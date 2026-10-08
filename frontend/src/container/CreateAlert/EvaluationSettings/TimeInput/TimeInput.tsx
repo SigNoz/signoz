@@ -131,13 +131,13 @@ function TimeInput({
 		if (e.key === 'ArrowRight' || e.key === 'Tab') {
 			e.preventDefault();
 			const nextField = document.querySelector(
-				`[data-field="${getNextField(currentField)}"]`,
+				`[data-field="${getNextField(currentField)}"] input`,
 			) as HTMLInputElement;
 			nextField?.focus();
 		} else if (e.key === 'ArrowLeft') {
 			e.preventDefault();
 			const prevField = document.querySelector(
-				`[data-field="${getPrevField(currentField)}"]`,
+				`[data-field="${getPrevField(currentField)}"] input`,
 			) as HTMLInputElement;
 			prevField?.focus();
 		}
@@ -152,10 +152,11 @@ function TimeInput({
 				onBlur={handleHoursBlur}
 				onKeyDown={(e): void => handleKeyDown(e, 'hours')}
 				disabled={disabled}
+				disabledTooltip={undefined}
 				maxLength={2}
-				className="time-input-field"
+				width={40}
 				placeholder="00"
-				data-testid="time-input-hours"
+				testId="time-input-hours"
 			/>
 			<span className="time-input-separator">:</span>
 			<Input
@@ -165,10 +166,11 @@ function TimeInput({
 				onBlur={handleMinutesBlur}
 				onKeyDown={(e): void => handleKeyDown(e, 'minutes')}
 				disabled={disabled}
+				disabledTooltip={undefined}
 				maxLength={2}
-				className="time-input-field"
+				width={40}
 				placeholder="00"
-				data-testid="time-input-minutes"
+				testId="time-input-minutes"
 			/>
 			<span className="time-input-separator">:</span>
 			<Input
@@ -178,10 +180,11 @@ function TimeInput({
 				onBlur={handleSecondsBlur}
 				onKeyDown={(e): void => handleKeyDown(e, 'seconds')}
 				disabled={disabled}
+				disabledTooltip={undefined}
 				maxLength={2}
-				className="time-input-field"
+				width={40}
 				placeholder="00"
-				data-testid="time-input-seconds"
+				testId="time-input-seconds"
 			/>
 		</div>
 	);

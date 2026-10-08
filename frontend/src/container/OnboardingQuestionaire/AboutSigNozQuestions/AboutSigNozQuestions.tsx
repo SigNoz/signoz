@@ -175,14 +175,16 @@ export function AboutSigNozQuestions({
 									{interestInSignoz.includes('Others') ? '' : 'Others'}
 								</Checkbox>
 								{interestInSignoz.includes('Others') && (
-									<Input
-										type="text"
-										className="onboarding-questionaire-other-input"
-										placeholder="What got you interested in SigNoz?"
-										value={otherInterestInSignoz}
-										autoFocus
-										onChange={(e): void => setOtherInterestInSignoz(e.target.value)}
-									/>
+									<div className="onboarding-questionaire-other-input">
+										<Input
+											type="text"
+											placeholder="What got you interested in SigNoz?"
+											value={otherInterestInSignoz}
+											autoFocus
+											width="100%"
+											onChange={(e): void => setOtherInterestInSignoz(e.target.value)}
+										/>
+									</div>
 								)}
 							</div>
 						</div>

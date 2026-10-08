@@ -59,18 +59,6 @@
 		--invite-members-field-background,
 		var(--l2-background)
 	);
-	--input-hover-background: var(
-		--invite-members-field-background,
-		var(--l2-background)
-	);
-	--input-focus-background: var(
-		--invite-members-field-background,
-		var(--l2-background)
-	);
-	--input-disabled-background: var(
-		--invite-members-field-background,
-		var(--l2-background)
-	);
 
 	input::placeholder {
 		color: var(--l3-foreground);

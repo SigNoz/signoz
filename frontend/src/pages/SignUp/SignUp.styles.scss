@@ -68,9 +68,17 @@
 				display: flex;
 				flex-direction: column;
 				gap: 12px;
+
+				// Restyle the @signozhq/ui Input (email) through its CSS tokens.
+				--input-background: var(--l2-background);
+				--input-border: var(--l1-border);
+				--input-border-hover: var(--l1-border);
+				--input-border-radius: 2px;
+				--input-font-size: 13px;
+				--input-foreground: var(--l1-foreground);
+				--input-placeholder: var(--l2-foreground);
 			}
 
-			.signup-form-input,
 			.signup-antd-input {
 				height: 32px;
 				width: 100%;
@@ -99,33 +107,6 @@
 
 				&:focus {
 					border-color: var(--primary);
-				}
-			}
-
-			.signup-form-input {
-				height: 32px;
-				background: var(--l2-background);
-				border: 1px solid var(--l1-border);
-				border-radius: 2px;
-				padding: 6px 8px;
-				font-family: Inter, sans-serif;
-				font-size: 13px;
-				font-weight: 400;
-				line-height: 1;
-				letter-spacing: -0.065px;
-				color: var(--l1-foreground);
-
-				&::placeholder {
-					color: var(--l2-foreground);
-				}
-
-				&:hover {
-					border-color: var(--l1-border);
-				}
-
-				&:focus {
-					border-color: var(--primary);
-					box-shadow: none;
 				}
 			}
 		}

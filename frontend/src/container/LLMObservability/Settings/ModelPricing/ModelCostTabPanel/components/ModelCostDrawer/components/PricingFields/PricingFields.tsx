@@ -49,6 +49,7 @@ function PricingFields({
 						required
 						value={pricing.input ?? ''}
 						disabled={isReadOnly}
+						disabledTooltip={undefined}
 						onChange={(e): void =>
 							onChange({ input: parsePricingAmount(e.target.value) })
 						}
@@ -69,6 +70,7 @@ function PricingFields({
 						required
 						value={pricing.output ?? ''}
 						disabled={isReadOnly}
+						disabledTooltip={undefined}
 						onChange={(e): void =>
 							onChange({ output: parsePricingAmount(e.target.value) })
 						}

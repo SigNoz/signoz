@@ -179,7 +179,6 @@ export function SpanHoverCard({
 
 	return (
 		<Tooltip
-			open={hoverCardData !== null}
 			side="right"
 			align="start"
 			sideOffset={8}

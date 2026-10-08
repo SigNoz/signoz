@@ -77,9 +77,6 @@
 	gap: var(--spacing-2);
 
 	--input-background: var(--l2-background);
-	--input-hover-background: var(--l2-background);
-	--input-focus-background: var(--l2-background);
-	--input-disabled-background: var(--l2-background);
 
 	input::placeholder {
 		color: var(--l3-foreground);

@@ -153,6 +153,35 @@
 						cursor: pointer;
 					}
 				}
+
+				.max-lines-per-row-input {
+					display: flex;
+
+					--input-height: 26px;
+					--input-border-radius: 0;
+					--input-border: var(--l1-border);
+
+					[data-testid='max-lines-per-row'] {
+						min-width: 36px;
+						width: auto;
+						border-right: none;
+						border-left: none;
+
+						input {
+							text-align: center;
+							font-size: 13px;
+						}
+					}
+
+					.periscope-btn {
+						box-shadow: none;
+						padding: 6px 12px;
+						height: 26px;
+
+						border-radius: 0px 1px 1px 0px;
+						background: var(--l3-background);
+					}
+				}
 			}
 
 			.edit-columns-container {

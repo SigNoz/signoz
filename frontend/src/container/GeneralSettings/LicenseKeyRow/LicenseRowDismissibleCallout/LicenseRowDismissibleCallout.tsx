@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AppLink } from 'lib/router/AppLink';
+import { SolidInfoCircle } from '@signozhq/icons';
 import { Callout } from '@signozhq/ui/callout';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
@@ -7,6 +7,7 @@ import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { AppLink } from 'lib/router/AppLink';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 
@@ -40,42 +41,43 @@ function LicenseRowDismissibleCallout(): JSX.Element | null {
 	};
 
 	return !isCalloutDismissed ? (
-		<Callout
-			type="info"
-			size="small"
-			showIcon
-			action="dismissible"
-			onClick={handleDismissCallout}
-			className="license-key-callout"
-		>
-			<div className="license-key-callout__description">
-				This is <strong>NOT</strong> your ingestion or Service account key.
-				{(hasServiceAccountsAccess || hasIngestionAccess) && (
-					<>
-						{' '}
-						Find your{' '}
-						{hasServiceAccountsAccess && (
-							<AppLink
-								to={ROUTES.SERVICE_ACCOUNTS_SETTINGS}
-								className="license-key-callout__link"
-							>
-								Service account here
-							</AppLink>
-						)}
-						{hasServiceAccountsAccess && hasIngestionAccess && ' and '}
-						{hasIngestionAccess && (
-							<AppLink
-								to={ROUTES.INGESTION_SETTINGS}
-								className="license-key-callout__link"
-							>
-								Ingestion key here
-							</AppLink>
-						)}
-						.
-					</>
-				)}
-			</div>
-		</Callout>
+		<div className="license-key-callout">
+			<Callout.Closeable
+				color="info"
+				size="sm"
+				icon={<SolidInfoCircle />}
+				closed={false}
+				onClose={handleDismissCallout}
+			>
+				<div className="license-key-callout__description">
+					This is <strong>NOT</strong> your ingestion or Service account key.
+					{(hasServiceAccountsAccess || hasIngestionAccess) && (
+						<>
+							{' '}
+							Find your{' '}
+							{hasServiceAccountsAccess && (
+								<AppLink
+									to={ROUTES.SERVICE_ACCOUNTS_SETTINGS}
+									className="license-key-callout__link"
+								>
+									Service account here
+								</AppLink>
+							)}
+							{hasServiceAccountsAccess && hasIngestionAccess && ' and '}
+							{hasIngestionAccess && (
+								<AppLink
+									to={ROUTES.INGESTION_SETTINGS}
+									className="license-key-callout__link"
+								>
+									Ingestion key here
+								</AppLink>
+							)}
+							.
+						</>
+					)}
+				</div>
+			</Callout.Closeable>
+		</div>
 	) : null;
 }
 

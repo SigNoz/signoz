@@ -461,7 +461,7 @@ describe('AttributeMappingsTab (integration)', () => {
 				screen.findByTestId('mapper-form-drawer'),
 			).resolves.toBeInTheDocument();
 			expect(screen.getByText('Edit mapping')).toBeInTheDocument();
-			const target = screen.getByTestId('mapper-form-target');
+			const target = screen.getByTestId('mapper-form-target-field');
 			expect(target).toHaveValue('gen_ai.request.model');
 			expect(target).toBeDisabled();
 		});
@@ -508,10 +508,13 @@ describe('AttributeMappingsTab (integration)', () => {
 			);
 
 			await user.type(
-				screen.getByTestId('mapper-form-target'),
+				screen.getByTestId('mapper-form-target-field'),
 				'gen_ai.response.model',
 			);
-			await user.type(screen.getByTestId('mapper-form-source-0'), 'raw.model');
+			await user.type(
+				screen.getByTestId('mapper-form-source-0-field'),
+				'raw.model',
+			);
 
 			const create = screen.getByTestId('mapper-form-save');
 			await waitFor(() =>

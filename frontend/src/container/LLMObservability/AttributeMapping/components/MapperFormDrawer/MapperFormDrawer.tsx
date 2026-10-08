@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
-import { SelectSimple } from '@signozhq/ui/select';
+import { Select } from '@signozhq/ui/select';
+import type { SelectItemType } from '@signozhq/ui/select';
 import {
 	closestCenter,
 	DndContext,
@@ -31,9 +32,9 @@ import {
 } from '../../types';
 import { createEmptySource, isMapperDraftValid } from '../../utils';
 
-const FIELD_CONTEXT_OPTIONS = [
-	{ value: FieldContext.attribute, label: 'Span attribute' },
-	{ value: FieldContext.resource, label: 'Resource' },
+const FIELD_CONTEXT_OPTIONS: SelectItemType[] = [
+	{ type: 'item', value: FieldContext.attribute, label: 'Span attribute' },
+	{ type: 'item', value: FieldContext.resource, label: 'Resource' },
 ];
 
 interface MapperFormDrawerProps {
@@ -190,12 +191,12 @@ function MapperFormDrawer({
 
 				<div className={styles.field}>
 					<span className={styles.label}>Write target to</span>
-					<SelectSimple
-						className={styles.fieldContext}
+					<Select
+						width={200}
 						items={FIELD_CONTEXT_OPTIONS}
+						placeholder="Select where to write"
 						value={draft.fieldContext}
-						withPortal={false}
-						onChange={(next): void =>
+						onChange={(next: string): void =>
 							setDraft({ ...draft, fieldContext: next as FieldContextValue })
 						}
 						testId="mapper-form-field-context"

@@ -26,6 +26,9 @@
 		"incremental": true,
 		"tsBuildInfoFile": "./node_modules/.cache/ts/tsconfig.tsbuildinfo",
 		"paths": {
+			"@signozhq/ui/sonner": [
+				"./src/shims/signozhq-ui-sonner.tsx"
+			],
 			"@constants/*": [
 				"./src/container/OnboardingContainer/constants/*"
 			],

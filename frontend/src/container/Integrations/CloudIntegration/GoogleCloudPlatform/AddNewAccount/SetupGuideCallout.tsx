@@ -16,7 +16,12 @@ function SetupGuideCallout({
 	linkLabel,
 }: SetupGuideCalloutProps): JSX.Element {
 	return (
-		<Callout icon={<KeyRound />} testId="gcp-setup-guide-callout">
+		<Callout
+			color="info"
+			size="sm"
+			icon={<KeyRound />}
+			testId="gcp-setup-guide-callout"
+		>
 			<Typography.Text as="span" size="base">
 				{description}
 			</Typography.Text>

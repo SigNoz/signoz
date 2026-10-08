@@ -72,7 +72,7 @@ export default function CeleryTaskDetail({
 								endTime ? `- ${formatTimestamp(endTime)}` : ''
 							}`}
 						</Typography.Text>
-						<Divider type="vertical" />
+						<Divider orientation="vertical" />
 						<Typography.Text className="subtitle">{taskData.value}</Typography.Text>
 					</div>
 				</div>

@@ -4,8 +4,8 @@
 	gap: 12px;
 	color: var(--l1-border);
 	&__divider {
-		--divider-color: var(--l1-border);
-		--divider-vertical-margin: 0;
+		--divider-border: var(--l1-border);
+		--divider-vertical-margin-inline: 0;
 	}
 	.dropdown-trigger-wrapper {
 		display: flex;

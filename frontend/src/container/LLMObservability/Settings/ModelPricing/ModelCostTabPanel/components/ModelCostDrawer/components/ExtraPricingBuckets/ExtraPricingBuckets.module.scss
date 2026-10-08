@@ -6,10 +6,6 @@
 	composes: drawerSection from '../../shared.module.scss';
 }
 
-.fullWidth {
-	width: 100%;
-}
-
 .pricingField {
 	composes: pricingField from '../../shared.module.scss';
 }

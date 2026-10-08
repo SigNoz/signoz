@@ -259,7 +259,7 @@ export default function K8sBaseDetails<T>({
 					<X />
 				</Button>
 			)}
-			<Divider type="vertical" />
+			<Divider orientation="vertical" />
 			<span className={styles.entityKind} data-testid="drawer-entity-kind">
 				<CategoryIcon category={category} />
 				{K8S_CATEGORY_SINGULAR_LABELS[category]}

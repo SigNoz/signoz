@@ -11,7 +11,7 @@ import afterLogin from 'AppRoutes/utils';
 import AuthError from 'components/AuthError/AuthError';
 import AuthPageContainer from 'components/AuthPageContainer';
 import { useNotifications } from 'hooks/useNotifications';
-import { ArrowRight } from '@signozhq/icons';
+import { ArrowRight, SolidInfoCircle } from '@signozhq/icons';
 import APIError from 'types/api/error';
 
 import tvUrl from '@/assets/svgs/tv.svg';
@@ -135,7 +135,6 @@ function SignUp(): JSX.Element {
 										autoFocus
 										required
 										id="signupEmail"
-										className="signup-form-input"
 									/>
 								</FormContainer.Item>
 							</div>
@@ -183,10 +182,12 @@ function SignUp(): JSX.Element {
 						</div>
 					</div>
 
-					<Callout type="info" size="small" showIcon className="signup-info-callout">
-						This will create an admin account. If you are not an admin, please ask
-						your admin for an invite link
-					</Callout>
+					<div className="signup-info-callout">
+						<Callout color="info" size="sm" icon={<SolidInfoCircle />}>
+							This will create an admin account. If you are not an admin, please ask
+							your admin for an invite link
+						</Callout>
+					</div>
 
 					{formError && <AuthError error={formError} />}
 

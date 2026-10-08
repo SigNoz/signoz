@@ -156,10 +156,10 @@ function ConnectionSecretsFields({
 										label={field.label}
 										tooltip={field.tooltip}
 										error={fieldState.error}
+										className={styles.monoInput}
 									>
 										<Input
 											id={field.testId}
-											className={cx(styles.fullWidth, styles.mono)}
 											placeholder={field.placeholder}
 											value={rhfField.value}
 											onChange={(e): void => rhfField.onChange(e.target.value)}

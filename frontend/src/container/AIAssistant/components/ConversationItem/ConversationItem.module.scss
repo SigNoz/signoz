@@ -62,16 +62,16 @@
 	opacity: 0.7;
 }
 
+// Wrapper around the chromeless rename Input (variant="unstyled"); the accent
+// bottom border marks the edit state, and the --input-* tokens keep the field
+// as compact as the title row it replaces.
 .input {
 	width: 100%;
-	background: transparent;
-	border: none;
 	border-bottom: 1px solid var(--accent-primary);
-	outline: none;
-	color: var(--l1-foreground);
-	font-size: 12px;
-	font-family: inherit;
-	padding: 1px 0;
+	--input-height: 20px;
+	--input-padding: 1px 0;
+	--input-font-size: 12px;
+	--input-foreground: var(--l1-foreground);
 }
 
 .actions {

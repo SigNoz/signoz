@@ -1,8 +1,12 @@
 import { MouseEvent, useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
+import {
+	RefreshCw,
+	SolidAlertTriangle,
+	SolidInfoCircle,
+} from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
-import { RefreshCw } from '@signozhq/icons';
 import setLocalStorage from 'api/browser/localstorage/set';
 import {
 	invalidateGetChecks,
@@ -81,81 +85,80 @@ export function K8sInstrumentationChecksCallout({
 	return (
 		<div className={styles.checkContainer}>
 			<Callout
-				type={hasMissingItems ? 'warning' : 'info'}
-				showIcon
-				size="medium"
-				title={
-					<div className={styles.header}>
-						Instrumentation checks
-						<Button
-							variant="solid"
-							color="warning"
-							size="sm"
-							onClick={handleRecheck}
-							loading={isFetching}
-							prefix={<RefreshCw size={12} />}
-							testId="instrumentation-checks-recheck-btn"
-						>
-							Recheck
-						</Button>
-					</div>
-				}
-				action="expandable"
-				defaultExpanded={isExpanded}
-				onClick={handleExpandToggle}
+				color={hasMissingItems ? 'warning' : 'info'}
+				size="md"
+				icon={hasMissingItems ? <SolidAlertTriangle /> : <SolidInfoCircle />}
 			>
-				<div className={styles.container} onClick={(e) => e.stopPropagation()}>
-					<div className={styles.entriesList}>
-						{checksData.presentDefaultEnabledMetrics?.map((entry) => (
-							<PresentEntryRow
-								key={`present-default-${entry.associatedComponent.name}`}
-								entry={entry}
-								typeLabel="Default enabled metrics"
-								itemType="metrics"
-							/>
-						))}
-						{checksData.presentOptionalMetrics?.map((entry) => (
-							<PresentEntryRow
-								key={`present-optional-${entry.associatedComponent.name}`}
-								entry={entry}
-								typeLabel="Optional metrics"
-								itemType="metrics"
-							/>
-						))}
-						{checksData.presentRequiredAttributes?.map((entry) => (
-							<PresentEntryRow
-								key={`present-attrs-${entry.associatedComponent.name}`}
-								entry={entry}
-								typeLabel="Required attributes"
-								itemType="attributes"
-							/>
-						))}
-						{checksData.missingDefaultEnabledMetrics?.map((entry) => (
-							<MissingEntryRow
-								key={`missing-default-${entry.associatedComponent.name}`}
-								entry={entry}
-								typeLabel="Missing default metrics"
-								itemType="metrics"
-							/>
-						))}
-						{checksData.missingOptionalMetrics?.map((entry) => (
-							<MissingEntryRow
-								key={`missing-optional-${entry.associatedComponent.name}`}
-								entry={entry}
-								typeLabel="Missing optional metrics"
-								itemType="metrics"
-							/>
-						))}
-						{checksData.missingRequiredAttributes?.map((entry) => (
-							<MissingEntryRow
-								key={`missing-attrs-${entry.associatedComponent.name}`}
-								entry={entry}
-								typeLabel="Missing required attributes"
-								itemType="attributes"
-							/>
-						))}
-					</div>
+				<div className={styles.header}>
+					<button type="button" onClick={handleExpandToggle}>
+						Instrumentation checks
+					</button>
+					<Button
+						variant="solid"
+						color="warning"
+						size="sm"
+						onClick={handleRecheck}
+						loading={isFetching}
+						prefix={<RefreshCw size={12} />}
+						testId="instrumentation-checks-recheck-btn"
+					>
+						Recheck
+					</Button>
 				</div>
+				{isExpanded && (
+					<div className={styles.container}>
+						<div className={styles.entriesList}>
+							{checksData.presentDefaultEnabledMetrics?.map((entry) => (
+								<PresentEntryRow
+									key={`present-default-${entry.associatedComponent.name}`}
+									entry={entry}
+									typeLabel="Default enabled metrics"
+									itemType="metrics"
+								/>
+							))}
+							{checksData.presentOptionalMetrics?.map((entry) => (
+								<PresentEntryRow
+									key={`present-optional-${entry.associatedComponent.name}`}
+									entry={entry}
+									typeLabel="Optional metrics"
+									itemType="metrics"
+								/>
+							))}
+							{checksData.presentRequiredAttributes?.map((entry) => (
+								<PresentEntryRow
+									key={`present-attrs-${entry.associatedComponent.name}`}
+									entry={entry}
+									typeLabel="Required attributes"
+									itemType="attributes"
+								/>
+							))}
+							{checksData.missingDefaultEnabledMetrics?.map((entry) => (
+								<MissingEntryRow
+									key={`missing-default-${entry.associatedComponent.name}`}
+									entry={entry}
+									typeLabel="Missing default metrics"
+									itemType="metrics"
+								/>
+							))}
+							{checksData.missingOptionalMetrics?.map((entry) => (
+								<MissingEntryRow
+									key={`missing-optional-${entry.associatedComponent.name}`}
+									entry={entry}
+									typeLabel="Missing optional metrics"
+									itemType="metrics"
+								/>
+							))}
+							{checksData.missingRequiredAttributes?.map((entry) => (
+								<MissingEntryRow
+									key={`missing-attrs-${entry.associatedComponent.name}`}
+									entry={entry}
+									typeLabel="Missing required attributes"
+									itemType="attributes"
+								/>
+							))}
+						</div>
+					</div>
+				)}
 			</Callout>
 		</div>
 	);

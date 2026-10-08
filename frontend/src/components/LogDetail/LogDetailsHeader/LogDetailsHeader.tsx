@@ -76,7 +76,7 @@ function LogDetailsHeader({
 	return (
 		<div className={styles.header} data-log-detail-ignore="true">
 			<div className={styles.leftSection}>
-				<Divider type="vertical" className={styles.divider} />
+				<Divider orientation="vertical" height={16} spacing={0} />
 				<Typography.Text
 					className={styles.timestamp}
 					data-testid="log-details-header-timestamp"

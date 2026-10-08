@@ -77,7 +77,7 @@ function Header({
 				>
 					<X size={14} />
 				</Button>
-				<Divider type="vertical" />
+				<Divider orientation="vertical" />
 				<Typography.Text>Configure panel</Typography.Text>
 				{isDirty && (
 					<Badge

@@ -27,14 +27,15 @@ function VariableInfoForm({
 			<div className={styles.infoItemContainer}>
 				<Typography className={styles.infoTitle}>Name</Typography>
 
-				<Input
-					testId="variable-name"
-					className={styles.variableNameInput}
-					value={title}
-					maxLength={DASHBOARD_NAME_MAX_LENGTH}
-					onChange={(e): void => onTitleChange(e.target.value)}
-					placeholder="Unique name of the variable"
-				/>
+				<div className={styles.variableNameInput}>
+					<Input
+						testId="variable-name"
+						value={title}
+						maxLength={DASHBOARD_NAME_MAX_LENGTH}
+						onChange={(e): void => onTitleChange(e.target.value)}
+						placeholder="Unique name of the variable"
+					/>
+				</div>
 
 				{visibleNameError ? (
 					<Typography.Text className={variableFormStyles.errorText}>

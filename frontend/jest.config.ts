@@ -13,6 +13,7 @@ const config: Config.InitialOptions = {
 	moduleFileExtensions: ['ts', 'tsx', 'js', 'json'],
 	modulePathIgnorePatterns: ['dist'],
 	moduleNameMapper: {
+		'^@signozhq/ui/sonner$': '<rootDir>/src/shims/signozhq-ui-sonner.tsx',
 		'\\.(png|jpg|jpeg|gif|svg|webp|avif|ico|bmp|tiff)$':
 			'<rootDir>/__mocks__/fileMock.ts',
 		// The icon glob module uses `import.meta.glob` (Vite-only); jest can't parse

@@ -15,20 +15,18 @@
 	border: 1px solid var(--l2-border);
 }
 
+// Wrapper around the chromeless new-tag Input (the Input itself is
+// variant="unstyled"); the placeholder colour comes via the --input-* tokens.
 .input {
 	flex: 1;
 	min-width: 120px;
-	border: none;
-	background: transparent;
-
-	&::placeholder {
-		color: var(--l3-foreground);
-	}
+	--input-placeholder: var(--l3-foreground);
+	--input-placeholder-opacity: 1;
 }
 
+// Wrapper around the inline chip-edit Input; width lives on the Input prop.
 .editInput {
-	width: 160px;
-	height: 24px;
+	--input-height: 24px;
 }
 
 .error {

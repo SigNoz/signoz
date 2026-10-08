@@ -1,3 +1,4 @@
+import { SolidAlertCircle } from '@signozhq/icons';
 import { Callout } from '@signozhq/ui/callout';
 import cx from 'classnames';
 import styles from './PermissionDeniedCallout.module.scss';
@@ -30,23 +31,20 @@ function PermissionDeniedCallout({
 			: [];
 
 	return (
-		<Callout
-			type="error"
-			showIcon
-			size="small"
-			className={cx(styles.callout, className)}
-		>
-			<Typography.Text className={styles.permission}>
-				<code className={styles.permissionCode}>user/{user.id}</code> is not
-				authorized to perform{' '}
-				{formattedPermissions.map((perm, idx) => (
-					<span key={perm}>
-						<code className={styles.permissionCode}>{perm}</code>
-						{idx < formattedPermissions.length - 1 && ', '}
-					</span>
-				))}
-			</Typography.Text>
-		</Callout>
+		<div className={cx(styles.callout, className)}>
+			<Callout color="danger" size="sm" icon={<SolidAlertCircle />}>
+				<Typography.Text className={styles.permission}>
+					<code className={styles.permissionCode}>user/{user.id}</code> is not
+					authorized to perform{' '}
+					{formattedPermissions.map((perm, idx) => (
+						<span key={perm}>
+							<code className={styles.permissionCode}>{perm}</code>
+							{idx < formattedPermissions.length - 1 && ', '}
+						</span>
+					))}
+				</Typography.Text>
+			</Callout>
+		</div>
 	);
 }
 

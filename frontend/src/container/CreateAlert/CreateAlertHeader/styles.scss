@@ -38,8 +38,8 @@
 	}
 
 	&__input.title {
-		background-color: transparent;
-		color: var(--l1-foreground);
+		--input-background: transparent;
+		--input-foreground: var(--l1-foreground);
 		width: 100%;
 		min-width: 300px;
 	}

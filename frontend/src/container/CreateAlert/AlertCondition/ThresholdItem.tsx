@@ -102,8 +102,8 @@ function ThresholdItem({
 						onChange={(e): void =>
 							updateThreshold(threshold.id, 'label', e.target.value)
 						}
-						style={{ width: 200 }}
-						data-testid="threshold-name-input"
+						width={200}
+						testId="threshold-name-input"
 					/>
 					{isAnomaly ? (
 						<Typography.Text className="sentence-text">at</Typography.Text>
@@ -121,9 +121,9 @@ function ThresholdItem({
 						onChange={(e): void =>
 							updateThreshold(threshold.id, 'thresholdValue', e.target.value)
 						}
-						style={{ width: 100 }}
+						width={100}
 						type="number"
-						data-testid="threshold-value-input"
+						testId="threshold-value-input"
 					/>
 					{isAnomaly ? (
 						<Typography.Text className="sentence-text">deviations</Typography.Text>
@@ -176,9 +176,9 @@ function ThresholdItem({
 								onChange={(e): void =>
 									updateThreshold(threshold.id, 'recoveryThresholdValue', e.target.value)
 								}
-								style={{ width: 100 }}
+								width={100}
 								type="number"
-								data-testid="recovery-threshold-value-input"
+								testId="recovery-threshold-value-input"
 							/>
 							<Tooltip title="Remove recovery threshold">
 								<Button
