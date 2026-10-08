@@ -1,19 +1,19 @@
 import { Color } from '@signozhq/design-tokens';
 import { Boxes } from '@signozhq/icons';
-import { InframonitoringtypesClusterRecordDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	InframonitoringtypesClusterRecordDTO,
+	InframonitoringtypesNodeConditionDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 
 import ColumnHeader from '../Base/ColumnHeader';
+import ClickableStatusCounts from '../Base/components/StatusFilterCells/ClickableStatusCounts';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes, getPodStatusItems } from '../commonUtils';
-import {
-	GroupedStatusCounts,
-	TextNoData,
-	ValidateColumnValueWrapper,
-} from '../components';
+import { TextNoData, ValidateColumnValueWrapper } from '../components';
 import {
 	INFRA_MONITORING_ATTR_KEYS,
 	InfraMonitoringEntity,
@@ -98,18 +98,21 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 			}
 
 			return (
-				<GroupedStatusCounts
+				<ClickableStatusCounts
+					kind="node"
 					rowId={rowId}
 					items={[
 						{
 							value: row.nodeCountsByReadiness.ready,
 							label: 'Ready',
 							color: Color.BG_FOREST_500,
+							statuses: [InframonitoringtypesNodeConditionDTO.ready],
 						},
 						{
 							value: row.nodeCountsByReadiness.notReady,
 							label: 'Not Ready',
 							color: Color.BG_AMBER_500,
+							statuses: [InframonitoringtypesNodeConditionDTO.not_ready],
 						},
 					]}
 				/>
@@ -135,7 +138,8 @@ export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 				return <TextNoData type="tanstack" />;
 			}
 			return (
-				<GroupedStatusCounts
+				<ClickableStatusCounts
+					kind="pod"
 					rowId={rowId}
 					items={getPodStatusItems(row.podCountsByStatus)}
 				/>

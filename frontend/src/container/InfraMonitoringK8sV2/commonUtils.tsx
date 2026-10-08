@@ -133,6 +133,24 @@ const ERROR_STATUS_LABELS: Record<ErrorStatusKey, string> = {
 	unexpectedAdmissionError: 'UnexpectedAdmissionError',
 };
 
+const POD_STATUS_VALUES = new Set<string>(
+	Object.values(InframonitoringtypesPodStatusDTO),
+);
+
+/**
+ * The count DTO spells each status in camelCase (`crashLoopBackOff`) where the
+ * status enum spells it lowercase (`crashloopbackoff`); anything that does not
+ * land on a real enum member is dropped rather than sent to the API.
+ */
+function countKeyToPodStatus(
+	key: string,
+): InframonitoringtypesPodStatusDTO | null {
+	const value = key.toLowerCase();
+	return POD_STATUS_VALUES.has(value)
+		? (value as InframonitoringtypesPodStatusDTO)
+		: null;
+}
+
 export function getPodStatusItems(
 	counts: InframonitoringtypesPodCountsByStatusDTO,
 ): StatusCountItem[] {
@@ -142,18 +160,42 @@ export function getPodStatusItems(
 	const errorBreakdown = errorKeys.map((key) => ({
 		label: ERROR_STATUS_LABELS[key],
 		value: counts[key],
+		statuses: [countKeyToPodStatus(key)].filter(
+			(status): status is InframonitoringtypesPodStatusDTO => status !== null,
+		),
 	}));
 
 	return [
-		{ value: counts.running, label: 'Running', color: Color.BG_FOREST_500 },
-		{ value: counts.completed, label: 'Completed', color: Color.BG_ROBIN_500 },
-		{ value: counts.pending, label: 'Pending', color: Color.BG_AMBER_500 },
-		{ value: counts.unknown, label: 'Unknown', color: Color.BG_SLATE_400 },
+		{
+			value: counts.running,
+			label: 'Running',
+			color: Color.BG_FOREST_500,
+			statuses: [InframonitoringtypesPodStatusDTO.running],
+		},
+		{
+			value: counts.completed,
+			label: 'Completed',
+			color: Color.BG_ROBIN_500,
+			statuses: [InframonitoringtypesPodStatusDTO.completed],
+		},
+		{
+			value: counts.pending,
+			label: 'Pending',
+			color: Color.BG_AMBER_500,
+			statuses: [InframonitoringtypesPodStatusDTO.pending],
+		},
+		{
+			value: counts.unknown,
+			label: 'Unknown',
+			color: Color.BG_SLATE_400,
+			statuses: [InframonitoringtypesPodStatusDTO.unknown],
+		},
 		{
 			value: errorTotal,
 			label: 'Error Status',
 			color: Color.BG_CHERRY_500,
 			breakdown: errorBreakdown,
+			statuses: errorBreakdown.flatMap((item) => item.statuses),
 		},
 	];
 }

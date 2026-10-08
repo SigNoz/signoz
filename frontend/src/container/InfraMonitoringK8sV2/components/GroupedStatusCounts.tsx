@@ -8,6 +8,8 @@ import { MouseEventHandler } from 'react';
 export interface StatusBreakdownItem {
 	label: string;
 	value: number;
+	/** The status values this row stands for, for click-to-filter. */
+	statuses?: string[];
 }
 
 export interface StatusCountItem {
@@ -15,15 +17,22 @@ export interface StatusCountItem {
 	label: string;
 	color: string;
 	breakdown?: StatusBreakdownItem[];
+	/** The status values this count stands for, for click-to-filter. */
+	statuses?: string[];
 }
 
 interface GroupedStatusCountsProps {
 	items: StatusCountItem[];
 	rowId: string;
 	showZeroValues?: boolean;
+	/** Omit to leave the counts inert, as on entities with no status filter. */
+	onSelectStatuses?: (statuses: string[]) => void;
 }
 
-function buildTooltipContent(item: StatusCountItem): React.ReactNode {
+function buildTooltipContent(
+	item: StatusCountItem,
+	onSelectStatuses?: (statuses: string[]) => void,
+): React.ReactNode {
 	const onClickHandle: MouseEventHandler = (e) => {
 		e.preventDefault();
 		e.stopPropagation();
@@ -57,14 +66,33 @@ function buildTooltipContent(item: StatusCountItem): React.ReactNode {
 			<Typography.Text className={styles.tooltipHeader}>
 				{item.label}
 			</Typography.Text>
-			{nonZeroBreakdown.map((b) => (
-				<div key={b.label} className={styles.tooltipRow}>
-					<Typography.Text>{b.label}</Typography.Text>
-					<Typography.Text className={styles.tooltipValue}>
-						{b.value}
-					</Typography.Text>
-				</div>
-			))}
+			{nonZeroBreakdown.map((b) =>
+				onSelectStatuses && b.statuses?.length ? (
+					<button
+						key={b.label}
+						type="button"
+						className={`${styles.tooltipRow} ${styles.tooltipRowSelectable}`}
+						data-testid={`status-breakdown-${b.statuses.join('-')}`}
+						onClick={(e): void => {
+							e.preventDefault();
+							e.stopPropagation();
+							onSelectStatuses(b.statuses as string[]);
+						}}
+					>
+						<Typography.Text>{b.label}</Typography.Text>
+						<Typography.Text className={styles.tooltipValue}>
+							{b.value}
+						</Typography.Text>
+					</button>
+				) : (
+					<div key={b.label} className={styles.tooltipRow}>
+						<Typography.Text>{b.label}</Typography.Text>
+						<Typography.Text className={styles.tooltipValue}>
+							{b.value}
+						</Typography.Text>
+					</div>
+				),
+			)}
 		</div>
 	);
 }
@@ -73,6 +101,7 @@ export function GroupedStatusCounts({
 	items,
 	rowId,
 	showZeroValues = true,
+	onSelectStatuses,
 }: GroupedStatusCountsProps): JSX.Element {
 	const visibleItems =
 		showZeroValues === false ? items.filter((item) => item.value > 0) : items;
@@ -87,14 +116,30 @@ export function GroupedStatusCounts({
 				<TanStackTable.HoverTooltip
 					key={item.label}
 					rowId={rowId}
-					title={buildTooltipContent(item)}
+					title={buildTooltipContent(item, onSelectStatuses)}
 					arrow
 					align="start"
 				>
 					{item.value ? (
 						<TanStackTable.Text
-							className={styles.item}
+							className={`${styles.item} ${
+								onSelectStatuses && item.statuses?.length ? styles.itemSelectable : ''
+							}`}
 							style={{ '--gsc-color': item.color } as React.CSSProperties}
+							data-testid={
+								item.statuses?.length
+									? `status-count-${item.statuses.join('-')}`
+									: undefined
+							}
+							onClick={
+								onSelectStatuses && item.statuses?.length
+									? (e: React.MouseEvent): void => {
+											e.preventDefault();
+											e.stopPropagation();
+											onSelectStatuses(item.statuses as string[]);
+										}
+									: undefined
+							}
 						>
 							{item.value}
 						</TanStackTable.Text>
