@@ -1,6 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
+import type { SpantypesGettableTraceSummaryDTO } from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
 import { render } from 'tests/test-utils';
 
@@ -176,9 +177,19 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 		hasMissingSpans: false,
 		totalSpansCount: 42,
 		totalErrorSpansCount: 0,
+		ai: {
+			tokens: {
+				input: 12040,
+				output: 3110,
+				cacheRead: 0,
+				cacheWrite: 0,
+				reasoning: 0,
+			},
+			totalCost: 0.0421,
+		},
 	};
 
-	const mockSummary = (data?: typeof traceMetadata): void => {
+	const mockSummary = (data?: SpantypesGettableTraceSummaryDTO): void => {
 		jest.mocked(useTraceSummary).mockReturnValue({ data, isLoading: false });
 	};
 
@@ -199,6 +210,36 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 			'ms',
 		);
 		expect(screen.getByText(duration)).toBeInTheDocument();
+	});
+
+	it('renders AI tokens and cost when the summary has them', () => {
+		mockSummary(traceMetadata);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+
+		expect(screen.getByText('Tokens: 12,040 → 3,110')).toBeInTheDocument();
+		expect(screen.getByText('Cost — $ 0.0421')).toBeInTheDocument();
+	});
+
+	it('omits AI tokens and cost when the summary has no ai field', () => {
+		mockSummary({ ...traceMetadata, ai: undefined });
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+
+		expect(screen.queryByText(/^Tokens:/)).not.toBeInTheDocument();
+		expect(screen.queryByText(/^Cost —/)).not.toBeInTheDocument();
+	});
+
+	it('omits AI tokens when input and output are both zero', () => {
+		mockSummary({
+			...traceMetadata,
+			ai: {
+				...traceMetadata.ai,
+				tokens: { ...traceMetadata.ai.tokens, input: 0, output: 0 },
+			},
+		});
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+
+		expect(screen.queryByText(/^Tokens:/)).not.toBeInTheDocument();
+		expect(screen.getByText('Cost — $ 0.0421')).toBeInTheDocument();
 	});
 
 	it('is shown by default and can be hidden / shown again via the Trace options menu', async () => {

@@ -1,10 +1,13 @@
-import { CalendarClock, Server, Timer } from '@signozhq/icons';
+import { CalendarClock, Coins, Landmark, Server, Timer } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import cx from 'classnames';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 
+import { formatCost, formatTokens } from '../utils/genAi';
+import type { SpantypesTraceAITokensDTO } from 'api/generated/services/sigNoz.schemas';
 import EntityMetadataItem from './EntityMetadataItem';
+import TokenUsageTooltip from './TokenUsageTooltip';
 
 import styles from './EntityMetadataRow.module.scss';
 
@@ -16,6 +19,8 @@ interface EntityMetadataRowProps {
 	execTimePercent?: number;
 	timestamp?: string;
 	statusCode?: string | number;
+	tokens?: SpantypesTraceAITokensDTO;
+	cost?: number;
 }
 
 const ICON_SIZE = 14;
@@ -32,6 +37,8 @@ function EntityMetadataRow({
 	execTimePercent,
 	timestamp,
 	statusCode,
+	tokens,
+	cost,
 }: EntityMetadataRowProps): JSX.Element {
 	const entityLabel = entity === 'trace' ? 'Trace' : 'Span';
 	const durationTooltip =
@@ -91,6 +98,25 @@ function EntityMetadataRow({
 					<HttpStatusBadge statusCode={statusCode} />
 				</EntityMetadataItem>
 			)}
+
+			{tokens && (tokens.input > 0 || tokens.output > 0) && (
+				<EntityMetadataItem
+					tooltip={<TokenUsageTooltip tokens={tokens} />}
+					tooltipClassName={styles.tokenTooltipContent}
+					icon={<Coins size={ICON_SIZE} />}
+				>
+					Tokens: {formatTokens(tokens.input)} → {formatTokens(tokens.output)}
+				</EntityMetadataItem>
+			)}
+
+			{cost !== undefined && (
+				<EntityMetadataItem
+					tooltip="Total cost"
+					icon={<Landmark size={ICON_SIZE} />}
+				>
+					Cost — {formatCost(cost)}
+				</EntityMetadataItem>
+			)}
 		</div>
 	);
 }
@@ -102,6 +128,8 @@ EntityMetadataRow.defaultProps = {
 	execTimePercent: undefined,
 	timestamp: undefined,
 	statusCode: undefined,
+	tokens: undefined,
+	cost: undefined,
 };
 
 export default EntityMetadataRow;

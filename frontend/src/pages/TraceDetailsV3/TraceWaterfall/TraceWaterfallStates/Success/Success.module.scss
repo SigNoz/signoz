@@ -217,8 +217,9 @@
 .statusCell {
 	display: flex;
 	align-items: center;
-	justify-content: center;
+	justify-content: flex-start;
 	cursor: pointer;
+	padding-left: var(--spacing-2);
 
 	--badge-border-radius: 2px;
 	--badge-padding: 3px 6px;
@@ -406,6 +407,11 @@
 	&.hasError {
 		box-shadow: 0 0 0 2px rgba(255, 70, 70, 0.3);
 	}
+}
+
+.aiSpanIcon {
+	flex-shrink: 0;
+	margin: 0 var(--spacing-2);
 }
 
 .treeLabel {

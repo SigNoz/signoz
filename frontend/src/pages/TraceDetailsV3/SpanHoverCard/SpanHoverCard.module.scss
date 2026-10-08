@@ -9,40 +9,23 @@
 }
 
 .popover {
+	composes: tooltipContent from '../shared.module.scss';
 	// Hover card may be rendered while the SpanDetailsPanel is docked as
 	// a FloatingPanel (z-index 999); bump above the default tooltip z-index.
 	--tooltip-z-index: 1000;
-	background-color: var(--l1-background);
-	padding: 8px 12px;
-	border-radius: 4px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-	border: 1px solid var(--l2-border);
-	color: var(--l1-foreground);
 }
 
 .content {
-	font-size: 12px;
-	color: var(--l1-foreground);
+	composes: tooltipBody from '../shared.module.scss';
+	width: 223px;
 }
 
-.name {
-	font-weight: 600;
-	margin-bottom: 4px;
+.title {
+	composes: tooltipTitle from '../shared.module.scss';
 }
 
-.row {
-	line-height: 1.5;
-	color: var(--l2-foreground);
-}
-
-.preview {
-	// container for additional preview rows
-}
-
-.previewKey {
-	color: var(--l2-foreground);
-}
-
-.previewValue {
-	color: var(--l1-foreground);
+.header {
+	display: flex;
+	flex-direction: column;
+	padding-bottom: var(--spacing-2);
 }
