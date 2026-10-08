@@ -1,8 +1,8 @@
 import { formatCost } from '../utils/genAi';
 import { SpanAiUsage } from './aiUsage';
 import TokenBreakdown from '../TokenBreakdown/TokenBreakdown';
-import TooltipRow from '../TooltipPrimitives/TooltipRow';
-import TooltipSection from '../TooltipPrimitives/TooltipSection';
+import TraceTooltipRow from '../TraceTooltip/TraceTooltipRow';
+import TraceTooltipSection from '../TraceTooltip/TraceTooltipSection';
 
 interface SpanUsageBreakdownProps {
 	usage: SpanAiUsage;
@@ -28,9 +28,9 @@ function SpanUsageBreakdown({ usage }: SpanUsageBreakdownProps): JSX.Element {
 				cacheWrite={cacheCreationTokens}
 			/>
 			{cost !== undefined && (
-				<TooltipSection>
-					<TooltipRow label="cost" value={formatCost(cost)} />
-				</TooltipSection>
+				<TraceTooltipSection>
+					<TraceTooltipRow label="cost" value={formatCost(cost)} />
+				</TraceTooltipSection>
 			)}
 		</>
 	);

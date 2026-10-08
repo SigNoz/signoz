@@ -1,13 +1,13 @@
 import { HTMLAttributes } from 'react';
 import cx from 'classnames';
 
-import styles from './TooltipSurface.module.scss';
+import styles from './TraceTooltip.module.scss';
 
-function TooltipSurface({
+function TraceTooltipSurface({
 	className,
 	...props
 }: HTMLAttributes<HTMLDivElement>): JSX.Element {
 	return <div className={cx(styles.surface, className)} {...props} />;
 }
 
-export default TooltipSurface;
+export default TraceTooltipSurface;

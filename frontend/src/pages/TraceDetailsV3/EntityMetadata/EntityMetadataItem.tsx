@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { Typography } from '@signozhq/ui/typography';
 
-import TraceTooltip from '../TooltipPrimitives/TraceTooltip';
+import TraceTooltip from '../TraceTooltip/TraceTooltip';
 
 import styles from './EntityMetadataItem.module.scss';
 

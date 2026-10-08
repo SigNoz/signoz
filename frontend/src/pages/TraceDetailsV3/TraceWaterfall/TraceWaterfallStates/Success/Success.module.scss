@@ -30,7 +30,7 @@
 // loads cross-module composes through the plain CSS parser, which chokes on
 // SCSS `//` comments in the target file.
 .popover {
-	composes: content from '../../../TooltipPrimitives/TooltipSurface.module.scss';
+	composes: content from '../../../TraceTooltip/TraceTooltip.module.scss';
 	--tooltip-z-index: 1000;
 	color: var(--l1-foreground);
 }

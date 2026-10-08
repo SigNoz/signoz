@@ -1,6 +1,6 @@
 import { AiTokenCounts, formatTokens, hasValue } from '../utils/genAi';
-import TooltipRow from '../TooltipPrimitives/TooltipRow';
-import TooltipSection from '../TooltipPrimitives/TooltipSection';
+import TraceTooltipRow from '../TraceTooltip/TraceTooltipRow';
+import TraceTooltipSection from '../TraceTooltip/TraceTooltipSection';
 
 type TokenBreakdownProps = Omit<AiTokenCounts, 'reasoning'>;
 
@@ -16,17 +16,25 @@ function TokenBreakdown({
 	const cacheRows = (
 		<>
 			{showCacheRead && (
-				<TooltipRow label="Cache Read" value={formatTokens(cacheRead)} isNested />
+				<TraceTooltipRow
+					label="Cache Read"
+					value={formatTokens(cacheRead)}
+					isNested
+				/>
 			)}
 			{showCacheWrite && (
-				<TooltipRow label="Cache Write" value={formatTokens(cacheWrite)} isNested />
+				<TraceTooltipRow
+					label="Cache Write"
+					value={formatTokens(cacheWrite)}
+					isNested
+				/>
 			)}
 		</>
 	);
 	const outputSection = hasValue(output) && (
-		<TooltipSection>
-			<TooltipRow label="Output" value={formatTokens(output)} isHeading />
-		</TooltipSection>
+		<TraceTooltipSection>
+			<TraceTooltipRow label="Output" value={formatTokens(output)} isHeading />
+		</TraceTooltipSection>
 	);
 
 	// Without totalInput the cache mode is unknown, so cache can't be shown as part of input.
@@ -34,15 +42,15 @@ function TokenBreakdown({
 		return (
 			<>
 				{hasValue(input) && (
-					<TooltipSection>
-						<TooltipRow label="Input" value={formatTokens(input)} isHeading />
-					</TooltipSection>
+					<TraceTooltipSection>
+						<TraceTooltipRow label="Input" value={formatTokens(input)} isHeading />
+					</TraceTooltipSection>
 				)}
 				{(showCacheRead || showCacheWrite) && (
-					<TooltipSection>
-						<TooltipRow label="Cache" isHeading />
+					<TraceTooltipSection>
+						<TraceTooltipRow label="Cache" isHeading />
 						{cacheRows}
-					</TooltipSection>
+					</TraceTooltipSection>
 				)}
 				{outputSection}
 			</>
@@ -51,22 +59,22 @@ function TokenBreakdown({
 
 	return (
 		<>
-			<TooltipSection>
-				<TooltipRow label="Input" value={formatTokens(totalInput)} isHeading />
+			<TraceTooltipSection>
+				<TraceTooltipRow label="Input" value={formatTokens(totalInput)} isHeading />
 				{cacheRows}
 				{hasValue(input) && (
-					<TooltipRow label="Input" value={formatTokens(input)} isNested />
+					<TraceTooltipRow label="Input" value={formatTokens(input)} isNested />
 				)}
-			</TooltipSection>
+			</TraceTooltipSection>
 			{outputSection}
 			{hasValue(output) && (
-				<TooltipSection>
-					<TooltipRow
+				<TraceTooltipSection>
+					<TraceTooltipRow
 						label="Total"
 						value={formatTokens(totalInput + output)}
 						isHeading
 					/>
-				</TooltipSection>
+				</TraceTooltipSection>
 			)}
 		</>
 	);

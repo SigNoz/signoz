@@ -1,9 +1,9 @@
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 
-import styles from './TooltipPrimitives.module.scss';
+import styles from './TraceTooltip.module.scss';
 
-interface TooltipRowProps {
+interface TraceTooltipRowProps {
 	label: string;
 	value?: string;
 	isNested?: boolean;
@@ -11,13 +11,13 @@ interface TooltipRowProps {
 	testId?: string;
 }
 
-function TooltipRow({
+function TraceTooltipRow({
 	label,
 	value,
 	isNested,
 	isHeading,
 	testId,
-}: TooltipRowProps): JSX.Element {
+}: TraceTooltipRowProps): JSX.Element {
 	return (
 		<div
 			className={cx(styles.row, isNested && styles.nestedRow)}
@@ -39,4 +39,4 @@ function TooltipRow({
 	);
 }
 
-export default TooltipRow;
+export default TraceTooltipRow;

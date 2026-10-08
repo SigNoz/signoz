@@ -1,7 +1,7 @@
 import { TooltipSimple, TooltipSimpleProps } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
 
-import styles from './TooltipSurface.module.scss';
+import styles from './TraceTooltip.module.scss';
 
 function TraceTooltip({
 	tooltipContentProps,

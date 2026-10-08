@@ -15,8 +15,8 @@ import { toFixed } from 'utils/toFixed';
 
 import { getAIUsageDetails, SpanAiDetails } from './aiUsage';
 import SpanUsageBreakdown from './SpanUsageBreakdown';
-import TooltipRow from '../TooltipPrimitives/TooltipRow';
-import TooltipSection from '../TooltipPrimitives/TooltipSection';
+import TraceTooltipRow from '../TraceTooltip/TraceTooltipRow';
+import TraceTooltipSection from '../TraceTooltip/TraceTooltipSection';
 
 import styles from './SpanHoverCard.module.scss';
 
@@ -77,28 +77,31 @@ export function SpanTooltipContent({
 				)}
 			</div>
 			{ai?.usage && <SpanUsageBreakdown usage={ai.usage} />}
-			<TooltipSection>
-				{ai?.model && <TooltipRow label="model" value={ai.model} />}
-				{ai?.toolName && <TooltipRow label="tool" value={ai.toolName} />}
-				{ai?.agentName && <TooltipRow label="agent" value={ai.agentName} />}
-				<TooltipRow label="status" value={hasError ? 'error' : 'ok'} />
-				<TooltipRow label="start" value={`${toFixed(relativeStartMs, 2)} ms`} />
-				<TooltipRow
+			<TraceTooltipSection>
+				{ai?.model && <TraceTooltipRow label="model" value={ai.model} />}
+				{ai?.toolName && <TraceTooltipRow label="tool" value={ai.toolName} />}
+				{ai?.agentName && <TraceTooltipRow label="agent" value={ai.agentName} />}
+				<TraceTooltipRow label="status" value={hasError ? 'error' : 'ok'} />
+				<TraceTooltipRow
+					label="start"
+					value={`${toFixed(relativeStartMs, 2)} ms`}
+				/>
+				<TraceTooltipRow
 					label="duration"
 					value={`${toFixed(formattedDuration, 2)} ${timeUnitName}`}
 				/>
-			</TooltipSection>
+			</TraceTooltipSection>
 			{previewRows && previewRows.length > 0 && (
-				<TooltipSection>
+				<TraceTooltipSection>
 					{previewRows.map((row) => (
-						<TooltipRow
+						<TraceTooltipRow
 							key={row.key}
 							label={row.key}
 							value={row.value}
 							testId={`span-hover-card-preview-${row.key}`}
 						/>
 					))}
-				</TooltipSection>
+				</TraceTooltipSection>
 			)}
 		</div>
 	);
