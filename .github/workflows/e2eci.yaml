@@ -87,15 +87,6 @@ jobs:
       - name: pnpm-install
         run: |
           cd tests/e2e && pnpm install --frozen-lockfile
-      - name: playwright-browsers
-        id: playwright-browsers
-        background: true
-        run: |
-          docker create --name pw mcr.microsoft.com/playwright:v1.57.0-noble
-          docker cp pw:/ms-playwright "$RUNNER_TEMP/ms-playwright"
-          docker rm pw
-          echo "PLAYWRIGHT_BROWSERS_PATH=$RUNNER_TEMP/ms-playwright" >> "$GITHUB_ENV"
-          cd tests/e2e && pnpm playwright install-deps ${{ matrix.project }}
       # Restore-only: the cacheci workflow owns cache saves. Seeds the
       # BuildKit cache mounts so the in-test image build is incremental.
       - name: restore
@@ -122,6 +113,17 @@ jobs:
           docker build -f "$RUNNER_TEMP/inject.Dockerfile" "$RUNNER_TEMP/cacheci"
       - name: wait-stack-deps
         wait: [pull-images, python-install]
+      # Started after the pulls so its download overlaps the CPU-bound
+      # image build instead of competing for the network.
+      - name: playwright-browsers
+        id: playwright-browsers
+        background: true
+        run: |
+          docker create --name pw mcr.microsoft.com/playwright:v1.57.0-noble
+          docker cp pw:/ms-playwright "$RUNNER_TEMP/ms-playwright"
+          docker rm pw
+          echo "PLAYWRIGHT_BROWSERS_PATH=$RUNNER_TEMP/ms-playwright" >> "$GITHUB_ENV"
+          cd tests/e2e && pnpm playwright install-deps ${{ matrix.project }}
       - name: bring-up-stack
         run: |
           cd tests && \
