@@ -13,7 +13,7 @@ import { useMemo } from 'react';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 import { toFixed } from 'utils/toFixed';
 
-import { getSpanAiDetails, SpanAiDetails } from './aiUsage';
+import { getAIUsageDetails, SpanAiDetails } from './aiUsage';
 import SpanUsageBreakdown from './SpanUsageBreakdown';
 import TooltipRow from '../TraceTooltip/TooltipRow';
 import TooltipSection from '../TraceTooltip/TooltipSection';
@@ -162,7 +162,7 @@ export function SpanHoverCard({
 				relativeStartMs: span.timestamp - traceStartTime,
 				durationMs: span.duration_nano / 1e6,
 				previewRows,
-				ai: getSpanAiDetails(span),
+				ai: getAIUsageDetails(span),
 			},
 		};
 	}, [

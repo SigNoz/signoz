@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
-import { getSpanAiDetails } from '../aiUsage';
+import { getAIUsageDetails } from '../aiUsage';
 import { SpanTooltipContent } from '../SpanHoverCard';
 
 const baseProps = {
@@ -15,14 +15,14 @@ const baseProps = {
 const spanWith = (attributes: Record<string, string | number>): SpanV3 =>
 	({ attributes, resource: {} }) as unknown as SpanV3;
 
-describe('getSpanAiDetails', () => {
+describe('getAIUsageDetails', () => {
 	it('returns undefined for a span without gen_ai attributes', () => {
-		expect(getSpanAiDetails(spanWith({ 'http.method': 'GET' }))).toBeUndefined();
+		expect(getAIUsageDetails(spanWith({ 'http.method': 'GET' }))).toBeUndefined();
 	});
 
 	it('reads model, tool, agent, token usage and cost', () => {
 		expect(
-			getSpanAiDetails(
+			getAIUsageDetails(
 				spanWith({
 					'gen_ai.request.model': 'gpt-4o',
 					'gen_ai.tool.name': 'search',
@@ -41,6 +41,7 @@ describe('getSpanAiDetails', () => {
 				outputTokens: 30,
 				cacheReadTokens: undefined,
 				cacheCreationTokens: undefined,
+				reasoningTokens: undefined,
 				cost: 0.00000056,
 			},
 		});

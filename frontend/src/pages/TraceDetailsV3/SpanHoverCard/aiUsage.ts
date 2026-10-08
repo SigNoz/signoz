@@ -1,3 +1,4 @@
+import type { SpantypesTraceAITokensDTO } from 'api/generated/services/sigNoz.schemas';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { GEN_AI_KEYS, getGenAiValue } from '../utils/genAi';
@@ -7,6 +8,7 @@ export interface SpanAiUsage {
 	outputTokens?: number;
 	cacheReadTokens?: number;
 	cacheCreationTokens?: number;
+	reasoningTokens?: number;
 	cost?: number;
 }
 
@@ -37,7 +39,7 @@ function getGenAiAttributeAsNumber(
 	return Number.isFinite(parsed) ? parsed : undefined;
 }
 
-export function getSpanAiDetails(span: SpanV3): SpanAiDetails | undefined {
+export function getAIUsageDetails(span: SpanV3): SpanAiDetails | undefined {
 	const usage: SpanAiUsage = {
 		inputTokens: getGenAiAttributeAsNumber(span, GEN_AI_KEYS.inputTokens),
 		outputTokens: getGenAiAttributeAsNumber(span, GEN_AI_KEYS.outputTokens),
@@ -46,6 +48,7 @@ export function getSpanAiDetails(span: SpanV3): SpanAiDetails | undefined {
 			span,
 			GEN_AI_KEYS.cacheCreationTokens,
 		),
+		reasoningTokens: getGenAiAttributeAsNumber(span, GEN_AI_KEYS.reasoningTokens),
 		cost: getGenAiAttributeAsNumber(span, GEN_AI_KEYS.cost),
 	};
 	const hasUsage =
@@ -61,4 +64,16 @@ export function getSpanAiDetails(span: SpanV3): SpanAiDetails | undefined {
 	return details.model || details.toolName || details.agentName || hasUsage
 		? details
 		: undefined;
+}
+
+export function convertToAiTokens(
+	usage: SpanAiUsage,
+): SpantypesTraceAITokensDTO {
+	return {
+		input: usage.inputTokens ?? 0,
+		output: usage.outputTokens ?? 0,
+		cacheRead: usage.cacheReadTokens ?? 0,
+		cacheWrite: usage.cacheCreationTokens ?? 0,
+		reasoning: usage.reasoningTokens ?? 0,
+	};
 }
