@@ -26,12 +26,38 @@
 		overflow-y: auto;
 		padding: var(--spacing-8);
 		margin: 0;
-		min-width: 900px;
+		// On a 13" screen the drawer itself is narrower than 900px, and a flat
+		// minimum there clips the right edge of every tab
+		box-sizing: border-box;
+		min-width: min(900px, 100%);
 	}
 }
 
 .closeButton {
 	--button-padding: var(--spacing-2);
+}
+
+.backButton {
+	--button-padding: var(--spacing-2) var(--spacing-3);
+
+	flex: none;
+	white-space: nowrap;
+}
+
+// The kind reads as a label on the name, not as part of it
+.entityKind {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	flex: none;
+	padding: var(--spacing-1) var(--spacing-3);
+	border-radius: 2px;
+	background: var(--l3-background);
+	color: var(--l2-foreground);
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
 }
 
 .title {

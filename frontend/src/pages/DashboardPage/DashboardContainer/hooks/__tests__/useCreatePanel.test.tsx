@@ -35,7 +35,10 @@ describe('useCreatePanel', () => {
 		mockGlobalTime = { selectedTime: '6h', minTime: 0, maxTime: 0 };
 		const { result } = renderHook(() => useCreatePanel());
 		act(() => {
-			result.current.createPanel('timeSeries' as never, 2);
+			result.current.createPanel('timeSeries' as never, {
+				type: 'section',
+				layoutIndex: 2,
+			});
 		});
 
 		const [url] = mockSafeNavigate.mock.calls[0];
@@ -43,6 +46,19 @@ describe('useCreatePanel', () => {
 		expect(url).toContain('panelKind=timeSeries');
 		expect(url).toContain('layoutIndex=2');
 		expect(url).toContain('relativeTime=6h');
+	});
+
+	it('carries a new section title for the editor to create on save', () => {
+		const { result } = renderHook(() => useCreatePanel());
+		act(() => {
+			result.current.createPanel('timeSeries' as never, {
+				type: 'newSection',
+				title: 'Errors',
+			});
+		});
+
+		const [url] = mockSafeNavigate.mock.calls[0];
+		expect(url).toContain('newSection=Errors');
 	});
 
 	it('carries a custom absolute window and never a stray relativeTime', () => {
@@ -53,7 +69,10 @@ describe('useCreatePanel', () => {
 		};
 		const { result } = renderHook(() => useCreatePanel());
 		act(() => {
-			result.current.createPanel('timeSeries' as never, 2);
+			result.current.createPanel('timeSeries' as never, {
+				type: 'section',
+				layoutIndex: 2,
+			});
 		});
 
 		const [url] = mockSafeNavigate.mock.calls[0];

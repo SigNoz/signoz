@@ -127,6 +127,7 @@ export const containerEntityConfig: K8sEntityConfig<
 	details: {
 		category: InfraMonitoringEntity.CONTAINERS,
 		eventCategory: InfraMonitoringEvents.Container,
+		tabsConfig: { showOverview: true },
 		queryKeyPrefix: 'container',
 		getSelectedItemExpression: k8sContainerGetSelectedItemExpression,
 		fetchEntityData,
