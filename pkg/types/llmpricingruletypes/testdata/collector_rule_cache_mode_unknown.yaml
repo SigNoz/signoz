@@ -26,6 +26,7 @@ processors:
             cache_read: signoz.gen_ai.usage.cache_read.input_tokens.cost
             cache_write: signoz.gen_ai.usage.cache_write.input_tokens.cost
             total: signoz.gen_ai.usage.tokens.cost
+            total_input_tokens: signoz.gen_ai.usage.total_input_tokens
 receivers:
     otlp:
         protocols:

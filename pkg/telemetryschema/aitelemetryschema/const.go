@@ -21,6 +21,7 @@ var (
 		aiobservabilitytypes.GenAIUsageCacheCreationInputTokens: genAIAttribute(aiobservabilitytypes.GenAIUsageCacheCreationInputTokens, telemetrytypes.FieldDataTypeNumber),
 		aiobservabilitytypes.GenAIUsageReasoningOutputTokens:    genAIAttribute(aiobservabilitytypes.GenAIUsageReasoningOutputTokens, telemetrytypes.FieldDataTypeNumber),
 		aiobservabilitytypes.SignozGenAITotalCost:               genAIAttribute(aiobservabilitytypes.SignozGenAITotalCost, telemetrytypes.FieldDataTypeNumber),
+		aiobservabilitytypes.SignozGenAITotalInputTokens:        genAIAttribute(aiobservabilitytypes.SignozGenAITotalInputTokens, telemetrytypes.FieldDataTypeNumber),
 
 		aiobservabilitytypes.GenAIInputMessages:  genAIAttribute(aiobservabilitytypes.GenAIInputMessages, telemetrytypes.FieldDataTypeString),
 		aiobservabilitytypes.GenAIOutputMessages: genAIAttribute(aiobservabilitytypes.GenAIOutputMessages, telemetrytypes.FieldDataTypeString),

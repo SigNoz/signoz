@@ -11361,6 +11361,11 @@ export interface SpantypesTraceAITokensDTO {
 	 * @minimum 0
 	 */
 	reasoning: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	totalInput?: number;
 }
 
 export interface SpantypesTraceAISummaryDTO {

@@ -48,13 +48,14 @@ type LLMPricingRuleProcessorCache struct {
 	Write float64 `yaml:"write" json:"write"`
 }
 
-// LLMPricingRuleProcessorOutputAttrs maps the processor's computed cost fields to span attribute names.
+// LLMPricingRuleProcessorOutputAttrs maps the processor's computed cost and token fields to span attribute names.
 type LLMPricingRuleProcessorOutputAttrs struct {
-	In         string `yaml:"in" json:"in"`
-	Out        string `yaml:"out" json:"out"`
-	CacheRead  string `yaml:"cache_read" json:"cache_read"`
-	CacheWrite string `yaml:"cache_write" json:"cache_write"`
-	Total      string `yaml:"total" json:"total"`
+	In               string `yaml:"in" json:"in"`
+	Out              string `yaml:"out" json:"out"`
+	CacheRead        string `yaml:"cache_read" json:"cache_read"`
+	CacheWrite       string `yaml:"cache_write" json:"cache_write"`
+	Total            string `yaml:"total" json:"total"`
+	TotalInputTokens string `yaml:"total_input_tokens" json:"total_input_tokens"`
 }
 
 // buildProcessorConfig converts pricing rules into the signozllmpricing processor config.
@@ -103,6 +104,8 @@ func buildProcessorConfig(rules []*LLMPricingRule) *LLMPricingRuleProcessorConfi
 			CacheRead:  aiobservabilitytypes.SignozGenAICostCacheRead,
 			CacheWrite: aiobservabilitytypes.SignozGenAICostCacheWrite,
 			Total:      aiobservabilitytypes.SignozGenAITotalCost,
+
+			TotalInputTokens: aiobservabilitytypes.SignozGenAITotalInputTokens,
 		},
 	}
 }

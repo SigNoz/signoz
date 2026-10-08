@@ -21,14 +21,15 @@ const (
 	GenAIOutputMessages = "gen_ai.output.messages"
 )
 
-// Per-span costs the SigNoz LLM pricing processor attaches; SigNoz semconv
-// (signoz-semantic-conventions model/genai/registry.yaml), not OTel semconv.
+// Per-span costs and token totals the SigNoz LLM pricing processor attaches;
+// SigNoz semconv (signoz-semantic-conventions model/genai/registry.yaml), not OTel semconv.
 const (
-	SignozGenAICostInput      = "signoz.gen_ai.usage.input_tokens.cost"
-	SignozGenAICostOutput     = "signoz.gen_ai.usage.output_tokens.cost"
-	SignozGenAICostCacheRead  = "signoz.gen_ai.usage.cache_read.input_tokens.cost"
-	SignozGenAICostCacheWrite = "signoz.gen_ai.usage.cache_write.input_tokens.cost"
-	SignozGenAITotalCost      = "signoz.gen_ai.usage.tokens.cost"
+	SignozGenAICostInput        = "signoz.gen_ai.usage.input_tokens.cost"
+	SignozGenAICostOutput       = "signoz.gen_ai.usage.output_tokens.cost"
+	SignozGenAICostCacheRead    = "signoz.gen_ai.usage.cache_read.input_tokens.cost"
+	SignozGenAICostCacheWrite   = "signoz.gen_ai.usage.cache_write.input_tokens.cost"
+	SignozGenAITotalCost        = "signoz.gen_ai.usage.tokens.cost"
+	SignozGenAITotalInputTokens = "signoz.gen_ai.usage.total_input_tokens"
 )
 
 // GenAISpanGateKeys mark a span as gen_ai: an LLM call, a tool call, or an

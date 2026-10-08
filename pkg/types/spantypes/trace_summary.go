@@ -42,6 +42,9 @@ type TraceAITokens struct {
 	CacheRead  uint64 `json:"cacheRead" required:"true"`
 	CacheWrite uint64 `json:"cacheWrite" required:"true"`
 	Reasoning  uint64 `json:"reasoning" required:"true"`
+	// TotalInput is nil, not 0, when any span with input tokens lacks the key,
+	// since a partial sum misleads and 0 is a valid total.
+	TotalInput *uint64 `json:"totalInput,omitempty" nullable:"false"`
 }
 
 func NewGettableTraceSummary(stats *TraceStats) *GettableTraceSummary {

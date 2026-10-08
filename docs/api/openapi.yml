@@ -10286,6 +10286,9 @@ components:
         reasoning:
           minimum: 0
           type: integer
+        totalInput:
+          minimum: 0
+          type: integer
       required:
       - input
       - output

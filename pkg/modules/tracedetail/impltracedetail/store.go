@@ -138,6 +138,7 @@ func (s *traceStore) GetTraceStats(ctx context.Context, orgID valuer.UUID, trace
 		"toUInt64(coalesce(sum(cache_read_tokens_value), 0)) AS cache_read_tokens",
 		"toUInt64(coalesce(sum(cache_write_tokens_value), 0)) AS cache_write_tokens",
 		"toUInt64(coalesce(sum(reasoning_tokens_value), 0)) AS reasoning_tokens",
+		"if(countIf(total_input_tokens_value IS NULL AND coalesce(input_tokens_value, 0) + coalesce(cache_read_tokens_value, 0) + coalesce(cache_write_tokens_value, 0) > 0) = 0, toUInt64(sum(total_input_tokens_value)), NULL) AS total_input_tokens",
 		"sum(total_cost_value) AS total_cost",
 	)
 	sb.From(sb.BuilderAs(spans, "spans"))
@@ -148,7 +149,7 @@ func (s *traceStore) GetTraceStats(ctx context.Context, orgID valuer.UUID, trace
 		&stats.StartNs, &stats.EndNs, &stats.TotalSpans, &stats.TotalErrorSpans, &stats.HasMissingSpans,
 		&stats.RootServiceName, &stats.RootEntryPoint, &stats.RootSpanStatusCode, &stats.GenAISpanCount,
 		&stats.Tokens.Input, &stats.Tokens.Output, &stats.Tokens.CacheRead, &stats.Tokens.CacheWrite, &stats.Tokens.Reasoning,
-		&stats.TotalCost,
+		&stats.Tokens.TotalInput, &stats.TotalCost,
 	)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying trace stats")
@@ -168,6 +169,7 @@ func (s *traceStore) genAISpanColumns(ctx context.Context, orgID valuer.UUID, bo
 		{aiobservabilitytypes.GenAIUsageCacheReadInputTokens, "cache_read_tokens_value"},
 		{aiobservabilitytypes.GenAIUsageCacheCreationInputTokens, "cache_write_tokens_value"},
 		{aiobservabilitytypes.GenAIUsageReasoningOutputTokens, "reasoning_tokens_value"},
+		{aiobservabilitytypes.SignozGenAITotalInputTokens, "total_input_tokens_value"},
 		{aiobservabilitytypes.SignozGenAITotalCost, "total_cost_value"},
 	}
 

@@ -32,6 +32,7 @@ def test_summary_ai_trace(
 ) -> None:
     """The summary carries the waterfall's trace-level fields and, for a trace with gen_ai
     spans, token totals over every LLM span and the cost summed over the spans that carry it.
+    The total input count is dropped because one LLM span was never priced.
     Spans are written to one layout only, so a read from the wrong column sums to zero."""
     use_attribute_backend(attribute_backend)
     write_mode = "json_only" if attribute_backend == "json" else "legacy_only"
@@ -59,6 +60,7 @@ def test_summary_ai_trace(
                     "gen_ai.usage.input_tokens": 100,
                     "gen_ai.usage.output_tokens": 20,
                     "gen_ai.usage.cache_read.input_tokens": 7,
+                    "signoz.gen_ai.usage.total_input_tokens": 100,
                     "signoz.gen_ai.usage.tokens.cost": 0.01,
                 },
                 attribute_write_mode=write_mode,
@@ -168,7 +170,13 @@ def test_summary_ai_trace_across_json_rollout(
                 kind=TracesKind.SPAN_KIND_CLIENT,
                 status_code=TracesStatusCode.STATUS_CODE_OK,
                 resources=resources,
-                attributes={"gen_ai.request.model": "gpt-4o-mini", "gen_ai.usage.input_tokens": 100, "gen_ai.usage.output_tokens": 20, "signoz.gen_ai.usage.tokens.cost": 0.01},
+                attributes={
+                    "gen_ai.request.model": "gpt-4o-mini",
+                    "gen_ai.usage.input_tokens": 100,
+                    "gen_ai.usage.output_tokens": 20,
+                    "signoz.gen_ai.usage.total_input_tokens": 100,
+                    "signoz.gen_ai.usage.tokens.cost": 0.01,
+                },
                 attribute_write_mode="legacy_only",
             ),
             Traces(
@@ -181,7 +189,13 @@ def test_summary_ai_trace_across_json_rollout(
                 kind=TracesKind.SPAN_KIND_CLIENT,
                 status_code=TracesStatusCode.STATUS_CODE_OK,
                 resources=resources,
-                attributes={"gen_ai.request.model": "gpt-4o-mini", "gen_ai.usage.input_tokens": 50, "gen_ai.usage.output_tokens": 5, "signoz.gen_ai.usage.tokens.cost": 0.02},
+                attributes={
+                    "gen_ai.request.model": "gpt-4o-mini",
+                    "gen_ai.usage.input_tokens": 50,
+                    "gen_ai.usage.output_tokens": 5,
+                    "signoz.gen_ai.usage.total_input_tokens": 50,
+                    "signoz.gen_ai.usage.tokens.cost": 0.02,
+                },
                 attribute_write_mode="json_only",
             ),
         ]
@@ -199,7 +213,7 @@ def test_summary_ai_trace_across_json_rollout(
     assert summary["totalSpansCount"] == 3
     assert summary["rootServiceEntryPoint"] == "long agent run"
     assert summary["rootSpanStatusCode"] == "200"
-    assert summary["ai"]["tokens"] == {"input": 150, "output": 25, "cacheRead": 0, "cacheWrite": 0, "reasoning": 0}
+    assert summary["ai"]["tokens"] == {"input": 150, "output": 25, "cacheRead": 0, "cacheWrite": 0, "reasoning": 0, "totalInput": 150}
     assert summary["ai"]["totalCost"] == pytest.approx(0.03)
 
 
