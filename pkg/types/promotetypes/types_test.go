@@ -36,7 +36,7 @@ func TestPromotePathTarget(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "UnsupportedDomain_Rejected",
+			name:    "UnsupportedTarget_Rejected",
 			path:    &PromotePath{Signal: "metrics", Context: "attribute", Path: "http.method"},
 			wantErr: true,
 		},

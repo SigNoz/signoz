@@ -12,7 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-// Target identifies a promotion domain.
+// Target identifies a promotion context.
 type Target struct {
 	Entry          telemetrytypes.EvolutionEntry // evolution row template; FieldName and ReleaseTime are set per write
 	DBName         string                        // index DDL database
@@ -57,7 +57,7 @@ func NewTarget(entry telemetrytypes.EvolutionEntry, dbName, localTableName, base
 	}
 }
 
-// NewLogsBodyTarget returns the logs body domain (body_v2 -> body_promoted).
+// NewLogsBodyTarget returns the logs body context (body_v2 -> body_promoted).
 func NewLogsBodyTarget() Target {
 	return NewTarget(
 		telemetrytypes.EvolutionEntry{
@@ -72,7 +72,7 @@ func NewLogsBodyTarget() Target {
 	)
 }
 
-// NewTracesAttributesTarget returns the spans attributes domain (attributes
+// NewTracesAttributesTarget returns the spans attributes context (attributes
 // -> attributes_promoted).
 func NewTracesAttributesTarget() Target {
 	return NewTarget(
@@ -129,7 +129,7 @@ func simpleJSONSubColumnIndexExpr(column, path, jsonDataType string) string {
 	return fmt.Sprintf("%s.%s::%s", column, clickhousesql.Identifier(path), jsonDataType)
 }
 
-// reservedPathPrefix returns the domain prefix path carries, if any: the base
+// reservedPathPrefix returns the target prefix path carries, if any: the base
 // or promoted column prefix, or the logs body search alias, which is stripped
 // from queries before metadata lookup and can never match.
 func (t Target) reservedPathPrefix(path string) (string, bool) {

@@ -35,7 +35,7 @@ func TestPromotePaths(t *testing.T) {
 			wantPromoted: []string{"http.method", "span.operation"},
 		},
 		{
-			name: "MixedDomains_RecordedPerTarget",
+			name: "MixedContexts_RecordedPerTarget",
 			paths: []*promotetypes.PromotePath{
 				{Signal: "traces", Context: "attribute", Path: "http.method", Promote: true},
 				{Signal: "logs", Context: "body", Path: "user.name", Promote: true},
@@ -52,7 +52,7 @@ func TestPromotePaths(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "UnsupportedDomain_Rejected",
+			name:    "UnsupportedTarget_Rejected",
 			paths:   []*promotetypes.PromotePath{{Signal: "metrics", Context: "attribute", Path: "http.method", Promote: true}},
 			wantErr: true,
 		},
@@ -216,7 +216,7 @@ func TestListPromotedPaths(t *testing.T) {
 		wantPaths []promotetypes.PromotePath
 	}{
 		{
-			name:     "PromotedPaths_EveryDomainAnnotated",
+			name:     "PromotedPaths_EveryContextAnnotated",
 			promoted: map[string]bool{"http.method": true},
 			wantPaths: []promotetypes.PromotePath{
 				{Signal: "logs", Context: "body", Path: "http.method", Promote: true},
@@ -224,13 +224,13 @@ func TestListPromotedPaths(t *testing.T) {
 			},
 		},
 		{
-			name:      "SignalFilter_SkipsOtherDomains",
+			name:      "SignalFilter_SkipsOtherContexts",
 			filters:   promotetypes.ListPromotedPathsFilters{Signal: "traces"},
 			promoted:  map[string]bool{"http.method": true},
 			wantPaths: []promotetypes.PromotePath{{Signal: "traces", Context: "attribute", Path: "http.method", Promote: true}},
 		},
 		{
-			name:      "ContextFilter_SkipsOtherDomains",
+			name:      "ContextFilter_SkipsOtherContexts",
 			filters:   promotetypes.ListPromotedPathsFilters{Context: "body"},
 			promoted:  map[string]bool{"http.method": true},
 			wantPaths: []promotetypes.PromotePath{{Signal: "logs", Context: "body", Path: "http.method", Promote: true}},
@@ -393,14 +393,14 @@ func TestListPromotedPaths(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, paths, len(testCase.wantPaths))
 
-			byDomainPath := map[string]promotetypes.PromotePath{}
+			byContextPath := map[string]promotetypes.PromotePath{}
 			for _, path := range paths {
-				byDomainPath[path.Signal+"/"+path.Context+"/"+path.Path] = path
+				byContextPath[path.Signal+"/"+path.Context+"/"+path.Path] = path
 			}
 			for _, want := range testCase.wantPaths {
 				key := want.Signal + "/" + want.Context + "/" + want.Path
-				require.Contains(t, byDomainPath, key)
-				assert.Equal(t, want, byDomainPath[key])
+				require.Contains(t, byContextPath, key)
+				assert.Equal(t, want, byContextPath[key])
 			}
 		})
 	}
