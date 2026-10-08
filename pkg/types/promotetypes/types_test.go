@@ -459,6 +459,8 @@ func TestValidatePromotePaths(t *testing.T) {
 		{name: "Empty_Rejected", paths: nil, wantErr: true},
 		{name: "NullPath_Rejected", paths: []*PromotePath{nil}, wantErr: true},
 		{name: "OverCap_Rejected", paths: validPaths(maxPromotePathsPerRequest + 1), wantErr: true},
+		{name: "PrefixedPath_Rejected", paths: []*PromotePath{{Signal: "logs", Context: "body", Path: "body.user.name"}}, wantErr: true},
+		{name: "UnsupportedSignal_Rejected", paths: []*PromotePath{{Signal: "metrics", Context: "body", Path: "user.name"}}, wantErr: true},
 		{name: "AtCap_Valid", paths: validPaths(maxPromotePathsPerRequest)},
 		{name: "SinglePath_Valid", paths: validPaths(1)},
 	}
