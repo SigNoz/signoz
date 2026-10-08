@@ -10,7 +10,6 @@ interface SpanUsageBreakdownProps {
 
 function SpanUsageBreakdown({ usage }: SpanUsageBreakdownProps): JSX.Element {
 	const {
-		totalInputTokens,
 		inputTokens,
 		outputTokens,
 		cacheReadTokens,
@@ -21,7 +20,6 @@ function SpanUsageBreakdown({ usage }: SpanUsageBreakdownProps): JSX.Element {
 	return (
 		<>
 			<TokenBreakdown
-				totalInput={totalInputTokens}
 				input={inputTokens}
 				output={outputTokens}
 				cacheRead={cacheReadTokens}

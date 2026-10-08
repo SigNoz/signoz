@@ -179,7 +179,6 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 		totalErrorSpansCount: 0,
 		ai: {
 			tokens: {
-				totalInput: 15150,
 				input: 12040,
 				output: 3110,
 				cacheRead: 0,
@@ -217,7 +216,7 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 		mockSummary(traceMetadata);
 		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
 
-		expect(screen.getByText('Tokens: 15,150 → 3,110')).toBeInTheDocument();
+		expect(screen.getByText('Tokens: 12,040 → 3,110')).toBeInTheDocument();
 		expect(screen.getByText('Cost — $ 0.0421')).toBeInTheDocument();
 	});
 
@@ -229,12 +228,12 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 		expect(screen.queryByText(/^Cost —/)).not.toBeInTheDocument();
 	});
 
-	it('shows AI tokens when totalInput and output are both zero', () => {
+	it('shows AI tokens when input and output are both zero', () => {
 		mockSummary({
 			...traceMetadata,
 			ai: {
 				...traceMetadata.ai,
-				tokens: { ...traceMetadata.ai.tokens, totalInput: 0, output: 0 },
+				tokens: { ...traceMetadata.ai.tokens, input: 0, output: 0 },
 			},
 		} as SpantypesGettableTraceSummaryDTO);
 		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
@@ -243,27 +242,27 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 		expect(screen.getByText('Cost — $ 0.0421')).toBeInTheDocument();
 	});
 
-	it('shows a dash for a missing totalInput', () => {
+	it('shows a dash for a missing input', () => {
 		mockSummary({
 			...traceMetadata,
 			ai: {
 				...traceMetadata.ai,
-				tokens: { ...traceMetadata.ai.tokens, totalInput: undefined },
+				tokens: { ...traceMetadata.ai.tokens, input: undefined },
 			},
-		} as SpantypesGettableTraceSummaryDTO);
+		} as unknown as SpantypesGettableTraceSummaryDTO);
 		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
 
 		expect(screen.getByText('Tokens: - → 3,110')).toBeInTheDocument();
 	});
 
-	it('omits AI tokens when totalInput and output are both missing', () => {
+	it('omits AI tokens when input and output are both missing', () => {
 		mockSummary({
 			...traceMetadata,
 			ai: {
 				...traceMetadata.ai,
 				tokens: {
 					...traceMetadata.ai.tokens,
-					totalInput: undefined,
+					input: undefined,
 					output: undefined,
 				},
 			},
@@ -280,7 +279,7 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 		} as unknown as SpantypesGettableTraceSummaryDTO);
 		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
 
-		expect(screen.getByText('Tokens: 15,150 → 3,110')).toBeInTheDocument();
+		expect(screen.getByText('Tokens: 12,040 → 3,110')).toBeInTheDocument();
 		expect(screen.queryByText(/^Cost —/)).not.toBeInTheDocument();
 	});
 

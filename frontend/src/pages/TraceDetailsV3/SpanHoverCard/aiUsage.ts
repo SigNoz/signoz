@@ -3,7 +3,6 @@ import { SpanV3 } from 'types/api/trace/getTraceV3';
 import { AiTokenCounts, GEN_AI_KEYS, getGenAiValue } from '../utils/genAi';
 
 export interface SpanAiUsage {
-	totalInputTokens?: number;
 	inputTokens?: number;
 	outputTokens?: number;
 	cacheReadTokens?: number;
@@ -41,10 +40,6 @@ function getGenAiAttributeAsNumber(
 
 export function getAIUsageDetails(span: SpanV3): SpanAiDetails | undefined {
 	const usage: SpanAiUsage = {
-		totalInputTokens: getGenAiAttributeAsNumber(
-			span,
-			GEN_AI_KEYS.totalInputTokens,
-		),
 		inputTokens: getGenAiAttributeAsNumber(span, GEN_AI_KEYS.inputTokens),
 		outputTokens: getGenAiAttributeAsNumber(span, GEN_AI_KEYS.outputTokens),
 		cacheReadTokens: getGenAiAttributeAsNumber(span, GEN_AI_KEYS.cacheReadTokens),
@@ -71,7 +66,6 @@ export function getAIUsageDetails(span: SpanV3): SpanAiDetails | undefined {
 
 export function convertToAiTokens(usage: SpanAiUsage): AiTokenCounts {
 	return {
-		totalInput: usage.totalInputTokens,
 		input: usage.inputTokens,
 		output: usage.outputTokens,
 		cacheRead: usage.cacheReadTokens,

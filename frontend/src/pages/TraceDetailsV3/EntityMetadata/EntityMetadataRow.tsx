@@ -8,6 +8,7 @@ import {
 	AiTokenCounts,
 	formatCost,
 	formatTokens,
+	getTotalInputTokens,
 	hasValue,
 } from '../utils/genAi';
 import EntityMetadataItem from './EntityMetadataItem';
@@ -45,6 +46,7 @@ function EntityMetadataRow({
 	cost,
 }: EntityMetadataRowProps): JSX.Element {
 	const entityLabel = entity === 'trace' ? 'Trace' : 'Span';
+	const totalInput = tokens && getTotalInputTokens(tokens);
 	const durationTooltip =
 		entity === 'trace' ? 'Trace Duration' : 'Span Duration';
 	// Single source of duration formatting so both rows label units identically.
@@ -103,12 +105,12 @@ function EntityMetadataRow({
 				</EntityMetadataItem>
 			)}
 
-			{tokens && (hasValue(tokens.totalInput) || hasValue(tokens.output)) && (
+			{tokens && (hasValue(totalInput) || hasValue(tokens.output)) && (
 				<EntityMetadataItem
 					tooltip={<TokenUsageTooltip tokens={tokens} />}
 					icon={<Coins size={ICON_SIZE} />}
 				>
-					Tokens: {formatTokens(tokens.totalInput)} → {formatTokens(tokens.output)}
+					Tokens: {formatTokens(totalInput)} → {formatTokens(tokens.output)}
 				</EntityMetadataItem>
 			)}
 

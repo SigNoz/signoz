@@ -1,16 +1,21 @@
-import { AiTokenCounts, formatTokens, hasValue } from '../utils/genAi';
+import {
+	AiTokenCounts,
+	formatTokens,
+	getTotalInputTokens,
+	hasValue,
+} from '../utils/genAi';
 import TraceTooltipRow from '../TraceTooltip/TraceTooltipRow';
 import TraceTooltipSection from '../TraceTooltip/TraceTooltipSection';
 
 type TokenBreakdownProps = Omit<AiTokenCounts, 'reasoning'>;
 
 function TokenBreakdown({
-	totalInput,
 	input,
 	output,
 	cacheRead,
 	cacheWrite,
 }: TokenBreakdownProps): JSX.Element {
+	const totalInput = getTotalInputTokens({ input, cacheRead, cacheWrite });
 	const showCacheRead = hasValue(cacheRead);
 	const showCacheWrite = hasValue(cacheWrite);
 	const cacheRows = (
@@ -37,7 +42,7 @@ function TokenBreakdown({
 		</TraceTooltipSection>
 	);
 
-	// Without totalInput the cache mode is unknown, so cache can't be shown as part of input.
+	// Without input there is no total to nest cache under.
 	if (!hasValue(totalInput)) {
 		return (
 			<>
@@ -81,7 +86,6 @@ function TokenBreakdown({
 }
 
 TokenBreakdown.defaultProps = {
-	totalInput: undefined,
 	input: undefined,
 	output: undefined,
 	cacheRead: undefined,

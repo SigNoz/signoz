@@ -9,7 +9,6 @@ export const GEN_AI_KEYS = {
 	cacheReadTokens: 'gen_ai.usage.cache_read.input_tokens',
 	cacheCreationTokens: 'gen_ai.usage.cache_creation.input_tokens',
 	reasoningTokens: 'gen_ai.usage.reasoning.output_tokens',
-	totalInputTokens: 'signoz.gen_ai.usage.total_input_tokens',
 	cost: 'signoz.gen_ai.usage.tokens.cost',
 } as const;
 
@@ -61,8 +60,6 @@ export function isAiSpan(span: SpanV3): boolean {
 
 /** Token counts; `null` or missing means the backend did not send the value. */
 export interface AiTokenCounts {
-	/** Input incl. cache read/write, counted once. Only set when the model's cache mode is known. */
-	totalInput?: number | null;
 	input?: number | null;
 	output?: number | null;
 	cacheRead?: number | null;
@@ -72,6 +69,23 @@ export interface AiTokenCounts {
 
 export function hasValue(value: number | null | undefined): value is number {
 	return value !== undefined && value !== null;
+}
+
+/**
+ * Input including cache read/write, counted once. Providers that report cache
+ * inside `input` (OpenAI) have `input >= cache`; those that report it
+ * separately (Anthropic) usually have `input < cache`.
+ */
+export function getTotalInputTokens({
+	input,
+	cacheRead,
+	cacheWrite,
+}: AiTokenCounts): number | undefined {
+	if (!hasValue(input)) {
+		return undefined;
+	}
+	const cache = (cacheRead ?? 0) + (cacheWrite ?? 0);
+	return input < cache ? input + cache : input;
 }
 
 /** Missing values render as `-`. */

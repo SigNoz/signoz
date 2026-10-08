@@ -1,6 +1,11 @@
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
-import { AiSpanKind, getAiSpanKind, isAiSpan } from '../genAi';
+import {
+	AiSpanKind,
+	getAiSpanKind,
+	getTotalInputTokens,
+	isAiSpan,
+} from '../genAi';
 
 const spanWith = (attributes: Record<string, string | number>): SpanV3 =>
 	({ attributes, resource: {} }) as unknown as SpanV3;
@@ -28,5 +33,19 @@ describe('getAiSpanKind', () => {
 		expect(getAiSpanKind(spanWith({ 'http.method': 'GET' }))).toBeUndefined();
 		expect(getAiSpanKind(spanWith({ 'gen_ai.tool.name': '' }))).toBeUndefined();
 		expect(isAiSpan(spanWith({}))).toBe(false);
+	});
+});
+
+describe('getTotalInputTokens', () => {
+	it.each([
+		// Cache reported inside input (OpenAI): input already includes it.
+		[{ input: 1000, cacheRead: 600, cacheWrite: 100 }, 1000],
+		// Cache reported separately (Anthropic): add it.
+		[{ input: 50, cacheRead: 600, cacheWrite: 100 }, 750],
+		[{ input: 71, cacheRead: 0, cacheWrite: 0 }, 71],
+		[{ input: 10 }, 10],
+		[{ cacheRead: 600 }, undefined],
+	])('%p → %p', (tokens, expected) => {
+		expect(getTotalInputTokens(tokens)).toBe(expected);
 	});
 });
