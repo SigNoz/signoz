@@ -168,6 +168,8 @@ export interface LegendProps {
 	onAction: OnLegendAction;
 	/** Show the per-item copy button. Default true. */
 	showCopy?: boolean;
+	/** Plural noun for the items in the search readouts. Default 'series'. */
+	itemLabel?: string;
 }
 
 /** Props for the uPlot legend controller, which derives items + interaction
