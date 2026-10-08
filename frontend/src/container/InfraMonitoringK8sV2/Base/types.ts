@@ -1,5 +1,10 @@
 import { ReactNode } from 'react';
 import {
+	InframonitoringtypesContainerStatusDTO,
+	InframonitoringtypesNodeConditionDTO,
+	InframonitoringtypesPodStatusDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
@@ -17,6 +22,9 @@ export type K8sBaseFilters = {
 	filter: {
 		expression: string;
 		filterByStatus?: 'active' | 'inactive' | '';
+		filterByPodStatus?: InframonitoringtypesPodStatusDTO[];
+		filterByNodeReadiness?: InframonitoringtypesNodeConditionDTO[];
+		filterByContainerStatus?: InframonitoringtypesContainerStatusDTO[];
 	};
 	groupBy?: Array<{ name: string }>;
 	offset?: number;

@@ -285,6 +285,9 @@ describe('K8sBaseList', () => {
 			expect(filters.filter).toStrictEqual({
 				expression: '',
 				filterByStatus: undefined,
+				filterByPodStatus: undefined,
+				filterByNodeReadiness: undefined,
+				filterByContainerStatus: undefined,
 			});
 			expect(filters.groupBy).toBeUndefined();
 			expect(filters.orderBy).toBeUndefined();
@@ -1666,5 +1669,63 @@ describe('K8sBaseList', () => {
 				expect(hasOrderByCleared).toBe(false);
 			});
 		});
+	});
+});
+
+describe('K8sBaseList status filters', () => {
+	const fetchListDataMock = jest.fn<
+		ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
+		Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
+	>();
+
+	function renderWithParams(queryParams: Record<string, string>): void {
+		fetchListDataMock.mockClear();
+		fetchListDataMock.mockResolvedValue({ data: [], total: 0, error: null });
+
+		renderComponent<TestItem>({
+			queryParams,
+			entity: InfraMonitoringEntity.PODS,
+			eventCategory: InfraMonitoringEvents.Pod,
+			fetchListData: fetchListDataMock,
+			tableColumns: createTestColumns(),
+			getRowKey: (row): string => row.id,
+			getItemKey: (row): string => row.id,
+		});
+	}
+
+	it('sends the statuses named in the URL', async () => {
+		renderWithParams({ podStatus: 'running,crashloopbackoff' });
+
+		await waitFor(() => {
+			expect(fetchListDataMock).toHaveBeenCalled();
+		});
+
+		const [filters] = fetchListDataMock.mock.calls[0];
+		expect(filters.filter.filterByPodStatus).toStrictEqual([
+			'running',
+			'crashloopbackoff',
+		]);
+	});
+
+	it('drops unknown statuses the API would reject', async () => {
+		renderWithParams({ podStatus: 'running,no_data,bogus' });
+
+		await waitFor(() => {
+			expect(fetchListDataMock).toHaveBeenCalled();
+		});
+
+		const [filters] = fetchListDataMock.mock.calls[0];
+		expect(filters.filter.filterByPodStatus).toStrictEqual(['running']);
+	});
+
+	it('omits the filter entirely when no status is selected', async () => {
+		renderWithParams({});
+
+		await waitFor(() => {
+			expect(fetchListDataMock).toHaveBeenCalled();
+		});
+
+		const [filters] = fetchListDataMock.mock.calls[0];
+		expect(filters.filter.filterByPodStatus).toBeUndefined();
 	});
 });
