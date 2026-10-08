@@ -1,10 +1,18 @@
-import { CalendarClock, Server, Timer } from '@signozhq/icons';
+import { CalendarClock, Coins, Landmark, Server, Timer } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import cx from 'classnames';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 
+import {
+	AiTokenCounts,
+	formatCost,
+	formatTokens,
+	getTotalInputTokens,
+	hasValue,
+} from '../utils/genAi';
 import EntityMetadataItem from './EntityMetadataItem';
+import TokenUsageTooltip from './TokenUsageTooltip';
 
 import styles from './EntityMetadataRow.module.scss';
 
@@ -16,6 +24,8 @@ interface EntityMetadataRowProps {
 	execTimePercent?: number;
 	timestamp?: string;
 	statusCode?: string | number;
+	tokens?: AiTokenCounts;
+	cost?: number | null;
 }
 
 const ICON_SIZE = 14;
@@ -32,8 +42,11 @@ function EntityMetadataRow({
 	execTimePercent,
 	timestamp,
 	statusCode,
+	tokens,
+	cost,
 }: EntityMetadataRowProps): JSX.Element {
 	const entityLabel = entity === 'trace' ? 'Trace' : 'Span';
+	const totalInput = tokens && getTotalInputTokens(tokens);
 	const durationTooltip =
 		entity === 'trace' ? 'Trace Duration' : 'Span Duration';
 	// Single source of duration formatting so both rows label units identically.
@@ -91,6 +104,24 @@ function EntityMetadataRow({
 					<HttpStatusBadge statusCode={statusCode} />
 				</EntityMetadataItem>
 			)}
+
+			{tokens && (hasValue(totalInput) || hasValue(tokens.output)) && (
+				<EntityMetadataItem
+					tooltip={<TokenUsageTooltip tokens={tokens} />}
+					icon={<Coins size={ICON_SIZE} />}
+				>
+					Tokens: {formatTokens(totalInput)} → {formatTokens(tokens.output)}
+				</EntityMetadataItem>
+			)}
+
+			{hasValue(cost) && (
+				<EntityMetadataItem
+					tooltip="Total cost"
+					icon={<Landmark size={ICON_SIZE} />}
+				>
+					Cost — {formatCost(cost)}
+				</EntityMetadataItem>
+			)}
 		</div>
 	);
 }
@@ -102,6 +133,8 @@ EntityMetadataRow.defaultProps = {
 	execTimePercent: undefined,
 	timestamp: undefined,
 	statusCode: undefined,
+	tokens: undefined,
+	cost: undefined,
 };
 
 export default EntityMetadataRow;

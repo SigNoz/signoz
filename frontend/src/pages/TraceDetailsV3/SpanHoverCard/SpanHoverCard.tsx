@@ -4,6 +4,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from '@signozhq/ui/tooltip';
+import { Typography } from '@signozhq/ui/typography';
 import { convertTimeToRelevantUnit } from 'utils/traceUtils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
@@ -11,6 +12,11 @@ import { getSpanAttribute, resolveSpanColor } from 'pages/TraceDetailsV3/utils';
 import { useMemo } from 'react';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 import { toFixed } from 'utils/toFixed';
+
+import { getAIUsageDetails, SpanAiDetails } from './aiUsage';
+import SpanUsageBreakdown from './SpanUsageBreakdown';
+import TraceTooltipRow from '../TraceTooltip/TraceTooltipRow';
+import TraceTooltipSection from '../TraceTooltip/TraceTooltipSection';
 
 import styles from './SpanHoverCard.module.scss';
 
@@ -38,6 +44,7 @@ export interface SpanTooltipContentProps {
 	relativeStartMs: number;
 	durationMs: number;
 	previewRows?: SpanPreviewRow[];
+	ai?: SpanAiDetails;
 }
 
 export function SpanTooltipContent({
@@ -47,33 +54,54 @@ export function SpanTooltipContent({
 	relativeStartMs,
 	durationMs,
 	previewRows,
+	ai,
 }: SpanTooltipContentProps): JSX.Element {
 	const { time: formattedDuration, timeUnitName } =
 		convertTimeToRelevantUnit(durationMs);
 
 	return (
 		<div className={styles.content}>
-			<div className={styles.name} style={{ color }}>
-				{spanName}
+			<div className={styles.header}>
+				<Typography.Text
+					className={styles.title}
+					size="small"
+					weight="medium"
+					style={{ color }}
+				>
+					{spanName}
+				</Typography.Text>
+				{ai?.usage && (
+					<Typography.Text size="small" weight="medium">
+						Usage Breakdown
+					</Typography.Text>
+				)}
 			</div>
-			<div className={styles.row}>status: {hasError ? 'error' : 'ok'}</div>
-			<div className={styles.row}>start: {toFixed(relativeStartMs, 2)} ms</div>
-			<div className={styles.row}>
-				duration: {toFixed(formattedDuration, 2)} {timeUnitName}
-			</div>
+			{ai?.usage && <SpanUsageBreakdown usage={ai.usage} />}
+			<TraceTooltipSection>
+				{ai?.model && <TraceTooltipRow label="model" value={ai.model} />}
+				{ai?.toolName && <TraceTooltipRow label="tool" value={ai.toolName} />}
+				{ai?.agentName && <TraceTooltipRow label="agent" value={ai.agentName} />}
+				<TraceTooltipRow label="status" value={hasError ? 'error' : 'ok'} />
+				<TraceTooltipRow
+					label="start"
+					value={`${toFixed(relativeStartMs, 2)} ms`}
+				/>
+				<TraceTooltipRow
+					label="duration"
+					value={`${toFixed(formattedDuration, 2)} ${timeUnitName}`}
+				/>
+			</TraceTooltipSection>
 			{previewRows && previewRows.length > 0 && (
-				<div className={styles.preview}>
+				<TraceTooltipSection>
 					{previewRows.map((row) => (
-						<div
+						<TraceTooltipRow
 							key={row.key}
-							className={styles.row}
-							data-testid={`span-hover-card-preview-${row.key}`}
-						>
-							<span className={styles.previewKey}>{row.key}:</span>{' '}
-							<span className={styles.previewValue}>{row.value}</span>
-						</div>
+							label={row.key}
+							value={row.value}
+							testId={`span-hover-card-preview-${row.key}`}
+						/>
 					))}
-				</div>
+				</TraceTooltipSection>
 			)}
 		</div>
 	);
@@ -137,6 +165,7 @@ export function SpanHoverCard({
 				relativeStartMs: span.timestamp - traceStartTime,
 				durationMs: span.duration_nano / 1e6,
 				previewRows,
+				ai: getAIUsageDetails(span),
 			},
 		};
 	}, [

@@ -6,6 +6,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useCrosshair } from '../hooks/useCrosshair';
 import { EventTooltipContent } from '../SpanHoverCard/EventTooltipContent';
 import { SpanTooltipContent } from '../SpanHoverCard/SpanHoverCard';
+import TraceTooltipSurface from '../TraceTooltip/TraceTooltipSurface';
 import { DEFAULT_ROW_HEIGHT } from './constants';
 import { useCanvasSetup } from './hooks/useCanvasSetup';
 import { useFlamegraphCrosshair } from './hooks/useFlamegraphCrosshair';
@@ -202,7 +203,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 
 	const tooltipElement = tooltipContent
 		? createPortal(
-				<div
+				<TraceTooltipSurface
 					className={styles.tooltip}
 					style={{
 						left: Math.min(tooltipContent.clientX + 15, window.innerWidth - 220),
@@ -226,7 +227,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 							previewRows={tooltipContent.previewRows}
 						/>
 					)}
-				</div>,
+				</TraceTooltipSurface>,
 				document.body,
 			)
 		: null;

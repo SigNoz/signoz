@@ -8,3 +8,12 @@
 	// Keep Typography.Text at the row's size (it reads this var, not inherited font-size).
 	--typography-font-size: var(--periscope-font-size-base);
 }
+
+.tokenTooltip {
+	composes: tooltipBody from '../shared.module.scss';
+	min-width: 160px;
+}
+
+.tokenTooltipTitle {
+	padding-bottom: var(--spacing-4);
+}
