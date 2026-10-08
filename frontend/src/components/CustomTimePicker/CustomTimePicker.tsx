@@ -72,6 +72,8 @@ interface CustomTimePickerProps {
 	maxTime: number;
 	/** When true, zoom-out button is hidden (e.g. in drawer/modal time selection) */
 	isModalTimeSelection?: boolean;
+	/** Lands on the trigger input. Not spread — the component takes no rest props. */
+	'data-testid'?: string;
 }
 
 function CustomTimePicker({
@@ -95,6 +97,7 @@ function CustomTimePicker({
 	minTime,
 	maxTime,
 	isModalTimeSelection = false,
+	'data-testid': dataTestId,
 }: CustomTimePickerProps): JSX.Element {
 	const [selectedTimePlaceholderValue, setSelectedTimePlaceholderValue] =
 		useState('Select / Enter Time Range');
@@ -596,6 +599,7 @@ function CustomTimePicker({
 				>
 					<Input
 						ref={inputRef}
+						data-testid={dataTestId}
 						autoComplete="off"
 						className={cx(
 							'timeSelection-input',
@@ -682,4 +686,5 @@ CustomTimePicker.defaultProps = {
 	onExitLiveLogs: noop,
 	showLiveLogs: false,
 	showRecentlyUsed: true,
+	'data-testid': undefined,
 };
