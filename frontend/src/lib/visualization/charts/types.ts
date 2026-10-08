@@ -9,6 +9,7 @@ import {
 	TooltipRenderArgs,
 } from 'lib/uPlotV2/components/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
+import type { LegendLayout } from 'lib/visualization/layout/ChartLayout/ChartLayout';
 import type {
 	HeatmapAxisScale,
 	HeatmapCell,
@@ -41,7 +42,7 @@ interface BaseChartProps {
 	tooltipPortalRoot?: HTMLElement | null;
 	/** Replaces the config-driven legend, for charts whose legend lists something
 	 *  other than uPlot series — heatmap groups, where the series are bucket rows. */
-	customLegend?: (averageLegendWidth: number) => React.ReactNode;
+	customLegend?: (layout: LegendLayout) => React.ReactNode;
 	/** Measured against for the chart/legend split. Pair with `customLegend`. */
 	legendLabels?: string[];
 	/** Rendered under the plot but above the legend, inside the chart column. */
