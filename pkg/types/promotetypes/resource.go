@@ -8,6 +8,18 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
+// FieldResource is the authz resource guarding the promoted paths of a signal.
+func FieldResource(signal telemetrytypes.Signal) (coretypes.Resource, bool) {
+	switch signal {
+	case telemetrytypes.SignalLogs:
+		return coretypes.ResourceMetaResourceLogsField, true
+	case telemetrytypes.SignalTraces:
+		return coretypes.ResourceMetaResourceTracesField, true
+	default:
+		return nil, false
+	}
+}
+
 // PromotePathsResources resolves the field resources of the signals in a promote request body.
 func PromotePathsResources(ec coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
 	values := gjson.GetBytes(ec.RequestBody, "#.signal").Array()
@@ -50,7 +62,7 @@ func fieldResources(signals []telemetrytypes.Signal) ([]coretypes.ResourceWithID
 	resources := make([]coretypes.ResourceWithID, 0, len(signals))
 	seen := make(map[string]struct{})
 	for _, signal := range signals {
-		resource, ok := signal.FieldResource()
+		resource, ok := FieldResource(signal)
 		if !ok {
 			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "promotion is not supported for signal %s", signal.StringValue())
 		}
