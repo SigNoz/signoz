@@ -260,7 +260,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddChannelSpecFactory(sqlschema),
 		sqlmigration.NewAddUserTuplesFactory(sqlstore),
 		sqlmigration.NewAddRuleViewFactory(sqlstore, sqlschema),
-		sqlmigration.NewDeleteUnsupportedLLMPricingRulesFactory(),
+		sqlmigration.NewKeepRelevantLLMPricingRulesFactory(),
 	)
 }
 
