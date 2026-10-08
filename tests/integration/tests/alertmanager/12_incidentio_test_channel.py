@@ -14,10 +14,7 @@ from wiremock.resources.mappings import HttpMethods, Mapping, MappingRequest, Ma
 from fixtures import types
 from fixtures.alerts import update_raw_channel_config
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.logger import setup_logger
 from fixtures.notification_channel import INCIDENTIO_TEST_TOKEN, incidentio_config, incidentio_path
-
-logger = setup_logger(__name__)
 
 
 # channel test (POST /api/v1/channels/test) drives the notifier once, synchronously,

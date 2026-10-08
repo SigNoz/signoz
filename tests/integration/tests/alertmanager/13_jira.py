@@ -14,7 +14,6 @@ from fixtures.alerts import (
     verify_notification_expectation,
 )
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.logger import setup_logger
 from fixtures.notification_channel import (
     JIRA_API_BASE,
     jira_config,
@@ -25,7 +24,6 @@ from fixtures.notification_channel import (
     wait_for_alertmanager_sync,
 )
 
-logger = setup_logger(__name__)
 
 METRICS_DATA = "ruler/test_scenarios/threshold_above_at_least_once/alert_data.jsonl"
 METRICS_RULE = "ruler/test_scenarios/threshold_above_at_least_once/rule.json"

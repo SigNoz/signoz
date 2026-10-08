@@ -14,7 +14,6 @@ from fixtures.alerts import (
     verify_notification_expectation,
 )
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.logger import setup_logger
 from fixtures.notification_channel import (
     googlechat_card_subset,
     googlechat_config,
@@ -23,7 +22,6 @@ from fixtures.notification_channel import (
     wait_for_alertmanager_sync,
 )
 
-logger = setup_logger(__name__)
 
 METRICS_DATA = "ruler/test_scenarios/threshold_above_at_least_once/alert_data.jsonl"
 METRICS_RULE = "ruler/test_scenarios/threshold_above_at_least_once/rule.json"
@@ -121,7 +119,7 @@ def test_googlechat_notifier(  # pylint: disable=too-many-arguments,too-many-pos
 ) -> None:
     channel_name = str(uuid.uuid4())
     path = gc_test_case.notification_expectation.notification_validations[0].validation_data["path"]
-    
+
     channel_config = update_raw_channel_config(gc_test_case.channel_config, channel_name, notification_channel)
 
     make_http_mocks(notification_channel, googlechat_ok_mappings(path))
