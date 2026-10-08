@@ -21,6 +21,23 @@ const queryWithTimestampOrder = (base: Query): Query => ({
 	},
 });
 
+const renderOn = (
+	route: string,
+	panelType: PANEL_TYPES | null,
+): ReturnType<typeof renderHook> => {
+	const search = new URLSearchParams();
+	if (panelType) {
+		search.set('panelTypes', JSON.stringify(panelType));
+	}
+	__setSearchParamsGetterForTest(() => search);
+
+	return renderHook(() => useQueryBuilder(), {
+		wrapper: ({ children }): JSX.Element => (
+			<AllTheProviders initialRoute={route}>{children}</AllTheProviders>
+		),
+	});
+};
+
 const initOn = (
 	route: string,
 	panelType: PANEL_TYPES | null,
@@ -100,5 +117,50 @@ describe('explorer orderBy sanitizing by panel type', () => {
 		);
 
 		expect(staged?.builder.queryData[0].orderBy).toStrictEqual([]);
+	});
+});
+
+// handleRunQuery means "respect the query I just built" for the init it causes.
+// It used to stay set for the rest of the visit, so every later init skipped
+// sanitizing as well.
+describe('the run bypass is one-shot', () => {
+	afterEach(() => {
+		__resetSearchParamsGetter();
+	});
+
+	it('skips sanitizing for the init after a run, and sanitizes the next one', () => {
+		const { result } = renderOn(ROUTES.LOGS_EXPLORER, PANEL_TYPES.TIME_SERIES);
+
+		act(() => {
+			(result.current as ReturnType<typeof useQueryBuilder>).handleRunQuery();
+		});
+
+		const afterRun = {
+			...queryWithTimestampOrder(initialQueriesMap.logs),
+			id: 'run-1',
+		};
+		act(() => {
+			(result.current as ReturnType<typeof useQueryBuilder>).initQueryBuilderData(
+				afterRun,
+			);
+		});
+		expect(
+			(result.current as ReturnType<typeof useQueryBuilder>).stagedQuery?.builder
+				.queryData[0].orderBy,
+		).toStrictEqual(timestampOrderBy);
+
+		const next = {
+			...queryWithTimestampOrder(initialQueriesMap.logs),
+			id: 'run-2',
+		};
+		act(() => {
+			(result.current as ReturnType<typeof useQueryBuilder>).initQueryBuilderData(
+				next,
+			);
+		});
+		expect(
+			(result.current as ReturnType<typeof useQueryBuilder>).stagedQuery?.builder
+				.queryData[0].orderBy,
+		).toStrictEqual([]);
 	});
 });

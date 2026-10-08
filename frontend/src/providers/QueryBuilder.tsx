@@ -269,6 +269,8 @@ export function QueryBuilderProvider({
 			setStagedQuery(nextQuery);
 			setCurrentQuery(newQueryState);
 			setQueryType(type);
+
+			setCalledFromHandleRunQuery(false);
 		},
 		[prepareQueryBuilderData],
 	);
