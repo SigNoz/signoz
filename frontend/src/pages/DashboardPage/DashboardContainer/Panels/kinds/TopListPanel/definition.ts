@@ -44,7 +44,7 @@ export const definition: PanelDefinition<'signoz/TopListPanel'> = {
 		view: true,
 		edit: true,
 		clone: true,
-		download: { csv: false, png: true, svg: true },
+		download: { csv: true, png: true, svg: true },
 		createAlert: false,
 		search: false,
 		drilldown: true,
