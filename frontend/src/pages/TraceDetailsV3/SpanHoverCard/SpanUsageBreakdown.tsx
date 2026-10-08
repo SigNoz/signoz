@@ -1,6 +1,6 @@
 import { formatCost } from '../utils/genAi';
 import { SpanAiUsage } from './aiUsage';
-import TokenBreakdown from '../TooltipPrimitives/TokenBreakdown';
+import TokenBreakdown from '../TokenBreakdown/TokenBreakdown';
 import TooltipRow from '../TooltipPrimitives/TooltipRow';
 import TooltipSection from '../TooltipPrimitives/TooltipSection';
 

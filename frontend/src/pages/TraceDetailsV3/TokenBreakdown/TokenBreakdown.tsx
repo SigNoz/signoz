@@ -1,6 +1,6 @@
 import { AiTokenCounts, formatTokens, hasValue } from '../utils/genAi';
-import TooltipRow from './TooltipRow';
-import TooltipSection from './TooltipSection';
+import TooltipRow from '../TooltipPrimitives/TooltipRow';
+import TooltipSection from '../TooltipPrimitives/TooltipSection';
 
 type TokenBreakdownProps = Omit<AiTokenCounts, 'reasoning'>;
 
