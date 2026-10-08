@@ -5,7 +5,7 @@ import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 
 import { formatCost, formatTokens } from '../utils/genAi';
-import type { SpantypesTraceAITokensDTO } from 'api/generated/services/sigNoz.schemas';
+import { TokenUsage } from '../SpanHoverCard/aiUsage';
 import EntityMetadataItem from './EntityMetadataItem';
 import TokenUsageTooltip from './TokenUsageTooltip';
 
@@ -19,7 +19,7 @@ interface EntityMetadataRowProps {
 	execTimePercent?: number;
 	timestamp?: string;
 	statusCode?: string | number;
-	tokens?: SpantypesTraceAITokensDTO;
+	tokens?: TokenUsage;
 	cost?: number;
 }
 

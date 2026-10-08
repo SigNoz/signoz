@@ -58,3 +58,6 @@ export enum TraceDetailsTab {
 	Overview = 'overview',
 	Thread = 'thread',
 }
+
+export const LLM_OBSERVABILITY_DOCS_URL =
+	'https://signoz.io/docs/llm-observability/';

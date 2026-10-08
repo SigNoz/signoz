@@ -1,9 +1,11 @@
+import { useMemo } from 'react';
 import { Link2 } from '@signozhq/icons';
 import dayjs from 'dayjs';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import EntityMetadataRow from '../EntityMetadata/EntityMetadataRow';
+import { getSpanAiDetails, getSpanTokenUsage } from '../SpanHoverCard/aiUsage';
 import { HIGHLIGHTED_OPTIONS } from './config';
 import {
 	LinkedSpansPanel,
@@ -31,6 +33,11 @@ function SpanSummary({
 }: SpanSummaryProps): JSX.Element {
 	const percentile = useSpanPercentile(selectedSpan);
 	const linkedSpans = useLinkedSpans((selectedSpan as any).references);
+	const tokens = useMemo(() => getSpanTokenUsage(selectedSpan), [selectedSpan]);
+	const cost = useMemo(
+		() => getSpanAiDetails(selectedSpan)?.usage?.cost,
+		[selectedSpan],
+	);
 
 	return (
 		<>
@@ -63,6 +70,8 @@ function SpanSummary({
 							: undefined
 					}
 					timestamp={dayjs(selectedSpan.timestamp).format('HH:mm:ss — MMM D, YYYY')}
+					tokens={tokens}
+					cost={cost}
 				/>
 
 				<div className={styles.spanInfoItem}>
