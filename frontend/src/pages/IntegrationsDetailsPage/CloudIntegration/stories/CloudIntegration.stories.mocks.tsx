@@ -17,6 +17,8 @@ import {
 	CLOUD_PROVIDERS,
 	CLOUD_SERVICE_CAP,
 	type CloudProvider,
+	MUTATION_STATES,
+	type MutationState,
 	createdAccountResponse,
 	BUILT_IN_INTEGRATION_NOT_FOUND,
 	credentialsResponse,
@@ -33,7 +35,30 @@ import {
 const builtInIntegrationNotFound: MockResolver = (_req, res, ctx) =>
 	res(ctx.status(404), ctx.json(BUILT_IN_INTEGRATION_NOT_FOUND));
 
+/**
+ * Answers a mutation by the control's state: never, with a failure, or with the
+ * success body the caller builds.
+ */
+const mutationResolver =
+	(state: MutationState, ok: MockResolver): MockResolver =>
+	(req, res, ctx, ...rest) => {
+		if (state === 'loading') {
+			return res(ctx.delay('infinite'));
+		}
+
+		return state === 'error'
+			? res(
+					ctx.status(500),
+					ctx.json({
+						status: 'error',
+						error: { code: 'internal', message: 'Request failed' },
+					}),
+				)
+			: ok(req, res, ctx, ...rest);
+	};
+
 const PROVIDER = 'Cloud integration · provider';
+const MUTATIONS = 'Cloud integration · mutations';
 const SERVICES = 'Cloud integration · services';
 
 export const cloudIntegrationMocks = defineStoryMocks({
@@ -66,6 +91,27 @@ export const cloudIntegrationMocks = defineStoryMocks({
 			value: 3,
 			max: CLOUD_SERVICE_CAP,
 		}),
+		accountCreate: choiceControl<MutationState>('Account connection', {
+			group: MUTATIONS,
+			description:
+				'How the POST behind the connect flow answers. AWS and Azure raise "Failed to create account connection" on `error` and the "account connected" toast on `success`, GCP raises its toast after the agent check-in and shows `error` inline. `loading` never answers.',
+			options: MUTATION_STATES,
+			value: 'success',
+		}),
+		accountUpdate: choiceControl<MutationState>('Account settings update', {
+			group: MUTATIONS,
+			description:
+				'How the PUT behind Update Changes in the account settings drawer answers. `success` raises "Account settings updated successfully", `error` raises "Failed to update account settings".',
+			options: MUTATION_STATES,
+			value: 'success',
+		}),
+		serviceUpdate: choiceControl<MutationState>('Service config update', {
+			group: MUTATIONS,
+			description:
+				'How the PUT behind Save on a service answers. `error` raises "Failed to update service config", `loading` leaves Save spinning.',
+			options: MUTATION_STATES,
+			value: 'success',
+		}),
 	},
 	handlers: (values, response) => [
 		rest.get(
@@ -75,12 +121,12 @@ export const cloudIntegrationMocks = defineStoryMocks({
 
 		rest.put(
 			'http://localhost/api/v1/cloud_integrations/:cloudProvider/accounts/:id/services/:serviceId',
-			response.json(async (req) => {
+			mutationResolver(values.serviceUpdate, async (req, res, ctx) => {
 				const body = (await req.json()) as CloudintegrationtypesUpdatableServiceDTO;
 
 				setServiceSignals(String(req.params.serviceId), body.config ?? {});
 
-				return { status: 'success', data: null };
+				return res(ctx.status(200), ctx.json({ status: 'success', data: null }));
 			}),
 		),
 
@@ -118,14 +164,25 @@ export const cloudIntegrationMocks = defineStoryMocks({
 		),
 
 		rest.post(
+			'http://localhost/api/v1/cloud_integrations/:cloudProvider/accounts/check_in',
+			(_req, res, ctx) =>
+				res(ctx.status(200), ctx.json({ status: 'success', data: null })),
+		),
+
+		rest.post(
 			'http://localhost/api/v1/cloud_integrations/:cloudProvider/accounts',
-			response.json(() => createdAccountResponse(values.provider)),
+			mutationResolver(values.accountCreate, (_req, res, ctx) =>
+				res(ctx.status(201), ctx.json(createdAccountResponse(values.provider))),
+			),
 		),
 
 		rest.put(
 			'http://localhost/api/v1/cloud_integrations/:cloudProvider/accounts/:id',
-			response.json((req) =>
-				accountResponse(values.provider, String(req.params.id)),
+			mutationResolver(values.accountUpdate, (req, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json(accountResponse(values.provider, String(req.params.id))),
+				),
 			),
 		),
 

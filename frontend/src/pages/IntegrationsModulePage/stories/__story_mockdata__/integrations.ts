@@ -11,6 +11,9 @@ import type {
 export const INSTALLATION_MIXES = ['mixed', 'all', 'none'] as const;
 export type InstallationMix = (typeof INSTALLATION_MIXES)[number];
 
+export const REQUEST_SUBMISSIONS = ['success', 'loading', 'error'] as const;
+export type RequestSubmission = (typeof REQUEST_SUBMISSIONS)[number];
+
 /**
  * The backend base64-encodes each integration's `icon.svg` into a data URI
  * (`readFileIfUri` in `pkg/query-service/app/integrations/builtin.go`), so the

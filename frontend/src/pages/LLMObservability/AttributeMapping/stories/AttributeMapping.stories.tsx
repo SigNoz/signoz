@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -76,5 +76,28 @@ export const GroupFormDrawer: Story = {
 		await GroupActionsMenu.play?.(context);
 		await userEvent.click(await screen.findByText('Edit'));
 		await screen.findByText('Edit group');
+	},
+};
+
+/**
+ * A group toggled off and saved: the toast announcing the saved changes, raised
+ * once the PATCH and the list refetch answer. Set Save changes to `error`,
+ * `refreshFailed` or `loading` for the other outcomes.
+ */
+export const ChangesSavedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		const [toggle] = await within(canvasElement).findAllByTestId(
+			/^group-enabled-/,
+			{},
+			{ timeout: 10000 },
+		);
+
+		await userEvent.click(toggle);
+		await userEvent.click(await screen.findByTestId('save-changes-btn'));
+		if (args.groupsSave === 'success') {
+			await waitFor(() =>
+				expect(screen.getByText(/attribute mapping changes saved/i)).toBeVisible(),
+			);
+		}
 	},
 };

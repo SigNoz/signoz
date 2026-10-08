@@ -113,3 +113,11 @@ export const unmappedModelsResponse = (
 	status: 'success',
 	data: { items: UNPRICED.slice(0, count) },
 });
+
+export const RULE_SAVES = ['success', 'loading', 'error'] as const;
+
+export type RuleSave = (typeof RULE_SAVES)[number];
+
+export const RULE_DELETES = ['success', 'loading', 'error'] as const;
+
+export type RuleDelete = (typeof RULE_DELETES)[number];
