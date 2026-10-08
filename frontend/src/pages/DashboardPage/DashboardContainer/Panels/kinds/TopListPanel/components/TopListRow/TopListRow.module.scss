@@ -9,8 +9,7 @@
 	grid-column: 1 / -1;
 	grid-template-columns: subgrid;
 	align-items: center;
-	row-gap: 5px;
-	height: 28px;
+	height: var(--row-height);
 	padding: 0 8px;
 	border: 0;
 	border-radius: 2px;
@@ -21,7 +20,7 @@
 	text-align: left;
 	transition: background-color 120ms;
 
-	// The panel surface is --l2-background, so row and track sit a level above it.
+	// The panel surface is --l2-background, so the hovered row sits a level above it.
 	&:hover {
 		background: var(--l3-background);
 	}
@@ -35,18 +34,54 @@
 	cursor: pointer;
 }
 
-.rank {
+.value {
 	grid-column: 1;
-	font-size: 11px;
+	font-size: 12px;
 	line-height: 16px;
-	color: var(--l3-foreground);
+	font-weight: var(--font-weight-medium);
+	color: var(--l1-foreground);
 	text-align: right;
+	white-space: nowrap;
 	font-variant-numeric: tabular-nums;
 }
 
-.label {
+.isNonNumeric {
+	color: var(--l3-foreground);
+}
+
+// The label sits on the bar, spanning the whole column so it isn't cut at the fill.
+.bar {
 	grid-column: 2;
+	position: relative;
+	display: flex;
+	align-items: center;
 	min-width: 0;
+	height: calc(var(--row-height) - 2px);
+}
+
+.fill {
+	position: absolute;
+	inset: 0 auto 0 0;
+	border-radius: 1px;
+	background: color-mix(in srgb, var(--bg-robin-500) 26%, transparent);
+
+	.row:hover & {
+		background: color-mix(in srgb, var(--bg-robin-500) 38%, transparent);
+	}
+}
+
+.hasThresholdColor {
+	background: color-mix(in srgb, var(--fill-color) 30%, transparent);
+
+	.row:hover & {
+		background: color-mix(in srgb, var(--fill-color) 42%, transparent);
+	}
+}
+
+.label {
+	position: relative;
+	min-width: 0;
+	padding: 0 8px;
 	overflow: hidden;
 	font-size: 12px;
 	line-height: 16px;
@@ -62,61 +97,4 @@
 .isEmptyLabel {
 	font-style: italic;
 	color: var(--l3-foreground);
-}
-
-.track {
-	grid-column: 3;
-	display: block;
-	height: 4px;
-	overflow: hidden;
-	border-radius: 1px;
-	background: var(--l3-background);
-
-	.row:hover & {
-		background: var(--l3-background-hover);
-	}
-}
-
-.fill {
-	display: block;
-	height: 100%;
-	border-radius: 1px;
-	background: var(--bg-robin-500);
-
-	.row:hover & {
-		background: var(--bg-robin-400);
-	}
-}
-
-.value {
-	grid-column: 4;
-	font-size: 12px;
-	line-height: 16px;
-	font-weight: var(--font-weight-medium);
-	color: var(--l1-foreground);
-	text-align: right;
-	white-space: nowrap;
-	font-variant-numeric: tabular-nums;
-}
-
-.isNonNumeric {
-	color: var(--l3-foreground);
-}
-
-// Narrow panels put the bar under the label so the label keeps its width.
-@container (max-width: 320px) {
-	.row {
-		height: auto;
-		padding: 5px 8px;
-	}
-
-	.value {
-		grid-column: 3;
-		grid-row: 1;
-	}
-
-	.track {
-		grid-column: 2 / -1;
-		grid-row: 2;
-	}
 }

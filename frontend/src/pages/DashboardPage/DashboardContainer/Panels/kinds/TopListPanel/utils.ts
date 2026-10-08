@@ -4,6 +4,12 @@ import type { PanelThreshold } from '../../types/threshold';
 import { resolveActiveThreshold } from '../../utils/evaluateThresholds';
 import { formatPanelValue } from '../../utils/formatPanelValue';
 
+import {
+	DEFAULT_ROW_HEIGHT,
+	LIST_PADDING_Y,
+	ROW_GAP,
+	ROW_HEIGHTS,
+} from './constants';
 import type { TopListRow } from './types';
 
 export const ACCENT_COLOR = 'var(--bg-robin-500)';
@@ -64,30 +70,31 @@ export function getNavigationTarget(
 	return target === undefined || target < 0 || target >= count ? null : target;
 }
 
-export interface SizerContent {
-	rank: string;
-	label: string;
-	value: string;
-}
-
 /**
- * The widest rank, label and value across all rows. The list renders only the rows
- * in view, so a hidden row carrying these keeps the shared columns from resizing as
- * rows scroll in and out.
+ * The widest formatted value across all rows. The list renders only the rows in view,
+ * so a hidden row carrying it keeps the value column from resizing as rows scroll in
+ * and out.
  */
-export function getSizerContent(
+export function getWidestValue(
 	rows: TopListRow[],
 	unit?: string,
 	precision?: PrecisionOption,
-): SizerContent {
-	const longest = (values: string[]): string =>
-		values.reduce(
+): string {
+	return rows
+		.map((row) => formatRowValue(row, unit, precision))
+		.reduce(
 			(widest, value) => (value.length > widest.length ? value : widest),
 			'',
 		);
-	return {
-		rank: String(rows.length),
-		label: longest(rows.map((row) => row.label)),
-		value: longest(rows.map((row) => formatRowValue(row, unit, precision))),
-	};
+}
+
+/** The roomiest row height at which every row fits; compact when none does. */
+export function getRowHeight(count: number, availableHeight: number): number {
+	if (availableHeight <= 0) {
+		return DEFAULT_ROW_HEIGHT;
+	}
+	const fits = (rowHeight: number): boolean =>
+		count * rowHeight + Math.max(count - 1, 0) * ROW_GAP + LIST_PADDING_Y <=
+		availableHeight;
+	return ROW_HEIGHTS.find(fits) ?? ROW_HEIGHTS[ROW_HEIGHTS.length - 1];
 }

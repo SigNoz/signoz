@@ -1,70 +1,43 @@
 @use '../../../../../../../../styles/scrollbar' as *;
 
 .container {
-	container-type: inline-size;
 	flex: 1;
 	min-height: 0;
 	overflow-y: auto;
 	@include custom-scrollbar;
 }
 
-// Rows share these columns through subgrid, so every bar starts at the same x.
-// The label column grows to its longest label but never squeezes the bar below 60%.
+// Rows share these columns through subgrid: the value, then the bar with its label.
+// Vertical padding is set inline, where it also stands in for unrendered rows.
 .list {
 	display: grid;
-	grid-template-columns: auto minmax(0, max-content) minmax(60%, 1fr) max-content;
+	grid-template-columns: max-content minmax(0, 1fr);
 	align-content: start;
 	column-gap: 10px;
+	row-gap: 1px;
 	margin: 0;
-	padding: 6px 4px;
+	padding-inline: 4px;
 	list-style: none;
 }
 
-// Narrow panels put the bar under the label so the label keeps its width.
-@container (max-width: 320px) {
-	.list {
-		grid-template-columns: auto minmax(0, 1fr) max-content;
-	}
-}
-
-// Stands in for the rows outside the rendered window.
-.spacer {
-	grid-column: 1 / -1;
-}
-
-// Zero-height row holding the widest rank, label and value, so the shared columns
-// keep their size while rows scroll in and out of the rendered window.
+// Zero-height row holding the widest value, so the shared columns keep
+// their size while rows scroll in and out of the rendered window. The negative
+// margin cancels the row gap after it.
 .sizer {
 	display: grid;
 	grid-column: 1 / -1;
 	grid-template-columns: subgrid;
 	height: 0;
+	margin-bottom: -1px;
 	padding: 0 8px;
 	overflow: hidden;
 	visibility: hidden;
 	white-space: nowrap;
 }
 
-.sizerRank {
-	grid-column: 1;
-	font-size: 11px;
-	font-variant-numeric: tabular-nums;
-}
-
-.sizerLabel {
-	grid-column: 2;
-	font-size: 12px;
-}
-
 .sizerValue {
-	grid-column: 4;
+	grid-column: 1;
 	font-size: 12px;
 	font-weight: var(--font-weight-medium);
 	font-variant-numeric: tabular-nums;
-}
-
-@container (max-width: 320px) {
-	.sizerValue {
-		grid-column: 3;
-	}
 }

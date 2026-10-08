@@ -1,17 +1,22 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { type CSSProperties, useCallback, useMemo, useRef } from 'react';
 import type { PrecisionOption } from 'components/Graph/types';
+import { useResizeObserver } from 'hooks/useDimensions';
 
 import type { PanelThreshold } from '../../../../types/threshold';
+import { LIST_PADDING_Y } from '../../constants';
 import { useTopListVirtualizer } from '../../hooks/useTopListVirtualizer';
 import type { TopListRow as TopListRowData } from '../../types';
 import {
 	getNavigationTarget,
-	getSizerContent,
+	getRowHeight,
+	getWidestValue,
 	type RowColors,
 } from '../../utils';
 import TopListRow from '../TopListRow/TopListRow';
 
 import styles from './TopList.module.scss';
+
+const RESIZE_DEBOUNCE_MS = 100;
 
 interface TopListProps {
 	rows: TopListRowData[];
@@ -33,11 +38,13 @@ function TopList({
 	onSelect,
 }: TopListProps): JSX.Element {
 	const containerRef = useRef<HTMLDivElement>(null);
-	const { virtualItems, paddingTop, paddingBottom, measureElement, focusRow } =
-		useTopListVirtualizer({ count: rows.length, containerRef });
+	const { height } = useResizeObserver(containerRef, RESIZE_DEBOUNCE_MS);
+	const rowHeight = getRowHeight(rows.length, height);
+	const { virtualItems, paddingTop, paddingBottom, focusRow } =
+		useTopListVirtualizer({ count: rows.length, rowHeight, containerRef });
 
-	const sizer = useMemo(
-		() => getSizerContent(rows, unit, precision),
+	const widestValue = useMemo(
+		() => getWidestValue(rows, unit, precision),
 		[rows, unit, precision],
 	);
 
@@ -53,17 +60,18 @@ function TopList({
 		[rows.length, focusRow],
 	);
 
+	const listStyle = {
+		'--row-height': `${rowHeight}px`,
+		paddingTop: LIST_PADDING_Y / 2 + paddingTop,
+		paddingBottom: LIST_PADDING_Y / 2 + paddingBottom,
+	} as CSSProperties;
+
 	return (
 		<div ref={containerRef} className={styles.container}>
-			<ol data-testid="top-list" className={styles.list}>
+			<ol data-testid="top-list" className={styles.list} style={listStyle}>
 				<li aria-hidden className={styles.sizer}>
-					<span className={styles.sizerRank}>{sizer.rank}</span>
-					<span className={styles.sizerLabel}>{sizer.label}</span>
-					<span className={styles.sizerValue}>{sizer.value}</span>
+					<span className={styles.sizerValue}>{widestValue}</span>
 				</li>
-				{paddingTop > 0 && (
-					<li aria-hidden className={styles.spacer} style={{ height: paddingTop }} />
-				)}
 				{virtualItems.map(({ index }) => (
 					<TopListRow
 						key={rows[index].key}
@@ -74,16 +82,8 @@ function TopList({
 						thresholds={thresholds}
 						onSelect={onSelect}
 						onNavigate={handleNavigate}
-						measureRef={measureElement}
 					/>
 				))}
-				{paddingBottom > 0 && (
-					<li
-						aria-hidden
-						className={styles.spacer}
-						style={{ height: paddingBottom }}
-					/>
-				)}
 			</ol>
 		</div>
 	);
