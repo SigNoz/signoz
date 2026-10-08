@@ -1,7 +1,7 @@
 import { Search } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { SelectSimple } from '@signozhq/ui/select';
+import { Select } from '@signozhq/ui/select';
 import { useCallback } from 'react';
 
 import { BrandedPermission } from '../../hooks/useAuthZ/types';
@@ -66,16 +66,21 @@ export function AuthZDevModalHeader({
 						onChange={(e): void => setSearch(e.target.value)}
 						prefix={<Search size={14} className={styles.searchIcon} />}
 						aria-label="Search permissions"
-						data-testid="authz-dev-search"
+						testId="authz-dev-search"
 					/>
 				</div>
 				<div className={styles.filter}>
-					<SelectSimple
-						items={resourceFilterItems}
+					<Select
+						aria-label="Filter by resource"
+						placeholder="Filter by resource"
+						items={resourceFilterItems.map(({ value, label }) => ({
+							type: 'item' as const,
+							value,
+							label,
+						}))}
 						value={resourceFilter}
-						onChange={(value): void => setResourceFilter(value as string)}
+						onChange={setResourceFilter}
 						testId="authz-dev-resource-filter"
-						withPortal={false}
 					/>
 				</div>
 			</div>

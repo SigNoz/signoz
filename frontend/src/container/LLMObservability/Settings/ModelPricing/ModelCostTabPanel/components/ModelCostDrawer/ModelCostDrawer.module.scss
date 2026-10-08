@@ -6,10 +6,6 @@
 	composes: drawerSection from './shared.module.scss';
 }
 
-.fullWidth {
-	width: 100%;
-}
-
 .required {
 	composes: required from './shared.module.scss';
 }

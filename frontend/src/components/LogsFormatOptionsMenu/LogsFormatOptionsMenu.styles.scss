@@ -202,46 +202,19 @@
 				.max-lines-per-row-input {
 					display: flex;
 
-					.ant-input-number-handler-wrap {
-						display: none;
-					}
+					--input-height: 26px;
+					--input-border-radius: 0;
+					--input-border: var(--l1-border);
 
-					.ant-input-number {
+					[data-testid='max-lines-per-row-field'] {
 						min-width: 36px;
 						width: auto;
 						border-right: none;
 						border-left: none;
-						border-top: 1px solid var(--l1-border);
-						border-bottom: 1px solid var(--l1-border);
-						text-align: center;
-						height: 26px;
-						border-radius: 0;
 
-						&:active,
-						&:focus {
-							border: none;
-							box-shadow: none;
-						}
-					}
-
-					.ant-input-number-focused {
-						box-shadow: none !important;
-					}
-
-					.ant-input-number-input-wrap {
 						input {
 							text-align: center;
 							font-size: 13px;
-
-							&:active,
-							&:focus {
-								border: none;
-							}
-						}
-
-						&:active,
-						&:focus {
-							border: none;
 						}
 					}
 

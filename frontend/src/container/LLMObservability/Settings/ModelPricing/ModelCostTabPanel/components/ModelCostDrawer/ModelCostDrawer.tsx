@@ -1,7 +1,7 @@
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
-import { SelectSimple } from '@signozhq/ui/select';
+import { Select } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import { Controller, useForm } from 'react-hook-form';
 
@@ -132,6 +132,11 @@ function ModelCostDrawer({
 								required
 								value={field.value}
 								disabled={mode === 'edit' || metadataReadOnly}
+								disabledTooltip={
+									canManage && mode === 'edit'
+										? 'The model ID cannot be changed after creation'
+										: undefined
+								}
 								aria-invalid={!!fieldState.error}
 								onChange={(e): void => field.onChange(e.target.value)}
 								testId="drawer-model-id-input"
@@ -156,14 +161,18 @@ function ModelCostDrawer({
 					rules={{ validate: validateProvider }}
 					render={({ field, fieldState }): JSX.Element => (
 						<>
-							<SelectSimple
+							<Select
 								id="provider-select"
 								value={field.value}
-								onChange={(value): void => field.onChange(value as string)}
+								onChange={(value: string): void => field.onChange(value)}
 								items={PROVIDER_OPTIONS}
+								placeholder="Select a provider"
 								disabled={mode === 'edit' || metadataReadOnly}
-								className={styles.fullWidth}
-								withPortal={false}
+								disabledTooltip={
+									canManage && mode === 'edit'
+										? 'The provider cannot be changed after creation'
+										: undefined
+								}
 								testId="drawer-provider-select"
 							/>
 							{fieldState.error && (

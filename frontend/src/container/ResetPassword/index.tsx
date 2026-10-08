@@ -202,15 +202,11 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 					</div>
 
 					{confirmPasswordError && (
-						<Callout
-							type="error"
-							size="small"
-							showIcon
-							icon={<CircleAlert size={12} />}
-							className="reset-password-error-callout"
-						>
-							Passwords don&apos;t match. Please try again.
-						</Callout>
+						<div className="reset-password-error-callout">
+							<Callout color="danger" size="sm" icon={<CircleAlert />}>
+								Passwords don&apos;t match. Please try again.
+							</Callout>
+						</div>
 					)}
 
 					{errorMessage && !confirmPasswordError && (

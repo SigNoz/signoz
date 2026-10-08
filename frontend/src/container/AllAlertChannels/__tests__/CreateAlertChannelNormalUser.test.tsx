@@ -297,7 +297,7 @@ describe('Create Alert Channel (Normal User)', () => {
 			it('Should check if API key label, required, info(help_email_to), and textbox are displayed properly', () => {
 				testLabelInputAndHelpValue({
 					labelText: 'field_email_to',
-					testId: 'email-to-textbox',
+					testId: 'email-to-textbox-field',
 					helpText: 'help_email_to',
 					required: true,
 				});

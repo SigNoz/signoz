@@ -1,5 +1,4 @@
 import { ReactNode } from 'react';
-import { Color } from '@signozhq/design-tokens';
 import { TableColumnType as ColumnType, Tooltip } from 'antd';
 import { Progress } from '@signozhq/ui/progress';
 import { Badge } from '@signozhq/ui/badge';
@@ -46,6 +45,18 @@ import {
 	APIMonitoringResponseColumn,
 	EndPointsResponseRow,
 } from './types';
+
+function metricProgressColor(
+	percent: number,
+): 'success' | 'warning' | 'highlight-danger' {
+	if (percent >= 90) {
+		return 'highlight-danger';
+	}
+	if (percent >= 60) {
+		return 'warning';
+	}
+	return 'success';
+}
 
 export const isEmptyFilterValue = (value: unknown): boolean =>
 	value === '' || value === null || value === undefined || value === 'n/a';
@@ -258,22 +269,13 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 			const errorRateValue =
 				errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate;
 			return (
-				<Progress
-					percent={Number((errorRateValue as number).toFixed(2))}
-					strokeLinecap="butt"
-					showInfo
-					strokeColor={((): string => {
-						const errorRatePercent = Number((errorRateValue as number).toFixed(2));
-						if (errorRatePercent >= 90) {
-							return Color.BG_SAKURA_500;
-						}
-						if (errorRatePercent >= 60) {
-							return Color.BG_AMBER_500;
-						}
-						return Color.BG_FOREST_500;
-					})()}
-					className="progress-bar error-rate"
-				/>
+				<div className="progress-bar error-rate">
+					<Progress
+						percent={Number((errorRateValue as number).toFixed(2))}
+						showInfo
+						color={metricProgressColor(Number((errorRateValue as number).toFixed(2)))}
+					/>
+				</div>
 			);
 		},
 	},
@@ -1023,26 +1025,23 @@ export const getEndPointsColumnsConfig = (
 		align: 'right',
 		className: `column`,
 		render: (errorRate: number | string): React.ReactNode => (
-			<Progress
-				percent={Number(
-					(
-						(errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate) as number
-					).toFixed(1),
-				)}
-				strokeLinecap="butt"
-				showInfo
-				strokeColor={((): string => {
-					const errorRatePercent = Number((errorRate as number).toFixed(1));
-					if (errorRatePercent >= 90) {
-						return Color.BG_SAKURA_500;
-					}
-					if (errorRatePercent >= 60) {
-						return Color.BG_AMBER_500;
-					}
-					return Color.BG_FOREST_500;
-				})()}
-				className="progress-bar error-rate"
-			/>
+			<div className="progress-bar error-rate">
+				<Progress
+					percent={Number(
+						(
+							(errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate) as number
+						).toFixed(1),
+					)}
+					showInfo
+					color={metricProgressColor(
+						Number(
+							(
+								(errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate) as number
+							).toFixed(1),
+						),
+					)}
+				/>
+			</div>
 		),
 	},
 	{
@@ -2514,24 +2513,15 @@ export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
 		align: 'center',
 		render: (errorPercentage: number | string): React.ReactNode =>
 			errorPercentage !== '-' ? (
-				<Progress
-					percent={Number((errorPercentage as number).toFixed(2))}
-					strokeLinecap="butt"
-					showInfo
-					strokeColor={((): string => {
-						const errorPercentagePercent = Number(
-							(errorPercentage as number).toFixed(2),
-						);
-						if (errorPercentagePercent >= 90) {
-							return Color.BG_SAKURA_500;
-						}
-						if (errorPercentagePercent >= 60) {
-							return Color.BG_AMBER_500;
-						}
-						return Color.BG_FOREST_500;
-					})()}
-					className="progress-bar error-rate"
-				/>
+				<div className="progress-bar error-rate">
+					<Progress
+						percent={Number((errorPercentage as number).toFixed(2))}
+						showInfo
+						color={metricProgressColor(
+							Number((errorPercentage as number).toFixed(2)),
+						)}
+					/>
+				</div>
 			) : (
 				'-'
 			),
@@ -3021,30 +3011,23 @@ export const getAllEndpointsWidgetData = (
 			</span>
 		),
 		F1: (errorRate: any): ReactNode => (
-			<Progress
-				percent={Number(
-					(
-						(errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate) as number
-					).toFixed(2),
-				)}
-				strokeLinecap="butt"
-				showInfo
-				strokeColor={((): string => {
-					const errorRatePercent = Number(
+			<div className="progress-bar error-rate">
+				<Progress
+					percent={Number(
 						(
 							(errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate) as number
 						).toFixed(2),
-					);
-					if (errorRatePercent >= 90) {
-						return Color.BG_SAKURA_500;
-					}
-					if (errorRatePercent >= 60) {
-						return Color.BG_AMBER_500;
-					}
-					return Color.BG_FOREST_500;
-				})()}
-				className="progress-bar error-rate"
-			/>
+					)}
+					showInfo
+					color={metricProgressColor(
+						Number(
+							(
+								(errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate) as number
+							).toFixed(2),
+						),
+					)}
+				/>
+			</div>
 		),
 	};
 

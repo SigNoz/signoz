@@ -1,4 +1,4 @@
-import { Check, Copy } from '@signozhq/icons';
+import { Check, Copy, SolidInfoCircle } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
@@ -44,11 +44,9 @@ function KeyCreatedPhase({
 			</div>
 
 			<div className="add-key-modal__callout-wrapper">
-				<Callout
-					type="info"
-					showIcon
-					title="Store the key securely. This is the only time it will be displayed."
-				/>
+				<Callout color="info" size="sm" icon={<SolidInfoCircle />}>
+					Store the key securely. This is the only time it will be displayed.
+				</Callout>
 			</div>
 		</div>
 	);

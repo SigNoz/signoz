@@ -182,14 +182,14 @@
 								flex-grow: 1;
 							}
 
-							.no-arrows-input input[type='number']::-webkit-inner-spin-button,
-							.no-arrows-input input[type='number']::-webkit-outer-spin-button {
+							input[type='number']::-webkit-inner-spin-button,
+							input[type='number']::-webkit-outer-spin-button {
 								-webkit-appearance: none;
 								margin: 0;
 							}
 
 							/* Hide number input arrows (Firefox) */
-							.no-arrows-input input[type='number'] {
+							input[type='number'] {
 								appearance: none;
 								-moz-appearance: textfield;
 							}

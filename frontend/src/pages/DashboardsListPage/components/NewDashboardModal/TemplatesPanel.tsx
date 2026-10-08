@@ -84,20 +84,21 @@ function TemplatesPanel(): JSX.Element {
 						Request a new template
 					</Typography>
 					<div className={styles.requestRow}>
-						<Input
-							className={styles.requestInput}
-							placeholder="Enter dashboard name..."
-							value={name}
-							testId="request-dashboard-name"
-							onChange={(e: ChangeEvent<HTMLInputElement>): void =>
-								setName(e.target.value)
-							}
-							onKeyDown={(e: KeyboardEvent<HTMLInputElement>): void => {
-								if (e.key === 'Enter') {
-									void handleRequest();
+						<div className={styles.requestInput}>
+							<Input
+								placeholder="Enter dashboard name..."
+								value={name}
+								testId="request-dashboard-name"
+								onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+									setName(e.target.value)
 								}
-							}}
-						/>
+								onKeyDown={(e: KeyboardEvent<HTMLInputElement>): void => {
+									if (e.key === 'Enter') {
+										void handleRequest();
+									}
+								}}
+							/>
+						</div>
 						<Button
 							disabledTooltip="Enter a dashboard name first"
 							variant="solid"

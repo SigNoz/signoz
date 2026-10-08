@@ -6,7 +6,7 @@ import {
 	ExternalLink,
 	FilePenLine,
 	Link2,
-	SolidAlertCircle,
+	SolidInfoCircle,
 	X,
 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
@@ -270,14 +270,11 @@ export default function CustomDomainSettings(): JSX.Element {
 			</div>
 
 			{isPollingEnabled && (
-				<Callout
-					type="info"
-					showIcon
-					className="custom-domain-callout"
-					size="small"
-					icon={<SolidAlertCircle size={13} color="primary" />}
-					title={`Updating your URL to ⎯ ${customDomainSubdomain}.${dnsSuffix}. This may take a few mins.`}
-				/>
+				<div className="custom-domain-callout">
+					<Callout color="info" size="sm" icon={<SolidInfoCircle />}>
+						{`Updating your URL to ⎯ ${customDomainSubdomain}.${dnsSuffix}. This may take a few mins.`}
+					</Callout>
+				</div>
 			)}
 
 			<CustomDomainEditModal

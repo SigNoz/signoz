@@ -46,6 +46,12 @@
 	&__search {
 		flex: 1;
 		min-width: 0;
+
+		--input-foreground: var(--l1-foreground);
+		--input-background: var(--l2-background);
+		--input-border: var(--l1-border);
+		--input-placeholder: var(--l3-foreground);
+		--input-placeholder-opacity: 1;
 	}
 }
 
@@ -67,16 +73,5 @@
 	&:hover {
 		color: var(--card-foreground);
 		background: transparent;
-	}
-}
-
-.members-search-input {
-	height: 32px;
-	color: var(--l1-foreground);
-	background-color: var(--l2-background);
-	border-color: var(--l1-border);
-
-	&::placeholder {
-		color: var(--l3-foreground);
 	}
 }

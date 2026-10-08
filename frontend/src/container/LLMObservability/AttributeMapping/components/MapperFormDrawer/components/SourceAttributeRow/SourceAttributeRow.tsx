@@ -1,5 +1,6 @@
 import { Button } from '@signozhq/ui/button';
-import { SelectSimple } from '@signozhq/ui/select';
+import { Select } from '@signozhq/ui/select';
+import type { SelectItemType } from '@signozhq/ui/select';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, X } from '@signozhq/icons';
@@ -14,14 +15,14 @@ import {
 import KeySearchInput from '../../../KeySearchInput/KeySearchInput';
 import styles from './SourceAttributeRow.module.scss';
 
-const CONTEXT_OPTIONS = [
-	{ value: FieldContext.attribute, label: 'Attribute' },
-	{ value: FieldContext.resource, label: 'Resource' },
+const CONTEXT_OPTIONS: SelectItemType[] = [
+	{ type: 'item', value: FieldContext.attribute, label: 'Attribute' },
+	{ type: 'item', value: FieldContext.resource, label: 'Resource' },
 ];
 
-const OPERATION_OPTIONS = [
-	{ value: MapperOperation.move, label: 'Move' },
-	{ value: MapperOperation.copy, label: 'Copy' },
+const OPERATION_OPTIONS: SelectItemType[] = [
+	{ type: 'item', value: MapperOperation.move, label: 'Move' },
+	{ type: 'item', value: MapperOperation.copy, label: 'Copy' },
 ];
 
 interface SourceAttributeRowProps {
@@ -74,22 +75,22 @@ function SourceAttributeRow({
 				onChange={(key): void => onChange(index, { key })}
 				testId={`mapper-form-source-${index}`}
 			/>
-			<SelectSimple
-				className={styles.sourceSelect}
+			<Select
+				width={120}
 				items={CONTEXT_OPTIONS}
+				placeholder="Select context"
 				value={value.context}
-				withPortal={false}
-				onChange={(next): void =>
+				onChange={(next: string): void =>
 					onChange(index, { context: next as FieldContextValue })
 				}
 				testId={`mapper-form-source-context-${index}`}
 			/>
-			<SelectSimple
-				className={styles.sourceSelect}
+			<Select
+				width={120}
 				items={OPERATION_OPTIONS}
+				placeholder="Select operation"
 				value={value.operation}
-				withPortal={false}
-				onChange={(next): void =>
+				onChange={(next: string): void =>
 					onChange(index, { operation: next as MapperOperationValue })
 				}
 				testId={`mapper-form-source-operation-${index}`}

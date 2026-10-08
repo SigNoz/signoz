@@ -130,7 +130,9 @@ function AlertActionButtons({
 				</Tooltip>
 				<CopyToClipboard textToCopy={window.location.href} />
 
-				<Divider type="vertical" className="alert-action-buttons__divider" />
+				<span className="alert-action-buttons__divider">
+					<Divider orientation="vertical" />
+				</span>
 
 				<Tooltip title="More options">
 					<span className="dropdown-trigger-wrapper">

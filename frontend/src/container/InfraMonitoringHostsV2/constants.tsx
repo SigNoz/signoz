@@ -9,7 +9,7 @@ import { K8sDetailsMetadataConfig } from 'container/InfraMonitoringK8sV2/Base/K8
 import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
 import { TextNoData } from 'container/InfraMonitoringK8sV2/components';
-import { getStrokeColorForPercent } from 'container/InfraMonitoringK8sV2/components/EntityProgressBar.utils';
+import { getProgressColorForPercent } from 'container/InfraMonitoringK8sV2/components/EntityProgressBar.utils';
 import { SelectedItemParams } from 'container/InfraMonitoringK8sV2/hooks';
 import {
 	getHostQueryPayload,
@@ -52,7 +52,7 @@ export const hostDetailsMetadataConfig: HostDetailMetadataConfigType[] = [
 		render: (value): React.ReactNode => (
 			<Progress
 				percent={Number(Number(value).toFixed(1))}
-				strokeColor={getStrokeColorForPercent('cpu', Number(value))}
+				color={getProgressColorForPercent('cpu', Number(value))}
 				showInfo
 			/>
 		),
@@ -63,7 +63,7 @@ export const hostDetailsMetadataConfig: HostDetailMetadataConfigType[] = [
 		render: (value): React.ReactNode => (
 			<Progress
 				percent={Number(Number(value).toFixed(1))}
-				strokeColor={getStrokeColorForPercent('memory', Number(value))}
+				color={getProgressColorForPercent('memory', Number(value))}
 				showInfo
 			/>
 		),

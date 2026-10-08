@@ -1093,7 +1093,6 @@ export default function ChatInput({
 										<Input
 											type="text"
 											placeholder={`Search ${activeContextCategory.toLowerCase()}…`}
-											className={styles.contextPopoverSearchInput}
 											value={pickerSearchQuery}
 											onChange={(e): void => setPickerSearchQuery(e.target.value)}
 											prefix={<Search size={12} />}

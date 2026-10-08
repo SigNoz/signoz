@@ -140,7 +140,7 @@ function MetricDetails({
 			title={
 				<div className="metric-details-header">
 					<div className="metric-details-title">
-						<Divider type="vertical" />
+						<Divider orientation="vertical" />
 						<Typography.Text>{metricName}</Typography.Text>
 					</div>
 					<div className="metric-details-header-buttons">

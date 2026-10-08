@@ -141,7 +141,10 @@ function ConnectionSecretsFields({
 						}
 
 						return (
-							<div key={field.name} className={styles.drawerSection}>
+							<div
+								key={field.name}
+								className={cx(styles.drawerSection, styles.monoInput)}
+							>
 								<FieldLabel
 									htmlFor={field.testId}
 									label={field.label}
@@ -158,7 +161,6 @@ function ConnectionSecretsFields({
 										<>
 											<Input
 												id={field.testId}
-												className={cx(styles.fullWidth, styles.mono)}
 												placeholder={field.placeholder}
 												value={rhfField.value}
 												onChange={(e): void => rhfField.onChange(e.target.value)}

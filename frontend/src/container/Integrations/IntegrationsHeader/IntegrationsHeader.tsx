@@ -124,6 +124,7 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 								}
 							}}
 							disabled={isSubmittingRequestForIntegration}
+							disabledTooltip={undefined}
 						/>
 					</div>
 

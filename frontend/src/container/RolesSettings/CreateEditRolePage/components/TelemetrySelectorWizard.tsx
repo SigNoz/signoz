@@ -3,13 +3,7 @@ import { Button } from '@signozhq/ui/button';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@signozhq/ui/select';
+import { Select } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 
 import {
@@ -37,7 +31,6 @@ function TelemetrySelectorWizard({
 	const {
 		open,
 		queryType,
-		selectedQueryType,
 		value,
 		selector,
 		isAnyResource,
@@ -105,24 +98,20 @@ function TelemetrySelectorWizard({
 					<Typography as="label" weight="medium">
 						Query Type
 					</Typography>
-					<Select value={queryType} onChange={handleQueryTypeChange}>
-						<SelectTrigger data-testid={`wizard-query-type-select-${testId}`}>
-							<SelectValue>{selectedQueryType?.label}</SelectValue>
-						</SelectTrigger>
-						<SelectContent withPortal={false} className={styles.selectContent}>
-							{QUERY_TYPES.filter((queryTypeOption) =>
-								isQueryTypeAvailable(queryTypeOption, resource),
-							).map((queryTypeOption) => (
-								<SelectItem
-									key={queryTypeOption.id}
-									value={queryTypeOption.id}
-									testId={`wizard-query-type-option-${queryTypeOption.id}-${testId}`}
-								>
-									{queryTypeOption.label}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
+					<Select
+						placeholder="Select a query type"
+						value={queryType}
+						onChange={handleQueryTypeChange}
+						items={QUERY_TYPES.filter((queryTypeOption) =>
+							isQueryTypeAvailable(queryTypeOption, resource),
+						).map((queryTypeOption) => ({
+							type: 'item' as const,
+							value: queryTypeOption.id,
+							label: queryTypeOption.label,
+							testId: `wizard-query-type-option-${queryTypeOption.id}-${testId}`,
+						}))}
+						testId={`wizard-query-type-select-${testId}`}
+					/>
 				</div>
 
 				{supportsKeyScoping && (
@@ -133,7 +122,7 @@ function TelemetrySelectorWizard({
 						<Input
 							value={SUPPORTED_GRANT_KEY}
 							readOnly
-							disabled
+							readOnlyTooltip={undefined}
 							testId={`wizard-key-input-${testId}`}
 						/>
 					</div>
@@ -144,19 +133,21 @@ function TelemetrySelectorWizard({
 						Value
 					</Typography>
 					<div className={styles.wizardValueRow}>
-						<Input
-							className={styles.wizardValueInput}
-							placeholder={
-								supportsKeyScoping
-									? 'Value or leave empty to allow every query'
-									: ANY_RESOURCE_VALUE
-							}
-							value={value}
-							disabled={!supportsKeyScoping}
-							onChange={handleValueChange}
-							onKeyDown={handleInputKeyDown}
-							testId={`wizard-value-input-${testId}`}
-						/>
+						<div className={styles.wizardValueInput}>
+							<Input
+								placeholder={
+									supportsKeyScoping
+										? 'Value or leave empty to allow every query'
+										: ANY_RESOURCE_VALUE
+								}
+								value={value}
+								disabled={!supportsKeyScoping}
+								disabledTooltip="This query type does not support key scoping"
+								onChange={handleValueChange}
+								onKeyDown={handleInputKeyDown}
+								testId={`wizard-value-input-${testId}`}
+							/>
+						</div>
 						<Checkbox
 							color="primary"
 							id={`wizard-any-resource-${testId}`}

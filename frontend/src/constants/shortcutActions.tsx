@@ -27,7 +27,7 @@ export type CmdAction = {
 	shortcut?: string[];
 	keywords?: string;
 	section?: string;
-	icon?: React.ReactNode;
+	icon?: React.ReactElement;
 	roles?: ROLES[];
 	perform: () => void;
 };

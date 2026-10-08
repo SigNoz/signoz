@@ -140,10 +140,10 @@ function FieldsSelectorContent({
 					<X className={styles.closeIcon} size={16} onClick={onClose} />
 				</div>
 
-				<section>
+				<section className={styles.searchInput}>
 					<Input
-						className={styles.searchInput}
 						type="text"
+						size="large"
 						value={inputValue}
 						placeholder="Search for a field..."
 						onChange={handleInputChange}

@@ -6,18 +6,15 @@
 	border-bottom: 1px solid var(--l1-border);
 
 	.search {
-		input {
-			--input-background: var(--l2-background);
-			--input-hover-background: var(--l2-background);
-			--input-focus-background: var(--l2-background);
-			&::placeholder {
-				color: var(--l3-foreground);
-			}
-			--input-font-size: 14px;
-			--input-border-color: var(--l1-border);
-			--input-focus-border-color: var(--primary-background);
-			--input-focus-outline-width: 0;
-			--input-focus-outline-offset: 0;
+		// Set on the wrapper so the Input frame inside picks them up.
+		--input-background: var(--l2-background);
+		--input-font-size: 14px;
+		--input-border-color: var(--l1-border);
+		--input-focus-ring-color: var(--primary-background);
+		--input-focus-outline-offset: 0;
+
+		input::placeholder {
+			color: var(--l3-foreground);
 		}
 	}
 

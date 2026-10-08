@@ -1,4 +1,4 @@
-import { Trash2 } from '@signozhq/icons';
+import { SolidAlertCircle, Trash2 } from '@signozhq/icons';
 import { ConfirmDialog } from '@signozhq/ui/dialog';
 import { Typography } from '@signozhq/ui/typography';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
@@ -43,13 +43,12 @@ function DeleteRoleModal({
 				action cannot be undone.
 			</Typography>
 			{error && (
-				<Callout
-					title="Failed to delete role"
-					color="cherry"
-					className={styles.errorCallout}
-				>
-					<ErrorInPlace error={error} height="auto" padding={0} />
-				</Callout>
+				<div className={styles.errorCallout}>
+					<Callout color="danger" size="sm" icon={<SolidAlertCircle />}>
+						Failed to delete role
+						<ErrorInPlace error={error} height="auto" padding={0} />
+					</Callout>
+				</div>
 			)}
 		</ConfirmDialog>
 	);

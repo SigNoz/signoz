@@ -217,7 +217,7 @@ function EvaluationWindowDetails({
 					value={evaluationWindow.startingAt.number}
 					onChange={(e): void => handleNumberChange(e.target.value)}
 					placeholder="Enter value"
-					data-testid="evaluation-window-details-custom-rolling-window-duration-input"
+					testId="evaluation-window-details-custom-rolling-window-duration-input"
 				/>
 			</div>
 			<div className="select-group time-select-group">

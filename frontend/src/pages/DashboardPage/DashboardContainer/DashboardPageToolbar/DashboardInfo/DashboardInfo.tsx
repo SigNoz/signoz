@@ -126,15 +126,16 @@ function DashboardInfo({
 
 			{isEditing ? (
 				<div className={styles.dashboardTitleEditor} onBlur={onEditorBlur}>
-					<Input
-						autoFocus
-						value={draft}
-						testId="dashboard-title-input"
-						maxLength={DASHBOARD_NAME_MAX_LENGTH}
-						className={styles.dashboardTitleInput}
-						onChange={(e): void => onDraftChange(e.target.value)}
-						onKeyDown={onKeyDown}
-					/>
+					<div className={styles.dashboardTitleInput}>
+						<Input
+							autoFocus
+							value={draft}
+							testId="dashboard-title-input"
+							maxLength={DASHBOARD_NAME_MAX_LENGTH}
+							onChange={(e): void => onDraftChange(e.target.value)}
+							onKeyDown={onKeyDown}
+						/>
+					</div>
 					<Button
 						type="button"
 						variant="solid"

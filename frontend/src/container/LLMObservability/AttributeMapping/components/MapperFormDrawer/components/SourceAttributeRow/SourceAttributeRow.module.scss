@@ -34,7 +34,7 @@
 	font-family: 'Geist Mono', monospace;
 }
 
-.sourceSelect {
+/* The selects size themselves via their `width` prop; keep them from flexing. */
+.source > [data-slot='select'] {
 	flex: 0 0 auto;
-	width: 120px;
 }

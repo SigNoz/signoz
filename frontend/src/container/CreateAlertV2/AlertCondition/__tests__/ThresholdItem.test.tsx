@@ -319,15 +319,12 @@ describe('ThresholdItem', () => {
 	it('renders with correct input widths', () => {
 		renderThresholdItem();
 
-		const labelInput = screen.getByPlaceholderText(
-			TEST_CONSTANTS.ENTER_THRESHOLD_NAME,
-		);
-		const valueInput = screen.getByPlaceholderText(
-			TEST_CONSTANTS.ENTER_THRESHOLD_VALUE,
-		);
+		// The width prop lands on the input frame as a CSS custom property
+		const labelInputFrame = screen.getByTestId('threshold-name-input');
+		const valueInputFrame = screen.getByTestId('threshold-value-input');
 
-		expect(labelInput).toHaveStyle('width: 200px');
-		expect(valueInput).toHaveStyle('width: 100px');
+		expect(labelInputFrame).toHaveStyle('--input-internal-width: 200px');
+		expect(valueInputFrame).toHaveStyle('--input-internal-width: 100px');
 	});
 
 	it('renders channels selector with correct width', () => {

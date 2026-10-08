@@ -32,12 +32,16 @@
 	}
 }
 
+// Wraps the search Input; restyles it via its --input-* tokens
+// (the Input is size="large" for the 40px height).
 .searchInput {
-	background-color: var(--l1-background);
-	height: 40px;
-	border-radius: 0;
-	border-left: none;
-	border-right: none;
+	--input-background: var(--l1-background);
+	--input-border-radius: 0;
+
+	[data-slot='input'] {
+		border-left: none;
+		border-right: none;
+	}
 }
 
 .section {

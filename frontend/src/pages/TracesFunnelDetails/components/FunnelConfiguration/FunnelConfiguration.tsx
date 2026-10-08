@@ -77,7 +77,9 @@ function FunnelConfiguration({
 							/>
 						</Tooltip>
 						<CopyToClipboard textToCopy={window.location.href} />
-						<Divider type="vertical" className="funnel-configuration__divider" />
+						<span className="funnel-configuration__divider">
+							<Divider orientation="vertical" />
+						</span>
 						<FunnelItemPopover
 							isPopoverOpen={isPopoverOpen}
 							setIsPopoverOpen={setIsPopoverOpen}

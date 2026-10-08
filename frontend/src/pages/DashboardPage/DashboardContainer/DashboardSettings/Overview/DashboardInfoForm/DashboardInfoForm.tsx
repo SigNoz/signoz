@@ -43,13 +43,14 @@ function DashboardInfoForm({
 							triggerClassName={styles.dashboardImageInput}
 						/>
 
-						<Input
-							testId="dashboard-name"
-							className={styles.dashboardNameInput}
-							value={title}
-							maxLength={DASHBOARD_NAME_MAX_LENGTH}
-							onChange={(e): void => onTitleChange(e.target.value)}
-						/>
+						<div className={styles.dashboardNameInput}>
+							<Input
+								testId="dashboard-name"
+								value={title}
+								maxLength={DASHBOARD_NAME_MAX_LENGTH}
+								onChange={(e): void => onTitleChange(e.target.value)}
+							/>
+						</div>
 					</section>
 				</div>
 

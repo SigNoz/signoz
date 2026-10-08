@@ -4,6 +4,8 @@
 	gap: 6px;
 	flex-wrap: wrap;
 	color: var(--l1-foreground);
+
+	--divider-border: var(--callout-warning-border);
 }
 
 .missingIcon {
@@ -20,8 +22,4 @@
 	svg {
 		margin-left: 4px;
 	}
-}
-
-.divider {
-	--divider-color: var(--callout-warning-border);
 }

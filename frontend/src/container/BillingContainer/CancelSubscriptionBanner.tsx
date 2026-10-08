@@ -216,7 +216,7 @@ function CancelSubscriptionBanner(): JSX.Element {
 							placeholder="Enter the word cancel..."
 							value={confirmText}
 							onChange={(e): void => setConfirmText(e.target.value)}
-							data-testid="cancel-confirm-input"
+							testId="cancel-confirm-input"
 						/>
 					</div>
 				)}

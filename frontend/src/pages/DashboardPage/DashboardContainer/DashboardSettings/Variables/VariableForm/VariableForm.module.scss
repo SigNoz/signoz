@@ -48,21 +48,21 @@
 }
 
 .input,
-.textarea,
-.defaultInput {
+.textarea {
+	width: 100%;
 	padding: 6px 6px 6px 8px;
 	border: 1px solid var(--l2-border);
 	border-radius: 2px;
 	background: var(--l3-background);
 }
 
-.input,
-.textarea {
-	width: 100%;
-}
-
+// Wrapper around the default-value Input: restyles the frame via its tokens.
 .defaultInput {
 	width: 342px;
+	--input-padding: 6px 6px 6px 8px;
+	--input-border: var(--l2-border);
+	--input-border-radius: 2px;
+	--input-background: var(--l3-background);
 }
 
 .errorText {

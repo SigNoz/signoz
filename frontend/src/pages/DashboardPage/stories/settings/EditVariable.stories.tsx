@@ -107,7 +107,7 @@ export const Textbox: Story = {
 	play: async ({ canvasElement }) => {
 		await openVariableEditor(canvasElement, 'owner');
 		await waitFor(() =>
-			expect(screen.getByTestId('variable-text-input')).toHaveValue(
+			expect(screen.getByTestId('variable-text-input-field')).toHaveValue(
 				'platform-team',
 			),
 		);

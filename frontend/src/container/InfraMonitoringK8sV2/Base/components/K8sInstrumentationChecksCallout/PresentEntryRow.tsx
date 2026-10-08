@@ -48,7 +48,7 @@ export function PresentEntryRow({
 			<Typography.Text size="base" italic color="muted">
 				{entry.associatedComponent.name}
 			</Typography.Text>
-			<Divider className={styles.divider} />
+			<Divider />
 		</div>
 	);
 }

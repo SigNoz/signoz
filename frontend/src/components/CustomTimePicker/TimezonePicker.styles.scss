@@ -34,34 +34,19 @@ $item-spacing: 8px;
 		@include flex-center;
 		gap: 6px;
 		width: -webkit-fill-available;
-	}
 
-	&__input {
-		@include text-style-base;
-		width: 100%;
-		background: transparent;
-		border: none;
-		border-radius: 0;
-		box-shadow: none;
-		outline: none;
-		height: auto;
-		color: var(--l1-foreground);
-		font-size: 14px;
-		line-height: 20px;
-		letter-spacing: -0.07px;
-		padding: 0;
-
-		&:focus,
-		&:focus-visible,
-		&:hover {
-			border: none;
-			box-shadow: none;
-			outline: none;
-		}
-
-		&::placeholder {
-			color: var(--l2-foreground);
-		}
+		// Restyle the unstyled search Input (old .timezone-picker__input rules,
+		// as --input-* tokens picked up by the Input frame inside)
+		--input-height: auto;
+		--input-padding: 0;
+		--input-border-width: 0;
+		--input-border-radius: 0;
+		--input-foreground: var(--l1-foreground);
+		--input-font-size: 14px;
+		--input-line-height: 20px;
+		--input-letter-spacing: -0.07px;
+		--input-placeholder: var(--l2-foreground);
+		--input-placeholder-opacity: 1;
 	}
 
 	&__esc-key {

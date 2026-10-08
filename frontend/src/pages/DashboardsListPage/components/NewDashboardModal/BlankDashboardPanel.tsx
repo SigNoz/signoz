@@ -94,22 +94,23 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 							onChange={setImage}
 							triggerClassName={styles.imageTrigger}
 						/>
-						<Input
-							className={styles.titleInput}
-							value={name}
-							autoFocus
-							maxLength={DASHBOARD_NAME_MAX_LENGTH}
-							placeholder="e.g. Sample Dashboard"
-							testId="create-dashboard-name"
-							onChange={(e: ChangeEvent<HTMLInputElement>): void =>
-								setName(e.target.value)
-							}
-							onKeyDown={(e): void => {
-								if (e.key === 'Enter') {
-									void handleCreate();
+						<div className={styles.titleInput}>
+							<Input
+								value={name}
+								autoFocus
+								maxLength={DASHBOARD_NAME_MAX_LENGTH}
+								placeholder="e.g. Sample Dashboard"
+								testId="create-dashboard-name"
+								onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+									setName(e.target.value)
 								}
-							}}
-						/>
+								onKeyDown={(e): void => {
+									if (e.key === 'Enter') {
+										void handleCreate();
+									}
+								}}
+							/>
+						</div>
 					</div>
 				</div>
 
