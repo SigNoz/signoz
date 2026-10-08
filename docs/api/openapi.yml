@@ -7754,6 +7754,31 @@ components:
       - metric
       - value
       type: object
+    PromotetypesIndexMaterializedPathsParams:
+      properties:
+        dryRun:
+          type: boolean
+        signal:
+          type: string
+      required:
+      - signal
+      type: object
+    PromotetypesIndexMaterializedPathsResult:
+      properties:
+        indexed:
+          items:
+            $ref: '#/components/schemas/PromotetypesPromotePath'
+          nullable: true
+          type: array
+        skipped:
+          items:
+            $ref: '#/components/schemas/PromotetypesPromotePath'
+          nullable: true
+          type: array
+      required:
+      - indexed
+      - skipped
+      type: object
     PromotetypesPromotePath:
       properties:
         context:
@@ -13739,6 +13764,77 @@ paths:
         - logs-field:update
         - traces-field:update
       summary: Promote paths
+      tags:
+      - promote
+      x-signoz-stability: alpha
+  /api/v1/promoted_path/materialized:
+    post:
+      deprecated: false
+      description: This endpoint indexes the JSON sub-columns of materialized paths
+        whose columns are indexed and returns the indexed and skipped paths.
+      operationId: IndexMaterializedPaths
+      parameters:
+      - in: query
+        name: signal
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: dryRun
+        schema:
+          type: boolean
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromotetypesIndexMaterializedPathsParams'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PromotetypesIndexMaterializedPathsResult'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - logs-field:update
+        - traces-field:update
+      - tokenizer:
+        - logs-field:update
+        - traces-field:update
+      summary: Index materialized paths
       tags:
       - promote
       x-signoz-stability: alpha

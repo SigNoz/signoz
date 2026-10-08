@@ -9506,6 +9506,17 @@ export interface PrometheusSuccessResponseSchemaDTO {
 	warnings?: string[];
 }
 
+export interface PromotetypesIndexMaterializedPathsParamsDTO {
+	/**
+	 * @type boolean
+	 */
+	dryRun?: boolean;
+	/**
+	 * @type string
+	 */
+	signal: string;
+}
+
 export interface PromotetypesWrappedIndexDTO {
 	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
 	/**
@@ -9539,6 +9550,17 @@ export interface PromotetypesPromotePathDTO {
 	 * @type string
 	 */
 	signal: string;
+}
+
+export interface PromotetypesIndexMaterializedPathsResultDTO {
+	/**
+	 * @type array,null
+	 */
+	indexed: PromotetypesPromotePathDTO[] | null;
+	/**
+	 * @type array,null
+	 */
+	skipped: PromotetypesPromotePathDTO[] | null;
 }
 
 export interface Querybuildertypesv5AggregationMetaDTO {
@@ -12895,6 +12917,27 @@ export type ListPromotedPaths200 = {
 	 * @type array,null
 	 */
 	data: PromotetypesPromotePathDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type IndexMaterializedPathsParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	signal: string;
+	/**
+	 * @type boolean
+	 * @description undefined
+	 */
+	dryRun?: boolean;
+};
+
+export type IndexMaterializedPaths200 = {
+	data: PromotetypesIndexMaterializedPathsResultDTO;
 	/**
 	 * @type string
 	 */

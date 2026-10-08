@@ -20,6 +20,7 @@ type MockMetadataStore struct {
 	ReducedMap                 map[string]bool
 	PromotedPathsMap           map[string]bool
 	LogsJSONIndexes            []telemetrytypes.TelemetryFieldKeySkipIndex
+	MaterializedKeys           []*telemetrytypes.TelemetryFieldKey
 	ColumnEvolutionMetadataMap map[string][]*telemetrytypes.EvolutionEntry
 	LookupKeysMap              map[telemetrytypes.MetricMetadataLookupKey]int64
 	// StaticFields holds signal-specific intrinsic field definitions (e.g. logstelemetryschema.IntrinsicFields).
@@ -371,6 +372,16 @@ func (m *MockMetadataStore) PromotePaths(_ context.Context, _ telemetrytypes.Evo
 // GetPromotedPaths returns the promoted paths.
 func (m *MockMetadataStore) GetPromotedPaths(_ context.Context, _ telemetrytypes.EvolutionEntry, _ ...string) (map[string]bool, error) {
 	return m.PromotedPathsMap, nil
+}
+
+func (m *MockMetadataStore) GetMaterializedKeys(_ context.Context, signal telemetrytypes.Signal) ([]*telemetrytypes.TelemetryFieldKey, error) {
+	keys := []*telemetrytypes.TelemetryFieldKey{}
+	for _, key := range m.MaterializedKeys {
+		if key.Signal == signal {
+			keys = append(keys, key)
+		}
+	}
+	return keys, nil
 }
 
 // ListJSONIndexes narrows the stored indexes to the lookup's field context like the real query.

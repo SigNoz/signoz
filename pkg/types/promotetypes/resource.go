@@ -46,6 +46,18 @@ func ListPromotedPathsResources(ec coretypes.ExtractorContext) ([]coretypes.Reso
 	return fieldResources(signals)
 }
 
+func IndexMaterializedPathsResources(ec coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
+	signalText := ""
+	if ec.Request != nil {
+		signalText = ec.Request.URL.Query().Get("signal")
+	}
+	signal, ok := telemetrytypes.SignalFromText(signalText)
+	if !ok {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid signal: %s", signalText)
+	}
+	return fieldResources([]telemetrytypes.Signal{signal})
+}
+
 func fieldResources(signals []telemetrytypes.Signal) ([]coretypes.ResourceWithID, error) {
 	resources := make([]coretypes.ResourceWithID, 0, len(signals))
 	seen := make(map[string]struct{})

@@ -2,10 +2,12 @@ package implpromote
 
 import (
 	"context"
+	"log/slog"
 	"strings"
 
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
@@ -22,10 +24,15 @@ var (
 type module struct {
 	metadataStore  telemetrytypes.MetadataStore
 	telemetryStore telemetrystore.TelemetryStore
+	settings       factory.ScopedProviderSettings
 }
 
-func NewModule(metadataStore telemetrytypes.MetadataStore, telemetrystore telemetrystore.TelemetryStore) promote.Module {
-	return &module{metadataStore: metadataStore, telemetryStore: telemetrystore}
+func NewModule(metadataStore telemetrytypes.MetadataStore, telemetrystore telemetrystore.TelemetryStore, providerSettings factory.ProviderSettings) promote.Module {
+	return &module{
+		metadataStore:  metadataStore,
+		telemetryStore: telemetrystore,
+		settings:       factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/promote/implpromote"),
+	}
 }
 
 func (m *module) ListPromotedPaths(ctx context.Context, filters promotetypes.ListPromotedPathsFilters) ([]promotetypes.PromotePath, error) {
@@ -99,6 +106,70 @@ func (m *module) listPromotedPaths(ctx context.Context, target promotetypes.Targ
 		})
 	}
 	return response, nil
+}
+
+func (m *module) IndexMaterializedPaths(ctx context.Context, params promotetypes.IndexMaterializedPathsParams) (*promotetypes.IndexMaterializedPathsResult, error) {
+	target, err := params.Target()
+	if err != nil {
+		return nil, err
+	}
+
+	keys, err := m.metadataStore.GetMaterializedKeys(ctx, target.Entry.Signal)
+	if err != nil {
+		return nil, err
+	}
+
+	paths := []*promotetypes.PromotePath{}
+	names := []string{}
+	for _, key := range keys {
+		if key.FieldContext != target.Entry.FieldContext || len(key.Indexes) == 0 {
+			continue
+		}
+		path, err := promotetypes.NewMaterializedPromotePath(target, key)
+		if err != nil {
+			return nil, err
+		}
+		paths = append(paths, path)
+		names = append(names, path.Path)
+	}
+
+	result := &promotetypes.IndexMaterializedPathsResult{Indexed: []*promotetypes.PromotePath{}, Skipped: []*promotetypes.PromotePath{}}
+	if len(paths) > 0 {
+		existing, err := m.metadataStore.ListJSONIndexes(ctx, target.JSONIndexLookup(), names...)
+		if err != nil {
+			return nil, err
+		}
+		existingByPath := map[string][]promotetypes.WrappedIndex{}
+		for _, index := range existing {
+			existingByPath[index.Name] = append(existingByPath[index.Name], promotetypes.WrappedIndex{FieldDataType: index.FieldDataType, Type: index.IndexType, Granularity: index.Granularity})
+		}
+		for _, path := range paths {
+			if indexes, ok := existingByPath[path.Path]; ok {
+				path.Indexes = indexes
+				result.Skipped = append(result.Skipped, path)
+				continue
+			}
+			result.Indexed = append(result.Indexed, path)
+		}
+	}
+
+	if !params.DryRun && len(result.Indexed) > 0 {
+		if err := m.promotePaths(ctx, target, result.Indexed...); err != nil {
+			return nil, err
+		}
+	}
+
+	indexed := make([]string, 0, len(result.Indexed))
+	for _, path := range result.Indexed {
+		indexed = append(indexed, path.Path)
+	}
+	skipped := make([]string, 0, len(result.Skipped))
+	for _, path := range result.Skipped {
+		skipped = append(skipped, path.Path)
+	}
+	m.settings.Logger().InfoContext(ctx, "indexed materialized paths", slog.String("signal", params.Signal), slog.Bool("dry_run", params.DryRun), slog.Int("indexed_count", len(indexed)), slog.Any("indexed", indexed), slog.Int("skipped_count", len(skipped)), slog.Any("skipped", skipped))
+
+	return result, nil
 }
 
 func (m *module) PromotePaths(ctx context.Context, paths ...*promotetypes.PromotePath) error {
