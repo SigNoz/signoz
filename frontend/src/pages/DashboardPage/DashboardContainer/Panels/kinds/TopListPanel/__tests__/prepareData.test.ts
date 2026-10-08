@@ -243,6 +243,8 @@ describe('prepareTopListRows', () => {
 			labelColumnNames: [],
 			valueColumnName: '',
 			ignoredValueColumns: [],
+			ignoredResults: [],
+			orderedByGroupKey: null,
 		});
 		expect(
 			prepareTopListRows([
