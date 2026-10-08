@@ -351,6 +351,21 @@
 					}
 				}
 
+				.calendar-time-inputs {
+					width: 100%;
+					display: flex;
+					flex-direction: column;
+					gap: 8px;
+					padding: 8px 16px;
+					border-top: 1px solid var(--l1-border);
+					border-bottom: 1px solid var(--l1-border);
+
+					/* TimeInput rows: label column + full-width input column */
+					> * {
+						width: 100%;
+					}
+				}
+
 				.calendar-actions {
 					width: 100%;
 					padding: 8px 16px;

@@ -183,6 +183,7 @@ function DateTimeSelection({
 	const [refreshButtonHidden, setRefreshButtonHidden] = useState<boolean>(false);
 	const [customDateTimeVisible, setCustomDTPickerVisible] =
 		useState<boolean>(false);
+	const [aroundTimeVisible, setAroundTimeVisible] = useState<boolean>(false);
 
 	const { stagedQuery, currentQuery, initQueryBuilderData } = useQueryBuilder();
 
@@ -307,7 +308,16 @@ function DateTimeSelection({
 					setCustomDTPickerVisible(true);
 					return;
 				}
+				if (value === 'around') {
+					setAroundTimeVisible(true);
+					return;
+				}
 				onTimeChange?.(value);
+				return;
+			}
+			if (value === 'around') {
+				setRefreshButtonHidden(true);
+				setAroundTimeVisible(true);
 				return;
 			}
 			if (value !== 'custom') {
@@ -727,6 +737,8 @@ function DateTimeSelection({
 						onCustomDateHandler={onCustomDateHandler}
 						customDateTimeVisible={customDateTimeVisible}
 						setCustomDTPickerVisible={setCustomDTPickerVisible}
+						aroundTimeVisible={aroundTimeVisible}
+						setAroundTimeVisible={setAroundTimeVisible}
 						onExitLiveLogs={onExitLiveLogs}
 						showRecentlyUsed={showRecentlyUsed}
 						minTime={minTimeForDateTimePicker}
