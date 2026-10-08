@@ -34,6 +34,15 @@
 	}
 }
 
+.tabs {
+	flex-shrink: 0;
+}
+
+.tab {
+	flex: unset;
+	padding: 0 24px;
+}
+
 .filterSection {
 	display: flex;
 	align-items: center;
