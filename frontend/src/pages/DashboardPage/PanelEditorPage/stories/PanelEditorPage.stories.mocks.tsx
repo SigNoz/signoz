@@ -24,6 +24,11 @@ import {
 	newPanelSearch,
 } from '../../DashboardContainer/PanelEditor/newPanelRoute';
 import {
+	API_RESULTS,
+	settle,
+	type ApiResult,
+} from '../../stories/__story_mockdata__/settled';
+import {
 	currentDashboardDocument,
 	PANEL_IDS,
 	patchDashboardDocument,
@@ -86,6 +91,13 @@ export const panelEditorMocks = defineStoryMocks({
 				'A locked dashboard is read-only, so the editor loads but Save is refused with the reason.',
 			value: false,
 		}),
+		panelSave: choiceControl<ApiResult>('Panel save', {
+			group: PANEL,
+			description:
+				'How the JSON Patch behind Save changes answers. `success` raises the "Panel saved" toast, `loading` never answers and leaves the button spinning.',
+			options: API_RESULTS,
+			value: 'success',
+		}),
 		noData: toggleControl('Preview returns nothing', {
 			group: DATA,
 			description: 'The preview query answers with an empty result.',
@@ -109,18 +121,14 @@ export const panelEditorMocks = defineStoryMocks({
 
 			// Saving the panel is a JSON Patch whose response replaces the cache, so
 			// the ops are applied to the story's document and the edit stays.
-			rest.patch(
-				'http://localhost/api/v2/dashboards/:id',
-				async (req, res, ctx) => {
+			rest.patch('http://localhost/api/v2/dashboards/:id', (req, res, ctx) =>
+				settle(values.panelSave, req, res, ctx, async () => {
 					const ops = (await req.json()) as Parameters<
 						typeof patchDashboardDocument
 					>[1];
 
-					return res(
-						ctx.status(200),
-						ctx.json(patchDashboardDocument(document, ops)),
-					);
-				},
+					return patchDashboardDocument(document, ops);
+				}),
 			),
 
 			rest.post(

@@ -119,3 +119,64 @@ export const PublishPrivate: Story = {
 		await screen.findByText('This dashboard is private');
 	},
 };
+
+/** The name edited and saved: the toast announcing the update, raised once the patch answers. */
+export const OverviewSavedToast: Story = {
+	play: async ({ canvasElement, args }) => {
+		await openSettings(canvasElement);
+		await userEvent.type(await screen.findByTestId('dashboard-name'), ' (v2)');
+		await userEvent.click(await screen.findByTestId('save-dashboard-config'));
+		if (args.dashboardPatch === 'success') {
+			await screen.findByText('Dashboard updated');
+		}
+	},
+};
+
+/** Publish Dashboard on a private dashboard: the toast announcing the new link. */
+export const PublishedToast: Story = {
+	args: { published: false },
+	// The 404 an unpublished dashboard answers with is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: async ({ canvasElement, args }) => {
+		await openSettings(canvasElement, 'Publish');
+		await userEvent.click(await screen.findByTestId('public-dashboard-publish'));
+		if (args.publicWrite === 'success') {
+			await screen.findByText('Dashboard published successfully');
+		}
+	},
+};
+
+/** Update Dashboard on a published dashboard: the toast confirming the new settings. */
+export const PublicUpdatedToast: Story = {
+	play: async ({ canvasElement, args }) => {
+		await openSettings(canvasElement, 'Publish');
+		await userEvent.click(await screen.findByTestId('public-dashboard-update'));
+		if (args.publicWrite === 'success') {
+			await screen.findByText('Public dashboard updated successfully');
+		}
+	},
+};
+
+/** Unpublish Dashboard: the toast confirming the link is gone. */
+export const UnpublishedToast: Story = {
+	play: async ({ canvasElement, args }) => {
+		await openSettings(canvasElement, 'Publish');
+		await userEvent.click(
+			await screen.findByTestId('public-dashboard-unpublish'),
+		);
+		if (args.publicWrite === 'success') {
+			await screen.findByText('Dashboard unpublished successfully');
+		}
+	},
+};
+
+/** The copy button beside the public link: the toast confirming the copy. */
+export const PublicUrlCopiedToast: Story = {
+	play: async ({ canvasElement }) => {
+		await openSettings(canvasElement, 'Publish');
+		await userEvent.click(
+			await screen.findByRole('button', { name: 'Copy link' }),
+		);
+		await screen.findByText('Copied public dashboard URL successfully');
+	},
+};

@@ -11,6 +11,7 @@ import { useDashboardPreferencesStore } from 'hooks/dashboard/useDashboardPrefer
 import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
 import {
+	choiceControl,
 	countControl,
 	multiChoiceControl,
 	toggleControl,
@@ -34,6 +35,11 @@ import {
 	type VariableKind,
 } from './__story_mockdata__/dashboard';
 import {
+	API_RESULTS,
+	settle,
+	type ApiResult,
+} from './__story_mockdata__/settled';
+import {
 	attributeValues,
 	emptyPanelResponse,
 	VARIABLE_ATTRIBUTES,
@@ -50,6 +56,7 @@ import {
 const LAYOUT = 'Dashboard · layout';
 const DATA = 'Dashboard · panels';
 const SHARING = 'Dashboard · sharing';
+const REQUESTS = 'Dashboard · requests';
 
 export const dashboardRoute = (): string =>
 	generatePath(ROUTES.DASHBOARD, { dashboardId: STORY_DASHBOARD_ID });
@@ -169,6 +176,44 @@ export const dashboardMocks = defineStoryMocks({
 				'Answers the dashboard document with a 404, which is the page-level failure the shell renders around.',
 			value: false,
 		}),
+		dashboardPatch: choiceControl<ApiResult>('Dashboard edit', {
+			group: REQUESTS,
+			description:
+				'How the JSON Patch behind every spec edit answers: rename, settings, variables, clone panel or section and the variable review. `loading` never answers, `error` answers 500.',
+			options: API_RESULTS,
+			value: 'success',
+		}),
+		dashboardUpdate: choiceControl<ApiResult>('Dashboard replace', {
+			group: REQUESTS,
+			description: "How the PUT behind the JSON editor's Apply changes answers.",
+			options: API_RESULTS,
+			value: 'success',
+		}),
+		dashboardClone: choiceControl<ApiResult>('Dashboard clone', {
+			group: REQUESTS,
+			description: 'How the endpoint behind Actions, Clone dashboard answers.',
+			options: API_RESULTS,
+			value: 'success',
+		}),
+		dashboardDelete: choiceControl<ApiResult>('Dashboard delete', {
+			group: REQUESTS,
+			description: 'How the endpoint behind Actions, Delete dashboard answers.',
+			options: API_RESULTS,
+			value: 'success',
+		}),
+		publicWrite: choiceControl<ApiResult>('Public link change', {
+			group: REQUESTS,
+			description: 'How publish, update and unpublish on the Publish tab answer.',
+			options: API_RESULTS,
+			value: 'success',
+		}),
+		substituteVars: choiceControl<ApiResult>('Variable substitution', {
+			group: REQUESTS,
+			description:
+				'How the endpoint that resolves variables before Create Alerts answers.',
+			options: API_RESULTS,
+			value: 'success',
+		}),
 		published: toggleControl('Published publicly', {
 			group: SHARING,
 			description:
@@ -197,26 +242,37 @@ export const dashboardMocks = defineStoryMocks({
 			// Every spec edit travels as a JSON Patch, and its response is what
 			// replaces the cache, so the ops are applied to the story's document
 			// rather than answered away.
-			rest.patch(
-				'http://localhost/api/v2/dashboards/:id',
-				async (req, res, ctx) => {
+			rest.patch('http://localhost/api/v2/dashboards/:id', (req, res, ctx) =>
+				settle(values.dashboardPatch, req, res, ctx, async () => {
 					const ops = (await req.json()) as Parameters<
 						typeof patchDashboardDocument
 					>[1];
 
-					return res(
-						ctx.status(200),
-						ctx.json(patchDashboardDocument(document, ops)),
-					);
-				},
+					return patchDashboardDocument(document, ops);
+				}),
 			),
 
-			rest.post('http://localhost/api/v2/dashboards/:id/clone', (_req, res, ctx) =>
-				res(ctx.status(200), ctx.json(currentDashboardDocument(document))),
+			rest.put('http://localhost/api/v2/dashboards/:id', (req, res, ctx) =>
+				settle(values.dashboardUpdate, req, res, ctx, () =>
+					currentDashboardDocument(document),
+				),
 			),
 
-			rest.delete('http://localhost/api/v2/dashboards/:id', (_req, res, ctx) =>
-				res(ctx.status(200), ctx.json(ok)),
+			rest.post('http://localhost/api/v2/dashboards/:id/clone', (req, res, ctx) =>
+				settle(values.dashboardClone, req, res, ctx, () =>
+					currentDashboardDocument(document),
+				),
+			),
+
+			rest.delete('http://localhost/api/v2/dashboards/:id', (req, res, ctx) =>
+				settle(values.dashboardDelete, req, res, ctx, () => ok),
+			),
+
+			rest.post('http://localhost/api/v5/substitute_vars', (req, res, ctx) =>
+				settle(values.substituteVars, req, res, ctx, async () => ({
+					status: 'success',
+					data: await req.json(),
+				})),
 			),
 
 			rest.put('http://localhost/api/v2/dashboards/:id/lock', (_req, res, ctx) =>
@@ -287,18 +343,17 @@ export const dashboardMocks = defineStoryMocks({
 					: res(ctx.status(404), ctx.json(NOT_PUBLIC)),
 			),
 
-			rest.post(
-				'http://localhost/api/v1/dashboards/:id/public',
-				(_req, res, ctx) => res(ctx.status(200), ctx.json(publicMeta())),
+			rest.post('http://localhost/api/v1/dashboards/:id/public', (req, res, ctx) =>
+				settle(values.publicWrite, req, res, ctx, publicMeta),
 			),
 
-			rest.put('http://localhost/api/v1/dashboards/:id/public', (_req, res, ctx) =>
-				res(ctx.status(200), ctx.json(publicMeta())),
+			rest.put('http://localhost/api/v1/dashboards/:id/public', (req, res, ctx) =>
+				settle(values.publicWrite, req, res, ctx, publicMeta),
 			),
 
 			rest.delete(
 				'http://localhost/api/v1/dashboards/:id/public',
-				(_req, res, ctx) => res(ctx.status(200), ctx.json(ok)),
+				(req, res, ctx) => settle(values.publicWrite, req, res, ctx, () => ok),
 			),
 		];
 	},

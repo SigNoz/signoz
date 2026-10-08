@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Route } from 'react-router-dom';
+import * as monaco from 'monaco-editor';
 import ROUTES from 'constants/routes';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
@@ -352,6 +353,244 @@ export const PanelMoveToSectionSubmenu: Story = {
 		await waitFor(() => expect(screen.getAllByRole('menu')).toHaveLength(2), {
 			timeout: 10000,
 		});
+	},
+};
+
+const PAGE_LOAD = { timeout: 10000 };
+
+const clickAction = async (
+	canvasElement: HTMLElement,
+	label: string,
+): Promise<void> => {
+	// The dropdown trigger's Slot merge drops the button's own test id.
+	await userEvent.click(
+		await within(canvasElement).findByRole(
+			'button',
+			{ name: 'Actions' },
+			PAGE_LOAD,
+		),
+	);
+	const item = await screen.findByText(label);
+	const menuItem = item.closest('[role="menuitem"]') ?? item;
+
+	await waitFor(() => {
+		expect(menuItem).not.toHaveAttribute('aria-disabled', 'true');
+		expect(menuItem).not.toHaveAttribute('data-disabled');
+	});
+	await userEvent.click(menuItem);
+};
+
+const clickPanelAction = async (
+	canvasElement: HTMLElement,
+	panelId: string,
+	label: string,
+): Promise<void> => {
+	await userEvent.click(
+		await within(canvasElement).findByTestId(
+			`panel-actions-${panelId}`,
+			{},
+			PAGE_LOAD,
+		),
+	);
+	await userEvent.click(await screen.findByText(label));
+};
+
+const clickSectionAction = async (
+	canvasElement: HTMLElement,
+	label: string,
+): Promise<void> => {
+	const [firstSection] = await within(canvasElement).findAllByRole(
+		'button',
+		{ name: 'Section actions' },
+		PAGE_LOAD,
+	);
+	await userEvent.click(firstSection);
+	await userEvent.click(await screen.findByText(label));
+};
+
+const expectToast = (text: string | RegExp): Promise<HTMLElement> =>
+	screen.findByText(text, undefined, PAGE_LOAD);
+
+/**
+ * Actions, Clone dashboard: the toast announcing the copy, raised once the
+ * clone endpoint answers. Set Dashboard clone to `error` to see the error
+ * modal instead.
+ */
+export const DashboardClonedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await clickAction(canvasElement, 'Clone dashboard');
+		if (args.dashboardClone === 'success') {
+			await expectToast('Dashboard cloned');
+		}
+	},
+};
+
+/**
+ * The title edited inline: the toast announcing the new name, raised once the
+ * patch answers.
+ */
+export const DashboardRenamedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await clickAction(canvasElement, 'Rename');
+		const input = await screen.findByTestId('dashboard-title-input');
+		await userEvent.clear(input);
+		await userEvent.type(input, 'Service overview (renamed){enter}');
+		if (args.dashboardPatch === 'success') {
+			await expectToast('Dashboard renamed successfully');
+		}
+	},
+};
+
+/**
+ * Actions, Delete dashboard, confirmed: the toast announcing the deletion,
+ * raised once the delete endpoint answers and before the page leaves for the
+ * list.
+ */
+export const DashboardDeletedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await clickAction(canvasElement, 'Delete dashboard');
+		await userEvent.click(await screen.findByRole('button', { name: 'Delete' }));
+		if (args.dashboardDelete === 'success') {
+			await expectToast('Dashboard deleted successfully');
+		}
+	},
+};
+
+/** A panel's Clone: the promise toast, loading until the patch answers. */
+export const PanelClonedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await clickPanelAction(canvasElement, 'p99-latency', 'Clone');
+		if (args.dashboardPatch === 'success') {
+			await expectToast('Panel cloned');
+		}
+	},
+};
+
+/** A panel's Clone whose patch is refused. */
+export const PanelCloneFailedToast: Story = {
+	args: { dashboardPatch: 'error' },
+	// The refused patch is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: async (context) => {
+		await PanelClonedToast.play?.(context);
+		await expectToast('Failed to clone panel');
+	},
+};
+
+/** A panel's Clone whose patch never answers, so the toast stays on loading. */
+export const PanelCloneLoadingToast: Story = {
+	args: { dashboardPatch: 'loading' },
+	play: async (context) => {
+		await PanelClonedToast.play?.(context);
+		await expectToast('Cloning panel…');
+	},
+};
+
+/** A section's Clone section: the promise toast, loading until the patch answers. */
+export const SectionClonedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await clickSectionAction(canvasElement, 'Clone section');
+		if (args.dashboardPatch === 'success') {
+			await expectToast('Section cloned');
+		}
+	},
+};
+
+/** A section's Clone section whose patch is refused. */
+export const SectionCloneFailedToast: Story = {
+	args: { dashboardPatch: 'error' },
+	// The refused patch is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: async (context) => {
+		await SectionClonedToast.play?.(context);
+		await expectToast('Failed to clone section');
+	},
+};
+
+/** A section's Clone section whose patch never answers, so the toast stays on loading. */
+export const SectionCloneLoadingToast: Story = {
+	args: { dashboardPatch: 'loading' },
+	play: async (context) => {
+		await SectionClonedToast.play?.(context);
+		await expectToast('Cloning section…');
+	},
+};
+
+/**
+ * A panel's Create Alerts when the substitute-variables call is refused: the
+ * dashboard has variables selected, so the query is resolved before the alert
+ * page opens.
+ */
+export const PanelCreateAlertErrorToast: Story = {
+	args: { substituteVars: 'error' },
+	// The refused request is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: async ({ canvasElement }): Promise<void> => {
+		await clickPanelAction(canvasElement, 'p99-latency', 'Create Alerts');
+		await expectToast('Failed to create alert from panel');
+	},
+};
+
+/**
+ * The View modal on a time series panel, Save in its series manager: the toast
+ * confirming the legend state was stored.
+ */
+export const ChartManagerSavedToast: Story = {
+	parameters: { msw: { handlers: [metricsListHandler] } },
+	play: async ({ canvasElement }): Promise<void> => {
+		await clickPanelAction(canvasElement, 'request-rate', 'View');
+		await userEvent.click(
+			await screen.findByRole('button', { name: 'Save' }, PAGE_LOAD),
+		);
+		await expectToast('The updated graphs & legends are saved');
+	},
+};
+
+const openJsonEditor = async (canvasElement: HTMLElement): Promise<void> => {
+	await userEvent.click(
+		await within(canvasElement).findByTestId('edit-json', {}, PAGE_LOAD),
+	);
+	await screen.findByTestId('json-editor-copy', {}, PAGE_LOAD);
+};
+
+/** The JSON editor's Copy: the toast confirming the clipboard write. */
+export const JsonCopiedToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openJsonEditor(canvasElement);
+		await userEvent.click(screen.getByTestId('json-editor-copy'));
+		await expectToast('JSON copied to clipboard');
+	},
+};
+
+/**
+ * The JSON editor with a whitespace edit, applied: the toast announcing the
+ * update, raised once the PUT answers.
+ */
+export const JsonAppliedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await openJsonEditor(canvasElement);
+		await waitFor(
+			() => {
+				if (monaco.editor.getModels().length === 0) {
+					throw new Error('Monaco has not mounted');
+				}
+			},
+			{ timeout: 20000 },
+		);
+		// Typing into Monaco's hidden textarea never reaches its model in this runner.
+		monaco.editor
+			.getModels()[0]
+			.applyEdits([{ range: new monaco.Range(1, 1, 1, 1), text: ' ' }]);
+		await waitFor(() =>
+			expect(screen.getByTestId('json-editor-apply')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			),
+		);
+		await userEvent.click(screen.getByTestId('json-editor-apply'));
+		if (args.dashboardUpdate === 'success') {
+			await expectToast('Dashboard updated');
+		}
 	},
 };
 

@@ -130,3 +130,94 @@ export const RenameReferenced: Story = {
 		await screen.findByText('Rename $environment');
 	},
 };
+
+const confirmImpact = async (): Promise<void> => {
+	await userEvent.click(await screen.findByTestId('variable-impact-confirm'));
+};
+
+/** Deleting a variable nothing reads, confirmed: the toast raised once the patch answers. */
+export const VariablesUpdatedToast: Story = {
+	play: async ({ canvasElement, args }) => {
+		await openSettings(canvasElement, 'Variables');
+		await clickRowAction('owner', 'delete');
+		await userEvent.click(
+			await screen.findByRole('button', { name: 'Confirm delete' }),
+		);
+		if (args.dashboardPatch === 'success') {
+			await screen.findByText('Variables updated');
+		}
+	},
+};
+
+/** Deleting `$environment` after reviewing its usages: the toast raised once the patch answers. */
+export const VariableDeletedToast: Story = {
+	play: async ({ canvasElement, args }) => {
+		await openSettings(canvasElement, 'Variables');
+		await clickRowAction('environment', 'delete');
+		await screen.findByText('Delete $environment');
+		await confirmImpact();
+		if (args.dashboardPatch === 'success') {
+			await screen.findByText('Deleted $environment');
+		}
+	},
+};
+
+/** Deleting `$environment` whose patch is refused. */
+export const VariableDeleteFailedToast: Story = {
+	args: { dashboardPatch: 'error' },
+	// The refused patch is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: async (context) => {
+		await VariableDeletedToast.play?.(context);
+		await screen.findByText('Could not delete the variable');
+	},
+};
+
+/** Renaming `$environment` to `$env` after reviewing the rewritten queries. */
+export const VariableRenamedToast: Story = {
+	play: async ({ canvasElement, args }) => {
+		await openVariableEditor(canvasElement, 'environment');
+		await typeVariableName('env');
+		await userEvent.click(screen.getByTestId('variable-save'));
+		await screen.findByText('Rename $environment');
+		await confirmImpact();
+		if (args.dashboardPatch === 'success') {
+			await screen.findByText('Renamed to $env');
+		}
+	},
+};
+
+/** Renaming `$environment` whose patch is refused. */
+export const VariableRenameFailedToast: Story = {
+	args: { dashboardPatch: 'error' },
+	// The refused patch is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: async (context) => {
+		await VariableRenamedToast.play?.(context);
+		await screen.findByText('Could not rename the variable');
+	},
+};
+
+/** Apply to all on `$namespace`, confirmed after the review. */
+export const VariableAppliedToast: Story = {
+	play: async ({ canvasElement, args }) => {
+		await openSettings(canvasElement, 'Variables');
+		await clickRowAction('namespace', 'apply-all');
+		await screen.findByText('Apply $namespace to panels');
+		await confirmImpact();
+		if (args.dashboardPatch === 'success') {
+			await screen.findByText('Applied $namespace to panels');
+		}
+	},
+};
+
+/** Apply to all on `$namespace` whose patch is refused. */
+export const VariableApplyFailedToast: Story = {
+	args: { dashboardPatch: 'error' },
+	// The refused patch is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: async (context) => {
+		await VariableAppliedToast.play?.(context);
+		await screen.findByText('Could not apply the variable to panels');
+	},
+};
