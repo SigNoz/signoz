@@ -129,10 +129,10 @@ describe('TopListPanelRenderer', () => {
 			screen.getAllByTestId('top-list-row-fill');
 		const [paymentValue, checkoutValue] =
 			screen.getAllByTestId('top-list-row-value');
-		expect(paymentFill).toHaveStyle({ backgroundColor: '#F1575F' });
+		expect(paymentFill.style.getPropertyValue('--fill-color')).toBe('#F1575F');
 		expect(paymentValue.style.color).toBe('');
 		expect(checkoutValue).toHaveStyle({ color: '#F5B225' });
-		expect(checkoutFill.style.backgroundColor).toBe('');
+		expect(checkoutFill.style.getPropertyValue('--fill-color')).toBe('');
 	});
 
 	it('opens the drilldown with the clicked row', () => {

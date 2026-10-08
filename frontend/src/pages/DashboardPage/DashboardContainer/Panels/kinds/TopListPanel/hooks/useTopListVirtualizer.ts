@@ -1,7 +1,8 @@
 import { type RefObject, useCallback, useEffect, useRef } from 'react';
 import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 
-const ROW_HEIGHT = 28;
+import { ROW_GAP } from '../constants';
+
 const OVERSCAN = 10;
 /** Size assumed until the container is measured, so the first paint isn't empty. */
 const INITIAL_RECT = { width: 0, height: 600 };
@@ -10,6 +11,7 @@ const FOCUS_RETRY_FRAMES = 10;
 
 interface UseTopListVirtualizerArgs {
 	count: number;
+	rowHeight: number;
 	containerRef: RefObject<HTMLDivElement>;
 }
 
@@ -19,23 +21,29 @@ interface TopListVirtualizer {
 	/** Space standing in for the rows above and below the rendered window. */
 	paddingTop: number;
 	paddingBottom: number;
-	measureElement: (element: Element | null) => void;
 	/** Scrolls the row into view if needed, then focuses it. */
 	focusRow: (index: number) => void;
 }
 
 export function useTopListVirtualizer({
 	count,
+	rowHeight,
 	containerRef,
 }: UseTopListVirtualizerArgs): TopListVirtualizer {
 	const virtualizer = useVirtualizer({
 		count,
 		getScrollElement: () => containerRef.current,
-		estimateSize: () => ROW_HEIGHT,
+		estimateSize: () => rowHeight,
+		gap: ROW_GAP,
 		overscan: OVERSCAN,
 		initialRect: INITIAL_RECT,
 	});
 	const focusFrame = useRef<number>();
+
+	// Every row takes the density's height, so a density change re-lays out every row.
+	useEffect(() => {
+		virtualizer.measure();
+	}, [virtualizer, rowHeight]);
 
 	useEffect(() => (): void => cancelAnimationFrame(focusFrame.current ?? 0), []);
 
@@ -70,7 +78,6 @@ export function useTopListVirtualizer({
 		virtualItems,
 		paddingTop: first ? first.start : 0,
 		paddingBottom: last ? virtualizer.getTotalSize() - last.end : 0,
-		measureElement: virtualizer.measureElement,
 		focusRow,
 	};
 }
