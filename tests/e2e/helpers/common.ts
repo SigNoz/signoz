@@ -1,5 +1,7 @@
 import type { Page, Request } from '@playwright/test';
 
+import { storageKey } from './base-path';
+
 // Shared helpers used across feature-specific helper modules (dashboards,
 // trace-details, …). Keep this to genuinely cross-feature utilities.
 
@@ -130,7 +132,9 @@ export function requestUrl(request: Request): URL {
 export async function authToken(page: Page): Promise<string> {
 	const state = await page.context().storageState();
 	for (const origin of state.origins) {
-		const entry = origin.localStorage.find((e) => e.name === 'AUTH_TOKEN');
+		const entry = origin.localStorage.find(
+			(e) => e.name === storageKey('AUTH_TOKEN'),
+		);
 		if (entry) {
 			return entry.value;
 		}
