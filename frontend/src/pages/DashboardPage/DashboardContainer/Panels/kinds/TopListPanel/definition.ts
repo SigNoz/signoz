@@ -5,6 +5,7 @@ import { QueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.
 import type { PanelDefinition } from '../../types/panelDefinition';
 import QueryBuilderEditorPane from 'pages/DashboardPage/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/QueryBuilderEditorPane';
 import Renderer from './Renderer';
+import { DEFAULT_LIMIT } from './constants';
 import { sections } from './sections';
 import { getTopListDataWarning } from './warnings';
 import {
@@ -27,10 +28,15 @@ export const definition: PanelDefinition<'signoz/TopListPanel'> = {
 		TelemetrytypesSignalDTO.traces,
 	],
 	supportedQueryTypes: [EQueryType.QUERY_BUILDER, EQueryType.CLICKHOUSE],
-	// Ranks a single query's value; the request rejects formulas and further queries.
 	queryBuilderFields: {
-		[QueryBuilderField.Formula]: { state: 'hidden' },
-		[QueryBuilderField.AdditionalQueries]: { state: 'hidden' },
+		// A list without a group by is a single row.
+		[QueryBuilderField.GroupBy]: { state: 'pinned' },
+		[QueryBuilderField.Limit]: {
+			state: 'defaulted',
+			placeholder: `Default ${DEFAULT_LIMIT} for Top List`,
+		},
+		// Ignored for logs and traces scalars; for metrics they apply before reduceTo.
+		[QueryBuilderField.Functions]: { state: 'hidden' },
 	},
 	queryCapabilities: {
 		requestType: Querybuildertypesv5RequestTypeDTO.scalar,
@@ -38,7 +44,10 @@ export const definition: PanelDefinition<'signoz/TopListPanel'> = {
 		bucketedStepInterval: false,
 		orderTiebreaker: false,
 		serverPaginated: false,
+		defaultRowLimit: DEFAULT_LIMIT,
 	},
+	// Formulas join their inputs on group values, so every query groups by the same keys.
+	syncedQueryBuilderFields: [QueryBuilderField.GroupBy],
 	getDataWarning: getTopListDataWarning,
 	actions: {
 		view: true,

@@ -24,4 +24,8 @@ export interface TopListData {
 	valueColumnName: string;
 	/** Value columns after the first, which the ranking ignores. */
 	ignoredValueColumns: string[];
+	/** Other enabled queries and formulas, which the ranking ignores. */
+	ignoredResults: string[];
+	/** The group-by key the ranked query orders by, when it orders by one instead of its value. */
+	orderedByGroupKey: string | null;
 }

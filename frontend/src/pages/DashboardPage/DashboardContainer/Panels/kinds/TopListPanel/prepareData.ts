@@ -1,8 +1,12 @@
+import type { Querybuildertypesv5QueryRangeRequestDTO } from 'api/generated/services/sigNoz.schemas';
+import { prepareScalarTables } from 'pages/DashboardPage/DashboardContainer/queryV5/prepareScalarTables';
 import type {
+	PanelQueryData,
 	PanelTable,
 	PanelTableColumn,
 	PanelTableRow,
 } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
+import { getScalarResults } from 'pages/DashboardPage/DashboardContainer/queryV5/v5ResponseData';
 
 import type { TopListData, TopListRow } from './types';
 
@@ -16,6 +20,8 @@ const EMPTY_DATA: TopListData = {
 	labelColumnNames: [],
 	valueColumnName: '',
 	ignoredValueColumns: [],
+	ignoredResults: [],
+	orderedByGroupKey: null,
 };
 
 /** A missing group value is `null` for traces/logs and `""` for metrics. */
@@ -75,25 +81,89 @@ function resolveLabel(
 	};
 }
 
-/** Highest value first; non-numeric values last; ties by label so the order is stable across refreshes. */
-function compareRows(a: TopListRow, b: TopListRow): number {
-	if (a.value === null || b.value === null) {
-		if (a.value === b.value) {
-			return a.label.localeCompare(b.label);
+type SortDirection = 'asc' | 'desc';
+
+/** By value in the query's direction; non-numeric values last; ties by label so the order is stable across refreshes. */
+function compareRows(direction: SortDirection) {
+	return (a: TopListRow, b: TopListRow): number => {
+		if (a.value === null || b.value === null) {
+			if (a.value === b.value) {
+				return a.label.localeCompare(b.label);
+			}
+			return a.value === null ? 1 : -1;
 		}
-		return a.value === null ? 1 : -1;
-	}
-	return b.value - a.value || a.label.localeCompare(b.label);
+		const byValue = direction === 'asc' ? a.value - b.value : b.value - a.value;
+		return byValue || a.label.localeCompare(b.label);
+	};
 }
+
+interface OrderedQuerySpec {
+	name?: string;
+	order?: { key?: { name?: string }; direction?: string }[];
+	groupBy?: { name?: string }[];
+}
+
+interface RankedOrder {
+	direction: SortDirection;
+	groupKey: string | null;
+}
+
+/**
+ * How the ranked query orders its rows. The server orders by value, descending, when
+ * no order is set; ordering by a group-by key returns the first N groups by that key.
+ */
+function getRankedOrder(
+	requestPayload: Querybuildertypesv5QueryRangeRequestDTO | undefined,
+	queryName: string | undefined,
+): RankedOrder {
+	const spec = (requestPayload?.compositeQuery?.queries ?? [])
+		.map((envelope) => envelope.spec as OrderedQuerySpec | undefined)
+		.find((candidate) => candidate?.name === queryName);
+	const [order] = spec?.order ?? [];
+	const keyName = order?.key?.name;
+	if (!keyName) {
+		return { direction: 'desc', groupKey: null };
+	}
+	if (spec?.groupBy?.some((key) => key.name === keyName)) {
+		return { direction: 'desc', groupKey: keyName };
+	}
+	return {
+		direction: order.direction === 'asc' ? 'asc' : 'desc',
+		groupKey: null,
+	};
+}
+
+/** The request's queries and formulas, in builder order. */
+function getQueryOrder(
+	requestPayload: Querybuildertypesv5QueryRangeRequestDTO | undefined,
+): string[] {
+	return (requestPayload?.compositeQuery?.queries ?? [])
+		.map((envelope) => envelope.spec?.name)
+		.filter((name): name is string => Boolean(name));
+}
+
+/** Tables in builder order; the response lists them in no particular order. */
+function orderTables(tables: PanelTable[], queryOrder: string[]): PanelTable[] {
+	const position = (table: PanelTable): number => {
+		const index = queryOrder.indexOf(table.queryName);
+		return index === -1 ? queryOrder.length : index;
+	};
+	return [...tables].sort((a, b) => position(a) - position(b));
+}
+
+const hasValueColumn = (table: PanelTable): boolean =>
+	table.columns.some((column) => column.isValueColumn);
 
 /**
  * Ranks the first value column of the first table that has one. The server already
  * orders and limits, but its order isn't stable on ties, so the rows are sorted again here.
+ * A query ordered by a group key still lists by value: its rows are the first N groups.
  */
-export function prepareTopListRows(tables: PanelTable[]): TopListData {
-	const table = tables.find((candidate) =>
-		candidate.columns.some((column) => column.isValueColumn),
-	);
+export function prepareTopListRows(
+	tables: PanelTable[],
+	direction: SortDirection = 'desc',
+): TopListData {
+	const [table, ...otherTables] = tables.filter(hasValueColumn);
 	if (!table) {
 		return EMPTY_DATA;
 	}
@@ -131,9 +201,29 @@ export function prepareTopListRows(tables: PanelTable[]): TopListData {
 	});
 
 	return {
-		rows: rows.sort(compareRows),
+		rows: rows.sort(compareRows(direction)),
 		labelColumnNames: labelColumns.map((column) => column.name),
 		valueColumnName: valueColumn.name,
 		ignoredValueColumns: ignoredColumns.map((column) => column.name),
+		ignoredResults: otherTables.map((other) => other.queryName),
+		orderedByGroupKey: null,
+	};
+}
+
+/** Ranks the first enabled query or formula, in builder order, in its order direction. */
+export function prepareTopListData(data: PanelQueryData): TopListData {
+	const tables = prepareScalarTables({
+		results: getScalarResults(data.response),
+		legendMap: data.legendMap ?? {},
+		requestPayload: data.requestPayload,
+	});
+	const ordered = orderTables(tables, getQueryOrder(data.requestPayload));
+	const { direction, groupKey } = getRankedOrder(
+		data.requestPayload,
+		ordered.find(hasValueColumn)?.queryName,
+	);
+	return {
+		...prepareTopListRows(ordered, direction),
+		orderedByGroupKey: groupKey,
 	};
 }

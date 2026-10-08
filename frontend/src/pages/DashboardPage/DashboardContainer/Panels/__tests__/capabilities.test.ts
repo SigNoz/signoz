@@ -122,6 +122,7 @@ const EXPECTED_QUERY_CAPABILITIES: Partial<
 		bucketedStepInterval: false,
 		orderTiebreaker: false,
 		serverPaginated: false,
+		defaultRowLimit: 10,
 	},
 	// Only Table and Scatter Plot ask the server to join their scalar results into UI rows.
 	'signoz/TablePanel': {

@@ -1,6 +1,4 @@
 import { useCallback, useMemo } from 'react';
-import { prepareScalarTables } from 'pages/DashboardPage/DashboardContainer/queryV5/prepareScalarTables';
-import { getScalarResults } from 'pages/DashboardPage/DashboardContainer/queryV5/v5ResponseData';
 
 import NoData from '../../components/NoData/NoData';
 import PanelStyles from '../../panel.module.scss';
@@ -12,7 +10,7 @@ import { getPanelTimeRange } from '../../utils/getPanelTimeRange';
 import { mapNumberThresholds } from '../NumberPanel/utils';
 
 import TopList from './components/TopList/TopList';
-import { prepareTopListRows } from './prepareData';
+import { prepareTopListData } from './prepareData';
 import type { TopListRow } from './types';
 import { ACCENT_COLOR, type RowColors } from './utils';
 
@@ -26,17 +24,7 @@ function TopListPanelRenderer({
 }: PanelRendererProps<'signoz/TopListPanel'>): JSX.Element {
 	const spec = panel.spec.plugin.spec;
 
-	const { rows } = useMemo(
-		() =>
-			prepareTopListRows(
-				prepareScalarTables({
-					results: getScalarResults(data.response),
-					legendMap: data.legendMap ?? {},
-					requestPayload: data.requestPayload,
-				}),
-			),
-		[data.response, data.legendMap, data.requestPayload],
-	);
+	const { rows } = useMemo(() => prepareTopListData(data), [data]);
 
 	const thresholds = useMemo(
 		() => mapNumberThresholds(spec.thresholds),

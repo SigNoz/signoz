@@ -49,7 +49,7 @@ function dataWith(groupColumns: string[], rows: unknown[][]): PanelQueryData {
 }
 
 describe('getTopListCsvRows', () => {
-	it('exports the ranked rows with formatted values', () => {
+	it('exports the rows in ranked order with formatted values', () => {
 		const data = dataWith(
 			['service.name'],
 			[
@@ -61,8 +61,8 @@ describe('getTopListCsvRows', () => {
 		expect(
 			getTopListCsvRows(panelWith({ formatting: { unit: 'ms' } }), data),
 		).toStrictEqual([
-			{ Rank: '1', 'service.name': 'payment', A: '1.5 s' },
-			{ Rank: '2', 'service.name': 'auth', A: '25 ms' },
+			{ 'service.name': 'payment', A: '1.5 s' },
+			{ 'service.name': 'auth', A: '25 ms' },
 		]);
 	});
 
@@ -70,7 +70,6 @@ describe('getTopListCsvRows', () => {
 		const data = dataWith(['http.route', 'region'], [['GET /orders', 'eu', 3]]);
 
 		expect(Object.keys(getTopListCsvRows(panelWith({}), data)[0])).toStrictEqual([
-			'Rank',
 			'http.route · region',
 			'A',
 		]);
@@ -80,7 +79,7 @@ describe('getTopListCsvRows', () => {
 		const data = dataWith([], [[42]]);
 
 		expect(getTopListCsvRows(panelWith({}), data)).toStrictEqual([
-			{ Rank: '1', Label: 'A', A: '42' },
+			{ Label: 'A', A: '42' },
 		]);
 	});
 
