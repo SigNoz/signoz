@@ -36,7 +36,7 @@ func TestPromotePaths(t *testing.T) {
 			wantPromoted: map[telemetrytypes.Signal]map[string]bool{telemetrytypes.SignalTraces: {"http.method": true, "span.operation": true}},
 		},
 		{
-			name: "MixedDomains_RecordedPerTarget",
+			name: "MixedContexts_RecordedPerTarget",
 			paths: []*promotetypes.PromotePath{
 				{Signal: "traces", Context: "attribute", Path: "http.method", Promote: true},
 				{Signal: "logs", Context: "body", Path: "user.name", Promote: true},
@@ -57,7 +57,7 @@ func TestPromotePaths(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "UnsupportedDomain_Rejected",
+			name:    "UnsupportedTarget_Rejected",
 			paths:   []*promotetypes.PromotePath{{Signal: "metrics", Context: "attribute", Path: "http.method", Promote: true}},
 			wantErr: true,
 		},
@@ -216,7 +216,7 @@ func TestListPromotedPaths(t *testing.T) {
 		wantPaths []promotetypes.PromotePath
 	}{
 		{
-			name: "PromotedPaths_ListedPerDomain",
+			name: "PromotedPaths_ListedPerTarget",
 			promoted: map[telemetrytypes.Signal]map[string]bool{
 				telemetrytypes.SignalLogs:   {"user.name": true},
 				telemetrytypes.SignalTraces: {"http.method": true},
@@ -227,7 +227,7 @@ func TestListPromotedPaths(t *testing.T) {
 			},
 		},
 		{
-			name:    "SignalFilter_SkipsOtherDomains",
+			name:    "SignalFilter_SkipsOtherContexts",
 			filters: promotetypes.ListPromotedPathsFilters{Signal: "traces"},
 			promoted: map[telemetrytypes.Signal]map[string]bool{
 				telemetrytypes.SignalLogs:   {"user.name": true},
@@ -236,7 +236,7 @@ func TestListPromotedPaths(t *testing.T) {
 			wantPaths: []promotetypes.PromotePath{{Signal: "traces", Context: "attribute", Path: "http.method", Promote: true}},
 		},
 		{
-			name:    "ContextFilter_SkipsOtherDomains",
+			name:    "ContextFilter_SkipsOtherContexts",
 			filters: promotetypes.ListPromotedPathsFilters{Context: "body"},
 			promoted: map[telemetrytypes.Signal]map[string]bool{
 				telemetrytypes.SignalLogs:   {"user.name": true},
@@ -245,7 +245,7 @@ func TestListPromotedPaths(t *testing.T) {
 			wantPaths: []promotetypes.PromotePath{{Signal: "logs", Context: "body", Path: "user.name", Promote: true}},
 		},
 		{
-			name:      "ContextAliasFilter_MatchesDomain",
+			name:      "ContextAliasFilter_MatchesTarget",
 			filters:   promotetypes.ListPromotedPathsFilters{Signal: "traces", Context: "tag"},
 			promoted:  map[telemetrytypes.Signal]map[string]bool{telemetrytypes.SignalTraces: {"http.method": true}},
 			wantPaths: []promotetypes.PromotePath{{Signal: "traces", Context: "attribute", Path: "http.method", Promote: true}},
@@ -396,14 +396,14 @@ func TestListPromotedPaths(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, paths, len(testCase.wantPaths))
 
-			byDomainPath := map[string]promotetypes.PromotePath{}
+			byContextPath := map[string]promotetypes.PromotePath{}
 			for _, path := range paths {
-				byDomainPath[path.Signal+"/"+path.Context+"/"+path.Path] = path
+				byContextPath[path.Signal+"/"+path.Context+"/"+path.Path] = path
 			}
 			for _, want := range testCase.wantPaths {
 				key := want.Signal + "/" + want.Context + "/" + want.Path
-				require.Contains(t, byDomainPath, key)
-				assert.Equal(t, want, byDomainPath[key])
+				require.Contains(t, byContextPath, key)
+				assert.Equal(t, want, byContextPath[key])
 			}
 		})
 	}

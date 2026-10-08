@@ -53,7 +53,7 @@ type ListPromotedPathsFilters struct {
 }
 
 // Validate checks the signal and context words are known; the pair need not
-// name a supported domain.
+// name a supported target.
 func (f *ListPromotedPathsFilters) Validate() error {
 	if f.Signal != "" {
 		if _, ok := telemetrytypes.SignalFromText(f.Signal); !ok {
