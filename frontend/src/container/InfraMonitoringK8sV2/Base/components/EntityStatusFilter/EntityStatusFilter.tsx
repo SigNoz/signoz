@@ -10,7 +10,7 @@ import {
 } from 'container/InfraMonitoringK8sV2/hooks';
 
 import StatusMultiSelect from './StatusMultiSelect';
-import { StatusFilterKind } from '../StatusFilterCells/useSetStatusFilter';
+import { StatusFilterKind } from '../StatusFilterCells/useStatusFilter';
 import {
 	CONTAINER_STATUS_FILTER_OPTIONS,
 	NODE_READINESS_FILTER_OPTIONS,

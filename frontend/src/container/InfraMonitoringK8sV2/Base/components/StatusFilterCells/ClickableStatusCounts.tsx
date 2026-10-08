@@ -3,7 +3,7 @@ import {
 	StatusCountItem,
 } from 'container/InfraMonitoringK8sV2/components';
 
-import { StatusFilterKind, useSetStatusFilter } from './useSetStatusFilter';
+import { StatusFilterKind, useStatusFilter } from './useStatusFilter';
 
 interface ClickableStatusCountsProps {
 	items: StatusCountItem[];
@@ -18,7 +18,7 @@ function ClickableStatusCounts({
 	kind,
 	showZeroValues,
 }: ClickableStatusCountsProps): JSX.Element {
-	const setStatusFilter = useSetStatusFilter(kind);
+	const { setStatusFilter } = useStatusFilter(kind);
 
 	return (
 		<GroupedStatusCounts

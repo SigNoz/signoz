@@ -1,7 +1,7 @@
 import { Badge, BadgeColor } from '@signozhq/ui/badge';
 import TanStackTable from 'components/TanStackTableView';
 
-import { StatusFilterKind, useSetStatusFilter } from './useSetStatusFilter';
+import { StatusFilterKind, useStatusFilter } from './useStatusFilter';
 
 import styles from './ClickableStatusBadge.module.scss';
 
@@ -21,12 +21,17 @@ function ClickableStatusBadge({
 	kind,
 	rowId,
 }: ClickableStatusBadgeProps): JSX.Element {
-	const setStatusFilter = useSetStatusFilter(kind);
+	const { selected, setStatusFilter } = useStatusFilter(kind);
+
+	// Clicking the status the list is already narrowed to has nothing left to
+	// narrow, so it undoes the filter instead — but only when this status is the
+	// whole filter, else it would silently drop the other selected statuses.
+	const isWholeFilter = selected.length === 1 && selected[0] === status;
 
 	return (
 		<TanStackTable.HoverTooltip
 			rowId={rowId}
-			title={`Filter by ${label}`}
+			title={isWholeFilter ? `Clear ${label} filter` : `Filter by ${label}`}
 			arrow
 			align="start"
 			delayDuration={300}
@@ -38,7 +43,7 @@ function ClickableStatusBadge({
 				onClick={(e): void => {
 					e.preventDefault();
 					e.stopPropagation();
-					setStatusFilter([status]);
+					setStatusFilter(isWholeFilter ? [] : [status]);
 				}}
 			>
 				<Badge color={color} variant="outline">
