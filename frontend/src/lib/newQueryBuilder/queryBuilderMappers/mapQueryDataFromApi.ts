@@ -30,7 +30,10 @@ const mapQueryFromV5 = (compositeQuery: ICompositeMetricQuery): Query => {
 	> = {};
 	const builderQueryTypes: Record<
 		string,
-		'builder_query' | 'builder_formula' | 'builder_trace_operator'
+		| 'builder_query'
+		| 'builder_ai_query'
+		| 'builder_formula'
+		| 'builder_trace_operator'
 	> = {};
 	const promQueries: IPromQLQuery[] = [];
 	const clickhouseQueries: IClickHouseQuery[] = [];
@@ -43,6 +46,14 @@ const mapQueryFromV5 = (compositeQuery: ICompositeMetricQuery): Query => {
 					spec as BuilderQuery,
 				);
 				builderQueryTypes[spec.name] = 'builder_query';
+			}
+		} else if (q.type === 'builder_ai_query') {
+			if (spec.name) {
+				builderQueries[spec.name] = {
+					...convertBuilderQueryToIBuilderQuery(spec as BuilderQuery),
+					builderQueryType: 'builder_ai_query',
+				};
+				builderQueryTypes[spec.name] = 'builder_ai_query';
 			}
 		} else if (q.type === 'builder_formula') {
 			if (spec.name) {
