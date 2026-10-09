@@ -51,6 +51,36 @@ func TestQueryRangeResources(t *testing.T) {
 			},
 		},
 		{
+			name: "atoms on different keys each require a grant",
+			body: builderQueryBody("logs", "resource.service.name = 'checkout' AND resource.deployment.environment.name = 'prod'"),
+			expected: []coretypes.ResourceWithID{
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/resource.deployment.environment.name/prod"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/resource.service.name/checkout"},
+			},
+		},
+		{
+			name: "old environment spelling does not scope",
+			body: builderQueryBody("traces", "resource.deployment.environment = 'prod'"),
+			expected: []coretypes.ResourceWithID{
+				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/*"},
+			},
+		},
+		{
+			name: "service values in list",
+			body: builderQueryBody("logs", "resource.service.name IN ('frontend', 'checkout')"),
+			expected: []coretypes.ResourceWithID{
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/resource.service.name/checkout"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/resource.service.name/frontend"},
+			},
+		},
+		{
+			name: "bare customer key does not scope",
+			body: builderQueryBody("logs", "service.name = 'checkout'"),
+			expected: []coretypes.ResourceWithID{
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/*"},
+			},
+		},
+		{
 			name: "no filter expression",
 			body: `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"logs"}}]}}`,
 			expected: []coretypes.ResourceWithID{
