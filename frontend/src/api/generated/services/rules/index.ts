@@ -966,7 +966,7 @@ export const useUpdateRuleByID = <
 	return useMutation(getUpdateRuleByIDMutationOptions(options));
 };
 /**
- * This endpoint creates a new alert rule from the stored definition of an existing one. The clone keeps every field of the source, including its enabled/disabled state, and gets the source's name suffixed with " - Copy" (or a bumped " - Copy (n)" counter when the source is itself a copy). The clone is owned by the caller.
+ * This endpoint creates a new alert rule from the stored definition of an existing one. The clone keeps every modeled field of the source, including its enabled/disabled state, and gets the source's name suffixed with " - Copy" (or a bumped " - Copy (n)" counter when the source is itself a copy). The clone is owned by the caller. Cloning fails with 400 when the stored source no longer passes create validation, for example when a channel it references has been deleted.
  * @summary Clone alert rule
  */
 export const cloneRuleByID = (
