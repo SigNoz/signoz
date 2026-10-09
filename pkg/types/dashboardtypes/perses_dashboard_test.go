@@ -2159,6 +2159,7 @@ func TestTopListPanelSpec(t *testing.T) {
 						"kind": "signoz/TopListPanel",
 						"spec": {
 							"formatting": {"unit": "ms", "decimalPrecision": 2},
+							"appearance": {"showRank": true, "showShare": true},
 							"thresholds": [{"value": 500, "operator": "above", "format": "background", "color": "Red"}]
 						}
 					},
@@ -2177,6 +2178,7 @@ func TestTopListPanelSpec(t *testing.T) {
 	assert.Equal(t, "ms", spec.Formatting.Unit)
 	require.Len(t, spec.Thresholds, 1)
 	assert.Equal(t, "background", spec.Thresholds[0].Format.ValueOrDefault())
+	assert.Equal(t, TopListAppearance{ShowRank: true, ShowShare: true}, spec.Appearance)
 
 	output, err := json.Marshal(d)
 	require.NoError(t, err, "marshal dashboard failed")
@@ -2186,9 +2188,15 @@ func TestTopListPanelSpec(t *testing.T) {
 	roundTrippedSpec := roundTripped.Panels["p1"].Spec.Plugin.Spec.(*TopListPanelSpec)
 	assert.Equal(t, spec.Formatting, roundTrippedSpec.Formatting)
 	assert.Equal(t, spec.Thresholds, roundTrippedSpec.Thresholds)
+	assert.Equal(t, spec.Appearance, roundTrippedSpec.Appearance)
 
 	t.Run("UnknownField_Rejected", func(t *testing.T) {
 		_, err := unmarshalDashboard([]byte(strings.Replace(string(data), `"formatting"`, `"legend": {}, "formatting"`, 1)))
+		assert.Error(t, err)
+	})
+
+	t.Run("UnknownAppearanceField_Rejected", func(t *testing.T) {
+		_, err := unmarshalDashboard([]byte(strings.Replace(string(data), `"showRank"`, `"showPoints": true, "showRank"`, 1)))
 		assert.Error(t, err)
 	})
 }

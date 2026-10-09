@@ -253,7 +253,13 @@ type PieChartPanelSpec struct {
 type TopListPanelSpec struct {
 	Visualization BasicVisualization    `json:"visualization"`
 	Formatting    PanelFormatting       `json:"formatting"`
+	Appearance    TopListAppearance     `json:"appearance"`
 	Thresholds    []ComparisonThreshold `json:"thresholds" validate:"dive"`
+}
+
+type TopListAppearance struct {
+	ShowRank  bool `json:"showRank" description:"Numbers each row by its position in the list."`
+	ShowShare bool `json:"showShare" description:"Shows each row's share of the listed rows' total."`
 }
 
 type TablePanelSpec struct {
