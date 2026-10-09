@@ -10,13 +10,42 @@ import (
 )
 
 func (provider *provider) addPromoteRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v1/logs/promote_paths", handler.New(provider.authzMiddleware.EditAccess(provider.promoteHandler.HandlePromoteAndIndexPaths), handler.OpenAPIDef{
-		ID:                  "HandlePromoteAndIndexPaths",
-		Tags:                []string{"logs"},
-		Summary:             "Promote and index paths",
-		Description:         "This endpoints promotes and indexes paths",
-		Request:             new([]*promotetypes.PromotePath),
-		RequestContentType:  "application/json",
+	if err := router.Handle("/api/v1/promoted_paths", handler.New(provider.authzMiddleware.EditAccess(provider.promoteHandler.PromotePaths), handler.OpenAPIDef{
+		ID:                 "PromotePaths",
+		Tags:               []string{"promote"},
+		Summary:            "Promote paths",
+		Description:        "This endpoint promotes paths of JSON columns to their promoted columns. Each path names its promotion domain with its signal and context, e.g. traces/attribute.",
+		Request:            new([]*promotetypes.PromotePath),
+		RequestContentType: "application/json",
+		RequestExamples: []handler.OpenAPIExample{
+			{
+				Name:    "logs_body",
+				Summary: "Logs body: promote a path and index it",
+				Value: []map[string]any{
+					{
+						"signal":  "logs",
+						"context": "body",
+						"path":    "body.user.name",
+						"promote": true,
+						"indexes": []map[string]any{
+							{"fieldDataType": "string", "type": "ngrambf_v1(4, 1024, 2, 0)", "granularity": 1},
+						},
+					},
+				},
+			},
+			{
+				Name:    "traces_attribute",
+				Summary: "Traces attribute: promote a path",
+				Value: []map[string]any{
+					{
+						"signal":  "traces",
+						"context": "attribute",
+						"path":    "http.method",
+						"promote": true,
+					},
+				},
+			},
+		},
 		Response:            nil,
 		ResponseContentType: "",
 		SuccessStatusCode:   http.StatusCreated,
@@ -26,12 +55,13 @@ func (provider *provider) addPromoteRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/logs/promote_paths", handler.New(provider.authzMiddleware.ViewAccess(provider.promoteHandler.ListPromotedAndIndexedPaths), handler.OpenAPIDef{
-		ID:                  "ListPromotedAndIndexedPaths",
-		Tags:                []string{"logs"},
-		Summary:             "Promote and index paths",
-		Description:         "This endpoints promotes and indexes paths",
+	if err := router.Handle("/api/v1/promoted_paths", handler.New(provider.authzMiddleware.ViewAccess(provider.promoteHandler.ListPromotedPaths), handler.OpenAPIDef{
+		ID:                  "ListPromotedPaths",
+		Tags:                []string{"promote"},
+		Summary:             "List promoted paths",
+		Description:         "This endpoint lists the promoted paths of every JSON column, each annotated with its signal and context. The signal, context, promoted and indexes query parameters filter the listing.",
 		Request:             nil,
+		RequestQuery:        new(promotetypes.ListPromotedPathsFilters),
 		RequestContentType:  "",
 		Response:            new([]*promotetypes.PromotePath),
 		ResponseContentType: "",
