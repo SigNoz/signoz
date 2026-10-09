@@ -135,6 +135,7 @@ func (m *module) PromotePaths(ctx context.Context, paths ...*promotetypes.Promot
 	return nil
 }
 
+// createIndexes creates string ngram + token filter indexes on JSON path subcolumns for LIKE queries.
 func (m *module) createIndexes(ctx context.Context, target promotetypes.Target, indexes []schemamigrator.Index) error {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  target.Entry.Signal.StringValue(),
@@ -187,16 +188,9 @@ func (m *module) promotePaths(ctx context.Context, target promotetypes.Target, p
 			}
 
 			for _, index := range it.Indexes {
-				var typeIndex schemamigrator.IndexType
-				switch {
-				case strings.HasPrefix(index.Type, string(schemamigrator.IndexTypeNGramBF)):
-					typeIndex = schemamigrator.IndexTypeNGramBF
-				case strings.HasPrefix(index.Type, string(schemamigrator.IndexTypeTokenBF)):
-					typeIndex = schemamigrator.IndexTypeTokenBF
-				case strings.HasPrefix(index.Type, string(schemamigrator.IndexTypeMinMax)):
-					typeIndex = schemamigrator.IndexTypeMinMax
-				default:
-					return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid index type: %s", index.Type)
+				typeIndex, err := index.SkipIndexType()
+				if err != nil {
+					return err
 				}
 				indexes = append(indexes, schemamigrator.Index{
 					Name:        schemamigrator.JSONSubColumnIndexName(parentColumn, it.Path, index.JSONDataType.StringValue(), typeIndex),

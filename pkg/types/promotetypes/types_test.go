@@ -3,9 +3,10 @@ package promotetypes
 import (
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 func TestPromotePathTarget(t *testing.T) {
@@ -134,6 +135,14 @@ func TestValidateAndSetDefaultsLogsBody(t *testing.T) {
 			path: &PromotePath{
 				Path:    "body.user.name",
 				Indexes: []WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeString, Granularity: 1}},
+			},
+			wantErr: true,
+		},
+		{
+			name: "UnknownIndexType_Rejected",
+			path: &PromotePath{
+				Path:    "body.user.name",
+				Indexes: []WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "unsupported", Granularity: 1}},
 			},
 			wantErr: true,
 		},
@@ -287,6 +296,18 @@ func TestListPromotedPathsFiltersMatch(t *testing.T) {
 			filters:    ListPromotedPathsFilters{Signal: "traces"},
 			target:     NewLogsBodyTarget(),
 			wantTarget: false,
+		},
+		{
+			name:       "ContextAliasFilter_MatchesResolvedContext",
+			filters:    ListPromotedPathsFilters{Context: "tag"},
+			target:     NewTracesAttributesTarget(),
+			wantTarget: true,
+		},
+		{
+			name:       "UppercaseContextFilter_MatchesResolvedContext",
+			filters:    ListPromotedPathsFilters{Context: "ATTRIBUTE"},
+			target:     NewTracesAttributesTarget(),
+			wantTarget: true,
 		},
 		{
 			name:       "ContextFilter_SkipsOtherContexts",

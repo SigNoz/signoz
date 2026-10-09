@@ -3,6 +3,7 @@ package promotetypes
 import (
 	"strings"
 
+	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/pkg/keycheck"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -52,11 +53,15 @@ func (f *ListPromotedPathsFilters) Validate() error {
 }
 
 func (f *ListPromotedPathsFilters) MatchesTarget(target Target) bool {
-	if f.Signal != "" && f.Signal != target.Entry.Signal.StringValue() {
-		return false
+	if f.Signal != "" {
+		if signal, ok := telemetrytypes.SignalFromText(f.Signal); !ok || signal != target.Entry.Signal {
+			return false
+		}
 	}
-	if f.Context != "" && f.Context != target.Entry.FieldContext.StringValue() {
-		return false
+	if f.Context != "" {
+		if fieldContext, ok := telemetrytypes.FieldContextFromText(f.Context); !ok || fieldContext != target.Entry.FieldContext {
+			return false
+		}
 	}
 	return true
 }
@@ -108,6 +113,9 @@ func (i *PromotePath) ValidateAndSetDefaults(target Target) error {
 		if index.Type == "" {
 			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "index type is required")
 		}
+		if _, err := index.SkipIndexType(); err != nil {
+			return err
+		}
 		if index.Granularity <= 0 {
 			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "index granularity must be greater than 0")
 		}
@@ -124,4 +132,17 @@ func (i *PromotePath) ValidateAndSetDefaults(target Target) error {
 	}
 
 	return nil
+}
+
+func (index WrappedIndex) SkipIndexType() (schemamigrator.IndexType, error) {
+	switch {
+	case strings.HasPrefix(index.Type, string(schemamigrator.IndexTypeNGramBF)):
+		return schemamigrator.IndexTypeNGramBF, nil
+	case strings.HasPrefix(index.Type, string(schemamigrator.IndexTypeTokenBF)):
+		return schemamigrator.IndexTypeTokenBF, nil
+	case strings.HasPrefix(index.Type, string(schemamigrator.IndexTypeMinMax)):
+		return schemamigrator.IndexTypeMinMax, nil
+	default:
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid index type: %s", index.Type)
+	}
 }

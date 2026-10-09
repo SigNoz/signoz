@@ -6,13 +6,14 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/types/promotetypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestPromotePaths(t *testing.T) {
@@ -23,7 +24,7 @@ func TestPromotePaths(t *testing.T) {
 		paths        []*promotetypes.PromotePath
 		promoteTwice bool
 		wantErr      bool
-		wantPromoted []string
+		wantPromoted map[telemetrytypes.Signal]map[string]bool
 	}{
 		{
 			name: "PromotesNewAttributes_Idempotent",
@@ -32,7 +33,7 @@ func TestPromotePaths(t *testing.T) {
 				{Signal: "traces", Context: "attribute", Path: "span.operation", Promote: true},
 			},
 			promoteTwice: true,
-			wantPromoted: []string{"http.method", "span.operation"},
+			wantPromoted: map[telemetrytypes.Signal]map[string]bool{telemetrytypes.SignalTraces: {"http.method": true, "span.operation": true}},
 		},
 		{
 			name: "MixedDomains_RecordedPerTarget",
@@ -40,11 +41,23 @@ func TestPromotePaths(t *testing.T) {
 				{Signal: "traces", Context: "attribute", Path: "http.method", Promote: true},
 				{Signal: "logs", Context: "body", Path: "body.user.name", Promote: true},
 			},
-			wantPromoted: []string{"http.method", "user.name"},
+			wantPromoted: map[telemetrytypes.Signal]map[string]bool{
+				telemetrytypes.SignalTraces: {"http.method": true},
+				telemetrytypes.SignalLogs:   {"user.name": true},
+			},
 		},
 		{
-			name:  "NonPromoteEntries_NotRecorded",
-			paths: []*promotetypes.PromotePath{{Signal: "traces", Context: "attribute", Path: "http.method"}},
+			name:         "NonPromoteEntries_NotRecorded",
+			paths:        []*promotetypes.PromotePath{{Signal: "traces", Context: "attribute", Path: "http.method"}},
+			wantPromoted: map[telemetrytypes.Signal]map[string]bool{},
+		},
+		{
+			name: "InvalidIndexTypeInLaterDomain_NothingRecorded",
+			paths: []*promotetypes.PromotePath{
+				{Signal: "traces", Context: "attribute", Path: "http.method", Promote: true},
+				{Signal: "logs", Context: "body", Path: "body.user.name", Promote: true, Indexes: []promotetypes.WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "unsupported", Granularity: 1}}},
+			},
+			wantErr: true,
 		},
 		{
 			name:    "InvalidSignal_Rejected",
@@ -73,7 +86,7 @@ func TestPromotePaths(t *testing.T) {
 		{
 			name:         "PromotesBodyPath_PrefixStripped",
 			paths:        []*promotetypes.PromotePath{{Signal: "logs", Context: "body", Path: "body.user.name", Promote: true}},
-			wantPromoted: []string{"user.name"},
+			wantPromoted: map[telemetrytypes.Signal]map[string]bool{telemetrytypes.SignalLogs: {"user.name": true}},
 		},
 	}
 
@@ -90,14 +103,11 @@ func TestPromotePaths(t *testing.T) {
 			}
 			require.NoError(t, err)
 
-			require.Len(t, store.PromotedPathsMap, len(testCase.wantPromoted))
-			for _, path := range testCase.wantPromoted {
-				assert.True(t, store.PromotedPathsMap[path], path)
-			}
+			assert.Equal(t, testCase.wantPromoted, store.PromotedPathsMap)
 
 			if testCase.promoteTwice {
 				require.NoError(t, m.PromotePaths(ctx, testCase.paths...))
-				assert.Len(t, store.PromotedPathsMap, len(testCase.wantPromoted))
+				assert.Equal(t, testCase.wantPromoted, store.PromotedPathsMap)
 			}
 		})
 	}
@@ -156,9 +166,7 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			ts := telemetrystoretest.New(telemetrystore.Config{}, sqlmock.QueryMatcherRegexp)
 			store := telemetrytypestest.NewMockMetadataStore()
-			if testCase.promoted != nil {
-				store.PromotedPathsMap = testCase.promoted
-			}
+			store.PromotedPathsMap[telemetrytypes.SignalLogs] = testCase.promoted
 			m := NewModule(store, ts)
 
 			ts.Mock().ExpectExec("ADD INDEX (.+)" + regexp.QuoteMeta(testCase.wantDDLColumn)).WillReturnError(nil)
@@ -176,33 +184,48 @@ func TestListPromotedPaths(t *testing.T) {
 	testCases := []struct {
 		name      string
 		filters   promotetypes.ListPromotedPathsFilters
-		promoted  map[string]bool
+		promoted  map[telemetrytypes.Signal]map[string]bool
 		indexes   []telemetrytypes.TelemetryFieldKeySkipIndex
 		wantPaths []promotetypes.PromotePath
 	}{
 		{
-			name:     "PromotedPaths_EveryDomainAnnotated",
-			promoted: map[string]bool{"http.method": true},
+			name: "PromotedPaths_ListedPerDomain",
+			promoted: map[telemetrytypes.Signal]map[string]bool{
+				telemetrytypes.SignalLogs:   {"user.name": true},
+				telemetrytypes.SignalTraces: {"http.method": true},
+			},
 			wantPaths: []promotetypes.PromotePath{
-				{Signal: "logs", Context: "body", Path: "body.http.method", Promote: true},
+				{Signal: "logs", Context: "body", Path: "body.user.name", Promote: true},
 				{Signal: "traces", Context: "attribute", Path: "http.method", Promote: true},
 			},
 		},
 		{
-			name:      "SignalFilter_SkipsOtherDomains",
-			filters:   promotetypes.ListPromotedPathsFilters{Signal: "traces"},
-			promoted:  map[string]bool{"http.method": true},
+			name:    "SignalFilter_SkipsOtherDomains",
+			filters: promotetypes.ListPromotedPathsFilters{Signal: "traces"},
+			promoted: map[telemetrytypes.Signal]map[string]bool{
+				telemetrytypes.SignalLogs:   {"user.name": true},
+				telemetrytypes.SignalTraces: {"http.method": true},
+			},
 			wantPaths: []promotetypes.PromotePath{{Signal: "traces", Context: "attribute", Path: "http.method", Promote: true}},
 		},
 		{
-			name:      "ContextFilter_SkipsOtherDomains",
-			filters:   promotetypes.ListPromotedPathsFilters{Context: "body"},
-			promoted:  map[string]bool{"http.method": true},
-			wantPaths: []promotetypes.PromotePath{{Signal: "logs", Context: "body", Path: "body.http.method", Promote: true}},
+			name:    "ContextFilter_SkipsOtherDomains",
+			filters: promotetypes.ListPromotedPathsFilters{Context: "body"},
+			promoted: map[telemetrytypes.Signal]map[string]bool{
+				telemetrytypes.SignalLogs:   {"user.name": true},
+				telemetrytypes.SignalTraces: {"http.method": true},
+			},
+			wantPaths: []promotetypes.PromotePath{{Signal: "logs", Context: "body", Path: "body.user.name", Promote: true}},
+		},
+		{
+			name:      "ContextAliasFilter_MatchesDomain",
+			filters:   promotetypes.ListPromotedPathsFilters{Signal: "traces", Context: "tag"},
+			promoted:  map[telemetrytypes.Signal]map[string]bool{telemetrytypes.SignalTraces: {"http.method": true}},
+			wantPaths: []promotetypes.PromotePath{{Signal: "traces", Context: "attribute", Path: "http.method", Promote: true}},
 		},
 		{
 			name:     "IndexedPaths_MergedForSupportingDomains",
-			promoted: map[string]bool{"user.name": true},
+			promoted: map[telemetrytypes.Signal]map[string]bool{telemetrytypes.SignalLogs: {"user.name": true}},
 			indexes: []telemetrytypes.TelemetryFieldKeySkipIndex{
 				{
 					Name:          "user.name",
@@ -239,18 +262,12 @@ func TestListPromotedPaths(t *testing.T) {
 						{FieldDataType: telemetrytypes.FieldDataTypeFloat64, Type: "minmax", Granularity: 1},
 					},
 				},
-				{
-					Signal:  "traces",
-					Context: "attribute",
-					Path:    "user.name",
-					Promote: true,
-				},
 			},
 		},
 		{
 			name:     "PromotedFalseFilter_IndexOnlyPaths",
 			filters:  promotetypes.ListPromotedPathsFilters{Promoted: &falseValue},
-			promoted: map[string]bool{"user.name": true},
+			promoted: map[telemetrytypes.Signal]map[string]bool{telemetrytypes.SignalLogs: {"user.name": true}},
 			indexes: []telemetrytypes.TelemetryFieldKeySkipIndex{
 				{
 					Name:          "request.duration",
@@ -275,7 +292,7 @@ func TestListPromotedPaths(t *testing.T) {
 		{
 			name:     "IndexesTrueFilter_PathsWithIndexes",
 			filters:  promotetypes.ListPromotedPathsFilters{Indexes: &trueValue},
-			promoted: map[string]bool{"user.name": true},
+			promoted: map[telemetrytypes.Signal]map[string]bool{telemetrytypes.SignalLogs: {"user.name": true}},
 			indexes: []telemetrytypes.TelemetryFieldKeySkipIndex{
 				{
 					Name:          "user.name",
