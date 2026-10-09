@@ -17,6 +17,8 @@ interface TopListTooltip {
 	left?: number;
 	show: (index: number, event: ReactMouseEvent<HTMLElement>) => void;
 	hide: () => void;
+	/** Hides the tooltip when the pointer is over the list but not on a row. */
+	hideOffRow: (event: ReactMouseEvent<HTMLElement>) => void;
 	/** The element the tooltip is positioned against. */
 	listRef: (element: HTMLElement | null) => void;
 	TooltipInPortal: FC<TooltipInPortalProps>;
@@ -54,12 +56,22 @@ export function useTopListTooltip(): TopListTooltip {
 		[showTooltip],
 	);
 
+	const hideOffRow = useCallback(
+		(event: ReactMouseEvent<HTMLElement>): void => {
+			if (!(event.target as Element).closest('[data-row-index]')) {
+				hideTooltip();
+			}
+		},
+		[hideTooltip],
+	);
+
 	return {
 		rowIndex: tooltipOpen ? (tooltipData ?? null) : null,
 		top: tooltipTop,
 		left: tooltipLeft,
 		show,
 		hide: hideTooltip,
+		hideOffRow,
 		listRef: containerRef,
 		TooltipInPortal,
 	};

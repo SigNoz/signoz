@@ -127,6 +127,16 @@ describe('TopList', () => {
 		).toStrictEqual(['count()1', 'Share of listed total50%']);
 	});
 
+	it('hides the tooltip over the empty space below the rows', async () => {
+		renderList(2);
+		fireEvent.mouseMove(renderedRows()[1]);
+		await screen.findByTestId('top-list-tooltip');
+
+		fireEvent.mouseMove(screen.getByTestId('top-list'));
+
+		expect(screen.queryByTestId('top-list-tooltip')).not.toBeInTheDocument();
+	});
+
 	it('hides the tooltip when the pointer leaves the list', async () => {
 		renderList(2);
 		fireEvent.mouseMove(renderedRows()[0]);
