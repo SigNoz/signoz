@@ -110,14 +110,39 @@ interface NamedQuerySpec {
 	}[];
 }
 
+function findQuerySpec(
+	requestPayload: Querybuildertypesv5QueryRangeRequestDTO | undefined,
+	queryName: string,
+): NamedQuerySpec | undefined {
+	return (requestPayload?.compositeQuery?.queries ?? [])
+		.map((envelope) => envelope.spec as NamedQuerySpec | undefined)
+		.find((candidate) => candidate?.name === queryName);
+}
+
+const AGGREGATION_FUNCTION = /^\s*([a-z_]\w*)\s*\(/i;
+
+/**
+ * The ranked aggregation's function, lowercased: `p99` for `p99(duration_nano)`, the space
+ * aggregation for a metric. Null for formulas and ClickHouse SQL, which have none to read.
+ */
+export function getRankedAggregationFunction(
+	requestPayload: Querybuildertypesv5QueryRangeRequestDTO | undefined,
+	queryName: string,
+): string | null {
+	const [aggregation] =
+		findQuerySpec(requestPayload, queryName)?.aggregations ?? [];
+	const name =
+		aggregation?.expression?.match(AGGREGATION_FUNCTION)?.[1] ??
+		aggregation?.spaceAggregation;
+	return name ? name.toLowerCase() : null;
+}
+
 /** The ranked aggregation as the query writes it: its alias, expression or formula. */
 function describeValue(
 	requestPayload: Querybuildertypesv5QueryRangeRequestDTO | undefined,
 	queryName: string,
 ): string | null {
-	const spec = (requestPayload?.compositeQuery?.queries ?? [])
-		.map((envelope) => envelope.spec as NamedQuerySpec | undefined)
-		.find((candidate) => candidate?.name === queryName);
+	const spec = findQuerySpec(requestPayload, queryName);
 	const [aggregation] = spec?.aggregations ?? [];
 	if (aggregation?.alias || aggregation?.expression) {
 		return aggregation.alias || aggregation.expression || null;
