@@ -16,14 +16,14 @@ function LogsActionsContainer({
 	showFrequencyChart,
 	handleToggleFrequencyChart,
 	orderBy,
-	setOrderBy,
+	onOrderChange,
 	explorerActions,
 }: {
 	listQuery: any;
 	showFrequencyChart: boolean;
 	handleToggleFrequencyChart: () => void;
 	orderBy: string;
-	setOrderBy: (value: string) => void;
+	onOrderChange: (value: string) => void;
 	explorerActions: ReactNode;
 }): JSX.Element {
 	const { options, config } = useOptionsMenu({
@@ -78,7 +78,7 @@ function LogsActionsContainer({
 
 						<ListViewOrderBy
 							value={orderBy}
-							onChange={(value): void => setOrderBy(value)}
+							onChange={onOrderChange}
 							dataSource={DataSource.LOGS}
 						/>
 					</div>

@@ -1,8 +1,72 @@
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/constants';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { OrderByPayload, Query } from 'types/api/queryBuilder/queryBuilderData';
+
+import { getParsedAggregationOptionsForOrderBy } from './aggregationConverter';
+
+export const DEFAULT_LIST_ORDER_BY = 'timestamp:desc';
+
+// Filters only. The query keeps the order for the panel that can use it.
+export const getRawPanelOrderBy = (query: Query | null): OrderByPayload[] => {
+	const queryData = query?.builder?.queryData?.[0];
+
+	if (!queryData) {
+		return [];
+	}
+
+	const disallowed = new Set<string>([SIGNOZ_VALUE]);
+	getParsedAggregationOptionsForOrderBy(queryData).forEach((aggregation) => {
+		if (aggregation?.key) {
+			disallowed.add(aggregation.key);
+		}
+	});
+
+	return (queryData.orderBy ?? []).filter(
+		(item) => !disallowed.has(item.columnName),
+	);
+};
+
+// Never write the fallback back: a view saved without an order would then read
+// as unsaved on open.
+export const getListOrderBy = (
+	query: Query | null,
+	fallback: string = DEFAULT_LIST_ORDER_BY,
+): string => {
+	const [orderBy] = getRawPanelOrderBy(query);
+
+	if (!orderBy?.columnName || !orderBy?.order) {
+		return fallback;
+	}
+
+	return `${orderBy.columnName}:${orderBy.order.toLowerCase()}`;
+};
+
+export const parseListOrderBy = (orderBy: string): OrderByPayload => {
+	const [columnName, order] = orderBy.split(':');
+
+	return {
+		columnName: columnName || 'timestamp',
+		order: order || 'desc',
+	};
+};
+
+export const setListOrderBy = (query: Query, orderBy: string): Query => {
+	const nextOrderBy = [parseListOrderBy(orderBy)];
+
+	return {
+		...query,
+		builder: {
+			...query.builder,
+			queryData: query.builder.queryData.map((item) => ({
+				...item,
+				orderBy: nextOrderBy,
+			})),
+		},
+	};
+};
 
 // Mapping between panel types and explorer views
 export const panelTypeToExplorerView: Record<PANEL_TYPES, ExplorerViews> = {

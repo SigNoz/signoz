@@ -6,7 +6,6 @@ import {
 	useCallback,
 	useEffect,
 	useMemo,
-	useState,
 } from 'react';
 import { QueryKey } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
@@ -23,6 +22,7 @@ import { TracesTableRow } from '../TracesTable/getFieldColumn';
 import TracesTable from '../TracesTable/TracesTable';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { getListOrderBy, setListOrderBy } from 'utils/explorerUtils';
 import { Pagination } from 'hooks/queryPagination';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { ArrowUp10, Minus } from '@signozhq/icons';
@@ -57,9 +57,13 @@ function TracesView({
 	setIsLoadingQueries,
 	queryKeyRef,
 }: TracesViewProps): JSX.Element {
-	const { stagedQuery, panelType } = useQueryBuilder();
+	const { stagedQuery, currentQuery, redirectWithQueryBuilderData, panelType } =
+		useQueryBuilder();
 
-	const [orderBy, setOrderBy] = useState<string>(TRACE_VIEW_DEFAULT_ORDER_BY);
+	const orderBy = useMemo(
+		() => getListOrderBy(stagedQuery, TRACE_VIEW_DEFAULT_ORDER_BY),
+		[stagedQuery],
+	);
 
 	const {
 		columns,
@@ -94,7 +98,6 @@ function TracesView({
 			stagedQuery,
 			panelType,
 			paginationQueryData,
-			orderBy,
 		],
 		[
 			globalSelectedTime,
@@ -103,7 +106,6 @@ function TracesView({
 			stagedQuery,
 			panelType,
 			paginationQueryData,
-			orderBy,
 		],
 	);
 
@@ -165,9 +167,12 @@ function TracesView({
 		}
 	}, [isLoading, isFetching, isError, rows.length]);
 
-	const handleOrderChange = useCallback((value: string): void => {
-		setOrderBy(value);
-	}, []);
+	const handleOrderChange = useCallback(
+		(value: string): void => {
+			redirectWithQueryBuilderData(setListOrderBy(currentQuery, value));
+		},
+		[currentQuery, redirectWithQueryBuilderData],
+	);
 
 	// Without the full column set there is no pool to pick from, so the control is dropped.
 	const fieldsSelectorConfig = useMemo(
