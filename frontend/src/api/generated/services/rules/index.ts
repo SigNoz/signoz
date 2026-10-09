@@ -18,6 +18,8 @@ import type {
 } from 'react-query';
 
 import type {
+	CloneRuleByID201,
+	CloneRuleByIDPathParameters,
 	CreateRule201,
 	CreateRuleView201,
 	DeleteRuleByIDPathParameters,
@@ -962,6 +964,85 @@ export const useUpdateRuleByID = <
 	TContext
 > => {
 	return useMutation(getUpdateRuleByIDMutationOptions(options));
+};
+/**
+ * This endpoint creates a new alert rule from the stored definition of an existing one. The clone keeps every modeled field of the source, including its enabled/disabled state, and gets the source's name suffixed with " - Copy" (or a bumped " - Copy (n)" counter when the source is itself a copy). The clone is owned by the caller. Cloning fails with 400 when the stored source no longer passes create validation, for example when a channel it references has been deleted.
+ * @summary Clone alert rule
+ */
+export const cloneRuleByID = (
+	{ id }: CloneRuleByIDPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<CloneRuleByID201>({
+		url: `/api/v2/rules/${id}/clone`,
+		method: 'POST',
+		signal,
+	});
+};
+
+export const getCloneRuleByIDMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof cloneRuleByID>>,
+		TError,
+		{ pathParams: CloneRuleByIDPathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof cloneRuleByID>>,
+	TError,
+	{ pathParams: CloneRuleByIDPathParameters },
+	TContext
+> => {
+	const mutationKey = ['cloneRuleByID'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof cloneRuleByID>>,
+		{ pathParams: CloneRuleByIDPathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return cloneRuleByID(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type CloneRuleByIDMutationResult = NonNullable<
+	Awaited<ReturnType<typeof cloneRuleByID>>
+>;
+
+export type CloneRuleByIDMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Clone alert rule
+ */
+export const useCloneRuleByID = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof cloneRuleByID>>,
+		TError,
+		{ pathParams: CloneRuleByIDPathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof cloneRuleByID>>,
+	TError,
+	{ pathParams: CloneRuleByIDPathParameters },
+	TContext
+> => {
+	return useMutation(getCloneRuleByIDMutationOptions(options));
 };
 /**
  * Returns distinct label keys from rule history entries for the selected range.

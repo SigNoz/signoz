@@ -105,6 +105,25 @@ func (handler *handler) CreateRule(rw http.ResponseWriter, req *http.Request) {
 	render.Success(rw, http.StatusCreated, ruletypes.NewRule(rule))
 }
 
+func (handler *handler) CloneRuleByID(rw http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
+	defer cancel()
+
+	id, err := valuer.NewUUID(mux.Vars(req)["id"])
+	if err != nil {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
+		return
+	}
+
+	rule, err := handler.ruler.CloneRule(ctx, id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusCreated, ruletypes.NewRule(rule))
+}
+
 func (handler *handler) UpdateRuleByID(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()

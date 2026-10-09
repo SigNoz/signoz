@@ -14202,6 +14202,17 @@ export type PatchRuleByID200 = {
 export type UpdateRuleByIDPathParameters = {
 	id: string;
 };
+export type CloneRuleByIDPathParameters = {
+	id: string;
+};
+export type CloneRuleByID201 = {
+	data: RuletypesRuleDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetRuleHistoryFilterKeysPathParameters = {
 	id: string;
 };
