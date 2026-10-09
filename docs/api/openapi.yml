@@ -13706,7 +13706,7 @@ paths:
                   - fieldDataType: string
                     granularity: 1
                     type: ngrambf_v1(4, 1024, 2, 0)
-                  path: body.user.name
+                  path: user.name
                   promote: true
                   signal: logs
               traces_attribute:
