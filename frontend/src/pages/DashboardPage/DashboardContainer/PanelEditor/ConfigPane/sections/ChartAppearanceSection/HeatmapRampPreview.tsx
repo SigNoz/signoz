@@ -1,15 +1,22 @@
 import { useMemo } from 'react';
-import { Typography } from '@signozhq/ui/typography';
-import type { DashboardtypesHeatmapColorsDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	DashboardtypesHeatmapColorModeDTO,
+	type DashboardtypesHeatmapColorsDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import {
 	createHeatmapColorResolver,
 	DEFAULT_HEATMAP_COLORS,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/colorScale';
-import { HeatmapColorMode } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
 import { resolveHeatmapColors } from 'pages/DashboardPage/DashboardContainer/Panels/utils/chartAppearance/resolvers';
 
-import { rampGradient } from './heatmapColorOptions';
+import ConfigField from '../../controls/ConfigField/ConfigField';
+import {
+	DEFAULT_COLOR_MODE,
+	DEFAULT_COLOR_SCALE,
+	DEFAULT_PALETTE,
+	rampGradient,
+} from './heatmapColorOptions';
 
 import styles from './HeatmapColorsField.module.scss';
 
@@ -46,29 +53,30 @@ function HeatmapRampPreview({ colors }: HeatmapRampPreviewProps): JSX.Element {
 	);
 
 	const summary = [
-		options.mode === HeatmapColorMode.Opacity ? 'opacity' : options.palette,
-		options.scale,
+		(colors?.mode ?? DEFAULT_COLOR_MODE) ===
+		DashboardtypesHeatmapColorModeDTO.opacity
+			? DashboardtypesHeatmapColorModeDTO.opacity
+			: (colors?.palette ?? DEFAULT_PALETTE),
+		colors?.scale ?? DEFAULT_COLOR_SCALE,
 		`${options.steps} steps`,
 	].join(' · ');
 
 	return (
-		<div className={styles.preview} data-testid="panel-editor-v2-heatmap-preview">
-			<div className={styles.previewHeader}>
-				<Typography.Text>Preview</Typography.Text>
-				<span className={styles.mono}>{summary}</span>
-			</div>
-			<div
-				className={styles.previewRamp}
-				style={{ background: rampGradient(ramp) }}
-			/>
-			<div className={styles.previewBounds}>
-				<span className={styles.mono}>
-					{(colors?.minCount ?? 0).toLocaleString()}
-				</span>
-				<span className={styles.mono}>
-					{colors?.maxCount == null ? 'auto' : colors.maxCount.toLocaleString()}
-				</span>
-			</div>
+		<div data-testid="panel-editor-v2-heatmap-preview">
+			<ConfigField label="Preview" aside={summary}>
+				<div className={styles.preview}>
+					<div
+						className={styles.previewRamp}
+						style={{ background: rampGradient(ramp) }}
+					/>
+					<div className={styles.previewBounds}>
+						<span>{(colors?.minCount ?? 0).toLocaleString()}</span>
+						<span>
+							{colors?.maxCount == null ? 'auto' : colors.maxCount.toLocaleString()}
+						</span>
+					</div>
+				</div>
+			</ConfigField>
 		</div>
 	);
 }

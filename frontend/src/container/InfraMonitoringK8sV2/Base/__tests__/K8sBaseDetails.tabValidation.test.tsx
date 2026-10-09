@@ -21,6 +21,7 @@ type TestEntity = {
 	name: string;
 	namespace: string;
 	cluster: string;
+	meta?: Record<string, string>;
 };
 
 const mockEntity: TestEntity = {
@@ -29,14 +30,22 @@ const mockEntity: TestEntity = {
 	cluster: 'test-cluster',
 };
 
-function createBaseProps() {
+/** The overview tab appears only for a resource whose meta relates it to others */
+const relatedEntity: TestEntity = {
+	...mockEntity,
+	meta: {
+		'k8s.pod.uid': '63edbad0-398e-48e5-baba-f7ded7c73f1b',
+		'k8s.namespace.name': 'default',
+		'k8s.cluster.name': 'test-cluster',
+	},
+};
+
+function createBaseProps(category: InfraMonitoringEntity, entity = mockEntity) {
 	return {
-		category: InfraMonitoringEntity.PODS,
+		category,
 		eventCategory: InfraMonitoringEvents.Pod,
 		getSelectedItemExpression: (): string => 'k8s.pod.name = "test-pod"',
-		fetchEntityData: jest
-			.fn()
-			.mockResolvedValue({ data: mockEntity, error: null }),
+		fetchEntityData: jest.fn().mockResolvedValue({ data: entity, error: null }),
 		getEntityName: (e: TestEntity): string => e.name,
 		getInitialLogTracesExpression: (): string => 'k8s.pod.name = "test-pod"',
 		getInitialEventsExpression: (): string => 'k8s.pod.name = "test-pod"',
@@ -51,7 +60,10 @@ function createBaseProps() {
 
 interface RenderOptions {
 	view?: string;
+	category?: InfraMonitoringEntity;
+	entity?: TestEntity;
 	tabsConfig?: {
+		showOverview?: boolean;
 		showMetrics?: boolean;
 		showLogs?: boolean;
 		showTraces?: boolean;
@@ -67,6 +79,9 @@ interface RenderOptions {
 
 function renderK8sBaseDetails({
 	view = VIEW_TYPES.METRICS,
+	// Volumes have no related resources, so they get no overview tab
+	category = InfraMonitoringEntity.VOLUMES,
+	entity = mockEntity,
 	tabsConfig,
 	customTabs,
 }: RenderOptions = {}) {
@@ -78,7 +93,7 @@ function renderK8sBaseDetails({
 	return render(
 		<NuqsTestingAdapter searchParams={searchParams}>
 			<K8sBaseDetails<TestEntity>
-				{...createBaseProps()}
+				{...createBaseProps(category, entity)}
 				tabsConfig={tabsConfig}
 				customTabs={customTabs}
 			/>
@@ -103,6 +118,25 @@ describe('K8sBaseDetails - Tab Validation', () => {
 
 		await waitFor(() => {
 			expect(getSelectedTabText()).toContain('Metrics');
+		});
+	});
+
+	it('should land on the overview tab for a category with related resources', async () => {
+		act(() => {
+			renderK8sBaseDetails({
+				view: 'invalid-tab',
+				category: InfraMonitoringEntity.PODS,
+				entity: relatedEntity,
+				tabsConfig: { showOverview: true },
+			});
+		});
+
+		await waitFor(() => {
+			expect(screen.getAllByText('test-pod').length).toBeGreaterThan(0);
+		});
+
+		await waitFor(() => {
+			expect(getSelectedTabText()).toContain('Overview');
 		});
 	});
 

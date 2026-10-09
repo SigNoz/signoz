@@ -121,6 +121,7 @@ export const podEntityConfig: K8sEntityConfig<InframonitoringtypesPodRecordDTO> 
 		details: {
 			category: InfraMonitoringEntity.PODS,
 			eventCategory: InfraMonitoringEvents.Pod,
+			tabsConfig: { showOverview: true },
 			queryKeyPrefix: 'pod',
 			getSelectedItemExpression: k8sPodGetSelectedItemExpression,
 			fetchEntityData,

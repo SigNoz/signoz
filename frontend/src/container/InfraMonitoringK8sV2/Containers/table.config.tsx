@@ -1,4 +1,4 @@
-import { Container } from '@signozhq/icons';
+import { Box } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import {
 	InframonitoringtypesContainerReadyDTO,
@@ -94,7 +94,7 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 		header: (): React.ReactNode => (
 			<EntityGroupHeader
 				title="Container Name"
-				icon={<Container data-hide-expanded="true" size={14} />}
+				icon={<Box data-hide-expanded="true" size={14} />}
 				docPath={`${CONTAINERS_DOC_PATH}#container-name`}
 			/>
 		),
