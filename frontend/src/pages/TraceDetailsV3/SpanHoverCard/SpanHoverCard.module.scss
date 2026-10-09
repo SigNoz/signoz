@@ -17,7 +17,8 @@
 
 .content {
 	composes: tooltipBody from '../shared.module.scss';
-	width: 223px;
+	min-width: 223px;
+	max-width: 360px;
 }
 
 .title {

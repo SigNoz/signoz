@@ -26,12 +26,12 @@ function TraceTooltipRow({
 			<Typography.Text
 				size="small"
 				color={isHeading ? undefined : 'muted'}
-				truncate={1}
+				className={styles.rowLabel}
 			>
 				{label}
 			</Typography.Text>
 			{value !== undefined && (
-				<Typography.Text size="small" truncate={1} className={styles.rowValue}>
+				<Typography.Text size="small" className={styles.rowValue}>
 					{value}
 				</Typography.Text>
 			)}

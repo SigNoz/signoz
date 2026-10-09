@@ -47,9 +47,9 @@
 }
 
 .row {
-	display: flex;
-	justify-content: space-between;
-	gap: var(--spacing-2);
+	display: grid;
+	grid-template-columns: fit-content(50%) minmax(0, 1fr);
+	column-gap: var(--spacing-2);
 	min-width: 0;
 }
 
@@ -57,9 +57,14 @@
 	padding-left: var(--spacing-6);
 }
 
+.rowLabel {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
 .rowValue {
-	flex-shrink: 0;
-	max-width: 60%;
+	min-width: 0;
+	overflow-wrap: anywhere;
 	text-align: right;
 	font-variant-numeric: tabular-nums;
 }
