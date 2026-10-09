@@ -83,18 +83,18 @@ func TestRawAttribute(t *testing.T) {
 		want     any
 	}{
 		{
-			name:     "JSONColumn_ObjectWhole",
+			name:     "JSONColumn_ObjectReturnedWhole",
 			storable: StorableSpan{AttributesJSON: telemetrystoretypes.JSONValue{"gen_ai": map[string]any{"tool": map[string]any{"call": map[string]any{"arguments": arguments}}}}},
 			key:      "gen_ai.tool.call.arguments",
 			want:     arguments,
 		},
 		{
-			name:     "JSONColumn_Missing",
+			name:     "JSONColumn_MissingPath_Nil",
 			storable: StorableSpan{AttributesJSON: telemetrystoretypes.JSONValue{"gen_ai": map[string]any{"tool": map[string]any{"name": "get_weather"}}}},
 			key:      "gen_ai.tool.call.arguments",
 		},
 		{
-			name:     "LegacyMaps_Ignored",
+			name:     "LegacyMapsOnly_Nil",
 			storable: StorableSpan{AttributesString: map[string]string{"gen_ai.output.messages": "sunny", "gen_ai.tool.call.arguments.city": "Paris"}},
 			key:      "gen_ai.output.messages",
 		},

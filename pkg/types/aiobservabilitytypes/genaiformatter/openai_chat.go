@@ -6,6 +6,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes/genai"
 )
 
+// Format: OpenAI Chat Completions, a request {messages}, a response {choices}, or a bare message list.
+// Written by: bifrost, openrouter requests, the raw OpenAI calls OpenInference records.
+// Handled: string and block content, tool_calls nested or flattened, tool messages, refusal,
+// reasoning_content, finish reasons.
+// Not yet: streaming delta chunks, legacy completions choices[].text, audio output.
+
 func (f *formatting) openAIChatMessages(list []any) genai.OutputMessages {
 	out := make(genai.OutputMessages, 0, len(list))
 	for _, item := range list {
@@ -30,7 +36,7 @@ func (f *formatting) openAIChatResponse(choices []any) genai.OutputMessages {
 		}
 		inner, _ := object(choice).obj("message")
 		msg := f.openAIChatMessage(inner)
-		if msg.Role == "" {
+		if msg.Role.IsZero() {
 			msg.Role = genai.RoleAssistant
 		}
 		if fr := finishReason(object(choice).str("finish_reason")); fr != nil {
@@ -77,33 +83,6 @@ func (f *formatting) openAIChatMessage(m object) genai.OutputMessage {
 		msg.Parts = append(msg.Parts, part(genai.ToolCallRequestPart{Type: genai.PartTypeToolCall, Name: call.str("name"), Arguments: decode(call["arguments"])}))
 	}
 	return msg
-}
-
-// contentPart converts one content block; a block of any other type is kept as sent.
-func contentPart(item any) genai.Part {
-	p, ok := item.(map[string]any)
-	if !ok {
-		if s, ok := item.(string); ok {
-			return part(textPart(s))
-		}
-		return part(genai.GenericPart{"type": FormatterGeneric, "content": stringOf(item)})
-	}
-	block := object(p)
-	switch block.str("type") {
-	case "text":
-		return part(textPart(block.str("text")))
-	case "refusal":
-		return part(textPart(block.str("refusal")))
-	case "image_url":
-		url := block.str("image_url")
-		if ref, ok := block.obj("image_url"); ok {
-			url = ref.str("url")
-		}
-		if url != "" {
-			return part(mediaPart(url, genai.ModalityImage))
-		}
-	}
-	return part(genai.GenericPart(p))
 }
 
 // toolCallPart reads {id, function: {name, arguments}}; a gateway may flatten it to {id, name, arguments|args}.

@@ -18,7 +18,7 @@ func TestParts_RoundTrip(t *testing.T) {
 		want Parts
 	}{
 		{
-			name: "EveryType_DecodesToItsStruct",
+			name: "EveryNamedType_DecodesToItsStruct",
 			json: `[{"type":"text","content":"hi"},` +
 				`{"type":"tool_call","name":"get_weather","id":"call_1","arguments":{"city":"Paris"}},` +
 				`{"type":"tool_call_response","id":"call_1","response":"rainy"},` +
@@ -43,17 +43,17 @@ func TestParts_RoundTrip(t *testing.T) {
 			},
 		},
 		{
-			name: "ExtraKeys_Dropped",
+			name: "UnknownKeys_Dropped",
 			json: `[{"type":"reasoning","content":"","signature":"sig"}]`,
 			want: Parts{{Value: ReasoningPart{Type: PartTypeReasoning}}},
 		},
 		{
-			name: "UnknownType_Generic",
+			name: "UnknownType_DecodesToGenericMap",
 			json: `[{"type":"refusal","refusal":"no"}]`,
 			want: Parts{{Value: GenericPart{"type": "refusal", "refusal": "no"}}},
 		},
 		{
-			name: "MissingType_Generic",
+			name: "MissingType_DecodesToGenericMap",
 			json: `[{"text":"bare"}]`,
 			want: Parts{{Value: GenericPart{"text": "bare"}}},
 		},

@@ -4,19 +4,21 @@ import (
 	"encoding/json"
 
 	"github.com/swaggest/jsonschema-go"
+
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-const (
-	PartTypeText                   PartType = "text"
-	PartTypeToolCall               PartType = "tool_call"
-	PartTypeToolCallResponse       PartType = "tool_call_response"
-	PartTypeServerToolCall         PartType = "server_tool_call"
-	PartTypeServerToolCallResponse PartType = "server_tool_call_response"
-	PartTypeBlob                   PartType = "blob"
-	PartTypeFile                   PartType = "file"
-	PartTypeURI                    PartType = "uri"
-	PartTypeReasoning              PartType = "reasoning"
-	PartTypeCompaction             PartType = "compaction"
+var (
+	PartTypeText                   = PartType{valuer.NewString("text")}
+	PartTypeToolCall               = PartType{valuer.NewString("tool_call")}
+	PartTypeToolCallResponse       = PartType{valuer.NewString("tool_call_response")}
+	PartTypeServerToolCall         = PartType{valuer.NewString("server_tool_call")}
+	PartTypeServerToolCallResponse = PartType{valuer.NewString("server_tool_call_response")}
+	PartTypeBlob                   = PartType{valuer.NewString("blob")}
+	PartTypeFile                   = PartType{valuer.NewString("file")}
+	PartTypeURI                    = PartType{valuer.NewString("uri")}
+	PartTypeReasoning              = PartType{valuer.NewString("reasoning")}
+	PartTypeCompaction             = PartType{valuer.NewString("compaction")}
 )
 
 var (
@@ -39,7 +41,7 @@ var partVariants = []partVariant{
 	{typ: PartTypeCompaction, decode: decodePart[CompactionPart], schema: CompactionPart{}, schemaRef: "#/components/schemas/GenaiCompactionPart"},
 }
 
-type PartType string
+type PartType struct{ valuer.String }
 
 // Part is one message part, the schema's anyOf discriminated on "type". Value holds the part
 // struct for that type and is encoded as the part itself.
@@ -141,7 +143,7 @@ func (Part) PrepareJSONSchema(schema *jsonschema.Schema) error {
 	}
 	mapping := make(map[string]string, len(partVariants))
 	for _, variant := range partVariants {
-		mapping[string(variant.typ)] = variant.schemaRef
+		mapping[variant.typ.StringValue()] = variant.schemaRef
 	}
 	schema.ExtraProperties["x-signoz-discriminator"] = map[string]any{
 		"propertyName": "type",

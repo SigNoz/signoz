@@ -5,11 +5,11 @@ package genaiformatter
 import (
 	"encoding/json"
 	"fmt"
-	"maps"
 	"regexp"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes/genai"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 const (
@@ -119,67 +119,11 @@ func (f *formatting) side(value any, role genai.Role) (genai.OutputMessages, str
 		if v == "" {
 			return genai.OutputMessages{}, FormatterText
 		}
-		f.warn("bare %s text, role assumed", role)
+		f.warn("bare %s text, role assumed", role.StringValue())
 		return genai.OutputMessages{{Role: role, Parts: genai.Parts{part(textPart(v))}}}, FormatterText
 	}
 	f.warn("message format not recognised, kept as generic")
 	return genai.OutputMessages{genericMessage(value)}, FormatterGeneric
-}
-
-// semconv decodes messages that already follow the schema through the genai types. A part of a
-// type the schema does not name is a provider content block and goes through the chat converter.
-func (f *formatting) semconv(list []any) genai.OutputMessages {
-	data, err := json.Marshal(semconvTextKey(list))
-	if err != nil {
-		f.warn("messages could not be encoded: %s", err)
-		return genai.OutputMessages{genericMessage(list)}
-	}
-	var msgs genai.OutputMessages
-	if err := json.Unmarshal(data, &msgs); err != nil {
-		f.warn("messages do not follow the schema: %s", err)
-		return genai.OutputMessages{genericMessage(list)}
-	}
-	for i := range msgs {
-		if msgs[i].Parts == nil {
-			msgs[i].Parts = genai.Parts{}
-		}
-		for j, p := range msgs[i].Parts {
-			if block, ok := p.Value.(genai.GenericPart); ok {
-				msgs[i].Parts[j] = contentPart(map[string]any(block))
-			}
-		}
-	}
-	return msgs
-}
-
-// semconvTextKey copies the text and reasoning parts some SDKs write with "text" in place of the
-// schema's "content". The input is left untouched, it is also the span's raw attribute.
-func semconvTextKey(list []any) []any {
-	out := make([]any, 0, len(list))
-	for _, item := range list {
-		m, ok := item.(map[string]any)
-		parts, hasParts := object(m).list("parts")
-		if !ok || !hasParts {
-			out = append(out, item)
-			continue
-		}
-		fixedParts := make([]any, 0, len(parts))
-		for _, p := range parts {
-			part, ok := p.(map[string]any)
-			typ := object(part).str("type")
-			if ok && (typ == "text" || typ == "reasoning") && part["content"] == nil && part["text"] != nil {
-				fixed := maps.Clone(part)
-				fixed["content"] = fixed["text"]
-				delete(fixed, "text")
-				p = fixed
-			}
-			fixedParts = append(fixedParts, p)
-		}
-		msg := maps.Clone(m)
-		msg["parts"] = fixedParts
-		out = append(out, msg)
-	}
-	return out
 }
 
 func firstObject(list []any) (object, bool) {
@@ -225,7 +169,7 @@ func role(value string) genai.Role {
 	case "function":
 		return genai.RoleTool
 	}
-	return genai.Role(lower)
+	return genai.Role{String: valuer.NewString(lower)}
 }
 
 func finishReason(value string) *genai.FinishReason {
@@ -235,9 +179,17 @@ func finishReason(value string) *genai.FinishReason {
 	}
 	fr, ok := finishReasonAliases[lower]
 	if !ok {
-		fr = genai.FinishReason(lower)
+		fr = genai.FinishReason{String: valuer.NewString(lower)}
 	}
 	return &fr
+}
+
+func optionalString(value any) *string {
+	s := stringOf(value)
+	if s == "" {
+		return nil
+	}
+	return &s
 }
 
 func part(value any) genai.Part {
@@ -248,20 +200,40 @@ func textPart(content string) genai.TextPart {
 	return genai.TextPart{Type: genai.PartTypeText, Content: content}
 }
 
+// contentPart converts one OpenAI content block, which semconv parts may also carry; a block of
+// any other type is kept as sent.
+func contentPart(item any) genai.Part {
+	p, ok := item.(map[string]any)
+	if !ok {
+		if s, ok := item.(string); ok {
+			return part(textPart(s))
+		}
+		return part(genai.GenericPart{"type": FormatterGeneric, "content": stringOf(item)})
+	}
+	block := object(p)
+	switch block.str("type") {
+	case "text":
+		return part(textPart(block.str("text")))
+	case "refusal":
+		return part(textPart(block.str("refusal")))
+	case "image_url":
+		url := block.str("image_url")
+		if ref, ok := block.obj("image_url"); ok {
+			url = ref.str("url")
+		}
+		if url != "" {
+			return part(mediaPart(url, genai.ModalityImage))
+		}
+	}
+	return part(genai.GenericPart(p))
+}
+
 // mediaPart places a data URL in a BlobPart, any other URL in a UriPart.
 func mediaPart(url string, modality genai.Modality) any {
 	if m := dataURL.FindStringSubmatch(url); m != nil {
 		return genai.BlobPart{Type: genai.PartTypeBlob, Modality: modality, MimeType: &m[1], Content: m[2]}
 	}
 	return genai.UriPart{Type: genai.PartTypeURI, Modality: modality, URI: url}
-}
-
-func optionalString(value any) *string {
-	s := stringOf(value)
-	if s == "" {
-		return nil
-	}
-	return &s
 }
 
 // stringOf renders nil as "" and non-strings as compact JSON.

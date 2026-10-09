@@ -3,36 +3,38 @@
 // Keys the schema does not name are dropped; the raw attribute on the span still has them.
 package genai
 
-const (
-	RoleSystem    Role = "system"
-	RoleUser      Role = "user"
-	RoleAssistant Role = "assistant"
-	RoleTool      Role = "tool"
+import "github.com/SigNoz/signoz/pkg/valuer"
+
+var (
+	RoleSystem    = Role{valuer.NewString("system")}
+	RoleUser      = Role{valuer.NewString("user")}
+	RoleAssistant = Role{valuer.NewString("assistant")}
+	RoleTool      = Role{valuer.NewString("tool")}
 )
 
-const (
-	FinishReasonStop          FinishReason = "stop"
-	FinishReasonLength        FinishReason = "length"
-	FinishReasonContentFilter FinishReason = "content_filter"
-	FinishReasonToolCall      FinishReason = "tool_call"
-	FinishReasonCompaction    FinishReason = "compaction"
-	FinishReasonError         FinishReason = "error"
+var (
+	FinishReasonStop          = FinishReason{valuer.NewString("stop")}
+	FinishReasonLength        = FinishReason{valuer.NewString("length")}
+	FinishReasonContentFilter = FinishReason{valuer.NewString("content_filter")}
+	FinishReasonToolCall      = FinishReason{valuer.NewString("tool_call")}
+	FinishReasonCompaction    = FinishReason{valuer.NewString("compaction")}
+	FinishReasonError         = FinishReason{valuer.NewString("error")}
 )
 
-const (
-	ModalityImage    Modality = "image"
-	ModalityVideo    Modality = "video"
-	ModalityAudio    Modality = "audio"
-	ModalityDocument Modality = "document"
+var (
+	ModalityImage    = Modality{valuer.NewString("image")}
+	ModalityVideo    = Modality{valuer.NewString("video")}
+	ModalityAudio    = Modality{valuer.NewString("audio")}
+	ModalityDocument = Modality{valuer.NewString("document")}
 )
 
-// Role, FinishReason and Modality are open enums: the constants are the values the schema
-// names, any other string is kept as sent.
-type Role string
+// Role, FinishReason and Modality are open enums: the variables are the values the schema
+// names, any other string is kept as sent, so none of them lists an Enum for the spec.
+type Role struct{ valuer.String }
 
-type FinishReason string
+type FinishReason struct{ valuer.String }
 
-type Modality string
+type Modality struct{ valuer.String }
 
 type InputMessages []ChatMessage
 
