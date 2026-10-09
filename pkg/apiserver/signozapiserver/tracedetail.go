@@ -90,7 +90,7 @@ func (provider *provider) addTraceDetailRoutes(router *mux.Router) error {
 			ID:                  "GetTraceThread",
 			Tags:                []string{"tracedetail"},
 			Summary:             "Get thread view for a trace",
-			Description:         "Returns the spans carrying gen_ai input or output messages, or a tool call's arguments or result, in timestamp order. Messages already in the OTel GenAI shape are decoded into formatted_input and formatted_output, with formatter naming the converter and formatter_warnings what it could not resolve. Pass nextCursor as after or prevCursor as before to page, or spanId to open the page around a span.",
+			Description:         "Returns the spans carrying gen_ai input or output messages, or a tool execution, in timestamp order. Messages already in the OTel GenAI shape are decoded into formatted_input and formatted_output, with formatter naming the converter and formatter_warnings what it could not resolve. Pass nextCursor as after or prevCursor as before to page, or spanId to open the page around a span.",
 			RequestQuery:        new(spantypes.GetTraceThreadParams),
 			Response:            new(spantypes.GettableTraceThread),
 			ResponseContentType: "application/json",

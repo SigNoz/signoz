@@ -38,8 +38,7 @@ type Formatted struct {
 }
 
 // Format converts the two attribute values, each a JSON string or a structured value; nil means
-// the attribute is absent. Output messages are the working shape for both sides, the input side
-// drops the finish reason.
+// the attribute is absent.
 func Format(input, output any) Formatted {
 	f := &formatting{out: Formatted{Input: genai.InputMessages{}, Output: genai.OutputMessages{}, Warnings: []string{}}}
 	var inputLabel, outputLabel string

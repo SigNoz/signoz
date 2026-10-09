@@ -297,6 +297,11 @@ def test_thread_reads_spans_across_json_rollout(
     assert [span["span_id"] for span in before_spans] == before_ids
     assert before_spans[0]["attributes"]["gen_ai.input.messages"] == json.dumps([{"role": "user", "content": "first"}])
     assert before_spans[1]["attributes"]["gen_ai.output.messages"] == json.dumps([{"role": "assistant", "content": "second"}])
+    # messages are decoded from the JSON column only, never from the legacy maps
+    for span in before_spans:
+        assert span["formatter"] == ""
+        assert span["formatted_input"] == []
+        assert span["formatted_output"] == []
 
     straddle = requests.get(signoz.self.host_configs["8080"].get(f"/api/v1/traces/{straddle_trace_id}/thread"), headers=headers, timeout=10)
     assert straddle.status_code == HTTPStatus.OK, straddle.text
@@ -304,6 +309,10 @@ def test_thread_reads_spans_across_json_rollout(
     assert [span["span_id"] for span in straddle_spans] == [legacy_id, json_id]
     assert straddle_spans[0]["attributes"]["gen_ai.input.messages"] == json.dumps([{"role": "user", "content": "legacy"}])
     assert straddle_spans[1]["attributes"]["gen_ai.input.messages"] == json.dumps([{"role": "user", "content": "json"}])
+    assert straddle_spans[0]["formatter"] == ""
+    assert straddle_spans[0]["formatted_input"] == []
+    assert straddle_spans[1]["formatter"] == "openai.chat"
+    assert straddle_spans[1]["formatted_input"] == [{"role": "user", "parts": [{"type": "text", "content": "json"}]}]
 
 
 def test_thread_without_messages_is_empty(

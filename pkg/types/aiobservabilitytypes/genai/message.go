@@ -34,10 +34,9 @@ type FinishReason string
 
 type Modality string
 
-// InputMessages is the gen_ai.input.messages value.
 type InputMessages []ChatMessage
 
-// OutputMessages is the gen_ai.output.messages value, one message per choice.
+// OutputMessages holds one message per choice.
 type OutputMessages []OutputMessage
 
 type ChatMessage struct {

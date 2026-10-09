@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// formatCase holds the two raw attribute values and the formatted view expected for them.
 type formatCase struct {
 	name       string
 	input      any

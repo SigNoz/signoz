@@ -16309,11 +16309,11 @@ paths:
     get:
       deprecated: false
       description: Returns the spans carrying gen_ai input or output messages, or
-        a tool call's arguments or result, in timestamp order. Messages already in
-        the OTel GenAI shape are decoded into formatted_input and formatted_output,
-        with formatter naming the converter and formatter_warnings what it could not
-        resolve. Pass nextCursor as after or prevCursor as before to page, or spanId
-        to open the page around a span.
+        a tool execution, in timestamp order. Messages already in the OTel GenAI shape
+        are decoded into formatted_input and formatted_output, with formatter naming
+        the converter and formatter_warnings what it could not resolve. Pass nextCursor
+        as after or prevCursor as before to page, or spanId to open the page around
+        a span.
       operationId: GetTraceThread
       parameters:
       - description: Page size, at most 100. 0 means 20.

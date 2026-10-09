@@ -182,7 +182,7 @@ func newThreadSpan(traceID string, storable *StorableSpan) *ThreadSpan {
 	maps.Copy(resources, storable.ResourcesString)
 	timeUnixNano := uint64(storable.StartTime.UnixNano())
 	attributes := threadAttributes(storable)
-	formatted := genaiformatter.Format(rawAttribute(storable, attributes, aiobservabilitytypes.GenAIInputMessages), rawAttribute(storable, attributes, aiobservabilitytypes.GenAIOutputMessages))
+	formatted := genaiformatter.Format(rawAttribute(storable, aiobservabilitytypes.GenAIInputMessages), rawAttribute(storable, aiobservabilitytypes.GenAIOutputMessages))
 	return &ThreadSpan{
 		SpanID:            storable.SpanID,
 		TraceID:           traceID,
@@ -217,13 +217,12 @@ func threadAttributes(storable *StorableSpan) map[string]any {
 	return attributes
 }
 
-// rawAttribute reads one attribute for decoding: from the JSON document, where an object value
-// is still whole, or from the legacy maps, where the collector already split objects into one
-// key per field.
-func rawAttribute(storable *StorableSpan, attributes map[string]any, key string) any {
-	if len(storable.AttributesJSON) == 0 {
-		return attributes[key]
-	}
+// rawAttribute reads one attribute for decoding from the JSON document, where an object value is
+// still whole. The legacy maps hold objects split into one key per field, so spans from before
+// the JSON rollout are not decoded. Not handled: a list of JSON strings, which formats as generic,
+// and a scalar at a prefix of the path, such as gen_ai.input beside gen_ai.input.messages, which
+// ends the walk early.
+func rawAttribute(storable *StorableSpan, key string) any {
 	var current any = map[string]any(storable.AttributesJSON)
 	for segment := range strings.SplitSeq(key, ".") {
 		object, ok := current.(map[string]any)

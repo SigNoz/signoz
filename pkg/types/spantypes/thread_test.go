@@ -94,20 +94,14 @@ func TestRawAttribute(t *testing.T) {
 			key:      "gen_ai.tool.call.arguments",
 		},
 		{
-			name:     "LegacyMaps_SplitKeysNotJoined",
-			storable: StorableSpan{AttributesString: map[string]string{"gen_ai.tool.call.arguments.city": "Paris"}},
-			key:      "gen_ai.tool.call.arguments",
-		},
-		{
-			name:     "LegacyMaps_String",
-			storable: StorableSpan{AttributesString: map[string]string{"gen_ai.output.messages": "sunny"}},
+			name:     "LegacyMaps_Ignored",
+			storable: StorableSpan{AttributesString: map[string]string{"gen_ai.output.messages": "sunny", "gen_ai.tool.call.arguments.city": "Paris"}},
 			key:      "gen_ai.output.messages",
-			want:     "sunny",
 		},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			assert.Equal(t, testCase.want, rawAttribute(&testCase.storable, threadAttributes(&testCase.storable), testCase.key))
+			assert.Equal(t, testCase.want, rawAttribute(&testCase.storable, testCase.key))
 		})
 	}
 }
