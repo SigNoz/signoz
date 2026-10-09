@@ -98,7 +98,7 @@ export function getTokenLabel(
 
 /** Missing values render as `-`. */
 export function formatTokens(value: number | null | undefined): string {
-	return hasValue(value) ? value.toLocaleString('en-US') : '-';
+	return hasValue(value) ? value.toLocaleString('en-US') : '0';
 }
 
 export function formatCost(value: number): string {

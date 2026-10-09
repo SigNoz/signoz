@@ -18,27 +18,22 @@ function TokenBreakdown({
 	reasoning,
 }: TokenBreakdownProps): JSX.Element {
 	const totalInput = getTotalInputTokens({ input, cacheRead, cacheWrite });
-	const showCacheRead = hasValue(cacheRead);
-	const showCacheWrite = hasValue(cacheWrite);
 	const cacheRows = (
 		<>
-			{showCacheRead && (
-				<TraceTooltipRow
-					label={getTokenLabel('Cache Read', cacheRead)}
-					value={formatTokens(cacheRead)}
-					isNested
-				/>
-			)}
-			{showCacheWrite && (
-				<TraceTooltipRow
-					label={getTokenLabel('Cache Write', cacheWrite)}
-					value={formatTokens(cacheWrite)}
-					isNested
-				/>
-			)}
+			<TraceTooltipRow
+				label={getTokenLabel('Cache Read', cacheRead)}
+				value={formatTokens(cacheRead)}
+				isNested
+			/>
+
+			<TraceTooltipRow
+				label={getTokenLabel('Cache Write', cacheWrite)}
+				value={formatTokens(cacheWrite)}
+				isNested
+			/>
 		</>
 	);
-	const reasoningSection = hasValue(reasoning) && (
+	const reasoningSection = (hasValue(input) || hasValue(output)) && (
 		<TraceTooltipSection>
 			<TraceTooltipRow
 				label={getTokenLabel('Reasoning', reasoning)}
@@ -56,6 +51,16 @@ function TokenBreakdown({
 			/>
 		</TraceTooltipSection>
 	);
+	const renderTotalUsage = (inputTotal: number): JSX.Element | false =>
+		(hasValue(input) || hasValue(output)) && (
+			<TraceTooltipSection>
+				<TraceTooltipRow
+					label="Total Token Usage"
+					value={formatTokens(inputTotal + (output ?? 0))}
+					isHeading
+				/>
+			</TraceTooltipSection>
+		);
 
 	// Without input there is no total to nest cache under.
 	if (!hasValue(totalInput)) {
@@ -70,14 +75,15 @@ function TokenBreakdown({
 						/>
 					</TraceTooltipSection>
 				)}
-				{(showCacheRead || showCacheWrite) && (
-					<TraceTooltipSection>
-						<TraceTooltipRow label="Cache Tokens" isHeading />
-						{cacheRows}
-					</TraceTooltipSection>
-				)}
+
+				<TraceTooltipSection>
+					<TraceTooltipRow label="Cache Tokens" isHeading />
+					{cacheRows}
+				</TraceTooltipSection>
+
 				{reasoningSection}
 				{outputSection}
+				{renderTotalUsage(0)}
 			</>
 		);
 	}
@@ -86,14 +92,14 @@ function TokenBreakdown({
 		<>
 			<TraceTooltipSection>
 				<TraceTooltipRow
-					label={getTokenLabel('Input', totalInput)}
+					label={getTokenLabel('Total Input', totalInput)}
 					value={formatTokens(totalInput)}
 					isHeading
 				/>
 				{cacheRows}
 				{hasValue(input) && (
 					<TraceTooltipRow
-						label={getTokenLabel('Total Input', input)}
+						label={getTokenLabel('Input', input)}
 						value={formatTokens(input)}
 						isNested
 					/>
@@ -102,15 +108,7 @@ function TokenBreakdown({
 
 			{reasoningSection}
 			{outputSection}
-			{hasValue(output) && (
-				<TraceTooltipSection>
-					<TraceTooltipRow
-						label="Total Token Usage"
-						value={formatTokens(totalInput + output)}
-						isHeading
-					/>
-				</TraceTooltipSection>
-			)}
+			{renderTotalUsage(totalInput)}
 		</>
 	);
 }
