@@ -29,6 +29,9 @@ type Ruler interface {
 	// model to store structured data.
 	CreateRule(ctx context.Context, ruleStr string) (*ruletypes.GettableRule, error)
 
+	// CloneRule creates a new rule from the stored definition of id, with a " - Copy" suffixed name.
+	CloneRule(ctx context.Context, id valuer.UUID) (*ruletypes.GettableRule, error)
+
 	// EditRule replaces the rule identified by id with the given JSON string.
 	// TODO: same as CreateRule — accept PostableRule instead of raw string.
 	EditRule(ctx context.Context, ruleStr string, id valuer.UUID) error

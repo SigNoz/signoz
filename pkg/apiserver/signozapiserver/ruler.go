@@ -71,6 +71,20 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/rules/{id}/clone", handler.New(provider.authzMiddleware.EditAccess(provider.rulerHandler.CloneRuleByID), handler.OpenAPIDef{
+		ID:                  "CloneRuleByID",
+		Tags:                []string{"rules"},
+		Summary:             "Clone alert rule",
+		Description:         "This endpoint creates a new alert rule from the stored definition of an existing one. The clone keeps every field of the source, including its enabled/disabled state, and gets the source's name suffixed with \" - Copy\" (or a bumped \" - Copy (n)\" counter when the source is itself a copy). The clone is owned by the caller.",
+		Response:            new(ruletypes.Rule),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusCreated,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v2/rules/{id}", handler.New(provider.authzMiddleware.EditAccess(provider.rulerHandler.UpdateRuleByID), handler.OpenAPIDef{
 		ID:                 "UpdateRuleByID",
 		Tags:               []string{"rules"},
