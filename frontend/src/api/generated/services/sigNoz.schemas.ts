@@ -6755,10 +6755,7 @@ export interface GenaiToolCallResponsePartDTO {
 }
 
 export interface GenaiGenericServerToolCallDTO {
-	/**
-	 * @type string
-	 */
-	type: string;
+	[key: string]: unknown;
 }
 
 export enum GenaiServerToolCallPartDTOType {
@@ -6782,10 +6779,7 @@ export interface GenaiServerToolCallPartDTO {
 }
 
 export interface GenaiGenericServerToolCallResponseDTO {
-	/**
-	 * @type string
-	 */
-	type: string;
+	[key: string]: unknown;
 }
 
 export enum GenaiServerToolCallResponsePartDTOType {
@@ -6885,10 +6879,7 @@ export interface GenaiCompactionPartDTO {
 }
 
 export interface GenaiGenericPartDTO {
-	/**
-	 * @type string
-	 */
-	type: string;
+	[key: string]: unknown;
 }
 
 export type GenaiPartDTO =

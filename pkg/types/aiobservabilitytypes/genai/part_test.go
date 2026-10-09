@@ -33,8 +33,8 @@ func TestParts_RoundTrip(t *testing.T) {
 				{Value: TextPart{Type: PartTypeText, Content: "hi"}},
 				{Value: ToolCallRequestPart{Type: PartTypeToolCall, Name: "get_weather", ID: &id, Arguments: map[string]any{"city": "Paris"}}},
 				{Value: ToolCallResponsePart{Type: PartTypeToolCallResponse, ID: &id, Response: "rainy"}},
-				{Value: ServerToolCallPart{Type: PartTypeServerToolCall, Name: "code_interpreter", ID: &id, ServerToolCall: GenericServerToolCall{Type: "code_interpreter", AdditionalProperties: map[string]any{"code": "1+1"}}}},
-				{Value: ServerToolCallResponsePart{Type: PartTypeServerToolCallResponse, ID: &id, ServerToolCallResponse: GenericServerToolCallResponse{Type: "code_interpreter", AdditionalProperties: map[string]any{"outputs": []any{}}}}},
+				{Value: ServerToolCallPart{Type: PartTypeServerToolCall, Name: "code_interpreter", ID: &id, ServerToolCall: GenericServerToolCall{"type": "code_interpreter", "code": "1+1"}}},
+				{Value: ServerToolCallResponsePart{Type: PartTypeServerToolCallResponse, ID: &id, ServerToolCallResponse: GenericServerToolCallResponse{"type": "code_interpreter", "outputs": []any{}}}},
 				{Value: BlobPart{Type: PartTypeBlob, Modality: ModalityImage, Content: "aGk=", MimeType: &mime}},
 				{Value: FilePart{Type: PartTypeFile, Modality: ModalityImage, FileID: "file_1"}},
 				{Value: UriPart{Type: PartTypeURI, Modality: ModalityImage, URI: "gs://b/x.png", MimeType: &mime}},
@@ -43,24 +43,19 @@ func TestParts_RoundTrip(t *testing.T) {
 			},
 		},
 		{
-			name: "ExtraKeys_Kept",
-			json: `[{"type":"reasoning","content":"","signature":"sig","redacted":true}]`,
-			want: Parts{{Value: ReasoningPart{Type: PartTypeReasoning, AdditionalProperties: map[string]any{"signature": "sig", "redacted": true}}}},
+			name: "ExtraKeys_Dropped",
+			json: `[{"type":"reasoning","content":"","signature":"sig"}]`,
+			want: Parts{{Value: ReasoningPart{Type: PartTypeReasoning}}},
 		},
 		{
 			name: "UnknownType_Generic",
 			json: `[{"type":"refusal","refusal":"no"}]`,
-			want: Parts{{Value: GenericPart{Type: "refusal", AdditionalProperties: map[string]any{"refusal": "no"}}}},
+			want: Parts{{Value: GenericPart{"type": "refusal", "refusal": "no"}}},
 		},
 		{
 			name: "MissingType_Generic",
 			json: `[{"text":"bare"}]`,
-			want: Parts{{Value: GenericPart{AdditionalProperties: map[string]any{"text": "bare"}}}},
-		},
-		{
-			name: "Blob_DropsExtraKeys",
-			json: `[{"type":"blob","modality":"audio","content":"aGk=","transcript":"hi"}]`,
-			want: Parts{{Value: BlobPart{Type: PartTypeBlob, Modality: ModalityAudio, Content: "aGk="}}},
+			want: Parts{{Value: GenericPart{"text": "bare"}}},
 		},
 	}
 	for _, testCase := range testCases {
@@ -85,15 +80,13 @@ func TestParts_Marshal(t *testing.T) {
 		part any
 		want string
 	}{
-		{name: "TypeFilledFromKind", part: TextPart{Content: "hi"}, want: `{"type":"text","content":"hi"}`},
-		{name: "ExtrasAfterFields_KnownKeysWin", part: TextPart{Content: "hi", AdditionalProperties: map[string]any{"content": "shadowed", "signature": "sig"}}, want: `{"type":"text","content":"hi","signature":"sig"}`},
-		{name: "ResponseNull_StillEmitted", part: ToolCallResponsePart{ID: &id}, want: `{"type":"tool_call_response","response":null,"id":"c1"}`},
-		{name: "NilArguments_Omitted", part: ToolCallRequestPart{Name: "f"}, want: `{"type":"tool_call","name":"f"}`},
-		{name: "Generic_KeepsType", part: GenericPart{Type: "refusal", AdditionalProperties: map[string]any{"refusal": "no"}}, want: `{"type":"refusal","refusal":"no"}`},
+		{name: "ResponseNull_StillEmitted", part: ToolCallResponsePart{Type: PartTypeToolCallResponse, ID: &id}, want: `{"type":"tool_call_response","response":null,"id":"c1"}`},
+		{name: "NilArguments_Omitted", part: ToolCallRequestPart{Type: PartTypeToolCall, Name: "f"}, want: `{"type":"tool_call","name":"f"}`},
+		{name: "Generic_AsSent", part: GenericPart{"type": "refusal", "refusal": "no"}, want: `{"type":"refusal","refusal":"no"}`},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			encoded, err := json.Marshal(testCase.part)
+			encoded, err := json.Marshal(Part{Value: testCase.part})
 			require.NoError(t, err)
 			assert.JSONEq(t, testCase.want, string(encoded))
 		})
@@ -103,14 +96,14 @@ func TestParts_Marshal(t *testing.T) {
 func TestMessages_RoundTrip(t *testing.T) {
 	stop := FinishReasonStop
 	name := "planner"
-	input := `[{"role":"system","parts":[{"type":"text","content":"be brief"}]},{"role":"user","parts":[],"name":"planner","x-trace":"abc"}]`
+	input := `[{"role":"system","parts":[{"type":"text","content":"be brief"}]},{"role":"user","parts":[],"name":"planner"}]`
 	output := `[{"role":"assistant","parts":[{"type":"text","content":"ok"}],"finish_reason":"stop"}]`
 
 	var in InputMessages
 	require.NoError(t, json.Unmarshal([]byte(input), &in))
 	assert.Equal(t, InputMessages{
 		{Role: RoleSystem, Parts: Parts{{Value: TextPart{Type: PartTypeText, Content: "be brief"}}}},
-		{Role: RoleUser, Parts: Parts{}, Name: &name, AdditionalProperties: map[string]any{"x-trace": "abc"}},
+		{Role: RoleUser, Parts: Parts{}, Name: &name},
 	}, in)
 	encoded, err := json.Marshal(in)
 	require.NoError(t, err)
@@ -122,8 +115,4 @@ func TestMessages_RoundTrip(t *testing.T) {
 	encoded, err = json.Marshal(out)
 	require.NoError(t, err)
 	assert.JSONEq(t, output, string(encoded))
-
-	encoded, err = json.Marshal(ChatMessage{Role: RoleUser})
-	require.NoError(t, err)
-	assert.JSONEq(t, `{"role":"user","parts":[]}`, string(encoded))
 }

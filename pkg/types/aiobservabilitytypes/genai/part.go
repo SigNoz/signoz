@@ -25,6 +25,7 @@ var (
 )
 
 // partVariants are the part types the schema names; any other type decodes as GenericPart.
+// schemaRef is the component in the generated OpenAPI spec, for the discriminator mapping.
 var partVariants = []partVariant{
 	{typ: PartTypeText, decode: decodePart[TextPart], schema: TextPart{}, schemaRef: "#/components/schemas/GenaiTextPart"},
 	{typ: PartTypeToolCall, decode: decodePart[ToolCallRequestPart], schema: ToolCallRequestPart{}, schemaRef: "#/components/schemas/GenaiToolCallRequestPart"},
@@ -49,54 +50,45 @@ type Part struct {
 type Parts []Part
 
 type TextPart struct {
-	Type                 PartType       `json:"type" required:"true"`
-	Content              string         `json:"content" required:"true"`
-	AdditionalProperties map[string]any `json:"-"`
+	Type    PartType `json:"type" required:"true"`
+	Content string   `json:"content" required:"true"`
 }
 
 type ToolCallRequestPart struct {
-	Type                 PartType       `json:"type" required:"true"`
-	Name                 string         `json:"name" required:"true"`
-	ID                   *string        `json:"id,omitempty"`
-	Arguments            any            `json:"arguments,omitempty"`
-	AdditionalProperties map[string]any `json:"-"`
+	Type      PartType `json:"type" required:"true"`
+	Name      string   `json:"name" required:"true"`
+	ID        *string  `json:"id,omitempty"`
+	Arguments any      `json:"arguments,omitempty"`
 }
 
 // ToolCallResponsePart carries a client tool result, or a built-in tool outcome.
 type ToolCallResponsePart struct {
-	Type                 PartType       `json:"type" required:"true"`
-	Response             any            `json:"response" required:"true" nullable:"true"`
-	ID                   *string        `json:"id,omitempty"`
-	AdditionalProperties map[string]any `json:"-"`
+	Type     PartType `json:"type" required:"true"`
+	Response any      `json:"response" required:"true" nullable:"true"`
+	ID       *string  `json:"id,omitempty"`
 }
 
 // ServerToolCallPart is a tool the provider ran itself, such as code_interpreter or web_search.
 type ServerToolCallPart struct {
-	Type                 PartType              `json:"type" required:"true"`
-	Name                 string                `json:"name" required:"true"`
-	ID                   *string               `json:"id,omitempty"`
-	ServerToolCall       GenericServerToolCall `json:"server_tool_call" required:"true"`
-	AdditionalProperties map[string]any        `json:"-"`
+	Type           PartType              `json:"type" required:"true"`
+	Name           string                `json:"name" required:"true"`
+	ID             *string               `json:"id,omitempty"`
+	ServerToolCall GenericServerToolCall `json:"server_tool_call" required:"true" nullable:"false"`
 }
 
-type GenericServerToolCall struct {
-	Type                 string         `json:"type" required:"true"`
-	AdditionalProperties map[string]any `json:"-"`
-}
+// GenericServerToolCall is the provider's own call object, {type, ...} with any other keys.
+type GenericServerToolCall map[string]any
 
 type ServerToolCallResponsePart struct {
 	Type                   PartType                      `json:"type" required:"true"`
 	ID                     *string                       `json:"id,omitempty"`
-	ServerToolCallResponse GenericServerToolCallResponse `json:"server_tool_call_response" required:"true"`
-	AdditionalProperties   map[string]any                `json:"-"`
+	ServerToolCallResponse GenericServerToolCallResponse `json:"server_tool_call_response" required:"true" nullable:"false"`
 }
 
-type GenericServerToolCallResponse struct {
-	Type                 string         `json:"type" required:"true"`
-	AdditionalProperties map[string]any `json:"-"`
-}
+// GenericServerToolCallResponse is the provider's own response object, {type, ...} with any other keys.
+type GenericServerToolCallResponse map[string]any
 
-// BlobPart is inline data; Content is base64. The schema allows no extra keys here.
+// BlobPart is inline data; Content is base64.
 type BlobPart struct {
 	Type     PartType `json:"type" required:"true"`
 	Modality Modality `json:"modality" required:"true"`
@@ -106,41 +98,34 @@ type BlobPart struct {
 
 // FilePart references a file uploaded to the provider.
 type FilePart struct {
-	Type                 PartType       `json:"type" required:"true"`
-	Modality             Modality       `json:"modality" required:"true"`
-	FileID               string         `json:"file_id" required:"true"`
-	MimeType             *string        `json:"mime_type,omitempty"`
-	AdditionalProperties map[string]any `json:"-"`
+	Type     PartType `json:"type" required:"true"`
+	Modality Modality `json:"modality" required:"true"`
+	FileID   string   `json:"file_id" required:"true"`
+	MimeType *string  `json:"mime_type,omitempty"`
 }
 
 // UriPart references external data; a data: URL belongs in BlobPart instead.
 type UriPart struct {
-	Type                 PartType       `json:"type" required:"true"`
-	Modality             Modality       `json:"modality" required:"true"`
-	URI                  string         `json:"uri" required:"true"`
-	MimeType             *string        `json:"mime_type,omitempty"`
-	AdditionalProperties map[string]any `json:"-"`
+	Type     PartType `json:"type" required:"true"`
+	Modality Modality `json:"modality" required:"true"`
+	URI      string   `json:"uri" required:"true"`
+	MimeType *string  `json:"mime_type,omitempty"`
 }
 
 type ReasoningPart struct {
-	Type                 PartType       `json:"type" required:"true"`
-	Content              string         `json:"content" required:"true"`
-	AdditionalProperties map[string]any `json:"-"`
+	Type    PartType `json:"type" required:"true"`
+	Content string   `json:"content" required:"true"`
 }
 
 // CompactionPart is compacted conversation state; Content is the summary when it is not encrypted.
 type CompactionPart struct {
-	Type                 PartType       `json:"type" required:"true"`
-	ID                   *string        `json:"id,omitempty"`
-	Content              *string        `json:"content,omitempty"`
-	AdditionalProperties map[string]any `json:"-"`
+	Type    PartType `json:"type" required:"true"`
+	ID      *string  `json:"id,omitempty"`
+	Content *string  `json:"content,omitempty"`
 }
 
 // GenericPart keeps a part of any other type as sent.
-type GenericPart struct {
-	Type                 PartType       `json:"type" required:"true"`
-	AdditionalProperties map[string]any `json:"-"`
-}
+type GenericPart map[string]any
 
 func (Part) JSONSchemaOneOf() []any {
 	oneOf := make([]any, 0, len(partVariants)+1)
@@ -190,237 +175,6 @@ func (p *Part) UnmarshalJSON(data []byte) error {
 	p.Value = value
 	return nil
 }
-
-func (p TextPart) MarshalJSON() ([]byte, error) {
-	type plain TextPart
-	p.Type = p.partType()
-	return marshalWithExtras(plain(p), p.AdditionalProperties)
-}
-
-func (p *TextPart) UnmarshalJSON(data []byte) error {
-	type plain TextPart
-	var v plain
-	extras, err := unmarshalWithExtras(data, &v)
-	if err != nil {
-		return err
-	}
-	*p = TextPart(v)
-	p.AdditionalProperties = extras
-	return nil
-}
-
-func (p ToolCallRequestPart) MarshalJSON() ([]byte, error) {
-	type plain ToolCallRequestPart
-	p.Type = p.partType()
-	return marshalWithExtras(plain(p), p.AdditionalProperties)
-}
-
-func (p *ToolCallRequestPart) UnmarshalJSON(data []byte) error {
-	type plain ToolCallRequestPart
-	var v plain
-	extras, err := unmarshalWithExtras(data, &v)
-	if err != nil {
-		return err
-	}
-	*p = ToolCallRequestPart(v)
-	p.AdditionalProperties = extras
-	return nil
-}
-
-func (p ToolCallResponsePart) MarshalJSON() ([]byte, error) {
-	type plain ToolCallResponsePart
-	p.Type = p.partType()
-	return marshalWithExtras(plain(p), p.AdditionalProperties)
-}
-
-func (p *ToolCallResponsePart) UnmarshalJSON(data []byte) error {
-	type plain ToolCallResponsePart
-	var v plain
-	extras, err := unmarshalWithExtras(data, &v)
-	if err != nil {
-		return err
-	}
-	*p = ToolCallResponsePart(v)
-	p.AdditionalProperties = extras
-	return nil
-}
-
-func (p ServerToolCallPart) MarshalJSON() ([]byte, error) {
-	type plain ServerToolCallPart
-	p.Type = p.partType()
-	return marshalWithExtras(plain(p), p.AdditionalProperties)
-}
-
-func (p *ServerToolCallPart) UnmarshalJSON(data []byte) error {
-	type plain ServerToolCallPart
-	var v plain
-	extras, err := unmarshalWithExtras(data, &v)
-	if err != nil {
-		return err
-	}
-	*p = ServerToolCallPart(v)
-	p.AdditionalProperties = extras
-	return nil
-}
-
-func (c GenericServerToolCall) MarshalJSON() ([]byte, error) {
-	type plain GenericServerToolCall
-	return marshalWithExtras(plain(c), c.AdditionalProperties)
-}
-
-func (c *GenericServerToolCall) UnmarshalJSON(data []byte) error {
-	type plain GenericServerToolCall
-	var v plain
-	extras, err := unmarshalWithExtras(data, &v)
-	if err != nil {
-		return err
-	}
-	*c = GenericServerToolCall(v)
-	c.AdditionalProperties = extras
-	return nil
-}
-
-func (p ServerToolCallResponsePart) MarshalJSON() ([]byte, error) {
-	type plain ServerToolCallResponsePart
-	p.Type = p.partType()
-	return marshalWithExtras(plain(p), p.AdditionalProperties)
-}
-
-func (p *ServerToolCallResponsePart) UnmarshalJSON(data []byte) error {
-	type plain ServerToolCallResponsePart
-	var v plain
-	extras, err := unmarshalWithExtras(data, &v)
-	if err != nil {
-		return err
-	}
-	*p = ServerToolCallResponsePart(v)
-	p.AdditionalProperties = extras
-	return nil
-}
-
-func (c GenericServerToolCallResponse) MarshalJSON() ([]byte, error) {
-	type plain GenericServerToolCallResponse
-	return marshalWithExtras(plain(c), c.AdditionalProperties)
-}
-
-func (c *GenericServerToolCallResponse) UnmarshalJSON(data []byte) error {
-	type plain GenericServerToolCallResponse
-	var v plain
-	extras, err := unmarshalWithExtras(data, &v)
-	if err != nil {
-		return err
-	}
-	*c = GenericServerToolCallResponse(v)
-	c.AdditionalProperties = extras
-	return nil
-}
-
-func (p BlobPart) MarshalJSON() ([]byte, error) {
-	type plain BlobPart
-	p.Type = p.partType()
-	return json.Marshal(plain(p))
-}
-
-func (p FilePart) MarshalJSON() ([]byte, error) {
-	type plain FilePart
-	p.Type = p.partType()
-	return marshalWithExtras(plain(p), p.AdditionalProperties)
-}
-
-func (p *FilePart) UnmarshalJSON(data []byte) error {
-	type plain FilePart
-	var v plain
-	extras, err := unmarshalWithExtras(data, &v)
-	if err != nil {
-		return err
-	}
-	*p = FilePart(v)
-	p.AdditionalProperties = extras
-	return nil
-}
-
-func (p UriPart) MarshalJSON() ([]byte, error) {
-	type plain UriPart
-	p.Type = p.partType()
-	return marshalWithExtras(plain(p), p.AdditionalProperties)
-}
-
-func (p *UriPart) UnmarshalJSON(data []byte) error {
-	type plain UriPart
-	var v plain
-	extras, err := unmarshalWithExtras(data, &v)
-	if err != nil {
-		return err
-	}
-	*p = UriPart(v)
-	p.AdditionalProperties = extras
-	return nil
-}
-
-func (p ReasoningPart) MarshalJSON() ([]byte, error) {
-	type plain ReasoningPart
-	p.Type = p.partType()
-	return marshalWithExtras(plain(p), p.AdditionalProperties)
-}
-
-func (p *ReasoningPart) UnmarshalJSON(data []byte) error {
-	type plain ReasoningPart
-	var v plain
-	extras, err := unmarshalWithExtras(data, &v)
-	if err != nil {
-		return err
-	}
-	*p = ReasoningPart(v)
-	p.AdditionalProperties = extras
-	return nil
-}
-
-func (p CompactionPart) MarshalJSON() ([]byte, error) {
-	type plain CompactionPart
-	p.Type = p.partType()
-	return marshalWithExtras(plain(p), p.AdditionalProperties)
-}
-
-func (p *CompactionPart) UnmarshalJSON(data []byte) error {
-	type plain CompactionPart
-	var v plain
-	extras, err := unmarshalWithExtras(data, &v)
-	if err != nil {
-		return err
-	}
-	*p = CompactionPart(v)
-	p.AdditionalProperties = extras
-	return nil
-}
-
-func (p GenericPart) MarshalJSON() ([]byte, error) {
-	type plain GenericPart
-	return marshalWithExtras(plain(p), p.AdditionalProperties)
-}
-
-func (p *GenericPart) UnmarshalJSON(data []byte) error {
-	type plain GenericPart
-	var v plain
-	extras, err := unmarshalWithExtras(data, &v)
-	if err != nil {
-		return err
-	}
-	*p = GenericPart(v)
-	p.AdditionalProperties = extras
-	return nil
-}
-
-func (TextPart) partType() PartType                   { return PartTypeText }
-func (ToolCallRequestPart) partType() PartType        { return PartTypeToolCall }
-func (ToolCallResponsePart) partType() PartType       { return PartTypeToolCallResponse }
-func (ServerToolCallPart) partType() PartType         { return PartTypeServerToolCall }
-func (ServerToolCallResponsePart) partType() PartType { return PartTypeServerToolCallResponse }
-func (BlobPart) partType() PartType                   { return PartTypeBlob }
-func (FilePart) partType() PartType                   { return PartTypeFile }
-func (UriPart) partType() PartType                    { return PartTypeURI }
-func (ReasoningPart) partType() PartType              { return PartTypeReasoning }
-func (CompactionPart) partType() PartType             { return PartTypeCompaction }
-func (p GenericPart) partType() PartType              { return p.Type }
 
 type partVariant struct {
 	typ       PartType

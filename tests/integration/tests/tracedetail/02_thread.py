@@ -62,17 +62,22 @@ def test_thread_returns_message_spans_in_order(
     assert "gen_ai.input.messages" not in output_only["attributes"]
     assert output_only["attributes"]["gen_ai.output.messages"] == "It is sunny in Bangalore."
 
-    # only messages already in the OTel shape are decoded; other formats wait for the converters
     tool_call = {"type": "tool_call", "name": "get_weather", "id": "call_1", "arguments": {"city": "Bangalore"}}
+    assert first["formatter"] == "semconv"
     assert first["formatted_input"] == [{"role": "user", "parts": [{"type": "text", "content": "weather in Bangalore?"}]}]
     assert first["formatted_output"] == [{"role": "assistant", "parts": [tool_call], "finish_reason": "tool_call"}]
-    assert first["formatter"] == "semconv"
     assert first["formatter_warnings"] == []
-    for span in (tool, input_only, output_only):
-        assert span["formatted_input"] == []
-        assert span["formatted_output"] == []
-        assert span["formatter"] == ""
-        assert span["formatter_warnings"] == []
+    # tool spans carry no messages until their converter lands
+    assert tool["formatter"] == ""
+    assert tool["formatted_input"] == []
+    assert tool["formatted_output"] == []
+    assert input_only["formatter"] == "openai.chat"
+    assert input_only["formatted_input"] == [{"role": "tool", "parts": [{"type": "tool_call_response", "id": "call_1", "response": "sunny"}]}]
+    assert input_only["formatted_output"] == []
+    assert output_only["formatter"] == "text"
+    assert output_only["formatted_input"] == []
+    assert output_only["formatted_output"] == [{"role": "assistant", "parts": [{"type": "text", "content": "It is sunny in Bangalore."}]}]
+    assert output_only["formatter_warnings"] == ["bare assistant text, role assumed"]
 
 
 def test_thread_paginates_with_cursors(

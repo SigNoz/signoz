@@ -5158,25 +5158,13 @@ components:
       - file_id
       type: object
     GenaiGenericPart:
-      properties:
-        type:
-          type: string
-      required:
-      - type
+      additionalProperties: {}
       type: object
     GenaiGenericServerToolCall:
-      properties:
-        type:
-          type: string
-      required:
-      - type
+      additionalProperties: {}
       type: object
     GenaiGenericServerToolCallResponse:
-      properties:
-        type:
-          type: string
-      required:
-      - type
+      additionalProperties: {}
       type: object
     GenaiInputMessages:
       items:

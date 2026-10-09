@@ -9,14 +9,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
 	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes/genai"
+	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes/genaiformatter"
 )
 
 const (
 	threadDefaultLimit = 20
 	threadMaxLimit     = 100
-
-	// FormatterSemconv is the formatter of messages that already follow the OTel GenAI shape.
-	FormatterSemconv = "semconv"
 )
 
 const (
@@ -184,7 +182,8 @@ func newThreadSpan(traceID string, storable *StorableSpan) *ThreadSpan {
 	maps.Copy(resources, storable.ResourcesString)
 	timeUnixNano := uint64(storable.StartTime.UnixNano())
 	attributes := threadAttributes(storable)
-	span := &ThreadSpan{
+	formatted := genaiformatter.Format(rawAttribute(storable, attributes, aiobservabilitytypes.GenAIInputMessages), rawAttribute(storable, attributes, aiobservabilitytypes.GenAIOutputMessages))
+	return &ThreadSpan{
 		SpanID:            storable.SpanID,
 		TraceID:           traceID,
 		ParentSpanID:      storable.ParentSpanID,
@@ -199,42 +198,12 @@ func newThreadSpan(traceID string, storable *StorableSpan) *ThreadSpan {
 		Attributes:        attributes,
 		Events:            storable.UnmarshalledEvents(),
 		References:        storable.UnmarshalledRefs(),
-		FormattedInput:    decodeMessages[genai.InputMessages](rawAttribute(storable, attributes, aiobservabilitytypes.GenAIInputMessages)),
-		FormattedOutput:   decodeMessages[genai.OutputMessages](rawAttribute(storable, attributes, aiobservabilitytypes.GenAIOutputMessages)),
-		FormatterWarnings: []string{},
+		FormattedInput:    formatted.Input,
+		FormattedOutput:   formatted.Output,
+		Formatter:         formatted.Formatter,
+		FormatterWarnings: formatted.Warnings,
 		timeUnixNano:      timeUnixNano,
 	}
-	if len(span.FormattedInput) > 0 || len(span.FormattedOutput) > 0 {
-		span.Formatter = FormatterSemconv
-	}
-	return span
-}
-
-// decodeMessages decodes the attribute, a JSON string or a structured value, when it is a list of
-// messages in the OTel shape. Other formats are left to the converters and give an empty list.
-func decodeMessages[T ~[]E, E any](value any) T {
-	data, ok := value.(string)
-	if !ok {
-		raw, err := json.Marshal(value)
-		if err != nil {
-			return T{}
-		}
-		data = string(raw)
-	}
-	var messages []map[string]json.RawMessage
-	if err := json.Unmarshal([]byte(data), &messages); err != nil || len(messages) == 0 {
-		return T{}
-	}
-	for _, m := range messages {
-		if _, ok := m["parts"]; !ok {
-			return T{}
-		}
-	}
-	var decoded T
-	if err := json.Unmarshal([]byte(data), &decoded); err != nil {
-		return T{}
-	}
-	return decoded
 }
 
 // threadAttributes flattens the JSON column into dotted keys, as the querier does for list

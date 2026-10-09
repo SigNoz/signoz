@@ -2,9 +2,7 @@ package spantypes
 
 import (
 	"testing"
-	"time"
 
-	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes/genai"
 	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -74,32 +72,6 @@ func TestThreadAttributes(t *testing.T) {
 			assert.Equal(t, testCase.wantAttrs, threadAttributes(&testCase.span))
 		})
 	}
-}
-
-func TestNewThreadSpan(t *testing.T) {
-	storable := StorableSpan{
-		SpanID:       "span-1",
-		ParentSpanID: "root",
-		Name:         "chat gpt-4o",
-		StartTime:    time.Unix(1757500000, 123456789),
-		DurationNano: 42,
-		AttributesJSON: telemetrystoretypes.JSONValue{"gen_ai": map[string]any{
-			"input": map[string]any{"messages": `[{"role":"user","parts":[{"type":"text","content":"hi"}]}]`},
-		}},
-		ResourcesString: map[string]string{"service.name": "chat"},
-	}
-
-	span := newThreadSpan("trace-1", &storable)
-
-	assert.Equal(t, "trace-1", span.TraceID)
-	assert.Equal(t, uint64(1757500000123), span.TimeUnix)
-	assert.Equal(t, uint64(1757500000123456789), span.timeUnixNano)
-	assert.Equal(t, map[string]string{"service.name": "chat"}, span.Resource)
-	assert.Equal(t, `[{"role":"user","parts":[{"type":"text","content":"hi"}]}]`, span.Attributes["gen_ai.input.messages"])
-	assert.Equal(t, genai.InputMessages{{Role: genai.RoleUser, Parts: genai.Parts{{Value: genai.TextPart{Type: genai.PartTypeText, Content: "hi"}}}}}, span.FormattedInput)
-	assert.Equal(t, genai.OutputMessages{}, span.FormattedOutput)
-	assert.Equal(t, FormatterSemconv, span.Formatter)
-	assert.Equal(t, []string{}, span.FormatterWarnings)
 }
 
 func TestRawAttribute(t *testing.T) {
