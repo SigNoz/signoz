@@ -35,11 +35,20 @@
 }
 
 .value {
-	grid-column: 1;
 	font-size: 12px;
 	line-height: 16px;
 	font-weight: var(--font-weight-medium);
 	color: var(--l1-foreground);
+	text-align: right;
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
+}
+
+// Rank and share: supporting numbers beside the value.
+.muted {
+	font-size: 12px;
+	line-height: 16px;
+	color: var(--l3-foreground);
 	text-align: right;
 	white-space: nowrap;
 	font-variant-numeric: tabular-nums;
@@ -51,7 +60,6 @@
 
 // The label sits on the bar, spanning the whole column so it isn't cut at the fill.
 .bar {
-	grid-column: 2;
 	position: relative;
 	display: flex;
 	align-items: center;

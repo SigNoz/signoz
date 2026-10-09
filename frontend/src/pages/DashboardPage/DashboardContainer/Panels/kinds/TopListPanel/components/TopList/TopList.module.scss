@@ -7,11 +7,14 @@
 	@include custom-scrollbar;
 }
 
-// Rows share these columns through subgrid: the value, then the bar with its label.
-// Vertical padding is set inline, where it also stands in for unrendered rows.
+// Rows share these columns through subgrid: the rank, value and share that are shown
+// (--leading-columns), then the bar with its label. Vertical padding is set inline,
+// where it also stands in for unrendered rows.
 .list {
 	display: grid;
-	grid-template-columns: max-content minmax(0, 1fr);
+	grid-template-columns:
+		repeat(var(--leading-columns, 1), max-content)
+		minmax(0, 1fr);
 	align-content: start;
 	column-gap: 10px;
 	row-gap: 1px;
@@ -36,8 +39,30 @@
 }
 
 .sizerValue {
-	grid-column: 1;
 	font-size: 12px;
 	font-weight: var(--font-weight-medium);
 	font-variant-numeric: tabular-nums;
+}
+
+.sizerMuted {
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+}
+
+// Measured for label truncation, so it carries the label's font.
+.sizerBar {
+	font-size: 12px;
+}
+
+// Lets the pointer pass through to the rows underneath; otherwise the tooltip catches
+// it and stops following.
+// Sized to its content like the chart tooltips, up to TooltipPlugin's maxWidth/maxHeight;
+// the floor keeps a short one from collapsing narrower than a scatter tooltip.
+.tooltip {
+	width: max-content;
+	min-width: 320px;
+	max-width: 450px;
+	max-height: 600px;
+	overflow: auto;
+	pointer-events: none;
 }

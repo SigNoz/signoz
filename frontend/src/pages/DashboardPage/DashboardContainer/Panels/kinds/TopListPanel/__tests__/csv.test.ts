@@ -83,6 +83,24 @@ describe('getTopListCsvRows', () => {
 		]);
 	});
 
+	it('adds rank and share columns when the panel shows them', () => {
+		const data = dataWith(
+			['service.name'],
+			[
+				['auth', 25],
+				['payment', 75],
+			],
+		);
+		const panel = panelWith({
+			appearance: { showRank: true, showShare: true },
+		});
+
+		expect(getTopListCsvRows(panel, data)).toStrictEqual([
+			{ Rank: '1', 'service.name': 'payment', A: '75', Share: '75%' },
+			{ Rank: '2', 'service.name': 'auth', A: '25', Share: '25%' },
+		]);
+	});
+
 	it('exports nothing for an empty result', () => {
 		expect(getTopListCsvRows(panelWith({}), dataWith([], []))).toStrictEqual([]);
 	});

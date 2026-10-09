@@ -5,13 +5,17 @@ import {
 	type KeyboardEvent as ReactKeyboardEvent,
 	type MouseEvent as ReactMouseEvent,
 } from 'react';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
 import type { PrecisionOption } from 'components/Graph/types';
 
 import type { PanelThreshold } from '../../../../types/threshold';
 import type { TopListRow as TopListRowData } from '../../types';
-import { formatRowValue, resolveRowColors, type RowColors } from '../../utils';
+import {
+	formatRowValue,
+	formatShare,
+	resolveRowColors,
+	type RowColors,
+} from '../../utils';
 
 import styles from './TopListRow.module.scss';
 
@@ -22,6 +26,12 @@ interface TopListRowProps {
 	unit?: string;
 	precision?: PrecisionOption;
 	thresholds: PanelThreshold[];
+	showRank: boolean;
+	showShare: boolean;
+	/** Shortens a label to fit its bar. */
+	fitLabel: (label: string) => string;
+	/** Moves the list's tooltip to this row, at the pointer. */
+	onHover: (index: number, event: ReactMouseEvent<HTMLButtonElement>) => void;
 	onSelect?: (
 		row: TopListRowData,
 		colors: RowColors,
@@ -37,6 +47,10 @@ function TopListRow({
 	unit,
 	precision,
 	thresholds,
+	showRank,
+	showShare,
+	fitLabel,
+	onHover,
 	onSelect,
 	onNavigate,
 }: TopListRowProps): JSX.Element {
@@ -48,6 +62,10 @@ function TopListRow({
 		() => resolveRowColors(row.value, thresholds, unit),
 		[row.value, thresholds, unit],
 	);
+	const displayShare = showShare ? formatShare(row.share) : null;
+	const knownShare =
+		displayShare !== null && row.share !== null ? displayShare : undefined;
+	const displayLabel = useMemo(() => fitLabel(row.label), [fitLabel, row.label]);
 
 	const handleClick = (event: ReactMouseEvent<HTMLButtonElement>): void => {
 		if (!onSelect) {
@@ -62,6 +80,9 @@ function TopListRow({
 		onSelect(row, colors, { x: event.clientX, y: event.clientY });
 	};
 
+	const handleMouseMove = (event: ReactMouseEvent<HTMLButtonElement>): void =>
+		onHover(index, event);
+
 	const handleKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>): void => {
 		if (onNavigate(index, event.key)) {
 			event.preventDefault();
@@ -73,13 +94,21 @@ function TopListRow({
 			<button
 				type="button"
 				aria-haspopup={onSelect ? 'menu' : undefined}
-				aria-label={`${row.label}: ${displayValue}`}
+				aria-label={`${row.label}: ${displayValue}${
+					knownShare ? `, ${knownShare} of total` : ''
+				}`}
 				data-row-index={index}
 				data-testid="top-list-row"
 				className={cx(styles.row, { [styles.isInteractive]: !!onSelect })}
 				onClick={handleClick}
+				onMouseMove={handleMouseMove}
 				onKeyDown={handleKeyDown}
 			>
+				{showRank && (
+					<span data-testid="top-list-row-rank" className={styles.muted}>
+						{index + 1}
+					</span>
+				)}
 				<span
 					data-testid="top-list-row-value"
 					className={cx(styles.value, {
@@ -89,6 +118,11 @@ function TopListRow({
 				>
 					{displayValue}
 				</span>
+				{displayShare && (
+					<span data-testid="top-list-row-share" className={styles.muted}>
+						{displayShare}
+					</span>
+				)}
 				<span className={styles.bar}>
 					<span
 						data-testid="top-list-row-fill"
@@ -102,13 +136,11 @@ function TopListRow({
 							} as CSSProperties
 						}
 					/>
-					<TooltipSimple title={row.label} arrow delayDuration={1000}>
-						<span
-							className={cx(styles.label, { [styles.isEmptyLabel]: row.isEmptyLabel })}
-						>
-							{row.label}
-						</span>
-					</TooltipSimple>
+					<span
+						className={cx(styles.label, { [styles.isEmptyLabel]: row.isEmptyLabel })}
+					>
+						{displayLabel}
+					</span>
 				</span>
 			</button>
 		</li>
