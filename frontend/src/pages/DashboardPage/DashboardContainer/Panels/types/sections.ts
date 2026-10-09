@@ -23,6 +23,7 @@ import type {
 	DashboardtypesTextPresentationDTO,
 	DashboardtypesThresholdWithLabelDTO,
 	DashboardtypesTimePreferenceDTO,
+	DashboardtypesTopListAppearanceDTO,
 	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { LegendSeriesResolver } from '../utils/legendSeries';
@@ -71,6 +72,8 @@ export enum SectionKind {
 	Dimensions = 'dimensions',
 	/** Scatter Plot's per-axis `axes` shape; `Axes` is the single y-axis shape. */
 	ScatterAxes = 'scatterAxes',
+	/** Top List's row display, for a kind with no chart to style. */
+	Appearance = 'appearance',
 }
 
 /**
@@ -146,6 +149,7 @@ export interface SectionSpecMap {
 	[SectionKind.PanelHeader]: DashboardtypesHeaderOptionsDTO; // spec.plugin.spec.headerOptions (Text)
 	[SectionKind.Dimensions]: DashboardtypesScatterPlotDimensionsDTO; // spec.plugin.spec.dimensions (Scatter Plot)
 	[SectionKind.ScatterAxes]: DashboardtypesScatterPlotAxesDTO; // spec.plugin.spec.axes (Scatter Plot)
+	[SectionKind.Appearance]: DashboardtypesTopListAppearanceDTO; // spec.plugin.spec.appearance (Top List)
 }
 
 /**
@@ -204,6 +208,10 @@ export interface SectionControls {
 	};
 	// Editor discriminator (not a spec field): which threshold variant a kind edits.
 	[SectionKind.Thresholds]: { variant?: ThresholdVariant };
+	[SectionKind.Appearance]: {
+		showRank?: boolean;
+		showShare?: boolean;
+	};
 }
 
 export type ControlledSectionKind = keyof SectionControls;
@@ -252,6 +260,7 @@ export const SECTION_METADATA = {
 	[SectionKind.PanelHeader]: { title: 'Panel header', icon: PanelTop },
 	[SectionKind.Dimensions]: { title: 'Dimensions', icon: Crosshair },
 	[SectionKind.ScatterAxes]: { title: 'Axes', icon: Scale3D },
+	[SectionKind.Appearance]: { title: 'Appearance', icon: Palette },
 } as const satisfies Record<SectionKind, SectionMetadata>;
 
 /**

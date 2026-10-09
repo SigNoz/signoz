@@ -325,6 +325,30 @@ describe('buildPluginSpec', () => {
 		});
 	});
 
+	describe('appearance seed', () => {
+		const sections: SectionConfig[] = [
+			{
+				kind: SectionKind.Appearance,
+				controls: { showRank: true, showShare: true },
+			},
+		];
+
+		it('carries the toggles across a switch between kinds that declare them', () => {
+			const oldSpec = oldSpecWith({
+				appearance: { showRank: true, showShare: false },
+			});
+
+			expect(buildPluginSpec(sections, { oldSpec }).appearance).toStrictEqual({
+				showRank: true,
+				showShare: false,
+			});
+		});
+
+		it('seeds nothing for a new panel, where unset reads as off', () => {
+			expect(buildPluginSpec(sections)).toStrictEqual({});
+		});
+	});
+
 	describe('chartAppearance seed', () => {
 		it('seeds only the declared defaulting controls', () => {
 			const sections: SectionConfig[] = [
