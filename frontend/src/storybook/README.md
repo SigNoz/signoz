@@ -524,3 +524,18 @@ without it the story re-renders the tree the previous walk left behind and the
 control looks dead. The endpoint that settles a transition between two steps then
 needs a plain resolver rather than `response.json`, or the Data control on
 `loading` strands the walk halfway.
+
+## Screenshots
+
+To check what a CSS or component change does before Chromatic runs on the PR,
+use [sbshot](https://github.com/SigNoz/sbshot). It shoots the stories, diffs two
+runs the way Chromatic does, and opens a viewer on the changes. From `frontend/`:
+
+```bash
+sbshot capture . --name-run before --title Pages/ --theme dark,light
+# make the change
+sbshot capture . --name-run after --title Pages/ --theme dark,light
+sbshot diff before after --ui
+```
+
+Output goes to `.sbshot/`, which is gitignored.
