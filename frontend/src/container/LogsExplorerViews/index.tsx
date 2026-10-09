@@ -45,6 +45,7 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import useUrlYAxisUnit from 'hooks/useUrlYAxisUnit';
 import { isEmpty, isUndefined } from 'lodash-es';
@@ -81,6 +82,7 @@ function LogsExplorerViewsContainer({
 	handleChangeSelectedView: ChangeViewFunctionType;
 }): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
+	const isSavedViewEnabled = useSavedViewEnabled();
 	const getExportToDashboardLink = useGetExportToDashboardLink();
 
 	const [showFrequencyChart, setShowFrequencyChart] = useState(
@@ -516,13 +518,15 @@ function LogsExplorerViewsContainer({
 
 			<GoToTop />
 
-			<ExplorerOptionWrapper
-				disabled={!stagedQuery}
-				query={exportDefaultQuery}
-				onExport={handleExport}
-				sourcepage={DataSource.LOGS}
-				handleChangeSelectedView={handleChangeSelectedView}
-			/>
+			{!isSavedViewEnabled && (
+				<ExplorerOptionWrapper
+					disabled={!stagedQuery}
+					query={exportDefaultQuery}
+					onExport={handleExport}
+					sourcepage={DataSource.LOGS}
+					handleChangeSelectedView={handleChangeSelectedView}
+				/>
+			)}
 		</div>
 	);
 }
