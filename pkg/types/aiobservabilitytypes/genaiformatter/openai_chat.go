@@ -6,7 +6,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes/genai"
 )
 
-func (f *formatting) chatMessages(list []any) genai.OutputMessages {
+func (f *formatting) openAIChatMessages(list []any) genai.OutputMessages {
 	out := make(genai.OutputMessages, 0, len(list))
 	for _, item := range list {
 		m, ok := item.(map[string]any)
@@ -14,14 +14,14 @@ func (f *formatting) chatMessages(list []any) genai.OutputMessages {
 			out = append(out, genericMessage(item))
 			continue
 		}
-		out = append(out, f.chatMessage(m))
+		out = append(out, f.openAIChatMessage(m))
 	}
 	return out
 }
 
-// chatResponse converts the choices of an OpenAI chat response, one message each with its
+// openAIChatResponse converts the choices of an OpenAI chat response, one message each with its
 // finish reason.
-func (f *formatting) chatResponse(choices []any) genai.OutputMessages {
+func (f *formatting) openAIChatResponse(choices []any) genai.OutputMessages {
 	out := make(genai.OutputMessages, 0, len(choices))
 	for _, item := range choices {
 		choice, ok := item.(map[string]any)
@@ -29,7 +29,7 @@ func (f *formatting) chatResponse(choices []any) genai.OutputMessages {
 			continue
 		}
 		inner, _ := object(choice).obj("message")
-		msg := f.chatMessage(inner)
+		msg := f.openAIChatMessage(inner)
 		if msg.Role == "" {
 			msg.Role = genai.RoleAssistant
 		}
@@ -41,8 +41,8 @@ func (f *formatting) chatResponse(choices []any) genai.OutputMessages {
 	return out
 }
 
-// chatMessage converts one {role, content, tool_calls, ...} message in the OpenAI chat shape.
-func (f *formatting) chatMessage(m object) genai.OutputMessage {
+// openAIChatMessage converts one {role, content, tool_calls, ...} message in the OpenAI chat shape.
+func (f *formatting) openAIChatMessage(m object) genai.OutputMessage {
 	msg := genai.OutputMessage{Role: role(m.str("role")), Parts: genai.Parts{}, Name: optionalString(m["name"]), FinishReason: finishReason(m.str("finish_reason"))}
 
 	if id := m.str("tool_call_id"); msg.Role == genai.RoleTool && id != "" {

@@ -5,6 +5,7 @@ package genaiformatter
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"regexp"
 	"strings"
 
@@ -105,15 +106,15 @@ func (f *formatting) side(value any, role genai.Role) (genai.OutputMessages, str
 				return f.semconv(v), FormatterSemconv
 			}
 			if _, ok := first["role"]; ok {
-				return f.chatMessages(v), FormatterOpenAIChat
+				return f.openAIChatMessages(v), FormatterOpenAIChat
 			}
 		}
 	case map[string]any:
 		if choices, ok := object(v).list("choices"); ok {
-			return f.chatResponse(choices), FormatterOpenAIChat
+			return f.openAIChatResponse(choices), FormatterOpenAIChat
 		}
 		if messages, ok := object(v).list("messages"); ok {
-			return f.chatMessages(messages), FormatterOpenAIChat
+			return f.openAIChatMessages(messages), FormatterOpenAIChat
 		}
 	case string:
 		if v == "" {
@@ -126,9 +127,10 @@ func (f *formatting) side(value any, role genai.Role) (genai.OutputMessages, str
 	return genai.OutputMessages{genericMessage(value)}, FormatterGeneric
 }
 
-// semconv decodes messages that already follow the schema through the genai types.
+// semconv decodes messages that already follow the schema through the genai types. A part of a
+// type the schema does not name is a provider content block and goes through the chat converter.
 func (f *formatting) semconv(list []any) genai.OutputMessages {
-	data, err := json.Marshal(list)
+	data, err := json.Marshal(semconvTextKey(list))
 	if err != nil {
 		f.warn("messages could not be encoded: %s", err)
 		return genai.OutputMessages{genericMessage(list)}
@@ -142,8 +144,43 @@ func (f *formatting) semconv(list []any) genai.OutputMessages {
 		if msgs[i].Parts == nil {
 			msgs[i].Parts = genai.Parts{}
 		}
+		for j, p := range msgs[i].Parts {
+			if block, ok := p.Value.(genai.GenericPart); ok {
+				msgs[i].Parts[j] = contentPart(map[string]any(block))
+			}
+		}
 	}
 	return msgs
+}
+
+// semconvTextKey copies the text and reasoning parts some SDKs write with "text" in place of the
+// schema's "content". The input is left untouched, it is also the span's raw attribute.
+func semconvTextKey(list []any) []any {
+	out := make([]any, 0, len(list))
+	for _, item := range list {
+		m, ok := item.(map[string]any)
+		parts, hasParts := object(m).list("parts")
+		if !ok || !hasParts {
+			out = append(out, item)
+			continue
+		}
+		fixedParts := make([]any, 0, len(parts))
+		for _, p := range parts {
+			part, ok := p.(map[string]any)
+			typ := object(part).str("type")
+			if ok && (typ == "text" || typ == "reasoning") && part["content"] == nil && part["text"] != nil {
+				fixed := maps.Clone(part)
+				fixed["content"] = fixed["text"]
+				delete(fixed, "text")
+				p = fixed
+			}
+			fixedParts = append(fixedParts, p)
+		}
+		msg := maps.Clone(m)
+		msg["parts"] = fixedParts
+		out = append(out, msg)
+	}
+	return out
 }
 
 func firstObject(list []any) (object, bool) {

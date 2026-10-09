@@ -37,6 +37,19 @@ func TestFormat(t *testing.T) {
 			]`,
 		},
 		{
+			name: "Semconv_ProviderSpellings",
+			input: `[{"role": "user", "parts": [
+				{"type": "text", "text": "What animal is in this image?"},
+				{"type": "image_url", "image_url": {"url": "data:image/jpeg;base64,/9j/4AAQ"}}
+			]}]`,
+			formatter: FormatterSemconv,
+			wantInput: `[{"role": "user", "parts": [
+				{"type": "text", "content": "What animal is in this image?"},
+				{"type": "blob", "modality": "image", "mime_type": "image/jpeg", "content": "/9j/4AAQ"}
+			]}]`,
+			wantOutput: `[]`,
+		},
+		{
 			name:       "Semconv_StructuredValue",
 			input:      []any{map[string]any{"role": "user", "parts": []any{map[string]any{"type": "text", "content": "hi"}}}},
 			formatter:  FormatterSemconv,
