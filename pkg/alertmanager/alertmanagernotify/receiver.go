@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/opsgenie"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/pagerduty"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/slack"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/telegram"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/webhook"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/config/receiver"
@@ -32,6 +33,7 @@ var customNotifierIntegrations = []string{
 	jira.Integration,
 	jsmops.Integration,
 	incidentio.Integration,
+	telegram.Integration,
 }
 
 func NewReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, templater alertmanagertypes.Templater) ([]notify.Integration, error) {
@@ -100,6 +102,11 @@ func NewReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Temp
 	for i, c := range nc.IncidentIOConfigs {
 		add(incidentio.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {
 			return incidentio.New(c, tmpl, l, templater)
+		})
+	}
+	for i, c := range nc.TelegramConfigs {
+		add(telegram.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {
+			return telegram.New(c, tmpl, l, templater)
 		})
 	}
 

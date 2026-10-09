@@ -258,6 +258,28 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				Metadata:     map[string]string{"team": "platform"},
 			},
 		},
+		{
+			description: "telegram",
+			kind:        ChannelKindTelegram,
+			spec: &ChannelTelegramConfig{
+				SendResolved:         &sendResolved,
+				BotToken:             "123456:bot-token",
+				ChatID:               -1001234567890,
+				APIURL:               "https://bot-api.example.com",
+				MessageThreadID:      42,
+				Message:              valuer.MustNewUnsetOrNonEmptyString("telegram message"),
+				DisableNotifications: true,
+			},
+			expectedRoundTrip: &ChannelTelegramConfig{
+				SendResolved:         &sendResolved,
+				BotToken:             "123456:bot-token",
+				ChatID:               -1001234567890,
+				APIURL:               "https://bot-api.example.com",
+				MessageThreadID:      42,
+				Message:              valuer.MustNewUnsetOrNonEmptyString("telegram message"),
+				DisableNotifications: true,
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -396,8 +418,8 @@ func TestDeriveChannelConfigRejectsUnrepresentableChannels(t *testing.T) {
 		{
 			description: "notifier kind outside the supported set",
 			channel: Channel{
-				DisplayName: "tg",
-				Data:        `{"name":"tg","telegram_configs":[{"chat_id":1}]}`,
+				DisplayName: "dc",
+				Data:        `{"name":"dc","discord_configs":[{"webhook_url":"https://discord.com/api/webhooks/1/x"}]}`,
 			},
 		},
 		{

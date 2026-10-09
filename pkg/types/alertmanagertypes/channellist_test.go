@@ -43,13 +43,13 @@ func TestListChannelsParamsValidateRejectsALongQuery(t *testing.T) {
 // possible until they are migrated. One of them must not fail the whole list.
 func TestChannelToListedChannelLeavesUnmodelledKindsEmpty(t *testing.T) {
 	channel := Channel{
-		DisplayName: "tg",
-		Name:        "tg",
-		Type:        "telegram",
-		Data:        `{"name":"tg","telegram_configs":[{"chat_id":1}]}`,
+		DisplayName: "dc",
+		Name:        "dc",
+		Type:        "discord",
+		Data:        `{"name":"dc","discord_configs":[{"webhook_url":"https://discord.com/api/webhooks/1/x"}]}`,
 	}
 
 	listed := channel.ToListedNotificationChannel()
-	assert.Equal(t, "tg", listed.Name)
+	assert.Equal(t, "dc", listed.Name)
 	assert.True(t, listed.Kind.IsZero())
 }

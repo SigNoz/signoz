@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/rulestatehistorytypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
@@ -251,6 +252,24 @@ func (r *BaseRule) GeneratorURL() string {
 	params := url.Values{}
 	params.Set("ruleId", r.id)
 	return r.ExternalURL("alerts/overview", params)
+}
+
+// ExpandAnnotations runs expand over the rule's annotations, leaving private
+// ones as they are. Those carry templates the notifier expands against its own
+// data model, and the ruler's expander rewrites every $-ref into a label
+// lookup, which blanks the ones that are not labels.
+func (r *BaseRule) ExpandAnnotations(expand func(string) string) ruletypes.Labels {
+	annotations := make(ruletypes.Labels, 0, len(r.annotations.Map()))
+	for name, value := range r.annotations.Map() {
+		if alertmanagertypes.IsPrivateAnnotation(name) {
+			annotations = append(annotations, ruletypes.Label{Name: name, Value: value})
+			continue
+		}
+
+		annotations = append(annotations, ruletypes.Label{Name: name, Value: expand(value)})
+	}
+
+	return annotations
 }
 
 func (r *BaseRule) ExternalURL(path string, params url.Values) string {

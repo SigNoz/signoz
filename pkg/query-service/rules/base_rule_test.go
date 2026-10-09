@@ -833,3 +833,55 @@ func labelsKey(lbls []*qbtypes.Label) string {
 	}
 	return temp.Labels().String()
 }
+
+func TestExpandAnnotations(t *testing.T) {
+	testCases := []struct {
+		name        string
+		annotations map[string]string
+		want        map[string]string
+	}{
+		{
+			name:        "PublicAnnotation_Expanded",
+			annotations: map[string]string{"summary": "observed {{$value}}"},
+			want:        map[string]string{"summary": "observed 0.35"},
+		},
+		{
+			// The ruler's expander rewrites every $-ref into a label lookup, so
+			// expanding these would blank the paths the notifier resolves.
+			name:        "PrivateAnnotation_LeftAlone",
+			annotations: map[string]string{ruletypes.AnnotationTitleTemplate: "{{ $rule.name }} on {{ $labels.host }}"},
+			want:        map[string]string{ruletypes.AnnotationTitleTemplate: "{{ $rule.name }} on {{ $labels.host }}"},
+		},
+		{
+			name: "MixedAnnotations_OnlyPublicExpanded",
+			annotations: map[string]string{
+				"summary":                        "observed {{$value}}",
+				ruletypes.AnnotationBodyTemplate: "$alert.status for $rule.name",
+			},
+			want: map[string]string{
+				"summary":                        "observed 0.35",
+				ruletypes.AnnotationBodyTemplate: "$alert.status for $rule.name",
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			rule := &BaseRule{annotations: ruletypes.FromMap(testCase.annotations)}
+			expand := func(text string) string {
+				tmpl := ruletypes.NewTemplateExpander(
+					context.Background(),
+					"{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"+text,
+					"__alert_test",
+					ruletypes.AlertTemplateData(map[string]string{}, "0.35", "0.32"),
+					nil,
+				)
+				out, err := tmpl.Expand()
+				require.NoError(t, err)
+				return out
+			}
+
+			assert.Equal(t, testCase.want, rule.ExpandAnnotations(expand).Map())
+		})
+	}
+}
