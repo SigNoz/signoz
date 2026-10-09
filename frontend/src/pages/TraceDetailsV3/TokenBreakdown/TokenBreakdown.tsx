@@ -1,5 +1,6 @@
 import {
 	AiTokenCounts,
+	formatCost,
 	formatTokens,
 	getTotalInputTokens,
 	hasValue,
@@ -7,13 +8,16 @@ import {
 import TraceTooltipRow from '../TraceTooltip/TraceTooltipRow';
 import TraceTooltipSection from '../TraceTooltip/TraceTooltipSection';
 
-type TokenBreakdownProps = Omit<AiTokenCounts, 'reasoning'>;
+type TokenBreakdownProps = Omit<AiTokenCounts, 'reasoning'> & {
+	cost?: number;
+};
 
 function TokenBreakdown({
 	input,
 	output,
 	cacheRead,
 	cacheWrite,
+	cost,
 }: TokenBreakdownProps): JSX.Element {
 	const totalInput = getTotalInputTokens({ input, cacheRead, cacheWrite });
 	const showCacheRead = hasValue(cacheRead);
@@ -79,6 +83,11 @@ function TokenBreakdown({
 						value={formatTokens(totalInput + output)}
 						isHeading
 					/>
+				</TraceTooltipSection>
+			)}
+			{hasValue(cost) && (
+				<TraceTooltipSection>
+					<TraceTooltipRow isHeading label="Cost" value={formatCost(cost)} />
 				</TraceTooltipSection>
 			)}
 		</>
