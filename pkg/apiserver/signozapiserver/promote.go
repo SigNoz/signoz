@@ -25,7 +25,7 @@ func (provider *provider) addPromoteRoutes(router *mux.Router) error {
 					{
 						"signal":  "logs",
 						"context": "body",
-						"path":    "body.user.name",
+						"path":    "user.name",
 						"promote": true,
 						"indexes": []map[string]any{
 							{"fieldDataType": "string", "type": "ngrambf_v1(4, 1024, 2, 0)", "granularity": 1},
