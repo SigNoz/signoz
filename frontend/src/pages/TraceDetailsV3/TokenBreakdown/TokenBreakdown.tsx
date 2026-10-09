@@ -38,6 +38,15 @@ function TokenBreakdown({
 			)}
 		</>
 	);
+	const reasoningSection = hasValue(reasoning) && (
+		<TraceTooltipSection>
+			<TraceTooltipRow
+				label={getTokenLabel('Reasoning', reasoning)}
+				value={formatTokens(reasoning)}
+				isHeading
+			/>
+		</TraceTooltipSection>
+	);
 	const outputSection = hasValue(output) && (
 		<TraceTooltipSection>
 			<TraceTooltipRow
@@ -67,6 +76,7 @@ function TokenBreakdown({
 						{cacheRows}
 					</TraceTooltipSection>
 				)}
+				{reasoningSection}
 				{outputSection}
 			</>
 		);
@@ -90,15 +100,7 @@ function TokenBreakdown({
 				)}
 			</TraceTooltipSection>
 
-			{hasValue(reasoning) && (
-				<TraceTooltipSection>
-					<TraceTooltipRow
-						label={getTokenLabel('Reasoning', reasoning)}
-						value={formatTokens(reasoning)}
-						isHeading
-					/>
-				</TraceTooltipSection>
-			)}
+			{reasoningSection}
 			{outputSection}
 			{hasValue(output) && (
 				<TraceTooltipSection>
