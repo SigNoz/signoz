@@ -72,7 +72,7 @@ def test_clone_rule(
     assert response.status_code == HTTPStatus.OK, response.text
     source = response.json()["data"]
 
-    # ── clone keeps everything but the id and name ──────────────────────────
+    # clone keeps everything but the id and name
     response = requests.post(
         signoz.self.host_configs["8080"].get(f"{BASE_URL}/{source_id}/clone"),
         headers={"Authorization": f"Bearer {token}"},
@@ -95,7 +95,7 @@ def test_clone_rule(
     assert response.json()["data"]["state"] == "disabled"
     assert response.json()["data"]["createdBy"] == USER_ADMIN_EMAIL
 
-    # ── cloning a copy bumps the counter ────────────────────────────────────
+    # cloning a copy bumps the counter
     response = requests.post(
         signoz.self.host_configs["8080"].get(f"{BASE_URL}/{clone['id']}/clone"),
         headers={"Authorization": f"Bearer {token}"},
@@ -106,7 +106,6 @@ def test_clone_rule(
     assert second_clone["alert"] == "clone me - Copy (2)"
     assert second_clone["condition"] == source["condition"]
 
-    # ── unknown and malformed ids ───────────────────────────────────────────
     response = requests.post(
         signoz.self.host_configs["8080"].get(f"{BASE_URL}/{uuid.uuid4()}/clone"),
         headers={"Authorization": f"Bearer {token}"},

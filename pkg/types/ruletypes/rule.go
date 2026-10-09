@@ -13,7 +13,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-// cloneCopySuffixRegex matches a " - Copy" or " - Copy (n)" suffix on an alert name.
 var cloneCopySuffixRegex = regexp.MustCompile(`^(.*) - Copy(?: \((\d+)\))?$`)
 
 type StorableRule struct {
@@ -88,7 +87,6 @@ type RuleStore interface {
 	DeleteRuleView(context.Context, valuer.UUID, valuer.UUID) error
 }
 
-// nextCloneAlertName appends " - Copy" to a clone's name, bumping an existing " - Copy (n)" counter.
 func nextCloneAlertName(name string) string {
 	base, count := name, 0
 	if m := cloneCopySuffixRegex.FindStringSubmatch(name); m != nil {
