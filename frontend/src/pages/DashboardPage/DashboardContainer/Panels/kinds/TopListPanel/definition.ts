@@ -32,7 +32,10 @@ export const definition: PanelDefinition<'signoz/TopListPanel'> = {
 		// A list without a group by is a single row.
 		[QueryBuilderField.GroupBy]: { state: 'pinned' },
 		// Picks top or bottom N on the server; a client-side flip would show the top N reversed.
-		[QueryBuilderField.OrderBy]: { state: 'pinned' },
+		[QueryBuilderField.OrderBy]: {
+			state: 'pinned',
+			placeholder: 'Default highest first',
+		},
 		[QueryBuilderField.Limit]: {
 			state: 'pinned',
 			placeholder: `Default ${DEFAULT_LIMIT} for Top List`,
