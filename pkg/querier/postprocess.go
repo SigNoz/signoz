@@ -232,7 +232,11 @@ func postProcessMetricQuery(
 		}
 	}
 
-	result = q.applySeriesLimit(result, query.Limit, query.Order)
+	reducesToScalar := req.RequestType == qbtypes.RequestTypeScalar && config.ReduceTo != qbtypes.ReduceToUnknown
+
+	if !reducesToScalar {
+		result = q.applySeriesLimit(result, query.Limit, query.Order)
+	}
 
 	if len(query.Functions) > 0 {
 		step := query.StepInterval.Milliseconds()
@@ -241,10 +245,8 @@ func postProcessMetricQuery(
 	}
 
 	// Apply reduce to for scalar request type
-	if req.RequestType == qbtypes.RequestTypeScalar {
-		if len(query.Aggregations) > 0 && query.Aggregations[0].ReduceTo != qbtypes.ReduceToUnknown {
-			result = q.applyMetricReduceTo(result, query.Aggregations[0].ReduceTo)
-		}
+	if reducesToScalar {
+		result = q.applyMetricReduceTo(result, config.ReduceTo, query.Limit, query.Order)
 	}
 
 	return result
@@ -271,7 +273,8 @@ func postProcessTraceOperator(
 }
 
 // applyMetricReduceTo applies reduce to operation using the metric's ReduceTo field.
-func (q *querier) applyMetricReduceTo(result *qbtypes.Result, reduceOp qbtypes.ReduceTo) *qbtypes.Result {
+// The limit is applied after reducing, so series rank by the reduced value rather than their average.
+func (q *querier) applyMetricReduceTo(result *qbtypes.Result, reduceOp qbtypes.ReduceTo, limit int, orderBy []qbtypes.OrderBy) *qbtypes.Result {
 	tsData, ok := result.Value.(*qbtypes.TimeSeriesData)
 	if !ok {
 		return result
@@ -284,6 +287,7 @@ func (q *querier) applyMetricReduceTo(result *qbtypes.Result, reduceOp qbtypes.R
 				reducedSeries := qbtypes.FunctionReduceTo(series, reduceOp)
 				agg.Series[i] = reducedSeries
 			}
+			agg.Series = qbtypes.ApplySeriesLimit(agg.Series, orderBy, limit)
 		}
 	}
 
