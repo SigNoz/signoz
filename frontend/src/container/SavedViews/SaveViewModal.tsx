@@ -14,11 +14,12 @@ const NAME_INPUT_ID = 'save-view-name';
 
 function SaveViewModal({
 	mode,
+	initialName = '',
 	isSaving,
 	onClose,
 	onSave,
 }: SaveViewModalProps): JSX.Element {
-	const [name, setName] = useState('');
+	const [name, setName] = useState(initialName);
 	const displayName = name.trim();
 
 	const handleSave = async (): Promise<void> => {

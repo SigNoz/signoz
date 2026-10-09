@@ -285,14 +285,12 @@ function TracesExplorer(): JSX.Element {
 			<QuickFiltersLayout
 				className="trace-explorer-page"
 				showFilters={isOpen}
+				onToggleFilters={(): void => setOpen(!isOpen)}
 				savedViewProps={{ source: SavedviewtypesSourceDTO.traces }}
 				quickFilterProps={{
 					className: 'qf-traces-explorer',
 					source: QuickFiltersSource.TRACES_EXPLORER,
 					signal: SignalType.TRACES,
-					handleFilterVisibilityChange: (): void => {
-						setOpen(!isOpen);
-					},
 					useFieldApis: quickFilterFieldApis,
 				}}
 			>

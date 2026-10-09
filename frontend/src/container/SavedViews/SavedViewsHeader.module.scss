@@ -15,6 +15,14 @@
 			transparent
 		);
 	}
+
+	&.isError {
+		background: linear-gradient(
+			to right,
+			var(--callout-error-background),
+			transparent
+		);
+	}
 }
 
 .name {
@@ -31,6 +39,11 @@
 	&.isDirty {
 		background: var(--callout-warning-background);
 		color: var(--callout-warning-title);
+	}
+
+	&.isError {
+		background: var(--callout-error-background);
+		color: var(--callout-error-title);
 	}
 }
 
@@ -58,4 +71,8 @@
 	align-items: center;
 	flex-shrink: 0;
 	gap: var(--spacing-1);
+}
+
+.collapseIcon {
+	rotate: 270deg;
 }

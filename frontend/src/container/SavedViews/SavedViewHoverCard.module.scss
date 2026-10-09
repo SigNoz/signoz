@@ -1,0 +1,110 @@
+.anchor {
+	position: absolute;
+	left: 100%;
+	width: 1px;
+	pointer-events: none;
+}
+
+.card {
+	--popover-padding: 0;
+	--popover-background: var(--l1-background);
+	--popover-border-color: var(--l2-border);
+	--popover-border-radius: var(--radius-2);
+	--popover-foreground: var(--l1-foreground);
+
+	width: 324px;
+}
+
+.content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-8);
+	padding: var(--spacing-6) var(--spacing-8);
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-4);
+}
+
+.name {
+	min-width: 0;
+	color: var(--l1-foreground);
+	font-size: var(--periscope-font-size-base);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.query {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	padding: var(--spacing-3) var(--spacing-4);
+	border-radius: var(--radius-2);
+	background: var(--l2-background);
+}
+
+.queryItem {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-1);
+}
+
+.queryName {
+	color: var(--l2-foreground);
+	font-size: var(--periscope-font-size-small);
+}
+
+.metric {
+	color: var(--l2-foreground);
+	font-family: var(--periscope-font-family-mono);
+	font-size: var(--font-size-xs);
+	word-break: break-all;
+}
+
+.expression {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 4;
+	line-clamp: 4;
+	overflow: hidden;
+	color: var(--l1-foreground);
+	font-family: var(--periscope-font-family-mono);
+	font-size: var(--font-size-xs);
+	word-break: break-all;
+}
+
+.noFilters {
+	color: var(--l3-foreground);
+	font-size: var(--periscope-font-size-base);
+}
+
+.updated {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+}
+
+.sectionTitle {
+	color: var(--muted-foreground);
+	font-size: var(--periscope-font-size-small);
+	font-weight: var(--font-weight-medium);
+	line-height: var(--line-height-18);
+	letter-spacing: 0.88px;
+	text-transform: uppercase;
+}
+
+.meta {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-4);
+	color: var(--l2-foreground);
+}
+
+.metaText {
+	color: var(--l2-foreground);
+	font-size: var(--periscope-font-size-base);
+}

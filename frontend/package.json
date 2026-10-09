@@ -49,6 +49,7 @@
     "@dnd-kit/sortable": "8.0.0",
     "@dnd-kit/utilities": "3.2.2",
     "@grafana/data": "^11.6.15",
+    "@lezer/highlight": "1.2.1",
     "@monaco-editor/react": "^4.7.0",
     "@sentry/react": "10.57.0",
     "@sentry/vite-plugin": "5.3.0",

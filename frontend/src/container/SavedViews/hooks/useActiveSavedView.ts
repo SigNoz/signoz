@@ -39,7 +39,7 @@ export function useActiveSavedView(
 	});
 
 	const hasUnsavedChanges = useMemo((): boolean => {
-		if (!view) {
+		if (!view || isError) {
 			return false;
 		}
 		if (!isStagedQueryCurrent) {
@@ -56,6 +56,7 @@ export function useActiveSavedView(
 		});
 	}, [
 		view,
+		isError,
 		isStagedQueryCurrent,
 		stagedQuery,
 		panelType,
