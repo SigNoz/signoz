@@ -4,8 +4,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"maps"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
+	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes/genai"
+	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes/genaiformatter"
 )
 
 const (
@@ -76,6 +80,12 @@ type ThreadSpan struct {
 	Attributes       map[string]any    `json:"attributes" required:"true" nullable:"false"`
 	Events           []Event           `json:"events" required:"true" nullable:"false"`
 	References       []OtelSpanRef     `json:"references" required:"true" nullable:"false"`
+	// The formatted fields hold the span's messages in the OTel GenAI shape; Formatter names the
+	// converter that produced them and FormatterWarnings what it could not resolve.
+	FormattedInput    genai.InputMessages  `json:"formatted_input" required:"true" nullable:"false"`
+	FormattedOutput   genai.OutputMessages `json:"formatted_output" required:"true" nullable:"false"`
+	Formatter         string               `json:"formatter" required:"true"`
+	FormatterWarnings []string             `json:"formatter_warnings" required:"true" nullable:"false"`
 
 	timeUnixNano uint64
 }
@@ -171,32 +181,55 @@ func newThreadSpan(traceID string, storable *StorableSpan) *ThreadSpan {
 	resources := make(map[string]string, len(storable.ResourcesString))
 	maps.Copy(resources, storable.ResourcesString)
 	timeUnixNano := uint64(storable.StartTime.UnixNano())
+	attributes := threadAttributes(storable)
+	formatted := genaiformatter.Format(rawAttribute(storable, aiobservabilitytypes.GenAIInputMessages), rawAttribute(storable, aiobservabilitytypes.GenAIOutputMessages))
 	return &ThreadSpan{
-		SpanID:           storable.SpanID,
-		TraceID:          traceID,
-		ParentSpanID:     storable.ParentSpanID,
-		Name:             storable.Name,
-		KindString:       storable.SpanKind,
-		TimeUnix:         timeUnixNano / 1_000_000, // client expects millis, as in the waterfall
-		DurationNano:     storable.DurationNano,
-		HasError:         storable.HasError,
-		StatusCodeString: storable.StatusCodeString,
-		StatusMessage:    storable.StatusMessage,
-		Resource:         resources,
-		Attributes:       threadAttributes(storable),
-		Events:           storable.UnmarshalledEvents(),
-		References:       storable.UnmarshalledRefs(),
-		timeUnixNano:     timeUnixNano,
+		SpanID:            storable.SpanID,
+		TraceID:           traceID,
+		ParentSpanID:      storable.ParentSpanID,
+		Name:              storable.Name,
+		KindString:        storable.SpanKind,
+		TimeUnix:          timeUnixNano / 1_000_000, // client expects millis, as in the waterfall
+		DurationNano:      storable.DurationNano,
+		HasError:          storable.HasError,
+		StatusCodeString:  storable.StatusCodeString,
+		StatusMessage:     storable.StatusMessage,
+		Resource:          resources,
+		Attributes:        attributes,
+		Events:            storable.UnmarshalledEvents(),
+		References:        storable.UnmarshalledRefs(),
+		FormattedInput:    formatted.Input,
+		FormattedOutput:   formatted.Output,
+		Formatter:         formatted.Formatter,
+		FormatterWarnings: formatted.Warnings,
+		timeUnixNano:      timeUnixNano,
 	}
 }
 
-// threadAttributes reads the JSON column and falls back to the legacy maps for spans written
-// before the JSON rollout.
+// threadAttributes flattens the JSON column into dotted keys, as the querier does for list
+// responses, and falls back to the legacy maps for spans written before the JSON rollout.
 func threadAttributes(storable *StorableSpan) map[string]any {
-	if len(storable.AttributesJSON) > 0 {
-		attributes := make(map[string]any, len(storable.AttributesJSON))
-		storable.AttributesJSON.FlattenInto("", attributes)
-		return attributes
+	if len(storable.AttributesJSON) == 0 {
+		return storable.Attributes()
 	}
-	return storable.Attributes()
+	attributes := make(map[string]any, len(storable.AttributesJSON))
+	storable.AttributesJSON.FlattenInto("", attributes)
+	return attributes
+}
+
+// rawAttribute reads one attribute for decoding from the JSON document, where an object value is
+// still whole. The legacy maps hold objects split into one key per field, so spans from before
+// the JSON rollout are not decoded. Not handled: a list of JSON strings, which formats as generic,
+// and a scalar at a prefix of the path, such as gen_ai.input beside gen_ai.input.messages, which
+// ends the walk early.
+func rawAttribute(storable *StorableSpan, key string) any {
+	var current any = map[string]any(storable.AttributesJSON)
+	for segment := range strings.SplitSeq(key, ".") {
+		object, ok := current.(map[string]any)
+		if !ok {
+			return nil
+		}
+		current = object[segment]
+	}
+	return current
 }

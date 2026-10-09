@@ -35,6 +35,9 @@ const (
 // agent span. A trace belongs to the AI explorer when any span carries one.
 var GenAISpanGateKeys = []string{GenAIRequestModel, GenAIToolName, GenAIAgentName}
 
+// GenAIThreadKeys mark a span as a thread row: a model call with its messages, or a tool execution.
+var GenAIThreadKeys = []string{GenAIInputMessages, GenAIOutputMessages, GenAIToolName}
+
 // GenAISpanFilterExpression renders the gate as a query-builder filter
 // expression: each gate key ORed on EXISTS.
 func GenAISpanFilterExpression() string {
