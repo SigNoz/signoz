@@ -7,3 +7,8 @@
 	cursor: default;
 	color: inherit;
 }
+
+// Above the floating span details panel (z-index 999).
+.tooltip {
+	--tooltip-z-index: 1000;
+}
