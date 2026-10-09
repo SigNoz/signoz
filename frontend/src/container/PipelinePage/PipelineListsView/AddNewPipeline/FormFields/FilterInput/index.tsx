@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Form } from 'antd';
 import { initialQueryBuilderFormValuesMap } from 'constants/queryBuilder';
+import { SemconvEditorWarning } from 'components/Semconv';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import isEqual from 'lodash-es/isEqual';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -55,6 +56,7 @@ function TagFilterInputWithLogsResultPreview({
 				value={value}
 				onChange={onChange}
 			/>
+			<SemconvEditorWarning value={value} editor="Pipeline filter" />
 			<div className="pipeline-filter-input-preview-container">
 				<LogsFilterPreview filter={value} />
 			</div>

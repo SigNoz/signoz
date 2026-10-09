@@ -7929,6 +7929,10 @@ components:
         rowsScanned:
           minimum: 0
           type: integer
+        semconvResolutions:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5SemconvResolution'
+          type: array
         stepIntervals:
           additionalProperties:
             minimum: 0
@@ -8657,6 +8661,20 @@ components:
           type: array
         stepInterval:
           $ref: '#/components/schemas/Querybuildertypesv5Step'
+      type: object
+    Querybuildertypesv5SemconvResolution:
+      properties:
+        current:
+          type: string
+        kind:
+          type: string
+        members:
+          items:
+            type: string
+          nullable: true
+          type: array
+        requested:
+          type: string
       type: object
     Querybuildertypesv5Step:
       description: Step interval. Accepts a Go duration string (e.g., "60s", "1m",
@@ -10657,6 +10675,42 @@ components:
       required:
       - values
       - complete
+      type: object
+    TelemetrytypesGettableSemconvMigrationReport:
+      properties:
+        endUnixMilli:
+          format: int64
+          type: integer
+        entries:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesSemconvMigrationReportEntry'
+          nullable: true
+          type: array
+        startUnixMilli:
+          format: int64
+          type: integer
+      required:
+      - entries
+      type: object
+    TelemetrytypesSemconvMigrationReportEntry:
+      properties:
+        current:
+          type: string
+        lastSeenUnixMilli:
+          format: int64
+          type: integer
+        old:
+          type: string
+        resourceSets:
+          minimum: 0
+          type: integer
+        services:
+          items:
+            type: string
+          nullable: true
+          type: array
+        signal:
+          type: string
       type: object
     TelemetrytypesSignal:
       enum:
@@ -13022,6 +13076,65 @@ paths:
       - tokenizer:
         - VIEWER
       summary: Get field keys
+      tags:
+      - fields
+      x-signoz-stability: alpha
+  /api/v1/fields/semconv-migration:
+    get:
+      deprecated: false
+      description: Returns services that still emit old semantic-convention names
+        without the current family name
+      operationId: GetSemconvMigrationReport
+      parameters:
+      - in: query
+        name: startUnixMilli
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: endUnixMilli
+        schema:
+          format: int64
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TelemetrytypesGettableSemconvMigrationReport'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get semantic-convention migration report
       tags:
       - fields
       x-signoz-stability: alpha

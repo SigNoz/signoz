@@ -29,7 +29,7 @@ export const KEY_ATTRIBUTE_KEYS: Record<string, string[]> = {
 	traces: [
 		'service.name',
 		'service.namespace',
-		'deployment.environment',
+		'deployment.environment.name',
 		'timestamp',
 		'duration_nano',
 		'kind_string',

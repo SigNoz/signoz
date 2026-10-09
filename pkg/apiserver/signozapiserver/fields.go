@@ -46,5 +46,23 @@ func (provider *provider) addFieldsRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v1/fields/semconv-migration", handler.New(provider.authzMiddleware.ViewAccess(provider.fieldsHandler.GetSemconvMigrationReport), handler.OpenAPIDef{
+		ID:                  "GetSemconvMigrationReport",
+		Tags:                []string{"fields"},
+		Summary:             "Get semantic-convention migration report",
+		Description:         "Returns services that still emit old semantic-convention names without the current family name",
+		Request:             nil,
+		RequestQuery:        new(telemetrytypes.PostableSemconvMigrationReportParams),
+		RequestContentType:  "",
+		Response:            new(telemetrytypes.GettableSemconvMigrationReport),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
 	return nil
 }
