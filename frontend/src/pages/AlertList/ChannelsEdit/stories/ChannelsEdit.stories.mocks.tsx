@@ -51,21 +51,21 @@ export const channelsEditMocks = defineStoryMocks({
 	},
 	handlers: (values, response) => [
 		rest.get(
-			'http://localhost/api/v1/channels/:id',
+			'http://localhost/api/v2/notification_channels/:id',
 			response.json((req) =>
 				channelResponse(String(req.params.id), values.channelType),
 			),
 		),
 
 		rest.put(
-			'http://localhost/api/v1/channels/:id',
+			'http://localhost/api/v2/notification_channels/:id',
 			values.saveOutcome === 'fails'
 				? rejectChannelAction
 				: resolveChannelActionSuccess,
 		),
 
 		rest.post(
-			'http://localhost/api/v1/testChannel',
+			'http://localhost/api/v2/notification_channels/test',
 			values.testOutcome === 'fails'
 				? rejectChannelAction
 				: resolveChannelActionSuccess,

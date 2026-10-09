@@ -26,9 +26,11 @@ import {
 	type RuletypesAlertCompositeQueryDTO,
 	type RuletypesRuleConditionDTO,
 	type RuletypesRuleDTO,
+	type AlertmanagertypesChannelConfigDTO,
+	type AlertmanagertypesGettableNotificationChannelDTO,
+	type AlertmanagertypesListedNotificationChannelDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { NEW_ALERT_SCHEMA_VERSION } from 'types/api/alerts/alertTypesV2';
-import type { Channels } from 'types/api/channels/getAll';
 
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
@@ -691,39 +693,138 @@ const CHANNEL_SEEDS: ChannelSeed[] = [
 
 export const CHANNEL_MAX = CHANNEL_SEEDS.length;
 
-const buildChannel = (index: number): Channels => {
+const buildChannel = (
+	index: number,
+): AlertmanagertypesListedNotificationChannelDTO => {
 	const seed = CHANNEL_SEEDS[index % CHANNEL_SEEDS.length];
 
 	return {
 		id: String(index + 1),
 		name: seed.name,
-		type: seed.type,
-		created_at: ago((index + 10) * DAY),
-		updated_at: ago((index + 1) * DAY),
-		data: JSON.stringify({ name: seed.name, ...seed.receiver }),
+		displayName: seed.name,
+		kind: seed.type as AlertmanagertypesListedNotificationChannelDTO['kind'],
+		createdAt: ago((index + 10) * DAY),
+		updatedAt: ago((index + 1) * DAY),
 	};
 };
 
+/** The v2 list, which is what the channel pickers read. */
 export const channelsResponse = (
 	count: number,
-): { status: string; data: Channels[] } => ({
-	status: 'success',
-	data: Array.from({ length: count }, (_unused, index) => buildChannel(index)),
-});
+): {
+	status: string;
+	data: {
+		channels: AlertmanagertypesListedNotificationChannelDTO[];
+		total: number;
+	};
+} => {
+	const channels = Array.from({ length: count }, (_unused, index) =>
+		buildChannel(index),
+	);
+
+	return { status: 'success', data: { channels, total: channels.length } };
+};
 
 /** Channel names the alert form and the routing policies pick from. */
 export const channelNames = (count: number): string[] =>
-	channelsResponse(count).data.map((channel) => channel.name);
+	channelsResponse(count).data.channels.map((channel) => channel.displayName);
 
+/**
+ * The v2 spec each kind is fetched with, so the edit form renders populated
+ * fields. Keys mirror the generated channel spec schemas.
+ */
+const CHANNEL_SPECS: Record<ChannelType, Record<string, unknown>> = {
+	slack: {
+		apiUrl: 'https://hooks.slack.com/services/T000/B000/story-token',
+		channel: '#ops-alerts',
+		title: '[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}',
+		text: '{{ range .Alerts -}}*Alert:* {{ .Labels.alertname }}\n{{ end }}',
+		sendResolved: true,
+	},
+	webhook: {
+		url: 'https://example.com/story-hook',
+		username: 'story-user',
+		sendResolved: true,
+	},
+	pagerduty: {
+		routingKey: 'story-routing-key',
+		description: '{{ .CommonLabels.alertname }}',
+		severity: 'critical',
+		sendResolved: true,
+	},
+	opsgenie: {
+		apiKey: 'story-opsgenie-key',
+		message: '{{ .CommonLabels.alertname }}',
+		description: 'Story channel',
+		sendResolved: true,
+	},
+	email: {
+		to: 'oncall@story.signoz.io',
+		html: '<p>{{ .CommonLabels.alertname }}</p>',
+		sendResolved: true,
+	},
+	msteams: {
+		webhookUrl: 'https://story.webhook.office.com/webhookb2/story',
+		title: '[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}',
+		text: 'Story channel',
+		sendResolved: true,
+	},
+	googlechat: {
+		webhookUrl: 'https://chat.googleapis.com/v1/spaces/STORY/messages',
+		title: '[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}',
+		text: 'Story channel',
+		sendResolved: true,
+	},
+	jira: {
+		site: 'https://story.atlassian.net',
+		project: 'OPS',
+		issueType: 'Task',
+		email: 'story@signoz.io',
+		apiToken: 'story-jira-token',
+		summary: '{{ .CommonLabels.alertname }}',
+		sendResolved: true,
+	},
+	jsmops: {
+		apiKey: 'story-jsm-key',
+		message: '{{ .CommonLabels.alertname }}',
+		description: 'Story channel',
+		sendResolved: true,
+	},
+	incidentio: {
+		url: 'https://api.incident.io/v2/alert_events/http/story',
+		token: 'story-incidentio-token',
+		title: '{{ .CommonLabels.alertname }}',
+		sendResolved: true,
+	},
+};
+
+/** A single channel as the v2 API returns it, which the edit screen reads. */
 export const channelResponse = (
 	id: string,
 	type: ChannelType,
-): { status: string; data: Channels } => {
-	const index = CHANNEL_SEEDS.findIndex((seed) => seed.type === type);
+): {
+	status: string;
+	data: AlertmanagertypesGettableNotificationChannelDTO;
+} => {
+	const index = Math.max(
+		CHANNEL_SEEDS.findIndex((seed) => seed.type === type),
+		0,
+	);
+	const seed = CHANNEL_SEEDS[index];
 
 	return {
 		status: 'success',
-		data: { ...buildChannel(Math.max(index, 0)), id },
+		data: {
+			id,
+			name: seed.name,
+			displayName: seed.name,
+			createdAt: ago((index + 10) * DAY),
+			updatedAt: ago((index + 1) * DAY),
+			config: {
+				kind: type,
+				spec: CHANNEL_SPECS[type],
+			} as unknown as AlertmanagertypesChannelConfigDTO,
+		},
 	};
 };
 

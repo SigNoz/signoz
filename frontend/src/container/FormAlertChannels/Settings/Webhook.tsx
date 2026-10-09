@@ -4,7 +4,7 @@ import { Input } from '@signozhq/ui/input';
 import { Form } from 'antd';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 
-import { WebhookChannel } from '../../CreateAlertChannels/config';
+import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
 
 function WebhookSettings({ setSelectedConfig }: WebhookProps): JSX.Element {
 	const { t } = useTranslation('channels');
@@ -12,7 +12,7 @@ function WebhookSettings({ setSelectedConfig }: WebhookProps): JSX.Element {
 	return (
 		<>
 			<Form.Item
-				name="api_url"
+				name="url"
 				label={t('field_webhook_url')}
 				tooltip={{
 					title: (
@@ -29,7 +29,7 @@ function WebhookSettings({ setSelectedConfig }: WebhookProps): JSX.Element {
 					onChange={(event): void => {
 						setSelectedConfig((value) => ({
 							...value,
-							api_url: event.target.value,
+							url: event.target.value,
 						}));
 					}}
 					data-testid="webhook-url-textbox"
@@ -66,12 +66,28 @@ function WebhookSettings({ setSelectedConfig }: WebhookProps): JSX.Element {
 					data-testid="webhook-password-textbox"
 				/>
 			</Form.Item>
+			<Form.Item
+				name="bearerToken"
+				label={t('field_webhook_bearer_token')}
+				help={t('help_webhook_bearer_token')}
+			>
+				<Input
+					type="password"
+					onChange={(event): void => {
+						setSelectedConfig((value) => ({
+							...value,
+							bearerToken: event.target.value,
+						}));
+					}}
+					data-testid="webhook-bearer-token-textbox"
+				/>
+			</Form.Item>
 		</>
 	);
 }
 
 interface WebhookProps {
-	setSelectedConfig: Dispatch<SetStateAction<Partial<WebhookChannel>>>;
+	setSelectedConfig: Dispatch<SetStateAction<Partial<ChannelSpecFormValues>>>;
 }
 
 export default WebhookSettings;

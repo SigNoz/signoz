@@ -2,10 +2,10 @@ import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus } from '@signozhq/icons';
 import { Select, Spin } from 'antd';
+import { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
 import { useAppContext } from 'providers/App/App';
-import { Channels } from 'types/api/channels/getAll';
 import APIError from 'types/api/error';
 
 import { StyledCreateChannelOption, StyledSelect } from './styles';
@@ -16,7 +16,7 @@ export interface ChannelSelectProps {
 	onSelectChannels: (s: string[]) => void;
 	onDropdownOpen: () => void;
 	isLoading: boolean;
-	channels: Channels[];
+	channels: ChannelOption[];
 	hasError: boolean;
 	error: APIError;
 	handleCreateNewChannels: () => void;
