@@ -83,6 +83,18 @@ describe('TanStackTableView Integration', () => {
 			expect(screen.getByRole('table')).toBeInTheDocument();
 		});
 
+		it('does not call onRowClick for skeleton rows', async () => {
+			const user = userEvent.setup();
+			const onRowClick = jest.fn();
+			renderTanStackTable({
+				props: { data: [], isLoading: true, onRowClick },
+			});
+
+			await user.click(screen.getAllByRole('cell')[0]);
+
+			expect(onRowClick).not.toHaveBeenCalled();
+		});
+
 		it('shows loading spinner for infinite scroll when loading', () => {
 			renderTanStackTable({
 				props: { isLoading: true, onEndReached: jest.fn() },
