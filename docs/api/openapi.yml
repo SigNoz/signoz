@@ -1,44 +1,5 @@
 components:
   schemas:
-    AiobservabilitytypesMessage:
-      properties:
-        content:
-          items:
-            $ref: '#/components/schemas/AiobservabilitytypesPart'
-          type: array
-        finishReason:
-          type: string
-        role:
-          type: string
-      required:
-      - content
-      type: object
-    AiobservabilitytypesPart:
-      properties:
-        arguments: {}
-        content:
-          type: string
-        id:
-          type: string
-        isError:
-          type: boolean
-        name:
-          type: string
-        toolCallId:
-          type: string
-        type:
-          $ref: '#/components/schemas/AiobservabilitytypesPartType'
-      required:
-      - type
-      type: object
-    AiobservabilitytypesPartType:
-      enum:
-      - text
-      - thinking
-      - tool_call
-      - tool_result
-      - generic
-      type: string
     AlertmanagertypesChannel:
       properties:
         createdAt:
@@ -5137,6 +5098,232 @@ components:
           type: array
       required:
       - config
+      type: object
+    GenaiBlobPart:
+      properties:
+        content:
+          type: string
+        mime_type:
+          nullable: true
+          type: string
+        modality:
+          type: string
+        type:
+          type: string
+      required:
+      - type
+      - modality
+      - content
+      type: object
+    GenaiChatMessage:
+      properties:
+        name:
+          nullable: true
+          type: string
+        parts:
+          $ref: '#/components/schemas/GenaiParts'
+        role:
+          type: string
+      required:
+      - role
+      - parts
+      type: object
+    GenaiCompactionPart:
+      properties:
+        content:
+          nullable: true
+          type: string
+        id:
+          nullable: true
+          type: string
+        type:
+          type: string
+      required:
+      - type
+      type: object
+    GenaiFilePart:
+      properties:
+        file_id:
+          type: string
+        mime_type:
+          nullable: true
+          type: string
+        modality:
+          type: string
+        type:
+          type: string
+      required:
+      - type
+      - modality
+      - file_id
+      type: object
+    GenaiGenericPart:
+      properties:
+        type:
+          type: string
+      required:
+      - type
+      type: object
+    GenaiGenericServerToolCall:
+      properties:
+        type:
+          type: string
+      required:
+      - type
+      type: object
+    GenaiGenericServerToolCallResponse:
+      properties:
+        type:
+          type: string
+      required:
+      - type
+      type: object
+    GenaiInputMessages:
+      items:
+        $ref: '#/components/schemas/GenaiChatMessage'
+      type: array
+    GenaiOutputMessage:
+      properties:
+        finish_reason:
+          nullable: true
+          type: string
+        name:
+          nullable: true
+          type: string
+        parts:
+          $ref: '#/components/schemas/GenaiParts'
+        role:
+          type: string
+      required:
+      - role
+      - parts
+      type: object
+    GenaiOutputMessages:
+      items:
+        $ref: '#/components/schemas/GenaiOutputMessage'
+      type: array
+    GenaiPart:
+      discriminator:
+        mapping:
+          blob: '#/components/schemas/GenaiBlobPart'
+          compaction: '#/components/schemas/GenaiCompactionPart'
+          file: '#/components/schemas/GenaiFilePart'
+          reasoning: '#/components/schemas/GenaiReasoningPart'
+          server_tool_call: '#/components/schemas/GenaiServerToolCallPart'
+          server_tool_call_response: '#/components/schemas/GenaiServerToolCallResponsePart'
+          text: '#/components/schemas/GenaiTextPart'
+          tool_call: '#/components/schemas/GenaiToolCallRequestPart'
+          tool_call_response: '#/components/schemas/GenaiToolCallResponsePart'
+          uri: '#/components/schemas/GenaiUriPart'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/GenaiTextPart'
+      - $ref: '#/components/schemas/GenaiToolCallRequestPart'
+      - $ref: '#/components/schemas/GenaiToolCallResponsePart'
+      - $ref: '#/components/schemas/GenaiServerToolCallPart'
+      - $ref: '#/components/schemas/GenaiServerToolCallResponsePart'
+      - $ref: '#/components/schemas/GenaiBlobPart'
+      - $ref: '#/components/schemas/GenaiFilePart'
+      - $ref: '#/components/schemas/GenaiUriPart'
+      - $ref: '#/components/schemas/GenaiReasoningPart'
+      - $ref: '#/components/schemas/GenaiCompactionPart'
+      - $ref: '#/components/schemas/GenaiGenericPart'
+      type: object
+    GenaiParts:
+      items:
+        $ref: '#/components/schemas/GenaiPart'
+      type: array
+    GenaiReasoningPart:
+      properties:
+        content:
+          type: string
+        type:
+          type: string
+      required:
+      - type
+      - content
+      type: object
+    GenaiServerToolCallPart:
+      properties:
+        id:
+          nullable: true
+          type: string
+        name:
+          type: string
+        server_tool_call:
+          $ref: '#/components/schemas/GenaiGenericServerToolCall'
+        type:
+          type: string
+      required:
+      - type
+      - name
+      - server_tool_call
+      type: object
+    GenaiServerToolCallResponsePart:
+      properties:
+        id:
+          nullable: true
+          type: string
+        server_tool_call_response:
+          $ref: '#/components/schemas/GenaiGenericServerToolCallResponse'
+        type:
+          type: string
+      required:
+      - type
+      - server_tool_call_response
+      type: object
+    GenaiTextPart:
+      properties:
+        content:
+          type: string
+        type:
+          type: string
+      required:
+      - type
+      - content
+      type: object
+    GenaiToolCallRequestPart:
+      properties:
+        arguments: {}
+        id:
+          nullable: true
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+      required:
+      - type
+      - name
+      type: object
+    GenaiToolCallResponsePart:
+      properties:
+        id:
+          nullable: true
+          type: string
+        response:
+          nullable: true
+        type:
+          type: string
+      required:
+      - type
+      - response
+      type: object
+    GenaiUriPart:
+      properties:
+        mime_type:
+          nullable: true
+          type: string
+        modality:
+          type: string
+        type:
+          type: string
+        uri:
+          type: string
+      required:
+      - type
+      - modality
+      - uri
       type: object
     GlobaltypesAPIKeyConfig:
       properties:
@@ -10257,13 +10444,9 @@ components:
             $ref: '#/components/schemas/SpantypesEvent'
           type: array
         formatted_input:
-          items:
-            $ref: '#/components/schemas/AiobservabilitytypesMessage'
-          type: array
+          $ref: '#/components/schemas/GenaiInputMessages'
         formatted_output:
-          items:
-            $ref: '#/components/schemas/AiobservabilitytypesMessage'
-          type: array
+          $ref: '#/components/schemas/GenaiOutputMessages'
         has_error:
           type: boolean
         kind_string:
@@ -16127,8 +16310,9 @@ paths:
   /api/v1/traces/{traceID}/thread:
     get:
       deprecated: false
-      description: Returns the spans carrying gen_ai input or output messages in timestamp
-        order, each with the messages normalised into formatted_input and formatted_output.
+      description: Returns the spans carrying gen_ai input or output messages, or
+        a tool call's arguments or result, in timestamp order. Messages already in
+        the OTel GenAI shape are decoded into formatted_input and formatted_output.
         Pass nextCursor as after or prevCursor as before to page, or spanId to open
         the page around a span.
       operationId: GetTraceThread

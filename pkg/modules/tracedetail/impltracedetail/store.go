@@ -297,12 +297,11 @@ func (s *traceStore) GetThreadSpans(ctx context.Context, orgID valuer.UUID, trac
 		sb.SelectMore("attributes")
 	}
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
-	messageKeys := []string{aiobservabilitytypes.GenAIInputMessages, aiobservabilitytypes.GenAIOutputMessages}
-	keys, err := s.genAIFieldKeys(ctx, orgID, messageKeys)
+	keys, err := s.genAIFieldKeys(ctx, orgID, aiobservabilitytypes.GenAIThreadKeys)
 	if err != nil {
 		return nil, err
 	}
-	hasMessages, err := s.anyExistsCondition(ctx, q, messageKeys, keys, sb)
+	isThreadSpan, err := s.anyExistsCondition(ctx, q, aiobservabilitytypes.GenAIThreadKeys, keys, sb)
 	if err != nil {
 		return nil, err
 	}
@@ -310,7 +309,7 @@ func (s *traceStore) GetThreadSpans(ctx context.Context, orgID valuer.UUID, trac
 		sb.E("trace_id", traceID),
 		sb.GE("ts_bucket_start", bounds.Start.Unix()-1800),
 		sb.LE("ts_bucket_start", bounds.End.Unix()),
-		hasMessages,
+		isThreadSpan,
 	)
 	if cursor := page.Cursor; cursor != nil {
 		// ClickHouse can't use an index for a tuple comparison, so the separate timestamp and

@@ -21,7 +21,7 @@ def test_thread_returns_message_spans_in_order(
     seed_attribute_evolution("traces", ATTRIBUTE_JSON_ROLLOUT_TIME)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
-    root_id, first_llm_id, tool_id, second_llm_id, third_llm_id = (TraceIdGenerator.span_id() for _ in range(5))
+    root_id, first_llm_id, tool_id, agent_id, second_llm_id, third_llm_id = (TraceIdGenerator.span_id() for _ in range(6))
     resources = {"service.name": "tracedetail-thread"}
     first_input = json.dumps([{"role": "user", "parts": [{"type": "text", "content": "weather in Bangalore?"}]}])
     first_output = json.dumps([{"role": "assistant", "parts": [{"type": "tool_call", "id": "call_1", "name": "get_weather", "arguments": {"city": "Bangalore"}}], "finish_reason": "tool_call"}])
@@ -33,7 +33,10 @@ def test_thread_returns_message_spans_in_order(
             Traces(
                 timestamp=now - timedelta(seconds=8), trace_id=trace_id, span_id=first_llm_id, parent_span_id=root_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.input.messages": first_input, "gen_ai.output.messages": first_output}, attribute_write_mode="json_only"
             ),
-            Traces(timestamp=now - timedelta(seconds=6), trace_id=trace_id, span_id=tool_id, parent_span_id=root_id, name="execute_tool get_weather", resources=resources, attributes={"gen_ai.tool.name": "get_weather"}, attribute_write_mode="json_only"),
+            Traces(
+                timestamp=now - timedelta(seconds=6), trace_id=trace_id, span_id=tool_id, parent_span_id=root_id, name="execute_tool get_weather", resources=resources, attributes={"gen_ai.tool.name": "get_weather", "gen_ai.tool.call.id": "call_1", "gen_ai.tool.call.arguments": json.dumps({"city": "Bangalore"}), "gen_ai.tool.call.result": "sunny"}, attribute_write_mode="json_only"
+            ),
+            Traces(timestamp=now - timedelta(seconds=5), trace_id=trace_id, span_id=agent_id, parent_span_id=root_id, name="invoke_agent planner", resources=resources, attributes={"gen_ai.agent.name": "planner"}, attribute_write_mode="json_only"),
             Traces(timestamp=now - timedelta(seconds=4), trace_id=trace_id, span_id=second_llm_id, parent_span_id=root_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.input.messages": second_input}, attribute_write_mode="json_only"),
             Traces(timestamp=now - timedelta(seconds=2), trace_id=trace_id, span_id=third_llm_id, parent_span_id=root_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.output.messages": "It is sunny in Bangalore."}, attribute_write_mode="json_only"),
         ]
@@ -44,10 +47,12 @@ def test_thread_returns_message_spans_in_order(
     assert response.status_code == HTTPStatus.OK, response.text
 
     thread = response.json()["data"]
-    assert [span["span_id"] for span in thread["spans"]] == [first_llm_id, second_llm_id, third_llm_id]
+    assert [span["span_id"] for span in thread["spans"]] == [first_llm_id, tool_id, second_llm_id, third_llm_id]
     assert "nextCursor" not in thread
 
-    first, input_only, output_only = thread["spans"]
+    first, tool, input_only, output_only = thread["spans"]
+    assert tool["attributes"]["gen_ai.tool.call.arguments"] == json.dumps({"city": "Bangalore"})
+    assert tool["attributes"]["gen_ai.tool.call.result"] == "sunny"
     assert first["time_unix"] == int((now - timedelta(seconds=8)).timestamp() * 1000)
     assert first["attributes"]["gen_ai.input.messages"] == first_input
     assert first["attributes"]["gen_ai.request.model"] == "gpt-4o"
@@ -56,18 +61,14 @@ def test_thread_returns_message_spans_in_order(
     assert "gen_ai.output.messages" not in input_only["attributes"]
     assert "gen_ai.input.messages" not in output_only["attributes"]
     assert output_only["attributes"]["gen_ai.output.messages"] == "It is sunny in Bangalore."
-    assert first["formatted_input"] == [{"role": "user", "content": [{"type": "text", "content": "weather in Bangalore?"}]}]
-    assert first["formatted_output"] == [
-        {
-            "role": "assistant",
-            "content": [{"type": "tool_call", "id": "call_1", "name": "get_weather", "arguments": {"city": "Bangalore"}}],
-            "finishReason": "tool_call",
-        }
-    ]
-    assert input_only["formatted_input"] == [{"role": "tool", "content": [{"type": "tool_result", "toolCallId": "call_1", "content": "sunny"}]}]
-    assert "formatted_output" not in input_only
-    assert "formatted_input" not in output_only
-    assert output_only["formatted_output"] == [{"content": [{"type": "text", "content": "It is sunny in Bangalore."}]}]
+
+    # only messages already in the OTel shape are decoded; other formats wait for the converters
+    tool_call = {"type": "tool_call", "name": "get_weather", "id": "call_1", "arguments": {"city": "Bangalore"}}
+    assert first["formatted_input"] == [{"role": "user", "parts": [{"type": "text", "content": "weather in Bangalore?"}]}]
+    assert first["formatted_output"] == [{"role": "assistant", "parts": [tool_call], "finish_reason": "tool_call"}]
+    for span in (tool, input_only, output_only):
+        assert "formatted_input" not in span
+        assert "formatted_output" not in span
 
 
 def test_thread_paginates_with_cursors(

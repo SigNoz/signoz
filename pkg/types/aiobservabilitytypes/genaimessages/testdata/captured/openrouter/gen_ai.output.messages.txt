@@ -1,1 +1,0 @@
-[{"role": "assistant", "parts": [{"type": "tool_call", "name": "get_current_weather", "id": "call_4BfNpuiPppRa5N1LQIkuBknW", "arguments": {"city": "Bengaluru"}}], "finish_reason": "tool_call"}]

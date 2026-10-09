@@ -4,53 +4,6 @@
  * * regenerate with 'pnpm generate:api'
  * SigNoz
  */
-export enum AiobservabilitytypesPartTypeDTO {
-	text = 'text',
-	thinking = 'thinking',
-	tool_call = 'tool_call',
-	tool_result = 'tool_result',
-	generic = 'generic',
-}
-export interface AiobservabilitytypesPartDTO {
-	arguments?: unknown;
-	/**
-	 * @type string
-	 */
-	content?: string;
-	/**
-	 * @type string
-	 */
-	id?: string;
-	/**
-	 * @type boolean
-	 */
-	isError?: boolean;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	toolCallId?: string;
-	type: AiobservabilitytypesPartTypeDTO;
-}
-
-export interface AiobservabilitytypesMessageDTO {
-	/**
-	 * @type array
-	 */
-	content: AiobservabilitytypesPartDTO[];
-	/**
-	 * @type string
-	 */
-	finishReason?: string;
-	/**
-	 * @type string
-	 */
-	role?: string;
-}
-
 export interface AlertmanagertypesChannelDTO {
 	/**
 	 * @type string
@@ -6722,6 +6675,269 @@ export interface GatewaytypesUpdatableIngestionKeyLimitDTO {
 	tags?: string[] | null;
 }
 
+export enum GenaiBlobPartDTOType {
+	blob = 'blob',
+}
+export interface GenaiBlobPartDTO {
+	/**
+	 * @type string
+	 */
+	content: string;
+	/**
+	 * @type string,null
+	 */
+	mime_type?: string | null;
+	/**
+	 * @type string
+	 */
+	modality: string;
+	/**
+	 * @type string
+	 * @enum blob
+	 */
+	type: GenaiBlobPartDTOType;
+}
+
+export enum GenaiTextPartDTOType {
+	text = 'text',
+}
+export interface GenaiTextPartDTO {
+	/**
+	 * @type string
+	 */
+	content: string;
+	/**
+	 * @type string
+	 * @enum text
+	 */
+	type: GenaiTextPartDTOType;
+}
+
+export enum GenaiToolCallRequestPartDTOType {
+	tool_call = 'tool_call',
+}
+export interface GenaiToolCallRequestPartDTO {
+	arguments?: unknown;
+	/**
+	 * @type string,null
+	 */
+	id?: string | null;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 * @enum tool_call
+	 */
+	type: GenaiToolCallRequestPartDTOType;
+}
+
+export enum GenaiToolCallResponsePartDTOType {
+	tool_call_response = 'tool_call_response',
+}
+export type GenaiToolCallResponsePartDTOResponse = unknown | null;
+
+export interface GenaiToolCallResponsePartDTO {
+	/**
+	 * @type string,null
+	 */
+	id?: string | null;
+	/**
+	 * @nullable true
+	 */
+	response: GenaiToolCallResponsePartDTOResponse;
+	/**
+	 * @type string
+	 * @enum tool_call_response
+	 */
+	type: GenaiToolCallResponsePartDTOType;
+}
+
+export interface GenaiGenericServerToolCallDTO {
+	/**
+	 * @type string
+	 */
+	type: string;
+}
+
+export enum GenaiServerToolCallPartDTOType {
+	server_tool_call = 'server_tool_call',
+}
+export interface GenaiServerToolCallPartDTO {
+	/**
+	 * @type string,null
+	 */
+	id?: string | null;
+	/**
+	 * @type string
+	 */
+	name: string;
+	server_tool_call: GenaiGenericServerToolCallDTO;
+	/**
+	 * @type string
+	 * @enum server_tool_call
+	 */
+	type: GenaiServerToolCallPartDTOType;
+}
+
+export interface GenaiGenericServerToolCallResponseDTO {
+	/**
+	 * @type string
+	 */
+	type: string;
+}
+
+export enum GenaiServerToolCallResponsePartDTOType {
+	server_tool_call_response = 'server_tool_call_response',
+}
+export interface GenaiServerToolCallResponsePartDTO {
+	/**
+	 * @type string,null
+	 */
+	id?: string | null;
+	server_tool_call_response: GenaiGenericServerToolCallResponseDTO;
+	/**
+	 * @type string
+	 * @enum server_tool_call_response
+	 */
+	type: GenaiServerToolCallResponsePartDTOType;
+}
+
+export enum GenaiFilePartDTOType {
+	file = 'file',
+}
+export interface GenaiFilePartDTO {
+	/**
+	 * @type string
+	 */
+	file_id: string;
+	/**
+	 * @type string,null
+	 */
+	mime_type?: string | null;
+	/**
+	 * @type string
+	 */
+	modality: string;
+	/**
+	 * @type string
+	 * @enum file
+	 */
+	type: GenaiFilePartDTOType;
+}
+
+export enum GenaiUriPartDTOType {
+	uri = 'uri',
+}
+export interface GenaiUriPartDTO {
+	/**
+	 * @type string,null
+	 */
+	mime_type?: string | null;
+	/**
+	 * @type string
+	 */
+	modality: string;
+	/**
+	 * @type string
+	 * @enum uri
+	 */
+	type: GenaiUriPartDTOType;
+	/**
+	 * @type string
+	 */
+	uri: string;
+}
+
+export enum GenaiReasoningPartDTOType {
+	reasoning = 'reasoning',
+}
+export interface GenaiReasoningPartDTO {
+	/**
+	 * @type string
+	 */
+	content: string;
+	/**
+	 * @type string
+	 * @enum reasoning
+	 */
+	type: GenaiReasoningPartDTOType;
+}
+
+export enum GenaiCompactionPartDTOType {
+	compaction = 'compaction',
+}
+export interface GenaiCompactionPartDTO {
+	/**
+	 * @type string,null
+	 */
+	content?: string | null;
+	/**
+	 * @type string,null
+	 */
+	id?: string | null;
+	/**
+	 * @type string
+	 * @enum compaction
+	 */
+	type: GenaiCompactionPartDTOType;
+}
+
+export interface GenaiGenericPartDTO {
+	/**
+	 * @type string
+	 */
+	type: string;
+}
+
+export type GenaiPartDTO =
+	| GenaiTextPartDTO
+	| GenaiToolCallRequestPartDTO
+	| GenaiToolCallResponsePartDTO
+	| GenaiServerToolCallPartDTO
+	| GenaiServerToolCallResponsePartDTO
+	| GenaiBlobPartDTO
+	| GenaiFilePartDTO
+	| GenaiUriPartDTO
+	| GenaiReasoningPartDTO
+	| GenaiCompactionPartDTO
+	| GenaiGenericPartDTO;
+
+export type GenaiPartsDTO = GenaiPartDTO[];
+
+export interface GenaiChatMessageDTO {
+	/**
+	 * @type string,null
+	 */
+	name?: string | null;
+	parts: GenaiPartsDTO;
+	/**
+	 * @type string
+	 */
+	role: string;
+}
+
+export type GenaiInputMessagesDTO = GenaiChatMessageDTO[];
+
+export interface GenaiOutputMessageDTO {
+	/**
+	 * @type string,null
+	 */
+	finish_reason?: string | null;
+	/**
+	 * @type string,null
+	 */
+	name?: string | null;
+	parts: GenaiPartsDTO;
+	/**
+	 * @type string
+	 */
+	role: string;
+}
+
+export type GenaiOutputMessagesDTO = GenaiOutputMessageDTO[];
+
 export interface GlobaltypesAPIKeyConfigDTO {
 	/**
 	 * @type boolean
@@ -11491,14 +11707,8 @@ export interface SpantypesThreadSpanDTO {
 	 * @type array
 	 */
 	events: SpantypesEventDTO[];
-	/**
-	 * @type array
-	 */
-	formatted_input?: AiobservabilitytypesMessageDTO[];
-	/**
-	 * @type array
-	 */
-	formatted_output?: AiobservabilitytypesMessageDTO[];
+	formatted_input?: GenaiInputMessagesDTO;
+	formatted_output?: GenaiOutputMessagesDTO;
 	/**
 	 * @type boolean
 	 */

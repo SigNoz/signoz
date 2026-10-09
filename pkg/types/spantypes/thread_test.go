@@ -2,8 +2,9 @@ package spantypes
 
 import (
 	"testing"
+	"time"
 
-	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
+	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes/genai"
 	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -76,46 +77,63 @@ func TestThreadAttributes(t *testing.T) {
 }
 
 func TestNewThreadSpan(t *testing.T) {
-	userHi := []aiobservabilitytypes.Message{{
-		Role:    aiobservabilitytypes.MessageRoleUser,
-		Content: []aiobservabilitytypes.Part{{Type: aiobservabilitytypes.PartTypeText, Content: "hi"}},
-	}}
-	assistantHello := []aiobservabilitytypes.Message{{
-		Role:         aiobservabilitytypes.MessageRoleAssistant,
-		Content:      []aiobservabilitytypes.Part{{Type: aiobservabilitytypes.PartTypeText, Content: "hello"}},
-		FinishReason: aiobservabilitytypes.FinishReasonStop,
-	}}
+	storable := StorableSpan{
+		SpanID:       "span-1",
+		ParentSpanID: "root",
+		Name:         "chat gpt-4o",
+		StartTime:    time.Unix(1757500000, 123456789),
+		DurationNano: 42,
+		AttributesJSON: telemetrystoretypes.JSONValue{"gen_ai": map[string]any{
+			"input": map[string]any{"messages": `[{"role":"user","parts":[{"type":"text","content":"hi"}]}]`},
+		}},
+		ResourcesString: map[string]string{"service.name": "chat"},
+	}
 
+	span := newThreadSpan("trace-1", &storable)
+
+	assert.Equal(t, "trace-1", span.TraceID)
+	assert.Equal(t, uint64(1757500000123), span.TimeUnix)
+	assert.Equal(t, uint64(1757500000123456789), span.timeUnixNano)
+	assert.Equal(t, map[string]string{"service.name": "chat"}, span.Resource)
+	assert.Equal(t, `[{"role":"user","parts":[{"type":"text","content":"hi"}]}]`, span.Attributes["gen_ai.input.messages"])
+	assert.Equal(t, genai.InputMessages{{Role: genai.RoleUser, Parts: genai.Parts{{Value: genai.TextPart{Type: genai.PartTypeText, Content: "hi"}}}}}, span.FormattedInput)
+	assert.Nil(t, span.FormattedOutput)
+}
+
+func TestRawAttribute(t *testing.T) {
+	arguments := map[string]any{"city": "Paris", "days": []any{1.0, 2.0}}
 	testCases := []struct {
-		name       string
-		span       StorableSpan
-		wantInput  []aiobservabilitytypes.Message
-		wantOutput []aiobservabilitytypes.Message
+		name     string
+		storable StorableSpan
+		key      string
+		want     any
 	}{
 		{
-			name: "InputAndOutput_BothFormatted",
-			span: StorableSpan{AttributesJSON: telemetrystoretypes.JSONValue{"gen_ai": map[string]any{
-				"input":  map[string]any{"messages": `[{"role":"user","parts":[{"type":"text","content":"hi"}]}]`},
-				"output": map[string]any{"messages": `[{"role":"assistant","parts":[{"type":"text","content":"hello"}],"finish_reason":"stop"}]`},
-			}}},
-			wantInput:  userHi,
-			wantOutput: assistantHello,
+			name:     "JSONColumn_ObjectWhole",
+			storable: StorableSpan{AttributesJSON: telemetrystoretypes.JSONValue{"gen_ai": map[string]any{"tool": map[string]any{"call": map[string]any{"arguments": arguments}}}}},
+			key:      "gen_ai.tool.call.arguments",
+			want:     arguments,
 		},
 		{
-			name:      "InputOnly_OutputUnset",
-			span:      StorableSpan{AttributesJSON: telemetrystoretypes.JSONValue{"gen_ai": map[string]any{"input": map[string]any{"messages": `[{"role":"user","content":"hi"}]`}}}},
-			wantInput: userHi,
+			name:     "JSONColumn_Missing",
+			storable: StorableSpan{AttributesJSON: telemetrystoretypes.JSONValue{"gen_ai": map[string]any{"tool": map[string]any{"name": "get_weather"}}}},
+			key:      "gen_ai.tool.call.arguments",
 		},
 		{
-			name: "NoMessages_BothUnset",
-			span: StorableSpan{AttributesJSON: telemetrystoretypes.JSONValue{"http": map[string]any{"method": "GET"}}},
+			name:     "LegacyMaps_SplitKeysNotJoined",
+			storable: StorableSpan{AttributesString: map[string]string{"gen_ai.tool.call.arguments.city": "Paris"}},
+			key:      "gen_ai.tool.call.arguments",
+		},
+		{
+			name:     "LegacyMaps_String",
+			storable: StorableSpan{AttributesString: map[string]string{"gen_ai.output.messages": "sunny"}},
+			key:      "gen_ai.output.messages",
+			want:     "sunny",
 		},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			span := newThreadSpan("trace-1", &testCase.span)
-			assert.Equal(t, testCase.wantInput, span.FormattedInput)
-			assert.Equal(t, testCase.wantOutput, span.FormattedOutput)
+			assert.Equal(t, testCase.want, rawAttribute(&testCase.storable, threadAttributes(&testCase.storable), testCase.key))
 		})
 	}
 }

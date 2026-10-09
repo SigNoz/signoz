@@ -4,10 +4,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"maps"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
-	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes/genaimessages"
+	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes/genai"
 )
 
 const (
@@ -63,24 +64,25 @@ type GettableTraceThread struct {
 }
 
 // ThreadSpan carries the fields the span details pane reads; snake_case keys match WaterfallSpan.
-// The formatted fields are set only when the span has the matching gen_ai messages attribute.
 type ThreadSpan struct {
-	SpanID           string                         `json:"span_id" required:"true"`
-	TraceID          string                         `json:"trace_id" required:"true"`
-	ParentSpanID     string                         `json:"parent_span_id" required:"true"`
-	Name             string                         `json:"name" required:"true"`
-	KindString       string                         `json:"kind_string" required:"true"`
-	TimeUnix         uint64                         `json:"time_unix" required:"true"`
-	DurationNano     uint64                         `json:"duration_nano" required:"true"`
-	HasError         bool                           `json:"has_error" required:"true"`
-	StatusCodeString string                         `json:"status_code_string" required:"true"`
-	StatusMessage    string                         `json:"status_message" required:"true"`
-	Resource         map[string]string              `json:"resource" required:"true" nullable:"false"`
-	Attributes       map[string]any                 `json:"attributes" required:"true" nullable:"false"`
-	Events           []Event                        `json:"events" required:"true" nullable:"false"`
-	References       []OtelSpanRef                  `json:"references" required:"true" nullable:"false"`
-	FormattedInput   []aiobservabilitytypes.Message `json:"formatted_input,omitempty" nullable:"false"`
-	FormattedOutput  []aiobservabilitytypes.Message `json:"formatted_output,omitempty" nullable:"false"`
+	SpanID           string            `json:"span_id" required:"true"`
+	TraceID          string            `json:"trace_id" required:"true"`
+	ParentSpanID     string            `json:"parent_span_id" required:"true"`
+	Name             string            `json:"name" required:"true"`
+	KindString       string            `json:"kind_string" required:"true"`
+	TimeUnix         uint64            `json:"time_unix" required:"true"`
+	DurationNano     uint64            `json:"duration_nano" required:"true"`
+	HasError         bool              `json:"has_error" required:"true"`
+	StatusCodeString string            `json:"status_code_string" required:"true"`
+	StatusMessage    string            `json:"status_message" required:"true"`
+	Resource         map[string]string `json:"resource" required:"true" nullable:"false"`
+	Attributes       map[string]any    `json:"attributes" required:"true" nullable:"false"`
+	Events           []Event           `json:"events" required:"true" nullable:"false"`
+	References       []OtelSpanRef     `json:"references" required:"true" nullable:"false"`
+	// The formatted fields hold the span's messages in the OTel GenAI shape, set when the
+	// attributes already follow it.
+	FormattedInput  genai.InputMessages  `json:"formatted_input,omitempty" nullable:"false"`
+	FormattedOutput genai.OutputMessages `json:"formatted_output,omitempty" nullable:"false"`
 
 	timeUnixNano uint64
 }
@@ -194,22 +196,59 @@ func newThreadSpan(traceID string, storable *StorableSpan) *ThreadSpan {
 		References:       storable.UnmarshalledRefs(),
 		timeUnixNano:     timeUnixNano,
 	}
-	if v, ok := attributes[aiobservabilitytypes.GenAIInputMessages]; ok {
-		span.FormattedInput = genaimessages.Normalize(v)
-	}
-	if v, ok := attributes[aiobservabilitytypes.GenAIOutputMessages]; ok {
-		span.FormattedOutput = genaimessages.Normalize(v)
-	}
+	decodeMessages(rawAttribute(storable, attributes, aiobservabilitytypes.GenAIInputMessages), &span.FormattedInput)
+	decodeMessages(rawAttribute(storable, attributes, aiobservabilitytypes.GenAIOutputMessages), &span.FormattedOutput)
 	return span
 }
 
-// threadAttributes reads the JSON column and falls back to the legacy maps for spans written
-// before the JSON rollout.
-func threadAttributes(storable *StorableSpan) map[string]any {
-	if len(storable.AttributesJSON) > 0 {
-		attributes := make(map[string]any, len(storable.AttributesJSON))
-		storable.AttributesJSON.FlattenInto("", attributes)
-		return attributes
+// decodeMessages fills out when the attribute, a JSON string or a structured value, is a list of
+// messages in the OTel shape. Other formats are left to the converters.
+func decodeMessages(value any, out any) {
+	data, ok := value.(string)
+	if !ok {
+		raw, err := json.Marshal(value)
+		if err != nil {
+			return
+		}
+		data = string(raw)
 	}
-	return storable.Attributes()
+	var messages []map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(data), &messages); err != nil || len(messages) == 0 {
+		return
+	}
+	for _, m := range messages {
+		if _, ok := m["parts"]; !ok {
+			return
+		}
+	}
+	_ = json.Unmarshal([]byte(data), out)
+}
+
+// threadAttributes flattens the JSON column into dotted keys, as the querier does for list
+// responses, and falls back to the legacy maps for spans written before the JSON rollout.
+func threadAttributes(storable *StorableSpan) map[string]any {
+	if len(storable.AttributesJSON) == 0 {
+		return storable.Attributes()
+	}
+	attributes := make(map[string]any, len(storable.AttributesJSON))
+	storable.AttributesJSON.FlattenInto("", attributes)
+	return attributes
+}
+
+// rawAttribute reads one attribute for decoding: from the JSON document, where an object value
+// is still whole, or from the legacy maps, where the collector already split objects into one
+// key per field.
+func rawAttribute(storable *StorableSpan, attributes map[string]any, key string) any {
+	if len(storable.AttributesJSON) == 0 {
+		return attributes[key]
+	}
+	var current any = map[string]any(storable.AttributesJSON)
+	for segment := range strings.SplitSeq(key, ".") {
+		object, ok := current.(map[string]any)
+		if !ok {
+			return nil
+		}
+		current = object[segment]
+	}
+	return current
 }

@@ -24,6 +24,9 @@ var (
 
 		aiobservabilitytypes.GenAIInputMessages:  genAIAttribute(aiobservabilitytypes.GenAIInputMessages, telemetrytypes.FieldDataTypeString),
 		aiobservabilitytypes.GenAIOutputMessages: genAIAttribute(aiobservabilitytypes.GenAIOutputMessages, telemetrytypes.FieldDataTypeString),
+
+		aiobservabilitytypes.GenAIToolCallArguments: genAIAttribute(aiobservabilitytypes.GenAIToolCallArguments, telemetrytypes.FieldDataTypeString),
+		aiobservabilitytypes.GenAIToolCallResult:    genAIAttribute(aiobservabilitytypes.GenAIToolCallResult, telemetrytypes.FieldDataTypeString),
 	}
 
 	// TraceAggregateFields are the per-trace aggregates the AI trace list computes;
