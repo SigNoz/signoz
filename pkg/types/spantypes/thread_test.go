@@ -97,7 +97,9 @@ func TestNewThreadSpan(t *testing.T) {
 	assert.Equal(t, map[string]string{"service.name": "chat"}, span.Resource)
 	assert.Equal(t, `[{"role":"user","parts":[{"type":"text","content":"hi"}]}]`, span.Attributes["gen_ai.input.messages"])
 	assert.Equal(t, genai.InputMessages{{Role: genai.RoleUser, Parts: genai.Parts{{Value: genai.TextPart{Type: genai.PartTypeText, Content: "hi"}}}}}, span.FormattedInput)
-	assert.Nil(t, span.FormattedOutput)
+	assert.Equal(t, genai.OutputMessages{}, span.FormattedOutput)
+	assert.Equal(t, FormatterSemconv, span.Formatter)
+	assert.Equal(t, []string{}, span.FormatterWarnings)
 }
 
 func TestRawAttribute(t *testing.T) {

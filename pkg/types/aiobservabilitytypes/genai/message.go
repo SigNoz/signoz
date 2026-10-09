@@ -1,6 +1,5 @@
 // Package genai mirrors the OpenTelemetry GenAI message schemas, one type per schema definition:
 // open-telemetry/semantic-conventions-genai@06ec68e, model/gen-ai/gen-ai-{input,output}-messages.json.
-// Copies live in testdata/semconv; schema_test.go checks the types against them.
 package genai
 
 const (

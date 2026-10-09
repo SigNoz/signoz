@@ -10447,6 +10447,12 @@ components:
           $ref: '#/components/schemas/GenaiInputMessages'
         formatted_output:
           $ref: '#/components/schemas/GenaiOutputMessages'
+        formatter:
+          type: string
+        formatter_warnings:
+          items:
+            type: string
+          type: array
         has_error:
           type: boolean
         kind_string:
@@ -10489,6 +10495,10 @@ components:
       - attributes
       - events
       - references
+      - formatted_input
+      - formatted_output
+      - formatter
+      - formatter_warnings
       type: object
     SpantypesTraceAISummary:
       properties:
@@ -16312,9 +16322,10 @@ paths:
       deprecated: false
       description: Returns the spans carrying gen_ai input or output messages, or
         a tool call's arguments or result, in timestamp order. Messages already in
-        the OTel GenAI shape are decoded into formatted_input and formatted_output.
-        Pass nextCursor as after or prevCursor as before to page, or spanId to open
-        the page around a span.
+        the OTel GenAI shape are decoded into formatted_input and formatted_output,
+        with formatter naming the converter and formatter_warnings what it could not
+        resolve. Pass nextCursor as after or prevCursor as before to page, or spanId
+        to open the page around a span.
       operationId: GetTraceThread
       parameters:
       - description: Page size, at most 100. 0 means 20.

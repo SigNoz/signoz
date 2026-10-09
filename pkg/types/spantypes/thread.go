@@ -14,6 +14,9 @@ import (
 const (
 	threadDefaultLimit = 20
 	threadMaxLimit     = 100
+
+	// FormatterSemconv is the formatter of messages that already follow the OTel GenAI shape.
+	FormatterSemconv = "semconv"
 )
 
 const (
@@ -79,10 +82,12 @@ type ThreadSpan struct {
 	Attributes       map[string]any    `json:"attributes" required:"true" nullable:"false"`
 	Events           []Event           `json:"events" required:"true" nullable:"false"`
 	References       []OtelSpanRef     `json:"references" required:"true" nullable:"false"`
-	// The formatted fields hold the span's messages in the OTel GenAI shape, set when the
-	// attributes already follow it.
-	FormattedInput  genai.InputMessages  `json:"formatted_input,omitempty" nullable:"false"`
-	FormattedOutput genai.OutputMessages `json:"formatted_output,omitempty" nullable:"false"`
+	// The formatted fields hold the span's messages in the OTel GenAI shape; Formatter names the
+	// converter that produced them and FormatterWarnings what it could not resolve.
+	FormattedInput    genai.InputMessages  `json:"formatted_input" required:"true" nullable:"false"`
+	FormattedOutput   genai.OutputMessages `json:"formatted_output" required:"true" nullable:"false"`
+	Formatter         string               `json:"formatter" required:"true"`
+	FormatterWarnings []string             `json:"formatter_warnings" required:"true" nullable:"false"`
 
 	timeUnixNano uint64
 }
@@ -180,48 +185,56 @@ func newThreadSpan(traceID string, storable *StorableSpan) *ThreadSpan {
 	timeUnixNano := uint64(storable.StartTime.UnixNano())
 	attributes := threadAttributes(storable)
 	span := &ThreadSpan{
-		SpanID:           storable.SpanID,
-		TraceID:          traceID,
-		ParentSpanID:     storable.ParentSpanID,
-		Name:             storable.Name,
-		KindString:       storable.SpanKind,
-		TimeUnix:         timeUnixNano / 1_000_000, // client expects millis, as in the waterfall
-		DurationNano:     storable.DurationNano,
-		HasError:         storable.HasError,
-		StatusCodeString: storable.StatusCodeString,
-		StatusMessage:    storable.StatusMessage,
-		Resource:         resources,
-		Attributes:       attributes,
-		Events:           storable.UnmarshalledEvents(),
-		References:       storable.UnmarshalledRefs(),
-		timeUnixNano:     timeUnixNano,
+		SpanID:            storable.SpanID,
+		TraceID:           traceID,
+		ParentSpanID:      storable.ParentSpanID,
+		Name:              storable.Name,
+		KindString:        storable.SpanKind,
+		TimeUnix:          timeUnixNano / 1_000_000, // client expects millis, as in the waterfall
+		DurationNano:      storable.DurationNano,
+		HasError:          storable.HasError,
+		StatusCodeString:  storable.StatusCodeString,
+		StatusMessage:     storable.StatusMessage,
+		Resource:          resources,
+		Attributes:        attributes,
+		Events:            storable.UnmarshalledEvents(),
+		References:        storable.UnmarshalledRefs(),
+		FormattedInput:    decodeMessages[genai.InputMessages](rawAttribute(storable, attributes, aiobservabilitytypes.GenAIInputMessages)),
+		FormattedOutput:   decodeMessages[genai.OutputMessages](rawAttribute(storable, attributes, aiobservabilitytypes.GenAIOutputMessages)),
+		FormatterWarnings: []string{},
+		timeUnixNano:      timeUnixNano,
 	}
-	decodeMessages(rawAttribute(storable, attributes, aiobservabilitytypes.GenAIInputMessages), &span.FormattedInput)
-	decodeMessages(rawAttribute(storable, attributes, aiobservabilitytypes.GenAIOutputMessages), &span.FormattedOutput)
+	if len(span.FormattedInput) > 0 || len(span.FormattedOutput) > 0 {
+		span.Formatter = FormatterSemconv
+	}
 	return span
 }
 
-// decodeMessages fills out when the attribute, a JSON string or a structured value, is a list of
-// messages in the OTel shape. Other formats are left to the converters.
-func decodeMessages(value any, out any) {
+// decodeMessages decodes the attribute, a JSON string or a structured value, when it is a list of
+// messages in the OTel shape. Other formats are left to the converters and give an empty list.
+func decodeMessages[T ~[]E, E any](value any) T {
 	data, ok := value.(string)
 	if !ok {
 		raw, err := json.Marshal(value)
 		if err != nil {
-			return
+			return T{}
 		}
 		data = string(raw)
 	}
 	var messages []map[string]json.RawMessage
 	if err := json.Unmarshal([]byte(data), &messages); err != nil || len(messages) == 0 {
-		return
+		return T{}
 	}
 	for _, m := range messages {
 		if _, ok := m["parts"]; !ok {
-			return
+			return T{}
 		}
 	}
-	_ = json.Unmarshal([]byte(data), out)
+	var decoded T
+	if err := json.Unmarshal([]byte(data), &decoded); err != nil {
+		return T{}
+	}
+	return decoded
 }
 
 // threadAttributes flattens the JSON column into dotted keys, as the querier does for list

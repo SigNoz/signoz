@@ -261,7 +261,7 @@ export const invalidateGetTraceSummary = async (
 };
 
 /**
- * Returns the spans carrying gen_ai input or output messages, or a tool call's arguments or result, in timestamp order. Messages already in the OTel GenAI shape are decoded into formatted_input and formatted_output. Pass nextCursor as after or prevCursor as before to page, or spanId to open the page around a span.
+ * Returns the spans carrying gen_ai input or output messages, or a tool call's arguments or result, in timestamp order. Messages already in the OTel GenAI shape are decoded into formatted_input and formatted_output, with formatter naming the converter and formatter_warnings what it could not resolve. Pass nextCursor as after or prevCursor as before to page, or spanId to open the page around a span.
  * @summary Get thread view for a trace
  */
 export const getTraceThread = (

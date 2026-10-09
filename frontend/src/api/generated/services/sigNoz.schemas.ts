@@ -11707,8 +11707,16 @@ export interface SpantypesThreadSpanDTO {
 	 * @type array
 	 */
 	events: SpantypesEventDTO[];
-	formatted_input?: GenaiInputMessagesDTO;
-	formatted_output?: GenaiOutputMessagesDTO;
+	formatted_input: GenaiInputMessagesDTO;
+	formatted_output: GenaiOutputMessagesDTO;
+	/**
+	 * @type string
+	 */
+	formatter: string;
+	/**
+	 * @type array
+	 */
+	formatter_warnings: string[];
 	/**
 	 * @type boolean
 	 */

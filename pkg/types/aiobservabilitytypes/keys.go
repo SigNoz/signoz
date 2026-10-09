@@ -19,9 +19,6 @@ const (
 
 	GenAIInputMessages  = "gen_ai.input.messages"
 	GenAIOutputMessages = "gen_ai.output.messages"
-
-	GenAIToolCallArguments = "gen_ai.tool.call.arguments"
-	GenAIToolCallResult    = "gen_ai.tool.call.result"
 )
 
 // Per-span costs the SigNoz LLM pricing processor attaches; SigNoz semconv
@@ -38,9 +35,8 @@ const (
 // agent span. A trace belongs to the AI explorer when any span carries one.
 var GenAISpanGateKeys = []string{GenAIRequestModel, GenAIToolName, GenAIAgentName}
 
-// GenAIThreadKeys mark a span as a thread row: a model call with its messages, or a tool
-// execution with its arguments or result.
-var GenAIThreadKeys = []string{GenAIInputMessages, GenAIOutputMessages, GenAIToolCallArguments, GenAIToolCallResult}
+// GenAIThreadKeys mark a span as a thread row: a model call with its messages, or a tool execution.
+var GenAIThreadKeys = []string{GenAIInputMessages, GenAIOutputMessages, GenAIToolName}
 
 // GenAISpanFilterExpression renders the gate as a query-builder filter
 // expression: each gate key ORed on EXISTS.

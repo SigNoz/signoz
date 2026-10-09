@@ -66,9 +66,13 @@ def test_thread_returns_message_spans_in_order(
     tool_call = {"type": "tool_call", "name": "get_weather", "id": "call_1", "arguments": {"city": "Bangalore"}}
     assert first["formatted_input"] == [{"role": "user", "parts": [{"type": "text", "content": "weather in Bangalore?"}]}]
     assert first["formatted_output"] == [{"role": "assistant", "parts": [tool_call], "finish_reason": "tool_call"}]
+    assert first["formatter"] == "semconv"
+    assert first["formatter_warnings"] == []
     for span in (tool, input_only, output_only):
-        assert "formatted_input" not in span
-        assert "formatted_output" not in span
+        assert span["formatted_input"] == []
+        assert span["formatted_output"] == []
+        assert span["formatter"] == ""
+        assert span["formatter_warnings"] == []
 
 
 def test_thread_paginates_with_cursors(
@@ -193,8 +197,8 @@ def test_thread_opens_around_span(
     resources = {"service.name": "tracedetail-thread-anchor"}
     root_id = TraceIdGenerator.span_id()
     llm_ids = [TraceIdGenerator.span_id() for _ in range(5)]
-    tool_id = TraceIdGenerator.span_id()
-    # tool span sits between the third and fourth llm spans
+    agent_id = TraceIdGenerator.span_id()
+    # agent span, not a thread row, sits between the third and fourth llm spans
     insert_traces(
         [
             Traces(timestamp=now - timedelta(seconds=20), duration=timedelta(seconds=19), trace_id=trace_id, span_id=root_id, name="POST /chat", kind=TracesKind.SPAN_KIND_SERVER, resources=resources, attribute_write_mode="json_only"),
@@ -202,7 +206,7 @@ def test_thread_opens_around_span(
                 Traces(timestamp=now - timedelta(seconds=18 - 3 * i), trace_id=trace_id, span_id=span_id, parent_span_id=root_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.input.messages": json.dumps([{"role": "user", "content": span_id}])}, attribute_write_mode="json_only")
                 for i, span_id in enumerate(llm_ids)
             ),
-            Traces(timestamp=now - timedelta(seconds=11), trace_id=trace_id, span_id=tool_id, parent_span_id=root_id, name="execute_tool get_weather", resources=resources, attributes={"gen_ai.tool.name": "get_weather"}, attribute_write_mode="json_only"),
+            Traces(timestamp=now - timedelta(seconds=11), trace_id=trace_id, span_id=agent_id, parent_span_id=root_id, name="invoke_agent planner", resources=resources, attributes={"gen_ai.agent.name": "planner"}, attribute_write_mode="json_only"),
         ]
     )
 
@@ -224,10 +228,10 @@ def test_thread_opens_around_span(
     assert [span["span_id"] for span in get_page({"limit": 3, "after": around["nextCursor"]})["spans"]] == llm_ids[4:]
 
     # span without messages: only its neighbours
-    around_tool = get_page({"limit": 2, "spanId": tool_id})
-    assert [span["span_id"] for span in around_tool["spans"]] == llm_ids[2:4]
-    assert around_tool["prevCursor"]
-    assert around_tool["nextCursor"]
+    around_agent = get_page({"limit": 2, "spanId": agent_id})
+    assert [span["span_id"] for span in around_agent["spans"]] == llm_ids[2:4]
+    assert around_agent["prevCursor"]
+    assert around_agent["nextCursor"]
 
     # near the start, the short side gives its room to the other
     at_start = get_page({"limit": 3, "spanId": llm_ids[0]})
@@ -272,7 +276,7 @@ def test_thread_reads_spans_across_json_rollout(
     insert_traces(
         [
             Traces(timestamp=rollout - timedelta(minutes=10), trace_id=before_trace_id, span_id=before_ids[0], name="chat gpt-4o", resources=resources, attributes={"gen_ai.input.messages": json.dumps([{"role": "user", "content": "first"}])}, attribute_write_mode="legacy_only"),
-            Traces(timestamp=rollout - timedelta(minutes=8), trace_id=before_trace_id, span_id=TraceIdGenerator.span_id(), name="execute_tool get_weather", resources=resources, attributes={"gen_ai.tool.name": "get_weather"}, attribute_write_mode="legacy_only"),
+            Traces(timestamp=rollout - timedelta(minutes=8), trace_id=before_trace_id, span_id=TraceIdGenerator.span_id(), name="invoke_agent planner", resources=resources, attributes={"gen_ai.agent.name": "planner"}, attribute_write_mode="legacy_only"),
             Traces(timestamp=rollout - timedelta(minutes=5), trace_id=before_trace_id, span_id=before_ids[1], name="chat gpt-4o", resources=resources, attributes={"gen_ai.output.messages": json.dumps([{"role": "assistant", "content": "second"}])}, attribute_write_mode="legacy_only"),
             Traces(timestamp=rollout - timedelta(minutes=5), trace_id=straddle_trace_id, span_id=legacy_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.input.messages": json.dumps([{"role": "user", "content": "legacy"}])}, attribute_write_mode="legacy_only"),
             Traces(timestamp=rollout + timedelta(minutes=5), trace_id=straddle_trace_id, span_id=json_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.input.messages": json.dumps([{"role": "user", "content": "json"}])}, attribute_write_mode="json_only"),
