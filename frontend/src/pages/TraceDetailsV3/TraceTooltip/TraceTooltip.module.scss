@@ -48,7 +48,8 @@
 
 .row {
 	display: grid;
-	grid-template-columns: fit-content(50%) minmax(0, 1fr);
+	grid-template-columns: auto auto;
+	justify-content: space-between;
 	column-gap: var(--spacing-2);
 	min-width: 0;
 }

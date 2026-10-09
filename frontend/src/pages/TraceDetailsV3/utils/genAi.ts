@@ -88,6 +88,14 @@ export function getTotalInputTokens({
 	return input < cache ? input + cache : input;
 }
 
+/** `Input Token` for a count of 1, `Input Tokens` otherwise. */
+export function getTokenLabel(
+	prefix: string,
+	count: number | null | undefined,
+): string {
+	return `${prefix} ${count === 1 ? 'Token' : 'Tokens'}`;
+}
+
 /** Missing values render as `-`. */
 export function formatTokens(value: number | null | undefined): string {
 	return hasValue(value) ? value.toLocaleString('en-US') : '-';

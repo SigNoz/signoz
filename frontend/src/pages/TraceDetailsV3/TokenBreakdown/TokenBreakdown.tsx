@@ -1,23 +1,20 @@
 import {
 	AiTokenCounts,
-	formatCost,
 	formatTokens,
+	getTokenLabel,
 	getTotalInputTokens,
 	hasValue,
 } from '../utils/genAi';
 import TraceTooltipRow from '../TraceTooltip/TraceTooltipRow';
 import TraceTooltipSection from '../TraceTooltip/TraceTooltipSection';
 
-type TokenBreakdownProps = Omit<AiTokenCounts, 'reasoning'> & {
-	cost?: number;
-};
+type TokenBreakdownProps = Omit<AiTokenCounts, 'reasoning'>;
 
 function TokenBreakdown({
 	input,
 	output,
 	cacheRead,
 	cacheWrite,
-	cost,
 }: TokenBreakdownProps): JSX.Element {
 	const totalInput = getTotalInputTokens({ input, cacheRead, cacheWrite });
 	const showCacheRead = hasValue(cacheRead);
@@ -26,14 +23,14 @@ function TokenBreakdown({
 		<>
 			{showCacheRead && (
 				<TraceTooltipRow
-					label="Cache Read"
+					label={getTokenLabel('Cache Read', cacheRead)}
 					value={formatTokens(cacheRead)}
 					isNested
 				/>
 			)}
 			{showCacheWrite && (
 				<TraceTooltipRow
-					label="Cache Write"
+					label={getTokenLabel('Cache Write', cacheWrite)}
 					value={formatTokens(cacheWrite)}
 					isNested
 				/>
@@ -42,7 +39,11 @@ function TokenBreakdown({
 	);
 	const outputSection = hasValue(output) && (
 		<TraceTooltipSection>
-			<TraceTooltipRow label="Output" value={formatTokens(output)} isHeading />
+			<TraceTooltipRow
+				label={getTokenLabel('Output', output)}
+				value={formatTokens(output)}
+				isHeading
+			/>
 		</TraceTooltipSection>
 	);
 
@@ -52,12 +53,16 @@ function TokenBreakdown({
 			<>
 				{hasValue(input) && (
 					<TraceTooltipSection>
-						<TraceTooltipRow label="Input" value={formatTokens(input)} isHeading />
+						<TraceTooltipRow
+							label={getTokenLabel('Input', input)}
+							value={formatTokens(input)}
+							isHeading
+						/>
 					</TraceTooltipSection>
 				)}
 				{(showCacheRead || showCacheWrite) && (
 					<TraceTooltipSection>
-						<TraceTooltipRow label="Cache" isHeading />
+						<TraceTooltipRow label="Cache Tokens" isHeading />
 						{cacheRows}
 					</TraceTooltipSection>
 				)}
@@ -69,25 +74,28 @@ function TokenBreakdown({
 	return (
 		<>
 			<TraceTooltipSection>
-				<TraceTooltipRow label="Input" value={formatTokens(totalInput)} isHeading />
+				<TraceTooltipRow
+					label={getTokenLabel('Input', totalInput)}
+					value={formatTokens(totalInput)}
+					isHeading
+				/>
 				{cacheRows}
 				{hasValue(input) && (
-					<TraceTooltipRow label="Input" value={formatTokens(input)} isNested />
+					<TraceTooltipRow
+						label={getTokenLabel('Total Input', input)}
+						value={formatTokens(input)}
+						isNested
+					/>
 				)}
 			</TraceTooltipSection>
 			{outputSection}
 			{hasValue(output) && (
 				<TraceTooltipSection>
 					<TraceTooltipRow
-						label="Total"
+						label="Total Token Usage"
 						value={formatTokens(totalInput + output)}
 						isHeading
 					/>
-				</TraceTooltipSection>
-			)}
-			{hasValue(cost) && (
-				<TraceTooltipSection>
-					<TraceTooltipRow isHeading label="Cost" value={formatCost(cost)} />
 				</TraceTooltipSection>
 			)}
 		</>
