@@ -17,6 +17,7 @@ import { AppState } from 'store/reducers';
 import styled from 'styled-components';
 import { GlobalTime } from 'types/actions/globalTime';
 
+import { CHARGE_STRENGTH } from './constants';
 import Map from './Map';
 
 const Container = styled.div`
@@ -25,8 +26,8 @@ const Container = styled.div`
 	}
 
 	.force-graph-container .graph-tooltip {
-		background: black;
-		padding: 1px;
+		background: transparent;
+		padding: 0;
 		.keyval {
 			display: flex;
 			.key {
@@ -85,8 +86,8 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 	}, [globalTime, getDetailedServiceMapItems, supportedQueries]);
 
 	useEffect(() => {
-		fgRef.current && fgRef.current.d3Force('charge').strength(-400);
-	});
+		fgRef.current?.d3Force('charge')?.strength(CHARGE_STRENGTH);
+	}, [serviceMap.items]);
 
 	const renderBody = (): JSX.Element => {
 		if (serviceMap.loading) {
@@ -97,7 +98,7 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 			return <Card>No Service Found</Card>;
 		}
 
-		return <Map fgRef={fgRef} serviceMap={serviceMap} />;
+		return <Map fgRef={fgRef} dependencies={serviceMap.items} />;
 	};
 
 	return (
