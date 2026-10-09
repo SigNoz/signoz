@@ -5,7 +5,7 @@
 
 import ROUTES from 'constants/routes';
 import { rest } from 'msw';
-import { userEvent, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { RoleType } from 'types/roles';
 
 import { choiceControl } from '@/storybook/controls/controls';
@@ -114,4 +114,20 @@ export const openLogsCard = async (
 	await userEvent.click(header);
 
 	return header.parentElement as HTMLElement;
+};
+
+/** Clicks save once the permission check behind the button has answered. */
+export const save = async (canvasElement: HTMLElement): Promise<void> => {
+	const button = await waitFor(
+		() => {
+			const found = within(canvasElement).getByTestId('save-button');
+
+			expect(found).not.toHaveAttribute('aria-disabled', 'true');
+
+			return found;
+		},
+		{ timeout: 15_000 },
+	);
+
+	await userEvent.click(button);
 };

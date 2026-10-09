@@ -7,8 +7,7 @@ import { screen, userEvent, within } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { dashboardMocks } from '../DashboardPage.stories.mocks';
-import { openSettings } from './settingsPlay';
+import { dashboardMocks, openSettings } from '../DashboardPage.stories.mocks';
 
 import DashboardPage from '../../DashboardPage';
 

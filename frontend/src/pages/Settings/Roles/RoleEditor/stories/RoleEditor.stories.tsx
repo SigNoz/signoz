@@ -4,7 +4,11 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { openLogsCard, roleEditorMocks } from './RoleEditor.stories.mocks';
+import {
+	openLogsCard,
+	roleEditorMocks,
+	save,
+} from './RoleEditor.stories.mocks';
 
 import SettingsPage from '../../../Settings';
 
@@ -98,22 +102,6 @@ export const TelemetrySelectorWizard: Story = {
 		);
 		await screen.findByRole('dialog', { name: 'Selector Wizard' });
 	},
-};
-
-/** Clicks save once the permission check behind the button has answered. */
-const save = async (canvasElement: HTMLElement): Promise<void> => {
-	const button = await waitFor(
-		() => {
-			const found = within(canvasElement).getByTestId('save-button');
-
-			expect(found).not.toHaveAttribute('aria-disabled', 'true');
-
-			return found;
-		},
-		{ timeout: 15_000 },
-	);
-
-	await userEvent.click(button);
 };
 
 /**

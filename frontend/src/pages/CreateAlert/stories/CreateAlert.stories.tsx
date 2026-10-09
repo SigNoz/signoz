@@ -4,7 +4,11 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { createAlertMocks } from './CreateAlert.stories.mocks';
+import {
+	clickFooterButton,
+	createAlertMocks,
+	fillValidAlert,
+} from './CreateAlert.stories.mocks';
 
 import CreateAlertPage from '../index';
 
@@ -86,36 +90,6 @@ export const Tooltips: Story = {
 		);
 		await screen.findByText('Example:', undefined, { timeout: 15_000 });
 	},
-};
-
-const untilLoaded = { timeout: 15_000 };
-
-const fillValidAlert = async (canvasElement: HTMLElement): Promise<void> => {
-	const canvas = within(canvasElement);
-
-	await userEvent.type(
-		await canvas.findByTestId('alert-name-input', undefined, untilLoaded),
-		'Toast alert',
-	);
-	const channels = await canvas.findByTestId(
-		'threshold-notification-channel-select',
-		undefined,
-		untilLoaded,
-	);
-
-	await userEvent.click(within(channels).getByRole('combobox'));
-	await userEvent.click(await screen.findByTitle('ops-slack'));
-	await userEvent.keyboard('{Escape}');
-};
-
-const clickFooterButton = async (
-	canvasElement: HTMLElement,
-	testId: string,
-): Promise<void> => {
-	const button = await within(canvasElement).findByTestId(testId);
-
-	await waitFor(() => expect(button).toBeEnabled());
-	await userEvent.click(button);
 };
 
 /** A valid rule saved from the footer: the toast raised once the POST answers. */

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, screen, waitFor, within } from 'storybook/test';
+import { expect, userEvent, screen, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -7,9 +7,14 @@ import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import {
 	clickRowAction,
 	dashboardsListMocks,
+	openLegacyDialog,
 	openRowActions,
 	overflowingRows,
 	pickRowAction,
+	requestTemplate,
+	retryMigration,
+	TOAST_TIMEOUT,
+	uploadDashboardJson,
 } from './DashboardsListPage.stories.mocks';
 import { BuiltinViewId } from '../types';
 
@@ -155,8 +160,6 @@ export const SaveViewPopover: Story = {
 		await screen.findByText('Save as view');
 	},
 };
-
-const TOAST_TIMEOUT = 10000;
 
 /** The renamed toast, raised once the PATCH answers. */
 export const DashboardRenamedToast: Story = {
@@ -310,17 +313,6 @@ export const UnpinFailedToast: Story = {
 	parameters: { allowConsoleErrors: true },
 };
 
-const openLegacyDialog = async (canvasElement: HTMLElement): Promise<void> => {
-	await userEvent.click(
-		await within(canvasElement).findByTestId(
-			'dashboard-title-4',
-			{},
-			{ timeout: TOAST_TIMEOUT },
-		),
-	);
-	await screen.findByTestId('legacy-dashboard-id');
-};
-
 /** The id copied from the legacy dashboard dialog. */
 export const LegacyDashboardIdCopiedToast: Story = {
 	play: async ({ canvasElement }) => {
@@ -332,14 +324,6 @@ export const LegacyDashboardIdCopiedToast: Story = {
 			{ timeout: TOAST_TIMEOUT },
 		);
 	},
-};
-
-const retryMigration = async (canvasElement: HTMLElement): Promise<void> => {
-	await openLegacyDialog(canvasElement);
-	const retry = await screen.findByTestId('legacy-dashboard-retry-migration');
-
-	await waitFor(() => expect(retry).toBeEnabled(), { timeout: TOAST_TIMEOUT });
-	await userEvent.click(retry);
 };
 
 /** Retry migration of the legacy dashboard succeeding. */
@@ -391,23 +375,6 @@ export const CreateDashboardFailedToast: Story = {
 	parameters: { allowConsoleErrors: true },
 };
 
-const uploadDashboardJson = async (json: object): Promise<void> => {
-	await userEvent.click(await screen.findByText('Import JSON'));
-	const dialog = await screen.findByRole('dialog');
-	const input = dialog.querySelector<HTMLInputElement>('input[type="file"]');
-
-	if (!input) {
-		throw new Error('The import dialog has no file input');
-	}
-	await userEvent.upload(
-		input,
-		new File([JSON.stringify(json)], 'dashboard.json', {
-			type: 'application/json',
-		}),
-	);
-	await userEvent.click(await screen.findByTestId('import-json-submit'));
-};
-
 const IMPORTED_SPEC = { layouts: [], panels: {}, variables: [] };
 
 /** A dashboard file whose `image` is neither an asset path nor base64. */
@@ -455,22 +422,6 @@ export const ImportJsonCreateFailedToast: Story = {
 		);
 	},
 	parameters: { allowConsoleErrors: true },
-};
-
-const requestTemplate = async (canvasElement: HTMLElement): Promise<void> => {
-	await userEvent.click(
-		await within(canvasElement).findByTestId(
-			'new-dashboard-cta',
-			{},
-			{ timeout: TOAST_TIMEOUT },
-		),
-	);
-	await userEvent.click(await screen.findByText('From a template'));
-	await userEvent.type(
-		await screen.findByTestId('request-dashboard-name'),
-		'Redis overview',
-	);
-	await userEvent.click(await screen.findByTestId('request-dashboard-submit'));
 };
 
 /** A template request the analytics endpoint accepted. */

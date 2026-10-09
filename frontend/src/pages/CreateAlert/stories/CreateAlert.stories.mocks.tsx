@@ -7,6 +7,7 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { AlertDetectionTypes } from 'container/FormAlertRules';
 import { rest } from 'msw';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
@@ -168,3 +169,35 @@ export const createAlertMocks = defineStoryMocks({
 	],
 	config: (values) => ({ route: routeFor(values.alertMode) }),
 });
+
+const untilLoaded = { timeout: 15_000 };
+
+export const fillValidAlert = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	const canvas = within(canvasElement);
+
+	await userEvent.type(
+		await canvas.findByTestId('alert-name-input', undefined, untilLoaded),
+		'Toast alert',
+	);
+	const channels = await canvas.findByTestId(
+		'threshold-notification-channel-select',
+		undefined,
+		untilLoaded,
+	);
+
+	await userEvent.click(within(channels).getByRole('combobox'));
+	await userEvent.click(await screen.findByTitle('ops-slack'));
+	await userEvent.keyboard('{Escape}');
+};
+
+export const clickFooterButton = async (
+	canvasElement: HTMLElement,
+	testId: string,
+): Promise<void> => {
+	const button = await within(canvasElement).findByTestId(testId);
+
+	await waitFor(() => expect(button).toBeEnabled());
+	await userEvent.click(button);
+};

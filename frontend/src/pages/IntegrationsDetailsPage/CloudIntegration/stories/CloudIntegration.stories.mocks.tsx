@@ -5,6 +5,7 @@
 
 import { rest } from 'msw';
 import type { CloudintegrationtypesUpdatableServiceDTO } from 'api/generated/services/sigNoz.schemas';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
@@ -205,3 +206,123 @@ export const cloudIntegrationMocks = defineStoryMocks({
 		seedServiceSignals(values.provider, values.services, values.enabledServices);
 	},
 });
+
+/** The page picks its first service before it can render it. */
+export const untilLoaded = { timeout: 20_000 };
+
+export const expectToast = async (text: RegExp): Promise<void> => {
+	await waitFor(() => expect(screen.getByText(text)).toBeVisible(), {
+		timeout: 10_000,
+	});
+};
+
+export const openConnectFlow = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	await userEvent.click(
+		await within(canvasElement).findByText(
+			/integrate now/i,
+			undefined,
+			untilLoaded,
+		),
+	);
+};
+
+export const connectAwsAccount = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	await openConnectFlow(canvasElement);
+	await userEvent.click(
+		await screen.findByRole('combobox', undefined, untilLoaded),
+	);
+	await userEvent.click(await screen.findByText('US East (N. Virginia)'));
+	await userEvent.click(
+		await screen.findByRole('checkbox', { name: /us-east-1/i }),
+	);
+	await userEvent.click(
+		await screen.findByRole('button', { name: /launch cloud formation/i }),
+	);
+};
+
+export const connectAzureAccount = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	await openConnectFlow(canvasElement);
+	const [region, resourceGroups] = await screen.findAllByRole(
+		'combobox',
+		undefined,
+		untilLoaded,
+	);
+
+	await userEvent.click(region);
+	await userEvent.click(
+		await screen.findByText('Australia East (australiaeast)'),
+	);
+	await userEvent.type(resourceGroups, 'prod-platform-rg{Enter}');
+	await userEvent.click(
+		await screen.findByRole('button', { name: /generate azure setup commands/i }),
+	);
+};
+
+export const connectGcpAccount = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	await openConnectFlow(canvasElement);
+	await userEvent.type(
+		await screen.findByTestId('gcp-account-name-input', undefined, untilLoaded),
+		'acme-org',
+	);
+	await userEvent.type(
+		screen.getByTestId('gcp-deployment-project-id-input'),
+		'acme-deploy-123',
+	);
+	await userEvent.click(screen.getByTestId('gcp-deployment-region-select'));
+	await userEvent.click(await screen.findByText('Mumbai (asia-south1)'));
+	await userEvent.type(
+		document.querySelector<HTMLElement>('#gcp-project-ids-select') as HTMLElement,
+		'project-a,',
+	);
+	await userEvent.click(screen.getByTestId('gcp-connect-account-btn'));
+};
+
+const openEditAccount = async (canvasElement: HTMLElement): Promise<void> => {
+	await userEvent.click(
+		await within(canvasElement).findByText(
+			/edit account/i,
+			undefined,
+			untilLoaded,
+		),
+	);
+	await screen.findByRole('dialog', undefined, untilLoaded);
+};
+
+export const updateAwsAccount = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	await openEditAccount(canvasElement);
+	await userEvent.click(
+		await screen.findByRole('checkbox', { name: /us-east-2/i }),
+	);
+	await userEvent.click(
+		await screen.findByRole('button', { name: /update changes/i }),
+	);
+};
+
+export const updateTaggedAccount = async (
+	canvasElement: HTMLElement,
+	tag: string,
+): Promise<void> => {
+	await openEditAccount(canvasElement);
+	const dialog = await screen.findByRole('dialog');
+
+	await userEvent.type(await within(dialog).findByRole('combobox'), tag);
+	const option = await screen.findByText(tag, {
+		selector: '.ant-select-item-option-content',
+	});
+
+	// The drawer disables pointer events outside itself, which the portalled popup is.
+	await userEvent.click(option, { pointerEventsCheck: 0 });
+	await userEvent.click(
+		await screen.findByRole('button', { name: /update changes/i }),
+	);
+};

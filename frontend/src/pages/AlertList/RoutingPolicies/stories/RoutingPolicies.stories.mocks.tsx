@@ -4,6 +4,7 @@
  */
 
 import { rest } from 'msw';
+import { screen, userEvent, within } from 'storybook/test';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
@@ -127,3 +128,40 @@ export const routingPoliciesMocks = defineStoryMocks({
 		route: `/alerts?tab=${AlertListTabs.CONFIGURATION}&subTab=${AlertListSubTabs.ROUTING_POLICIES}`,
 	}),
 });
+
+/** The page fetches before it renders a row, which outlasts the 1s default. */
+export const untilLoaded = { timeout: 15_000 };
+
+export const fillNewPolicy = async (): Promise<void> => {
+	await userEvent.type(
+		await screen.findByPlaceholderText('e.g. Base routing policy...'),
+		'Toast policy',
+	);
+	await userEvent.type(
+		await screen.findByPlaceholderText(/e\.g\. service\.name/),
+		'severity = "critical"',
+	);
+	await userEvent.click(await screen.findByRole('combobox'));
+	await userEvent.click(await screen.findByTitle('ops-slack'));
+	await userEvent.keyboard('{Escape}');
+	await userEvent.click(
+		await screen.findByRole('button', { name: 'Save Routing Policy' }),
+	);
+};
+
+export const openEditPolicy = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	await userEvent.click(
+		(
+			await within(canvasElement).findAllByTestId(
+				'edit-routing-policy',
+				undefined,
+				untilLoaded,
+			)
+		)[0],
+	);
+	await userEvent.click(
+		await screen.findByRole('button', { name: 'Save Routing Policy' }),
+	);
+};

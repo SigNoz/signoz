@@ -4,7 +4,11 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { alertRulesMocks } from './AlertRules.stories.mocks';
+import {
+	alertRulesMocks,
+	runRowAction,
+	untilLoaded,
+} from './AlertRules.stories.mocks';
 
 import AlertList from '../../index';
 import { RULE_MAX } from '../../stories/__story_mockdata__/alerts';
@@ -30,9 +34,6 @@ const meta = {
 export default meta;
 
 type Story = StoryObj<AlertRulesArgs>;
-
-/** The page fetches before it renders a row, which outlasts the 1s default. */
-const untilLoaded = { timeout: 15_000 };
 
 /**
  * Every alert rule the org has configured, with the state each one evaluated to
@@ -148,20 +149,6 @@ export const BottomStripPaginated: Story = {
 	parameters: {
 		signoz: { route: '/alerts?tab=AlertRules&page=2&limit=10' },
 	},
-};
-
-const runRowAction = async (
-	canvasElement: HTMLElement,
-	name: RegExp,
-): Promise<void> => {
-	const [actions] = await within(canvasElement).findAllByTestId(
-		'alert-actions',
-		undefined,
-		untilLoaded,
-	);
-
-	await userEvent.click(actions);
-	await userEvent.click(await screen.findByRole('menuitem', { name }));
 };
 
 /** Enable or Disable from the row menu: the promise toast, pending then settled. */

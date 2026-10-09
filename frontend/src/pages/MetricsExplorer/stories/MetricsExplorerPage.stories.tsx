@@ -4,12 +4,12 @@ import {
 	openKeySuggestions,
 	typeFilter,
 } from 'components/QueryBuilderV2/QueryV2/QuerySearch/stories/__story_mockdata__/querySearch.play';
-import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
+import { screen, userEvent } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { metricsMocks } from './MetricsExplorerPage.stories.mocks';
+import { metricsMocks, saveUnit } from './MetricsExplorerPage.stories.mocks';
 import MetricsExplorerPage from '../MetricsExplorerPage';
 
 type MetricsArgs = PageStoryArgs<typeof metricsMocks>;
@@ -133,29 +133,6 @@ export const FilterValueSuggestions: Story = {
 		await typeFilter(canvasElement, 'service.name = ');
 		await findSuggestion(canvasElement, 'checkout');
 	},
-};
-
-const saveUnit = async (
-	canvasElement: HTMLElement,
-	expected: string | false,
-): Promise<void> => {
-	const selector = await within(canvasElement).findByTestId(
-		'y-axis-unit-selector',
-		{},
-		{ timeout: 15000 },
-	);
-
-	await userEvent.click(within(selector).getByRole('combobox'));
-	await userEvent.keyboard('bytes');
-	const bytes = await screen.findByText('Bytes (B)');
-
-	await userEvent.click(
-		(bytes.closest('.ant-select-item-option') as HTMLElement | null) ?? bytes,
-	);
-	await userEvent.click(await screen.findByRole('button', { name: 'Yes' }));
-	if (expected) {
-		await waitFor(() => expect(screen.getByText(expected)).toBeVisible());
-	}
 };
 
 /**

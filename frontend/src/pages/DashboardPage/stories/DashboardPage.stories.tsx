@@ -9,9 +9,15 @@ import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
+	clickAction,
+	clickPanelAction,
+	clickSectionAction,
 	dashboardMocks,
 	desyncedDashboardHandler,
+	expectToast,
 	metricsListHandler,
+	openJsonEditor,
+	PAGE_LOAD,
 	tooltipDashboardHandler,
 	tooltipRoute,
 	warnedPanelQueryHandler,
@@ -356,61 +362,6 @@ export const PanelMoveToSectionSubmenu: Story = {
 	},
 };
 
-const PAGE_LOAD = { timeout: 10000 };
-
-const clickAction = async (
-	canvasElement: HTMLElement,
-	label: string,
-): Promise<void> => {
-	// The dropdown trigger's Slot merge drops the button's own test id.
-	await userEvent.click(
-		await within(canvasElement).findByRole(
-			'button',
-			{ name: 'Actions' },
-			PAGE_LOAD,
-		),
-	);
-	const item = await screen.findByText(label);
-	const menuItem = item.closest('[role="menuitem"]') ?? item;
-
-	await waitFor(() => {
-		expect(menuItem).not.toHaveAttribute('aria-disabled', 'true');
-		expect(menuItem).not.toHaveAttribute('data-disabled');
-	});
-	await userEvent.click(menuItem);
-};
-
-const clickPanelAction = async (
-	canvasElement: HTMLElement,
-	panelId: string,
-	label: string,
-): Promise<void> => {
-	await userEvent.click(
-		await within(canvasElement).findByTestId(
-			`panel-actions-${panelId}`,
-			{},
-			PAGE_LOAD,
-		),
-	);
-	await userEvent.click(await screen.findByText(label));
-};
-
-const clickSectionAction = async (
-	canvasElement: HTMLElement,
-	label: string,
-): Promise<void> => {
-	const [firstSection] = await within(canvasElement).findAllByRole(
-		'button',
-		{ name: 'Section actions' },
-		PAGE_LOAD,
-	);
-	await userEvent.click(firstSection);
-	await userEvent.click(await screen.findByText(label));
-};
-
-const expectToast = (text: string | RegExp): Promise<HTMLElement> =>
-	screen.findByText(text, undefined, PAGE_LOAD);
-
 /**
  * Actions, Clone dashboard: the toast announcing the copy, raised once the
  * clone endpoint answers. Set Dashboard clone to `error` to see the error
@@ -544,13 +495,6 @@ export const ChartManagerSavedToast: Story = {
 		);
 		await expectToast('The updated graphs & legends are saved');
 	},
-};
-
-const openJsonEditor = async (canvasElement: HTMLElement): Promise<void> => {
-	await userEvent.click(
-		await within(canvasElement).findByTestId('edit-json', {}, PAGE_LOAD),
-	);
-	await screen.findByTestId('json-editor-copy', {}, PAGE_LOAD);
 };
 
 /** The JSON editor's Copy: the toast confirming the clipboard write. */

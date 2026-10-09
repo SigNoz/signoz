@@ -14,7 +14,12 @@ import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import { STORY_TRACE_ID } from './__story_mockdata__/traceDetails';
-import { traceDetailsMocks } from './TraceDetailsV3.stories.mocks';
+import {
+	openRowMenu,
+	startDownload,
+	traceDetailsMocks,
+	untilLoaded,
+} from './TraceDetailsV3.stories.mocks';
 import TraceDetailsV3 from '../index';
 
 type TraceDetailsArgs = PageStoryArgs<typeof traceDetailsMocks>;
@@ -90,9 +95,6 @@ export const BottomStripNoErrors: Story = {
 export const BottomStripLoading: Story = {
 	args: { bottomStrip: true, dataState: 'loading' },
 };
-
-/** The waterfall renders once the trace resolves, which outlasts the 1s default. */
-const untilLoaded = { timeout: 15_000 };
 
 /**
  * Turns on Highlight errors, which writes `has_error = true` into the filter and
@@ -227,42 +229,6 @@ export const SpanPercentileOpen: Story = {
 	},
 };
 
-/** Opens the pretty view's action menu on the first row that offers `item`. */
-const openRowMenu = async (
-	canvasElement: HTMLElement,
-	item: string,
-): Promise<void> => {
-	await within(canvasElement).findAllByText(
-		/rpc\.method/,
-		undefined,
-		untilLoaded,
-	);
-
-	const triggers = Array.from(
-		canvasElement.querySelectorAll<HTMLElement>('.pretty-view__actions'),
-	);
-
-	for (const trigger of triggers) {
-		// eslint-disable-next-line no-await-in-loop
-		await userEvent.click(trigger);
-
-		// eslint-disable-next-line no-await-in-loop
-		const match = await screen
-			.findByRole('menuitem', { name: item })
-			.catch(() => null);
-
-		if (match) {
-			await userEvent.click(match);
-			return;
-		}
-
-		// eslint-disable-next-line no-await-in-loop
-		await userEvent.keyboard('{Escape}');
-	}
-
-	throw new Error(`no row offers "${item}"`);
-};
-
 /** The span's trace id clicked in the panel, which copies it. */
 export const TraceIdCopiedToast: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
@@ -310,18 +276,6 @@ export const SpanLinkCopiedToast: Story = {
 			expect(screen.getByText('Copied to clipboard')).toBeVisible(),
 		);
 	},
-};
-
-const startDownload = async (canvasElement: HTMLElement): Promise<void> => {
-	await userEvent.click(
-		await within(canvasElement).findByRole(
-			'button',
-			{ name: 'Trace options' },
-			untilLoaded,
-		),
-	);
-	await userEvent.click(await screen.findByTestId('download-trace-submenu'));
-	await userEvent.click(await screen.findByTestId('download-trace-csv'));
 };
 
 /** "Download trace" as CSV, finished. */

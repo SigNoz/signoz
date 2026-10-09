@@ -4,6 +4,7 @@
  */
 
 import { rest, type ResponseComposition, type RestContext } from 'msw';
+import { screen, userEvent, within } from 'storybook/test';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
@@ -125,3 +126,20 @@ export const alertRulesMocks = defineStoryMocks({
 	],
 	config: () => ({ route: `/alerts?tab=${AlertListTabs.ALERT_RULES}` }),
 });
+
+/** The page fetches before it renders a row, which outlasts the 1s default. */
+export const untilLoaded = { timeout: 15_000 };
+
+export const runRowAction = async (
+	canvasElement: HTMLElement,
+	name: RegExp,
+): Promise<void> => {
+	const [actions] = await within(canvasElement).findAllByTestId(
+		'alert-actions',
+		undefined,
+		untilLoaded,
+	);
+
+	await userEvent.click(actions);
+	await userEvent.click(await screen.findByRole('menuitem', { name }));
+};

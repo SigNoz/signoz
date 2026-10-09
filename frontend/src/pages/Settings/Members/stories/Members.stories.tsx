@@ -4,7 +4,13 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { membersMocks } from './Members.stories.mocks';
+import {
+	membersMocks,
+	openMember,
+	openResetLink,
+	sendInvites,
+	untilLoaded,
+} from './Members.stories.mocks';
 
 import SettingsPage from '../../Settings';
 
@@ -30,28 +36,8 @@ export default meta;
 
 type Story = StoryObj<MembersArgs>;
 
-/** The table fetches before it renders a row, which outlasts the 1s default. */
-const untilLoaded = { timeout: 15_000 };
-
 /** One more than the twenty rows a page holds. */
 const OVER_ONE_PAGE = 21;
-
-/**
- * The click handler sits on the row rather than the cell, and the header row
- * resolves before the body has one: wait on a cell, then click the row it is in.
- */
-const openMember = async (
-	canvasElement: HTMLElement,
-	name: RegExp,
-): Promise<void> => {
-	const cell = await within(canvasElement).findByText(
-		name,
-		undefined,
-		untilLoaded,
-	);
-
-	await userEvent.click(cell.closest('tr') as HTMLElement);
-};
 
 const openPendingMember = async ({
 	canvasElement,
@@ -216,53 +202,6 @@ export const InviteMembers: Story = {
 };
 
 /**
- * Selects `viewer` in the roles dropdown at `index`. The option's content ignores
- * pointer events, so the click goes to the option around it. A click on the
- * label closes the dropdown, where Escape would close the dialog too.
- */
-const pickRole = async (index: number): Promise<void> => {
-	const comboboxes = await screen.findAllByRole(
-		'combobox',
-		undefined,
-		untilLoaded,
-	);
-
-	await userEvent.click(comboboxes[index]);
-	const options = await screen.findAllByText('viewer', undefined, untilLoaded);
-
-	await userEvent.click(
-		options[options.length - 1].closest('.ant-select-item-option') as HTMLElement,
-	);
-	await userEvent.click(await screen.findByText('Email address'));
-};
-
-const sendInvites = async (
-	canvasElement: HTMLElement,
-	emails: string[],
-): Promise<void> => {
-	await userEvent.click(
-		await within(canvasElement).findByText(
-			/invite member/i,
-			undefined,
-			untilLoaded,
-		),
-	);
-	const fields = await screen.findAllByTestId(
-		/^invite-email-/,
-		undefined,
-		untilLoaded,
-	);
-
-	for (const [index, email] of emails.entries()) {
-		await userEvent.type(fields[index], email);
-		await pickRole(index);
-	}
-	await userEvent.click(
-		await screen.findByRole('button', { name: 'Invite Team Members' }),
-	);
-};
-
-/**
  * Invites sent to every address: the toast confirming it. Set Sending invites
  * to `error` or `loading` to see the form instead.
  */
@@ -369,17 +308,6 @@ export const InviteRevokedToast: Story = {
 			);
 		}
 	},
-};
-
-const openResetLink = async (canvasElement: HTMLElement): Promise<void> => {
-	await openMember(canvasElement, /jon snow/i);
-	await userEvent.click(
-		await screen.findByRole(
-			'button',
-			{ name: 'Generate Password Reset Link' },
-			untilLoaded,
-		),
-	);
 };
 
 /**

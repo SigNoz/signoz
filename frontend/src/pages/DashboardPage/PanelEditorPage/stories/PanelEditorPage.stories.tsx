@@ -2,12 +2,12 @@ import type { ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
-import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
+import { screen, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { panelEditorMocks } from './PanelEditorPage.stories.mocks';
+import { panelEditorMocks, savePanel } from './PanelEditorPage.stories.mocks';
 
 import PanelEditorPage from '../PanelEditorPage';
 
@@ -228,17 +228,6 @@ export const ConfigChanged: Story = {
 			await canvas.findByTestId('panel-editor-v2-line-style-dashed'),
 		);
 	},
-};
-
-const savePanel = async (): Promise<void> => {
-	const save = await screen.findByTestId(
-		'panel-editor-v2-save',
-		{},
-		{ timeout: 10000 },
-	);
-
-	await waitFor(() => expect(save).toBeEnabled(), { timeout: 10000 });
-	await userEvent.click(save);
 };
 
 /**

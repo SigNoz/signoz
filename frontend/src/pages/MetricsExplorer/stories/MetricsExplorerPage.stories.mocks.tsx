@@ -22,6 +22,7 @@ import {
 import type { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import { rest } from 'msw';
 import type { AppState } from 'store/reducers';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { defaultFeatureFlags } from 'tests/fixtures/appContextMock';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import type { QueryRangeRequestV5, TimeSeries } from 'types/api/v5/queryRange';
@@ -560,3 +561,26 @@ export const metricsMocks = defineStoryMocks({
 		);
 	},
 });
+
+export const saveUnit = async (
+	canvasElement: HTMLElement,
+	expected: string | false,
+): Promise<void> => {
+	const selector = await within(canvasElement).findByTestId(
+		'y-axis-unit-selector',
+		{},
+		{ timeout: 15000 },
+	);
+
+	await userEvent.click(within(selector).getByRole('combobox'));
+	await userEvent.keyboard('bytes');
+	const bytes = await screen.findByText('Bytes (B)');
+
+	await userEvent.click(
+		(bytes.closest('.ant-select-item-option') as HTMLElement | null) ?? bytes,
+	);
+	await userEvent.click(await screen.findByRole('button', { name: 'Yes' }));
+	if (expected) {
+		await waitFor(() => expect(screen.getByText(expected)).toBeVisible());
+	}
+};

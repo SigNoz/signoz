@@ -4,7 +4,12 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { routingPoliciesMocks } from './RoutingPolicies.stories.mocks';
+import {
+	fillNewPolicy,
+	openEditPolicy,
+	routingPoliciesMocks,
+	untilLoaded,
+} from './RoutingPolicies.stories.mocks';
 import { FIRST_POLICY_NAME } from './__story_mockdata__/routingPolicies';
 
 import AlertList from '../../index';
@@ -30,9 +35,6 @@ const meta = {
 export default meta;
 
 type Story = StoryObj<RoutingPoliciesArgs>;
-
-/** The page fetches before it renders a row, which outlasts the 1s default. */
-const untilLoaded = { timeout: 15_000 };
 
 /**
  * The rules that decide which channel an alert reaches, matched on the labels
@@ -136,38 +138,6 @@ export const FormValidationError: Story = {
 		);
 		await screen.findByText('Please provide a name for the routing policy');
 	},
-};
-
-const fillNewPolicy = async (): Promise<void> => {
-	await userEvent.type(
-		await screen.findByPlaceholderText('e.g. Base routing policy...'),
-		'Toast policy',
-	);
-	await userEvent.type(
-		await screen.findByPlaceholderText(/e\.g\. service\.name/),
-		'severity = "critical"',
-	);
-	await userEvent.click(await screen.findByRole('combobox'));
-	await userEvent.click(await screen.findByTitle('ops-slack'));
-	await userEvent.keyboard('{Escape}');
-	await userEvent.click(
-		await screen.findByRole('button', { name: 'Save Routing Policy' }),
-	);
-};
-
-const openEditPolicy = async (canvasElement: HTMLElement): Promise<void> => {
-	await userEvent.click(
-		(
-			await within(canvasElement).findAllByTestId(
-				'edit-routing-policy',
-				undefined,
-				untilLoaded,
-			)
-		)[0],
-	);
-	await userEvent.click(
-		await screen.findByRole('button', { name: 'Save Routing Policy' }),
-	);
 };
 
 const confirmDelete = async (canvasElement: HTMLElement): Promise<void> => {

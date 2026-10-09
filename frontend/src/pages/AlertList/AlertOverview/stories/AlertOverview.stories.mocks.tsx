@@ -4,6 +4,7 @@
  */
 
 import { rest } from 'msw';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
@@ -159,3 +160,21 @@ export const alertOverviewMocks = defineStoryMocks({
 		route: `/alerts/overview?ruleId=${STORY_RULE_ID}&relativeTime=${STORY_RELATIVE_TIME}`,
 	}),
 });
+
+export const clickFooterButton = async (
+	canvasElement: HTMLElement,
+	testId: string,
+): Promise<void> => {
+	// The footer stays disabled, and remounts, until the rule has loaded.
+	const button = await waitFor(
+		() => {
+			const element = within(canvasElement).getByTestId(testId);
+
+			expect(element).toBeEnabled();
+
+			return element;
+		},
+		{ timeout: 15_000 },
+	);
+	await userEvent.click(button);
+};

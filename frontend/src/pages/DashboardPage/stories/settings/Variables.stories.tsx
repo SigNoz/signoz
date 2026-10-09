@@ -7,14 +7,15 @@ import { screen, userEvent } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { dashboardMocks } from '../DashboardPage.stories.mocks';
 import {
 	clickRowAction,
+	confirmImpact,
+	dashboardMocks,
 	openSettings,
 	openVariableEditor,
 	typeVariableName,
 	variableRow,
-} from './settingsPlay';
+} from '../DashboardPage.stories.mocks';
 
 import DashboardPage from '../../DashboardPage';
 
@@ -129,10 +130,6 @@ export const RenameReferenced: Story = {
 		await userEvent.click(screen.getByTestId('variable-save'));
 		await screen.findByText('Rename $environment');
 	},
-};
-
-const confirmImpact = async (): Promise<void> => {
-	await userEvent.click(await screen.findByTestId('variable-impact-confirm'));
 };
 
 /** Deleting a variable nothing reads, confirmed: the toast raised once the patch answers. */

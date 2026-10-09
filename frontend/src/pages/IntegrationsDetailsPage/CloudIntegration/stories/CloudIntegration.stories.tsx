@@ -1,12 +1,22 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Route } from 'react-router-dom';
-import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
+import { screen, userEvent, within } from 'storybook/test';
 import ROUTES from 'constants/routes';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { cloudIntegrationMocks } from './CloudIntegration.stories.mocks';
+import {
+	cloudIntegrationMocks,
+	connectAwsAccount,
+	connectAzureAccount,
+	connectGcpAccount,
+	expectToast,
+	openConnectFlow,
+	untilLoaded,
+	updateAwsAccount,
+	updateTaggedAccount,
+} from './CloudIntegration.stories.mocks';
 
 import IntegrationsDetailsPage from '../../index';
 
@@ -41,9 +51,6 @@ const meta = {
 export default meta;
 
 type Story = StoryObj<CloudIntegrationArgs>;
-
-/** The page picks its first service before it can render it. */
-const untilLoaded = { timeout: 20_000 };
 
 /**
  * An AWS account SigNoz collects from: the services it can watch split by
@@ -165,86 +172,6 @@ export const TooltipsInDataCollected: Story = {
 	},
 };
 
-const expectToast = async (text: RegExp): Promise<void> => {
-	await waitFor(() => expect(screen.getByText(text)).toBeVisible(), {
-		timeout: 10_000,
-	});
-};
-
-const openConnectFlow = async (canvasElement: HTMLElement): Promise<void> => {
-	await userEvent.click(
-		await within(canvasElement).findByText(
-			/integrate now/i,
-			undefined,
-			untilLoaded,
-		),
-	);
-};
-
-const connectAwsAccount = async (canvasElement: HTMLElement): Promise<void> => {
-	await openConnectFlow(canvasElement);
-	await userEvent.click(
-		await screen.findByRole('combobox', undefined, untilLoaded),
-	);
-	await userEvent.click(await screen.findByText('US East (N. Virginia)'));
-	await userEvent.click(
-		await screen.findByRole('checkbox', { name: /us-east-1/i }),
-	);
-	await userEvent.click(
-		await screen.findByRole('button', { name: /launch cloud formation/i }),
-	);
-};
-
-const connectAzureAccount = async (
-	canvasElement: HTMLElement,
-): Promise<void> => {
-	await openConnectFlow(canvasElement);
-	const [region, resourceGroups] = await screen.findAllByRole(
-		'combobox',
-		undefined,
-		untilLoaded,
-	);
-
-	await userEvent.click(region);
-	await userEvent.click(
-		await screen.findByText('Australia East (australiaeast)'),
-	);
-	await userEvent.type(resourceGroups, 'prod-platform-rg{Enter}');
-	await userEvent.click(
-		await screen.findByRole('button', { name: /generate azure setup commands/i }),
-	);
-};
-
-const connectGcpAccount = async (canvasElement: HTMLElement): Promise<void> => {
-	await openConnectFlow(canvasElement);
-	await userEvent.type(
-		await screen.findByTestId('gcp-account-name-input', undefined, untilLoaded),
-		'acme-org',
-	);
-	await userEvent.type(
-		screen.getByTestId('gcp-deployment-project-id-input'),
-		'acme-deploy-123',
-	);
-	await userEvent.click(screen.getByTestId('gcp-deployment-region-select'));
-	await userEvent.click(await screen.findByText('Mumbai (asia-south1)'));
-	await userEvent.type(
-		document.querySelector<HTMLElement>('#gcp-project-ids-select') as HTMLElement,
-		'project-a,',
-	);
-	await userEvent.click(screen.getByTestId('gcp-connect-account-btn'));
-};
-
-const openEditAccount = async (canvasElement: HTMLElement): Promise<void> => {
-	await userEvent.click(
-		await within(canvasElement).findByText(
-			/edit account/i,
-			undefined,
-			untilLoaded,
-		),
-	);
-	await screen.findByRole('dialog', undefined, untilLoaded);
-};
-
 /**
  * Connecting an AWS account: region and monitored regions picked, the template
  * launched, and the first poll finds the account connected. Set Account
@@ -322,35 +249,6 @@ export const GcpRegionOpen: Story = {
 		);
 		await screen.findByRole('listbox');
 	},
-};
-
-const updateAwsAccount = async (canvasElement: HTMLElement): Promise<void> => {
-	await openEditAccount(canvasElement);
-	await userEvent.click(
-		await screen.findByRole('checkbox', { name: /us-east-2/i }),
-	);
-	await userEvent.click(
-		await screen.findByRole('button', { name: /update changes/i }),
-	);
-};
-
-const updateTaggedAccount = async (
-	canvasElement: HTMLElement,
-	tag: string,
-): Promise<void> => {
-	await openEditAccount(canvasElement);
-	const dialog = await screen.findByRole('dialog');
-
-	await userEvent.type(await within(dialog).findByRole('combobox'), tag);
-	const option = await screen.findByText(tag, {
-		selector: '.ant-select-item-option-content',
-	});
-
-	// The drawer disables pointer events outside itself, which the portalled popup is.
-	await userEvent.click(option, { pointerEventsCheck: 0 });
-	await userEvent.click(
-		await screen.findByRole('button', { name: /update changes/i }),
-	);
 };
 
 /**

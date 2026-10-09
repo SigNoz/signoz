@@ -4,7 +4,11 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { editRulesMocks } from './EditRules.stories.mocks';
+import {
+	editRulesMocks,
+	findLabelInput,
+	removeLabel,
+} from './EditRules.stories.mocks';
 
 import EditRules from '../index';
 
@@ -54,39 +58,6 @@ export const RuleNotFound: Story = {
  */
 export const Tooltips: Story = {
 	args: { tooltipsOpen: true, previewSeries: 6 },
-};
-
-/** The page fetches the rule before it renders the form, which outlasts the 1s default. */
-const untilLoaded = { timeout: 15_000 };
-
-const LABEL_INPUT = 'alert-labels-input-v1';
-
-/** The labels field, scrolled into view once the rule has loaded. */
-const findLabelInput = async (
-	canvasElement: HTMLElement,
-): Promise<HTMLElement> => {
-	const input = await within(canvasElement).findByTestId(
-		LABEL_INPUT,
-		undefined,
-		untilLoaded,
-	);
-	input.scrollIntoView({ block: 'center' });
-	return input;
-};
-
-const removeLabel = async (
-	canvasElement: HTMLElement,
-	label: string,
-): Promise<void> => {
-	const chip = within(canvasElement)
-		.getByText(label)
-		.closest<HTMLElement>('[data-slot="badge"]');
-
-	if (!chip) {
-		throw new Error(`Label ${label} did not render`);
-	}
-
-	await userEvent.click(within(chip).getByRole('button'));
 };
 
 /** The rule's own labels, each with its remove button, above the empty input. */

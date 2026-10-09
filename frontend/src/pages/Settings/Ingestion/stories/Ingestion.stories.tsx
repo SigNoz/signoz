@@ -5,7 +5,13 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { ingestionMocks } from './Ingestion.stories.mocks';
+import {
+	addTag,
+	ingestionMocks,
+	openCreateKey,
+	submitCreateKey,
+	untilLoaded,
+} from './Ingestion.stories.mocks';
 
 import SettingsPage from '../../Settings';
 
@@ -30,9 +36,6 @@ const meta = {
 export default meta;
 
 type Story = StoryObj<IngestionArgs>;
-
-/** The list fetches before it renders a row, which outlasts the 1s default. */
-const untilLoaded = { timeout: 15_000 };
 
 /**
  * The keys collectors send data with, and how much each one is allowed to send
@@ -76,46 +79,6 @@ export const KeyLimits: Story = {
 		await screen.findByRole('button', { name: 'Edit logs limit' }, untilLoaded);
 	},
 };
-
-async function openCreateKey(
-	canvasElement: HTMLElement,
-): Promise<ReturnType<typeof within>> {
-	await userEvent.click(
-		await within(canvasElement).findByText(
-			'New Ingestion key',
-			undefined,
-			untilLoaded,
-		),
-	);
-	return within(
-		await screen.findByRole(
-			'dialog',
-			{ name: 'Create new ingestion key' },
-			untilLoaded,
-		),
-	);
-}
-
-async function addTag(
-	dialog: ReturnType<typeof within>,
-	tag: string,
-): Promise<void> {
-	await userEvent.click(await dialog.findByRole('button', { name: /New Tag/ }));
-	await userEvent.keyboard(`${tag}{Enter}`);
-}
-
-async function submitCreateKey(
-	dialog: ReturnType<typeof within>,
-): Promise<void> {
-	await userEvent.type(dialog.getByLabelText('Name'), 'otel-collectors');
-	await userEvent.click(dialog.getByLabelText('Expiration'));
-	await userEvent.click(
-		await screen.findByTitle(dayjs().add(1, 'day').format('YYYY-MM-DD')),
-	);
-	await userEvent.click(
-		dialog.getByRole('button', { name: 'Create new Ingestion key' }),
-	);
-}
 
 /** The form a new key is named and dated in. */
 export const CreateKey: Story = {

@@ -7,8 +7,11 @@ import { expect, screen, userEvent, waitFor } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { panelEditorMocks } from '../PanelEditorPage.stories.mocks';
-import { addThreshold, openLinkDialog } from './panelEditorPlay';
+import {
+	addThreshold,
+	openLinkDialog,
+	panelEditorMocks,
+} from '../PanelEditorPage.stories.mocks';
 
 import PanelEditorPage from '../../PanelEditorPage';
 

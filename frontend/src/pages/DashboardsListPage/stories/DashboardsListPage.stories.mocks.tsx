@@ -542,3 +542,63 @@ export const clickRowAction = async (testId: string): Promise<void> => {
 	);
 	await userEvent.click(item);
 };
+
+export const TOAST_TIMEOUT = 10000;
+
+export const openLegacyDialog = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	await userEvent.click(
+		await within(canvasElement).findByTestId(
+			'dashboard-title-4',
+			{},
+			{ timeout: TOAST_TIMEOUT },
+		),
+	);
+	await screen.findByTestId('legacy-dashboard-id');
+};
+
+export const retryMigration = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	await openLegacyDialog(canvasElement);
+	const retry = await screen.findByTestId('legacy-dashboard-retry-migration');
+
+	await waitFor(() => expect(retry).toBeEnabled(), { timeout: TOAST_TIMEOUT });
+	await userEvent.click(retry);
+};
+
+export const uploadDashboardJson = async (json: object): Promise<void> => {
+	await userEvent.click(await screen.findByText('Import JSON'));
+	const dialog = await screen.findByRole('dialog');
+	const input = dialog.querySelector<HTMLInputElement>('input[type="file"]');
+
+	if (!input) {
+		throw new Error('The import dialog has no file input');
+	}
+	await userEvent.upload(
+		input,
+		new File([JSON.stringify(json)], 'dashboard.json', {
+			type: 'application/json',
+		}),
+	);
+	await userEvent.click(await screen.findByTestId('import-json-submit'));
+};
+
+export const requestTemplate = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	await userEvent.click(
+		await within(canvasElement).findByTestId(
+			'new-dashboard-cta',
+			{},
+			{ timeout: TOAST_TIMEOUT },
+		),
+	);
+	await userEvent.click(await screen.findByText('From a template'));
+	await userEvent.type(
+		await screen.findByTestId('request-dashboard-name'),
+		'Redis overview',
+	);
+	await userEvent.click(await screen.findByTestId('request-dashboard-submit'));
+};

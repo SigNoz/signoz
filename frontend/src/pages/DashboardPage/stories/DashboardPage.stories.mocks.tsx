@@ -8,6 +8,7 @@ import { generatePath } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import type { GetPublicDashboard200 } from 'api/generated/services/sigNoz.schemas';
 import { useDashboardPreferencesStore } from 'hooks/dashboard/useDashboardPreference';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
 import {
@@ -432,3 +433,212 @@ export const cyclicVariablesDashboardHandler = rest.get(
 	(_req, res, ctx) =>
 		res(ctx.status(200), ctx.json(cyclicVariablesDashboardResponse())),
 );
+
+// The dashboard document loads before the toolbar renders.
+export const PAGE_LOAD = { timeout: 10000 };
+
+export const clickAction = async (
+	canvasElement: HTMLElement,
+	label: string,
+): Promise<void> => {
+	// The dropdown trigger's Slot merge drops the button's own test id.
+	await userEvent.click(
+		await within(canvasElement).findByRole(
+			'button',
+			{ name: 'Actions' },
+			PAGE_LOAD,
+		),
+	);
+	const item = await screen.findByText(label);
+	const menuItem = item.closest('[role="menuitem"]') ?? item;
+
+	await waitFor(() => {
+		expect(menuItem).not.toHaveAttribute('aria-disabled', 'true');
+		expect(menuItem).not.toHaveAttribute('data-disabled');
+	});
+	await userEvent.click(menuItem);
+};
+
+export const clickPanelAction = async (
+	canvasElement: HTMLElement,
+	panelId: string,
+	label: string,
+): Promise<void> => {
+	await userEvent.click(
+		await within(canvasElement).findByTestId(
+			`panel-actions-${panelId}`,
+			{},
+			PAGE_LOAD,
+		),
+	);
+	await userEvent.click(await screen.findByText(label));
+};
+
+export const clickSectionAction = async (
+	canvasElement: HTMLElement,
+	label: string,
+): Promise<void> => {
+	const [firstSection] = await within(canvasElement).findAllByRole(
+		'button',
+		{ name: 'Section actions' },
+		PAGE_LOAD,
+	);
+	await userEvent.click(firstSection);
+	await userEvent.click(await screen.findByText(label));
+};
+
+export const expectToast = (text: string | RegExp): Promise<HTMLElement> =>
+	screen.findByText(text, undefined, PAGE_LOAD);
+
+export const openJsonEditor = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	await userEvent.click(
+		await within(canvasElement).findByTestId('edit-json', {}, PAGE_LOAD),
+	);
+	await screen.findByTestId('json-editor-copy', {}, PAGE_LOAD);
+};
+
+export const confirmImpact = async (): Promise<void> => {
+	await userEvent.click(await screen.findByTestId('variable-impact-confirm'));
+};
+
+/**
+ * A denied control stays on screen, disabled. Buttons say so through
+ * `disabled` or `aria-disabled` depending on the Button, menu rows through
+ * `data-disabled`.
+ */
+const isDisabled = (element: HTMLElement): boolean =>
+	element.hasAttribute('disabled') ||
+	element.getAttribute('aria-disabled') === 'true' ||
+	element.hasAttribute('data-disabled');
+
+export const expectDisabled = (
+	element: HTMLElement,
+	disabled = true,
+): Promise<void> =>
+	waitFor(() => expect(isDisabled(element)).toBe(disabled), PAGE_LOAD);
+
+export const toolbarButton = (
+	canvasElement: HTMLElement,
+	name: string,
+): Promise<HTMLElement> =>
+	within(canvasElement).findByRole('button', { name }, PAGE_LOAD);
+
+export const openActionsMenu = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	// The dropdown trigger's Slot merge drops the button's own test id.
+	await userEvent.click(await toolbarButton(canvasElement, 'Actions'));
+	await screen.findByText('Clone dashboard');
+};
+
+// Not by test id: the Actions menu only carries them on some Dropdown versions.
+export const menuItem = (name: string): HTMLElement =>
+	screen.getByRole('menuitem', { name });
+
+export type SettingsTab = 'Overview' | 'Variables' | 'Publish';
+
+export type VariableType = 'dynamic' | 'textbox' | 'custom' | 'query';
+
+type RowAction = 'edit' | 'delete' | 'apply-all';
+
+/** Opens the settings drawer from the toolbar and returns the tab's panel. */
+export const openSettings = async (
+	canvasElement: HTMLElement,
+	tab: SettingsTab = 'Overview',
+): Promise<HTMLElement> => {
+	await userEvent.click(
+		await within(canvasElement).findByTestId('show-drawer', {}, PAGE_LOAD),
+	);
+
+	if (tab !== 'Overview') {
+		await userEvent.click(await screen.findByRole('tab', { name: tab }));
+	}
+
+	return screen.findByRole('tabpanel');
+};
+
+export const variableRow = (name: string): Promise<HTMLElement> =>
+	screen.findByTestId(`variable-row-${name}`, {}, PAGE_LOAD);
+
+/** Row actions render once the edit permission resolves. */
+export const clickRowAction = async (
+	name: string,
+	action: RowAction,
+): Promise<void> => {
+	const row = await variableRow(name);
+
+	await userEvent.click(
+		action === 'apply-all'
+			? // The tooltip trigger's Slot merge drops this button's test id.
+				await within(row).findByRole('button', { name: 'Apply to all' }, PAGE_LOAD)
+			: await within(row).findByTestId(
+					`variable-${action}-${name}`,
+					{},
+					PAGE_LOAD,
+				),
+	);
+};
+
+/** A new variable's editor, which opens on the Dynamic type. */
+export const openNewVariable = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	const panel = await openSettings(canvasElement, 'Variables');
+	const add = await within(panel).findByTestId('add-variable', {}, PAGE_LOAD);
+
+	// Disabled until its permission check resolves: through `disabled` or
+	// `aria-disabled`, depending on the Button.
+	await waitFor(() => expect(add).toBeEnabled(), PAGE_LOAD);
+	await waitFor(
+		() => expect(add).not.toHaveAttribute('aria-disabled', 'true'),
+		PAGE_LOAD,
+	);
+	await userEvent.click(add);
+	await screen.findByText('Variable Type');
+};
+
+export const openVariableEditor = async (
+	canvasElement: HTMLElement,
+	name: string,
+): Promise<void> => {
+	await openSettings(canvasElement, 'Variables');
+	await clickRowAction(name, 'edit');
+	await screen.findByText('Variable Type');
+};
+
+/**
+ * A value in the editor's preview. The toolbar's selector for the same variable
+ * resolves to its first value too, whenever its own query returns.
+ */
+export const findPreviewValue = async (value: string): Promise<HTMLElement> => {
+	const label = await screen.findByText('Preview of Values');
+
+	return within(label.parentElement as HTMLElement).findByText(
+		value,
+		undefined,
+		PAGE_LOAD,
+	);
+};
+
+export const pickVariableType = async (type: VariableType): Promise<void> => {
+	await userEvent.click(await screen.findByTestId(`variable-type-${type}`));
+};
+
+export const typeVariableName = async (name: string): Promise<void> => {
+	const input = await screen.findByTestId('variable-name');
+
+	await userEvent.clear(input);
+	await userEvent.type(input, name);
+};
+
+/**
+ * The editor's pickers are antd Selects: the element carrying the test id does
+ * nothing on click, the combobox inside it is what opens the list.
+ */
+export const openVariableSelect = async (testId: string): Promise<void> => {
+	const select = await screen.findByTestId(testId);
+
+	await userEvent.click(within(select).getByRole('combobox'));
+};

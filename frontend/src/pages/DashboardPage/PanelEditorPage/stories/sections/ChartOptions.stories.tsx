@@ -7,12 +7,12 @@ import { expect, screen, userEvent, waitFor } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { panelEditorMocks } from '../PanelEditorPage.stories.mocks';
 import {
 	expandSection,
 	openConfigSelect,
+	panelEditorMocks,
 	pickSegment,
-} from './panelEditorPlay';
+} from '../PanelEditorPage.stories.mocks';
 
 import PanelEditorPage from '../../PanelEditorPage';
 

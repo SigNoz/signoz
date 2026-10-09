@@ -4,7 +4,10 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { alertOverviewMocks } from './AlertOverview.stories.mocks';
+import {
+	alertOverviewMocks,
+	clickFooterButton,
+} from './AlertOverview.stories.mocks';
 
 import AlertList from '../../index';
 
@@ -74,24 +77,6 @@ export const AlertActionsMenu: Story = {
 		);
 		await screen.findByRole('menu');
 	},
-};
-
-const clickFooterButton = async (
-	canvasElement: HTMLElement,
-	testId: string,
-): Promise<void> => {
-	// The footer stays disabled, and remounts, until the rule has loaded.
-	const button = await waitFor(
-		() => {
-			const element = within(canvasElement).getByTestId(testId);
-
-			expect(element).toBeEnabled();
-
-			return element;
-		},
-		{ timeout: 15_000 },
-	);
-	await userEvent.click(button);
 };
 
 /** The rule saved unchanged from the footer: the toast raised once the PUT answers. */
