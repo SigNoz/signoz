@@ -5476,7 +5476,21 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpecDTOKind {
 	'signoz/TopListPanel' = 'signoz/TopListPanel',
 }
+export interface DashboardtypesTopListAppearanceDTO {
+	/**
+	 * @type boolean
+	 * @description Numbers each row by its position in the list.
+	 */
+	showRank?: boolean;
+	/**
+	 * @type boolean
+	 * @description Shows each row's share of the listed rows' total.
+	 */
+	showShare?: boolean;
+}
+
 export interface DashboardtypesTopListPanelSpecDTO {
+	appearance?: DashboardtypesTopListAppearanceDTO;
 	formatting?: DashboardtypesPanelFormattingDTO;
 	/**
 	 * @type array,null
