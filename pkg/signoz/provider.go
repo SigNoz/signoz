@@ -259,6 +259,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddAIObservabilityQuickFiltersFactory(sqlstore),
 		sqlmigration.NewAddChannelSpecFactory(sqlschema),
 		sqlmigration.NewAddUserTuplesFactory(sqlstore),
+		sqlmigration.NewRepairSaFactorKeyWildcardsFactory(sqlstore),
 		sqlmigration.NewAddRuleViewFactory(sqlstore, sqlschema),
 	)
 }
