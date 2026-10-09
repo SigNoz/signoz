@@ -56,7 +56,7 @@ export const listPromotedPaths = (
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<ListPromotedPaths200>({
-		url: `/api/v1/promoted_path`,
+		url: `/api/v1/promoted_paths`,
 		method: 'GET',
 		params,
 		signal,
@@ -66,7 +66,7 @@ export const listPromotedPaths = (
 export const getListPromotedPathsQueryKey = (
 	params?: ListPromotedPathsParams,
 ) => {
-	return [`/api/v1/promoted_path`, ...(params ? [params] : [])] as const;
+	return [`/api/v1/promoted_paths`, ...(params ? [params] : [])] as const;
 };
 
 export const getListPromotedPathsQueryOptions = <
@@ -156,7 +156,7 @@ export const promotePaths = (
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
-		url: `/api/v1/promoted_path`,
+		url: `/api/v1/promoted_paths`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		data: promotetypesPromotePathDTONull,

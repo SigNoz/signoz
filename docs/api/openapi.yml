@@ -13611,7 +13611,7 @@ paths:
       tags:
       - preferences
       x-signoz-stability: alpha
-  /api/v1/promoted_path:
+  /api/v1/promoted_paths:
     get:
       deprecated: false
       description: This endpoint lists the promoted paths of every JSON column, each
@@ -13697,6 +13697,25 @@ paths:
       requestBody:
         content:
           application/json:
+            examples:
+              logs_body:
+                summary: 'Logs body: promote a path and index it'
+                value:
+                - context: body
+                  indexes:
+                  - fieldDataType: string
+                    granularity: 1
+                    type: ngrambf_v1(4, 1024, 2, 0)
+                  path: body.user.name
+                  promote: true
+                  signal: logs
+              traces_attribute:
+                summary: 'Traces attribute: promote a path'
+                value:
+                - context: attribute
+                  path: http.method
+                  promote: true
+                  signal: traces
             schema:
               items:
                 $ref: '#/components/schemas/PromotetypesPromotePath'
