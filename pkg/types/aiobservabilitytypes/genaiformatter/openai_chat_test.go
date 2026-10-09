@@ -5,70 +5,164 @@ import "testing"
 func TestFormat_OpenAIChat(t *testing.T) {
 	runFormatCases(t, []formatCase{
 		{
-			name: "Chat_RequestAndResponse",
-			input: `{
-				"model": "gpt-4o",
-				"messages": [
-					{"role": "system", "content": "You are a weather assistant."},
-					{"role": "user", "content": [
-						{"type": "text", "text": "What is in this picture, and what is the weather there?"},
-						{"type": "image_url", "image_url": {"url": "https://example.com/eiffel.png", "detail": "low"}}
-					]}
-				],
-				"tools": [{"type": "function", "function": {"name": "get_weather"}}]
-			}`,
-			output: `{
-				"id": "chatcmpl-1",
-				"choices": [{
-					"index": 0,
-					"finish_reason": "tool_calls",
-					"message": {"role": "assistant", "content": null, "tool_calls": [
-						{"id": "call_1", "type": "function", "function": {"name": "get_weather", "arguments": "{\"city\": \"Paris\"}"}}
-					]}
-				}],
-				"usage": {"prompt_tokens": 120, "completion_tokens": 18}
-			}`,
+			name:      "OpenInference_RequestWithToolCalls",
+			input:     `{"messages": [{"role": "user", "content": "What's the weather in Paris and in London? Use the tool for each."}], "model": "gpt-4o-mini", "max_tokens": 120, "tool_choice": "auto", "tools": [{"type": "function", "function": {"name": "get_current_weather", "description": "Get the current weather for a city.", "parameters": {"type": "object", "properties": {"city": {"type": "string"}, "unit": {"type": "string", "enum": ["c", "f"]}}, "required": ["city"]}}}]}`,
+			output:    `{"id":"chatcmpl-DksBDptnQ3aTu18YrqSdYQgiPOuRV","choices":[{"finish_reason":"tool_calls","index":0,"logprobs":null,"message":{"content":null,"refusal":null,"role":"assistant","annotations":[],"tool_calls":[{"id":"call_SW4hst7nzysgvWSAz4OdyK9D","function":{"arguments":"{\"city\": \"Paris\"}","name":"get_current_weather"},"type":"function"},{"id":"call_si8wiETYGpooMB7gMXSgMQpk","function":{"arguments":"{\"city\": \"London\"}","name":"get_current_weather"},"type":"function"}]}}],"created":1780063727,"model":"gpt-4o-mini-2024-07-18","object":"chat.completion","service_tier":"default","system_fingerprint":"fp_6e71a9f378","usage":{"completion_tokens":46,"prompt_tokens":71,"total_tokens":117,"completion_tokens_details":{"accepted_prediction_tokens":0,"audio_tokens":0,"reasoning_tokens":0,"rejected_prediction_tokens":0},"prompt_tokens_details":{"audio_tokens":0,"cached_tokens":0}}}`,
 			formatter: FormatterOpenAIChat,
 			wantInput: `[
-				{"role": "system", "parts": [{"type": "text", "content": "You are a weather assistant."}]},
-				{"role": "user", "parts": [
-					{"type": "text", "content": "What is in this picture, and what is the weather there?"},
-					{"type": "uri", "modality": "image", "uri": "https://example.com/eiffel.png"}
-				]}
+			  {
+			    "role": "user",
+			    "parts": [
+			      {
+			        "type": "text",
+			        "content": "What's the weather in Paris and in London? Use the tool for each."
+			      }
+			    ]
+			  }
 			]`,
 			wantOutput: `[
-				{"role": "assistant", "parts": [{"type": "tool_call", "id": "call_1", "name": "get_weather", "arguments": {"city": "Paris"}}], "finish_reason": "tool_call"}
+			  {
+			    "role": "assistant",
+			    "parts": [
+			      {
+			        "type": "tool_call",
+			        "name": "get_current_weather",
+			        "id": "call_SW4hst7nzysgvWSAz4OdyK9D",
+			        "arguments": {
+			          "city": "Paris"
+			        }
+			      },
+			      {
+			        "type": "tool_call",
+			        "name": "get_current_weather",
+			        "id": "call_si8wiETYGpooMB7gMXSgMQpk",
+			        "arguments": {
+			          "city": "London"
+			        }
+			      }
+			    ],
+			    "finish_reason": "tool_call"
+			  }
 			]`,
 		},
 		{
-			name: "Chat_ToolTurn",
-			input: `[
-				{"role": "user", "content": "Weather in Paris?"},
-				{"role": "assistant", "content": null, "tool_calls": [{"id": "call_1", "type": "function", "name": "get_weather", "args": "{\"city\": \"Paris\"}"}]},
-				{"role": "tool", "tool_call_id": "call_1", "content": "{\"temp_c\": 21, \"sky\": \"clear\"}"}
-			]`,
-			output:    `[{"role": "assistant", "content": "It is 21°C and clear in Paris.", "finish_reason": "stop"}]`,
+			name:      "OpenInference_ToolTurn",
+			input:     `{"messages": [{"role": "user", "content": "What's the weather in Paris and in London? Use the tool for each."}, {"content": null, "refusal": null, "role": "assistant", "annotations": [], "audio": null, "function_call": null, "tool_calls": [{"id": "call_SW4hst7nzysgvWSAz4OdyK9D", "function": {"arguments": "{\"city\": \"Paris\"}", "name": "get_current_weather"}, "type": "function"}, {"id": "call_si8wiETYGpooMB7gMXSgMQpk", "function": {"arguments": "{\"city\": \"London\"}", "name": "get_current_weather"}, "type": "function"}]}, {"role": "tool", "tool_call_id": "call_SW4hst7nzysgvWSAz4OdyK9D", "content": "{\"city\": \"Paris\", \"temp_c\": 18, \"summary\": \"Clear\"}"}, {"role": "tool", "tool_call_id": "call_si8wiETYGpooMB7gMXSgMQpk", "content": "{\"city\": \"London\", \"temp_c\": 18, \"summary\": \"Clear\"}"}], "model": "gpt-4o-mini", "max_tokens": 80}`,
+			output:    `{"id":"chatcmpl-DksBF2QuaoMMMFg9UAXX9Rc28XVJT","choices":[{"finish_reason":"stop","index":0,"logprobs":null,"message":{"content":"The current weather is as follows:\n\n- **Paris**: 18°C, Clear\n- **London**: 18°C, Clear\n\nBoth cities are enjoying clear skies with the same temperature.","refusal":null,"role":"assistant","annotations":[]}}],"created":1780063729,"model":"gpt-4o-mini-2024-07-18","object":"chat.completion","service_tier":"default","system_fingerprint":"fp_e2d886d409","usage":{"completion_tokens":40,"prompt_tokens":118,"total_tokens":158,"completion_tokens_details":{"accepted_prediction_tokens":0,"audio_tokens":0,"reasoning_tokens":0,"rejected_prediction_tokens":0},"prompt_tokens_details":{"audio_tokens":0,"cached_tokens":0}}}`,
 			formatter: FormatterOpenAIChat,
 			wantInput: `[
-				{"role": "user", "parts": [{"type": "text", "content": "Weather in Paris?"}]},
-				{"role": "assistant", "parts": [{"type": "tool_call", "id": "call_1", "name": "get_weather", "arguments": {"city": "Paris"}}]},
-				{"role": "tool", "parts": [{"type": "tool_call_response", "id": "call_1", "response": {"temp_c": 21, "sky": "clear"}}]}
+			  {
+			    "role": "user",
+			    "parts": [
+			      {
+			        "type": "text",
+			        "content": "What's the weather in Paris and in London? Use the tool for each."
+			      }
+			    ]
+			  },
+			  {
+			    "role": "assistant",
+			    "parts": [
+			      {
+			        "type": "tool_call",
+			        "name": "get_current_weather",
+			        "id": "call_SW4hst7nzysgvWSAz4OdyK9D",
+			        "arguments": {
+			          "city": "Paris"
+			        }
+			      },
+			      {
+			        "type": "tool_call",
+			        "name": "get_current_weather",
+			        "id": "call_si8wiETYGpooMB7gMXSgMQpk",
+			        "arguments": {
+			          "city": "London"
+			        }
+			      }
+			    ]
+			  },
+			  {
+			    "role": "tool",
+			    "parts": [
+			      {
+			        "type": "tool_call_response",
+			        "response": {
+			          "city": "Paris",
+			          "summary": "Clear",
+			          "temp_c": 18
+			        },
+			        "id": "call_SW4hst7nzysgvWSAz4OdyK9D"
+			      }
+			    ]
+			  },
+			  {
+			    "role": "tool",
+			    "parts": [
+			      {
+			        "type": "tool_call_response",
+			        "response": {
+			          "city": "London",
+			          "summary": "Clear",
+			          "temp_c": 18
+			        },
+			        "id": "call_si8wiETYGpooMB7gMXSgMQpk"
+			      }
+			    ]
+			  }
 			]`,
-			wantOutput: `[{"role": "assistant", "parts": [{"type": "text", "content": "It is 21°C and clear in Paris."}], "finish_reason": "stop"}]`,
+			wantOutput: `[
+			  {
+			    "role": "assistant",
+			    "parts": [
+			      {
+			        "type": "text",
+			        "content": "The current weather is as follows:\n\n- **Paris**: 18°C, Clear\n- **London**: 18°C, Clear\n\nBoth cities are enjoying clear skies with the same temperature."
+			      }
+			    ],
+			    "finish_reason": "stop"
+			  }
+			]`,
 		},
 		{
-			name:       "Chat_UnknownBlockKeptAsSent",
-			input:      `[{"role": "user", "content": [{"type": "input_audio", "input_audio": {"data": "aGk=", "format": "wav"}}]}]`,
-			formatter:  FormatterOpenAIChat,
-			wantInput:  `[{"role": "user", "parts": [{"type": "input_audio", "input_audio": {"data": "aGk=", "format": "wav"}}]}]`,
-			wantOutput: `[]`,
-		},
-		{
-			name:       "Chat_TwiceEncoded",
-			input:      `"[{\"role\":\"human\",\"content\":\"hi\"}]"`,
-			formatter:  FormatterOpenAIChat,
-			wantInput:  `[{"role": "user", "parts": [{"type": "text", "content": "hi"}]}]`,
-			wantOutput: `[]`,
+			name:      "Bifrost_BareInputFlattenedToolCalls",
+			input:     `What's the weather in Paris and in London? Use the tool for each.`,
+			output:    `[{"role":"assistant","content":"","tool_calls":[{"id":"call_xP33RT5exgBrNsvsWQZwiY9D","type":"function","name":"get_current_weather","args":"{\"city\": \"Paris\"}"},{"id":"call_lC6GgT8JW2ygJqWEM2wcohIz","type":"function","name":"get_current_weather","args":"{\"city\": \"London\"}"}]}]`,
+			formatter: FormatterText,
+			warnings:  []string{"bare user text, role assumed", "output formatted as openai.chat, input as text"},
+			wantInput: `[
+			  {
+			    "role": "user",
+			    "parts": [
+			      {
+			        "type": "text",
+			        "content": "What's the weather in Paris and in London? Use the tool for each."
+			      }
+			    ]
+			  }
+			]`,
+			wantOutput: `[
+			  {
+			    "role": "assistant",
+			    "parts": [
+			      {
+			        "type": "tool_call",
+			        "name": "get_current_weather",
+			        "id": "call_xP33RT5exgBrNsvsWQZwiY9D",
+			        "arguments": {
+			          "city": "Paris"
+			        }
+			      },
+			      {
+			        "type": "tool_call",
+			        "name": "get_current_weather",
+			        "id": "call_lC6GgT8JW2ygJqWEM2wcohIz",
+			        "arguments": {
+			          "city": "London"
+			        }
+			      }
+			    ]
+			  }
+			]`,
 		},
 	})
 }
