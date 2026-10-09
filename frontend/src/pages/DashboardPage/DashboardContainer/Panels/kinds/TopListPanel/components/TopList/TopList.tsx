@@ -97,6 +97,7 @@ function TopList({
 			className={styles.container}
 			onScroll={tooltip.hide}
 			onMouseLeave={tooltip.hide}
+			onMouseMove={tooltip.hideOffRow}
 		>
 			<ol
 				ref={tooltip.listRef}
