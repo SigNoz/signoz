@@ -12,6 +12,7 @@ import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
+import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
 import ExplorerActions from 'container/ExplorerActions/ExplorerActions';
@@ -24,6 +25,7 @@ import Toolbar from 'container/Toolbar/Toolbar';
 import {
 	getExportQueryData,
 	getQueryByPanelType,
+	withRootSpanFilter,
 } from 'container/TracesExplorer/explorerUtils';
 import ListView from 'container/TracesExplorer/ListView';
 import { defaultSelectedColumns } from 'container/TracesExplorer/ListView/configs';
@@ -32,6 +34,7 @@ import TableView from 'container/TracesExplorer/TableView';
 import TracesView from 'container/TracesExplorer/TracesView';
 import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
 import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashboardLink';
+import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
@@ -91,8 +94,10 @@ function TracesExplorer(): JSX.Element {
 	const queryClient = useQueryClient();
 	const listQueryKeyRef = useRef<any>();
 
+	const compositeQueryParam = useGetCompositeQueryParam();
+
 	// Get panel type from URL
-	const panelTypesFromUrl = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
+	const panelTypesFromUrl = useGetPanelTypesQueryParam(PANEL_TYPES.TRACE);
 	const [isLoadingQueries, setIsLoadingQueries] = useState<boolean>(false);
 	const [isCancelled, setIsCancelled] = useState(false);
 
@@ -120,14 +125,22 @@ function TracesExplorer(): JSX.Element {
 	const [warning, setWarning] = useState<Warning | undefined>();
 	const [isOpen, setOpen] = useState<boolean>(true);
 
-	const defaultQuery = useMemo(
-		(): Query =>
-			updateAllQueriesOperators(
-				initialQueriesMap.traces,
-				PANEL_TYPES.LIST,
-				DataSource.TRACES,
-			),
-		[updateAllQueriesOperators],
+	const defaultQuery = useMemo((): Query => {
+		const baseQuery = updateAllQueriesOperators(
+			initialQueriesMap.traces,
+			PANEL_TYPES.TRACE,
+			DataSource.TRACES,
+		);
+
+		return withRootSpanFilter(baseQuery);
+	}, [updateAllQueriesOperators]);
+
+	const tracesExplorerDefaultUrlParams = useMemo(
+		() => ({
+			[QueryParams.panelTypes]: PANEL_TYPES.TRACE,
+			[QueryParams.selectedExplorerView]: ExplorerViews.TRACE,
+		}),
+		[],
 	);
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
@@ -191,7 +204,7 @@ function TracesExplorer(): JSX.Element {
 		() =>
 			getQueryByPanelType(
 				stagedQuery || initialQueriesMap.traces,
-				panelType || PANEL_TYPES.LIST,
+				panelType || PANEL_TYPES.TRACE,
 			),
 		[stagedQuery, panelType],
 	);
@@ -261,7 +274,16 @@ function TracesExplorer(): JSX.Element {
 		],
 	);
 
-	useShareBuilderUrl({ defaultValue: defaultQuery });
+	useShareBuilderUrl({
+		defaultValue: defaultQuery,
+		urlParams: tracesExplorerDefaultUrlParams,
+	});
+
+	useEffect(() => {
+		if (!compositeQueryParam) {
+			handleSetConfig(PANEL_TYPES.TRACE, DataSource.TRACES);
+		}
+	}, [compositeQueryParam, handleSetConfig]);
 
 	const logEventCalledRef = useRef(false);
 
