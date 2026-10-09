@@ -24,6 +24,7 @@ interface Envelope {
 		disabled?: boolean;
 		order?: { key: { name: string }; direction: 'asc' | 'desc' }[];
 		groupBy?: { name: string }[];
+		aggregations?: Partial<Record<string, string>>[];
 	};
 }
 
@@ -168,5 +169,46 @@ describe('top list with several queries', () => {
 		expect(getTopListDataWarning(panel, data)?.messages).toStrictEqual([
 			'The query orders by "service.name", so the list shows the first groups by that key rather than the top values. Order by the value instead.',
 		]);
+	});
+});
+
+describe('top list value name', () => {
+	const aggregated = (
+		aggregation: Partial<Record<string, string>>,
+	): Envelope => ({
+		type: 'builder_query',
+		spec: { name: 'A', aggregations: [aggregation] },
+	});
+
+	it.each([
+		{
+			scenario: 'an alias',
+			aggregation: { alias: 'requests', expression: 'count()' },
+			expected: 'requests',
+		},
+		{
+			scenario: 'an expression',
+			aggregation: { expression: 'p99(duration_nano)' },
+			expected: 'p99(duration_nano)',
+		},
+		{
+			scenario: 'a metric',
+			aggregation: { metricName: 'signoz_calls_total', spaceAggregation: 'sum' },
+			expected: 'sum(signoz_calls_total)',
+		},
+	])('names the value after $scenario', ({ aggregation, expected }) => {
+		expect(
+			prepareTopListData(dataWith([A], [aggregated(aggregation)])).valueName,
+		).toBe(expected);
+	});
+
+	it('names a ranked formula after its expression', () => {
+		const data = dataWith([F1], [query('A'), query('B'), formula('F1', 'A / B')]);
+
+		expect(prepareTopListData(data).valueName).toBe('A / B');
+	});
+
+	it('falls back to the query name with nothing to describe it', () => {
+		expect(prepareTopListData(dataWith([A], [query('A')])).valueName).toBe('A');
 	});
 });

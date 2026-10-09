@@ -19,6 +19,7 @@ const EMPTY_DATA: TopListData = {
 	rows: [],
 	labelColumnNames: [],
 	valueColumnName: '',
+	valueName: '',
 	ignoredValueColumns: [],
 	ignoredResults: [],
 	orderedByGroupKey: null,
@@ -95,6 +96,38 @@ function compareRows(direction: SortDirection) {
 		const byValue = direction === 'asc' ? a.value - b.value : b.value - a.value;
 		return byValue || a.label.localeCompare(b.label);
 	};
+}
+
+interface NamedQuerySpec {
+	name?: string;
+	/** Formulas. */
+	expression?: string;
+	aggregations?: {
+		alias?: string;
+		expression?: string;
+		metricName?: string;
+		spaceAggregation?: string;
+	}[];
+}
+
+/** The ranked aggregation as the query writes it: its alias, expression or formula. */
+function describeValue(
+	requestPayload: Querybuildertypesv5QueryRangeRequestDTO | undefined,
+	queryName: string,
+): string | null {
+	const spec = (requestPayload?.compositeQuery?.queries ?? [])
+		.map((envelope) => envelope.spec as NamedQuerySpec | undefined)
+		.find((candidate) => candidate?.name === queryName);
+	const [aggregation] = spec?.aggregations ?? [];
+	if (aggregation?.alias || aggregation?.expression) {
+		return aggregation.alias || aggregation.expression || null;
+	}
+	if (aggregation?.metricName) {
+		return aggregation.spaceAggregation
+			? `${aggregation.spaceAggregation}(${aggregation.metricName})`
+			: aggregation.metricName;
+	}
+	return spec?.expression || null;
 }
 
 interface OrderedQuerySpec {
@@ -189,21 +222,34 @@ export function prepareTopListRows(
 			value: toFiniteNumber(rawValue),
 			rawValue,
 			ratio: 0,
+			share: null,
 			queryName: valueColumn.queryName,
 			labels,
 		};
 	});
 
-	const max = Math.max(0, ...rows.map((row) => row.value ?? 0));
+	const values = rows
+		.map((row) => row.value)
+		.filter((value): value is number => value !== null);
+	const max = Math.max(0, ...values);
+	const total = values.some((value) => value < 0)
+		? 0
+		: values.reduce((sum, value) => sum + value, 0);
 	rows.forEach((row) => {
 		row.ratio =
 			max > 0 && row.value !== null && row.value > 0 ? row.value / max : 0;
+		row.share = total > 0 && row.value !== null ? row.value / total : null;
 	});
 
 	return {
 		rows: rows.sort(compareRows(direction)),
 		labelColumnNames: labelColumns.map((column) => column.name),
 		valueColumnName: valueColumn.name,
+		// A lone aggregation's column takes the legend, which labels rows here, not values.
+		valueName:
+			table.legend && valueColumn.name === table.legend
+				? valueColumn.queryName
+				: valueColumn.name,
 		ignoredValueColumns: ignoredColumns.map((column) => column.name),
 		ignoredResults: otherTables.map((other) => other.queryName),
 		orderedByGroupKey: null,
@@ -222,8 +268,12 @@ export function prepareTopListData(data: PanelQueryData): TopListData {
 		data.requestPayload,
 		ordered.find(hasValueColumn)?.queryName,
 	);
-	return {
-		...prepareTopListRows(ordered, direction),
-		orderedByGroupKey: groupKey,
-	};
+	const prepared = prepareTopListRows(ordered, direction);
+	const rankedQuery = prepared.rows[0]?.queryName;
+	// A bare query name ("A") says nothing about the value; the query spec can.
+	const valueName =
+		rankedQuery && prepared.valueName === rankedQuery
+			? (describeValue(data.requestPayload, rankedQuery) ?? rankedQuery)
+			: prepared.valueName;
+	return { ...prepared, valueName, orderedByGroupKey: groupKey };
 }

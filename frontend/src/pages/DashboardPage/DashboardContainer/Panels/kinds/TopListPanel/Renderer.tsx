@@ -15,6 +15,7 @@ import type { TopListRow } from './types';
 import { ACCENT_COLOR, type RowColors } from './utils';
 
 function TopListPanelRenderer({
+	panelId,
 	panel,
 	data,
 	isFetching,
@@ -24,7 +25,7 @@ function TopListPanelRenderer({
 }: PanelRendererProps<'signoz/TopListPanel'>): JSX.Element {
 	const spec = panel.spec.plugin.spec;
 
-	const { rows } = useMemo(() => prepareTopListData(data), [data]);
+	const { rows, valueName } = useMemo(() => prepareTopListData(data), [data]);
 
 	const thresholds = useMemo(
 		() => mapNumberThresholds(spec.thresholds),
@@ -78,10 +79,14 @@ function TopListPanelRenderer({
 				<NoData isFetching={isFetching} onRetry={refetch} panel={panel} />
 			) : (
 				<TopList
+					panelId={panelId}
 					rows={rows}
+					valueName={valueName}
 					unit={spec.formatting?.unit}
 					precision={precision}
 					thresholds={thresholds}
+					showRank={spec.appearance?.showRank}
+					showShare={spec.appearance?.showShare}
 					onSelect={enableDrillDown ? handleSelect : undefined}
 				/>
 			)}

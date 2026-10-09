@@ -116,6 +116,52 @@ describe('prepareTopListRows', () => {
 		]);
 	});
 
+	it('gives each numeric row its share of the total', () => {
+		const table = serviceTable([
+			['auth', 30],
+			['payment', 60],
+			['missing', 'n/a'],
+			['checkout', 10],
+		]);
+
+		expect(
+			prepareTopListRows([table]).rows.map((row) => [row.label, row.share]),
+		).toStrictEqual([
+			['payment', 0.6],
+			['auth', 0.3],
+			['checkout', 0.1],
+			['missing', null],
+		]);
+	});
+
+	it.each([
+		{ scenario: 'any value is negative', values: [8, -4] },
+		{ scenario: 'the total is zero', values: [0, 0] },
+	])('gives no shares when $scenario', ({ values }) => {
+		const table = serviceTable(
+			values.map((value, index) => [`s${index}`, value]),
+		);
+
+		expect(
+			prepareTopListRows([table]).rows.map((row) => row.share),
+		).toStrictEqual([null, null]);
+	});
+
+	it.each([
+		{ legend: '', expected: 'count()' },
+		{ legend: '{{service.name}}', expected: 'A' },
+	])(
+		'names the value $expected when the legend is "$legend"',
+		({ legend, expected }) => {
+			const table = serviceTable([['auth', 1]], {
+				legend,
+				columns: [groupColumn('service.name'), valueColumn(legend || 'count()')],
+			});
+
+			expect(prepareTopListRows([table]).valueName).toBe(expected);
+		},
+	);
+
 	it('parses numeric strings', () => {
 		const table = serviceTable([
 			['a', '12'],
@@ -242,6 +288,7 @@ describe('prepareTopListRows', () => {
 			rows: [],
 			labelColumnNames: [],
 			valueColumnName: '',
+			valueName: '',
 			ignoredValueColumns: [],
 			ignoredResults: [],
 			orderedByGroupKey: null,
