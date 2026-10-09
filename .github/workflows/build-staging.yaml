@@ -25,6 +25,7 @@ jobs:
       time: ${{ steps.build-info.outputs.time }}
       branch: ${{ steps.build-info.outputs.branch }}
       deployment: ${{ steps.build-info.outputs.deployment }}
+      unset: ${{ steps.build-info.outputs.unset }}
     steps:
       - name: self-checkout
         uses: actions/checkout@v4
@@ -59,7 +60,14 @@ jobs:
               echo "error: not able to determine deployment - please verify the PR label or the branch"
               exit 1
           fi
+
+          unset=false
+          if [[ "${deployment}" == *":unset" ]]; then
+              deployment=${deployment%":unset"}
+              unset=true
+          fi
           echo "deployment=${deployment}" >> $GITHUB_OUTPUT
+          echo "unset=${unset}" >> $GITHUB_OUTPUT
       - name: create-dotenv
         run: |
           mkdir -p frontend
@@ -76,6 +84,7 @@ jobs:
           path: frontend/.env
           key: staging-dotenv-${{ github.sha }}
   js-build:
+    if: ${{ needs.prepare.outputs.unset != 'true' }}
     uses: signoz/primus.workflows/.github/workflows/js-build.yaml@main
     needs: prepare
     secrets: inherit
@@ -126,3 +135,15 @@ jobs:
       GITHUB_REPOSITORY_NAME: charts-saas-v3-staging
       GITHUB_EVENT_NAME: releaser
       GITHUB_EVENT_PAYLOAD: '{"deployment": "${{ needs.prepare.outputs.deployment }}", "signoz_version": "${{ needs.prepare.outputs.version }}"}'
+  staging-unset:
+    if: ${{ needs.prepare.outputs.unset == 'true' }}
+    uses: signoz/primus.workflows/.github/workflows/github-trigger.yaml@main
+    secrets: inherit
+    needs: prepare
+    with:
+      PRIMUS_REF: main
+      GITHUB_ENVIRONMENT: staging
+      GITHUB_SILENT: true
+      GITHUB_REPOSITORY_NAME: charts-saas-v3-staging
+      GITHUB_EVENT_NAME: releaser
+      GITHUB_EVENT_PAYLOAD: '{"deployment": "${{ needs.prepare.outputs.deployment }}", "signoz_version": "unset"}'
