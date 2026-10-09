@@ -14,7 +14,7 @@ from fixtures.auth import (
 )
 from fixtures.role import find_role_by_name, transaction_group
 
-PROMOTED_PATH_BASE = "/api/v1/promoted_path"
+PROMOTED_PATH_BASE = "/api/v1/promoted_paths"
 
 _EDITOR_EMAIL = "editor+promote@integration.test"
 _VIEWER_EMAIL = "viewer+promote@integration.test"

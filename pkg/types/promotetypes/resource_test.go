@@ -105,7 +105,7 @@ func TestListPromotedPathsResources(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			request := httptest.NewRequest("GET", "/api/v1/promoted_path"+testCase.query, nil)
+			request := httptest.NewRequest("GET", "/api/v1/promoted_paths"+testCase.query, nil)
 			resources, err := ListPromotedPathsResources(coretypes.ExtractorContext{Request: request})
 			require.NoError(t, err)
 			assert.Equal(t, testCase.want, resourceKinds(resources))
