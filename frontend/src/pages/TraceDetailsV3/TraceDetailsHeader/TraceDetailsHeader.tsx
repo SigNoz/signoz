@@ -64,11 +64,11 @@ function TraceDetailsHeader({
 	const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 	const [isPreviewFieldsOpen, setIsPreviewFieldsOpen] = useState(false);
 	const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
-	const { data: traceSummary } = useTraceSummary(traceID || '');
+	const { data: traceSummary } = useTraceSummary(traceID);
 	const previewFields = useTraceStore((s) => s.previewFields);
 	const setPreviewFields = useTraceStore((s) => s.setPreviewFields);
 
-	const logTraceEvent = useTraceDetailLogEvent('v3', traceID || '');
+	const logTraceEvent = useTraceDetailLogEvent('v3', traceID);
 
 	const handleToggleAnalytics = useCallback((): void => {
 		logTraceEvent(TraceDetailEvents.AnalyticsPanelToggled, {
@@ -122,7 +122,7 @@ function TraceDetailsHeader({
 						</Button>
 						<KeyValueLabel
 							badgeKey="Trace ID"
-							badgeValue={traceID || ''}
+							badgeValue={traceID}
 							maxCharacters={100}
 						/>
 					</div>
@@ -155,7 +155,7 @@ function TraceDetailsHeader({
 										showTraceDetails={showTraceDetails}
 										onToggleTraceDetails={handleToggleTraceDetails}
 										onOpenPreviewFields={(): void => setIsPreviewFieldsOpen(true)}
-										traceId={traceID || ''}
+										traceId={traceID}
 										startTime={startTime}
 										endTime={endTime}
 										totalSpansCount={traceSummary.totalSpansCount}
@@ -170,7 +170,7 @@ function TraceDetailsHeader({
 							<Filters
 								startTime={startTime}
 								endTime={endTime}
-								traceID={traceID || ''}
+								traceID={traceID}
 								onFilteredSpansChange={onFilteredSpansChange}
 								isExpanded={isFilterExpanded}
 								onExpand={(): void => setIsFilterExpanded(true)}
