@@ -1401,3 +1401,61 @@ func TestBucketCache_NoCache(t *testing.T) {
 	// The actual NoCache logic is implemented in querier.run(), not in bucket cache
 	// This test verifies that the cache works normally and NoCache bypasses it at a higher level
 }
+
+func TestBucketCache_Put_OverlappingBuckets(t *testing.T) {
+	testCases := []struct {
+		name            string
+		windows         []qbtypes.TimeRange
+		expectedBuckets []qbtypes.TimeRange
+	}{
+		{
+			name:            "SlidingWindows_KeepNewest",
+			windows:         []qbtypes.TimeRange{{From: 1000, To: 5000}, {From: 2000, To: 6000}, {From: 3000, To: 7000}},
+			expectedBuckets: []qbtypes.TimeRange{{From: 3000, To: 7000}},
+		},
+		{
+			name:            "DisjointWindows_KeepAll",
+			windows:         []qbtypes.TimeRange{{From: 1000, To: 3000}, {From: 5000, To: 7000}},
+			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 3000}, {From: 5000, To: 7000}},
+		},
+		{
+			name:            "PartialOverlap_DropOnlyOverlapping",
+			windows:         []qbtypes.TimeRange{{From: 1000, To: 3000}, {From: 5000, To: 7000}, {From: 2000, To: 4000}},
+			expectedBuckets: []qbtypes.TimeRange{{From: 2000, To: 4000}, {From: 5000, To: 7000}},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			memCache := createTestCache(t)
+			bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
+			step := qbtypes.Step{Duration: time.Second}
+
+			for _, window := range testCase.windows {
+				query := &mockQuery{fingerprint: testCase.name, startMs: window.From, endMs: window.To}
+				bc.Put(context.Background(), valuer.UUID{}, query, step, &qbtypes.Result{
+					Type:  qbtypes.RequestTypeTimeSeries,
+					Value: createTestTimeSeries("A", window.From, window.To, 1000),
+				})
+			}
+
+			var data qbtypes.CachedData
+			require.NoError(t, memCache.Get(context.Background(), valuer.UUID{}, "v5:query:"+testCase.name, &data))
+			buckets := make([]qbtypes.TimeRange, 0, len(data.Buckets))
+			for _, bucket := range data.Buckets {
+				buckets = append(buckets, qbtypes.TimeRange{From: bucket.StartMs, To: bucket.EndMs})
+			}
+			assert.Equal(t, testCase.expectedBuckets, buckets)
+
+			last := testCase.windows[len(testCase.windows)-1]
+			cached, missing := bc.GetMissRanges(context.Background(), valuer.UUID{}, &mockQuery{fingerprint: testCase.name, startMs: last.From, endMs: last.To}, step)
+			assert.Empty(t, missing)
+			require.NotNil(t, cached)
+			tsData, ok := cached.Value.(*qbtypes.TimeSeriesData)
+			require.True(t, ok)
+			require.Len(t, tsData.Aggregations, 1)
+			require.Len(t, tsData.Aggregations[0].Series, 1)
+			assert.Len(t, tsData.Aggregations[0].Series[0].Values, int((last.To-last.From)/1000))
+		})
+	}
+}
