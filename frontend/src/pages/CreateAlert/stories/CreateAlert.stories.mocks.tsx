@@ -7,6 +7,7 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { AlertDetectionTypes } from 'container/FormAlertRules';
 import { rest } from 'msw';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
@@ -76,6 +77,9 @@ const routeFor = (mode: AlertMode): string => {
 
 const FORM = 'Create alert · form';
 
+const TEST_NOTIFICATIONS = ['sent', 'no-alerts'] as const;
+type TestNotification = (typeof TEST_NOTIFICATIONS)[number];
+
 export const createAlertMocks = defineStoryMocks({
 	controls: {
 		alertMode: choiceControl<AlertMode>('Alert being created', {
@@ -96,6 +100,13 @@ export const createAlertMocks = defineStoryMocks({
 			value: 3,
 			max: 6,
 		}),
+		testNotification: choiceControl<TestNotification>('Test notification', {
+			group: 'Create alert · form',
+			description:
+				'What the test run finds. `sent` raises the success toast, `no-alerts` the error toast saying the condition was not met.',
+			options: TEST_NOTIFICATIONS,
+			value: 'sent',
+		}),
 	},
 	handlers: (values, response) => [
 		rest.post('http://localhost/api/v2/rules', (_req, res, ctx) =>
@@ -107,7 +118,10 @@ export const createAlertMocks = defineStoryMocks({
 				ctx.status(200),
 				ctx.json({
 					status: 'success',
-					data: { alertCount: 2, message: 'Rule tested against the last 6 hours' },
+					data: {
+						alertCount: values.testNotification === 'no-alerts' ? 0 : 2,
+						message: 'Rule tested against the last 6 hours',
+					},
 				}),
 			),
 		),
@@ -155,3 +169,35 @@ export const createAlertMocks = defineStoryMocks({
 	],
 	config: (values) => ({ route: routeFor(values.alertMode) }),
 });
+
+const untilLoaded = { timeout: 15_000 };
+
+export const fillValidAlert = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	const canvas = within(canvasElement);
+
+	await userEvent.type(
+		await canvas.findByTestId('alert-name-input', undefined, untilLoaded),
+		'Toast alert',
+	);
+	const channels = await canvas.findByTestId(
+		'threshold-notification-channel-select',
+		undefined,
+		untilLoaded,
+	);
+
+	await userEvent.click(within(channels).getByRole('combobox'));
+	await userEvent.click(await screen.findByTitle('ops-slack'));
+	await userEvent.keyboard('{Escape}');
+};
+
+export const clickFooterButton = async (
+	canvasElement: HTMLElement,
+	testId: string,
+): Promise<void> => {
+	const button = await within(canvasElement).findByTestId(testId);
+
+	await waitFor(() => expect(button).toBeEnabled());
+	await userEvent.click(button);
+};

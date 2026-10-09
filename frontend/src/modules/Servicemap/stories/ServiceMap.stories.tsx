@@ -1,10 +1,17 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { serviceMapMocks } from './ServiceMap.stories.mocks';
+import {
+	OPEN_DROPDOWN,
+	openAttributeFilterOn,
+	openSelect,
+	pickOption,
+	serviceMapMocks,
+	stageClusterIn,
+} from './ServiceMap.stories.mocks';
 
 import ServiceMapContainer from '../index';
 
@@ -95,5 +102,51 @@ export const FilterAttributes: Story = {
 		// sits on never reaches the handler that opens the list.
 		await userEvent.click(within(filter).getByRole('combobox'));
 		await screen.findByText('k8s.cluster.name', undefined, untilLoaded);
+	},
+};
+
+/** A key staged as a chip, the filter open again on how to match it. */
+export const FilterOperators: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openAttributeFilterOn(canvasElement, 'k8s.cluster.name');
+		await pickOption('k8s.cluster.name');
+		await openAttributeFilterOn(canvasElement, 'Not IN');
+	},
+};
+
+/** A key and `IN` staged, the filter open on the values the key holds. */
+export const FilterValues: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await stageClusterIn(canvasElement);
+	},
+};
+
+/** Two values ticked before the filter is left, which is what applies it. */
+export const FilterValuesSelected: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await stageClusterIn(canvasElement);
+		await pickOption('prod-us-east');
+		await pickOption('prod-eu-west');
+		await waitFor(
+			() =>
+				expect(
+					document.querySelectorAll('.ant-select-item-option-selected'),
+				).toHaveLength(2),
+			untilLoaded,
+		);
+	},
+};
+
+/** The environment selector open on the environments the calls came from. */
+export const EnvironmentOptions: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openSelect(canvasElement, 'resource-environment-filter');
+		await waitFor(
+			() =>
+				expect(
+					document.querySelector(`${OPEN_DROPDOWN} .ant-select-item-option`),
+				).not.toBeNull(),
+			untilLoaded,
+		);
 	},
 };

@@ -1,8 +1,16 @@
+import { useEffect, useState } from 'react';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { UrlUpdateEvent } from 'nuqs/adapters/testing';
 
-import { renderTanStackTable } from './testUtils';
+import TanStackTable from '../index';
+import type { TableColumnDef } from '../types';
+import {
+	defaultData,
+	renderTanStackTable,
+	renderWithProviders,
+	type TestRow,
+} from './testUtils';
 
 jest.mock('hooks/useDarkMode', () => ({
 	useIsDarkMode: (): boolean => false,
@@ -807,6 +815,58 @@ describe('TanStackTableView Integration', () => {
 			// Verify all 3 data rows plus 1 expansion row = 4 tr elements in tbody
 			const tbody = screen.getByRole('table').querySelector('tbody');
 			expect(tbody?.querySelectorAll('tr')).toHaveLength(4);
+		});
+	});
+
+	describe('cell identity', () => {
+		it('keeps cells mounted across re-renders that pass new inline row callbacks', async () => {
+			const user = userEvent.setup();
+			const onMount = jest.fn();
+
+			function MountTracker({ id }: { id: string }): JSX.Element {
+				useEffect(() => onMount(id), [id]);
+				return <span data-testid={`tracked-${id}`}>Row {id}</span>;
+			}
+
+			const columns: TableColumnDef<TestRow>[] = [
+				{
+					id: 'id',
+					header: 'ID',
+					accessorKey: 'id',
+					cell: ({ row }): JSX.Element => <MountTracker id={row.id} />,
+				},
+			];
+
+			function Harness(): JSX.Element {
+				const [, setRenders] = useState(0);
+
+				return (
+					<>
+						<button
+							type="button"
+							data-testid="rerender"
+							onClick={(): void => setRenders((count) => count + 1)}
+						>
+							Re-render
+						</button>
+						<TanStackTable<TestRow>
+							data={defaultData}
+							columns={columns}
+							getRowKey={(row): string => row.id}
+							isRowActive={(row): boolean => row.id === '1'}
+						/>
+					</>
+				);
+			}
+
+			renderWithProviders(<Harness />);
+			await screen.findByTestId('tracked-2');
+			onMount.mockClear();
+
+			await user.click(screen.getByTestId('rerender'));
+			await user.hover(screen.getByTestId('tracked-2'));
+
+			expect(onMount).not.toHaveBeenCalled();
 		});
 	});
 

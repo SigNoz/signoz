@@ -1,10 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import {
+	findSuggestion,
+	openKeySuggestions,
+	typeFilter,
+} from 'components/QueryBuilderV2/QueryV2/QuerySearch/stories/__story_mockdata__/querySearch.play';
 import { screen, userEvent } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { metricsMocks } from './MetricsExplorerPage.stories.mocks';
+import { metricsMocks, saveUnit } from './MetricsExplorerPage.stories.mocks';
 import MetricsExplorerPage from '../MetricsExplorerPage';
 
 type MetricsArgs = PageStoryArgs<typeof metricsMocks>;
@@ -112,5 +117,46 @@ export const MetricDetailsDashboardsMenu: Story = {
 			),
 		);
 		await screen.findByRole('menu');
+	},
+};
+
+/** The summary's metric search focused: the attributes metrics can be found by. */
+export const FilterKeySuggestions: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openKeySuggestions(canvasElement, 'k8s.cluster.name');
+	},
+};
+
+/** The metric search on an attribute and an operator: the values it holds. */
+export const FilterValueSuggestions: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await typeFilter(canvasElement, 'service.name = ');
+		await findSuggestion(canvasElement, 'checkout');
+	},
+};
+
+/**
+ * "Set the selected unit as the metric unit?" answered Yes: the toast raised
+ * once the metadata write lands. Set Unit save to `error` for the failure.
+ */
+export const UnitSavedToast: Story = {
+	args: { tab: 'explorer', metricUnit: 'unset' },
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await saveUnit(
+			canvasElement,
+			args.unitSave === 'success'
+				? 'Unit saved successfully'
+				: 'Failed to save unit',
+		);
+	},
+};
+
+/** The same save with the metadata write failing. */
+export const UnitSaveErrorToast: Story = {
+	args: { tab: 'explorer', metricUnit: 'unset', unitSave: 'error' },
+	// The deliberate 500 is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: async ({ canvasElement }): Promise<void> => {
+		await saveUnit(canvasElement, 'Failed to save unit');
 	},
 };

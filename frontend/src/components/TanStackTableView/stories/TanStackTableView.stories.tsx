@@ -143,6 +143,19 @@ export const Pagination: Story = {
 	},
 };
 
+/** Interaction: the page size menu lists the row counts a page can show. */
+export const PageSizeOpen: Story = {
+	args: {
+		pagination: { total: 42, defaultLimit: 10, showTotalCount: true },
+	},
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByTestId('pagination-page-size'),
+		);
+		await screen.findByRole('listbox');
+	},
+};
+
 /** Data: the supported empty result keeps the table structure without a fabricated empty state. */
 export const Empty: Story = {
 	args: { data: [], testId: 'tanstack-empty-table' },

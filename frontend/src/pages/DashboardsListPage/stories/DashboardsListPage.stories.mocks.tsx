@@ -3,9 +3,23 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import { rest } from 'msw';
+import {
+	rest,
+	type ResponseResolver,
+	type RestContext,
+	type RestRequest,
+} from 'msw';
+import logEvent from 'api/common/logEvent';
 import type { GetDashboardV2200 } from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
+import {
+	expect,
+	mocked,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+} from 'storybook/test';
 
 import {
 	choiceControl,
@@ -21,14 +35,20 @@ import {
 	dashboardViewsResponse,
 	dashboardsListResponse,
 	orgUsersResponse,
+	PIN_WRITES,
 	recentDashboardIds,
 	ROW_MARKERS,
 	savedView,
 	seedPinnedDashboards,
 	setDashboardPinned,
 	STORY_USER_EMAIL,
+	TEMPLATE_REQUESTS,
 	TOOLTIP_TAGS,
+	WRITE_STATES,
+	type PinWrite,
 	type RowMarker,
+	type TemplateRequest,
+	type WriteState,
 } from './__story_mockdata__/dashboardsList';
 import { useDashboardViewsStore } from '../store/useDashboardViewsStore';
 import {
@@ -40,6 +60,7 @@ import { builtinViewQuery } from '../utils/views';
 
 const LIST = 'Dashboards · list';
 const VIEWS = 'Dashboards · views';
+const WRITES = 'Dashboards · writes';
 
 const VIEWS_OPTIONS = [
 	BuiltinViewId.All,
@@ -70,6 +91,42 @@ const writtenDashboard = (): GetDashboardV2200 =>
 	});
 
 const ok = { status: 'success', data: null };
+
+const serverError = {
+	status: 'error',
+	error: {
+		code: 'internal',
+		message: 'Something went wrong',
+		url: '',
+		errors: [],
+	},
+};
+
+const pinLimitError = {
+	status: 'error',
+	error: {
+		code: 'already_exists',
+		message: 'Pin limit reached',
+		url: '',
+		errors: [],
+	},
+};
+
+/** Answers a write per its control: the `success` resolver, never, or a 500. */
+const gated =
+	(
+		state: WriteState,
+		success: ResponseResolver<RestRequest, RestContext>,
+	): ResponseResolver<RestRequest, RestContext> =>
+	(req, res, ctx) => {
+		if (state === 'loading') {
+			return res(ctx.delay('infinite'));
+		}
+
+		return state === 'error'
+			? res(ctx.status(500), ctx.json(serverError))
+			: success(req, res, ctx);
+	};
 
 /**
  * `formatQueryErrorMessage` strips the `invalid filter query:` prefix and turns
@@ -174,6 +231,48 @@ export const dashboardsListMocks = defineStoryMocks({
 				'Answers the list with a 400 and a parse error, which is the Invalid query state: the backend message replaces the generic one and Retry is gone.',
 			value: false,
 		}),
+		rowWrite: choiceControl<WriteState>('Row action', {
+			group: WRITES,
+			description:
+				'How rename, tags, duplicate, lock and delete answer. `success` raises their toast, `loading` never answers, `error` opens the error modal instead.',
+			options: WRITE_STATES,
+			value: 'success',
+		}),
+		pinWrite: choiceControl<PinWrite>('Pin', {
+			group: WRITES,
+			description:
+				'How pinning answers. `limit` refuses the pin with a 409 and raises the 10-pin toast, `error` fails both pin and unpin with a toast.',
+			options: PIN_WRITES,
+			value: 'success',
+		}),
+		createWrite: choiceControl<WriteState>('Create dashboard', {
+			group: WRITES,
+			description:
+				'How the POST behind Create and Import answers. `error` raises a failure toast beside the error modal.',
+			options: WRITE_STATES,
+			value: 'success',
+		}),
+		migrationWrite: choiceControl<WriteState>('Retry migration', {
+			group: WRITES,
+			description:
+				'How the legacy dashboard migration answers. `success` raises the migrated toast, `error` the failure toast.',
+			options: WRITE_STATES,
+			value: 'success',
+		}),
+		viewWrite: choiceControl<WriteState>('Saved view writes', {
+			group: WRITES,
+			description:
+				'How saving, renaming and deleting a saved view answer. `error` raises the failure toast.',
+			options: WRITE_STATES,
+			value: 'success',
+		}),
+		templateRequest: choiceControl<TemplateRequest>('Template request', {
+			group: WRITES,
+			description:
+				'How the analytics event behind "Request a new template" answers: `error` returns a failed response, `rejected` throws.',
+			options: TEMPLATE_REQUESTS,
+			value: 'success',
+		}),
 		view: choiceControl<ViewOption>('Active view', {
 			group: VIEWS,
 			description:
@@ -237,6 +336,12 @@ export const dashboardsListMocks = defineStoryMocks({
 		rest.put(
 			'http://localhost/api/v2/users/me/dashboards/:id/pins',
 			(req, res, ctx) => {
+				if (values.pinWrite !== 'success') {
+					return values.pinWrite === 'limit'
+						? res(ctx.status(409), ctx.json(pinLimitError))
+						: res(ctx.status(500), ctx.json(serverError));
+				}
+
 				setDashboardPinned(String(req.params.id), true);
 
 				return res(ctx.status(200), ctx.json(ok));
@@ -246,44 +351,75 @@ export const dashboardsListMocks = defineStoryMocks({
 		rest.delete(
 			'http://localhost/api/v2/users/me/dashboards/:id/pins',
 			(req, res, ctx) => {
+				if (values.pinWrite === 'error') {
+					return res(ctx.status(500), ctx.json(serverError));
+				}
+
 				setDashboardPinned(String(req.params.id), false);
 
 				return res(ctx.status(200), ctx.json(ok));
 			},
 		),
 
-		rest.post('http://localhost/api/v2/dashboards', (_req, res, ctx) =>
-			res(ctx.status(201), ctx.json(writtenDashboard())),
+		rest.post(
+			'http://localhost/api/v2/dashboards',
+			gated(values.createWrite, (_req, res, ctx) =>
+				res(ctx.status(201), ctx.json(writtenDashboard())),
+			),
 		),
 
-		rest.put('http://localhost/api/v2/dashboards/:id', (_req, res, ctx) =>
-			res(ctx.status(200), ctx.json(writtenDashboard())),
+		rest.put(
+			'http://localhost/api/v2/dashboards/:id',
+			gated(values.rowWrite, (_req, res, ctx) =>
+				res(ctx.status(200), ctx.json(writtenDashboard())),
+			),
 		),
 
-		rest.post('http://localhost/api/v2/dashboards/:id/clone', (_req, res, ctx) =>
-			res(ctx.status(200), ctx.json(writtenDashboard())),
+		rest.patch(
+			'http://localhost/api/v2/dashboards/:id',
+			gated(values.rowWrite, (_req, res, ctx) =>
+				res(ctx.status(200), ctx.json(writtenDashboard())),
+			),
+		),
+
+		rest.post(
+			'http://localhost/api/v2/dashboards/:id/clone',
+			gated(values.rowWrite, (_req, res, ctx) =>
+				res(ctx.status(200), ctx.json(writtenDashboard())),
+			),
 		),
 
 		rest.post(
 			'http://localhost/api/v2/dashboards/:id/migrate',
-			(_req, res, ctx) => res(ctx.status(200), ctx.json(writtenDashboard())),
+			gated(values.migrationWrite, (_req, res, ctx) =>
+				res(ctx.status(200), ctx.json(writtenDashboard())),
+			),
 		),
 
-		rest.delete('http://localhost/api/v2/dashboards/:id', (_req, res, ctx) =>
-			res(ctx.status(200), ctx.json(ok)),
+		rest.delete(
+			'http://localhost/api/v2/dashboards/:id',
+			gated(values.rowWrite, (_req, res, ctx) =>
+				res(ctx.status(200), ctx.json(ok)),
+			),
 		),
 
-		rest.put('http://localhost/api/v2/dashboards/:id/lock', (_req, res, ctx) =>
-			res(ctx.status(200), ctx.json(ok)),
+		rest.put(
+			'http://localhost/api/v2/dashboards/:id/lock',
+			gated(values.rowWrite, (_req, res, ctx) =>
+				res(ctx.status(200), ctx.json(ok)),
+			),
 		),
 
-		rest.delete('http://localhost/api/v2/dashboards/:id/lock', (_req, res, ctx) =>
-			res(ctx.status(200), ctx.json(ok)),
+		rest.delete(
+			'http://localhost/api/v2/dashboards/:id/lock',
+			gated(values.rowWrite, (_req, res, ctx) =>
+				res(ctx.status(200), ctx.json(ok)),
+			),
 		),
 
 		rest.post(
 			'http://localhost/api/v2/dashboard_views',
-			async (req, res, ctx) => {
+			gated(values.viewWrite, async (req, res, ctx) => {
 				const body = (await req.json()) as { name: string };
 
 				return res(
@@ -298,12 +434,12 @@ export const dashboardsListMocks = defineStoryMocks({
 						},
 					}),
 				);
-			},
+			}),
 		),
 
 		rest.put(
 			'http://localhost/api/v2/dashboard_views/:id',
-			async (req, res, ctx) => {
+			gated(values.viewWrite, async (req, res, ctx) => {
 				const body = (await req.json()) as { name: string; data: unknown };
 
 				return res(
@@ -318,15 +454,37 @@ export const dashboardsListMocks = defineStoryMocks({
 						},
 					}),
 				);
-			},
+			}),
 		),
 
-		rest.delete('http://localhost/api/v2/dashboard_views/:id', (_req, res, ctx) =>
-			res(ctx.status(200), ctx.json(ok)),
+		rest.delete(
+			'http://localhost/api/v2/dashboard_views/:id',
+			gated(values.viewWrite, (_req, res, ctx) =>
+				res(ctx.status(200), ctx.json(ok)),
+			),
 		),
 	],
 	config: (values) => ({ route: listRoute(values.view) }),
 	effect: (values) => {
+		mocked(logEvent).mockImplementation(async () => {
+			if (values.templateRequest === 'rejected') {
+				throw new Error('Event rejected');
+			}
+
+			return values.templateRequest === 'error'
+				? {
+						statusCode: 500,
+						payload: null,
+						error: 'Event rejected',
+						message: null,
+					}
+				: {
+						statusCode: 200,
+						error: null,
+						message: 'success',
+						payload: { status: 'success', data: '' },
+					};
+		});
 		seedPinnedDashboards(
 			values.markers.includes('pinned')
 				? Array.from({ length: PINNED_COUNT }, (_unused, index) =>
@@ -342,3 +500,105 @@ export const dashboardsListMocks = defineStoryMocks({
 		});
 	},
 });
+
+/** Opens the actions menu of the row at `index`. */
+export const openRowActions = async (
+	canvasElement: HTMLElement,
+	index: number,
+): Promise<void> => {
+	// The icon-only trigger carries no accessible name.
+	const triggers = await within(canvasElement).findAllByTestId(
+		'dashboard-action-icon',
+		{},
+		{ timeout: 10000 },
+	);
+
+	await userEvent.click(triggers[index]);
+	await screen.findByText('Rename');
+};
+
+/** Picks a row action, retrying while its permission check still disables it. */
+export const pickRowAction = async (label: string | RegExp): Promise<void> => {
+	await waitFor(
+		async () => {
+			await userEvent.click(screen.getByText(label));
+			await screen.findByRole('dialog', {}, { timeout: 500 });
+		},
+		{ timeout: 10000 },
+	);
+};
+
+/** Picks a row action once its permission check has enabled it. */
+export const clickRowAction = async (testId: string): Promise<void> => {
+	const item = await screen.findByTestId(testId);
+
+	await waitFor(
+		async () => {
+			await expect(item).toBeEnabled();
+			await expect(item).not.toHaveAttribute('data-disabled');
+			await expect(item).not.toHaveAttribute('aria-disabled', 'true');
+		},
+		{ timeout: 10000 },
+	);
+	await userEvent.click(item);
+};
+
+export const TOAST_TIMEOUT = 10000;
+
+export const openLegacyDialog = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	await userEvent.click(
+		await within(canvasElement).findByTestId(
+			'dashboard-title-4',
+			{},
+			{ timeout: TOAST_TIMEOUT },
+		),
+	);
+	await screen.findByTestId('legacy-dashboard-id');
+};
+
+export const retryMigration = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	await openLegacyDialog(canvasElement);
+	const retry = await screen.findByTestId('legacy-dashboard-retry-migration');
+
+	await waitFor(() => expect(retry).toBeEnabled(), { timeout: TOAST_TIMEOUT });
+	await userEvent.click(retry);
+};
+
+export const uploadDashboardJson = async (json: object): Promise<void> => {
+	await userEvent.click(await screen.findByText('Import JSON'));
+	const dialog = await screen.findByRole('dialog');
+	const input = dialog.querySelector<HTMLInputElement>('input[type="file"]');
+
+	if (!input) {
+		throw new Error('The import dialog has no file input');
+	}
+	await userEvent.upload(
+		input,
+		new File([JSON.stringify(json)], 'dashboard.json', {
+			type: 'application/json',
+		}),
+	);
+	await userEvent.click(await screen.findByTestId('import-json-submit'));
+};
+
+export const requestTemplate = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	await userEvent.click(
+		await within(canvasElement).findByTestId(
+			'new-dashboard-cta',
+			{},
+			{ timeout: TOAST_TIMEOUT },
+		),
+	);
+	await userEvent.click(await screen.findByText('From a template'));
+	await userEvent.type(
+		await screen.findByTestId('request-dashboard-name'),
+		'Redis overview',
+	);
+	await userEvent.click(await screen.findByTestId('request-dashboard-submit'));
+};

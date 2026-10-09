@@ -21,9 +21,15 @@ import {
 	myOrganizationResponse,
 } from './__story_mockdata__/singleSignOn';
 
+import {
+	MUTATION_OUTCOMES,
+	type MutationOutcome,
+	mutationResolver,
+} from '../../stories/__story_mockdata__/mutationOutcome';
 import { rolesListResponse } from '../../stories/__story_mockdata__/roles';
 
 const DOMAINS = 'Single sign-on · domains';
+const ACTIONS = 'Single sign-on · actions';
 
 export const singleSignOnMocks = defineStoryMocks({
 	controls: {
@@ -45,6 +51,27 @@ export const singleSignOnMocks = defineStoryMocks({
 				'Whether members of the domain are made to sign in through the provider rather than with a password.',
 			value: true,
 		}),
+		displayNameUpdate: choiceControl<MutationOutcome>('Display name update', {
+			group: ACTIONS,
+			description:
+				'How the PUT behind the display name form answers. `success` raises the success toast, `loading` never answers, `error` opens the error modal.',
+			options: MUTATION_OUTCOMES,
+			value: 'success',
+		}),
+		domainSave: choiceControl<MutationOutcome>('Domain save', {
+			group: ACTIONS,
+			description:
+				'How creating or updating a domain answers. `success` raises the created or updated toast, `loading` leaves the button spinning, `error` opens the error modal.',
+			options: MUTATION_OUTCOMES,
+			value: 'success',
+		}),
+		domainDelete: choiceControl<MutationOutcome>('Domain delete', {
+			group: ACTIONS,
+			description:
+				'How the DELETE behind "Delete Domain" answers. `success` raises the "Domain deleted" toast, `loading` leaves the button spinning, `error` opens the error modal.',
+			options: MUTATION_OUTCOMES,
+			value: 'success',
+		}),
 	},
 	handlers: (values, response) => [
 		rest.get(
@@ -56,20 +83,23 @@ export const singleSignOnMocks = defineStoryMocks({
 
 		rest.put(
 			'http://localhost/api/v2/auth_domains/:id',
-			response.json(() => ({ status: 'success', data: { id: 'auth-domain-0' } })),
+			mutationResolver(values.domainSave, {
+				status: 'success',
+				data: { id: 'auth-domain-0' },
+			}),
 		),
 
 		rest.post(
 			'http://localhost/api/v2/auth_domains',
-			response.json(() => ({
+			mutationResolver(values.domainSave, {
 				status: 'success',
 				data: { id: 'auth-domain-new' },
-			})),
+			}),
 		),
 
 		rest.delete(
 			'http://localhost/api/v2/auth_domains/:id',
-			response.json(() => ({ status: 'success', data: null })),
+			mutationResolver(values.domainDelete),
 		),
 
 		// The provider form maps IdP groups onto SigNoz roles, so it reads the role
@@ -85,8 +115,9 @@ export const singleSignOnMocks = defineStoryMocks({
 			res(ctx.status(200), ctx.json(myOrganizationResponse())),
 		),
 
-		rest.put('http://localhost/api/v2/orgs/me', (_req, res, ctx) =>
-			res(ctx.status(200), ctx.json(myOrganizationResponse())),
+		rest.put(
+			'http://localhost/api/v2/orgs/me',
+			mutationResolver(values.displayNameUpdate, myOrganizationResponse()),
 		),
 	],
 	config: () => ({ route: ROUTES.ORG_SETTINGS }),

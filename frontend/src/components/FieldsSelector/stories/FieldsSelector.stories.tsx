@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { screen, userEvent } from 'storybook/test';
+import { expect, screen, userEvent, waitFor } from 'storybook/test';
 import { DataSource } from 'types/common/queryBuilder';
 
 import FieldsSelector from '../FieldsSelector';
@@ -53,6 +53,21 @@ export const UnsavedChanges: Story = {
 
 		await userEvent.click(addField);
 		await screen.findByRole('button', { name: 'Save changes' });
+	},
+};
+
+/** Saving: the toast raised once the edited columns are applied. */
+export const SavedToast: Story = {
+	play: async (): Promise<void> => {
+		const [addField] = await screen.findAllByRole('button', { name: 'Add' });
+
+		await userEvent.click(addField);
+		await userEvent.click(
+			await screen.findByRole('button', { name: 'Save changes' }),
+		);
+		await waitFor(() =>
+			expect(screen.getByText('Saved successfully')).toBeVisible(),
+		);
 	},
 };
 

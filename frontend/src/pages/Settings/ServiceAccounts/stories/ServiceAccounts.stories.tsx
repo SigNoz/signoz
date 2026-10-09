@@ -280,3 +280,208 @@ export const RevokeKey: Story = {
 export const Viewer: Story = {
 	args: { access: 'viewer' },
 };
+
+/**
+ * A rename saved: the toast confirming it. Set Saving the account to `fails` to
+ * see the drawer keep the edit instead.
+ */
+export const AccountUpdatedToast: Story = {
+	parameters: at(`account=${ACCOUNT}`),
+	play: async ({ args }): Promise<void> => {
+		await userEvent.type(
+			await screen.findByDisplayValue('ci-pipeline', undefined, untilLoaded),
+			'-v2',
+		);
+		await userEvent.click(await screen.findByText(/save changes/i));
+		if (args.saveOutcome === 'succeeds') {
+			await waitFor(() =>
+				expect(
+					screen.getByText(/service account updated successfully/i),
+				).toBeVisible(),
+			);
+		}
+	},
+};
+
+/**
+ * A new account created: the toast confirming it. Set Creating an account to
+ * `error` or `loading` to see the dialog instead.
+ */
+export const AccountCreatedToast: Story = {
+	parameters: at('create-sa=true'),
+	play: async ({ args }): Promise<void> => {
+		await userEvent.type(
+			await screen.findByTestId('create-sa-name-input', undefined, untilLoaded),
+			'release-signer',
+		);
+		await userEvent.click(
+			await waitFor(() => {
+				const button = screen.getByTestId('create-sa-submit-btn');
+
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
+				expect(button).toBeEnabled();
+
+				return button;
+			}, untilLoaded),
+		);
+		if (args.accountCreate === 'success') {
+			await waitFor(() =>
+				expect(
+					screen.getByText(/service account created successfully/i),
+				).toBeVisible(),
+			);
+		}
+	},
+};
+
+/**
+ * An account deleted from its confirmation: the toast confirming it. Set
+ * Deleting an account to `error` or `loading` to see the dialog instead.
+ */
+export const AccountDeletedToast: Story = {
+	parameters: at(`account=${ACCOUNT}&delete-sa=true`),
+	play: async ({ args }): Promise<void> => {
+		await userEvent.click(
+			await waitFor(() => {
+				const button = screen.getByTestId('confirm-delete-btn');
+
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
+				expect(button).toBeEnabled();
+
+				return button;
+			}, untilLoaded),
+		);
+		if (args.accountDelete === 'success') {
+			await waitFor(() =>
+				expect(screen.getByText(/service account deleted/i)).toBeVisible(),
+			);
+		}
+	},
+};
+
+/**
+ * A key renamed in its dialog: the toast confirming it. Set Updating a key to
+ * `error` or `loading` to see the dialog instead.
+ */
+export const KeyUpdatedToast: Story = {
+	parameters: at(`${KEYS_TAB}&edit-key=factor-api-key-0`),
+	play: async ({ args }): Promise<void> => {
+		await userEvent.type(
+			await screen.findByPlaceholderText(
+				/enter key name/i,
+				undefined,
+				untilLoaded,
+			),
+			'-rotated',
+		);
+		await userEvent.click(
+			await waitFor(() => {
+				const button = within(screen.getByTestId('edit-key-modal')).getByRole(
+					'button',
+					{ name: 'Save Changes' },
+				);
+
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
+				expect(button).toBeEnabled();
+
+				return button;
+			}, untilLoaded),
+		);
+		if (args.keyUpdate === 'success') {
+			await waitFor(() =>
+				expect(screen.getByText(/key updated successfully/i)).toBeVisible(),
+			);
+		}
+	},
+};
+
+/**
+ * A key revoked from its edit dialog: the toast confirming it. Set Revoking a
+ * key to `error` or `loading` to see the confirmation instead.
+ */
+export const KeyRevokedFromEditToast: Story = {
+	parameters: at(`${KEYS_TAB}&edit-key=factor-api-key-0`),
+	play: async ({ args }): Promise<void> => {
+		await userEvent.click(
+			await waitFor(() => {
+				const button = screen.getByRole('button', { name: 'Revoke Key' });
+
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
+				expect(button).toBeEnabled();
+
+				return button;
+			}, untilLoaded),
+		);
+		const dialog = await screen.findByRole(
+			'dialog',
+			{ name: /revoke production-writer/i },
+			untilLoaded,
+		);
+
+		await userEvent.click(
+			await waitFor(() => {
+				const button = within(dialog).getByRole('button', {
+					name: 'Revoke Key',
+				});
+
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
+				expect(button).toBeEnabled();
+
+				return button;
+			}, untilLoaded),
+		);
+		if (args.keyRevoke === 'success') {
+			await waitFor(() =>
+				expect(screen.getByText(/key revoked successfully/i)).toBeVisible(),
+			);
+		}
+	},
+};
+
+/**
+ * A key revoked from its row's confirmation: the toast confirming it. Set
+ * Revoking a key to `error` or `loading` to see the confirmation instead.
+ */
+export const KeyRevokedToast: Story = {
+	parameters: at(`${KEYS_TAB}&revoke-key=factor-api-key-0`),
+	play: async ({ args }): Promise<void> => {
+		await userEvent.click(
+			await waitFor(() => {
+				const button = screen.getByRole('button', { name: 'Revoke Key' });
+
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
+				expect(button).toBeEnabled();
+
+				return button;
+			}, untilLoaded),
+		);
+		if (args.keyRevoke === 'success') {
+			await waitFor(() =>
+				expect(screen.getByText(/key revoked successfully/i)).toBeVisible(),
+			);
+		}
+	},
+};
+
+/** The new key's secret copied from the creation dialog: the toast confirming it. */
+export const KeyCopiedToast: Story = {
+	parameters: at(`${KEYS_TAB}&add-key=true`),
+	play: async (): Promise<void> => {
+		await userEvent.type(
+			await screen.findByPlaceholderText(
+				/enter key name/i,
+				undefined,
+				untilLoaded,
+			),
+			'release-signer',
+		);
+		await userEvent.click(await screen.findByText(/create key/i));
+		// The copy button is the one beside the new key, which may have no name.
+		const key = await screen.findByText(/^sk-/, undefined, untilLoaded);
+
+		await userEvent.click(
+			within(key.parentElement as HTMLElement).getByRole('button'),
+		);
+		await screen.findByText(/key copied to clipboard/i);
+	},
+};
