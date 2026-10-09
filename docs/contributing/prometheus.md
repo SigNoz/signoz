@@ -105,8 +105,8 @@ server-side:
   would silently use the wrong offset or range.
 - Steps or ranges that are not whole seconds. The grid functions take
   whole-second parameters.
-- Grouping by `__name__`, or matching on it, in hybrid plans. The synthetic
-  name would leak into results.
+- Grouping by `__name__`, or matching on it, in hybrid plans. That needs
+  name bookkeeping the compiler does not do.
 - Name-keeping units in hybrid plans. Bare and comparison-filtered instant
   selectors and `last_over_time` keep their real `__name__` (`keepsName`).
   Substitution would replace that name. These units transpile only as full
@@ -290,14 +290,13 @@ the engine applies, to the same slot value, in the same operator order the
 AST dictates. Go instead of another SQL layer changes where, not what.
 
 A full plan's arrays map straight to the result matrix. A hybrid plan
-materializes each unit's arrays as synthetic series under its
-`__signoz_transpiled_N__` name. The engine evaluates the rewritten
-expression over a storage that serves synthetic names from memory and
-everything else live. Substitution is sound because a unit's output is a
-plain instant vector to the engine: same values at same timestamps, under a
-different name. The name cannot matter. Plans that group by or match on
-`__name__` were refused at classification. Name-keeping units are never
-substituted. One subtlety makes it exact: we write stale markers at absent
+materializes each unit's arrays as synthetic in-memory series. The engine
+evaluates the rewritten expression over a storage that resolves
+`__signoz_transpiled_N__` selectors from memory and everything else live.
+The synthetic series carry no `__name__`: substituted units all drop it, so
+the engine sees the replaced expression's exact output, same labelsets and
+same values at same timestamps. Plans that group by or match on `__name__`
+were refused at classification. Name-keeping units are never substituted. One subtlety makes it exact: we write stale markers at absent
 grid points. Without them, the engine's lookback would resurrect a point
 from up to `lookback` earlier. The marker encodes "absent here" the way the
 engine itself encodes it. Units evaluate concurrently. Each unit is one
