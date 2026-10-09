@@ -7,7 +7,13 @@ import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/quer
 import type { PanelOfKind } from '../../../types/rendererProps';
 import { getTopListDataWarning } from '../warnings';
 
-const panel = {} as PanelOfKind<'signoz/TopListPanel'>;
+const panelWith = (
+	appearance: { showShare?: boolean } = {},
+): PanelOfKind<'signoz/TopListPanel'> =>
+	({
+		spec: { plugin: { spec: { appearance } } },
+	}) as unknown as PanelOfKind<'signoz/TopListPanel'>;
+const panel = panelWith();
 
 interface Column {
 	name: string;

@@ -8,7 +8,13 @@ import type { PanelOfKind } from '../../../types/rendererProps';
 import { prepareTopListData } from '../prepareData';
 import { getTopListDataWarning } from '../warnings';
 
-const panel = {} as PanelOfKind<'signoz/TopListPanel'>;
+const panelWith = (
+	appearance: { showShare?: boolean } = {},
+): PanelOfKind<'signoz/TopListPanel'> =>
+	({
+		spec: { plugin: { spec: { appearance } } },
+	}) as unknown as PanelOfKind<'signoz/TopListPanel'>;
+const panel = panelWith();
 
 interface Result {
 	queryName: string;
@@ -210,5 +216,55 @@ describe('top list value name', () => {
 
 	it('falls back to the query name with nothing to describe it', () => {
 		expect(prepareTopListData(dataWith([A], [query('A')])).valueName).toBe('A');
+	});
+});
+
+describe('share of total warning', () => {
+	const ranked = (aggregation: Partial<Record<string, string>>): Envelope => ({
+		type: 'builder_query',
+		spec: { name: 'A', aggregations: [aggregation] },
+	});
+	const sharePanel = panelWith({ showShare: true });
+	const shareMessage = (data: PanelQueryData): string | undefined =>
+		getTopListDataWarning(sharePanel, data)?.messages?.find((message) =>
+			message.startsWith('Share of total'),
+		);
+
+	it.each([
+		{
+			scenario: 'a percentile',
+			aggregation: { expression: 'p99(duration_nano)' },
+		},
+		{ scenario: 'an average', aggregation: { expression: 'avg(duration_nano)' } },
+		{ scenario: 'a maximum', aggregation: { expression: 'max(duration_nano)' } },
+		{
+			scenario: 'a metric averaged across series',
+			aggregation: { metricName: 'cpu', spaceAggregation: 'avg' },
+		},
+	])('warns when ranking $scenario', ({ aggregation }) => {
+		expect(shareMessage(dataWith([A], [ranked(aggregation)]))).toBeDefined();
+	});
+
+	it.each([
+		{ scenario: 'a count', aggregation: { expression: 'count()' } },
+		{ scenario: 'a sum', aggregation: { expression: 'sum(bytes)' } },
+		{
+			scenario: 'a metric summed across series',
+			aggregation: { metricName: 'signoz_calls_total', spaceAggregation: 'sum' },
+		},
+	])('stays quiet when ranking $scenario', ({ aggregation }) => {
+		expect(shareMessage(dataWith([A], [ranked(aggregation)]))).toBeUndefined();
+	});
+
+	it('stays quiet for a formula, whose aggregation it cannot tell', () => {
+		const data = dataWith([F1], [query('A'), query('B'), formula('F1', 'A / B')]);
+
+		expect(shareMessage(data)).toBeUndefined();
+	});
+
+	it('stays quiet when the panel does not show shares', () => {
+		const data = dataWith([A], [ranked({ expression: 'p99(duration_nano)' })]);
+
+		expect(getTopListDataWarning(panel, data)).toBeNull();
 	});
 });
