@@ -260,3 +260,46 @@ func TestCloneableConcurrentSetGet(t *testing.T) {
 		assert.NotSame(t, cachedCloneable, cloneables[i])
 	}
 }
+
+func TestSetGrowingExistingKeysStaysWithinMaxCost(t *testing.T) {
+	testCases := []struct {
+		name     string
+		newValue func(key string, size int) cachetypes.Cacheable
+	}{
+		{
+			name: "Cloneable",
+			newValue: func(key string, size int) cachetypes.Cacheable {
+				return &LargeCloneable{Key: key, CostHint: int64(size)}
+			},
+		},
+		{
+			name: "Cacheable",
+			newValue: func(key string, size int) cachetypes.Cacheable {
+				return &CacheableB{Key: strings.Repeat(key, size/len(key))}
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			var maxCost int64 = 1 << 20
+			c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
+				NumCounters: 10 * 1000,
+				MaxCost:     maxCost,
+			}})
+			require.NoError(t, err)
+
+			orgID := valuer.GenerateUUID()
+			// 20 keys rewritten up to 100 KB each: 2 MB in total if updates never evict.
+			for round := 1; round <= 50; round++ {
+				for k := 0; k < 20; k++ {
+					key := fmt.Sprintf("key-%02d", k)
+					_ = c.Set(context.Background(), orgID, key, testCase.newValue(key, round*2000), time.Hour)
+				}
+			}
+
+			metrics := c.(*provider).cc.Metrics
+			assert.LessOrEqual(t, int64(metrics.CostAdded())-int64(metrics.CostEvicted()), maxCost)
+		})
+	}
+}

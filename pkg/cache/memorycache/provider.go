@@ -120,7 +120,7 @@ func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey s
 		span.SetAttributes(attribute.Bool("memory.cloneable", true))
 		span.SetAttributes(attribute.Int64("memory.cost", cost))
 		toCache := cloneable.Clone()
-		if ok := provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, cost, ttl); !ok {
+		if ok := provider.setWithEviction(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, cost, ttl); !ok {
 			return errors.New(errors.TypeInternal, errors.CodeInternal, "error writing to cache")
 		}
 
@@ -137,7 +137,7 @@ func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey s
 	span.SetAttributes(attribute.Bool("memory.cloneable", false))
 	span.SetAttributes(attribute.Int64("memory.cost", cost))
 
-	if ok := provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, cost, ttl); !ok {
+	if ok := provider.setWithEviction(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, cost, ttl); !ok {
 		return errors.New(errors.TypeInternal, errors.CodeInternal, "error writing to cache")
 	}
 
@@ -227,4 +227,11 @@ func (provider *provider) unmarshalBinary(ctx context.Context, dest cachetypes.C
 	))
 	defer span.End()
 	return dest.UnmarshalBinary(fromCache)
+}
+
+// setWithEviction writes the key as a new item: ristretto evicts only on
+// insert, so updating an existing key in place can grow the cache past MaxCost.
+func (provider *provider) setWithEviction(key string, value any, cost int64, ttl time.Duration) bool {
+	provider.cc.Del(key)
+	return provider.cc.SetWithTTL(key, value, cost, ttl)
 }
