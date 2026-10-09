@@ -36,6 +36,7 @@ import {
 	filterOptionsBySearch,
 	findOptionLabelText,
 	handleScrollToBottom,
+	findOptionLabel,
 	prioritizeOrAddOptionForMultiSelect,
 	SPACEKEY,
 } from './utils';
@@ -73,6 +74,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	onDropdownVisibleChange,
 	showIncompleteDataMessage = false,
 	showLabels = false,
+	preserveOptionOrder = false,
 	enableRegexOption = false,
 	isDynamicVariable = false,
 	showRetryButton = true,
@@ -311,7 +313,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			]);
 		} else {
 			setVisibleOptions(
-				selectedValues.length > 0 && isEmpty(searchText)
+				selectedValues.length > 0 && isEmpty(searchText) && !preserveOptionOrder
 					? prioritizeOrAddOptionForMultiSelect(filteredOptions, selectedValues)
 					: filteredOptions,
 			);
@@ -1475,6 +1477,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		const shouldPrioritize =
 			selectedValues.length > 0 &&
 			isEmpty(searchText) &&
+			!preserveOptionOrder &&
 			!(hasSections && (allOptionShown || isAllSelected));
 
 		const processedOptions = shouldPrioritize
@@ -1805,6 +1808,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		isDynamicVariable,
 		showRetryButton,
 		waitingMessage,
+		preserveOptionOrder,
 	]);
 
 	// Custom handler for dropdown visibility changes
@@ -1892,7 +1896,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			const { label: labelProp, value, closable, onClose } = props;
 
 			const label = showLabels
-				? options.find((option) => option.value === value)?.label || labelProp
+				? findOptionLabel(options, value) || labelProp
 				: labelProp;
 
 			// If the display value is the special ALL value, render the ALL tag

@@ -1,20 +1,21 @@
 import { Color } from '@signozhq/design-tokens';
-import { Badge, BadgeColor } from '@signozhq/ui/badge';
-import { InframonitoringtypesNodeRecordDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	InframonitoringtypesNodeConditionDTO,
+	InframonitoringtypesNodeRecordDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 
 import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
+import ClickableStatusBadge from '../Base/components/StatusFilterCells/ClickableStatusBadge';
+import ClickableStatusCounts from '../Base/components/StatusFilterCells/ClickableStatusCounts';
 import { formatBytes, getPodStatusItems } from '../commonUtils';
 import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
-import {
-	GroupedStatusCounts,
-	TextNoData,
-	ValidateColumnValueWrapper,
-} from '../components';
+import { TextNoData, ValidateColumnValueWrapper } from '../components';
 import { InfraMonitoringEntity } from '../constants';
+import { NODE_CONDITION_COLORS, NODE_CONDITION_LABELS } from './utils';
 import { Workflow } from '@signozhq/icons';
 
 export function getK8sNodeRowKey(
@@ -30,18 +31,6 @@ export function getK8sNodeItemKey(
 ): string {
 	return node.nodeName;
 }
-
-const NODE_CONDITION_COLORS: Record<string, BadgeColor> = {
-	ready: 'forest',
-	not_ready: 'amber',
-	no_data: 'secondary',
-};
-
-const NODE_CONDITION_LABEL_MAP: Record<string, string> = {
-	ready: 'Ready',
-	not_ready: 'Not Ready',
-	no_data: 'No Data',
-};
 
 export type NodeTableColumnConfig =
 	TableColumnDef<InframonitoringtypesNodeRecordDTO>;
@@ -107,24 +96,31 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 				}
 
 				return (
-					<Badge color={color} variant="outline">
-						{NODE_CONDITION_LABEL_MAP[row.condition] || 'Unknown'}
-					</Badge>
+					<ClickableStatusBadge
+						color={color}
+						label={NODE_CONDITION_LABELS[row.condition] || 'Unknown'}
+						status={row.condition}
+						kind="node"
+						rowId={rowId}
+					/>
 				);
 			}
 
 			return (
-				<GroupedStatusCounts
+				<ClickableStatusCounts
+					kind="node"
 					items={[
 						{
 							value: row.nodeCountsByReadiness?.ready ?? 0,
 							label: 'Ready',
 							color: Color.BG_FOREST_500,
+							statuses: [InframonitoringtypesNodeConditionDTO.ready],
 						},
 						{
 							value: row.nodeCountsByReadiness?.notReady ?? 0,
 							label: 'Not Ready',
 							color: Color.BG_AMBER_500,
+							statuses: [InframonitoringtypesNodeConditionDTO.not_ready],
 						},
 					]}
 					rowId={rowId}
@@ -149,7 +145,8 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 				return <TextNoData type="tanstack" />;
 			}
 			return (
-				<GroupedStatusCounts
+				<ClickableStatusCounts
+					kind="pod"
 					items={getPodStatusItems(row.podCountsByStatus)}
 					rowId={rowId}
 				/>

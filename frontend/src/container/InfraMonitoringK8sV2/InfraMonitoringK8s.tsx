@@ -18,6 +18,7 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import { CategoryIcon } from './Base/categoryIcons';
 import { K8sDynamicList } from './Base/K8sDynamicList';
+import EntityStatusFilter from './Base/components/EntityStatusFilter/EntityStatusFilter';
 import {
 	GetClustersQuickFiltersConfig,
 	GetContainersQuickFiltersConfig,
@@ -36,9 +37,12 @@ import {
 } from './constants';
 import {
 	useInfraMonitoringCategory,
+	useInfraMonitoringContainerStatusFilter,
 	useInfraMonitoringGroupBy,
+	useInfraMonitoringNodeReadinessFilter,
 	useInfraMonitoringOrderBy,
 	useInfraMonitoringPageListing,
+	useInfraMonitoringPodStatusFilter,
 	useInfraMonitoringSelectedItemParams,
 } from './hooks';
 
@@ -60,6 +64,9 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	const [, setOrderBy] = useInfraMonitoringOrderBy();
 	const [, setSelectedItemParams] = useInfraMonitoringSelectedItemParams();
 	const [, setCurrentPage] = useInfraMonitoringPageListing();
+	const [, setPodStatusFilter] = useInfraMonitoringPodStatusFilter();
+	const [, setNodeReadinessFilter] = useInfraMonitoringNodeReadinessFilter();
+	const [, setContainerStatusFilter] = useInfraMonitoringContainerStatusFilter();
 
 	const compositeQuery = useGetCompositeQueryParam();
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
@@ -219,6 +226,9 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			void setGroupBy(null);
 			void setCurrentPage(null);
 			setSelectedItemParams(null);
+			void setPodStatusFilter(null);
+			void setNodeReadinessFilter(null);
+			void setContainerStatusFilter(null);
 			redirectWithQueryBuilderData({
 				...currentQuery,
 				builder: {
@@ -326,7 +336,10 @@ export default function InfraMonitoringK8s(): JSX.Element {
 							showFilters ? styles.listContainerFiltersVisible : ''
 						}`}
 					>
-						<K8sDynamicList controlListPrefix={showFiltersComp} />
+						<K8sDynamicList
+							controlListPrefix={showFiltersComp}
+							leftFilters={<EntityStatusFilter />}
+						/>
 					</div>
 				</div>
 			</div>
