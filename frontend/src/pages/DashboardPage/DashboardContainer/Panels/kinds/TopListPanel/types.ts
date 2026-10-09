@@ -10,6 +10,8 @@ export interface TopListRow {
 	rawValue: unknown;
 	/** Bar length: `value` over the largest positive value, 0–1. Zero for values ≤ 0 and null. */
 	ratio: number;
+	/** `value` over the sum of every row's value; null for null values and when any value is negative. */
+	share: number | null;
 	/** Source query, the drilldown target. */
 	queryName: string;
 	/** Group-by key → value, the drilldown filters. */
@@ -22,6 +24,8 @@ export interface TopListData {
 	labelColumnNames: string[];
 	/** The ranked value column. */
 	valueColumnName: string;
+	/** What the ranked value measures. Unlike `valueColumnName`, never the legend template. */
+	valueName: string;
 	/** Value columns after the first, which the ranking ignores. */
 	ignoredValueColumns: string[];
 	/** Other enabled queries and formulas, which the ranking ignores. */
