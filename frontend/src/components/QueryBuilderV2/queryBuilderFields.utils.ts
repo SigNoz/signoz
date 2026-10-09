@@ -33,7 +33,12 @@ function fromRule(rule: QueryBuilderFieldRule): ResolvedQueryBuilderField {
 				pinned: false,
 			};
 		case 'pinned':
-			return { hidden: false, disabled: false, pinned: true };
+			return {
+				hidden: false,
+				disabled: false,
+				pinned: true,
+				...(rule.placeholder !== undefined && { placeholder: rule.placeholder }),
+			};
 		default:
 			return AVAILABLE;
 	}

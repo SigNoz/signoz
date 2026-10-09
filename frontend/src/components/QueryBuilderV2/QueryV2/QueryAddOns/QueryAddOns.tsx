@@ -223,6 +223,14 @@ function QueryAddOns({
 
 	const { handleSetQueryData, currentQuery } = useQueryBuilder();
 
+	// A panel's default limit applies only to a lone query: per-query limits can keep
+	// different groups and break a formula's join.
+	const isLoneQuery =
+		(currentQuery.builder?.queryData?.length ?? 1) +
+			(currentQuery.builder?.queryFormulas?.length ?? 0) +
+			(currentQuery.builder?.queryTraceOperator?.length ?? 0) <=
+		1;
+
 	const supportedAddOns = useMemo((): AddOn[] => {
 		let addOns: AddOn[];
 
@@ -519,7 +527,8 @@ function QueryAddOns({
 								onChange={handleChangeLimit}
 								initialValue={query?.limit ?? undefined}
 								placeholder={
-									resolvedFields.get(QueryBuilderField.Limit)?.placeholder ??
+									(isLoneQuery &&
+										resolvedFields.get(QueryBuilderField.Limit)?.placeholder) ||
 									'Enter limit'
 								}
 								onClose={(): void => handleRemoveView(QueryBuilderField.Limit)}
@@ -552,6 +561,9 @@ function QueryAddOns({
 										onChange={handleChangeOrderByKeys}
 										isRawQuery={isRawQuery}
 										isNewQueryV2
+										placeholder={
+											resolvedFields.get(QueryBuilderField.OrderBy)?.placeholder
+										}
 									/>
 								</div>
 								{!isPinned(QueryBuilderField.OrderBy) && (

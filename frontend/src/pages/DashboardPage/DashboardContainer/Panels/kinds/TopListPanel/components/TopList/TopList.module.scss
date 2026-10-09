@@ -1,0 +1,68 @@
+@use '../../../../../../../../styles/scrollbar' as *;
+
+.container {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	@include custom-scrollbar;
+}
+
+// Rows share these columns through subgrid: the rank, value and share that are shown
+// (--leading-columns), then the bar with its label. Vertical padding is set inline,
+// where it also stands in for unrendered rows.
+.list {
+	display: grid;
+	grid-template-columns:
+		repeat(var(--leading-columns, 1), max-content)
+		minmax(0, 1fr);
+	align-content: start;
+	column-gap: 10px;
+	row-gap: 1px;
+	margin: 0;
+	padding-inline: 4px;
+	list-style: none;
+}
+
+// Zero-height row holding the widest value, so the shared columns keep
+// their size while rows scroll in and out of the rendered window. The negative
+// margin cancels the row gap after it.
+.sizer {
+	display: grid;
+	grid-column: 1 / -1;
+	grid-template-columns: subgrid;
+	height: 0;
+	margin-bottom: -1px;
+	padding: 0 8px;
+	overflow: hidden;
+	visibility: hidden;
+	white-space: nowrap;
+}
+
+.sizerValue {
+	font-size: 12px;
+	font-weight: var(--font-weight-medium);
+	font-variant-numeric: tabular-nums;
+}
+
+.sizerMuted {
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+}
+
+// Measured for label truncation, so it carries the label's font.
+.sizerBar {
+	font-size: 12px;
+}
+
+// Lets the pointer pass through to the rows underneath; otherwise the tooltip catches
+// it and stops following.
+// Sized to its content like the chart tooltips, up to TooltipPlugin's maxWidth/maxHeight;
+// the floor keeps a short one from collapsing narrower than a scatter tooltip.
+.tooltip {
+	width: max-content;
+	min-width: 320px;
+	max-width: 450px;
+	max-height: 600px;
+	overflow: auto;
+	pointer-events: none;
+}

@@ -24,13 +24,14 @@ export enum QueryBuilderField {
 
 /**
  * `reason` is required on `disabled`: an inert control the user can see has to explain itself.
- * `defaulted` leaves the field as is; its placeholder names the value an empty field falls back to.
+ * `defaulted` leaves the field as is; its placeholder names the value an empty field falls back to,
+ * as a `pinned` field's may.
  */
 export type QueryBuilderFieldRule =
 	| { state: 'defaulted'; placeholder: string }
 	| { state: 'hidden' }
 	| { state: 'disabled'; reason: string }
-	| { state: 'pinned' };
+	| { state: 'pinned'; placeholder?: string };
 
 /**
  * A caller's narrowing of the builder's surface. The builder works out which fields suit

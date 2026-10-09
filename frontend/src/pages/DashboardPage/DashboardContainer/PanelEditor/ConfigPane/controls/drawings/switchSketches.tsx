@@ -26,6 +26,22 @@ export const SWITCH_SKETCHES = {
 			))}
 		</SketchSvg>
 	),
+	rank: (
+		<SketchSvg>
+			{[5, 11, 17].map((y, index) => (
+				<g key={y}>
+					<circle cx={4} cy={y} r={1.2} fill="var(--l3-foreground)" />
+					<path d={`M9 ${y} H${36 - index * 9}`} />
+				</g>
+			))}
+		</SketchSvg>
+	),
+	share: (
+		<SketchSvg>
+			<path d="M3 11 H37" strokeDasharray="3 3" />
+			<rect x={3} y={8} width={22} height={6} fill="var(--l3-foreground)" />
+		</SketchSvg>
+	),
 	combine: (
 		<SketchSvg>
 			<rect x={4} y={10} width={6} height={10} />

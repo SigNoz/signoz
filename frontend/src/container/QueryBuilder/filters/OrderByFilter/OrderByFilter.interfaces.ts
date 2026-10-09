@@ -9,6 +9,8 @@ export type OrderByFilterProps = {
 	isRawQuery?: boolean;
 	entityVersion?: string;
 	isNewQueryV2?: boolean;
+	/** Shown while no order is set, e.g. to name the order the server falls back to. */
+	placeholder?: string;
 };
 
 export type OrderByFilterValue = {

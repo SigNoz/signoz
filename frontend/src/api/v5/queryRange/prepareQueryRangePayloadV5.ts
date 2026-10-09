@@ -54,6 +54,7 @@ export function mapPanelTypeToRequestType(panelType: PANEL_TYPES): RequestType {
 		case PANEL_TYPES.SCATTER:
 		case PANEL_TYPES.PIE:
 		case PANEL_TYPES.VALUE:
+		case PANEL_TYPES.TOP_LIST:
 			return 'scalar';
 		case PANEL_TYPES.TRACE:
 			return 'trace';
@@ -281,7 +282,8 @@ export function createAggregation(
 		(panelType === PANEL_TYPES.TABLE ||
 			panelType === PANEL_TYPES.SCATTER ||
 			panelType === PANEL_TYPES.PIE ||
-			panelType === PANEL_TYPES.VALUE);
+			panelType === PANEL_TYPES.VALUE ||
+			panelType === PANEL_TYPES.TOP_LIST);
 
 	if (queryData.dataSource === DataSource.METRICS) {
 		return [

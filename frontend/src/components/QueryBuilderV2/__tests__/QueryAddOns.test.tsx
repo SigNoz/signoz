@@ -15,6 +15,9 @@ import QueryAddOns from '../QueryV2/QueryAddOns/QueryAddOns';
 // Mocks: only what is required for this component to render and for us to assert handler calls
 const mockHandleChangeQueryData = jest.fn();
 const mockHandleSetQueryData = jest.fn();
+let mockCurrentQuery: { unit: string | undefined; builder?: unknown } = {
+	unit: undefined,
+};
 
 jest.mock('hooks/queryBuilder/useQueryBuilderOperations', () => ({
 	useQueryOperations: (): {
@@ -27,10 +30,10 @@ jest.mock('hooks/queryBuilder/useQueryBuilderOperations', () => ({
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: (): {
 		handleSetQueryData: typeof mockHandleSetQueryData;
-		currentQuery: { unit: string | undefined };
+		currentQuery: typeof mockCurrentQuery;
 	} => ({
 		handleSetQueryData: mockHandleSetQueryData,
-		currentQuery: { unit: undefined },
+		currentQuery: mockCurrentQuery,
 	}),
 }));
 
@@ -46,9 +49,10 @@ jest.mock('container/QueryBuilder/filters/GroupByFilter/GroupByFilter', () => ({
 }));
 
 jest.mock('container/QueryBuilder/filters/OrderByFilter/OrderByFilter', () => ({
-	OrderByFilter: ({ onChange }: any): JSX.Element => (
+	OrderByFilter: ({ onChange, placeholder }: any): JSX.Element => (
 		<button
 			data-testid="orderby"
+			data-placeholder={placeholder}
 			onClick={(): void => onChange([{ columnName: 'duration', order: 'desc' }])}
 		>
 			OrderByFilter
@@ -194,6 +198,84 @@ describe('QueryAddOns', () => {
 		expect(screen.getByTestId('input-Limit')).toHaveAttribute(
 			'placeholder',
 			'Default 10,000',
+		);
+	});
+
+	describe('a pinned limit with a default', () => {
+		const renderPinnedLimit = (): void => {
+			render(
+				<QueryAddOns
+					query={baseQuery()}
+					version="v5"
+					isRawQuery={false}
+					showReduceTo={false}
+					panelType={PANEL_TYPES.TOP_LIST}
+					index={0}
+					fieldsConfig={{
+						[QueryBuilderField.Limit]: {
+							state: 'pinned',
+							placeholder: 'Default 10',
+						},
+					}}
+					isForTraceOperator={false}
+				/>,
+			);
+		};
+
+		afterEach(() => {
+			mockCurrentQuery = { unit: undefined };
+		});
+
+		it('is open with its default as the placeholder', () => {
+			renderPinnedLimit();
+
+			expect(screen.getByTestId('input-Limit')).toHaveAttribute(
+				'placeholder',
+				'Default 10',
+			);
+		});
+
+		it('drops the default once a formula joins the query', () => {
+			mockCurrentQuery = {
+				unit: undefined,
+				builder: {
+					queryData: [baseQuery()],
+					queryFormulas: [{ expression: 'A * 2' }],
+					queryTraceOperator: [],
+				},
+			};
+
+			renderPinnedLimit();
+
+			expect(screen.getByTestId('input-Limit')).toHaveAttribute(
+				'placeholder',
+				'Enter limit',
+			);
+		});
+	});
+
+	it('passes a pinned Order By its placeholder', () => {
+		render(
+			<QueryAddOns
+				query={baseQuery()}
+				version="v5"
+				isRawQuery={false}
+				showReduceTo={false}
+				panelType={PANEL_TYPES.TOP_LIST}
+				index={0}
+				fieldsConfig={{
+					[QueryBuilderField.OrderBy]: {
+						state: 'pinned',
+						placeholder: 'Default: value, desc',
+					},
+				}}
+				isForTraceOperator={false}
+			/>,
+		);
+
+		expect(screen.getByTestId('orderby')).toHaveAttribute(
+			'data-placeholder',
+			'Default: value, desc',
 		);
 	});
 

@@ -32,6 +32,7 @@ const EXPECTED_QUERY_TYPES: Record<PanelKind, EQueryType[]> = {
 	'signoz/HistogramPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/HeatmapPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/PieChartPanel': [QUERY_BUILDER, CLICKHOUSE],
+	'signoz/TopListPanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/TablePanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/ListPanel': [QUERY_BUILDER],
 	'signoz/ScatterPlotPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
@@ -48,6 +49,7 @@ const EXPECTED_SIGNALS: Record<PanelKind, TelemetrytypesSignalDTO[]> = {
 	// A heatmap needs a bucket axis, which only a metric carries.
 	'signoz/HeatmapPanel': [metrics],
 	'signoz/PieChartPanel': [metrics, logs, traces],
+	'signoz/TopListPanel': [metrics, logs, traces],
 	'signoz/TablePanel': [metrics, logs, traces],
 	// List renders raw rows; metrics produce no row data.
 	'signoz/ListPanel': [logs, traces],
@@ -113,6 +115,14 @@ const EXPECTED_QUERY_CAPABILITIES: Partial<
 		bucketedStepInterval: false,
 		orderTiebreaker: false,
 		serverPaginated: false,
+	},
+	'signoz/TopListPanel': {
+		requestType: scalar,
+		formatTableResultForUI: false,
+		bucketedStepInterval: false,
+		orderTiebreaker: false,
+		serverPaginated: false,
+		defaultRowLimit: 10,
 	},
 	// Only Table and Scatter Plot ask the server to join their scalar results into UI rows.
 	'signoz/TablePanel': {
