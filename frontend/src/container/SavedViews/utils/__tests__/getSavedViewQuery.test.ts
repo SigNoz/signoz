@@ -8,7 +8,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { findSavedView, getSavedViewQuery, toSavedViewSource } from '../utils';
+import { getSavedViewQuery } from '../getSavedViewQuery';
 
 jest.mock('uuid', () => ({
 	v4: (): string => 'test-id',
@@ -89,38 +89,5 @@ describe('getSavedViewQuery', () => {
 
 		// panelType travels separately (url param), the Query itself has no such field
 		expect(query).not.toHaveProperty('panelType', PANEL_TYPES.TIME_SERIES);
-	});
-});
-
-describe('toSavedViewSource', () => {
-	it('maps every explorer source page to the v2 source', () => {
-		expect(toSavedViewSource(DataSource.LOGS)).toBe(SavedviewtypesSourceDTO.logs);
-		expect(toSavedViewSource(DataSource.TRACES)).toBe(
-			SavedviewtypesSourceDTO.traces,
-		);
-		expect(toSavedViewSource(DataSource.METRICS)).toBe(
-			SavedviewtypesSourceDTO.metrics,
-		);
-		expect(toSavedViewSource('meter')).toBe(SavedviewtypesSourceDTO.meter);
-	});
-});
-
-describe('findSavedView', () => {
-	const views = [
-		{ ...makeView(), id: 'a' },
-		{ ...makeView(), id: 'b' },
-	];
-
-	it('returns the view with the matching id', () => {
-		expect(findSavedView(views, 'b')?.id).toBe('b');
-	});
-
-	it('returns undefined when the id is not in the list', () => {
-		expect(findSavedView(views, 'c')).toBeUndefined();
-	});
-
-	it('returns undefined for a null or not yet loaded list', () => {
-		expect(findSavedView(null, 'a')).toBeUndefined();
-		expect(findSavedView(undefined, 'a')).toBeUndefined();
 	});
 });

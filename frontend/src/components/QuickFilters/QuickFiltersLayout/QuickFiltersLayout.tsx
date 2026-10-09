@@ -3,6 +3,7 @@ import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import SavedViewsHeader from 'container/SavedViews/SavedViewsHeader';
 import SavedViewsPanel from 'container/SavedViews/SavedViewsPanel';
+import SavedViewsRestore from 'container/SavedViews/SavedViewsRestore';
 import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 
 import QuickFilters from '../QuickFilters';
@@ -40,7 +41,7 @@ function QuickFiltersLayout({
 	testId,
 	children,
 }: QuickFiltersLayoutProps): JSX.Element {
-	const [isViewsOpen, setIsViewsOpen] = useState(false);
+	const [isViewsListOpen, setIsViewsListOpen] = useState(false);
 	const isSavedViewEnabled = useSavedViewEnabled();
 
 	const hasQuickFilters = !!quickFilterProps;
@@ -48,19 +49,23 @@ function QuickFiltersLayout({
 
 	const showSidebar = showFilters && (hasQuickFilters || hasSavedViews);
 
-	const isPanelPinned = hasSavedViews && !hasQuickFilters;
+	const isViewsListPinned = hasSavedViews && !hasQuickFilters;
+	const isViewsListVisible = isViewsListPinned || isViewsListOpen;
 
-	const isSliding = hasQuickFilters && isViewsOpen;
+	const isSliding = hasQuickFilters && isViewsListOpen;
 
 	const savedViewsHeader = hasSavedViews ? (
 		<SavedViewsHeader
 			{...savedViewProps}
-			onOpenViews={isPanelPinned ? undefined : (): void => setIsViewsOpen(true)}
+			onOpenViews={
+				isViewsListVisible ? undefined : (): void => setIsViewsListOpen(true)
+			}
 		/>
 	) : undefined;
 
 	return (
 		<div className={cx(styles.layout, className)} data-testid={testId}>
+			{hasSavedViews && <SavedViewsRestore source={savedViewProps.source} />}
 			{showSidebar && (
 				<aside
 					className={cx(styles.sidebar, { [styles.isStatic]: !hasQuickFilters })}
@@ -80,10 +85,12 @@ function QuickFiltersLayout({
 						)}
 					</div>
 					<div className={styles.savedViews}>
-						{hasSavedViews && (isPanelPinned || isViewsOpen) && (
+						{hasSavedViews && isViewsListVisible && (
 							<SavedViewsPanel
 								{...savedViewProps}
-								onClose={isPanelPinned ? undefined : (): void => setIsViewsOpen(false)}
+								onClose={
+									isViewsListPinned ? undefined : (): void => setIsViewsListOpen(false)
+								}
 							/>
 						)}
 					</div>
