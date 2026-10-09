@@ -6,6 +6,7 @@ import (
 
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/promql/parser"
+	"github.com/prometheus/prometheus/storage"
 	"github.com/prometheus/prometheus/util/annotations"
 	"github.com/prometheus/prometheus/util/stats"
 )
@@ -26,6 +27,11 @@ type Prometheus interface {
 	// Statements returns the datastore statements the engine path of a
 	// range query would run, captured without executing them.
 	Statements(ctx context.Context, query string, start, end time.Time, step time.Duration) ([]CapturedStatement, error)
+
+	// Querier gives direct storage access for matcher-based lookups
+	// (series/label discovery) that don't fit the PromQL-expression shape
+	// QueryRange/Query evaluate.
+	Querier(mint, maxt int64) (storage.Querier, error)
 }
 
 // Result is one evaluation's outcome. The caller owns Value: the provider
