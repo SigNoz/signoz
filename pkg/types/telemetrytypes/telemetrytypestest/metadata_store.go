@@ -376,9 +376,15 @@ func (m *MockMetadataStore) GetPromotedPaths(_ context.Context, entry telemetryt
 	return m.PromotedPathsMap[entry.Signal], nil
 }
 
-// ListLogsJSONIndexes lists the JSON indexes for the logs table.
-func (m *MockMetadataStore) ListLogsJSONIndexes(ctx context.Context, filters ...string) ([]telemetrytypes.TelemetryFieldKeySkipIndex, error) {
-	return m.LogsJSONIndexes, nil
+// ListJSONIndexes narrows the stored indexes to the lookup's field context like the real query.
+func (m *MockMetadataStore) ListJSONIndexes(ctx context.Context, lookup telemetrytypes.JSONIndexLookup, filters ...string) ([]telemetrytypes.TelemetryFieldKeySkipIndex, error) {
+	indexes := []telemetrytypes.TelemetryFieldKeySkipIndex{}
+	for _, index := range m.LogsJSONIndexes {
+		if index.FieldContext.StringValue() == lookup.FieldContext.StringValue() {
+			indexes = append(indexes, index)
+		}
+	}
+	return indexes, nil
 }
 
 func (m *MockMetadataStore) updateColumnEvolutionMetadataForKeys(_ context.Context, keysToUpdate []*telemetrytypes.TelemetryFieldKey) map[string][]*telemetrytypes.EvolutionEntry {

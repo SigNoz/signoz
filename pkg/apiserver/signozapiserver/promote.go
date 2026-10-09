@@ -14,7 +14,7 @@ func (provider *provider) addPromoteRoutes(router *mux.Router) error {
 		ID:                 "PromotePaths",
 		Tags:               []string{"promote"},
 		Summary:            "Promote paths",
-		Description:        "This endpoint promotes paths of JSON columns to their promoted columns. Each path names its promotion domain with its signal and context, e.g. traces/attribute.",
+		Description:        "This endpoint promotes paths of JSON columns to their promoted columns. Each path names its promotion target with its signal and context, e.g. traces/attribute.",
 		Request:            new([]*promotetypes.PromotePath),
 		RequestContentType: "application/json",
 		RequestExamples: []handler.OpenAPIExample{
@@ -25,7 +25,7 @@ func (provider *provider) addPromoteRoutes(router *mux.Router) error {
 					{
 						"signal":  "logs",
 						"context": "body",
-						"path":    "body.user.name",
+						"path":    "user.name",
 						"promote": true,
 						"indexes": []map[string]any{
 							{"fieldDataType": "string", "type": "ngrambf_v1(4, 1024, 2, 0)", "granularity": 1},
