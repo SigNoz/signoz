@@ -5,13 +5,13 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@signozhq/ui/dialog';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import { ConfigProvider } from 'antd';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { useRef } from 'react';
 
 import ViewPanelModalContent from './ViewPanelModalContent';
+import ViewPanelModalTitle from './ViewPanelModalTitle';
 import styles from './ViewPanelModal.module.scss';
 
 interface ViewPanelModalProps {
@@ -31,8 +31,6 @@ function ViewPanelModal({
 	open,
 	onClose,
 }: ViewPanelModalProps): JSX.Element {
-	const name = panel?.spec.display.name ?? '';
-
 	// Render antd popups into the dialog (not document.body) so they stay inside the
 	// modal's interactive, focus-trapped layer instead of being blocked by Radix.
 	const contentRef = useRef<HTMLDivElement>(null);
@@ -54,11 +52,11 @@ function ViewPanelModal({
 			>
 				<DialogHeader>
 					<DialogTitle>
-						<TooltipSimple title={name} arrow>
-							<Typography.Text className={styles.title}>
-								{name ? `${name} - (View mode)` : 'View mode'}
-							</Typography.Text>
-						</TooltipSimple>
+						{panel ? (
+							<ViewPanelModalTitle panel={panel} />
+						) : (
+							<Typography.Text className={styles.title}>View mode</Typography.Text>
+						)}
 					</DialogTitle>
 				</DialogHeader>
 				<DialogCloseButton />
