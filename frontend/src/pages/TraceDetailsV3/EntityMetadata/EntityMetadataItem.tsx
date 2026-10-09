@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
+import cx from 'classnames';
 
 import styles from './EntityMetadataItem.module.scss';
 
@@ -20,7 +21,7 @@ function EntityMetadataItem({
 	return (
 		<TooltipSimple
 			title={tooltip}
-			tooltipContentProps={{ className: tooltipClassName }}
+			tooltipContentProps={{ className: cx(styles.tooltip, tooltipClassName) }}
 		>
 			<span className={styles.item}>
 				{icon}

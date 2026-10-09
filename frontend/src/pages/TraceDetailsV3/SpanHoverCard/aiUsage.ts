@@ -2,6 +2,14 @@ import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { GEN_AI_KEYS, getGenAiValue } from '../utils/genAi';
 
+export interface TokenUsage {
+	input: number;
+	output: number;
+	cacheRead?: number;
+	cacheWrite?: number;
+	reasoning?: number;
+}
+
 export interface SpanAiUsage {
 	inputTokens?: number;
 	outputTokens?: number;
@@ -61,4 +69,18 @@ export function getSpanAiDetails(span: SpanV3): SpanAiDetails | undefined {
 	return details.model || details.toolName || details.agentName || hasUsage
 		? details
 		: undefined;
+}
+
+export function getSpanTokenUsage(span: SpanV3): TokenUsage | undefined {
+	const usage = getSpanAiDetails(span)?.usage;
+	if (!usage) {
+		return undefined;
+	}
+	return {
+		input: usage.inputTokens ?? 0,
+		output: usage.outputTokens ?? 0,
+		cacheRead: usage.cacheReadTokens,
+		cacheWrite: usage.cacheCreationTokens,
+		reasoning: getGenAiAttributeAsNumber(span, GEN_AI_KEYS.reasoningTokens),
+	};
 }
