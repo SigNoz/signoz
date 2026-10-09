@@ -7756,6 +7756,8 @@ components:
       type: object
     PromotetypesPromotePath:
       properties:
+        context:
+          type: string
         indexes:
           items:
             $ref: '#/components/schemas/PromotetypesWrappedIndex'
@@ -7764,6 +7766,12 @@ components:
           type: string
         promote:
           type: boolean
+        signal:
+          type: string
+      required:
+      - signal
+      - context
+      - path
       type: object
     PromotetypesWrappedIndex:
       properties:
@@ -9844,6 +9852,53 @@ components:
       required:
       - aggregations
       type: object
+    SpantypesGettableTraceSummary:
+      properties:
+        ai:
+          $ref: '#/components/schemas/SpantypesTraceAISummary'
+        endTimestampMillis:
+          minimum: 0
+          type: integer
+        hasMissingSpans:
+          type: boolean
+        rootServiceEntryPoint:
+          type: string
+        rootServiceName:
+          type: string
+        rootSpanStatusCode:
+          type: string
+        startTimestampMillis:
+          minimum: 0
+          type: integer
+        totalErrorSpansCount:
+          minimum: 0
+          type: integer
+        totalSpansCount:
+          minimum: 0
+          type: integer
+      required:
+      - startTimestampMillis
+      - endTimestampMillis
+      - rootServiceName
+      - rootServiceEntryPoint
+      - rootSpanStatusCode
+      - totalSpansCount
+      - totalErrorSpansCount
+      - hasMissingSpans
+      type: object
+    SpantypesGettableTraceThread:
+      properties:
+        nextCursor:
+          type: string
+        prevCursor:
+          type: string
+        spans:
+          items:
+            $ref: '#/components/schemas/SpantypesThreadSpan'
+          type: array
+      required:
+      - spans
+      type: object
     SpantypesGettableWaterfallTrace:
       properties:
         endTimestampMillis:
@@ -10157,6 +10212,94 @@ components:
           additionalProperties: {}
           nullable: true
           type: object
+      type: object
+    SpantypesThreadSpan:
+      properties:
+        attributes:
+          additionalProperties: {}
+          type: object
+        duration_nano:
+          minimum: 0
+          type: integer
+        events:
+          items:
+            $ref: '#/components/schemas/SpantypesEvent'
+          type: array
+        has_error:
+          type: boolean
+        kind_string:
+          type: string
+        name:
+          type: string
+        parent_span_id:
+          type: string
+        references:
+          items:
+            $ref: '#/components/schemas/SpantypesOtelSpanRef'
+          type: array
+        resource:
+          additionalProperties:
+            type: string
+          type: object
+        span_id:
+          type: string
+        status_code_string:
+          type: string
+        status_message:
+          type: string
+        time_unix:
+          minimum: 0
+          type: integer
+        trace_id:
+          type: string
+      required:
+      - span_id
+      - trace_id
+      - parent_span_id
+      - name
+      - kind_string
+      - time_unix
+      - duration_nano
+      - has_error
+      - status_code_string
+      - status_message
+      - resource
+      - attributes
+      - events
+      - references
+      type: object
+    SpantypesTraceAISummary:
+      properties:
+        tokens:
+          $ref: '#/components/schemas/SpantypesTraceAITokens'
+        totalCost:
+          type: number
+      required:
+      - tokens
+      type: object
+    SpantypesTraceAITokens:
+      properties:
+        cacheRead:
+          minimum: 0
+          type: integer
+        cacheWrite:
+          minimum: 0
+          type: integer
+        input:
+          minimum: 0
+          type: integer
+        output:
+          minimum: 0
+          type: integer
+        reasoning:
+          minimum: 0
+          type: integer
+      required:
+      - input
+      - output
+      - cacheRead
+      - cacheWrite
+      - reasoning
       type: object
     SpantypesUpdatableSpanMapper:
       properties:
@@ -13297,110 +13440,6 @@ paths:
       tags:
       - llmpricingrules
       x-signoz-stability: alpha
-  /api/v1/logs/promote_paths:
-    get:
-      deprecated: false
-      description: This endpoints promotes and indexes paths
-      operationId: ListPromotedAndIndexedPaths
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    items:
-                      $ref: '#/components/schemas/PromotetypesPromotePath'
-                    nullable: true
-                    type: array
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
-      summary: Promote and index paths
-      tags:
-      - logs
-      x-signoz-stability: alpha
-    post:
-      deprecated: false
-      description: This endpoints promotes and indexes paths
-      operationId: HandlePromoteAndIndexPaths
-      requestBody:
-        content:
-          application/json:
-            schema:
-              items:
-                $ref: '#/components/schemas/PromotetypesPromotePath'
-              nullable: true
-              type: array
-      responses:
-        "201":
-          description: Created
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - EDITOR
-      - tokenizer:
-        - EDITOR
-      summary: Promote and index paths
-      tags:
-      - logs
-      x-signoz-stability: alpha
   /api/v1/org/preferences:
     get:
       deprecated: false
@@ -13571,6 +13610,152 @@ paths:
       summary: Update org preference
       tags:
       - preferences
+      x-signoz-stability: alpha
+  /api/v1/promoted_paths:
+    get:
+      deprecated: false
+      description: This endpoint lists the promoted paths of every JSON column, each
+        annotated with its signal and context. The signal, context, promoted and indexes
+        query parameters filter the listing.
+      operationId: ListPromotedPaths
+      parameters:
+      - in: query
+        name: signal
+        schema:
+          type: string
+      - in: query
+        name: context
+        schema:
+          type: string
+      - in: query
+        name: promoted
+        schema:
+          nullable: true
+          type: boolean
+      - in: query
+        name: indexes
+        schema:
+          nullable: true
+          type: boolean
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/PromotetypesPromotePath'
+                    nullable: true
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List promoted paths
+      tags:
+      - promote
+      x-signoz-stability: alpha
+    post:
+      deprecated: false
+      description: This endpoint promotes paths of JSON columns to their promoted
+        columns. Each path names its promotion target with its signal and context,
+        e.g. traces/attribute.
+      operationId: PromotePaths
+      requestBody:
+        content:
+          application/json:
+            examples:
+              logs_body:
+                summary: 'Logs body: promote a path and index it'
+                value:
+                - context: body
+                  indexes:
+                  - fieldDataType: string
+                    granularity: 1
+                    type: ngrambf_v1(4, 1024, 2, 0)
+                  path: user.name
+                  promote: true
+                  signal: logs
+              traces_attribute:
+                summary: 'Traces attribute: promote a path'
+                value:
+                - context: attribute
+                  path: http.method
+                  promote: true
+                  signal: traces
+            schema:
+              items:
+                $ref: '#/components/schemas/PromotetypesPromotePath'
+              nullable: true
+              type: array
+      responses:
+        "201":
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Promote paths
+      tags:
+      - promote
       x-signoz-stability: alpha
   /api/v1/roles:
     get:
@@ -15879,6 +16064,163 @@ paths:
       - tokenizer:
         - VIEWER
       summary: Get aggregations for a trace
+      tags:
+      - tracedetail
+      x-signoz-stability: alpha
+  /api/v1/traces/{traceID}/summary:
+    get:
+      deprecated: false
+      description: Returns the trace's time range, root span, span and error counts,
+        and whether any spans are missing. AI traces also include token and cost totals.
+      operationId: GetTraceSummary
+      parameters:
+      - in: path
+        name: traceID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesGettableTraceSummary'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get summary for a trace
+      tags:
+      - tracedetail
+      x-signoz-stability: alpha
+  /api/v1/traces/{traceID}/thread:
+    get:
+      deprecated: false
+      description: Returns the spans carrying gen_ai input or output messages in timestamp
+        order. Pass nextCursor as after or prevCursor as before to page, or spanId
+        to open the page around a span.
+      operationId: GetTraceThread
+      parameters:
+      - description: Page size, at most 100. 0 means 20.
+        in: query
+        name: limit
+        schema:
+          description: Page size, at most 100. 0 means 20.
+          type: integer
+      - description: The nextCursor of a page; returns the spans after it. Set only
+          one of after, before and spanId.
+        in: query
+        name: after
+        schema:
+          description: The nextCursor of a page; returns the spans after it. Set only
+            one of after, before and spanId.
+          type: string
+      - description: The prevCursor of a page; returns the spans before it. Set only
+          one of after, before and spanId.
+        in: query
+        name: before
+        schema:
+          description: The prevCursor of a page; returns the spans before it. Set
+            only one of after, before and spanId.
+          type: string
+      - description: Returns the page around this span. Set only one of after, before
+          and spanId.
+        in: query
+        name: spanId
+        schema:
+          description: Returns the page around this span. Set only one of after, before
+            and spanId.
+          type: string
+      - in: path
+        name: traceID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesGettableTraceThread'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get thread view for a trace
       tags:
       - tracedetail
       x-signoz-stability: alpha

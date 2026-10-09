@@ -40,7 +40,10 @@ async function fetchListData(
 	try {
 		const response = await listContainers(
 			{
-				filter: { expression: filters.filter.expression },
+				filter: {
+					expression: filters.filter.expression,
+					filterByContainerStatus: filters.filter.filterByContainerStatus,
+				},
 				groupBy: filters.groupBy?.map((g) => ({ name: g.name })),
 				offset: filters.offset,
 				limit: filters.limit ?? 10,
@@ -127,6 +130,7 @@ export const containerEntityConfig: K8sEntityConfig<
 	details: {
 		category: InfraMonitoringEntity.CONTAINERS,
 		eventCategory: InfraMonitoringEvents.Container,
+		tabsConfig: { showOverview: true },
 		queryKeyPrefix: 'container',
 		getSelectedItemExpression: k8sContainerGetSelectedItemExpression,
 		fetchEntityData,

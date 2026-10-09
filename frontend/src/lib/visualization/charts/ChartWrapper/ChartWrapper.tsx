@@ -63,20 +63,20 @@ export default function ChartWrapper({
 	);
 
 	const legendComponent = useCallback(
-		({ averageLegendWidth, showSearch }: LegendLayout): React.ReactNode => {
+		(layout: LegendLayout): React.ReactNode => {
 			if (!showLegend) {
 				return null;
 			}
 			// A pie's slices and a heatmap's groups are not uPlot series.
 			if (customLegend) {
-				return customLegend(averageLegendWidth);
+				return customLegend(layout);
 			}
 			return (
 				<UPlotLegend
 					config={config}
 					position={legendConfig.position}
-					averageLegendWidth={averageLegendWidth}
-					showSearch={showSearch}
+					averageLegendWidth={layout.averageLegendWidth}
+					showSearch={layout.showSearch}
 				/>
 			);
 		},

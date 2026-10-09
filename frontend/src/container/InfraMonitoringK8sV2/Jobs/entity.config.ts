@@ -42,7 +42,10 @@ async function fetchListData(
 	try {
 		const response = await listJobs(
 			{
-				filter: { expression: filters.filter.expression },
+				filter: {
+					expression: filters.filter.expression,
+					filterByPodStatus: filters.filter.filterByPodStatus,
+				},
 				groupBy: filters.groupBy?.map((g) => ({ name: g.name })),
 				offset: filters.offset,
 				limit: filters.limit ?? 10,
@@ -132,6 +135,7 @@ export const jobEntityConfig: K8sEntityConfig<
 	details: {
 		category: InfraMonitoringEntity.JOBS,
 		eventCategory: InfraMonitoringEvents.Job,
+		tabsConfig: { showOverview: true },
 		queryKeyPrefix: 'job',
 		getSelectedItemExpression: k8sJobGetSelectedItemExpression,
 		fetchEntityData,

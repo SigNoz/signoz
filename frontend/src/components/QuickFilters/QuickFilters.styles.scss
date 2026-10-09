@@ -12,6 +12,7 @@
 		overflow: visible;
 		position: relative;
 		align-self: stretch;
+		clip-path: inset(0 -100vw 0 0);
 	}
 }
 
@@ -34,7 +35,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		padding: 10.5px;
+		padding: var(--spacing-2) 10.5px;
 		border-bottom: 1px solid var(--l1-border);
 
 		.left-actions {
@@ -45,6 +46,9 @@
 			justify-content: flex-start;
 
 			.text {
+				padding-left: var(--spacing-4);
+				white-space: nowrap;
+				flex-shrink: 0;
 				color: var(--l1-foreground);
 				font-family: Inter;
 				font-size: 14px;
@@ -77,6 +81,8 @@
 			}
 
 			.select-box {
+				--combobox-trigger-width: auto;
+
 				display: flex;
 				padding: 2px 5px;
 				flex-direction: row;
@@ -94,10 +100,9 @@
 		.right-actions {
 			display: flex;
 			align-items: center;
-			gap: 10px;
-			width: 100%;
+			gap: var(--spacing-1);
+			flex-shrink: 0;
 			justify-content: flex-end;
-			--button-variant-link-color: var(--l1-foreground);
 
 			.divider-filter {
 				width: 1px;
@@ -105,26 +110,8 @@
 				background: var(--l1-background);
 			}
 
-			.sync-icon {
-				cursor: pointer;
-			}
-
-			.right-action-icon-container {
-				position: relative;
-				display: flex;
-				padding: 2px;
-				background-color: var(--l1-background);
-
-				.settings-icon {
-					height: 14px;
-					width: 14px;
-					cursor: pointer;
-				}
-
-				&.active,
-				&:hover {
-					background: var(--l2-background);
-				}
+			.active {
+				background: var(--l2-background);
 			}
 		}
 	}

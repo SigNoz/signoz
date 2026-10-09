@@ -9520,17 +9520,25 @@ export interface PromotetypesWrappedIndexDTO {
 
 export interface PromotetypesPromotePathDTO {
 	/**
+	 * @type string
+	 */
+	context: string;
+	/**
 	 * @type array
 	 */
 	indexes?: PromotetypesWrappedIndexDTO[];
 	/**
 	 * @type string
 	 */
-	path?: string;
+	path: string;
 	/**
 	 * @type boolean
 	 */
 	promote?: boolean;
+	/**
+	 * @type string
+	 */
+	signal: string;
 }
 
 export interface Querybuildertypesv5AggregationMetaDTO {
@@ -11335,6 +11343,82 @@ export interface SpantypesGettableTraceAggregationsDTO {
 	aggregations: SpantypesSpanAggregationResultDTO[];
 }
 
+export interface SpantypesTraceAITokensDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	cacheRead: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	cacheWrite: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	input: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	output: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	reasoning: number;
+}
+
+export interface SpantypesTraceAISummaryDTO {
+	tokens: SpantypesTraceAITokensDTO;
+	/**
+	 * @type number
+	 */
+	totalCost?: number;
+}
+
+export interface SpantypesGettableTraceSummaryDTO {
+	ai?: SpantypesTraceAISummaryDTO;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	endTimestampMillis: number;
+	/**
+	 * @type boolean
+	 */
+	hasMissingSpans: boolean;
+	/**
+	 * @type string
+	 */
+	rootServiceEntryPoint: string;
+	/**
+	 * @type string
+	 */
+	rootServiceName: string;
+	/**
+	 * @type string
+	 */
+	rootSpanStatusCode: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	startTimestampMillis: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	totalErrorSpansCount: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	totalSpansCount: number;
+}
+
 export interface SpantypesOtelSpanRefDTO {
 	/**
 	 * @type string
@@ -11348,6 +11432,86 @@ export interface SpantypesOtelSpanRefDTO {
 	 * @type string
 	 */
 	traceId?: string;
+}
+
+export type SpantypesThreadSpanDTOAttributes = { [key: string]: unknown };
+
+export type SpantypesThreadSpanDTOResource = { [key: string]: string };
+
+export interface SpantypesThreadSpanDTO {
+	/**
+	 * @type object
+	 */
+	attributes: SpantypesThreadSpanDTOAttributes;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	duration_nano: number;
+	/**
+	 * @type array
+	 */
+	events: SpantypesEventDTO[];
+	/**
+	 * @type boolean
+	 */
+	has_error: boolean;
+	/**
+	 * @type string
+	 */
+	kind_string: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	parent_span_id: string;
+	/**
+	 * @type array
+	 */
+	references: SpantypesOtelSpanRefDTO[];
+	/**
+	 * @type object
+	 */
+	resource: SpantypesThreadSpanDTOResource;
+	/**
+	 * @type string
+	 */
+	span_id: string;
+	/**
+	 * @type string
+	 */
+	status_code_string: string;
+	/**
+	 * @type string
+	 */
+	status_message: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	time_unix: number;
+	/**
+	 * @type string
+	 */
+	trace_id: string;
+}
+
+export interface SpantypesGettableTraceThreadDTO {
+	/**
+	 * @type string
+	 */
+	nextCursor?: string;
+	/**
+	 * @type string
+	 */
+	prevCursor?: string;
+	/**
+	 * @type array
+	 */
+	spans: SpantypesThreadSpanDTO[];
 }
 
 export type SpantypesWaterfallSpanDTOAttributesAnyOf = {
@@ -12678,17 +12842,6 @@ export type ListUnmappedLLMModels200 = {
 	status: string;
 };
 
-export type ListPromotedAndIndexedPaths200 = {
-	/**
-	 * @type array,null
-	 */
-	data: PromotetypesPromotePathDTO[] | null;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type ListOrgPreferences200 = {
 	/**
 	 * @type array
@@ -12714,6 +12867,40 @@ export type GetOrgPreference200 = {
 export type UpdateOrgPreferencePathParameters = {
 	name: string;
 };
+export type ListPromotedPathsParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	signal?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	context?: string;
+	/**
+	 * @type boolean,null
+	 * @description undefined
+	 */
+	promoted?: boolean | null;
+	/**
+	 * @type boolean,null
+	 * @description undefined
+	 */
+	indexes?: boolean | null;
+};
+
+export type ListPromotedPaths200 = {
+	/**
+	 * @type array,null
+	 */
+	data: PromotetypesPromotePathDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type ListRoles200 = {
 	/**
 	 * @type array
@@ -13017,6 +13204,51 @@ export type GetTraceAggregationsPathParameters = {
 };
 export type GetTraceAggregations200 = {
 	data: SpantypesGettableTraceAggregationsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetTraceSummaryPathParameters = {
+	traceID: string;
+};
+export type GetTraceSummary200 = {
+	data: SpantypesGettableTraceSummaryDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetTraceThreadPathParameters = {
+	traceID: string;
+};
+export type GetTraceThreadParams = {
+	/**
+	 * @type integer
+	 * @description Page size, at most 100. 0 means 20.
+	 */
+	limit?: number;
+	/**
+	 * @type string
+	 * @description The nextCursor of a page; returns the spans after it. Set only one of after, before and spanId.
+	 */
+	after?: string;
+	/**
+	 * @type string
+	 * @description The prevCursor of a page; returns the spans before it. Set only one of after, before and spanId.
+	 */
+	before?: string;
+	/**
+	 * @type string
+	 * @description Returns the page around this span. Set only one of after, before and spanId.
+	 */
+	spanId?: string;
+};
+
+export type GetTraceThread200 = {
+	data: SpantypesGettableTraceThreadDTO;
 	/**
 	 * @type string
 	 */

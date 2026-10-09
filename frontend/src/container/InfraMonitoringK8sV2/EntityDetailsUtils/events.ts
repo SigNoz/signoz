@@ -1,4 +1,7 @@
-import type { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
+import type {
+	InfraMonitoringEntity,
+	VIEWS,
+} from 'container/InfraMonitoringK8sV2/constants';
 import logEvent from 'api/common/logEvent';
 import { extractQueryPairs } from 'utils/queryContextUtils';
 import { isCustomTimeRange } from 'store/globalTime';
@@ -15,7 +18,7 @@ export function logInfraDrawerTimeRangeCustomizedEvent(
 
 export function logInfraDrawerFilterCustomizedEvent(
 	entityType: InfraMonitoringEntity,
-	tab: 'metrics' | 'logs' | 'traces' | 'events' | 'pod_metrics',
+	tab: `${VIEWS}`,
 	expression: string,
 	filterSource: 'search' | 'logs',
 ): void {

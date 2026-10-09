@@ -10,7 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 )
 
-type TraceSummary struct {
+type TraceBounds struct {
 	TraceID  string    `ch:"trace_id"`
 	Start    time.Time `ch:"start"`
 	End      time.Time `ch:"end"`
