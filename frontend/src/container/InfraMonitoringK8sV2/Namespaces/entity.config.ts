@@ -143,6 +143,7 @@ export const namespaceEntityConfig: K8sEntityConfig<
 	details: {
 		category: InfraMonitoringEntity.NAMESPACES,
 		eventCategory: InfraMonitoringEvents.Namespace,
+		tabsConfig: { showOverview: true },
 		queryKeyPrefix: 'namespace',
 		getSelectedItemExpression: k8sNamespaceGetSelectedItemExpression,
 		fetchEntityData,

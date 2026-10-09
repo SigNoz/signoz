@@ -5291,6 +5291,87 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	spec: DashboardtypesTextPanelSpecDTO;
 }
 
+export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTOKind {
+	'signoz/HeatmapPanel' = 'signoz/HeatmapPanel',
+}
+export enum DashboardtypesHeatmapYScaleDTO {
+	auto = 'auto',
+	linear = 'linear',
+	log = 'log',
+	symlog = 'symlog',
+}
+export interface DashboardtypesHeatmapAxisDTO {
+	scale?: DashboardtypesHeatmapYScaleDTO;
+}
+
+export interface DashboardtypesHeatmapAxesDTO {
+	y?: DashboardtypesHeatmapAxisDTO;
+}
+
+export enum DashboardtypesHeatmapColorModeDTO {
+	palette = 'palette',
+	opacity = 'opacity',
+}
+export enum DashboardtypesHeatmapPaletteDTO {
+	ice = 'ice',
+	moss = 'moss',
+	rust = 'rust',
+	graphite = 'graphite',
+	ember = 'ember',
+	lagoon = 'lagoon',
+	orchid = 'orchid',
+	verdant = 'verdant',
+	lava = 'lava',
+	beacon = 'beacon',
+}
+export enum DashboardtypesHeatmapColorScaleDTO {
+	log = 'log',
+	sqrt = 'sqrt',
+	linear = 'linear',
+}
+export interface DashboardtypesHeatmapColorsDTO {
+	/**
+	 * @type string
+	 */
+	fill?: string;
+	/**
+	 * @type number,null
+	 */
+	maxCount?: number | null;
+	/**
+	 * @type number,null
+	 */
+	minCount?: number | null;
+	mode?: DashboardtypesHeatmapColorModeDTO;
+	palette?: DashboardtypesHeatmapPaletteDTO;
+	scale?: DashboardtypesHeatmapColorScaleDTO;
+	/**
+	 * @type integer
+	 */
+	steps?: number;
+}
+
+export interface DashboardtypesHeatmapChartAppearanceDTO {
+	colors?: DashboardtypesHeatmapColorsDTO;
+}
+
+export interface DashboardtypesHeatmapPanelSpecDTO {
+	axes?: DashboardtypesHeatmapAxesDTO;
+	chartAppearance?: DashboardtypesHeatmapChartAppearanceDTO;
+	formatting?: DashboardtypesPanelFormattingDTO;
+	legend?: DashboardtypesLegendDTO;
+	visualization?: DashboardtypesBasicVisualizationDTO;
+}
+
+export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTO {
+	/**
+	 * @enum signoz/HeatmapPanel
+	 * @type string
+	 */
+	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTOKind;
+	spec: DashboardtypesHeatmapPanelSpecDTO;
+}
+
 export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpecDTO
@@ -5300,7 +5381,8 @@ export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTO
-	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTO;
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTO;
 
 export enum Querybuildertypesv5RequestTypeDTO {
 	scalar = 'scalar',
@@ -6226,6 +6308,7 @@ export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/HistogramPanel' = 'signoz/HistogramPanel',
 	'signoz/ListPanel' = 'signoz/ListPanel',
 	'signoz/TextPanel' = 'signoz/TextPanel',
+	'signoz/HeatmapPanel' = 'signoz/HeatmapPanel',
 }
 /**
  * @nullable
@@ -10328,6 +10411,56 @@ export interface RuletypesListableRuleDTO {
 	updatedBy?: string;
 }
 
+export interface RuletypesRuleViewDataDTO {
+	order?: RuletypesListOrderDTO;
+	/**
+	 * @type string
+	 */
+	query?: string;
+	sort?: RuletypesListSortDTO;
+	/**
+	 * @type array
+	 */
+	states?: string[];
+	/**
+	 * @type string
+	 */
+	version: string;
+}
+
+export interface RuletypesRuleViewDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	data: RuletypesRuleViewDataDTO;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+}
+
+export interface RuletypesListableRuleViewsDTO {
+	/**
+	 * @type array
+	 */
+	views: RuletypesRuleViewDTO[];
+}
+
 export interface RuletypesListableRulesDTO {
 	/**
 	 * @type array
@@ -10494,6 +10627,14 @@ export interface RuletypesPostableRuleDTO {
 	 * @type string
 	 */
 	version?: string;
+}
+
+export interface RuletypesPostableRuleViewDTO {
+	data: RuletypesRuleViewDataDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
 }
 
 export type RuletypesRuleDTOAnnotations = { [key: string]: string };
@@ -11194,6 +11335,82 @@ export interface SpantypesGettableTraceAggregationsDTO {
 	aggregations: SpantypesSpanAggregationResultDTO[];
 }
 
+export interface SpantypesTraceAITokensDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	cacheRead: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	cacheWrite: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	input: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	output: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	reasoning: number;
+}
+
+export interface SpantypesTraceAISummaryDTO {
+	tokens: SpantypesTraceAITokensDTO;
+	/**
+	 * @type number
+	 */
+	totalCost?: number;
+}
+
+export interface SpantypesGettableTraceSummaryDTO {
+	ai?: SpantypesTraceAISummaryDTO;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	endTimestampMillis: number;
+	/**
+	 * @type boolean
+	 */
+	hasMissingSpans: boolean;
+	/**
+	 * @type string
+	 */
+	rootServiceEntryPoint: string;
+	/**
+	 * @type string
+	 */
+	rootServiceName: string;
+	/**
+	 * @type string
+	 */
+	rootSpanStatusCode: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	startTimestampMillis: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	totalErrorSpansCount: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	totalSpansCount: number;
+}
+
 export interface SpantypesOtelSpanRefDTO {
 	/**
 	 * @type string
@@ -11207,6 +11424,86 @@ export interface SpantypesOtelSpanRefDTO {
 	 * @type string
 	 */
 	traceId?: string;
+}
+
+export type SpantypesThreadSpanDTOAttributes = { [key: string]: unknown };
+
+export type SpantypesThreadSpanDTOResource = { [key: string]: string };
+
+export interface SpantypesThreadSpanDTO {
+	/**
+	 * @type object
+	 */
+	attributes: SpantypesThreadSpanDTOAttributes;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	duration_nano: number;
+	/**
+	 * @type array
+	 */
+	events: SpantypesEventDTO[];
+	/**
+	 * @type boolean
+	 */
+	has_error: boolean;
+	/**
+	 * @type string
+	 */
+	kind_string: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	parent_span_id: string;
+	/**
+	 * @type array
+	 */
+	references: SpantypesOtelSpanRefDTO[];
+	/**
+	 * @type object
+	 */
+	resource: SpantypesThreadSpanDTOResource;
+	/**
+	 * @type string
+	 */
+	span_id: string;
+	/**
+	 * @type string
+	 */
+	status_code_string: string;
+	/**
+	 * @type string
+	 */
+	status_message: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	time_unix: number;
+	/**
+	 * @type string
+	 */
+	trace_id: string;
+}
+
+export interface SpantypesGettableTraceThreadDTO {
+	/**
+	 * @type string
+	 */
+	nextCursor?: string;
+	/**
+	 * @type string
+	 */
+	prevCursor?: string;
+	/**
+	 * @type array
+	 */
+	spans: SpantypesThreadSpanDTO[];
 }
 
 export type SpantypesWaterfallSpanDTOAttributesAnyOf = {
@@ -12882,6 +13179,51 @@ export type GetTraceAggregations200 = {
 	status: string;
 };
 
+export type GetTraceSummaryPathParameters = {
+	traceID: string;
+};
+export type GetTraceSummary200 = {
+	data: SpantypesGettableTraceSummaryDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetTraceThreadPathParameters = {
+	traceID: string;
+};
+export type GetTraceThreadParams = {
+	/**
+	 * @type integer
+	 * @description Page size, at most 100. 0 means 20.
+	 */
+	limit?: number;
+	/**
+	 * @type string
+	 * @description The nextCursor of a page; returns the spans after it. Set only one of after, before and spanId.
+	 */
+	after?: string;
+	/**
+	 * @type string
+	 * @description The prevCursor of a page; returns the spans before it. Set only one of after, before and spanId.
+	 */
+	before?: string;
+	/**
+	 * @type string
+	 * @description Returns the page around this span. Set only one of after, before and spanId.
+	 */
+	spanId?: string;
+};
+
+export type GetTraceThread200 = {
+	data: SpantypesGettableTraceThreadDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type ListUserPreferences200 = {
 	/**
 	 * @type array
@@ -13777,6 +14119,36 @@ export type GetUsersByRoleID200 = {
 	 * @type array
 	 */
 	data: TypesUserDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListRuleViews200 = {
+	data: RuletypesListableRuleViewsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateRuleView201 = {
+	data: RuletypesRuleViewDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteRuleViewPathParameters = {
+	id: string;
+};
+export type UpdateRuleViewPathParameters = {
+	id: string;
+};
+export type UpdateRuleView200 = {
+	data: RuletypesRuleViewDTO;
 	/**
 	 * @type string
 	 */

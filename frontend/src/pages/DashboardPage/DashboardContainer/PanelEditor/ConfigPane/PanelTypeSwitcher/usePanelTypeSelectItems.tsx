@@ -18,8 +18,7 @@ interface UsePanelTypeSelectItemsArgs {
 /**
  * Visualization-kind options for a `ConfigSelect`, each disabled (with a reason
  * tooltip) when the active query type or signal is incompatible — resolved through
- * the capabilities guard. Shared by the editor's `PanelTypeSwitcher` and the View
- * modal's header so the two selectors apply the same rule and can't drift.
+ * the capabilities guard, the same rule the editor's `PanelTypeSwitcher` applies.
  */
 export function usePanelTypeSelectItems({
 	queryType,
