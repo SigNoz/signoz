@@ -15,6 +15,7 @@ export function OrderByFilter({
 	isRawQuery = false,
 	entityVersion,
 	isNewQueryV2 = false,
+	placeholder,
 }: OrderByFilterProps): JSX.Element {
 	const getPopupContainer = useSelectPopupContainer();
 	const {
@@ -87,6 +88,7 @@ export function OrderByFilter({
 			disabled={isMetricsDataSource && isDisabledSelect}
 			showArrow={false}
 			value={selectedValue}
+			placeholder={placeholder}
 			labelInValue
 			filterOption={false}
 			options={optionsData}

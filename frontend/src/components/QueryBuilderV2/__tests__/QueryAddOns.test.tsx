@@ -49,9 +49,10 @@ jest.mock('container/QueryBuilder/filters/GroupByFilter/GroupByFilter', () => ({
 }));
 
 jest.mock('container/QueryBuilder/filters/OrderByFilter/OrderByFilter', () => ({
-	OrderByFilter: ({ onChange }: any): JSX.Element => (
+	OrderByFilter: ({ onChange, placeholder }: any): JSX.Element => (
 		<button
 			data-testid="orderby"
+			data-placeholder={placeholder}
 			onClick={(): void => onChange([{ columnName: 'duration', order: 'desc' }])}
 		>
 			OrderByFilter
@@ -251,6 +252,31 @@ describe('QueryAddOns', () => {
 				'Enter limit',
 			);
 		});
+	});
+
+	it('passes a pinned Order By its placeholder', () => {
+		render(
+			<QueryAddOns
+				query={baseQuery()}
+				version="v5"
+				isRawQuery={false}
+				showReduceTo={false}
+				panelType={PANEL_TYPES.TOP_LIST}
+				index={0}
+				fieldsConfig={{
+					[QueryBuilderField.OrderBy]: {
+						state: 'pinned',
+						placeholder: 'Default: value, desc',
+					},
+				}}
+				isForTraceOperator={false}
+			/>,
+		);
+
+		expect(screen.getByTestId('orderby')).toHaveAttribute(
+			'data-placeholder',
+			'Default: value, desc',
+		);
 	});
 
 	it('auto-opens Order By and Limit when present in query', () => {

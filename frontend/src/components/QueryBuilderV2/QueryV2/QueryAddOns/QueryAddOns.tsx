@@ -561,6 +561,9 @@ function QueryAddOns({
 										onChange={handleChangeOrderByKeys}
 										isRawQuery={isRawQuery}
 										isNewQueryV2
+										placeholder={
+											resolvedFields.get(QueryBuilderField.OrderBy)?.placeholder
+										}
 									/>
 								</div>
 								{!isPinned(QueryBuilderField.OrderBy) && (
