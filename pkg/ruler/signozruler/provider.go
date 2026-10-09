@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
@@ -149,6 +150,10 @@ func (provider *provider) CloneRule(ctx context.Context, id valuer.UUID) (*rulet
 	postableRule, err := storedRule.ToPostableRuleForCloning()
 	if err != nil {
 		return nil, err
+	}
+
+	if err := postableRule.Validate(); err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "source rule %s is not valid", id.StringValue())
 	}
 
 	body, err := json.Marshal(postableRule)

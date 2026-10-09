@@ -120,6 +120,38 @@ def test_clone_rule(
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
 
+    # a source whose channel was deleted since no longer passes create validation
+    stale_channel_name = f"clone-rule-stale-{uuid.uuid4()}"
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/channels"),
+        json={"name": stale_channel_name, "webhook_configs": [{"url": "http://localhost:9/alert", "send_resolved": False}]},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    stale_channel_id = response.json()["data"]["id"]
+    stale_rule = {
+        **SOURCE_RULE,
+        "alert": "stale channel",
+        "condition": {**SOURCE_RULE["condition"], "thresholds": {"kind": "basic", "spec": [{**SOURCE_RULE["condition"]["thresholds"]["spec"][0], "channels": [stale_channel_name]}]}},
+        "notificationSettings": {**SOURCE_RULE["notificationSettings"], "usePolicy": True},
+    }
+    stale_rule_id = create_alert_rule(stale_rule)
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"/api/v1/channels/{stale_channel_id}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{stale_rule_id}/clone"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert stale_channel_name in response.json()["error"]["message"]
+
     for rule_id in [clone["id"], second_clone["id"]]:
         response = requests.delete(
             signoz.self.host_configs["8080"].get(f"/api/v1/rules/{rule_id}"),

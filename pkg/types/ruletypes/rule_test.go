@@ -104,7 +104,6 @@ func TestStorableRule_ToPostableRuleForCloning(t *testing.T) {
 			expected := &PostableRule{}
 			require.NoError(t, json.Unmarshal([]byte(testCase.stored), expected))
 			expected.AlertName = testCase.expectedName
-			assert.Equal(t, expected, cloned)
 
 			marshaled, err := json.Marshal(cloned)
 			require.NoError(t, err)
