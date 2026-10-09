@@ -4844,8 +4844,19 @@ components:
         timePreference:
           $ref: '#/components/schemas/DashboardtypesTimePreference'
       type: object
+    DashboardtypesTopListAppearance:
+      properties:
+        showRank:
+          description: Numbers each row by its position in the list.
+          type: boolean
+        showShare:
+          description: Shows each row's share of the listed rows' total.
+          type: boolean
+      type: object
     DashboardtypesTopListPanelSpec:
       properties:
+        appearance:
+          $ref: '#/components/schemas/DashboardtypesTopListAppearance'
         formatting:
           $ref: '#/components/schemas/DashboardtypesPanelFormatting'
         thresholds:
