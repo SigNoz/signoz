@@ -4,8 +4,14 @@ import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/quer
 
 import type { PanelOfKind } from '../../types/rendererProps';
 
-import { prepareTopListData } from './prepareData';
+import {
+	getRankedAggregationFunction,
+	prepareTopListData,
+} from './prepareData';
 import type { TopListData } from './types';
+
+/** Aggregations whose group values don't add up to a meaningful total. */
+const NON_ADDITIVE_FUNCTION = /^(avg|min|max|median|p\d+|quantile)/;
 
 const quoteAll = (names: string[]): string =>
 	names.map((name) => `"${name}"`).join(', ');
@@ -90,8 +96,23 @@ function collectIssues(
 	return issues;
 }
 
+/** Share of total sums the rows, which says nothing for averages, percentiles, min or max. */
+function getShareIssue(
+	{ rows, valueName }: TopListData,
+	requestPayload: Querybuildertypesv5QueryRangeRequestDTO | undefined,
+): string | null {
+	const aggregation = getRankedAggregationFunction(
+		requestPayload,
+		rows[0].queryName,
+	);
+	if (!aggregation || !NON_ADDITIVE_FUNCTION.test(aggregation)) {
+		return null;
+	}
+	return `Share of total adds up "${valueName}" across rows, which isn't meaningful for averages, percentiles, minimums or maximums. Turn it off in Appearance, or rank a count or sum.`;
+}
+
 export function getTopListDataWarning(
-	_panel: PanelOfKind<'signoz/TopListPanel'>,
+	panel: PanelOfKind<'signoz/TopListPanel'>,
 	data: PanelQueryData,
 ): PanelStatusDetail | null {
 	const topList = prepareTopListData(data);
@@ -99,10 +120,13 @@ export function getTopListDataWarning(
 		return null;
 	}
 
-	const issues = collectIssues(
-		topList,
-		getLimitedFormulaInputs(data.requestPayload),
-	);
+	const shareIssue = panel.spec.plugin.spec.appearance?.showShare
+		? getShareIssue(topList, data.requestPayload)
+		: null;
+	const issues = [
+		...collectIssues(topList, getLimitedFormulaInputs(data.requestPayload)),
+		...(shareIssue ? [shareIssue] : []),
+	];
 	if (issues.length === 0) {
 		return null;
 	}
