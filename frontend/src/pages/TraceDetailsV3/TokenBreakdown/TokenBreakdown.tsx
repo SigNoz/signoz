@@ -8,13 +8,14 @@ import {
 import TraceTooltipRow from '../TraceTooltip/TraceTooltipRow';
 import TraceTooltipSection from '../TraceTooltip/TraceTooltipSection';
 
-type TokenBreakdownProps = Omit<AiTokenCounts, 'reasoning'>;
+type TokenBreakdownProps = AiTokenCounts;
 
 function TokenBreakdown({
 	input,
 	output,
 	cacheRead,
 	cacheWrite,
+	reasoning,
 }: TokenBreakdownProps): JSX.Element {
 	const totalInput = getTotalInputTokens({ input, cacheRead, cacheWrite });
 	const showCacheRead = hasValue(cacheRead);
@@ -88,6 +89,16 @@ function TokenBreakdown({
 					/>
 				)}
 			</TraceTooltipSection>
+
+			{hasValue(reasoning) && (
+				<TraceTooltipSection>
+					<TraceTooltipRow
+						label={getTokenLabel('Reasoning', reasoning)}
+						value={formatTokens(reasoning)}
+						isHeading
+					/>
+				</TraceTooltipSection>
+			)}
 			{outputSection}
 			{hasValue(output) && (
 				<TraceTooltipSection>
@@ -107,6 +118,7 @@ TokenBreakdown.defaultProps = {
 	output: undefined,
 	cacheRead: undefined,
 	cacheWrite: undefined,
+	reasoning: undefined,
 };
 
 export default TokenBreakdown;

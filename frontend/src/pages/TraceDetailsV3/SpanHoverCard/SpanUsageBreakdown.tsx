@@ -14,6 +14,7 @@ function SpanUsageBreakdown({ usage }: SpanUsageBreakdownProps): JSX.Element {
 		outputTokens,
 		cacheReadTokens,
 		cacheCreationTokens,
+		reasoningTokens,
 		cost,
 	} = usage;
 
@@ -24,6 +25,7 @@ function SpanUsageBreakdown({ usage }: SpanUsageBreakdownProps): JSX.Element {
 				output={outputTokens}
 				cacheRead={cacheReadTokens}
 				cacheWrite={cacheCreationTokens}
+				reasoning={reasoningTokens}
 			/>
 			{hasValue(cost) && (
 				<TraceTooltipSection>

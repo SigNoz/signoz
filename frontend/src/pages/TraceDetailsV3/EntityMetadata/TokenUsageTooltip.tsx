@@ -10,7 +10,7 @@ interface TokenUsageTooltipProps {
 }
 
 function TokenUsageTooltip({ tokens }: TokenUsageTooltipProps): JSX.Element {
-	const { input, output, cacheRead, cacheWrite } = tokens;
+	const { input, output, cacheRead, cacheWrite, reasoning } = tokens;
 
 	return (
 		<div className={styles.tokenTooltip}>
@@ -26,6 +26,7 @@ function TokenUsageTooltip({ tokens }: TokenUsageTooltipProps): JSX.Element {
 				output={output}
 				cacheRead={cacheRead}
 				cacheWrite={cacheWrite}
+				reasoning={reasoning}
 			/>
 		</div>
 	);
