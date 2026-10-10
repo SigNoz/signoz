@@ -32,6 +32,7 @@ import {
 	OpsgenieChannel,
 	PagerChannel,
 	SlackChannel,
+	TelegramChannel,
 	ValidatePagerChannel,
 	WebhookChannel,
 } from 'container/CreateAlertChannels/config';
@@ -44,6 +45,7 @@ import {
 	prepareIncidentIORequest,
 	prepareJiraRequest,
 	prepareJsmOpsRequest,
+	prepareTelegramRequest,
 } from 'container/CreateAlertChannels/utils';
 import FormAlertChannels from 'container/FormAlertChannels';
 import { useNotifications } from 'hooks/useNotifications';
@@ -70,7 +72,8 @@ function EditAlertChannels({
 				GoogleChatChannel &
 				JiraChannel &
 				JsmOpsChannel &
-				IncidentIOChannel
+				IncidentIOChannel &
+				TelegramChannel
 		>
 	>({
 		...initialValue,
@@ -637,6 +640,68 @@ function EditAlertChannels({
 		t,
 	]);
 
+	const validateTelegramConfig = useCallback((): string => {
+		if (!selectedConfig.bot_token || selectedConfig.chat_id == null) {
+			return t('telegram_required_fields');
+		}
+
+		if (selectedConfig.chat_id === 0) {
+			return t('telegram_chat_id_invalid');
+		}
+
+		if (
+			selectedConfig.message_thread_id != null &&
+			selectedConfig.message_thread_id <= 0
+		) {
+			return t('telegram_message_thread_id_invalid');
+		}
+
+		return '';
+	}, [selectedConfig, t]);
+
+	const onTelegramEditHandler = useCallback(async () => {
+		const validationError = validateTelegramConfig();
+
+		if (validationError !== '') {
+			notifications.error({
+				message: 'Error',
+				description: validationError,
+			});
+			return { status: 'failed', statusMessage: validationError };
+		}
+
+		setSavingState(true);
+
+		try {
+			await updateChannel({
+				pathParams: { id },
+				data: prepareTelegramRequest(selectedConfig),
+			});
+			notifications.success({
+				message: 'Success',
+				description: t('channel_edit_done'),
+			});
+			history.replace(ROUTES.ALL_CHANNELS);
+			return { status: 'success', statusMessage: t('channel_edit_done') };
+		} catch (error) {
+			const apiError = notifyError(error);
+			return {
+				status: 'failed',
+				statusMessage: apiError.getErrorMessage() || t('channel_edit_failed'),
+			};
+		} finally {
+			setSavingState(false);
+		}
+	}, [
+		validateTelegramConfig,
+		updateChannel,
+		id,
+		selectedConfig,
+		notifications,
+		notifyError,
+		t,
+	]);
+
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
 			let result;
@@ -660,6 +725,8 @@ function EditAlertChannels({
 				result = await onJsmOpsEditHandler();
 			} else if (value === ChannelType.IncidentIO) {
 				result = await onIncidentIOEditHandler();
+			} else if (value === ChannelType.Telegram) {
+				result = await onTelegramEditHandler();
 			}
 			logEvent('Alert Channel: Save channel', {
 				type: value,
@@ -682,6 +749,7 @@ function EditAlertChannels({
 			onJiraEditHandler,
 			onJsmOpsEditHandler,
 			onIncidentIOEditHandler,
+			onTelegramEditHandler,
 		],
 	);
 
@@ -776,6 +844,19 @@ function EditAlertChannels({
 						await testChannel({ data: prepareIncidentIORequest(selectedConfig) });
 						break;
 					}
+					case ChannelType.Telegram: {
+						const validationError = validateTelegramConfig();
+						if (validationError !== '') {
+							notifications.error({
+								message: 'Error',
+								description: validationError,
+							});
+							setTestingState(false);
+							return;
+						}
+						await testChannel({ data: prepareTelegramRequest(selectedConfig) });
+						break;
+					}
 					default:
 						notifications.error({
 							message: 'Error',
@@ -816,6 +897,7 @@ function EditAlertChannels({
 			validateJiraConfig,
 			validateJsmOpsConfig,
 			validateIncidentIOConfig,
+			validateTelegramConfig,
 			testChannel,
 			prepareWebhookRequest,
 			preparePagerRequest,

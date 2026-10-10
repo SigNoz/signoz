@@ -39,6 +39,7 @@ import {
 	OpsgenieChannel,
 	PagerChannel,
 	SlackChannel,
+	TelegramChannel,
 	ValidatePagerChannel,
 	WebhookChannel,
 } from './config';
@@ -53,6 +54,7 @@ import {
 	prepareIncidentIORequest,
 	prepareJiraRequest,
 	prepareJsmOpsRequest,
+	prepareTelegramRequest,
 } from './utils';
 
 import './CreateAlertChannels.styles.scss';
@@ -81,7 +83,8 @@ function CreateAlertChannels({
 				GoogleChatChannel &
 				JiraChannel &
 				JsmOpsChannel &
-				IncidentIOChannel
+				IncidentIOChannel &
+				TelegramChannel
 		>
 	>(() => ({
 		send_resolved: true,
@@ -604,6 +607,73 @@ function CreateAlertChannels({
 		showErrorModal,
 	]);
 
+	const validateTelegramConfig = useCallback((): boolean => {
+		if (!selectedConfig.bot_token || selectedConfig.chat_id == null) {
+			notifications.error({
+				message: 'Error',
+				description: t('telegram_required_fields'),
+			});
+			return false;
+		}
+
+		if (selectedConfig.chat_id === 0) {
+			notifications.error({
+				message: 'Error',
+				description: t('telegram_chat_id_invalid'),
+			});
+			return false;
+		}
+
+		if (
+			selectedConfig.message_thread_id != null &&
+			selectedConfig.message_thread_id <= 0
+		) {
+			notifications.error({
+				message: 'Error',
+				description: t('telegram_message_thread_id_invalid'),
+			});
+			return false;
+		}
+
+		return true;
+	}, [
+		selectedConfig.bot_token,
+		selectedConfig.chat_id,
+		selectedConfig.message_thread_id,
+		notifications,
+		t,
+	]);
+
+	const onTelegramHandler = useCallback(async () => {
+		if (!validateTelegramConfig()) {
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		}
+
+		setSavingState(true);
+
+		try {
+			await createChannel({ data: prepareTelegramRequest(selectedConfig) });
+			notifications.success({
+				message: 'Success',
+				description: t('channel_creation_done'),
+			});
+			history.replace(ROUTES.ALL_CHANNELS);
+			return { status: 'success', statusMessage: t('channel_creation_done') };
+		} catch (error) {
+			showErrorModal(toAPIError(error as ErrorType<RenderErrorResponseDTO>));
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		} finally {
+			setSavingState(false);
+		}
+	}, [
+		validateTelegramConfig,
+		createChannel,
+		selectedConfig,
+		notifications,
+		t,
+		showErrorModal,
+	]);
+
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
 			if (!selectedConfig.name) {
@@ -625,6 +695,7 @@ function CreateAlertChannels({
 				[ChannelType.Jira]: onJiraHandler,
 				[ChannelType.JsmOps]: onJsmOpsHandler,
 				[ChannelType.IncidentIO]: onIncidentIOHandler,
+				[ChannelType.Telegram]: onTelegramHandler,
 			};
 
 			if (isChannelType(value)) {
@@ -660,6 +731,7 @@ function CreateAlertChannels({
 			onJiraHandler,
 			onJsmOpsHandler,
 			onIncidentIOHandler,
+			onTelegramHandler,
 			notifications,
 			t,
 		],
@@ -725,6 +797,13 @@ function CreateAlertChannels({
 						}
 						await testChannel({ data: prepareIncidentIORequest(selectedConfig) });
 						break;
+					case ChannelType.Telegram:
+						if (!validateTelegramConfig()) {
+							setTestingState(false);
+							return;
+						}
+						await testChannel({ data: prepareTelegramRequest(selectedConfig) });
+						break;
 					default:
 						notifications.error({
 							message: 'Error',
@@ -776,6 +855,7 @@ function CreateAlertChannels({
 			validateJiraConfig,
 			validateJsmOpsConfig,
 			validateIncidentIOConfig,
+			validateTelegramConfig,
 			testChannel,
 			notifications,
 		],
