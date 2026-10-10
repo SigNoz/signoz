@@ -1,0 +1,71 @@
+.surface {
+	background-color: color-mix(in srgb, var(--l3-background) 60%, transparent);
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-2);
+	padding: var(--spacing-4);
+	box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
+	backdrop-filter: blur(20px);
+}
+
+.content {
+	--tooltip-background: color-mix(
+		in srgb,
+		var(--l3-background) 60%,
+		transparent
+	);
+	--tooltip-border-color: var(--l2-border);
+	--tooltip-border-radius: var(--radius-2);
+	--tooltip-padding: var(--spacing-4);
+	--tooltip-box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
+	/* Above the docked span details FloatingPanel (z-index 999). */
+	--tooltip-z-index: 1000;
+	backdrop-filter: blur(20px);
+}
+
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+	padding: var(--spacing-2) 0;
+	border-top: 1px solid;
+	border-image: linear-gradient(
+			90deg,
+			var(--l3-background-transparent),
+			var(--l3-border),
+			var(--l3-background-transparent)
+		)
+		1;
+}
+
+.section:first-child {
+	padding-top: 0;
+	border-top: none;
+}
+
+.section:last-child {
+	padding-bottom: 0;
+}
+
+.row {
+	display: grid;
+	grid-template-columns: auto auto;
+	justify-content: space-between;
+	column-gap: var(--spacing-2);
+	min-width: 0;
+}
+
+.nestedRow {
+	padding-left: var(--spacing-6);
+}
+
+.rowLabel {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.rowValue {
+	min-width: 0;
+	overflow-wrap: anywhere;
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
