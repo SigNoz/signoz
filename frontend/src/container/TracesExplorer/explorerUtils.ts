@@ -1,7 +1,47 @@
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { cloneDeep, set } from 'lodash-es';
-import { OrderByPayload, Query } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	OrderByPayload,
+	Query,
+	TagFilterItem,
+} from 'types/api/queryBuilder/queryBuilderData';
+import { v4 as uuid } from 'uuid';
+
+export const createRootSpanFilterItem = (): TagFilterItem => ({
+	id: uuid().slice(0, 8),
+	key: {
+		key: 'isRoot',
+		dataType: undefined,
+		type: '',
+	},
+	op: '=',
+	value: 'true',
+});
+
+export const withRootSpanFilter = (query: Query): Query => {
+	const nextQuery = cloneDeep(query);
+	const queryData = nextQuery.builder?.queryData?.[0];
+
+	if (!queryData) {
+		return nextQuery;
+	}
+
+	if (!queryData.filters) {
+		queryData.filters = { items: [], op: 'AND' };
+	}
+
+	const hasRootFilter = queryData.filters.items.some(
+		(filter) =>
+			filter.key?.key === 'isRoot' && String(filter.value) === 'true',
+	);
+
+	if (!hasRootFilter) {
+		queryData.filters.items.push(createRootSpanFilterItem());
+	}
+
+	return nextQuery;
+};
 
 export const getListViewQuery = (
 	stagedQuery: Query,
