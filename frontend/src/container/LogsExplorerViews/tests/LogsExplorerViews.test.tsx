@@ -2,6 +2,7 @@ import { VirtuosoMockContext } from 'react-virtuoso';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
+import * as compositeQueryHook from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { logsQueryRangeSuccessResponse } from 'mocks-server/__mockdata__/logs_query_range';
 import { server } from 'mocks-server/server';
@@ -395,6 +396,68 @@ describe('LogsExplorerViews -', () => {
 					expect(first.disabled).toBe(false);
 				}
 			});
+		});
+
+		it('builds List View query with the orderBy carried in the URL', async () => {
+			(useCopyLogLink as jest.Mock).mockReturnValue({ activeLogId: undefined });
+			(useGetExplorerQueryRange as jest.Mock).mockReturnValue({
+				data: { payload: logsQueryRangeSuccessNewFormatResponse },
+			});
+
+			const baseQuery = mockQueryBuilderContextValue.currentQuery;
+			const compositeQuerySpy = jest
+				.spyOn(compositeQueryHook, 'useGetCompositeQueryParam')
+				.mockReturnValue({
+					...baseQuery,
+					builder: {
+						...baseQuery.builder,
+						queryData: [
+							{
+								...baseQuery.builder.queryData[0],
+								orderBy: [{ columnName: 'timestamp', order: 'asc' }],
+							},
+						],
+					},
+				} as any);
+
+			render(
+				<VirtuosoMockContext.Provider
+					value={{ viewportHeight: 300, itemHeight: 100 }}
+				>
+					<PreferenceContextProvider>
+						<QueryBuilderContext.Provider
+							value={
+								{ ...mockQueryBuilderContextValue, panelType: PANEL_TYPES.LIST } as any
+							}
+						>
+							<LogsExplorerViews
+								setIsLoadingQueries={(): void => {}}
+								listQueryKeyRef={{ current: {} }}
+								chartQueryKeyRef={{ current: {} }}
+								setWarning={(): void => {}}
+								showLiveLogs={false}
+								handleChangeSelectedView={(): void => {}}
+							/>
+						</QueryBuilderContext.Provider>
+					</PreferenceContextProvider>
+				</VirtuosoMockContext.Provider>,
+			);
+
+			await waitFor(() => {
+				const listCall = (useGetExplorerQueryRange as jest.Mock).mock.calls.find(
+					(call) => call[1] === PANEL_TYPES.LIST && call[0],
+				);
+				expect(listCall).toBeDefined();
+				if (listCall) {
+					const first = listCall[0].builder.queryData[0];
+					expect(first.orderBy).toStrictEqual([
+						{ columnName: 'timestamp', order: 'asc' },
+						{ columnName: 'id', order: 'asc' },
+					]);
+				}
+			});
+
+			compositeQuerySpy.mockRestore();
 		});
 	});
 });

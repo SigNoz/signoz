@@ -1,5 +1,8 @@
+import { initialQueriesMap } from 'constants/queryBuilder';
+import * as queryRangeHook from 'hooks/queryBuilder/useGetQueryRange';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, waitFor } from 'tests/test-utils';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import ListView from './index';
 
@@ -183,5 +186,83 @@ describe('Traces ListView - Error and Empty States', () => {
 			const optionsButton = screen.getByText(/options_menu.options|options/i);
 			expect(optionsButton).toBeInTheDocument();
 		});
+	});
+});
+
+describe('Traces ListView - order from the URL', () => {
+	const buildRoute = (order: 'asc' | 'desc'): string => {
+		const baseQuery = initialQueriesMap.traces;
+		const query: Query = {
+			...baseQuery,
+			builder: {
+				...baseQuery.builder,
+				queryData: [
+					{
+						...baseQuery.builder.queryData[0],
+						orderBy: [{ columnName: 'timestamp', order }],
+					},
+				],
+			},
+		};
+
+		// the param is read through URLSearchParams and decoded once more by
+		// useGetCompositeQueryParam, so it lands in the URL double encoded
+		const compositeQuery = encodeURIComponent(
+			encodeURIComponent(JSON.stringify(query)),
+		);
+
+		return `/traces-explorer?compositeQuery=${compositeQuery}`;
+	};
+
+	const renderWithRoute = (
+		initialRoute: string,
+	): jest.SpyInstance<ReturnType<typeof queryRangeHook.useGetQueryRange>> => {
+		const spy = jest.spyOn(queryRangeHook, 'useGetQueryRange').mockReturnValue({
+			data: undefined,
+			isFetching: false,
+			isLoading: false,
+			isError: false,
+			error: null,
+		} as any);
+
+		render(
+			<ListView
+				isFilterApplied={false}
+				setWarning={jest.fn()}
+				setIsLoadingQueries={jest.fn()}
+			/>,
+			undefined,
+			{ initialRoute },
+		);
+
+		return spy;
+	};
+
+	it('queries with the order carried in the compositeQuery param', async () => {
+		const spy = renderWithRoute(buildRoute('asc'));
+
+		await waitFor(() => {
+			expect(spy).toHaveBeenCalled();
+			const [{ query }] = spy.mock.calls[0] as any;
+			expect(query.builder.queryData[0].orderBy).toStrictEqual([
+				{ columnName: 'timestamp', order: 'asc' },
+			]);
+		});
+
+		spy.mockRestore();
+	});
+
+	it('falls back to newest first when the URL carries no order', async () => {
+		const spy = renderWithRoute('/traces-explorer');
+
+		await waitFor(() => {
+			expect(spy).toHaveBeenCalled();
+			const [{ query }] = spy.mock.calls[0] as any;
+			expect(query.builder.queryData[0].orderBy).toStrictEqual([
+				{ columnName: 'timestamp', order: 'desc' },
+			]);
+		});
+
+		spy.mockRestore();
 	});
 });
