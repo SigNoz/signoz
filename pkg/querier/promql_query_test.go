@@ -531,3 +531,96 @@ func TestToResultDropsSeriesAndBucketLeftEmpty(t *testing.T) {
 	require.True(t, ok)
 	assert.Empty(t, tsData.Aggregations)
 }
+
+func TestPromQLReduceToOperator(t *testing.T) {
+	assert.Equal(t, qbv5.ReduceToLast, promQLReduceToOperator(qbv5.ReduceToUnknown))
+	assert.Equal(t, qbv5.ReduceToLast, promQLReduceToOperator(qbv5.ReduceTo{}))
+	assert.Equal(t, qbv5.ReduceToSum, promQLReduceToOperator(qbv5.ReduceToSum))
+	assert.Equal(t, qbv5.ReduceToAvg, promQLReduceToOperator(qbv5.ReduceToAvg))
+	assert.Equal(t, qbv5.ReduceToMin, promQLReduceToOperator(qbv5.ReduceToMin))
+	assert.Equal(t, qbv5.ReduceToMax, promQLReduceToOperator(qbv5.ReduceToMax))
+	assert.Equal(t, qbv5.ReduceToCount, promQLReduceToOperator(qbv5.ReduceToCount))
+	assert.Equal(t, qbv5.ReduceToMedian, promQLReduceToOperator(qbv5.ReduceToMedian))
+}
+
+func TestPromQLScalarReduceTo(t *testing.T) {
+	tests := []struct {
+		name          string
+		reduceTo      qbv5.ReduceTo
+		expectedValue float64
+	}{
+		{
+			name:          "default to last when unspecified",
+			reduceTo:      qbv5.ReduceToUnknown,
+			expectedValue: 30.0,
+		},
+		{
+			name:          "reduce to sum",
+			reduceTo:      qbv5.ReduceToSum,
+			expectedValue: 60.0,
+		},
+		{
+			name:          "reduce to avg",
+			reduceTo:      qbv5.ReduceToAvg,
+			expectedValue: 20.0,
+		},
+		{
+			name:          "reduce to min",
+			reduceTo:      qbv5.ReduceToMin,
+			expectedValue: 10.0,
+		},
+		{
+			name:          "reduce to max",
+			reduceTo:      qbv5.ReduceToMax,
+			expectedValue: 30.0,
+		},
+		{
+			name:          "reduce to count",
+			reduceTo:      qbv5.ReduceToCount,
+			expectedValue: 3.0,
+		},
+		{
+			name:          "reduce to median",
+			reduceTo:      qbv5.ReduceToMedian,
+			expectedValue: 20.0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			q := &promqlQuery{
+				query: qbv5.PromQuery{
+					Name:     "A",
+					ReduceTo: tt.reduceTo,
+				},
+				requestType: qbv5.RequestTypeScalar,
+			}
+			matrix := promql.Matrix{
+				{
+					Metric: labels.FromStrings("job_name", "testJob"),
+					Floats: []promql.FPoint{
+						{T: 1000, F: 10.0},
+						{T: 2000, F: 20.0},
+						{T: 3000, F: 30.0},
+					},
+				},
+			}
+
+			var mu sync.Mutex
+			var rows, bytes uint64
+			result, err := q.toResult(matrix, nil, time.Now(), &mu, &rows, &bytes)
+			require.NoError(t, err)
+			require.Equal(t, qbv5.RequestTypeScalar, result.Type)
+
+			scalarData, ok := result.Value.(*qbv5.ScalarData)
+			require.True(t, ok)
+			require.Equal(t, "A", scalarData.QueryName)
+			require.Len(t, scalarData.Data, 1)
+
+			row := scalarData.Data[0]
+			require.NotEmpty(t, row)
+			val := row[len(row)-1]
+			assert.InDelta(t, tt.expectedValue, val, 1e-6)
+		})
+	}
+}

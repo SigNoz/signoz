@@ -13,6 +13,9 @@ type PromQuery struct {
 	Stats bool `json:"stats"`
 
 	Legend string `json:"legend"`
+
+	// reduce to operator for scalar requests
+	ReduceTo ReduceTo `json:"reduceTo,omitzero"`
 }
 
 // Copy creates a deep copy of the PromQuery.
