@@ -2,8 +2,6 @@ package resourcefilter
 
 import (
 	"context"
-	"encoding/json"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -13,33 +11,6 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/require"
 )
-
-// likeToRegexp mirrors ClickHouse LIKE: % is any run, _ is one character and
-// a backslash escapes the next character.
-func likeToRegexp(pattern string) *regexp.Regexp {
-	var b strings.Builder
-	b.WriteString("(?s)^")
-	runes := []rune(pattern)
-	for i := 0; i < len(runes); i++ {
-		switch r := runes[i]; r {
-		case '%':
-			b.WriteString(".*")
-		case '_':
-			b.WriteString(".")
-		case '\\':
-			if i+1 < len(runes) {
-				i++
-				b.WriteString(regexp.QuoteMeta(string(runes[i])))
-			} else {
-				b.WriteString(regexp.QuoteMeta(`\`))
-			}
-		default:
-			b.WriteString(regexp.QuoteMeta(string(r)))
-		}
-	}
-	b.WriteString("$")
-	return regexp.MustCompile(b.String())
-}
 
 // negatedLabelHints returns the patterns bound to `labels NOT LIKE ?`.
 func negatedLabelHints(sql string, args []any) []string {
@@ -53,34 +24,31 @@ func negatedLabelHints(sql string, args []any) []string {
 	return hints
 }
 
-// The labels column holds the collector's json.Marshal of the resource map, so
-// a negated hint must never match a row whose value differs from the operand.
+// The labels column holds the collector's json.Marshal of the resource map, and a
+// LIKE hint over it cannot be anchored to one key's value, so a negated filter
+// must carry no `labels NOT LIKE` hint and rely on the exact value comparison.
 func TestNegatedIndexHintKeepsRowsThatMatchTheFilter(t *testing.T) {
 	cases := []struct {
-		name   string
-		key    string
-		op     qbtypes.FilterOperator
-		value  any
-		labels map[string]string
+		name  string
+		key   string
+		op    qbtypes.FilterOperator
+		value any
 	}{
-		{"not equal keeps a longer value", "deployment.environment", qbtypes.FilterOperatorNotEqual, "prod", map[string]string{"deployment.environment": "production"}},
-		{"not equal keeps another key ending in the key", "service.name", qbtypes.FilterOperatorNotEqual, "api", map[string]string{"service.name": "worker", "peer.service.name": "api"}},
-		{"not in keeps a longer value", "service.name", qbtypes.FilterOperatorNotIn, []any{"api", "db"}, map[string]string{"service.name": "api-gateway"}},
+		{"not equal keeps a longer value", "deployment.environment", qbtypes.FilterOperatorNotEqual, "prod"},
+		{"not equal keeps another key ending in the key", "service.name", qbtypes.FilterOperatorNotEqual, "api"},
+		{"not in keeps a longer value", "service.name", qbtypes.FilterOperatorNotIn, []any{"api", "db"}},
 	}
 	storage := newStorage()
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			raw, err := json.Marshal(tc.labels)
-			require.NoError(t, err)
 			key := &telemetrytypes.TelemetryFieldKey{Name: tc.key, FieldContext: telemetrytypes.FieldContextResource}
 			sb := sqlbuilder.NewSelectBuilder()
 			conds, _, err := querybuilder.Conditions(context.Background(), qbtypes.QueryInfo{}, storage, key, tc.op, tc.value, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key: {key}}, false, sb)
 			require.NoError(t, err)
 			sb.Where(conds...)
 			sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-			for _, hint := range negatedLabelHints(sql, args) {
-				require.False(t, likeToRegexp(hint).MatchString(string(raw)), "labels NOT LIKE %q drops %s", hint, raw)
-			}
+			require.Empty(t, negatedLabelHints(sql, args), "a negated filter must not add a labels NOT LIKE hint: %s", sql)
+			require.Contains(t, sql, "simpleJSONExtractString(labels, '"+tc.key+"') <> ?")
 		})
 	}
 }

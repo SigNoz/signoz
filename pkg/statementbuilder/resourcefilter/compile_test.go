@@ -42,7 +42,7 @@ func TestConditionBuilder(t *testing.T) {
 			},
 			op:           qbtypes.FilterOperatorNotEqual,
 			value:        "redis",
-			expected:     "WHERE simpleJSONExtractString(labels, 'k8s.namespace.name') <> ?",
+			expected:     "simpleJSONExtractString(labels, 'k8s.namespace.name') <> ?",
 			expectedArgs: []any{"redis"},
 		},
 		{
@@ -120,7 +120,7 @@ func TestConditionBuilder(t *testing.T) {
 			},
 			op:           qbtypes.FilterOperatorNotIn,
 			value:        []any{"watch", "redis"},
-			expected:     "WHERE (simpleJSONExtractString(labels, 'k8s.namespace.name') <> ? AND simpleJSONExtractString(labels, 'k8s.namespace.name') <> ?)",
+			expected:     "(simpleJSONExtractString(labels, 'k8s.namespace.name') <> ? AND simpleJSONExtractString(labels, 'k8s.namespace.name') <> ?)",
 			expectedArgs: []any{"watch", "redis"},
 		},
 		{
