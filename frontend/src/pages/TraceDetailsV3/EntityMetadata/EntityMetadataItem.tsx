@@ -1,11 +1,11 @@
 import { ReactNode } from 'react';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { TooltipSimple, TooltipSimpleProps } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 
 import styles from './EntityMetadataItem.module.scss';
 
 interface EntityMetadataItemProps {
-	tooltip: string;
+	tooltip: TooltipSimpleProps['title'];
 	icon?: ReactNode;
 	children: ReactNode;
 }
@@ -16,7 +16,10 @@ function EntityMetadataItem({
 	children,
 }: EntityMetadataItemProps): JSX.Element {
 	return (
-		<TooltipSimple title={tooltip}>
+		<TooltipSimple
+			title={tooltip}
+			tooltipContentProps={{ className: styles.tooltip }}
+		>
 			<span className={styles.item}>
 				{icon}
 				<Typography.Text as="span">{children}</Typography.Text>

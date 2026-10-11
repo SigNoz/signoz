@@ -7,3 +7,7 @@
 	cursor: default;
 	color: inherit;
 }
+
+.tooltip {
+	composes: tooltipContent from '../shared.module.scss';
+}
