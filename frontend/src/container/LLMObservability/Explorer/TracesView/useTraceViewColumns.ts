@@ -21,7 +21,11 @@ import {
 	TRACE_VIEW_COLUMN_EXTRA_FIELDS,
 	TRACE_VIEW_FIELD_KEYS,
 } from '../constants';
-import { buildTraceViewColumns, TRACE_ID_COLUMN_ID } from './configs';
+import {
+	buildTraceViewColumns,
+	sortByDefaultOrder,
+	TRACE_ID_COLUMN_ID,
+} from './configs';
 
 const STORAGE_KEY = LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_COLUMNS;
 
@@ -55,7 +59,10 @@ export function useTraceViewColumns(): UseTraceViewColumns {
 	);
 
 	const availableFields = useMemo(
-		() => mergeExtraFields(TRACE_VIEW_COLUMN_EXTRA_FIELDS, fetchedFields),
+		() =>
+			sortByDefaultOrder(
+				mergeExtraFields(TRACE_VIEW_COLUMN_EXTRA_FIELDS, fetchedFields),
+			),
 		[fetchedFields],
 	);
 

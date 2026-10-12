@@ -155,6 +155,39 @@ describe('ResetPassword Component', () => {
 				{ timeout: 200 },
 			);
 		});
+
+		it('clears password mismatch error when confirm password is emptied', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+			render(<ResetPassword version="1.0.0" />, undefined, {
+				initialRoute: '/password-reset?token=reset-token-123',
+			});
+
+			const passwordInput = screen.getByPlaceholderText(/enter new password/i);
+			const confirmPasswordInput = screen.getByPlaceholderText(
+				/confirm your new password/i,
+			);
+			const submitButton = screen.getByRole('button', {
+				name: /reset password/i,
+			});
+
+			await user.type(passwordInput, 'password123');
+			await user.type(confirmPasswordInput, 'password456');
+			await user.tab();
+
+			await waitFor(() => {
+				expect(screen.getByText(/passwords don't match/i)).toBeInTheDocument();
+			});
+
+			await user.clear(confirmPasswordInput);
+
+			await waitFor(() => {
+				expect(
+					screen.queryByText(/passwords don't match/i),
+				).not.toBeInTheDocument();
+				expect(submitButton).toBeDisabled();
+			});
+		});
 	});
 
 	describe('Successful Password Reset', () => {
@@ -286,6 +319,65 @@ describe('ResetPassword Component', () => {
 			await waitFor(() => {
 				expect(screen.getByText(/passwords don't match/i)).toBeInTheDocument();
 				expect(screen.queryByText(/invalid token/i)).not.toBeInTheDocument();
+			});
+		});
+
+		it('clears API error when the user edits the password', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+			server.use(
+				rest.post(RESET_PASSWORD_ENDPOINT, (_req, res, ctx) =>
+					res(
+						ctx.status(400),
+						ctx.json({
+							error: {
+								code: 'invalid_password',
+								message: 'password must be at least 8 characters long',
+							},
+						}),
+					),
+				),
+			);
+
+			render(<ResetPassword version="1.0.0" />, undefined, {
+				initialRoute: '/password-reset?token=reset-token-123',
+			});
+
+			const passwordInput = screen.getByPlaceholderText(/enter new password/i);
+			const confirmPasswordInput = screen.getByPlaceholderText(
+				/confirm your new password/i,
+			);
+			const submitButton = screen.getByRole('button', {
+				name: /reset password/i,
+			});
+
+			await user.type(passwordInput, 'weak');
+			await user.type(confirmPasswordInput, 'weak');
+
+			await waitFor(() => {
+				expect(submitButton).not.toBeDisabled();
+			});
+
+			await user.click(submitButton);
+
+			await waitFor(() => {
+				expect(
+					screen.getByText(/password must be at least 8 characters long/i),
+				).toBeInTheDocument();
+			});
+
+			await user.type(passwordInput, 'Er1!');
+
+			await waitFor(() => {
+				expect(
+					screen.queryByText(/password must be at least 8 characters long/i),
+				).not.toBeInTheDocument();
+			});
+
+			await user.type(confirmPasswordInput, 'Er1!');
+
+			await waitFor(() => {
+				expect(submitButton).not.toBeDisabled();
 			});
 		});
 	});

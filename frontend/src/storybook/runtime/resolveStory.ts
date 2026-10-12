@@ -80,8 +80,34 @@ const firstAnswer = <TAnswer>(
 ): TAnswer =>
 	answers.find((answer): answer is TAnswer => answer !== undefined) ?? fallback;
 
+const parametersLookClobbered = (parameters: SignozStoryParameters): boolean =>
+	!parameters.signoz && Boolean(parameters.docs?.description?.component);
+
+/**
+ * `parameters.signoz` gone while a docs description is there is the signature of
+ * a meta that spreads `storyMocks(...)` and lets the csf plugin append its own
+ * `parameters` after it: the doc comment above `const meta` compiles to a
+ * `parameters` property, which overwrites the one the spread brought. The page
+ * then renders against the global handlers only, which reads as a page whose
+ * endpoints are all unmocked. The meta has to re-state
+ * `parameters: { ...pageStory.parameters }` after the spread.
+ */
+const warnOnClobberedParameters = (context: StoryRuntimeContext): void => {
+	if (parametersLookClobbered(context.parameters)) {
+		// eslint-disable-next-line no-console
+		console.error(
+			`[storybook] ${context.id} has a docs description but no parameters.signoz: ` +
+				'the doc comment above `const meta` overwrote the mocks. Add ' +
+				'`parameters: { ...pageStory.parameters }` after the spread.',
+		);
+	}
+};
+
 const resolveWorld = (context: StoryRuntimeContext): StoryWorld => {
 	const { parameters, args } = context;
+
+	warnOnClobberedParameters(context);
+
 	const storyConfig = parameters.signoz ?? {};
 
 	// A page's own mocks resolve ahead of the global ones, so the page wins every

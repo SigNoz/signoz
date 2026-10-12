@@ -23,7 +23,7 @@ import PanelEditorContainer from '../DashboardContainer/PanelEditor';
 import type { PanelEditorHandoffState } from '../DashboardContainer/PanelEditor/panelEditorHandoff';
 import {
 	parseNewPanelKind,
-	parseNewPanelLayoutIndex,
+	parseNewPanelTarget,
 } from '../DashboardContainer/PanelEditor/newPanelRoute';
 import { useSyncVariablesForSuggestions } from '../DashboardContainer/hooks/useSyncVariablesForSuggestions';
 import { useTimeSearchParams } from '../DashboardContainer/hooks/useTimeSearchParams';
@@ -99,7 +99,7 @@ function PanelEditorPage(): JSX.Element {
 	}, [newKind, existingPanel, handoffSpec]);
 
 	// Target section for a newly-created panel (set by the "Add panel" trigger).
-	const layoutIndex = parseNewPanelLayoutIndex(search);
+	const target = parseNewPanelTarget(search);
 
 	const backToDashboard = useCallback((): void => {
 		// Drop editor-only URL state (variables come from the persisted store), but carry
@@ -137,7 +137,7 @@ function PanelEditorPage(): JSX.Element {
 			panel={panel}
 			savedPanel={existingPanel}
 			isNew={!!newKind}
-			layoutIndex={layoutIndex}
+			target={target}
 			onClose={backToDashboard}
 			onSaved={backToDashboard}
 		/>

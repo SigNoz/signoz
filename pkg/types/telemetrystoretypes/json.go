@@ -35,3 +35,21 @@ func (v *JSONValue) Scan(src any) error {
 	*v = decoded
 	return nil
 }
+
+// FlattenInto writes v into out under dotted keys, overwriting existing keys.
+func (v JSONValue) FlattenInto(prefix string, out map[string]any) {
+	for k, value := range v {
+		key := k
+		if prefix != "" {
+			key = prefix + "." + k
+		}
+		switch child := value.(type) {
+		case map[string]any:
+			JSONValue(child).FlattenInto(key, out)
+		case JSONValue:
+			child.FlattenInto(key, out)
+		default:
+			out[key] = value
+		}
+	}
+}

@@ -1,10 +1,15 @@
 import {
 	DashboardtypesComparisonOperatorDTO,
 	DashboardtypesFillModeDTO,
+	DashboardtypesHeatmapColorModeDTO,
+	DashboardtypesHeatmapColorScaleDTO,
+	DashboardtypesHeatmapPaletteDTO,
+	DashboardtypesHeatmapYScaleDTO,
 	DashboardtypesLegendPositionDTO,
 	DashboardtypesLineInterpolationDTO,
 	DashboardtypesLineStyleDTO,
 	type DashboardtypesPanelSpecDTO,
+	DashboardtypesStackModeDTO,
 	DashboardtypesThresholdFormatDTO,
 	DashboardtypesTextAlignDTO,
 	DashboardtypesTimePreferenceDTO,
@@ -119,6 +124,43 @@ function isEmptySlice(value: object): boolean {
 		: Object.keys(value).length === 0;
 }
 
+/**
+ * Translates stacking across a Bar↔Area switch rather than dropping it. Area's
+ * `percent` has no bar equivalent, so it collapses to stacked-on; a stack-mode kind
+ * with nothing to carry starts on `normal`.
+ */
+function translateStackingForKind(
+	controls: SectionControls[SectionKind.Visualization],
+	old: SectionSpecMap[SectionKind.Visualization] | undefined,
+): Pick<
+	SectionSpecMap[SectionKind.Visualization],
+	'stack' | 'stackedBarChart'
+> {
+	if (controls.stacking) {
+		if (old?.stackedBarChart !== undefined) {
+			return { stackedBarChart: old.stackedBarChart };
+		}
+		if (old?.stack !== undefined) {
+			return { stackedBarChart: old.stack !== DashboardtypesStackModeDTO.none };
+		}
+		return {};
+	}
+	if (controls.stackMode) {
+		if (old?.stack !== undefined) {
+			return { stack: old.stack };
+		}
+		if (old?.stackedBarChart !== undefined) {
+			return {
+				stack: old.stackedBarChart
+					? DashboardtypesStackModeDTO.normal
+					: DashboardtypesStackModeDTO.none,
+			};
+		}
+		return { stack: DashboardtypesStackModeDTO.normal };
+	}
+	return {};
+}
+
 const SECTION_SEEDS: SectionSeeds = {
 	[SectionKind.TextLayout]: {
 		specKey: 'presentation',
@@ -158,10 +200,7 @@ const SECTION_SEEDS: SectionSeeds = {
 					timePreference:
 						old?.timePreference ?? DashboardtypesTimePreferenceDTO.global_time,
 				}),
-				...(controls.stacking &&
-					old?.stackedBarChart !== undefined && {
-						stackedBarChart: old.stackedBarChart,
-					}),
+				...translateStackingForKind(controls, old),
 				...(controls.fillSpans &&
 					old?.fillSpans !== undefined && { fillSpans: old.fillSpans }),
 			};
@@ -170,10 +209,7 @@ const SECTION_SEEDS: SectionSeeds = {
 	[SectionKind.Axes]: {
 		specKey: 'axes',
 		seed: (controls, { oldPluginSpec }): SectionSpecMap[SectionKind.Axes] => {
-			const old = oldPluginSpec?.axes;
-			if (!old) {
-				return {};
-			}
+			const old = oldPluginSpec?.axes ?? {};
 			return {
 				...(controls.minMax &&
 					typeof old.softMin === 'number' && { softMin: old.softMin }),
@@ -181,6 +217,13 @@ const SECTION_SEEDS: SectionSeeds = {
 					typeof old.softMax === 'number' && { softMax: old.softMax }),
 				...(controls.logScale &&
 					old.isLogScale !== undefined && { isLogScale: old.isLogScale }),
+				// Seeded so the control opens on the axis being drawn.
+				...(controls.y && {
+					y: {
+						...old.y,
+						scale: old.y?.scale ?? DashboardtypesHeatmapYScaleDTO.auto,
+					},
+				}),
 			};
 		},
 	},
@@ -204,9 +247,11 @@ const SECTION_SEEDS: SectionSeeds = {
 			const {
 				lineStyle = DashboardtypesLineStyleDTO.solid,
 				lineInterpolation = DashboardtypesLineInterpolationDTO.spline,
-				fillMode = DashboardtypesFillModeDTO.none,
+				fillMode,
+				fillOpacity,
 				showPoints,
 				spanGaps,
+				colors,
 			} = oldPluginSpec?.chartAppearance ?? {};
 			const appearance: SectionSpecMap[SectionKind.ChartAppearance] = {};
 			if (controls.lineStyle) {
@@ -216,13 +261,32 @@ const SECTION_SEEDS: SectionSeeds = {
 				appearance.lineInterpolation = lineInterpolation;
 			}
 			if (controls.fillMode) {
-				appearance.fillMode = fillMode;
+				const carried = fillMode ?? DashboardtypesFillModeDTO.none;
+				// An always-filled kind's wire enum has no `none`, so the save API would
+				// reject it. Keyed off the capability, not the kind.
+				appearance.fillMode =
+					controls.fillOpacity && carried === DashboardtypesFillModeDTO.none
+						? DashboardtypesFillModeDTO.solid
+						: carried;
+			}
+			if (controls.fillOpacity && typeof fillOpacity === 'number') {
+				appearance.fillOpacity = fillOpacity;
 			}
 			if (controls.showPoints && showPoints !== undefined) {
 				appearance.showPoints = showPoints;
 			}
 			if (controls.spanGaps && spanGaps !== undefined) {
 				appearance.spanGaps = spanGaps;
+			}
+			// Seeded so the controls open on the ramp the grid is drawn with; the
+			// count bounds and step count stay unset, which reads as derived.
+			if (controls.colors) {
+				appearance.colors = {
+					...colors,
+					mode: colors?.mode ?? DashboardtypesHeatmapColorModeDTO.palette,
+					palette: colors?.palette ?? DashboardtypesHeatmapPaletteDTO.lava,
+					scale: colors?.scale ?? DashboardtypesHeatmapColorScaleDTO.log,
+				};
 			}
 			return appearance;
 		},

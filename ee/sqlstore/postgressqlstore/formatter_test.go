@@ -55,6 +55,67 @@ func TestJSONExtractString(t *testing.T) {
 	}
 }
 
+func TestJSONExtractMapValue(t *testing.T) {
+	tests := []struct {
+		name     string
+		column   string
+		mapField string
+		key      string
+		expected string
+	}{
+		{
+			name:     "PlainKey",
+			column:   "data",
+			mapField: "labels",
+			key:      "team",
+			expected: `"data"::jsonb->'labels'->>'team'`,
+		},
+		{
+			name:     "DottedKey_OneMapEntry",
+			column:   "data",
+			mapField: "labels",
+			key:      "k8s.cluster",
+			expected: `"data"::jsonb->'labels'->>'k8s.cluster'`,
+		},
+		{
+			name:     "SingleQuoteInKey_Doubled",
+			column:   "data",
+			mapField: "labels",
+			key:      "o'brien",
+			expected: `"data"::jsonb->'labels'->>'o''brien'`,
+		},
+		{
+			name:     "BackslashInKey_Literal",
+			column:   "data",
+			mapField: "labels",
+			key:      `a\b`,
+			expected: `"data"::jsonb->'labels'->>'a\b'`,
+		},
+		{
+			name:     "DoubleQuoteInKey_Literal",
+			column:   "data",
+			mapField: "labels",
+			key:      `a"b`,
+			expected: `"data"::jsonb->'labels'->>'a"b'`,
+		},
+		{
+			name:     "QualifiedColumn",
+			column:   "rule.data",
+			mapField: "labels",
+			key:      "severity",
+			expected: `"rule"."data"::jsonb->'labels'->>'severity'`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newFormatter(pgdialect.New())
+			got := string(f.JSONExtractMapValue(tt.column, tt.mapField, tt.key))
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}
+
 func TestJSONType(t *testing.T) {
 	tests := []struct {
 		name     string

@@ -42,9 +42,12 @@ function MetricsExplorerPage(): JSX.Element {
 	useShareBuilderUrl({ defaultValue: defaultQuery });
 
 	return (
-		<div className="metrics-explorer-page">
-			<RouteTab routes={routes} activeKey={pathname} history={history} />
-		</div>
+		<RouteTab
+			className="metrics-explorer-page"
+			routes={routes}
+			activeKey={pathname}
+			history={history}
+		/>
 	);
 }
 

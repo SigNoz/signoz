@@ -7,7 +7,7 @@ import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import classNames from 'classnames';
 import ResizeTable from 'components/ResizeTable/ResizeTable';
-import { DataType } from 'container/LogDetailedView/TableView';
+import { DataType } from 'container/LogDetailedView/LogDetailedView.types';
 import { CircleArrowDown, CircleArrowRight, Focus } from '@signozhq/icons';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';

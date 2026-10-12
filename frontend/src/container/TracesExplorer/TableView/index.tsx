@@ -2,6 +2,7 @@ import {
 	Dispatch,
 	memo,
 	MutableRefObject,
+	ReactNode,
 	SetStateAction,
 	useEffect,
 	useMemo,
@@ -30,10 +31,12 @@ function TableView({
 	setWarning,
 	setIsLoadingQueries,
 	queryKeyRef,
+	headerActions,
 }: {
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
 	setIsLoadingQueries: Dispatch<SetStateAction<boolean>>;
 	queryKeyRef?: MutableRefObject<any>;
+	headerActions?: ReactNode;
 }): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
 
@@ -101,14 +104,17 @@ function TableView({
 	return (
 		<Space.Compact block direction="vertical">
 			{isError && error && <ErrorInPlace error={error as APIError} />}
-			{!isError && data && (
+			{!isError && (
 				<div className="traces-table-view-header">
-					<ExportMenu
-						dataSource={DataSource.TRACES}
-						data={data}
-						query={stagedQuery || initialQueriesMap.traces}
-						fileName="traces-table"
-					/>
+					{headerActions}
+					{data && (
+						<ExportMenu
+							dataSource={DataSource.TRACES}
+							data={data}
+							query={stagedQuery || initialQueriesMap.traces}
+							fileName="traces-table"
+						/>
+					)}
 				</div>
 			)}
 			{!isError && (
@@ -125,6 +131,7 @@ function TableView({
 
 TableView.defaultProps = {
 	queryKeyRef: undefined,
+	headerActions: undefined,
 };
 
 export default memo(TableView);

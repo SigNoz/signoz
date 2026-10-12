@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import LiveLogsPauseResume from 'container/LiveLogs/LiveLogsPauseResume/LiveLogsPauseResume';
-import NewExplorerCTA from 'container/NewExplorerCTA';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { noop } from 'lodash-es';
 
@@ -12,7 +11,6 @@ interface ToolbarProps {
 	showAutoRefresh: boolean;
 	leftActions?: JSX.Element;
 	rightActions?: JSX.Element;
-	showOldCTA?: boolean;
 	warningElement?: JSX.Element;
 	onGoLive?: () => void;
 	onExitLiveLogs?: () => void;
@@ -23,7 +21,6 @@ export default function Toolbar({
 	showAutoRefresh,
 	leftActions,
 	rightActions,
-	showOldCTA,
 	warningElement,
 	showLiveLogs,
 	onGoLive,
@@ -48,7 +45,6 @@ export default function Toolbar({
 			<div className="rightActions">
 				<div className="timeRange">
 					{warningElement}
-					{showOldCTA && <NewExplorerCTA />}
 					{showLiveLogs && <LiveLogsPauseResume />}
 					<DateTimeSelectionV2
 						showLiveLogs={showLiveLogs}
@@ -69,7 +65,6 @@ export default function Toolbar({
 Toolbar.defaultProps = {
 	leftActions: <div />,
 	rightActions: <div />,
-	showOldCTA: false,
 	warningElement: <div />,
 	showLiveLogs: false,
 	onGoLive: (): void => noop(),

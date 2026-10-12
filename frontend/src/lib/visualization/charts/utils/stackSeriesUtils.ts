@@ -42,43 +42,9 @@ interface BuildStackedSeriesParams {
 	mode: StackMode;
 }
 
-/** Per-point total. Mixed-sign columns sum signed, as "share of total" implies. */
-function columnTotals({
-	data,
-	valueSeriesCount,
-	pointCount,
-	omit,
-}: Omit<BuildStackedSeriesParams, 'mode'>): number[] {
-	const totals = Array(pointCount).fill(0) as number[];
-
-	for (let seriesIndex = 1; seriesIndex <= valueSeriesCount; seriesIndex++) {
-		if (omit(seriesIndex)) {
-			continue;
-		}
-		const rawValues = data[seriesIndex] as (number | null)[];
-		rawValues.forEach((rawValue, pointIndex) => {
-			totals[pointIndex] += rawValue == null ? 0 : Number(rawValue);
-		});
-	}
-
-	return totals;
-}
-
 /** A column whose participating series sum to 0 has no share to divide, so every slice is 0. */
 function toPercent(value: number, total: number): number {
 	return total === 0 ? 0 : (value / total) * 100;
-}
-
-/** What a raw value adds to the stack at a given point. */
-type Contribution = (value: number, pointIndex: number) => number;
-
-function contributionForMode(params: BuildStackedSeriesParams): Contribution {
-	if (params.mode !== StackMode.Percent) {
-		return (value): number => value;
-	}
-	// Resolved up front: totals span series the accumulation below has not reached yet.
-	const totals = columnTotals(params);
-	return (value, pointIndex): number => toPercent(value, totals[pointIndex]);
 }
 
 /**
@@ -93,14 +59,7 @@ function buildStackedSeries({
 	mode,
 }: BuildStackedSeriesParams): (number | null)[][] {
 	const stackedSeries: (number | null)[][] = Array(valueSeriesCount);
-	const cumulativeSums = Array(pointCount).fill(0) as number[];
-	const contributionOf = contributionForMode({
-		data,
-		valueSeriesCount,
-		pointCount,
-		omit,
-		mode,
-	});
+	const columnTotals = Array(pointCount).fill(0) as number[];
 
 	for (let seriesIndex = valueSeriesCount; seriesIndex >= 1; seriesIndex--) {
 		const rawValues = data[seriesIndex] as (number | null)[];
@@ -110,12 +69,25 @@ function buildStackedSeries({
 		} else {
 			stackedSeries[seriesIndex - 1] = rawValues.map((rawValue, pointIndex) => {
 				const numericValue = rawValue == null ? 0 : Number(rawValue);
-				return (cumulativeSums[pointIndex] += contributionOf(
-					numericValue,
-					pointIndex,
-				));
+				return (columnTotals[pointIndex] += numericValue);
 			});
 		}
+	}
+
+	if (mode !== StackMode.Percent) {
+		return stackedSeries;
+	}
+
+	// Scale the running totals once they are final rather than accumulating per-slice
+	// percentages: the topmost series then divides the total by itself and lands on
+	// exactly 100, where accumulated shares drift past it and stretch the y axis.
+	for (let seriesIndex = valueSeriesCount; seriesIndex >= 1; seriesIndex--) {
+		if (omit(seriesIndex)) {
+			continue;
+		}
+		stackedSeries[seriesIndex - 1] = stackedSeries[seriesIndex - 1].map(
+			(value, pointIndex) => toPercent(value as number, columnTotals[pointIndex]),
+		);
 	}
 
 	return stackedSeries;

@@ -4,11 +4,8 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { noop } from 'lodash-es';
-import { screen, waitFor } from 'tests/test-utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-
-import { AllTraceFilterKeyValue } from '../Filter/filterUtils';
 
 export const optionMenuReturn = {
 	options: {
@@ -193,40 +190,3 @@ export const qbProviderValue = {
 	handleOnUnitsChange: noop,
 	isStagedQueryUpdated: (): boolean => false,
 } as any;
-
-export function checkIfSectionIsOpen(
-	getByTestId: (testId: string) => HTMLElement,
-	panelName: string,
-): void {
-	const section = getByTestId(`collapse-${panelName}`);
-	expect(section.querySelector('.ant-collapse-item-active')).not.toBeNull();
-}
-
-export function checkIfSectionIsNotOpen(
-	getByTestId: (testId: string) => HTMLElement,
-	panelName: string,
-): void {
-	const section = getByTestId(`collapse-${panelName}`);
-	expect(section.querySelector('.ant-collapse-item-active')).toBeNull();
-}
-
-export const defaultOpenSections = [
-	'hasError',
-	'durationNano',
-	'serviceName',
-	'deployment.environment',
-];
-
-export const defaultClosedSections = Object.keys(AllTraceFilterKeyValue).filter(
-	(section) =>
-		![...defaultOpenSections, 'durationNanoMin', 'durationNanoMax'].includes(
-			section,
-		),
-);
-
-export async function checkForSectionContent(values: string[]): Promise<void> {
-	for (const val of values) {
-		const sectionContent = await screen.findByText(val);
-		await waitFor(() => expect(sectionContent).toBeInTheDocument());
-	}
-}

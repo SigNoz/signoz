@@ -25,16 +25,15 @@ function TracesModulePage(): JSX.Element {
 	};
 
 	return (
-		<div className="traces-module-container">
-			<RouteTab
-				routes={routes}
-				activeKey={
-					pathname.includes(ROUTES.TRACES_FUNNELS) ? ROUTES.TRACES_FUNNELS : pathname
-				}
-				history={history}
-				onChangeHandler={handleTabChange}
-			/>
-		</div>
+		<RouteTab
+			className="traces-module-container"
+			routes={routes}
+			activeKey={
+				pathname.includes(ROUTES.TRACES_FUNNELS) ? ROUTES.TRACES_FUNNELS : pathname
+			}
+			history={history}
+			onChangeHandler={handleTabChange}
+		/>
 	);
 }
 

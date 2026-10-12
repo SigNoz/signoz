@@ -88,10 +88,11 @@ export function toQueryEnvelopes(
 }
 
 /**
- * Step interval (seconds) for BAR panels capping the bar count (~80 max). Duplicated from V1
- * `getBarStepIntervalPoints` per the V1/V2 split policy.
+ * Step interval (seconds) capping how many points a range comes back as (~80 max), for the
+ * kinds that draw one mark per point. Duplicated from V1 `getBarStepIntervalPoints` per the
+ * V1/V2 split policy.
  */
-export function getBarStepIntervalSeconds(
+export function getBucketedStepIntervalSeconds(
 	startMs: number,
 	endMs: number,
 ): number {
@@ -115,15 +116,16 @@ export function getBarStepIntervalSeconds(
 }
 
 /**
- * BAR panels: builder queries without a user-set stepInterval get the range-derived one so bars
- * align (V1 parity: `updateBarStepInterval`).
+ * Builder queries without a user-set stepInterval get the range-derived one, so a wide range
+ * comes back as a readable number of marks instead of one per raw point (V1 parity:
+ * `updateBarStepInterval`). An explicit interval is the user's call and is left alone.
  */
-function withBarStepInterval(
+function withBucketedStepInterval(
 	envelopes: Querybuildertypesv5QueryEnvelopeDTO[],
 	startMs: number,
 	endMs: number,
 ): Querybuildertypesv5QueryEnvelopeDTO[] {
-	const stepInterval = getBarStepIntervalSeconds(startMs, endMs);
+	const stepInterval = getBucketedStepIntervalSeconds(startMs, endMs);
 	return envelopes.map((envelope) => {
 		if (
 			envelope.type !==
@@ -253,7 +255,7 @@ export function buildQueryRangeRequest({
 }: BuildQueryRangeRequestArgs): Querybuildertypesv5QueryRangeRequestDTO {
 	let envelopes = toQueryEnvelopes(queries);
 	if (bucketedStepInterval) {
-		envelopes = withBarStepInterval(envelopes, startMs, endMs);
+		envelopes = withBucketedStepInterval(envelopes, startMs, endMs);
 	}
 	if (orderTiebreaker) {
 		envelopes = withListOrderTiebreaker(envelopes);

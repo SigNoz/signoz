@@ -1596,7 +1596,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Materialized key",
 			query:                 "materialized.key.name=\"test\"",
 			shouldPass:            true,
-			expectedQuery:         "WHERE (`attribute_string_materialized$$key$$name` = ? AND `attribute_string_materialized$$key$$name_exists`)",
+			expectedQuery:         "WHERE (`attribute_string_materialized$$key$$name` = ? AND `attribute_string_materialized$$key$$name_exists` = true)",
 			expectedArgs:          []any{"test"},
 			expectedErrorContains: "",
 		},

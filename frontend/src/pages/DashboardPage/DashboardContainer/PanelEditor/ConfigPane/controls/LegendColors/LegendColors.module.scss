@@ -42,7 +42,9 @@
 
 .label {
 	overflow: hidden;
-	font-size: 12px;
+	font-family: var(--font-mono);
+	font-size: var(--font-size-xs);
+	letter-spacing: -0.01em;
 	color: var(--l2-foreground);
 	white-space: nowrap;
 	text-overflow: ellipsis;

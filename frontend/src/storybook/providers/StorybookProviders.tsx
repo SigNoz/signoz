@@ -7,12 +7,14 @@ import AppProviders from '@/app/AppProviders';
 import AppShell from '@/app/AppShell';
 import type { AppLayer } from '@/app/types';
 import { CmdKPalette } from 'components/cmdKPalette/cmdKPalette';
+import { Toaster } from '@signozhq/ui/sonner';
 import AppLayout from 'container/AppLayout';
 import history from 'lib/history';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { AppContext, useAppContext } from 'providers/App/App';
 
 import { createStoryAppContext } from '../mocks/createStoryAppContext';
+import { setStoryStore } from '../mocks/store.mock';
 import { interceptExternalNavigation } from '../navigation/interceptExternalNavigation';
 import NavigationBlockedOverlay from '../navigation/NavigationBlockedOverlay';
 import { ResolvedStoryConfig } from '../types';
@@ -49,7 +51,10 @@ const storyRouter: AppLayer = (children) => (
 const appLayout: AppLayer = (children) => <AppLayout>{children}</AppLayout>;
 
 const bareLayout: AppLayer = (children) => (
-	<TooltipProvider>{children}</TooltipProvider>
+	<TooltipProvider>
+		{children}
+		<Toaster />
+	</TooltipProvider>
 );
 
 function StorybookProviders({
@@ -59,11 +64,18 @@ function StorybookProviders({
 	queryBuilder,
 	route = '/',
 	layout = 'none',
+	routeState,
 	reduxState,
 }: StorybookProvidersProps): JSX.Element {
-	const searchParams = useStoryRoute(route);
+	const searchParams = useStoryRoute(route, routeState);
 	const queryClient = useMemo(createStorybookQueryClient, []);
-	const store = useMemo(() => createStorybookStore(reduxState), [reduxState]);
+	const store = useMemo(() => {
+		const created = createStorybookStore(reduxState);
+		// The modules that read the redux singleton have to answer from this story's
+		// store, not the one the app module created at import time.
+		setStoryStore(created);
+		return created;
+	}, [reduxState]);
 	const appContextValue = useMemo(
 		() => createStoryAppContext(role, appContext),
 		[role, appContext],

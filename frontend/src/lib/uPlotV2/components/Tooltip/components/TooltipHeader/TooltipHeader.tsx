@@ -1,14 +1,13 @@
 import { useMemo } from 'react';
 import cx from 'classnames';
 import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
-import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import dayjs from 'dayjs';
-import { Pin } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 import type uPlot from 'uplot';
+import { formatTimestampOmittingTodaysDate } from 'utils/timeUtils';
 
 import { TooltipContentItem } from '../../../types';
 import TooltipItem from '../TooltipItem/TooltipItem';
+import TooltipPinnedBadge from '../TooltipPinnedBadge/TooltipPinnedBadge';
 
 import Styles from './TooltipHeader.module.scss';
 
@@ -19,6 +18,7 @@ interface TooltipHeaderProps {
 	isPinned: boolean;
 	activeItem: TooltipContentItem | null;
 	headerRowClassName?: string;
+	/** Overrides the default, which drops the date part for points on the current day. */
 	dateFormat?: string;
 }
 
@@ -29,7 +29,7 @@ export default function TooltipHeader({
 	isPinned,
 	activeItem,
 	headerRowClassName,
-	dateFormat = DATE_TIME_FORMATS.MONTH_DATETIME_SECONDS,
+	dateFormat,
 }: TooltipHeaderProps): JSX.Element {
 	const { timezone: userTimezone } = useTimezone();
 	const resolvedTimezone = timezone?.value ?? userTimezone.value;
@@ -46,9 +46,11 @@ export default function TooltipHeader({
 		if (timestamp == null) {
 			return null;
 		}
-		return dayjs(timestamp * 1000)
-			.tz(resolvedTimezone)
-			.format(dateFormat);
+		return formatTimestampOmittingTodaysDate(
+			timestamp * 1000,
+			resolvedTimezone,
+			dateFormat,
+		);
 	}, [
 		resolvedTimezone,
 		uPlotInstance.data,
@@ -65,14 +67,7 @@ export default function TooltipHeader({
 			{showTooltipHeader && headerTitle && (
 				<div className={cx(Styles.headerRow, headerRowClassName)}>
 					<span>{headerTitle}</span>
-					{isPinned && (
-						<div className={cx(Styles.status)} data-testid="uplot-tooltip-status">
-							<>
-								<Pin size={12} />
-								<span>Pinned</span>
-							</>
-						</div>
-					)}
+					{isPinned && <TooltipPinnedBadge />}
 				</div>
 			)}
 

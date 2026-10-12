@@ -213,7 +213,7 @@ function FunnelStep({
 						<div className="latency-pointer__label">Latency pointer</div>
 						{hasEditPermission ? (
 							<DropdownMenuSimple menu={{ items: latencyPointerItems }}>
-								<Space>
+								<Space data-testid={`funnel-step-latency-pointer-${index}`}>
 									{
 										LatencyPointers.find(
 											(option) => option.value === stepData.latency_pointer,

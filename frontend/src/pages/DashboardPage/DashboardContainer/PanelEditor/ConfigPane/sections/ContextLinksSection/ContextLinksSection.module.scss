@@ -1,7 +1,13 @@
 .list {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: 14px;
+}
+
+.help {
+	font-size: 13px;
+	line-height: 19px;
+	color: var(--l2-foreground);
 }
 
 /* --- Saved-link list item --- */
@@ -9,10 +15,15 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 8px;
-	padding: 8px 10px;
-	border: 1px solid var(--l2-border);
-	border-radius: 6px;
+	gap: 14px;
+	padding: 8px 10px 8px 16px;
+	border: 1px solid var(--l1-border);
+	border-radius: 4px;
+	background: var(--l2-background);
+
+	&:hover {
+		border-color: var(--l2-border);
+	}
 }
 
 .listItemText {
@@ -32,12 +43,13 @@
 
 .listItemLabel {
 	font-size: 13px;
-	color: var(--text-vanilla-100);
+	color: var(--l1-foreground);
 }
 
 .listItemUrl {
-	font-size: 11px;
-	color: var(--text-vanilla-400);
+	font-family: 'Geist Mono', monospace;
+	font-size: 12px;
+	color: var(--l2-foreground);
 }
 
 .listItemActions {

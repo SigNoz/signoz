@@ -6,10 +6,21 @@
 import { FeatureKeys } from 'constants/features';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import { checkListStepToPreferenceKeyMap } from 'container/Home/constants';
-import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	type ListSavedViews200,
+	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTOSignal as LogsSignal,
+	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricsSignal,
+	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTOSignal as TracesSignal,
+	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
+	type Querybuildertypesv5QueryEnvelopeDTO,
+	Querybuildertypesv5RequestTypeDTO,
+	type RuletypesRuleDTO,
+	SavedviewtypesPanelTypeDTO,
+	SavedviewtypesSchemaVersionDTO,
+	SavedviewtypesSourceDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import type { ServiceDataProps } from 'api/metrics/getTopLevelOperations';
 import { alertRulesFixture } from 'mocks-server/__mockdata__/alert_rules';
-import { explorerView } from 'mocks-server/__mockdata__/explorer_views';
 import { defaultFeatureFlags } from 'tests/fixtures/appContextMock';
 import type { FeatureFlagProps } from 'types/api/features/getFeaturesFlags';
 import type { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
@@ -165,20 +176,53 @@ const VIEW_NAMES: Record<SavedViewSignal, string[]> = {
 export const isSavedViewSignal = (value: string): value is SavedViewSignal =>
 	SAVED_VIEW_SIGNALS.includes(value as SavedViewSignal);
 
+const SAVED_VIEW_SOURCE: Record<SavedViewSignal, SavedviewtypesSourceDTO> = {
+	logs: SavedviewtypesSourceDTO.logs,
+	traces: SavedviewtypesSourceDTO.traces,
+	metrics: SavedviewtypesSourceDTO.metrics,
+};
+
+const SAVED_VIEW_QUERY: Record<
+	SavedViewSignal,
+	Querybuildertypesv5QueryEnvelopeDTO
+> = {
+	logs: {
+		type: Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query,
+		spec: { name: 'A', signal: LogsSignal.logs },
+	},
+	traces: {
+		type: Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query,
+		spec: { name: 'A', signal: TracesSignal.traces },
+	},
+	metrics: {
+		type: Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query,
+		spec: { name: 'A', signal: MetricsSignal.metrics },
+	},
+};
+
 export const savedViewsResponse = (
 	count: number,
-	sourcePage: SavedViewSignal,
-): Record<string, unknown> => {
-	const names = VIEW_NAMES[sourcePage];
+	signal: SavedViewSignal,
+): ListSavedViews200 => {
+	const names = VIEW_NAMES[signal];
 
 	return {
 		status: 'success',
 		data: Array.from({ length: Math.min(count, names.length) }, (_, index) => ({
-			...explorerView.data[0],
-			id: `storybook-${sourcePage}-view-${index + 1}`,
-			name: names[index],
-			sourcePage,
-			tags: [sourcePage],
+			id: `storybook-${signal}-view-${index + 1}`,
+			name: `storybook-${signal}-view-${index + 1}`,
+			source: SAVED_VIEW_SOURCE[signal],
+			schemaVersion: SavedviewtypesSchemaVersionDTO.v2,
+			createdAt: '2026-08-20T09:00:00Z',
+			createdBy: 'storybook@signoz.io',
+			updatedAt: '2026-08-20T09:00:00Z',
+			updatedBy: 'storybook@signoz.io',
+			spec: {
+				displayName: names[index],
+				panelType: SavedviewtypesPanelTypeDTO.list,
+				requestType: Querybuildertypesv5RequestTypeDTO.raw,
+				queries: [SAVED_VIEW_QUERY[signal]],
+			},
 		})),
 	};
 };

@@ -137,6 +137,15 @@ describe('stackSeries', () => {
 			]);
 		});
 
+		it('tops out at exactly 100 for values that do not divide cleanly', () => {
+			// Accumulating each slice's share drifts past 100 and stretches the y axis.
+			const data: AlignedData = [[1], [63], [78], [44]];
+
+			const [, top] = stackSeries(data, includeAll, StackMode.Percent).data;
+
+			expect(top[0]).toBe(100);
+		});
+
 		it('yields 0 across a column whose signed total cancels to zero', () => {
 			const data: AlignedData = [[1], [10], [-10]];
 

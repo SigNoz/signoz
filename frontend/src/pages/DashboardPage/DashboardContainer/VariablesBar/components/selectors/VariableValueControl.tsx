@@ -42,11 +42,8 @@ function VariableValueControl({
 	onChange,
 	onAutoSelect,
 }: VariableValueControlProps): JSX.Element {
-	const { options, loading, errorMessage, onRetry } = useVariableOptions(
-		variable,
-		variables,
-		selections,
-	);
+	const { options, loading, errorMessage, onRetry, isRetryable, dynamic } =
+		useVariableOptions(variable, variables, selections);
 
 	useAutoSelect(variable, options, selection, onAutoSelect);
 
@@ -65,6 +62,8 @@ function VariableValueControl({
 			loading={loading}
 			errorMessage={errorMessage}
 			onRetry={onRetry}
+			isRetryable={isRetryable}
+			dynamic={dynamic}
 			selection={selection}
 			onChange={onChange}
 			emptyFallback={emptyFallback}

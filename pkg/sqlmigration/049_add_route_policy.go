@@ -13,7 +13,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
@@ -48,6 +47,11 @@ type rule struct {
 	Deleted int    `bun:"deleted,default:0"`
 	Data    string `bun:"data,type:text"`
 	OrgID   string `bun:"org_id,type:text"`
+}
+
+type routePolicyRuleData struct {
+	PreferredChannels []string          `json:"preferredChannels"`
+	Labels            map[string]string `json:"labels"`
 }
 
 type addRoutePolicies struct {
@@ -187,20 +191,20 @@ func (migration *addRoutePolicies) migrateRulesToRoutePolicies(ctx context.Conte
 func (migration *addRoutePolicies) convertRulesToRoutes(rules []*rule, channelsByOrg map[string][]string) ([]*expressionRoute, error) {
 	var routes []*expressionRoute
 	for _, r := range rules {
-		var gettableRule ruletypes.GettableRule
-		if err := json.Unmarshal([]byte(r.Data), &gettableRule); err != nil {
+		var ruleData routePolicyRuleData
+		if err := json.Unmarshal([]byte(r.Data), &ruleData); err != nil {
 			return nil, errors.NewInternalf(errors.CodeInternal, "failed to unmarshal rule data for rule ID %s: %v", r.ID, err)
 		}
 
-		if len(gettableRule.PreferredChannels) == 0 {
+		if len(ruleData.PreferredChannels) == 0 {
 			channels, exists := channelsByOrg[r.OrgID]
 			if !exists || len(channels) == 0 {
 				continue
 			}
-			gettableRule.PreferredChannels = channels
+			ruleData.PreferredChannels = channels
 		}
 		severity := "critical"
-		if v, ok := gettableRule.Labels["severity"]; ok {
+		if v, ok := ruleData.Labels["severity"]; ok {
 			severity = v
 		}
 		expression := fmt.Sprintf(`%s == "%s" && %s == "%s"`, "threshold.name", severity, "ruleId", r.ID.String())
@@ -218,7 +222,7 @@ func (migration *addRoutePolicies) convertRulesToRoutes(rules []*rule, channelsB
 			},
 			Expression:     expression,
 			ExpressionKind: "rule",
-			Channels:       gettableRule.PreferredChannels,
+			Channels:       ruleData.PreferredChannels,
 			Name:           r.ID.StringValue(),
 			Enabled:        true,
 			OrgID:          r.OrgID,
