@@ -140,6 +140,109 @@ func TestWebhookReadingURLFromFile(t *testing.T) {
 	test.AssertNotifyLeaksNoSecret(ctx, t, notifier, u.String())
 }
 
+func TestWebhookBodyTemplate(t *testing.T) {
+	var gotBody string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		gotBody = string(body)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	newNotifier := func(t *testing.T, bodyTemplate string) *Notifier {
+		tmpl := test.CreateTmpl(t)
+		notifier, err := New(
+			&config.WebhookConfig{
+				URL:        config.SecretTemplateURL(srv.URL),
+				HTTPConfig: &commoncfg.HTTPClientConfig{},
+			},
+			tmpl,
+			promslog.NewNopLogger(),
+			alertmanagertemplate.New(tmpl, slog.Default()),
+		)
+		require.NoError(t, err)
+		require.NoError(t, notifier.SetBodyTemplate(bodyTemplate))
+		return notifier
+	}
+
+	newCtx := func() context.Context {
+		ctx := context.Background()
+		return notify.WithGroupKey(ctx, "test-group")
+	}
+
+	alerts := []*types.Alert{
+		{
+			Alert: model.Alert{
+				Labels:      model.LabelSet{"alertname": "TestAlert", "severity": "critical"},
+				Annotations: model.LabelSet{"summary": "Test summary"},
+				StartsAt:    time.Now(),
+				EndsAt:      time.Now().Add(time.Hour),
+			},
+		},
+	}
+
+	t.Run("default payload when no body template is set", func(t *testing.T) {
+		gotBody = ""
+		notifier := newNotifier(t, "")
+		_, err := notifier.Notify(newCtx(), alerts...)
+		require.NoError(t, err)
+		assert.Contains(t, gotBody, `"version":"4"`)
+		assert.Contains(t, gotBody, `"groupKey"`)
+	})
+
+	t.Run("custom body template replaces the default payload", func(t *testing.T) {
+		gotBody = ""
+		notifier := newNotifier(t, `{"text": "{{ .CommonLabels.alertname }} is {{ .Status }}"}`)
+		_, err := notifier.Notify(newCtx(), alerts...)
+		require.NoError(t, err)
+		assert.Contains(t, gotBody, `"text": "TestAlert is firing"`)
+		assert.NotContains(t, gotBody, `"version":"4"`)
+	})
+
+	t.Run("body template can iterate alerts", func(t *testing.T) {
+		gotBody = ""
+		notifier := newNotifier(t, `{{ range .Alerts }}{{ .Annotations.summary }};{{ end }}`)
+		_, err := notifier.Notify(newCtx(), alerts...)
+		require.NoError(t, err)
+		assert.Contains(t, gotBody, "Test summary;")
+	})
+
+	t.Run("invalid body template is rejected", func(t *testing.T) {
+		tmpl := test.CreateTmpl(t)
+		notifier, err := New(
+			&config.WebhookConfig{
+				URL:        config.SecretTemplateURL(srv.URL),
+				HTTPConfig: &commoncfg.HTTPClientConfig{},
+			},
+			tmpl,
+			promslog.NewNopLogger(),
+			alertmanagertemplate.New(tmpl, slog.Default()),
+		)
+		require.NoError(t, err)
+		require.Error(t, notifier.SetBodyTemplate(`{{ .Unclosed`))
+		// the notifier still has no template installed after the failure
+		assert.Nil(t, notifier.bodyTemplate)
+	})
+
+	t.Run("empty body template clears a previously set one", func(t *testing.T) {
+		tmpl := test.CreateTmpl(t)
+		notifier, err := New(
+			&config.WebhookConfig{
+				URL:        config.SecretTemplateURL(srv.URL),
+				HTTPConfig: &commoncfg.HTTPClientConfig{},
+			},
+			tmpl,
+			promslog.NewNopLogger(),
+			alertmanagertemplate.New(tmpl, slog.Default()),
+		)
+		require.NoError(t, err)
+		require.NoError(t, notifier.SetBodyTemplate(`{"text": "hi"}`))
+		assert.NotNil(t, notifier.bodyTemplate)
+		require.NoError(t, notifier.SetBodyTemplate(""))
+		assert.Nil(t, notifier.bodyTemplate)
+	})
+}
+
 func TestWebhookURLTemplating(t *testing.T) {
 	var calledURL string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

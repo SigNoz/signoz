@@ -73,18 +73,31 @@ type customReceiverConfigs struct {
 	Jira       []*JiraReceiverConfig
 	JSMOps     []*JSMOpsReceiverConfig
 	IncidentIO []*IncidentIOReceiverConfig
+	// WebhookBodyTemplates parallels the receiver's upstream webhook_configs;
+	// each entry is SigNoz's optional custom body template for the webhook
+	// config at the same index (empty = default payload).
+	WebhookBodyTemplates []string
 }
 
 func (c customReceiverConfigs) isEmpty() bool {
-	return len(c.GoogleChat) == 0 && len(c.Jira) == 0 && len(c.JSMOps) == 0 && len(c.IncidentIO) == 0
+	if len(c.GoogleChat) != 0 || len(c.Jira) != 0 || len(c.JSMOps) != 0 || len(c.IncidentIO) != 0 {
+		return false
+	}
+	for _, tmpl := range c.WebhookBodyTemplates {
+		if tmpl != "" {
+			return false
+		}
+	}
+	return true
 }
 
 func customConfigsOf(receiver *Receiver) customReceiverConfigs {
 	return customReceiverConfigs{
-		GoogleChat: receiver.GoogleChatConfigs,
-		Jira:       receiver.JiraConfigs,
-		JSMOps:     receiver.JSMOpsConfigs,
-		IncidentIO: receiver.IncidentIOConfigs,
+		GoogleChat:           receiver.GoogleChatConfigs,
+		Jira:                 receiver.JiraConfigs,
+		JSMOps:               receiver.JSMOpsConfigs,
+		IncidentIO:           receiver.IncidentIOConfigs,
+		WebhookBodyTemplates: receiver.WebhookBodyTemplates,
 	}
 }
 
@@ -191,11 +204,12 @@ func extendedReceivers(c *config.Config, customConfigs map[string]customReceiver
 		base := c.Receivers[i]
 		custom := customConfigs[base.Name]
 		receivers[i] = &Receiver{
-			Receiver:          &base,
-			GoogleChatConfigs: custom.GoogleChat,
-			JiraConfigs:       custom.Jira,
-			JSMOpsConfigs:     custom.JSMOps,
-			IncidentIOConfigs: custom.IncidentIO,
+			Receiver:             &base,
+			GoogleChatConfigs:    custom.GoogleChat,
+			JiraConfigs:          custom.Jira,
+			JSMOpsConfigs:        custom.JSMOps,
+			IncidentIOConfigs:    custom.IncidentIO,
+			WebhookBodyTemplates: custom.WebhookBodyTemplates,
 		}
 	}
 
@@ -389,11 +403,12 @@ func (c *Config) GetReceiver(name string) (*Receiver, error) {
 			base := c.alertmanagerConfig.Receivers[i]
 			custom := c.customConfigs[name]
 			return &Receiver{
-				Receiver:          &base,
-				GoogleChatConfigs: custom.GoogleChat,
-				JiraConfigs:       custom.Jira,
-				JSMOpsConfigs:     custom.JSMOps,
-				IncidentIOConfigs: custom.IncidentIO,
+				Receiver:             &base,
+				GoogleChatConfigs:    custom.GoogleChat,
+				JiraConfigs:          custom.Jira,
+				JSMOpsConfigs:        custom.JSMOps,
+				IncidentIOConfigs:    custom.IncidentIO,
+				WebhookBodyTemplates: custom.WebhookBodyTemplates,
 			}, nil
 		}
 	}
