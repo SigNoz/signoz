@@ -64,7 +64,13 @@
                 "value": 300,
                 "unit": "ms",
                 "color": "#f00",
-                "label": "p99 SLO"
+                "label": "p99 SLO",
+                "axis": "y"
+              },
+              {
+                "value": 50,
+                "color": "#0f0",
+                "axis": "x"
               }
             ]
           }
