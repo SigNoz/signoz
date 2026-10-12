@@ -17,17 +17,33 @@ export function resolveAutoAxes(
 	return { x, y };
 }
 
+function resolveScatterAxisColumns(
+	spec: DashboardtypesPanelSpecDTO,
+	tableColumns: TableColumnOption[],
+): { x?: TableColumnOption; y?: TableColumnOption } | null {
+	if (spec.plugin.kind !== 'signoz/ScatterPlotPanel') {
+		return null;
+	}
+	return resolveAutoAxes(tableColumns, {
+		x: spec.plugin.spec.dimensions?.x,
+		y: spec.plugin.spec.dimensions?.y,
+	});
+}
+
 /** The name of the column each axis plots; unset for other kinds or before results load. */
 export function getScatterAxisColumnNames(
 	spec: DashboardtypesPanelSpecDTO,
 	tableColumns: TableColumnOption[] = [],
 ): { x?: string; y?: string } {
-	if (spec.plugin.kind !== 'signoz/ScatterPlotPanel') {
-		return {};
-	}
-	const { x, y } = resolveAutoAxes(tableColumns, {
-		x: spec.plugin.spec.dimensions?.x,
-		y: spec.plugin.spec.dimensions?.y,
-	});
-	return { x: x?.name, y: y?.name };
+	const axes = resolveScatterAxisColumns(spec, tableColumns);
+	return axes ? { x: axes.x?.name, y: axes.y?.name } : {};
+}
+
+/** The unit of the column each axis plots; unset for other kinds or before results load. */
+export function getScatterAxisColumnUnits(
+	spec: DashboardtypesPanelSpecDTO,
+	tableColumns: TableColumnOption[] = [],
+): { x?: string; y?: string } {
+	const axes = resolveScatterAxisColumns(spec, tableColumns);
+	return axes ? { x: axes.x?.unit, y: axes.y?.unit } : {};
 }

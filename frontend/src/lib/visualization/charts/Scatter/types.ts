@@ -29,6 +29,8 @@ export interface ScatterAxisOptions {
 	softMin?: number | null;
 	softMax?: number | null;
 	scale?: ScatterAxisScale;
+	/** Lines drawn across the plot at values on this axis. */
+	thresholds?: Threshold[];
 }
 
 export interface BuildScatterConfigArgs {
@@ -41,8 +43,6 @@ export interface BuildScatterConfigArgs {
 	/** 0–1. */
 	fillOpacity?: number;
 	colorMapping?: Record<string, string>;
-	/** Drawn on the y axis. */
-	thresholds?: Threshold[];
 	decimalPrecision?: PrecisionOption;
 	selectionPreferencesSource?: SelectionPreferencesSource;
 	shouldSaveSelectionPreference?: boolean;

@@ -1,6 +1,9 @@
 import { useCallback, useMemo, useRef } from 'react';
 import { ChartScatter } from '@signozhq/icons';
-import type { DashboardtypesScatterPlotPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	type DashboardtypesScatterPlotPanelSpecDTO,
+	DashboardtypesThresholdAxisDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import type { IRenderTooltipFooterArgs } from 'lib/uPlotV2/components/types';
@@ -17,7 +20,6 @@ import NoData from '../../components/NoData/NoData';
 import PanelMessage from '../../components/PanelMessage/PanelMessage';
 import PanelStyles from '../../panel.module.scss';
 import type { PanelRendererProps } from '../../types/rendererProps';
-import { mapThresholds } from '../../utils/baseConfigBuilder';
 import { enrichScatterClick } from '../../utils/drilldown/enrichScatterClick';
 import { getBuilderQueries } from '../../utils/getBuilderQueries';
 import { getPanelTimeRange } from '../../utils/getPanelTimeRange';
@@ -37,7 +39,7 @@ import { prepareScatterPlotData } from './utils/prepareData';
 import { getScatterTable } from './utils/scatterTable';
 import styles from './Renderer.module.scss';
 import { ScatterPlotDataStatus } from './types';
-import { toScatterAxisOptions } from './utils/axisOptions';
+import { getAxisThresholds, toScatterAxisOptions } from './utils/axisOptions';
 
 function ScatterPlotPanelRenderer({
 	panelId,
@@ -106,12 +108,19 @@ function ScatterPlotPanelRenderer({
 						id: panelId,
 						series: readyData.series,
 						isDarkMode,
-						x: toScatterAxisOptions(spec.axes?.x, readyData.channels.x.unit),
-						y: toScatterAxisOptions(spec.axes?.y, readyData.channels.y.unit),
+						x: toScatterAxisOptions(
+							spec.axes?.x,
+							readyData.channels.x.unit,
+							getAxisThresholds(spec.thresholds, DashboardtypesThresholdAxisDTO.x),
+						),
+						y: toScatterAxisOptions(
+							spec.axes?.y,
+							readyData.channels.y.unit,
+							getAxisThresholds(spec.thresholds, DashboardtypesThresholdAxisDTO.y),
+						),
 						pointSize: resolvePointSize(spec.chartAppearance?.points),
 						fillOpacity: resolvePointOpacity(spec.chartAppearance?.points),
 						colorMapping: spec.legend?.customColors ?? {},
-						thresholds: mapThresholds(spec.thresholds),
 						decimalPrecision,
 						selectionPreferencesSource: resolveSelectionPreferencesSource(panelMode),
 						shouldSaveSelectionPreference: shouldSaveSelectionPreference(panelMode),

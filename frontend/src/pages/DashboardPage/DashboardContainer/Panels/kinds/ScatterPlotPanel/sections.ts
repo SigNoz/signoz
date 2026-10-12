@@ -23,7 +23,7 @@ export const sections: SectionConfig[] = [
 	},
 	{
 		kind: SectionKind.Thresholds,
-		controls: { variant: ThresholdVariant.LABEL },
+		controls: { variant: ThresholdVariant.LABEL, axis: true },
 	},
 	{ kind: SectionKind.ContextLinks },
 ];
