@@ -1,8 +1,14 @@
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { act, AllTheProviders, renderHook } from 'tests/test-utils';
+import {
+	act,
+	AllTheProviders,
+	renderHook,
+	RenderHookResult,
+} from 'tests/test-utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryBuilderContextType } from 'types/common/queryBuilder';
 import {
 	__resetSearchParamsGetter,
 	__setSearchParamsGetterForTest,
@@ -24,7 +30,7 @@ const queryWithTimestampOrder = (base: Query): Query => ({
 const renderOn = (
 	route: string,
 	panelType: PANEL_TYPES | null,
-): ReturnType<typeof renderHook> => {
+): RenderHookResult<QueryBuilderContextType, unknown> => {
 	const search = new URLSearchParams();
 	if (panelType) {
 		search.set('panelTypes', JSON.stringify(panelType));
@@ -43,17 +49,7 @@ const initOn = (
 	panelType: PANEL_TYPES | null,
 	query: Query,
 ): Query | null => {
-	const search = new URLSearchParams();
-	if (panelType) {
-		search.set('panelTypes', JSON.stringify(panelType));
-	}
-	__setSearchParamsGetterForTest(() => search);
-
-	const { result } = renderHook(() => useQueryBuilder(), {
-		wrapper: ({ children }): JSX.Element => (
-			<AllTheProviders initialRoute={route}>{children}</AllTheProviders>
-		),
-	});
+	const { result } = renderOn(route, panelType);
 
 	act(() => {
 		result.current.initQueryBuilderData(query);
@@ -152,7 +148,7 @@ describe('the run bypass is one-shot', () => {
 		const { result } = renderOn(ROUTES.LOGS_EXPLORER, PANEL_TYPES.TIME_SERIES);
 
 		act(() => {
-			(result.current as ReturnType<typeof useQueryBuilder>).handleRunQuery();
+			result.current.handleRunQuery();
 		});
 
 		const afterRun = {
@@ -160,13 +156,10 @@ describe('the run bypass is one-shot', () => {
 			id: 'run-1',
 		};
 		act(() => {
-			(result.current as ReturnType<typeof useQueryBuilder>).initQueryBuilderData(
-				afterRun,
-			);
+			result.current.initQueryBuilderData(afterRun);
 		});
 		expect(
-			(result.current as ReturnType<typeof useQueryBuilder>).stagedQuery?.builder
-				.queryData[0].orderBy,
+			result.current.stagedQuery?.builder.queryData[0].orderBy,
 		).toStrictEqual(timestampOrderBy);
 
 		const next = {
@@ -174,13 +167,10 @@ describe('the run bypass is one-shot', () => {
 			id: 'run-2',
 		};
 		act(() => {
-			(result.current as ReturnType<typeof useQueryBuilder>).initQueryBuilderData(
-				next,
-			);
+			result.current.initQueryBuilderData(next);
 		});
 		expect(
-			(result.current as ReturnType<typeof useQueryBuilder>).stagedQuery?.builder
-				.queryData[0].orderBy,
+			result.current.stagedQuery?.builder.queryData[0].orderBy,
 		).toStrictEqual([]);
 	});
 });
