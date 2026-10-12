@@ -13,6 +13,8 @@ interface TopListTooltipProps {
 	unit?: string;
 	precision?: PrecisionOption;
 	thresholds: PanelThreshold[];
+	/** Bar color where no threshold recolours it; unset uses the accent. */
+	barColor?: string;
 	showShare: boolean;
 	/** Hints for what a click does; none when rows aren't clickable. */
 	footer?: ReactNode;
@@ -24,6 +26,7 @@ function TopListTooltip({
 	unit,
 	precision,
 	thresholds,
+	barColor,
 	showShare,
 	footer,
 }: TopListTooltipProps): JSX.Element {
@@ -31,12 +34,12 @@ function TopListTooltip({
 		() => getTooltipContent(row, { valueName, unit, precision, showShare }),
 		[row, valueName, unit, precision, showShare],
 	);
-	const { barColor } = resolveRowColors(row.value, thresholds, unit);
+	const colors = resolveRowColors(row.value, thresholds, unit, barColor);
 
 	return (
 		<TooltipCard
 			title={row.label}
-			color={barColor ?? ACCENT_COLOR}
+			color={colors.barColor ?? ACCENT_COLOR}
 			rows={rows}
 			mutedRows={mutedRows}
 			footer={footer}

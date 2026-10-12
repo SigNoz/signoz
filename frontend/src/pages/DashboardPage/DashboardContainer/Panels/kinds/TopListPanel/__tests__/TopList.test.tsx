@@ -105,6 +105,61 @@ describe('TopList', () => {
 		).toStrictEqual(['67%', '33%']);
 	});
 
+	it('paints bars the panel color unless a background threshold matches', () => {
+		render(
+			<TopList
+				panelId="panel-1"
+				rows={rowsOf(2)}
+				valueName="count()"
+				barColor="#00C853"
+				thresholds={[
+					{ value: 2, operator: '>=', color: 'Red', format: 'background' },
+				]}
+			/>,
+		);
+
+		const fills = screen.getAllByTestId('top-list-row-fill');
+		expect(fills[0].style.getPropertyValue('--fill-color')).not.toBe('#00C853');
+		expect(fills[1].style.getPropertyValue('--fill-color')).toBe('#00C853');
+	});
+
+	it('heads the columns that are shown', () => {
+		render(
+			<TopList
+				panelId="panel-1"
+				rows={rowsOf(2)}
+				valueName="count()"
+				labelName="service.name"
+				thresholds={[]}
+				showRank
+				showShare
+			/>,
+		);
+
+		expect(screen.getByTestId('top-list-header').textContent).toBe(
+			'#service.nameSharecount()',
+		);
+	});
+
+	it('explains a header on hover with its full name', async () => {
+		render(
+			<TopList
+				panelId="panel-1"
+				rows={rowsOf(2)}
+				valueName="sum(signoz_calls_total)"
+				labelName="service.name"
+				thresholds={[]}
+			/>,
+		);
+
+		fireEvent.pointerMove(screen.getByText('sum(signoz_calls_total)'));
+
+		const tooltip = await screen.findAllByTestId('top-list-header-tooltip');
+		expect(tooltip[0]).toHaveTextContent(
+			'sum(signoz_calls_total)The value each row is ranked by.',
+		);
+	});
+
 	it('follows the pointer with the hovered row in the tooltip', async () => {
 		const rows = rowsOf(2).map((row) => ({ ...row, share: 0.5 }));
 		render(

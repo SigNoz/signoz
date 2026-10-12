@@ -92,7 +92,7 @@ describe('getTopListCsvRows', () => {
 			],
 		);
 		const panel = panelWith({
-			appearance: { showRank: true, showShare: true },
+			appearance: { showRank: true, showShare: true, barColor: '#4E74F8' },
 		});
 
 		expect(getTopListCsvRows(panel, data)).toStrictEqual([

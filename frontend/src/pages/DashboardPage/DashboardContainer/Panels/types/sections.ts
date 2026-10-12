@@ -214,6 +214,7 @@ export interface SectionControls {
 	[SectionKind.Appearance]: {
 		showRank?: boolean;
 		showShare?: boolean;
+		barColor?: boolean;
 	};
 }
 

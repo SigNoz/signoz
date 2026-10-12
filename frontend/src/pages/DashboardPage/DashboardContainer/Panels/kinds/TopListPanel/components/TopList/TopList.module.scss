@@ -7,14 +7,10 @@
 	@include custom-scrollbar;
 }
 
-// Rows share these columns through subgrid: the rank, value and share that are shown
-// (--leading-columns), then the bar with its label. Vertical padding is set inline,
-// where it also stands in for unrendered rows.
+// Rows share these columns through subgrid; the shown ones are set inline. Vertical
+// padding is set inline too, where it also stands in for unrendered rows.
 .list {
 	display: grid;
-	grid-template-columns:
-		repeat(var(--leading-columns, 1), max-content)
-		minmax(0, 1fr);
 	align-content: start;
 	column-gap: 10px;
 	row-gap: 1px;

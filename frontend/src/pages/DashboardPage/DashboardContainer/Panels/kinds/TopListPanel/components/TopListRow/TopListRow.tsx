@@ -26,6 +26,8 @@ interface TopListRowProps {
 	unit?: string;
 	precision?: PrecisionOption;
 	thresholds: PanelThreshold[];
+	/** Bar color where no threshold recolours it; unset uses the accent. */
+	barColor?: string;
 	showRank: boolean;
 	showShare: boolean;
 	/** Shortens a label to fit its bar. */
@@ -47,6 +49,7 @@ function TopListRow({
 	unit,
 	precision,
 	thresholds,
+	barColor,
 	showRank,
 	showShare,
 	fitLabel,
@@ -59,8 +62,8 @@ function TopListRow({
 		[row, unit, precision],
 	);
 	const colors = useMemo(
-		() => resolveRowColors(row.value, thresholds, unit),
-		[row.value, thresholds, unit],
+		() => resolveRowColors(row.value, thresholds, unit, barColor),
+		[row.value, thresholds, unit, barColor],
 	);
 	const displayShare = showShare ? formatShare(row.share) : null;
 	const knownShare =
@@ -109,25 +112,11 @@ function TopListRow({
 						{index + 1}
 					</span>
 				)}
-				<span
-					data-testid="top-list-row-value"
-					className={cx(styles.value, {
-						[styles.isNonNumeric]: row.value === null,
-					})}
-					style={{ color: colors.valueColor }}
-				>
-					{displayValue}
-				</span>
-				{displayShare && (
-					<span data-testid="top-list-row-share" className={styles.muted}>
-						{displayShare}
-					</span>
-				)}
 				<span className={styles.bar}>
 					<span
 						data-testid="top-list-row-fill"
 						className={cx(styles.fill, {
-							[styles.hasThresholdColor]: !!colors.barColor,
+							[styles.hasFillColor]: !!colors.barColor,
 						})}
 						style={
 							{
@@ -141,6 +130,20 @@ function TopListRow({
 					>
 						{displayLabel}
 					</span>
+				</span>
+				{displayShare && (
+					<span data-testid="top-list-row-share" className={styles.muted}>
+						{displayShare}
+					</span>
+				)}
+				<span
+					data-testid="top-list-row-value"
+					className={cx(styles.value, {
+						[styles.isNonNumeric]: row.value === null,
+					})}
+					style={{ color: colors.valueColor }}
+				>
+					{displayValue}
 				</span>
 			</button>
 		</li>

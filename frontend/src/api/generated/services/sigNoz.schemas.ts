@@ -5949,6 +5949,11 @@ export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboa
 }
 export interface DashboardtypesTopListAppearanceDTO {
 	/**
+	 * @type string
+	 * @description Hex color of every bar; a matching background threshold overrides it.
+	 */
+	barColor: string;
+	/**
 	 * @type boolean
 	 * @description Numbers each row by its position in the list.
 	 */
