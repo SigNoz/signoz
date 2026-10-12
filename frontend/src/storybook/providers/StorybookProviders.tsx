@@ -7,6 +7,7 @@ import AppProviders from '@/app/AppProviders';
 import AppShell from '@/app/AppShell';
 import type { AppLayer } from '@/app/types';
 import { CmdKPalette } from 'components/cmdKPalette/cmdKPalette';
+import { Toaster } from '@signozhq/ui/sonner';
 import AppLayout from 'container/AppLayout';
 import history from 'lib/history';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
@@ -50,7 +51,10 @@ const storyRouter: AppLayer = (children) => (
 const appLayout: AppLayer = (children) => <AppLayout>{children}</AppLayout>;
 
 const bareLayout: AppLayer = (children) => (
-	<TooltipProvider>{children}</TooltipProvider>
+	<TooltipProvider>
+		{children}
+		<Toaster />
+	</TooltipProvider>
 );
 
 function StorybookProviders({

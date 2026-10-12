@@ -1,6 +1,7 @@
 import { Typography } from '@signozhq/ui/typography';
 
-import ThresholdColorSelect from '../../ThresholdColorSelect';
+import ColorSwatches from '../../../../controls/ColorSwatches/ColorSwatches';
+import { COLOR_PRESETS } from '../../thresholdOptions';
 
 import styles from '../../ThresholdsSection.module.scss';
 
@@ -10,16 +11,38 @@ interface ThresholdColorFieldProps {
 	onChange: (hex: string) => void;
 }
 
-/** Labelled color picker, shared by every threshold variant. */
+const OPTIONS = COLOR_PRESETS.map((preset) => ({
+	value: preset.value as string,
+	id: preset.label.toLowerCase(),
+	label: preset.label,
+	fill: preset.value,
+}));
+
+/** Labelled color swatches, shared by every threshold variant. */
 function ThresholdColorField({
 	testId,
 	value,
 	onChange,
 }: ThresholdColorFieldProps): JSX.Element {
+	const preset = OPTIONS.find(
+		(option) => option.value.toLowerCase() === value?.toLowerCase(),
+	);
+
 	return (
 		<div className={styles.field}>
 			<Typography.Text className={styles.fieldLabel}>Color</Typography.Text>
-			<ThresholdColorSelect value={value} testId={testId} onChange={onChange} />
+			<ColorSwatches
+				testId={testId}
+				label="Color"
+				value={preset?.value}
+				options={OPTIONS}
+				onChange={onChange}
+				custom={{
+					value: preset ? undefined : value,
+					initial: value,
+					onChange,
+				}}
+			/>
 		</div>
 	);
 }

@@ -233,12 +233,23 @@ function TanStackTableInner<TData, TItemKey = string>(
 		[effectiveColumns],
 	);
 
+	// A rebuilt column def is a new cell component to React, which remounts every
+	// cell it renders. Read the row callbacks through refs so inline ones do not.
+	const isRowActiveRef = useRef(isRowActive);
+	isRowActiveRef.current = isRowActive;
+	const getRowKeyDataRef = useRef(getRowKeyData);
+	getRowKeyDataRef.current = getRowKeyData;
+
 	const tanstackColumns = useMemo<ColumnDef<TData>[]>(
 		() =>
 			effectiveColumns.map((colDef) =>
-				buildTanstackColumnDef<TData, TItemKey>(colDef, isRowActive, getRowKeyData),
+				buildTanstackColumnDef<TData, TItemKey>(
+					colDef,
+					(row) => isRowActiveRef.current?.(row) ?? false,
+					(index) => getRowKeyDataRef.current(index),
+				),
 			),
-		[effectiveColumns, isRowActive, getRowKeyData],
+		[effectiveColumns],
 	);
 
 	const getRowId = useCallback(
