@@ -1,4 +1,8 @@
-import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	Querybuildertypesv5RequestTypeDTO,
+	type TelemetrytypesSignalDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import type { QueryMode } from 'types/common/dashboard';
 
 export type { QueryBuilderFieldsConfig } from 'components/QueryBuilderV2/queryBuilderFields.types';
 
@@ -33,4 +37,26 @@ export interface PanelQueryCapabilities {
 /** Raw rows rather than an aggregated result — the single source for "is this raw?". */
 export function isRawRequest(capabilities: PanelQueryCapabilities): boolean {
 	return capabilities.requestType === Querybuildertypesv5RequestTypeDTO.raw;
+}
+
+export enum QueryModeKind {
+	SIGNAL = 'signal',
+	SIGNAL_LESS = 'signal-less',
+}
+
+export type QueryModeCapability =
+	| { kind: QueryModeKind.SIGNAL; signals: TelemetrytypesSignalDTO[] }
+	| { kind: QueryModeKind.SIGNAL_LESS };
+
+export type SupportedQueryModes = Partial<
+	Record<QueryMode, QueryModeCapability>
+>;
+
+/** Signals `mode` accepts; empty for a signal-less or undeclared mode. */
+export function getQueryModeSignals(
+	modes: SupportedQueryModes | undefined,
+	mode: QueryMode,
+): TelemetrytypesSignalDTO[] {
+	const capability = modes?.[mode];
+	return capability?.kind === QueryModeKind.SIGNAL ? capability.signals : [];
 }

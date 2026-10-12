@@ -6,6 +6,11 @@ import type {
 	Querybuildertypesv5QueryEnvelopeBuilderDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
+import {
+	isBuilderOrAIEnvelope,
+	isBuilderOrAIPluginKind,
+} from '../../../queryV5/builderEnvelope';
+
 function clauseFor(attribute: string, variableName: string): string {
 	return `${attribute} IN $${variableName}`;
 }
@@ -21,14 +26,14 @@ function forEachBuilderSpec(
 	if (plugin.kind === 'signoz/CompositeQuery') {
 		const composite = plugin.spec as Querybuildertypesv5CompositeQueryDTO;
 		(composite.queries ?? [])
-			.filter((envelope) => envelope.type === 'builder_query')
+			.filter(isBuilderOrAIEnvelope)
 			.forEach((envelope) => {
 				const { spec } = envelope as Querybuildertypesv5QueryEnvelopeBuilderDTO;
 				if (spec) {
 					fn(spec as Querybuildertypesv5BuilderQuerySpecDTO);
 				}
 			});
-	} else if (plugin.kind === 'signoz/BuilderQuery') {
+	} else if (isBuilderOrAIPluginKind(plugin.kind)) {
 		fn(plugin.spec as Querybuildertypesv5BuilderQuerySpecDTO);
 	}
 }
