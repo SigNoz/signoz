@@ -17,7 +17,9 @@ import {
 	metricsRetentionResponse,
 	RETENTION_STATUSES,
 	tracesRetentionResponse,
+	DOMAIN_UPDATES,
 	WORKSPACE_URLS,
+	type DomainUpdate,
 	type WorkspaceUrl,
 } from './__story_mockdata__/workspace';
 
@@ -45,6 +47,13 @@ export const workspaceMocks = defineStoryMocks({
 				'Whether a custom subdomain is set. Cloud admins only: self-hosted has no domain card.',
 			options: WORKSPACE_URLS,
 			value: 'custom',
+		}),
+		domainUpdate: choiceControl<DomainUpdate>('Domain update', {
+			group: DOMAIN,
+			description:
+				'How the PUT behind "Apply Changes" answers. `success` raises the "Workspace URL updated" toast, `loading` never answers and leaves the button spinning, `error` shows the failure in the modal.',
+			options: DOMAIN_UPDATES,
+			value: 'success',
 		}),
 	},
 	handlers: (values, response) => [
@@ -75,6 +84,22 @@ export const workspaceMocks = defineStoryMocks({
 		rest.get('http://localhost/api/v2/zeus/hosts', (_req, res, ctx) =>
 			res(ctx.status(200), ctx.json(hostsResponse(values.workspaceUrl))),
 		),
+
+		rest.put('http://localhost/api/v2/zeus/hosts', (_req, res, ctx) => {
+			if (values.domainUpdate === 'loading') {
+				return res(ctx.delay('infinite'));
+			}
+
+			return values.domainUpdate === 'error'
+				? res(
+						ctx.status(409),
+						ctx.json({
+							status: 'error',
+							error: { code: 'already_exists', message: 'Subdomain is taken' },
+						}),
+					)
+				: res(ctx.status(204));
+		}),
 	],
 	config: () => ({ route: ROUTES.SETTINGS }),
 });

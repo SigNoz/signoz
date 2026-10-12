@@ -12,6 +12,11 @@ type Handler interface {
 	PatchRuleByID(http.ResponseWriter, *http.Request)
 	TestRule(http.ResponseWriter, *http.Request)
 
+	ListRuleViews(http.ResponseWriter, *http.Request)
+	CreateRuleView(http.ResponseWriter, *http.Request)
+	UpdateRuleView(http.ResponseWriter, *http.Request)
+	DeleteRuleView(http.ResponseWriter, *http.Request)
+
 	ListDowntimeSchedules(http.ResponseWriter, *http.Request)
 	GetDowntimeScheduleByID(http.ResponseWriter, *http.Request)
 	CreateDowntimeSchedule(http.ResponseWriter, *http.Request)

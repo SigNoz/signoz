@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
 	ArrowUpToLine,
-	Filter,
 	Frown,
 	RefreshCw,
 	Settings2 as SettingsIcon,
@@ -14,8 +13,9 @@ import {
 	ComboboxList,
 	ComboboxTrigger,
 } from '@signozhq/ui/combobox';
-import { Skeleton, Tooltip } from 'antd';
+import { Skeleton } from 'antd';
 import { Button } from '@signozhq/ui/button';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -57,6 +57,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		showFilterCollapse = true,
 		showQueryName = true,
 		useFieldApis,
+		savedViewsHeader,
 	} = props;
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 	const [params, setParams] = useApiMonitoringParams();
@@ -179,7 +180,6 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	// Helpers to reduce cognitive complexity in main render
 	const renderLeftActions = (): JSX.Element => (
 		<section className="left-actions">
-			<Filter size="md" />
 			<Typography.Text className="text">
 				{displayedQueryName ? 'Filters for' : 'Filters'}
 			</Typography.Text>
@@ -232,51 +232,60 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		<section className="right-actions">
 			<Tooltip title="Reset All">
 				<Button
-					size="md"
-					variant="link"
+					variant="ghost"
 					color="secondary"
+					size="sm"
 					icon
 					aria-label="Reset All"
 					onClick={handleReset}
 				>
-					<RefreshCw className="sync-icon" size="md" />
+					<RefreshCw size={14} />
 				</Button>
 			</Tooltip>
 			{showFilterCollapse && (
 				<Tooltip title="Collapse Filters">
 					<Button
-						size="md"
-						variant="link"
+						variant="ghost"
 						color="secondary"
+						size="sm"
 						icon
 						aria-label="Collapse Filters"
 						onClick={handleFilterVisibilityChange}
 					>
-						<ArrowUpToLine style={{ rotate: '270deg' }} size="md" />
+						<ArrowUpToLine style={{ rotate: '270deg' }} size={14} />
 					</Button>
 				</Tooltip>
 			)}
-			{isDynamicFilters && (
-				<AuthZButton
-					size="md"
-					checks={QuickFilterManagePermissions}
-					variant="link"
-					color="secondary"
-					icon
-					aria-label="Settings"
-					onClick={(): void => setIsSettingsOpen(true)}
-					testId="settings-icon-container"
-				>
-					<Tooltip title="Settings" open={isSettingsDisabled ? false : undefined}>
-						<SettingsIcon
-							className="settings-icon"
-							data-testid="settings-icon"
-							width={14}
-							height={14}
-						/>
+			{isDynamicFilters &&
+				(isSettingsDisabled ? (
+					<AuthZButton
+						checks={QuickFilterManagePermissions}
+						variant="ghost"
+						color="secondary"
+						size="sm"
+						icon
+						aria-label="Settings"
+						onClick={(): void => setIsSettingsOpen(true)}
+						testId="settings-icon-container"
+					>
+						<SettingsIcon data-testid="settings-icon" size={14} />
+					</AuthZButton>
+				) : (
+					<Tooltip title="Settings">
+						<Button
+							variant="ghost"
+							color="secondary"
+							size="sm"
+							icon
+							aria-label="Settings"
+							aria-expanded={isSettingsOpen}
+							onClick={(): void => setIsSettingsOpen(true)}
+							testId="settings-icon-container"
+						>
+							<SettingsIcon data-testid="settings-icon" size={14} />
+						</Button>
 					</Tooltip>
-				</AuthZButton>
-			)}
+				))}
 		</section>
 	);
 
@@ -382,6 +391,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	return (
 		<div className="quick-filters-container">
 			<div className="quick-filters">
+				{savedViewsHeader}
 				{source !== QuickFiltersSource.INFRA_MONITORING && (
 					<section className="header">
 						{renderLeftActions()}

@@ -21,7 +21,7 @@ func NewQueryInfo(ctx context.Context, orgID valuer.UUID, fl flagger.Flagger, si
 		EndNs:      endNs,
 		Signal:     signal,
 		Metric:     metric,
-		FamiliesOn: semconvFamiliesEnabled(ctx, orgID, fl),
+		FamiliesOn: SemconvFamiliesEnabled(ctx, orgID, fl),
 	}
 	if fl != nil {
 		evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
@@ -61,7 +61,7 @@ func Resolve(
 	traits := storage.Traits()
 
 	lookup := key
-	matches := matchingLogicalFields(q.FamiliesOn, q.Signal, key, fieldKeys)
+	matches := matchingLogicalFields(q.FamiliesOn, q.Signal, q.Metric, key, fieldKeys)
 	if len(matches) == 0 && slices.Contains(traits.OwnContexts, key.FieldContext) {
 		// a column the storage knows under the key's own context is the key
 		// as written, and only a miss corrects to the bare spelling
@@ -71,7 +71,7 @@ func Resolve(
 			}
 		}
 		lookup = telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextUnspecified, key.FieldDataType)
-		matches = matchingLogicalFields(q.FamiliesOn, q.Signal, lookup, fieldKeys)
+		matches = matchingLogicalFields(q.FamiliesOn, q.Signal, q.Metric, lookup, fieldKeys)
 	}
 
 	resolved := qbtypes.Resolved{Key: key, Ambiguous: len(matches) > 1}

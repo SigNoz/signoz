@@ -173,3 +173,20 @@ export const NAMESPACE_VALUES = [
 	'payments-prod',
 	'platform-prod',
 ] as const;
+
+/**
+ * The attributes the dynamic variable editor offers a variable to read, with
+ * the values each one resolves to.
+ */
+const ATTRIBUTE_VALUES: Record<string, readonly string[]> = {
+	'k8s.namespace.name': NAMESPACE_VALUES,
+	'k8s.cluster.name': ['prod-us-east-1', 'prod-eu-west-1'],
+	'service.name': SERVICES,
+	'deployment.environment': ['production', 'staging', 'development'],
+	'host.name': ['ip-10-0-1-12', 'ip-10-0-1-37', 'ip-10-0-2-4'],
+};
+
+export const VARIABLE_ATTRIBUTES = Object.keys(ATTRIBUTE_VALUES);
+
+export const attributeValues = (name: string | null): readonly string[] =>
+	ATTRIBUTE_VALUES[name ?? ''] ?? NAMESPACE_VALUES;

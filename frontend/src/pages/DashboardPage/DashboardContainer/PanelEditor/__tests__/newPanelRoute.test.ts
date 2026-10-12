@@ -6,14 +6,33 @@ import {
 	NEW_PANEL_ID,
 	newPanelSearch,
 	parseNewPanelKind,
-	parseNewPanelLayoutIndex,
+	parseNewPanelTarget,
 } from '../newPanelRoute';
 
 describe('newPanelRoute', () => {
 	it('round-trips kind + layoutIndex through the new-panel search', () => {
-		const search = newPanelSearch('signoz/ListPanel', 2);
+		const search = newPanelSearch('signoz/ListPanel', {
+			type: 'section',
+			layoutIndex: 2,
+		});
 		expect(parseNewPanelKind(NEW_PANEL_ID, search)).toBe('signoz/ListPanel');
-		expect(parseNewPanelLayoutIndex(search)).toBe(2);
+		expect(parseNewPanelTarget(search)).toStrictEqual({
+			type: 'section',
+			layoutIndex: 2,
+		});
+	});
+
+	it.each([
+		{ type: 'root' as const },
+		{ type: 'newSection' as const, title: 'Errors & 5xx' },
+	])('round-trips a $type target', (target) => {
+		expect(
+			parseNewPanelTarget(newPanelSearch('signoz/TimeSeriesPanel', target)),
+		).toStrictEqual(target);
+	});
+
+	it('ignores a blank new section title', () => {
+		expect(parseNewPanelTarget('?newSection=%20%20')).toBeUndefined();
 	});
 
 	it('omits layoutIndex when not provided', () => {
@@ -21,7 +40,7 @@ describe('newPanelRoute', () => {
 		expect(parseNewPanelKind(NEW_PANEL_ID, search)).toBe(
 			'signoz/TimeSeriesPanel',
 		);
-		expect(parseNewPanelLayoutIndex(search)).toBeUndefined();
+		expect(parseNewPanelTarget(search)).toBeUndefined();
 	});
 
 	it('returns null for an existing panel id (not the new sentinel)', () => {
