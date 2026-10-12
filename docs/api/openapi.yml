@@ -13719,9 +13719,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - logs-field:list
+        - traces-field:list
       - tokenizer:
-        - VIEWER
+        - logs-field:list
+        - traces-field:list
       summary: List promoted paths
       tags:
       - promote
@@ -13788,9 +13790,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - logs-field:update
+        - traces-field:update
       - tokenizer:
-        - EDITOR
+        - logs-field:update
+        - traces-field:update
       summary: Promote paths
       tags:
       - promote
