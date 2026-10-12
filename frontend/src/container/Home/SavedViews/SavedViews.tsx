@@ -8,7 +8,7 @@ import {
 	SavedviewtypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
-import { getSavedViewQuery } from 'container/SavedViews/utils';
+import { getSavedViewQuery } from 'container/SavedViews/utils/getSavedViewQuery';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { SOURCEPAGE_VS_ROUTES } from 'pages/SaveView/constants';
 import Card from 'periscope/components/Card/Card';

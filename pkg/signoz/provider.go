@@ -261,6 +261,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddUserTuplesFactory(sqlstore),
 		sqlmigration.NewRepairSaFactorKeyWildcardsFactory(sqlstore),
 		sqlmigration.NewAddRuleViewFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddFieldTuplesFactory(sqlstore),
 	)
 }
 

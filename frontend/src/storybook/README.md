@@ -116,6 +116,10 @@ Storybook fills the seams with:
   because elapsed-time code reads it — `lodash.debounce` compares two readings
   to decide its trailing call is due, and a frozen one leaves every debounced
   input in the app filtering nothing. `?storyClock=live` opts out.
+- A speech recognizer in place of the browser's, also in
+  `.storybook/preview-head.html`, because Storybook has no microphone. It
+  starts listening on `start()` and hears only what a `play` passes to
+  `webkitSpeechRecognition.listening.hear(text)`.
 - Theme from the toolbar (dark/light). `applyThemeBodyClass` puts `<body>` in the
   state the app gets from `index.html` plus `AppLayout`: `data-theme="default"`
   (every `@signozhq/design-tokens` semantic token is scoped to it, and without it
