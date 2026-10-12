@@ -871,12 +871,13 @@ function ExplorerOptions({
 					}
 					{isQueryUpdated && (
 						<>
-							<Divider
-								type="vertical"
+							<span
 								className={cx('explorer-options-container__divider', {
 									hidden: !isEditDeleteSupported,
 								})}
-							/>
+							>
+								<Divider orientation="vertical" />
+							</span>
 							<Tooltip title="Update this view" placement="top">
 								<Button
 									className={cx('action-icon', isEditDeleteSupported ? ' ' : 'hidden')}

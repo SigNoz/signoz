@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { SolidInfoCircle } from '@signozhq/icons';
 import { Callout } from '@signozhq/ui/callout';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
@@ -40,42 +41,43 @@ function LicenseRowDismissibleCallout(): JSX.Element | null {
 	};
 
 	return !isCalloutDismissed ? (
-		<Callout
-			type="info"
-			size="small"
-			showIcon
-			action="dismissible"
-			onClick={handleDismissCallout}
-			className="license-key-callout"
-		>
-			<div className="license-key-callout__description">
-				This is <strong>NOT</strong> your ingestion or Service account key.
-				{(hasServiceAccountsAccess || hasIngestionAccess) && (
-					<>
-						{' '}
-						Find your{' '}
-						{hasServiceAccountsAccess && (
-							<Link
-								to={ROUTES.SERVICE_ACCOUNTS_SETTINGS}
-								className="license-key-callout__link"
-							>
-								Service account here
-							</Link>
-						)}
-						{hasServiceAccountsAccess && hasIngestionAccess && ' and '}
-						{hasIngestionAccess && (
-							<Link
-								to={ROUTES.INGESTION_SETTINGS}
-								className="license-key-callout__link"
-							>
-								Ingestion key here
-							</Link>
-						)}
-						.
-					</>
-				)}
-			</div>
-		</Callout>
+		<div className="license-key-callout">
+			<Callout.Closeable
+				color="info"
+				size="sm"
+				icon={<SolidInfoCircle />}
+				closed={false}
+				onClose={handleDismissCallout}
+			>
+				<div className="license-key-callout__description">
+					This is <strong>NOT</strong> your ingestion or Service account key.
+					{(hasServiceAccountsAccess || hasIngestionAccess) && (
+						<>
+							{' '}
+							Find your{' '}
+							{hasServiceAccountsAccess && (
+								<Link
+									to={ROUTES.SERVICE_ACCOUNTS_SETTINGS}
+									className="license-key-callout__link"
+								>
+									Service account here
+								</Link>
+							)}
+							{hasServiceAccountsAccess && hasIngestionAccess && ' and '}
+							{hasIngestionAccess && (
+								<Link
+									to={ROUTES.INGESTION_SETTINGS}
+									className="license-key-callout__link"
+								>
+									Ingestion key here
+								</Link>
+							)}
+							.
+						</>
+					)}
+				</div>
+			</Callout.Closeable>
+		</div>
 	) : null;
 }
 

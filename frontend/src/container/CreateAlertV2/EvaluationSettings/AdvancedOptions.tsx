@@ -23,7 +23,7 @@ function AdvancedOptions(): JSX.Element {
 								<Input
 									placeholder="Enter tolerance limit..."
 									type="number"
-									style={{ width: 100 }}
+									width={100}
 									onChange={(e): void =>
 										setAdvancedOptions({
 											type: 'SET_SEND_NOTIFICATION_IF_DATA_IS_MISSING',
@@ -56,7 +56,7 @@ function AdvancedOptions(): JSX.Element {
 							<div className="advanced-option-item-input-group">
 								<Input
 									placeholder="Enter minimum datapoints..."
-									style={{ width: 100 }}
+									width={100}
 									type="number"
 									onChange={(e): void =>
 										setAdvancedOptions({

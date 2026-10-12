@@ -56,22 +56,15 @@ function ProgressRender(item: string | number): JSX.Element {
 	const percent = Number(Number(item).toFixed(1));
 	return (
 		<div className="progress-container">
-			<Progress
-				percent={percent}
-				strokeLinecap="butt"
-				showInfo
-				strokeColor={((): string => {
-					const cpuPercent = percent;
-					if (cpuPercent >= 90) {
-						return Color.BG_SAKURA_500;
+			<div className="progress-bar">
+				<Progress
+					percent={percent}
+					showInfo
+					color={
+						percent >= 90 ? 'highlight-danger' : percent >= 60 ? 'warning' : 'success'
 					}
-					if (cpuPercent >= 60) {
-						return Color.BG_AMBER_500;
-					}
-					return Color.BG_FOREST_500;
-				})()}
-				className="progress-bar"
-			/>
+				/>
+			</div>
 		</div>
 	);
 }

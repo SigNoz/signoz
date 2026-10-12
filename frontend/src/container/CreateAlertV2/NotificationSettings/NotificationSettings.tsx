@@ -25,6 +25,7 @@ function NotificationSettings(): JSX.Element {
 				value={notificationSettings.reNotification.value}
 				placeholder="Enter time interval..."
 				disabled={!notificationSettings.reNotification.enabled}
+				disabledTooltip={undefined}
 				type="number"
 				onChange={(e): void => {
 					setNotificationSettings({
@@ -37,7 +38,7 @@ function NotificationSettings(): JSX.Element {
 						},
 					});
 				}}
-				data-testid="repeat-notifications-time-input"
+				testId="repeat-notifications-time-input"
 			/>
 			<Select
 				value={notificationSettings.reNotification.unit || null}

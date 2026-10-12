@@ -101,7 +101,6 @@ const LazyEventDotPopover = memo(function LazyEventDotPopover({
 
 	return (
 		<Tooltip
-			open
 			title={
 				<EventTooltipContent
 					eventName={event.name}

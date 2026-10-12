@@ -88,8 +88,9 @@ function FormAlertChannels({
 			<Form initialValues={initialValue} layout="vertical" form={formInstance}>
 				<Form.Item label={t('field_channel_name')} labelAlign="left" name="name">
 					<Input
-						data-testid="channel-name-textbox"
+						testId="channel-name-textbox"
 						disabled={editing}
+						disabledTooltip={undefined}
 						onChange={(event): void => {
 							setSelectedConfig((state) => ({
 								...state,

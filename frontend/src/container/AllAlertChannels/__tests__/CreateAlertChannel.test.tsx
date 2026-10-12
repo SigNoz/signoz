@@ -387,7 +387,7 @@ describe('Create Alert Channel', () => {
 			it('Should check if API key label, required, info(help_email_to), and textbox are displayed properly', () => {
 				testLabelInputAndHelpValue({
 					labelText: 'field_email_to',
-					testId: 'email-to-textbox',
+					testId: 'email-to-textbox-field',
 					helpText: 'help_email_to',
 					required: true,
 				});
@@ -479,7 +479,7 @@ describe('Create Alert Channel', () => {
 			it('Should check if saving with a webhook url outside chat.googleapis.com displays error notification', async () => {
 				const user = userEvent.setup();
 
-				await fillField(user, 'channel-name-textbox', 'gchat-channel');
+				await fillField(user, 'channel-name-textbox-field', 'gchat-channel');
 				await fillField(user, 'webhook-url-textbox', 'https://example.com/webhook');
 
 				await user.click(screen.getByTestId('save-channel-button'));
@@ -506,7 +506,7 @@ describe('Create Alert Channel', () => {
 
 				const user = userEvent.setup();
 
-				await fillField(user, 'channel-name-textbox', 'gchat-channel');
+				await fillField(user, 'channel-name-textbox-field', 'gchat-channel');
 				await fillField(user, 'webhook-url-textbox', validWebhookUrl);
 
 				await user.click(screen.getByTestId('save-channel-button'));
@@ -538,7 +538,10 @@ describe('Create Alert Channel', () => {
 				user: ReturnType<typeof userEvent.setup>,
 				site: string,
 			): Promise<void> => {
-				await user.type(screen.getByTestId('channel-name-textbox'), 'jira-channel');
+				await user.type(
+					screen.getByTestId('channel-name-textbox-field'),
+					'jira-channel',
+				);
 				await user.type(screen.getByTestId('jira-site-textbox'), site);
 				await user.type(screen.getByTestId('jira-email-textbox'), 'me@acme.com');
 				await user.type(screen.getByTestId('jira-api-token-textbox'), 'tok123');
@@ -687,7 +690,7 @@ describe('Create Alert Channel', () => {
 			it('Should block save when the API key is missing', async () => {
 				const user = userEvent.setup();
 				await user.type(
-					screen.getByTestId('channel-name-textbox'),
+					screen.getByTestId('channel-name-textbox-field'),
 					'jsmops-channel',
 				);
 
@@ -715,7 +718,7 @@ describe('Create Alert Channel', () => {
 
 				const user = userEvent.setup();
 				await user.type(
-					screen.getByTestId('channel-name-textbox'),
+					screen.getByTestId('channel-name-textbox-field'),
 					'jsmops-channel',
 				);
 				await user.type(screen.getByTestId('jsmops-api-key-textbox'), 'key-abc');
@@ -773,7 +776,7 @@ describe('Create Alert Channel', () => {
 			it('Should block save when the URL or token is missing', async () => {
 				const user = userEvent.setup();
 				await user.type(
-					screen.getByTestId('channel-name-textbox'),
+					screen.getByTestId('channel-name-textbox-field'),
 					'incidentio-channel',
 				);
 
@@ -790,7 +793,7 @@ describe('Create Alert Channel', () => {
 			it('Should display an error when the URL is not an alert events URL', async () => {
 				const user = userEvent.setup();
 				await user.type(
-					screen.getByTestId('channel-name-textbox'),
+					screen.getByTestId('channel-name-textbox-field'),
 					'incidentio-channel',
 				);
 				await user.type(
@@ -823,7 +826,7 @@ describe('Create Alert Channel', () => {
 
 				const user = userEvent.setup();
 				await user.type(
-					screen.getByTestId('channel-name-textbox'),
+					screen.getByTestId('channel-name-textbox-field'),
 					'incidentio-channel',
 				);
 				await user.type(

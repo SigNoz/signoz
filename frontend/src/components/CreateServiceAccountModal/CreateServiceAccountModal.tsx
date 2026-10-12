@@ -116,11 +116,10 @@ function CreateServiceAccountModal(): JSX.Element {
 									<Input
 										id="sa-name"
 										placeholder="Enter a name"
-										className="create-sa-form__input"
 										value={field.value}
 										onChange={field.onChange}
 										onBlur={field.onBlur}
-										data-testid="create-sa-name-input"
+										testId="create-sa-name-input"
 									/>
 								)}
 							/>

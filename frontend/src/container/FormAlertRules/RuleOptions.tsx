@@ -1,14 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import {
-	Checkbox,
-	Collapse,
-	Form,
-	InputNumber,
-	InputNumberProps,
-	Select,
-	SelectProps,
-	Space,
-} from 'antd';
+import { Checkbox, Collapse, Form, Select, SelectProps, Space } from 'antd';
+import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
 import type { DefaultOptionType } from 'antd/es/select';
 import {
@@ -293,7 +285,7 @@ function RuleOptions({
 		</Form.Item>
 	);
 
-	const onChange: InputNumberProps['onChange'] = (value): void => {
+	const onChange = (value: number | null): void => {
 		setAlertDef({
 			...alertDef,
 			condition: {
@@ -394,13 +386,12 @@ function RuleOptions({
 					{ruleType !== AlertDetectionTypes.ANOMALY_DETECTION_ALERT && (
 						<Space direction="horizontal" align="center">
 							<Form.Item noStyle>
-								<InputNumber
-									addonBefore={t('field_threshold')}
-									value={alertDef?.condition?.target}
+								<Input.Number
+									prefix={t('field_threshold')}
+									value={alertDef?.condition?.target ?? null}
 									onChange={onChange}
-									type="number"
-									data-testid="alert-threshold-target-input"
-									onWheel={(e): void => e.currentTarget.blur()}
+									width={200}
+									testId="alert-threshold-target-input"
 								/>
 							</Form.Item>
 
@@ -447,10 +438,18 @@ function RuleOptions({
 										</Form.Item>
 										<Typography.Text>{t('text_alert_on_absent')}</Typography.Text>
 
-										<Form.Item noStyle name={['condition', 'absentFor']}>
-											<InputNumber
+										<Form.Item
+											noStyle
+											name={['condition', 'absentFor']}
+											// Input.Number is a controlled input: map the form store's
+											// `undefined` (field not set yet) to `null` (empty field).
+											getValueProps={(value): { value: number | null } => ({
+												value: value ?? null,
+											})}
+										>
+											<Input.Number
 												min={1}
-												value={alertDef?.condition?.absentFor}
+												width={90}
 												onChange={(value): void => {
 													setAlertDef({
 														...alertDef,
@@ -460,8 +459,6 @@ function RuleOptions({
 														},
 													});
 												}}
-												type="number"
-												onWheel={(e): void => e.currentTarget.blur()}
 											/>
 										</Form.Item>
 										<Typography.Text>{t('text_for')}</Typography.Text>
@@ -486,10 +483,18 @@ function RuleOptions({
 										</Form.Item>
 										<Typography.Text>{t('text_require_min_points')}</Typography.Text>
 
-										<Form.Item noStyle name={['condition', 'requiredNumPoints']}>
-											<InputNumber
+										<Form.Item
+											noStyle
+											name={['condition', 'requiredNumPoints']}
+											// Input.Number is a controlled input: map the form store's
+											// `undefined` (field not set yet) to `null` (empty field).
+											getValueProps={(value): { value: number | null } => ({
+												value: value ?? null,
+											})}
+										>
+											<Input.Number
 												min={1}
-												value={alertDef?.condition?.requiredNumPoints}
+												width={90}
 												onChange={(value): void => {
 													setAlertDef({
 														...alertDef,
@@ -499,8 +504,6 @@ function RuleOptions({
 														},
 													});
 												}}
-												type="number"
-												onWheel={(e): void => e.currentTarget.blur()}
 											/>
 										</Form.Item>
 										<Typography.Text>{t('text_num_points')}</Typography.Text>

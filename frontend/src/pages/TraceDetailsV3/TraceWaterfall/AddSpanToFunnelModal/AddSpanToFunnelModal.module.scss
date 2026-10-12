@@ -100,27 +100,17 @@
 
 .searchInput {
 	flex: 1;
-	padding: 6px 8px;
-	background: var(--l3-background);
-
-	height: 18px;
 	margin-inline-end: 6px;
+
+	// Restyle the @signozhq/ui Input through its CSS tokens.
+	--input-background: var(--l3-background);
+	--input-font-size: 14px;
+	--input-line-height: 18px;
+	--input-letter-spacing: -0.07px;
+	--input-placeholder: var(--l2-foreground);
 
 	svg {
 		opacity: 0.4;
-	}
-
-	input {
-		font-size: 14px;
-		line-height: 18px;
-		letter-spacing: -0.07px;
-		font-weight: 400;
-		background: var(--l3-background);
-	}
-
-	input::placeholder {
-		color: var(--l2-foreground);
-		opacity: 0.6;
 	}
 }
 

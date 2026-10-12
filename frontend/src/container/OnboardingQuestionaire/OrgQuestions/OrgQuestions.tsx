@@ -162,16 +162,19 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 								value: tool,
 								label:
 									tool === 'Others' && observabilityTool === 'Others' ? (
-										<Input
-											type="text"
+										<div
 											className="onboarding-questionaire-other-input"
-											placeholder="What tool do you currently use?"
-											value={otherTool || ''}
-											autoFocus
 											style={{ userSelect: 'text' }}
-											onKeyDown={(e): void => e.stopPropagation()}
-											onChange={(e): void => setOtherTool(e.target.value)}
-										/>
+										>
+											<Input
+												type="text"
+												placeholder="What tool do you currently use?"
+												value={otherTool || ''}
+												autoFocus
+												onKeyDown={(e): void => e.stopPropagation()}
+												onChange={(e): void => setOtherTool(e.target.value)}
+											/>
+										</div>
 									) : (
 										label
 									),

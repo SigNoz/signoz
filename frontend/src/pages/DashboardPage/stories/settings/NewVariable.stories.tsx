@@ -111,7 +111,10 @@ export const ApplyToPanelsOpen: Story = {
 export const NameRequired: Story = {
 	play: async ({ canvasElement }) => {
 		await openNewVariable(canvasElement);
-		await userEvent.type(screen.getByTestId('variable-name'), 'x{Backspace}');
+		await userEvent.type(
+			screen.getByTestId('variable-name-field'),
+			'x{Backspace}',
+		);
 		await screen.findByText('Variable name is required');
 	},
 };
@@ -141,7 +144,7 @@ export const Textbox: Story = {
 		await typeVariableName('region');
 		await pickVariableType('textbox');
 		await userEvent.type(
-			await screen.findByTestId('variable-text-input'),
+			await screen.findByTestId('variable-text-input-field'),
 			'us-east-1',
 		);
 	},

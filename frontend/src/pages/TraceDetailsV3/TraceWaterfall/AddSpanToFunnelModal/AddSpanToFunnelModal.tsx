@@ -165,13 +165,14 @@ function AddSpanToFunnelModal({
 		<div className={styles.root}>
 			{!!filteredData?.length && (
 				<div className={styles.search}>
-					<Input
-						className={styles.searchInput}
-						placeholder="Search by name, description, or tags..."
-						prefix={<Search size={12} />}
-						value={searchQuery}
-						onChange={handleSearch}
-					/>
+					<div className={styles.searchInput}>
+						<Input
+							placeholder="Search by name, description, or tags..."
+							prefix={<Search size={12} />}
+							value={searchQuery}
+							onChange={handleSearch}
+						/>
+					</div>
 				</div>
 			)}
 			<div className={styles.list}>

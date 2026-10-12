@@ -177,13 +177,9 @@
 
 .resourceSelectorHeader {
 	border-bottom: 1px solid var(--l2-border);
-}
 
-.resourceSelectorInput {
-	border-radius: 0;
-	border: none !important;
-	box-shadow: none !important;
-	height: 36px;
+	// The search Input is unstyled; only its height differs from the default.
+	--input-height: 36px;
 }
 
 .resourceSelectorItems {

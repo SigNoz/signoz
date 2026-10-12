@@ -30,63 +30,41 @@
 		font-weight: var(--font-weight-light);
 	}
 
+	// Wrapper around the Input; restyles the frame inside via --input-* tokens.
 	.input {
 		flex: 1;
 		min-width: 150px;
-		font-family: 'Space Mono', monospace !important;
-
-		--input-border-radius: 0px;
-		border: 1px solid var(--input-with-label-border-color, var(--l2-border));
-		background: var(--input-with-label-background-color, var(--l2-background));
-		color: var(--input-with-label-color, var(--l2-foreground));
-
-		font-size: 12px !important;
-		line-height: 25px;
-
 		position: relative;
 
+		--input-font-family: 'Space Mono', monospace;
+		--input-font-size: 12px;
+		--input-border-radius: 0px;
+		--input-border: var(--input-with-label-border-color, var(--l2-border));
+		--input-background: var(
+			--input-with-label-background-color,
+			var(--l2-background)
+		);
+		--input-foreground: var(--input-with-label-color, var(--l2-foreground));
+		--input-placeholder: var(--input-with-label-color, var(--l3-foreground));
+		--input-placeholder-opacity: 1;
+
 		&:hover,
-		&:focus {
-			z-index: 1;
-		}
-
-		.ant-select-selector {
-			position: relative;
-			border-radius: inherit;
-		}
-
-		.ant-select:hover .ant-select-selector,
-		.ant-select-focused .ant-select-selector {
+		&:focus-within {
 			z-index: 1;
 		}
 
 		&.input__has-label-after {
 			margin-left: -1px;
-
-			.ant-select-selector {
-				margin-left: -1px;
-				border-top-left-radius: 0;
-				border-bottom-left-radius: 0;
-			}
 		}
 
 		&.input__has-close-button {
-			.ant-select-selector {
-				border-top-right-radius: 0;
-				border-bottom-right-radius: 0;
-			}
-
 			~ .close-btn {
 				margin-left: -1px;
 			}
 		}
 
-		&::placeholder {
-			color: var(--input-with-label-color, var(--l3-foreground)) !important;
-			font-size: 12px !important;
-		}
-		&[type='number']::-webkit-inner-spin-button,
-		&[type='number']::-webkit-outer-spin-button {
+		input[type='number']::-webkit-inner-spin-button,
+		input[type='number']::-webkit-outer-spin-button {
 			-webkit-appearance: none;
 			-moz-appearance: none;
 			appearance: none;
@@ -109,17 +87,8 @@
 	}
 
 	&.labelAfter {
-		.input {
-			border-radius: 2px;
-			border: 1px solid var(--input-with-label-border-color, var(--l2-border));
-			background: var(--input-with-label-background-color, var(--l2-background));
-			border-top-right-radius: 0px;
-			border-bottom-right-radius: 0px;
-
-			.ant-select-selector {
-				border-top-right-radius: 0;
-				border-bottom-right-radius: 0;
-			}
+		.input [data-slot='input'] {
+			border-radius: 2px 0 0 2px;
 		}
 
 		.label {

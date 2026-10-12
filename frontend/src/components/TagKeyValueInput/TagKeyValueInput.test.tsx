@@ -9,7 +9,8 @@ type User = ReturnType<typeof userEvent.setup>;
 
 const startEditingFirstChip = async (user: User): Promise<HTMLElement> => {
 	await user.click(screen.getAllByTestId(`${TID}-chip`)[0]);
-	return screen.getByTestId(`${TID}-edit`);
+	// The Input's testId lands on its frame; the native input is `${testId}-field`.
+	return screen.getByTestId(`${TID}-edit-field`);
 };
 
 describe('TagKeyValueInput — inline chip edit', () => {
@@ -101,7 +102,7 @@ describe('TagKeyValueInput — backend-rule validation', () => {
 		const onTagsChange = jest.fn();
 		render(<TagKeyValueInput tags={[]} onTagsChange={onTagsChange} />);
 
-		const input = screen.getByTestId(TID);
+		const input = screen.getByTestId(`${TID}-field`);
 		await user.type(input, 'env:pro d{Enter}');
 
 		expect(screen.getByTestId(`${TID}-error`)).toHaveTextContent(

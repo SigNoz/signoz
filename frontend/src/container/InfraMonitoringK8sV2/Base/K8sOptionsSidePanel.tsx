@@ -169,7 +169,7 @@ function K8sOptionsSidePanel<TData>({
 					max={10}
 					value={lineClamp}
 					onChange={handleLineClampChange}
-					data-testid="line-clamp-input"
+					testId="line-clamp-input"
 					type="number"
 					prefix={
 						<Button

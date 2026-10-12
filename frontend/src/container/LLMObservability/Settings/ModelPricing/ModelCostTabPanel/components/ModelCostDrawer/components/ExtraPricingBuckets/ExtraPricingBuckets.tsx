@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { SelectSimple } from '@signozhq/ui/select';
+import { Select } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import { Plus, Trash2 } from '@signozhq/icons';
 import { LlmpricingruletypesLLMPricingRuleCacheModeDTO as CacheModeDTO } from 'api/generated/services/sigNoz.schemas';
@@ -84,6 +84,7 @@ function ExtraPricingBuckets({
 						step={0.01}
 						value={pricing[bucket.key] ?? ''}
 						disabled={isReadOnly}
+						disabledTooltip={undefined}
 						onChange={(e): void =>
 							// Clearing the field is allowed — the row stays mounted because
 							// presence is tracked in `addedKeys`, not the value. Removal is
@@ -119,14 +120,14 @@ function ExtraPricingBuckets({
 					<label htmlFor="cache-mode" className={styles.fieldLabel}>
 						Cache mode
 					</label>
-					<SelectSimple
+					<Select
 						id="cache-mode"
 						value={pricing.cacheMode}
 						items={CACHE_MODE_OPTIONS}
-						onChange={(v): void => onChange({ cacheMode: v as CacheModeDTO })}
+						placeholder="Select a cache mode"
+						onChange={(v: string): void => onChange({ cacheMode: v as CacheModeDTO })}
 						disabled={isReadOnly}
-						className={styles.fullWidth}
-						withPortal={false}
+						disabledTooltip={undefined}
 						testId="drawer-cache-mode"
 					/>
 				</div>

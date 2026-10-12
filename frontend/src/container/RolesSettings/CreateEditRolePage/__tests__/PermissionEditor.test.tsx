@@ -231,7 +231,7 @@ describe('PermissionEditor', () => {
 			await user.click(await within(createToggle).findByText('Only selected'));
 
 			const input = screen.getByTestId(
-				'item-input-selector-input-factor-api-key-read',
+				'item-input-selector-input-factor-api-key-read-field',
 			);
 			await user.type(input, 'api-key-001{enter}');
 
@@ -251,7 +251,7 @@ describe('PermissionEditor', () => {
 			await user.click(await within(createToggle).findByText('Only selected'));
 
 			const input = screen.getByTestId(
-				'item-input-selector-input-factor-api-key-read',
+				'item-input-selector-input-factor-api-key-read-field',
 			);
 			await user.type(input, 'api-key-002');
 
@@ -276,7 +276,7 @@ describe('PermissionEditor', () => {
 			await user.click(await within(createToggle).findByText('Only selected'));
 
 			const input = screen.getByTestId(
-				'item-input-selector-input-factor-api-key-read',
+				'item-input-selector-input-factor-api-key-read-field',
 			);
 			await user.type(input, 'key-a, key-b, key-c{enter}');
 
@@ -298,7 +298,7 @@ describe('PermissionEditor', () => {
 			await user.click(await within(createToggle).findByText('Only selected'));
 
 			const input = screen.getByTestId(
-				'item-input-selector-input-factor-api-key-read',
+				'item-input-selector-input-factor-api-key-read-field',
 			);
 			await user.type(input, 'key-x key-y key-z{enter}');
 
@@ -320,7 +320,7 @@ describe('PermissionEditor', () => {
 			await user.click(await within(createToggle).findByText('Only selected'));
 
 			const input = screen.getByTestId(
-				'item-input-selector-input-factor-api-key-read',
+				'item-input-selector-input-factor-api-key-read-field',
 			);
 			await user.type(input, 'same-key{enter}');
 			await user.type(input, 'same-key{enter}');
@@ -342,7 +342,7 @@ describe('PermissionEditor', () => {
 			await user.click(await within(createToggle).findByText('Only selected'));
 
 			const input = screen.getByTestId(
-				'item-input-selector-input-factor-api-key-read',
+				'item-input-selector-input-factor-api-key-read-field',
 			);
 			await user.type(input, 'removable-key{enter}');
 
@@ -367,7 +367,7 @@ describe('PermissionEditor', () => {
 			await user.click(await within(readToggle).findByText('Only selected'));
 
 			const input = screen.getByTestId(
-				'item-input-selector-input-factor-api-key-read',
+				'item-input-selector-input-factor-api-key-read-field',
 			);
 			await user.type(input, 'key-one key-two{enter}');
 
@@ -396,7 +396,7 @@ describe('PermissionEditor', () => {
 			await user.click(await within(readToggle).findByText('Only selected'));
 
 			const input = screen.getByTestId(
-				'item-input-selector-input-factor-api-key-read',
+				'item-input-selector-input-factor-api-key-read-field',
 			);
 			await user.type(input, 'a-very-long-api-key-identifier-000001{enter}');
 
@@ -418,7 +418,7 @@ describe('PermissionEditor', () => {
 			await user.click(await within(readToggle).findByText('Only selected'));
 
 			const input = screen.getByTestId(
-				'item-input-selector-input-factor-api-key-read',
+				'item-input-selector-input-factor-api-key-read-field',
 			);
 			await user.type(input, 'key-one key-two{enter}');
 
@@ -449,7 +449,7 @@ describe('PermissionEditor', () => {
 			await user.click(await within(readToggle).findByText('Only selected'));
 
 			const input = screen.getByTestId(
-				'item-input-selector-input-factor-api-key-read',
+				'item-input-selector-input-factor-api-key-read-field',
 			);
 			await user.type(input, 'key-one key-two{enter}');
 
@@ -503,7 +503,7 @@ describe('PermissionEditor', () => {
 			await user.click(await within(createToggle).findByText('Only selected'));
 
 			const input = screen.getByTestId(
-				'item-input-selector-input-factor-api-key-read',
+				'item-input-selector-input-factor-api-key-read-field',
 			);
 			await user.type(input, 'will-be-cleared{enter}');
 
@@ -527,7 +527,7 @@ describe('PermissionEditor', () => {
 			await user.click(await within(createToggle).findByText('Only selected'));
 
 			const input = screen.getByTestId(
-				'item-input-selector-input-factor-api-key-read',
+				'item-input-selector-input-factor-api-key-read-field',
 			);
 			await user.type(input, 'to-be-cleared{enter}');
 
@@ -556,7 +556,7 @@ describe('PermissionEditor', () => {
 			await user.click(await within(createToggle).findByText('Only selected'));
 
 			const input = screen.getByTestId(
-				'item-input-selector-input-factor-api-key-read',
+				'item-input-selector-input-factor-api-key-read-field',
 			);
 			await user.type(input, 'preserved-key{enter}');
 
@@ -643,7 +643,7 @@ describe('PermissionEditor', () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
 
-			const nameInput = screen.getByTestId('role-name-input');
+			const nameInput = screen.getByTestId('role-name-input-field');
 			await user.type(nameInput, 'valid-role');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -673,7 +673,7 @@ describe('PermissionEditor', () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
 
-			const nameInput = screen.getByTestId('role-name-input');
+			const nameInput = screen.getByTestId('role-name-input-field');
 			await user.type(nameInput, 'valid-role');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
@@ -710,7 +710,7 @@ describe('PermissionEditor', () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
 
-			const nameInput = screen.getByTestId('role-name-input');
+			const nameInput = screen.getByTestId('role-name-input-field');
 			await user.type(nameInput, 'valid-role');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');

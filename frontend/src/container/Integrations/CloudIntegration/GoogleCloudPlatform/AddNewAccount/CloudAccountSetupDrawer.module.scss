@@ -2,7 +2,7 @@
 	--dialog-header-padding: var(--spacing-10) var(--spacing-12);
 	--dialog-footer-padding: var(--spacing-8) var(--spacing-12);
 
-	// Input and ComboboxSimple default to --border borders, inherited text and
+	// Input and Combobox default to --border borders, inherited text and
 	// --muted-foreground placeholders; the drawer wants the dimmer --l2-border with
 	// brighter values and duller placeholders. Backgrounds are left alone — both
 	// components default to transparent and every field sits on an --l2-background
@@ -12,6 +12,7 @@
 	--input-foreground: var(--l1-foreground);
 	--input-placeholder-color: var(--l3-foreground);
 	--combobox-trigger-border-color: var(--l2-border);
+	--combobox-trigger-placeholder: var(--l3-foreground);
 
 	// Bounded flex column so the header/footer stay put and only the body
 	// scrolls when content overflows.
@@ -40,21 +41,9 @@
 		width: var(--radix-select-trigger-width);
 	}
 
-	[data-slot='combobox-content'] {
-		z-index: 5;
-		background: var(--l1-background);
-		border: 1px solid var(--l2-border);
-		border-radius: var(--radius-2);
-	}
-
 	// Selected region value: bright, like every other field's text.
 	[data-slot='combobox-value'] {
 		color: var(--l1-foreground);
-	}
-
-	// Empty trigger (.regionEmpty, set from the RHF value): dull the placeholder text.
-	.regionEmpty [data-slot='combobox-value'] {
-		color: var(--l3-foreground);
 	}
 }
 
@@ -85,8 +74,8 @@
 	composes: drawerSection from './shared.module.scss';
 }
 
-.mono {
-	composes: mono from './shared.module.scss';
+.monoInput {
+	composes: monoInput from './shared.module.scss';
 }
 
 .fullWidth {

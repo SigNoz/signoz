@@ -199,7 +199,6 @@ function MembersSettings(): JSX.Element {
 								setSearchQuery(e.target.value);
 								setPage(1);
 							}}
-							className="members-search-input"
 							name="members-search"
 						/>
 					</div>

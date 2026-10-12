@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X } from '@signozhq/icons';
-import { Card, InputNumber } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Card } from 'antd';
 import Spinner from 'components/Spinner';
 import TextToolTip from 'components/TextToolTip';
 import {
@@ -92,11 +93,12 @@ function ApDexSettings({
 						urlText={apDexToolTipUrlText}
 					/>
 				</Typography>
-				<InputNumber
+				<Input.Number
 					value={thresholdValue}
 					onChange={handleThreadholdChange}
 					min={0}
 					step={0.1}
+					width={90}
 				/>
 			</AppDexThresholdContainer>
 			{/* TODO: Add this feature later when backend is ready to support it. */}

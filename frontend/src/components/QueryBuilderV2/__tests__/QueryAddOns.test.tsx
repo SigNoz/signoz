@@ -159,7 +159,7 @@ describe('QueryAddOns', () => {
 			/>,
 		);
 
-		const input = screen.getByTestId('input-Limit') as HTMLInputElement;
+		const input = screen.getByTestId('input-Limit-field') as HTMLInputElement;
 		expect(screen.getByTestId('limit-content')).toBeInTheDocument();
 		expect(input.value).toBe('5');
 
@@ -185,7 +185,9 @@ describe('QueryAddOns', () => {
 		);
 
 		expect(screen.getByTestId('order-by-content')).toBeInTheDocument();
-		const limitInput = screen.getByTestId('input-Limit') as HTMLInputElement;
+		const limitInput = screen.getByTestId(
+			'input-Limit-field',
+		) as HTMLInputElement;
 		expect(screen.getByTestId('limit-content')).toBeInTheDocument();
 		expect(limitInput.value).toBe('7');
 	});

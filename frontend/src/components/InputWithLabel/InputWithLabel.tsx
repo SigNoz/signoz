@@ -46,19 +46,23 @@ function InputWithLabel({
 			})}
 		>
 			{!labelAfter && <Typography.Text className="label">{label}</Typography.Text>}
-			<Input
+			<div
 				className={cx('input', {
 					'input__has-label-after': !labelAfter,
 					'input__has-close-button': !!onClose,
 				})}
-				placeholder={placeholder}
-				type={type}
-				value={inputValue}
-				onChange={handleChange}
-				disabled={disabled}
-				name={label.toLowerCase()}
-				data-testid={`input-${label}`}
-			/>
+			>
+				<Input
+					placeholder={placeholder}
+					type={type}
+					value={inputValue}
+					onChange={handleChange}
+					disabled={disabled}
+					disabledTooltip={undefined}
+					name={label.toLowerCase()}
+					testId={`input-${label}`}
+				/>
+			</div>
 			{labelAfter && <Typography.Text className="label">{label}</Typography.Text>}
 			{onClose && (
 				<Button

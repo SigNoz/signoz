@@ -43,7 +43,7 @@ describe('Should check if the edit alert channel is properly displayed', () => {
 	it('Should check if the name label and textbox are displayed properly', () => {
 		testLabelInputAndHelpValue({
 			labelText: 'field_channel_name',
-			testId: 'channel-name-textbox',
+			testId: 'channel-name-textbox-field',
 			value: 'Dummy-Channel',
 		});
 	});

@@ -62,15 +62,15 @@ export default function CeleryOverviewDetails({
 						<Typography.Text className="subtitle">
 							{details.span_name}
 						</Typography.Text>
-						<Divider type="vertical" />
+						<Divider orientation="vertical" />
 						<Typography.Text className="subtitle">
 							{details.messaging_system}
 						</Typography.Text>
-						<Divider type="vertical" />
+						<Divider orientation="vertical" />
 						<Typography.Text className="subtitle">
 							{details.destination}
 						</Typography.Text>
-						<Divider type="vertical" />
+						<Divider orientation="vertical" />
 						<Typography.Text className="subtitle">
 							{details.kind_string}
 						</Typography.Text>

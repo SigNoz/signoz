@@ -179,13 +179,14 @@ function VariableForm({
 											Default Value
 										</Typography.Text>
 									</div>
-									<Input
-										className={styles.defaultInput}
-										value={model.textValue}
-										placeholder="Enter a default value (if any)..."
-										onChange={(e): void => set({ textValue: e.target.value })}
-										testId="variable-text-input"
-									/>
+									<div className={styles.defaultInput}>
+										<Input
+											value={model.textValue}
+											placeholder="Enter a default value (if any)..."
+											onChange={(e): void => set({ textValue: e.target.value })}
+											testId="variable-text-input"
+										/>
+									</div>
 								</div>
 							</div>
 						),

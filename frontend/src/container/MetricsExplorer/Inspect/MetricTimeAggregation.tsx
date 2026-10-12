@@ -1,7 +1,6 @@
+import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
-// TODO(@signozhq/ui-input): migrate this <Input> once @signozhq/ui Input
-// supports the `onWheel` handler (used to blur on scroll for number inputs).
-import { Input, Select } from 'antd';
+import { Select } from 'antd';
 import classNames from 'classnames';
 
 import { TIME_AGGREGATION_OPTIONS } from './constants';
@@ -61,8 +60,7 @@ function MetricTimeAggregation({
 					<Typography.Text>aggregated every</Typography.Text>
 					<Input
 						type="number"
-						className="no-arrows-input"
-						value={currentMetricInspectionOptions.timeAggregationInterval}
+						value={currentMetricInspectionOptions.timeAggregationInterval ?? ''}
 						placeholder="Select interval..."
 						suffix="seconds"
 						onChange={(e): void => {

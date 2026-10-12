@@ -43,11 +43,9 @@
 .searchBar {
 	padding: 0px 8px 12px;
 	flex-shrink: 0;
-}
-
-.search {
-	width: 100%;
-	font-size: 12px;
+	// The search Input fills its parent by default; its text size comes from
+	// the component's CSS token.
+	--input-font-size: 12px;
 }
 
 .list {

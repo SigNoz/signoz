@@ -25,13 +25,13 @@ function FieldRenderer({ field }: FieldRendererProps): JSX.Element {
 						<TagContainer>
 							<TagLabel>
 								type
-								<Divider type="vertical" />{' '}
+								<Divider orientation="vertical" />{' '}
 							</TagLabel>
 							<TagValue>{logType}</TagValue>
 						</TagContainer>
 						<TagContainer>
 							<TagLabel>
-								data type <Divider type="vertical" />{' '}
+								data type <Divider orientation="vertical" />{' '}
 							</TagLabel>
 							<TagValue>{dataType}</TagValue>
 						</TagContainer>

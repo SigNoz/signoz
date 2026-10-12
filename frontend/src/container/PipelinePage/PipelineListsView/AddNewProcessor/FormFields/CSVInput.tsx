@@ -1,26 +1,49 @@
 import { ChangeEventHandler, useState } from 'react';
-// TODO(@signozhq/ui-input): migrate to @signozhq/ui Input once the antd
-// `InputProps` spread (`size`, etc.) is no longer needed on this wrapper.
-import { Input, InputProps } from 'antd';
+import { Input } from '@signozhq/ui/input';
 
-function CSVInput({ value, onChange, ...otherProps }: InputProps): JSX.Element {
-	const [inputValue, setInputValue] = useState(
-		((value as string[]) || []).join(', '),
-	);
+interface CSVInputProps {
+	// `value` and `onChange` are injected by the surrounding antd <Form.Item>,
+	// which stores this field's value as a string array.
+	value?: string[];
+	onChange?: (value: string[]) => void;
+	placeholder?: string;
+	// Injected by <Form.Item> to link the label to the control.
+	id?: string;
+}
 
-	const onChangeHandler = onChange as unknown as (v: string[]) => void;
+function CSVInput({
+	value,
+	onChange,
+	placeholder,
+	id,
+}: CSVInputProps): JSX.Element {
+	const [inputValue, setInputValue] = useState((value || []).join(', '));
 
 	const onInputChange: ChangeEventHandler<HTMLInputElement> = (e) => {
 		const newValue = e.target.value;
 		setInputValue(newValue);
 
-		if (onChangeHandler) {
+		if (onChange) {
 			const splitValues = newValue.split(',').map((v) => v.trim());
-			onChangeHandler(splitValues);
+			onChange(splitValues);
 		}
 	};
 
-	return <Input value={inputValue} onChange={onInputChange} {...otherProps} />;
+	return (
+		<Input
+			id={id}
+			placeholder={placeholder}
+			value={inputValue}
+			onChange={onInputChange}
+		/>
+	);
 }
+
+CSVInput.defaultProps = {
+	value: undefined,
+	onChange: undefined,
+	placeholder: undefined,
+	id: undefined,
+};
 
 export default CSVInput;

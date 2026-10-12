@@ -318,7 +318,6 @@ function SaveView(): JSX.Element {
 						prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
 						value={searchValue}
 						onChange={handleSearch}
-						className="search-input"
 					/>
 				</div>
 
@@ -399,7 +398,7 @@ function SaveView(): JSX.Element {
 					<Input
 						placeholder="e.g. Crash landing view"
 						value={newViewName}
-						data-testid="view-name"
+						testId="view-name"
 						onChange={(e): void => setNewViewName(e.target.value)}
 					/>
 				</div>

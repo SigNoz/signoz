@@ -94,7 +94,7 @@ describe('TriggeredAlerts — empty / error states', () => {
 			expect(screen.getByText('High CPU Usage')).toBeInTheDocument(),
 		);
 
-		const input = screen.getByTestId('triggered-alerts-search-input');
+		const input = screen.getByTestId('triggered-alerts-search-input-field');
 		await user.type(input, 'this-matches-nothing-xyz');
 
 		await screen.findByTestId('no-results-empty-state');
@@ -111,8 +111,11 @@ describe('TriggeredAlerts — empty / error states', () => {
 			expect(screen.getByText('High CPU Usage')).toBeInTheDocument(),
 		);
 		expect(
-			(screen.getByTestId('triggered-alerts-search-input') as HTMLInputElement)
-				.value,
+			(
+				screen.getByTestId(
+					'triggered-alerts-search-input-field',
+				) as HTMLInputElement
+			).value,
 		).toBe('');
 	});
 });

@@ -142,7 +142,7 @@ export default function ChartManager({
 					placeholder="Filter Series"
 					value={filterValue}
 					onChange={handleFilterChange}
-					data-testid="filter-input"
+					testId="filter-input"
 				/>
 				<div className="chart-manager-actions-container">
 					<Button type="default" onClick={onCancel}>

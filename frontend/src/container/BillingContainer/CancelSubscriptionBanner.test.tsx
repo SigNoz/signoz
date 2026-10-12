@@ -92,7 +92,7 @@ describe('CancelSubscriptionBanner', () => {
 			screen.getByText(/Cancelling your subscription would stop your data/i),
 		).toBeInTheDocument();
 		expect(screen.getByText(/Type/i)).toBeInTheDocument();
-		expect(screen.getByTestId('cancel-confirm-input')).toBeInTheDocument();
+		expect(screen.getByTestId('cancel-confirm-input-field')).toBeInTheDocument();
 		expect(screen.getByRole('button', { name: /go back/i })).toBeInTheDocument();
 		expect(
 			screen.getByTestId('cancel-subscription-confirm-btn'),
@@ -114,7 +114,7 @@ describe('CancelSubscriptionBanner', () => {
 		const confirmButton = screen.getByTestId('cancel-subscription-confirm-btn');
 		expect(confirmButton).toHaveAttribute('aria-disabled', 'true');
 
-		const input = screen.getByTestId('cancel-confirm-input');
+		const input = screen.getByTestId('cancel-confirm-input-field');
 		await user.type(input, 'canc');
 		expect(confirmButton).toHaveAttribute('aria-disabled', 'true');
 
@@ -134,7 +134,7 @@ describe('CancelSubscriptionBanner', () => {
 		});
 		await user.click(screen.getByTestId('cancel-subscription-btn'));
 
-		const input = screen.getByTestId('cancel-confirm-input');
+		const input = screen.getByTestId('cancel-confirm-input-field');
 		await user.type(input, 'cancel');
 
 		await user.click(screen.getByRole('button', { name: /go back/i }));
@@ -149,7 +149,7 @@ describe('CancelSubscriptionBanner', () => {
 			);
 		});
 		await user.click(screen.getByTestId('cancel-subscription-btn'));
-		expect(screen.getByTestId('cancel-confirm-input')).toHaveValue('');
+		expect(screen.getByTestId('cancel-confirm-input-field')).toHaveValue('');
 	});
 
 	it('fires mailto via DOM-attached anchor and shows fallback view after confirming', async () => {
@@ -165,7 +165,7 @@ describe('CancelSubscriptionBanner', () => {
 			);
 		});
 		await user.click(screen.getByTestId('cancel-subscription-btn'));
-		await user.type(screen.getByTestId('cancel-confirm-input'), 'cancel');
+		await user.type(screen.getByTestId('cancel-confirm-input-field'), 'cancel');
 		await user.click(screen.getByTestId('cancel-subscription-confirm-btn'));
 
 		const appendedAnchor = appendSpy.mock.calls
@@ -201,7 +201,7 @@ describe('CancelSubscriptionBanner', () => {
 			);
 		});
 		await user.click(screen.getByTestId('cancel-subscription-btn'));
-		await user.type(screen.getByTestId('cancel-confirm-input'), 'cancel');
+		await user.type(screen.getByTestId('cancel-confirm-input-field'), 'cancel');
 		await user.click(screen.getByTestId('cancel-subscription-confirm-btn'));
 
 		await user.click(screen.getByTestId('copy-email-template-btn'));
@@ -227,7 +227,7 @@ describe('CancelSubscriptionBanner', () => {
 			);
 		});
 		await user.click(screen.getByTestId('cancel-subscription-btn'));
-		await user.type(screen.getByTestId('cancel-confirm-input'), 'cancel');
+		await user.type(screen.getByTestId('cancel-confirm-input-field'), 'cancel');
 		await user.click(screen.getByTestId('cancel-subscription-confirm-btn'));
 
 		await user.click(screen.getByTestId('retry-mailto-btn'));
@@ -251,7 +251,7 @@ describe('CancelSubscriptionBanner', () => {
 			);
 		});
 		await user.click(screen.getByTestId('cancel-subscription-btn'));
-		await user.type(screen.getByTestId('cancel-confirm-input'), 'cancel');
+		await user.type(screen.getByTestId('cancel-confirm-input-field'), 'cancel');
 		await user.click(screen.getByTestId('cancel-subscription-confirm-btn'));
 
 		await user.click(screen.getByRole('button', { name: /close/i }));

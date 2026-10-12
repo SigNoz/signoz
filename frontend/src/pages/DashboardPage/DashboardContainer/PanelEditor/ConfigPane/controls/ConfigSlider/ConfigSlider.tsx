@@ -14,8 +14,7 @@ interface ConfigSliderProps {
 }
 
 /**
- * Numeric slider for the config sections. The design-system Slider is multi-thumb
- * capable, so its callback hands back `number | number[]`; this narrows to one thumb.
+ * Numeric slider for the config sections.
  */
 function ConfigSlider({
 	testId,
@@ -28,15 +27,17 @@ function ConfigSlider({
 }: ConfigSliderProps): JSX.Element {
 	return (
 		<div className={styles.row}>
-			<Slider
-				testId={testId}
-				className={styles.slider}
-				value={value}
-				min={min}
-				max={max}
-				step={step}
-				onChange={(next): void => onChange(Array.isArray(next) ? next[0] : next)}
-			/>
+			<div className={styles.slider}>
+				<Slider
+					testId={testId}
+					color="primary"
+					value={value}
+					min={min}
+					max={max}
+					step={step}
+					onChange={onChange}
+				/>
+			</div>
 			<span className={styles.value}>
 				{formatValue ? formatValue(value) : value}
 			</span>

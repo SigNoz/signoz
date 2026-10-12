@@ -4,7 +4,7 @@ import TanStackTable from 'components/TanStackTableView';
 import styles from './EntityProgressBar.module.scss';
 import {
 	EntityProgressBarType,
-	getStrokeColor,
+	getProgressColor,
 } from './EntityProgressBar.utils';
 
 export function EntityProgressBar({
@@ -27,14 +27,13 @@ export function EntityProgressBar({
 
 	return (
 		<div className={styles.entityProgressBar}>
-			<Progress
-				percent={percentage}
-				strokeLinecap="butt"
-				status="normal"
-				strokeColor={getStrokeColor(type, value)}
-				className={styles.progressBar}
-				showInfo={false}
-			/>
+			<div className={styles.progressBar}>
+				<Progress
+					percent={percentage}
+					color={getProgressColor(type, value)}
+					showInfo={false}
+				/>
+			</div>
 			<TanStackTable.Text>{percentage}%</TanStackTable.Text>
 		</div>
 	);

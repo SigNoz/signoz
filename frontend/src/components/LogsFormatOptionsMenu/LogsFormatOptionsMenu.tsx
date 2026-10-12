@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Button, InputNumber, Popover, Tooltip } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Button, Popover, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { LogViewMode } from 'container/OptionsMenu/types';
@@ -207,11 +208,14 @@ function OptionsMenu({
 										{' '}
 										<Minus size={12} />{' '}
 									</button>
-									<InputNumber
+									<Input.Number
 										min={1}
 										max={10}
 										value={maxLinesPerRow}
 										onChange={handleLinesPerRowChange}
+										controls={false}
+										noFocusRing
+										testId="max-lines-per-row-field"
 									/>
 									<button
 										type="button"

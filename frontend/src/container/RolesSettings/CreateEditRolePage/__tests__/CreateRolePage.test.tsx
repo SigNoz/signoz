@@ -53,21 +53,21 @@ describe('CreateRolePage', () => {
 		it('renders empty name input', async () => {
 			await renderCreatePage();
 
-			const nameInput = screen.getByTestId('role-name-input');
+			const nameInput = screen.getByTestId('role-name-input-field');
 			expect(nameInput).toHaveValue('');
 		});
 
 		it('renders empty description input', async () => {
 			await renderCreatePage();
 
-			const descInput = screen.getByTestId('role-description-input');
+			const descInput = screen.getByTestId('role-description-input-field');
 			expect(descInput).toHaveValue('');
 		});
 
 		it('name input is enabled in create mode', async () => {
 			await renderCreatePage();
 
-			const nameInput = screen.getByTestId('role-name-input');
+			const nameInput = screen.getByTestId('role-name-input-field');
 			expect(nameInput).not.toBeDisabled();
 		});
 
@@ -97,7 +97,7 @@ describe('CreateRolePage', () => {
 			const user = userEvent.setup();
 			await renderCreatePage();
 
-			const nameInput = screen.getByTestId('role-name-input');
+			const nameInput = screen.getByTestId('role-name-input-field');
 			await user.type(nameInput, 'test-role');
 
 			const saveBtn = screen.getByTestId('save-button');
@@ -108,7 +108,7 @@ describe('CreateRolePage', () => {
 			const user = userEvent.setup();
 			await renderCreatePage();
 
-			const nameInput = screen.getByTestId('role-name-input');
+			const nameInput = screen.getByTestId('role-name-input-field');
 			await user.type(nameInput, 'my-role');
 
 			await expect(
@@ -120,7 +120,7 @@ describe('CreateRolePage', () => {
 			const user = userEvent.setup();
 			await renderCreatePage();
 
-			const descInput = screen.getByTestId('role-description-input');
+			const descInput = screen.getByTestId('role-description-input-field');
 			await user.type(descInput, 'Some description');
 
 			const saveBtn = screen.getByTestId('save-button');
@@ -162,10 +162,10 @@ describe('CreateRolePage', () => {
 			const user = userEvent.setup();
 			await renderCreatePage();
 
-			const nameInput = screen.getByTestId('role-name-input');
+			const nameInput = screen.getByTestId('role-name-input-field');
 			await user.type(nameInput, 'my-custom-role');
 
-			const descInput = screen.getByTestId('role-description-input');
+			const descInput = screen.getByTestId('role-description-input-field');
 			await user.type(descInput, 'Role for testing');
 
 			const saveBtn = screen.getByTestId('save-button');
@@ -199,7 +199,7 @@ describe('CreateRolePage', () => {
 			const user = userEvent.setup();
 			await renderCreatePage();
 
-			const descInput = screen.getByTestId('role-description-input');
+			const descInput = screen.getByTestId('role-description-input-field');
 			await user.type(descInput, 'Description only');
 
 			const saveBtn = screen.getByTestId('save-button');
@@ -217,7 +217,7 @@ describe('CreateRolePage', () => {
 			const user = userEvent.setup();
 			await renderCreatePage();
 
-			const descInput = screen.getByTestId('role-description-input');
+			const descInput = screen.getByTestId('role-description-input-field');
 			await user.type(descInput, 'Description only');
 
 			const saveBtn = screen.getByTestId('save-button');
@@ -236,7 +236,7 @@ describe('CreateRolePage', () => {
 			const user = userEvent.setup();
 			await renderCreatePage();
 
-			const descInput = screen.getByTestId('role-description-input');
+			const descInput = screen.getByTestId('role-description-input-field');
 			await user.type(descInput, 'Description only');
 
 			const saveBtn = screen.getByTestId('save-button');
@@ -246,7 +246,7 @@ describe('CreateRolePage', () => {
 				screen.findByTestId('save-error-banner'),
 			).resolves.toBeInTheDocument();
 
-			const nameInput = screen.getByTestId('role-name-input');
+			const nameInput = screen.getByTestId('role-name-input-field');
 			await user.type(nameInput, 'a');
 
 			await waitFor(() => {
@@ -269,7 +269,7 @@ describe('CreateRolePage', () => {
 			const user = userEvent.setup();
 			await renderCreatePage();
 
-			const nameInput = screen.getByTestId('role-name-input');
+			const nameInput = screen.getByTestId('role-name-input-field');
 			await user.type(nameInput, 'duplicate-role');
 
 			const saveBtn = screen.getByTestId('save-button');
@@ -290,7 +290,7 @@ describe('CreateRolePage', () => {
 			const user = userEvent.setup();
 			await renderCreatePage();
 
-			const nameInput = screen.getByTestId('role-name-input');
+			const nameInput = screen.getByTestId('role-name-input-field');
 			await user.type(nameInput, 'valid-role');
 
 			const apiKeysCard = screen.getByTestId('resource-card-factor-api-key');

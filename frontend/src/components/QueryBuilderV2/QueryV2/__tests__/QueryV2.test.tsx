@@ -168,7 +168,7 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 		expect(limitInput).toBeInTheDocument();
 		expect(limitInput).toHaveAttribute('type', 'number');
 		expect(limitInput).toHaveAttribute('name', 'limit');
-		expect(limitInput).toHaveAttribute('data-testid', 'input-Limit');
+		expect(limitInput).toHaveAttribute('data-testid', 'input-Limit-field');
 	});
 
 	it('Cmd+Enter on an input triggers handleRunQuery via container handler', async () => {

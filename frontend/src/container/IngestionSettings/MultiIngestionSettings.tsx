@@ -1862,7 +1862,11 @@ function MultiIngestionSettings(): JSX.Element {
 						label="Name"
 						rules={[{ required: true }, { type: 'string', min: 6 }]}
 					>
-						<Input placeholder="Enter Ingestion Key name" disabled />
+						<Input
+							placeholder="Enter Ingestion Key name"
+							disabled
+							disabledTooltip={undefined}
+						/>
 					</Form.Item>
 
 					<Form.Item name="tags" label="Tags">

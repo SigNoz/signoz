@@ -9,7 +9,12 @@ const GCP_INTEGRATION_DOCS_URL =
 
 function SetupGuideCallout(): JSX.Element {
 	return (
-		<Callout icon={<KeyRound />} testId="gcp-setup-guide-callout">
+		<Callout
+			color="info"
+			size="sm"
+			icon={<KeyRound />}
+			testId="gcp-setup-guide-callout"
+		>
 			<Typography.Text as="span" size="base">
 				Please go through our GCP integration guide, which covers all prerequisites
 				— service account, IAM roles, and resource setup.

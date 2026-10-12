@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { useQueries } from 'react-query';
-import { Color } from '@signozhq/design-tokens';
 import { Skeleton, Tooltip } from 'antd';
 import { Progress } from '@signozhq/ui/progress';
 import { Typography } from '@signozhq/ui/typography';
@@ -136,26 +135,21 @@ function DomainMetrics({
 						) : (
 							<Tooltip title={formattedDomainMetricsData.errorRate}>
 								{formattedDomainMetricsData.errorRate !== '-' ? (
-									<Progress
-										percent={Number(
-											Number(formattedDomainMetricsData.errorRate).toFixed(2),
-										)}
-										strokeLinecap="butt"
-										showInfo
-										strokeColor={((): string => {
-											const errorRatePercent = Number(
+									<div className="progress-bar">
+										<Progress
+											percent={Number(
 												Number(formattedDomainMetricsData.errorRate).toFixed(2),
-											);
-											if (errorRatePercent >= 90) {
-												return Color.BG_SAKURA_500;
+											)}
+											showInfo
+											color={
+												Number(formattedDomainMetricsData.errorRate) >= 90
+													? 'highlight-danger'
+													: Number(formattedDomainMetricsData.errorRate) >= 60
+														? 'warning'
+														: 'success'
 											}
-											if (errorRatePercent >= 60) {
-												return Color.BG_AMBER_500;
-											}
-											return Color.BG_FOREST_500;
-										})()}
-										className="progress-bar"
-									/>
+										/>
+									</div>
 								) : (
 									'-'
 								)}

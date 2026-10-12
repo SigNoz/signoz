@@ -96,14 +96,14 @@ describe('ForgotPassword Component', () => {
 		it('pre-fills email from props', () => {
 			render(<ForgotPassword {...defaultProps} />);
 
-			const emailInput = screen.getByTestId('email');
+			const emailInput = screen.getByTestId('email-field');
 			expect(emailInput).toHaveValue(TEST_EMAIL);
 		});
 
 		it('disables email input field', () => {
 			render(<ForgotPassword {...defaultProps} />);
 
-			const emailInput = screen.getByTestId('email');
+			const emailInput = screen.getByTestId('email-field');
 			expect(emailInput).toBeDisabled();
 		});
 

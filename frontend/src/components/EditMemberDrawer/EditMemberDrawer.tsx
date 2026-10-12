@@ -471,20 +471,19 @@ function EditMemberDrawer({
 				<label className="edit-member-drawer__label" htmlFor="member-name">
 					Name
 				</label>
-				<Tooltip title={isRootUser ? ROOT_USER_TOOLTIP : undefined}>
-					<Input
-						id="member-name"
-						value={localDisplayName}
-						onChange={(e): void => {
-							setLocalDisplayName(e.target.value);
-							setSaveErrors((prev) =>
-								prev.filter((err) => err.context !== 'Name update'),
-							);
-						}}
-						placeholder="Enter name"
-						disabled={isRootUser || isDeleted}
-					/>
-				</Tooltip>
+				<Input
+					id="member-name"
+					value={localDisplayName}
+					onChange={(e): void => {
+						setLocalDisplayName(e.target.value);
+						setSaveErrors((prev) =>
+							prev.filter((err) => err.context !== 'Name update'),
+						);
+					}}
+					placeholder="Enter name"
+					disabled={isRootUser || isDeleted}
+					disabledTooltip={isRootUser ? ROOT_USER_TOOLTIP : undefined}
+				/>
 			</div>
 
 			<div className="edit-member-drawer__field">

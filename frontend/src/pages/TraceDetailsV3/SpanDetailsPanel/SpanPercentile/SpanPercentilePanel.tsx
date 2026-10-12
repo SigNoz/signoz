@@ -89,7 +89,7 @@ function SpanPercentilePanel({
 					<div className={styles.resourceSelectorHeader}>
 						<Input
 							placeholder="Search resource attributes"
-							className={styles.resourceSelectorInput}
+							variant="unstyled"
 							value={resourceAttributesSearchQuery}
 							onChange={(e): void =>
 								setResourceAttributesSearchQuery(e.target.value as string)

@@ -74,7 +74,8 @@ describe('AddKeyModal', () => {
 
 		// The form only renders once the checks resolve, so waiting for it also
 		// guarantees the button is no longer in its authz-loading state.
-		const nameInput = await screen.findByTestId('add-key-name-input');
+		// The Input's testId lands on its frame; the native input is `-field`.
+		const nameInput = await screen.findByTestId('add-key-name-input-field');
 		const createBtn = await screen.findByTestId('add-key-submit-btn');
 
 		expect(createBtn).toHaveAttribute('aria-disabled', 'true');
@@ -94,7 +95,7 @@ describe('AddKeyModal', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderModal();
 
-		const nameInput = await screen.findByTestId('add-key-name-input');
+		const nameInput = await screen.findByTestId('add-key-name-input-field');
 		const submitBtn = await screen.findByTestId('add-key-submit-btn');
 		await user.type(nameInput, 'Deploy Key');
 		await waitFor(() =>
@@ -118,8 +119,9 @@ describe('AddKeyModal', () => {
 		);
 		renderModal();
 
-		const nameInput =
-			await screen.findByTestId<HTMLInputElement>('add-key-name-input');
+		const nameInput = await screen.findByTestId<HTMLInputElement>(
+			'add-key-name-input-field',
+		);
 		const submitBtn = await screen.findByTestId('add-key-submit-btn');
 		await user.type(nameInput, 'Deploy Key');
 		await waitFor(() =>
@@ -139,7 +141,7 @@ describe('AddKeyModal', () => {
 
 		renderModal();
 
-		const nameInput = await screen.findByTestId('add-key-name-input');
+		const nameInput = await screen.findByTestId('add-key-name-input-field');
 		const submitBtn = await screen.findByTestId('add-key-submit-btn');
 		await user.type(nameInput, 'Deploy Key');
 		await waitFor(() =>

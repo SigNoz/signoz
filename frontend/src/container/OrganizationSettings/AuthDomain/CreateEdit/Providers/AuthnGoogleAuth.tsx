@@ -94,6 +94,7 @@ function ConfigureGoogleAuthAuthnProvider({
 							<Input
 								id="google-domain"
 								disabled={!isCreate}
+								disabledTooltip={undefined}
 								testId="google-auth-domain"
 							/>
 						</Form.Item>
@@ -165,10 +166,12 @@ function ConfigureGoogleAuthAuthnProvider({
 					</div>
 
 					<div className="authn-provider__callout-wrapper">
-						<Callout type="warning" size="small" showIcon className="callout">
-							Google OAuth2 won&apos;t be enabled unless you enter all the attributes
-							above
-						</Callout>
+						<div className="callout">
+							<Callout color="warning" size="sm" icon={<TriangleAlert />}>
+								Google OAuth2 won&apos;t be enabled unless you enter all the attributes
+								above
+							</Callout>
+						</div>
 					</div>
 				</div>
 
