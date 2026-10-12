@@ -178,12 +178,12 @@ export default function AlertRules({
 						</div>
 
 						<div className="alert-rule-item-description home-data-item-tag">
-							<Badge textTransform="none" color="archive" variant="outlined">
+							<Badge textTransform="uppercase" color="archive" variant="outlined">
 								{rule?.labels?.severity}
 							</Badge>
 
 							{rule.state === 'firing' && (
-								<Badge color="danger" variant="outlined">
+								<Badge color="danger" variant="outlined" textTransform="uppercase">
 									{rule.state}
 								</Badge>
 							)}

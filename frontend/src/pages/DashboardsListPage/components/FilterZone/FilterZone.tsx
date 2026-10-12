@@ -154,9 +154,9 @@ function FilterZone({
 						{!isEmpty && (
 							<Button
 								disabledTooltip={undefined}
-								variant="solid"
-								color="primary"
-								size="sm"
+								variant="outlined"
+								color="secondary"
+								size="md"
 								prefix={<X size={12} />}
 								disabled={disabled}
 								onClick={handleClear}
