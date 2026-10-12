@@ -216,6 +216,39 @@ CONTENT_TEMPLATING_TEST = [
         ),
     ),
     types.AlertManagerNotificationTestCase(
+        name="slack_ai_traces_default_templating",
+        rule_path="ruler/test_scenarios/rule_state_history_ai_traces/rule.json",
+        alert_data=[
+            types.AlertData(
+                type="traces",
+                data_path="ruler/test_scenarios/rule_state_history_ai_traces/alert_data.jsonl",
+            ),
+        ],
+        channel_config=slack_default_config,
+        notification_expectation=types.AMNotificationExpectation(
+            should_notify=True,
+            wait_time_seconds=120,
+            notification_validations=[
+                types.NotificationValidation(
+                    destination_type="webhook",
+                    validation_data={
+                        "path": "/services/TEAM_ID/BOT_ID/TOKEN_ID",
+                        "json_body": {
+                            "username": "Alertmanager",
+                            "attachments": [
+                                {
+                                    "color": "danger",
+                                    "mrkdwn_in": ["fallback", "pretext", "text"],
+                                    "text": re.compile(r"\*RelatedTraces:\* View in <[^>]*/ai-observability/explorer\?[^>]*\|ai traces explorer>"),
+                                }
+                            ],
+                        },
+                    },
+                ),
+            ],
+        ),
+    ),
+    types.AlertManagerNotificationTestCase(
         name="webhook_metrics_default_templating",
         rule_path="alertmanager/content_templating/metrics_rule.json",
         alert_data=[
