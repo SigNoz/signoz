@@ -2,7 +2,8 @@ package dashboardtypes
 
 import (
 	"encoding/json"
-	"math"
+	"maps"
+	"slices"
 	"strconv"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -361,6 +362,32 @@ type ScatterPlotPanelSpec struct {
 	Thresholds      []ThresholdWithLabel       `json:"thresholds" validate:"dive"`
 }
 
+func (s *ScatterPlotPanelSpec) validateAgainstQuery(query Query, path string) error {
+	composite, err := query.Spec.Plugin.buildV5CompositeQueryFromPlugin()
+	if err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s.dimensions: %s", path, err.Error())
+	}
+	keys, known := composite.CollectResultColumnKeys()
+	if !known {
+		return nil
+	}
+	for _, binding := range []struct{ field, key string }{{"x", s.Dimensions.X}, {"y", s.Dimensions.Y}, {"sizeBy", s.Dimensions.SizeBy}} {
+		// Empty is unset: the renderer picks a column or a fixed size.
+		if binding.key == "" {
+			continue
+		}
+		if _, ok := keys.Aggregations[binding.key]; !ok {
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.dimensions.%s: %q is not a value column of the panel's query; value columns: %s", path, binding.field, binding.key, allowedValuesForKind(slices.Sorted(maps.Keys(keys.Aggregations))))
+		}
+	}
+	for _, label := range s.Dimensions.ColorBy {
+		if _, ok := keys.Groups[label]; !ok {
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.dimensions.colorBy: %q is not a group-by key of the panel's query; group-by keys: %s", path, label, allowedValuesForKind(slices.Sorted(maps.Keys(keys.Groups))))
+		}
+	}
+	return nil
+}
+
 // ScatterPlotDimensions binds result columns to what a dot encodes. Value columns
 // use the Table column key, so formatting.columnUnits carries over between the
 // two kinds.
@@ -388,12 +415,12 @@ type ScatterPlotChartAppearance struct {
 }
 
 // ScatterPlotPoints keeps the fixed size and the size range side by side so
-// binding or unbinding dimensions.size restores the other's last setting. Nil
+// binding or unbinding dimensions.sizeBy restores the other's last setting. Nil
 // fields resolve to the renderer default.
 type ScatterPlotPoints struct {
-	Size    *PointDiameter `json:"size" description:"Diameter of every dot when dimensions.size is unset."`
-	MinSize *PointDiameter `json:"minSize" description:"Diameter of the smallest dot when dimensions.size is set."`
-	MaxSize *PointDiameter `json:"maxSize" description:"Diameter of the largest dot when dimensions.size is set."`
+	Size    *PointDiameter `json:"size" description:"Diameter of every dot when dimensions.sizeBy is unset."`
+	MinSize *PointDiameter `json:"minSize" description:"Diameter of the smallest dot when dimensions.sizeBy is set."`
+	MaxSize *PointDiameter `json:"maxSize" description:"Diameter of the largest dot when dimensions.sizeBy is set."`
 	Opacity *PointOpacity  `json:"opacity"`
 }
 
@@ -973,12 +1000,12 @@ func (PointDiameter) PrepareJSONSchema(s *jsonschema.Schema) error {
 }
 
 func (d *PointDiameter) UnmarshalJSON(data []byte) error {
-	var v float64
+	var v int
 	if err := json.Unmarshal(data, &v); err != nil {
-		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid point size: must be a whole number between %d and %d", minPointDiameter, maxPointDiameter)
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid point diameter: must be a whole number between %d and %d", minPointDiameter, maxPointDiameter)
 	}
-	if v != math.Trunc(v) || v < minPointDiameter || v > maxPointDiameter {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid point size %v: must be a whole number between %d and %d", v, minPointDiameter, maxPointDiameter)
+	if v < minPointDiameter || v > maxPointDiameter {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid point diameter %d: must be a whole number between %d and %d", v, minPointDiameter, maxPointDiameter)
 	}
 	*d = PointDiameter(v)
 	return nil

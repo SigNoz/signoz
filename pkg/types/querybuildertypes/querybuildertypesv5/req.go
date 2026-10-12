@@ -263,6 +263,43 @@ type CompositeQuery struct {
 	Queries []QueryEnvelope `json:"queries" description:"The queries to run, each wrapped in a type-discriminated envelope. Names must be unique; formulas and trace operators reference other queries by name."`
 }
 
+// ResultColumnKeys is what a scalar query yields per row, keyed the way the
+// UI keys columns: an aggregation column is the query name, or
+// queryName.expression when the query has several aggregations; a group
+// column is a group-by key name.
+type ResultColumnKeys struct {
+	Aggregations map[string]struct{}
+	Groups       map[string]struct{}
+}
+
+// CollectResultColumnKeys reports false when a query's columns are only known
+// at run time, as for ClickHouse SQL and PromQL. A disabled query yields no
+// aggregation column but keeps its group columns, since a formula over it
+// still carries them.
+func (c *CompositeQuery) CollectResultColumnKeys() (ResultColumnKeys, bool) {
+	keys := ResultColumnKeys{Aggregations: map[string]struct{}{}, Groups: map[string]struct{}{}}
+	for _, envelope := range c.Queries {
+		if envelope.GetType() == QueryTypeClickHouseSQL || envelope.GetType() == QueryTypePromQL {
+			return ResultColumnKeys{}, false
+		}
+		for _, key := range envelope.GetGroupBy() {
+			keys.Groups[key.Name] = struct{}{}
+		}
+		if envelope.IsDisabled() {
+			continue
+		}
+		expressions := envelope.GetAggregationExpressions()
+		if len(expressions) <= 1 {
+			keys.Aggregations[envelope.GetQueryName()] = struct{}{}
+			continue
+		}
+		for _, expression := range expressions {
+			keys.Aggregations[envelope.GetQueryName()+"."+expression] = struct{}{}
+		}
+	}
+	return keys, true
+}
+
 // PrepareJSONSchema adds description to the CompositeQuery schema.
 func (c *CompositeQuery) PrepareJSONSchema(schema *jsonschema.Schema) error {
 	schema.WithDescription("Composite query containing one or more query envelopes. Each query envelope specifies its type and corresponding spec.")
