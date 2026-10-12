@@ -1,0 +1,128 @@
+{
+  "display": {
+    "name": "service health",
+    "description": "throughput against tail latency per pod"
+  },
+  "variables": [],
+  "panels": {
+    "p1": {
+      "kind": "Panel",
+      "spec": {
+        "display": {
+          "name": "throughput vs p99",
+          "description": ""
+        },
+        "plugin": {
+          "kind": "signoz/ScatterPlotPanel",
+          "spec": {
+            "visualization": {
+              "timePreference": "last_1_hr"
+            },
+            "dimensions": {
+              "x": "A.count()",
+              "y": "A.p99(duration_nano)",
+              "sizeBy": "A.countIf(has_error = true)",
+              "colorBy": ["k8s.namespace.name", "k8s.pod.name"]
+            },
+            "formatting": {
+              "columnUnits": {
+                "A.p99(duration_nano)": "ns"
+              },
+              "decimalPrecision": "1"
+            },
+            "axes": {
+              "x": {
+                "softMin": 0,
+                "softMax": null,
+                "scale": "log",
+                "label": "Throughput"
+              },
+              "y": {
+                "softMin": null,
+                "softMax": 1000,
+                "scale": "symlog",
+                "label": "p99 latency"
+              }
+            },
+            "chartAppearance": {
+              "points": {
+                "size": 8,
+                "minSize": 4,
+                "maxSize": 24,
+                "opacity": 0.1
+              }
+            },
+            "legend": {
+              "position": "right",
+              "mode": "list",
+              "customColors": {
+                "checkout": "#1f77b4"
+              }
+            },
+            "thresholds": [
+              {
+                "value": 300,
+                "unit": "ms",
+                "color": "#f00",
+                "label": "p99 SLO"
+              }
+            ]
+          }
+        },
+        "links": [],
+        "queries": [
+          {
+            "kind": "scalar",
+            "spec": {
+              "plugin": {
+                "kind": "signoz/BuilderQuery",
+                "spec": {
+                  "name": "A",
+                  "signal": "traces",
+                  "aggregations": [
+                    {
+                      "expression": "count()"
+                    },
+                    {
+                      "expression": "p99(duration_nano)"
+                    },
+                    {
+                      "expression": "countIf(has_error = true)"
+                    }
+                  ],
+                  "groupBy": [
+                    {
+                      "name": "k8s.namespace.name"
+                    },
+                    {
+                      "name": "k8s.pod.name"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "links": [],
+  "layouts": [
+    {
+      "kind": "Grid",
+      "spec": {
+        "items": [
+          {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 8,
+            "content": {
+              "$ref": "#/spec/panels/p1"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

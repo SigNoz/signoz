@@ -225,6 +225,34 @@ func (q *QueryEnvelope) GetGroupBy() []GroupByKey {
 	return nil
 }
 
+// GetAggregationExpressions returns one entry per aggregation. A metric
+// aggregation has no expression, so it contributes an empty entry.
+func (q *QueryEnvelope) GetAggregationExpressions() []string {
+	switch spec := q.Spec.(type) {
+	case QueryBuilderTraceOperator:
+		expressions := make([]string, len(spec.Aggregations))
+		for i, aggregation := range spec.Aggregations {
+			expressions[i] = aggregation.Expression
+		}
+		return expressions
+	case QueryBuilderQuery[TraceAggregation]:
+		expressions := make([]string, len(spec.Aggregations))
+		for i, aggregation := range spec.Aggregations {
+			expressions[i] = aggregation.Expression
+		}
+		return expressions
+	case QueryBuilderQuery[LogAggregation]:
+		expressions := make([]string, len(spec.Aggregations))
+		for i, aggregation := range spec.Aggregations {
+			expressions[i] = aggregation.Expression
+		}
+		return expressions
+	case QueryBuilderQuery[MetricAggregation]:
+		return make([]string, len(spec.Aggregations))
+	}
+	return nil
+}
+
 // GetFilter returns the filter.
 func (q *QueryEnvelope) GetFilter() *Filter {
 	switch spec := q.Spec.(type) {
