@@ -360,7 +360,7 @@ type ScatterPlotPanelSpec struct {
 	Axes            ScatterPlotAxes            `json:"axes"`
 	ChartAppearance ScatterPlotChartAppearance `json:"chartAppearance"`
 	Legend          Legend                     `json:"legend"`
-	Thresholds      []ThresholdWithLabel       `json:"thresholds" validate:"dive"`
+	Thresholds      []ScatterPlotThreshold     `json:"thresholds" validate:"dive"`
 }
 
 func (s *ScatterPlotPanelSpec) validateAgainstQuery(query Query, path string) error {
@@ -521,6 +521,11 @@ type ComparisonThreshold struct {
 	Unit     string             `json:"unit"`
 	Color    string             `json:"color" validate:"required" required:"true"`
 	Format   ThresholdFormat    `json:"format"`
+}
+
+type ScatterPlotThreshold struct {
+	ThresholdWithLabel
+	Axis ThresholdAxis `json:"axis"`
 }
 
 type TableThreshold struct {
@@ -846,6 +851,45 @@ func (as *AxisScale) UnmarshalJSON(data []byte) error {
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid axis scale %q: must be `auto`, `linear`, `log`, or `symlog`", v)
+	}
+}
+
+// ThresholdAxis is the axis a scatter plot threshold line marks: `y` draws it
+// horizontally, `x` vertically.
+type ThresholdAxis struct{ valuer.String }
+
+var (
+	ThresholdAxisX = ThresholdAxis{valuer.NewString("x")}
+	ThresholdAxisY = ThresholdAxis{valuer.NewString("y")} // default
+)
+
+func (ThresholdAxis) Enum() []any {
+	return []any{ThresholdAxisX, ThresholdAxisY}
+}
+
+func (ta ThresholdAxis) ValueOrDefault() string {
+	if ta.IsZero() {
+		return ThresholdAxisY.StringValue()
+	}
+	return ta.StringValue()
+}
+
+func (ta ThresholdAxis) MarshalJSON() ([]byte, error) {
+	return json.Marshal(ta.ValueOrDefault())
+}
+
+func (ta *ThresholdAxis) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid threshold axis: must be a string, one of `x` or `y`")
+	}
+	val := ThresholdAxis{valuer.NewString(v)}
+	switch val {
+	case ThresholdAxisX, ThresholdAxisY:
+		*ta = val
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid threshold axis %q: must be `x` or `y`", v)
 	}
 }
 
