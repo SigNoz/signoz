@@ -1,15 +1,17 @@
 import type { IconSize } from '@signozhq/icons';
 import type { ComponentType, SVGProps } from 'react';
 
+import type { NewPanelTarget } from '../../../patchOps';
+
 type IconProps = Omit<SVGProps<SVGSVGElement>, 'ref'> & {
 	size?: number | IconSize;
 	strokeWidth?: number;
 };
 
 export interface SectionOption {
-	/** The section's `layoutIndex`, stringified for the Select value. */
+	/** `layoutIndex` stringified, or "root" for a root yet to be created. */
 	value: string;
-	layoutIndex: number;
+	target: NewPanelTarget;
 	/** Section title, or "Dashboard (root)" for the untitled top-level layout. */
 	label: string;
 	/** Caption under the label. */

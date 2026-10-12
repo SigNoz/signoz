@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -75,5 +75,69 @@ export const ResetPassword: Story = {
 			),
 		);
 		await screen.findByText(/current password/i, undefined, untilLoaded);
+	},
+};
+
+/**
+ * A new name saved: the toast confirming it. Set Name update to `error` or
+ * `loading` to see the modal instead.
+ */
+export const NameUpdatedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByText(
+				/update name/i,
+				undefined,
+				untilLoaded,
+			),
+		);
+		const input = await screen.findByPlaceholderText(
+			/e\.g\. john doe/i,
+			undefined,
+			untilLoaded,
+		);
+
+		await userEvent.clear(input);
+		await userEvent.type(input, 'Jon Targaryen');
+		await userEvent.click(await screen.findByTestId('update-name-btn'));
+		if (args.nameUpdate === 'success') {
+			await waitFor(() =>
+				expect(screen.getByText(/name updated successfully/i)).toBeVisible(),
+			);
+		}
+	},
+};
+
+/**
+ * A new password saved: the toast confirming it. Set Password update to `error`
+ * or `loading` to see the modal instead.
+ */
+export const PasswordUpdatedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByText(
+				/reset password/i,
+				undefined,
+				untilLoaded,
+			),
+		);
+		await userEvent.type(
+			await screen.findByTestId(
+				'current-password-textbox',
+				undefined,
+				untilLoaded,
+			),
+			'old-password-1',
+		);
+		await userEvent.type(
+			await screen.findByTestId('new-password-textbox'),
+			'new-password-2',
+		);
+		await userEvent.click(await screen.findByTestId('reset-password-btn'));
+		if (args.passwordUpdate === 'success') {
+			await waitFor(() =>
+				expect(screen.getByText(/password updated successfully/i)).toBeVisible(),
+			);
+		}
 	},
 };

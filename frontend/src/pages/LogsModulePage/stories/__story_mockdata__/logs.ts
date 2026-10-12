@@ -15,6 +15,9 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
 import type { OptionsQuery } from 'container/OptionsMenu/types';
+import { STORAGE_VERSION } from 'lib/recentQueries/constants';
+import type { RecentQueriesStoreShape } from 'lib/recentQueries/types';
+import { makeId, storageKeyFor } from 'lib/recentQueries/utils';
 import type { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import { quickFiltersListResponse } from 'mocks-server/__mockdata__/customQuickFilters';
 import type { AppState } from 'store/reducers';
@@ -470,3 +473,34 @@ const DASHBOARD_NAMES = [
 
 export const dashboardsResponse = (): ListDashboardsForUserV2200 =>
 	dashboardsForUserResponse(DASHBOARD_NAMES);
+
+const RECENT_FILTERS = [
+	"service.name = 'checkout' AND severity_text = 'ERROR'",
+	"k8s.namespace.name = 'observability'",
+	"body CONTAINS 'timeout'",
+	'http.status_code >= 500',
+	"deployment.environment IN ['production', 'staging']",
+];
+
+/** The filter lists this many recent entries at most. */
+export const RECENT_FILTER_MAX = RECENT_FILTERS.length;
+
+/**
+ * The explorer's recent filters as the store keeps them in localStorage,
+ * newest first, five minutes apart. Dated off `new Date()`, which the story
+ * clock freezes, so the "5 minutes ago" labels hold still.
+ */
+export const recentFiltersStorage = (count: number): [string, string] => {
+	const store: RecentQueriesStoreShape = {
+		version: STORAGE_VERSION,
+		entries: RECENT_FILTERS.slice(0, count).map((expression, index) => ({
+			id: makeId('logs', '', expression),
+			signal: 'logs',
+			source: '',
+			filter: { expression },
+			lastUsedAt: new Date().getTime() - (index + 1) * 5 * 60_000,
+		})),
+	};
+
+	return [storageKeyFor('logs', ''), JSON.stringify(store)];
+};

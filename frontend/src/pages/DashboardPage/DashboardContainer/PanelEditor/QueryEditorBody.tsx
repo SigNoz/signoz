@@ -39,6 +39,7 @@ import { useTableColumns } from './hooks/useTableColumns';
 
 import logEvent from '@/api/common/logEvent';
 import { DashboardEvents } from '../../constants/events';
+import type { NewPanelTarget } from '../patchOps';
 
 // The query builder sits in an `overflow:hidden` resizable pane, so its Select
 // popups (group-by, order-by, having, …) clip when they open into the short pane.
@@ -58,8 +59,7 @@ interface QueryEditorBodyProps {
 	savedPanel?: DashboardtypesPanelDTO;
 	/** Creating a new panel (seeded default) vs editing an existing one. */
 	isNew?: boolean;
-	/** Target section for a new panel; falls back to the last/new section. */
-	layoutIndex?: number;
+	target?: NewPanelTarget;
 	/** Leave the editor (navigate back to the dashboard) without saving. */
 	onClose: () => void;
 	/** Called after a successful save — navigates back to the dashboard. */
@@ -70,6 +70,7 @@ interface QueryEditorBodyProps {
 	panelDefinition: RenderableQueryPanelDefinition;
 	/** Kind switch, owned by the shell (its cache must survive the fork swap). */
 	onChangePanelKind: (kind: PanelKind) => void;
+	originalPanelKind?: PanelKind;
 }
 
 /**
@@ -84,12 +85,13 @@ function QueryEditorBody({
 	panel,
 	savedPanel,
 	isNew = false,
-	layoutIndex,
+	target,
 	onClose,
 	onSaved,
 	draftApi,
 	panelDefinition,
 	onChangePanelKind,
+	originalPanelKind,
 }: QueryEditorBodyProps): JSX.Element {
 	// Read here rather than taken as props: this renders inside a loaded dashboard
 	// subtree, so it resolves the same context every other consumer does.
@@ -133,7 +135,7 @@ function QueryEditorBody({
 		dashboardId,
 		panelId,
 		isNew,
-		layoutIndex,
+		target,
 	});
 
 	const panelKind = draft.spec.plugin.kind;
@@ -317,8 +319,10 @@ function QueryEditorBody({
 					panel={draft}
 					panelId={panelId}
 					spec={spec}
+					savedSpec={(savedPanel ?? panel).spec}
 					onChangeSpec={setSpec}
 					onChangePanelKind={onChangePanelKind}
+					originalPanelKind={originalPanelKind}
 					queryType={currentQuery.queryType}
 					legendSeries={legendSeries}
 					tableColumns={tableColumns}

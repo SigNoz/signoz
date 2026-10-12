@@ -198,6 +198,7 @@ function createBaseSpec(
 				: undefined,
 		legend: isEmpty(queryData.legend) ? undefined : queryData.legend,
 		having: normalizeHaving(queryData.having),
+		bucketOptions: queryData.bucketOptions,
 		functions: isEmpty(queryData.functions)
 			? undefined
 			: queryData.functions.map((func: QueryFunction): QueryFunction => {
