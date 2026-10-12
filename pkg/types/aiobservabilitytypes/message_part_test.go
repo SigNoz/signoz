@@ -1,4 +1,4 @@
-package genai
+package aiobservabilitytypes
 
 import (
 	"encoding/json"
@@ -41,6 +41,11 @@ func TestParts_RoundTrip(t *testing.T) {
 				{Value: ReasoningPart{Type: PartTypeReasoning, Content: "thinking"}},
 				{Value: CompactionPart{Type: PartTypeCompaction, ID: &id, Content: &summary}},
 			},
+		},
+		{
+			name: "MissingRequiredKey_StillDecodesToItsStruct",
+			json: `[{"type":"file","file_id":"file_1"}]`,
+			want: Parts{{Value: FilePart{Type: PartTypeFile, FileID: "file_1"}}},
 		},
 		{
 			name: "UnknownKeys_Dropped",

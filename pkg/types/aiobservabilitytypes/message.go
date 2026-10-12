@@ -1,7 +1,8 @@
-// Package genai mirrors the OpenTelemetry GenAI message schemas, one type per schema definition:
+// The message types mirror the OpenTelemetry GenAI message schemas, one type per schema definition:
 // open-telemetry/semantic-conventions-genai@06ec68e, model/gen-ai/gen-ai-{input,output}-messages.json.
 // Keys the schema does not name are dropped; the raw attribute on the span still has them.
-package genai
+
+package aiobservabilitytypes
 
 import "github.com/SigNoz/signoz/pkg/valuer"
 

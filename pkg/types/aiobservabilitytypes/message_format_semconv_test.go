@@ -1,4 +1,4 @@
-package genaiformatter
+package aiobservabilitytypes
 
 import "testing"
 

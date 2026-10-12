@@ -8,8 +8,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
-	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes/genai"
-	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes/genaiformatter"
 )
 
 const (
@@ -82,10 +80,10 @@ type ThreadSpan struct {
 	References       []OtelSpanRef     `json:"references" required:"true" nullable:"false"`
 	// The formatted fields hold the span's messages in the OTel GenAI shape; Formatter names the
 	// converter that produced them and FormatterWarnings what it could not resolve.
-	FormattedInput    genai.InputMessages  `json:"formatted_input" required:"true" nullable:"false"`
-	FormattedOutput   genai.OutputMessages `json:"formatted_output" required:"true" nullable:"false"`
-	Formatter         string               `json:"formatter" required:"true"`
-	FormatterWarnings []string             `json:"formatter_warnings" required:"true" nullable:"false"`
+	FormattedInput    aiobservabilitytypes.InputMessages  `json:"formatted_input" required:"true" nullable:"false"`
+	FormattedOutput   aiobservabilitytypes.OutputMessages `json:"formatted_output" required:"true" nullable:"false"`
+	Formatter         string                              `json:"formatter" required:"true"`
+	FormatterWarnings []string                            `json:"formatter_warnings" required:"true" nullable:"false"`
 
 	timeUnixNano uint64
 }
@@ -182,7 +180,7 @@ func newThreadSpan(traceID string, storable *StorableSpan) *ThreadSpan {
 	maps.Copy(resources, storable.ResourcesString)
 	timeUnixNano := uint64(storable.StartTime.UnixNano())
 	attributes := threadAttributes(storable)
-	formatted := genaiformatter.Format(rawAttribute(storable, aiobservabilitytypes.GenAIInputMessages), rawAttribute(storable, aiobservabilitytypes.GenAIOutputMessages))
+	formatted := aiobservabilitytypes.FormatMessages(rawAttribute(storable, aiobservabilitytypes.GenAIInputMessages), rawAttribute(storable, aiobservabilitytypes.GenAIOutputMessages))
 	return &ThreadSpan{
 		SpanID:            storable.SpanID,
 		TraceID:           traceID,

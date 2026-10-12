@@ -1,4 +1,4 @@
-package genaiformatter
+package aiobservabilitytypes
 
 import (
 	"encoding/json"
@@ -22,7 +22,7 @@ func runFormatCases(t *testing.T, testCases []formatCase) {
 	t.Helper()
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			formatted := Format(testCase.input, testCase.output)
+			formatted := FormatMessages(testCase.input, testCase.output)
 			assert.Equal(t, testCase.formatter, formatted.Formatter)
 			assert.Equal(t, append([]string{}, testCase.warnings...), formatted.Warnings)
 

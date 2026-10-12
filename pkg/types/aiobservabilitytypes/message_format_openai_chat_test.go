@@ -1,4 +1,4 @@
-package genaiformatter
+package aiobservabilitytypes
 
 import "testing"
 
@@ -167,6 +167,55 @@ func TestFormat_OpenAIChat(t *testing.T) {
 			      }
 			    ]
 			  }
+			]`,
+		},
+		{
+			// openinference capture, input.value of the ChatCompletion span
+			name:      "FileByID_FilePart",
+			input:     `{"model": "gpt-4o-mini", "messages": [{"role": "user", "content": [{"type": "text", "text": "Summarise this document in one sentence."}, {"type": "file", "file": {"file_id": "file-6F2ksmvXxt4VdoqmHRw6kL"}}]}], "max_tokens": 60}`,
+			output:    `{"id":"chatcmpl-DktFileCapture0001","object":"chat.completion","model":"gpt-4o-mini-2024-07-18","choices":[{"index":0,"finish_reason":"stop","logprobs":null,"message":{"role":"assistant","content":"The document is a short PDF about dragons.","refusal":null,"annotations":[]}}]}`,
+			formatter: FormatterOpenAIChat,
+			wantInput: `[
+			  {
+			    "role": "user",
+			    "parts": [
+			      {"type": "text", "content": "Summarise this document in one sentence."},
+			      {"type": "file", "modality": "document", "file_id": "file-6F2ksmvXxt4VdoqmHRw6kL", "mime_type": "application/pdf"}
+			    ]
+			  }
+			]`,
+			wantOutput: `[
+			  {
+			    "role": "assistant",
+			    "parts": [{"type": "text", "content": "The document is a short PDF about dragons."}],
+			    "finish_reason": "stop"
+			  }
+			]`,
+		},
+		{
+			// openinference capture, input.value of the ChatCompletion span
+			name:      "FileInline_BlobPart",
+			input:     `{"model": "gpt-4o-mini", "messages": [{"role": "user", "content": [{"type": "text", "text": "Summarise this document in one sentence."}, {"type": "file", "file": {"filename": "draconomicon.pdf", "file_data": "data:application/pdf;base64,JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZy9QYWdlcyAyIDAgUj4+ZW5kb2JqCjIgMCBvYmo8PC9UeXBlL1BhZ2VzL0tpZHNbXS9Db3VudCAwPj5lbmRvYmoKdHJhaWxlcjw8L1Jvb3QgMSAwIFI+PgolJUVPRgo="}}]}], "max_tokens": 60}`,
+			formatter: FormatterOpenAIChat,
+			wantInput: `[
+			  {
+			    "role": "user",
+			    "parts": [
+			      {"type": "text", "content": "Summarise this document in one sentence."},
+			      {"type": "blob", "modality": "document", "mime_type": "application/pdf", "content": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZy9QYWdlcyAyIDAgUj4+ZW5kb2JqCjIgMCBvYmo8PC9UeXBlL1BhZ2VzL0tpZHNbXS9Db3VudCAwPj5lbmRvYmoKdHJhaWxlcjw8L1Jvb3QgMSAwIFI+PgolJUVPRgo="}
+			    ]
+			  }
+			]`,
+			wantOutput: `[]`,
+		},
+		{
+			name:      "ResponseWithScalarChoice_KeptAsGeneric",
+			output:    `{"choices":["oops",{"finish_reason":"stop","index":1,"message":{"role":"assistant","content":"hi"}}]}`,
+			formatter: FormatterOpenAIChat,
+			wantInput: `[]`,
+			wantOutput: `[
+			  {"role": "", "parts": [{"type": "generic", "content": "oops"}]},
+			  {"role": "assistant", "parts": [{"type": "text", "content": "hi"}], "finish_reason": "stop"}
 			]`,
 		},
 	})

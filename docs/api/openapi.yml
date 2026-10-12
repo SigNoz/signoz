@@ -1,5 +1,219 @@
 components:
   schemas:
+    AiobservabilitytypesBlobPart:
+      properties:
+        content:
+          type: string
+        mime_type:
+          nullable: true
+          type: string
+        modality:
+          type: string
+        type:
+          type: string
+      required:
+      - type
+      - modality
+      - content
+      type: object
+    AiobservabilitytypesChatMessage:
+      properties:
+        name:
+          nullable: true
+          type: string
+        parts:
+          $ref: '#/components/schemas/AiobservabilitytypesParts'
+        role:
+          type: string
+      required:
+      - role
+      - parts
+      type: object
+    AiobservabilitytypesCompactionPart:
+      properties:
+        content:
+          nullable: true
+          type: string
+        id:
+          nullable: true
+          type: string
+        type:
+          type: string
+      required:
+      - type
+      type: object
+    AiobservabilitytypesFilePart:
+      properties:
+        file_id:
+          type: string
+        mime_type:
+          nullable: true
+          type: string
+        modality:
+          type: string
+        type:
+          type: string
+      required:
+      - type
+      - modality
+      - file_id
+      type: object
+    AiobservabilitytypesGenericPart:
+      additionalProperties: {}
+      type: object
+    AiobservabilitytypesGenericServerToolCall:
+      additionalProperties: {}
+      type: object
+    AiobservabilitytypesGenericServerToolCallResponse:
+      additionalProperties: {}
+      type: object
+    AiobservabilitytypesInputMessages:
+      items:
+        $ref: '#/components/schemas/AiobservabilitytypesChatMessage'
+      type: array
+    AiobservabilitytypesOutputMessage:
+      properties:
+        finish_reason:
+          nullable: true
+          type: string
+        name:
+          nullable: true
+          type: string
+        parts:
+          $ref: '#/components/schemas/AiobservabilitytypesParts'
+        role:
+          type: string
+      required:
+      - role
+      - parts
+      type: object
+    AiobservabilitytypesOutputMessages:
+      items:
+        $ref: '#/components/schemas/AiobservabilitytypesOutputMessage'
+      type: array
+    AiobservabilitytypesPart:
+      discriminator:
+        mapping:
+          blob: '#/components/schemas/AiobservabilitytypesBlobPart'
+          compaction: '#/components/schemas/AiobservabilitytypesCompactionPart'
+          file: '#/components/schemas/AiobservabilitytypesFilePart'
+          reasoning: '#/components/schemas/AiobservabilitytypesReasoningPart'
+          server_tool_call: '#/components/schemas/AiobservabilitytypesServerToolCallPart'
+          server_tool_call_response: '#/components/schemas/AiobservabilitytypesServerToolCallResponsePart'
+          text: '#/components/schemas/AiobservabilitytypesTextPart'
+          tool_call: '#/components/schemas/AiobservabilitytypesToolCallRequestPart'
+          tool_call_response: '#/components/schemas/AiobservabilitytypesToolCallResponsePart'
+          uri: '#/components/schemas/AiobservabilitytypesUriPart'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/AiobservabilitytypesTextPart'
+      - $ref: '#/components/schemas/AiobservabilitytypesToolCallRequestPart'
+      - $ref: '#/components/schemas/AiobservabilitytypesToolCallResponsePart'
+      - $ref: '#/components/schemas/AiobservabilitytypesServerToolCallPart'
+      - $ref: '#/components/schemas/AiobservabilitytypesServerToolCallResponsePart'
+      - $ref: '#/components/schemas/AiobservabilitytypesBlobPart'
+      - $ref: '#/components/schemas/AiobservabilitytypesFilePart'
+      - $ref: '#/components/schemas/AiobservabilitytypesUriPart'
+      - $ref: '#/components/schemas/AiobservabilitytypesReasoningPart'
+      - $ref: '#/components/schemas/AiobservabilitytypesCompactionPart'
+      - $ref: '#/components/schemas/AiobservabilitytypesGenericPart'
+      type: object
+    AiobservabilitytypesParts:
+      items:
+        $ref: '#/components/schemas/AiobservabilitytypesPart'
+      type: array
+    AiobservabilitytypesReasoningPart:
+      properties:
+        content:
+          type: string
+        type:
+          type: string
+      required:
+      - type
+      - content
+      type: object
+    AiobservabilitytypesServerToolCallPart:
+      properties:
+        id:
+          nullable: true
+          type: string
+        name:
+          type: string
+        server_tool_call:
+          $ref: '#/components/schemas/AiobservabilitytypesGenericServerToolCall'
+        type:
+          type: string
+      required:
+      - type
+      - name
+      - server_tool_call
+      type: object
+    AiobservabilitytypesServerToolCallResponsePart:
+      properties:
+        id:
+          nullable: true
+          type: string
+        server_tool_call_response:
+          $ref: '#/components/schemas/AiobservabilitytypesGenericServerToolCallResponse'
+        type:
+          type: string
+      required:
+      - type
+      - server_tool_call_response
+      type: object
+    AiobservabilitytypesTextPart:
+      properties:
+        content:
+          type: string
+        type:
+          type: string
+      required:
+      - type
+      - content
+      type: object
+    AiobservabilitytypesToolCallRequestPart:
+      properties:
+        arguments: {}
+        id:
+          nullable: true
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+      required:
+      - type
+      - name
+      type: object
+    AiobservabilitytypesToolCallResponsePart:
+      properties:
+        id:
+          nullable: true
+          type: string
+        response:
+          nullable: true
+        type:
+          type: string
+      required:
+      - type
+      - response
+      type: object
+    AiobservabilitytypesUriPart:
+      properties:
+        mime_type:
+          nullable: true
+          type: string
+        modality:
+          type: string
+        type:
+          type: string
+        uri:
+          type: string
+      required:
+      - type
+      - modality
+      - uri
+      type: object
     AlertmanagertypesChannel:
       properties:
         createdAt:
@@ -5098,220 +5312,6 @@ components:
           type: array
       required:
       - config
-      type: object
-    GenaiBlobPart:
-      properties:
-        content:
-          type: string
-        mime_type:
-          nullable: true
-          type: string
-        modality:
-          type: string
-        type:
-          type: string
-      required:
-      - type
-      - modality
-      - content
-      type: object
-    GenaiChatMessage:
-      properties:
-        name:
-          nullable: true
-          type: string
-        parts:
-          $ref: '#/components/schemas/GenaiParts'
-        role:
-          type: string
-      required:
-      - role
-      - parts
-      type: object
-    GenaiCompactionPart:
-      properties:
-        content:
-          nullable: true
-          type: string
-        id:
-          nullable: true
-          type: string
-        type:
-          type: string
-      required:
-      - type
-      type: object
-    GenaiFilePart:
-      properties:
-        file_id:
-          type: string
-        mime_type:
-          nullable: true
-          type: string
-        modality:
-          type: string
-        type:
-          type: string
-      required:
-      - type
-      - modality
-      - file_id
-      type: object
-    GenaiGenericPart:
-      additionalProperties: {}
-      type: object
-    GenaiGenericServerToolCall:
-      additionalProperties: {}
-      type: object
-    GenaiGenericServerToolCallResponse:
-      additionalProperties: {}
-      type: object
-    GenaiInputMessages:
-      items:
-        $ref: '#/components/schemas/GenaiChatMessage'
-      type: array
-    GenaiOutputMessage:
-      properties:
-        finish_reason:
-          nullable: true
-          type: string
-        name:
-          nullable: true
-          type: string
-        parts:
-          $ref: '#/components/schemas/GenaiParts'
-        role:
-          type: string
-      required:
-      - role
-      - parts
-      type: object
-    GenaiOutputMessages:
-      items:
-        $ref: '#/components/schemas/GenaiOutputMessage'
-      type: array
-    GenaiPart:
-      discriminator:
-        mapping:
-          blob: '#/components/schemas/GenaiBlobPart'
-          compaction: '#/components/schemas/GenaiCompactionPart'
-          file: '#/components/schemas/GenaiFilePart'
-          reasoning: '#/components/schemas/GenaiReasoningPart'
-          server_tool_call: '#/components/schemas/GenaiServerToolCallPart'
-          server_tool_call_response: '#/components/schemas/GenaiServerToolCallResponsePart'
-          text: '#/components/schemas/GenaiTextPart'
-          tool_call: '#/components/schemas/GenaiToolCallRequestPart'
-          tool_call_response: '#/components/schemas/GenaiToolCallResponsePart'
-          uri: '#/components/schemas/GenaiUriPart'
-        propertyName: type
-      oneOf:
-      - $ref: '#/components/schemas/GenaiTextPart'
-      - $ref: '#/components/schemas/GenaiToolCallRequestPart'
-      - $ref: '#/components/schemas/GenaiToolCallResponsePart'
-      - $ref: '#/components/schemas/GenaiServerToolCallPart'
-      - $ref: '#/components/schemas/GenaiServerToolCallResponsePart'
-      - $ref: '#/components/schemas/GenaiBlobPart'
-      - $ref: '#/components/schemas/GenaiFilePart'
-      - $ref: '#/components/schemas/GenaiUriPart'
-      - $ref: '#/components/schemas/GenaiReasoningPart'
-      - $ref: '#/components/schemas/GenaiCompactionPart'
-      - $ref: '#/components/schemas/GenaiGenericPart'
-      type: object
-    GenaiParts:
-      items:
-        $ref: '#/components/schemas/GenaiPart'
-      type: array
-    GenaiReasoningPart:
-      properties:
-        content:
-          type: string
-        type:
-          type: string
-      required:
-      - type
-      - content
-      type: object
-    GenaiServerToolCallPart:
-      properties:
-        id:
-          nullable: true
-          type: string
-        name:
-          type: string
-        server_tool_call:
-          $ref: '#/components/schemas/GenaiGenericServerToolCall'
-        type:
-          type: string
-      required:
-      - type
-      - name
-      - server_tool_call
-      type: object
-    GenaiServerToolCallResponsePart:
-      properties:
-        id:
-          nullable: true
-          type: string
-        server_tool_call_response:
-          $ref: '#/components/schemas/GenaiGenericServerToolCallResponse'
-        type:
-          type: string
-      required:
-      - type
-      - server_tool_call_response
-      type: object
-    GenaiTextPart:
-      properties:
-        content:
-          type: string
-        type:
-          type: string
-      required:
-      - type
-      - content
-      type: object
-    GenaiToolCallRequestPart:
-      properties:
-        arguments: {}
-        id:
-          nullable: true
-          type: string
-        name:
-          type: string
-        type:
-          type: string
-      required:
-      - type
-      - name
-      type: object
-    GenaiToolCallResponsePart:
-      properties:
-        id:
-          nullable: true
-          type: string
-        response:
-          nullable: true
-        type:
-          type: string
-      required:
-      - type
-      - response
-      type: object
-    GenaiUriPart:
-      properties:
-        mime_type:
-          nullable: true
-          type: string
-        modality:
-          type: string
-        type:
-          type: string
-        uri:
-          type: string
-      required:
-      - type
-      - modality
-      - uri
       type: object
     GlobaltypesAPIKeyConfig:
       properties:
@@ -10440,9 +10440,9 @@ components:
             $ref: '#/components/schemas/SpantypesEvent'
           type: array
         formatted_input:
-          $ref: '#/components/schemas/GenaiInputMessages'
+          $ref: '#/components/schemas/AiobservabilitytypesInputMessages'
         formatted_output:
-          $ref: '#/components/schemas/GenaiOutputMessages'
+          $ref: '#/components/schemas/AiobservabilitytypesOutputMessages'
         formatter:
           type: string
         formatter_warnings:

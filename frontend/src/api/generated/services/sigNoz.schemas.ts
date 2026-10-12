@@ -4,6 +4,264 @@
  * * regenerate with 'pnpm generate:api'
  * SigNoz
  */
+export enum AiobservabilitytypesBlobPartDTOType {
+	blob = 'blob',
+}
+export interface AiobservabilitytypesBlobPartDTO {
+	/**
+	 * @type string
+	 */
+	content: string;
+	/**
+	 * @type string,null
+	 */
+	mime_type?: string | null;
+	/**
+	 * @type string
+	 */
+	modality: string;
+	/**
+	 * @type string
+	 * @enum blob
+	 */
+	type: AiobservabilitytypesBlobPartDTOType;
+}
+
+export enum AiobservabilitytypesTextPartDTOType {
+	text = 'text',
+}
+export interface AiobservabilitytypesTextPartDTO {
+	/**
+	 * @type string
+	 */
+	content: string;
+	/**
+	 * @type string
+	 * @enum text
+	 */
+	type: AiobservabilitytypesTextPartDTOType;
+}
+
+export enum AiobservabilitytypesToolCallRequestPartDTOType {
+	tool_call = 'tool_call',
+}
+export interface AiobservabilitytypesToolCallRequestPartDTO {
+	arguments?: unknown;
+	/**
+	 * @type string,null
+	 */
+	id?: string | null;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 * @enum tool_call
+	 */
+	type: AiobservabilitytypesToolCallRequestPartDTOType;
+}
+
+export enum AiobservabilitytypesToolCallResponsePartDTOType {
+	tool_call_response = 'tool_call_response',
+}
+export type AiobservabilitytypesToolCallResponsePartDTOResponse =
+	| unknown
+	| null;
+
+export interface AiobservabilitytypesToolCallResponsePartDTO {
+	/**
+	 * @type string,null
+	 */
+	id?: string | null;
+	/**
+	 * @nullable true
+	 */
+	response: AiobservabilitytypesToolCallResponsePartDTOResponse;
+	/**
+	 * @type string
+	 * @enum tool_call_response
+	 */
+	type: AiobservabilitytypesToolCallResponsePartDTOType;
+}
+
+export interface AiobservabilitytypesGenericServerToolCallDTO {
+	[key: string]: unknown;
+}
+
+export enum AiobservabilitytypesServerToolCallPartDTOType {
+	server_tool_call = 'server_tool_call',
+}
+export interface AiobservabilitytypesServerToolCallPartDTO {
+	/**
+	 * @type string,null
+	 */
+	id?: string | null;
+	/**
+	 * @type string
+	 */
+	name: string;
+	server_tool_call: AiobservabilitytypesGenericServerToolCallDTO;
+	/**
+	 * @type string
+	 * @enum server_tool_call
+	 */
+	type: AiobservabilitytypesServerToolCallPartDTOType;
+}
+
+export interface AiobservabilitytypesGenericServerToolCallResponseDTO {
+	[key: string]: unknown;
+}
+
+export enum AiobservabilitytypesServerToolCallResponsePartDTOType {
+	server_tool_call_response = 'server_tool_call_response',
+}
+export interface AiobservabilitytypesServerToolCallResponsePartDTO {
+	/**
+	 * @type string,null
+	 */
+	id?: string | null;
+	server_tool_call_response: AiobservabilitytypesGenericServerToolCallResponseDTO;
+	/**
+	 * @type string
+	 * @enum server_tool_call_response
+	 */
+	type: AiobservabilitytypesServerToolCallResponsePartDTOType;
+}
+
+export enum AiobservabilitytypesFilePartDTOType {
+	file = 'file',
+}
+export interface AiobservabilitytypesFilePartDTO {
+	/**
+	 * @type string
+	 */
+	file_id: string;
+	/**
+	 * @type string,null
+	 */
+	mime_type?: string | null;
+	/**
+	 * @type string
+	 */
+	modality: string;
+	/**
+	 * @type string
+	 * @enum file
+	 */
+	type: AiobservabilitytypesFilePartDTOType;
+}
+
+export enum AiobservabilitytypesUriPartDTOType {
+	uri = 'uri',
+}
+export interface AiobservabilitytypesUriPartDTO {
+	/**
+	 * @type string,null
+	 */
+	mime_type?: string | null;
+	/**
+	 * @type string
+	 */
+	modality: string;
+	/**
+	 * @type string
+	 * @enum uri
+	 */
+	type: AiobservabilitytypesUriPartDTOType;
+	/**
+	 * @type string
+	 */
+	uri: string;
+}
+
+export enum AiobservabilitytypesReasoningPartDTOType {
+	reasoning = 'reasoning',
+}
+export interface AiobservabilitytypesReasoningPartDTO {
+	/**
+	 * @type string
+	 */
+	content: string;
+	/**
+	 * @type string
+	 * @enum reasoning
+	 */
+	type: AiobservabilitytypesReasoningPartDTOType;
+}
+
+export enum AiobservabilitytypesCompactionPartDTOType {
+	compaction = 'compaction',
+}
+export interface AiobservabilitytypesCompactionPartDTO {
+	/**
+	 * @type string,null
+	 */
+	content?: string | null;
+	/**
+	 * @type string,null
+	 */
+	id?: string | null;
+	/**
+	 * @type string
+	 * @enum compaction
+	 */
+	type: AiobservabilitytypesCompactionPartDTOType;
+}
+
+export interface AiobservabilitytypesGenericPartDTO {
+	[key: string]: unknown;
+}
+
+export type AiobservabilitytypesPartDTO =
+	| AiobservabilitytypesTextPartDTO
+	| AiobservabilitytypesToolCallRequestPartDTO
+	| AiobservabilitytypesToolCallResponsePartDTO
+	| AiobservabilitytypesServerToolCallPartDTO
+	| AiobservabilitytypesServerToolCallResponsePartDTO
+	| AiobservabilitytypesBlobPartDTO
+	| AiobservabilitytypesFilePartDTO
+	| AiobservabilitytypesUriPartDTO
+	| AiobservabilitytypesReasoningPartDTO
+	| AiobservabilitytypesCompactionPartDTO
+	| AiobservabilitytypesGenericPartDTO;
+
+export type AiobservabilitytypesPartsDTO = AiobservabilitytypesPartDTO[];
+
+export interface AiobservabilitytypesChatMessageDTO {
+	/**
+	 * @type string,null
+	 */
+	name?: string | null;
+	parts: AiobservabilitytypesPartsDTO;
+	/**
+	 * @type string
+	 */
+	role: string;
+}
+
+export type AiobservabilitytypesInputMessagesDTO =
+	AiobservabilitytypesChatMessageDTO[];
+
+export interface AiobservabilitytypesOutputMessageDTO {
+	/**
+	 * @type string,null
+	 */
+	finish_reason?: string | null;
+	/**
+	 * @type string,null
+	 */
+	name?: string | null;
+	parts: AiobservabilitytypesPartsDTO;
+	/**
+	 * @type string
+	 */
+	role: string;
+}
+
+export type AiobservabilitytypesOutputMessagesDTO =
+	AiobservabilitytypesOutputMessageDTO[];
+
 export interface AlertmanagertypesChannelDTO {
 	/**
 	 * @type string
@@ -6675,260 +6933,6 @@ export interface GatewaytypesUpdatableIngestionKeyLimitDTO {
 	tags?: string[] | null;
 }
 
-export enum GenaiBlobPartDTOType {
-	blob = 'blob',
-}
-export interface GenaiBlobPartDTO {
-	/**
-	 * @type string
-	 */
-	content: string;
-	/**
-	 * @type string,null
-	 */
-	mime_type?: string | null;
-	/**
-	 * @type string
-	 */
-	modality: string;
-	/**
-	 * @type string
-	 * @enum blob
-	 */
-	type: GenaiBlobPartDTOType;
-}
-
-export enum GenaiTextPartDTOType {
-	text = 'text',
-}
-export interface GenaiTextPartDTO {
-	/**
-	 * @type string
-	 */
-	content: string;
-	/**
-	 * @type string
-	 * @enum text
-	 */
-	type: GenaiTextPartDTOType;
-}
-
-export enum GenaiToolCallRequestPartDTOType {
-	tool_call = 'tool_call',
-}
-export interface GenaiToolCallRequestPartDTO {
-	arguments?: unknown;
-	/**
-	 * @type string,null
-	 */
-	id?: string | null;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 * @enum tool_call
-	 */
-	type: GenaiToolCallRequestPartDTOType;
-}
-
-export enum GenaiToolCallResponsePartDTOType {
-	tool_call_response = 'tool_call_response',
-}
-export type GenaiToolCallResponsePartDTOResponse = unknown | null;
-
-export interface GenaiToolCallResponsePartDTO {
-	/**
-	 * @type string,null
-	 */
-	id?: string | null;
-	/**
-	 * @nullable true
-	 */
-	response: GenaiToolCallResponsePartDTOResponse;
-	/**
-	 * @type string
-	 * @enum tool_call_response
-	 */
-	type: GenaiToolCallResponsePartDTOType;
-}
-
-export interface GenaiGenericServerToolCallDTO {
-	[key: string]: unknown;
-}
-
-export enum GenaiServerToolCallPartDTOType {
-	server_tool_call = 'server_tool_call',
-}
-export interface GenaiServerToolCallPartDTO {
-	/**
-	 * @type string,null
-	 */
-	id?: string | null;
-	/**
-	 * @type string
-	 */
-	name: string;
-	server_tool_call: GenaiGenericServerToolCallDTO;
-	/**
-	 * @type string
-	 * @enum server_tool_call
-	 */
-	type: GenaiServerToolCallPartDTOType;
-}
-
-export interface GenaiGenericServerToolCallResponseDTO {
-	[key: string]: unknown;
-}
-
-export enum GenaiServerToolCallResponsePartDTOType {
-	server_tool_call_response = 'server_tool_call_response',
-}
-export interface GenaiServerToolCallResponsePartDTO {
-	/**
-	 * @type string,null
-	 */
-	id?: string | null;
-	server_tool_call_response: GenaiGenericServerToolCallResponseDTO;
-	/**
-	 * @type string
-	 * @enum server_tool_call_response
-	 */
-	type: GenaiServerToolCallResponsePartDTOType;
-}
-
-export enum GenaiFilePartDTOType {
-	file = 'file',
-}
-export interface GenaiFilePartDTO {
-	/**
-	 * @type string
-	 */
-	file_id: string;
-	/**
-	 * @type string,null
-	 */
-	mime_type?: string | null;
-	/**
-	 * @type string
-	 */
-	modality: string;
-	/**
-	 * @type string
-	 * @enum file
-	 */
-	type: GenaiFilePartDTOType;
-}
-
-export enum GenaiUriPartDTOType {
-	uri = 'uri',
-}
-export interface GenaiUriPartDTO {
-	/**
-	 * @type string,null
-	 */
-	mime_type?: string | null;
-	/**
-	 * @type string
-	 */
-	modality: string;
-	/**
-	 * @type string
-	 * @enum uri
-	 */
-	type: GenaiUriPartDTOType;
-	/**
-	 * @type string
-	 */
-	uri: string;
-}
-
-export enum GenaiReasoningPartDTOType {
-	reasoning = 'reasoning',
-}
-export interface GenaiReasoningPartDTO {
-	/**
-	 * @type string
-	 */
-	content: string;
-	/**
-	 * @type string
-	 * @enum reasoning
-	 */
-	type: GenaiReasoningPartDTOType;
-}
-
-export enum GenaiCompactionPartDTOType {
-	compaction = 'compaction',
-}
-export interface GenaiCompactionPartDTO {
-	/**
-	 * @type string,null
-	 */
-	content?: string | null;
-	/**
-	 * @type string,null
-	 */
-	id?: string | null;
-	/**
-	 * @type string
-	 * @enum compaction
-	 */
-	type: GenaiCompactionPartDTOType;
-}
-
-export interface GenaiGenericPartDTO {
-	[key: string]: unknown;
-}
-
-export type GenaiPartDTO =
-	| GenaiTextPartDTO
-	| GenaiToolCallRequestPartDTO
-	| GenaiToolCallResponsePartDTO
-	| GenaiServerToolCallPartDTO
-	| GenaiServerToolCallResponsePartDTO
-	| GenaiBlobPartDTO
-	| GenaiFilePartDTO
-	| GenaiUriPartDTO
-	| GenaiReasoningPartDTO
-	| GenaiCompactionPartDTO
-	| GenaiGenericPartDTO;
-
-export type GenaiPartsDTO = GenaiPartDTO[];
-
-export interface GenaiChatMessageDTO {
-	/**
-	 * @type string,null
-	 */
-	name?: string | null;
-	parts: GenaiPartsDTO;
-	/**
-	 * @type string
-	 */
-	role: string;
-}
-
-export type GenaiInputMessagesDTO = GenaiChatMessageDTO[];
-
-export interface GenaiOutputMessageDTO {
-	/**
-	 * @type string,null
-	 */
-	finish_reason?: string | null;
-	/**
-	 * @type string,null
-	 */
-	name?: string | null;
-	parts: GenaiPartsDTO;
-	/**
-	 * @type string
-	 */
-	role: string;
-}
-
-export type GenaiOutputMessagesDTO = GenaiOutputMessageDTO[];
-
 export interface GlobaltypesAPIKeyConfigDTO {
 	/**
 	 * @type boolean
@@ -11706,8 +11710,8 @@ export interface SpantypesThreadSpanDTO {
 	 * @type array
 	 */
 	events: SpantypesEventDTO[];
-	formatted_input: GenaiInputMessagesDTO;
-	formatted_output: GenaiOutputMessagesDTO;
+	formatted_input: AiobservabilitytypesInputMessagesDTO;
+	formatted_output: AiobservabilitytypesOutputMessagesDTO;
 	/**
 	 * @type string
 	 */

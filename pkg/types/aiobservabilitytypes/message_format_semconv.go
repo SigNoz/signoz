@@ -1,10 +1,8 @@
-package genaiformatter
+package aiobservabilitytypes
 
 import (
 	"encoding/json"
 	"maps"
-
-	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes/genai"
 )
 
 // Format: the OTel shape itself, [{role, parts}].
@@ -15,23 +13,23 @@ import (
 
 // semconv decodes messages that already follow the schema through the genai types. A part of a
 // type the schema does not name is a provider content block, which contentPart converts.
-func (f *formatting) semconv(list []any) genai.OutputMessages {
+func (f *formatting) semconv(list []any) OutputMessages {
 	data, err := json.Marshal(semconvTextKey(list))
 	if err != nil {
 		f.warn("messages could not be encoded: %s", err)
-		return genai.OutputMessages{genericMessage(list)}
+		return OutputMessages{genericMessage(list)}
 	}
-	var msgs genai.OutputMessages
+	var msgs OutputMessages
 	if err := json.Unmarshal(data, &msgs); err != nil {
 		f.warn("messages do not follow the schema: %s", err)
-		return genai.OutputMessages{genericMessage(list)}
+		return OutputMessages{genericMessage(list)}
 	}
 	for i := range msgs {
 		if msgs[i].Parts == nil {
-			msgs[i].Parts = genai.Parts{}
+			msgs[i].Parts = Parts{}
 		}
 		for j, p := range msgs[i].Parts {
-			if block, ok := p.Value.(genai.GenericPart); ok {
+			if block, ok := p.Value.(GenericPart); ok {
 				msgs[i].Parts[j] = contentPart(map[string]any(block))
 			}
 		}
@@ -45,7 +43,7 @@ func semconvTextKey(list []any) []any {
 	out := make([]any, 0, len(list))
 	for _, item := range list {
 		m, ok := item.(map[string]any)
-		parts, hasParts := object(m).list("parts")
+		parts, hasParts := m["parts"].([]any)
 		if !ok || !hasParts {
 			out = append(out, item)
 			continue
@@ -53,7 +51,7 @@ func semconvTextKey(list []any) []any {
 		fixedParts := make([]any, 0, len(parts))
 		for _, p := range parts {
 			part, ok := p.(map[string]any)
-			typ := object(part).str("type")
+			typ := stringOf(part["type"])
 			if ok && (typ == "text" || typ == "reasoning") && part["content"] == nil && part["text"] != nil {
 				fixed := maps.Clone(part)
 				fixed["content"] = fixed["text"]

@@ -1,9 +1,7 @@
-package genaiformatter
+package aiobservabilitytypes
 
 import (
 	"strings"
-
-	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes/genai"
 )
 
 // Format: OpenAI Chat Completions, a request {messages}, a response {choices}, or a bare message list.
@@ -12,8 +10,8 @@ import (
 // reasoning_content, finish reasons.
 // Not yet: streaming delta chunks, legacy completions choices[].text, audio output.
 
-func (f *formatting) openAIChatMessages(list []any) genai.OutputMessages {
-	out := make(genai.OutputMessages, 0, len(list))
+func (f *formatting) openAIChatMessages(list []any) OutputMessages {
+	out := make(OutputMessages, 0, len(list))
 	for _, item := range list {
 		m, ok := item.(map[string]any)
 		if !ok {
@@ -27,19 +25,20 @@ func (f *formatting) openAIChatMessages(list []any) genai.OutputMessages {
 
 // openAIChatResponse converts the choices of an OpenAI chat response, one message each with its
 // finish reason.
-func (f *formatting) openAIChatResponse(choices []any) genai.OutputMessages {
-	out := make(genai.OutputMessages, 0, len(choices))
+func (f *formatting) openAIChatResponse(choices []any) OutputMessages {
+	out := make(OutputMessages, 0, len(choices))
 	for _, item := range choices {
 		choice, ok := item.(map[string]any)
 		if !ok {
+			out = append(out, genericMessage(item))
 			continue
 		}
-		inner, _ := object(choice).obj("message")
+		inner, _ := choice["message"].(map[string]any)
 		msg := f.openAIChatMessage(inner)
 		if msg.Role.IsZero() {
-			msg.Role = genai.RoleAssistant
+			msg.Role = RoleAssistant
 		}
-		if fr := finishReason(object(choice).str("finish_reason")); fr != nil {
+		if fr := finishReason(stringOf(choice["finish_reason"])); fr != nil {
 			msg.FinishReason = fr
 		}
 		out = append(out, msg)
@@ -48,11 +47,11 @@ func (f *formatting) openAIChatResponse(choices []any) genai.OutputMessages {
 }
 
 // openAIChatMessage converts one {role, content, tool_calls, ...} message in the OpenAI chat shape.
-func (f *formatting) openAIChatMessage(m object) genai.OutputMessage {
-	msg := genai.OutputMessage{Role: role(m.str("role")), Parts: genai.Parts{}, Name: optionalString(m["name"]), FinishReason: finishReason(m.str("finish_reason"))}
+func (f *formatting) openAIChatMessage(m map[string]any) OutputMessage {
+	msg := OutputMessage{Role: role(stringOf(m["role"])), Parts: Parts{}, Name: optionalString(m["name"]), FinishReason: finishReason(stringOf(m["finish_reason"]))}
 
-	if id := m.str("tool_call_id"); msg.Role == genai.RoleTool && id != "" {
-		msg.Parts = genai.Parts{part(genai.ToolCallResponsePart{Type: genai.PartTypeToolCallResponse, ID: &id, Response: toolResponse(m["content"])})}
+	if id := stringOf(m["tool_call_id"]); msg.Role == RoleTool && id != "" {
+		msg.Parts = Parts{part(ToolCallResponsePart{Type: PartTypeToolCallResponse, ID: &id, Response: toolResponse(m["content"])})}
 		return msg
 	}
 
@@ -66,34 +65,38 @@ func (f *formatting) openAIChatMessage(m object) genai.OutputMessage {
 			msg.Parts = append(msg.Parts, contentPart(item))
 		}
 	}
-	if refusal := m.str("refusal"); refusal != "" {
+	if refusal := stringOf(m["refusal"]); refusal != "" {
 		msg.Parts = append(msg.Parts, part(textPart(refusal)))
 	}
-	if reasoning := m.text("reasoning_content", "reasoning"); reasoning != "" {
-		msg.Parts = append(msg.Parts, part(genai.ReasoningPart{Type: genai.PartTypeReasoning, Content: reasoning}))
+	reasoning, _ := m["reasoning_content"].(string)
+	if reasoning == "" {
+		reasoning, _ = m["reasoning"].(string)
 	}
-	if calls, ok := m.list("tool_calls"); ok {
+	if reasoning != "" {
+		msg.Parts = append(msg.Parts, part(ReasoningPart{Type: PartTypeReasoning, Content: reasoning}))
+	}
+	if calls, ok := m["tool_calls"].([]any); ok {
 		for _, call := range calls {
 			if c, ok := call.(map[string]any); ok {
 				msg.Parts = append(msg.Parts, toolCallPart(c))
 			}
 		}
 	}
-	if call, ok := m.obj("function_call"); ok {
-		msg.Parts = append(msg.Parts, part(genai.ToolCallRequestPart{Type: genai.PartTypeToolCall, Name: call.str("name"), Arguments: decode(call["arguments"])}))
+	if call, ok := m["function_call"].(map[string]any); ok {
+		msg.Parts = append(msg.Parts, part(ToolCallRequestPart{Type: PartTypeToolCall, Name: stringOf(call["name"]), Arguments: decode(call["arguments"])}))
 	}
 	return msg
 }
 
 // toolCallPart reads {id, function: {name, arguments}}; a gateway may flatten it to {id, name, arguments|args}.
-func toolCallPart(c object) genai.Part {
-	call := genai.ToolCallRequestPart{Type: genai.PartTypeToolCall, ID: optionalString(c["id"]), Name: c.str("name")}
+func toolCallPart(c map[string]any) Part {
+	call := ToolCallRequestPart{Type: PartTypeToolCall, ID: optionalString(c["id"]), Name: stringOf(c["name"])}
 	args := c["arguments"]
 	if args == nil {
 		args = c["args"]
 	}
-	if fn, ok := c.obj("function"); ok {
-		call.Name = fn.str("name")
+	if fn, ok := c["function"].(map[string]any); ok {
+		call.Name = stringOf(fn["name"])
 		args = fn["arguments"]
 	}
 	if args != nil {
@@ -111,10 +114,10 @@ func toolResponse(value any) any {
 		texts := make([]string, 0, len(v))
 		for _, item := range v {
 			block, ok := item.(map[string]any)
-			if !ok || object(block).str("type") != "text" {
+			if !ok || stringOf(block["type"]) != "text" {
 				return v
 			}
-			texts = append(texts, object(block).str("text"))
+			texts = append(texts, stringOf(block["text"]))
 		}
 		return strings.Join(texts, "\n")
 	}

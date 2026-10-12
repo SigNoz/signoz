@@ -1,4 +1,4 @@
-package genai
+package aiobservabilitytypes
 
 import (
 	"encoding/json"
@@ -29,16 +29,16 @@ var (
 // partVariants are the part types the schema names; any other type decodes as GenericPart.
 // schemaRef is the component in the generated OpenAPI spec, for the discriminator mapping.
 var partVariants = []partVariant{
-	{typ: PartTypeText, decode: decodePart[TextPart], schema: TextPart{}, schemaRef: "#/components/schemas/GenaiTextPart"},
-	{typ: PartTypeToolCall, decode: decodePart[ToolCallRequestPart], schema: ToolCallRequestPart{}, schemaRef: "#/components/schemas/GenaiToolCallRequestPart"},
-	{typ: PartTypeToolCallResponse, decode: decodePart[ToolCallResponsePart], schema: ToolCallResponsePart{}, schemaRef: "#/components/schemas/GenaiToolCallResponsePart"},
-	{typ: PartTypeServerToolCall, decode: decodePart[ServerToolCallPart], schema: ServerToolCallPart{}, schemaRef: "#/components/schemas/GenaiServerToolCallPart"},
-	{typ: PartTypeServerToolCallResponse, decode: decodePart[ServerToolCallResponsePart], schema: ServerToolCallResponsePart{}, schemaRef: "#/components/schemas/GenaiServerToolCallResponsePart"},
-	{typ: PartTypeBlob, decode: decodePart[BlobPart], schema: BlobPart{}, schemaRef: "#/components/schemas/GenaiBlobPart"},
-	{typ: PartTypeFile, decode: decodePart[FilePart], schema: FilePart{}, schemaRef: "#/components/schemas/GenaiFilePart"},
-	{typ: PartTypeURI, decode: decodePart[UriPart], schema: UriPart{}, schemaRef: "#/components/schemas/GenaiUriPart"},
-	{typ: PartTypeReasoning, decode: decodePart[ReasoningPart], schema: ReasoningPart{}, schemaRef: "#/components/schemas/GenaiReasoningPart"},
-	{typ: PartTypeCompaction, decode: decodePart[CompactionPart], schema: CompactionPart{}, schemaRef: "#/components/schemas/GenaiCompactionPart"},
+	{typ: PartTypeText, decode: decodePart[TextPart], schema: TextPart{}, schemaRef: "#/components/schemas/AiobservabilitytypesTextPart"},
+	{typ: PartTypeToolCall, decode: decodePart[ToolCallRequestPart], schema: ToolCallRequestPart{}, schemaRef: "#/components/schemas/AiobservabilitytypesToolCallRequestPart"},
+	{typ: PartTypeToolCallResponse, decode: decodePart[ToolCallResponsePart], schema: ToolCallResponsePart{}, schemaRef: "#/components/schemas/AiobservabilitytypesToolCallResponsePart"},
+	{typ: PartTypeServerToolCall, decode: decodePart[ServerToolCallPart], schema: ServerToolCallPart{}, schemaRef: "#/components/schemas/AiobservabilitytypesServerToolCallPart"},
+	{typ: PartTypeServerToolCallResponse, decode: decodePart[ServerToolCallResponsePart], schema: ServerToolCallResponsePart{}, schemaRef: "#/components/schemas/AiobservabilitytypesServerToolCallResponsePart"},
+	{typ: PartTypeBlob, decode: decodePart[BlobPart], schema: BlobPart{}, schemaRef: "#/components/schemas/AiobservabilitytypesBlobPart"},
+	{typ: PartTypeFile, decode: decodePart[FilePart], schema: FilePart{}, schemaRef: "#/components/schemas/AiobservabilitytypesFilePart"},
+	{typ: PartTypeURI, decode: decodePart[UriPart], schema: UriPart{}, schemaRef: "#/components/schemas/AiobservabilitytypesUriPart"},
+	{typ: PartTypeReasoning, decode: decodePart[ReasoningPart], schema: ReasoningPart{}, schemaRef: "#/components/schemas/AiobservabilitytypesReasoningPart"},
+	{typ: PartTypeCompaction, decode: decodePart[CompactionPart], schema: CompactionPart{}, schemaRef: "#/components/schemas/AiobservabilitytypesCompactionPart"},
 }
 
 type PartType struct{ valuer.String }
