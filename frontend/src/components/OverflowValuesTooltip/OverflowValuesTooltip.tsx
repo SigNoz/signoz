@@ -3,7 +3,7 @@ import TooltipScrollArea, {
 	TOOLTIP_SCROLL_CONTENT_CLASS,
 } from 'components/TooltipScrollArea/TooltipScrollArea';
 
-import styles from '../../VariablesBar.module.scss';
+import styles from './OverflowValuesTooltip.module.scss';
 
 interface OverflowValuesTooltipProps {
 	/** The selected values the pill hides behind this `+N`. */

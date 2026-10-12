@@ -116,6 +116,10 @@ Storybook fills the seams with:
   because elapsed-time code reads it — `lodash.debounce` compares two readings
   to decide its trailing call is due, and a frozen one leaves every debounced
   input in the app filtering nothing. `?storyClock=live` opts out.
+- A speech recognizer in place of the browser's, also in
+  `.storybook/preview-head.html`, because Storybook has no microphone. It
+  starts listening on `start()` and hears only what a `play` passes to
+  `webkitSpeechRecognition.listening.hear(text)`.
 - Theme from the toolbar (dark/light). `applyThemeBodyClass` puts `<body>` in the
   state the app gets from `index.html` plus `AppLayout`: `data-theme="default"`
   (every `@signozhq/design-tokens` semantic token is scoped to it, and without it
@@ -524,3 +528,18 @@ without it the story re-renders the tree the previous walk left behind and the
 control looks dead. The endpoint that settles a transition between two steps then
 needs a plain resolver rather than `response.json`, or the Data control on
 `loading` strands the walk halfway.
+
+## Screenshots
+
+To check what a CSS or component change does before Chromatic runs on the PR,
+use [sbshot](https://github.com/SigNoz/sbshot). It shoots the stories, diffs two
+runs the way Chromatic does, and opens a viewer on the changes. From `frontend/`:
+
+```bash
+sbshot capture . --name-run before --title Pages/ --theme dark,light
+# make the change
+sbshot capture . --name-run after --title Pages/ --theme dark,light
+sbshot diff before after --ui
+```
+
+Output goes to `.sbshot/`, which is gitignored.
