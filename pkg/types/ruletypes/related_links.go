@@ -20,10 +20,11 @@ func (t AlertType) TracesExplorerPath() string {
 }
 
 // RelatedTracesLabel is the button text notifiers show for a related_traces link.
-// Any link whose path is under the AI observability section counts, matching the
-// templates' `match "^https?://[^/]+/ai-observability/"` check.
+// Any link whose path contains the AI observability section counts, so installs
+// served under a URL prefix still match. Mirrors the templates'
+// `match "^https?://[^?#]*/ai-observability/"` check.
 func RelatedTracesLabel(link string) string {
-	if u, err := url.Parse(link); err == nil && strings.HasPrefix(u.Path, "/"+AIObservabilityPathPrefix+"/") {
+	if u, err := url.Parse(link); err == nil && strings.Contains(u.Path, "/"+AIObservabilityPathPrefix+"/") {
 		return "View Related AI Traces"
 	}
 	return "View Related Traces"

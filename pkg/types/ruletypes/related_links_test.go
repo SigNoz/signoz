@@ -17,6 +17,8 @@ func TestRelatedTracesLabel(t *testing.T) {
 		{name: "Empty", link: "", want: "View Related Traces"},
 		{name: "AIObservabilityHost", link: "https://ai-observability.acme.com/traces-explorer", want: "View Related Traces"},
 		{name: "AIObservabilityPathLookalike", link: "https://acme.com/ai-observability-team/explorer", want: "View Related Traces"},
+		{name: "PrefixedInstall", link: "https://acme.com/signoz/ai-observability/explorer?q=1", want: "View Related AI Traces"},
+		{name: "AIObservabilityInQuery", link: "https://acme.com/traces-explorer?q=/ai-observability/", want: "View Related Traces"},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {

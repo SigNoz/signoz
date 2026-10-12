@@ -768,6 +768,7 @@ func TestBaseRule_ExternalURL(t *testing.T) {
 		{name: "default value returned as-is", externalURL: mustParseURL(t, "http://localhost:8080"), want: "http://localhost:8080"},
 		{name: "configured https host", externalURL: mustParseURL(t, "https://signoz.example.com"), want: "https://signoz.example.com"},
 		{name: "configured host with port", externalURL: mustParseURL(t, "http://signoz.internal:3301"), want: "http://signoz.internal:3301"},
+		{name: "configured host with path prefix", externalURL: mustParseURL(t, "https://signoz.example.com/signoz/"), want: "https://signoz.example.com/signoz"},
 	}
 
 	for _, tc := range tests {

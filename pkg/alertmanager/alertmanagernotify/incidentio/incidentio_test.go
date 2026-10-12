@@ -223,6 +223,9 @@ func TestNotifyRelatedTracesLabel(t *testing.T) {
 	}{
 		{name: "TracesExplorer", link: "https://signoz.example/traces-explorer?q=1", want: "[View related traces]"},
 		{name: "AITracesExplorer", link: "https://signoz.example/ai-observability/explorer?q=1", want: "[View related AI traces]"},
+		{name: "PrefixedInstall", link: "https://signoz.example/signoz/ai-observability/explorer?q=1", want: "[View related AI traces]"},
+		{name: "AIObservabilityHost", link: "https://ai-observability.acme.com/traces-explorer", want: "[View related traces]"},
+		{name: "AIObservabilityInQuery", link: "https://signoz.example/traces-explorer?q=/ai-observability/", want: "[View related traces]"},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
