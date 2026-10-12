@@ -332,18 +332,10 @@ function LogsExplorerViewsContainer({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data]);
 
-	// Store previous orderDirection to detect changes
-	const prevOrderByRef = useRef(orderBy);
-
 	useEffect(() => {
-		const orderByChanged =
-			prevOrderByRef.current !== orderBy && selectedPanelType === PANEL_TYPES.LIST;
-		prevOrderByRef.current = orderBy;
-
 		if (
 			requestData?.id !== stagedQuery?.id ||
-			currentMinTimeRef.current !== minTime ||
-			orderByChanged
+			currentMinTimeRef.current !== minTime
 		) {
 			const newRequestData = getRequestData(stagedQuery, {
 				filters: listQuery?.filters || initialFilters,
@@ -367,7 +359,6 @@ function LogsExplorerViewsContainer({
 		activeLogId,
 		selectedPanelType,
 		maxTime,
-		orderBy,
 	]);
 
 	const chartData = useMemo(() => {
