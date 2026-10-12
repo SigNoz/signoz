@@ -1,25 +1,22 @@
-import { PersistedAnnouncementBanner } from '@signozhq/ui/announcement-banner';
-
-import styles from './NoAuthBanner.module.scss';
+import { AlertStrip } from '@signozhq/ui/alert-strip';
 
 export function NoAuthBanner(): JSX.Element {
 	return (
-		<PersistedAnnouncementBanner
-			type="warning"
+		<AlertStrip.CloseablePersisted
+			color="warning"
+			side="top"
 			storageKey="no-auth-banner-v1"
 			testId="no-auth-banner"
-			className={styles.banner}
 		>
 			Impersonation mode: authentication is disabled. Anyone with access to this
 			instance has admin privileges.{' '}
-			<a
+			<AlertStrip.Link
 				href="https://signoz.io/docs/manage/administrator-guide/configuration/impersonation-mode/"
 				target="_blank"
-				rel="noreferrer"
 			>
 				Learn more
-			</a>
-		</PersistedAnnouncementBanner>
+			</AlertStrip.Link>
+		</AlertStrip.CloseablePersisted>
 	);
 }
 
