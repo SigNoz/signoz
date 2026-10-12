@@ -26,6 +26,10 @@ export const QUESTIONNAIRE_PAGES = [
 
 export type QuestionnairePage = (typeof QUESTIONNAIRE_PAGES)[number];
 
+export const PROFILE_UPDATES = ['success', 'error'] as const;
+
+export type ProfileUpdate = (typeof PROFILE_UPDATES)[number];
+
 export const orgOnboardingMocks = defineStoryMocks({
 	controls: {
 		page: choiceControl<QuestionnairePage>('Questionnaire page', {
@@ -35,13 +39,28 @@ export const orgOnboardingMocks = defineStoryMocks({
 			options: QUESTIONNAIRE_PAGES,
 			value: 'about-your-org',
 		}),
+		profileUpdate: choiceControl<ProfileUpdate>('Profile save', {
+			group: QUESTIONNAIRE,
+			description:
+				'How the PUT behind the scale page answers. `error` raises the failure as a toast and lets the questionnaire carry on to the last page.',
+			options: PROFILE_UPDATES,
+			value: 'success',
+		}),
 	},
-	handlers: (_values, response) => [
+	handlers: (values, response) => [
 		// Answering the scale page saves the profile, and the last page only opens
 		// once that call settles: a plain resolver, so `Data` cannot strand the
 		// questionnaire two pages in.
 		rest.put('http://localhost/api/v2/zeus/profiles', (_req, res, ctx) =>
-			res(ctx.status(204)),
+			values.profileUpdate === 'error'
+				? res(
+						ctx.status(500),
+						ctx.json({
+							status: 'error',
+							error: { code: 'internal', message: 'Could not save the profile' },
+						}),
+					)
+				: res(ctx.status(204)),
 		),
 		rest.get(
 			'http://localhost/api/v1/roles',

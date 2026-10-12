@@ -23,6 +23,13 @@ jest.mock('hooks/useSavedViewEnabled', () => ({
 	useSavedViewEnabled: jest.fn(() => true),
 }));
 
+jest.mock('container/SavedViews/SavedViewsRestore', () => ({
+	__esModule: true,
+	default: ({ source }: { source: string }): JSX.Element => (
+		<div data-testid="saved-views-restore" data-source={source} />
+	),
+}));
+
 jest.mock('../../QuickFilters', () => ({
 	__esModule: true,
 	default: ({
@@ -87,6 +94,10 @@ describe('QuickFiltersLayout', () => {
 		).not.toBeInTheDocument();
 		expect(screen.queryByTestId('quick-filters')).not.toBeInTheDocument();
 		expect(screen.getByText('content')).toBeInTheDocument();
+		expect(screen.getByTestId('saved-views-restore')).toHaveAttribute(
+			'data-source',
+			SavedviewtypesSourceDTO.traces,
+		);
 	});
 
 	it('renders no sidebar at all without quick filters or saved views', () => {
@@ -149,6 +160,7 @@ describe('QuickFiltersLayout', () => {
 			expect(
 				screen.queryByTestId('quick-filters-layout-filters'),
 			).not.toBeInTheDocument();
+			expect(screen.queryByTestId('saved-views-restore')).not.toBeInTheDocument();
 		});
 
 		it('opens the panel from the header and slides the quick filters drawer, keeping the same QuickFilters node', async () => {
@@ -176,12 +188,14 @@ describe('QuickFiltersLayout', () => {
 			expect(screen.getByTestId('saved-views-panel')).toBeInTheDocument();
 			expect(drawer()).toHaveClass('isOpen');
 			expect(screen.getByTestId('quick-filters')).toBe(quickFilters);
+			expect(screen.queryByTestId('saved-views-open')).not.toBeInTheDocument();
 
 			await user.click(screen.getByTestId('saved-views-close'));
 
 			expect(screen.queryByTestId('saved-views-panel')).not.toBeInTheDocument();
 			expect(drawer()).not.toHaveClass('isOpen');
 			expect(screen.getByTestId('quick-filters')).toBe(quickFilters);
+			expect(screen.getByTestId('saved-views-open')).toBeInTheDocument();
 		});
 
 		it('hands the source to the header and the panel', async () => {
