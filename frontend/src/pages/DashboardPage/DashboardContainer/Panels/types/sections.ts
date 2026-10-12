@@ -16,6 +16,7 @@ import type {
 	DashboardtypesScatterPlotAxesDTO,
 	DashboardtypesScatterPlotDimensionsDTO,
 	DashboardtypesScatterPlotPointsDTO,
+	DashboardtypesScatterPlotThresholdDTO,
 	DashboardtypesSpanGapsDTO,
 	DashboardtypesStackModeDTO,
 	DashboardtypesTableFormattingDTO,
@@ -89,6 +90,7 @@ export enum ThresholdVariant {
 /** Union of every threshold element shape stored under `plugin.spec.thresholds`. */
 export type AnyThreshold =
 	| DashboardtypesThresholdWithLabelDTO
+	| DashboardtypesScatterPlotThresholdDTO
 	| DashboardtypesComparisonThresholdDTO
 	| DashboardtypesTableThresholdDTO;
 
@@ -203,7 +205,8 @@ export interface SectionControls {
 		fillSpans?: boolean;
 	};
 	// Editor discriminator (not a spec field): which threshold variant a kind edits.
-	[SectionKind.Thresholds]: { variant?: ThresholdVariant };
+	// axis → a `label` threshold picks the axis it marks (Scatter Plot).
+	[SectionKind.Thresholds]: { variant?: ThresholdVariant; axis?: boolean };
 }
 
 export type ControlledSectionKind = keyof SectionControls;

@@ -85,11 +85,20 @@ export function buildSeries({
 	});
 }
 
-export const THRESHOLDS: Threshold[] = [
+export const Y_THRESHOLDS: Threshold[] = [
 	{
 		thresholdValue: 300,
 		thresholdUnit: 'ms',
 		thresholdColor: '#E5484D',
 		thresholdLabel: 'p99 SLO',
+	},
+];
+
+export const X_THRESHOLDS: Threshold[] = [
+	{
+		thresholdValue: 60,
+		thresholdUnit: 'reqps',
+		thresholdColor: '#3E63DD',
+		thresholdLabel: 'Capacity',
 	},
 ];

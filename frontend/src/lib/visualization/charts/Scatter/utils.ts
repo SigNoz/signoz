@@ -4,6 +4,7 @@ import {
 	DrawStyle,
 } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
+import type { ThresholdsDrawHookOptions } from 'lib/uPlotV2/hooks/types';
 import {
 	applyScatterPlugin,
 	createScatterPlugin,
@@ -26,6 +27,7 @@ import { createScatterRange } from './scatterRange';
 import type {
 	AxisDistribution,
 	BuildScatterConfigArgs,
+	ScatterAxisOptions,
 	ScatterSeries,
 } from './types';
 
@@ -71,6 +73,15 @@ function getLogAxisTicks({
 		: {};
 }
 
+function getThresholdOptions(
+	scaleKey: 'x' | 'y',
+	{ thresholds, unit }: ScatterAxisOptions,
+): ThresholdsDrawHookOptions | undefined {
+	return thresholds && thresholds.length > 0
+		? { scaleKey, thresholds, yAxisUnit: unit }
+		: undefined;
+}
+
 export function buildScatterConfig({
 	id,
 	series,
@@ -80,7 +91,6 @@ export function buildScatterConfig({
 	pointSize = DEFAULT_SCATTER_POINT_SIZE,
 	fillOpacity,
 	colorMapping = {},
-	thresholds,
 	decimalPrecision,
 	selectionPreferencesSource,
 	shouldSaveSelectionPreference,
@@ -96,16 +106,22 @@ export function buildScatterConfig({
 	// The last x label is centred on the plot's right edge; room for its unit.
 	builder.setPadding([16, X_AXIS_END_LABEL_PADDING_PX, 8, 8]);
 
+	const xSoftLimits = adjustSoftLimitsWithThresholds(
+		x.softMin ?? null,
+		x.softMax ?? null,
+		x.thresholds,
+		x.unit,
+	);
 	const ySoftLimits = adjustSoftLimitsWithThresholds(
 		y.softMin ?? null,
 		y.softMax ?? null,
-		thresholds,
+		y.thresholds,
 		y.unit,
 	);
 	const xDistribution = resolveAxisDistribution(
 		series.flatMap((entry) => entry.xs),
 		x.scale,
-		[x.softMin, x.softMax],
+		[xSoftLimits.softMin, xSoftLimits.softMax],
 	);
 	const yDistribution = resolveAxisDistribution(
 		series.flatMap((entry) => entry.ys),
@@ -113,10 +129,8 @@ export function buildScatterConfig({
 		[ySoftLimits.softMin, ySoftLimits.softMax],
 	);
 
-	const yThresholds =
-		thresholds && thresholds.length > 0
-			? { scaleKey: 'y', thresholds, yAxisUnit: y.unit }
-			: undefined;
+	const xThresholds = getThresholdOptions('x', x);
+	const yThresholds = getThresholdOptions('y', y);
 
 	// The largest disc drawn, plus its outline, kept clear of each plot edge.
 	const largestDiameter = series.some((entry) => entry.sizes)
@@ -130,8 +144,7 @@ export function buildScatterConfig({
 		range: createScatterRange({
 			dimension: 'x',
 			marginPx,
-			softMin: x.softMin,
-			softMax: x.softMax,
+			...xSoftLimits,
 			...xDistribution,
 		}),
 		...xDistribution,
@@ -186,9 +199,11 @@ export function buildScatterConfig({
 		});
 	});
 
-	if (yThresholds) {
-		builder.addThresholds(yThresholds);
-	}
+	[xThresholds, yThresholds].forEach((options) => {
+		if (options) {
+			builder.addThresholds(options);
+		}
+	});
 
 	return builder;
 }

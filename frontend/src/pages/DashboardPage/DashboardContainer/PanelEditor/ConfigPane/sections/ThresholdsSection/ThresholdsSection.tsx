@@ -5,8 +5,9 @@ import {
 	DashboardtypesComparisonOperatorDTO,
 	type DashboardtypesComparisonThresholdDTO,
 	type DashboardtypesTableThresholdDTO,
+	type DashboardtypesScatterPlotThresholdDTO,
+	DashboardtypesThresholdAxisDTO,
 	DashboardtypesThresholdFormatDTO,
-	type DashboardtypesThresholdWithLabelDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	AnyThreshold,
@@ -44,6 +45,7 @@ const ADD_TESTID: Record<ThresholdVariant, string> = {
 function defaultThreshold(
 	variant: ThresholdVariant,
 	tableColumns: TableColumnOption[],
+	withAxis: boolean,
 ): AnyThreshold {
 	switch (variant) {
 		case 'comparison':
@@ -62,18 +64,23 @@ function defaultThreshold(
 				format: DashboardtypesThresholdFormatDTO.background,
 			};
 		default:
-			return { value: 0, color: DEFAULT_THRESHOLD_COLOR, label: '' };
+			return {
+				value: 0,
+				color: DEFAULT_THRESHOLD_COLOR,
+				label: '',
+				...(withAxis && { axis: DashboardtypesThresholdAxisDTO.y }),
+			};
 	}
 }
 
 type ThresholdsSectionProps = {
 	value: AnyThreshold[] | undefined;
 	/** `variant` picks the row editor + element shape; defaults to `label`. */
-	controls?: { variant?: ThresholdVariant };
+	controls?: { variant?: ThresholdVariant; axis?: boolean };
 	onChange: (next: AnyThreshold[]) => void;
 } & Pick<
 	SectionEditorContext,
-	'yAxisUnit' | 'tableColumns' | 'registerHeaderAction'
+	'yAxisUnit' | 'tableColumns' | 'axisColumnUnits' | 'registerHeaderAction'
 >;
 
 /**
@@ -88,9 +95,11 @@ function ThresholdsSection({
 	onChange,
 	yAxisUnit,
 	tableColumns = [],
+	axisColumnUnits,
 	registerHeaderAction,
 }: ThresholdsSectionProps): JSX.Element {
 	const variant = controls?.variant ?? ThresholdVariant.LABEL;
+	const withAxis = !!controls?.axis;
 	const thresholds = value ?? [];
 	// Which row is being edited, and whether it was just added (so Discard removes it).
 	const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -107,10 +116,10 @@ function ThresholdsSection({
 
 	const addThreshold = useCallback((): void => {
 		const current = value ?? [];
-		onChange([...current, defaultThreshold(variant, tableColumns)]);
+		onChange([...current, defaultThreshold(variant, tableColumns, withAxis)]);
 		setEditingIndex(current.length);
 		setUnsavedIndex(current.length);
-	}, [value, onChange, variant, tableColumns]);
+	}, [value, onChange, variant, tableColumns, withAxis]);
 
 	useEffect(() => {
 		registerHeaderAction?.(addThreshold);
@@ -189,7 +198,9 @@ function ThresholdsSection({
 			<LabelThresholdRow
 				// eslint-disable-next-line react/no-array-index-key
 				key={index}
-				threshold={threshold as DashboardtypesThresholdWithLabelDTO}
+				threshold={threshold as DashboardtypesScatterPlotThresholdDTO}
+				showAxis={withAxis}
+				axisUnits={axisColumnUnits}
 				{...common}
 			/>
 		);
