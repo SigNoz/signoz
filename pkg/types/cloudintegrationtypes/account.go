@@ -196,6 +196,10 @@ func NewGettableAccounts(accounts []*Account) *GettableAccounts {
 }
 
 func NewAccountConfigFromPostable(provider CloudProviderType, config *PostableAccountConfig) (*AccountConfig, error) {
+	if config == nil {
+		return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "config cannot be nil")
+	}
+
 	switch provider {
 	case CloudProviderTypeAWS:
 		if config.AWS == nil {
@@ -265,6 +269,10 @@ func NewAccountConfigFromPostable(provider CloudProviderType, config *PostableAc
 }
 
 func NewAccountConfigFromUpdatable(provider CloudProviderType, config *UpdatableAccount) (*AccountConfig, error) {
+	if config == nil || config.Config == nil {
+		return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "config cannot be nil")
+	}
+
 	switch provider {
 	case CloudProviderTypeAWS:
 		if config.Config.AWS == nil {
