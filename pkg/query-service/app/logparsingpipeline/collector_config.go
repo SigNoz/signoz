@@ -2,6 +2,7 @@ package logparsingpipeline
 
 import (
 	"encoding/json"
+	"slices"
 	"strings"
 	"sync"
 
@@ -24,10 +25,13 @@ var (
 )
 
 const (
-	memoryLimiterProcessor       = "memory_limiter"
-	memoryLimiterProcessorPrefix = "memory_limiter/"
-	batchProcessor               = "batch"
-	batchProcessorPrefix         = "batch/"
+	memoryLimiterProcessor        = "memory_limiter"
+	memoryLimiterProcessorPrefix  = "memory_limiter/"
+	batchProcessor                = "batch"
+	batchProcessorPrefix          = "batch/"
+	normalizerProcessor           = "signozlogsnormalizer"
+	normalizerProcessorPrefix     = "signozlogsnormalizer/"
+	userPipelinesBeforeNormalizer = "before"
 )
 
 // check if the processors already exist
@@ -90,9 +94,14 @@ func getOtelPipelineFromConfig(config map[string]interface{}) (*otelPipeline, er
 //  2. signoz user-pipeline processors (in the order given by signozPipelineProcessorNames)
 //  3. custom processors (non-signoz, non-memory_limiter, non-batch processors from the current config)
 //  4. batch processors (any processor named "batch" or "batch/<id>") and anything after them
+//
+// If a signozlogsnormalizer processor is present, the order above is skipped: user-pipeline
+// processors go right after the first one, or right before it when its config sets
+// `opamp.position: before`, and the other processors keep their places.
 func buildCollectorPipelineProcessorsList(
 	currentCollectorProcessors []string,
 	signozPipelineProcessorNames []string,
+	processorConfigs map[string]interface{},
 ) ([]string, error) {
 	lockLogsPipelineSpec.Lock()
 	defer lockLogsPipelineSpec.Unlock()
@@ -101,6 +110,23 @@ func buildCollectorPipelineProcessorsList(
 	userPipelineSet := make(map[string]struct{}, len(signozPipelineProcessorNames))
 	for _, p := range signozPipelineProcessorNames {
 		userPipelineSet[p] = struct{}{}
+	}
+
+	if normalizerIdx := slices.IndexFunc(currentCollectorProcessors, isNormalizerProcessor); normalizerIdx >= 0 {
+		before := normalizerPosition(processorConfigs, currentCollectorProcessors[normalizerIdx]) == userPipelinesBeforeNormalizer
+		result := make([]string, 0, len(currentCollectorProcessors)+len(signozPipelineProcessorNames))
+		for idx, p := range currentCollectorProcessors {
+			if idx == normalizerIdx && before {
+				result = append(result, signozPipelineProcessorNames...)
+			}
+			if _, inUserPipelines := userPipelineSet[p]; !inUserPipelines && !hasSignozPipelineProcessorPrefix(p) {
+				result = append(result, p)
+			}
+			if idx == normalizerIdx && !before {
+				result = append(result, signozPipelineProcessorNames...)
+			}
+		}
+		return result, nil
 	}
 
 	var memoryLimiters []string
@@ -133,6 +159,37 @@ func buildCollectorPipelineProcessorsList(
 		result = append(result, currentCollectorProcessors[batchIdx:]...)
 	}
 	return result, nil
+}
+
+func isNormalizerProcessor(name string) bool {
+	return name == normalizerProcessor || strings.HasPrefix(name, normalizerProcessorPrefix)
+}
+
+// normalizesBeforeUserPipelines reports whether the logs pipeline of the collector config runs
+// signozlogsnormalizer ahead of user pipelines, judged by the first one as in buildCollectorPipelineProcessorsList.
+// Malformed configs report false; GenerateCollectorConfigWithPipelines surfaces their errors.
+func normalizesBeforeUserPipelines(config []byte) bool {
+	var collectorConf map[string]interface{}
+	if err := yaml.Unmarshal(config, &collectorConf); err != nil {
+		return false
+	}
+	p, err := getOtelPipelineFromConfig(collectorConf)
+	if err != nil || p.Pipelines.Logs == nil {
+		return false
+	}
+	normalizerIdx := slices.IndexFunc(p.Pipelines.Logs.Processors, isNormalizerProcessor)
+	if normalizerIdx < 0 {
+		return false
+	}
+	processorConfigs, _ := collectorConf["processors"].(map[string]interface{})
+	return normalizerPosition(processorConfigs, p.Pipelines.Logs.Processors[normalizerIdx]) != userPipelinesBeforeNormalizer
+}
+
+func normalizerPosition(processorConfigs map[string]interface{}, name string) string {
+	config, _ := processorConfigs[name].(map[string]interface{})
+	opamp, _ := config["opamp"].(map[string]interface{})
+	position, _ := opamp["position"].(string)
+	return position
 }
 
 func GenerateCollectorConfigWithPipelines(config []byte, pipelines []pipelinetypes.GettablePipeline) ([]byte, error) {
@@ -180,7 +237,9 @@ func GenerateCollectorConfigWithPipelines(config []byte, pipelines []pipelinetyp
 		return nil, errors.NewInternalf(CodeCollectorConfigLogsPipelineNotFound, "logs pipeline doesn't exist")
 	}
 
-	updatedProcessorList, _ := buildCollectorPipelineProcessorsList(p.Pipelines.Logs.Processors, signozPipelineProcNames)
+	updatedProcessorList, _ := buildCollectorPipelineProcessorsList(
+		p.Pipelines.Logs.Processors, signozPipelineProcNames, collectorConf["processors"].(map[string]interface{}),
+	)
 	p.Pipelines.Logs.Processors = updatedProcessorList
 
 	// add the new processor to the data ( no checks required as the keys will exists)
