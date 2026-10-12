@@ -72,14 +72,14 @@ importers:
         specifier: 5.3.0
         version: 5.3.0
       '@signozhq/design-tokens':
-        specifier: file:.yalc/@signozhq/design-tokens
-        version: file:.yalc/@signozhq/design-tokens
+        specifier: 2.3.0
+        version: 2.3.0
       '@signozhq/icons':
         specifier: 0.4.0
         version: 0.4.0
       '@signozhq/ui':
-        specifier: file:.yalc/@signozhq/ui
-        version: file:.yalc/@signozhq/ui(@date-fns/tz@1.4.1)(@emotion/is-prop-valid@1.2.0)(@signozhq/icons@0.4.0)(@types/react-dom@18.0.10)(@types/react@18.0.26)(date-fns@4.1.0)(react-dom@18.2.0(react@18.2.0))(react-router-dom@5.3.4(react@18.2.0))(react-router@6.30.6(react@18.2.0))(react@18.2.0)
+        specifier: 0.3.0
+        version: 0.3.0(@date-fns/tz@1.4.1)(@emotion/is-prop-valid@1.2.0)(@signozhq/icons@0.4.0)(@types/react-dom@18.0.10)(@types/react@18.0.26)(date-fns@4.1.0)(react-dom@18.2.0(react@18.2.0))(react-router-dom@5.3.4(react@18.2.0))(react-router@6.30.6(react@18.2.0))(react@18.2.0)
       '@tanstack/react-table':
         specifier: 8.21.3
         version: 8.21.3(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -3474,14 +3474,14 @@ packages:
   '@sideway/pinpoint@2.0.0':
     resolution: {integrity: sha512-RNiOoTPkptFtSVzQevY/yWtZwf/RxyVnPy/OcA9HBM3MlGDnBEYL5B41H0MTn0Uec8Hi+2qUtTfG2WWZBmMejQ==}
 
-  '@signozhq/design-tokens@file:.yalc/@signozhq/design-tokens':
-    resolution: {directory: .yalc/@signozhq/design-tokens, type: directory}
+  '@signozhq/design-tokens@2.3.0':
+    resolution: {integrity: sha512-gVTPc2uJwBsTF9VMzPghgsnv6eioK8oxzES1CLDxedxpcfwbWltuzxVPwhPuoC54E2vItDVZhR9RFI/JZ50ldw==}
 
   '@signozhq/icons@0.4.0':
     resolution: {integrity: sha512-QctNvNPlQlsefFdIVmSy/P/7a1IcQ3IryKP0KPMqtoqew3q89FGUmFa5IfEJ7Z3CHhtG1zaXwBKqP72QkLyA3g==}
 
-  '@signozhq/ui@file:.yalc/@signozhq/ui':
-    resolution: {directory: .yalc/@signozhq/ui, type: directory}
+  '@signozhq/ui@0.3.0':
+    resolution: {integrity: sha512-Khzr3/YC/QACwBi1zfQwt+h88iyuIu9hm5hkcIkuCTteD9P+r13US/NN4kkbJe8IHyZXCoDkoIpmQxzbrA3/SA==}
     peerDependencies:
       '@signozhq/icons': 0.3.0
       react: ^18.2.0
@@ -8443,8 +8443,8 @@ packages:
       '@types/react':
         optional: true
 
-  react-resizable-panels@4.12.3:
-    resolution: {integrity: sha512-GHMJWnDXui/3RX4bT+cgBP+N3N2nkwcoZATr/2xLFpqQQe7TlBrE0cGM0dUa9ceT7A90tUrSRsiqgRG+g0/2AA==}
+  react-resizable-panels@4.12.2:
+    resolution: {integrity: sha512-NwY5LCo4WrxVvDh0xoMML6EMLPONP/8ckKcIdpnojxexoatZdjLiRqLJQjQK5CPkd4SYiB/2M5BVrjZBQtOO7Q==}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
@@ -13023,11 +13023,11 @@ snapshots:
 
   '@sideway/pinpoint@2.0.0': {}
 
-  '@signozhq/design-tokens@file:.yalc/@signozhq/design-tokens': {}
+  '@signozhq/design-tokens@2.3.0': {}
 
   '@signozhq/icons@0.4.0': {}
 
-  '@signozhq/ui@file:.yalc/@signozhq/ui(@date-fns/tz@1.4.1)(@emotion/is-prop-valid@1.2.0)(@signozhq/icons@0.4.0)(@types/react-dom@18.0.10)(@types/react@18.0.26)(date-fns@4.1.0)(react-dom@18.2.0(react@18.2.0))(react-router-dom@5.3.4(react@18.2.0))(react-router@6.30.6(react@18.2.0))(react@18.2.0)':
+  '@signozhq/ui@0.3.0(@date-fns/tz@1.4.1)(@emotion/is-prop-valid@1.2.0)(@signozhq/icons@0.4.0)(@types/react-dom@18.0.10)(@types/react@18.0.26)(date-fns@4.1.0)(react-dom@18.2.0(react@18.2.0))(react-router-dom@5.3.4(react@18.2.0))(react-router@6.30.6(react@18.2.0))(react@18.2.0)':
     dependencies:
       '@base-ui/react': 1.7.0(@date-fns/tz@1.4.1)(@types/react@18.0.26)(date-fns@4.1.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@chenglou/pretext': 0.0.8
@@ -13049,7 +13049,7 @@ snapshots:
       react-compiler-runtime: 1.0.0(react@18.2.0)
       react-day-picker: 9.9.0(react@18.2.0)
       react-dom: 18.2.0(react@18.2.0)
-      react-resizable-panels: 4.12.3(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      react-resizable-panels: 4.12.2(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
     transitivePeerDependencies:
       - '@date-fns/tz'
       - '@emotion/is-prop-valid'
@@ -18917,7 +18917,7 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.0.26
 
-  react-resizable-panels@4.12.3(react-dom@18.2.0(react@18.2.0))(react@18.2.0):
+  react-resizable-panels@4.12.2(react-dom@18.2.0(react@18.2.0))(react@18.2.0):
     dependencies:
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)

@@ -105,19 +105,17 @@ jest.mock(
 
 jest.mock('@signozhq/ui/resizable', () => ({
 	__esModule: true,
-	ResizablePanelGroup: ({
-		children,
+	Resizable: ({
+		items,
 	}: {
-		children: React.ReactNode;
-	}): JSX.Element => <div>{children}</div>,
-	ResizablePanel: ({ children }: { children: React.ReactNode }): JSX.Element => (
-		<div>{children}</div>
+		items: Array<{ value: string; children: React.ReactNode }>;
+	}): JSX.Element => (
+		<div>
+			{items.map((item) => (
+				<div key={item.value}>{item.children}</div>
+			))}
+		</div>
 	),
-	ResizableHandle: (): null => null,
-	useDefaultLayout: (): unknown => ({
-		defaultLayout: undefined,
-		onLayoutChanged: jest.fn(),
-	}),
 }));
 jest.mock('@signozhq/ui/sonner', () => ({
 	toast: { success: jest.fn(), error: jest.fn() },
