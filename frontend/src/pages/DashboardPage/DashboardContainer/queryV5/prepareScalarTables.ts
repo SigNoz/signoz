@@ -5,7 +5,7 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 import { Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType } from 'api/generated/services/sigNoz.schemas';
 
-import { isBuilderOrAIEnvelope } from './builderEnvelope';
+import { isBuilderOrAIEnvelope } from 'lib/query/builderEnvelope';
 
 import type { PanelTable, PanelTableColumn } from './types';
 

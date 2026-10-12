@@ -1,6 +1,6 @@
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 
-import { isAIBuilderEnvelope } from '../../../queryV5/builderEnvelope';
+import { isAIBuilderEnvelope } from 'lib/query/builderEnvelope';
 import { toQueryEnvelopes } from '../../../queryV5/buildQueryRangeRequest';
 import type { PanelActionId } from '../PanelActionsMenu/panelActionMeta';
 

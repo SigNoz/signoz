@@ -11,7 +11,7 @@ import {
 	textContainsVariableReference,
 } from 'lib/dashboardVariables/variableReference';
 
-import { isBuilderOrAIEnvelope } from '../../../queryV5/builderEnvelope';
+import { isBuilderOrAIEnvelope } from 'lib/query/builderEnvelope';
 import { toQueryEnvelopes } from '../../../queryV5/buildQueryRangeRequest';
 import { getTextPanelBody } from './getTextPanelBody';
 import { dtoToFormModel } from '../variableAdapters';

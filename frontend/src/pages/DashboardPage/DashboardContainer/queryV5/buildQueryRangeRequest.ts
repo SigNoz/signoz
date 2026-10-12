@@ -19,7 +19,7 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 
 import type { PanelQueryCapabilities } from '../Panels/types/panelCapabilities';
-import { isBuilderOrAIEnvelope } from './builderEnvelope';
+import { isBuilderOrAIEnvelope } from 'lib/query/builderEnvelope';
 
 // Narrow view over the envelope spec variants. Orval erases envelope `spec` to `unknown`, so
 // shared fields are read through this view with a localized cast at the envelope boundary.

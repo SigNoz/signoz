@@ -7,7 +7,7 @@ import type { BuilderQuery } from 'types/api/v5/queryRange';
 import {
 	isBuilderOrAIEnvelope,
 	isBuilderOrAIPluginKind,
-} from '../../queryV5/builderEnvelope';
+} from 'lib/query/builderEnvelope';
 
 /**
  * Flattens a panel's queries into its builder queries, unwrapping

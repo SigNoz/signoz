@@ -22,7 +22,10 @@ import type { QueryEnvelope } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { isAIBuilderEnvelope, isBuilderOrAIEnvelope } from './builderEnvelope';
+import {
+	isAIBuilderEnvelope,
+	isBuilderOrAIEnvelope,
+} from 'lib/query/builderEnvelope';
 import { toQueryEnvelopes } from './buildQueryRangeRequest';
 
 /**

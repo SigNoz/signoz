@@ -9,7 +9,7 @@ import type {
 import {
 	isBuilderOrAIEnvelope,
 	isBuilderOrAIPluginKind,
-} from '../../../queryV5/builderEnvelope';
+} from 'lib/query/builderEnvelope';
 
 function clauseFor(attribute: string, variableName: string): string {
 	return `${attribute} IN $${variableName}`;
