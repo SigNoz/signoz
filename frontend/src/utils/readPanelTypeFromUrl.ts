@@ -3,11 +3,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 
 import { getUnstableCurrentSearchParams } from './getUnstableCurrentSearchParams';
 
-/**
- * The param is JSON-encoded, but a hand-written link can carry it unencoded, and
- * a malformed one must not throw (engineering-pod#6158). Reads the params
- * directly, not through `useUrlQuery`, so it works outside a hook.
- */
+// The param is JSON-encoded, but a hand-written link can carry it unencoded.
 export const readPanelTypeFromUrl = (
 	fallback: PANEL_TYPES | null = null,
 ): PANEL_TYPES | null => {

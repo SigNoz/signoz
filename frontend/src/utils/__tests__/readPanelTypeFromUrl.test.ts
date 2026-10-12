@@ -30,7 +30,6 @@ describe('readPanelTypeFromUrl', () => {
 		expect(readPanelTypeFromUrl()).toBe(PANEL_TYPES.LIST);
 	});
 
-	// engineering-pod#6158: an unguarded parse of this param crashed the page.
 	it('returns the raw value instead of throwing on a malformed one', () => {
 		withParam('{list');
 

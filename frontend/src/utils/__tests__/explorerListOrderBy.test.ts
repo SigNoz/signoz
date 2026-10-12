@@ -38,7 +38,6 @@ describe('getRawPanelOrderBy', () => {
 		).toStrictEqual([{ columnName: 'service.name', order: 'asc' }]);
 	});
 
-	// Repro: set an order on the Time Series tab, then switch to List.
 	it('drops an aggregation carried in from an aggregated panel', () => {
 		expect(
 			getRawPanelOrderBy(withOrderBy([{ columnName: 'count()', order: 'desc' }])),

@@ -9,7 +9,6 @@ import { getParsedAggregationOptionsForOrderBy } from './aggregationConverter';
 
 export const DEFAULT_LIST_ORDER_BY = 'timestamp:desc';
 
-// Filters only. The query keeps the order for the panel that can use it.
 export const getRawPanelOrderBy = (query: Query | null): OrderByPayload[] => {
 	const queryData = query?.builder?.queryData?.[0];
 
@@ -29,8 +28,6 @@ export const getRawPanelOrderBy = (query: Query | null): OrderByPayload[] => {
 	);
 };
 
-// Never write the fallback back: a view saved without an order would then read
-// as unsaved on open.
 export const getListOrderBy = (
 	query: Query | null,
 	fallback: string = DEFAULT_LIST_ORDER_BY,
