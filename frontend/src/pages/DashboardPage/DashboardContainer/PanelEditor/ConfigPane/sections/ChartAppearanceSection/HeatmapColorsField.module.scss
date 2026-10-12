@@ -1,138 +1,85 @@
-.colors {
-	display: flex;
-	flex-direction: column;
-	gap: var(--spacing-8);
-}
-
-.field {
-	display: flex;
-	flex: 1;
-	flex-direction: column;
-	gap: var(--spacing-4);
-	min-width: 0;
-}
-
-.fieldHeader {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: var(--spacing-4);
-}
-
-// The track is inset by half a thumb at each end by default, which reads as an
-// indent against the label and help text either side of it. Radix keeps the thumb
-// in bounds on its own, so the track can run the full width of the field.
-.slider {
-	--slider-track-margin-x: 0;
-}
-
-.help {
-	font-size: var(--periscope-font-size-small);
-	color: var(--l3-foreground);
-}
-
-.mono {
-	font-family: var(--periscope-font-family-mono);
-	font-size: var(--periscope-font-size-small);
-	color: var(--l3-foreground);
-}
-
-.bounds {
-	display: flex;
-	gap: var(--spacing-4);
-}
-
-.fillGrid {
-	display: grid;
-	grid-template-columns: repeat(4, minmax(0, 1fr));
-	gap: var(--spacing-4);
-}
-
-.customFill {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: var(--spacing-4);
-	padding: var(--spacing-4) var(--spacing-6);
-	border: 1px solid var(--l2-border);
-	border-radius: var(--radius-1);
-	background: var(--l2-background-60);
-	cursor: pointer;
-
-	&:hover {
-		border-color: var(--l2-foreground);
-	}
-
-	&.isSelected {
-		border-color: var(--accent-primary);
-	}
-}
-
-.customFillValue {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-4);
-}
-
-.customFillSwatch {
-	width: var(--spacing-12);
-	height: var(--spacing-8);
-	border-radius: var(--radius-1);
-	border: 1px solid var(--l2-border);
-}
-
 .preview {
 	display: flex;
 	flex-direction: column;
-	gap: var(--spacing-3);
-}
-
-.previewHeader {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: var(--spacing-4);
+	gap: 6px;
 }
 
 .previewRamp {
-	height: var(--spacing-8);
-	border-radius: var(--radius-1);
-	border: 1px solid var(--l2-border);
+	height: 16px;
+	border-radius: 2px;
+	box-shadow: inset 0 0 0 1px var(--l1-border);
 }
 
 .previewBounds {
 	display: flex;
 	justify-content: space-between;
-	gap: var(--spacing-4);
+	gap: 8px;
+	font-family: 'Geist Mono', monospace;
+	font-size: 12px;
+	color: var(--l2-foreground);
 }
 
-.paletteGrid {
+// The grid can't query its own width, so a wrapper is the container.
+.cards {
+	container-type: inline-size;
+}
+
+.cardGrid {
 	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: var(--spacing-4);
+	grid-template-columns: minmax(0, 1fr);
+	gap: 8px;
 }
 
-.paletteCard {
+@container (min-width: 200px) {
+	.cardGrid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+.card {
 	display: flex;
 	flex-direction: column;
-	gap: var(--spacing-3);
-	padding: var(--spacing-4);
-	border: 1px solid var(--l2-border);
-	border-radius: var(--radius-1);
-	background: var(--l2-background-60);
-	cursor: pointer;
+	align-items: stretch;
+	gap: 8px;
+	min-width: 0;
+	padding: 10px 10px 8px;
+	border: 1px solid var(--l1-border);
+	border-radius: 4px;
+	background: var(--l2-background);
+	font: inherit;
 	text-align: left;
+	cursor: pointer;
+	transition: border-color 150ms;
 
 	&:hover {
-		border-color: var(--l2-foreground);
+		border-color: var(--l2-border);
+	}
+
+	&:focus-visible {
+		outline: 1px solid var(--bg-robin-500);
+		outline-offset: 1px;
 	}
 
 	&.isSelected {
-		border-color: var(--accent-primary);
+		border-color: var(--bg-robin-500);
+		box-shadow: inset 0 0 0 1px var(--bg-robin-500);
 	}
 }
 
-.paletteRamp {
-	height: var(--spacing-6);
-	border-radius: var(--radius-1);
+.cardRamp {
+	height: 10px;
+	border-radius: 2px;
+}
+
+.cardName {
+	overflow: hidden;
+	font-family: 'Geist Mono', monospace;
+	font-size: 12px;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	color: var(--l2-foreground);
+
+	.isSelected & {
+		color: var(--l1-foreground);
+	}
 }

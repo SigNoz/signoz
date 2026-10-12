@@ -4,6 +4,7 @@ import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 
 import ColumnHeader from '../Base/ColumnHeader';
+import ClickableStatusCounts from '../Base/components/StatusFilterCells/ClickableStatusCounts';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { SelectedItemParams } from '../hooks';
@@ -124,7 +125,8 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDep
 					return <TextNoData type="tanstack" />;
 				}
 				return (
-					<GroupedStatusCounts
+					<ClickableStatusCounts
+						kind="pod"
 						rowId={rowId}
 						items={getPodStatusItems(podCountsByStatus)}
 					/>

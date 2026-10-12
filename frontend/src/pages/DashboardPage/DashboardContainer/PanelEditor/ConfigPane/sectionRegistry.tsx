@@ -15,6 +15,7 @@ import {
 	type SectionEditorProps,
 	type SectionSpecMap,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
+import type { SeededPluginSpec } from 'pages/DashboardPage/DashboardContainer/Panels/utils/buildPluginSpec';
 
 import type { SectionEditorContext } from './sectionContext';
 import AxesSection from './sections/AxesSection/AxesSection';
@@ -159,6 +160,8 @@ export interface ErasedSectionDescriptor {
 	Component: ComponentType<
 		{
 			value: unknown;
+			defaultValue?: unknown;
+			savedValue?: unknown;
 			controls?: unknown;
 			onChange: (next: unknown) => void;
 		} & SectionEditorContext
@@ -173,4 +176,17 @@ export function resolveSectionEditor(
 	return SECTION_REGISTRY[kind] as unknown as
 		| ErasedSectionDescriptor
 		| undefined;
+}
+
+/** A slice's default, read through the same lens from the kind's seeded plugin spec. */
+export function getSectionDefault(
+	editor: ErasedSectionDescriptor,
+	spec: PanelSpec,
+	defaults: SeededPluginSpec,
+): unknown {
+	return editor.get({
+		...spec,
+		links: [],
+		plugin: { ...spec.plugin, spec: defaults },
+	} as PanelSpec);
 }

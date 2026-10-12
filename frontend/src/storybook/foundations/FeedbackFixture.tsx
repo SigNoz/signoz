@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Trash2, TriangleAlert } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { ConfirmDialog } from '@signozhq/ui/dialog';
-import { Toaster, toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/sonner';
 
 import MessageTip from '@/components/MessageTip';
 
@@ -103,7 +103,6 @@ function FeedbackFixture({ state }: FeedbackFixtureProps): JSX.Element {
 					</ConfirmDialog>
 				</>
 			)}
-			<Toaster closeButton position="top-right" />
 		</>
 	);
 }

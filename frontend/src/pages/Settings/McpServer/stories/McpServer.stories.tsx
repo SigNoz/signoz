@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { userEvent, within } from 'storybook/test';
+import { screen, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -76,4 +76,32 @@ export const NonAdmin: Story = {
  */
 export const Tooltips: Story = {
 	args: { tooltipsOpen: true },
+};
+
+/** The client config snippet copied: the toast confirming it. */
+export const SnippetCopiedToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByRole(
+				'button',
+				{ name: /^copy .* config$/i },
+				untilLoaded,
+			),
+		);
+		await screen.findByText(/snippet copied to clipboard/i);
+	},
+};
+
+/** The instance URL copied: the toast confirming it. */
+export const InstanceUrlCopiedToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByRole(
+				'button',
+				{ name: /copy signoz instance url/i },
+				untilLoaded,
+			),
+		);
+		await screen.findByText(/instance url copied to clipboard/i);
+	},
 };

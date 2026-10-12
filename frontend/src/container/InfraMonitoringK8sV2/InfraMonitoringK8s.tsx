@@ -12,24 +12,13 @@ import {
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import {
-	ArrowUpDown,
-	ArrowUpToLine,
-	Bolt,
-	Box,
-	Boxes,
-	Computer,
-	Container,
-	FilePenLine,
-	Filter,
-	Group,
-	HardDrive,
-	Workflow,
-} from '@signozhq/icons';
+import { ArrowUpToLine, Filter } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { CategoryIcon } from './Base/categoryIcons';
 import { K8sDynamicList } from './Base/K8sDynamicList';
+import EntityStatusFilter from './Base/components/EntityStatusFilter/EntityStatusFilter';
 import {
 	GetClustersQuickFiltersConfig,
 	GetContainersQuickFiltersConfig,
@@ -42,14 +31,18 @@ import {
 	GetStatefulsetsQuickFiltersConfig,
 	GetVolumesQuickFiltersConfig,
 	InfraMonitoringEntity,
+	K8S_CATEGORY_LABELS,
 	K8sCategories,
 	METRIC_NAMESPACE_BY_ENTITY,
 } from './constants';
 import {
 	useInfraMonitoringCategory,
+	useInfraMonitoringContainerStatusFilter,
 	useInfraMonitoringGroupBy,
+	useInfraMonitoringNodeReadinessFilter,
 	useInfraMonitoringOrderBy,
 	useInfraMonitoringPageListing,
+	useInfraMonitoringPodStatusFilter,
 	useInfraMonitoringSelectedItemParams,
 } from './hooks';
 
@@ -71,6 +64,9 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	const [, setOrderBy] = useInfraMonitoringOrderBy();
 	const [, setSelectedItemParams] = useInfraMonitoringSelectedItemParams();
 	const [, setCurrentPage] = useInfraMonitoringPageListing();
+	const [, setPodStatusFilter] = useInfraMonitoringPodStatusFilter();
+	const [, setNodeReadinessFilter] = useInfraMonitoringNodeReadinessFilter();
+	const [, setContainerStatusFilter] = useInfraMonitoringContainerStatusFilter();
 
 	const compositeQuery = useGetCompositeQueryParam();
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
@@ -156,62 +152,62 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		() => [
 			{
 				key: K8sCategories.CONTAINERS,
-				label: 'Containers',
-				icon: <Box size={14} />,
+				label: K8S_CATEGORY_LABELS[InfraMonitoringEntity.CONTAINERS],
+				icon: <CategoryIcon category={InfraMonitoringEntity.CONTAINERS} />,
 				config: GetContainersQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.PODS,
-				label: 'Pods',
-				icon: <Container size={14} />,
+				label: K8S_CATEGORY_LABELS[InfraMonitoringEntity.PODS],
+				icon: <CategoryIcon category={InfraMonitoringEntity.PODS} />,
 				config: GetPodsQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.NODES,
-				label: 'Nodes',
-				icon: <Workflow size={14} />,
+				label: K8S_CATEGORY_LABELS[InfraMonitoringEntity.NODES],
+				icon: <CategoryIcon category={InfraMonitoringEntity.NODES} />,
 				config: GetNodesQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.NAMESPACES,
-				label: 'Namespaces',
-				icon: <FilePenLine size={14} />,
+				label: K8S_CATEGORY_LABELS[InfraMonitoringEntity.NAMESPACES],
+				icon: <CategoryIcon category={InfraMonitoringEntity.NAMESPACES} />,
 				config: GetNamespaceQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.CLUSTERS,
-				label: 'Clusters',
-				icon: <Boxes size={14} />,
+				label: K8S_CATEGORY_LABELS[InfraMonitoringEntity.CLUSTERS],
+				icon: <CategoryIcon category={InfraMonitoringEntity.CLUSTERS} />,
 				config: GetClustersQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.DEPLOYMENTS,
-				label: 'Deployments',
-				icon: <Computer size={14} />,
+				label: K8S_CATEGORY_LABELS[InfraMonitoringEntity.DEPLOYMENTS],
+				icon: <CategoryIcon category={InfraMonitoringEntity.DEPLOYMENTS} />,
 				config: GetDeploymentsQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.JOBS,
-				label: 'Jobs',
-				icon: <Bolt size={14} />,
+				label: K8S_CATEGORY_LABELS[InfraMonitoringEntity.JOBS],
+				icon: <CategoryIcon category={InfraMonitoringEntity.JOBS} />,
 				config: GetJobsQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.DAEMONSETS,
-				label: 'DaemonSets',
-				icon: <Group size={14} />,
+				label: K8S_CATEGORY_LABELS[InfraMonitoringEntity.DAEMONSETS],
+				icon: <CategoryIcon category={InfraMonitoringEntity.DAEMONSETS} />,
 				config: GetDaemonsetsQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.STATEFULSETS,
-				label: 'StatefulSets',
-				icon: <ArrowUpDown size={14} />,
+				label: K8S_CATEGORY_LABELS[InfraMonitoringEntity.STATEFULSETS],
+				icon: <CategoryIcon category={InfraMonitoringEntity.STATEFULSETS} />,
 				config: GetStatefulsetsQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.VOLUMES,
-				label: 'Volumes',
-				icon: <HardDrive size={14} />,
+				label: K8S_CATEGORY_LABELS[InfraMonitoringEntity.VOLUMES],
+				icon: <CategoryIcon category={InfraMonitoringEntity.VOLUMES} />,
 				config: GetVolumesQuickFiltersConfig(),
 			},
 		],
@@ -230,6 +226,9 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			void setGroupBy(null);
 			void setCurrentPage(null);
 			setSelectedItemParams(null);
+			void setPodStatusFilter(null);
+			void setNodeReadinessFilter(null);
+			void setContainerStatusFilter(null);
 			redirectWithQueryBuilderData({
 				...currentQuery,
 				builder: {
@@ -337,7 +336,10 @@ export default function InfraMonitoringK8s(): JSX.Element {
 							showFilters ? styles.listContainerFiltersVisible : ''
 						}`}
 					>
-						<K8sDynamicList controlListPrefix={showFiltersComp} />
+						<K8sDynamicList
+							controlListPrefix={showFiltersComp}
+							leftFilters={<EntityStatusFilter />}
+						/>
 					</div>
 				</div>
 			</div>
