@@ -22,12 +22,12 @@ import {
 	resolveQueryMode,
 } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 import { getQueryModeSignals } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelCapabilities';
-import { QueryMode } from 'types/common/dashboard';
 import {
 	type BuilderStash,
 	getBuilderMode,
 	getQueryMode,
 	isBuilderMode,
+	QueryMode,
 	withoutAIQueryTag,
 } from 'pages/DashboardPage/DashboardContainer/Panels/utils/queryMode';
 import { seedBuilderForMode } from 'pages/DashboardPage/DashboardContainer/Panels/utils/seedBuilderForMode';

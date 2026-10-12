@@ -1,6 +1,14 @@
+import { Querybuildertypesv5QueryTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 
-import { QueryMode } from 'types/common/dashboard';
+export const QueryMode = {
+	...EQueryType,
+	/** Not an `EQueryType`: AI queries are builder queries tagged `builderQueryType: builder_ai_query`. */
+	AI_QUERY_BUILDER: Querybuildertypesv5QueryTypeDTO.builder_ai_query,
+} as const;
+
+export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode];
 
 /** Builder queries per authoring tab; `Query` has one `builder` slot, so off-screen tabs live here. */
 export type BuilderStash = Partial<Record<QueryMode, Query['builder']>>;

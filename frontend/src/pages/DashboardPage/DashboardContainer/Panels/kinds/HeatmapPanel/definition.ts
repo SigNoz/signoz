@@ -11,7 +11,7 @@ import {
 	Querybuildertypesv5RequestTypeDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { QueryMode } from 'types/common/dashboard';
+import { QueryMode } from 'pages/DashboardPage/DashboardContainer/Panels/utils/queryMode';
 
 export const definition: PanelDefinition<'signoz/HeatmapPanel'> = {
 	kind: 'signoz/HeatmapPanel',

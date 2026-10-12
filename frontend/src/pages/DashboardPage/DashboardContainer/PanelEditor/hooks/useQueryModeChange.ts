@@ -1,7 +1,6 @@
 import { type MutableRefObject, useCallback } from 'react';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { QueryMode } from 'types/common/dashboard';
 
 import {
 	getQueryModeSignals,
@@ -12,6 +11,7 @@ import {
 	type BuilderStash,
 	getBuilderMode,
 	isBuilderMode,
+	QueryMode,
 } from 'pages/DashboardPage/DashboardContainer/Panels/utils/queryMode';
 import { seedBuilderForMode } from 'pages/DashboardPage/DashboardContainer/Panels/utils/seedBuilderForMode';
 

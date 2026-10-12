@@ -5,7 +5,7 @@ import {
 	type PANEL_TYPES,
 } from 'constants/queryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryMode } from 'types/common/dashboard';
+import { QueryMode } from 'pages/DashboardPage/DashboardContainer/Panels/utils/queryMode';
 import {
 	DataSource,
 	type QueryBuilderContextType,
