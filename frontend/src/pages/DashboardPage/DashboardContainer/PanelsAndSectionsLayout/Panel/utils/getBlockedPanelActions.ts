@@ -13,13 +13,9 @@ export type BlockedPanelActions = Partial<Record<PanelActionId, string>>;
 export function getBlockedPanelActions(
 	panel: DashboardtypesPanelDTO,
 ): BlockedPanelActions {
-	// The editor and alert builder have no AI query mode. View in Logs/Traces stays on.
+	// The alert builder has no AI query mode. View in Logs/Traces stays on.
 	if (toQueryEnvelopes(panel.spec.queries).some(isAIBuilderEnvelope)) {
-		return {
-			view: AI_PANEL_REASON,
-			edit: AI_PANEL_REASON,
-			createAlert: AI_PANEL_REASON,
-		};
+		return { createAlert: AI_PANEL_REASON };
 	}
 	return {};
 }
