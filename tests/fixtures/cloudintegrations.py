@@ -49,8 +49,7 @@ class ProviderAccountSpec:
 class ProviderServiceSpec:
     provider: str
     service_id: str
-    # GCP ships every service with supportedSignals.logs false, so a logs block
-    # is neither required on write nor persisted.
+    # Whether writes require a logs block and reads include it.
     supports_logs: bool
     account_config: dict
     # id shown in parametrized test names; defaults to the provider slug.

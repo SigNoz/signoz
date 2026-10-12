@@ -121,7 +121,33 @@
     "logs": []
   },
   "telemetryCollectionStrategy": {
-    "gcp": {}
+    "gcp": {
+      "metrics": {
+        "metricNames": [
+          "cloudsql.googleapis.com/database/up",
+          "cloudsql.googleapis.com/database/instance_state",
+          "cloudsql.googleapis.com/database/replication/replica_lag",
+          "cloudsql.googleapis.com/database/cpu/utilization",
+          "cloudsql.googleapis.com/database/memory/utilization",
+          "cloudsql.googleapis.com/database/disk/utilization",
+          "cloudsql.googleapis.com/database/network/connections",
+          "cloudsql.googleapis.com/database/mysql/queries",
+          "cloudsql.googleapis.com/database/mysql/dml_operations_count",
+          "cloudsql.googleapis.com/database/mysql/threads",
+          "cloudsql.googleapis.com/database/mysql/innodb/buffer_pool_reads_count",
+          "cloudsql.googleapis.com/database/mysql/innodb/buffer_pool_read_requests_count",
+          "cloudsql.googleapis.com/database/mysql/slow_queries_count",
+          "cloudsql.googleapis.com/database/mysql/aborted_connects_count",
+          "cloudsql.googleapis.com/database/mysql/innodb/deadlocks_count",
+          "cloudsql.googleapis.com/database/mysql/innodb/row_lock_waits_count",
+          "cloudsql.googleapis.com/database/disk/read_ops_count",
+          "cloudsql.googleapis.com/database/disk/write_ops_count"
+        ]
+      },
+      "logs": {
+        "sinkFilter": "resource.type=\"cloudsql_database\" AND (logName:\"/logs/cloudsql.googleapis.com%2Fmysql\" OR (log_id(\"cloudaudit.googleapis.com/data_access\") AND protoPayload.request.@type=\"type.googleapis.com/google.cloud.sql.audit.v1.MysqlAuditEntry\"))"
+      }
+    }
   },
   "assets": {
     "dashboards": [

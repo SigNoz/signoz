@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
+	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -150,7 +151,7 @@ func NewAccountFromStorable(storableAccount *StorableCloudIntegration) (*Account
 		}
 		account.Config.Azure = azureConfig
 	case CloudProviderTypeGCP:
-		gcpConfig := new(GCPAccountConfig)
+		gcpConfig := &GCPAccountConfig{ConnectionMethod: GCPConnectionMethodManual}
 		err := json.Unmarshal([]byte(storableAccount.Config), gcpConfig)
 		if err != nil {
 			return nil, err
@@ -240,7 +241,8 @@ func NewAccountConfigFromPostable(provider CloudProviderType, config *PostableAc
 			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "GCP config can not be nil for GCP provider")
 		}
 
-		if config.GCP.DeploymentProjectID == "" {
+		deploymentProjectID := strings.TrimSpace(config.GCP.DeploymentProjectID)
+		if deploymentProjectID == "" {
 			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "deployment project ID is required for GCP provider")
 		}
 
@@ -248,14 +250,29 @@ func NewAccountConfigFromPostable(provider CloudProviderType, config *PostableAc
 			return nil, err
 		}
 
-		if len(config.GCP.ProjectIDs) == 0 {
-			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "at least one project id is required for GCP provider")
+		connectionMethod := config.GCP.ConnectionMethod
+		if connectionMethod.IsZero() {
+			connectionMethod = GCPConnectionMethodManual
+		}
+		projectIDs := config.GCP.ProjectIDs
+		switch connectionMethod {
+		case GCPConnectionMethodManual:
+			var err error
+			projectIDs, err = normalizeGCPProjectIDs(projectIDs)
+			if err != nil {
+				return nil, err
+			}
+		case GCPConnectionMethodAgent:
+			projectIDs = []string{deploymentProjectID}
+		default:
+			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "unsupported GCP connection method: %q", connectionMethod.StringValue())
 		}
 
 		return &AccountConfig{
 			GCP: &GCPAccountConfig{
-				DeploymentProjectID: config.GCP.DeploymentProjectID,
-				ProjectIDs:          config.GCP.ProjectIDs,
+				ConnectionMethod:    connectionMethod,
+				DeploymentProjectID: deploymentProjectID,
+				ProjectIDs:          projectIDs,
 				DeploymentRegion:    config.GCP.DeploymentRegion,
 			},
 		}, nil
@@ -301,18 +318,20 @@ func NewAccountConfigFromUpdatable(provider CloudProviderType, config *Updatable
 			return nil, err
 		}
 
-		if len(config.Config.GCP.ProjectIDs) == 0 {
-			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "at least one project id is required for GCP provider")
+		projectIDs, err := normalizeGCPProjectIDs(config.Config.GCP.ProjectIDs)
+		if err != nil {
+			return nil, err
 		}
 
-		if config.Config.GCP.DeploymentProjectID == "" {
+		deploymentProjectID := strings.TrimSpace(config.Config.GCP.DeploymentProjectID)
+		if deploymentProjectID == "" {
 			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "deployment project ID is required for GCP provider")
 		}
 
 		return &AccountConfig{
 			GCP: &GCPAccountConfig{
-				DeploymentProjectID: config.Config.GCP.DeploymentProjectID,
-				ProjectIDs:          config.Config.GCP.ProjectIDs,
+				DeploymentProjectID: deploymentProjectID,
+				ProjectIDs:          projectIDs,
 				DeploymentRegion:    config.Config.GCP.DeploymentRegion,
 			},
 		}, nil
@@ -355,6 +374,13 @@ func GetSigNozAPIURLFromDeployment(deployment *zeustypes.GettableDeployment) (st
 }
 
 func (account *Account) Update(provider CloudProviderType, config *AccountConfig) error {
+	if provider == CloudProviderTypeGCP {
+		if account.Config.GCP.ConnectionMethod == GCPConnectionMethodAgent {
+			return errors.NewInvalidInputf(ErrCodeInvalidInput, "GCP agent account configuration cannot be updated")
+		}
+		config.GCP.ConnectionMethod = account.Config.GCP.ConnectionMethod
+	}
+
 	// deployment region can not be updated once set for Azure
 	if provider == CloudProviderTypeAzure {
 		config.Azure.DeploymentRegion = account.Config.Azure.DeploymentRegion
@@ -362,6 +388,18 @@ func (account *Account) Update(provider CloudProviderType, config *AccountConfig
 
 	account.Config = config
 	account.UpdatedAt = time.Now()
+
+	return nil
+}
+
+func (account *Account) ValidateProviderAccountID(providerAccountID string) error {
+	if account.Provider != CloudProviderTypeGCP || account.Config.GCP.ConnectionMethod != GCPConnectionMethodAgent {
+		return nil
+	}
+
+	if providerAccountID != account.Config.GCP.DeploymentProjectID {
+		return errors.NewInvalidInputf(ErrCodeInvalidInput, "providerAccountId must match deploymentProjectId for GCP agent setup")
+	}
 
 	return nil
 }

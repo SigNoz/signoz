@@ -5,7 +5,7 @@
   "overview": "file://overview.md",
   "supportedSignals": {
     "metrics": true,
-    "logs": false
+    "logs": true
   },
   "dataCollected": {
     "metrics": [
@@ -109,7 +109,31 @@
     "logs": []
   },
   "telemetryCollectionStrategy": {
-    "gcp": {}
+    "gcp": {
+      "metrics": {
+        "metricNames": [
+          "compute.googleapis.com/instance/uptime_total",
+          "compute.googleapis.com/instance/cpu/utilization",
+          "compute.googleapis.com/guest/memory/bytes_used",
+          "compute.googleapis.com/guest/memory/percent_used",
+          "agent.googleapis.com/memory/percent_used",
+          "compute.googleapis.com/instance/disk/average_io_latency",
+          "compute.googleapis.com/instance/disk/read_bytes_count",
+          "compute.googleapis.com/instance/disk/write_bytes_count",
+          "compute.googleapis.com/instance/disk/read_ops_count",
+          "compute.googleapis.com/instance/disk/write_ops_count",
+          "compute.googleapis.com/instance/disk/performance_status",
+          "compute.googleapis.com/instance/network/received_bytes_count",
+          "compute.googleapis.com/instance/network/sent_bytes_count",
+          "compute.googleapis.com/instance/network/received_packets_count",
+          "compute.googleapis.com/instance/network/sent_packets_count",
+          "compute.googleapis.com/firewall/dropped_packets_count"
+        ]
+      },
+      "logs": {
+        "sinkFilter": "resource.type=\"gce_instance\" OR protoPayload.serviceName=\"compute.googleapis.com\""
+      }
+    }
   },
   "assets": {
     "dashboards": [

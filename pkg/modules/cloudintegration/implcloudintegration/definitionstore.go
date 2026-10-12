@@ -108,6 +108,12 @@ func validateServiceDefinition(def *citypes.ServiceDefinition) error {
 		return errors.NewInternalf(errors.CodeInternal, "telemetryCollectionStrategy is required")
 	}
 
+	if gcpStrategy := def.TelemetryCollectionStrategy.GCP; gcpStrategy != nil && gcpStrategy.Logs != nil {
+		if strings.TrimSpace(gcpStrategy.Logs.SinkFilter) == "" {
+			return errors.NewInternalf(errors.CodeInternal, "sinkFilter is required for GCP logs collection")
+		}
+	}
+
 	seenDashboardIDs := map[string]struct{}{}
 	for _, d := range def.Assets.Dashboards {
 		if _, seen := seenDashboardIDs[d.ID]; seen {
