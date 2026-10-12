@@ -5160,12 +5160,18 @@ components:
       type: object
     DashboardtypesTopListAppearance:
       properties:
+        barColor:
+          description: Hex color of every bar; a matching background threshold overrides
+            it.
+          type: string
         showRank:
           description: Numbers each row by its position in the list.
           type: boolean
         showShare:
           description: Shows each row's share of the listed rows' total.
           type: boolean
+      required:
+      - barColor
       type: object
     DashboardtypesTopListPanelSpec:
       properties:
