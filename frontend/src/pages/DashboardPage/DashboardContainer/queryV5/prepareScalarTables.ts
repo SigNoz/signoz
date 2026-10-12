@@ -16,11 +16,6 @@ export interface AggregationView {
 	expression?: string;
 }
 
-interface BuilderSpecView {
-	name?: string;
-	aggregations?: AggregationView[];
-}
-
 type AggregationsPerQuery = Record<string, AggregationView[]>;
 
 /**
@@ -35,7 +30,7 @@ export function extractAggregationsPerQuery(
 		if (!isBuilderOrAIEnvelope(envelope)) {
 			return;
 		}
-		const spec = envelope.spec as BuilderSpecView;
+		const spec = envelope.spec;
 		if (spec?.name && spec.aggregations) {
 			perQuery[spec.name] = spec.aggregations as AggregationView[];
 		}

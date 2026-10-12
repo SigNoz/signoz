@@ -1,4 +1,8 @@
-import type { Querybuildertypesv5QueryEnvelopeDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	Querybuildertypesv5QueryEnvelopeBuilderAIDTO,
+	Querybuildertypesv5QueryEnvelopeBuilderDTO,
+	Querybuildertypesv5QueryEnvelopeDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import {
 	DashboardtypesQueryPluginKindDTO,
 	Querybuildertypesv5QueryEnvelopeBuilderAIDTOType,
@@ -13,7 +17,9 @@ const BUILDER_ENVELOPE_TYPES: string[] = [
 /** True for `builder_query` and `builder_ai_query`. Formulas and trace operators are excluded. */
 export function isBuilderOrAIEnvelope(
 	envelope: Querybuildertypesv5QueryEnvelopeDTO,
-): boolean {
+): envelope is
+	| Querybuildertypesv5QueryEnvelopeBuilderDTO
+	| Querybuildertypesv5QueryEnvelopeBuilderAIDTO {
 	return BUILDER_ENVELOPE_TYPES.includes(envelope.type);
 }
 
