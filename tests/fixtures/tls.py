@@ -107,10 +107,11 @@ def tls(
     )
 
 
-def issue_server_keystore(tls: types.TLS, directory: Path, hostname: str) -> Path:
+def issue_server_keystore(tls: types.TLS, directory: Path, *hostnames: str) -> Path:
     """Write a PKCS12 keystore (keystore.p12, password KEYSTORE_PASSWORD) into
-    directory, holding a certificate for hostname issued by the integration CA.
-    Mount it into a mock container that must serve TLS as hostname."""
+    directory, holding a certificate for the hostnames (SANs, CN is the first)
+    issued by the integration CA. Mount it into a mock container that must
+    serve TLS as those hostnames."""
     ca_cert = x509.load_pem_x509_certificate(Path(tls.ca_cert_path).read_bytes())
     ca_key = serialization.load_pem_private_key(Path(tls.ca_key_path).read_bytes(), password=None)
 
@@ -118,13 +119,13 @@ def issue_server_keystore(tls: types.TLS, directory: Path, hostname: str) -> Pat
     leaf_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     leaf_cert = (
         x509.CertificateBuilder()
-        .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, hostname)]))
+        .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, hostnames[0])]))
         .issuer_name(ca_cert.subject)
         .public_key(leaf_key.public_key())
         .serial_number(x509.random_serial_number())
         .not_valid_before(now - datetime.timedelta(days=1))
         .not_valid_after(now + datetime.timedelta(days=3650))
-        .add_extension(x509.SubjectAlternativeName([x509.DNSName(hostname)]), critical=False)
+        .add_extension(x509.SubjectAlternativeName([x509.DNSName(hostname) for hostname in hostnames]), critical=False)
         .add_extension(x509.ExtendedKeyUsage([x509.oid.ExtendedKeyUsageOID.SERVER_AUTH]), critical=False)
         .sign(ca_key, hashes.SHA256())
     )
@@ -132,7 +133,7 @@ def issue_server_keystore(tls: types.TLS, directory: Path, hostname: str) -> Pat
     keystore_path = directory / "keystore.p12"
     keystore_path.write_bytes(
         pkcs12.serialize_key_and_certificates(
-            name=hostname.encode(),
+            name=hostnames[0].encode(),
             key=leaf_key,
             cert=leaf_cert,
             cas=[ca_cert],

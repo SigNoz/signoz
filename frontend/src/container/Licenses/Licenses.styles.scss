@@ -1,7 +1,4 @@
 .licenses-page {
-	max-height: 100vh;
-	overflow: hidden;
-
 	.licenses-page-header {
 		border-bottom: 1px solid var(--l1-border);
 		background: var(--l1-background);
@@ -32,7 +29,6 @@
 
 		.licenses-page-content {
 			flex: 1;
-			height: calc(100vh - 48px);
 			background: var(--l1-background);
 			padding: 10px 8px;
 			overflow-y: auto;

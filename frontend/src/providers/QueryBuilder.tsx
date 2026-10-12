@@ -32,7 +32,7 @@ import ROUTES from 'constants/routes';
 import {
 	panelTypeDataSourceFormValuesMap,
 	PartialPanelTypes,
-} from 'lib/query/panelQuery';
+} from 'lib/query/panelTypeDataSourceFormValuesMap';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
@@ -767,12 +767,11 @@ export function QueryBuilderProvider({
 							queryItem.dataSource
 						].builder.queryData;
 
-					// `dataSource` travels with the panel type's fields, but is appended to a
-					// copy: `propsRequired` is the list held in
-					// `panelTypeDataSourceFormValuesMap`, and pushing onto it grew that
-					// module-level array by one entry on every call.
+					// `dataSource` travels with the panel type's fields, but on a copy:
+					// `propsRequired` is the list the map holds, and pushing onto it grew
+					// that array by one entry on every call.
 					if (propsRequired) {
-						[...propsRequired, 'dataSource'].forEach((p: any) => {
+						[...propsRequired, 'dataSource'].forEach((p) => {
 							set(queryItem, p, get(newQueryItem, p));
 						});
 					}

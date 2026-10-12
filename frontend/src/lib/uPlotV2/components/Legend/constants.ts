@@ -10,11 +10,20 @@ export const MIN_LEGEND_ITEM_WIDTH = 110;
 /** Marker + row padding, on top of the estimated label width. */
 export const LEGEND_ITEM_EXTRA_WIDTH = 16;
 
+/** Must match `.gridList`'s column gap and `.scroller`'s padding-right, or the
+ * reserved row count disagrees with the grid that gets laid out. */
+export const LEGEND_COLUMN_GAP = 8;
+export const LEGEND_SCROLLER_PADDING_RIGHT = 4;
+
 /** Must match `.row`'s height and the grid's row gap, or the reserved
  * rectangle clips a row. */
 export const LEGEND_ROW_HEIGHT = 28;
 export const LEGEND_ROW_GAP = 2;
 export const LEGEND_MAX_BOTTOM_ROWS = 2;
+
+/** Must match `.inlineToolbar`'s height and margin-bottom, or it eats a row. */
+export const LEGEND_TOOLBAR_HEIGHT = 24;
+export const LEGEND_TOOLBAR_GAP = 4;
 
 /** Hover delay before a row's full-name tooltip opens. */
 export const LEGEND_TOOLTIP_DELAY_MS = 500;

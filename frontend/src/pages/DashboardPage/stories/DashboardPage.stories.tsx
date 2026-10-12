@@ -1,0 +1,552 @@
+import type { ComponentType } from 'react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { Route } from 'react-router-dom';
+import * as monaco from 'monaco-editor';
+import ROUTES from 'constants/routes';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
+
+import { storyMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
+
+import {
+	clickAction,
+	clickPanelAction,
+	clickSectionAction,
+	dashboardMocks,
+	desyncedDashboardHandler,
+	expectToast,
+	metricsListHandler,
+	openJsonEditor,
+	PAGE_LOAD,
+	tooltipDashboardHandler,
+	tooltipRoute,
+	warnedPanelQueryHandler,
+} from './DashboardPage.stories.mocks';
+import { TOOLTIP_PANEL_NAME } from './__story_mockdata__/tooltipDashboard';
+
+import DashboardPage from '../DashboardPage';
+
+type DashboardArgs = PageStoryArgs<typeof dashboardMocks>;
+
+const pageStory = storyMocks(dashboardMocks, { layout: 'app' });
+
+/**
+ * One dashboard: its variables, its sections and every panel querying
+ * `query_range`, plus the lock, clone and publish actions in the header.
+ *
+ * Route: `/dashboard/:dashboardId`.
+ */
+const meta = {
+	title: 'Pages/Dashboards/Detail/Overview',
+	tags: ['authz', 'play'],
+	// The page is wrapped in `withAuthZPage`, which types its props as an index
+	// signature; the story's args are what the controls resolve to.
+	component: DashboardPage as ComponentType<DashboardArgs>,
+	// The page reads the dashboard id out of the pathname, so it renders under
+	// its own route rather than being mounted on its own.
+	render: (): JSX.Element => (
+		<Route path={ROUTES.DASHBOARD} component={DashboardPage} />
+	),
+	...pageStory,
+	parameters: { ...pageStory.parameters },
+} satisfies Meta<DashboardArgs>;
+
+export default meta;
+
+type Story = StoryObj<DashboardArgs>;
+
+/**
+ * A service dashboard with data: the variable bar over two titled sections, and
+ * the panel kinds all drawn from the same query endpoint: time series, single
+ * numbers, a table, a bar chart, a pie and a log list.
+ */
+export const Default: Story = {};
+
+/**
+ * The blank dashboard a freshly created one starts as, with the two steps that
+ * populate it. A titled section renders its own add-panel state instead, so this
+ * needs both no panels and no sections.
+ */
+export const Empty: Story = {
+	args: { panels: 0, sectioned: false },
+};
+
+/**
+ * A locked dashboard: the lock indicator sits over the grid and the edit
+ * affordances are gone even for an admin.
+ */
+export const Locked: Story = {
+	args: { locked: true },
+};
+
+/**
+ * A viewer: the panels and the variable bar work, but nothing that would change
+ * the dashboard is offered.
+ */
+export const Viewer: Story = {
+	args: { access: 'viewer' },
+};
+
+/**
+ * Every query ran and matched nothing, which each panel kind draws as its own
+ * no-data state.
+ */
+export const NoData: Story = {
+	args: { noData: true },
+};
+
+/** A partial data failure: the dashboard remains visible while panel queries fail. */
+export const PanelQueryError: Story = {
+	args: { dataState: 'error' },
+	// The mocked queries deliberately fail; the resulting console errors are the state under test.
+	parameters: { allowConsoleErrors: true },
+};
+
+/** The panels mid-fetch, with the header, variable bar and grid already laid out. */
+export const Loading: Story = {
+	args: { dataState: 'loading' },
+};
+
+/**
+ * Every tooltip the dashboard itself carries, held open at once: the title, the
+ * description with its link, the public-page globe, the `+N` of tags that did
+ * not fit, two panel descriptions, a panel's time-preference pill, the
+ * collapsed panel search, the warning one panel's query came back with, the
+ * `+N` of variables the bar hid, the values a multi-select pill stands for, the
+ * add-variable `+`, and a legend's copy buttons.
+ *
+ * The document and one panel's query are answered by the story, so the Panels,
+ * Sections, Variables and Locked controls do not reach it; the Variable options
+ * control still does, and the selection comes from the route.
+ */
+export const Tooltips: Story = {
+	args: { tooltipsOpen: true, variableValues: 12 },
+	parameters: {
+		signoz: { route: tooltipRoute() },
+		msw: { handlers: [tooltipDashboardHandler, warnedPanelQueryHandler] },
+	},
+};
+
+/**
+ * What a locked dashboard refuses, with the Actions menu open: the padlock
+ * offering to unlock, the disabled Configure and New Panel buttons, and the
+ * menu rows saying why they cannot be picked.
+ */
+export const TooltipsWhenLocked: Story = {
+	args: { tooltipsOpen: true, locked: true },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		// The dropdown trigger's Slot merge drops the button's own test id.
+		await userEvent.click(
+			await canvas.findByRole('button', { name: 'Actions' }, { timeout: 10000 }),
+		);
+		await screen.findByText('Clone dashboard');
+	},
+};
+
+/**
+ * The JSON editor's two warnings, held open: the panels the layout places
+ * nowhere and the layout slots pointing at panels the spec no longer has, each
+ * listing the ids behind it.
+ *
+ * The document is answered by the story, so the Panels, Sections, Variables and
+ * Locked controls do not reach it.
+ */
+export const TooltipsInJsonDrawer: Story = {
+	args: { tooltipsOpen: true },
+	parameters: { msw: { handlers: [desyncedDashboardHandler] } },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		await userEvent.click(
+			await canvas.findByTestId('edit-json', {}, { timeout: 10000 }),
+		);
+		await screen.findByTestId('json-editor-dangling-warning');
+	},
+};
+
+/**
+ * A panel expanded into view mode, whose header carries the full panel name its
+ * title truncates, over the dashboard's own tooltips behind the dialog.
+ *
+ * The document is answered by the story, so the Panels, Sections, Variables and
+ * Locked controls do not reach it.
+ */
+export const TooltipsInViewPanelModal: Story = {
+	args: { tooltipsOpen: true },
+	parameters: {
+		msw: { handlers: [tooltipDashboardHandler, metricsListHandler] },
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		await userEvent.click(
+			await canvas.findByTestId(
+				'panel-actions-request-rate',
+				{},
+				{ timeout: 10000 },
+			),
+		);
+		await userEvent.click(await screen.findByText('View'));
+		await screen.findByText(`${TOOLTIP_PANEL_NAME} - (View mode)`);
+	},
+};
+
+/**
+ * The dashboard's own Actions menu, open: rename, clone, lock, full screen and
+ * delete, the menu the toolbar's Actions button carries.
+ */
+export const ActionsMenu: Story = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		// The dropdown trigger's Slot merge drops the button's own test id.
+		await userEvent.click(
+			await canvas.findByRole('button', { name: 'Actions' }, { timeout: 10000 }),
+		);
+		await screen.findByText('Clone dashboard');
+	},
+};
+
+/**
+ * One panel's own menu, open over the grid: edit, clone, the download formats
+ * its data can be taken in, and the move-to-section submenu.
+ */
+export const PanelActionsMenu: Story = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		await userEvent.click(
+			await canvas.findByTestId(
+				'panel-actions-p99-latency',
+				{},
+				{ timeout: 10000 },
+			),
+		);
+		await screen.findByRole('menu');
+	},
+};
+
+/**
+ * A section's menu, open: add a panel to it, rename it, clone it, delete it.
+ */
+export const SectionActionsMenu: Story = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		const [firstSection] = await canvas.findAllByRole(
+			'button',
+			{ name: 'Section actions' },
+			{ timeout: 10000 },
+		);
+		await userEvent.click(firstSection);
+		await screen.findByRole('menu');
+	},
+};
+
+const openNewPanelPicker = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	const canvas = within(canvasElement);
+
+	await userEvent.click(
+		await canvas.findByTestId('add-panel-header', {}, { timeout: 10000 }),
+	);
+	await screen.findByTestId('panel-type-signoz/TimeSeriesPanel');
+};
+
+/**
+ * The new-panel drawer opened from the toolbar: the panel kinds grouped by
+ * category, Time Series preselected, and the target section on the split
+ * button.
+ */
+export const NewPanelPicker: Story = {
+	play: async ({ canvasElement }) => {
+		await openNewPanelPicker(canvasElement);
+	},
+};
+
+/** The drawer with another kind picked, previewed where it will be added. */
+export const NewPanelPickerTypeSelected: Story = {
+	play: async ({ canvasElement }) => {
+		await openNewPanelPicker(canvasElement);
+		await userEvent.click(
+			await screen.findByTestId('panel-type-signoz/BarChartPanel'),
+		);
+	},
+};
+
+/** The drawer filtered by a search that matches one kind. */
+export const NewPanelPickerSearch: Story = {
+	play: async ({ canvasElement }) => {
+		await openNewPanelPicker(canvasElement);
+		await userEvent.type(await screen.findByTestId('panel-type-search'), 'heat');
+	},
+};
+
+/** The drawer narrowed to one category. */
+export const NewPanelPickerCategory: Story = {
+	play: async ({ canvasElement }) => {
+		await openNewPanelPicker(canvasElement);
+		await userEvent.click(
+			await screen.findByRole('button', { name: /Distributions/ }),
+		);
+	},
+};
+
+/** The split button's menu: the sections to add to, and "New section". */
+export const NewPanelPickerSectionMenu: Story = {
+	play: async ({ canvasElement }) => {
+		await openNewPanelPicker(canvasElement);
+		await userEvent.click(
+			await screen.findByRole('button', { name: 'Choose section' }),
+		);
+		await screen.findByTestId('panel-section-create');
+	},
+};
+
+/** Naming a new section, previewed on the dashboard behind the drawer. */
+export const NewPanelPickerNewSection: Story = {
+	play: async ({ canvasElement }) => {
+		await openNewPanelPicker(canvasElement);
+		await userEvent.click(
+			await screen.findByRole('button', { name: 'Choose section' }),
+		);
+		await userEvent.click(await screen.findByTestId('panel-section-create'));
+		await userEvent.type(
+			await screen.findByTestId('panel-section-name'),
+			'Errors',
+		);
+	},
+};
+
+/**
+ * The drawer on a dashboard without sections: the panel goes to the root, and
+ * the split button can still start a section.
+ */
+export const NewPanelPickerNoSections: Story = {
+	args: { sectioned: false },
+	play: async ({ canvasElement }) => {
+		await openNewPanelPicker(canvasElement);
+	},
+};
+
+/**
+ * The drawer opened from the second section's menu, targeting that section.
+ */
+export const NewPanelPickerFromSection: Story = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		const [, secondSection] = await canvas.findAllByRole(
+			'button',
+			{ name: 'Section actions' },
+			{ timeout: 10000 },
+		);
+		await userEvent.click(secondSection);
+		await userEvent.click(await screen.findByText('Add panel'));
+		await screen.findByTestId('panel-type-signoz/TimeSeriesPanel');
+	},
+};
+
+/** The panel menu's move-to-section submenu, open on the sections it can go to. */
+export const PanelMoveToSectionSubmenu: Story = {
+	play: async (context) => {
+		await PanelActionsMenu.play?.(context);
+		await userEvent.hover(await screen.findByText('Move to section'));
+		// The submenu lists the sections the panel is not already in.
+		await waitFor(() => expect(screen.getAllByRole('menu')).toHaveLength(2), {
+			timeout: 10000,
+		});
+	},
+};
+
+/**
+ * Actions, Clone dashboard: the toast announcing the copy, raised once the
+ * clone endpoint answers. Set Dashboard clone to `error` to see the error
+ * modal instead.
+ */
+export const DashboardClonedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await clickAction(canvasElement, 'Clone dashboard');
+		if (args.dashboardClone === 'success') {
+			await expectToast('Dashboard cloned');
+		}
+	},
+};
+
+/**
+ * The title edited inline: the toast announcing the new name, raised once the
+ * patch answers.
+ */
+export const DashboardRenamedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await clickAction(canvasElement, 'Rename');
+		const input = await screen.findByTestId('dashboard-title-input');
+		await userEvent.clear(input);
+		await userEvent.type(input, 'Service overview (renamed){enter}');
+		if (args.dashboardPatch === 'success') {
+			await expectToast('Dashboard renamed successfully');
+		}
+	},
+};
+
+/**
+ * Actions, Delete dashboard, confirmed: the toast announcing the deletion,
+ * raised once the delete endpoint answers and before the page leaves for the
+ * list.
+ */
+export const DashboardDeletedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await clickAction(canvasElement, 'Delete dashboard');
+		await userEvent.click(await screen.findByRole('button', { name: 'Delete' }));
+		if (args.dashboardDelete === 'success') {
+			await expectToast('Dashboard deleted successfully');
+		}
+	},
+};
+
+/** A panel's Clone: the promise toast, loading until the patch answers. */
+export const PanelClonedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await clickPanelAction(canvasElement, 'p99-latency', 'Clone');
+		if (args.dashboardPatch === 'success') {
+			await expectToast('Panel cloned');
+		}
+	},
+};
+
+/** A panel's Clone whose patch is refused. */
+export const PanelCloneFailedToast: Story = {
+	args: { dashboardPatch: 'error' },
+	// The refused patch is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: async (context) => {
+		await PanelClonedToast.play?.(context);
+		await expectToast('Failed to clone panel');
+	},
+};
+
+/** A panel's Clone whose patch never answers, so the toast stays on loading. */
+export const PanelCloneLoadingToast: Story = {
+	args: { dashboardPatch: 'loading' },
+	play: async (context) => {
+		await PanelClonedToast.play?.(context);
+		await expectToast('Cloning panel…');
+	},
+};
+
+/** A section's Clone section: the promise toast, loading until the patch answers. */
+export const SectionClonedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await clickSectionAction(canvasElement, 'Clone section');
+		if (args.dashboardPatch === 'success') {
+			await expectToast('Section cloned');
+		}
+	},
+};
+
+/** A section's Clone section whose patch is refused. */
+export const SectionCloneFailedToast: Story = {
+	args: { dashboardPatch: 'error' },
+	// The refused patch is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: async (context) => {
+		await SectionClonedToast.play?.(context);
+		await expectToast('Failed to clone section');
+	},
+};
+
+/** A section's Clone section whose patch never answers, so the toast stays on loading. */
+export const SectionCloneLoadingToast: Story = {
+	args: { dashboardPatch: 'loading' },
+	play: async (context) => {
+		await SectionClonedToast.play?.(context);
+		await expectToast('Cloning section…');
+	},
+};
+
+/**
+ * A panel's Create Alerts when the substitute-variables call is refused: the
+ * dashboard has variables selected, so the query is resolved before the alert
+ * page opens.
+ */
+export const PanelCreateAlertErrorToast: Story = {
+	args: { substituteVars: 'error' },
+	// The refused request is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: async ({ canvasElement }): Promise<void> => {
+		await clickPanelAction(canvasElement, 'p99-latency', 'Create Alerts');
+		await expectToast('Failed to create alert from panel');
+	},
+};
+
+/**
+ * The View modal on a time series panel, Save in its series manager: the toast
+ * confirming the legend state was stored.
+ */
+export const ChartManagerSavedToast: Story = {
+	parameters: { msw: { handlers: [metricsListHandler] } },
+	play: async ({ canvasElement }): Promise<void> => {
+		await clickPanelAction(canvasElement, 'request-rate', 'View');
+		await userEvent.click(
+			await screen.findByRole('button', { name: 'Save' }, PAGE_LOAD),
+		);
+		await expectToast('The updated graphs & legends are saved');
+	},
+};
+
+/** The JSON editor's Copy: the toast confirming the clipboard write. */
+export const JsonCopiedToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openJsonEditor(canvasElement);
+		await userEvent.click(screen.getByTestId('json-editor-copy'));
+		await expectToast('JSON copied to clipboard');
+	},
+};
+
+/**
+ * The JSON editor with a whitespace edit, applied: the toast announcing the
+ * update, raised once the PUT answers.
+ */
+export const JsonAppliedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await openJsonEditor(canvasElement);
+		await waitFor(
+			() => {
+				if (monaco.editor.getModels().length === 0) {
+					throw new Error('Monaco has not mounted');
+				}
+			},
+			{ timeout: 20000 },
+		);
+		// Typing into Monaco's hidden textarea never reaches its model in this runner.
+		monaco.editor
+			.getModels()[0]
+			.applyEdits([{ range: new monaco.Range(1, 1, 1, 1), text: ' ' }]);
+		await waitFor(() =>
+			expect(screen.getByTestId('json-editor-apply')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			),
+		);
+		await userEvent.click(screen.getByTestId('json-editor-apply'));
+		if (args.dashboardUpdate === 'success') {
+			await expectToast('Dashboard updated');
+		}
+	},
+};
+
+/**
+ * A dashboard id nobody has, which is what a deleted or mistyped link opens on.
+ *
+ * Kept last: test-runner shares one page across a file's stories, and the 404
+ * this story is about can settle after the next story has already started,
+ * which fails that one instead.
+ */
+export const NotFound: Story = {
+	args: { notFound: true },
+	// The deliberate 404 is the state under test.
+	parameters: { allowConsoleErrors: true },
+};

@@ -4,7 +4,7 @@ import type { MenuItem } from '@signozhq/ui/dropdown-menu';
 import { findRootSection, type DashboardSection } from '../../../utils';
 import type { MovePanelArgs } from '../hooks/useMovePanelToSection';
 
-// Matches the root option label in the New Panel picker (SectionPicker).
+// Matches the root option label in the New Panel picker (AddPanelSplitButton).
 const ROOT_LABEL = 'Dashboard (root)';
 
 interface MoveItemsArgs {

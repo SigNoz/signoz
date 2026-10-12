@@ -1,6 +1,5 @@
 import { ColorPicker } from 'antd';
 import { Button } from '@signozhq/ui/button';
-import { Typography } from '@signozhq/ui/typography';
 
 import styles from './LegendColors.module.scss';
 
@@ -41,9 +40,9 @@ function LegendColorRow({
 					data-testid={`legend-color-${label}`}
 				>
 					<span className={styles.swatch} style={{ backgroundColor: color }} />
-					<Typography.Text className={styles.label} title={label}>
+					<span className={styles.label} title={label}>
 						{label}
-					</Typography.Text>
+					</span>
 				</button>
 			</ColorPicker>
 			{isOverridden && (

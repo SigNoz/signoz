@@ -39,7 +39,11 @@ async function fetchListData(
 	try {
 		const response = await listNodes(
 			{
-				filter: { expression: filters.filter.expression },
+				filter: {
+					expression: filters.filter.expression,
+					filterByPodStatus: filters.filter.filterByPodStatus,
+					filterByNodeReadiness: filters.filter.filterByNodeReadiness,
+				},
 				groupBy: filters.groupBy?.map((g) => ({ name: g.name })),
 				offset: filters.offset,
 				limit: filters.limit ?? 10,
@@ -129,6 +133,7 @@ export const nodeEntityConfig: K8sEntityConfig<
 	details: {
 		category: InfraMonitoringEntity.NODES,
 		eventCategory: InfraMonitoringEvents.Node,
+		tabsConfig: { showOverview: true },
 		queryKeyPrefix: 'node',
 		getSelectedItemExpression: k8sNodeGetSelectedItemExpression,
 		fetchEntityData,

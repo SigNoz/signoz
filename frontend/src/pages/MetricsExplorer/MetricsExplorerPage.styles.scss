@@ -1,13 +1,4 @@
 .metrics-explorer-page {
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-	height: 100%;
-
-	.ant-tabs {
-		height: 100%;
-	}
-
 	.ant-tabs-nav {
 		padding-left: 16px;
 		margin-bottom: 0px;
@@ -18,20 +9,7 @@
 	}
 
 	.ant-tabs-content-holder {
-		display: flex;
 		padding: 16px;
-
-		.ant-tabs-content {
-			flex: 1;
-			display: flex;
-			flex-direction: column;
-
-			.ant-tabs-tabpane {
-				flex: 1;
-				display: flex;
-				flex-direction: column;
-			}
-		}
 	}
 
 	.tab-item {

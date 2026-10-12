@@ -5,10 +5,6 @@ import {
 	QUERY_BUILDER_FUNCTIONS,
 } from 'constants/antlrQueryConstants';
 import { OPERATORS as QUERY_BUILDER_OPERATORS } from 'constants/queryBuilder';
-import {
-	RESTRICTED_GROUP_BY_FIELDS,
-	RESTRICTED_SELECTED_FIELDS,
-} from 'container/LogsFilters/config';
 import { MetricsType } from 'container/MetricsApplication/constant';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
@@ -18,6 +14,10 @@ import {
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
+import {
+	RESTRICTED_GROUP_BY_FIELDS,
+	RESTRICTED_SELECTED_FIELDS,
+} from './config';
 import { LogAttributeBucket } from './constants';
 import { generateFieldKeyForArray, getDataTypes } from './utils';
 

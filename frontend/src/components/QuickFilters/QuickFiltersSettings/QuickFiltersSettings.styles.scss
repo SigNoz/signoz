@@ -6,29 +6,22 @@
 	left: 0;
 	z-index: 999;
 	width: 342px;
+	height: 100%;
 	background: var(--l1-background);
-	transition: width 0.05s ease-in-out;
+	border-right: 1px solid var(--l1-border);
 	overflow: hidden;
 	color: var(--l1-foreground);
-
-	&.qf-logs-explorer {
-		height: calc(100vh - 45px);
-	}
-
-	&.qf-exceptions {
-		height: 100vh;
-	}
-
-	&.qf-api-monitoring {
-		height: calc(100vh - 45px);
-	}
-
-	&.qf-traces-explorer {
-		height: calc(100vh - 45px);
-	}
+	transition:
+		transform 0.2s ease-in-out,
+		visibility 0s;
 
 	&.hidden {
-		width: 0;
+		transform: translateX(-100%);
+		visibility: hidden;
+		pointer-events: none;
+		transition:
+			transform 0.2s ease-in-out,
+			visibility 0s 0.2s;
 	}
 	.qf-header {
 		display: flex;

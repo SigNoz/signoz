@@ -38,7 +38,6 @@ jobs:
       fail-fast: false
       matrix:
         suite:
-          - alerts
           - alertmanager
           - alertmanagerrotation
           - basepath
@@ -47,6 +46,7 @@ jobs:
           - dashboard
           - ingestionkeys
           - inframonitoring
+          - llmpricingrules
           - logspipelines
           - passwordauthn
           - preference
@@ -63,10 +63,12 @@ jobs:
           - querierauthz
           - role
           - rootuser
+          - ruler
           - savedview
           - semconvfamilies
           - serviceaccount
           - spanmapper
+          - tracedetail
           - querier_json_body
           - querier_skip_resource_fingerprint
           - ttl

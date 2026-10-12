@@ -25,8 +25,11 @@ type Store interface {
 	// CreateAccount creates a new cloud integration account
 	CreateAccount(ctx context.Context, account *StorableCloudIntegration) error
 
-	// UpdateAccount updates an existing cloud integration account
+	// UpdateAccount updates the user updatable fields (config) of an existing cloud integration account
 	UpdateAccount(ctx context.Context, account *StorableCloudIntegration) error
+
+	// UpdateAgentReport updates the provider account id and last agent report of an existing cloud integration account
+	UpdateAgentReport(ctx context.Context, account *StorableCloudIntegration) error
 
 	// RemoveAccount marks a cloud integration account as removed by setting the RemovedAt field
 	RemoveAccount(ctx context.Context, orgID, id valuer.UUID, provider CloudProviderType) error

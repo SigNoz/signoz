@@ -218,6 +218,12 @@ func FieldKeyToMaterializedColumnNameForExists(key *TelemetryFieldKey) string {
 	))
 }
 
+// FieldKeyToMaterializedExistsCondition compares the exists column explicitly: a bare bool
+// column defeats skip-index pruning across OR.
+func FieldKeyToMaterializedExistsCondition(key *TelemetryFieldKey, exists bool) string {
+	return fmt.Sprintf("%s = %t", FieldKeyToMaterializedColumnNameForExists(key), exists)
+}
+
 type TelemetryFieldValues struct {
 	StringValues  []string  `json:"stringValues,omitempty"`
 	BoolValues    []bool    `json:"boolValues,omitempty"`
@@ -390,6 +396,19 @@ func NewTelemetryFieldKey(name string, fieldContext FieldContext, fieldDataType 
 		FieldContext:  fieldContext,
 		FieldDataType: fieldDataType,
 	}
+}
+
+// JSONIndexLookup locates one domain's JSON sub-column indexes in
+// system.data_skipping_indices: the table to read, the base and promoted
+// column prefixes to match index expressions against, and the signal and
+// context to stamp on the results.
+type JSONIndexLookup struct {
+	Signal               Signal
+	FieldContext         FieldContext
+	DBName               string
+	LocalTableName       string
+	BaseColumnPrefix     string
+	PromotedColumnPrefix string
 }
 
 type TelemetryFieldKeySkipIndex struct {

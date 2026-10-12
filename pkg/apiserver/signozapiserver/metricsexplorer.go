@@ -167,26 +167,6 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/metrics/dashboards", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.metricsExplorerHandler.GetMetricDashboards),
-		handler.OpenAPIDef{
-			ID:                  "GetMetricDashboards",
-			Tags:                []string{"metrics"},
-			Summary:             "Get metric dashboards",
-			Description:         "This endpoint returns associated dashboards for a specified metric",
-			Request:             nil,
-			RequestQuery:        new(metricsexplorertypes.MetricNameQuery),
-			RequestContentType:  "",
-			Response:            new(metricsexplorertypes.MetricDashboardsResponse),
-			ResponseContentType: "application/json",
-			SuccessStatusCode:   http.StatusOK,
-			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusNotFound, http.StatusInternalServerError},
-			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodGet).GetError(); err != nil {
-		return err
-	}
-
 	if err := router.Handle("/api/v3/metrics/dashboards", handler.New(
 		provider.authzMiddleware.ViewAccess(provider.metricsExplorerHandler.GetMetricDashboardsV2),
 		handler.OpenAPIDef{

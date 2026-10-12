@@ -1,0 +1,10 @@
+.actions {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-6);
+}
+
+.unsavedChanges {
+	font-size: var(--periscope-font-size-base);
+	color: var(--accent-amber);
+}

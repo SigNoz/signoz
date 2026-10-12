@@ -33,7 +33,6 @@
 	"NOT_FOUND": "SigNoz | Page Not Found",
 	"LOGS": "SigNoz | Logs",
 	"LOGS_EXPLORER": "SigNoz | Logs Explorer",
-	"LIVE_LOGS": "SigNoz | Live Logs",
 	"HOME_PAGE": "Open source Observability Platform | SigNoz",
 	"PASSWORD_RESET": "SigNoz | Password Reset",
 	"LIST_LICENSES": "SigNoz | List of Licenses",
@@ -61,6 +60,7 @@
 	"INTEGRATIONS_DETAIL": "SigNoz | Integration",
 	"PUBLIC_DASHBOARD": "SigNoz | Dashboard",
 	"AI_OBSERVABILITY_OVERVIEW": "SigNoz | AI Observability Overview",
+	"AI_OBSERVABILITY_EXPLORER": "SigNoz | AI Observability Explorer",
 	"AI_OBSERVABILITY_CONFIGURATION": "SigNoz | AI Observability Configuration",
 	"AI_OBSERVABILITY_ATTRIBUTE_MAPPING": "SigNoz | AI Observability Attribute Mapping"
 }

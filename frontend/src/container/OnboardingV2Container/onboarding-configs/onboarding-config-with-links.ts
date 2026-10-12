@@ -4,11 +4,13 @@ import amazonMskUrl from '@/assets/Logos/amazon-msk.svg';
 import androidJavaMonitoringUrl from '@/assets/Logos/android-java-monitoring.svg';
 import androidKotlinMonitoringUrl from '@/assets/Logos/android-kotlin-monitoring.svg';
 import anthropicApiMonitoringUrl from '@/assets/Logos/anthropic-api-monitoring.svg';
+import antigravityUrl from '@/assets/Logos/antigravity.svg';
 import apacheDruidUrl from '@/assets/Logos/apache-druid.svg';
 import apacheUrl from '@/assets/Logos/apache.svg';
 import apiGatewayUrl from '@/assets/Logos/api-gateway.svg';
 import argocdUrl from '@/assets/Logos/argocd.svg';
 import aspnetUrl from '@/assets/Logos/aspnet.svg';
+import auroraUrl from '@/assets/Logos/aurora.svg';
 import auth0Url from '@/assets/Logos/auth0.svg';
 import autogenUrl from '@/assets/Logos/autogen.svg';
 import awsAlbUrl from '@/assets/Logos/aws-alb.svg';
@@ -28,6 +30,7 @@ import celeryUrl from '@/assets/Logos/celery.svg';
 import certManagerUrl from '@/assets/Logos/cert-manager.svg';
 import claudeCodeUrl from '@/assets/Logos/claude-code.svg';
 import clickhouseUrl from '@/assets/Logos/clickhouse.svg';
+import clineUrl from '@/assets/Logos/cline.svg';
 import cloudflareUrl from '@/assets/Logos/cloudflare.svg';
 import cloudnativePgUrl from '@/assets/Logos/cloudnative-pg.svg';
 import cloudwatchLogsUrl from '@/assets/Logos/cloudwatch-logs.svg';
@@ -36,8 +39,10 @@ import confluentKafkaUrl from '@/assets/Logos/confluent-kafka.svg';
 import convexLogoUrl from '@/assets/Logos/convex-logo.svg';
 import cppUrl from '@/assets/Logos/cpp.svg';
 import crewAiUrl from '@/assets/Logos/crew-ai.svg';
+import cursorUrl from '@/assets/Logos/cursor.svg';
 import dashboardsUrl from '@/assets/Logos/dashboards.svg';
 import datadogUrl from '@/assets/Logos/datadog.svg';
+import daytonaUrl from '@/assets/Logos/daytona.svg';
 import dbosUrl from '@/assets/Logos/dbos.svg';
 import deepseekUrl from '@/assets/Logos/deepseek.svg';
 import denoUrl from '@/assets/Logos/deno.svg';
@@ -47,6 +52,7 @@ import documentLoadUrl from '@/assets/Logos/document-load.svg';
 import dotnetUrl from '@/assets/Logos/dotnet.svg';
 import dspyUrl from '@/assets/Logos/dspy.svg';
 import dynamodbUrl from '@/assets/Logos/dynamodb.svg';
+import e2bUrl from '@/assets/Logos/e2b.svg';
 import ec2Url from '@/assets/Logos/ec2.svg';
 import ecsUrl from '@/assets/Logos/ecs.svg';
 import eksUrl from '@/assets/Logos/eks.svg';
@@ -55,6 +61,7 @@ import elasticsearchUrl from '@/assets/Logos/elasticsearch.svg';
 import elbUrl from '@/assets/Logos/elb.svg';
 import elixirUrl from '@/assets/Logos/elixir.svg';
 import elkUrl from '@/assets/Logos/elk.svg';
+import emqxUrl from '@/assets/Logos/emqx.svg';
 import envoyUrl from '@/assets/Logos/envoy.svg';
 import externalApiMonitoringUrl from '@/assets/Logos/external-api-monitoring.svg';
 import fluentbitUrl from '@/assets/Logos/fluentbit.svg';
@@ -101,6 +108,7 @@ import javascriptUrl from '@/assets/Logos/javascript.svg';
 import jbossUrl from '@/assets/Logos/jboss.svg';
 import jenkinsUrl from '@/assets/Logos/jenkins.svg';
 import kafkaUrl from '@/assets/Logos/kafka.svg';
+import karpenterUrl from '@/assets/Logos/karpenter.svg';
 import kedaUrl from '@/assets/Logos/keda.svg';
 import kongUrl from '@/assets/Logos/kong.svg';
 import kubernetesUrl from '@/assets/Logos/kubernetes.svg';
@@ -116,9 +124,11 @@ import logrusUrl from '@/assets/Logos/logrus.svg';
 import logsUrl from '@/assets/Logos/logs.svg';
 import logstashUrl from '@/assets/Logos/logstash.svg';
 import mastraUrl from '@/assets/Logos/mastra.svg';
+import metaUrl from '@/assets/Logos/meta.svg';
 import metricsUrl from '@/assets/Logos/metrics.svg';
 import microsoftSqlServerUrl from '@/assets/Logos/microsoft-sql-server.svg';
 import mistralUrl from '@/assets/Logos/mistral.svg';
+import modalUrl from '@/assets/Logos/modal.svg';
 import mongoUrl from '@/assets/Logos/mongo.svg';
 import n8nUrl from '@/assets/Logos/n8n.svg';
 import neonUrl from '@/assets/Logos/neon.svg';
@@ -141,6 +151,7 @@ import phpUrl from '@/assets/Logos/php.svg';
 import pinoUrl from '@/assets/Logos/pino.svg';
 import pipecatUrl from '@/assets/Logos/pipecat.svg';
 import planetscaleUrl from '@/assets/Logos/planetscale.svg';
+import podmanUrl from '@/assets/Logos/podman.svg';
 import postgresqlUrl from '@/assets/Logos/postgresql.svg';
 import prometheusUrl from '@/assets/Logos/prometheus.svg';
 import pydanticAiUrl from '@/assets/Logos/pydantic-ai.svg';
@@ -158,6 +169,7 @@ import rubyOnRailsUrl from '@/assets/Logos/ruby-on-rails.svg';
 import rustUrl from '@/assets/Logos/rust.svg';
 import s3Url from '@/assets/Logos/s3.svg';
 import scalaUrl from '@/assets/Logos/scala.svg';
+import sglangUrl from '@/assets/Logos/sglang.svg';
 import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
 import slogUrl from '@/assets/Logos/slog.svg';
 import slurmUrl from '@/assets/Logos/slurm.svg';
@@ -179,6 +191,7 @@ import traceloopUrl from '@/assets/Logos/traceloop.svg';
 import tracesUrl from '@/assets/Logos/traces.svg';
 import vectorUrl from '@/assets/Logos/vector.svg';
 import vercelUrl from '@/assets/Logos/vercel.svg';
+import vllmUrl from '@/assets/Logos/vllm.svg';
 import vmUrl from '@/assets/Logos/vm.svg';
 import vpcUrl from '@/assets/Logos/vpc.svg';
 import windowsUrl from '@/assets/Logos/windows.svg';
@@ -1014,35 +1027,64 @@ const onboardingConfigWithLinks = [
 			'tracing',
 		],
 		id: 'golang',
-		link: '/docs/instrumentation/opentelemetry-golang/',
+		link: '/docs/instrumentation/golang/overview/',
 		question: {
-			desc: 'What is your Environment?',
+			desc: 'How do you want to instrument your application?',
+			helpText:
+				'The SDK needs code changes. Compile-time instrumentation rebuilds the binary with otelc. eBPF attaches to a running binary and needs neither.',
+			helpLink: '/docs/instrumentation/golang/overview/',
+			helpLinkText: 'Compare the options →',
 			type: 'select',
-			entityID: 'environment',
+			entityID: 'framework',
 			options: [
 				{
-					key: 'vm',
-					label: 'VM',
-					imgUrl: vmUrl,
+					key: 'golang-sdk',
+					label: 'OpenTelemetry SDK',
+					imgUrl: goUrl,
 					link: '/docs/instrumentation/opentelemetry-golang/',
+					question: {
+						desc: 'What is your Environment?',
+						type: 'select',
+						entityID: 'environment',
+						options: [
+							{
+								key: 'vm',
+								label: 'VM',
+								imgUrl: vmUrl,
+								link: '/docs/instrumentation/opentelemetry-golang/',
+							},
+							{
+								key: 'k8s',
+								label: 'Kubernetes',
+								imgUrl: kubernetesUrl,
+								link: '/docs/instrumentation/opentelemetry-golang/',
+							},
+							{
+								key: 'windows',
+								label: 'Windows',
+								imgUrl: windowsUrl,
+								link: '/docs/instrumentation/opentelemetry-golang/',
+							},
+							{
+								key: 'docker',
+								label: 'Docker',
+								imgUrl: dockerUrl,
+								link: '/docs/instrumentation/opentelemetry-golang/',
+							},
+						],
+					},
 				},
 				{
-					key: 'k8s',
-					label: 'Kubernetes',
-					imgUrl: kubernetesUrl,
-					link: '/docs/instrumentation/opentelemetry-golang/',
+					key: 'golang-compile-time',
+					label: 'Compile-Time (otelc)',
+					imgUrl: goUrl,
+					link: '/docs/instrumentation/golang/compile-time-instrumentation/',
 				},
 				{
-					key: 'windows',
-					label: 'Windows',
-					imgUrl: windowsUrl,
-					link: '/docs/instrumentation/opentelemetry-golang/',
-				},
-				{
-					key: 'docker',
-					label: 'Docker',
-					imgUrl: dockerUrl,
-					link: '/docs/instrumentation/opentelemetry-golang/',
+					key: 'golang-ebpf',
+					label: 'eBPF',
+					imgUrl: opentelemetryUrl,
+					link: '/docs/instrumentation/golang/ebpf-instrumentation/',
 				},
 			],
 		},
@@ -2868,21 +2910,27 @@ const onboardingConfigWithLinks = [
 					imgUrl: lambdaUrl,
 					link: '/docs/aws-monitoring/lambda/lambda-traces/',
 					question: {
-						desc: 'Which runtime does your Lambda function use?',
+						desc: 'How is your Lambda function packaged?',
 						helpText:
-							'Python, Node.js, Java, and Ruby use the OpenTelemetry auto-instrumentation layer. Go has no layer, so you add the SDK to your code.',
+							'Zip functions use the OpenTelemetry auto-instrumentation layer, except Go, which has no layer and needs the SDK in your code. Layers do not attach to container images, so those bake instrumentation into the image.',
 						options: [
 							{
 								key: 'aws-lambda-traces-auto',
-								label: 'Python, Node.js, Java, Ruby',
+								label: 'Zip - Python, Node.js, Java, Ruby',
 								imgUrl: lambdaUrl,
 								link: '/docs/aws-monitoring/lambda/lambda-traces/',
 							},
 							{
 								key: 'aws-lambda-traces-golang',
-								label: 'Go',
+								label: 'Zip - Go',
 								imgUrl: goUrl,
 								link: '/docs/aws-monitoring/lambda/lambda-traces-golang/',
+							},
+							{
+								key: 'aws-lambda-traces-container-image',
+								label: 'Container Image',
+								imgUrl: dockerUrl,
+								link: '/docs/aws-monitoring/lambda/lambda-traces-container-image/',
 							},
 						],
 					},
@@ -7488,6 +7536,456 @@ const onboardingConfigWithLinks = [
 		],
 		id: 'mysql-logs',
 		link: '/docs/integrations/opentelemetry-mysql/',
+	},
+	{
+		dataSource: 'cursor',
+		label: 'Cursor',
+		imgUrl: cursorUrl,
+		tags: ['LLM Monitoring'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'agent',
+			'ai coding assistant',
+			'cursor',
+			'cursor ai',
+			'cursor observability',
+			'cursor traces',
+			'ide',
+			'llm',
+			'llm monitoring',
+			'monitoring',
+			'observability',
+			'token usage',
+			'traces',
+			'tracing',
+		],
+		id: 'cursor',
+		link: '/docs/cursor-observability/',
+	},
+	{
+		dataSource: 'antigravity-cli',
+		label: 'Antigravity CLI',
+		imgUrl: antigravityUrl,
+		tags: ['LLM Monitoring'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'agent',
+			'ai coding assistant',
+			'antigravity',
+			'antigravity cli',
+			'cli',
+			'google antigravity',
+			'llm',
+			'llm monitoring',
+			'monitoring',
+			'observability',
+			'quota',
+			'tool calls',
+			'traces',
+			'tracing',
+		],
+		id: 'antigravity-cli',
+		link: '/docs/antigravity-cli-monitoring/',
+	},
+	{
+		dataSource: 'qwen-code',
+		label: 'Qwen Code',
+		imgUrl: qwenUrl,
+		tags: ['LLM Monitoring'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'agent',
+			'ai coding assistant',
+			'cli',
+			'llm',
+			'llm monitoring',
+			'monitoring',
+			'observability',
+			'qwen',
+			'qwen code',
+			'qwen code cli',
+			'token spend',
+			'traces',
+			'tracing',
+		],
+		id: 'qwen-code',
+		link: '/docs/qwen-code-observability/',
+	},
+	{
+		dataSource: 'deepseek-harness',
+		label: 'DeepSeek Harness',
+		imgUrl: deepseekUrl,
+		tags: ['LLM Monitoring'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'agent',
+			'ai coding assistant',
+			'deepseek',
+			'deepseek harness',
+			'dsh',
+			'llm',
+			'llm monitoring',
+			'monitoring',
+			'observability',
+			'token spend',
+			'traces',
+			'tracing',
+		],
+		id: 'deepseek-harness',
+		link: '/docs/deepseek-harness-observability/',
+	},
+	{
+		dataSource: 'muse-spark',
+		label: 'Meta Muse Spark',
+		imgUrl: metaUrl,
+		tags: ['LLM Monitoring'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'llm',
+			'llm monitoring',
+			'meta',
+			'meta model api',
+			'monitoring',
+			'muse',
+			'muse spark',
+			'observability',
+			'prompt cache',
+			'reasoning tokens',
+			'traces',
+			'tracing',
+		],
+		id: 'muse-spark',
+		link: '/docs/muse-spark-monitoring/',
+	},
+	{
+		dataSource: 'openai-agents-sdk',
+		label: 'OpenAI Agents SDK',
+		imgUrl: openaiUrl,
+		tags: ['LLM Monitoring'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'agent',
+			'agents sdk',
+			'handoffs',
+			'llm',
+			'llm monitoring',
+			'monitoring',
+			'observability',
+			'openai',
+			'openai agents sdk',
+			'tool calls',
+			'traces',
+			'tracing',
+		],
+		id: 'openai-agents-sdk',
+		link: '/docs/openai-agents-sdk-observability/',
+	},
+	{
+		dataSource: 'e2b',
+		label: 'E2B Sandbox',
+		imgUrl: e2bUrl,
+		tags: ['LLM Monitoring'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'agent',
+			'code execution',
+			'e2b',
+			'e2b sandbox',
+			'llm',
+			'llm monitoring',
+			'monitoring',
+			'observability',
+			'sandbox',
+			'traces',
+			'tracing',
+		],
+		id: 'e2b',
+		link: '/docs/e2b-monitoring/',
+	},
+	{
+		dataSource: 'daytona',
+		label: 'Daytona Sandbox',
+		imgUrl: daytonaUrl,
+		tags: ['LLM Monitoring'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'agent',
+			'code execution',
+			'daytona',
+			'daytona sandbox',
+			'llm',
+			'llm monitoring',
+			'monitoring',
+			'observability',
+			'sandbox',
+			'traces',
+			'tracing',
+		],
+		id: 'daytona',
+		link: '/docs/daytona-monitoring/',
+	},
+	{
+		dataSource: 'vercel-sandbox',
+		label: 'Vercel Sandbox',
+		imgUrl: vercelUrl,
+		tags: ['LLM Monitoring'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'agent',
+			'code execution',
+			'llm',
+			'llm monitoring',
+			'monitoring',
+			'observability',
+			'sandbox',
+			'traces',
+			'tracing',
+			'vercel',
+			'vercel sandbox',
+		],
+		id: 'vercel-sandbox',
+		link: '/docs/vercel-sandbox-observability/',
+	},
+	{
+		dataSource: 'modal',
+		label: 'Modal',
+		imgUrl: modalUrl,
+		tags: ['LLM Monitoring'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'agent',
+			'container metrics',
+			'llm',
+			'llm monitoring',
+			'modal',
+			'modal functions',
+			'modal sandbox',
+			'monitoring',
+			'observability',
+			'sandbox',
+			'serverless',
+			'traces',
+			'tracing',
+		],
+		id: 'modal',
+		link: '/docs/integrations/modal/',
+	},
+	{
+		dataSource: 'cline',
+		label: 'Cline',
+		imgUrl: clineUrl,
+		tags: ['LLM Monitoring'],
+		module: 'metrics',
+		relatedSearchKeywords: [
+			'ai coding assistant',
+			'cline',
+			'cline monitoring',
+			'cost per model',
+			'llm',
+			'llm monitoring',
+			'metrics',
+			'monitoring',
+			'observability',
+			'token usage',
+			'vs code',
+		],
+		id: 'cline',
+		link: '/docs/cline-monitoring/',
+	},
+	{
+		dataSource: 'muse-code',
+		label: 'Meta Muse Code',
+		imgUrl: metaUrl,
+		tags: ['LLM Monitoring'],
+		module: 'metrics',
+		relatedSearchKeywords: [
+			'agent',
+			'ai coding assistant',
+			'cli',
+			'llm',
+			'llm monitoring',
+			'meta',
+			'metrics',
+			'monitoring',
+			'muse',
+			'muse code',
+			'observability',
+			'prompt cache',
+			'token usage',
+		],
+		id: 'muse-code',
+		link: '/docs/muse-code-monitoring/',
+	},
+	{
+		dataSource: 'vllm',
+		label: 'vLLM',
+		imgUrl: vllmUrl,
+		tags: ['LLM Monitoring'],
+		module: 'metrics',
+		relatedSearchKeywords: [
+			'inference server',
+			'kv cache',
+			'llm',
+			'llm monitoring',
+			'metrics',
+			'monitoring',
+			'observability',
+			'time to first token',
+			'token throughput',
+			'vllm',
+		],
+		id: 'vllm',
+		link: '/docs/vllm-observability/',
+	},
+	{
+		dataSource: 'sglang',
+		label: 'SGLang',
+		imgUrl: sglangUrl,
+		tags: ['LLM Monitoring'],
+		module: 'metrics',
+		relatedSearchKeywords: [
+			'inference server',
+			'kv cache',
+			'llm',
+			'llm monitoring',
+			'metrics',
+			'monitoring',
+			'observability',
+			'sglang',
+			'time to first token',
+			'token throughput',
+		],
+		id: 'sglang',
+		link: '/docs/sglang-observability/',
+	},
+	{
+		dataSource: 'karpenter',
+		label: 'Karpenter',
+		imgUrl: karpenterUrl,
+		tags: ['infrastructure monitoring', 'metrics'],
+		module: 'metrics',
+		relatedSearchKeywords: [
+			'autoscaling',
+			'disruption',
+			'karpenter',
+			'karpenter metrics',
+			'kubernetes',
+			'metrics',
+			'monitoring',
+			'node provisioning',
+			'observability',
+			'opentelemetry karpenter',
+			'prometheus',
+		],
+		id: 'karpenter',
+		link: '/docs/metrics-management/opentelemetry-karpenter-metrics/',
+	},
+	{
+		dataSource: 'podman',
+		label: 'Podman',
+		imgUrl: podmanUrl,
+		tags: ['infrastructure monitoring', 'metrics'],
+		module: 'metrics',
+		relatedSearchKeywords: [
+			'container metrics',
+			'containers',
+			'metrics',
+			'monitoring',
+			'observability',
+			'opentelemetry podman',
+			'podman',
+			'podman metrics',
+		],
+		id: 'podman',
+		link: '/docs/metrics-management/opentelemetry-podman-metrics/',
+	},
+	{
+		dataSource: 'emqx',
+		label: 'EMQX',
+		imgUrl: emqxUrl,
+		tags: ['Messaging Queues', 'metrics'],
+		module: 'metrics',
+		relatedSearchKeywords: [
+			'broker',
+			'emqx',
+			'emqx metrics',
+			'iot',
+			'messaging queues',
+			'metrics',
+			'monitoring',
+			'mqtt',
+			'observability',
+			'opentelemetry emqx',
+		],
+		id: 'emqx',
+		link: '/docs/integrations/opentelemetry-emqx/',
+	},
+	{
+		dataSource: 'aws-rds-aurora',
+		label: 'AWS RDS Aurora',
+		imgUrl: auroraUrl,
+		tags: ['AWS', 'database'],
+		module: 'metrics',
+		relatedSearchKeywords: [
+			'aurora',
+			'aurora mysql',
+			'aurora postgresql',
+			'aws',
+			'cloudwatch',
+			'database',
+			'metrics',
+			'monitoring',
+			'observability',
+			'rds',
+			'rds aurora',
+		],
+		id: 'aws-rds-aurora',
+		link: '/docs/integrations/aws-rds-aurora/',
+	},
+	{
+		dataSource: 'gcp-cloud-storage',
+		label: 'GCP Cloud Storage',
+		imgUrl: gcpCloudStorageUrl,
+		tags: ['GCP'],
+		module: 'dashboards',
+		relatedSearchKeywords: [
+			'bucket',
+			'cloud storage',
+			'gcp',
+			'gcp cloud storage',
+			'gcp integration',
+			'gcs',
+			'google cloud',
+			'metrics',
+			'monitoring',
+			'object storage',
+			'observability',
+		],
+		id: 'gcp-cloud-storage',
+		link: '/integrations/gcp?service=cloudstorage',
+		internalRedirect: true,
+	},
+	{
+		dataSource: 'aws-lambda-microvms',
+		label: 'AWS Lambda MicroVMs',
+		imgUrl: lambdaUrl,
+		tags: ['AWS'],
+		module: 'metrics',
+		relatedSearchKeywords: [
+			'aws',
+			'lambda',
+			'lambda microvms',
+			'logs',
+			'metrics',
+			'microvm',
+			'monitoring',
+			'observability',
+			'opentelemetry collector',
+			'serverless',
+			'traces',
+		],
+		id: 'aws-lambda-microvms',
+		link: '/docs/aws-monitoring/lambda-microvms/',
 	},
 ];
 export default onboardingConfigWithLinks;

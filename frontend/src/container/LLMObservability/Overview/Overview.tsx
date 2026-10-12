@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { Typography } from '@signozhq/ui/typography';
+import logEvent from 'api/common/logEvent';
 import Spinner from 'components/Spinner';
 import DashboardContainer from 'pages/DashboardPage/DashboardContainer';
 
@@ -7,6 +9,10 @@ import styles from './Overview.module.scss';
 
 function Overview(): JSX.Element {
 	const { dashboard, isLoading, isError, error, refetch } = useSystemDashboard();
+
+	useEffect(() => {
+		void logEvent('AI Observability Overview: Page visited', {});
+	}, []);
 
 	const renderContent = (): JSX.Element => {
 		if (isLoading) {
