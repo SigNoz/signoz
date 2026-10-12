@@ -37,6 +37,7 @@ import { openInNewTab } from 'utils/navigation';
 
 import {
 	// KEY_ATTRIBUTE_KEYS, // uncomment when key attributes section is re-enabled
+	SPAN_DETAILS_PANEL_MIN_WIDTH,
 	SpanDetailVariant,
 	VISIBLE_ACTIONS,
 } from './constants';
@@ -435,7 +436,7 @@ function SpanDetailsPanel({
 		return actions;
 	}, [variant, onVariantChange]);
 
-	const PANEL_WIDTH = 500;
+	const PANEL_WIDTH = SPAN_DETAILS_PANEL_MIN_WIDTH;
 	const PANEL_MARGIN_RIGHT = 20;
 	const PANEL_MARGIN_TOP = 50;
 	const PANEL_MARGIN_BOTTOM = 25;
@@ -488,7 +489,7 @@ function SpanDetailsPanel({
 			isOpen={panelState.isOpen}
 			className={styles.panel}
 			width={PANEL_WIDTH}
-			minWidth={480}
+			minWidth={SPAN_DETAILS_PANEL_MIN_WIDTH}
 			height={window.innerHeight - PANEL_MARGIN_TOP - PANEL_MARGIN_BOTTOM}
 			defaultPosition={{
 				x: window.innerWidth - PANEL_WIDTH - PANEL_MARGIN_RIGHT,
