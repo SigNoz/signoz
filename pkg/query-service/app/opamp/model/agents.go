@@ -122,6 +122,15 @@ func (agents *Agents) RecommendLatestConfigToAll(
 	provider AgentConfigProvider,
 ) error {
 	for _, agent := range agents.GetAllAgents() {
+		// An agent that has connected but not reported its effective config yet
+		// gets its recommendation once it does (see Agent.processStatusUpdate).
+		if agent.Config == "" {
+			agents.logger.Info(
+				"skipping config recommendation for agent without effective config", "agent_id", agent.AgentID,
+			)
+			continue
+		}
+
 		newConfig, confId, err := provider.RecommendAgentConfig(
 			agent.OrgID,
 			[]byte(agent.Config),

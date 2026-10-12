@@ -437,3 +437,12 @@ func TestPipeCharInAliasDoesntBreakCollectorConfig(t *testing.T) {
 		}, result[0].Attributes_string,
 	)
 }
+
+func TestGenerateCollectorConfigWithPipelinesRejectsEmptyConfig(t *testing.T) {
+	// An agent that has not reported its effective config yet has an empty config.
+	// It must produce an error, not a panic from writing into a nil map.
+	for _, conf := range []string{"", "\n", "# comment only\n"} {
+		_, err := GenerateCollectorConfigWithPipelines([]byte(conf), nil)
+		require.Error(t, err, "config %q", conf)
+	}
+}
