@@ -115,7 +115,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		return true, err
 	}
 
-	message, err := n.client.Send(telebot.ChatID(chatID), messageText, &telebot.SendOptions{
+	_, err = n.client.Send(telebot.ChatID(chatID), messageText, &telebot.SendOptions{
 		DisableNotification:   n.conf.DisableNotifications,
 		DisableWebPagePreview: true,
 		ThreadID:              n.conf.MessageThreadID,
@@ -124,8 +124,6 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	if err != nil {
 		return true, notify.NewErrorWithReason(notify.ClientErrorReason, err)
 	}
-
-	logger.DebugContext(ctx, "telegram message published", slog.Int("message_id", message.ID), slog.Int64("chat_id", message.Chat.ID))
 
 	return false, nil
 }
