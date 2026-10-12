@@ -280,8 +280,25 @@ type TopListPanelSpec struct {
 }
 
 type TopListAppearance struct {
-	ShowRank  bool `json:"showRank" description:"Numbers each row by its position in the list."`
-	ShowShare bool `json:"showShare" description:"Shows each row's share of the listed rows' total."`
+	ShowRank  bool            `json:"showRank" description:"Numbers each row by its position in the list."`
+	ShowShare bool            `json:"showShare" description:"Shows each row's share of the listed rows' total."`
+	BarColor  TopListBarColor `json:"barColor" required:"true" validate:"omitempty,hexcolor" description:"Hex color of every bar; a matching background threshold overrides it."`
+}
+
+// TopListBarColor is a hex color; empty resolves to the default.
+type TopListBarColor string
+
+const DefaultTopListBarColor TopListBarColor = "#4E74F8"
+
+func (c TopListBarColor) ValueOrDefault() string {
+	if c == "" {
+		return string(DefaultTopListBarColor)
+	}
+	return string(c)
+}
+
+func (c TopListBarColor) MarshalJSON() ([]byte, error) {
+	return json.Marshal(c.ValueOrDefault())
 }
 
 type TablePanelSpec struct {

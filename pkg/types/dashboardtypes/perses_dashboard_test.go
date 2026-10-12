@@ -2232,7 +2232,7 @@ func TestTopListPanelSpec(t *testing.T) {
 						"kind": "signoz/TopListPanel",
 						"spec": {
 							"formatting": {"unit": "ms", "decimalPrecision": 2},
-							"appearance": {"showRank": true, "showShare": true},
+							"appearance": {"showRank": true, "showShare": true, "barColor": "#4E74F8"},
 							"thresholds": [{"value": 500, "operator": "above", "format": "background", "color": "Red"}]
 						}
 					},
@@ -2251,7 +2251,7 @@ func TestTopListPanelSpec(t *testing.T) {
 	assert.Equal(t, "ms", spec.Formatting.Unit)
 	require.Len(t, spec.Thresholds, 1)
 	assert.Equal(t, "background", spec.Thresholds[0].Format.ValueOrDefault())
-	assert.Equal(t, TopListAppearance{ShowRank: true, ShowShare: true}, spec.Appearance)
+	assert.Equal(t, TopListAppearance{ShowRank: true, ShowShare: true, BarColor: "#4E74F8"}, spec.Appearance)
 
 	output, err := json.Marshal(d)
 	require.NoError(t, err, "marshal dashboard failed")
@@ -2265,6 +2265,19 @@ func TestTopListPanelSpec(t *testing.T) {
 
 	t.Run("UnknownField_Rejected", func(t *testing.T) {
 		_, err := unmarshalDashboard([]byte(strings.Replace(string(data), `"formatting"`, `"legend": {}, "formatting"`, 1)))
+		assert.Error(t, err)
+	})
+
+	t.Run("MissingBarColor_Defaulted", func(t *testing.T) {
+		d, err := unmarshalDashboard([]byte(strings.Replace(string(data), `, "barColor": "#4E74F8"`, ``, 1)))
+		require.NoError(t, err)
+		output, err := json.Marshal(d.Panels["p1"].Spec.Plugin.Spec)
+		require.NoError(t, err)
+		assert.Contains(t, string(output), `"barColor":"#4E74F8"`)
+	})
+
+	t.Run("InvalidBarColor_Rejected", func(t *testing.T) {
+		_, err := unmarshalDashboard([]byte(strings.Replace(string(data), `"#4E74F8"`, `"blue"`, 1)))
 		assert.Error(t, err)
 	})
 
