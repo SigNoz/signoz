@@ -48,13 +48,13 @@ export type QueryModeCapability =
 	| { kind: QueryModeKind.SIGNAL; signals: TelemetrytypesSignalDTO[] }
 	| { kind: QueryModeKind.SIGNAL_LESS };
 
-export type SupportedQueryModes = Partial<
+export type SupportedQueryModesKindMap = Partial<
 	Record<QueryMode, QueryModeCapability>
 >;
 
 /** Signals `mode` accepts; empty for a signal-less or undeclared mode. */
 export function getQueryModeSignals(
-	modes: SupportedQueryModes | undefined,
+	modes: SupportedQueryModesKindMap | undefined,
 	mode: QueryMode,
 ): TelemetrytypesSignalDTO[] {
 	const capability = modes?.[mode];

@@ -19,7 +19,7 @@ export const definition: PanelDefinition<'signoz/AreaChartPanel'> = {
 	Renderer,
 	EditorPane: QueryBuilderEditorPane,
 	sections,
-	supportedQueryModes: {
+	supportedQueryModesKindMap: {
 		[QueryMode.QUERY_BUILDER]: {
 			kind: QueryModeKind.SIGNAL,
 			signals: [

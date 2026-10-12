@@ -118,9 +118,9 @@ export function usePanelKindAndQueryModeSwitch({
 
 	const onChangeQueryMode = useQueryModeChange({
 		panelType,
-		supportedQueryModes:
+		supportedQueryModesKindMap:
 			getQueryPanelDefinition(spec.plugin.kind as PanelKind)
-				?.supportedQueryModes ?? {},
+				?.supportedQueryModesKindMap ?? {},
 		parkedBuilders,
 	});
 
@@ -193,7 +193,7 @@ export function usePanelKindAndQueryModeSwitch({
 							builder: seedBuilderForMode({
 								mode: targetMode,
 								defaultSignal: getQueryModeSignals(
-									getQueryPanelDefinition(newKind)?.supportedQueryModes,
+									getQueryPanelDefinition(newKind)?.supportedQueryModesKindMap,
 									QueryMode.QUERY_BUILDER,
 								)[0],
 								panelType: newPanelType,

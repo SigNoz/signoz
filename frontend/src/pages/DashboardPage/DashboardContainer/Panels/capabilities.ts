@@ -58,7 +58,7 @@ export function getSupportedSignals(
 	mode: QueryMode = DEFAULT_QUERY_MODE,
 ): TelemetrytypesSignalDTO[] {
 	return getQueryModeSignals(
-		getQueryPanelDefinition(kind)?.supportedQueryModes,
+		getQueryPanelDefinition(kind)?.supportedQueryModesKindMap,
 		mode,
 	);
 }
@@ -72,7 +72,7 @@ export function isSignalSupported(
 
 /** Authoring modes a kind supports, in tab order. */
 export function getSupportedQueryModes(kind: PanelKind): QueryMode[] {
-	const modes = getQueryPanelDefinition(kind)?.supportedQueryModes ?? {};
+	const modes = getQueryPanelDefinition(kind)?.supportedQueryModesKindMap ?? {};
 	return Object.keys(modes) as QueryMode[];
 }
 /** Query languages a kind supports (Query Builder / ClickHouse / PromQL). */

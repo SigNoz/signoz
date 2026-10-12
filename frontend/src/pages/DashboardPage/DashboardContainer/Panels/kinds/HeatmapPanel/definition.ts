@@ -21,7 +21,7 @@ export const definition: PanelDefinition<'signoz/HeatmapPanel'> = {
 	Renderer,
 	EditorPane: QueryBuilderEditorPane,
 	sections,
-	supportedQueryModes: {
+	supportedQueryModesKindMap: {
 		// Only metrics carry a bucket axis; the request rejects the other signals.
 		[QueryMode.QUERY_BUILDER]: {
 			kind: QueryModeKind.SIGNAL,

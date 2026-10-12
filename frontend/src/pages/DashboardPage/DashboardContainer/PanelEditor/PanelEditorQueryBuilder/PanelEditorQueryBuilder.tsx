@@ -112,7 +112,7 @@ function PanelEditorQueryBuilder({
 							panelType={panelType}
 							fieldsConfig={panelDefinition.queryBuilderFields}
 							allowedDataSources={getQueryModeSignals(
-								panelDefinition.supportedQueryModes,
+								panelDefinition.supportedQueryModesKindMap,
 								QueryMode.QUERY_BUILDER,
 							)}
 							showTraceOperator={!isRawQuery}
@@ -160,7 +160,9 @@ function PanelEditorQueryBuilder({
 			},
 		};
 
-		const modes = Object.keys(panelDefinition.supportedQueryModes) as QueryMode[];
+		const modes = Object.keys(
+			panelDefinition.supportedQueryModesKindMap,
+		) as QueryMode[];
 
 		return modes.map((queryType) => ({
 			key: queryType,

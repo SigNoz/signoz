@@ -4,7 +4,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 
 import {
 	getQueryModeSignals,
-	type SupportedQueryModes,
+	type SupportedQueryModesKindMap,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelCapabilities';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import {
@@ -17,7 +17,7 @@ import { seedBuilderForMode } from 'pages/DashboardPage/DashboardContainer/Panel
 
 interface UseQueryModeChangeArgs {
 	panelType: PANEL_TYPES;
-	supportedQueryModes: SupportedQueryModes;
+	supportedQueryModesKindMap: SupportedQueryModesKindMap;
 	/** Builder queries for the tabs not on screen, keyed by mode. */
 	parkedBuilders: MutableRefObject<BuilderStash>;
 }
@@ -28,7 +28,7 @@ interface UseQueryModeChangeArgs {
  */
 export function useQueryModeChange({
 	panelType,
-	supportedQueryModes,
+	supportedQueryModesKindMap,
 	parkedBuilders,
 }: UseQueryModeChangeArgs): (key: string) => void {
 	const {
@@ -46,7 +46,7 @@ export function useQueryModeChange({
 				seedBuilderForMode({
 					mode,
 					defaultSignal: getQueryModeSignals(
-						supportedQueryModes,
+						supportedQueryModesKindMap,
 						QueryMode.QUERY_BUILDER,
 					)[0],
 					panelType,
@@ -74,7 +74,7 @@ export function useQueryModeChange({
 			panelType,
 			parkedBuilders,
 			redirectWithQueryBuilderData,
-			supportedQueryModes,
+			supportedQueryModesKindMap,
 			updateAllQueriesOperators,
 		],
 	);

@@ -19,7 +19,7 @@ export const definition: PanelDefinition<'signoz/ListPanel'> = {
 	Renderer,
 	EditorPane: ListEditorPane,
 	// Raw records come from logs and traces; metrics don't produce row data.
-	supportedQueryModes: {
+	supportedQueryModesKindMap: {
 		[QueryMode.QUERY_BUILDER]: {
 			kind: QueryModeKind.SIGNAL,
 			signals: [TelemetrytypesSignalDTO.logs, TelemetrytypesSignalDTO.traces],
