@@ -19,8 +19,7 @@ export const SlackInitialConfig: Partial<SlackChannel> = {
 
      *Summary:* {{ .Annotations.summary }}
      *Description:* {{ .Annotations.description }}
-     *RelatedLogs:* {{ if gt (len .Annotations.related_logs) 0 -}} View in <{{ .Annotations.related_logs }}|logs explorer> {{- end}}
-     *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}} View in <{{ .Annotations.related_traces }}|traces explorer> {{- end}}
+     {{ template "signoz.relatedLinks.slack" . }}
 
      *Details:*
        {{ range .Labels.SortedPairs }} • *{{ .Name }}:* {{ .Value }}
@@ -135,11 +134,7 @@ export const JsmOpsInitialConfig: Partial<JsmOpsChannel> = {
 
 {{ end }}{{ if .GeneratorURL }}[View in SigNoz]({{ .GeneratorURL }})
 
-{{ end }}{{ if .Annotations.related_logs }}[View related logs]({{ .Annotations.related_logs }})
-
-{{ end }}{{ if .Annotations.related_traces }}[View related traces]({{ .Annotations.related_traces }})
-
-{{ end }}{{ end }}`,
+{{ end }}{{ template "signoz.relatedLinks.markdown" . }}{{ end }}`,
 	priority:
 		'{{ if eq (index .Alerts 0).Labels.severity "critical" }}P1{{ else if eq (index .Alerts 0).Labels.severity "warning" }}P2{{ else if eq (index .Alerts 0).Labels.severity "info" }}P3{{ else }}P4{{ end }}',
 	tags: ['signoz-alert'],
@@ -161,11 +156,7 @@ export const IncidentIOInitialConfig: Partial<IncidentIOChannel> = {
 
 {{ end }}{{ if .GeneratorURL }}[View in SigNoz]({{ .GeneratorURL }})
 
-{{ end }}{{ if .Annotations.related_logs }}[View related logs]({{ .Annotations.related_logs }})
-
-{{ end }}{{ if .Annotations.related_traces }}[View related traces]({{ .Annotations.related_traces }})
-
-{{ end }}{{ end }}`,
+{{ end }}{{ template "signoz.relatedLinks.markdown" . }}{{ end }}`,
 };
 
 export const EmailInitialConfig: Partial<EmailChannel> = {

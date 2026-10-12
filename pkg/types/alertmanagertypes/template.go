@@ -19,6 +19,7 @@ func AdditionalFuncMap() tmpltext.FuncMap {
 		"urlescape": func(value string) tmplhtml.HTML {
 			return tmplhtml.HTML(url.QueryEscape(value))
 		},
+		"isAITracesLink": IsAITracesLink,
 	}
 }
 
@@ -45,6 +46,13 @@ func FromGlobs(paths []string) (*alertmanagertemplate.Template, error) {
 	{{ define "__ruleIdPath" }}{{- $isTestAlert := "" -}}{{- range .CommonLabels.SortedPairs -}}{{- if eq .Name "testalert" -}}{{- if eq .Value "true" -}}{{- $isTestAlert = "true" -}}{{- end -}}{{- end -}}{{- end -}}{{- range .CommonLabels.SortedPairs -}}{{- if eq .Name "ruleId" -}}{{- if ne .Value "" -}}/edit?ruleId={{ .Value | urlescape }}{{- if $isTestAlert -}}&isTestAlert=true{{- end -}}{{- end -}}{{- end -}}{{- end -}}{{- end }}
 	{{ define "__alertmanagerURL" }}{{ .ExternalURL }}/alerts{{ template "__ruleIdPath" . }}{{ end }}
 	{{ define "msteamsv2.default.titleLink" }}{{ template "__alertmanagerURL" . }}{{ end }}
+	{{ define "signoz.relatedLinks.slack" }}*RelatedLogs:* {{ if gt (len .Annotations.related_logs) 0 -}} View in <{{ .Annotations.related_logs }}|logs explorer> {{- end}}
+     *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}} View in <{{ .Annotations.related_traces }}|{{ if isAITracesLink .Annotations.related_traces }}ai traces explorer{{ else }}traces explorer{{ end }}> {{- end}}{{ end }}
+	{{ define "signoz.relatedLinks.markdown" }}{{ if .Annotations.related_logs }}[View related logs]({{ .Annotations.related_logs }})
+
+{{ end }}{{ if .Annotations.related_traces }}[{{ if isAITracesLink .Annotations.related_traces }}View related AI traces{{ else }}View related traces{{ end }}]({{ .Annotations.related_traces }})
+
+{{ end }}{{ end }}
 	`))); err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error parsing alertmanager templates")
 	}

@@ -158,6 +158,108 @@ Description: Request rate exceeded 10k/s`},
 			wantIsDefaultBody: true,
 		},
 		{
+			// The current seeded default renders the related-links block via the
+			// server-side define; for a plain traces link the output is byte-equal
+			// to the old inline template above.
+			name: "current default: related links via define, same bytes as old default",
+			alerts: []*types.Alert{
+				createAlert(
+					map[string]string{ruletypes.LabelAlertName: "DiskUsageHigh", ruletypes.LabelSeverityName: "critical", "instance": "db-primary-01"},
+					map[string]string{
+						"summary":        "Disk usage high on database host",
+						"description":    "Disk usage is high on the database host",
+						"related_logs":   "https://logs.example.com/search?q=DiskUsageHigh",
+						"related_traces": "https://traces.example.com/search?q=DiskUsageHigh",
+					},
+					true,
+				),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				DefaultTitleTemplate: `{{ .CommonLabels.alertname }}`,
+				DefaultBodyTemplate: `{{ range .Alerts -}}
+     *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}
+
+     *Summary:* {{ .Annotations.summary }}
+     *Description:* {{ .Annotations.description }}
+     {{ template "signoz.relatedLinks.slack" . }}
+
+     *Details:*
+       {{ range .Labels.SortedPairs }} • *{{ .Name }}:* {{ .Value }}
+       {{ end }}
+     {{ end }}`,
+			},
+			wantTitle: "DiskUsageHigh",
+			wantBody: []string{"*Alert:* DiskUsageHigh - critical\n" +
+				"\n" +
+				"     *Summary:* Disk usage high on database host\n" +
+				"     *Description:* Disk usage is high on the database host\n" +
+				"     *RelatedLogs:* View in <https://logs.example.com/search?q=DiskUsageHigh|logs explorer>\n" +
+				"     *RelatedTraces:* View in <https://traces.example.com/search?q=DiskUsageHigh|traces explorer>\n" +
+				"\n" +
+				"     *Details:*\n" +
+				"        • *alertname:* DiskUsageHigh\n" +
+				"        • *instance:* db-primary-01\n" +
+				"        • *severity:* critical\n" +
+				"       \n" +
+				"     "},
+			wantIsDefaultBody: true,
+		},
+		{
+			// An AI trace alert links to the ai-observability explorer and the
+			// define labels it accordingly.
+			name: "current default: ai traces link labelled ai traces explorer",
+			alerts: []*types.Alert{
+				createAlert(
+					map[string]string{ruletypes.LabelAlertName: "HighLLMLatency", ruletypes.LabelSeverityName: "warning"},
+					map[string]string{
+						"summary":        "LLM latency is high",
+						"description":    "p99 latency of LLM calls is above threshold",
+						"related_traces": "https://signoz.example.com/ai-observability/explorer?startTime=1&endTime=2",
+					},
+					true,
+				),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				DefaultTitleTemplate: `{{ .CommonLabels.alertname }}`,
+				DefaultBodyTemplate: `{{ range .Alerts -}}
+     *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}} View in <{{ .Annotations.related_traces }}|{{ if isAITracesLink .Annotations.related_traces }}ai traces explorer{{ else }}traces explorer{{ end }}> {{- end}}
+     {{ end }}`,
+			},
+			wantTitle:         "HighLLMLatency",
+			wantBody:          []string{"*RelatedTraces:* View in <https://signoz.example.com/ai-observability/explorer?startTime=1&endTime=2|ai traces explorer>\n     "},
+			wantIsDefaultBody: true,
+		},
+		{
+			// The markdown define used by the incident.io / JSM Ops defaults,
+			// exercised through the shipped JSM Ops description template.
+			name: "jsmops default: ai traces link labelled view related ai traces",
+			alerts: []*types.Alert{
+				createAlert(
+					map[string]string{ruletypes.LabelAlertName: "HighLLMLatency", ruletypes.LabelSeverityName: "warning"},
+					map[string]string{
+						"summary":        "LLM latency is high",
+						"description":    "p99 latency of LLM calls is above threshold",
+						"related_traces": "https://signoz.example.com/ai-observability/explorer?startTime=1&endTime=2",
+					},
+					true,
+				),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				DefaultTitleTemplate: alertmanagertypes.DefaultJSMOpsMessageTemplate,
+				DefaultBodyTemplate:  alertmanagertypes.DefaultJSMOpsDescriptionTemplate,
+			},
+			wantTitle: "[FIRING:1] HighLLMLatency",
+			wantBody: []string{"**Alert:** HighLLMLatency (warning)\n" +
+				"\n" +
+				"**Summary:** LLM latency is high\n" +
+				"\n" +
+				"**Description:** p99 latency of LLM calls is above threshold\n" +
+				"\n" +
+				"[View related AI traces](https://signoz.example.com/ai-observability/explorer?startTime=1&endTime=2)\n" +
+				"\n"},
+			wantIsDefaultBody: true,
+		},
+		{
 			// Pod crash loop on multiple pods — body is expanded once per alert
 			// and joined with "\n\n", with the pod name pulled from labels.
 			name: "new template: pod crash loop on multiple pods, body per-alert",

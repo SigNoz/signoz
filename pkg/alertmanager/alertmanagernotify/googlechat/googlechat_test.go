@@ -344,6 +344,16 @@ func TestGoogleChatLinkButtons(t *testing.T) {
 			},
 		},
 		{
+			name:   "ai traces link",
+			labels: model.LabelSet{"alertname": "X"},
+			annotations: model.LabelSet{
+				ruletypes.AnnotationRelatedTraces: "https://signoz.example/ai-observability/explorer?q=1",
+			},
+			wantButtons: map[string]string{
+				"View Related AI Traces": "https://signoz.example/ai-observability/explorer?q=1",
+			},
+		},
+		{
 			name:        "no links → no buttons",
 			labels:      model.LabelSet{"alertname": "X"},
 			annotations: model.LabelSet{"summary": "s"},

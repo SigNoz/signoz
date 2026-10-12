@@ -311,11 +311,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		case ruletypes.AlertTypeTraces, ruletypes.AlertTypeAITraces:
 			params := r.prepareParamsForTraces(ctx, ts, smpl.Metric)
 			if len(params) > 0 {
-				explorerPath := "traces-explorer"
-				if r.typ == ruletypes.AlertTypeAITraces {
-					explorerPath = "ai-observability/explorer"
-				}
-				link := r.ExternalURL(explorerPath, params)
+				link := r.ExternalURL(r.typ.TracesExplorerPath(), params)
 				r.logger.InfoContext(ctx, "adding traces link to annotations", slog.String("annotation.link", link))
 				annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationRelatedTraces, Value: link})
 			}
