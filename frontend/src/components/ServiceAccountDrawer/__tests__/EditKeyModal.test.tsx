@@ -1,6 +1,9 @@
 import { toast } from '@signozhq/ui/sonner';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
-import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
+import {
+	AUTHZ_CHECK_URL,
+	setupAuthzAdmin,
+} from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { submitImplicitly } from 'tests/submitImplicitly';
@@ -87,6 +90,19 @@ describe('EditKeyModal (URL-controlled)', () => {
 			'aria-disabled',
 			'true',
 		);
+	});
+
+	it('does not show the denial tooltip while the permission check is pending', async () => {
+		server.use(
+			rest.post(AUTHZ_CHECK_URL, (_req, res, ctx) => res(ctx.delay('infinite'))),
+		);
+		renderModal();
+
+		await screen.findByText('key-1');
+
+		expect(
+			screen.queryByText('You do not have permission to update this key'),
+		).not.toBeInTheDocument();
 	});
 
 	it('save calls update API, shows toast, and closes modal', async () => {

@@ -32,6 +32,7 @@ export interface EditKeyFormProps {
 	onRevokeClick: () => void;
 	formatTimezoneAdjustedTimestamp: (ts: string, format: string) => string;
 	canUpdate?: boolean;
+	isUpdateDenied?: boolean;
 	accountId?: string;
 }
 
@@ -47,6 +48,7 @@ function EditKeyForm({
 	onRevokeClick,
 	formatTimezoneAdjustedTimestamp,
 	canUpdate = true,
+	isUpdateDenied = false,
 	accountId = '',
 }: EditKeyFormProps): JSX.Element {
 	return (
@@ -116,7 +118,9 @@ function EditKeyForm({
 								size="sm"
 								disabled={!canUpdate}
 								disabledTooltip={
-									canUpdate ? undefined : 'You do not have permission to update this key'
+									isUpdateDenied
+										? 'You do not have permission to update this key'
+										: undefined
 								}
 								width="60%"
 								items={[
