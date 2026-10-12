@@ -359,7 +359,7 @@ type ScatterPlotPanelSpec struct {
 	Axes            ScatterPlotAxes            `json:"axes"`
 	ChartAppearance ScatterPlotChartAppearance `json:"chartAppearance"`
 	Legend          Legend                     `json:"legend"`
-	Thresholds      []ThresholdWithLabel       `json:"thresholds" validate:"dive"`
+	Thresholds      []ScatterPlotThreshold     `json:"thresholds" validate:"dive"`
 }
 
 func (s *ScatterPlotPanelSpec) validateAgainstQuery(query Query, path string) error {
@@ -520,6 +520,11 @@ type ComparisonThreshold struct {
 	Unit     string             `json:"unit" description:"The unit id of value, such as ms or percent. Empty means the panel's unit, or the column's unit for a table threshold. Prefer the panel's unit; a different unit works only when it converts to it, such as s against a panel in ms."`
 	Color    string             `json:"color" validate:"required" required:"true" description:"The CSS color applied to the text or background, per format, while the threshold is active. For example #F1575F matches the SigNoz red preset; CSS named colors such as red also work."`
 	Format   ThresholdFormat    `json:"format" description:"What the color is applied to: text (default) or background."`
+}
+
+type ScatterPlotThreshold struct {
+	ThresholdWithLabel
+	Axis ThresholdAxis `json:"axis"`
 }
 
 type TableThreshold struct {
@@ -845,6 +850,45 @@ func (as *AxisScale) UnmarshalJSON(data []byte) error {
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid axis scale %q: must be `auto`, `linear`, `log`, or `symlog`", v)
+	}
+}
+
+// ThresholdAxis is the axis a scatter plot threshold line marks: `y` draws it
+// horizontally, `x` vertically.
+type ThresholdAxis struct{ valuer.String }
+
+var (
+	ThresholdAxisX = ThresholdAxis{valuer.NewString("x")}
+	ThresholdAxisY = ThresholdAxis{valuer.NewString("y")} // default
+)
+
+func (ThresholdAxis) Enum() []any {
+	return []any{ThresholdAxisX, ThresholdAxisY}
+}
+
+func (ta ThresholdAxis) ValueOrDefault() string {
+	if ta.IsZero() {
+		return ThresholdAxisY.StringValue()
+	}
+	return ta.StringValue()
+}
+
+func (ta ThresholdAxis) MarshalJSON() ([]byte, error) {
+	return json.Marshal(ta.ValueOrDefault())
+}
+
+func (ta *ThresholdAxis) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid threshold axis: must be a string, one of `x` or `y`")
+	}
+	val := ThresholdAxis{valuer.NewString(v)}
+	switch val {
+	case ThresholdAxisX, ThresholdAxisY:
+		*ta = val
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid threshold axis %q: must be `x` or `y`", v)
 	}
 }
 

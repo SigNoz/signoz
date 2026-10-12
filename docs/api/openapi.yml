@@ -5844,7 +5844,7 @@ components:
           $ref: '#/components/schemas/DashboardtypesLegend'
         thresholds:
           items:
-            $ref: '#/components/schemas/DashboardtypesThresholdWithLabel'
+            $ref: '#/components/schemas/DashboardtypesScatterPlotThreshold'
           nullable: true
           type: array
         visualization:
@@ -5860,6 +5860,23 @@ components:
           $ref: '#/components/schemas/DashboardtypesPointOpacity'
         size:
           $ref: '#/components/schemas/DashboardtypesPointDiameter'
+      type: object
+    DashboardtypesScatterPlotThreshold:
+      properties:
+        axis:
+          $ref: '#/components/schemas/DashboardtypesThresholdAxis'
+        color:
+          type: string
+        label:
+          type: string
+        unit:
+          type: string
+        value:
+          format: double
+          type: number
+      required:
+      - value
+      - color
       type: object
     DashboardtypesSource:
       enum:
@@ -6027,6 +6044,11 @@ components:
       - value
       - name
       type: object
+    DashboardtypesThresholdAxis:
+      enum:
+      - x
+      - "y"
+      type: string
     DashboardtypesThresholdFormat:
       enum:
       - text
