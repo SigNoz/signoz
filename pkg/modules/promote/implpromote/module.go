@@ -127,7 +127,8 @@ func (m *module) IndexMaterializedPaths(ctx context.Context, params promotetypes
 		}
 		path, err := promotetypes.NewMaterializedPromotePath(target, key)
 		if err != nil {
-			return nil, err
+			m.settings.Logger().WarnContext(ctx, "skipping materialized path that cannot be indexed", slog.String("path", key.Name), errors.Attr(err))
+			continue
 		}
 		paths = append(paths, path)
 		names = append(names, path.Path)

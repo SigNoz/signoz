@@ -5,11 +5,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-const (
-	DefaultMaterializedIndexType        = "bloom_filter(0.01)"
-	DefaultMaterializedIndexGranularity = 64
-)
-
 type IndexMaterializedPathsResult struct {
 	Indexed []*PromotePath `json:"indexed" required:"true"`
 	Skipped []*PromotePath `json:"skipped" required:"true"`
@@ -32,13 +27,18 @@ func (p *IndexMaterializedPathsParams) Target() (Target, error) {
 	return NewTargetFromText(p.Signal, telemetrytypes.FieldContextAttribute.StringValue())
 }
 
+// NewMaterializedPromotePath mirrors the type and granularity of the key's column indexes.
 func NewMaterializedPromotePath(target Target, key *telemetrytypes.TelemetryFieldKey) (*PromotePath, error) {
+	indexes := make([]WrappedIndex, 0, len(key.Indexes))
+	for _, index := range key.Indexes {
+		indexes = append(indexes, WrappedIndex{FieldDataType: key.FieldDataType, Type: index.IndexType, Granularity: index.Granularity})
+	}
 	path := &PromotePath{
 		Signal:  target.Entry.Signal.StringValue(),
 		Context: target.Entry.FieldContext.StringValue(),
 		Path:    key.Name,
 		Promote: false,
-		Indexes: []WrappedIndex{{FieldDataType: key.FieldDataType, Type: DefaultMaterializedIndexType, Granularity: DefaultMaterializedIndexGranularity}},
+		Indexes: indexes,
 	}
 	if err := path.ValidateAndSetDefaults(target); err != nil {
 		return nil, err

@@ -412,15 +412,15 @@ func TestListPromotedPaths(t *testing.T) {
 
 func TestIndexMaterializedPaths(t *testing.T) {
 	ctx := context.Background()
-	columnIndex := []telemetrytypes.TelemetryFieldKeySkipIndex{{IndexType: "bloom_filter(0.01)", Granularity: 64}}
+	bloomIndex := []telemetrytypes.TelemetryFieldKeySkipIndex{{IndexType: "bloom_filter", Granularity: 4}}
 	materializedKeys := []*telemetrytypes.TelemetryFieldKey{
-		{Name: "user.id", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString, Indexes: columnIndex},
+		{Name: "user.id", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString, Indexes: bloomIndex},
 		{Name: "tenant.id", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
-		{Name: "retry.count", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeNumber, Indexes: columnIndex},
-		{Name: "k8s.pod.name", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString, Indexes: columnIndex},
+		{Name: "retry.count", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeNumber, Indexes: []telemetrytypes.TelemetryFieldKeySkipIndex{{IndexType: "minmax", Granularity: 1}}},
+		{Name: "k8s.pod.name", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString, Indexes: bloomIndex},
 	}
-	userIDDDL := "`attributes.user.id_String_bloom_filter` attributes.`user.id`::String TYPE bloom_filter(0.01) GRANULARITY 64"
-	retryCountDDL := "`attributes.retry.count_Float64_bloom_filter` attributes.`retry.count`::Float64 TYPE bloom_filter(0.01) GRANULARITY 64"
+	userIDDDL := "`attributes.user.id_String_bloom_filter` attributes.`user.id`::String TYPE bloom_filter GRANULARITY 4"
+	retryCountDDL := "`attributes.retry.count_Float64_minmax` attributes.`retry.count`::Float64 TYPE minmax GRANULARITY 1"
 
 	testCases := []struct {
 		name        string
@@ -457,10 +457,15 @@ func TestIndexMaterializedPaths(t *testing.T) {
 			wantDDL:     []string{retryCountDDL},
 		},
 		{
-			name:    "CardinalPath_Rejected",
-			params:  promotetypes.IndexMaterializedPathsParams{Signal: "traces"},
-			keys:    append([]*telemetrytypes.TelemetryFieldKey{{Name: "session.550e8400-e29b-41d4-a716-446655440000", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString, Indexes: columnIndex}}, materializedKeys...),
-			wantErr: true,
+			name:   "UnindexablePaths_LoggedAndLeftOut",
+			params: promotetypes.IndexMaterializedPathsParams{Signal: "traces"},
+			keys: append([]*telemetrytypes.TelemetryFieldKey{
+				{Name: "session.550e8400-e29b-41d4-a716-446655440000", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString, Indexes: bloomIndex},
+				{Name: "user.email", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString, Indexes: []telemetrytypes.TelemetryFieldKeySkipIndex{{IndexType: "text(tokenizer = 'splitByNonAlpha')", Granularity: 1}}},
+			}, materializedKeys...),
+			wantIndexed: []string{"user.id", "retry.count"},
+			wantSkipped: []string{},
+			wantDDL:     []string{userIDDDL, retryCountDDL},
 		},
 		{
 			name:    "LogsSignal_NoAttributeTarget_Rejected",
