@@ -52,6 +52,7 @@ import Events from './Events/Events';
 import OpenInLogsExplorer from './SpanLogs/OpenInLogsExplorer';
 import SpanLogs from './SpanLogs/SpanLogs';
 import { useSpanContextLogs } from './SpanLogs/useSpanContextLogs';
+import SpanAIMessages from './SpanAIMessages/SpanAIMessages';
 import SpanSummary from './SpanSummary';
 
 import styles from './SpanDetailsPanel.module.scss';
@@ -320,6 +321,7 @@ function SpanDetailsContent({
 						<div className={styles.tabsScroll}>
 							<TabsContent value="overview">
 								{isWide && summary}
+								<SpanAIMessages span={selectedSpan} />
 								<DataViewer
 									data={spanDisplayData}
 									drawerKey="trace-details"

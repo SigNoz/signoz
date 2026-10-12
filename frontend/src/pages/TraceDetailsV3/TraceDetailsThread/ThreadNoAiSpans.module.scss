@@ -1,0 +1,40 @@
+.root {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--spacing-12);
+	padding: var(--spacing-20) var(--spacing-24);
+}
+
+.message {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	max-width: 428px;
+}
+
+.emoji {
+	font-size: 32px;
+	line-height: 1;
+}
+
+.paragraphs {
+	display: flex;
+	flex-direction: column;
+	gap: var(--paragraph-base-500-line-height);
+}
+
+.text {
+	margin: 0;
+	font-family: var(--paragraph-base-500-font-family);
+	font-size: var(--paragraph-base-500-font-size);
+	font-weight: var(--paragraph-base-500-font-weight);
+	line-height: var(--paragraph-base-500-line-height);
+	letter-spacing: var(--paragraph-base-500-letter-spacing);
+	color: var(--l2-foreground);
+}
+
+.highlight {
+	composes: text;
+	color: var(--l1-foreground);
+}

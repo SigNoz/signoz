@@ -1,0 +1,49 @@
+.root {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-10);
+	min-width: 0;
+}
+
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+	min-width: 0;
+}
+
+.sectionTitle {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	font-size: var(--font-size-xs);
+	font-weight: var(--font-weight-medium);
+	color: var(--l2-foreground);
+}
+
+.messages {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-10);
+	min-width: 0;
+}
+
+.raw {
+	margin: 0;
+	padding: var(--spacing-4) var(--spacing-6);
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-2);
+	background: var(--l2-background);
+	font-family: var(--font-family-sf-mono);
+	font-size: var(--font-size-xs);
+	line-height: var(--line-height-18);
+	color: var(--l1-foreground);
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.missing {
+	font-size: var(--periscope-font-size-base);
+	font-style: italic;
+	color: var(--l2-foreground);
+}

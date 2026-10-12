@@ -1,0 +1,16 @@
+.card {
+	padding: var(--spacing-8);
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-2);
+	background: var(--l1-background);
+	min-width: 0;
+	cursor: pointer;
+
+	&:hover {
+		border-color: var(--l3-border);
+	}
+
+	&.isSelected {
+		border-color: var(--primary);
+	}
+}

@@ -1,0 +1,25 @@
+.root {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	padding: var(--spacing-4) 0;
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	font-size: var(--font-size-xs);
+	font-weight: var(--font-weight-medium);
+	color: var(--l2-foreground);
+	text-transform: uppercase;
+	letter-spacing: var(--letter-spacing-wide);
+}
+
+.scroll {
+	max-height: 480px;
+	overflow-y: auto;
+	padding: var(--spacing-4);
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-2);
+}
