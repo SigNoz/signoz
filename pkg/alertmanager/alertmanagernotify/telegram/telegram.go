@@ -145,7 +145,7 @@ func (n *Notifier) buildMessage(ctx context.Context, logger *slog.Logger, as []*
 	}
 
 	if len(result.MissingVars) > 0 {
-		logger.WarnContext(ctx, "unresolved variables in rule template", slog.Any("template.missing_vars", result.MissingVars))
+		logger.WarnContext(ctx, "unresolved variables in rule template", slog.Any("template_missing_vars", result.MissingVars))
 	}
 
 	// A rule may set only one of the two, so the other half still comes from
