@@ -29,6 +29,7 @@ import type { RenderableQueryPanelDefinition } from '../../Panels/types/panelDef
 import { toPanelType } from '../../Panels/types/panelKind';
 import {
 	getQueryMode,
+	isBuilderMode,
 	QueryMode,
 } from 'pages/DashboardPage/DashboardContainer/Panels/utils/queryMode';
 
@@ -171,9 +172,7 @@ function PanelEditorQueryBuilder({
 			),
 			children: queryTypeComponents[queryType].component,
 			// QB wants a null data source and AI pins traces: both mounted, they overwrite each other's provider config in a loop.
-			destroyInactiveTabPane:
-				queryType === QueryMode.QUERY_BUILDER ||
-				queryType === QueryMode.AI_QUERY_BUILDER,
+			destroyInactiveTabPane: isBuilderMode(queryType),
 		}));
 	}, [panelDefinition, panelType, isDarkMode, isRawQuery]);
 
