@@ -128,7 +128,7 @@ function NotificationChannels(): JSX.Element {
 					<span className={styles.actionsHeader}>Actions</span>
 				),
 				accessorKey: 'id',
-				width: { fixed: '72px', ignoreLastColumnFill: true },
+				width: { fixed: '96px', ignoreLastColumnFill: true },
 				enableSort: false,
 				enableResize: false,
 				enableRemove: false,
