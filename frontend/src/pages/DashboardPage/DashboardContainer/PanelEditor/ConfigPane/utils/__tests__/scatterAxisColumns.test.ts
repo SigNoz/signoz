@@ -1,10 +1,13 @@
 import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 
-import { getScatterAxisColumnNames } from '../scatterAxisColumns';
+import {
+	getScatterAxisColumnNames,
+	getScatterAxisColumnUnits,
+} from '../scatterAxisColumns';
 
 const COLUMNS = [
 	{ key: 'A', label: 'A.Request rate', name: 'Request rate' },
-	{ key: 'B', label: 'B.p99 latency', name: 'p99 latency' },
+	{ key: 'B', label: 'B.p99 latency', name: 'p99 latency', unit: 'ms' },
 	{ key: 'C', label: 'C.Errors', name: 'Errors' },
 ];
 
@@ -48,5 +51,13 @@ describe('getScatterAxisColumnNames', () => {
 				COLUMNS,
 			),
 		).toStrictEqual({});
+	});
+});
+
+describe('getScatterAxisColumnUnits', () => {
+	it('reads the unit of the column each axis plots', () => {
+		expect(
+			getScatterAxisColumnUnits(scatterSpec({ x: 'B', y: 'A' }), COLUMNS),
+		).toStrictEqual({ x: 'ms', y: undefined });
 	});
 });

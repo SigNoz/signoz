@@ -19,6 +19,8 @@ export interface SectionEditorContext {
 	sizeColumnLabel?: string;
 	/** Name of the column each Scatter Plot axis plots, for its label's placeholder. */
 	axisColumnNames?: { x?: string; y?: string };
+	/** Unit of the column each Scatter Plot axis plots. */
+	axisColumnUnits?: { x?: string; y?: string };
 	signal?: TelemetrytypesSignalDTO;
 	panelKind?: PanelKind;
 	onChangePanelKind?: (kind: PanelKind) => void;

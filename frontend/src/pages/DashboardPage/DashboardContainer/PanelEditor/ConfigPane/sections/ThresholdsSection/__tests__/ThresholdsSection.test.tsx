@@ -161,3 +161,52 @@ describe('ThresholdsSection', () => {
 		).not.toBeInTheDocument();
 	});
 });
+
+describe('ThresholdsSection with an axis picker', () => {
+	function AxisHarness({
+		onChange,
+	}: {
+		onChange: (next: AnyThreshold[]) => void;
+	}): JSX.Element {
+		const [value, setValue] = useState<AnyThreshold[]>([]);
+		return (
+			<ThresholdsSection
+				value={value}
+				controls={{ axis: true }}
+				axisColumnUnits={{ x: 'reqps', y: 'ms' }}
+				onChange={(next): void => {
+					setValue(next);
+					onChange(next);
+				}}
+			/>
+		);
+	}
+
+	it('adds a y threshold and saves the picked axis', async () => {
+		const user = userEvent.setup();
+		const onChange = jest.fn();
+		render(<AxisHarness onChange={onChange} />);
+
+		await user.click(screen.getByTestId('panel-editor-v2-add-threshold'));
+		expect(onChange).toHaveBeenLastCalledWith([
+			expect.objectContaining({ axis: 'y' }),
+		]);
+
+		await user.click(screen.getByTestId('threshold-axis-0-x'));
+		await user.click(screen.getByTestId('threshold-save-0'));
+
+		expect(onChange).toHaveBeenLastCalledWith([
+			expect.objectContaining({ axis: 'x' }),
+		]);
+		expect(screen.getByText('X axis')).toBeInTheDocument();
+	});
+
+	it('hides the axis picker without the control', async () => {
+		const user = userEvent.setup();
+		render(<Harness />);
+
+		await user.click(screen.getByTestId('panel-editor-v2-add-threshold'));
+
+		expect(screen.queryByTestId('threshold-axis-0')).not.toBeInTheDocument();
+	});
+});
