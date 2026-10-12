@@ -95,7 +95,13 @@ func (module *module) GetSessionContext(ctx context.Context, email valuer.Email,
 	}
 
 	context.Exists = true
+	seenOrgIDs := map[valuer.UUID]struct{}{}
 	for _, user := range users {
+		if _, ok := seenOrgIDs[user.OrgID]; ok {
+			continue
+		}
+		seenOrgIDs[user.OrgID] = struct{}{}
+
 		idx := slices.IndexFunc(orgs, func(org *types.Organization) bool {
 			return org.ID == user.OrgID
 		})

@@ -27,7 +27,7 @@ func (store *store) GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Co
 		BunDBCtx(ctx).
 		NewSelect().
 		Model(user).
-		Where("email = ?", email).
+		Where("LOWER(email) = LOWER(?)", email).
 		Where("org_id = ?", orgID).
 		Where("status = ?", types.UserStatusActive.StringValue()).
 		Scan(ctx)
