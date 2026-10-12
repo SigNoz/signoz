@@ -15,7 +15,6 @@ from fixtures.alerts import (
     verify_notification_expectation,
 )
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.logger import setup_logger
 from fixtures.notification_channel import (
     telegram_channel,
     telegram_message_subset,
@@ -24,8 +23,6 @@ from fixtures.notification_channel import (
     telegram_retry_mappings,
     wait_for_alertmanager_sync,
 )
-
-logger = setup_logger(__name__)
 
 V2_BASE_URL = "/api/v2/notification_channels"
 

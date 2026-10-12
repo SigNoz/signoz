@@ -12,10 +12,7 @@ from wiremock.resources.mappings import HttpMethods, Mapping, MappingRequest, Ma
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.logger import setup_logger
 from fixtures.notification_channel import TELEGRAM_CHAT_ID, TELEGRAM_OK_BODY, telegram_channel, telegram_path, wait_for_alertmanager_sync
-
-logger = setup_logger(__name__)
 
 
 # channel test (POST /api/v2/notification_channels/test) drives the notifier once,
