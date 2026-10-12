@@ -75,7 +75,7 @@ def test_get_reflects_a_v2_update_after_a_v1_create(
     "receiver",
     [
         pytest.param(
-            {"telegram_configs": [{"chat": 12345, "token": "telegram-bot-token"}]},
+            {"pushover_configs": [{"user_key": "pushover-user-key", "token": "pushover-token"}]},
             id="kind_v2_does_not_model",
         ),
         pytest.param(
@@ -115,7 +115,7 @@ def test_update_retypes_a_legacy_channel_of_an_unmodelled_kind(
     cleanup_notification_channels: list[str],
 ) -> None:
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    name = f"legacy-telegram-{uuid.uuid4().hex[:8]}"
+    name = f"legacy-pushover-{uuid.uuid4().hex[:8]}"
 
     response = requests.post(
         signoz.self.host_configs["8080"].get(V2_BASE_URL),
@@ -126,7 +126,7 @@ def test_update_retypes_a_legacy_channel_of_an_unmodelled_kind(
     assert response.status_code == HTTPStatus.CREATED, response.text
     channel_id = response.json()["data"]["id"]
     cleanup_notification_channels.append(channel_id)
-    rewrite_channel_as_legacy_receiver(signoz, channel_id, {"name": name, "telegram_configs": [{"chat": 12345, "token": "telegram-bot-token"}]})
+    rewrite_channel_as_legacy_receiver(signoz, channel_id, {"name": name, "pushover_configs": [{"user_key": "pushover-user-key", "token": "pushover-token"}]})
 
     response = requests.get(
         signoz.self.host_configs["8080"].get(f"{V2_BASE_URL}/{channel_id}"),
