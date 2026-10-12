@@ -22,22 +22,27 @@ export interface RowColors {
 	valueColor?: string;
 }
 
-/** A matching threshold recolours the bar (`background` format) or the value (`text`). */
+/**
+ * A matching threshold recolours the bar (`background` format) or the value (`text`).
+ * Bars no threshold recolours take `barColor`.
+ */
 export function resolveRowColors(
 	value: number | null,
 	thresholds: PanelThreshold[],
 	unit?: string,
+	barColor?: string,
 ): RowColors {
+	const base = { barColor };
 	if (value === null || thresholds.length === 0) {
-		return {};
+		return base;
 	}
 	const { threshold } = resolveActiveThreshold(thresholds, value, unit);
 	if (!threshold) {
-		return {};
+		return base;
 	}
 	return threshold.format === 'background'
 		? { barColor: threshold.color }
-		: { valueColor: threshold.color };
+		: { ...base, valueColor: threshold.color };
 }
 
 /** Non-numeric cells ("NaN", "n/a") are shown as the server sent them. */
@@ -187,4 +192,16 @@ export function getRowHeight(count: number, availableHeight: number): number {
 		count * rowHeight + Math.max(count - 1, 0) * ROW_GAP + LIST_PADDING_Y <=
 		availableHeight;
 	return ROW_HEIGHTS.find(fits) ?? ROW_HEIGHTS[ROW_HEIGHTS.length - 1];
+}
+
+/** Grid columns in display order: rank, the bar with its label, share, then value. */
+export function getGridColumns(showRank: boolean, showShare: boolean): string {
+	return [
+		showRank && 'max-content',
+		'minmax(0, 1fr)',
+		showShare && 'max-content',
+		'max-content',
+	]
+		.filter(Boolean)
+		.join(' ');
 }

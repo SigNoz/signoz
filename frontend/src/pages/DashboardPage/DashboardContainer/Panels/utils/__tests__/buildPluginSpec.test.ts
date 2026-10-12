@@ -12,6 +12,7 @@ import {
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
+import { DEFAULT_BAR_COLOR } from '../../kinds/TopListPanel/constants';
 import { defaultColumnsForSignal } from '../../../PanelEditor/ListColumnsEditor/selectFields';
 import { sections as areaSections } from '../../kinds/AreaChartPanel/sections';
 import { sections as listSections } from '../../kinds/ListPanel/sections';
@@ -330,23 +331,26 @@ describe('buildPluginSpec', () => {
 		const sections: SectionConfig[] = [
 			{
 				kind: SectionKind.Appearance,
-				controls: { showRank: true, showShare: true },
+				controls: { showRank: true, showShare: true, barColor: true },
 			},
 		];
 
-		it('carries the toggles across a switch between kinds that declare them', () => {
+		it('carries the toggles and bar color across a switch between kinds that declare them', () => {
 			const oldSpec = oldSpecWith({
-				appearance: { showRank: true, showShare: false },
+				appearance: { showRank: true, showShare: false, barColor: '#00C853' },
 			});
 
 			expect(buildPluginSpec(sections, { oldSpec }).appearance).toStrictEqual({
+				barColor: '#00C853',
 				showRank: true,
 				showShare: false,
 			});
 		});
 
-		it('seeds nothing for a new panel, where unset reads as off', () => {
-			expect(buildPluginSpec(sections)).toStrictEqual({});
+		it('seeds only the default bar color for a new panel, where unset toggles read as off', () => {
+			expect(buildPluginSpec(sections)).toStrictEqual({
+				appearance: { barColor: DEFAULT_BAR_COLOR },
+			});
 		});
 	});
 

@@ -25,7 +25,10 @@ function TopListPanelRenderer({
 }: PanelRendererProps<'signoz/TopListPanel'>): JSX.Element {
 	const spec = panel.spec.plugin.spec;
 
-	const { rows, valueName } = useMemo(() => prepareTopListData(data), [data]);
+	const { rows, valueName, labelColumnNames } = useMemo(
+		() => prepareTopListData(data),
+		[data],
+	);
 
 	const thresholds = useMemo(
 		() => mapNumberThresholds(spec.thresholds),
@@ -82,9 +85,11 @@ function TopListPanelRenderer({
 					panelId={panelId}
 					rows={rows}
 					valueName={valueName}
+					labelName={labelColumnNames.join(', ')}
 					unit={spec.formatting?.unit}
 					precision={precision}
 					thresholds={thresholds}
+					barColor={spec.appearance?.barColor ?? undefined}
 					showRank={spec.appearance?.showRank}
 					showShare={spec.appearance?.showShare}
 					onSelect={enableDrillDown ? handleSelect : undefined}

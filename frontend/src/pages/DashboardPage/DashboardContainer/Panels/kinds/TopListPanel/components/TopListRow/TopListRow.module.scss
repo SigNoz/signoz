@@ -59,30 +59,38 @@
 }
 
 // The label sits on the bar, spanning the whole column so it isn't cut at the fill.
+// The track sits a level above the panel surface (--l2-background).
 .bar {
 	position: relative;
 	display: flex;
 	align-items: center;
 	min-width: 0;
-	height: calc(var(--row-height) - 2px);
+	height: calc(var(--row-height) - 4px);
+	border-radius: 2px;
+	background: var(--l3-background);
+	transition: background-color 120ms;
+
+	.row:hover & {
+		background: var(--l3-background-hover);
+	}
 }
 
 .fill {
 	position: absolute;
 	inset: 0 auto 0 0;
-	border-radius: 1px;
-	background: color-mix(in srgb, var(--bg-robin-500) 26%, transparent);
+	border-radius: 2px;
+	background: color-mix(in srgb, var(--bg-robin-500) 35%, transparent);
 
 	.row:hover & {
-		background: color-mix(in srgb, var(--bg-robin-500) 38%, transparent);
+		background: color-mix(in srgb, var(--bg-robin-500) 48%, transparent);
 	}
 }
 
-.hasThresholdColor {
-	background: color-mix(in srgb, var(--fill-color) 30%, transparent);
+.hasFillColor {
+	background: color-mix(in srgb, var(--fill-color) 35%, transparent);
 
 	.row:hover & {
-		background: color-mix(in srgb, var(--fill-color) 42%, transparent);
+		background: color-mix(in srgb, var(--fill-color) 48%, transparent);
 	}
 }
 

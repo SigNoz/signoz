@@ -11,7 +11,7 @@ export const sections: SectionConfig[] = [
 	},
 	{
 		kind: SectionKind.Appearance,
-		controls: { showRank: true, showShare: true },
+		controls: { showRank: true, showShare: true, barColor: true },
 	},
 	{ kind: SectionKind.Formatting, controls: { unit: true, decimals: true } },
 	{

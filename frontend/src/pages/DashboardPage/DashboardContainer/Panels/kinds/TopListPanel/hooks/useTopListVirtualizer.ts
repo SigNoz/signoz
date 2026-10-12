@@ -1,7 +1,7 @@
 import { type RefObject, useCallback, useEffect, useRef } from 'react';
 import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 
-import { ROW_GAP } from '../constants';
+import { HEADER_HEIGHT, ROW_GAP } from '../constants';
 
 const OVERSCAN = 10;
 /** Size assumed until the container is measured, so the first paint isn't empty. */
@@ -35,6 +35,8 @@ export function useTopListVirtualizer({
 		getScrollElement: () => containerRef.current,
 		estimateSize: () => rowHeight,
 		gap: ROW_GAP,
+		// Keeps a row scrolled to from landing under the sticky header.
+		scrollPaddingStart: HEADER_HEIGHT,
 		overscan: OVERSCAN,
 		initialRect: INITIAL_RECT,
 	});
