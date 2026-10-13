@@ -1,15 +1,11 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef } from 'react';
+import { ArrowDownRight, ArrowUpRight } from '@signozhq/icons';
 
 import { useToolCallLinks } from '../../AIThreadMessage/useToolCallLinks';
-import SpanMessages from '../../SpanMessages/SpanMessages';
-import {
-	getSpanMessages,
-	hasAnyMessages,
-	hasFormattedMessages,
-} from '../../SpanMessages/utils';
-import { ThreadSpan, ThreadView } from '../../TraceDetailsThread/types';
-import ThreadViewToggle from '../../TraceDetailsThread/ThreadViewToggle';
+import { getSpanMessages, hasAnyMessages } from '../../SpanMessages/utils';
+import { ThreadSpan } from '../../TraceDetailsThread/types';
 import { buildToolCallIndex } from '../../TraceDetailsThread/utils';
+import MessagesAccordion from './MessagesAccordion';
 
 import styles from './SpanAIMessages.module.scss';
 
@@ -20,14 +16,11 @@ interface SpanAIMessagesProps {
 /** Waterfall spans only carry raw attributes, so they get the JSON view alone. */
 function SpanAIMessages({ span }: SpanAIMessagesProps): JSX.Element | null {
 	const data = useMemo(() => getSpanMessages(span), [span]);
-	const canFormat = hasFormattedMessages(data);
-	const [view, setView] = useState(ThreadView.Formatted);
-	const effectiveView = canFormat ? view : ThreadView.Json;
 
-	const scrollRef = useRef<HTMLDivElement>(null);
+	const rootRef = useRef<HTMLDivElement>(null);
 	const toolCallIds = useMemo(() => buildToolCallIndex([span]), [span]);
 	const { isToolLinkEnabled, onToolLinkClick } = useToolCallLinks(
-		scrollRef,
+		rootRef,
 		toolCallIds,
 	);
 
@@ -35,26 +28,27 @@ function SpanAIMessages({ span }: SpanAIMessagesProps): JSX.Element | null {
 		return null;
 	}
 
+	const callbacks = { isToolLinkEnabled, onToolLinkClick };
+
 	return (
-		<div className={styles.root} data-testid="span-ai-messages">
-			<div className={styles.header}>
-				Messages
-				{canFormat && (
-					<ThreadViewToggle
-						value={effectiveView}
-						onChange={setView}
-						testId="span-ai-messages-view-toggle"
-					/>
-				)}
-			</div>
-			<div className={styles.scroll} ref={scrollRef}>
-				<SpanMessages
-					span={span}
-					view={effectiveView}
-					isToolLinkEnabled={isToolLinkEnabled}
-					onToolLinkClick={onToolLinkClick}
-				/>
-			</div>
+		<div className={styles.root} ref={rootRef} data-testid="span-ai-messages">
+			<MessagesAccordion
+				icon={<ArrowUpRight size={14} />}
+				title="Input"
+				messages={data.formattedInput}
+				raw={data.rawInput}
+				testId="span-ai-messages-input"
+				{...callbacks}
+			/>
+			<MessagesAccordion
+				icon={<ArrowDownRight size={14} />}
+				title="Output"
+				messages={data.formattedOutput}
+				raw={data.rawOutput}
+				isOutput
+				testId="span-ai-messages-output"
+				{...callbacks}
+			/>
 		</div>
 	);
 }

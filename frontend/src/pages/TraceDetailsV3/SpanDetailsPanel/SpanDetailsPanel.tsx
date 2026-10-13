@@ -292,6 +292,7 @@ function SpanDetailsContent({
 		<>
 			<div className={styles.panelBody} ref={bodyRef}>
 				{!isWide && <div className={styles.detailsSection}>{summary}</div>}
+				<SpanAIMessages span={selectedSpan} />
 
 				<div className={styles.tabsSection}>
 					{/* Step 9: ContentTabs */}
@@ -321,7 +322,6 @@ function SpanDetailsContent({
 						<div className={styles.tabsScroll}>
 							<TabsContent value="overview">
 								{isWide && summary}
-								<SpanAIMessages span={selectedSpan} />
 								<DataViewer
 									data={spanDisplayData}
 									drawerKey="trace-details"
