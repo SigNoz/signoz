@@ -4,7 +4,7 @@ import {
 	DEFAULT_COLOR_STEPS,
 	MAX_COLOR_STEPS,
 	MIN_COLOR_STEPS,
-} from 'lib/uPlotV2/plugins/HeatmapPlugin/colorScale';
+} from 'lib/visualization/colorRamp/colorScale';
 
 import ConfigField from '../../controls/ConfigField/ConfigField';
 import ConfigSlider from '../../controls/ConfigSlider/ConfigSlider';

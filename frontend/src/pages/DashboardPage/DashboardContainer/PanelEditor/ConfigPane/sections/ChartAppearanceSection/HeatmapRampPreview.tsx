@@ -5,9 +5,9 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import {
-	createHeatmapColorResolver,
-	DEFAULT_HEATMAP_COLORS,
-} from 'lib/uPlotV2/plugins/HeatmapPlugin/colorScale';
+	createColorRampResolver,
+	DEFAULT_COLOR_RAMP_OPTIONS,
+} from 'lib/visualization/colorRamp/colorScale';
 import { resolveHeatmapColors } from 'pages/DashboardPage/DashboardContainer/Panels/utils/chartAppearance/resolvers';
 
 import ConfigField from '../../controls/ConfigField/ConfigField';
@@ -36,13 +36,13 @@ function HeatmapRampPreview({ colors }: HeatmapRampPreviewProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
 	const options = useMemo(
-		() => ({ ...DEFAULT_HEATMAP_COLORS, ...resolveHeatmapColors(colors) }),
+		() => ({ ...DEFAULT_COLOR_RAMP_OPTIONS, ...resolveHeatmapColors(colors) }),
 		[colors],
 	);
 
 	const ramp = useMemo(
 		() =>
-			createHeatmapColorResolver({
+			createColorRampResolver({
 				options,
 				domain: NOMINAL_DOMAIN,
 				isDarkMode,

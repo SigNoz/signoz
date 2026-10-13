@@ -3,13 +3,11 @@ import userEvent from '@testing-library/user-event';
 import type { LegendItem } from 'lib/uPlotV2/config/types';
 import { render, screen } from 'tests/test-utils';
 import {
-	DEFAULT_HEATMAP_COLORS,
+	DEFAULT_COLOR_RAMP_OPTIONS,
 	resolveExtremeColor,
-} from 'lib/uPlotV2/plugins/HeatmapPlugin/colorScale';
-import {
-	HeatmapColorMode,
-	HeatmapSeries,
-} from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
+} from 'lib/visualization/colorRamp/colorScale';
+import { HeatmapSeries } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
+import { ColorRampMode } from 'lib/visualization/colorRamp/types';
 
 import Heatmap from '../Heatmap';
 
@@ -111,7 +109,7 @@ describe('Heatmap', () => {
 	});
 
 	it('labels the colour bar with an explicit clamp instead of the data range', () => {
-		renderHeatmap({ colors: { minCount: 5, maxCount: 500 } });
+		renderHeatmap({ colors: { min: 5, max: 500 } });
 
 		expect(screen.getByText('5')).toBeInTheDocument();
 		expect(screen.getByText('500')).toBeInTheDocument();
@@ -198,9 +196,9 @@ describe('Heatmap group legend', () => {
 		renderHeatmap();
 		// The DOM lowercases hex; the palette is built uppercase.
 		const extreme = resolveExtremeColor({
-			options: DEFAULT_HEATMAP_COLORS,
+			options: DEFAULT_COLOR_RAMP_OPTIONS,
 			isDarkMode: true,
-			seriesColor: DEFAULT_HEATMAP_COLORS.fill,
+			seriesColor: DEFAULT_COLOR_RAMP_OPTIONS.fill,
 		}).toLowerCase();
 
 		// cart peaks at 1200 and checkout at 4, which the marker does not report.
@@ -210,7 +208,7 @@ describe('Heatmap group legend', () => {
 
 	it('gives every marker the solid fill in opacity mode', () => {
 		renderHeatmap({
-			colors: { mode: HeatmapColorMode.Opacity, fill: '#e5484d' },
+			colors: { mode: ColorRampMode.Opacity, fill: '#e5484d' },
 		});
 
 		// A partially transparent marker is hard to read against the panel.

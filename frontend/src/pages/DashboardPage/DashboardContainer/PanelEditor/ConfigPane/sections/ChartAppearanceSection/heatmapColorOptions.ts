@@ -9,8 +9,8 @@ import {
 	HEATMAP_COLOR_SCALE_MAP,
 	HEATMAP_PALETTE_MAP,
 } from 'pages/DashboardPage/DashboardContainer/Panels/utils/chartAppearance/enumMaps';
-import { DEFAULT_HEATMAP_COLORS } from 'lib/uPlotV2/plugins/HeatmapPlugin/colorScale';
-import { getPaletteStops } from 'lib/uPlotV2/plugins/HeatmapPlugin/palettes';
+import { DEFAULT_COLOR_RAMP_OPTIONS } from 'lib/visualization/colorRamp/colorScale';
+import { getPaletteStops } from 'lib/visualization/colorRamp/palettes';
 
 import type { ColorSwatchOption } from '../../controls/ColorSwatches/ColorSwatches';
 import type { ConfigTileItem } from '../../controls/ConfigTiles/ConfigTiles';
@@ -23,15 +23,15 @@ function dtoFor<D extends string, V>(map: Record<D, V>, value: V): D {
 /** What the chart draws for an unset field, in spec terms. */
 export const DEFAULT_COLOR_MODE = dtoFor(
 	HEATMAP_COLOR_MODE_MAP,
-	DEFAULT_HEATMAP_COLORS.mode,
+	DEFAULT_COLOR_RAMP_OPTIONS.mode,
 );
 export const DEFAULT_COLOR_SCALE = dtoFor(
 	HEATMAP_COLOR_SCALE_MAP,
-	DEFAULT_HEATMAP_COLORS.scale,
+	DEFAULT_COLOR_RAMP_OPTIONS.scale,
 );
 export const DEFAULT_PALETTE = dtoFor(
 	HEATMAP_PALETTE_MAP,
-	DEFAULT_HEATMAP_COLORS.palette,
+	DEFAULT_COLOR_RAMP_OPTIONS.palette,
 );
 
 export const COLOR_MODE_OPTIONS: ConfigTileItem<DashboardtypesHeatmapColorModeDTO>[] =
