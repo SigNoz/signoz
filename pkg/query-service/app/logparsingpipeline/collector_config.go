@@ -113,7 +113,7 @@ func buildCollectorPipelineProcessorsList(
 	}
 
 	if normalizerIdx := slices.IndexFunc(currentCollectorProcessors, isNormalizerProcessor); normalizerIdx >= 0 {
-		before := normalizerPosition(processorConfigs, currentCollectorProcessors[normalizerIdx]) == userPipelinesBeforeNormalizer
+		before := opampPosition(processorConfigs, currentCollectorProcessors[normalizerIdx]) == userPipelinesBeforeNormalizer
 		result := make([]string, 0, len(currentCollectorProcessors)+len(signozPipelineProcessorNames))
 		for idx, p := range currentCollectorProcessors {
 			if idx == normalizerIdx && before {
@@ -165,10 +165,10 @@ func isNormalizerProcessor(name string) bool {
 	return name == normalizerProcessor || strings.HasPrefix(name, normalizerProcessorPrefix)
 }
 
-// normalizesBeforeUserPipelines reports whether the logs pipeline of the collector config runs
+// collectorNormalizesFirst reports whether the logs pipeline of the collector config runs
 // signozlogsnormalizer ahead of user pipelines, judged by the first one as in buildCollectorPipelineProcessorsList.
 // Malformed configs report false; GenerateCollectorConfigWithPipelines surfaces their errors.
-func normalizesBeforeUserPipelines(config []byte) bool {
+func collectorNormalizesFirst(config []byte) bool {
 	var collectorConf map[string]interface{}
 	if err := yaml.Unmarshal(config, &collectorConf); err != nil {
 		return false
@@ -182,10 +182,10 @@ func normalizesBeforeUserPipelines(config []byte) bool {
 		return false
 	}
 	processorConfigs, _ := collectorConf["processors"].(map[string]interface{})
-	return normalizerPosition(processorConfigs, p.Pipelines.Logs.Processors[normalizerIdx]) != userPipelinesBeforeNormalizer
+	return opampPosition(processorConfigs, p.Pipelines.Logs.Processors[normalizerIdx]) != userPipelinesBeforeNormalizer
 }
 
-func normalizerPosition(processorConfigs map[string]interface{}, name string) string {
+func opampPosition(processorConfigs map[string]interface{}, name string) string {
 	config, _ := processorConfigs[name].(map[string]interface{})
 	opamp, _ := config["opamp"].(map[string]interface{})
 	position, _ := opamp["position"].(string)

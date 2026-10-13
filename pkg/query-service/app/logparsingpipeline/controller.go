@@ -224,13 +224,13 @@ func (ic *LogParsingPipelineController) ValidatePipelines(ctx context.Context,
 // when queries run on body_v2 (use_json_body), so operators see the body the explorer shows.
 // After them when dual ingestion alone writes body_v2, so operators keep seeing the raw body
 // users still query. Absent when neither flag is on.
-// The leading one is dropped when normalizedUpstream: the collector already normalizes before user pipelines.
-func (ic *LogParsingPipelineController) withNormalizePipeline(ctx context.Context, orgID valuer.UUID, pipelines []pipelinetypes.GettablePipeline, normalizedUpstream bool) []pipelinetypes.GettablePipeline {
+// The leading one is dropped when collectorNormalizesFirst.
+func (ic *LogParsingPipelineController) withNormalizePipeline(ctx context.Context, orgID valuer.UUID, pipelines []pipelinetypes.GettablePipeline, collectorNormalizesFirst bool) []pipelinetypes.GettablePipeline {
 	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
 	dualIngestion := ic.fl.BooleanOrEmpty(ctx, flagger.FeatureJSONBodyDualIngestion, evalCtx)
 	switch {
 	case ic.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, evalCtx):
-		if normalizedUpstream {
+		if collectorNormalizesFirst {
 			return pipelines
 		}
 		return append([]pipelinetypes.GettablePipeline{getNormalizePipeline(dualIngestion)}, pipelines...)
@@ -436,7 +436,7 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 	}
 
 	// normalize is only for sending to the collector, never persisted
-	enrichedPipelines = pc.withNormalizePipeline(ctx, orgId, enrichedPipelines, normalizesBeforeUserPipelines(currentConfYaml))
+	enrichedPipelines = pc.withNormalizePipeline(ctx, orgId, enrichedPipelines, collectorNormalizesFirst(currentConfYaml))
 
 	updatedConf, err := GenerateCollectorConfigWithPipelines(currentConfYaml, enrichedPipelines)
 	if err != nil {
