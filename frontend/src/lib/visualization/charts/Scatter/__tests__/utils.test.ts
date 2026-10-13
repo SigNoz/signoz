@@ -104,14 +104,25 @@ describe('resolveAxisDistribution', () => {
 	});
 
 	describe('auto', () => {
+		const SKEWED = [1, 2, 3, 5, 8, 10, 20, 50, 1000];
+
 		it.each([
+			['skewed positive values', SKEWED, DistributionType.Logarithmic],
 			[
-				'positive values spanning three decades',
-				[1, 1000],
-				DistributionType.Logarithmic,
+				'values spread evenly across decades',
+				[1, 250, 500, 750, 1000],
+				DistributionType.Linear,
 			],
-			['positive values spanning less', [1, 999], DistributionType.Linear],
-			['a wide span that includes zero', [0, 1, 1e6], DistributionType.Linear],
+			[
+				'a single outlier among clustered values',
+				[0.001, 40, 45, 50, 55, 60],
+				DistributionType.Linear,
+			],
+			[
+				'skewed values spanning under two decades',
+				[10, 10, 10, 11, 50],
+				DistributionType.Linear,
+			],
 			['no finite values', [Number.NaN], DistributionType.Linear],
 		])('picks a scale for %s', (_, values, distribution) => {
 			expect(resolveAxisDistribution(values, ScatterAxisScale.Auto)).toStrictEqual(
@@ -119,10 +130,25 @@ describe('resolveAxisDistribution', () => {
 			);
 		});
 
-		it('stays linear when a soft limit reaches zero or below', () => {
+		it('picks symlog for skewed values that include zero', () => {
 			expect(
-				resolveAxisDistribution([0.02, 5000], ScatterAxisScale.Auto, [-10]),
-			).toStrictEqual({ distribution: DistributionType.Linear });
+				resolveAxisDistribution(
+					[0, 0, 1, 2, 5, 10, 50, 100, 10_000],
+					ScatterAxisScale.Auto,
+				),
+			).toStrictEqual({
+				distribution: DistributionType.SymmetricLog,
+				asinhThreshold: 1,
+			});
+		});
+
+		it('picks symlog when a soft limit reaches zero or below', () => {
+			expect(
+				resolveAxisDistribution(SKEWED, ScatterAxisScale.Auto, [0]),
+			).toStrictEqual({
+				distribution: DistributionType.SymmetricLog,
+				asinhThreshold: 1,
+			});
 		});
 
 		it('counts a soft limit towards the decades it spans', () => {
@@ -132,7 +158,7 @@ describe('resolveAxisDistribution', () => {
 		});
 
 		it('is the default', () => {
-			expect(resolveAxisDistribution([1, 1e4])).toStrictEqual({
+			expect(resolveAxisDistribution(SKEWED)).toStrictEqual({
 				distribution: DistributionType.Logarithmic,
 			});
 		});

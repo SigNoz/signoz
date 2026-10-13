@@ -25,9 +25,8 @@ import {
 import { adjustSoftLimitsWithThresholds } from 'lib/uPlotV2/utils/scale';
 import uPlot from 'uplot';
 
-import { createScatterRange } from './scatterRange';
+import { createScatterRange, getScaleTransform } from './scatterRange';
 
-/** Circle outline; the fill carries the colour. */
 const POINT_STROKE_WIDTH = 1;
 
 /** Unit-suffixed x labels are wider than uPlot's 50px default assumes. */
@@ -35,7 +34,6 @@ const X_AXIS_TICK_SPACE_PX = 90;
 const X_AXIS_END_LABEL_PADDING_PX = 40;
 
 export interface ScatterSeries {
-	/** Group label, as the legend names it. */
 	label: string;
 	xs: number[];
 	ys: number[];
@@ -44,7 +42,7 @@ export interface ScatterSeries {
 }
 
 export enum ScatterAxisScale {
-	/** Log when the values are positive and span several decades, else linear. */
+	/** Log or symlog when it spreads the points out more than linear does. */
 	Auto = 'auto',
 	Linear = 'linear',
 	Log = 'log',
@@ -52,11 +50,7 @@ export enum ScatterAxisScale {
 	SymLog = 'symlog',
 }
 
-/** Decades of positive values `auto` needs before it picks a log axis. */
-export const AUTO_LOG_MIN_DECADES = 3;
-
 export interface ScatterAxisOptions {
-	/** Axis title. */
 	label?: string;
 	unit?: string;
 	softMin?: number | null;
@@ -81,10 +75,7 @@ export interface BuildScatterConfigArgs {
 	shouldSaveSelectionPreference?: boolean;
 }
 
-/**
- * The dot under the cursor, read off uPlot's cursor: the scatter plugin's
- * `dataIdx` answers only for the hit series, so its index is the one set.
- */
+/** The plugin's `dataIdx` answers only for the hit series. */
 export function getCursorHit(
 	plot: uPlot,
 ): { seriesIndex: number; dataIndex: number } | null {
@@ -117,13 +108,23 @@ export interface AxisDistribution {
 	asinhThreshold?: number;
 }
 
-function getPositiveRange(values: number[]): {
-	minPositive: number;
-	maxPositive: number;
+const LINEAR_DISTRIBUTION: AxisDistribution = {
+	distribution: DistributionType.Linear,
+};
+
+/** Orders of magnitude `auto` needs before it considers leaving linear. */
+export const AUTO_MIN_DECADES = 2;
+
+/** How many times more axis the middle half of the points must cover for `auto` to leave linear. */
+export const AUTO_SPREAD_GAIN = 2;
+
+function getMagnitudeRange(values: number[]): {
+	minMagnitude: number;
+	maxMagnitude: number;
 	hasNonPositive: boolean;
 } {
-	let minPositive = Infinity;
-	let maxPositive = -Infinity;
+	let minMagnitude = Infinity;
+	let maxMagnitude = -Infinity;
 	let hasNonPositive = false;
 	for (const value of values) {
 		if (!Number.isFinite(value)) {
@@ -131,63 +132,105 @@ function getPositiveRange(values: number[]): {
 		}
 		if (value <= 0) {
 			hasNonPositive = true;
-		} else {
-			minPositive = Math.min(minPositive, value);
-			maxPositive = Math.max(maxPositive, value);
+		}
+		if (value !== 0) {
+			minMagnitude = Math.min(minMagnitude, Math.abs(value));
+			maxMagnitude = Math.max(maxMagnitude, Math.abs(value));
 		}
 	}
-	return { minPositive, maxPositive, hasNonPositive };
+	return { minMagnitude, maxMagnitude, hasNonPositive };
 }
 
-/**
- * The symmetric log's linear band ends at the smallest non-zero magnitude, so
- * the small values still spread out.
- */
-function symmetricLogDistribution(minPositive: number): AxisDistribution {
-	const asinhThreshold = Number.isFinite(minPositive)
-		? 10 ** Math.floor(Math.log10(minPositive))
+/** The linear band ends at the smallest non-zero magnitude so small values still spread. */
+function symmetricLogDistribution(minMagnitude: number): AxisDistribution {
+	const asinhThreshold = Number.isFinite(minMagnitude)
+		? 10 ** Math.floor(Math.log10(minMagnitude))
 		: 1;
 	return { distribution: DistributionType.SymmetricLog, asinhThreshold };
 }
 
+function quantile(sorted: number[], q: number): number {
+	const position = (sorted.length - 1) * q;
+	const lower = Math.floor(position);
+	const upper = Math.ceil(position);
+	return sorted[lower] + (sorted[upper] - sorted[lower]) * (position - lower);
+}
+
+/** Share of the axis the middle half of the points covers. */
+function middleHalfSpread(
+	sorted: number[],
+	[min, max]: [number, number],
+	distribution: AxisDistribution,
+): number {
+	const { forward } = getScaleTransform(distribution);
+	const span = forward(max) - forward(min);
+	return span > 0
+		? (forward(quantile(sorted, 0.75)) - forward(quantile(sorted, 0.25))) / span
+		: 0;
+}
+
 /**
- * A plain log axis cannot place zero or negatives, so `log` falls back to the
- * symmetric log rather than lose those points; callers that would rather drop
- * them filter first.
+ * Log (symlog with zero or negatives) when it spreads the points out clearly
+ * more than linear does; min/max alone would let one outlier decide.
  */
+function resolveAutoDistribution(
+	values: number[],
+	softLimits: number[],
+): AxisDistribution {
+	const sorted = values
+		.filter((value) => Number.isFinite(value))
+		.sort((a, b) => a - b);
+	if (sorted.length < 2) {
+		return LINEAR_DISTRIBUTION;
+	}
+	const { minMagnitude, maxMagnitude, hasNonPositive } = getMagnitudeRange([
+		...sorted,
+		...softLimits,
+	]);
+	if (!(Math.log10(maxMagnitude / minMagnitude) >= AUTO_MIN_DECADES)) {
+		return LINEAR_DISTRIBUTION;
+	}
+	const candidate = hasNonPositive
+		? symmetricLogDistribution(minMagnitude)
+		: { distribution: DistributionType.Logarithmic };
+	const extent: [number, number] = [
+		Math.min(sorted[0], ...softLimits),
+		Math.max(sorted[sorted.length - 1], ...softLimits),
+	];
+	const candidateSpread = middleHalfSpread(sorted, extent, candidate);
+	const linearSpread = middleHalfSpread(sorted, extent, LINEAR_DISTRIBUTION);
+	return candidateSpread > 0 &&
+		candidateSpread >= AUTO_SPREAD_GAIN * linearSpread
+		? candidate
+		: LINEAR_DISTRIBUTION;
+}
+
+/** `log` falls back to symlog rather than drop zero or negatives; callers filter first to drop them. */
 export function resolveAxisDistribution(
 	values: number[],
 	scale: ScatterAxisScale = ScatterAxisScale.Auto,
-	/**
-	 * Soft limits (and thresholds) the axis must reach. Only `auto` weighs them:
-	 * a soft min at or below zero rules out log. An explicit scale keeps its
-	 * choice, and a log axis drops a bound it cannot place.
-	 */
+	/** Soft limits and thresholds the axis must reach; only `auto` weighs them. */
 	softLimits: Array<number | null | undefined> = [],
 ): AxisDistribution {
-	const { minPositive, hasNonPositive } = getPositiveRange(values);
 	switch (scale) {
 		case ScatterAxisScale.Linear:
-			return { distribution: DistributionType.Linear };
+			return LINEAR_DISTRIBUTION;
 		case ScatterAxisScale.SymLog:
-			return symmetricLogDistribution(minPositive);
-		case ScatterAxisScale.Log:
+			return symmetricLogDistribution(getMagnitudeRange(values).minMagnitude);
+		case ScatterAxisScale.Log: {
+			const { minMagnitude, hasNonPositive } = getMagnitudeRange(values);
 			return hasNonPositive
-				? symmetricLogDistribution(minPositive)
+				? symmetricLogDistribution(minMagnitude)
 				: { distribution: DistributionType.Logarithmic };
-		case ScatterAxisScale.Auto:
-		default: {
-			const extent = getPositiveRange([
-				...values,
-				...softLimits.filter((limit): limit is number => limit != null),
-			]);
-			const spansDecades =
-				Number.isFinite(extent.minPositive) &&
-				Math.log10(extent.maxPositive / extent.minPositive) >= AUTO_LOG_MIN_DECADES;
-			return !extent.hasNonPositive && spansDecades
-				? { distribution: DistributionType.Logarithmic }
-				: { distribution: DistributionType.Linear };
 		}
+		case ScatterAxisScale.Auto:
+		default:
+			return resolveAutoDistribution(
+				values,
+				softLimits.filter(
+					(limit): limit is number => limit != null && Number.isFinite(limit),
+				),
+			);
 	}
 }
 
@@ -256,8 +299,6 @@ export function buildScatterConfig({
 	builder.addScale({
 		scaleKey: 'x',
 		time: false,
-		softMin: x.softMin ?? undefined,
-		softMax: x.softMax ?? undefined,
 		range: createScatterRange({
 			dimension: 'x',
 			marginPx,
@@ -270,9 +311,6 @@ export function buildScatterConfig({
 	builder.addScale({
 		scaleKey: 'y',
 		time: false,
-		softMin: y.softMin ?? undefined,
-		softMax: y.softMax ?? undefined,
-		thresholds: yThresholds,
 		range: createScatterRange({
 			dimension: 'y',
 			marginPx,
