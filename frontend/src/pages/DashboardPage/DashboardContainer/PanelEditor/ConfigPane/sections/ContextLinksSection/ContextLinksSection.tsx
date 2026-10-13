@@ -61,6 +61,10 @@ function ContextLinksSection({
 
 	return (
 		<div className={styles.list}>
+			<span className={styles.help}>
+				Links appear in a menu when someone clicks a data point. Variables pass the
+				clicked series and time range along.
+			</span>
 			{links.map((link, index) => (
 				<ContextLinkListItem
 					// Links have no stable id on the wire; index is the row identity here.
@@ -81,7 +85,7 @@ function ContextLinksSection({
 				data-testid="panel-editor-v2-add-link"
 				onClick={openAddDialog}
 			>
-				Add Context Link
+				Add link
 			</Button>
 
 			<ContextLinkDialog

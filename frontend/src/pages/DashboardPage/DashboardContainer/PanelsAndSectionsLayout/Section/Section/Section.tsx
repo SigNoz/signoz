@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
+import cx from 'classnames';
 
 import ConfirmDeleteDialog from '../../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
@@ -9,6 +10,8 @@ import type { DashboardSection } from '../../../utils';
 import PanelTypeSelectionModal from '../../Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
 import { useCloneSection } from '../hooks/useCloneSection';
 import { useDeleteSection } from '../hooks/useDeleteSection';
+import { usePanelPickerHighlight } from '../hooks/usePanelPickerHighlight';
+import { usePanelPickerReveal } from '../hooks/usePanelPickerReveal';
 import { useRenameSection } from '../hooks/useRenameSection';
 import { useScrollIntoView } from '../hooks/useScrollIntoView';
 import { useToggleSectionCollapse } from '../hooks/useToggleSectionCollapse';
@@ -67,12 +70,17 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 
 	const sectionRef = useRef<HTMLDivElement>(null);
 	useScrollIntoView(section.id, sectionRef);
+	const pickerTarget = usePanelPickerHighlight(section.layoutIndex);
+	const isOutlined = !!pickerTarget?.outline;
+	// A collapsed section has no grid to show the placeholder in, so reveal its header.
+	usePanelPickerReveal(sectionRef, !!pickerTarget && !!section.title && !open);
 
 	const grid = (
 		<SectionGrid
 			items={section.items}
 			layoutIndex={section.layoutIndex}
 			sections={sections}
+			placeholderKind={pickerTarget?.panelKind}
 		/>
 	);
 
@@ -81,6 +89,7 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 		return (
 			<div
 				ref={sectionRef}
+				className={cx({ [styles.pickerTarget]: isOutlined })}
 				data-testid={`dashboard-section-${section.id}`}
 				data-section-layout-index={section.layoutIndex}
 			>
@@ -92,7 +101,9 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 	return (
 		<div
 			ref={sectionRef}
-			className={styles.section}
+			className={cx(styles.section, {
+				[styles.pickerTarget]: isOutlined,
+			})}
 			data-testid={`dashboard-section-${section.id}`}
 			data-section-layout-index={section.layoutIndex}
 		>
@@ -113,7 +124,7 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 				}}
 			/>
 			{open &&
-				(section.items.length > 0 ? (
+				(section.items.length > 0 || pickerTarget ? (
 					grid
 				) : (
 					<div className={styles.emptySection}>

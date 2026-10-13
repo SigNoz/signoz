@@ -296,4 +296,3 @@ go.mod @therealpandey
 /frontend/.storybook/ @H4ad
 /frontend/src/storybook/ @H4ad
 /.claude/skills/signoz-page-story/ @H4ad
-/.claude/skills/storybook-visual-diff/ @H4ad

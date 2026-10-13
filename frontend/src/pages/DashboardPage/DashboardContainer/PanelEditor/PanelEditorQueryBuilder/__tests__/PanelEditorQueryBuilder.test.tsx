@@ -59,6 +59,7 @@ function lastQueryBuilderProps(): {
 	isRawQuery: boolean;
 	showTraceOperator: boolean;
 	fieldsConfig: unknown;
+	allowedDataSources: string[];
 } {
 	const calls = mockQueryBuilderV2.mock.calls;
 	return calls[calls.length - 1][0];
@@ -119,6 +120,15 @@ describe('PanelEditorQueryBuilder field visibility (driven by the capabilities g
 		expect(props.fieldsConfig).toStrictEqual({});
 	});
 
+	it('hands the fields the Heatmap hides to the builder', () => {
+		renderBuilder('signoz/HeatmapPanel');
+
+		expect(lastQueryBuilderProps().fieldsConfig).toStrictEqual({
+			functions: { state: 'hidden' },
+			having: { state: 'hidden' },
+		});
+	});
+
 	it('marks List raw and leaves the field surface to the raw baseline', () => {
 		renderBuilder('signoz/ListPanel');
 
@@ -127,5 +137,40 @@ describe('PanelEditorQueryBuilder field visibility (driven by the capabilities g
 		expect(props.isRawQuery).toBe(true);
 		expect(props.showTraceOperator).toBe(false);
 		expect(props.fieldsConfig).toStrictEqual({});
+	});
+});
+
+describe('PanelEditorQueryBuilder signal dropdown (driven by the capabilities guard)', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+		mockUseQueryBuilder.mockReturnValue({
+			currentQuery: { queryType: EQueryType.QUERY_BUILDER },
+			redirectWithQueryBuilderData: jest.fn(),
+		});
+	});
+
+	it('offers metrics alone for the Heatmap kind — the only signal with a bucket axis', () => {
+		renderBuilder('signoz/HeatmapPanel');
+
+		expect(lastQueryBuilderProps().allowedDataSources).toStrictEqual(['metrics']);
+	});
+
+	it('offers logs and traces for the List kind, which reads raw rows', () => {
+		renderBuilder('signoz/ListPanel');
+
+		expect(lastQueryBuilderProps().allowedDataSources).toStrictEqual([
+			'logs',
+			'traces',
+		]);
+	});
+
+	it('offers every signal for a kind that visualizes them all', () => {
+		renderBuilder('signoz/TimeSeriesPanel');
+
+		expect(lastQueryBuilderProps().allowedDataSources).toStrictEqual([
+			'metrics',
+			'logs',
+			'traces',
+		]);
 	});
 });

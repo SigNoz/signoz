@@ -21,7 +21,6 @@ import { Color } from '@signozhq/design-tokens';
 import { Button, Select } from 'antd';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { TooltipProvider, TooltipSimple } from '@signozhq/ui/tooltip';
-import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import TextToolTip from 'components/TextToolTip/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -30,12 +29,14 @@ import { capitalize, isEmpty } from 'lodash-es';
 import type { BaseSelectRef } from 'rc-select';
 import { popupContainer } from 'utils/selectPopupContainer';
 
+import TruncatedTooltip from './TruncatedTooltip';
 import { CustomMultiSelectProps, CustomTagProps, OptionData } from './types';
 import {
 	ALL_SELECTED_VALUE,
 	filterOptionsBySearch,
 	findOptionLabelText,
 	handleScrollToBottom,
+	findOptionLabel,
 	prioritizeOrAddOptionForMultiSelect,
 	SPACEKEY,
 } from './utils';
@@ -73,6 +74,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	onDropdownVisibleChange,
 	showIncompleteDataMessage = false,
 	showLabels = false,
+	preserveOptionOrder = false,
 	enableRegexOption = false,
 	isDynamicVariable = false,
 	showRetryButton = true,
@@ -311,7 +313,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			]);
 		} else {
 			setVisibleOptions(
-				selectedValues.length > 0 && isEmpty(searchText)
+				selectedValues.length > 0 && isEmpty(searchText) && !preserveOptionOrder
 					? prioritizeOrAddOptionForMultiSelect(filteredOptions, selectedValues)
 					: filteredOptions,
 			);
@@ -729,65 +731,71 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			};
 
 			return (
-				<div
+				<TruncatedTooltip
 					key={option.value || `option-${index}`}
-					id={optionId}
-					ref={(el): void => {
-						if (index !== undefined) {
-							optionRefs.current[index] = el;
-						}
-					}}
-					className={cx('option-item', {
-						selected: isSelected,
-						active: isActive,
-					})}
-					onKeyDown={(e): void => {
-						if ((e.key === 'Enter' || e.key === SPACEKEY) && isActive) {
-							e.stopPropagation();
-							e.preventDefault();
-							handleItemSelection();
-						}
-					}}
-					onMouseEnter={(): void => {
-						setActiveIndex(index ?? -1);
-						setActiveChipIndex(-1); // Clear chip selection when hovering ALL option
-					}}
-					role="option"
-					aria-selected={isSelected}
-					aria-disabled={option.disabled}
-					tabIndex={isActive ? 0 : -1}
+					title={String(option.label || '')}
 				>
-					<Checkbox
-						value={isSelected}
-						className="option-checkbox"
-						onClick={(e): void => selectFromButton(e, 'checkbox')}
-					>
-						<div className="option-content">
-							<Typography.Text truncate={1} className="option-label-text">
-								{highlightMatchedText(String(option.label || ''), searchText)}
-							</Typography.Text>
-							{(option.type === 'custom' || option.type === 'regex') && (
-								<div className="option-badge">{capitalize(option.type)}</div>
-							)}
-							{option.value && ensureValidOption(option.value) && (
-								<Button
-									type="text"
-									className="only-btn"
-									onClick={(e): void => selectFromButton(e, 'option')}
-								>
-									{currentToggleTagValue({ option: option.value })}
-								</Button>
-							)}
-							<Button
-								type="text"
-								className="toggle-btn"
+					{(textRef): JSX.Element => (
+						<div
+							id={optionId}
+							ref={(el): void => {
+								if (index !== undefined) {
+									optionRefs.current[index] = el;
+								}
+							}}
+							className={cx('option-item', {
+								selected: isSelected,
+								active: isActive,
+							})}
+							onKeyDown={(e): void => {
+								if ((e.key === 'Enter' || e.key === SPACEKEY) && isActive) {
+									e.stopPropagation();
+									e.preventDefault();
+									handleItemSelection();
+								}
+							}}
+							onMouseEnter={(): void => {
+								setActiveIndex(index ?? -1);
+								setActiveChipIndex(-1); // Clear chip selection when hovering ALL option
+							}}
+							role="option"
+							aria-selected={isSelected}
+							aria-disabled={option.disabled}
+							tabIndex={isActive ? 0 : -1}
+						>
+							<Checkbox
+								value={isSelected}
+								className="option-checkbox"
 								onClick={(e): void => selectFromButton(e, 'checkbox')}
 							>
-								Toggle
-							</Button>
+								<div className="option-content">
+									<span ref={textRef} className="option-label-text">
+										{highlightMatchedText(String(option.label || ''), searchText)}
+									</span>
+									{(option.type === 'custom' || option.type === 'regex') && (
+										<div className="option-badge">{capitalize(option.type)}</div>
+									)}
+									{option.value && ensureValidOption(option.value) && (
+										<Button
+											type="text"
+											className="only-btn"
+											onClick={(e): void => selectFromButton(e, 'option')}
+										>
+											{currentToggleTagValue({ option: option.value })}
+										</Button>
+									)}
+									<Button
+										type="text"
+										className="toggle-btn"
+										onClick={(e): void => selectFromButton(e, 'checkbox')}
+									>
+										Toggle
+									</Button>
+								</div>
+							</Checkbox>
 						</div>
-					</Checkbox>
-				</div>
+					)}
+				</TruncatedTooltip>
 			);
 		},
 		[
@@ -1469,6 +1477,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		const shouldPrioritize =
 			selectedValues.length > 0 &&
 			isEmpty(searchText) &&
+			!preserveOptionOrder &&
 			!(hasSections && (allOptionShown || isAllSelected));
 
 		const processedOptions = shouldPrioritize
@@ -1799,6 +1808,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		isDynamicVariable,
 		showRetryButton,
 		waitingMessage,
+		preserveOptionOrder,
 	]);
 
 	// Custom handler for dropdown visibility changes
@@ -1886,7 +1896,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			const { label: labelProp, value, closable, onClose } = props;
 
 			const label = showLabels
-				? options.find((option) => option.value === value)?.label || labelProp
+				? findOptionLabel(options, value) || labelProp
 				: labelProp;
 
 			// If the display value is the special ALL value, render the ALL tag

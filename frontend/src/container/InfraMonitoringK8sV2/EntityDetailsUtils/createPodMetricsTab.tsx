@@ -2,7 +2,7 @@ import { Container } from '@signozhq/icons';
 import { InfraMonitoringEvents } from 'constants/events';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 
-import { CustomTab } from '../Base/K8sBaseDetails';
+import { CustomTab } from '../Base/types';
 import {
 	InfraMonitoringEntity,
 	podUtilizationByPodWidgetInfo,
