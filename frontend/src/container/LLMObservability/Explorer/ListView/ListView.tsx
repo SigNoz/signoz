@@ -6,7 +6,6 @@ import {
 	useCallback,
 	useEffect,
 	useMemo,
-	useState,
 } from 'react';
 import { QueryKey } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
@@ -34,6 +33,8 @@ import { Warning } from 'types/api';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { getListOrderBy, setListOrderBy } from 'utils/explorerUtils';
+
 import TraceExplorerControls from '../Controls';
 import { getListViewQuery } from '../explorerUtils';
 import {
@@ -58,12 +59,16 @@ function ListView({
 	setIsLoadingQueries,
 	queryKeyRef,
 }: ListViewProps): JSX.Element {
-	const { stagedQuery, panelType: panelTypeFromQueryBuilder } =
-		useQueryBuilder();
+	const {
+		stagedQuery,
+		currentQuery,
+		redirectWithQueryBuilderData,
+		panelType: panelTypeFromQueryBuilder,
+	} = useQueryBuilder();
 
 	const panelType = panelTypeFromQueryBuilder || PANEL_TYPES.LIST;
 
-	const [orderBy, setOrderBy] = useState<string>('timestamp:desc');
+	const orderBy = useMemo(() => getListOrderBy(stagedQuery), [stagedQuery]);
 
 	const {
 		selectedTime: globalSelectedTime,
@@ -92,7 +97,6 @@ function ListView({
 			stagedQuery,
 			panelType,
 			paginationConfig,
-			orderBy,
 		],
 		[
 			stagedQuery,
@@ -101,7 +105,6 @@ function ListView({
 			paginationConfig,
 			maxTime,
 			minTime,
-			orderBy,
 		],
 	);
 
@@ -167,9 +170,12 @@ function ListView({
 		[queryTableData],
 	);
 
-	const handleOrderChange = useCallback((value: string) => {
-		setOrderBy(value);
-	}, []);
+	const handleOrderChange = useCallback(
+		(value: string) => {
+			redirectWithQueryBuilderData(setListOrderBy(currentQuery, value));
+		},
+		[currentQuery, redirectWithQueryBuilderData],
+	);
 
 	useEffect(() => {
 		if (!isLoading && !isFetching && !isError && rows.length !== 0) {
