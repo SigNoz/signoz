@@ -9,8 +9,6 @@ import ConfigMultiSelect from '../../controls/ConfigMultiSelect/ConfigMultiSelec
 import ConfigSelect from '../../controls/ConfigSelect/ConfigSelect';
 import type { SectionEditorContext } from '../../sectionContext';
 import { resolveAutoAxes } from '../../utils/scatterAxisColumns';
-
-import styles from './DimensionsSection.module.scss';
 import LabelWithInfo from './LabelWithInfo';
 import {
 	buildColorKeyItems,
@@ -19,6 +17,8 @@ import {
 	formatColumnOption,
 	UNSET_DIMENSION,
 } from './utils';
+
+import styles from './DimensionsSection.module.scss';
 
 type DimensionsSectionProps = SectionEditorProps<SectionKind.Dimensions> &
 	Pick<SectionEditorContext, 'tableColumns' | 'groupColumns'>;
@@ -32,11 +32,6 @@ const FIELD_INFO = {
 		'One color and legend entry per combination of the selected keys. Leave it empty to color by every group key.',
 };
 
-/**
- * Edits the `dimensions` slice of a Scatter Plot: which value column each axis
- * and the dot size read, and which group-by keys colour the dots. Options come
- * from the preview query's joined result.
- */
 function DimensionsSection({
 	value,
 	onChange,

@@ -66,8 +66,7 @@ export function useDrilldownBreakout({
 				groupBy,
 				aggregateData.filters ?? [],
 			);
-			// A breakout regroups one query, which would stop a scatter plot's queries
-			// joining on the same labels; a table shows the regrouped query on its own.
+			// A regrouped query no longer joins the scatter's others; show it as a table.
 			const breakoutPanelType =
 				panelType === PANEL_TYPES.SCATTER
 					? PANEL_TYPES.TABLE

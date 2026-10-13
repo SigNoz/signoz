@@ -7,6 +7,7 @@ import getLabelName from 'lib/getLabelName';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { preparePieData } from '../kinds/PieChartPanel/prepareData';
 import { prepareScatterPlotData } from '../kinds/ScatterPlotPanel/utils/prepareData';
+import { getJoinedScalarTable } from './getJoinedScalarTable';
 import { ScatterPlotDataStatus } from '../kinds/ScatterPlotPanel/types';
 import { getBuilderQueries } from './getBuilderQueries';
 import { resolveSeriesLabelV5 } from './resolveSeriesLabel';
@@ -111,10 +112,7 @@ export function resolveTimeSeriesLegendSeries({
 	);
 }
 
-/**
- * Scatter Plot: one entry per colour group, which `dimensions.colorBy` picks, so the
- * labels come from the same data prep the renderer runs.
- */
+/** One entry per colour group, from the renderer's data prep. */
 export function resolveScatterLegendSeries({
 	spec,
 	data,
@@ -127,11 +125,7 @@ export function resolveScatterLegendSeries({
 		? themeColors.chartcolors
 		: themeColors.lightModeColor;
 	const scatterData = prepareScatterPlotData({
-		table: prepareScalarTables({
-			results: getScalarResults(data.response),
-			legendMap: data.legendMap,
-			requestPayload: data.requestPayload,
-		}).find((candidate) => candidate.columns.length > 0),
+		table: getJoinedScalarTable(data),
 		dimensions: spec.plugin.spec.dimensions,
 		axes: spec.plugin.spec.axes,
 		columnUnits: {},

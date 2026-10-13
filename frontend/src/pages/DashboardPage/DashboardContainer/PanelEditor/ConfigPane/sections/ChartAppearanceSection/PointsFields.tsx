@@ -18,7 +18,6 @@ interface PointsFieldsProps {
 	value: DashboardtypesScatterPlotPointsDTO | undefined;
 	savedValue: DashboardtypesScatterPlotPointsDTO | undefined;
 	onChange: (next: DashboardtypesScatterPlotPointsDTO) => void;
-	/** The column dots are sized by; unset draws every dot at one size. */
 	sizeColumnLabel?: string;
 }
 
@@ -29,7 +28,7 @@ function PointsFields({
 	sizeColumnLabel,
 }: PointsFieldsProps): JSX.Element {
 	const reset = createFieldResetter(value, savedValue, onChange);
-	// The renderer's defaults, so a thumb starts where an unset field draws.
+	// Renderer defaults, so thumbs start where an unset field draws.
 	const size = resolvePointSize(value);
 
 	return (

@@ -15,7 +15,6 @@ interface ScatterAxisFieldsProps {
 	axis: 'x' | 'y';
 	value: DashboardtypesScatterPlotAxisDTO | undefined;
 	onChange: (next: DashboardtypesScatterPlotAxisDTO) => void;
-	/** The name of the column the axis plots, shown until a label is typed. */
 	columnName?: string;
 }
 

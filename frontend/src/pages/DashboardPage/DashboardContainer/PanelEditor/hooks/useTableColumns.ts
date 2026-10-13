@@ -32,8 +32,7 @@ export interface TableColumnOption {
  * Resolves a Table panel's value (aggregation) columns into `{ key, label }`
  * options, so the table-only config editors (column units, per-column thresholds)
  * store the query-keyed value the renderer looks up by while showing the readable
- * column name. Empty for kinds that don't join their scalar rows (Table and
- * Scatter Plot do) or before data arrives.
+ * column name. Empty for kinds that don't join scalar rows, or before data arrives.
  */
 export function useTableColumns(
 	panel: DashboardtypesPanelDTO,

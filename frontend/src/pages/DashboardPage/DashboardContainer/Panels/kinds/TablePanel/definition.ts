@@ -35,7 +35,7 @@ export const definition: PanelDefinition<'signoz/TablePanel'> = {
 		},
 	},
 	queryBuilderFields: {},
-	// Asks the server to transpose its scalar result into UI rows (as does Scatter Plot).
+	// Asks the server to transpose its scalar result into UI rows.
 	queryCapabilities: {
 		requestType: Querybuildertypesv5RequestTypeDTO.scalar,
 		formatTableResultForUI: true,

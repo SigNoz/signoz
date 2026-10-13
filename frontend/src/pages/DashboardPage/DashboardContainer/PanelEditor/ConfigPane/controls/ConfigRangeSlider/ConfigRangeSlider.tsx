@@ -8,12 +8,10 @@ interface ConfigRangeSliderProps {
 	min: number;
 	max: number;
 	step: number;
-	/** Renders the current range beside the track (e.g. `4–24 px`). */
 	formatValue?: (value: [number, number]) => string;
 	onChange: (value: [number, number]) => void;
 }
 
-/** Two-thumb slider for a min/max pair; the thumbs can meet but not cross. */
 function ConfigRangeSlider({
 	testId,
 	value,

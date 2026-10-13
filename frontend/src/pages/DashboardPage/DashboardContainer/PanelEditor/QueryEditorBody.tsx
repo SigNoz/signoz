@@ -29,13 +29,13 @@ import PanelEditorLayout, {
 import PreviewPane from './PreviewPane/PreviewPane';
 import { useLegendSeries } from './hooks/useLegendSeries';
 import type { PanelEditorDraftApi } from './types';
+import { useGroupColumns } from './hooks/useGroupColumns';
 import { usePanelEditSession } from './hooks/usePanelEditSession';
 import { usePanelEditorSave } from './hooks/usePanelEditorSave';
 import { useSeedMetricUnit } from './hooks/useSeedMetricUnit';
 import { useSeedNewListColumns } from './hooks/useSeedNewListColumns';
 import { useSwitchColumnsOnSignalChange } from './hooks/useSwitchColumnsOnSignalChange';
 import { useSwitchToViewMode } from './hooks/useSwitchToViewMode';
-import { useGroupColumns } from './hooks/useGroupColumns';
 import { useTableColumns } from './hooks/useTableColumns';
 
 import logEvent from '@/api/common/logEvent';

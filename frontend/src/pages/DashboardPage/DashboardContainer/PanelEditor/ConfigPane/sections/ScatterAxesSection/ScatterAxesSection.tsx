@@ -13,7 +13,6 @@ import styles from './ScatterAxesSection.module.scss';
 type ScatterAxesSectionProps = SectionEditorProps<SectionKind.ScatterAxes> &
 	Pick<SectionEditorContext, 'axisColumnNames'>;
 
-/** Edits a Scatter Plot's `axes` slice: label, soft bounds and scale, per axis. */
 function ScatterAxesSection({
 	value,
 	savedValue,
