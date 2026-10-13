@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import {
 	getListDashboardViewsQueryKey,
 	invalidateListDashboardViews,
@@ -72,7 +72,7 @@ export function useSavedViews({
 		mutation: {
 			onSuccess: invalidate,
 			onError: (): void => {
-				toast.error('Failed to save view.');
+				toast.danger('Failed to save view.', { action: { label: 'Dismiss' } });
 			},
 		},
 	});
@@ -98,7 +98,7 @@ export function useSavedViews({
 				});
 			},
 			onError: (): void => {
-				toast.error('Failed to update view.');
+				toast.danger('Failed to update view.', { action: { label: 'Dismiss' } });
 			},
 		},
 	});
@@ -106,7 +106,7 @@ export function useSavedViews({
 		mutation: {
 			onSuccess: invalidate,
 			onError: (): void => {
-				toast.error('Failed to delete view.');
+				toast.danger('Failed to delete view.', { action: { label: 'Dismiss' } });
 			},
 		},
 	});

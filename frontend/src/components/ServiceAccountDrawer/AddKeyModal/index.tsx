@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
 import { DialogWrapper } from '@signozhq/ui/dialog';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	invalidateListServiceAccountKeys,
@@ -119,7 +119,7 @@ function AddKeyModal(): JSX.Element {
 
 	useEffect(() => {
 		if (copyState.error) {
-			toast.error('Failed to copy key');
+			toast.danger('Failed to copy key', { action: { label: 'Dismiss' } });
 		}
 	}, [copyState.error]);
 

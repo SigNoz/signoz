@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import logEvent from 'api/common/logEvent';
 import { cloneDeep } from 'lodash-es';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
@@ -25,6 +25,9 @@ export interface ClonePanelArgs {
 	panelId: string;
 	layoutIndex: number;
 }
+
+/** How long the "Panel cloned" toast gets before the clone is scrolled into view. */
+const REVEAL_DELAY_MS = 2000;
 
 /**
  * Duplicates a panel: deep-copies the source spec under a fresh id and drops a
@@ -66,20 +69,21 @@ export function useClonePanel({
 				}),
 			);
 
-			toast.promise(clone, {
+			void toast.promise(clone, {
 				loading: 'Cloning panel…',
 				success: 'Panel cloned',
 				error: 'Failed to clone panel',
+				errorAction: { label: 'Dismiss' },
 				position: 'top-center',
-				duration: 2000,
-				// Defer the reveal to the toast's auto-close so the confirmation shows first.
-				onAutoClose: () => setScrollTargetId(newPanelId),
 			});
 
 			// toast.promise owns the error UX; swallow here to avoid an unhandled
 			// rejection (the optimistic cache write + settle refetch handle state).
 			try {
 				await clone;
+				// Defer the reveal so the confirmation toast registers first (the
+				// reworked toast.promise has no auto-close hook to tie this to).
+				setTimeout(() => setScrollTargetId(newPanelId), REVEAL_DELAY_MS);
 				void logEvent(DashboardDetailEvents.PanelAction, {
 					action: 'clone',
 					panelType: toPanelType(source.panel.spec.plugin.kind),

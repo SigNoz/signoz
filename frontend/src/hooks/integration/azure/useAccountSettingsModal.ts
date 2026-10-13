@@ -6,7 +6,7 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Form } from 'antd';
 import { FormInstance } from 'antd/lib';
 import { useUpdateAccount } from 'api/generated/services/cloudintegration';
@@ -105,7 +105,8 @@ export function useAccountSettingsModal({
 						});
 					},
 					onError: (error) => {
-						toast.error('Failed to update account settings', {
+						toast.danger('Failed to update account settings', {
+							action: { label: 'Dismiss' },
 							description: error?.message,
 							position: 'bottom-right',
 						});

@@ -110,6 +110,43 @@ export const ConnectAccount: Story = {
 	},
 };
 
+/** Azure's connect dialog, which the AWS regions form does not open. */
+export const AzureConnectAccount: Story = {
+	args: { provider: 'azure', accounts: 0 },
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByText(
+				/integrate now/i,
+				undefined,
+				untilLoaded,
+			),
+		);
+		await screen.findByRole('dialog', undefined, untilLoaded);
+	},
+};
+
+/** The GCP region combobox, opened from the connect drawer. */
+export const GcpRegionDropdown: Story = {
+	args: { provider: 'gcp', accounts: 0 },
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByText(
+				/integrate now/i,
+				undefined,
+				untilLoaded,
+			),
+		);
+		await userEvent.click(
+			await screen.findByTestId(
+				'gcp-deployment-region-select',
+				undefined,
+				untilLoaded,
+			),
+		);
+		await screen.findByRole('listbox');
+	},
+};
+
 /** The regions an already-connected account collects from. */
 export const EditAccount: Story = {
 	play: async ({ canvasElement }): Promise<void> => {

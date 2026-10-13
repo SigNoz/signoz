@@ -1,5 +1,5 @@
 import { ReactNode, useCallback } from 'react';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';

@@ -2,6 +2,7 @@ import type { ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { screen, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -44,6 +45,20 @@ type Story = StoryObj<PanelEditorArgs>;
  * the left, the panel's formatting, legend, axes and thresholds on the right.
  */
 export const Default: Story = {};
+
+/** The ClickHouse query tab, including its info callout. */
+export const ClickHouseQuery: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByText('ClickHouse Query', undefined, {
+				timeout: 15000,
+			}),
+		);
+		await screen.findByText(/ClickHouse query agent skill/i, undefined, {
+			timeout: 15000,
+		});
+	},
+};
 
 /** The create route, seeding an unsaved panel of the chosen kind. */
 export const NewPanel: Story = {

@@ -5,7 +5,7 @@ import ROUTES from 'constants/routes';
 import { getAbsoluteUrl } from 'utils/basePath';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 
 import {

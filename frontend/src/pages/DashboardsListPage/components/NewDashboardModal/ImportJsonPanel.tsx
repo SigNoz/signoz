@@ -5,7 +5,7 @@ import { red } from '@ant-design/colors';
 // eslint-disable-next-line signoz/no-antd-components -- Upload has no @signozhq/ui equivalent yet
 import { Upload, UploadProps } from 'antd';
 import { Button } from '@signozhq/ui/button';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Typography } from '@signozhq/ui/typography';
 import { CircleAlert, MonitorDot, MoveRight } from '@signozhq/icons';
 import logEvent from 'api/common/logEvent';
@@ -73,8 +73,9 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 				void logEvent(DashboardListEvents.ImportFailed, {
 					reason: 'invalid-image',
 				});
-				toast.error(
+				toast.danger(
 					'Dashboard "image" must be an /assets/Icons or /assets/Logos path, or a base64 image',
+					{ action: { label: 'Dismiss' } },
 				);
 				return;
 			}
@@ -88,8 +89,9 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 			showErrorModal(error as APIError);
 			setIsCreateError(true);
 			void logEvent(DashboardListEvents.ImportFailed, { reason: 'schema' });
-			toast.error(
+			toast.danger(
 				error instanceof Error ? error.message : t('error_loading_json'),
+				{ action: { label: 'Dismiss' } },
 			);
 		} finally {
 			setIsCreating(false);

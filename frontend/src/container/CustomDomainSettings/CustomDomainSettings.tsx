@@ -12,7 +12,7 @@ import {
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Skeleton } from 'antd';
 import {
 	RenderErrorResponseDTO,
@@ -31,7 +31,7 @@ function DomainUpdateToast({
 	toastId,
 	url,
 }: {
-	toastId: string | number;
+	toastId: string;
 	url: string;
 }): JSX.Element {
 	const displayUrl = url?.split('://')[1] ?? url;
@@ -143,10 +143,12 @@ export default function CustomDomainSettings(): JSX.Element {
 					setIsEditModalOpen(false);
 					setCustomDomainSubdomain(subdomain);
 					const newUrl = `https://${subdomain}.${dnsSuffix}`;
-					toast.custom(
-						(toastId) => <DomainUpdateToast toastId={toastId} url={newUrl} />,
-						{ duration: 5000, position: 'bottom-right' }, // this 5 sec is as per design
-					);
+					const toastId = `domain-update:${newUrl}`;
+					toast.info(<DomainUpdateToast toastId={toastId} url={newUrl} />, {
+						id: toastId,
+						timeout: 5000, // this 5 sec is as per design
+						position: 'bottom-right',
+					});
 				},
 				onError: (error: AxiosError<RenderErrorResponseDTO>) => {
 					setUpdateDomainError(error as AxiosError<RenderErrorResponseDTO>);

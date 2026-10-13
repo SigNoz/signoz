@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
@@ -98,8 +98,9 @@ function Footer(): JSX.Element {
 			{
 				onSuccess: (response) => {
 					if (response.data?.alertCount === 0) {
-						toast.error(
+						toast.danger(
 							'No alerts found during the evaluation. This happens when rule condition is unsatisfied. You may adjust the rule threshold and retry.',
+							{ action: { label: 'Dismiss' } },
 						);
 						return;
 					}

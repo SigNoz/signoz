@@ -9,7 +9,7 @@ import { useQueryClient } from 'react-query';
 import { Key, LayoutGrid, Plus, Trash2, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Skeleton } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';

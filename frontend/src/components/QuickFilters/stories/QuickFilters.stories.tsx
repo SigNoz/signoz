@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { ComponentProps, ComponentType } from 'react';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { withCanvas } from '@/storybook/decorators/withCanvas';
 import type { GlobalMockArgs } from '@/storybook/globals';
@@ -15,7 +16,7 @@ import {
 	queryBuilder,
 	selectedServiceQueryBuilder,
 } from './QuickFilters.stories.mocks';
-import { QuickFiltersSource, SignalType } from '../types';
+import { FiltersType, QuickFiltersSource, SignalType } from '../types';
 
 const meta = {
 	title: 'Components/Quick Filters',
@@ -56,10 +57,10 @@ type TooltipsStory = StoryObj<
  * silence.
  */
 const settingsControl = (canvasElement: HTMLElement): Promise<HTMLElement> =>
-	waitFor(() => {
+	waitFor(async () => {
 		const control = within(canvasElement).getByTestId('settings-icon-container');
 
-		expect(control).not.toHaveAttribute('aria-disabled', 'true');
+		await expect(control).not.toHaveAttribute('aria-disabled', 'true');
 
 		return control;
 	});
@@ -102,6 +103,27 @@ export const SelectedExpandedCheckbox: Story = {
 		signoz: {
 			queryBuilder: selectedServiceQueryBuilder,
 		},
+	},
+};
+
+/** The duration min/max row, which a checkbox-only config never reaches. */
+export const DurationFilter: Story = {
+	args: {
+		signal: undefined,
+		source: QuickFiltersSource.TRACES_EXPLORER,
+		config: [
+			...checkboxConfig,
+			{
+				attributeKey: {
+					dataType: DataTypes.Float64,
+					key: 'duration_nano',
+					type: '',
+				},
+				defaultOpen: true,
+				title: 'Duration',
+				type: FiltersType.DURATION,
+			},
+		],
 	},
 };
 

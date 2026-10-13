@@ -47,6 +47,12 @@ import {
 	traceWaterfallResponse,
 } from './__story_mockdata__/traceDetails';
 
+/** Holds the download panel on screen: the export request never settles. */
+export const hangingTraceExport = rest.post(
+	'http://localhost/api/v1/export_raw_data',
+	(_req, res, ctx) => res(ctx.delay('infinite')),
+);
+
 const TRACE = 'Trace · trace';
 const PANEL = 'Trace · span panel';
 

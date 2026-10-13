@@ -1,7 +1,7 @@
 import { useCopyToClipboard } from 'react-use';
 import { Copy, KeyRound } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import useActiveLicenseKey from 'hooks/useActiveLicenseKey/useActiveLicenseKey';
 import { getMaskedKey } from 'utils/maskedKey';
 

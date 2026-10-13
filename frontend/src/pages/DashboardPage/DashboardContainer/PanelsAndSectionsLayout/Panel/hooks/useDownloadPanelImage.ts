@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import logEvent from 'api/common/logEvent';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 
@@ -44,7 +44,7 @@ export function useDownloadPanelImage(): UseDownloadPanelImage {
 					panelId,
 				});
 			} catch {
-				toast.error('Could not download panel.', {
+				toast.danger('Could not download panel.', {
 					action: {
 						label: 'Dismiss',
 						onClick: (): void => {

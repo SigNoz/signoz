@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from 'react-query';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import {
 	getGetDashboardV2QueryKey,
 	lockDashboardV2,

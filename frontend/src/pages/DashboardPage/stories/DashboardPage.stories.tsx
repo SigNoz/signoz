@@ -186,6 +186,22 @@ export const TooltipsInViewPanelModal: Story = {
 	},
 };
 
+/** A list or table panel's search field, expanded and filled. */
+export const PanelSearchExpanded: Story = {
+	play: async ({ canvasElement }) => {
+		await userEvent.click(
+			await within(canvasElement).findByTestId(
+				'panel-header-search-trigger',
+				{},
+				{ timeout: 15000 },
+			),
+		);
+		const input = await screen.findByTestId('panel-header-search-input-field');
+
+		await userEvent.type(input, 'error');
+	},
+};
+
 /**
  * The dashboard's own Actions menu, open: rename, clone, lock, full screen and
  * delete, the menu the toolbar's Actions button carries.
@@ -235,6 +251,33 @@ export const SectionActionsMenu: Story = {
 		);
 		await userEvent.click(firstSection);
 		await screen.findByRole('menu');
+	},
+};
+
+/** Delete dashboard, the confirm dialog the Actions menu opens. */
+export const DeleteDashboardDialog: Story = {
+	play: async (context) => {
+		await ActionsMenu.play?.(context);
+		await userEvent.click(await screen.findByText('Delete dashboard'));
+		await screen.findByText('This action cannot be undone.');
+	},
+};
+
+/** Rename section, the title dialog a section menu opens. */
+export const RenameSectionDialog: Story = {
+	play: async (context) => {
+		await SectionActionsMenu.play?.(context);
+		await userEvent.click(await screen.findByText('Rename section'));
+		await screen.findByRole('dialog', { name: /rename section/i });
+	},
+};
+
+/** New panel, including the section picker in the dialog footer. */
+export const AddPanelDialog: Story = {
+	play: async (context) => {
+		await SectionActionsMenu.play?.(context);
+		await userEvent.click(await screen.findByText('Add panel'));
+		await screen.findByText('Add panel to');
 	},
 };
 

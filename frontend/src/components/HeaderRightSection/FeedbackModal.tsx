@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Button, Input } from 'antd';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
@@ -39,7 +39,8 @@ function FeedbackModal({ onClose }: { onClose: () => void }): JSX.Element {
 			})
 			.catch(() => {
 				console.error(`Failed to submit ${entityName}`);
-				toast.error(`Failed to submit ${entityName}`, {
+				toast.danger(`Failed to submit ${entityName}`, {
+					action: { label: 'Dismiss' },
 					position: 'top-right',
 				});
 			})

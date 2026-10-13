@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { ConfigProvider } from 'antd';
 import {
 	type DashboardtypesPanelDTO,

@@ -4,7 +4,7 @@ import { useCopyToClipboard } from 'react-use';
 import { Copy, Ellipsis, Pin, PinOff } from '@signozhq/icons';
 import { Dropdown, type DropdownActionItemType } from '@signozhq/ui/dropdown';
 import { Input } from '@signozhq/ui/input';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
 import { darkTheme, lightTheme, themeExtension } from './constants';

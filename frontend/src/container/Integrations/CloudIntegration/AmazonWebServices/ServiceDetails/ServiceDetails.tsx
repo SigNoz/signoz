@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
 import { Button } from '@signozhq/ui/button';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Switch } from '@signozhq/ui/switch';
 import { Tabs } from '@signozhq/ui/tabs';
 import { Skeleton } from 'antd';
@@ -334,7 +334,8 @@ function ServiceDetails({
 						onError: (error) => {
 							console.error('Failed to update service config:', error);
 
-							toast.error('Failed to update service config', {
+							toast.danger('Failed to update service config', {
+								action: { label: 'Dismiss' },
 								description: error?.message,
 							});
 						},

@@ -7,7 +7,7 @@ import {
 	updateMyPassword,
 	useUpdateMyUserV2,
 } from 'api/generated/services/users';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Check, FileTerminal, Mail, User } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';

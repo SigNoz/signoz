@@ -3,7 +3,7 @@ import { useHistory } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Flex } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -56,14 +56,16 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 				setIsRequestIntegrationDialogOpen(false);
 				setIsSubmittingRequestForIntegration(false);
 			} else {
-				toast.error(response.error || 'Something went wrong', {
+				toast.danger(response.error || 'Something went wrong', {
+					action: { label: 'Dismiss' },
 					position: 'top-right',
 				});
 
 				setIsSubmittingRequestForIntegration(false);
 			}
 		} catch (error) {
-			toast.error('Something went wrong', {
+			toast.danger('Something went wrong', {
+				action: { label: 'Dismiss' },
 				position: 'top-right',
 			});
 			setIsSubmittingRequestForIntegration(false);

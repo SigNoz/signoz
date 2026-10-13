@@ -4,7 +4,7 @@ import { X } from '@signozhq/icons';
 import { Divider } from '@signozhq/ui/divider';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper, DrawerWrapperProps } from '@signozhq/ui/drawer';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';

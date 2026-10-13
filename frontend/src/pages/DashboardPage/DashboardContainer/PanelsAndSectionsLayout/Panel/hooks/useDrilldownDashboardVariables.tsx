@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import logEvent from 'api/common/logEvent';
 import { DashboardtypesDynamicVariableSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import type { FilterData } from 'container/QueryTable/Drilldown/drilldownUtils';
@@ -96,7 +96,9 @@ export function useDrilldownDashboardVariables({
 	const handleCreate = useCallback(
 		async (fieldName: string, fieldValue: string | number): Promise<void> => {
 			if (existingNames.has(fieldName)) {
-				toast.error(`Variable "${fieldName}" already exists`);
+				toast.danger(`Variable "${fieldName}" already exists`, {
+					action: { label: 'Dismiss' },
+				});
 				return;
 			}
 			void logEvent(DashboardDetailEvents.DrilldownAction, {
@@ -120,7 +122,9 @@ export function useDrilldownDashboardVariables({
 				setSelection(fieldName, { value: [fieldValue], allSelected: false });
 				toast.success(`Created variable "${fieldName}"`);
 			} catch {
-				toast.error('Failed to create variable');
+				toast.danger('Failed to create variable', {
+					action: { label: 'Dismiss' },
+				});
 			}
 			onClose();
 		},

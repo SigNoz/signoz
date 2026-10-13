@@ -11,7 +11,7 @@ import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import type { UploadFile } from 'antd';
 import getSessionStorage from 'api/browser/sessionstorage/get';
@@ -591,19 +591,23 @@ export default function ChatInput({
 			});
 			if (error === 'network') {
 				markVoiceUnavailable();
-				toast.error('Voice input unavailable in this browser', {
+				toast.danger('Voice input unavailable in this browser', {
+					action: { label: 'Dismiss' },
 					description:
 						'This browser cannot reach the speech recognition service. Try Google Chrome or Microsoft Edge.',
 				});
 			} else if (error === 'not-allowed') {
 				markVoiceUnavailable();
-				toast.error('Microphone access denied', {
+				toast.danger('Microphone access denied', {
+					action: { label: 'Dismiss' },
 					description:
 						'Grant microphone permission in your browser settings to use voice input.',
 				});
 			} else if (error === 'not-supported') {
 				markVoiceUnavailable();
-				toast.error('Voice input is not supported in this browser.');
+				toast.danger('Voice input is not supported in this browser.', {
+					action: { label: 'Dismiss' },
+				});
 			}
 			// `no-speech` is benign (just silence) — don't toast or hide.
 		},

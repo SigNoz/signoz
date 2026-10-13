@@ -138,6 +138,27 @@ export const AwaitingClarification: Story = {
 	args: { agent: 'awaiting-clarification', contents: BRIEF },
 };
 
+/** The severity select open, including the free-text option the new Select renders. */
+export const ClarificationSelectOpen: Story = {
+	args: { agent: 'awaiting-clarification', contents: BRIEF },
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+		const severityLabel = await canvas.findByText(
+			'Severity',
+			undefined,
+			untilLoaded,
+		);
+		const field = severityLabel.closest('div');
+
+		if (!field) {
+			throw new Error('Severity field is not in the clarification form');
+		}
+
+		await userEvent.click(within(field).getByRole('combobox'));
+		await screen.findByText('Other (type your own)');
+	},
+};
+
 /** Reopening the page on a thread that has not come back yet. */
 export const LoadingThread: Story = {
 	args: { dataState: 'loading' },
@@ -209,6 +230,23 @@ export const NegativeFeedback: Story = {
 
 			return bars[bars.length - 1];
 		}, /what went wrong/i);
+	},
+};
+
+/** Renaming a thread: the chromeless title input the row swaps in. */
+export const ConversationRename: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await clickUntil(async () => {
+			const [actions] = await within(canvasElement).findAllByLabelText(
+				/conversation actions/i,
+				undefined,
+				untilLoaded,
+			);
+
+			return actions;
+		}, /^Rename$/);
+		await userEvent.click(screen.getByText('Rename'));
+		await within(canvasElement).findByRole('textbox');
 	},
 };
 

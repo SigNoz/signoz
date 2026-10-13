@@ -6,7 +6,7 @@ import { ResizeTable } from 'components/ResizeTable';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { usePlotContext } from 'lib/uPlotV2/context/PlotContext';
 import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 
 import { getChartManagerColumns } from 'lib/visualization/components/ChartManager/getChartMangerColumns';
 import {

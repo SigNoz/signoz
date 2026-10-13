@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { ExportFormat } from 'lib/exportData/types';
 
 import { TraceDetailEventKeys, TraceDetailEvents } from '../events';
@@ -75,7 +75,9 @@ export function useDownloadTrace({
 						toast.info('Export cancelled');
 					}
 				} catch (error) {
-					toast.error('Failed to download trace');
+					toast.danger('Failed to download trace', {
+						action: { label: 'Dismiss' },
+					});
 					console.error(error);
 				}
 			};

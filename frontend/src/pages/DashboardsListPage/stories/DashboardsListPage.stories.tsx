@@ -116,6 +116,20 @@ export const Tooltips: Story = {
 	parameters: { msw: { handlers: [overflowingRows] } },
 };
 
+/** A pre-v2 dashboard, which opens the migration dialog instead of the page. */
+export const LegacyDashboardDialog: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const [legacy] = await within(canvasElement).findAllByTestId(
+			/^dashboard-legacy-/,
+			undefined,
+			{ timeout: 15000 },
+		);
+
+		await userEvent.click(legacy);
+		await screen.findByTestId('legacy-dashboard-id');
+	},
+};
+
 /** The first row's actions menu, open over the list. */
 export const RowActionsMenu: Story = {
 	play: async ({ canvasElement }) => {

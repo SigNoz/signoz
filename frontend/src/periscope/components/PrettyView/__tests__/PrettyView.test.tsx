@@ -7,9 +7,9 @@ jest.mock('react-use', () => ({
 	useCopyToClipboard: (): [unknown, jest.Mock] => [{}, jest.fn()],
 }));
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
-	toast: { success: jest.fn(), error: jest.fn() },
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
+	toast: { success: jest.fn(), danger: jest.fn() },
 }));
 
 describe('PrettyView', () => {

@@ -115,6 +115,19 @@ export const ChartAppearance: Story = {
 	},
 };
 
+/** Disconnect-values in threshold mode, with an invalid duration showing the inline error. */
+export const ChartAppearanceDisconnectThreshold: Story = {
+	play: async (context) => {
+		await ChartAppearance.play?.(context);
+		await pickSegment('panel-editor-v2-span-gaps', 'Threshold');
+		const input = await screen.findByTestId('panel-editor-v2-span-gaps-value');
+
+		await userEvent.clear(input);
+		await userEvent.type(input, '5x');
+		await screen.findByText(/enter a valid duration/i);
+	},
+};
+
 /** Dashed lines under a gradient fill, with the points drawn. */
 export const ChartAppearanceDashedGradient: Story = {
 	play: async (context) => {

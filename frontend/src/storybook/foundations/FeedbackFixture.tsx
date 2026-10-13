@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Trash2, TriangleAlert } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { ConfirmDialog } from '@signozhq/ui/dialog';
-import { Toaster, toast } from '@signozhq/ui/sonner';
+import { Toaster, toast } from '@signozhq/ui/toast';
 
 import MessageTip from '@/components/MessageTip';
 
@@ -10,6 +10,11 @@ export type FeedbackState =
 	| 'success-toast'
 	| 'actionable-error-toast'
 	| 'long-toast'
+	| 'promise-loading-toast'
+	| 'promise-error-toast'
+	| 'warning-toast'
+	| 'info-toast'
+	| 'danger-description-toast'
 	| 'inline-alert'
 	| 'confirmation'
 	| 'toast-over-confirmation';
@@ -21,6 +26,8 @@ interface FeedbackFixtureProps {
 const longMessage =
 	'We could not apply the retention policy because the selected storage tier is unavailable. Review the workspace settings, then try again.';
 
+const pendingSave = new Promise<void>(() => undefined);
+
 function FeedbackFixture({ state }: FeedbackFixtureProps): JSX.Element {
 	const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
 
@@ -31,19 +38,72 @@ function FeedbackFixture({ state }: FeedbackFixtureProps): JSX.Element {
 		}
 
 		if (state === 'actionable-error-toast') {
-			toast.error('Failed to save the notification channel', {
+			toast.danger('Failed to save the notification channel', {
 				action: { label: 'Retry', onClick: (): void => undefined },
 			});
 			return;
 		}
 
-		toast.error(longMessage, { duration: Infinity });
+		if (state === 'promise-loading-toast') {
+			void toast.promise(pendingSave, {
+				id: 'feedback-promise-loading',
+				loading: 'Enabling the alert rule',
+				success: 'Alert rule enabled',
+				error: 'Could not enable the alert rule',
+				errorAction: { label: 'Dismiss' },
+			});
+			return;
+		}
+
+		if (state === 'promise-error-toast') {
+			void toast
+				.promise(Promise.reject(new Error('failed')), {
+					id: 'feedback-promise-error',
+					loading: 'Cloning the panel',
+					success: 'Panel cloned',
+					error: 'Could not clone the panel',
+					errorAction: { label: 'Dismiss' },
+					position: 'top-center',
+				})
+				.catch((): void => undefined);
+			return;
+		}
+
+		if (state === 'warning-toast') {
+			toast.warning('Some invites failed', { timeout: 0 });
+			return;
+		}
+
+		if (state === 'info-toast') {
+			toast.info('Export cancelled', {
+				position: 'bottom-right',
+				timeout: 0,
+			});
+			return;
+		}
+
+		if (state === 'danger-description-toast') {
+			toast.danger('Failed to update account settings', {
+				description:
+					'The service account does not have permission to change this connection.',
+				action: { label: 'Dismiss' },
+				position: 'bottom-right',
+			});
+			return;
+		}
+
+		toast.danger(longMessage, { action: { label: 'Dismiss' } });
 	};
 
 	const isToastStory =
 		state === 'success-toast' ||
 		state === 'actionable-error-toast' ||
-		state === 'long-toast';
+		state === 'long-toast' ||
+		state === 'promise-loading-toast' ||
+		state === 'promise-error-toast' ||
+		state === 'warning-toast' ||
+		state === 'info-toast' ||
+		state === 'danger-description-toast';
 	const confirmationTitle = 'Delete environment';
 
 	return (
@@ -112,7 +172,7 @@ function FeedbackFixture({ state }: FeedbackFixtureProps): JSX.Element {
 					</ConfirmDialog>
 				</>
 			)}
-			<Toaster closeButton position="top-right" />
+			<Toaster position="top-right" />
 		</>
 	);
 }

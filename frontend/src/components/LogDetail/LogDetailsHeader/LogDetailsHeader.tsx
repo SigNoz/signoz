@@ -5,7 +5,7 @@ import { Typography } from '@signozhq/ui/typography';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { aggregateAttributesResourcesToString } from 'container/LogDetailedView/utils';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import {
 	ChevronDown,

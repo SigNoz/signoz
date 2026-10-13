@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction, useCallback, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Form, FormInstance } from 'antd';
 import {
 	CreateAccountMutationResult,
@@ -155,7 +155,8 @@ export function useIntegrationModal({
 					},
 					onError: () => {
 						setModalState(ModalStateEnum.ERROR);
-						toast.error('Failed to create account connection', {
+						toast.danger('Failed to create account connection', {
+							action: { label: 'Dismiss' },
 							position: 'bottom-right',
 						});
 					},

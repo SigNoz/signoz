@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getSupportedSignals } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
@@ -117,8 +117,8 @@ jest.mock('@signozhq/ui/resizable', () => ({
 		</div>
 	),
 }));
-jest.mock('@signozhq/ui/sonner', () => ({
-	toast: { success: jest.fn(), error: jest.fn() },
+jest.mock('@signozhq/ui/toast', () => ({
+	toast: { success: jest.fn(), danger: jest.fn() },
 }));
 const mockShowErrorModal = jest.fn();
 jest.mock('providers/ErrorModalProvider', () => ({
@@ -371,7 +371,7 @@ describe('PanelEditorContainer composition', () => {
 		await userEvent.click(screen.getByTestId('editor-save'));
 
 		await waitFor(() => expect(mockShowErrorModal).toHaveBeenCalledWith(failure));
-		expect(toast.error).not.toHaveBeenCalled();
+		expect(toast.danger).not.toHaveBeenCalled();
 	});
 
 	it('marks the saved panel to be scrolled into view on the dashboard', async () => {

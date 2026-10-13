@@ -3,7 +3,7 @@ import { useQueryClient } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
 import { useDashboardPermissions } from 'hooks/dashboards/useDashboardPermissions';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import logEvent from 'api/common/logEvent';
 import {
 	invalidateGetPublicDashboard,

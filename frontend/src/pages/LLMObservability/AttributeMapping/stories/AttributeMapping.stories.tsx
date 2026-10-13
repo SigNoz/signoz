@@ -70,6 +70,20 @@ export const GroupActionsMenu: Story = {
 	},
 };
 
+/** The drawer that adds a mapping to the first group. */
+export const AddMappingDrawer: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByRole(
+				'button',
+				{ name: /add mapping/i },
+				{ timeout: 15000 },
+			),
+		);
+		await screen.findByText('New custom mapping');
+	},
+};
+
 /** The first mapping group's edit drawer, opened from its menu. */
 export const GroupFormDrawer: Story = {
 	play: async (context): Promise<void> => {

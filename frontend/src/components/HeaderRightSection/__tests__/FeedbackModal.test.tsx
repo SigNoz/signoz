@@ -1,6 +1,6 @@
 // Mock dependencies before imports
 import { useLocation } from 'react-router-dom';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { logEventMock } from '__tests__/logEventMock';
@@ -14,11 +14,11 @@ jest.mock('react-router-dom', () => ({
 	useLocation: jest.fn(),
 }));
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
 	toast: {
 		success: jest.fn(),
-		error: jest.fn(),
+		danger: jest.fn(),
 	},
 }));
 
@@ -50,7 +50,7 @@ describe('FeedbackModal', () => {
 			isCloudUser: false,
 		});
 		mockToast.success.mockClear();
-		mockToast.error.mockClear();
+		mockToast.danger.mockClear();
 	});
 
 	it('should render feedback modal with all tabs', () => {

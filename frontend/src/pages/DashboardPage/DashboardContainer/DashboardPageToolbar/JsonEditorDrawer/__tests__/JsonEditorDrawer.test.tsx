@@ -44,8 +44,8 @@ jest.mock('@monaco-editor/react', () => ({
 	),
 }));
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	toast: { success: jest.fn(), error: jest.fn() },
+jest.mock('@signozhq/ui/toast', () => ({
+	toast: { success: jest.fn(), danger: jest.fn() },
 }));
 
 jest.mock('react-use', () => ({

@@ -1,4 +1,4 @@
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { render, screen, userEvent } from 'tests/test-utils';
 import { ILog } from 'types/api/logs/log';
@@ -7,8 +7,8 @@ import LogDetail from '..';
 import { VIEW_TYPES } from '../constants';
 import { LogDetailProps } from '../LogDetail.interfaces';
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	toast: { success: jest.fn(), error: jest.fn() },
+jest.mock('@signozhq/ui/toast', () => ({
+	toast: { success: jest.fn(), danger: jest.fn() },
 }));
 
 // DataViewer pulls in react-json-tree (ESM) + Monaco; mock it (as trace's tests

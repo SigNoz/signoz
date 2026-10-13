@@ -97,3 +97,34 @@ export const NavSettingsMenu: Story = {
 		await screen.findByRole('menu');
 	},
 };
+
+/** Impersonation mode: the warning strip above the shell. */
+export const NoAuthBanner: Story = {
+	args: { banner: 'no-auth' },
+	play: async (): Promise<void> => {
+		await screen.findByTestId('no-auth-banner', undefined, { timeout: 10000 });
+	},
+};
+
+/** The header feedback popover, opened from the top nav. */
+export const FeedbackDialog: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByRole(
+				'button',
+				{ name: 'Feedback' },
+				{ timeout: 10000 },
+			),
+		);
+		await screen.findByPlaceholderText('Write your feedback here...');
+	},
+};
+
+/** The command palette, opened with the same shortcut the shell listens for. */
+export const CommandPalette: Story = {
+	play: async (): Promise<void> => {
+		await userEvent.keyboard('{Meta>}k{/Meta}');
+		await screen.findByTestId('cmdk-palette', undefined, { timeout: 10000 });
+		await screen.findByText('Go to Home');
+	},
+};

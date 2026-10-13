@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { useQueryClient } from 'react-query';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import GroupByIcon from 'assets/CustomIcons/GroupByIcon';
 import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBuilderV2/utils';
@@ -142,7 +142,10 @@ export function useSpanAttributeActions(): SpanAttributeAction[] {
 					ROUTES.TRACES_EXPLORER,
 				);
 			} catch {
-				toast.error(SOMETHING_WENT_WRONG, { position: 'top-right' });
+				toast.danger(SOMETHING_WENT_WRONG, {
+					action: { label: 'Dismiss' },
+					position: 'top-right',
+				});
 			}
 		},
 		[currentQuery, getAutocompleteKey, redirectWithQueryBuilderData],
@@ -185,7 +188,10 @@ export function useSpanAttributeActions(): SpanAttributeAction[] {
 					ROUTES.TRACES_EXPLORER,
 				);
 			} catch {
-				toast.error(SOMETHING_WENT_WRONG, { position: 'top-right' });
+				toast.danger(SOMETHING_WENT_WRONG, {
+					action: { label: 'Dismiss' },
+					position: 'top-right',
+				});
 			}
 		},
 		[currentQuery, getAutocompleteKey, redirectWithQueryBuilderData],

@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useQueryClient } from 'react-query';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import {
 	invalidateListDashboardsForUserV2,
 	useMigrateDashboardV2,
@@ -32,7 +32,9 @@ export function useRetryMigration(
 				onMigrated?.();
 			},
 			onError: (error): void => {
-				toast.error(toAPIError(error, FAILURE_MESSAGE).getErrorMessage());
+				toast.danger(toAPIError(error, FAILURE_MESSAGE).getErrorMessage(), {
+					action: { label: 'Dismiss' },
+				});
 			},
 		},
 	});

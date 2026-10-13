@@ -10,7 +10,7 @@ import logEvent from 'api/common/logEvent';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { useCopyToClipboard } from 'react-use';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 
 import { defineJsonEditorTheme, JSON_EDITOR_THEME } from './editorTheme';
 import styles from './JsonEditorDrawer.module.scss';

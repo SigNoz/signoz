@@ -4,7 +4,7 @@ import { Input as AntInput } from 'antd';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { AxiosError } from 'axios';
 import { generatePath } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
@@ -76,7 +76,9 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 			);
 		} catch (e) {
 			showErrorModal(e as APIError);
-			toast.error((e as AxiosError).toString() || 'Failed to create dashboard');
+			toast.danger((e as AxiosError).toString() || 'Failed to create dashboard', {
+				action: { label: 'Dismiss' },
+			});
 			setSubmitting(false);
 		}
 	};
