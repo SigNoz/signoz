@@ -23,6 +23,7 @@ import MsTeamsSettings from './Settings/MsTeams';
 import OpsgenieSettings from './Settings/Opsgenie';
 import PagerSettings from './Settings/Pager';
 import SlackSettings from './Settings/Slack';
+import TelegramSettings from './Settings/Telegram';
 import WebhookSettings from './Settings/Webhook';
 import { Button } from './styles';
 
@@ -80,6 +81,15 @@ function FormAlertChannels({
 					<IncidentIOSettings
 						setSelectedConfig={setSelectedConfig}
 						initialMetadata={initialValue?.metadata as Record<string, string>}
+					/>
+				);
+			case ChannelKind.telegram:
+				return (
+					<TelegramSettings
+						setSelectedConfig={setSelectedConfig}
+						initialDisableNotifications={
+							initialValue?.disableNotifications as boolean
+						}
 					/>
 				);
 			case ChannelKind.opsgenie:
@@ -143,6 +153,9 @@ function FormAlertChannels({
 						disabled={editing}
 						onChange={onTypeChangeHandler}
 						value={type}
+						// the list is virtualized, and the default height clips the last
+						// kinds out of the rendered window
+						listHeight={420}
 						data-testid="channel-type-select"
 					>
 						<Select.Option value="slack" key="slack" data-testid="select-option">
@@ -195,6 +208,14 @@ function FormAlertChannels({
 							data-testid="select-option"
 						>
 							incident.io
+						</Select.Option>
+
+						<Select.Option
+							value="telegram"
+							key="telegram"
+							data-testid="select-option"
+						>
+							Telegram
 						</Select.Option>
 					</Select>
 				</Form.Item>

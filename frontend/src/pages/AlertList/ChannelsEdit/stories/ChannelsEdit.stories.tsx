@@ -163,3 +163,11 @@ export const JiraServiceManagementOps: Story = {
 export const IncidentIO: Story = {
 	args: { channelType: 'incidentio' },
 };
+
+/**
+ * The Telegram channel, whose chat and topic are the only numeric fields the
+ * form edits, and whose message template the API fills when it is left empty.
+ */
+export const Telegram: Story = {
+	args: { channelType: 'telegram' },
+};

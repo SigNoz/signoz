@@ -81,6 +81,7 @@ export const CHANNEL_TYPES = [
 	'jira',
 	'jsmops',
 	'incidentio',
+	'telegram',
 ] as const;
 
 export type ChannelType = (typeof CHANNEL_TYPES)[number];
@@ -674,6 +675,22 @@ const CHANNEL_SEEDS: ChannelSeed[] = [
 		},
 	},
 	{
+		name: 'oncall-telegram',
+		type: 'telegram',
+		receiver: {
+			telegram_configs: [
+				{
+					bot_token: 'story-bot-token',
+					// negative, the way Telegram numbers a group
+					chat: -1001234567890,
+					send_resolved: true,
+					message: '<b>{{ .CommonLabels.alertname }}</b>',
+					message_thread_id: 42,
+				},
+			],
+		},
+	},
+	{
 		name: 'oncall-incidentio',
 		type: 'incidentio',
 		receiver: {
@@ -788,6 +805,14 @@ const CHANNEL_SPECS: Record<ChannelType, Record<string, unknown>> = {
 		apiKey: 'story-jsm-key',
 		message: '{{ .CommonLabels.alertname }}',
 		description: 'Story channel',
+		sendResolved: true,
+	},
+	telegram: {
+		botToken: 'story-bot-token',
+		chatId: -1001234567890,
+		title: '<b>{{ .CommonLabels.alertname }}</b>',
+		message: '<b>{{ .CommonLabels.alertname }}</b>',
+		messageThreadId: 42,
 		sendResolved: true,
 	},
 	incidentio: {
