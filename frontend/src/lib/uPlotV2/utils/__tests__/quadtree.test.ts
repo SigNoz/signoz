@@ -59,12 +59,4 @@ describe('Quadtree', () => {
 		expect(collect(tree, 40, 40, 5, 5).has(99)).toBe(true);
 		expect(collect(tree, 55, 55, 5, 5).has(99)).toBe(true);
 	});
-
-	it('clear empties the tree', () => {
-		const tree = new Quadtree<Item>(0, 0, 100, 100);
-		tree.add({ id: 1, x: 10, y: 10, w: 5, h: 5 });
-		tree.clear();
-
-		expect(collect(tree, 0, 0, 100, 100).size).toBe(0);
-	});
 });

@@ -8,12 +8,7 @@ export interface QuadtreeRect {
 const MAX_OBJECTS = 10;
 const MAX_LEVELS = 4;
 
-/**
- * Spatial index over axis-aligned rectangles, for answering "what is under the
- * cursor" on charts whose marks have no shared x order to binary-search. An item
- * straddling a quadrant boundary lives in every quadrant it touches, so `get` can
- * report it more than once.
- */
+/** Rect index for cursor hit-testing; items straddling quadrants are stored in each, so `get` may repeat them. */
 export class Quadtree<T extends QuadtreeRect = QuadtreeRect> {
 	private items: T[] = [];
 	private quadrants: Quadtree<T>[] | null = null;
@@ -60,11 +55,6 @@ export class Quadtree<T extends QuadtreeRect = QuadtreeRect> {
 				quadrant.get(x, y, w, h, visit),
 			);
 		}
-	}
-
-	clear(): void {
-		this.items = [];
-		this.quadrants = null;
 	}
 
 	private split(): void {

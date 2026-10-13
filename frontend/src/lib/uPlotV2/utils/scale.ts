@@ -211,33 +211,6 @@ function getLogScaleRange(
 }
 
 /**
- * Computes the arcsinh-scale range using uPlot.rangeAsinh, which pads to whole
- * magnitudes on either side of zero and pins an edge that sits exactly on zero.
- */
-function getAsinhScaleRange(
-	minMax: Range.MinMax,
-	params: RangeFunctionParams,
-	dataMin: number | null,
-	dataMax: number | null,
-	logBase?: uPlot.Scale['log'],
-): Range.MinMax {
-	const { min, max } = params;
-	const resolvedMin = min ?? dataMin;
-	const resolvedMax = max ?? dataMax;
-
-	if (resolvedMin == null || resolvedMax == null) {
-		return minMax;
-	}
-
-	return uPlot.rangeAsinh(
-		resolvedMin,
-		resolvedMax,
-		(logBase ?? 10) as 2 | 10,
-		true,
-	);
-}
-
-/**
  * Snaps log-scale [min, max] to exact powers of logBase (nearest magnitude below/above).
  * If min and max would be equal after snapping, max is increased by one magnitude so the range is valid.
  */
@@ -339,8 +312,6 @@ export function createRangeFunction(
 			minMax = getLogScaleRange(minMax, params, dataMin, dataMax, logBase);
 			const logFn = scale.log === 2 ? Math.log2 : Math.log10;
 			minMax = adjustLogRange(minMax, (logBase ?? 10) as number, logFn);
-		} else if (scale.distr === 4) {
-			minMax = getAsinhScaleRange(minMax, params, dataMin, dataMax, logBase);
 		}
 
 		minMax = applyHardLimits(minMax, params, scale.distr ?? 1);

@@ -181,8 +181,7 @@ export function buildClickData(event: MouseEvent, plot: uPlot): ChartClickData {
 		absoluteMouseY: event.clientY,
 	};
 
-	// A faceted plot (scatter) has no shared x series, so `data[0]` is null and
-	// `posToIdx` would throw; the hit is the plot's own to resolve.
+	// Faceted (scatter): no shared x, so `posToIdx` would throw.
 	if (plot.data[0] == null) {
 		return {
 			xValue,

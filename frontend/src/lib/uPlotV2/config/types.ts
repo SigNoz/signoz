@@ -94,8 +94,7 @@ export interface AxisProps {
 	isDarkMode?: boolean;
 	/** Axis is on a log scale — thins the grid lines to keep dense decades readable. */
 	isLogScale?: boolean;
-	/** Unit the value ticks are formatted in (`spec.formatting.unit`). Named for the
-	 *  y axis, the only value axis until scatter; a non-time x axis reads it too. */
+	/** Unit the value ticks are formatted in (`spec.formatting.unit`); a non-time x axis reads it too. */
 	yAxisUnit?: string;
 	/**
 	 * X axis carries timestamps, so its ticks format as dates/times. Declared by the caller
@@ -114,8 +113,7 @@ export interface AxisProps {
 export enum DistributionType {
 	Linear = 'linear',
 	Logarithmic = 'logarithmic',
-	/** arcsinh: linear within ±`asinhThreshold`, logarithmic beyond. Takes zero and
-	 *  negatives, which a plain log cannot place. */
+	/** arcsinh: linear within ±`asinhThreshold`, log beyond; places zero and negatives. */
 	SymmetricLog = 'symlog',
 }
 
@@ -162,7 +160,7 @@ export enum DrawStyle {
 	Points = 'points',
 	Bar = 'bar',
 	Histogram = 'histogram',
-	/** Faceted (mode 2) discs at per-series x/y, drawn by the caller's `pathBuilder`. */
+	/** Mode 2; drawn by the caller's `pathBuilder`. */
 	Scatter = 'scatter',
 }
 

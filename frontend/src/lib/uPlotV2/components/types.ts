@@ -123,7 +123,6 @@ export interface HeatmapTooltipProps
 	groupColor: string;
 }
 
-/** Not part of `TooltipProps`: it describes one point's channels, not a series list. */
 export interface ScatterTooltipProps
 	extends BaseTooltipProps, TooltipRenderArgs {
 	channels: ScatterChannels;

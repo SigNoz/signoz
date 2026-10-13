@@ -1,6 +1,5 @@
 import uPlot from 'uplot';
 
-import { PlotMode } from '../../../config/types';
 import { UPlotConfigBuilder } from '../../../config/UPlotConfigBuilder';
 import {
 	applyScatterPlugin,
@@ -268,7 +267,6 @@ describe('applyScatterPlugin', () => {
 		applyScatterPlugin(builder, plugin);
 		const config = builder.getConfig();
 
-		expect(builder.getMode()).toBe(PlotMode.Faceted);
 		expect(config.mode).toBe(2);
 		expect(config.cursor?.drag).toMatchObject({
 			x: false,

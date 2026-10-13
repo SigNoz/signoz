@@ -21,10 +21,7 @@ export interface ScatterPluginOptions {
 	hoverTolerance?: number;
 }
 
-/**
- * One faceted series: parallel columns, one point per index. Sizes are in the
- * caller's units and mapped to `pointSize` at draw time; `null` draws at `fixed`.
- */
+/** Parallel columns; a `null` size draws at `fixed`. */
 export type ScatterSeriesData = [
 	xs: number[],
 	ys: number[],
@@ -45,7 +42,6 @@ export interface ScatterChannel {
 	unit?: string;
 }
 
-/** What each visual channel plots, for the tooltip and axes. */
 export interface ScatterChannels {
 	x: ScatterChannel;
 	y: ScatterChannel;

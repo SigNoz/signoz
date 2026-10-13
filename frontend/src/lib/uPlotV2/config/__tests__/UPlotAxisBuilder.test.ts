@@ -138,6 +138,12 @@ describe('UPlotAxisBuilder', () => {
 		).not.toHaveProperty('border');
 	});
 
+	it('leaves the axis line off when the grid is hidden', () => {
+		expect(
+			new UPlotAxisBuilder(createAxisProps({ grid: { show: false } })).getConfig(),
+		).not.toHaveProperty('border');
+	});
+
 	it('passes explicit splits and a label filter through to uPlot', () => {
 		const splits = jest.fn();
 		const filter = jest.fn();

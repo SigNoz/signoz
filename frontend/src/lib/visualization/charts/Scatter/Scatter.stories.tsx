@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
@@ -117,32 +117,23 @@ function ScatterStory(props: ScatterStoryProps): JSX.Element {
 		height,
 	} = props;
 	const isDarkMode = useIsDarkMode();
-	const [drawMs, setDrawMs] = useState<number | null>(null);
 
 	const series = useMemo(() => buildSeries(props), [props]);
-	const pointCount = series.reduce((sum, entry) => sum + entry.xs.length, 0);
-	const drawLabel = drawMs === null ? '—' : `${drawMs.toFixed(1)} ms`;
 
-	const config = useMemo(() => {
-		const builder = buildScatterConfig({
-			id: 'scatter-story',
-			series,
-			isDarkMode,
-			x: { unit: 'reqps', scale: xScale },
-			y: { unit: 'ms', scale: yScale },
-			pointSize: { fixed: pointSize, min: 4, max: pointSize * 4 },
-			fillOpacity,
-			thresholds: thresholds ? THRESHOLDS : undefined,
-		});
-		let started = 0;
-		builder.addHook('drawClear', (): void => {
-			started = performance.now();
-		});
-		builder.addHook('draw', (): void => {
-			setDrawMs(performance.now() - started);
-		});
-		return builder;
-	}, [series, isDarkMode, xScale, yScale, pointSize, fillOpacity, thresholds]);
+	const config = useMemo(
+		() =>
+			buildScatterConfig({
+				id: 'scatter-story',
+				series,
+				isDarkMode,
+				x: { unit: 'reqps', scale: xScale },
+				y: { unit: 'ms', scale: yScale },
+				pointSize: { fixed: pointSize, min: 4, max: pointSize * 4 },
+				fillOpacity,
+				thresholds: thresholds ? THRESHOLDS : undefined,
+			}),
+		[series, isDarkMode, xScale, yScale, pointSize, fillOpacity, thresholds],
+	);
 
 	const data = useMemo(() => prepareScatterChartData(series), [series]);
 
@@ -173,9 +164,6 @@ function ScatterStory(props: ScatterStoryProps): JSX.Element {
 				resolvePointLabels={resolvePointLabels}
 				canPinTooltip
 			/>
-			<p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, opacity: 0.7 }}>
-				{`${pointCount.toLocaleString()} points · last draw ${drawLabel}`}
-			</p>
 		</div>
 	);
 }

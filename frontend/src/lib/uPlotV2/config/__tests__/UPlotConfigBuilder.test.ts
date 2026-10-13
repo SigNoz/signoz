@@ -680,7 +680,6 @@ describe('UPlotConfigBuilder plot mode', () => {
 
 		const faceted = new UPlotConfigBuilder({ id: 'faceted' });
 		faceted.setMode(PlotMode.Faceted);
-		expect(faceted.getMode()).toBe(PlotMode.Faceted);
 		expect(faceted.getConfig().mode).toBe(2);
 	});
 });

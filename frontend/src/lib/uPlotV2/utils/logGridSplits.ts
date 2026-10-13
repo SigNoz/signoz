@@ -12,11 +12,7 @@ function isDecade(value: number): boolean {
 
 const LOG_SPLIT_MULTIPLES = [1, 2, 5];
 
-/**
- * Splits at 1, 2 and 5 × 10ⁿ inside the scale. uPlot's own log splits step
- * from the scale's minimum, so a range not snapped to a power of ten would
- * label 10.79, 21.58, … instead.
- */
+/** 1, 2, 5 × 10ⁿ in range; uPlot's log splits step from an unsnapped min (10.79, 21.58…). */
 export const logScaleSplits: uPlot.Axis.Splits = (_u, _axisIdx, min, max) => {
 	if (!(min > 0) || !(max > min)) {
 		return [];
@@ -38,11 +34,7 @@ export const logScaleSplits: uPlot.Axis.Splits = (_u, _axisIdx, min, max) => {
 	return splits;
 };
 
-/**
- * Labels for `logScaleSplits`: every power of ten, then any 2 or 5 that sits
- * at least `space` px from the labels already kept, so a range spanning under
- * one decade still reads at both ends.
- */
+/** Labels every decade, plus any 2 or 5 at least `space` px clear. */
 export const spacedLogLabels: uPlot.Axis.Filter = (
 	u,
 	splits,

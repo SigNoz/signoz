@@ -1,5 +1,4 @@
-// Surface matches the shared Tooltip: same tokens, same radius, no shadow.
-// Padding lives on the sections so a footer can reach the container edges.
+// Sections own the padding so the footer spans edge to edge.
 .container {
 	font-family: 'Inter';
 	font-size: 12px;
@@ -78,7 +77,6 @@
 	color: var(--text-vanilla-100);
 }
 
-// The group values name the point; the channels are what it says.
 .rowMuted {
 	color: var(--text-vanilla-400);
 }
