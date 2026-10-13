@@ -31,7 +31,7 @@ const (
 	batchProcessorPrefix          = "batch/"
 	normalizerProcessor           = "signozlogsnormalizer"
 	normalizerProcessorPrefix     = "signozlogsnormalizer/"
-	userPipelinesBeforeNormalizer = "before"
+	normalizerBeforeUserPipelines = "before"
 )
 
 // check if the processors already exist
@@ -95,8 +95,8 @@ func getOtelPipelineFromConfig(config map[string]interface{}) (*otelPipeline, er
 //  3. custom processors (non-signoz, non-memory_limiter, non-batch processors from the current config)
 //  4. batch processors (any processor named "batch" or "batch/<id>") and anything after them
 //
-// If a signozlogsnormalizer processor is present, the order above is skipped: user-pipeline
-// processors go right after the first one, or right before it when its config sets
+// If a signozlogsnormalizer processor is present, the order above is skipped: the first one
+// runs right after user-pipeline processors, or right before them when its config sets
 // `opamp.position: before`, and the other processors keep their places.
 func buildCollectorPipelineProcessorsList(
 	currentCollectorProcessors []string,
@@ -113,16 +113,16 @@ func buildCollectorPipelineProcessorsList(
 	}
 
 	if normalizerIdx := slices.IndexFunc(currentCollectorProcessors, isNormalizerProcessor); normalizerIdx >= 0 {
-		before := opampPosition(processorConfigs, currentCollectorProcessors[normalizerIdx]) == userPipelinesBeforeNormalizer
+		normalizerFirst := opampPosition(processorConfigs, currentCollectorProcessors[normalizerIdx]) == normalizerBeforeUserPipelines
 		result := make([]string, 0, len(currentCollectorProcessors)+len(signozPipelineProcessorNames))
 		for idx, p := range currentCollectorProcessors {
-			if idx == normalizerIdx && before {
+			if idx == normalizerIdx && !normalizerFirst {
 				result = append(result, signozPipelineProcessorNames...)
 			}
 			if _, inUserPipelines := userPipelineSet[p]; !inUserPipelines && !hasSignozPipelineProcessorPrefix(p) {
 				result = append(result, p)
 			}
-			if idx == normalizerIdx && !before {
+			if idx == normalizerIdx && normalizerFirst {
 				result = append(result, signozPipelineProcessorNames...)
 			}
 		}
@@ -178,7 +178,7 @@ func collectorNormalizesFirst(collectorConf map[string]interface{}) bool {
 		return false
 	}
 	processorConfigs, _ := collectorConf["processors"].(map[string]interface{})
-	return opampPosition(processorConfigs, p.Pipelines.Logs.Processors[normalizerIdx]) != userPipelinesBeforeNormalizer
+	return opampPosition(processorConfigs, p.Pipelines.Logs.Processors[normalizerIdx]) == normalizerBeforeUserPipelines
 }
 
 func opampPosition(processorConfigs map[string]interface{}, name string) string {
