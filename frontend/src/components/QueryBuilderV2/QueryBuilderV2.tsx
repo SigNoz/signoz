@@ -4,7 +4,11 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { Formula } from 'container/QueryBuilder/components/Formula';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { IBuilderTraceOperator } from 'types/api/queryBuilder/queryBuilderData';
+import { getBuilderVariant } from 'lib/query/queryMode';
+import {
+	BuilderVariant,
+	IBuilderTraceOperator,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { QueryBuilderField } from './queryBuilderFields.types';
@@ -60,9 +64,17 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		[config],
 	);
 
+	const isAIQuery =
+		getBuilderVariant(currentQuery.builder) === BuilderVariant.AI;
+
 	useEffect(() => {
 		if (currentDataSource !== initialDataSource || newPanelType !== panelType) {
-			if (newPanelType === PANEL_TYPES.BAR && !currentDataSource) {
+			// AI queries are traces-only; BAR must not force metrics on them.
+			if (isAIQuery) {
+				handleSetConfig(newPanelType, DataSource.TRACES);
+				return;
+			}
+			if (newPanelType === PANEL_TYPES.BAR) {
 				handleSetConfig(PANEL_TYPES.BAR, DataSource.METRICS);
 				return;
 			}
@@ -74,6 +86,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		initialDataSource,
 		currentDataSource,
 		newPanelType,
+		isAIQuery,
 	]);
 
 	useEffect(() => {
