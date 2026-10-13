@@ -38,7 +38,7 @@ jest.mock(
 	'pages/DashboardPage/DashboardContainer/store/useDashboardStore',
 	() => ({
 		useDashboardStore: (selector: (s: unknown) => unknown): unknown =>
-			selector({ dashboardId: 'dash-1' }),
+			selector({ dashboardId: 'dash-1', resolvedVariables: {} }),
 	}),
 );
 

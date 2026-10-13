@@ -73,3 +73,35 @@ func TestThreadAttributes(t *testing.T) {
 		})
 	}
 }
+
+func TestRawAttribute(t *testing.T) {
+	arguments := map[string]any{"city": "Paris", "days": []any{1.0, 2.0}}
+	testCases := []struct {
+		name     string
+		storable StorableSpan
+		key      string
+		want     any
+	}{
+		{
+			name:     "JSONColumn_ObjectReturnedWhole",
+			storable: StorableSpan{AttributesJSON: telemetrystoretypes.JSONValue{"gen_ai": map[string]any{"tool": map[string]any{"call": map[string]any{"arguments": arguments}}}}},
+			key:      "gen_ai.tool.call.arguments",
+			want:     arguments,
+		},
+		{
+			name:     "JSONColumn_MissingPath_Nil",
+			storable: StorableSpan{AttributesJSON: telemetrystoretypes.JSONValue{"gen_ai": map[string]any{"tool": map[string]any{"name": "get_weather"}}}},
+			key:      "gen_ai.tool.call.arguments",
+		},
+		{
+			name:     "LegacyMapsOnly_Nil",
+			storable: StorableSpan{AttributesString: map[string]string{"gen_ai.output.messages": "sunny", "gen_ai.tool.call.arguments.city": "Paris"}},
+			key:      "gen_ai.output.messages",
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.want, rawAttribute(&testCase.storable, testCase.key))
+		})
+	}
+}

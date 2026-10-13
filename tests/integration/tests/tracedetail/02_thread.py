@@ -21,7 +21,7 @@ def test_thread_returns_message_spans_in_order(
     seed_attribute_evolution("traces", ATTRIBUTE_JSON_ROLLOUT_TIME)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
-    root_id, first_llm_id, tool_id, second_llm_id, third_llm_id = (TraceIdGenerator.span_id() for _ in range(5))
+    root_id, first_llm_id, tool_id, agent_id, second_llm_id, third_llm_id = (TraceIdGenerator.span_id() for _ in range(6))
     resources = {"service.name": "tracedetail-thread"}
     first_input = json.dumps([{"role": "user", "parts": [{"type": "text", "content": "weather in Bangalore?"}]}])
     first_output = json.dumps([{"role": "assistant", "parts": [{"type": "tool_call", "id": "call_1", "name": "get_weather", "arguments": {"city": "Bangalore"}}], "finish_reason": "tool_call"}])
@@ -33,7 +33,10 @@ def test_thread_returns_message_spans_in_order(
             Traces(
                 timestamp=now - timedelta(seconds=8), trace_id=trace_id, span_id=first_llm_id, parent_span_id=root_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.input.messages": first_input, "gen_ai.output.messages": first_output}, attribute_write_mode="json_only"
             ),
-            Traces(timestamp=now - timedelta(seconds=6), trace_id=trace_id, span_id=tool_id, parent_span_id=root_id, name="execute_tool get_weather", resources=resources, attributes={"gen_ai.tool.name": "get_weather"}, attribute_write_mode="json_only"),
+            Traces(
+                timestamp=now - timedelta(seconds=6), trace_id=trace_id, span_id=tool_id, parent_span_id=root_id, name="execute_tool get_weather", resources=resources, attributes={"gen_ai.tool.name": "get_weather", "gen_ai.tool.call.id": "call_1", "gen_ai.tool.call.arguments": json.dumps({"city": "Bangalore"}), "gen_ai.tool.call.result": "sunny"}, attribute_write_mode="json_only"
+            ),
+            Traces(timestamp=now - timedelta(seconds=5), trace_id=trace_id, span_id=agent_id, parent_span_id=root_id, name="invoke_agent planner", resources=resources, attributes={"gen_ai.agent.name": "planner"}, attribute_write_mode="json_only"),
             Traces(timestamp=now - timedelta(seconds=4), trace_id=trace_id, span_id=second_llm_id, parent_span_id=root_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.input.messages": second_input}, attribute_write_mode="json_only"),
             Traces(timestamp=now - timedelta(seconds=2), trace_id=trace_id, span_id=third_llm_id, parent_span_id=root_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.output.messages": "It is sunny in Bangalore."}, attribute_write_mode="json_only"),
         ]
@@ -44,10 +47,12 @@ def test_thread_returns_message_spans_in_order(
     assert response.status_code == HTTPStatus.OK, response.text
 
     thread = response.json()["data"]
-    assert [span["span_id"] for span in thread["spans"]] == [first_llm_id, second_llm_id, third_llm_id]
+    assert [span["span_id"] for span in thread["spans"]] == [first_llm_id, tool_id, second_llm_id, third_llm_id]
     assert "nextCursor" not in thread
 
-    first, input_only, output_only = thread["spans"]
+    first, tool, input_only, output_only = thread["spans"]
+    assert tool["attributes"]["gen_ai.tool.call.arguments"] == json.dumps({"city": "Bangalore"})
+    assert tool["attributes"]["gen_ai.tool.call.result"] == "sunny"
     assert first["time_unix"] == int((now - timedelta(seconds=8)).timestamp() * 1000)
     assert first["attributes"]["gen_ai.input.messages"] == first_input
     assert first["attributes"]["gen_ai.request.model"] == "gpt-4o"
@@ -56,6 +61,23 @@ def test_thread_returns_message_spans_in_order(
     assert "gen_ai.output.messages" not in input_only["attributes"]
     assert "gen_ai.input.messages" not in output_only["attributes"]
     assert output_only["attributes"]["gen_ai.output.messages"] == "It is sunny in Bangalore."
+
+    tool_call = {"type": "tool_call", "name": "get_weather", "id": "call_1", "arguments": {"city": "Bangalore"}}
+    assert first["formatter"] == "semconv"
+    assert first["formatted_input"] == [{"role": "user", "parts": [{"type": "text", "content": "weather in Bangalore?"}]}]
+    assert first["formatted_output"] == [{"role": "assistant", "parts": [tool_call], "finish_reason": "tool_call"}]
+    assert first["formatter_warnings"] == []
+    # tool spans carry no messages until their converter lands
+    assert tool["formatter"] == ""
+    assert tool["formatted_input"] == []
+    assert tool["formatted_output"] == []
+    assert input_only["formatter"] == "openai.chat"
+    assert input_only["formatted_input"] == [{"role": "tool", "parts": [{"type": "tool_call_response", "id": "call_1", "response": "sunny"}]}]
+    assert input_only["formatted_output"] == []
+    assert output_only["formatter"] == "text"
+    assert output_only["formatted_input"] == []
+    assert output_only["formatted_output"] == [{"role": "assistant", "parts": [{"type": "text", "content": "It is sunny in Bangalore."}]}]
+    assert output_only["formatter_warnings"] == ["bare assistant text, role assumed"]
 
 
 def test_thread_paginates_with_cursors(
@@ -180,8 +202,8 @@ def test_thread_opens_around_span(
     resources = {"service.name": "tracedetail-thread-anchor"}
     root_id = TraceIdGenerator.span_id()
     llm_ids = [TraceIdGenerator.span_id() for _ in range(5)]
-    tool_id = TraceIdGenerator.span_id()
-    # tool span sits between the third and fourth llm spans
+    agent_id = TraceIdGenerator.span_id()
+    # agent span, not a thread row, sits between the third and fourth llm spans
     insert_traces(
         [
             Traces(timestamp=now - timedelta(seconds=20), duration=timedelta(seconds=19), trace_id=trace_id, span_id=root_id, name="POST /chat", kind=TracesKind.SPAN_KIND_SERVER, resources=resources, attribute_write_mode="json_only"),
@@ -189,7 +211,7 @@ def test_thread_opens_around_span(
                 Traces(timestamp=now - timedelta(seconds=18 - 3 * i), trace_id=trace_id, span_id=span_id, parent_span_id=root_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.input.messages": json.dumps([{"role": "user", "content": span_id}])}, attribute_write_mode="json_only")
                 for i, span_id in enumerate(llm_ids)
             ),
-            Traces(timestamp=now - timedelta(seconds=11), trace_id=trace_id, span_id=tool_id, parent_span_id=root_id, name="execute_tool get_weather", resources=resources, attributes={"gen_ai.tool.name": "get_weather"}, attribute_write_mode="json_only"),
+            Traces(timestamp=now - timedelta(seconds=11), trace_id=trace_id, span_id=agent_id, parent_span_id=root_id, name="invoke_agent planner", resources=resources, attributes={"gen_ai.agent.name": "planner"}, attribute_write_mode="json_only"),
         ]
     )
 
@@ -211,10 +233,10 @@ def test_thread_opens_around_span(
     assert [span["span_id"] for span in get_page({"limit": 3, "after": around["nextCursor"]})["spans"]] == llm_ids[4:]
 
     # span without messages: only its neighbours
-    around_tool = get_page({"limit": 2, "spanId": tool_id})
-    assert [span["span_id"] for span in around_tool["spans"]] == llm_ids[2:4]
-    assert around_tool["prevCursor"]
-    assert around_tool["nextCursor"]
+    around_agent = get_page({"limit": 2, "spanId": agent_id})
+    assert [span["span_id"] for span in around_agent["spans"]] == llm_ids[2:4]
+    assert around_agent["prevCursor"]
+    assert around_agent["nextCursor"]
 
     # near the start, the short side gives its room to the other
     at_start = get_page({"limit": 3, "spanId": llm_ids[0]})
@@ -259,7 +281,7 @@ def test_thread_reads_spans_across_json_rollout(
     insert_traces(
         [
             Traces(timestamp=rollout - timedelta(minutes=10), trace_id=before_trace_id, span_id=before_ids[0], name="chat gpt-4o", resources=resources, attributes={"gen_ai.input.messages": json.dumps([{"role": "user", "content": "first"}])}, attribute_write_mode="legacy_only"),
-            Traces(timestamp=rollout - timedelta(minutes=8), trace_id=before_trace_id, span_id=TraceIdGenerator.span_id(), name="execute_tool get_weather", resources=resources, attributes={"gen_ai.tool.name": "get_weather"}, attribute_write_mode="legacy_only"),
+            Traces(timestamp=rollout - timedelta(minutes=8), trace_id=before_trace_id, span_id=TraceIdGenerator.span_id(), name="invoke_agent planner", resources=resources, attributes={"gen_ai.agent.name": "planner"}, attribute_write_mode="legacy_only"),
             Traces(timestamp=rollout - timedelta(minutes=5), trace_id=before_trace_id, span_id=before_ids[1], name="chat gpt-4o", resources=resources, attributes={"gen_ai.output.messages": json.dumps([{"role": "assistant", "content": "second"}])}, attribute_write_mode="legacy_only"),
             Traces(timestamp=rollout - timedelta(minutes=5), trace_id=straddle_trace_id, span_id=legacy_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.input.messages": json.dumps([{"role": "user", "content": "legacy"}])}, attribute_write_mode="legacy_only"),
             Traces(timestamp=rollout + timedelta(minutes=5), trace_id=straddle_trace_id, span_id=json_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.input.messages": json.dumps([{"role": "user", "content": "json"}])}, attribute_write_mode="json_only"),
@@ -275,6 +297,11 @@ def test_thread_reads_spans_across_json_rollout(
     assert [span["span_id"] for span in before_spans] == before_ids
     assert before_spans[0]["attributes"]["gen_ai.input.messages"] == json.dumps([{"role": "user", "content": "first"}])
     assert before_spans[1]["attributes"]["gen_ai.output.messages"] == json.dumps([{"role": "assistant", "content": "second"}])
+    # messages are decoded from the JSON column only, never from the legacy maps
+    for span in before_spans:
+        assert span["formatter"] == ""
+        assert span["formatted_input"] == []
+        assert span["formatted_output"] == []
 
     straddle = requests.get(signoz.self.host_configs["8080"].get(f"/api/v1/traces/{straddle_trace_id}/thread"), headers=headers, timeout=10)
     assert straddle.status_code == HTTPStatus.OK, straddle.text
@@ -282,6 +309,10 @@ def test_thread_reads_spans_across_json_rollout(
     assert [span["span_id"] for span in straddle_spans] == [legacy_id, json_id]
     assert straddle_spans[0]["attributes"]["gen_ai.input.messages"] == json.dumps([{"role": "user", "content": "legacy"}])
     assert straddle_spans[1]["attributes"]["gen_ai.input.messages"] == json.dumps([{"role": "user", "content": "json"}])
+    assert straddle_spans[0]["formatter"] == ""
+    assert straddle_spans[0]["formatted_input"] == []
+    assert straddle_spans[1]["formatter"] == "openai.chat"
+    assert straddle_spans[1]["formatted_input"] == [{"role": "user", "parts": [{"type": "text", "content": "json"}]}]
 
 
 def test_thread_without_messages_is_empty(
