@@ -44,6 +44,8 @@ interface AddOn {
 	key: QueryBuilderField;
 	description?: string;
 	docLink?: string;
+	/** Shown in the empty field unless a field rule supplies its own. */
+	placeholder?: string;
 }
 
 /** Fields the add-on bar does not own: each has its own control elsewhere in the query. */
@@ -76,6 +78,7 @@ const ADD_ONS: AddOn[] = [
 		description:
 			'Break down data by attributes like service name, endpoint, status code, or region. Essential for spotting patterns and comparing performance across different segments.',
 		docLink: 'https://signoz.io/docs/querying/aggregation-grouping/#grouping',
+		placeholder: 'Everything (no breakdown)',
 	},
 	{
 		icon: <ScrollText size={14} />,
@@ -85,6 +88,7 @@ const ADD_ONS: AddOn[] = [
 			'Filter grouped results based on aggregate conditions. Show only groups meeting specific criteria, like error rates > 5% or p99 latency > 500',
 		docLink:
 			'https://signoz.io/docs/querying/result-manipulation/#conditional-filtering-with-having',
+		placeholder: 'Type Having query like count() > 10 ...',
 	},
 	{
 		icon: <ScrollText size={14} />,
@@ -94,6 +98,7 @@ const ADD_ONS: AddOn[] = [
 			'Sort results to surface what matters most. Quickly identify slowest operations, most frequent errors, or highest resource consumers.',
 		docLink:
 			'https://signoz.io/docs/querying/result-manipulation/#sorting--limiting',
+		placeholder: 'Select fields to order by',
 	},
 	{
 		icon: <ScrollText size={14} />,
@@ -103,6 +108,7 @@ const ADD_ONS: AddOn[] = [
 			'Show only the top/bottom N results. Perfect for focusing on outliers, reducing noise, and improving dashboard performance.',
 		docLink:
 			'https://signoz.io/docs/querying/result-manipulation/#how-limit-works-for-time-series',
+		placeholder: 'Enter limit',
 	},
 	{
 		icon: <ScrollText size={14} />,
@@ -112,6 +118,7 @@ const ADD_ONS: AddOn[] = [
 			'Customize series labels using variables like {{service.name}}-{{endpoint}}. Makes charts readable at a glance during incident investigation.',
 		docLink:
 			'https://signoz.io/docs/querying/aggregation-grouping/#legend-formatting',
+		placeholder: 'Write legend format',
 	},
 ];
 
@@ -285,6 +292,13 @@ function QueryAddOns({
 
 	const isPinned = useCallback(
 		(key: QueryBuilderField): boolean => Boolean(resolvedFields.get(key)?.pinned),
+		[resolvedFields],
+	);
+
+	const placeholderOf = useCallback(
+		(key: QueryBuilderField): string | undefined =>
+			resolvedFields.get(key)?.placeholder ??
+			ADD_ONS.find((addOn) => addOn.key === key)?.placeholder,
 		[resolvedFields],
 	);
 
@@ -471,6 +485,7 @@ function QueryAddOns({
 										}
 										query={query}
 										onChange={handleChangeGroupByKeys}
+										placeholder={placeholderOf(QueryBuilderField.GroupBy)}
 									/>
 								</div>
 								{!isPinned(QueryBuilderField.GroupBy) && (
@@ -506,6 +521,7 @@ function QueryAddOns({
 										onClose={(): void => handleRemoveView(QueryBuilderField.Having)}
 										onChange={handleChangeHaving}
 										queryData={query}
+										placeholder={placeholderOf(QueryBuilderField.Having)}
 									/>
 								</div>
 							</div>
@@ -518,7 +534,7 @@ function QueryAddOns({
 								type="number"
 								onChange={handleChangeLimit}
 								initialValue={query?.limit ?? undefined}
-								placeholder="Enter limit"
+								placeholder={placeholderOf(QueryBuilderField.Limit)}
 								onClose={(): void => handleRemoveView(QueryBuilderField.Limit)}
 								closeIcon={<ChevronUp size={16} />}
 							/>
@@ -549,6 +565,7 @@ function QueryAddOns({
 										onChange={handleChangeOrderByKeys}
 										isRawQuery={isRawQuery}
 										isNewQueryV2
+										placeholder={placeholderOf(QueryBuilderField.OrderBy)}
 									/>
 								</div>
 								{!isPinned(QueryBuilderField.OrderBy) && (
@@ -600,7 +617,7 @@ function QueryAddOns({
 						<div className="add-on-content" data-testid="legend-format-content">
 							<InputWithLabel
 								label="Legend format"
-								placeholder="Write legend format"
+								placeholder={placeholderOf(QueryBuilderField.Legend)}
 								onChange={handleChangeQueryLegend}
 								initialValue={isEmpty(query?.legend) ? undefined : query?.legend}
 								onClose={(): void => handleRemoveView(QueryBuilderField.Legend)}

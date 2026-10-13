@@ -21,7 +21,7 @@ function InputWithLabel({
 }: {
 	label: string;
 	initialValue?: string | number | null;
-	placeholder: string;
+	placeholder?: string;
 	type?: string;
 	onClose?: () => void;
 	labelAfter?: boolean;
