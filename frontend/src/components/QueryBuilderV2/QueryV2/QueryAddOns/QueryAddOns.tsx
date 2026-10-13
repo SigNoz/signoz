@@ -38,30 +38,6 @@ import { buildDefaultLegendFromGroupBy } from './utils';
 
 import './QueryAddOns.styles.scss';
 
-interface AddOn {
-	icon: React.ReactNode;
-	label: string;
-	key: QueryBuilderField;
-	description?: string;
-	docLink?: string;
-}
-
-/** Add-ons rendered as a text field; each has to name what an empty field means. */
-type InputAddOnField =
-	| QueryBuilderField.GroupBy
-	| QueryBuilderField.Having
-	| QueryBuilderField.OrderBy
-	| QueryBuilderField.Limit
-	| QueryBuilderField.Legend;
-
-const ADD_ON_PLACEHOLDERS: Record<InputAddOnField, string> = {
-	[QueryBuilderField.GroupBy]: 'Everything (no breakdown)',
-	[QueryBuilderField.Having]: 'Type Having query like count() > 10 ...',
-	[QueryBuilderField.OrderBy]: 'Select fields to order by',
-	[QueryBuilderField.Limit]: 'Enter limit',
-	[QueryBuilderField.Legend]: 'Write legend format',
-};
-
 /** Fields the add-on bar does not own: each has its own control elsewhere in the query. */
 type NonAddOnField =
 	| QueryBuilderField.Aggregation
@@ -70,76 +46,123 @@ type NonAddOnField =
 	| QueryBuilderField.Formula
 	| QueryBuilderField.AdditionalQueries;
 
-// Omit rather than Partial, so a field added to the enum has to be placed on one side.
-const ADD_ONS_KEYS_TO_QUERY_PATH: Omit<
-	Record<QueryBuilderField, string>,
-	NonAddOnField
-> = {
-	[QueryBuilderField.GroupBy]: 'groupBy',
-	[QueryBuilderField.Having]: 'having.expression',
-	[QueryBuilderField.OrderBy]: 'orderBy',
-	[QueryBuilderField.Limit]: 'limit',
-	[QueryBuilderField.Legend]: 'legend',
-	[QueryBuilderField.ReduceTo]: 'reduceTo',
-	[QueryBuilderField.BucketOptions]: 'bucketOptions',
-};
+type AddOnField = Exclude<QueryBuilderField, NonAddOnField>;
 
-const ADD_ONS: AddOn[] = [
-	{
+interface AddOnSpec {
+	icon: React.ReactNode;
+	label: string;
+	/** Where the add-on's value lives on the query; a value there opens it on mount. */
+	queryPath: string;
+	description?: string;
+	docLink?: string;
+}
+
+/** A text field has to name what leaving it empty means. */
+type AddOnDefinition =
+	| (AddOnSpec & { input: true; placeholder: string })
+	| (AddOnSpec & { input: false });
+
+// A Record, so a field added to the enum has to be placed here or in `NonAddOnField`.
+const ADD_ON_DEFINITIONS = {
+	[QueryBuilderField.GroupBy]: {
+		input: true,
 		icon: <BarChart size={14} />,
 		label: 'Group By',
-		key: QueryBuilderField.GroupBy,
+		queryPath: 'groupBy',
+		placeholder: 'Everything (no breakdown)',
 		description:
 			'Break down data by attributes like service name, endpoint, status code, or region. Essential for spotting patterns and comparing performance across different segments.',
 		docLink: 'https://signoz.io/docs/querying/aggregation-grouping/#grouping',
 	},
-	{
+	[QueryBuilderField.Having]: {
+		input: true,
 		icon: <ScrollText size={14} />,
 		label: 'Having',
-		key: QueryBuilderField.Having,
+		queryPath: 'having.expression',
+		placeholder: 'Type Having query like count() > 10 ...',
 		description:
 			'Filter grouped results based on aggregate conditions. Show only groups meeting specific criteria, like error rates > 5% or p99 latency > 500',
 		docLink:
 			'https://signoz.io/docs/querying/result-manipulation/#conditional-filtering-with-having',
 	},
-	{
+	[QueryBuilderField.OrderBy]: {
+		input: true,
 		icon: <ScrollText size={14} />,
 		label: 'Order By',
-		key: QueryBuilderField.OrderBy,
+		queryPath: 'orderBy',
+		placeholder: 'Select fields to order by',
 		description:
 			'Sort results to surface what matters most. Quickly identify slowest operations, most frequent errors, or highest resource consumers.',
 		docLink:
 			'https://signoz.io/docs/querying/result-manipulation/#sorting--limiting',
 	},
-	{
+	[QueryBuilderField.Limit]: {
+		input: true,
 		icon: <ScrollText size={14} />,
 		label: 'Limit',
-		key: QueryBuilderField.Limit,
+		queryPath: 'limit',
+		placeholder: 'Enter limit',
 		description:
 			'Show only the top/bottom N results. Perfect for focusing on outliers, reducing noise, and improving dashboard performance.',
 		docLink:
 			'https://signoz.io/docs/querying/result-manipulation/#how-limit-works-for-time-series',
 	},
-	{
+	[QueryBuilderField.Legend]: {
+		input: true,
 		icon: <ScrollText size={14} />,
 		label: 'Legend format',
-		key: QueryBuilderField.Legend,
+		queryPath: 'legend',
+		placeholder: 'Write legend format',
 		description:
 			'Customize series labels using variables like {{service.name}}-{{endpoint}}. Makes charts readable at a glance during incident investigation.',
 		docLink:
 			'https://signoz.io/docs/querying/aggregation-grouping/#legend-formatting',
 	},
-];
+	[QueryBuilderField.ReduceTo]: {
+		input: false,
+		icon: <ScrollText size={14} />,
+		label: 'Reduce to',
+		queryPath: 'reduceTo',
+		description:
+			'Apply mathematical operations like sum, average, min, max, or percentiles to reduce multiple time series into a single value.',
+		docLink:
+			'https://signoz.io/docs/userguide/query-builder-v5/#result-manipulation',
+	},
+	[QueryBuilderField.BucketOptions]: {
+		input: false,
+		icon: <Grid3X3 size={14} />,
+		label: 'Bucket by',
+		queryPath: 'bucketOptions',
+		description:
+			'Choose how the bucket axis is spaced — logarithmically, so every band is the same height and the tail stays readable, or linearly up to a max value. Left to Auto, the query picks the finest log axis it can return.',
+		docLink: 'https://signoz.io/docs/userguide/query-builder-v5/',
+	},
+} as const satisfies Record<AddOnField, AddOnDefinition>;
 
-const REDUCE_TO: AddOn = {
-	icon: <ScrollText size={14} />,
-	label: 'Reduce to',
-	key: QueryBuilderField.ReduceTo,
-	description:
-		'Apply mathematical operations like sum, average, min, max, or percentiles to reduce multiple time series into a single value.',
-	docLink:
-		'https://signoz.io/docs/userguide/query-builder-v5/#result-manipulation',
-};
+type InputAddOnField = {
+	[K in AddOnField]: (typeof ADD_ON_DEFINITIONS)[K] extends { input: true }
+		? K
+		: never;
+}[AddOnField];
+
+type AddOn = AddOnDefinition & { key: AddOnField };
+
+const toAddOn = (key: AddOnField): AddOn => ({
+	key,
+	...ADD_ON_DEFINITIONS[key],
+});
+
+const BASE_ADD_ONS = (
+	[
+		QueryBuilderField.GroupBy,
+		QueryBuilderField.Having,
+		QueryBuilderField.OrderBy,
+		QueryBuilderField.Limit,
+		QueryBuilderField.Legend,
+	] as const satisfies readonly AddOnField[]
+).map(toAddOn);
+
+const REDUCE_TO = toAddOn(QueryBuilderField.ReduceTo);
 
 // Offered only by a heatmap over metrics: the bucket axis is what a heatmap plots
 // against, and no other panel type sends one. A histogram brings its own buckets.
@@ -148,14 +171,7 @@ const HISTOGRAM_ATTRIBUTE_TYPES = new Set<string>([
 	ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM,
 ]);
 
-const BUCKET_OPTIONS: AddOn = {
-	icon: <Grid3X3 size={14} />,
-	label: 'Bucket by',
-	key: QueryBuilderField.BucketOptions,
-	description:
-		'Choose how the bucket axis is spaced — logarithmically, so every band is the same height and the tail stays readable, or linearly up to a max value. Left to Auto, the query picks the finest log axis it can return.',
-	docLink: 'https://signoz.io/docs/userguide/query-builder-v5/',
-};
+const BUCKET_OPTIONS = toAddOn(QueryBuilderField.BucketOptions);
 
 const hasValue = (value: unknown): boolean =>
 	value != null && value !== '' && !(Array.isArray(value) && value.length === 0);
@@ -243,12 +259,16 @@ function QueryAddOns({
 		let addOns: AddOn[];
 
 		if (panelType === PANEL_TYPES.VALUE) {
-			addOns = ADD_ONS.filter((addOn) => addOn.key === QueryBuilderField.Legend);
+			addOns = BASE_ADD_ONS.filter(
+				(addOn) => addOn.key === QueryBuilderField.Legend,
+			);
 		} else if (query.dataSource === DataSource.METRICS) {
 			// Group by for metrics is offered by MetricsAggregateSection instead.
-			addOns = ADD_ONS.filter((addOn) => addOn.key !== QueryBuilderField.GroupBy);
+			addOns = BASE_ADD_ONS.filter(
+				(addOn) => addOn.key !== QueryBuilderField.GroupBy,
+			);
 		} else {
-			addOns = [...ADD_ONS];
+			addOns = [...BASE_ADD_ONS];
 		}
 
 		if (showReduceTo) {
@@ -306,7 +326,7 @@ function QueryAddOns({
 
 	const placeholderOf = useCallback(
 		(key: InputAddOnField): string =>
-			resolvedFields.get(key)?.placeholder ?? ADD_ON_PLACEHOLDERS[key],
+			resolvedFields.get(key)?.placeholder ?? ADD_ON_DEFINITIONS[key].placeholder,
 		[resolvedFields],
 	);
 
@@ -328,12 +348,6 @@ function QueryAddOns({
 		if (!initializedRef.current || hasAvailabilityItemsChanged) {
 			initializedRef.current = true;
 
-			const activeAddOnKeys = new Set(
-				Object.entries(ADD_ONS_KEYS_TO_QUERY_PATH)
-					.filter(([, path]) => hasValue(get(query, path)))
-					.map(([key]) => key as QueryBuilderField),
-			);
-
 			// Initial seeding from query values on mount. A disabled field never opens.
 			setSelectedViews(
 				offeredAddOns.filter((addOn) => {
@@ -341,7 +355,7 @@ function QueryAddOns({
 
 					return (
 						resolved?.pinned ||
-						(activeAddOnKeys.has(addOn.key) && !resolved?.disabled)
+						(hasValue(get(query, addOn.queryPath)) && !resolved?.disabled)
 					);
 				}),
 			);
