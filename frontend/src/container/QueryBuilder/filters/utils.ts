@@ -8,9 +8,9 @@ import { HavingForm } from 'types/api/queryBuilder/queryBuilderData';
 import { ORDERBY_FILTERS } from './OrderByFilter/config';
 import {
 	orderByValueDelimiter,
+	getRemoveOrderFromValue,
 	splitOrderByFromString,
 } from './OrderByFilter/utils';
-import { getRemoveOrderFromValue } from './QueryBuilderSearchV2/utils';
 
 export const handleKeyDownLimitFilter: React.KeyboardEventHandler<
 	HTMLInputElement

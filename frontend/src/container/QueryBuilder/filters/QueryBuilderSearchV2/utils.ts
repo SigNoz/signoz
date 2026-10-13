@@ -3,8 +3,6 @@ import { queryFilterTags } from 'hooks/queryBuilder/useTag';
 import { parse } from 'papaparse';
 import type { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
-import { orderByValueDelimiter } from '../OrderByFilter/utils';
-
 export const tagRegexp =
 	/^\s*(.*?)\s*(\bIN\b|\bNOT_IN\b|\bNIN\b|\bLIKE\b|\bNOT_LIKE\b|\bNLIKE\b|\bILIKE\b|\bNOT_ILIKE\b|\bNOTILIKE\b|\bREGEX\b|\bNOT_REGEX\b|\bNREGEX\b|=|!=|\bEXISTS\b|\bNOT_EXISTS\b|\bNEXISTS\b|\bCONTAINS\b|\bNOT_CONTAINS\b|\bNCONTAINS\b|>=|>|<=|<|\bHAS\b|\bNHAS\b)\s*(.*)$/gi;
 
@@ -179,15 +177,6 @@ export function replaceStringWithMaxLength(
 
 export function checkCommaInValue(str: string): string {
 	return str.includes(',') ? `"${str}"` : str;
-}
-
-export function getRemoveOrderFromValue(tag: string): string {
-	const match = parse(tag, { delimiter: orderByValueDelimiter });
-	if (match) {
-		const [key] = match.data.flat() as string[];
-		return key;
-	}
-	return tag;
 }
 
 /**
