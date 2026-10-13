@@ -510,7 +510,7 @@ func TestRecommendAgentConfigWithNormalizerProcessorAndJSONBody(t *testing.T) {
 			return []pipelinetypes.GettablePipeline{userPipeline}, nil
 		},
 	}
-	normalizeOperator := CollectorConfProcessorName(getNormalizePipeline(false))
+	normalizeOperator := CollectorConfProcessorName(getNormalizePipeline())
 	user := CollectorConfProcessorName(userPipeline)
 
 	testCases := []struct {
