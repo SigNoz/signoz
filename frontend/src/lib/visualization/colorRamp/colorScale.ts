@@ -1,21 +1,17 @@
 import { Color as DesignToken } from '@signozhq/design-tokens';
 import Color from 'color';
 
-import { DEFAULT_HEATMAP_PALETTE, getPaletteStops } from './palettes';
-import {
-	HeatmapColorMode,
-	HeatmapColorOptions,
-	HeatmapColorScale,
-} from './types';
+import { DEFAULT_COLOR_RAMP_PALETTE, getPaletteStops } from './palettes';
+import { ColorRampMode, ColorRampOptions, ColorRampScale } from './types';
 
 export const MIN_COLOR_STEPS = 2;
 export const MAX_COLOR_STEPS = 128;
 export const DEFAULT_COLOR_STEPS = 64;
 
-/** Without a floor, the lowest counts read as "no data". */
+/** Without a floor, the lowest values read as "no data". */
 export const MIN_OPACITY_ALPHA = 0.1;
 
-/** Log's bottom when the grid holds no positive count to take it from. */
+/** Log's bottom when the values hold no positive one to take it from. */
 const DEFAULT_LOG_FLOOR = 1;
 
 /** Widest span a single ramp is stretched over on a log scale. */
@@ -25,57 +21,57 @@ const MAX_LOG_DECADES = 6;
 export const DEFAULT_OPACITY_FILL = DesignToken.BG_ROBIN_500;
 
 /** Zero takes the panel surface so an empty stretch recedes, leaving the ramp's
- *  bottom to the smallest count that did occur — on a log scale the two collapse. */
+ *  bottom to the smallest value that did occur — on a log scale the two collapse. */
 const ZERO_FILL: Record<'dark' | 'light', string> = {
 	dark: DesignToken.BG_INK_500,
 	light: DesignToken.BG_VANILLA_100,
 };
 
-export const DEFAULT_HEATMAP_COLORS: HeatmapColorOptions = {
-	mode: HeatmapColorMode.Palette,
-	scale: HeatmapColorScale.Log,
-	minCount: null,
-	maxCount: null,
-	palette: DEFAULT_HEATMAP_PALETTE,
+export const DEFAULT_COLOR_RAMP_OPTIONS: ColorRampOptions = {
+	mode: ColorRampMode.Palette,
+	scale: ColorRampScale.Log,
+	min: null,
+	max: null,
+	palette: DEFAULT_COLOR_RAMP_PALETTE,
 	steps: DEFAULT_COLOR_STEPS,
 	fill: '',
 };
 
-export interface CountDomain {
+export interface ColorRampDomain {
 	min: number;
 	max: number;
-	/** Bottom decade of the log scale: the smallest count it separates from zero.
+	/** Bottom decade of the log scale: the smallest value it separates from zero.
 	 *  Always positive, since log has no bottom otherwise. */
 	logFloor: number;
 }
 
-/** Highest count, ignoring `null`. 0 for an empty grid. */
-export function getMaxCount(counts: Array<Array<number | null>>): number {
+/** Highest value, ignoring `null`. 0 when there is none. */
+export function getMaxValue(values: Array<Array<number | null>>): number {
 	let max = 0;
-	for (const row of counts) {
-		for (const count of row) {
-			if (count !== null && Number.isFinite(count) && count > max) {
-				max = count;
+	for (const row of values) {
+		for (const value of row) {
+			if (value !== null && Number.isFinite(value) && value > max) {
+				max = value;
 			}
 		}
 	}
 	return max;
 }
 
-/** Smallest count above zero, ignoring `null`. `null` for a grid without one. */
-export function getSmallestPositiveCount(
-	counts: Array<Array<number | null>>,
+/** Smallest value above zero, ignoring `null`. `null` when there is none. */
+export function getSmallestPositiveValue(
+	values: Array<Array<number | null>>,
 ): number | null {
 	let smallest: number | null = null;
-	for (const row of counts) {
-		for (const count of row) {
+	for (const row of values) {
+		for (const value of row) {
 			if (
-				count !== null &&
-				Number.isFinite(count) &&
-				count > 0 &&
-				(smallest === null || count < smallest)
+				value !== null &&
+				Number.isFinite(value) &&
+				value > 0 &&
+				(smallest === null || value < smallest)
 			) {
-				smallest = count;
+				smallest = value;
 			}
 		}
 	}
@@ -83,49 +79,49 @@ export function getSmallestPositiveCount(
 }
 
 /**
- * The grid's own resolution: whole counts floor at 1, while a heatmap of rates or
- * ratios can live entirely below it, where a fixed floor of 1 would flatten every
- * cell onto the bottom colour. Capped at `MAX_LOG_DECADES` so one stray tiny cell
- * cannot stretch the ramp over a range nothing else occupies.
+ * The values' own resolution: whole counts floor at 1, while rates or ratios can
+ * live entirely below it, where a fixed floor of 1 would flatten every value onto
+ * the bottom colour. Capped at `MAX_LOG_DECADES` so one stray tiny value cannot
+ * stretch the ramp over a range nothing else occupies.
  */
 function resolveLogFloor(
-	counts: Array<Array<number | null>>,
+	values: Array<Array<number | null>>,
 	max: number,
 ): number {
-	const smallest = getSmallestPositiveCount(counts) ?? DEFAULT_LOG_FLOOR;
+	const smallest = getSmallestPositiveValue(values) ?? DEFAULT_LOG_FLOOR;
 	return Math.max(smallest, max / 10 ** MAX_LOG_DECADES);
 }
 
-/** Explicit clamps win; otherwise 0 to the grid's highest count. */
-export function resolveCountDomain(
-	options: Pick<HeatmapColorOptions, 'minCount' | 'maxCount'>,
-	counts: Array<Array<number | null>>,
-): CountDomain {
-	const min = options.minCount ?? 0;
-	const max = options.maxCount ?? getMaxCount(counts);
-	const logFloor = resolveLogFloor(counts, max);
+/** Explicit clamps win; otherwise 0 to the highest value. */
+export function resolveColorDomain(
+	options: Pick<ColorRampOptions, 'min' | 'max'>,
+	values: Array<Array<number | null>>,
+): ColorRampDomain {
+	const min = options.min ?? 0;
+	const max = options.max ?? getMaxValue(values);
+	const logFloor = resolveLogFloor(values, max);
 	return max > min ? { min, max, logFloor } : { min, max: min, logFloor };
 }
 
-/** Position on the colour scale, 0..1. A degenerate domain collapses to 0 so an
- *  all-zero grid renders at the bottom rather than disappearing. */
-export function normalizeCount({
-	count,
+/** Position on the colour scale, 0..1. A degenerate domain collapses to 0 so
+ *  all-zero values render at the bottom rather than disappearing. */
+export function normalizeColorValue({
+	value,
 	domain,
 	scale,
 }: {
-	count: number;
-	domain: CountDomain;
-	scale: HeatmapColorScale;
+	value: number;
+	domain: ColorRampDomain;
+	scale: ColorRampScale;
 }): number {
 	const { min, max } = domain;
 	if (!(max > min)) {
 		return 0;
 	}
 
-	const clamped = Math.min(Math.max(count, min), max);
+	const clamped = Math.min(Math.max(value, min), max);
 
-	if (scale === HeatmapColorScale.Log) {
+	if (scale === ColorRampScale.Log) {
 		// Anything at or below the floor sits at the bottom; log cannot place it.
 		const bottom = Math.max(min, domain.logFloor);
 		const logMin = Math.log10(bottom);
@@ -134,11 +130,11 @@ export function normalizeCount({
 			return (Math.log10(Math.max(clamped, bottom)) - logMin) / (logMax - logMin);
 		}
 		// The floor already reaches the top of the domain, so there is no span to
-		// spread logarithmically. Fall through rather than flatten the whole grid.
+		// spread logarithmically. Fall through rather than flatten every value.
 	}
 
 	const linear = (clamped - min) / (max - min);
-	return scale === HeatmapColorScale.Sqrt ? Math.sqrt(linear) : linear;
+	return scale === ColorRampScale.Sqrt ? Math.sqrt(linear) : linear;
 }
 
 export function clampColorSteps(steps: number): number {
@@ -164,57 +160,57 @@ function sampleStops(stops: string[], t: number): string {
 }
 
 /**
- * Colour the densest cells are drawn with — the palette's extreme, or the opacity
+ * Colour the highest values are drawn with — the palette's extreme, or the opacity
  * fill at full strength. Depends only on the options, not on the data, so callers
- * can read it before a grid exists.
+ * can read it before any values exist.
  */
 export function resolveExtremeColor({
 	options,
 	isDarkMode,
 	seriesColor,
 }: {
-	options: HeatmapColorOptions;
+	options: ColorRampOptions;
 	isDarkMode: boolean;
 	seriesColor: string;
 }): string {
-	if (options.mode === HeatmapColorMode.Opacity) {
+	if (options.mode === ColorRampMode.Opacity) {
 		return options.fill || seriesColor || DEFAULT_OPACITY_FILL;
 	}
 	const stops = getPaletteStops(options.palette, isDarkMode);
 	return stops[stops.length - 1] ?? DEFAULT_OPACITY_FILL;
 }
 
-export interface HeatmapColorResolver {
-	/** `null` for a `null` count, which must be hatched. */
-	colorFor: (count: number | null) => string | null;
-	/** 0..1, or `null` for a `null` count. */
-	positionOf: (count: number | null) => number | null;
+export interface ColorRampResolver {
+	/** `null` for a `null` value, which the caller draws as no data. */
+	colorFor: (value: number | null) => string | null;
+	/** 0..1, or `null` for a `null` value. */
+	positionOf: (value: number | null) => number | null;
 	/** Low to high. The colour bar renders exactly these. */
 	ramp: string[];
-	domain: CountDomain;
+	domain: ColorRampDomain;
 }
 
 /** Palette mode walks a sequential ramp; opacity mode varies the alpha of one
- *  fill, so the grid matches its group's legend swatch. */
-export function createHeatmapColorResolver({
+ *  fill, so a heatmap grid matches its group's legend swatch. */
+export function createColorRampResolver({
 	options,
 	domain,
 	isDarkMode,
 	seriesColor,
 }: {
-	options: HeatmapColorOptions;
-	domain: CountDomain;
+	options: ColorRampOptions;
+	domain: ColorRampDomain;
 	isDarkMode: boolean;
 	/** Opacity-mode fill when `options.fill` is empty. */
 	seriesColor: string;
-}): HeatmapColorResolver {
+}): ColorRampResolver {
 	const steps = clampColorSteps(options.steps);
 	const positions = Array.from({ length: steps }, (_, index) =>
 		steps === 1 ? 0 : index / (steps - 1),
 	);
 
 	let ramp: string[];
-	if (options.mode === HeatmapColorMode.Opacity) {
+	if (options.mode === ColorRampMode.Opacity) {
 		const base = Color(options.fill || seriesColor || DEFAULT_OPACITY_FILL);
 		ramp = positions.map((t) =>
 			base
@@ -227,24 +223,24 @@ export function createHeatmapColorResolver({
 		ramp = positions.map((t) => sampleStops(stops, t));
 	}
 
-	const positionOf = (count: number | null): number | null => {
-		if (count === null || !Number.isFinite(count)) {
+	const positionOf = (value: number | null): number | null => {
+		if (value === null || !Number.isFinite(value)) {
 			return null;
 		}
-		return normalizeCount({ count, domain, scale: options.scale });
+		return normalizeColorValue({ value, domain, scale: options.scale });
 	};
 
-	// An explicit `minCount` above zero makes it a clamped value like any other.
+	// An explicit `min` above zero makes it a clamped value like any other.
 	const zeroFill =
 		domain.min <= 0 ? ZERO_FILL[isDarkMode ? 'dark' : 'light'] : null;
 
 	return {
 		positionOf,
-		colorFor: (count): string | null => {
-			if (count === 0 && zeroFill !== null) {
+		colorFor: (value): string | null => {
+			if (value === 0 && zeroFill !== null) {
 				return zeroFill;
 			}
-			const t = positionOf(count);
+			const t = positionOf(value);
 			if (t === null) {
 				return null;
 			}
