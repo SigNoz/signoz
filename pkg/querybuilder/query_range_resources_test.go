@@ -75,6 +75,13 @@ func TestQueryRangeResources(t *testing.T) {
 			},
 		},
 		{
+			name: "repeated list expands like a single one",
+			body: builderQueryBody("logs", "resource.service.name IN ('checkout') AND resource.service.name IN ('checkout')"),
+			expected: []coretypes.ResourceWithID{
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/resource.service.name = 'checkout'"},
+			},
+		},
+		{
 			name: "two lists on one key stay one resource",
 			body: builderQueryBody("logs", "signoz.workspace.key.id IN ('a', 'b') AND resource.signoz.workspace.key.id IN ('b', 'c')"),
 			expected: []coretypes.ResourceWithID{
@@ -269,4 +276,9 @@ func TestQueryRangeResourcesDisjunctCap(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, capped, 1)
 	assert.Equal(t, "builder_query/resource.service.name IN ('a', 'b') AND signoz.workspace.key.id IN ('y', 'z')", capped[0].ID)
+
+	tight, err := NewQueryRangeResources(1)(coretypes.ExtractorContext{RequestBody: []byte(builderQueryBody("logs", "resource.service.name IN ('a', 'b')"))})
+	require.NoError(t, err)
+	require.Len(t, tight, 1)
+	assert.Equal(t, "builder_query/resource.service.name IN ('a', 'b')", tight[0].ID)
 }

@@ -2,6 +2,7 @@ package querybuilder
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -39,6 +40,7 @@ const (
 type normalizedPart struct {
 	text    string
 	join    joinKind
+	negated bool
 	skipped bool
 }
 
@@ -124,8 +126,11 @@ func normalizeWhereClause(expression string, variables map[string]qbtypes.Variab
 	sort.Slice(visitor.conditions, func(i, j int) bool {
 		return visitor.conditions[i].sortKey() < visitor.conditions[j].sortKey()
 	})
+	conditions := slices.CompactFunc(visitor.conditions, func(left, right WhereClauseCondition) bool {
+		return left.sortKey() == right.sortKey()
+	})
 
-	return &NormalizedWhereClause{Expression: part.text, Conditions: visitor.conditions}, nil
+	return &NormalizedWhereClause{Expression: part.text, Conditions: conditions}, nil
 }
 
 func (condition WhereClauseCondition) sortKey() string {
@@ -218,10 +223,10 @@ func (visitor *whereClauseNormalizer) visitUnaryExpression(ctx grammar.IUnaryExp
 		if part.skipped {
 			return part
 		}
-		if part.join != joinKindNone {
-			return normalizedPart{text: "NOT (" + part.text + ")", join: joinKindNone}
+		if part.join != joinKindNone || part.negated {
+			return normalizedPart{text: "NOT (" + part.text + ")", negated: true}
 		}
-		return normalizedPart{text: "NOT " + part.text, join: joinKindNone}
+		return normalizedPart{text: "NOT " + part.text, negated: true}
 	}
 
 	return part

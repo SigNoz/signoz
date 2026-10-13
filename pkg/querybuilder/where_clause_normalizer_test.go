@@ -26,6 +26,15 @@ func TestNormalizeWhereClauseEquivalenceClasses(t *testing.T) {
 			expected: "service.name = 'frontend' AND status = 200",
 		},
 		{
+			name: "nested not keeps its parentheses",
+			expressions: []string{
+				"NOT (NOT a = 1)",
+				"NOT(NOT a=1)",
+				"not (not a = 1)",
+			},
+			expected: "NOT (NOT a = 1)",
+		},
+		{
 			name: "operand order",
 			expressions: []string{
 				"a = 1 AND b = 2",
@@ -327,6 +336,8 @@ func TestNormalizeWhereClauseIdempotence(t *testing.T) {
 		"a IN [3, 1, 2] AND hasAll(tags, ['a', 'b']) AND body CONTAINS 'x'",
 		"duration BETWEEN 1 AND 10 OR duration > 100",
 		`msg = 'with \'escapes\' and "quotes"'`,
+		"NOT (NOT resource.region = 'us-east')",
+		"NOT (NOT (a = 1 OR b = 2)) AND NOT c EXISTS",
 	}
 
 	for _, expression := range expressions {
@@ -438,6 +449,16 @@ func TestFilterStringLiteral(t *testing.T) {
 			assert.Equal(t, testCase.expected, FilterStringLiteral(testCase.input))
 		})
 	}
+}
+
+func TestNormalizeWhereClauseDedupesRepeatedConditions(t *testing.T) {
+	normalized, err := NormalizeWhereClause("service.name IN ('checkout') AND service.name IN ('checkout') AND status = 500 AND status = 500", nil)
+	require.NoError(t, err)
+	assert.Equal(t, "service.name IN ('checkout') AND status = 500", normalized.Expression)
+	assert.Equal(t, []WhereClauseCondition{
+		{Key: "service.name", Operator: "IN", Values: []string{"checkout"}, TopLevel: true},
+		{Key: "status", Operator: "=", Values: []string{"500"}, TopLevel: true},
+	}, normalized.Conditions)
 }
 
 func TestNormalizeWhereClauseWithPins(t *testing.T) {

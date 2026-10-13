@@ -190,15 +190,17 @@ func builderQuerySelectors(queryType, expression string, variables map[string]qb
 		if !ok {
 			continue
 		}
-		if _, dup := seenKeys[key]; dup || len(condition.Values) == 0 {
-			expandable = false
-		}
+		_, dup := seenKeys[key]
 		seenKeys[key] = struct{}{}
 		lists = append(lists, condition)
+		if dup || len(condition.Values) == 0 || disjuncts > maxDisjuncts/len(condition.Values) {
+			expandable = false
+			continue
+		}
 		disjuncts *= len(condition.Values)
 	}
 
-	if len(lists) == 0 || !expandable || disjuncts > maxDisjuncts {
+	if len(lists) == 0 || !expandable {
 		return []string{queryType + "/" + normalized.Expression}, nil
 	}
 
