@@ -13,13 +13,13 @@ import type { LegendLayout } from 'lib/visualization/layout/ChartLayout/ChartLay
 import type {
 	HeatmapAxisScale,
 	HeatmapCell,
-	HeatmapColorOptions,
 	HeatmapSeries,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
 import type {
 	ScatterChannels,
 	ScatterPointLabel,
 } from 'lib/uPlotV2/plugins/ScatterPlugin/types';
+import type { ColorRampOptions } from 'lib/visualization/colorRamp/types';
 import {
 	DashboardCursorSync,
 	SyncTooltipFilterMode,
@@ -134,8 +134,8 @@ export interface HeatmapChartProps {
 	width: number;
 	height: number;
 	isDarkMode: boolean;
-	/** Overrides on top of `DEFAULT_HEATMAP_COLORS`. */
-	colors?: Partial<HeatmapColorOptions>;
+	/** Overrides on top of `DEFAULT_COLOR_RAMP_OPTIONS`. */
+	colors?: Partial<ColorRampOptions>;
 	/** Default auto: the boundaries pick between log, symmetric log and
 	 *  linear. */
 	axisScale?: HeatmapAxisScale;

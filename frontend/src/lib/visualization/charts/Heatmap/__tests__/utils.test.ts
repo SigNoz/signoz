@@ -1,5 +1,5 @@
 import { resolveHeatmapYAxis } from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
-import { DEFAULT_HEATMAP_COLORS } from 'lib/uPlotV2/plugins/HeatmapPlugin/colorScale';
+import { DEFAULT_COLOR_RAMP_OPTIONS } from 'lib/visualization/colorRamp/colorScale';
 import {
 	HeatmapAxisScale,
 	HeatmapGrid,
@@ -69,7 +69,7 @@ function buildConfig(
 		id: 'panel-1',
 		grid: GRID,
 		yAxis: Y_AXIS,
-		colors: DEFAULT_HEATMAP_COLORS,
+		colors: DEFAULT_COLOR_RAMP_OPTIONS,
 		isDarkMode: true,
 		seriesColor: '#4e74f8',
 		...overrides,
@@ -175,7 +175,7 @@ describe('buildHeatmapConfig', () => {
 			id: 'panel-1',
 			grid: GRID,
 			yAxis: Y_AXIS,
-			colors: DEFAULT_HEATMAP_COLORS,
+			colors: DEFAULT_COLOR_RAMP_OPTIONS,
 			isDarkMode: true,
 			seriesColor: '#4e74f8',
 		}).getConfig();
