@@ -424,7 +424,7 @@ func TestIndexMaterializedPaths(t *testing.T) {
 
 	testCases := []struct {
 		name        string
-		params      promotetypes.IndexMaterializedPathsParams
+		req         promotetypes.PostableIndexMaterializedPaths
 		keys        []*telemetrytypes.TelemetryFieldKey
 		existing    []telemetrytypes.TelemetryFieldKeySkipIndex
 		wantIndexed []string
@@ -434,14 +434,14 @@ func TestIndexMaterializedPaths(t *testing.T) {
 	}{
 		{
 			name:        "DryRun_NoDDL",
-			params:      promotetypes.IndexMaterializedPathsParams{Signal: "traces", DryRun: true},
+			req:         promotetypes.PostableIndexMaterializedPaths{Signal: "traces", DryRun: true},
 			keys:        materializedKeys,
 			wantIndexed: []string{"user.id", "retry.count"},
 			wantSkipped: []string{},
 		},
 		{
 			name:        "Run_IndexesBaseColumn",
-			params:      promotetypes.IndexMaterializedPathsParams{Signal: "traces"},
+			req:         promotetypes.PostableIndexMaterializedPaths{Signal: "traces"},
 			keys:        materializedKeys,
 			wantIndexed: []string{"user.id", "retry.count"},
 			wantSkipped: []string{},
@@ -449,7 +449,7 @@ func TestIndexMaterializedPaths(t *testing.T) {
 		},
 		{
 			name:        "AnyIndexBuilt_Skipped",
-			params:      promotetypes.IndexMaterializedPathsParams{Signal: "traces"},
+			req:         promotetypes.PostableIndexMaterializedPaths{Signal: "traces"},
 			keys:        materializedKeys,
 			existing:    []telemetrytypes.TelemetryFieldKeySkipIndex{{Name: "user.id", FieldContext: telemetrytypes.FieldContextAttribute, IndexType: "ngrambf_v1(4, 1024, 2, 0)"}},
 			wantIndexed: []string{"retry.count"},
@@ -457,8 +457,8 @@ func TestIndexMaterializedPaths(t *testing.T) {
 			wantDDL:     []string{retryCountDDL},
 		},
 		{
-			name:   "UnsupportedIndexType_LoggedAndLeftOut",
-			params: promotetypes.IndexMaterializedPathsParams{Signal: "traces"},
+			name: "UnsupportedIndexType_LoggedAndLeftOut",
+			req:  promotetypes.PostableIndexMaterializedPaths{Signal: "traces"},
 			keys: append([]*telemetrytypes.TelemetryFieldKey{
 				{Name: "user.email", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString, Indexes: []telemetrytypes.TelemetryFieldKeySkipIndex{{IndexType: "text(tokenizer = 'splitByNonAlpha')", Granularity: 1}}},
 			}, materializedKeys...),
@@ -468,7 +468,7 @@ func TestIndexMaterializedPaths(t *testing.T) {
 		},
 		{
 			name:    "LogsSignal_NoAttributeTarget_Rejected",
-			params:  promotetypes.IndexMaterializedPathsParams{Signal: "logs"},
+			req:     promotetypes.PostableIndexMaterializedPaths{Signal: "logs"},
 			wantErr: true,
 		},
 		{
@@ -488,7 +488,7 @@ func TestIndexMaterializedPaths(t *testing.T) {
 				ts.Mock().ExpectExec("ADD INDEX (.+)" + regexp.QuoteMeta(ddl)).WillReturnError(nil)
 			}
 
-			result, err := m.IndexMaterializedPaths(ctx, testCase.params)
+			result, err := m.IndexMaterializedPaths(ctx, testCase.req)
 			if testCase.wantErr {
 				assert.Error(t, err)
 				return

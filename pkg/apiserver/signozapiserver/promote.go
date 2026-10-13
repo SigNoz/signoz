@@ -89,7 +89,7 @@ func (provider *provider) addPromoteRoutes(router *mux.Router) error {
 		Tags:                []string{"promote"},
 		Summary:             "Index materialized paths",
 		Description:         "This endpoint indexes the JSON sub-columns of materialized paths whose columns are indexed and returns the indexed and skipped paths.",
-		Request:             new(promotetypes.IndexMaterializedPathsParams),
+		Request:             new(promotetypes.PostableIndexMaterializedPaths),
 		RequestContentType:  "application/json",
 		Response:            new(promotetypes.IndexMaterializedPathsResult),
 		ResponseContentType: "application/json",

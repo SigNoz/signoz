@@ -74,17 +74,17 @@ func (h *handler) ListPromotedPaths(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) IndexMaterializedPaths(w http.ResponseWriter, r *http.Request) {
-	var params promotetypes.IndexMaterializedPathsParams
-	if err := binding.JSON.BindBody(r.Body, &params); err != nil {
+	var req promotetypes.PostableIndexMaterializedPaths
+	if err := binding.JSON.BindBody(r.Body, &req); err != nil {
 		render.Error(w, err)
 		return
 	}
-	if err := params.Validate(); err != nil {
+	if err := req.Validate(); err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	paths, err := h.module.IndexMaterializedPaths(r.Context(), params)
+	paths, err := h.module.IndexMaterializedPaths(r.Context(), req)
 	if err != nil {
 		render.Error(w, err)
 		return

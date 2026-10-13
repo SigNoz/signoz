@@ -108,8 +108,8 @@ func (m *module) listPromotedPaths(ctx context.Context, target promotetypes.Targ
 	return response, nil
 }
 
-func (m *module) IndexMaterializedPaths(ctx context.Context, params promotetypes.IndexMaterializedPathsParams) (*promotetypes.IndexMaterializedPathsResult, error) {
-	target, err := params.Target()
+func (m *module) IndexMaterializedPaths(ctx context.Context, req promotetypes.PostableIndexMaterializedPaths) (*promotetypes.IndexMaterializedPathsResult, error) {
+	target, err := req.Target()
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func (m *module) IndexMaterializedPaths(ctx context.Context, params promotetypes
 		}
 	}
 
-	if !params.DryRun && len(result.Indexed) > 0 {
+	if !req.DryRun && len(result.Indexed) > 0 {
 		if err := m.promotePaths(ctx, target, result.Indexed...); err != nil {
 			return nil, err
 		}
@@ -168,7 +168,7 @@ func (m *module) IndexMaterializedPaths(ctx context.Context, params promotetypes
 	for _, path := range result.Skipped {
 		skipped = append(skipped, path.Path)
 	}
-	m.settings.Logger().InfoContext(ctx, "indexed materialized paths", slog.String("signal", params.Signal), slog.Bool("dry_run", params.DryRun), slog.Int("indexed_count", len(indexed)), slog.Any("indexed", indexed), slog.Int("skipped_count", len(skipped)), slog.Any("skipped", skipped))
+	m.settings.Logger().InfoContext(ctx, "indexed materialized paths", slog.String("signal", req.Signal), slog.Bool("dry_run", req.DryRun), slog.Int("indexed_count", len(indexed)), slog.Any("indexed", indexed), slog.Int("skipped_count", len(skipped)), slog.Any("skipped", skipped))
 
 	return result, nil
 }

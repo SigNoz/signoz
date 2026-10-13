@@ -76,21 +76,21 @@ func TestNewMaterializedPromotePath(t *testing.T) {
 	}
 }
 
-func TestIndexMaterializedPathsParamsValidate(t *testing.T) {
+func TestPostableIndexMaterializedPathsValidate(t *testing.T) {
 	testCases := []struct {
 		name    string
-		params  IndexMaterializedPathsParams
+		req     PostableIndexMaterializedPaths
 		wantErr bool
 	}{
-		{name: "TracesSignal_Valid", params: IndexMaterializedPathsParams{Signal: "traces", DryRun: true}},
-		{name: "MissingSignal_Rejected", params: IndexMaterializedPathsParams{}, wantErr: true},
-		{name: "UnknownSignal_Rejected", params: IndexMaterializedPathsParams{Signal: "events"}, wantErr: true},
-		{name: "LogsSignal_NoAttributeTarget_Rejected", params: IndexMaterializedPathsParams{Signal: "logs"}, wantErr: true},
+		{name: "TracesSignal_Valid", req: PostableIndexMaterializedPaths{Signal: "traces", DryRun: true}},
+		{name: "MissingSignal_Rejected", req: PostableIndexMaterializedPaths{}, wantErr: true},
+		{name: "UnknownSignal_Rejected", req: PostableIndexMaterializedPaths{Signal: "events"}, wantErr: true},
+		{name: "LogsSignal_NoAttributeTarget_Rejected", req: PostableIndexMaterializedPaths{Signal: "logs"}, wantErr: true},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			err := testCase.params.Validate()
+			err := testCase.req.Validate()
 			if testCase.wantErr {
 				assert.Error(t, err)
 				return

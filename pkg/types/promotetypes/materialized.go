@@ -10,12 +10,12 @@ type IndexMaterializedPathsResult struct {
 	Skipped []*PromotePath `json:"skipped" required:"true"`
 }
 
-type IndexMaterializedPathsParams struct {
+type PostableIndexMaterializedPaths struct {
 	Signal string `json:"signal" required:"true"`
 	DryRun bool   `json:"dryRun"`
 }
 
-func (p *IndexMaterializedPathsParams) Validate() error {
+func (p *PostableIndexMaterializedPaths) Validate() error {
 	if p.Signal == "" {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "signal is required")
 	}
@@ -23,7 +23,7 @@ func (p *IndexMaterializedPathsParams) Validate() error {
 	return err
 }
 
-func (p *IndexMaterializedPathsParams) Target() (Target, error) {
+func (p *PostableIndexMaterializedPaths) Target() (Target, error) {
 	return NewTargetFromText(p.Signal, telemetrytypes.FieldContextAttribute.StringValue())
 }
 

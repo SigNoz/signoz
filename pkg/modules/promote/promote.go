@@ -11,7 +11,7 @@ type Module interface {
 	ListPromotedPaths(ctx context.Context, filters promotetypes.ListPromotedPathsFilters) ([]promotetypes.PromotePath, error)
 	PromotePaths(ctx context.Context, paths ...*promotetypes.PromotePath) error
 
-	IndexMaterializedPaths(ctx context.Context, params promotetypes.IndexMaterializedPathsParams) (*promotetypes.IndexMaterializedPathsResult, error)
+	IndexMaterializedPaths(ctx context.Context, req promotetypes.PostableIndexMaterializedPaths) (*promotetypes.IndexMaterializedPathsResult, error)
 }
 
 type Handler interface {
