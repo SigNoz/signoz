@@ -52,7 +52,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
-import { selectStyle } from './config';
+import { selectStyle } from '../config';
 import { PLACEHOLDER } from './constant';
 import { TypographyText } from './style';
 import {
