@@ -10,6 +10,7 @@ import {
 import {
 	createColorRampResolver,
 	DEFAULT_COLOR_RAMP_OPTIONS,
+	getRampBottom,
 	resolveColorDomain,
 	resolveExtremeColor,
 } from 'lib/visualization/colorRamp/colorScale';
@@ -300,13 +301,23 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 			<ColorBar
 				label="count"
 				ramp={colorResolver.ramp}
-				minLabel={colorResolver.domain.min.toLocaleString()}
+				minLabel={getRampBottom(
+					colorResolver.domain,
+					colors.scale,
+				).toLocaleString()}
 				maxLabel={colorResolver.domain.max.toLocaleString()}
 				markerPosition={colorResolver.positionOf(hoveredCell?.count ?? null)}
 				showNoDataKey={hasMissingCells(grid.counts)}
 			/>
 		);
-	}, [showVisualMap, hasGrid, colorResolver, hoveredCell, grid.counts]);
+	}, [
+		showVisualMap,
+		hasGrid,
+		colorResolver,
+		colors.scale,
+		hoveredCell,
+		grid.counts,
+	]);
 
 	return (
 		<ChartWrapper

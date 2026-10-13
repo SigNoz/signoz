@@ -7,7 +7,10 @@ import {
 	resolveExtremeColor,
 } from 'lib/visualization/colorRamp/colorScale';
 import { HeatmapSeries } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
-import { ColorRampMode } from 'lib/visualization/colorRamp/types';
+import {
+	ColorRampMode,
+	ColorRampScale,
+} from 'lib/visualization/colorRamp/types';
 
 import Heatmap from '../Heatmap';
 
@@ -72,10 +75,32 @@ describe('Heatmap', () => {
 		expect(screen.getByTestId('heatmap')).toBeInTheDocument();
 	});
 
-	it('shows the colour bar with the resolved count domain', () => {
+	it('starts the default log colour bar at its floor, not at 0', () => {
 		renderHeatmap();
 
 		expect(screen.getByTestId('color-bar')).toBeInTheDocument();
+		expect(screen.getByText('1')).toBeInTheDocument();
+		expect(screen.queryByText('0')).not.toBeInTheDocument();
+		expect(screen.getByText('1,204')).toBeInTheDocument();
+	});
+
+	it('labels an all-zero log colour bar 0 to 0, as its cells are drawn', () => {
+		renderHeatmap({
+			series: [
+				{
+					label: 'service.name=cart',
+					points: [{ timestamp: 1000, counts: [0, 0, 0, 0] }],
+				},
+			],
+		});
+
+		expect(screen.getAllByText('0')).toHaveLength(2);
+		expect(screen.queryByText('1')).not.toBeInTheDocument();
+	});
+
+	it('starts a linear colour bar at 0', () => {
+		renderHeatmap({ colors: { scale: ColorRampScale.Linear } });
+
 		expect(screen.getByText('0')).toBeInTheDocument();
 		expect(screen.getByText('1,204')).toBeInTheDocument();
 	});
