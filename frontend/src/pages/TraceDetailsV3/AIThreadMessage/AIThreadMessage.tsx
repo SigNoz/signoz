@@ -21,16 +21,16 @@ function AIThreadMessage({
 	isToolLinkEnabled,
 	onToolLinkClick,
 }: AIThreadMessageProps): JSX.Element {
-	const { role, content, finishReason } = message;
+	const { role, parts: messageParts, finish_reason: finishReason } = message;
 	const roleLabel = getRoleLabel(role);
 	const tone = getFinishReasonTone(finishReason);
 
 	const parts = (
 		<div className={styles.parts}>
-			{content.length === 0 ? (
+			{messageParts.length === 0 ? (
 				<span className={styles.empty}>No content</span>
 			) : (
-				content.map((part, index) => (
+				messageParts.map((part, index) => (
 					<MessagePart
 						// Parts have no stable id and never reorder.
 						// eslint-disable-next-line react/no-array-index-key

@@ -1,38 +1,42 @@
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
+// OTel GenAI message parts; keys the schema marks required may still be missing.
 export type MessagePart =
 	| { type: 'text'; content: string }
-	| { type: 'thinking'; content?: string }
+	| { type: 'reasoning'; content?: string }
+	| { type: 'compaction'; id?: string | null; content?: string | null }
+	| { type: 'tool_call'; name?: string; id?: string | null; arguments?: unknown }
+	| { type: 'tool_call_response'; id?: string | null; response?: unknown }
 	| {
-			type: 'tool_call';
-			id: string;
-			name: string;
-			arguments: unknown;
-			server?: boolean;
-	  }
-	| {
-			type: 'tool_result';
-			toolCallId: string;
+			type: 'server_tool_call';
 			name?: string;
-			content: string;
-			isError?: boolean;
+			id?: string | null;
+			server_tool_call?: Record<string, unknown>;
 	  }
 	| {
-			type: 'media';
+			type: 'server_tool_call_response';
+			id?: string | null;
+			server_tool_call_response?: Record<string, unknown>;
+	  }
+	| {
+			type: 'blob' | 'file' | 'uri';
 			modality?: string;
-			mimeType?: string;
+			mime_type?: string | null;
+			content?: string;
+			file_id?: string;
 			uri?: string;
-			name?: string;
-			sizeBytes?: number;
 	  }
-	| { type: 'generic'; content: string };
+	| { type: 'generic'; content?: unknown };
+
+export type MessagePartType = MessagePart['type'];
 
 export interface ThreadMessage {
-	// system | user | assistant | tool; any other value renders headerless.
+	// system | developer | user | assistant | tool; any other value renders headerless.
 	role?: string;
-	content: MessagePart[];
+	parts: MessagePart[];
+	name?: string;
 	// stop | tool_call | length | content_filter | error, or provider-specific.
-	finishReason?: string;
+	finish_reason?: string;
 }
 
 export type ThreadSpan = SpanV3 & {

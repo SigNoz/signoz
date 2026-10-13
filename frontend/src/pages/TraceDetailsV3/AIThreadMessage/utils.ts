@@ -8,6 +8,7 @@ export const TOOL_CALL_ID_ATTR = 'data-tool-call-id';
 
 const ROLE_LABELS: Record<string, string> = {
 	system: 'System',
+	developer: 'Developer',
 	user: 'User',
 	assistant: 'Assistant',
 	tool: 'Tool',
@@ -27,7 +28,7 @@ export function getRoleLabel(role?: string): string | undefined {
 }
 
 export function getFinishReasonTone(reason?: string): MessageTone {
-	return (reason && FINISH_REASON_TONES[reason]) || 'success';
+	return (reason && FINISH_REASON_TONES[reason.toLowerCase()]) || 'success';
 }
 
 /** Parses objects and arrays only; scalars and invalid JSON return undefined. */
@@ -44,10 +45,19 @@ export function parseJsonObject(text: string): object | undefined {
 	}
 }
 
+export function toDisplayText(value: unknown): string {
+	if (value === undefined || value === null) {
+		return '';
+	}
+	return typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+}
+
 export function collectToolCallIds(messages: ThreadMessage[]): string[] {
 	return messages.flatMap((message) =>
-		message.content.flatMap((part) =>
-			part.type === 'tool_call' ? [part.id] : [],
+		message.parts.flatMap((part) =>
+			(part.type === 'tool_call' || part.type === 'server_tool_call') && part.id
+				? [part.id]
+				: [],
 		),
 	);
 }

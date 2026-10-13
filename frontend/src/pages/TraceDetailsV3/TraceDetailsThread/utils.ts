@@ -2,10 +2,16 @@ import type { SpantypesThreadSpanDTO } from 'api/generated/services/sigNoz.schem
 import { isAxiosError } from 'axios';
 
 import { collectToolCallIds } from '../AIThreadMessage/utils';
+import { toThreadMessages } from './messageUtils';
 import { AnchorStatus, ThreadSpan } from './types';
 
-type WireThreadSpan = Omit<ThreadSpan, 'timestamp' | 'service.name'> & {
+type WireThreadSpan = Omit<
+	ThreadSpan,
+	'timestamp' | 'service.name' | 'formatted_input' | 'formatted_output'
+> & {
 	time_unix: number;
+	formatted_input?: unknown;
+	formatted_output?: unknown;
 };
 
 /** Derives SpanV3's `timestamp` and `service.name`, as the waterfall does. */
@@ -15,6 +21,8 @@ export function toThreadSpan(span: SpantypesThreadSpanDTO): ThreadSpan {
 		...wire,
 		'service.name': wire.resource?.['service.name'] || '',
 		timestamp: wire.time_unix,
+		formatted_input: toThreadMessages(wire.formatted_input),
+		formatted_output: toThreadMessages(wire.formatted_output),
 	};
 }
 
