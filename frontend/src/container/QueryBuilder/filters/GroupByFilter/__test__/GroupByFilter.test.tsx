@@ -54,8 +54,10 @@ function setup(
 	return { onChange };
 }
 
+const groupByInput = (): HTMLInputElement =>
+	screen.getByTestId('group-by').querySelector('input') as HTMLInputElement;
+
 async function clickOptionVisible(label: string): Promise<void> {
-	await screen.findByRole('listbox');
 	await screen.findByText(
 		(content, el) =>
 			content.trim() === label && !!el?.closest('.ant-select-item-option'),
@@ -64,7 +66,6 @@ async function clickOptionVisible(label: string): Promise<void> {
 
 async function clickOption(label: string): Promise<void> {
 	const user = userEvent.setup({ pointerEventsCheck: 0 });
-	await screen.findByRole('listbox');
 	const option = await screen.findByText(
 		(content, el) =>
 			content.trim() === label && !!el?.closest('.ant-select-item-option'),
@@ -100,20 +101,17 @@ describe('GroupByFilter', () => {
 		useFieldKeys([]);
 		const { onChange } = setup({ signalSource: 'meter' });
 
-		const select = screen.getByTestId('group-by');
-		fireEvent.focus(select);
+		fireEvent.focus(screen.getByTestId('group-by'));
 
 		await waitFor(() => expect(requests.length).toBeGreaterThanOrEqual(1));
 		expect(requests[0].get('signal')).toBe('metrics');
 		expect(requests[0].get('source')).toBe('meter');
 		expect(requests[0].get('metricName')).toBe('signoz_calls_total');
 
-		const input = select.querySelector('input') as HTMLInputElement;
+		const input = groupByInput();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		await user.type(input, 'custom.attr');
-		await screen.findByRole('listbox');
-		const option = await screen.findByRole('option', { name: 'custom.attr' });
-		await user.click(option);
+		await clickOption('custom.attr');
 
 		expect(onChange).toHaveBeenCalled();
 		const emitted = onChange.mock.calls[0][0][0];
@@ -128,7 +126,7 @@ describe('GroupByFilter', () => {
 		const { onChange } = setup();
 
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		await user.click(screen.getByRole('combobox'));
+		await user.click(groupByInput());
 		await clickOption('service.name');
 
 		await waitFor(() => expect(onChange).toHaveBeenCalled());
@@ -149,8 +147,7 @@ describe('GroupByFilter', () => {
 		setup();
 
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		await user.click(screen.getByRole('combobox'));
-		await screen.findByRole('listbox');
+		await user.click(groupByInput());
 
 		await waitFor(() =>
 			expect(
@@ -165,8 +162,7 @@ describe('GroupByFilter', () => {
 		useFieldKeys([{ name: 'service.name', fieldContext: 'attribute' }]);
 		const { onChange } = setup();
 
-		const select = screen.getByTestId('group-by');
-		const input = select.querySelector('input') as HTMLInputElement;
+		const input = groupByInput();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		await user.type(input, 'attribute.serv');
 
@@ -213,10 +209,9 @@ describe('GroupByFilter', () => {
 		);
 		setup();
 
-		const select = screen.getByTestId('group-by');
-		const input = select.querySelector('input') as HTMLInputElement;
+		const input = groupByInput();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		await user.click(screen.getByRole('combobox'));
+		await user.click(groupByInput());
 		await clickOptionVisible('service.name');
 
 		await user.type(input, 'host');
@@ -258,7 +253,7 @@ describe('GroupByFilter', () => {
 		});
 
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		await user.click(screen.getByRole('combobox'));
+		await user.click(groupByInput());
 		await clickOptionVisible('host.name');
 
 		expect(
@@ -273,7 +268,7 @@ describe('GroupByFilter', () => {
 		const { onChange } = setup();
 
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		await user.click(screen.getByRole('combobox'));
+		await user.click(groupByInput());
 		await clickOption('log.file.path');
 
 		await waitFor(() => expect(onChange).toHaveBeenCalled());

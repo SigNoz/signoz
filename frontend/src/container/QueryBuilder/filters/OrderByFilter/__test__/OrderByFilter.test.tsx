@@ -23,6 +23,9 @@ const fieldKeysBody = (
 	},
 });
 
+const orderByInput = (): HTMLInputElement =>
+	screen.getByTestId('order-by').querySelector('input') as HTMLInputElement;
+
 function setup(query: Partial<IBuilderQuery>): { onChange: jest.Mock } {
 	const onChange = jest.fn();
 	render(
@@ -74,12 +77,11 @@ describe('OrderByFilter', () => {
 		const { onChange } = setup({});
 
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		await user.click(screen.getByRole('combobox'));
+		await user.click(orderByInput());
 
 		await waitFor(() => expect(requests.length).toBeGreaterThanOrEqual(1));
 		expect(requests[0].get('signal')).toBe('logs');
 
-		await screen.findByRole('listbox');
 		await screen.findByText('service.name desc');
 		await user.click(await screen.findByText('service.name asc'));
 
@@ -93,7 +95,7 @@ describe('OrderByFilter', () => {
 		setup({});
 
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		await user.type(screen.getByRole('combobox'), 'resource.serv');
+		await user.type(orderByInput(), 'resource.serv');
 
 		await waitFor(() =>
 			expect(
@@ -128,11 +130,11 @@ describe('OrderByFilter', () => {
 		setup({});
 
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		await user.type(screen.getByRole('combobox'), 'attribute.serv');
+		await user.type(orderByInput(), 'attribute.serv');
 		await screen.findByText('attribute.service.name asc');
 
-		await user.clear(screen.getByRole('combobox'));
-		await user.type(screen.getByRole('combobox'), 'resource.serv');
+		await user.clear(orderByInput());
+		await user.type(orderByInput(), 'resource.serv');
 		await waitFor(() =>
 			expect(
 				requests.some((params) => params.get('searchText') === 'resource.serv'),
@@ -161,7 +163,7 @@ describe('OrderByFilter', () => {
 		});
 
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		await user.click(screen.getByRole('combobox'));
+		await user.click(orderByInput());
 
 		await screen.findByText('host.name asc');
 		expect(requests).toHaveLength(0);

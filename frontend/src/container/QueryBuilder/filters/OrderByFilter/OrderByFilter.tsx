@@ -94,6 +94,7 @@ export function OrderByFilter({
 			options={optionsData}
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 			onChange={handleChange}
+			data-testid="order-by"
 		/>
 	);
 }
