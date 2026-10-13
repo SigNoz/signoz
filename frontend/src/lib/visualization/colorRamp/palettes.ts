@@ -1,6 +1,6 @@
-import { HeatmapColorPalette } from './types';
+import { ColorRampPalette } from './types';
 
-export const DEFAULT_HEATMAP_PALETTE = HeatmapColorPalette.Lava;
+export const DEFAULT_COLOR_RAMP_PALETTE = ColorRampPalette.Lava;
 
 interface PaletteDefinition {
 	/** Evenly spaced, one end of the ramp to the other. */
@@ -13,8 +13,8 @@ interface PaletteDefinition {
  * Stop values come from the long-established public palette families —
  * ColorBrewer for the hue ramps, matplotlib's perceptual set for the rest.
  */
-const PALETTES: Record<HeatmapColorPalette, PaletteDefinition> = {
-	[HeatmapColorPalette.Ice]: {
+const PALETTES: Record<ColorRampPalette, PaletteDefinition> = {
+	[ColorRampPalette.Ice]: {
 		darkFirst: false,
 		stops: [
 			'#f7fbff',
@@ -28,7 +28,7 @@ const PALETTES: Record<HeatmapColorPalette, PaletteDefinition> = {
 			'#08306b',
 		],
 	},
-	[HeatmapColorPalette.Moss]: {
+	[ColorRampPalette.Moss]: {
 		darkFirst: false,
 		stops: [
 			'#f7fcf5',
@@ -42,7 +42,7 @@ const PALETTES: Record<HeatmapColorPalette, PaletteDefinition> = {
 			'#00441b',
 		],
 	},
-	[HeatmapColorPalette.Rust]: {
+	[ColorRampPalette.Rust]: {
 		darkFirst: false,
 		stops: [
 			'#fff5f0',
@@ -56,7 +56,7 @@ const PALETTES: Record<HeatmapColorPalette, PaletteDefinition> = {
 			'#67000d',
 		],
 	},
-	[HeatmapColorPalette.Graphite]: {
+	[ColorRampPalette.Graphite]: {
 		darkFirst: false,
 		stops: [
 			'#ffffff',
@@ -70,7 +70,7 @@ const PALETTES: Record<HeatmapColorPalette, PaletteDefinition> = {
 			'#000000',
 		],
 	},
-	[HeatmapColorPalette.Ember]: {
+	[ColorRampPalette.Ember]: {
 		darkFirst: false,
 		stops: [
 			'#ffffcc',
@@ -84,7 +84,7 @@ const PALETTES: Record<HeatmapColorPalette, PaletteDefinition> = {
 			'#800026',
 		],
 	},
-	[HeatmapColorPalette.Lagoon]: {
+	[ColorRampPalette.Lagoon]: {
 		darkFirst: false,
 		stops: [
 			'#ffffd9',
@@ -98,7 +98,7 @@ const PALETTES: Record<HeatmapColorPalette, PaletteDefinition> = {
 			'#081d58',
 		],
 	},
-	[HeatmapColorPalette.Orchid]: {
+	[ColorRampPalette.Orchid]: {
 		darkFirst: false,
 		stops: [
 			'#fff7f3',
@@ -112,7 +112,7 @@ const PALETTES: Record<HeatmapColorPalette, PaletteDefinition> = {
 			'#49006a',
 		],
 	},
-	[HeatmapColorPalette.Verdant]: {
+	[ColorRampPalette.Verdant]: {
 		darkFirst: true,
 		stops: [
 			'#440154',
@@ -126,7 +126,7 @@ const PALETTES: Record<HeatmapColorPalette, PaletteDefinition> = {
 			'#fde725',
 		],
 	},
-	[HeatmapColorPalette.Lava]: {
+	[ColorRampPalette.Lava]: {
 		darkFirst: true,
 		stops: [
 			'#000004',
@@ -140,7 +140,7 @@ const PALETTES: Record<HeatmapColorPalette, PaletteDefinition> = {
 			'#fcfdbf',
 		],
 	},
-	[HeatmapColorPalette.Beacon]: {
+	[ColorRampPalette.Beacon]: {
 		darkFirst: true,
 		stops: [
 			'#002051',
@@ -156,10 +156,10 @@ const PALETTES: Record<HeatmapColorPalette, PaletteDefinition> = {
 	},
 };
 
-/** Stops oriented low-count first for the active theme. At the wrong polarity,
- *  empty cells become the loudest thing on screen. */
+/** Stops oriented low end first for the active theme. At the wrong polarity,
+ *  the emptiest values become the loudest thing on screen. */
 export function getPaletteStops(
-	palette: HeatmapColorPalette,
+	palette: ColorRampPalette,
 	isDarkMode: boolean,
 ): string[] {
 	const definition = PALETTES[palette];

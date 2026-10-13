@@ -1,4 +1,4 @@
-import { DEFAULT_OPACITY_FILL } from 'lib/uPlotV2/plugins/HeatmapPlugin/colorScale';
+import { DEFAULT_OPACITY_FILL } from 'lib/visualization/colorRamp/colorScale';
 
 import ColorSwatches from '../../controls/ColorSwatches/ColorSwatches';
 import ConfigField from '../../controls/ConfigField/ConfigField';

@@ -1,7 +1,7 @@
 import { getPaletteStops } from '../palettes';
-import { HeatmapColorPalette } from '../types';
+import { ColorRampPalette } from '../types';
 
-const ALL_PALETTES = Object.values(HeatmapColorPalette);
+const ALL_PALETTES = Object.values(ColorRampPalette);
 
 /** Perceived brightness, good enough to tell a ramp's ends apart. */
 function luminance(hex: string): number {
@@ -49,14 +49,14 @@ describe('getPaletteStops', () => {
 	});
 
 	it('never mutates the stored ramp when reversing it', () => {
-		const first = getPaletteStops(HeatmapColorPalette.Lava, false);
-		const second = getPaletteStops(HeatmapColorPalette.Lava, false);
+		const first = getPaletteStops(ColorRampPalette.Lava, false);
+		const second = getPaletteStops(ColorRampPalette.Lava, false);
 
 		expect(first).toStrictEqual(second);
 	});
 
 	it('offers a neutral ramp for panels that already spend colour elsewhere', () => {
-		const stops = getPaletteStops(HeatmapColorPalette.Graphite, true);
+		const stops = getPaletteStops(ColorRampPalette.Graphite, true);
 
 		// Every stop is a grey: red, green and blue channels stay equal.
 		stops.forEach((stop) => {

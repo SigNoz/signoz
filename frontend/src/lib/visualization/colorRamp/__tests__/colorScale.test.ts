@@ -2,24 +2,24 @@ import { Color } from '@signozhq/design-tokens';
 
 import {
 	clampColorSteps,
-	createHeatmapColorResolver,
+	createColorRampResolver,
 	DEFAULT_COLOR_STEPS,
-	DEFAULT_HEATMAP_COLORS,
-	getMaxCount,
-	getSmallestPositiveCount,
+	DEFAULT_COLOR_RAMP_OPTIONS,
+	getMaxValue,
+	getSmallestPositiveValue,
 	MAX_COLOR_STEPS,
 	MIN_OPACITY_ALPHA,
-	normalizeCount,
-	resolveCountDomain,
+	normalizeColorValue,
+	resolveColorDomain,
 } from '../colorScale';
-import { HeatmapColorMode, HeatmapColorScale } from '../types';
+import { ColorRampMode, ColorRampScale } from '../types';
 
 const SERIES_COLOR = '#4e74f8';
 
-describe('getMaxCount', () => {
+describe('getMaxValue', () => {
 	it('ignores null cells', () => {
 		expect(
-			getMaxCount([
+			getMaxValue([
 				[1, null, 9],
 				[null, 4],
 			]),
@@ -27,19 +27,19 @@ describe('getMaxCount', () => {
 	});
 
 	it('returns 0 for an empty or all-null grid', () => {
-		expect(getMaxCount([])).toBe(0);
-		expect(getMaxCount([[null, null]])).toBe(0);
+		expect(getMaxValue([])).toBe(0);
+		expect(getMaxValue([[null, null]])).toBe(0);
 	});
 
 	it('ignores non-finite counts', () => {
-		expect(getMaxCount([[3, Number.POSITIVE_INFINITY, Number.NaN]])).toBe(3);
+		expect(getMaxValue([[3, Number.POSITIVE_INFINITY, Number.NaN]])).toBe(3);
 	});
 });
 
-describe('getSmallestPositiveCount', () => {
+describe('getSmallestPositiveValue', () => {
 	it('ignores nulls, zeros and non-finite counts', () => {
 		expect(
-			getSmallestPositiveCount([
+			getSmallestPositiveValue([
 				[0, null, 4],
 				[Number.NaN, 2, -3],
 			]),
@@ -47,25 +47,23 @@ describe('getSmallestPositiveCount', () => {
 	});
 
 	it('returns null when nothing is above zero', () => {
-		expect(getSmallestPositiveCount([[0, null]])).toBeNull();
+		expect(getSmallestPositiveValue([[0, null]])).toBeNull();
 	});
 });
 
-describe('resolveCountDomain', () => {
+describe('resolveColorDomain', () => {
 	it('floors at 0 on auto so a zero count sits at the bottom of the scale', () => {
-		expect(
-			resolveCountDomain({ minCount: null, maxCount: null }, [[5, 20]]),
-		).toStrictEqual({
-			min: 0,
-			max: 20,
-			logFloor: 5,
-		});
+		expect(resolveColorDomain({ min: null, max: null }, [[5, 20]])).toStrictEqual(
+			{
+				min: 0,
+				max: 20,
+				logFloor: 5,
+			},
+		);
 	});
 
 	it('honours explicit clamps', () => {
-		expect(
-			resolveCountDomain({ minCount: 10, maxCount: 100 }, [[5, 20]]),
-		).toStrictEqual({
+		expect(resolveColorDomain({ min: 10, max: 100 }, [[5, 20]])).toStrictEqual({
 			min: 10,
 			max: 100,
 			logFloor: 5,
@@ -73,9 +71,7 @@ describe('resolveCountDomain', () => {
 	});
 
 	it('collapses a max at or below min', () => {
-		expect(
-			resolveCountDomain({ minCount: 50, maxCount: 10 }, [[5]]),
-		).toStrictEqual({
+		expect(resolveColorDomain({ min: 50, max: 10 }, [[5]])).toStrictEqual({
 			min: 50,
 			max: 50,
 			logFloor: 5,
@@ -84,90 +80,90 @@ describe('resolveCountDomain', () => {
 
 	it('takes the log floor from the smallest positive count, below 1 included', () => {
 		expect(
-			resolveCountDomain({ minCount: null, maxCount: null }, [[0, 0.02, 0.8]])
-				.logFloor,
+			resolveColorDomain({ min: null, max: null }, [[0, 0.02, 0.8]]).logFloor,
 		).toBeCloseTo(0.02, 6);
 	});
 
 	it('keeps the log floor within MAX_LOG_DECADES of the max', () => {
 		expect(
-			resolveCountDomain({ minCount: null, maxCount: null }, [[1, 1e9]]).logFloor,
+			resolveColorDomain({ min: null, max: null }, [[1, 1e9]]).logFloor,
 		).toBe(1e3);
 	});
 
 	it('falls back to a floor of 1 for a grid without a positive count', () => {
 		expect(
-			resolveCountDomain({ minCount: null, maxCount: null }, [[null, 0]]).logFloor,
+			resolveColorDomain({ min: null, max: null }, [[null, 0]]).logFloor,
 		).toBe(1);
 	});
 });
 
-describe('normalizeCount', () => {
+describe('normalizeColorValue', () => {
 	const domain = { min: 0, max: 1000, logFloor: 1 };
 
 	it('spreads low counts on a log scale where a linear one washes them out', () => {
-		const log = (count: number): number =>
-			normalizeCount({ count, domain, scale: HeatmapColorScale.Log });
+		const log = (value: number): number =>
+			normalizeColorValue({ value, domain, scale: ColorRampScale.Log });
 
 		expect(log(10)).toBeCloseTo(1 / 3, 5);
 		expect(log(20)).toBeCloseTo(Math.log10(20) / 3, 5);
 		expect(
-			normalizeCount({ count: 10, domain, scale: HeatmapColorScale.Linear }),
+			normalizeColorValue({ value: 10, domain, scale: ColorRampScale.Linear }),
 		).toBeCloseTo(0.01, 5);
 	});
 
 	it('puts 0 and 1 at the bottom of a log scale', () => {
 		expect(
-			normalizeCount({ count: 0, domain, scale: HeatmapColorScale.Log }),
+			normalizeColorValue({ value: 0, domain, scale: ColorRampScale.Log }),
 		).toBe(0);
 		expect(
-			normalizeCount({ count: 1, domain, scale: HeatmapColorScale.Log }),
+			normalizeColorValue({ value: 1, domain, scale: ColorRampScale.Log }),
 		).toBe(0);
 	});
 
 	it('reaches the top of the scale at max on every scale', () => {
-		[
-			HeatmapColorScale.Log,
-			HeatmapColorScale.Sqrt,
-			HeatmapColorScale.Linear,
-		].forEach((scale) => {
-			expect(normalizeCount({ count: 1000, domain, scale })).toBeCloseTo(1, 6);
-		});
+		[ColorRampScale.Log, ColorRampScale.Sqrt, ColorRampScale.Linear].forEach(
+			(scale) => {
+				expect(normalizeColorValue({ value: 1000, domain, scale })).toBeCloseTo(
+					1,
+					6,
+				);
+			},
+		);
 	});
 
 	it('takes the square root of the linear position on a sqrt scale', () => {
 		expect(
-			normalizeCount({
-				count: 250,
+			normalizeColorValue({
+				value: 250,
 				domain: { min: 0, max: 1000, logFloor: 1 },
-				scale: HeatmapColorScale.Sqrt,
+				scale: ColorRampScale.Sqrt,
 			}),
 		).toBeCloseTo(0.5, 6);
 	});
 
 	it('clamps counts outside the domain', () => {
-		const scale = HeatmapColorScale.Linear;
-		expect(normalizeCount({ count: -5, domain, scale })).toBe(0);
-		expect(normalizeCount({ count: 5000, domain, scale })).toBe(1);
+		const scale = ColorRampScale.Linear;
+		expect(normalizeColorValue({ value: -5, domain, scale })).toBe(0);
+		expect(normalizeColorValue({ value: 5000, domain, scale })).toBe(1);
 	});
 
 	it('returns the bottom of the scale when min equals max', () => {
 		expect(
-			normalizeCount({
-				count: 7,
+			normalizeColorValue({
+				value: 7,
 				domain: { min: 7, max: 7, logFloor: 1 },
-				scale: HeatmapColorScale.Log,
+				scale: ColorRampScale.Log,
 			}),
 		).toBe(0);
 	});
 
 	it('spreads a log domain that sits entirely below a count of 1', () => {
 		const fractional = { min: 0, max: 1, logFloor: 0.001 };
-		const log = (count: number): number =>
-			normalizeCount({
-				count,
+		const log = (value: number): number =>
+			normalizeColorValue({
+				value,
 				domain: fractional,
-				scale: HeatmapColorScale.Log,
+				scale: ColorRampScale.Log,
 			});
 
 		expect(log(0.001)).toBe(0);
@@ -179,17 +175,17 @@ describe('normalizeCount', () => {
 		const domainAtFloor = { min: 0, max: 1, logFloor: 1 };
 
 		expect(
-			normalizeCount({
-				count: 1,
+			normalizeColorValue({
+				value: 1,
 				domain: domainAtFloor,
-				scale: HeatmapColorScale.Log,
+				scale: ColorRampScale.Log,
 			}),
 		).toBe(1);
 		expect(
-			normalizeCount({
-				count: 0.5,
+			normalizeColorValue({
+				value: 0.5,
 				domain: domainAtFloor,
-				scale: HeatmapColorScale.Log,
+				scale: ColorRampScale.Log,
 			}),
 		).toBe(0.5);
 	});
@@ -207,13 +203,13 @@ describe('clampColorSteps', () => {
 	});
 });
 
-describe('createHeatmapColorResolver', () => {
+describe('createColorRampResolver', () => {
 	const build = (
-		overrides: Partial<typeof DEFAULT_HEATMAP_COLORS> = {},
+		overrides: Partial<typeof DEFAULT_COLOR_RAMP_OPTIONS> = {},
 		isDarkMode = true,
-	): ReturnType<typeof createHeatmapColorResolver> =>
-		createHeatmapColorResolver({
-			options: { ...DEFAULT_HEATMAP_COLORS, ...overrides },
+	): ReturnType<typeof createColorRampResolver> =>
+		createColorRampResolver({
+			options: { ...DEFAULT_COLOR_RAMP_OPTIONS, ...overrides },
 			domain: { min: 0, max: 1000, logFloor: 1 },
 			isDarkMode,
 			seriesColor: SERIES_COLOR,
@@ -242,8 +238,8 @@ describe('createHeatmapColorResolver', () => {
 	});
 
 	it('colours zero off the ramp once an explicit minimum lifts it off the bottom', () => {
-		const resolver = createHeatmapColorResolver({
-			options: { ...DEFAULT_HEATMAP_COLORS, minCount: 5 },
+		const resolver = createColorRampResolver({
+			options: { ...DEFAULT_COLOR_RAMP_OPTIONS, min: 5 },
 			domain: { min: 5, max: 1000, logFloor: 5 },
 			isDarkMode: true,
 			seriesColor: SERIES_COLOR,
@@ -267,7 +263,7 @@ describe('createHeatmapColorResolver', () => {
 	});
 
 	it('varies alpha in opacity mode, never below the visibility floor', () => {
-		const resolver = build({ mode: HeatmapColorMode.Opacity, steps: 4 });
+		const resolver = build({ mode: ColorRampMode.Opacity, steps: 4 });
 
 		expect(resolver.ramp[0]).toBe(`rgba(78, 116, 248, ${MIN_OPACITY_ALPHA})`);
 		// `color` drops the alpha channel from the string once it reaches 1.
@@ -276,7 +272,7 @@ describe('createHeatmapColorResolver', () => {
 
 	it('prefers an explicit opacity fill over the series colour', () => {
 		const resolver = build({
-			mode: HeatmapColorMode.Opacity,
+			mode: ColorRampMode.Opacity,
 			fill: '#e5484d',
 			steps: 2,
 		});
