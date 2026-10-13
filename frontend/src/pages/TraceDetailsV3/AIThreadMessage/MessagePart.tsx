@@ -1,4 +1,4 @@
-import { MessagePart as MessagePartType } from '../TraceDetailsThread/types';
+import { MessagePart as MessagePartType } from './types';
 import JsonBlock from './JsonBlock';
 import ThinkingPart from './parts/ThinkingPart';
 import ToolCallPart from './parts/ToolCallPart';

@@ -1,6 +1,4 @@
-import { MessagePart, ThreadMessage } from '../TraceDetailsThread/types';
-
-type MediaMessagePart = Extract<MessagePart, { type: 'blob' | 'file' | 'uri' }>;
+import { MediaMessagePart, ThreadMessage } from './types';
 
 export const MAX_TEXT_LENGTH = 1000;
 
@@ -31,7 +29,7 @@ export function getRoleLabel(role?: string): string | undefined {
 	return role ? ROLE_LABELS[role] : undefined;
 }
 
-export function getFinishReasonTone(reason?: string): MessageTone {
+export function getFinishReasonTone(reason?: string | null): MessageTone {
 	return (reason && FINISH_REASON_TONES[reason.toLowerCase()]) || 'success';
 }
 
@@ -58,7 +56,11 @@ export function toDisplayText(value: unknown): string {
 
 /** Blob content is inline base64; only a prefix is shown. */
 export function truncateBlobContent(part: MediaMessagePart): MediaMessagePart {
-	if (!part.content || part.content.length <= MAX_BLOB_PREVIEW_LENGTH) {
+	if (
+		part.type !== 'blob' ||
+		!part.content ||
+		part.content.length <= MAX_BLOB_PREVIEW_LENGTH
+	) {
 		return part;
 	}
 	return {

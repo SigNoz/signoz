@@ -1,7 +1,8 @@
 import AIThreadMessage, {
 	AIThreadMessageProps,
 } from '../AIThreadMessage/AIThreadMessage';
-import { ThreadMessage, ThreadView } from '../TraceDetailsThread/types';
+import { ThreadMessage } from '../AIThreadMessage/types';
+import { ThreadView } from '../TraceDetailsThread/types';
 import RawMessages from './RawMessages';
 import { RawMessagesValue } from './utils';
 

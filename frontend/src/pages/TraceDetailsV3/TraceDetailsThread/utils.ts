@@ -2,7 +2,7 @@ import type { SpantypesThreadSpanDTO } from 'api/generated/services/sigNoz.schem
 import { isAxiosError } from 'axios';
 
 import { collectToolCallIds } from '../AIThreadMessage/utils';
-import { toThreadMessages } from './messageUtils';
+import { toThreadMessages } from '../AIThreadMessage/messageUtils';
 import { AnchorStatus, ThreadSpan } from './types';
 
 /** Derives SpanV3's `timestamp` and `service.name`, as the waterfall does. */

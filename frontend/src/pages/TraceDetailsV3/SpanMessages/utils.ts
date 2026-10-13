@@ -1,6 +1,7 @@
 import { parseJsonObject } from '../AIThreadMessage/utils';
-import { toThreadMessages } from '../TraceDetailsThread/messageUtils';
-import { ThreadMessage, ThreadSpan } from '../TraceDetailsThread/types';
+import { toThreadMessages } from '../AIThreadMessage/messageUtils';
+import { ThreadMessage } from '../AIThreadMessage/types';
+import { ThreadSpan } from '../TraceDetailsThread/types';
 import { GEN_AI_KEYS } from '../utils/aiTraceUtils';
 
 /** Parsed JSON, or the original string when it isn't JSON. */
