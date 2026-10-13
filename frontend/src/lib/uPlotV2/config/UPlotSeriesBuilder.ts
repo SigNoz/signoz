@@ -125,7 +125,6 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 			return { paths: pathBuilder };
 		}
 
-		// Scatter without a `pathBuilder` has nothing to draw its discs with.
 		if (drawStyle === DrawStyle.Points || drawStyle === DrawStyle.Scatter) {
 			return { paths: (): null => null };
 		}

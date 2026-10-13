@@ -39,11 +39,11 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 		};
 	}
 
-	/** The axis line reads as the outermost grid line, so it takes the grid's style. */
+	/** Styled like the grid. */
 	private buildBorderConfig(
 		grid: uPlot.Axis.Grid | undefined,
 	): uPlot.Axis.Border | undefined {
-		if (this.props.showBorder === false || !grid) {
+		if (this.props.showBorder === false || !grid || grid.show === false) {
 			return undefined;
 		}
 		return { show: true, stroke: grid.stroke, width: grid.width };
@@ -67,10 +67,7 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 		};
 	}
 
-	/**
-	 * Build values formatter for X-axis: time, or a value axis when a unit or
-	 * precision is given (scatter). Neither leaves uPlot's numeric default.
-	 */
+	/** Time ticks, or unit-formatted values when a unit/precision is set. */
 	private buildXAxisValuesFormatter(): uPlot.Axis.Values | undefined {
 		const { isTimeAxis, yAxisUnit, decimalPrecision } = this.props;
 
@@ -85,11 +82,7 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 		return undefined;
 	}
 
-	/**
-	 * Build values formatter for a value axis (values with units). A split outside
-	 * the scale's range gets no label: uPlot's arcsinh splits always include
-	 * ±threshold, and it would draw that label past the plot's edge.
-	 */
+	/** Blanks splits outside the scale; uPlot's asinh splits always include ±threshold. */
 	private buildValueAxisFormatter(): uPlot.Axis.Values {
 		const { yAxisUnit, decimalPrecision, scaleKey } = this.props;
 

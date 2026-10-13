@@ -18,7 +18,6 @@ import {
 	ScatterSeriesData,
 } from './types';
 
-/** Every scatter series reads its own x and y columns against the shared scales. */
 export const SCATTER_FACETS: Series.Facet[] = [
 	{ scale: 'x', auto: true },
 	{ scale: 'y', auto: true },
@@ -32,11 +31,7 @@ const TWO_PI = 2 * Math.PI;
 const HOVER_RING_GAP_PX = 3;
 const HOVER_RING_WIDTH_PX = 2;
 
-/**
- * uPlot `ceil`s a cursor point's left/top but not its size, which pulls a ring
- * up to 1px right and down of the disc. Snapping the edge to a whole pixel and
- * growing the span by twice the snap keeps the centre exact.
- */
+/** uPlot ceils a cursor point's left/top but not its size; snap so the ring stays centred. */
 function snapToPixel(start: number, length: number): [number, number] {
 	const snapped = Math.floor(start);
 	return [snapped, length + (start - snapped) * 2];
@@ -52,7 +47,6 @@ export function getSeriesStroke(u: uPlot, seriesIdx: number): string {
 type SeriesWithPaths = Series & { _paths?: Series.Paths | null };
 
 export interface ScatterPlugin {
-	/** Draws every point of a series as one path and indexes the discs for hover. */
 	pathBuilder: Series.PathBuilder;
 	/** Hover by disc rather than by nearest x: mode 2 has no shared x to scan. */
 	cursor: uPlot.Cursor;
@@ -70,8 +64,7 @@ export function createScatterPlugin({
 	let tree: Quadtree<ScatterHit> | null = null;
 	let hit: ScatterHit | null = null;
 
-	// The domain spans every series, so it is resolved once per dataset rather than
-	// once per series path.
+	// Spans every series; cached per dataset.
 	let cachedData: uPlot.AlignedData | null = null;
 	let cachedDomain: SizeDomain | null = null;
 
@@ -189,7 +182,6 @@ export function createScatterPlugin({
 				);
 				return { left, top, width, height };
 			},
-			// An outline around the disc, so the point itself stays readable.
 			fill: (): string => 'transparent',
 			stroke: getSeriesStroke,
 			width: (): number => HOVER_RING_WIDTH_PX,
@@ -204,8 +196,7 @@ export function createScatterPlugin({
 		hooks: {
 			drawClear: (u: uPlot): void => {
 				tree = new Quadtree<ScatterHit>(0, 0, u.bbox.width, u.bbox.height);
-				// The tree only knows what the path builder last drew, so cached paths
-				// must be rebuilt alongside it.
+				// The tree holds only what the path builder drew, so force a rebuild.
 				u.series.forEach((series, index) => {
 					if (index > 0) {
 						(series as SeriesWithPaths)._paths = null;

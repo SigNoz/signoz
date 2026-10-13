@@ -96,7 +96,6 @@ export interface HistogramChartProps extends ChartWrapperProps {
 export interface ScatterPointClick {
 	seriesIndex: number;
 	dataIndex: number;
-	/** The series' drawn colour. */
 	color: string;
 	/** Viewport coordinates of the click. */
 	coordinates: { x: number; y: number };
