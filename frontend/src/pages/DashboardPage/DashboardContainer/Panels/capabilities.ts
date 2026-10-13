@@ -1,6 +1,6 @@
 import { type TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { EQueryType } from 'types/common/dashboard';
-import { QueryMode } from 'pages/DashboardPage/DashboardContainer/Panels/utils/queryMode';
+import { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
 
 import { getPanelDefinition } from './registry';
 import { getQueryModeSignals } from './types/panelCapabilities';

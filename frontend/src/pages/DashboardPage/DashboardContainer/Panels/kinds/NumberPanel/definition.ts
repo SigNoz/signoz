@@ -9,7 +9,7 @@ import {
 	Querybuildertypesv5RequestTypeDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { QueryMode } from 'pages/DashboardPage/DashboardContainer/Panels/utils/queryMode';
+import { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
 
 export const definition: PanelDefinition<'signoz/NumberPanel'> = {
 	kind: 'signoz/NumberPanel',

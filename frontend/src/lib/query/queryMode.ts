@@ -1,28 +1,8 @@
-import { Querybuildertypesv5QueryTypeDTO } from 'api/generated/services/sigNoz.schemas';
-import type { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { EQueryType } from 'types/common/dashboard';
-
-export const QueryMode = {
-	...EQueryType,
-	/** Not an `EQueryType`: AI queries are builder queries tagged `builderQueryType: builder_ai_query`. */
-	AI_QUERY_BUILDER: Querybuildertypesv5QueryTypeDTO.builder_ai_query,
-} as const;
-
-export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode];
-
-/** Query Builder and AI share `Query.builder`; the variant says which one it holds. */
-export const BuilderVariant = {
-	MAIN: 'main',
-	AI: 'ai',
-} as const;
-
-export type BuilderVariant =
-	(typeof BuilderVariant)[keyof typeof BuilderVariant];
-
-/** Builder queries per variant; `Query` has one `builder` slot, so the off-screen variant lives here. */
-export type BuildersByVariant = Partial<
-	Record<BuilderVariant, Query['builder']>
->;
+import {
+	BuilderVariant,
+	type Query,
+	QueryMode,
+} from 'types/api/queryBuilder/queryBuilderData';
 
 /** Which variant the `builder` slot holds, whatever query type is active. */
 export function getBuilderVariant(builder: Query['builder']): BuilderVariant {

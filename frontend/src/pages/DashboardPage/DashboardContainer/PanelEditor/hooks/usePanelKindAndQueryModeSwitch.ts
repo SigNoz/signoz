@@ -11,9 +11,12 @@ import { handleQueryChange } from 'lib/query/panelQuery';
 import type { PartialPanelTypes } from 'lib/query/panelTypeDataSourceFormValuesMap';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
-import type {
-	OrderByPayload,
-	Query,
+import {
+	type BuilderVariant,
+	type BuildersByVariant,
+	type OrderByPayload,
+	type Query,
+	QueryMode,
 } from 'types/api/queryBuilder/queryBuilderData';
 
 import {
@@ -23,14 +26,11 @@ import {
 } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 import { getQueryModeSignals } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelCapabilities';
 import {
-	type BuilderVariant,
-	type BuildersByVariant,
 	getBuilderVariant,
 	getQueryMode,
-	QueryMode,
 	toBuilderVariant,
 	withoutAIQueryTag,
-} from 'pages/DashboardPage/DashboardContainer/Panels/utils/queryMode';
+} from 'lib/query/queryMode';
 import { seedBuilderForMode } from 'pages/DashboardPage/DashboardContainer/Panels/utils/seedBuilderForMode';
 import { toPanelType, type PanelKind } from '../../Panels/types/panelKind';
 import { getBuilderQueries } from '../../Panels/utils/getBuilderQueries';

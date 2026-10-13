@@ -8,7 +8,7 @@ import {
 	toPanelType,
 	type PanelKind,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
-import type { BuildersByVariant } from 'pages/DashboardPage/DashboardContainer/Panels/utils/queryMode';
+import type { BuildersByVariant } from 'types/api/queryBuilder/queryBuilderData';
 
 import PanelEditorQueryBuilder from '../PanelEditorQueryBuilder';
 import { useQueryModeChange } from '../../hooks/useQueryModeChange';

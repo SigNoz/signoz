@@ -2,7 +2,7 @@ import {
 	Querybuildertypesv5RequestTypeDTO,
 	type TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import type { QueryMode } from 'pages/DashboardPage/DashboardContainer/Panels/utils/queryMode';
+import type { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
 
 export type { QueryBuilderFieldsConfig } from 'components/QueryBuilderV2/queryBuilderFields.types';
 

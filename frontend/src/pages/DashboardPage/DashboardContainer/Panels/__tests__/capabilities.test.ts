@@ -3,7 +3,7 @@ import {
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { EQueryType } from 'types/common/dashboard';
-import { QueryMode } from 'pages/DashboardPage/DashboardContainer/Panels/utils/queryMode';
+import { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
 
 import { UNSUPPORTED_PANEL } from '../kinds/UnsupportedPanel/definition';
 import { getPanelDefinition, isPanelKindSupported } from '../registry';

@@ -27,11 +27,8 @@ import {
 } from '../../Panels/types/panelCapabilities';
 import type { RenderableQueryPanelDefinition } from '../../Panels/types/panelDefinition';
 import { toPanelType } from '../../Panels/types/panelKind';
-import {
-	getQueryMode,
-	isBuilderMode,
-	QueryMode,
-} from 'pages/DashboardPage/DashboardContainer/Panels/utils/queryMode';
+import { getQueryMode, isBuilderMode } from 'lib/query/queryMode';
+import { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
 
 import styles from './PanelEditorQueryBuilder.module.scss';
 

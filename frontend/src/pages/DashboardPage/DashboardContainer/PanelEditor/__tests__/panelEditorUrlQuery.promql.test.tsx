@@ -22,7 +22,7 @@ import { requireQueryPanelDefinition } from 'pages/DashboardPage/DashboardContai
 
 import PanelEditorQueryBuilder from '../PanelEditorQueryBuilder/PanelEditorQueryBuilder';
 import { useQueryModeChange } from '../hooks/useQueryModeChange';
-import type { BuildersByVariant } from 'pages/DashboardPage/DashboardContainer/Panels/utils/queryMode';
+import type { BuildersByVariant } from 'types/api/queryBuilder/queryBuilderData';
 
 // jest.config maps the real hook to a no-op mock; this suite needs real navigation.
 jest.mock('hooks/useSafeNavigate', () => {

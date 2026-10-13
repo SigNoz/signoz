@@ -6,13 +6,12 @@ import {
 	getQueryModeSignals,
 	type SupportedQueryModesKindMap,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelCapabilities';
-import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	type BuildersByVariant,
-	getBuilderVariant,
+	type Query,
 	QueryMode,
-	toBuilderVariant,
-} from 'pages/DashboardPage/DashboardContainer/Panels/utils/queryMode';
+} from 'types/api/queryBuilder/queryBuilderData';
+import { getBuilderVariant, toBuilderVariant } from 'lib/query/queryMode';
 import { seedBuilderForMode } from 'pages/DashboardPage/DashboardContainer/Panels/utils/seedBuilderForMode';
 
 interface UseQueryModeChangeArgs {
