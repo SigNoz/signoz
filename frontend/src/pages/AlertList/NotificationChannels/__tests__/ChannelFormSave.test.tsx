@@ -1,4 +1,5 @@
 import {
+	AUTHZ_CHECK_URL,
 	setupAuthzAdmin,
 	setupAuthzGrantByPrefix,
 } from 'lib/authz/utils/authz-test-utils';
@@ -134,6 +135,30 @@ describe('ChannelForm save', () => {
 				expect.stringContaining('update'),
 			);
 			expect(screen.getByTestId('test-channel-button')).toBeDisabled();
+		},
+		TEST_TIMEOUT,
+	);
+
+	it(
+		'stays editable when the permission check itself fails',
+		async () => {
+			// a failed check is an outage, not a denial: locking the form on one
+			// would read as "no permission" every time the batch misses
+			server.use(
+				rest.post(AUTHZ_CHECK_URL, (_, res, ctx) => res(ctx.status(500))),
+			);
+
+			render(<ChannelForm channelId="3" onDone={jest.fn()} />);
+
+			// Save is disabled while the checks are in flight and settles once they
+			// resolve, so waiting on it means the failure has landed
+			const save = await screen.findByTestId('save-channel-button', {}, FIND);
+			await waitFor(() => expect(save).toBeEnabled(), FIND);
+
+			expect(screen.getByTestId('slack-channel-textbox')).toBeEnabled();
+			expect(
+				screen.queryByTestId('channel-read-only-notice'),
+			).not.toBeInTheDocument();
 		},
 		TEST_TIMEOUT,
 	);

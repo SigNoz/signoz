@@ -14,6 +14,11 @@ export interface NotificationChannelPermissions {
 	/** Per the authz guide, an edit affordance needs `read` as well as `update`. */
 	canEdit: boolean;
 	isLoading: boolean;
+	/**
+	 * The check itself failed. Callers should fall open — behave as before authz
+	 * and let the API decide — rather than read an outage as a denial.
+	 */
+	hasError: boolean;
 	readPermission: BrandedPermission;
 	updatePermission: BrandedPermission;
 	deletePermission: BrandedPermission;
@@ -45,7 +50,7 @@ export function useNotificationChannelPermissions(
 		[readPermission, updatePermission, deletePermission],
 	);
 
-	const { isGranted, isLoading } = useAuthZ(checks, { enabled });
+	const { isGranted, isLoading, error } = useAuthZ(checks, { enabled });
 
 	const canRead = isGranted(readPermission);
 	const canUpdate = isGranted(updatePermission);
@@ -61,6 +66,7 @@ export function useNotificationChannelPermissions(
 		canDelete: isGranted(deletePermission),
 		canEdit: canRead && canUpdate,
 		isLoading,
+		hasError: !!error,
 		readPermission,
 		updatePermission,
 		deletePermission,

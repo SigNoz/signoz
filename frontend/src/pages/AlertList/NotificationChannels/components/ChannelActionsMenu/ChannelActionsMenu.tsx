@@ -11,6 +11,7 @@ import { Button } from '@signozhq/ui/button';
 import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
 import { AlertmanagertypesListedNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas';
 import { useNotificationChannelPermissions } from 'hooks/notificationChannels/useNotificationChannelPermissions';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 
 import styles from './ChannelActionsMenu.module.scss';
 
@@ -30,18 +31,24 @@ function ChannelActionsMenu({
 	onDelete,
 	onViewJson,
 }: ChannelActionsMenuProps): JSX.Element {
-	const { canEdit, canDelete } = useNotificationChannelPermissions(channel.id);
+	const { canEdit, canDelete, hasError, deletePermission } =
+		useNotificationChannelPermissions(channel.id);
+
+	// A failed check is not a denial: fall open and let the API decide, the way
+	// the collection hook documents.
+	const mayEdit = canEdit || hasError;
+	const mayDelete = canDelete || hasError;
 
 	// Without `update` the same screen is still readable, so the action opens it
 	// as a view rather than disappearing.
-	const openLabel = canEdit ? 'Edit' : 'View';
+	const openLabel = mayEdit ? 'Edit' : 'View';
 
 	const menuItems = useMemo(
 		() => [
 			{
 				key: 'open',
 				label: openLabel,
-				icon: canEdit ? <PenLine size={14} /> : <Eye size={14} />,
+				icon: mayEdit ? <PenLine size={14} /> : <Eye size={14} />,
 				onClick: (): void => onOpen(channel),
 			},
 			{
@@ -59,14 +66,28 @@ function ChannelActionsMenu({
 			{ key: 'divider', type: 'divider' as const },
 			{
 				key: 'delete',
-				label: 'Delete',
+				// the tooltip is what tells a denied user why the item is dead
+				label: (
+					<AuthZTooltip checks={mayDelete ? [] : [deletePermission]} side="left">
+						<span>Delete</span>
+					</AuthZTooltip>
+				),
 				icon: <Trash2 size={14} />,
-				disabled: !canDelete,
+				disabled: !mayDelete,
 				danger: true,
 				onClick: (): void => onDelete(channel),
 			},
 		],
-		[openLabel, canEdit, canDelete, channel, onOpen, onDelete, onViewJson],
+		[
+			openLabel,
+			mayEdit,
+			mayDelete,
+			deletePermission,
+			channel,
+			onOpen,
+			onDelete,
+			onViewJson,
+		],
 	);
 
 	return (

@@ -136,5 +136,7 @@
   "slack_channel_help": "Specify channel or user, use #channel-name, @username (has to be all lowercase, no whitespace)",
   "api_key_required": "API Key is mandatory",
 	"to_required": "To field is mandatory",
-	"channel_name_required": "Channel name is mandatory"
+	"channel_name_required": "Channel name is mandatory",
+  "channel_read_only_title": "You can view this channel but not change it",
+  "channel_read_only_help": "Changing a channel needs update permission on it. Ask an admin to grant it, or open the channel read-only."
 }
