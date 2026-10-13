@@ -92,7 +92,7 @@ interface UsePanelKindAndQueryModeSwitchApi {
  * the two things that don't: a per-kind session cache that makes switching reversible
  * (`Table → List → Table` restores the original query + spec), and, on first visit to a
  * kind, a query rebuild (`handleQueryChange`) + spec reset (`getSwitchedPluginSpec`).
- * It also owns the tab switch, stashing the off-screen builder tab per mode and per kind.
+ * It also owns the tab switch, stashing the off-screen builder variant per kind.
  */
 export function usePanelKindAndQueryModeSwitch({
 	spec,
