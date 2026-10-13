@@ -49,7 +49,7 @@ function AIThreadMessage({
 			className={styles.message}
 			data-testid={`ai-thread-message-${role || 'unknown'}`}
 		>
-			{role === 'system' ? (
+			{role === 'system' || role === 'developer' ? (
 				<CollapsibleBlock label={roleLabel} testId="ai-message-system-toggle">
 					{parts}
 				</CollapsibleBlock>

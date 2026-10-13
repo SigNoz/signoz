@@ -233,15 +233,3 @@
 		padding: 0;
 	}
 }
-
-.mediaChip {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--spacing-3);
-	align-self: flex-start;
-	padding: var(--spacing-2) var(--spacing-4);
-	border: 1px solid var(--l2-border);
-	border-radius: var(--radius-round);
-	font-size: var(--font-size-xs);
-	color: var(--l2-foreground);
-}

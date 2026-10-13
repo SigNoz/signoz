@@ -5,19 +5,21 @@ import styles from '../AIThreadMessage.module.scss';
 
 interface ThinkingPartProps {
 	content?: string;
+	label?: string;
+	testId?: string;
 }
 
-function ThinkingPart({ content }: ThinkingPartProps): JSX.Element {
+function ThinkingPart({
+	content,
+	label = 'Thinking',
+	testId = 'ai-message-thinking-toggle',
+}: ThinkingPartProps): JSX.Element {
 	return (
-		<CollapsibleBlock
-			label="Thinking"
-			isBoxed
-			testId="ai-message-thinking-toggle"
-		>
+		<CollapsibleBlock label={label} isBoxed testId={testId}>
 			{content ? (
 				<ExpandableText text={content} isMarkdown />
 			) : (
-				<span className={styles.empty}>Reasoning content not captured</span>
+				<span className={styles.empty}>Content not captured</span>
 			)}
 		</CollapsibleBlock>
 	);
@@ -25,6 +27,8 @@ function ThinkingPart({ content }: ThinkingPartProps): JSX.Element {
 
 ThinkingPart.defaultProps = {
 	content: undefined,
+	label: 'Thinking',
+	testId: 'ai-message-thinking-toggle',
 };
 
 export default ThinkingPart;

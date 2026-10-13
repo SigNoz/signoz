@@ -1,10 +1,10 @@
 import { MessagePart as MessagePartType } from '../TraceDetailsThread/types';
-import MediaPart from './parts/MediaPart';
+import JsonBlock from './JsonBlock';
 import ThinkingPart from './parts/ThinkingPart';
 import ToolCallPart from './parts/ToolCallPart';
 import ToolResultPart from './parts/ToolResultPart';
 import TextContent from './TextContent';
-import { toDisplayText } from './utils';
+import { toDisplayText, truncateBlobContent } from './utils';
 
 interface MessagePartProps {
 	part: MessagePartType;
@@ -23,7 +23,13 @@ function MessagePart({
 		case 'reasoning':
 			return <ThinkingPart content={part.content} />;
 		case 'compaction':
-			return part.content ? <TextContent text={part.content} /> : null;
+			return (
+				<ThinkingPart
+					label="Compaction"
+					content={part.content ?? undefined}
+					testId="ai-message-compaction-toggle"
+				/>
+			);
 		case 'tool_call':
 			return (
 				<ToolCallPart
@@ -60,13 +66,7 @@ function MessagePart({
 		case 'blob':
 		case 'file':
 		case 'uri':
-			return (
-				<MediaPart
-					modality={part.modality}
-					mimeType={part.mime_type ?? undefined}
-					name={part.file_id ?? part.uri}
-				/>
-			);
+			return <JsonBlock data={truncateBlobContent(part)} />;
 		case 'generic':
 			return <TextContent text={toDisplayText(part.content)} />;
 		default:

@@ -1,6 +1,10 @@
-import { ThreadMessage } from '../TraceDetailsThread/types';
+import { MessagePart, ThreadMessage } from '../TraceDetailsThread/types';
+
+type MediaMessagePart = Extract<MessagePart, { type: 'blob' | 'file' | 'uri' }>;
 
 export const MAX_TEXT_LENGTH = 1000;
+
+const MAX_BLOB_PREVIEW_LENGTH = 100;
 
 export const MAX_INLINE_RESULT_LENGTH = 80;
 
@@ -50,6 +54,17 @@ export function toDisplayText(value: unknown): string {
 		return '';
 	}
 	return typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+}
+
+/** Blob content is inline base64; only a prefix is shown. */
+export function truncateBlobContent(part: MediaMessagePart): MediaMessagePart {
+	if (!part.content || part.content.length <= MAX_BLOB_PREVIEW_LENGTH) {
+		return part;
+	}
+	return {
+		...part,
+		content: `${part.content.slice(0, MAX_BLOB_PREVIEW_LENGTH)}…`,
+	};
 }
 
 export function collectToolCallIds(messages: ThreadMessage[]): string[] {

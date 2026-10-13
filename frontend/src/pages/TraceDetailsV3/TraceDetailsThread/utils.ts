@@ -5,24 +5,14 @@ import { collectToolCallIds } from '../AIThreadMessage/utils';
 import { toThreadMessages } from './messageUtils';
 import { AnchorStatus, ThreadSpan } from './types';
 
-type WireThreadSpan = Omit<
-	ThreadSpan,
-	'timestamp' | 'service.name' | 'formatted_input' | 'formatted_output'
-> & {
-	time_unix: number;
-	formatted_input?: unknown;
-	formatted_output?: unknown;
-};
-
 /** Derives SpanV3's `timestamp` and `service.name`, as the waterfall does. */
 export function toThreadSpan(span: SpantypesThreadSpanDTO): ThreadSpan {
-	const wire = span as unknown as WireThreadSpan;
 	return {
-		...wire,
-		'service.name': wire.resource?.['service.name'] || '',
-		timestamp: wire.time_unix,
-		formatted_input: toThreadMessages(wire.formatted_input),
-		formatted_output: toThreadMessages(wire.formatted_output),
+		...(span as unknown as ThreadSpan),
+		'service.name': span.resource?.['service.name'] || '',
+		timestamp: span.time_unix,
+		formatted_input: toThreadMessages(span.formatted_input),
+		formatted_output: toThreadMessages(span.formatted_output),
 	};
 }
 
