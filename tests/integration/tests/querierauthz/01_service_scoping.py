@@ -155,7 +155,7 @@ def test_denied_message_names_resource(
         request_type="raw",
     )
     assert response.status_code == HTTPStatus.FORBIDDEN, response.text
-    assert "builder_query/signoz.workspace.key.id/key-b" in response.text
+    assert "builder_query/signoz.workspace.key.id = 'key-b'" in response.text
 
 
 def test_variables_resolve_into_gate(

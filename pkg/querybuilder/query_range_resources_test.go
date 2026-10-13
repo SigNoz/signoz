@@ -24,60 +24,83 @@ func TestQueryRangeResources(t *testing.T) {
 			name: "top level key equality",
 			body: builderQueryBody("logs", "signoz.workspace.key.id = 'checkout' AND status = 500"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id/checkout"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id = 'checkout' AND status = 500"},
 			},
 		},
 		{
 			name: "resource prefixed key",
 			body: builderQueryBody("traces", "resource.signoz.workspace.key.id = 'checkout'"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/signoz.workspace.key.id/checkout"},
+				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/resource.signoz.workspace.key.id = 'checkout'"},
 			},
 		},
 		{
-			name: "in atom requires every value",
+			name: "in atom is a union of one resource per value",
 			body: builderQueryBody("logs", "signoz.workspace.key.id IN ('b', 'a')"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id/a"},
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id/b"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id = 'a'"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id = 'b'"},
 			},
 		},
 		{
-			name: "multiple equality atoms each require a grant",
+			name: "conjunction is one resource",
 			body: builderQueryBody("logs", "signoz.workspace.key.id = 'b' AND signoz.workspace.key.id = 'a'"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id/a"},
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id/b"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id = 'a' AND signoz.workspace.key.id = 'b'"},
 			},
 		},
 		{
-			name: "atoms on different keys each require a grant",
+			name: "atoms on different keys are one resource",
 			body: builderQueryBody("logs", "resource.service.name = 'checkout' AND resource.deployment.environment.name = 'prod'"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/resource.deployment.environment.name/prod"},
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/resource.service.name/checkout"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/resource.deployment.environment.name = 'prod' AND resource.service.name = 'checkout'"},
 			},
 		},
 		{
-			name: "old environment spelling does not scope",
+			name: "list with another atom expands into disjuncts",
+			body: builderQueryBody("logs", "resource.service.name IN ('b', 'a') AND signoz.workspace.key.id = 'k'"),
+			expected: []coretypes.ResourceWithID{
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/resource.service.name = 'a' AND signoz.workspace.key.id = 'k'"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/resource.service.name = 'b' AND signoz.workspace.key.id = 'k'"},
+			},
+		},
+		{
+			name: "two lists expand into every combination",
+			body: builderQueryBody("logs", "resource.service.name IN ('a', 'b') AND signoz.workspace.key.id IN ('y', 'z')"),
+			expected: []coretypes.ResourceWithID{
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/resource.service.name = 'a' AND signoz.workspace.key.id = 'y'"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/resource.service.name = 'a' AND signoz.workspace.key.id = 'z'"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/resource.service.name = 'b' AND signoz.workspace.key.id = 'y'"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/resource.service.name = 'b' AND signoz.workspace.key.id = 'z'"},
+			},
+		},
+		{
+			name: "two lists on one key stay one resource",
+			body: builderQueryBody("logs", "signoz.workspace.key.id IN ('a', 'b') AND resource.signoz.workspace.key.id IN ('b', 'c')"),
+			expected: []coretypes.ResourceWithID{
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/resource.signoz.workspace.key.id IN ('b', 'c') AND signoz.workspace.key.id IN ('a', 'b')"},
+			},
+		},
+		{
+			name: "old environment spelling is part of the id but not a selector",
 			body: builderQueryBody("traces", "resource.deployment.environment = 'prod'"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/*"},
+				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/resource.deployment.environment = 'prod'"},
 			},
 		},
 		{
 			name: "service values in list",
 			body: builderQueryBody("logs", "resource.service.name IN ('frontend', 'checkout')"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/resource.service.name/checkout"},
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/resource.service.name/frontend"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/resource.service.name = 'checkout'"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/resource.service.name = 'frontend'"},
 			},
 		},
 		{
-			name: "bare customer key does not scope",
+			name: "bare customer key is part of the id but not a selector",
 			body: builderQueryBody("logs", "service.name = 'checkout'"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/*"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name = 'checkout'"},
 			},
 		},
 		{
@@ -88,45 +111,38 @@ func TestQueryRangeResources(t *testing.T) {
 			},
 		},
 		{
-			name: "key atom under or does not qualify",
+			name: "or keeps the whole filter as the id",
 			body: builderQueryBody("logs", "signoz.workspace.key.id = 'a' OR status = 500"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/*"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id = 'a' OR status = 500"},
 			},
 		},
 		{
-			name: "negated key atom does not qualify",
-			body: builderQueryBody("logs", "NOT signoz.workspace.key.id = 'a'"),
+			name: "list under or is not expanded",
+			body: builderQueryBody("logs", "signoz.workspace.key.id IN ('a', 'b') OR status = 500"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/*"},
-			},
-		},
-		{
-			name: "key inequality does not qualify",
-			body: builderQueryBody("logs", "signoz.workspace.key.id != 'a'"),
-			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/*"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id IN ('a', 'b') OR status = 500"},
 			},
 		},
 		{
 			name: "value with spaces and slashes stays plaintext in the id",
 			body: builderQueryBody("logs", "signoz.workspace.key.id = 'check out/2'"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id/check out/2"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id = 'check out/2'"},
 			},
 		},
 		{
 			name: "audit source maps to audit logs resource",
 			body: `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"logs","source":"audit","filter":{"expression":"signoz.workspace.key.id = 'a'"}}}]}}`,
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceAuditLogs, ID: "builder_query/signoz.workspace.key.id/a"},
+				{Resource: coretypes.ResourceTelemetryResourceAuditLogs, ID: "builder_query/signoz.workspace.key.id = 'a'"},
 			},
 		},
 		{
 			name: "ai builder query maps to traces resource without a signal",
 			body: `{"compositeQuery":{"queries":[{"type":"builder_ai_query","spec":{"filter":{"expression":"signoz.workspace.key.id = 'checkout'"}}}]}}`,
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_ai_query/signoz.workspace.key.id/checkout"},
+				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_ai_query/signoz.workspace.key.id = 'checkout'"},
 			},
 		},
 		{
@@ -162,28 +178,29 @@ func TestQueryRangeResources(t *testing.T) {
 			name: "trace operator rides on its referenced queries",
 			body: `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"name":"A","signal":"traces","disabled":true,"filter":{"expression":"signoz.workspace.key.id = 'checkout'"}}},{"type":"builder_query","spec":{"name":"B","signal":"traces","disabled":true,"filter":{"expression":"signoz.workspace.key.id = 'checkout' AND has_error = true"}}},{"type":"builder_trace_operator","spec":{"name":"T1","expression":"A => B","returnSpansFrom":"A"}}]}}`,
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/signoz.workspace.key.id/checkout"},
+				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/signoz.workspace.key.id = 'checkout'"},
+				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/has_error = true AND signoz.workspace.key.id = 'checkout'"},
 			},
 		},
 		{
 			name: "variable substitution qualifies",
 			body: `{"variables":{"key":{"value":"checkout"}},"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"logs","filter":{"expression":"signoz.workspace.key.id = $key"}}}]}}`,
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id/checkout"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id = 'checkout'"},
 			},
 		},
 		{
 			name: "duplicate queries dedupe",
 			body: `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"logs","filter":{"expression":"signoz.workspace.key.id = 'a'"}}},{"type":"builder_query","spec":{"signal":"logs","filter":{"expression":"signoz.workspace.key.id='a'"}}}]}}`,
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id/a"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id = 'a'"},
 			},
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			refs, err := QueryRangeResources(coretypes.ExtractorContext{RequestBody: []byte(testCase.body)})
+			refs, err := NewQueryRangeResources(64)(coretypes.ExtractorContext{RequestBody: []byte(testCase.body)})
 			require.NoError(t, err)
 			assert.Equal(t, testCase.expected, refs)
 		})
@@ -200,7 +217,7 @@ func TestQueryRangeResourcesErrors(t *testing.T) {
 	}
 
 	for _, body := range bodies {
-		_, err := QueryRangeResources(coretypes.ExtractorContext{RequestBody: []byte(body)})
+		_, err := NewQueryRangeResources(64)(coretypes.ExtractorContext{RequestBody: []byte(body)})
 		assert.Error(t, err, "body %s", body)
 	}
 }
@@ -218,10 +235,38 @@ func TestTelemetrySelector(t *testing.T) {
 		return values
 	}
 
-	assert.Equal(t, []string{"builder_query/signoz.workspace.key.id/a", "builder_query/signoz.workspace.key.id/*", "builder_query/*", "*"}, selectorValues("builder_query/signoz.workspace.key.id/a"))
+	assert.Equal(t, []string{"builder_query/signoz.workspace.key.id/a", "builder_query/signoz.workspace.key.id/*", "builder_query/*", "*"}, selectorValues("builder_query/signoz.workspace.key.id = 'a'"))
+	assert.Equal(t, []string{"builder_query/signoz.workspace.key.id/a", "builder_query/signoz.workspace.key.id/*", "builder_query/*", "*"}, selectorValues("builder_query/resource.signoz.workspace.key.id = 'a' AND status = 500"))
+	assert.Equal(t, []string{
+		"builder_query/resource.service.name/x",
+		"builder_query/resource.service.name/*",
+		"builder_query/signoz.workspace.key.id/z",
+		"builder_query/signoz.workspace.key.id/*",
+		"builder_query/*",
+		"*",
+	}, selectorValues("builder_query/resource.service.name = 'x' AND signoz.workspace.key.id = 'z'"))
+	assert.Equal(t, []string{"builder_query/signoz.workspace.key.id/*", "builder_query/*", "*"}, selectorValues("builder_query/signoz.workspace.key.id IN ('a', 'b')"))
+	assert.Equal(t, []string{"builder_query/*", "*"}, selectorValues("builder_query/signoz.workspace.key.id = 'a' OR status = 500"))
+	assert.Equal(t, []string{"builder_query/*", "*"}, selectorValues("builder_query/service.name = 'x'"))
+	assert.Equal(t, []string{"builder_query/signoz.workspace.key.id/a/b", "builder_query/signoz.workspace.key.id/*", "builder_query/*", "*"}, selectorValues("builder_query/signoz.workspace.key.id = 'a/b'"))
+	assert.Equal(t, []string{"builder_query/*", "*"}, selectorValues("builder_query/*"))
 	assert.Equal(t, []string{"builder_query/*", "*"}, selectorValues("builder_query"))
-	assert.Equal(t, []string{"promql/*", "*"}, selectorValues("promql"))
+	assert.Equal(t, []string{"promql/*", "*"}, selectorValues("promql/*"))
 	assert.Equal(t, []string{"*"}, selectorValues("*"))
-	// a value containing "/" stays one logical segment (SplitN 3).
-	assert.Equal(t, []string{"builder_query/signoz.workspace.key.id/a/b", "builder_query/signoz.workspace.key.id/*", "builder_query/*", "*"}, selectorValues("builder_query/signoz.workspace.key.id/a/b"))
+
+	_, err := TelemetrySelector(context.Background(), coretypes.ResourceTelemetryResourceLogs, "builder_query/signoz.workspace.key.id = ", orgID)
+	assert.Error(t, err)
+}
+
+func TestQueryRangeResourcesDisjunctCap(t *testing.T) {
+	body := []byte(builderQueryBody("logs", "resource.service.name IN ('a', 'b') AND signoz.workspace.key.id IN ('y', 'z')"))
+
+	expanded, err := NewQueryRangeResources(4)(coretypes.ExtractorContext{RequestBody: body})
+	require.NoError(t, err)
+	assert.Len(t, expanded, 4)
+
+	capped, err := NewQueryRangeResources(3)(coretypes.ExtractorContext{RequestBody: body})
+	require.NoError(t, err)
+	require.Len(t, capped, 1)
+	assert.Equal(t, "builder_query/resource.service.name IN ('a', 'b') AND signoz.workspace.key.id IN ('y', 'z')", capped[0].ID)
 }

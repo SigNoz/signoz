@@ -53,6 +53,7 @@ import (
 
 type provider struct {
 	globalConfig               global.Config
+	authzConfig                authz.Config
 	web                        web.Web
 	router                     *mux.Router
 	httpServer                 *httpserver.Server
@@ -143,6 +144,7 @@ func NewFactory(
 	statsHandler statsreporter.Handler,
 	savedViewHandler savedview.Handler,
 	globalConfig global.Config,
+	authzConfig authz.Config,
 	identNResolver identn.IdentNResolver,
 	sharder sharder.Sharder,
 	auditor auditor.Auditor,
@@ -196,6 +198,7 @@ func NewFactory(
 			statsHandler,
 			savedViewHandler,
 			globalConfig,
+			authzConfig,
 			identNResolver,
 			sharder,
 			auditor,
@@ -251,6 +254,7 @@ func newProvider(
 	statsHandler statsreporter.Handler,
 	savedViewHandler savedview.Handler,
 	globalConfig global.Config,
+	authzConfig authz.Config,
 	identNResolver identn.IdentNResolver,
 	sharder sharder.Sharder,
 	auditor auditor.Auditor,
@@ -263,6 +267,7 @@ func newProvider(
 
 	provider := &provider{
 		globalConfig:               globalConfig,
+		authzConfig:                authzConfig,
 		web:                        web,
 		router:                     router,
 		healthyC:                   make(chan struct{}),

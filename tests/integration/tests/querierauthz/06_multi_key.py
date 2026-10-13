@@ -13,10 +13,16 @@ from fixtures.role import transaction_group
 user_password = "password123Z$"
 service_role = "telemetry-scope-service"
 service_email = "scope-service@telemetry.test"
-service_env_role = "telemetry-scope-service-env"
-service_env_email = "scope-service-env@telemetry.test"
+env_role = "telemetry-scope-env"
+env_email = "scope-env@telemetry.test"
+two_services_role = "telemetry-scope-two-services"
+two_services_email = "scope-two-services@telemetry.test"
+two_keys_role = "telemetry-scope-two-keys"
+two_keys_email = "scope-two-keys@telemetry.test"
+mixed_role = "telemetry-scope-mixed"
+mixed_email = "scope-mixed@telemetry.test"
 
-seed_resources = {"service.name": "checkout", "deployment.environment.name": "prod"}
+two_lists = "resource.service.name IN ('checkout', 'frontend') AND signoz.workspace.key.id IN ('k1', 'k2')"
 
 
 def test_setup(
@@ -27,41 +33,57 @@ def test_setup(
 ) -> None:
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    create_role(admin_token, service_role, [transaction_group("read", "telemetryresource", "logs", ["builder_query/resource.service.name/checkout"])])
-    service_user = create_active_user(signoz, admin_token, email=service_email, role="signoz-viewer", password=user_password)
-    change_user_role(signoz, admin_token, service_user, "signoz-viewer", service_role)
+    for role, email, selectors in [
+        (service_role, service_email, ["builder_query/resource.service.name/checkout"]),
+        (env_role, env_email, ["builder_query/resource.deployment.environment.name/prod"]),
+        (two_services_role, two_services_email, ["builder_query/resource.service.name/checkout", "builder_query/resource.service.name/frontend"]),
+        (two_keys_role, two_keys_email, ["builder_query/signoz.workspace.key.id/k1", "builder_query/signoz.workspace.key.id/k2"]),
+        (mixed_role, mixed_email, ["builder_query/resource.service.name/checkout", "builder_query/signoz.workspace.key.id/k2"]),
+    ]:
+        create_role(admin_token, role, [transaction_group("read", "telemetryresource", "logs", selectors)])
+        user_id = create_active_user(signoz, admin_token, email=email, role="signoz-viewer", password=user_password)
+        change_user_role(signoz, admin_token, user_id, "signoz-viewer", role)
 
-    create_role(
-        admin_token,
-        service_env_role,
-        [transaction_group("read", "telemetryresource", "logs", ["builder_query/resource.service.name/checkout", "builder_query/resource.deployment.environment.name/prod"])],
+
+@pytest.fixture(name="seed_logs")
+def seed_logs_fixture(insert_logs: Callable[[list[Logs]], None]) -> datetime:
+    now = datetime.now(tz=UTC)
+    insert_logs(
+        [
+            Logs(timestamp=now - timedelta(seconds=1), resources={"service.name": "checkout", "signoz.workspace.key.id": "k1", "deployment.environment.name": "prod"}, body="checkout-k1"),
+            Logs(timestamp=now - timedelta(seconds=2), resources={"service.name": "frontend", "signoz.workspace.key.id": "k2", "deployment.environment.name": "prod"}, body="frontend-k2"),
+        ]
     )
-    service_env_user = create_active_user(signoz, admin_token, email=service_env_email, role="signoz-viewer", password=user_password)
-    change_user_role(signoz, admin_token, service_env_user, "signoz-viewer", service_env_role)
+    return now
 
 
 @pytest.mark.parametrize(
-    "expression",
+    ("email", "expression"),
     [
-        "resource.service.name = 'checkout'",
-        "resource.service.name IN ('checkout')",
-        "resource.service.name = 'checkout' AND severity_text = 'ERROR'",
+        (service_email, "resource.service.name = 'checkout'"),
+        (service_email, "resource.service.name IN ('checkout')"),
+        (service_email, "resource.service.name = 'checkout' AND severity_text = 'ERROR'"),
+        # any granted atom selects the query; the other atoms only narrow it
+        (service_email, "resource.service.name = 'checkout' AND resource.deployment.environment.name = 'prod'"),
+        (env_email, "resource.service.name = 'checkout' AND resource.deployment.environment.name = 'prod'"),
+        (service_email, "resource.service.name IN ('checkout') AND signoz.workspace.key.id IN ('k1', 'k2')"),
+        # a list is a union: every value, or every value of the other list, must be granted
+        (two_services_email, two_lists),
+        (two_keys_email, two_lists),
     ],
 )
-def test_service_grant_allows_service_filter(
+def test_allowed(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
+    seed_logs: datetime,
+    email: str,
     expression: str,
 ) -> None:
-    now = datetime.now(tz=UTC)
-    insert_logs([Logs(timestamp=now - timedelta(seconds=1), resources=seed_resources, body="checkout-0")])
-
     response = make_query_request(
         signoz,
-        get_token(service_email, user_password),
-        int((now - timedelta(minutes=10)).timestamp() * 1000),
-        int(now.timestamp() * 1000),
+        get_token(email, user_password),
+        int((seed_logs - timedelta(minutes=10)).timestamp() * 1000),
+        int(seed_logs.timestamp() * 1000),
         [build_raw_query("A", "logs", limit=50, filter_expression=expression)],
         request_type="raw",
     )
@@ -69,51 +91,36 @@ def test_service_grant_allows_service_filter(
 
 
 @pytest.mark.parametrize(
-    ("expression", "denied_resource"),
+    ("email", "expression", "denied_resource"),
     [
-        ("service.name = 'checkout'", "builder_query/*"),  # bare customer key never scopes
-        ("resource.deployment.environment.name = 'prod'", "builder_query/resource.deployment.environment.name/prod"),
-        # every top-level grant-key atom needs its own grant, so narrowing by a second key is denied
-        ("resource.service.name = 'checkout' AND resource.deployment.environment.name = 'prod'", "builder_query/resource.deployment.environment.name/prod"),
-        ("resource.service.name = 'frontend'", "builder_query/resource.service.name/frontend"),
+        (service_email, "service.name = 'checkout'", "builder_query/service.name = 'checkout'"),  # bare customer key never selects
+        (service_email, "resource.deployment.environment.name = 'prod'", "builder_query/resource.deployment.environment.name = 'prod'"),
+        (service_email, "resource.service.name = 'frontend'", "builder_query/resource.service.name = 'frontend'"),
+        (env_email, "resource.service.name = 'checkout'", "builder_query/resource.service.name = 'checkout'"),
+        (
+            service_email,
+            "resource.service.name IN ('checkout', 'frontend') AND resource.deployment.environment.name = 'prod'",
+            "builder_query/resource.deployment.environment.name = 'prod' AND resource.service.name = 'frontend'",
+        ),
+        # one service and one key leave the (frontend, k1) slice unselected
+        (mixed_email, two_lists, "builder_query/resource.service.name = 'frontend' AND signoz.workspace.key.id = 'k1'"),
     ],
 )
-def test_service_grant_denies_other_keys(
+def test_denied(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
+    seed_logs: datetime,
+    email: str,
     expression: str,
     denied_resource: str,
 ) -> None:
-    now = datetime.now(tz=UTC)
-    insert_logs([Logs(timestamp=now - timedelta(seconds=1), resources=seed_resources, body="checkout-0")])
-
     response = make_query_request(
         signoz,
-        get_token(service_email, user_password),
-        int((now - timedelta(minutes=10)).timestamp() * 1000),
-        int(now.timestamp() * 1000),
+        get_token(email, user_password),
+        int((seed_logs - timedelta(minutes=10)).timestamp() * 1000),
+        int(seed_logs.timestamp() * 1000),
         [build_raw_query("A", "logs", limit=50, filter_expression=expression)],
         request_type="raw",
     )
     assert response.status_code == HTTPStatus.FORBIDDEN, response.text
     assert denied_resource in response.text
-
-
-def test_grants_on_both_keys_allow_conjunction(
-    signoz: types.SigNoz,
-    get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
-) -> None:
-    now = datetime.now(tz=UTC)
-    insert_logs([Logs(timestamp=now - timedelta(seconds=1), resources=seed_resources, body="checkout-0")])
-
-    response = make_query_request(
-        signoz,
-        get_token(service_env_email, user_password),
-        int((now - timedelta(minutes=10)).timestamp() * 1000),
-        int(now.timestamp() * 1000),
-        [build_raw_query("A", "logs", limit=50, filter_expression="resource.service.name = 'checkout' AND resource.deployment.environment.name = 'prod'")],
-        request_type="raw",
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
