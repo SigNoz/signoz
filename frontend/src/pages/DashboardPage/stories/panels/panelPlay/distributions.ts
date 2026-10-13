@@ -1,5 +1,5 @@
 import { DashboardtypesHeatmapYScaleDTO as HeatmapYScale } from 'api/generated/services/sigNoz.schemas';
-import { getPaletteStops } from 'lib/uPlotV2/plugins/HeatmapPlugin/palettes';
+import { getPaletteStops } from 'lib/visualization/colorRamp/palettes';
 import { HEATMAP_PALETTE_MAP } from 'pages/DashboardPage/DashboardContainer/Panels/utils/chartAppearance/enumMaps';
 import { expect, waitFor, within } from 'storybook/test';
 import type uPlot from 'uplot';
