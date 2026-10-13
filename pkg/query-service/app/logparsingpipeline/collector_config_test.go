@@ -216,6 +216,67 @@ func TestBuildLogsPipeline(t *testing.T) {
 	}
 }
 
+func TestBuildLogsPipelineWithNormalizer(t *testing.T) {
+	a := constants.LogsPPLPfx + "a"
+	b := constants.LogsPPLPfx + "b"
+	before := map[string]any{"opamp": map[string]any{"position": "before"}}
+	after := map[string]any{"opamp": map[string]any{"position": "after"}}
+
+	testCases := []struct {
+		name          string
+		fromCollector []string
+		userPipelines []string
+		configs       map[string]any
+		expected      []string
+	}{
+		{
+			name:          "ExistingAndStaleUserProcessorsReplaced",
+			fromCollector: []string{"memory_limiter", a, constants.LogsPPLPfx + "stale", constants.OldLogsPPLPfx + "old", "signozlogsnormalizer", "custom", "batch"},
+			userPipelines: []string{a, b},
+			expected:      []string{"memory_limiter", "signozlogsnormalizer", a, b, "custom", "batch"},
+		},
+		{
+			name:          "NamedNormalizerBefore_CustomProcessorsKeepPlace",
+			fromCollector: []string{"memory_limiter", "custom_a", "signozlogsnormalizer/x", a, "custom_b", "batch"},
+			userPipelines: []string{a},
+			configs:       map[string]any{"signozlogsnormalizer/x": before},
+			expected:      []string{"memory_limiter", "custom_a", a, "signozlogsnormalizer/x", "custom_b", "batch"},
+		},
+		{
+			name:          "FirstNormalizerBefore_SecondIgnored",
+			fromCollector: []string{"memory_limiter", "signozlogsnormalizer/first", "signozlogsnormalizer/second", "batch"},
+			userPipelines: []string{a},
+			configs:       map[string]any{"signozlogsnormalizer/first": before, "signozlogsnormalizer/second": after},
+			expected:      []string{"memory_limiter", a, "signozlogsnormalizer/first", "signozlogsnormalizer/second", "batch"},
+		},
+		{
+			name:          "FirstNormalizerAfter_SecondIgnored",
+			fromCollector: []string{"memory_limiter", "signozlogsnormalizer/first", "signozlogsnormalizer/second", "batch"},
+			userPipelines: []string{a},
+			configs:       map[string]any{"signozlogsnormalizer/first": after, "signozlogsnormalizer/second": before},
+			expected:      []string{"memory_limiter", "signozlogsnormalizer/first", a, "signozlogsnormalizer/second", "batch"},
+		},
+		{
+			name:          "NormalizerAfterBatch",
+			fromCollector: []string{"memory_limiter", "batch", "signozlogsnormalizer"},
+			userPipelines: []string{a},
+			expected:      []string{"memory_limiter", "batch", "signozlogsnormalizer", a},
+		},
+		{
+			name:          "NoUserPipelines_StaleRemoved",
+			fromCollector: []string{"memory_limiter", a, "signozlogsnormalizer", "batch"},
+			expected:      []string{"memory_limiter", "signozlogsnormalizer", "batch"},
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			processors, err := buildCollectorPipelineProcessorsList(testCase.fromCollector, testCase.userPipelines, testCase.configs)
+			require.NoError(t, err)
+			assert.Equal(t, testCase.expected, processors)
+		})
+	}
+}
+
 func TestPipelineAliasCollisionsDontResultInDuplicateCollectorProcessors(t *testing.T) {
 	require := require.New(t)
 
