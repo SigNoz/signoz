@@ -3,6 +3,7 @@ import { ChartBarDecreasing } from '@signozhq/icons';
 import { QueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.types';
 
 import type { PanelDefinition } from '../../types/panelDefinition';
+import { QueryModeKind } from '../../types/panelCapabilities';
 import QueryBuilderEditorPane from 'pages/DashboardPage/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/QueryBuilderEditorPane';
 import Renderer from './Renderer';
 import { DEFAULT_LIMIT } from './constants';
@@ -12,7 +13,7 @@ import {
 	Querybuildertypesv5RequestTypeDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { EQueryType } from 'types/common/dashboard';
+import { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
 
 export const definition: PanelDefinition<'signoz/TopListPanel'> = {
 	kind: 'signoz/TopListPanel',
@@ -22,12 +23,17 @@ export const definition: PanelDefinition<'signoz/TopListPanel'> = {
 	Renderer,
 	EditorPane: QueryBuilderEditorPane,
 	sections,
-	supportedSignals: [
-		TelemetrytypesSignalDTO.metrics,
-		TelemetrytypesSignalDTO.logs,
-		TelemetrytypesSignalDTO.traces,
-	],
-	supportedQueryTypes: [EQueryType.QUERY_BUILDER, EQueryType.CLICKHOUSE],
+	supportedQueryModesKindMap: {
+		[QueryMode.QUERY_BUILDER]: {
+			kind: QueryModeKind.SIGNAL,
+			signals: [
+				TelemetrytypesSignalDTO.metrics,
+				TelemetrytypesSignalDTO.logs,
+				TelemetrytypesSignalDTO.traces,
+			],
+		},
+		[QueryMode.CLICKHOUSE]: { kind: QueryModeKind.SIGNAL_LESS },
+	},
 	queryBuilderFields: {
 		// A list without a group by is a single row.
 		[QueryBuilderField.GroupBy]: { state: 'pinned' },
