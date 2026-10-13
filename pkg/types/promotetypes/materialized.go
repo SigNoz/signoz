@@ -11,8 +11,8 @@ type IndexMaterializedPathsResult struct {
 }
 
 type IndexMaterializedPathsParams struct {
-	Signal string `query:"signal" json:"signal" required:"true"`
-	DryRun bool   `query:"dryRun" json:"dryRun"`
+	Signal string `json:"signal" required:"true"`
+	DryRun bool   `json:"dryRun"`
 }
 
 func (p *IndexMaterializedPathsParams) Validate() error {
@@ -27,7 +27,9 @@ func (p *IndexMaterializedPathsParams) Target() (Target, error) {
 	return NewTargetFromText(p.Signal, telemetrytypes.FieldContextAttribute.StringValue())
 }
 
-// NewMaterializedPromotePath mirrors the type and granularity of the key's column indexes.
+// NewMaterializedPromotePath mirrors the type and granularity of the key's
+// column indexes. Only the indexes are validated: the key was materialized on
+// purpose, so the path checks for user input, such as cardinality, do not apply.
 func NewMaterializedPromotePath(target Target, key *telemetrytypes.TelemetryFieldKey) (*PromotePath, error) {
 	indexes := make([]WrappedIndex, 0, len(key.Indexes))
 	for _, index := range key.Indexes {
@@ -40,7 +42,7 @@ func NewMaterializedPromotePath(target Target, key *telemetrytypes.TelemetryFiel
 		Promote: false,
 		Indexes: indexes,
 	}
-	if err := path.ValidateAndSetDefaults(target); err != nil {
+	if err := path.validateAndSetIndexDefaults(); err != nil {
 		return nil, err
 	}
 	return path, nil

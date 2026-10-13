@@ -47,10 +47,7 @@ func ListPromotedPathsResources(ec coretypes.ExtractorContext) ([]coretypes.Reso
 }
 
 func IndexMaterializedPathsResources(ec coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
-	signalText := ""
-	if ec.Request != nil {
-		signalText = ec.Request.URL.Query().Get("signal")
-	}
+	signalText := gjson.GetBytes(ec.RequestBody, "signal").String()
 	signal, ok := telemetrytypes.SignalFromText(signalText)
 	if !ok {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid signal: %s", signalText)

@@ -55,13 +55,6 @@ func TestNewMaterializedPromotePath(t *testing.T) {
 			}},
 			wantErr: true,
 		},
-		{
-			name: "CardinalPath_Rejected",
-			key: &telemetrytypes.TelemetryFieldKey{Name: "session.550e8400-e29b-41d4-a716-446655440000", FieldDataType: telemetrytypes.FieldDataTypeString, Indexes: []telemetrytypes.TelemetryFieldKeySkipIndex{
-				{IndexType: "bloom_filter", Granularity: 1},
-			}},
-			wantErr: true,
-		},
 	}
 
 	for _, testCase := range testCases {

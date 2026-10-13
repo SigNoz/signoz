@@ -153,7 +153,9 @@ func (t *telemetryMetaStore) GetMaterializedKeys(ctx context.Context, signal tel
 	return keys, nil
 }
 
-// listColumnSkipIndexes leaves out indexes on expressions or multiple columns.
+// listColumnSkipIndexes keys each index by its expression with one pair of
+// quoting backticks removed, so only an index on a single column matches a
+// column name.
 func (t *telemetryMetaStore) listColumnSkipIndexes(ctx context.Context, signal telemetrytypes.Signal, dbName, localTableName string) (map[string][]telemetrytypes.TelemetryFieldKeySkipIndex, error) {
 	ctx = withTelemetryContext(ctx, signal, "listColumnSkipIndexes")
 	sb := sqlbuilder.Select("name", "type_full", "expr", "granularity").From(SkipIndexTableName)
@@ -173,10 +175,7 @@ func (t *telemetryMetaStore) listColumnSkipIndexes(ctx context.Context, signal t
 		if err := rows.Scan(&name, &typeFull, &expr, &granularity); err != nil {
 			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan skip index")
 		}
-		column := strings.Trim(expr, "`")
-		if strings.ContainsAny(column, "`,( ") {
-			continue
-		}
+		column := strings.TrimSuffix(strings.TrimPrefix(expr, "`"), "`")
 		indexes[column] = append(indexes[column], telemetrytypes.TelemetryFieldKeySkipIndex{
 			BaseColumn:      column,
 			IndexName:       name,

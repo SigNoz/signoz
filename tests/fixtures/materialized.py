@@ -19,11 +19,11 @@ def materialize_attribute(signoz: types.SigNoz) -> Generator[Callable[[str, str,
     def materialize(signal: str, key: str, indexed: bool) -> str:
         database, local_table, distributed_table = MATERIALIZED_TABLES[signal]
         column = f"attribute_string_{key.replace('.', '$$')}"
+        created.append((signal, key, column))
         for table in (local_table, distributed_table):
             signoz.telemetrystore.conn.query(f"ALTER TABLE {database}.{table} ON CLUSTER '{cluster}' ADD COLUMN IF NOT EXISTS `{column}` LowCardinality(String) DEFAULT attributes_string['{key}']")
         if indexed:
             signoz.telemetrystore.conn.query(f"ALTER TABLE {database}.{local_table} ON CLUSTER '{cluster}' ADD INDEX IF NOT EXISTS `{column}_idx` `{column}` TYPE bloom_filter(0.01) GRANULARITY 64")
-        created.append((signal, key, column))
         return column
 
     yield materialize

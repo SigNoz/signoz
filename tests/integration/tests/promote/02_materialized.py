@@ -22,7 +22,7 @@ def test_index_materialized_paths(
 
     resp = requests.post(
         signoz.self.host_configs["8080"].get(MATERIALIZED_PATH),
-        params={"signal": "traces", "dryRun": "true"},
+        json={"signal": "traces", "dryRun": True},
         headers={"Authorization": f"Bearer {token}"},
         timeout=30,
     )
@@ -34,7 +34,7 @@ def test_index_materialized_paths(
 
     resp = requests.post(
         signoz.self.host_configs["8080"].get(MATERIALIZED_PATH),
-        params={"signal": "logs"},
+        json={"signal": "logs"},
         headers={"Authorization": f"Bearer {token}"},
         timeout=30,
     )
@@ -43,7 +43,7 @@ def test_index_materialized_paths(
 
     resp = requests.post(
         signoz.self.host_configs["8080"].get(MATERIALIZED_PATH),
-        params={"signal": "traces"},
+        json={"signal": "traces"},
         headers={"Authorization": f"Bearer {token}"},
         timeout=30,
     )
@@ -53,7 +53,7 @@ def test_index_materialized_paths(
 
     resp = requests.post(
         signoz.self.host_configs["8080"].get(MATERIALIZED_PATH),
-        params={"signal": "traces"},
+        json={"signal": "traces"},
         headers={"Authorization": f"Bearer {token}"},
         timeout=30,
     )

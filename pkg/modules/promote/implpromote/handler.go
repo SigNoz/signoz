@@ -75,7 +75,7 @@ func (h *handler) ListPromotedPaths(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) IndexMaterializedPaths(w http.ResponseWriter, r *http.Request) {
 	var params promotetypes.IndexMaterializedPathsParams
-	if err := binding.Query.BindQuery(r.URL.Query(), &params); err != nil {
+	if err := binding.JSON.BindBody(r.Body, &params); err != nil {
 		render.Error(w, err)
 		return
 	}

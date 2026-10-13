@@ -457,10 +457,9 @@ func TestIndexMaterializedPaths(t *testing.T) {
 			wantDDL:     []string{retryCountDDL},
 		},
 		{
-			name:   "UnindexablePaths_LoggedAndLeftOut",
+			name:   "UnsupportedIndexType_LoggedAndLeftOut",
 			params: promotetypes.IndexMaterializedPathsParams{Signal: "traces"},
 			keys: append([]*telemetrytypes.TelemetryFieldKey{
-				{Name: "session.550e8400-e29b-41d4-a716-446655440000", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString, Indexes: bloomIndex},
 				{Name: "user.email", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString, Indexes: []telemetrytypes.TelemetryFieldKeySkipIndex{{IndexType: "text(tokenizer = 'splitByNonAlpha')", Granularity: 1}}},
 			}, materializedKeys...),
 			wantIndexed: []string{"user.id", "retry.count"},
