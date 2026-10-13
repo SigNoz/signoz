@@ -205,7 +205,7 @@ func TestPrepareParamsForLogs(t *testing.T) {
 	assert.Contains(t, params.Encode(), "compositeQuery=%257B")
 	compositeQuery, err := url.QueryUnescape(params.Get("compositeQuery"))
 	assert.NoError(t, err)
-	assert.JSONEq(t, `{"queryType":"builder","builder":{"queryData":[{"dataSource":"logs","filter":{}}],"queryFormulas":[]}}`, compositeQuery)
+	assert.JSONEq(t, `{"queryType":"builder","builder":{"queryData":[{"queryName":"A","dataSource":"logs","filter":{}}],"queryFormulas":[]}}`, compositeQuery)
 }
 
 func TestPrepareParamsForLogsFilterExpression(t *testing.T) {
@@ -270,7 +270,7 @@ func TestPrepareParamsForLogsFilterExpression(t *testing.T) {
 
 	compositeQuery, err := url.QueryUnescape(params.Get("compositeQuery"))
 	assert.NoError(t, err)
-	assert.JSONEq(t, `{"queryType":"builder","builder":{"queryData":[{"dataSource":"logs","filter":{"expression":"service.name EXISTS"}}],"queryFormulas":[]}}`, compositeQuery)
+	assert.JSONEq(t, `{"queryType":"builder","builder":{"queryData":[{"queryName":"A","dataSource":"logs","filter":{"expression":"service.name EXISTS"}}],"queryFormulas":[]}}`, compositeQuery)
 }
 
 func TestPrepareParamsForTracesFilterExpression(t *testing.T) {
@@ -335,7 +335,7 @@ func TestPrepareParamsForTracesFilterExpression(t *testing.T) {
 
 	compositeQuery, err := url.QueryUnescape(params.Get("compositeQuery"))
 	assert.NoError(t, err)
-	assert.JSONEq(t, `{"queryType":"builder","builder":{"queryData":[{"dataSource":"traces","filter":{"expression":"service.name EXISTS"}}],"queryFormulas":[]}}`, compositeQuery)
+	assert.JSONEq(t, `{"queryType":"builder","builder":{"queryData":[{"queryName":"A","dataSource":"traces","filter":{"expression":"service.name EXISTS"}}],"queryFormulas":[]}}`, compositeQuery)
 }
 
 func TestPrepareParamsForTraces(t *testing.T) {
@@ -401,7 +401,7 @@ func TestPrepareParamsForTraces(t *testing.T) {
 	assert.Contains(t, params.Encode(), "compositeQuery=%257B")
 	compositeQuery, err := url.QueryUnescape(params.Get("compositeQuery"))
 	assert.NoError(t, err)
-	assert.JSONEq(t, `{"queryType":"builder","builder":{"queryData":[{"dataSource":"traces","filter":{}}],"queryFormulas":[]}}`, compositeQuery)
+	assert.JSONEq(t, `{"queryType":"builder","builder":{"queryData":[{"queryName":"A","dataSource":"traces","filter":{}}],"queryFormulas":[]}}`, compositeQuery)
 }
 
 func TestThresholdRuleLabelNormalization(t *testing.T) {

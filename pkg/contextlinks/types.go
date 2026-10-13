@@ -1,6 +1,7 @@
 package contextlinks
 
 import (
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 )
 
@@ -10,9 +11,19 @@ type FilterExpression struct {
 	Expression string `json:"expression,omitempty"`
 }
 
+// BuilderQuery is the part of an alert's builder query that carries over into
+// an explorer link.
+type BuilderQuery struct {
+	Name    string
+	Filter  string
+	GroupBy []qbtypes.GroupByKey
+}
+
 // LinkQuery carries the only fields the explorer pages read from a shared
-// link; the frontend fills in the rest of the query shape with defaults.
+// link; the frontend fills in the rest of the query shape with defaults and
+// names an unnamed query A, so a link with several queries names each.
 type LinkQuery struct {
+	QueryName        string            `json:"queryName,omitempty"`
 	DataSource       string            `json:"dataSource"`
 	BuilderQueryType string            `json:"builderQueryType,omitempty"`
 	Filter           *FilterExpression `json:"filter,omitempty"`
