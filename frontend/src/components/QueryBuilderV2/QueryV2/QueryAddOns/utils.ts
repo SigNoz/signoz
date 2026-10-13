@@ -1,4 +1,5 @@
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { getFieldContextPrefix } from 'utils/fieldKeyContext';
 
 export const buildDefaultLegendFromGroupBy = (
 	groupBy: IBuilderQuery['groupBy'],
@@ -6,7 +7,8 @@ export const buildDefaultLegendFromGroupBy = (
 	const segments = groupBy
 		.map((item) => item?.key)
 		.filter((key): key is string => Boolean(key))
-		.map((key) => `${key} = {{${key}}}`);
+		// Series labels carry the bare name; a stored key may carry a context prefix.
+		.map((key) => `${key} = {{${getFieldContextPrefix(key)?.remainder ?? key}}}`);
 
 	if (segments.length === 0) {
 		return null;
