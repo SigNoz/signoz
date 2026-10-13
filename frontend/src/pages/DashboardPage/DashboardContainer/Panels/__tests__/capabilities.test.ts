@@ -36,7 +36,7 @@ const EXPECTED_QUERY_TYPES: Record<PanelKind, EQueryType[]> = {
 	'signoz/PieChartPanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/TablePanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/ListPanel': [QUERY_BUILDER],
-	'signoz/ScatterPlotPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
+	'signoz/ScatterPlotPanel': [QUERY_BUILDER, CLICKHOUSE],
 	// Static kind: no query surface at all.
 	'signoz/TextPanel': [],
 };
@@ -80,7 +80,7 @@ const EXPECTED_QUERY_MODES: Record<PanelKind, QueryMode[]> = {
 	],
 	'signoz/TablePanel': [QUERY_BUILDER, CLICKHOUSE, QueryMode.AI_QUERY_BUILDER],
 	'signoz/ListPanel': [QUERY_BUILDER, QueryMode.AI_QUERY_BUILDER],
-	'signoz/ScatterPlotPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
+	'signoz/ScatterPlotPanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/TextPanel': [],
 };
 

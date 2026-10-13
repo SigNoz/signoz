@@ -32,7 +32,6 @@ export const definition: PanelDefinition<'signoz/ScatterPlotPanel'> = {
 			],
 		},
 		[QueryMode.CLICKHOUSE]: { kind: QueryModeKind.SIGNAL_LESS },
-		[QueryMode.PROM]: { kind: QueryModeKind.SIGNAL_LESS },
 	},
 	queryBuilderFields: {
 		legend_format: {
