@@ -2,10 +2,7 @@ import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.s
 
 import type { TableColumnOption } from '../../hooks/useTableColumns';
 
-/**
- * The columns a Scatter Plot's axes plot, as the renderer picks them: a bound
- * key, else X takes the first value column and Y the first one X did not take.
- */
+/** Mirrors the renderer: bound key, else X = first value column, Y = first other. */
 export function resolveAutoAxes(
 	columns: TableColumnOption[],
 	bound: { x?: string; y?: string },
@@ -30,7 +27,6 @@ function resolveScatterAxisColumns(
 	});
 }
 
-/** The name of the column each axis plots; unset for other kinds or before results load. */
 export function getScatterAxisColumnNames(
 	spec: DashboardtypesPanelSpecDTO,
 	tableColumns: TableColumnOption[] = [],
@@ -39,7 +35,6 @@ export function getScatterAxisColumnNames(
 	return axes ? { x: axes.x?.name, y: axes.y?.name } : {};
 }
 
-/** The unit of the column each axis plots; unset for other kinds or before results load. */
 export function getScatterAxisColumnUnits(
 	spec: DashboardtypesPanelSpecDTO,
 	tableColumns: TableColumnOption[] = [],

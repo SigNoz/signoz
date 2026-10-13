@@ -10,7 +10,6 @@ export interface ConfigMultiSelectItem<T extends string = string> {
 interface ConfigMultiSelectProps<T extends string = string> {
 	testId: string;
 	value: T[];
-	/** Shown while nothing is selected, which is a valid choice. */
 	placeholder?: string;
 	items: ConfigMultiSelectItem<T>[];
 	onChange: (value: T[]) => void;
@@ -18,11 +17,7 @@ interface ConfigMultiSelectProps<T extends string = string> {
 	'aria-label'?: string;
 }
 
-/**
- * Multi-select for the config sections; the picks show as tags. The order of
- * `items` is kept rather than the order they were picked in, so the same set
- * always reads (and is stored) the same way.
- */
+/** Emits picks in items order, so the stored value is stable. */
 function ConfigMultiSelect<T extends string = string>({
 	testId,
 	value,

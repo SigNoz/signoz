@@ -6,7 +6,7 @@ import { getBuilderQueries } from '../../../utils/getBuilderQueries';
 import { findGroupByMismatch } from './groupByMismatch';
 import { getScatterPlotWarning } from './messages';
 import { prepareScatterPlotData } from './prepareData';
-import { getScatterTable } from './scatterTable';
+import { getJoinedScalarTable } from '../../../utils/getJoinedScalarTable';
 
 export function getScatterPlotDataWarning(
 	panel: PanelOfKind<'signoz/ScatterPlotPanel'>,
@@ -15,7 +15,7 @@ export function getScatterPlotDataWarning(
 	const { dimensions, axes, formatting } = panel.spec.plugin.spec;
 	return getScatterPlotWarning(
 		prepareScatterPlotData({
-			table: getScatterTable(data),
+			table: getJoinedScalarTable(data),
 			dimensions,
 			axes,
 			columnUnits: formatting?.columnUnits ?? {},

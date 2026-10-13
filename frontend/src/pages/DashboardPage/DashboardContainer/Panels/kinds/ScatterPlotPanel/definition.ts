@@ -40,8 +40,7 @@ export const definition: PanelDefinition<'signoz/ScatterPlotPanel'> = {
 			placeholder: `Default ${MAX_PLOTTED_GROUPS.toLocaleString('en-US')} for Scatter Plot`,
 		},
 	},
-	// Same request as Table: one joined row per group, so x and y can come from
-	// different queries.
+	// One joined row per group, so x and y can come from different queries.
 	queryCapabilities: {
 		requestType: Querybuildertypesv5RequestTypeDTO.scalar,
 		formatTableResultForUI: true,

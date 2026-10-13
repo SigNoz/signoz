@@ -22,6 +22,7 @@ import PanelStyles from '../../panel.module.scss';
 import type { PanelRendererProps } from '../../types/rendererProps';
 import { enrichScatterClick } from '../../utils/drilldown/enrichScatterClick';
 import { getBuilderQueries } from '../../utils/getBuilderQueries';
+import { getJoinedScalarTable } from '../../utils/getJoinedScalarTable';
 import { getPanelTimeRange } from '../../utils/getPanelTimeRange';
 import {
 	resolveDecimalPrecision,
@@ -32,14 +33,14 @@ import {
 	shouldSaveSelectionPreference,
 } from '../../utils/selectionPreferences';
 
+import { ScatterPlotDataStatus } from './types';
+import { getAxisThresholds, toScatterAxisOptions } from './utils/axisOptions';
 import { findGroupByMismatch } from './utils/groupByMismatch';
 import { getScatterPlotEmptyMessage } from './utils/messages';
 import { resolvePointOpacity, resolvePointSize } from './utils/points';
 import { prepareScatterPlotData } from './utils/prepareData';
-import { getScatterTable } from './utils/scatterTable';
+
 import styles from './Renderer.module.scss';
-import { ScatterPlotDataStatus } from './types';
-import { getAxisThresholds, toScatterAxisOptions } from './utils/axisOptions';
 
 function ScatterPlotPanelRenderer({
 	panelId,
@@ -60,7 +61,7 @@ function ScatterPlotPanelRenderer({
 		[panel.spec.plugin.spec],
 	);
 
-	const table = useMemo(() => getScatterTable(data), [data]);
+	const table = useMemo(() => getJoinedScalarTable(data), [data]);
 
 	const scatterData = useMemo(
 		() =>

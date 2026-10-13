@@ -8,9 +8,8 @@ import { getGroupByFilters } from './getGroupByFilters';
 import { resolveDrilldownSignal } from './signal';
 
 interface EnrichScatterClickArgs {
-	/** The dot's group-by labels. */
 	labels: ScatterPointLabel[];
-	/** The dot's series label, as the legend names it. */
+	/** Legend label. */
 	label: string;
 	color: string;
 	/** Y's query first: a dot is placed by both, but Y is usually what was measured. */
@@ -21,11 +20,7 @@ interface EnrichScatterClickArgs {
 	timeRange?: { startTime: number; endTime: number };
 }
 
-/**
- * Turns a dot click into a drilldown payload filtered to the dot's group. The
- * drilldown follows Y's query, or X's when Y has no builder query (a formula,
- * PromQL). Returns `null` when neither does.
- */
+/** Drilldown filtered to the dot's group, via Y's builder query else X's; null if neither. */
 export function enrichScatterClick({
 	labels,
 	label,
