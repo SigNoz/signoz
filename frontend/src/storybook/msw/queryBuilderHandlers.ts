@@ -1,9 +1,65 @@
+import type { GetFieldsKeys200 } from 'api/generated/services/sigNoz.schemas';
+import {
+	TelemetrytypesFieldContextDTO,
+	TelemetrytypesFieldDataTypeDTO,
+	TelemetrytypesSignalDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { rest } from 'msw';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { DataSource } from 'types/common/queryBuilder';
+import { getFieldContextPrefix } from 'utils/fieldKeyContext';
 
 import {
 	autocompleteKeysResponse,
 	autocompleteValuesResponse,
 } from './__story_mockdata__/queryBuilderAutocomplete';
+
+const SIGNAL_TO_DATA_SOURCE: Record<string, DataSource> = {
+	[TelemetrytypesSignalDTO.logs]: DataSource.LOGS,
+	[TelemetrytypesSignalDTO.traces]: DataSource.TRACES,
+	[TelemetrytypesSignalDTO.metrics]: DataSource.METRICS,
+};
+
+/**
+ * The v5 keys list, served from the same per-signal fixture as the v3 pair so
+ * the group-by and order-by filters open on the product's keys. A context
+ * prefix in `searchText` narrows to that context the way the backend does.
+ */
+const fieldKeysResponseForSignal = (
+	signal: string | null,
+	searchText: string,
+): GetFieldsKeys200 => {
+	const prefix = getFieldContextPrefix(searchText);
+	const keys = (
+		autocompleteKeysResponse(
+			SIGNAL_TO_DATA_SOURCE[signal ?? ''] ?? DataSource.LOGS,
+			prefix?.remainder ?? searchText,
+		).data.attributeKeys ?? []
+	).map((attribute) => ({
+		name: attribute.key,
+		signal: signal as TelemetrytypesSignalDTO,
+		fieldContext:
+			attribute.type === 'resource'
+				? TelemetrytypesFieldContextDTO.resource
+				: TelemetrytypesFieldContextDTO.attribute,
+		fieldDataType: (attribute.dataType === DataTypes.Int64 ||
+		attribute.dataType === DataTypes.Float64
+			? TelemetrytypesFieldDataTypeDTO.number
+			: attribute.dataType) as TelemetrytypesFieldDataTypeDTO,
+	}));
+
+	return {
+		status: 'success',
+		data: {
+			complete: true,
+			keys: Object.fromEntries(
+				keys
+					.filter((key) => !prefix || key.fieldContext === prefix.context)
+					.map((key) => [key.name, [key]]),
+			),
+		},
+	};
+};
 
 /**
  * The query shapes `src/mocks-server/handlers.ts` answers from its own fixture:
@@ -37,6 +93,17 @@ const isSharedFixtureValuesQuery = (params: URLSearchParams): boolean => {
  * both. Returning nothing hands the request on to the next matching handler.
  */
 export const queryBuilderHandlers = [
+	rest.get('http://localhost/api/v1/fields/keys', (req, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json(
+				fieldKeysResponseForSignal(
+					req.url.searchParams.get('signal'),
+					req.url.searchParams.get('searchText') ?? '',
+				),
+			),
+		),
+	),
 	rest.get(
 		'http://localhost/api/v3/autocomplete/attribute_keys',
 		(req, res, ctx) => {
