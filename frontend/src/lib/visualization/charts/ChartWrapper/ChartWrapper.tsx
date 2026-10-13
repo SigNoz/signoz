@@ -1,5 +1,7 @@
 import { useCallback, useMemo, useRef } from 'react';
-import ChartLayout from 'lib/visualization/layout/ChartLayout/ChartLayout';
+import ChartLayout, {
+	LegendLayout,
+} from 'lib/visualization/layout/ChartLayout/ChartLayout';
 import UPlotLegend from 'lib/uPlotV2/components/Legend/UPlotLegend';
 import {
 	LegendPosition,
@@ -17,7 +19,8 @@ import { ChartWrapperProps } from 'lib/visualization/charts/types';
 import { useChartStacking } from 'lib/visualization/charts/ChartWrapper/useChartStacking';
 
 const TOOLTIP_WIDTH_PADDING = 120;
-const TOOLTIP_MIN_WIDTH = 300;
+// Holds a tooltip row's value column next to a legend-length label.
+const TOOLTIP_MIN_WIDTH = 360;
 
 export default function ChartWrapper({
 	legendConfig = { position: LegendPosition.BOTTOM },
@@ -41,6 +44,9 @@ export default function ChartWrapper({
 	customTooltip,
 	pinnedTooltipElement,
 	tooltipPortalRoot,
+	customLegend,
+	legendLabels,
+	contentFooter,
 	'data-testid': testId,
 }: ChartWrapperProps): JSX.Element {
 	const plotInstanceRef = useRef<uPlot | null>(null);
@@ -57,19 +63,24 @@ export default function ChartWrapper({
 	);
 
 	const legendComponent = useCallback(
-		(averageLegendWidth: number): React.ReactNode => {
+		(layout: LegendLayout): React.ReactNode => {
 			if (!showLegend) {
 				return null;
+			}
+			// A pie's slices and a heatmap's groups are not uPlot series.
+			if (customLegend) {
+				return customLegend(layout);
 			}
 			return (
 				<UPlotLegend
 					config={config}
 					position={legendConfig.position}
-					averageLegendWidth={averageLegendWidth}
+					averageLegendWidth={layout.averageLegendWidth}
+					showSearch={layout.showSearch}
 				/>
 			);
 		},
-		[config, legendConfig.position, showLegend],
+		[config, legendConfig.position, showLegend, customLegend],
 	);
 
 	const renderTooltipCallback = useCallback(
@@ -100,6 +111,8 @@ export default function ChartWrapper({
 				containerHeight={containerHeight}
 				legendConfig={legendConfig}
 				legendComponent={legendComponent}
+				seriesLabelsOverride={legendLabels}
+				contentFooter={contentFooter}
 				layoutChildren={layoutChildren}
 			>
 				{({ chartWidth, chartHeight, averageLegendWidth }): JSX.Element => (

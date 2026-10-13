@@ -19,6 +19,7 @@ export enum MetricsExplorerEvents {
 	YAxisUnitApplied = 'Metrics Explorer: Y axis unit applied',
 	AddToAlertClicked = 'Metrics Explorer: Add to alert clicked',
 	AddToDashboardClicked = 'Metrics Explorer: Add to dashboard clicked',
+	AddToDashboardSuccessful = 'Metrics Explorer: Add to dashboard successful',
 	SaveViewClicked = 'Metrics Explorer: Save view clicked',
 	SearchApplied = 'Metrics Explorer: Search applied',
 	ViewEdited = 'Metrics Explorer: View edited',

@@ -94,6 +94,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ querier.Handler }{},
 		struct{ serviceaccount.Handler }{},
 		struct{ serviceaccount.Getter }{},
+		struct{ user.Getter }{},
 		struct{ factory.Handler }{},
 		struct{ cloudintegration.Handler }{},
 		struct{ rulestatehistory.Handler }{},
@@ -174,6 +175,7 @@ func (openapi *OpenAPI) CreateAndWrite(path string) error {
 	}
 
 	attachDiscriminators(openapi.reflector.Spec)
+	openapi.collector.AttachStabilities(openapi.reflector.Spec)
 
 	// The library's MarshalYAML does a JSON round-trip that converts all numbers
 	// to float64, causing large integers (e.g. epoch millisecond timestamps) to

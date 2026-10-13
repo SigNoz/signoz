@@ -34,7 +34,9 @@ export default function TooltipItem({
 				style={{ color: item.color }}
 				data-testid={contentTestId}
 			>
-				<span className={Styles.uplotTooltipItemLabel}>{item.label}</span>
+				<span className={Styles.uplotTooltipItemLabel} title={item.label}>
+					{item.label}
+				</span>
 				<span
 					className={Styles.uplotTooltipItemContentSeparator}
 					style={{ borderColor: item.color }}

@@ -4,14 +4,11 @@ import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 
 import ColumnHeader from '../Base/ColumnHeader';
+import ClickableStatusCounts from '../Base/components/StatusFilterCells/ClickableStatusCounts';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes, getPodStatusItems } from '../commonUtils';
-import {
-	GroupedStatusCounts,
-	TextNoData,
-	ValidateColumnValueWrapper,
-} from '../components';
+import { TextNoData, ValidateColumnValueWrapper } from '../components';
 import {
 	INFRA_MONITORING_ATTR_KEYS,
 	InfraMonitoringEntity,
@@ -119,7 +116,8 @@ export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 				return <TextNoData type="tanstack" />;
 			}
 			return (
-				<GroupedStatusCounts
+				<ClickableStatusCounts
+					kind="pod"
 					items={getPodStatusItems(row.podCountsByStatus)}
 					rowId={rowId}
 				/>

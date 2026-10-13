@@ -16,6 +16,7 @@ export default function UPlotLegend({
 	position = LegendPosition.BOTTOM,
 	config,
 	averageLegendWidth,
+	showSearch,
 }: UPlotLegendProps): JSX.Element {
 	const { legendItemsMap, focusedSeriesIndex } = useLegendsSync({ config });
 	const onAction = useLegendActions();
@@ -27,6 +28,7 @@ export default function UPlotLegend({
 			items={items}
 			position={position}
 			averageLegendWidth={averageLegendWidth}
+			showSearch={showSearch}
 			focusedSeriesIndex={focusedSeriesIndex}
 			onAction={onAction}
 		/>

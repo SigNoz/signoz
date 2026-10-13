@@ -136,6 +136,7 @@ function DashboardsAndAlertsPopover({
 				>
 					<div
 						className="dashboards-and-alerts-popover dashboards-popover"
+						data-testid="metric-dashboards-popover"
 						style={{ backgroundColor: `${Color.BG_SIENNA_500}33` }}
 					>
 						<Grid2X2 size={12} color={Color.BG_SIENNA_500} />
@@ -154,6 +155,7 @@ function DashboardsAndAlertsPopover({
 				>
 					<div
 						className="dashboards-and-alerts-popover alerts-popover"
+						data-testid="metric-alerts-popover"
 						style={{ backgroundColor: `${Color.BG_SAKURA_500}33` }}
 					>
 						<Bell size={12} color={Color.BG_SAKURA_500} />

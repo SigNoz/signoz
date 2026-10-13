@@ -1,4 +1,4 @@
-import { Container } from '@signozhq/icons';
+import { Box } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import {
 	InframonitoringtypesContainerReadyDTO,
@@ -9,6 +9,8 @@ import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 
 import ColumnHeader from '../Base/ColumnHeader';
+import ClickableStatusBadge from '../Base/components/StatusFilterCells/ClickableStatusBadge';
+import ClickableStatusCounts from '../Base/components/StatusFilterCells/ClickableStatusCounts';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes } from '../commonUtils';
@@ -94,7 +96,7 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 		header: (): React.ReactNode => (
 			<EntityGroupHeader
 				title="Container Name"
-				icon={<Container data-hide-expanded="true" size={14} />}
+				icon={<Box data-hide-expanded="true" size={14} />}
 				docPath={`${CONTAINERS_DOC_PATH}#container-name`}
 			/>
 		),
@@ -173,7 +175,7 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 		width: { min: STATUS_COLUMN_WIDTH },
 		enableSort: false,
 		visibilityBehavior: 'hidden-on-expand',
-		cell: ({ row }): React.ReactNode => {
+		cell: ({ row, rowId }): React.ReactNode => {
 			if (
 				!row.status ||
 				row.status === InframonitoringtypesContainerStatusDTO.no_data
@@ -182,9 +184,13 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 			}
 
 			return (
-				<Badge color={CONTAINER_STATUS_COLORS[row.status]} variant="outline">
-					{CONTAINER_STATUS_LABELS[row.status]}
-				</Badge>
+				<ClickableStatusBadge
+					color={CONTAINER_STATUS_COLORS[row.status]}
+					label={CONTAINER_STATUS_LABELS[row.status]}
+					status={row.status}
+					kind="container"
+					rowId={rowId}
+				/>
 			);
 		},
 	},
@@ -205,7 +211,8 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 				return <TextNoData type="tanstack" />;
 			}
 			return (
-				<GroupedStatusCounts
+				<ClickableStatusCounts
+					kind="container"
 					items={getContainerStatusItems(row.containerCountsByStatus)}
 					rowId={rowId}
 				/>

@@ -2,7 +2,6 @@ import { useCallback } from 'react';
 import { QueryParams } from 'constants/query';
 import { initialAutocompleteData, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/constants';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -47,7 +46,7 @@ export const useHandleExplorerTabChange = (): {
 			) {
 				query = updateQueriesData(query, 'queryData', (item) => ({
 					...item,
-					orderBy: item.orderBy.filter((item) => item.columnName !== SIGNOZ_VALUE),
+					orderBy: [],
 					aggregateAttribute: initialAutocompleteData,
 				}));
 			}
@@ -73,32 +72,20 @@ export const useHandleExplorerTabChange = (): {
 			}
 
 			const query = currentQueryData?.query || getUpdateQuery(newPanelType);
+			const nextViewKey = currentQueryData?.viewKey || viewKey;
+			const nextViewName = currentQueryData?.viewName || viewName;
 
-			if (redirectToUrl) {
-				redirectWithQueryBuilderData(
-					query,
-					{
-						[QueryParams.panelTypes]: newPanelType,
-						[QueryParams.viewName]: currentQueryData?.viewName || viewName,
-						[QueryParams.viewKey]: currentQueryData?.viewKey || viewKey,
-					},
-					redirectToUrl,
-					undefined,
-					newTab,
-				);
-			} else {
-				redirectWithQueryBuilderData(
-					query,
-					{
-						[QueryParams.panelTypes]: newPanelType,
-						[QueryParams.viewName]: currentQueryData?.viewName || viewName,
-						[QueryParams.viewKey]: currentQueryData?.viewKey || viewKey,
-					},
-					undefined,
-					undefined,
-					newTab,
-				);
-			}
+			redirectWithQueryBuilderData(
+				query,
+				{
+					[QueryParams.panelTypes]: newPanelType,
+					...(nextViewKey ? { [QueryParams.viewKey]: nextViewKey } : {}),
+					...(nextViewName ? { [QueryParams.viewName]: nextViewName } : {}),
+				},
+				redirectToUrl,
+				undefined,
+				newTab,
+			);
 		},
 		[panelType, getUpdateQuery, redirectWithQueryBuilderData, viewName, viewKey],
 	);

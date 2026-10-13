@@ -1,18 +1,25 @@
 import type {
 	DashboardtypesLinkDTO,
 	DashboardtypesAxesDTO,
-	DashboardtypesBarChartVisualizationDTO,
 	DashboardtypesComparisonThresholdDTO,
+	DashboardtypesFillModeDTO,
+	DashboardtypesFillOpacityDTO,
+	DashboardtypesHeatmapAxesDTO,
+	DashboardtypesHeatmapColorsDTO,
 	DashboardtypesHeaderOptionsDTO,
 	DashboardtypesHistogramBucketsDTO,
 	DashboardtypesLegendDTO,
+	DashboardtypesLineInterpolationDTO,
+	DashboardtypesLineStyleDTO,
 	DashboardtypesPanelFormattingDTO,
 	DashboardtypesPanelSpecDTO,
+	DashboardtypesSpanGapsDTO,
+	DashboardtypesStackModeDTO,
 	DashboardtypesTableFormattingDTO,
 	DashboardtypesTableThresholdDTO,
 	DashboardtypesTextPresentationDTO,
 	DashboardtypesThresholdWithLabelDTO,
-	DashboardtypesTimeSeriesChartAppearanceDTO,
+	DashboardtypesTimePreferenceDTO,
 	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { LegendSeriesResolver } from '../utils/legendSeries';
@@ -87,15 +94,42 @@ export type AnyThreshold =
 export type PanelFormattingSlice = DashboardtypesPanelFormattingDTO &
 	Pick<DashboardtypesTableFormattingDTO, 'columnUnits'>;
 
+/** Superset spanning every kind's chart-appearance DTO. */
+export interface PanelChartAppearanceSlice {
+	lineStyle?: DashboardtypesLineStyleDTO;
+	lineInterpolation?: DashboardtypesLineInterpolationDTO;
+	/** Area's wire enum is a nominally distinct subset with the same members. */
+	fillMode?: DashboardtypesFillModeDTO;
+	fillOpacity?: DashboardtypesFillOpacityDTO;
+	showPoints?: boolean;
+	spanGaps?: DashboardtypesSpanGapsDTO;
+	/** The heatmap's cell colour ramp. */
+	colors?: DashboardtypesHeatmapColorsDTO;
+}
+
+/** Superset spanning every kind's visualization DTO. */
+export interface PanelVisualizationSlice {
+	timePreference?: DashboardtypesTimePreferenceDTO;
+	/** Bar stacking; a kind declares this or `stack`, never both. */
+	stackedBarChart?: boolean;
+	/** Area stacking. */
+	stack?: DashboardtypesStackModeDTO;
+	fillSpans?: boolean;
+}
+
+// Superset of every kind's axes DTO, gated by the `controls` bag.
+export type PanelAxesSlice = DashboardtypesAxesDTO &
+	DashboardtypesHeatmapAxesDTO;
+
 export interface SectionSpecMap {
 	[SectionKind.Formatting]: PanelFormattingSlice; // spec.plugin.spec.formatting
-	[SectionKind.Axes]: DashboardtypesAxesDTO; // spec.plugin.spec.axes
+	[SectionKind.Axes]: PanelAxesSlice; // spec.plugin.spec.axes
 	[SectionKind.Legend]: DashboardtypesLegendDTO; // spec.plugin.spec.legend
-	[SectionKind.ChartAppearance]: DashboardtypesTimeSeriesChartAppearanceDTO; // spec.plugin.spec.chartAppearance
+	[SectionKind.ChartAppearance]: PanelChartAppearanceSlice; // spec.plugin.spec.chartAppearance
 	[SectionKind.Buckets]: DashboardtypesHistogramBucketsDTO; // spec.plugin.spec.histogramBuckets
-	// spec.plugin.spec.visualization — typed as the Bar shape (widest superset);
+	// spec.plugin.spec.visualization — typed as the superset of every kind's shape;
 	// the `controls` bag gates which fields each kind writes.
-	[SectionKind.Visualization]: DashboardtypesBarChartVisualizationDTO;
+	[SectionKind.Visualization]: PanelVisualizationSlice;
 	[SectionKind.Thresholds]: AnyThreshold[]; // spec.plugin.spec.thresholds (variant picks the editor)
 	[SectionKind.ContextLinks]: DashboardtypesLinkDTO[]; // spec.links (PANEL-level)
 	[SectionKind.Columns]: TelemetrytypesTelemetryFieldKeyDTO[]; // spec.plugin.spec.selectFields (List)
@@ -113,7 +147,13 @@ export interface SectionControls {
 		decimals?: boolean;
 		columnUnits?: boolean;
 	};
-	[SectionKind.Axes]: { minMax?: boolean; logScale?: boolean }; // minMax → softMin/softMax
+	// minMax → softMin/softMax; y → the heatmap's bucket-axis scale, whose domain
+	// comes from the response and so takes no soft bounds.
+	[SectionKind.Axes]: {
+		minMax?: boolean;
+		logScale?: boolean;
+		y?: boolean;
+	};
 	[SectionKind.Legend]: {
 		position?: boolean;
 		// colors → customColors; the resolver supplies the labels overrides are keyed by,
@@ -124,8 +164,15 @@ export interface SectionControls {
 		lineStyle?: boolean;
 		lineInterpolation?: boolean;
 		fillMode?: boolean;
+		/**
+		 * Declaring it also marks the kind always-filled: `fillMode` drops `none` to match
+		 * the narrower `AreaFillMode` wire enum the save API validates against.
+		 */
+		fillOpacity?: boolean;
 		showPoints?: boolean;
 		spanGaps?: boolean;
+		// colors → the heatmap's cell colour ramp; nothing else here applies to a grid.
+		colors?: boolean;
 	};
 	[SectionKind.Buckets]: {
 		count?: boolean;
@@ -133,12 +180,13 @@ export interface SectionControls {
 		mergeQueries?: boolean;
 	};
 	// switchPanelKind → the visualization-type switcher (every kind, so you can switch
-	// away from any panel); stacking → stackedBarChart (Bar); fillSpans → fill gaps with
-	// 0 (TimeSeries).
+	// away from any panel); stacking → stackedBarChart (Bar); stackMode → stack
+	// (Area); fillSpans → fill gaps with 0 (TimeSeries / Area).
 	[SectionKind.Visualization]: {
 		switchPanelKind: boolean;
 		timePreference?: boolean;
 		stacking?: boolean;
+		stackMode?: boolean;
 		fillSpans?: boolean;
 	};
 	// Editor discriminator (not a spec field): which threshold variant a kind edits.
@@ -181,7 +229,7 @@ export const SECTION_METADATA = {
 	[SectionKind.Legend]: { title: 'Legend', icon: Signpost },
 	[SectionKind.ChartAppearance]: { title: 'Chart appearance', icon: Palette },
 	[SectionKind.Visualization]: { title: 'Visualization', icon: Wallpaper },
-	[SectionKind.Buckets]: { title: 'Histogram / Buckets', icon: BarChart },
+	[SectionKind.Buckets]: { title: 'Buckets', icon: BarChart },
 	[SectionKind.Thresholds]: { title: 'Thresholds', icon: Antenna },
 	[SectionKind.ContextLinks]: { title: 'Context Links', icon: Link2 },
 	[SectionKind.Columns]: { title: 'Columns', icon: Columns3 },
@@ -195,7 +243,14 @@ export const SECTION_METADATA = {
  */
 export type SectionEditorProps<K extends SectionKind> = {
 	value: SectionSpecMap[K] | undefined;
+	/** The kind's seeded value for this slice; what an unset field renders as. */
+	defaultValue?: SectionSpecMap[K];
+	/** The slice as last saved; Reset and changed markers compare against it. */
+	savedValue?: SectionSpecMap[K];
 	onChange: (next: SectionSpecMap[K]) => void;
 } & (K extends ControlledSectionKind
 	? { controls: SectionControls[K] }
 	: unknown);
+
+export type SectionControlsOf<K extends SectionKind> =
+	K extends ControlledSectionKind ? SectionControls[K] : undefined;

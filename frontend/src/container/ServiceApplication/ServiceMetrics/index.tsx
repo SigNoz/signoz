@@ -11,7 +11,7 @@ import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { Tags } from 'types/reducer/trace';
+import { Tags } from 'hooks/useResourceAttribute/types';
 
 import SkipOnBoardingModal from '../SkipOnBoardModal';
 import ServiceMetricsApplication from './ServiceMetricsApplication';

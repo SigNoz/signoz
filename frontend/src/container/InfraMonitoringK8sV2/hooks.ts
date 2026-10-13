@@ -1,13 +1,20 @@
 import {
 	createParser,
 	Options,
+	parseAsArrayOf,
 	parseAsInteger,
 	parseAsJson,
 	parseAsString,
+	parseAsStringEnum,
 	useQueryState,
 	useQueryStates,
 	UseQueryStateReturn,
 } from 'nuqs';
+import {
+	InframonitoringtypesContainerStatusDTO,
+	InframonitoringtypesNodeConditionDTO,
+	InframonitoringtypesPodStatusDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { useCallback, useMemo } from 'react';
 import {
 	IBuilderQuery,
@@ -18,7 +25,6 @@ import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
 import {
 	DEFAULT_K8S_CATEGORY,
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
-	VIEWS,
 } from './constants';
 import { orderBySchema, OrderBySchemaType } from './schemas';
 
@@ -85,10 +91,13 @@ export const useInfraMonitoringGroupBy = (): UseQueryStateReturn<
 		parseAsGroupBy.withDefault([]).withOptions(defaultNuqsOptions),
 	);
 
-export const useInfraMonitoringView = (): UseQueryStateReturn<string, string> =>
+export const useInfraMonitoringView = (): UseQueryStateReturn<
+	string | null,
+	undefined
+> =>
 	useQueryState(
 		INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW,
-		parseAsString.withDefault(VIEWS.METRICS).withOptions(defaultNuqsOptions),
+		parseAsString.withOptions(defaultNuqsOptions),
 	);
 
 export const useInfraMonitoringLogFilters = (): UseQueryStateReturn<
@@ -137,6 +146,8 @@ export const useInfraMonitoringCategory = (): UseQueryStateReturn<
 
 export interface SelectedItemParams {
 	selectedItem: string | null;
+	/** Drawer category, when it differs from the list page category. */
+	category?: string | null;
 	clusterName?: string | null;
 	namespaceName?: string | null;
 	containerName?: string | null;
@@ -144,6 +155,7 @@ export interface SelectedItemParams {
 
 const selectedItemParamsParsers = {
 	[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM]: parseAsString,
+	[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CATEGORY]: parseAsString,
 	[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CLUSTER_NAME]: parseAsString,
 	[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_NAMESPACE_NAME]: parseAsString,
 	[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CONTAINER_NAME]: parseAsString,
@@ -165,6 +177,8 @@ export const useInfraMonitoringSelectedItemParams =
 			() => ({
 				selectedItem:
 					rawParams[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM] ?? null,
+				category:
+					rawParams[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CATEGORY] ?? null,
 				clusterName:
 					rawParams[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CLUSTER_NAME] ??
 					null,
@@ -183,6 +197,7 @@ export const useInfraMonitoringSelectedItemParams =
 				if (newParams === null) {
 					void setRawParams({
 						[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM]: null,
+						[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CATEGORY]: null,
 						[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CLUSTER_NAME]: null,
 						[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_NAMESPACE_NAME]: null,
 						[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CONTAINER_NAME]: null,
@@ -193,6 +208,8 @@ export const useInfraMonitoringSelectedItemParams =
 				void setRawParams({
 					[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM]:
 						newParams.selectedItem ?? null,
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CATEGORY]:
+						newParams.category ?? null,
 					[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CLUSTER_NAME]:
 						newParams.clusterName ?? null,
 					[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_NAMESPACE_NAME]:
@@ -214,4 +231,59 @@ export const useInfraMonitoringStatusFilter = (): UseQueryStateReturn<
 	useQueryState(
 		INFRA_MONITORING_K8S_PARAMS_KEYS.STATUS_FILTER,
 		parseAsString.withDefault('').withOptions(defaultNuqsOptions),
+	);
+
+/**
+ * The list APIs reject the `no_data` sentinel (see IsFilterable in
+ * pkg/types/inframonitoringtypes), so it is never offered as a filter value.
+ */
+function withoutNoData<T extends string>(values: T[]): T[] {
+	return values.filter((value) => value !== 'no_data');
+}
+
+export const FILTERABLE_POD_STATUSES = withoutNoData(
+	Object.values(InframonitoringtypesPodStatusDTO),
+);
+
+export const FILTERABLE_NODE_CONDITIONS = withoutNoData(
+	Object.values(InframonitoringtypesNodeConditionDTO),
+);
+
+export const FILTERABLE_CONTAINER_STATUSES = withoutNoData(
+	Object.values(InframonitoringtypesContainerStatusDTO),
+);
+
+const EMPTY_FILTER: [] = [];
+
+export const useInfraMonitoringPodStatusFilter = (): UseQueryStateReturn<
+	InframonitoringtypesPodStatusDTO[],
+	[]
+> =>
+	useQueryState(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.POD_STATUS_FILTER,
+		parseAsArrayOf(parseAsStringEnum(FILTERABLE_POD_STATUSES))
+			.withDefault(EMPTY_FILTER)
+			.withOptions(defaultNuqsOptions),
+	);
+
+export const useInfraMonitoringNodeReadinessFilter = (): UseQueryStateReturn<
+	InframonitoringtypesNodeConditionDTO[],
+	[]
+> =>
+	useQueryState(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.NODE_READINESS_FILTER,
+		parseAsArrayOf(parseAsStringEnum(FILTERABLE_NODE_CONDITIONS))
+			.withDefault(EMPTY_FILTER)
+			.withOptions(defaultNuqsOptions),
+	);
+
+export const useInfraMonitoringContainerStatusFilter = (): UseQueryStateReturn<
+	InframonitoringtypesContainerStatusDTO[],
+	[]
+> =>
+	useQueryState(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.CONTAINER_STATUS_FILTER,
+		parseAsArrayOf(parseAsStringEnum(FILTERABLE_CONTAINER_STATUSES))
+			.withDefault(EMPTY_FILTER)
+			.withOptions(defaultNuqsOptions),
 	);

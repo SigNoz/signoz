@@ -1,7 +1,7 @@
 import { DrawerProps } from 'antd';
-import { AddToQueryHOCProps } from 'components/Logs/AddToQueryHOC';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
-import { ActionItemProps } from 'container/LogDetailedView/ActionItem';
+import { AddToQueryHOCProps } from 'components/Logs/AddToQueryHOC';
+import { ActionItemProps } from 'container/LogDetailedView/LogDetailedView.types';
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
 

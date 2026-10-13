@@ -187,7 +187,7 @@ func (store *config) ListChannels(ctx context.Context, orgID string, params *ale
 	}
 
 	if !params.Kind.IsZero() {
-		q = q.Where("type = ?", params.Kind.ToStoredType())
+		q = q.Where("type = ?", params.Kind.StringValue())
 	}
 
 	q = q.

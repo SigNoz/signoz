@@ -1,6 +1,9 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { DashboardtypesTimePreferenceDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	DashboardtypesStackModeDTO,
+	DashboardtypesTimePreferenceDTO,
+} from 'api/generated/services/sigNoz.schemas';
 
 import VisualizationSection from '../VisualizationSection';
 
@@ -8,6 +11,8 @@ import VisualizationSection from '../VisualizationSection';
 // the test doesn't pull the whole panel registry (renderers, chart libs).
 jest.mock('pages/DashboardPage/DashboardContainer/Panels/registry', () => ({
 	getPanelDefinition: jest.fn(() => ({
+		displayName: 'Time Series',
+		icon: (): null => null,
 		mode: 'query',
 		supportedSignals: ['metrics', 'logs', 'traces'],
 		supportedQueryTypes: ['builder', 'clickhouse_sql', 'promql'],
@@ -91,7 +96,8 @@ describe('VisualizationSection', () => {
 		expect(onChange).toHaveBeenCalledWith({ timePreference: 'last_1_hr' });
 	});
 
-	it('toggles bar stacking through onChange, preserving other fields', () => {
+	it('toggles bar stacking through onChange, preserving other fields', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(
 			<VisualizationSection
@@ -107,7 +113,9 @@ describe('VisualizationSection', () => {
 			/>,
 		);
 
-		fireEvent.click(screen.getByTestId('panel-editor-v2-stacked-bar-chart'));
+		await user.click(
+			screen.getByTestId('panel-editor-v2-stacked-bar-chart-stacked'),
+		);
 
 		expect(onChange).toHaveBeenCalledWith({
 			timePreference: 'global_time',
@@ -115,7 +123,45 @@ describe('VisualizationSection', () => {
 		});
 	});
 
-	it('toggles fill spans through onChange', () => {
+	it('writes the chosen stack mode through the tiles', async () => {
+		const user = userEvent.setup();
+		const onChange = jest.fn();
+		render(
+			<VisualizationSection
+				value={{ fillSpans: true }}
+				controls={{ switchPanelKind: true, stackMode: true }}
+				onChange={onChange}
+			/>,
+		);
+
+		expect(screen.getByTestId('panel-editor-v2-stack-mode')).toBeInTheDocument();
+		await user.click(screen.getByTestId('panel-editor-v2-stack-mode-percent'));
+
+		expect(onChange).toHaveBeenCalledWith({
+			fillSpans: true,
+			stack: DashboardtypesStackModeDTO.percent,
+		});
+	});
+
+	it('renders no stack-mode control for a kind that declares bar stacking', () => {
+		render(
+			<VisualizationSection
+				value={undefined}
+				controls={{ switchPanelKind: true, stacking: true }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(
+			screen.getByTestId('panel-editor-v2-stacked-bar-chart'),
+		).toBeInTheDocument();
+		expect(
+			screen.queryByTestId('panel-editor-v2-stack-mode'),
+		).not.toBeInTheDocument();
+	});
+
+	it('toggles fill spans through onChange', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(
 			<VisualizationSection
@@ -128,12 +174,13 @@ describe('VisualizationSection', () => {
 			/>,
 		);
 
-		fireEvent.click(screen.getByTestId('panel-editor-v2-fill-spans'));
+		await user.click(screen.getByTestId('panel-editor-v2-fill-spans'));
 
 		expect(onChange).toHaveBeenCalledWith({ fillSpans: true });
 	});
 
 	it('renders the type switcher and switches kind when switchPanelKind is set', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const onChangePanelKind = jest.fn();
 		render(
 			<VisualizationSection
@@ -149,7 +196,8 @@ describe('VisualizationSection', () => {
 			screen.getByTestId('panel-editor-v2-type-switcher'),
 		).toBeInTheDocument();
 
-		await pickOption('panel-editor-v2-type-switcher', 'Table');
+		await user.click(screen.getByTestId('panel-editor-v2-type-switcher'));
+		await user.click(screen.getByTestId('panel-type-signoz/TablePanel'));
 		expect(onChangePanelKind).toHaveBeenCalledWith('signoz/TablePanel');
 	});
 

@@ -630,62 +630,6 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/public/dashboards/{id}", handler.New(provider.authzMiddleware.CheckWithoutClaims(
-		provider.dashboardHandler.GetPublicData,
-		authtypes.Relation{Verb: coretypes.VerbRead},
-		coretypes.ResourceMetaResourcePublicDashboard,
-		func(req *http.Request, orgs []*types.Organization) ([]coretypes.Selector, valuer.UUID, error) {
-			id, err := valuer.NewUUID(mux.Vars(req)["id"])
-			if err != nil {
-				return nil, valuer.UUID{}, err
-			}
-
-			return provider.dashboardModule.GetPublicDashboardSelectorsAndOrg(req.Context(), id, orgs)
-		}, []string{}), handler.OpenAPIDef{
-		ID:                  "GetPublicDashboardData",
-		Tags:                []string{"dashboard"},
-		Summary:             "Get public dashboard data",
-		Description:         "This endpoint returns the sanitized dashboard data for public access",
-		Request:             nil,
-		RequestContentType:  "",
-		Response:            new(dashboardtypes.GettablePublicDashboardData),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{},
-		Deprecated:          false,
-		SecuritySchemes:     newAnonymousSecuritySchemes([]string{coretypes.ResourceMetaResourcePublicDashboard.Scope(coretypes.VerbRead)}),
-	})).Methods(http.MethodGet).GetError(); err != nil {
-		return err
-	}
-
-	if err := router.Handle("/api/v1/public/dashboards/{id}/widgets/{idx}/query_range", handler.New(provider.authzMiddleware.CheckWithoutClaims(
-		provider.dashboardHandler.GetPublicWidgetQueryRange,
-		authtypes.Relation{Verb: coretypes.VerbRead},
-		coretypes.ResourceMetaResourcePublicDashboard,
-		func(req *http.Request, orgs []*types.Organization) ([]coretypes.Selector, valuer.UUID, error) {
-			id, err := valuer.NewUUID(mux.Vars(req)["id"])
-			if err != nil {
-				return nil, valuer.UUID{}, err
-			}
-
-			return provider.dashboardModule.GetPublicDashboardSelectorsAndOrg(req.Context(), id, orgs)
-		}, []string{}), handler.OpenAPIDef{
-		ID:                  "GetPublicDashboardWidgetQueryRange",
-		Tags:                []string{"dashboard"},
-		Summary:             "Get query range result",
-		Description:         "This endpoint return query range results for a widget of public dashboard",
-		Request:             nil,
-		RequestContentType:  "",
-		Response:            new(querybuildertypesv5.QueryRangeResponse),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{},
-		Deprecated:          false,
-		SecuritySchemes:     newAnonymousSecuritySchemes([]string{coretypes.ResourceMetaResourcePublicDashboard.Scope(coretypes.VerbRead)}),
-	})).Methods(http.MethodGet).GetError(); err != nil {
-		return err
-	}
-
 	if err := router.Handle("/api/v2/public/dashboards/{id}", handler.New(provider.authzMiddleware.CheckWithoutClaims(
 		provider.dashboardHandler.GetPublicDataV2,
 		authtypes.Relation{Verb: coretypes.VerbRead},

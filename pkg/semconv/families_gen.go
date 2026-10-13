@@ -2,21 +2,37 @@
 
 package semconv
 
+import "github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+
 var families = []Family{
 	{
-		Current:        "db.system.name",
-		Old:            []string{"db.system"},
-		Kind:           KindAttribute,
-		Contexts:       nil,
-		Signals:        nil,
-		ApplyToMetrics: nil,
+		current: "container.cpu.usage",
+		kind:    KindMetric,
+		members: []Member{
+			{name: "container.cpu.utilization"},
+		},
 	},
 	{
-		Current:        "deployment.environment.name",
-		Old:            []string{"deployment.environment"},
-		Kind:           KindAttribute,
-		Contexts:       nil,
-		Signals:        nil,
-		ApplyToMetrics: nil,
+		current: "deployment.environment.name",
+		kind:    KindAttribute,
+		members: []Member{
+			{name: "deployment.environment"},
+		},
+		contexts: []telemetrytypes.FieldContext{telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource},
+		signals:  []telemetrytypes.Signal{telemetrytypes.SignalLogs, telemetrytypes.SignalMetrics, telemetrytypes.SignalTraces},
+	},
+	{
+		current: "k8s.node.cpu.usage",
+		kind:    KindMetric,
+		members: []Member{
+			{name: "k8s.node.cpu.utilization"},
+		},
+	},
+	{
+		current: "k8s.pod.cpu.usage",
+		kind:    KindMetric,
+		members: []Member{
+			{name: "k8s.pod.cpu.utilization"},
+		},
 	},
 }

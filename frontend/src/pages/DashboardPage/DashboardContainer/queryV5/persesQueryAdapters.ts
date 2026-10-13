@@ -100,6 +100,7 @@ export function panelTypeToRequestType(
 	switch (panelType) {
 		case PANEL_TYPES.TIME_SERIES:
 		case PANEL_TYPES.BAR:
+		case PANEL_TYPES.AREA:
 		case PANEL_TYPES.HISTOGRAM:
 			return Querybuildertypesv5RequestTypeDTO.time_series;
 		case PANEL_TYPES.TABLE:
@@ -108,6 +109,8 @@ export function panelTypeToRequestType(
 			return Querybuildertypesv5RequestTypeDTO.scalar;
 		case PANEL_TYPES.LIST:
 			return Querybuildertypesv5RequestTypeDTO.raw;
+		case PANEL_TYPES.HEATMAP:
+			return Querybuildertypesv5RequestTypeDTO.heatmap;
 		case PANEL_TYPES.TRACE:
 			return Querybuildertypesv5RequestTypeDTO.trace;
 		default:

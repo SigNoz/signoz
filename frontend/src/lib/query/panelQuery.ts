@@ -1,15 +1,23 @@
 /**
  * Panel query shaping shared by the dashboard panel editor and the query
- * builder: the per-panel-type field allowlist, the panel-type switch, and the
- * dirty-check used to decide whether a panel has unsaved query edits.
+ * builder: the panel-type switch and the dirty-check used to decide whether a
+ * panel has unsaved query edits.
  */
 import {
 	initialQueryBuilderFormValuesMap,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { cloneDeep, isEqual, set, unset } from 'lodash-es';
-import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
+import {
+	IBuilderFormula,
+	IBuilderQuery,
+	Query,
+} from 'types/api/queryBuilder/queryBuilderData';
+
+import {
+	panelTypeDataSourceFormValuesMap,
+	PartialPanelTypes,
+} from 'lib/query/panelTypeDataSourceFormValuesMap';
 
 // Asks "would saving the current panel change the persisted widget spec?".
 //
@@ -91,451 +99,22 @@ export const getIsQueryModified = (
 	);
 };
 
-export type PartialPanelTypes = {
-	[PANEL_TYPES.BAR]: 'bar';
-	[PANEL_TYPES.LIST]: 'list';
-	[PANEL_TYPES.TABLE]: 'table';
-	[PANEL_TYPES.TIME_SERIES]: 'graph';
-	[PANEL_TYPES.VALUE]: 'value';
-	[PANEL_TYPES.PIE]: 'pie';
-	[PANEL_TYPES.HISTOGRAM]: 'histogram';
-};
+/**
+ * Formulas are carried across a panel-type switch whole, not rebuilt from
+ * `panelTypeDataSourceFormValuesMap` the way `queryData` is, so a bucket axis has to be
+ * dropped by hand. The request rejects one on any type but heatmap.
+ */
+const withHeatmapBucketOptions = (
+	formulas: IBuilderFormula[],
+	newPanelType: keyof PartialPanelTypes,
+): IBuilderFormula[] => {
+	if (newPanelType === PANEL_TYPES.HEATMAP) {
+		return formulas;
+	}
 
-export const panelTypeDataSourceFormValuesMap: Record<
-	keyof PartialPanelTypes,
-	Record<DataSource, any>
-> = {
-	[PANEL_TYPES.BAR]: {
-		[DataSource.LOGS]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'filters',
-					'filter',
-					'groupBy',
-					'limit',
-					'having',
-					'orderBy',
-					'functions',
-					'stepInterval',
-					'disabled',
-					'queryName',
-					'legend',
-					'expression',
-					'aggregations',
-				],
-			},
-		},
-		[DataSource.METRICS]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'timeAggregation',
-					'filters',
-					'filter',
-					'spaceAggregation',
-					'groupBy',
-					'limit',
-					'having',
-					'orderBy',
-					'stepInterval',
-					'legend',
-					'queryName',
-					'disabled',
-					'functions',
-					'expression',
-					'aggregations',
-				],
-			},
-		},
-		[DataSource.TRACES]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'filters',
-					'filter',
-					'groupBy',
-					'limit',
-					'having',
-					'orderBy',
-					'functions',
-					'stepInterval',
-					'disabled',
-					'queryName',
-					'legend',
-					'expression',
-					'aggregations',
-				],
-			},
-		},
-	},
-	[PANEL_TYPES.TIME_SERIES]: {
-		[DataSource.LOGS]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'filters',
-					'filter',
-					'groupBy',
-					'limit',
-					'having',
-					'orderBy',
-					'functions',
-					'stepInterval',
-					'disabled',
-					'queryName',
-					'legend',
-					'expression',
-					'aggregations',
-				],
-			},
-		},
-		[DataSource.METRICS]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'timeAggregation',
-					'filters',
-					'filter',
-					'spaceAggregation',
-					'groupBy',
-					'limit',
-					'having',
-					'orderBy',
-					'stepInterval',
-					'legend',
-					'queryName',
-					'disabled',
-					'functions',
-					'expression',
-					'aggregations',
-				],
-			},
-		},
-		[DataSource.TRACES]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'filters',
-					'filter',
-					'groupBy',
-					'limit',
-					'having',
-					'orderBy',
-					'functions',
-					'stepInterval',
-					'disabled',
-					'queryName',
-					'legend',
-					'expression',
-					'aggregations',
-				],
-			},
-		},
-	},
-	[PANEL_TYPES.HISTOGRAM]: {
-		[DataSource.LOGS]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'filters',
-					'filter',
-					'groupBy',
-					'limit',
-					'having',
-					'orderBy',
-					'functions',
-					'stepInterval',
-					'disabled',
-					'queryName',
-					'legend',
-					'expression',
-					'aggregations',
-				],
-			},
-		},
-		[DataSource.METRICS]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'timeAggregation',
-					'filters',
-					'filter',
-					'spaceAggregation',
-					'groupBy',
-					'limit',
-					'having',
-					'orderBy',
-					'stepInterval',
-					'legend',
-					'queryName',
-					'disabled',
-					'functions',
-					'expression',
-					'aggregations',
-				],
-			},
-		},
-		[DataSource.TRACES]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'filters',
-					'filter',
-					'groupBy',
-					'limit',
-					'having',
-					'orderBy',
-					'functions',
-					'stepInterval',
-					'disabled',
-					'queryName',
-					'legend',
-					'expression',
-					'aggregations',
-				],
-			},
-		},
-	},
-	[PANEL_TYPES.TABLE]: {
-		[DataSource.LOGS]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'filters',
-					'filter',
-					'groupBy',
-					'limit',
-					'having',
-					'orderBy',
-					'functions',
-					'stepInterval',
-					'disabled',
-					'queryName',
-					'expression',
-					'legend',
-					'aggregations',
-				],
-			},
-		},
-		[DataSource.METRICS]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'timeAggregation',
-					'filters',
-					'filter',
-					'spaceAggregation',
-					'groupBy',
-					'reduceTo',
-					'limit',
-					'having',
-					'orderBy',
-					'stepInterval',
-					'legend',
-					'queryName',
-					'expression',
-					'disabled',
-					'functions',
-					'aggregations',
-				],
-			},
-		},
-		[DataSource.TRACES]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'filters',
-					'filter',
-					'groupBy',
-					'limit',
-					'having',
-					'orderBy',
-					'functions',
-					'stepInterval',
-					'disabled',
-					'queryName',
-					'expression',
-					'legend',
-					'aggregations',
-				],
-			},
-		},
-	},
-	[PANEL_TYPES.PIE]: {
-		[DataSource.LOGS]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'filters',
-					'filter',
-					'groupBy',
-					'limit',
-					'having',
-					'orderBy',
-					'functions',
-					'stepInterval',
-					'disabled',
-					'queryName',
-					'expression',
-					'legend',
-					'aggregations',
-				],
-			},
-		},
-		[DataSource.METRICS]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'timeAggregation',
-					'filters',
-					'filter',
-					'spaceAggregation',
-					'groupBy',
-					'reduceTo',
-					'limit',
-					'having',
-					'orderBy',
-					'stepInterval',
-					'legend',
-					'queryName',
-					'expression',
-					'disabled',
-					'functions',
-					'aggregations',
-				],
-			},
-		},
-		[DataSource.TRACES]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'filters',
-					'filter',
-					'groupBy',
-					'limit',
-					'having',
-					'orderBy',
-					'functions',
-					'stepInterval',
-					'disabled',
-					'queryName',
-					'expression',
-					'legend',
-					'aggregations',
-				],
-			},
-		},
-	},
-	[PANEL_TYPES.LIST]: {
-		[DataSource.LOGS]: {
-			builder: {
-				queryData: [
-					'queryName',
-					'filters',
-					'filter',
-					'limit',
-					'orderBy',
-					'functions',
-					'aggregations',
-				],
-			},
-		},
-		[DataSource.METRICS]: {
-			builder: {
-				queryData: ['queryName', 'filters', 'filter', 'aggregations'],
-			},
-		},
-		[DataSource.TRACES]: {
-			builder: {
-				queryData: [
-					'queryName',
-					'filters',
-					'filter',
-					'limit',
-					'orderBy',
-					'functions',
-					'aggregations',
-				],
-			},
-		},
-	},
-	[PANEL_TYPES.VALUE]: {
-		[DataSource.LOGS]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'filters',
-					'filter',
-					'reduceTo',
-					'having',
-					'functions',
-					'stepInterval',
-					'queryName',
-					'expression',
-					'disabled',
-					'legend',
-					'aggregations',
-				],
-			},
-		},
-		[DataSource.METRICS]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'timeAggregation',
-					'filters',
-					'filter',
-					'spaceAggregation',
-					'having',
-					'reduceTo',
-					'stepInterval',
-					'legend',
-					'queryName',
-					'expression',
-					'disabled',
-					'functions',
-					'aggregations',
-				],
-			},
-		},
-		[DataSource.TRACES]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'filters',
-					'filter',
-					'reduceTo',
-					'having',
-					'functions',
-					'stepInterval',
-					'queryName',
-					'expression',
-					'disabled',
-					'legend',
-					'aggregations',
-				],
-			},
-		},
-	},
+	return (formulas ?? []).map(
+		({ bucketOptions: _bucketOptions, ...rest }) => rest,
+	);
 };
 
 export function handleQueryChange(
@@ -555,7 +134,7 @@ export function handleQueryChange(
 					panelTypeDataSourceFormValuesMap[newPanelType][dataSource].builder
 						.queryData;
 
-				fieldsToSelect.forEach((field: keyof IBuilderQuery) => {
+				fieldsToSelect.forEach((field) => {
 					set(tempQuery, field, supersetQuery.builder.queryData[index][field]);
 				});
 
@@ -581,6 +160,10 @@ export function handleQueryChange(
 
 				return tempQuery;
 			}),
+			queryFormulas: withHeatmapBucketOptions(
+				supersetQuery.builder.queryFormulas,
+				newPanelType,
+			),
 			queryTraceOperator:
 				newPanelType === PANEL_TYPES.LIST
 					? []

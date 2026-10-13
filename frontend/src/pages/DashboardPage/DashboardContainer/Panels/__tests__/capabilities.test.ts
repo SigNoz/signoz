@@ -22,13 +22,15 @@ import type { PanelKind } from '../types/panelKind';
 
 const { QUERY_BUILDER, CLICKHOUSE, PROM } = EQueryType;
 const { logs, traces, metrics } = TelemetrytypesSignalDTO;
-const { time_series, scalar, raw } = Querybuildertypesv5RequestTypeDTO;
+const { time_series, scalar, raw, heatmap } = Querybuildertypesv5RequestTypeDTO;
 
 const EXPECTED_QUERY_TYPES: Record<PanelKind, EQueryType[]> = {
 	'signoz/TimeSeriesPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/BarChartPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
+	'signoz/AreaChartPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/NumberPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/HistogramPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
+	'signoz/HeatmapPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/PieChartPanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/TablePanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/ListPanel': [QUERY_BUILDER],
@@ -39,8 +41,11 @@ const EXPECTED_QUERY_TYPES: Record<PanelKind, EQueryType[]> = {
 const EXPECTED_SIGNALS: Record<PanelKind, TelemetrytypesSignalDTO[]> = {
 	'signoz/TimeSeriesPanel': [metrics, logs, traces],
 	'signoz/BarChartPanel': [metrics, logs, traces],
+	'signoz/AreaChartPanel': [metrics, logs, traces],
 	'signoz/NumberPanel': [metrics, logs, traces],
 	'signoz/HistogramPanel': [metrics, logs, traces],
+	// A heatmap needs a bucket axis, which only a metric carries.
+	'signoz/HeatmapPanel': [metrics],
 	'signoz/PieChartPanel': [metrics, logs, traces],
 	'signoz/TablePanel': [metrics, logs, traces],
 	// List renders raw rows; metrics produce no row data.
@@ -70,10 +75,26 @@ const EXPECTED_QUERY_CAPABILITIES: Partial<
 		orderTiebreaker: false,
 		serverPaginated: false,
 	},
+	'signoz/AreaChartPanel': {
+		requestType: time_series,
+		formatTableResultForUI: false,
+		bucketedStepInterval: false,
+		orderTiebreaker: false,
+		serverPaginated: false,
+	},
 	'signoz/HistogramPanel': {
 		requestType: time_series,
 		formatTableResultForUI: false,
 		bucketedStepInterval: false,
+		orderTiebreaker: false,
+		serverPaginated: false,
+	},
+	// Only Heatmap asks for `heatmap`: server-bucketed counts, one set per timestamp. Like
+	// Bar it draws one mark per point, so it asks for a widened step interval too.
+	'signoz/HeatmapPanel': {
+		requestType: heatmap,
+		formatTableResultForUI: false,
+		bucketedStepInterval: true,
 		orderTiebreaker: false,
 		serverPaginated: false,
 	},
