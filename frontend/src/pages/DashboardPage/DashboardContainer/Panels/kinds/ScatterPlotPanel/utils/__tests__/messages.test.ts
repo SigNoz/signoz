@@ -146,6 +146,21 @@ describe('getScatterPlotWarning', () => {
 		).toBe('Showing the first 10,000 groups.');
 	});
 
+	it('does not flag the cap when only missing values left groups out', () => {
+		expect(
+			getScatterPlotWarning(
+				ready({
+					totalGroups: 12000,
+					drawnGroups: 9000,
+					missingValueGroups: 3000,
+				}),
+			),
+		).toStrictEqual({
+			message: 'Showing 9,000 of 12,000 groups.',
+			messages: ['3,000 groups missing an X or Y value.'],
+		});
+	});
+
 	it('names dimensions bound to columns the result lacks', () => {
 		expect(
 			getScatterPlotWarning(
