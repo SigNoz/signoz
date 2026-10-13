@@ -829,7 +829,7 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 	// cache window includes it so a hit carries it too.
 	lookbackMs := uint64(lookbackSteps(query)) * stepMs
 	req := CacheRequest{
-		Key:             CacheKey(query.Fingerprint()),
+		Key:             CacheKey(q.fingerprintSalt(ctx, orgID, query.Fingerprint())),
 		Window:          qbtypes.TimeRange{From: from - min(lookbackMs, from), To: to},
 		Step:            step,
 		Kind:            queryKind(query),
@@ -1000,6 +1000,16 @@ func mergeResults(req CacheRequest, cached *qbtypes.Result, fresh []*qbtypes.Res
 		return ts >= windowStart && ts < req.Window.To
 	})
 	return merged
+}
+
+// fingerprintSalt adds the per-org settings that change a statement without
+// changing the query, so a flip does not serve entries built under the
+// other setting.
+func (q *querier) fingerprintSalt(ctx context.Context, orgID valuer.UUID, fingerprint string) string {
+	if querybuilder.SemconvFamiliesEnabled(ctx, orgID, q.fl) {
+		return fingerprint + "&families=1"
+	}
+	return fingerprint
 }
 
 // alignWindowToStep moves both ends of a window down to the step grid, the

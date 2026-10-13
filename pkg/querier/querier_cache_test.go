@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -548,4 +549,13 @@ func TestPromQLFingerprint_StartOrEndModifierIsNotCached(t *testing.T) {
 	assert.Empty(t, fingerprint("up @ end()"))
 	assert.Empty(t, fingerprint("sum(up @ start())"))
 	assert.Empty(t, fingerprint("max_over_time(up[5m:1m] @ end())"))
+}
+
+func TestFingerprintSalt_SeparatesSemconvFamilyResolution(t *testing.T) {
+	off := &querier{}
+	on := &querier{fl: flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureResolveSemconvFamilies.String(): true})}
+	orgID := valuer.GenerateUUID()
+
+	assert.Equal(t, "builder&x", off.fingerprintSalt(context.Background(), orgID, "builder&x"))
+	assert.NotEqual(t, "builder&x", on.fingerprintSalt(context.Background(), orgID, "builder&x"))
 }
