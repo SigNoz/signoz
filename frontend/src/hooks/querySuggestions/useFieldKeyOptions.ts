@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { FieldKeysConfig } from 'api/querySuggestions/types';
 import { BuilderQueryType } from 'types/api/v5/queryRange';
 import {
@@ -12,6 +12,8 @@ export interface FieldKeyOption {
 	label: string;
 	name: string;
 }
+
+const NO_EXCLUDED_NAMES: readonly string[] = [];
 
 interface UseFieldKeyOptionsParams {
 	fieldKeysConfig: FieldKeysConfig;
@@ -27,16 +29,29 @@ export const useFieldKeyOptions = ({
 	fieldKeysConfig,
 	builderQueryType,
 	enabled,
-	excludeNames = [],
+	excludeNames = NO_EXCLUDED_NAMES,
 }: UseFieldKeyOptionsParams): {
 	options: FieldKeyOption[];
 	isFetching: boolean;
 } => {
-	const { data, isFetching } = useFieldKeysSuggestion(
+	// A previous result is reusable across search text within one signal / source /
+	// metric; a change of any of those starts from empty until its own result lands.
+	const scope = `${fieldKeysConfig.signal ?? ''}|${fieldKeysConfig.source ?? ''}|${
+		fieldKeysConfig.metricName ?? ''
+	}`;
+	const settledScopeRef = useRef(scope);
+	const keepPreviousData = settledScopeRef.current === scope;
+
+	const { data, isFetching, isSuccess, isPreviousData } = useFieldKeysSuggestion(
 		fieldKeysConfig,
 		builderQueryType,
-		{ enabled, keepPreviousData: true },
+		{ enabled, keepPreviousData },
 	);
+	useEffect(() => {
+		if (isSuccess && !isPreviousData) {
+			settledScopeRef.current = scope;
+		}
+	}, [isSuccess, isPreviousData, scope]);
 	const searchText = fieldKeysConfig.searchText ?? '';
 
 	const options = useMemo(() => {
