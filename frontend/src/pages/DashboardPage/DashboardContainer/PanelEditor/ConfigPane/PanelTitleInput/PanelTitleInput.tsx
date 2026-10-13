@@ -1,7 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
-import { AutoComplete, Input } from 'antd';
-import type { InputRef } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { AutoComplete } from 'antd';
 import { useDashboardVariableNames } from 'pages/DashboardPage/DashboardContainer/hooks/useDashboardVariableNames';
 
 import { DASHBOARD_NAME_MAX_LENGTH } from '../../../constants';
@@ -26,7 +26,7 @@ function PanelTitleInput({
 	onChange,
 }: PanelTitleInputProps): JSX.Element {
 	const variableNames = useDashboardVariableNames();
-	const inputRef = useRef<InputRef>(null);
+	const inputRef = useRef<HTMLInputElement>(null);
 	const pendingCursor = useRef<number | null>(null);
 	const [cursor, setCursor] = useState(0);
 	const [focused, setFocused] = useState(false);
@@ -50,7 +50,7 @@ function PanelTitleInput({
 		if (pendingCursor.current === null) {
 			return;
 		}
-		inputRef.current?.input?.setSelectionRange(
+		inputRef.current?.setSelectionRange(
 			pendingCursor.current,
 			pendingCursor.current,
 		);
@@ -59,7 +59,7 @@ function PanelTitleInput({
 	}, [value]);
 
 	const syncCursor = (): void => {
-		setCursor(inputRef.current?.input?.selectionStart ?? 0);
+		setCursor(inputRef.current?.selectionStart ?? 0);
 	};
 
 	const handleChange = (next: string): void => {
@@ -92,7 +92,7 @@ function PanelTitleInput({
 		>
 			<Input
 				ref={inputRef}
-				data-testid="panel-editor-v2-title"
+				testId="panel-editor-v2-title"
 				placeholder="Panel title"
 				onKeyDown={handleKeyDown}
 				onKeyUp={syncCursor}
