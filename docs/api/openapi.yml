@@ -14103,16 +14103,6 @@ paths:
       description: This endpoint indexes the JSON sub-columns of materialized paths
         whose columns are indexed and returns the indexed and skipped paths.
       operationId: IndexMaterializedPaths
-      parameters:
-      - in: query
-        name: signal
-        required: true
-        schema:
-          type: string
-      - in: query
-        name: dryRun
-        schema:
-          type: boolean
       requestBody:
         content:
           application/json:

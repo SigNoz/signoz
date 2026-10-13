@@ -19,7 +19,6 @@ import type {
 
 import type {
 	IndexMaterializedPaths200,
-	IndexMaterializedPathsParams,
 	ListPromotedPaths200,
 	ListPromotedPathsParams,
 	PromotetypesIndexMaterializedPathsParamsDTO,
@@ -238,7 +237,6 @@ export const usePromotePaths = <
  * @summary Index materialized paths
  */
 export const indexMaterializedPaths = (
-	params: IndexMaterializedPathsParams,
 	promotetypesIndexMaterializedPathsParamsDTO?: BodyType<PromotetypesIndexMaterializedPathsParamsDTO>,
 	signal?: AbortSignal,
 ) => {
@@ -247,7 +245,6 @@ export const indexMaterializedPaths = (
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		data: promotetypesIndexMaterializedPathsParamsDTO,
-		params,
 		signal,
 	});
 };
@@ -259,19 +256,13 @@ export const getIndexMaterializedPathsMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof indexMaterializedPaths>>,
 		TError,
-		{
-			params: IndexMaterializedPathsParams;
-			data?: BodyType<PromotetypesIndexMaterializedPathsParamsDTO>;
-		},
+		{ data?: BodyType<PromotetypesIndexMaterializedPathsParamsDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof indexMaterializedPaths>>,
 	TError,
-	{
-		params: IndexMaterializedPathsParams;
-		data?: BodyType<PromotetypesIndexMaterializedPathsParamsDTO>;
-	},
+	{ data?: BodyType<PromotetypesIndexMaterializedPathsParamsDTO> },
 	TContext
 > => {
 	const mutationKey = ['indexMaterializedPaths'];
@@ -285,14 +276,11 @@ export const getIndexMaterializedPathsMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof indexMaterializedPaths>>,
-		{
-			params: IndexMaterializedPathsParams;
-			data?: BodyType<PromotetypesIndexMaterializedPathsParamsDTO>;
-		}
+		{ data?: BodyType<PromotetypesIndexMaterializedPathsParamsDTO> }
 	> = (props) => {
-		const { params, data } = props ?? {};
+		const { data } = props ?? {};
 
-		return indexMaterializedPaths(params, data);
+		return indexMaterializedPaths(data);
 	};
 
 	return { mutationFn, ...mutationOptions };
@@ -317,19 +305,13 @@ export const useIndexMaterializedPaths = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof indexMaterializedPaths>>,
 		TError,
-		{
-			params: IndexMaterializedPathsParams;
-			data?: BodyType<PromotetypesIndexMaterializedPathsParamsDTO>;
-		},
+		{ data?: BodyType<PromotetypesIndexMaterializedPathsParamsDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof indexMaterializedPaths>>,
 	TError,
-	{
-		params: IndexMaterializedPathsParams;
-		data?: BodyType<PromotetypesIndexMaterializedPathsParamsDTO>;
-	},
+	{ data?: BodyType<PromotetypesIndexMaterializedPathsParamsDTO> },
 	TContext
 > => {
 	return useMutation(getIndexMaterializedPathsMutationOptions(options));

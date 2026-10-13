@@ -13272,19 +13272,6 @@ export type ListPromotedPaths200 = {
 	status: string;
 };
 
-export type IndexMaterializedPathsParams = {
-	/**
-	 * @type string
-	 * @description undefined
-	 */
-	signal: string;
-	/**
-	 * @type boolean
-	 * @description undefined
-	 */
-	dryRun?: boolean;
-};
-
 export type IndexMaterializedPaths200 = {
 	data: PromotetypesIndexMaterializedPathsResultDTO;
 	/**
