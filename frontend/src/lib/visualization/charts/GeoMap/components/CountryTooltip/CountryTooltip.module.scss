@@ -1,0 +1,42 @@
+.content {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	font-size: 12px;
+	min-width: 160px;
+}
+
+.title {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-weight: 500;
+}
+
+.code {
+	margin-left: auto;
+	color: var(--l3-foreground);
+	font-variant-numeric: tabular-nums;
+}
+
+.swatch {
+	width: 10px;
+	height: 10px;
+	border-radius: 2px;
+}
+
+.value {
+	font-size: 14px;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
+.meta,
+.footer {
+	color: var(--l3-foreground);
+}
+
+.footer {
+	border-top: 1px solid var(--l2-border);
+	padding-top: 4px;
+}

@@ -1,0 +1,24 @@
+.svg {
+	display: block;
+	user-select: none;
+
+	path,
+	circle {
+		vector-effect: non-scaling-stroke;
+	}
+}
+
+.pannable {
+	cursor: grab;
+}
+
+.panning {
+	cursor: grabbing;
+}
+
+.hoverOutline {
+	fill: none;
+	stroke: var(--l1-foreground);
+	stroke-width: 1.5;
+	pointer-events: none;
+}
