@@ -1,3 +1,5 @@
+@use '../../../../styles/scrollbar' as *;
+
 .root {
 	display: flex;
 	flex-direction: column;
@@ -17,6 +19,8 @@
 }
 
 .scroll {
+	@include custom-scrollbar;
+
 	max-height: 480px;
 	overflow-y: auto;
 	padding: var(--spacing-4);
