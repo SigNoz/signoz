@@ -25,8 +25,7 @@ export const UNSUPPORTED_PANEL: RenderablePanelDefinition = {
 	Renderer,
 	EditorPane: QueryBuilderEditorPane,
 	sections: [],
-	supportedSignals: [],
-	supportedQueryTypes: [],
+	supportedQueryModesKindMap: {},
 	queryBuilderFields: {},
 	queryCapabilities: {
 		requestType: Querybuildertypesv5RequestTypeDTO.time_series,

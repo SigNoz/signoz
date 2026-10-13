@@ -220,14 +220,14 @@ func TestGetThreadSpans(t *testing.T) {
 			name:        "FlagOff_ReadsAndFiltersLegacyMaps",
 			jsonRelease: &jsonInsideTrace,
 			selectSQL:   selectSQL,
-			whereSQL:    "(mapContains(attributes_string, 'gen_ai.input.messages') OR mapContains(attributes_string, 'gen_ai.output.messages'))",
+			whereSQL:    "(mapContains(attributes_string, 'gen_ai.input.messages') OR mapContains(attributes_string, 'gen_ai.output.messages') OR mapContains(attributes_string, 'gen_ai.tool.name'))",
 		},
 		{
 			name:        "FlagOn_ReleasedDuringTrace_ReadsJSONFiltersJSONThenMaps",
 			jsonOn:      true,
 			jsonRelease: &jsonInsideTrace,
 			selectSQL:   selectSQL + ", attributes",
-			whereSQL:    "(multiIf(attributes.`gen_ai.input.messages` IS NOT NULL, attributes.`gen_ai.input.messages`::String, mapContains(attributes_string, 'gen_ai.input.messages'), attributes_string['gen_ai.input.messages'], NULL) IS NOT NULL OR multiIf(attributes.`gen_ai.output.messages` IS NOT NULL, attributes.`gen_ai.output.messages`::String, mapContains(attributes_string, 'gen_ai.output.messages'), attributes_string['gen_ai.output.messages'], NULL) IS NOT NULL)",
+			whereSQL:    "(multiIf(attributes.`gen_ai.input.messages` IS NOT NULL, attributes.`gen_ai.input.messages`::String, mapContains(attributes_string, 'gen_ai.input.messages'), attributes_string['gen_ai.input.messages'], NULL) IS NOT NULL OR multiIf(attributes.`gen_ai.output.messages` IS NOT NULL, attributes.`gen_ai.output.messages`::String, mapContains(attributes_string, 'gen_ai.output.messages'), attributes_string['gen_ai.output.messages'], NULL) IS NOT NULL OR multiIf(attributes.`gen_ai.tool.name` IS NOT NULL, attributes.`gen_ai.tool.name`::String, mapContains(attributes_string, 'gen_ai.tool.name'), attributes_string['gen_ai.tool.name'], NULL) IS NOT NULL)",
 		},
 	}
 
