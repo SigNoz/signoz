@@ -15,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
+	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/types/spantypes/spantypestest"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -71,6 +72,11 @@ func genAIMetadataStore(jsonRelease *time.Time) *telemetrytypestest.MockMetadata
 	for name, def := range aitelemetryschema.GenAIFields {
 		key := def
 		metadataStore.KeysMap[name] = []*telemetrytypes.TelemetryFieldKey{&key}
+	}
+	for _, name := range aiobservabilitytypes.GenAIThreadKeys {
+		if _, ok := metadataStore.KeysMap[name]; !ok {
+			metadataStore.KeysMap[name] = []*telemetrytypes.TelemetryFieldKey{{Name: name, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString}}
+		}
 	}
 	if jsonRelease != nil {
 		selector := telemetrytypes.EvolutionSelector{Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldName: "__all__"}
@@ -220,14 +226,14 @@ func TestGetThreadSpans(t *testing.T) {
 			name:        "FlagOff_ReadsAndFiltersLegacyMaps",
 			jsonRelease: &jsonInsideTrace,
 			selectSQL:   selectSQL,
-			whereSQL:    "(mapContains(attributes_string, 'gen_ai.input.messages') OR mapContains(attributes_string, 'gen_ai.output.messages') OR mapContains(attributes_string, 'gen_ai.tool.name'))",
+			whereSQL:    "(mapContains(attributes_string, 'gen_ai.input.messages') OR mapContains(attributes_string, 'gen_ai.output.messages') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.prompt.0.role') OR mapContains(attributes_string, 'gen_ai.completion.0.role') OR mapContains(attributes_string, 'llm.input_messages.0.message.role') OR mapContains(attributes_string, 'llm.output_messages.0.message.role'))",
 		},
 		{
 			name:        "FlagOn_ReleasedDuringTrace_ReadsJSONFiltersJSONThenMaps",
 			jsonOn:      true,
 			jsonRelease: &jsonInsideTrace,
 			selectSQL:   selectSQL + ", attributes",
-			whereSQL:    "(multiIf(attributes.`gen_ai.input.messages` IS NOT NULL, attributes.`gen_ai.input.messages`::String, mapContains(attributes_string, 'gen_ai.input.messages'), attributes_string['gen_ai.input.messages'], NULL) IS NOT NULL OR multiIf(attributes.`gen_ai.output.messages` IS NOT NULL, attributes.`gen_ai.output.messages`::String, mapContains(attributes_string, 'gen_ai.output.messages'), attributes_string['gen_ai.output.messages'], NULL) IS NOT NULL OR multiIf(attributes.`gen_ai.tool.name` IS NOT NULL, attributes.`gen_ai.tool.name`::String, mapContains(attributes_string, 'gen_ai.tool.name'), attributes_string['gen_ai.tool.name'], NULL) IS NOT NULL)",
+			whereSQL:    "(multiIf(attributes.`gen_ai.input.messages` IS NOT NULL, attributes.`gen_ai.input.messages`::String, mapContains(attributes_string, 'gen_ai.input.messages'), attributes_string['gen_ai.input.messages'], NULL) IS NOT NULL OR multiIf(attributes.`gen_ai.output.messages` IS NOT NULL, attributes.`gen_ai.output.messages`::String, mapContains(attributes_string, 'gen_ai.output.messages'), attributes_string['gen_ai.output.messages'], NULL) IS NOT NULL OR multiIf(attributes.`gen_ai.tool.name` IS NOT NULL, attributes.`gen_ai.tool.name`::String, mapContains(attributes_string, 'gen_ai.tool.name'), attributes_string['gen_ai.tool.name'], NULL) IS NOT NULL OR multiIf(attributes.`gen_ai.prompt.0.role` IS NOT NULL, attributes.`gen_ai.prompt.0.role`::String, mapContains(attributes_string, 'gen_ai.prompt.0.role'), attributes_string['gen_ai.prompt.0.role'], NULL) IS NOT NULL OR multiIf(attributes.`gen_ai.completion.0.role` IS NOT NULL, attributes.`gen_ai.completion.0.role`::String, mapContains(attributes_string, 'gen_ai.completion.0.role'), attributes_string['gen_ai.completion.0.role'], NULL) IS NOT NULL OR multiIf(attributes.`llm.input_messages.0.message.role` IS NOT NULL, attributes.`llm.input_messages.0.message.role`::String, mapContains(attributes_string, 'llm.input_messages.0.message.role'), attributes_string['llm.input_messages.0.message.role'], NULL) IS NOT NULL OR multiIf(attributes.`llm.output_messages.0.message.role` IS NOT NULL, attributes.`llm.output_messages.0.message.role`::String, mapContains(attributes_string, 'llm.output_messages.0.message.role'), attributes_string['llm.output_messages.0.message.role'], NULL) IS NOT NULL)",
 		},
 	}
 

@@ -4,11 +4,25 @@ import (
 	"strings"
 )
 
-// Format: OpenAI Chat Completions, a request {messages}, a response {choices}, or a bare message list.
+// Format: OpenAI Chat Completions, a request {messages}, a response {choices}, or a bare message list
+// (openai/openai-openapi@ee9458d, openapi.yaml: CreateChatCompletionRequest, CreateChatCompletionResponse).
 // Written by: bifrost, openrouter requests, the raw OpenAI calls OpenInference records.
-// Handled: string and block content, tool_calls nested or flattened, tool messages, refusal,
-// reasoning_content, finish reasons.
-// Not yet: streaming delta chunks, legacy completions choices[].text, audio output.
+// Handled: string and block content of every ChatCompletionRequestMessageContentPart* type, tool_calls
+// nested or flattened, tool messages, refusal, reasoning_content, the response audio object, finish reasons.
+// Not yet: streaming delta chunks, legacy completions choices[].text; a request-side {audio: {id}}
+// reference to an earlier audio response is dropped.
+
+// openAIChatRequest converts a request whose system prompt sits outside the history: Anthropic's
+// system, LangChain's system_prompt.
+func (f *formatting) openAIChatRequest(request map[string]any, messages []any) OutputMessages {
+	msgs := f.openAIChatMessages(messages)
+	for _, key := range []string{"system", "system_prompt"} {
+		if system := systemMessage(request[key]); system != nil {
+			return append(OutputMessages{*system}, msgs...)
+		}
+	}
+	return msgs
+}
 
 func (f *formatting) openAIChatMessages(list []any) OutputMessages {
 	out := make(OutputMessages, 0, len(list))
@@ -67,6 +81,14 @@ func (f *formatting) openAIChatMessage(m map[string]any) OutputMessage {
 	}
 	if refusal := stringOf(m["refusal"]); refusal != "" {
 		msg.Parts = append(msg.Parts, part(textPart(refusal)))
+	}
+	if audio, ok := m["audio"].(map[string]any); ok {
+		if transcript := stringOf(audio["transcript"]); transcript != "" {
+			msg.Parts = append(msg.Parts, part(textPart(transcript)))
+		}
+		if data := stringOf(audio["data"]); data != "" {
+			msg.Parts = append(msg.Parts, part(audioPart(data, "")))
+		}
 	}
 	reasoning, _ := m["reasoning_content"].(string)
 	if reasoning == "" {

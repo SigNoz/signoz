@@ -161,3 +161,35 @@ func TestFormat_Semconv(t *testing.T) {
 		},
 	})
 }
+
+// Cases from a local pydantic-ai 2.55 run against a stub provider, InstrumentationSettings version 5.
+func TestFormat_Semconv_Repairs(t *testing.T) {
+	runFormatCases(t, []formatCase{
+		{
+			// pydantic-ai: tool call arguments as a JSON string, the tool result under result with the tool
+			// name, the instructions as gen_ai.system_instructions and the finish reasons as a list
+			name:   "PydanticAI_ArgumentsDecoded_ResultBecomesResponse_InstructionsPrepended",
+			input:  `[{"role":"user","parts":[{"type":"text","content":"Weather in Paris?"}]},{"role":"assistant","parts":[{"type":"tool_call","id":"call_stub1","name":"get_weather","arguments":"{\"city\": \"Paris\"}"}],"finish_reason":"tool_call"},{"role":"user","parts":[{"type":"tool_call_response","id":"call_stub1","name":"get_weather","result":{"city":"Paris","temp_c":18}}]}]`,
+			output: `[{"role":"assistant","parts":[{"type":"text","content":"Paris is clear at 18C."}],"finish_reason":"stop"}]`,
+			attributes: map[string]any{
+				GenAISystemInstructions:    `[{"type":"text","content":"Use the tool."}]`,
+				GenAIResponseFinishReasons: []any{"stop"},
+			},
+			formatter: FormatterSemconv,
+			wantInput: `[
+			  {"role": "system", "parts": [{"type": "text", "content": "Use the tool."}]},
+			  {"role": "user", "parts": [{"type": "text", "content": "Weather in Paris?"}]},
+			  {"role": "assistant", "parts": [{"type": "tool_call", "name": "get_weather", "id": "call_stub1", "arguments": {"city": "Paris"}}]},
+			  {"role": "user", "parts": [{"type": "tool_call_response", "id": "call_stub1", "response": {"city": "Paris", "temp_c": 18}}]}
+			]`,
+			wantOutput: `[{"role": "assistant", "parts": [{"type": "text", "content": "Paris is clear at 18C."}], "finish_reason": "stop"}]`,
+		},
+		{
+			name:       "ThinkingPart_BecomesReasoning",
+			output:     `[{"role":"assistant","parts":[{"type":"thinking","thinking":"hmm"},{"type":"tool_call_response","id":"c1","output":"done"},{"type":"text","content":"ok"}]}]`,
+			formatter:  FormatterSemconv,
+			wantInput:  `[]`,
+			wantOutput: `[{"role": "assistant", "parts": [{"type": "reasoning", "content": "hmm"}, {"type": "tool_call_response", "id": "c1", "response": "done"}, {"type": "text", "content": "ok"}]}]`,
+		},
+	})
+}
