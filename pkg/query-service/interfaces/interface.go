@@ -79,9 +79,6 @@ type Reader interface {
 
 	GetMetricMetadata(context.Context, valuer.UUID, string, string) (*v3.MetricMetadataResponse, error)
 
-	AddRuleStateHistory(ctx context.Context, ruleStateHistory []model.RuleStateHistory) error
-	GetLastSavedRuleStateHistory(ctx context.Context, ruleID string) ([]model.RuleStateHistory, error)
-
 	GetMinAndMaxTimestampForTraceID(ctx context.Context, traceID []string) (int64, int64, error)
 
 	//trace

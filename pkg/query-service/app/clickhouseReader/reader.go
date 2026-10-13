@@ -62,8 +62,6 @@ const (
 	primaryNamespace          = "clickhouse"
 	archiveNamespace          = "clickhouse-archive"
 	signozTraceDBName         = "signoz_traces"
-	signozHistoryDBName       = "signoz_analytics"
-	ruleStateHistoryTableName = "distributed_rule_state_history_v0"
 	signozDurationMVTable     = "distributed_durationSort"
 	signozUsageExplorerTable  = "distributed_usage_explorer"
 	signozSpansTable          = "distributed_signoz_spans"
@@ -4482,57 +4480,6 @@ func (r *ClickHouseReader) GetSpanAttributeKeysByNames(ctx context.Context, name
 	}
 
 	return response, nil
-}
-
-func (r *ClickHouseReader) AddRuleStateHistory(ctx context.Context, ruleStateHistory []model.RuleStateHistory) error {
-	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
-		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
-		instrumentationtypes.CodeFunctionName: "AddRuleStateHistory",
-	})
-	var statement driver.Batch
-	var err error
-
-	defer func() {
-		if statement != nil {
-			statement.Abort()
-		}
-	}()
-
-	statement, err = r.db.PrepareBatch(ctx, fmt.Sprintf("INSERT INTO %s.%s (rule_id, rule_name, overall_state, overall_state_changed, state, state_changed, unix_milli, labels, fingerprint, value) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
-		signozHistoryDBName, ruleStateHistoryTableName))
-
-	if err != nil {
-		return err
-	}
-
-	for _, history := range ruleStateHistory {
-		err = statement.Append(history.RuleID, history.RuleName, history.OverallState, history.OverallStateChanged, history.State, history.StateChanged, history.UnixMilli, history.Labels, history.Fingerprint, history.Value)
-		if err != nil {
-			return err
-		}
-	}
-
-	err = statement.Send()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (r *ClickHouseReader) GetLastSavedRuleStateHistory(ctx context.Context, ruleID string) ([]model.RuleStateHistory, error) {
-	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
-		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
-		instrumentationtypes.CodeFunctionName: "GetLastSavedRuleStateHistory",
-	})
-	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE rule_id = '%s' AND state_changed = true ORDER BY unix_milli DESC LIMIT 1 BY fingerprint",
-		signozHistoryDBName, ruleStateHistoryTableName, ruleID)
-
-	history := []model.RuleStateHistory{}
-	err := r.db.Select(ctx, &history, query)
-	if err != nil {
-		return nil, err
-	}
-	return history, nil
 }
 
 func (r *ClickHouseReader) GetMinAndMaxTimestampForTraceID(ctx context.Context, traceID []string) (int64, int64, error) {
