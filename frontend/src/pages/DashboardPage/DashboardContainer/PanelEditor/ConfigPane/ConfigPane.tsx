@@ -40,7 +40,7 @@ interface ConfigPaneProps {
 	legendSeries: LegendSeries[];
 	/** Table panel's resolved value columns, for the table-only editors. */
 	tableColumns: TableColumnOption[];
-	/** Group-by labels of a joined scalar result, for the scatter dimensions editor. */
+	/** Group-by columns of the joined scalar result. */
 	groupColumns?: string[];
 	/** Query step interval (seconds), for the chart-appearance span-gaps floor. */
 	stepInterval?: number;

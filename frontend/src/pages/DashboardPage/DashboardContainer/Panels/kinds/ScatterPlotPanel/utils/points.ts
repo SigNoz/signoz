@@ -10,14 +10,6 @@ export const POINT_OPACITY_BOUNDS = { min: 0.1, max: 1 } as const;
 
 export const DEFAULT_POINT_OPACITY = 0.7;
 
-/** What an unset `points` draws as, spelled out for the editor's change tracking. */
-export const DEFAULT_POINTS: Required<DashboardtypesScatterPlotPointsDTO> = {
-	size: DEFAULT_SCATTER_POINT_SIZE.fixed,
-	minSize: DEFAULT_SCATTER_POINT_SIZE.min,
-	maxSize: DEFAULT_SCATTER_POINT_SIZE.max,
-	opacity: DEFAULT_POINT_OPACITY,
-};
-
 export function resolvePointSize(
 	points: DashboardtypesScatterPlotPointsDTO | undefined,
 ): ScatterPointSize {

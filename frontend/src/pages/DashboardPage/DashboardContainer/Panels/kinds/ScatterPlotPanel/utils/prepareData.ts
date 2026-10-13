@@ -11,7 +11,6 @@ import type {
 
 import { getColumnUnit } from '../../../utils/getColumnUnit';
 import { getValueColumnLabels } from '../../../utils/getValueColumnLabels';
-
 import {
 	type PrepareScatterPlotDataArgs,
 	ScatterDimension,
@@ -78,7 +77,6 @@ function getPointLabels(
  */
 export const MAX_PLOTTED_GROUPS = 10_000;
 
-/** Joins the values of a dot's colour keys into its series label. */
 export const COLOR_LABEL_SEPARATOR = ', ';
 
 /**

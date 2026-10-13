@@ -4,8 +4,8 @@ import { Button } from '@signozhq/ui/button';
 import {
 	DashboardtypesComparisonOperatorDTO,
 	type DashboardtypesComparisonThresholdDTO,
-	type DashboardtypesTableThresholdDTO,
 	type DashboardtypesScatterPlotThresholdDTO,
+	type DashboardtypesTableThresholdDTO,
 	DashboardtypesThresholdAxisDTO,
 	DashboardtypesThresholdFormatDTO,
 } from 'api/generated/services/sigNoz.schemas';

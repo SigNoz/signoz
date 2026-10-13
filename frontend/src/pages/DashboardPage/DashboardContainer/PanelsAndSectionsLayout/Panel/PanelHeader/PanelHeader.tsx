@@ -7,11 +7,10 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 import type { PanelTimePreferenceLabel } from 'pages/DashboardPage/DashboardContainer/hooks/resolvePanelTimeWindow';
+import { getQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
 import type { PanelActionsConfig } from '../Panel';
-import { getQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
-
 import PanelActionsMenu from '../PanelActionsMenu/PanelActionsMenu';
 import { EMPTY_PANEL_QUERY_DATA } from '../utils/emptyPanelQueryData';
 import { usePanelTitle } from '../hooks/usePanelTitle';

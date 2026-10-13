@@ -15,7 +15,7 @@ export interface SectionEditorContext {
 	tableColumns?: TableColumnOption[];
 	/** Group-by labels of the joined scalar result; the colour-by options. */
 	groupColumns?: string[];
-	/** Label of the value column a Scatter Plot sizes its dots by; unset when none is. */
+	/** Scatter Plot's size column label, if bound. */
 	sizeColumnLabel?: string;
 	/** Name of the column each Scatter Plot axis plots, for its label's placeholder. */
 	axisColumnNames?: { x?: string; y?: string };

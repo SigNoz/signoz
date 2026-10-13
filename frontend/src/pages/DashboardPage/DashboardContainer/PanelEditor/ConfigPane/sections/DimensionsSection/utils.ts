@@ -19,10 +19,7 @@ export function formatAutoOption(
 	return column ? `Auto (${formatColumnOption(column)})` : 'Auto';
 }
 
-/**
- * The unset option first, then the result's columns. A bound key the current
- * result no longer has stays listed, so the select never shows a bare value.
- */
+/** Keeps a bound key the result lacks, so the select never shows a bare value. */
 export function buildDimensionItems(
 	columns: ConfigSelectItem[],
 	current: string | undefined,
@@ -35,7 +32,6 @@ export function buildDimensionItems(
 	return items;
 }
 
-/** The result's group-by keys, then any selected key the result no longer has. */
 export function buildColorKeyItems(
 	groupColumns: string[],
 	selected: string[],
