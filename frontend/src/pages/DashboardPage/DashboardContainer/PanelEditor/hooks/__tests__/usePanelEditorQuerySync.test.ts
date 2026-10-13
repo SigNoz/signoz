@@ -45,8 +45,16 @@ const SAVED_QUERIES = [{ id: 'saved' }] as unknown as NonNullable<
 const CONVERTED_QUERIES = [{ id: 'converted' }] as unknown as NonNullable<
 	DashboardtypesPanelSpecDTO['queries']
 >;
-const SEED_V1 = { id: 'seed', queryType: 'builder' } as unknown as Query;
-const STAGED_V1 = { id: 'staged', queryType: 'builder' } as unknown as Query;
+const SEED_V1 = {
+	id: 'seed',
+	queryType: 'builder',
+	builder: { queryData: [] },
+} as unknown as Query;
+const STAGED_V1 = {
+	id: 'staged',
+	queryType: 'builder',
+	builder: { queryData: [] },
+} as unknown as Query;
 
 function makeDraft(
 	queries = SAVED_QUERIES,
@@ -74,7 +82,11 @@ function builderState(
 	handleRunQuery: jest.Mock;
 } {
 	return {
-		currentQuery: { id: 'current', queryType: 'builder' } as unknown as Query,
+		currentQuery: {
+			id: 'current',
+			queryType: 'builder',
+			builder: { queryData: [] },
+		} as unknown as Query,
 		stagedQuery: STAGED_V1,
 		handleRunQuery: jest.fn(),
 		...overrides,
@@ -396,8 +408,16 @@ describe('usePanelEditorQuerySync', () => {
 		const EDITED_ENVELOPES = [
 			{ id: 'edited-envelopes' },
 		] as unknown as NonNullable<DashboardtypesPanelSpecDTO['queries']>;
-		const editedQuery = { id: 'edited', queryType: 'builder' } as Query;
-		const unchangedQuery = { id: 'unchanged', queryType: 'builder' } as Query;
+		const editedQuery = {
+			id: 'edited',
+			queryType: 'builder',
+			builder: { queryData: [] },
+		} as unknown as Query;
+		const unchangedQuery = {
+			id: 'unchanged',
+			queryType: 'builder',
+			builder: { queryData: [] },
+		} as unknown as Query;
 
 		beforeEach(() => {
 			mockToPerses.mockImplementation((query: Query) =>
@@ -466,6 +486,68 @@ describe('usePanelEditorQuerySync', () => {
 			const { result } = setup();
 
 			expect(result.current.isQueryDirty).toBe(false);
+		});
+	});
+
+	describe('AI queries are saved like any builder query', () => {
+		const aiQuery = {
+			id: 'ai',
+			queryType: 'builder',
+			builder: { queryData: [{ builderQueryType: 'builder_ai_query' }] },
+		} as unknown as Query;
+
+		it('keeps the AI tag when seeding, so a saved AI panel reopens on the AI tab', () => {
+			const savedAiQuery = {
+				id: 'saved-ai',
+				queryType: 'builder',
+				builder: {
+					queryData: [
+						{ dataSource: 'traces', builderQueryType: 'builder_ai_query' },
+					],
+				},
+			} as unknown as Query;
+			mockFromPerses.mockReturnValue(savedAiQuery);
+			setup({ savedQueries: SAVED_QUERIES });
+
+			const [seeded] = mockUseShareBuilderUrl.mock.calls[0];
+			expect(seeded.defaultValue).toBe(savedAiQuery);
+		});
+
+		it('serializes the live AI query, not the seed', () => {
+			// Input-sensitive so the envelope compare reads dirty and names what was serialized.
+			mockToPerses.mockImplementation((query: Query) =>
+				query?.id === 'ai' ? CONVERTED_QUERIES : SAVED_QUERIES,
+			);
+			mockUseQueryBuilder.mockReturnValue(builderState({ currentQuery: aiQuery }));
+			const { result } = setup({ savedQueries: SAVED_QUERIES });
+			const { spec } = makeDraft();
+
+			expect(result.current.buildSaveSpec(spec)).toStrictEqual({
+				...spec,
+				queries: CONVERTED_QUERIES,
+			});
+		});
+
+		it('still saves a ClickHouse query while an AI query sits in the builder slot', () => {
+			const clickHouseQuery = {
+				...aiQuery,
+				id: 'ch',
+				queryType: 'clickhouse_sql',
+			} as unknown as Query;
+			// Input-sensitive so the envelope compare reads dirty and the normal path runs.
+			mockToPerses.mockImplementation((query: Query) =>
+				query?.id === 'ch' ? CONVERTED_QUERIES : SAVED_QUERIES,
+			);
+			mockUseQueryBuilder.mockReturnValue(
+				builderState({ currentQuery: clickHouseQuery }),
+			);
+			const { result } = setup({ savedQueries: SAVED_QUERIES });
+			const { spec } = makeDraft();
+
+			expect(result.current.buildSaveSpec(spec)).toStrictEqual({
+				...spec,
+				queries: CONVERTED_QUERIES,
+			});
 		});
 	});
 });
