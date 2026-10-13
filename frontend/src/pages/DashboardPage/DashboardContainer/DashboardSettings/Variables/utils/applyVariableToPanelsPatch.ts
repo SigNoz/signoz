@@ -7,8 +7,8 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 
 import {
-	isBuilderOrAIEnvelope,
-	isBuilderOrAIPluginKind,
+	isBuilderEnvelope,
+	isBuilderPluginKind,
 } from 'lib/query/builderEnvelope';
 
 function clauseFor(attribute: string, variableName: string): string {
@@ -25,15 +25,13 @@ function forEachBuilderSpec(
 	}
 	if (plugin.kind === 'signoz/CompositeQuery') {
 		const composite = plugin.spec as Querybuildertypesv5CompositeQueryDTO;
-		(composite.queries ?? [])
-			.filter(isBuilderOrAIEnvelope)
-			.forEach((envelope) => {
-				const { spec } = envelope as Querybuildertypesv5QueryEnvelopeBuilderDTO;
-				if (spec) {
-					fn(spec as Querybuildertypesv5BuilderQuerySpecDTO);
-				}
-			});
-	} else if (isBuilderOrAIPluginKind(plugin.kind)) {
+		(composite.queries ?? []).filter(isBuilderEnvelope).forEach((envelope) => {
+			const { spec } = envelope as Querybuildertypesv5QueryEnvelopeBuilderDTO;
+			if (spec) {
+				fn(spec as Querybuildertypesv5BuilderQuerySpecDTO);
+			}
+		});
+	} else if (isBuilderPluginKind(plugin.kind)) {
 		fn(plugin.spec as Querybuildertypesv5BuilderQuerySpecDTO);
 	}
 }

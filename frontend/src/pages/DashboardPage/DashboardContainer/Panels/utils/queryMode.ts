@@ -10,31 +10,53 @@ export const QueryMode = {
 
 export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode];
 
-/** Builder queries per authoring tab; `Query` has one `builder` slot, so off-screen tabs live here. */
-export type BuilderStash = Partial<Record<QueryMode, Query['builder']>>;
+/** Query Builder and AI share `Query.builder`; the variant says which one it holds. */
+export const BuilderVariant = {
+	MAIN: 'main',
+	AI: 'ai',
+} as const;
 
-/** Which builder mode the `builder` slot holds, whatever query type is active. */
-export function getBuilderMode(builder: Query['builder']): QueryMode {
+export type BuilderVariant =
+	(typeof BuilderVariant)[keyof typeof BuilderVariant];
+
+/** Builder queries per variant; `Query` has one `builder` slot, so the off-screen variant lives here. */
+export type BuildersByVariant = Partial<
+	Record<BuilderVariant, Query['builder']>
+>;
+
+/** Which variant the `builder` slot holds, whatever query type is active. */
+export function getBuilderVariant(builder: Query['builder']): BuilderVariant {
 	return builder.queryData[0]?.builderQueryType === QueryMode.AI_QUERY_BUILDER
-		? QueryMode.AI_QUERY_BUILDER
-		: QueryMode.QUERY_BUILDER;
+		? BuilderVariant.AI
+		: BuilderVariant.MAIN;
+}
+
+/** The variant a tab authors; `undefined` for tabs that own their own slot. */
+export function toBuilderVariant(mode: QueryMode): BuilderVariant | undefined {
+	if (mode === QueryMode.AI_QUERY_BUILDER) {
+		return BuilderVariant.AI;
+	}
+	return mode === QueryMode.QUERY_BUILDER ? BuilderVariant.MAIN : undefined;
 }
 
 /** The tab a query belongs to: its query type, or AI when a builder query carries the tag. */
 export function getQueryMode(query: Query): QueryMode {
-	return query.queryType === QueryMode.QUERY_BUILDER
-		? getBuilderMode(query.builder)
-		: query.queryType;
+	if (query.queryType !== QueryMode.QUERY_BUILDER) {
+		return query.queryType;
+	}
+	return getBuilderVariant(query.builder) === BuilderVariant.AI
+		? QueryMode.AI_QUERY_BUILDER
+		: QueryMode.QUERY_BUILDER;
 }
 
 /** Query Builder and AI both author `Query.builder`; the other modes own their own slot. */
 export function isBuilderMode(mode: QueryMode): boolean {
-	return mode === QueryMode.QUERY_BUILDER || mode === QueryMode.AI_QUERY_BUILDER;
+	return toBuilderVariant(mode) !== undefined;
 }
 
 /** Drops the AI tag, leaving the same query readable as a plain builder query. */
 export function withoutAIQueryTag(query: Query): Query {
-	if (getBuilderMode(query.builder) !== QueryMode.AI_QUERY_BUILDER) {
+	if (getBuilderVariant(query.builder) !== BuilderVariant.AI) {
 		return query;
 	}
 	return {

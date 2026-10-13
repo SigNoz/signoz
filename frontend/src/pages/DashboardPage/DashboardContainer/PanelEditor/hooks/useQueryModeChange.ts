@@ -8,18 +8,18 @@ import {
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelCapabilities';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import {
-	type BuilderStash,
-	getBuilderMode,
-	isBuilderMode,
+	type BuildersByVariant,
+	getBuilderVariant,
 	QueryMode,
+	toBuilderVariant,
 } from 'pages/DashboardPage/DashboardContainer/Panels/utils/queryMode';
 import { seedBuilderForMode } from 'pages/DashboardPage/DashboardContainer/Panels/utils/seedBuilderForMode';
 
 interface UseQueryModeChangeArgs {
 	panelType: PANEL_TYPES;
 	supportedQueryModesKindMap: SupportedQueryModesKindMap;
-	/** Builder queries for the tabs not on screen, keyed by mode. */
-	parkedBuilders: MutableRefObject<BuilderStash>;
+	/** Builder queries for the variant not on screen. */
+	parkedBuilders: MutableRefObject<BuildersByVariant>;
 }
 
 /**
@@ -39,8 +39,9 @@ export function useQueryModeChange({
 
 	return useCallback(
 		(key: string): void => {
-			const target = key as QueryMode;
-			const held = getBuilderMode(currentQuery.builder);
+			const targetMode = key as QueryMode;
+			const targetVariant = toBuilderVariant(targetMode);
+			const heldVariant = getBuilderVariant(currentQuery.builder);
 
 			const seedFor = (mode: QueryMode): Query['builder'] =>
 				seedBuilderForMode({
@@ -55,17 +56,19 @@ export function useQueryModeChange({
 
 			// Keyed on what `builder` holds, not the active tab: ClickHouse → QB must not reseed.
 			let { builder } = currentQuery;
-			if (isBuilderMode(target) && target !== held) {
-				parkedBuilders.current[held] = currentQuery.builder;
-				builder = parkedBuilders.current[target] ?? seedFor(target);
-				delete parkedBuilders.current[target];
+			if (targetVariant && targetVariant !== heldVariant) {
+				parkedBuilders.current[heldVariant] = currentQuery.builder;
+				builder = parkedBuilders.current[targetVariant] ?? seedFor(targetMode);
+				delete parkedBuilders.current[targetVariant];
 			}
 
 			redirectWithQueryBuilderData({
 				...currentQuery,
 				// An AI query is a builder query carrying the AI tag; its query type stays `builder`.
 				queryType:
-					target === QueryMode.AI_QUERY_BUILDER ? QueryMode.QUERY_BUILDER : target,
+					targetMode === QueryMode.AI_QUERY_BUILDER
+						? QueryMode.QUERY_BUILDER
+						: targetMode,
 				builder,
 			});
 		},

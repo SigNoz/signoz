@@ -5,7 +5,7 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 import { Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType } from 'api/generated/services/sigNoz.schemas';
 
-import { isBuilderOrAIEnvelope } from 'lib/query/builderEnvelope';
+import { isBuilderEnvelope } from 'lib/query/builderEnvelope';
 
 import type { PanelTable, PanelTableColumn } from './types';
 
@@ -27,7 +27,7 @@ export function extractAggregationsPerQuery(
 ): AggregationsPerQuery {
 	const perQuery: AggregationsPerQuery = {};
 	(requestPayload?.compositeQuery?.queries ?? []).forEach((envelope) => {
-		if (!isBuilderOrAIEnvelope(envelope)) {
+		if (!isBuilderEnvelope(envelope)) {
 			return;
 		}
 		const spec = envelope.spec;

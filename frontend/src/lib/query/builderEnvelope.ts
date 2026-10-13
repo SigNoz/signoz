@@ -15,7 +15,7 @@ const BUILDER_ENVELOPE_TYPES: string[] = [
 ];
 
 /** True for `builder_query` and `builder_ai_query`. Formulas and trace operators are excluded. */
-export function isBuilderOrAIEnvelope(
+export function isBuilderEnvelope(
 	envelope: Querybuildertypesv5QueryEnvelopeDTO,
 ): envelope is
 	| Querybuildertypesv5QueryEnvelopeBuilderDTO
@@ -25,7 +25,7 @@ export function isBuilderOrAIEnvelope(
 
 export function isAIBuilderEnvelope(
 	envelope: Querybuildertypesv5QueryEnvelopeDTO,
-): boolean {
+): envelope is Querybuildertypesv5QueryEnvelopeBuilderAIDTO {
 	return (
 		envelope.type ===
 		Querybuildertypesv5QueryEnvelopeBuilderAIDTOType.builder_ai_query
@@ -40,8 +40,8 @@ const BUILDER_PLUGIN_KINDS: string[] = [
 /**
  * True for a bare `signoz/BuilderQuery` or `signoz/AIBuilderQuery` plugin (the form List
  * panels use). Inside a CompositeQuery an AI query is a `builder_ai_query` envelope, matched
- * by `isBuilderOrAIEnvelope`.
+ * by `isBuilderEnvelope`.
  */
-export function isBuilderOrAIPluginKind(kind: string): boolean {
+export function isBuilderPluginKind(kind: string): boolean {
 	return BUILDER_PLUGIN_KINDS.includes(kind);
 }

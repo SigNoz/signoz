@@ -2,17 +2,17 @@ import type { Querybuildertypesv5QueryEnvelopeDTO } from 'api/generated/services
 
 import {
 	isAIBuilderEnvelope,
-	isBuilderOrAIEnvelope,
-	isBuilderOrAIPluginKind,
+	isBuilderEnvelope,
+	isBuilderPluginKind,
 } from '../builderEnvelope';
 
 const envelope = (type: string): Querybuildertypesv5QueryEnvelopeDTO =>
 	({ type, spec: {} }) as unknown as Querybuildertypesv5QueryEnvelopeDTO;
 
 describe('builder envelope predicates', () => {
-	describe('isBuilderOrAIEnvelope', () => {
+	describe('isBuilderEnvelope', () => {
 		it.each(['builder_query', 'builder_ai_query'])('accepts %s', (type) => {
-			expect(isBuilderOrAIEnvelope(envelope(type))).toBe(true);
+			expect(isBuilderEnvelope(envelope(type))).toBe(true);
 		});
 
 		it.each([
@@ -21,7 +21,7 @@ describe('builder envelope predicates', () => {
 			'promql',
 			'clickhouse_sql',
 		])('rejects %s', (type) => {
-			expect(isBuilderOrAIEnvelope(envelope(type))).toBe(false);
+			expect(isBuilderEnvelope(envelope(type))).toBe(false);
 		});
 	});
 
@@ -35,18 +35,18 @@ describe('builder envelope predicates', () => {
 		});
 	});
 
-	describe('isBuilderOrAIPluginKind', () => {
+	describe('isBuilderPluginKind', () => {
 		it.each(['signoz/BuilderQuery', 'signoz/AIBuilderQuery'])(
 			'accepts %s',
 			(kind) => {
-				expect(isBuilderOrAIPluginKind(kind)).toBe(true);
+				expect(isBuilderPluginKind(kind)).toBe(true);
 			},
 		);
 
 		it.each(['signoz/CompositeQuery', 'signoz/PromQLQuery'])(
 			'rejects %s',
 			(kind) => {
-				expect(isBuilderOrAIPluginKind(kind)).toBe(false);
+				expect(isBuilderPluginKind(kind)).toBe(false);
 			},
 		);
 	});

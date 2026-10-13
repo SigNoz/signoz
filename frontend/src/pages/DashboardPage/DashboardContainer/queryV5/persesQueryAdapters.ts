@@ -24,7 +24,7 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import {
 	isAIBuilderEnvelope,
-	isBuilderOrAIEnvelope,
+	isBuilderEnvelope,
 } from 'lib/query/builderEnvelope';
 import { toQueryEnvelopes } from './buildQueryRangeRequest';
 
@@ -174,7 +174,7 @@ export function toPerses(
 	const envelopes = toGeneratedEnvelopes(composite.queries ?? []);
 
 	if (panelType === PANEL_TYPES.LIST) {
-		const builder = envelopes.find(isBuilderOrAIEnvelope);
+		const builder = envelopes.find(isBuilderEnvelope);
 		if (!builder) {
 			return [];
 		}

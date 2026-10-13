@@ -23,11 +23,12 @@ import {
 } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 import { getQueryModeSignals } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelCapabilities';
 import {
-	type BuilderStash,
-	getBuilderMode,
+	type BuilderVariant,
+	type BuildersByVariant,
+	getBuilderVariant,
 	getQueryMode,
-	isBuilderMode,
 	QueryMode,
+	toBuilderVariant,
 	withoutAIQueryTag,
 } from 'pages/DashboardPage/DashboardContainer/Panels/utils/queryMode';
 import { seedBuilderForMode } from 'pages/DashboardPage/DashboardContainer/Panels/utils/seedBuilderForMode';
@@ -68,8 +69,8 @@ interface KindState {
 	pluginSpec: DashboardtypesPanelPluginDTO['spec'];
 	queries: DashboardtypesQueryDTO[];
 	query: Query;
-	/** Both builder tabs' queries as the kind was left, keyed by mode. */
-	builders: BuilderStash;
+	/** Both builder variants' queries as the kind was left. */
+	builders: BuildersByVariant;
 }
 
 interface UsePanelKindAndQueryModeSwitchArgs {
@@ -106,7 +107,7 @@ export function usePanelKindAndQueryModeSwitch({
 
 	const cacheRef = useRef<Map<PanelKind, KindState>>(new Map());
 	// Builder queries for the tabs not on screen; the live one is `currentQuery.builder`.
-	const parkedBuilders = useRef<BuilderStash>({});
+	const parkedBuilders = useRef<BuildersByVariant>({});
 
 	// Latest spec/query/type, read inside the stable callback without re-subscribing.
 	const specRef = useRef(spec);
@@ -143,12 +144,13 @@ export function usePanelKindAndQueryModeSwitch({
 				query,
 				builders: {
 					...parkedBuilders.current,
-					[getBuilderMode(query.builder)]: query.builder,
+					[getBuilderVariant(query.builder)]: query.builder,
 				},
 			});
 
 			const newPanelType = toPanelType(newKind);
 			const targetMode = resolveQueryMode(newKind, getQueryMode(query));
+			const targetVariant = toBuilderVariant(targetMode);
 			// An AI query is a builder query carrying the tag, so it rides on `builder`.
 			const targetQueryType =
 				targetMode === QueryMode.AI_QUERY_BUILDER
@@ -204,16 +206,14 @@ export function usePanelKindAndQueryModeSwitch({
 			// Target tab's query comes from the stash; the rest stay parked.
 			const unparkTargetTab = (
 				source: Query,
-				stash: BuilderStash,
-			): { query: Query; parked: BuilderStash } => {
-				const stored = isBuilderMode(targetMode)
-					? stash[targetMode]
-					: source.builder;
+				builders: BuildersByVariant,
+			): { query: Query; parked: BuildersByVariant } => {
+				const stored = targetVariant ? builders[targetVariant] : source.builder;
 				const next = stored
 					? { ...source, builder: stored }
 					: seedTargetTab(source);
-				const parked: BuilderStash = { ...stash };
-				delete parked[getBuilderMode(next.builder)];
+				const parked: BuildersByVariant = { ...builders };
+				delete parked[getBuilderVariant(next.builder)];
 				return { query: next, parked };
 			};
 
@@ -254,18 +254,21 @@ export function usePanelKindAndQueryModeSwitch({
 
 			// First visit → rebuild both builder tabs' queries for the new panel type.
 			const transformed = rebuildForNewKind(query);
-			const rebuiltStash: BuilderStash = {};
-			(Object.keys(parkedBuilders.current) as QueryMode[]).forEach((mode) => {
-				const parked = parkedBuilders.current[mode];
-				if (parked) {
-					rebuiltStash[mode] = rebuildForNewKind({
-						...query,
-						builder: parked,
-					}).builder;
-				}
-			});
-			rebuiltStash[getBuilderMode(transformed.builder)] = transformed.builder;
-			const picked = unparkTargetTab(transformed, rebuiltStash);
+			const rebuiltBuilders: BuildersByVariant = {};
+			(Object.keys(parkedBuilders.current) as BuilderVariant[]).forEach(
+				(variant) => {
+					const parked = parkedBuilders.current[variant];
+					if (parked) {
+						rebuiltBuilders[variant] = rebuildForNewKind({
+							...query,
+							builder: parked,
+						}).builder;
+					}
+				},
+			);
+			rebuiltBuilders[getBuilderVariant(transformed.builder)] =
+				transformed.builder;
+			const picked = unparkTargetTab(transformed, rebuiltBuilders);
 			parkedBuilders.current = picked.parked;
 			const nextQuery = picked.query;
 			const signal = getBuilderQueries(currentSpec.queries)[0]

@@ -8,7 +8,7 @@ import {
 	toPanelType,
 	type PanelKind,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
-import type { BuilderStash } from 'pages/DashboardPage/DashboardContainer/Panels/utils/queryMode';
+import type { BuildersByVariant } from 'pages/DashboardPage/DashboardContainer/Panels/utils/queryMode';
 
 import PanelEditorQueryBuilder from '../PanelEditorQueryBuilder';
 import { useQueryModeChange } from '../../hooks/useQueryModeChange';
@@ -63,7 +63,7 @@ const AI_QUERY = {
 /** Stands in for the editor shell: owns the tab switch and its parked Query Builder query. */
 function BuilderHost({ panelKind }: { panelKind: PanelKind }): JSX.Element {
 	const panelDefinition = requireQueryPanelDefinition(panelKind);
-	const parkedBuilders = useRef<BuilderStash>({});
+	const parkedBuilders = useRef<BuildersByVariant>({});
 	const onChangeQueryMode = useQueryModeChange({
 		panelType: toPanelType(panelKind),
 		supportedQueryModesKindMap: panelDefinition.supportedQueryModesKindMap,

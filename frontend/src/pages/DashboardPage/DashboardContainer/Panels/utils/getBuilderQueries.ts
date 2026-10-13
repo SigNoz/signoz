@@ -5,8 +5,8 @@ import type {
 import type { BuilderQuery } from 'types/api/v5/queryRange';
 
 import {
-	isBuilderOrAIEnvelope,
-	isBuilderOrAIPluginKind,
+	isBuilderEnvelope,
+	isBuilderPluginKind,
 } from 'lib/query/builderEnvelope';
 
 /**
@@ -21,13 +21,13 @@ export function getBuilderQueries(
 	const flattened: BuilderQuery[] = [];
 	queries.forEach((envelope) => {
 		const plugin = envelope.spec.plugin;
-		if (isBuilderOrAIPluginKind(plugin.kind)) {
+		if (isBuilderPluginKind(plugin.kind)) {
 			flattened.push(plugin.spec as BuilderQuery);
 			return;
 		}
 		if (plugin.kind === 'signoz/CompositeQuery') {
 			(plugin.spec.queries || []).forEach((sub) => {
-				if (isBuilderOrAIEnvelope(sub)) {
+				if (isBuilderEnvelope(sub)) {
 					flattened.push(sub.spec as BuilderQuery);
 				}
 			});

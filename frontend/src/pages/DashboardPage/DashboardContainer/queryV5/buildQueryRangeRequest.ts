@@ -19,7 +19,7 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 
 import type { PanelQueryCapabilities } from '../Panels/types/panelCapabilities';
-import { isBuilderOrAIEnvelope } from 'lib/query/builderEnvelope';
+import { isBuilderEnvelope } from 'lib/query/builderEnvelope';
 
 // Narrow view over the envelope spec variants. Orval erases envelope `spec` to `unknown`, so
 // shared fields are read through this view with a localized cast at the envelope boundary.
@@ -139,7 +139,7 @@ function withBucketedStepInterval(
 ): Querybuildertypesv5QueryEnvelopeDTO[] {
 	const stepInterval = getBucketedStepIntervalSeconds(startMs, endMs);
 	return envelopes.map((envelope) => {
-		if (!isBuilderOrAIEnvelope(envelope)) {
+		if (!isBuilderEnvelope(envelope)) {
 			return envelope;
 		}
 		if ((envelope.spec as QuerySpecView)?.stepInterval) {
@@ -164,7 +164,7 @@ function withListOrderTiebreaker(
 	envelopes: Querybuildertypesv5QueryEnvelopeDTO[],
 ): Querybuildertypesv5QueryEnvelopeDTO[] {
 	return envelopes.map((envelope) => {
-		if (!isBuilderOrAIEnvelope(envelope)) {
+		if (!isBuilderEnvelope(envelope)) {
 			return envelope;
 		}
 		const spec = envelope.spec as QuerySpecView;
@@ -203,7 +203,7 @@ function withPagination(
 	{ offset, limit }: { offset: number; limit: number },
 ): Querybuildertypesv5QueryEnvelopeDTO[] {
 	return envelopes.map((envelope) => {
-		if (!isBuilderOrAIEnvelope(envelope)) {
+		if (!isBuilderEnvelope(envelope)) {
 			return envelope;
 		}
 		return {
@@ -306,7 +306,7 @@ export function hasRunnableQueries(queries: DashboardtypesQueryDTO[]): boolean {
 	}
 
 	const metricsSpecs = envelopes
-		.filter(isBuilderOrAIEnvelope)
+		.filter(isBuilderEnvelope)
 		.map((envelope) => envelope.spec as QuerySpecView)
 		.filter((spec) => spec.signal === 'metrics');
 
