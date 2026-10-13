@@ -80,6 +80,7 @@ const EXPECTED_QUERY_MODES: Record<PanelKind, QueryMode[]> = {
 	],
 	'signoz/TablePanel': [QUERY_BUILDER, CLICKHOUSE, QueryMode.AI_QUERY_BUILDER],
 	'signoz/ListPanel': [QUERY_BUILDER, QueryMode.AI_QUERY_BUILDER],
+	'signoz/ScatterPlotPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/TextPanel': [],
 };
 
