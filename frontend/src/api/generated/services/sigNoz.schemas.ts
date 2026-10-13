@@ -9843,17 +9843,6 @@ export interface PrometheusSuccessResponseSchemaDTO {
 	warnings?: string[];
 }
 
-export interface PromotetypesIndexMaterializedPathsParamsDTO {
-	/**
-	 * @type boolean
-	 */
-	dryRun?: boolean;
-	/**
-	 * @type string
-	 */
-	signal: string;
-}
-
 export interface PromotetypesWrappedIndexDTO {
 	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
 	/**
@@ -9898,6 +9887,17 @@ export interface PromotetypesIndexMaterializedPathsResultDTO {
 	 * @type array,null
 	 */
 	skipped: PromotetypesPromotePathDTO[] | null;
+}
+
+export interface PromotetypesPostableIndexMaterializedPathsDTO {
+	/**
+	 * @type boolean
+	 */
+	dryRun?: boolean;
+	/**
+	 * @type string
+	 */
+	signal: string;
 }
 
 export interface Querybuildertypesv5AggregationMetaDTO {

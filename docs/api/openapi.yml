@@ -8046,15 +8046,6 @@ components:
       - metric
       - value
       type: object
-    PromotetypesIndexMaterializedPathsParams:
-      properties:
-        dryRun:
-          type: boolean
-        signal:
-          type: string
-      required:
-      - signal
-      type: object
     PromotetypesIndexMaterializedPathsResult:
       properties:
         indexed:
@@ -8070,6 +8061,15 @@ components:
       required:
       - indexed
       - skipped
+      type: object
+    PromotetypesPostableIndexMaterializedPaths:
+      properties:
+        dryRun:
+          type: boolean
+        signal:
+          type: string
+      required:
+      - signal
       type: object
     PromotetypesPromotePath:
       properties:
@@ -14107,7 +14107,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PromotetypesIndexMaterializedPathsParams'
+              $ref: '#/components/schemas/PromotetypesPostableIndexMaterializedPaths'
       responses:
         "200":
           content:
