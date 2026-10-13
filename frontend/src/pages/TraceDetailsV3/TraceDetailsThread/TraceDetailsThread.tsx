@@ -130,7 +130,7 @@ function TraceDetailsThread(): JSX.Element {
 	return (
 		<div className={styles.root} data-testid="trace-details-thread">
 			<div className={styles.content}>
-				{!hasNoThread && (
+				{!hasNoThread && anchorStatus !== AnchorStatus.NotFound && (
 					<div className={styles.toolbar}>
 						<ThreadViewToggle
 							value={view}
