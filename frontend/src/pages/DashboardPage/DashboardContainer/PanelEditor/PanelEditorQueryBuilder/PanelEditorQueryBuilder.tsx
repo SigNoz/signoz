@@ -27,6 +27,7 @@ import {
 } from '../../Panels/types/panelCapabilities';
 import type { RenderableQueryPanelDefinition } from '../../Panels/types/panelDefinition';
 import { toPanelType } from '../../Panels/types/panelKind';
+import { useSyncQueryBuilderFields } from './useSyncQueryBuilderFields';
 import { getQueryMode, isBuilderMode } from 'lib/query/queryMode';
 import { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -72,6 +73,7 @@ function PanelEditorQueryBuilder({
 	const isRawQuery = isRawRequest(panelDefinition.queryCapabilities);
 	const { currentQuery } = useQueryBuilder();
 	const isDarkMode = useIsDarkMode();
+	useSyncQueryBuilderFields(panelDefinition.syncedQueryBuilderFields);
 
 	// Cleared here, not in QueryBuilderV2: builder panes unmount on every tab switch.
 	useEffect(() => {

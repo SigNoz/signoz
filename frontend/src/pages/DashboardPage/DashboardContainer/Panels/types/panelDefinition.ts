@@ -12,6 +12,7 @@ import type {
 	PanelQueryCapabilities,
 	QueryBuilderFieldsConfig,
 	SupportedQueryModesKindMap,
+	SyncedQueryBuilderField,
 } from './panelCapabilities';
 import type {
 	BaseRendererProps,
@@ -121,6 +122,8 @@ export interface QueryPanelDefinition<
 	queryBuilderFields: QueryBuilderFieldsConfig;
 	/** How this kind's query-range request is shaped (request type, paging, result formatting). */
 	queryCapabilities: PanelQueryCapabilities;
+	/** Builder fields kept equal across queries: an edit to one query copies to the rest. */
+	syncedQueryBuilderFields?: SyncedQueryBuilderField[];
 }
 
 /**
