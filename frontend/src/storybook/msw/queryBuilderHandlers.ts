@@ -6,7 +6,7 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { rest } from 'msw';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { DataSource } from 'types/common/queryBuilder';
+import { DATA_SOURCE_TO_SIGNAL, DataSource } from 'types/common/queryBuilder';
 import { getFieldContextPrefix } from 'utils/fieldKeyContext';
 
 import {
@@ -14,11 +14,12 @@ import {
 	autocompleteValuesResponse,
 } from './__story_mockdata__/queryBuilderAutocomplete';
 
-const SIGNAL_TO_DATA_SOURCE: Record<string, DataSource> = {
-	[TelemetrytypesSignalDTO.logs]: DataSource.LOGS,
-	[TelemetrytypesSignalDTO.traces]: DataSource.TRACES,
-	[TelemetrytypesSignalDTO.metrics]: DataSource.METRICS,
-};
+const SIGNAL_TO_DATA_SOURCE: Record<string, DataSource> = Object.fromEntries(
+	Object.entries(DATA_SOURCE_TO_SIGNAL).map(([dataSource, signal]) => [
+		signal,
+		dataSource as DataSource,
+	]),
+);
 
 /**
  * The v5 keys list, served from the same per-signal fixture as the v3 pair so
