@@ -167,12 +167,8 @@ func isNormalizerProcessor(name string) bool {
 
 // collectorNormalizesFirst reports whether the logs pipeline of the collector config runs
 // signozlogsnormalizer ahead of user pipelines, judged by the first one as in buildCollectorPipelineProcessorsList.
-// Malformed configs report false; GenerateCollectorConfigWithPipelines surfaces their errors.
-func collectorNormalizesFirst(config []byte) bool {
-	var collectorConf map[string]interface{}
-	if err := yaml.Unmarshal(config, &collectorConf); err != nil {
-		return false
-	}
+// Malformed configs report false; generateCollectorConfigWithPipelines surfaces their errors.
+func collectorNormalizesFirst(collectorConf map[string]interface{}) bool {
 	p, err := getOtelPipelineFromConfig(collectorConf)
 	if err != nil || p.Pipelines.Logs == nil {
 		return false
@@ -192,13 +188,24 @@ func opampPosition(processorConfigs map[string]interface{}, name string) string 
 	return position
 }
 
-func GenerateCollectorConfigWithPipelines(config []byte, pipelines []pipelinetypes.GettablePipeline) ([]byte, error) {
+func unmarshalCollectorConfig(config []byte) (map[string]interface{}, error) {
 	var collectorConf map[string]interface{}
-	err := yaml.Unmarshal([]byte(config), &collectorConf)
-	if err != nil {
+	if err := yaml.Unmarshal(config, &collectorConf); err != nil {
 		return nil, errors.WrapInvalidInputf(err, CodeCollectorConfigUnmarshalFailed, "could not unmarshal collector config")
 	}
+	return collectorConf, nil
+}
 
+func GenerateCollectorConfigWithPipelines(config []byte, pipelines []pipelinetypes.GettablePipeline) ([]byte, error) {
+	collectorConf, err := unmarshalCollectorConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	return generateCollectorConfigWithPipelines(collectorConf, pipelines)
+}
+
+// generateCollectorConfigWithPipelines modifies collectorConf in place.
+func generateCollectorConfigWithPipelines(collectorConf map[string]any, pipelines []pipelinetypes.GettablePipeline) ([]byte, error) {
 	signozPipelineProcessors, signozPipelineProcNames, err := PreparePipelineProcessor(pipelines)
 	if err != nil {
 		return nil, err

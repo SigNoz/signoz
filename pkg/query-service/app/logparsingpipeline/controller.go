@@ -418,10 +418,15 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 		return nil, "", err
 	}
 
-	// normalize is only for sending to the collector, never persisted
-	enrichedPipelines = pc.withNormalizePipeline(ctx, orgId, enrichedPipelines, collectorNormalizesFirst(currentConfYaml))
+	collectorConf, err := unmarshalCollectorConfig(currentConfYaml)
+	if err != nil {
+		return nil, "", err
+	}
 
-	updatedConf, err := GenerateCollectorConfigWithPipelines(currentConfYaml, enrichedPipelines)
+	// normalize is only for sending to the collector, never persisted
+	enrichedPipelines = pc.withNormalizePipeline(ctx, orgId, enrichedPipelines, collectorNormalizesFirst(collectorConf))
+
+	updatedConf, err := generateCollectorConfigWithPipelines(collectorConf, enrichedPipelines)
 	if err != nil {
 		return nil, "", err
 	}
