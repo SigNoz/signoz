@@ -6,17 +6,22 @@
 import ROUTES from 'constants/routes';
 import { rest } from 'msw';
 
-import { countControl } from '@/storybook/controls/controls';
+import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 
 import {
 	PRICING_RULE_MAX,
 	pricingRulesResponse,
+	RULE_DELETES,
+	RULE_SAVES,
+	type RuleDelete,
+	type RuleSave,
 	UNPRICED_MODEL_MAX,
 	unmappedModelsResponse,
 } from './__story_mockdata__/modelPricing';
 
 const RULES = 'Model pricing · rules';
+const WRITES = 'Model pricing · writes';
 
 export const modelPricingMocks = defineStoryMocks({
 	controls: {
@@ -34,8 +39,58 @@ export const modelPricingMocks = defineStoryMocks({
 			value: 3,
 			max: UNPRICED_MODEL_MAX,
 		}),
+		ruleSave: choiceControl<RuleSave>('Rule save', {
+			group: WRITES,
+			description:
+				'How the PUT behind the cost drawer\'s Save and the unpriced tab\'s "Map model" answers. `success` raises the saved or "Mapped model" toast, `loading` never answers, `error` shows the failure in the drawer or raises the error toast.',
+			options: RULE_SAVES,
+			value: 'success',
+		}),
+		ruleDelete: choiceControl<RuleDelete>('Rule delete', {
+			group: WRITES,
+			description:
+				"How the DELETE behind the row menu's Delete answers. `success` raises the deleted toast, `loading` never answers, `error` raises the error toast.",
+			options: RULE_DELETES,
+			value: 'success',
+		}),
 	},
 	handlers: (values, response) => [
+		rest.put('http://localhost/api/v1/llm_pricing_rules', (_req, res, ctx) => {
+			if (values.ruleSave === 'loading') {
+				return res(ctx.delay('infinite'));
+			}
+
+			return values.ruleSave === 'error'
+				? res(
+						ctx.status(500),
+						ctx.json({
+							status: 'error',
+							error: { code: 'internal', message: 'Could not save the pricing rule' },
+						}),
+					)
+				: res(ctx.status(204));
+		}),
+		rest.delete(
+			'http://localhost/api/v1/llm_pricing_rules/:id',
+			(_req, res, ctx) => {
+				if (values.ruleDelete === 'loading') {
+					return res(ctx.delay('infinite'));
+				}
+
+				return values.ruleDelete === 'error'
+					? res(
+							ctx.status(500),
+							ctx.json({
+								status: 'error',
+								error: {
+									code: 'internal',
+									message: 'Could not delete the pricing rule',
+								},
+							}),
+						)
+					: res(ctx.status(204));
+			},
+		),
 		rest.get(
 			'http://localhost/api/v1/llm_pricing_rules/unmapped_models',
 			response.json(() => unmappedModelsResponse(values.unpricedModels)),

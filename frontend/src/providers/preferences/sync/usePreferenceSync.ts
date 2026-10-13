@@ -2,13 +2,9 @@
 import { useEffect, useState } from 'react';
 import { useListSavedViews } from 'api/generated/services/saved-view';
 import { TelemetryFieldKey } from 'api/v5/v5';
-import {
-	defaultLogsSelectedColumns,
-	defaultTraceSelectedColumns,
-	ensureLogsRequiredColumns,
-} from 'container/OptionsMenu/constants';
-import { FontSize, LogViewMode } from 'container/OptionsMenu/types';
-import { findSavedView, toSavedViewSource } from 'container/SavedViews/utils';
+import { findSavedView } from 'container/SavedViews/utils/findSavedView';
+import { getViewColumnsAndFormatting } from 'container/SavedViews/utils/getViewColumnsAndFormatting';
+import { toSavedViewSource } from 'container/SavedViews/utils/toSavedViewSource';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { usePreferenceLoader } from '../loader/usePreferenceLoader';
@@ -38,43 +34,11 @@ export function usePreferenceSync({
 	const [savedViewPreferences, setSavedViewPreferences] =
 		useState<Preferences | null>(null);
 
-	const withColumnNames = (
-		columns: TelemetryFieldKey[] | undefined,
-	): TelemetryFieldKey[] | null => {
-		if (!columns) {
-			return null;
-		}
-		return columns.map((column) => ({
-			...column,
-			name: column.name ?? column.key,
-		}));
-	};
-
 	useEffect(() => {
 		const spec = savedViewId
 			? findSavedView(viewsData?.data, savedViewId)?.spec
 			: undefined;
-		const selectedFields = spec?.selectedFields as
-			| TelemetryFieldKey[]
-			| undefined;
-
-		let columns: TelemetryFieldKey[] = [];
-		let formatting: FormattingOptions | undefined;
-		if (dataSource === DataSource.LOGS) {
-			columns = ensureLogsRequiredColumns(
-				withColumnNames(selectedFields) || defaultLogsSelectedColumns,
-			);
-			formatting = {
-				maxLines: spec?.display?.maxLines || 1,
-				format: (spec?.display?.format as LogViewMode) || 'table',
-				fontSize: (spec?.display?.fontSize as FontSize) || FontSize.SMALL,
-				version: 1,
-			};
-		}
-		if (dataSource === DataSource.TRACES) {
-			columns = selectedFields || defaultTraceSelectedColumns;
-		}
-		setSavedViewPreferences({ columns, formatting });
+		setSavedViewPreferences(getViewColumnsAndFormatting(spec, dataSource));
 	}, [viewsData, dataSource, savedViewId, mode]);
 
 	// We are using a reSync state because we have URL updates as well as local storage updates

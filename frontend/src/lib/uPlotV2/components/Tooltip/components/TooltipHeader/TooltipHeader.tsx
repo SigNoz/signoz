@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
 import cx from 'classnames';
 import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
-import { Pin } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 import type uPlot from 'uplot';
 import { formatTimestampOmittingTodaysDate } from 'utils/timeUtils';
 
 import { TooltipContentItem } from '../../../types';
 import TooltipItem from '../TooltipItem/TooltipItem';
+import TooltipPinnedBadge from '../TooltipPinnedBadge/TooltipPinnedBadge';
 
 import Styles from './TooltipHeader.module.scss';
 
@@ -67,14 +67,7 @@ export default function TooltipHeader({
 			{showTooltipHeader && headerTitle && (
 				<div className={cx(Styles.headerRow, headerRowClassName)}>
 					<span>{headerTitle}</span>
-					{isPinned && (
-						<div className={cx(Styles.status)} data-testid="uplot-tooltip-status">
-							<>
-								<Pin size={12} />
-								<span>Pinned</span>
-							</>
-						</div>
-					)}
+					{isPinned && <TooltipPinnedBadge />}
 				</div>
 			)}
 

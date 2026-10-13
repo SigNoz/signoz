@@ -1,6 +1,10 @@
 import {
 	DashboardtypesAreaFillModeDTO,
 	DashboardtypesFillModeDTO,
+	DashboardtypesHeatmapColorModeDTO,
+	DashboardtypesHeatmapColorScaleDTO,
+	DashboardtypesHeatmapPaletteDTO,
+	DashboardtypesHeatmapYScaleDTO,
 	DashboardtypesLegendPositionDTO,
 	DashboardtypesLineInterpolationDTO,
 	DashboardtypesLineStyleDTO,
@@ -14,6 +18,12 @@ import {
 	LineStyle,
 	StackMode,
 } from 'lib/uPlotV2/config/types';
+import {
+	HeatmapAxisScale,
+	HeatmapColorMode,
+	HeatmapColorPalette,
+	HeatmapColorScale,
+} from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
 
 /**
  * Bridges the V2 wire-format enums to the uPlotV2 chart enums. String values
@@ -60,4 +70,47 @@ export const LEGEND_POSITION_MAP: Record<
 > = {
 	[DashboardtypesLegendPositionDTO.bottom]: LegendPosition.BOTTOM,
 	[DashboardtypesLegendPositionDTO.right]: LegendPosition.RIGHT,
+};
+
+export const HEATMAP_COLOR_MODE_MAP: Record<
+	DashboardtypesHeatmapColorModeDTO,
+	HeatmapColorMode
+> = {
+	[DashboardtypesHeatmapColorModeDTO.palette]: HeatmapColorMode.Palette,
+	[DashboardtypesHeatmapColorModeDTO.opacity]: HeatmapColorMode.Opacity,
+};
+
+export const HEATMAP_COLOR_SCALE_MAP: Record<
+	DashboardtypesHeatmapColorScaleDTO,
+	HeatmapColorScale
+> = {
+	[DashboardtypesHeatmapColorScaleDTO.log]: HeatmapColorScale.Log,
+	[DashboardtypesHeatmapColorScaleDTO.sqrt]: HeatmapColorScale.Sqrt,
+	[DashboardtypesHeatmapColorScaleDTO.linear]: HeatmapColorScale.Linear,
+};
+
+export const HEATMAP_PALETTE_MAP: Record<
+	DashboardtypesHeatmapPaletteDTO,
+	HeatmapColorPalette
+> = {
+	[DashboardtypesHeatmapPaletteDTO.ice]: HeatmapColorPalette.Ice,
+	[DashboardtypesHeatmapPaletteDTO.moss]: HeatmapColorPalette.Moss,
+	[DashboardtypesHeatmapPaletteDTO.rust]: HeatmapColorPalette.Rust,
+	[DashboardtypesHeatmapPaletteDTO.graphite]: HeatmapColorPalette.Graphite,
+	[DashboardtypesHeatmapPaletteDTO.ember]: HeatmapColorPalette.Ember,
+	[DashboardtypesHeatmapPaletteDTO.lagoon]: HeatmapColorPalette.Lagoon,
+	[DashboardtypesHeatmapPaletteDTO.orchid]: HeatmapColorPalette.Orchid,
+	[DashboardtypesHeatmapPaletteDTO.verdant]: HeatmapColorPalette.Verdant,
+	[DashboardtypesHeatmapPaletteDTO.lava]: HeatmapColorPalette.Lava,
+	[DashboardtypesHeatmapPaletteDTO.beacon]: HeatmapColorPalette.Beacon,
+};
+
+export const HEATMAP_Y_SCALE_MAP: Record<
+	DashboardtypesHeatmapYScaleDTO,
+	HeatmapAxisScale
+> = {
+	[DashboardtypesHeatmapYScaleDTO.auto]: HeatmapAxisScale.Auto,
+	[DashboardtypesHeatmapYScaleDTO.linear]: HeatmapAxisScale.Linear,
+	[DashboardtypesHeatmapYScaleDTO.log]: HeatmapAxisScale.Log,
+	[DashboardtypesHeatmapYScaleDTO.symlog]: HeatmapAxisScale.Symlog,
 };

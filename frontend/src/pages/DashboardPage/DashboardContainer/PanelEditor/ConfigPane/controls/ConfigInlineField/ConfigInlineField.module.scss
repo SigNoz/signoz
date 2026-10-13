@@ -1,0 +1,24 @@
+.row {
+	display: grid;
+	grid-template-columns: 76px minmax(0, 1fr);
+	align-items: center;
+	gap: 12px;
+}
+
+// Matches ConfigField's heading.
+.label {
+	font-family: 'Geist Mono', monospace;
+	font-size: 12px;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	white-space: nowrap;
+	color: var(--l2-foreground);
+}
+
+.help {
+	grid-column: 2;
+	margin-top: -4px;
+	font-size: 12px;
+	line-height: 17px;
+	color: var(--l2-foreground);
+}
