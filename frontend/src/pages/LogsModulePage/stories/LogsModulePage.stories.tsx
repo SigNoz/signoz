@@ -83,7 +83,7 @@ export const RawFormat: Story = {
 	args: { format: 'raw' },
 };
 
-/** The format popover: the format list, the max-lines stepper, and the font-size control. */
+/** The format popover: radios, the max-lines stepper, and the font-size control. */
 export const FormatMenuOpen: Story = {
 	args: { format: 'raw' },
 	play: openFormatMenu,

@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from 'react-query';
 import { Button } from '@signozhq/ui/button';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import logEvent from 'api/common/logEvent';
 import {
 	invalidateListDashboardsForUserV2,

@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useQueryClient } from 'react-query';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import {
 	invalidateListDashboardsForUserV2,
 	usePinDashboardV2,
@@ -30,10 +30,11 @@ export function usePinDashboard(): UsePinDashboardResult {
 		mutation: {
 			onSuccess: invalidate,
 			onError: (error): void => {
-				toast.error(
+				toast.danger(
 					getHttpStatusCode(error) === 409
 						? PIN_LIMIT_MESSAGE
 						: 'Failed to pin dashboard.',
+					{ action: { label: 'Dismiss' } },
 				);
 			},
 		},
@@ -43,7 +44,9 @@ export function usePinDashboard(): UsePinDashboardResult {
 		mutation: {
 			onSuccess: invalidate,
 			onError: (): void => {
-				toast.error('Failed to unpin dashboard.');
+				toast.danger('Failed to unpin dashboard.', {
+					action: { label: 'Dismiss' },
+				});
 			},
 		},
 	});

@@ -138,7 +138,7 @@ export const openFormatMenu = async ({
 			untilLoaded,
 		),
 	);
-	await screen.findByTestId('max-lines-per-row', undefined, untilLoaded);
+	await screen.findByTestId('max-lines-per-row-field', undefined, untilLoaded);
 };
 
 export const openQuickFiltersSettings = async ({

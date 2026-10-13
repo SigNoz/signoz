@@ -1,4 +1,4 @@
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import {
 	setupAuthzAdmin,
 	setupAuthzDenyAll,
@@ -10,9 +10,9 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import CreateServiceAccountModal from '../CreateServiceAccountModal';
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
-	toast: { success: jest.fn(), error: jest.fn() },
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
+	toast: { success: jest.fn(), danger: jest.fn() },
 }));
 
 const mockToast = jest.mocked(toast);

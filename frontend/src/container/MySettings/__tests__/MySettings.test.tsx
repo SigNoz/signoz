@@ -16,7 +16,7 @@ import {
 	within,
 } from 'tests/test-utils';
 import APIError from 'types/api/error';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 
 jest.mock('hooks/useActiveLicenseKey/useActiveLicenseKey');
 const mockUseActiveLicenseKey = useActiveLicenseKey as jest.MockedFunction<
@@ -29,11 +29,11 @@ const editUserFn = jest.fn();
 const updateMyPasswordFn = jest.fn();
 const showErrorModalFn = jest.fn();
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
 	toast: {
 		success: jest.fn(),
-		error: jest.fn(),
+		danger: jest.fn(),
 	},
 }));
 

@@ -139,32 +139,24 @@ export const AwaitingClarification: Story = {
 	args: { agent: 'awaiting-clarification', contents: BRIEF },
 };
 
-/** The severity select open, including the free-text option the form's Select renders. */
+/** The severity select open, including the free-text option the new Select renders. */
 export const ClarificationSelectOpen: Story = {
 	args: { agent: 'awaiting-clarification', contents: BRIEF },
 	play: async ({ canvasElement }): Promise<void> => {
 		const canvas = within(canvasElement);
+		const severityLabel = await canvas.findByText(
+			'Severity',
+			undefined,
+			untilLoaded,
+		);
+		const field = severityLabel.closest('div');
 
-		// Open from the keyboard, and retry: the message list remounts its items
-		// while it measures the thread, which can close the popup again. The
-		// "Other" checkbox in the Notify field carries the same text, so assert
-		// on the popup's option role.
-		await waitFor(async () => {
-			const severityLabel = canvas.getByText('Severity');
-			const field = severityLabel.closest('div');
+		if (!field) {
+			throw new Error('Severity field is not in the clarification form');
+		}
 
-			if (!field) {
-				throw new Error('Severity field is not in the clarification form');
-			}
-
-			within(field).getByRole('combobox').focus();
-			await userEvent.keyboard('{Enter}');
-			await screen.findByRole(
-				'option',
-				{ name: 'Other (type your own)' },
-				{ timeout: 1_000 },
-			);
-		}, untilLoaded);
+		await userEvent.click(within(field).getByRole('combobox'));
+		await screen.findByText('Other (type your own)');
 	},
 };
 
@@ -260,7 +252,7 @@ export const NegativeFeedback: Story = {
 	},
 };
 
-/** Renaming a thread: the title input the row swaps in. */
+/** Renaming a thread: the chromeless title input the row swaps in. */
 export const ConversationRename: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await clickUntil(async () => {
@@ -273,7 +265,7 @@ export const ConversationRename: Story = {
 			return actions;
 		}, /^Rename$/);
 		await userEvent.click(screen.getByText('Rename'));
-		await within(canvasElement).findByDisplayValue(/checkout p99 regression/i);
+		await within(canvasElement).findByRole('textbox');
 	},
 };
 

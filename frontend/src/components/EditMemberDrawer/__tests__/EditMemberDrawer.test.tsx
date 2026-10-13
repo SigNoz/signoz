@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	useCreateResetPasswordToken,
@@ -82,11 +82,11 @@ jest.mock('@signozhq/ui/dialog', () => ({
 	),
 }));
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
 	toast: {
 		success: jest.fn(),
-		error: jest.fn(),
+		danger: jest.fn(),
 	},
 }));
 

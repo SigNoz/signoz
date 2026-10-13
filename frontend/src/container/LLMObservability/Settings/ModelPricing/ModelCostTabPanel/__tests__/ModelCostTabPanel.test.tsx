@@ -16,11 +16,11 @@ import ModelCostTabPanel from '../ModelCostTabPanel';
 
 const toastSuccess = jest.fn();
 const toastError = jest.fn();
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
 	toast: {
 		success: (...args: unknown[]): void => toastSuccess(...args),
-		error: (...args: unknown[]): void => toastError(...args),
+		danger: (...args: unknown[]): void => toastError(...args),
 	},
 }));
 

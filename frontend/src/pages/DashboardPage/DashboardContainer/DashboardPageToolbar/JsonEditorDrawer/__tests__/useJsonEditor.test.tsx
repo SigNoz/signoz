@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { updateDashboardV2 } from 'api/generated/services/dashboard';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 
 import { useJsonEditor } from '../useJsonEditor';
 
@@ -23,8 +23,8 @@ jest.mock('api/generated/services/dashboard', () => ({
 	updateDashboardV2: jest.fn(),
 }));
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	toast: { success: jest.fn(), error: jest.fn() },
+jest.mock('@signozhq/ui/toast', () => ({
+	toast: { success: jest.fn(), danger: jest.fn() },
 }));
 
 const mockUpdate = updateDashboardV2 as jest.Mock;

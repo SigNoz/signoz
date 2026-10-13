@@ -109,7 +109,7 @@ export const ChartAppearance: Story = {
 export const ChartAppearanceDisconnectThreshold: Story = {
 	play: async (context) => {
 		await ChartAppearance.play?.(context);
-		await pickSegment('panel-editor-v2-span-gaps', 'threshold');
+		await pickSegment('panel-editor-v2-span-gaps', 'Threshold');
 		const input = await screen.findByTestId('panel-editor-v2-span-gaps-value');
 
 		await userEvent.clear(input);

@@ -60,10 +60,10 @@ type TooltipsStory = StoryObj<
  * silence.
  */
 const settingsControl = (canvasElement: HTMLElement): Promise<HTMLElement> =>
-	waitFor(() => {
+	waitFor(async () => {
 		const control = within(canvasElement).getByTestId('settings-icon-container');
 
-		expect(control).not.toHaveAttribute('aria-disabled', 'true');
+		await expect(control).not.toHaveAttribute('aria-disabled', 'true');
 
 		return control;
 	});

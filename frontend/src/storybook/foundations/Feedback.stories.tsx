@@ -113,7 +113,7 @@ export const InfoToast: Story = {
 	},
 };
 
-/** An error toast with a description and a Dismiss action, bottom-right. */
+/** A danger toast with a description and a Dismiss action, bottom-right. */
 export const DangerWithDescription: Story = {
 	args: { state: 'danger-description-toast' },
 	play: async ({ canvasElement }): Promise<void> => {
