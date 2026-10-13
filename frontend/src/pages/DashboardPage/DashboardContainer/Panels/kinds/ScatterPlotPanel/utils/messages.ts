@@ -26,11 +26,7 @@ function logAxisNote(count: number): string {
 	return `${count} ${pluralizeGroups(count)} with a value ≤ 0 can't go on a log axis`;
 }
 
-/**
- * Why a query that returned groups still plots nothing. Undefined when the
- * query returned no groups (the plain no-data state) or something plots.
- * `mismatch` is the queries' group bys when they differ.
- */
+/** Why returned groups plot nothing; undefined for plain no-data or when something plots. */
 export function getScatterPlotEmptyMessage(
 	data: ScatterPlotData,
 	mismatch: QueryGroupBy[] | null = null,
@@ -78,12 +74,7 @@ function formatCount(count: number): string {
 	return count.toLocaleString('en-US');
 }
 
-/**
- * Groups the plot left out (the cap, a missing X or Y, a value a log axis
- * can't place) and dimensions bound to a column the result lacks. Null when
- * nothing needs saying, or nothing plots (the empty state explains that).
- * `mismatch` explains missing values when the queries' group bys differ.
- */
+/** Groups left out and stale dimensions; null when nothing to say or nothing plots. */
 export function getScatterPlotWarning(
 	data: ScatterPlotData,
 	mismatch: QueryGroupBy[] | null = null,
@@ -91,7 +82,7 @@ export function getScatterPlotWarning(
 	if (data.status !== ScatterPlotDataStatus.Ready || data.drawnGroups === 0) {
 		return null;
 	}
-	const atCap = data.totalGroups >= MAX_PLOTTED_GROUPS;
+	const atCap = data.cappedGroups > 0 || data.totalGroups === MAX_PLOTTED_GROUPS;
 	const groupsLeftOut = atCap || data.drawnGroups < data.totalGroups;
 	const messages = [
 		...data.staleDimensions.map(staleNote),
