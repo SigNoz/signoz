@@ -6,6 +6,7 @@ import {
 	DEFAULT_COLOR_STEPS,
 	DEFAULT_COLOR_RAMP_OPTIONS,
 	getMaxValue,
+	getRampBottom,
 	getSmallestPositiveValue,
 	MAX_COLOR_STEPS,
 	MIN_OPACITY_ALPHA,
@@ -95,6 +96,25 @@ describe('resolveColorDomain', () => {
 			resolveColorDomain({ min: null, max: null }, [[null, 0]]).logFloor,
 		).toBe(1);
 	});
+});
+
+describe('getRampBottom', () => {
+	const domain = { min: 0, max: 1000, logFloor: 4 };
+
+	it('starts a log ramp at its floor, since log cannot place 0', () => {
+		expect(getRampBottom(domain, ColorRampScale.Log)).toBe(4);
+	});
+
+	it('keeps an explicit minimum above the floor on a log ramp', () => {
+		expect(getRampBottom({ ...domain, min: 10 }, ColorRampScale.Log)).toBe(10);
+	});
+
+	it.each([ColorRampScale.Linear, ColorRampScale.Sqrt])(
+		'starts a %s ramp at the domain minimum',
+		(scale) => {
+			expect(getRampBottom(domain, scale)).toBe(0);
+		},
+	);
 });
 
 describe('normalizeColorValue', () => {
