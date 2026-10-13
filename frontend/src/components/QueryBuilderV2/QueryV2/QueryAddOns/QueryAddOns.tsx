@@ -1,22 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Tooltip } from 'antd';
+import { Button } from 'antd';
 import cx from 'classnames';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
-import { ATTRIBUTE_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GroupByFilter } from 'container/QueryBuilder/filters/GroupByFilter/GroupByFilter';
 import { OrderByFilter } from 'container/QueryBuilder/filters/OrderByFilter/OrderByFilter';
 import { ReduceToFilter } from 'container/QueryBuilder/filters/ReduceToFilter/ReduceToFilter';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { get, isEmpty } from 'lodash-es';
-import {
-	BarChart,
-	ChevronUp,
-	ExternalLink,
-	Grid3X3,
-	ScrollText,
-} from '@signozhq/icons';
+import { ChevronUp } from '@signozhq/icons';
 import { Querybuildertypesv5BucketOptionsDTO } from 'api/generated/services/sigNoz.schemas';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';
@@ -34,193 +29,19 @@ import {
 
 import BucketOptions from './BucketOptions/BucketOptions';
 import HavingFilter from './HavingFilter/HavingFilter';
-import { buildDefaultLegendFromGroupBy } from './utils';
+import {
+	ADD_ON_DEFINITIONS,
+	BASE_ADD_ONS,
+	BUCKET_OPTIONS,
+	HISTOGRAM_ATTRIBUTE_TYPES,
+	type InputAddOnField,
+	REDUCE_TO,
+} from './constants';
+import TooltipContent from './TooltipContent';
+import type { AddOn } from './types';
+import { buildDefaultLegendFromGroupBy, hasValue } from './utils';
 
 import './QueryAddOns.styles.scss';
-
-/** Fields the add-on bar does not own: each has its own control elsewhere in the query. */
-type NonAddOnField =
-	| QueryBuilderField.Aggregation
-	| QueryBuilderField.StepInterval
-	| QueryBuilderField.Functions
-	| QueryBuilderField.Formula
-	| QueryBuilderField.AdditionalQueries;
-
-type AddOnField = Exclude<QueryBuilderField, NonAddOnField>;
-
-interface AddOnSpec {
-	icon: React.ReactNode;
-	label: string;
-	/** Where the add-on's value lives on the query; a value there opens it on mount. */
-	queryPath: string;
-	description?: string;
-	docLink?: string;
-}
-
-/** A text field has to name what leaving it empty means. */
-type AddOnDefinition =
-	| (AddOnSpec & { input: true; placeholder: string })
-	| (AddOnSpec & { input: false });
-
-// A Record, so a field added to the enum has to be placed here or in `NonAddOnField`.
-const ADD_ON_DEFINITIONS = {
-	[QueryBuilderField.GroupBy]: {
-		input: true,
-		icon: <BarChart size={14} />,
-		label: 'Group By',
-		queryPath: 'groupBy',
-		placeholder: 'Everything (no breakdown)',
-		description:
-			'Break down data by attributes like service name, endpoint, status code, or region. Essential for spotting patterns and comparing performance across different segments.',
-		docLink: 'https://signoz.io/docs/querying/aggregation-grouping/#grouping',
-	},
-	[QueryBuilderField.Having]: {
-		input: true,
-		icon: <ScrollText size={14} />,
-		label: 'Having',
-		queryPath: 'having.expression',
-		placeholder: 'Type Having query like count() > 10 ...',
-		description:
-			'Filter grouped results based on aggregate conditions. Show only groups meeting specific criteria, like error rates > 5% or p99 latency > 500',
-		docLink:
-			'https://signoz.io/docs/querying/result-manipulation/#conditional-filtering-with-having',
-	},
-	[QueryBuilderField.OrderBy]: {
-		input: true,
-		icon: <ScrollText size={14} />,
-		label: 'Order By',
-		queryPath: 'orderBy',
-		placeholder: 'Select fields to order by',
-		description:
-			'Sort results to surface what matters most. Quickly identify slowest operations, most frequent errors, or highest resource consumers.',
-		docLink:
-			'https://signoz.io/docs/querying/result-manipulation/#sorting--limiting',
-	},
-	[QueryBuilderField.Limit]: {
-		input: true,
-		icon: <ScrollText size={14} />,
-		label: 'Limit',
-		queryPath: 'limit',
-		placeholder: 'Enter limit',
-		description:
-			'Show only the top/bottom N results. Perfect for focusing on outliers, reducing noise, and improving dashboard performance.',
-		docLink:
-			'https://signoz.io/docs/querying/result-manipulation/#how-limit-works-for-time-series',
-	},
-	[QueryBuilderField.Legend]: {
-		input: true,
-		icon: <ScrollText size={14} />,
-		label: 'Legend format',
-		queryPath: 'legend',
-		placeholder: 'Write legend format',
-		description:
-			'Customize series labels using variables like {{service.name}}-{{endpoint}}. Makes charts readable at a glance during incident investigation.',
-		docLink:
-			'https://signoz.io/docs/querying/aggregation-grouping/#legend-formatting',
-	},
-	[QueryBuilderField.ReduceTo]: {
-		input: false,
-		icon: <ScrollText size={14} />,
-		label: 'Reduce to',
-		queryPath: 'reduceTo',
-		description:
-			'Apply mathematical operations like sum, average, min, max, or percentiles to reduce multiple time series into a single value.',
-		docLink:
-			'https://signoz.io/docs/userguide/query-builder-v5/#result-manipulation',
-	},
-	[QueryBuilderField.BucketOptions]: {
-		input: false,
-		icon: <Grid3X3 size={14} />,
-		label: 'Bucket by',
-		queryPath: 'bucketOptions',
-		description:
-			'Choose how the bucket axis is spaced — logarithmically, so every band is the same height and the tail stays readable, or linearly up to a max value. Left to Auto, the query picks the finest log axis it can return.',
-		docLink: 'https://signoz.io/docs/userguide/query-builder-v5/',
-	},
-} as const satisfies Record<AddOnField, AddOnDefinition>;
-
-type InputAddOnField = {
-	[K in AddOnField]: (typeof ADD_ON_DEFINITIONS)[K] extends { input: true }
-		? K
-		: never;
-}[AddOnField];
-
-type AddOn = AddOnDefinition & { key: AddOnField };
-
-const toAddOn = (key: AddOnField): AddOn => ({
-	key,
-	...ADD_ON_DEFINITIONS[key],
-});
-
-const BASE_ADD_ONS = (
-	[
-		QueryBuilderField.GroupBy,
-		QueryBuilderField.Having,
-		QueryBuilderField.OrderBy,
-		QueryBuilderField.Limit,
-		QueryBuilderField.Legend,
-	] as const satisfies readonly AddOnField[]
-).map(toAddOn);
-
-const REDUCE_TO = toAddOn(QueryBuilderField.ReduceTo);
-
-// Offered only by a heatmap over metrics: the bucket axis is what a heatmap plots
-// against, and no other panel type sends one. A histogram brings its own buckets.
-const HISTOGRAM_ATTRIBUTE_TYPES = new Set<string>([
-	ATTRIBUTE_TYPES.HISTOGRAM,
-	ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM,
-]);
-
-const BUCKET_OPTIONS = toAddOn(QueryBuilderField.BucketOptions);
-
-const hasValue = (value: unknown): boolean =>
-	value != null && value !== '' && !(Array.isArray(value) && value.length === 0);
-
-// Custom tooltip content component
-function TooltipContent({
-	label,
-	description,
-	docLink,
-}: {
-	label: string;
-	description?: string;
-	docLink?: string;
-}): JSX.Element {
-	return (
-		<div
-			style={{
-				display: 'flex',
-				flexDirection: 'column',
-				gap: '8px',
-				maxWidth: '300px',
-			}}
-		>
-			<strong style={{ fontSize: '14px' }}>{label}</strong>
-			{description && (
-				<span style={{ fontSize: '12px', lineHeight: '1.5' }}>{description}</span>
-			)}
-			{docLink && (
-				<a
-					href={docLink}
-					target="_blank"
-					rel="noopener noreferrer"
-					onClick={(e): void => e.stopPropagation()}
-					style={{
-						display: 'flex',
-						alignItems: 'center',
-						gap: '4px',
-						color: '#4096ff',
-						fontSize: '12px',
-						marginTop: '4px',
-					}}
-				>
-					Learn more
-					<ExternalLink size={12} />
-				</a>
-			)}
-		</div>
-	);
-}
 
 function QueryAddOns({
 	query,
@@ -484,7 +305,7 @@ function QueryAddOns({
 					{selectedViews.find((view) => view.key === QueryBuilderField.GroupBy) && (
 						<div className="add-on-content" data-testid="group-by-content">
 							<div className="periscope-input-with-label">
-								<Tooltip
+								<TooltipSimple
 									title={
 										<TooltipContent
 											label="Group By"
@@ -492,13 +313,13 @@ function QueryAddOns({
 											docLink="https://signoz.io/docs/querying/aggregation-grouping/#grouping"
 										/>
 									}
-									placement="top"
-									mouseEnterDelay={0.5}
+									arrow
+									delayDuration={500}
 								>
 									<div className="label" style={{ cursor: 'help' }}>
 										Group By
 									</div>
-								</Tooltip>
+								</TooltipSimple>
 								<div className="input">
 									<GroupByFilter
 										disabled={
@@ -523,7 +344,7 @@ function QueryAddOns({
 					{selectedViews.find((view) => view.key === QueryBuilderField.Having) && (
 						<div className="add-on-content" data-testid="having-content">
 							<div className="periscope-input-with-label">
-								<Tooltip
+								<TooltipSimple
 									title={
 										<TooltipContent
 											label="Having"
@@ -531,13 +352,13 @@ function QueryAddOns({
 											docLink="https://signoz.io/docs/querying/result-manipulation/#conditional-filtering-with-having"
 										/>
 									}
-									placement="top"
-									mouseEnterDelay={0.5}
+									arrow
+									delayDuration={500}
 								>
 									<div className="label" style={{ cursor: 'help' }}>
 										Having
 									</div>
-								</Tooltip>
+								</TooltipSimple>
 								<div className="input">
 									<HavingFilter
 										onClose={(): void => handleRemoveView(QueryBuilderField.Having)}
@@ -565,7 +386,7 @@ function QueryAddOns({
 					{selectedViews.find((view) => view.key === QueryBuilderField.OrderBy) && (
 						<div className="add-on-content" data-testid="order-by-content">
 							<div className="periscope-input-with-label">
-								<Tooltip
+								<TooltipSimple
 									title={
 										<TooltipContent
 											label="Order By"
@@ -573,13 +394,13 @@ function QueryAddOns({
 											docLink="https://signoz.io/docs/querying/result-manipulation/#sorting--limiting"
 										/>
 									}
-									placement="top"
-									mouseEnterDelay={0.5}
+									arrow
+									delayDuration={500}
 								>
 									<div className="label" style={{ cursor: 'help' }}>
 										Order By
 									</div>
-								</Tooltip>
+								</TooltipSimple>
 								<div className="input">
 									<OrderByFilter
 										entityVersion={version}
@@ -605,7 +426,7 @@ function QueryAddOns({
 						showReduceTo && (
 							<div className="add-on-content" data-testid="reduce-to-content">
 								<div className="periscope-input-with-label">
-									<Tooltip
+									<TooltipSimple
 										title={
 											<TooltipContent
 												label="Reduce to"
@@ -613,13 +434,13 @@ function QueryAddOns({
 												docLink="https://signoz.io/docs/userguide/query-builder-v5/#result-manipulation"
 											/>
 										}
-										placement="top"
-										mouseEnterDelay={0.5}
+										arrow
+										delayDuration={500}
 									>
 										<div className="label" style={{ cursor: 'help' }}>
 											Reduce to
 										</div>
-									</Tooltip>
+									</TooltipSimple>
 									<div className="input">
 										<ReduceToFilter query={query} onChange={handleChangeReduceToV5} />
 									</div>
@@ -686,7 +507,7 @@ function QueryAddOns({
 					return {
 						value: addOn.key,
 						label: (
-							<Tooltip
+							<TooltipSimple
 								title={
 									<TooltipContent
 										label={addOn.label}
@@ -694,8 +515,8 @@ function QueryAddOns({
 										docLink={resolved?.disabled ? undefined : addOn.docLink}
 									/>
 								}
-								placement="top"
-								mouseEnterDelay={0.5}
+								arrow
+								delayDuration={500}
 							>
 								<span
 									className={cx('add-on-tab-title', {
@@ -707,7 +528,7 @@ function QueryAddOns({
 									{addOn.icon}
 									{addOn.label}
 								</span>
-							</Tooltip>
+							</TooltipSimple>
 						),
 					};
 				})}
