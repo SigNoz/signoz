@@ -103,6 +103,19 @@ export function resolveColorDomain(
 	return max > min ? { min, max, logFloor } : { min, max: min, logFloor };
 }
 
+/**
+ * Lowest value the ramp distinguishes, for its legend's bottom label. Log cannot
+ * place 0, so its ramp starts at the floor rather than the domain's minimum.
+ */
+export function getRampBottom(
+	domain: ColorRampDomain,
+	scale: ColorRampScale,
+): number {
+	return scale === ColorRampScale.Log
+		? Math.max(domain.min, domain.logFloor)
+		: domain.min;
+}
+
 /** Position on the colour scale, 0..1. A degenerate domain collapses to 0 so
  *  all-zero values render at the bottom rather than disappearing. */
 export function normalizeColorValue({
@@ -123,7 +136,7 @@ export function normalizeColorValue({
 
 	if (scale === ColorRampScale.Log) {
 		// Anything at or below the floor sits at the bottom; log cannot place it.
-		const bottom = Math.max(min, domain.logFloor);
+		const bottom = getRampBottom(domain, scale);
 		const logMin = Math.log10(bottom);
 		const logMax = Math.log10(max);
 		if (logMax > logMin) {
