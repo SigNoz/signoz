@@ -53,6 +53,7 @@ import type {
 import { getFieldKeySuggestions } from 'api/querySuggestions/getFieldKeySuggestions';
 import { getFieldValueSuggestions } from 'api/querySuggestions/getFieldValueSuggestions';
 import type { SignalType } from 'types/api/v5/queryRange';
+import { getFieldContextPrefix } from 'utils/fieldKeyContext';
 
 import {
 	queryExamples,
@@ -62,7 +63,6 @@ import {
 import {
 	combineInitialAndUserExpression,
 	dedupeOptionsByLabel,
-	getFieldContextPrefix,
 	getRecentOptions,
 	isSupportedFunction,
 	renderRecentDeleteButton,

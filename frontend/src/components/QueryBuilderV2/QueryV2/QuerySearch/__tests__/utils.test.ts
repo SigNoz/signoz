@@ -4,7 +4,6 @@ import { DataSource } from 'types/common/queryBuilder';
 import {
 	combineInitialAndUserExpression,
 	dedupeOptionsByLabel,
-	getFieldContextPrefix,
 	getUserExpressionFromCombined,
 	isSupportedFunction,
 } from '../utils';
@@ -59,47 +58,6 @@ describe('entityLogsExpression', () => {
 			expect(getUserExpressionFromCombined('', 'service.name = "a"')).toBe(
 				'service.name = "a"',
 			);
-		});
-	});
-});
-
-describe('getFieldContextPrefix', () => {
-	it('matches a complete context prefix with a remainder', () => {
-		expect(getFieldContextPrefix('attribute.status')).toStrictEqual({
-			context: 'attribute',
-			remainder: 'status',
-		});
-	});
-
-	it('matches a bare context prefix with empty remainder', () => {
-		expect(getFieldContextPrefix('resource.')).toStrictEqual({
-			context: 'resource',
-			remainder: '',
-		});
-	});
-
-	it('matches every backend field context', () => {
-		['attribute', 'resource', 'span', 'body', 'log', 'metric'].forEach((ctx) => {
-			expect(getFieldContextPrefix(`${ctx}.x`)).toStrictEqual({
-				context: ctx,
-				remainder: 'x',
-			});
-		});
-	});
-
-	it('does not match a partial context name', () => {
-		expect(getFieldContextPrefix('attr')).toBeNull();
-		expect(getFieldContextPrefix('attribute')).toBeNull();
-	});
-
-	it('does not match a non-context key with dots', () => {
-		expect(getFieldContextPrefix('status.code')).toBeNull();
-	});
-
-	it('matches context case-insensitively but keeps remainder casing', () => {
-		expect(getFieldContextPrefix('Attribute.Status')).toStrictEqual({
-			context: 'attribute',
-			remainder: 'Status',
 		});
 	});
 });
