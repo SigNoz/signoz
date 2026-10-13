@@ -14,6 +14,7 @@ import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { toast } from '@signozhq/ui/sonner';
 import ROUTES from 'constants/routes';
 import { useNotificationChannelPermissions } from 'hooks/notificationChannels/useNotificationChannelPermissions';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { getAbsoluteUrl } from 'utils/basePath';
 
 import type { Channel } from '../../types';
@@ -33,7 +34,12 @@ function ChannelActionsMenu({
 	onViewJson,
 }: ChannelActionsMenuProps): JSX.Element {
 	const [, setCopy] = useCopyToClipboard();
-	const { canDelete } = useNotificationChannelPermissions(channel.id);
+	const { canDelete, hasError, deletePermission } =
+		useNotificationChannelPermissions(channel.id);
+
+	// A failed check is not a denial: fall open and let the API decide, the way
+	// the collection hook documents.
+	const mayDelete = canDelete || hasError;
 
 	const menuItems = useMemo<DropdownItemType[]>(
 		() => [
@@ -76,14 +82,19 @@ function ChannelActionsMenu({
 			{
 				type: 'item',
 				value: 'delete',
-				label: 'Delete',
+				// the tooltip is what tells a denied user why the item is dead
+				label: (
+					<AuthZTooltip checks={mayDelete ? [] : [deletePermission]} side="left">
+						<span>Delete</span>
+					</AuthZTooltip>
+				),
 				prefix: <Trash2 size={14} />,
-				disabled: !canDelete,
+				disabled: !mayDelete,
 				danger: true,
 				onClick: (): void => onDelete(channel),
 			},
 		],
-		[canDelete, channel, onOpen, onDelete, onViewJson, setCopy],
+		[mayDelete, deletePermission, channel, onOpen, onDelete, onViewJson, setCopy],
 	);
 
 	return (
