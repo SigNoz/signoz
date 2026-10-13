@@ -547,7 +547,6 @@ function QueryAddOns({
 										entityVersion={version}
 										query={query}
 										onChange={handleChangeOrderByKeys}
-										isRawQuery={isRawQuery}
 										isNewQueryV2
 									/>
 								</div>

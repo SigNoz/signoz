@@ -16,7 +16,6 @@ import { useOrderByFilter } from './useOrderByFilter';
 export function OrderByFilter({
 	query,
 	onChange,
-	isRawQuery = false,
 	entityVersion,
 	isNewQueryV2 = false,
 }: OrderByFilterProps): JSX.Element {
@@ -39,7 +38,7 @@ export function OrderByFilter({
 			searchText: debouncedSearchText,
 		},
 		builderQueryType: query.builderQueryType,
-		enabled: !!query.aggregateAttribute?.key || isRawQuery,
+		enabled: isNoopQuery,
 	});
 
 	// Get parsed aggregation options using createAggregation only for QueryV2
