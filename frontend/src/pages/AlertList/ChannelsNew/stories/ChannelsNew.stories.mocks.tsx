@@ -46,12 +46,12 @@ export const channelsNewMocks = defineStoryMocks({
 	},
 	handlers: (values) => [
 		rest.post(
-			'http://localhost/api/v1/channels',
+			'http://localhost/api/v2/notification_channels',
 			values.saveOutcome === 'fails' ? rejectChannelAction : resolveChannelCreated,
 		),
 
 		rest.post(
-			'http://localhost/api/v1/testChannel',
+			'http://localhost/api/v2/notification_channels/test',
 			values.testOutcome === 'fails' ? rejectChannelAction : resolveChannelTested,
 		),
 	],
