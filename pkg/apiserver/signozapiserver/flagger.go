@@ -4,13 +4,12 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/gorilla/mux"
 )
 
 func (provider *provider) addFlaggerRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v2/features", handler.New(provider.authzMiddleware.ViewAccess(provider.flaggerHandler.GetFeatures), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/features", handler.New(provider.authzMiddleware.OpenAccess(provider.flaggerHandler.GetFeatures), handler.OpenAPIDef{
 		ID:                  "GetFeatures",
 		Tags:                []string{"features"},
 		Summary:             "Get features",
@@ -22,7 +21,7 @@ func (provider *provider) addFlaggerRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		SecuritySchemes:     newScopedSecuritySchemes(nil),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}

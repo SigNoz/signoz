@@ -1,18 +1,13 @@
 import { toast } from '@signozhq/ui/sonner';
+import {
+	setupAuthzAdmin,
+	setupAuthzDenyAll,
+} from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import CreateServiceAccountModal from '../CreateServiceAccountModal';
-
-jest.mock('lib/authz/components/AuthZTooltip/AuthZTooltip', () => ({
-	__esModule: true,
-	default: ({
-		children,
-	}: {
-		children: React.ReactElement;
-	}): React.ReactElement => children,
-}));
 
 jest.mock('@signozhq/ui/sonner', () => ({
 	...jest.requireActual('@signozhq/ui/sonner'),
@@ -45,6 +40,7 @@ describe('CreateServiceAccountModal', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		server.use(
+			setupAuthzAdmin(),
 			rest.post(SERVICE_ACCOUNTS_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(201), ctx.json({ status: 'success', data: {} })),
 			),
@@ -55,23 +51,41 @@ describe('CreateServiceAccountModal', () => {
 		server.resetHandlers();
 	});
 
-	it('submit button is disabled when form is empty', () => {
+	it('submit button is disabled while the form is empty', async () => {
 		renderModal();
 
-		expect(
-			screen.getByRole('button', { name: /Create Service Account/i }),
-		).toBeDisabled();
+		// The form only renders once the create check resolves, and the name field
+		// registers its `required` rule on mount, so the empty-form invalid state
+		// settles a tick later.
+		await screen.findByTestId('create-sa-name-input');
+
+		await waitFor(() =>
+			expect(screen.getByTestId('create-sa-submit-btn')).toBeDisabled(),
+		);
+	});
+
+	it('submit button becomes disabled after clearing the name field', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		renderModal();
+
+		const nameInput = await screen.findByTestId('create-sa-name-input');
+		const submitBtn = await screen.findByTestId('create-sa-submit-btn');
+
+		await user.type(nameInput, 'test');
+		await waitFor(() => expect(submitBtn).not.toBeDisabled());
+
+		await user.clear(nameInput);
+		await waitFor(() => expect(submitBtn).toBeDisabled());
 	});
 
 	it('successful submit shows toast.success and closes modal', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderModal();
 
-		await user.type(screen.getByPlaceholderText('Enter a name'), 'Deploy Bot');
+		const nameInput = await screen.findByTestId('create-sa-name-input');
+		await user.type(nameInput, 'Deploy Bot');
 
-		const submitBtn = screen.getByRole('button', {
-			name: /Create Service Account/i,
-		});
+		const submitBtn = screen.getByTestId('create-sa-submit-btn');
 		await waitFor(() => expect(submitBtn).not.toBeDisabled());
 		await user.click(submitBtn);
 
@@ -102,11 +116,10 @@ describe('CreateServiceAccountModal', () => {
 
 		renderModal();
 
-		await user.type(screen.getByPlaceholderText('Enter a name'), 'Dupe Bot');
+		const nameInput = await screen.findByTestId('create-sa-name-input');
+		await user.type(nameInput, 'Dupe Bot');
 
-		const submitBtn = screen.getByRole('button', {
-			name: /Create Service Account/i,
-		});
+		const submitBtn = screen.getByTestId('create-sa-submit-btn');
 		await waitFor(() => expect(submitBtn).not.toBeDisabled());
 		await user.click(submitBtn);
 
@@ -131,8 +144,45 @@ describe('CreateServiceAccountModal', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderModal();
 
-		await screen.findByTestId('create-service-account-modal');
-		await user.click(screen.getByRole('button', { name: /Cancel/i }));
+		const cancelBtn = await screen.findByTestId('create-sa-cancel-btn');
+		await user.click(cancelBtn);
+
+		await waitFor(() => {
+			expect(
+				screen.queryByTestId('create-service-account-modal'),
+			).not.toBeInTheDocument();
+		});
+	});
+
+	it('shows inline permission denial and hides the form when create permission is denied', async () => {
+		server.use(setupAuthzDenyAll());
+
+		renderModal();
+
+		await expect(
+			screen.findByText(/is not authorized to perform/i),
+		).resolves.toBeInTheDocument();
+
+		expect(screen.queryByTestId('create-sa-name-input')).not.toBeInTheDocument();
+		expect(
+			screen.getByTestId('create-service-account-modal'),
+		).toBeInTheDocument();
+	});
+
+	it('keeps the footer usable when create permission is denied', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		server.use(setupAuthzDenyAll());
+
+		renderModal();
+
+		await expect(
+			screen.findByText(/is not authorized to perform/i),
+		).resolves.toBeInTheDocument();
+
+		// The footer lives outside the guard: submit is gated, Cancel still works.
+		expect(screen.getByTestId('create-sa-submit-btn')).toBeDisabled();
+
+		await user.click(screen.getByTestId('create-sa-cancel-btn'));
 
 		await waitFor(() => {
 			expect(
@@ -145,7 +195,7 @@ describe('CreateServiceAccountModal', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderModal();
 
-		const nameInput = screen.getByPlaceholderText('Enter a name');
+		const nameInput = await screen.findByTestId('create-sa-name-input');
 		await user.type(nameInput, 'Bot');
 		await user.clear(nameInput);
 

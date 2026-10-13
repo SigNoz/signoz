@@ -1,0 +1,46 @@
+.highlights {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 12px 16px;
+	padding: 12px 0;
+
+	// Constrain each KeyValueLabel (the grid items) to its cell.
+	:global(.key-value-label) {
+		width: auto;
+		min-width: 0;
+		overflow: hidden;
+	}
+}
+
+.valueBadge {
+	--badge-font-size: 13px;
+	box-sizing: border-box;
+	max-width: 100%;
+	min-width: 0;
+}
+
+// Truncating text inside a badge
+.badgeText {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.serviceDot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--accent-forest);
+	flex-shrink: 0;
+	margin-right: 4px;
+}
+
+.traceLink {
+	display: inline-block;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--accent-primary);
+}

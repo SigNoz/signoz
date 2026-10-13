@@ -80,6 +80,7 @@ function RuleOptions({
 			defaultValue={defaultCompareOp}
 			value={alertDef.condition?.op}
 			style={{ minWidth: '120px' }}
+			data-testid="alert-threshold-op-select"
 			onChange={(value: string | unknown): void => {
 				const newOp = (value as string) || '';
 
@@ -116,6 +117,7 @@ function RuleOptions({
 			defaultValue={defaultMatchType}
 			style={{ minWidth: '130px' }}
 			value={alertDef.condition?.matchType}
+			data-testid="alert-threshold-match-type-select-v1"
 			onChange={(value: string | unknown): void => handleMatchOptChange(value)}
 		>
 			<Select.Option value="1">{t('option_atleastonce')}</Select.Option>
@@ -177,6 +179,7 @@ function RuleOptions({
 			style={{ minWidth: '120px' }}
 			value={alertDef.evalWindow}
 			onChange={onChangeEvalWindow}
+			data-testid="alert-eval-window-select"
 		>
 			<Select.Option value="5m0s">{t('option_5min')}</Select.Option>
 			<Select.Option value="10m0s">{t('option_10min')}</Select.Option>
@@ -194,6 +197,7 @@ function RuleOptions({
 			style={{ minWidth: '120px' }}
 			value={alertDef.evalWindow}
 			onChange={onChangeEvalWindow}
+			data-testid="alert-eval-window-select"
 		>
 			<Select.Option value="5m0s">{t('option_5min')}</Select.Option>
 			<Select.Option value="10m0s">{t('option_10min')}</Select.Option>
@@ -395,6 +399,7 @@ function RuleOptions({
 									value={alertDef?.condition?.target}
 									onChange={onChange}
 									type="number"
+									data-testid="alert-threshold-target-input"
 									onWheel={(e): void => e.currentTarget.blur()}
 								/>
 							</Form.Item>

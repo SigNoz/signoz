@@ -1,53 +1,69 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { Modal } from 'antd';
+
 import { Typography } from '@signozhq/ui/typography';
-import { AxiosError } from 'axios';
-import NotFound from 'components/NotFound';
+import logEvent from 'api/common/logEvent';
 import Spinner from 'components/Spinner';
-import DashboardContainer from 'container/DashboardContainer';
-import { useDashboardBootstrap } from 'hooks/dashboard/useDashboardBootstrap';
-import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
-import { ErrorType } from 'types/common';
+import { withAuthZPage } from 'lib/authz/components/withAuthZ/withAuthZPage';
+import {
+	buildDashboardDeletePermission,
+	buildDashboardReadPermission,
+	buildDashboardUpdatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
+import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
+
+import DashboardContainer from './DashboardContainer';
+import { useDashboardFetch } from './DashboardContainer/hooks/useDashboardFetch';
+import styles from './DashboardPage.module.scss';
 
 function DashboardPage(): JSX.Element {
 	const { dashboardId } = useParams<{ dashboardId: string }>();
 
-	const [onModal, Content] = Modal.useModal();
+	const { dashboard, isLoading, isError, error, refetch } =
+		useDashboardFetch(dashboardId);
 
-	const { isLoading, isError, isFetching, error } = useDashboardBootstrap(
-		dashboardId,
-		{ confirm: onModal.confirm },
-	);
-
-	const dashboardTitle = useDashboardStore((s) => s.dashboardData?.data.title);
-
+	// Fire once per dashboard load (re-fires on navigating to a different id).
+	const openedRef = useRef<string | null>(null);
 	useEffect(() => {
-		document.title = dashboardTitle || document.title;
-	}, [dashboardTitle]);
-
-	const errorMessage = isError
-		? (error as AxiosError<{ errorType: string }>)?.response?.data?.errorType
-		: 'Something went wrong';
-
-	if (isError && !isFetching && errorMessage === ErrorType.NotFound) {
-		return <NotFound />;
-	}
-
-	if (isError && errorMessage) {
-		return <Typography>{errorMessage}</Typography>;
-	}
+		if (!dashboard || openedRef.current === dashboard.id) {
+			return;
+		}
+		openedRef.current = dashboard.id;
+		const { spec } = dashboard;
+		void logEvent(DashboardDetailEvents.Opened, {
+			dashboardId: dashboard.id,
+			dashboardName: spec.display.name,
+			panelCount: Object.keys(spec.panels).length,
+			variableCount: spec.variables.length,
+			sectionCount: spec.layouts.length,
+		});
+	}, [dashboard]);
 
 	if (isLoading) {
-		return <Spinner tip="Loading.." />;
+		return <Spinner tip="Loading dashboard..." />;
 	}
 
-	return (
-		<>
-			{Content}
-			<DashboardContainer />
-		</>
-	);
+	if (isError || !dashboard) {
+		return (
+			<div className={styles.errorState}>
+				<Typography.Title>Failed to load dashboard</Typography.Title>
+				<Typography.Text>{(error as Error)?.message}</Typography.Text>
+			</div>
+		);
+	}
+
+	return <DashboardContainer dashboard={dashboard} refetch={refetch} />;
 }
 
-export default DashboardPage;
+// Typed explicitly: the route lazy-loads this, and Loadable needs indexable props.
+export default withAuthZPage<Record<string, unknown>>(DashboardPage, {
+	checks: (_props, router) => [
+		buildDashboardReadPermission(router.params.dashboardId ?? ''),
+	],
+	// Same batch as `checks`, so the controls below resolve from cache.
+	preloadChecks: (_props, router) => [
+		buildDashboardUpdatePermission(router.params.dashboardId ?? ''),
+		buildDashboardDeletePermission(router.params.dashboardId ?? ''),
+	],
+	fallbackOnLoading: <Spinner tip="Loading dashboard..." />,
+});

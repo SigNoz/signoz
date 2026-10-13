@@ -1,6 +1,7 @@
 import { closeCompletion, startCompletion } from '@codemirror/autocomplete';
 import type { Completion } from '@codemirror/autocomplete';
 import type { EditorView } from '@uiw/react-codemirror';
+import { QUERY_BUILDER_FUNCTIONS } from 'constants/antlrQueryConstants';
 import dayjs from 'dayjs';
 import { normalizeFilterExpression } from 'lib/recentQueries/normalize';
 import * as recentQueriesStore from 'lib/recentQueries/recentQueriesStore';
@@ -14,6 +15,15 @@ import {
 	RECENTS_DISPLAY_CAP,
 	RECENTS_SECTION,
 } from './constants';
+
+// search() lives in the logs condition builder only; traces and metrics reject it
+// as an unsupported operator. Every other function is implemented for all signals.
+export function isSupportedFunction(
+	functionName: string,
+	signal: SignalType,
+): boolean {
+	return functionName !== QUERY_BUILDER_FUNCTIONS.SEARCH || signal === 'logs';
+}
 
 export interface FieldContextPrefixMatch {
 	context: string;

@@ -190,6 +190,15 @@ func NewAvailablePreference() map[Name]Preference {
 			AllowedValues: []string{},
 			Value:         MustNewValue([]any{}, ValueTypeArray),
 		},
+		NameLogDetailsPinnedAttributes: {
+			Name:          NameLogDetailsPinnedAttributes,
+			Description:   "List of pinned attributes in log details drawer.",
+			ValueType:     ValueTypeArray,
+			DefaultValue:  MustNewValue([]any{}, ValueTypeArray),
+			AllowedScopes: []Scope{ScopeUser},
+			AllowedValues: []string{},
+			Value:         MustNewValue([]any{}, ValueTypeArray),
+		},
 	}
 }
 

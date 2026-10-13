@@ -1,12 +1,10 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useEffect, useState } from 'react';
+import { useListSavedViews } from 'api/generated/services/saved-view';
 import { TelemetryFieldKey } from 'api/v5/v5';
-import {
-	defaultLogsSelectedColumns,
-	ensureLogsRequiredColumns,
-} from 'container/OptionsMenu/constants';
-import { defaultSelectedColumns as defaultTracesSelectedColumns } from 'container/TracesExplorer/ListView/configs';
-import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
+import { findSavedView } from 'container/SavedViews/utils/findSavedView';
+import { getViewColumnsAndFormatting } from 'container/SavedViews/utils/getViewColumnsAndFormatting';
+import { toSavedViewSource } from 'container/SavedViews/utils/toSavedViewSource';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { usePreferenceLoader } from '../loader/usePreferenceLoader';
@@ -28,50 +26,19 @@ export function usePreferenceSync({
 	updateColumns: (newColumns: TelemetryFieldKey[]) => void;
 	updateFormatting: (newFormatting: FormattingOptions) => void;
 } {
-	const { data: viewsData } = useGetAllViews(
-		dataSource,
-		mode === PreferenceMode.SAVED_VIEW,
+	const { data: viewsData } = useListSavedViews(
+		{ source: toSavedViewSource(dataSource) },
+		{ query: { enabled: mode === PreferenceMode.SAVED_VIEW } },
 	);
 
 	const [savedViewPreferences, setSavedViewPreferences] =
 		useState<Preferences | null>(null);
 
-	const updateExtraDataSelectColumns = (
-		columns: TelemetryFieldKey[],
-	): TelemetryFieldKey[] | null => {
-		if (!columns) {
-			return null;
-		}
-		return columns.map((column) => ({
-			...column,
-			name: column.name ?? column.key,
-		}));
-	};
-
 	useEffect(() => {
-		const extraData = viewsData?.data?.data?.find(
-			(view) => view.id === savedViewId,
-		)?.extraData;
-
-		const parsedExtraData = JSON.parse(extraData || '{}');
-		let columns: TelemetryFieldKey[] = [];
-		let formatting: FormattingOptions | undefined;
-		if (dataSource === DataSource.LOGS) {
-			columns = ensureLogsRequiredColumns(
-				updateExtraDataSelectColumns(parsedExtraData?.selectColumns) ||
-					defaultLogsSelectedColumns,
-			);
-			formatting = {
-				maxLines: parsedExtraData?.maxLines ?? 1,
-				format: parsedExtraData?.format ?? 'table',
-				fontSize: parsedExtraData?.fontSize ?? 'small',
-				version: parsedExtraData?.version ?? 1,
-			};
-		}
-		if (dataSource === DataSource.TRACES) {
-			columns = parsedExtraData?.selectColumns || defaultTracesSelectedColumns;
-		}
-		setSavedViewPreferences({ columns, formatting });
+		const spec = savedViewId
+			? findSavedView(viewsData?.data, savedViewId)?.spec
+			: undefined;
+		setSavedViewPreferences(getViewColumnsAndFormatting(spec, dataSource));
 	}, [viewsData, dataSource, savedViewId, mode]);
 
 	// We are using a reSync state because we have URL updates as well as local storage updates

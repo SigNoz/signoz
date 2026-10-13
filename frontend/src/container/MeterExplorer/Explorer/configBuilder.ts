@@ -1,6 +1,4 @@
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { getInitialStackedBands } from 'container/DashboardContainer/visualization/charts/utils/stackSeriesUtils';
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';
 import {
@@ -73,7 +71,7 @@ export function buildMeterChartConfig({
 		show: true,
 		side: 2,
 		isDarkMode,
-		panelType: PANEL_TYPES.BAR,
+		isTimeAxis: true,
 	});
 
 	builder.addAxis({
@@ -82,15 +80,11 @@ export function buildMeterChartConfig({
 		side: 3,
 		isDarkMode,
 		yAxisUnit,
-		panelType: PANEL_TYPES.BAR,
 	});
 
 	if (!apiResponse?.data?.result) {
 		return builder;
 	}
-
-	const seriesCount = (apiResponse.data.result.length ?? 0) + 1;
-	builder.setBands(getInitialStackedBands(seriesCount));
 
 	apiResponse.data.result.forEach((series) => {
 		const baseLabelName = getLabelName(

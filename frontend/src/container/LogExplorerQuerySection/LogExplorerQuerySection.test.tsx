@@ -92,23 +92,25 @@ jest.mock('hooks/useDarkMode', () => ({
 	useIsDarkMode: (): boolean => false,
 }));
 
-jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
-	useDashboardStore: (): { dashboardData: undefined } => ({
-		dashboardData: undefined,
+jest.mock('api/querySuggestions/getFieldKeySuggestions', () => ({
+	getFieldKeySuggestions: jest.fn().mockResolvedValue({
+		status: 'success',
+		data: { complete: true, keys: {} },
 	}),
 }));
 
-jest.mock('api/querySuggestions/getKeySuggestions', () => ({
-	getKeySuggestions: jest.fn().mockResolvedValue({
+jest.mock('api/querySuggestions/getFieldValueSuggestions', () => ({
+	getFieldValueSuggestions: jest.fn().mockResolvedValue({
+		status: 'success',
 		data: {
-			data: { keys: {} },
+			complete: true,
+			values: {
+				stringValues: [],
+				numberValues: [],
+				boolValues: [],
+				relatedValues: [],
+			},
 		},
-	}),
-}));
-
-jest.mock('api/querySuggestions/getValueSuggestion', () => ({
-	getValueSuggestions: jest.fn().mockResolvedValue({
-		data: { data: { values: { stringValues: [], numberValues: [] } } },
 	}),
 }));
 

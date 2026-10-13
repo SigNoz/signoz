@@ -65,6 +65,22 @@ class TracesKind(Enum):
     def from_value(cls, value: int) -> "TracesKind":
         return cls(value)
 
+    def kind_string(self) -> str:
+        """The `kind_string` column value, mirroring ptrace.SpanKind.String() — the exporter
+        writes `otelSpan.Kind().String()`. Features filter on these, e.g. third-party-apis
+        requires `kind_string = 'Client'`."""
+        return _KIND_STRINGS[self]
+
+
+_KIND_STRINGS = {
+    TracesKind.SPAN_KIND_UNSPECIFIED: "Unspecified",
+    TracesKind.SPAN_KIND_INTERNAL: "Internal",
+    TracesKind.SPAN_KIND_SERVER: "Server",
+    TracesKind.SPAN_KIND_CLIENT: "Client",
+    TracesKind.SPAN_KIND_PRODUCER: "Producer",
+    TracesKind.SPAN_KIND_CONSUMER: "Consumer",
+}
+
 
 class TracesStatusCode(Enum):
     STATUS_CODE_UNSET = 0
@@ -276,6 +292,7 @@ class Traces(ABC):
     events: list[dict[str, Any]]
     links: list[dict[str, Any]]
     resource_json: dict[str, str]
+    attributes_json: dict[str, Any]
     response_status_code: str
     external_http_url: str
     http_url: str
@@ -286,6 +303,7 @@ class Traces(ABC):
     db_operation: str
     has_error: bool
     is_remote: str
+    scope_json: dict[str, Any]
 
     resource: list[TracesResource]
     tag_attributes: list[TracesTagAttributes]
@@ -311,7 +329,9 @@ class Traces(ABC):
         links: list[TracesLink] = [],
         trace_state: str = "",
         flags: np.uint32 = 0,
+        scope: dict[str, Any] = {},
         resource_write_mode: Literal["legacy_only", "dual_write"] = "dual_write",
+        attribute_write_mode: Literal["legacy_only", "dual_write", "json_only"] = "dual_write",
     ) -> None:
         if timestamp is None:
             timestamp = datetime.datetime.now()
@@ -344,7 +364,7 @@ class Traces(ABC):
         self.flags = flags
         self.name = name
         self.kind = kind.value
-        self.kind_string = kind.name
+        self.kind_string = kind.kind_string()
         self.status_code = status_code.value
         self.status_message = status_message
         self.status_code_string = status_code.name
@@ -391,6 +411,33 @@ class Traces(ABC):
 
         # Calculate resource fingerprint
         self.resource_fingerprint = LogsOrTracesFingerprint(self.resources_string).calculate()
+
+        # Process scope mirroring the InstrumentationScope on the OTLP span.
+        scope_name = scope.get("name", "")
+        scope_version = scope.get("version", "")
+        scope_string = {k: str(v) for k, v in scope.get("attributes", {}).items()}
+        self.scope_json = {
+            "name": scope_name,
+            "version": scope_version,
+            "attributes": scope_string,
+        }
+
+        scope_keys = {"scope.name": scope_name, "scope.version": scope_version}
+        scope_keys.update(scope_string)
+        for k, v in scope_keys.items():
+            if v == "":
+                continue
+            self.tag_attributes.append(
+                TracesTagAttributes(
+                    timestamp=timestamp,
+                    tag_key=k,
+                    tag_type="scope",
+                    tag_data_type="string",
+                    string_value=v,
+                    number_value=None,
+                )
+            )
+            self.attribute_keys.append(TracesResourceOrAttributeKeys(name=k, datatype="string", tag_type="scope"))
 
         # Process attributes by type and populate custom fields
         self.attribute_string = {}
@@ -464,6 +511,14 @@ class Traces(ABC):
                         string_value=str(v),
                     )
                 )
+
+        # Spans before the attribute JSON-evolution time populate only the legacy
+        # attributes_{string,number,bool} maps; spans at or after it dual-write the
+        # native-typed `attributes` JSON column too, and spans past the map-write
+        # cutoff populate only the JSON column (metadata rows are still written).
+        self.attributes_json = {} if attribute_write_mode == "legacy_only" else dict(attributes)
+        if attribute_write_mode == "json_only":
+            self.attribute_string, self.attributes_number, self.attributes_bool = {}, {}, {}
 
         # Process events and derive error events. self.events holds the parsed
         # response shape; np_arr() encodes back to the DB format on insert.
@@ -609,7 +664,6 @@ class Traces(ABC):
             self.response_status_code = str_value
 
     def np_arr(self) -> np.array:
-        """Return span data as numpy array for database insertion"""
         return np.array(
             [
                 self.ts_bucket_start,
@@ -644,6 +698,8 @@ class Traces(ABC):
                 self.has_error,
                 self.is_remote,
                 self.resource_json,
+                self.scope_json,
+                self.attributes_json,
             ],
             dtype=object,
         )
@@ -653,7 +709,6 @@ class Traces(ABC):
         cls,
         data: dict,
     ) -> "Traces":
-        """Create a Traces instance from a dict."""
         # parse timestamp from iso format
         timestamp = parse_timestamp(data["timestamp"])
         duration = parse_duration(data.get("duration", "PT1S"))
@@ -675,6 +730,7 @@ class Traces(ABC):
             attributes=data.get("attributes", {}),
             trace_state=data.get("trace_state", ""),
             flags=data.get("flags", 0),
+            scope=data.get("scope", {}),
         )
 
     @classmethod
@@ -814,6 +870,8 @@ def insert_traces_to_clickhouse(conn, traces: list[Traces]) -> None:
             "has_error",
             "is_remote",
             "resource",
+            "scope",
+            "attributes",
         ],
         data=[trace.np_arr() for trace in traces],
     )
@@ -837,6 +895,7 @@ _TRACES_TABLES_TO_TRUNCATE = [
     "span_attributes_keys",
     "signoz_error_index_v2",
     "top_level_operations",
+    "trace_summary",
 ]
 
 
@@ -875,6 +934,60 @@ def insert_traces(
         clickhouse.conn,
         clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"],
     )
+
+
+def insert_attribute_evolution_to_clickhouse(conn, signal: str, release_time: datetime.datetime) -> None:
+    """Seed the `attributes` JSON column-evolution row for a signal at release_time. Unlike the
+    resource row (seeded by the migrator at install), the attribute JSON rollout is install-specific
+    and not migrator-seeded, so tests insert it to gate map-vs-JSON resolution across a window."""
+    # insert_deduplicate=0: successive tests seed a byte-identical row (release_time is
+    # minute-aligned), and ReplicatedMergeTree would drop the re-insert as a duplicate even
+    # after the prior test's teardown deleted it, leaving the querier to fall back to the Map.
+    conn.command(
+        """
+        INSERT INTO signoz_metadata.distributed_column_evolution_metadata
+            (signal, column_name, column_type, field_context, field_name, version, release_time)
+        SETTINGS insert_deduplicate = 0
+        VALUES (%(signal)s, 'attributes', 'JSON()', 'attribute', '__all__', 1, %(release_time_ns)s)
+        """,
+        parameters={"signal": signal, "release_time_ns": int(release_time.timestamp() * 1e9)},
+    )
+
+
+@pytest.fixture(name="seed_attribute_evolution", scope="function")
+def seed_attribute_evolution(
+    clickhouse: types.TestContainerClickhouse,
+) -> Generator[Callable[[str, datetime.datetime], None], Any]:
+    def _seed(signal: str, release_time: datetime.datetime) -> None:
+        insert_attribute_evolution_to_clickhouse(clickhouse.conn, signal, release_time)
+
+    yield _seed
+
+    cluster = clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]
+    clickhouse.conn.query(f"ALTER TABLE signoz_metadata.column_evolution_metadata ON CLUSTER '{cluster}' DELETE WHERE column_name = 'attributes' AND field_context = 'attribute' AND field_name = '__all__' SETTINGS mutations_sync = 1")
+
+
+# A rollout far before any test's query window, so seeding it makes the querier read span
+# attributes entirely from the native JSON column rather than straddling into the legacy Map.
+ATTRIBUTE_JSON_ROLLOUT_TIME = datetime.datetime(2020, 1, 1, tzinfo=datetime.UTC)
+
+
+@pytest.fixture(name="use_attribute_backend")
+def use_attribute_backend(
+    seed_attribute_evolution: Callable[[str, datetime.datetime], None],
+) -> Callable[[str], None]:
+    """Applies the physical attribute layout a test runs under. "map" leaves the querier on the
+    legacy attributes_{string,number,bool} maps; "json" seeds the column-evolution row so it reads
+    the native `attributes` JSON column instead. Pair with
+    @pytest.mark.parametrize("attribute_backend", ["map", "json"]) and call it once in the body;
+    insert_traces dual-writes both layouts, so a test that passes under both has strict Map/JSON
+    parity."""
+
+    def _apply(backend: str) -> None:
+        if backend == "json":
+            seed_attribute_evolution("traces", ATTRIBUTE_JSON_ROLLOUT_TIME)
+
+    return _apply
 
 
 @pytest.fixture(name="insert_top_level_operations", scope="function")

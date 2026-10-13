@@ -51,11 +51,11 @@ func (f *TraceTimeRangeFinder) GetTraceTimeRangeMulti(ctx context.Context, trace
 	query := fmt.Sprintf(`
 		SELECT
 			count(),
-			toUnixTimestamp64Nano(min(start)),
-			toUnixTimestamp64Nano(max(end))
+			%s,
+			%s
 		FROM %s.%s
 		WHERE trace_id IN (%s)
-	`, DBName, TraceSummaryTableName, strings.Join(placeholders, ", "))
+	`, UnixNanoExpr("min(start)"), UnixNanoExpr("max(end)"), DBName, TraceSummaryTableName, strings.Join(placeholders, ", "))
 
 	row := f.telemetryStore.ClickhouseDB().QueryRow(ctx, query, args...)
 
@@ -75,4 +75,10 @@ func (f *TraceTimeRangeFinder) GetTraceTimeRangeMulti(ctx context.Context, trace
 	endNano += 1_000_000_000
 
 	return startNano, endNano, true, nil
+}
+
+// UnixNanoExpr renders the conversion of a timestamp-typed column expression
+// (DateTime64(9)) to Unix epoch nanoseconds.
+func UnixNanoExpr(expr string) string {
+	return fmt.Sprintf("toUnixTimestamp64Nano(%s)", expr)
 }

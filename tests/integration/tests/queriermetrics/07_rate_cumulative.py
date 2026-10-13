@@ -1,7 +1,3 @@
-"""
-Look at the cumulative_counters_1h.jsonl file for the relevant data
-"""
-
 import os
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta

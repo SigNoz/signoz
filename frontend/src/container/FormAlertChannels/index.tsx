@@ -9,6 +9,10 @@ import ROUTES from 'constants/routes';
 import {
 	ChannelType,
 	EmailChannel,
+	GoogleChatChannel,
+	IncidentIOChannel,
+	JiraChannel,
+	JsmOpsChannel,
 	OpsgenieChannel,
 	PagerChannel,
 	SlackChannel,
@@ -17,6 +21,10 @@ import {
 import history from 'lib/history';
 
 import EmailSettings from './Settings/Email';
+import GoogleChatSettings from './Settings/GoogleChat';
+import IncidentIOSettings from './Settings/IncidentIo';
+import JiraSettings from './Settings/Jira';
+import JsmOpsSettings from './Settings/JsmOps';
 import MsTeamsSettings from './Settings/MsTeams';
 import OpsgenieSettings from './Settings/Opsgenie';
 import PagerSettings from './Settings/Pager';
@@ -49,6 +57,19 @@ function FormAlertChannels({
 				return <PagerSettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.MsTeams:
 				return <MsTeamsSettings setSelectedConfig={setSelectedConfig} />;
+			case ChannelType.GoogleChat:
+				return <GoogleChatSettings setSelectedConfig={setSelectedConfig} />;
+			case ChannelType.Jira:
+				return <JiraSettings setSelectedConfig={setSelectedConfig} />;
+			case ChannelType.JsmOps:
+				return <JsmOpsSettings setSelectedConfig={setSelectedConfig} />;
+			case ChannelType.IncidentIO:
+				return (
+					<IncidentIOSettings
+						setSelectedConfig={setSelectedConfig}
+						initialMetadata={initialValue?.metadata as Record<string, string>}
+					/>
+				);
 			case ChannelType.Opsgenie:
 				return <OpsgenieSettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.Email:
@@ -129,6 +150,30 @@ function FormAlertChannels({
 						<Select.Option value="msteams" key="msteams" data-testid="select-option">
 							Microsoft Teams
 						</Select.Option>
+
+						<Select.Option
+							value="googlechat"
+							key="googlechat"
+							data-testid="select-option"
+						>
+							Google Chat
+						</Select.Option>
+
+						<Select.Option value="jira" key="jira" data-testid="select-option">
+							Jira
+						</Select.Option>
+
+						<Select.Option value="jsmops" key="jsmops" data-testid="select-option">
+							Jira Service Management Ops
+						</Select.Option>
+
+						<Select.Option
+							value="incidentio"
+							key="incidentio"
+							data-testid="select-option"
+						>
+							incident.io
+						</Select.Option>
 					</Select>
 				</Form.Item>
 
@@ -176,7 +221,11 @@ interface FormAlertChannelsProps {
 					WebhookChannel &
 					PagerChannel &
 					OpsgenieChannel &
-					EmailChannel
+					EmailChannel &
+					GoogleChatChannel &
+					JiraChannel &
+					JsmOpsChannel &
+					IncidentIOChannel
 			>
 		>
 	>;

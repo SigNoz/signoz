@@ -62,6 +62,13 @@ type queryEnvelopeBuilder struct {
 	Spec builderQuerySpec `json:"spec" description:"The builder query specification."`
 }
 
+// queryEnvelopeBuilderAI is the OpenAPI schema for a builder_ai_query QueryEnvelope.
+// The spec is always a traces builder query (the signal is implied by the type).
+type queryEnvelopeBuilderAI struct {
+	Type QueryType                           `json:"type" required:"true" description:"The type of the query."`
+	Spec QueryBuilderQuery[TraceAggregation] `json:"spec" description:"The AI builder query specification."`
+}
+
 // queryEnvelopeFormula is the OpenAPI schema for a QueryEnvelope with type=builder_formula.
 type queryEnvelopeFormula struct {
 	Type QueryType           `json:"type" required:"true" description:"The type of the query."`
@@ -100,6 +107,7 @@ var _ jsonschema.OneOfExposer = QueryEnvelope{}
 func (QueryEnvelope) JSONSchemaOneOf() []any {
 	return []any{
 		queryEnvelopeBuilder{},
+		queryEnvelopeBuilderAI{},
 		queryEnvelopeFormula{},
 		// queryEnvelopeJoin{}, // deferred — see commented queryEnvelopeJoin above
 		queryEnvelopeTraceOperator{},
@@ -120,6 +128,7 @@ func (QueryEnvelope) PrepareJSONSchema(s *jsonschema.Schema) error {
 		"propertyName": "type",
 		"mapping": map[string]string{
 			QueryTypeBuilder.StringValue():       "#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilder",
+			QueryTypeBuilderAI.StringValue():     "#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderAI",
 			QueryTypeFormula.StringValue():       "#/components/schemas/Querybuildertypesv5QueryEnvelopeFormula",
 			QueryTypeTraceOperator.StringValue(): "#/components/schemas/Querybuildertypesv5QueryEnvelopeTraceOperator",
 			QueryTypePromQL.StringValue():        "#/components/schemas/Querybuildertypesv5QueryEnvelopePromQL",
@@ -148,6 +157,15 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return err
 		}
+		q.Spec = spec
+
+	case QueryTypeBuilderAI:
+		// the signal is implied by the type, so pin it
+		var spec QueryBuilderQuery[TraceAggregation]
+		if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
+			return err
+		}
+		spec.Signal = telemetrytypes.SignalTraces
 		q.Spec = spec
 
 	case QueryTypeFormula:
@@ -194,7 +212,7 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 			"unknown query type %q",
 			shadow.Type,
 		).WithAdditional(
-			"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, builder_trace_operator, promql, clickhouse_sql",
+			"Valid query types are: builder_query, builder_ai_query, builder_sub_query, builder_formula, builder_join, builder_trace_operator, promql, clickhouse_sql",
 		).WithSuggestions(errors.NewValidReferences(errors.NounQueryTypes, QueryType{}.Enum()...))
 	}
 
@@ -707,4 +725,131 @@ func (r *QueryRangeRequest) GetQueriesSupportingZeroDefault() map[string]bool {
 	}
 
 	return canDefaultZero
+}
+
+type BucketOptions struct {
+	Kind BucketsKind `json:"kind"`
+	Spec any         `json:"spec"`
+}
+
+type BucketsKind struct {
+	valuer.String
+}
+
+var (
+	BucketsKindLinear = BucketsKind{valuer.NewString("linear")}
+	BucketsKindLog    = BucketsKind{valuer.NewString("log")}
+)
+
+// Enum implements jsonschema.Enum.
+func (BucketsKind) Enum() []any {
+	return []any{
+		BucketsKindLinear,
+		BucketsKindLog,
+	}
+}
+
+// LinearBucketsSpec divides (0, MaxValue] into NumBuckets equal bands.
+type LinearBucketsSpec struct {
+	// Everything above MaxValue is counted in the trailing overflow band. Evenly
+	// spaced upper bounds have no top to divide without it, so it is required.
+	MaxValue   float64 `json:"maxValue" required:"true"`
+	NumBuckets int     `json:"numBuckets,omitempty"`
+}
+
+// LogBucketsSpec spaces upper bounds at 2^Scale bands per doubling, the mapping
+// an exponential histogram uses.
+type LogBucketsSpec struct {
+	// ClickHouse always buckets at MaxLogScale and the surplus is folded away
+	// afterwards, so every Scale reads the same cache entry. MaxLogScale applies
+	// when unset.
+	Scale *int `json:"scale,omitempty"`
+}
+
+func (b *BucketOptions) UnmarshalJSON(data []byte) error {
+	var shadow struct {
+		Kind BucketsKind     `json:"kind"`
+		Spec json.RawMessage `json:"spec"`
+	}
+	if err := binding.JSON.BindBody(bytes.NewReader(data), &shadow, binding.WithDisallowUnknownFields(true)); err != nil {
+		return err
+	}
+
+	b.Kind = shadow.Kind
+
+	// An absent spec is a malformed pair rather than a request for defaults;
+	// `"spec": {}` asks for those.
+	if len(shadow.Spec) == 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"bucketOptions spec is required, use an empty object for the kind's defaults")
+	}
+
+	switch shadow.Kind {
+	case BucketsKindLinear:
+		var spec LinearBucketsSpec
+		if err := binding.JSON.BindBody(bytes.NewReader(shadow.Spec), &spec, binding.WithDisallowUnknownFields(true), binding.WithUnknownFieldContext("linear buckets spec")); err != nil {
+			return err
+		}
+		b.Spec = spec
+
+	case BucketsKindLog:
+		var spec LogBucketsSpec
+		if err := binding.JSON.BindBody(bytes.NewReader(shadow.Spec), &spec, binding.WithDisallowUnknownFields(true), binding.WithUnknownFieldContext("log buckets spec")); err != nil {
+			return err
+		}
+		b.Spec = spec
+
+	default:
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"invalid bucketOptions kind: %s",
+			shadow.Kind.StringValue(),
+		).WithAdditional(
+			"Valid bucket kinds are: linear, log",
+		)
+	}
+
+	return nil
+}
+
+// bucketOptionsLinear and bucketOptionsLog are the OpenAPI schemas for the two
+// BucketOptions variants. They have to be named types: the reflector turns an
+// anonymous one into an inline subschema, leaving the discriminator mapping in
+// PrepareJSONSchema pointing at components that were never emitted. `kind` is
+// required:"true" on both so oapi-codegen renders the discriminator non-pointer.
+type bucketOptionsLinear struct {
+	Kind BucketsKind       `json:"kind" required:"true" description:"How the upper bounds are spaced."`
+	Spec LinearBucketsSpec `json:"spec" required:"true" description:"The evenly spaced bucket specification."`
+}
+
+type bucketOptionsLog struct {
+	Kind BucketsKind    `json:"kind" required:"true" description:"How the upper bounds are spaced."`
+	Spec LogBucketsSpec `json:"spec" required:"true" description:"The logarithmic bucket specification."`
+}
+
+var _ jsonschema.OneOfExposer = BucketOptions{}
+
+func (BucketOptions) JSONSchemaOneOf() []any {
+	return []any{
+		bucketOptionsLinear{},
+		bucketOptionsLog{},
+	}
+}
+
+var _ jsonschema.Preparer = BucketOptions{}
+
+// PrepareJSONSchema marks the options as a `kind`-discriminated union;
+// signoz.attachDiscriminators promotes it and strips the base properties.
+func (BucketOptions) PrepareJSONSchema(s *jsonschema.Schema) error {
+	if s.ExtraProperties == nil {
+		s.ExtraProperties = map[string]any{}
+	}
+	s.ExtraProperties["x-signoz-discriminator"] = map[string]any{
+		"propertyName": "kind",
+		"mapping": map[string]string{
+			BucketsKindLinear.StringValue(): "#/components/schemas/Querybuildertypesv5BucketOptionsLinear",
+			BucketsKindLog.StringValue():    "#/components/schemas/Querybuildertypesv5BucketOptionsLog",
+		},
+	}
+	return nil
 }

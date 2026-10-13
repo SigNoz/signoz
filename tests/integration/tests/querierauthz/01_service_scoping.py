@@ -41,7 +41,7 @@ def test_setup(
             transaction_group("read", "telemetryresource", "traces", ["builder_query/signoz.workspace.key.id/key-a"]),
         ],
     )
-    user_id = create_active_user(signoz, admin_token, email=scoped_email, role="VIEWER", password=user_password)
+    user_id = create_active_user(signoz, admin_token, email=scoped_email, role="signoz-viewer", password=user_password)
     change_user_role(signoz, admin_token, user_id, "signoz-viewer", scoped_role)
 
 

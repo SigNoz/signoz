@@ -39,7 +39,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/statementbuilder"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
@@ -97,9 +96,6 @@ type Config struct {
 
 	// Querier config
 	Querier querier.Config `mapstructure:"querier"`
-
-	// StatementBuilder config
-	StatementBuilder statementbuilder.Config `mapstructure:"statementbuilder"`
 
 	// Ruler config
 	Ruler ruler.Config `mapstructure:"ruler"`
@@ -170,7 +166,6 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		prometheus.NewConfigFactory(),
 		alertmanager.NewConfigFactory(),
 		querier.NewConfigFactory(),
-		statementbuilder.NewConfigFactory(),
 		ruler.NewConfigFactory(),
 		emailing.NewConfigFactory(),
 		sharder.NewConfigFactory(),

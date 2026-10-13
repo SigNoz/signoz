@@ -1,4 +1,4 @@
-import { MouseEventHandler } from 'react';
+import { MouseEvent } from 'react';
 import { ILog } from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
@@ -11,7 +11,7 @@ export type UseCopyLogLink = {
 	isHighlighted: boolean;
 	isLogsExplorerPage: boolean;
 	activeLogId: string | null;
-	onLogCopy: MouseEventHandler<HTMLElement>;
+	onLogCopy: (event?: MouseEvent<HTMLElement>) => void;
 	onClearActiveLog: () => void;
 };
 

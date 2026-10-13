@@ -8,6 +8,7 @@ import (
 
 	cmock "github.com/SigNoz/clickhouse-go-mock"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -70,7 +71,7 @@ func TestStatementBuilder(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint), __limit_cte AS (SELECT toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `__GROUP_BY_KEY_0_service.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_service.name` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `__GROUP_BY_KEY_0_service.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_service.name`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_service.name` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_service.name`",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint), __limit_cte AS (SELECT toString(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS `__GROUP_BY_KEY_0_service.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_service.name` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS `__GROUP_BY_KEY_0_service.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_service.name`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_service.name` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_service.name`",
 				Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10, "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
 			},
 			expectedErr: nil,
@@ -99,7 +100,7 @@ func TestStatementBuilder(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __limit_cte AS (SELECT toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `__GROUP_BY_KEY_0_service.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL) OR (attributes_string['http.request.method'] = ? AND mapContains(attributes_string, 'http.request.method'))) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_service.name` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `__GROUP_BY_KEY_0_service.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL) OR (attributes_string['http.request.method'] = ? AND mapContains(attributes_string, 'http.request.method'))) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_service.name`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_service.name` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_service.name`",
+				Query: "WITH __limit_cte AS (SELECT toString(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS `__GROUP_BY_KEY_0_service.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? OR (attributes_string['http.request.method'] = ? AND mapContains(attributes_string, 'http.request.method'))) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_service.name` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS `__GROUP_BY_KEY_0_service.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? OR (attributes_string['http.request.method'] = ? AND mapContains(attributes_string, 'http.request.method'))) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_service.name`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_service.name` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_service.name`",
 				Args:  []any{"redis-manual", "GET", "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10, "redis-manual", "GET", "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
 			},
 			expectedErr: nil,
@@ -128,7 +129,7 @@ func TestStatementBuilder(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __limit_cte AS (SELECT toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `__GROUP_BY_KEY_0_service.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE ((match(`attribute_string_materialized$$key$$name`, ?) AND `attribute_string_materialized$$key$$name_exists`) OR (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_service.name` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `__GROUP_BY_KEY_0_service.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE ((match(`attribute_string_materialized$$key$$name`, ?) AND `attribute_string_materialized$$key$$name_exists`) OR (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_service.name`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_service.name` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_service.name`",
+				Query: "WITH __limit_cte AS (SELECT toString(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS `__GROUP_BY_KEY_0_service.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE ((match(`attribute_string_materialized$$key$$name`, ?) AND `attribute_string_materialized$$key$$name_exists` = true) OR multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ?) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_service.name` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS `__GROUP_BY_KEY_0_service.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE ((match(`attribute_string_materialized$$key$$name`, ?) AND `attribute_string_materialized$$key$$name_exists` = true) OR multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ?) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_service.name`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_service.name` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_service.name`",
 				Args:  []any{"redis-manual", "redis-manual", "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10, "redis-manual", "redis-manual", "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
 			},
 			expectedErr: nil,
@@ -159,7 +160,7 @@ func TestStatementBuilder(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint), __limit_cte AS (SELECT toString(multiIf(attribute_string_http$$route <> '', attribute_string_http$$route, NULL)) AS `__GROUP_BY_KEY_0_httpRoute`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_httpRoute` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(attribute_string_http$$route <> '', attribute_string_http$$route, NULL)) AS `__GROUP_BY_KEY_0_httpRoute`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_httpRoute`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_httpRoute` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_httpRoute`",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint), __limit_cte AS (SELECT toString(attribute_string_http$$route) AS `__GROUP_BY_KEY_0_httpRoute`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_httpRoute` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(attribute_string_http$$route) AS `__GROUP_BY_KEY_0_httpRoute`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_httpRoute`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_httpRoute` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_httpRoute`",
 				Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10, "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
 			},
 			expectedErr: nil,
@@ -197,7 +198,7 @@ func TestStatementBuilder(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __limit_cte AS (SELECT toString(multiIf(attribute_string_http$$route <> '', attribute_string_http$$route, NULL)) AS `__GROUP_BY_KEY_0_httpRoute`, toString(multiIf(http_method <> '', http_method, NULL)) AS `__GROUP_BY_KEY_1_httpMethod`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE ((resource_string_service$$name = ? AND resource_string_service$$name <> '') AND http_method <> '' AND kind_string = ?) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_httpRoute`, `__GROUP_BY_KEY_1_httpMethod` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(attribute_string_http$$route <> '', attribute_string_http$$route, NULL)) AS `__GROUP_BY_KEY_0_httpRoute`, toString(multiIf(http_method <> '', http_method, NULL)) AS `__GROUP_BY_KEY_1_httpMethod`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE ((resource_string_service$$name = ? AND resource_string_service$$name <> '') AND http_method <> '' AND kind_string = ?) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_httpRoute`, `__GROUP_BY_KEY_1_httpMethod`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_httpRoute`, `__GROUP_BY_KEY_1_httpMethod` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_httpRoute`, `__GROUP_BY_KEY_1_httpMethod`",
+				Query: "WITH __limit_cte AS (SELECT toString(attribute_string_http$$route) AS `__GROUP_BY_KEY_0_httpRoute`, toString(http_method) AS `__GROUP_BY_KEY_1_httpMethod`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE (resource_string_service$$name = ? AND http_method <> '' AND kind_string = ?) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_httpRoute`, `__GROUP_BY_KEY_1_httpMethod` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(attribute_string_http$$route) AS `__GROUP_BY_KEY_0_httpRoute`, toString(http_method) AS `__GROUP_BY_KEY_1_httpMethod`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE (resource_string_service$$name = ? AND http_method <> '' AND kind_string = ?) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_httpRoute`, `__GROUP_BY_KEY_1_httpMethod`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_httpRoute`, `__GROUP_BY_KEY_1_httpMethod` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_httpRoute`, `__GROUP_BY_KEY_1_httpMethod`",
 				Args:  []any{"redis-manual", "Server", "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10, "redis-manual", "Server", "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
 			},
 			expectedErr: nil,
@@ -238,7 +239,7 @@ func TestStatementBuilder(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint), __limit_cte AS (SELECT toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `__GROUP_BY_KEY_0_service.name`, sum(multiIf(mapContains(attributes_number, 'metric.max_count'), toFloat64(attributes_number['metric.max_count']), NULL)) AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_service.name` ORDER BY __result_0 desc LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `__GROUP_BY_KEY_0_service.name`, sum(multiIf(mapContains(attributes_number, 'metric.max_count'), toFloat64(attributes_number['metric.max_count']), NULL)) AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_service.name`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_service.name` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_service.name` ORDER BY ts desc",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint), __limit_cte AS (SELECT toString(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS `__GROUP_BY_KEY_0_service.name`, sum(multiIf(mapContains(attributes_number, 'metric.max_count'), toFloat64(attributes_number['metric.max_count']), NULL)) AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_service.name` ORDER BY __result_0 desc LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS `__GROUP_BY_KEY_0_service.name`, sum(multiIf(mapContains(attributes_number, 'metric.max_count'), toFloat64(attributes_number['metric.max_count']), NULL)) AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_service.name`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_service.name` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_service.name` ORDER BY ts desc",
 				Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10, "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
 			},
 			expectedErr: nil,
@@ -267,7 +268,7 @@ func TestStatementBuilder(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint), __limit_cte AS (SELECT toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `__GROUP_BY_KEY_0_service.name`, sum(multiIf(`attribute_number_cart$$items_count_exists`, toFloat64(`attribute_number_cart$$items_count`), NULL)) AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_service.name` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `__GROUP_BY_KEY_0_service.name`, sum(multiIf(`attribute_number_cart$$items_count_exists`, toFloat64(`attribute_number_cart$$items_count`), NULL)) AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_service.name`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_service.name` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_service.name`",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint), __limit_cte AS (SELECT toString(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS `__GROUP_BY_KEY_0_service.name`, sum(multiIf(`attribute_number_cart$$items_count_exists` = true, toFloat64(`attribute_number_cart$$items_count`), NULL)) AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_service.name` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS `__GROUP_BY_KEY_0_service.name`, sum(multiIf(`attribute_number_cart$$items_count_exists` = true, toFloat64(`attribute_number_cart$$items_count`), NULL)) AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_service.name`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_service.name` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_service.name`",
 				Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10, "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
 			},
 			expectedErr: nil,
@@ -306,7 +307,7 @@ func TestStatementBuilder(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint), __limit_cte AS (SELECT toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `__GROUP_BY_KEY_0_service.name`, sum(multiIf(`attribute_number_cart$$items_count_exists`, toFloat64(`attribute_number_cart$$items_count`), NULL)) AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_service.name` ORDER BY `__GROUP_BY_KEY_0_service.name` desc LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `__GROUP_BY_KEY_0_service.name`, sum(multiIf(`attribute_number_cart$$items_count_exists`, toFloat64(`attribute_number_cart$$items_count`), NULL)) AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_service.name`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_service.name` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_service.name` ORDER BY `__GROUP_BY_KEY_0_service.name` desc, ts desc",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint), __limit_cte AS (SELECT toString(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS `__GROUP_BY_KEY_0_service.name`, sum(multiIf(`attribute_number_cart$$items_count_exists` = true, toFloat64(`attribute_number_cart$$items_count`), NULL)) AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_service.name` ORDER BY `__GROUP_BY_KEY_0_service.name` desc LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS `__GROUP_BY_KEY_0_service.name`, sum(multiIf(`attribute_number_cart$$items_count_exists` = true, toFloat64(`attribute_number_cart$$items_count`), NULL)) AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_service.name`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_service.name` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_service.name` ORDER BY `__GROUP_BY_KEY_0_service.name` desc, ts desc",
 				Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10, "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
 			},
 			expectedErr: nil,
@@ -337,7 +338,7 @@ func TestStatementBuilder(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint), __limit_cte AS (SELECT toString(multiIf(response_status_code <> '', response_status_code, NULL)) AS `__GROUP_BY_KEY_0_responseStatusCode`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_responseStatusCode` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(response_status_code <> '', response_status_code, NULL)) AS `__GROUP_BY_KEY_0_responseStatusCode`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_responseStatusCode`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_responseStatusCode` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_responseStatusCode`",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint), __limit_cte AS (SELECT toString(response_status_code) AS `__GROUP_BY_KEY_0_responseStatusCode`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_responseStatusCode` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(response_status_code) AS `__GROUP_BY_KEY_0_responseStatusCode`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_responseStatusCode`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_responseStatusCode` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_responseStatusCode`",
 				Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10, "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
 			},
 			expectedErr: nil,
@@ -368,25 +369,111 @@ func TestStatementBuilder(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint), __limit_cte AS (SELECT toString(multiIf(response_status_code <> '', response_status_code, NULL)) AS `__GROUP_BY_KEY_0_responseStatusCode`, quantile(0.90)(multiIf(duration_nano <> 0, accurateCastOrNull(duration_nano, 'Float64'), NULL)) AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_responseStatusCode` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(response_status_code <> '', response_status_code, NULL)) AS `__GROUP_BY_KEY_0_responseStatusCode`, quantile(0.90)(multiIf(duration_nano <> 0, accurateCastOrNull(duration_nano, 'Float64'), NULL)) AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_responseStatusCode`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_responseStatusCode` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_responseStatusCode`",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint), __limit_cte AS (SELECT toString(response_status_code) AS `__GROUP_BY_KEY_0_responseStatusCode`, quantile(0.90)(toFloat64(duration_nano)) AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_responseStatusCode` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(response_status_code) AS `__GROUP_BY_KEY_0_responseStatusCode`, quantile(0.90)(toFloat64(duration_nano)) AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_responseStatusCode`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_responseStatusCode` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_responseStatusCode`",
 				Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10, "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
 			},
 			expectedErr: nil,
 		},
+		{
+			name:        "scope.name filter and group by",
+			requestType: qbtypes.RequestTypeTimeSeries,
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Aggregations: []qbtypes.TraceAggregation{
+					{
+						Expression: "count()",
+					},
+				},
+				Filter: &qbtypes.Filter{
+					Expression: "scope.name = 'opentelemetry-io'",
+				},
+				Limit: 10,
+				GroupBy: []qbtypes.GroupByKey{
+					{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:         "scope.name",
+							FieldContext: telemetrytypes.FieldContextScope,
+						},
+					},
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __limit_cte AS (SELECT toString(multiIf(scope.name::String <> '', scope.name::String, NULL)) AS `__GROUP_BY_KEY_0_scope.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE (scope.name::String = ? AND scope.name::String <> '') AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_scope.name` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(scope.name::String <> '', scope.name::String, NULL)) AS `__GROUP_BY_KEY_0_scope.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE (scope.name::String = ? AND scope.name::String <> '') AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_scope.name`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_scope.name` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_scope.name`",
+				Args:  []any{"opentelemetry-io", "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10, "opentelemetry-io", "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
+			},
+			expectedErr: nil,
+		},
+		{
+			name:        "scope.version filter with scope.name group by",
+			requestType: qbtypes.RequestTypeTimeSeries,
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Aggregations: []qbtypes.TraceAggregation{
+					{
+						Expression: "count()",
+					},
+				},
+				Filter: &qbtypes.Filter{
+					Expression: "scope.version = '1.0.0'",
+				},
+				Limit: 10,
+				GroupBy: []qbtypes.GroupByKey{
+					{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:         "scope.name",
+							FieldContext: telemetrytypes.FieldContextScope,
+						},
+					},
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __limit_cte AS (SELECT toString(multiIf(scope.name::String <> '', scope.name::String, NULL)) AS `__GROUP_BY_KEY_0_scope.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE (scope.version::String = ? AND scope.version::String <> '') AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_scope.name` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(scope.name::String <> '', scope.name::String, NULL)) AS `__GROUP_BY_KEY_0_scope.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE (scope.version::String = ? AND scope.version::String <> '') AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_scope.name`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_scope.name` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_scope.name`",
+				Args:  []any{"1.0.0", "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10, "1.0.0", "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
+			},
+			expectedErr: nil,
+		},
+		{
+			name:        "scope.version filter only (no scope field in group by)",
+			requestType: qbtypes.RequestTypeTimeSeries,
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Aggregations: []qbtypes.TraceAggregation{
+					{
+						Expression: "count()",
+					},
+				},
+				Filter: &qbtypes.Filter{
+					Expression: "scope.version = '1.0.0'",
+				},
+				Limit: 10,
+				GroupBy: []qbtypes.GroupByKey{
+					{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: "service.name",
+						},
+					},
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __limit_cte AS (SELECT toString(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS `__GROUP_BY_KEY_0_service.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE (scope.version::String = ? AND scope.version::String <> '') AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_service.name` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS `__GROUP_BY_KEY_0_service.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE (scope.version::String = ? AND scope.version::String <> '') AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_service.name`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_service.name` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_service.name`",
+				Args:  []any{"1.0.0", "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10, "1.0.0", "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
+			},
+		},
 	}
 
 	fl := flaggertest.New(t)
-	fm := tracestelemetryschema.NewFieldMapper()
-	cb := tracestelemetryschema.NewConditionBuilder(fm)
+	storage := tracestelemetryschema.NewStorage()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
 
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
-		fm,
-		cb,
+		storage,
 		aggExprRewriter,
 		nil,
 		fl,
@@ -465,7 +552,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, name AS `__SELECT_KEY_3_name`, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) AS `__SELECT_KEY_4_service.name`, duration_nano AS `__SELECT_KEY_5_duration_nano`, multiIf(`attribute_number_cart$$items_count_exists`, `attribute_number_cart$$items_count`, NULL) AS `__SELECT_KEY_6_cart.items_count` FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, name AS `__SELECT_KEY_3_name`, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) AS `__SELECT_KEY_4_service.name`, duration_nano AS `__SELECT_KEY_5_duration_nano`, multiIf(`attribute_number_cart$$items_count_exists` = true, `attribute_number_cart$$items_count`, NULL) AS `__SELECT_KEY_6_cart.items_count` FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -494,7 +581,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 				Limit: 10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, trace_state AS `__SELECT_KEY_3_trace_state`, parent_span_id AS `__SELECT_KEY_4_parent_span_id`, flags AS `__SELECT_KEY_5_flags`, name AS `__SELECT_KEY_6_name`, kind AS `__SELECT_KEY_7_kind`, kind_string AS `__SELECT_KEY_8_kind_string`, duration_nano AS `__SELECT_KEY_9_duration_nano`, status_code AS `__SELECT_KEY_10_status_code`, status_message AS `__SELECT_KEY_11_status_message`, status_code_string AS `__SELECT_KEY_12_status_code_string`, events AS `__SELECT_KEY_13_events`, links AS `__SELECT_KEY_14_links`, response_status_code AS `__SELECT_KEY_15_response_status_code`, external_http_url AS `__SELECT_KEY_16_external_http_url`, http_url AS `__SELECT_KEY_17_http_url`, external_http_method AS `__SELECT_KEY_18_external_http_method`, http_method AS `__SELECT_KEY_19_http_method`, http_host AS `__SELECT_KEY_20_http_host`, db_name AS `__SELECT_KEY_21_db_name`, db_operation AS `__SELECT_KEY_22_db_operation`, has_error AS `__SELECT_KEY_23_has_error`, is_remote AS `__SELECT_KEY_24_is_remote`, attributes_string, attributes_number, attributes_bool, resources_string FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY multiIf(mapContains(attributes_string, 'user.id'), attributes_string['user.id'], NULL) desc LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, trace_state AS `__SELECT_KEY_3_trace_state`, parent_span_id AS `__SELECT_KEY_4_parent_span_id`, flags AS `__SELECT_KEY_5_flags`, name AS `__SELECT_KEY_6_name`, kind AS `__SELECT_KEY_7_kind`, kind_string AS `__SELECT_KEY_8_kind_string`, duration_nano AS `__SELECT_KEY_9_duration_nano`, status_code AS `__SELECT_KEY_10_status_code`, status_message AS `__SELECT_KEY_11_status_message`, status_code_string AS `__SELECT_KEY_12_status_code_string`, events AS `__SELECT_KEY_13_events`, links AS `__SELECT_KEY_14_links`, response_status_code AS `__SELECT_KEY_15_response_status_code`, external_http_url AS `__SELECT_KEY_16_external_http_url`, http_url AS `__SELECT_KEY_17_http_url`, external_http_method AS `__SELECT_KEY_18_external_http_method`, http_method AS `__SELECT_KEY_19_http_method`, http_host AS `__SELECT_KEY_20_http_host`, db_name AS `__SELECT_KEY_21_db_name`, db_operation AS `__SELECT_KEY_22_db_operation`, has_error AS `__SELECT_KEY_23_has_error`, is_remote AS `__SELECT_KEY_24_is_remote`, attributes_string, attributes_number, attributes_bool, resources_string, attributes FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY multiIf(mapContains(attributes_string, 'user.id'), attributes_string['user.id'], NULL) desc LIMIT ?",
 				Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -582,7 +669,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 				Limit: 10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, name AS `__SELECT_KEY_3_name`, resource_string_service$$name AS `__SELECT_KEY_4_serviceName`, duration_nano AS `__SELECT_KEY_5_durationNano`, http_method AS `__SELECT_KEY_6_httpMethod`, multiIf(`attribute_string_mixed$$materialization$$key_exists`, toString(`attribute_string_mixed$$materialization$$key`), multiIf(resource.`mixed.materialization.key` IS NOT NULL, resource.`mixed.materialization.key`::String, mapContains(resources_string, 'mixed.materialization.key'), resources_string['mixed.materialization.key'], NULL) IS NOT NULL, toString(multiIf(resource.`mixed.materialization.key` IS NOT NULL, resource.`mixed.materialization.key`::String, mapContains(resources_string, 'mixed.materialization.key'), resources_string['mixed.materialization.key'], NULL)), NULL) AS `__SELECT_KEY_7_mixed.materialization.key` FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, name AS `__SELECT_KEY_3_name`, resource_string_service$$name AS `__SELECT_KEY_4_serviceName`, duration_nano AS `__SELECT_KEY_5_durationNano`, http_method AS `__SELECT_KEY_6_httpMethod`, multiIf(`attribute_string_mixed$$materialization$$key_exists` = true, `attribute_string_mixed$$materialization$$key`, multiIf(resource.`mixed.materialization.key` IS NOT NULL, resource.`mixed.materialization.key`::String, mapContains(resources_string, 'mixed.materialization.key'), resources_string['mixed.materialization.key'], NULL) IS NOT NULL, multiIf(resource.`mixed.materialization.key` IS NOT NULL, resource.`mixed.materialization.key`::String, mapContains(resources_string, 'mixed.materialization.key'), resources_string['mixed.materialization.key'], NULL), NULL) AS `__SELECT_KEY_7_mixed.materialization.key` FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -627,7 +714,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 				Limit: 10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, name AS `__SELECT_KEY_3_name`, resource_string_service$$name AS `__SELECT_KEY_4_serviceName`, duration_nano AS `__SELECT_KEY_5_durationNano`, http_method AS `__SELECT_KEY_6_httpMethod`, multiIf(`attribute_string_mixed$$materialization$$key_exists`, `attribute_string_mixed$$materialization$$key`, NULL) AS `__SELECT_KEY_7_mixed.materialization.key` FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, name AS `__SELECT_KEY_3_name`, resource_string_service$$name AS `__SELECT_KEY_4_serviceName`, duration_nano AS `__SELECT_KEY_5_durationNano`, http_method AS `__SELECT_KEY_6_httpMethod`, multiIf(`attribute_string_mixed$$materialization$$key_exists` = true, `attribute_string_mixed$$materialization$$key`, NULL) AS `__SELECT_KEY_7_mixed.materialization.key` FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -669,7 +756,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 				Limit: 10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, name AS `__SELECT_KEY_3_name`, resource_string_service$$name AS `__SELECT_KEY_4_serviceName`, duration_nano AS `__SELECT_KEY_5_durationNano`, http_method AS `__SELECT_KEY_6_httpMethod`, multiIf(mapContains(attributes_string, 'non-existent.key'), toString(attributes_string['non-existent.key']), mapContains(attributes_number, 'non-existent.key'), toString(attributes_number['non-existent.key']), mapContains(attributes_bool, 'non-existent.key'), toString(attributes_bool['non-existent.key']), NULL) AS `__SELECT_KEY_7_non-existent.key` FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, name AS `__SELECT_KEY_3_name`, resource_string_service$$name AS `__SELECT_KEY_4_serviceName`, duration_nano AS `__SELECT_KEY_5_durationNano`, http_method AS `__SELECT_KEY_6_httpMethod`, multiIf(mapContains(attributes_string, 'non-existent.key'), attributes_string['non-existent.key'], mapContains(attributes_number, 'non-existent.key'), toString(attributes_number['non-existent.key']), mapContains(attributes_bool, 'non-existent.key'), toString(attributes_bool['non-existent.key']), NULL) AS `__SELECT_KEY_7_non-existent.key` FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -677,17 +764,15 @@ func TestStatementBuilderListQuery(t *testing.T) {
 	}
 
 	fl := flaggertest.New(t)
-	fm := tracestelemetryschema.NewFieldMapper()
-	cb := tracestelemetryschema.NewConditionBuilder(fm)
+	storage := tracestelemetryschema.NewStorage()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
 
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
-		fm,
-		cb,
+		storage,
 		aggExprRewriter,
 		nil,
 		fl,
@@ -752,7 +837,7 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 				Limit:        10,
 			},
 			expected: qbtypes.Statement{
-				Query: "SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, trace_state AS `__SELECT_KEY_3_trace_state`, parent_span_id AS `__SELECT_KEY_4_parent_span_id`, flags AS `__SELECT_KEY_5_flags`, name AS `__SELECT_KEY_6_name`, kind AS `__SELECT_KEY_7_kind`, kind_string AS `__SELECT_KEY_8_kind_string`, duration_nano AS `__SELECT_KEY_9_duration_nano`, status_code AS `__SELECT_KEY_10_status_code`, status_message AS `__SELECT_KEY_11_status_message`, status_code_string AS `__SELECT_KEY_12_status_code_string`, events AS `__SELECT_KEY_13_events`, links AS `__SELECT_KEY_14_links`, response_status_code AS `__SELECT_KEY_15_response_status_code`, external_http_url AS `__SELECT_KEY_16_external_http_url`, http_url AS `__SELECT_KEY_17_http_url`, external_http_method AS `__SELECT_KEY_18_external_http_method`, http_method AS `__SELECT_KEY_19_http_method`, http_host AS `__SELECT_KEY_20_http_host`, db_name AS `__SELECT_KEY_21_db_name`, db_operation AS `__SELECT_KEY_22_db_operation`, has_error AS `__SELECT_KEY_23_has_error`, is_remote AS `__SELECT_KEY_24_is_remote`, attributes_string, attributes_number, attributes_bool, resources_string FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, trace_state AS `__SELECT_KEY_3_trace_state`, parent_span_id AS `__SELECT_KEY_4_parent_span_id`, flags AS `__SELECT_KEY_5_flags`, name AS `__SELECT_KEY_6_name`, kind AS `__SELECT_KEY_7_kind`, kind_string AS `__SELECT_KEY_8_kind_string`, duration_nano AS `__SELECT_KEY_9_duration_nano`, status_code AS `__SELECT_KEY_10_status_code`, status_message AS `__SELECT_KEY_11_status_message`, status_code_string AS `__SELECT_KEY_12_status_code_string`, events AS `__SELECT_KEY_13_events`, links AS `__SELECT_KEY_14_links`, response_status_code AS `__SELECT_KEY_15_response_status_code`, external_http_url AS `__SELECT_KEY_16_external_http_url`, http_url AS `__SELECT_KEY_17_http_url`, external_http_method AS `__SELECT_KEY_18_external_http_method`, http_method AS `__SELECT_KEY_19_http_method`, http_host AS `__SELECT_KEY_20_http_host`, db_name AS `__SELECT_KEY_21_db_name`, db_operation AS `__SELECT_KEY_22_db_operation`, has_error AS `__SELECT_KEY_23_has_error`, is_remote AS `__SELECT_KEY_24_is_remote`, attributes_string, attributes_number, attributes_bool, resources_string, attributes FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -794,30 +879,165 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 				}},
 			},
 			expected: qbtypes.Statement{
-				Query: "SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, trace_state AS `__SELECT_KEY_3_trace_state`, parent_span_id AS `__SELECT_KEY_4_parent_span_id`, flags AS `__SELECT_KEY_5_flags`, name AS `__SELECT_KEY_6_name`, kind AS `__SELECT_KEY_7_kind`, kind_string AS `__SELECT_KEY_8_kind_string`, duration_nano AS `__SELECT_KEY_9_duration_nano`, status_code AS `__SELECT_KEY_10_status_code`, status_message AS `__SELECT_KEY_11_status_message`, status_code_string AS `__SELECT_KEY_12_status_code_string`, events AS `__SELECT_KEY_13_events`, links AS `__SELECT_KEY_14_links`, response_status_code AS `__SELECT_KEY_15_response_status_code`, external_http_url AS `__SELECT_KEY_16_external_http_url`, http_url AS `__SELECT_KEY_17_http_url`, external_http_method AS `__SELECT_KEY_18_external_http_method`, http_method AS `__SELECT_KEY_19_http_method`, http_host AS `__SELECT_KEY_20_http_host`, db_name AS `__SELECT_KEY_21_db_name`, db_operation AS `__SELECT_KEY_22_db_operation`, has_error AS `__SELECT_KEY_23_has_error`, is_remote AS `__SELECT_KEY_24_is_remote`, attributes_string, attributes_number, attributes_bool, resources_string FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY timestamp asc LIMIT ?",
+				Query: "SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, trace_state AS `__SELECT_KEY_3_trace_state`, parent_span_id AS `__SELECT_KEY_4_parent_span_id`, flags AS `__SELECT_KEY_5_flags`, name AS `__SELECT_KEY_6_name`, kind AS `__SELECT_KEY_7_kind`, kind_string AS `__SELECT_KEY_8_kind_string`, duration_nano AS `__SELECT_KEY_9_duration_nano`, status_code AS `__SELECT_KEY_10_status_code`, status_message AS `__SELECT_KEY_11_status_message`, status_code_string AS `__SELECT_KEY_12_status_code_string`, events AS `__SELECT_KEY_13_events`, links AS `__SELECT_KEY_14_links`, response_status_code AS `__SELECT_KEY_15_response_status_code`, external_http_url AS `__SELECT_KEY_16_external_http_url`, http_url AS `__SELECT_KEY_17_http_url`, external_http_method AS `__SELECT_KEY_18_external_http_method`, http_method AS `__SELECT_KEY_19_http_method`, http_host AS `__SELECT_KEY_20_http_host`, db_name AS `__SELECT_KEY_21_db_name`, db_operation AS `__SELECT_KEY_22_db_operation`, has_error AS `__SELECT_KEY_23_has_error`, is_remote AS `__SELECT_KEY_24_is_remote`, attributes_string, attributes_number, attributes_bool, resources_string, attributes FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY timestamp asc LIMIT ?",
 				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
 			},
 			expectedErr: nil,
+		},
+		{
+			name:        "List query with scope filter only (no scope in select or group by)",
+			requestType: qbtypes.RequestTypeRaw,
+			keysMap: map[string][]*telemetrytypes.TelemetryFieldKey{
+				"scope.version": {
+					{
+						Name:          "scope.version",
+						Signal:        telemetrytypes.SignalTraces,
+						FieldContext:  telemetrytypes.FieldContextScope,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+				},
+			},
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Filter: &qbtypes.Filter{
+					Expression: "scope.version = '1.0.0'",
+				},
+				Limit: 10,
+			},
+			expected: qbtypes.Statement{
+				Query: "SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, trace_state AS `__SELECT_KEY_3_trace_state`, parent_span_id AS `__SELECT_KEY_4_parent_span_id`, flags AS `__SELECT_KEY_5_flags`, name AS `__SELECT_KEY_6_name`, kind AS `__SELECT_KEY_7_kind`, kind_string AS `__SELECT_KEY_8_kind_string`, duration_nano AS `__SELECT_KEY_9_duration_nano`, status_code AS `__SELECT_KEY_10_status_code`, status_message AS `__SELECT_KEY_11_status_message`, status_code_string AS `__SELECT_KEY_12_status_code_string`, events AS `__SELECT_KEY_13_events`, links AS `__SELECT_KEY_14_links`, response_status_code AS `__SELECT_KEY_15_response_status_code`, external_http_url AS `__SELECT_KEY_16_external_http_url`, http_url AS `__SELECT_KEY_17_http_url`, external_http_method AS `__SELECT_KEY_18_external_http_method`, http_method AS `__SELECT_KEY_19_http_method`, http_host AS `__SELECT_KEY_20_http_host`, db_name AS `__SELECT_KEY_21_db_name`, db_operation AS `__SELECT_KEY_22_db_operation`, has_error AS `__SELECT_KEY_23_has_error`, is_remote AS `__SELECT_KEY_24_is_remote`, attributes_string, attributes_number, attributes_bool, resources_string, attributes FROM signoz_traces.distributed_signoz_index_v3 WHERE (scope.version::String = ? AND scope.version::String <> '') AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{"1.0.0", "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
+			},
+		},
+		{
+			// Regression test: scope.version in selectFields with no metadata (isColumn=true filters it out)
+			// must still produce scope.version::String, not scope.attributes.version::String
+			name:        "scope.version in selectFields only, no metadata (intrinsic field fallback)",
+			requestType: qbtypes.RequestTypeRaw,
+			keysMap:     map[string][]*telemetrytypes.TelemetryFieldKey{},
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Filter:       &qbtypes.Filter{},
+				SelectFields: []telemetrytypes.TelemetryFieldKey{
+					{Name: "scope.version", FieldContext: telemetrytypes.FieldContextUnspecified},
+				},
+				Limit: 10,
+			},
+			expected: qbtypes.Statement{
+				Query: "SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, multiIf(scope.version::String <> '', scope.version::String, NULL) AS `__SELECT_KEY_3_scope.version` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
+			},
+		},
+		{
+			// A scope attribute whose own name literally carries a `scope.` prefix (`scope.prefixed`,
+			// normalized to {prefixed, scope}) resolves to that attribute in a SELECT even without a
+			// filter: getKeySelectors emits the reconstructed `scope.prefixed` selector so the metadata
+			// fetch surfaces it and AdjustKey recovers the full name. Without it the `scope.` prefix is
+			// lost and it wrongly reads `scope.attributes.prefixed`.
+			name:        "scope-prefixed attribute in selectFields resolves without a filter",
+			requestType: qbtypes.RequestTypeRaw,
+			keysMap: map[string][]*telemetrytypes.TelemetryFieldKey{
+				"scope.prefixed": {
+					{
+						Name:          "scope.prefixed",
+						Signal:        telemetrytypes.SignalTraces,
+						FieldContext:  telemetrytypes.FieldContextScope,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+				},
+			},
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Filter:       &qbtypes.Filter{},
+				SelectFields: []telemetrytypes.TelemetryFieldKey{
+					{Name: "prefixed", FieldContext: telemetrytypes.FieldContextScope},
+				},
+				Limit: 10,
+			},
+			expected: qbtypes.Statement{
+				Query: "SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, multiIf(scope.attributes.`scope.prefixed` IS NOT NULL, scope.attributes.`scope.prefixed`::String, NULL) AS `__SELECT_KEY_3_scope.prefixed` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
+			},
+		},
+		{
+			// A scope-context key whose name matches a declared scope path resolves to that
+			// declared path (scope.name), not the span `name` column and not an undeclared
+			// scope attribute. getTracesKeys surfaces the declared path as an intrinsic key
+			// (metadata.go), which shadows the same-named span intrinsic.
+			name:        "scope-context name resolves to the declared scope path",
+			requestType: qbtypes.RequestTypeRaw,
+			keysMap: map[string][]*telemetrytypes.TelemetryFieldKey{
+				"scope.name": {
+					{
+						Name:          "scope.name",
+						Signal:        telemetrytypes.SignalTraces,
+						FieldContext:  telemetrytypes.FieldContextScope,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+				},
+				"name": {
+					{
+						Name:          "name",
+						Signal:        telemetrytypes.SignalTraces,
+						FieldContext:  telemetrytypes.FieldContextSpan,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+				},
+			},
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Filter:       &qbtypes.Filter{},
+				SelectFields: []telemetrytypes.TelemetryFieldKey{
+					{Name: "name", FieldContext: telemetrytypes.FieldContextScope},
+				},
+				Limit: 10,
+			},
+			expected: qbtypes.Statement{
+				Query: "SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, multiIf(scope.name::String <> '', scope.name::String, NULL) AS `__SELECT_KEY_3_name` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
+			},
+		},
+		{
+			// span.scope.name (span context, name "scope.name") resolves to the declared
+			// scope path scope.name, not a span attribute literally named scope.name.
+			name:        "span-context scope.name in selectFields resolves to the declared scope path",
+			requestType: qbtypes.RequestTypeRaw,
+			keysMap:     map[string][]*telemetrytypes.TelemetryFieldKey{},
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Filter:       &qbtypes.Filter{},
+				SelectFields: []telemetrytypes.TelemetryFieldKey{
+					{Name: "scope.name", FieldContext: telemetrytypes.FieldContextSpan},
+				},
+				Limit: 10,
+			},
+			expected: qbtypes.Statement{
+				Query: "SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, multiIf(scope.name::String <> '', scope.name::String, NULL) AS `__SELECT_KEY_3_scope.name` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
+			},
 		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			fl := flaggertest.New(t)
-			fm := tracestelemetryschema.NewFieldMapper()
-			cb := tracestelemetryschema.NewConditionBuilder(fm)
+			storage := tracestelemetryschema.NewStorage()
 			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 			mockMetadataStore.KeysMap = c.keysMap
 			if mockMetadataStore.KeysMap == nil {
 				mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 			}
-			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
 
 			statementBuilder := NewTraceQueryStatementBuilder(
 				instrumentationtest.New().ToProviderSettings(),
 				mockMetadataStore,
-				fm,
-				cb,
+				storage,
 				aggExprRewriter,
 				nil,
 				fl,
@@ -854,7 +1074,7 @@ func TestStatementBuilderGroupByResourceEvolution(t *testing.T) {
 			startMs: 1747947419000, // 2025-05-22 21:56:59 UTC, ~3m before release
 			endMs:   1747983448000, // 2025-05-23 07:57:28 UTC, ~10h after release
 			expected: qbtypes.Statement{
-				Query: "WITH __limit_cte AS (SELECT toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `__GROUP_BY_KEY_0_service.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_service.name` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `__GROUP_BY_KEY_0_service.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_service.name`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_service.name` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_service.name`",
+				Query: "WITH __limit_cte AS (SELECT toString(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS `__GROUP_BY_KEY_0_service.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_service.name` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS `__GROUP_BY_KEY_0_service.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_service.name`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_service.name` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_service.name`",
 				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10, "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
 			},
 		},
@@ -879,17 +1099,15 @@ func TestStatementBuilderGroupByResourceEvolution(t *testing.T) {
 	}
 
 	fl := flaggertest.New(t)
-	fm := tracestelemetryschema.NewFieldMapper()
-	cb := tracestelemetryschema.NewConditionBuilder(fm)
+	storage := tracestelemetryschema.NewStorage()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
 
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
-		fm,
-		cb,
+		storage,
 		aggExprRewriter,
 		nil,
 		fl,
@@ -960,7 +1178,7 @@ func TestStatementBuilderTraceQuery(t *testing.T) {
 				Limit: 10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __toe AS (SELECT trace_id FROM signoz_traces.distributed_signoz_index_v3 WHERE (`attribute_string_materialized$$key$$name` = ? AND `attribute_string_materialized$$key$$name_exists`) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ?), __toe_duration_sorted AS (SELECT trace_id, duration_nano, resource_string_service$$name as `service.name`, name FROM signoz_traces.distributed_signoz_index_v3 WHERE parent_span_id = '' AND trace_id GLOBAL IN __toe AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY duration_nano DESC LIMIT 1 BY trace_id) SELECT __toe_duration_sorted.`service.name` AS `service.name`, __toe_duration_sorted.name AS `name`, count() AS span_count, __toe_duration_sorted.duration_nano AS `duration_nano`, __toe_duration_sorted.trace_id AS `trace_id` FROM __toe INNER JOIN __toe_duration_sorted ON __toe.trace_id = __toe_duration_sorted.trace_id GROUP BY trace_id, duration_nano, name, `service.name` ORDER BY duration_nano DESC LIMIT 1 BY trace_id LIMIT ? SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000",
+				Query: "WITH __toe AS (SELECT trace_id FROM signoz_traces.distributed_signoz_index_v3 WHERE (`attribute_string_materialized$$key$$name` = ? AND `attribute_string_materialized$$key$$name_exists` = true) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ?), __toe_duration_sorted AS (SELECT trace_id, duration_nano, resource_string_service$$name as `service.name`, name FROM signoz_traces.distributed_signoz_index_v3 WHERE parent_span_id = '' AND trace_id GLOBAL IN __toe AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY duration_nano DESC LIMIT 1 BY trace_id) SELECT __toe_duration_sorted.`service.name` AS `service.name`, __toe_duration_sorted.name AS `name`, count() AS span_count, __toe_duration_sorted.duration_nano AS `duration_nano`, __toe_duration_sorted.trace_id AS `trace_id` FROM __toe INNER JOIN __toe_duration_sorted ON __toe.trace_id = __toe_duration_sorted.trace_id GROUP BY trace_id, duration_nano, name, `service.name` ORDER BY duration_nano DESC LIMIT 1 BY trace_id LIMIT ? SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000",
 				Args:  []any{"redis-manual", "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -976,7 +1194,7 @@ func TestStatementBuilderTraceQuery(t *testing.T) {
 				Limit: 10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __toe AS (SELECT trace_id FROM signoz_traces.distributed_signoz_index_v3 WHERE ((match(`attribute_string_materialized$$key$$name`, ?) AND `attribute_string_materialized$$key$$name_exists`) OR (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ?), __toe_duration_sorted AS (SELECT trace_id, duration_nano, resource_string_service$$name as `service.name`, name FROM signoz_traces.distributed_signoz_index_v3 WHERE parent_span_id = '' AND trace_id GLOBAL IN __toe AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY duration_nano DESC LIMIT 1 BY trace_id) SELECT __toe_duration_sorted.`service.name` AS `service.name`, __toe_duration_sorted.name AS `name`, count() AS span_count, __toe_duration_sorted.duration_nano AS `duration_nano`, __toe_duration_sorted.trace_id AS `trace_id` FROM __toe INNER JOIN __toe_duration_sorted ON __toe.trace_id = __toe_duration_sorted.trace_id GROUP BY trace_id, duration_nano, name, `service.name` ORDER BY duration_nano DESC LIMIT 1 BY trace_id LIMIT ? SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000",
+				Query: "WITH __toe AS (SELECT trace_id FROM signoz_traces.distributed_signoz_index_v3 WHERE ((match(`attribute_string_materialized$$key$$name`, ?) AND `attribute_string_materialized$$key$$name_exists` = true) OR multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ?) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ?), __toe_duration_sorted AS (SELECT trace_id, duration_nano, resource_string_service$$name as `service.name`, name FROM signoz_traces.distributed_signoz_index_v3 WHERE parent_span_id = '' AND trace_id GLOBAL IN __toe AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY duration_nano DESC LIMIT 1 BY trace_id) SELECT __toe_duration_sorted.`service.name` AS `service.name`, __toe_duration_sorted.name AS `name`, count() AS span_count, __toe_duration_sorted.duration_nano AS `duration_nano`, __toe_duration_sorted.trace_id AS `trace_id` FROM __toe INNER JOIN __toe_duration_sorted ON __toe.trace_id = __toe_duration_sorted.trace_id GROUP BY trace_id, duration_nano, name, `service.name` ORDER BY duration_nano DESC LIMIT 1 BY trace_id LIMIT ? SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000",
 				Args:  []any{"redis-manual", "redis-manual", "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -1022,7 +1240,7 @@ func TestStatementBuilderTraceQuery(t *testing.T) {
 				Limit: 10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __toe AS (SELECT trace_id FROM signoz_traces.distributed_signoz_index_v3 WHERE (((name, resource_string_service$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from signoz_traces.distributed_top_level_operations WHERE time >= toDateTime(1747947419))) AND parent_span_id != '' OR (`attribute_string_materialized$$key$$name` = ? AND `attribute_string_materialized$$key$$name_exists`)) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ?), __toe_duration_sorted AS (SELECT trace_id, duration_nano, resource_string_service$$name as `service.name`, name FROM signoz_traces.distributed_signoz_index_v3 WHERE parent_span_id = '' AND trace_id GLOBAL IN __toe AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY duration_nano DESC LIMIT 1 BY trace_id) SELECT __toe_duration_sorted.`service.name` AS `service.name`, __toe_duration_sorted.name AS `name`, count() AS span_count, __toe_duration_sorted.duration_nano AS `duration_nano`, __toe_duration_sorted.trace_id AS `trace_id` FROM __toe INNER JOIN __toe_duration_sorted ON __toe.trace_id = __toe_duration_sorted.trace_id GROUP BY trace_id, duration_nano, name, `service.name` ORDER BY duration_nano DESC LIMIT 1 BY trace_id LIMIT ? SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000",
+				Query: "WITH __toe AS (SELECT trace_id FROM signoz_traces.distributed_signoz_index_v3 WHERE (((name, resource_string_service$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from signoz_traces.distributed_top_level_operations WHERE time >= toDateTime(1747947419))) AND parent_span_id != '' OR (`attribute_string_materialized$$key$$name` = ? AND `attribute_string_materialized$$key$$name_exists` = true)) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ?), __toe_duration_sorted AS (SELECT trace_id, duration_nano, resource_string_service$$name as `service.name`, name FROM signoz_traces.distributed_signoz_index_v3 WHERE parent_span_id = '' AND trace_id GLOBAL IN __toe AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY duration_nano DESC LIMIT 1 BY trace_id) SELECT __toe_duration_sorted.`service.name` AS `service.name`, __toe_duration_sorted.name AS `name`, count() AS span_count, __toe_duration_sorted.duration_nano AS `duration_nano`, __toe_duration_sorted.trace_id AS `trace_id` FROM __toe INNER JOIN __toe_duration_sorted ON __toe.trace_id = __toe_duration_sorted.trace_id GROUP BY trace_id, duration_nano, name, `service.name` ORDER BY duration_nano DESC LIMIT 1 BY trace_id LIMIT ? SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000",
 				Args:  []any{"redis-manual", "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -1046,17 +1264,15 @@ func TestStatementBuilderTraceQuery(t *testing.T) {
 	}
 
 	fl := flaggertest.New(t)
-	fm := tracestelemetryschema.NewFieldMapper()
-	cb := tracestelemetryschema.NewConditionBuilder(fm)
+	storage := tracestelemetryschema.NewStorage()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
 
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
-		fm,
-		cb,
+		storage,
 		aggExprRewriter,
 		nil,
 		fl,
@@ -1684,21 +1900,17 @@ func newSkipResourceFingerprintBuilder(
 	t.Helper()
 
 	fl := flaggertest.New(t)
-	fm := tracestelemetryschema.NewFieldMapper()
-	cb := tracestelemetryschema.NewConditionBuilder(fm)
+	storage := tracestelemetryschema.NewStorage()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(
-		instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl,
-	)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
 
 	return NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
-		fm,
-		cb,
+		storage,
 		aggExprRewriter,
 		telemetryStore,
 		fl,
@@ -1714,17 +1926,15 @@ func TestStatementBuilderGroupByUnseenKey(t *testing.T) {
 	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 
 	fl := flaggertest.New(t)
-	fm := tracestelemetryschema.NewFieldMapper()
-	cb := tracestelemetryschema.NewConditionBuilder(fm)
+	storage := tracestelemetryschema.NewStorage()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
 
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
-		fm,
-		cb,
+		storage,
 		aggExprRewriter,
 		nil,
 		fl,
@@ -1756,17 +1966,15 @@ func TestStatementBuilderAggregationUnseenKey(t *testing.T) {
 	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 
 	fl := flaggertest.New(t)
-	fm := tracestelemetryschema.NewFieldMapper()
-	cb := tracestelemetryschema.NewConditionBuilder(fm)
+	storage := tracestelemetryschema.NewStorage()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
 
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
-		fm,
-		cb,
+		storage,
 		aggExprRewriter,
 		nil,
 		fl,
@@ -1786,4 +1994,119 @@ func TestStatementBuilderAggregationUnseenKey(t *testing.T) {
 	assert.Contains(t, q.Query, "attributes_string['error.type']")
 	assert.Contains(t, q.Query, "attributes_number['error.type']")
 	assert.Contains(t, q.Query, "attributes_bool['error.type']")
+}
+
+// TestStatementBuilderSemconvFamilies builds the same family-member filter
+// with the resolve_semconv_families flag on and off. On: the resource filter
+// merges both spellings and widens the index hints to any member. Off: the
+// query uses only the requested spelling, so users see no change.
+func TestStatementBuilderSemconvFamilies(t *testing.T) {
+	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
+	query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+		Signal:       telemetrytypes.SignalTraces,
+		StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+		Aggregations: []qbtypes.TraceAggregation{{Expression: "count()"}},
+		Filter: &qbtypes.Filter{
+			Expression: "deployment.environment.name = 'production'",
+		},
+	}
+
+	cases := []struct {
+		name     string
+		flag     bool
+		expected qbtypes.Statement
+	}{
+		{
+			name: "flag on merges both spellings",
+			flag: true,
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (COALESCE(NULLIF(simpleJSONExtractString(labels, 'deployment.environment.name'), ''), NULLIF(simpleJSONExtractString(labels, 'deployment.environment'), ''), '') = ? AND (labels LIKE ? OR labels LIKE ?) AND (labels LIKE ? OR labels LIKE ?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY __result_0 DESC",
+				Args:  []any{"production", "%deployment.environment.name%", "%deployment.environment%", "%deployment.environment.name\":\"production%", "%deployment.environment\":\"production%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
+			},
+		},
+		{
+			name: "flag off keeps the literal spelling",
+			flag: false,
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'deployment.environment.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY __result_0 DESC",
+				Args:  []any{"production", "%deployment.environment.name%", "%deployment.environment.name\":\"production%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			fl := flaggertest.WithBooleanFlags(t, map[string]bool{
+				flagger.FeatureResolveSemconvFamilies.String(): c.flag,
+			})
+			storage := tracestelemetryschema.NewStorage()
+			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+			mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
+
+			statementBuilder := NewTraceQueryStatementBuilder(
+				instrumentationtest.New().ToProviderSettings(),
+				mockMetadataStore,
+				storage,
+				aggExprRewriter,
+				nil,
+				fl,
+				false,
+				100000,
+			)
+
+			q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, qbtypes.RequestTypeScalar, query, nil)
+			require.NoError(t, err)
+			require.Equal(t, c.expected.Query, q.Query)
+			require.Equal(t, c.expected.Args, q.Args)
+		})
+	}
+}
+
+// The mid-migration state: metadata holds only the old spelling, and the
+// query names the current one. The resource-filter condition and the group
+// by column both read the stored spelling, so the filter and the groups
+// agree.
+func TestStatementBuilderSemconvSingleSpelling(t *testing.T) {
+	fl := flaggertest.WithBooleanFlags(t, map[string]bool{
+		flagger.FeatureResolveSemconvFamilies.String(): true,
+	})
+	storage := tracestelemetryschema.NewStorage()
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	mockMetadataStore.KeysMap = map[string][]*telemetrytypes.TelemetryFieldKey{
+		"deployment.environment": {{
+			Name:          "deployment.environment",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextResource,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		}},
+	}
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
+
+	statementBuilder := NewTraceQueryStatementBuilder(
+		instrumentationtest.New().ToProviderSettings(),
+		mockMetadataStore,
+		storage,
+		aggExprRewriter,
+		nil,
+		fl,
+		false,
+		100000,
+	)
+
+	query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+		Signal:       telemetrytypes.SignalTraces,
+		StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+		Aggregations: []qbtypes.TraceAggregation{{Expression: "count()"}},
+		Filter: &qbtypes.Filter{
+			Expression: "deployment.environment.name = 'production'",
+		},
+		GroupBy: []qbtypes.GroupByKey{
+			{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}},
+		},
+	}
+
+	q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, qbtypes.RequestTypeScalar, query, nil)
+	require.NoError(t, err)
+	require.Equal(t, "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'deployment.environment') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT toString(multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL)) AS `__GROUP_BY_KEY_0_deployment.environment.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_deployment.environment.name` ORDER BY __result_0 DESC", q.Query)
 }

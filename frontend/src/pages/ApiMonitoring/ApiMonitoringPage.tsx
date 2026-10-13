@@ -13,9 +13,12 @@ function ApiMonitoringPage(): JSX.Element {
 	const routes: TabRoutes[] = [Explorer];
 
 	return (
-		<div className="api-monitoring-page">
-			<RouteTab routes={routes} activeKey={pathname} history={history} />
-		</div>
+		<RouteTab
+			className="api-monitoring-page"
+			routes={routes}
+			activeKey={pathname}
+			history={history}
+		/>
 	);
 }
 

@@ -40,8 +40,8 @@ describe('InviteMembers - Submission', () => {
 
 			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
 			await user.type(emailInputs[0], 'alice@signoz.io');
-			await user.click(screen.getAllByText('Select role')[0]);
-			await user.click(await screen.findByText('Viewer'));
+			await user.click(screen.getAllByText('Select roles')[0]);
+			await user.click(await screen.findByTitle('Viewer'));
 
 			await user.click(screen.getByTestId('submit-btn'));
 
@@ -73,17 +73,17 @@ describe('InviteMembers - Submission', () => {
 			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
 
 			await user.type(emailInputs[0], 'alice@signoz.io');
-			await user.click(screen.getAllByText('Select role')[0]);
-			await user.click(await screen.findByText('Viewer'));
+			await user.click(screen.getAllByText('Select roles')[0]);
+			await user.click(await screen.findByTitle('Viewer'));
 
 			await user.type(emailInputs[1], 'bob@signoz.io');
-			await user.click(screen.getAllByText('Select role')[0]);
-			const editorOptions = await screen.findAllByText('Editor');
+			await user.click(screen.getAllByText('Select roles')[0]);
+			const editorOptions = await screen.findAllByTitle('Editor');
 			await user.click(editorOptions[editorOptions.length - 1]);
 
 			await user.type(emailInputs[2], 'charlie@signoz.io');
-			await user.click(screen.getAllByText('Select role')[0]);
-			const adminOptions = await screen.findAllByText('Admin');
+			await user.click(screen.getAllByText('Select roles')[0]);
+			const adminOptions = await screen.findAllByTitle('Admin');
 			await user.click(adminOptions[adminOptions.length - 1]);
 
 			await user.click(screen.getByTestId('submit-btn'));
@@ -125,8 +125,8 @@ describe('InviteMembers - Submission', () => {
 
 			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
 			await user.type(emailInputs[0], VALID_EMAIL);
-			await user.click(screen.getAllByText('Select role')[0]);
-			await user.click(await screen.findByText('Viewer'));
+			await user.click(screen.getAllByText('Select roles')[0]);
+			await user.click(await screen.findByTitle('Viewer'));
 
 			await user.click(screen.getByTestId('submit-btn'));
 
@@ -154,8 +154,8 @@ describe('InviteMembers - Submission', () => {
 
 			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
 			await user.type(emailInputs[0], VALID_EMAIL);
-			await user.click(screen.getAllByText('Select role')[0]);
-			await user.click(await screen.findByText('Viewer'));
+			await user.click(screen.getAllByText('Select roles')[0]);
+			await user.click(await screen.findByTitle('Viewer'));
 
 			await user.click(screen.getByTestId('submit-btn'));
 
@@ -218,12 +218,12 @@ describe('InviteMembers - Submission', () => {
 			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
 
 			await user.type(emailInputs[0], 'alice@signoz.io');
-			await user.click(screen.getAllByText('Select role')[0]);
-			await user.click(await screen.findByText('Viewer'));
+			await user.click(screen.getAllByText('Select roles')[0]);
+			await user.click(await screen.findByTitle('Viewer'));
 
 			await user.type(emailInputs[1], 'bob@signoz.io');
-			await user.click(screen.getAllByText('Select role')[0]);
-			const editorOptions = await screen.findAllByText('Editor');
+			await user.click(screen.getAllByText('Select roles')[0]);
+			const editorOptions = await screen.findAllByTitle('Editor');
 			await user.click(editorOptions[editorOptions.length - 1]);
 
 			await user.click(screen.getByTestId('submit-btn'));
@@ -276,8 +276,8 @@ describe('InviteMembers - Submission', () => {
 
 			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
 			await user.type(emailInputs[0], VALID_EMAIL);
-			await user.click(screen.getAllByText('Select role')[0]);
-			await user.click(await screen.findByText('Viewer'));
+			await user.click(screen.getAllByText('Select roles')[0]);
+			await user.click(await screen.findByTitle('Viewer'));
 
 			await user.click(screen.getByTestId('submit-btn'));
 
@@ -303,8 +303,8 @@ describe('InviteMembers - Submission', () => {
 
 			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
 			await user.type(emailInputs[0], VALID_EMAIL);
-			await user.click(screen.getAllByText('Select role')[0]);
-			await user.click(await screen.findByText('Viewer'));
+			await user.click(screen.getAllByText('Select roles')[0]);
+			await user.click(await screen.findByTitle('Viewer'));
 
 			await user.click(screen.getByTestId('submit-btn'));
 

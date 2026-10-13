@@ -26,48 +26,6 @@ export function formatBytes(bytes: number, decimals = 2): string {
 	return `${parseFloat((bytes / k ** i).toFixed(decimals))} ${sizes[i]}`;
 }
 
-/**
- * Returns stroke color for request utilization parameters according to current value
- */
-export function getStrokeColorForRequestUtilization(value: number): string {
-	const percent = Number((value * 100).toFixed(1));
-	// Orange
-	if (percent <= 50) {
-		return Color.BG_AMBER_500;
-	}
-	// Green
-	if (percent > 50 && percent <= 100) {
-		return Color.BG_FOREST_500;
-	}
-	// Regular Red
-	if (percent > 100 && percent <= 150) {
-		return Color.BG_SAKURA_500;
-	}
-	// Dark Red
-	return Color.BG_CHERRY_600;
-}
-
-/**
- * Returns stroke color for limit utilization parameters according to current value
- */
-export function getStrokeColorForLimitUtilization(value: number): string {
-	const percent = Number((value * 100).toFixed(1));
-	// Green
-	if (percent <= 60) {
-		return Color.BG_FOREST_500;
-	}
-	// Yellow
-	if (percent > 60 && percent <= 80) {
-		return Color.BG_AMBER_200;
-	}
-	// Orange
-	if (percent > 80 && percent <= 95) {
-		return Color.BG_AMBER_500;
-	}
-	// Red
-	return Color.BG_SAKURA_500;
-}
-
 export const POD_STATUS_COLORS: Record<
 	InframonitoringtypesPodStatusDTO,
 	BadgeColor
@@ -91,6 +49,34 @@ export const POD_STATUS_COLORS: Record<
 	[InframonitoringtypesPodStatusDTO.nodelost]: 'cherry',
 	[InframonitoringtypesPodStatusDTO.shutdown]: 'cherry',
 	[InframonitoringtypesPodStatusDTO.unexpectedadmissionerror]: 'cherry',
+};
+
+/** kubectl prints these as single CamelCase words, so the enum value alone is not a usable label. */
+export const POD_STATUS_LABELS: Record<
+	InframonitoringtypesPodStatusDTO,
+	string
+> = {
+	[InframonitoringtypesPodStatusDTO.running]: 'Running',
+	[InframonitoringtypesPodStatusDTO.completed]: 'Completed',
+	[InframonitoringtypesPodStatusDTO.pending]: 'Pending',
+	[InframonitoringtypesPodStatusDTO.unknown]: 'Unknown',
+	[InframonitoringtypesPodStatusDTO.no_data]: 'No data',
+	[InframonitoringtypesPodStatusDTO.failed]: 'Failed',
+	[InframonitoringtypesPodStatusDTO.crashloopbackoff]: 'CrashLoopBackOff',
+	[InframonitoringtypesPodStatusDTO.imagepullbackoff]: 'ImagePullBackOff',
+	[InframonitoringtypesPodStatusDTO.errimagepull]: 'ErrImagePull',
+	[InframonitoringtypesPodStatusDTO.createcontainerconfigerror]:
+		'CreateContainerConfigError',
+	[InframonitoringtypesPodStatusDTO.containercreating]: 'ContainerCreating',
+	[InframonitoringtypesPodStatusDTO.oomkilled]: 'OOMKilled',
+	[InframonitoringtypesPodStatusDTO.error]: 'Error',
+	[InframonitoringtypesPodStatusDTO.containercannotrun]: 'ContainerCannotRun',
+	[InframonitoringtypesPodStatusDTO.evicted]: 'Evicted',
+	[InframonitoringtypesPodStatusDTO.nodeaffinity]: 'NodeAffinity',
+	[InframonitoringtypesPodStatusDTO.nodelost]: 'NodeLost',
+	[InframonitoringtypesPodStatusDTO.shutdown]: 'Shutdown',
+	[InframonitoringtypesPodStatusDTO.unexpectedadmissionerror]:
+		'UnexpectedAdmissionError',
 };
 
 type PodStatusCategory =
@@ -147,6 +133,24 @@ const ERROR_STATUS_LABELS: Record<ErrorStatusKey, string> = {
 	unexpectedAdmissionError: 'UnexpectedAdmissionError',
 };
 
+const POD_STATUS_VALUES = new Set<string>(
+	Object.values(InframonitoringtypesPodStatusDTO),
+);
+
+/**
+ * The count DTO spells each status in camelCase (`crashLoopBackOff`) where the
+ * status enum spells it lowercase (`crashloopbackoff`); anything that does not
+ * land on a real enum member is dropped rather than sent to the API.
+ */
+function countKeyToPodStatus(
+	key: string,
+): InframonitoringtypesPodStatusDTO | null {
+	const value = key.toLowerCase();
+	return POD_STATUS_VALUES.has(value)
+		? (value as InframonitoringtypesPodStatusDTO)
+		: null;
+}
+
 export function getPodStatusItems(
 	counts: InframonitoringtypesPodCountsByStatusDTO,
 ): StatusCountItem[] {
@@ -156,18 +160,42 @@ export function getPodStatusItems(
 	const errorBreakdown = errorKeys.map((key) => ({
 		label: ERROR_STATUS_LABELS[key],
 		value: counts[key],
+		statuses: [countKeyToPodStatus(key)].filter(
+			(status): status is InframonitoringtypesPodStatusDTO => status !== null,
+		),
 	}));
 
 	return [
-		{ value: counts.running, label: 'Running', color: Color.BG_FOREST_500 },
-		{ value: counts.completed, label: 'Completed', color: Color.BG_ROBIN_500 },
-		{ value: counts.pending, label: 'Pending', color: Color.BG_AMBER_500 },
-		{ value: counts.unknown, label: 'Unknown', color: Color.BG_SLATE_400 },
+		{
+			value: counts.running,
+			label: 'Running',
+			color: Color.BG_FOREST_500,
+			statuses: [InframonitoringtypesPodStatusDTO.running],
+		},
+		{
+			value: counts.completed,
+			label: 'Completed',
+			color: Color.BG_ROBIN_500,
+			statuses: [InframonitoringtypesPodStatusDTO.completed],
+		},
+		{
+			value: counts.pending,
+			label: 'Pending',
+			color: Color.BG_AMBER_500,
+			statuses: [InframonitoringtypesPodStatusDTO.pending],
+		},
+		{
+			value: counts.unknown,
+			label: 'Unknown',
+			color: Color.BG_SLATE_400,
+			statuses: [InframonitoringtypesPodStatusDTO.unknown],
+		},
 		{
 			value: errorTotal,
 			label: 'Error Status',
 			color: Color.BG_CHERRY_500,
 			breakdown: errorBreakdown,
+			statuses: errorBreakdown.flatMap((item) => item.statuses),
 		},
 	];
 }

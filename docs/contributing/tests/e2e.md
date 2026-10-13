@@ -30,11 +30,11 @@ yarn install:browsers   # one-time Playwright browser install
 
 ### Starting the Test Environment
 
-To spin up the backend stack (SigNoz, ClickHouse, Postgres, Zookeeper, Zeus mock, gateway mock, seeder, migrator-with-web) and keep it running:
+To spin up the backend stack (SigNoz, ClickHouse, Postgres, ClickHouse Keeper, Zeus mock, gateway mock, seeder, migrator-with-web) and keep it running:
 
 ```bash
 cd tests
-uv run pytest --basetemp=./tmp/ -vv --reuse --with-web \
+uv run pytest --basetemp=./tmp/ -vv --reuse --rebuild --with-web \
   e2e/bootstrap/setup.py::test_setup
 ```
 
@@ -45,8 +45,13 @@ This command will:
 - Start the HTTP seeder container (`tests/seeder/` — exposing `/telemetry/{traces,logs,metrics}` POST + DELETE)
 - Write backend coordinates to `tests/e2e/.env.local` (loaded by `playwright.config.ts` via dotenv)
 - Keep containers running via the `--reuse` flag
+- Rebuild the SigNoz container from the current sources via the `--rebuild` flag
 
-The `--with-web` flag builds the frontend into the SigNoz container — required for E2E. The build takes ~4 mins on a cold start.
+The `--with-web` flag builds the frontend into the SigNoz container — required for E2E. The build takes ~4 mins on a cold start; later builds are incremental.
+
+### Rebuilding After Source Changes
+
+The `--with-web` image bakes the built frontend in, so neither backend nor frontend changes are picked up while `--reuse` keeps the container running. `--rebuild` fixes that for both: it kills the SigNoz container, rebuilds the image incrementally (go build cache + pnpm store — a frontend-only change rebuilds in about a minute), and starts a fresh one while databases, mocks, migrations, and the seeder stay reused. The setup command above passes it, so the iteration loop is: change code → re-run the setup command → re-run your specs. `--rebuild` requires `--reuse` and cannot be combined with `--teardown` or `--clean`.
 
 ### Stopping the Test Environment
 
@@ -106,6 +111,41 @@ These two folders look similar but mean different things:
 - **`testdata/`** holds static data files (typically JSON / YAML) consumed by the helpers — for example, `apm-metrics.json`, a real dashboard payload uploaded through the UI by an importer helper.
 
 Rule of thumb: if it's a `test.extend` fixture, put it in `fixtures/`. If it's a function you call explicitly (or a constant the function uses), put it in `helpers/`. If it's a static file the helpers read, put it in `testdata/`.
+
+### Extended fixtures
+
+For features needing complex setup (API-seeded data, ruler evaluation waits, cleanup), create domain-specific fixtures that extend `auth`. Group them in `fixtures/<domain>/`.
+
+**Fixture scopes:**
+- **test scope** — fresh data per test. Use for mutations (edit, delete, rename).
+- **worker scope** — shared across tests in one worker. Use for read-only data. Worker scope pays the setup cost once per worker instead of once per test.
+
+**The alerts pattern** (`fixtures/alerts/`) demonstrates extending fixtures:
+
+```
+fixtures/alerts/
+├── alert-rules.ts   # extends auth — worker-scoped rule list + test-scoped factory
+└── alert-history.ts # extends alert-rules — adds history fixtures (waits on ruler)
+```
+
+Specs import from the fixture they need:
+
+```ts
+// List tests — just need rules, no history
+import { test, expect } from '../../../fixtures/alerts/alert-rules';
+
+// History tests — need history rows from ruler evaluation
+import { test, expect } from '../../../fixtures/alerts/alert-history';
+```
+
+**When creating new fixtures:**
+
+1. **Identify scope** — Will tests mutate the data? If yes, test-scoped. If read-only, worker-scoped.
+2. **Group by domain** — Put fixtures in `fixtures/<domain>/`. Helpers in `helpers/<domain>/`.
+3. **Extend existing fixtures** — Chain from `auth` or another fixture to inherit its setup.
+4. **Handle timeouts** — Worker-scoped fixtures that wait on backend processing need explicit timeouts.
+5. **Clean up** — Always delete seeded data in the fixture teardown (after `use()`).
+6. **Extract logic into functions** — Keep the `test.extend()` block lean; move setup/teardown logic to named functions so the extend block reads as a manifest of "what fixtures exist."
 
 Each spec follows these principles:
 
@@ -227,11 +267,14 @@ cd tests/e2e
 # Single feature dir
 npx playwright test tests/alerts/ --project=chromium
 
+# Single sub-area
+npx playwright test tests/alerts/history/ --project=chromium
+
 # Single file
-npx playwright test tests/alerts/alerts.spec.ts --project=chromium
+npx playwright test tests/alerts/page.spec.ts --project=chromium
 
 # Single test by title grep
-npx playwright test --project=chromium -g "TC-01"
+npx playwright test --project=chromium -g "AL-01"
 ```
 
 ### Iterative modes
@@ -265,7 +308,14 @@ yarn test:staging
 | `SIGNOZ_E2E_PASSWORD` | Admin password. Bootstrap writes the integration-test default. |
 | `SIGNOZ_E2E_SEEDER_URL` | Seeder HTTP base URL — hit by specs that need per-test telemetry. |
 
-Loading order in `playwright.config.ts`: `.env` first (user-provided, staging), then `.env.local` with `override: true` (bootstrap-generated, local mode). Anything already set in `process.env` at yarn-test time wins because dotenv doesn't touch vars that are already present.
+Precedence in `playwright.config.ts`, lowest to highest: `.env` (user-provided, staging) → `.env.local` (bootstrap-generated, local mode) → whatever is already in `process.env`. The config parses both files itself and only fills in keys the environment does not already define, so exporting a variable always wins:
+
+```bash
+# runs against a locally served frontend, not whatever .env.local points at
+SIGNOZ_E2E_BASE_URL=http://127.0.0.1:3301 pnpm test tests/alerts
+```
+
+This is deliberately not `dotenv.config({ override: true })`. That flag makes the *file* beat `process.env`, which silently discarded exported values — including the `SIGNOZ_E2E_BASE_URL` in `pnpm test:staging`, whenever a `.env.local` happened to exist.
 
 ### Playwright options
 
@@ -281,13 +331,16 @@ The full `playwright.config.ts` is the source of truth. Common things to tweak:
 The same pytest flags integration tests expose work here, since E2E reuses the shared fixture graph:
 
 - `--reuse` — keep containers warm between runs (required for all iteration).
+- `--rebuild` — recreate the SigNoz container from the current sources (backend and, with `--with-web`, frontend) while the rest of the stack stays up. Requires `--reuse`.
 - `--teardown` — tear everything down.
+- `--clean` — prune the docker build caches, forcing the next image build to start cold.
 - `--with-web` — build the frontend into the SigNoz container. **Required for E2E**; integration tests don't need it.
-- `--sqlstore-provider`, `--postgres-version`, `--clickhouse-version`, etc. — see `docs/contributing/integration.md`.
+- `--sqlstore-provider`, `--postgres-version`, `--clickhouse-version`, etc. — see `docs/contributing/tests/integration.md`.
 
 ## What should I remember?
 
-- **Always use the `--reuse` flag** when setting up the E2E stack. `--with-web` adds a ~4 min frontend build; you only want to pay that once.
+- **Always use the `--reuse` flag** when setting up the E2E stack. `--with-web` adds a ~4 min frontend build on a cold start; later builds are incremental.
+- **Changed backend or frontend code? Re-run the setup command** — it passes `--rebuild`, swapping the SigNoz container for one built from your current sources while the rest of the stack stays up.
 - **Don't teardown before setup.** `--reuse` correctly handles partially-set-up state, so chaining teardown → setup wastes time.
 - **Prefer UI-driven flows.** Playwright captures BE requests in the trace; a parallel `fetch` probe is almost always redundant. Drop to `page.request.*` only when the UI can't reach what you need.
 - **Use `page.waitForResponse` on UI clicks** to assert BE contracts — it still exercises the UI trigger path.

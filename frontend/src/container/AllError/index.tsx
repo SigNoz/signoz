@@ -37,9 +37,8 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Exception, PayloadProps } from 'types/api/errors/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { FeatureKeys } from '../../constants/features';
-import { useAppContext } from '../../providers/App/App';
 import { FilterDropdownExtendsProps } from './types';
+import { useExceptionsStripInfo } from './useExceptionsStripInfo';
 import {
 	extractFilterValues,
 	getDefaultFilterValue,
@@ -161,6 +160,11 @@ function AllErrors(): JSX.Element {
 				enabled: !loading,
 			},
 		]);
+
+	useExceptionsStripInfo({
+		shownCount: data?.payload?.length ?? 0,
+		totalCount: errorCountResponse.data?.payload ?? 0,
+	});
 
 	const isFetching = isErrorsFetching || errorCountResponse.isFetching;
 	useEffect(() => {
@@ -418,11 +422,6 @@ function AllErrors(): JSX.Element {
 		},
 	];
 
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
-
 	const onChangeHandler: TableProps<Exception>['onChange'] = useCallback(
 		(
 			paginations: TablePaginationConfig,
@@ -458,7 +457,7 @@ function AllErrors(): JSX.Element {
 	useEffect(() => {
 		if (!isUndefined(errorCountResponse.data?.payload)) {
 			const selectedEnvironments = queries.find(
-				(val) => val.tagKey === getResourceDeploymentKeys(dotMetricsEnabled),
+				(val) => val.tagKey === getResourceDeploymentKeys(),
 			)?.tagValue;
 
 			logEvent('Exception: List page visited', {

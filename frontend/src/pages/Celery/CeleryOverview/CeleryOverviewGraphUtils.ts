@@ -2,7 +2,7 @@ import { getStepInterval } from 'components/CeleryTask/CeleryTaskGraph/CeleryTas
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { getWidgetQuery } from 'pages/MessagingQueues/MQDetails/MetricPage/MetricPageUtil';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import {
 	BaseAutocompleteData,
 	DataTypes,

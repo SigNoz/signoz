@@ -16,7 +16,7 @@ import LogsError from 'container/LogsError/LogsError';
 import { EmptyLogsListConfig } from 'container/LogsExplorerList/utils';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { FontSize } from 'container/OptionsMenu/types';
-import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import createQueryParams from 'lib/createQueryParams';
 import { Compass } from '@signozhq/icons';

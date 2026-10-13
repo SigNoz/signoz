@@ -41,8 +41,10 @@
 	.ant-drawer-body {
 		display: flex;
 		flex-direction: column;
-		padding: 16px;
-		padding-bottom: 0;
+		padding: 0 16px;
+		// OverlayScrollbar owns the scroll. A native scrollbar here changes the
+		// body width when it toggles and shifts the header grid.
+		overflow: hidden;
 	}
 
 	.title {
@@ -70,7 +72,7 @@
 	}
 
 	.log-detail-drawer__content {
-		height: 100%;
+		min-height: 100%;
 	}
 
 	.log-detail-drawer__log {
@@ -79,6 +81,7 @@
 		align-items: center;
 		gap: 4px;
 		position: relative;
+		margin-top: 16px;
 
 		.log-body {
 			font-family: 'SF Mono';
@@ -121,6 +124,19 @@
 			position: absolute;
 			right: 0;
 		}
+	}
+
+	.log-detail-drawer__section-divider {
+		height: 8px;
+		margin: 12px 0;
+		background-image:
+			radial-gradient(circle, var(--l3-border) 1px, transparent 1px),
+			radial-gradient(circle, var(--l3-border) 1px, transparent 1px);
+		background-size: 6px 2px;
+		background-position:
+			left top,
+			left bottom;
+		background-repeat: repeat-x;
 	}
 
 	.tabs-and-search {

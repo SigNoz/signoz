@@ -1,7 +1,3 @@
-"""
-Look at the histogram_data_1h.jsonl file for the relevant data
-"""
-
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
@@ -459,6 +455,58 @@ def test_histogram_percentile_for_cumulative_service(
     assert result_values[-1]["value"] == last_value
 
 
+def test_histogram_percentile_with_a_gap_in_one_bucket(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
+) -> None:
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    metric_name = "test_gapped_bucket_percentile_bucket"
+
+    # the cumulative count of each `le`, one entry per minute. the minutes bring
+    # 20, 10, 10 and 20 observations into (1, 2] and 10, 20, 10 and 10 into
+    # (2, 4]. None is a minute the bucket was not reported at all
+    le_to_counts = {
+        "1": [0, 0, 0, 0, 0],
+        "2": [0, 20, 30, None, 60],
+        "4": [0, 30, 60, 80, 110],
+        "+Inf": [0, 30, 60, 80, 110],
+    }
+    minutes = len(le_to_counts["1"])
+    start_ms = int((now - timedelta(minutes=minutes)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+
+    insert_metrics(
+        [
+            Metrics(
+                metric_name=metric_name,
+                labels={"le": le},
+                timestamp=now - timedelta(minutes=minutes - minute),
+                value=count,
+                temporality="Cumulative",
+                type_="Histogram",
+            )
+            for le, counts in le_to_counts.items()
+            for minute, count in enumerate(counts)
+            if count is not None
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms,
+        end_ms,
+        [build_builder_query("A", metric_name, "doesnotreallymatter", "p50")],
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    p50_by_minute = [1.75, 2.5, 2.5, 2]
+    assert [point["value"] for point in sorted(get_series_values(response.json(), "A"), key=lambda point: point["timestamp"])] == pytest.approx(p50_by_minute)
+
+
 @pytest.mark.parametrize(
     "space_agg, zeroth_value, first_value, last_value",
     [
@@ -509,3 +557,45 @@ def test_histogram_percentile_for_delta_service(
     assert result_values[0]["value"] == zeroth_value
     assert result_values[1]["value"] == first_value
     assert result_values[-1]["value"] == last_value
+
+
+def test_histogram_percentile_explicit_le_group_by(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
+) -> None:
+    """`le` is grouped by internally and then collapsed by histogramQuantile, so naming it
+    explicitly must not change the result — not even ahead of another key, where dropping it
+    from the output shifts the remaining group-by positions."""
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    metric_name = "test_explicit_le_bucket"
+
+    metrics = Metrics.load_from_file(
+        FILE,
+        base_time=now - timedelta(minutes=60),
+        metric_name_override=metric_name,
+    )
+    insert_metrics(metrics)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms,
+        end_ms,
+        [
+            build_builder_query("A", metric_name, "doesnotreallymatter", "p95", group_by=["le", "service"]),
+            build_builder_query("B", metric_name, "doesnotreallymatter", "p95", group_by=["service"]),
+        ],
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    data = response.json()
+    with_le = get_all_series(data, "A")
+    without_le = get_all_series(data, "B")
+
+    assert [[label["key"]["name"] for label in series["labels"]] for series in with_le] == [["service"], ["service"]], f"le must be collapsed out of the output labels, got {[series['labels'] for series in with_le]}"
+    assert {series["labels"][0]["value"]: sorted(series["values"], key=lambda v: v["timestamp"]) for series in with_le} == {series["labels"][0]["value"]: sorted(series["values"], key=lambda v: v["timestamp"]) for series in without_le}

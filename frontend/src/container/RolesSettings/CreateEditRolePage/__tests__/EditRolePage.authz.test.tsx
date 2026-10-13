@@ -4,6 +4,7 @@ import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen } from 'tests/test-utils';
 import {
+	AUTHZ_CHECK_URL,
 	setupAuthzAdmin,
 	setupAuthzDenyAll,
 	setupAuthzDeny,
@@ -57,24 +58,80 @@ function renderEditPage(): ReturnType<typeof render> {
 
 describe('EditRolePage - AuthZ', () => {
 	describe('permission denied', () => {
-		it('shows PermissionDeniedFullPage when read permission denied', async () => {
+		it('shows PermissionDeniedCallout when read permission denied', async () => {
 			server.use(setupAuthzDenyAll());
 
 			renderEditPage();
 
 			await expect(
-				screen.findByText(/You are not authorized/i),
+				screen.findByText(/is not authorized to perform/i),
 			).resolves.toBeInTheDocument();
+
+			expect(
+				screen.queryByText('Uh-oh! You are not authorized'),
+			).not.toBeInTheDocument();
 		});
 
-		it('shows PermissionDeniedFullPage when update permission denied but read granted', async () => {
+		it('keeps the header visible and hides the form when read permission denied', async () => {
+			server.use(setupAuthzDenyAll());
+
+			renderEditPage();
+
+			await screen.findByText(/is not authorized to perform/i);
+
+			await expect(
+				screen.findByText(`Role - ${EDIT_ROLE_NAME}`),
+			).resolves.toBeInTheDocument();
+			expect(screen.getByTestId('cancel-button')).toBeInTheDocument();
+			expect(screen.getByTestId('save-button')).toBeDisabled();
+
+			expect(
+				screen.queryByTestId('role-description-input'),
+			).not.toBeInTheDocument();
+			expect(screen.queryByTestId('permission-editor')).not.toBeInTheDocument();
+		});
+
+		it('renders page with disabled save button when update permission denied but read granted', async () => {
 			server.use(setupAuthzDeny(buildRoleUpdatePermission(EDIT_ROLE_NAME)));
 
 			renderEditPage();
 
 			await expect(
-				screen.findByText(/You are not authorized/i),
+				screen.findByText(`Role - ${EDIT_ROLE_NAME}`),
 			).resolves.toBeInTheDocument();
+
+			const saveButton = await screen.findByTestId('save-button');
+			expect(saveButton).toBeDisabled();
+		});
+	});
+
+	describe('route without the name query param', () => {
+		// `roleName` is the permission selector. When it is missing we must skip the
+		// check entirely — building `role:` widens to `role:*` on the wire and never
+		// matches back, which would deny the form even for an admin.
+		it('renders the form instead of denying it', async () => {
+			server.use(setupAuthzAdmin());
+
+			render(
+				<Switch>
+					<Route path={ROUTES.ROLES_SETTINGS} exact>
+						<div data-testid="roles-list-redirect" />
+					</Route>
+					<Route path={ROUTES.ROLE_DETAILS}>
+						<CreateEditRolePage />
+					</Route>
+				</Switch>,
+				undefined,
+				{ initialRoute: `/settings/roles/${EDIT_ROLE_ID}` },
+			);
+
+			await expect(
+				screen.findByTestId('role-description-input'),
+			).resolves.toBeInTheDocument();
+
+			expect(
+				screen.queryByText(/is not authorized to perform/i),
+			).not.toBeInTheDocument();
 		});
 	});
 
@@ -93,6 +150,23 @@ describe('EditRolePage - AuthZ', () => {
 			renderEditPage();
 
 			expect(document.querySelector('.ant-skeleton')).toBeInTheDocument();
+		});
+	});
+
+	describe('permission check failure', () => {
+		it('renders the form when the permission check request fails', async () => {
+			server.use(
+				rest.post(AUTHZ_CHECK_URL, (_req, res, ctx) => res(ctx.status(500))),
+			);
+
+			renderEditPage();
+
+			await expect(
+				screen.findByTestId('role-description-input'),
+			).resolves.toBeInTheDocument();
+			expect(
+				screen.queryByText(/is not authorized to perform/i),
+			).not.toBeInTheDocument();
 		});
 	});
 

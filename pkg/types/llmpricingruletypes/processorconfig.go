@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
 	"gopkg.in/yaml.v3"
 )
 
@@ -60,8 +61,12 @@ type LLMPricingRuleProcessorOutputAttrs struct {
 func buildProcessorConfig(rules []*LLMPricingRule) *LLMPricingRuleProcessorConfig {
 	pricingRules := make([]LLMPricingRuleProcessor, 0, len(rules))
 	for _, r := range rules {
+		// The collector rejects negative prices (providers use them for "unknown").
+		if r.Pricing.Input < 0 || r.Pricing.Output < 0 {
+			continue
+		}
 		var cache *LLMPricingRuleProcessorCache
-		if r.Pricing.Cache != nil {
+		if r.Pricing.Cache != nil && r.Pricing.Cache.Read >= 0 && r.Pricing.Cache.Write >= 0 {
 			mode := r.Pricing.Cache.Mode.StringValue()
 			if mode != LLMPricingRuleCacheModeSubtract.StringValue() && mode != LLMPricingRuleCacheModeAdditive.StringValue() {
 				mode = ""
@@ -83,21 +88,21 @@ func buildProcessorConfig(rules []*LLMPricingRule) *LLMPricingRuleProcessorConfi
 
 	return &LLMPricingRuleProcessorConfig{
 		Attrs: LLMPricingRuleProcessorAttrs{
-			Model:      GenAIRequestModel,
-			In:         GenAIUsageInputTokens,
-			Out:        GenAIUsageOutputTokens,
-			CacheRead:  GenAIUsageCacheReadInputTokens,
-			CacheWrite: GenAIUsageCacheCreationInputTokens,
+			Model:      aiobservabilitytypes.GenAIRequestModel,
+			In:         aiobservabilitytypes.GenAIUsageInputTokens,
+			Out:        aiobservabilitytypes.GenAIUsageOutputTokens,
+			CacheRead:  aiobservabilitytypes.GenAIUsageCacheReadInputTokens,
+			CacheWrite: aiobservabilitytypes.GenAIUsageCacheCreationInputTokens,
 		},
 		DefaultPricing: LLMPricingRuleProcessorDefaultPricing{
 			Rules: pricingRules,
 		},
 		OutputAttrs: LLMPricingRuleProcessorOutputAttrs{
-			In:         SignozGenAICostInput,
-			Out:        SignozGenAICostOutput,
-			CacheRead:  SignozGenAICostCacheRead,
-			CacheWrite: SignozGenAICostCacheWrite,
-			Total:      SignozGenAITotalCost,
+			In:         aiobservabilitytypes.SignozGenAICostInput,
+			Out:        aiobservabilitytypes.SignozGenAICostOutput,
+			CacheRead:  aiobservabilitytypes.SignozGenAICostCacheRead,
+			CacheWrite: aiobservabilitytypes.SignozGenAICostCacheWrite,
+			Total:      aiobservabilitytypes.SignozGenAITotalCost,
 		},
 	}
 }

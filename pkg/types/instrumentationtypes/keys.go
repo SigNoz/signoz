@@ -2,14 +2,26 @@ package instrumentationtypes
 
 import semconv "go.opentelemetry.io/collector/semconv/v1.6.1"
 
-// Log comment / context keys for query observability.
+// Log attribute and log comment / context keys for observability.
 // Names align with OpenTelemetry semantic conventions where applicable
 // (https://pkg.go.dev/go.opentelemetry.io/otel/semconv); custom keys are namespaced.
 const (
 	// CodeFunctionName is the fully-qualified function or method name (OTel code.function.name).
 	CodeFunctionName = semconv.AttributeCodeFunction
+	// CodeFilePath is the source file path of the call site.
+	CodeFilePath = semconv.AttributeCodeFilepath
+	// CodeLineNumber is the source line number of the call site.
+	CodeLineNumber = semconv.AttributeCodeLineNumber
 	// CodeNamespace is the logical module or component name (e.g. "dashboard", "anomaly").
 	CodeNamespace = semconv.AttributeCodeNamespace
+	// ExceptionType is the error type (errors.typ).
+	ExceptionType = semconv.AttributeExceptionType
+	// ExceptionCode is the error code (errors.code); SigNoz-specific, no OTel equivalent.
+	ExceptionCode = "exception.code"
+	// ExceptionMessage is the error message.
+	ExceptionMessage = semconv.AttributeExceptionMessage
+	// ExceptionStacktrace is the stacktrace captured at error creation time.
+	ExceptionStacktrace = semconv.AttributeExceptionStacktrace
 	// TelemetrySignal is the telemetry signal type: "traces", "logs", or "metrics".
 	TelemetrySignal = "telemetry.signal"
 	// QueryDuration is the query time-range bucket label (e.g. "<1h", "<24h").

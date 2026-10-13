@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pql "github.com/prometheus/prometheus/promql"
 	cmock "github.com/SigNoz/clickhouse-go-mock"
+	pql "github.com/prometheus/prometheus/promql"
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -768,26 +768,11 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 		},
 	}
 
-	// time_series_v4 cols of interest
-	fingerprintCols := []cmock.ColumnType{
-		{Name: "fingerprint", Type: "UInt64"},
-		{Name: "any(labels)", Type: "String"},
-	}
-
-	// samples_v4 columns
-	samplesCols := []cmock.ColumnType{
-		{Name: "metric_name", Type: "String"},
-		{Name: "fingerprint", Type: "UInt64"},
-		{Name: "unix_milli", Type: "Int64"},
-		{Name: "value", Type: "Float64"},
-		{Name: "flags", Type: "UInt32"},
-	}
-
 	// see Timestamps on base_rule
 	evalWindowMs := int64(5 * 60 * 1000) // 5 minutes in ms
 	evalTimeMs := evalTime.UnixMilli()
-	queryStart := ((evalTimeMs-2*evalWindowMs)/60000)*60000 + 1 // truncate to minute + 1ms
-	queryEnd := (evalTimeMs / 60000) * 60000                    // truncate to minute
+	queryEnd := (evalTimeMs / 60000) * 60000 // truncate to minute
+	gridStart := queryEnd - evalWindowMs
 
 	cases := []struct {
 		targetUnit string
@@ -904,43 +889,19 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 	for idx, c := range cases {
 		telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
 
-		// single fingerprint with labels JSON
-		fingerprint := uint64(12345)
-		labelsJSON := `{"__name__":"test_metric"}`
-		fingerprintData := [][]any{
-			{fingerprint, labelsJSON},
-		}
-		fingerprintRows := cmock.NewRows(fingerprintCols, fingerprintData)
-
-		// create samples data from test case values
-		samplesData := make([][]any, len(c.values))
+		tsList := make([]int64, len(c.values))
+		vList := make([]float64, len(c.values))
 		for i, v := range c.values {
-			samplesData[i] = []any{
-				"test_metric",
-				fingerprint,
-				v.timestamp.UnixMilli(),
-				v.value,
-				uint32(0), // flags - 0 means normal value, 1 means stale, we are not doing staleness tests
-			}
+			tsList[i] = v.timestamp.UnixMilli()
+			vList[i] = v.value
 		}
-		samplesRows := cmock.NewRows(samplesCols, samplesData)
+		grid := prometheustest.LastSampleGrid(tsList, vList, gridStart, queryEnd, 60_000, 300_000)
 
-		// args: $1=metric_name (the __name__ matcher maps onto the column)
+		// args: $1-$3=group-key join conditions, $4-$6=samples conditions
 		telemetryStore.Mock().
-			ExpectQuery("SELECT fingerprint, any").
-			WithArgs("test_metric").
-			WillReturnRows(fingerprintRows)
-
-		// args: $1=metric_name IN (discovered names), $2=metric_name (subquery), $3=start, $4=end
-		telemetryStore.Mock().
-			ExpectQuery("SELECT metric_name, fingerprint, unix_milli").
-			WithArgs(
-				"test_metric",
-				"test_metric",
-				queryStart,
-				queryEnd,
-			).
-			WillReturnRows(samplesRows)
+			ExpectQuery("SELECT gkey").
+			WithArgs("test_metric", nil, nil, "test_metric", nil, nil).
+			WillReturnRows(cmock.NewRows(prometheustest.GridCols, [][]any{{`[["__name__","test_metric"]]`, grid}}))
 
 		promProvider := prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore)
 
@@ -970,14 +931,12 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, promProvider, externalUrl)
 		if err != nil {
 			assert.NoError(t, err)
-			promProvider.Close()
 			continue
 		}
 
 		alertsFound, err := rule.Eval(context.Background(), evalTime)
 		if err != nil {
 			assert.NoError(t, err)
-			promProvider.Close()
 			continue
 		}
 
@@ -995,7 +954,6 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 			assert.Equal(t, c.expectAlerts, foundCount, "case %d", idx)
 		}
 
-		promProvider.Close()
 	}
 }
 
@@ -1027,12 +985,6 @@ func TestPromRuleNoData(t *testing.T) {
 		},
 	}
 
-	// time_series_v4 cols of interest
-	fingerprintCols := []cmock.ColumnType{
-		{Name: "fingerprint", Type: "UInt64"},
-		{Name: "any(labels)", Type: "String"},
-	}
-
 	cases := []struct {
 		values []struct {
 			timestamp time.Time
@@ -1054,15 +1006,11 @@ func TestPromRuleNoData(t *testing.T) {
 	for idx, c := range cases {
 		telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
 
-		// no data
-		fingerprintData := [][]any{}
-		fingerprintRows := cmock.NewRows(fingerprintCols, fingerprintData)
-
 		// no rows == no data
 		telemetryStore.Mock().
-			ExpectQuery("SELECT fingerprint, any").
-			WithArgs("test_metric").
-			WillReturnRows(fingerprintRows)
+			ExpectQuery("SELECT gkey").
+			WithArgs("test_metric", nil, nil, "test_metric", nil, nil).
+			WillReturnRows(cmock.NewRows(prometheustest.GridCols, [][]any{}))
 
 		promProvider := prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore)
 
@@ -1087,14 +1035,12 @@ func TestPromRuleNoData(t *testing.T) {
 		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, promProvider, externalUrl)
 		if err != nil {
 			assert.NoError(t, err)
-			promProvider.Close()
 			continue
 		}
 
 		alertsFound, err := rule.Eval(context.Background(), evalTime)
 		if err != nil {
 			assert.NoError(t, err)
-			promProvider.Close()
 			continue
 		}
 
@@ -1107,7 +1053,6 @@ func TestPromRuleNoData(t *testing.T) {
 			}
 		}
 
-		promProvider.Close()
 	}
 }
 
@@ -1139,24 +1084,11 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 		},
 	}
 
-	fingerprintCols := []cmock.ColumnType{
-		{Name: "fingerprint", Type: "UInt64"},
-		{Name: "any(labels)", Type: "String"},
-	}
-
-	samplesCols := []cmock.ColumnType{
-		{Name: "metric_name", Type: "String"},
-		{Name: "fingerprint", Type: "UInt64"},
-		{Name: "unix_milli", Type: "Int64"},
-		{Name: "value", Type: "Float64"},
-		{Name: "flags", Type: "UInt32"},
-	}
-
 	// see .Timestamps of base rule
 	evalWindowMs := int64(5 * 60 * 1000)
 	evalTimeMs := evalTime.UnixMilli()
-	queryStart := ((evalTimeMs-2*evalWindowMs)/60000)*60000 + 1
 	queryEnd := (evalTimeMs / 60000) * 60000
+	gridStart := queryEnd - evalWindowMs
 
 	cases := []struct {
 		targetUnit string
@@ -1250,39 +1182,19 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 	for idx, c := range cases {
 		telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
 
-		fingerprint := uint64(12345)
-		labelsJSON := `{"__name__":"test_metric"}`
-		fingerprintData := [][]any{
-			{fingerprint, labelsJSON},
-		}
-		fingerprintRows := cmock.NewRows(fingerprintCols, fingerprintData)
-
-		samplesData := make([][]any, len(c.values))
+		tsList := make([]int64, len(c.values))
+		vList := make([]float64, len(c.values))
 		for i, v := range c.values {
-			samplesData[i] = []any{
-				"test_metric",
-				fingerprint,
-				v.timestamp.UnixMilli(),
-				v.value,
-				uint32(0),
-			}
+			tsList[i] = v.timestamp.UnixMilli()
+			vList[i] = v.value
 		}
-		samplesRows := cmock.NewRows(samplesCols, samplesData)
+		grid := prometheustest.LastSampleGrid(tsList, vList, gridStart, queryEnd, 60_000, 300_000)
 
+		// args: $1-$3=group-key join conditions, $4-$6=samples conditions
 		telemetryStore.Mock().
-			ExpectQuery("SELECT fingerprint, any").
-			WithArgs("test_metric").
-			WillReturnRows(fingerprintRows)
-
-		telemetryStore.Mock().
-			ExpectQuery("SELECT metric_name, fingerprint, unix_milli").
-			WithArgs(
-				"test_metric",
-				"test_metric",
-				queryStart,
-				queryEnd,
-			).
-			WillReturnRows(samplesRows)
+			ExpectQuery("SELECT gkey").
+			WithArgs("test_metric", nil, nil, "test_metric", nil, nil).
+			WillReturnRows(cmock.NewRows(prometheustest.GridCols, [][]any{{`[["__name__","test_metric"]]`, grid}}))
 
 		promProvider := prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore)
 
@@ -1319,14 +1231,12 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, promProvider, externalUrl)
 		if err != nil {
 			assert.NoError(t, err)
-			promProvider.Close()
 			continue
 		}
 
 		alertsFound, err := rule.Eval(context.Background(), evalTime)
 		if err != nil {
 			assert.NoError(t, err)
-			promProvider.Close()
 			continue
 		}
 
@@ -1344,7 +1254,6 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 			assert.Equal(t, c.expectAlerts, foundCount, "case %d", idx)
 		}
 
-		promProvider.Close()
 	}
 }
 
@@ -1378,27 +1287,6 @@ func TestPromRule_NoData(t *testing.T) {
 		},
 	}
 
-	// time_series_v4 cols of interest
-	fingerprintCols := []cmock.ColumnType{
-		{Name: "fingerprint", Type: "UInt64"},
-		{Name: "any(labels)", Type: "String"},
-	}
-
-	// samples_v4 columns
-	samplesCols := []cmock.ColumnType{
-		{Name: "metric_name", Type: "String"},
-		{Name: "fingerprint", Type: "UInt64"},
-		{Name: "unix_milli", Type: "Int64"},
-		{Name: "value", Type: "Float64"},
-		{Name: "flags", Type: "UInt32"},
-	}
-
-	// see Timestamps on base_rule
-	evalWindowMs := int64(5 * 60 * 1000) // 5 minutes in ms
-	evalTimeMs := evalTime.UnixMilli()
-	queryStart := ((evalTimeMs-2*evalWindowMs)/60000)*60000 + 1 // truncate to minute + 1ms
-	queryEnd := (evalTimeMs / 60000) * 60000                    // truncate to minute
-
 	cases := []struct {
 		description   string
 		alertOnAbsent bool
@@ -1430,18 +1318,11 @@ func TestPromRule_NoData(t *testing.T) {
 
 			telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
 
-			// single fingerprint with labels JSON
-			fingerprint := uint64(12345)
-			labelsJSON := `{"__name__":"test_metric"}`
+			// no rows == no data
 			telemetryStore.Mock().
-				ExpectQuery("SELECT fingerprint, any").
-				WithArgs("test_metric").
-				WillReturnRows(cmock.NewRows(fingerprintCols, [][]any{{fingerprint, labelsJSON}}))
-
-			telemetryStore.Mock().
-				ExpectQuery("SELECT metric_name, fingerprint, unix_milli").
-				WithArgs("test_metric", "test_metric", queryStart, queryEnd).
-				WillReturnRows(cmock.NewRows(samplesCols, [][]any{}))
+				ExpectQuery("SELECT gkey").
+				WithArgs("test_metric", nil, nil, "test_metric", nil, nil).
+				WillReturnRows(cmock.NewRows(prometheustest.GridCols, [][]any{}))
 
 			promProvider := prometheustest.New(
 				context.Background(),
@@ -1450,7 +1331,6 @@ func TestPromRule_NoData(t *testing.T) {
 				telemetryStore,
 			)
 			defer func() {
-				_ = promProvider.Close()
 			}()
 
 			externalUrl := mustParseURL(t, "http://localhost:8080")
@@ -1510,19 +1390,6 @@ func TestPromRule_NoData_AbsentFor(t *testing.T) {
 		},
 	}
 
-	fingerprintCols := []cmock.ColumnType{
-		{Name: "fingerprint", Type: "UInt64"},
-		{Name: "any(labels)", Type: "String"},
-	}
-
-	samplesCols := []cmock.ColumnType{
-		{Name: "metric_name", Type: "String"},
-		{Name: "fingerprint", Type: "UInt64"},
-		{Name: "unix_milli", Type: "Int64"},
-		{Name: "value", Type: "Float64"},
-		{Name: "flags", Type: "UInt32"},
-	}
-
 	cases := []struct {
 		description        string
 		absentFor          uint64        // grace period in minutes
@@ -1556,43 +1423,30 @@ func TestPromRule_NoData_AbsentFor(t *testing.T) {
 
 			telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
 
-			fingerprint := uint64(12345)
-			labelsJSON := `{"__name__":"test_metric"}`
-
-			// Helper to calculate query time range for an eval time
-			calcQueryRange := func(evalTime time.Time) (int64, int64) {
-				evalTimeMs := evalTime.UnixMilli()
-				queryStart := ((evalTimeMs-2*evalWindow.Milliseconds())/60000)*60000 + 1
-				queryEnd := (evalTimeMs / 60000) * 60000
-				return queryStart, queryEnd
+			// Grid an eval at this time evaluates over (see Timestamps on
+			// base_rule).
+			calcGrid := func(evalTime time.Time) (int64, int64) {
+				gridEnd := (evalTime.UnixMilli() / 60000) * 60000
+				return gridEnd - evalWindow.Milliseconds(), gridEnd
 			}
 
-			// First eval (t1) - with data
-			queryStart1, queryEnd1 := calcQueryRange(t1)
+			// First eval (t1) - with data: points in the past relative to t1
+			gridStart1, gridEnd1 := calcGrid(t1)
+			grid1 := prometheustest.LastSampleGrid(
+				[]int64{baseTime.UnixMilli(), baseTime.Add(1 * time.Minute).UnixMilli(), baseTime.Add(2 * time.Minute).UnixMilli()},
+				[]float64{100, 100, 100},
+				gridStart1, gridEnd1, 60_000, 300_000,
+			)
 			telemetryStore.Mock().
-				ExpectQuery("SELECT fingerprint, any").
-				WithArgs("test_metric").
-				WillReturnRows(cmock.NewRows(fingerprintCols, [][]any{{fingerprint, labelsJSON}}))
-			telemetryStore.Mock().
-				ExpectQuery("SELECT metric_name, fingerprint, unix_milli").
-				WithArgs("test_metric", "test_metric", queryStart1, queryEnd1).
-				WillReturnRows(cmock.NewRows(samplesCols, [][]any{
-					// Data points in the past relative to t1
-					{"test_metric", fingerprint, baseTime.UnixMilli(), 100.0, uint32(0)},
-					{"test_metric", fingerprint, baseTime.Add(1 * time.Minute).UnixMilli(), 100.0, uint32(0)},
-					{"test_metric", fingerprint, baseTime.Add(2 * time.Minute).UnixMilli(), 100.0, uint32(0)},
-				}))
+				ExpectQuery("SELECT gkey").
+				WithArgs("test_metric", nil, nil, "test_metric", nil, nil).
+				WillReturnRows(cmock.NewRows(prometheustest.GridCols, [][]any{{`[["__name__","test_metric"]]`, grid1}}))
 
 			// Second eval (t2) - no data
-			queryStart2, queryEnd2 := calcQueryRange(t2)
 			telemetryStore.Mock().
-				ExpectQuery("SELECT fingerprint, any").
-				WithArgs("test_metric").
-				WillReturnRows(cmock.NewRows(fingerprintCols, [][]any{{fingerprint, labelsJSON}}))
-			telemetryStore.Mock().
-				ExpectQuery("SELECT metric_name, fingerprint, unix_milli").
-				WithArgs("test_metric", "test_metric", queryStart2, queryEnd2).
-				WillReturnRows(cmock.NewRows(samplesCols, [][]any{})) // empty - no data
+				ExpectQuery("SELECT gkey").
+				WithArgs("test_metric", nil, nil, "test_metric", nil, nil).
+				WillReturnRows(cmock.NewRows(prometheustest.GridCols, [][]any{}))
 
 			promProvider := prometheustest.New(
 				context.Background(),
@@ -1601,7 +1455,6 @@ func TestPromRule_NoData_AbsentFor(t *testing.T) {
 				telemetryStore,
 			)
 			defer func() {
-				_ = promProvider.Close()
 			}()
 
 			externalUrl := mustParseURL(t, "http://localhost:8080")
@@ -1652,32 +1505,15 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 		},
 	}
 
-	fingerprintCols := []cmock.ColumnType{
-		{Name: "fingerprint", Type: "UInt64"},
-		{Name: "any(labels)", Type: "String"},
-	}
-	fingerprint := uint64(12345)
-	fingerprintData := [][]any{{fingerprint, `{"__name__":"test_metric"}`}}
-
-	samplesCols := []cmock.ColumnType{
-		{Name: "metric_name", Type: "String"},
-		{Name: "fingerprint", Type: "UInt64"},
-		{Name: "unix_milli", Type: "Int64"},
-		{Name: "value", Type: "Float64"},
-		{Name: "flags", Type: "UInt32"},
-	}
-	samplesData := [][]any{
-		{"test_metric", fingerprint, baseTime.UnixMilli(), 100.0, 0},
-		{"test_metric", fingerprint, baseTime.Add(time.Minute).UnixMilli(), 150.0, 0},
-		{"test_metric", fingerprint, baseTime.Add(2 * time.Minute).UnixMilli(), 250.0, 0},
-	}
+	sampleTs := []int64{baseTime.UnixMilli(), baseTime.Add(time.Minute).UnixMilli(), baseTime.Add(2 * time.Minute).UnixMilli()}
+	sampleVs := []float64{100, 150, 250}
 	targetForAlert := 200.0
 	targetForNoAlert := 500.0
 
 	// see Timestamps on base_rule
 	evalTimeMs := evalTime.UnixMilli()
-	queryStart := ((evalTimeMs-evalWindow.Milliseconds()-lookBackDelta.Milliseconds())/60000)*60000 + 1 // truncate to minute + 1ms
-	queryEnd := (evalTimeMs / 60000) * 60000                                                            // truncate to minute
+	queryEnd := (evalTimeMs / 60000) * 60000 // truncate to minute
+	gridStart := queryEnd - evalWindow.Milliseconds()
 
 	cases := []struct {
 		description       string
@@ -1746,14 +1582,11 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 
 		t.Run(c.description, func(t *testing.T) {
 			telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
+			grid := prometheustest.LastSampleGrid(sampleTs, sampleVs, gridStart, queryEnd, 60_000, lookBackDelta.Milliseconds())
 			telemetryStore.Mock().
-				ExpectQuery("SELECT fingerprint, any").
-				WithArgs("test_metric").
-				WillReturnRows(cmock.NewRows(fingerprintCols, fingerprintData))
-			telemetryStore.Mock().
-				ExpectQuery("SELECT metric_name, fingerprint, unix_milli").
-				WithArgs("test_metric", "test_metric", queryStart, queryEnd).
-				WillReturnRows(cmock.NewRows(samplesCols, samplesData))
+				ExpectQuery("SELECT gkey").
+				WithArgs("test_metric", nil, nil, "test_metric", nil, nil).
+				WillReturnRows(cmock.NewRows(prometheustest.GridCols, [][]any{{`[["__name__","test_metric"]]`, grid}}))
 			promProvider := prometheustest.New(
 				context.Background(),
 				instrumentationtest.New().ToProviderSettings(),
@@ -1761,7 +1594,6 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 				telemetryStore,
 			)
 			defer func() {
-				_ = promProvider.Close()
 			}()
 
 			externalUrl := mustParseURL(t, "http://localhost:8080")

@@ -26,7 +26,10 @@ function ChangePercentage({
 }: ChangePercentageProps): JSX.Element {
 	if (direction > 0) {
 		return (
-			<div className="change-percentage change-percentage--success">
+			<div
+				className="change-percentage change-percentage--success"
+				data-testid="stats-card-change"
+			>
 				<div className="change-percentage__icon">
 					<ArrowDownLeft size={14} color={Color.BG_FOREST_500} />
 				</div>
@@ -38,7 +41,10 @@ function ChangePercentage({
 	}
 	if (direction < 0) {
 		return (
-			<div className="change-percentage change-percentage--error">
+			<div
+				className="change-percentage change-percentage--error"
+				data-testid="stats-card-change"
+			>
 				<div className="change-percentage__icon">
 					<ArrowUpRight size={14} color={Color.BG_CHERRY_500} />
 				</div>
@@ -50,7 +56,10 @@ function ChangePercentage({
 	}
 
 	return (
-		<div className="change-percentage change-percentage--no-previous-data">
+		<div
+			className="change-percentage change-percentage--no-previous-data"
+			data-testid="stats-card-change"
+		>
 			<div className="change-percentage__label">no previous data</div>
 		</div>
 	);
@@ -103,7 +112,12 @@ function StatsCard({
 	const formattedEndTimeForTooltip = convertTimestampToLocaleDateString(endTime);
 
 	return (
-		<div className={`stats-card ${isEmpty ? 'stats-card--empty' : ''}`}>
+		<div
+			className={`stats-card ${isEmpty ? 'stats-card--empty' : ''}`}
+			data-testid="stats-card"
+			data-stats-title={title}
+			data-empty={isEmpty ? 'true' : 'false'}
+		>
 			<div className="stats-card__title-wrapper">
 				<div className="title">{title}</div>
 				<div className="duration-indicator">
@@ -123,7 +137,7 @@ function StatsCard({
 			</div>
 
 			<div className="stats-card__stats">
-				<div className="count-label">
+				<div className="count-label" data-testid="stats-card-value">
 					{isEmpty ? emptyMessage : displayValue || totalCurrentCount}
 				</div>
 

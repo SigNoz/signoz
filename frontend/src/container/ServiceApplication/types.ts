@@ -26,7 +26,6 @@ export interface ServiceMetricsTableProps {
 export interface GetQueryRangeRequestDataProps {
 	topLevelOperations: [keyof ServiceDataProps, string[]][];
 	globalSelectedInterval: Time | CustomTimeType;
-	dotMetricsEnabled: boolean;
 }
 
 export interface GetServiceListFromQueryProps {

@@ -621,7 +621,7 @@
                       {
                         "metricName": "cloudsql.googleapis.com/database/postgresql/deadlock_count",
                         "temporality": "",
-                        "timeAggregation": "max",
+                        "timeAggregation": "rate",
                         "spaceAggregation": "sum",
                         "reduceTo": "avg"
                       }
@@ -784,40 +784,57 @@
             {
               "kind": "time_series",
               "spec": {
-                "name": "A",
                 "plugin": {
-                  "kind": "signoz/BuilderQuery",
+                  "kind": "signoz/CompositeQuery",
                   "spec": {
-                    "name": "A",
-                    "signal": "metrics",
-                    "source": "",
-                    "aggregations": [
+                    "queries": [
                       {
-                        "metricName": "cloudsql.googleapis.com/database/cpu/utilization",
-                        "temporality": "",
-                        "timeAggregation": "max",
-                        "spaceAggregation": "max",
-                        "reduceTo": "avg"
-                      }
-                    ],
-                    "disabled": false,
-                    "filter": {
-                      "expression": "project_id = $project_id AND database_id in $database_id AND gcp.resource_type = 'cloudsql_database' "
-                    },
-                    "groupBy": [
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "stepInterval": 0,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "cloudsql.googleapis.com/database/cpu/utilization",
+                              "temporality": "",
+                              "timeAggregation": "max",
+                              "spaceAggregation": "max",
+                              "reduceTo": ""
+                            }
+                          ],
+                          "disabled": false,
+                          "filter": {
+                            "expression": "project_id = $project_id AND database_id in $database_id AND gcp.resource_type = 'cloudsql_database' "
+                          },
+                          "groupBy": [
+                            {
+                              "name": "database_id",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": null,
+                          "selectFields": null,
+                          "secondaryAggregations": null,
+                          "functions": null,
+                          "legend": "{{database_id}}"
+                        }
+                      },
                       {
-                        "name": "database_id",
-                        "signal": "",
-                        "fieldContext": "attribute",
-                        "fieldDataType": "string"
+                        "type": "builder_formula",
+                        "spec": {
+                          "name": "F1",
+                          "expression": "100 * A",
+                          "disabled": false,
+                          "order": null,
+                          "functions": null,
+                          "legend": "{{database_id}}"
+                        }
                       }
-                    ],
-                    "order": [],
-                    "having": {
-                      "expression": ""
-                    },
-                    "functions": [],
-                    "legend": "{{database_id}}"
+                    ]
                   }
                 }
               }
@@ -882,7 +899,7 @@
                       {
                         "metricName": "cloudsql.googleapis.com/database/postgresql/transaction_count",
                         "temporality": "",
-                        "timeAggregation": "max",
+                        "timeAggregation": "rate",
                         "spaceAggregation": "sum",
                         "reduceTo": "avg"
                       }

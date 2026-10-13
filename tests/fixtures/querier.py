@@ -33,6 +33,7 @@ class RequestType:
     TIME_SERIES = "time_series"
     SCALAR = "scalar"
     TABLE = "table"
+    HEATMAP = "heatmap"
 
 
 @dataclass
@@ -78,12 +79,15 @@ class BuilderQuery:
     signal: str
     name: str = "A"
     source: str | None = None
+    query_type: str = "builder_query"
     limit: int | None = None
     offset: int | None = None
     filter_expression: str | None = None
+    having_expression: str | None = None
     select_fields: list[TelemetryFieldKey] | None = None
     order: list[OrderBy] | None = None
     aggregations: list[Aggregation | MetricAggregation] | None = None
+    group_by: list[TelemetryFieldKey] | None = None
     step_interval: int | None = None
 
     def to_dict(self) -> dict:
@@ -99,16 +103,20 @@ class BuilderQuery:
             spec["offset"] = self.offset
         if self.filter_expression:
             spec["filter"] = {"expression": self.filter_expression}
+        if self.having_expression:
+            spec["having"] = {"expression": self.having_expression}
         if self.select_fields:
             spec["selectFields"] = [f.to_dict() for f in self.select_fields]
         if self.order:
             spec["order"] = [o.to_dict() if hasattr(o, "to_dict") else o for o in self.order]
         if self.aggregations:
             spec["aggregations"] = [agg.to_dict() if hasattr(agg, "to_dict") else agg for agg in self.aggregations]
+        if self.group_by:
+            spec["groupBy"] = [k.to_dict() for k in self.group_by]
         if self.step_interval is not None:
             spec["stepInterval"] = self.step_interval
 
-        return {"type": "builder_query", "spec": spec}
+        return {"type": self.query_type, "spec": spec}
 
 
 @dataclass
@@ -290,6 +298,7 @@ def build_builder_query(
     group_by: list[str] | None = None,
     filter_expression: str | None = None,
     functions: list[dict] | None = None,
+    bucket_options: dict | None = None,
     disabled: bool = False,
 ) -> dict:
     spec: dict[str, Any] = {
@@ -311,6 +320,8 @@ def build_builder_query(
         spec["aggregations"][0]["temporality"] = temporality
     if comparisonSpaceAggregationParam:
         spec["aggregations"][0]["comparisonSpaceAggregationParam"] = comparisonSpaceAggregationParam
+    if bucket_options is not None:
+        spec["bucketOptions"] = bucket_options
     if group_by:
         spec["groupBy"] = [
             {
@@ -333,6 +344,7 @@ def build_formula_query(
     expression: str,
     *,
     functions: list[dict] | None = None,
+    bucket_options: dict | None = None,
     disabled: bool = False,
     order: list[dict] | None = None,
     limit: int | None = None,
@@ -344,11 +356,27 @@ def build_formula_query(
     }
     if functions:
         spec["functions"] = functions
+    if bucket_options is not None:
+        spec["bucketOptions"] = bucket_options
     if order:
         spec["order"] = order
     if limit is not None:
         spec["limit"] = limit
     return {"type": "builder_formula", "spec": spec}
+
+
+def build_log_bucket_options(scale: int | None = None) -> dict:
+    spec: dict[str, Any] = {}
+    if scale is not None:
+        spec["scale"] = scale
+    return {"kind": "log", "spec": spec}
+
+
+def build_linear_bucket_options(max_value: float, num_buckets: int | None = None) -> dict:
+    spec: dict[str, Any] = {"maxValue": max_value}
+    if num_buckets is not None:
+        spec["numBuckets"] = num_buckets
+    return {"kind": "linear", "spec": spec}
 
 
 def build_function(name: str, *args: Any) -> dict:
@@ -383,6 +411,24 @@ def get_all_series(response_json: dict, query_name: str) -> list[dict]:
         return []
     # at the time of writing this, the series is always a list with one element
     return aggregations[0].get("series", [])
+
+
+def get_heatmap_buckets(response_json: dict, query_name: str) -> list[float]:
+    """The ascending bucket upper bounds a heatmap result's counts are positional against.
+    Each point holds one more count than there are bounds: the trailing one is the open-above overflow."""
+    results = response_json.get("data", {}).get("data", {}).get("results", [])
+    result = find_named_result(results, query_name)
+    if not result:
+        return []
+    aggregations = result.get("aggregations", [])
+    if not aggregations:
+        return []
+    return aggregations[0].get("meta", {}).get("buckets", [])
+
+
+def get_heatmap_columns(response_json: dict, query_name: str) -> list[dict]:
+    """A heatmap result's points for its single series, oldest first."""
+    return sorted(get_series_values(response_json, query_name), key=lambda point: point["timestamp"])
 
 
 def get_scalar_value(response_json: dict, query_name: str) -> float | None:
@@ -696,6 +742,7 @@ def build_raw_query(
     order: list[dict] | None = None,
     limit: int | None = None,
     filter_expression: str | None = None,
+    select_fields: list[dict] | None = None,
     step_interval: int = DEFAULT_STEP_INTERVAL,
     disabled: bool = False,
 ) -> dict:
@@ -714,6 +761,9 @@ def build_raw_query(
 
     if filter_expression:
         spec["filter"] = {"expression": filter_expression}
+
+    if select_fields:
+        spec["selectFields"] = select_fields
 
     return {"type": "builder_query", "spec": spec}
 
@@ -987,6 +1037,8 @@ def generate_traces_with_corrupt_metadata() -> list[Traces]:
                 "cloud.provider": "integration",
                 "cloud.account.id": "000",
                 "trace_id": "corrupt_data",
+                "scope_name": "corrupt_data",
+                "scope.scope.name": "corrupt_data",
             },
             attributes={
                 "net.transport": "IP.TCP",
@@ -995,7 +1047,10 @@ def generate_traces_with_corrupt_metadata() -> list[Traces]:
                 "http.request.method": "POST",
                 "http.response.status_code": "200",
                 "timestamp": "corrupt_data",
+                "version": "1.0.0",
+                "scope.scope.version": "1.0.0",
             },
+            scope={"name": "io.signoz.http.server", "version": "2.0.0"},
         ),
         Traces(
             timestamp=now - timedelta(seconds=3.5),
@@ -1015,12 +1070,24 @@ def generate_traces_with_corrupt_metadata() -> list[Traces]:
                 "cloud.provider": "integration",
                 "cloud.account.id": "000",
                 "timestamp": "corrupt_data",
+                "scope.attributes.name": "corrupt_data",
             },
             attributes={
                 "db.name": "integration",
                 "db.operation": "SELECT",
                 "db.statement": "SELECT * FROM integration",
                 "trace_d": "corrupt_data",
+                "scope.attributes.version": "corrupt_data",
+            },
+            scope={
+                "name": "io.opentelemetry.contrib.http",
+                "version": "1.0.0",
+                "attributes": {
+                    "telemetry.sdk.language": "cpp",
+                    "name": "not-the-real-name",
+                    "version": "not-the-real-version",
+                    "attributes": "literally-a-key-named-attributes",
+                },
             },
         ),
         Traces(
@@ -1041,12 +1108,15 @@ def generate_traces_with_corrupt_metadata() -> list[Traces]:
                 "cloud.provider": "integration",
                 "cloud.account.id": "000",
                 "duration_nano": "corrupt_data",
+                "scope.scope.attributes.version": "corrupt_data",
             },
             attributes={
                 "http.request.method": "PATCH",
                 "http.status_code": "404",
                 "id": "1",
+                "scope.scope.version": "corrupt_data",
             },
+            scope={"name": "io.signoz.http.client", "version": "2.0.0"},
         ),
         Traces(
             timestamp=now - timedelta(seconds=1),
@@ -1065,6 +1135,7 @@ def generate_traces_with_corrupt_metadata() -> list[Traces]:
                 "host.name": "linux-001",
                 "cloud.provider": "integration",
                 "cloud.account.id": "001",
+                "scope.scope.version": "corrupt_data",
             },
             attributes={
                 "message.type": "SENT",
@@ -1072,7 +1143,10 @@ def generate_traces_with_corrupt_metadata() -> list[Traces]:
                 "messaging.message.id": "001",
                 "duration_nano": "corrupt_data",
                 "id": 1,
+                "scope": "corrupt_data",
+                "scope.attributes.name": "corrupt_data",
             },
+            scope={"name": "io.signoz.messaging", "version": "3.0.0"},
         ),
     ]
 
@@ -1097,3 +1171,47 @@ def make_scalar_query_request(
             "formatOptions": {"formatTableResultForUI": True, "fillGaps": False},
         },
     )
+
+
+def run_query_case(signoz: types.SigNoz, token: str, now: datetime, case: dict[str, Any]) -> None:
+    start_ms = case.get("startMs", int((now - timedelta(seconds=10)).timestamp() * 1000))
+    end_ms = case.get("endMs", int(now.timestamp() * 1000))
+
+    if case["requestType"] == "raw":
+        query = build_raw_query(
+            name=case["name"],
+            signal="logs",
+            filter_expression=case.get("expression"),
+            order=case.get("order") or [build_order_by("timestamp", "desc")],
+            limit=case.get("limit", 100),
+            step_interval=case.get("stepInterval") or 60,
+        )
+    else:
+        aggregation = case.get("aggregation")
+        if aggregation and not isinstance(aggregation, list):
+            aggregations = [build_aggregation(aggregation)]
+        elif aggregation:
+            aggregations = aggregation
+        else:
+            aggregations = []
+        query = build_scalar_query(
+            name=case["name"],
+            signal="logs",
+            aggregations=aggregations,
+            group_by=case.get("groupBy"),
+            order=case.get("order"),
+            limit=case.get("limit", 100),
+            filter_expression=case.get("expression"),
+            step_interval=case.get("stepInterval") or 60,
+        )
+
+    response = make_query_request(
+        signoz=signoz,
+        token=token,
+        start_ms=start_ms,
+        end_ms=end_ms,
+        queries=[query],
+        request_type=case["requestType"],
+    )
+    assert response.status_code == 200, f"HTTP {response.status_code} for case '{case['name']}': {response.text}"
+    assert case["validate"](response), f"Validation failed for case '{case['name']}': {response.json()}"

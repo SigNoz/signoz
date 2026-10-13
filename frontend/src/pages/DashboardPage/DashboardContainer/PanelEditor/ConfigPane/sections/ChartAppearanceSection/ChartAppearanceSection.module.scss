@@ -1,0 +1,36 @@
+.inset {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 12px 14px;
+	border: 1px solid var(--l1-border);
+	border-radius: 4px;
+	background: var(--l2-background);
+}
+
+.insetRow {
+	flex-direction: row;
+	align-items: center;
+	gap: 12px;
+}
+
+.insetLabel {
+	font-size: 13px;
+	color: var(--l1-foreground);
+}
+
+.opacitySlider {
+	flex: 1;
+	min-width: 0;
+}
+
+.thresholdField {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.thresholdPrefix {
+	padding-right: 4px;
+	opacity: 0.6;
+}

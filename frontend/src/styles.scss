@@ -30,6 +30,10 @@ body {
 	box-sizing: border-box;
 }
 
+.translate-safe {
+	display: contents;
+}
+
 // Respect user's reduced motion preference
 @media (prefers-reduced-motion: reduce) {
 	* {
@@ -806,6 +810,18 @@ body.ai-assistant-panel-open {
 	.PylonChat-chatWindowFrameContainer {
 		right: calc(var(--ai-assistant-panel-width, 380px) + 8px) !important;
 		left: auto !important;
+	}
+}
+
+body.bottom-strip-on {
+	// Pylon re-shows its own launcher when the chat window opens, so
+	// `hideChatBubble` cannot hold it down.
+	.PylonChat-bubbleFrameContainer {
+		display: none !important;
+	}
+
+	.PylonChat-chatWindowFrameContainer {
+		bottom: calc(var(--bottom-strip-height, 0px) + 12px) !important;
 	}
 }
 

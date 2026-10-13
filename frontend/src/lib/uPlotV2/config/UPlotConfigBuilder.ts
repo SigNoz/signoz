@@ -1,5 +1,5 @@
-import { SeriesVisibilityItem } from 'container/DashboardContainer/visualization/panels/types';
-import { getStoredSeriesVisibility } from 'container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils';
+import { SeriesVisibilityItem } from 'lib/visualization/panels/types';
+import { getStoredSeriesVisibility } from 'lib/visualization/panels/utils/legendVisibilityUtils';
 import { ThresholdsDrawHookOptions } from 'lib/uPlotV2/hooks/types';
 import { thresholdsDrawHook } from 'lib/uPlotV2/hooks/useThresholdsDrawHook';
 import { resolveSeriesVisibility } from 'lib/uPlotV2/utils/seriesVisibility';
@@ -20,6 +20,7 @@ import {
 	ConfigBuilderProps,
 	LegendItem,
 	SelectionPreferencesSource,
+	StackMode,
 } from './types';
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
@@ -28,6 +29,11 @@ import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
 /**
  * Type definitions for uPlot option objects
  */
+/** Renders a 0–100 number as `50%`, unlike the 0–1 `percentunit`. */
+const PERCENT_AXIS_UNIT = 'percent';
+
+const PERCENT_AXIS_MAX = 100;
+
 type LegendConfig = {
 	show?: boolean;
 	live?: boolean;
@@ -56,6 +62,8 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	readonly scales: UPlotScaleBuilder[] = [];
 
 	private bands: uPlot.Band[] = [];
+
+	private stackMode: StackMode = StackMode.None;
 
 	private cursor: Cursor | undefined;
 
@@ -143,6 +151,15 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 		this.axes[scaleKey] = new UPlotAxisBuilder(props);
 	}
 
+	/** Drives the fill bands, the percent axis unit and the percent range below. */
+	setStackMode(stackMode: StackMode): void {
+		this.stackMode = stackMode;
+	}
+
+	getStackMode(): StackMode {
+		return this.stackMode;
+	}
+
 	/**
 	 * Add or merge a scale configuration
 	 */
@@ -209,6 +226,41 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	 */
 	setBands(bands: uPlot.Band[]): void {
 		this.bands = bands;
+	}
+
+	/**
+	 * The panel's own limits are in the source unit, which means nothing once values are
+	 * normalised. Soft rather than hard, so mixed-sign shares outside 0–100 stay visible.
+	 */
+	private resolveScale(scale: UPlotScaleBuilder): UPlotScaleBuilder {
+		if (this.stackMode !== StackMode.Percent || scale.props.scaleKey !== 'y') {
+			return scale;
+		}
+		return new UPlotScaleBuilder({
+			...scale.props,
+			min: undefined,
+			max: undefined,
+			softMin: 0,
+			softMax: PERCENT_AXIS_MAX,
+			// Thresholds still draw, but a 500ms one must not stretch the axis to 0–500.
+			thresholds: undefined,
+		});
+	}
+
+	/** Explicit bands win; otherwise a stack fills between consecutive series. */
+	private resolveBands(): uPlot.Band[] | undefined {
+		if (this.bands.length > 0) {
+			return this.bands;
+		}
+		if (this.stackMode === StackMode.None || this.series.length < 2) {
+			return undefined;
+		}
+		return (
+			this.series
+				.slice(0, -1)
+				// uPlot series are 1-based (index 0 is the timestamp axis).
+				.map((_, index) => ({ series: [index + 1, index + 2] as [number, number] }))
+		);
 	}
 
 	/**
@@ -444,9 +496,19 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 				};
 			}),
 		];
-		config.axes = Object.values(this.axes).map((a) => a.getConfig());
+		config.axes = Object.entries(this.axes).map(([scaleKey, axis]) => {
+			if (scaleKey !== 'y' || this.stackMode !== StackMode.Percent) {
+				return axis.getConfig();
+			}
+			// Ticks read as percentages; the panel unit still applies to tooltips and
+			// thresholds, so build from a copy rather than touching the axis props.
+			return new UPlotAxisBuilder({
+				...axis.props,
+				yAxisUnit: PERCENT_AXIS_UNIT,
+			}).getConfig();
+		});
 		config.scales = this.scales.reduce(
-			(acc, s) => ({ ...acc, ...s.getConfig() }),
+			(acc, s) => ({ ...acc, ...this.resolveScale(s).getConfig() }),
 			{} as Record<string, uPlot.Scale>,
 		);
 
@@ -456,7 +518,7 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 		config.cursor = this.getCursorConfig();
 		config.tzDate = this.tzDate;
 		config.plugins = this.plugins.length > 0 ? this.plugins : undefined;
-		config.bands = this.bands.length > 0 ? this.bands : undefined;
+		config.bands = this.resolveBands();
 
 		if (Array.isArray(this.padding)) {
 			config.padding = this.padding;

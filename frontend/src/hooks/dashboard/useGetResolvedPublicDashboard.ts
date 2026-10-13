@@ -1,14 +1,13 @@
 import { getPublicDashboardDataV2 } from 'api/generated/services/dashboard';
 import { DashboardtypesGettablePublicDashboardDataV2DTO } from 'api/generated/services/sigNoz.schemas';
-import getPublicDashboardDataAPI from 'api/dashboard/public/getPublicDashboardData';
 import { AxiosError, isAxiosError } from 'axios';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useQuery, UseQueryResult } from 'react-query';
 import { ErrorV2Resp } from 'types/api';
-import { PublicDashboardDataProps } from 'types/api/dashboard/public/get';
 
 export enum PublicDashboardSchema {
-	V1 = 'v1',
+	/** Stored data never migrated to v6 — there is no v2 spec to render. */
+	Legacy = 'legacy',
 	V2 = 'v2',
 }
 
@@ -17,9 +16,10 @@ export type ResolvedPublicDashboard =
 			schema: PublicDashboardSchema.V2;
 			data: DashboardtypesGettablePublicDashboardDataV2DTO;
 	  }
-	| { schema: PublicDashboardSchema.V1; data: PublicDashboardDataProps };
+	| { schema: PublicDashboardSchema.Legacy };
 
-// The v2 endpoint rejects non-v6 rows with this code — our signal that it's a v1 dashboard.
+// The v2 endpoint rejects non-v6 rows with this code — our signal that the dashboard
+// predates the v2 migration.
 const V2_SCHEMA_MISMATCH_CODE = 'dashboard_invalid_data';
 
 function isV2SchemaMismatch(error: unknown): boolean {
@@ -30,8 +30,8 @@ function isV2SchemaMismatch(error: unknown): boolean {
 	return response?.data?.error?.code === V2_SCHEMA_MISMATCH_CODE;
 }
 
-// Probe v2 first, fall back to v1 only on a schema mismatch. v1-first is unsafe: it 200s for a
-// v2 dashboard with queries un-redacted. Other v2 errors re-throw rather than mis-render as v1.
+// Only a schema mismatch means "legacy"; every other v2 error propagates so the page shows
+// its unavailable state rather than implying the dashboard just needs re-migrating.
 async function resolvePublicDashboard(
 	id: string,
 ): Promise<ResolvedPublicDashboard> {
@@ -42,8 +42,7 @@ async function resolvePublicDashboard(
 		if (!isV2SchemaMismatch(error)) {
 			throw error;
 		}
-		const v1 = await getPublicDashboardDataAPI({ id });
-		return { schema: PublicDashboardSchema.V1, data: v1.data };
+		return { schema: PublicDashboardSchema.Legacy };
 	}
 }
 

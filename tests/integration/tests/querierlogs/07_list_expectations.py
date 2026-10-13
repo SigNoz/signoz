@@ -26,7 +26,23 @@ from fixtures.querier import (
         #         name="A",
         #         limit=1,
         #     ),
-        #     lambda x: _flatten_log(x[2]),
+        #     lambda x: [
+        #         x[2].attributes_bool,
+        #         x[2].attributes_number,
+        #         x[2].attributes_string,
+        #         x[2].body,
+        #         x[2].id,
+        #         x[2].resources_string,
+        #         x[2].scope_name,
+        #         x[2].scope_string,
+        #         x[2].scope_version,
+        #         x[2].severity_number,
+        #         x[2].severity_text,
+        #         x[2].span_id,
+        #         x[2].timestamp,
+        #         x[2].trace_flags,
+        #         x[2].trace_id,
+        #     ],
         #     id="no-select-no-order",
         #     # Behaviour:
         #     # Empty order results in consistent random order
@@ -141,7 +157,23 @@ from fixtures.querier import (
                 limit=1,
                 order=[OrderBy(TelemetryFieldKey("timestamp"), "desc")],
             ),
-            lambda x: _flatten_log(x[3]),
+            lambda x: [
+                x[3].attributes_bool,
+                x[3].attributes_number,
+                x[3].attributes_string,
+                x[3].body,
+                x[3].id,
+                x[3].resources_string,
+                x[3].scope_name,
+                x[3].scope_string,
+                x[3].scope_version,
+                x[3].severity_number,
+                x[3].severity_text,
+                x[3].span_id,
+                x[3].timestamp,
+                x[3].trace_flags,
+                x[3].trace_id,
+            ],
             id="no-select-order-timestamp-desc",
             # Behaviour:
             # AdjustKeys no-op
@@ -259,7 +291,23 @@ from fixtures.querier import (
                 limit=1,
                 order=[OrderBy(TelemetryFieldKey("attribute.timestamp"), "desc")],
             ),
-            lambda x: _flatten_log(x[0]),
+            lambda x: [
+                x[0].attributes_bool,
+                x[0].attributes_number,
+                x[0].attributes_string,
+                x[0].body,
+                x[0].id,
+                x[0].resources_string,
+                x[0].scope_name,
+                x[0].scope_string,
+                x[0].scope_version,
+                x[0].severity_number,
+                x[0].severity_text,
+                x[0].span_id,
+                x[0].timestamp,
+                x[0].trace_flags,
+                x[0].trace_id,
+            ],
             id="no-select-order-attr-timestamp-desc",
             # Behaviour:
             # Order by attribute.timestamp resolves to attributes_string['timestamp'].
@@ -521,10 +569,24 @@ def test_logs_list_query_timestamp_expectations(
                 order=[OrderBy(TelemetryFieldKey("trace_id"), "desc")],
             ),
             lambda x: [
-                _flatten_log(x[0]),
-                _flatten_log(x[2]),
-                _flatten_log(x[1]),
-                _flatten_log(x[3]),
+                [
+                    log.attributes_bool,
+                    log.attributes_number,
+                    log.attributes_string,
+                    log.body,
+                    log.id,
+                    log.resources_string,
+                    log.scope_name,
+                    log.scope_string,
+                    log.scope_version,
+                    log.severity_number,
+                    log.severity_text,
+                    log.span_id,
+                    log.timestamp,
+                    log.trace_flags,
+                    log.trace_id,
+                ]
+                for log in (x[0], x[2], x[1], x[3])
             ],
             id="no-select-trace-id-order",
             # Justification (expected values and row order):
@@ -541,10 +603,24 @@ def test_logs_list_query_timestamp_expectations(
                 order=[OrderBy(TelemetryFieldKey("attribute.trace_id"), "desc")],
             ),
             lambda x: [
-                _flatten_log(x[1]),
-                _flatten_log(x[2]),
-                _flatten_log(x[0]),
-                _flatten_log(x[3]),
+                [
+                    log.attributes_bool,
+                    log.attributes_number,
+                    log.attributes_string,
+                    log.body,
+                    log.id,
+                    log.resources_string,
+                    log.scope_name,
+                    log.scope_string,
+                    log.scope_version,
+                    log.severity_number,
+                    log.severity_text,
+                    log.span_id,
+                    log.timestamp,
+                    log.trace_flags,
+                    log.trace_id,
+                ]
+                for log in (x[1], x[2], x[0], x[3])
             ],
             id="no-select-attribute-trace-id-order",
             # Justification (expected values and row order):
@@ -740,23 +816,3 @@ def test_logs_list_query_trace_id_expectations(
                 keys = list(data.keys())
                 for i, expected_value in enumerate(expected_row):
                     assert data[keys[i]] == expected_value, f"Row mismatch at key '{keys[i]}': expected {expected_value}, got {data[keys[i]]}"
-
-
-def _flatten_log(log: Logs) -> list[Any]:
-    return [
-        log.attributes_bool,
-        log.attributes_number,
-        log.attributes_string,
-        log.body,
-        log.id,
-        log.resources_string,
-        log.scope_name,
-        log.scope_string,
-        log.scope_version,
-        log.severity_number,
-        log.severity_text,
-        log.span_id,
-        log.timestamp,
-        log.trace_flags,
-        log.trace_id,
-    ]

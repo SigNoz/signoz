@@ -10,6 +10,7 @@ interface SectionedValuesInput {
 	isSomeFilterPresentForCurrentAttribute: boolean;
 	isNotInOperator: boolean;
 	hasExistingQuery: boolean;
+	isRelatedValuesSupported: boolean;
 	visibleItemsCount: number;
 	relatedExclusions: string[];
 }
@@ -65,6 +66,7 @@ export function useSectionedValues({
 	isSomeFilterPresentForCurrentAttribute,
 	isNotInOperator,
 	hasExistingQuery,
+	isRelatedValuesSupported,
 	visibleItemsCount,
 	relatedExclusions,
 }: SectionedValuesInput): SectionedValuesOutput {
@@ -95,6 +97,7 @@ export function useSectionedValues({
 			isNotInOperator,
 			hasExistingQuery,
 			hasFilterForThisKey: isSomeFilterPresentForCurrentAttribute,
+			isRelatedValuesSupported,
 		});
 	}, [
 		relatedValues,
@@ -103,6 +106,7 @@ export function useSectionedValues({
 		isSomeFilterPresentForCurrentAttribute,
 		isNotInOperator,
 		hasExistingQuery,
+		isRelatedValuesSupported,
 		relatedExclusions,
 	]);
 

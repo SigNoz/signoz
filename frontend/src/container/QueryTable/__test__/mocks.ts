@@ -638,7 +638,7 @@ export const WidgetHeaderProps: any = {
 		isRefetchError: false,
 		isStale: true,
 	},
-	headerMenuList: ['view', 'clone', 'delete', 'edit'],
+	headerMenuList: ['view'],
 	isWarning: false,
 	isFetchingResponse: false,
 	tableProcessedDataRef: {

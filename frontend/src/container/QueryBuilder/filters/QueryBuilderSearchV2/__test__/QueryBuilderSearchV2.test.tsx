@@ -5,9 +5,8 @@ import {
 	initialQueriesMap,
 	initialQueryBuilderFormValues,
 } from 'constants/queryBuilder';
-import { IUseDashboardVariablesReturn } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
+import { DynamicVariableSuggestion } from 'providers/Dashboard/store/dynamicVariableSuggestions';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
-import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -150,24 +149,14 @@ jest.mock('hooks/useSafeNavigate', () => ({
 	}),
 }));
 
-// Mock dashboard variables
-const dashboardVariables = {
-	service: {
-		id: 'service',
-		name: 'service',
-		type: 'DYNAMIC' as IDashboardVariable['type'],
-		dynamicVariablesAttribute: 'service.name',
-		description: '',
-		sort: 'DISABLED' as IDashboardVariable['sort'],
-		multiSelect: false,
-		showALLOption: false,
-	},
-};
+// Mock the dynamic variables the open dashboard would publish
+const dynamicVariableSuggestions = [
+	{ name: 'service', attribute: 'service.name' },
+];
 
-jest.mock('hooks/dashboard/useDashboardVariables', () => ({
-	useDashboardVariables: (): IUseDashboardVariablesReturn => ({
-		dashboardVariables: dashboardVariables,
-	}),
+jest.mock('hooks/dashboard/useDynamicVariableSuggestions', () => ({
+	useDynamicVariableSuggestions: (): DynamicVariableSuggestion[] =>
+		dynamicVariableSuggestions,
 }));
 
 describe('Suggestion Key -> Operator -> Value Flow', () => {

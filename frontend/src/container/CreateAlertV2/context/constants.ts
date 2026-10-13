@@ -125,6 +125,14 @@ export const THRESHOLD_OPERATOR_OPTIONS = [
 	{ value: AlertThresholdOperator.IS_BELOW, label: 'BELOW' },
 	{ value: AlertThresholdOperator.IS_EQUAL_TO, label: 'EQUAL TO' },
 	{ value: AlertThresholdOperator.IS_NOT_EQUAL_TO, label: 'NOT EQUAL TO' },
+	{
+		value: AlertThresholdOperator.IS_ABOVE_OR_EQUAL_TO,
+		label: 'ABOVE OR EQUAL TO',
+	},
+	{
+		value: AlertThresholdOperator.IS_BELOW_OR_EQUAL_TO,
+		label: 'BELOW OR EQUAL TO',
+	},
 ];
 
 export const ANOMALY_THRESHOLD_OPERATOR_OPTIONS = [

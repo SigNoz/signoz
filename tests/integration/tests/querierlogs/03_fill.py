@@ -20,9 +20,6 @@ def test_logs_fill_gaps(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Test fillGaps for logs without groupBy.
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     logs: list[Logs] = [
         Logs(
@@ -106,9 +103,6 @@ def test_logs_fill_gaps_with_group_by(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Test fillGaps for logs with groupBy.
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     logs: list[Logs] = [
         Logs(
@@ -207,9 +201,6 @@ def test_logs_fill_gaps_formula(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Test fillGaps for logs with formula.
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     logs: list[Logs] = [
         Logs(
@@ -314,9 +305,6 @@ def test_logs_fill_gaps_formula_with_group_by(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Test fillGaps for logs with formula and groupBy.
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     logs: list[Logs] = [
         Logs(
@@ -442,9 +430,6 @@ def test_logs_fill_zero(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Test fillZero function for logs without groupBy.
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     logs: list[Logs] = [
         Logs(
@@ -518,9 +503,6 @@ def test_logs_fill_zero_with_group_by(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Test fillZero function for logs with groupBy.
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     logs: list[Logs] = [
         Logs(
@@ -618,9 +600,6 @@ def test_logs_fill_zero_formula(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Test fillZero function for logs with formula.
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     logs: list[Logs] = [
         Logs(
@@ -726,9 +705,6 @@ def test_logs_fill_zero_formula_with_group_by(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Test fillZero function for logs with formula and groupBy.
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     logs: list[Logs] = [
         Logs(

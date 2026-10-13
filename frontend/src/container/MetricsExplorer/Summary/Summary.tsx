@@ -21,7 +21,7 @@ import {
 import eyesEmojiUrl from 'assets/Images/eyesEmoji.svg';
 import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
 import { initialQueriesMap } from 'constants/queryBuilder';
-import { usePageSize } from 'container/InfraMonitoringK8s/utils';
+import { usePageSize } from './usePageSize';
 import NoLogs from 'container/NoLogs/NoLogs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';

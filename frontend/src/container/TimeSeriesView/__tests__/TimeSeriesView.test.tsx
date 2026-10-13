@@ -39,12 +39,11 @@ jest.mock('lib/uPlotLib/utils/getUplotChartData', () => ({
 	],
 }));
 
-jest.mock(
-	'container/DashboardContainer/visualization/charts/utils/stackSeriesUtils',
-	() => ({ stackSeries: (): unknown => ({ data: [], bands: [] }) }),
-);
+jest.mock('lib/visualization/charts/utils/stackSeriesUtils', () => ({
+	stackSeries: (): unknown => ({ data: [], bands: [] }),
+}));
 
-jest.mock('container/GridCardLayout/GridCard/utils', () => ({
+jest.mock('container/WidgetCard/Card/utils', () => ({
 	getLocalStorageGraphVisibilityState: (): unknown => ({
 		graphVisibilityStates: [],
 	}),
@@ -132,7 +131,7 @@ describe('TimeSeriesView header gating', () => {
 	});
 
 	it('renders no header row when neither export nor unit selector is enabled', () => {
-		const { container } = renderView({ withRawV5: false });
-		expect(container.querySelector('.time-series-view__header')).toBeNull();
+		const { queryByTestId } = renderView({ withRawV5: false });
+		expect(queryByTestId('time-series-view-header')).toBeNull();
 	});
 });

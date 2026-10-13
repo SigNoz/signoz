@@ -1,0 +1,74 @@
+import { useMemo } from 'react';
+import { Table } from 'antd';
+import type { TableProps } from 'antd/lib';
+import logEvent from 'api/common/logEvent';
+
+import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
+
+import type { DashboardListItem } from '../../utils/helpers';
+import DashboardRow from '../DashboardRow/DashboardRow';
+
+interface Props {
+	dashboards: DashboardListItem[];
+	page: number;
+	pageSize: number;
+	total: number;
+	onPageChange: (page: number) => void;
+	showUpdatedAt: boolean;
+	showUpdatedBy: boolean;
+	loading: boolean;
+}
+
+function DashboardsListContent({
+	dashboards,
+	page,
+	pageSize,
+	total,
+	onPageChange,
+	showUpdatedAt,
+	showUpdatedBy,
+	loading,
+}: Props): JSX.Element {
+	const columns: TableProps<DashboardListItem>['columns'] = useMemo(
+		() => [
+			{
+				title: 'Dashboards',
+				key: 'dashboard',
+				render: (_, dashboard, index): JSX.Element => (
+					<DashboardRow
+						dashboard={dashboard}
+						index={index}
+						showUpdatedAt={showUpdatedAt}
+						showUpdatedBy={showUpdatedBy}
+					/>
+				),
+			},
+		],
+		[showUpdatedAt, showUpdatedBy],
+	);
+
+	const paginationConfig = total > pageSize && {
+		pageSize,
+		showSizeChanger: false,
+		onChange: (pageNumber: number): void => {
+			void logEvent(DashboardListEvents.Paginated, { pageNumber });
+			onPageChange(pageNumber);
+		},
+		current: page,
+		total,
+		hideOnSinglePage: true,
+	};
+
+	return (
+		<Table
+			columns={columns}
+			dataSource={dashboards.map((d) => ({ ...d, key: d.id }))}
+			showSorterTooltip
+			loading={loading}
+			showHeader={false}
+			pagination={paginationConfig}
+		/>
+	);
+}
+
+export default DashboardsListContent;

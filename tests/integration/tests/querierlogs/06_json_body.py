@@ -3,11 +3,13 @@ from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 
+import pytest
 import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
+from fixtures.querier import build_order_by, build_raw_query, get_rows, make_query_request
 
 
 def test_logs_json_body_simple_searches(
@@ -911,3 +913,61 @@ def test_logs_json_body_listing(
     assert len(results) == 1
     count = results[0]["data"][0][0]
     assert count == 4  # 4 logs have status="success"
+
+
+@pytest.mark.parametrize(
+    "expression,expected_services",
+    [
+        pytest.param("body.service IN ['auth', 'payment']", {"auth", "payment"}, id="in_scalar_path"),
+        pytest.param("body.status IN [200, 500]", {"auth", "payment"}, id="in_number_path"),
+        pytest.param("body.service NOT IN ['auth']", {"payment", "search"}, id="not_in_scalar_path"),
+        # An `[]` path is extracted as an array. Comparing that array to each scalar in the
+        # list is something ClickHouse rejects outright (code 130), so this shape used to
+        # fail the whole query; per-value extraction reads the first element instead.
+        pytest.param("body.user_names[*] IN ['alpha', 'gamma']", {"auth", "payment"}, id="in_array_path"),
+    ],
+)
+def test_logs_json_body_in_operator(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[list[Logs]], None],
+    expression: str,
+    expected_services: set[str],
+) -> None:
+    """IN over a body JSON path fans out to one comparison per value."""
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    specs = [("auth", 200, ["alpha", "beta"]), ("payment", 500, ["gamma"]), ("search", 404, ["beta", "alpha"])]
+    insert_logs(
+        [
+            Logs(
+                timestamp=now - timedelta(seconds=i + 1),
+                resources={"service.name": "api"},
+                body=json.dumps({"service": service, "status": status, "user_names": user_names}),
+            )
+            for i, (service, status, user_names) in enumerate(specs)
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((now - timedelta(minutes=5)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
+        request_type="raw",
+        queries=[
+            build_raw_query(
+                "A",
+                "logs",
+                filter_expression=expression,
+                order=[build_order_by("timestamp", "desc")],
+                limit=100,
+            )
+        ],
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["status"] == "success"
+    # flag off: the body comes back as the raw JSON string
+    assert {json.loads(row["data"]["body"])["service"] for row in get_rows(response)} == expected_services

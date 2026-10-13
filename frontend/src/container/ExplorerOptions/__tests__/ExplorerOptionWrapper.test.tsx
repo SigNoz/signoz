@@ -2,7 +2,6 @@ import { useHistory } from 'react-router-dom';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { MOCK_QUERY } from 'container/QueryTable/Drilldown/__tests__/mockTableData';
 import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
-import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { rest, server } from 'mocks-server/server';
 import {
 	defaultFeatureFlags,
@@ -13,14 +12,10 @@ import {
 } from 'tests/test-utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
-import { v4 } from 'uuid';
+import { buildExportPanelLink } from 'pages/DashboardPage/DashboardContainer/PanelEditor/newPanelRoute';
 
 import ExplorerOptionWrapper from '../ExplorerOptionWrapper';
 import { getExplorerToolBarVisibility } from '../utils';
-
-// Mock dependencies
-jest.mock('hooks/dashboard/useUpdateDashboard');
 
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
@@ -40,7 +35,6 @@ const mockGetExplorerToolBarVisibility = jest.mocked(
 	getExplorerToolBarVisibility,
 );
 
-const mockUseUpdateDashboard = jest.mocked(useUpdateDashboard);
 const mockUseHistory = jest.mocked(useHistory);
 
 // Mock data
@@ -143,17 +137,6 @@ describe('ExplorerOptionWrapper', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		mockGetExplorerToolBarVisibility.mockReturnValue(true);
-		// Mock useUpdateDashboard to return a mutation object
-		mockUseUpdateDashboard.mockReturnValue({
-			mutate: jest.fn(),
-			mutateAsync: jest.fn(),
-			isLoading: false,
-			isError: false,
-			isSuccess: false,
-			data: undefined,
-			error: null,
-			reset: jest.fn(),
-		} as unknown as ReturnType<typeof useUpdateDashboard>);
 	});
 
 	it('should navigate to alert creation page when "Create an Alert" is clicked in logs-explorer', async () => {
@@ -291,34 +274,27 @@ describe('ExplorerOptionWrapper', () => {
 			});
 		});
 
-		it('should test actual handleExport function with generateExportToDashboardLink and verify useUpdateDashboard is NOT called', async () => {
+		it('should navigate to the panel editor via the export link without writing the dashboard', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 			// Mock the safeNavigate function
 			const mockSafeNavigate = jest.fn();
 
-			// Get the mock mutate function to track calls
-			const mockMutate = mockUseUpdateDashboard().mutate as jest.MockedFunction<
-				(...args: unknown[]) => void
-			>;
-
 			const panelTypeParam = PANEL_TYPES.TIME_SERIES;
-			const widgetId = v4();
 			const query = mockQuery;
 
 			// Create a real handleExport function similar to LogsExplorerViews
-			// This should NOT call useUpdateDashboard (as per PR #8029)
+			// Export navigates only; it must not write the dashboard (PR #8029).
 			const handleExport = (dashboard: ExportDashboard | null): void => {
 				if (!dashboard) {
 					return;
 				}
 
-				// Call the actual generateExportToDashboardLink function (not mocked)
-				const dashboardEditView = generateExportToDashboardLink({
+				// Call the real link builder (not mocked)
+				const dashboardEditView = buildExportPanelLink({
 					query,
 					panelType: panelTypeParam,
 					dashboardId: dashboard.id,
-					widgetId,
 				});
 
 				// Simulate navigation
@@ -379,15 +355,13 @@ describe('ExplorerOptionWrapper', () => {
 			// Wait for the handleExport function to be called and navigation to occur
 			await waitFor(() => {
 				expect(mockSafeNavigate).toHaveBeenCalledTimes(1);
+				// V2 panel-editor link: compositeQuery is double-encoded (see newPanelRoute).
 				expect(mockSafeNavigate).toHaveBeenCalledWith(
-					`/dashboard/${TEST_DASHBOARD_ID}/new?graphType=${panelTypeParam}&widgetId=${widgetId}&compositeQuery=${encodeURIComponent(
-						JSON.stringify(query),
+					`/dashboard/${TEST_DASHBOARD_ID}/panel/new?panelKind=signoz%2FTimeSeriesPanel&compositeQuery=${encodeURIComponent(
+						encodeURIComponent(JSON.stringify(query)),
 					)}`,
 				);
 			});
-
-			// Assert that useUpdateDashboard was NOT called (as per PR #8029)
-			expect(mockMutate).not.toHaveBeenCalled();
 		});
 	});
 

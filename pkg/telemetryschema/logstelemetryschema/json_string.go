@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -92,19 +93,29 @@ func InferDataType(value any, operator qbtypes.FilterOperator, key *telemetrytyp
 	return closure(value, key)
 }
 
-func getBodyJSONPath(key *telemetrytypes.TelemetryFieldKey) string {
+// ClickHouse's JSONPath parser accepts only \\ and \" inside a quoted member.
+func jsonPathMember(segment string) string {
+	escaped := strings.ReplaceAll(segment, `\`, `\\`)
+	escaped = strings.ReplaceAll(escaped, `"`, `\"`)
+	return `"` + escaped + `"`
+}
+
+// bodyJSONPathLiteral escapes each segment for JSONPath, then the whole path as a
+// ClickHouse literal; the fixed "$." root is kept out of the literal escaping.
+func bodyJSONPathLiteral(key *telemetrytypes.TelemetryFieldKey) string {
 	parts := strings.Split(key.Name, ".")
-	newParts := []string{}
+	newParts := make([]string, 0, len(parts))
 	for _, part := range parts {
 		if strings.HasSuffix(part, "[*]") {
-			newParts = append(newParts, fmt.Sprintf(`"%s"[*]`, strings.TrimSuffix(part, "[*]")))
+			newParts = append(newParts, jsonPathMember(strings.TrimSuffix(part, "[*]"))+"[*]")
 		} else if strings.HasSuffix(part, "[]") {
-			newParts = append(newParts, fmt.Sprintf(`"%s"[*]`, strings.TrimSuffix(part, "[]")))
+			newParts = append(newParts, jsonPathMember(strings.TrimSuffix(part, "[]"))+"[*]")
 		} else {
-			newParts = append(newParts, fmt.Sprintf(`"%s"`, part))
+			newParts = append(newParts, jsonPathMember(part))
 		}
 	}
-	return strings.Join(newParts, ".")
+	members := clickhousesql.StringLiteral(strings.Join(newParts, "."))
+	return "'$." + members[1:]
 }
 
 func GetBodyJSONKey(_ context.Context, key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any) (string, any) {
@@ -116,12 +127,12 @@ func GetBodyJSONKey(_ context.Context, key *telemetrytypes.TelemetryFieldKey, op
 		dataType == telemetrytypes.FieldDataTypeArrayString ||
 		dataType == telemetrytypes.FieldDataTypeArrayBool ||
 		dataType == telemetrytypes.FieldDataTypeArrayNumber {
-		return fmt.Sprintf("JSONExtract(JSON_QUERY(body, '$.%s'), '%s')", getBodyJSONPath(key), dataType.CHDataType()), value
+		return fmt.Sprintf("JSONExtract(JSON_QUERY(body, %s), '%s')", bodyJSONPathLiteral(key), dataType.CHDataType()), value
 	}
 
 	if dataType != telemetrytypes.FieldDataTypeString {
 		// for all types except strings, we need to extract the value from the JSON_VALUE
-		return fmt.Sprintf("JSONExtract(JSON_VALUE(body, '$.%s'), '%s')", getBodyJSONPath(key), dataType.CHDataType()), value
+		return fmt.Sprintf("JSONExtract(JSON_VALUE(body, %s), '%s')", bodyJSONPathLiteral(key), dataType.CHDataType()), value
 	}
 	// JSON_VALUE returns a String; stringify list operands so a numeric element in a mixed
 	// set (e.g. IN ['alpha', 42]) doesn't hit a String-vs-number supertype error (CH 386).
@@ -132,11 +143,11 @@ func GetBodyJSONKey(_ context.Context, key *telemetrytypes.TelemetryFieldKey, op
 		}
 		value = strs
 	}
-	return fmt.Sprintf("JSON_VALUE(body, '$.%s')", getBodyJSONPath(key)), value
+	return fmt.Sprintf("JSON_VALUE(body, %s)", bodyJSONPathLiteral(key)), value
 }
 
 func GetBodyJSONKeyForExists(_ context.Context, key *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, _ any) string {
-	return fmt.Sprintf("JSON_EXISTS(body, '$.%s')", getBodyJSONPath(key))
+	return fmt.Sprintf("JSON_EXISTS(body, %s)", bodyJSONPathLiteral(key))
 }
 
 // legacyElemType infers the has-family element type from the needle (legacy has no schema). It
@@ -211,7 +222,7 @@ func getBodyJSONArrayKey(key *telemetrytypes.TelemetryFieldKey, dt telemetrytype
 		name += "[*]"
 	}
 	arrKey := telemetrytypes.NewTelemetryFieldKey(name, key.FieldContext, key.FieldDataType)
-	return fmt.Sprintf("JSONExtract(JSON_QUERY(body, '$.%s'), 'Array(Nullable(%s))')", getBodyJSONPath(arrKey), dt.CHDataType())
+	return fmt.Sprintf("JSONExtract(JSON_QUERY(body, %s), 'Array(Nullable(%s))')", bodyJSONPathLiteral(arrKey), dt.CHDataType())
 }
 
 // getBodyJSONScalarKey builds the single-element-set fallback for a scalar body value: the leaf
@@ -225,18 +236,18 @@ func getBodyJSONScalarKey(key *telemetrytypes.TelemetryFieldKey, dt telemetrytyp
 		return "", "", false
 	}
 	scalarKey := telemetrytypes.NewTelemetryFieldKey(name, key.FieldContext, key.FieldDataType)
-	path := getBodyJSONPath(scalarKey)
+	path := bodyJSONPathLiteral(scalarKey)
 	if dt == telemetrytypes.FieldDataTypeString {
-		expr = fmt.Sprintf("JSON_VALUE(body, '$.%s')", path)
+		expr = fmt.Sprintf("JSON_VALUE(body, %s)", path)
 	} else {
 		// Nullable so a scalar of a different type (e.g. a bool/string where a number is
 		// searched) extracts to NULL rather than the type's default (0/false), which would
 		// otherwise zero-value match has(x, 0).
-		expr = fmt.Sprintf("JSONExtract(JSON_VALUE(body, '$.%s'), 'Nullable(%s)')", path, dt.CHDataType())
+		expr = fmt.Sprintf("JSONExtract(JSON_VALUE(body, %s), 'Nullable(%s)')", path, dt.CHDataType())
 	}
 	keys := strings.Split(name, ".")
 	for i, k := range keys {
-		keys[i] = "'" + k + "'"
+		keys[i] = clickhousesql.StringLiteral(k)
 	}
 	guard = fmt.Sprintf("JSONType(body, %s) NOT IN ('Array', 'Object', 'Null')", strings.Join(keys, ", "))
 	return expr, guard, true

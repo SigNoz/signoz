@@ -12,11 +12,14 @@ var (
 	Gateway        = valuer.NewString("gateway")
 	PremiumSupport = valuer.NewString("premium_support")
 
-	AnomalyDetection  = valuer.NewString("anomaly_detection")
-	DotMetricsEnabled = valuer.NewString("dot_metrics_enabled")
+	AnomalyDetection = valuer.NewString("anomaly_detection")
 
 	// License State.
 	LicenseStatusInvalid = valuer.NewString("invalid")
+
+	// License Platform.
+	LicensePlatformCloud      = valuer.NewString("cloud")
+	LicensePlatformSelfHosted = valuer.NewString("self_hosted")
 
 	// Plan.
 	PlanNameEnterprise = valuer.NewString("enterprise")
@@ -55,13 +58,6 @@ var BasicPlan = []*Feature{
 	},
 	{
 		Name:       AnomalyDetection,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	{
-		Name:       DotMetricsEnabled,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
@@ -112,21 +108,6 @@ var EnterprisePlan = []*Feature{
 		UsageLimit: -1,
 		Route:      "",
 	},
-	{
-		Name:       DotMetricsEnabled,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
 }
 
-var DefaultFeatureSet = []*Feature{
-	{
-		Name:       DotMetricsEnabled,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-}
+var DefaultFeatureSet = []*Feature{}

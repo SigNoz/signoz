@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { useInterval } from 'react-use';
 import { Check, ChevronDown } from '@signozhq/icons';
 import { Button, Popover } from 'antd';
 import { Checkbox } from '@signozhq/ui/checkbox';
@@ -11,21 +10,18 @@ import get from 'api/browser/localstorage/get';
 import set from 'api/browser/localstorage/set';
 import { DASHBOARD_TIME_IN_DURATION } from 'constants/app';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { getMinMaxForSelectedTime } from 'lib/getMinMax';
 import _omit from 'lodash-es/omit';
 // eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import {
-	UPDATE_AUTO_REFRESH_INTERVAL,
-	UPDATE_TIME_INTERVAL,
-} from 'types/actions/globalTime';
+import { UPDATE_AUTO_REFRESH_INTERVAL } from 'types/actions/globalTime';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { refreshIntervalOptions } from './constants';
 import { ButtonContainer } from './styles';
+import { useAutoRefreshTick } from './useAutoRefreshTick';
 
 import './AutoRefreshV2.styles.scss';
 
@@ -93,30 +89,10 @@ function AutoRefresh({
 		[selectedOption],
 	);
 
-	useInterval(() => {
-		const selectedValue = getOption?.value;
-
-		if (isDisabled || !isAutoRefreshEnabled) {
-			return;
-		}
-
-		if (selectedOption !== 'off' && selectedValue) {
-			const { maxTime, minTime } = getMinMaxForSelectedTime(
-				globalTime.selectedTime,
-				globalTime.minTime,
-				globalTime.maxTime,
-			);
-
-			dispatch({
-				type: UPDATE_TIME_INTERVAL,
-				payload: {
-					maxTime,
-					minTime,
-					selectedTime: globalTime.selectedTime,
-				},
-			});
-		}
-	}, getOption?.value || 0);
+	useAutoRefreshTick(
+		!isDisabled && isAutoRefreshEnabled && selectedOption !== 'off',
+		getOption?.value || 0,
+	);
 
 	const onChangeHandler = useCallback(
 		(selectedValue: string) => {

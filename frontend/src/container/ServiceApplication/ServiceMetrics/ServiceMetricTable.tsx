@@ -21,6 +21,7 @@ import { getTotalRPS } from 'utils/services';
 
 import { getColumns } from '../Columns/ServiceColumn';
 import { ServiceMetricsTableProps } from '../types';
+import { useServicesStripInfo } from '../useServicesStripInfo';
 import { getServiceListFromQuery } from '../utils';
 
 function ServiceMetricTable({
@@ -66,6 +67,8 @@ function ServiceMetricTable({
 			}),
 		[isLoading, queries, topLevelOperations],
 	);
+
+	useServicesStripInfo(services.length);
 
 	const { search } = useLocation();
 	const tableColumns = useMemo(() => getColumns(search, true), [search]);

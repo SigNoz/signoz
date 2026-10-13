@@ -295,6 +295,8 @@
     // Prevents bracket access on CSS modules (styles['kebab-case']) which fails with camelCaseOnly config
     "signoz/no-dashboard-fetch-outside-root": "error",
     // Forces useDashboardFetchRequired() outside the root V2 pages (allowlisted in overrides below)
+    "signoz/no-msw-in-story-file": "error",
+    // Bans msw imports in *.stories.tsx; handlers/mock data belong in the sibling .stories.mocks.tsx
     "no-restricted-globals": [
       "error",
       {
@@ -323,9 +325,10 @@
             "name": "react",
             "importNames": [
               "createContext",
-              "useContext"
+              "useContext",
+              "useSyncExternalStore"
             ],
-            "message": "[State mgmt] React Context is deprecated. Migrate shared state to Zustand."
+            "message": "[State mgmt] React Context and hand-rolled external stores are deprecated. Migrate shared state to Zustand."
           },
           {
             "name": "immer",
@@ -335,6 +338,10 @@
             "name": "api/generated/services/dashboard",
             "importNames": ["patchDashboardV2", "usePatchDashboardV2"],
             "message": "[dashboard-v2] Don't call patchDashboardV2/usePatchDashboardV2 directly — use useOptimisticPatch().patchAsync so spec edits update the react-query cache optimistically and reconcile on settle."
+          },
+          {
+            "name": "motion/react-client",
+            "message": "[motion] motion/react-client is for React Server Components only. Use 'motion/react' instead — it provides the same exports and works correctly in client-side SPAs."
           }
         ]
       }
@@ -487,8 +494,11 @@
     // Simplifies boolean returns
     "sonarjs/prefer-while": "error",
     // Suggests while loops over for loops
-    "sonarjs/elseif-without-else": "off"
+    "sonarjs/elseif-without-else": "off",
     // Requires final else in if-else-if chains (was disabled)
+    "signoz/no-conditional-text-nodes-with-siblings": "warn",
+    // Vendored from eslint-plugin-react-google-translate
+    "signoz/no-return-text-nodes": "warn"
   },
   "ignorePatterns": [
     "src/parser/*.ts",
@@ -562,12 +572,12 @@
       }
     },
     {
-      // Root V2 pages own the dashboard fetch lifecycle; useDashboardFetchRequired wraps it.
+      // Root dashboard pages own the fetch lifecycle; useDashboardFetchRequired wraps it.
       // Everywhere else must use useDashboardFetchRequired().
       "files": [
-        "src/pages/DashboardPageV2/DashboardPageV2.tsx",
-        "src/pages/DashboardPageV2/PanelEditorPage/PanelEditorPage.tsx",
-        "src/pages/DashboardPageV2/DashboardContainer/hooks/useDashboardFetchRequired.ts"
+        "src/pages/DashboardPage/DashboardPage.tsx",
+        "src/pages/DashboardPage/PanelEditorPage/PanelEditorPage.tsx",
+        "src/pages/DashboardPage/DashboardContainer/hooks/useDashboardFetchRequired.ts"
       ],
       "rules": {
         "signoz/no-dashboard-fetch-outside-root": "off"

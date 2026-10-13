@@ -19,6 +19,7 @@ import (
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/common/promslog"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
@@ -39,14 +40,12 @@ func TestWebhookRetry(t *testing.T) {
 		promslog.NewNopLogger(),
 		alertmanagertemplate.New(tmpl, slog.Default()),
 	)
-	if err != nil {
-		require.NoError(t, err)
-	}
+	require.NoError(t, err)
 
 	t.Run("test retry status code", func(t *testing.T) {
 		for statusCode, expected := range test.RetryTests(test.DefaultRetryCodes()) {
 			actual, _ := notifier.retrier.Check(statusCode, nil)
-			require.Equal(t, expected, actual, "error on status %d", statusCode)
+			assert.Equal(t, expected, actual, "error on status %d", statusCode)
 		}
 	})
 
@@ -73,7 +72,8 @@ func TestWebhookRetry(t *testing.T) {
 		} {
 			t.Run("", func(t *testing.T) {
 				_, err = notifier.retrier.Check(tc.status, tc.body)
-				require.Equal(t, tc.exp, err.Error())
+				require.Error(t, err)
+				assert.Equal(t, tc.exp, err.Error())
 			})
 		}
 	})
@@ -83,16 +83,16 @@ func TestWebhookTruncateAlerts(t *testing.T) {
 	alerts := make([]*types.Alert, 10)
 
 	truncatedAlerts, numTruncated := truncateAlerts(0, alerts)
-	require.Len(t, truncatedAlerts, 10)
-	require.EqualValues(t, 0, numTruncated)
+	assert.Len(t, truncatedAlerts, 10)
+	assert.EqualValues(t, 0, numTruncated)
 
 	truncatedAlerts, numTruncated = truncateAlerts(4, alerts)
-	require.Len(t, truncatedAlerts, 4)
-	require.EqualValues(t, 6, numTruncated)
+	assert.Len(t, truncatedAlerts, 4)
+	assert.EqualValues(t, 6, numTruncated)
 
 	truncatedAlerts, numTruncated = truncateAlerts(100, alerts)
-	require.Len(t, truncatedAlerts, 10)
-	require.EqualValues(t, 0, numTruncated)
+	assert.Len(t, truncatedAlerts, 10)
+	assert.EqualValues(t, 0, numTruncated)
 }
 
 func TestWebhookRedactedURL(t *testing.T) {
@@ -219,10 +219,10 @@ func TestWebhookURLTemplating(t *testing.T) {
 
 			if tc.expectError {
 				require.Error(t, err)
-				require.Contains(t, err.Error(), tc.expectedErrMsg)
+				assert.Contains(t, err.Error(), tc.expectedErrMsg)
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, tc.expectedPath, calledURL)
+				assert.Equal(t, tc.expectedPath, calledURL)
 			}
 		})
 	}

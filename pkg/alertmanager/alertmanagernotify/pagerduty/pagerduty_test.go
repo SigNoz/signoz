@@ -25,6 +25,7 @@ import (
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/common/promslog"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/prometheus/alertmanager/config"
@@ -54,7 +55,7 @@ func TestPagerDutyRetryV1(t *testing.T) {
 	retryCodes := append(test.DefaultRetryCodes(), http.StatusForbidden)
 	for statusCode, expected := range test.RetryTests(retryCodes) {
 		actual, _ := notifier.retrier.Check(statusCode, nil)
-		require.Equal(t, expected, actual, "retryv1 - error on status %d", statusCode)
+		assert.Equal(t, expected, actual, "retryv1 - error on status %d", statusCode)
 	}
 }
 
@@ -74,7 +75,7 @@ func TestPagerDutyRetryV2(t *testing.T) {
 	retryCodes := append(test.DefaultRetryCodes(), http.StatusTooManyRequests)
 	for statusCode, expected := range test.RetryTests(retryCodes) {
 		actual, _ := notifier.retrier.Check(statusCode, nil)
-		require.Equal(t, expected, actual, "retryv2 - error on status %d", statusCode)
+		assert.Equal(t, expected, actual, "retryv2 - error on status %d", statusCode)
 	}
 }
 
@@ -349,12 +350,12 @@ func TestPagerDutyTemplating(t *testing.T) {
 				require.Error(t, err)
 				if errors.Asc(err, errors.CodeInternal) {
 					_, _, errMsg, _, _, _ := errors.Unwrapb(err)
-					require.Contains(t, errMsg, tc.errMsg)
+					assert.Contains(t, errMsg, tc.errMsg)
 				} else {
-					require.Contains(t, err.Error(), tc.errMsg)
+					assert.Contains(t, err.Error(), tc.errMsg)
 				}
 			}
-			require.Equal(t, tc.retry, ok)
+			assert.Equal(t, tc.retry, ok)
 		})
 	}
 }
@@ -393,7 +394,7 @@ func TestErrDetails(t *testing.T) {
 	} {
 		t.Run("", func(t *testing.T) {
 			err := errDetails(tc.status, tc.body)
-			require.Contains(t, err, tc.exp)
+			assert.Contains(t, err, tc.exp)
 		})
 	}
 }
@@ -427,7 +428,7 @@ func TestEventSizeEnforcement(t *testing.T) {
 
 	encodedV1, err := notifierV1.encodeMessage(context.Background(), msgV1)
 	require.NoError(t, err)
-	require.Contains(t, encodedV1.String(), `"details":{"error":"Custom details have been removed because the original event exceeds the maximum size of 512KB"}`)
+	assert.Contains(t, encodedV1.String(), `"details":{"error":"Custom details have been removed because the original event exceeds the maximum size of 512KB"}`)
 
 	// V2 Messages
 	msgV2 := &pagerDutyMessage{
@@ -451,7 +452,7 @@ func TestEventSizeEnforcement(t *testing.T) {
 
 	encodedV2, err := notifierV2.encodeMessage(context.Background(), msgV2)
 	require.NoError(t, err)
-	require.Contains(t, encodedV2.String(), `"custom_details":{"error":"Custom details have been removed because the original event exceeds the maximum size of 512KB"}`)
+	assert.Contains(t, encodedV2.String(), `"custom_details":{"error":"Custom details have been removed because the original event exceeds the maximum size of 512KB"}`)
 }
 
 func TestPagerDutyEmptySrcHref(t *testing.T) {
@@ -543,8 +544,9 @@ func TestPagerDutyEmptySrcHref(t *testing.T) {
 				}
 			}
 
-			require.Equal(t, expectedImages, event.Images)
-			require.Equal(t, expectedLinks, event.Links)
+			// Handler runs on the server's goroutine — require is illegal here.
+			assert.Equal(t, expectedImages, event.Images)
+			assert.Equal(t, expectedLinks, event.Links)
 		},
 	))
 	defer server.Close()
@@ -644,7 +646,7 @@ func TestPagerDutyTimeout(t *testing.T) {
 				},
 			}
 			_, err = pd.Notify(ctx, alert)
-			require.Equal(t, tt.wantErr, err != nil)
+			assert.Equal(t, tt.wantErr, err != nil)
 		})
 	}
 }
@@ -899,11 +901,12 @@ func TestRenderDetails(t *testing.T) {
 				tmpl: test.CreateTmpl(t),
 			}
 			got, err := n.renderDetails(tt.args.data)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("renderDetails() error = %v, wantErr %v", err, tt.wantErr)
-				return
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
 			}
-			require.Equal(t, tt.want, got)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
@@ -944,7 +947,7 @@ func TestPrepareContent(t *testing.T) {
 
 		title, err := notifier.prepareTitle(ctx, alerts)
 		require.NoError(t, err)
-		require.Equal(t, "HighCPU for Payment service (FIRING)", title)
+		assert.Equal(t, "HighCPU for Payment service (FIRING)", title)
 	})
 
 	t.Run("custom template uses $variable annotation for title", func(t *testing.T) {
@@ -980,6 +983,6 @@ func TestPrepareContent(t *testing.T) {
 
 		title, err := notifier.prepareTitle(ctx, alerts)
 		require.NoError(t, err)
-		require.Equal(t, "HighCPU on api-server is in resolved state", title)
+		assert.Equal(t, "HighCPU on api-server is in resolved state", title)
 	})
 }

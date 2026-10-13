@@ -1207,8 +1207,8 @@
                       {
                         "metricName": "kubernetes.io/container/restart_count",
                         "temporality": "",
-                        "timeAggregation": "max",
-                        "spaceAggregation": "max",
+                        "timeAggregation": "increase",
+                        "spaceAggregation": "sum",
                         "reduceTo": "avg"
                       }
                     ],

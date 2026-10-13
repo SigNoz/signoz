@@ -23,6 +23,13 @@
 			font-weight: 400;
 			line-height: 20px; /* 142.857% */
 			letter-spacing: -0.07px;
+
+			.cloud-service-data-collected-table-heading-info {
+				display: inline-flex;
+				align-items: center;
+				color: var(--l3-foreground);
+				cursor: help;
+			}
 		}
 
 		.cloud-service-data-collected-table-logs {
@@ -31,4 +38,10 @@
 			background: var(--l1-background);
 		}
 	}
+}
+
+.cloud-service-data-collected-table-tooltip {
+	max-width: 280px;
+	white-space: normal;
+	word-break: break-word;
 }

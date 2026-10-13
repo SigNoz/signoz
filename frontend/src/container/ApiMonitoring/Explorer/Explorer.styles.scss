@@ -1,23 +1,15 @@
-.api-monitoring-page {
-	display: flex;
-	height: 100%;
+.api-monitoring-explorer {
+	.api-quick-filters-header {
+		padding: 12px;
+		border-bottom: 1px solid var(--l1-border);
+		border-right: 1px solid var(--l1-border);
 
-	.api-quick-filter-left-section {
-		width: 0%;
-		flex-shrink: 0;
+		display: flex;
+		align-items: center;
+		gap: 6px;
 
-		.api-quick-filters-header {
-			padding: 12px;
-			border-bottom: 1px solid var(--l1-border);
-			border-right: 1px solid var(--l1-border);
-
-			display: flex;
-			align-items: center;
-			gap: 6px;
-
-			font-size: 14px;
-			line-height: 18px;
-		}
+		font-size: 14px;
+		line-height: 18px;
 	}
 
 	.api-module-right-section {
@@ -159,16 +151,6 @@
 			.error-rate {
 				width: 120px;
 			}
-		}
-	}
-
-	&.filter-visible {
-		.api-quick-filter-left-section {
-			width: 260px;
-		}
-
-		.api-module-right-section {
-			width: calc(100% - 260px);
 		}
 	}
 }

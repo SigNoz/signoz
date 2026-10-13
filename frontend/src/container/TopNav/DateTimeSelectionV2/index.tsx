@@ -12,7 +12,6 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import NewExplorerCTA from 'container/NewExplorerCTA';
 import dayjs, { Dayjs } from 'dayjs';
 import {
 	useGlobalTimeQueryInvalidate,
@@ -54,7 +53,7 @@ import {
 	Time,
 	TimeRange,
 } from './types';
-import { getUnstableCurrentSearchParams } from './utils/getUnstableCurrentSearchParams';
+import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 
 import './DateTimeSelectionV2.styles.scss';
 
@@ -65,7 +64,6 @@ function DateTimeSelection({
 	updateTimeInterval,
 	globalTimeLoading,
 	showResetButton = false,
-	showOldExplorerCTA = false,
 	defaultRelativeTime = RelativeTimeMap['6hr'] as Time,
 	isModalTimeSelection = false,
 	onTimeChange,
@@ -688,12 +686,6 @@ function DateTimeSelection({
 				</FormItem>
 			)}
 
-			{showOldExplorerCTA && (
-				<div style={{ marginRight: 12 }}>
-					<NewExplorerCTA />
-				</div>
-			)}
-
 			{!hasSelectedTimeError && !refreshButtonHidden && showRefreshText && (
 				<div className="refresh-text-container">
 					<RefreshText
@@ -770,7 +762,6 @@ interface DateTimeSelectionV2Props {
 	showAutoRefresh: boolean;
 	showRefreshText?: boolean;
 	hideShareModal?: boolean;
-	showOldExplorerCTA?: boolean;
 	showResetButton?: boolean;
 	defaultRelativeTime?: Time;
 	isModalTimeSelection?: boolean;
@@ -792,7 +783,6 @@ interface DateTimeSelectionV2Props {
 
 DateTimeSelection.defaultProps = {
 	hideShareModal: false,
-	showOldExplorerCTA: false,
 	showRefreshText: true,
 	showResetButton: false,
 	defaultRelativeTime: RelativeTimeMap['6hr'] as Time,

@@ -1,7 +1,7 @@
 import { QueryParams } from 'constants/query';
 import { History, Location } from 'history';
 import getRenderer from 'lib/uPlotLib/utils/getRenderer';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuidv4 } from 'uuid';

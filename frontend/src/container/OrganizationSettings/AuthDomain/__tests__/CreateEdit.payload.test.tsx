@@ -112,9 +112,7 @@ describe('CreateEdit — save payload correctness', () => {
 		await waitFor(() => expect(capturedPayload).not.toBeNull());
 
 		expect(capturedPayload).toMatchObject({
-			config: expect.objectContaining({
-				roleMapping: expect.objectContaining({ groupMappings: {} }),
-			}),
+			roleMapping: expect.objectContaining({ groupMappings: {} }),
 		});
 	});
 
@@ -161,7 +159,7 @@ describe('CreateEdit — save payload correctness', () => {
 
 		expect(capturedPayload).toMatchObject({
 			config: expect.objectContaining({
-				googleAuthConfig: expect.objectContaining({
+				spec: expect.objectContaining({
 					domainToAdminEmail: {},
 				}),
 			}),

@@ -3,37 +3,30 @@ import { TooltipSimple } from '@signozhq/ui/tooltip';
 
 import styles from './ColumnHeader.module.scss';
 import cx from 'classnames';
+import { MouseEventHandler } from 'react';
+import { DOCS_BASE_URL } from 'constants/app';
 
-const DOCS_BASE_URL = `${process.env.DOCS_BASE_URL}/docs`;
+const DOCS_ROOT = `${DOCS_BASE_URL}/docs`;
 
 interface ColumnHeaderProps {
 	children?: React.ReactNode;
-	title?: string;
 	docPath?: string;
-	tooltip?: string;
+	tooltip?: React.ReactNode;
 	className?: string;
 }
 
 function ColumnHeader({
 	children,
-	title,
 	docPath,
 	tooltip,
 	className,
 }: ColumnHeaderProps): JSX.Element {
+	const stopPropagationHandler: MouseEventHandler = (e): void =>
+		e.stopPropagation();
+
 	const renderContent = (): React.ReactNode => {
 		if (children) {
 			return children;
-		}
-
-		if (title) {
-			const parts = title.split('\n');
-			return parts.map((part, index) => (
-				<div key={`${part}-${index}`}>
-					{part}
-					{index < parts.length - 1 && <br />}
-				</div>
-			));
 		}
 
 		return null;
@@ -42,21 +35,25 @@ function ColumnHeader({
 	const renderInfoIcon = (): React.ReactNode => {
 		if (docPath) {
 			const tooltipTitle = tooltip || 'Not sure what this means?';
+			const isJustStringTitle = typeof tooltipTitle === 'string';
+
 			return (
 				<TooltipSimple
 					arrow
 					title={
-						<>
+						<div onClick={stopPropagationHandler}>
 							{tooltipTitle}{' '}
 							<a
-								href={`${DOCS_BASE_URL}${docPath}`}
+								href={`${DOCS_ROOT}${docPath}`}
 								target="_blank"
 								rel="noopener"
-								onClick={(e): void => e.stopPropagation()}
+								onClick={stopPropagationHandler}
 							>
-								Learn more.
+								{isJustStringTitle
+									? 'Learn more.'
+									: 'Check the documentation to learn more.'}
 							</a>
-						</>
+						</div>
 					}
 				>
 					<div className={styles.infoIcon}>
@@ -68,7 +65,9 @@ function ColumnHeader({
 
 		if (tooltip) {
 			return (
-				<TooltipSimple title={tooltip}>
+				<TooltipSimple
+					title={<div onClick={stopPropagationHandler}>{tooltip}</div>}
+				>
 					<div className={styles.infoIcon}>
 						<Info size="md" />
 					</div>

@@ -1,7 +1,6 @@
 import * as roleApi from 'api/generated/services/role';
-import { FeatureKeys } from 'constants/features';
 import { server } from 'mocks-server/server';
-import { defaultFeatureFlags, render, screen, waitFor } from 'tests/test-utils';
+import { render, screen, waitFor } from 'tests/test-utils';
 import {
 	invalidLicense,
 	setupAuthzAdmin,
@@ -33,26 +32,6 @@ describe('ViewRolePage - Feature Gate', () => {
 	});
 
 	describe('feature disabled', () => {
-		it('shows error when fine-grained authz flag is inactive', async () => {
-			render(<ViewRolePage />, undefined, {
-				initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
-				appContextOverrides: {
-					featureFlags: defaultFeatureFlags.map((f) =>
-						f.name === FeatureKeys.USE_FINE_GRAINED_AUTHZ
-							? { ...f, active: false }
-							: f,
-					),
-				},
-			});
-
-			await expect(
-				screen.findByTestId('feature-gate-error-banner'),
-			).resolves.toBeInTheDocument();
-			await expect(
-				screen.findByText(/Custom roles feature is not available/i),
-			).resolves.toBeInTheDocument();
-		});
-
 		it('shows error when license is invalid', async () => {
 			render(<ViewRolePage />, undefined, {
 				initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),

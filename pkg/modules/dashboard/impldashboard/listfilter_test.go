@@ -560,6 +560,16 @@ func TestCompile_Rejections(t *testing.T) {
 			expectedErrShouldContain: "RFC3339",
 		},
 		{
+			subtestName:              "rejects LIKE pattern ending in an unescaped backslash",
+			dslQueryToCompile:        `name LIKE 'prod\\'`,
+			expectedErrShouldContain: "must not end with an unescaped backslash",
+		},
+		{
+			subtestName:              "rejects ILIKE pattern ending in an unescaped backslash",
+			dslQueryToCompile:        `name ILIKE '%\\'`,
+			expectedErrShouldContain: "must not end with an unescaped backslash",
+		},
+		{
 			subtestName:              "rejects REGEXP — not yet supported",
 			dslQueryToCompile:        `name REGEXP '.*'`,
 			expectedErrShouldContain: "REGEXP",
@@ -572,8 +582,19 @@ func TestCompile_Rejections(t *testing.T) {
 	})
 }
 
+func TestCompileTrailingLiteralBackslash(t *testing.T) {
+	runCompileCases(t, []compileCase{
+		{
+			subtestName:       "escaped trailing backslash compiles",
+			dslQueryToCompile: `name LIKE '%\\\\'`,
+			expectedSQL:       `json_extract("dashboard"."data", '$.spec.display.name') LIKE ? ESCAPE '\'`,
+			expectedArgs:      []any{`%\\`},
+		},
+	})
+}
+
 // Every key in dashboardtypes.ReservedOps must have a matching case in
-// visitComparisonForReservedKeys; a key that's reserved but unhandled falls
+// resolveReservedKey; a key that's reserved but unhandled falls
 // through to the "no handler for reserved key" error. Equal is accepted by all
 // reserved keys, so `key = 'x'` always reaches the dispatch switch — a missing
 // handler surfaces as that error regardless of whether the value type-checks.
@@ -583,7 +604,7 @@ func TestCompileReservedKeysAllHandled(t *testing.T) {
 			_, err := Compile(string(key)+` = 'x'`, formatter(t))
 			if err != nil {
 				assert.NotContains(t, err.Error(), "no handler for reserved key",
-					"reserved key %q has no handler in visitComparisonForReservedKeys", key)
+					"reserved key %q has no handler in resolveReservedKey", key)
 			}
 		})
 	}

@@ -63,8 +63,13 @@ func (d *DashboardSpec) Validate() error {
 	return d.validateLayouts()
 }
 
-// validateVariables rejects two variables sharing the same name.
+// validateVariables rejects an absent or null list, and duplicate variable names.
 func (d *DashboardSpec) validateVariables() error {
+	// Nil is an absent or explicitly null field; `[]` decodes non-nil. The schema
+	// declares it required and non-nullable, so both are rejected.
+	if d.Variables == nil {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.variables: is required and must not be null; use [] for a dashboard with no variables")
+	}
 	seen := make(map[string]struct{}, len(d.Variables))
 	for i, v := range d.Variables {
 		var name string
@@ -94,6 +99,9 @@ func (d *DashboardSpec) validateVariables() error {
 }
 
 func (d *DashboardSpec) validatePanels() error {
+	if d.Panels == nil {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.panels: is required and must not be null; use {} for a dashboard with no panels")
+	}
 	for key, panel := range d.Panels {
 		if err := common.ValidateID(key); err != nil {
 			return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "spec.panels: %s", err.Error())
@@ -106,8 +114,8 @@ func (d *DashboardSpec) validatePanels() error {
 			return err
 		}
 		panelKind := panel.Spec.Plugin.Kind
-		if len(panel.Spec.Queries) != 1 {
-			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.spec.queries: panel must have one query, found %d", path, len(panel.Spec.Queries))
+		if err := validatePanelQueryCount(panel.Spec.Queries, panelKind, path); err != nil {
+			return err
 		}
 		allowed := allowedQueryKinds[panelKind]
 		for qi, q := range panel.Spec.Queries {
@@ -115,6 +123,22 @@ func (d *DashboardSpec) validatePanels() error {
 				return err
 			}
 		}
+	}
+	return nil
+}
+
+func validatePanelQueryCount(queries []Query, panelKind PanelPluginKind, path string) error {
+	if queries == nil {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.spec.queries: is required and must not be null; use [] for a panel that renders without a query", path)
+	}
+	if panelKind.rendersWithoutQuery() {
+		if len(queries) != 0 {
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.spec.queries: panel kind %q renders without a query and must have queries: [], found %d", path, panelKind, len(queries))
+		}
+		return nil
+	}
+	if len(queries) != 1 {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.spec.queries: panel must have one query, found %d", path, len(queries))
 	}
 	return nil
 }
@@ -133,6 +157,7 @@ func (d *DashboardSpec) validateQuery(qi int, q Query, panelKind PanelPluginKind
 func validateQueryAllowedForPanel(plugin QueryPlugin, allowed []QueryPluginKind, panelKind PanelPluginKind, path string) error {
 	compositeSubQueryTypeToPluginKind := map[qb.QueryType]QueryPluginKind{
 		qb.QueryTypeBuilder:       QueryKindBuilder,
+		qb.QueryTypeBuilderAI:     QueryKindAIBuilder,
 		qb.QueryTypeFormula:       QueryKindFormula,
 		qb.QueryTypeTraceOperator: QueryKindTraceOperator,
 		qb.QueryTypePromQL:        QueryKindPromQL,
@@ -252,6 +277,9 @@ const maxLayoutsPerDashboard = 500
 // Geometry (validateGridLayoutGeometry) needs only each layout's own data but
 // runs here so its errors can name the layout by index.
 func (d *DashboardSpec) validateLayouts() error {
+	if d.Layouts == nil {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts: is required and must not be null; use [] for a dashboard with no layouts")
+	}
 	if len(d.Layouts) > maxLayoutsPerDashboard {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts: dashboard has %d layouts; maximum is %d", len(d.Layouts), maxLayoutsPerDashboard)
 	}

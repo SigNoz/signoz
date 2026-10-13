@@ -35,8 +35,8 @@ describe('InviteMembers - Validation', () => {
 
 			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
 			await user.type(emailInputs[0], INVALID_EMAIL);
-			await user.click(screen.getAllByText('Select role')[0]);
-			await user.click(await screen.findByText('Viewer'));
+			await user.click(screen.getAllByText('Select roles')[0]);
+			await user.click(await screen.findByTitle('Viewer'));
 
 			await user.click(screen.getByTestId('submit-btn'));
 
@@ -60,8 +60,8 @@ describe('InviteMembers - Validation', () => {
 
 			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
 			await user.type(emailInputs[0], INVALID_EMAIL);
-			await user.click(screen.getAllByText('Select role')[0]);
-			await user.click(await screen.findByText('Viewer'));
+			await user.click(screen.getAllByText('Select roles')[0]);
+			await user.click(await screen.findByTitle('Viewer'));
 
 			await user.click(screen.getByTestId('submit-btn'));
 
@@ -85,8 +85,8 @@ describe('InviteMembers - Validation', () => {
 
 			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
 			await user.type(emailInputs[0], INVALID_EMAIL);
-			await user.click(screen.getAllByText('Select role')[0]);
-			await user.click(await screen.findByText('Viewer'));
+			await user.click(screen.getAllByText('Select roles')[0]);
+			await user.click(await screen.findByTitle('Viewer'));
 			await user.click(screen.getByTestId('submit-btn'));
 
 			await expect(
@@ -149,8 +149,8 @@ describe('InviteMembers - Validation', () => {
 				screen.findByText('Please select roles for team members'),
 			).resolves.toBeInTheDocument();
 
-			await user.click(screen.getAllByText('Select role')[0]);
-			await user.click(await screen.findByText('Viewer'));
+			await user.click(screen.getAllByText('Select roles')[0]);
+			await user.click(await screen.findByTitle('Viewer'));
 
 			await waitFor(() => {
 				expect(
@@ -204,8 +204,8 @@ describe('InviteMembers - Validation', () => {
 
 			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
 			await user.type(emailInputs[0], VALID_EMAIL);
-			await user.click(screen.getAllByText('Select role')[0]);
-			await user.click(await screen.findByText('Viewer'));
+			await user.click(screen.getAllByText('Select roles')[0]);
+			await user.click(await screen.findByTitle('Viewer'));
 
 			await user.click(screen.getByTestId('submit-btn'));
 

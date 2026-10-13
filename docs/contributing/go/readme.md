@@ -12,6 +12,7 @@ We **recommend** (almost enforce) reviewing these guides before contributing to 
 
 - [Abstractions](abstractions.md) - When to introduce new types and intermediate representations
 - [Authz](authz.md) - Authorization, roles, and access control
+- [ClickHouse SQL](clickhousesql.md) - Quoting names and values in generated ClickHouse queries
 - [Errors](errors.md) - Structured error handling
 - [Endpoint](endpoint.md) - HTTP endpoint patterns
 - [Flagger](flagger.md) - Feature flag patterns
@@ -20,4 +21,5 @@ We **recommend** (almost enforce) reviewing these guides before contributing to 
 - [Packages](packages.md) - Naming, layout, and conventions for `pkg/` packages
 - [Service](service.md) - Managed service lifecycle with `factory.Service`
 - [SQL](sql.md) - Database and SQL patterns
+- [DSL Filtering to SQL](dslfilteringtosql.md) - Compiling the list filter DSL to relational-store WHERE clauses
 - [Types](types.md) - Domain types, request/response bodies, and storage rows in `pkg/types/`

@@ -6,7 +6,8 @@ import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { Check, TableColumnsSplit, X } from '@signozhq/icons';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
-import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import { FieldKeysConfigProp } from 'api/querySuggestions/types';
+import { BuilderQueryType, TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import AddedFields from './AddedFields';
@@ -28,6 +29,12 @@ interface FieldsSelectorProps {
 	signal: DataSource;
 	maxFields?: number;
 	requiredFields?: readonly string[];
+	// Lets users add a free-typed field which
+	// does not show up in the suggestions
+	allowCustomFields?: boolean;
+	fieldKeysConfig?: FieldKeysConfigProp;
+	builderQueryType?: BuilderQueryType;
+	extraFields?: TelemetryFieldKey[];
 	width?: number;
 	height?: number;
 	defaultPosition?: { x: number; y: number };
@@ -46,6 +53,10 @@ function FieldsSelectorContent({
 	signal,
 	maxFields,
 	requiredFields,
+	allowCustomFields,
+	fieldKeysConfig,
+	builderQueryType,
+	extraFields,
 	width = DEFAULT_PANEL_WIDTH,
 	height,
 	defaultPosition,
@@ -67,7 +78,7 @@ function FieldsSelectorContent({
 
 	const handleInputChange = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>): void => {
-			const value = e.target.value.trim().toLowerCase();
+			const value = e.target.value.trim();
 			setInputValue(value);
 			debouncedUpdate(value);
 		},
@@ -153,6 +164,10 @@ function FieldsSelectorContent({
 					addedFields={draftFields}
 					onAdd={handleAdd}
 					isAtLimit={isAtLimit}
+					allowCustomFields={allowCustomFields}
+					fieldKeysConfig={fieldKeysConfig}
+					builderQueryType={builderQueryType}
+					extraFields={extraFields}
 				/>
 
 				{hasUnsavedChanges && (
@@ -192,7 +207,7 @@ function FieldsSelector({
 		() =>
 			fields.map((f) => ({
 				...f,
-				key: f.key ?? buildCompositeKey(f.name, f.fieldContext),
+				key: buildCompositeKey(f.name, f.fieldContext, f.fieldDataType),
 			})),
 		[fields],
 	);

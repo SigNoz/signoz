@@ -1,4 +1,7 @@
-import { listRolesSuccessResponse } from 'mocks-server/__mockdata__/roles';
+import {
+	listRolesSuccessResponse,
+	managedRoles,
+} from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
@@ -10,23 +13,33 @@ const ROLES_ENDPOINT = '*/api/v1/roles';
 const SA_KEYS_ENDPOINT = '*/api/v1/service_accounts/:id/keys';
 const SA_ENDPOINT = '*/api/v1/service_accounts/sa-1';
 const SA_DELETE_ENDPOINT = '*/api/v1/service_accounts/sa-1';
-const SA_ROLES_ENDPOINT = '*/api/v1/service_accounts/:id/roles';
-const SA_ROLE_DELETE_ENDPOINT = '*/api/v1/service_accounts/:id/roles/:rid';
+const SA_ROLES_ENDPOINT = '*/api/v1/service_account_roles';
+const SA_ROLE_DELETE_ENDPOINT = '*/api/v1/service_account_roles/:id';
+
+const ADMIN_ASSIGNMENT_ID = 'sar-admin-1';
 
 const activeAccountResponse = {
 	id: 'sa-1',
 	name: 'CI Bot',
 	email: 'ci-bot@signoz.io',
-	roles: ['signoz-admin'],
 	status: 'ACTIVE',
 	createdAt: '2026-01-01T00:00:00Z',
 	updatedAt: '2026-01-02T00:00:00Z',
+	serviceAccountRoles: [
+		{
+			id: ADMIN_ASSIGNMENT_ID,
+			serviceAccountId: 'sa-1',
+			roleId: managedRoles[0].id,
+			role: { ...managedRoles[0], transactionGroups: [] },
+		},
+	],
 };
 
 const deletedAccountResponse = {
 	...activeAccountResponse,
 	id: 'sa-2',
 	status: 'DELETED',
+	serviceAccountRoles: [],
 };
 
 function renderDrawer(
@@ -58,22 +71,13 @@ describe('ServiceAccountDrawer', () => {
 			rest.delete(SA_DELETE_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
 			),
-			rest.get(SA_ROLES_ENDPOINT, (_, res, ctx) =>
+			rest.post(SA_ROLES_ENDPOINT, (_, res, ctx) =>
 				res(
-					ctx.status(200),
-					ctx.json({
-						data: listRolesSuccessResponse.data.filter(
-							(r) => r.name === 'signoz-admin',
-						),
-					}),
+					ctx.status(201),
+					ctx.json({ status: 'success', data: { id: 'sar-new' } }),
 				),
 			),
-			rest.post(SA_ROLES_ENDPOINT, (_, res, ctx) =>
-				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
-			),
-			rest.delete(SA_ROLE_DELETE_ENDPOINT, (_, res, ctx) =>
-				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
-			),
+			rest.delete(SA_ROLE_DELETE_ENDPOINT, (_, res, ctx) => res(ctx.status(204))),
 			setupAuthzAdmin(),
 		);
 	});
@@ -136,11 +140,14 @@ describe('ServiceAccountDrawer', () => {
 		server.use(
 			rest.post(SA_ROLES_ENDPOINT, async (req, res, ctx) => {
 				roleSpy(await req.json());
-				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+				return res(
+					ctx.status(201),
+					ctx.json({ status: 'success', data: { id: 'sar-new' } }),
+				);
 			}),
 			rest.delete(SA_ROLE_DELETE_ENDPOINT, (_, res, ctx) => {
 				deleteSpy();
-				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+				return res(ctx.status(204));
 			}),
 		);
 
@@ -159,7 +166,8 @@ describe('ServiceAccountDrawer', () => {
 		await waitFor(() => {
 			expect(roleSpy).toHaveBeenCalledWith(
 				expect.objectContaining({
-					id: '019c24aa-2248-7585-a129-4188b3473c27',
+					serviceAccountId: 'sa-1',
+					roleId: '019c24aa-2248-7585-a129-4188b3473c27',
 				}),
 			);
 			expect(deleteSpy).not.toHaveBeenCalled();
@@ -174,11 +182,14 @@ describe('ServiceAccountDrawer', () => {
 		server.use(
 			rest.post(SA_ROLES_ENDPOINT, async (req, res, ctx) => {
 				roleSpy(await req.json());
-				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+				return res(
+					ctx.status(201),
+					ctx.json({ status: 'success', data: { id: 'sar-new' } }),
+				);
 			}),
-			rest.delete(SA_ROLE_DELETE_ENDPOINT, (_, res, ctx) => {
-				deleteSpy();
-				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+			rest.delete(SA_ROLE_DELETE_ENDPOINT, (req, res, ctx) => {
+				deleteSpy(req.params.id);
+				return res(ctx.status(204));
 			}),
 		);
 
@@ -198,7 +209,7 @@ describe('ServiceAccountDrawer', () => {
 		await user.click(saveBtn);
 
 		await waitFor(() => {
-			expect(deleteSpy).toHaveBeenCalled();
+			expect(deleteSpy).toHaveBeenCalledWith(ADMIN_ASSIGNMENT_ID);
 			expect(roleSpy).not.toHaveBeenCalled();
 		});
 	});
@@ -244,9 +255,6 @@ describe('ServiceAccountDrawer', () => {
 				res(ctx.status(200), ctx.json({ data: deletedAccountResponse })),
 			),
 			rest.get('*/api/v1/service_accounts/sa-2/keys', (_, res, ctx) =>
-				res(ctx.status(200), ctx.json({ data: [] })),
-			),
-			rest.get('*/api/v1/service_accounts/sa-2/roles', (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ data: [] })),
 			),
 		);
@@ -312,22 +320,13 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 			rest.delete(SA_DELETE_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
 			),
-			rest.get(SA_ROLES_ENDPOINT, (_, res, ctx) =>
+			rest.post(SA_ROLES_ENDPOINT, (_, res, ctx) =>
 				res(
-					ctx.status(200),
-					ctx.json({
-						data: listRolesSuccessResponse.data.filter(
-							(r) => r.name === 'signoz-admin',
-						),
-					}),
+					ctx.status(201),
+					ctx.json({ status: 'success', data: { id: 'sar-new' } }),
 				),
 			),
-			rest.post(SA_ROLES_ENDPOINT, (_, res, ctx) =>
-				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
-			),
-			rest.delete(SA_ROLE_DELETE_ENDPOINT, (_, res, ctx) =>
-				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
-			),
+			rest.delete(SA_ROLE_DELETE_ENDPOINT, (_, res, ctx) => res(ctx.status(204))),
 			setupAuthzAdmin(),
 		);
 	});
@@ -410,14 +409,17 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		let roleAddCallCount = 0;
 
-		// First call → 429, second call → 200
+		// First call → 429, second call → 201
 		server.use(
 			rest.post(SA_ROLES_ENDPOINT, (_, res, ctx) => {
 				roleAddCallCount += 1;
 				if (roleAddCallCount === 1) {
 					return res(ctx.status(429), ctx.json({ message: 'Too Many Requests' }));
 				}
-				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+				return res(
+					ctx.status(201),
+					ctx.json({ status: 'success', data: { id: 'sar-new' } }),
+				);
 			}),
 		);
 

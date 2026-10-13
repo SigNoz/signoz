@@ -20,11 +20,11 @@ import (
 type traceOperatorStatementBuilder struct {
 	logger                    *slog.Logger
 	metadataStore             telemetrytypes.MetadataStore
-	fm                        qbtypes.FieldMapper
-	cb                        qbtypes.ConditionBuilder
+	storage                   qbtypes.Storage
 	traceStmtBuilder          qbtypes.StatementBuilder[qbtypes.TraceAggregation]
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation]
 	aggExprRewriter           qbtypes.AggExprRewriter
+	fl                        flagger.Flagger
 }
 
 var _ qbtypes.TraceOperatorStatementBuilder = (*traceOperatorStatementBuilder)(nil)
@@ -41,15 +41,14 @@ func NewOperatorFactory(
 	return factory.NewProviderFactory(
 		factory.MustNewName("traceoperator"),
 		func(_ context.Context, settings factory.ProviderSettings, cfg statementbuilder.Config) (qbtypes.TraceOperatorStatementBuilder, error) {
-			fm := tracestelemetryschema.NewFieldMapper()
-			cb := tracestelemetryschema.NewConditionBuilder(fm)
-			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, fm, cb, fl)
+			storage := tracestelemetryschema.NewStorage()
+			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, storage, fl, telemetrytypes.SignalTraces)
 			traceStmtBuilder := NewTraceQueryStatementBuilder(
-				settings, metadataStore, fm, cb, aggExprRewriter, telemetryStore, fl,
+				settings, metadataStore, storage, aggExprRewriter, telemetryStore, fl,
 				cfg.SkipResourceFingerprint.Enabled, cfg.SkipResourceFingerprint.Threshold,
 			)
 			return NewTraceOperatorStatementBuilder(
-				settings, metadataStore, fm, cb, traceStmtBuilder, aggExprRewriter, fl,
+				settings, metadataStore, storage, traceStmtBuilder, aggExprRewriter, fl,
 			), nil
 		},
 	)
@@ -58,8 +57,7 @@ func NewOperatorFactory(
 func NewTraceOperatorStatementBuilder(
 	settings factory.ProviderSettings,
 	metadataStore telemetrytypes.MetadataStore,
-	fieldMapper qbtypes.FieldMapper,
-	conditionBuilder qbtypes.ConditionBuilder,
+	storage qbtypes.Storage,
 	traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
 	aggExprRewriter qbtypes.AggExprRewriter,
 	flagger flagger.Flagger,
@@ -80,11 +78,11 @@ func NewTraceOperatorStatementBuilder(
 	return &traceOperatorStatementBuilder{
 		logger:                    tracesSettings.Logger(),
 		metadataStore:             metadataStore,
-		fm:                        fieldMapper,
-		cb:                        conditionBuilder,
+		storage:                   storage,
 		traceStmtBuilder:          traceStmtBuilder,
 		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
 		aggExprRewriter:           aggExprRewriter,
+		fl:                        flagger,
 	}
 }
 

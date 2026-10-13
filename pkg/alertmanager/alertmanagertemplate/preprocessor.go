@@ -24,7 +24,7 @@ type fieldPath string
 // Slices and interfaces are not surfaced. Pointer fields are dereferenced.
 func extractFieldMappings(data any) []fieldPath {
 	val := reflect.ValueOf(data)
-	if val.Kind() == reflect.Ptr {
+	if val.Kind() == reflect.Pointer {
 		if val.IsNil() {
 			return nil
 		}
@@ -60,7 +60,7 @@ func collectFieldMappings(val reflect.Value, prefix string) []fieldPath {
 		}
 
 		ft := field.Type
-		if ft.Kind() == reflect.Ptr {
+		if ft.Kind() == reflect.Pointer {
 			ft = ft.Elem()
 		}
 
@@ -73,7 +73,7 @@ func collectFieldMappings(val reflect.Value, prefix string) []fieldPath {
 		if ft.Kind() == reflect.Struct && ft.String() != "time.Time" {
 			paths = append(paths, fieldPath(key))
 			fv := val.Field(i)
-			if fv.Kind() == reflect.Ptr {
+			if fv.Kind() == reflect.Pointer {
 				if fv.IsNil() {
 					continue
 				}
@@ -95,7 +95,7 @@ func collectFieldMappings(val reflect.Value, prefix string) []fieldPath {
 // flattened OTel-style label keys like "service.name" resolve naturally.
 func structRootSet(data any) map[string]bool {
 	val := reflect.ValueOf(data)
-	if val.Kind() == reflect.Ptr {
+	if val.Kind() == reflect.Pointer {
 		if val.IsNil() {
 			return nil
 		}
@@ -121,7 +121,7 @@ func structRootSet(data any) map[string]bool {
 			continue
 		}
 		ft := field.Type
-		if ft.Kind() == reflect.Ptr {
+		if ft.Kind() == reflect.Pointer {
 			ft = ft.Elem()
 		}
 		if ft.Kind() == reflect.Struct && ft.String() != "time.Time" {

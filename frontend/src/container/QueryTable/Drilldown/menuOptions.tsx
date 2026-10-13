@@ -1,5 +1,5 @@
 import { OPERATORS } from 'constants/queryBuilder';
-import { Braces, ChartBar, DraftingCompass, ScrollText } from '@signozhq/icons';
+import { ChartBar, DraftingCompass, ScrollText } from '@signozhq/icons';
 
 /**
  * Supported operators for filtering with their display properties
@@ -65,12 +65,10 @@ export const AGGREGATE_OPTIONS = [
 export const getBaseContextConfig = ({
 	handleBaseDrilldown,
 	setSubMenu,
-	showDashboardVariablesOption,
 	showBreakoutOption,
 }: {
 	handleBaseDrilldown: (key: string) => void;
 	setSubMenu: (subMenu: string) => void;
-	showDashboardVariablesOption: boolean;
 	showBreakoutOption: boolean;
 }): {
 	key: string;
@@ -79,13 +77,6 @@ export const getBaseContextConfig = ({
 	onClick: () => void;
 	hidden?: boolean;
 }[] => [
-	{
-		key: 'dashboard_variables',
-		icon: <Braces size={16} />,
-		label: 'Dashboard Variables',
-		onClick: (): void => setSubMenu('dashboard_variables'),
-		hidden: !showDashboardVariablesOption,
-	},
 	{
 		key: 'view_logs',
 		icon: <ScrollText size={16} />,

@@ -14,7 +14,7 @@ import './InviteTeamMembers.styles.scss';
 
 interface TeamMember {
 	email: string;
-	role: string;
+	roles: string[];
 	name: string;
 	frontendBaseUrl: string;
 	id: string;
@@ -45,7 +45,7 @@ function InviteTeamMembers({
 	const toTeamMembers = (rows: InviteMemberRow[]): TeamMember[] =>
 		rows.map((row) => ({
 			email: row.email,
-			role: roleIdToName[row.roleId] ?? row.roleId,
+			roles: row.roleIds.map((roleId) => roleIdToName[roleId] ?? roleId),
 			name: '',
 			frontendBaseUrl: getBaseUrl(),
 			id: row.id,

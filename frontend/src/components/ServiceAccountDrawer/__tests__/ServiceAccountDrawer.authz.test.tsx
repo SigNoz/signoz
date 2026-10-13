@@ -1,7 +1,10 @@
-import { listRolesSuccessResponse } from 'mocks-server/__mockdata__/roles';
+import {
+	listRolesSuccessResponse,
+	managedRoles,
+} from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import { render, screen, waitFor } from 'tests/test-utils';
 import {
 	setupAuthzAdmin,
 	setupAuthzDeny,
@@ -18,17 +21,24 @@ const ROLES_ENDPOINT = '*/api/v1/roles';
 const SA_KEYS_ENDPOINT = '*/api/v1/service_accounts/:id/keys';
 const SA_ENDPOINT = '*/api/v1/service_accounts/sa-1';
 const SA_DELETE_ENDPOINT = '*/api/v1/service_accounts/sa-1';
-const SA_ROLES_ENDPOINT = '*/api/v1/service_accounts/:id/roles';
-const SA_ROLE_DELETE_ENDPOINT = '*/api/v1/service_accounts/:id/roles/:rid';
+const SA_ROLES_ENDPOINT = '*/api/v1/service_account_roles';
+const SA_ROLE_DELETE_ENDPOINT = '*/api/v1/service_account_roles/:id';
 
 const activeAccountResponse = {
 	id: 'sa-1',
 	name: 'CI Bot',
 	email: 'ci-bot@signoz.io',
-	roles: ['signoz-admin'],
 	status: 'ACTIVE',
 	createdAt: '2026-01-01T00:00:00Z',
 	updatedAt: '2026-01-02T00:00:00Z',
+	serviceAccountRoles: [
+		{
+			id: 'sar-admin-1',
+			serviceAccountId: 'sa-1',
+			roleId: managedRoles[0].id,
+			role: { ...managedRoles[0], transactionGroups: [] },
+		},
+	],
 };
 
 function renderDrawer(
@@ -58,22 +68,13 @@ function setupBaseHandlers(): void {
 		rest.delete(SA_DELETE_ENDPOINT, (_, res, ctx) =>
 			res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
 		),
-		rest.get(SA_ROLES_ENDPOINT, (_, res, ctx) =>
+		rest.post(SA_ROLES_ENDPOINT, (_, res, ctx) =>
 			res(
-				ctx.status(200),
-				ctx.json({
-					data: listRolesSuccessResponse.data.filter(
-						(r) => r.name === 'signoz-admin',
-					),
-				}),
+				ctx.status(201),
+				ctx.json({ status: 'success', data: { id: 'sar-new' } }),
 			),
 		),
-		rest.post(SA_ROLES_ENDPOINT, (_, res, ctx) =>
-			res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
-		),
-		rest.delete(SA_ROLE_DELETE_ENDPOINT, (_, res, ctx) =>
-			res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
-		),
+		rest.delete(SA_ROLE_DELETE_ENDPOINT, (_, res, ctx) => res(ctx.status(204))),
 	);
 }
 
@@ -109,10 +110,7 @@ describe('ServiceAccountDrawer — permissions', () => {
 	it('shows PermissionDeniedCallout in Keys tab when list-keys permission is denied', async () => {
 		server.use(setupAuthzDeny(APIKeyListPermission));
 
-		renderDrawer();
-		await screen.findByDisplayValue('CI Bot');
-
-		fireEvent.click(screen.getByRole('radio', { name: /keys/i }));
+		renderDrawer({ account: 'sa-1', tab: 'keys' });
 
 		await waitFor(() => {
 			expect(screen.getByText(/list:factor-api-key/)).toBeInTheDocument();

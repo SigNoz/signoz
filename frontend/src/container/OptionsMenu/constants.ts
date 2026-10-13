@@ -56,7 +56,7 @@ export function dedupeColumnsByCompositeKey(
 	const seen = new Set<string>();
 	let hasDuplicate = false;
 	const deduped = columns.filter((c) => {
-		const key = buildCompositeKey(c.name, c.fieldContext);
+		const key = buildCompositeKey(c.name, c.fieldContext, c.fieldDataType);
 		if (seen.has(key)) {
 			hasDuplicate = true;
 			return false;

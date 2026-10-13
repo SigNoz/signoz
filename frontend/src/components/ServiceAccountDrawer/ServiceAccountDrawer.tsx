@@ -38,6 +38,7 @@ import {
 	APIKeyCreatePermission,
 	buildSAAttachPermission,
 	buildSADeletePermission,
+	buildSAReadPermission,
 	buildSAUpdatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
 import {
@@ -376,6 +377,7 @@ function ServiceAccountDrawer({
 					<AuthZButton
 						checks={[buildSADeletePermission(selectedAccountId ?? '')]}
 						authZEnabled={!!selectedAccountId}
+						withPortal={false}
 						variant="link"
 						color="destructive"
 						onClick={(): void => {
@@ -391,8 +393,12 @@ function ServiceAccountDrawer({
 							Cancel
 						</Button>
 						<AuthZButton
-							checks={[buildSAUpdatePermission(selectedAccountId ?? '')]}
+							checks={[
+								buildSAReadPermission(selectedAccountId ?? ''),
+								buildSAUpdatePermission(selectedAccountId ?? ''),
+							]}
 							authZEnabled={!!selectedAccountId}
+							withPortal={false}
 							variant="solid"
 							color="primary"
 							loading={isSaving}
@@ -465,6 +471,7 @@ function ServiceAccountDrawer({
 							buildSAAttachPermission(selectedAccountId ?? ''),
 						]}
 						authZEnabled={!isDeleted && !!selectedAccountId}
+						withPortal={false}
 						variant="outlined"
 						size="sm"
 						color="secondary"

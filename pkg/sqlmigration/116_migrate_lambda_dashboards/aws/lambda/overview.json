@@ -1,0 +1,856 @@
+{
+  "schemaVersion": "v6",
+  "image": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwcHgiIGhlaWdodD0iODAwcHgiIHZpZXdCb3g9IjAgMCAxNiAxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBmaWxsPSJub25lIj48cGF0aCBmaWxsPSIjRkE3RTE0IiBkPSJNNy45ODMgOC4zN2MtLjA1My4wNzMtLjA5OC4xMzMtLjE0MS4xOTRMNS43NzUgMTEuNWMtLjY0LjkxLTEuMjgyIDEuODItMS45MjQgMi43M2EuMTI4LjEyOCAwIDAxLS4wOTIuMDUxYy0uOTA2LS4wMDctMS44MTMtLjAxNy0yLjcxOS0uMDI4LS4wMSAwLS4wMi0uMDAzLS4wNC0uMDA2YS40NTUuNDU1IDAgMDEuMDI1LS4wNTMgMTM5NzcuNDk2IDEzOTc3LjQ5NiAwIDAxNS40NDYtOC4xNDZjLjA5Mi0uMTM4LjE4OC0uMjczLjI3NS0uNDEzYS4xNjUuMTY1IDAgMDAuMDE4LS4xMjRjLS4xNjctLjUxNS0uMzM4LTEuMDMtLjUwOC0xLjU0My0uMDczLS4yMi0uMTUtLjQ0LS4yMTgtLjY2LS4wMjItLjA3Mi0uMDU5LS4wOTQtLjEzNC0uMDkzLS41Ny4wMDItMS4xMzYuMDAxLTEuNzA0LjAwMS0uMTA4IDAtLjEwOCAwLS4xMDgtLjEwMyAwLS42NzQgMC0xLjM0Ny0uMDAyLTIuMDIxIDAtLjA3NS4wMjYtLjA5Mi4wOTktLjA5MiAxLjE0My4wMDIgMi4yODYuMDAyIDMuNDMgMGEuMTEzLjExMyAwIDAxLjA3Ni4wMTcuMTA3LjEwNyAwIDAxLjA0NS4wNjEgMTgyNjYuMTg0IDE4MjY2LjE4NCAwIDAwMy45MiA5LjUxYy4yMTguNTMuNDM4IDEuMDU5LjY1NCAxLjU5LjAyNi4wNjQuMDUzLjA3Ni4xMi4wNTYuNi0uMTc4IDEuMi0uMzUyIDEuOC0uNTMxLjA3NS0uMDIzLjEwMi0uMDA4LjEyNi4wNjQuMjA0LjYyLjQxMiAxLjIzOS42MiAxLjg1OGwuMDIuMDczYy0uMDQzLjAxNS0uMDgzLjAzMi0uMTI0LjA0M2wtNC4wODUgMS4yNWMtLjA2NS4wMi0uMDg1IDAtLjEwNi0uMDU0bC0xLjI1LTMuMDQ4LTEuMjI2LTIuOTg0LS4xODMtLjQ0OWMtLjAxLS4wMjYtLjAyMy0uMDQ4LS4wNDMtLjA4N3oiLz48L3N2Zz4=",
+  "name": "",
+  "generateName": true,
+  "tags": [],
+  "spec": {
+    "display": {
+      "name": "AWS Lambda Overview",
+      "description": "Overview of AWS Lambda functions"
+    },
+    "variables": [
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "display": {
+            "name": "Account",
+            "description": "AWS Account"
+          },
+          "allowAllValue": false,
+          "allowMultiple": false,
+          "customAllValue": "",
+          "capturingRegexp": "",
+          "sort": "none",
+          "plugin": {
+            "kind": "signoz/QueryVariable",
+            "spec": {
+              "queryValue": "SELECT JSONExtractString(labels, 'cloud.account.id') as `cloud.account.id`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE \n    metric_name like 'aws_Lambda_Invocations_sum'\nGROUP BY `cloud.account.id`\n\n"
+            }
+          },
+          "name": "Account"
+        }
+      },
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "display": {
+            "name": "Region",
+            "description": "AWS Region"
+          },
+          "allowAllValue": false,
+          "allowMultiple": false,
+          "customAllValue": "",
+          "capturingRegexp": "",
+          "sort": "none",
+          "plugin": {
+            "kind": "signoz/QueryVariable",
+            "spec": {
+              "queryValue": "SELECT JSONExtractString(labels, 'cloud.region') as `cloud.region`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE \n    metric_name like 'aws_Lambda_Invocations_sum'\n    and JSONExtractString(labels, 'cloud.account.id') IN {{.Account}}\nGROUP BY `cloud.region`\n"
+            }
+          },
+          "name": "Region"
+        }
+      },
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "display": {
+            "name": "FunctionName",
+            "description": "Name of the Lambda function"
+          },
+          "allowAllValue": true,
+          "allowMultiple": true,
+          "customAllValue": "",
+          "capturingRegexp": "",
+          "sort": "none",
+          "plugin": {
+            "kind": "signoz/DynamicVariable",
+            "spec": {
+              "name": "FunctionName",
+              "signal": "metrics"
+            }
+          },
+          "name": "FunctionName"
+        }
+      }
+    ],
+    "panels": {
+      "2516c785-b025-49b3-aeb4-a4735ccb2709": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Errors",
+            "description": "The number of invocations that result in a function error. Function errors include exceptions that your code throws and exceptions that the Lambda runtime throws. The runtime returns errors for issues such as timeouts and configuration errors. To calculate the error rate, divide the value of Errors by the value of Invocations. Note that the timestamp on an error metric reflects when the function was invoked, not when the error occurred.\n\nSee more at https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "aws_Lambda_Errors_sum",
+                        "temporality": "",
+                        "timeAggregation": "sum",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS) AND FunctionName IN $FunctionName"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "cloud.account.id",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "cloud.region",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "FunctionName",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{FunctionName}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "4119a1e5-32a8-4859-96e9-a5451114782b": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Async events dropped",
+            "description": "The number of events that are dropped without successfully executing the function. If you configure a dead-letter queue (DLQ) or OnFailure destination, then events are sent there before they're dropped. Events are dropped for various reasons. For example, events can exceed the maximum event age or exhaust the maximum retry attempts, or reserved concurrency might be set to 0. To troubleshoot why events are dropped, look at the Errors metric to identify function errors and the Throttles metric to identify concurrency issues.\n\nSee more at https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "aws_Lambda_AsyncEventsDropped_sum",
+                        "temporality": "",
+                        "timeAggregation": "sum",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS) AND FunctionName IN $FunctionName"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "cloud.account.id",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "cloud.region",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "FunctionName",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{FunctionName}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "6354ea62-e82b-4323-a33d-eef92519e843": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Throttles",
+            "description": "The number of invocation requests that are throttled. When all function instances are processing requests and no concurrency is available to scale up, Lambda rejects additional requests with a TooManyRequestsException error. Throttled requests and other invocation errors don't count as either Invocations or Errors.\n\nSee more at https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "aws_Lambda_Throttles_sum",
+                        "temporality": "",
+                        "timeAggregation": "sum",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS) AND FunctionName IN $FunctionName"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "cloud.account.id",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "cloud.region",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "FunctionName",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{FunctionName}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "853d3a92-b396-4064-8762-18d7487989e0": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Async events received",
+            "description": "The number of events that Lambda successfully queues for processing. This metric provides insight into the number of events that a Lambda function receives. Monitor this metric and set alarms for thresholds to check for issues. For example, to detect an undesirable number of events sent to Lambda, and to quickly diagnose issues resulting from incorrect trigger or function configurations. Mismatches between AsyncEventsReceived and Invocations can indicate a disparity in processing, events being dropped, or a potential queue backlog.\n\nSee more at https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "aws_Lambda_AsyncEventsReceived_sum",
+                        "temporality": "",
+                        "timeAggregation": "sum",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS) AND FunctionName IN $FunctionName"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "cloud.account.id",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "cloud.region",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "FunctionName",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{FunctionName}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "877bb5c8-331c-492f-b666-2054c2ae39bd": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Invocations",
+            "description": "The number of times that your function code is invoked, including successful invocations and invocations that result in a function error. Invocations aren't recorded if the invocation request is throttled or otherwise results in an invocation error. The value of Invocations equals the number of requests billed.\n\nSee more at https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "aws_Lambda_Invocations_sum",
+                        "temporality": "",
+                        "timeAggregation": "sum",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS) AND FunctionName IN $FunctionName"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "cloud.account.id",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "cloud.region",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "FunctionName",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{FunctionName}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "ae6d7c81-d921-4d4c-95ec-6b42d900ea45": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Max Async Event Age",
+            "description": "The time between when Lambda successfully queues the event and when the function is invoked. The value of this metric increases when events are being retried due to invocation failures or throttling. Monitor this metric and set alarms for thresholds on different statistics for when a queue buildup occurs. To troubleshoot an increase in this metric, look at the Errors metric to identify function errors and the Throttles metric to identify concurrency issues.\n\nSee more at https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "ms",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "aws_Lambda_AsyncEventAge_max",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "max",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS) AND FunctionName IN $FunctionName"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "cloud.account.id",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "cloud.region",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "FunctionName",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{FunctionName}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "b038520d-0756-4e46-a915-12a2f19a0254": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Max Duration",
+            "description": "The amount of time that your function code spends processing an event. The billed duration for an invocation is the value of Duration rounded up to the nearest millisecond. Duration does not include cold start time.\n\nSee more at https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "ms",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "stepInterval": 60,
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "aws_Lambda_Duration_max",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "max",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS) AND FunctionName IN $FunctionName"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "cloud.account.id",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "cloud.region",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "FunctionName",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{FunctionName}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      }
+    },
+    "layouts": [
+      {
+        "kind": "Grid",
+        "spec": {
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/877bb5c8-331c-492f-b666-2054c2ae39bd"
+              }
+            },
+            {
+              "x": 6,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/b038520d-0756-4e46-a915-12a2f19a0254"
+              }
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/2516c785-b025-49b3-aeb4-a4735ccb2709"
+              }
+            },
+            {
+              "x": 6,
+              "y": 6,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/6354ea62-e82b-4323-a33d-eef92519e843"
+              }
+            },
+            {
+              "x": 0,
+              "y": 12,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/853d3a92-b396-4064-8762-18d7487989e0"
+              }
+            },
+            {
+              "x": 6,
+              "y": 12,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/ae6d7c81-d921-4d4c-95ec-6b42d900ea45"
+              }
+            },
+            {
+              "x": 0,
+              "y": 18,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/4119a1e5-32a8-4859-96e9-a5451114782b"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "duration": "",
+    "refreshInterval": "",
+    "links": []
+  }
+}

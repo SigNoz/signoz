@@ -1,7 +1,8 @@
 import awsDarkLogo from '@/assets/Logos/aws-dark.svg';
 import azureOpenaiLogo from '@/assets/Logos/azure-openai.svg';
+import gcpLogo from '@/assets/Logos/gcp.svg';
 
-import { AzureRegion } from './types';
+import { AzureRegion, GCPRegion } from './types';
 
 export const INTEGRATION_TELEMETRY_EVENTS = {
 	INTEGRATIONS_LIST_VISITED: 'Integrations Page: Visited the list page',
@@ -21,6 +22,7 @@ export const INTEGRATION_TELEMETRY_EVENTS = {
 export const INTEGRATION_TYPES = {
 	AWS: 'aws',
 	AZURE: 'azure',
+	GCP: 'gcp',
 };
 
 export const AWS_INTEGRATION = {
@@ -53,7 +55,26 @@ export const AZURE_INTEGRATION = {
 	is_new: true,
 };
 
-export const ONE_CLICK_INTEGRATIONS = [AWS_INTEGRATION, AZURE_INTEGRATION];
+export const GCP_INTEGRATION = {
+	id: INTEGRATION_TYPES.GCP,
+	title: 'Google Cloud Platform',
+	description: 'Setup for GCP monitoring with SigNoz',
+	author: {
+		name: 'SigNoz',
+		email: 'integrations@signoz.io',
+		homepage: 'https://signoz.io',
+	},
+	icon: gcpLogo,
+	icon_alt: 'gcp-logo',
+	is_installed: false,
+	is_new: true,
+};
+
+export const ONE_CLICK_INTEGRATIONS = [
+	AWS_INTEGRATION,
+	AZURE_INTEGRATION,
+	GCP_INTEGRATION,
+];
 
 export const AZURE_REGIONS: AzureRegion[] = [
 	{
@@ -164,4 +185,67 @@ export const AZURE_REGIONS: AzureRegion[] = [
 	{ label: 'West US', value: 'westus', geography: 'United States' },
 	{ label: 'West US 2', value: 'westus2', geography: 'United States' },
 	{ label: 'West US 3', value: 'westus3', geography: 'United States' },
+];
+
+// Source of truth: pkg/types/cloudintegrationtypes/regions.go (GCP regions).
+export const GCP_REGIONS: GCPRegion[] = [
+	{ label: 'Johannesburg', value: 'africa-south1', geography: 'Africa' },
+	{ label: 'Changhua County', value: 'asia-east1', geography: 'APAC' },
+	{ label: 'Hong Kong', value: 'asia-east2', geography: 'APAC' },
+	{ label: 'Tokyo', value: 'asia-northeast1', geography: 'APAC' },
+	{ label: 'Osaka', value: 'asia-northeast2', geography: 'APAC' },
+	{ label: 'Seoul', value: 'asia-northeast3', geography: 'APAC' },
+	{ label: 'Mumbai', value: 'asia-south1', geography: 'APAC' },
+	{ label: 'Delhi', value: 'asia-south2', geography: 'APAC' },
+	{ label: 'Singapore', value: 'asia-southeast1', geography: 'APAC' },
+	{ label: 'Jakarta', value: 'asia-southeast2', geography: 'APAC' },
+	{ label: 'Bangkok', value: 'asia-southeast3', geography: 'APAC' },
+	{ label: 'Sydney', value: 'australia-southeast1', geography: 'APAC' },
+	{ label: 'Melbourne', value: 'australia-southeast2', geography: 'APAC' },
+	{ label: 'Warsaw', value: 'europe-central2', geography: 'Europe' },
+	{ label: 'Hamina', value: 'europe-north1', geography: 'Europe' },
+	{ label: 'Stockholm', value: 'europe-north2', geography: 'Europe' },
+	{ label: 'Madrid', value: 'europe-southwest1', geography: 'Europe' },
+	{ label: 'St. Ghislain', value: 'europe-west1', geography: 'Europe' },
+	{ label: 'London', value: 'europe-west2', geography: 'Europe' },
+	{ label: 'Frankfurt', value: 'europe-west3', geography: 'Europe' },
+	{ label: 'Eemshaven', value: 'europe-west4', geography: 'Europe' },
+	{ label: 'Zurich', value: 'europe-west6', geography: 'Europe' },
+	{ label: 'Milan', value: 'europe-west8', geography: 'Europe' },
+	{ label: 'Paris', value: 'europe-west9', geography: 'Europe' },
+	{ label: 'Berlin', value: 'europe-west10', geography: 'Europe' },
+	{ label: 'Turin', value: 'europe-west12', geography: 'Europe' },
+	{ label: 'Doha', value: 'me-central1', geography: 'Middle East' },
+	{ label: 'Dammam', value: 'me-central2', geography: 'Middle East' },
+	{ label: 'Tel Aviv', value: 'me-west1', geography: 'Middle East' },
+	{
+		label: 'Montréal',
+		value: 'northamerica-northeast1',
+		geography: 'North America',
+	},
+	{
+		label: 'Toronto',
+		value: 'northamerica-northeast2',
+		geography: 'North America',
+	},
+	{
+		label: 'Querétaro',
+		value: 'northamerica-south1',
+		geography: 'North America',
+	},
+	{
+		label: 'São Paulo',
+		value: 'southamerica-east1',
+		geography: 'South America',
+	},
+	{ label: 'Santiago', value: 'southamerica-west1', geography: 'South America' },
+	{ label: 'Council Bluffs', value: 'us-central1', geography: 'North America' },
+	{ label: 'Moncks Corner', value: 'us-east1', geography: 'North America' },
+	{ label: 'Ashburn', value: 'us-east4', geography: 'North America' },
+	{ label: 'Columbus', value: 'us-east5', geography: 'North America' },
+	{ label: 'Dallas', value: 'us-south1', geography: 'North America' },
+	{ label: 'The Dalles', value: 'us-west1', geography: 'North America' },
+	{ label: 'Los Angeles', value: 'us-west2', geography: 'North America' },
+	{ label: 'Salt Lake City', value: 'us-west3', geography: 'North America' },
+	{ label: 'Las Vegas', value: 'us-west4', geography: 'North America' },
 ];

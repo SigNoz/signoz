@@ -12,6 +12,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/global/signozglobal"
 	"github.com/SigNoz/signoz/pkg/licensing"
+	"github.com/SigNoz/signoz/pkg/modules/aiobservability"
+	"github.com/SigNoz/signoz/pkg/modules/aiobservability/implaiobservability"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
@@ -48,10 +50,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail/impltracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
+	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/ruler/signozruler"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
+	"github.com/SigNoz/signoz/pkg/subscription"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/zeus"
 )
@@ -72,8 +76,11 @@ type Handlers struct {
 	FlaggerHandler          flagger.Handler
 	GatewayHandler          gateway.Handler
 	Fields                  fields.Handler
+	AIObservability         aiobservability.Handler
 	AuthzHandler            authz.Handler
 	ZeusHandler             zeus.Handler
+	LicensingHandler        licensing.Handler
+	SubscriptionHandler     subscription.Handler
 	QuerierHandler          querier.Handler
 	ServiceAccountHandler   serviceaccount.Handler
 	RegistryHandler         factory.Handler
@@ -81,6 +88,7 @@ type Handlers struct {
 	RuleStateHistory        rulestatehistory.Handler
 	SpanMapperHandler       spanmapper.Handler
 	AlertmanagerHandler     alertmanager.Handler
+	PrometheusHandler       prometheus.Handler
 	TraceDetail             tracedetail.Handler
 	RulerHandler            ruler.Handler
 	LLMPricingRuleHandler   llmpricingrule.Handler
@@ -92,15 +100,17 @@ func NewHandlers(
 	providerSettings factory.ProviderSettings,
 	analytics analytics.Analytics,
 	querierHandler querier.Handler,
-	licensing licensing.Licensing,
+	licensingService licensing.Licensing,
 	global global.Global,
 	flaggerService flagger.Flagger,
 	gatewayService gateway.Gateway,
 	telemetryMetadataStore telemetrytypes.MetadataStore,
 	authz authz.AuthZ,
 	zeusService zeus.Zeus,
+	subscriptionService subscription.Subscription,
 	registryHandler factory.Handler,
 	alertmanagerService alertmanager.Alertmanager,
+	prometheusService prometheus.Prometheus,
 	rulerService ruler.Ruler,
 	statsAggregator statsreporter.Aggregator,
 ) Handlers {
@@ -120,8 +130,11 @@ func NewHandlers(
 		FlaggerHandler:          flagger.NewHandler(flaggerService),
 		GatewayHandler:          gateway.NewHandler(gatewayService),
 		Fields:                  implfields.NewHandler(providerSettings, telemetryMetadataStore),
+		AIObservability:         implaiobservability.NewHandler(providerSettings, telemetryMetadataStore),
 		AuthzHandler:            signozauthzapi.NewHandler(authz),
-		ZeusHandler:             zeus.NewHandler(zeusService, licensing),
+		ZeusHandler:             zeus.NewHandler(zeusService, licensingService),
+		LicensingHandler:        licensing.NewHandler(licensingService),
+		SubscriptionHandler:     subscription.NewHandler(subscriptionService),
 		QuerierHandler:          querierHandler,
 		ServiceAccountHandler:   implserviceaccount.NewHandler(modules.ServiceAccount, modules.ServiceAccountGetter),
 		RegistryHandler:         registryHandler,
@@ -129,6 +142,7 @@ func NewHandlers(
 		CloudIntegrationHandler: implcloudintegration.NewHandler(modules.CloudIntegration),
 		SpanMapperHandler:       implspanmapper.NewHandler(modules.SpanMapper),
 		AlertmanagerHandler:     signozalertmanager.NewHandler(alertmanagerService),
+		PrometheusHandler:       prometheus.NewHandler(providerSettings.Logger, prometheusService),
 		TraceDetail:             impltracedetail.NewHandler(modules.TraceDetail),
 		RulerHandler:            signozruler.NewHandler(rulerService),
 		LLMPricingRuleHandler:   impllmpricingrule.NewHandler(modules.LLMPricingRule),

@@ -1,5 +1,6 @@
 // ===================== Base Types =====================
 
+import { Querybuildertypesv5BucketOptionsDTO } from 'api/generated/services/sigNoz.schemas';
 import { ReduceOperators } from 'types/common/queryBuilder';
 
 import { Warning } from '..';
@@ -16,12 +17,18 @@ export type RequestType =
 
 export type QueryType =
 	| 'builder_query'
+	| 'builder_ai_query'
 	| 'builder_trace_operator'
 	| 'builder_formula'
 	| 'builder_sub_query'
 	| 'builder_join'
 	| 'clickhouse_sql'
 	| 'promql';
+
+export type BuilderQueryType = Extract<
+	QueryType,
+	'builder_query' | 'builder_ai_query'
+>;
 
 export type OrderDirection = 'asc' | 'desc';
 
@@ -224,6 +231,8 @@ export interface BaseBuilderQuery {
 	functions?: QueryFunction[];
 	legend?: string;
 	expression?: string; // for trace operator
+	/** Heatmap only. */
+	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 }
 
 export interface TraceBuilderQuery extends BaseBuilderQuery {
@@ -261,6 +270,8 @@ export interface QueryBuilderFormula {
 	limit?: number;
 	having?: Having;
 	legend?: string;
+	/** Heatmap only. */
+	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 }
 
 export interface QueryBuilderJoin {

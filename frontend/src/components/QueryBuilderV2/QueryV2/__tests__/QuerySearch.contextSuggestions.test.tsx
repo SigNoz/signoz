@@ -17,12 +17,6 @@ jest.mock('hooks/useDarkMode', () => ({
 	useIsDarkMode: (): boolean => false,
 }));
 
-jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
-	useDashboardStore: (): { dashboardData: undefined } => ({
-		dashboardData: undefined,
-	}),
-}));
-
 // Shrink the suggestion-fetch debounce (300ms in prod) so these integration
 // tests aren't paced by it; coalescing semantics stay intact.
 jest.mock('../QuerySearch/constants', () => ({

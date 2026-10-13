@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
@@ -162,6 +163,24 @@ type filterNewSeriesTestCase struct {
 	evalTime          time.Time
 	expectedFiltered  []*qbtypes.TimeSeries // series that should be in the final filtered result (old enough)
 	expectError       bool
+}
+
+func TestBaseRule_IsFilterNewSeriesSupported(t *testing.T) {
+	postableRule := createPostableRule(&ruletypes.AlertCompositeQuery{
+		QueryType: ruletypes.QueryTypeBuilder,
+		Queries: []qbtypes.QueryEnvelope{{
+			Type: qbtypes.QueryTypeBuilderAI,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Name:         "A",
+				Signal:       telemetrytypes.SignalTraces,
+				Aggregations: []qbtypes.TraceAggregation{{Expression: "max(trace.total_tokens)"}},
+			},
+		}},
+	})
+
+	rule, err := NewBaseRule("test-rule", valuer.GenerateUUID(), &postableRule, mustParseURL(t, "http://localhost:8080"), WithLogger(instrumentationtest.New().Logger()))
+	require.NoError(t, err)
+	assert.False(t, rule.isFilterNewSeriesSupported())
 }
 
 func TestBaseRule_FilterNewSeries(t *testing.T) {

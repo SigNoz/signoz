@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -45,13 +46,13 @@ func TestStatementBuilderGroupByUnknownKey(t *testing.T) {
 			fl := flaggertest.WithUseJSONBody(t, c.useJSONBody)
 			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 			mockMetadataStore.KeysMap = logstelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-			fm := logstelemetryschema.NewFieldMapper(fl)
-			cb := logstelemetryschema.NewConditionBuilder(fm, fl)
-			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+			storage := logstelemetryschema.NewStorage()
+			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
 			statementBuilder := NewLogQueryStatementBuilder(
 				instrumentationtest.New().ToProviderSettings(),
-				mockMetadataStore, fm, cb, aggExprRewriter,
-				logstelemetryschema.DefaultFullTextColumn, fl, nil, false, 100000,
+				mockMetadataStore, storage, aggExprRewriter,
+				logstelemetryschema.DefaultFullTextColumn, fl, nil,
+				statementbuilder.Config{SkipResourceFingerprint: statementbuilder.SkipResourceFingerprint{Enabled: false, Threshold: 100000}},
 			)
 
 			query := qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{

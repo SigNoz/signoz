@@ -1,9 +1,7 @@
+import * as Sentry from '@sentry/react';
 import Convert from 'ansi-to-html';
-import type { DataNode } from 'antd/es/tree';
-import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { MetricsType } from 'container/MetricsApplication/constant';
 import dompurify from 'dompurify';
-import { uniqueId } from 'lodash-es';
 import {
 	ILog,
 	ILogAggregateAttributesResources,
@@ -12,7 +10,6 @@ import {
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { FORBID_DOM_PURIFY_ATTR, FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
-import BodyTitleRenderer from './BodyTitleRenderer';
 import { typeToArrayTypeMapper } from './config';
 import { AnyObject, IFieldAttributes } from './LogDetailedView.types';
 
@@ -38,135 +35,6 @@ export const recursiveParseJSON = (obj: string): Record<string, unknown> => {
 		return {};
 	}
 };
-
-type JsonToDataNodesOptions = {
-	parentKey?: string;
-	parentIsArray?: boolean;
-	isBodyJsonQueryEnabled?: boolean;
-	handleChangeSelectedView?: ChangeViewFunctionType;
-};
-
-type ComputeDataNodeOptions = {
-	key: string;
-	valueIsArray: boolean;
-	value: unknown;
-	nodeKey: string;
-	parentIsArray: boolean;
-	isBodyJsonQueryEnabled?: boolean;
-	handleChangeSelectedView?: ChangeViewFunctionType;
-};
-
-export const computeDataNode = ({
-	key,
-	valueIsArray,
-	value,
-	nodeKey,
-	parentIsArray,
-	isBodyJsonQueryEnabled = false,
-	handleChangeSelectedView,
-}: ComputeDataNodeOptions): DataNode => ({
-	key: uniqueId(),
-	title: (
-		<BodyTitleRenderer
-			title={`${key} ${valueIsArray ? '[...]' : ''}`}
-			nodeKey={nodeKey}
-			value={value}
-			parentIsArray={parentIsArray}
-			handleChangeSelectedView={handleChangeSelectedView}
-		/>
-	),
-	children: jsonToDataNodes(value as Record<string, unknown>, {
-		parentKey: valueIsArray
-			? `${nodeKey}${isBodyJsonQueryEnabled ? '[]' : '[*]'}`
-			: nodeKey,
-		parentIsArray: valueIsArray,
-		isBodyJsonQueryEnabled,
-		handleChangeSelectedView,
-	}),
-});
-
-export function jsonToDataNodes(
-	json: Record<string, unknown>,
-	options: JsonToDataNodesOptions = {},
-): DataNode[] {
-	const {
-		parentKey = '',
-		parentIsArray = false,
-		isBodyJsonQueryEnabled = false,
-		handleChangeSelectedView,
-	} = options;
-
-	return Object.entries(json).map(([key, value]) => {
-		let nodeKey = parentKey || key;
-		if (parentIsArray) {
-			nodeKey += `.${value}`;
-		} else if (parentKey) {
-			nodeKey += `.${key}`;
-		}
-
-		const valueIsArray = Array.isArray(value);
-
-		if (parentIsArray) {
-			if (typeof value === 'object' && value !== null) {
-				return computeDataNode({
-					key,
-					valueIsArray,
-					value,
-					nodeKey,
-					parentIsArray,
-					isBodyJsonQueryEnabled,
-					handleChangeSelectedView,
-				});
-			}
-
-			return {
-				key: uniqueId(),
-				title: (
-					<BodyTitleRenderer
-						title={value as string}
-						nodeKey={nodeKey}
-						value={value}
-						parentIsArray={parentIsArray}
-						handleChangeSelectedView={handleChangeSelectedView}
-					/>
-				),
-				children: jsonToDataNodes(
-					{},
-					{
-						parentKey: nodeKey,
-						parentIsArray: valueIsArray,
-						isBodyJsonQueryEnabled,
-						handleChangeSelectedView,
-					},
-				),
-			};
-		}
-
-		if (typeof value === 'object' && value !== null) {
-			return computeDataNode({
-				key,
-				valueIsArray,
-				value,
-				nodeKey,
-				parentIsArray,
-				isBodyJsonQueryEnabled,
-				handleChangeSelectedView,
-			});
-		}
-		return {
-			key: uniqueId(),
-			title: (
-				<BodyTitleRenderer
-					title={key}
-					nodeKey={nodeKey}
-					value={value}
-					parentIsArray={parentIsArray}
-					handleChangeSelectedView={handleChangeSelectedView}
-				/>
-			),
-		};
-	});
-}
 
 export function flattenObject(obj: AnyObject, prefix = ''): AnyObject {
 	return Object.keys(obj).reduce((acc: AnyObject, k: string): AnyObject => {
@@ -253,19 +121,12 @@ export const getFieldAttributes = (field: string): IFieldAttributes => {
 // Returns key to be used when filtering for `field` via
 // the query builder. This is useful for powering filtering
 // by field values from log details view.
-export const filterKeyForField = (field: string): string => {
-	// Must work for all 3 of the following types of cases
-	// timestamp -> timestamp
-	// attributes_string.log.file -> log.file
-	// resources_string.k8s.pod.name -> k8s.pod.name
-	const fieldAttribs = getFieldAttributes(field);
-	return fieldAttribs?.newField || field;
-};
 
-export const aggregateAttributesResourcesToString = (logData: ILog): string => {
+export const aggregateAttributesResourcesToObject = (
+	logData: ILog,
+): ILogAggregateAttributesResources => {
 	const outputJson: ILogAggregateAttributesResources = {
 		body: logData.body,
-		date: logData.date,
 		id: logData.id,
 		severityNumber: logData.severityNumber,
 		severityText: logData.severityText,
@@ -274,29 +135,94 @@ export const aggregateAttributesResourcesToString = (logData: ILog): string => {
 		traceFlags: logData.traceFlags,
 		traceId: logData.traceId,
 		attributes: {},
-		resources: {},
+		resource: {},
 		scope: {},
 		severity_text: logData.severity_text,
 		severity_number: logData.severity_number,
 	};
 
 	Object.keys(logData).forEach((key) => {
+		if (key === 'date') {
+			return;
+		}
 		if (key.startsWith('attributes_')) {
 			outputJson.attributes = outputJson.attributes || {};
 			Object.assign(outputJson.attributes, logData[key as keyof ILog]);
 		} else if (key.startsWith('resources_')) {
-			outputJson.resources = outputJson.resources || {};
-			Object.assign(outputJson.resources, logData[key as keyof ILog]);
+			outputJson.resource = outputJson.resource || {};
+			Object.assign(outputJson.resource, logData[key as keyof ILog]);
 		} else if (key.startsWith('scope_string')) {
 			outputJson.scope = outputJson.scope || {};
 			Object.assign(outputJson.scope, logData[key as keyof ILog]);
 		} else {
-			// @ts-expect-error
+			// @ts-expect-error dynamic top-level copy
 			outputJson[key] = logData[key as keyof ILog];
 		}
 	});
 
-	return JSON.stringify(outputJson, null, 2);
+	// Show `timestamp` first and `id` last in the details view.
+	const { timestamp, id, ...rest } = outputJson;
+	return { timestamp, ...rest, id };
+};
+
+export const aggregateAttributesResourcesToString = (logData: ILog): string => {
+	try {
+		return JSON.stringify(aggregateAttributesResourcesToObject(logData), null, 2);
+	} catch (err) {
+		Sentry.captureException(err);
+		return '';
+	}
+};
+
+const MAX_JSON_PARSE_BYTES = 128 * 1024;
+
+// A JSON-encoded object/array string is parsed so DataViewer renders it as a tree
+// instead of one escaped string; non-JSON / plain-text values are returned unchanged.
+// Guarded against very large payloads.
+export const parseJsonStringValue = (value: unknown): unknown => {
+	if (typeof value !== 'string') {
+		return value;
+	}
+	const trimmed = value.trim();
+	const looksLikeJson = trimmed.startsWith('{') || trimmed.startsWith('[');
+	if (!looksLikeJson || trimmed.length > MAX_JSON_PARSE_BYTES) {
+		return value;
+	}
+	try {
+		const parsed = JSON.parse(trimmed);
+		return parsed !== null && typeof parsed === 'object' ? parsed : value;
+	} catch {
+		return value;
+	}
+};
+
+// Parse each attribute value that's a stringified JSON string into an object
+// Non-JSON values are left unchanged.
+const parseAttributeJsonValues = (
+	attributes: Record<string, unknown>,
+): Record<string, unknown> => {
+	const parsed: Record<string, unknown> = {};
+	Object.keys(attributes).forEach((key) => {
+		parsed[key] = parseJsonStringValue(attributes[key]);
+	});
+	return parsed;
+};
+
+export const buildPrettyViewData = (
+	raw: ILogAggregateAttributesResources,
+): Record<string, unknown> => {
+	const prettyData: Record<string, unknown> = { ...raw };
+	prettyData.body = parseJsonStringValue(raw.body);
+	prettyData.attributes = parseAttributeJsonValues(raw.attributes);
+
+	// drop undefined fields so they don't render as empty rows
+	Object.keys(prettyData).forEach((key) => {
+		if (prettyData[key] === undefined) {
+			delete prettyData[key];
+		}
+	});
+
+	return prettyData;
 };
 
 const isFloat = (num: number): boolean => num % 1 !== 0;
@@ -351,16 +277,6 @@ export const escapeHtml = (unsafe: string): string =>
 		.replace(/'/g, '&#039;');
 
 // parse field value to remove escaping characters
-export const parseFieldValue = (value: string): string => {
-	try {
-		return JSON.parse(value);
-	} catch (error) {
-		return value;
-	}
-};
-
-// now we do not want to render colors everywhere like in tooltip and monaco editor hence we remove such codes to make
-// the log line readable
 export const removeEscapeCharacters = (str: string): string =>
 	(str ?? '')
 		.replace(/\\x1[bB][[0-9;]*m/g, '')
@@ -390,10 +306,6 @@ export const unescapeString = (str: string): string =>
 		.replace(/\\u([0-9A-Fa-f]{4})/g, (_, hex) =>
 			String.fromCharCode(parseInt(hex, 16)),
 		); // Replaces Unicode escape sequences
-
-export function removeExtraSpaces(input: string): string {
-	return input.replace(/\s+/g, ' ').trim();
-}
 
 export function findKeyPath(
 	obj: AnyObject,

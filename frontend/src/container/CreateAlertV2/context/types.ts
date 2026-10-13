@@ -99,6 +99,8 @@ export enum AlertThresholdOperator {
 	IS_BELOW = 'below',
 	IS_EQUAL_TO = 'equal',
 	IS_NOT_EQUAL_TO = 'not_equal',
+	IS_ABOVE_OR_EQUAL_TO = 'above_or_equal',
+	IS_BELOW_OR_EQUAL_TO = 'below_or_equal',
 	ABOVE_BELOW = 'outside_bounds',
 }
 

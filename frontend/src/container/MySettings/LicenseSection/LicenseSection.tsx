@@ -3,13 +3,16 @@ import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { useNotifications } from 'hooks/useNotifications';
 import { Copy } from '@signozhq/icons';
+import useActiveLicenseKey from 'hooks/useActiveLicenseKey/useActiveLicenseKey';
+import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
+import { buildLicenseReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/license.permissions';
 import { useAppContext } from 'providers/App/App';
 import { getMaskedKey } from 'utils/maskedKey';
 
 import './LicenseSection.styles.scss';
 
-function LicenseSection(): JSX.Element | null {
-	const { activeLicense } = useAppContext();
+function LicenseSectionContent(): JSX.Element | null {
+	const { licenseKey } = useActiveLicenseKey();
 	const { notifications } = useNotifications();
 	const [, handleCopyToClipboard] = useCopyToClipboard();
 
@@ -20,7 +23,41 @@ function LicenseSection(): JSX.Element | null {
 		});
 	};
 
-	if (!activeLicense?.key) {
+	if (!licenseKey) {
+		return null;
+	}
+
+	return (
+		<div className="license-section-content">
+			<div className="license-section-content-item">
+				<div className="license-section-content-item-title-action">
+					<span>License key</span>
+					<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+						<Typography.Text code>{getMaskedKey(licenseKey)}</Typography.Text>
+						<Button
+							variant="link"
+							color="none"
+							aria-label="Copy license key"
+							data-testid="license-key-copy-btn"
+							onClick={(): void => handleCopyKey(licenseKey)}
+						>
+							<Copy size={14} />
+						</Button>
+					</span>
+				</div>
+
+				<div className="license-section-content-item-description">
+					Your SigNoz license key.
+				</div>
+			</div>
+		</div>
+	);
+}
+
+function LicenseSection(): JSX.Element | null {
+	const { activeLicense } = useAppContext();
+
+	if (!activeLicense) {
 		return <></>;
 	}
 
@@ -30,29 +67,9 @@ function LicenseSection(): JSX.Element | null {
 				<div className="license-section-title">License</div>
 			</div>
 
-			<div className="license-section-content">
-				<div className="license-section-content-item">
-					<div className="license-section-content-item-title-action">
-						<span>License key</span>
-						<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-							<Typography.Text code>{getMaskedKey(activeLicense.key)}</Typography.Text>
-							<Button
-								variant="link"
-								color="none"
-								aria-label="Copy license key"
-								data-testid="license-key-copy-btn"
-								onClick={(): void => handleCopyKey(activeLicense.key)}
-							>
-								<Copy size={14} />
-							</Button>
-						</span>
-					</div>
-
-					<div className="license-section-content-item-description">
-						Your SigNoz license key.
-					</div>
-				</div>
-			</div>
+			<AuthZGuardContent checks={[buildLicenseReadPermission(activeLicense.id)]}>
+				<LicenseSectionContent />
+			</AuthZGuardContent>
 		</div>
 	);
 }

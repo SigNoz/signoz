@@ -1,0 +1,59 @@
+.unitSelector {
+	:global(.ant-select) {
+		width: 100%;
+	}
+	:global(.ant-select-selector) {
+		border-color: var(--l2-border) !important;
+	}
+}
+
+.preview {
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+	padding: 12px 14px;
+	border-radius: 4px;
+	background: var(--l2-background);
+}
+
+.previewLabel {
+	font-size: 12px;
+	color: var(--l2-foreground);
+}
+
+.previewValue {
+	font-family: 'Geist Mono', monospace;
+	font-size: 15px;
+	color: var(--l1-foreground);
+}
+
+// Stacked per-column unit pickers; each column keeps the standard field layout.
+.columnUnits {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+
+	:global(.ant-select) {
+		width: 100%;
+	}
+}
+
+.columnUnitsHint {
+	font-size: 12px;
+	color: var(--l2-foreground);
+}
+
+.columnField {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.columnLabel {
+	font-size: 13px;
+	color: var(--l1-foreground);
+}
+
+.columnUnitSelector {
+	flex: 1;
+}

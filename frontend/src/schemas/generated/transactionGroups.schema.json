@@ -66,6 +66,7 @@
         "factor-api-key",
         "license",
         "subscription",
+        "deployment-host",
         "logs",
         "traces",
         "metrics",

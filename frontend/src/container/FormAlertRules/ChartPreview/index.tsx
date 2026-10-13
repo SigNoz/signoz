@@ -15,9 +15,9 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import AnomalyAlertEvaluationView from 'container/AnomalyAlertEvaluationView';
 import { INITIAL_CRITICAL_THRESHOLD } from 'container/CreateAlertV2/context/constants';
 import { Threshold } from 'container/CreateAlertV2/context/types';
-import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
-import { getFormatNameByOptionId } from 'container/NewWidget/RightContainer/alertFomatCategories';
-import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
+import { populateMultipleResults } from 'lib/query/populateMultipleResults';
+import { getFormatNameByOptionId } from 'constants/formats/alertFormatCategories';
+import { timePreferenceType } from 'constants/timePreference';
 import {
 	CustomTimeType,
 	Time,

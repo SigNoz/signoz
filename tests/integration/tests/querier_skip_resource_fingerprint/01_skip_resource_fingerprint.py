@@ -1,14 +1,3 @@
-"""
-Transparency check for the skip_resource_fingerprint optimization (traces and logs).
-
-At or above the configured fingerprint threshold the optimization pushes resource
-conditions onto the main spans/logs table instead of the fingerprint CTE. That
-rewrite must change ClickHouse performance, never the rows: each test runs the same
-query against the primary instance (optimization on, threshold=2) and
-`signoz_fingerprint` (optimization off) and asserts the responses are identical, then
-diffs the rendered SQL to prove the two really did take different paths.
-"""
-
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 
@@ -33,6 +22,12 @@ from fixtures.traces import Traces
 FINGERPRINT_CTE_FILTER = "resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)"
 
 
+# At or above the configured fingerprint threshold the optimization pushes resource
+# conditions onto the main spans/logs table instead of the fingerprint CTE. That
+# rewrite must change performance, never rows: each test runs the same query against
+# the primary instance (optimization on, threshold=2) and `signoz_fingerprint`
+# (optimization off), asserts identical responses, then diffs the rendered SQL to
+# prove the two really did take different paths.
 def test_skip_resource_fingerprint_traces_fallback_matches_fingerprint(
     signoz: types.SigNoz,
     signoz_fingerprint: types.SigNoz,

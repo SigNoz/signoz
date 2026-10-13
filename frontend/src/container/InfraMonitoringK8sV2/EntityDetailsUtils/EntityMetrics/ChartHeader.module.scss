@@ -2,6 +2,7 @@
 	display: inline-flex;
 	align-items: center;
 	gap: var(--spacing-2);
+	width: 100%;
 }
 
 .infoIcon {
@@ -20,6 +21,7 @@
 	align-items: center;
 	color: var(--l2-foreground);
 	transition: opacity 0.2s;
+	margin-left: auto;
 
 	&:hover {
 		color: var(--l3-foreground);

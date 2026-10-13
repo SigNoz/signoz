@@ -16,6 +16,8 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { StatusCodes } from 'http-status-codes';
 import find from 'lodash-es/find';
+import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
+import { buildLicenseReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/license.permissions';
 import { useAppContext } from 'providers/App/App';
 import {
 	ErrorResponse,
@@ -673,17 +675,21 @@ function GeneralSettings({
 				</span>
 			</div>
 
-			{(showCustomDomainSettings || activeLicense?.key) && (
+			{(showCustomDomainSettings || activeLicense) && (
 				<div className="custom-domain-card">
 					{showCustomDomainSettings && <CustomDomainSettings />}
-					{showCustomDomainSettings && activeLicense?.key && (
+					{showCustomDomainSettings && activeLicense && (
 						<div className="custom-domain-card-divider" />
 					)}
-					{activeLicense?.key && (
-						<>
-							<LicenseKeyRow />
-							<LicenseRowDismissibleCallout />
-						</>
+					{activeLicense && (
+						<AuthZGuardContent
+							checks={[buildLicenseReadPermission(activeLicense.id)]}
+						>
+							<>
+								<LicenseKeyRow />
+								<LicenseRowDismissibleCallout />
+							</>
+						</AuthZGuardContent>
 					)}
 				</div>
 			)}

@@ -1,0 +1,79 @@
+@use '../../../../../styles/scrollbar' as *;
+
+.config {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	// padding: 18px 18px 44px;
+	background-color: var(--l1-background);
+	overflow-y: auto;
+	overflow-x: hidden;
+	scrollbar-gutter: stable;
+	padding-bottom: 44px;
+
+	@include custom-scrollbar;
+}
+
+.heading {
+	padding: 16px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.marker {
+	display: inline-block;
+	width: 8px;
+	height: 4px;
+	border-radius: 20px;
+	background-color: var(--primary);
+}
+
+.title {
+	display: flex;
+	align-items: baseline;
+	gap: 9px;
+	white-space: nowrap;
+}
+
+.subtitle {
+	font-size: 12px;
+	color: var(--text-vanilla-400);
+}
+
+.eyebrow {
+	display: block;
+	padding: 18px 20px 12px;
+	font-family: 'Geist Mono', monospace;
+	font-size: 12px;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--l2-foreground);
+}
+
+.group {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 16px;
+}
+
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.divider {
+	// flex-shrink:0 keeps the 1px line from collapsing to 0 once the pane
+	// content overflows and the flex column starts shrinking its children.
+	flex-shrink: 0;
+	height: 1px;
+	background: var(--l1-border);
+}
+
+.sections {
+	display: flex;
+	flex-direction: column;
+	border-bottom: 1px solid var(--l1-border);
+}

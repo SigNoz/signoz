@@ -1,7 +1,6 @@
 package alertmanager
 
 import (
-	"net/url"
 	"strings"
 	"time"
 
@@ -24,11 +23,6 @@ type Signoz struct {
 
 	// Config is the config for the alertmanager server.
 	alertmanagerserver.Config `mapstructure:",squash" yaml:",squash"`
-}
-
-type Legacy struct {
-	// ApiURL is the URL of the legacy signoz alertmanager.
-	ApiURL *url.URL `mapstructure:"api_url"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {

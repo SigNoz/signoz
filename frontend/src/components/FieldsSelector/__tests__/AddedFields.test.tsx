@@ -11,7 +11,7 @@ const makeField = (name: string, fieldContext = 'log'): TelemetryFieldKey => ({
 	signal: 'logs',
 	fieldContext: fieldContext as TelemetryFieldKey['fieldContext'],
 	fieldDataType: 'string',
-	key: `${fieldContext}.${name}`,
+	key: `${fieldContext}:${name}`,
 });
 
 describe('AddedFields — requiredFields', () => {
@@ -33,7 +33,7 @@ describe('AddedFields — requiredFields', () => {
 				inputValue=""
 				fields={fields}
 				onFieldsChange={jest.fn()}
-				requiredFields={['log.a', 'log.c']}
+				requiredFields={['log:a', 'log:c']}
 			/>,
 		);
 
@@ -50,7 +50,7 @@ describe('AddedFields — requiredFields', () => {
 				inputValue=""
 				fields={fields}
 				onFieldsChange={jest.fn()}
-				requiredFields={['log.a']}
+				requiredFields={['log:a']}
 			/>,
 		);
 
@@ -68,7 +68,7 @@ describe('AddedFields — requiredFields', () => {
 				inputValue=""
 				fields={fields}
 				onFieldsChange={jest.fn()}
-				requiredFields={['log.body']}
+				requiredFields={['log:body']}
 			/>,
 		);
 
@@ -101,11 +101,11 @@ describe('AddedFields — requiredFields', () => {
 				inputValue=""
 				fields={fields}
 				onFieldsChange={jest.fn()}
-				requiredFields={['log.body']}
+				requiredFields={['log:body']}
 			/>,
 		);
 
-		// 'log.body' locked, 'log.body_extra' removable.
+		// 'log:body' locked, 'log:body_extra' removable.
 		expect(screen.getAllByRole('button', { name: /remove/i })).toHaveLength(1);
 	});
 });

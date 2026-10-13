@@ -14,10 +14,20 @@ import testPagerApi from 'api/channels/testPager';
 import testSlackApi from 'api/channels/testSlack';
 import testWebhookApi from 'api/channels/testWebhook';
 import logEvent from 'api/common/logEvent';
+import {
+	useTestChannel,
+	useUpdateChannelByID,
+} from 'api/generated/services/channels';
+import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { ErrorType } from 'api/generatedAPIInstance';
 import ROUTES from 'constants/routes';
 import {
 	ChannelType,
 	EmailChannel,
+	GoogleChatChannel,
+	IncidentIOChannel,
+	JiraChannel,
+	JsmOpsChannel,
 	MsTeamsChannel,
 	OpsgenieChannel,
 	PagerChannel,
@@ -25,10 +35,21 @@ import {
 	ValidatePagerChannel,
 	WebhookChannel,
 } from 'container/CreateAlertChannels/config';
+import {
+	isValidGoogleChatWebhookURL,
+	isValidIncidentIOURL,
+	isValidJiraReopenDuration,
+	isValidJiraSiteURL,
+	prepareGoogleChatRequest,
+	prepareIncidentIORequest,
+	prepareJiraRequest,
+	prepareJsmOpsRequest,
+} from 'container/CreateAlertChannels/utils';
 import FormAlertChannels from 'container/FormAlertChannels';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import APIError from 'types/api/error';
+import { toAPIError } from 'utils/errorUtils';
 
 function EditAlertChannels({
 	initialValue,
@@ -45,7 +66,11 @@ function EditAlertChannels({
 				PagerChannel &
 				MsTeamsChannel &
 				OpsgenieChannel &
-				EmailChannel
+				EmailChannel &
+				GoogleChatChannel &
+				JiraChannel &
+				JsmOpsChannel &
+				IncidentIOChannel
 		>
 	>({
 		...initialValue,
@@ -53,6 +78,26 @@ function EditAlertChannels({
 	const [savingState, setSavingState] = useState<boolean>(false);
 	const [testingState, setTestingState] = useState<boolean>(false);
 	const { notifications } = useNotifications();
+
+	const { mutateAsync: updateChannel } = useUpdateChannelByID();
+	const { mutateAsync: testChannel } = useTestChannel();
+
+	const notifyError = useCallback(
+		(error: unknown): APIError => {
+			const apiError =
+				error instanceof APIError
+					? error
+					: toAPIError(error as ErrorType<RenderErrorResponseDTO>);
+
+			notifications.error({
+				message: apiError.getErrorCode(),
+				description: apiError.getErrorMessage(),
+			});
+
+			return apiError;
+		},
+		[notifications],
+	);
 
 	const [type, setType] = useState<ChannelType>(
 		initialValue?.type ? (initialValue.type as ChannelType) : ChannelType.Slack,
@@ -364,6 +409,234 @@ function EditAlertChannels({
 		}
 	}, [prepareMsTeamsRequest, t, notifications, selectedConfig]);
 
+	const validateGoogleChatConfig = useCallback((): string => {
+		if (!selectedConfig?.webhook_url) {
+			return t('webhook_url_required');
+		}
+
+		if (!isValidGoogleChatWebhookURL(selectedConfig.webhook_url)) {
+			return t('google_chat_webhook_url_invalid');
+		}
+
+		return '';
+	}, [selectedConfig, t]);
+
+	const onGoogleChatEditHandler = useCallback(async () => {
+		const validationError = validateGoogleChatConfig();
+
+		if (validationError !== '') {
+			notifications.error({
+				message: 'Error',
+				description: validationError,
+			});
+			return { status: 'failed', statusMessage: validationError };
+		}
+
+		setSavingState(true);
+
+		try {
+			await updateChannel({
+				pathParams: { id },
+				data: prepareGoogleChatRequest(selectedConfig),
+			});
+			notifications.success({
+				message: 'Success',
+				description: t('channel_edit_done'),
+			});
+			history.replace(ROUTES.ALL_CHANNELS);
+			return { status: 'success', statusMessage: t('channel_edit_done') };
+		} catch (error) {
+			const apiError = notifyError(error);
+			return {
+				status: 'failed',
+				statusMessage: apiError.getErrorMessage() || t('channel_edit_failed'),
+			};
+		} finally {
+			setSavingState(false);
+		}
+	}, [
+		validateGoogleChatConfig,
+		updateChannel,
+		id,
+		selectedConfig,
+		notifications,
+		notifyError,
+		t,
+	]);
+
+	const validateJiraConfig = useCallback((): string => {
+		if (
+			!selectedConfig.site ||
+			!selectedConfig.username ||
+			!selectedConfig.password ||
+			!selectedConfig.project ||
+			!selectedConfig.issue_type
+		) {
+			return t('jira_required_fields');
+		}
+
+		if (!isValidJiraSiteURL(selectedConfig.site)) {
+			return t('jira_site_invalid');
+		}
+
+		if (
+			selectedConfig.reopen_duration &&
+			!isValidJiraReopenDuration(selectedConfig.reopen_duration)
+		) {
+			return t('jira_reopen_duration_invalid');
+		}
+
+		return '';
+	}, [selectedConfig, t]);
+
+	const onJiraEditHandler = useCallback(async () => {
+		const validationError = validateJiraConfig();
+
+		if (validationError !== '') {
+			notifications.error({
+				message: 'Error',
+				description: validationError,
+			});
+			return { status: 'failed', statusMessage: validationError };
+		}
+
+		setSavingState(true);
+
+		try {
+			await updateChannel({
+				pathParams: { id },
+				data: prepareJiraRequest(selectedConfig),
+			});
+			notifications.success({
+				message: 'Success',
+				description: t('channel_edit_done'),
+			});
+			history.replace(ROUTES.ALL_CHANNELS);
+			return { status: 'success', statusMessage: t('channel_edit_done') };
+		} catch (error) {
+			const apiError = notifyError(error);
+			return {
+				status: 'failed',
+				statusMessage: apiError.getErrorMessage() || t('channel_edit_failed'),
+			};
+		} finally {
+			setSavingState(false);
+		}
+	}, [
+		validateJiraConfig,
+		updateChannel,
+		id,
+		selectedConfig,
+		notifications,
+		notifyError,
+		t,
+	]);
+
+	const validateJsmOpsConfig = useCallback((): string => {
+		if (!selectedConfig.api_key) {
+			return t('api_key_required');
+		}
+		return '';
+	}, [selectedConfig, t]);
+
+	const onJsmOpsEditHandler = useCallback(async () => {
+		const validationError = validateJsmOpsConfig();
+
+		if (validationError !== '') {
+			notifications.error({
+				message: 'Error',
+				description: validationError,
+			});
+			return { status: 'failed', statusMessage: validationError };
+		}
+
+		setSavingState(true);
+
+		try {
+			await updateChannel({
+				pathParams: { id },
+				data: prepareJsmOpsRequest(selectedConfig),
+			});
+			notifications.success({
+				message: 'Success',
+				description: t('channel_edit_done'),
+			});
+			history.replace(ROUTES.ALL_CHANNELS);
+			return { status: 'success', statusMessage: t('channel_edit_done') };
+		} catch (error) {
+			const apiError = notifyError(error);
+			return {
+				status: 'failed',
+				statusMessage: apiError.getErrorMessage() || t('channel_edit_failed'),
+			};
+		} finally {
+			setSavingState(false);
+		}
+	}, [
+		validateJsmOpsConfig,
+		updateChannel,
+		id,
+		selectedConfig,
+		notifications,
+		notifyError,
+		t,
+	]);
+
+	const validateIncidentIOConfig = useCallback((): string => {
+		if (!selectedConfig.url || !selectedConfig.token) {
+			return t('incidentio_required_fields');
+		}
+
+		if (!isValidIncidentIOURL(selectedConfig.url)) {
+			return t('incidentio_url_invalid');
+		}
+
+		return '';
+	}, [selectedConfig, t]);
+
+	const onIncidentIOEditHandler = useCallback(async () => {
+		const validationError = validateIncidentIOConfig();
+
+		if (validationError !== '') {
+			notifications.error({
+				message: 'Error',
+				description: validationError,
+			});
+			return { status: 'failed', statusMessage: validationError };
+		}
+
+		setSavingState(true);
+
+		try {
+			await updateChannel({
+				pathParams: { id },
+				data: prepareIncidentIORequest(selectedConfig),
+			});
+			notifications.success({
+				message: 'Success',
+				description: t('channel_edit_done'),
+			});
+			history.replace(ROUTES.ALL_CHANNELS);
+			return { status: 'success', statusMessage: t('channel_edit_done') };
+		} catch (error) {
+			const apiError = notifyError(error);
+			return {
+				status: 'failed',
+				statusMessage: apiError.getErrorMessage() || t('channel_edit_failed'),
+			};
+		} finally {
+			setSavingState(false);
+		}
+	}, [
+		validateIncidentIOConfig,
+		updateChannel,
+		id,
+		selectedConfig,
+		notifications,
+		notifyError,
+		t,
+	]);
+
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
 			let result;
@@ -379,6 +652,14 @@ function EditAlertChannels({
 				result = await onOpsgenieEditHandler();
 			} else if (value === ChannelType.Email) {
 				result = await onEmailEditHandler();
+			} else if (value === ChannelType.GoogleChat) {
+				result = await onGoogleChatEditHandler();
+			} else if (value === ChannelType.Jira) {
+				result = await onJiraEditHandler();
+			} else if (value === ChannelType.JsmOps) {
+				result = await onJsmOpsEditHandler();
+			} else if (value === ChannelType.IncidentIO) {
+				result = await onIncidentIOEditHandler();
 			}
 			logEvent('Alert Channel: Save channel', {
 				type: value,
@@ -397,10 +678,15 @@ function EditAlertChannels({
 			onMsTeamsEditHandler,
 			onOpsgenieEditHandler,
 			onEmailEditHandler,
+			onGoogleChatEditHandler,
+			onJiraEditHandler,
+			onJsmOpsEditHandler,
+			onIncidentIOEditHandler,
 		],
 	);
 
 	const performChannelTest = useCallback(
+		// eslint-disable-next-line sonarjs/cognitive-complexity
 		async (channelType: ChannelType) => {
 			setTestingState(true);
 			try {
@@ -438,6 +724,58 @@ function EditAlertChannels({
 							await testEmail(request);
 						}
 						break;
+					case ChannelType.GoogleChat: {
+						const validationError = validateGoogleChatConfig();
+						if (validationError !== '') {
+							notifications.error({
+								message: 'Error',
+								description: validationError,
+							});
+							setTestingState(false);
+							return;
+						}
+						await testChannel({ data: prepareGoogleChatRequest(selectedConfig) });
+						break;
+					}
+					case ChannelType.Jira: {
+						const validationError = validateJiraConfig();
+						if (validationError !== '') {
+							notifications.error({
+								message: 'Error',
+								description: validationError,
+							});
+							setTestingState(false);
+							return;
+						}
+						await testChannel({ data: prepareJiraRequest(selectedConfig) });
+						break;
+					}
+					case ChannelType.JsmOps: {
+						const validationError = validateJsmOpsConfig();
+						if (validationError !== '') {
+							notifications.error({
+								message: 'Error',
+								description: validationError,
+							});
+							setTestingState(false);
+							return;
+						}
+						await testChannel({ data: prepareJsmOpsRequest(selectedConfig) });
+						break;
+					}
+					case ChannelType.IncidentIO: {
+						const validationError = validateIncidentIOConfig();
+						if (validationError !== '') {
+							notifications.error({
+								message: 'Error',
+								description: validationError,
+							});
+							setTestingState(false);
+							return;
+						}
+						await testChannel({ data: prepareIncidentIORequest(selectedConfig) });
+						break;
+					}
 					default:
 						notifications.error({
 							message: 'Error',
@@ -459,10 +797,7 @@ function EditAlertChannels({
 					status: 'Test success',
 				});
 			} catch (error) {
-				notifications.error({
-					message: (error as APIError).getErrorCode(),
-					description: (error as APIError).getErrorMessage(),
-				});
+				notifyError(error);
 				logEvent('Alert Channel: Test notification', {
 					type: channelType,
 					sendResolvedAlert: selectedConfig?.send_resolved,
@@ -476,6 +811,12 @@ function EditAlertChannels({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
 			t,
+			notifyError,
+			validateGoogleChatConfig,
+			validateJiraConfig,
+			validateJsmOpsConfig,
+			validateIncidentIOConfig,
+			testChannel,
 			prepareWebhookRequest,
 			preparePagerRequest,
 			prepareSlackRequest,

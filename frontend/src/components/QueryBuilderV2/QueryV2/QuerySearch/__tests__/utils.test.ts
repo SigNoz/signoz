@@ -1,8 +1,12 @@
+import { QUERY_BUILDER_FUNCTIONS } from 'constants/antlrQueryConstants';
+import { DataSource } from 'types/common/queryBuilder';
+
 import {
 	combineInitialAndUserExpression,
 	dedupeOptionsByLabel,
 	getFieldContextPrefix,
 	getUserExpressionFromCombined,
+	isSupportedFunction,
 } from '../utils';
 
 describe('entityLogsExpression', () => {
@@ -116,5 +120,21 @@ describe('dedupeOptionsByLabel', () => {
 
 	it('returns an empty array for empty input', () => {
 		expect(dedupeOptionsByLabel([])).toStrictEqual([]);
+	});
+});
+
+describe('isSupportedFunction', () => {
+	const { HASANY, SEARCH } = QUERY_BUILDER_FUNCTIONS;
+
+	it('allows the has family on every signal', () => {
+		[DataSource.LOGS, DataSource.TRACES, DataSource.METRICS].forEach((signal) => {
+			expect(isSupportedFunction(HASANY, signal)).toBe(true);
+		});
+	});
+
+	it('allows search on logs only', () => {
+		expect(isSupportedFunction(SEARCH, DataSource.LOGS)).toBe(true);
+		expect(isSupportedFunction(SEARCH, DataSource.TRACES)).toBe(false);
+		expect(isSupportedFunction(SEARCH, DataSource.METRICS)).toBe(false);
 	});
 });

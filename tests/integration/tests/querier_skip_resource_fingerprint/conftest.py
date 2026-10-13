@@ -31,8 +31,8 @@ def signoz_skip_resource_fingerprint(
         pytestconfig=pytestconfig,
         cache_key="signoz-skip-resource-fingerprint",
         env_overrides={
-            "SIGNOZ_STATEMENTBUILDER_SKIP__RESOURCE__FINGERPRINT_ENABLED": True,
-            "SIGNOZ_STATEMENTBUILDER_SKIP__RESOURCE__FINGERPRINT_THRESHOLD": 2,
+            "SIGNOZ_QUERIER_SKIP__RESOURCE__FINGERPRINT_ENABLED": True,
+            "SIGNOZ_QUERIER_SKIP__RESOURCE__FINGERPRINT_THRESHOLD": 2,
         },
     )
 
@@ -66,6 +66,6 @@ def signoz_fingerprint(
         pytestconfig=pytestconfig,
         cache_key="signoz-skip-resource-fingerprint-baseline",
         env_overrides={
-            "SIGNOZ_STATEMENTBUILDER_SKIP__RESOURCE__FINGERPRINT_ENABLED": False,
+            "SIGNOZ_QUERIER_SKIP__RESOURCE__FINGERPRINT_ENABLED": False,
         },
     )

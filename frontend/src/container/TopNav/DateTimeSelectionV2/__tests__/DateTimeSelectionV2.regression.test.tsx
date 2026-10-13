@@ -24,7 +24,7 @@ import DateTimeSelection from '../index';
 import {
 	__resetSearchParamsGetter,
 	__setSearchParamsGetterForTest,
-} from '../utils/getUnstableCurrentSearchParams';
+} from 'utils/getUnstableCurrentSearchParams';
 
 const queryClient = new QueryClient({
 	defaultOptions: {
@@ -59,11 +59,6 @@ jest.mock('components/CustomTimePicker/CustomTimePicker', () => ({
 			</button>
 		</div>
 	),
-}));
-
-jest.mock('container/NewExplorerCTA', () => ({
-	__esModule: true,
-	default: (): null => null,
 }));
 
 function NuqsParamSetter({ paramValue }: { paramValue: string }): JSX.Element {

@@ -53,6 +53,10 @@
 		z-index: 0;
 		background: var(--l1-background);
 
+		// Column so the bottom strip sits under the scrolling content, not inside it.
+		display: flex;
+		flex-direction: column;
+
 		&.full-screen-content {
 			width: 100%;
 		}
@@ -70,7 +74,9 @@
 
 .chat-support-gateway {
 	position: fixed;
-	bottom: 20px;
+	// Lifted above the bottom strip. Don't extend this pattern — new fixed-bottom
+	// UI belongs in the bounded layout, not in another offset here.
+	bottom: calc(20px + var(--bottom-strip-height, 0px));
 	right: 20px;
 	z-index: 1000;
 
@@ -183,6 +189,11 @@
 		text-decoration-color: white;
 		text-decoration-thickness: 2px;
 		text-underline-offset: 2px;
+	}
+
+	&[disabled] {
+		opacity: 0.6;
+		text-decoration: none;
 	}
 }
 

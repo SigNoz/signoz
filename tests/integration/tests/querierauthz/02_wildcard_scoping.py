@@ -24,11 +24,11 @@ def test_setup(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     create_role(admin_token, any_key_role, [transaction_group("read", "telemetryresource", "logs", ["builder_query/signoz.workspace.key.id/*"])])
-    any_user = create_active_user(signoz, admin_token, email=any_key_email, role="VIEWER", password=user_password)
+    any_user = create_active_user(signoz, admin_token, email=any_key_email, role="signoz-viewer", password=user_password)
     change_user_role(signoz, admin_token, any_user, "signoz-viewer", any_key_role)
 
     create_role(admin_token, builder_all_role, [transaction_group("read", "telemetryresource", "logs", ["builder_query/*"])])
-    all_user = create_active_user(signoz, admin_token, email=builder_all_email, role="VIEWER", password=user_password)
+    all_user = create_active_user(signoz, admin_token, email=builder_all_email, role="signoz-viewer", password=user_password)
     change_user_role(signoz, admin_token, all_user, "signoz-viewer", builder_all_role)
 
 

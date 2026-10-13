@@ -1,0 +1,10 @@
+.stripTypography {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+
+	color: var(--l2-foreground);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}

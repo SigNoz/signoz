@@ -618,15 +618,32 @@ func normalizePreV5PageSize(query map[string]any, rowLimitPanel bool) {
 	}
 }
 
-// normalizeQueryLimit drops a limit above the v5 maximum (MaxQueryLimit); v1 allowed
-// larger/unbounded limits, and an over-max value fails validation. Removing it leaves
-// the query unlimited (the field is optional).
+// normalizeQueryLimit coerces limit to the int the v5 decode expects: v1 stored it
+// as a string ("5") or float, both of which fail the typed decode. An unparseable
+// value or one above the v5 maximum (MaxQueryLimit) is dropped, leaving the query
+// unlimited (the field is optional).
 func normalizeQueryLimit(query map[string]any) {
-	limit, ok := coerceFloat(query["limit"])
-	if !ok {
+	if query["limit"] == nil {
 		return
 	}
-	if limit > qb.MaxQueryLimit {
+	limit, ok := coerceFloat(query["limit"])
+	if !ok || limit > qb.MaxQueryLimit {
 		delete(query, "limit")
+		return
 	}
+	query["limit"] = int(limit)
+}
+
+// normalizeQueryOffset coerces offset to the int the v5 decode expects; v1 could
+// store it as a string. An unparseable value is dropped (offset defaults to 0).
+func normalizeQueryOffset(query map[string]any) {
+	if query["offset"] == nil {
+		return
+	}
+	offset, ok := coerceFloat(query["offset"])
+	if !ok {
+		delete(query, "offset")
+		return
+	}
+	query["offset"] = int(offset)
 }

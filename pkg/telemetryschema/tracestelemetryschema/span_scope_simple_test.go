@@ -2,6 +2,7 @@ package tracestelemetryschema
 
 import (
 	"context"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
@@ -14,8 +15,7 @@ import (
 
 func TestSpanScopeFilterExpression(t *testing.T) {
 	// Test that span scope fields work in filter expressions
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
+	storage := NewStorage()
 
 	tests := []struct {
 		name              string
@@ -77,14 +77,11 @@ func TestSpanScopeFilterExpression(t *testing.T) {
 			}}
 
 			whereClause, err := querybuilder.PrepareWhereClause(tt.expression, querybuilder.FilterExprVisitorOpts{
-				Context:          context.Background(),
-				Logger:           instrumentationtest.New().Logger(),
-				FieldMapper:      fm,
-				ConditionBuilder: cb,
-				FieldKeys:        fieldKeys,
-				Builder:          sb,
-				StartNs:          tt.startNs,
-				EndNs:            1761458708000000000,
+				Context: context.Background(),
+				Logger:  instrumentationtest.New().Logger(),
+				Storage: storage, Query: qbtypes.QueryInfo{StartNs: tt.startNs, EndNs: 1761458708000000000},
+				FieldKeys: fieldKeys,
+				Builder:   sb,
 			})
 
 			if tt.expectError {
@@ -128,8 +125,7 @@ func TestSpanScopeWithResourceFilter(t *testing.T) {
 			// For now, just verify the expression parses correctly
 			// In a real implementation, we'd need to check that the resource filter
 			// is properly skipped when span scope fields are present
-			fm := NewFieldMapper()
-			cb := NewConditionBuilder(fm)
+			storage := NewStorage()
 
 			// Prepare field keys for the test
 			fieldKeys := make(map[string][]*telemetrytypes.TelemetryFieldKey)
@@ -147,14 +143,11 @@ func TestSpanScopeWithResourceFilter(t *testing.T) {
 			}}
 
 			_, err := querybuilder.PrepareWhereClause(tt.expression, querybuilder.FilterExprVisitorOpts{
-				Context:            context.Background(),
-				Logger:             instrumentationtest.New().Logger(),
-				FieldMapper:        fm,
-				ConditionBuilder:   cb,
+				Context: context.Background(),
+				Logger:  instrumentationtest.New().Logger(),
+				Storage: storage, Query: qbtypes.QueryInfo{StartNs: 1761437108000000000, EndNs: 1761458708000000000},
 				FieldKeys:          fieldKeys,
 				SkipResourceFilter: false, // This would be set by the statement builder
-				StartNs:            1761437108000000000,
-				EndNs:              1761458708000000000,
 			})
 
 			assert.NoError(t, err)

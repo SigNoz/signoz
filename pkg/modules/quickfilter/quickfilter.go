@@ -4,20 +4,27 @@ import (
 	"context"
 	"net/http"
 
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/types/quickfiltertypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type Module interface {
-	GetQuickFilters(ctx context.Context, orgID valuer.UUID) ([]*quickfiltertypes.SignalFilters, error)
-	UpdateQuickFilters(ctx context.Context, orgID valuer.UUID, signal quickfiltertypes.Signal, filters []v3.AttributeKey) error
-	GetSignalFilters(ctx context.Context, orgID valuer.UUID, signal quickfiltertypes.Signal) (*quickfiltertypes.SignalFilters, error)
+	// Get returns the stored quick filter row for a source.
+	Get(ctx context.Context, orgID valuer.UUID, source quickfiltertypes.Source) (*quickfiltertypes.StorableQuickFilter, error)
+	// GetQuickFilters returns quick filters for a source, or for every source when source is zero.
+	GetQuickFilters(ctx context.Context, orgID valuer.UUID, source quickfiltertypes.Source) ([]*quickfiltertypes.SourceFilters, error)
+	UpsertQuickFilters(ctx context.Context, orgID valuer.UUID, source quickfiltertypes.Source, filters []telemetrytypes.TelemetryFieldKey) error
 	SetDefaultConfig(ctx context.Context, orgID valuer.UUID) error
 }
 
 type Handler interface {
+	// Legacy v1 endpoints, served by converting to and from the v3 attribute key shape.
 	GetQuickFilters(http.ResponseWriter, *http.Request)
 	UpdateQuickFilters(http.ResponseWriter, *http.Request)
-	GetSignalFilters(http.ResponseWriter, *http.Request)
+	GetSourceFilters(http.ResponseWriter, *http.Request)
+
+	ListQuickFiltersV2(http.ResponseWriter, *http.Request)
+	GetQuickFiltersV2(http.ResponseWriter, *http.Request)
+	UpdateQuickFiltersV2(http.ResponseWriter, *http.Request)
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -1124,7 +1125,7 @@ func TestJSONStmtBuilder_SelectField(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "SELECT timestamp, id, multiIf((dynamicElement(body_v2.`user.name`, 'String') IS NOT NULL), dynamicElement(body_v2.`user.name`, 'String'), NULL) AS `__SELECT_KEY_0_user.name` FROM signoz_logs.distributed_logs_v2 WHERE timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "SELECT timestamp, id, dynamicElement(body_v2.`user.name`, 'String') AS `__SELECT_KEY_0_user.name` FROM signoz_logs.distributed_logs_v2 WHERE timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
@@ -1201,7 +1202,7 @@ func TestJSONStmtBuilder_OrderBy(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? ORDER BY multiIf((dynamicElement(body_v2.`user.name`, 'String') IS NOT NULL), dynamicElement(body_v2.`user.name`, 'String'), NULL) asc LIMIT ?",
+				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? ORDER BY dynamicElement(body_v2.`user.name`, 'String') asc LIMIT ?",
 				Args:  []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
@@ -1332,22 +1333,19 @@ func buildJSONTestStatementBuilder(t *testing.T, addIndexes bool) (*logQueryStat
 
 	mockMetadataStore := buildTestTelemetryMetadataStore(t, addIndexes)
 	fl := flaggertest.WithUseJSONBody(t, true)
-	fm := logstelemetryschema.NewFieldMapper(fl)
-	cb := logstelemetryschema.NewConditionBuilder(fm, fl)
+	storage := logstelemetryschema.NewStorage()
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
 
 	statementBuilder := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
-		fm,
-		cb,
+		storage,
 		aggExprRewriter,
 		logstelemetryschema.DefaultFullTextColumn,
 		fl,
 		nil,
-		false,
-		100000,
+		statementbuilder.Config{SkipResourceFingerprint: statementbuilder.SkipResourceFingerprint{Enabled: false, Threshold: 100000}},
 	)
 
 	return statementBuilder, mockMetadataStore

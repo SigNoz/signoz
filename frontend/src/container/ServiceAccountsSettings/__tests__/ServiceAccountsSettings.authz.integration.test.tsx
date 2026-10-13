@@ -10,7 +10,6 @@ import ServiceAccountsSettings from '../ServiceAccountsSettings';
 const SA_LIST_ENDPOINT = '*/api/v1/service_accounts';
 const SA_ENDPOINT = '*/api/v1/service_accounts/:id';
 const SA_KEYS_ENDPOINT = '*/api/v1/service_accounts/:id/keys';
-const SA_ROLES_ENDPOINT = '*/api/v1/service_accounts/:id/roles';
 const ROLES_ENDPOINT = '*/api/v1/roles';
 
 const mockServiceAccountsAPI = [
@@ -18,7 +17,7 @@ const mockServiceAccountsAPI = [
 		id: 'sa-1',
 		name: 'CI Bot',
 		email: 'ci-bot@signoz.io',
-		roles: ['signoz-admin'],
+		serviceAccountRoles: [],
 		status: 'ACTIVE',
 		createdAt: 1700000000,
 		updatedAt: 1700000001,
@@ -27,7 +26,7 @@ const mockServiceAccountsAPI = [
 		id: 'sa-2',
 		name: 'Monitoring Agent',
 		email: 'monitor@signoz.io',
-		roles: ['signoz-viewer'],
+		serviceAccountRoles: [],
 		status: 'ACTIVE',
 		createdAt: 1700000002,
 		updatedAt: 1700000003,
@@ -36,7 +35,7 @@ const mockServiceAccountsAPI = [
 		id: 'sa-3',
 		name: 'Legacy Bot',
 		email: 'legacy@signoz.io',
-		roles: ['signoz-editor'],
+		serviceAccountRoles: [],
 		status: 'DISABLED',
 		createdAt: 1700000004,
 		updatedAt: 1700000005,
@@ -59,9 +58,6 @@ describe('ServiceAccountsSettings (integration)', () => {
 					: res(ctx.status(404), ctx.json({ message: 'Not found' }));
 			}),
 			rest.get(SA_KEYS_ENDPOINT, (_, res, ctx) =>
-				res(ctx.status(200), ctx.json({ data: [] })),
-			),
-			rest.get(SA_ROLES_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ data: [] })),
 			),
 			rest.get(ROLES_ENDPOINT, (_, res, ctx) =>

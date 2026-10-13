@@ -1,0 +1,32 @@
+import { matchPath, Redirect, useLocation } from 'react-router-dom';
+import RouteTab from 'components/RouteTab';
+import { TabRoutes } from 'components/RouteTab/types';
+import ROUTES from 'constants/routes';
+import history from 'lib/history';
+
+import { __TAB_NAMES__ } from './constants';
+
+import styles from './__Pascal__.module.scss';
+
+function __Pascal__(): JSX.Element {
+	const { pathname } = useLocation();
+
+	const routes: TabRoutes[] = [__TAB_NAMES__];
+
+	if (matchPath(pathname, { path: __BASE_ROUTE__, exact: true })) {
+		return <Redirect to={routes[0].route} />;
+	}
+
+	return (
+		<div className={styles.shell} data-testid="__kebab__-shell">
+			<RouteTab
+				routes={routes}
+				activeKey={pathname}
+				history={history}
+				showRightSection={false}
+			/>
+		</div>
+	);
+}
+
+export default __Pascal__;

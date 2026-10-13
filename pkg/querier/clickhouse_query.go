@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -66,7 +67,7 @@ func (q *chSQLQuery) Window() (uint64, uint64) { return q.fromMS, q.toMS }
 func (q *chSQLQuery) renderVars(query string, vars map[string]qbtypes.VariableItem, start, end uint64) (string, error) {
 	varsData := map[string]any{}
 	for k, v := range vars {
-		varsData[k] = formatValueForCH(v.Value)
+		varsData[k] = clickhousesql.Literal(v.Value)
 	}
 
 	querybuilder.AssignReservedVars(varsData, start, end)
@@ -106,7 +107,7 @@ func (q *chSQLQuery) render(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	querybuilder.LogIfStatementIsNotValid(ctx, q.logger, rendered)
+	clickhousesql.LogIfStatementIsNotValid(ctx, q.logger, rendered)
 
 	return rendered, nil
 }

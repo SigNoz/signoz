@@ -118,7 +118,10 @@ function TimelineTableContent(): JSX.Element {
 
 	const handleRowClick = (
 		record: AlertRuleTimelineTableResponse,
-	): HTMLAttributes<AlertRuleTimelineTableResponse> => ({
+	): HTMLAttributes<AlertRuleTimelineTableResponse> & {
+		'data-testid': string;
+	} => ({
+		'data-testid': 'timeline-row',
 		onClick: (): void => {
 			void logEvent('Alert history: Timeline table row: Clicked', {
 				ruleId: record.ruleID,
@@ -128,12 +131,15 @@ function TimelineTableContent(): JSX.Element {
 	});
 
 	return (
-		<div className="timeline-table">
+		<div className="timeline-table" data-testid="timeline-table">
 			{/* If we don't wait to have the keys, the QuerySearch will not render them at first usage */}
 			{!isLoadingKeys && hardcodedAttributeKeys ? (
 				<div className="timeline-table__filter">
 					<div className="timeline-table__filter-row">
-						<div className="timeline-table__filter-search">
+						<div
+							className="timeline-table__filter-search"
+							data-testid="timeline-filter-search"
+						>
 							<QuerySearch
 								onChange={querySearchOnChange}
 								queryData={queryData}
@@ -155,6 +161,7 @@ function TimelineTableContent(): JSX.Element {
 					<Skeleton.Input
 						className="timeline-table__filter--loading-skeleton"
 						active
+						data-testid="timeline-filter-skeleton"
 					/>
 				</div>
 			)}
@@ -172,14 +179,17 @@ function TimelineTableContent(): JSX.Element {
 				locale={{
 					emptyText:
 						isError && apiError ? (
-							<div className="timeline-table__error">
+							<div className="timeline-table__error" data-testid="timeline-error">
 								<ErrorContent error={apiError} />
 							</div>
 						) : undefined,
 				}}
 				footer={(): JSX.Element => (
 					<div className="timeline-table__pagination">
-						<div className="timeline-table__pagination-info">
+						<div
+							className="timeline-table__pagination-info"
+							data-testid="timeline-footer-range"
+						>
 							{paginationConfig.showTotal?.(totalItems, [
 								totalItems === 0
 									? 0

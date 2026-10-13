@@ -92,9 +92,6 @@ def migrator(
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.Operation:
-    """
-    Package-scoped fixture for running schema migrations.
-    """
     return create_migrator(
         network=network,
         clickhouse=clickhouse,

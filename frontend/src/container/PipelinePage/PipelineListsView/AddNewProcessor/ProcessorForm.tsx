@@ -2,14 +2,17 @@ import { useTranslation } from 'react-i18next';
 import { Input } from '@signozhq/ui/input';
 import { Switch } from '@signozhq/ui/switch';
 import { Form, Select, Space } from 'antd';
+import { FeatureKeys } from 'constants/features';
 import { ModalFooterTitle } from 'container/PipelinePage/styles';
+import { useAppContext } from 'providers/App/App';
 import { ProcessorData } from 'types/api/pipeline/def';
 
 import { formValidationRules } from '../config';
-import { processorFields, ProcessorFormField } from './config';
+import { ProcessorFormField } from './config';
 import CSVInput from './FormFields/CSVInput';
 import JsonFlattening from './FormFields/JsonFlattening';
 import { FormWrapper, PipelineIndexIcon, StyledSelect } from './styles';
+import { resolveProcessorFields } from './utils';
 
 import './styles.scss';
 
@@ -133,16 +136,23 @@ function ProcessorForm({
 	selectedProcessorData,
 	isAdd,
 }: ProcessorFormProps): JSX.Element {
+	const { featureFlags } = useAppContext();
+	const isBodyJsonEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.USE_JSON_BODY)
+			?.active || false;
+
 	return (
 		<div className="processor-form-container">
-			{processorFields[processorType]?.map((fieldData: ProcessorFormField) => (
-				<ProcessorFieldInput
-					key={fieldData.name + String(fieldData.initialValue)}
-					fieldData={fieldData}
-					selectedProcessorData={selectedProcessorData}
-					isAdd={isAdd}
-				/>
-			))}
+			{resolveProcessorFields(processorType, isBodyJsonEnabled).map(
+				(fieldData: ProcessorFormField) => (
+					<ProcessorFieldInput
+						key={fieldData.name + String(fieldData.initialValue)}
+						fieldData={fieldData}
+						selectedProcessorData={selectedProcessorData}
+						isAdd={isAdd}
+					/>
+				),
+			)}
 		</div>
 	);
 }

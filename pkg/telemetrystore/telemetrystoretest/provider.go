@@ -32,7 +32,7 @@ func New(_ telemetrystore.Config, matcher sqlmock.QueryMatcher) *Provider {
 
 // ClickhouseDB returns the mock Clickhouse connection.
 func (p *Provider) ClickhouseDB() clickhouse.Conn {
-	return p.clickhouseDB.(clickhouse.Conn)
+	return conn{Conn: p.clickhouseDB.(clickhouse.Conn)}
 }
 
 // Cluster returns the cluster name.

@@ -36,54 +36,6 @@ from fixtures.traces import (
 # collision-robustness check.
 
 
-def _query_window(now: datetime) -> tuple[int, int]:
-    """[now-1min, now+1s) in epoch millis — the default window for list tests
-    that seed spans a few seconds in the past."""
-    return (
-        int((now - timedelta(minutes=1)).timestamp() * 1000),
-        int((now + timedelta(seconds=1)).timestamp() * 1000),
-    )
-
-
-def _expected_list_row(span: Traces) -> dict[str, Any]:
-    """The full empty-selectFields list row the API returns for `span`: every
-    intrinsic + calculated column (mirroring the fixture's OTel-derived
-    computation), the merged `attributes` map (the union of the typed attribute
-    dicts) and the `resource` map. Deriving it from the span object lets list
-    responses be asserted as an exact round-trip of the inserted span — which
-    holds for clean and corrupt spans alike, since the corrupt values live only
-    inside the `attributes` map."""
-    return {
-        "timestamp": format_timestamp(span.timestamp),
-        "trace_id": span.trace_id,
-        "span_id": span.span_id,
-        "trace_state": span.trace_state,
-        "parent_span_id": span.parent_span_id,
-        "flags": int(span.flags),
-        "name": span.name,
-        "kind": int(span.kind),
-        "kind_string": span.kind_string,
-        "duration_nano": int(span.duration_nano),
-        "status_code": int(span.status_code),
-        "status_message": span.status_message,
-        "status_code_string": span.status_code_string,
-        "events": span.events,
-        "links": span.links,
-        "response_status_code": span.response_status_code,
-        "external_http_url": span.external_http_url,
-        "http_url": span.http_url,
-        "external_http_method": span.external_http_method,
-        "http_method": span.http_method,
-        "http_host": span.http_host,
-        "db_name": span.db_name,
-        "db_operation": span.db_operation,
-        "has_error": span.has_error,
-        "is_remote": span.is_remote,
-        "attributes": {**span.attribute_string, **span.attributes_number, **span.attributes_bool},
-        "resource": span.resources_string,
-    }
-
-
 # ============================================================================
 # Basic list & row shape
 # ============================================================================
@@ -251,31 +203,14 @@ def test_traces_list(
     assert rows[1]["data"]["service.name"] == post_span.service_name
 
 
-def _verify_events_links_full(rows: list[dict], traces: list[Traces]) -> None:
-    """Empty-selectFields case: events/links arrive parsed into structured objects.
-    Every row's events/links should match the fixture's stored parsed shape
-    (the fixture's `.events`/`.links` mirror the API response shape directly).
-    """
-    for row, trace in zip(rows, traces, strict=True):
-        assert row["data"]["events"] == trace.events
-        assert row["data"]["links"] == trace.links
-        # Jaeger-era `refType` is dropped at the consume layer.
-        for link in row["data"]["links"]:
-            assert "refType" not in link
-
-
-def _verify_events_links_skip(rows: list[dict], traces: list[Traces]) -> None:
-    """Projected-selectFields case: nothing to verify beyond the key set."""
-
-
 @pytest.mark.parametrize(
-    "select_fields,expected_keys,verify_values",
+    "select_fields,expected_keys,events_links",
     [
-        pytest.param([], ALL_SELECT_FIELDS, _verify_events_links_full, id="empty_returns_all_fields"),
+        pytest.param([], ALL_SELECT_FIELDS, "full", id="empty_returns_all_fields"),
         pytest.param(
             [TelemetryFieldKey("service.name")],
             ["timestamp", "trace_id", "span_id", "service.name"],
-            _verify_events_links_skip,
+            "skip",
             id="projected_subset",
         ),
     ],
@@ -289,7 +224,7 @@ def test_traces_list_select_fields(
     noise: str,
     select_fields: list[TelemetryFieldKey],
     expected_keys: list[str],
-    verify_values: Callable[[list[dict], list[Traces]], None],
+    events_links: str,
 ) -> None:
     """
     Setup:
@@ -386,7 +321,17 @@ def test_traces_list_select_fields(
     for row in rows:
         assert set(row["data"].keys()) == set(expected_keys)
 
-    verify_values(rows, traces)
+    # Empty-selectFields case: events/links arrive parsed into structured objects.
+    # Every row's events/links should match the fixture's stored parsed shape
+    # (the fixture's `.events`/`.links` mirror the API response shape directly).
+    # Projected-selectFields case: nothing to verify beyond the key set.
+    if events_links == "full":
+        for row, trace in zip(rows, traces, strict=True):
+            assert row["data"]["events"] == trace.events
+            assert row["data"]["links"] == trace.links
+            # Jaeger-era `refType` is dropped at the consume layer.
+            for link in row["data"]["links"]:
+                assert "refType" not in link
 
 
 @pytest.mark.parametrize(
@@ -439,7 +384,8 @@ def test_traces_list_select_field_types(
     insert_traces([span])
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
 
     response = make_query_request(
         signoz,
@@ -491,7 +437,8 @@ def test_traces_list_select_field_dedup(
     insert_traces([span])
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
 
     response = make_query_request(
         signoz,
@@ -555,7 +502,8 @@ def test_traces_list_select_calculated_field_collision(
     insert_traces([span])
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
 
     response = make_query_request(
         signoz,
@@ -624,12 +572,14 @@ def test_traces_list_response_shape_values(
     insert_traces(spans)
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
 
     # Each span's full empty-selectFields row is derived from the span object:
     # intrinsic + calculated columns come from the fixture's own OTel-mirroring
     # computation, and the merged `attributes` map is exactly the union of the
-    # typed attribute dicts. This holds identically for clean and corrupt spans.
+    # typed attribute dicts. This holds identically for clean and corrupt spans,
+    # since the corrupt values live only inside the `attributes` map.
     for span_obj in spans:
         marker = span_obj.attribute_string["marker"]
         response = make_query_request(
@@ -644,7 +594,35 @@ def test_traces_list_response_shape_values(
         rows = get_rows(response)
         assert len(rows) == 1
         data = rows[0]["data"]
-        assert data == _expected_list_row(span_obj)
+        assert data == {
+            "timestamp": format_timestamp(span_obj.timestamp),
+            "trace_id": span_obj.trace_id,
+            "span_id": span_obj.span_id,
+            "trace_state": span_obj.trace_state,
+            "parent_span_id": span_obj.parent_span_id,
+            "flags": int(span_obj.flags),
+            "name": span_obj.name,
+            "kind": int(span_obj.kind),
+            "kind_string": span_obj.kind_string,
+            "duration_nano": int(span_obj.duration_nano),
+            "status_code": int(span_obj.status_code),
+            "status_message": span_obj.status_message,
+            "status_code_string": span_obj.status_code_string,
+            "events": span_obj.events,
+            "links": span_obj.links,
+            "response_status_code": span_obj.response_status_code,
+            "external_http_url": span_obj.external_http_url,
+            "http_url": span_obj.http_url,
+            "external_http_method": span_obj.external_http_method,
+            "http_method": span_obj.http_method,
+            "http_host": span_obj.http_host,
+            "db_name": span_obj.db_name,
+            "db_operation": span_obj.db_operation,
+            "has_error": span_obj.has_error,
+            "is_remote": span_obj.is_remote,
+            "attributes": {**span_obj.attribute_string, **span_obj.attributes_number, **span_obj.attributes_bool},
+            "resource": span_obj.resources_string,
+        }
         # `==` treats True/1 and 7.5/7.5 as equal regardless of type, so pin the
         # string/number/bool type preservation for the error span explicitly.
         if marker == "error":
@@ -719,7 +697,8 @@ def test_traces_list_ordering(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
 
     expected = [m["marker"] for m in sorted(metas, key=sort_value, reverse=(direction == "desc"))]
 
@@ -780,7 +759,8 @@ def test_traces_list_order_multi_key_tiebreak(
     by_duration_secs = {1: spans[0].span_id, 2: spans[1].span_id, 3: spans[2].span_id}
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
 
     def query(duration_direction: str) -> list[str]:
         response = make_query_request(
@@ -837,7 +817,8 @@ def test_traces_list_no_default_order(
     insert_traces(spans)
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
 
     response = make_query_request(
         signoz,
@@ -904,7 +885,8 @@ def test_traces_list_pagination(
     insert_traces(spans)
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
 
     # timestamp desc => newest span (i=4) first
     ordered_span_ids = [span.span_id for span in reversed(spans)]
@@ -1018,7 +1000,8 @@ def test_traces_list_empty_result(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
 
     # Filter matches nothing.
     response = make_query_request(
@@ -1109,7 +1092,8 @@ def test_traces_list_span_scope(
     insert_top_level_operations([("op-entry", "scope-svc")])
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
 
     def query_scope(expression: str) -> list[str]:
         response = make_query_request(
@@ -1137,11 +1121,40 @@ def test_traces_list_span_scope(
     [
         # Case 1: order by timestamp; empty selectFields returns the full
         # response shape (all intrinsic + calculated columns plus the merged
-        # `attributes` and `resource` maps). x[3] (topic-service) is latest.
+        # `attributes` and `resource` maps, every value derived from the inserted
+        # span object). x[3] (topic-service) is latest.
         pytest.param(
             BuilderQuery(signal="traces", name="A", order=[OrderBy(TelemetryFieldKey("timestamp"), "desc")], limit=1),
             HTTPStatus.OK,
-            lambda x: _expected_list_row(x[3]),
+            lambda x: {
+                "timestamp": format_timestamp(x[3].timestamp),
+                "trace_id": x[3].trace_id,
+                "span_id": x[3].span_id,
+                "trace_state": x[3].trace_state,
+                "parent_span_id": x[3].parent_span_id,
+                "flags": int(x[3].flags),
+                "name": x[3].name,
+                "kind": int(x[3].kind),
+                "kind_string": x[3].kind_string,
+                "duration_nano": int(x[3].duration_nano),
+                "status_code": int(x[3].status_code),
+                "status_message": x[3].status_message,
+                "status_code_string": x[3].status_code_string,
+                "events": x[3].events,
+                "links": x[3].links,
+                "response_status_code": x[3].response_status_code,
+                "external_http_url": x[3].external_http_url,
+                "http_url": x[3].http_url,
+                "external_http_method": x[3].external_http_method,
+                "http_method": x[3].http_method,
+                "http_host": x[3].http_host,
+                "db_name": x[3].db_name,
+                "db_operation": x[3].db_operation,
+                "has_error": x[3].has_error,
+                "is_remote": x[3].is_remote,
+                "attributes": {**x[3].attribute_string, **x[3].attributes_number, **x[3].attributes_bool},
+                "resource": x[3].resources_string,
+            },
             id="order_timestamp_full_shape",
         ),
         # Case 2: order by attribute.timestamp. The key resolves to the intrinsic
@@ -1150,7 +1163,35 @@ def test_traces_list_span_scope(
         pytest.param(
             BuilderQuery(signal="traces", name="A", order=[OrderBy(TelemetryFieldKey("attribute.timestamp"), "desc")], limit=1),
             HTTPStatus.OK,
-            lambda x: _expected_list_row(x[3]),
+            lambda x: {
+                "timestamp": format_timestamp(x[3].timestamp),
+                "trace_id": x[3].trace_id,
+                "span_id": x[3].span_id,
+                "trace_state": x[3].trace_state,
+                "parent_span_id": x[3].parent_span_id,
+                "flags": int(x[3].flags),
+                "name": x[3].name,
+                "kind": int(x[3].kind),
+                "kind_string": x[3].kind_string,
+                "duration_nano": int(x[3].duration_nano),
+                "status_code": int(x[3].status_code),
+                "status_message": x[3].status_message,
+                "status_code_string": x[3].status_code_string,
+                "events": x[3].events,
+                "links": x[3].links,
+                "response_status_code": x[3].response_status_code,
+                "external_http_url": x[3].external_http_url,
+                "http_url": x[3].http_url,
+                "external_http_method": x[3].external_http_method,
+                "http_method": x[3].http_method,
+                "http_host": x[3].http_host,
+                "db_name": x[3].db_name,
+                "db_operation": x[3].db_operation,
+                "has_error": x[3].has_error,
+                "is_remote": x[3].is_remote,
+                "attributes": {**x[3].attribute_string, **x[3].attributes_number, **x[3].attributes_bool},
+                "resource": x[3].resources_string,
+            },
             id="order_attribute_timestamp_full_shape",
         ),
         # Case 3: select timestamp with empty order by.
@@ -1199,6 +1240,13 @@ def test_traces_list_span_scope(
             lambda x: {"duration_nano": int(x[1].duration_nano), "span_id": x[1].span_id, "timestamp": format_timestamp(x[1].timestamp), "trace_id": x[1].trace_id},
             id="select_attribute_duration_order_intrinsic",
         ),
+        # Case 9: filter on the intrinsic scope.version. Only x[1] should match.
+        pytest.param(
+            BuilderQuery(signal="traces", name="A", select_fields=[TelemetryFieldKey("timestamp")], filter_expression="scope.version = '1.0.0'", limit=1),
+            HTTPStatus.OK,
+            lambda x: {"span_id": x[1].span_id, "timestamp": format_timestamp(x[1].timestamp), "trace_id": x[1].trace_id},
+            id="filter_scope_version",
+        ),
     ],
 )
 def test_traces_list_with_corrupt_data(
@@ -1242,6 +1290,168 @@ def test_traces_list_with_corrupt_data(
         assert get_rows(response)[0]["data"] == expected(traces)
 
 
+@pytest.mark.parametrize(
+    "filter_expression,expected_indices",
+    [
+        # Intrinsic scope.name / scope.version resolve to the JSON sub-columns.
+        pytest.param("scope.name = 'io.signoz.payment'", [1], id="intrinsic_scope_name"),
+        pytest.param("scope.version = '2.3.1'", [0], id="intrinsic_scope_version"),
+        # A scope attribute resolves against the scope JSON column's attributes.
+        pytest.param("scope.telemetry.sdk.language = 'python'", [1], id="scope_attribute"),
+        # A scope attribute whose own name carries a `scope.` prefix. `scope.prefixed`
+        # normalizes to {prefixed, scope} and must still resolve to the attribute.
+        pytest.param("scope.prefixed = 'prefixed-val'", [0], id="scope_prefixed_attribute"),
+        # `env.tier` is a span attribute on span 0 and a scope attribute on
+        # span 1. Unprefixed -> no explicit context, so it is checked in every
+        # applicable context (attribute OR scope) and both spans match.
+        pytest.param("env.tier = 'gold'", [0, 1], id="bare_cross_context"),
+        # The explicit `scope.` prefix forces scope context only, so span 0's
+        # span attribute is ignored — only span 1 matches.
+        pytest.param("scope.env.tier = 'gold'", [1], id="scope_prefixed_cross_context"),
+        # `scope.name` names both homes it can resolve to: the declared scope.name field
+        # (span 0) and a same-named `name` scope attribute (span 1), the same way any
+        # other name colliding across contexts unions. `scope.attribute.name` addresses
+        # the attribute alone.
+        pytest.param("scope.name = 'io.signoz.checkout'", [0, 1], id="scope_name_unions_attribute"),
+        # The `scope.name` spelling is also a real stored key: span 2 carries a span
+        # attribute literally named `scope.name`, so it matches too.
+        pytest.param("scope.name = 'attr-scope-name'", [2], id="scope_name_matches_stored_spelling"),
+        # The explicit `scope.attribute.` prefix addresses the scope attribute alone, without
+        # the declared path. Span 1 has a `name` scope attribute = 'io.signoz.checkout'.
+        pytest.param("scope.attribute.name = 'io.signoz.checkout'", [1], id="scope_attribute_name"),
+        # `version` as a scope attribute: no span carries one (span 1's 4.5.6 is the declared
+        # scope.version, not a scope attribute), so this matches nothing.
+        pytest.param("scope.attribute.version = '4.5.6'", [], id="scope_attribute_version_none"),
+        # An unprefixed `name` is checked in every applicable context: the span `name`
+        # column (span 2) and a `name` scope attribute (span 1). It does not reach the
+        # declared scope.name field (span 0), which only the `scope.` prefix addresses.
+        pytest.param("name = 'io.signoz.checkout'", [1, 2], id="bare_name_unions_scope_attribute"),
+        # A value that no resolvable key holds (scope.name/scope.version field,
+        # a `name`/`version` scope attribute, or a same-named attribute/resource)
+        # returns nothing.
+        pytest.param("scope.version = 'corrupt_data'", [], id="scope_version_no_match"),
+        pytest.param("scope.name = 'corrupt_data'", [], id="scope_name_no_match"),
+    ],
+)
+def test_traces_list_with_scope_filter(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+    filter_expression: str,
+    expected_indices: list[int],
+) -> None:
+    """
+    Setup three spans with different scope key resolution:
+    - x[0]: scope.name/version 'io.signoz.checkout'/'2.3.1'; span attribute
+      env.tier='gold'.
+    - x[1]: scope.name/version 'io.signoz.payment'/'4.5.6'; scope attributes
+      telemetry.sdk.language='python', env.tier='gold', and a `name` scope
+      attribute colliding with x[0]'s scope.name value.
+    - x[2]: span name 'io.signoz.checkout' (colliding with x[0]'s scope.name
+      value) and a span attribute literally named `scope.name`.
+
+    Tests:
+    - Filtering on scope.name / scope.version / a scope attribute.
+    - An unprefixed key is resolved across contexts (scope checked alongside
+      attribute / intrinsic), while a `scope.`-prefixed key is scope-only.
+    - `scope.name`/`scope.version` name every home they resolve to: the declared JSON
+      sub-column and a same-named `name`/`version` scope attribute. The explicit
+      `scope.attribute.` prefix addresses the attribute alone.
+    - a bare `name` reaches the span `name` column and a `name` scope attribute, but
+      never the declared scope.name field.
+    """
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    trace_id = TraceIdGenerator.trace_id()
+    span_ids = [TraceIdGenerator.span_id() for _ in range(3)]
+
+    traces = [
+        Traces(
+            timestamp=now - timedelta(seconds=4),
+            duration=timedelta(seconds=2),
+            trace_id=trace_id,
+            span_id=span_ids[0],
+            parent_span_id="",
+            name="GET /checkout",
+            kind=TracesKind.SPAN_KIND_SERVER,
+            status_code=TracesStatusCode.STATUS_CODE_OK,
+            resources={"service.name": "checkout"},
+            attributes={"http.request.method": "GET", "env.tier": "gold"},
+            scope={
+                "name": "io.signoz.checkout",
+                "version": "2.3.1",
+                # a scope attribute whose own name carries a `scope.` prefix
+                "attributes": {"telemetry.sdk.language": "go", "scope.prefixed": "prefixed-val"},
+            },
+        ),
+        Traces(
+            timestamp=now - timedelta(seconds=2),
+            duration=timedelta(seconds=1),
+            trace_id=trace_id,
+            span_id=span_ids[1],
+            parent_span_id="",
+            name="POST /pay",
+            kind=TracesKind.SPAN_KIND_SERVER,
+            status_code=TracesStatusCode.STATUS_CODE_OK,
+            resources={"service.name": "payment"},
+            attributes={"http.request.method": "POST"},
+            # env.tier is a scope attribute here (cross-context with span 0);
+            # `name` is a scope attribute colliding with span 0's scope.name.
+            scope={
+                "name": "io.signoz.payment",
+                "version": "4.5.6",
+                "attributes": {
+                    "telemetry.sdk.language": "python",
+                    "env.tier": "gold",
+                    "name": "io.signoz.checkout",
+                },
+            },
+        ),
+        Traces(
+            timestamp=now - timedelta(seconds=1),
+            duration=timedelta(seconds=1),
+            trace_id=trace_id,
+            span_id=span_ids[2],
+            parent_span_id="",
+            # span name collides with span 0's scope.name value
+            name="io.signoz.checkout",
+            kind=TracesKind.SPAN_KIND_SERVER,
+            status_code=TracesStatusCode.STATUS_CODE_OK,
+            resources={"service.name": "probe"},
+            # a span attribute named `scope.name`
+            attributes={"scope.name": "attr-scope-name"},
+            scope={"name": "span-gamma", "version": "9.9.9"},
+        ),
+    ]
+    insert_traces(traces)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
+
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=start_ms,
+        end_ms=end_ms,
+        request_type=RequestType.RAW,
+        queries=[
+            BuilderQuery(
+                signal="traces",
+                name="A",
+                select_fields=[TelemetryFieldKey("timestamp")],
+                filter_expression=filter_expression,
+                limit=10,
+            ).to_dict()
+        ],
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    got_span_ids = {row["data"]["span_id"] for row in get_rows(response)}
+    expected_span_ids = {traces[i].span_id for i in expected_indices}
+    assert got_span_ids == expected_span_ids
+
+
 @pytest.mark.parametrize("surface", ["filter", "select", "order"])
 def test_traces_list_unknown_span_context_synthesizes(
     signoz: types.SigNoz,
@@ -1275,7 +1485,8 @@ def test_traces_list_unknown_span_context_synthesizes(
     insert_traces([span])
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
     key = "span.does_not_exist"
     svc = "resource.service.name = 'forgiving-ctx-service'"
 
@@ -1346,7 +1557,8 @@ def test_traces_list_unknown_other_context_synthesizes(
     insert_traces(spans)
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
     key = f"{context}.does_not_exist"
     svc = "resource.service.name = 'synth-service'"
 
@@ -1409,7 +1621,8 @@ def test_traces_list_order_unknown_key_synthesizes(
     insert_traces(spans)
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
 
     response = make_query_request(
         signoz,

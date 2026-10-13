@@ -36,8 +36,12 @@ function AccountSettingsModal({
 
 	const queryClient = useQueryClient();
 
+	// `account.config` is the shared per-provider union (Azure | AWS | GCP).
+	// Narrow to Azure by `resource_groups` (Azure-only) rather than
+	// `deployment_region`, which GCP also has — so it no longer identifies
+	// Azure uniquely.
 	const azureConfig = useMemo(
-		() => ('deployment_region' in account.config ? account.config : null),
+		() => ('resource_groups' in account.config ? account.config : null),
 		[account.config],
 	);
 

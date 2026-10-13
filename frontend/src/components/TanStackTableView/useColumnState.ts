@@ -67,6 +67,13 @@ export function useColumnState<TData>({
 
 	const columnSizing = useStoreSizing(storageKey ?? '');
 	const prevColumnIdsRef = useRef<Set<string> | null>(null);
+	const prevStorageKeyRef = useRef<string | undefined>(storageKey);
+
+	// Reset prevColumnIdsRef when storageKey changes to avoid cross-table interference
+	if (prevStorageKeyRef.current !== storageKey) {
+		prevColumnIdsRef.current = null;
+		prevStorageKeyRef.current = storageKey;
+	}
 
 	useEffect(
 		function autoShowNewlyAddedColumns(): void {

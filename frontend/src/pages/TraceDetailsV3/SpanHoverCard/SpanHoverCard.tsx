@@ -4,7 +4,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from '@signozhq/ui/tooltip';
-import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
+import { convertTimeToRelevantUnit } from 'utils/traceUtils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
 import { getSpanAttribute, resolveSpanColor } from 'pages/TraceDetailsV3/utils';

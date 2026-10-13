@@ -4,13 +4,13 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { render, screen } from '@testing-library/react';
+import { TooltipProvider } from '@signozhq/ui/tooltip';
 import {
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import * as useOptionsMenuHooks from 'container/OptionsMenu';
-import * as useUpdateDashboardHooks from 'hooks/dashboard/useUpdateDashboard';
 import * as useQueryBuilderHooks from 'hooks/queryBuilder/useQueryBuilder';
 import * as useHandleExplorerTabChangeHooks from 'hooks/useHandleExplorerTabChange';
 import * as appContextHooks from 'providers/App/App';
@@ -95,10 +95,6 @@ jest.mock('react-redux', () => ({
 	}),
 }));
 
-jest.spyOn(useUpdateDashboardHooks, 'useUpdateDashboard').mockReturnValue({
-	mutate: jest.fn(),
-	isLoading: false,
-} as any);
 jest.spyOn(useOptionsMenuHooks, 'useOptionsMenu').mockReturnValue({
 	options: {
 		selectColumns: [],
@@ -151,9 +147,11 @@ function renderExplorer(): void {
 		<QueryClientProvider client={queryClient}>
 			<MemoryRouter>
 				<Provider store={store}>
-					<ErrorModalProvider>
-						<Explorer />
-					</ErrorModalProvider>
+					<TooltipProvider>
+						<ErrorModalProvider>
+							<Explorer />
+						</ErrorModalProvider>
+					</TooltipProvider>
 				</Provider>
 			</MemoryRouter>
 		</QueryClientProvider>,

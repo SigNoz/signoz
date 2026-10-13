@@ -1,18 +1,22 @@
 import { useCallback, useMemo } from 'react';
-import { useQueryClient } from 'react-query';
 import {
-	getGetServiceAccountRolesQueryKey,
-	useCreateServiceAccountRoleDeprecated,
-	useDeleteServiceAccountRoleDeprecated,
-	useGetServiceAccountRoles,
+	useCreateServiceAccountRole,
+	useDeleteServiceAccountRole,
+	useGetServiceAccount,
 } from 'api/generated/services/serviceaccount';
-import type { AuthtypesGettableRoleDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	AuthtypesGettableRoleDTO,
+	ServiceaccounttypesServiceAccountRoleDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { retryOn429 } from 'utils/errorUtils';
 
 const enum PromiseStatus {
-	Fulfilled = 'fulfilled',
 	Rejected = 'rejected',
 }
+
+// Stable identity so the memos below do not recompute on every render.
+const EMPTY_SERVICE_ACCOUNT_ROLES: ServiceaccounttypesServiceAccountRoleDTO[] =
+	[];
 
 export interface RoleUpdateFailure {
 	roleName: string;
@@ -33,33 +37,39 @@ export function useServiceAccountRoleManager(
 	accountId: string,
 	options?: { enabled?: boolean },
 ): UseServiceAccountRoleManagerResult {
-	const queryClient = useQueryClient();
-
-	const { data, isLoading } = useGetServiceAccountRoles(
+	const { data, isLoading } = useGetServiceAccount(
 		{ id: accountId },
 		{ query: { enabled: options?.enabled ?? true } },
 	);
 
+	const serviceAccountRoles =
+		data?.data?.serviceAccountRoles ?? EMPTY_SERVICE_ACCOUNT_ROLES;
+
 	const currentRoles = useMemo<AuthtypesGettableRoleDTO[]>(
-		() => data?.data ?? [],
-		[data?.data],
+		() =>
+			serviceAccountRoles.map((serviceAccountRole) => serviceAccountRole.role),
+		[serviceAccountRoles],
+	);
+
+	// DELETE /api/v1/service_account_roles/{id} is keyed by the join row, not the role.
+	const assignmentIdByRoleId = useMemo(
+		() =>
+			new Map(
+				serviceAccountRoles.map((serviceAccountRole) => [
+					serviceAccountRole.roleId,
+					serviceAccountRole.id,
+				]),
+			),
+		[serviceAccountRoles],
 	);
 
 	// the retry for these mutations is safe due to being idempotent on backend
-	const { mutateAsync: createRole } = useCreateServiceAccountRoleDeprecated({
+	const { mutateAsync: createRole } = useCreateServiceAccountRole({
 		mutation: { retry: retryOn429 },
 	});
-	const { mutateAsync: deleteRole } = useDeleteServiceAccountRoleDeprecated({
+	const { mutateAsync: deleteRole } = useDeleteServiceAccountRole({
 		mutation: { retry: retryOn429 },
 	});
-
-	const invalidateRoles = useCallback(
-		() =>
-			queryClient.invalidateQueries(
-				getGetServiceAccountRolesQueryKey({ id: accountId }),
-			),
-		[accountId, queryClient],
-	);
 
 	const applyDiff = useCallback(
 		async (
@@ -84,25 +94,33 @@ export function useServiceAccountRoleManager(
 				...addedRoles.map((role) => ({
 					role,
 					run: (): ReturnType<typeof createRole> =>
-						createRole({ pathParams: { id: accountId }, data: { id: role.id } }),
+						createRole({
+							data: { serviceAccountId: accountId, roleId: role.id ?? '' },
+						}),
 				})),
-				...removedRoles.map((role) => ({
-					role,
-					run: (): ReturnType<typeof deleteRole> =>
-						deleteRole({ pathParams: { id: accountId, rid: role.id ?? '' } }),
-				})),
+				...removedRoles
+					.map((role) => ({
+						role,
+						assignmentId: assignmentIdByRoleId.get(role.id ?? ''),
+					}))
+					.filter(
+						(
+							entry,
+						): entry is {
+							role: AuthtypesGettableRoleDTO;
+							assignmentId: string;
+						} => !!entry.assignmentId,
+					)
+					.map(({ role, assignmentId }) => ({
+						role,
+						run: (): ReturnType<typeof deleteRole> =>
+							deleteRole({ pathParams: { id: assignmentId } }),
+					})),
 			];
 
 			const results = await Promise.allSettled(
 				allOperations.map((op) => op.run()),
 			);
-
-			const successCount = results.filter(
-				(r) => r.status === PromiseStatus.Fulfilled,
-			).length;
-			if (successCount > 0) {
-				await invalidateRoles();
-			}
 
 			const failures: RoleUpdateFailure[] = [];
 			results.forEach((result, index) => {
@@ -113,7 +131,6 @@ export function useServiceAccountRoleManager(
 						error: result.reason,
 						onRetry: async (): Promise<void> => {
 							await run();
-							await invalidateRoles();
 						},
 					});
 				}
@@ -121,7 +138,7 @@ export function useServiceAccountRoleManager(
 
 			return failures;
 		},
-		[accountId, currentRoles, createRole, deleteRole, invalidateRoles],
+		[accountId, currentRoles, assignmentIdByRoleId, createRole, deleteRole],
 	);
 
 	return {

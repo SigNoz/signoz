@@ -1,0 +1,57 @@
+import { Table } from '@signozhq/icons';
+
+import type { PanelDefinition } from '../../types/panelDefinition';
+import { QueryModeKind } from '../../types/panelCapabilities';
+import QueryBuilderEditorPane from 'pages/DashboardPage/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/QueryBuilderEditorPane';
+import Renderer from './Renderer';
+import { sections } from './sections';
+import {
+	Querybuildertypesv5RequestTypeDTO,
+	TelemetrytypesSignalDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
+
+export const definition: PanelDefinition<'signoz/TablePanel'> = {
+	kind: 'signoz/TablePanel',
+	displayName: 'Table',
+	mode: 'query',
+	icon: Table,
+	Renderer,
+	EditorPane: QueryBuilderEditorPane,
+	sections,
+	supportedQueryModesKindMap: {
+		[QueryMode.QUERY_BUILDER]: {
+			kind: QueryModeKind.SIGNAL,
+			signals: [
+				TelemetrytypesSignalDTO.metrics,
+				TelemetrytypesSignalDTO.logs,
+				TelemetrytypesSignalDTO.traces,
+			],
+		},
+		[QueryMode.CLICKHOUSE]: { kind: QueryModeKind.SIGNAL_LESS },
+		[QueryMode.AI_QUERY_BUILDER]: {
+			kind: QueryModeKind.SIGNAL,
+			signals: [TelemetrytypesSignalDTO.traces],
+		},
+	},
+	queryBuilderFields: {},
+	// The only kind that asks the server to transpose its scalar result into UI rows.
+	queryCapabilities: {
+		requestType: Querybuildertypesv5RequestTypeDTO.scalar,
+		formatTableResultForUI: true,
+		bucketedStepInterval: false,
+		orderTiebreaker: false,
+		serverPaginated: false,
+	},
+	// Tables carry tabular data worth exporting (V1 parity: download is table-only).
+	actions: {
+		view: true,
+		edit: true,
+		clone: true,
+		download: { csv: true, png: true, svg: true },
+		createAlert: false,
+		// V1 parity: only tables (and lists) expose the header search box.
+		search: true,
+		drilldown: true,
+	},
+};

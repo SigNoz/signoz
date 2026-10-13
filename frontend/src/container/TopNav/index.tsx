@@ -3,7 +3,6 @@ import { matchPath, useHistory } from 'react-router-dom';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import ROUTES from 'constants/routes';
 
-import NewExplorerCTA from '../NewExplorerCTA';
 import DateTimeSelector from './DateTimeSelectionV2';
 import { routesToDisable, routesToSkip } from './DateTimeSelectionV2/constants';
 
@@ -44,7 +43,6 @@ function TopNav(): JSX.Element | null {
 
 	return !isRouteToSkip ? (
 		<div className="top-nav-container">
-			<NewExplorerCTA />
 			<DateTimeSelector showAutoRefresh />
 			<HeaderRightSection enableShare enableFeedback enableAnnouncements={false} />
 		</div>

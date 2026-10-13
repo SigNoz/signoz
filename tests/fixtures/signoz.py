@@ -1,4 +1,6 @@
+import os
 import platform
+import subprocess
 import time
 from http import HTTPStatus
 from os import path
@@ -8,10 +10,10 @@ import docker.errors
 import pytest
 import requests
 from testcontainers.core.container import DockerContainer, Network
-from testcontainers.core.image import DockerImage
 
 from fixtures import reuse, types
 from fixtures.logger import setup_logger
+from fixtures.tls import CA_CONTAINER_PATH, CA_ID_LABEL, ca_id
 
 logger = setup_logger(__name__)
 
@@ -26,10 +28,12 @@ def create_signoz(
     pytestconfig: pytest.Config,
     cache_key: str = "signoz",
     env_overrides: dict | None = None,
+    tls: types.TLS | None = None,
 ) -> types.SigNoz:
     """
     Factory function for creating a SigNoz container.
-    Accepts optional env_overrides to customize the container environment.
+    Accepts optional env_overrides to customize the container environment, and
+    an optional integration CA (tls) to trust in addition to the system roots.
     """
 
     def create() -> types.SigNoz:
@@ -50,17 +54,27 @@ def create_signoz(
 
         # Docker build context is the repo root — one up from pytest's
         # rootdir (tests/).
-        self = DockerImage(
-            path=str(pytestconfig.rootpath.parent),
-            dockerfile_path=dockerfile_path,
-            tag="signoz:integration",
-            buildargs={
-                "TARGETARCH": arch,
-                "ZEUSURL": zeus.container_configs["8080"].base(),
-            },
-        )
+        context = pytestconfig.rootpath.parent
 
-        self.build()
+        # The docker CLI is required: the Dockerfiles use BuildKit cache
+        # mounts, which docker-py does not support.
+        subprocess.run(
+            [
+                "docker",
+                "build",
+                "--file",
+                str(context / dockerfile_path),
+                "--tag",
+                "signoz:integration",
+                "--build-arg",
+                f"TARGETARCH={arch}",
+                "--build-arg",
+                f"ZEUSURL={zeus.container_configs['8080'].base()}",
+                str(context),
+            ],
+            check=True,
+            env=os.environ | {"DOCKER_BUILDKIT": "1"},
+        )
 
         env = (
             {
@@ -103,6 +117,13 @@ def create_signoz(
                 dir_path,
                 "rw",
             )
+
+        # The CA lands in the directory Go scans for system roots, so tests can
+        # stand in for real TLS hosts (e.g. the fake accounts.google.com) while
+        # the bundled roots keep working for everything else.
+        if tls:
+            container.with_volume_mapping(tls.ca_cert_path, CA_CONTAINER_PATH, "ro")
+            container.with_kwargs(labels={CA_ID_LABEL: ca_id(tls)})
 
         container.start()
 
@@ -182,6 +203,16 @@ def create_signoz(
             gateway=gateway,
         )
 
+    def stale(container: types.SigNoz) -> bool:
+        if not tls:
+            return False
+        client = docker.from_env()
+        try:
+            labels = client.containers.get(container_id=container.self.id).attrs["Config"]["Labels"]
+        except docker.errors.NotFound:
+            return True
+        return labels.get(CA_ID_LABEL) != ca_id(tls)
+
     return reuse.wrap(
         request,
         pytestconfig,
@@ -200,6 +231,8 @@ def create_signoz(
         create=create,
         delete=delete,
         restore=restore,
+        rebuild=pytestconfig.getoption("--rebuild"),
+        stale=stale,
     )
 
 
@@ -210,12 +243,10 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     gateway: types.TestContainerDocker,
     sqlstore: types.TestContainerSQL,
     clickhouse: types.TestContainerClickhouse,
+    tls: types.TLS,
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.SigNoz:
-    """
-    Package-scoped fixture for setting up SigNoz.
-    """
     return create_signoz(
         network=network,
         zeus=zeus,
@@ -224,4 +255,5 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         clickhouse=clickhouse,
         request=request,
         pytestconfig=pytestconfig,
+        tls=tls,
     )

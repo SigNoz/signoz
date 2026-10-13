@@ -21,18 +21,14 @@ export const timelineTableColumns = ({
 		sorter: true,
 		width: 140,
 		render: (value): JSX.Element => (
-			<div className="alert-rule-state">
-				<AlertState state={value} showLabel />
-			</div>
+			<AlertState state={value} showLabel testId="timeline-row-state" />
 		),
 	},
 	{
 		title: 'LABELS',
 		dataIndex: 'labels',
 		render: (labels): JSX.Element => (
-			<div className="alert-rule-labels">
-				<AlertLabels labels={labels} />
-			</div>
+			<AlertLabels labels={labels} testId="timeline-row-labels" />
 		),
 	},
 	{
@@ -40,7 +36,10 @@ export const timelineTableColumns = ({
 		dataIndex: 'unixMilli',
 		width: 200,
 		render: (value): JSX.Element => (
-			<div className="alert-rule__created-at">
+			<div
+				className="alert-rule__created-at"
+				data-testid="timeline-row-created-at"
+			>
 				{formatTimezoneAdjustedTimestamp(value, DATE_TIME_FORMATS.DASH_DATETIME)}
 			</div>
 		),
@@ -53,7 +52,7 @@ export const timelineTableColumns = ({
 			if (!record.relatedTracesLink && !record.relatedLogsLink) {
 				return (
 					<Tooltip title="No links available for this item">
-						<Button type="text" ghost disabled>
+						<Button type="text" ghost disabled data-testid="timeline-row-actions">
 							<Ellipsis className="dropdown-icon" size="md" />
 						</Button>
 					</Tooltip>
@@ -65,7 +64,7 @@ export const timelineTableColumns = ({
 					relatedTracesLink={record.relatedTracesLink ?? ''}
 					relatedLogsLink={record.relatedLogsLink ?? ''}
 				>
-					<Button type="text" ghost>
+					<Button type="text" ghost data-testid="timeline-row-actions">
 						<Ellipsis className="dropdown-icon" size="md" />
 					</Button>
 				</ConditionalAlertPopover>

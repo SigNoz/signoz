@@ -1,33 +1,31 @@
-import { Space } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
-import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
-import ListOfAllDashboard from 'container/ListOfDashboard';
 import { LayoutGrid } from '@signozhq/icons';
 
-import './DashboardsListPage.styles.scss';
+import Spinner from 'components/Spinner';
+import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
+import { useDashboardCollectionPermissions } from 'hooks/dashboards/useDashboardCollectionPermissions';
+import DashboardsList from './components/DashboardsList/DashboardsList';
+
+import styles from './DashboardsListPage.module.scss';
+import { BreadcrumbLink } from '@signozhq/ui/breadcrumb';
 
 function DashboardsListPage(): JSX.Element {
-	return (
-		<Space
-			direction="vertical"
-			size="middle"
-			style={{ width: '100%' }}
-			className="dashboard-list-page"
-		>
-			<div className="dashboard-header">
-				<div className="dashboard-header-left">
-					<LayoutGrid size={14} className="icon" />
-					<Typography.Text className="text">Dashboards</Typography.Text>
-				</div>
+	// Resolved before the list mounts, so no control renders enabled-then-disabled.
+	const { isLoading } = useDashboardCollectionPermissions();
 
+	return (
+		<div className={styles.page}>
+			<div className={styles.header}>
+				<div className={styles.headerLeft}>
+					<BreadcrumbLink icon={<LayoutGrid size={14} />}>Dashboard</BreadcrumbLink>
+				</div>
 				<HeaderRightSection
 					enableAnnouncements={false}
 					enableShare
 					enableFeedback
 				/>
 			</div>
-			<ListOfAllDashboard />
-		</Space>
+			{isLoading ? <Spinner tip="Loading dashboards..." /> : <DashboardsList />}
+		</div>
 	);
 }
 

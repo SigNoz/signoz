@@ -41,6 +41,9 @@ func (d *v1Decoder) convertV1Panels(raw any) map[string]*Panel {
 		if !ok || id == "" {
 			continue
 		}
+		if _, present := panels[id]; present {
+			continue
+		}
 		var panel *Panel
 		panelType := d.readString(widget, "panelTypes")
 		switch panelType {

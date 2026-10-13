@@ -1,8 +1,69 @@
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/constants';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { OrderByPayload, Query } from 'types/api/queryBuilder/queryBuilderData';
+
+import { getParsedAggregationOptionsForOrderBy } from './aggregationConverter';
+
+export const DEFAULT_LIST_ORDER_BY = 'timestamp:desc';
+
+export const getRawPanelOrderBy = (query: Query | null): OrderByPayload[] => {
+	const queryData = query?.builder?.queryData?.[0];
+
+	if (!queryData) {
+		return [];
+	}
+
+	const disallowed = new Set<string>([SIGNOZ_VALUE]);
+	getParsedAggregationOptionsForOrderBy(queryData).forEach((aggregation) => {
+		if (aggregation?.key) {
+			disallowed.add(aggregation.key);
+		}
+	});
+
+	return (queryData.orderBy ?? []).filter(
+		(item) => !disallowed.has(item.columnName),
+	);
+};
+
+export const getListOrderBy = (
+	query: Query | null,
+	fallback: string = DEFAULT_LIST_ORDER_BY,
+): string => {
+	const [orderBy] = getRawPanelOrderBy(query);
+
+	if (!orderBy?.columnName || !orderBy?.order) {
+		return fallback;
+	}
+
+	return `${orderBy.columnName}:${orderBy.order.toLowerCase()}`;
+};
+
+export const parseListOrderBy = (orderBy: string): OrderByPayload => {
+	const [columnName, order] = orderBy.split(':');
+
+	return {
+		columnName: columnName || 'timestamp',
+		order: order || 'desc',
+	};
+};
+
+export const setListOrderBy = (query: Query, orderBy: string): Query => {
+	const nextOrderBy = [parseListOrderBy(orderBy)];
+
+	return {
+		...query,
+		builder: {
+			...query.builder,
+			queryData: query.builder.queryData.map((item) => ({
+				...item,
+				orderBy: nextOrderBy,
+			})),
+		},
+	};
+};
 
 // Mapping between panel types and explorer views
 export const panelTypeToExplorerView: Record<PANEL_TYPES, ExplorerViews> = {
@@ -12,8 +73,12 @@ export const panelTypeToExplorerView: Record<PANEL_TYPES, ExplorerViews> = {
 	[PANEL_TYPES.TABLE]: ExplorerViews.TABLE,
 	[PANEL_TYPES.VALUE]: ExplorerViews.TIMESERIES,
 	[PANEL_TYPES.BAR]: ExplorerViews.TIMESERIES,
+	[PANEL_TYPES.AREA]: ExplorerViews.TIMESERIES,
 	[PANEL_TYPES.PIE]: ExplorerViews.TIMESERIES,
 	[PANEL_TYPES.HISTOGRAM]: ExplorerViews.TIMESERIES,
+	[PANEL_TYPES.HEATMAP]: ExplorerViews.TIMESERIES,
+	// Dashboard-only visualisation; explorers never offer it.
+	[PANEL_TYPES.TEXT]: ExplorerViews.LIST,
 	[PANEL_TYPES.EMPTY_WIDGET]: ExplorerViews.LIST,
 };
 
@@ -69,7 +134,12 @@ export const getMetricsExplorerUrl = ({
 	const params = new URLSearchParams();
 	params.set(
 		QueryParams.compositeQuery,
-		encodeURIComponent(JSON.stringify(query)),
+		// `unit` must always be present: the query builder provider rewrites (and
+		// pushes a new history entry for) any compositeQuery missing a key of
+		// `initialQueriesMap`, which traps the browser back button.
+		// Since this is only being used by infra-monitoring, I will keep this fix one line
+		// instead of going and update each chart configuration.
+		encodeURIComponent(JSON.stringify({ unit: '', ...query })),
 	);
 
 	if (relativeTime) {

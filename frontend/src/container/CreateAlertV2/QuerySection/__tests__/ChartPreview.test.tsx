@@ -44,7 +44,7 @@ jest.mock(
 		},
 );
 jest.mock(
-	'container/NewWidget/LeftContainer/WidgetGraph/PlotTag',
+	'components/PlotTag/PlotTag',
 	() =>
 		function MockPlotTag(props: any): JSX.Element {
 			return (

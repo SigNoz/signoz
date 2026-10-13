@@ -41,6 +41,26 @@ import type {
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
+const withQueryKey = <T extends object, K>(
+	query: T,
+	queryKey: K,
+): T & { queryKey: K } => {
+	const result = { queryKey } as T & { queryKey: K };
+	for (const key of Object.keys(query)) {
+		// The explicit queryKey always wins, matching the previous
+		// `{ ...query, queryKey }` spread where it was set last.
+		if (key === 'queryKey') {
+			continue;
+		}
+		Object.defineProperty(result, key, {
+			enumerable: true,
+			configurable: true,
+			get: () => (query as Record<string, unknown>)[key],
+		});
+	}
+	return result;
+};
+
 /**
  * Returns all span attribute mapping groups for the authenticated org.
  * @summary List span attribute mapping groups
@@ -120,7 +140,7 @@ export function useListSpanMapperGroups<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -449,7 +469,7 @@ export const getListSpanMappersQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!groupId,
+		enabled: groupId !== null && groupId !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof listSpanMappers>>,
@@ -486,7 +506,7 @@ export function useListSpanMappers<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**

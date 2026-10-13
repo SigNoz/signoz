@@ -23,6 +23,7 @@ import (
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/common/promslog"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/prometheus/alertmanager/config"
@@ -50,7 +51,7 @@ func TestSlackRetry(t *testing.T) {
 
 	for statusCode, expected := range test.RetryTests(test.DefaultRetryCodes()) {
 		actual, _ := notifier.retrier.Check(statusCode, nil)
-		require.Equal(t, expected, actual, "error on status %d", statusCode)
+		assert.Equal(t, expected, actual, "error on status %d", statusCode)
 	}
 }
 
@@ -232,15 +233,15 @@ func TestNotifier_Notify_WithReason(t *testing.T) {
 				},
 			}
 			retry, err := notifier.Notify(ctx, alert1)
-			require.Equal(t, tt.expectedRetry, retry)
+			assert.Equal(t, tt.expectedRetry, retry)
 			if tt.noError {
 				require.NoError(t, err)
 			} else {
 				var reasonError *notify.ErrorWithReason
 				require.ErrorAs(t, err, &reasonError)
-				require.Equal(t, tt.expectedReason, reasonError.Reason)
-				require.Contains(t, err.Error(), tt.expectedErr)
-				require.Contains(t, err.Error(), "channelname")
+				assert.Equal(t, tt.expectedReason, reasonError.Reason)
+				assert.Contains(t, err.Error(), tt.expectedErr)
+				assert.Contains(t, err.Error(), "channelname")
 			}
 		})
 	}
@@ -296,7 +297,7 @@ func TestSlackTimeout(t *testing.T) {
 				},
 			}
 			_, err = notifier.Notify(ctx, alert)
-			require.Equal(t, tt.wantErr, err != nil)
+			assert.Equal(t, tt.wantErr, err != nil)
 		})
 	}
 }
@@ -350,14 +351,14 @@ func TestPrepareContent(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, atts, 1)
 
-		require.Equal(t, "HighCPU (FIRING)", atts[0].Title)
-		require.Equal(t, "Alert: HighCPU - severity critical", atts[0].Text)
+		assert.Equal(t, "HighCPU (FIRING)", atts[0].Title)
+		assert.Equal(t, "Alert: HighCPU - severity critical", atts[0].Text)
 		// Color is templated — firing alert should be "danger"
-		require.Equal(t, "danger", atts[0].Color)
+		assert.Equal(t, "danger", atts[0].Color)
 		// No BlockKit blocks for default template
-		require.Nil(t, atts[0].Blocks)
+		assert.Nil(t, atts[0].Blocks)
 		// Default markdownIn when config has none
-		require.Equal(t, []string{"fallback", "pretext", "text"}, atts[0].MrkdwnIn)
+		assert.Equal(t, []string{"fallback", "pretext", "text"}, atts[0].MrkdwnIn)
 	})
 
 	t.Run("custom template produces 1+N attachments with per-alert color", func(t *testing.T) {
@@ -428,10 +429,10 @@ func TestPrepareContent(t *testing.T) {
 		require.Len(t, atts, 3)
 
 		// First attachment: title-only, no color, no blocks
-		require.Equal(t, "[firing] HighCPU — api-server", atts[0].Title)
-		require.Empty(t, atts[0].Color)
-		require.Nil(t, atts[0].Blocks)
-		require.Equal(t, "https://alertmanager.signoz.com", atts[0].TitleLink)
+		assert.Equal(t, "[firing] HighCPU — api-server", atts[0].Title)
+		assert.Empty(t, atts[0].Color)
+		assert.Nil(t, atts[0].Blocks)
+		assert.Equal(t, "https://alertmanager.signoz.com", atts[0].TitleLink)
 
 		expectedFiringBody := "*HighCPU*\n\n" +
 			"*Service:* _api-server_\n*Instance:* _i-0abc123_\n*Region:* _us-east-1_\n*Method:* _GET_\n\n" +
@@ -446,16 +447,16 @@ func TestPrepareContent(t *testing.T) {
 			"*Status:* resolved | *Severity:* critical\n\n"
 
 		// Second attachment: firing alert body rendered as slack mrkdwn text, red color
-		require.Nil(t, atts[1].Blocks)
-		require.Equal(t, "#FF0000", atts[1].Color)
-		require.Equal(t, []string{"text"}, atts[1].MrkdwnIn)
-		require.Equal(t, expectedFiringBody, atts[1].Text)
+		assert.Nil(t, atts[1].Blocks)
+		assert.Equal(t, "#FF0000", atts[1].Color)
+		assert.Equal(t, []string{"text"}, atts[1].MrkdwnIn)
+		assert.Equal(t, expectedFiringBody, atts[1].Text)
 
 		// Third attachment: resolved alert body rendered as slack mrkdwn text, green color
-		require.Nil(t, atts[2].Blocks)
-		require.Equal(t, "#00FF00", atts[2].Color)
-		require.Equal(t, []string{"text"}, atts[2].MrkdwnIn)
-		require.Equal(t, expectedResolvedBody, atts[2].Text)
+		assert.Nil(t, atts[2].Blocks)
+		assert.Equal(t, "#00FF00", atts[2].Color)
+		assert.Equal(t, []string{"text"}, atts[2].MrkdwnIn)
+		assert.Equal(t, expectedResolvedBody, atts[2].Text)
 	})
 
 	t.Run("default template with fields and actions", func(t *testing.T) {
@@ -498,49 +499,45 @@ func TestPrepareContent(t *testing.T) {
 
 		// prepareContent does not populate fields/actions — that's done by
 		// addFieldsAndActions which is called from Notify.
-		require.Nil(t, atts[0].Fields)
-		require.Nil(t, atts[0].Actions)
+		assert.Nil(t, atts[0].Fields)
+		assert.Nil(t, atts[0].Actions)
 
 		// Simulate what Notify does after prepareContent
 		notifier.addFieldsAndActions(&atts[0], tmplText)
 
 		// Verify fields
 		require.Len(t, atts[0].Fields, 2)
-		require.Equal(t, "Severity", atts[0].Fields[0].Title)
-		require.Equal(t, "critical", atts[0].Fields[0].Value)
-		require.True(t, *atts[0].Fields[0].Short)
-		require.Equal(t, "Service", atts[0].Fields[1].Title)
-		require.Equal(t, "api-server", atts[0].Fields[1].Value)
+		assert.Equal(t, "Severity", atts[0].Fields[0].Title)
+		assert.Equal(t, "critical", atts[0].Fields[0].Value)
+		require.NotNil(t, atts[0].Fields[0].Short)
+		assert.True(t, *atts[0].Fields[0].Short)
+		assert.Equal(t, "Service", atts[0].Fields[1].Title)
+		assert.Equal(t, "api-server", atts[0].Fields[1].Value)
 
 		// Verify actions
 		require.Len(t, atts[0].Actions, 1)
-		require.Equal(t, "button", atts[0].Actions[0].Type)
-		require.Equal(t, "View Alert", atts[0].Actions[0].Text)
-		require.Equal(t, "https://alertmanager.signoz.com", atts[0].Actions[0].URL)
+		assert.Equal(t, "button", atts[0].Actions[0].Type)
+		assert.Equal(t, "View Alert", atts[0].Actions[0].Text)
+		assert.Equal(t, "https://alertmanager.signoz.com", atts[0].Actions[0].URL)
 	})
 }
 
 func TestSlackMessageField(t *testing.T) {
-	// 1. Setup a fake Slack server
+	// 1. Setup a fake Slack server. The handler runs on the server's
+	// goroutine, so only assert (never require) is safe here.
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var body map[string]any
-		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			t.Fatal(err)
-		}
+		assert.NoError(t, json.NewDecoder(r.Body).Decode(&body))
 
 		// 2. VERIFY: Top-level text exists
-		if body["text"] != "My Top Level Message" {
-			t.Errorf("Expected top-level 'text' to be 'My Top Level Message', got %v", body["text"])
-		}
+		assert.Equal(t, "My Top Level Message", body["text"])
 
 		// 3. VERIFY: Old attachments still exist
 		attachments, ok := body["attachments"].([]any)
-		if !ok || len(attachments) == 0 {
-			t.Errorf("Expected attachments to exist")
-		} else {
-			first := attachments[0].(map[string]any)
-			if first["title"] != "Old Attachment Title" {
-				t.Errorf("Expected attachment title 'Old Attachment Title', got %v", first["title"])
+		if assert.True(t, ok, "expected attachments to exist") && assert.NotEmpty(t, attachments) {
+			first, ok := attachments[0].(map[string]any)
+			if assert.True(t, ok, "expected attachment to be an object") {
+				assert.Equal(t, "Old Attachment Title", first["title"])
 			}
 		}
 
@@ -561,21 +558,16 @@ func TestSlackMessageField(t *testing.T) {
 	}
 
 	tmpl, err := template.FromGlobs([]string{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	tmpl.ExternalURL = u
 
 	logger := slog.New(slog.DiscardHandler)
 	notifier, err := New(conf, tmpl, logger, newTestTemplater(tmpl))
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	ctx := context.Background()
 	ctx = notify.WithGroupKey(ctx, "test-group-key")
 
-	if _, err := notifier.Notify(ctx); err != nil {
-		t.Fatal("Notify failed:", err)
-	}
+	_, err = notifier.Notify(ctx)
+	require.NoError(t, err, "Notify failed")
 }

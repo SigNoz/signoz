@@ -1517,10 +1517,11 @@ func TestNonAggregationFieldsSkipped(t *testing.T) {
 	})
 }
 
-func TestMetricAggregationValidateForType(t *testing.T) {
+func TestMetricAggregationValidateForTypeAndTemporality(t *testing.T) {
 	cases := []struct {
 		name             string
 		metricType       metrictypes.Type
+		temporality      metrictypes.Temporality
 		spaceAggregation metrictypes.SpaceAggregation
 		comparisonParam  *metrictypes.ComparisonSpaceAggregationParam
 		wantErr          bool
@@ -1532,9 +1533,31 @@ func TestMetricAggregationValidateForType(t *testing.T) {
 			wantErr:          false,
 		},
 		{
-			name:             "percentile on exponential histogram is allowed",
+			name:             "percentile on delta exponential histogram is allowed",
 			metricType:       metrictypes.ExpHistogramType,
+			temporality:      metrictypes.Delta,
 			spaceAggregation: metrictypes.SpaceAggregationPercentile99,
+			wantErr:          false,
+		},
+		{
+			name:             "cumulative exponential histogram is not allowed",
+			metricType:       metrictypes.ExpHistogramType,
+			temporality:      metrictypes.Cumulative,
+			spaceAggregation: metrictypes.SpaceAggregationPercentile99,
+			wantErr:          true,
+		},
+		{
+			name:             "exponential histogram with unresolved temporality is not allowed",
+			metricType:       metrictypes.ExpHistogramType,
+			temporality:      metrictypes.Unknown,
+			spaceAggregation: metrictypes.SpaceAggregationPercentile99,
+			wantErr:          true,
+		},
+		{
+			name:             "cumulative histogram is unaffected by the exponential histogram rule",
+			metricType:       metrictypes.HistogramType,
+			temporality:      metrictypes.Cumulative,
+			spaceAggregation: metrictypes.SpaceAggregationPercentile95,
 			wantErr:          false,
 		},
 		{
@@ -1562,10 +1585,11 @@ func TestMetricAggregationValidateForType(t *testing.T) {
 			agg := MetricAggregation{
 				MetricName:                      "test_metric",
 				Type:                            tc.metricType,
+				Temporality:                     tc.temporality,
 				SpaceAggregation:                tc.spaceAggregation,
 				ComparisonSpaceAggregationParam: tc.comparisonParam,
 			}
-			err := agg.ValidateForType()
+			err := agg.ValidateForTypeAndTemporality()
 			if tc.wantErr && err == nil {
 				t.Errorf("expected error, got nil")
 			}

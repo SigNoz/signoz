@@ -36,6 +36,10 @@ type QueryBuilderFormula struct {
 	// functions to apply to the formula result
 	Functions []Function `json:"functions,omitzero"`
 
+	// BucketOptions is the bucket axis to count the formula's results into.
+	// Only a heatmap request reads it, and only from the query it draws.
+	BucketOptions *BucketOptions `json:"bucketOptions,omitempty"`
+
 	Legend string `json:"legend"`
 }
 
@@ -59,6 +63,11 @@ func (f QueryBuilderFormula) Copy() QueryBuilderFormula {
 
 	if f.Having != nil {
 		c.Having = f.Having.Copy()
+	}
+
+	if f.BucketOptions != nil {
+		bucketOptionsCopy := *f.BucketOptions
+		c.BucketOptions = &bucketOptionsCopy
 	}
 
 	return c

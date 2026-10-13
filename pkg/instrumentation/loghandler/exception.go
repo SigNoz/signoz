@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 )
 
 type exception struct{}
@@ -35,9 +36,9 @@ func (h *exception) Wrap(next LogHandler) LogHandler {
 		t, c, m, _, _, _ := errors.Unwrapb(foundErr)
 
 		newRecord.AddAttrs(
-			slog.String("exception.type", t.String()),
-			slog.String("exception.code", c.String()),
-			slog.String("exception.message", m),
+			slog.String(instrumentationtypes.ExceptionType, t.String()),
+			slog.String(instrumentationtypes.ExceptionCode, c.String()),
+			slog.String(instrumentationtypes.ExceptionMessage, m),
 		)
 
 		// Use the stacktrace captured at error creation time if available.
@@ -45,7 +46,7 @@ func (h *exception) Wrap(next LogHandler) LogHandler {
 			Stacktrace() string
 		}
 		if st, ok := foundErr.(stacktracer); ok && st.Stacktrace() != "" {
-			newRecord.AddAttrs(slog.String("exception.stacktrace", st.Stacktrace()))
+			newRecord.AddAttrs(slog.String(instrumentationtypes.ExceptionStacktrace, st.Stacktrace()))
 		}
 
 		return next.Handle(ctx, newRecord)

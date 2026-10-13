@@ -44,7 +44,8 @@ export function validateCreateAlertState(
 		if (!threshold.label) {
 			return 'Please enter a label for each threshold';
 		}
-		if (!notificationSettings.routingPolicies && !threshold.channels.length) {
+		// this runs during render, so a throw here takes down the whole page
+		if (!notificationSettings.routingPolicies && !threshold.channels?.length) {
 			return 'Please select at least one channel for each threshold or enable routing policies';
 		}
 	}

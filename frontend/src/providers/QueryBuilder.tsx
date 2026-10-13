@@ -32,12 +32,11 @@ import ROUTES from 'constants/routes';
 import {
 	panelTypeDataSourceFormValuesMap,
 	PartialPanelTypes,
-} from 'container/NewWidget/utils';
+} from 'lib/query/panelTypeDataSourceFormValuesMap';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
@@ -66,6 +65,8 @@ import {
 } from 'types/common/queryBuilder';
 import { sanitizeOrderByForExplorer } from 'utils/sanitizeOrderBy';
 import { v4 as uuid } from 'uuid';
+import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
+import { readPanelTypeFromUrl } from 'utils/readPanelTypeFromUrl';
 
 export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	currentQuery: initialQueriesMap.metrics,
@@ -105,7 +106,6 @@ export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 export function QueryBuilderProvider({
 	children,
 }: PropsWithChildren): JSX.Element {
-	const urlQuery = useUrlQuery();
 	const location = useLocation();
 
 	const currentPathnameRef = useRef<string | null>(location.pathname);
@@ -122,7 +122,7 @@ export function QueryBuilderProvider({
 		null,
 	);
 
-	const panelTypeQueryParams = urlQuery.get(
+	const panelTypeQueryParams = getUnstableCurrentSearchParams().get(
 		QueryParams.panelTypes,
 	) as PANEL_TYPES | null;
 
@@ -164,21 +164,29 @@ export function QueryBuilderProvider({
 	const prepareQueryBuilderData = useCallback(
 		(query: Query): Query => {
 			const builder: QueryBuilderData = {
-				queryData: query.builder.queryData?.map((item) => ({
-					...initialQueryBuilderFormValuesMap[
-						initialDataSource || DataSource.METRICS
-					],
-					...item,
-				})),
-				queryFormulas: query.builder.queryFormulas?.map((item) => ({
-					...initialFormulaBuilderFormValues,
-					...item,
-				})),
-				queryTraceOperator: query.builder.queryTraceOperator?.map((item) => ({
-					...initialQueryBuilderFormTraceOperatorValues,
-					...item,
-				})),
+				queryData:
+					query.builder.queryData?.map((item) => ({
+						...initialQueryBuilderFormValuesMap[
+							initialDataSource || DataSource.METRICS
+						],
+						...item,
+					})) ?? [],
+				queryFormulas:
+					query.builder.queryFormulas?.map((item) => ({
+						...initialFormulaBuilderFormValues,
+						...item,
+					})) ?? [],
+				queryTraceOperator:
+					query.builder.queryTraceOperator?.map((item) => ({
+						...initialQueryBuilderFormTraceOperatorValues,
+						...item,
+					})) ?? [],
 			};
+
+			const urlPanelType = readPanelTypeFromUrl(PANEL_TYPES.LIST);
+
+			const isRawPanel =
+				urlPanelType === PANEL_TYPES.LIST || urlPanelType === PANEL_TYPES.TRACE;
 
 			const setupedQueryData = builder.queryData.map((item) => {
 				const currentElement: IBuilderQuery = {
@@ -198,8 +206,10 @@ export function QueryBuilderProvider({
 
 				// Explorer pages: sanitize stale orderBy before first query
 				const isExplorer =
-					location.pathname === ROUTES.LOGS_EXPLORER ||
-					location.pathname === ROUTES.TRACES_EXPLORER;
+					(location.pathname === ROUTES.LOGS_EXPLORER ||
+						location.pathname === ROUTES.TRACES_EXPLORER ||
+						location.pathname === ROUTES.AI_OBSERVABILITY_EXPLORER) &&
+					!isRawPanel;
 				if (isExplorer) {
 					const sanitizedOrderBy = sanitizeOrderByForExplorer(currentElement);
 					return calledFromHandleRunQuery
@@ -210,15 +220,17 @@ export function QueryBuilderProvider({
 				return currentElement;
 			});
 
-			const promql: IPromQLQuery[] = query.promql.map((item) => ({
-				...initialQueryPromQLData,
-				...item,
-			}));
+			const promql: IPromQLQuery[] =
+				query.promql?.map((item) => ({
+					...initialQueryPromQLData,
+					...item,
+				})) ?? [];
 
-			const clickHouse: IClickHouseQuery[] = query.clickhouse_sql.map((item) => ({
-				...initialClickHouseData,
-				...item,
-			}));
+			const clickHouse: IClickHouseQuery[] =
+				query.clickhouse_sql?.map((item) => ({
+					...initialClickHouseData,
+					...item,
+				})) ?? [];
 
 			const newQueryState: QueryState = {
 				clickhouse_sql: clickHouse,
@@ -258,6 +270,8 @@ export function QueryBuilderProvider({
 			setStagedQuery(nextQuery);
 			setCurrentQuery(newQueryState);
 			setQueryType(type);
+
+			setCalledFromHandleRunQuery(false);
 		},
 		[prepareQueryBuilderData],
 	);
@@ -471,6 +485,7 @@ export function QueryBuilderProvider({
 			const newQuery: IBuilderQuery = {
 				...initialBuilderQuery,
 				source: queries?.[0]?.source || '',
+				builderQueryType: queries?.[0]?.builderQueryType,
 				queryName: createNewBuilderItemName({ existNames, sourceNames: alphabet }),
 				expression: createNewBuilderItemName({
 					existNames,
@@ -762,10 +777,14 @@ export function QueryBuilderProvider({
 							queryItem.dataSource
 						].builder.queryData;
 
-					propsRequired?.push('dataSource');
-					propsRequired?.forEach((p: any) => {
-						set(queryItem, p, get(newQueryItem, p));
-					});
+					// `dataSource` travels with the panel type's fields, but on a copy:
+					// `propsRequired` is the list the map holds, and pushing onto it grew
+					// that array by one entry on every call.
+					if (propsRequired) {
+						[...propsRequired, 'dataSource'].forEach((p) => {
+							set(queryItem, p, get(newQueryItem, p));
+						});
+					}
 					return queryItem;
 				}
 
@@ -976,6 +995,7 @@ export function QueryBuilderProvider({
 				unit: query.unit || initialQueryState.unit,
 			};
 
+			const urlQuery = getUnstableCurrentSearchParams();
 			const pagination = urlQuery.get(QueryParams.pagination);
 
 			if (pagination) {
@@ -1014,7 +1034,7 @@ export function QueryBuilderProvider({
 
 			safeNavigate(generatedUrl, { newTab });
 		},
-		[location.pathname, safeNavigate, urlQuery],
+		[location.pathname, safeNavigate],
 	);
 
 	const handleSetConfig = useCallback(
@@ -1028,7 +1048,8 @@ export function QueryBuilderProvider({
 	const handleRunQuery = useCallback(() => {
 		const isExplorer =
 			location.pathname === ROUTES.LOGS_EXPLORER ||
-			location.pathname === ROUTES.TRACES_EXPLORER;
+			location.pathname === ROUTES.TRACES_EXPLORER ||
+			location.pathname === ROUTES.AI_OBSERVABILITY_EXPLORER;
 		if (isExplorer) {
 			setCalledFromHandleRunQuery(true);
 		}

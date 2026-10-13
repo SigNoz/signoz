@@ -46,6 +46,12 @@ export class UPlotScaleBuilder extends ConfigBuilder<
 
 		// Special handling for time scales (X axis)
 		if (time) {
+			// A range supplied outright wins: marks spanning an interval have to reach
+			// the end of their last column, past the last timestamp min/max carry.
+			if (range) {
+				return { [scaleKey]: { time: true, auto: false, range } };
+			}
+
 			let minTime = this.min ?? 0;
 			let maxTime = this.max ?? 0;
 
@@ -55,17 +61,6 @@ export class UPlotScaleBuilder extends ConfigBuilder<
 				minTime = fallbackMin;
 				maxTime = fallbackMax;
 			}
-
-			// Align max time to "endTime - 1 minute", rounded down to minute precision
-			// This matches legacy getXAxisScale behavior and avoids empty space at the right edge
-			const oneMinuteAgoTimestamp = (maxTime - 60) * 1000;
-			const currentDate = new Date(oneMinuteAgoTimestamp);
-
-			currentDate.setSeconds(0);
-			currentDate.setMilliseconds(0);
-
-			const unixTimestampSeconds = Math.floor(currentDate.getTime() / 1000);
-			maxTime = unixTimestampSeconds;
 
 			return {
 				[scaleKey]: {

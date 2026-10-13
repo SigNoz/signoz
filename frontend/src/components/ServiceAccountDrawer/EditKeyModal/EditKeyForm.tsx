@@ -60,6 +60,7 @@ function EditKeyForm({
 						<AuthZTooltip
 							checks={[buildAPIKeyUpdatePermission(keyItem?.id ?? '')]}
 							enabled={!!keyItem?.id}
+							withPortal={false}
 						>
 							<div className="edit-key-modal__key-display">
 								<span className="edit-key-modal__id-text">{keyItem?.name || '—'}</span>
@@ -168,6 +169,7 @@ function EditKeyForm({
 					variant="link"
 					color="destructive"
 					onClick={onRevokeClick}
+					withPortal={false}
 				>
 					<Trash2 size={12} />
 					Revoke Key
@@ -186,6 +188,7 @@ function EditKeyForm({
 						color="primary"
 						loading={isSaving}
 						disabled={!isDirty}
+						withPortal={false}
 					>
 						Save Changes
 					</AuthZButton>

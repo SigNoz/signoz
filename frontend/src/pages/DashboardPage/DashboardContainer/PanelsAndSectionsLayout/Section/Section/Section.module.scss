@@ -1,0 +1,26 @@
+.section {
+	margin-bottom: 12px;
+	border: 1px solid var(--l1-border);
+	border-radius: 4px;
+}
+
+.pickerTarget {
+	border-radius: 4px;
+	outline: 1px dashed var(--bg-robin-500);
+	outline-offset: 2px;
+}
+
+.dragging {
+	opacity: 0.8;
+}
+
+.deleteModal :global(.ant-modal-confirm-body) {
+	align-items: center;
+}
+
+.emptySection {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 24px 12px;
+}

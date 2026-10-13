@@ -9,6 +9,7 @@ import (
 	"github.com/antlr4-go/antlr/v4"
 	"golang.org/x/exp/maps"
 
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
@@ -459,7 +460,5 @@ func escapeValueIfNeeded(value string) string {
 		return value
 	}
 
-	// For all other values (strings), escape single quotes and wrap in single quotes
-	escaped := strings.ReplaceAll(value, "'", "\\'")
-	return fmt.Sprintf("'%s'", escaped)
+	return querybuilder.FilterStringLiteral(value)
 }
