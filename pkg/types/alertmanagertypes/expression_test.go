@@ -70,6 +70,30 @@ func TestEvalScopeExpression(t *testing.T) {
 			want:       false,
 		},
 		{
+			name:       "missing dotted label returns false",
+			expression: `cluster.name = "kbr"`,
+			lset:       model.LabelSet{"state": "used"},
+			want:       false,
+		},
+		{
+			name:       "missing deep dotted label returns false",
+			expression: `k8s.cluster.name = "kbr"`,
+			lset:       model.LabelSet{"state": "used"},
+			want:       false,
+		},
+		{
+			name:       "OR - missing dotted label first, second matches",
+			expression: `cluster.name = "kbr" OR tcpcheck.endpoint = "x:5002"`,
+			lset:       model.LabelSet{"tcpcheck.endpoint": "x:5002"},
+			want:       true,
+		},
+		{
+			name:       "OR - first fails, missing dotted label second",
+			expression: `env = "production" OR cluster.name = "kbr"`,
+			lset:       model.LabelSet{"env": "staging"},
+			want:       false,
+		},
+		{
 			name:       "in list - present",
 			expression: `env in ["production", "staging"]`,
 			lset:       model.LabelSet{"env": "production"},
