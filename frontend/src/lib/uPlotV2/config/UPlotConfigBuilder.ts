@@ -163,13 +163,8 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 		return this.stackMode;
 	}
 
-	/** Faceted series carry their own x column each; see `SeriesProps.facets`. */
 	setMode(mode: PlotMode): void {
 		this.mode = mode;
-	}
-
-	getMode(): PlotMode {
-		return this.mode;
 	}
 
 	/**

@@ -7,11 +7,7 @@ import { buildChannelRows, resolveHoveredPoint } from './scatterTooltipContent';
 
 import Styles from './ScatterTooltip.module.scss';
 
-/**
- * One point, its channels, then the group values that name it. Purpose-built
- * rather than composed from the shared `Tooltip`, whose list is one row per
- * series at a shared x; a scatter point has no such neighbours.
- */
+/** Own component: the shared Tooltip lists one row per series at a shared x. */
 export default function ScatterTooltip({
 	uPlotInstance,
 	dataIndexes,

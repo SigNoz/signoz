@@ -24,7 +24,6 @@ export interface ScatterTooltipRow {
 	value: string;
 }
 
-/** The point the cursor resolved to: the focused series' own index into its columns. */
 export function resolveHoveredPoint(
 	u: uPlot,
 	seriesIndex: number | null,

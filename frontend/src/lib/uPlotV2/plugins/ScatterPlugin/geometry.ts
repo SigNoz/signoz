@@ -8,10 +8,7 @@ export interface SizeDomain {
 	max: number;
 }
 
-/**
- * Extent of the size column across every series, so equal values draw equal
- * discs whichever group they belong to. `null` when nothing carries a size.
- */
+/** Size extent across all series, so equal values draw equal discs. */
 export function resolveSizeDomain(data: uPlot.AlignedData): SizeDomain | null {
 	let min = Infinity;
 	let max = -Infinity;
@@ -31,10 +28,7 @@ export function resolveSizeDomain(data: uPlot.AlignedData): SizeDomain | null {
 	return min <= max ? { min, max } : null;
 }
 
-/**
- * Disc diameter for a size value. Area, not diameter, follows the value: a
- * point worth twice as much should look twice as big.
- */
+/** Area, not diameter, scales with the value. */
 export function resolvePointDiameter(
 	size: number | null | undefined,
 	domain: SizeDomain | null,
@@ -55,11 +49,7 @@ export function resolvePointDiameter(
 	return Math.sqrt(minArea + (maxArea - minArea) * t);
 }
 
-/**
- * Nearest disc under the cursor, or `null`. Overlapping discs resolve to the one
- * whose centre is closest; `tolerance` widens every disc so thin points stay
- * hoverable.
- */
+/** Disc whose centre is closest, within `tolerance` px; `null` if none. */
 export function resolveHit(
 	tree: Quadtree<ScatterHit>,
 	cx: number,
