@@ -44,9 +44,23 @@ interface AddOn {
 	key: QueryBuilderField;
 	description?: string;
 	docLink?: string;
-	/** Shown in the empty field unless a field rule supplies its own. */
-	placeholder?: string;
 }
+
+/** Add-ons rendered as a text field; each has to name what an empty field means. */
+type InputAddOnField =
+	| QueryBuilderField.GroupBy
+	| QueryBuilderField.Having
+	| QueryBuilderField.OrderBy
+	| QueryBuilderField.Limit
+	| QueryBuilderField.Legend;
+
+const ADD_ON_PLACEHOLDERS: Record<InputAddOnField, string> = {
+	[QueryBuilderField.GroupBy]: 'Everything (no breakdown)',
+	[QueryBuilderField.Having]: 'Type Having query like count() > 10 ...',
+	[QueryBuilderField.OrderBy]: 'Select fields to order by',
+	[QueryBuilderField.Limit]: 'Enter limit',
+	[QueryBuilderField.Legend]: 'Write legend format',
+};
 
 /** Fields the add-on bar does not own: each has its own control elsewhere in the query. */
 type NonAddOnField =
@@ -78,7 +92,6 @@ const ADD_ONS: AddOn[] = [
 		description:
 			'Break down data by attributes like service name, endpoint, status code, or region. Essential for spotting patterns and comparing performance across different segments.',
 		docLink: 'https://signoz.io/docs/querying/aggregation-grouping/#grouping',
-		placeholder: 'Everything (no breakdown)',
 	},
 	{
 		icon: <ScrollText size={14} />,
@@ -88,7 +101,6 @@ const ADD_ONS: AddOn[] = [
 			'Filter grouped results based on aggregate conditions. Show only groups meeting specific criteria, like error rates > 5% or p99 latency > 500',
 		docLink:
 			'https://signoz.io/docs/querying/result-manipulation/#conditional-filtering-with-having',
-		placeholder: 'Type Having query like count() > 10 ...',
 	},
 	{
 		icon: <ScrollText size={14} />,
@@ -98,7 +110,6 @@ const ADD_ONS: AddOn[] = [
 			'Sort results to surface what matters most. Quickly identify slowest operations, most frequent errors, or highest resource consumers.',
 		docLink:
 			'https://signoz.io/docs/querying/result-manipulation/#sorting--limiting',
-		placeholder: 'Select fields to order by',
 	},
 	{
 		icon: <ScrollText size={14} />,
@@ -108,7 +119,6 @@ const ADD_ONS: AddOn[] = [
 			'Show only the top/bottom N results. Perfect for focusing on outliers, reducing noise, and improving dashboard performance.',
 		docLink:
 			'https://signoz.io/docs/querying/result-manipulation/#how-limit-works-for-time-series',
-		placeholder: 'Enter limit',
 	},
 	{
 		icon: <ScrollText size={14} />,
@@ -118,7 +128,6 @@ const ADD_ONS: AddOn[] = [
 			'Customize series labels using variables like {{service.name}}-{{endpoint}}. Makes charts readable at a glance during incident investigation.',
 		docLink:
 			'https://signoz.io/docs/querying/aggregation-grouping/#legend-formatting',
-		placeholder: 'Write legend format',
 	},
 ];
 
@@ -296,9 +305,8 @@ function QueryAddOns({
 	);
 
 	const placeholderOf = useCallback(
-		(key: QueryBuilderField): string | undefined =>
-			resolvedFields.get(key)?.placeholder ??
-			ADD_ONS.find((addOn) => addOn.key === key)?.placeholder,
+		(key: InputAddOnField): string =>
+			resolvedFields.get(key)?.placeholder ?? ADD_ON_PLACEHOLDERS[key],
 		[resolvedFields],
 	);
 

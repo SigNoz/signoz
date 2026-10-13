@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
-import type { SyncedQueryBuilderField } from '../../Panels/types/panelCapabilities';
+import type { SyncedQueryBuilderField } from './queryBuilderFields.types';
 import {
 	snapshotQueries,
 	syncQueryBuilderFields,

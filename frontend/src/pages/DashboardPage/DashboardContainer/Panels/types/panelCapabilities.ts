@@ -2,19 +2,9 @@ import {
 	Querybuildertypesv5RequestTypeDTO,
 	type TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import type { QueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.types';
 import type { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
 
 export type { QueryBuilderFieldsConfig } from 'components/QueryBuilderV2/queryBuilderFields.types';
-
-/** Per-query builder fields that can be kept equal across a panel's queries. */
-export type SyncedQueryBuilderField =
-	| QueryBuilderField.GroupBy
-	| QueryBuilderField.OrderBy
-	| QueryBuilderField.Having
-	| QueryBuilderField.Limit
-	| QueryBuilderField.StepInterval
-	| QueryBuilderField.ReduceTo;
 
 /**
  * How a kind's query-range request is shaped. Declared per-kind in

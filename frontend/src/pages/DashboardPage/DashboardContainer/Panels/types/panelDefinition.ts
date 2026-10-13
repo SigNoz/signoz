@@ -8,11 +8,11 @@ import type { ChartLine } from '@signozhq/icons';
 import type { SectionConfig } from './sections';
 import type { AnyPanelInteractionProps } from './interactions';
 import type { PanelKind } from './panelKind';
+import type { SyncedQueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.types';
 import type {
 	PanelQueryCapabilities,
 	QueryBuilderFieldsConfig,
 	SupportedQueryModesKindMap,
-	SyncedQueryBuilderField,
 } from './panelCapabilities';
 import type {
 	BaseRendererProps,

@@ -1,8 +1,10 @@
-import { QueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.types';
 import { isEqual } from 'lodash-es';
 import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
-import type { SyncedQueryBuilderField } from '../../Panels/types/panelCapabilities';
+import {
+	QueryBuilderField,
+	type SyncedQueryBuilderField,
+} from './queryBuilderFields.types';
 
 const QUERY_PROPERTY = {
 	[QueryBuilderField.GroupBy]: 'groupBy',

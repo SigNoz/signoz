@@ -1,8 +1,10 @@
-import { QueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.types';
 import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
-import type { SyncedQueryBuilderField } from '../../../Panels/types/panelCapabilities';
+import {
+	QueryBuilderField,
+	type SyncedQueryBuilderField,
+} from '../queryBuilderFields.types';
 import {
 	snapshotQueries,
 	syncQueryBuilderFields,

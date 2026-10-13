@@ -22,6 +22,15 @@ export enum QueryBuilderField {
 	AdditionalQueries = 'additional_queries',
 }
 
+/** Per-query builder fields that can be kept equal across a panel's queries. */
+export type SyncedQueryBuilderField =
+	| QueryBuilderField.GroupBy
+	| QueryBuilderField.OrderBy
+	| QueryBuilderField.Having
+	| QueryBuilderField.Limit
+	| QueryBuilderField.StepInterval
+	| QueryBuilderField.ReduceTo;
+
 /**
  * `reason` is required on `disabled`: an inert control the user can see has to explain itself.
  * `default`'s placeholder names the value an empty field falls back to.

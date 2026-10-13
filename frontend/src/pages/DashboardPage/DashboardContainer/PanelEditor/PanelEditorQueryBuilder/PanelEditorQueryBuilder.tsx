@@ -19,6 +19,7 @@ import PromQLQueryContainer from 'container/QueryBuilder/rawQueryEditors/PromQL'
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useSyncQueryBuilderFields } from 'components/QueryBuilderV2/useSyncQueryBuilderFields';
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
@@ -27,7 +28,6 @@ import {
 } from '../../Panels/types/panelCapabilities';
 import type { RenderableQueryPanelDefinition } from '../../Panels/types/panelDefinition';
 import { toPanelType } from '../../Panels/types/panelKind';
-import { useSyncQueryBuilderFields } from './useSyncQueryBuilderFields';
 import { getQueryMode, isBuilderMode } from 'lib/query/queryMode';
 import { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
 
