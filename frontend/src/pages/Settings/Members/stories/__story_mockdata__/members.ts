@@ -154,3 +154,26 @@ export const createdUserResponse = (): CreateUser201 => ({
 	status: 'success',
 	data: { id: 'user-active-new' },
 });
+
+export const RESET_LINK_OUTCOMES = [
+	'success',
+	'no-token',
+	'loading',
+	'error',
+] as const;
+
+export type ResetLinkOutcome = (typeof RESET_LINK_OUTCOMES)[number];
+
+/** A reset-token response that carries no token, which the drawer reports as a failure. */
+export const emptyResetTokenResponse = (): GetResetPasswordToken200 => ({
+	status: 'success',
+	data: {
+		id: 'reset-token-1',
+		passwordId: 'password-1',
+		token: '',
+		expiresAt: new Date(JOINED_AT).toISOString(),
+	},
+});
+
+/** An invite for an address the backend refuses, to leave a batch half sent. */
+export const BLOCKED_INVITE_DOMAIN = 'blocked.example';

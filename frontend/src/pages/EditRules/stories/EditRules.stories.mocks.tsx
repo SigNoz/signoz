@@ -5,6 +5,7 @@
 
 import ROUTES from 'constants/routes';
 import { rest } from 'msw';
+import { userEvent, within } from 'storybook/test';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
@@ -120,3 +121,36 @@ export const editRulesMocks = defineStoryMocks({
 		route: `${ROUTES.EDIT_ALERTS}?ruleId=${STORY_RULE_ID}&relativeTime=6h`,
 	}),
 });
+
+/** The page fetches the rule before it renders the form, which outlasts the 1s default. */
+const untilLoaded = { timeout: 15_000 };
+
+const LABEL_INPUT = 'alert-labels-input-v1';
+
+/** The labels field, scrolled into view once the rule has loaded. */
+export const findLabelInput = async (
+	canvasElement: HTMLElement,
+): Promise<HTMLElement> => {
+	const input = await within(canvasElement).findByTestId(
+		LABEL_INPUT,
+		undefined,
+		untilLoaded,
+	);
+	input.scrollIntoView({ block: 'center' });
+	return input;
+};
+
+export const removeLabel = async (
+	canvasElement: HTMLElement,
+	label: string,
+): Promise<void> => {
+	const chip = within(canvasElement)
+		.getByText(label)
+		.closest<HTMLElement>('[data-slot="badge"]');
+
+	if (!chip) {
+		throw new Error(`Label ${label} did not render`);
+	}
+
+	await userEvent.click(within(chip).getByRole('button'));
+};
