@@ -244,13 +244,11 @@ func generateCollectorConfigWithPipelines(collectorConf map[string]any, pipeline
 		return nil, errors.NewInternalf(CodeCollectorConfigLogsPipelineNotFound, "logs pipeline doesn't exist")
 	}
 
-	updatedProcessorList, _ := buildCollectorPipelineProcessorsList(
-		p.Pipelines.Logs.Processors, signozPipelineProcNames, collectorConf["processors"].(map[string]interface{}),
-	)
+	updatedProcessorList, _ := buildCollectorPipelineProcessorsList(p.Pipelines.Logs.Processors, signozPipelineProcNames, collectorConf["processors"].(map[string]any))
 	p.Pipelines.Logs.Processors = updatedProcessorList
 
 	// add the new processor to the data ( no checks required as the keys will exists)
-	collectorConf["service"].(map[string]interface{})["pipelines"].(map[string]interface{})["logs"] = p.Pipelines.Logs
+	collectorConf["service"].(map[string]any)["pipelines"].(map[string]any)["logs"] = p.Pipelines.Logs
 
 	updatedConf, err := yaml.Marshal(collectorConf)
 	if err != nil {
