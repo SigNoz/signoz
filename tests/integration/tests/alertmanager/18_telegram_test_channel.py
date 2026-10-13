@@ -25,13 +25,13 @@ class TestChannelCase(NamedTuple):
     bot: str
     status: int  # stub status
     body: dict  # stub body
-    expected_error: str | None  # telebot's error text, None when delivered
+    expected_error: str | None  # the notifier's error text, None when delivered
 
 
 TEST_CHANNEL_CASES = [
     TestChannelCase("success", "tg-tc-ok", 200, TELEGRAM_OK_BODY, None),
-    TestChannelCase("chat_not_found_400", "tg-tc-400", 400, {"ok": False, "error_code": 400, "description": "Bad Request: chat not found"}, "telegram: chat not found (400)"),
-    TestChannelCase("unauthorized_401", "tg-tc-401", 401, {"ok": False, "error_code": 401, "description": "Unauthorized"}, "telegram: Unauthorized (401)"),
+    TestChannelCase("chat_not_found_400", "tg-tc-400", 400, {"ok": False, "error_code": 400, "description": "Bad Request: chat not found"}, "unexpected status code 400"),
+    TestChannelCase("unauthorized_401", "tg-tc-401", 401, {"ok": False, "error_code": 401, "description": "Unauthorized"}, "unexpected status code 401"),
 ]
 
 
@@ -73,9 +73,10 @@ def test_telegram_test_channel(  # pylint: disable=too-many-arguments,too-many-p
         assert response.status_code == HTTPStatus.NO_CONTENT, f"expected 204, got {response.status_code}: {response.text}"
     else:
         # a Bot API error surfaces as a 500 (untyped notify error) whose body
-        # carries telebot's error; pin it to distinguish 400 vs 401
+        # carries the status code and the Bot API's description
         assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR, f"expected 500, got {response.status_code}: {response.text}"
         assert case.expected_error in response.text, f"expected {case.expected_error!r} in error body: {response.text}"
+        assert case.body["description"] in response.text, f"expected {case.body['description']!r} in error body: {response.text}"
 
     # exactly one delivery attempt either way (testChannel never retries)
     count = requests.post(

@@ -25,9 +25,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// mockBotAPI answers sendMessage the way api.telegram.org does. telebot posts
-// every parameter as a string but parses chat.id back into an int64, so the
-// echoed id has to be a number or the send fails and the pipeline retries.
+// mockBotAPI answers sendMessage the way api.telegram.org does. Every
+// parameter is posted as a string.
 type mockBotAPI struct {
 	srv  *httptest.Server
 	mu   sync.Mutex
@@ -35,6 +34,12 @@ type mockBotAPI struct {
 }
 
 func newMockBotAPI(t *testing.T) *mockBotAPI {
+	t.Helper()
+
+	return newMockBotAPIWithStatus(t, http.StatusOK)
+}
+
+func newMockBotAPIWithStatus(t *testing.T, status int) *mockBotAPI {
 	t.Helper()
 	mock := &mockBotAPI{}
 	mock.srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -45,9 +50,13 @@ func newMockBotAPI(t *testing.T) *mockBotAPI {
 		mock.sent = append(mock.sent, params)
 		mock.mu.Unlock()
 
-		chatID, _ := strconv.ParseInt(params["chat_id"], 10, 64)
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"ok":true,"result":{"message_id":1,"date":0,"chat":{"id":` + strconv.FormatInt(chatID, 10) + `,"type":"private"}}}`))
+		w.WriteHeader(status)
+		if status != http.StatusOK {
+			_, _ = w.Write([]byte(`{"ok":false,"error_code":` + strconv.Itoa(status) + `,"description":"failed"}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"ok":true,"result":{"message_id":1,"date":0,"chat":{"id":` + params["chat_id"] + `,"type":"private"}}}`))
 	}))
 	t.Cleanup(mock.srv.Close)
 
@@ -213,18 +222,16 @@ func TestNotifyBuildsTheMessage(t *testing.T) {
 }
 
 // A v1-written receiver can carry a mode the v2 spec no longer offers. Nothing
-// renders to those, so the integration refuses to build rather than sending
-// HTML-escaped text under a markdown parser.
-func TestNewRejectsAParseModeOtherThanHTML(t *testing.T) {
+// renders to those, so the send goes out as HTML without touching the receiver.
+func TestNewForcesParseModeHTML(t *testing.T) {
 	testCases := []struct {
 		name      string
 		parseMode string
-		wantErr   bool
 	}{
-		{"HTML", "HTML", false},
-		{"MarkdownV2", "MarkdownV2", true},
-		{"Markdown", "Markdown", true},
-		{"Empty", "", true},
+		{"HTML", "HTML"},
+		{"MarkdownV2", "MarkdownV2"},
+		{"Markdown", "Markdown"},
+		{"Empty", ""},
 	}
 
 	for _, testCase := range testCases {
@@ -235,20 +242,22 @@ func TestNewRejectsAParseModeOtherThanHTML(t *testing.T) {
 
 			tmpl := test.CreateTmpl(t)
 			logger := slog.New(slog.DiscardHandler)
-			_, err = New(&config.TelegramConfig{
+			conf := &config.TelegramConfig{
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
 				APIUrl:     &config.URL{URL: apiURL},
 				BotToken:   "123456:tok",
 				ChatID:     -1001234567890,
 				ParseMode:  testCase.parseMode,
 				Message:    alertmanagertypes.DefaultTelegramMessageTemplate,
-			}, tmpl, logger, alertmanagertemplate.New(tmpl, logger))
-
-			if testCase.wantErr {
-				assert.Error(t, err)
-				return
 			}
-			assert.NoError(t, err)
+			notifier, err := New(conf, tmpl, logger, alertmanagertemplate.New(tmpl, logger))
+			require.NoError(t, err)
+
+			_, err = notifier.Notify(notify.WithGroupKey(context.Background(), "1"), newAlert("web-3", nil))
+			require.NoError(t, err)
+
+			assert.Equal(t, "HTML", mock.only(t)["parse_mode"])
+			assert.Equal(t, testCase.parseMode, conf.ParseMode)
 		})
 	}
 }
@@ -262,4 +271,49 @@ func TestNotifySendsTheConfiguredSendOptions(t *testing.T) {
 	sent := mock.only(t)
 	assert.Equal(t, "-1001234567890", sent["chat_id"])
 	assert.Equal(t, "HTML", sent["parse_mode"])
+}
+
+func TestNotifyRetriesOnlyRateLimitAndServerErrors(t *testing.T) {
+	testCases := []struct {
+		name      string
+		status    int
+		wantErr   bool
+		wantRetry bool
+	}{
+		{"OK_NoRetry", http.StatusOK, false, false},
+		{"TooManyRequests_Retries", http.StatusTooManyRequests, true, true},
+		{"InternalServerError_Retries", http.StatusInternalServerError, true, true},
+		{"BadGateway_Retries", http.StatusBadGateway, true, true},
+		{"BadRequest_DoesNotRetry", http.StatusBadRequest, true, false},
+		{"Unauthorized_DoesNotRetry", http.StatusUnauthorized, true, false},
+		{"Forbidden_DoesNotRetry", http.StatusForbidden, true, false},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			mock := newMockBotAPIWithStatus(t, testCase.status)
+
+			retry, err := newNotifier(t, mock).Notify(notify.WithGroupKey(context.Background(), "1"), newAlert("web-3", nil))
+			if testCase.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, testCase.wantRetry, retry)
+		})
+	}
+}
+
+func TestNotifyPostsToTheBotSendMessageEndpoint(t *testing.T) {
+	var gotPath string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		_, _ = w.Write([]byte(`{"ok":true}`))
+	}))
+	t.Cleanup(srv.Close)
+
+	_, err := newNotifier(t, &mockBotAPI{srv: srv}).Notify(notify.WithGroupKey(context.Background(), "1"), newAlert("web-3", nil))
+	require.NoError(t, err)
+
+	assert.Equal(t, "/bot123456:tok/sendMessage", gotPath)
 }

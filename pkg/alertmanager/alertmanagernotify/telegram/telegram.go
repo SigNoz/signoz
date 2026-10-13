@@ -9,8 +9,11 @@
 package telegram
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"log/slog"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -24,7 +27,6 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	commoncfg "github.com/prometheus/common/config"
-	telebot "gopkg.in/telebot.v3"
 )
 
 const (
@@ -40,7 +42,7 @@ type Notifier struct {
 	conf      *config.TelegramConfig
 	tmpl      *template.Template
 	logger    *slog.Logger
-	client    *telebot.Bot
+	client    *http.Client
 	retrier   *notify.Retrier
 	templater alertmanagertypes.Templater
 }
@@ -54,24 +56,17 @@ func New(conf *config.TelegramConfig, t *template.Template, l *slog.Logger, temp
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "telegram api_url is nil")
 	}
 
-	// Rendering targets the HTML subset only. A receiver written through the v1
-	// API can still carry another mode, and sending HTML-escaped text under it
-	// would mangle the message, so the integration refuses to build instead.
+	// Rendering targets the HTML subset only. A receiver stored through the v1
+	// API can still carry another mode; failing here would fail the whole org's
+	// config, so the send is forced to HTML instead.
 	if conf.ParseMode != parseModeHTML {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "telegram parse_mode %q is not supported, only %s is", conf.ParseMode, parseModeHTML)
+		l.Warn("telegram parse_mode is not supported, sending as HTML", slog.String("parse_mode", conf.ParseMode))
+		htmlConf := *conf
+		htmlConf.ParseMode = parseModeHTML
+		conf = &htmlConf
 	}
 
 	httpclient, err := notify.NewClientWithTracing(*conf.HTTPConfig, Integration, httpOpts...)
-	if err != nil {
-		return nil, err
-	}
-
-	client, err := telebot.NewBot(telebot.Settings{
-		URL:       conf.APIUrl.String(),
-		ParseMode: conf.ParseMode,
-		Client:    httpclient,
-		Offline:   true,
-	})
 	if err != nil {
 		return nil, err
 	}
@@ -80,8 +75,8 @@ func New(conf *config.TelegramConfig, t *template.Template, l *slog.Logger, temp
 		conf:      conf,
 		tmpl:      t,
 		logger:    l,
-		client:    client,
-		retrier:   &notify.Retrier{},
+		client:    httpclient,
+		retrier:   &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
 		templater: templater,
 	}, nil
 }
@@ -108,24 +103,52 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	if err != nil {
 		return true, err
 	}
-	n.client.Token = botToken
 
 	chatID, err := n.getChatID()
 	if err != nil {
 		return true, err
 	}
 
-	_, err = n.client.Send(telebot.ChatID(chatID), messageText, &telebot.SendOptions{
-		DisableNotification:   n.conf.DisableNotifications,
-		DisableWebPagePreview: true,
-		ThreadID:              n.conf.MessageThreadID,
-		ParseMode:             n.conf.ParseMode,
-	})
+	buf, err := n.encodeSendMessage(chatID, messageText)
 	if err != nil {
-		return true, notify.NewErrorWithReason(notify.ClientErrorReason, err)
+		return false, err
 	}
 
-	return false, nil
+	resp, err := notify.PostJSON(ctx, n.client, n.conf.APIUrl.String()+"/bot"+botToken+"/sendMessage", buf) //nolint:bodyclose
+	if err != nil {
+		return true, notify.RedactURL(err)
+	}
+	defer notify.Drain(resp)
+
+	shouldRetry, err := n.retrier.Check(resp.StatusCode, resp.Body)
+	if err != nil {
+		return shouldRetry, notify.NewErrorWithReason(notify.GetFailureReasonFromStatusCode(resp.StatusCode), err)
+	}
+	return shouldRetry, err
+}
+
+// encodeSendMessage builds the sendMessage payload with every value as a
+// string, the encoding upstream's telebot client uses.
+func (n *Notifier) encodeSendMessage(chatID int64, text string) (*bytes.Buffer, error) {
+	params := map[string]string{
+		"chat_id":                  strconv.FormatInt(chatID, 10),
+		"text":                     text,
+		"parse_mode":               n.conf.ParseMode,
+		"disable_web_page_preview": "true",
+	}
+	if n.conf.DisableNotifications {
+		params["disable_notification"] = "true"
+	}
+	if n.conf.MessageThreadID != 0 {
+		params["message_thread_id"] = strconv.Itoa(n.conf.MessageThreadID)
+	}
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(params); err != nil {
+		return nil, err
+	}
+
+	return &buf, nil
 }
 
 // buildMessage renders the channel's own message template unless the rule
