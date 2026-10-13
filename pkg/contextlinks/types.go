@@ -20,9 +20,9 @@ type BuilderQuery struct {
 }
 
 // LinkQuery carries the only fields the explorer pages read from a shared
-// link; the frontend fills in the rest of the query shape with defaults and
-// names an unnamed query A, so a link with several queries names each.
+// link; the frontend fills in the rest of the query shape with defaults.
 type LinkQuery struct {
+	// the explorer names an unnamed query A, so a link with several queries names each
 	QueryName        string            `json:"queryName,omitempty"`
 	DataSource       string            `json:"dataSource"`
 	BuilderQueryType string            `json:"builderQueryType,omitempty"`

@@ -131,10 +131,8 @@ func (f QueryBuilderFormula) Validate() error {
 	return nil
 }
 
-// ExtractReferencedQueryNames returns the distinct query names the expression
-// refers to, in order of first appearance, as the formula evaluator resolves
-// them. An expression that does not parse refers to nothing.
 func (f QueryBuilderFormula) ExtractReferencedQueryNames() []string {
+	// parsed the way the evaluator parses it, so the names match what it resolves
 	expression, err := govaluate.NewEvaluableExpressionWithFunctions(f.Expression, EvalFuncs())
 	if err != nil {
 		return nil

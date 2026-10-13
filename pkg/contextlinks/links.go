@@ -12,18 +12,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-// PrepareParamsForTracesV5 returns the traces explorer query params for the
-// given range, one explorer query per builder query with the labels folded
-// into its filter; the traces explorer writes its time params in nanoseconds.
-// queryType is builder_ai_query for the AI observability explorer.
 func PrepareParamsForTracesV5(start, end time.Time, labels map[string]string, queries []BuilderQuery, queryType qbtypes.QueryType) url.Values {
+	// the traces explorer takes its time params in nanoseconds
 	return prepareExplorerParams("traces", queryType, start.UnixNano(), end.UnixNano(), labels, queries)
 }
 
-// PrepareParamsForLogsV5 returns the logs explorer query params for the given
-// range, one explorer query per builder query with the labels folded into its
-// filter; the logs explorer writes its time params in milliseconds.
 func PrepareParamsForLogsV5(start, end time.Time, labels map[string]string, queries []BuilderQuery) url.Values {
+	// the logs explorer takes its time params in milliseconds
 	return prepareExplorerParams("logs", qbtypes.QueryTypeBuilder, start.UnixMilli(), end.UnixMilli(), labels, queries)
 }
 
@@ -35,8 +30,6 @@ func prepareExplorerParams(dataSource string, queryType qbtypes.QueryType, start
 		builderQueryType = queryType.StringValue()
 	}
 
-	// a rule without a builder query for the signal (e.g. ClickHouse SQL
-	// alerts) still links to the explorer filtered on the labels alone
 	if len(queries) == 0 {
 		queries = []BuilderQuery{{}}
 	}
@@ -68,12 +61,6 @@ func prepareExplorerParams(dataSource string, queryType qbtypes.QueryType, start
 	return params
 }
 
-// ExtractBuilderQueries returns the builder queries of the given signal that
-// the rule's selected query draws on, in composite query order: the selected
-// query itself, or the inputs of a selected formula. Disabled inputs count,
-// since a formula's inputs are usually hidden. The result is empty when none
-// of them is a builder query (e.g. PromQL or ClickHouse SQL alerts). AI trace
-// queries (builder_ai_query) count as trace builder queries.
 func ExtractBuilderQueries(condition *ruletypes.RuleCondition, signal telemetrytypes.Signal) []BuilderQuery {
 	if condition == nil || condition.CompositeQuery == nil {
 		return nil
@@ -114,6 +101,8 @@ func extractBuilderQueries[T any](queries []qbtypes.QueryEnvelope, names []strin
 			continue
 		}
 		spec, ok := query.Spec.(qbtypes.QueryBuilderQuery[T])
+		// spec.Disabled is deliberately not checked: a formula's inputs are
+		// usually hidden in the UI but must still make it into the link
 		if !ok || spec.Signal != signal || !slices.Contains(names, spec.Name) {
 			continue
 		}
