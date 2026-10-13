@@ -1,4 +1,5 @@
 import { DistributionType } from 'lib/uPlotV2/config/types';
+import { DEFAULT_ASINH_THRESHOLD } from 'lib/uPlotV2/utils/scale';
 import uPlot from 'uplot';
 
 import type { AxisDistribution } from './utils';
@@ -8,10 +9,9 @@ interface ScaleTransform {
 	inverse: (position: number) => number;
 }
 
-/** The space uPlot lays the scale out in, so a pixel margin is the same size along it. */
-function getScaleTransform({
+export function getScaleTransform({
 	distribution,
-	asinhThreshold = 1,
+	asinhThreshold = DEFAULT_ASINH_THRESHOLD,
 }: AxisDistribution): ScaleTransform {
 	switch (distribution) {
 		case DistributionType.Logarithmic:
@@ -32,7 +32,7 @@ function getScaleTransform({
 	}
 }
 
-/** Half the span a single value spreads to, in transformed units. */
+/** In transformed units. */
 const SINGLE_VALUE_HALF_SPAN = 0.5;
 
 /** The data's extent stretched to the soft limits; null with neither. */
@@ -54,7 +54,6 @@ function resolveExtent(
 }
 
 export interface ScatterRangeOptions extends AxisDistribution {
-	/** The axis this scale is laid out along. */
 	dimension: 'x' | 'y';
 	/** CSS pixels kept clear at each end so the largest dot draws whole. */
 	marginPx: number;
@@ -62,13 +61,7 @@ export interface ScatterRangeOptions extends AxisDistribution {
 	softMax?: number | null;
 }
 
-/**
- * Fits the scale to the data and then widens it by `marginPx` at each end.
- * uPlot clips series to the plot area, so a dot at the extreme value would
- * otherwise lose the half that hangs past the edge. Log scales are left
- * unsnapped: rounding out to the next power of ten after the margin can add a
- * whole empty decade.
- */
+/** Data extent padded by `marginPx` so edge dots draw whole; log stays unsnapped (snapping after the margin can add an empty decade). */
 export function createScatterRange({
 	dimension,
 	marginPx,
