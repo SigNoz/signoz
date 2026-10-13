@@ -86,7 +86,8 @@ const SPECS: Record<string, Record<string, unknown>> = {
 		resolveTransition: 'Done',
 		reopenTransition: 'Reopen',
 		wontFixResolution: 'WontFix',
-		reopenDuration: '72h',
+		// the API only ever returns the canonical spelling
+		reopenDuration: '3d',
 		customFields: { customfield_1: 'v' },
 		sendResolved: true,
 	},

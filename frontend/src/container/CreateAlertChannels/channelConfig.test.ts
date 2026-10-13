@@ -119,3 +119,30 @@ describe('toChannelFormState', () => {
 		expect(values.name).toBe('prod alerts');
 	});
 });
+
+describe('jira reopen duration', () => {
+	it.each([
+		['72h', '3d'],
+		['1440m', '1d'],
+		['7d', '1w'],
+		['90m', '1h30m'],
+		['3d', '3d'],
+	])('sends %s as %s, the only spelling the api accepts back', (typed, sent) => {
+		expect(
+			toChannelConfig(ChannelKind.jira, {
+				site: 'https://acme.atlassian.net',
+				project: 'OPS',
+				issueType: 'Task',
+				email: 'a@b.c',
+				apiToken: 'tok',
+				reopenDuration: typed,
+			}).spec,
+		).toMatchObject({ reopenDuration: sent });
+	});
+
+	it('leaves a duration it cannot parse for the validator to reject', () => {
+		expect(
+			toChannelConfig(ChannelKind.jira, { reopenDuration: 'tomorrow' }).spec,
+		).toMatchObject({ reopenDuration: 'tomorrow' });
+	});
+});

@@ -19,6 +19,7 @@ import { pick } from 'lodash-es';
 import { omitBlank } from 'utils/omitBlank';
 
 import { ChannelFormValues, ChannelKind, ChannelSpecFormValues } from './types';
+import { canonicalJiraReopenDuration } from './utils';
 
 /**
  * The fields each kind sends. `satisfies` ties every entry to that kind's
@@ -138,7 +139,15 @@ export function toChannelConfig(
 	kind: ChannelKind,
 	values: ChannelFormValues,
 ): AlertmanagertypesChannelConfigDTO {
-	const spec = omitBlank(pick(values, SPEC_FIELDS[kind]));
+	const spec: Record<string, unknown> = omitBlank(
+		pick(values, SPEC_FIELDS[kind]),
+	);
+
+	// the API answers a read with the duration prometheus would print, and
+	// rejects anything spelled differently
+	if (kind === ChannelKind.jira && typeof spec.reopenDuration === 'string') {
+		spec.reopenDuration = canonicalJiraReopenDuration(spec.reopenDuration);
+	}
 
 	// The generated config type is a union whose every member fixes `kind` to a
 	// single literal, so a plain ChannelKind never matches one. Asserted once
