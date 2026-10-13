@@ -31,16 +31,18 @@ function ChannelForm({ channelId, onDone }: ChannelFormProps): JSX.Element {
 	} = useChannelFormState({ channelId, onDone });
 
 	// A reader with `read` but no `update` still gets the screen, without saving.
-	// While the check is in flight the answer is unknown, so the form stays
-	// editable rather than flashing read-only; the API is the real gate.
+	// Only a resolved denial locks it: while the check is in flight, or when it
+	// failed outright, the form stays editable and the API is the real gate.
 	const {
 		canEdit,
 		isLoading: isPermissionLoading,
+		hasError: permissionCheckFailed,
 		editChecks,
 	} = useNotificationChannelPermissions(channelId ?? '', {
 		enabled: !!channelId,
 	});
-	const readOnly = !!channelId && !isPermissionLoading && !canEdit;
+	const readOnly =
+		!!channelId && !isPermissionLoading && !permissionCheckFailed && !canEdit;
 	// Saving an existing channel needs read and update on it; creating one needs
 	// create on the collection, which is also what a test send is gated on.
 	const saveChecks = channelId
@@ -70,29 +72,42 @@ function ChannelForm({ channelId, onDone }: ChannelFormProps): JSX.Element {
 	}
 
 	return (
-		<FormAlertChannels
-			formInstance={formInstance}
-			type={type}
-			setSelectedConfig={setValues}
-			onTypeChangeHandler={onTypeChange}
-			onTestHandler={onTest}
-			onSaveHandler={onSave}
-			savingState={isSaving}
-			testingState={isTesting}
-			title={
-				// eslint-disable-next-line no-nested-ternary
-				channelId
-					? readOnly
-						? t('page_title_view')
-						: t('page_title_edit')
-					: t('page_title_create')
-			}
-			initialValue={{ type, ...values }}
-			editing={!!channelId}
-			readOnly={readOnly}
-			saveChecks={saveChecks}
-			testChecks={[NotificationChannelCreatePermission]}
-		/>
+		<>
+			{readOnly && (
+				<Callout
+					type="info"
+					showIcon
+					title={t('channel_read_only_title')}
+					className={styles.readOnlyNotice}
+					testId="channel-read-only-notice"
+				>
+					{t('channel_read_only_help')}
+				</Callout>
+			)}
+			<FormAlertChannels
+				formInstance={formInstance}
+				type={type}
+				setSelectedConfig={setValues}
+				onTypeChangeHandler={onTypeChange}
+				onTestHandler={onTest}
+				onSaveHandler={onSave}
+				savingState={isSaving}
+				testingState={isTesting}
+				title={
+					// eslint-disable-next-line no-nested-ternary
+					channelId
+						? readOnly
+							? t('page_title_view')
+							: t('page_title_edit')
+						: t('page_title_create')
+				}
+				initialValue={{ type, ...values }}
+				editing={!!channelId}
+				readOnly={readOnly}
+				saveChecks={saveChecks}
+				testChecks={[NotificationChannelCreatePermission]}
+			/>
+		</>
 	);
 }
 
