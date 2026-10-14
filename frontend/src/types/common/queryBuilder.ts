@@ -1,5 +1,8 @@
 import { Dispatch, SetStateAction } from 'react';
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	TelemetrytypesSignalDTO,
+	TelemetrytypesSourceDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { Format } from 'constants/formats/types';
@@ -30,6 +33,18 @@ export const DATA_SOURCE_TO_SIGNAL: Record<
 	[DataSource.METRICS]: TelemetrytypesSignalDTO.metrics,
 	[DataSource.TRACES]: TelemetrytypesSignalDTO.traces,
 	[DataSource.LOGS]: TelemetrytypesSignalDTO.logs,
+};
+
+export type BuilderQuerySource = `${TelemetrytypesSourceDTO}`;
+
+// `source` tells meter and metrics apart, since both share the metrics signal:
+// meter sends 'meter', the rest is ''.
+export const QUERY_SOURCE_TO_FIELD_SOURCE: Record<
+	BuilderQuerySource,
+	TelemetrytypesSourceDTO | undefined
+> = {
+	meter: TelemetrytypesSourceDTO.meter,
+	'': undefined,
 };
 
 export enum StringOperators {

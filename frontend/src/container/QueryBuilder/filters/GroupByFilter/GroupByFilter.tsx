@@ -7,7 +7,6 @@ import {
 	useState,
 } from 'react';
 import { Select, Spin } from 'antd';
-import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 // ** Constants
 import { idDivider } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
@@ -18,12 +17,15 @@ import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAut
 // ** Helpers
 import { isEqual, uniqWith } from 'lodash-es';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { MetricAggregation } from 'types/api/v5/queryRange';
-import { DATA_SOURCE_TO_SIGNAL, DataSource } from 'types/common/queryBuilder';
+import {
+	DATA_SOURCE_TO_SIGNAL,
+	QUERY_SOURCE_TO_FIELD_SOURCE,
+} from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 
 import { selectStyle } from '../QueryBuilderSearchV2/config';
+import { getMetricNameForQuery } from '../utils';
 import OptionRenderer from '../OptionRenderer/OptionRenderer';
 import { GroupByFilterProps } from './GroupByFilter.interfaces';
 import { toAttributeKey } from './utils';
@@ -32,7 +34,6 @@ export const GroupByFilter = memo(function GroupByFilter({
 	query,
 	onChange,
 	disabled,
-	signalSource,
 }: GroupByFilterProps): JSX.Element {
 	const getPopupContainer = useSelectPopupContainer();
 	const [searchText, setSearchText] = useState<string>('');
@@ -43,17 +44,11 @@ export const GroupByFilter = memo(function GroupByFilter({
 
 	const debouncedValue = useDebounce(searchText, DEBOUNCE_DELAY);
 
-	const metricName =
-		query.dataSource === DataSource.METRICS
-			? (query.aggregations?.[0] as MetricAggregation)?.metricName ||
-				query.aggregateAttribute?.key
-			: undefined;
-
 	const { data: fieldKeys, isFetching } = useFieldKeysSuggestion(
 		{
 			signal: DATA_SOURCE_TO_SIGNAL[query.dataSource],
-			source: signalSource === 'meter' ? TelemetrytypesSourceDTO.meter : undefined,
-			metricName: metricName || undefined,
+			source: QUERY_SOURCE_TO_FIELD_SOURCE[query.source ?? ''],
+			metricName: getMetricNameForQuery(query),
 			searchText: debouncedValue,
 		},
 		query.builderQueryType,

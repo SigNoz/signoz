@@ -36,24 +36,18 @@ const fieldKeysBody = (
 const groupByInput = (): HTMLInputElement =>
 	screen.getByTestId('group-by').querySelector('input') as HTMLInputElement;
 
-function setup(
-	overrides?: Partial<React.ComponentProps<typeof GroupByFilter>>,
-): { onChange: jest.Mock } {
+function setup(queryOverrides?: Partial<IBuilderQuery>): {
+	onChange: jest.Mock;
+} {
 	const onChange = jest.fn();
 	const query = {
 		dataSource: DataSource.METRICS,
 		aggregateAttribute: { key: 'signoz_calls_total' },
 		aggregateOperator: 'COUNT',
 		groupBy: [],
+		...queryOverrides,
 	} as unknown as IBuilderQuery;
-	render(
-		<GroupByFilter
-			query={query}
-			onChange={onChange}
-			disabled={false}
-			{...overrides}
-		/>,
-	);
+	render(<GroupByFilter query={query} onChange={onChange} disabled={false} />);
 	return { onChange };
 }
 
@@ -93,7 +87,7 @@ describe('GroupByFilter', () => {
 
 	it('asks the fields API for meter keys and emits a typed custom key', async () => {
 		useFieldKeys([]);
-		const { onChange } = setup({ signalSource: 'meter' });
+		const { onChange } = setup({ source: 'meter' });
 
 		fireEvent.focus(screen.getByTestId('group-by'));
 

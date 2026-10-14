@@ -1,16 +1,17 @@
 import { useMemo } from 'react';
 import { Select, Spin } from 'antd';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
-import { MetricAggregation } from 'types/api/v5/queryRange';
 import {
 	DATA_SOURCE_TO_SIGNAL,
 	DataSource,
 	MetricAggregateOperator,
+	QUERY_SOURCE_TO_FIELD_SOURCE,
 } from 'types/common/queryBuilder';
 import { getParsedAggregationOptionsForOrderBy } from 'utils/aggregationConverter';
 import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 
 import { selectStyle } from '../QueryBuilderSearchV2/config';
+import { getMetricNameForQuery } from '../utils';
 import { OrderByFilterProps } from './OrderByFilter.interfaces';
 import { useOrderByFilter } from './useOrderByFilter';
 
@@ -32,16 +33,11 @@ export function OrderByFilter({
 		handleSearchKeys,
 	} = useOrderByFilter({ query, onChange, entityVersion });
 
-	const metricName =
-		query.dataSource === DataSource.METRICS
-			? (query.aggregations?.[0] as MetricAggregation)?.metricName ||
-				query.aggregateAttribute?.key
-			: undefined;
-
 	const { data: fieldKeys, isFetching } = useFieldKeysSuggestion(
 		{
 			signal: DATA_SOURCE_TO_SIGNAL[query.dataSource],
-			metricName: metricName || undefined,
+			source: QUERY_SOURCE_TO_FIELD_SOURCE[query.source ?? ''],
+			metricName: getMetricNameForQuery(query),
 			searchText: debouncedSearchText,
 		},
 		query.builderQueryType,
