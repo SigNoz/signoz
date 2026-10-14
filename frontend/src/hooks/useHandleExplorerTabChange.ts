@@ -2,7 +2,6 @@ import { useCallback } from 'react';
 import { QueryParams } from 'constants/query';
 import { initialAutocompleteData, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/constants';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -47,7 +46,7 @@ export const useHandleExplorerTabChange = (): {
 			) {
 				query = updateQueriesData(query, 'queryData', (item) => ({
 					...item,
-					orderBy: item.orderBy.filter((item) => item.columnName !== SIGNOZ_VALUE),
+					orderBy: [],
 					aggregateAttribute: initialAutocompleteData,
 				}));
 			}
