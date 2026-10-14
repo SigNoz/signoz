@@ -229,6 +229,11 @@ const EVERY_PART: ThreadSpanTemplate[] = [
 		name: 'execute_tool · tool results',
 		operation: 'execute_tool',
 		input: [
+			input('assistant', [
+				toolCall('call_object_args', 'get_current_weather', WEATHER),
+				toolCall('call_streamed_args', 'get_current_weather', '{"city": "Beng'),
+				toolCall('call_no_args', 'list_cities', undefined),
+			]),
 			input('tool', [
 				toolResult('call_object_args', '27 °C'),
 				toolResult('call_streamed_args', WEATHER_RESULT),
@@ -236,7 +241,7 @@ const EVERY_PART: ThreadSpanTemplate[] = [
 					'call_no_args',
 					'Bengaluru, Mumbai, Delhi, Chennai, Kolkata, Hyderabad, Pune, Ahmedabad, Jaipur, Lucknow',
 				),
-				toolResult('call_not_in_thread', 'A result whose call is not loaded'),
+				toolResult('call_not_in_span', 'A result whose call is not in this span'),
 			]),
 		],
 	},

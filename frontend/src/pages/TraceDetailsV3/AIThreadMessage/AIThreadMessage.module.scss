@@ -156,22 +156,32 @@
 
 .toolLink {
 	display: inline-flex;
-	align-items: center;
-	flex-shrink: 0;
+	align-self: flex-start;
+	max-width: 100%;
+	min-width: 0;
 	padding: 0;
 	border: none;
+	border-radius: var(--radius-2);
 	background: none;
-	color: var(--l2-foreground);
+	font: inherit;
+	color: inherit;
+	text-align: left;
 	cursor: pointer;
 
-	&:hover:not(:disabled) {
-		color: var(--primary);
-	}
+	&:hover {
+		.chip {
+			background: var(--l3-background);
+		}
 
-	&:disabled {
-		cursor: not-allowed;
-		opacity: 0.5;
+		.toolLinkIcon {
+			color: var(--primary);
+		}
 	}
+}
+
+.toolLinkIcon {
+	flex-shrink: 0;
+	color: var(--l2-foreground);
 }
 
 .collapsible {

@@ -1,8 +1,10 @@
-import { memo } from 'react';
+import { memo, useMemo, useRef } from 'react';
 import cx from 'classnames';
 
+import { useToolCallLinks } from '../AIThreadMessage/useToolCallLinks';
 import SpanMessages from '../SpanMessages/SpanMessages';
 import { ThreadSpan, ThreadView } from './types';
+import { buildToolCallIndex } from './utils';
 
 import styles from './ThreadSpanCard.module.scss';
 
@@ -11,8 +13,6 @@ interface ThreadSpanCardProps {
 	view: ThreadView;
 	isSelected: boolean;
 	onSelect: (span: ThreadSpan) => void;
-	isToolLinkEnabled: (toolCallId: string) => boolean;
-	onToolLinkClick: (toolCallId: string) => void;
 }
 
 function ThreadSpanCard({
@@ -20,12 +20,19 @@ function ThreadSpanCard({
 	view,
 	isSelected,
 	onSelect,
-	isToolLinkEnabled,
-	onToolLinkClick,
 }: ThreadSpanCardProps): JSX.Element {
+	const cardRef = useRef<HTMLElement>(null);
+	// A result links only to a call in its own span.
+	const toolCallIds = useMemo(() => buildToolCallIndex([span]), [span]);
+	const { isToolLinkEnabled, onToolLinkClick } = useToolCallLinks(
+		cardRef,
+		toolCallIds,
+	);
+
 	return (
 		// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
 		<article
+			ref={cardRef}
 			className={cx(styles.card, isSelected && styles.isSelected)}
 			onClick={(): void => onSelect(span)}
 			data-span-id={span.span_id}

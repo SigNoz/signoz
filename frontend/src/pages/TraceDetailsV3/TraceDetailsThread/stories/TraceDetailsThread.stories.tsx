@@ -80,7 +80,7 @@ export const SystemPromptExpanded: Story = {
 /**
  * One card per message part type: markdown and long text, reasoning with and
  * without content, compaction, tool calls with object, truncated and missing
- * arguments, inline and block tool results (one whose call is not loaded),
+ * arguments, inline and block tool results (one whose call is not in its span),
  * server tool calls, blob / file / uri media, and generic parts.
  */
 export const EveryPart: Story = {
@@ -100,6 +100,18 @@ export const EveryPartExpanded: Story = {
 /** Every part type as raw JSON. */
 export const EveryPartJson: Story = {
 	args: { scenario: 'every-part', view: ThreadView.Json },
+};
+
+/** A tool result's link followed to its call in the same span, highlighted. */
+export const ToolCallLinkFollowed: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const [link] = await within(canvasElement).findAllByTestId(
+			'ai-tool-result-link',
+			undefined,
+			untilThreadLoaded,
+		);
+		await userEvent.click(link);
+	},
 };
 
 /**

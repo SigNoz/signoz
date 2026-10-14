@@ -35,26 +35,33 @@ function ToolResultPart({
 		onLinkClick?.(toolCallId);
 	};
 
+	const chip = (
+		<PartChip
+			label="tool_result"
+			value={isInline ? content || '…' : name || toolCallId}
+			tone={isError ? 'error' : 'success'}
+		>
+			{isLinkEnabled && (
+				<CornerUpRight size={12} className={styles.toolLinkIcon} />
+			)}
+		</PartChip>
+	);
+
 	return (
 		<div className={styles.toolResult} data-testid="ai-tool-result">
-			<PartChip
-				label="tool_result"
-				value={isInline ? content || '…' : name || toolCallId}
-				tone={isError ? 'error' : 'success'}
-			>
+			{isLinkEnabled ? (
 				<button
 					type="button"
 					className={styles.toolLink}
-					disabled={!isLinkEnabled}
 					onClick={handleLinkClick}
-					title={
-						isLinkEnabled ? 'Go to tool call' : 'Matching tool call is not loaded'
-					}
+					title="Go to tool call"
 					data-testid="ai-tool-result-link"
 				>
-					<CornerUpRight size={12} />
+					{chip}
 				</button>
-			</PartChip>
+			) : (
+				chip
+			)}
 			{!isInline && <TextContent text={content} />}
 		</div>
 	);

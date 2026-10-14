@@ -1,14 +1,11 @@
-import { useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { Callout } from '@signozhq/ui/callout';
 import { TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
 
-import { useToolCallLinks } from '../AIThreadMessage/useToolCallLinks';
 import { TraceDetailsTab } from '../constants';
 import { useSpanDetailVariant } from '../hooks/useSpanDetailVariant';
 import { useTraceDetailsTab } from '../hooks/useTraceDetailsTab';
 import { SpanDetailVariant } from '../SpanDetailsPanel/constants';
-import { useScrollToAnchorSpan } from './hooks/useScrollToAnchorSpan';
 import { useThreadSpanSelection } from './hooks/useThreadSpanSelection';
 import { useThreadView } from './hooks/useThreadView';
 import { useTraceThread } from './hooks/useTraceThread';
@@ -20,7 +17,7 @@ import ThreadSpanList from './ThreadSpanList';
 import ThreadSpanNotFound from './ThreadSpanNotFound';
 import ThreadViewToggle from './ThreadViewToggle';
 import { AnchorStatus } from './types';
-import { buildToolCallIndex, getAnchorStatus } from './utils';
+import { getAnchorStatus } from './utils';
 
 import styles from './TraceDetailsThread.module.scss';
 
@@ -35,19 +32,8 @@ function TraceDetailsThread(): JSX.Element {
 	const thread = useTraceThread(traceId || '', anchorSpanId);
 	const { spans, isLoading, isError } = thread;
 
-	const listRef = useRef<HTMLDivElement>(null);
-	const toolCallIds = useMemo(() => buildToolCallIndex(spans), [spans]);
-	const { isToolLinkEnabled, onToolLinkClick } = useToolCallLinks(
-		listRef,
-		toolCallIds,
-	);
-
 	const anchorStatus = getAnchorStatus(anchorSpanId, spans, isLoading);
-	useScrollToAnchorSpan(
-		listRef,
-		anchorSpanId,
-		anchorStatus === AnchorStatus.Found,
-	);
+	const anchorIndex = spans.findIndex((span) => span.span_id === anchorSpanId);
 
 	const selectedSpan = spans.find((span) => span.span_id === selectedSpanId);
 	const [spanDetailVariant, setSpanDetailVariant] = useSpanDetailVariant();
@@ -102,27 +88,25 @@ function TraceDetailsThread(): JSX.Element {
 					/>
 				)}
 				<ThreadSpanList
-					listRef={listRef}
-					firstItemKey={spans[0]?.span_id}
+					key={anchorSpanId}
+					spans={spans}
+					prependedCount={thread.prependedCount}
+					initialSpanIndex={anchorIndex === -1 ? undefined : anchorIndex}
 					hasNextPage={thread.hasNextPage}
 					hasPreviousPage={thread.hasPreviousPage}
 					isFetchingNextPage={thread.isFetchingNextPage}
 					isFetchingPreviousPage={thread.isFetchingPreviousPage}
 					fetchNextPage={thread.fetchNextPage}
 					fetchPreviousPage={thread.fetchPreviousPage}
-				>
-					{spans.map((span) => (
+					renderSpan={(span): JSX.Element => (
 						<ThreadSpanCard
-							key={span.span_id}
 							span={span}
 							view={view}
 							isSelected={span.span_id === selectedSpanId}
 							onSelect={selectSpan}
-							isToolLinkEnabled={isToolLinkEnabled}
-							onToolLinkClick={onToolLinkClick}
 						/>
-					))}
-				</ThreadSpanList>
+					)}
+				/>
 			</>
 		);
 	};

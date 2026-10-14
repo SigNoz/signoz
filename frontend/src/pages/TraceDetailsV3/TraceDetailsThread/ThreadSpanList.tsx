@@ -1,54 +1,92 @@
-import { ReactNode, RefObject } from 'react';
+import { ReactNode, useCallback, useMemo } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 
-import { useThreadInfiniteScroll } from './hooks/useThreadInfiniteScroll';
 import ThreadPageLoader from './ThreadPageLoader';
+import { ThreadSpan } from './types';
 
 import styles from './ThreadSpanList.module.scss';
 
+// Virtuoso needs a positive index it can decrease as older spans are prepended.
+const FIRST_ITEM_INDEX_BASE = 1_000_000;
+const LOAD_AHEAD_PX = 200;
+
 interface ThreadSpanListProps {
-	listRef: RefObject<HTMLDivElement>;
-	firstItemKey?: string;
+	spans: ThreadSpan[];
+	prependedCount: number;
+	initialSpanIndex?: number;
 	hasNextPage: boolean;
 	hasPreviousPage: boolean;
 	isFetchingNextPage: boolean;
 	isFetchingPreviousPage: boolean;
 	fetchNextPage: () => Promise<unknown>;
 	fetchPreviousPage: () => Promise<unknown>;
-	children: ReactNode;
+	renderSpan: (span: ThreadSpan) => ReactNode;
 }
 
 function ThreadSpanList({
-	listRef,
-	firstItemKey,
+	spans,
+	prependedCount,
+	initialSpanIndex,
 	hasNextPage,
 	hasPreviousPage,
 	isFetchingNextPage,
 	isFetchingPreviousPage,
 	fetchNextPage,
 	fetchPreviousPage,
-	children,
+	renderSpan,
 }: ThreadSpanListProps): JSX.Element {
-	const { topSentinelRef, bottomSentinelRef } = useThreadInfiniteScroll({
-		containerRef: listRef,
-		firstItemKey,
-		hasNextPage,
-		hasPreviousPage,
-		isFetchingNextPage,
-		isFetchingPreviousPage,
-		fetchNextPage,
-		fetchPreviousPage,
-	});
+	const handleEndReached = useCallback((): void => {
+		if (hasNextPage && !isFetchingNextPage) {
+			void fetchNextPage();
+		}
+	}, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+	const handleStartReached = useCallback((): void => {
+		if (hasPreviousPage && !isFetchingPreviousPage) {
+			void fetchPreviousPage();
+		}
+	}, [hasPreviousPage, isFetchingPreviousPage, fetchPreviousPage]);
+
+	const components = useMemo(
+		() => ({
+			Header: (): JSX.Element | null =>
+				isFetchingPreviousPage ? (
+					<div className={styles.item}>
+						<ThreadPageLoader testId="thread-loading-previous" />
+					</div>
+				) : null,
+			Footer: (): JSX.Element => (
+				<div className={styles.footer}>
+					{isFetchingNextPage && (
+						<div className={styles.item}>
+							<ThreadPageLoader testId="thread-loading-next" />
+						</div>
+					)}
+				</div>
+			),
+		}),
+		[isFetchingPreviousPage, isFetchingNextPage],
+	);
 
 	return (
-		<div className={styles.list} ref={listRef} data-testid="thread-span-list">
-			<div ref={topSentinelRef} className={styles.sentinel} />
-			{isFetchingPreviousPage && (
-				<ThreadPageLoader testId="thread-loading-previous" />
+		<Virtuoso
+			className={styles.list}
+			data-testid="thread-span-list"
+			data={spans}
+			firstItemIndex={FIRST_ITEM_INDEX_BASE - prependedCount}
+			// Omitted, not undefined: an explicit undefined blanks the list, and 0 resets an early scroll.
+			{...(initialSpanIndex === undefined
+				? {}
+				: { initialTopMostItemIndex: initialSpanIndex })}
+			increaseViewportBy={LOAD_AHEAD_PX}
+			computeItemKey={(_, span): string => span.span_id}
+			itemContent={(_, span): JSX.Element => (
+				<div className={styles.item}>{renderSpan(span)}</div>
 			)}
-			{children}
-			{isFetchingNextPage && <ThreadPageLoader testId="thread-loading-next" />}
-			<div ref={bottomSentinelRef} className={styles.sentinel} />
-		</div>
+			startReached={handleStartReached}
+			endReached={handleEndReached}
+			components={components}
+		/>
 	);
 }
 

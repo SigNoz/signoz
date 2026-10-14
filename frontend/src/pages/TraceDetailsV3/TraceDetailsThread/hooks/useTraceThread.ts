@@ -16,6 +16,8 @@ type PageParam = Pick<GetTraceThreadParams, 'after' | 'before'>;
 
 interface UseTraceThreadResult {
 	spans: ThreadSpan[];
+	// Spans loaded above the first page.
+	prependedCount: number;
 	isLoading: boolean;
 	isError: boolean;
 	hasNextPage: boolean;
@@ -68,8 +70,21 @@ export function useTraceThread(
 		[query.data],
 	);
 
+	const prependedCount = useMemo(
+		() =>
+			query.data?.pages.reduce(
+				(count, page, index) =>
+					(query.data.pageParams[index] as PageParam | undefined)?.before
+						? count + page.data.spans.length
+						: count,
+				0,
+			) ?? 0,
+		[query.data],
+	);
+
 	return {
 		spans,
+		prependedCount,
 		isLoading: query.isLoading,
 		isError: query.isError,
 		hasNextPage: !!query.hasNextPage,

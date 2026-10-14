@@ -5,18 +5,15 @@
 
 	flex: 1;
 	min-height: 0;
-	overflow-y: auto;
-	display: flex;
-	flex-direction: column;
-	gap: var(--spacing-6);
-	padding: var(--spacing-6) var(--spacing-8);
-	// Prepend compensation is manual; native anchoring would double-shift.
-	overflow-anchor: none;
 }
 
-.sentinel {
-	flex-shrink: 0;
-	height: 1px;
+// Padding, not margin: Virtuoso measures item boxes.
+.item {
+	padding: var(--spacing-6) var(--spacing-8) 0;
+}
+
+.footer {
+	padding-bottom: var(--spacing-6);
 }
 
 .pageLoader {
