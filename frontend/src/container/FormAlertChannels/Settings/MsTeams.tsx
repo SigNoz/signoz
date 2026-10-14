@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Form, Input } from 'antd';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 
-import { MsTeamsChannel } from '../../CreateAlertChannels/config';
+import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
 
 function MsTeams({ setSelectedConfig }: MsTeamsProps): JSX.Element {
 	const { t } = useTranslation('channels');
@@ -11,7 +11,7 @@ function MsTeams({ setSelectedConfig }: MsTeamsProps): JSX.Element {
 	return (
 		<>
 			<Form.Item
-				name="webhook_url"
+				name="webhookUrl"
 				label={t('field_webhook_url')}
 				tooltip={{
 					title: (
@@ -28,7 +28,7 @@ function MsTeams({ setSelectedConfig }: MsTeamsProps): JSX.Element {
 					onChange={(event): void => {
 						setSelectedConfig((value) => ({
 							...value,
-							webhook_url: event.target.value,
+							webhookUrl: event.target.value,
 						}));
 					}}
 					data-testid="webhook-url-textbox"
@@ -67,7 +67,7 @@ function MsTeams({ setSelectedConfig }: MsTeamsProps): JSX.Element {
 
 interface MsTeamsProps {
 	setSelectedConfig: React.Dispatch<
-		React.SetStateAction<Partial<MsTeamsChannel>>
+		React.SetStateAction<Partial<ChannelSpecFormValues>>
 	>;
 }
 
