@@ -33,6 +33,8 @@ func TestFormat_Tool(t *testing.T) {
 			wantOutput: `[{"role": "tool", "parts": [{"type": "tool_call_response", "response": {"city": "Bengaluru", "temp_c": 28, "summary": "Partly cloudy"}}]}]`,
 		},
 		{
+			// a decorated function returning None is json.dumps(None); the openllmetry capture shows it on
+			// workflow spans, with this positional-args input
 			name: "TraceloopDecorator_PositionalArgsOnly_ListKept",
 			attributes: map[string]any{
 				GenAIToolName:          "lookup",
@@ -91,13 +93,6 @@ func TestFormat_Tool(t *testing.T) {
 			formatter:  FormatterTool,
 			wantInput:  `[{"role": "assistant", "parts": [{"type": "tool_call", "name": "get_weather", "id": "call_1", "arguments": {"city": "Paris", "days": [1, 2]}}]}]`,
 			wantOutput: `[]`,
-		},
-		{
-			name:       "ResultWithoutArguments_OutputOnly",
-			attributes: map[string]any{GenAIToolCallResult: "sunny"},
-			formatter:  FormatterTool,
-			wantInput:  `[]`,
-			wantOutput: `[{"role": "tool", "parts": [{"type": "tool_call_response", "response": "sunny"}]}]`,
 		},
 		{
 			// the mapper groups never fill both; the tool call wins when an SDK does

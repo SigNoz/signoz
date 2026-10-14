@@ -37,25 +37,22 @@ type FormattedMessages struct {
 
 // FormatMessages builds the OTel GenAI view of a span's messages from the formats SDKs write. attributes
 // is the span's JSON attribute document, nested by key segment, so an object value is whole. Each
-// message value is a JSON string or a structured value.
+// message value is a JSON string or a structured value. A tool call and its result take precedence over
+// messages beside them.
 func FormatMessages(attributes map[string]any) FormattedMessages {
-	f := &formatting{attrs: attributes, out: FormattedMessages{Input: InputMessages{}, Output: OutputMessages{}, Warnings: []string{}}}
+	f := &formatting{attributes: attributes, out: FormattedMessages{Input: InputMessages{}, Output: OutputMessages{}, Warnings: []string{}}}
 	switch {
-	case f.attr(GenAIToolCallArguments) != nil || f.attr(GenAIToolCallResult) != nil:
+	case attribute(f.attributes, GenAIToolCallArguments) != nil || attribute(f.attributes, GenAIToolCallResult) != nil:
 		f.tool()
-	case f.attr(GenAIInputMessages) != nil || f.attr(GenAIOutputMessages) != nil:
+	case attribute(f.attributes, GenAIInputMessages) != nil || attribute(f.attributes, GenAIOutputMessages) != nil:
 		f.messages()
 	}
 	return f.out
 }
 
 type formatting struct {
-	attrs map[string]any
-	out   FormattedMessages
-}
-
-func (f *formatting) attr(key string) any {
-	return attribute(f.attrs, key)
+	attributes map[string]any
+	out        FormattedMessages
 }
 
 func (f *formatting) warn(format string, args ...any) {
@@ -66,14 +63,14 @@ func (f *formatting) warn(format string, args ...any) {
 // the formatter after the input side, or the output side when the input has none.
 func (f *formatting) messages() {
 	var inputLabel, outputLabel string
-	if input := f.attr(GenAIInputMessages); input != nil {
+	if input := attribute(f.attributes, GenAIInputMessages); input != nil {
 		var msgs OutputMessages
 		msgs, inputLabel = f.side(decode(input), RoleUser)
 		for _, m := range msgs {
 			f.out.Input = append(f.out.Input, ChatMessage{Role: m.Role, Parts: m.Parts, Name: m.Name})
 		}
 	}
-	if output := f.attr(GenAIOutputMessages); output != nil {
+	if output := attribute(f.attributes, GenAIOutputMessages); output != nil {
 		f.out.Output, outputLabel = f.side(decode(output), RoleAssistant)
 	}
 	f.out.Formatter = inputLabel

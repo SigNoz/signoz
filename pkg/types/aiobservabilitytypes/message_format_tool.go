@@ -11,12 +11,12 @@ package aiobservabilitytypes
 // tool renders the call as an assistant tool_call and the result as a tool tool_call_response, both
 // carrying gen_ai.tool.call.id so the pair can be matched.
 func (f *formatting) tool() {
-	id := optionalString(f.attr(GenAIToolCallID))
-	if raw := f.attr(GenAIToolCallArguments); raw != nil {
-		call := ToolCallRequestPart{Type: PartTypeToolCall, Name: stringOf(f.attr(GenAIToolName)), ID: id, Arguments: toolArguments(decode(raw))}
+	id := optionalString(attribute(f.attributes, GenAIToolCallID))
+	if raw := attribute(f.attributes, GenAIToolCallArguments); raw != nil {
+		call := ToolCallRequestPart{Type: PartTypeToolCall, Name: stringOf(attribute(f.attributes, GenAIToolName)), ID: id, Arguments: toolArguments(decode(raw))}
 		f.out.Input = InputMessages{{Role: RoleAssistant, Parts: Parts{part(call)}}}
 	}
-	if raw := f.attr(GenAIToolCallResult); raw != nil {
+	if raw := attribute(f.attributes, GenAIToolCallResult); raw != nil {
 		result := ToolCallResponsePart{Type: PartTypeToolCallResponse, ID: id, Response: toolResult(decode(raw))}
 		f.out.Output = OutputMessages{{Role: RoleTool, Parts: Parts{part(result)}}}
 	}

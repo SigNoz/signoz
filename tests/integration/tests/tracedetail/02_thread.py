@@ -343,7 +343,14 @@ def test_thread_without_gen_ai_spans_is_empty(
 ) -> None:
     seed_attribute_evolution("traces", ATTRIBUTE_JSON_ROLLOUT_TIME)
     trace_id = TraceIdGenerator.trace_id()
-    insert_traces([Traces(timestamp=datetime.now(tz=UTC) - timedelta(seconds=5), trace_id=trace_id, span_id=TraceIdGenerator.span_id(), name="GET /health", resources={"service.name": "tracedetail-thread-empty"}, attribute_write_mode="json_only")])
+    resources = {"service.name": "tracedetail-thread-empty"}
+    # messages without a gate key, as a failed call or an unmapped SDK writes them, are not a row either
+    insert_traces(
+        [
+            Traces(timestamp=datetime.now(tz=UTC) - timedelta(seconds=5), trace_id=trace_id, span_id=TraceIdGenerator.span_id(), name="GET /health", resources=resources, attribute_write_mode="json_only"),
+            Traces(timestamp=datetime.now(tz=UTC) - timedelta(seconds=4), trace_id=trace_id, span_id=TraceIdGenerator.span_id(), name="chat", resources=resources, attributes={"gen_ai.input.messages": json.dumps([{"role": "user", "content": "hi"}])}, attribute_write_mode="json_only"),
+        ]
+    )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = requests.get(signoz.self.host_configs["8080"].get(f"/api/v1/traces/{trace_id}/thread"), headers={"Authorization": f"Bearer {token}"}, timeout=10)

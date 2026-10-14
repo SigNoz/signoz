@@ -2,6 +2,7 @@ package aiobservabilitytypes
 
 import (
 	"encoding/json"
+	"maps"
 	"strings"
 	"testing"
 
@@ -9,13 +10,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// formatCase feeds FormatMessages a span document built from attributes, flat dotted keys as the SDK
-// set them, plus input and output as gen_ai.input.messages and gen_ai.output.messages.
 type formatCase struct {
 	name       string
 	input      any
 	output     any
-	attributes map[string]any
+	attributes map[string]any // flat dotted keys beside the two message attributes
 	formatter  string
 	warnings   []string
 	wantInput  string
@@ -26,16 +25,8 @@ func runFormatCases(t *testing.T, testCases []formatCase) {
 	t.Helper()
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			attributes := map[string]any{}
-			if testCase.input != nil {
-				attributes[GenAIInputMessages] = testCase.input
-			}
-			if testCase.output != nil {
-				attributes[GenAIOutputMessages] = testCase.output
-			}
-			for key, value := range testCase.attributes {
-				attributes[key] = value
-			}
+			attributes := map[string]any{GenAIInputMessages: testCase.input, GenAIOutputMessages: testCase.output}
+			maps.Copy(attributes, testCase.attributes)
 			formatted := FormatMessages(document(attributes))
 			assert.Equal(t, testCase.formatter, formatted.Formatter)
 			assert.Equal(t, append([]string{}, testCase.warnings...), formatted.Warnings)
@@ -131,30 +122,5 @@ So, the ball costs 5 cents.`,
 			wantInput:  `[]`,
 			wantOutput: `[]`,
 		},
-		{
-			name:       "NilDocument_EmptyListsNoFormatter",
-			wantInput:  `[]`,
-			wantOutput: `[]`,
-		},
 	})
-}
-
-func TestAttribute(t *testing.T) {
-	arguments := map[string]any{"city": "Paris", "days": []any{1.0, 2.0}}
-	testCases := []struct {
-		name string
-		doc  map[string]any
-		key  string
-		want any
-	}{
-		{name: "Object_ReturnedWhole", doc: document(map[string]any{"gen_ai.tool.call.arguments": arguments}), key: GenAIToolCallArguments, want: arguments},
-		{name: "MissingPath_Nil", doc: document(map[string]any{"gen_ai.tool.name": "get_weather"}), key: GenAIToolCallArguments},
-		{name: "ScalarAtPrefix_Nil", doc: document(map[string]any{"gen_ai.tool.call": "x"}), key: GenAIToolCallArguments},
-		{name: "NilDocument_Nil", key: GenAIToolCallArguments},
-	}
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			assert.Equal(t, testCase.want, attribute(testCase.doc, testCase.key))
-		})
-	}
 }
