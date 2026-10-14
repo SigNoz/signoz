@@ -5,9 +5,18 @@ import { Skeleton } from '@signozhq/ui/skeleton';
 import { toast } from '@signozhq/ui/sonner';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import {
+	buildSavedViewReadPermission,
+	SavedViewCreatePermission,
+	SavedViewListPermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 
 import {
 	MY_VIEW_NAME,
+	SAVED_VIEW_FORBIDDEN_NAME,
 	SAVED_VIEW_LOAD_FAILED_NAME,
 	SAVED_VIEW_TOAST_POSITION,
 } from './constants';
@@ -31,8 +40,15 @@ function SavedViewsHeader({
 	onOpenViews?: () => void;
 	onCollapse?: () => void;
 }): JSX.Element {
-	const { view, isLoading, isError, hasUnsavedChanges } =
+	const { view, isLoading, isError, errorMessage, hasUnsavedChanges } =
 		useActiveSavedView(source);
+	const { viewKey } = useGetSavedViewParams();
+	const readPermission = buildSavedViewReadPermission(viewKey);
+	const { deniedPermissions } = useAuthZ([readPermission], {
+		enabled: !!viewKey,
+	});
+	const isReadDenied = !!viewKey && deniedPermissions.length > 0;
+	const hasProblem = isReadDenied || isError;
 	const { revertView, clearView, createView, updateView, isSaving } =
 		useSavedViewActions(source);
 
@@ -49,16 +65,32 @@ function SavedViewsHeader({
 	const openSaveAsNew = useCallback((): void => setModalMode('saveAsNew'), []);
 	const closeModal = useCallback((): void => setModalMode(null), []);
 
-	const name = isError
-		? SAVED_VIEW_LOAD_FAILED_NAME
-		: (view?.spec.displayName ?? MY_VIEW_NAME);
-	const isDirty = !isError && !!view && hasUnsavedChanges;
+	let name = view?.spec.displayName ?? MY_VIEW_NAME;
+	if (isReadDenied) {
+		name = SAVED_VIEW_FORBIDDEN_NAME;
+	} else if (isError) {
+		name = SAVED_VIEW_LOAD_FAILED_NAME;
+	}
+	const isDirty = !hasProblem && !!view && hasUnsavedChanges;
+
+	const nameChip = (
+		<span
+			className={cx(styles.name, {
+				[styles.isDirty]: isDirty,
+				[styles.isError]: hasProblem,
+			})}
+			data-testid="saved-views-name"
+		>
+			{isDirty && <span className={styles.dot} />}
+			<span className={styles.nameText}>{name}</span>
+		</span>
+	);
 
 	return (
 		<div
 			className={cx(styles.header, {
 				[styles.isDirty]: isDirty,
-				[styles.isError]: isError,
+				[styles.isError]: hasProblem,
 			})}
 			data-testid="saved-views-header"
 			data-source={source}
@@ -68,6 +100,7 @@ function SavedViewsHeader({
 					<SavedViewsIconButton
 						title="All views"
 						icon={<List size={14} />}
+						checks={[SavedViewListPermission]}
 						onClick={onOpenViews}
 						testId="saved-views-open"
 					/>
@@ -79,33 +112,25 @@ function SavedViewsHeader({
 						className={styles.skeleton}
 						testId="saved-views-loading"
 					/>
+				) : isReadDenied ? (
+					<AuthZTooltip checks={[readPermission]}>{nameChip}</AuthZTooltip>
 				) : (
-					<TooltipSimple title={name}>
-						<span
-							className={cx(styles.name, {
-								[styles.isDirty]: isDirty,
-								[styles.isError]: isError,
-							})}
-							data-testid="saved-views-name"
-						>
-							{isDirty && <span className={styles.dot} />}
-							<span className={styles.nameText}>{name}</span>
-						</span>
-					</TooltipSimple>
+					<TooltipSimple title={errorMessage ?? name}>{nameChip}</TooltipSimple>
 				)}
 			</div>
 
 			<div className={styles.actions}>
-				{!view && (
+				{(!view || hasProblem) && (
 					<SavedViewsIconButton
 						title="Create new view"
 						icon={<Plus size={14} />}
 						disabled={isLoading}
+						checks={[SavedViewCreatePermission]}
 						onClick={(): void => setModalMode('create')}
 						testId="saved-views-create"
 					/>
 				)}
-				{(isError || (view && !isDirty)) && (
+				{(hasProblem || (view && !isDirty)) && (
 					<SavedViewsIconButton
 						title="Clear view"
 						icon={<Undo2 size={14} />}
@@ -116,6 +141,7 @@ function SavedViewsHeader({
 				{view && isDirty && (
 					<>
 						<SaveChangesMenu
+							viewId={view.id}
 							disabled={isSaving}
 							onSaveAsNew={openSaveAsNew}
 							onUpdate={(): void => {

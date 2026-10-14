@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Plus } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import { SavedViewCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
 
 import SaveViewModal from './SaveViewModal';
 import { SavedViewsEmptyStateProps } from './types';
@@ -31,7 +32,8 @@ function SavedViewsEmptyState({
 			<Typography.Text className={styles.stateText}>
 				Save the current view to open it later.
 			</Typography.Text>
-			<Button
+			<AuthZButton
+				checks={[SavedViewCreatePermission]}
 				variant="outlined"
 				color="secondary"
 				size="sm"
@@ -40,7 +42,7 @@ function SavedViewsEmptyState({
 				data-testid="saved-views-list-create"
 			>
 				Create view
-			</Button>
+			</AuthZButton>
 			{isModalOpen && (
 				<SaveViewModal
 					mode="create"

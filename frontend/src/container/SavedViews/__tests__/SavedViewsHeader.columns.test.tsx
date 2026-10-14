@@ -105,9 +105,11 @@ describe('SavedViewsHeader columns', () => {
 		await userEvent.click(screen.getByTestId('add-column'));
 		await waitFor(() => expect(isDirty()).toBe(true));
 		await userEvent.click(screen.getByTestId('saved-views-save-changes'));
-		await userEvent.click(
-			await screen.findByRole('menuitem', { name: 'Update selected view' }),
-		);
+		const update = (await screen.findByTestId('saved-views-update')).closest(
+			'[role="menuitem"]',
+		) as HTMLElement;
+		await waitFor(() => expect(update).not.toHaveAttribute('data-disabled'));
+		await userEvent.click(update);
 		await waitFor(() => expect(isDirty()).toBe(false));
 
 		await userEvent.click(screen.getByTestId('add-column'));

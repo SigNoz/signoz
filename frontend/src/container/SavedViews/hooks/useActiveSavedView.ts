@@ -7,6 +7,7 @@ import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQue
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
 import { DataSource } from 'types/common/queryBuilder';
+import { toAPIError } from 'utils/errorUtils';
 
 import { SAVED_VIEW_OPTIONS_DATA_SOURCE } from '../constants';
 import { UseActiveSavedViewResult } from '../types';
@@ -23,7 +24,7 @@ export function useActiveSavedView(
 		dataSource: optionsDataSource ?? DataSource.LOGS,
 	});
 
-	const { data, isLoading, isError } = useGetSavedView(
+	const { data, isLoading, isError, error } = useGetSavedView(
 		{ id: viewKey },
 		{ query: { enabled: !!viewKey } },
 	);
@@ -68,10 +69,16 @@ export function useActiveSavedView(
 		lastResult.current = { viewId: view?.id, hasUnsavedChanges };
 	}, [view?.id, hasUnsavedChanges]);
 
+	const errorMessage =
+		viewKey && isError && error
+			? toAPIError(error, '').getErrorMessage() || undefined
+			: undefined;
+
 	return {
 		view,
 		isLoading: !!viewKey && isLoading,
 		isError: !!viewKey && isError,
+		errorMessage,
 		hasUnsavedChanges,
 	};
 }

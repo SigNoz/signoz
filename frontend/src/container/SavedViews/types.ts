@@ -42,6 +42,7 @@ export interface UseActiveSavedViewResult {
 	view: SavedviewtypesSavedViewDTO | undefined;
 	isLoading: boolean;
 	isError: boolean;
+	errorMessage: string | undefined;
 	hasUnsavedChanges: boolean;
 }
 
@@ -71,6 +72,7 @@ export interface SaveViewModalProps {
 }
 
 export interface SaveChangesMenuProps {
+	viewId: string;
 	disabled: boolean;
 	onSaveAsNew: () => void;
 	onUpdate: () => void;
@@ -82,6 +84,7 @@ export interface SavedViewsIconButtonProps {
 	testId: string;
 	color?: 'secondary' | 'warning';
 	disabled?: boolean;
+	checks?: BrandedPermission[];
 	onClick?: () => void;
 }
 
