@@ -4,7 +4,7 @@ import ThinkingPart from './parts/ThinkingPart';
 import ToolCallPart from './parts/ToolCallPart';
 import ToolResultPart from './parts/ToolResultPart';
 import TextContent from './TextContent';
-import { toDisplayText, truncateBlobContent } from './utils';
+import { toDisplayText, toToolCallKey, truncateBlobContent } from './utils';
 
 interface MessagePartProps {
 	part: MessagePartType;
@@ -50,15 +50,20 @@ function MessagePart({
 		case 'tool_call_response':
 		case 'server_tool_call_response': {
 			const toolCallId = part.id ?? '';
+			const toolCallKey = toToolCallKey(
+				toolCallId,
+				part.type === 'server_tool_call_response',
+			);
 			return (
 				<ToolResultPart
 					toolCallId={toolCallId}
+					toolCallKey={toolCallKey}
 					content={toDisplayText(
 						part.type === 'tool_call_response'
 							? part.response
 							: part.server_tool_call_response,
 					)}
-					isLinkEnabled={!!toolCallId && !!isToolLinkEnabled?.(toolCallId)}
+					isLinkEnabled={!!toolCallId && !!isToolLinkEnabled?.(toolCallKey)}
 					onLinkClick={onToolLinkClick}
 				/>
 			);

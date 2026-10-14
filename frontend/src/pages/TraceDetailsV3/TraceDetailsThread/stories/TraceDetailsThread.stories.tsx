@@ -81,7 +81,8 @@ export const SystemPromptExpanded: Story = {
  * One card per message part type: markdown and long text, reasoning with and
  * without content, compaction, tool calls with object, truncated and missing
  * arguments, inline and block tool results (one whose call is not in its span),
- * server tool calls, blob / file / uri media, and generic parts.
+ * server tool calls (one sharing its id with a client call), blob / file / uri
+ * media, and generic parts.
  */
 export const EveryPart: Story = {
 	args: { scenario: 'every-part' },

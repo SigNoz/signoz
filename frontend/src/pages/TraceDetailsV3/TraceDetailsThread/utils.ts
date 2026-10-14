@@ -1,7 +1,7 @@
 import type { SpantypesThreadSpanDTO } from 'api/generated/services/sigNoz.schemas';
 import { isAxiosError } from 'axios';
 
-import { collectToolCallIds } from '../AIThreadMessage/utils';
+import { collectToolCallKeys } from '../AIThreadMessage/utils';
 import { toThreadMessages } from '../AIThreadMessage/messageUtils';
 import { InterestedSpanStatus, ThreadSpan } from './types';
 
@@ -23,8 +23,8 @@ export function isNotFoundError(error: unknown): boolean {
 export function buildToolCallIndex(spans: ThreadSpan[]): Set<string> {
 	return new Set(
 		spans.flatMap((span) => [
-			...collectToolCallIds(span.formatted_input ?? []),
-			...collectToolCallIds(span.formatted_output ?? []),
+			...collectToolCallKeys(span.formatted_input ?? []),
+			...collectToolCallKeys(span.formatted_output ?? []),
 		]),
 	);
 }

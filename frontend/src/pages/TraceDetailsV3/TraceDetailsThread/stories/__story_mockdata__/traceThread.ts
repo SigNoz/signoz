@@ -248,6 +248,13 @@ const EVERY_PART: ThreadSpanTemplate[] = [
 	{
 		name: 'chat · server tools',
 		operation: 'chat',
+		// A client call sharing the server call's id, rendered first.
+		input: [
+			input('assistant', [
+				toolCall('srv_search_1', 'lookup_city', { city: 'Bengaluru' }),
+			]),
+			input('tool', [toolResult('srv_search_1', 'Bengaluru, India')]),
+		],
 		output: [
 			output(
 				'assistant',

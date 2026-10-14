@@ -4,7 +4,7 @@ import { Badge } from '@signozhq/ui/badge';
 import JsonBlock from '../JsonBlock';
 import PartChip from '../PartChip';
 import TextContent from '../TextContent';
-import { parseJsonObject, TOOL_CALL_ID_ATTR } from '../utils';
+import { parseJsonObject, TOOL_CALL_ID_ATTR, toToolCallKey } from '../utils';
 
 import styles from '../AIThreadMessage.module.scss';
 
@@ -29,7 +29,7 @@ function ToolCallPart({
 		return typeof args === 'object' && args !== null ? args : undefined;
 	}, [args]);
 
-	const toolCallAttr = { [TOOL_CALL_ID_ATTR]: id };
+	const toolCallAttr = { [TOOL_CALL_ID_ATTR]: toToolCallKey(id, !!server) };
 
 	return (
 		<div className={styles.toolCall} {...toolCallAttr} data-testid="ai-tool-call">

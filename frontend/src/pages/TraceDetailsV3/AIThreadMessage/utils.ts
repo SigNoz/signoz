@@ -69,11 +69,16 @@ export function truncateBlobContent(part: MediaMessagePart): MediaMessagePart {
 	};
 }
 
-export function collectToolCallIds(messages: ThreadMessage[]): string[] {
+// Server and client calls can share an id, so links match on kind too.
+export function toToolCallKey(id: string, isServer: boolean): string {
+	return `${isServer ? 'server' : 'client'}:${id}`;
+}
+
+export function collectToolCallKeys(messages: ThreadMessage[]): string[] {
 	return messages.flatMap((message) =>
 		message.parts.flatMap((part) =>
 			(part.type === 'tool_call' || part.type === 'server_tool_call') && part.id
-				? [part.id]
+				? [toToolCallKey(part.id, part.type === 'server_tool_call')]
 				: [],
 		),
 	);

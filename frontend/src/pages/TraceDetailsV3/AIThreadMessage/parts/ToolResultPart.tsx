@@ -9,15 +9,17 @@ import styles from '../AIThreadMessage.module.scss';
 
 interface ToolResultPartProps {
 	toolCallId: string;
+	toolCallKey: string;
 	name?: string;
 	content: string;
 	isError?: boolean;
 	isLinkEnabled: boolean;
-	onLinkClick?: (toolCallId: string) => void;
+	onLinkClick?: (toolCallKey: string) => void;
 }
 
 function ToolResultPart({
 	toolCallId,
+	toolCallKey,
 	name,
 	content,
 	isError,
@@ -32,7 +34,7 @@ function ToolResultPart({
 
 	const handleLinkClick = (event: MouseEvent): void => {
 		event.stopPropagation();
-		onLinkClick?.(toolCallId);
+		onLinkClick?.(toolCallKey);
 	};
 
 	const chip = (
