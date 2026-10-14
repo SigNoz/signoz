@@ -30,6 +30,7 @@ function ConfigActions({
 
 	// Only kinds whose query can seed an alert offer this today; mirror the panel
 	// menu's create-alert capability.
+	//TODO: AI query check should be removed after we support alerts on ai query @tewarig
 	if (
 		!actions.createAlert ||
 		getQueryMode(currentQuery) === QueryMode.AI_QUERY_BUILDER
