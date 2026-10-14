@@ -35,6 +35,19 @@ export const DATA_SOURCE_TO_SIGNAL: Record<
 	[DataSource.LOGS]: TelemetrytypesSignalDTO.logs,
 };
 
+// Total, not Partial, so a signal added to the generated enum has to be mapped here
+// before it compiles.
+export const SIGNAL_TO_DATA_SOURCE: Record<
+	TelemetrytypesSignalDTO,
+	DataSource | undefined
+> = {
+	[TelemetrytypesSignalDTO.logs]: DataSource.LOGS,
+	[TelemetrytypesSignalDTO.metrics]: DataSource.METRICS,
+	[TelemetrytypesSignalDTO.traces]: DataSource.TRACES,
+	// The "unset" member: not a data source a query can be built against.
+	[TelemetrytypesSignalDTO['']]: undefined,
+};
+
 export type BuilderQuerySource = `${TelemetrytypesSourceDTO}`;
 
 // `source` tells meter and metrics apart, since both share the metrics signal:

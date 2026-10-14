@@ -4,10 +4,9 @@ import {
 	TelemetrytypesFieldDataTypeDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { SIGNAL_TO_DATA_SOURCE } from 'container/QueryBuilder/components/DataSourceDropdown/DataSourceDropdown.utils';
 import { rest } from 'msw';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, SIGNAL_TO_DATA_SOURCE } from 'types/common/queryBuilder';
 
 import {
 	autocompleteKeysResponse,
