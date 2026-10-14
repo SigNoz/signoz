@@ -22,7 +22,10 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
-import { INITIAL_CREATE_ALERT_STATE } from './constants';
+import {
+	INITIAL_ANOMALY_THRESHOLD,
+	INITIAL_CREATE_ALERT_STATE,
+} from './constants';
 import {
 	EvaluationWindowPreset,
 	resolveUrlAlertPrefill,
@@ -182,6 +185,16 @@ export function CreateAlertProvider(
 				type: 'RESET',
 			},
 		});
+
+		if (alertType === AlertTypes.ANOMALY_BASED_ALERT) {
+			setCreateAlertState({
+				slice: CreateAlertSlice.THRESHOLD,
+				action: {
+					type: 'SET_THRESHOLDS',
+					payload: [INITIAL_ANOMALY_THRESHOLD],
+				},
+			});
+		}
 
 		if (urlPrefill.thresholds) {
 			setCreateAlertState({

@@ -35,6 +35,11 @@ export const INITIAL_CRITICAL_THRESHOLD: Threshold = {
 	color: Color.BG_SAKURA_500,
 };
 
+export const INITIAL_ANOMALY_THRESHOLD: Threshold = {
+	...INITIAL_CRITICAL_THRESHOLD,
+	thresholdValue: 3,
+};
+
 export const INITIAL_WARNING_THRESHOLD: Threshold = {
 	id: v4(),
 	label: 'warning',
