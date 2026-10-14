@@ -10,6 +10,7 @@ import ROUTES from 'constants/routes';
 import CreateAlertV2 from 'container/CreateAlertV2';
 import FormAlertRules, { AlertDetectionTypes } from 'container/FormAlertRules';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
+import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -193,7 +194,7 @@ function CreateRules(): JSX.Element {
 			className="alerts-container create-alert-tabs"
 			tabBarExtraContent={
 				<div className="create-alert-tabs__extra">
-					<DateTimeSelector showAutoRefresh />
+					<DateTimeSelector showAutoRefresh defaultRelativeTime={'5m' as Time} />
 					<HeaderRightSection
 						enableAnnouncements={false}
 						enableShare
