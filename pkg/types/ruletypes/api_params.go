@@ -638,6 +638,7 @@ type GettableRule struct {
 	Id    string     `json:"id" required:"true"`
 	State AlertState `json:"state" required:"true"`
 	PostableRule
+	Muted     bool      `json:"muted"`
 	CreatedAt time.Time `json:"createAt" required:"true"`
 	CreatedBy *string   `json:"createBy" nullable:"true"`
 	UpdatedAt time.Time `json:"updateAt" required:"true"`
@@ -677,6 +678,7 @@ type Rule struct {
 	Id    string     `json:"id" required:"true"`
 	State AlertState `json:"state" required:"true"`
 	PostableRule
+	Muted bool `json:"muted"`
 	types.TimeAuditable
 	types.UserAuditable
 }
@@ -686,6 +688,7 @@ func NewRule(g *GettableRule) *Rule {
 		Id:           g.Id,
 		State:        g.State,
 		PostableRule: g.PostableRule,
+		Muted:        g.Muted,
 	}
 	r.CreatedAt = g.CreatedAt
 	r.UpdatedAt = g.UpdatedAt

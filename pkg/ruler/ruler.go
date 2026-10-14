@@ -2,6 +2,7 @@ package ruler
 
 import (
 	"context"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
@@ -44,6 +45,12 @@ type Ruler interface {
 	// TestNotification fires a test alert for the rule defined in ruleStr.
 	// TODO: same as CreateRule — accept PostableRule instead of raw string.
 	TestNotification(ctx context.Context, orgID valuer.UUID, ruleStr string) (int, error)
+
+	// MuteRule creates or extends the rule's adhoc downtime; a zero endTime never expires.
+	MuteRule(ctx context.Context, id valuer.UUID, endTime time.Time) (*alertmanagertypes.PlannedMaintenance, error)
+
+	// UnmuteRule deletes the rule's adhoc downtimes; deleting none is still success.
+	UnmuteRule(ctx context.Context, id valuer.UUID) error
 
 	// MaintenanceStore returns the store for planned maintenance / downtime schedules.
 	// TODO: expose downtime CRUD as methods on Ruler directly instead of leaking the

@@ -20,10 +20,19 @@ func NewMockTokenizer(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockTokenizer {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockTokenizer{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -77,7 +86,7 @@ type MockTokenizer_Collect_Call struct {
 // Collect is a helper method to define mock.On call
 //   - context1 context.Context
 //   - uUID valuer.UUID
-func (_e *MockTokenizer_Expecter) Collect(context1 interface{}, uUID interface{}) *MockTokenizer_Collect_Call {
+func (_e *MockTokenizer_Expecter) Collect(context1 any, uUID any) *MockTokenizer_Collect_Call {
 	return &MockTokenizer_Collect_Call{Call: _e.mock.On("Collect", context1, uUID)}
 }
 
@@ -99,8 +108,8 @@ func (_c *MockTokenizer_Collect_Call) Run(run func(context1 context.Context, uUI
 	return _c
 }
 
-func (_c *MockTokenizer_Collect_Call) Return(stringToV map[string]any, err error) *MockTokenizer_Collect_Call {
-	_c.Call.Return(stringToV, err)
+func (_c *MockTokenizer_Collect_Call) Return(stringToAnyMoqParam map[string]any, err error) *MockTokenizer_Collect_Call {
+	_c.Call.Return(stringToAnyMoqParam, err)
 	return _c
 }
 
@@ -190,7 +199,7 @@ type MockTokenizer_CreateToken_Call struct {
 //   - context1 context.Context
 //   - identity *authtypes.Identity
 //   - stringToString map[string]string
-func (_e *MockTokenizer_Expecter) CreateToken(context1 interface{}, identity interface{}, stringToString interface{}) *MockTokenizer_CreateToken_Call {
+func (_e *MockTokenizer_Expecter) CreateToken(context1 any, identity any, stringToString any) *MockTokenizer_CreateToken_Call {
 	return &MockTokenizer_CreateToken_Call{Call: _e.mock.On("CreateToken", context1, identity, stringToString)}
 }
 
@@ -252,7 +261,7 @@ type MockTokenizer_DeleteIdentity_Call struct {
 // DeleteIdentity is a helper method to define mock.On call
 //   - context1 context.Context
 //   - uUID valuer.UUID
-func (_e *MockTokenizer_Expecter) DeleteIdentity(context1 interface{}, uUID interface{}) *MockTokenizer_DeleteIdentity_Call {
+func (_e *MockTokenizer_Expecter) DeleteIdentity(context1 any, uUID any) *MockTokenizer_DeleteIdentity_Call {
 	return &MockTokenizer_DeleteIdentity_Call{Call: _e.mock.On("DeleteIdentity", context1, uUID)}
 }
 
@@ -309,7 +318,7 @@ type MockTokenizer_DeleteToken_Call struct {
 // DeleteToken is a helper method to define mock.On call
 //   - context1 context.Context
 //   - s string
-func (_e *MockTokenizer_Expecter) DeleteToken(context1 interface{}, s interface{}) *MockTokenizer_DeleteToken_Call {
+func (_e *MockTokenizer_Expecter) DeleteToken(context1 any, s any) *MockTokenizer_DeleteToken_Call {
 	return &MockTokenizer_DeleteToken_Call{Call: _e.mock.On("DeleteToken", context1, s)}
 }
 
@@ -366,7 +375,7 @@ type MockTokenizer_DeleteTokensByUserID_Call struct {
 // DeleteTokensByUserID is a helper method to define mock.On call
 //   - context1 context.Context
 //   - uUID valuer.UUID
-func (_e *MockTokenizer_Expecter) DeleteTokensByUserID(context1 interface{}, uUID interface{}) *MockTokenizer_DeleteTokensByUserID_Call {
+func (_e *MockTokenizer_Expecter) DeleteTokensByUserID(context1 any, uUID any) *MockTokenizer_DeleteTokensByUserID_Call {
 	return &MockTokenizer_DeleteTokensByUserID_Call{Call: _e.mock.On("DeleteTokensByUserID", context1, uUID)}
 }
 
@@ -434,7 +443,7 @@ type MockTokenizer_GetIdentity_Call struct {
 // GetIdentity is a helper method to define mock.On call
 //   - context1 context.Context
 //   - s string
-func (_e *MockTokenizer_Expecter) GetIdentity(context1 interface{}, s interface{}) *MockTokenizer_GetIdentity_Call {
+func (_e *MockTokenizer_Expecter) GetIdentity(context1 any, s any) *MockTokenizer_GetIdentity_Call {
 	return &MockTokenizer_GetIdentity_Call{Call: _e.mock.On("GetIdentity", context1, s)}
 }
 
@@ -502,7 +511,7 @@ type MockTokenizer_ListMaxLastObservedAtByOrgID_Call struct {
 // ListMaxLastObservedAtByOrgID is a helper method to define mock.On call
 //   - context1 context.Context
 //   - uUID valuer.UUID
-func (_e *MockTokenizer_Expecter) ListMaxLastObservedAtByOrgID(context1 interface{}, uUID interface{}) *MockTokenizer_ListMaxLastObservedAtByOrgID_Call {
+func (_e *MockTokenizer_Expecter) ListMaxLastObservedAtByOrgID(context1 any, uUID any) *MockTokenizer_ListMaxLastObservedAtByOrgID_Call {
 	return &MockTokenizer_ListMaxLastObservedAtByOrgID_Call{Call: _e.mock.On("ListMaxLastObservedAtByOrgID", context1, uUID)}
 }
 
@@ -571,7 +580,7 @@ type MockTokenizer_RotateToken_Call struct {
 //   - context1 context.Context
 //   - s string
 //   - s1 string
-func (_e *MockTokenizer_Expecter) RotateToken(context1 interface{}, s interface{}, s1 interface{}) *MockTokenizer_RotateToken_Call {
+func (_e *MockTokenizer_Expecter) RotateToken(context1 any, s any, s1 any) *MockTokenizer_RotateToken_Call {
 	return &MockTokenizer_RotateToken_Call{Call: _e.mock.On("RotateToken", context1, s, s1)}
 }
 
@@ -634,7 +643,7 @@ type MockTokenizer_SetLastObservedAt_Call struct {
 //   - context1 context.Context
 //   - s string
 //   - time1 time.Time
-func (_e *MockTokenizer_Expecter) SetLastObservedAt(context1 interface{}, s interface{}, time1 interface{}) *MockTokenizer_SetLastObservedAt_Call {
+func (_e *MockTokenizer_Expecter) SetLastObservedAt(context1 any, s any, time1 any) *MockTokenizer_SetLastObservedAt_Call {
 	return &MockTokenizer_SetLastObservedAt_Call{Call: _e.mock.On("SetLastObservedAt", context1, s, time1)}
 }
 
@@ -695,7 +704,7 @@ type MockTokenizer_Start_Call struct {
 
 // Start is a helper method to define mock.On call
 //   - context1 context.Context
-func (_e *MockTokenizer_Expecter) Start(context1 interface{}) *MockTokenizer_Start_Call {
+func (_e *MockTokenizer_Expecter) Start(context1 any) *MockTokenizer_Start_Call {
 	return &MockTokenizer_Start_Call{Call: _e.mock.On("Start", context1)}
 }
 
@@ -746,7 +755,7 @@ type MockTokenizer_Stop_Call struct {
 
 // Stop is a helper method to define mock.On call
 //   - context1 context.Context
-func (_e *MockTokenizer_Expecter) Stop(context1 interface{}) *MockTokenizer_Stop_Call {
+func (_e *MockTokenizer_Expecter) Stop(context1 any) *MockTokenizer_Stop_Call {
 	return &MockTokenizer_Stop_Call{Call: _e.mock.On("Stop", context1)}
 }
 

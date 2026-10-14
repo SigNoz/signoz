@@ -184,6 +184,54 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/rules/{id}/mute", handler.New(
+		provider.authzMiddleware.CheckResources(provider.rulerHandler.MuteRuleByID, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		handler.OpenAPIDef{
+			ID:                  "MuteRuleByID",
+			Tags:                []string{"rules"},
+			Summary:             "Mute alert rule",
+			Description:         "Stops notification delivery for the rule by creating (or extending) its ad-hoc downtime. The body carries `duration` or `endTime`; an empty body mutes indefinitely. Evaluation, state and history continue unaffected.",
+			Request:             new(ruletypes.PostableRuleMute),
+			RequestContentType:  "application/json",
+			Response:            new(alertmanagertypes.PlannedMaintenance),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbUpdate)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbUpdate,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}),
+	)).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/rules/{id}/unmute", handler.New(
+		provider.authzMiddleware.CheckResources(provider.rulerHandler.UnmuteRuleByID, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		handler.OpenAPIDef{
+			ID:                "UnmuteRuleByID",
+			Tags:              []string{"rules"},
+			Summary:           "Unmute alert rule",
+			Description:       "Deletes the rule's mute-created ad-hoc downtimes. Maintenance windows created on the planned-downtime page are never touched. Unmuting a rule that is not muted succeeds.",
+			SuccessStatusCode: http.StatusNoContent,
+			ErrorStatusCodes:  []int{http.StatusBadRequest, http.StatusNotFound},
+			SecuritySchemes:   newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbUpdate)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbUpdate,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}),
+	)).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v2/rules/test", handler.New(
 		provider.authzMiddleware.CheckResources(provider.rulerHandler.TestRule, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
 		handler.OpenAPIDef{

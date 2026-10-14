@@ -11,6 +11,8 @@ type Handler interface {
 	DeleteRuleByID(http.ResponseWriter, *http.Request)
 	PatchRuleByID(http.ResponseWriter, *http.Request)
 	TestRule(http.ResponseWriter, *http.Request)
+	MuteRuleByID(http.ResponseWriter, *http.Request)
+	UnmuteRuleByID(http.ResponseWriter, *http.Request)
 
 	ListRuleViews(http.ResponseWriter, *http.Request)
 	CreateRuleView(http.ResponseWriter, *http.Request)
