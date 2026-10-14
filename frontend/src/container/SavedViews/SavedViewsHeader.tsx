@@ -86,7 +86,7 @@ function SavedViewsHeader({
 			)}
 
 			<div className={styles.actions}>
-				{!view && !isError && (
+				{!view && (
 					<SavedViewsIconButton
 						title="Create new view"
 						icon={<Plus size={14} />}
@@ -95,7 +95,7 @@ function SavedViewsHeader({
 						testId="saved-views-create"
 					/>
 				)}
-				{view && !isDirty && !isError && (
+				{(isError || (view && !isDirty)) && (
 					<SavedViewsIconButton
 						title="Clear view"
 						icon={<Undo2 size={14} />}

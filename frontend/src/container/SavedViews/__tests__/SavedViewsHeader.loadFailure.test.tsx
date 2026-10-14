@@ -39,16 +39,14 @@ describe('SavedViewsHeader when loading fails', () => {
 		localStorage.clear();
 	});
 
-	it('shows the load failed state when the view in the url does not load', async () => {
+	it('shows the load failed state with create and clear when the view does not load', async () => {
 		mockSavedViewsApi([]);
 		renderHeader(viewUrl(PATH, withColumns));
 
-		await waitFor(() =>
-			expect(chip()).toHaveTextContent('Saved view failed to load'),
-		);
+		await waitFor(() => expect(chip()).toHaveTextContent('View failed to load'));
 		expect(isDirty()).toBe(false);
-		expect(screen.queryByTestId('saved-views-create')).toBeNull();
-		expect(screen.queryByTestId('saved-views-clear')).toBeNull();
+		expect(screen.getByTestId('saved-views-create')).toBeInTheDocument();
+		expect(screen.getByTestId('saved-views-clear')).toBeInTheDocument();
 		expect(screen.getByTestId('saved-views-open')).toBeInTheDocument();
 	});
 
