@@ -1,10 +1,8 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import { useEffect, useState } from 'react';
-import { useListSavedViews } from 'api/generated/services/saved-view';
+import { useEffect, useRef, useState } from 'react';
+import { useGetSavedView } from 'api/generated/services/saved-view';
 import { TelemetryFieldKey } from 'api/v5/v5';
-import { findSavedView } from 'container/SavedViews/utils/findSavedView';
 import { getViewColumnsAndFormatting } from 'container/SavedViews/utils/getViewColumnsAndFormatting';
-import { toSavedViewSource } from 'container/SavedViews/utils/toSavedViewSource';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { usePreferenceLoader } from '../loader/usePreferenceLoader';
@@ -26,20 +24,30 @@ export function usePreferenceSync({
 	updateColumns: (newColumns: TelemetryFieldKey[]) => void;
 	updateFormatting: (newFormatting: FormattingOptions) => void;
 } {
-	const { data: viewsData } = useListSavedViews(
-		{ source: toSavedViewSource(dataSource) },
-		{ query: { enabled: mode === PreferenceMode.SAVED_VIEW } },
+	const isSavedViewMode = mode === PreferenceMode.SAVED_VIEW && !!savedViewId;
+	const { data: viewData } = useGetSavedView(
+		{ id: savedViewId ?? '' },
+		{ query: { enabled: isSavedViewMode } },
 	);
 
 	const [savedViewPreferences, setSavedViewPreferences] =
 		useState<Preferences | null>(null);
 
+	// Seeded once per view: a refetch of the same view keeps columns edited in
+	// memory. Discard writes the saved ones back through the updater.
+	const seededViewId = useRef<string>();
 	useEffect(() => {
-		const spec = savedViewId
-			? findSavedView(viewsData?.data, savedViewId)?.spec
-			: undefined;
-		setSavedViewPreferences(getViewColumnsAndFormatting(spec, dataSource));
-	}, [viewsData, dataSource, savedViewId, mode]);
+		const view = viewData?.data;
+		if (view && view.id === savedViewId) {
+			if (seededViewId.current !== savedViewId) {
+				seededViewId.current = savedViewId;
+				setSavedViewPreferences(getViewColumnsAndFormatting(view.spec, dataSource));
+			}
+			return;
+		}
+		seededViewId.current = undefined;
+		setSavedViewPreferences(getViewColumnsAndFormatting(undefined, dataSource));
+	}, [viewData, dataSource, savedViewId]);
 
 	// We are using a reSync state because we have URL updates as well as local storage updates
 	// and we want to make sure we are always using the latest preferences
