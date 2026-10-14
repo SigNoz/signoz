@@ -3,6 +3,7 @@ import cx from 'classnames';
 
 import { AIThreadMessageProps } from '../AIThreadMessage/AIThreadMessage';
 import { ThreadSpan, ThreadView } from '../TraceDetailsThread/types';
+import JsonBlock from '../AIThreadMessage/JsonBlock';
 import MessagesSection from './MessagesSection';
 import { getSpanMessages, hasAnyMessages } from './utils';
 
@@ -29,13 +30,23 @@ function SpanMessages({
 	const isFormatted = view === ThreadView.Formatted;
 
 	if (!hasAnyMessages(data)) {
-		return (<></>) as JSX.Element;
+		return (
+			//TODO: add message here
+			<div className={styles.missing}></div>
+		);
+	}
+
+	if (!isFormatted) {
+		return (
+			<div className={cx(styles.root, className)} data-testid="span-messages-json">
+				<JsonBlock data={{ input: data.rawInput, output: data.rawOutput }} />
+			</div>
+		);
 	}
 
 	return (
 		<div className={cx(styles.root, className)}>
 			<MessagesSection
-				title={isFormatted ? undefined : 'Input'}
 				view={view}
 				messages={data.formattedInput}
 				raw={data.rawInput}
@@ -44,7 +55,6 @@ function SpanMessages({
 				onToolLinkClick={onToolLinkClick}
 			/>
 			<MessagesSection
-				title={isFormatted ? undefined : 'Output'}
 				view={view}
 				messages={data.formattedOutput}
 				raw={data.rawOutput}

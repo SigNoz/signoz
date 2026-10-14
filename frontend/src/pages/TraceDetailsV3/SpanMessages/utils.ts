@@ -1,5 +1,4 @@
 import { parseJsonObject } from '../AIThreadMessage/utils';
-import { toThreadMessages } from '../AIThreadMessage/messageUtils';
 import { ThreadMessage } from '../AIThreadMessage/types';
 import { ThreadSpan } from '../TraceDetailsThread/types';
 import { GEN_AI_KEYS } from '../utils/aiTraceUtils';
@@ -30,12 +29,8 @@ export function getSpanMessages(span: ThreadSpan): SpanMessagesData {
 
 	// Waterfall spans and spans from before the JSON column have no formatted messages.
 	return {
-		formattedInput: span.formatted_input?.length
-			? span.formatted_input
-			: toThreadMessages(rawInput),
-		formattedOutput: span.formatted_output?.length
-			? span.formatted_output
-			: toThreadMessages(rawOutput),
+		formattedInput: span.formatted_input ?? [],
+		formattedOutput: span.formatted_output ?? [],
 		rawInput,
 		rawOutput,
 	};
