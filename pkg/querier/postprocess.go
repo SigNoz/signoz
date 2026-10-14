@@ -16,7 +16,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -1202,7 +1201,7 @@ func (q *querier) postProcessLogBody(ctx context.Context, orgID valuer.UUID, res
 // carried one. Anything that is not a decoded document — the legacy string body, a NULL cell —
 // is legal under these names and left alone.
 func stripEmptyBodyMessage(val any) {
-	bodyMap, ok := val.(telemetrystoretypes.JSONValue)
+	bodyMap, ok := val.(map[string]any)
 	if !ok {
 		return
 	}
