@@ -5,6 +5,7 @@ import { TIMEZONE_DATA } from 'components/CustomTimePicker/timezoneUtils';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { getRandomColor } from 'container/ExplorerOptions/utils';
 import { AlertDetectionTypes } from 'container/FormAlertRules';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 import { v4 } from 'uuid';
 
@@ -282,6 +283,16 @@ export function getThresholdStateFromAlertDef(
 			(isAnomalyRule && alertDef.evaluation?.spec?.evalWindow) ||
 			INITIAL_ALERT_THRESHOLD_STATE.evaluationWindow,
 	};
+}
+
+// Anomaly rules are stored as metric alerts; only the rule type tells them apart.
+export function getAlertTypeFromAlertDef(
+	alertDef: PostableAlertRuleV2 | undefined,
+): AlertTypes {
+	if (alertDef?.ruleType === AlertDetectionTypes.ANOMALY_DETECTION_ALERT) {
+		return AlertTypes.ANOMALY_BASED_ALERT;
+	}
+	return alertDef?.alertType as AlertTypes;
 }
 
 export function getCreateAlertLocalStateFromAlertDef(

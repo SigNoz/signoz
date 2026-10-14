@@ -1,5 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 
 import { defaultPostableAlertRuleV2 } from '../constants';
@@ -11,6 +12,7 @@ import {
 import {
 	getAdvancedOptionsStateFromAlertDef,
 	getColorForThreshold,
+	getAlertTypeFromAlertDef,
 	getCreateAlertLocalStateFromAlertDef,
 	getEvaluationWindowStateFromAlertDef,
 	getNotificationSettingsStateFromAlertDef,
@@ -361,6 +363,28 @@ describe('CreateAlertV2 utils', () => {
 			});
 			expect(state.thresholds[0].thresholdValue).toBe(-3);
 			expect(state.evaluationWindow).toBe('5m0s');
+		});
+	});
+
+	describe('getAlertTypeFromAlertDef', () => {
+		it('maps anomaly rules to the anomaly alert type', () => {
+			expect(
+				getAlertTypeFromAlertDef({
+					...defaultPostableAlertRuleV2,
+					alertType: AlertTypes.METRICS_BASED_ALERT,
+					ruleType: 'anomaly_rule',
+				}),
+			).toBe(AlertTypes.ANOMALY_BASED_ALERT);
+		});
+
+		it('keeps the stored alert type for other rules', () => {
+			expect(
+				getAlertTypeFromAlertDef({
+					...defaultPostableAlertRuleV2,
+					alertType: AlertTypes.LOGS_BASED_ALERT,
+					ruleType: 'threshold_rule',
+				}),
+			).toBe(AlertTypes.LOGS_BASED_ALERT);
 		});
 	});
 
