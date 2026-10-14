@@ -52,7 +52,7 @@ export interface QuickFilterChangeEventData {
 
 export interface IQuickFiltersProps {
 	config: IQuickFiltersConfig[];
-	handleFilterVisibilityChange: () => void;
+	handleFilterVisibilityChange?: () => void;
 	source: QuickFiltersSource;
 	onFilterChange?: (query: Query) => void;
 	onQuickFilterChange?: (data: QuickFilterChangeEventData) => void;
