@@ -2029,8 +2029,10 @@ components:
             type: string
           type: array
       required:
+      - connectionMethod
       - deploymentProjectId
       - deploymentRegion
+      - projectIds
       type: object
     CloudintegrationtypesGCPServiceConfig:
       properties:

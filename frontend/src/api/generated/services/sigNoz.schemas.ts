@@ -3803,7 +3803,7 @@ export interface CloudintegrationtypesGCPIntegrationConfigDTO {
 }
 
 export interface CloudintegrationtypesGCPPostableAccountConfigDTO {
-	connectionMethod?: CloudintegrationtypesGCPConnectionMethodDTO;
+	connectionMethod: CloudintegrationtypesGCPConnectionMethodDTO;
 	/**
 	 * @type string
 	 */
@@ -3815,7 +3815,7 @@ export interface CloudintegrationtypesGCPPostableAccountConfigDTO {
 	/**
 	 * @type array
 	 */
-	projectIds?: string[];
+	projectIds: string[];
 }
 
 export interface CloudintegrationtypesGettableAccountWithConnectionArtifactDTO {

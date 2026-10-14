@@ -48,14 +48,13 @@ type GCPAccountConfig struct {
 }
 
 type GCPPostableAccountConfig struct {
-	// ConnectionMethod defaults to manual when omitted.
-	ConnectionMethod GCPConnectionMethod `json:"connectionMethod,omitempty" required:"false" default:"manual"`
+	ConnectionMethod GCPConnectionMethod `json:"connectionMethod" required:"true"`
 	// DeploymentProjectID is the project hosting the integration resources.
 	DeploymentProjectID string `json:"deploymentProjectId" required:"true"`
 	// DeploymentRegion is the region used for the integration resources.
 	DeploymentRegion string `json:"deploymentRegion" required:"true"`
-	// Required for manual setup; always replaced with DeploymentProjectID for Agent setup.
-	ProjectIDs []string `json:"projectIds,omitempty" required:"false" nullable:"false"`
+	// Agent setup requires exactly DeploymentProjectID; manual setup may select multiple projects.
+	ProjectIDs []string `json:"projectIds" required:"true" nullable:"false"`
 }
 
 // UpdatableGCPAccountConfig contains settings for manual integrations only.
@@ -103,6 +102,28 @@ type GCPServiceLogsConfig struct {
 
 type GCPServiceMetricsConfig struct {
 	Enabled bool `json:"enabled" required:"true"`
+}
+
+func (config *GCPAccountConfig) Validate() error {
+	if config.ConnectionMethod.IsZero() {
+		return errors.NewInvalidInputf(ErrCodeInvalidInput, "connectionMethod is required for GCP provider")
+	}
+	if config.ConnectionMethod != GCPConnectionMethodManual && config.ConnectionMethod != GCPConnectionMethodAgent {
+		return errors.NewInvalidInputf(ErrCodeInvalidInput, "unsupported GCP connectionMethod: %q", config.ConnectionMethod.StringValue())
+	}
+	if err := validateGCPDeploymentProjectID(config.DeploymentProjectID); err != nil {
+		return err
+	}
+	if err := validateGCPRegion(config.DeploymentRegion); err != nil {
+		return err
+	}
+	if err := validateGCPProjectIDs(config.ProjectIDs); err != nil {
+		return err
+	}
+	if config.ConnectionMethod == GCPConnectionMethodAgent && (len(config.ProjectIDs) != 1 || config.ProjectIDs[0] != config.DeploymentProjectID) {
+		return errors.NewInvalidInputf(ErrCodeInvalidInput, "projectIds must contain only deploymentProjectId for GCP agent setup")
+	}
+	return nil
 }
 
 func NewGCPConnectionArtifact(accountID valuer.UUID, agentVersion string, creds *Credentials, cfg *GCPAccountConfig) (*GCPConnectionArtifact, error) {
@@ -272,19 +293,29 @@ ingestion_key_version=$(printf '%s' {{.IngestionKey | shellQuote}} | \
     --project="$project_id" --data-file=- --format='value(name.basename())')`
 }
 
-func normalizeGCPProjectIDs(projectIDs []string) ([]string, error) {
+func validateGCPDeploymentProjectID(projectID string) error {
+	if strings.TrimSpace(projectID) == "" {
+		return errors.NewInvalidInputf(ErrCodeInvalidInput, "deploymentProjectId is required for GCP provider")
+	}
+	if projectID != strings.TrimSpace(projectID) {
+		return errors.NewInvalidInputf(ErrCodeInvalidInput, "deploymentProjectId cannot contain leading or trailing whitespace")
+	}
+	return nil
+}
+
+func validateGCPProjectIDs(projectIDs []string) error {
 	if len(projectIDs) == 0 {
-		return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "at least one project id is required for GCP provider")
+		return errors.NewInvalidInputf(ErrCodeInvalidInput, "projectIds must contain at least one project ID for GCP provider")
 	}
 
-	normalized := make([]string, len(projectIDs))
-	for i, projectID := range projectIDs {
-		projectID = strings.TrimSpace(projectID)
-		if projectID == "" {
-			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "projectIds cannot contain an empty or whitespace-only project ID")
+	for _, projectID := range projectIDs {
+		if strings.TrimSpace(projectID) == "" {
+			return errors.NewInvalidInputf(ErrCodeInvalidInput, "projectIds cannot contain an empty or whitespace-only project ID")
 		}
-		normalized[i] = projectID
+		if projectID != strings.TrimSpace(projectID) {
+			return errors.NewInvalidInputf(ErrCodeInvalidInput, "projectIds cannot contain leading or trailing whitespace")
+		}
 	}
 
-	return normalized, nil
+	return nil
 }

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
-	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -241,41 +240,16 @@ func NewAccountConfigFromPostable(provider CloudProviderType, config *PostableAc
 			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "GCP config can not be nil for GCP provider")
 		}
 
-		deploymentProjectID := strings.TrimSpace(config.GCP.DeploymentProjectID)
-		if deploymentProjectID == "" {
-			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "deployment project ID is required for GCP provider")
+		gcpConfig := &GCPAccountConfig{
+			ConnectionMethod:    config.GCP.ConnectionMethod,
+			DeploymentProjectID: config.GCP.DeploymentProjectID,
+			ProjectIDs:          config.GCP.ProjectIDs,
+			DeploymentRegion:    config.GCP.DeploymentRegion,
 		}
-
-		if err := validateGCPRegion(config.GCP.DeploymentRegion); err != nil {
+		if err := gcpConfig.Validate(); err != nil {
 			return nil, err
 		}
-
-		connectionMethod := config.GCP.ConnectionMethod
-		if connectionMethod.IsZero() {
-			connectionMethod = GCPConnectionMethodManual
-		}
-		projectIDs := config.GCP.ProjectIDs
-		switch connectionMethod {
-		case GCPConnectionMethodManual:
-			var err error
-			projectIDs, err = normalizeGCPProjectIDs(projectIDs)
-			if err != nil {
-				return nil, err
-			}
-		case GCPConnectionMethodAgent:
-			projectIDs = []string{deploymentProjectID}
-		default:
-			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "unsupported GCP connection method: %q", connectionMethod.StringValue())
-		}
-
-		return &AccountConfig{
-			GCP: &GCPAccountConfig{
-				ConnectionMethod:    connectionMethod,
-				DeploymentProjectID: deploymentProjectID,
-				ProjectIDs:          projectIDs,
-				DeploymentRegion:    config.GCP.DeploymentRegion,
-			},
-		}, nil
+		return &AccountConfig{GCP: gcpConfig}, nil
 	default:
 		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 	}
@@ -318,20 +292,18 @@ func NewAccountConfigFromUpdatable(provider CloudProviderType, config *Updatable
 			return nil, err
 		}
 
-		projectIDs, err := normalizeGCPProjectIDs(config.Config.GCP.ProjectIDs)
-		if err != nil {
+		if err := validateGCPProjectIDs(config.Config.GCP.ProjectIDs); err != nil {
 			return nil, err
 		}
 
-		deploymentProjectID := strings.TrimSpace(config.Config.GCP.DeploymentProjectID)
-		if deploymentProjectID == "" {
-			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "deployment project ID is required for GCP provider")
+		if err := validateGCPDeploymentProjectID(config.Config.GCP.DeploymentProjectID); err != nil {
+			return nil, err
 		}
 
 		return &AccountConfig{
 			GCP: &GCPAccountConfig{
-				DeploymentProjectID: deploymentProjectID,
-				ProjectIDs:          projectIDs,
+				DeploymentProjectID: config.Config.GCP.DeploymentProjectID,
+				ProjectIDs:          config.Config.GCP.ProjectIDs,
 				DeploymentRegion:    config.Config.GCP.DeploymentRegion,
 			},
 		}, nil

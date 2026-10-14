@@ -86,7 +86,7 @@ def test_gcp_account_without_connection_method_remains_manual(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     project_id = "signoz-test-project"
     config = {"deploymentProjectId": project_id, "deploymentRegion": "us-central1", "projectIds": [project_id]}
-    account = create_cloud_integration_account(admin_token, "gcp", config={"gcp": config})
+    account = create_cloud_integration_account(admin_token, "gcp", config={"gcp": config | {"connectionMethod": "manual"}})
 
     # Reproduce the released manual account format, which had no connection method.
     with signoz.sqlstore.conn.begin() as conn:
@@ -347,7 +347,7 @@ def test_update_gcp_agent_account_rejected(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     headers = {"Authorization": f"Bearer {admin_token}"}
     project_id = "signoz-agent-update-project"
-    account_id = create_cloud_integration_account(admin_token, "gcp", config={"gcp": {"connectionMethod": "agent", "deploymentProjectId": project_id, "deploymentRegion": "us-central1"}})["id"]
+    account_id = create_cloud_integration_account(admin_token, "gcp", config={"gcp": {"connectionMethod": "agent", "deploymentProjectId": project_id, "deploymentRegion": "us-central1", "projectIds": [project_id]}})["id"]
     account_url = signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/gcp/accounts/{account_id}")
 
     checkin = simulate_agent_checkin(signoz, admin_token, "gcp", account_id, project_id)

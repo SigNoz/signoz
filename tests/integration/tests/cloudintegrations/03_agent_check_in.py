@@ -65,7 +65,7 @@ provider_account_reuse = pytest.mark.parametrize(
         ),
         pytest.param(
             "gcp",
-            {"gcp": {"connectionMethod": "agent", "deploymentProjectId": "signoz-reuse-project", "deploymentRegion": "us-central1"}},
+            {"gcp": {"connectionMethod": "agent", "deploymentProjectId": "signoz-reuse-project", "deploymentRegion": "us-central1", "projectIds": ["signoz-reuse-project"]}},
             "signoz-reuse-project",
             id="gcp_agent",
         ),
@@ -185,7 +185,7 @@ def test_gcp_agent_check_in_returns_collection_strategy(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     headers = {"Authorization": f"Bearer {admin_token}"}
     project_id = "signoz-agent-strategy-project"
-    account_id = create_cloud_integration_account(admin_token, "gcp", config={"gcp": {"connectionMethod": "agent", "deploymentProjectId": project_id, "deploymentRegion": "us-central1"}})["id"]
+    account_id = create_cloud_integration_account(admin_token, "gcp", config={"gcp": {"connectionMethod": "agent", "deploymentProjectId": project_id, "deploymentRegion": "us-central1", "projectIds": [project_id]}})["id"]
     services_url = signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/gcp/accounts/{account_id}/services")
     mysql_sink_filter = '(resource.type="cloudsql_database" AND (logName:"/logs/cloudsql.googleapis.com%2Fmysql" OR (log_id("cloudaudit.googleapis.com/data_access") AND protoPayload.request.@type="type.googleapis.com/google.cloud.sql.audit.v1.MysqlAuditEntry")))'
     postgres_sink_filter = '(resource.type="cloudsql_database" AND (logName:"/logs/cloudsql.googleapis.com%2Fpostgres" OR (log_id("cloudaudit.googleapis.com/data_access") AND protoPayload.request.@type="type.googleapis.com/google.cloud.sql.audit.v1.PgAuditEntry")))'
@@ -234,7 +234,7 @@ def test_gcp_agent_check_in_rejects_other_project(
 ) -> None:
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     project_id = "signoz-agent-mismatch-project"
-    account_id = create_cloud_integration_account(admin_token, "gcp", config={"gcp": {"connectionMethod": "agent", "deploymentProjectId": project_id, "deploymentRegion": "us-central1"}})["id"]
+    account_id = create_cloud_integration_account(admin_token, "gcp", config={"gcp": {"connectionMethod": "agent", "deploymentProjectId": project_id, "deploymentRegion": "us-central1", "projectIds": [project_id]}})["id"]
 
     response = simulate_agent_checkin(signoz, admin_token, "gcp", account_id, "signoz-other-project")
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
