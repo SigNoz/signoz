@@ -572,12 +572,23 @@ export const EmailInitialConfig: Partial<AlertmanagertypesChannelEmailConfigDTO>
   </html>`,
 	};
 
-// The backend fills the message template itself when the key is absent, so it is
-// left unset here rather than seeded with a copy that would drift. send_resolved
-// mirrors the default upstream applies, so the switch shows what will be stored.
+// mirrors DefaultTelegramTitleTemplate / DefaultTelegramMessageTemplate in
+// pkg/types/alertmanagertypes/channel_telegram.go, so the form shows the
+// templates it will send rather than two empty boxes. send_resolved mirrors the
+// default upstream applies, so the switch shows what will be stored.
 export const TelegramInitialConfig: Partial<AlertmanagertypesChannelTelegramConfigDTO> =
 	{
 		sendResolved: true,
+		title: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname | html }}`,
+		message: `{{ range .Alerts -}}
+<b>Alert:</b> {{ .Labels.alertname | html }}{{ if .Labels.severity }} ({{ .Labels.severity | html }}){{ end }}
+{{ if .Annotations.summary }}<b>Summary:</b> {{ .Annotations.summary | html }}
+{{ end }}{{ if .Annotations.description }}<b>Description:</b> {{ .Annotations.description | html }}
+{{ end }}{{ if .GeneratorURL }}<a href="{{ .GeneratorURL | html }}">View in SigNoz</a>
+{{ end }}{{ if .Annotations.related_logs }}<a href="{{ .Annotations.related_logs | html }}">View related logs</a>
+{{ end }}{{ if .Annotations.related_traces }}<a href="{{ .Annotations.related_traces | html }}">View related traces</a>
+{{ end }}
+{{ end }}`,
 	};
 
 // prefilled values of every channel type, keyed by type so the form can apply

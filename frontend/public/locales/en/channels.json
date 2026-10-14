@@ -187,5 +187,22 @@
   "placeholder_incidentio_metadata_value": "Value",
   "button_incidentio_add_metadata": "Add metadata",
   "channel_read_only_title": "You can view this channel but not change it",
-  "channel_read_only_help": "Changing a channel needs update permission on it. Ask an admin to grant it, or open the channel read-only."
+  "channel_read_only_help": "Changing a channel needs update permission on it. Ask an admin to grant it, or open the channel read-only.",
+  "telegram_tip": "Create a bot with @BotFather, add it to the chat, then paste its token and the chat's numeric id below.",
+  "telegram_tip_link": "Learn how",
+  "field_telegram_bot_token": "Bot token",
+  "help_telegram_bot_token": "The token BotFather returns, in the form 123456789:AA… .",
+  "field_telegram_chat_id": "Chat ID",
+  "help_telegram_chat_id": "The numeric chat the bot posts to, negative for groups and channels. Telegram's @username form is not accepted.",
+  "placeholder_telegram_chat_id": "e.g. -1001234567890",
+  "field_telegram_message_thread_id": "Topic ID (optional)",
+  "help_telegram_message_thread_id": "Posts into one topic of a forum group. Leave empty to post in the group itself.",
+  "field_telegram_message": "Message",
+  "help_telegram_message": "Template for the message body. Telegram HTML, so interpolated values are escaped.",
+  "field_telegram_api_url": "Bot API URL (optional)",
+  "help_telegram_api_url": "Point at a self-hosted Bot API server. Leave empty to use Telegram's.",
+  "field_telegram_disable_notifications": "Send silently",
+  "help_telegram_disable_notifications": "Delivers without a sound or vibration on the recipients' devices.",
+  "field_telegram_title": "Title",
+  "help_telegram_title": "Sent in bold above the message. Telegram HTML, so interpolated values are escaped."
 }

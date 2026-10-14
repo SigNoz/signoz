@@ -99,6 +99,16 @@ const SPECS: Record<string, Record<string, unknown>> = {
 		tags: 'prod,db',
 		sendResolved: true,
 	},
+	telegram: {
+		botToken: 'tok',
+		chatId: -1001234567890,
+		apiUrl: 'https://telegram.example.com',
+		title: '<b>{{ .CommonLabels.alertname }}</b>',
+		message: '<b>{{ .CommonLabels.alertname }}</b>',
+		messageThreadId: 42,
+		disableNotifications: true,
+		sendResolved: true,
+	},
 	incidentio: {
 		url: 'https://api.incident.io/v2/alert_events/http/abc',
 		token: 'tok',

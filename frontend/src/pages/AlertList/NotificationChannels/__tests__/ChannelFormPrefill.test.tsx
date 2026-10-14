@@ -10,8 +10,11 @@ const FIND = { timeout: 5000 };
 interface PrefillCase {
 	kind: string;
 	spec: Record<string, unknown>;
-	/** [data-testid, expected value] for the fields that kind renders. */
-	fields: [string, string][];
+	/**
+	 * [data-testid, expected value] for the fields that kind renders. A numeric
+	 * input reports a number, not the string it was typed as.
+	 */
+	fields: [string, string | number][];
 	/**
 	 * Jira and JSM Ops keep their extra fields behind a collapsed panel. Tests
 	 * run without translations, so the header shows the i18n key.
@@ -197,6 +200,25 @@ const CASES: PrefillCase[] = [
 			['incidentio-token-textbox', 'incident-token'],
 			['incidentio-title-textarea', 'incident title'],
 			['incidentio-description-textarea', 'incident description'],
+		],
+	},
+	{
+		kind: 'telegram',
+		spec: {
+			botToken: 'telegram-bot-token',
+			chatId: -1001234567890,
+			messageThreadId: 42,
+			title: '<b>telegram title</b>',
+			message: '<b>telegram message</b>',
+			apiUrl: 'https://telegram.example.com',
+		},
+		fields: [
+			['telegram-bot-token-textbox', 'telegram-bot-token'],
+			['telegram-chat-id-textbox', -1001234567890],
+			['telegram-message-thread-id-textbox', 42],
+			['telegram-title-textarea', '<b>telegram title</b>'],
+			['telegram-message-textarea', '<b>telegram message</b>'],
+			['telegram-api-url-textbox', 'https://telegram.example.com'],
 		],
 	},
 ];

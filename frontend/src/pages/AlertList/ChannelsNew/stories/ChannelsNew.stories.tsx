@@ -62,6 +62,13 @@ export const ChannelTypeSelectOpen: Story = {
 	},
 };
 
+/** The Telegram form: the bot token and the numeric chat it posts to. */
+export const Telegram: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await selectChannelType(canvasElement, /^Telegram$/);
+	},
+};
+
 /** Mutation: saving without a channel name shows the form's required-field feedback. */
 export const InvalidRequiredFields: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
