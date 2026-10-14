@@ -44,10 +44,6 @@
 	pointer-events: auto;
 }
 
-.search {
-	--input-background: var(--l2-background);
-}
-
 .searchSpinner {
 	color: var(--l2-foreground);
 	animation: spin 0.8s linear infinite;

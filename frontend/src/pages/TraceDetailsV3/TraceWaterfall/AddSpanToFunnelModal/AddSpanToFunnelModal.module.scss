@@ -102,13 +102,6 @@
 	flex: 1;
 	margin-inline-end: 6px;
 
-	// Restyle the @signozhq/ui Input through its CSS tokens.
-	--input-background: var(--l3-background);
-	--input-font-size: 14px;
-	--input-line-height: 18px;
-	--input-letter-spacing: -0.07px;
-	--input-placeholder: var(--l2-foreground);
-
 	svg {
 		opacity: 0.4;
 	}

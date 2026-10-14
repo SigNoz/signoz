@@ -28,12 +28,6 @@
 	width: 200px;
 }
 
-.sourceLabel {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-}
-
 .label {
 	color: var(--l2-foreground);
 	font-family: Inter;
@@ -42,27 +36,8 @@
 	line-height: 20px;
 }
 
-.column {
-	flex-direction: column;
-	gap: 8px;
-}
-
-.input,
-.textarea {
-	width: 100%;
-	padding: 6px 6px 6px 8px;
-	border: 1px solid var(--l2-border);
-	border-radius: 2px;
-	background: var(--l3-background);
-}
-
-// Wrapper around the default-value Input: restyles the frame via its tokens.
 .defaultInput {
 	width: 342px;
-	--input-padding: 6px 6px 6px 8px;
-	--input-border: var(--l2-border);
-	--input-border-radius: 2px;
-	--input-background: var(--l3-background);
 }
 
 .errorText {
@@ -77,13 +52,6 @@
 	gap: 20px;
 	margin-top: 40px;
 	margin-bottom: 0;
-
-	--badge-height: var(--spacing-7);
-	--badge-font-size: 11px;
-	--badge-line-height: 12px;
-	--badge-padding: 0px var(--spacing-2);
-	--tabs-trigger-secondary-icon-width: 14px;
-	--tabs-trigger-secondary-icon-height: 14px;
 }
 
 /* Picker row (label left, tabs right); the bottom divider separates type from
@@ -99,11 +67,6 @@
 	@media (max-width: 1440px) {
 		flex-wrap: wrap;
 	}
-}
-
-/* Active tab panel — reset the Tabs default padding; body rows handle spacing. */
-.typePanel {
-	padding: 0 !important;
 }
 
 .typeContent {
@@ -249,16 +212,6 @@
 	overflow-y: auto;
 }
 
-.previewValues [data-slot='badge'] {
-	height: 30px;
-	align-items: center;
-	color: var(--l1-foreground);
-	font-family: 'Space Mono';
-	font-size: 14px;
-	border: 1px solid var(--l1-border);
-	border-radius: 2px;
-}
-
 .previewError {
 	color: var(--bg-amber-500);
 }
@@ -266,8 +219,7 @@
 /* Sort / multi / all / default rows */
 .sortSection,
 .multiSection,
-.allOptionSection,
-.dynamicSection {
+.allOptionSection {
 	align-items: flex-start;
 	justify-content: space-between;
 	margin-bottom: 0;

@@ -278,7 +278,7 @@ function SaveView(): JSX.Element {
 						</div>
 						<div className="view-details">
 							<div className="view-tag">
-								<Typography.Text className="tag-text">
+								<Typography.Text size="xs" color="muted" className="tag-text">
 									{view.createdBy.substring(0, 1).toUpperCase()}
 								</Typography.Text>
 							</div>
@@ -301,11 +301,12 @@ function SaveView(): JSX.Element {
 	return (
 		<div className="save-view-container">
 			<div className="save-view-content">
-				<Typography.Title className="title">Views</Typography.Title>
-				<Typography.Text className="subtitle">
+				<Typography variant="title" size="large" className="title">
+					Views
+				</Typography>
+				<Typography.Text size="lg" color="muted" className="subtitle">
 					Manage your saved views for {ROUTES_VS_SOURCEPAGE[pathname]}.{' '}
 					<Typography.Link
-						className="learn-more"
 						href="https://signoz.io/docs/metrics-management/metrics-explorer/?utm_source=product&utm_medium=views-tab#saved-views-in-metrics-explorer"
 						target="_blank"
 					>

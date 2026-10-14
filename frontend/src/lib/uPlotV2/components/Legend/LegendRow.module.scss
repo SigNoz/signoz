@@ -114,9 +114,9 @@
 		opacity 180ms cubic-bezier(0.08, 0.52, 0.52, 1),
 		transform 180ms cubic-bezier(0.08, 0.52, 0.52, 1);
 
+	// The smallest Button size (sm, 24px) overflows the 28px row under the
+	// 4px top offset.
 	--button-height: 20px;
-	--button-variant-ghost-color: var(--l3-foreground);
-	--button-variant-ghost-hover-color: var(--l1-foreground);
 }
 
 // :focus-visible, not :focus-within — the latter also matches the click that

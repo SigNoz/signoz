@@ -1,7 +1,6 @@
 import React, { ChangeEvent, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Plus, Search } from '@signozhq/icons';
-import { Color } from '@signozhq/design-tokens';
 import { Input } from '@signozhq/ui/input';
 import { Button, Flex, Form, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
@@ -128,14 +127,14 @@ export function PlannedDowntime(): JSX.Element {
 	return (
 		<div className="planned-downtime-container">
 			<div className="planned-downtime-content">
-				<Typography.Title className="title">Planned Downtime</Typography.Title>
-				<Typography.Text className="subtitle">
+				<Typography.Title level={4}>Planned Downtime</Typography.Title>
+				<Typography.Text color="muted">
 					Create and manage planned downtimes.
 				</Typography.Text>
 				<Flex className="toolbar">
 					<Input
 						placeholder="Search for a planned downtime..."
-						prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
+						prefix={<Search size={12} />}
 						value={searchValue}
 						onChange={handleSearch}
 					/>

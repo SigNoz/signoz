@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Slider } from '@signozhq/ui/slider';
-import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { ArrowRight, Minus } from '@signozhq/icons';
 
@@ -195,9 +194,9 @@ function OptimiseSignozNeeds({
 			<div className="questions-form-container">
 				<div className="questions-form">
 					<div className="form-group">
-						<Typography.Text className="question">
+						<div className="question">
 							What does your scale approximately look like?
-						</Typography.Text>
+						</div>
 					</div>
 
 					<div className="form-group">

@@ -8,26 +8,6 @@
 		width: calc(100% - 30px);
 		max-width: 736px;
 
-		.title {
-			color: var(--l1-foreground);
-			font-size: var(--font-size-lg);
-			font-style: normal;
-			font-weight: var(--font-weight-normal);
-			line-height: 28px; /* 155.556% */
-			letter-spacing: -0.09px;
-		}
-
-		.subtitle {
-			color: var(--l2-foreground);
-			font-size: var(--font-size-sm);
-			font-style: normal;
-			font-weight: var(--font-weight-normal);
-			line-height: 20px; /* 142.857% */
-			letter-spacing: -0.07px;
-		}
-		.learn-more {
-			font-size: 14px;
-		}
 		.search-input-container {
 			margin-top: 16px;
 			margin-bottom: 8px;
@@ -99,17 +79,6 @@
 						display: flex;
 						justify-content: center;
 						align-items: center;
-
-						.tag-text {
-							color: var(--l2-foreground);
-							leading-trim: both;
-							text-edge: cap;
-							font-size: 10px;
-							font-style: normal;
-							font-weight: var(--font-weight-normal);
-							line-height: normal;
-							letter-spacing: -0.05px;
-						}
 					}
 
 					.view-created-by {

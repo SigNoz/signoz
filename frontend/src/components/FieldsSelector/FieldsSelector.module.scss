@@ -32,10 +32,9 @@
 	}
 }
 
-// Wraps the search Input; restyles it via its --input-* tokens
-// (the Input is size="large" for the 40px height).
+// Full-bleed search bar: only top/bottom borders, square corners.
+// Per-side widths cannot be expressed via --input-border-width.
 .searchInput {
-	--input-background: var(--l1-background);
 	--input-border-radius: 0;
 
 	[data-slot='input'] {

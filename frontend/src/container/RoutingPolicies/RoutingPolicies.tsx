@@ -1,6 +1,5 @@
 import { ChangeEvent, useMemo } from 'react';
 import { Plus, Search } from '@signozhq/icons';
-import { Color } from '@signozhq/design-tokens';
 import { Input } from '@signozhq/ui/input';
 import { Button, Flex, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
@@ -62,14 +61,14 @@ function RoutingPolicies(): JSX.Element {
 	return (
 		<div className="routing-policies-container">
 			<div className="routing-policies-content">
-				<Typography.Title className="title">Routing Policies</Typography.Title>
-				<Typography.Text className="subtitle">
+				<Typography.Title level={4}>Routing Policies</Typography.Title>
+				<Typography.Text color="muted">
 					Create and manage routing policies.
 				</Typography.Text>
 				<Flex className="toolbar">
 					<Input
 						placeholder="Search for a routing policy..."
-						prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
+						prefix={<Search size={12} />}
 						value={searchTerm}
 						onChange={handleSearch}
 					/>

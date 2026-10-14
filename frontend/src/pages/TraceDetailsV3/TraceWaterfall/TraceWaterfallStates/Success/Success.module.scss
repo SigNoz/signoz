@@ -206,11 +206,6 @@
 	justify-content: center;
 	cursor: pointer;
 
-	--badge-border-radius: 2px;
-	--badge-padding: 3px 6px;
-	--badge-line-height: 12px;
-	--badge-border-width: 0px;
-
 	&.hoveredSpan {
 		// Middle segment of the row band — square so it butts up against the
 		// name and timeline segments (no rounded corner at the badge column).
@@ -371,13 +366,6 @@
 	display: inline-flex;
 	align-items: center;
 	flex-shrink: 0;
-
-	:global(.badge) {
-		font-size: 10px;
-		line-height: 14px;
-		padding: 0 4px;
-		height: 14px;
-	}
 }
 
 .treeIcon {

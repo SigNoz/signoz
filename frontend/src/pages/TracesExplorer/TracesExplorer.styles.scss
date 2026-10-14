@@ -65,10 +65,6 @@
 }
 
 .trace-explorer-page {
-	// Meant to fix the query builder colors
-	--input-background: var(--l2-background);
-	--input-hover-border-color: var(--internal-ant-border-color-hover);
-
 	.trace-explorer {
 		background: var(--l1-background);
 		border-color: var(--l1-border);

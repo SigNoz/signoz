@@ -24,7 +24,9 @@ function CheckboxFilterHeader({
 				) : (
 					<ChevronRight size={13} cursor="pointer" />
 				)}
-				<Typography.Text className="title">{title}</Typography.Text>
+				<Typography.Text className="title" color="muted">
+					{title}
+				</Typography.Text>
 			</section>
 			<section className="right-action">
 				{isOpen && showClearAll && (

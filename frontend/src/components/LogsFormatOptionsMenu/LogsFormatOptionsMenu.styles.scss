@@ -199,22 +199,23 @@
 					}
 				}
 
+				// Stepper group: the Input sits seamlessly between the -/+
+				// periscope-btns (26px tall, l1-border).
 				.max-lines-per-row-input {
 					display: flex;
 
 					--input-height: 26px;
 					--input-border-radius: 0;
 					--input-border: var(--l1-border);
+					--input-border-width: 1px 0;
 
 					[data-testid='max-lines-per-row-field'] {
 						min-width: 36px;
 						width: auto;
-						border-right: none;
-						border-left: none;
 
+						// No Input token for text alignment.
 						input {
 							text-align: center;
-							font-size: 13px;
 						}
 					}
 

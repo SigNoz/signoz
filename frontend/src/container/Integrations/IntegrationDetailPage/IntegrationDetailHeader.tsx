@@ -136,8 +136,12 @@ function IntegrationDetailHeader(
 							<Skeleton.Input active className="skeleton-item" />
 						) : (
 							<>
-								<Typography.Text className="heading">{title}</Typography.Text>
-								<Typography.Text className="description">{description}</Typography.Text>
+								<Typography.Text size="lg" weight="medium" className="heading">
+									{title}
+								</Typography.Text>
+								<Typography.Text size="small" color="muted" className="description">
+									{description}
+								</Typography.Text>
 							</>
 						)}
 					</div>

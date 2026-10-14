@@ -189,13 +189,13 @@ export const TooltipsInViewPanelModal: Story = {
 /** A list or table panel's search field, expanded and filled. */
 export const PanelSearchExpanded: Story = {
 	play: async ({ canvasElement }) => {
-		await userEvent.click(
-			await within(canvasElement).findByTestId(
-				'panel-header-search-trigger',
-				{},
-				{ timeout: 15000 },
-			),
+		// Both the table and the log list render a search trigger; expand the first.
+		const [trigger] = await within(canvasElement).findAllByTestId(
+			'panel-header-search-trigger',
+			{},
+			{ timeout: 15000 },
 		);
+		await userEvent.click(trigger);
 		const input = await screen.findByTestId('panel-header-search-input-field');
 
 		await userEvent.type(input, 'error');
@@ -258,8 +258,18 @@ export const SectionActionsMenu: Story = {
 export const DeleteDashboardDialog: Story = {
 	play: async (context) => {
 		await ActionsMenu.play?.(context);
-		await userEvent.click(await screen.findByText('Delete dashboard'));
-		await screen.findByText('This action cannot be undone.');
+		// The row stays inert until its authz checks resolve, so one click can
+		// land too early; keep clicking until the confirm dialog is up.
+		await waitFor(
+			async () => {
+				const item = screen.queryByTestId('dashboard-action-delete');
+				if (item) {
+					await userEvent.click(item);
+				}
+				screen.getByText('This action cannot be undone.');
+			},
+			{ timeout: 10000 },
+		);
 	},
 };
 

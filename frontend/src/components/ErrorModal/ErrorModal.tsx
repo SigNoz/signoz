@@ -53,8 +53,13 @@ function ErrorModal({
 					onClick={(): void => setVisible(true)}
 					onKeyDown={undefined}
 				>
-					<Badge variant="solid" color="danger">
-						<CircleAlert size={14} color={Color.BG_CHERRY_500} /> error
+					<Badge
+						variant="solid"
+						color="danger"
+						textTransform="uppercase"
+						prefix={<CircleAlert size={14} />}
+					>
+						error
 					</Badge>
 				</span>
 			) : (

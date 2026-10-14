@@ -57,9 +57,7 @@ function TokenError({ error }: TokenErrorProps): JSX.Element {
 					<Typography.Title level={4} className="reset-password-header-title">
 						{title}
 					</Typography.Title>
-					<Typography.Text className="reset-password-header-subtitle">
-						{subtitle}
-					</Typography.Text>
+					<Typography.Text color="muted">{subtitle}</Typography.Text>
 				</div>
 				{error && <AuthError error={error} />}
 				<div className="reset-password-back-action">
@@ -67,6 +65,7 @@ function TokenError({ error }: TokenErrorProps): JSX.Element {
 						size="md"
 						color="primary"
 						variant="solid"
+						width="100%"
 						testId="back-to-login"
 						prefix={<ArrowLeft size={12} />}
 						onClick={(): void => history.push(ROUTES.LOGIN)}

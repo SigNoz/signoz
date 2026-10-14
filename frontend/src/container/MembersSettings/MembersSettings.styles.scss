@@ -46,12 +46,6 @@
 	&__search {
 		flex: 1;
 		min-width: 0;
-
-		--input-foreground: var(--l1-foreground);
-		--input-background: var(--l2-background);
-		--input-border: var(--l1-border);
-		--input-placeholder: var(--l3-foreground);
-		--input-placeholder-opacity: 1;
 	}
 }
 

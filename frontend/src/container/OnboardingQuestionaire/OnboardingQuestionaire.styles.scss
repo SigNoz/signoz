@@ -44,44 +44,13 @@
 			}
 
 			.onboarding-header-title {
-				font-family: Inter, sans-serif;
-				font-size: 18px;
-				font-weight: 600;
-				line-height: 1;
-				letter-spacing: 0;
-				color: var(--l1-foreground);
-				margin: 0 !important;
-				text-align: center;
+				margin: 0;
 			}
 
 			.onboarding-header-subtitle {
-				font-family: Inter, sans-serif;
-				font-size: 13px;
-				font-weight: 400;
-				line-height: 20px;
-				letter-spacing: -0.065px;
-				color: var(--l2-foreground);
 				max-width: 528px;
-				margin: 0 !important;
-				text-align: center;
+				margin: 0;
 			}
-		}
-
-		.title {
-			color: var(--l1-foreground) !important;
-			font-size: 24px !important;
-			line-height: 32px !important;
-			margin-bottom: 8px !important;
-		}
-
-		.sub-title {
-			color: var(--l2-foreground) !important;
-			font-size: 14px !important;
-			font-style: normal;
-			font-weight: 400 !important;
-			line-height: 24px !important;
-			margin-top: 0px !important;
-			margin-bottom: 24px !important;
 		}
 
 		.questions-form-container {
@@ -102,83 +71,11 @@
 			border: 1px solid var(--l2-border);
 			background: var(--l2-background);
 
-			.ant-form-item {
-				margin-bottom: 0px !important;
-
-				.ant-form-item-label {
-					label {
-						color: var(--l1-foreground) !important;
-						font-size: 13px !important;
-						font-weight: 500;
-						line-height: 20px;
-					}
-				}
-			}
-
-			.discover-signoz-input {
-				width: 100%;
-				height: 80px;
-				resize: none;
-				border: 1px solid var(--l1-border);
-				background: var(--l3-background);
-				color: var(--l1-foreground);
-				border-radius: 2px;
-				font-family: Inter, sans-serif;
-				font-size: 13px;
-				font-weight: 400;
-				line-height: 20px;
-				letter-spacing: -0.065px;
-				padding: 6px 8px;
-				box-sizing: border-box;
-
-				&::placeholder {
-					color: var(--l3-foreground);
-					opacity: 1;
-				}
-
-				&:focus-visible {
-					outline: none;
-					border-color: var(--bg-robin-500);
-				}
-			}
-
 			&.invite-team-members-form {
-				--invite-members-field-background: var(--l3-background);
-
 				padding-right: 12px;
 
 				.form-group {
 					gap: 24px !important;
-				}
-			}
-		}
-
-		.invite-team-members-container {
-			display: flex;
-			width: 100%;
-			flex-direction: column;
-			gap: 12px;
-
-			.ant-input-group {
-				width: 100%;
-
-				.ant-input {
-					font-size: 12px;
-
-					height: 32px;
-					background: var(--l3-background);
-					border: 1px solid var(--l1-border);
-					color: var(--l2-foreground);
-				}
-
-				.ant-input-group-addon {
-					font-size: 11px;
-					height: 32px;
-					min-width: 80px;
-					background: var(--l3-background);
-					border: 1px solid var(--l1-border);
-					border-left: 0px;
-					color: var(--l2-foreground);
 				}
 			}
 		}
@@ -201,35 +98,6 @@
 			gap: 8px;
 		}
 
-		.onboarding-back-button {
-			width: 100%;
-			height: 32px;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			gap: 8px;
-			border-radius: 2px;
-			background: transparent;
-			border: 1px solid var(--l1-border);
-			color: var(--l2-foreground);
-			font-family: Inter, sans-serif;
-			font-size: 11px;
-			font-weight: 500;
-			line-height: 1;
-			cursor: pointer;
-			transition: opacity 0.2s;
-
-			&:hover {
-				opacity: 0.8;
-				border-color: var(--bg-robin-500);
-			}
-
-			&:disabled {
-				opacity: 0.5;
-				cursor: not-allowed;
-			}
-		}
-
 		.form-group {
 			display: flex;
 			flex-direction: column;
@@ -237,6 +105,8 @@
 			gap: 12px;
 			align-self: stretch;
 
+			// RadioGroup lays its items out in a single grid column and has no prop for a
+			// second one; the onboarding options are short enough to pair up.
 			[role='radiogroup'] {
 				width: 100%;
 				grid-template-columns: 1fr 1fr;
@@ -245,23 +115,6 @@
 
 		.slider-container {
 			width: calc(100% - 16px);
-		}
-
-		.do-later-container {
-			width: 100%;
-			display: flex;
-			justify-content: center;
-			align-items: center;
-			margin-top: 24px;
-
-			.do-later-button {
-				font-size: 12px;
-
-				display: flex;
-				justify-content: center;
-				align-items: center;
-				gap: 8px;
-			}
 		}
 
 		.question {
@@ -295,112 +148,6 @@
 			white-space: nowrap;
 		}
 
-		input[type='text'] {
-			width: 100%;
-			padding: 6px 8px;
-			border-radius: 2px;
-			font-size: 13px;
-			font-weight: 400;
-			line-height: 1;
-			letter-spacing: -0.065px;
-			height: 32px;
-			border: 1px solid var(--l1-border);
-			background: var(--l3-background);
-			color: var(--l1-foreground);
-			box-sizing: border-box;
-
-			&::placeholder {
-				color: var(--l3-foreground);
-			}
-
-			&:focus-visible {
-				outline: none;
-				border-color: var(--bg-robin-500);
-			}
-		}
-
-		.radio-group,
-		.grid,
-		.tool-grid {
-			display: flex;
-			align-items: flex-start;
-			align-content: flex-start;
-			gap: 10px;
-			align-self: stretch;
-			flex-wrap: wrap;
-		}
-
-		.radio-button,
-		.grid-button,
-		.tool-button {
-			border-radius: 4px;
-			border: 1px solid var(--l1-border);
-			background: var(--l3-background);
-			padding: 12px;
-			color: var(--l2-foreground);
-			font-size: 14px;
-			font-style: normal;
-			text-align: left;
-			font-weight: 400;
-			transition: background-color 0.3s ease;
-			min-width: 258px;
-			cursor: pointer;
-			box-sizing: border-box;
-		}
-
-		.radio-button.active,
-		.grid-button.active,
-		.tool-button.active,
-		.radio-button:hover,
-		.grid-button:hover,
-		.tool-button:hover {
-			border: 1px solid
-				color-mix(in srgb, var(--primary-background) 40%, transparent);
-			background: color-mix(in srgb, var(--primary-background) 20%, transparent);
-		}
-
-		.two-column-grid {
-			width: 100%;
-			display: grid;
-			grid-template-columns: 1fr 1fr; /* Two equal columns */
-			gap: 10px;
-		}
-
-		.observability-tools-checkbox-container {
-			display: flex;
-			flex-wrap: wrap;
-			gap: 0 12px;
-			width: 528px;
-			align-items: flex-start;
-
-			.observability-tool-checkbox-item {
-				display: flex;
-				align-items: center;
-				gap: 8px;
-				height: 32px;
-				width: calc((528px - 12px) / 2);
-				min-width: 258px;
-				flex: 0 0 calc((528px - 12px) / 2);
-				padding: 0;
-				box-sizing: border-box;
-				cursor: pointer;
-
-				&.checkbox-item {
-					width: calc((528px - 12px) / 2) !important;
-					flex-direction: row;
-				}
-
-				&:hover {
-					opacity: 0.8;
-				}
-			}
-
-			.observability-tool-other-input {
-				width: 100%;
-				margin-top: 12px;
-			}
-		}
-
 		.checkbox-grid {
 			display: flex;
 			flex-direction: column;
@@ -418,159 +165,14 @@
 			padding: 0;
 			width: 100%;
 
-			label {
-				color: var(--l1-foreground) !important;
-			}
-
 			&.checkbox-item-others {
 				.onboarding-questionaire-other-input {
 					display: flex;
 					align-items: center;
 					flex: 1 0 0;
 					min-width: 0;
-
-					--input-height: 32px;
-					--input-padding: 6px 8px;
-					--input-gap: 4px;
-					--input-border-radius: 2px;
-					--input-border: var(--l1-border);
-					--input-background: var(--l3-background);
-					--input-foreground: var(--l1-foreground);
-					--input-font-family: Inter, sans-serif;
-					--input-font-size: 13px;
-					--input-font-weight: 400;
-					--input-line-height: 100%;
-					--input-letter-spacing: -0.065px;
-					--input-placeholder: var(--l3-foreground);
-					--input-placeholder-opacity: 1;
-					--input-focus-ring: var(--bg-robin-500);
 				}
 			}
-
-			.ant-checkbox-wrapper {
-				color: var(--l1-foreground);
-				font-family: Inter, sans-serif;
-				font-size: 13px;
-				font-weight: 400;
-				line-height: 1;
-				letter-spacing: -0.065px;
-				display: flex;
-				align-items: center;
-				gap: 8px;
-				width: 100%;
-
-				.ant-checkbox {
-					.ant-checkbox-inner {
-						width: 16px;
-						height: 16px;
-						border: 1.5px solid var(--l3-background);
-						border-radius: 2px;
-						background-color: transparent;
-					}
-
-					&.ant-checkbox-checked .ant-checkbox-inner {
-						background-color: var(--primary-background);
-						border-color: var(--primary-background);
-					}
-				}
-
-				span {
-					color: var(--l1-foreground) !important;
-				}
-			}
-		}
-
-		.onboarding-questionaire-button,
-		.add-another-member-button,
-		.remove-team-member-button {
-			display: flex;
-			align-items: center;
-			justify-content: space-between;
-			border-radius: 2px;
-			border: 1px solid var(--l1-border);
-			background: var(--l3-background);
-			color: var(--l2-foreground);
-			box-shadow: none;
-			font-size: 14px;
-			font-style: normal;
-			text-align: left;
-			font-weight: 400;
-			transition: background-color 0.3s ease;
-			cursor: pointer;
-			height: 40px;
-			box-sizing: border-box;
-
-			&:hover {
-				border: 1px solid
-					color-mix(in srgb, var(--primary-background) 40%, transparent);
-				background: color-mix(in srgb, var(--primary-background) 20%, transparent);
-			}
-
-			&:focus-visible {
-				outline: none;
-			}
-
-			&.active {
-				border: 1px solid
-					color-mix(in srgb, var(--primary-background) 40%, transparent);
-				background: color-mix(in srgb, var(--primary-background) 20%, transparent);
-			}
-		}
-
-		.add-another-member-button,
-		.remove-team-member-button {
-			color: var(--l2-foreground);
-			text-align: center;
-			font-variant-numeric: slashed-zero;
-			font-family: Inter;
-			font-size: 11px;
-			font-style: normal;
-			font-weight: 500;
-			line-height: 100%;
-		}
-
-		.remove-team-member-button {
-			display: flex;
-			align-items: center;
-			justify-content: center;
-
-			border: 1px solid var(--l1-border);
-			border-top-left-radius: 0px;
-			border-bottom-left-radius: 0px;
-			background-color: var(--l3-background);
-
-			border-left: 0px;
-			border-top-left-radius: 0px;
-			border-bottom-left-radius: 0px;
-		}
-
-		.onboarding-questionaire-other-input {
-			.ant-input-group {
-				.ant-input {
-					border-top-right-radius: 0px !important;
-					border-bottom-right-radius: 0px !important;
-				}
-			}
-		}
-
-		.tool-grid {
-			grid-template-columns: repeat(4, 1fr);
-		}
-
-		.input-field {
-			flex: 0;
-			padding: 12px;
-			border: 1px solid var(--l1-border);
-			background: var(--l3-background);
-			color: var(--l1-foreground);
-			border-radius: 4px;
-			font-size: 14px;
-			min-width: 258px;
-		}
-
-		.arrow {
-			font-size: 18px;
-			color: var(--l1-foreground);
 		}
 	}
 

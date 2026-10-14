@@ -28,25 +28,12 @@
 }
 
 .login-form-title {
-	font-family: Inter, sans-serif;
-	font-size: 18px;
-	font-weight: 600;
-	line-height: 1;
-	letter-spacing: 0;
-	color: var(--l1-foreground);
-	margin: 0 !important;
+	--typography-title-margin-top: 0;
+	--typography-title-margin-bottom: 0;
 }
 
 .login-form-description {
-	font-family: Inter, sans-serif;
-	font-size: 13px;
-	font-weight: 400;
-	line-height: 20px;
-	letter-spacing: -0.065px;
-	color: var(--l2-foreground);
 	max-width: 317px;
-	margin: 0 !important;
-	text-align: center;
 }
 
 .login-form-card {

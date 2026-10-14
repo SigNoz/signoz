@@ -139,10 +139,18 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 		<div className="questions-container">
 			<div className="onboarding-header-section">
 				<div className="onboarding-header-icon">🎉</div>
-				<Typography.Title level={4} className="onboarding-header-title">
+				<Typography.Title
+					level={4}
+					align="center"
+					className="onboarding-header-title"
+				>
 					Welcome to SigNoz Cloud
 				</Typography.Title>
-				<Typography.Text className="onboarding-header-subtitle">
+				<Typography.Text
+					align="center"
+					color="muted"
+					className="onboarding-header-subtitle"
+				>
 					Let&apos;s get you started
 				</Typography.Text>
 			</div>

@@ -763,7 +763,7 @@ function OnboardingAddDataSource(): JSX.Element {
 											>
 												Select your data source
 											</Typography.Title>
-											<Typography.Text className="question-sub-title">
+											<Typography.Text color="muted" className="question-sub-title">
 												Select from a host of services to start sending data to SigNoz
 											</Typography.Text>
 										</div>
@@ -787,9 +787,15 @@ function OnboardingAddDataSource(): JSX.Element {
 
 												{Object.keys(groupedDataSources).map((tag) => (
 													<div key={tag} className="onboarding-data-source-group">
-														<Typography.Title level={5} className="onboarding-title">
+														<Typography.Text
+															size="sm"
+															weight="medium"
+															color="muted"
+															display="block"
+															className="onboarding-title"
+														>
 															{tag} ({groupedDataSources[tag].length})
-														</Typography.Title>
+														</Typography.Text>
 														<div className="onboarding-data-source-list">
 															{groupedDataSources[tag].map((dataSource) => (
 																<Button
@@ -826,10 +832,16 @@ function OnboardingAddDataSource(): JSX.Element {
 
 											<div className="data-source-categories-filter-container">
 												<div className="onboarding-data-source-category">
-													<Typography.Title level={5} className="onboarding-filters-title">
+													<Typography.Text
+														size="sm"
+														weight="medium"
+														color="muted"
+														display="block"
+														className="onboarding-filters-title"
+													>
 														{' '}
 														Filters{' '}
-													</Typography.Title>
+													</Typography.Text>
 
 													<div
 														key="all"
@@ -843,18 +855,25 @@ function OnboardingAddDataSource(): JSX.Element {
 															}
 														}}
 													>
-														<Typography.Title
-															level={5}
+														<Typography.Text
+															size="sm"
+															weight="medium"
+															interactive
+															color={selectedCategory === 'All' ? undefined : 'muted'}
 															className={`onboarding-filters-item-title ${
 																selectedCategory === 'All' ? 'selected' : ''
 															}`}
 														>
 															All
-														</Typography.Title>
+														</Typography.Text>
 
 														<div className="line-divider" />
 
-														<Typography.Text className="onboarding-filters-item-count">
+														<Typography.Text
+															size="xs"
+															color="muted"
+															className="onboarding-filters-item-count"
+														>
 															{onboardingConfigWithLinks.length}
 														</Typography.Text>
 													</div>
@@ -872,18 +891,25 @@ function OnboardingAddDataSource(): JSX.Element {
 																}
 															}}
 														>
-															<Typography.Title
-																level={5}
+															<Typography.Text
+																size="sm"
+																weight="medium"
+																interactive
+																color={selectedCategory === tag ? undefined : 'muted'}
 																className={`onboarding-filters-item-title ${
 																	selectedCategory === tag ? 'selected' : ''
 																}`}
 															>
 																{tag}
-															</Typography.Title>
+															</Typography.Text>
 
 															<div className="line-divider" />
 
-															<Typography.Text className="onboarding-filters-item-count">
+															<Typography.Text
+																size="xs"
+																color="muted"
+																className="onboarding-filters-item-count"
+															>
 																{allGroupedDataSources[tag].length}
 															</Typography.Text>
 														</div>

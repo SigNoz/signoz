@@ -147,7 +147,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 					<Typography.Title level={4} className="reset-password-header-title">
 						Reset Your Password
 					</Typography.Title>
-					<Typography.Text className="reset-password-header-subtitle">
+					<Typography.Text color="muted">
 						Monitor your applications. Find what is causing issues.
 					</Typography.Text>
 					{version && (

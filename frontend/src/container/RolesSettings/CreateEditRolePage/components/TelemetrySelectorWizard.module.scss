@@ -1,28 +1,3 @@
-.wizardDialog {
-	border-color: var(--l1-border);
-
-	--select-trigger-background-color: var(--l3-background);
-	--select-trigger-border-color: var(--l3-background);
-	--select-background: var(--l3-background);
-	--select-item-background-hover: var(--l3-background-hover);
-	--select-trigger-focus-outline-width: 1px;
-	--select-trigger-focus-outline-offset: 0px;
-
-	--input-background: var(--l3-background);
-	--input-hover-background: var(--l3-background);
-	--input-focus-background: var(--l3-background);
-	--input-disabled-background: var(--l3-background);
-	--input-border-color: var(--l3-border);
-	--input-hover-border-color: var(--l3-border);
-	--input-focus-border-color: var(--l3-border);
-
-	outline: none;
-
-	& > div {
-		background-color: var(--l2-background);
-	}
-}
-
 .wizardBody {
 	display: flex;
 	flex-direction: column;

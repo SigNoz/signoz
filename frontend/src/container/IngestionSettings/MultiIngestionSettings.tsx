@@ -1631,8 +1631,11 @@ function MultiIngestionSettings(): JSX.Element {
 		<div className="ingestion-key-container">
 			<div className="ingestion-key-content">
 				<header>
-					<Typography.Title className="title"> Ingestion Keys </Typography.Title>
-					<Typography.Text className="subtitle">
+					<Typography.Title level={4} className="title">
+						{' '}
+						Ingestion Keys{' '}
+					</Typography.Title>
+					<Typography.Text color="muted">
 						Create and manage ingestion keys for the SigNoz Cloud{' '}
 						<a
 							href="https://signoz.io/docs/ingestion/signoz-cloud/keys/"

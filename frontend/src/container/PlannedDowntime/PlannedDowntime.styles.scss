@@ -117,29 +117,6 @@
 		width: calc(100% - 30px);
 		max-width: 736px;
 
-		.title {
-			color: var(--l1-foreground);
-			font-size: var(--font-size-lg);
-			font-style: normal;
-			font-weight: var(--font-weight-normal);
-			line-height: 28px;
-			letter-spacing: -0.09px;
-		}
-
-		.subtitle {
-			color: var(---bg-vanilla-400);
-			font-size: var(--font-size-sm);
-			font-style: normal;
-			font-weight: var(--font-weight-normal);
-			line-height: 20px;
-			letter-spacing: -0.07px;
-		}
-
-		.ant-input-affix-wrapper {
-			margin-top: 16px;
-			margin-bottom: 8px;
-		}
-
 		.toolbar {
 			display: flex;
 			align-items: center;

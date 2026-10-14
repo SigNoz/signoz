@@ -65,24 +65,6 @@
 				.details {
 					display: flex;
 					flex-direction: column;
-					.heading {
-						color: var(--l1-foreground);
-						font-family: Inter;
-						font-size: 14px;
-						font-style: normal;
-						font-weight: 500;
-						line-height: 20px; /* 142.857% */
-						letter-spacing: -0.07px;
-					}
-
-					.description {
-						color: var(--l2-foreground);
-						font-family: Inter;
-						font-size: 12px;
-						font-style: normal;
-						font-weight: 400;
-						line-height: 18px; /* 150% */
-					}
 				}
 
 				.configure-btn {
@@ -174,16 +156,6 @@
 				align-items: center;
 				justify-content: center;
 				padding: 8px 8px 18px 8px !important;
-
-				.typography {
-					color: var(--l1-foreground);
-					font-family: Inter;
-					font-size: 14px;
-					font-style: normal;
-					font-weight: 400;
-					line-height: 20px; /* 142.857% */
-					letter-spacing: -0.07px;
-				}
 			}
 
 			.integration-tab-btns:hover {
@@ -223,24 +195,13 @@
 				flex-direction: column;
 				gap: 6px;
 
+				// Typography's `color` prop has no callout palette.
 				.heading {
 					color: var(--callout-error-title);
-					font-family: Inter;
-					font-size: 14px;
-					font-style: normal;
-					font-weight: 400;
-					line-height: normal;
-					letter-spacing: -0.07px;
 				}
 
 				.subtitle {
 					color: var(--callout-error-description);
-					font-family: Inter;
-					font-size: 14px;
-					font-style: normal;
-					font-weight: 400;
-					line-height: 22px; /* 157.143% */
-					letter-spacing: -0.07px;
 				}
 			}
 

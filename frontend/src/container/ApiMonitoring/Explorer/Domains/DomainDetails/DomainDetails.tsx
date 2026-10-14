@@ -161,7 +161,12 @@ function DomainDetails({
 						<Divider orientation="vertical" />
 
 						{domainData?.domainName && (
-							<Typography.Text className="title">
+							<Typography.Text
+								size="lg"
+								weight="medium"
+								color="muted"
+								className="title"
+							>
 								{domainData.domainName}
 							</Typography.Text>
 						)}

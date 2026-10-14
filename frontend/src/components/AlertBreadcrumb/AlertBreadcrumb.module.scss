@@ -1,6 +1,9 @@
 .breadcrumb {
 	padding-left: 16px;
 
+	// The antd breadcrumb provides the item spacing.
+	--button-padding: 0;
+
 	ol {
 		align-items: center;
 	}
@@ -8,12 +11,4 @@
 	:global(.ant-breadcrumb-separator) {
 		color: var(--muted-foreground);
 	}
-
-	[data-slot='button'] {
-		padding: 0px;
-	}
-}
-
-.divider {
-	--divider-border: var(--l1-border);
 }

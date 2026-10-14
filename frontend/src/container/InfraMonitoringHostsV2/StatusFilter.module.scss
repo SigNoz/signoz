@@ -2,8 +2,8 @@
 	display: flex;
 	align-items: center;
 
+	// The group butts up against the status label, so its left corners stay square.
 	--toggle-group-border-radius: 0px 2px 2px 0px;
-	--toggle-group-button-font-size: var(--periscope-font-size-base);
 }
 
 .statusLabel {

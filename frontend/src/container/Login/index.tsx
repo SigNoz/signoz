@@ -305,10 +305,14 @@ function Login(): JSX.Element {
 					<div className="login-form-emoji">
 						<img src={tvUrl} alt="TV" width="32" height="32" />
 					</div>
-					<Typography.Title level={4} className="login-form-title">
+					<Typography.Title level={4} align="center" className="login-form-title">
 						Sign in to your workspace
 					</Typography.Title>
-					<Typography.Text className="login-form-description">
+					<Typography.Text
+						align="center"
+						color="muted"
+						className="login-form-description"
+					>
 						Sign in to monitor, trace, and troubleshoot your applications
 						effortlessly.
 					</Typography.Text>

@@ -91,7 +91,6 @@ function TelemetrySelectorWizard({
 			testId={`telemetry-wizard-dialog-${testId}`}
 			trigger={trigger}
 			footer={footer}
-			className={styles.wizardDialog}
 		>
 			<div className={styles.wizardBody}>
 				<div className={styles.wizardField}>

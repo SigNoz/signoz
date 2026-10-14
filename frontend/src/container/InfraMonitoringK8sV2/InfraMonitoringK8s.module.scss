@@ -152,7 +152,6 @@
 		color 0.2s ease;
 	color: var(--l2-foreground);
 	font-size: var(--periscope-font-size-base);
-	--typography-color: var(--l1-foreground);
 
 	&:hover:not(.categoryItemSelected) {
 		background: var(--l2-background-hover);

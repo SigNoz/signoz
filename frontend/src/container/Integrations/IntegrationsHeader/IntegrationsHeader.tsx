@@ -74,13 +74,20 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 
 	return (
 		<div className="integrations-header">
-			<Typography.Title className="title">Integrations</Typography.Title>
+			<Typography variant="title" size="large" weight="medium" className="title">
+				Integrations
+			</Typography>
 			<Flex
 				justify="space-between"
 				align="center"
 				className="integrations-header__subrow"
 			>
-				<Typography.Text className="subtitle">
+				<Typography.Text
+					size="lg"
+					color="muted"
+					display="block"
+					className="subtitle"
+				>
 					Manage integrations for this workspace.
 				</Typography.Text>
 			</Flex>

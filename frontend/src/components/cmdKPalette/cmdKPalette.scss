@@ -7,14 +7,6 @@
 [data-slot='dialog-content'] {
 	position: fixed;
 	z-index: 1001 !important;
-	background: var(--l1-background);
-	color: var(--l1-foreground);
-
-	/* Override the background and color of the dialog content from the theme */
-	> div {
-		background: var(--l1-background);
-		color: var(--l1-foreground);
-	}
 }
 
 .cmdk-section-heading [cmdk-group-heading] {

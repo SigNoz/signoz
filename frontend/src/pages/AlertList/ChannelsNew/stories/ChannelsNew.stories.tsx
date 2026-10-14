@@ -96,7 +96,7 @@ export const SaveFailure: Story = {
 		const canvas = within(canvasElement);
 
 		await userEvent.type(
-			await canvas.findByTestId('channel-name-textbox'),
+			await canvas.findByTestId('channel-name-textbox-field'),
 			'Storybook channel',
 		);
 		await userEvent.type(

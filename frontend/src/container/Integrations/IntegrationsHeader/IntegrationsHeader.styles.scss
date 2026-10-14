@@ -9,23 +9,7 @@
 	}
 
 	.title {
-		color: var(--l1-foreground);
-		font-size: var(--font-size-lg);
-		font-style: normal;
-		line-height: 28px; /* 155.556% */
-		letter-spacing: -0.09px;
-		font-weight: 500;
 		margin: 0;
-	}
-
-	.subtitle {
-		color: var(--l2-foreground);
-		font-size: var(--font-size-sm);
-		font-style: normal;
-		line-height: 20px; /* 142.857% */
-		letter-spacing: -0.07px;
-		font-weight: 400;
-		display: block;
 	}
 
 	.integrations-search-request-container {
@@ -33,12 +17,6 @@
 		align-items: center;
 		gap: 8px;
 		margin-top: 16px;
-
-		input {
-			color: var(--l1-foreground);
-			flex: 1;
-			width: auto;
-		}
 	}
 }
 
