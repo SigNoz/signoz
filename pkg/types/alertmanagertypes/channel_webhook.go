@@ -2,6 +2,7 @@ package alertmanagertypes
 
 import (
 	"strings"
+	texttemplate "text/template"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/prometheus/alertmanager/config"
@@ -21,6 +22,13 @@ type ChannelWebhookConfig struct {
 	Username     string `json:"username"`
 	Password     string `json:"password" format:"password"`
 	BearerToken  string `json:"bearerToken" format:"password"`
+	// BodyTemplate is an optional Go text/template rendered against the
+	// alert template data to produce the request body. When empty, the
+	// notifier sends the default Alertmanager-style JSON payload. Set it
+	// to shape the payload for consumers that need a specific schema,
+	// e.g. Rocket.Chat incoming webhooks which render the "text" field:
+	//   {"text": "{{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}"}
+	BodyTemplate string `json:"bodyTemplate,omitempty"`
 }
 
 func (c *ChannelWebhookConfig) UnmarshalJSON(data []byte) error {
@@ -43,6 +51,12 @@ func (c ChannelWebhookConfig) Validate() error {
 
 	if usesBasicAuth && c.BearerToken != "" {
 		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.bearerToken cannot be combined with config.spec.username or config.spec.password")
+	}
+
+	if c.BodyTemplate != "" {
+		if _, err := texttemplate.New("webhook_body").Parse(c.BodyTemplate); err != nil {
+			return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.bodyTemplate is not a valid Go template: %v", err)
+		}
 	}
 
 	return nil
@@ -77,7 +91,11 @@ func (c ChannelWebhookConfig) toUndefaultedReceiver(displayName string) (*Receiv
 	return &Receiver{Receiver: &config.Receiver{
 		Name:           displayName,
 		WebhookConfigs: []*config.WebhookConfig{webhook},
-	}}, nil
+	},
+		// Upstream's config.WebhookConfig cannot carry SigNoz's optional
+		// body template, so it rides alongside as a parallel slice.
+		WebhookBodyTemplates: []string{c.BodyTemplate},
+	}, nil
 }
 
 func newChannelWebhookConfigFromReceiver(name string, receiver *Receiver) (ChannelSpec, error) {
@@ -98,6 +116,12 @@ func newChannelWebhookConfigFromReceiver(name string, receiver *Receiver) (Chann
 	webhook := &ChannelWebhookConfig{
 		SendResolved: &sendResolved,
 		URL:          string(upstream.URL),
+	}
+
+	// The body template travels as a parallel slice on Receiver because
+	// upstream's config.WebhookConfig has no field for it.
+	if len(receiver.WebhookBodyTemplates) > 0 {
+		webhook.BodyTemplate = receiver.WebhookBodyTemplates[0]
 	}
 
 	if upstream.HTTPConfig != nil {

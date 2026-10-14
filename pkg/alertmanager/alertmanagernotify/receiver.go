@@ -61,7 +61,22 @@ func NewReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Temp
 	}
 
 	for i, c := range nc.WebhookConfigs {
-		add(webhook.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return webhook.New(c, tmpl, l, templater) })
+		// Upstream's config.WebhookConfig cannot carry SigNoz's optional
+		// body template, so it travels as a parallel slice on Receiver.
+		var bodyTemplate string
+		if i < len(nc.WebhookBodyTemplates) {
+			bodyTemplate = nc.WebhookBodyTemplates[i]
+		}
+		add(webhook.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {
+			notifier, err := webhook.New(c, tmpl, l, templater)
+			if err != nil {
+				return nil, err
+			}
+			if err := notifier.SetBodyTemplate(bodyTemplate); err != nil {
+				return nil, err
+			}
+			return notifier, nil
+		})
 	}
 	for i, c := range nc.EmailConfigs {
 		add(email.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {

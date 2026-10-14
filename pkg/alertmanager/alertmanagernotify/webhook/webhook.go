@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	texttemplate "text/template"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
@@ -35,6 +36,12 @@ type Notifier struct {
 	client    *http.Client
 	retrier   *notify.Retrier
 	templater alertmanagertypes.Templater
+	// bodyTemplate, when set, replaces the default Alertmanager-style JSON
+	// payload: it is rendered against the alert template data to produce
+	// the request body. This lets webhook consumers that require a
+	// specific schema (e.g. Rocket.Chat incoming webhooks, which render
+	// the "text" field) receive a usable payload.
+	bodyTemplate *texttemplate.Template
 }
 
 // New returns a new Webhook.
@@ -53,6 +60,24 @@ func New(conf *config.WebhookConfig, t *template.Template, l *slog.Logger, templ
 		retrier:   &notify.Retrier{},
 		templater: templater,
 	}, nil
+}
+
+// SetBodyTemplate installs an optional Go text/template used to render the
+// request body from the alert template data (*template.Data). An empty
+// string clears it, restoring the default Alertmanager-style JSON payload.
+// The template is validated eagerly so a bad template fails at setup time,
+// not when the first alert fires.
+func (n *Notifier) SetBodyTemplate(bodyTemplate string) error {
+	if bodyTemplate == "" {
+		n.bodyTemplate = nil
+		return nil
+	}
+	tmpl, err := texttemplate.New("webhook_body").Parse(bodyTemplate)
+	if err != nil {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid webhook body template: %v", err)
+	}
+	n.bodyTemplate = tmpl
+	return nil
 }
 
 // Message defines the JSON object send to webhook endpoints.
@@ -94,7 +119,13 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 	}
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(msg); err != nil {
+	if n.bodyTemplate != nil {
+		// A custom body template replaces the default payload entirely;
+		// the template author controls the output format.
+		if err := n.bodyTemplate.Execute(&buf, data); err != nil {
+			return false, errors.NewInternalf(errors.CodeInternal, "failed to execute webhook body template: %v", err)
+		}
+	} else if err := json.NewEncoder(&buf).Encode(msg); err != nil {
 		return false, err
 	}
 
