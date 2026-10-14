@@ -70,12 +70,13 @@ function OnboardingQuestionaire(): JSX.Element {
 
 	const [optimiseSignozDetails, setOptimiseSignozDetails] =
 		useState<OptimiseSignozDetails>(INITIAL_OPTIMISE_SIGNOZ_DETAILS);
+	const [hasScaleAnswer, setHasScaleAnswer] = useState(false);
 
 	const [updatingOrgOnboardingStatus, setUpdatingOrgOnboardingStatus] =
 		useState<boolean>(false);
 
 	useEffect(() => {
-		logEvent('Org Onboarding: Started', {
+		void logEvent('Org Onboarding: Started', {
 			org_id: org?.[0]?.id,
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -93,7 +94,7 @@ function OnboardingQuestionaire(): JSX.Element {
 
 			setUpdatingOrgOnboardingStatus(false);
 
-			logEvent('Org Onboarding: Redirecting to Get Started', {});
+			void logEvent('Org Onboarding: Redirecting to Get Started', {});
 
 			history.push(ROUTES.GET_STARTED_WITH_CLOUD);
 		},
@@ -102,17 +103,14 @@ function OnboardingQuestionaire(): JSX.Element {
 		},
 	});
 
-	const isNextDisabled =
-		optimiseSignozDetails.logsPerDay === 0 &&
-		optimiseSignozDetails.hostsPerDay === 0 &&
-		optimiseSignozDetails.services === 0;
+	const isNextDisabled = !hasScaleAnswer;
 
 	const { mutate: updateProfile, isLoading: isUpdatingProfile } =
 		usePutProfile<AxiosError<RenderErrorResponseDTO>>();
 
 	const { mutate: updateOrgPreference } = useMutation(updateOrgPreferenceAPI, {
 		onSuccess: () => {
-			refetchOrgPreferences();
+			void refetchOrgPreferences();
 		},
 		onError: (error) => {
 			showErrorNotification(notifications, error as AxiosError);
@@ -121,8 +119,8 @@ function OnboardingQuestionaire(): JSX.Element {
 		},
 	});
 
-	const handleUpdateProfile = (): void => {
-		logEvent(NEXT_BUTTON_EVENT_NAME, {
+	const handleUpdateProfile = (scaleDetails: OptimiseSignozDetails): void => {
+		void logEvent(NEXT_BUTTON_EVENT_NAME, {
 			currentPageID: 3,
 			nextPageID: 4,
 		});
@@ -148,16 +146,16 @@ function OnboardingQuestionaire(): JSX.Element {
 								signozDetails?.otherInterestInSignoz,
 							] as string[])
 						: (signozDetails?.interestInSignoz as string[]),
-					logs_scale_per_day_in_gb: optimiseSignozDetails?.logsPerDay as number,
-					number_of_hosts: optimiseSignozDetails?.hostsPerDay as number,
-					number_of_services: optimiseSignozDetails?.services as number,
+					logs_scale_per_day_in_gb: scaleDetails.logsPerDay,
+					number_of_hosts: scaleDetails.hostsPerDay,
+					number_of_services: scaleDetails.services,
 				},
 			},
 			{
 				onSuccess: () => {
 					setCurrentStep(4);
 				},
-				onError: (error: any) => {
+				onError: (error) => {
 					toast.error(error?.message || SOMETHING_WENT_WRONG);
 
 					// Allow user to proceed even if API fails
@@ -168,7 +166,7 @@ function OnboardingQuestionaire(): JSX.Element {
 	};
 
 	const handleOnboardingComplete = (): void => {
-		logEvent(ONBOARDING_COMPLETE_EVENT_NAME, {
+		void logEvent(ONBOARDING_COMPLETE_EVENT_NAME, {
 			currentPageID: 4,
 		});
 
@@ -189,7 +187,7 @@ function OnboardingQuestionaire(): JSX.Element {
 							usesOtel: orgDetails.usesOtel ?? null,
 						}}
 						onNext={(orgDetails: OrgDetails): void => {
-							logEvent(NEXT_BUTTON_EVENT_NAME, {
+							void logEvent(NEXT_BUTTON_EVENT_NAME, {
 								currentPageID: 1,
 								nextPageID: 2,
 							});
@@ -205,7 +203,7 @@ function OnboardingQuestionaire(): JSX.Element {
 						signozDetails={signozDetails}
 						setSignozDetails={setSignozDetails}
 						onNext={(): void => {
-							logEvent(NEXT_BUTTON_EVENT_NAME, {
+							void logEvent(NEXT_BUTTON_EVENT_NAME, {
 								currentPageID: 2,
 								nextPageID: 3,
 							});
@@ -221,7 +219,10 @@ function OnboardingQuestionaire(): JSX.Element {
 						optimiseSignozDetails={optimiseSignozDetails}
 						setOptimiseSignozDetails={setOptimiseSignozDetails}
 						onNext={handleUpdateProfile}
-						onWillDoLater={handleUpdateProfile}
+						onScaleInteraction={(): void => setHasScaleAnswer(true)}
+						onWillDoLater={(): void =>
+							handleUpdateProfile(INITIAL_OPTIMISE_SIGNOZ_DETAILS)
+						}
 					/>
 				)}
 
