@@ -5,6 +5,7 @@ import { render, screen } from '@testing-library/react';
 import * as metricsGeneratedAPI from 'api/generated/services/metrics';
 import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import * as appContextHooks from 'providers/App/App';
+import TimezoneProvider from 'providers/Timezone';
 import store from 'store';
 
 import ROUTES from '../../../../constants/routes';
@@ -120,7 +121,9 @@ describe('Inspect', () => {
 		render(
 			<QueryClientProvider client={queryClient}>
 				<Provider store={store}>
-					<Inspect {...defaultProps} />
+					<TimezoneProvider>
+						<Inspect {...defaultProps} />
+					</TimezoneProvider>
 				</Provider>
 			</QueryClientProvider>,
 		);
@@ -139,7 +142,9 @@ describe('Inspect', () => {
 		render(
 			<QueryClientProvider client={queryClient}>
 				<Provider store={store}>
-					<Inspect {...defaultProps} />
+					<TimezoneProvider>
+						<Inspect {...defaultProps} />
+					</TimezoneProvider>
 				</Provider>
 			</QueryClientProvider>,
 		);
@@ -156,7 +161,9 @@ describe('Inspect', () => {
 		render(
 			<QueryClientProvider client={queryClient}>
 				<Provider store={store}>
-					<Inspect {...defaultProps} />
+					<TimezoneProvider>
+						<Inspect {...defaultProps} />
+					</TimezoneProvider>
 				</Provider>
 			</QueryClientProvider>,
 		);
@@ -173,7 +180,9 @@ describe('Inspect', () => {
 		render(
 			<QueryClientProvider client={queryClient}>
 				<Provider store={store}>
-					<Inspect {...defaultProps} />
+					<TimezoneProvider>
+						<Inspect {...defaultProps} />
+					</TimezoneProvider>
 				</Provider>
 			</QueryClientProvider>,
 		);
