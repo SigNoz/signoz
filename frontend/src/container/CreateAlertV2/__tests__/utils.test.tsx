@@ -316,6 +316,54 @@ describe('CreateAlertV2 utils', () => {
 		});
 	});
 
+	describe('getThresholdStateFromAlertDef for anomaly rules', () => {
+		const anomalyDef: PostableAlertRuleV2 = {
+			...defaultPostableAlertRuleV2,
+			ruleType: 'anomaly_rule',
+			condition: {
+				...defaultPostableAlertRuleV2.condition,
+				algorithm: 'standard',
+				seasonality: 'weekly',
+				thresholds: {
+					kind: 'basic',
+					spec: [
+						{
+							name: 'critical',
+							target: -3,
+							targetUnit: '',
+							channels: ['email'],
+							matchType: AlertThresholdMatchType.ALL_THE_TIME,
+							op: AlertThresholdOperator.IS_BELOW,
+						},
+					],
+				},
+			},
+			evaluation: {
+				kind: 'rolling',
+				spec: { evalWindow: '1h0m0s', frequency: '1m' },
+			},
+		};
+
+		it('shows deviations unsigned and restores the anomaly settings', () => {
+			expect(getThresholdStateFromAlertDef(anomalyDef)).toMatchObject({
+				operator: AlertThresholdOperator.IS_BELOW,
+				thresholds: [{ thresholdValue: 3 }],
+				algorithm: 'standard',
+				seasonality: 'weekly',
+				evaluationWindow: '1h0m0s',
+			});
+		});
+
+		it('keeps signed targets and the default window for threshold rules', () => {
+			const state = getThresholdStateFromAlertDef({
+				...anomalyDef,
+				ruleType: 'threshold_rule',
+			});
+			expect(state.thresholds[0].thresholdValue).toBe(-3);
+			expect(state.evaluationWindow).toBe('5m0s');
+		});
+	});
+
 	describe('getThresholdStateFromAlertDef null channels', () => {
 		it('falls back to an empty array so downstream consumers never see null', () => {
 			const def: PostableAlertRuleV2 = {
