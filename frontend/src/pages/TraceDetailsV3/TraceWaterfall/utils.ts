@@ -1,5 +1,38 @@
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
+type TraceWaterfallSidebarWidthOptions = {
+	indentWidthPerLevel: number;
+};
+
+const TREE_ARROW_SLOT_WIDTH = 18;
+const TREE_SUBTREE_COUNT_SLOT_WIDTH = 34;
+const TREE_ICON_TOTAL_WIDTH = 19;
+const TREE_SERVICE_NAME_GAP_WIDTH = 18;
+const TREE_ROW_ACTIONS_WIDTH = 64;
+const TREE_CONTENT_PADDING_WIDTH = 32;
+const TREE_FALLBACK_CHAR_WIDTH = 7.5;
+
+function measureTraceWaterfallTextWidth(text: string): number {
+	if (!text) {
+		return 0;
+	}
+
+	if (typeof document === 'undefined') {
+		return text.length * TREE_FALLBACK_CHAR_WIDTH;
+	}
+
+	const canvas = document.createElement('canvas');
+	const context = canvas.getContext('2d');
+
+	if (!context) {
+		return text.length * TREE_FALLBACK_CHAR_WIDTH;
+	}
+
+	context.font = '400 13px Inter';
+
+	return context.measureText(text).width;
+}
+
 /**
  * Computes the visible spans from a complete span list based on collapse state.
  *
@@ -59,4 +92,34 @@ export function getAncestorSpanIds(
 	}
 
 	return ancestors;
+}
+
+export function getTraceWaterfallSidebarContentWidth(
+	allSpans: SpanV3[],
+	sidebarWidth: number,
+	{ indentWidthPerLevel }: TraceWaterfallSidebarWidthOptions,
+): number {
+	if (allSpans.length === 0) {
+		return sidebarWidth;
+	}
+
+	const maxSpanWidth = allSpans.reduce((currentMax, span) => {
+		const baseWidth =
+			span.level * indentWidthPerLevel +
+			TREE_ARROW_SLOT_WIDTH +
+			TREE_SUBTREE_COUNT_SLOT_WIDTH +
+			TREE_ICON_TOTAL_WIDTH +
+			TREE_ROW_ACTIONS_WIDTH +
+			TREE_CONTENT_PADDING_WIDTH;
+
+		const labelWidth = measureTraceWaterfallTextWidth(span.name);
+		const serviceNameWidth = span['service.name']
+			? TREE_SERVICE_NAME_GAP_WIDTH +
+				measureTraceWaterfallTextWidth(span['service.name'])
+			: 0;
+
+		return Math.max(currentMax, Math.ceil(baseWidth + labelWidth + serviceNameWidth));
+	}, sidebarWidth);
+
+	return Math.max(sidebarWidth, maxSpanWidth);
 }
