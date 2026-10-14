@@ -12,6 +12,20 @@ import (
 
 var ErrCodeInvalidScopeExpression = errors.MustNewCode("invalid_scope_expression")
 
+// NilSafeMemberAccess rewrites every member access a.b into a?.b, so a dotted
+// label missing from the alert evaluates to nil instead of failing the run.
+type NilSafeMemberAccess struct{}
+
+func (NilSafeMemberAccess) Visit(node *ast.Node) {
+	member, ok := (*node).(*ast.MemberNode)
+	if !ok || member.Optional {
+		return
+	}
+	member.Optional = true
+	// The compiler only honours Optional inside a ChainNode.
+	ast.Patch(node, &ast.ChainNode{Node: member})
+}
+
 // ConvertLabelSetToEnv converts a label set into a map suitable for use as an
 // expr environment. Dotted keys (e.g. "kubernetes.node") are expanded into
 // nested maps so that expr can resolve them without panicking. When a dotted
@@ -73,7 +87,7 @@ func ConvertLabelSetToEnv(lset model.LabelSet) (map[string]any, bool) {
 // failure as "don't skip" so alerts pass through).
 func EvalScopeExpression(expression string, lset model.LabelSet) (bool, error) {
 	env, _ := ConvertLabelSetToEnv(lset)
-	program, err := expr.Compile(expression, expr.Env(env), expr.AllowUndefinedVariables(), expr.Patch(nilSafeMemberAccess{}))
+	program, err := expr.Compile(expression, expr.Env(env), expr.AllowUndefinedVariables(), expr.Patch(NilSafeMemberAccess{}))
 	if err != nil {
 		return false, errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeInvalidScopeExpression, "compile scope expression %q", expression)
 	}
@@ -86,18 +100,4 @@ func EvalScopeExpression(expression string, lset model.LabelSet) (bool, error) {
 		return false, errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidScopeExpression, "scope expression %q returned non-bool value %T (%v)", expression, output, output)
 	}
 	return result, nil
-}
-
-// nilSafeMemberAccess rewrites every member access a.b into a?.b, so a dotted
-// label missing from the alert evaluates to nil instead of failing the run.
-type nilSafeMemberAccess struct{}
-
-func (nilSafeMemberAccess) Visit(node *ast.Node) {
-	member, ok := (*node).(*ast.MemberNode)
-	if !ok || member.Optional {
-		return
-	}
-	member.Optional = true
-	// The compiler only honours Optional inside a ChainNode.
-	ast.Patch(node, &ast.ChainNode{Node: member})
 }

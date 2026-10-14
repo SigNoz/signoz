@@ -660,6 +660,38 @@ func TestProvider_EvaluateExpression(t *testing.T) {
 			},
 			expected: false,
 		},
+		{
+			name:       "missing dotted label - no match",
+			expression: `service.name = 'otel-demo'`,
+			labelSet: model.LabelSet{
+				"http.status_code": "501",
+			},
+			expected: false,
+		},
+		{
+			name:       "missing dotted label first in OR - other side matches",
+			expression: `service.name = 'otel-demo' OR http.status_code = '501'`,
+			labelSet: model.LabelSet{
+				"http.status_code": "501",
+			},
+			expected: true,
+		},
+		{
+			name:       "missing dotted label second in OR - other side matches",
+			expression: `http.status_code = '501' OR service.name = 'otel-demo'`,
+			labelSet: model.LabelSet{
+				"http.status_code": "501",
+			},
+			expected: true,
+		},
+		{
+			name:       "missing dotted label in AND - no match",
+			expression: `service.name = 'otel-demo' AND http.status_code = '501'`,
+			labelSet: model.LabelSet{
+				"http.status_code": "501",
+			},
+			expected: false,
+		},
 	}
 
 	for _, tt := range tests {

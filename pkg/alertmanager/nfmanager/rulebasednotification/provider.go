@@ -247,7 +247,7 @@ func (r *provider) convertLabelSetToEnv(ctx context.Context, labelSet model.Labe
 func (r *provider) evaluateExpr(ctx context.Context, expression string, labelSet model.LabelSet) (bool, error) {
 	env := r.convertLabelSetToEnv(ctx, labelSet)
 
-	program, err := expr.Compile(expression, expr.Env(env), expr.AllowUndefinedVariables())
+	program, err := expr.Compile(expression, expr.Env(env), expr.AllowUndefinedVariables(), expr.Patch(alertmanagertypes.NilSafeMemberAccess{}))
 	if err != nil {
 		return false, errors.NewInternalf(errors.CodeInternal, "error compiling route policy %s: %v", expression, err)
 	}
