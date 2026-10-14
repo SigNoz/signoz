@@ -71,7 +71,7 @@ var RepeatOnAllMap = map[RepeatOn]time.Weekday{
 type Recurrence struct {
 	Duration   valuer.TextDuration `json:"duration" required:"true"`
 	RepeatType RepeatType          `json:"repeatType" required:"true"`
-	RepeatOn   []RepeatOn          `json:"repeatOn"`
+	RepeatOn   []RepeatOn          `json:"repeatOn" description:"Required for weekly recurrence."`
 }
 
 func (r *Recurrence) Scan(src interface{}) error {
