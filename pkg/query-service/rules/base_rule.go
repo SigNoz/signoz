@@ -358,19 +358,11 @@ func (r *BaseRule) ActiveAlerts() []*ruletypes.Alert {
 }
 
 func (r *BaseRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay time.Duration, interval time.Duration, notifyFunc NotifyFunc) {
-	var orgID string
-	err := r.
-		sqlstore.
-		BunDB().
-		NewSelect().
-		Table("organizations").
-		ColumnExpr("id").
-		Limit(1).
-		Scan(ctx, &orgID)
-	if err != nil {
-		r.logger.ErrorContext(ctx, "failed to get org ids", errors.Attr(err))
+	if r.orgID.IsZero() {
+		r.logger.ErrorContext(ctx, "rule has no org id")
 		return
 	}
+	orgID := r.orgID.StringValue()
 
 	alerts := []*ruletypes.Alert{}
 	r.ForEachActiveAlert(func(alert *ruletypes.Alert) {
