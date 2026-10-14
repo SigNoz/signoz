@@ -13,8 +13,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// NewCreateChannelAttachExtractor resolves the channels a new rule names. The
-// rule does not exist yet, so there is nothing to diff against.
 func NewCreateChannelAttachExtractor(alertmanagerService alertmanager.Alertmanager) coretypes.ResourceIDsExtractor {
 	return coretypes.ResourceIDsExtractor{Phase: coretypes.PhaseRequest, Fn: func(ec coretypes.ExtractorContext) ([]string, error) {
 		if ec.Request == nil {
@@ -36,22 +34,18 @@ func NewCreateChannelAttachExtractor(alertmanagerService alertmanager.Alertmanag
 	}}
 }
 
-// NewReplaceChannelAttachExtractor resolves the channels a full rule update adds.
 func NewReplaceChannelAttachExtractor(alertmanagerService alertmanager.Alertmanager, rulerService ruler.Ruler) coretypes.ResourceIDsExtractor {
 	return newChannelDiffExtractor(alertmanagerService, rulerService, replacedChannels, attachedSide)
 }
 
-// NewReplaceChannelDetachExtractor resolves the channels a full rule update drops.
 func NewReplaceChannelDetachExtractor(alertmanagerService alertmanager.Alertmanager, rulerService ruler.Ruler) coretypes.ResourceIDsExtractor {
 	return newChannelDiffExtractor(alertmanagerService, rulerService, replacedChannels, detachedSide)
 }
 
-// NewPatchChannelAttachExtractor resolves the channels a partial rule update adds.
 func NewPatchChannelAttachExtractor(alertmanagerService alertmanager.Alertmanager, rulerService ruler.Ruler) coretypes.ResourceIDsExtractor {
 	return newChannelDiffExtractor(alertmanagerService, rulerService, patchedChannels, attachedSide)
 }
 
-// NewPatchChannelDetachExtractor resolves the channels a partial rule update drops.
 func NewPatchChannelDetachExtractor(alertmanagerService alertmanager.Alertmanager, rulerService ruler.Ruler) coretypes.ResourceIDsExtractor {
 	return newChannelDiffExtractor(alertmanagerService, rulerService, patchedChannels, detachedSide)
 }
@@ -63,8 +57,6 @@ const (
 
 type diffSide int
 
-// incomingChannelsFunc returns the channel names the rule holds once the write
-// lands, given the stored rule and the request body.
 type incomingChannelsFunc func(stored *ruletypes.GettableRule, body []byte) ([]string, error)
 
 func newChannelDiffExtractor(alertmanagerService alertmanager.Alertmanager, rulerService ruler.Ruler, incoming incomingChannelsFunc, side diffSide) coretypes.ResourceIDsExtractor {
@@ -104,22 +96,13 @@ func newChannelDiffExtractor(alertmanagerService alertmanager.Alertmanager, rule
 	}}
 }
 
-// replacedChannels mirrors EditRule, which overwrites the stored rule with the body.
 func replacedChannels(_ *ruletypes.GettableRule, body []byte) ([]string, error) {
 	return channelsFromBody(body)
 }
 
-// patchedChannels mirrors PatchRule, which unmarshals the body over the stored
-// rule, so a body omitting the condition leaves the channels untouched. The
-// round trip is what detaches the copy from the stored rule's nested pointers.
 func patchedChannels(stored *ruletypes.GettableRule, body []byte) ([]string, error) {
-	storedJSON, err := json.Marshal(stored.PostableRule)
+	patched, err := clonePostableRule(stored.PostableRule)
 	if err != nil {
-		return nil, err
-	}
-
-	patched := new(ruletypes.PostableRule)
-	if err := json.Unmarshal(storedJSON, patched); err != nil {
 		return nil, err
 	}
 
@@ -128,6 +111,20 @@ func patchedChannels(stored *ruletypes.GettableRule, body []byte) ([]string, err
 	}
 
 	return patched.Channels(), nil
+}
+
+func clonePostableRule(rule ruletypes.PostableRule) (*ruletypes.PostableRule, error) {
+	encoded, err := json.Marshal(rule)
+	if err != nil {
+		return nil, err
+	}
+
+	clone := new(ruletypes.PostableRule)
+	if err := json.Unmarshal(encoded, clone); err != nil {
+		return nil, err
+	}
+
+	return clone, nil
 }
 
 func channelsFromBody(body []byte) ([]string, error) {
@@ -139,8 +136,6 @@ func channelsFromBody(body []byte) ([]string, error) {
 	return rule.Channels(), nil
 }
 
-// resolveChannelIDs maps channel display names onto the ids authz objects are
-// keyed by. Names with no channel are dropped; the handler rejects them anyway.
 func resolveChannelIDs(ctx context.Context, alertmanagerService alertmanager.Alertmanager, orgID valuer.UUID, names []string) ([]string, error) {
 	if len(names) == 0 {
 		return nil, nil

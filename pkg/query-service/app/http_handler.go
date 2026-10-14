@@ -361,13 +361,6 @@ func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
 	writeHttpResponse(w, data)
 }
 
-func newScopedSecuritySchemes(scopes ...string) []handler.OpenAPISecurityScheme {
-	return []handler.OpenAPISecurityScheme{
-		{Name: authtypes.IdentNProviderAPIKey.StringValue(), Scopes: scopes},
-		{Name: authtypes.IdentNProviderTokenizer.StringValue(), Scopes: scopes},
-	}
-}
-
 func newRuleHistoryV1OpenAPIDef(id string) handler.OpenAPIDef {
 	return handler.OpenAPIDef{
 		ID:                id,
@@ -376,7 +369,7 @@ func newRuleHistoryV1OpenAPIDef(id string) handler.OpenAPIDef {
 		Description:       "Deprecated legacy endpoint. Use the v2 rule history routes.",
 		SuccessStatusCode: http.StatusOK,
 		Deprecated:        true,
-		SecuritySchemes:   newScopedSecuritySchemes(coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbRead)),
+		SecuritySchemes:   handler.NewScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbRead)}),
 	}
 }
 
@@ -404,7 +397,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 			Description:       "Deprecated legacy endpoint. Use ListRulesV3.",
 			SuccessStatusCode: http.StatusOK,
 			Deprecated:        true,
-			SecuritySchemes:   newScopedSecuritySchemes(coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbList)),
+			SecuritySchemes:   handler.NewScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbList)}),
 		},
 		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceMetaResourceRule,
@@ -422,7 +415,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 			Description:       "Deprecated legacy endpoint. Use GetRuleByID.",
 			SuccessStatusCode: http.StatusOK,
 			Deprecated:        true,
-			SecuritySchemes:   newScopedSecuritySchemes(coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbRead)),
+			SecuritySchemes:   handler.NewScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbRead)}),
 		},
 		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceMetaResourceRule,
@@ -441,11 +434,11 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 			Description:       "Deprecated legacy endpoint. Use CreateRule.",
 			SuccessStatusCode: http.StatusOK,
 			Deprecated:        true,
-			SecuritySchemes: newScopedSecuritySchemes(
+			SecuritySchemes: handler.NewScopedSecuritySchemes([]string{
 				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbCreate),
 				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbAttach),
 				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbAttach),
-			),
+			}),
 		},
 		handler.WithResourceDefs(
 			handler.BasicResourceDef{
@@ -476,13 +469,13 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 			Description:       "Deprecated legacy endpoint. Use UpdateRuleByID.",
 			SuccessStatusCode: http.StatusOK,
 			Deprecated:        true,
-			SecuritySchemes: newScopedSecuritySchemes(
+			SecuritySchemes: handler.NewScopedSecuritySchemes([]string{
 				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbUpdate),
 				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbAttach),
 				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbDetach),
 				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbAttach),
 				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbDetach),
-			),
+			}),
 		},
 		handler.WithResourceDefs(
 			handler.BasicResourceDef{
@@ -523,7 +516,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 			Description:       "Deprecated legacy endpoint. Use DeleteRuleByID.",
 			SuccessStatusCode: http.StatusOK,
 			Deprecated:        true,
-			SecuritySchemes:   newScopedSecuritySchemes(coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbDelete)),
+			SecuritySchemes:   handler.NewScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbDelete)}),
 		},
 		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceMetaResourceRule,
@@ -542,13 +535,13 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 			Description:       "Deprecated legacy endpoint. Use PatchRuleByID.",
 			SuccessStatusCode: http.StatusOK,
 			Deprecated:        true,
-			SecuritySchemes: newScopedSecuritySchemes(
+			SecuritySchemes: handler.NewScopedSecuritySchemes([]string{
 				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbUpdate),
 				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbAttach),
 				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbDetach),
 				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbAttach),
 				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbDetach),
-			),
+			}),
 		},
 		handler.WithResourceDefs(
 			handler.BasicResourceDef{
@@ -589,11 +582,11 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 			Description:       "Deprecated legacy endpoint. Use TestRule.",
 			SuccessStatusCode: http.StatusOK,
 			Deprecated:        true,
-			SecuritySchemes: newScopedSecuritySchemes(
+			SecuritySchemes: handler.NewScopedSecuritySchemes([]string{
 				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbCreate),
 				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbAttach),
 				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbAttach),
-			),
+			}),
 		},
 		handler.WithResourceDefs(
 			handler.BasicResourceDef{

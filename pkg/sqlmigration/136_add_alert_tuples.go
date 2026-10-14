@@ -54,9 +54,6 @@ func (migration *addAlertTuples) Up(ctx context.Context, db *bun.DB) error {
 
 	isPG := migration.sqlstore.BunDB().Dialect().Name() == dialect.PG
 
-	// rule, planned-maintenance and route-policy moved from role gates to
-	// CheckResources, which on enterprise requires real tuples -- existing orgs
-	// never had these written, only new orgs get them from the registry at bootstrap.
 	writeVerbs := []string{"create", "read", "update", "delete", "list"}
 	readVerbs := []string{"read", "list"}
 	linkVerbs := []string{"attach", "detach"}
@@ -91,8 +88,6 @@ func (migration *addAlertTuples) Up(ctx context.Context, db *bun.DB) error {
 			migrationTuple{authtypes.SigNozViewerRoleName, "metaresource", "route-policy", verb},
 		)
 	}
-	// 129 wrote notification-channel CRUD only; a rule or route policy naming a
-	// channel now needs attach, which editors must hold without channel writes.
 	for _, verb := range linkVerbs {
 		tuples = append(tuples,
 			migrationTuple{authtypes.SigNozAdminRoleName, "metaresource", "notification-channel", verb},

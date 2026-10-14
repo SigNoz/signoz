@@ -70,7 +70,6 @@ RULE_CONDITION = {
     "selectedQueryName": "A",
 }
 
-
 RULE_TEMPLATE = {
     "description": "authz coverage rule",
     "alertType": "METRIC_BASED_ALERT",
@@ -84,7 +83,6 @@ RULE_TEMPLATE = {
     "schemaVersion": "v2alpha1",
 }
 
-
 def test_setup_users_and_target(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -92,8 +90,6 @@ def test_setup_users_and_target(
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    # A rerun against a --reuse stack starts from the previous run's state, and
-    # inviting an existing address fails, so only invite what is missing.
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v2/users"),
         headers={"Authorization": f"Bearer {admin_token}"},
@@ -109,8 +105,6 @@ def test_setup_users_and_target(
         if email not in existing_emails:
             create_active_user(signoz, admin_token, email=email, role=role, password=password, name=name)
 
-    # Channel outlives this test (later tests reference it), so no fixture teardown;
-    # the suite's cleanup test deletes it.
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/channels"),
         headers={"Authorization": f"Bearer {admin_token}"},
@@ -152,7 +146,6 @@ def test_setup_users_and_target(
     )
     assert response.status_code == HTTPStatus.CREATED, response.text
 
-
 def test_viewer_allowed_on_reads(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -184,14 +177,11 @@ def test_viewer_allowed_on_reads(
         )
         assert response.status_code == HTTPStatus.OK, f"GET {path}: expected 200, got {response.status_code}: {response.text}"
 
-
 def test_viewer_allowed_on_rule_views(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    # Rule views ride on the rule list verb, which a viewer holds, so the whole
-    # CRUD surface is open to them.
     token = get_token(_VIEWER_EMAIL, _VIEWER_PASSWORD)
 
     response = requests.get(
@@ -217,7 +207,6 @@ def test_viewer_allowed_on_rule_views(
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
-
 def test_viewer_forbidden_on_mutations(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -234,7 +223,6 @@ def test_viewer_forbidden_on_mutations(
     ids = {rule["alert"]: rule["id"] for rule in response.json()["data"]["rules"]}
     target_id = ids[_TARGET_RULE]
 
-    # Authz runs before body parsing, so an empty body still proves the 403.
     for method, path in (
         ("post", V2_RULES_URL),
         ("put", f"{V2_RULES_URL}/{target_id}"),
@@ -260,7 +248,6 @@ def test_viewer_forbidden_on_mutations(
             timeout=5,
         )
         assert response.status_code == HTTPStatus.FORBIDDEN, f"{method.upper()} {path}: expected 403, got {response.status_code}: {response.text}"
-
 
 def test_editor_allowed_on_rule_and_downtime_mutations(
     signoz: SigNoz,
@@ -335,7 +322,6 @@ def test_editor_allowed_on_rule_and_downtime_mutations(
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
-
 def test_editor_forbidden_on_route_policy_writes(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -355,7 +341,6 @@ def test_editor_forbidden_on_route_policy_writes(
             timeout=5,
         )
         assert response.status_code == HTTPStatus.FORBIDDEN, f"{method.upper()} {path}: expected 403, got {response.status_code}: {response.text}"
-
 
 def test_admin_allowed_on_route_policy_writes(
     signoz: SigNoz,
@@ -385,14 +370,11 @@ def test_admin_allowed_on_route_policy_writes(
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
-
 def test_editor_allowed_on_downtime_naming_rules(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    # alertIds links the schedule to rules, so create needs rule attach and the
-    # update that drops the id needs rule detach.
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     token = get_token(_EDITOR_EMAIL, _EDITOR_PASSWORD)
 
@@ -438,14 +420,11 @@ def test_editor_allowed_on_downtime_naming_rules(
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
-
 def test_editor_allowed_on_rule_channel_changes(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    # Swapping the channel attaches one and detaches the other; the patch that
-    # leaves the condition alone must resolve to no link change at all.
     token = get_token(_EDITOR_EMAIL, _EDITOR_PASSWORD)
 
     response = requests.post(
@@ -488,10 +467,6 @@ def test_editor_allowed_on_rule_channel_changes(
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
-
-# ─── channel attach scoping (enterprise, custom role) ─────────────────────────
-
-
 def test_apply_license(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -500,15 +475,12 @@ def test_apply_license(
 ):
     add_license(signoz, make_http_mocks, get_token)
 
-
 def test_setup_channel_scoped_actor(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     create_role: Callable[..., str],
 ):
-    # Full rule writes including the rule side of the link, but nothing on the
-    # channel, so only the channel attach check can deny this actor.
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.get(
@@ -519,8 +491,6 @@ def test_setup_channel_scoped_actor(
     assert response.status_code == HTTPStatus.OK, response.text
     existing_role_ids = {role["name"]: role["id"] for role in response.json()["data"]}
 
-    # A rerun against a --reuse stack inherits the grants the last run ended on,
-    # so reset the role rather than creating it twice.
     if _ACTOR_ROLE_NAME in existing_role_ids:
         response = requests.put(
             signoz.self.host_configs["8080"].get(f"/api/v1/roles/{existing_role_ids[_ACTOR_ROLE_NAME]}"),
@@ -542,14 +512,11 @@ def test_setup_channel_scoped_actor(
         user_id = create_active_user(signoz, admin_token, email=_ACTOR_EMAIL, role="signoz-viewer", password=_ACTOR_PASSWORD, name="alert authz actor")
         change_user_role(signoz, admin_token, user_id, "signoz-viewer", _ACTOR_ROLE_NAME)
 
-
 def test_rule_without_channels_allowed_without_channel_attach(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    # A rule that names no channel resolves to no links, so the attach check
-    # never runs and rule create alone carries the request.
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
 
@@ -577,7 +544,6 @@ def test_rule_without_channels_allowed_without_channel_attach(
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
-
 def test_rule_naming_channel_forbidden_without_channel_attach(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -592,7 +558,6 @@ def test_rule_naming_channel_forbidden_without_channel_attach(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.FORBIDDEN, response.text
-
 
 def test_rule_naming_channel_allowed_once_channel_attach_granted(
     signoz: SigNoz,
@@ -627,7 +592,6 @@ def test_rule_naming_channel_allowed_once_channel_attach_granted(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
-
 
 def test_alert_authz_cleanup(
     signoz: SigNoz,

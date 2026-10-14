@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"reflect"
 
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 	"github.com/swaggest/jsonschema-go"
@@ -62,6 +63,13 @@ type OpenAPIDef struct {
 type OpenAPISecurityScheme struct {
 	Name   string
 	Scopes []string
+}
+
+func NewScopedSecuritySchemes(scopes []string) []OpenAPISecurityScheme {
+	return []OpenAPISecurityScheme{
+		{Name: authtypes.IdentNProviderAPIKey.StringValue(), Scopes: scopes},
+		{Name: authtypes.IdentNProviderTokenizer.StringValue(), Scopes: scopes},
+	}
 }
 
 // OpenAPICollector is a collector for OpenAPI operations.

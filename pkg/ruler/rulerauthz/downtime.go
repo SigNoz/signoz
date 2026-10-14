@@ -7,16 +7,12 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// DowntimeRuleIDsExtractor reads the rules a new downtime schedule silences.
-// A create has no stored schedule, so every id passed is an attach.
 var DowntimeRuleIDsExtractor = coretypes.BodyJSONArray("alertIds")
 
-// NewDowntimeRuleAttachExtractor resolves the rules a downtime schedule update adds.
 func NewDowntimeRuleAttachExtractor(rulerService ruler.Ruler) coretypes.ResourceIDsExtractor {
 	return newDowntimeDiffExtractor(rulerService, attachedSide)
 }
 
-// NewDowntimeRuleDetachExtractor resolves the rules a downtime schedule update drops.
 func NewDowntimeRuleDetachExtractor(rulerService ruler.Ruler) coretypes.ResourceIDsExtractor {
 	return newDowntimeDiffExtractor(rulerService, detachedSide)
 }

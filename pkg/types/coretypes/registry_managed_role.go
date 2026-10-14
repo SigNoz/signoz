@@ -287,7 +287,7 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionLimit}, WildCardSelectorString)},
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionLimit}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionLimit}, WildCardSelectorString)},
-		// notification-channel — read only (admin writes), attach/detach so rules can name a channel
+		// notification-channel — read only (admin writes)
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindNotificationChannel}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindNotificationChannel}, WildCardSelectorString)},
 		{Verb: VerbAttach, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindNotificationChannel}, WildCardSelectorString)},

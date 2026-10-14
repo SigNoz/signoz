@@ -1,7 +1,5 @@
 package coretypes
 
-// DiffLinks compares the links a resource currently holds against the ones a
-// write asks for. Duplicates collapse, so each id appears at most once.
 func DiffLinks(stored, incoming []string) (attached, detached []string) {
 	storedSet := make(map[string]struct{}, len(stored))
 	for _, id := range stored {

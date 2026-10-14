@@ -9,8 +9,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// NewCreateRoutePolicyChannelAttachExtractor resolves the channels a new route
-// policy names. The policy does not exist yet, so there is nothing to diff against.
 func NewCreateRoutePolicyChannelAttachExtractor(alertmanagerService alertmanager.Alertmanager) coretypes.ResourceIDsExtractor {
 	return coretypes.ResourceIDsExtractor{Phase: coretypes.PhaseRequest, Fn: func(ec coretypes.ExtractorContext) ([]string, error) {
 		if ec.Request == nil {
@@ -32,12 +30,10 @@ func NewCreateRoutePolicyChannelAttachExtractor(alertmanagerService alertmanager
 	}}
 }
 
-// NewUpdateRoutePolicyChannelAttachExtractor resolves the channels a route policy update adds.
 func NewUpdateRoutePolicyChannelAttachExtractor(alertmanagerService alertmanager.Alertmanager) coretypes.ResourceIDsExtractor {
 	return newRoutePolicyDiffExtractor(alertmanagerService, attachedSide)
 }
 
-// NewUpdateRoutePolicyChannelDetachExtractor resolves the channels a route policy update drops.
 func NewUpdateRoutePolicyChannelDetachExtractor(alertmanagerService alertmanager.Alertmanager) coretypes.ResourceIDsExtractor {
 	return newRoutePolicyDiffExtractor(alertmanagerService, detachedSide)
 }
