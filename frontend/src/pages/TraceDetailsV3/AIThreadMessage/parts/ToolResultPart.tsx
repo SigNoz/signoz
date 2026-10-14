@@ -10,6 +10,7 @@ import styles from '../AIThreadMessage.module.scss';
 interface ToolResultPartProps {
 	toolCallId: string;
 	toolCallKey: string;
+	type: 'tool_call_response' | 'server_tool_call_response';
 	name?: string;
 	content: string;
 	isError?: boolean;
@@ -20,6 +21,7 @@ interface ToolResultPartProps {
 function ToolResultPart({
 	toolCallId,
 	toolCallKey,
+	type,
 	name,
 	content,
 	isError,
@@ -39,7 +41,7 @@ function ToolResultPart({
 
 	const chip = (
 		<PartChip
-			label="tool_result"
+			label={type}
 			value={isInline ? content || '…' : name || toolCallId}
 			tone={isError ? 'error' : 'success'}
 		>

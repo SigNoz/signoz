@@ -1,5 +1,5 @@
 import CollapsibleBlock from '../CollapsibleBlock';
-import ExpandableText from '../ExpandableText';
+import TextContent from '../TextContent';
 
 import styles from '../AIThreadMessage.module.scss';
 
@@ -17,7 +17,7 @@ function ThinkingPart({
 	return (
 		<CollapsibleBlock label={label} isBoxed testId={testId}>
 			{content ? (
-				<ExpandableText text={content} isMarkdown />
+				<TextContent text={content} isMarkdown />
 			) : (
 				<span className={styles.empty}>Content not captured</span>
 			)}

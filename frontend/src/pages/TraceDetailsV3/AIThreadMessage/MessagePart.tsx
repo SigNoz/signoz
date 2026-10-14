@@ -36,6 +36,7 @@ function MessagePart({
 					id={part.id ?? ''}
 					name={part.name ?? ''}
 					args={part.arguments}
+					type={part.type}
 				/>
 			);
 		case 'server_tool_call':
@@ -44,7 +45,7 @@ function MessagePart({
 					id={part.id ?? ''}
 					name={part.name ?? ''}
 					args={part.server_tool_call}
-					server
+					type={part.type}
 				/>
 			);
 		case 'tool_call_response':
@@ -58,6 +59,7 @@ function MessagePart({
 				<ToolResultPart
 					toolCallId={toolCallId}
 					toolCallKey={toolCallKey}
+					type={part.type}
 					content={toDisplayText(
 						part.type === 'tool_call_response'
 							? part.response

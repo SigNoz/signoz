@@ -1,3 +1,5 @@
+import { attempt, isError, isObjectLike } from 'lodash-es';
+
 import { MediaMessagePart, ThreadMessage } from './types';
 
 export const MAX_TEXT_LENGTH = 1000;
@@ -39,16 +41,10 @@ export function getFinishReasonTone(reason?: string | null): MessageTone {
 
 /** Parses objects and arrays only; scalars and invalid JSON return undefined. */
 export function parseJsonObject(text: string): object | undefined {
-	const trimmed = text.trim();
-	if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {
-		return undefined;
-	}
-	try {
-		const parsed: unknown = JSON.parse(trimmed);
-		return typeof parsed === 'object' && parsed !== null ? parsed : undefined;
-	} catch {
-		return undefined;
-	}
+	const parsed: unknown = attempt(JSON.parse, text);
+	return isObjectLike(parsed) && !isError(parsed)
+		? (parsed as object)
+		: undefined;
 }
 
 export function toDisplayText(value: unknown): string {

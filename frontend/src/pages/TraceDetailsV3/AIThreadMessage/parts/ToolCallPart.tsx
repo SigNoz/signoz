@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { Badge } from '@signozhq/ui/badge';
 
 import JsonBlock from '../JsonBlock';
 import PartChip from '../PartChip';
@@ -12,14 +11,14 @@ interface ToolCallPartProps {
 	id: string;
 	name: string;
 	args: unknown;
-	server?: boolean;
+	type: 'tool_call' | 'server_tool_call';
 }
 
 function ToolCallPart({
 	id,
 	name,
 	args,
-	server,
+	type,
 }: ToolCallPartProps): JSX.Element {
 	// Streamed calls can carry truncated, unparseable argument strings.
 	const json = useMemo(() => {
@@ -29,25 +28,23 @@ function ToolCallPart({
 		return typeof args === 'object' && args !== null ? args : undefined;
 	}, [args]);
 
-	const toolCallAttr = { [TOOL_CALL_ID_ATTR]: toToolCallKey(id, !!server) };
+	const toolCallAttr = {
+		[TOOL_CALL_ID_ATTR]: toToolCallKey(id, type === 'server_tool_call'),
+	};
 
 	return (
 		<div className={styles.toolCall} {...toolCallAttr} data-testid="ai-tool-call">
 			<PartChip
-				label="tool_call"
+				label={type}
+				tone="info"
+				isPlain
 				value={
 					<>
 						<span className={styles.chipKey}>name :</span>
 						<span className={styles.toolName}>{name}</span>
 					</>
 				}
-			>
-				{server && (
-					<Badge color="secondary" variant="outline">
-						server
-					</Badge>
-				)}
-			</PartChip>
+			/>
 			{json ? (
 				<JsonBlock data={json} />
 			) : (
@@ -61,9 +58,5 @@ function ToolCallPart({
 		</div>
 	);
 }
-
-ToolCallPart.defaultProps = {
-	server: false,
-};
 
 export default ToolCallPart;

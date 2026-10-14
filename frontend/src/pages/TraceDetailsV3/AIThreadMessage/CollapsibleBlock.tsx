@@ -1,8 +1,11 @@
-import { MouseEvent, ReactNode, useState } from 'react';
+import { MouseEvent, ReactNode } from 'react';
 import { ChevronDown, ChevronUp } from '@signozhq/icons';
+import { Collapse } from 'antd';
 import cx from 'classnames';
 
 import styles from './AIThreadMessage.module.scss';
+
+const PANEL_KEY = 'content';
 
 interface CollapsibleBlockProps {
 	label: ReactNode;
@@ -18,26 +21,27 @@ function CollapsibleBlock({
 	testId,
 	children,
 }: CollapsibleBlockProps): JSX.Element {
-	const [isOpen, setIsOpen] = useState(false);
-
-	const handleToggle = (event: MouseEvent): void => {
-		event.stopPropagation();
-		setIsOpen((prev) => !prev);
+	// Toggling must not count as a click on the message card; the body still does.
+	const stopHeaderClick = (event: MouseEvent): void => {
+		if ((event.target as HTMLElement).closest('.ant-collapse-header')) {
+			event.stopPropagation();
+		}
 	};
 
 	return (
-		<div className={cx(styles.collapsible, isBoxed && styles.boxed)}>
-			<button
-				type="button"
-				className={styles.collapsibleToggle}
-				onClick={handleToggle}
-				aria-expanded={isOpen}
-				data-testid={testId}
-			>
-				<span className={styles.collapsibleLabel}>{label}</span>
-				{isOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-			</button>
-			{isOpen && <div className={styles.collapsibleBody}>{children}</div>}
+		// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+		<div onClick={stopHeaderClick}>
+			<Collapse
+				ghost
+				className={cx(styles.collapsible, isBoxed && styles.boxed)}
+				expandIconPosition="end"
+				expandIcon={({ isActive }): JSX.Element => (
+					<span className={styles.collapsibleChevron} data-testid={testId}>
+						{isActive ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+					</span>
+				)}
+				items={[{ key: PANEL_KEY, label, children }]}
+			/>
 		</div>
 	);
 }

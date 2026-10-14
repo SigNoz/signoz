@@ -1,3 +1,5 @@
+@use '../../../styles/scrollbar' as *;
+
 .message {
 	display: flex;
 	flex-direction: column;
@@ -85,6 +87,11 @@
 	font-size: var(--font-size-xs);
 	color: var(--l1-foreground);
 	min-width: 0;
+
+	&.isPlain {
+		padding: 0;
+		background: none;
+	}
 }
 
 .dot {
@@ -134,8 +141,10 @@
 }
 
 .toolName {
+	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	white-space: nowrap;
 	color: var(--accent-amber);
 }
 
@@ -155,6 +164,14 @@
 
 	&.isHighlighted {
 		outline-color: var(--primary);
+	}
+
+	// Large arguments scroll inside the block instead of stretching the card.
+	.json {
+		@include custom-scrollbar;
+
+		max-height: 240px;
+		overflow-y: auto;
 	}
 }
 
@@ -189,51 +206,69 @@
 }
 
 .collapsible {
-	display: flex;
-	flex-direction: column;
-	gap: var(--spacing-4);
 	min-width: 0;
 
+	:global(.ant-collapse-item) {
+		border: none;
+	}
+
+	:global(.ant-collapse-header) {
+		align-items: center !important;
+		gap: var(--spacing-2);
+		padding: 0 !important;
+		font-size: var(--font-size-xs);
+		color: var(--l2-foreground);
+	}
+
+	// Unboxed: the chevron sits right after the label.
+	:global(.ant-collapse-header-text) {
+		flex: none !important;
+		margin-inline-end: 0 !important;
+		font-weight: var(--font-weight-medium);
+		color: var(--l1-foreground);
+	}
+
+	:global(.ant-collapse-expand-icon) {
+		height: auto !important;
+		padding-inline-start: 0 !important;
+	}
+
+	:global(.ant-collapse-content-box) {
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+		padding: var(--spacing-4) 0 0 !important;
+	}
+
 	&.boxed {
-		gap: 0;
 		border: 1px solid var(--l2-border);
 		border-radius: var(--radius-2);
 		background: var(--l2-background);
 
-		.collapsibleToggle {
-			justify-content: space-between;
-			padding: var(--spacing-3) var(--spacing-5);
+		:global(.ant-collapse-header) {
+			padding: var(--spacing-3) var(--spacing-5) !important;
 		}
 
-		.collapsibleBody {
-			padding: 0 var(--spacing-5) var(--spacing-4);
+		:global(.ant-collapse-header-text) {
+			flex: auto !important;
+		}
+
+		:global(.ant-collapse-content-box) {
+			padding: 0 var(--spacing-5) var(--spacing-4) !important;
+		}
+
+		// The block is the box; nested text drops its own.
+		.textBox {
+			padding: 0;
+			border: none;
+			background: none;
 		}
 	}
 }
 
-.collapsibleToggle {
+.collapsibleChevron {
 	display: flex;
-	align-items: center;
-	gap: var(--spacing-2);
-	min-width: 0;
-	padding: 0;
-	border: none;
-	background: none;
-	font-size: var(--font-size-xs);
 	color: var(--l2-foreground);
-	cursor: pointer;
-	text-align: left;
-}
-
-.collapsibleLabel {
-	font-weight: var(--font-weight-medium);
-	color: var(--l1-foreground);
-}
-
-.collapsibleBody {
-	display: flex;
-	flex-direction: column;
-	min-width: 0;
 }
 
 .json {
