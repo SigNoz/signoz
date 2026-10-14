@@ -13022,8 +13022,12 @@ paths:
       security:
       - api_key:
         - planned-maintenance:create
+        - planned-maintenance:attach
+        - rule:attach
       - tokenizer:
         - planned-maintenance:create
+        - planned-maintenance:attach
+        - rule:attach
       summary: Create downtime schedule
       tags:
       - downtimeschedules
@@ -13184,8 +13188,16 @@ paths:
       security:
       - api_key:
         - planned-maintenance:update
+        - planned-maintenance:attach
+        - planned-maintenance:detach
+        - rule:attach
+        - rule:detach
       - tokenizer:
         - planned-maintenance:update
+        - planned-maintenance:attach
+        - planned-maintenance:detach
+        - rule:attach
+        - rule:detach
       summary: Update downtime schedule
       tags:
       - downtimeschedules
@@ -14465,8 +14477,12 @@ paths:
       security:
       - api_key:
         - route-policy:create
+        - route-policy:attach
+        - notification-channel:attach
       - tokenizer:
         - route-policy:create
+        - route-policy:attach
+        - notification-channel:attach
       summary: Create route policy
       tags:
       - routepolicies
@@ -14639,8 +14655,16 @@ paths:
       security:
       - api_key:
         - route-policy:update
+        - route-policy:attach
+        - route-policy:detach
+        - notification-channel:attach
+        - notification-channel:detach
       - tokenizer:
         - route-policy:update
+        - route-policy:attach
+        - route-policy:detach
+        - notification-channel:attach
+        - notification-channel:detach
       summary: Update route policy
       tags:
       - routepolicies
@@ -23114,8 +23138,12 @@ paths:
       security:
       - api_key:
         - rule:create
+        - rule:attach
+        - notification-channel:attach
       - tokenizer:
         - rule:create
+        - rule:attach
+        - notification-channel:attach
       summary: Create alert rule
       tags:
       - rules
@@ -24072,8 +24100,16 @@ paths:
       security:
       - api_key:
         - rule:update
+        - rule:attach
+        - rule:detach
+        - notification-channel:attach
+        - notification-channel:detach
       - tokenizer:
         - rule:update
+        - rule:attach
+        - rule:detach
+        - notification-channel:attach
+        - notification-channel:detach
       summary: Patch alert rule
       tags:
       - rules
@@ -24913,8 +24949,16 @@ paths:
       security:
       - api_key:
         - rule:update
+        - rule:attach
+        - rule:detach
+        - notification-channel:attach
+        - notification-channel:detach
       - tokenizer:
         - rule:update
+        - rule:attach
+        - rule:detach
+        - notification-channel:attach
+        - notification-channel:detach
       summary: Update alert rule
       tags:
       - rules
@@ -26281,8 +26325,12 @@ paths:
       security:
       - api_key:
         - rule:create
+        - rule:attach
+        - notification-channel:attach
       - tokenizer:
         - rule:create
+        - rule:attach
+        - notification-channel:attach
       summary: Test alert rule
       tags:
       - rules
