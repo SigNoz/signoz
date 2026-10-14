@@ -110,7 +110,7 @@ describe('PanelHeader title and description', () => {
 				},
 			},
 		});
-		renderWithProvider(
+		render(
 			<PanelHeader
 				{...baseProps}
 				panel={makePanel({ name: 'Latency of $service ({{missing}})' })}

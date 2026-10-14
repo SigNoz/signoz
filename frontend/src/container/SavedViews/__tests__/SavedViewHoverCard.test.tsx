@@ -197,9 +197,7 @@ describe('SavedViewHoverCard', () => {
 			await renderPanel();
 			openCard('Errors');
 
-			fireEvent.pointerDown(
-				within(row('Errors')).getByTestId('saved-views-row-menu'),
-			);
+			fireEvent.click(within(row('Errors')).getByTestId('saved-views-row-menu'));
 
 			expect(card()).toBeNull();
 		});

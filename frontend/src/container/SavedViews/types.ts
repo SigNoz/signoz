@@ -137,8 +137,6 @@ export interface SavedViewsRowButtonProps {
 	tooltip?: string;
 	testId: string;
 	onClick?: () => void;
-	onPointerDown?: () => void;
-	onKeyDown?: () => void;
 }
 
 export interface SavedViewsRowMenuProps {
