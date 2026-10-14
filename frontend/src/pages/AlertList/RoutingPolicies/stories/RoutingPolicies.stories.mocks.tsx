@@ -17,7 +17,7 @@ import {
 import {
 	CHANNEL_MAX,
 	channelNames,
-	channelsResponse,
+	notificationChannelsResponse,
 } from '../../stories/__story_mockdata__/alerts';
 import { AlertListSubTabs, AlertListTabs } from '../../types';
 
@@ -118,10 +118,10 @@ export const routingPoliciesMocks = defineStoryMocks({
 				: res(ctx.status(200), ctx.json({ status: 'success', data: null })),
 		),
 
-		rest.get('http://localhost/api/v1/channels', (_req, res, ctx) =>
+		rest.get('http://localhost/api/v2/notification_channels', (_req, res, ctx) =>
 			values.channelsState === 'error'
 				? res(ctx.status(500), ctx.json({ status: 'error' }))
-				: res(ctx.json(channelsResponse(values.channels))),
+				: res(ctx.json(notificationChannelsResponse(values.channels))),
 		),
 	],
 	config: () => ({
