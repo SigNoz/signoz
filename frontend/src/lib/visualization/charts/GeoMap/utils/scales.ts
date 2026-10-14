@@ -7,6 +7,10 @@ import { ColorRampMode } from 'lib/visualization/colorRamp/types';
 
 import { GeoMapColors, GeoMapDatum } from '../types';
 
+/** Enough of the palette's background-coloured end to skip that the lowest
+ *  value stays apart from the map's background and no-data fill in either theme. */
+const PALETTE_START = 0.25;
+
 export interface GeoMapRank {
 	rank: number;
 	share: number;
@@ -58,5 +62,8 @@ export function createGeoMapColorResolver(
 		domain: resolveColorDomain(options, [data.map((datum) => datum.value)]),
 		isDarkMode,
 		seriesColor: '',
+		paletteStart: PALETTE_START,
+		// Zero is a measured value; the surface colour would read as ocean.
+		fillZero: false,
 	});
 }
