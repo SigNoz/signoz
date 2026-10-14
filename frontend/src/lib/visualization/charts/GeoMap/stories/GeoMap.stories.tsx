@@ -72,6 +72,16 @@ export const ErrorRateWorld: Story = {
 				'geo.country.iso_code',
 			),
 		);
+		await expect(screen.queryByTestId('geo-map-tooltip')).toBeNull();
+
+		const backdrop = document.querySelector<HTMLElement>(
+			'.context-menu-backdrop',
+		);
+		await expect(backdrop).not.toBeNull();
+		await userEvent.click(backdrop as HTMLElement);
+		await waitFor(() =>
+			expect(screen.queryByTestId('geo-map-drilldown-menu')).toBeNull(),
+		);
 	},
 };
 

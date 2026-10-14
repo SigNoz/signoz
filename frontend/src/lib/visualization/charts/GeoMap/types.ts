@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import {
 	ColorRampPalette,
 	ColorRampScale,
@@ -88,5 +89,7 @@ export interface GeoMapProps {
 	bubbleRadius: [number, number];
 	formatValue: (value: number) => string;
 	isDarkMode: boolean;
+	/** Hides the tooltip; the caller opens its drilldown menu from this. */
 	onSelect?: (selection: GeoMapSelection) => void;
+	renderTooltipFooter?: () => ReactNode;
 }

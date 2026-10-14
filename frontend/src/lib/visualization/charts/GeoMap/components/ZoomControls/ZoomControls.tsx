@@ -22,7 +22,7 @@ export default function ZoomControls({
 	return (
 		<div className={styles.controls} data-testid="geo-map-zoom-controls">
 			<Button
-				variant="outlined"
+				variant="solid"
 				color="secondary"
 				size="icon"
 				aria-label="Zoom in"
@@ -33,7 +33,7 @@ export default function ZoomControls({
 				data-testid="geo-map-zoom-in"
 			/>
 			<Button
-				variant="outlined"
+				variant="solid"
 				color="secondary"
 				size="icon"
 				aria-label="Zoom out"
@@ -44,7 +44,7 @@ export default function ZoomControls({
 				data-testid="geo-map-zoom-out"
 			/>
 			<Button
-				variant="outlined"
+				variant="solid"
 				color="secondary"
 				size="icon"
 				aria-label="Reset view"
