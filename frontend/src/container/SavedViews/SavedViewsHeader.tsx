@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import cx from 'classnames';
-import { ArrowUpToLine, Menu, Plus, Undo2, X } from '@signozhq/icons';
+import { ArrowUpToLine, List, Plus, Undo2, X } from '@signozhq/icons';
 import { Skeleton } from '@signozhq/ui/skeleton';
 import { toast } from '@signozhq/ui/sonner';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
@@ -63,27 +63,37 @@ function SavedViewsHeader({
 			data-testid="saved-views-header"
 			data-source={source}
 		>
-			{isLoading ? (
-				<Skeleton.Input
-					active
-					size="small"
-					className={styles.skeleton}
-					testId="saved-views-loading"
-				/>
-			) : (
-				<TooltipSimple title={name}>
-					<span
-						className={cx(styles.name, {
-							[styles.isDirty]: isDirty,
-							[styles.isError]: isError,
-						})}
-						data-testid="saved-views-name"
-					>
-						{isDirty && <span className={styles.dot} />}
-						<span className={styles.nameText}>{name}</span>
-					</span>
-				</TooltipSimple>
-			)}
+			<div className={styles.viewTitle}>
+				{!isDirty && onOpenViews && (
+					<SavedViewsIconButton
+						title="All views"
+						icon={<List size={14} />}
+						onClick={onOpenViews}
+						testId="saved-views-open"
+					/>
+				)}
+				{isLoading ? (
+					<Skeleton.Input
+						active
+						size="small"
+						className={styles.skeleton}
+						testId="saved-views-loading"
+					/>
+				) : (
+					<TooltipSimple title={name}>
+						<span
+							className={cx(styles.name, {
+								[styles.isDirty]: isDirty,
+								[styles.isError]: isError,
+							})}
+							data-testid="saved-views-name"
+						>
+							{isDirty && <span className={styles.dot} />}
+							<span className={styles.nameText}>{name}</span>
+						</span>
+					</TooltipSimple>
+				)}
+			</div>
 
 			<div className={styles.actions}>
 				{!view && (
@@ -121,14 +131,6 @@ function SavedViewsHeader({
 							testId="saved-views-discard"
 						/>
 					</>
-				)}
-				{!isDirty && onOpenViews && (
-					<SavedViewsIconButton
-						title="All views"
-						icon={<Menu size={14} />}
-						onClick={onOpenViews}
-						testId="saved-views-open"
-					/>
 				)}
 				{onCollapse && (
 					<SavedViewsIconButton
