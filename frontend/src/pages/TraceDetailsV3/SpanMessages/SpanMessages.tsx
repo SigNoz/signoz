@@ -30,11 +30,7 @@ function SpanMessages({
 	const callbacks = { canLinkToToolCall, onToolLinkClick };
 
 	if (!hasAnyMessages(data)) {
-		return (
-			<div className={styles.missing}>
-				This span has no input or output messages.
-			</div>
-		);
+		return (<></>) as JSX.Element;
 	}
 
 	return (

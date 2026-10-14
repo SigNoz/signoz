@@ -1,5 +1,6 @@
-import { ReactNode, useState } from 'react';
+import { MouseEvent, ReactNode, useState } from 'react';
 import { ChevronDown, ChevronUp } from '@signozhq/icons';
+import { Collapse } from 'antd';
 
 import { AIThreadMessageProps } from '../../AIThreadMessage/AIThreadMessage';
 import { ThreadMessage } from '../../AIThreadMessage/types';
@@ -9,6 +10,8 @@ import { ThreadView } from '../../TraceDetailsThread/types';
 import ThreadViewToggle from '../../TraceDetailsThread/ThreadViewToggle';
 
 import styles from './MessagesAccordion.module.scss';
+
+const PANEL_KEY = 'messages';
 
 interface MessagesAccordionProps extends Pick<
 	AIThreadMessageProps,
@@ -31,7 +34,7 @@ function MessagesAccordion({
 	canLinkToToolCall,
 	onToolLinkClick,
 }: MessagesAccordionProps): JSX.Element | null {
-	const [isOpen, setIsOpen] = useState(true);
+	const [isOpen, setIsOpen] = useState(false);
 	const [view, setView] = useState(ThreadView.Formatted);
 	const canFormat = messages.length > 0;
 	const effectiveView = canFormat ? view : ThreadView.Json;
@@ -40,44 +43,55 @@ function MessagesAccordion({
 		return null;
 	}
 
+	const stopToggle = (event: MouseEvent): void => event.stopPropagation();
+
 	return (
-		<section className={styles.accordion} data-testid={testId}>
-			<div className={styles.header}>
-				<span className={styles.title}>
-					{icon}
-					{title}
-				</span>
-				{isOpen && canFormat && (
-					<ThreadViewToggle
-						value={effectiveView}
-						onChange={setView}
-						testId={`${testId}-view-toggle`}
-					/>
+		<section data-testid={testId}>
+			<Collapse
+				className={styles.accordion}
+				activeKey={isOpen ? [PANEL_KEY] : []}
+				onChange={(): void => setIsOpen((prev) => !prev)}
+				expandIconPosition="end"
+				expandIcon={({ isActive }): JSX.Element => (
+					<span className={styles.chevron} data-testid={`${testId}-toggle`}>
+						{isActive ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+					</span>
 				)}
-				<button
-					type="button"
-					className={styles.chevron}
-					onClick={(): void => setIsOpen((prev) => !prev)}
-					aria-expanded={isOpen}
-					aria-label={`Toggle ${title}`}
-					data-testid={`${testId}-toggle`}
-				>
-					{isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-				</button>
-			</div>
-			{isOpen && (
-				<div className={styles.body}>
-					<MessagesSection
-						view={effectiveView}
-						messages={messages}
-						raw={raw}
-						testId={`${testId}-body`}
-						isOutput={isOutput}
-						canLinkToToolCall={canLinkToToolCall}
-						onToolLinkClick={onToolLinkClick}
-					/>
-				</div>
-			)}
+				items={[
+					{
+						key: PANEL_KEY,
+						label: (
+							<span className={styles.title}>
+								{icon}
+								{title}
+							</span>
+						),
+						extra: isOpen &&
+							canFormat && (
+								// The view toggle lives in the header; its clicks must not fold the panel.
+								// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+								<span onClick={stopToggle}>
+									<ThreadViewToggle
+										value={effectiveView}
+										onChange={setView}
+										testId={`${testId}-view-toggle`}
+									/>
+								</span>
+							),
+						children: (
+							<MessagesSection
+								view={effectiveView}
+								messages={messages}
+								raw={raw}
+								testId={`${testId}-body`}
+								isOutput={isOutput}
+								canLinkToToolCall={canLinkToToolCall}
+								onToolLinkClick={onToolLinkClick}
+							/>
+						),
+					},
+				]}
+			/>
 		</section>
 	);
 }

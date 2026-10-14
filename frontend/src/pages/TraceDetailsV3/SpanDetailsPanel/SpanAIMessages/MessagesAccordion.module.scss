@@ -1,19 +1,32 @@
 @use '../../../../styles/scrollbar' as *;
 
 .accordion {
-	display: flex;
-	flex-direction: column;
 	border: 1px solid var(--l2-border);
 	border-radius: var(--radius-2);
 	background: var(--l2-background);
-}
 
-.header {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-4);
-	height: 40px;
-	padding: 0 var(--spacing-4);
+	:global(.ant-collapse-item) {
+		border: none;
+	}
+
+	:global(.ant-collapse-header) {
+		align-items: center !important;
+		height: 40px;
+		padding: 0 var(--spacing-4) !important;
+	}
+
+	:global(.ant-collapse-content) {
+		background: transparent;
+		border-top: 1px solid var(--l2-border);
+	}
+
+	:global(.ant-collapse-content-box) {
+		@include custom-scrollbar;
+
+		max-height: 150px;
+		overflow-y: auto;
+		padding: var(--spacing-4) !important;
+	}
 }
 
 .title {
@@ -26,19 +39,5 @@
 
 .chevron {
 	display: flex;
-	margin-left: auto;
-	padding: var(--spacing-2);
-	border: none;
-	background: none;
 	color: var(--l2-foreground);
-	cursor: pointer;
-}
-
-.body {
-	@include custom-scrollbar;
-
-	max-height: 150px;
-	overflow-y: auto;
-	padding: var(--spacing-4);
-	border-top: 1px solid var(--l2-border);
 }
