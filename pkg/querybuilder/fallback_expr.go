@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"regexp"
 	"strconv"
+	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/clickhousesql"
@@ -207,12 +208,20 @@ func ColumnIsTemporal(col *schema.Column) bool {
 	return false
 }
 
-func castFloat(col string) string     { return fmt.Sprintf("toFloat64OrNull(%s)", col) }
-func castFloatHack(col string) string { return fmt.Sprintf("toFloat64(%s)", col) }
-func castString(col string) string    { return fmt.Sprintf("toString(%s)", col) }
-func castBool(col string) string      { return fmt.Sprintf("accurateCastOrNull(%s, 'Bool')", col) }
+func castFloat(col string) string  { return fmt.Sprintf("toFloat64OrNull(%s)", col) }
+func castString(col string) string { return fmt.Sprintf("toString(%s)", col) }
+func castBool(col string) string   { return fmt.Sprintf("accurateCastOrNull(%s, 'Bool')", col) }
 func accurateCastFloat(col string) string {
 	return fmt.Sprintf("accurateCastOrNull(%s, 'Float64')", col)
+}
+
+// castFloatHack leaves a read already cast to Float64 bare: the wrapper would hide it from
+// its skip index.
+func castFloatHack(col string) string {
+	if strings.HasPrefix(col, "toFloat64OrNull(") {
+		return col
+	}
+	return fmt.Sprintf("toFloat64(%s)", col)
 }
 
 func allFloats(in []any) bool {
