@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useGetSavedView } from 'api/generated/services/saved-view';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { getViewColumnsAndFormatting } from 'container/SavedViews/utils/getViewColumnsAndFormatting';
@@ -25,7 +25,7 @@ export function usePreferenceSync({
 	updateFormatting: (newFormatting: FormattingOptions) => void;
 } {
 	const isSavedViewMode = mode === PreferenceMode.SAVED_VIEW && !!savedViewId;
-	const { data: viewData, dataUpdatedAt } = useGetSavedView(
+	const { data: viewData } = useGetSavedView(
 		{ id: savedViewId ?? '' },
 		{ query: { enabled: isSavedViewMode } },
 	);
@@ -33,13 +33,21 @@ export function usePreferenceSync({
 	const [savedViewPreferences, setSavedViewPreferences] =
 		useState<Preferences | null>(null);
 
-	// dataUpdatedAt re-runs this on a refetch that returns the same view, so
-	// discarding restores columns edited in memory.
+	// Seeded once per view: a refetch of the same view keeps columns edited in
+	// memory. Discard writes the saved ones back through the updater.
+	const seededViewId = useRef<string>();
 	useEffect(() => {
 		const view = viewData?.data;
-		const spec = view && view.id === savedViewId ? view.spec : undefined;
-		setSavedViewPreferences(getViewColumnsAndFormatting(spec, dataSource));
-	}, [viewData, dataUpdatedAt, dataSource, savedViewId, mode]);
+		if (view && view.id === savedViewId) {
+			if (seededViewId.current !== savedViewId) {
+				seededViewId.current = savedViewId;
+				setSavedViewPreferences(getViewColumnsAndFormatting(view.spec, dataSource));
+			}
+			return;
+		}
+		seededViewId.current = undefined;
+		setSavedViewPreferences(getViewColumnsAndFormatting(undefined, dataSource));
+	}, [viewData, dataSource, savedViewId]);
 
 	// We are using a reSync state because we have URL updates as well as local storage updates
 	// and we want to make sure we are always using the latest preferences
