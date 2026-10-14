@@ -478,6 +478,11 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 		stats["cloudintegration.azure.connectedaccounts.count"] = azureAccountsCount
 	}
 
+	gcpAccountsCount, err := module.store.CountConnectedAccounts(ctx, orgID, cloudintegrationtypes.CloudProviderTypeGCP)
+	if err == nil {
+		stats["cloudintegration.gcp.connectedaccounts.count"] = gcpAccountsCount
+	}
+
 	// NOTE: not adding stats for services for now.
 
 	return stats, nil
