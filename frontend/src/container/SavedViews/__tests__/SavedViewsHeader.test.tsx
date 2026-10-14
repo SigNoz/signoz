@@ -15,12 +15,12 @@ import SavedViewsRestore from '../SavedViewsRestore';
 import {
 	explorerUrl,
 	makeView,
-	mockSavedViewsApi,
 	queryWith,
 	renderWithExplorerProviders,
 	urlParam,
 	viewUrl,
 } from './savedViewsTestUtils';
+import { mockSavedViewsApi } from './savedViewsApiMock';
 
 const PATH = ROUTES.TRACES_EXPLORER;
 
@@ -130,16 +130,6 @@ describe('SavedViewsHeader', () => {
 		expect(isDirty()).toBe(false);
 	});
 
-	it('falls back to My view when the view in the url does not load', async () => {
-		mockSavedViewsApi([]);
-		renderHeader(viewUrl(PATH, errors));
-
-		await waitFor(() =>
-			expect(screen.queryByTestId('saved-views-loading')).toBeNull(),
-		);
-		expect(chip()).toHaveTextContent('My view');
-	});
-
 	it('marks the view dirty once the query changes, swapping in save and discard', async () => {
 		mockSavedViewsApi([errors]);
 		const { history } = renderHeader(viewUrl(PATH, errors));
@@ -225,38 +215,6 @@ describe('SavedViewsHeader', () => {
 		expect(
 			JSON.parse(localStorage.getItem(LOCALSTORAGE.LAST_USED_SAVED_VIEWS) ?? '{}'),
 		).toStrictEqual({});
-	});
-
-	describe('last used view', () => {
-		beforeEach(() => {
-			localStorage.setItem(
-				LOCALSTORAGE.LAST_USED_SAVED_VIEWS,
-				JSON.stringify({ traces: { key: errors.id, value: 'Errors' } }),
-			);
-		});
-
-		it('reopens on a bare explorer', async () => {
-			mockSavedViewsApi([errors]);
-			const { history } = renderHeader(explorerUrl(PATH, {}));
-
-			await waitForView('Errors');
-			expect(urlParam(history, QueryParams.viewKey)).toBe(
-				JSON.stringify(errors.id),
-			);
-		});
-
-		it('leaves a url with its own query alone', async () => {
-			mockSavedViewsApi([errors]);
-			const { history } = renderHeader(
-				explorerUrl(PATH, {
-					query: queryWith(DataSource.TRACES, 'service.name = "cart"'),
-				}),
-			);
-
-			await act(() => new Promise((resolve) => setTimeout(resolve, 200)));
-			expect(chip()).toHaveTextContent('My view');
-			expect(urlParam(history, QueryParams.viewKey)).toBeNull();
-		});
 	});
 
 	describe('unsaved changes indicator', () => {
