@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "definition": {
     "name": "gen_ai.tool",
     "condition": {
@@ -15,6 +15,9 @@
         },
         {
           "value": "tool_response"
+        },
+        {
+          "value": "tool_name"
         }
       ],
       "resource": []
@@ -30,10 +33,16 @@
               "key": "tool.name",
               "context": "attribute",
               "operation": "copy",
-              "priority": 20
+              "priority": 30
             },
             {
               "key": "ai.toolCall.name",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 20
+            },
+            {
+              "key": "tool_name",
               "context": "attribute",
               "operation": "copy",
               "priority": 10
@@ -132,6 +141,32 @@
             },
             {
               "key": "output.value",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 10
+            }
+          ]
+        }
+      },
+      {
+        "name": "gen_ai.operation.name",
+        "fieldContext": "attribute",
+        "config": {
+          "sources": [
+            {
+              "key": "openinference.span.kind",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 30
+            },
+            {
+              "key": "llm.request.type",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 20
+            },
+            {
+              "key": "traceloop.span.kind",
               "context": "attribute",
               "operation": "copy",
               "priority": 10

@@ -21,10 +21,16 @@
               "key": "agent.name",
               "context": "attribute",
               "operation": "copy",
-              "priority": 20
+              "priority": 30
             },
             {
               "key": "agent_name",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 20
+            },
+            {
+              "key": "crewai.agent.role",
               "context": "attribute",
               "operation": "copy",
               "priority": 10
@@ -39,6 +45,18 @@
           "sources": [
             {
               "key": "agent.id",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 30
+            },
+            {
+              "key": "crewai.agent.id",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 20
+            },
+            {
+              "key": "agent_id",
               "context": "attribute",
               "operation": "copy",
               "priority": 10
@@ -69,6 +87,32 @@
               "key": "final_result",
               "context": "attribute",
               "operation": "move",
+              "priority": 10
+            }
+          ]
+        }
+      },
+      {
+        "name": "gen_ai.operation.name",
+        "fieldContext": "attribute",
+        "config": {
+          "sources": [
+            {
+              "key": "openinference.span.kind",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 30
+            },
+            {
+              "key": "llm.request.type",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 20
+            },
+            {
+              "key": "traceloop.span.kind",
+              "context": "attribute",
+              "operation": "copy",
               "priority": 10
             }
           ]
