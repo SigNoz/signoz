@@ -287,6 +287,86 @@ describe('hasUnsavedViewChanges', () => {
 		).toBe(false);
 	});
 
+	describe('list order', () => {
+		const withOrderBy = (
+			staged: Query,
+			orderBy: Query['builder']['queryData'][number]['orderBy'],
+		): Query => ({
+			...staged,
+			builder: {
+				...staged.builder,
+				queryData: staged.builder.queryData.map((queryData) => ({
+					...queryData,
+					orderBy,
+				})),
+			},
+		});
+
+		const listView = (
+			orderBy: Query['builder']['queryData'][number]['orderBy'],
+		) =>
+			viewFrom(
+				toSavedViewSpec({
+					query: withOrderBy(query(DataSource.LOGS), orderBy),
+					panelType: PANEL_TYPES.LIST,
+					displayName: 'Errors',
+				}),
+			);
+
+		it('opens a view saved with no order clean', () => {
+			const noOrder = listView([]);
+
+			expect(noOrder.spec.queries[0].spec).not.toHaveProperty('order');
+			expect(
+				hasUnsavedViewChanges({
+					view: noOrder,
+					stagedQuery: stagedFrom(noOrder, DataSource.LOGS),
+					panelType: PANEL_TYPES.LIST,
+				}),
+			).toBe(false);
+		});
+
+		it('is dirty once the sort changes, and clean again after saving it', () => {
+			const noOrder = listView([]);
+			const sorted = withOrderBy(stagedFrom(noOrder, DataSource.LOGS), [
+				{ columnName: 'timestamp', order: 'asc' },
+			]);
+
+			expect(
+				hasUnsavedViewChanges({
+					view: noOrder,
+					stagedQuery: sorted,
+					panelType: PANEL_TYPES.LIST,
+				}),
+			).toBe(true);
+
+			const saved = listView([{ columnName: 'timestamp', order: 'asc' }]);
+			expect(
+				hasUnsavedViewChanges({
+					view: saved,
+					stagedQuery: stagedFrom(saved, DataSource.LOGS),
+					panelType: PANEL_TYPES.LIST,
+				}),
+			).toBe(false);
+		});
+
+		it('opens a legacy view sorted by timestamp and id clean', () => {
+			const legacy = listView([
+				{ columnName: 'timestamp', order: 'desc' },
+				{ columnName: 'id', order: 'desc' },
+			]);
+
+			expect(legacy.spec.queries[0].spec).toHaveProperty('order.length', 2);
+			expect(
+				hasUnsavedViewChanges({
+					view: legacy,
+					stagedQuery: stagedFrom(legacy, DataSource.LOGS),
+					panelType: PANEL_TYPES.LIST,
+				}),
+			).toBe(false);
+		});
+	});
+
 	it('ignores formatting on traces', () => {
 		expect(
 			hasUnsavedViewChanges({
