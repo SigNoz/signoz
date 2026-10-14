@@ -409,19 +409,13 @@ func (q *promqlQuery) toResultForTimeSeriesAndScalar(matrix promql.Matrix, warni
 	}
 
 	var payload any = tsData
-	// Scalar requests must return scalar data; reduce each series to its
-	// last point. This approximates an instant query evaluated at the end
-	// of the window: the final range-eval step sees the same samples an
-	// instant query at that timestamp would, except a series that went
-	// stale mid-window still surfaces its most recent value instead of
-	// dropping out of the result.
-	// TODO(srikanthccv): "last" mirrors the instant-query semantics we
-	// have always followed for PromQL scalar requests, but it should be
-	// configurable on the PromQuery spec just like the builder reduceTo.
+	// Scalar requests must return scalar data; reduce each series according
+	// to the query's reduceTo operator (defaulting to last).
 	if q.requestType == qbv5.RequestTypeScalar {
+		reduceOp := promQLReduceToOperator(q.query.ReduceTo)
 		for _, aggBucket := range tsData.Aggregations {
 			for i, s := range aggBucket.Series {
-				aggBucket.Series[i] = qbv5.FunctionReduceTo(s, qbv5.ReduceToLast)
+				aggBucket.Series[i] = qbv5.FunctionReduceTo(s, reduceOp)
 			}
 		}
 		payload = convertTimeSeriesDataToScalar(tsData, q.query.Name)
@@ -433,4 +427,11 @@ func (q *promqlQuery) toResultForTimeSeriesAndScalar(matrix promql.Matrix, warni
 		Warnings: warnings,
 		Stats:    stats,
 	}
+}
+
+func promQLReduceToOperator(reduceTo qbv5.ReduceTo) qbv5.ReduceTo {
+	if reduceTo == qbv5.ReduceToUnknown || reduceTo.IsZero() {
+		return qbv5.ReduceToLast
+	}
+	return reduceTo
 }
