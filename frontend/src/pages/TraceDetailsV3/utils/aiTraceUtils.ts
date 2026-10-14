@@ -32,7 +32,7 @@ export function getGenAiValue(
 	span: SpanV3,
 	key: string,
 ): string | number | boolean | undefined {
-	const value = span.attributes?.[key] ?? span.resource?.[key];
+	const value = span.resource?.[key] ?? span.attributes?.[key];
 	return value === '' ? undefined : value;
 }
 
