@@ -1,0 +1,17 @@
+name: hackathon-ai-agent
+version: 1.0.0
+description: "SigNoz AI Hackathon - Autonomous Neural Optimizer (ANO)"
+dependencies:
+  - langchain
+  - langchain-core
+  - langchain-openai
+  - openinference-instrumentation-langchain
+  - opentelemetry-api
+  - opentelemetry-sdk
+  - opentelemetry-exporter-otlp
+  - clickhouse-connect
+  - pydantic
+  - python-dotenv
+entrypoint: run.py
+environment:
+  SIGNOZ_OTLP_ENDPOINT: "http://127.0.0.1:4317"
