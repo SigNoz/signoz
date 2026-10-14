@@ -14,6 +14,11 @@ const MAX_RETRIES = 3;
 
 type PageParam = Pick<GetTraceThreadParams, 'after' | 'before'>;
 
+interface UseTraceThreadOptions {
+	traceId: string;
+	interestedSpanId?: string;
+}
+
 interface UseTraceThreadResult {
 	spans: ThreadSpan[];
 	spansAboveFirstPage: number;
@@ -27,10 +32,10 @@ interface UseTraceThreadResult {
 	fetchPreviousPage: () => Promise<unknown>;
 }
 
-export function useTraceThread(
-	traceId: string,
-	interestedSpanId?: string,
-): UseTraceThreadResult {
+export function useTraceThread({
+	traceId,
+	interestedSpanId,
+}: UseTraceThreadOptions): UseTraceThreadResult {
 	const query = useInfiniteQuery({
 		queryKey: getGetTraceThreadQueryKey(
 			{ traceID: traceId },

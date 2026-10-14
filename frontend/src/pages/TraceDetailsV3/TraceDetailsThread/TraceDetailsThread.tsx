@@ -34,8 +34,18 @@ function TraceDetailsThread(): JSX.Element {
 		selectSpan,
 		panelState,
 	} = useThreadSpanSelection();
-	const thread = useTraceThread(traceId || '', interestedSpanId);
-	const { spans, isLoading, isError } = thread;
+	const {
+		spans,
+		spansAboveFirstPage,
+		isLoading,
+		isError,
+		hasNextPage,
+		hasPreviousPage,
+		isFetchingNextPage,
+		isFetchingPreviousPage,
+		fetchNextPage,
+		fetchPreviousPage,
+	} = useTraceThread({ traceId: traceId || '', interestedSpanId });
 
 	const interestedSpanStatus = getInterestedSpanStatus(
 		interestedSpanId,
@@ -101,16 +111,16 @@ function TraceDetailsThread(): JSX.Element {
 				<ThreadSpanList
 					key={interestedSpanId}
 					spans={spans}
-					spansAboveFirstPage={thread.spansAboveFirstPage}
+					spansAboveFirstPage={spansAboveFirstPage}
 					initialSpanIndex={
 						interestedSpanIndex === -1 ? undefined : interestedSpanIndex
 					}
-					hasNextPage={thread.hasNextPage}
-					hasPreviousPage={thread.hasPreviousPage}
-					isFetchingNextPage={thread.isFetchingNextPage}
-					isFetchingPreviousPage={thread.isFetchingPreviousPage}
-					fetchNextPage={thread.fetchNextPage}
-					fetchPreviousPage={thread.fetchPreviousPage}
+					hasNextPage={hasNextPage}
+					hasPreviousPage={hasPreviousPage}
+					isFetchingNextPage={isFetchingNextPage}
+					isFetchingPreviousPage={isFetchingPreviousPage}
+					fetchNextPage={fetchNextPage}
+					fetchPreviousPage={fetchPreviousPage}
 					renderSpan={(span): JSX.Element => (
 						<ThreadSpanCard
 							span={span}
