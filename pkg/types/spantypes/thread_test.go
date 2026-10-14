@@ -3,10 +3,19 @@ package spantypes
 import (
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// jsonAttrs builds a native JSON column from dotted leaf paths, as ClickHouse stores them.
+func jsonAttrs(paths map[string]any) chcol.JSON {
+	j := chcol.NewJSON()
+	for path, value := range paths {
+		j.SetValueAtPath(path, value)
+	}
+	return *j
+}
 
 func TestNewThreadQuery_Cursor(t *testing.T) {
 	testCases := []struct {
@@ -48,7 +57,7 @@ func TestThreadAttributes(t *testing.T) {
 		{
 			name: "JSONColumnPresent_LegacyMapsIgnored",
 			span: StorableSpan{
-				AttributesJSON:   telemetrystoretypes.JSONValue{"gen_ai": map[string]any{"request": map[string]any{"model": "json"}}},
+				AttributesJSON:   jsonAttrs(map[string]any{"gen_ai.request.model": "json"}),
 				AttributesString: map[string]string{"gen_ai.request.model": "map", "http.method": "GET"},
 			},
 			wantAttrs: map[string]any{"gen_ai.request.model": "json"},
