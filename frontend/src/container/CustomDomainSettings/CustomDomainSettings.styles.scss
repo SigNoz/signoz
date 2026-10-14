@@ -110,12 +110,7 @@
 
 	.custom-domain-callout {
 		margin: 0 var(--margin-3) var(--margin-3);
-		font-size: var(--paragraph-base-400-font-size);
 		max-width: 742px;
-		--callout-background: var(--primary);
-		--callout-border-color: var(--callout-primary-border);
-		--callout-icon-color: var(--primary);
-		--callout-title-color: var(--callout-primary-title);
 	}
 
 	.custom-domain-card-divider {
@@ -241,59 +236,7 @@
 	}
 }
 
-.edit-modal-input-wrapper {
-	display: flex;
-	align-items: stretch;
-
-	.edit-modal-input-field {
-		flex: 1;
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-3);
-		padding: 6px var(--padding-3);
-		background: var(--l1-background);
-		border: 1px solid var(--l1-border);
-		border-right: none;
-		border-radius: 2px 0 0 2px;
-
-		svg {
-			flex-shrink: 0;
-		}
-
-		input {
-			flex: 1;
-			width: 100%;
-			height: auto;
-			background: transparent;
-			border: none;
-			border-radius: 0;
-			outline: none;
-			box-shadow: none;
-			color: var(--l1-foreground);
-			font-size: var(--paragraph-base-400-font-size);
-			line-height: var(--line-height-20);
-			padding: 0;
-
-			&:focus,
-			&:focus-visible {
-				outline: none;
-				box-shadow: none;
-			}
-		}
-	}
-}
-
 .edit-modal-input-suffix {
-	display: flex;
-	align-items: center;
-	padding: 6px var(--padding-3);
-	background: var(--l2-background);
-	border: 1px solid var(--l1-border);
-	border-left: none;
-	border-radius: 0 2px 2px 0;
-	color: var(--l2-foreground);
-	font-size: var(--paragraph-base-400-font-size);
-	line-height: var(--line-height-20);
 	white-space: nowrap;
 }
 

@@ -4,6 +4,9 @@
 
 	border-radius: 2px 0px 0px 2px;
 
+	// The label chip and the Input share the --input-with-label-* theming
+	// contract (set by e.g. FormAlertRules, WidgetFullView) so the joined
+	// group recolors as one.
 	.label {
 		// Typography.Text takes its display from this token; at its `inline` default
 		// the label blockifies as a flex item and the text rides the top of the row.
@@ -31,17 +34,14 @@
 		display: flex;
 		justify-content: flex-start;
 		align-items: center;
-		font-weight: var(--font-weight-light);
 	}
 
-	// Wrapper around the Input; restyles the frame inside via --input-* tokens.
 	.input {
 		flex: 1;
 		min-width: 150px;
 		position: relative;
 
-		--input-font-family: 'Space Mono', monospace;
-		--input-font-size: 12px;
+		// Square corners: the input sits mid-group between label and close button.
 		--input-border-radius: 0px;
 		--input-border: var(--input-with-label-border-color, var(--l2-border));
 		--input-background: var(
@@ -49,8 +49,6 @@
 			var(--l2-background)
 		);
 		--input-foreground: var(--input-with-label-color, var(--l2-foreground));
-		--input-placeholder: var(--input-with-label-color, var(--l3-foreground));
-		--input-placeholder-opacity: 1;
 
 		&:hover,
 		&:focus-within {
@@ -67,6 +65,7 @@
 			}
 		}
 
+		// The Input has no token for the native number spinners.
 		input[type='number']::-webkit-inner-spin-button,
 		input[type='number']::-webkit-outer-spin-button {
 			-webkit-appearance: none;
@@ -91,8 +90,8 @@
 	}
 
 	&.labelAfter {
-		.input [data-slot='input'] {
-			border-radius: 2px 0 0 2px;
+		.input {
+			--input-border-radius: 2px 0 0 2px;
 		}
 
 		.label {

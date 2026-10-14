@@ -27,13 +27,11 @@
 	--select-trigger-border-radius: 2px 0px 0px 2px;
 }
 
-// Wrapper around the name Input: restyles the frame via its documented tokens
-// (flat left corners so it joins flush with the image picker).
+// Flat left corners on the name Input so it joins flush with the image picker.
 .dashboardNameInput {
 	flex: 1;
 	min-width: 0;
 	--input-border-radius: 0px 2px 2px 0px;
-	--input-border: var(--l2-border);
 }
 
 .descriptionTextArea {

@@ -5,14 +5,6 @@
 
 	&__input {
 		flex: 1;
-
-		// Restyle the @signozhq/ui Input through its CSS tokens.
-		--input-font-family: Inter;
-		--input-font-size: 14px;
-		--input-line-height: 18px;
-		--input-letter-spacing: -0.07px;
-		--input-placeholder: var(--l2-foreground);
-		--input-placeholder-opacity: 0.4;
 	}
 
 	&__new-btn {
@@ -74,10 +66,6 @@
 				align-items: flex-start;
 				width: 140px;
 				&__heading {
-					color: var(--l2-foreground);
-					font-size: 11px;
-					font-weight: 600;
-					line-height: 18px; /* 163.636% */
 					letter-spacing: 0.88px;
 					text-transform: uppercase;
 					padding: 12px 18px 6px 14px;

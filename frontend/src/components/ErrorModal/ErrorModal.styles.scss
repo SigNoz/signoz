@@ -3,20 +3,7 @@
 		width: fit-content;
 		display: flex;
 		align-items: center;
-		gap: 4px;
-		border-radius: 20px;
-		background: color-mix(in srgb, var(--danger-background) 20%, transparent);
-		padding-left: 3px;
-		padding-right: 8px;
 		cursor: pointer;
-		span {
-			color: var(--danger-background);
-			font-size: 10px;
-			font-weight: 500;
-			line-height: 20px; /* 200% */
-			letter-spacing: 0.4px;
-			text-transform: uppercase;
-		}
 	}
 	&__wrap {
 		background: linear-gradient(

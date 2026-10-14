@@ -250,14 +250,15 @@ export function PlannedDowntime(): JSX.Element {
 				</div>
 
 				<div className={styles.filtersRow}>
-					<Input
-						containerClassName={styles.searchInput}
-						placeholder="Search by name"
-						value={searchValue}
-						onChange={handleSearch}
-						suffix={<Search size={14} className={styles.searchIcon} />}
-						testId="planned-downtime-search"
-					/>
+					<div className={styles.searchInput}>
+						<Input
+							placeholder="Search by name"
+							value={searchValue}
+							onChange={handleSearch}
+							suffix={<Search size={14} className={styles.searchIcon} />}
+							testId="planned-downtime-search"
+						/>
+					</div>
 				</div>
 			</header>
 

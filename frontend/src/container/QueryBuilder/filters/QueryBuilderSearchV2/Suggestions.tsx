@@ -49,7 +49,7 @@ function Suggestions(props: ISuggestionsProps): React.ReactElement {
 							) : (
 								<div className="dot" />
 							)}
-							<Typography.Text className="text value" truncate={1}>
+							<Typography.Text className="value" color="muted" truncate={1}>
 								{label}
 							</Typography.Text>
 						</section>
@@ -57,7 +57,7 @@ function Suggestions(props: ISuggestionsProps): React.ReactElement {
 							<Typography.Text className="data-type">{value.dataType}</Typography.Text>
 							<section className={cx('type-tag', value.type)}>
 								<div className="dot" />
-								<Typography.Text className="text">{value.type}</Typography.Text>
+								<Typography.Text size="small">{value.type}</Typography.Text>
 							</section>
 						</section>
 					</div>
@@ -67,7 +67,11 @@ function Suggestions(props: ISuggestionsProps): React.ReactElement {
 					<div className="container-without-tag">
 						<section className="left">
 							<div className="dot" />
-							<Typography.Text className={cx('text value', option)} truncate={1}>
+							<Typography.Text
+								className={cx('value', option)}
+								color="muted"
+								truncate={1}
+							>
 								{`${label}`}
 							</Typography.Text>
 						</section>

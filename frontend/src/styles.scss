@@ -831,30 +831,8 @@ body.bottom-strip-on {
 	}
 }
 
-[role='tab'] {
-	color: var(--foreground) !important;
-}
-
-[data-slot='drawer-content'] {
-	background: var(--l1-background) !important;
-	border: 1px solid var(--l1-border) !important;
-
-	[data-slot='drawer-title'] {
-		color: var(--l1-foreground) !important;
-	}
-
-	[data-slot='drawer-close'] {
-		color: var(--l1-foreground) !important;
-	}
-
-	[data-slot='drawer-body'] {
-		color: var(--l1-foreground) !important;
-	}
-}
 // overrides
 :root {
-	--radius-2: 4px;
-
 	// @signozhq/ui dropdown content portals to body with a default z-index of 50,
 	// antd defines it at z-index of 1050. Keeping this till we have components from both
 	// design libraries.

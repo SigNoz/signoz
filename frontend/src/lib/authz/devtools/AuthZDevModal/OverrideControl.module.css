@@ -1,3 +1,4 @@
+/* Segmented control with pressed states, which Button has no variant for. */
 .segmented {
 	display: inline-flex;
 	align-items: center;
@@ -9,9 +10,6 @@
 
 	--button-height: 22px;
 	--button-padding: 0 var(--spacing-3);
-	--button-secondary-ghost-label: var(--l2-foreground);
-	--button-secondary-ghost-label-hover: var(--l2-foreground);
-	--button-variant-ghost-background-color: transparent;
 	--button-border-radius: calc(var(--radius-2) - 1px);
 }
 

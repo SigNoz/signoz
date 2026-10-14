@@ -3,16 +3,9 @@
 	align-items: center;
 	gap: 0;
 
-	// The fields are @signozhq/ui Inputs, restyled through the input tokens.
-	--input-background: var(--l2-background);
-	--input-border: var(--l1-border);
-	--input-border-hover: var(--l1-border);
-	--input-foreground: var(--l1-foreground);
-	--input-placeholder: var(--l2-foreground);
+	// A clock reads as fixed-width digits, and each field is only 40px wide, so the
+	// default padding would clip a two digit value.
 	--input-font-family: 'Space Mono', monospace;
-	--input-font-size: 13px;
-	--input-font-weight: 600;
-	--input-border-radius: 4px;
 	--input-padding: 0 4px;
 
 	input {

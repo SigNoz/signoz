@@ -55,14 +55,12 @@
 	flex: 1 1 0;
 	min-width: 0;
 
+	// Matches the antd RolesSelect in the same row, which is forced to the
+	// same field background below.
 	--input-background: var(
 		--invite-members-field-background,
 		var(--l2-background)
 	);
-
-	input::placeholder {
-		color: var(--l3-foreground);
-	}
 }
 
 .cellRole {

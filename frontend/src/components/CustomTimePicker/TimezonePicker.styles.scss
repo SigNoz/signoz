@@ -35,18 +35,9 @@ $item-spacing: 8px;
 		gap: 6px;
 		width: -webkit-fill-available;
 
-		// Restyle the unstyled search Input (old .timezone-picker__input rules,
-		// as --input-* tokens picked up by the Input frame inside)
+		// The search row draws its own padding; the inline Input hugs the text.
 		--input-height: auto;
 		--input-padding: 0;
-		--input-border-width: 0;
-		--input-border-radius: 0;
-		--input-foreground: var(--l1-foreground);
-		--input-font-size: 14px;
-		--input-line-height: 20px;
-		--input-letter-spacing: -0.07px;
-		--input-placeholder: var(--l2-foreground);
-		--input-placeholder-opacity: 1;
 	}
 
 	&__esc-key {

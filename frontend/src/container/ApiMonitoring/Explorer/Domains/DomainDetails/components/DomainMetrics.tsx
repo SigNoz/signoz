@@ -87,22 +87,47 @@ function DomainMetrics({
 		<div className="domain-detail-drawer__endpoint" data-testid="domain-metrics">
 			<div className="domain-details-grid">
 				<div className="labels-row">
-					<Typography.Text color="muted" className="domain-details-metadata-label">
+					<Typography.Text
+						size="sm"
+						weight="medium"
+						color="muted"
+						className="domain-details-metadata-label"
+					>
 						EXTERNAL API
 					</Typography.Text>
-					<Typography.Text color="muted" className="domain-details-metadata-label">
+					<Typography.Text
+						size="sm"
+						weight="medium"
+						color="muted"
+						className="domain-details-metadata-label"
+					>
 						AVERAGE LATENCY
 					</Typography.Text>
-					<Typography.Text color="muted" className="domain-details-metadata-label">
+					<Typography.Text
+						size="sm"
+						weight="medium"
+						color="muted"
+						className="domain-details-metadata-label"
+					>
 						ERROR %
 					</Typography.Text>
-					<Typography.Text color="muted" className="domain-details-metadata-label">
+					<Typography.Text
+						size="sm"
+						weight="medium"
+						color="muted"
+						className="domain-details-metadata-label"
+					>
 						LAST USED
 					</Typography.Text>
 				</div>
 
 				<div className="values-row" data-testid="domain-metrics-values">
-					<Typography.Text className="domain-details-metadata-value">
+					<Typography.Text
+						size="small"
+						weight="medium"
+						color="muted"
+						className="domain-details-metadata-value"
+					>
 						{isLoading || isRefetching ? (
 							<Skeleton.Button active size="small" />
 						) : (
@@ -114,7 +139,12 @@ function DomainMetrics({
 						)}
 					</Typography.Text>
 					{/* // update the tooltip as well */}
-					<Typography.Text className="domain-details-metadata-value">
+					<Typography.Text
+						size="small"
+						weight="medium"
+						color="muted"
+						className="domain-details-metadata-value"
+					>
 						{isLoading || isRefetching ? (
 							<Skeleton.Button active size="small" />
 						) : (
@@ -128,7 +158,12 @@ function DomainMetrics({
 						)}
 					</Typography.Text>
 					{/* // update the tooltip as well */}
-					<Typography.Text className="domain-details-metadata-value error-rate">
+					<Typography.Text
+						size="small"
+						weight="medium"
+						color="muted"
+						className="domain-details-metadata-value error-rate"
+					>
 						{isLoading || isRefetching ? (
 							<Skeleton.Button active size="small" />
 						) : (
@@ -155,7 +190,12 @@ function DomainMetrics({
 							</Tooltip>
 						)}
 					</Typography.Text>
-					<Typography.Text className="domain-details-metadata-value">
+					<Typography.Text
+						size="small"
+						weight="medium"
+						color="muted"
+						className="domain-details-metadata-value"
+					>
 						{isLoading || isRefetching ? (
 							<Skeleton.Button active size="small" />
 						) : (

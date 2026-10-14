@@ -5,6 +5,7 @@ import {
 	RefreshCw,
 	Settings2 as SettingsIcon,
 } from '@signozhq/icons';
+import { Badge } from '@signozhq/ui/badge';
 import { Combobox, type ComboboxItemType } from '@signozhq/ui/combobox';
 import { Skeleton } from 'antd';
 import { Button } from '@signozhq/ui/button';
@@ -209,9 +210,9 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 					<Tooltip
 						title={`Filter currently in sync with query ${displayedQueryName}`}
 					>
-						<Typography.Text className="sync-tag">
+						<Badge variant="solid" color="primary" textTransform="uppercase">
 							{displayedQueryName}
-						</Typography.Text>
+						</Badge>
 					</Tooltip>
 				)
 			)}

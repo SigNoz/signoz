@@ -1,10 +1,4 @@
 .mcp-client-tabs-root {
-	button[data-variant='primary'] {
-		border: none;
-		background: transparent;
-		box-shadow: none;
-	}
-
 	// Remove default tab content padding/margin — the card provides spacing.
 	--tabs-content-padding: 0;
 	--tabs-content-margin: var(--spacing-4) 0 0;

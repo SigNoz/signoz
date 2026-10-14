@@ -117,7 +117,7 @@ function SignUp(): JSX.Element {
 					<Typography.Title level={4} className="signup-header-title">
 						Create your account
 					</Typography.Title>
-					<Typography.Text className="signup-header-subtitle">
+					<Typography.Text color="muted" className="signup-header-subtitle">
 						You&apos;re almost in. Create a password to start monitoring your
 						applications with SigNoz.
 					</Typography.Text>

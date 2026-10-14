@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { CircleAlert, CircleCheck, LoaderCircle } from '@signozhq/icons';
+import { CircleCheck, LoaderCircle } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
@@ -90,6 +90,8 @@ export default function CustomDomainEditModal({
 
 	const hasError = Boolean(errorMessage);
 
+	// On error the field's own `status` draws the trailing icon, so the prefix only
+	// carries the in-progress and valid states.
 	const statusIcon = ((): JSX.Element | null => {
 		if (isLoading) {
 			return (
@@ -98,7 +100,7 @@ export default function CustomDomainEditModal({
 		}
 
 		if (hasError) {
-			return <CircleAlert size={16} color={Color.BG_CHERRY_500} />;
+			return null;
 		}
 
 		return value && value.length >= 3 ? (
@@ -142,25 +144,18 @@ export default function CustomDomainEditModal({
 						Workspace URL
 					</label>
 
-					<div
-						className={`edit-modal-input-wrapper${
-							hasError ? ' edit-modal-input-wrapper--error' : ''
-						}`}
-					>
-						<div className="edit-modal-input-field">
-							{statusIcon}
-							<Input
-								id="workspace-url-input"
-								aria-describedby="workspace-url-helper"
-								aria-invalid={hasError}
-								value={value}
-								onChange={handleChange}
-								onKeyDown={handleKeyDown}
-								autoFocus
-							/>
-						</div>
-						<div className="edit-modal-input-suffix">{dnsSuffix}</div>
-					</div>
+					<Input
+						id="workspace-url-input"
+						testId="workspace-url-input"
+						aria-describedby="workspace-url-helper"
+						value={value}
+						onChange={handleChange}
+						onKeyDown={handleKeyDown}
+						autoFocus
+						status={hasError ? 'danger' : undefined}
+						prefix={statusIcon}
+						suffix={<span className="edit-modal-input-suffix">{dnsSuffix}</span>}
+					/>
 
 					<span
 						id="workspace-url-helper"
@@ -192,6 +187,7 @@ export default function CustomDomainEditModal({
 						/>
 					) : (
 						<Button
+							testId="workspace-url-apply"
 							disabledTooltip="Change the workspace URL first"
 							variant="solid"
 							size="md"

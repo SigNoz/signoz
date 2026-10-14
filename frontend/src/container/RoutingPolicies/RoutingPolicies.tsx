@@ -134,14 +134,15 @@ function RoutingPolicies(): JSX.Element {
 				</div>
 
 				<div className={styles.filtersRow}>
-					<Input
-						containerClassName={styles.searchInput}
-						placeholder="Search by name or description"
-						value={searchTerm}
-						onChange={handleSearch}
-						suffix={<Search size={14} className={styles.searchIcon} />}
-						testId="routing-policies-search"
-					/>
+					<div className={styles.searchInput}>
+						<Input
+							placeholder="Search by name or description"
+							value={searchTerm}
+							onChange={handleSearch}
+							suffix={<Search size={14} className={styles.searchIcon} />}
+							testId="routing-policies-search"
+						/>
+					</div>
 				</div>
 			</header>
 

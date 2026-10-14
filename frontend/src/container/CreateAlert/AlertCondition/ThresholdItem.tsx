@@ -106,10 +106,14 @@ function ThresholdItem({
 						testId="threshold-name-input"
 					/>
 					{isAnomaly ? (
-						<Typography.Text className="sentence-text">at</Typography.Text>
+						<Typography.Text className="sentence-text" color="muted">
+							at
+						</Typography.Text>
 					) : (
 						<>
-							<Typography.Text className="sentence-text">on value</Typography.Text>
+							<Typography.Text className="sentence-text" color="muted">
+								on value
+							</Typography.Text>
 							<Typography.Text className="sentence-text highlighted-text">
 								{getOperatorSymbol()}
 							</Typography.Text>
@@ -126,13 +130,17 @@ function ThresholdItem({
 						testId="threshold-value-input"
 					/>
 					{isAnomaly ? (
-						<Typography.Text className="sentence-text">deviations</Typography.Text>
+						<Typography.Text className="sentence-text" color="muted">
+							deviations
+						</Typography.Text>
 					) : (
 						yAxisUnitSelect
 					)}
 					{!notificationSettings.routingPolicies && (
 						<>
-							<Typography.Text className="sentence-text">send to</Typography.Text>
+							<Typography.Text className="sentence-text" color="muted">
+								send to
+							</Typography.Text>
 							<Select
 								value={threshold.channels}
 								onChange={(value): void =>
@@ -169,7 +177,9 @@ function ThresholdItem({
 					)}
 					{showRecoveryThreshold && (
 						<>
-							<Typography.Text className="sentence-text">recover on</Typography.Text>
+							<Typography.Text className="sentence-text" color="muted">
+								recover on
+							</Typography.Text>
 							<Input
 								placeholder="Enter recovery threshold value"
 								value={threshold.recoveryThresholdValue ?? ''}

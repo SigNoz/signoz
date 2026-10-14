@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { Input } from '@signozhq/ui/input';
-import { Input as AntdInput } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ArrowRight } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
@@ -139,12 +138,12 @@ export function AboutSigNozQuestions({
 					<div className="form-group">
 						<div className="question">How did you first come across SigNoz?</div>
 
-						<AntdInput.TextArea
-							className="discover-signoz-input"
+						<Input.TextArea
 							placeholder="e.g., I asked ChatGPT for Datadog alternatives, searched Google for “OpenTelemetry tools,” saw a Reddit or LinkedIn post, or heard about it from a colleague."
 							value={discoverSignoz}
 							autoFocus
 							rows={4}
+							enterKeyHint="enter"
 							onChange={(e): void => setDiscoverSignoz(e.target.value)}
 						/>
 					</div>

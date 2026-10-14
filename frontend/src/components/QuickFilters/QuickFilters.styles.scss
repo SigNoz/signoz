@@ -49,36 +49,11 @@
 				padding-left: var(--spacing-4);
 				white-space: nowrap;
 				flex-shrink: 0;
-				color: var(--l1-foreground);
-				font-family: Inter;
-				font-size: 14px;
-				font-style: normal;
-				font-weight: 400;
-				line-height: 18px;
-				letter-spacing: -0.07px;
 				min-width: 70px;
 			}
 
-			.sync-tag {
-				display: flex;
-				padding: 5px 9px;
-				flex-direction: column;
-				justify-content: center;
-				align-items: center;
-				gap: 10px;
-				border-radius: 2px;
-				border: 1px solid
-					color-mix(in srgb, var(--primary-background) 20%, transparent);
-				background: var(--primary-background);
-				color: var(--primary-foreground);
-				font-family: 'Geist Mono';
-				font-size: 14px;
-				font-style: normal;
-				font-weight: 400;
-				line-height: 18px;
-				text-transform: uppercase;
-			}
-
+			// Query selector themed as the primary sync chip; the Combobox has no
+			// primary color variant.
 			.select-box {
 				--combobox-trigger-width: auto;
 
@@ -94,8 +69,6 @@
 				--combobox-trigger-label: var(--primary-foreground);
 				--combobox-trigger-icon: var(--primary-foreground);
 				--combobox-trigger-icon-hover: var(--primary-foreground);
-				--combobox-trigger-font-family: 'Geist Mono';
-				--combobox-trigger-border-radius: 2px;
 				--combobox-trigger-min-block-size: 30px;
 			}
 		}

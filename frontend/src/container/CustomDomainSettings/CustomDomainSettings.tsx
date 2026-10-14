@@ -273,7 +273,7 @@ export default function CustomDomainSettings(): JSX.Element {
 
 			{isPollingEnabled && (
 				<div className="custom-domain-callout">
-					<Callout color="info" size="sm" icon={<SolidInfoCircle />}>
+					<Callout color="primary" size="sm" icon={<SolidInfoCircle />}>
 						{`Updating your URL to ⎯ ${customDomainSubdomain}.${dnsSuffix}. This may take a few mins.`}
 					</Callout>
 				</div>

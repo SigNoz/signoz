@@ -10,13 +10,6 @@
 	font-size: 12px;
 }
 
-// Wrapper around the name Input: restyles the frame via its tokens.
-.variableNameInput {
-	--input-border-radius: 2px;
-	--input-border: var(--l2-border);
-	--input-placeholder: var(--l3-foreground);
-}
-
 .descriptionTextArea {
 	border-radius: 2px;
 	border: 1px solid var(--l2-border);
