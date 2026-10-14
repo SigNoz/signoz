@@ -1,0 +1,70 @@
+{
+  "dashboard": {
+    "title": "Node.js Service Overview",
+    "tags": ["nodejs", "overview"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 1,
+    "templating": {
+      "list": [
+        {
+          "name": "service",
+          "type": "query",
+          "label": "Service",
+          "query": "label_values(nodejs_service_requests_total, service_name)",
+          "multi": false,
+          "includeAll": true
+        }
+      ]
+    },
+    "panels": [
+      {
+        "type": "row",
+        "title": "Request Metrics",
+        "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+      },
+      {
+        "type": "graph",
+        "title": "Request Rate (per second)",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
+        "targets": [
+          {
+            "expr": "rate(nodejs_service_requests_total{service_name=\"$service\"}[5m])",
+            "legendFormat": "req/s"
+          }
+        ],
+        "datasource": "Prometheus"
+      },
+      {
+        "type": "graph",
+        "title": "Error Rate (%)",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
+        "targets": [
+          {
+            "expr": "rate(nodejs_service_error_count{service_name=\"$service\"}[5m]) / rate(nodejs_service_requests_total{service_name=\"$service\"}[5m]) * 100",
+            "legendFormat": "errors %"
+          }
+        ],
+        "datasource": "Prometheus"
+      },
+      {
+        "type": "row",
+        "title": "Latency",
+        "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 }
+      },
+      {
+        "type": "graph",
+        "title": "P95 Latency (ms)",
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 10 },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(nodejs_service_request_duration_seconds_bucket{service_name=\"$service\"}[5m])) * 1000",
+            "legendFormat": "P95"
+          }
+        ],
+        "datasource": "Prometheus"
+      }
+    ]
+  }
+}
+
