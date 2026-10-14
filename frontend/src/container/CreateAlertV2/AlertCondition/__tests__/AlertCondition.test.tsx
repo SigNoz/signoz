@@ -68,27 +68,21 @@ jest.mock('../AnomalyThreshold', () => ({
 }));
 
 const mockHandleSetQueryData = jest.fn();
+const mockRedirectWithQueryBuilderData = jest.fn();
+const mockCurrentQuery = {
+	dataSource: 'METRICS',
+	queryName: 'A',
+	builder: {
+		queryData: [{ dataSource: 'METRICS' }],
+		queryFormulas: [],
+	},
+};
 
 // Mock useQueryBuilder hook
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
-	useQueryBuilder: (): {
-		currentQuery: {
-			builder: { queryData: unknown[]; queryFormulas: unknown[] };
-			dataSource: string;
-			queryName: string;
-		};
-		redirectWithQueryBuilderData: () => void;
-		handleSetQueryData: jest.Mock;
-	} => ({
-		currentQuery: {
-			dataSource: 'METRICS',
-			queryName: 'A',
-			builder: {
-				queryData: [{ dataSource: 'METRICS' }],
-				queryFormulas: [],
-			},
-		},
-		redirectWithQueryBuilderData: jest.fn(),
+	useQueryBuilder: (): unknown => ({
+		currentQuery: mockCurrentQuery,
+		redirectWithQueryBuilderData: mockRedirectWithQueryBuilderData,
 		handleSetQueryData: mockHandleSetQueryData,
 	}),
 }));
@@ -226,6 +220,19 @@ describe('AlertCondition', () => {
 					{ name: 'anomaly', args: [], namedArgs: { z_score_threshold: 3 } },
 				],
 			}),
+		);
+	});
+
+	it('keeps the current query when switching between threshold and anomaly', () => {
+		renderAlertCondition();
+
+		fireEvent.click(screen.getByText(ANOMALY_TAB_TEXT));
+
+		expect(mockRedirectWithQueryBuilderData).toHaveBeenCalledWith(
+			mockCurrentQuery,
+			{ alertType: AlertTypes.ANOMALY_BASED_ALERT, ruleType: 'anomaly_rule' },
+			undefined,
+			true,
 		);
 	});
 

@@ -146,12 +146,20 @@ export function CreateAlertProvider(
 
 	const handleAlertTypeChange = useCallback(
 		(value: AlertTypes): void => {
-			const queryToRedirect = buildInitialAlertDef(value);
-			const currentQueryToRedirect = mapQueryDataFromApi(
-				queryToRedirect.condition.compositeQuery,
-			);
+			// Threshold and anomaly alerts share the metric query, so switching keeps it.
+			const metricAlertTypes = [
+				AlertTypes.METRICS_BASED_ALERT,
+				AlertTypes.ANOMALY_BASED_ALERT,
+			];
+			const keepsQuery =
+				value !== alertType &&
+				metricAlertTypes.includes(value) &&
+				metricAlertTypes.includes(alertType);
+			const queryToRedirect = keepsQuery
+				? currentQuery
+				: mapQueryDataFromApi(buildInitialAlertDef(value).condition.compositeQuery);
 			redirectWithQueryBuilderData(
-				currentQueryToRedirect,
+				queryToRedirect,
 				{
 					[QueryParams.alertType]: value,
 					[QueryParams.ruleType]:
@@ -164,7 +172,7 @@ export function CreateAlertProvider(
 			);
 			setAlertType(value);
 		},
-		[redirectWithQueryBuilderData],
+		[alertType, currentQuery, redirectWithQueryBuilderData],
 	);
 
 	const ruleNameAppliedRef = useRef(false);
