@@ -6,26 +6,27 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { useQueryClient } from 'react-query';
 import { Select, Spin } from 'antd';
-import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
+import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 // ** Constants
-import { idDivider, QueryBuilderKeys } from 'constants/queryBuilder';
+import { idDivider } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
-import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
+import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
 import useDebounce from 'hooks/useDebounce';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 // ** Components
 // ** Helpers
 import { isEqual, uniqWith } from 'lodash-es';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { DataSource } from 'types/common/queryBuilder';
+import { MetricAggregation } from 'types/api/v5/queryRange';
+import { DATA_SOURCE_TO_SIGNAL, DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 
 import { selectStyle } from '../QueryBuilderSearchV2/config';
 import OptionRenderer from '../OptionRenderer/OptionRenderer';
 import { GroupByFilterProps } from './GroupByFilter.interfaces';
+import { toAttributeKey } from './utils';
 
 export const GroupByFilter = memo(function GroupByFilter({
 	query,
@@ -34,11 +35,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 	signalSource,
 }: GroupByFilterProps): JSX.Element {
 	const getPopupContainer = useSelectPopupContainer();
-	const queryClient = useQueryClient();
 	const [searchText, setSearchText] = useState<string>('');
-	const [optionsData, setOptionsData] = useState<
-		SelectOption<string, ReactNode>[]
-	>([]);
 	const [localValues, setLocalValues] = useState<SelectOption<string, string>[]>(
 		[],
 	);
@@ -46,74 +43,46 @@ export const GroupByFilter = memo(function GroupByFilter({
 
 	const debouncedValue = useDebounce(searchText, DEBOUNCE_DELAY);
 
-	const dataSource = useMemo(() => {
-		if (signalSource === 'meter') {
-			return 'meter' as DataSource;
-		}
-		return query.dataSource;
-	}, [signalSource, query.dataSource]);
+	const metricName =
+		query.dataSource === DataSource.METRICS
+			? query.aggregateAttribute?.key ||
+				(query.aggregations?.[0] as MetricAggregation)?.metricName
+			: undefined;
 
-	const { isFetching } = useGetAggregateKeys(
+	const { data: fieldKeys, isFetching } = useFieldKeysSuggestion(
 		{
-			aggregateAttribute: query.aggregateAttribute?.key || '',
-			dataSource,
-			aggregateOperator: query.aggregateOperator || '',
+			signal: DATA_SOURCE_TO_SIGNAL[query.dataSource],
+			source: signalSource === 'meter' ? TelemetrytypesSourceDTO.meter : undefined,
+			metricName: metricName || undefined,
 			searchText: debouncedValue,
 		},
-		{
-			queryKey: [debouncedValue, isFocused],
-			enabled: !disabled && isFocused,
-			onSuccess: (data) => {
-				const keys = query.groupBy.reduce<string[]>((acc, item) => {
-					acc.push(item.key);
-					return acc;
-				}, []);
-
-				const filteredOptions: BaseAutocompleteData[] =
-					data?.payload?.attributeKeys?.filter(
-						(attrKey) => !keys.includes(attrKey.key),
-					) || [];
-
-				const options: SelectOption<string, ReactNode>[] =
-					filteredOptions.map((item) => ({
-						label: (
-							<OptionRenderer
-								key={item.key}
-								label={item.key}
-								value={item.key}
-								dataType={item.dataType || ''}
-								type={item.type || ''}
-							/>
-						),
-						value: `${item.id}`,
-					})) || [];
-
-				setOptionsData(options);
-			},
-		},
+		query.builderQueryType,
+		{ enabled: !disabled && isFocused },
 	);
 
-	const getAttributeKeys = useCallback(async () => {
-		const response = await queryClient.fetchQuery(
-			[QueryBuilderKeys.GET_AGGREGATE_KEYS, searchText, isFocused],
-			async () =>
-				getAggregateKeys({
-					aggregateAttribute: query.aggregateAttribute?.key || '',
-					dataSource: dataSource,
-					aggregateOperator: query.aggregateOperator || '',
-					searchText,
-				}),
-		);
+	const attributeKeys = useMemo(
+		() => (fieldKeys ?? []).map(toAttributeKey),
+		[fieldKeys],
+	);
 
-		return response.payload?.attributeKeys || [];
-	}, [
-		isFocused,
-		query.aggregateAttribute?.key,
-		query.aggregateOperator,
-		dataSource,
-		queryClient,
-		searchText,
-	]);
+	const optionsData = useMemo((): SelectOption<string, ReactNode>[] => {
+		const selectedKeys = new Set(query.groupBy.map((item) => item.key));
+
+		return attributeKeys
+			.filter((item) => !selectedKeys.has(item.key))
+			.map((item) => ({
+				label: (
+					<OptionRenderer
+						key={item.key}
+						label={item.key}
+						value={item.key}
+						dataType={item.dataType || ''}
+						type={item.type || ''}
+					/>
+				),
+				value: `${item.id}`,
+			}));
+	}, [attributeKeys, query.groupBy]);
 
 	const handleSearchKeys = (searchText: string): void => {
 		setSearchText(searchText);
@@ -129,15 +98,13 @@ export const GroupByFilter = memo(function GroupByFilter({
 	};
 
 	const handleChange = useCallback(
-		async (values: SelectOption<string, string>[]): Promise<void> => {
-			const keys = await getAttributeKeys();
-
+		(values: SelectOption<string, string>[]): void => {
 			const groupByValues: BaseAutocompleteData[] = values.map((item) => {
 				const id = item.value;
 				const currentValue = item.value.split(idDivider)[0];
 
 				if (id && id.includes(idDivider)) {
-					const attribute = keys.find((item) => item.id === id);
+					const attribute = attributeKeys.find((item) => item.id === id);
 					const existAttribute = query.groupBy.find((item) => item.id === id);
 
 					if (attribute) {
@@ -149,14 +116,14 @@ export const GroupByFilter = memo(function GroupByFilter({
 					}
 				}
 
-				return chooseAutocompleteFromCustomValue(keys, currentValue);
+				return chooseAutocompleteFromCustomValue(attributeKeys, currentValue);
 			});
 
 			const result = uniqWith(groupByValues, isEqual);
 
 			onChange(result);
 		},
-		[getAttributeKeys, onChange, query.groupBy],
+		[attributeKeys, onChange, query.groupBy],
 	);
 
 	const clearSearch = useCallback(() => {
