@@ -62,6 +62,9 @@ importers:
       '@grafana/data':
         specifier: ^11.6.15
         version: 11.6.15(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      '@lezer/highlight':
+        specifier: 1.2.1
+        version: 1.2.1
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)

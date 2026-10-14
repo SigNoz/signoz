@@ -453,6 +453,42 @@ describe('usePanelActionItems', () => {
 		expect(mockOpenView).toHaveBeenCalledWith('panel-1', baseArgs.panel);
 	});
 
+	it('disables only Create Alerts on an AI query panel', () => {
+		const aiPanel = {
+			...mockPanel,
+			spec: {
+				...mockPanel.spec,
+				queries: [
+					{
+						kind: 'time_series',
+						spec: {
+							plugin: {
+								kind: 'signoz/CompositeQuery',
+								spec: {
+									queries: [
+										{
+											type: 'builder_ai_query',
+											spec: { name: 'A', signal: 'traces' },
+										},
+									],
+								},
+							},
+						},
+					},
+				],
+			},
+		} as unknown as DashboardtypesPanelDTO;
+
+		const { result } = renderHook(() =>
+			usePanelActionItems({ ...baseArgs, panel: aiPanel }),
+		);
+
+		const disabled = disabledKeys(result.current);
+		expect(disabled).toContain('create-alert');
+		expect(disabled).not.toContain('view-panel');
+		expect(disabled).not.toContain('edit-panel');
+	});
+
 	it('create-alert seeds an alert from this panel', () => {
 		const { result } = renderHook(() => usePanelActionItems(baseArgs));
 		click(actionRow(result.current.items, 'create-alert'));

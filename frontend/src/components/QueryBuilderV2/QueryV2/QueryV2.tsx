@@ -318,7 +318,6 @@ export const QueryV2 = forwardRef(function QueryV2(
 								index={index}
 								key={`metrics-aggregate-section-${query.queryName}-${query.dataSource}-${signalSource}`}
 								version="v4"
-								signalSource={signalSource as 'meter' | ''}
 							/>
 						)}
 

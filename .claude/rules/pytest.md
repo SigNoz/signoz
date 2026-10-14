@@ -17,3 +17,4 @@ For the Python integration suite under `tests/`. Setup, running, and suite layou
 - **snake_case parametrize ids.** `ids=["fill_gaps", "fill_zero"]`, not camelCase.
 - **Name suite files with the two-digit prefix (`NN_*.py`).** `pyproject.toml` restricts collection to `[0-9][0-9]_*.py` (plus the bootstrap `setup.py` / `run.py`) — a file that doesn't match is silently never collected.
 - **Always run pytest from `tests/`.** `--import-mode=importlib` is what allows same-basename files across suites (`querier/01_logs.py` vs `rawexportdata/01_logs.py`), but it disables pytest's implicit `sys.path` injection — `import fixtures` only resolves via `pythonpath = ["."]` from that rootdir.
+- **After changing any `.py` file, run `make py-fmt` and `make py-lint`** from the repo root and fix what they report.

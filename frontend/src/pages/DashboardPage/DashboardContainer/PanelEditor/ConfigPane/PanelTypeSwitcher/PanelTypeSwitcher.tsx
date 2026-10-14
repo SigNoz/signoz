@@ -8,6 +8,7 @@ import type { EQueryType } from 'types/common/dashboard';
 import PanelTypeBrowser from '../../../PanelsAndSectionsLayout/Panel/PanelTypeSelectionModal/PanelTypeBrowser';
 import { getPanelDefinition } from '../../../Panels/registry';
 import type { PanelKind } from '../../../Panels/types/panelKind';
+import { JS_DRIVEN_SLIDE } from '../../../utils/drawerSlide';
 import ConfigField from '../controls/ConfigField/ConfigField';
 
 import styles from './PanelTypeSwitcher.module.scss';
@@ -104,6 +105,7 @@ function PanelTypeSwitcher({
 				direction="right"
 				width="wide"
 				testId="panel-type-switcher-drawer"
+				drawerContentProps={JS_DRIVEN_SLIDE}
 				drawerDescriptionProps={{ className: styles.drawerBody }}
 			>
 				<PanelTypeBrowser

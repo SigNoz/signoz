@@ -44,6 +44,8 @@ const IS_CARRIED = {
 	orderBy: true,
 	reduceTo: true,
 	legend: true,
+	// Identifies an AI query, so the panel keeps authoring in AI mode after the switch.
+	builderQueryType: true,
 	// `dataSource` is appended by the provider; the rest drive surfaces this switch
 	// does not reach.
 	// Heatmap only; listed for it below.
@@ -54,7 +56,6 @@ const IS_CARRIED = {
 	offset: false,
 	selectColumns: false,
 	source: false,
-	builderQueryType: false,
 } satisfies Record<BuilderField, boolean>;
 
 function omit(
