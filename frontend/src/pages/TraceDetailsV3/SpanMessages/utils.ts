@@ -24,8 +24,10 @@ function toRawValue(value: unknown): RawMessagesValue | undefined {
 }
 
 export function getSpanMessages(span: ThreadSpan): SpanMessagesData {
-	const rawInput = toRawValue(span.attributes?.[GEN_AI_KEYS.inputMessages]);
-	const rawOutput = toRawValue(span.attributes?.[GEN_AI_KEYS.outputMessages]);
+	const rawInput =
+		toRawValue(span.attributes?.[GEN_AI_KEYS.inputMessages]) ?? [];
+	const rawOutput =
+		toRawValue(span.attributes?.[GEN_AI_KEYS.outputMessages]) ?? [];
 
 	// Waterfall spans and spans from before the JSON column have no formatted messages.
 	return {

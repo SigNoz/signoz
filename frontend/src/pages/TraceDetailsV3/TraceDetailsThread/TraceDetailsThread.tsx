@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { Callout } from '@signozhq/ui/callout';
+import history, { hasInAppHistory } from 'lib/history';
 import { TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
 
 import { TraceDetailsTab } from '../constants';
@@ -88,7 +89,12 @@ function TraceDetailsThread(): JSX.Element {
 			return (
 				<ThreadSpanNotFound
 					onGoBack={(): void => {
-						void setTab(TraceDetailsTab.Overview);
+						// go back to the previous page
+						if (hasInAppHistory()) {
+							history.goBack();
+						} else {
+							void setTab(TraceDetailsTab.Overview);
+						}
 					}}
 					onShowThread={clearInterestedSpan}
 				/>
