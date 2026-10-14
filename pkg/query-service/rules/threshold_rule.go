@@ -100,14 +100,14 @@ func (r *ThresholdRule) prepareParamsForLogs(ctx context.Context, ts time.Time, 
 		return nil
 	}
 
-	filterExpr, groupBy, found := contextlinks.BuilderQueryForSignal(r.ruleCondition.CompositeQuery.Queries, telemetrytypes.SignalLogs)
+	builderQueries, found := contextlinks.BuilderQueriesForSignal(r.ruleCondition.CompositeQuery.Queries, telemetrytypes.SignalLogs)
 	if !found {
 		return nil
 	}
 
-	whereClause := contextlinks.PrepareFilterExpression(lbls.Map(), filterExpr, groupBy)
+	whereClauses := contextlinks.PrepareFilterExpressions(lbls.Map(), builderQueries)
 
-	return contextlinks.PrepareParamsForLogsV5(start, end, whereClause)
+	return contextlinks.PrepareParamsForLogsV5(start, end, whereClauses)
 }
 
 func (r *ThresholdRule) prepareParamsForTraces(ctx context.Context, ts time.Time, lbls ruletypes.Labels) url.Values {
@@ -125,14 +125,14 @@ func (r *ThresholdRule) prepareParamsForTraces(ctx context.Context, ts time.Time
 		return nil
 	}
 
-	filterExpr, groupBy, found := contextlinks.BuilderQueryForSignal(r.ruleCondition.CompositeQuery.Queries, telemetrytypes.SignalTraces)
+	builderQueries, found := contextlinks.BuilderQueriesForSignal(r.ruleCondition.CompositeQuery.Queries, telemetrytypes.SignalTraces)
 	if !found {
 		return nil
 	}
 
-	whereClause := contextlinks.PrepareFilterExpression(lbls.Map(), filterExpr, groupBy)
+	whereClauses := contextlinks.PrepareFilterExpressions(lbls.Map(), builderQueries)
 
-	return contextlinks.PrepareParamsForTracesV5(start, end, whereClause, r.typ.BuilderQueryType())
+	return contextlinks.PrepareParamsForTracesV5(start, end, whereClauses, r.typ.BuilderQueryType())
 }
 
 func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, ts time.Time) (ruletypes.Vector, error) {

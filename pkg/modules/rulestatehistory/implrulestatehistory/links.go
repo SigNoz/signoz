@@ -17,10 +17,9 @@ import (
 // filter and the entry's labels, so a history entry can be opened in the
 // explorer with the context that produced it.
 type relatedLinkBuilder struct {
-	alertType  ruletypes.AlertType
-	evaluation ruletypes.Evaluation
-	filterExpr string
-	groupBy    []qbtypes.GroupByKey
+	alertType      ruletypes.AlertType
+	evaluation     ruletypes.Evaluation
+	builderQueries []contextlinks.BuilderQuery
 }
 
 // relatedLinkBuilderForRule returns nil when the rule cannot be loaded or is
@@ -65,7 +64,7 @@ func (m *module) relatedLinkBuilderForRule(ctx context.Context, orgID valuer.UUI
 
 	// links are still built from the labels alone when the rule has no builder
 	// query for the signal (e.g. ClickHouse SQL alerts)
-	builder.filterExpr, builder.groupBy, _ = contextlinks.BuilderQueryForSignal(rule.RuleCondition.CompositeQuery.Queries, signal)
+	builder.builderQueries, _ = contextlinks.BuilderQueriesForSignal(rule.RuleCondition.CompositeQuery.Queries, signal)
 
 	return builder
 }
@@ -89,15 +88,15 @@ func (b *relatedLinkBuilder) links(labels rulestatehistorytypes.LabelsString, st
 		return rulestatehistorytypes.RelatedLinks{}
 	}
 
-	whereClause := contextlinks.PrepareFilterExpression(lbls, b.filterExpr, b.groupBy)
+	whereClauses := contextlinks.PrepareFilterExpressions(lbls, b.builderQueries)
 
 	switch b.alertType {
 	case ruletypes.AlertTypeLogs:
-		return rulestatehistorytypes.RelatedLinks{RelatedLogsLink: contextlinks.PrepareParamsForLogsV5(start, end, whereClause).Encode()}
+		return rulestatehistorytypes.RelatedLinks{RelatedLogsLink: contextlinks.PrepareParamsForLogsV5(start, end, whereClauses).Encode()}
 	case ruletypes.AlertTypeTraces:
-		return rulestatehistorytypes.RelatedLinks{RelatedTracesLink: contextlinks.PrepareParamsForTracesV5(start, end, whereClause, qbtypes.QueryTypeBuilder).Encode()}
+		return rulestatehistorytypes.RelatedLinks{RelatedTracesLink: contextlinks.PrepareParamsForTracesV5(start, end, whereClauses, qbtypes.QueryTypeBuilder).Encode()}
 	case ruletypes.AlertTypeAITraces:
-		return rulestatehistorytypes.RelatedLinks{RelatedAITracesLink: contextlinks.PrepareParamsForTracesV5(start, end, whereClause, qbtypes.QueryTypeBuilderAI).Encode()}
+		return rulestatehistorytypes.RelatedLinks{RelatedAITracesLink: contextlinks.PrepareParamsForTracesV5(start, end, whereClauses, qbtypes.QueryTypeBuilderAI).Encode()}
 	}
 	return rulestatehistorytypes.RelatedLinks{}
 }

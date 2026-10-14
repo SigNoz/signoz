@@ -42,6 +42,21 @@ type WhereClauseRewriter struct {
 // by clause, in which case we replace it with the actual value for the notification
 // i.e Severity text = WARN
 // If the Severity text is not part of the group by clause, then we add it as it is.
+// PrepareFilterExpressions returns one filter expression per builder query. A
+// caller whose rule has no builder query for the signal passes none and gets a
+// single expression built from the labels alone.
+func PrepareFilterExpressions(labels map[string]string, builderQueries []BuilderQuery) []string {
+	if len(builderQueries) == 0 {
+		return []string{PrepareFilterExpression(labels, "", nil)}
+	}
+
+	expressions := make([]string, 0, len(builderQueries))
+	for _, builderQuery := range builderQueries {
+		expressions = append(expressions, PrepareFilterExpression(labels, builderQuery.Filter, builderQuery.GroupBy))
+	}
+	return expressions
+}
+
 func PrepareFilterExpression(labels map[string]string, whereClause string, groupByItems []qbtypes.GroupByKey) string {
 	if whereClause == "" && len(labels) == 0 {
 		return ""
