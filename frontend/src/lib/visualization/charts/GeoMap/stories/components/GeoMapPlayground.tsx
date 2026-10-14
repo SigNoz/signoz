@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import TooltipFooter from 'lib/visualization/panels/components/TooltipFooter';
 import {
 	ColorRampPalette,
 	ColorRampScale,
@@ -68,6 +69,18 @@ export default function GeoMapPlayground({
 		[prepared.data, shapes],
 	);
 	const [selection, setSelection] = useState<GeoMapSelection | null>(null);
+	const closeMenu = useCallback((): void => setSelection(null), []);
+	const renderTooltipFooter = useCallback(
+		() => (
+			<TooltipFooter
+				id="geo-map-playground"
+				isPinned={false}
+				canPin={false}
+				dismiss={closeMenu}
+			/>
+		),
+		[closeMenu],
+	);
 
 	return (
 		<div className={styles.page}>
@@ -95,6 +108,7 @@ export default function GeoMapPlayground({
 						formatValue={formatValue}
 						isDarkMode={isDarkMode}
 						onSelect={setSelection}
+						renderTooltipFooter={renderTooltipFooter}
 					/>
 				</div>
 			</div>
@@ -104,7 +118,7 @@ export default function GeoMapPlayground({
 					name={shapes?.nameOf(selection.datum.code) ?? selection.datum.code}
 					field={fixture.country ? 'geo.region.iso_code' : 'geo.country.iso_code'}
 					formatValue={formatValue}
-					onClose={(): void => setSelection(null)}
+					onClose={closeMenu}
 				/>
 			)}
 		</div>

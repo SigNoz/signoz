@@ -1,3 +1,6 @@
+import { Braces, ChartBar, DraftingCompass, ScrollText } from '@signozhq/icons';
+import ContextMenu from 'periscope/components/ContextMenu';
+
 import { GeoMapSelection } from '../../types';
 
 import styles from './GeoMapPlayground.module.scss';
@@ -11,7 +14,10 @@ interface GeoMapPlaygroundMenuProps {
 	onClose: () => void;
 }
 
-/** Stand-in for the dashboard drilldown menu the panel would open. */
+/**
+ * The dashboard's own ContextMenu with stand-in actions. Its backdrop is what
+ * keeps the map inert until a click outside closes the menu.
+ */
 export default function GeoMapPlaygroundMenu({
 	selection,
 	name,
@@ -21,26 +27,32 @@ export default function GeoMapPlaygroundMenu({
 }: GeoMapPlaygroundMenuProps): JSX.Element {
 	const { datum, clientX, clientY } = selection;
 	return (
-		<div
-			className={styles.menu}
-			style={{ left: clientX + 8, top: clientY + 8 }}
-			data-testid="geo-map-drilldown-menu"
-		>
-			<div className={styles.menuTitle}>
-				{name} · {formatValue(datum.value)}
-			</div>
-			<button type="button" onClick={onClose} data-testid="geo-map-menu-filter">
-				Filter dashboard: {field} = {datum.raw}
-			</button>
-			<button type="button" onClick={onClose} data-testid="geo-map-menu-logs">
-				View in Logs
-			</button>
-			<button type="button" onClick={onClose} data-testid="geo-map-menu-traces">
-				View in Traces
-			</button>
-			<button type="button" onClick={onClose} data-testid="geo-map-menu-breakout">
-				Breakout by…
-			</button>
-		</div>
+		<ContextMenu
+			coordinates={{ x: clientX, y: clientY }}
+			onClose={onClose}
+			items={
+				<div data-testid="geo-map-drilldown-menu">
+					<ContextMenu.Header>
+						<div className={styles.menuTitle}>
+							{name} · {formatValue(datum.value)}
+						</div>
+					</ContextMenu.Header>
+					<ContextMenu.Item icon={<Braces size={16} />} onClick={onClose}>
+						<span data-testid="geo-map-menu-filter">
+							Filter dashboard: {field} = {datum.raw}
+						</span>
+					</ContextMenu.Item>
+					<ContextMenu.Item icon={<ScrollText size={16} />} onClick={onClose}>
+						<span data-testid="geo-map-menu-logs">View in Logs</span>
+					</ContextMenu.Item>
+					<ContextMenu.Item icon={<DraftingCompass size={16} />} onClick={onClose}>
+						<span data-testid="geo-map-menu-traces">View in Traces</span>
+					</ContextMenu.Item>
+					<ContextMenu.Item icon={<ChartBar size={16} />} onClick={onClose}>
+						<span data-testid="geo-map-menu-breakout">Breakout by…</span>
+					</ContextMenu.Item>
+				</div>
+			}
+		/>
 	);
 }

@@ -64,7 +64,10 @@ export async function hoverUntilTooltip(
 	throw new Error('no shape with data under the pointer');
 }
 
-/** A press and release without movement, which OpenLayers reports as a click. */
+/**
+ * A press and release without movement, which OpenLayers reports as a click,
+ * then the DOM click a browser sends after it.
+ */
 export function clickAt(
 	canvasElement: HTMLElement,
 	[x, y]: [number, number],
@@ -72,4 +75,7 @@ export function clickAt(
 	const viewport = viewportOf(canvasElement);
 	dispatch(viewport, 'pointerdown', x, y);
 	dispatch(document, 'pointerup', x, y);
+	viewport.dispatchEvent(
+		new MouseEvent('click', { clientX: x, clientY: y, bubbles: true }),
+	);
 }

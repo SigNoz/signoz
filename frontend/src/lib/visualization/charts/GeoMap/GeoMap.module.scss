@@ -24,11 +24,6 @@
 
 .tooltip {
 	position: absolute;
-	padding: 8px 12px;
-	border-radius: 4px;
-	background-color: var(--l2-background);
-	border: 1px solid var(--l2-border);
-	color: var(--l1-foreground);
 	pointer-events: none;
 	z-index: 9999;
 }

@@ -27,6 +27,7 @@ export default function GeoMap({
 	formatValue,
 	isDarkMode,
 	onSelect,
+	renderTooltipFooter,
 }: GeoMapProps): JSX.Element {
 	const wrapperRef = useRef<HTMLDivElement>(null);
 	const mapAreaRef = useRef<HTMLDivElement>(null);
@@ -82,10 +83,11 @@ export default function GeoMap({
 		(code: string, clientX: number, clientY: number): void => {
 			const datum = valueByCode.get(code);
 			if (datum && onSelect) {
+				hideTooltip();
 				onSelect({ datum, clientX, clientY });
 			}
 		},
-		[valueByCode, onSelect],
+		[valueByCode, onSelect, hideTooltip],
 	);
 
 	const hovered =
@@ -149,6 +151,7 @@ export default function GeoMap({
 							rank={ranks.get(hovered.code)}
 							total={data.length}
 							formatValue={formatValue}
+							footer={renderTooltipFooter?.()}
 						/>
 					</TooltipInPortal>
 				)}

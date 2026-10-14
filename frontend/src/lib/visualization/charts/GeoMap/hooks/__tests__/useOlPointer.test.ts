@@ -61,21 +61,39 @@ describe('useOlPointer', () => {
 		expect(onHover).toHaveBeenLastCalledWith(null, 0, 0);
 	});
 
-	it('selects the clicked shape', () => {
-		const { setFeatureUnderPointer, emit, onSelect } = setup();
+	const domClick = (target: HTMLElement): void => {
+		target.dispatchEvent(new MouseEvent('click', { clientX: 30, clientY: 40 }));
+	};
+
+	it('selects the clicked shape on the DOM click that follows', () => {
+		const { setFeatureUnderPointer, emit, onSelect, target } = setup();
 		setFeatureUnderPointer(germany);
 
 		emit('click', {});
+		expect(onSelect).not.toHaveBeenCalled();
 
-		expect(onSelect).toHaveBeenCalledWith('DE', 10, 20);
+		domClick(target);
+		expect(onSelect).toHaveBeenCalledWith('DE', 30, 40);
 	});
 
 	it('ignores clicks on empty map', () => {
-		const { emit, onSelect } = setup();
+		const { emit, onSelect, target } = setup();
 
 		emit('click', {});
+		domClick(target);
 
 		expect(onSelect).not.toHaveBeenCalled();
+	});
+
+	it('ignores a DOM click OpenLayers did not report, such as the end of a pan', () => {
+		const { setFeatureUnderPointer, emit, onSelect, target } = setup();
+		setFeatureUnderPointer(germany);
+
+		emit('click', {});
+		domClick(target);
+		domClick(target);
+
+		expect(onSelect).toHaveBeenCalledTimes(1);
 	});
 
 	it('stops listening when unmounted', () => {
