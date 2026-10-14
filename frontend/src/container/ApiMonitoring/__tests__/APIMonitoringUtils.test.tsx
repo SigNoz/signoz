@@ -53,7 +53,7 @@ describe('API Monitoring Utils', () => {
 					'25', // rps
 					'2.5', // error_rate
 					'15000000', // p99 (ns) -> 15 ms
-					'2025-09-17T12:54:17.040Z', // lastseen
+					'1758113657.04', // lastseen in seconds; === 2025-09-17T12:54:17.040Z
 				],
 			];
 
@@ -66,6 +66,27 @@ describe('API Monitoring Utils', () => {
 			expect(result[0].errorRate).toBe('2.5');
 			expect(result[0].latency).toBe(15);
 			expect(result[0].lastUsed).toBe('2025-09-17T12:54:17.040Z');
+		});
+
+		it('should convert lastseen from seconds to a correct ISO timestamp', () => {
+			const columns = APIMonitoringColumnsMock;
+			const data = [
+				[
+					'test-domain',
+					'10', // endpoints
+					'25', // rps
+					'2.5', // error_rate
+					'15000000', // p99 (ns) -> 15 ms
+					'1785503109.583', // lastseen in seconds -> 2026-07-31T13:05:09.583Z
+				],
+			];
+
+			const result = formatDataForTable(data as any, columns as any);
+
+			expect(result).toHaveLength(1);
+			// Regression: a raw seconds value must not land in January 1970
+			// (previously new Date(seconds) treated it as milliseconds).
+			expect(result[0].lastUsed).toBe('2026-07-31T13:05:09.583Z');
 		});
 
 		it('should handle n/a and undefined values', () => {
