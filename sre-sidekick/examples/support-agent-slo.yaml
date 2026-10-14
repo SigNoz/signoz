@@ -1,0 +1,17 @@
+version: "1"
+service: support-agent
+environment: local
+
+slos:
+  - name: grounded-answers
+    description: Answers should be grounded in retrieved evidence.
+    type: grounded_answers
+    target: 0.95
+    window: 30d
+    requires_completeness: true
+    completeness_threshold: 0.95
+    good_query: increase(agent_grounded_answers_total{service_name="support-agent",environment="local"}[30d])
+    total_query: increase(agent_evaluated_answers_total{service_name="support-agent",environment="local"}[30d])
+    dependencies:
+      - agent_grounded_answers_total
+      - agent_evaluated_answers_total

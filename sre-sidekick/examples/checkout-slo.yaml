@@ -1,0 +1,25 @@
+version: "1"
+service: checkout-api
+environment: test
+
+slos:
+  - name: request-success
+    description: Checkout requests should succeed.
+    type: ratio
+    target: 0.995
+    window: 30d
+    requires_completeness: true
+    completeness_threshold: 0.95
+    good_query: increase(http_server_request_success_total{service_name="checkout-api",environment="test"}[30d])
+    total_query: increase(http_server_request_total{service_name="checkout-api",environment="test"}[30d])
+    dependencies:
+      - http_server_request_success_total
+      - http_server_request_total
+
+  - name: request-latency
+    description: Checkout requests should complete within one second.
+    type: latency_threshold
+    target: 0.99
+    window: 30d
+    latency_metric: http_server_request_duration_seconds
+    threshold_ms: 1000
