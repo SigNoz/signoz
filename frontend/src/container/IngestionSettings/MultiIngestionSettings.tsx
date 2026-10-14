@@ -83,6 +83,8 @@ import { MeterAggregateOperator } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
 import { getDaysUntilExpiry } from 'utils/timeUtils';
 
+import SemconvMigrationReport from './SemconvMigrationReport';
+
 import './IngestionSettings.styles.scss';
 
 const { Option } = Select;
@@ -1705,6 +1707,7 @@ function MultiIngestionSettings(): JSX.Element {
 					}}
 					className="ingestion-keys-table"
 				/>
+				<SemconvMigrationReport />
 			</div>
 
 			{/* Delete Key Modal */}

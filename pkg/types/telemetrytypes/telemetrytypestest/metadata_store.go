@@ -23,7 +23,19 @@ type MockMetadataStore struct {
 	ColumnEvolutionMetadataMap map[string][]*telemetrytypes.EvolutionEntry
 	LookupKeysMap              map[telemetrytypes.MetricMetadataLookupKey]int64
 	// StaticFields holds signal-specific intrinsic field definitions (e.g. logstelemetryschema.IntrinsicFields).
-	StaticFields map[string]telemetrytypes.TelemetryFieldKey
+	StaticFields           map[string]telemetrytypes.TelemetryFieldKey
+	SemconvMigrationReport *telemetrytypes.GettableSemconvMigrationReport
+}
+
+func (m *MockMetadataStore) GetSemconvMigrationReport(_ context.Context, _ valuer.UUID, startUnixMilli, endUnixMilli int64) (*telemetrytypes.GettableSemconvMigrationReport, error) {
+	if m.SemconvMigrationReport != nil {
+		return m.SemconvMigrationReport, nil
+	}
+	return &telemetrytypes.GettableSemconvMigrationReport{
+		StartUnixMilli: startUnixMilli,
+		EndUnixMilli:   endUnixMilli,
+		Entries:        []*telemetrytypes.SemconvMigrationReportEntry{},
+	}, nil
 }
 
 // NewMockMetadataStore creates a new instance of MockMetadataStore with initialized maps.

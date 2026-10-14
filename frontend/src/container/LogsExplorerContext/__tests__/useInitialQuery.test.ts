@@ -164,7 +164,9 @@ describe('useInitialQuery - Priority-Based Resource Filtering', () => {
 							value: 'frontend-service',
 						}),
 						expect.objectContaining({
-							key: expect.objectContaining({ key: 'deployment.environment' }),
+							key: expect.objectContaining({
+								key: 'deployment.environment.name',
+							}),
 							value: 'production',
 						}),
 						expect.objectContaining({
@@ -286,7 +288,9 @@ describe('useInitialQuery - Priority-Based Resource Filtering', () => {
 							value: 'legacy-app',
 						}),
 						expect.objectContaining({
-							key: expect.objectContaining({ key: 'deployment.environment' }),
+							key: expect.objectContaining({
+								key: 'deployment.environment.name',
+							}),
 							value: 'production',
 						}),
 						expect.objectContaining({

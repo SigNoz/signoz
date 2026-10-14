@@ -125,6 +125,15 @@ def get_field_values(signoz: types.SigNoz, token: str, params: dict, path: str =
     )
 
 
+def get_semconv_migration_report(signoz: types.SigNoz, token: str, params: dict) -> requests.Response:
+    return requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/semconv-migration"),
+        timeout=30,
+        headers={"authorization": f"Bearer {token}"},
+        params=params,
+    )
+
+
 @pytest.fixture(name="insert_attributes_metadata", scope="function")
 def insert_attributes_metadata(
     clickhouse: types.TestContainerClickhouse,

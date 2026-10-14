@@ -116,6 +116,9 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	// safely assume ms regardless of the resolution the caller sent.
 	req.Start = querybuilder.ToMilliSecs(req.Start)
 	req.End = querybuilder.ToMilliSecs(req.End)
+	// Key resolution rewrites parts of the builder queries, so the caller's
+	// spelling is read before that.
+	semconvResolutions := semconvResolutionsForRequest(req)
 
 	event := &qbtypes.QBEvent{
 		Version:         "v5",
@@ -164,6 +167,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	qbResp, qbErr := q.run(ctx, orgID, queries, req, steps, event, preseededResults)
 	if qbResp != nil {
 		qbResp.QBEvent = event
+		qbResp.Meta.SemconvResolutions = semconvResolutions
 		if len(intervalWarnings) != 0 && req.RequestType == qbtypes.RequestTypeTimeSeries {
 			if qbResp.Warning == nil {
 				qbResp.Warning = &qbtypes.QueryWarnData{

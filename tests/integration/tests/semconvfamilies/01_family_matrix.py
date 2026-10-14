@@ -1,12 +1,12 @@
 from collections.abc import Callable
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 
 import pytest
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.metadata import AttributesMetadata, get_field_keys, get_field_values
+from fixtures.metadata import AttributesMetadata, get_field_keys, get_field_values, get_semconv_migration_report
 from fixtures.querier import (
     RequestType,
     build_aggregation,
@@ -465,3 +465,66 @@ def test_related_values_search_matches_merged_value(
     # The BOTH row reads as staging, so its old production value must not
     # satisfy the search.
     assert set(response.json()["data"]["values"].get("relatedValues") or []) == {"production"}
+
+
+def test_response_meta_reports_the_resolved_family(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    family_fleet: datetime,
+) -> None:
+    """Raw SQL and PromQL are not rewritten, so only a builder query reports."""
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((family_fleet - timedelta(minutes=2)).timestamp() * 1000),
+        end_ms=int((family_fleet + timedelta(minutes=1)).timestamp() * 1000),
+        request_type=RequestType.RAW,
+        queries=[
+            build_raw_query(
+                "A",
+                "traces",
+                limit=1,
+                filter_expression=f"resource.{OLD_KEY} EXISTS",
+                order=[build_order_by("timestamp", "asc")],
+                select_fields=[{"name": "span.name"}],
+            )
+        ],
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert {
+        "requested": OLD_KEY,
+        "current": CURRENT_KEY,
+        "members": [CURRENT_KEY, OLD_KEY],
+        "kind": "attribute",
+    } in response.json()["data"]["meta"]["semconvResolutions"]
+
+
+def test_migration_report_lists_old_only_services(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_attributes_metadata: Callable[[list[AttributesMetadata]], None],
+) -> None:
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_attributes_metadata(
+        [
+            AttributesMetadata(data_source="traces", resource_attributes={"service.name": OLD, OLD_KEY: "production"}, timestamp=now),
+            AttributesMetadata(data_source="traces", resource_attributes={"service.name": NEW, CURRENT_KEY: "production"}, timestamp=now),
+            AttributesMetadata(data_source="traces", resource_attributes={"service.name": BOTH, CURRENT_KEY: "staging", OLD_KEY: "production"}, timestamp=now),
+        ]
+    )
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = get_semconv_migration_report(
+        signoz,
+        token,
+        {
+            "startUnixMilli": int((now - timedelta(hours=1)).timestamp() * 1000),
+            "endUnixMilli": int((now + timedelta(hours=1)).timestamp() * 1000),
+        },
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    entry = next(item for item in response.json()["data"]["entries"] if item["current"] == CURRENT_KEY and item["old"] == OLD_KEY and item["signal"] == "traces")
+    # NEW carries the current spelling, BOTH carries both. Only OLD is behind.
+    assert set(entry["services"]) == {OLD}
