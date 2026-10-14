@@ -34,7 +34,7 @@ func TestFromGlobs(t *testing.T) {
 					Timeout:   false,
 				},
 			},
-			expected: "http://localhost:8080/alerts/edit?ruleId=01961575-461c-7668-875f-05d374062bfc",
+			expected: "http://localhost:8080/alerts/overview?ruleId=01961575-461c-7668-875f-05d374062bfc",
 		},
 		{
 			name: "SingleAlertWithValidRuleUUIDv4",
@@ -49,7 +49,7 @@ func TestFromGlobs(t *testing.T) {
 					Timeout:   false,
 				},
 			},
-			expected: "http://localhost:8080/alerts/edit?ruleId=2d8edca5-4f24-4266-afd1-28cefadcfa88",
+			expected: "http://localhost:8080/alerts/overview?ruleId=2d8edca5-4f24-4266-afd1-28cefadcfa88",
 		},
 		{
 			name: "MultipleAlertsWithMismatchingRuleId",
@@ -97,7 +97,7 @@ func TestFromGlobs(t *testing.T) {
 					Timeout:   false,
 				},
 			},
-			expected: "http://localhost:8080/alerts/edit?ruleId=01961575-461c-7668-875f-05d374062bfc",
+			expected: "http://localhost:8080/alerts/overview?ruleId=01961575-461c-7668-875f-05d374062bfc",
 		},
 		{
 			name: "MultipleAlertsWithNoRuleId",
@@ -152,7 +152,7 @@ func TestFromGlobs(t *testing.T) {
 					Timeout:   false,
 				},
 			},
-			expected: "http://localhost:8080/alerts/edit?ruleId=01961575-461c-7668-875f-05d374062bfc&isTestAlert=true",
+			expected: "http://localhost:8080/alerts/overview?ruleId=01961575-461c-7668-875f-05d374062bfc&isTestAlert=true",
 		},
 		{
 			name: "TestAlertWithRuleIdWithSpacesAndSymbol",
@@ -168,7 +168,7 @@ func TestFromGlobs(t *testing.T) {
 					Timeout:   false,
 				},
 			},
-			expected: "http://localhost:8080/alerts/edit?ruleId=Prom+%2B+Alert+%26+Rule&isTestAlert=true",
+			expected: "http://localhost:8080/alerts/overview?ruleId=Prom+%2B+Alert+%26+Rule&isTestAlert=true",
 		},
 		{
 			name: "AlertWithBlankRuleId",
