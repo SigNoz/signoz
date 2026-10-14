@@ -2,12 +2,12 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
-import { Channels } from 'types/api/channels/getAll';
+import { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
 
 import { CreateAlertProvider } from '../../context';
 import AlertThreshold from '../AlertThreshold';
 
-const mockChannels: Channels[] = [];
+const mockChannels: ChannelOption[] = [];
 const mockRefreshChannels = jest.fn();
 const mockIsLoadingChannels = false;
 const mockIsErrorChannels = false;
@@ -85,16 +85,17 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 }));
 
 // Mock getAllChannels API
-jest.mock('api/channels/getAll', () => ({
+jest.mock('hooks/notificationChannels/useChannelOptions', () => ({
 	__esModule: true,
-	default: jest.fn(() =>
-		Promise.resolve({
-			data: [
-				{ id: '1', name: 'Email Channel' },
-				{ id: '2', name: 'Slack Channel' },
-			] as Channels[],
-		}),
-	),
+	useChannelOptions: jest.fn(() => ({
+		data: [
+			{ id: '1', name: 'Email Channel' },
+			{ id: '2', name: 'Slack Channel' },
+		] as ChannelOption[],
+		isLoading: false,
+		isError: false,
+		refetch: jest.fn(),
+	})),
 }));
 
 // Mock alert format categories
