@@ -42,7 +42,7 @@ func NewMaterializedPromotePath(target Target, key *telemetrytypes.TelemetryFiel
 		Promote: false,
 		Indexes: indexes,
 	}
-	if err := path.validateAndSetIndexDefaults(); err != nil {
+	if err := path.validateAndSetIndexDefaults(target); err != nil {
 		return nil, err
 	}
 	return path, nil

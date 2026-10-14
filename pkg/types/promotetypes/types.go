@@ -114,7 +114,7 @@ func (i *PromotePath) ValidateAndSetDefaults(target Target) error {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cardinal paths can not be promoted or indexed")
 	}
 
-	return i.validateAndSetIndexDefaults()
+	return i.validateAndSetIndexDefaults(target)
 }
 
 func (index WrappedIndex) SkipIndexType() (schemamigrator.IndexType, error) {
@@ -201,7 +201,7 @@ func validateIndexType(indexType string) error {
 	return nil
 }
 
-func (i *PromotePath) validateAndSetIndexDefaults() error {
+func (i *PromotePath) validateAndSetIndexDefaults(target Target) error {
 	for idx, index := range i.Indexes {
 		if index.Type == "" {
 			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "index type is required")
@@ -221,7 +221,7 @@ func (i *PromotePath) validateAndSetIndexDefaults() error {
 			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "index is not supported for column type: %s", index.FieldDataType)
 		}
 
-		i.Indexes[idx].JSONDataType = jsonDataType
+		i.Indexes[idx].JSONDataType = target.IndexDataType(jsonDataType)
 	}
 
 	return nil

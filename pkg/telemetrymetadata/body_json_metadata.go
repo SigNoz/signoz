@@ -42,11 +42,17 @@ var logsBodyIndexLookup = promotetypes.NewLogsBodyTarget().JSONIndexLookup()
 // a backtick-quoted path may hold any character, parentheses included.
 var simpleJSONSubColumnIndexExprRe = regexp.MustCompile("^CAST\\((?P<expr>(?:[^()`]|`[^`]*`)+), '(?P<type>.+)'\\)$")
 
-// unfoldJSONSubColumnIndexExpr accepts both the folded (lower/assumeNotNull)
-// and the bare type-cast expression forms.
+// ClickHouse stores a traces number index expression with its ::String unfolded to CAST.
+var jsonNumberSubColumnIndexExprRe = regexp.MustCompile(`^toFloat64OrNull\(CAST\((?P<expr>[^()]+), 'String'\)\)$`)
+
+// unfoldJSONSubColumnIndexExpr accepts the folded (lower/assumeNotNull), the
+// traces number and the bare type-cast expression forms.
 func unfoldJSONSubColumnIndexExpr(expr string) (string, string, error) {
 	if columnExpr, columnType, err := schemamigrator.UnfoldJSONSubColumnIndexExpr(expr); err == nil {
 		return columnExpr, columnType, nil
+	}
+	if matches := jsonNumberSubColumnIndexExprRe.FindStringSubmatch(expr); matches != nil {
+		return matches[1], telemetrytypes.Float64.StringValue(), nil
 	}
 	matches := simpleJSONSubColumnIndexExprRe.FindStringSubmatch(expr)
 	if matches == nil {
