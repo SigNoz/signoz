@@ -1,5 +1,6 @@
 import { ReactElement } from 'react';
 import type { Link } from '@signozhq/icons';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import {
 	SavedviewtypesSavedViewDTO,
 	SavedviewtypesSourceDTO,
@@ -123,6 +124,7 @@ export interface SavedViewRowActionConfig {
 	icon: typeof Link;
 	danger?: boolean;
 	hasDividerBefore?: boolean;
+	buildPermission?: (id: string) => BrandedPermission;
 }
 
 export interface PendingSavedViewAction {
@@ -141,6 +143,7 @@ export interface SavedViewsRowButtonProps {
 }
 
 export interface SavedViewsRowMenuProps {
+	viewId: string;
 	onAction: (key: SavedViewRowActionKey) => void;
 	onOpen: () => void;
 }

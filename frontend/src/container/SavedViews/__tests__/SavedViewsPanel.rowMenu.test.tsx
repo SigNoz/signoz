@@ -58,6 +58,12 @@ const row = (name: string): HTMLElement =>
 		.getAllByTestId('saved-views-row')
 		.find((element) => element.textContent?.includes(name)) as HTMLElement;
 
+const ROW_MENU_ITEM_TEST_IDS: Record<string, string> = {
+	'Copy link': 'saved-views-row-menu-copyLink',
+	'Edit details': 'saved-views-row-menu-editDetails',
+	Delete: 'saved-views-row-menu-delete',
+};
+
 async function chooseFromRowMenu(
 	viewName: string,
 	item: string,
@@ -66,7 +72,10 @@ async function chooseFromRowMenu(
 	await userEvent.click(
 		within(row(viewName)).getByTestId('saved-views-row-menu'),
 	);
-	await userEvent.click(await screen.findByRole('menuitem', { name: item }));
+	const label = await screen.findByTestId(ROW_MENU_ITEM_TEST_IDS[item]);
+	const menuItem = label.closest('[role="menuitem"]') as HTMLElement;
+	await waitFor(() => expect(menuItem).not.toHaveAttribute('data-disabled'));
+	await userEvent.click(menuItem);
 }
 
 const chip = (): HTMLElement => screen.getByTestId('saved-views-name');
@@ -87,8 +96,11 @@ describe('SavedViewsPanel row menu', () => {
 			within(row('Errors')).getByTestId('saved-views-row-menu'),
 		);
 
-		const items = await screen.findAllByRole('menuitem');
-		expect(items.map((item) => item.textContent)).toStrictEqual([
+		await screen.findByTestId('saved-views-row-menu-copyLink');
+		const items = document.querySelectorAll(
+			'[data-testid^="saved-views-row-menu-"]',
+		);
+		expect(Array.from(items, (item) => item.textContent)).toStrictEqual([
 			'Copy link',
 			'Edit details',
 			'Delete',
