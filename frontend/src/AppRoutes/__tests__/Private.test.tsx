@@ -300,20 +300,17 @@ describe('PrivateRoute', () => {
 			);
 		});
 
-		it('should redirect /logs-save-views to /logs/saved-views', () => {
-			renderPrivateRoute({ initialRoute: '/logs-save-views' });
+		it.each([
+			['/logs-save-views', ROUTES.LOGS_EXPLORER],
+			['/traces-save-views', ROUTES.TRACES_EXPLORER],
+			[ROUTES.LOGS_SAVE_VIEWS, ROUTES.LOGS_EXPLORER],
+			[ROUTES.TRACES_SAVE_VIEWS, ROUTES.TRACES_EXPLORER],
+			[ROUTES.METRICS_EXPLORER_VIEWS, ROUTES.METRICS_EXPLORER_EXPLORER],
+			[ROUTES.METER_EXPLORER_VIEWS, ROUTES.METER_EXPLORER],
+		])('should redirect the old views route %s to %s', (from, to) => {
+			renderPrivateRoute({ initialRoute: from });
 
-			expect(screen.getByTestId('location-display')).toHaveTextContent(
-				'/logs/saved-views',
-			);
-		});
-
-		it('should redirect /traces-save-views to /traces/saved-views', () => {
-			renderPrivateRoute({ initialRoute: '/traces-save-views' });
-
-			expect(screen.getByTestId('location-display')).toHaveTextContent(
-				'/traces/saved-views',
-			);
+			expect(screen.getByTestId('location-display').textContent).toBe(to);
 		});
 
 		it('should redirect /settings/access-tokens to /settings/service-accounts', () => {
@@ -1635,11 +1632,6 @@ describe('PrivateRoute', () => {
 			['LIST_LICENSES', ROUTES.LIST_LICENSES, USER_ROLES.EDITOR as ROLES],
 			['ONBOARDING', ROUTES.ONBOARDING, USER_ROLES.VIEWER as ROLES],
 			['APPLICATION', ROUTES.APPLICATION, USER_ROLES.ANONYMOUS as ROLES],
-			[
-				'METRICS_EXPLORER_VIEWS',
-				ROUTES.METRICS_EXPLORER_VIEWS,
-				USER_ROLES.ANONYMOUS as ROLES,
-			],
 		];
 
 		it.each(authzRouteRolePairs)(
