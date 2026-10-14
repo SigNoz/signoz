@@ -17,10 +17,8 @@ const (
 	GenAIUsageCacheCreationInputTokens = "gen_ai.usage.cache_creation.input_tokens"
 	GenAIUsageReasoningOutputTokens    = "gen_ai.usage.reasoning.output_tokens"
 
-	GenAIInputMessages         = "gen_ai.input.messages"
-	GenAIOutputMessages        = "gen_ai.output.messages"
-	GenAISystemInstructions    = "gen_ai.system_instructions"
-	GenAIResponseFinishReasons = "gen_ai.response.finish_reasons"
+	GenAIInputMessages  = "gen_ai.input.messages"
+	GenAIOutputMessages = "gen_ai.output.messages"
 
 	GenAIToolCallID        = "gen_ai.tool.call.id"
 	GenAIToolCallArguments = "gen_ai.tool.call.arguments"
@@ -38,16 +36,9 @@ const (
 )
 
 // GenAISpanGateKeys mark a span as gen_ai: an LLM call, a tool call, or an
-// agent span. A trace belongs to the AI explorer when any span carries one.
+// agent span. A trace belongs to the AI explorer when any span carries one,
+// and the thread of a trace is these spans.
 var GenAISpanGateKeys = []string{GenAIRequestModel, GenAIToolName, GenAIAgentName}
-
-// GenAIThreadKeys mark a span as a thread row: a model call with its messages, in the semconv keys
-// or the flattened keys of openllmetry and OpenInference, or a tool execution.
-var GenAIThreadKeys = []string{
-	GenAIInputMessages, GenAIOutputMessages, GenAIToolName,
-	"gen_ai.prompt.0.role", "gen_ai.completion.0.role",
-	"llm.input_messages.0.message.role", "llm.output_messages.0.message.role",
-}
 
 // GenAISpanFilterExpression renders the gate as a query-builder filter
 // expression: each gate key ORed on EXISTS.

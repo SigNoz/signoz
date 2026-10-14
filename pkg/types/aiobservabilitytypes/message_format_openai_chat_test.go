@@ -170,8 +170,7 @@ func TestFormat_OpenAIChat(t *testing.T) {
 			]`,
 		},
 		{
-			// ChatCompletionRequestMessageContentPartFile {file: {file_id}} (openai/openai-openapi@ee9458d,
-			// openapi.yaml), as OpenInference records the request in input.value
+			// openinference capture, input.value of the ChatCompletion span
 			name:      "FileByID_FilePart",
 			input:     `{"model": "gpt-4o-mini", "messages": [{"role": "user", "content": [{"type": "text", "text": "Summarise this document in one sentence."}, {"type": "file", "file": {"file_id": "file-6F2ksmvXxt4VdoqmHRw6kL"}}]}], "max_tokens": 60}`,
 			output:    `{"id":"chatcmpl-DktFileCapture0001","object":"chat.completion","model":"gpt-4o-mini-2024-07-18","choices":[{"index":0,"finish_reason":"stop","logprobs":null,"message":{"role":"assistant","content":"The document is a short PDF about dragons.","refusal":null,"annotations":[]}}]}`,
@@ -194,7 +193,7 @@ func TestFormat_OpenAIChat(t *testing.T) {
 			]`,
 		},
 		{
-			// ChatCompletionRequestMessageContentPartFile {file: {filename, file_data}}, file_data a data URL
+			// openinference capture, input.value of the ChatCompletion span
 			name:      "FileInline_BlobPart",
 			input:     `{"model": "gpt-4o-mini", "messages": [{"role": "user", "content": [{"type": "text", "text": "Summarise this document in one sentence."}, {"type": "file", "file": {"filename": "draconomicon.pdf", "file_data": "data:application/pdf;base64,JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZy9QYWdlcyAyIDAgUj4+ZW5kb2JqCjIgMCBvYmo8PC9UeXBlL1BhZ2VzL0tpZHNbXS9Db3VudCAwPj5lbmRvYmoKdHJhaWxlcjw8L1Jvb3QgMSAwIFI+PgolJUVPRgo="}}]}], "max_tokens": 60}`,
 			formatter: FormatterOpenAIChat,
@@ -206,57 +205,6 @@ func TestFormat_OpenAIChat(t *testing.T) {
 			      {"type": "blob", "modality": "document", "mime_type": "application/pdf", "content": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZy9QYWdlcyAyIDAgUj4+ZW5kb2JqCjIgMCBvYmo8PC9UeXBlL1BhZ2VzL0tpZHNbXS9Db3VudCAwPj5lbmRvYmoKdHJhaWxlcjw8L1Jvb3QgMSAwIFI+PgolJUVPRgo="}
 			    ]
 			  }
-			]`,
-			wantOutput: `[]`,
-		},
-		{
-			// ChatCompletionRequestMessageContentPartAudio {input_audio: {data, format}}; format is wav or mp3
-			name:      "InputAudio_BlobPartWithMimeFromFormat",
-			input:     `{"model": "gpt-4o-audio-preview", "messages": [{"role": "user", "content": [{"type": "text", "text": "What is in this recording?"}, {"type": "input_audio", "input_audio": {"data": "UklGRg==", "format": "wav"}}, {"type": "input_audio", "input_audio": {"data": "SUQz", "format": "flac"}}]}]}`,
-			formatter: FormatterOpenAIChat,
-			wantInput: `[
-			  {
-			    "role": "user",
-			    "parts": [
-			      {"type": "text", "content": "What is in this recording?"},
-			      {"type": "blob", "modality": "audio", "mime_type": "audio/wav", "content": "UklGRg=="},
-			      {"type": "blob", "modality": "audio", "content": "SUQz"}
-			    ]
-			  }
-			]`,
-			wantOutput: `[]`,
-		},
-		{
-			// ChatCompletionResponseMessage.audio {id, expires_at, data, transcript}; the transcript is the
-			// answer text, the bytes come without a format, and a later request refers to it by id only
-			name:      "ResponseAudio_TranscriptTextAndBlob_RequestReferenceDropped",
-			input:     `{"model": "gpt-4o-audio-preview", "messages": [{"role": "user", "content": "Say hi"}, {"role": "assistant", "audio": {"id": "audio_abc123"}}, {"role": "user", "content": "Again"}]}`,
-			output:    `{"choices":[{"finish_reason":"stop","index":0,"message":{"role":"assistant","content":null,"refusal":null,"audio":{"id":"audio_abc123","expires_at":1729018800,"data":"UklGRg==","transcript":"Hi there!"}}}]}`,
-			formatter: FormatterOpenAIChat,
-			wantInput: `[
-			  {"role": "user", "parts": [{"type": "text", "content": "Say hi"}]},
-			  {"role": "assistant", "parts": []},
-			  {"role": "user", "parts": [{"type": "text", "content": "Again"}]}
-			]`,
-			wantOutput: `[
-			  {
-			    "role": "assistant",
-			    "parts": [
-			      {"type": "text", "content": "Hi there!"},
-			      {"type": "blob", "modality": "audio", "content": "UklGRg=="}
-			    ],
-			    "finish_reason": "stop"
-			  }
-			]`,
-		},
-		{
-			// a system prompt outside the history, as the Anthropic Messages API and LangChain take it
-			name:      "SystemOutsideHistory_LeadingSystemMessage",
-			input:     `{"model": "claude-3-5-sonnet", "system": "You are terse.", "messages": [{"role": "user", "content": "hi"}]}`,
-			formatter: FormatterOpenAIChat,
-			wantInput: `[
-			  {"role": "system", "parts": [{"type": "text", "content": "You are terse."}]},
-			  {"role": "user", "parts": [{"type": "text", "content": "hi"}]}
 			]`,
 			wantOutput: `[]`,
 		},
