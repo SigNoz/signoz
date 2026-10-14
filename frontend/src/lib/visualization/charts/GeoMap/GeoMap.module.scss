@@ -1,4 +1,4 @@
-// Shared by every layer through inheritance.
+// Same theme hooks as the SVG chart; canvas reads them through readPalette().
 .wrapper {
 	--geo-no-data: var(--l3-background);
 	--geo-context: var(--l2-background);
@@ -17,7 +17,11 @@
 	min-height: 0;
 }
 
-// Portalled to <body>, so it can't rely on the wrapper's variables.
+.canvas {
+	position: absolute;
+	inset: 0;
+}
+
 .tooltip {
 	position: absolute;
 	padding: 8px 12px;

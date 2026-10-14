@@ -1,6 +1,3 @@
-import { geoGraticule } from 'd3-geo';
-import type { ExtendedFeature } from 'd3-geo';
-
 import {
 	CountryFeature,
 	GeoMapDatum,
@@ -11,27 +8,23 @@ import {
 } from '../types';
 import { COUNTRY_BY_ISO2 } from './countries';
 
-// Centred on 10°E so Chukotka stays joined to Russia; the box spans the same
-// 360° starting at the seam that rotation creates (170°W), nudged inside it.
 // Antarctica isn't drawn, and Mercator stretches toward the poles, so the world
 // frame stops at 58°S and 75°N (the Arctic edge is cropped, as on web maps).
-const WORLD_ROTATE: [number, number] = [-10, 0];
 const WORLD_BOX: LonLatBox = [
-	[-169.99, -58],
-	[189.99, 75],
+	[-180, -58],
+	[180, 75],
 ];
 
 /**
- * `box` is fitted as a lon/lat rectangle, not the members' geometry: Russia would
+ * Each view frames a lon/lat box, not its members' geometry: Russia would
  * stretch Europe to the Pacific and overseas territories would drag a frame
  * across oceans. Fit to data and the country view fall back to the world box.
  */
 export const VIEW_PRESETS: Record<GeoMapView, GeoMapViewPreset> = {
-	world: { label: 'World', rotate: WORLD_ROTATE, box: WORLD_BOX },
-	fit: { label: 'Fit to data', rotate: WORLD_ROTATE, box: WORLD_BOX },
+	world: { label: 'World', box: WORLD_BOX },
+	fit: { label: 'Fit to data', box: WORLD_BOX },
 	africa: {
 		label: 'Africa',
-		rotate: [-17, 0],
 		box: [
 			[-26, -36],
 			[60, 38],
@@ -39,7 +32,6 @@ export const VIEW_PRESETS: Record<GeoMapView, GeoMapViewPreset> = {
 	},
 	asia: {
 		label: 'Asia',
-		rotate: [-95, 0],
 		box: [
 			[25, -12],
 			[150, 58],
@@ -47,7 +39,6 @@ export const VIEW_PRESETS: Record<GeoMapView, GeoMapViewPreset> = {
 	},
 	europe: {
 		label: 'Europe',
-		rotate: [-12, 0],
 		box: [
 			[-25, 34],
 			[45, 71],
@@ -55,7 +46,6 @@ export const VIEW_PRESETS: Record<GeoMapView, GeoMapViewPreset> = {
 	},
 	north_america: {
 		label: 'N. America',
-		rotate: [100, 0],
 		box: [
 			[-170, 7],
 			[-52, 74],
@@ -63,36 +53,22 @@ export const VIEW_PRESETS: Record<GeoMapView, GeoMapViewPreset> = {
 	},
 	south_america: {
 		label: 'S. America',
-		rotate: [60, 0],
 		box: [
 			[-92, -56],
 			[-30, 14],
 		],
 	},
-	// Centred east of the antimeridian so Fiji and NZ's islands aren't split.
+	// Stops at the antimeridian: shapes aren't repeated across world copies, so
+	// Fiji's islands east of 180° fall outside the frame.
 	oceania: {
 		label: 'Oceania',
-		rotate: [-150, 0],
 		box: [
 			[110, -50],
-			[190, 2],
+			[180, 2],
 		],
 	},
-	country: { label: 'Country', rotate: WORLD_ROTATE, box: WORLD_BOX },
+	country: { label: 'Country', box: WORLD_BOX },
 };
-
-/**
- * Mercator everywhere, except the US country view: Alaska and Hawaii sit so far
- * from the lower 48 that Albers USA, which insets them, is the only frame that
- * shows every state at a readable size.
- */
-export type GeoMapProjectionName = 'mercator' | 'albersUsa';
-
-export interface GeoMapFit {
-	projection: GeoMapProjectionName;
-	rotate: [number, number];
-	object: ExtendedFeature;
-}
 
 export function isMember(country: CountryFeature, view: GeoMapView): boolean {
 	return (
@@ -102,19 +78,10 @@ export function isMember(country: CountryFeature, view: GeoMapView): boolean {
 	);
 }
 
-/** Densified outline: a lon/lat box is fitted by its edges, not just its corners. */
-function boxOutline(box: LonLatBox): ExtendedFeature {
-	return {
-		type: 'Feature',
-		properties: {},
-		geometry: geoGraticule().extent(box).outline(),
-	};
-}
-
 function padBox([[w, s], [e, n]]: LonLatBox, pad: number): LonLatBox {
 	return [
 		[Math.max(w - pad, -180), Math.max(s - pad, -85)],
-		[Math.min(e + pad, 180), Math.min(n + pad, 85)],
+		[e + pad, Math.min(n + pad, 85)],
 	];
 }
 
@@ -144,52 +111,37 @@ function getFitBox(iso2s: string[]): LonLatBox | null {
 	);
 }
 
-function getCountryFit(iso2: SubdivisionCountry): GeoMapFit | null {
+/**
+ * Whole-country bounds keep island states (Andaman and Nicobar) in frame,
+ * unless they wrap the antimeridian (the US's Aleutians, Russia), where only
+ * the mainland is usable: for the US that is the lower 48.
+ */
+function getCountryBox(iso2: SubdivisionCountry): LonLatBox | null {
 	const country = COUNTRY_BY_ISO2.get(iso2);
 	if (!country) {
 		return null;
 	}
-	if (iso2 === 'US') {
-		return { projection: 'albersUsa', rotate: [0, 0], object: country };
-	}
-	// Whole-country bounds keep island states (Andaman and Nicobar) in frame,
-	// unless they wrap the antimeridian, where only the mainland is usable.
 	const { bounds, mainland } = country.properties;
-	const box = bounds[0][0] > bounds[1][0] ? mainland : bounds;
-	const centre = (box[0][0] + box[1][0]) / 2;
-	return {
-		projection: 'mercator',
-		rotate: [-centre, 0],
-		object: boxOutline(padBox(box, 1)),
-	};
+	return padBox(bounds[0][0] > bounds[1][0] ? mainland : bounds, 1);
 }
 
-export function getGeoMapFit(
+/** The lon/lat box a view frames. */
+export function getViewBox(
 	view: GeoMapView,
 	data: GeoMapDatum[],
 	country?: SubdivisionCountry,
-): GeoMapFit {
+): LonLatBox {
 	if (view === 'country' && country) {
-		const fit = getCountryFit(country);
-		if (fit) {
-			return fit;
+		const box = getCountryBox(country);
+		if (box) {
+			return box;
 		}
 	}
 	if (view === 'fit') {
 		const box = getFitBox(data.map((datum) => datum.code));
 		if (box) {
-			const centre = (box[0][0] + box[1][0]) / 2;
-			return {
-				projection: 'mercator',
-				rotate: [-centre, 0],
-				object: boxOutline(box),
-			};
+			return box;
 		}
 	}
-	const preset = VIEW_PRESETS[view];
-	return {
-		projection: 'mercator',
-		rotate: preset.rotate,
-		object: boxOutline(preset.box),
-	};
+	return VIEW_PRESETS[view].box;
 }

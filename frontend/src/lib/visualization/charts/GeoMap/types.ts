@@ -53,7 +53,6 @@ export type GeoMapLayer = 'regions' | 'bubbles';
 
 export interface GeoMapViewPreset {
 	label: string;
-	rotate: [number, number];
 	box: LonLatBox;
 }
 
