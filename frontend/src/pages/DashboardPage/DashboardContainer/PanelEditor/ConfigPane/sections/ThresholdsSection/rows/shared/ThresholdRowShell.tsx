@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { Check, Pencil, Trash2, X } from '@signozhq/icons';
+import { Pencil, Trash2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
+import { Typography } from '@signozhq/ui/typography';
 
 import styles from '../../ThresholdsSection.module.scss';
 
@@ -8,11 +9,11 @@ interface ThresholdRowShellProps {
 	index: number;
 	/** testId prefix per variant: `threshold` | `comparison-threshold` | `table-threshold`. */
 	testIdPrefix: string;
-	/** Swatch color shown in view mode. */
-	color: string;
+	marker: ReactNode;
 	isEditing: boolean;
-	/** Compact view-mode summary, rendered between the color dot and the actions. */
-	summary: ReactNode;
+	isNew: boolean;
+	title: ReactNode;
+	subtitle?: ReactNode;
 	/** Edit-mode fields. */
 	children: ReactNode;
 	onEdit: () => void;
@@ -29,9 +30,11 @@ interface ThresholdRowShellProps {
 function ThresholdRowShell({
 	index,
 	testIdPrefix,
-	color,
+	marker,
 	isEditing,
-	summary,
+	isNew,
+	title,
+	subtitle,
 	children,
 	onEdit,
 	onSave,
@@ -41,9 +44,11 @@ function ThresholdRowShell({
 	if (!isEditing) {
 		return (
 			<div className={styles.viewRow}>
-				<span className={styles.dot} style={{ backgroundColor: color }} />
-				{summary}
-				<div className={styles.spacer} />
+				{marker}
+				<div className={styles.viewText}>
+					<span className={styles.viewValue}>{title}</span>
+					{subtitle && <span className={styles.viewLabel}>{subtitle}</span>}
+				</div>
 				<Button
 					type="button"
 					variant="ghost"
@@ -72,6 +77,9 @@ function ThresholdRowShell({
 
 	return (
 		<div className={styles.editRow}>
+			<Typography.Text className={styles.editTitle}>
+				{isNew ? 'New threshold' : 'Edit threshold'}
+			</Typography.Text>
 			{children}
 
 			<div className={styles.actions}>
@@ -79,17 +87,15 @@ function ThresholdRowShell({
 					type="button"
 					variant="outlined"
 					color="secondary"
-					prefix={<X size={14} />}
 					data-testid={`${testIdPrefix}-discard-${index}`}
 					onClick={onDiscard}
 				>
-					Discard
+					Cancel
 				</Button>
 				<Button
 					type="button"
 					variant="solid"
 					color="primary"
-					prefix={<Check size={14} />}
 					data-testid={`${testIdPrefix}-save-${index}`}
 					onClick={onSave}
 				>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
-import { X } from '@signozhq/icons';
+import { ArrowLeft, X } from '@signozhq/icons';
 import { Divider } from '@signozhq/ui/divider';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper, DrawerWrapperProps } from '@signozhq/ui/drawer';
@@ -16,12 +16,19 @@ import {
 	useGlobalTimeStore,
 } from 'store/globalTime';
 
-import { INFRA_MONITORING_K8S_PARAMS_KEYS } from '../constants';
+import {
+	INFRA_MONITORING_K8S_PARAMS_KEYS,
+	K8S_CATEGORY_SINGULAR_LABELS,
+} from '../constants';
 import { useInfraMonitoringSelectedItemParams } from '../hooks';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
 import LoadingContainer from '../LoadingContainer';
 
 import K8sBaseDetailsContent from './K8sBaseDetailsContent';
+import { CategoryIcon } from './categoryIcons';
+import { getEntityNameAttributeKey } from './relations';
+import { useDrawerHistoryStore } from './useDrawerHistoryStore';
+import { usePrimeEntityDetails } from './usePrimeEntityDetails';
 import { K8sBaseDetailsProps } from './types';
 import { useDrawerLifecycleStore } from './useDrawerLifecycleStore';
 
@@ -86,6 +93,11 @@ export default function K8sBaseDetails<T>({
 		useInfraMonitoringSelectedItemParams();
 	const selectedItem = selectedItemParams.selectedItem;
 
+	const selectedItemExpression = useMemo(
+		() => getSelectedItemExpression(selectedItemParams),
+		[getSelectedItemExpression, selectedItemParams],
+	);
+
 	const entityQueryKey = useMemo(
 		() =>
 			getAutoRefreshQueryKey(
@@ -121,9 +133,10 @@ export default function K8sBaseDetails<T>({
 			const { minTime, maxTime } = getMinMaxTime();
 			const start = Math.floor(minTime / NANO_SECOND_MULTIPLIER);
 			const end = Math.floor(maxTime / NANO_SECOND_MULTIPLIER);
-			const expression = getSelectedItemExpression(selectedItemParams);
-
-			return fetchEntityData({ filter: { expression }, start, end }, signal);
+			return fetchEntityData(
+				{ filter: { expression: selectedItemExpression }, start, end },
+				signal,
+			);
 		},
 		cacheTime: INFRA_MONITORING_DETAILS_CACHE_TIME,
 		staleTime: INFRA_MONITORING_DETAILS_CACHE_TIME,
@@ -158,9 +171,29 @@ export default function K8sBaseDetails<T>({
 		}
 	}, [selectedItem, markDrawerOpened, markDrawerClosed]);
 
+	const previousEntry = useDrawerHistoryStore(
+		(store) => store.entries[store.entries.length - 1] ?? null,
+	);
+	const popDrawerHistory = useDrawerHistoryStore((store) => store.pop);
+	const primeDetails = usePrimeEntityDetails();
+	const resetHistory = useDrawerHistoryStore((store) => store.reset);
+
 	const handleClose = useCallback((): void => {
+		resetHistory();
 		setSelectedItemParams(null);
-	}, [setSelectedItemParams]);
+	}, [resetHistory, setSelectedItemParams]);
+
+	// Steps back through resources opened from an overview tab
+	const handleBack = useCallback((): void => {
+		const previous = popDrawerHistory();
+
+		if (!previous) {
+			return;
+		}
+
+		primeDetails(previous);
+		setSelectedItemParams(previous.params);
+	}, [popDrawerHistory, primeDetails, setSelectedItemParams]);
 
 	const handleOpenChange = useCallback(
 		(open: boolean): void => {
@@ -172,10 +205,24 @@ export default function K8sBaseDetails<T>({
 	);
 
 	const handleCopyId = useCallback((): void => {
-		toast.success('ID copied to clipboard', { position: 'bottom-left' });
-	}, []);
+		toast.success(
+			`${K8S_CATEGORY_SINGULAR_LABELS[category]} name copied to clipboard`,
+			{ position: 'bottom-left' },
+		);
+	}, [category]);
 
 	const entityName = entity ? getEntityName(entity) : '';
+
+	// meta carries the resource's parents; its own name comes from the config
+	const entityAttributes = useMemo((): Record<string, string> => {
+		const meta = (entity as { meta?: Record<string, string> | null } | null)
+			?.meta;
+
+		return {
+			...(meta ?? {}),
+			...(entityName ? { [getEntityNameAttributeKey(category)]: entityName } : {}),
+		};
+	}, [entity, entityName, category]);
 
 	useEffect(() => {
 		if (entity) {
@@ -187,20 +234,48 @@ export default function K8sBaseDetails<T>({
 		}
 	}, [entity, eventCategory]);
 
+	// Names the resource it returns to, so a drill several levels deep stays clear
+	const backTarget = previousEntry
+		? `Back to ${K8S_CATEGORY_SINGULAR_LABELS[previousEntry.category]}`
+		: '';
+	const backLabel = previousEntry ? `${backTarget}: ${previousEntry.label}` : '';
+
 	// TODO(H4ad): Improve this on component level
 	// DrawerWrapper types `title` as string but renders any ReactNode.
 	const drawerTitle = (
 		<>
-			<Button
-				variant="ghost"
-				size="sm"
-				color="secondary"
-				onClick={handleClose}
-				data-testid="close-drawer-button"
-				className={styles.closeButton}
-				prefix={<X />}
-			/>
+			{/* One control: step back where there is a trail, close otherwise.
+			    Clicking outside the drawer closes it either way. The label is text
+			    rather than a tooltip, which a click on the control would dismiss. */}
+			{previousEntry ? (
+				<Button
+					variant="ghost"
+					size="sm"
+					color="secondary"
+					onClick={handleBack}
+					data-testid="drawer-back-button"
+					className={styles.backButton}
+					aria-label={backLabel}
+					prefix={<ArrowLeft size={14} />}
+				>
+					{backTarget}
+				</Button>
+			) : (
+				<Button
+					variant="ghost"
+					size="sm"
+					color="secondary"
+					onClick={handleClose}
+					data-testid="close-drawer-button"
+					className={styles.closeButton}
+					prefix={<X />}
+				/>
+			)}
 			<Divider type="vertical" />
+			<span className={styles.entityKind} data-testid="drawer-entity-kind">
+				<CategoryIcon category={category} />
+				{K8S_CATEGORY_SINGULAR_LABELS[category]}
+			</span>
 			<Typography.Text className={styles.title}>
 				{entityName ||
 					((isEntityError || hasResponseError) && 'Failed to load entity details') ||
@@ -208,8 +283,8 @@ export default function K8sBaseDetails<T>({
 					'-'}
 			</Typography.Text>
 			<CopyButton
-				value={selectedItem ?? ''}
-				ariaLabel="Copy ID"
+				value={entityName || selectedItem || ''}
+				ariaLabel={`Copy ${K8S_CATEGORY_SINGULAR_LABELS[category]} name`}
 				className={styles.copyIdButton}
 				testId="copy-id-button"
 				onCopy={handleCopyId}
@@ -271,6 +346,8 @@ export default function K8sBaseDetails<T>({
 						customTabs={customTabs}
 						logsAndTracesInitialExpression={logsAndTracesInitialExpression}
 						eventsInitialExpression={eventsInitialExpression}
+						entityAttributes={entityAttributes}
+						entityName={entityName}
 					/>
 				</GlobalTimeProvider>
 			)}

@@ -37,6 +37,7 @@ import {
 	getListQuery,
 	getQueryByPanelType,
 } from 'container/LogsExplorerViews/explorerUtils';
+import ExplorerActions from 'container/ExplorerActions/ExplorerActions';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
 import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashboardLink';
@@ -58,6 +59,7 @@ import { QueryDataV3 } from 'types/api/widgets/getQuery';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 } from 'uuid';
+import { getListOrderBy, setListOrderBy } from 'utils/explorerUtils';
 
 import LogsActionsContainer from './LogsActionsContainer';
 
@@ -100,7 +102,8 @@ function LogsExplorerViewsContainer({
 	const currentMinTimeRef = useRef<number>(minTime);
 
 	// Context
-	const { stagedQuery, panelType } = useQueryBuilder();
+	const { stagedQuery, currentQuery, redirectWithQueryBuilderData, panelType } =
+		useQueryBuilder();
 
 	const selectedPanelType = panelType || PANEL_TYPES.LIST;
 
@@ -110,7 +113,7 @@ function LogsExplorerViewsContainer({
 	const [requestData, setRequestData] = useState<Query | null>(null);
 	const [listChartQuery, setListChartQuery] = useState<Query | null>(null);
 
-	const [orderBy, setOrderBy] = useState<string>('timestamp:desc');
+	const orderBy = useMemo(() => getListOrderBy(stagedQuery), [stagedQuery]);
 
 	const { yAxisUnit, onUnitChange } = useUrlYAxisUnit('');
 
@@ -138,6 +141,13 @@ function LogsExplorerViewsContainer({
 	const exportDefaultQuery = useMemo(
 		() => getExportQueryData(requestData, selectedPanelType),
 		[selectedPanelType, requestData],
+	);
+
+	const explorerActions = useMemo(
+		() => (
+			<ExplorerActions query={exportDefaultQuery} sourcepage={DataSource.LOGS} />
+		),
+		[exportDefaultQuery],
 	);
 
 	const {
@@ -183,6 +193,13 @@ function LogsExplorerViewsContainer({
 			// custom selected time interval to prevent recalculating the start and end timestamps before fetching next pages
 			'custom',
 		);
+
+	const handleOrderChange = useCallback(
+		(value: string): void => {
+			redirectWithQueryBuilderData(setListOrderBy(currentQuery, value));
+		},
+		[currentQuery, redirectWithQueryBuilderData],
+	);
 
 	const getRequestData = useCallback(
 		(
@@ -315,18 +332,10 @@ function LogsExplorerViewsContainer({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data]);
 
-	// Store previous orderDirection to detect changes
-	const prevOrderByRef = useRef(orderBy);
-
 	useEffect(() => {
-		const orderByChanged =
-			prevOrderByRef.current !== orderBy && selectedPanelType === PANEL_TYPES.LIST;
-		prevOrderByRef.current = orderBy;
-
 		if (
 			requestData?.id !== stagedQuery?.id ||
-			currentMinTimeRef.current !== minTime ||
-			orderByChanged
+			currentMinTimeRef.current !== minTime
 		) {
 			const newRequestData = getRequestData(stagedQuery, {
 				filters: listQuery?.filters || initialFilters,
@@ -350,7 +359,6 @@ function LogsExplorerViewsContainer({
 		activeLogId,
 		selectedPanelType,
 		maxTime,
-		orderBy,
 	]);
 
 	const chartData = useMemo(() => {
@@ -416,14 +424,14 @@ function LogsExplorerViewsContainer({
 	return (
 		<div className="logs-explorer-views-container">
 			<div className="logs-explorer-views-types">
-				{!showLiveLogs && (
+				{!showLiveLogs && selectedPanelType === PANEL_TYPES.LIST && (
 					<LogsActionsContainer
 						listQuery={listQuery}
-						selectedPanelType={selectedPanelType}
 						showFrequencyChart={showFrequencyChart}
 						handleToggleFrequencyChart={handleToggleFrequencyChart}
 						orderBy={orderBy}
-						setOrderBy={setOrderBy}
+						onOrderChange={handleOrderChange}
+						explorerActions={explorerActions}
 					/>
 				)}
 
@@ -474,21 +482,23 @@ function LogsExplorerViewsContainer({
 								dataSource={DataSource.LOGS}
 								setWarning={setWarning}
 								allowExport
+								headerActions={explorerActions}
 							/>
 						</div>
 					)}
 					{selectedPanelType === PANEL_TYPES.TABLE && !showLiveLogs && (
 						<div className="table-view-container">
-							{data && !isError && (
-								<div className="table-view-container-header">
+							<div className="table-view-container-header">
+								{explorerActions}
+								{data && !isError && (
 									<ExportMenu
 										dataSource={DataSource.LOGS}
 										data={data}
 										query={stagedQuery || initialQueriesMap.metrics}
 										fileName="logs-table"
 									/>
-								</div>
-							)}
+								)}
+							</div>
 							<LogsExplorerTable
 								data={
 									(data?.payload?.data?.newResult?.data?.result ||

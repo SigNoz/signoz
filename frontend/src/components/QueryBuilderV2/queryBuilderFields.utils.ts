@@ -76,6 +76,7 @@ export const RAW_QUERY_FIELDS: Omit<
 	[QueryBuilderField.Limit]: { state: 'hidden' },
 	[QueryBuilderField.Legend]: { state: 'hidden' },
 	[QueryBuilderField.ReduceTo]: { state: 'hidden' },
+	[QueryBuilderField.BucketOptions]: { state: 'hidden' },
 	[QueryBuilderField.Formula]: { state: 'hidden' },
 	[QueryBuilderField.OrderBy]: { state: 'pinned' },
 };

@@ -1,5 +1,6 @@
 .root {
-	height: calc(100vh);
+	flex: 1;
+	min-height: 0;
 	display: flex;
 	flex-direction: column;
 }

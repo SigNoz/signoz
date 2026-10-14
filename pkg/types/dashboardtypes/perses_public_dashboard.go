@@ -106,6 +106,13 @@ func redactQuery(spec any) any {
 			return spec
 		}
 		return &BuilderQuerySpec{Spec: redactLeafQuery(s.Spec)}
+	case *AIBuilderQuerySpec:
+		if s == nil {
+			return spec
+		}
+		redacted := redactLeafQuery(qb.QueryBuilderQuery[qb.TraceAggregation](*s)).(qb.QueryBuilderQuery[qb.TraceAggregation])
+		out := AIBuilderQuerySpec(redacted)
+		return &out
 	case *qb.PromQuery:
 		return redactQueryPtr(s)
 	case *qb.ClickHouseQuery:
@@ -188,7 +195,8 @@ func (d *DashboardV2) GetPanelQuery(startTime, endTime uint64, panelKey string) 
 		return nil, err
 	}
 
-	// fillGaps lives on the panel visualization; only timeseries and bar chart carry it.
+	// fillGaps lives on the panel visualization; only timeseries, bar chart and
+	// area chart carry it.
 	fillGaps := false
 	switch panelSpec := panel.Spec.Plugin.Spec.(type) {
 	case *TimeSeriesPanelSpec:
@@ -196,6 +204,10 @@ func (d *DashboardV2) GetPanelQuery(startTime, endTime uint64, panelKey string) 
 			fillGaps = panelSpec.Visualization.FillSpans
 		}
 	case *BarChartPanelSpec:
+		if panelSpec != nil {
+			fillGaps = panelSpec.Visualization.FillSpans
+		}
+	case *AreaChartPanelSpec:
 		if panelSpec != nil {
 			fillGaps = panelSpec.Visualization.FillSpans
 		}

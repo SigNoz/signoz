@@ -167,7 +167,7 @@ describe('UnpricedModelsTab (integration)', () => {
 
 		await screen.findByTestId(`unpriced-model-name-${MODEL}`);
 
-		// Open the row's dropdown and take the "Create pricing for …" escape hatch
+		// Open the row's dropdown and take the "Create a new pricing model" escape hatch
 		// instead of mapping onto an existing billing model.
 		await user.click(screen.getByTestId(`map-to-select-${MODEL}`));
 		await user.click(await screen.findByTestId(`map-to-create-${MODEL}`));

@@ -78,6 +78,8 @@ export interface AxisProps {
 	};
 	/** Explicit tick formatter, replacing the scale's default (time / unit-formatted). */
 	values?: uPlot.Axis.Values;
+	/** Explicit axis splits, overriding the default tick calculation. */
+	splits?: uPlot.Axis.Splits;
 	/** Pixels between the ticks and their labels; also feeds the y axis width calculation. */
 	gap?: number;
 	/** Explicit axis thickness. Left unset, the y axis sizes itself to its widest label. */
@@ -222,6 +224,8 @@ export interface SeriesProps extends LineConfig, PointsConfig, BarConfig {
 	spanGaps?: boolean | number;
 	fillColor?: string;
 	fillMode?: FillMode;
+	/** 0–1, for `Solid` and `Gradient`; unset uses `DEFAULT_FILL_OPACITY`. */
+	fillOpacity?: number;
 	isDarkMode?: boolean;
 	stepInterval?: number;
 	metric?: { [key: string]: string };

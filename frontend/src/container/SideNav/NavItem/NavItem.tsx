@@ -51,7 +51,7 @@ export default function NavItem({
 			data-testid={dataTestId}
 		>
 			{showIcon && <div className="nav-item-active-marker" />}
-			<div className={cx('nav-item-data', isBeta ? 'beta-tag' : '')}>
+			<div className="nav-item-data">
 				{showIcon && (
 					<div className={cx('nav-item-icon', isEarlyAccess ? 'noz-wave' : '')}>
 						{icon}

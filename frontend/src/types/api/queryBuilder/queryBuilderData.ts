@@ -1,3 +1,7 @@
+import {
+	Querybuildertypesv5BucketOptionsDTO,
+	Querybuildertypesv5QueryTypeDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { Format } from 'constants/formats/types';
 import { EQueryType } from 'types/common/dashboard';
@@ -18,6 +22,14 @@ import {
 } from '../v5/queryRange';
 import { BaseAutocompleteData } from './queryAutocompleteResponse';
 
+export const QueryMode = {
+	...EQueryType,
+	/** Not an `EQueryType`: AI queries are builder queries tagged `builderQueryType: builder_ai_query`. */
+	AI_QUERY_BUILDER: Querybuildertypesv5QueryTypeDTO.builder_ai_query,
+} as const;
+
+export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode];
+
 // Type for Formula
 export interface IBuilderFormula {
 	expression: string;
@@ -28,6 +40,8 @@ export interface IBuilderFormula {
 	having?: Having[];
 	stepInterval?: number;
 	orderBy?: OrderByPayload[];
+	/** Heatmap only. */
+	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 }
 
 export type IBuilderTraceOperator = IBuilderQuery;
@@ -92,6 +106,8 @@ export type IBuilderQuery = {
 	selectColumns?: BaseAutocompleteData[] | TelemetryFieldKey[];
 	source?: 'meter' | '';
 	builderQueryType?: BuilderQueryType;
+	/** Heatmap only. */
+	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 };
 
 export interface IClickHouseQuery {
@@ -136,3 +152,17 @@ export type MapQueryDataToApiResult<T> = {
 	data: T;
 	newLegendMap: Record<string, string>;
 };
+
+/** Query Builder and AI share `Query.builder`; the variant says which one it holds. */
+export const BuilderVariant = {
+	MAIN: 'main',
+	AI: 'ai',
+} as const;
+
+export type BuilderVariant =
+	(typeof BuilderVariant)[keyof typeof BuilderVariant];
+
+/** Builder queries per variant; `Query` has one `builder` slot, so the off-screen variant lives here. */
+export type BuildersByVariant = Partial<
+	Record<BuilderVariant, Query['builder']>
+>;

@@ -12,13 +12,14 @@ import { CmdKPalette } from 'components/cmdKPalette/cmdKPalette';
 import NotFound from 'components/NotFound';
 import { ShiftHoldOverlayController } from 'components/ShiftOverlay/ShiftHoldOverlayController';
 import Spinner from 'components/Spinner';
-import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import AppLayout from 'container/AppLayout';
 import Hex from 'crypto-js/enc-hex';
 import HmacSHA256 from 'crypto-js/hmac-sha256';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
+import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
+import { ChatSupportState, useChatSupport } from 'hooks/useChatSupport';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { StatusCodes } from 'http-status-codes';
@@ -58,7 +59,6 @@ function App(): JSX.Element {
 		isFetchingActiveLicense,
 		activeLicenseFetchError,
 		userFetchError,
-		featureFlagsFetchError,
 		isLoggedIn: isLoggedInState,
 		featureFlags,
 		org,
@@ -66,6 +66,8 @@ function App(): JSX.Element {
 	} = useAppContext();
 	const [routes, setRoutes] = useState<AppRoutes[]>(defaultRoutes);
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
+	const isSavedViewEnabled = useSavedViewEnabled();
+	const chatSupport = useChatSupport();
 
 	const { hostname } = window.location;
 	const [pathname, setPathname] = useState(history.location.pathname);
@@ -253,7 +255,9 @@ function App(): JSX.Element {
 	}, [isDarkMode]);
 
 	useEffect(() => {
+		// The bottom strip carries Support, so the floating bubble goes entirely.
 		if (
+			isSavedViewEnabled ||
 			pathname === ROUTES.ONBOARDING ||
 			pathname.startsWith('/public/dashboard/') ||
 			pathname === '/ai-assistant' ||
@@ -263,71 +267,32 @@ function App(): JSX.Element {
 		} else {
 			window.Pylon?.('showChatBubble');
 		}
-	}, [pathname]);
+	}, [pathname, isSavedViewEnabled]);
 
-	// eslint-disable-next-line sonarjs/cognitive-complexity
+	// Identity for the Pylon widget. Whether this user gets Pylon at all is
+	// `useChatSupport`'s call — this only fills in who they are.
 	useEffect(() => {
-		// feature flag shouldn't be loading and featureFlags or fetchError any one of this should be true indicating that req is complete
-		// licenses should also be present. there is no check for licenses for loading and error as that is mandatory if not present then routing
-		// to something went wrong which would ideally need a reload.
-		if (
-			!isFetchingFeatureFlags &&
-			(featureFlags || featureFlagsFetchError) &&
-			activeLicense &&
-			trialInfo
-		) {
-			let isChatSupportEnabled = false;
-			let isPremiumSupportEnabled = false;
-			if (featureFlags && featureFlags.length > 0) {
-				isChatSupportEnabled =
-					featureFlags.find((flag) => flag.name === FeatureKeys.CHAT_SUPPORT)
-						?.active || false;
-
-				isPremiumSupportEnabled =
-					featureFlags.find((flag) => flag.name === FeatureKeys.PREMIUM_SUPPORT)
-						?.active || false;
-			}
-			const showAddCreditCardModal =
-				!isPremiumSupportEnabled && !trialInfo?.trialConvertedToSubscription;
-
-			if (
-				isLoggedInState &&
-				isChatSupportEnabled &&
-				!showAddCreditCardModal &&
-				(isCloudUser || isEnterpriseSelfHostedUser) &&
-				window.signozBootData?.settings?.pylon?.enabled
-			) {
-				const email = user.email || '';
-				const secret = window.signozBootData?.settings?.pylon?.identitySecret || '';
-				let emailHash = '';
-
-				if (email && secret) {
-					emailHash = HmacSHA256(email, Hex.parse(secret)).toString(Hex);
-				}
-
-				window.pylon = {
-					chat_settings: {
-						app_id: window.signozBootData?.settings?.pylon?.appId,
-						email: user.email,
-						name: user.displayName || user.email,
-						email_hash: emailHash,
-					},
-				};
-			}
+		if (chatSupport !== ChatSupportState.Pylon) {
+			return;
 		}
-	}, [
-		isLoggedInState,
-		user,
-		pathname,
-		trialInfo?.trialConvertedToSubscription,
-		featureFlags,
-		isFetchingFeatureFlags,
-		featureFlagsFetchError,
-		activeLicense,
-		trialInfo,
-		isCloudUser,
-		isEnterpriseSelfHostedUser,
-	]);
+
+		const email = user.email || '';
+		const secret = window.signozBootData?.settings?.pylon?.identitySecret || '';
+		let emailHash = '';
+
+		if (email && secret) {
+			emailHash = HmacSHA256(email, Hex.parse(secret)).toString(Hex);
+		}
+
+		window.pylon = {
+			chat_settings: {
+				app_id: window.signozBootData?.settings?.pylon?.appId,
+				email: user.email,
+				name: user.displayName || user.email,
+				email_hash: emailHash,
+			},
+		};
+	}, [chatSupport, user]);
 
 	useEffect(() => {
 		if (!isFetchingUser && isCloudUser && user && user.email) {

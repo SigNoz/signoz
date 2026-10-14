@@ -2,7 +2,6 @@ import {
 	DashboardtypesTextAlignDTO,
 	DashboardtypesVerticalAlignDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { Typography } from '@signozhq/ui/typography';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import {
 	resolveTextBackground,
@@ -19,23 +18,15 @@ import type {
 	SectionKind,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 
-import BackgroundSwatches from '../../controls/BackgroundSwatches/BackgroundSwatches';
-import CustomBackgroundRow from '../../controls/BackgroundSwatches/CustomBackgroundRow';
-import ConfigSegmented from '../../controls/ConfigSegmented/ConfigSegmented';
+import AlignmentGrid from '../../controls/AlignmentGrid/AlignmentGrid';
+import ColorSwatches from '../../controls/ColorSwatches/ColorSwatches';
+import ConfigField from '../../controls/ConfigField/ConfigField';
+import { createFieldResetter } from '../../utils/changes';
+import { backgroundOptions } from './background';
+import BackgroundContrastNote from './BackgroundContrastNote';
 
-import styles from './TextLayoutSection.module.scss';
-
-const HORIZONTAL_OPTIONS = [
-	{ value: DashboardtypesTextAlignDTO.left, label: 'Left' },
-	{ value: DashboardtypesTextAlignDTO.center, label: 'Center' },
-	{ value: DashboardtypesTextAlignDTO.right, label: 'Right' },
-];
-
-const VERTICAL_OPTIONS = [
-	{ value: DashboardtypesVerticalAlignDTO.top, label: 'Top' },
-	{ value: DashboardtypesVerticalAlignDTO.center, label: 'Middle' },
-	{ value: DashboardtypesVerticalAlignDTO.bottom, label: 'Bottom' },
-];
+/** What the picker opens on before a custom colour is chosen. */
+const INITIAL_CUSTOM_COLOR = '#3A2A63';
 
 /**
  * Edits the Text panel's `presentation` slice: body alignment and the card
@@ -43,56 +34,56 @@ const VERTICAL_OPTIONS = [
  */
 function TextLayoutSection({
 	value,
+	savedValue,
 	onChange,
 }: SectionEditorProps<SectionKind.TextLayout>): JSX.Element {
 	const theme = useIsDarkMode() ? PanelTheme.Dark : PanelTheme.Light;
 	const background = resolveTextBackground(value?.background, theme);
+	const reset = createFieldResetter(value, savedValue, onChange);
 
 	return (
-		<div className={styles.section}>
-			<div className={styles.field}>
-				<Typography.Text>Horizontal alignment</Typography.Text>
-				<ConfigSegmented
-					testId="text-layout-horizontal-align"
-					items={HORIZONTAL_OPTIONS}
-					value={value?.textAlign ?? DashboardtypesTextAlignDTO.left}
-					onChange={(textAlign): void => onChange({ ...value, textAlign })}
+		<>
+			<ConfigField label="Text position" {...reset('textAlign', 'verticalAlign')}>
+				<AlignmentGrid
+					testId="text-layout-align"
+					description="Where the text sits inside the panel."
+					value={{
+						textAlign: value?.textAlign ?? DashboardtypesTextAlignDTO.left,
+						verticalAlign: value?.verticalAlign ?? DashboardtypesVerticalAlignDTO.top,
+					}}
+					onChange={(alignment): void => onChange({ ...value, ...alignment })}
 				/>
-			</div>
-			<div className={styles.field}>
-				<Typography.Text>Vertical alignment</Typography.Text>
-				<ConfigSegmented
-					testId="text-layout-vertical-align"
-					items={VERTICAL_OPTIONS}
-					value={value?.verticalAlign ?? DashboardtypesVerticalAlignDTO.top}
-					onChange={(verticalAlign): void => onChange({ ...value, verticalAlign })}
-				/>
-			</div>
-			<div className={styles.field}>
-				<Typography.Text>Background</Typography.Text>
-				<BackgroundSwatches
+			</ConfigField>
+			<ConfigField label="Background" {...reset('background')}>
+				<ColorSwatches
 					testId="text-layout-background"
 					label="Panel background"
-					theme={theme}
 					value={selectionFromResolved(background)}
+					options={backgroundOptions(theme)}
+					dividerAfter={1}
 					onChange={(selection: TextBackgroundSelection): void =>
 						onChange({
 							...value,
 							background: storedFromSelection(selection, theme),
 						})
 					}
+					custom={{
+						value:
+							background.kind === TextBackgroundKind.Custom
+								? background.surface
+								: undefined,
+						initial: INITIAL_CUSTOM_COLOR,
+						onChange: (hex): void => onChange({ ...value, background: hex }),
+						pickerFooter: (hex) => (
+							<BackgroundContrastNote
+								testId="text-layout-background-custom-contrast"
+								color={hex}
+							/>
+						),
+					}}
 				/>
-				<CustomBackgroundRow
-					testId="text-layout-background-custom"
-					value={
-						background.kind === TextBackgroundKind.Custom
-							? background.surface
-							: undefined
-					}
-					onChange={(hex): void => onChange({ ...value, background: hex })}
-				/>
-			</div>
-		</div>
+			</ConfigField>
+		</>
 	);
 }
 

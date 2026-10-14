@@ -1,13 +1,14 @@
 import type {
+	DashboardtypesAIBuilderQuerySpecDTO,
 	DashboardtypesBuilderQuerySpecDTO,
 	DashboardtypesQueryDTO,
 	Querybuildertypesv5CompositeQueryDTO,
 	Querybuildertypesv5QueryEnvelopeDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
+	DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpecDTOKind as AIBuilderQueryPluginKind,
 	DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpecDTOKind as BuilderQueryPluginKind,
 	DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTOKind as CompositeQueryPluginKind,
-	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
 	Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType,
 	Querybuildertypesv5QueryEnvelopePromQLDTOType,
 	Querybuildertypesv5RequestTypeDTO,
@@ -21,6 +22,10 @@ import type { QueryEnvelope } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
+import {
+	isAIBuilderEnvelope,
+	isBuilderEnvelope,
+} from 'lib/query/builderEnvelope';
 import { toQueryEnvelopes } from './buildQueryRangeRequest';
 
 /**
@@ -43,11 +48,6 @@ const toGeneratedEnvelopes = (
 	envelopes: QueryEnvelope[],
 ): Querybuildertypesv5QueryEnvelopeDTO[] =>
 	envelopes as unknown as Querybuildertypesv5QueryEnvelopeDTO[];
-
-const isBuilderQueryEnvelope = (
-	envelope: Querybuildertypesv5QueryEnvelopeDTO,
-): boolean =>
-	envelope.type === Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query;
 
 /**
  * Clears the V1 explorer's `pageSize`/`offset` before conversion — the shared mapper folds
@@ -100,6 +100,7 @@ export function panelTypeToRequestType(
 	switch (panelType) {
 		case PANEL_TYPES.TIME_SERIES:
 		case PANEL_TYPES.BAR:
+		case PANEL_TYPES.AREA:
 		case PANEL_TYPES.HISTOGRAM:
 			return Querybuildertypesv5RequestTypeDTO.time_series;
 		case PANEL_TYPES.TABLE:
@@ -108,6 +109,8 @@ export function panelTypeToRequestType(
 			return Querybuildertypesv5RequestTypeDTO.scalar;
 		case PANEL_TYPES.LIST:
 			return Querybuildertypesv5RequestTypeDTO.raw;
+		case PANEL_TYPES.HEATMAP:
+			return Querybuildertypesv5RequestTypeDTO.heatmap;
 		case PANEL_TYPES.TRACE:
 			return Querybuildertypesv5RequestTypeDTO.trace;
 		default:
@@ -155,8 +158,9 @@ export function fromPerses(
 /**
  * V1 `Query` → perses panel queries (to write the builder result back to the editor
  * draft). Wrapped in a single `signoz/CompositeQuery` to satisfy the
- * `panel.queries.length === 1` invariant. Exception: List emits its one builder query
- * as a bare `signoz/BuilderQuery` because the backend rejects a `signoz/CompositeQuery`.
+ * `panel.queries.length === 1` invariant. Exception: List rejects `signoz/CompositeQuery`
+ * backend-side, so it emits its one builder query as the bare plugin matching the query —
+ * a bare plugin carries no envelope `type`, so the kind is what keeps an AI list AI.
  */
 export function toPerses(
 	query: Query,
@@ -170,21 +174,23 @@ export function toPerses(
 	const envelopes = toGeneratedEnvelopes(composite.queries ?? []);
 
 	if (panelType === PANEL_TYPES.LIST) {
-		const builder = envelopes.find(isBuilderQueryEnvelope);
+		const builder = envelopes.find(isBuilderEnvelope);
 		if (!builder) {
 			return [];
 		}
+		const plugin = isAIBuilderEnvelope(builder)
+			? {
+					kind: AIBuilderQueryPluginKind['signoz/AIBuilderQuery'],
+					spec: builder.spec as unknown as DashboardtypesAIBuilderQuerySpecDTO,
+				}
+			: {
+					kind: BuilderQueryPluginKind['signoz/BuilderQuery'],
+					spec: builder.spec as DashboardtypesBuilderQuerySpecDTO,
+				};
 		return [
 			{
 				kind: panelTypeToRequestType(panelType),
-				spec: {
-					plugin: {
-						kind: BuilderQueryPluginKind['signoz/BuilderQuery'],
-						// The generated envelope union doesn't discriminate `spec` by `type`, so
-						// narrow the filtered builder query to the dashboard builder spec.
-						spec: builder.spec as DashboardtypesBuilderQuerySpecDTO,
-					},
-				},
+				spec: { plugin },
 			},
 		];
 	}

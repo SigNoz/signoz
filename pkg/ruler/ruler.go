@@ -17,6 +17,9 @@ type Ruler interface {
 	// ListRuleStates returns all rules with their current evaluation state.
 	ListRuleStates(ctx context.Context) (*ruletypes.GettableRules, error)
 
+	// ListRules returns a filtered, sorted page of rules with state, plus label pairs and reserved filter keys.
+	ListRules(ctx context.Context, params *ruletypes.ListRulesParams) (*ruletypes.ListableRules, error)
+
 	// GetRule returns a single rule by ID.
 	GetRule(ctx context.Context, id valuer.UUID) (*ruletypes.GettableRule, error)
 
@@ -46,4 +49,9 @@ type Ruler interface {
 	// TODO: expose downtime CRUD as methods on Ruler directly instead of leaking the
 	// store interface. The handler should not call store methods directly.
 	MaintenanceStore() alertmanagertypes.MaintenanceStore
+
+	CreateRuleView(ctx context.Context, orgID valuer.UUID, postable ruletypes.PostableRuleView) (*ruletypes.RuleView, error)
+	ListRuleViews(ctx context.Context, orgID valuer.UUID) (*ruletypes.ListableRuleViews, error)
+	UpdateRuleView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatable ruletypes.UpdatableRuleView) (*ruletypes.RuleView, error)
+	DeleteRuleView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 }

@@ -1,0 +1,24 @@
+// `:` is spaced like a word, per the Figma, so the gap here is a space width
+// rather than the wider gap between whole items.
+.keyValue {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2);
+
+	color: var(--l2-foreground);
+	white-space: nowrap;
+}
+
+.prefix {
+	display: inline-flex;
+	align-items: center;
+	margin-right: var(--spacing-1);
+}
+
+.warning {
+	color: var(--warning);
+}
+
+.error {
+	color: var(--destructive);
+}

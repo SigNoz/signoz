@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/perses/spec/go/dashboard"
 	"github.com/stretchr/testify/assert"
@@ -522,6 +524,149 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 			assert.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
 		})
 	}
+}
+
+// TestHeatmapPanelQueryKinds pins the panel allowlist to what validateHeatmap
+// accepts in querybuildertypesv5: everything but a trace operator.
+func TestHeatmapPanelQueryKinds(t *testing.T) {
+	testCases := []struct {
+		description     string
+		queryPluginKind string
+		queryPluginSpec string
+		expectedAllowed bool
+	}{
+		{
+			description:     "a metrics builder query is allowed",
+			queryPluginKind: "signoz/BuilderQuery",
+			queryPluginSpec: `{"name": "A", "signal": "metrics", "aggregations": [
+				{"metricName": "http.server.request.duration", "timeAggregation": "increase", "spaceAggregation": "sum"}
+			]}`,
+			expectedAllowed: true,
+		},
+		{
+			description:     "a promql query is allowed",
+			queryPluginKind: "signoz/PromQLQuery",
+			queryPluginSpec: `{"name": "A", "query": "sum by (le) (increase(signoz_latency_bucket[5m]))"}`,
+			expectedAllowed: true,
+		},
+		{
+			description:     "a clickhouse query is allowed",
+			queryPluginKind: "signoz/ClickHouseSQL",
+			queryPluginSpec: `{"name": "A", "query": "SELECT ts, bucket, value FROM cells"}`,
+			expectedAllowed: true,
+		},
+		{
+			description:     "a formula is allowed",
+			queryPluginKind: "signoz/Formula",
+			queryPluginSpec: `{"name": "F1", "expression": "A / B"}`,
+			expectedAllowed: true,
+		},
+		{
+			description:     "a composite query is allowed, since a formula needs its disabled inputs alongside it",
+			queryPluginKind: "signoz/CompositeQuery",
+			queryPluginSpec: `{"queries": [
+				{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "disabled": true, "aggregations": [
+					{"metricName": "http.server.request.duration", "timeAggregation": "increase", "spaceAggregation": "sum"}
+				]}},
+				{"type": "builder_formula", "spec": {"name": "F1", "expression": "A * 2"}}
+			]}`,
+			expectedAllowed: true,
+		},
+		{
+			description:     "a trace operator is refused",
+			queryPluginKind: "signoz/TraceOperator",
+			queryPluginSpec: `{"name": "T1", "expression": "A => B"}`,
+			expectedAllowed: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			data := fmt.Sprintf(`{
+				"variables": [],
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"links": [],
+							"plugin": {"kind": "signoz/HeatmapPanel", "spec": {}},
+							"queries": [{
+								"kind": "heatmap",
+								"spec": {
+									"plugin": {"kind": %q, "spec": %s}
+								}
+							}]
+						}
+					}
+				},
+				"links": [],
+				"layouts": []
+			}`, testCase.queryPluginKind, testCase.queryPluginSpec)
+
+			_, err := unmarshalDashboard([]byte(data))
+
+			if testCase.expectedAllowed {
+				require.NoError(t, err)
+				return
+			}
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "is not supported by panel kind")
+		})
+	}
+}
+
+func TestValidateHeatmapDashboard(t *testing.T) {
+	data, err := os.ReadFile("testdata/perses_heatmap_panel.json")
+	require.NoError(t, err, "reading example file")
+
+	spec, err := unmarshalDashboard(data)
+	require.NoError(t, err, "unmarshal and validate failed")
+
+	require.IsType(t, &HeatmapPanelSpec{}, spec.Panels["p1"].Spec.Plugin.Spec)
+	panelSpec := spec.Panels["p1"].Spec.Plugin.Spec.(*HeatmapPanelSpec)
+	assert.Equal(t, "log", panelSpec.Axes.Y.Scale.ValueOrDefault())
+	assert.Equal(t, "ember", panelSpec.ChartAppearance.Colors.Palette.ValueOrDefault())
+	assert.Equal(t, "sqrt", panelSpec.ChartAppearance.Colors.Scale.ValueOrDefault())
+	assert.Equal(t, 8, panelSpec.ChartAppearance.Colors.Steps)
+
+	dashboard := &DashboardV2{Spec: *spec}
+	request, err := dashboard.GetPanelQuery(1, 2, "p1")
+	require.NoError(t, err, "building the panel's query failed")
+	assert.Equal(t, qb.RequestTypeHeatmap, request.RequestType)
+
+	require.Len(t, request.CompositeQuery.Queries, 3)
+	numerator, ok := request.CompositeQuery.Queries[0].Spec.(qb.QueryBuilderQuery[qb.MetricAggregation])
+	require.True(t, ok, "expected a metrics builder query")
+	assert.True(t, numerator.Disabled)
+	require.NotNil(t, numerator.BucketOptions)
+	require.IsType(t, qb.LogBucketsSpec{}, numerator.BucketOptions.Spec)
+	assert.Equal(t, 4, *numerator.BucketOptions.Spec.(qb.LogBucketsSpec).Scale)
+
+	denominator, ok := request.CompositeQuery.Queries[1].Spec.(qb.QueryBuilderQuery[qb.MetricAggregation])
+	require.True(t, ok, "expected a metrics builder query")
+	assert.True(t, denominator.Disabled)
+	require.NotNil(t, denominator.BucketOptions)
+	require.IsType(t, qb.LinearBucketsSpec{}, denominator.BucketOptions.Spec)
+	assert.Equal(t, float64(1000), denominator.BucketOptions.Spec.(qb.LinearBucketsSpec).MaxValue)
+
+	formula, ok := request.CompositeQuery.Queries[2].Spec.(qb.QueryBuilderFormula)
+	require.True(t, ok, "expected a formula")
+	require.NotNil(t, formula.BucketOptions)
+	assert.Equal(t, qb.BucketsKindLog, formula.BucketOptions.Kind)
+	require.IsType(t, qb.LogBucketsSpec{}, formula.BucketOptions.Spec)
+	assert.Equal(t, 2, *formula.BucketOptions.Spec.(qb.LogBucketsSpec).Scale)
+
+	require.NoError(t, request.Validate(), "the request built from the panel is not a valid heatmap request")
+
+	// the panel read back out of storage draws the same heatmap
+	stored, err := json.Marshal(spec)
+	require.NoError(t, err, "marshal dashboard failed")
+	reread, err := unmarshalDashboard(stored)
+	require.NoError(t, err, "the stored dashboard does not validate")
+	rereadRequest, err := (&DashboardV2{Spec: *reread}).GetPanelQuery(1, 2, "p1")
+	require.NoError(t, err, "building the stored panel's query failed")
+	assert.Equal(t, request, rereadRequest)
 }
 
 func TestInvalidateOneInvalidPanel(t *testing.T) {
@@ -1467,6 +1612,264 @@ func TestTimeSeriesPanelDefaults(t *testing.T) {
 	}
 }
 
+func TestAreaChartPanelDefaults(t *testing.T) {
+	data := []byte(`{
+		"variables": [],
+		"panels": {
+			"p1": {
+				"kind": "Panel",
+				"spec": {
+					"links": [],
+					"plugin": {
+						"kind": "signoz/AreaChartPanel",
+						"spec": {}
+					},
+					"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
+				}
+			}
+		},
+		"links": [],
+		"layouts": []
+	}`)
+	d, err := unmarshalDashboard(data)
+	require.NoError(t, err, "unmarshal and validate failed")
+
+	require.IsType(t, &AreaChartPanelSpec{}, d.Panels["p1"].Spec.Plugin.Spec)
+	spec := d.Panels["p1"].Spec.Plugin.Spec.(*AreaChartPanelSpec)
+
+	assert.Equal(t, "solid", spec.ChartAppearance.FillMode.ValueOrDefault(), "area fillMode defaults to solid, where the TimeSeries FillMode defaults to none")
+	assert.Nil(t, spec.ChartAppearance.FillOpacity, "an omitted fillOpacity stays nil so the renderer applies the kind default")
+	assert.Equal(t, "none", spec.Visualization.Stack.ValueOrDefault(), "expected Stack default none")
+	assert.Equal(t, "2", spec.Formatting.DecimalPrecision.ValueOrDefault(), "expected DecimalPrecision default 2")
+	assert.Equal(t, "spline", spec.ChartAppearance.LineInterpolation.ValueOrDefault(), "expected LineInterpolation default spline")
+	assert.Equal(t, "solid", spec.ChartAppearance.LineStyle.ValueOrDefault(), "expected LineStyle default solid")
+	assert.Equal(t, "global_time", spec.Visualization.TimePreference.ValueOrDefault(), "expected TimePreference default global_time")
+	assert.Equal(t, "bottom", spec.Legend.Position.ValueOrDefault(), "expected LegendPosition default bottom")
+	assert.Equal(t, "list", spec.Legend.Mode.ValueOrDefault(), "expected LegendMode default list")
+
+	output, err := json.Marshal(d)
+	require.NoError(t, err, "marshal dashboard failed")
+	outputStr := string(output)
+	for field, want := range map[string]string{
+		"fillMode":    `"solid"`,
+		"stack":       `"none"`,
+		"fillOpacity": `null`,
+	} {
+		assert.Contains(t, outputStr, `"`+field+`":`+want, "expected stored/response JSON to contain %s:%s", field, want)
+	}
+}
+
+func TestAreaChartPanelRoundTrip(t *testing.T) {
+	data := []byte(`{
+		"variables": [],
+		"panels": {
+			"p1": {
+				"kind": "Panel",
+				"spec": {
+					"links": [],
+					"plugin": {
+						"kind": "signoz/AreaChartPanel",
+						"spec": {
+							"visualization": {"timePreference": "global_time", "fillSpans": false, "stack": "percent"},
+							"chartAppearance": {"fillMode": "gradient", "fillOpacity": 0.4}
+						}
+					},
+					"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
+				}
+			}
+		},
+		"links": [],
+		"layouts": []
+	}`)
+	d, err := unmarshalDashboard(data)
+	require.NoError(t, err, "unmarshal and validate failed")
+
+	require.IsType(t, &AreaChartPanelSpec{}, d.Panels["p1"].Spec.Plugin.Spec)
+	spec := d.Panels["p1"].Spec.Plugin.Spec.(*AreaChartPanelSpec)
+
+	assert.Equal(t, "percent", spec.Visualization.Stack.ValueOrDefault(), "expected stack percent")
+	assert.Equal(t, "gradient", spec.ChartAppearance.FillMode.ValueOrDefault(), "expected fillMode gradient")
+
+	output, err := json.Marshal(d)
+	require.NoError(t, err, "marshal dashboard failed")
+	assert.Contains(t, string(output), `"stack":"percent"`, "expected stack in stored/response JSON")
+	assert.Contains(t, string(output), `"fillMode":"gradient"`, "expected fillMode in stored/response JSON")
+}
+
+func TestAreaChartPanelFillOpacity(t *testing.T) {
+	tests := []struct {
+		scenario                 string
+		chartAppearance          string
+		expectedFillOpacitySet   bool
+		expectedFillOpacityValue FillOpacity
+		expectedMarshalledJSON   string
+	}{
+		{
+			scenario:                 "zero is a set value, not an absent one",
+			chartAppearance:          `{"fillOpacity": 0}`,
+			expectedFillOpacitySet:   true,
+			expectedFillOpacityValue: 0,
+			expectedMarshalledJSON:   `"fillOpacity":0`,
+		},
+		{
+			scenario:                 "fully opaque upper bound",
+			chartAppearance:          `{"fillOpacity": 1}`,
+			expectedFillOpacitySet:   true,
+			expectedFillOpacityValue: 1,
+			expectedMarshalledJSON:   `"fillOpacity":1`,
+		},
+		{
+			scenario:                 "typical fractional value",
+			chartAppearance:          `{"fillOpacity": 0.4}`,
+			expectedFillOpacitySet:   true,
+			expectedFillOpacityValue: 0.4,
+			expectedMarshalledJSON:   `"fillOpacity":0.4`,
+		},
+		{
+			scenario:                 "precision beyond one decimal place survives",
+			chartAppearance:          `{"fillOpacity": 0.125}`,
+			expectedFillOpacitySet:   true,
+			expectedFillOpacityValue: 0.125,
+			expectedMarshalledJSON:   `"fillOpacity":0.125`,
+		},
+		{
+			scenario:               "omitted field stays nil so the renderer applies the kind default",
+			chartAppearance:        `{}`,
+			expectedFillOpacitySet: false,
+			expectedMarshalledJSON: `"fillOpacity":null`,
+		},
+		{
+			scenario:               "explicit null stays nil rather than decoding as zero",
+			chartAppearance:        `{"fillOpacity": null}`,
+			expectedFillOpacitySet: false,
+			expectedMarshalledJSON: `"fillOpacity":null`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.scenario, func(t *testing.T) {
+			data := []byte(`{
+				"variables": [],
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"links": [],
+							"plugin": {"kind": "signoz/AreaChartPanel", "spec": {"chartAppearance": ` + test.chartAppearance + `}},
+							"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
+						}
+					}
+				},
+				"links": [],
+				"layouts": []
+			}`)
+			d, err := unmarshalDashboard(data)
+			require.NoError(t, err, "unmarshal and validate failed")
+
+			require.IsType(t, &AreaChartPanelSpec{}, d.Panels["p1"].Spec.Plugin.Spec)
+			spec := d.Panels["p1"].Spec.Plugin.Spec.(*AreaChartPanelSpec)
+
+			if !test.expectedFillOpacitySet {
+				assert.Nil(t, spec.ChartAppearance.FillOpacity, "expected fillOpacity to stay unset")
+			} else {
+				require.NotNil(t, spec.ChartAppearance.FillOpacity, "expected fillOpacity to decode as a set value")
+				assert.Equal(t, test.expectedFillOpacityValue, *spec.ChartAppearance.FillOpacity, "unexpected decoded fillOpacity")
+			}
+
+			output, err := json.Marshal(d)
+			require.NoError(t, err, "marshal dashboard failed")
+			assert.Contains(t, string(output), test.expectedMarshalledJSON, "unexpected fillOpacity in stored/response JSON")
+		})
+	}
+}
+
+func TestInvalidateAreaChartPanelSpecValues(t *testing.T) {
+	tests := []struct {
+		scenario               string
+		panelKind              string
+		panelSpec              string
+		expectedErrorSubstring string
+	}{
+		{
+			scenario:               "unknown stack mode",
+			panelKind:              "signoz/AreaChartPanel",
+			panelSpec:              `{"visualization": {"stack": "stacked"}}`,
+			expectedErrorSubstring: "stack mode",
+		},
+		{
+			scenario:               "unknown area fill mode",
+			panelKind:              "signoz/AreaChartPanel",
+			panelSpec:              `{"chartAppearance": {"fillMode": "striped"}}`,
+			expectedErrorSubstring: "fill mode",
+		},
+		{
+			scenario:               "fill opacity on a 0-100 scale",
+			panelKind:              "signoz/AreaChartPanel",
+			panelSpec:              `{"chartAppearance": {"fillOpacity": 40}}`,
+			expectedErrorSubstring: "invalid fillOpacity 40: must be between 0 and 1",
+		},
+		{
+			scenario:               "negative fill opacity",
+			panelKind:              "signoz/AreaChartPanel",
+			panelSpec:              `{"chartAppearance": {"fillOpacity": -0.5}}`,
+			expectedErrorSubstring: "invalid fillOpacity -0.5: must be between 0 and 1",
+		},
+		{
+			scenario:               "non-numeric fill opacity",
+			panelKind:              "signoz/AreaChartPanel",
+			panelSpec:              `{"chartAppearance": {"fillOpacity": "0.4"}}`,
+			expectedErrorSubstring: "cannot unmarshal string",
+		},
+		{
+			scenario:               "stack on a time series panel",
+			panelKind:              "signoz/TimeSeriesPanel",
+			panelSpec:              `{"visualization": {"stack": "normal"}}`,
+			expectedErrorSubstring: `unknown field`,
+		},
+		{
+			scenario:               "fill opacity on a time series panel",
+			panelKind:              "signoz/TimeSeriesPanel",
+			panelSpec:              `{"chartAppearance": {"fillOpacity": 0.4}}`,
+			expectedErrorSubstring: `unknown field`,
+		},
+		{
+			scenario:               "stacked bar chart on an area panel",
+			panelKind:              "signoz/AreaChartPanel",
+			panelSpec:              `{"visualization": {"stackedBarChart": true}}`,
+			expectedErrorSubstring: `unknown field`,
+		},
+		{
+			scenario:               "stack on a bar chart panel",
+			panelKind:              "signoz/BarChartPanel",
+			panelSpec:              `{"visualization": {"stack": "percent"}}`,
+			expectedErrorSubstring: `unknown field`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.scenario, func(t *testing.T) {
+			data := []byte(`{
+				"variables": [],
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"links": [],
+							"plugin": {"kind": "` + test.panelKind + `", "spec": ` + test.panelSpec + `},
+							"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
+						}
+					}
+				},
+				"links": [],
+				"layouts": []
+			}`)
+			_, err := unmarshalDashboard(data)
+			require.Error(t, err, "expected the spec to be rejected")
+			assert.Contains(t, err.Error(), test.expectedErrorSubstring, "unexpected error message: %s", err.Error())
+		})
+	}
+}
+
 func TestNumberPanelDefaults(t *testing.T) {
 	data := []byte(`{
 		"variables": [],
@@ -1616,6 +2019,43 @@ func TestStorageRoundTrip(t *testing.T) {
 	}
 
 	assert.Contains(t, responseStr, `"operator":"above"`, "expected operator:above after storage round-trip")
+}
+
+// An AI builder query carries no signal of its own: the plugin kind implies
+// gen_ai, which only reads traces, so decode pins the signal and marshal emits it.
+func TestAIBuilderQueryStorageRoundTrip(t *testing.T) {
+	input := []byte(`{
+		"variables": [],
+		"panels": {"p1": {"kind": "Panel", "spec": {
+			"links": [],
+			"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
+			"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/AIBuilderQuery", "spec": {
+				"name": "A", "aggregations": [{"expression": "count()"}]
+			}}}}]
+		}}},
+		"links": [],
+		"layouts": []
+	}`)
+
+	d, err := unmarshalDashboard(input)
+	require.NoError(t, err)
+
+	plugin := d.Panels["p1"].Spec.Queries[0].Spec.Plugin
+	assert.Equal(t, QueryKindAIBuilder, plugin.Kind)
+
+	aiSpec, ok := plugin.Spec.(*AIBuilderQuerySpec)
+	require.True(t, ok, "expected *AIBuilderQuerySpec, got %T", plugin.Spec)
+	assert.Equal(t, "A", aiSpec.Name)
+	assert.Equal(t, telemetrytypes.SignalTraces, aiSpec.Signal)
+
+	stored, err := json.Marshal(plugin)
+	require.NoError(t, err)
+	assert.Contains(t, string(stored), `"kind":"signoz/AIBuilderQuery"`)
+	assert.Contains(t, string(stored), `"signal":"traces"`)
+
+	var loaded QueryPlugin
+	require.NoError(t, json.Unmarshal(stored, &loaded))
+	assert.Equal(t, plugin, loaded)
 }
 
 func TestPostableDashboardV2GenerateNameFlag(t *testing.T) {
@@ -1830,6 +2270,8 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 		{"TimeSeries+PromQL", mkQuery("signoz/TimeSeriesPanel", "signoz/PromQLQuery", `{"name":"A","query":"up"}`), false},
 		{"Table+ClickHouse", mkQuery("signoz/TablePanel", "signoz/ClickHouseSQL", `{"name":"A","query":"SELECT 1"}`), false},
 		{"List+Builder", mkQuery("signoz/ListPanel", "signoz/BuilderQuery", `{"name":"A","signal":"logs"}`), false},
+		{"TimeSeries+AIBuilder", mkQuery("signoz/TimeSeriesPanel", "signoz/AIBuilderQuery", `{"name":"A","aggregations":[{"expression":"count()"}]}`), false},
+		{"List+AIBuilder", mkQuery("signoz/ListPanel", "signoz/AIBuilderQuery", `{"name":"A"}`), false},
 		// Top-level: rejected
 		{"Table+PromQL", mkQuery("signoz/TablePanel", "signoz/PromQLQuery", `{"name":"A","query":"up"}`), true},
 		{"List+ClickHouse", mkQuery("signoz/ListPanel", "signoz/ClickHouseSQL", `{"name":"A","query":"SELECT 1"}`), true},
@@ -1839,6 +2281,7 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 		// Composite sub-queries
 		{"Table+Composite(promql)", mkComposite("signoz/TablePanel", "promql", `{"name":"A","query":"up"}`), true},
 		{"Table+Composite(clickhouse)", mkComposite("signoz/TablePanel", "clickhouse_sql", `{"name":"A","query":"SELECT 1"}`), false},
+		{"Table+Composite(builder_ai)", mkComposite("signoz/TablePanel", "builder_ai_query", `{"name":"A","aggregations":[{"expression":"count()"}]}`), false},
 	}
 
 	for _, tc := range cases {

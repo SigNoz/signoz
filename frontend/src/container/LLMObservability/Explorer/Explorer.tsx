@@ -2,12 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
-import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
-import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
-import QuickFilters from 'components/QuickFilters/QuickFilters';
+import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
@@ -173,7 +171,7 @@ function Explorer(): JSX.Element {
 
 	useEffect(() => {
 		if (!logEventCalledRef.current) {
-			logEvent('Traces Explorer: Page visited', {});
+			logEvent('AI Observability Explorer: Page visited', {});
 			logEventCalledRef.current = true;
 		}
 	}, []);
@@ -188,26 +186,21 @@ function Explorer(): JSX.Element {
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
-			<div
+			<QuickFiltersLayout
 				className="trace-explorer-page"
-				data-testid="llm-observability-explorer"
+				testId="llm-observability-explorer"
+				showFilters={isOpen}
+				quickFilterProps={{
+					className: 'qf-traces-explorer',
+					source: QuickFiltersSource.AI_OBSERVABILITY,
+					signal: SignalType.AI_OBSERVABILITY,
+					useFieldApis: quickFiltersFieldApis,
+					handleFilterVisibilityChange: (): void => {
+						setOpen(!isOpen);
+					},
+				}}
 			>
-				<Card className="filter" hidden={!isOpen}>
-					<QuickFilters
-						className="qf-traces-explorer"
-						source={QuickFiltersSource.AI_OBSERVABILITY}
-						signal={SignalType.AI_OBSERVABILITY}
-						useFieldApis={quickFiltersFieldApis}
-						handleFilterVisibilityChange={(): void => {
-							setOpen(!isOpen);
-						}}
-					/>
-				</Card>
-				<div
-					className={cx('trace-explorer', {
-						'filters-expanded': isOpen,
-					})}
-				>
+				<div className="trace-explorer">
 					<div className="trace-explorer-header">
 						<Toolbar
 							showAutoRefresh
@@ -291,7 +284,7 @@ function Explorer(): JSX.Element {
 						)}
 					</div>
 				</div>
-			</div>
+			</QuickFiltersLayout>
 		</Sentry.ErrorBoundary>
 	);
 }

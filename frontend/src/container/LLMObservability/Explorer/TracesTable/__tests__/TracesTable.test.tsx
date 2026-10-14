@@ -11,10 +11,12 @@ const PERSISTED_KEY = `@signoz/table-columns/${STORAGE_KEY}`;
 
 const ROWS = [{ id: 't1', trace_id: 'abc', 'service.name': 'checkout' }];
 
+// An aggregate outside the default order starts hidden, so the persisted
+// defaults are observable.
 const COLUMNS = buildTraceViewColumns([
 	{ name: 'trace_id' },
 	{ name: 'service.name', fieldContext: 'resource' },
-	{ name: 'start_time' },
+	{ name: 'unlisted_aggregate' },
 ]);
 
 function RaceHarness(): JSX.Element {
@@ -66,7 +68,9 @@ describe('TracesTable column-init race', () => {
 
 		await expect(screen.findByRole('table')).resolves.toBeInTheDocument();
 		expect(screen.getByText('trace_id')).toBeInTheDocument();
-		expect(screen.queryByText('start_time')).not.toBeInTheDocument();
-		expect(persistedState()?.hiddenColumnIds).toStrictEqual(['start_time']);
+		expect(screen.queryByText('unlisted_aggregate')).not.toBeInTheDocument();
+		expect(persistedState()?.hiddenColumnIds).toStrictEqual([
+			'unlisted_aggregate',
+		]);
 	});
 });

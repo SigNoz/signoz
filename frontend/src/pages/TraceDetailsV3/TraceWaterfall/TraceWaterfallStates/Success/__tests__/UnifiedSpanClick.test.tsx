@@ -93,7 +93,7 @@ jest.mock('lib/uPlotLib/utils/generateColor', () => ({
 	hashFn: (): number => 0,
 }));
 
-jest.mock('container/TraceDetail/utils', () => ({
+jest.mock('utils/traceUtils', () => ({
 	convertTimeToRelevantUnit: (
 		value: number,
 	): { time: number; timeUnitName: string } => ({

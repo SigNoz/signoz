@@ -1,19 +1,23 @@
 import { Button } from '@signozhq/ui/button';
 import { Plus, X } from '@signozhq/icons';
 
-import { FieldContextValue } from 'container/LLMObservability/AttributeMapping/types';
+import {
+	ConditionKey,
+	FieldContextValue,
+} from 'container/LLMObservability/AttributeMapping/types';
+import { createConditionKey } from 'container/LLMObservability/AttributeMapping/utils';
 import KeySearchInput from '../../../KeySearchInput/KeySearchInput';
 import styles from './ConditionKeyList.module.scss';
 
 interface ConditionKeyListProps {
 	label: string;
 	labelHint?: string;
-	keys: string[];
+	keys: ConditionKey[];
 	placeholder: string;
 	addLabel: string;
 	testIdPrefix: string;
 	fieldContext: FieldContextValue;
-	onChange: (keys: string[]) => void;
+	onChange: (keys: ConditionKey[]) => void;
 }
 
 function ConditionKeyList({
@@ -27,11 +31,11 @@ function ConditionKeyList({
 	onChange,
 }: ConditionKeyListProps): JSX.Element {
 	const updateKey = (index: number, value: string): void => {
-		onChange(keys.map((key, i) => (i === index ? value : key)));
+		onChange(keys.map((key, i) => (i === index ? { ...key, value } : key)));
 	};
 
 	const addKey = (): void => {
-		onChange([...keys, '']);
+		onChange([...keys, createConditionKey()]);
 	};
 
 	const removeKey = (index: number): void => {
@@ -53,7 +57,7 @@ function ConditionKeyList({
 							<KeySearchInput
 								className={styles.keyInput}
 								placeholder={placeholder}
-								value={key}
+								value={key.value}
 								fieldContext={fieldContext}
 								onChange={(next): void => updateKey(index, next)}
 								testId={`${testIdPrefix}-${index}`}
