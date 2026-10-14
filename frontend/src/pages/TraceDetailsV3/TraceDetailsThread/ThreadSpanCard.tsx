@@ -1,4 +1,4 @@
-import { memo, useMemo, useRef } from 'react';
+import { KeyboardEvent, memo, useMemo, useRef } from 'react';
 import cx from 'classnames';
 
 import { useToolCallLinks } from '../AIThreadMessage/useToolCallLinks';
@@ -21,7 +21,7 @@ function ThreadSpanCard({
 	isSelected,
 	onSelect,
 }: ThreadSpanCardProps): JSX.Element {
-	const cardRef = useRef<HTMLElement>(null);
+	const cardRef = useRef<HTMLDivElement>(null);
 	// A result links only to a call in its own span.
 	const toolCallIds = useMemo(() => buildToolCallIndex([span]), [span]);
 	const { isToolLinkEnabled, onToolLinkClick } = useToolCallLinks(
@@ -29,12 +29,28 @@ function ThreadSpanCard({
 		toolCallIds,
 	);
 
+	const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
+		// Keys pressed on the card's own controls stay with them.
+		if (event.target !== event.currentTarget) {
+			return;
+		}
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			onSelect(span);
+		}
+	};
+
 	return (
-		// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
-		<article
+		<div
 			ref={cardRef}
+			// eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- a <button> can't nest the card's own buttons
+			role="button"
+			tabIndex={0}
+			aria-pressed={isSelected}
+			aria-label={`Span ${span.name}`}
 			className={cx(styles.card, isSelected && styles.isSelected)}
 			onClick={(): void => onSelect(span)}
+			onKeyDown={handleKeyDown}
 			data-span-id={span.span_id}
 			data-testid="thread-span-card"
 		>
@@ -44,7 +60,7 @@ function ThreadSpanCard({
 				isToolLinkEnabled={isToolLinkEnabled}
 				onToolLinkClick={onToolLinkClick}
 			/>
-		</article>
+		</div>
 	);
 }
 

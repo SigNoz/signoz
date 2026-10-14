@@ -11,6 +11,11 @@
 		border-color: var(--l3-border);
 	}
 
+	&:focus-visible {
+		outline: 1px solid var(--primary);
+		outline-offset: var(--spacing-1);
+	}
+
 	&.isSelected::before {
 		content: '';
 		position: absolute;
