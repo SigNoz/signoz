@@ -31,7 +31,7 @@
     "test:changedsince": "jest --changedSince=main --coverage --silent",
     "generate:api": "orval --config ./orval.config.ts && sh scripts/post-types-generation.sh",
     "generate:config:web-settings": "json2ts ./src/schemas/generated/webSettings.schema.json -o src/types/generated/webSettings.ts --style.useTabs --style.tabWidth=1 --style.singleQuote --bannerComment '/* AUTO GENERATED FILE - DO NOT EDIT - GENERATED FROM frontend/src/schemas/generated/webSettings.schema.json */'",
-    "build:geo-outlines": "node scripts/build-geo-outlines.mjs"
+    "build:geo-outlines": "node scripts/geo-outlines/build.mjs"
   },
   "engines": {
     "node": ">=22.0.0",
