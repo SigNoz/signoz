@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import ROUTES from 'constants/routes';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
@@ -83,5 +83,32 @@ export const RequestIntegration: Story = {
 			await screen.findByPlaceholderText(/enter integration name/i),
 			'Kafka',
 		);
+	},
+};
+
+/**
+ * Submitting the request form raises "Integration Request Submitted" when the
+ * event is accepted. Set Request submission to `error` for the failure toast, or
+ * `loading` to keep the submit button spinning.
+ */
+export const RequestIntegrationToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByText(
+				/request integration/i,
+				undefined,
+				untilLoaded,
+			),
+		);
+		await userEvent.type(
+			await screen.findByPlaceholderText(/enter integration name/i),
+			'Kafka',
+		);
+		await userEvent.click(await screen.findByRole('button', { name: /submit/i }));
+		if (args.requestSubmission === 'success') {
+			await waitFor(() =>
+				expect(screen.getByText(/integration request submitted/i)).toBeVisible(),
+			);
+		}
 	},
 };

@@ -13,6 +13,7 @@ import { choiceControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 
 const SOURCE = 'Onboarding · source';
+const INVITES = 'Onboarding · invites';
 
 /**
  * `catalogue` is the picker itself; the rest are `getStartedSource` values,
@@ -45,6 +46,10 @@ export const SETUP_STEPS = [
 
 export type SetupStep = (typeof SETUP_STEPS)[number];
 
+export const INVITE_RESULTS = ['success', 'loading', 'error'] as const;
+
+export type InviteResult = (typeof INVITE_RESULTS)[number];
+
 export const onboardingV2Mocks = defineStoryMocks({
 	controls: {
 		source: choiceControl<Source>('Data source', {
@@ -61,8 +66,15 @@ export const onboardingV2Mocks = defineStoryMocks({
 			options: SETUP_STEPS,
 			value: 'select-data-source',
 		}),
+		invite: choiceControl<InviteResult>('Invite result', {
+			group: INVITES,
+			description:
+				'How the POST behind Send Invites in the header modal answers. `success` closes the modal and raises "Invites sent successfully", `loading` never answers, `error` keeps the modal open with the failure inline.',
+			options: INVITE_RESULTS,
+			value: 'success',
+		}),
 	},
-	handlers: (_values, response) => [
+	handlers: (values, response) => [
 		// The setup instructions quote the workspace's ingestion key, which is the
 		// same payload the ingestion settings tab reads.
 		rest.get(
@@ -74,6 +86,24 @@ export const onboardingV2Mocks = defineStoryMocks({
 			'http://localhost/api/v1/roles',
 			response.json(() => rolesListResponse(0)),
 		),
+		rest.post('http://localhost/api/v2/users', (_req, res, ctx) => {
+			if (values.invite === 'loading') {
+				return res(ctx.delay('infinite'));
+			}
+
+			return values.invite === 'error'
+				? res(
+						ctx.status(409),
+						ctx.json({
+							status: 'error',
+							error: { code: 'already_exists', message: 'User already exists' },
+						}),
+					)
+				: res(
+						ctx.status(201),
+						ctx.json({ status: 'success', data: { id: 'user-new' } }),
+					);
+		}),
 	],
 	config: (values) => {
 		const dataSource = DATA_SOURCE_ID[values.source];

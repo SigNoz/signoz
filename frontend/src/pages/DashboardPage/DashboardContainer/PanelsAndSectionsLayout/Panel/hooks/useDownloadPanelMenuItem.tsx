@@ -10,6 +10,7 @@ import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/quer
 import { buildDownloadMenuItem } from '../utils/buildDownloadMenuItem';
 import { useDownloadPanelCsv } from './useDownloadPanelCsv';
 import { useDownloadPanelImage } from './useDownloadPanelImage';
+import { usePanelTitle } from './usePanelTitle';
 
 interface UseDownloadPanelMenuItemArgs {
 	panelId: string;
@@ -28,7 +29,7 @@ export function useDownloadPanelMenuItem({
 	data,
 	actions,
 }: UseDownloadPanelMenuItemArgs): MenuItem | null {
-	const panelName = panel.spec.display.name;
+	const panelName = usePanelTitle(panel);
 	const downloadPanelCsv = useDownloadPanelCsv({
 		panel,
 		data,

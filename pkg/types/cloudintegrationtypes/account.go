@@ -246,7 +246,7 @@ func NewAccountConfigFromPostable(provider CloudProviderType, config *PostableAc
 			ProjectIDs:          config.GCP.ProjectIDs,
 			DeploymentRegion:    config.GCP.DeploymentRegion,
 		}
-		if err := gcpConfig.Validate(); err != nil {
+		if err := gcpConfig.ErrIfInvalid(); err != nil {
 			return nil, err
 		}
 		return &AccountConfig{GCP: gcpConfig}, nil
@@ -364,7 +364,7 @@ func (account *Account) Update(provider CloudProviderType, config *AccountConfig
 	return nil
 }
 
-func (account *Account) ErrIfInvalidateProviderAccountID(providerAccountID string) error {
+func (account *Account) ErrIfInvalidProviderAccountID(providerAccountID string) error {
 	if account.Provider != CloudProviderTypeGCP || account.Config.GCP.ConnectionMethod != GCPConnectionMethodAgent {
 		return nil
 	}

@@ -260,6 +260,8 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddChannelSpecFactory(sqlschema),
 		sqlmigration.NewAddUserTuplesFactory(sqlstore),
 		sqlmigration.NewAddRuleViewFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddFieldTuplesFactory(sqlstore),
+		sqlmigration.NewKeepRelevantLLMPricingRulesFactory(),
 		sqlmigration.NewAddGCPConnectionMethodFactory(),
 	)
 }

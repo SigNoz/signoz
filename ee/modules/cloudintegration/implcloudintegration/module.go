@@ -186,7 +186,7 @@ func (module *module) AgentCheckIn(ctx context.Context, orgID valuer.UUID, provi
 		return module.checkInRemovedAccount(ctx, account, req.ProviderAccountID, syncState)
 	}
 
-	if err := account.ErrIfInvalidateProviderAccountID(req.ProviderAccountID); err != nil {
+	if err := account.ErrIfInvalidProviderAccountID(req.ProviderAccountID); err != nil {
 		return nil, err
 	}
 

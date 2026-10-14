@@ -104,7 +104,7 @@ type GCPServiceMetricsConfig struct {
 	Enabled bool `json:"enabled" required:"true"`
 }
 
-func (config *GCPAccountConfig) Validate() error {
+func (config *GCPAccountConfig) ErrIfInvalid() error {
 	if config.ConnectionMethod.IsZero() {
 		return errors.NewInvalidInputf(ErrCodeInvalidInput, "connectionMethod is required for GCP provider")
 	}
