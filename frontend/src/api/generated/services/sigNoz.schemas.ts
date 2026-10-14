@@ -11789,8 +11789,8 @@ export interface SpantypesThreadSpanDTO {
 	 * @type array
 	 */
 	events: SpantypesEventDTO[];
-	formattedInput: AiobservabilitytypesInputMessagesDTO;
-	formattedOutput: AiobservabilitytypesOutputMessagesDTO;
+	formatted_input: AiobservabilitytypesInputMessagesDTO;
+	formatted_output: AiobservabilitytypesOutputMessagesDTO;
 	/**
 	 * @type string
 	 */
@@ -11798,7 +11798,7 @@ export interface SpantypesThreadSpanDTO {
 	/**
 	 * @type array
 	 */
-	formatterWarnings: string[];
+	formatter_warnings: string[];
 	/**
 	 * @type boolean
 	 */

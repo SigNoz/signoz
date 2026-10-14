@@ -148,6 +148,37 @@ func TestFormat_OpenInference(t *testing.T) {
 			wantInput:  `[{"role": "user", "parts": [{"type": "text", "content": "hi"}]}]`,
 			wantOutput: `[{"role": "assistant", "parts": [{"type": "text", "content": "hello"}], "finish_reason": "stop"}]`,
 		},
+		{
+			// instrumentors that omit message.role: the tool_call_id, tool_calls or neither decide it
+			name: "MissingRole_InferredFromToolFields",
+			attributes: map[string]any{
+				"llm.input_messages.0.message.content":                                   "Weather in Oslo?",
+				"llm.input_messages.1.message.tool_calls.0.tool_call.id":                 "call_9",
+				"llm.input_messages.1.message.tool_calls.0.tool_call.function.name":      "get_weather",
+				"llm.input_messages.1.message.tool_calls.0.tool_call.function.arguments": `{"city":"Oslo"}`,
+				"llm.input_messages.2.message.tool_call_id":                              "call_9",
+				"llm.input_messages.2.message.content":                                   "4C, cloudy",
+			},
+			formatter: FormatterOpenInference,
+			wantInput: `[
+			  {"role": "user", "parts": [{"type": "text", "content": "Weather in Oslo?"}]},
+			  {"role": "assistant", "parts": [{"type": "tool_call", "name": "get_weather", "id": "call_9", "arguments": {"city": "Oslo"}}]},
+			  {"role": "tool", "parts": [{"type": "tool_call_response", "id": "call_9", "response": "4C, cloudy"}]}
+			]`,
+			wantOutput: `[]`,
+		},
+		{
+			// Bedrock converse writes the content array without message_content.type on plain text
+			name: "UntypedContentWithText_TextPart",
+			attributes: map[string]any{
+				"llm.input_messages.0.message.role":                            "user",
+				"llm.input_messages.0.message.contents.0.message_content.text": "Summarise this.",
+				"llm.input_messages.0.message.contents.1.message_content.text": "Second block.",
+			},
+			formatter:  FormatterOpenInference,
+			wantInput:  `[{"role": "user", "parts": [{"type": "text", "content": "Summarise this."}, {"type": "text", "content": "Second block."}]}]`,
+			wantOutput: `[]`,
+		},
 	})
 }
 

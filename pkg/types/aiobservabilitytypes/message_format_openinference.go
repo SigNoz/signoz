@@ -69,12 +69,26 @@ func (f *formatting) openInferenceMessages(buckets []map[string]any) OutputMessa
 
 // openInferenceMessage converts one message.* object. A tool message's content is its tool call
 // response; otherwise message.content, the ordered message.contents and the tool calls are parts.
+// A message without a role is a tool response when it has a tool_call_id, an assistant turn when it
+// has tool calls, else a user turn.
 func (f *formatting) openInferenceMessage(m map[string]any) OutputMessage {
 	msg := OutputMessage{Role: role(stringOf(m["role"])), Parts: Parts{}, Name: optionalString(m["name"])}
 	content, hasContent := m["content"]
 	contentText := stringOf(content)
+	id := stringOf(m["tool_call_id"])
+	calls := indexed(m, "tool_calls")
+	if msg.Role.IsZero() {
+		switch {
+		case id != "":
+			msg.Role = RoleTool
+		case len(calls) > 0:
+			msg.Role = RoleAssistant
+		default:
+			msg.Role = RoleUser
+		}
+	}
 
-	if id := stringOf(m["tool_call_id"]); msg.Role == RoleTool && id != "" {
+	if msg.Role == RoleTool && id != "" {
 		var response any
 		if hasContent {
 			response = decode(content)
@@ -85,7 +99,6 @@ func (f *formatting) openInferenceMessage(m map[string]any) OutputMessage {
 		return msg
 	}
 
-	calls := indexed(m, "tool_calls")
 	msg.Parts = f.openInferenceContents(m, len(calls) == 0)
 	if contentText != "" && !(len(msg.Parts) == 1 && textOf(msg.Parts) == contentText) {
 		msg.Parts = append(Parts{part(textPart(contentText))}, msg.Parts...)
@@ -109,6 +122,9 @@ func (f *formatting) openInferenceContents(m map[string]any, keepToolUse bool) P
 	for _, item := range items {
 		content, _ := item["message_content"].(map[string]any)
 		typ := stringOf(content["type"])
+		if typ == "" && content["text"] != nil {
+			typ = "text"
+		}
 		switch typ {
 		case "text":
 			parts = append(parts, part(textPart(stringOf(content["text"]))))
