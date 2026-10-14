@@ -43,6 +43,16 @@ func (q *querier) Select(ctx context.Context, sortSeries bool, hints *storage.Se
 		return storage.EmptySeriesSet()
 	}
 
+	if hints != nil && hints.Func == "series" {
+		// /api/v1/series only reads Labels() on the result; skip the
+		// samples query entirely rather than fetch and discard it.
+		list := make([]*series, 0, len(lookup.fingerprints))
+		for _, lset := range lookup.fingerprints {
+			list = append(list, &series{lset: lset})
+		}
+		return newSeriesSet(sortAndMerge(list))
+	}
+
 	list, err := q.fetchSamples(ctx, start, end, matchers, lookup, q.lastSamplePerStepFor(ctx, hints))
 	if err != nil {
 		return storage.ErrSeriesSet(err)
@@ -58,7 +68,7 @@ func (q *querier) LabelValues(ctx context.Context, name string, hints *storage.L
 	if name == metricNameLabel {
 		sb.Select("DISTINCT metric_name AS value")
 	} else {
-		sb.Select(fmt.Sprintf("DISTINCT JSONExtractString(labels, %s) AS value", sb.Var(name)))
+		sb.Select(fmt.Sprintf("DISTINCT JSONExtractString(labels, %s) AS value", sb.Var(unescapePromLabelName(name))))
 	}
 	adjustedStart, _, table, _ := metricstelemetryschema.WhichTSTableToUse(uint64(q.mint), uint64(q.maxt), false, nil)
 	sb.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, table))

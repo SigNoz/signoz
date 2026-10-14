@@ -34,8 +34,10 @@ import (
 
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 
+	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/promql/parser"
+	"github.com/prometheus/prometheus/storage"
 	"github.com/prometheus/prometheus/util/stats"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -268,6 +270,162 @@ func (r *ClickHouseReader) GetQueryRangeResult(ctx context.Context, query *model
 	}
 
 	return &promql.Result{Value: res.Value, Warnings: res.Warnings}, &qs, nil
+}
+
+const seriesResultHardLimit = 100_000
+
+func (r *ClickHouseReader) GetSeries(ctx context.Context, params *model.SeriesQueryParams) ([]map[string]string, *model.ApiError) {
+	limit := params.Limit
+	if limit <= 0 || limit > seriesResultHardLimit {
+		limit = seriesResultHardLimit
+	}
+
+	mintMs := params.Start.UnixMilli()
+	maxtMs := params.End.UnixMilli()
+
+	// Use string key (lbls.String()) to avoid false dedup from 64-bit hash collisions.
+	seen := map[string]struct{}{}
+	result := []map[string]string{}
+
+	for _, matchStr := range params.Matches {
+		// Create a fresh parser and querier for each match[] selector.
+		// The remote-read querier resolves all buffered Select calls in one
+		// ReadMultiple batch on the first Next() call and cannot be reused
+		// across independent match[] groups.
+		matchers, err := parser.NewParser(parser.Options{}).ParseMetricSelector(matchStr)
+		if err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		}
+
+		querier, err := r.prometheus.Querier(mintMs, maxtMs)
+		if err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+
+		hints := &storage.SelectHints{Start: mintMs, End: maxtMs, Func: "series"}
+		ss := querier.Select(ctx, false, hints, matchers...)
+		for ss.Next() {
+			lbls := ss.At().Labels()
+			key := lbls.String()
+			if _, ok := seen[key]; ok {
+				continue
+			}
+			seen[key] = struct{}{}
+			m := make(map[string]string, lbls.Len())
+			lbls.Range(func(l labels.Label) {
+				m[l.Name] = l.Value
+			})
+			result = append(result, m)
+			if len(result) >= limit {
+				querier.Close()
+				return nil, &model.ApiError{
+					Typ: model.ErrorExec,
+					Err: fmt.Errorf("series count exceeds limit of %d; use match[] selectors or a narrower time range to reduce results", limit),
+				}
+			}
+		}
+		ssErr := ss.Err()
+		querier.Close()
+		if ssErr != nil {
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: ssErr}
+		}
+	}
+
+	return result, nil
+}
+
+func (r *ClickHouseReader) GetLabels(ctx context.Context, params *model.LabelQueryParams) ([]string, *model.ApiError) {
+	mintMs := params.Start.UnixMilli()
+	maxtMs := params.End.UnixMilli()
+
+	seen := map[string]struct{}{}
+	var result []string
+
+	run := func(matchers []*labels.Matcher) *model.ApiError {
+		querier, err := r.prometheus.Querier(mintMs, maxtMs)
+		if err != nil {
+			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+		defer querier.Close()
+		names, _, err := querier.LabelNames(ctx, nil, matchers...)
+		if err != nil {
+			return &model.ApiError{Typ: model.ErrorExec, Err: err}
+		}
+		for _, name := range names {
+			if _, ok := seen[name]; !ok {
+				seen[name] = struct{}{}
+				result = append(result, name)
+			}
+		}
+		return nil
+	}
+
+	if len(params.Matches) == 0 {
+		if apiErr := run(nil); apiErr != nil {
+			return nil, apiErr
+		}
+		sort.Strings(result)
+		return result, nil
+	}
+
+	for _, matchStr := range params.Matches {
+		matchers, parseErr := parser.NewParser(parser.Options{}).ParseMetricSelector(matchStr)
+		if parseErr != nil {
+			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: parseErr}
+		}
+		if apiErr := run(matchers); apiErr != nil {
+			return nil, apiErr
+		}
+	}
+	sort.Strings(result)
+	return result, nil
+}
+
+func (r *ClickHouseReader) GetLabelValues(ctx context.Context, labelName string, params *model.LabelQueryParams) ([]string, *model.ApiError) {
+	mintMs := params.Start.UnixMilli()
+	maxtMs := params.End.UnixMilli()
+
+	seen := map[string]struct{}{}
+	var result []string
+
+	run := func(matchers []*labels.Matcher) *model.ApiError {
+		querier, err := r.prometheus.Querier(mintMs, maxtMs)
+		if err != nil {
+			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+		defer querier.Close()
+		values, _, err := querier.LabelValues(ctx, labelName, nil, matchers...)
+		if err != nil {
+			return &model.ApiError{Typ: model.ErrorExec, Err: err}
+		}
+		for _, v := range values {
+			if _, ok := seen[v]; !ok {
+				seen[v] = struct{}{}
+				result = append(result, v)
+			}
+		}
+		return nil
+	}
+
+	if len(params.Matches) == 0 {
+		if apiErr := run(nil); apiErr != nil {
+			return nil, apiErr
+		}
+		sort.Strings(result)
+		return result, nil
+	}
+
+	for _, matchStr := range params.Matches {
+		matchers, parseErr := parser.NewParser(parser.Options{}).ParseMetricSelector(matchStr)
+		if parseErr != nil {
+			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: parseErr}
+		}
+		if apiErr := run(matchers); apiErr != nil {
+			return nil, apiErr
+		}
+	}
+	sort.Strings(result)
+	return result, nil
 }
 
 func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, error) {
