@@ -23,6 +23,8 @@ export interface PayloadPropsLogs {
 	status: TStatus;
 	expected_logs_ttl_duration_hrs?: number;
 	expected_logs_move_ttl_duration_hrs?: number;
+	error_message?: string;
+
 }
 
 export type Props = TTTLType;
