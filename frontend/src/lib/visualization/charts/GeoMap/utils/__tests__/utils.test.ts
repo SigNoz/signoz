@@ -1,4 +1,3 @@
-import type { TransformMatrix } from '@visx/zoom/lib/types';
 import { getRampBottom } from 'lib/visualization/colorRamp/colorScale';
 import {
 	ColorRampPalette,
@@ -6,13 +5,11 @@ import {
 } from 'lib/visualization/colorRamp/types';
 
 import { GeoMapDatum } from '../../types';
-import { codeOf } from '../dom';
 import {
 	createGeoMapColorResolver,
 	createRadiusScale,
 	rankData,
 } from '../scales';
-import { constrainZoom, MAX_ZOOM } from '../zoom';
 
 const data = (...values: number[]): GeoMapDatum[] =>
 	values.map((value, index) => ({ code: `C${index}`, value, raw: `C${index}` }));
@@ -82,54 +79,5 @@ describe('createGeoMapColorResolver', () => {
 		expect(
 			createGeoMapColorResolver(data(1, 10), colors, true).ramp,
 		).toHaveLength(8);
-	});
-});
-
-describe('constrainZoom', () => {
-	const constrain = constrainZoom(200, 100);
-	const transform = (overrides: Partial<TransformMatrix>): TransformMatrix => ({
-		scaleX: 1,
-		scaleY: 1,
-		translateX: 0,
-		translateY: 0,
-		skewX: 0,
-		skewY: 0,
-		...overrides,
-	});
-
-	it('stops zooming out past the fitted map', () => {
-		expect(constrain(transform({ scaleX: 0.5, scaleY: 0.5 }))).toMatchObject({
-			scaleX: 1,
-			translateX: 0,
-		});
-	});
-
-	it('caps zooming in', () => {
-		expect(constrain(transform({ scaleX: 99, scaleY: 99 })).scaleX).toBe(
-			MAX_ZOOM,
-		);
-	});
-
-	it('keeps the zoomed map covering the panel', () => {
-		const panned = constrain(
-			transform({ scaleX: 2, scaleY: 2, translateX: 50, translateY: -500 }),
-		);
-		expect(panned.translateX).toBe(0);
-		expect(panned.translateY).toBe(-100);
-	});
-});
-
-describe('codeOf', () => {
-	it('reads the shape code off a map element', () => {
-		const element = document.createElementNS(
-			'http://www.w3.org/2000/svg',
-			'path',
-		);
-		element.setAttribute('data-code', 'US-CA');
-		expect(codeOf(element)).toBe('US-CA');
-	});
-
-	it('is null for anything else', () => {
-		expect(codeOf(document.createElement('div'))).toBeNull();
 	});
 });

@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import {
 	ColorRampPalette,
 	ColorRampScale,
@@ -7,6 +8,7 @@ import {
 import { VIEW_PRESETS } from '../geo/views';
 import GeoMapAssetTable from './components/GeoMapAssetTable';
 import GeoMapPlayground from './components/GeoMapPlayground';
+import { clickAt, hoverUntilTooltip } from './play/olPointer';
 
 const meta = {
 	title: 'Charts/GeoMap',
@@ -58,7 +60,41 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /** Error rate per country as shaded regions; the main choropleth case. */
-export const ErrorRateWorld: Story = {};
+export const ErrorRateWorld: Story = {
+	tags: ['play'],
+	play: async ({ canvasElement }): Promise<void> => {
+		const point = await hoverUntilTooltip(canvasElement);
+		await expect(screen.getByTestId('geo-map-tooltip')).toHaveTextContent('%');
+
+		clickAt(canvasElement, point);
+		await waitFor(() =>
+			expect(screen.getByTestId('geo-map-drilldown-menu')).toHaveTextContent(
+				'geo.country.iso_code',
+			),
+		);
+	},
+};
+
+/** Zoom in, then back to the fitted frame. */
+export const ZoomControls: Story = {
+	tags: ['play'],
+	play: async ({ canvasElement }): Promise<void> => {
+		const map = within(canvasElement);
+		// The controls only show on CSS :hover, which synthetic events don't trigger.
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		await expect(map.getByTestId('geo-map-zoom-out')).toBeDisabled();
+
+		await user.click(map.getByTestId('geo-map-zoom-in'));
+		await waitFor(() =>
+			expect(map.getByTestId('geo-map-zoom-out')).toBeEnabled(),
+		);
+
+		await user.click(map.getByTestId('geo-map-zoom-reset'));
+		await waitFor(() =>
+			expect(map.getByTestId('geo-map-zoom-out')).toBeDisabled(),
+		);
+	},
+};
 
 /** Requests are dominated by the US; the default log scale keeps the rest readable. */
 export const Requests: Story = {
@@ -93,14 +129,22 @@ export const FitToData: Story = {
 	args: { dataset: 'europeLatency', view: 'fit' },
 };
 
-/** Oceania rotates past the antimeridian so Fiji and NZ stay whole. */
+/** Oceania, framed up to the antimeridian. */
 export const OceaniaView: Story = {
 	args: { view: 'oceania' },
 };
 
-/** US states, from GeoIP's bare region codes; Albers USA insets Alaska and Hawaii. */
+/** US states, from GeoIP's bare region codes; the frame is the lower 48. */
 export const UsStates: Story = {
 	args: { dataset: 'usStates' },
+	tags: ['play'],
+	play: async ({ canvasElement }): Promise<void> => {
+		await waitFor(() =>
+			expect(within(canvasElement).queryByTestId('geo-map-loading')).toBeNull(),
+		);
+		await hoverUntilTooltip(canvasElement);
+		await expect(screen.getByTestId('geo-map-tooltip')).toHaveTextContent('US-');
+	},
 };
 
 /** The same states as bubbles. */

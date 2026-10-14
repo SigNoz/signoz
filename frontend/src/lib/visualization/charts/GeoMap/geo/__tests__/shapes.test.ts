@@ -1,7 +1,5 @@
-import type { ParsedFeature } from '@visx/geo/lib/projections/Projection';
-
 import { GeoMapDatum, ShapeFeature } from '../../types';
-import { classifyFeatures, getOutsideView } from '../classify';
+import { getOutsideView } from '../classify';
 import { getCountryShapes, getSubdivisionShapes } from '../shapes';
 import {
 	isSubdivisionCountry,
@@ -11,66 +9,6 @@ import {
 } from '../subdivisions';
 
 const datum = (code: string): GeoMapDatum => ({ code, value: 1, raw: code });
-
-function parsed(
-	code: string,
-	path: string | null,
-): ParsedFeature<ShapeFeature> {
-	return {
-		feature: {
-			type: 'Feature',
-			properties: { code, name: code, label: [0, 0] },
-			geometry: { type: 'Polygon', coordinates: [] },
-		},
-		path,
-	} as unknown as ParsedFeature<ShapeFeature>;
-}
-
-describe('classifyFeatures', () => {
-	const inside: [[number, number], [number, number]] = [
-		[10, 10],
-		[20, 20],
-	];
-	const outside: [[number, number], [number, number]] = [
-		[500, 500],
-		[600, 600],
-	];
-	const boundsByCode: Record<string, typeof inside> = {
-		NEAR: inside,
-		FAR: outside,
-	};
-	const path = {
-		bounds: (shape: ShapeFeature): typeof inside =>
-			boundsByCode[shape.properties.code as string] ?? inside,
-	};
-	const isMember = (shape: ShapeFeature): boolean =>
-		shape.properties.code === 'IN_VIEW';
-
-	it('splits members from the non-members that land in the panel', () => {
-		const { members, context } = classifyFeatures(
-			[parsed('IN_VIEW', 'M0'), parsed('NEAR', 'M0'), parsed('FAR', 'M0')],
-			path,
-			isMember,
-			100,
-			100,
-		);
-		expect(members.map((m) => m.feature.properties.code)).toStrictEqual([
-			'IN_VIEW',
-		]);
-		expect(context.map((c) => c.feature.properties.code)).toStrictEqual(['NEAR']);
-	});
-
-	it('drops shapes the projection clipped away entirely', () => {
-		const { members } = classifyFeatures(
-			[parsed('IN_VIEW', null)],
-			path,
-			isMember,
-			100,
-			100,
-		);
-		expect(members).toHaveLength(0);
-	});
-});
 
 describe('country shapes', () => {
 	it('reports values outside a region view', () => {

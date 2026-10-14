@@ -1,17 +1,19 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
-import { Zoom } from '@visx/zoom';
-import type { GeoProjection } from 'd3-geo';
 import { useResizeObserver } from 'hooks/useDimensions';
 
 import CountryTooltip from './components/CountryTooltip/CountryTooltip';
 import MapLegend from './components/MapLegend/MapLegend';
 import MapStatus from './components/MapStatus/MapStatus';
-import MapViewport from './components/MapViewport/MapViewport';
+import ZoomControls from './components/ZoomControls/ZoomControls';
 import { useGeoMapScales } from './hooks/useGeoMapScales';
 import { useGeoMapShapes } from './hooks/useGeoMapShapes';
 import { GeoMapProps } from './types';
-import { constrainZoom, MAX_ZOOM } from './utils/zoom';
+import { useOlLayers } from './hooks/useOlLayers';
+import { useOlMap } from './hooks/useOlMap';
+import { useOlPointer } from './hooks/useOlPointer';
+import { useOlView } from './hooks/useOlView';
+import { OlPalette, readPalette } from './utils/olStyles';
 
 import styles from './GeoMap.module.scss';
 
@@ -26,9 +28,11 @@ export default function GeoMap({
 	isDarkMode,
 	onSelect,
 }: GeoMapProps): JSX.Element {
-	const mapRef = useRef<HTMLDivElement>(null);
-	const { width, height } = useResizeObserver(mapRef, 100);
-	const [geoProjection, setGeoProjection] = useState<GeoProjection | null>(null);
+	const wrapperRef = useRef<HTMLDivElement>(null);
+	const mapAreaRef = useRef<HTMLDivElement>(null);
+	const canvasRef = useRef<HTMLDivElement>(null);
+	const { width, height } = useResizeObserver(mapAreaRef, 100);
+	const [palette, setPalette] = useState<OlPalette | null>(null);
 
 	const {
 		tooltipOpen,
@@ -50,16 +54,17 @@ export default function GeoMap({
 		isDarkMode,
 	);
 	const { shapes, status, retry } = useGeoMapShapes(view, country);
-	const constrain = useMemo(() => constrainZoom(width, height), [width, height]);
+	const handle = useOlMap(canvasRef);
 
-	// A projection is a function, so it must not be handed to setState as one.
-	const handleProjection = useCallback((next: GeoProjection): void => {
-		setGeoProjection(() => next);
-	}, []);
+	useEffect(() => {
+		if (wrapperRef.current) {
+			setPalette(readPalette(wrapperRef.current));
+		}
+	}, [isDarkMode]);
 
 	const handleHover = useCallback(
 		(code: string | null, clientX: number, clientY: number): void => {
-			const rect = mapRef.current?.getBoundingClientRect();
+			const rect = mapAreaRef.current?.getBoundingClientRect();
 			if (!code || !rect || !valueByCode.has(code)) {
 				hideTooltip();
 				return;
@@ -86,51 +91,49 @@ export default function GeoMap({
 	const hovered =
 		tooltipOpen && tooltipData ? valueByCode.get(tooltipData) : undefined;
 
+	useOlLayers({
+		handle,
+		shapes,
+		data,
+		layer,
+		palette,
+		fillFor,
+		radiusFor,
+		hoveredCode: hovered?.code ?? null,
+	});
+	const zoom = useOlView(handle, view, country, data, width, height);
+	useOlPointer(handle, handleHover, handleSelect);
+
 	return (
-		<div className={styles.wrapper} data-geo-map data-testid="geo-map">
+		<div
+			className={styles.wrapper}
+			ref={wrapperRef}
+			data-geo-map
+			data-testid="geo-map"
+		>
 			<div
 				className={styles.mapArea}
 				ref={(node): void => {
-					(mapRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+					(mapAreaRef as React.MutableRefObject<HTMLDivElement | null>).current =
+						node;
 					containerRef(node);
 				}}
 			>
+				<div
+					ref={canvasRef}
+					className={styles.canvas}
+					data-testid="geo-map-canvas"
+				/>
 				{status !== 'ready' && <MapStatus status={status} onRetry={retry} />}
-				{width > 0 &&
-					height > 0 &&
-					shapes && (
-						// Remounting on view, country or size change resets the zoom.
-						<Zoom<SVGSVGElement>
-							key={`${view}:${country ?? ''}:${width}x${height}`}
-							width={width}
-							height={height}
-							scaleXMin={1}
-							scaleXMax={MAX_ZOOM}
-							scaleYMin={1}
-							scaleYMax={MAX_ZOOM}
-							constrain={constrain}
-						>
-							{(zoom): JSX.Element => (
-								<MapViewport
-									zoom={zoom}
-									width={width}
-									height={height}
-									view={view}
-									country={country}
-									layer={layer}
-									shapes={shapes}
-									data={data}
-									fillFor={fillFor}
-									onProjection={handleProjection}
-									geoProjection={geoProjection}
-									hoveredCode={hovered?.code ?? null}
-									radiusFor={radiusFor}
-									onHover={handleHover}
-									onSelect={handleSelect}
-								/>
-							)}
-						</Zoom>
-					)}
+				{status === 'ready' && (
+					<ZoomControls
+						canZoomIn={zoom.canZoomIn}
+						canZoomOut={zoom.canZoomOut}
+						onZoomIn={zoom.zoomIn}
+						onZoomOut={zoom.zoomOut}
+						onReset={zoom.reset}
+					/>
+				)}
 				{hovered && (
 					<TooltipInPortal
 						left={tooltipLeft}

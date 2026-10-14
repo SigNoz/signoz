@@ -1,61 +1,53 @@
-import { geoBounds } from 'd3-geo';
-
 import { GeoMapDatum } from '../../types';
 import { COUNTRY_BY_ISO2 } from '../countries';
-import { getGeoMapFit, isMember } from '../views';
+import { getViewBox, isMember, VIEW_PRESETS } from '../views';
 
 const datum = (code: string): GeoMapDatum => ({ code, value: 1, raw: code });
 
-const lonRange = (view: Parameters<typeof getGeoMapFit>): [number, number] => {
-	const [[west], [east]] = geoBounds(getGeoMapFit(...view).object);
-	return [west, east];
-};
-
-describe('getGeoMapFit', () => {
-	it('frames the world in Mercator, centred so Chukotka stays with Russia', () => {
-		const fit = getGeoMapFit('world', []);
-		expect(fit.projection).toBe('mercator');
-		expect(fit.rotate).toStrictEqual([-10, 0]);
-	});
-
+describe('getViewBox', () => {
 	it('crops the world at 58°S and 75°N', () => {
-		const [[, south], [, north]] = geoBounds(getGeoMapFit('world', []).object);
-		expect(south).toBeCloseTo(-58, 0);
-		expect(north).toBeCloseTo(75, 0);
+		expect(getViewBox('world', [])).toStrictEqual([
+			[-180, -58],
+			[180, 75],
+		]);
 	});
 
-	it('fits a region preset to its own box', () => {
-		const [west, east] = lonRange(['europe', []]);
-		expect(west).toBeCloseTo(-25, 0);
-		expect(east).toBeCloseTo(45, 0);
+	it('frames a region preset by its own box', () => {
+		expect(getViewBox('europe', [])).toBe(VIEW_PRESETS.europe.box);
 	});
 
 	it('fits data by mainlands, so French Guiana does not drag the frame west', () => {
-		const [west] = lonRange(['fit', [datum('FR'), datum('DE')]]);
+		const [[west]] = getViewBox('fit', [datum('FR'), datum('DE')]);
 		expect(west).toBeGreaterThan(-15);
 	});
 
 	it('falls back to the world when there is nothing to fit', () => {
-		expect(getGeoMapFit('fit', []).rotate).toStrictEqual([-10, 0]);
+		expect(getViewBox('fit', [])).toBe(VIEW_PRESETS.world.box);
 	});
 
-	it('draws the US with Albers USA, fitted to the country itself', () => {
-		const fit = getGeoMapFit('country', [], 'US');
-		expect(fit.projection).toBe('albersUsa');
-		expect(fit.object).toBe(COUNTRY_BY_ISO2.get('US'));
+	it('frames the US by its lower 48, since its bounds wrap the antimeridian', () => {
+		const [[west, south], [east, north]] = getViewBox('country', [], 'US');
+		const us = COUNTRY_BY_ISO2.get('US');
+		if (!us) {
+			throw new Error('no US outline');
+		}
+		const [[mWest, mSouth], [mEast, mNorth]] = us.properties.mainland;
+		expect([west, south, east, north]).toStrictEqual([
+			mWest - 1,
+			mSouth - 1,
+			mEast + 1,
+			mNorth + 1,
+		]);
 	});
 
 	it('keeps India’s island states in the country frame', () => {
-		const fit = getGeoMapFit('country', [], 'IN');
-		const [west, east] = lonRange(['country', [], 'IN']);
-		expect(fit.projection).toBe('mercator');
+		const [[west], [east]] = getViewBox('country', [], 'IN');
 		expect(west).toBeLessThan(72); // Lakshadweep
 		expect(east).toBeGreaterThan(93); // Andaman and Nicobar
 	});
 
 	it('shows the world for a country view with no country', () => {
-		expect(getGeoMapFit('country', []).projection).toBe('mercator');
-		expect(getGeoMapFit('country', []).rotate).toStrictEqual([-10, 0]);
+		expect(getViewBox('country', [])).toBe(VIEW_PRESETS.world.box);
 	});
 });
 
