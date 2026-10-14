@@ -36,6 +36,13 @@ DOCKER_REGISTRY_ENTERPRISE 		?= docker.io/signoz/signoz
 JS_BUILD_CONTEXT 				= $(SRC)/frontend
 
 ##############################################################
+# git hooks
+##############################################################
+# Hooks live outside the working tree, so they cannot be checked in. Expanded
+# while this file is parsed, which wires them up on any make invocation.
+GITHOOKS_INSTALL := $(shell sh $(SRC)/.githooks/install >/dev/null 2>&1 || true)
+
+##############################################################
 # directories
 ##############################################################
 $(TARGET_DIR):
