@@ -30,25 +30,25 @@
         "config": {
           "sources": [
             {
-              "key": "tool.name",
+              "key": "gen_ai.client.tool_name",
               "context": "attribute",
               "operation": "copy",
               "priority": 40
             },
             {
-              "key": "ai.toolCall.name",
+              "key": "tool_name",
               "context": "attribute",
               "operation": "copy",
               "priority": 30
             },
             {
-              "key": "tool_name",
+              "key": "tool.name",
               "context": "attribute",
               "operation": "copy",
               "priority": 20
             },
             {
-              "key": "gen_ai.client.tool_name",
+              "key": "ai.toolCall.name",
               "context": "attribute",
               "operation": "copy",
               "priority": 10
@@ -62,19 +62,19 @@
         "config": {
           "sources": [
             {
-              "key": "tool.id",
+              "key": "gen_ai.client.tool_use_id",
               "context": "attribute",
               "operation": "copy",
               "priority": 30
             },
             {
-              "key": "ai.toolCall.id",
+              "key": "tool.id",
               "context": "attribute",
               "operation": "copy",
               "priority": 20
             },
             {
-              "key": "gen_ai.client.tool_use_id",
+              "key": "ai.toolCall.id",
               "context": "attribute",
               "operation": "copy",
               "priority": 10

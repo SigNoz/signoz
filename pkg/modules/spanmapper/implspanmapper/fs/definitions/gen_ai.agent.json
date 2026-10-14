@@ -18,19 +18,19 @@
         "config": {
           "sources": [
             {
-              "key": "agent.name",
+              "key": "crewai.agent.role",
               "context": "attribute",
               "operation": "copy",
               "priority": 30
             },
             {
-              "key": "agent_name",
+              "key": "agent.name",
               "context": "attribute",
               "operation": "copy",
               "priority": 20
             },
             {
-              "key": "crewai.agent.role",
+              "key": "agent_name",
               "context": "attribute",
               "operation": "copy",
               "priority": 10
@@ -44,7 +44,7 @@
         "config": {
           "sources": [
             {
-              "key": "agent.id",
+              "key": "agent_id",
               "context": "attribute",
               "operation": "copy",
               "priority": 30
@@ -56,7 +56,7 @@
               "priority": 20
             },
             {
-              "key": "agent_id",
+              "key": "agent.id",
               "context": "attribute",
               "operation": "copy",
               "priority": 10
