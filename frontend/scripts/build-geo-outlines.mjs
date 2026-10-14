@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 import { geoArea, geoBounds } from 'd3-geo';
 import { topology } from 'topojson-server';
-import { presimplify, simplify, quantile } from 'topojson-simplify';
+import { presimplify, simplify } from 'topojson-simplify';
 import { feature, quantize } from 'topojson-client';
 
 const NATURAL_EARTH_URL =
@@ -21,11 +21,13 @@ const outDir = join(
 );
 
 const QUANTIZATION = 1e5;
-// Share of the smallest-weight points dropped by simplification.
-const SIMPLIFY_QUANTILE = 0.05;
+// Simplification drops every point whose triangle with its neighbours is
+// smaller than this, in square degrees. A fixed size, unlike a share of all
+// points, still leaves a small island a few points of its own.
+const MIN_WEIGHT = 3e-3;
 // 10m is street-level detail; a country view needs far less.
 const SUBDIVISION_QUANTIZATION = 1e4;
-const SUBDIVISION_SIMPLIFY_QUANTILE = 0.985;
+const SUBDIVISION_MIN_WEIGHT = 1e-3;
 
 // Countries with a states/provinces view. Add one only after checking that the
 // GeoIP region codes line up with Natural Earth's admin-1 level for it.
@@ -157,29 +159,78 @@ function polygonsOf(geometry) {
 
 const round = (n) => Math.round(n * 1e3) / 1e3;
 
+// A shape this many times the minimum weight or smaller could lose every polygon.
+const PROTECTED_SHAPE_FACTOR = 10;
+
+/** Area of a lon/lat ring in square degrees, the unit of the simplify weights. */
+function planarRingArea(ring) {
+	let twice = 0;
+	ring.forEach(([x, y], i) => {
+		const [nx, ny] = ring[(i + 1) % ring.length];
+		twice += x * ny - nx * y;
+	});
+	return Math.abs(twice) / 2;
+}
+
+// Weights every point of a small shape's largest outline as Infinity, which
+// simplify never removes, so a city-state or city-sized province (Monaco, a
+// London borough) still has an outline to colour. Neighbours share those arcs,
+// so their common border stays in step.
+function protectSmallShapes(topo, features, minWeight) {
+	topo.objects[Object.keys(topo.objects)[0]].geometries.forEach(
+		(geometry, i) => {
+			const polygons = polygonsOf(features[i].geometry);
+			const areas = polygons.map(([outer]) => planarRingArea(outer));
+			const total = areas.reduce((sum, area) => sum + area, 0);
+			if (polygons.length === 0 || total > minWeight * PROTECTED_SHAPE_FACTOR) {
+				return;
+			}
+			const largest = areas.indexOf(Math.max(...areas));
+			const rings =
+				geometry.type === 'Polygon' ? geometry.arcs : geometry.arcs[largest];
+			rings[0].forEach((index) => {
+				topo.arcs[index < 0 ? ~index : index].forEach((point) => {
+					point[2] = Infinity;
+				});
+			});
+		},
+	);
+}
+
 // presimplify stores each point's weight as a third coordinate and simplify
 // keeps it, so it is dropped before quantizing (which would carry it through).
 // Simplifying can collapse a tiny island until its ring runs the other way; d3
 // then reads it as "the whole globe except this island" and floods the map, so
 // any polygon larger than a hemisphere is dropped and the topology rebuilt.
-function simplifyAndQuantize(objects, dropQuantile, quantization) {
+// An island smaller than the minimum weight keeps only its arc's endpoints and
+// collapses to a sliver with no area; it is dropped the same way.
+function simplifyAndQuantize(objects, minWeight, quantization) {
 	const [name] = Object.keys(objects);
 	let topo = presimplify(topology(objects));
-	topo = simplify(topo, quantile(topo, dropQuantile));
+	protectSmallShapes(topo, objects[name].features, minWeight);
+	topo = simplify(topo, minWeight);
 	topo = { ...topo, arcs: topo.arcs.map((arc) => arc.map(([x, y]) => [x, y])) };
 	topo = quantize(topo, quantization);
 
 	let flipped = 0;
+	let collapsed = 0;
 	const features = feature(topo, topo.objects[name]).features.map((f) => {
 		const kept = polygonsOf(f.geometry).filter((coordinates) => {
+			if (new Set(coordinates[0].map((point) => point.join())).size < 3) {
+				collapsed += 1;
+				return false;
+			}
 			const inverted = geoArea({ type: 'Polygon', coordinates }) > 2 * Math.PI;
 			flipped += inverted ? 1 : 0;
 			return !inverted;
 		});
 		return { ...f, geometry: { type: 'MultiPolygon', coordinates: kept } };
 	});
-	if (flipped === 0) {
-		return { topo, flipped };
+	const emptied = features
+		.filter((f) => f.geometry.coordinates.length === 0)
+		.map((f) => f.properties.code ?? f.properties.name);
+	if (flipped === 0 && collapsed === 0) {
+		return { topo, flipped, collapsed, emptied };
 	}
 	return {
 		topo: quantize(
@@ -187,6 +238,8 @@ function simplifyAndQuantize(objects, dropQuantile, quantization) {
 			quantization,
 		),
 		flipped,
+		collapsed,
+		emptied,
 	};
 }
 const roundBounds = (b) => b.map(([x, y]) => [round(x), round(y)]);
@@ -244,9 +297,15 @@ for (const [key, members] of groups) {
 }
 features.sort((a, b) => String(a.id).localeCompare(String(b.id)));
 
-const { topo, flipped: countriesFlipped } = simplifyAndQuantize(
+const {
+	topo,
+	flipped: countriesFlipped,
+	collapsed: countriesCollapsed,
+	emptied: countriesEmptied,
+} = simplifyAndQuantize(
 	{ countries: { type: 'FeatureCollection', features } },
-	SIMPLIFY_QUANTILE,
+	MIN_WEIGHT,
+
 	QUANTIZATION,
 );
 
@@ -335,7 +394,7 @@ for (const country of SUBDIVISION_COUNTRIES) {
 		.sort((a, b) => a.id.localeCompare(b.id));
 	const { topo: subdivisionTopo, flipped } = simplifyAndQuantize(
 		{ subdivisions: { type: 'FeatureCollection', features: shapes } },
-		SUBDIVISION_SIMPLIFY_QUANTILE,
+		SUBDIVISION_MIN_WEIGHT,
 		SUBDIVISION_QUANTIZATION,
 	);
 	const subdivisionNames = {};
@@ -369,6 +428,8 @@ console.log(
 		{
 			subdivisions: subdivisionReport,
 			countriesDroppedFlippedIslands: countriesFlipped,
+			countriesDroppedCollapsedPolygons: countriesCollapsed,
+			countriesEmptied: countriesEmptied.join(' '),
 			features: features.length,
 			decodedFeatures: decoded,
 			sizes: {
