@@ -42,7 +42,53 @@ const SUBDIVISION_ALIASES = {
 		'IN-DD': 'IN-DH',
 		'IN-DN': 'IN-DH',
 	},
+	// Natural Earth carries Metro Manila under its retired code.
+	PH: { 'PH-00': 'PH-MNL' },
 };
+
+// Shapes Natural Earth still splits along retired lines, merged into the codes
+// GeoIP reports now; the retired codes become aliases. Northern Ireland's 26
+// districts became 11 councils in 2015, each a union of old districts.
+const SUBDIVISION_MERGES = {
+	GB: {
+		'GB-ANN': ['Antrim and Newtownabbey', ['GB-ANT', 'GB-NTA']],
+		'GB-AND': ['Ards and North Down', ['GB-ARD', 'GB-NDN']],
+		'GB-ABC': [
+			'Armagh City, Banbridge and Craigavon',
+			['GB-ARM', 'GB-BNB', 'GB-CGV'],
+		],
+		'GB-BFS': ['Belfast', ['GB-BFS']],
+		'GB-CCG': [
+			'Causeway Coast and Glens',
+			['GB-BLY', 'GB-CLR', 'GB-LMV', 'GB-MYL'],
+		],
+		'GB-DRS': ['Derry City and Strabane', ['GB-DRY', 'GB-STB']],
+		'GB-FMO': ['Fermanagh and Omagh', ['GB-FER', 'GB-OMH']],
+		'GB-LBC': ['Lisburn and Castlereagh', ['GB-LSB', 'GB-CSR']],
+		'GB-MEA': ['Mid and East Antrim', ['GB-BLA', 'GB-CKF', 'GB-LRN']],
+		'GB-MUL': ['Mid Ulster', ['GB-CKT', 'GB-DGN', 'GB-MFT']],
+		'GB-NMD': ['Newry, Mourne and Down', ['GB-NYM', 'GB-DOW']],
+	},
+};
+
+// Retired code → [current code, current name].
+const SUBDIVISION_RECODES = new Map(
+	Object.values(SUBDIVISION_MERGES).flatMap((merges) =>
+		Object.entries(merges).flatMap(([code, [name, retired]]) =>
+			retired.map((old) => [old, [code, name]]),
+		),
+	),
+);
+for (const [country, merges] of Object.entries(SUBDIVISION_MERGES)) {
+	SUBDIVISION_ALIASES[country] ??= {};
+	for (const [code, [, retired]] of Object.entries(merges)) {
+		for (const old of retired) {
+			if (old !== code) {
+				SUBDIVISION_ALIASES[country][old] = code;
+			}
+		}
+	}
+}
 
 // Natural Earth puts these islands in "Seven seas (open ocean)".
 const OPEN_OCEAN_REGION = {
@@ -390,7 +436,15 @@ for (const f of admin1.features) {
 	if (!admin1ByCountry.has(country)) {
 		admin1ByCountry.set(country, []);
 	}
-	admin1ByCountry.get(country).push(f);
+	const recode = SUBDIVISION_RECODES.get(code);
+	admin1ByCountry.get(country).push(
+		recode
+			? {
+					...f,
+					properties: { ...f.properties, iso_3166_2: recode[0], name: recode[1] },
+				}
+			: f,
+	);
 }
 
 // Natural Earth splits some codes across shapes (Dublin's four councils are all
