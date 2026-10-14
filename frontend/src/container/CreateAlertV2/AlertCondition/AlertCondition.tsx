@@ -16,12 +16,14 @@ import Stepper from '../Stepper';
 import AlertThreshold from './AlertThreshold';
 import AnomalyThreshold from './AnomalyThreshold';
 import { ANOMALY_TAB_TOOLTIP, THRESHOLD_TAB_TOOLTIP } from './constants';
+import { useAnomalyFunctionSync } from './useAnomalyFunctionSync';
 
 import './styles.scss';
 
 function AlertCondition(): JSX.Element {
 	const { alertType, setAlertType } = useCreateAlertState();
 	const { featureFlags } = useAppContext();
+	useAnomalyFunctionSync();
 
 	const {
 		data,

@@ -67,6 +67,8 @@ jest.mock('../AnomalyThreshold', () => ({
 	},
 }));
 
+const mockHandleSetQueryData = jest.fn();
+
 // Mock useQueryBuilder hook
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: (): {
@@ -76,6 +78,7 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 			queryName: string;
 		};
 		redirectWithQueryBuilderData: () => void;
+		handleSetQueryData: jest.Mock;
 	} => ({
 		currentQuery: {
 			dataSource: 'METRICS',
@@ -86,6 +89,7 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 			},
 		},
 		redirectWithQueryBuilderData: jest.fn(),
+		handleSetQueryData: mockHandleSetQueryData,
 	}),
 }));
 
@@ -118,6 +122,7 @@ const useAppContextSpy = jest.spyOn(appHooks, 'useAppContext');
 
 describe('AlertCondition', () => {
 	beforeEach(() => {
+		jest.clearAllMocks();
 		useAppContextSpy.mockReturnValue(createAppContextMock('ADMIN'));
 	});
 
@@ -206,6 +211,22 @@ describe('AlertCondition', () => {
 		expect(
 			screen.queryByTestId(ANOMALY_THRESHOLD_TEST_ID),
 		).not.toBeInTheDocument();
+	});
+
+	it('adds the anomaly function with the default z-score when switching to anomaly', () => {
+		renderAlertCondition();
+		expect(mockHandleSetQueryData).not.toHaveBeenCalled();
+
+		fireEvent.click(screen.getByText(ANOMALY_TAB_TEXT));
+
+		expect(mockHandleSetQueryData).toHaveBeenCalledWith(
+			0,
+			expect.objectContaining({
+				functions: [
+					{ name: 'anomaly', args: [], namedArgs: { z_score_threshold: 3 } },
+				],
+			}),
+		);
 	});
 
 	it('applies active tab styling correctly', () => {

@@ -15,6 +15,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ArrowRight } from '@signozhq/icons';
 import { IUser } from 'providers/App/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryFunction } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { USER_ROLES } from 'types/roles';
 import { openInNewTab } from 'utils/navigation';
@@ -41,6 +42,25 @@ export function getQueryNames(currentQuery: Query): BaseOptionType[] {
 	};
 
 	return queryConfig[currentQuery.queryType]?.() || [];
+}
+
+// Drops the anomaly function, or re-adds it last with the given z-score.
+export function syncAnomalyFunction(
+	functions: QueryFunction[],
+	zScoreThreshold: number | undefined,
+): QueryFunction[] {
+	const otherFunctions = functions.filter(({ name }) => name !== 'anomaly');
+	if (zScoreThreshold === undefined) {
+		return otherFunctions;
+	}
+	return [
+		...otherFunctions,
+		{
+			name: 'anomaly',
+			args: [],
+			namedArgs: { z_score_threshold: zScoreThreshold },
+		},
+	];
 }
 
 export function getCategoryByOptionId(id: string): string | undefined {
