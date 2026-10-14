@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -81,6 +82,14 @@ type WaterfallSpan struct {
 	StatusCode         int16  `json:"status_code,omitempty"`
 	StatusCodeString   string `json:"status_code_string,omitempty"`
 	StatusMessage      string `json:"status_message,omitempty"`
+
+	// The formatted fields hold the span's gen_ai messages in the OTel GenAI shape, set only when the
+	// span carries gen_ai.input.messages or gen_ai.output.messages; Formatter names the converter that
+	// produced them and FormatterWarnings what it could not resolve.
+	FormattedInput    aiobservabilitytypes.InputMessages  `json:"formattedInput,omitempty"`
+	FormattedOutput   aiobservabilitytypes.OutputMessages `json:"formattedOutput,omitempty"`
+	Formatter         string                              `json:"formatter,omitempty"`
+	FormatterWarnings []string                            `json:"formatterWarnings,omitempty"`
 
 	// Internal tree structure fields
 	Children         []*WaterfallSpan `json:"-"`
@@ -317,7 +326,7 @@ func (item *StorableSpan) ToWaterfallSpan(traceID string) *WaterfallSpan {
 	resources := make(map[string]string)
 	maps.Copy(resources, item.ResourcesString)
 
-	return &WaterfallSpan{
+	span := &WaterfallSpan{
 		Attributes:         item.Attributes(),
 		DBName:             item.DBName,
 		DBOperation:        item.DBOperation,
@@ -348,6 +357,16 @@ func (item *StorableSpan) ToWaterfallSpan(traceID string) *WaterfallSpan {
 		ServiceName:        item.ServiceName,
 		References:         item.UnmarshalledRefs(),
 	}
+
+	input, output := rawAttribute(item, aiobservabilitytypes.GenAIInputMessages), rawAttribute(item, aiobservabilitytypes.GenAIOutputMessages)
+	if input != nil || output != nil {
+		formatted := aiobservabilitytypes.FormatMessages(input, output)
+		span.FormattedInput = formatted.Input
+		span.FormattedOutput = formatted.Output
+		span.Formatter = formatted.Formatter
+		span.FormatterWarnings = formatted.Warnings
+	}
+	return span
 }
 
 func EnrichSelectedSpans(window []*WaterfallSpan, fullSpans []StorableSpan) {

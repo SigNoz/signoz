@@ -80,10 +80,10 @@ type ThreadSpan struct {
 	References       []OtelSpanRef     `json:"references" required:"true" nullable:"false"`
 	// The formatted fields hold the span's messages in the OTel GenAI shape; Formatter names the
 	// converter that produced them and FormatterWarnings what it could not resolve.
-	FormattedInput    aiobservabilitytypes.InputMessages  `json:"formatted_input" required:"true" nullable:"false"`
-	FormattedOutput   aiobservabilitytypes.OutputMessages `json:"formatted_output" required:"true" nullable:"false"`
+	FormattedInput    aiobservabilitytypes.InputMessages  `json:"formattedInput" required:"true" nullable:"false"`
+	FormattedOutput   aiobservabilitytypes.OutputMessages `json:"formattedOutput" required:"true" nullable:"false"`
 	Formatter         string                              `json:"formatter" required:"true"`
-	FormatterWarnings []string                            `json:"formatter_warnings" required:"true" nullable:"false"`
+	FormatterWarnings []string                            `json:"formatterWarnings" required:"true" nullable:"false"`
 
 	timeUnixNano uint64
 }

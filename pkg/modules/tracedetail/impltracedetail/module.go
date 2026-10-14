@@ -59,7 +59,7 @@ func (m *module) GetTraceSummary(ctx context.Context, orgID valuer.UUID, traceID
 // For large traces (NumSpans > effectiveLimit) it uses a two-step fetch:
 // minimal fields for all spans to build the tree, then full fields for the
 // visible window only. Aggregations are not returned.
-func (m *module) GetWaterfallV4(ctx context.Context, traceID string, selectedSpanID string, uncollapsedSpans []string) (*spantypes.GettableWaterfallTrace, error) {
+func (m *module) GetWaterfallV4(ctx context.Context, orgID valuer.UUID, traceID string, selectedSpanID string, uncollapsedSpans []string) (*spantypes.GettableWaterfallTrace, error) {
 	bounds, err := m.store.GetTraceBounds(ctx, traceID)
 	if err != nil {
 		return nil, err
@@ -68,13 +68,13 @@ func (m *module) GetWaterfallV4(ctx context.Context, traceID string, selectedSpa
 		attrs := metric.WithAttributes(attrResponseType.String(attrResponseTypeWindowed))
 		m.metrics.waterfallRequestCount.Add(ctx, 1, attrs)
 		m.metrics.waterfallSpanCount.Add(ctx, int64(bounds.NumSpans), attrs)
-		return m.getWindowedWaterfall(ctx, traceID, selectedSpanID, uncollapsedSpans, bounds.Start, bounds.End)
+		return m.getWindowedWaterfall(ctx, orgID, traceID, selectedSpanID, uncollapsedSpans, bounds.Start, bounds.End)
 	}
-	return m.getFullWaterfall(ctx, traceID, bounds)
+	return m.getFullWaterfall(ctx, orgID, traceID, bounds)
 }
 
-func (m *module) getFullWaterfall(ctx context.Context, traceID string, bounds *spantypes.TraceBounds) (*spantypes.GettableWaterfallTrace, error) {
-	spanItems, err := m.store.GetTraceSpans(ctx, traceID, bounds)
+func (m *module) getFullWaterfall(ctx context.Context, orgID valuer.UUID, traceID string, bounds *spantypes.TraceBounds) (*spantypes.GettableWaterfallTrace, error) {
+	spanItems, err := m.store.GetTraceSpans(ctx, orgID, traceID, bounds)
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +149,7 @@ func (m *module) GetFlamegraph(ctx context.Context, traceID string, selectedSpan
 }
 
 // getWindowedWaterfall builds the waterfall tree with minimal data and then returns only a window of full spans.
-func (m *module) getWindowedWaterfall(ctx context.Context, traceID, selectedSpanID string, uncollapsedSpans []string, start, end time.Time) (*spantypes.GettableWaterfallTrace, error) {
+func (m *module) getWindowedWaterfall(ctx context.Context, orgID valuer.UUID, traceID, selectedSpanID string, uncollapsedSpans []string, start, end time.Time) (*spantypes.GettableWaterfallTrace, error) {
 	// Step 1: minimal fetch → build full tree → select visible window
 	minimalSpans, err := m.store.GetMinimalSpans(ctx, traceID, start, end)
 	if err != nil {
@@ -177,7 +177,7 @@ func (m *module) getWindowedWaterfall(ctx context.Context, traceID, selectedSpan
 	for i, s := range selectedSpans {
 		spanIDs[i] = s.SpanID
 	}
-	fullSpans, err := m.store.GetTraceSpansByIDs(ctx, traceID, start, end, spanIDs)
+	fullSpans, err := m.store.GetTraceSpansByIDs(ctx, orgID, traceID, start, end, spanIDs)
 	if err != nil {
 		return nil, err
 	}

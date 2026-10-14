@@ -71,20 +71,20 @@ def test_thread_returns_message_spans_in_order(
 
     tool_call = {"type": "tool_call", "name": "get_weather", "id": "call_1", "arguments": {"city": "Bangalore"}}
     assert first["formatter"] == "semconv"
-    assert first["formatted_input"] == [{"role": "user", "parts": [{"type": "text", "content": "weather in Bangalore?"}]}]
-    assert first["formatted_output"] == [{"role": "assistant", "parts": [tool_call], "finish_reason": "tool_call"}]
-    assert first["formatter_warnings"] == []
+    assert first["formattedInput"] == [{"role": "user", "parts": [{"type": "text", "content": "weather in Bangalore?"}]}]
+    assert first["formattedOutput"] == [{"role": "assistant", "parts": [tool_call], "finish_reason": "tool_call"}]
+    assert first["formatterWarnings"] == []
     # tool spans carry no messages until their converter lands
     assert tool["formatter"] == ""
-    assert tool["formatted_input"] == []
-    assert tool["formatted_output"] == []
+    assert tool["formattedInput"] == []
+    assert tool["formattedOutput"] == []
     assert input_only["formatter"] == "openai.chat"
-    assert input_only["formatted_input"] == [{"role": "tool", "parts": [{"type": "tool_call_response", "id": "call_1", "response": "sunny"}]}]
-    assert input_only["formatted_output"] == []
+    assert input_only["formattedInput"] == [{"role": "tool", "parts": [{"type": "tool_call_response", "id": "call_1", "response": "sunny"}]}]
+    assert input_only["formattedOutput"] == []
     assert output_only["formatter"] == "text"
-    assert output_only["formatted_input"] == []
-    assert output_only["formatted_output"] == [{"role": "assistant", "parts": [{"type": "text", "content": "It is sunny in Bangalore."}]}]
-    assert output_only["formatter_warnings"] == ["bare assistant text, role assumed"]
+    assert output_only["formattedInput"] == []
+    assert output_only["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "It is sunny in Bangalore."}]}]
+    assert output_only["formatterWarnings"] == ["bare assistant text, role assumed"]
 
 
 def test_thread_paginates_with_cursors(
@@ -307,8 +307,8 @@ def test_thread_reads_spans_across_json_rollout(
     # messages are decoded from the JSON column only, never from the legacy maps
     for span in before_spans:
         assert span["formatter"] == ""
-        assert span["formatted_input"] == []
-        assert span["formatted_output"] == []
+        assert span["formattedInput"] == []
+        assert span["formattedOutput"] == []
 
     straddle = requests.get(signoz.self.host_configs["8080"].get(f"/api/v1/traces/{straddle_trace_id}/thread"), headers=headers, timeout=10)
     assert straddle.status_code == HTTPStatus.OK, straddle.text
@@ -317,9 +317,9 @@ def test_thread_reads_spans_across_json_rollout(
     assert straddle_spans[0]["attributes"]["gen_ai.input.messages"] == json.dumps([{"role": "user", "content": "legacy"}])
     assert straddle_spans[1]["attributes"]["gen_ai.input.messages"] == json.dumps([{"role": "user", "content": "json"}])
     assert straddle_spans[0]["formatter"] == ""
-    assert straddle_spans[0]["formatted_input"] == []
+    assert straddle_spans[0]["formattedInput"] == []
     assert straddle_spans[1]["formatter"] == "openai.chat"
-    assert straddle_spans[1]["formatted_input"] == [{"role": "user", "parts": [{"type": "text", "content": "json"}]}]
+    assert straddle_spans[1]["formattedInput"] == [{"role": "user", "parts": [{"type": "text", "content": "json"}]}]
 
 
 def test_thread_without_messages_is_empty(
