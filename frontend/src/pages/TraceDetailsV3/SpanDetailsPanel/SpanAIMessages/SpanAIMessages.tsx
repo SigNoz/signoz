@@ -28,8 +28,6 @@ function SpanAIMessages({ span }: SpanAIMessagesProps): JSX.Element | null {
 		return null;
 	}
 
-	const callbacks = { canLinkToToolCall, onToolLinkClick };
-
 	return (
 		<div className={styles.root} ref={rootRef} data-testid="span-ai-messages">
 			<MessagesAccordion
@@ -38,7 +36,8 @@ function SpanAIMessages({ span }: SpanAIMessagesProps): JSX.Element | null {
 				messages={data.formattedInput}
 				raw={data.rawInput}
 				testId="span-ai-messages-input"
-				{...callbacks}
+				canLinkToToolCall={canLinkToToolCall}
+				onToolLinkClick={onToolLinkClick}
 			/>
 			<MessagesAccordion
 				icon={<ArrowDownRight size={14} />}
@@ -47,7 +46,8 @@ function SpanAIMessages({ span }: SpanAIMessagesProps): JSX.Element | null {
 				raw={data.rawOutput}
 				isOutput
 				testId="span-ai-messages-output"
-				{...callbacks}
+				canLinkToToolCall={canLinkToToolCall}
+				onToolLinkClick={onToolLinkClick}
 			/>
 		</div>
 	);

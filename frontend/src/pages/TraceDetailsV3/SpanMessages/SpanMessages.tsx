@@ -27,7 +27,6 @@ function SpanMessages({
 }: SpanMessagesProps): JSX.Element {
 	const data = useMemo(() => getSpanMessages(span), [span]);
 	const isFormatted = view === ThreadView.Formatted;
-	const callbacks = { canLinkToToolCall, onToolLinkClick };
 
 	if (!hasAnyMessages(data)) {
 		return (<></>) as JSX.Element;
@@ -41,7 +40,8 @@ function SpanMessages({
 				messages={data.formattedInput}
 				raw={data.rawInput}
 				testId="span-messages-input"
-				{...callbacks}
+				canLinkToToolCall={canLinkToToolCall}
+				onToolLinkClick={onToolLinkClick}
 			/>
 			<MessagesSection
 				title={isFormatted ? undefined : 'Output'}
@@ -50,7 +50,8 @@ function SpanMessages({
 				raw={data.rawOutput}
 				isOutput
 				testId="span-messages-output"
-				{...callbacks}
+				canLinkToToolCall={canLinkToToolCall}
+				onToolLinkClick={onToolLinkClick}
 			/>
 		</div>
 	);
