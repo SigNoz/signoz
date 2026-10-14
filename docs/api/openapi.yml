@@ -549,6 +549,8 @@ components:
         sendResolved:
           nullable: true
           type: boolean
+        title:
+          type: string
       required:
       - botToken
       - chatId
@@ -847,6 +849,8 @@ components:
       - required:
         - incidentio_configs
       - required:
+        - telegram_configs
+      - required:
         - discord_configs
       - required:
         - email_configs
@@ -866,8 +870,6 @@ components:
         - victorops_configs
       - required:
         - sns_configs
-      - required:
-        - telegram_configs
       - required:
         - webex_configs
       - required:
@@ -943,7 +945,7 @@ components:
           type: array
         telegram_configs:
           items:
-            $ref: '#/components/schemas/ConfigTelegramConfig'
+            $ref: '#/components/schemas/AlertmanagertypesTelegramReceiverConfig'
           type: array
         victorops_configs:
           items:
@@ -1087,7 +1089,7 @@ components:
           type: array
         telegram_configs:
           items:
-            $ref: '#/components/schemas/ConfigTelegramConfig'
+            $ref: '#/components/schemas/AlertmanagertypesTelegramReceiverConfig'
           type: array
         victorops_configs:
           items:
@@ -1157,6 +1159,34 @@ components:
       required:
       - timezone
       - startTime
+      type: object
+    AlertmanagertypesTelegramReceiverConfig:
+      properties:
+        api_url:
+          $ref: '#/components/schemas/ConfigURLType2'
+        chat:
+          format: int64
+          type: integer
+        chat_file:
+          type: string
+        disable_notifications:
+          type: boolean
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        message:
+          type: string
+        message_thread_id:
+          type: integer
+        parse_mode:
+          type: string
+        send_resolved:
+          type: boolean
+        title:
+          type: string
+        token:
+          type: string
+        token_file:
+          type: string
       type: object
     AlertmanagertypesTestableNotificationChannel:
       properties:
