@@ -4,21 +4,15 @@ import {
 	TelemetrytypesFieldDataTypeDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { SIGNAL_TO_DATA_SOURCE } from 'container/QueryBuilder/components/DataSourceDropdown/DataSourceDropdown.utils';
 import { rest } from 'msw';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { DATA_SOURCE_TO_SIGNAL, DataSource } from 'types/common/queryBuilder';
+import { DataSource } from 'types/common/queryBuilder';
 
 import {
 	autocompleteKeysResponse,
 	autocompleteValuesResponse,
 } from './__story_mockdata__/queryBuilderAutocomplete';
-
-const SIGNAL_TO_DATA_SOURCE: Record<string, DataSource> = Object.fromEntries(
-	Object.entries(DATA_SOURCE_TO_SIGNAL).map(([dataSource, signal]) => [
-		signal,
-		dataSource as DataSource,
-	]),
-);
 
 /**
  * The v5 keys list, served from the same per-signal fixture as the v3 pair so
@@ -34,7 +28,7 @@ const fieldKeysResponseForSignal = (
 	);
 	const keys = (
 		autocompleteKeysResponse(
-			SIGNAL_TO_DATA_SOURCE[signal ?? ''] ?? DataSource.LOGS,
+			SIGNAL_TO_DATA_SOURCE[signal as TelemetrytypesSignalDTO] ?? DataSource.LOGS,
 			context ? searchText.slice(context.length + 1) : searchText,
 		).data.attributeKeys ?? []
 	).map((attribute) => ({

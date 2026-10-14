@@ -45,8 +45,8 @@ export const GroupByFilter = memo(function GroupByFilter({
 
 	const metricName =
 		query.dataSource === DataSource.METRICS
-			? query.aggregateAttribute?.key ||
-				(query.aggregations?.[0] as MetricAggregation)?.metricName
+			? (query.aggregations?.[0] as MetricAggregation)?.metricName ||
+				query.aggregateAttribute?.key
 			: undefined;
 
 	const { data: fieldKeys, isFetching } = useFieldKeysSuggestion(
@@ -57,7 +57,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 			searchText: debouncedValue,
 		},
 		query.builderQueryType,
-		{ enabled: !disabled && isFocused },
+		{ enabled: !disabled && isFocused, keepPreviousData: true },
 	);
 
 	const attributeKeys = useMemo(

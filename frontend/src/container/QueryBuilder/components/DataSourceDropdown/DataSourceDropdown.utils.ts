@@ -3,7 +3,7 @@ import { DataSource } from 'types/common/queryBuilder';
 
 // Total, not Partial, so a signal added to the generated enum has to be mapped here
 // before it compiles.
-const SIGNAL_TO_DATA_SOURCE: Record<
+export const SIGNAL_TO_DATA_SOURCE: Record<
 	TelemetrytypesSignalDTO,
 	DataSource | undefined
 > = {

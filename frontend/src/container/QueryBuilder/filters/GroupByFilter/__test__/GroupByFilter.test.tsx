@@ -57,6 +57,7 @@ function setup(
 	return { onChange };
 }
 
+// wait for dropdown and select the option instead of hitting Enter
 async function clickOption(label: string): Promise<void> {
 	const user = userEvent.setup({ pointerEventsCheck: 0 });
 	const option = await screen.findByText(
@@ -123,6 +124,7 @@ describe('GroupByFilter', () => {
 		await clickOption('service.name');
 
 		await waitFor(() => expect(onChange).toHaveBeenCalled());
+		// Expect payload to be resolved to the exact attribute returned by MSW
 		expect(onChange.mock.calls[0][0][0]).toMatchObject({
 			key: 'service.name',
 			type: 'resource',
