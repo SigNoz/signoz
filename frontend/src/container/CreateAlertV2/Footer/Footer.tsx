@@ -117,6 +117,7 @@ function Footer(): JSX.Element {
 		notificationSettings,
 		currentQuery,
 		testAlertRule,
+		handleApiError,
 	]);
 
 	const queryClient = useQueryClient();
@@ -173,6 +174,7 @@ function Footer(): JSX.Element {
 		createAlertRule,
 		safeNavigate,
 		handleApiError,
+		queryClient,
 	]);
 
 	const isSavingAlertRule = isCreatingAlertRule || isUpdatingAlertRule;
