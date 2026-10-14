@@ -10,7 +10,7 @@ import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 
 import {
 	CHANNEL_MAX,
-	channelsResponse,
+	notificationChannelsResponse,
 } from '../../stories/__story_mockdata__/alerts';
 import { AlertListTabs } from '../../types';
 
@@ -27,8 +27,8 @@ export const channelsMocks = defineStoryMocks({
 	},
 	handlers: (values, response) => [
 		rest.get(
-			'http://localhost/api/v1/channels',
-			response.json(() => channelsResponse(values.channels)),
+			'http://localhost/api/v2/notification_channels',
+			response.json(() => notificationChannelsResponse(values.channels)),
 		),
 	],
 	config: () => ({ route: `/alerts?tab=${AlertListTabs.CHANNELS}` }),

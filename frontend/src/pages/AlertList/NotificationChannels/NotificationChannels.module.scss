@@ -1,0 +1,144 @@
+.container {
+	--control-height: 2rem;
+
+	display: flex;
+	flex-direction: column;
+	height: calc(100vh - 62px);
+	min-height: 400px;
+
+	--combobox-trigger-height: var(--control-height);
+	--select-trigger-height: var(--control-height);
+	--input-height: var(--control-height);
+	--input-wrapper-height: var(--control-height);
+	--button-height: var(--control-height);
+}
+
+/* Title, count and filters sit on the page surface, with matching space above
+   and below before the table starts. */
+.headerBand {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-6);
+	flex-shrink: 0;
+	padding: var(--spacing-6) var(--spacing-8);
+}
+
+/* Title and count on the left, the create action at the far end, the way the
+   dashboards list opens. */
+.commandHeader {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.headingBlock {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+}
+
+.title {
+	margin: 0;
+	color: var(--l1-foreground);
+	font-size: var(--font-size-lg);
+	font-weight: var(--font-weight-medium);
+	line-height: 28px;
+	letter-spacing: -0.09px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.countPill {
+	padding: 2px 9px;
+	border-radius: 999px;
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
+	color: var(--l2-foreground);
+	font-size: var(--font-size-xs);
+	font-variant-numeric: tabular-nums;
+}
+
+.grow {
+	flex: 1;
+}
+
+/* Search and the type filter, the band's second row. */
+.filtersRow {
+	position: relative;
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-4);
+	flex-wrap: wrap;
+}
+
+/* Spans the row, the way the dashboards filter bar does. The input's own
+   wrapper is `width: 100%`, so the basis has to be 0 or `auto` resolves to the
+   full row and wraps the type filter onto the next line. */
+.searchInput {
+	flex: 1 1 0;
+	min-width: 220px;
+}
+
+.kindSelect {
+	/* the trigger sizes itself to 100%, so the flex item has to be bounded */
+	flex: 0 0 180px;
+	width: 180px;
+	max-width: 180px;
+}
+
+/* The options panel is rendered inline (withPortal={false}) so it can be told to
+   match the trigger; Radix publishes that width at the popper layer. */
+.filtersRow :global([data-slot='select-content']) {
+	width: var(--radix-select-trigger-width);
+	min-width: var(--radix-select-trigger-width);
+}
+
+.newChannelButton {
+	flex: 0 0 auto;
+}
+
+.searchIcon {
+	color: var(--l2-foreground);
+}
+
+.actionsHeader {
+	display: block;
+	text-align: right;
+}
+
+/* Left on the table's own defaults, the way Infrastructure Monitoring uses it:
+   transparent cells over the page background rather than a raised slab. */
+.tableContainer {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+
+	--tanstack-table-row-hover-bg: var(--l2-background-hover);
+	--tanstack-table-row-active-bg: var(--l2-background-active);
+	--tanstack-table-row-height: 42px;
+
+	--tanstack-cell-padding-top-override: 5px;
+	--tanstack-cell-padding-bottom-override: 5px;
+	--tanstack-cell-padding-left-override: 16px;
+	--tanstack-cell-padding-right-override: 16px;
+
+	--tanstack-table-row-odd-bg: color-mix(
+		in srgb,
+		var(--l1-foreground) 2%,
+		transparent
+	);
+	--tanstack-table-row-even-bg: color-mix(
+		in srgb,
+		var(--l1-foreground) 1%,
+		transparent
+	);
+}
+
+.paginationContainer {
+	padding-right: var(--spacing-12);
+	height: 62px;
+}
