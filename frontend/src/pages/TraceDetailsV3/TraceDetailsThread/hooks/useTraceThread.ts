@@ -29,12 +29,12 @@ interface UseTraceThreadResult {
 
 export function useTraceThread(
 	traceId: string,
-	anchorSpanId?: string,
+	interestedSpanId?: string,
 ): UseTraceThreadResult {
 	const query = useInfiniteQuery({
 		queryKey: getGetTraceThreadQueryKey(
 			{ traceID: traceId },
-			{ spanId: anchorSpanId },
+			{ spanId: interestedSpanId },
 		),
 		queryFn: ({ pageParam, signal }) => {
 			const { after, before } = (pageParam ?? {}) as PageParam;
@@ -44,8 +44,8 @@ export function useTraceThread(
 					limit: THREAD_PAGE_LIMIT,
 					after,
 					before,
-					// The anchor only shapes the first page; cursors drive the rest.
-					spanId: after || before ? undefined : anchorSpanId,
+					// The interested span only shapes the first page; cursors drive the rest.
+					spanId: after || before ? undefined : interestedSpanId,
 				},
 				signal,
 			);
@@ -56,7 +56,7 @@ export function useTraceThread(
 			firstPage.data.prevCursor
 				? { before: firstPage.data.prevCursor }
 				: undefined,
-		// An unknown anchor span is a 404; retrying won't find it.
+		// An unknown interested span is a 404; retrying won't find it.
 		retry: (failureCount, error): boolean =>
 			!isNotFoundError(error) && failureCount < MAX_RETRIES,
 		enabled: !!traceId,

@@ -16,8 +16,8 @@ import ThreadSpanDetails from './ThreadSpanDetails';
 import ThreadSpanList from './ThreadSpanList';
 import ThreadSpanNotFound from './ThreadSpanNotFound';
 import ThreadViewToggle from './ThreadViewToggle';
-import { AnchorStatus } from './types';
-import { getAnchorStatus } from './utils';
+import { InterestedSpanStatus } from './types';
+import { getInterestedSpanStatus } from './utils';
 
 import styles from './TraceDetailsThread.module.scss';
 
@@ -27,13 +27,24 @@ function TraceDetailsThread(): JSX.Element {
 	const { id: traceId } = useParams<TraceDetailV3URLProps>();
 	const [, setTab] = useTraceDetailsTab();
 	const [view, setView] = useThreadView();
-	const { anchorSpanId, clearAnchor, selectedSpanId, selectSpan, panelState } =
-		useThreadSpanSelection();
-	const thread = useTraceThread(traceId || '', anchorSpanId);
+	const {
+		interestedSpanId,
+		clearInterestedSpan,
+		selectedSpanId,
+		selectSpan,
+		panelState,
+	} = useThreadSpanSelection();
+	const thread = useTraceThread(traceId || '', interestedSpanId);
 	const { spans, isLoading, isError } = thread;
 
-	const anchorStatus = getAnchorStatus(anchorSpanId, spans, isLoading);
-	const anchorIndex = spans.findIndex((span) => span.span_id === anchorSpanId);
+	const interestedSpanStatus = getInterestedSpanStatus(
+		interestedSpanId,
+		spans,
+		isLoading,
+	);
+	const interestedSpanIndex = spans.findIndex(
+		(span) => span.span_id === interestedSpanId,
+	);
 
 	const selectedSpan = spans.find((span) => span.span_id === selectedSpanId);
 	const [spanDetailVariant, setSpanDetailVariant] = useSpanDetailVariant();
@@ -49,7 +60,7 @@ function TraceDetailsThread(): JSX.Element {
 	);
 	const hasNoThread =
 		!isLoading &&
-		anchorStatus !== AnchorStatus.NotFound &&
+		interestedSpanStatus !== InterestedSpanStatus.NotFound &&
 		(isError || spans.length === 0);
 
 	const renderBody = (): JSX.Element => {
@@ -63,13 +74,13 @@ function TraceDetailsThread(): JSX.Element {
 				</div>
 			);
 		}
-		if (anchorStatus === AnchorStatus.NotFound) {
+		if (interestedSpanStatus === InterestedSpanStatus.NotFound) {
 			return (
 				<ThreadSpanNotFound
 					onGoBack={(): void => {
 						void setTab(TraceDetailsTab.Overview);
 					}}
-					onShowThread={clearAnchor}
+					onShowThread={clearInterestedSpan}
 				/>
 			);
 		}
@@ -78,7 +89,7 @@ function TraceDetailsThread(): JSX.Element {
 		}
 		return (
 			<>
-				{anchorStatus === AnchorStatus.NoMessages && (
+				{interestedSpanStatus === InterestedSpanStatus.NoMessages && (
 					<Callout
 						type="info"
 						size="small"
@@ -88,10 +99,12 @@ function TraceDetailsThread(): JSX.Element {
 					/>
 				)}
 				<ThreadSpanList
-					key={anchorSpanId}
+					key={interestedSpanId}
 					spans={spans}
 					spansAboveFirstPage={thread.spansAboveFirstPage}
-					initialSpanIndex={anchorIndex === -1 ? undefined : anchorIndex}
+					initialSpanIndex={
+						interestedSpanIndex === -1 ? undefined : interestedSpanIndex
+					}
 					hasNextPage={thread.hasNextPage}
 					hasPreviousPage={thread.hasPreviousPage}
 					isFetchingNextPage={thread.isFetchingNextPage}
@@ -114,7 +127,7 @@ function TraceDetailsThread(): JSX.Element {
 	return (
 		<div className={styles.root} data-testid="trace-details-thread">
 			<div className={styles.content}>
-				{!hasNoThread && anchorStatus !== AnchorStatus.NotFound && (
+				{!hasNoThread && interestedSpanStatus !== InterestedSpanStatus.NotFound && (
 					<div className={styles.toolbar}>
 						<ThreadViewToggle
 							value={view}

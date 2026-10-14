@@ -3,7 +3,7 @@ import { isAxiosError } from 'axios';
 
 import { collectToolCallIds } from '../AIThreadMessage/utils';
 import { toThreadMessages } from '../AIThreadMessage/messageUtils';
-import { AnchorStatus, ThreadSpan } from './types';
+import { InterestedSpanStatus, ThreadSpan } from './types';
 
 /** Derives SpanV3's `timestamp` and `service.name`, as the waterfall does. */
 export function toThreadSpan(span: SpantypesThreadSpanDTO): ThreadSpan {
@@ -29,21 +29,21 @@ export function buildToolCallIndex(spans: ThreadSpan[]): Set<string> {
 	);
 }
 
-export function getAnchorStatus(
-	anchorSpanId: string | undefined,
+export function getInterestedSpanStatus(
+	interestedSpanId: string | undefined,
 	spans: ThreadSpan[],
 	isLoading: boolean,
-): AnchorStatus {
-	if (!anchorSpanId) {
-		return AnchorStatus.None;
+): InterestedSpanStatus {
+	if (!interestedSpanId) {
+		return InterestedSpanStatus.None;
 	}
 	if (isLoading) {
-		return AnchorStatus.Loading;
+		return InterestedSpanStatus.Loading;
 	}
 	if (spans.length === 0) {
-		return AnchorStatus.NotFound;
+		return InterestedSpanStatus.NotFound;
 	}
-	return spans.some((span) => span.span_id === anchorSpanId)
-		? AnchorStatus.Found
-		: AnchorStatus.NoMessages;
+	return spans.some((span) => span.span_id === interestedSpanId)
+		? InterestedSpanStatus.Found
+		: InterestedSpanStatus.NoMessages;
 }

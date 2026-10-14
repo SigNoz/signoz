@@ -41,7 +41,7 @@ type Anchor = (typeof ANCHORS)[number];
 
 const TRACE_AGE_MS = 2 * 60 * 1000;
 
-const anchorSpanId = (anchor: Anchor): string | undefined => {
+const interestedSpanId = (anchor: Anchor): string | undefined => {
 	switch (anchor) {
 		case 'span-in-thread':
 			return threadSpanIdAt(1);
@@ -139,7 +139,7 @@ export const traceThreadMocks = defineStoryMocks({
 		if (values.view === ThreadView.Json) {
 			params.set('view', ThreadView.Json);
 		}
-		const spanId = anchorSpanId(values.anchor);
+		const spanId = interestedSpanId(values.anchor);
 		if (spanId) {
 			params.set('spanId', spanId);
 		}

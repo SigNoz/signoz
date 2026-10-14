@@ -11,8 +11,8 @@ const SPAN_ID_PARAM = 'spanId';
 
 interface ThreadSpanSelection {
 	// The spanId the thread was opened with; it shapes the first page fetched.
-	anchorSpanId?: string;
-	clearAnchor: () => void;
+	interestedSpanId?: string;
+	clearInterestedSpan: () => void;
 	selectedSpanId?: string;
 	selectSpan: (span: ThreadSpan) => void;
 	panelState: DetailsPanelState;
@@ -22,7 +22,7 @@ export function useThreadSpanSelection(): ThreadSpanSelection {
 	const urlQuery = useUrlQuery();
 	const { safeNavigate } = useSafeNavigate();
 	const selectedSpanId = urlQuery.get(SPAN_ID_PARAM) || undefined;
-	const [anchorSpanId, setAnchorSpanId] = useState(selectedSpanId);
+	const [interestedSpanId, setInterestedSpanId] = useState(selectedSpanId);
 
 	const setSpanIdParam = useCallback(
 		(spanId?: string): void => {
@@ -56,19 +56,25 @@ export function useThreadSpanSelection(): ThreadSpanSelection {
 		[setSpanIdParam, openPanel],
 	);
 
-	const clearAnchor = useCallback((): void => {
-		setAnchorSpanId(undefined);
+	const clearInterestedSpan = useCallback((): void => {
+		setInterestedSpanId(undefined);
 		setSpanIdParam(undefined);
 	}, [setSpanIdParam]);
 
 	return useMemo(
 		() => ({
-			anchorSpanId,
-			clearAnchor,
+			interestedSpanId,
+			clearInterestedSpan,
 			selectedSpanId,
 			selectSpan,
 			panelState,
 		}),
-		[anchorSpanId, clearAnchor, selectedSpanId, selectSpan, panelState],
+		[
+			interestedSpanId,
+			clearInterestedSpan,
+			selectedSpanId,
+			selectSpan,
+			panelState,
+		],
 	);
 }

@@ -12,7 +12,7 @@ export enum ThreadView {
 	Json = 'json',
 }
 
-export enum AnchorStatus {
+export enum InterestedSpanStatus {
 	None = 'none',
 	Loading = 'loading',
 	Found = 'found',
