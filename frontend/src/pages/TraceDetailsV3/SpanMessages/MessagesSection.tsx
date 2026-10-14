@@ -10,7 +10,7 @@ import styles from './SpanMessages.module.scss';
 
 type MessageProps = Pick<
 	AIThreadMessageProps,
-	'isOutput' | 'isToolLinkEnabled' | 'onToolLinkClick'
+	'isOutput' | 'canLinkToToolCall' | 'onToolLinkClick'
 >;
 
 interface MessagesSectionProps extends MessageProps {
@@ -28,7 +28,7 @@ function MessagesSection({
 	raw,
 	testId,
 	isOutput,
-	isToolLinkEnabled,
+	canLinkToToolCall,
 	onToolLinkClick,
 }: MessagesSectionProps): JSX.Element | null {
 	const isFormatted = view === ThreadView.Formatted;
@@ -48,7 +48,7 @@ function MessagesSection({
 							key={index}
 							message={message}
 							isOutput={isOutput}
-							isToolLinkEnabled={isToolLinkEnabled}
+							canLinkToToolCall={canLinkToToolCall}
 							onToolLinkClick={onToolLinkClick}
 						/>
 					))}

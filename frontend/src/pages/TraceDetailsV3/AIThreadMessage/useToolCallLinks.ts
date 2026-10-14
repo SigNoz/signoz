@@ -7,24 +7,24 @@ import styles from './AIThreadMessage.module.scss';
 const HIGHLIGHT_MS = 1500;
 
 interface ToolCallLinks {
-	isToolLinkEnabled: (toolCallId: string) => boolean;
-	onToolLinkClick: (toolCallId: string) => void;
+	canLinkToToolCall: (toolCallKey: string) => boolean;
+	onToolLinkClick: (toolCallKey: string) => void;
 }
 
-/** Links tool results to their calls in `rootRef`; enabled only for ids in `toolCallIds`. */
+/** Links tool results to their calls in `rootRef`; enabled only for keys in `toolCallKeys`. */
 export function useToolCallLinks(
 	rootRef: RefObject<HTMLElement>,
-	toolCallIds: Set<string>,
+	toolCallKeys: Set<string>,
 ): ToolCallLinks {
-	const isToolLinkEnabled = useCallback(
-		(toolCallId: string): boolean => toolCallIds.has(toolCallId),
-		[toolCallIds],
+	const canLinkToToolCall = useCallback(
+		(toolCallKey: string): boolean => toolCallKeys.has(toolCallKey),
+		[toolCallKeys],
 	);
 
 	const onToolLinkClick = useCallback(
-		(toolCallId: string): void => {
+		(toolCallKey: string): void => {
 			const target = rootRef.current?.querySelector<HTMLElement>(
-				`[${TOOL_CALL_ID_ATTR}="${CSS.escape(toolCallId)}"]`,
+				`[${TOOL_CALL_ID_ATTR}="${CSS.escape(toolCallKey)}"]`,
 			);
 			if (!target) {
 				return;
@@ -39,5 +39,5 @@ export function useToolCallLinks(
 		[rootRef],
 	);
 
-	return { isToolLinkEnabled, onToolLinkClick };
+	return { canLinkToToolCall, onToolLinkClick };
 }

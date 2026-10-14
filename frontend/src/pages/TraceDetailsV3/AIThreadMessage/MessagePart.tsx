@@ -8,13 +8,13 @@ import { toDisplayText, toToolCallKey, truncateBlobContent } from './utils';
 
 interface MessagePartProps {
 	part: MessagePartType;
-	isToolLinkEnabled?: (toolCallId: string) => boolean;
-	onToolLinkClick?: (toolCallId: string) => void;
+	canLinkToToolCall?: (toolCallKey: string) => boolean;
+	onToolLinkClick?: (toolCallKey: string) => void;
 }
 
 function MessagePart({
 	part,
-	isToolLinkEnabled,
+	canLinkToToolCall,
 	onToolLinkClick,
 }: MessagePartProps): JSX.Element | null {
 	switch (part.type) {
@@ -63,7 +63,7 @@ function MessagePart({
 							? part.response
 							: part.server_tool_call_response,
 					)}
-					isLinkEnabled={!!toolCallId && !!isToolLinkEnabled?.(toolCallKey)}
+					isLinkEnabled={!!toolCallId && !!canLinkToToolCall?.(toolCallKey)}
 					onLinkClick={onToolLinkClick}
 				/>
 			);
@@ -80,7 +80,7 @@ function MessagePart({
 }
 
 MessagePart.defaultProps = {
-	isToolLinkEnabled: undefined,
+	canLinkToToolCall: undefined,
 	onToolLinkClick: undefined,
 };
 

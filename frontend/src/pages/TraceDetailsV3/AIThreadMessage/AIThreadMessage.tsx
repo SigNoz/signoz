@@ -11,14 +11,14 @@ import styles from './AIThreadMessage.module.scss';
 export interface AIThreadMessageProps {
 	message: ThreadMessage;
 	isOutput?: boolean;
-	isToolLinkEnabled?: (toolCallId: string) => boolean;
-	onToolLinkClick?: (toolCallId: string) => void;
+	canLinkToToolCall?: (toolCallKey: string) => boolean;
+	onToolLinkClick?: (toolCallKey: string) => void;
 }
 
 function AIThreadMessage({
 	message,
 	isOutput,
-	isToolLinkEnabled,
+	canLinkToToolCall,
 	onToolLinkClick,
 }: AIThreadMessageProps): JSX.Element {
 	const { role, parts: messageParts, finish_reason: finishReason } = message;
@@ -36,7 +36,7 @@ function AIThreadMessage({
 						// eslint-disable-next-line react/no-array-index-key
 						key={index}
 						part={part}
-						isToolLinkEnabled={isToolLinkEnabled}
+						canLinkToToolCall={canLinkToToolCall}
 						onToolLinkClick={onToolLinkClick}
 					/>
 				))
@@ -82,7 +82,7 @@ function AIThreadMessage({
 
 AIThreadMessage.defaultProps = {
 	isOutput: false,
-	isToolLinkEnabled: undefined,
+	canLinkToToolCall: undefined,
 	onToolLinkClick: undefined,
 };
 

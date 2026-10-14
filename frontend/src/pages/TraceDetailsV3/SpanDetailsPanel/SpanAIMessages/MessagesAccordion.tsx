@@ -12,7 +12,7 @@ import styles from './MessagesAccordion.module.scss';
 
 interface MessagesAccordionProps extends Pick<
 	AIThreadMessageProps,
-	'isOutput' | 'isToolLinkEnabled' | 'onToolLinkClick'
+	'isOutput' | 'canLinkToToolCall' | 'onToolLinkClick'
 > {
 	icon: ReactNode;
 	title: string;
@@ -28,7 +28,7 @@ function MessagesAccordion({
 	raw,
 	testId,
 	isOutput,
-	isToolLinkEnabled,
+	canLinkToToolCall,
 	onToolLinkClick,
 }: MessagesAccordionProps): JSX.Element | null {
 	const [isOpen, setIsOpen] = useState(true);
@@ -73,7 +73,7 @@ function MessagesAccordion({
 						raw={raw}
 						testId={`${testId}-body`}
 						isOutput={isOutput}
-						isToolLinkEnabled={isToolLinkEnabled}
+						canLinkToToolCall={canLinkToToolCall}
 						onToolLinkClick={onToolLinkClick}
 					/>
 				</div>

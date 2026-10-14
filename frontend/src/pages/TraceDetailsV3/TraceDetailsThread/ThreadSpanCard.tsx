@@ -23,10 +23,10 @@ function ThreadSpanCard({
 }: ThreadSpanCardProps): JSX.Element {
 	const cardRef = useRef<HTMLDivElement>(null);
 	// A result links only to a call in its own span.
-	const toolCallIds = useMemo(() => buildToolCallIndex([span]), [span]);
-	const { isToolLinkEnabled, onToolLinkClick } = useToolCallLinks(
+	const toolCallKeys = useMemo(() => buildToolCallIndex([span]), [span]);
+	const { canLinkToToolCall, onToolLinkClick } = useToolCallLinks(
 		cardRef,
-		toolCallIds,
+		toolCallKeys,
 	);
 
 	const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
@@ -57,7 +57,7 @@ function ThreadSpanCard({
 			<SpanMessages
 				span={span}
 				view={view}
-				isToolLinkEnabled={isToolLinkEnabled}
+				canLinkToToolCall={canLinkToToolCall}
 				onToolLinkClick={onToolLinkClick}
 			/>
 		</div>

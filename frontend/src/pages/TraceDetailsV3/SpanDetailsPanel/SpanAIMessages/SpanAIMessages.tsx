@@ -18,17 +18,17 @@ function SpanAIMessages({ span }: SpanAIMessagesProps): JSX.Element | null {
 	const data = useMemo(() => getSpanMessages(span), [span]);
 
 	const rootRef = useRef<HTMLDivElement>(null);
-	const toolCallIds = useMemo(() => buildToolCallIndex([span]), [span]);
-	const { isToolLinkEnabled, onToolLinkClick } = useToolCallLinks(
+	const toolCallKeys = useMemo(() => buildToolCallIndex([span]), [span]);
+	const { canLinkToToolCall, onToolLinkClick } = useToolCallLinks(
 		rootRef,
-		toolCallIds,
+		toolCallKeys,
 	);
 
 	if (!hasAnyMessages(data)) {
 		return null;
 	}
 
-	const callbacks = { isToolLinkEnabled, onToolLinkClick };
+	const callbacks = { canLinkToToolCall, onToolLinkClick };
 
 	return (
 		<div className={styles.root} ref={rootRef} data-testid="span-ai-messages">

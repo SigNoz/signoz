@@ -10,7 +10,7 @@ import styles from './SpanMessages.module.scss';
 
 interface SpanMessagesProps extends Pick<
 	AIThreadMessageProps,
-	'isToolLinkEnabled' | 'onToolLinkClick'
+	'canLinkToToolCall' | 'onToolLinkClick'
 > {
 	span: ThreadSpan;
 	view: ThreadView;
@@ -22,12 +22,12 @@ function SpanMessages({
 	span,
 	view,
 	className,
-	isToolLinkEnabled,
+	canLinkToToolCall,
 	onToolLinkClick,
 }: SpanMessagesProps): JSX.Element {
 	const data = useMemo(() => getSpanMessages(span), [span]);
 	const isFormatted = view === ThreadView.Formatted;
-	const callbacks = { isToolLinkEnabled, onToolLinkClick };
+	const callbacks = { canLinkToToolCall, onToolLinkClick };
 
 	if (!hasAnyMessages(data)) {
 		return (
