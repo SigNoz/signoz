@@ -33,6 +33,8 @@ _ACTOR_EMAIL = "actor+alertauthz@integration.test"
 _ACTOR_PASSWORD = "password123Z$"
 _ACTOR_ROLE_NAME = "alert-authz-actor"
 _ACTOR_RULE = "alert authz actor rule"
+_ACTOR_SWAP_RULE = "alert authz actor swap rule"
+_ACTOR_DOWNTIME_NAME = "alert-authz-actor-downtime"
 _DOWNTIME_NAME = "alert-authz-downtime"
 _ROUTE_POLICY_NAME = "alert-authz-route-policy"
 _VIEW_NAME = "alert-authz-view"
@@ -44,8 +46,14 @@ _ACTOR_BASE_TRANSACTION_GROUPS = [
     transaction_group("create", "metaresource", "rule", ["*"]),
     transaction_group("read", "metaresource", "rule", ["*"]),
     transaction_group("list", "metaresource", "rule", ["*"]),
+    transaction_group("update", "metaresource", "rule", ["*"]),
     transaction_group("delete", "metaresource", "rule", ["*"]),
     transaction_group("attach", "metaresource", "rule", ["*"]),
+    transaction_group("create", "metaresource", "planned-maintenance", ["*"]),
+    transaction_group("read", "metaresource", "planned-maintenance", ["*"]),
+    transaction_group("list", "metaresource", "planned-maintenance", ["*"]),
+    transaction_group("update", "metaresource", "planned-maintenance", ["*"]),
+    transaction_group("attach", "metaresource", "planned-maintenance", ["*"]),
 ]
 
 RULE_CONDITION = {
@@ -82,6 +90,7 @@ RULE_TEMPLATE = {
     "version": "v5",
     "schemaVersion": "v2alpha1",
 }
+
 
 def test_setup_users_and_target(
     signoz: SigNoz,
@@ -129,7 +138,7 @@ def test_setup_users_and_target(
     )
     assert response.status_code == HTTPStatus.OK, response.text
     ids = {rule["alert"]: rule["id"] for rule in response.json()["data"]["rules"]}
-    for name in (_TARGET_RULE, _EDITOR_RULE, _EDITOR_RULE_V1):
+    for name in (_TARGET_RULE, _EDITOR_RULE, _EDITOR_RULE_V1, _ACTOR_SWAP_RULE):
         if name in ids:
             response = requests.delete(
                 signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{ids[name]}"),
@@ -145,6 +154,7 @@ def test_setup_users_and_target(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.CREATED, response.text
+
 
 def test_viewer_allowed_on_reads(
     signoz: SigNoz,
@@ -177,6 +187,7 @@ def test_viewer_allowed_on_reads(
         )
         assert response.status_code == HTTPStatus.OK, f"GET {path}: expected 200, got {response.status_code}: {response.text}"
 
+
 def test_viewer_allowed_on_rule_views(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -206,6 +217,7 @@ def test_viewer_allowed_on_rule_views(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
 
 def test_viewer_forbidden_on_mutations(
     signoz: SigNoz,
@@ -248,6 +260,7 @@ def test_viewer_forbidden_on_mutations(
             timeout=5,
         )
         assert response.status_code == HTTPStatus.FORBIDDEN, f"{method.upper()} {path}: expected 403, got {response.status_code}: {response.text}"
+
 
 def test_editor_allowed_on_rule_and_downtime_mutations(
     signoz: SigNoz,
@@ -322,6 +335,7 @@ def test_editor_allowed_on_rule_and_downtime_mutations(
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
+
 def test_editor_forbidden_on_route_policy_writes(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -341,6 +355,7 @@ def test_editor_forbidden_on_route_policy_writes(
             timeout=5,
         )
         assert response.status_code == HTTPStatus.FORBIDDEN, f"{method.upper()} {path}: expected 403, got {response.status_code}: {response.text}"
+
 
 def test_admin_allowed_on_route_policy_writes(
     signoz: SigNoz,
@@ -369,6 +384,7 @@ def test_admin_allowed_on_route_policy_writes(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
 
 def test_editor_allowed_on_downtime_naming_rules(
     signoz: SigNoz,
@@ -420,6 +436,7 @@ def test_editor_allowed_on_downtime_naming_rules(
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
+
 def test_editor_allowed_on_rule_channel_changes(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -467,6 +484,7 @@ def test_editor_allowed_on_rule_channel_changes(
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
+
 def test_apply_license(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -474,6 +492,7 @@ def test_apply_license(
     get_token: Callable[[str, str], str],
 ):
     add_license(signoz, make_http_mocks, get_token)
+
 
 def test_setup_channel_scoped_actor(
     signoz: SigNoz,
@@ -512,6 +531,7 @@ def test_setup_channel_scoped_actor(
         user_id = create_active_user(signoz, admin_token, email=_ACTOR_EMAIL, role="signoz-viewer", password=_ACTOR_PASSWORD, name="alert authz actor")
         change_user_role(signoz, admin_token, user_id, "signoz-viewer", _ACTOR_ROLE_NAME)
 
+
 def test_rule_without_channels_allowed_without_channel_attach(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -544,6 +564,7 @@ def test_rule_without_channels_allowed_without_channel_attach(
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
+
 def test_rule_naming_channel_forbidden_without_channel_attach(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -558,6 +579,7 @@ def test_rule_naming_channel_forbidden_without_channel_attach(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.FORBIDDEN, response.text
+
 
 def test_rule_naming_channel_allowed_once_channel_attach_granted(
     signoz: SigNoz,
@@ -593,6 +615,106 @@ def test_rule_naming_channel_allowed_once_channel_attach_granted(
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
+
+def test_channel_swap_forbidden_without_channel_detach(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(V2_RULES_URL),
+        json={**RULE_TEMPLATE, "alert": _ACTOR_SWAP_RULE},
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    rule_id = response.json()["data"]["id"]
+
+    swapped_condition = {
+        **RULE_CONDITION,
+        "thresholds": {
+            "kind": "basic",
+            "spec": [{"name": "critical", "target": 90, "matchType": "at_least_once", "op": "above", "channels": [SEED_CHANNEL_ALT["name"]]}],
+        },
+    }
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{rule_id}"),
+        json={**RULE_TEMPLATE, "alert": _ACTOR_SWAP_RULE, "condition": swapped_condition},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
+
+    response = requests.patch(
+        signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{rule_id}"),
+        json={"description": "patched without touching channels"},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{rule_id}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+
+def test_downtime_rule_removal_forbidden_without_rule_detach(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{V3_RULES_URL}?limit=200"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    target_id = {rule["alert"]: rule["id"] for rule in response.json()["data"]["rules"]}[_TARGET_RULE]
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(DOWNTIME_URL),
+        json={
+            "name": _ACTOR_DOWNTIME_NAME,
+            "description": "scoped actor window",
+            "schedule": {"timezone": "UTC", "startTime": "2026-09-21T00:00:00Z", "endTime": "2026-09-22T00:00:00Z"},
+            "alertIds": [target_id],
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    downtime_id = response.json()["data"]["id"]
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{DOWNTIME_URL}/{downtime_id}"),
+        json={
+            "name": _ACTOR_DOWNTIME_NAME,
+            "description": "scoped actor window without rules",
+            "schedule": {"timezone": "UTC", "startTime": "2026-09-21T00:00:00Z", "endTime": "2026-09-22T00:00:00Z"},
+            "alertIds": [],
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"{DOWNTIME_URL}/{downtime_id}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+
 def test_alert_authz_cleanup(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -607,7 +729,7 @@ def test_alert_authz_cleanup(
     )
     assert response.status_code == HTTPStatus.OK, response.text
     ids = {rule["alert"]: rule["id"] for rule in response.json()["data"]["rules"]}
-    for name in (_TARGET_RULE, _EDITOR_RULE, _EDITOR_RULE_V1):
+    for name in (_TARGET_RULE, _EDITOR_RULE, _EDITOR_RULE_V1, _ACTOR_SWAP_RULE):
         if name in ids:
             response = requests.delete(
                 signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{ids[name]}"),

@@ -72,6 +72,7 @@ func TestChannelsFromBody(t *testing.T) {
 		name         string
 		body         string
 		wantChannels []string
+		wantErr      bool
 	}{
 		{
 			name:         "V1PreferredChannels_FoldedIntoThresholds",
@@ -93,11 +94,21 @@ func TestChannelsFromBody(t *testing.T) {
 			body:         v2RuleJSON(`[]`),
 			wantChannels: nil,
 		},
+		{
+			name:    "NotJSON_Errors",
+			body:    "not json",
+			wantErr: true,
+		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			channels, err := channelsFromBody([]byte(testCase.body))
+
+			if testCase.wantErr {
+				assert.Error(t, err)
+				return
+			}
 
 			require.NoError(t, err)
 			assert.Equal(t, testCase.wantChannels, channels)
@@ -105,36 +116,46 @@ func TestChannelsFromBody(t *testing.T) {
 	}
 }
 
-func TestChannelsFromBodyInvalidJSON(t *testing.T) {
-	_, err := channelsFromBody([]byte("not json"))
-
-	assert.Error(t, err)
-}
-
-func TestPatchedChannels(t *testing.T) {
+func TestIncomingChannels(t *testing.T) {
 	testCases := []struct {
-		name         string
-		stored       string
-		patch        string
-		wantChannels []string
+		name            string
+		incoming        incomingChannelsFunc
+		stored          string
+		body            string
+		wantChannels    []string
+		wantStoredAfter []string
 	}{
 		{
-			name:         "PatchOmitsCondition_StoredChannelsSurvive",
-			stored:       v2RuleJSON(`["slack"]`),
-			patch:        `{"disabled": true}`,
-			wantChannels: []string{"slack"},
+			name:            "Replaced_IgnoresStored",
+			incoming:        replacedChannels,
+			stored:          v2RuleJSON(`["slack"]`),
+			body:            v2RuleJSON(`["pager"]`),
+			wantChannels:    []string{"pager"},
+			wantStoredAfter: []string{"slack"},
 		},
 		{
-			name:         "PatchSetsChannels_StoredChannelsReplaced",
-			stored:       v2RuleJSON(`["slack"]`),
-			patch:        v2RuleJSON(`["pager"]`),
-			wantChannels: []string{"pager"},
+			name:            "Patched_OmitsCondition_StoredChannelsSurvive",
+			incoming:        patchedChannels,
+			stored:          v2RuleJSON(`["slack"]`),
+			body:            `{"disabled": true}`,
+			wantChannels:    []string{"slack"},
+			wantStoredAfter: []string{"slack"},
 		},
 		{
-			name:         "PatchEmptiesChannels_NoChannelsLeft",
-			stored:       v2RuleJSON(`["slack"]`),
-			patch:        v2RuleJSON(`[]`),
-			wantChannels: nil,
+			name:            "Patched_SetsChannels_StoredChannelsReplaced",
+			incoming:        patchedChannels,
+			stored:          v2RuleJSON(`["slack"]`),
+			body:            v2RuleJSON(`["pager"]`),
+			wantChannels:    []string{"pager"},
+			wantStoredAfter: []string{"slack"},
+		},
+		{
+			name:            "Patched_EmptiesChannels_NoChannelsLeft",
+			incoming:        patchedChannels,
+			stored:          v2RuleJSON(`["slack"]`),
+			body:            v2RuleJSON(`[]`),
+			wantChannels:    nil,
+			wantStoredAfter: []string{"slack"},
 		},
 	}
 
@@ -143,30 +164,11 @@ func TestPatchedChannels(t *testing.T) {
 			stored := new(ruletypes.GettableRule)
 			require.NoError(t, json.Unmarshal([]byte(testCase.stored), &stored.PostableRule))
 
-			channels, err := patchedChannels(stored, []byte(testCase.patch))
+			channels, err := testCase.incoming(stored, []byte(testCase.body))
 
 			require.NoError(t, err)
 			assert.Equal(t, testCase.wantChannels, channels)
+			assert.Equal(t, testCase.wantStoredAfter, stored.Channels())
 		})
 	}
-}
-
-func TestPatchedChannelsLeavesStoredRuleUntouched(t *testing.T) {
-	stored := new(ruletypes.GettableRule)
-	require.NoError(t, json.Unmarshal([]byte(v2RuleJSON(`["slack"]`)), &stored.PostableRule))
-
-	_, err := patchedChannels(stored, []byte(v2RuleJSON(`["pager"]`)))
-
-	require.NoError(t, err)
-	assert.Equal(t, []string{"slack"}, stored.Channels())
-}
-
-func TestReplacedChannelsIgnoresStored(t *testing.T) {
-	stored := new(ruletypes.GettableRule)
-	require.NoError(t, json.Unmarshal([]byte(v2RuleJSON(`["slack"]`)), &stored.PostableRule))
-
-	channels, err := replacedChannels(stored, []byte(v2RuleJSON(`["pager"]`)))
-
-	require.NoError(t, err)
-	assert.Equal(t, []string{"pager"}, channels)
 }
