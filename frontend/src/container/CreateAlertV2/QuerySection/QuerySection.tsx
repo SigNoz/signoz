@@ -129,6 +129,11 @@ function QuerySection(): JSX.Element {
 		},
 	];
 
+	const isAnomalyDetection = alertType === AlertTypes.ANOMALY_BASED_ALERT;
+	const activeTab = isAnomalyDetection
+		? AlertTypes.METRICS_BASED_ALERT
+		: alertType;
+
 	return (
 		<div className="query-section">
 			<Stepper stepNumber={1} label="Define the query" />
@@ -144,7 +149,7 @@ function QuerySection(): JSX.Element {
 						<Button
 							key={tab.value}
 							className={classNames('list-view-tab', 'explorer-view-option', {
-								'active-tab': alertType === tab.value,
+								'active-tab': activeTab === tab.value,
 							})}
 							onClick={(): void => {
 								setAlertType(tab.value as AlertTypes);
@@ -165,6 +170,7 @@ function QuerySection(): JSX.Element {
 				handleCancelQuery={handleCancelQuery}
 				alertDef={alertDef}
 				panelType={PANEL_TYPES.TIME_SERIES}
+				isAnomalyDetection={isAnomalyDetection}
 				key={currentQuery.queryType}
 				ruleId=""
 				hideTitle
