@@ -8,12 +8,11 @@ import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Typography } from '@signozhq/ui/typography';
 import { useGetNotificationChannel } from 'api/generated/services/channels';
 import Spinner from 'components/Spinner';
-import { useIsDarkMode } from 'hooks/useDarkMode';
+import { READONLY_EDITOR_OPTIONS } from 'container/RolesSettings/monaco.config';
 import {
-	defineJsonTheme,
-	JSON_THEME_DARK,
-	READONLY_EDITOR_OPTIONS,
-} from 'container/RolesSettings/monaco.config';
+	defineJsonEditorTheme,
+	JSON_EDITOR_THEME,
+} from 'lib/monaco/jsonEditorTheme';
 
 import { channelToJson, hasSecrets } from '../../utils/channelJson';
 import styles from './ChannelJsonDialog.module.scss';
@@ -29,7 +28,6 @@ function ChannelJsonDialog({
 	channelName,
 	onClose,
 }: ChannelJsonDialogProps): JSX.Element {
-	const isDarkMode = useIsDarkMode();
 	const [copyState, copyToClipboard] = useCopyToClipboard();
 	const [copied, setCopied] = useState(false);
 	const [showSecrets, setShowSecrets] = useState(false);
@@ -118,8 +116,13 @@ function ChannelJsonDialog({
 							language="json"
 							options={READONLY_EDITOR_OPTIONS}
 							height="100%"
-							theme={isDarkMode ? JSON_THEME_DARK : 'light'}
-							beforeMount={defineJsonTheme}
+							theme="vs-dark"
+							// the same theme the dashboard JSON drawer uses: it reads the
+							// page's own tokens, so it follows light and dark
+							onMount={(editor, monaco): void => {
+								defineJsonEditorTheme(monaco, editor.getContainerDomNode());
+								monaco.editor.setTheme(JSON_EDITOR_THEME);
+							}}
 						/>
 					</div>
 				</div>
