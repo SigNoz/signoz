@@ -74,17 +74,24 @@ func (m *mockBotAPI) only(t *testing.T) map[string]string {
 
 func newNotifier(t *testing.T, mock *mockBotAPI) *Notifier {
 	t.Helper()
+
+	return newNotifierWithTitle(t, mock, alertmanagertypes.DefaultTelegramTitleTemplate)
+}
+
+func newNotifierWithTitle(t *testing.T, mock *mockBotAPI, title string) *Notifier {
+	t.Helper()
 	tmpl := test.CreateTmpl(t)
 	apiURL, err := url.Parse(mock.srv.URL)
 	require.NoError(t, err)
 
 	logger := slog.New(slog.DiscardHandler)
-	notifier, err := New(&config.TelegramConfig{
+	notifier, err := New(&alertmanagertypes.TelegramReceiverConfig{
 		HTTPConfig: &commoncfg.HTTPClientConfig{},
 		APIUrl:     &config.URL{URL: apiURL},
 		BotToken:   "123456:tok",
 		ChatID:     -1001234567890,
 		ParseMode:  "HTML",
+		Title:      title,
 		Message:    alertmanagertypes.DefaultTelegramMessageTemplate,
 	}, tmpl, logger, alertmanagertemplate.New(tmpl, logger))
 	require.NoError(t, err)
@@ -112,6 +119,7 @@ func newAlert(host string, annotations model.LabelSet) *types.Alert {
 func TestNotifyBuildsTheMessage(t *testing.T) {
 	testCases := []struct {
 		name            string
+		untitledChannel bool
 		alerts          []*types.Alert
 		wantExact       string
 		wantContains    []string
@@ -121,10 +129,18 @@ func TestNotifyBuildsTheMessage(t *testing.T) {
 			name:   "NoRuleTemplates_UsesChannelTemplate",
 			alerts: []*types.Alert{newAlert("web-3", nil)},
 			wantContains: []string{
-				"<b>[FIRING:1] checkout-latency-high</b>",
+				"<b>[FIRING:1] checkout-latency-high</b>\n\n<b>Alert:</b>",
 				"<b>Summary:</b> p99 is 612ms",
 				`<a href="http://am/alerts/overview?ruleId=r1">View in SigNoz</a>`,
 			},
+		},
+		{
+			// Receivers stored before the channel title existed have none.
+			name:            "UntitledChannel_SendsTheMessageAlone",
+			untitledChannel: true,
+			alerts:          []*types.Alert{newAlert("web-3", nil)},
+			wantContains:    []string{"<b>Summary:</b> p99 is 612ms"},
+			wantNotContains: []string{"[FIRING:1]"},
 		},
 		{
 			name: "TitleAndBody_ReplaceTheChannelTemplate",
@@ -139,30 +155,41 @@ func TestNotifyBuildsTheMessage(t *testing.T) {
 			// $-refs are template variables, so the braced form is the real
 			// syntax and the only one that reaches conditionals. A bare ref in
 			// text is rewritten into an action before expansion.
-			name: "BracedAndBareRefs_ExpandAlike",
+			name:            "BracedAndBareRefs_ExpandAlike",
+			untitledChannel: true,
 			alerts: []*types.Alert{newAlert("web-3", model.LabelSet{
 				ruletypes.AnnotationBodyTemplate: "{{ $rule.name }}|$rule.name|{{ if $alert.is_firing }}up{{ end }}",
 			})},
 			wantExact: "checkout-latency-high|checkout-latency-high|up",
 		},
 		{
-			name: "BodyOnly_OmitsTheTitleLine",
+			name: "BodyOnly_KeepsTheChannelTitle",
+			alerts: []*types.Alert{newAlert("web-3", model.LabelSet{
+				ruletypes.AnnotationBodyTemplate: "$alert.status for $rule.name",
+			})},
+			wantExact: "<b>[FIRING:1] checkout-latency-high</b>\n\nfiring for checkout-latency-high",
+		},
+		{
+			name:            "BodyOnly_UntitledChannel_OmitsTheTitleLine",
+			untitledChannel: true,
 			alerts: []*types.Alert{newAlert("web-3", model.LabelSet{
 				ruletypes.AnnotationBodyTemplate: "$alert.status for $rule.name",
 			})},
 			wantExact: "firing for checkout-latency-high",
 		},
 		{
-			name: "TitleOnly_KeepsTheChannelBody",
+			name: "TitleOnly_ReplacesTheChannelTitle",
 			alerts: []*types.Alert{newAlert("web-3", model.LabelSet{
 				ruletypes.AnnotationTitleTemplate: "Incident on $labels.host",
 			})},
-			wantContains: []string{"<b>Incident on web-3</b>", "<b>Summary:</b> p99 is 612ms"},
+			wantContains:    []string{"<b>Incident on web-3</b>\n\n<b>Alert:</b>", "<b>Summary:</b> p99 is 612ms"},
+			wantNotContains: []string{"[FIRING:1]"},
 		},
 		{
 			// Rule templates are authored in markdown for every channel, so
 			// Telegram converts rather than escaping the markers away.
-			name: "RuleTemplateMarkdown_RenderedToTelegramHTML",
+			name:            "RuleTemplateMarkdown_RenderedToTelegramHTML",
+			untitledChannel: true,
 			alerts: []*types.Alert{newAlert("web-3", model.LabelSet{
 				ruletypes.AnnotationBodyTemplate: "**{{ $rule.name }}** on `{{ $labels.host }}` — [open](https://signoz.io/d?a=1&b=2)",
 			})},
@@ -180,7 +207,8 @@ func TestNotifyBuildsTheMessage(t *testing.T) {
 			wantExact: "<b>p99 &lt; 2s &amp; rising</b>\n\np99 &lt; 2s &amp; rising",
 		},
 		{
-			name: "GroupedAlerts_BodyRenderedPerAlert",
+			name:            "GroupedAlerts_BodyRenderedPerAlert",
+			untitledChannel: true,
 			alerts: []*types.Alert{
 				newAlert("web-3", model.LabelSet{ruletypes.AnnotationBodyTemplate: "host $labels.host"}),
 				newAlert("web-4", model.LabelSet{ruletypes.AnnotationBodyTemplate: "host $labels.host"}),
@@ -203,7 +231,12 @@ func TestNotifyBuildsTheMessage(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			mock := newMockBotAPI(t)
 
-			retry, err := newNotifier(t, mock).Notify(notify.WithGroupKey(context.Background(), "1"), testCase.alerts...)
+			title := alertmanagertypes.DefaultTelegramTitleTemplate
+			if testCase.untitledChannel {
+				title = ""
+			}
+
+			retry, err := newNotifierWithTitle(t, mock, title).Notify(notify.WithGroupKey(context.Background(), "1"), testCase.alerts...)
 			require.NoError(t, err)
 			assert.False(t, retry)
 
@@ -242,7 +275,7 @@ func TestNewForcesParseModeHTML(t *testing.T) {
 
 			tmpl := test.CreateTmpl(t)
 			logger := slog.New(slog.DiscardHandler)
-			conf := &config.TelegramConfig{
+			conf := &alertmanagertypes.TelegramReceiverConfig{
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
 				APIUrl:     &config.URL{URL: apiURL},
 				BotToken:   "123456:tok",

@@ -18,6 +18,7 @@ func TestChannelTelegramConfigDefaults(t *testing.T) {
 
 	require.NotNil(t, spec.SendResolved)
 	assert.True(t, *spec.SendResolved, "upstream defaults telegram send_resolved on")
+	assert.Equal(t, DefaultTelegramTitleTemplate, spec.Title.StringValue())
 	assert.Equal(t, DefaultTelegramMessageTemplate, spec.Message.StringValue())
 	assert.Empty(t, spec.APIURL, "the global telegram_api_url applies when none is given")
 }
@@ -63,7 +64,7 @@ func TestDeriveChannelConfigRejectsUnsupportedTelegramSettings(t *testing.T) {
 	}
 }
 
-func TestDefaultTelegramMessageTemplateEscapesAlertContent(t *testing.T) {
+func TestDefaultTelegramTemplatesEscapeAlertContent(t *testing.T) {
 	tmpl, err := FromGlobs([]string{})
 	require.NoError(t, err)
 	tmpl.ExternalURL = &url.URL{Scheme: "http", Host: "localhost:8080"}
@@ -89,10 +90,14 @@ func TestDefaultTelegramMessageTemplateEscapesAlertContent(t *testing.T) {
 
 	for name, render := range renderers {
 		t.Run(name, func(t *testing.T) {
+			title, err := render(DefaultTelegramTitleTemplate, data)
+			require.NoError(t, err)
+			assert.Equal(t, "[FIRING:1] p99 &lt; 2s &amp; rising", title)
+
 			rendered, err := render(DefaultTelegramMessageTemplate, data)
 			require.NoError(t, err)
 
-			assert.Contains(t, rendered, "<b>[FIRING:1] p99 &lt; 2s &amp; rising</b>")
+			assert.NotContains(t, rendered, "[FIRING:1]", "the title is sent separately")
 			assert.Contains(t, rendered, "<b>Summary:</b> latency &gt; 2s")
 			assert.Contains(t, rendered, `<a href="http://localhost:8080/alerts?a=1&amp;b=2">View in SigNoz</a>`)
 			assert.Contains(t, rendered, `<a href="http://localhost:8080/logs?a=1&amp;b=2">View related logs</a>`)
@@ -126,4 +131,22 @@ func TestTelegramResolvesTheGlobalAPIURLAndHTTPConfig(t *testing.T) {
 	require.NotNil(t, telegram.APIUrl)
 	assert.Equal(t, "https://api.telegram.org", telegram.APIUrl.String())
 	assert.NotNil(t, telegram.HTTPConfig)
+
+	stored, err := cfg.GetReceiver("tg")
+	require.NoError(t, err)
+	assert.Nil(t, stored.TelegramConfigs[0].APIUrl, "the global stays out of the stored receiver")
+}
+
+// Receivers stored before the title existed decode without one and keep
+// sending their message alone; only the spec fills the default title.
+func TestTelegramReceiverWithoutTitleStaysUntitled(t *testing.T) {
+	receiver, err := NewReceiver(`{"name":"tg","telegram_configs":[{"token":"123456:tok","chat":1,"message":"hello"}]}`)
+	require.NoError(t, err)
+	require.Len(t, receiver.TelegramConfigs, 1)
+	assert.Empty(t, receiver.TelegramConfigs[0].Title)
+	assert.Equal(t, "hello", receiver.TelegramConfigs[0].Message)
+
+	spec, err := newChannelTelegramConfigFromReceiver("tg", receiver)
+	require.NoError(t, err)
+	assert.True(t, spec.(*ChannelTelegramConfig).Title.IsZero())
 }

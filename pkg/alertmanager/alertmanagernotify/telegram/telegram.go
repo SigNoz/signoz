@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Package telegram delivers alerts to a Telegram chat. It follows upstream's
-// notifier for everything about the transport and adds the per-rule title and
-// body templates carried on the _title_template and _body_template
-// annotations.
+// notifier for everything about the transport and adds the channel title and
+// the per-rule title and body templates carried on the _title_template and
+// _body_template annotations.
 package telegram
 
 import (
@@ -22,7 +22,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -39,7 +38,7 @@ const (
 )
 
 type Notifier struct {
-	conf      *config.TelegramConfig
+	conf      *alertmanagertypes.TelegramReceiverConfig
 	tmpl      *template.Template
 	logger    *slog.Logger
 	client    *http.Client
@@ -47,7 +46,7 @@ type Notifier struct {
 	templater alertmanagertypes.Templater
 }
 
-func New(conf *config.TelegramConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
+func New(conf *alertmanagertypes.TelegramReceiverConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
 	if conf.HTTPConfig == nil {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "telegram http_config is nil")
 	}
@@ -60,7 +59,7 @@ func New(conf *config.TelegramConfig, t *template.Template, l *slog.Logger, temp
 	// API can still carry another mode; failing here would fail the whole org's
 	// config, so the send is forced to HTML instead.
 	if conf.ParseMode != parseModeHTML {
-		l.Warn("telegram parse_mode is not supported, sending as HTML", slog.String("parse_mode", conf.ParseMode))
+		l.WarnContext(context.Background(), "telegram parse_mode is not supported, sending as HTML", slog.String("parse_mode", conf.ParseMode))
 		htmlConf := *conf
 		htmlConf.ParseMode = parseModeHTML
 		conf = &htmlConf
@@ -151,48 +150,52 @@ func (n *Notifier) encodeSendMessage(chatID int64, text string) (*bytes.Buffer, 
 	return &buf, nil
 }
 
-// buildMessage renders the channel's own message template unless the rule
-// carries templates of its own, in which case those replace it.
+// buildMessage sends the title in bold above the message. Each half comes from
+// the rule's template when it has one and from the channel's otherwise; an
+// empty title sends the message alone.
 func (n *Notifier) buildMessage(ctx context.Context, logger *slog.Logger, as []*types.Alert) (string, error) {
 	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(as)
-	if customTitle == "" && customBody == "" {
-		return n.renderChannelTemplate(ctx, as)
-	}
 
-	result, err := n.templater.Expand(ctx, alertmanagertypes.ExpandRequest{
-		TitleTemplate: customTitle,
-		BodyTemplate:  customBody,
-	}, as)
-	if err != nil {
-		return "", err
-	}
-
-	if len(result.MissingVars) > 0 {
-		logger.WarnContext(ctx, "unresolved variables in rule template", slog.Any("template_missing_vars", result.MissingVars))
-	}
-
-	// A rule may set only one of the two, so the other half still comes from
-	// the channel.
-	body := strings.Join(nonEmpty(result.Body), "\n\n")
-	if customBody == "" {
-		body, err = n.renderChannelTemplate(ctx, as)
+	var result *alertmanagertypes.ExpandResult
+	if customTitle != "" || customBody != "" {
+		var err error
+		result, err = n.templater.Expand(ctx, alertmanagertypes.ExpandRequest{
+			TitleTemplate: customTitle,
+			BodyTemplate:  customBody,
+		}, as)
 		if err != nil {
 			return "", err
 		}
+
+		if len(result.MissingVars) > 0 {
+			logger.WarnContext(ctx, "unresolved variables in rule template", slog.Any("template_missing_vars", result.MissingVars))
+		}
+	}
+
+	var (
+		title, body string
+		err         error
+	)
+	if customTitle != "" {
+		title, err = n.renderRuleTemplate(result.Title)
 	} else {
-		body, err = n.renderRuleTemplate(body)
-		if err != nil {
-			return "", err
-		}
+		title, err = n.renderChannelTemplate(ctx, as, n.conf.Title)
 	}
-
-	if result.Title == "" {
-		return body, nil
-	}
-
-	title, err := n.renderRuleTemplate(result.Title)
 	if err != nil {
 		return "", err
+	}
+
+	if customBody != "" {
+		body, err = n.renderRuleTemplate(strings.Join(nonEmpty(result.Body), "\n\n"))
+	} else {
+		body, err = n.renderChannelTemplate(ctx, as, n.conf.Message)
+	}
+	if err != nil {
+		return "", err
+	}
+
+	if title == "" {
+		return body, nil
 	}
 
 	return strings.TrimSpace("<b>" + title + "</b>\n\n" + body), nil
@@ -201,16 +204,20 @@ func (n *Notifier) buildMessage(ctx context.Context, logger *slog.Logger, as []*
 // renderChannelTemplate reproduces upstream's rendering, including its choice
 // of engine under parse_mode HTML: html/template escapes every interpolated
 // value, so a channel template that does not pipe through html still sends.
-func (n *Notifier) renderChannelTemplate(ctx context.Context, as []*types.Alert) (string, error) {
+func (n *Notifier) renderChannelTemplate(ctx context.Context, as []*types.Alert, text string) (string, error) {
+	if text == "" {
+		return "", nil
+	}
+
 	var tmplErr error
 	data := notify.GetTemplateData(ctx, n.tmpl, as, n.logger)
 
-	message := notify.TmplHTML(n.tmpl, data, &tmplErr)(n.conf.Message)
+	rendered := notify.TmplHTML(n.tmpl, data, &tmplErr)(text)
 	if tmplErr != nil {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to execute telegram message template: %s", tmplErr.Error())
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to execute telegram template: %s", tmplErr.Error())
 	}
 
-	return message, nil
+	return strings.TrimSpace(rendered), nil
 }
 
 // renderRuleTemplate converts the templater's output from markdown, which is

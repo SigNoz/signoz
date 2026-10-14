@@ -31,6 +31,8 @@ type Receiver struct {
 	// Shadows upstream's incidentio_configs so our custom notifier (templater,
 	// group-key dedup, label metadata) handles it instead of upstream's.
 	IncidentIOConfigs []*IncidentIOReceiverConfig `json:"incidentio_configs,omitempty" yaml:"incidentio_configs,omitempty"`
+	// Shadows upstream's telegram_configs to carry a title alongside the message.
+	TelegramConfigs []*TelegramReceiverConfig `json:"telegram_configs,omitempty" yaml:"telegram_configs,omitempty"`
 }
 
 // NewReceiver builds a Receiver from its JSON input, applying each notifier
@@ -85,6 +87,14 @@ func newDefaultedReceiver(receiver *Receiver) (*Receiver, error) {
 			return nil, err
 		}
 		receiver.IncidentIOConfigs[i] = defaulted
+	}
+
+	for i, tc := range receiver.TelegramConfigs {
+		defaulted, err := defaultedNotifierConfig(tc)
+		if err != nil {
+			return nil, err
+		}
+		receiver.TelegramConfigs[i] = defaulted
 	}
 
 	return receiver, nil
