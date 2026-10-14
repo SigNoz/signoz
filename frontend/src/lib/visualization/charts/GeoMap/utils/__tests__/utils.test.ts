@@ -80,4 +80,17 @@ describe('createGeoMapColorResolver', () => {
 			createGeoMapColorResolver(data(1, 10), colors, true).ramp,
 		).toHaveLength(8);
 	});
+
+	it('colours zero from the ramp, not the panel surface', () => {
+		const resolver = createGeoMapColorResolver(data(0, 10), colors, true);
+		expect(resolver.colorFor(0)).toBe(resolver.ramp[0]);
+	});
+
+	it.each([true, false])(
+		'keeps the lowest value off the near-background end (dark mode: %s)',
+		(isDarkMode) => {
+			const { ramp } = createGeoMapColorResolver(data(1, 10), colors, isDarkMode);
+			expect(ramp[0]).not.toMatch(/^#(000004|fcfdbf)$/i);
+		},
+	);
 });

@@ -210,12 +210,20 @@ export function createColorRampResolver({
 	domain,
 	isDarkMode,
 	seriesColor,
+	paletteStart = 0,
+	fillZero = true,
 }: {
 	options: ColorRampOptions;
 	domain: ColorRampDomain;
 	isDarkMode: boolean;
 	/** Opacity-mode fill when `options.fill` is empty. */
 	seriesColor: string;
+	/** 0..1 share of the palette's low end to skip. That end shades towards the
+	 *  theme's background, which suits a grid where low recedes, but not shapes
+	 *  that must stay visible against it. */
+	paletteStart?: number;
+	/** `false` gives 0 the ramp's bottom colour instead of the panel surface. */
+	fillZero?: boolean;
 }): ColorRampResolver {
 	const steps = clampColorSteps(options.steps);
 	const positions = Array.from({ length: steps }, (_, index) =>
@@ -233,7 +241,9 @@ export function createColorRampResolver({
 		);
 	} else {
 		const stops = getPaletteStops(options.palette, isDarkMode);
-		ramp = positions.map((t) => sampleStops(stops, t));
+		ramp = positions.map((t) =>
+			sampleStops(stops, paletteStart + t * (1 - paletteStart)),
+		);
 	}
 
 	const positionOf = (value: number | null): number | null => {
@@ -245,7 +255,7 @@ export function createColorRampResolver({
 
 	// An explicit `min` above zero makes it a clamped value like any other.
 	const zeroFill =
-		domain.min <= 0 ? ZERO_FILL[isDarkMode ? 'dark' : 'light'] : null;
+		fillZero && domain.min <= 0 ? ZERO_FILL[isDarkMode ? 'dark' : 'light'] : null;
 
 	return {
 		positionOf,

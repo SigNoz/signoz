@@ -268,6 +268,32 @@ describe('createColorRampResolver', () => {
 		expect(resolver.colorFor(0)).toBe(resolver.ramp[0]);
 	});
 
+	it('gives zero the bottom of the ramp when the surface fill is off', () => {
+		const resolver = createColorRampResolver({
+			options: DEFAULT_COLOR_RAMP_OPTIONS,
+			domain: { min: 0, max: 1000, logFloor: 1 },
+			isDarkMode: true,
+			seriesColor: SERIES_COLOR,
+			fillZero: false,
+		});
+
+		expect(resolver.colorFor(0)).toBe(resolver.ramp[0]);
+	});
+
+	it('starts the ramp part-way up the palette, keeping its top', () => {
+		const full = build({ steps: 8 });
+		const trimmed = createColorRampResolver({
+			options: { ...DEFAULT_COLOR_RAMP_OPTIONS, steps: 8 },
+			domain: { min: 0, max: 1000, logFloor: 1 },
+			isDarkMode: true,
+			seriesColor: SERIES_COLOR,
+			paletteStart: 0.25,
+		});
+
+		expect(trimmed.ramp[0]).not.toBe(full.ramp[0]);
+		expect(trimmed.ramp[7]).toBe(full.ramp[7]);
+	});
+
 	it('emits one ramp entry per step', () => {
 		expect(build({ steps: 8 }).ramp).toHaveLength(8);
 	});
