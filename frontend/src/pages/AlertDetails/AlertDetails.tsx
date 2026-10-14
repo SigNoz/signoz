@@ -74,7 +74,7 @@ function AlertDetails(): JSX.Element {
 
 	const handleTabChange = (route: string): void => {
 		if (route === ROUTES.ALERT_HISTORY) {
-			logEvent('Alert History tab: Visited', { ruleId });
+			void logEvent('Alert History tab: Visited', { ruleId });
 		}
 	};
 

@@ -271,7 +271,7 @@ describe('CreateAlertV2 utils', () => {
 		});
 	});
 
-	describe('getThresholdStateFromAlertDef', () => {
+	it('getThresholdStateFromAlertDef maps thresholds, query, operator and match type', () => {
 		const args: PostableAlertRuleV2 = {
 			...defaultPostableAlertRuleV2,
 			annotations: {
