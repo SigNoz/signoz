@@ -4,6 +4,7 @@ import { ThreadMessage } from './types';
 import CollapsibleBlock from './CollapsibleBlock';
 import MessagePart from './MessagePart';
 import PartChip from './PartChip';
+import RoleLabel from './RoleLabel';
 import { getFinishReasonTone, getRoleLabel } from './utils';
 
 import styles from './AIThreadMessage.module.scss';
@@ -50,14 +51,17 @@ function AIThreadMessage({
 			data-testid={`ai-thread-message-${role || 'unknown'}`}
 		>
 			{role === 'system' || role === 'developer' ? (
-				<CollapsibleBlock label={roleLabel} testId="ai-message-system-toggle">
+				<CollapsibleBlock
+					label={roleLabel && <RoleLabel label={roleLabel} />}
+					testId="ai-message-system-toggle"
+				>
 					{parts}
 				</CollapsibleBlock>
 			) : (
 				<>
 					{roleLabel && (
 						<div className={styles.roleHeader}>
-							{roleLabel}
+							<RoleLabel label={roleLabel} />
 							{isOutput && (
 								<Badge
 									color={tone === 'info' ? 'robin' : tone}

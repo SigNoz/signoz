@@ -1,5 +1,12 @@
 @use '../../../styles/scrollbar' as *;
 
+// Design token Paragraph/Base/400.
+@mixin paragraph-base {
+	font-size: var(--periscope-font-size-base);
+	font-weight: var(--font-weight-normal);
+	line-height: var(--line-height-20);
+}
+
 .message {
 	display: flex;
 	flex-direction: column;
@@ -11,9 +18,12 @@
 	display: flex;
 	align-items: center;
 	gap: var(--spacing-4);
-	font-size: var(--font-size-xs);
-	font-weight: var(--font-weight-medium);
 	color: var(--l1-foreground);
+}
+
+// Typography sets size, weight and line height; the mixin adds the rest.
+.roleLabel {
+	@include paragraph-base;
 }
 
 .parts {
@@ -41,9 +51,9 @@
 }
 
 .text {
-	font-size: var(--periscope-font-size-base);
-	line-height: var(--line-height-20);
-	color: var(--l1-foreground);
+	@include paragraph-base;
+
+	color: var(--l2-foreground);
 	word-break: break-word;
 
 	:global(p) {
@@ -54,10 +64,101 @@
 		margin-bottom: 0;
 	}
 
-	:global(ol),
-	:global(ul) {
+	:global(:is(ol, ul)) {
 		margin: 0 0 var(--spacing-4);
 		padding-left: var(--spacing-10);
+	}
+
+	:global(li::marker) {
+		color: var(--l2-foreground);
+	}
+
+	:global(:is(h1, h2, h3, h4, h5, h6)) {
+		margin: var(--spacing-6) 0 var(--spacing-4);
+		font-size: var(--periscope-font-size-base);
+		font-weight: var(--font-weight-semibold);
+		line-height: var(--line-height-20);
+		color: var(--l1-foreground);
+	}
+
+	:global(:is(h1, h2)) {
+		font-size: var(--periscope-font-size-medium);
+	}
+
+	:global(:is(h1, h2, h3, h4, h5, h6):first-child) {
+		margin-top: 0;
+	}
+
+	:global(strong) {
+		font-weight: var(--font-weight-semibold);
+		color: var(--l1-foreground);
+	}
+
+	:global(a) {
+		color: var(--accent-primary);
+		text-decoration: none;
+
+		&:hover {
+			text-decoration: underline;
+		}
+	}
+
+	:global(code:not(pre code)) {
+		padding: 0 var(--spacing-2);
+		border: 1px solid var(--l2-border);
+		border-radius: var(--radius-2);
+		background: var(--l3-background);
+		font-family: var(--font-mono);
+		font-size: 0.92em;
+		color: var(--l1-foreground);
+	}
+
+	:global(pre) {
+		position: relative;
+		margin: 0 0 var(--spacing-4);
+	}
+
+	// The highlighter sets its box with inline styles; syntax colours stay its own.
+	:global(pre > div:not(.code-copy-btn)) {
+		margin: 0 !important;
+		padding: var(--spacing-4) var(--spacing-5) !important;
+		border: 1px solid var(--l2-border);
+		border-radius: var(--radius-2) !important;
+		background: var(--l1-background) !important;
+		overflow-x: auto;
+	}
+
+	:global(pre code) {
+		font-family: var(--font-mono) !important;
+	}
+
+	:global(blockquote) {
+		margin: 0 0 var(--spacing-4);
+		padding-left: var(--spacing-5);
+		border-left: 2px solid var(--l3-border);
+		color: var(--l2-foreground);
+	}
+
+	:global(hr) {
+		margin: var(--spacing-6) 0;
+		border: none;
+		border-top: 1px solid var(--l2-border);
+	}
+
+	:global(table) {
+		margin: 0 0 var(--spacing-4);
+		border-collapse: collapse;
+	}
+
+	:global(:is(th, td)) {
+		padding: var(--spacing-2) var(--spacing-4);
+		border: 1px solid var(--l2-border);
+		text-align: left;
+	}
+
+	:global(th) {
+		background: var(--l2-background);
+		font-weight: var(--font-weight-semibold);
 	}
 }
 
@@ -84,9 +185,10 @@
 	padding: var(--spacing-2) var(--spacing-4);
 	border-radius: var(--radius-2);
 	background: var(--l2-background);
-	font-size: var(--font-size-xs);
-	color: var(--l1-foreground);
+	color: var(--l2-foreground);
 	min-width: 0;
+
+	@include paragraph-base;
 
 	&.isPlain {
 		padding: 0;
@@ -224,8 +326,9 @@
 	:global(.ant-collapse-header-text) {
 		flex: none !important;
 		margin-inline-end: 0 !important;
-		font-weight: var(--font-weight-medium);
-		color: var(--l1-foreground);
+		color: var(--l2-foreground);
+
+		@include paragraph-base;
 	}
 
 	:global(.ant-collapse-expand-icon) {
