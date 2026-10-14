@@ -70,3 +70,5 @@ def test_traces_scalar_and_object_key_both_survive(
     assert attributes["db.function"] == "refresh"
     assert isinstance(attributes["db.function"], str)
     assert attributes["db.function.arg"] == 2
+    # the native read returns flat dotted keys, so no Go-side flattening is needed: db is not nested
+    assert "db" not in attributes

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
