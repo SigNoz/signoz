@@ -18,7 +18,6 @@ import { useTimezone } from 'providers/Timezone';
 
 import ChannelActionsMenu from './components/ChannelActionsMenu/ChannelActionsMenu';
 import ChannelJsonDialog from './components/ChannelJsonDialog/ChannelJsonDialog';
-import DeleteChannelDialog from './components/DeleteChannelDialog/DeleteChannelDialog';
 import {
 	KIND_FILTER_ALL,
 	KIND_FILTER_OPTIONS,
@@ -248,13 +247,7 @@ function NotificationChannels(): JSX.Element {
 				/>
 			)}
 
-			<DeleteChannelDialog
-				open={!!deletion.channel}
-				channelName={deletion.channel?.displayName ?? ''}
-				isDeleting={deletion.isDeleting}
-				onConfirm={deletion.confirm}
-				onCancel={deletion.cancel}
-			/>
+			{deletion.contextHolder}
 		</div>
 	);
 }

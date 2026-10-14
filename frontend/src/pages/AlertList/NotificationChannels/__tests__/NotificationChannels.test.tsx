@@ -79,15 +79,17 @@ describe('Notification channels list', () => {
 			// Radix renders the menu into a portal once the trigger is activated
 			await screen.findByRole('menu', {}, FIND);
 
-			const deleteItem = await screen.findByRole(
-				'menuitem',
-				{ name: 'Delete' },
-				FIND,
+			await user.click(
+				await screen.findByRole('menuitem', { name: 'Delete' }, FIND),
 			);
-			await user.click(deleteItem);
 
+			// the shared destructive confirmation, the one dashboards also use
 			await expect(
-				screen.findByTestId('channel-delete-confirm', {}, FIND),
+				screen.findByText(
+					/Are you sure you want to delete the Dummy-Channel channel\?/,
+					{},
+					FIND,
+				),
 			).resolves.toBeInTheDocument();
 		},
 		TEST_TIMEOUT,
