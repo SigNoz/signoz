@@ -1,3 +1,4 @@
+import { Button } from '@signozhq/ui/button';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import { render, screen, userEvent } from 'tests/test-utils';
@@ -45,8 +46,7 @@ jest.mock('../../QuickFilters', () => ({
 			{savedViewsHeader}
 			{source}
 			{handleFilterVisibilityChange && (
-				<button
-					type="button"
+				<Button
 					aria-label="Collapse Filters"
 					data-testid="quick-filters-collapse"
 					onClick={handleFilterVisibilityChange}
