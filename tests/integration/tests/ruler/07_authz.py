@@ -707,6 +707,19 @@ def test_downtime_rule_removal_forbidden_without_rule_detach(
     )
     assert response.status_code == HTTPStatus.FORBIDDEN, response.text
 
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{DOWNTIME_URL}/{downtime_id}"),
+        json={
+            "name": _ACTOR_DOWNTIME_NAME,
+            "description": "scoped actor window without rules",
+            "schedule": {"timezone": "UTC", "startTime": "2026-09-21T00:00:00Z", "endTime": "2026-09-22T00:00:00Z"},
+            "alertIds": [],
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
     response = requests.delete(
         signoz.self.host_configs["8080"].get(f"{DOWNTIME_URL}/{downtime_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
@@ -721,6 +734,29 @@ def test_alert_authz_cleanup(
     get_token: Callable[[str, str], str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(DOWNTIME_URL),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    for schedule in response.json()["data"] or []:
+        if schedule["name"] not in (_DOWNTIME_NAME, _ACTOR_DOWNTIME_NAME):
+            continue
+        response = requests.put(
+            signoz.self.host_configs["8080"].get(f"{DOWNTIME_URL}/{schedule['id']}"),
+            json={"name": schedule["name"], "description": schedule["description"], "schedule": schedule["schedule"], "alertIds": []},
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+        response = requests.delete(
+            signoz.self.host_configs["8080"].get(f"{DOWNTIME_URL}/{schedule['id']}"),
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
     response = requests.get(
         signoz.self.host_configs["8080"].get(f"{V3_RULES_URL}?limit=200"),
