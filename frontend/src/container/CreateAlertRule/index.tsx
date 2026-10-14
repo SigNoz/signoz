@@ -41,7 +41,7 @@ function CreateRules(): JSX.Element {
 
 	useEffect(() => {
 		if (isTypeSelectionMode) {
-			logEvent('Alert: New alert data source selection page visited', {});
+			void logEvent('Alert: New alert data source selection page visited', {});
 		}
 	}, [isTypeSelectionMode]);
 
