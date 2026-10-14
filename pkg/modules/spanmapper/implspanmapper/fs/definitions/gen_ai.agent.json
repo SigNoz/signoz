@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "definition": {
     "name": "gen_ai.agent",
     "condition": {
