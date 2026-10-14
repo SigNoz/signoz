@@ -9,18 +9,26 @@ import {
 import GeoMap from '../../GeoMap';
 import { getOutsideView } from '../../geo/classify';
 import { useGeoMapShapes } from '../../hooks/useGeoMapShapes';
-import { GeoMapLayer, GeoMapSelection, GeoMapView } from '../../types';
+import {
+	GeoMapLayer,
+	GeoMapSelection,
+	GeoMapView,
+	SubdivisionCountry,
+} from '../../types';
 import { FIXTURES } from '../fixtures/fixtures';
 import { FixtureDataset } from '../fixtures/types';
 import GeoMapPlaygroundMenu from './GeoMapPlaygroundMenu';
 import GeoMapPlaygroundWarnings from './GeoMapPlaygroundWarnings';
 import { formatterFor, prepareFixture } from '../fixtures/prepareFixture';
+import { statesFixture } from '../fixtures/stateFixtures';
 import { useSubdivisionSet } from '../../hooks/useSubdivisionSet';
 
 import styles from './GeoMapPlayground.module.scss';
 
 export interface GeoMapPlaygroundProps {
 	dataset: FixtureDataset;
+	/** Any country's states with generated values; overrides `dataset`. */
+	statesOf: SubdivisionCountry | 'none';
 	view: GeoMapView;
 	layer: GeoMapLayer;
 	palette: ColorRampPalette;
@@ -34,6 +42,7 @@ export interface GeoMapPlaygroundProps {
 
 export default function GeoMapPlayground({
 	dataset,
+	statesOf,
 	view,
 	layer,
 	palette,
@@ -45,10 +54,17 @@ export default function GeoMapPlayground({
 	height,
 }: GeoMapPlaygroundProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-	const fixture = FIXTURES[dataset];
+	const country = statesOf === 'none' ? FIXTURES[dataset].country : statesOf;
+	const { set: subdivisions } = useSubdivisionSet(country);
+	const fixture = useMemo(
+		() =>
+			statesOf === 'none'
+				? FIXTURES[dataset]
+				: statesFixture(statesOf, subdivisions),
+		[dataset, statesOf, subdivisions],
+	);
 	// State datasets are always drawn on their country's view.
 	const mapView: GeoMapView = fixture.country ? 'country' : view;
-	const { set: subdivisions } = useSubdivisionSet(fixture.country);
 	const { shapes } = useGeoMapShapes(mapView, fixture.country);
 	const prepared = useMemo(
 		() => prepareFixture(fixture, subdivisions),
