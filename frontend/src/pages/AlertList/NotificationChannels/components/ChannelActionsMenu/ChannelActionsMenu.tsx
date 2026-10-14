@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { generatePath } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import {
@@ -34,12 +34,18 @@ function ChannelActionsMenu({
 	onViewJson,
 }: ChannelActionsMenuProps): JSX.Element {
 	const [, setCopy] = useCopyToClipboard();
-	const { canDelete, hasError, deletePermission } =
-		useNotificationChannelPermissions(channel.id);
 
-	// A failed check is not a denial: fall open and let the API decide, the way
-	// the collection hook documents.
-	const mayDelete = canDelete || hasError;
+	// A list of N channels would otherwise check three verbs per row on mount,
+	// for menus nobody opened, and the authz API caps one batch at 25
+	// transactions. Only the row whose menu was opened pays for its checks.
+	const [menuOpened, setMenuOpened] = useState(false);
+	const { canDelete, isLoading, hasError, deletePermission } =
+		useNotificationChannelPermissions(channel.id, { enabled: menuOpened });
+
+	// Unknown is not denied: before the menu is opened, while the check is in
+	// flight, and when it failed, the actions stay available and the API decides.
+	const resolved = menuOpened && !isLoading && !hasError;
+	const mayDelete = !resolved || canDelete;
 
 	const menuItems = useMemo<DropdownItemType[]>(
 		() => [
@@ -103,6 +109,9 @@ function ChannelActionsMenu({
 		<div
 			className={styles.actions}
 			onClick={(event): void => event.stopPropagation()}
+			// Radix opens the menu on pointerdown and seals the click away, so the
+			// latch has to run before that
+			onPointerDown={(): void => setMenuOpened(true)}
 		>
 			<Dropdown items={menuItems} nativeButton align="end" side="bottom">
 				<Button
