@@ -22,7 +22,6 @@ from fixtures.notification_channel import (
     wait_for_alertmanager_sync,
 )
 
-
 METRICS_DATA = "ruler/test_scenarios/threshold_above_at_least_once/alert_data.jsonl"
 METRICS_RULE = "ruler/test_scenarios/threshold_above_at_least_once/rule.json"
 LOGS_DATA = "ruler/test_scenarios/threshold_below_at_least_once/alert_data.jsonl"
