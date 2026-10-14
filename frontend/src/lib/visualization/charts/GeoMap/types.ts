@@ -4,6 +4,8 @@ import {
 	ColorRampScale,
 } from 'lib/visualization/colorRamp/types';
 
+import type { SUBDIVISION_COUNTRY_CODES } from './geo/subdivisionCountries';
+
 export type LonLatBox = [[number, number], [number, number]];
 
 export interface ShapeProperties {
@@ -37,7 +39,7 @@ export type CountryFeature = GeoJSON.Feature<
 >;
 
 /** Countries whose states/provinces ship with the chart (see `geo/subdivisions.ts`). */
-export type SubdivisionCountry = 'US' | 'IN';
+export type SubdivisionCountry = (typeof SUBDIVISION_COUNTRY_CODES)[number];
 
 export type GeoMapView =
 	| 'world'

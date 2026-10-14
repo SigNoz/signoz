@@ -5,6 +5,8 @@ import {
 	ColorRampScale,
 } from 'lib/visualization/colorRamp/types';
 
+import { getCountryName } from '../geo/countries';
+import { SUBDIVISION_COUNTRIES } from '../geo/subdivisions';
 import { VIEW_PRESETS } from '../geo/views';
 import GeoMapAssetTable from './components/GeoMapAssetTable';
 import GeoMapPlayground from './components/GeoMapPlayground';
@@ -16,6 +18,7 @@ const meta = {
 	parameters: { layout: 'fullscreen' },
 	args: {
 		dataset: 'errorRate',
+		statesOf: 'none',
 		view: 'world',
 		layer: 'regions',
 		palette: ColorRampPalette.Lava,
@@ -36,6 +39,19 @@ const meta = {
 				'usStates',
 				'indiaStates',
 			],
+		},
+		statesOf: {
+			control: 'select',
+			options: ['none', ...SUBDIVISION_COUNTRIES],
+			labels: {
+				none: 'None (use dataset)',
+				...Object.fromEntries(
+					SUBDIVISION_COUNTRIES.map((code) => [
+						code,
+						`${getCountryName(code)} (${code})`,
+					]),
+				),
+			},
 		},
 		view: {
 			control: 'select',
@@ -169,6 +185,29 @@ export const UsStateBubbles: Story = {
 /** Indian states, Mercator; newer ISO codes (TS, UK, CG) resolve through aliases. */
 export const IndiaStates: Story = {
 	args: { dataset: 'indiaStates', palette: ColorRampPalette.Ice },
+};
+
+/** France's departments, framed without its overseas departments. */
+export const FranceStates: Story = {
+	args: { statesOf: 'FR' },
+	tags: ['play'],
+	play: async ({ canvasElement }): Promise<void> => {
+		await waitFor(() =>
+			expect(within(canvasElement).queryByTestId('geo-map-loading')).toBeNull(),
+		);
+		await hoverUntilTooltip(canvasElement);
+		await expect(screen.getByTestId('geo-map-tooltip')).toHaveTextContent('FR-');
+	},
+};
+
+/** Brazil's states. */
+export const BrazilStates: Story = {
+	args: { statesOf: 'BR', palette: ColorRampPalette.Verdant },
+};
+
+/** Japan's prefectures, an island chain kept whole in one frame. */
+export const JapanStates: Story = {
+	args: { statesOf: 'JP', palette: ColorRampPalette.Ice },
 };
 
 /** A small dashboard tile. */

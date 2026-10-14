@@ -60,17 +60,40 @@ describe('subdivision shapes', () => {
 });
 
 describe('isSubdivisionCountry', () => {
-	it.each(SUBDIVISION_COUNTRIES)(
+	it.each(['US', 'IN', 'BR', 'FR', 'JP'])(
 		'accepts %s, which ships its states',
 		(code) => {
 			expect(isSubdivisionCountry(code)).toBe(true);
 		},
 	);
 
-	it.each([['BR'], ['us'], [''], [null], [undefined], ['toString']])(
+	// AQ and VA have under two coded states, so no file is generated for them.
+	it.each([['AQ'], ['VA'], ['us'], [''], [null], [undefined], ['toString']])(
 		'rejects %p',
 		(code) => {
 			expect(isSubdivisionCountry(code)).toBe(false);
 		},
 	);
+});
+
+describe('subdivision files', () => {
+	it('loads every listed country, each with two or more uniquely coded states', async () => {
+		const sets = await Promise.all(SUBDIVISION_COUNTRIES.map(loadSubdivisions));
+		sets.forEach((set) => {
+			const codes = set.shapes.map((shape) => shape.properties.code);
+			expect(codes.length).toBeGreaterThanOrEqual(2);
+			expect(new Set(codes).size).toBe(codes.length);
+			codes.forEach((code) =>
+				expect(code).toMatch(new RegExp(`^${set.country}-`)),
+			);
+		});
+	});
+
+	it('merges the shapes Natural Earth splits under one code', async () => {
+		const ireland = await loadSubdivisions('IE');
+		const dublin = ireland.shapes.filter(
+			(shape) => shape.properties.code === 'IE-D',
+		);
+		expect(dublin).toHaveLength(1);
+	});
 });

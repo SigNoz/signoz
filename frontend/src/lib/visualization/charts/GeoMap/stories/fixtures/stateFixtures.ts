@@ -1,5 +1,8 @@
+import { getCountryName } from '../../geo/countries';
+import { SubdivisionSet } from '../../geo/subdivisions';
+import { SubdivisionCountry } from '../../types';
 import { seededRandom } from './seededRandom';
-import { FixtureRow } from './types';
+import { Fixture, FixtureRow } from './types';
 
 // GeoIP emits the bare region code next to a separate country column.
 const US_REGIONS = [
@@ -133,4 +136,32 @@ export function indiaLatency(): FixtureRow[] {
 		{ country: 'India', raw: 'kerala', value: 9 },
 		{ country: 'US', raw: 'CA', value: 140 },
 	];
+}
+
+/**
+ * Requests for every state of any country, built from its outlines file, so
+ * each country can be previewed without a hand-written dataset. Empty until the
+ * file has loaded.
+ */
+export function statesFixture(
+	country: SubdivisionCountry,
+	set: SubdivisionSet | null,
+): Fixture {
+	const random = seededRandom(
+		country.charCodeAt(0) * 31 + country.charCodeAt(1),
+	);
+	const rows: FixtureRow[] =
+		set?.country === country
+			? [...set.codes].sort().map((code) => ({
+					country,
+					raw: code.slice(country.length + 1),
+					value: Math.round(1_000 + Math.pow(random(), 2) * 250_000),
+				}))
+			: [];
+	return {
+		title: `Requests by state: ${getCountryName(country)}`,
+		unit: 'count',
+		rows,
+		country,
+	};
 }

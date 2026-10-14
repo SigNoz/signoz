@@ -1,15 +1,15 @@
 // Builds the Geo Map outlines assets: Natural Earth 50m admin-0 countries, and
-// 10m admin-1 states/provinces for the countries that have a country view.
+// 10m admin-1 states/provinces for every country with at least two of them.
 // Run by hand when bumping Natural Earth or editing regions/aliases; the output is committed.
 // Usage: pnpm build:geo-outlines
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 import { geoArea, geoBounds } from 'd3-geo';
 import { topology } from 'topojson-server';
 import { presimplify, simplify } from 'topojson-simplify';
-import { feature, quantize } from 'topojson-client';
+import { feature, merge, quantize } from 'topojson-client';
 
 const NATURAL_EARTH_URL =
 	'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_50m_admin_0_countries.geojson';
@@ -29,9 +29,8 @@ const MIN_WEIGHT = 3e-3;
 const SUBDIVISION_QUANTIZATION = 1e4;
 const SUBDIVISION_MIN_WEIGHT = 1e-3;
 
-// Countries with a states/provinces view. Add one only after checking that the
-// GeoIP region codes line up with Natural Earth's admin-1 level for it.
-const SUBDIVISION_COUNTRIES = ['US', 'IN'];
+// A country view needs at least this many coded states to be worth drawing.
+const MIN_SUBDIVISIONS = 2;
 // ISO 3166-2 codes that changed after Natural Earth v5.1.2, or older spellings
 // still in GeoIP data, mapped to the code the shape carries.
 const SUBDIVISION_ALIASES = {
@@ -305,7 +304,6 @@ const {
 } = simplifyAndQuantize(
 	{ countries: { type: 'FeatureCollection', features } },
 	MIN_WEIGHT,
-
 	QUANTIZATION,
 );
 
@@ -371,36 +369,117 @@ if (!admin1Response.ok) {
 	);
 }
 const admin1 = await admin1Response.json();
-const subdivisionDir = join(outDir, 'subdivisions');
-mkdirSync(subdivisionDir, { recursive: true });
-const subdivisionReport = {};
-for (const country of SUBDIVISION_COUNTRIES) {
-	const shapes = admin1.features
-		.filter(
-			(f) =>
-				f.properties.iso_a2 === country &&
-				/^[A-Z]{2}-[A-Z0-9]{1,3}$/.test(f.properties.iso_3166_2),
-		)
-		.map((f) => ({
+
+// Shapes without an ISO 3166-2 code can't be matched to data, and a code under
+// another country's prefix (Puerto Rico's `US-PR`) belongs to that country's file.
+const admin1ByCountry = new Map();
+const subdivisionUncoded = {};
+for (const f of admin1.features) {
+	const country = f.properties.iso_a2;
+	if (!isCode(country)) {
+		continue;
+	}
+	const code = f.properties.iso_3166_2;
+	if (
+		!/^[A-Z]{2}-[A-Z0-9]{1,3}$/.test(code ?? '') ||
+		!code.startsWith(`${country}-`)
+	) {
+		subdivisionUncoded[country] = (subdivisionUncoded[country] ?? 0) + 1;
+		continue;
+	}
+	if (!admin1ByCountry.has(country)) {
+		admin1ByCountry.set(country, []);
+	}
+	admin1ByCountry.get(country).push(f);
+}
+
+// Natural Earth splits some codes across shapes (Dublin's four councils are all
+// `IE-D`). Merging them through a topology drops the borders between the parts,
+// so one code is one shape with one outline.
+function mergeByCode(features) {
+	const byCode = new Map();
+	for (const f of features) {
+		const code = f.properties.iso_3166_2;
+		if (!byCode.has(code)) {
+			byCode.set(code, []);
+		}
+		byCode.get(code).push(f);
+	}
+	const topo = topology({
+		parts: { type: 'FeatureCollection', features },
+	});
+	const geometries = topo.objects.parts.geometries;
+	let merged = 0;
+	const shapes = [...byCode].map(([code, members]) => {
+		// The largest part carries the name and label point.
+		const primary = members.reduce((a, b) => (geoArea(a) >= geoArea(b) ? a : b));
+		let geometry = primary.geometry;
+		if (members.length > 1) {
+			merged += members.length - 1;
+			geometry = merge(
+				topo,
+				geometries.filter((_, i) => features[i].properties.iso_3166_2 === code),
+			);
+		}
+		return {
 			type: 'Feature',
-			id: f.properties.iso_3166_2,
+			id: code,
 			properties: {
-				code: f.properties.iso_3166_2,
-				name: f.properties.name,
-				label: [round(f.properties.longitude), round(f.properties.latitude)],
+				code,
+				name: primary.properties.name,
+				label: [
+					round(primary.properties.longitude),
+					round(primary.properties.latitude),
+				],
 			},
-			geometry: f.geometry,
-		}))
-		.sort((a, b) => a.id.localeCompare(b.id));
-	const { topo: subdivisionTopo, flipped } = simplifyAndQuantize(
+			geometry,
+		};
+	});
+	return { shapes: shapes.sort((a, b) => a.id.localeCompare(b.id)), merged };
+}
+
+const subdivisionDir = join(outDir, 'subdivisions');
+rmSync(subdivisionDir, { recursive: true, force: true });
+mkdirSync(subdivisionDir, { recursive: true });
+const subdivisionCountries = [];
+const subdivisionSkipped = [];
+const subdivisionSizes = [];
+const subdivisionMerged = {};
+const subdivisionFlipped = {};
+let subdivisionCollapsed = 0;
+const subdivisionEmptied = [];
+let subdivisionGzipTotal = 0;
+for (const country of [...admin1ByCountry.keys()].sort((a, b) =>
+	a.localeCompare(b),
+)) {
+	const members = admin1ByCountry.get(country);
+	const { shapes, merged } = mergeByCode(members);
+	if (shapes.length < MIN_SUBDIVISIONS) {
+		subdivisionSkipped.push(country);
+		continue;
+	}
+	if (merged) {
+		subdivisionMerged[country] = merged;
+	}
+	const {
+		topo: subdivisionTopo,
+		flipped,
+		collapsed,
+		emptied,
+	} = simplifyAndQuantize(
 		{ subdivisions: { type: 'FeatureCollection', features: shapes } },
 		SUBDIVISION_MIN_WEIGHT,
 		SUBDIVISION_QUANTIZATION,
 	);
+	if (flipped) {
+		subdivisionFlipped[country] = flipped;
+	}
+	subdivisionCollapsed += collapsed;
+	if (emptied.length) {
+		subdivisionEmptied.push(...emptied);
+	}
 	const subdivisionNames = {};
-	for (const f of admin1.features.filter(
-		(x) => x.properties.iso_a2 === country,
-	)) {
+	for (const f of members) {
 		for (const n of [
 			f.properties.name,
 			f.properties.name_en,
@@ -416,12 +495,35 @@ for (const country of SUBDIVISION_COUNTRIES) {
 		names: subdivisionNames,
 	});
 	writeFileSync(join(subdivisionDir, `${country}.json`), json);
-	subdivisionReport[country] = {
-		shapes: shapes.length,
-		droppedFlippedIslands: flipped,
-		size: `${kb(json)} raw / ${gz(json)} gzip`,
-	};
+	subdivisionCountries.push(country);
+	const gzipped = gzipSync(json).length;
+	subdivisionGzipTotal += gzipped;
+	subdivisionSizes.push([country, shapes.length, gzipped]);
 }
+
+writeFileSync(
+	join(outDir, '../geo/subdivisionCountries.ts'),
+	`// Generated by scripts/build-geo-outlines.mjs; do not edit.
+export const SUBDIVISION_COUNTRY_CODES = [
+${subdivisionCountries.map((country) => `\t'${country}',`).join('\n')}
+] as const;
+`,
+);
+
+const subdivisionReport = {
+	countries: subdivisionCountries.length,
+	totalGzip: `${(subdivisionGzipTotal / 1024).toFixed(0)} KB`,
+	largest: subdivisionSizes
+		.sort((a, b) => b[2] - a[2])
+		.slice(0, 10)
+		.map(([c, n, g]) => `${c}: ${n} shapes, ${(g / 1024).toFixed(0)} KB gzip`),
+	skippedUnderMinimum: subdivisionSkipped.join(' '),
+	mergedParts: subdivisionMerged,
+	uncodedShapes: subdivisionUncoded,
+	droppedFlippedIslands: subdivisionFlipped,
+	droppedCollapsedPolygons: subdivisionCollapsed,
+	emptiedShapes: subdivisionEmptied.join(' '),
+};
 
 console.log(
 	JSON.stringify(

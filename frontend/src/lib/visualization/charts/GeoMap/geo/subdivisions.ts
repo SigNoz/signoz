@@ -2,6 +2,7 @@ import { feature } from 'topojson-client';
 import type { GeometryCollection, Topology } from 'topojson-specification';
 
 import { ShapeFeature, ShapeProperties, SubdivisionCountry } from '../types';
+import { SUBDIVISION_COUNTRY_CODES } from './subdivisionCountries';
 
 type SubdivisionFile = Topology<{
 	subdivisions: GeometryCollection<ShapeProperties>;
@@ -20,31 +21,30 @@ export interface SubdivisionSet {
 	names: Record<string, string>;
 }
 
-// One chunk per country, so a world map never downloads any of them. Keyed by
-// `SubdivisionCountry`, so a country added to one and not the other won't compile.
-const LOADERS: Record<SubdivisionCountry, () => Promise<{ default: unknown }>> =
-	{
-		US: () => import('../assets/subdivisions/US.json'),
-		IN: () => import('../assets/subdivisions/IN.json'),
-	};
+export const SUBDIVISION_COUNTRIES: readonly SubdivisionCountry[] =
+	SUBDIVISION_COUNTRY_CODES;
 
-export const SUBDIVISION_COUNTRIES = Object.keys(
-	LOADERS,
-) as SubdivisionCountry[];
+const SUBDIVISION_COUNTRY_SET = new Set<string>(SUBDIVISION_COUNTRY_CODES);
 
 /** Narrows a spec's or user's country code to one whose states ship with the chart. */
 export function isSubdivisionCountry(
 	code: string | null | undefined,
 ): code is SubdivisionCountry {
-	return (
-		Boolean(code) && Object.prototype.hasOwnProperty.call(LOADERS, code as string)
-	);
+	return typeof code === 'string' && SUBDIVISION_COUNTRY_SET.has(code);
+}
+
+// The bundler splits every file the pattern matches into its own chunk, so a
+// world map never downloads any of them.
+function importSubdivisions(
+	country: SubdivisionCountry,
+): Promise<{ default: unknown }> {
+	return import(`../assets/subdivisions/${country}.json`);
 }
 
 const cache = new Map<SubdivisionCountry, Promise<SubdivisionSet>>();
 
 async function load(country: SubdivisionCountry): Promise<SubdivisionSet> {
-	const file = (await LOADERS[country]()).default as SubdivisionFile;
+	const file = (await importSubdivisions(country)).default as SubdivisionFile;
 	const shapes = feature(file, file.objects.subdivisions)
 		.features as ShapeFeature[];
 	return {

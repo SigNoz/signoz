@@ -25,7 +25,7 @@ describe('getViewBox', () => {
 		expect(getViewBox('fit', [])).toBe(VIEW_PRESETS.world.box);
 	});
 
-	it('frames the US by its lower 48, since its bounds wrap the antimeridian', () => {
+	it('frames the US by its lower 48', () => {
 		const [[west, south], [east, north]] = getViewBox('country', [], 'US');
 		const us = COUNTRY_BY_ISO2.get('US');
 		if (!us) {
@@ -44,6 +44,39 @@ describe('getViewBox', () => {
 		const [[west], [east]] = getViewBox('country', [], 'IN');
 		expect(west).toBeLessThan(72); // Lakshadweep
 		expect(east).toBeGreaterThan(93); // Andaman and Nicobar
+	});
+
+	it('leaves France’s overseas departments out of its frame', () => {
+		const [[west, south], [east]] = getViewBox('country', [], 'FR');
+		expect(west).toBeGreaterThan(-10); // French Guiana
+		expect(south).toBeGreaterThan(35); // Réunion
+		expect(east).toBeLessThan(15);
+	});
+
+	it('keeps island chains whole', () => {
+		const [[idWest], [idEast]] = getViewBox('country', [], 'ID');
+		expect(idWest).toBeLessThan(100); // Sumatra
+		expect(idEast).toBeGreaterThan(135); // Papua
+
+		const [[, jpSouth], [jpEast]] = getViewBox('country', [], 'JP');
+		expect(jpSouth).toBeLessThan(32); // Kyushu
+		expect(jpEast).toBeGreaterThan(145); // Hokkaido
+
+		const [[esWest]] = getViewBox('country', [], 'ES');
+		expect(esWest).toBeLessThan(-15); // the Canaries
+	});
+
+	it('keeps both New Zealand islands, without the Chatham Islands across the antimeridian', () => {
+		const [[west, south], [east]] = getViewBox('country', [], 'NZ');
+		expect(west).toBeLessThan(168);
+		expect(south).toBeLessThan(-45);
+		expect(east).toBeGreaterThan(177);
+		expect(east).toBeLessThanOrEqual(180);
+	});
+
+	it('leaves remote islands out (Easter Island)', () => {
+		const [[west]] = getViewBox('country', [], 'CL');
+		expect(west).toBeGreaterThan(-80);
 	});
 
 	it('shows the world for a country view with no country', () => {
