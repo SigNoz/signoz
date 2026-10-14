@@ -260,7 +260,7 @@ func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 			err = c.Set(context.Background(), orgID, cacheKey, &cacheableData, 0)
 			assert.NoError(t, err)
 
-			misses := qc.FindMissingTimeRanges(orgID, tc.requestedStart, tc.requestedEnd, tc.requestedStep, cacheKey)
+			misses := qc.FindMissingTimeRanges(context.Background(), orgID, tc.requestedStart, tc.requestedEnd, tc.requestedStep, cacheKey)
 			if len(misses) != len(tc.expectedMiss) {
 				t.Errorf("expected %d misses, got %d", len(tc.expectedMiss), len(misses))
 			}
@@ -480,7 +480,7 @@ func TestFindMissingTimeRangesWithFluxInterval(t *testing.T) {
 			err = c.Set(context.Background(), orgID, cacheKey, &cacheableData, 0)
 			assert.NoError(t, err)
 
-			misses := qc.FindMissingTimeRanges(orgID, tc.requestedStart, tc.requestedEnd, tc.requestedStep, cacheKey)
+			misses := qc.FindMissingTimeRanges(context.Background(), orgID, tc.requestedStart, tc.requestedEnd, tc.requestedStep, cacheKey)
 			if len(misses) != len(tc.expectedMiss) {
 				t.Errorf("expected %d misses, got %d", len(tc.expectedMiss), len(misses))
 			}
