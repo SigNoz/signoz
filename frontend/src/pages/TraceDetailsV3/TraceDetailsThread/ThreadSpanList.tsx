@@ -12,7 +12,7 @@ const LOAD_AHEAD_PX = 200;
 
 interface ThreadSpanListProps {
 	spans: ThreadSpan[];
-	prependedCount: number;
+	spansAboveFirstPage: number;
 	initialSpanIndex?: number;
 	hasNextPage: boolean;
 	hasPreviousPage: boolean;
@@ -25,7 +25,7 @@ interface ThreadSpanListProps {
 
 function ThreadSpanList({
 	spans,
-	prependedCount,
+	spansAboveFirstPage,
 	initialSpanIndex,
 	hasNextPage,
 	hasPreviousPage,
@@ -73,7 +73,8 @@ function ThreadSpanList({
 			className={styles.list}
 			data-testid="thread-span-list"
 			data={spans}
-			firstItemIndex={FIRST_ITEM_INDEX_BASE - prependedCount}
+			// 0 is allowed, negative is not (Virtuoso warns); the base fits 1,000,000 prepended spans.
+			firstItemIndex={FIRST_ITEM_INDEX_BASE - spansAboveFirstPage}
 			// Omitted, not undefined: an explicit undefined blanks the list, and 0 resets an early scroll.
 			{...(initialSpanIndex === undefined
 				? {}

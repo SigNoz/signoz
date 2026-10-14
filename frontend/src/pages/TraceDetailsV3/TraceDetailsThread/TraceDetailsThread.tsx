@@ -90,7 +90,7 @@ function TraceDetailsThread(): JSX.Element {
 				<ThreadSpanList
 					key={anchorSpanId}
 					spans={spans}
-					prependedCount={thread.prependedCount}
+					spansAboveFirstPage={thread.spansAboveFirstPage}
 					initialSpanIndex={anchorIndex === -1 ? undefined : anchorIndex}
 					hasNextPage={thread.hasNextPage}
 					hasPreviousPage={thread.hasPreviousPage}
