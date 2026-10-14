@@ -1,7 +1,6 @@
 package savedviewtypes
 
 import (
-	"crypto/rand"
 	"strings"
 	"time"
 
@@ -18,9 +17,6 @@ var (
 	ErrCodeSavedViewInvalidInput = errors.MustNewCode("saved_view_invalid_input")
 	ErrCodeSavedViewNotFound     = errors.MustNewCode("saved_view_not_found")
 )
-
-// savedViewNameSuffixLen mirrors dashboardtypes' generated-name logic.
-const savedViewNameSuffixLen = 8
 
 var (
 	SourceTraces          = Source{valuer.NewString("traces")}
@@ -136,7 +132,7 @@ func (postable PostableSavedView) ToSavedView(orgID string, createdBy string) *S
 
 	name := postable.Name
 	if postable.GenerateName {
-		name = generateSavedViewName(postable.Spec.DisplayName)
+		name = types.GenerateName(postable.Spec.DisplayName)
 	}
 
 	return &SavedView{
@@ -242,44 +238,4 @@ func validateSavedViewName(name string) error {
 		return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "name %q is invalid: %s", name, strings.Join(errs, "; "))
 	}
 	return nil
-}
-
-// generateSavedViewName is a copy of dashboardtypes.generateDashboardName: slugify
-// the display name and append a random suffix for practical collision avoidance
-// (the DB unique index on (org_id, name) is what actually guarantees uniqueness).
-func generateSavedViewName(displayName string) string {
-	const dns1123LabelMaxLen = 63
-	suffixAlphabet := []byte("abcdefghijklmnopqrstuvwxyz0123456789")
-
-	var b strings.Builder
-	b.Grow(len(displayName))
-	prevHyphen := false
-	for _, r := range strings.ToLower(displayName) {
-		switch {
-		case (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9'):
-			b.WriteRune(r)
-			prevHyphen = false
-		case b.Len() > 0 && !prevHyphen:
-			b.WriteByte('-')
-			prevHyphen = true
-		}
-	}
-	prefix := strings.TrimRight(b.String(), "-")
-
-	suffix := make([]byte, savedViewNameSuffixLen)
-	if _, err := rand.Read(suffix); err != nil {
-		panic(errors.WrapInternalf(err, errors.CodeInternal, "read random for saved view name suffix"))
-	}
-	for i := range suffix {
-		suffix[i] = suffixAlphabet[int(suffix[i])%len(suffixAlphabet)]
-	}
-
-	maxPrefix := dns1123LabelMaxLen - 1 - savedViewNameSuffixLen
-	if len(prefix) > maxPrefix {
-		prefix = strings.TrimRight(prefix[:maxPrefix], "-")
-	}
-	if prefix == "" {
-		return string(suffix)
-	}
-	return prefix + "-" + string(suffix)
 }

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
@@ -42,7 +43,7 @@ func (p *PostableNotificationChannel) UnmarshalJSON(data []byte) error {
 	}
 
 	if p.GenerateName {
-		p.Name = generateChannelName(p.DisplayName)
+		p.Name = types.GenerateName(p.DisplayName)
 	}
 
 	return nil

@@ -8,28 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNextCloneAlertName(t *testing.T) {
-	testCases := []struct {
-		name     string
-		input    string
-		expected string
-	}{
-		{name: "PlainName_CopySuffixAppended", input: "High CPU", expected: "High CPU - Copy"},
-		{name: "CopySuffix_BumpedToTwo", input: "High CPU - Copy", expected: "High CPU - Copy (2)"},
-		{name: "NumberedSuffix_Incremented", input: "High CPU - Copy (2)", expected: "High CPU - Copy (3)"},
-		{name: "MultiDigitSuffix_Incremented", input: "svc - Copy (41)", expected: "svc - Copy (42)"},
-		{name: "ContainsCopyWord_NotTreatedAsSuffix", input: "Copy of things", expected: "Copy of things - Copy"},
-		{name: "RepeatedCopy_OnlyTrailingMarkerParsed", input: "Prod - Copy - Copy", expected: "Prod - Copy - Copy (2)"},
-		{name: "LongName_NotTruncated", input: "Muting And Manual Resolving Log Based Alert 7 October With A Very Long Descriptive Name That Goes On And On Past One Hundred Twenty Eight Characters", expected: "Muting And Manual Resolving Log Based Alert 7 October With A Very Long Descriptive Name That Goes On And On Past One Hundred Twenty Eight Characters - Copy"},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			assert.Equal(t, testCase.expected, nextCloneAlertName(testCase.input))
-		})
-	}
-}
-
 func TestStorableRule_ToPostableRuleForCloning(t *testing.T) {
 	v1Stored := `{
 		"alert": "cpu high",

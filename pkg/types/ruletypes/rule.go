@@ -3,17 +3,12 @@ package ruletypes
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
-
-var cloneCopySuffixRegex = regexp.MustCompile(`^(.*) - Copy(?: \((\d+)\))?$`)
 
 type StorableRule struct {
 	// The alias must stay rule: the list filter compiler emits rule.<col> refs.
@@ -58,7 +53,7 @@ func (rule *StorableRule) ToPostableRuleForCloning() (*PostableRule, error) {
 	if err := json.Unmarshal([]byte(rule.Data), postable); err != nil {
 		return nil, err
 	}
-	postable.AlertName = nextCloneAlertName(postable.AlertName)
+	postable.AlertName = types.GenerateCloneName(postable.AlertName, 0)
 	return postable, nil
 }
 
@@ -85,20 +80,4 @@ type RuleStore interface {
 	ListRuleViews(context.Context, valuer.UUID) ([]*RuleView, error)
 	UpdateRuleView(context.Context, *RuleView) error
 	DeleteRuleView(context.Context, valuer.UUID, valuer.UUID) error
-}
-
-func nextCloneAlertName(name string) string {
-	base, count := name, 0
-	if m := cloneCopySuffixRegex.FindStringSubmatch(name); m != nil {
-		base = m[1]
-		count = 1
-		if m[2] != "" {
-			count, _ = strconv.Atoi(m[2])
-		}
-	}
-
-	if count++; count > 1 {
-		return fmt.Sprintf("%s - Copy (%d)", base, count)
-	}
-	return base + " - Copy"
 }

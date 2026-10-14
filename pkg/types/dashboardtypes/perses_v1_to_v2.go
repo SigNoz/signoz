@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types"
 )
 
 // V1 → V2 migration. The v1 storable shape is the frontend's `DashboardData`
@@ -95,7 +96,7 @@ func (storable StorableDashboard) ConvertV1ToV2() (result *DashboardV2, err erro
 			SchemaVersion: SchemaVersion,
 			Image:         image,
 		},
-		Name: generateDashboardName(title),
+		Name: types.GenerateName(title),
 		Tags: tags,
 		Spec: spec,
 	}, nil
@@ -104,5 +105,5 @@ func (storable StorableDashboard) ConvertV1ToV2() (result *DashboardV2, err erro
 // V1Name derives the v2 name column from a v1 dashboard's title. Used to backfill the
 // name of a dashboard whose data fails to migrate, so it stays findable by name.
 func (storable StorableDashboard) V1Name() string {
-	return generateDashboardName(storable.Data.readString("title"))
+	return types.GenerateName(storable.Data.readString("title"))
 }
