@@ -719,17 +719,11 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		registerShortcut(GlobalShortcuts.NavigateToTracesFunnel, () =>
 			onClickHandler(ROUTES.TRACES_FUNNELS, null),
 		);
-		registerShortcut(GlobalShortcuts.NavigateToTracesViews, () =>
-			onClickHandler(ROUTES.TRACES_SAVE_VIEWS, null),
-		);
 		registerShortcut(GlobalShortcuts.NavigateToMetricsSummary, () =>
 			onClickHandler(ROUTES.METRICS_EXPLORER, null),
 		);
 		registerShortcut(GlobalShortcuts.NavigateToMetricsExplorer, () =>
 			onClickHandler(ROUTES.METRICS_EXPLORER_EXPLORER, null),
-		);
-		registerShortcut(GlobalShortcuts.NavigateToMetricsViews, () =>
-			onClickHandler(ROUTES.METRICS_EXPLORER_VIEWS, null),
 		);
 		registerShortcut(GlobalShortcuts.NavigateToSettings, () =>
 			onClickHandler(ROUTES.SETTINGS, null),
@@ -755,9 +749,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		registerShortcut(GlobalShortcuts.NavigateToLogsPipelines, () =>
 			onClickHandler(ROUTES.LOGS_PIPELINES, null),
 		);
-		registerShortcut(GlobalShortcuts.NavigateToLogsViews, () =>
-			onClickHandler(ROUTES.LOGS_SAVE_VIEWS, null),
-		);
 		return (): void => {
 			deregisterShortcut(GlobalShortcuts.NavigateToHome);
 			deregisterShortcut(GlobalShortcuts.NavigateToServices);
@@ -770,7 +761,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			deregisterShortcut(GlobalShortcuts.NavigateToTracesFunnel);
 			deregisterShortcut(GlobalShortcuts.NavigateToMetricsSummary);
 			deregisterShortcut(GlobalShortcuts.NavigateToMetricsExplorer);
-			deregisterShortcut(GlobalShortcuts.NavigateToMetricsViews);
 			deregisterShortcut(GlobalShortcuts.NavigateToSettings);
 			deregisterShortcut(GlobalShortcuts.NavigateToSettingsIngestion);
 			deregisterShortcut(GlobalShortcuts.NavigateToSettingsBilling);
@@ -779,8 +769,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			deregisterShortcut(GlobalShortcuts.NavigateToSettingsRoles);
 			deregisterShortcut(GlobalShortcuts.NavigateToSettingsMembers);
 			deregisterShortcut(GlobalShortcuts.NavigateToLogsPipelines);
-			deregisterShortcut(GlobalShortcuts.NavigateToLogsViews);
-			deregisterShortcut(GlobalShortcuts.NavigateToTracesViews);
 		};
 	}, [deregisterShortcut, onClickHandler, registerShortcut]);
 

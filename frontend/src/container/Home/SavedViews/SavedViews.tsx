@@ -8,10 +8,11 @@ import {
 	SavedviewtypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
-import { getSavedViewQuery } from 'container/SavedViews/utils';
+import { getSavedViewQuery } from 'container/SavedViews/utils/getSavedViewQuery';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { SOURCEPAGE_VS_ROUTES } from 'pages/SaveView/constants';
 import Card from 'periscope/components/Card/Card';
+import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 
@@ -35,6 +36,7 @@ export default function SavedViews({
 	loadingUserPreferences: boolean;
 }): JSX.Element {
 	const { user } = useAppContext();
+	const isSavedViewEnabled = useSavedViewEnabled();
 	const [selectedEntity, setSelectedEntity] = useState<string>('logs');
 	const [selectedEntityViews, setSelectedEntityViews] = useState<
 		SavedviewtypesSavedViewDTO[]
@@ -351,7 +353,7 @@ export default function SavedViews({
 				{selectedEntityViews.length > 0 ? renderSavedViews() : emptyStateCard()}
 			</Card.Content>
 
-			{selectedEntityViews.length > 0 && (
+			{!isSavedViewEnabled && selectedEntityViews.length > 0 && (
 				<Card.Footer>
 					<div className="services-footer home-data-card-footer">
 						<Link to={footerLink}>
