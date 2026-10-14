@@ -9,6 +9,44 @@ import { IDetailedError, IValidationResult } from 'types/antlrQueryTypes';
 class QueryErrorListener {
 	private errors: IDetailedError[] = [];
 
+	constructor(private readonly friendlyMessages = false) {}
+
+	private describeError(msg: string, symbol?: string): string {
+		if (!this.friendlyMessages) return msg;
+
+		if (msg.startsWith('token recognition error') && /at: ['"]["']/.test(msg)) {
+			return 'Close the quoted text with a matching quote.';
+		}
+		if (msg.includes("missing ')'")) {
+			return 'Add a closing parenthesis ")".';
+		}
+		if (msg.includes("missing ']'")) {
+			return 'Add a closing bracket "]".';
+		}
+		if (msg.includes('extraneous input')) {
+			return `Remove the unexpected ${this.describeSymbol(symbol)}.`;
+		}
+		const expected =
+			msg.match(/(?:expecting|missing) (.*?)(?: at |$)/)?.[1] || '';
+		if (expected.includes('FREETEXT')) {
+			return `Add a filter expression before ${this.describeSymbol(symbol)}.`;
+		}
+		if (expected.includes('QUOTED_TEXT')) {
+			const value = expected.includes("'['") ? 'a function argument' : 'a value';
+			return `Add ${value} before ${this.describeSymbol(symbol)}.`;
+		}
+		if (msg.startsWith('token recognition error')) {
+			return 'Check for an invalid character in the filter.';
+		}
+		return `Check the filter syntax near ${this.describeSymbol(symbol)}.`;
+	}
+
+	private describeSymbol(symbol?: string): string {
+		if (!symbol || symbol === '<EOF>') return 'the end of the query';
+		const label = symbol.length > 40 ? `${symbol.slice(0, 40)}...` : symbol;
+		return `"${label}"`;
+	}
+
 	syntaxError(
 		_recognizer: any,
 		offendingSymbol: any,
@@ -17,12 +55,16 @@ class QueryErrorListener {
 		msg: string,
 	): void {
 		// For unterminated quotes, we only want to show one error
-		if (this.hasUnterminatedQuoteError() && msg.includes('expecting')) {
+		if (
+			this.hasUnterminatedQuoteError() &&
+			(msg.includes('expecting') ||
+				(this.friendlyMessages && msg.includes('missing')))
+		) {
 			return;
 		}
 
 		const error: IDetailedError = {
-			message: msg,
+			message: this.describeError(msg, offendingSymbol?.text),
 			line,
 			column,
 			offendingSymbol: offendingSymbol?.text || String(offendingSymbol),
@@ -43,7 +85,7 @@ class QueryErrorListener {
 			(e) =>
 				e.line === line &&
 				e.column === column &&
-				this.isSimilarError(e.message, msg),
+				this.isSimilarError(e.message, error.message),
 		);
 
 		if (!isDuplicate) {
@@ -54,6 +96,7 @@ class QueryErrorListener {
 	private hasUnterminatedQuoteError(): boolean {
 		return this.errors.some(
 			(error) =>
+				error.message.includes('Close the quoted text') ||
 				error.message.includes('unterminated') ||
 				(error.message.includes('missing') && error.message.includes("'")),
 		);
@@ -117,7 +160,7 @@ export const validateQuery = (query: string): IValidationResult => {
 	}
 
 	try {
-		const errorListener = new QueryErrorListener();
+		const errorListener = new QueryErrorListener(true);
 		const inputStream = CharStreams.fromString(query);
 
 		// Setup lexer
@@ -148,12 +191,9 @@ export const validateQuery = (query: string): IValidationResult => {
 			message: 'Query is valid!',
 			errors: [],
 		};
-	} catch (error) {
-		const errorMessage =
-			error instanceof Error ? error.message : 'Invalid query syntax';
-
+	} catch {
 		const detailedError: IDetailedError = {
-			message: errorMessage,
+			message: 'Check the filter syntax and try again.',
 			line: 0,
 			column: 0,
 			offendingSymbol: '',
