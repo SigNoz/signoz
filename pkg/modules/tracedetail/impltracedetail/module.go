@@ -2,6 +2,7 @@ package impltracedetail
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -11,6 +12,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.opentelemetry.io/otel/metric"
 )
+
+// formattedSpansLogThreshold is the number of formatted gen_ai spans in one waterfall response above which
+// the response is logged, to size the memory the formatted copies of the messages take.
+const formattedSpansLogThreshold = 200
 
 type module struct {
 	store    spantypes.TraceStore
@@ -64,13 +69,26 @@ func (m *module) GetWaterfallV4(ctx context.Context, orgID valuer.UUID, traceID 
 	if err != nil {
 		return nil, err
 	}
-	if bounds.NumSpans > uint64(m.config.Waterfall.MaxLimitToSelectAllSpans) {
+	windowed := bounds.NumSpans > uint64(m.config.Waterfall.MaxLimitToSelectAllSpans)
+	if windowed {
 		attrs := metric.WithAttributes(attrResponseType.String(attrResponseTypeWindowed))
 		m.metrics.waterfallRequestCount.Add(ctx, 1, attrs)
 		m.metrics.waterfallSpanCount.Add(ctx, int64(bounds.NumSpans), attrs)
-		return m.getWindowedWaterfall(ctx, orgID, traceID, selectedSpanID, uncollapsedSpans, bounds.Start, bounds.End)
 	}
-	return m.getFullWaterfall(ctx, orgID, traceID, bounds)
+
+	var trace *spantypes.GettableWaterfallTrace
+	if windowed {
+		trace, err = m.getWindowedWaterfall(ctx, orgID, traceID, selectedSpanID, uncollapsedSpans, bounds.Start, bounds.End)
+	} else {
+		trace, err = m.getFullWaterfall(ctx, orgID, traceID, bounds)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if trace.FormattedSpans > formattedSpansLogThreshold {
+		m.settings.Logger().InfoContext(ctx, "waterfall response carries many formatted gen_ai spans", slog.String("trace_id", traceID), slog.Int("formatted_spans", trace.FormattedSpans), slog.Int("spans", len(trace.Spans)), slog.Bool("windowed", trace.HasMore))
+	}
+	return trace, nil
 }
 
 func (m *module) getFullWaterfall(ctx context.Context, orgID valuer.UUID, traceID string, bounds *spantypes.TraceBounds) (*spantypes.GettableWaterfallTrace, error) {
