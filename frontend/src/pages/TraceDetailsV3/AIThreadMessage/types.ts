@@ -44,7 +44,7 @@ export type MediaMessagePart = Extract<
 >;
 
 // role: system | developer | user | assistant | tool; any other value renders headerless.
-// finish_reason: stop | tool_call | length | content_filter | error, or provider-specific.
+// finish_reason: stop | tool_call | length | content_filter | compaction | error, or provider-specific.
 export type ThreadMessage = Partial<
 	Omit<AiobservabilitytypesOutputMessageDTO, 'parts'>
 > & {

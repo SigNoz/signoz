@@ -104,6 +104,10 @@
 	&[data-tone='error'] {
 		background: var(--accent-cherry);
 	}
+
+	&[data-tone='info'] {
+		background: var(--accent-primary);
+	}
 }
 
 .chipLabel {

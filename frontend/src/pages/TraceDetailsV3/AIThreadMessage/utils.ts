@@ -16,11 +16,15 @@ const ROLE_LABELS: Record<string, string> = {
 	tool: 'Tool',
 };
 
-export type MessageTone = 'success' | 'warning' | 'error';
+export type MessageTone = 'success' | 'warning' | 'error' | 'info';
 
+// Provider values the backend could not map fall back to info.
 const FINISH_REASON_TONES: Record<string, MessageTone> = {
+	stop: 'success',
+	tool_call: 'success',
 	length: 'warning',
 	content_filter: 'warning',
+	compaction: 'info',
 	error: 'error',
 };
 
@@ -30,7 +34,7 @@ export function getRoleLabel(role?: string): string | undefined {
 }
 
 export function getFinishReasonTone(reason?: string | null): MessageTone {
-	return (reason && FINISH_REASON_TONES[reason.toLowerCase()]) || 'success';
+	return (reason && FINISH_REASON_TONES[reason.toLowerCase()]) || 'info';
 }
 
 /** Parses objects and arrays only; scalars and invalid JSON return undefined. */

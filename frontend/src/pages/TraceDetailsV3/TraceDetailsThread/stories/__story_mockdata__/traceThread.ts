@@ -362,6 +362,7 @@ const ROLES_AND_FINISH_REASONS: ThreadSpanTemplate[] = [
 				'content_filter',
 			),
 			output('assistant', [text('The provider returned an error.')], 'error'),
+			output('assistant', [text('The context was compacted.')], 'compaction'),
 		],
 	},
 ];

@@ -59,7 +59,10 @@ function AIThreadMessage({
 						<div className={styles.roleHeader}>
 							{roleLabel}
 							{isOutput && (
-								<Badge color={tone} testId="ai-message-output-badge">
+								<Badge
+									color={tone === 'info' ? 'robin' : tone}
+									testId="ai-message-output-badge"
+								>
 									Output
 								</Badge>
 							)}

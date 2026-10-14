@@ -117,8 +117,9 @@ export const ToolCallLinkFollowed: Story = {
 
 /**
  * Every role (system and developer collapsed, a message with no role rendered
- * headerless, one with no parts) and every finish reason, `length`,
- * `content_filter` and `error` toned as warnings and errors.
+ * headerless, one with no parts) and every finish reason: `stop` and
+ * `tool_call` green, `length` and `content_filter` amber, `error` red and
+ * `compaction` blue.
  */
 export const RolesAndFinishReasons: Story = {
 	args: { scenario: 'roles-and-finish-reasons' },
