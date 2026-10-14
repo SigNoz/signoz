@@ -3720,6 +3720,14 @@ export interface CloudintegrationtypesGCPConnectionArtifactDTO {
 	 * @type string
 	 */
 	cliCommand: string;
+	/**
+	 * @type string
+	 */
+	createSecretsCommand: string;
+	/**
+	 * @type string
+	 */
+	createServiceAccountCommand: string;
 }
 
 export interface CloudintegrationtypesConnectionArtifactDTO {

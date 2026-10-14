@@ -1965,8 +1965,14 @@ components:
       properties:
         cliCommand:
           type: string
+        createSecretsCommand:
+          type: string
+        createServiceAccountCommand:
+          type: string
       required:
       - cliCommand
+      - createSecretsCommand
+      - createServiceAccountCommand
       type: object
     CloudintegrationtypesGCPConnectionMethod:
       enum:

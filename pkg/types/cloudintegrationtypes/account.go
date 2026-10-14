@@ -392,7 +392,7 @@ func (account *Account) Update(provider CloudProviderType, config *AccountConfig
 	return nil
 }
 
-func (account *Account) ValidateProviderAccountID(providerAccountID string) error {
+func (account *Account) ErrIfInvalidateProviderAccountID(providerAccountID string) error {
 	if account.Provider != CloudProviderTypeGCP || account.Config.GCP.ConnectionMethod != GCPConnectionMethodAgent {
 		return nil
 	}

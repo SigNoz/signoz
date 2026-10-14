@@ -150,7 +150,29 @@ def test_create_gcp_agent_account_connection_command(
         "gcp",
         config={"gcp": {"connectionMethod": "agent", "deploymentProjectId": " signoz-agent-project ", "deploymentRegion": "us-central1"}},
     )
-    command = account["connectionArtifact"]["gcp"]["cliCommand"]
+    artifact = account["connectionArtifact"]["gcp"]
+    command = artifact["cliCommand"]
+    service_account_command = artifact["createServiceAccountCommand"]
+    secrets_command = artifact["createSecretsCommand"]
+
+    assert "gcloud iam service-accounts create 'signoz-integration-bootstrap'" in service_account_command
+    assert "executor_email='signoz-integration-bootstrap@signoz-agent-project.iam.gserviceaccount.com'" in service_account_command
+    assert "gcloud config get-value account" in service_account_command
+    assert "roles/config.agent" in service_account_command
+    assert "--role=roles/secretmanager.admin" in service_account_command
+
+    for prerequisite_command in (service_account_command, secrets_command):
+        assert "project_id='signoz-agent-project'" in prerequisite_command
+        assert "api_secret_id='signoz-integration-credentials-api-key'" in prerequisite_command
+        assert "ingestion_secret_id='signoz-integration-credentials-ingestion-key'" in prerequisite_command
+
+    assert "region='us-central1'" in secrets_command
+    assert 'gcloud secrets create "$api_secret_id"' in secrets_command
+    assert 'gcloud secrets create "$ingestion_secret_id"' in secrets_command
+    assert "--replication-policy=user-managed" in secrets_command
+    assert "--labels=managed-by=signoz-integration" in secrets_command
+    assert "printf '%s' 'test-api-key-789'" in secrets_command
+    assert "printf '%s' 'test-ingestion-key-123456'" in secrets_command
 
     # Capture the expanded arguments with a shell function instead of deploying GCP resources.
     script = "gcloud() { printf '%s\\0' \"$@\"; }\n" + command

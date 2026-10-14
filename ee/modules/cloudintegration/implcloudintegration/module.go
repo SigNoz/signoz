@@ -2,7 +2,6 @@ package implcloudintegration
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -187,7 +186,7 @@ func (module *module) AgentCheckIn(ctx context.Context, orgID valuer.UUID, provi
 		return module.checkInRemovedAccount(ctx, account, req.ProviderAccountID, syncState)
 	}
 
-	if err := account.ValidateProviderAccountID(req.ProviderAccountID); err != nil {
+	if err := account.ErrIfInvalidateProviderAccountID(req.ProviderAccountID); err != nil {
 		return nil, err
 	}
 
@@ -199,8 +198,11 @@ func (module *module) AgentCheckIn(ctx context.Context, orgID valuer.UUID, provi
 	// If a different integration is already connected to this provider account ID, reject the check-in.
 	// Allow re-check-in from the same integration (e.g. agent restarting).
 	if connectedAccount != nil && connectedAccount.ID != req.CloudIntegrationID {
-		errMessage := fmt.Sprintf("provider account id %s is already connected to cloud integration id %s", req.ProviderAccountID, connectedAccount.ID)
-		return nil, errors.New(errors.TypeAlreadyExists, cloudintegrationtypes.ErrCodeCloudIntegrationAlreadyConnected, errMessage)
+		return nil, errors.Newf(
+			errors.TypeAlreadyExists,
+			cloudintegrationtypes.ErrCodeCloudIntegrationAlreadyConnected,
+			"provider account id %s is already connected to cloud integration id %s", req.ProviderAccountID, connectedAccount.ID,
+		)
 	}
 
 	account.UpdateAgentReport(&req.ProviderAccountID, cloudintegrationtypes.NewAgentReport(req.Data, syncState))
@@ -482,8 +484,6 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 	if err == nil {
 		stats["cloudintegration.gcp.connectedaccounts.count"] = gcpAccountsCount
 	}
-
-	// NOTE: not adding stats for services for now.
 
 	return stats, nil
 }
