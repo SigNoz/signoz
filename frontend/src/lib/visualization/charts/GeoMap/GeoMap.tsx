@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { useResizeObserver } from 'hooks/useDimensions';
 
@@ -25,6 +25,8 @@ export default function GeoMap({
 	colors,
 	bubbleRadius,
 	formatValue,
+	valueLabel,
+	sizeMetric,
 	isDarkMode,
 	onSelect,
 	renderTooltipFooter,
@@ -48,11 +50,11 @@ export default function GeoMap({
 		detectBounds: true,
 	});
 
-	const { resolver, valueByCode, ranks, radiusFor, fillFor } = useGeoMapScales(
-		data,
-		colors,
-		bubbleRadius,
-		isDarkMode,
+	const { resolver, valueByCode, ranks, sizeByCode, radiusFor, fillFor } =
+		useGeoMapScales(data, colors, bubbleRadius, isDarkMode, Boolean(sizeMetric));
+	const maxSize = useMemo(
+		() => Math.max(0, ...sizeByCode.values()),
+		[sizeByCode],
 	);
 	const { shapes, status, retry } = useGeoMapShapes(view, country);
 	const handle = useOlMap(canvasRef);
@@ -100,7 +102,9 @@ export default function GeoMap({
 		layer,
 		palette,
 		fillFor,
+		sizeByCode,
 		radiusFor,
+		hasSizeMetric: Boolean(sizeMetric),
 		hoveredCode: hovered?.code ?? null,
 	});
 	const zoom = useOlView(handle, view, country, data, width, height);
@@ -151,6 +155,8 @@ export default function GeoMap({
 							rank={ranks.get(hovered.code)}
 							total={data.length}
 							formatValue={formatValue}
+							valueLabel={valueLabel}
+							sizeMetric={sizeMetric}
 							footer={renderTooltipFooter?.()}
 						/>
 					</TooltipInPortal>
@@ -161,6 +167,15 @@ export default function GeoMap({
 				scale={colors.scale}
 				formatValue={formatValue}
 				markerValue={hovered?.value ?? null}
+				valueLabel={valueLabel}
+				size={
+					sizeMetric && {
+						label: sizeMetric.label,
+						maxSize,
+						radiusFor,
+						formatValue: sizeMetric.formatValue,
+					}
+				}
 			/>
 		</div>
 	);

@@ -36,7 +36,7 @@ export function prepareFixture(
 			return;
 		}
 		seen.add(code);
-		data.push({ code, value: row.value, raw: String(row.raw) });
+		data.push({ code, value: row.value, raw: String(row.raw), size: row.size });
 	});
 	return { data, unmapped, duplicates };
 }

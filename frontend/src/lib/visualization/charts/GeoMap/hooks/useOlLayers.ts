@@ -15,7 +15,11 @@ interface UseOlLayersArgs {
 	layer: GeoMapLayer;
 	palette: OlPalette | null;
 	fillFor: (code: string) => string | null;
-	radiusFor: (value: number) => number;
+	/** What each bubble is sized by; codes without one draw no bubble. */
+	sizeByCode: Map<string, number>;
+	radiusFor: (size: number) => number;
+	/** Adds neutral, size-only bubbles over the shaded regions. */
+	hasSizeMetric?: boolean;
 	hoveredCode: string | null;
 }
 
@@ -27,16 +31,15 @@ export function useOlLayers({
 	layer,
 	palette,
 	fillFor,
+	sizeByCode,
 	radiusFor,
+	hasSizeMetric = false,
 	hoveredCode,
 }: UseOlLayersArgs): void {
 	// Cached styles bake in the palette, so a theme change starts a fresh cache.
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	const styles = useMemo(() => createStyleCache(), [palette]);
-	const valueByCode = useMemo(
-		() => new Map(data.map((datum) => [datum.code, datum.value])),
-		[data],
-	);
+	const showBubbles = layer === 'bubbles' || hasSizeMetric;
 
 	useEffect(() => {
 		if (!handle || !shapes) {
@@ -56,10 +59,15 @@ export function useOlLayers({
 		}
 		const source = handle.layers.bubbles.getSource();
 		source?.clear();
-		if (layer === 'bubbles') {
-			source?.addFeatures(toBubbleFeatures(data, shapes));
+		if (showBubbles) {
+			source?.addFeatures(
+				toBubbleFeatures(
+					data.filter((datum) => sizeByCode.has(datum.code)),
+					shapes,
+				),
+			);
 		}
-	}, [handle, shapes, data, layer]);
+	}, [handle, shapes, data, showBubbles, sizeByCode]);
 
 	useEffect(() => {
 		if (!handle || !palette) {
@@ -74,12 +82,11 @@ export function useOlLayers({
 		});
 		layers.bubbles.setStyle((feature): Style => {
 			const code = feature.get('code') as string;
-			const value = valueByCode.get(code) ?? 0;
-			return styles.bubble(
-				fillFor(code) ?? palette.noData,
-				radiusFor(value),
-				palette,
-			);
+			const radius = radiusFor(sizeByCode.get(code) ?? 0);
+			if (layer === 'regions') {
+				return styles.neutralBubble(radius, palette);
+			}
+			return styles.bubble(fillFor(code) ?? palette.noData, radius, palette);
 		});
 		layers.hover.setStyle(
 			new Style({
@@ -87,7 +94,7 @@ export function useOlLayers({
 				fill: new Fill({ color: 'transparent' }),
 			}),
 		);
-	}, [handle, palette, layer, fillFor, radiusFor, valueByCode, styles]);
+	}, [handle, palette, layer, fillFor, radiusFor, sizeByCode, styles]);
 
 	useEffect(() => {
 		if (!handle) {

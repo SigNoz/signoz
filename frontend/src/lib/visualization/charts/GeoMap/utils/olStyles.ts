@@ -30,9 +30,12 @@ function withAlpha(color: string, alpha: number): number[] {
 export function createStyleCache(): {
 	shape: (fill: string, palette: OlPalette) => Style;
 	bubble: (fill: string, radius: number, palette: OlPalette) => Style;
+	/** A size-only bubble over shaded shapes: no ramp colour, so colour keeps one meaning. */
+	neutralBubble: (radius: number, palette: OlPalette) => Style;
 } {
 	const shapes = new Map<string, Style>();
 	const bubbles = new Map<string, Style>();
+	const neutralBubbles = new Map<string, Style>();
 	return {
 		shape: (fill, palette): Style => {
 			let style = shapes.get(fill);
@@ -58,6 +61,22 @@ export function createStyleCache(): {
 					zIndex: -radius,
 				});
 				bubbles.set(key, style);
+			}
+			return style;
+		},
+		neutralBubble: (radius, palette): Style => {
+			const key = radius.toFixed(1);
+			let style = neutralBubbles.get(key);
+			if (!style) {
+				style = new Style({
+					image: new CircleStyle({
+						radius,
+						fill: new Fill({ color: withAlpha(palette.outline, 0.2) }),
+						stroke: new Stroke({ color: palette.outline, width: 1.5 }),
+					}),
+					zIndex: -radius,
+				});
+				neutralBubbles.set(key, style);
 			}
 			return style;
 		},

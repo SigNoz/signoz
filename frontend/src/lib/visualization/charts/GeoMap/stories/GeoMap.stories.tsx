@@ -34,6 +34,7 @@ const meta = {
 			control: 'radio',
 			options: [
 				'errorRate',
+				'errorRateAndRequests',
 				'requests',
 				'europeLatency',
 				'usStates',
@@ -120,6 +121,34 @@ export const ZoomControls: Story = {
 			expect(map.getByTestId('geo-map-zoom-out')).toBeDisabled(),
 		);
 	},
+};
+
+/**
+ * Two metrics: countries shaded by error rate, with neutral bubbles sized by
+ * requests, so a dark country with a big bubble is the one to fix first.
+ */
+export const ErrorRateSizedByRequests: Story = {
+	args: { dataset: 'errorRateAndRequests' },
+	tags: ['play'],
+	play: async ({ canvasElement }): Promise<void> => {
+		await waitFor(() =>
+			expect(
+				within(canvasElement).getByTestId('geo-map-size-legend'),
+			).toHaveTextContent('Requests'),
+		);
+		await hoverUntilTooltip(canvasElement);
+		await expect(screen.getByTestId('geo-map-tooltip')).toHaveTextContent(
+			'Error rate',
+		);
+		await expect(screen.getByTestId('geo-map-tooltip-size')).toHaveTextContent(
+			'Requests',
+		);
+	},
+};
+
+/** The same two metrics as bubbles alone: colour by error rate, size by requests. */
+export const BubblesColouredAndSized: Story = {
+	args: { dataset: 'errorRateAndRequests', layer: 'bubbles' },
 };
 
 /** Requests are dominated by the US; the default log scale keeps the rest readable. */

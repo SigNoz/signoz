@@ -71,6 +71,14 @@ export default function GeoMapPlayground({
 		[fixture, subdivisions],
 	);
 	const formatValue = useMemo(() => formatterFor(fixture.unit), [fixture.unit]);
+	const sizeMetric = useMemo(
+		() =>
+			fixture.sizeMetric && {
+				label: fixture.sizeMetric.label,
+				formatValue: formatterFor(fixture.sizeMetric.unit),
+			},
+		[fixture.sizeMetric],
+	);
 	const colors = useMemo(
 		() => ({ palette, scale, steps, min: null, max: null }),
 		[palette, scale, steps],
@@ -122,6 +130,8 @@ export default function GeoMapPlayground({
 						colors={colors}
 						bubbleRadius={bubbleRadius}
 						formatValue={formatValue}
+						valueLabel={fixture.valueLabel}
+						sizeMetric={sizeMetric}
 						isDarkMode={isDarkMode}
 						onSelect={setSelection}
 						renderTooltipFooter={renderTooltipFooter}

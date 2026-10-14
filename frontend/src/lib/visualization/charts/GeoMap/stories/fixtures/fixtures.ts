@@ -54,6 +54,15 @@ function requests(): FixtureRow[] {
 	];
 }
 
+/** Error rate sized by traffic: the same countries' rates and request counts. */
+function errorRateAndRequests(): FixtureRow[] {
+	const requestsByRaw = new Map(requests().map((row) => [row.raw, row.value]));
+	return errorRate().map((row) => ({
+		...row,
+		size: requestsByRaw.get(row.raw) ?? null,
+	}));
+}
+
 function europeLatency(): FixtureRow[] {
 	const random = seededRandom(23);
 	const europe = COUNTRIES.filter((country) =>
@@ -78,6 +87,13 @@ export const FIXTURES: Record<FixtureDataset, Fixture> = {
 		title: 'Error rate by country',
 		unit: 'percent',
 		rows: errorRate(),
+	},
+	errorRateAndRequests: {
+		title: 'Error rate by country, sized by requests',
+		unit: 'percent',
+		rows: errorRateAndRequests(),
+		valueLabel: 'Error rate',
+		sizeMetric: { label: 'Requests', unit: 'count' },
 	},
 	requests: { title: 'Requests by country', unit: 'count', rows: requests() },
 	europeLatency: {

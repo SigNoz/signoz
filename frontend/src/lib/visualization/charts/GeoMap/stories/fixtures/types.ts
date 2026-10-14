@@ -2,6 +2,7 @@ import { SubdivisionCountry } from '../../types';
 
 export type FixtureDataset =
 	| 'errorRate'
+	| 'errorRateAndRequests'
 	| 'requests'
 	| 'europeLatency'
 	| 'usStates'
@@ -13,12 +14,23 @@ export interface FixtureRow {
 	/** State datasets only: the separate country column GeoIP emits beside the region. */
 	country?: string | null;
 	value: number;
+	/** Two-metric datasets only: the value that sizes the bubble. */
+	size?: number | null;
+}
+
+/** A dataset's second metric, drawn as bubble size. */
+export interface FixtureSizeMetric {
+	label: string;
+	unit: 'percent' | 'count' | 'ms';
 }
 
 export interface Fixture {
 	title: string;
 	unit: 'percent' | 'count' | 'ms';
 	rows: FixtureRow[];
+	/** Two-metric datasets only: names the colour metric. */
+	valueLabel?: string;
+	sizeMetric?: FixtureSizeMetric;
 	/** State datasets only: whose states the rows name; drawn with the country view. */
 	country?: SubdivisionCountry;
 }

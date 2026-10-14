@@ -6,8 +6,10 @@ import {
 
 import { GeoMapDatum } from '../../types';
 import {
+	bubbleSizeOf,
 	createGeoMapColorResolver,
 	createRadiusScale,
+	getSizeLegendSteps,
 	rankData,
 } from '../scales';
 
@@ -15,7 +17,7 @@ const data = (...values: number[]): GeoMapDatum[] =>
 	values.map((value, index) => ({ code: `C${index}`, value, raw: `C${index}` }));
 
 describe('createRadiusScale', () => {
-	const radius = createRadiusScale(data(0, 25, 100), [3, 30]);
+	const radius = createRadiusScale([0, 25, 100], [3, 30]);
 
 	it('floors the smallest value at the minimum radius', () => {
 		expect(radius(0)).toBe(3);
@@ -35,7 +37,41 @@ describe('createRadiusScale', () => {
 	});
 
 	it('keeps every bubble at the minimum when all values are zero', () => {
-		expect(createRadiusScale(data(0, 0), [3, 30])(0)).toBe(3);
+		expect(createRadiusScale([0, 0], [3, 30])(0)).toBe(3);
+	});
+});
+
+describe('bubbleSizeOf', () => {
+	const datum = (size?: number | null): GeoMapDatum => ({
+		code: 'DE',
+		value: 4,
+		raw: 'DE',
+		size,
+	});
+
+	it('sizes by the value when the map has no size metric', () => {
+		expect(bubbleSizeOf(datum(900), false)).toBe(4);
+	});
+
+	it('sizes by the size metric when the map has one', () => {
+		expect(bubbleSizeOf(datum(900), true)).toBe(900);
+	});
+
+	it.each([[undefined], [null], [0], [-5], [Number.NaN]])(
+		'draws no bubble for a size of %p',
+		(size) => {
+			expect(bubbleSizeOf(datum(size), true)).toBeNull();
+		},
+	);
+});
+
+describe('getSizeLegendSteps', () => {
+	it('references the largest size and a quarter of it', () => {
+		expect(getSizeLegendSteps(1000)).toStrictEqual([1000, 250]);
+	});
+
+	it('has nothing to show without a positive size', () => {
+		expect(getSizeLegendSteps(0)).toStrictEqual([]);
 	});
 });
 
