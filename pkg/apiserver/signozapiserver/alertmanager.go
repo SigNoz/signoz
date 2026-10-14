@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
+	"github.com/SigNoz/signoz/pkg/ruler/rulerauthz"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -386,15 +387,31 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusCreated,
 			ErrorStatusCodes:    []int{http.StatusBadRequest},
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRoutePolicy.Scope(coretypes.VerbCreate)}),
+			SecuritySchemes: newScopedSecuritySchemes([]string{
+				coretypes.ResourceMetaResourceRoutePolicy.Scope(coretypes.VerbCreate),
+				coretypes.ResourceMetaResourceRoutePolicy.Scope(coretypes.VerbAttach),
+				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbAttach),
+			}),
 		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceRoutePolicy,
-			Verb:     coretypes.VerbCreate,
-			Category: coretypes.ActionCategoryConfigurationChange,
-			ID:       coretypes.ResponseJSONPath("data.id"),
-			Selector: coretypes.WildcardSelector,
-		}),
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceRoutePolicy,
+				Verb:     coretypes.VerbCreate,
+				Category: coretypes.ActionCategoryConfigurationChange,
+				ID:       coretypes.ResponseJSONPath("data.id"),
+				Selector: coretypes.WildcardSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourceRoutePolicy,
+				SourceIDs:      coretypes.OneID(coretypes.ResponseJSONPath("data.id")),
+				SourceSelector: coretypes.WildcardSelector,
+				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
+				TargetIDs:      rulerauthz.NewCreateRoutePolicyChannelAttachExtractor(provider.alertmanagerService),
+				TargetSelector: coretypes.IDSelector,
+			},
+		),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -412,15 +429,43 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRoutePolicy.Scope(coretypes.VerbUpdate)}),
+			SecuritySchemes: newScopedSecuritySchemes([]string{
+				coretypes.ResourceMetaResourceRoutePolicy.Scope(coretypes.VerbUpdate),
+				coretypes.ResourceMetaResourceRoutePolicy.Scope(coretypes.VerbAttach),
+				coretypes.ResourceMetaResourceRoutePolicy.Scope(coretypes.VerbDetach),
+				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbAttach),
+				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbDetach),
+			}),
 		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceRoutePolicy,
-			Verb:     coretypes.VerbUpdate,
-			Category: coretypes.ActionCategoryConfigurationChange,
-			ID:       coretypes.PathParam("id"),
-			Selector: coretypes.IDSelector,
-		}),
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceRoutePolicy,
+				Verb:     coretypes.VerbUpdate,
+				Category: coretypes.ActionCategoryConfigurationChange,
+				ID:       coretypes.PathParam("id"),
+				Selector: coretypes.IDSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourceRoutePolicy,
+				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
+				SourceSelector: coretypes.IDSelector,
+				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
+				TargetIDs:      rulerauthz.NewUpdateRoutePolicyChannelAttachExtractor(provider.alertmanagerService),
+				TargetSelector: coretypes.IDSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbDetach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourceRoutePolicy,
+				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
+				SourceSelector: coretypes.IDSelector,
+				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
+				TargetIDs:      rulerauthz.NewUpdateRoutePolicyChannelDetachExtractor(provider.alertmanagerService),
+				TargetSelector: coretypes.IDSelector,
+			},
+		),
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}

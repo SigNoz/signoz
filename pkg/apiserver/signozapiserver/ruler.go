@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
+	"github.com/SigNoz/signoz/pkg/ruler/rulerauthz"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
@@ -97,15 +98,31 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusCreated,
 			ErrorStatusCodes:    []int{http.StatusBadRequest},
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbCreate)}),
+			SecuritySchemes: newScopedSecuritySchemes([]string{
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbCreate),
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbAttach),
+				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbAttach),
+			}),
 		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceRule,
-			Verb:     coretypes.VerbCreate,
-			Category: coretypes.ActionCategoryConfigurationChange,
-			ID:       coretypes.ResponseJSONPath("data.id"),
-			Selector: coretypes.WildcardSelector,
-		}),
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceRule,
+				Verb:     coretypes.VerbCreate,
+				Category: coretypes.ActionCategoryConfigurationChange,
+				ID:       coretypes.ResponseJSONPath("data.id"),
+				Selector: coretypes.WildcardSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourceRule,
+				SourceIDs:      coretypes.OneID(coretypes.ResponseJSONPath("data.id")),
+				SourceSelector: coretypes.WildcardSelector,
+				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
+				TargetIDs:      rulerauthz.NewCreateChannelAttachExtractor(provider.alertmanagerService),
+				TargetSelector: coretypes.IDSelector,
+			},
+		),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -122,15 +139,43 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 			RequestExamples:    postableRuleExamples(),
 			SuccessStatusCode:  http.StatusNoContent,
 			ErrorStatusCodes:   []int{http.StatusBadRequest, http.StatusNotFound},
-			SecuritySchemes:    newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbUpdate)}),
+			SecuritySchemes: newScopedSecuritySchemes([]string{
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbUpdate),
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbAttach),
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbDetach),
+				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbAttach),
+				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbDetach),
+			}),
 		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceRule,
-			Verb:     coretypes.VerbUpdate,
-			Category: coretypes.ActionCategoryConfigurationChange,
-			ID:       coretypes.PathParam("id"),
-			Selector: coretypes.IDSelector,
-		}),
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceRule,
+				Verb:     coretypes.VerbUpdate,
+				Category: coretypes.ActionCategoryConfigurationChange,
+				ID:       coretypes.PathParam("id"),
+				Selector: coretypes.IDSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourceRule,
+				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
+				SourceSelector: coretypes.IDSelector,
+				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
+				TargetIDs:      rulerauthz.NewReplaceChannelAttachExtractor(provider.alertmanagerService, provider.rulerService),
+				TargetSelector: coretypes.IDSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbDetach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourceRule,
+				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
+				SourceSelector: coretypes.IDSelector,
+				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
+				TargetIDs:      rulerauthz.NewReplaceChannelDetachExtractor(provider.alertmanagerService, provider.rulerService),
+				TargetSelector: coretypes.IDSelector,
+			},
+		),
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
@@ -171,15 +216,43 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbUpdate)}),
+			SecuritySchemes: newScopedSecuritySchemes([]string{
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbUpdate),
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbAttach),
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbDetach),
+				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbAttach),
+				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbDetach),
+			}),
 		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceRule,
-			Verb:     coretypes.VerbUpdate,
-			Category: coretypes.ActionCategoryConfigurationChange,
-			ID:       coretypes.PathParam("id"),
-			Selector: coretypes.IDSelector,
-		}),
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceRule,
+				Verb:     coretypes.VerbUpdate,
+				Category: coretypes.ActionCategoryConfigurationChange,
+				ID:       coretypes.PathParam("id"),
+				Selector: coretypes.IDSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourceRule,
+				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
+				SourceSelector: coretypes.IDSelector,
+				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
+				TargetIDs:      rulerauthz.NewPatchChannelAttachExtractor(provider.alertmanagerService, provider.rulerService),
+				TargetSelector: coretypes.IDSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbDetach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourceRule,
+				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
+				SourceSelector: coretypes.IDSelector,
+				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
+				TargetIDs:      rulerauthz.NewPatchChannelDetachExtractor(provider.alertmanagerService, provider.rulerService),
+				TargetSelector: coretypes.IDSelector,
+			},
+		),
 	)).Methods(http.MethodPatch).GetError(); err != nil {
 		return err
 	}
@@ -198,14 +271,29 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest},
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbCreate)}),
+			SecuritySchemes: newScopedSecuritySchemes([]string{
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbCreate),
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbAttach),
+				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbAttach),
+			}),
 		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceRule,
-			Verb:     coretypes.VerbCreate,
-			Category: coretypes.ActionCategoryConfigurationChange,
-			Selector: coretypes.WildcardSelector,
-		}),
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceRule,
+				Verb:     coretypes.VerbCreate,
+				Category: coretypes.ActionCategoryConfigurationChange,
+				Selector: coretypes.WildcardSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourceRule,
+				SourceSelector: coretypes.WildcardSelector,
+				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
+				TargetIDs:      rulerauthz.NewCreateChannelAttachExtractor(provider.alertmanagerService),
+				TargetSelector: coretypes.IDSelector,
+			},
+		),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -364,15 +452,31 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusCreated,
 			ErrorStatusCodes:    []int{http.StatusBadRequest},
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourcePlannedMaintenance.Scope(coretypes.VerbCreate)}),
+			SecuritySchemes: newScopedSecuritySchemes([]string{
+				coretypes.ResourceMetaResourcePlannedMaintenance.Scope(coretypes.VerbCreate),
+				coretypes.ResourceMetaResourcePlannedMaintenance.Scope(coretypes.VerbAttach),
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbAttach),
+			}),
 		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourcePlannedMaintenance,
-			Verb:     coretypes.VerbCreate,
-			Category: coretypes.ActionCategoryConfigurationChange,
-			ID:       coretypes.ResponseJSONPath("data.id"),
-			Selector: coretypes.WildcardSelector,
-		}),
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourcePlannedMaintenance,
+				Verb:     coretypes.VerbCreate,
+				Category: coretypes.ActionCategoryConfigurationChange,
+				ID:       coretypes.ResponseJSONPath("data.id"),
+				Selector: coretypes.WildcardSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourcePlannedMaintenance,
+				SourceIDs:      coretypes.OneID(coretypes.ResponseJSONPath("data.id")),
+				SourceSelector: coretypes.WildcardSelector,
+				TargetResource: coretypes.ResourceMetaResourceRule,
+				TargetIDs:      rulerauthz.DowntimeRuleIDsExtractor,
+				TargetSelector: coretypes.IDSelector,
+			},
+		),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -388,15 +492,43 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 			RequestContentType: "application/json",
 			SuccessStatusCode:  http.StatusNoContent,
 			ErrorStatusCodes:   []int{http.StatusBadRequest, http.StatusNotFound},
-			SecuritySchemes:    newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourcePlannedMaintenance.Scope(coretypes.VerbUpdate)}),
+			SecuritySchemes: newScopedSecuritySchemes([]string{
+				coretypes.ResourceMetaResourcePlannedMaintenance.Scope(coretypes.VerbUpdate),
+				coretypes.ResourceMetaResourcePlannedMaintenance.Scope(coretypes.VerbAttach),
+				coretypes.ResourceMetaResourcePlannedMaintenance.Scope(coretypes.VerbDetach),
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbAttach),
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbDetach),
+			}),
 		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourcePlannedMaintenance,
-			Verb:     coretypes.VerbUpdate,
-			Category: coretypes.ActionCategoryConfigurationChange,
-			ID:       coretypes.PathParam("id"),
-			Selector: coretypes.IDSelector,
-		}),
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourcePlannedMaintenance,
+				Verb:     coretypes.VerbUpdate,
+				Category: coretypes.ActionCategoryConfigurationChange,
+				ID:       coretypes.PathParam("id"),
+				Selector: coretypes.IDSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourcePlannedMaintenance,
+				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
+				SourceSelector: coretypes.IDSelector,
+				TargetResource: coretypes.ResourceMetaResourceRule,
+				TargetIDs:      rulerauthz.NewDowntimeRuleAttachExtractor(provider.rulerService),
+				TargetSelector: coretypes.IDSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbDetach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourcePlannedMaintenance,
+				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
+				SourceSelector: coretypes.IDSelector,
+				TargetResource: coretypes.ResourceMetaResourceRule,
+				TargetIDs:      rulerauthz.NewDowntimeRuleDetachExtractor(provider.rulerService),
+				TargetSelector: coretypes.IDSelector,
+			},
+		),
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}

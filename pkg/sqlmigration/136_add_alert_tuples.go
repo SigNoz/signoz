@@ -59,10 +59,17 @@ func (migration *addAlertTuples) Up(ctx context.Context, db *bun.DB) error {
 	// never had these written, only new orgs get them from the registry at bootstrap.
 	writeVerbs := []string{"create", "read", "update", "delete", "list"}
 	readVerbs := []string{"read", "list"}
+	linkVerbs := []string{"attach", "detach"}
 
-	tuples := make([]migrationTuple, 0, 33)
+	tuples := make([]migrationTuple, 0, 47)
 	for _, objectName := range []string{"rule", "planned-maintenance"} {
 		for _, verb := range writeVerbs {
+			tuples = append(tuples,
+				migrationTuple{authtypes.SigNozAdminRoleName, "metaresource", objectName, verb},
+				migrationTuple{authtypes.SigNozEditorRoleName, "metaresource", objectName, verb},
+			)
+		}
+		for _, verb := range linkVerbs {
 			tuples = append(tuples,
 				migrationTuple{authtypes.SigNozAdminRoleName, "metaresource", objectName, verb},
 				migrationTuple{authtypes.SigNozEditorRoleName, "metaresource", objectName, verb},
@@ -75,10 +82,21 @@ func (migration *addAlertTuples) Up(ctx context.Context, db *bun.DB) error {
 	for _, verb := range writeVerbs {
 		tuples = append(tuples, migrationTuple{authtypes.SigNozAdminRoleName, "metaresource", "route-policy", verb})
 	}
+	for _, verb := range linkVerbs {
+		tuples = append(tuples, migrationTuple{authtypes.SigNozAdminRoleName, "metaresource", "route-policy", verb})
+	}
 	for _, verb := range readVerbs {
 		tuples = append(tuples,
 			migrationTuple{authtypes.SigNozEditorRoleName, "metaresource", "route-policy", verb},
 			migrationTuple{authtypes.SigNozViewerRoleName, "metaresource", "route-policy", verb},
+		)
+	}
+	// 129 wrote notification-channel CRUD only; a rule or route policy naming a
+	// channel now needs attach, which editors must hold without channel writes.
+	for _, verb := range linkVerbs {
+		tuples = append(tuples,
+			migrationTuple{authtypes.SigNozAdminRoleName, "metaresource", "notification-channel", verb},
+			migrationTuple{authtypes.SigNozEditorRoleName, "metaresource", "notification-channel", verb},
 		)
 	}
 

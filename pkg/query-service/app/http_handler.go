@@ -74,6 +74,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/ruler"
+	"github.com/SigNoz/signoz/pkg/ruler/rulerauthz"
 	"github.com/SigNoz/signoz/pkg/version"
 )
 
@@ -440,15 +441,31 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 			Description:       "Deprecated legacy endpoint. Use CreateRule.",
 			SuccessStatusCode: http.StatusOK,
 			Deprecated:        true,
-			SecuritySchemes:   newScopedSecuritySchemes(coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbCreate)),
+			SecuritySchemes: newScopedSecuritySchemes(
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbCreate),
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbAttach),
+				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbAttach),
+			),
 		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceRule,
-			Verb:     coretypes.VerbCreate,
-			Category: coretypes.ActionCategoryConfigurationChange,
-			ID:       coretypes.ResponseJSONPath("data.id"),
-			Selector: coretypes.WildcardSelector,
-		}),
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceRule,
+				Verb:     coretypes.VerbCreate,
+				Category: coretypes.ActionCategoryConfigurationChange,
+				ID:       coretypes.ResponseJSONPath("data.id"),
+				Selector: coretypes.WildcardSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourceRule,
+				SourceIDs:      coretypes.OneID(coretypes.ResponseJSONPath("data.id")),
+				SourceSelector: coretypes.WildcardSelector,
+				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
+				TargetIDs:      rulerauthz.NewCreateChannelAttachExtractor(aH.Signoz.Alertmanager),
+				TargetSelector: coretypes.IDSelector,
+			},
+		),
 	)).Methods(http.MethodPost)
 	router.Handle("/api/v1/rules/{id}", handler.New(
 		am.CheckResources(aH.editRule, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
@@ -459,15 +476,43 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 			Description:       "Deprecated legacy endpoint. Use UpdateRuleByID.",
 			SuccessStatusCode: http.StatusOK,
 			Deprecated:        true,
-			SecuritySchemes:   newScopedSecuritySchemes(coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbUpdate)),
+			SecuritySchemes: newScopedSecuritySchemes(
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbUpdate),
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbAttach),
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbDetach),
+				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbAttach),
+				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbDetach),
+			),
 		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceRule,
-			Verb:     coretypes.VerbUpdate,
-			Category: coretypes.ActionCategoryConfigurationChange,
-			ID:       coretypes.PathParam("id"),
-			Selector: coretypes.IDSelector,
-		}),
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceRule,
+				Verb:     coretypes.VerbUpdate,
+				Category: coretypes.ActionCategoryConfigurationChange,
+				ID:       coretypes.PathParam("id"),
+				Selector: coretypes.IDSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourceRule,
+				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
+				SourceSelector: coretypes.IDSelector,
+				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
+				TargetIDs:      rulerauthz.NewReplaceChannelAttachExtractor(aH.Signoz.Alertmanager, aH.ruleManager),
+				TargetSelector: coretypes.IDSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbDetach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourceRule,
+				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
+				SourceSelector: coretypes.IDSelector,
+				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
+				TargetIDs:      rulerauthz.NewReplaceChannelDetachExtractor(aH.Signoz.Alertmanager, aH.ruleManager),
+				TargetSelector: coretypes.IDSelector,
+			},
+		),
 	)).Methods(http.MethodPut)
 	router.Handle("/api/v1/rules/{id}", handler.New(
 		am.CheckResources(aH.deleteRule, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
@@ -497,15 +542,43 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 			Description:       "Deprecated legacy endpoint. Use PatchRuleByID.",
 			SuccessStatusCode: http.StatusOK,
 			Deprecated:        true,
-			SecuritySchemes:   newScopedSecuritySchemes(coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbUpdate)),
+			SecuritySchemes: newScopedSecuritySchemes(
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbUpdate),
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbAttach),
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbDetach),
+				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbAttach),
+				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbDetach),
+			),
 		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceRule,
-			Verb:     coretypes.VerbUpdate,
-			Category: coretypes.ActionCategoryConfigurationChange,
-			ID:       coretypes.PathParam("id"),
-			Selector: coretypes.IDSelector,
-		}),
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceRule,
+				Verb:     coretypes.VerbUpdate,
+				Category: coretypes.ActionCategoryConfigurationChange,
+				ID:       coretypes.PathParam("id"),
+				Selector: coretypes.IDSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourceRule,
+				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
+				SourceSelector: coretypes.IDSelector,
+				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
+				TargetIDs:      rulerauthz.NewPatchChannelAttachExtractor(aH.Signoz.Alertmanager, aH.ruleManager),
+				TargetSelector: coretypes.IDSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbDetach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourceRule,
+				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
+				SourceSelector: coretypes.IDSelector,
+				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
+				TargetIDs:      rulerauthz.NewPatchChannelDetachExtractor(aH.Signoz.Alertmanager, aH.ruleManager),
+				TargetSelector: coretypes.IDSelector,
+			},
+		),
 	)).Methods(http.MethodPatch)
 	router.Handle("/api/v1/testRule", handler.New(
 		am.CheckResources(aH.testRule, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
@@ -516,14 +589,29 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 			Description:       "Deprecated legacy endpoint. Use TestRule.",
 			SuccessStatusCode: http.StatusOK,
 			Deprecated:        true,
-			SecuritySchemes:   newScopedSecuritySchemes(coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbCreate)),
+			SecuritySchemes: newScopedSecuritySchemes(
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbCreate),
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbAttach),
+				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbAttach),
+			),
 		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceRule,
-			Verb:     coretypes.VerbCreate,
-			Category: coretypes.ActionCategoryConfigurationChange,
-			Selector: coretypes.WildcardSelector,
-		}),
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceRule,
+				Verb:     coretypes.VerbCreate,
+				Category: coretypes.ActionCategoryConfigurationChange,
+				Selector: coretypes.WildcardSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourceRule,
+				SourceSelector: coretypes.WildcardSelector,
+				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
+				TargetIDs:      rulerauthz.NewCreateChannelAttachExtractor(aH.Signoz.Alertmanager),
+				TargetSelector: coretypes.IDSelector,
+			},
+		),
 	)).Methods(http.MethodPost)
 	router.Handle("/api/v1/rules/{id}/history/stats", handler.New(
 		am.CheckResources(aH.getRuleStats, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
