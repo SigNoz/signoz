@@ -3,6 +3,7 @@ import type { ColorRampResolver } from 'lib/visualization/colorRamp/colorScale';
 
 import { GeoMapColors, GeoMapDatum } from '../types';
 import {
+	bubbleSizeOf,
 	createGeoMapColorResolver,
 	createRadiusScale,
 	GeoMapRank,
@@ -13,7 +14,9 @@ interface GeoMapScales {
 	resolver: ColorRampResolver;
 	valueByCode: Map<string, GeoMapDatum>;
 	ranks: Map<string, GeoMapRank>;
-	radiusFor: (value: number) => number;
+	/** What each bubble is sized by; codes without one draw no bubble. */
+	sizeByCode: Map<string, number>;
+	radiusFor: (size: number) => number;
 	fillFor: (code: string) => string | null;
 }
 
@@ -23,6 +26,7 @@ export function useGeoMapScales(
 	colors: GeoMapColors,
 	bubbleRadius: [number, number],
 	isDarkMode: boolean,
+	hasSizeMetric = false,
 ): GeoMapScales {
 	const resolver = useMemo(
 		() => createGeoMapColorResolver(data, colors, isDarkMode),
@@ -33,9 +37,19 @@ export function useGeoMapScales(
 		[data],
 	);
 	const ranks = useMemo(() => rankData(data), [data]);
+	const sizeByCode = useMemo(() => {
+		const sizes = new Map<string, number>();
+		data.forEach((datum) => {
+			const size = bubbleSizeOf(datum, hasSizeMetric);
+			if (size !== null) {
+				sizes.set(datum.code, size);
+			}
+		});
+		return sizes;
+	}, [data, hasSizeMetric]);
 	const radiusFor = useMemo(
-		() => createRadiusScale(data, bubbleRadius),
-		[data, bubbleRadius],
+		() => createRadiusScale([...sizeByCode.values()], bubbleRadius),
+		[sizeByCode, bubbleRadius],
 	);
 	const fillFor = useCallback(
 		(code: string): string | null => {
@@ -44,5 +58,5 @@ export function useGeoMapScales(
 		},
 		[valueByCode, resolver],
 	);
-	return { resolver, valueByCode, ranks, radiusFor, fillFor };
+	return { resolver, valueByCode, ranks, sizeByCode, radiusFor, fillFor };
 }

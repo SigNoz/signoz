@@ -59,6 +59,12 @@
 	flex-shrink: 0;
 }
 
+.metricLabel {
+	font-family: var(--font-mono);
+	font-size: var(--font-size-xs);
+	color: var(--muted-foreground);
+}
+
 .value {
 	font-family: var(--font-mono);
 	font-size: var(--font-size-xs);

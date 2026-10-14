@@ -65,6 +65,14 @@ export interface GeoMapDatum {
 	value: number;
 	/** Group-by value as the query returned it; drilldown filters on this. */
 	raw: string;
+	/** The second metric, read only when the map has a `sizeMetric`. */
+	size?: number | null;
+}
+
+/** A second metric drawn as bubble size, from each datum's `size`. */
+export interface GeoMapSizeMetric {
+	label: string;
+	formatValue: (value: number) => string;
 }
 
 export interface GeoMapColors {
@@ -90,6 +98,13 @@ export interface GeoMapProps {
 	colors: GeoMapColors;
 	bubbleRadius: [number, number];
 	formatValue: (value: number) => string;
+	/** Names the colour metric in the tooltip when a size metric is shown. */
+	valueLabel?: string;
+	/**
+	 * Sizes bubbles by a second metric. On `regions` they are drawn neutral over
+	 * the shaded shapes; on `bubbles` they keep the value's colour.
+	 */
+	sizeMetric?: GeoMapSizeMetric;
 	isDarkMode: boolean;
 	/** Hides the tooltip; the caller opens its drilldown menu from this. */
 	onSelect?: (selection: GeoMapSelection) => void;

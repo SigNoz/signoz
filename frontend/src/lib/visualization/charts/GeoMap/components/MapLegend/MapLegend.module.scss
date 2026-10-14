@@ -1,8 +1,15 @@
 .legend {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: 8px;
 	flex: 0 0 auto;
+}
+
+.metricLabel {
+	font-size: 11px;
+	color: var(--l3-foreground);
+	white-space: nowrap;
 }
 
 .legendBar {

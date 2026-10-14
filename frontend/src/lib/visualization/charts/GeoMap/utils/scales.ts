@@ -16,17 +16,37 @@ export interface GeoMapRank {
 	share: number;
 }
 
-/** Area grows with |value|, floored at `min` so the smallest stays hoverable. */
+/**
+ * What a datum's bubble is sized by: its value, or with a size metric its
+ * `size`, where a missing, non-finite or non-positive size draws no bubble.
+ */
+export function bubbleSizeOf(
+	datum: GeoMapDatum,
+	hasSizeMetric: boolean,
+): number | null {
+	if (!hasSizeMetric) {
+		return datum.value;
+	}
+	const { size } = datum;
+	return size != null && Number.isFinite(size) && size > 0 ? size : null;
+}
+
+/** The size legend's reference values: the largest size, and a quarter of it. */
+export function getSizeLegendSteps(maxSize: number): number[] {
+	return maxSize > 0 ? [maxSize, maxSize / 4] : [];
+}
+
+/** Area grows with |size|, floored at `min` so the smallest stays hoverable. */
 export function createRadiusScale(
-	data: GeoMapDatum[],
+	sizes: number[],
 	[min, max]: [number, number],
-): (value: number) => number {
-	const maxAbs = Math.max(0, ...data.map((datum) => Math.abs(datum.value)));
-	return (value: number): number => {
+): (size: number) => number {
+	const maxAbs = Math.max(0, ...sizes.map((size) => Math.abs(size)));
+	return (size: number): number => {
 		if (maxAbs === 0) {
 			return min;
 		}
-		const share = Math.abs(value) / maxAbs;
+		const share = Math.abs(size) / maxAbs;
 		return Math.sqrt(min * min + (max * max - min * min) * share);
 	};
 }
