@@ -1263,6 +1263,19 @@ func (r *ClickHouseReader) hasCustomRetentionColumn(ctx context.Context) (bool, 
 	return true, nil
 }
 
+func maxRetentionTTLForKeyTables(defaultTTLDays int, ttlConditions []retentiontypes.CustomRetentionRule) int {
+	maxRetentionTTL := defaultTTLDays
+	if maxRetentionTTL <= 0 {
+		maxRetentionTTL = retentiontypes.DefaultLogsRetentionDays
+	}
+
+	for _, rule := range ttlConditions {
+		maxRetentionTTL = max(maxRetentionTTL, rule.TTLDays)
+	}
+
+	return maxRetentionTTL
+}
+
 func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *retentiontypes.CustomRetentionTTLParams) (*retentiontypes.CustomRetentionTTLResponse, error) {
 
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
@@ -1394,10 +1407,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *r
 
 	// NOTE: Since logs support custom rule based retention, that makes it difficult to identify which attributes, resource keys
 	// we need to keep, hence choosing MAX for safe side and not to create any complex solution for this.
-	maxRetentionTTL := params.DefaultTTLDays
-	for _, rule := range params.TTLConditions {
-		maxRetentionTTL = max(maxRetentionTTL, rule.TTLDays)
-	}
+	maxRetentionTTL := maxRetentionTTLForKeyTables(params.DefaultTTLDays, params.TTLConditions)
 
 	ttlPayload[tableNames[2]] = []string{
 		fmt.Sprintf("ALTER TABLE %s ON CLUSTER %s MODIFY TTL timestamp + toIntervalDay(%d) DELETE SETTINGS materialize_ttl_after_modify=0",
