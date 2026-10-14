@@ -81,13 +81,15 @@ function QuerySection(): JSX.Element {
 	}, [isLoadingQueries]);
 
 	const handleCancelQuery = useCallback(() => {
-		queryClient.cancelQueries([REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW]);
+		void queryClient.cancelQueries([REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW]);
 		setIsCancelled(true);
 	}, [queryClient]);
 
 	const runQueryHandler = useCallback(() => {
 		setIsCancelled(false);
-		queryClient.invalidateQueries([REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW]);
+		void queryClient.invalidateQueries([
+			REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW,
+		]);
 		// Reset the source param when the query is changed
 		// Then manually run the query
 		if (source === YAxisSource.DASHBOARDS && didQueryChange) {
