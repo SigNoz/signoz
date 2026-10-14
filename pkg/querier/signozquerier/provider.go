@@ -51,6 +51,7 @@ func NewFactory(
 				bucketCache,
 				flagger,
 				cfg.LogTraceIDWindowPadding,
+				cfg.TraceIDWindowPadding,
 				cfg.MaxConcurrentQueries,
 			), nil
 		},
