@@ -1,7 +1,11 @@
 import { useMemo } from 'react';
 import { Select, Spin } from 'antd';
-import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
-import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
+import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
+import {
+	DATA_SOURCE_TO_SIGNAL,
+	DataSource,
+	MetricAggregateOperator,
+} from 'types/common/queryBuilder';
 import { getParsedAggregationOptionsForOrderBy } from 'utils/aggregationConverter';
 import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 
@@ -27,13 +31,12 @@ export function OrderByFilter({
 		handleSearchKeys,
 	} = useOrderByFilter({ query, onChange, entityVersion });
 
-	const { data, isFetching } = useGetAggregateKeys(
+	const { data: fieldKeys, isFetching } = useFieldKeysSuggestion(
 		{
-			aggregateAttribute: query.aggregateAttribute?.key || '',
-			dataSource: query.dataSource,
-			aggregateOperator: query.aggregateOperator || '',
+			signal: DATA_SOURCE_TO_SIGNAL[query.dataSource],
 			searchText: debouncedSearchText,
 		},
+		query.builderQueryType,
 		{
 			enabled: !!query.aggregateAttribute?.key || isRawQuery,
 			keepPreviousData: true,
@@ -47,9 +50,11 @@ export function OrderByFilter({
 	);
 
 	const optionsData = useMemo(() => {
-		const keyOptions = createOptions(data?.payload?.attributeKeys || []);
-		const groupByOptions = createOptions(query.groupBy);
-		const aggregationOptionsFromParsed = createOptions(parsedAggregationOptions);
+		const keyOptions = createOptions((fieldKeys ?? []).map((key) => key.name));
+		const groupByOptions = createOptions(query.groupBy.map((item) => item.key));
+		const aggregationOptionsFromParsed = createOptions(
+			parsedAggregationOptions.map((item) => item.key),
+		);
 
 		const options =
 			query.aggregateOperator === MetricAggregateOperator.NOOP
@@ -62,7 +67,7 @@ export function OrderByFilter({
 		return generateOptions(options);
 	}, [
 		createOptions,
-		data?.payload?.attributeKeys,
+		fieldKeys,
 		query.groupBy,
 		query.aggregateOperator,
 		parsedAggregationOptions,
@@ -92,6 +97,7 @@ export function OrderByFilter({
 			options={optionsData}
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 			onChange={handleChange}
+			data-testid="order-by"
 		/>
 	);
 }
