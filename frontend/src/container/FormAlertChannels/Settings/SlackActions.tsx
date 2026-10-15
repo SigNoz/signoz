@@ -1,7 +1,9 @@
 import { Dispatch, SetStateAction, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Minus, Plus } from '@signozhq/icons';
-import { Button, Form, Input } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
+import { Form } from 'antd';
 import { AlertmanagertypesChannelSlackActionDTO } from 'api/generated/services/sigNoz.schemas';
 
 import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
@@ -53,25 +55,25 @@ function SlackActions({
 						value={row.text}
 						placeholder={t('placeholder_slack_action_text')}
 						onChange={(event): void => updateRow(index, { text: event.target.value })}
-						data-testid={`slack-action-text-${index}`}
+						testId={`slack-action-text-${index}`}
 					/>
 					<Input
 						value={row.url}
 						placeholder={t('placeholder_slack_action_url')}
 						onChange={(event): void => updateRow(index, { url: event.target.value })}
-						data-testid={`slack-action-url-${index}`}
+						testId={`slack-action-url-${index}`}
 					/>
 					<Input
 						value={row.type}
 						placeholder={t('placeholder_slack_action_type')}
 						onChange={(event): void => updateRow(index, { type: event.target.value })}
-						data-testid={`slack-action-type-${index}`}
+						testId={`slack-action-type-${index}`}
 					/>
 					<Input
 						value={row.name ?? ''}
 						placeholder={t('placeholder_slack_action_name')}
 						onChange={(event): void => updateRow(index, { name: event.target.value })}
-						data-testid={`slack-action-name-${index}`}
+						testId={`slack-action-name-${index}`}
 					/>
 					<Input
 						value={row.value ?? ''}
@@ -79,7 +81,7 @@ function SlackActions({
 						onChange={(event): void =>
 							updateRow(index, { value: event.target.value })
 						}
-						data-testid={`slack-action-value-${index}`}
+						testId={`slack-action-value-${index}`}
 					/>
 					<Input
 						value={row.style ?? ''}
@@ -87,7 +89,7 @@ function SlackActions({
 						onChange={(event): void =>
 							updateRow(index, { style: event.target.value })
 						}
-						data-testid={`slack-action-style-${index}`}
+						testId={`slack-action-style-${index}`}
 					/>
 					<Input
 						value={row.confirm?.text ?? ''}
@@ -97,22 +99,28 @@ function SlackActions({
 								confirm: event.target.value ? { text: event.target.value } : undefined,
 							})
 						}
-						data-testid={`slack-action-confirm-${index}`}
+						testId={`slack-action-confirm-${index}`}
 					/>
 					<Button
-						type="text"
-						icon={<Minus size={14} />}
+						variant="ghost"
+						color="secondary"
+						size="sm"
+						icon
 						aria-label={t('remove_slack_action')}
 						onClick={(): void => sync(rows.filter((_, i) => i !== index))}
-						data-testid={`slack-action-remove-${index}`}
-					/>
+						testId={`slack-action-remove-${index}`}
+					>
+						<Minus size={14} />
+					</Button>
 				</div>
 			))}
 			<Button
-				type="dashed"
-				icon={<Plus size={14} />}
+				variant="dashed"
+				color="secondary"
+				size="sm"
+				prefix={<Plus size={14} />}
 				onClick={(): void => sync([...rows, { ...emptyAction }])}
-				data-testid="slack-action-add"
+				testId="slack-action-add"
 			>
 				{t('add_slack_action')}
 			</Button>

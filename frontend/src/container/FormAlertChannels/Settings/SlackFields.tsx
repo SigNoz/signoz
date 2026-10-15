@@ -1,7 +1,10 @@
 import { Dispatch, SetStateAction, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Minus, Plus } from '@signozhq/icons';
-import { Button, Checkbox, Form, Input } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Checkbox } from '@signozhq/ui/checkbox';
+import { Input } from '@signozhq/ui/input';
+import { Form } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { AlertmanagertypesChannelSlackFieldDTO } from 'api/generated/services/sigNoz.schemas';
 
@@ -48,7 +51,7 @@ function SlackFields({
 						onChange={(event): void =>
 							updateRow(index, { title: event.target.value })
 						}
-						data-testid={`slack-field-title-${index}`}
+						testId={`slack-field-title-${index}`}
 					/>
 					<Input
 						value={row.value}
@@ -56,35 +59,42 @@ function SlackFields({
 						onChange={(event): void =>
 							updateRow(index, { value: event.target.value })
 						}
-						data-testid={`slack-field-value-${index}`}
+						testId={`slack-field-value-${index}`}
 					/>
 					<Checkbox
-						checked={!!row.short}
-						onChange={(event): void =>
-							updateRow(index, { short: event.target.checked })
+						color="primary"
+						value={!!row.short}
+						onChange={(checked): void =>
+							updateRow(index, { short: checked === true })
 						}
-						data-testid={`slack-field-short-${index}`}
+						testId={`slack-field-short-${index}`}
 					>
 						<Typography.Text size="sm">
 							{t('field_slack_field_short')}
 						</Typography.Text>
 					</Checkbox>
 					<Button
-						type="text"
-						icon={<Minus size={14} />}
+						variant="ghost"
+						color="secondary"
+						size="sm"
+						icon
 						aria-label={t('remove_slack_field')}
 						onClick={(): void => sync(rows.filter((_, i) => i !== index))}
-						data-testid={`slack-field-remove-${index}`}
-					/>
+						testId={`slack-field-remove-${index}`}
+					>
+						<Minus size={14} />
+					</Button>
 				</div>
 			))}
 			<Button
-				type="dashed"
-				icon={<Plus size={14} />}
+				variant="dashed"
+				color="secondary"
+				size="sm"
+				prefix={<Plus size={14} />}
 				onClick={(): void =>
 					sync([...rows, { title: '', value: '', short: false }])
 				}
-				data-testid="slack-field-add"
+				testId="slack-field-add"
 			>
 				{t('add_slack_field')}
 			</Button>
