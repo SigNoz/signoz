@@ -20424,9 +20424,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List metric names
       tags:
       - metrics
@@ -20577,9 +20577,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: Get metric attributes
       tags:
       - metrics
@@ -20647,9 +20647,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: Get metric highlights
       tags:
       - metrics
@@ -20706,9 +20706,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: Inspect raw metric data points
       tags:
       - metrics
@@ -20776,9 +20776,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: Get metric metadata
       tags:
       - metrics
@@ -20870,9 +20870,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: Check if non-SigNoz metrics have been received
       tags:
       - metrics
@@ -20929,9 +20929,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: Get metrics statistics
       tags:
       - metrics
@@ -20988,9 +20988,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: Get metrics treemap
       tags:
       - metrics
