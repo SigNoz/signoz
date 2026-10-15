@@ -1,6 +1,6 @@
-# Shipped span mapper definitions
+# Span Mapper
 
-Where each source key comes from. A group runs on spans with an attribute key containing one of its condition substrings; sources are tried by priority and the first present wins; an existing target is never overwritten. Bump `version` on every change.
+Where each source key in the shipped definitions under `pkg/modules/spanmapper/implspanmapper/fs/definitions/` comes from. A group runs on spans with an attribute key containing one of its condition substrings; sources are tried by priority and the first present wins; an existing target is never overwritten. Bump `version` on every change.
 
 ## gen_ai.llm
 
