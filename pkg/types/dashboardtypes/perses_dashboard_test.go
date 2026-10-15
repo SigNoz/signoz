@@ -2313,7 +2313,7 @@ func TestGeoMapPanelSpec(t *testing.T) {
 		"location": {"mode": "subdivision", "country": "geo.country.iso_code", "countryFormat": "alpha2", "region": "geo.region.iso_code"},
 		"map": {"layer": "bubbles", "view": "country", "viewCountry": "FR", "colorBy": "A", "sizeBy": "A"},
 		"chartAppearance": {
-			"colors": {"palette": "ice", "scale": "linear", "steps": 16, "min": 0, "max": 10},
+			"colors": {"mode": "opacity", "fill": "#4E74F8", "palette": "ice", "scale": "linear", "steps": 16, "min": 0, "max": 10},
 			"bubbles": {"minRadius": 2, "maxRadius": 30},
 			"labels": false
 		},
@@ -2348,7 +2348,7 @@ func TestGeoMapPanelSpec(t *testing.T) {
 		require.NoError(t, err)
 		output, err := json.Marshal(d.Panels["p1"].Spec.Plugin.Spec)
 		require.NoError(t, err)
-		for _, field := range []string{`"mode":"auto"`, `"countryFormat":"auto"`, `"layer":"regions"`, `"view":"world"`, `"palette":"lava"`, `"scale":"log"`, `"labels":null`} {
+		for _, field := range []string{`"mode":"palette"`, `"mode":"auto"`, `"countryFormat":"auto"`, `"layer":"regions"`, `"view":"world"`, `"palette":"lava"`, `"scale":"log"`, `"labels":null`} {
 			assert.Contains(t, string(output), field)
 		}
 	})
@@ -2366,6 +2366,7 @@ func TestGeoMapPanelSpec(t *testing.T) {
 		{"unknown location mode", `{"location": {"mode": "geohash"}}`},
 		{"unknown country format", `{"location": {"countryFormat": "numeric"}}`},
 		{"colour min above max", `{"chartAppearance": {"colors": {"min": 10, "max": 1}}}`},
+		{"unknown color mode", `{"chartAppearance": {"colors": {"mode": "gradient"}}}`},
 		{"too few steps", `{"chartAppearance": {"colors": {"steps": 1}}}`},
 		{"radius out of range", `{"chartAppearance": {"bubbles": {"maxRadius": 65}}}`},
 		{"min radius above max", `{"chartAppearance": {"bubbles": {"minRadius": 20, "maxRadius": 10}}}`},

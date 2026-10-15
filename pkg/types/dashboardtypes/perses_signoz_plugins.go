@@ -558,12 +558,15 @@ type GeoMapChartAppearance struct {
 }
 
 type GeoMapColors struct {
+	Mode    HeatmapColorMode  `json:"mode"`
 	Palette HeatmapPalette    `json:"palette"`
 	Scale   HeatmapColorScale `json:"scale"`
 	Steps   int               `json:"steps" validate:"omitempty,min=2,max=128"`
 	// Min and Max clamp the colour scale; nil derives them from the data.
 	Min *float64 `json:"min"`
 	Max *float64 `json:"max"`
+	// Fill applies in opacity mode; empty means the default fill.
+	Fill string `json:"fill"`
 }
 
 func (c *GeoMapColors) UnmarshalJSON(data []byte) error {
