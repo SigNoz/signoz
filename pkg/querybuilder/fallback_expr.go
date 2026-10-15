@@ -136,6 +136,8 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 		// This following is one way to workaround it
 
 		// if the key is a number, the value is a string, we will let clickHouse handle the conversion
+		// and clickhouse float64 has a 53-bit mantissa, so values above 2^53 rounds to the nearest representable double
+		// breaking the equality filters for large integers
 		case float32, float64:
 			tblFieldName = castFloatHack(tblFieldName)
 		case string:
