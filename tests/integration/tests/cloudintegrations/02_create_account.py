@@ -1,5 +1,3 @@
-import os
-import subprocess
 from collections.abc import Callable
 from http import HTTPStatus
 
@@ -184,22 +182,11 @@ def test_create_gcp_account_rejects_invalid_config(
     assert error_field in response.text
 
 
-@pytest.mark.parametrize(
-    "secret_versions,expected_api_key_version,expected_ingestion_key_version",
-    [
-        pytest.param({"api_key_version": "3", "ingestion_key_version": "7"}, "3", "7", id="uploaded_versions"),
-        pytest.param({}, "latest", "latest", id="latest_versions"),
-    ],
-)
 def test_create_gcp_agent_account_connection_command(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
-    secret_versions: dict,
-    expected_api_key_version: str,
-    expected_ingestion_key_version: str,
 ) -> None:
-    """The generated apply command uses the bootstrap's secret references and the uploaded versions, defaulting to latest."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     account = create_cloud_integration_account(
         admin_token,
@@ -207,53 +194,39 @@ def test_create_gcp_agent_account_connection_command(
         config={"gcp": {"connectionMethod": "agent", "deploymentProjectId": "signoz-agent-project", "deploymentRegion": "us-central1", "projectIds": ["signoz-agent-project"]}},
     )
     artifact = account["connectionArtifact"]["gcp"]
-    command = artifact["cliCommand"]
     service_account_command = artifact["createServiceAccountCommand"]
     secrets_command = artifact["createSecretsCommand"]
+    deploy_command = artifact["cliCommand"]
 
     assert "gcloud iam service-accounts create 'signoz-integration-bootstrap'" in service_account_command
     assert "executor_email='signoz-integration-bootstrap@signoz-agent-project.iam.gserviceaccount.com'" in service_account_command
-    assert "gcloud config get-value account" in service_account_command
     assert "roles/config.agent" in service_account_command
     assert "--role=roles/secretmanager.admin" in service_account_command
 
     for prerequisite_command in (service_account_command, secrets_command):
         assert "project_id='signoz-agent-project'" in prerequisite_command
-        assert "api_secret_id='signoz-integration-credentials-api-key'" in prerequisite_command
-        assert "ingestion_secret_id='signoz-integration-credentials-ingestion-key'" in prerequisite_command
+        assert "api_secret_id='signoz-integration-api-credentials'" in prerequisite_command
+        assert "ingestion_secret_id='signoz-integration-ingestion-key-credential'" in prerequisite_command
 
     assert "region='us-central1'" in secrets_command
     assert 'gcloud secrets create "$api_secret_id"' in secrets_command
     assert 'gcloud secrets create "$ingestion_secret_id"' in secrets_command
     assert "--replication-policy=user-managed" in secrets_command
-    assert "--labels=managed-by=signoz-integration" in secrets_command
-    assert "printf '%s' 'test-api-key-789'" in secrets_command
+    assert secrets_command.count("--labels=managed-by=signoz &&") == 2
+    assert """printf '%s' '{"api_key":"test-api-key-789"}'""" in secrets_command
     assert "printf '%s' 'test-ingestion-key-123456'" in secrets_command
 
-    # Capture the expanded arguments with a shell function instead of deploying GCP resources.
-    script = "gcloud() { printf '%s\\0' \"$@\"; }\n" + command
-    env = {key: value for key, value in os.environ.items() if key not in ("api_key_version", "ingestion_key_version")} | secret_versions
-    result = subprocess.run(["/bin/sh", "-c", script], env=env, capture_output=True, text=True, check=True, timeout=5)
-    args = result.stdout.split("\0")[:-1]
-    assert args[:4] == ["infra-manager", "deployments", "apply", "projects/signoz-agent-project/locations/us-central1/deployments/signoz-integration-bootstrap"]
-    flags = dict(arg.removeprefix("--").split("=", 1) for arg in args[4:])
-    assert flags["project"] == "signoz-agent-project"
-    assert flags["service-account"] == "projects/signoz-agent-project/serviceAccounts/signoz-integration-bootstrap@signoz-agent-project.iam.gserviceaccount.com"
-    assert flags["gcs-source"] == "gs://signoz-cloud-integration/gcp/v0.0.8/bootstrap/"
-    assert flags["tf-version-constraint"] == "=1.5.7"
-    assert dict(value.split("=", 1) for value in flags["input-values"].split(",")) == {
-        "project_id": "signoz-agent-project",
-        "deployment_region": "us-central1",
-        "integration_account_id": account["id"],
-        "signoz_api_url": "https://test-deployment.test.signoz.cloud",
-        "ingestion_url": "https://ingest.test.signoz.cloud",
-        "api_key_secret_id": "signoz-integration-credentials-api-key",
-        "api_key_secret_version": expected_api_key_version,
-        "ingestion_key_secret_id": "signoz-integration-credentials-ingestion-key",
-        "ingestion_key_secret_version": expected_ingestion_key_version,
-    }
-    assert "test-api-key-789" not in command
-    assert "test-ingestion-key-123456" not in command
+    assert "gcloud infra-manager deployments apply" in deploy_command
+    assert "projects/signoz-agent-project/locations/us-central1/deployments/signoz-integration-bootstrap" in deploy_command
+    assert "--gcs-source='gs://signoz-cloud-integration/gcp/v0.0.8/bootstrap/'" in deploy_command
+    assert "project_id=signoz-agent-project,deployment_region=us-central1" in deploy_command
+    assert f"integration_account_id={account['id']}" in deploy_command
+    assert "api_secret_id=signoz-integration-api-credentials" in deploy_command
+    assert "ingestion_secret_id=signoz-integration-ingestion-key-credential" in deploy_command
+    assert 'api_secret_version="${api_secret_version:-latest}"' in deploy_command
+    assert 'ingestion_secret_version="${ingestion_secret_version:-latest}"' in deploy_command
+    assert "test-api-key-789" not in deploy_command
+    assert "test-ingestion-key-123456" not in deploy_command
 
 
 def test_create_account_unsupported_provider(

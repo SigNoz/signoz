@@ -2,6 +2,7 @@ package cloudintegrationtypes
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"slices"
 	"strings"
@@ -19,8 +20,8 @@ var (
 	AgentGCPTerraformModuleStorePath = "gs://signoz-cloud-integration/gcp/%s/bootstrap/"
 	AgentGCPBootstrapDeploymentName  = "signoz-integration-bootstrap"
 	gcpBootstrapExecutorName         = "signoz-integration-bootstrap"
-	gcpAPIKeySecretID                = "signoz-integration-credentials-api-key"
-	gcpIngestionKeySecretID          = "signoz-integration-credentials-ingestion-key"
+	gcpAPISecretID                   = "signoz-integration-api-credentials"
+	gcpIngestionSecretID             = "signoz-integration-ingestion-key-credential"
 
 	gcpCLITemplate = template.Must(template.New("gcpCLI").Funcs(template.FuncMap{
 		"shellQuote": func(value string) string {
@@ -127,6 +128,11 @@ func (config *GCPAccountConfig) ErrIfInvalid() error {
 }
 
 func NewGCPConnectionArtifact(accountID valuer.UUID, agentVersion string, creds *Credentials, cfg *GCPAccountConfig) (*GCPConnectionArtifact, error) {
+	apiSecretJSON, err := json.Marshal(map[string]string{"api_key": creds.SigNozAPIKey})
+	if err != nil {
+		return nil, err
+	}
+
 	executorEmail := fmt.Sprintf("%s@%s.iam.gserviceaccount.com", gcpBootstrapExecutorName, cfg.DeploymentProjectID)
 	data := gcpTemplateData{
 		DeploymentName:    fmt.Sprintf("projects/%s/locations/%s/deployments/%s", cfg.DeploymentProjectID, cfg.DeploymentRegion, AgentGCPBootstrapDeploymentName),
@@ -135,15 +141,15 @@ func NewGCPConnectionArtifact(accountID valuer.UUID, agentVersion string, creds 
 		ServiceAccount:    fmt.Sprintf("projects/%s/serviceAccounts/%s", cfg.DeploymentProjectID, executorEmail),
 		ExecutorName:      gcpBootstrapExecutorName,
 		ExecutorEmail:     executorEmail,
-		APIKeySecretID:    gcpAPIKeySecretID,
-		IngestionSecretID: gcpIngestionKeySecretID,
-		APIKey:            creds.SigNozAPIKey,
+		APISecretID:       gcpAPISecretID,
+		IngestionSecretID: gcpIngestionSecretID,
+		APISecretJSON:     string(apiSecretJSON),
 		IngestionKey:      creds.IngestionKey,
 		ModuleURL:         fmt.Sprintf(AgentGCPTerraformModuleStorePath, agentVersion),
 		InputValues: fmt.Sprintf(
 			"project_id=%s,deployment_region=%s,integration_account_id=%s,signoz_api_url=%s,ingestion_url=%s,"+
-				"api_key_secret_id=%s,ingestion_key_secret_id=%s",
-			cfg.DeploymentProjectID, cfg.DeploymentRegion, accountID.StringValue(), creds.SigNozAPIURL, creds.IngestionURL, gcpAPIKeySecretID, gcpIngestionKeySecretID,
+				"api_secret_id=%s,ingestion_secret_id=%s",
+			cfg.DeploymentProjectID, cfg.DeploymentRegion, accountID.StringValue(), creds.SigNozAPIURL, creds.IngestionURL, gcpAPISecretID, gcpIngestionSecretID,
 		),
 	}
 
@@ -201,9 +207,9 @@ type gcpTemplateData struct {
 	ServiceAccount    string
 	ExecutorName      string
 	ExecutorEmail     string
-	APIKeySecretID    string
+	APISecretID       string
 	IngestionSecretID string
-	APIKey            string
+	APISecretJSON     string
 	IngestionKey      string
 	ModuleURL         string
 	InputValues       string
@@ -224,13 +230,13 @@ func gcpCLITemplateStr() string {
   --service-account={{.ServiceAccount | shellQuote}} \
   --gcs-source={{.ModuleURL | shellQuote}} \
   --tf-version-constraint='=1.5.7' \
-  --input-values={{.InputValues | shellQuote}},api_key_secret_version="${api_key_version:-latest}",ingestion_key_secret_version="${ingestion_key_version:-latest}"`
+  --input-values={{.InputValues | shellQuote}},api_secret_version="${api_secret_version:-latest}",ingestion_secret_version="${ingestion_secret_version:-latest}"`
 }
 
 func gcpCreateServiceAccountTemplateStr() string {
 	return `project_id={{.ProjectID | shellQuote}}
 executor_email={{.ExecutorEmail | shellQuote}}
-api_secret_id={{.APIKeySecretID | shellQuote}}
+api_secret_id={{.APISecretID | shellQuote}}
 ingestion_secret_id={{.IngestionSecretID | shellQuote}}
 caller_email=$(gcloud config get-value account)
 
@@ -267,7 +273,7 @@ gcloud iam service-accounts add-iam-policy-binding "$executor_email" \
 func gcpCreateSecretsTemplateStr() string {
 	return `project_id={{.ProjectID | shellQuote}}
 region={{.Region | shellQuote}}
-api_secret_id={{.APIKeySecretID | shellQuote}}
+api_secret_id={{.APISecretID | shellQuote}}
 ingestion_secret_id={{.IngestionSecretID | shellQuote}}
 
 gcloud services enable config.googleapis.com cloudbuild.googleapis.com \
@@ -278,17 +284,17 @@ sleep 60 &&
 
 gcloud secrets create "$api_secret_id" \
   --project="$project_id" --replication-policy=user-managed \
-  --locations="$region" --labels=managed-by=signoz-integration &&
+  --locations="$region" --labels=managed-by=signoz &&
 
 gcloud secrets create "$ingestion_secret_id" \
   --project="$project_id" --replication-policy=user-managed \
-  --locations="$region" --labels=managed-by=signoz-integration &&
+  --locations="$region" --labels=managed-by=signoz &&
 
-api_key_version=$(printf '%s' {{.APIKey | shellQuote}} | \
+api_secret_version=$(printf '%s' {{.APISecretJSON | shellQuote}} | \
   gcloud secrets versions add "$api_secret_id" \
     --project="$project_id" --data-file=- --format='value(name.basename())') &&
 
-ingestion_key_version=$(printf '%s' {{.IngestionKey | shellQuote}} | \
+ingestion_secret_version=$(printf '%s' {{.IngestionKey | shellQuote}} | \
   gcloud secrets versions add "$ingestion_secret_id" \
     --project="$project_id" --data-file=- --format='value(name.basename())')`
 }
