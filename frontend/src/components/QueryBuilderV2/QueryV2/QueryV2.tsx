@@ -6,7 +6,7 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
+import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import cx from 'classnames';
 import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -90,6 +90,26 @@ export const QueryV2 = forwardRef(function QueryV2(
 	const handleCloneEntity = (): void => {
 		cloneQuery('query', query);
 	};
+
+	const queryActionItems: DropdownItemType[] = [
+		{
+			type: 'item',
+			label: 'Clone',
+			value: 'clone-query',
+			prefix: <Copy size={14} />,
+			onClick: handleCloneEntity,
+		},
+	];
+
+	if (queriesCount && queriesCount > 1) {
+		queryActionItems.push({
+			type: 'item',
+			label: 'Delete',
+			value: 'delete-query',
+			prefix: <Trash size={14} />,
+			onClick: handleDeleteQuery,
+		});
+	}
 
 	const showReduceTo = useMemo(
 		() =>
@@ -224,32 +244,14 @@ export const QueryV2 = forwardRef(function QueryV2(
 							)}
 
 							{isMultiQueryAllowed && (
-								<DropdownMenuSimple
-									className="query-actions-dropdown"
-									menu={{
-										items: [
-											{
-												label: 'Clone',
-												key: 'clone-query',
-												icon: <Copy size={14} />,
-												onClick: handleCloneEntity,
-											},
-											...(queriesCount && queriesCount > 1
-												? [
-														{
-															label: 'Delete',
-															key: 'delete-query',
-															icon: <Trash size={14} />,
-															onClick: handleDeleteQuery,
-														},
-													]
-												: []),
-										],
-									}}
+								<Dropdown
+									items={queryActionItems}
+									nativeButton={false}
 									align="end"
+									side="bottom"
 								>
 									<Ellipsis size={16} />
-								</DropdownMenuSimple>
+								</Dropdown>
 							)}
 						</div>
 					</div>

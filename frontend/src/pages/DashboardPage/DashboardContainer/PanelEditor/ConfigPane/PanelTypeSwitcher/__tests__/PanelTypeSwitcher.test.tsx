@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 
 import PanelTypeSwitcher from '../PanelTypeSwitcher';
@@ -45,14 +44,12 @@ async function renderSwitcher(
 	const user = userEvent.setup({ pointerEventsCheck: 0 });
 	const onChange = jest.fn();
 	render(
-		<TooltipProvider>
-			<PanelTypeSwitcher
-				panelKind="signoz/TimeSeriesPanel"
-				queryType={EQueryType.QUERY_BUILDER}
-				onChange={onChange}
-				{...props}
-			/>
-		</TooltipProvider>,
+		<PanelTypeSwitcher
+			panelKind="signoz/TimeSeriesPanel"
+			queryType={EQueryType.QUERY_BUILDER}
+			onChange={onChange}
+			{...props}
+		/>,
 	);
 	await user.click(screen.getByTestId('panel-editor-v2-type-switcher'));
 	return { onChange, user };
@@ -183,7 +180,10 @@ describe('PanelTypeSwitcher', () => {
 				queryType: EQueryType.PROM,
 			});
 
-			expect(screen.getByTestId('panel-editor-v2-type-revert')).toBeDisabled();
+			expect(screen.getByTestId('panel-editor-v2-type-revert')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 	});
 });

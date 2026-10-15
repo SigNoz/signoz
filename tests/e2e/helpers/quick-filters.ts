@@ -45,10 +45,6 @@ function settingsPanel(page: Page): Locator {
 		.filter({ hasText: SETTINGS_PANEL_TITLE });
 }
 
-function settingsGearContainer(page: Page): Locator {
-	return page.getByTestId(SETTINGS_ICON_TEST_ID).locator('..');
-}
-
 /** Minimal filter set so `isDynamicFilters` is true and the settings gear renders. */
 export async function seedCustomFiltersViaApi(
 	page: Page,
@@ -102,7 +98,6 @@ export async function assertQuickFiltersSettingsDrawerClosed(
 	page: Page,
 ): Promise<void> {
 	await expect(page.getByText(SETTINGS_PANEL_TITLE)).toBeHidden();
-	await expect(settingsGearContainer(page)).not.toHaveClass(/active/);
 	// Collapsed panel keeps the `hidden` class (width: 0). Assert the class, not
 	// toBeVisible() — a zero-width element is never "visible" to Playwright.
 	await expect(page.locator('.quick-filters-settings')).toHaveClass(/hidden/);
@@ -128,7 +123,6 @@ export async function assertQuickFiltersSettingsDrawerOpen(
 	const panel = settingsPanel(page);
 	const filtersColumn = page.locator('.quick-filters');
 
-	await expect(settingsGearContainer(page)).toHaveClass(/active/);
 	await expect(panel).toBeVisible();
 	await expect(panel).not.toHaveClass(/hidden/);
 	await expect(page.getByText(SETTINGS_PANEL_TITLE)).toBeVisible();

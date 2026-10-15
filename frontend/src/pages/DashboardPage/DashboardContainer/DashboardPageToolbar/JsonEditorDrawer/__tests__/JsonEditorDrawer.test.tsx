@@ -1,5 +1,4 @@
 import { fireEvent, render, screen } from 'tests/test-utils';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 
 import JsonEditorDrawer from '../JsonEditorDrawer';
@@ -129,9 +128,7 @@ describe('JsonEditorDrawer', () => {
 			hookValue({ danglingPanelIds: ['p1', 'p2'] }),
 		);
 		const { unmount } = render(
-			<TooltipProvider>
-				<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />
-			</TooltipProvider>,
+			<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />,
 		);
 		expect(screen.getByTestId('json-editor-dangling-warning')).toHaveTextContent(
 			'2 panels not present in layout',
@@ -141,11 +138,7 @@ describe('JsonEditorDrawer', () => {
 		// first tree, so a rerender does not pick up the new hook value.
 		unmount();
 		mockUseJsonEditor.mockReturnValue(hookValue({ danglingPanelIds: [] }));
-		render(
-			<TooltipProvider>
-				<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />
-			</TooltipProvider>,
-		);
+		render(<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />);
 		expect(
 			screen.queryByTestId('json-editor-dangling-warning'),
 		).not.toBeInTheDocument();
@@ -153,11 +146,7 @@ describe('JsonEditorDrawer', () => {
 
 	it('warns about layout refs to missing panels', () => {
 		mockUseJsonEditor.mockReturnValue(hookValue({ missingPanelRefs: ['ghost'] }));
-		render(
-			<TooltipProvider>
-				<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />
-			</TooltipProvider>,
-		);
+		render(<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />);
 		expect(
 			screen.getByTestId('json-editor-missing-ref-warning'),
 		).toHaveTextContent('1 layout item references a panel that no longer exists');
@@ -186,7 +175,10 @@ describe('JsonEditorDrawer', () => {
 		const { rerender } = render(
 			<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />,
 		);
-		expect(screen.getByTestId('json-editor-apply')).toBeDisabled();
+		expect(screen.getByTestId('json-editor-apply')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 
 		mockUseJsonEditor.mockReturnValue(
 			hookValue({ validity: { valid: false, lineCount: 1 } }),
@@ -194,13 +186,19 @@ describe('JsonEditorDrawer', () => {
 		rerender(
 			<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />,
 		);
-		expect(screen.getByTestId('json-editor-apply')).toBeDisabled();
+		expect(screen.getByTestId('json-editor-apply')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 
 		mockUseJsonEditor.mockReturnValue(hookValue({ isSaving: true }));
 		rerender(
 			<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />,
 		);
-		expect(screen.getByTestId('json-editor-apply')).toBeDisabled();
+		expect(screen.getByTestId('json-editor-apply')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('wires toolbar and footer buttons to the hook callbacks', () => {

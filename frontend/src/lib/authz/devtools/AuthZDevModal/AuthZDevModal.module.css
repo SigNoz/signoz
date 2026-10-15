@@ -55,6 +55,9 @@
 
 .filter {
 	flex: 0 0 176px;
+	/* The inline popup must stack above the list buttons, which set `isolation: isolate`. */
+	position: relative;
+	z-index: 1;
 	/* Normalize the library trigger height (2.25rem) to match the input. */
 	--select-trigger-height: 2rem;
 }
@@ -72,11 +75,6 @@
 .actionsRow {
 	display: flex;
 	gap: var(--spacing-3);
-}
-
-.actionButton {
-	flex: 0 0 auto;
-	height: 2rem;
 }
 
 .list {

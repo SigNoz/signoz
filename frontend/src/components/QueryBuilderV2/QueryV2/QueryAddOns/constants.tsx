@@ -5,6 +5,8 @@ import { QueryBuilderField } from '../../queryBuilderFields.types';
 
 import type { AddOn, AddOnDefinition, AddOnField } from './types';
 
+export const ADD_ON_TOOLTIP_DELAY_MS = 500;
+
 // A Record, so a field added to the enum has to be placed here or in `NonAddOnField`.
 export const ADD_ON_DEFINITIONS = {
 	[QueryBuilderField.GroupBy]: {

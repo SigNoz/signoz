@@ -1,4 +1,4 @@
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 
@@ -13,11 +13,11 @@ function ViewPanelModalTitle({ panel }: ViewPanelModalTitleProps): JSX.Element {
 	const name = usePanelTitle(panel);
 
 	return (
-		<TooltipSimple title={name} arrow>
+		<Tooltip title={name}>
 			<Typography.Text className={styles.title}>
 				{name ? `${name} - (View mode)` : 'View mode'}
 			</Typography.Text>
-		</TooltipSimple>
+		</Tooltip>
 	);
 }
 

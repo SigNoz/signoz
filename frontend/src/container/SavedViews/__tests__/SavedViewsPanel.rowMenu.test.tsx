@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { toast } from '@signozhq/ui/sonner';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
@@ -63,10 +63,8 @@ async function chooseFromRowMenu(
 	item: string,
 ): Promise<void> {
 	await screen.findByTestId('saved-views-list');
-	await userEvent.click(
-		within(row(viewName)).getByTestId('saved-views-row-menu'),
-	);
-	await userEvent.click(await screen.findByRole('menuitem', { name: item }));
+	fireEvent.click(within(row(viewName)).getByTestId('saved-views-row-menu'));
+	fireEvent.click(await screen.findByRole('menuitem', { name: item }));
 }
 
 const chip = (): HTMLElement => screen.getByTestId('saved-views-name');
@@ -83,9 +81,7 @@ describe('SavedViewsPanel row menu', () => {
 		renderPanelWithHeader();
 		await screen.findByTestId('saved-views-list');
 
-		await userEvent.click(
-			within(row('Errors')).getByTestId('saved-views-row-menu'),
-		);
+		fireEvent.click(within(row('Errors')).getByTestId('saved-views-row-menu'));
 
 		const items = await screen.findAllByRole('menuitem');
 		expect(items.map((item) => item.textContent)).toStrictEqual([

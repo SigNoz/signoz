@@ -1,4 +1,3 @@
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import userEvent from '@testing-library/user-event';
 import * as roleApi from 'api/generated/services/role';
 import {
@@ -142,17 +141,19 @@ describe('ViewRolePage - AuthZ', () => {
 				error: null,
 			} as ReturnType<typeof useRolePermissionsModule.useRolePermissions>);
 
-			render(
-				<TooltipProvider>
-					<ViewRolePage />
-				</TooltipProvider>,
-				undefined,
-				{ initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}` },
-			);
+			render(<ViewRolePage />, undefined, {
+				initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
+			});
 
 			await waitFor(() => {
-				expect(screen.getByTestId('delete-button')).not.toBeDisabled();
-				expect(screen.getByTestId('save-button')).not.toBeDisabled();
+				expect(screen.getByTestId('delete-button')).not.toHaveAttribute(
+					'aria-disabled',
+					'true',
+				);
+				expect(screen.getByTestId('save-button')).not.toHaveAttribute(
+					'aria-disabled',
+					'true',
+				);
 			});
 		});
 	});
@@ -208,15 +209,9 @@ describe('ViewRolePage - AuthZ', () => {
 				error: null,
 			} as ReturnType<typeof useRolePermissionsModule.useRolePermissions>);
 
-			render(
-				<TooltipProvider>
-					<ViewRolePage />
-				</TooltipProvider>,
-				undefined,
-				{
-					initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
-				},
-			);
+			render(<ViewRolePage />, undefined, {
+				initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
+			});
 
 			await expect(
 				screen.findByTestId('save-button'),
@@ -240,18 +235,15 @@ describe('ViewRolePage - AuthZ', () => {
 				error: null,
 			} as ReturnType<typeof useRolePermissionsModule.useRolePermissions>);
 
-			render(
-				<TooltipProvider>
-					<ViewRolePage />
-				</TooltipProvider>,
-				undefined,
-				{
-					initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
-				},
-			);
+			render(<ViewRolePage />, undefined, {
+				initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
+			});
 
 			await waitFor(() => {
-				expect(screen.getByTestId('save-button')).toBeDisabled();
+				expect(screen.getByTestId('save-button')).toHaveAttribute(
+					'aria-disabled',
+					'true',
+				);
 			});
 		});
 
@@ -276,18 +268,15 @@ describe('ViewRolePage - AuthZ', () => {
 				error: null,
 			} as ReturnType<typeof useRolePermissionsModule.useRolePermissions>);
 
-			render(
-				<TooltipProvider>
-					<ViewRolePage />
-				</TooltipProvider>,
-				undefined,
-				{
-					initialRoute: buildViewRoleRoute(MANAGED_ROLE_ID, MANAGED_ROLE_NAME),
-				},
-			);
+			render(<ViewRolePage />, undefined, {
+				initialRoute: buildViewRoleRoute(MANAGED_ROLE_ID, MANAGED_ROLE_NAME),
+			});
 
 			await waitFor(() => {
-				expect(screen.getByTestId('save-button')).toBeDisabled();
+				expect(screen.getByTestId('save-button')).toHaveAttribute(
+					'aria-disabled',
+					'true',
+				);
 			});
 		});
 
@@ -314,15 +303,9 @@ describe('ViewRolePage - AuthZ', () => {
 				error: null,
 			} as ReturnType<typeof useRolePermissionsModule.useRolePermissions>);
 
-			render(
-				<TooltipProvider>
-					<ViewRolePage />
-				</TooltipProvider>,
-				undefined,
-				{
-					initialRoute: buildViewRoleRoute(MANAGED_ROLE_ID, MANAGED_ROLE_NAME),
-				},
-			);
+			render(<ViewRolePage />, undefined, {
+				initialRoute: buildViewRoleRoute(MANAGED_ROLE_ID, MANAGED_ROLE_NAME),
+			});
 
 			const updateButton = await screen.findByTestId('save-button');
 			await user.hover(updateButton);
@@ -351,19 +334,13 @@ describe('ViewRolePage - AuthZ', () => {
 				error: null,
 			} as ReturnType<typeof useRolePermissionsModule.useRolePermissions>);
 
-			render(
-				<TooltipProvider>
-					<ViewRolePage />
-				</TooltipProvider>,
-				undefined,
-				{
-					initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
-				},
-			);
+			render(<ViewRolePage />, undefined, {
+				initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
+			});
 
 			await waitFor(() => {
 				const updateButton = screen.getByTestId('save-button');
-				expect(updateButton).toBeDisabled();
+				expect(updateButton).toHaveAttribute('aria-disabled', 'true');
 				expect(updateButton).toHaveAttribute('data-denied-permissions');
 			});
 		});
@@ -387,18 +364,15 @@ describe('ViewRolePage - AuthZ', () => {
 				error: null,
 			} as ReturnType<typeof useRolePermissionsModule.useRolePermissions>);
 
-			render(
-				<TooltipProvider>
-					<ViewRolePage />
-				</TooltipProvider>,
-				undefined,
-				{
-					initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
-				},
-			);
+			render(<ViewRolePage />, undefined, {
+				initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
+			});
 
 			await waitFor(() => {
-				expect(screen.getByTestId('delete-button')).toBeDisabled();
+				expect(screen.getByTestId('delete-button')).toHaveAttribute(
+					'aria-disabled',
+					'true',
+				);
 			});
 		});
 
@@ -419,18 +393,15 @@ describe('ViewRolePage - AuthZ', () => {
 				error: null,
 			} as ReturnType<typeof useRolePermissionsModule.useRolePermissions>);
 
-			render(
-				<TooltipProvider>
-					<ViewRolePage />
-				</TooltipProvider>,
-				undefined,
-				{
-					initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
-				},
-			);
+			render(<ViewRolePage />, undefined, {
+				initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
+			});
 
 			await waitFor(() => {
-				expect(screen.getByTestId('delete-button')).not.toBeDisabled();
+				expect(screen.getByTestId('delete-button')).not.toHaveAttribute(
+					'aria-disabled',
+					'true',
+				);
 			});
 		});
 
@@ -451,19 +422,13 @@ describe('ViewRolePage - AuthZ', () => {
 				error: null,
 			} as ReturnType<typeof useRolePermissionsModule.useRolePermissions>);
 
-			render(
-				<TooltipProvider>
-					<ViewRolePage />
-				</TooltipProvider>,
-				undefined,
-				{
-					initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
-				},
-			);
+			render(<ViewRolePage />, undefined, {
+				initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
+			});
 
 			await waitFor(() => {
 				const deleteButton = screen.getByTestId('delete-button');
-				expect(deleteButton).toBeDisabled();
+				expect(deleteButton).toHaveAttribute('aria-disabled', 'true');
 				expect(deleteButton).toHaveAttribute('data-denied-permissions');
 			});
 		});
@@ -491,15 +456,9 @@ describe('ViewRolePage - AuthZ', () => {
 				error: null,
 			} as ReturnType<typeof useRolePermissionsModule.useRolePermissions>);
 
-			render(
-				<TooltipProvider>
-					<ViewRolePage />
-				</TooltipProvider>,
-				undefined,
-				{
-					initialRoute: buildViewRoleRoute(MANAGED_ROLE_ID, MANAGED_ROLE_NAME),
-				},
-			);
+			render(<ViewRolePage />, undefined, {
+				initialRoute: buildViewRoleRoute(MANAGED_ROLE_ID, MANAGED_ROLE_NAME),
+			});
 
 			const deleteButton = await screen.findByTestId('delete-button');
 			await user.hover(deleteButton);

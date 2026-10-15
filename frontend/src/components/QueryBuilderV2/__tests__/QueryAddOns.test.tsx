@@ -358,6 +358,29 @@ describe('QueryAddOns', () => {
 		);
 	});
 
+	it('closes the only open add-on when its tab is clicked again', async () => {
+		const user = userEvent.setup();
+
+		render(
+			<QueryAddOns
+				query={baseQuery()}
+				version="v5"
+				isRawQuery={false}
+				showReduceTo={false}
+				panelType={PANEL_TYPES.TIME_SERIES}
+				index={0}
+				isForTraceOperator={false}
+			/>,
+		);
+
+		const legendTab = screen.getByTestId('query-add-on-legend_format');
+		await user.click(legendTab);
+		expect(screen.getByTestId('legend-format-content')).toBeInTheDocument();
+
+		await user.click(legendTab);
+		expect(screen.queryByTestId('legend-format-content')).not.toBeInTheDocument();
+	});
+
 	it('does not override existing legend when enabling Legend format', async () => {
 		const user = userEvent.setup();
 		const query = baseQuery({
@@ -461,8 +484,14 @@ describe('QueryAddOns', () => {
 			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 0 } } });
 
 			expect(screen.getByTestId('bucket-options-content')).toBeInTheDocument();
-			expect(screen.getByRole('radio', { name: 'Log' })).toBeChecked();
-			expect(screen.getByRole('radio', { name: '0' })).toBeChecked();
+			expect(screen.getByRole('button', { name: 'Log' })).toHaveAttribute(
+				'aria-pressed',
+				'true',
+			);
+			expect(screen.getByRole('button', { name: '0' })).toHaveAttribute(
+				'aria-pressed',
+				'true',
+			);
 		});
 
 		it('shows the server default, log at scale 4, without sending it', async () => {
@@ -471,10 +500,16 @@ describe('QueryAddOns', () => {
 
 			await user.click(screen.getByTestId('query-add-on-bucket_options'));
 
-			expect(screen.getByRole('radio', { name: 'Log' })).toBeChecked();
-			expect(screen.getByRole('radio', { name: '4' })).toBeChecked();
+			expect(screen.getByRole('button', { name: 'Log' })).toHaveAttribute(
+				'aria-pressed',
+				'true',
+			);
+			expect(screen.getByRole('button', { name: '4' })).toHaveAttribute(
+				'aria-pressed',
+				'true',
+			);
 			expect(
-				screen.queryByRole('radio', { name: 'Auto' }),
+				screen.queryByRole('button', { name: 'Auto' }),
 			).not.toBeInTheDocument();
 			expect(mockHandleChangeQueryData).not.toHaveBeenCalledWith(
 				'bucketOptions',
@@ -486,7 +521,7 @@ describe('QueryAddOns', () => {
 			const user = userEvent.setup();
 			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 4 } } });
 
-			await user.click(screen.getByRole('radio', { name: '0' }));
+			await user.click(screen.getByRole('button', { name: '0' }));
 
 			expect(mockHandleChangeQueryData).toHaveBeenCalledWith('bucketOptions', {
 				kind: 'log',
@@ -498,7 +533,7 @@ describe('QueryAddOns', () => {
 			const user = userEvent.setup();
 			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 0 } } });
 
-			await user.click(screen.getByRole('radio', { name: '-4' }));
+			await user.click(screen.getByRole('button', { name: '-4' }));
 
 			expect(mockHandleChangeQueryData).toHaveBeenCalledWith('bucketOptions', {
 				kind: 'log',
@@ -519,7 +554,7 @@ describe('QueryAddOns', () => {
 			const user = userEvent.setup();
 			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 0 } } });
 
-			await user.click(screen.getByRole('radio', { name: 'Linear' }));
+			await user.click(screen.getByRole('button', { name: 'Linear' }));
 
 			expect(mockHandleChangeQueryData).toHaveBeenLastCalledWith(
 				'bucketOptions',
@@ -534,7 +569,7 @@ describe('QueryAddOns', () => {
 			const user = userEvent.setup();
 			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 0 } } });
 
-			await user.click(screen.getByRole('radio', { name: 'Linear' }));
+			await user.click(screen.getByRole('button', { name: 'Linear' }));
 			await user.type(screen.getByTestId('bucket-options-max-value'), '500');
 
 			await waitFor(() => {

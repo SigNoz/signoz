@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Typography } from '@signozhq/ui/typography';
-import { Button, ButtonGroup } from '@signozhq/ui/button';
+import { ButtonGroup } from '@signozhq/ui/button-group';
 import { Skeleton } from 'antd';
 
 import { useRolePermissions } from '../../hooks/useRolePermissions';
@@ -94,14 +94,21 @@ function PermissionOverview({
 					color="secondary"
 					size="sm"
 					testId="toggle-all-group"
-				>
-					<Button onClick={handleExpandAll} data-testid="expand-all-button">
-						Expand all
-					</Button>
-					<Button onClick={handleCollapseAll} data-testid="collapse-all-button">
-						Collapse all
-					</Button>
-				</ButtonGroup>
+					items={[
+						{
+							value: 'expand-all',
+							label: 'Expand all',
+							onClick: handleExpandAll,
+							testId: 'expand-all-button',
+						},
+						{
+							value: 'collapse-all',
+							label: 'Collapse all',
+							onClick: handleCollapseAll,
+							testId: 'collapse-all-button',
+						},
+					]}
+				/>
 			</div>
 			<div className={styles.grid}>
 				{resources.map((resource) => (
