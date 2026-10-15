@@ -65,13 +65,6 @@ function VariablesPopover({
 				maxWidth="var(--anchor-width)"
 				maxHeight={300}
 				aria-label="Insert a variable"
-				onOpenChange={(open, eventDetails): void => {
-					// Typing, clicking and tabbing inside the input are not dismissals.
-					const target = eventDetails.event?.target as Node | null;
-					if (!open && target && anchorRef.current?.contains(target)) {
-						eventDetails.cancel();
-					}
-				}}
 			>
 				<div className={styles.content}>
 					{variables.length === 0 ? (
