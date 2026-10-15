@@ -66,6 +66,9 @@ export function resolveLayer(
 	return layer === LAYER.points ? LAYER.regions : layer;
 }
 
+/** Where a state view opens when the rows suggest no country; the save API needs one. */
+const DEFAULT_STATE_COUNTRY = 'US';
+
 interface KindChange {
 	next: GeoMapPlacementSlice;
 	/** The area to restore when leaving a state view, which takes over the area. */
@@ -102,7 +105,8 @@ export function changeRowKind(
 	if (to === 'state') {
 		const view = map.view ?? VIEW.world;
 		map.view = VIEW.country;
-		map.viewCountry = map.viewCountry || suggestedCountry || '';
+		map.viewCountry =
+			map.viewCountry || suggestedCountry || DEFAULT_STATE_COUNTRY;
 		if (map.layer === LAYER.points) {
 			map.layer = LAYER.regions;
 		}

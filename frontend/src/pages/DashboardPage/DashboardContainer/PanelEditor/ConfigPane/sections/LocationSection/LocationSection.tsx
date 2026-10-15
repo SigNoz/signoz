@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { Badge } from '@signozhq/ui/badge';
 import {
 	DashboardtypesGeoMapLayerDTO,
 	DashboardtypesGeoMapViewDTO,
@@ -107,15 +108,16 @@ function LocationSection({
 				<div className={styles.empty} data-testid="geo-location-empty">
 					<span className={styles.emptyTitle}>Add a location to Group By</span>
 					<span className={styles.muted}>
-						The query has no group-by yet, so there is nothing to place. Group by one
-						of these attributes in the query below and run it. This section fills in
-						by itself.
+						Group the query by the attribute that holds each row&apos;s country,
+						state, or latitude and longitude, then run it. This section fills in by
+						itself.
 					</span>
+					<span className={styles.muted}>GeoIP enrichment usually names them:</span>
 					<div className={styles.chips}>
 						{SUGGESTED_KEYS.map((key) => (
-							<span key={key} className={styles.chip}>
+							<Badge key={key} color="secondary" variant="outline">
 								{key}
-							</span>
+							</Badge>
 						))}
 					</div>
 				</div>

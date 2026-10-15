@@ -95,6 +95,12 @@ describe('changeRowKind', () => {
 		expect(change.previousView).toBe('europe');
 	});
 
+	it('opens states on the US when the rows suggest no country', () => {
+		expect(
+			changeRowKind(undefined, 'country', 'state', {}).next.map?.viewCountry,
+		).toBe('US');
+	});
+
 	it('restores the area when leaving states', () => {
 		const change = changeRowKind(
 			{
