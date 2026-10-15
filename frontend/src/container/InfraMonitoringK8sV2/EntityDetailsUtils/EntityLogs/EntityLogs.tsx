@@ -25,10 +25,8 @@ import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants'
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { FontSize } from 'container/OptionsMenu/types';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
-import { getOldLogsOperatorFromNew } from 'hooks/logs/useActiveLog';
 import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
 import useScrollToLog from 'hooks/logs/useScrollToLog';
-import { generateFilterQuery } from 'lib/logs/generateFilterQuery';
 import { saveRecentQueryByExpression } from 'lib/recentQueries/saveRecentQuery';
 import { ILog } from 'types/api/logs/log';
 import { DataSource } from 'types/common/queryBuilder';
@@ -81,29 +79,6 @@ function EntityLogsContent({
 
 	const { activeLog, selectedTab, handleSetActiveLog, handleCloseLogDetail } =
 		useLogDetailHandlers();
-
-	// TODO: Move away from using onAddToQuery after old drawer cleanup
-	const onAddToQuery = useCallback(
-		(fieldKey: string, fieldValue: string, operator: string): void => {
-			handleCloseLogDetail();
-
-			const partExpression = generateFilterQuery({
-				fieldKey,
-				fieldValue,
-				type: getOldLogsOperatorFromNew(operator),
-			});
-
-			const currentUser = userExpression;
-			const newUser = currentUser.trim()
-				? `${currentUser} AND ${partExpression}`
-				: partExpression;
-
-			querySearchOnRun(newUser);
-
-			logInfraDrawerFilterCustomizedEvent(category, 'logs', newUser, 'logs');
-		},
-		[userExpression, querySearchOnRun, handleCloseLogDetail, category],
-	);
 
 	const onApplyLogFilter = useCallback(
 		(expression: string): void => {
@@ -342,8 +317,6 @@ function EntityLogsContent({
 						logs={logs}
 						onNavigateLog={handleSetActiveLog}
 						selectedTab={selectedTab}
-						onAddToQuery={onAddToQuery}
-						onClickActionItem={onAddToQuery}
 						onApplyLogFilter={onApplyLogFilter}
 						onScrollToLog={handleScrollToLog}
 						handleOpenInExplorer={(e) => handleOpenInExplorer(e, activeLog)}
