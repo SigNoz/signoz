@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import type { LegendPosition } from 'lib/uPlotV2/components/types';
 import {
 	ColorRampMode,
 	ColorRampPalette,
@@ -141,6 +142,8 @@ export interface GeoMapProps {
 	showLabels?: boolean;
 	/** Keys for the data's own `color`s, listed after the colour bar. */
 	colorKeys?: GeoMapColorKey[];
+	/** Below the map (default), or in a column to its right. */
+	legendPosition?: LegendPosition;
 	isDarkMode: boolean;
 	/** Hides the tooltip; the caller opens its drilldown menu from this. */
 	onSelect?: (selection: GeoMapSelection) => void;

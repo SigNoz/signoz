@@ -82,4 +82,20 @@ describe('ColorBar', () => {
 				'linear-gradient(to right, #111111 0%, #111111 50%, #dddddd 50%, #dddddd 100%)',
 		});
 	});
+
+	it('runs low to high from the bottom when vertical', () => {
+		render(
+			<ColorBar
+				ramp={['#000', '#fff']}
+				minLabel="0.18%"
+				maxLabel="14.2%"
+				markerPosition={0.25}
+				orientation="vertical"
+			/>,
+		);
+
+		const labels = screen.getAllByText(/%$/).map((label) => label.textContent);
+		expect(labels).toStrictEqual(['14.2%', '0.18%']);
+		expect(screen.getByTestId('color-bar-marker')).toHaveStyle({ bottom: '25%' });
+	});
 });

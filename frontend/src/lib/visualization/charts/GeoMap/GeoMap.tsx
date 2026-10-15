@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { useResizeObserver } from 'hooks/useDimensions';
+import { LegendPosition } from 'lib/uPlotV2/components/types';
 
 import CountryTooltip from './components/CountryTooltip/CountryTooltip';
 import MapLegend from './components/MapLegend/MapLegend';
@@ -33,6 +34,7 @@ export default function GeoMap({
 	sizeMetric,
 	showLabels = true,
 	colorKeys,
+	legendPosition = LegendPosition.BOTTOM,
 	isDarkMode,
 	onSelect,
 	renderTooltipFooter,
@@ -156,6 +158,7 @@ export default function GeoMap({
 			className={styles.wrapper}
 			ref={wrapperRef}
 			data-geo-map
+			data-legend-position={legendPosition}
 			data-testid="geo-map"
 		>
 			<div
@@ -215,6 +218,7 @@ export default function GeoMap({
 				markerValue={hovered?.value ?? null}
 				valueLabel={valueLabel}
 				colorKeys={colorKeys}
+				position={legendPosition}
 				size={
 					sizeMetric && {
 						label: sizeMetric.label,
