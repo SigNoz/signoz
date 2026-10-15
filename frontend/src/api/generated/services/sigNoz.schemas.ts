@@ -11998,6 +11998,10 @@ export interface SpantypesWaterfallSpanDTO {
 	/**
 	 * @type string
 	 */
+	time_unix_nano?: string;
+	/**
+	 * @type string
+	 */
 	trace_id?: string;
 	/**
 	 * @type string
@@ -12011,6 +12015,10 @@ export interface SpantypesGettableWaterfallTraceDTO {
 	 * @minimum 0
 	 */
 	endTimestampMillis?: number;
+	/**
+	 * @type string
+	 */
+	endTimestampUnixNano?: string;
 	/**
 	 * @type boolean
 	 */
@@ -12036,6 +12044,10 @@ export interface SpantypesGettableWaterfallTraceDTO {
 	 * @minimum 0
 	 */
 	startTimestampMillis?: number;
+	/**
+	 * @type string
+	 */
+	startTimestampUnixNano?: string;
 	/**
 	 * @type integer
 	 * @minimum 0

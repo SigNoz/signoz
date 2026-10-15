@@ -34,25 +34,38 @@ const getTraceV4 = async (
 	// Wire spans carry time_unix; SpanV3's timestamp + 'service.name' are derived below.
 	type WireSpan = Omit<SpanV3, 'timestamp' | 'service.name'> & {
 		time_unix: number;
+		time_unix_nano?: string;
 	};
 	const rawPayload = response.data as unknown as Omit<
 		GetTraceV4SuccessResponse,
 		'spans'
-	> & { spans: WireSpan[] | null };
+	> & {
+		spans: WireSpan[] | null;
+		startTimestampUnixNano?: string;
+		endTimestampUnixNano?: string;
+	};
 
 	// Derive 'service.name' from resource for convenience — only derived field
 	// todo(tech-debt): to remove use of this and to directly use service.name from resources.
 	const spans: SpanV3[] = (rawPayload.spans || []).map((span) => ({
 		...span,
 		'service.name': span.resource?.['service.name'] || '',
-		timestamp: span.time_unix,
+		timestamp: span.time_unix_nano
+			? Number(span.time_unix_nano) / 1e6
+			: span.time_unix,
 	}));
 
-	// API returns startTimestampMillis/endTimestampMillis as relative durations (ms from epoch offset),
-	// not absolute unix millis like V2. The span timestamps are absolute unix millis.
-	// Convert by using the first span's timestamp as the base if there's a mismatch.
+	// Keep the trace origin as precise as the span timestamps.
 	let { startTimestampMillis, endTimestampMillis } = rawPayload;
+	if (rawPayload.startTimestampUnixNano) {
+		startTimestampMillis = Number(rawPayload.startTimestampUnixNano) / 1e6;
+	}
+	if (rawPayload.endTimestampUnixNano) {
+		endTimestampMillis = Number(rawPayload.endTimestampUnixNano) / 1e6;
+	}
+	// Older responses may use a relative origin for the trace bounds.
 	if (
+		!rawPayload.startTimestampUnixNano &&
 		spans.length > 0 &&
 		spans[0].timestamp > 0 &&
 		startTimestampMillis < spans[0].timestamp / 10
