@@ -157,7 +157,7 @@ func TestFormat_OpenInference(t *testing.T) {
 		},
 		{
 			// pipecat writes the request as llm.input_messages and the streamed reply as output.value alone,
-			// which the mapper copies onto gen_ai.output.messages
+			// which the mapper moves onto gen_ai.output.messages
 			// https://github.com/Arize-ai/openinference/blob/12f2cc035edfb00b60b656d977f07abfb7a69900/python/instrumentation/openinference-instrumentation-pipecat/src/openinference/instrumentation/pipecat/_attributes.py#L430
 			// https://github.com/Arize-ai/openinference/blob/12f2cc035edfb00b60b656d977f07abfb7a69900/python/instrumentation/openinference-instrumentation-pipecat/src/openinference/instrumentation/pipecat/_observer.py#L628
 			name: "OutputKeysAbsent_RawOutputFormatted_Warns",

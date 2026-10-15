@@ -55,13 +55,17 @@ type FormattedMessages struct {
 
 // FormatMessages builds the OTel GenAI view of a span's messages from the formats SDKs write. attributes
 // is the span's JSON attribute document, nested by key segment, so an object value is whole. Each
-// message value is a JSON string or a structured value. OpenInference's flattened messages come first,
+// message value is a JSON string or a structured value. An embeddings call has no messages, whatever the
+// mapper moved onto the message attributes. OpenInference's flattened messages come first,
 // then a tool call and its result, then the AI SDK's ai.* keys, then the message attributes, then
 // openllmetry's flattened prompts and completions. gen_ai.system_instructions leads the
 // input and gen_ai.response.finish_reasons overrides the finish reasons the converter found, whichever
 // converter ran.
 func FormatMessages(attributes map[string]any) FormattedMessages {
 	f := &formatting{attributes: attributes, out: FormattedMessages{Input: InputMessages{}, Output: OutputMessages{}, Warnings: []string{}}}
+	if isEmbeddings(attributes) {
+		return f.out
+	}
 	switch {
 	case f.openInference():
 	case attribute(f.attributes, GenAIToolCallArguments) != nil || attribute(f.attributes, GenAIToolCallResult) != nil:
@@ -74,6 +78,17 @@ func FormatMessages(attributes map[string]any) FormattedMessages {
 	f.prependSystemInstructions()
 	f.fillFinishReasons()
 	return f.out
+}
+
+// isEmbeddings matches the operation name as the semconv embeddings, openllmetry's llm.request.type
+// embedding and OpenInference's span kind EMBEDDING, copied by the mapper, or the AI SDK's ai.embed* ids.
+// https://github.com/open-telemetry/semantic-conventions-genai/blob/06ec68e722c45a7218e23ea1bc1339fe4e21ecae/model/gen-ai/registry.yaml#L658
+func isEmbeddings(attributes map[string]any) bool {
+	switch strings.ToLower(stringOf(attribute(attributes, GenAIOperationName))) {
+	case "embeddings", "embedding":
+		return true
+	}
+	return strings.HasPrefix(stringOf(attribute(attributes, vercelOperation)), "ai.embed")
 }
 
 type formatting struct {
