@@ -21,7 +21,7 @@ def test_thread_returns_gen_ai_spans_in_order(
     seed_attribute_evolution("traces", ATTRIBUTE_JSON_ROLLOUT_TIME)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
-    root_id, first_llm_id, tool_id, agent_id, second_llm_id, third_llm_id = (TraceIdGenerator.span_id() for _ in range(6))
+    root_id, first_llm_id, tool_id, agent_id, second_llm_id, third_llm_id, flattened_llm_id = (TraceIdGenerator.span_id() for _ in range(7))
     resources = {"service.name": "tracedetail-thread"}
     first_input = json.dumps([{"role": "user", "parts": [{"type": "text", "content": "weather in Bangalore?"}]}])
     first_output = json.dumps([{"role": "assistant", "parts": [{"type": "tool_call", "id": "call_1", "name": "get_weather", "arguments": {"city": "Bangalore"}}]}])
@@ -54,6 +54,23 @@ def test_thread_returns_gen_ai_spans_in_order(
             Traces(timestamp=now - timedelta(seconds=5), trace_id=trace_id, span_id=agent_id, parent_span_id=root_id, name="invoke_agent planner", resources=resources, attributes={"gen_ai.agent.name": "planner"}, attribute_write_mode="json_only"),
             Traces(timestamp=now - timedelta(seconds=4), trace_id=trace_id, span_id=second_llm_id, parent_span_id=root_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.input.messages": second_input}, attribute_write_mode="json_only"),
             Traces(timestamp=now - timedelta(seconds=2), trace_id=trace_id, span_id=third_llm_id, parent_span_id=root_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.output.messages": "It is sunny in Bangalore."}, attribute_write_mode="json_only"),
+            Traces(
+                timestamp=now - timedelta(seconds=1),
+                trace_id=trace_id,
+                span_id=flattened_llm_id,
+                parent_span_id=root_id,
+                name="ChatCompletion",
+                resources=resources,
+                attributes={
+                    "gen_ai.request.model": "gpt-4o",
+                    "llm.input_messages.0.message.role": "user",
+                    "llm.input_messages.0.message.content": "thanks",
+                    "llm.output_messages.0.message.role": "assistant",
+                    "llm.output_messages.0.message.content": "You're welcome.",
+                    "llm.finish_reason": "stop",
+                },
+                attribute_write_mode="json_only",
+            ),
         ]
     )
 
@@ -62,10 +79,10 @@ def test_thread_returns_gen_ai_spans_in_order(
     assert response.status_code == HTTPStatus.OK, response.text
 
     thread = response.json()["data"]
-    assert [span["span_id"] for span in thread["spans"]] == [first_llm_id, tool_id, agent_id, second_llm_id, third_llm_id]
+    assert [span["span_id"] for span in thread["spans"]] == [first_llm_id, tool_id, agent_id, second_llm_id, third_llm_id, flattened_llm_id]
     assert "nextCursor" not in thread
 
-    first, tool, agent, input_only, output_only = thread["spans"]
+    first, tool, agent, input_only, output_only, flattened = thread["spans"]
     assert agent["attributes"]["gen_ai.agent.name"] == "planner"
     assert agent["formattedInput"] == []
     assert agent["formattedOutput"] == []
@@ -91,6 +108,9 @@ def test_thread_returns_gen_ai_spans_in_order(
     assert output_only["formattedInput"] == []
     assert output_only["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "It is sunny in Bangalore."}]}]
     assert output_only["formatterWarnings"] == ["bare assistant text, role assumed"]
+    assert flattened["attributes"]["llm.input_messages.0.message.content"] == "thanks"
+    assert flattened["formattedInput"] == [{"role": "user", "parts": [{"type": "text", "content": "thanks"}]}]
+    assert flattened["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "You're welcome."}], "finish_reason": "stop"}]
 
 
 def test_thread_paginates_with_cursors(

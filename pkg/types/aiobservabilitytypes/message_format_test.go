@@ -121,6 +121,31 @@ So, the ball costs 5 cents.`,
 	})
 }
 
+func TestIndexed(t *testing.T) {
+	testCases := []struct {
+		name string
+		doc  map[string]any
+		want []map[string]any
+	}{
+		{
+			name: "NumericKeys_SortedNumerically",
+			doc:  document(map[string]any{"llm.input_messages.10.message.role": "user", "llm.input_messages.2.message.role": "system", "llm.input_messages.x.message.role": "skipped"}),
+			want: []map[string]any{{"message": map[string]any{"role": "system"}}, {"message": map[string]any{"role": "user"}}},
+		},
+		{
+			name: "StructuredList_KeptInOrder",
+			doc:  map[string]any{"llm": map[string]any{"input_messages": []any{map[string]any{"message": "b"}, map[string]any{"message": "a"}, "not an object"}}},
+			want: []map[string]any{{"message": "b"}, {"message": "a"}},
+		},
+		{name: "Absent_Empty", doc: map[string]any{}, want: []map[string]any{}},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.want, indexed(testCase.doc, openInferenceInputMessages))
+		})
+	}
+}
+
 func TestFormat_SystemInstructions(t *testing.T) {
 	input := `[{"role":"user","parts":[{"type":"text","content":"hi"}]}]`
 	runFormatCases(t, []formatCase{
