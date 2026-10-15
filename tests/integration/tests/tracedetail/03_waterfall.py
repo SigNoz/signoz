@@ -48,10 +48,12 @@ def test_waterfall_formats_messages_on_gen_ai_spans(
     root, llm, tool, output_only = waterfall["spans"]
 
     # spans without messages carry no formatted keys
-    for span in (root, tool):
-        assert not {"formattedInput", "formattedOutput", "formatterWarnings"} & span.keys(), span
+    assert not {"formattedInput", "formattedOutput", "formatterWarnings"} & root.keys(), root
     assert root["attributes"]["http.method"] == "POST"
+
     assert tool["attributes"]["gen_ai.tool.call.result"] == "sunny"
+    assert "formattedInput" not in tool
+    assert tool["formattedOutput"] == [{"role": "tool", "parts": [{"type": "tool_call_response", "response": "sunny"}]}]
 
     # the raw messages stay in attributes for the raw view
     assert llm["attributes"]["gen_ai.input.messages"] == llm_input

@@ -50,17 +50,19 @@ interface UseSpanCategoryFilterReturn {
 export function useSpanCategoryFilter(
 	props: ExpressionFilterProps,
 ): UseSpanCategoryFilterReturn {
-	const { expression, filters, setExpression, expressionRef, runQuery } = props;
+	const { expression, committedPairs, setExpression, expressionRef, runQuery } =
+		props;
 
-	// Derive active category from filters (only updates after runQuery)
+	// Derive active category from the committed pairs (only updates after runQuery)
 	const selectedCategory = useMemo((): SpanCategory => {
+		const committedKeys = new Set(committedPairs.map((pair) => pair.key));
 		for (const [category, key] of Object.entries(CATEGORY_KEYS)) {
-			if (filters.items.some((item) => item.key?.key === key)) {
+			if (committedKeys.has(key)) {
 				return category as SpanCategory;
 			}
 		}
 		return 'All';
-	}, [filters]);
+	}, [committedPairs]);
 
 	const handleCategoryChange = useCallback(
 		(category: SpanCategory): void => {

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { ArrowRightFromLine, Search, X } from '@signozhq/icons';
 import { Switch } from '@signozhq/ui/switch';
@@ -13,19 +13,19 @@ import {
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
-import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
-import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { uniqBy } from 'lodash-es';
 import NozButton from 'pages/TraceDetailsV3/TraceDetailsHeader/NozButton';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	DataSource,
 	TracesAggregatorOperator,
 } from 'types/common/queryBuilder';
+import { extractQueryPairs } from 'utils/queryContextUtils';
+import { validateQuery } from 'utils/queryValidationUtils';
 
 import { BASE_FILTER_QUERY } from './constants';
 import { useHighlightErrors } from './hooks/useHighlightErrors';
@@ -37,7 +37,7 @@ import QueryResult from './QueryResult';
 
 import styles from './Filters.module.scss';
 
-function prepareQuery(filters: TagFilter, traceID: string): Query {
+function prepareQuery(expression: string, traceID: string): Query {
 	return {
 		...initialQueriesMap.traces,
 		builder: {
@@ -47,23 +47,7 @@ function prepareQuery(filters: TagFilter, traceID: string): Query {
 					...initialQueriesMap.traces.builder.queryData[0],
 					aggregateOperator: TracesAggregatorOperator.NOOP,
 					orderBy: [{ columnName: 'timestamp', order: 'asc' }],
-					filters: {
-						...filters,
-						items: [
-							...filters.items,
-							{
-								id: '5ab8e1cf',
-								key: {
-									key: 'trace_id',
-									dataType: DataTypes.String,
-									type: '',
-									id: 'trace_id--string----true',
-								},
-								op: '=',
-								value: traceID,
-							},
-						],
-					},
+					filter: { expression: `(${expression}) AND trace_id = '${traceID}'` },
 					selectColumns: [],
 				},
 			],
@@ -88,10 +72,8 @@ function Filters({
 	onExpand: () => void;
 	onCollapse: () => void;
 }): JSX.Element {
-	const [filters, setFilters] = useState<TagFilter>(
-		BASE_FILTER_QUERY.filters || { items: [], op: 'AND' },
-	);
 	const [expression, setExpression] = useState<string>('');
+	const [committedExpression, setCommittedExpression] = useState<string>('');
 	const [noData, setNoData] = useState<boolean>(false);
 	const [filteredSpanIds, setFilteredSpanIds] = useState<string[]>([]);
 	const [currentSearchedIndex, setCurrentSearchedIndex] = useState<number>(0);
@@ -100,10 +82,12 @@ function Filters({
 
 	const runQuery = useCallback(
 		(value: string): void => {
-			const items = convertExpressionToFilters(value);
-			setFilters({ items, op: 'AND' });
-			// Clear results when expression produces no filters
-			if (items.length === 0) {
+			if (!validateQuery(value).isValid) {
+				return;
+			}
+			setCommittedExpression(value);
+			// Clear results when expression is empty
+			if (!value.trim()) {
 				setFilteredSpanIds([]);
 				onFilteredSpansChange?.([], false);
 				setCurrentSearchedIndex(0);
@@ -120,7 +104,7 @@ function Filters({
 			expressionRef.current = value;
 			// Clear results when expression is emptied
 			if (!value.trim()) {
-				setFilters({ items: [], op: 'AND' });
+				setCommittedExpression('');
 				setFilteredSpanIds([]);
 				onFilteredSpansChange?.([], false);
 				setCurrentSearchedIndex(0);
@@ -146,17 +130,22 @@ function Filters({
 	const handleClear = useCallback((): void => {
 		setExpression('');
 		expressionRef.current = '';
-		setFilters({ items: [], op: 'AND' });
+		setCommittedExpression('');
 		setFilteredSpanIds([]);
 		onFilteredSpansChange?.([], false);
 		setCurrentSearchedIndex(0);
 		setNoData(false);
 	}, [onFilteredSpansChange]);
 
+	const committedPairs = useMemo(
+		() => extractQueryPairs(committedExpression),
+		[committedExpression],
+	);
+
 	// Expression-based filter hooks
 	const filterProps = {
 		expression,
-		filters,
+		committedPairs,
 		setExpression,
 		expressionRef,
 		runQuery,
@@ -196,9 +185,11 @@ function Filters({
 		[filteredSpanIds, history, search],
 	);
 
+	const isFilterActive = committedExpression.trim().length > 0;
+
 	const { isFetching, error } = useGetQueryRange(
 		{
-			query: prepareQuery(filters, traceID),
+			query: prepareQuery(committedExpression, traceID),
 			graphType: PANEL_TYPES.LIST,
 			selectedTime: 'GLOBAL_TIME',
 			start: startTime,
@@ -222,12 +213,11 @@ function Filters({
 				],
 			},
 		},
-		DEFAULT_ENTITY_VERSION,
+		ENTITY_VERSION_V5,
 		{
-			queryKey: [filters],
-			enabled: filters.items.length > 0,
+			queryKey: [committedExpression, traceID, startTime, endTime],
+			enabled: isFilterActive,
 			onSuccess: (data) => {
-				const isFilterActive = filters.items.length > 0;
 				if (data?.payload.data.newResult.data.result[0].list) {
 					const uniqueSpans = uniqBy(
 						data?.payload.data.newResult.data.result[0].list,
@@ -247,7 +237,6 @@ function Filters({
 				}
 			},
 			onError: () => {
-				const isFilterActive = filters.items.length > 0;
 				setNoData(false);
 				setFilteredSpanIds([]);
 				onFilteredSpansChange?.([], isFilterActive);
@@ -353,7 +342,6 @@ function Filters({
 								<QuerySearch
 									queryData={{
 										...BASE_FILTER_QUERY,
-										filters,
 										filter: { expression },
 									}}
 									onChange={handleExpressionChange}
@@ -391,6 +379,7 @@ function Filters({
 											size="icon"
 											color="secondary"
 											onClick={handleClear}
+											data-testid="clear-filter"
 										>
 											<X size={14} />
 										</Button>

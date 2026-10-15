@@ -83,9 +83,8 @@ type WaterfallSpan struct {
 	StatusCodeString   string `json:"status_code_string,omitempty"`
 	StatusMessage      string `json:"status_message,omitempty"`
 
-	// The formatted fields hold the span's gen_ai messages in the OTel GenAI shape, set only when the
-	// span carries gen_ai.input.messages or gen_ai.output.messages; FormatterWarnings holds what the
-	// converter could not resolve.
+	// The formatted fields hold the span's gen_ai messages or tool call in the OTel GenAI shape, omitted
+	// when the span carries neither; FormatterWarnings holds what the converter could not resolve.
 	FormattedInput    aiobservabilitytypes.InputMessages  `json:"formattedInput,omitempty"`
 	FormattedOutput   aiobservabilitytypes.OutputMessages `json:"formattedOutput,omitempty"`
 	FormatterWarnings []string                            `json:"formatterWarnings,omitempty"`
@@ -325,7 +324,8 @@ func (item *StorableSpan) ToWaterfallSpan(traceID string) *WaterfallSpan {
 	resources := make(map[string]string)
 	maps.Copy(resources, item.ResourcesString)
 
-	span := &WaterfallSpan{
+	formatted := aiobservabilitytypes.FormatMessages(item.AttributesJSON)
+	return &WaterfallSpan{
 		Attributes:         item.Attributes(),
 		DBName:             item.DBName,
 		DBOperation:        item.DBOperation,
@@ -355,16 +355,10 @@ func (item *StorableSpan) ToWaterfallSpan(traceID string) *WaterfallSpan {
 		TimeUnix:           uint64(item.StartTime.UnixNano()),
 		ServiceName:        item.ServiceName,
 		References:         item.UnmarshalledRefs(),
+		FormattedInput:     formatted.Input,
+		FormattedOutput:    formatted.Output,
+		FormatterWarnings:  formatted.Warnings,
 	}
-
-	input, output := rawAttribute(item, aiobservabilitytypes.GenAIInputMessages), rawAttribute(item, aiobservabilitytypes.GenAIOutputMessages)
-	if input != nil || output != nil {
-		formatted := aiobservabilitytypes.FormatMessages(input, output)
-		span.FormattedInput = formatted.Input
-		span.FormattedOutput = formatted.Output
-		span.FormatterWarnings = formatted.Warnings
-	}
-	return span
 }
 
 func EnrichSelectedSpans(window []*WaterfallSpan, fullSpans []StorableSpan) {

@@ -300,11 +300,11 @@ func (s *traceStore) GetThreadSpans(ctx context.Context, orgID valuer.UUID, trac
 		sb.SelectMore("attributes")
 	}
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
-	keys, err := s.genAIFieldKeys(ctx, orgID, aiobservabilitytypes.GenAIThreadKeys)
+	keys, err := s.genAIFieldKeys(ctx, orgID, aiobservabilitytypes.GenAISpanGateKeys)
 	if err != nil {
 		return nil, err
 	}
-	isThreadSpan, err := s.anyExistsCondition(ctx, q, aiobservabilitytypes.GenAIThreadKeys, keys, sb)
+	isThreadSpan, err := s.anyExistsCondition(ctx, q, aiobservabilitytypes.GenAISpanGateKeys, keys, sb)
 	if err != nil {
 		return nil, err
 	}
