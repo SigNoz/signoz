@@ -20493,9 +20493,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:list
       - tokenizer:
-        - VIEWER
+        - rule:list
       summary: Get metric alerts
       tags:
       - metrics
@@ -28060,9 +28060,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - dashboard:list
       - tokenizer:
-        - VIEWER
+        - dashboard:list
       summary: Get metric dashboards (v2)
       tags:
       - metrics
