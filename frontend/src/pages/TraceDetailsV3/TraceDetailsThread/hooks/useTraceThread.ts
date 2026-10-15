@@ -11,6 +11,7 @@ import { isNotFoundError, toThreadSpan } from '../utils';
 
 const THREAD_PAGE_LIMIT = 100;
 const MAX_RETRIES = 3;
+const STALE_TIME_MS = 5 * 60 * 1000;
 
 type PageParam = Pick<GetTraceThreadParams, 'after' | 'before'>;
 
@@ -66,6 +67,7 @@ export function useTraceThread({
 			!isNotFoundError(error) && failureCount < MAX_RETRIES,
 		enabled: !!traceId,
 		refetchOnWindowFocus: false,
+		staleTime: STALE_TIME_MS,
 	});
 
 	const spans = useMemo(

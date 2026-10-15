@@ -54,6 +54,11 @@ const HIDDEN_SPAN_FIELDS_IN_DETAILS_VIEW: ReadonlySet<string> = new Set([
 	'has_children',
 	'level',
 	'service.name',
+	// Thread-only: shown as Input / Output, not as attributes.
+	'formatted_input',
+	'formatted_output',
+	'formatter',
+	'formatter_warnings',
 ]);
 
 /**

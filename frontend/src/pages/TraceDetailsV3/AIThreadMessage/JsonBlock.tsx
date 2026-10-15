@@ -5,6 +5,7 @@ import styles from './AIThreadMessage.module.scss';
 
 // Branch toggles (arrow, key, summary); PrettyView already stops its actions menu.
 const TREE_TOGGLES = '.pretty-view__nested-row > :not(ul)';
+const NO_ACTIONS = { leaf: [], nested: [] };
 
 interface JsonBlockProps {
 	data: object;
@@ -25,7 +26,7 @@ function JsonBlock({ data }: JsonBlockProps): JSX.Element {
 				data={data as Record<string, unknown>}
 				searchable={false}
 				drawerKey="ai-thread-message"
-				showPinned={true}
+				visibleActions={NO_ACTIONS}
 			/>
 		</div>
 	);

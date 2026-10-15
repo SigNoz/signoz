@@ -1,12 +1,9 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
 import { DetailsPanelState } from 'components/DetailsPanel/types';
 import { ResizableBox } from 'periscope/components/ResizableBox';
-import { TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
 
 import SpanDetailsPanel from '../SpanDetailsPanel/SpanDetailsPanel';
 import { SpanDetailVariant } from '../SpanDetailsPanel/constants';
-import { useTraceSummary } from '../TraceDetailsHeader/useTraceSummary';
 import { ThreadSpan } from './types';
 
 import styles from './TraceDetailsThread.module.scss';
@@ -29,8 +26,6 @@ function ThreadSpanDetails({
 	variant,
 	onVariantChange,
 }: ThreadSpanDetailsProps): JSX.Element {
-	const { id: traceId = '' } = useParams<TraceDetailV3URLProps>();
-	const { data: summary } = useTraceSummary(traceId);
 	const [width, setWidth] = useState(RIGHT_DOCK_MIN);
 	const [height, setHeight] = useState(BOTTOM_DOCK_DEFAULT);
 
@@ -40,8 +35,8 @@ function ThreadSpanDetails({
 			selectedSpan={span}
 			variant={variant}
 			onVariantChange={onVariantChange}
-			traceStartTime={summary?.startTimestampMillis}
-			traceEndTime={summary?.endTimestampMillis}
+			traceStartTime={span.timestamp}
+			traceEndTime={span.timestamp + span.duration_nano / 1e6}
 		/>
 	);
 
