@@ -20287,9 +20287,9 @@ paths:
           description: Not Implemented
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: Metric reduction stats
       tags:
       - metrics
@@ -20347,9 +20347,9 @@ paths:
           description: Not Implemented
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: Metric reduction volume over time
       tags:
       - metrics
