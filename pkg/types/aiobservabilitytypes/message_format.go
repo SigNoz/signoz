@@ -44,7 +44,8 @@ type FormattedMessages struct {
 // FormatMessages builds the OTel GenAI view of a span's messages from the formats SDKs write. attributes
 // is the span's JSON attribute document, nested by key segment, so an object value is whole. Each
 // message value is a JSON string or a structured value. OpenInference's flattened messages come first,
-// then a tool call and its result, then the message attributes. gen_ai.system_instructions leads the
+// then a tool call and its result, then the message attributes, then openllmetry's flattened prompts
+// and completions. gen_ai.system_instructions leads the
 // input and gen_ai.response.finish_reasons overrides the finish reasons the converter found, whichever
 // converter ran.
 func FormatMessages(attributes map[string]any) FormattedMessages {
@@ -55,6 +56,7 @@ func FormatMessages(attributes map[string]any) FormattedMessages {
 		f.tool()
 	case attribute(f.attributes, GenAIInputMessages) != nil || attribute(f.attributes, GenAIOutputMessages) != nil:
 		f.messages()
+	case f.traceloop():
 	}
 	f.prependSystemInstructions()
 	f.fillFinishReasons()
@@ -80,6 +82,7 @@ func (f *formatting) messages() {
 	}
 	if output := attribute(f.attributes, GenAIOutputMessages); output != nil {
 		f.out.Output, outputLabel = f.side(decode(output), RoleAssistant)
+		f.completionToolCalls()
 	}
 	f.warnMixedFormats(inputLabel, outputLabel)
 }
@@ -205,6 +208,12 @@ func indexed(doc map[string]any, key string) []map[string]any {
 		}
 	}
 	return out
+}
+
+// indexedAt reads one entry of a flattened list by its index.
+func indexedAt(doc map[string]any, key string, i int) map[string]any {
+	m, _ := attribute(doc, key+"."+strconv.Itoa(i)).(map[string]any)
+	return m
 }
 
 func firstObject(list []any) (map[string]any, bool) {
