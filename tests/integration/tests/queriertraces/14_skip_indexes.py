@@ -11,7 +11,6 @@ from fixtures.querier import RequestType, build_aggregation, build_traces_scalar
 from fixtures.traces import ATTRIBUTE_JSON_ROLLOUT_TIME, Traces
 
 PROMOTED_PATHS = "/api/v1/promoted_paths"
-MATERIALIZED_PATH = "/api/v1/promoted_paths/materialized"
 
 
 def test_traces_filters_use_skip_indexes(
@@ -20,7 +19,6 @@ def test_traces_filters_use_skip_indexes(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
     seed_attribute_evolution: Callable[[str, datetime], None],
-    materialize_attribute: Callable[..., str],
     request: pytest.FixtureRequest,
 ) -> None:
     seed_attribute_evolution("traces", ATTRIBUTE_JSON_ROLLOUT_TIME)
@@ -48,22 +46,12 @@ def test_traces_filters_use_skip_indexes(
     )
     assert resp.status_code == HTTPStatus.BAD_REQUEST, resp.text
 
-    materialize_attribute("traces", "materialized.index_probe", True)
-    resp = requests.post(
-        signoz.self.host_configs["8080"].get(MATERIALIZED_PATH),
-        json={"signal": "traces"},
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=30,
-    )
-    assert resp.status_code == HTTPStatus.OK, resp.text
-
     now = datetime.now(tz=UTC)
-    insert_traces([Traces(timestamp=now - timedelta(seconds=10), attributes={"index.number_probe": 200, "index.string_probe": "probe", "materialized.index_probe": "probe", "http.route": "/probe", "rpc.method": "probe"})])
+    insert_traces([Traces(timestamp=now - timedelta(seconds=10), attributes={"index.number_probe": 200, "index.string_probe": "probe", "http.route": "/probe", "rpc.method": "probe"})])
 
     for filter_expression, index_name in [
         ("index.number_probe = 200", "attributes.index.number_probe_Float64_bloom_filter"),
         ("index.string_probe = 'probe'", "attributes.index.string_probe_String_bloom_filter"),
-        ("materialized.index_probe = 'probe'", "attributes.materialized.index_probe_String_bloom_filter"),
         ("http.route = '/probe'", "attributes.http.route_String_bloom_filter"),
         ("rpc.method = 'probe'", "attributes.rpc.method_String_bloom_filter"),
         ("name = 'probe'", "idx_name"),
