@@ -1,0 +1,77 @@
+{
+  "alert": "notification_routing",
+  "ruleType": "threshold_rule",
+  "alertType": "METRIC_BASED_ALERT",
+  "condition": {
+    "thresholds": {
+      "kind": "basic",
+      "spec": [
+        {
+          "name": "critical",
+          "target": 90,
+          "matchType": "1",
+          "op": "1",
+          "channels": [
+            "test channel"
+          ]
+        }
+      ]
+    },
+    "compositeQuery": {
+      "queryType": "builder",
+      "panelType": "graph",
+      "queries": [
+        {
+          "type": "builder_query",
+          "spec": {
+            "name": "A",
+            "signal": "metrics",
+            "aggregations": [
+              {
+                "metricName": "cpu_usage_notification_routing",
+                "timeAggregation": "avg",
+                "spaceAggregation": "max"
+              }
+            ],
+            "groupBy": [
+              {
+                "name": "tier",
+                "fieldContext": "attribute",
+                "fieldDataType": "string"
+              },
+              {
+                "name": "service.name",
+                "fieldContext": "attribute",
+                "fieldDataType": "string"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "selectedQueryName": "A"
+  },
+  "evaluation": {
+    "kind": "rolling",
+    "spec": {
+      "evalWindow": "5m0s",
+      "frequency": "15s"
+    }
+  },
+  "labels": {},
+  "annotations": {
+    "description": "CPU usage is above threshold",
+    "summary": "High CPU usage"
+  },
+  "notificationSettings": {
+    "groupBy": [],
+    "usePolicy": true,
+    "renotify": {
+      "enabled": false,
+      "interval": "30m",
+      "alertStates": []
+    }
+  },
+  "version": "v5",
+  "schemaVersion": "v2alpha1"
+}
