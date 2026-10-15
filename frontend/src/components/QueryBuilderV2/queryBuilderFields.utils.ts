@@ -19,10 +19,10 @@ const AVAILABLE: ResolvedQueryBuilderField = {
 	pinned: false,
 };
 
+export const STEP_INTERVAL_PLACEHOLDER = 'Auto';
+
 function fromRule(rule: QueryBuilderFieldRule): ResolvedQueryBuilderField {
 	switch (rule.state) {
-		case 'default':
-			return { ...AVAILABLE, placeholder: rule.placeholder };
 		case 'hidden':
 			return { hidden: true, disabled: false, pinned: false };
 		case 'disabled':
@@ -44,8 +44,10 @@ export function resolveQueryBuilderField(
 	config?: QueryBuilderFieldsConfig,
 ): ResolvedQueryBuilderField {
 	const rule = config?.[field];
+	const resolved = rule ? fromRule(rule) : AVAILABLE;
+	const placeholder = rule?.state === 'hidden' ? undefined : rule?.placeholder;
 
-	return rule ? fromRule(rule) : AVAILABLE;
+	return placeholder ? { ...resolved, placeholder } : resolved;
 }
 
 /**

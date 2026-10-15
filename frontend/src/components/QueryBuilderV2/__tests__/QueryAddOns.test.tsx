@@ -174,55 +174,32 @@ describe('QueryAddOns', () => {
 	});
 
 	it.each([
-		[QueryBuilderField.Limit, 'query-add-on-limit', 'input-Limit', 'placeholder'],
-		[
-			QueryBuilderField.Legend,
-			'query-add-on-legend_format',
-			'input-Legend format',
-			'placeholder',
-		],
-		[
-			QueryBuilderField.GroupBy,
-			'query-add-on-group_by',
-			'groupby',
-			'data-placeholder',
-		],
-		[
-			QueryBuilderField.Having,
-			'query-add-on-having',
-			'having-change',
-			'data-placeholder',
-		],
-		[
-			QueryBuilderField.OrderBy,
-			'query-add-on-order_by',
-			'orderby',
-			'data-placeholder',
-		],
-	])(
-		'shows the configured %s placeholder',
-		(field, addOnTestId, inputTestId, attribute) => {
-			render(
-				<QueryAddOns
-					query={baseQuery()}
-					version="v5"
-					isRawQuery={false}
-					showReduceTo={false}
-					panelType={PANEL_TYPES.TIME_SERIES}
-					index={0}
-					fieldsConfig={{ [field]: { state: 'default', placeholder: 'Default X' } }}
-					isForTraceOperator={false}
-				/>,
-			);
+		[QueryBuilderField.Limit, 'input-Limit', 'placeholder'],
+		[QueryBuilderField.Legend, 'input-Legend format', 'placeholder'],
+		[QueryBuilderField.GroupBy, 'groupby', 'data-placeholder'],
+		[QueryBuilderField.Having, 'having-change', 'data-placeholder'],
+		[QueryBuilderField.OrderBy, 'orderby', 'data-placeholder'],
+	])('shows the configured %s placeholder', (field, inputTestId, attribute) => {
+		render(
+			<QueryAddOns
+				query={baseQuery()}
+				version="v5"
+				isRawQuery={false}
+				showReduceTo={false}
+				panelType={PANEL_TYPES.TIME_SERIES}
+				index={0}
+				fieldsConfig={{
+					[field]: { state: 'pinned', placeholder: 'Default X' },
+				}}
+				isForTraceOperator={false}
+			/>,
+		);
 
-			fireEvent.click(screen.getByTestId(addOnTestId));
-
-			expect(screen.getByTestId(inputTestId)).toHaveAttribute(
-				attribute,
-				'Default X',
-			);
-		},
-	);
+		expect(screen.getByTestId(inputTestId)).toHaveAttribute(
+			attribute,
+			'Default X',
+		);
+	});
 
 	it('keeps the built-in placeholder without a rule', () => {
 		render(

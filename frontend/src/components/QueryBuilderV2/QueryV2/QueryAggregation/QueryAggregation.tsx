@@ -15,6 +15,7 @@ import {
 import {
 	resolveQueryBuilderField,
 	type ResolvedQueryBuilderField,
+	STEP_INTERVAL_PLACEHOLDER,
 } from '../../queryBuilderFields.utils';
 
 import QueryAggregationSelect from './QueryAggregationSelect';
@@ -108,7 +109,7 @@ function QueryAggregationOptions({
 								initialValue={queryData?.stepInterval ? queryData?.stepInterval : null}
 								className="query-aggregation-interval-input"
 								label="Seconds"
-								placeholder={stepInterval.placeholder ?? 'Auto'}
+								placeholder={stepInterval.placeholder ?? STEP_INTERVAL_PLACEHOLDER}
 								type="number"
 								onChange={handleAggregationIntervalChange}
 								disabled={stepInterval.disabled}

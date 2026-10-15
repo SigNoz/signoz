@@ -24,7 +24,7 @@ describe('QueryAggregationOptions step interval placeholder', () => {
 				queryData={queryData}
 				fieldsConfig={{
 					[QueryBuilderField.StepInterval]: {
-						state: 'default',
+						state: 'pinned',
 						placeholder: 'Default 60',
 					},
 				}}
