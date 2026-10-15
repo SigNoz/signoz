@@ -109,16 +109,43 @@ describe('Trace waterfall Filters', () => {
 		);
 	});
 
-	it('reflects a committed has_error clause on the highlight errors switch', async () => {
-		const toggle = screen
-			.getByTestId('highlight-errors-toggle')
-			.querySelector('[role="switch"]');
-		expect(toggle).toHaveAttribute('aria-checked', 'false');
+	it.each(['has_error = true', "has_error = 'true'", 'has_error = TRUE'])(
+		'reflects a committed %s on the highlight errors switch',
+		async (expression) => {
+			const toggle = screen
+				.getByTestId('highlight-errors-toggle')
+				.querySelector('[role="switch"]');
+			expect(toggle).toHaveAttribute('aria-checked', 'false');
 
-		commit('has_error = true');
+			commit(expression);
+
+			await waitFor(() => expect(payloads).toHaveLength(1));
+			expect(toggle).toHaveAttribute('aria-checked', 'true');
+		},
+	);
+
+	it('keeps the highlight errors switch off for has_error != true', async () => {
+		commit('has_error != true');
 
 		await waitFor(() => expect(payloads).toHaveLength(1));
-		expect(toggle).toHaveAttribute('aria-checked', 'true');
+		expect(
+			screen
+				.getByTestId('highlight-errors-toggle')
+				.querySelector('[role="switch"]'),
+		).toHaveAttribute('aria-checked', 'false');
+	});
+
+	it('does not commit an expression that fails to parse', async () => {
+		commit("service.name = 'frontend'");
+		await waitFor(() => expect(payloads).toHaveLength(1));
+
+		commit('service.name =');
+
+		expect(payloads).toHaveLength(1);
+		expect(onFilteredSpansChange).toHaveBeenLastCalledWith(
+			['span-1', 'span-2'],
+			true,
+		);
 	});
 
 	it('clearing the filter drops the results without another request', async () => {

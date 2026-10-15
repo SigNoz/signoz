@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { ArrowRightFromLine, Search, X } from '@signozhq/icons';
 import { Switch } from '@signozhq/ui/switch';
@@ -24,6 +24,8 @@ import {
 	DataSource,
 	TracesAggregatorOperator,
 } from 'types/common/queryBuilder';
+import { extractQueryPairs } from 'utils/queryContextUtils';
+import { validateQuery } from 'utils/queryValidationUtils';
 
 import { BASE_FILTER_QUERY } from './constants';
 import { useHighlightErrors } from './hooks/useHighlightErrors';
@@ -80,6 +82,9 @@ function Filters({
 
 	const runQuery = useCallback(
 		(value: string): void => {
+			if (!validateQuery(value).isValid) {
+				return;
+			}
 			setCommittedExpression(value);
 			// Clear results when expression is empty
 			if (!value.trim()) {
@@ -132,10 +137,15 @@ function Filters({
 		setNoData(false);
 	}, [onFilteredSpansChange]);
 
+	const committedPairs = useMemo(
+		() => extractQueryPairs(committedExpression),
+		[committedExpression],
+	);
+
 	// Expression-based filter hooks
 	const filterProps = {
 		expression,
-		committedExpression,
+		committedPairs,
 		setExpression,
 		expressionRef,
 		runQuery,
@@ -205,7 +215,7 @@ function Filters({
 		},
 		ENTITY_VERSION_V5,
 		{
-			queryKey: [committedExpression],
+			queryKey: [committedExpression, traceID, startTime, endTime],
 			enabled: isFilterActive,
 			onSuccess: (data) => {
 				if (data?.payload.data.newResult.data.result[0].list) {
