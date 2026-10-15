@@ -146,6 +146,12 @@ func (q *promqlQuery) Fingerprint() string {
 		q.query.Step.String(),
 	}
 
+	// Two windows a fraction of a step apart describe different instants, so
+	// they must not share an entry.
+	if stepMs := uint64(q.query.Step.Milliseconds()); stepMs > 0 && q.tr.From%stepMs != 0 {
+		parts = append(parts, fmt.Sprintf("offset=%d", q.tr.From%stepMs))
+	}
+
 	return strings.Join(parts, "&")
 }
 
@@ -352,7 +358,7 @@ func (q *promqlQuery) toResult(matrix promql.Matrix, warnings []string, began ti
 }
 
 func (q *promqlQuery) toResultForHeatmap(matrix promql.Matrix, warnings []string, began time.Time, statsMu *sync.Mutex, rowsScanned, bytesScanned *uint64) (*qbv5.Result, error) {
-	tsData, err := foldMatrixAsHeatmap(matrix, &q.tr, uint64(q.query.Step.Milliseconds()), q.query.Name)
+	tsData, err := foldMatrixAsHeatmap(matrix, q.query.Name)
 	if err != nil {
 		return nil, err
 	}
