@@ -14,6 +14,8 @@ from fixtures.auth import (
     change_user_role,
     create_active_user,
 )
+from fixtures.fs import get_testdata_file_path
+from fixtures.metrics import Metrics
 from fixtures.role import transaction_group
 
 user_password = "password123Z$"
@@ -56,11 +58,6 @@ def test_setup(
     change_user_role(signoz, admin_token, wildcard_user, "signoz-viewer", wildcard_role)
 
 
-def window() -> tuple[int, int]:
-    now = datetime.now(tz=UTC)
-    return int((now - timedelta(minutes=10)).timestamp() * 1000), int(now.timestamp() * 1000)
-
-
 @pytest.mark.parametrize("path", list_paths)
 @pytest.mark.parametrize(
     ("email", "expected"),
@@ -73,11 +70,11 @@ def test_list_routes(
     email: str,
     expected: HTTPStatus,
 ) -> None:
-    start, end = window()
+    now = datetime.now(tz=UTC)
     token = get_token(email, USER_ADMIN_PASSWORD if email == USER_ADMIN_EMAIL else user_password)
     response = requests.post(
         signoz.self.host_configs["8080"].get(path),
-        json={"start": start, "end": end, "limit": 10},
+        json={"start": int((now - timedelta(minutes=10)).timestamp() * 1000), "end": int(now.timestamp() * 1000), "limit": 10},
         headers={"Authorization": f"Bearer {token}"},
         timeout=10,
     )
@@ -88,15 +85,53 @@ def test_list_denied_message_names_metrics_wildcard(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
 ) -> None:
-    start, end = window()
+    now = datetime.now(tz=UTC)
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/infra_monitoring/hosts"),
-        json={"start": start, "end": end, "limit": 10, "filter": {"expression": "host.name = 'web-1'"}},
+        json={"start": int((now - timedelta(minutes=10)).timestamp() * 1000), "end": int(now.timestamp() * 1000), "limit": 10, "filter": {"expression": "host.name = 'web-1'"}},
         headers={"Authorization": f"Bearer {get_token(scoped_email, user_password)}"},
         timeout=10,
     )
     assert response.status_code == HTTPStatus.FORBIDDEN, response.text
     assert "builder_query/*" in response.text
+
+
+@pytest.mark.parametrize(
+    ("email", "expression", "expected", "expected_hosts"),
+    [
+        (scoped_email, "signoz.workspace.key.id = 'key-a'", HTTPStatus.OK, {"acc-h1"}),
+        (scoped_email, "signoz.workspace.key.id = 'key-b'", HTTPStatus.FORBIDDEN, set()),
+        (scoped_email, "signoz.workspace.key.id IN ('key-a', 'key-b')", HTTPStatus.FORBIDDEN, set()),
+        (wildcard_email, None, HTTPStatus.OK, {"acc-h1", "acc-h2"}),
+    ],
+    ids=["scoped_granted_key", "scoped_other_key", "scoped_both_keys", "wildcard_unfiltered"],
+)
+def test_hosts_scoped_read(
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
+    email: str,
+    expression: str | None,
+    expected: HTTPStatus,
+    expected_hosts: set[str],
+) -> None:
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        [Metrics.from_dict({**metric.to_dict(), "labels": {**metric.labels, "signoz.workspace.key.id": "key-a" if metric.labels["host.name"] == "acc-h1" else "key-b"}}) for metric in Metrics.load_from_file(get_testdata_file_path("inframonitoring/hosts_value_accuracy.jsonl"), base_time=now - timedelta(minutes=4))]
+    )
+
+    body: dict = {"start": int((now - timedelta(minutes=5)).timestamp() * 1000), "end": int(now.timestamp() * 1000), "limit": 50}
+    if expression:
+        body["filter"] = {"expression": expression}
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v2/infra_monitoring/hosts"),
+        json=body,
+        headers={"Authorization": f"Bearer {get_token(email, user_password)}"},
+        timeout=10,
+    )
+    assert response.status_code == expected, response.text
+    if expected == HTTPStatus.OK:
+        assert {record["hostName"] for record in response.json()["data"]["records"]} == expected_hosts
 
 
 @pytest.mark.parametrize(
