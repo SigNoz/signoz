@@ -7,6 +7,10 @@ import {
 	awaitVariablesResolved,
 	createDashboardViaApi,
 	deleteDashboardViaApi,
+	fetchDashboardData,
+	gotoDashboardsList,
+	renameDashboardViaToolbar,
+	SEARCH_PLACEHOLDER,
 } from '../../../helpers/dashboards';
 
 const TELEMETRY_DEPENDENT_VARS = ['q_env', 'q_service', 'd_namespace'];
@@ -682,6 +686,40 @@ test.describe('Dashboard Detail — Configure drawer', () => {
 				.getByRole('tabpanel', { name: 'Variables' })
 				.getByText('tb_env', { exact: true })
 				.first(),
+		).toBeVisible();
+	});
+
+	// ─── Toolbar rename ──────────────────────────────────────────────────────
+	// The toolbar options popover uses a separate PUT path from the Configure
+	// drawer (TC-02 above). Both paths must persist server-side and surface in
+	// the list view — this catches optimistic-update regressions specific to
+	// the toolbar entry point.
+
+	test('TC-22 rename via toolbar options popover persists to the toolbar title', async ({
+		authedPage: page,
+	}) => {
+		const id = await seed(page, 'cfg-toolbar-rename');
+		await page.goto(`/dashboard/${id}`);
+
+		// DashboardDescription toolbar always renders — even on blank dashboards.
+		await expect(page.getByTestId('options')).toBeVisible();
+
+		await renameDashboardViaToolbar(page, 'cfg-toolbar-rename-renamed');
+
+		await expect(page.getByTestId('dashboard-title')).toHaveText(
+			'cfg-toolbar-rename-renamed',
+		);
+
+		const persisted = await fetchDashboardData(page, id);
+		expect(persisted.title).toBe('cfg-toolbar-rename-renamed');
+
+		// List view reflects the rename after navigating back.
+		await gotoDashboardsList(page);
+		await page
+			.getByPlaceholder(SEARCH_PLACEHOLDER)
+			.fill('cfg-toolbar-rename-renamed');
+		await expect(
+			page.getByText('cfg-toolbar-rename-renamed').first(),
 		).toBeVisible();
 	});
 });

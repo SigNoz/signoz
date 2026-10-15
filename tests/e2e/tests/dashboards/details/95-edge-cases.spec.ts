@@ -9,6 +9,7 @@ import {
 	createDashboardViaApi,
 	createVariablesDashboardViaApi,
 	deleteDashboardViaApi,
+	openDashboardSettingsDrawer,
 } from '../../../helpers/dashboards';
 
 const seedIds = new Set<string>();
@@ -239,5 +240,26 @@ test.describe('Dashboard Detail Page — Edge Cases', () => {
 		).toBeVisible();
 		// document.title is set from the dashboard name — confirm it is intact.
 		await expect(page).toHaveTitle(new RegExp('Spec & Chars'));
+	});
+
+	test('TC-09 navigating away with the settings drawer open does not crash', async ({
+		authedPage: page,
+	}) => {
+		const id = await createDashboardViaApi(page, 'edge-drawer-nav-away');
+		seedIds.add(id);
+		await page.goto(`/dashboard/${id}`);
+
+		await openDashboardSettingsDrawer(page);
+
+		// Navigate away without closing the drawer.
+		await page.goto('/dashboard');
+		await expect(page).toHaveURL(/\/dashboard($|\?)/);
+		await expect(
+			page.getByRole('heading', { name: 'Dashboards', level: 1 }),
+		).toBeVisible();
+		// No error overlay should be present.
+		await expect(
+			page.getByRole('alert').filter({ hasText: /error/i }),
+		).toHaveCount(0);
 	});
 });
