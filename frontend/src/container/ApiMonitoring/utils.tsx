@@ -2121,101 +2121,6 @@ export const getEndPointDetailsQueryPayload = (
 	},
 ];
 
-export const getEndPointZeroStateQueryPayload = (
-	domainName: string,
-	start: number,
-	end: number,
-): GetQueryResultsProps[] => [
-	{
-		selectedTime: 'GLOBAL_TIME',
-		graphType: PANEL_TYPES.TABLE,
-		query: {
-			builder: {
-				queryData: [
-					{
-						dataSource: DataSource.TRACES,
-						queryName: 'A',
-						aggregateOperator: 'count',
-						aggregateAttribute: {
-							dataType: DataTypes.String,
-							key: '',
-							type: '',
-						},
-						timeAggregation: 'count',
-						spaceAggregation: 'sum',
-						functions: [],
-						filters: {
-							items: [
-								{
-									id: '3db61dd6',
-									key: {
-										key: SPAN_ATTRIBUTES.SERVER_NAME,
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '212678b9',
-									key: {
-										key: 'kind_string',
-										dataType: DataTypes.String,
-										type: '',
-									},
-									op: '=',
-									value: 'Client',
-								},
-							],
-							op: 'AND',
-						},
-						expression: 'A',
-						disabled: false,
-						stepInterval: 60,
-						having: [],
-						legend: '',
-						limit: null,
-						orderBy: [],
-						groupBy: [
-							{
-								key: SPAN_ATTRIBUTES.HTTP_URL,
-								dataType: DataTypes.String,
-								type: 'tag',
-							},
-						],
-						reduceTo: ReduceOperators.AVG,
-					},
-				],
-				queryFormulas: [],
-				queryTraceOperator: [],
-			},
-			clickhouse_sql: [
-				{
-					disabled: false,
-					legend: '',
-					name: 'A',
-					query: '',
-				},
-			],
-			id: '315b15fa-ff0c-442f-89f8-2bf4fb1af2f2',
-			promql: [
-				{
-					disabled: false,
-					legend: '',
-					name: 'A',
-					query: '',
-				},
-			],
-			queryType: EQueryType.QUERY_BUILDER,
-		},
-		variables: {},
-		formatForWeb: true,
-		start,
-		end,
-		step: 60,
-	},
-];
-
 interface EndPointMetricsResponseRow {
 	data: {
 		A: number | string;
@@ -2831,8 +2736,6 @@ export const END_POINT_DETAILS_QUERY_KEYS_ARRAY = [
 	REACT_QUERY_KEY.GET_ENDPOINT_DEPENDENT_SERVICES_DATA,
 	REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_BAR_CHARTS_DATA,
 	REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_LATENCY_BAR_CHARTS_DATA,
-	REACT_QUERY_KEY.GET_ENDPOINT_RATE_OVER_TIME_DATA,
-	REACT_QUERY_KEY.GET_ENDPOINT_LATENCY_OVER_TIME_DATA,
 ];
 
 export const getAllEndpointsWidgetData = (
