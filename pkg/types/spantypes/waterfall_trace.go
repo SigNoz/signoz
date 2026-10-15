@@ -231,7 +231,7 @@ func NewGettableWaterfallTrace(
 	formattedSpans := 0
 	for _, span := range selectedSpans {
 		span.TimeUnix = span.TimeUnix / 1_000_000
-		if span.Formatter != "" {
+		if len(span.FormattedInput) > 0 || len(span.FormattedOutput) > 0 {
 			formattedSpans++
 		}
 	}
