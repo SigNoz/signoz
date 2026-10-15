@@ -5,7 +5,7 @@ go 1.25.7
 require (
 	dario.cat/mergo v1.0.2
 	github.com/AfterShip/clickhouse-sql-parser v0.5.6
-	github.com/ClickHouse/clickhouse-go/v2 v2.44.0
+	github.com/ClickHouse/clickhouse-go/v2 v2.45.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/SigNoz/clickhouse-go-mock v0.14.0
 	github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd
@@ -32,7 +32,7 @@ require (
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.1
 	github.com/huandu/go-sqlbuilder v1.39.1
-	github.com/jackc/pgx/v5 v5.9.2
+	github.com/jackc/pgx/v5 v5.10.0
 	github.com/json-iterator/go v1.1.13-0.20220915233716-71ac16282d12
 	github.com/knadh/koanf v1.5.0
 	github.com/knadh/koanf/v2 v2.3.3
@@ -61,7 +61,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/swaggest/jsonschema-go v0.3.78
 	github.com/swaggest/rest v0.2.75
-	github.com/tidwall/gjson v1.18.0
+	github.com/tidwall/gjson v1.19.0
 	github.com/uptrace/bun v1.2.9
 	github.com/uptrace/bun/dialect/pgdialect v1.2.9
 	github.com/uptrace/bun/dialect/sqlitedialect v1.2.9
@@ -72,15 +72,15 @@ require (
 	go.opentelemetry.io/collector/pdata v1.54.0
 	go.opentelemetry.io/contrib/config v0.10.0
 	go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux v0.63.0
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.68.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.69.0
 	go.opentelemetry.io/otel v1.45.0
 	go.opentelemetry.io/otel/metric v1.45.0
 	go.opentelemetry.io/otel/sdk v1.45.0
 	go.opentelemetry.io/otel/trace v1.45.0
 	go.uber.org/multierr v1.11.0
-	go.uber.org/zap v1.27.1
+	go.uber.org/zap v1.28.0
 	golang.org/x/crypto v0.55.0
-	golang.org/x/exp v0.0.0-20260312153236-7ab1446f8b90
+	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f
 	golang.org/x/net v0.58.0
 	golang.org/x/oauth2 v0.36.0
 	golang.org/x/sync v0.22.0
@@ -91,11 +91,11 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.35.3
-	modernc.org/sqlite v1.48.2
+	modernc.org/sqlite v1.52.0
 )
 
 require (
-	github.com/IBM/pgxpoolprometheus v1.1.2 // indirect
+	github.com/IBM/pgxpoolprometheus v1.1.3 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.41.5 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.32.12 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.12 // indirect
@@ -135,7 +135,7 @@ require (
 	github.com/hashicorp/go-metrics v0.5.4 // indirect
 	github.com/huandu/go-clone v1.7.3 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-isatty v0.0.21 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/nxadm/tail v1.4.11 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.148.0 // indirect
@@ -154,7 +154,7 @@ require (
 	golang.org/x/term v0.45.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912 // indirect
-	modernc.org/libc v1.70.0 // indirect
+	modernc.org/libc v1.72.3 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
@@ -172,7 +172,7 @@ require (
 	github.com/Masterminds/squirrel v1.5.4 // indirect
 	github.com/Yiling-J/theine-go v0.6.2 // indirect
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b
-	github.com/andybalholm/brotli v1.2.0 // indirect
+	github.com/andybalholm/brotli v1.2.1 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/beevik/etree v1.6.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -269,17 +269,17 @@ require (
 	github.com/oklog/ulid/v2 v2.1.1
 	github.com/open-feature/go-sdk v1.17.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.144.0 // indirect
-	github.com/openfga/openfga v1.14.1
-	github.com/paulmach/orb v0.12.0 // indirect
+	github.com/openfga/openfga v1.18.1
+	github.com/paulmach/orb v0.13.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
-	github.com/pierrec/lz4/v4 v4.1.25 // indirect
+	github.com/pierrec/lz4/v4 v4.1.26 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
-	github.com/pressly/goose/v3 v3.27.0 // indirect
+	github.com/pressly/goose/v3 v3.27.1 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/exporter-toolkit v0.15.1 // indirect
 	github.com/prometheus/otlptranslator v1.0.0 // indirect
-	github.com/prometheus/procfs v0.19.2 // indirect
+	github.com/prometheus/procfs v0.20.1 // indirect
 	github.com/prometheus/sigv4 v0.4.1 // indirect
 	github.com/puzpuzpuz/xsync/v3 v3.5.1 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
