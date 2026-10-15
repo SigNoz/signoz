@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
+import { extractQueryPairs } from 'utils/queryContextUtils';
 
 import { applyExpression, ExpressionFilterProps } from './types';
 
@@ -50,17 +51,26 @@ interface UseSpanCategoryFilterReturn {
 export function useSpanCategoryFilter(
 	props: ExpressionFilterProps,
 ): UseSpanCategoryFilterReturn {
-	const { expression, filters, setExpression, expressionRef, runQuery } = props;
+	const {
+		expression,
+		committedExpression,
+		setExpression,
+		expressionRef,
+		runQuery,
+	} = props;
 
-	// Derive active category from filters (only updates after runQuery)
+	// Derive active category from the committed expression (only updates after runQuery)
 	const selectedCategory = useMemo((): SpanCategory => {
+		const committedKeys = new Set(
+			extractQueryPairs(committedExpression).map((pair) => pair.key),
+		);
 		for (const [category, key] of Object.entries(CATEGORY_KEYS)) {
-			if (filters.items.some((item) => item.key?.key === key)) {
+			if (committedKeys.has(key)) {
 				return category as SpanCategory;
 			}
 		}
 		return 'All';
-	}, [filters]);
+	}, [committedExpression]);
 
 	const handleCategoryChange = useCallback(
 		(category: SpanCategory): void => {
