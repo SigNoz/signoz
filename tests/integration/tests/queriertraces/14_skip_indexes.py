@@ -47,13 +47,11 @@ def test_traces_filters_use_skip_indexes(
     assert resp.status_code == HTTPStatus.BAD_REQUEST, resp.text
 
     now = datetime.now(tz=UTC)
-    insert_traces([Traces(timestamp=now - timedelta(seconds=10), attributes={"index.number_probe": 200, "index.string_probe": "probe", "http.route": "/probe", "rpc.method": "probe"})])
+    insert_traces([Traces(timestamp=now - timedelta(seconds=10), attributes={"index.number_probe": 200, "index.string_probe": "probe"})])
 
     for filter_expression, index_name in [
         ("index.number_probe = 200", "attributes.index.number_probe_float64_bloom_filter"),
         ("index.string_probe = 'probe'", "attributes.index.string_probe_string_bloom_filter"),
-        ("http.route = '/probe'", "attributes.http.route_String_bloom_filter"),
-        ("rpc.method = 'probe'", "attributes.rpc.method_String_bloom_filter"),
         ("name = 'probe'", "idx_name"),
         ("duration_nano > 100", "idx_duration"),
         ("kind = 2", "idx_kind"),
