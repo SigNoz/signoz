@@ -1,5 +1,7 @@
 import type { ComponentType } from 'react';
 import type {
+	DashboardtypesGeoMapLocationDTO,
+	DashboardtypesGeoMapSettingsDTO,
 	DashboardtypesLinkDTO,
 	DashboardtypesHistogramBucketsDTO,
 	DashboardtypesLegendDTO,
@@ -10,6 +12,7 @@ import type {
 import {
 	SectionKind,
 	type AnyThreshold,
+	type GeoMapPlacementSlice,
 	type PanelAxesSlice,
 	type PanelChartAppearanceSlice,
 	type PanelFormattingSlice,
@@ -28,6 +31,7 @@ import ContextLinksSection from './sections/ContextLinksSection/ContextLinksSect
 import DimensionsSection from './sections/DimensionsSection/DimensionsSection';
 import FormattingSection from './sections/FormattingSection/FormattingSection';
 import LegendSection from './sections/LegendSection/LegendSection';
+import LocationSection from './sections/LocationSection/LocationSection';
 import PanelHeaderSection from './sections/PanelHeaderSection/PanelHeaderSection';
 import ScatterAxesSection from './sections/ScatterAxesSection/ScatterAxesSection';
 import TextLayoutSection from './sections/TextLayoutSection/TextLayoutSection';
@@ -104,6 +108,16 @@ export const SECTION_REGISTRY: {
 			getPluginSlice<DashboardtypesScatterPlotDimensionsDTO>(spec, 'dimensions'),
 		update: (spec, dimensions): PanelSpec =>
 			updatePluginSlice(spec, 'dimensions', dimensions),
+	},
+	// Two plugin-spec keys: what a row is sets the area and layer it can use.
+	[SectionKind.Location]: {
+		Component: LocationSection,
+		get: (spec): GeoMapPlacementSlice => ({
+			location: getPluginSlice<DashboardtypesGeoMapLocationDTO>(spec, 'location'),
+			map: getPluginSlice<DashboardtypesGeoMapSettingsDTO>(spec, 'map'),
+		}),
+		update: (spec, { location, map }): PanelSpec =>
+			updatePluginSlice(updatePluginSlice(spec, 'location', location), 'map', map),
 	},
 	[SectionKind.Legend]: {
 		Component: LegendSection,

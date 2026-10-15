@@ -22,6 +22,8 @@ interface ComparisonThresholdRowProps {
 	onLiveChange: (next: DashboardtypesComparisonThresholdDTO) => void;
 	onDiscard: () => void;
 	onRemove: () => void;
+	/** Off where a match always recolors the same thing (Geo Map). */
+	withFormat?: boolean;
 }
 
 /**
@@ -39,6 +41,7 @@ function ComparisonThresholdRow({
 	onLiveChange,
 	onDiscard,
 	onRemove,
+	withFormat = true,
 }: ComparisonThresholdRowProps): JSX.Element {
 	const { draft, setDraft, setValue } = useThresholdDraft(
 		threshold,
@@ -89,12 +92,14 @@ function ComparisonThresholdRow({
 				value={draft.color}
 				onChange={(color): void => setDraft((d) => ({ ...d, color }))}
 			/>
-			<ThresholdFormatField
-				testId={`comparison-threshold-format-${index}`}
-				value={draft.format}
-				color={draft.color}
-				onChange={(format): void => setDraft((d) => ({ ...d, format }))}
-			/>
+			{withFormat && (
+				<ThresholdFormatField
+					testId={`comparison-threshold-format-${index}`}
+					value={draft.format}
+					color={draft.color}
+					onChange={(format): void => setDraft((d) => ({ ...d, format }))}
+				/>
+			)}
 		</ThresholdRowShell>
 	);
 }
