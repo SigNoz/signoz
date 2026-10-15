@@ -1,9 +1,8 @@
-import { Tooltip } from '@signozhq/ui/tooltip';
+import { Popover, type PopoverHandleType } from '@signozhq/ui/popover';
 import { convertTimeToRelevantUnit } from 'utils/traceUtils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
 import { getSpanAttribute, resolveSpanColor } from 'pages/TraceDetailsV3/utils';
-import { useMemo } from 'react';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 import { toFixed } from 'utils/toFixed';
 
@@ -74,91 +73,69 @@ export function SpanTooltipContent({
 	);
 }
 
-/**
- * Single hover card anchored at a fixed X (sidebar/timeline boundary). The
- * Y of the anchor is derived from the hovered span's index in the list,
- * so the card slides vertically in place rather than jumping with the cursor.
- *
- * Mount this inside the scrollable waterfall body so `anchorTop` is in
- * content coordinates — Radix portals the content layer out automatically.
- */
 export interface SpanHoverCardProps {
-	hoveredSpanId: string | null;
-	anchorLeft: number;
-	rowHeight: number;
-	spans: SpanV3[];
+	handle: PopoverHandleType<SpanV3>;
 	traceStartTime: number;
 }
 
+/**
+ * The hover card for the waterfall: one popover serving every row.
+ *
+ * Driven by a handle rather than a trigger — the rows are virtualised and carry their own
+ * tooltips and buttons, so making each one a trigger would both multiply the popup and swallow
+ * those nested tooltips into it. A row calls `showAt(rowElement, span)` on pointer enter instead,
+ * and the card moves to it and renders that span.
+ *
+ * A popover, not a tooltip: the card runs past the six lines a tooltip clamps to as soon as a
+ * couple of preview fields are on.
+ */
 export function SpanHoverCard({
-	hoveredSpanId,
-	anchorLeft,
-	rowHeight,
-	spans,
+	handle,
 	traceStartTime,
 }: SpanHoverCardProps): JSX.Element {
 	const previewFields = useTraceStore((s) => s.previewFields);
 	const colorByFieldName = useTraceStore((s) => s.colorByField.name);
 	const isDarkMode = useIsDarkMode();
 
-	const hoverCardData = useMemo(() => {
-		if (!hoveredSpanId) {
-			return null;
-		}
-		const idx = spans.findIndex((s) => s.span_id === hoveredSpanId);
-		if (idx === -1) {
-			return null;
-		}
-		const span = spans[idx];
-		const previewRows: SpanPreviewRow[] = previewFields
-			.filter((f) => !RESERVED_PREVIEW_KEYS.has(f.name))
-			.map((f) => {
-				const value = getSpanAttribute(span, f.name);
-				return value !== undefined && value !== ''
-					? { key: f.name, value: String(value) }
-					: null;
-			})
-			.filter((r): r is SpanPreviewRow => r !== null);
-
-		const pair = resolveSpanColor(span, colorByFieldName);
-		return {
-			anchorTop: idx * rowHeight,
-			tooltip: {
-				spanName: span.name,
-				color: isDarkMode ? pair.color : pair.colorDark,
-				hasError: span.has_error,
-				relativeStartMs: span.timestamp - traceStartTime,
-				durationMs: span.duration_nano / 1e6,
-				previewRows,
-			},
-		};
-	}, [
-		hoveredSpanId,
-		spans,
-		previewFields,
-		colorByFieldName,
-		rowHeight,
-		traceStartTime,
-		isDarkMode,
-	]);
-
 	return (
-		<Tooltip
+		<Popover
+			nativeButton
 			side="right"
 			align="start"
-			sideOffset={8}
-			title={
-				hoverCardData ? <SpanTooltipContent {...hoverCardData.tooltip} /> : null
-			}
+			handle={handle}
+			// The card is a preview; the pointer and the keyboard stay where they were.
+			initialFocus={false}
+			finalFocus={false}
+			aria-label="Span preview"
 		>
-			<div
-				className={styles.anchor}
-				style={{
-					top: hoverCardData?.anchorTop ?? 0,
-					left: anchorLeft,
-					height: rowHeight,
-				}}
-			/>
-		</Tooltip>
+			{(span: SpanV3 | undefined): JSX.Element | null => {
+				if (!span) {
+					return null;
+				}
+
+				const previewRows: SpanPreviewRow[] = previewFields
+					.filter((f) => !RESERVED_PREVIEW_KEYS.has(f.name))
+					.map((f) => {
+						const value = getSpanAttribute(span, f.name);
+						return value !== undefined && value !== ''
+							? { key: f.name, value: String(value) }
+							: null;
+					})
+					.filter((r): r is SpanPreviewRow => r !== null);
+
+				const pair = resolveSpanColor(span, colorByFieldName);
+
+				return (
+					<SpanTooltipContent
+						spanName={span.name}
+						color={isDarkMode ? pair.color : pair.colorDark}
+						hasError={span.has_error}
+						relativeStartMs={span.timestamp - traceStartTime}
+						durationMs={span.duration_nano / 1e6}
+						previewRows={previewRows}
+					/>
+				);
+			}}
+		</Popover>
 	);
 }

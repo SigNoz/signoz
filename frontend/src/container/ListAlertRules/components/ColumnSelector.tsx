@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Columns3 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Checkbox } from '@signozhq/ui/checkbox';
-import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';
+import { Popover } from '@signozhq/ui/popover';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import {
 	hideColumn,
@@ -40,8 +40,12 @@ function ColumnSelector<TData>({
 	};
 
 	return (
-		<Popover>
-			<PopoverTrigger asChild>
+		<Popover
+			nativeButton
+			side="bottom"
+			align="end"
+			aria-label="Toggle columns"
+			trigger={
 				<Button
 					variant="outlined"
 					size="sm"
@@ -51,8 +55,9 @@ function ColumnSelector<TData>({
 				>
 					Columns
 				</Button>
-			</PopoverTrigger>
-			<PopoverContent align="end" className={styles.popoverContent}>
+			}
+		>
+			<div className={styles.popoverContent}>
 				<div className={styles.title}>Toggle Columns</div>
 				<div className={styles.columnList}>
 					{selectableColumns.map((col) => {
@@ -72,7 +77,7 @@ function ColumnSelector<TData>({
 						);
 					})}
 				</div>
-			</PopoverContent>
+			</div>
 		</Popover>
 	);
 }

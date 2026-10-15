@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
+import { usePopoverHandle } from '@signozhq/ui/popover';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import {
 	createColumnHelper,
@@ -117,6 +118,9 @@ const LazyEventDotPopover = memo(function LazyEventDotPopover({
 
 // css config
 const CONNECTOR_WIDTH = 30;
+
+// A fast scroll sweeps dozens of rows; none of them should flash a hover card.
+const SPAN_HOVER_CARD_DELAY_MS = 500;
 const VERTICAL_CONNECTOR_WIDTH = 1;
 
 interface SpanStateClasses {
@@ -189,7 +193,7 @@ const SpanOverview = memo(function SpanOverview({
 	filteredSpanIds: string[];
 	isFilterActive: boolean;
 	onAddSpanToFunnel: (span: SpanV3) => void;
-	onHoverEnter: (spanId: string) => void;
+	onHoverEnter: (spanId: string, row: HTMLElement, span: SpanV3) => void;
 	onHoverLeave: () => void;
 }): JSX.Element {
 	const isRootSpan = span.level === 0;
@@ -249,7 +253,9 @@ const SpanOverview = memo(function SpanOverview({
 			})}
 			data-span-state={spanState}
 			onClick={(): void => handleSpanClick(span)}
-			onMouseEnter={(): void => onHoverEnter(span.span_id)}
+			onMouseEnter={(event): void =>
+				onHoverEnter(span.span_id, event.currentTarget, span)
+			}
 			onMouseLeave={(): void => onHoverLeave()}
 		>
 			{/* Tree connector lines — always draw vertical lines at all ancestor levels + L-connector */}
@@ -545,33 +551,45 @@ function Success(props: ISuccessProps): JSX.Element {
 		prevHoveredSpanIdRef.current = spanId;
 	}, []);
 
-	// Hover-card state — single popover anchored at the sidebar/timeline
-	// boundary, Y tracks the hovered row. Set after a 500 ms debounce so fast
-	// scrolls/cursor sweeps don't fire the card.
-	const [hoveredSpanId, setHoveredSpanId] = useState<string | null>(null);
+	// One card for the whole waterfall, shown against whichever row the pointer is on. The
+	// delay is ours rather than the popover's: a fast scroll sweeps dozens of rows, and none of
+	// them should flash a card.
+	const hoverCard = usePopoverHandle<SpanV3>();
 	const hoverDelayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	const handleRowMouseEnter = useCallback(
-		(spanId: string): void => {
+		(spanId: string, row: HTMLElement, span: SpanV3): void => {
 			applyHoverClass(spanId);
+
 			if (hoverDelayTimerRef.current) {
 				clearTimeout(hoverDelayTimerRef.current);
 			}
-			hoverDelayTimerRef.current = setTimeout(() => {
-				setHoveredSpanId(spanId);
-			}, 500);
+			hoverDelayTimerRef.current = setTimeout(
+				() => hoverCard.showAt(row, span),
+				SPAN_HOVER_CARD_DELAY_MS,
+			);
 		},
-		[applyHoverClass],
+		[applyHoverClass, hoverCard],
 	);
 
 	const handleRowMouseLeave = useCallback((): void => {
 		applyHoverClass(null);
+
 		if (hoverDelayTimerRef.current) {
 			clearTimeout(hoverDelayTimerRef.current);
 			hoverDelayTimerRef.current = null;
 		}
-		setHoveredSpanId(null);
-	}, [applyHoverClass]);
+		hoverCard.close();
+	}, [applyHoverClass, hoverCard]);
+
+	useEffect(
+		() => (): void => {
+			if (hoverDelayTimerRef.current) {
+				clearTimeout(hoverDelayTimerRef.current);
+			}
+		},
+		[],
+	);
 
 	const handleCollapseUncollapse = useCallback(
 		(spanId: string, collapse: boolean) => {
@@ -822,6 +840,7 @@ function Success(props: ISuccessProps): JSX.Element {
 
 	return (
 		<div className={styles.root}>
+			<SpanHoverCard handle={hoverCard} traceStartTime={traceMetadata.startTime} />
 			{isFetching && <div className={styles.loadingBar} />}
 			<div className={styles.splitPanel} ref={scrollContainerRef}>
 				{/* Sticky header row */}
@@ -861,13 +880,6 @@ function Success(props: ISuccessProps): JSX.Element {
 						ref={loadMoreBottomSentinelRef}
 						className={cx(styles.loadMoreSentinel, styles.loadMoreSentinelBottom)}
 					/>
-					<SpanHoverCard
-						hoveredSpanId={hoveredSpanId}
-						anchorLeft={sidebarWidth}
-						rowHeight={ROW_HEIGHT}
-						spans={spans}
-						traceStartTime={traceMetadata.startTime}
-					/>
 					{/* Left panel - table with horizontal scroll */}
 					<ResizableBox
 						handle="right"
@@ -896,7 +908,9 @@ function Success(props: ISuccessProps): JSX.Element {
 												height: ROW_HEIGHT,
 												transform: `translateY(${virtualRow.start}px)`,
 											}}
-											onMouseEnter={(): void => handleRowMouseEnter(span.span_id)}
+											onMouseEnter={(event): void =>
+												handleRowMouseEnter(span.span_id, event.currentTarget, span)
+											}
 											onMouseLeave={handleRowMouseLeave}
 										>
 											{row.getVisibleCells().map((cell) => (

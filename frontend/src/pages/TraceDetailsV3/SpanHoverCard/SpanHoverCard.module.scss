@@ -1,14 +1,7 @@
-// Invisible 1 px anchor mounted inside the scrollable waterfall body. Its
-// `top` is updated by the parent to track the hovered row's Y; its `left`
-// is the sidebar/timeline boundary so the popover always opens at the same
-// X regardless of which row is hovered.
-.anchor {
-	position: absolute;
-	width: 1px;
-	pointer-events: none;
-}
-
 .content {
+	// The popover shell carries no padding of its own, so the card owns it. Same values the
+	// tooltip used to supply, so the card reads exactly as it did before.
+	padding: var(--spacing-1) var(--spacing-4);
 	font-size: 12px;
 	color: var(--l1-foreground);
 }

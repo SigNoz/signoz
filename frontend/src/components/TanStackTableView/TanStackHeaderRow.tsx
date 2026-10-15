@@ -13,7 +13,7 @@ import {
 	X,
 } from '@signozhq/icons';
 import { useSortable } from '@dnd-kit/sortable';
-import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';
+import { Popover } from '@signozhq/ui/popover';
 import { flexRender, Header as TanStackHeader } from '@tanstack/react-table';
 import cx from 'classnames';
 
@@ -209,8 +209,13 @@ function TanStackHeaderRow<TData>({
 					</span>
 				)}
 				{isColumnRemovable && (
-					<Popover>
-						<PopoverTrigger asChild>
+					<Popover
+						nativeButton={false}
+						side="bottom"
+						align="end"
+						width={140}
+						aria-label={`Column actions for ${headerTitleAttr}`}
+						trigger={
 							<span
 								role="button"
 								aria-label={`Column actions for ${headerTitleAttr}`}
@@ -221,25 +226,20 @@ function TanStackHeaderRow<TData>({
 							>
 								<Ellipsis size="md" />
 							</span>
-						</PopoverTrigger>
-						<PopoverContent
-							align="end"
-							sideOffset={6}
-							className={headerStyles.tanstackColumnActionsContent}
+						}
+					>
+						<button
+							type="button"
+							className={headerStyles.tanstackRemoveColumnAction}
+							onClick={(event): void => {
+								event.preventDefault();
+								event.stopPropagation();
+								onRemoveColumn?.(column.id);
+							}}
 						>
-							<button
-								type="button"
-								className={headerStyles.tanstackRemoveColumnAction}
-								onClick={(event): void => {
-									event.preventDefault();
-									event.stopPropagation();
-									onRemoveColumn?.(column.id);
-								}}
-							>
-								<X size="md" className={headerStyles.tanstackRemoveColumnActionIcon} />
-								Remove column
-							</button>
-						</PopoverContent>
+							<X size="md" className={headerStyles.tanstackRemoveColumnActionIcon} />
+							Remove column
+						</button>
 					</Popover>
 				)}
 			</span>

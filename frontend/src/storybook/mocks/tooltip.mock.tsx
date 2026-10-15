@@ -5,6 +5,7 @@
 import {
 	TooltipProvider as UiTooltipProvider,
 	Tooltip as UiTooltip,
+	useTooltipHandle as uiUseTooltipHandle,
 	type TooltipProps,
 	// eslint-disable-next-line signoz/no-signozhq-ui-barrel
 } from '@signozhq/ui';
@@ -44,9 +45,10 @@ HeldTooltip.displayName = 'Tooltip';
 const tooltipModule: typeof import('@signozhq/ui/tooltip') = {
 	TooltipProvider: UiTooltipProvider,
 	Tooltip: HeldTooltip,
+	useTooltipHandle: uiUseTooltipHandle,
 };
 
-export const { TooltipProvider, Tooltip } = tooltipModule;
+export const { TooltipProvider, Tooltip, useTooltipHandle } = tooltipModule;
 
 export type {
 	TooltipContainer,

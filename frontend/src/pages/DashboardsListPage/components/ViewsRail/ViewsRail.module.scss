@@ -201,7 +201,8 @@
 	flex-direction: column;
 	gap: 8px;
 	width: 280px;
-	padding: 4px;
+	// The popover shell carries no padding of its own, so the form owns it.
+	padding: var(--spacing-8);
 }
 
 .saveTitle {

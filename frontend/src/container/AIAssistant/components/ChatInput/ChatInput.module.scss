@@ -194,21 +194,6 @@
 	}
 }
 
-.contextPopover {
-	--popover-width: 480px;
-	// Each pane inside draws its own padding, and the divider between them has to
-	// reach the popover's edges.
-	--popover-padding: 0;
-	--popover-z-index: 1000;
-
-	max-width: min(92vw, 480px);
-	margin-left: 16px;
-	// Clip horizontal overflow so long entity titles can't poke past the
-	// popover's right edge. Vertical overflow is handled inside
-	// `.contextPopoverEntities`.
-	overflow-x: hidden;
-}
-
 .contextPopoverContent {
 	display: grid;
 	grid-template-columns: 180px 1fr;

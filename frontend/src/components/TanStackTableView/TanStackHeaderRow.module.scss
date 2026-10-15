@@ -111,16 +111,6 @@
 	margin-left: auto;
 }
 
-.tanstackColumnActionsContent {
-	width: 140px;
-	padding: 0;
-	background: var(--tanstack-table-header-cell-bg, var(--l2-background));
-	border: 1px solid
-		var(--tanstack-table-header-cell-actions-border-color, var(--l2-border));
-	border-radius: 4px;
-	box-shadow: none;
-}
-
 .tanstackRemoveColumnAction {
 	display: flex;
 	align-items: center;
