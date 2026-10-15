@@ -178,9 +178,8 @@ func newThreadSpan(traceID string, storable *StorableSpan) *ThreadSpan {
 	maps.Copy(resources, storable.ResourcesString)
 	timeUnixNano := uint64(storable.StartTime.UnixNano())
 	attributes := threadAttributes(storable)
-	// Spans from before the JSON rollout have no document and are not decoded: the legacy maps
-	// hold an object split into one key per field.
-	formatted := aiobservabilitytypes.FormatMessages(storable.AttributesJSON.NestedMap())
+	// Pre-rollout spans have an empty JSON document and format to nothing.
+	formatted := aiobservabilitytypes.FormatMessages(storable.AttributesJSON.ValuesByPath())
 	return &ThreadSpan{
 		SpanID:            storable.SpanID,
 		TraceID:           traceID,

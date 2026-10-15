@@ -106,19 +106,10 @@ func (f *formatting) side(value any, role Role) (OutputMessages, string) {
 	return OutputMessages{genericMessage(value)}, FormatterGeneric
 }
 
-// attribute walks the document along the dotted key; a nested object comes back whole. Not handled: a
-// scalar at a prefix of the path, such as gen_ai.input beside gen_ai.input.messages, which ends the
-// walk early.
+// attribute reads one attribute by its full dotted path from the flat JSON document, resolving the
+// driver's Variant wrappers to the plain Go types the formatter asserts on.
 func attribute(doc map[string]any, key string) any {
-	var current any = doc
-	for segment := range strings.SplitSeq(key, ".") {
-		object, ok := current.(map[string]any)
-		if !ok {
-			return nil
-		}
-		current = object[segment]
-	}
-	return current
+	return plainJSON(doc[key])
 }
 
 func firstObject(list []any) (map[string]any, bool) {
@@ -133,13 +124,12 @@ func genericMessage(value any) OutputMessage {
 	return OutputMessage{Parts: Parts{part(GenericPart{"type": FormatterGeneric, "content": stringOf(value)})}}
 }
 
-// decode parses a JSON-encoded attribute value, twice when an SDK encoded the string again. A
-// structured value is normalized to plain []any and map[string]any so side can assert it; the
-// ClickHouse driver decodes JSON columns into wrapper types that side would otherwise miss.
+// decode parses a JSON-encoded attribute value, twice when an SDK encoded the string again.
+// Anything that is not a JSON string is returned as is.
 func decode(value any) any {
 	s, ok := value.(string)
 	if !ok {
-		return plainJSON(value)
+		return value
 	}
 	trimmed := strings.TrimSpace(s)
 	if trimmed == "" || !strings.ContainsAny(trimmed[:1], `[{"`) {

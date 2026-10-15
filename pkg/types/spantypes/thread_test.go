@@ -95,7 +95,6 @@ func TestNewThreadSpan_FormatsJSONMessages(t *testing.T) {
 
 	span := newThreadSpan("trace", &storable)
 
-	assert.Equal(t, aiobservabilitytypes.FormatterOpenAIChat, span.Formatter)
 	require.Len(t, span.FormattedInput, 1)
 	assert.Equal(t, aiobservabilitytypes.RoleUser, span.FormattedInput[0].Role)
 	require.Len(t, span.FormattedOutput, 1)

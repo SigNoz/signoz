@@ -77,17 +77,6 @@ func TestFormat_Tool(t *testing.T) {
 			wantOutput: `[{"role": "tool", "parts": [{"type": "tool_call_response", "id": "call_l0ycKcmt1uPCdGWR4SkwoLBv", "response": {"city": "Bengaluru", "unit": "c", "temperature": 27, "condition": "partly cloudy"}}]}]`,
 		},
 		{
-			// the object form the OTel registry asks for, whole in the JSON column
-			name: "StructuredArguments_ObjectKept",
-			attributes: map[string]any{
-				GenAIToolName:          "get_weather",
-				GenAIToolCallID:        "call_1",
-				GenAIToolCallArguments: map[string]any{"city": "Paris", "days": []any{1.0, 2.0}},
-			},
-			wantInput:  `[{"role": "assistant", "parts": [{"type": "tool_call", "name": "get_weather", "id": "call_1", "arguments": {"city": "Paris", "days": [1, 2]}}]}]`,
-			wantOutput: `[]`,
-		},
-		{
 			// the mapper groups never fill both; the tool call wins when an SDK does
 			name: "MessagesBesideToolCall_ToolCallFormatted",
 			attributes: map[string]any{

@@ -3,7 +3,6 @@ package aiobservabilitytypes
 import (
 	"encoding/json"
 	"maps"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -26,7 +25,7 @@ func runFormatCases(t *testing.T, testCases []formatCase) {
 		t.Run(testCase.name, func(t *testing.T) {
 			attributes := map[string]any{GenAIInputMessages: testCase.input, GenAIOutputMessages: testCase.output}
 			maps.Copy(attributes, testCase.attributes)
-			formatted := FormatMessages(document(attributes))
+			formatted := FormatMessages(attributes)
 			assert.Equal(t, append([]string{}, testCase.warnings...), formatted.Warnings)
 
 			input, err := json.Marshal(formatted.Input)
@@ -37,25 +36,6 @@ func runFormatCases(t *testing.T, testCases []formatCase) {
 			assert.JSONEq(t, testCase.wantOutput, string(output))
 		})
 	}
-}
-
-// document nests flat dotted keys the way the JSON column stores them.
-func document(flat map[string]any) map[string]any {
-	doc := map[string]any{}
-	for key, value := range flat {
-		segments := strings.Split(key, ".")
-		current := doc
-		for _, segment := range segments[:len(segments)-1] {
-			child, ok := current[segment].(map[string]any)
-			if !ok {
-				child = map[string]any{}
-				current[segment] = child
-			}
-			current = child
-		}
-		current[segments[len(segments)-1]] = value
-	}
-	return doc
 }
 
 func TestFormat(t *testing.T) {
