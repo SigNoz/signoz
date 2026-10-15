@@ -152,7 +152,9 @@ export function buildCountries(source) {
 		COUNTRY_MIN_WEIGHT,
 		COUNTRY_QUANTIZATION,
 	);
-	const lookups = buildLookups(source.features);
+	const drawn = new Set(features.map((f) => f.properties.code).filter(Boolean));
+	// Lets data be checked against the drawn codes without decoding the outlines.
+	const lookups = { codes: [...drawn].sort(), ...buildLookups(source.features) };
 
 	const regionCounts = {};
 	for (const f of features) {
@@ -160,7 +162,6 @@ export function buildCountries(source) {
 			regionCounts[region] = (regionCounts[region] ?? 0) + 1;
 		}
 	}
-	const drawn = new Set(features.map((f) => f.properties.code).filter(Boolean));
 
 	return {
 		topology: topo,

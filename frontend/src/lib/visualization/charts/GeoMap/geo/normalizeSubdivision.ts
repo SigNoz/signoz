@@ -1,5 +1,5 @@
 import { normalizeCountry } from './normalizeCountry';
-import { SubdivisionSet } from './subdivisions';
+import type { SubdivisionSet } from './subdivisions';
 
 /**
  * ISO 3166-2 code of a state/province within `set.country`. GeoIP emits the bare

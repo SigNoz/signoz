@@ -2,6 +2,7 @@ import { feature } from 'topojson-client';
 import type { GeometryCollection, Topology } from 'topojson-specification';
 
 import { ShapeFeature, ShapeProperties, SubdivisionCountry } from '../types';
+import { rememberSubdivisions } from './subdivisionCache';
 import { SUBDIVISION_COUNTRY_CODES } from './subdivisionCountries';
 
 type SubdivisionFile = Topology<{
@@ -47,13 +48,15 @@ async function load(country: SubdivisionCountry): Promise<SubdivisionSet> {
 	const file = (await importSubdivisions(country)).default as SubdivisionFile;
 	const shapes = feature(file, file.objects.subdivisions)
 		.features as ShapeFeature[];
-	return {
+	const set: SubdivisionSet = {
 		country,
 		shapes,
 		codes: new Set(shapes.map((shape) => shape.properties.code as string)),
 		aliases: file.aliases,
 		names: file.names,
 	};
+	rememberSubdivisions(set);
+	return set;
 }
 
 /**
