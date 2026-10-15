@@ -1,5 +1,9 @@
 import { AlertmanagertypesListedNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas';
-import { AUTHZ_CHECK_URL } from 'lib/authz/utils/authz-test-utils';
+import { buildNotificationChannelDeletePermission } from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
+import {
+	AUTHZ_CHECK_URL,
+	setupAuthzDeny,
+} from 'lib/authz/utils/authz-test-utils';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
@@ -41,6 +45,33 @@ describe('ChannelActionsMenu - AuthZ', () => {
 	afterEach(() => {
 		jest.restoreAllMocks();
 		server.resetHandlers();
+	});
+
+	it('disables deleting when delete is denied', async () => {
+		server.use(setupAuthzDeny(buildNotificationChannelDeletePermission('3')));
+
+		render(
+			<ChannelActionsMenu
+				channel={CHANNEL}
+				onOpen={jest.fn()}
+				onDelete={jest.fn()}
+				onViewJson={jest.fn()}
+			/>,
+		);
+
+		const user = userEvent.setup({ delay: null });
+		await user.click(await screen.findByTestId('channel-actions-3', {}, FIND));
+
+		const deleteRow = await screen.findByText('Delete', {}, FIND);
+		// a row still waiting on its check reads as loading, not denied
+		await waitFor(
+			() => expect(document.querySelector('[data-loading]')).toBeNull(),
+			FIND,
+		);
+		await waitFor(
+			() => expect(deleteRow.closest('[data-disabled]')).not.toBeNull(),
+			FIND,
+		);
 	});
 
 	it('checks the channel only once its menu is opened', async () => {
