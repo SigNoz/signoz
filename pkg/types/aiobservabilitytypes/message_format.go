@@ -133,12 +133,13 @@ func genericMessage(value any) OutputMessage {
 	return OutputMessage{Parts: Parts{part(GenericPart{"type": FormatterGeneric, "content": stringOf(value)})}}
 }
 
-// decode parses a JSON-encoded attribute value, twice when an SDK encoded the string again.
-// Anything that is not JSON is returned as is.
+// decode parses a JSON-encoded attribute value, twice when an SDK encoded the string again. A
+// structured value is normalized to plain []any and map[string]any so side can assert it; the
+// ClickHouse driver decodes JSON columns into wrapper types that side would otherwise miss.
 func decode(value any) any {
 	s, ok := value.(string)
 	if !ok {
-		return value
+		return plainJSON(value)
 	}
 	trimmed := strings.TrimSpace(s)
 	if trimmed == "" || !strings.ContainsAny(trimmed[:1], `[{"`) {
@@ -150,6 +151,20 @@ func decode(value any) any {
 	}
 	if inner, ok := decoded.(string); ok {
 		return decode(inner)
+	}
+	return decoded
+}
+
+// plainJSON round-trips a structured value through encoding/json, turning wrapper types such as the
+// ClickHouse driver's JSON Variants into plain Go types. Values that cannot be marshaled pass through.
+func plainJSON(value any) any {
+	raw, err := json.Marshal(value)
+	if err != nil {
+		return value
+	}
+	var decoded any
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		return value
 	}
 	return decoded
 }
