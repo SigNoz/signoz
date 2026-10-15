@@ -30,6 +30,7 @@ import {
 	toColorKeys,
 } from '../../chartOptions';
 import { prepareGeoMapData, toText } from '../../prepareData';
+import { withTooltipDetails } from '../../tooltipDetails';
 import { LocationKind } from '../../types';
 import { getGeoMapEmptyMessage } from '../../warnings';
 
@@ -115,6 +116,10 @@ export default function GeoMapPanelBody({
 			},
 		[sizeColumn, labels, formatterFor],
 	);
+	const { regions, points } = useMemo(
+		() => withTooltipDetails({ table, data: geoData, labels, formatterFor }),
+		[table, geoData, labels, formatterFor],
+	);
 	const colors = useMemo(
 		() => resolveColors(chartAppearance?.colors),
 		[chartAppearance?.colors],
@@ -143,7 +148,9 @@ export default function GeoMapPanelBody({
 				labels: Object.fromEntries(
 					groupColumns.map((column) => [column.name, toText(row.data[column.id])]),
 				),
-				label: point?.label ?? datum.raw,
+				label: point
+					? point.label || `${point.lat.toFixed(2)}, ${point.lon.toFixed(2)}`
+					: datum.raw,
 				queryNames: [colorColumn?.queryName, sizeColumn?.queryName].filter(
 					(name): name is string => Boolean(name),
 				),
@@ -199,8 +206,8 @@ export default function GeoMapPanelBody({
 	}
 	return (
 		<GeoMap
-			data={geoData.regions}
-			points={geoData.points}
+			data={regions}
+			points={points}
 			view={map?.view ?? 'world'}
 			country={country}
 			layer={geoData.layer}
