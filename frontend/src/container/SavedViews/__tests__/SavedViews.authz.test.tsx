@@ -94,15 +94,22 @@ describe('SavedViews - AuthZ', () => {
 		expect(screen.queryByTestId('saved-views-search')).toBeNull();
 	});
 
-	it('keeps a row it cannot read clickable, the open view decides access', async () => {
+	it('disables only the views it cannot read', async () => {
 		mockSavedViewsApi([errors, slow]);
 		server.use(setupAuthzDeny(buildSavedViewReadPermission(errors.id)));
 		renderPanel();
 
 		await screen.findAllByTestId('saved-views-row');
-		expect(
-			within(rowNamed('Errors')).getByTestId('saved-views-row-name'),
-		).toBeEnabled();
+		await waitFor(() =>
+			expect(
+				within(rowNamed('Errors')).getByTestId('saved-views-row-name'),
+			).toBeDisabled(),
+		);
+		await waitFor(() =>
+			expect(
+				within(rowNamed('Slow spans')).getByTestId('saved-views-row-name'),
+			).toBeEnabled(),
+		);
 	});
 
 	it('keeps the row menu on a view it cannot read', async () => {

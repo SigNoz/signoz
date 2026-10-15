@@ -84,9 +84,9 @@ describe('SavedViewsPanel list', () => {
 		const { history } = renderPanel();
 
 		await screen.findByTestId('saved-views-list');
-		await userEvent.click(
-			within(row('Slow spans')).getByTestId('saved-views-row-name'),
-		);
+		const name = within(row('Slow spans')).getByTestId('saved-views-row-name');
+		await waitFor(() => expect(name).toBeEnabled());
+		await userEvent.click(name);
 
 		await waitFor(() =>
 			expect(urlParam(history, QueryParams.viewKey)).toBe(
