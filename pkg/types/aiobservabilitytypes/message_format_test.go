@@ -120,3 +120,69 @@ So, the ball costs 5 cents.`,
 		},
 	})
 }
+
+func TestFormat_SystemInstructions(t *testing.T) {
+	input := `[{"role":"user","parts":[{"type":"text","content":"hi"}]}]`
+	runFormatCases(t, []formatCase{
+		{
+			// the langchain instrumentation moves system messages out of the history into gen_ai.system_instructions,
+			// a JSON list of parts:
+			// https://github.com/traceloop/openllmetry/blob/93429cfb9767e6b51db6cb35f6b70f758117669a/packages/opentelemetry-instrumentation-langchain/opentelemetry/instrumentation/langchain/span_utils.py#L304
+			name:       "ListOfParts_LeadsInput",
+			input:      input,
+			attributes: map[string]any{GenAISystemInstructions: `[{"type": "text", "content": "You are concise."}]`},
+			wantInput: `[
+			  {"role": "system", "parts": [{"type": "text", "content": "You are concise."}]},
+			  {"role": "user", "parts": [{"type": "text", "content": "hi"}]}
+			]`,
+			wantOutput: `[]`,
+		},
+		{
+			name:       "BareString_TextPart",
+			input:      input,
+			attributes: map[string]any{GenAISystemInstructions: "be brief"},
+			wantInput: `[
+			  {"role": "system", "parts": [{"type": "text", "content": "be brief"}]},
+			  {"role": "user", "parts": [{"type": "text", "content": "hi"}]}
+			]`,
+			wantOutput: `[]`,
+		},
+		{
+			// a create_agent span carries instructions alone
+			name:       "NoMessages_Nothing",
+			attributes: map[string]any{GenAISystemInstructions: "be brief"},
+			wantInput:  `[]`,
+			wantOutput: `[]`,
+		},
+	})
+}
+
+func TestFormat_FinishReasons(t *testing.T) {
+	output := `[{"role":"assistant","parts":[{"type":"text","content":"a"}],"finish_reason":"stop"},{"role":"assistant","parts":[{"type":"text","content":"b"}]}]`
+	runFormatCases(t, []formatCase{
+		{
+			name:       "List_OverridesMessages",
+			output:     output,
+			attributes: map[string]any{GenAIResponseFinishReasons: []any{"tool_calls", "length"}},
+			wantInput:  `[]`,
+			wantOutput: `[{"role": "assistant", "parts": [{"type": "text", "content": "a"}], "finish_reason": "tool_call"}, {"role": "assistant", "parts": [{"type": "text", "content": "b"}], "finish_reason": "length"}]`,
+		},
+		{
+			name:       "LengthMismatch_LeavesMessages_Warns",
+			output:     output,
+			attributes: map[string]any{GenAIResponseFinishReasons: []any{"stop"}},
+			warnings:   []string{"gen_ai.response.finish_reasons has 1 entries for 2 output messages"},
+			wantInput:  `[]`,
+			wantOutput: `[{"role": "assistant", "parts": [{"type": "text", "content": "a"}], "finish_reason": "stop"}, {"role": "assistant", "parts": [{"type": "text", "content": "b"}]}]`,
+		},
+		{
+			// llm.finish_reason copied by the mapper as a bare string, in the Vercel AI SDK spelling:
+			// https://github.com/vercel/ai/blob/a5e92fe3c692f8e152fe1eb9ef50a4e734ad0ffb/packages/provider/src/language-model/v2/language-model-v2-finish-reason.ts
+			name:       "BareString_SingleChoice",
+			output:     `{"choices":[{"finish_reason":"stop","message":{"role":"assistant","content":"hi"}}]}`,
+			attributes: map[string]any{GenAIResponseFinishReasons: "tool-calls"},
+			wantInput:  `[]`,
+			wantOutput: `[{"role": "assistant", "parts": [{"type": "text", "content": "hi"}], "finish_reason": "tool_call"}]`,
+		},
+	})
+}
