@@ -4155,14 +4155,26 @@ components:
             type: string
           nullable: true
           type: object
+        customOrder:
+          additionalProperties:
+            type: integer
+          nullable: true
+          type: object
         mode:
           $ref: '#/components/schemas/DashboardtypesLegendMode'
+        order:
+          $ref: '#/components/schemas/DashboardtypesLegendOrder'
         position:
           $ref: '#/components/schemas/DashboardtypesLegendPosition'
       type: object
     DashboardtypesLegendMode:
       enum:
       - list
+      type: string
+    DashboardtypesLegendOrder:
+      enum:
+      - value
+      - custom
       type: string
     DashboardtypesLegendPosition:
       enum:

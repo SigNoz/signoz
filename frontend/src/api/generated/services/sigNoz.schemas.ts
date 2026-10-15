@@ -4857,6 +4857,10 @@ export interface DashboardtypesPanelFormattingDTO {
 export enum DashboardtypesLegendModeDTO {
 	list = 'list',
 }
+export enum DashboardtypesLegendOrderDTO {
+	value = 'value',
+	custom = 'custom',
+}
 export enum DashboardtypesLegendPositionDTO {
 	bottom = 'bottom',
 	right = 'right',
@@ -4871,12 +4875,25 @@ export type DashboardtypesLegendDTOCustomColorsAnyOf = {
 export type DashboardtypesLegendDTOCustomColors =
 	DashboardtypesLegendDTOCustomColorsAnyOf | null;
 
+export type DashboardtypesLegendDTOCustomOrderAnyOf = { [key: string]: number };
+
+/**
+ * @nullable
+ */
+export type DashboardtypesLegendDTOCustomOrder =
+	DashboardtypesLegendDTOCustomOrderAnyOf | null;
+
 export interface DashboardtypesLegendDTO {
 	/**
 	 * @type object,null
 	 */
 	customColors?: DashboardtypesLegendDTOCustomColors;
+	/**
+	 * @type object,null
+	 */
+	customOrder?: DashboardtypesLegendDTOCustomOrder;
 	mode?: DashboardtypesLegendModeDTO;
+	order?: DashboardtypesLegendOrderDTO;
 	position?: DashboardtypesLegendPositionDTO;
 }
 

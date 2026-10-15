@@ -1,4 +1,7 @@
-import { DashboardtypesLegendPositionDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	DashboardtypesLegendOrderDTO,
+	DashboardtypesLegendPositionDTO,
+} from 'api/generated/services/sigNoz.schemas';
 
 import type { ConfigTileItem } from '../../controls/ConfigTiles/ConfigTiles';
 import { TILE_DRAWINGS } from '../../controls/drawings/tileDrawings';
@@ -16,3 +19,8 @@ export const POSITION_OPTIONS: ConfigTileItem<DashboardtypesLegendPositionDTO>[]
 			drawing: TILE_DRAWINGS.legendRight,
 		},
 	];
+
+export const ORDER_OPTIONS: ConfigTileItem<DashboardtypesLegendOrderDTO>[] = [
+	{ value: DashboardtypesLegendOrderDTO.value, label: 'By value' },
+	{ value: DashboardtypesLegendOrderDTO.custom, label: 'Custom' },
+];

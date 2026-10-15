@@ -159,6 +159,9 @@ export interface SectionControls {
 		// colors → customColors; the resolver supplies the labels overrides are keyed by,
 		// so a kind can't offer color overrides with nothing to color
 		colors?: LegendSeriesResolver;
+		// order → order + customOrder; keyed by the labels `colors` resolves, so a kind
+		// declares it only alongside `colors`
+		order?: boolean;
 	};
 	[SectionKind.ChartAppearance]: {
 		lineStyle?: boolean;
