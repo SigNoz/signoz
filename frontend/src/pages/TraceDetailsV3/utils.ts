@@ -76,6 +76,7 @@ const VISIBLE_SPAN_FIELDS_IN_DETAILS_VIEW = [
 	'external_http_method',
 	'external_http_url',
 	'response_status_code',
+	// Keys must exist on the waterfall DTO.
 ] as const satisfies readonly (keyof SpantypesWaterfallSpanDTO)[];
 
 /**
