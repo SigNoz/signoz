@@ -11,6 +11,7 @@ import (
 
 const (
 	FormatterSemconv    = "semconv"
+	FormatterTool       = "tool"
 	FormatterOpenAIChat = "openai.chat"
 	FormatterText       = "text"
 	FormatterGeneric    = "generic"
@@ -34,19 +35,42 @@ type FormattedMessages struct {
 	Warnings  []string
 }
 
-// FormatMessages builds the OTel GenAI view of gen_ai.input.messages and gen_ai.output.messages from the
-// formats SDKs write. Each value is a JSON string or a structured value; nil means absent.
-func FormatMessages(input, output any) FormattedMessages {
-	f := &formatting{out: FormattedMessages{Input: InputMessages{}, Output: OutputMessages{}, Warnings: []string{}}}
+// FormatMessages builds the OTel GenAI view of a span's messages from the formats SDKs write. attributes
+// is the span's JSON attribute document, nested by key segment, so an object value is whole. Each
+// message value is a JSON string or a structured value. A tool call and its result take precedence over
+// messages beside them.
+func FormatMessages(attributes map[string]any) FormattedMessages {
+	f := &formatting{attributes: attributes, out: FormattedMessages{Input: InputMessages{}, Output: OutputMessages{}, Warnings: []string{}}}
+	switch {
+	case attribute(f.attributes, GenAIToolCallArguments) != nil || attribute(f.attributes, GenAIToolCallResult) != nil:
+		f.tool()
+	case attribute(f.attributes, GenAIInputMessages) != nil || attribute(f.attributes, GenAIOutputMessages) != nil:
+		f.messages()
+	}
+	return f.out
+}
+
+type formatting struct {
+	attributes map[string]any
+	out        FormattedMessages
+}
+
+func (f *formatting) warn(format string, args ...any) {
+	f.out.Warnings = append(f.out.Warnings, fmt.Sprintf(format, args...))
+}
+
+// messages converts gen_ai.input.messages and gen_ai.output.messages, each by its own shape, and names
+// the formatter after the input side, or the output side when the input has none.
+func (f *formatting) messages() {
 	var inputLabel, outputLabel string
-	if input != nil {
+	if input := attribute(f.attributes, GenAIInputMessages); input != nil {
 		var msgs OutputMessages
 		msgs, inputLabel = f.side(decode(input), RoleUser)
 		for _, m := range msgs {
 			f.out.Input = append(f.out.Input, ChatMessage{Role: m.Role, Parts: m.Parts, Name: m.Name})
 		}
 	}
-	if output != nil {
+	if output := attribute(f.attributes, GenAIOutputMessages); output != nil {
 		f.out.Output, outputLabel = f.side(decode(output), RoleAssistant)
 	}
 	f.out.Formatter = inputLabel
@@ -55,15 +79,6 @@ func FormatMessages(input, output any) FormattedMessages {
 	} else if outputLabel != "" && outputLabel != inputLabel {
 		f.warn("output formatted as %s, input as %s", outputLabel, inputLabel)
 	}
-	return f.out
-}
-
-type formatting struct {
-	out FormattedMessages
-}
-
-func (f *formatting) warn(format string, args ...any) {
-	f.out.Warnings = append(f.out.Warnings, fmt.Sprintf(format, args...))
 }
 
 // side converts one attribute value by its shape; role is what a bare string on this side is
@@ -95,6 +110,21 @@ func (f *formatting) side(value any, role Role) (OutputMessages, string) {
 	}
 	f.warn("message format not recognised, kept as generic")
 	return OutputMessages{genericMessage(value)}, FormatterGeneric
+}
+
+// attribute walks the document along the dotted key; a nested object comes back whole. Not handled: a
+// scalar at a prefix of the path, such as gen_ai.input beside gen_ai.input.messages, which ends the
+// walk early.
+func attribute(doc map[string]any, key string) any {
+	var current any = doc
+	for segment := range strings.SplitSeq(key, ".") {
+		object, ok := current.(map[string]any)
+		if !ok {
+			return nil
+		}
+		current = object[segment]
+	}
+	return current
 }
 
 func firstObject(list []any) (map[string]any, bool) {
