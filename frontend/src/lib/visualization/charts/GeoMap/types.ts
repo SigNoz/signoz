@@ -71,6 +71,14 @@ export interface GeoMapDatum {
 	size?: number | null;
 	/** Drawn in place of the palette colour, e.g. a matched threshold's. */
 	color?: string;
+	/** The row's other values, already formatted; the tooltip lists them. */
+	details?: GeoMapDetail[];
+}
+
+/** A labelled value from a location's row, shown in its tooltip. */
+export interface GeoMapDetail {
+	label: string;
+	value: string;
 }
 
 /** One row placed by latitude and longitude, drawn on the `points` layer. */
@@ -82,10 +90,12 @@ export interface GeoMapPoint {
 	value: number;
 	/** The second metric, read only when the map has a `sizeMetric`. */
 	size?: number | null;
-	/** What the tooltip names it by: the group value(s), e.g. a city. */
+	/** What the tooltip names it by, e.g. a city; empty names it by the shape it falls in. */
 	label: string;
 	/** Drawn in place of the palette colour, e.g. a matched threshold's. */
 	color?: string;
+	/** The row's other values, already formatted; the tooltip lists them. */
+	details?: GeoMapDetail[];
 }
 
 /** A legend key for colours drawn outside the palette, e.g. a threshold. */
@@ -131,7 +141,7 @@ export interface GeoMapProps {
 	colors: GeoMapColors;
 	bubbleRadius: [number, number];
 	formatValue: (value: number) => string;
-	/** Names the colour metric in the tooltip when a size metric is shown. */
+	/** Names the column the colour shows, in the tooltip and beside the colour bar. */
 	valueLabel?: string;
 	/**
 	 * Sizes bubbles by a second metric. On `regions` they are drawn neutral over

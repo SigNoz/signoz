@@ -4,7 +4,10 @@ import { fromLonLat, transformExtent } from 'ol/proj';
 import { COUNTRY_BY_ISO2 } from '../../geo/countries';
 import { getCountryShapes } from '../../geo/shapes';
 import { GeoMapDatum } from '../../types';
+import VectorSource from 'ol/source/Vector';
+
 import {
+	findShapeAt,
 	getViewExtent,
 	toBubbleFeatures,
 	toLabelFeatures,
@@ -30,6 +33,23 @@ describe('toShapeFeatures', () => {
 		const germany = members.find((feature) => feature.get('code') === 'DE');
 		const [west] = germany?.getGeometry()?.getExtent() ?? [];
 		expect(west).toBeGreaterThan(fromLonLat([5, 50])[0]);
+	});
+});
+
+describe('findShapeAt', () => {
+	const { members, context } = toShapeFeatures(getCountryShapes('europe'));
+	const sources = [
+		new VectorSource({ features: members }),
+		new VectorSource({ features: context }),
+	];
+
+	it('finds the member or context shape a point falls in', () => {
+		expect(findShapeAt(sources, [2.35, 48.86])).toBe('FR');
+		expect(findShapeAt(sources, [78.49, 17.39])).toBe('IN');
+	});
+
+	it('finds nothing at sea', () => {
+		expect(findShapeAt(sources, [-30, 30])).toBeNull();
 	});
 });
 

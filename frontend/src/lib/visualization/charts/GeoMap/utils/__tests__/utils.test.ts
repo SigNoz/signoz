@@ -11,7 +11,6 @@ import {
 	createGeoMapColorResolver,
 	createRadiusScale,
 	getSizeLegendSteps,
-	rankData,
 } from '../scales';
 
 const data = (...values: number[]): GeoMapDatum[] =>
@@ -73,18 +72,6 @@ describe('getSizeLegendSteps', () => {
 
 	it('has nothing to show without a positive size', () => {
 		expect(getSizeLegendSteps(0)).toStrictEqual([]);
-	});
-});
-
-describe('rankData', () => {
-	it('ranks highest first with each value’s share of the total', () => {
-		const ranks = rankData(data(10, 30, 60));
-		expect(ranks.get('C2')).toStrictEqual({ rank: 1, share: 0.6 });
-		expect(ranks.get('C0')).toStrictEqual({ rank: 3, share: 0.1 });
-	});
-
-	it('leaves negatives out of the total', () => {
-		expect(rankData(data(-50, 50)).get('C1')?.share).toBe(1);
 	});
 });
 

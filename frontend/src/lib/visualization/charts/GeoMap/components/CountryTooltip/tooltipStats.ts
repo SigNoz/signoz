@@ -1,5 +1,4 @@
 import { GeoMapDatum, GeoMapSizeMetric } from '../../types';
-import { GeoMapRank } from '../../utils/scales';
 
 export interface TooltipStat {
 	label: string;
@@ -7,33 +6,30 @@ export interface TooltipStat {
 	testId?: string;
 }
 
-/** The rows under the value: the size metric first when the map has one, then rank and share. */
+/**
+ * The rows under the value: the row's other values when the caller supplies
+ * them, else the size metric when the map has one.
+ */
 export function buildTooltipStats({
 	datum,
-	rank,
-	total,
 	sizeMetric,
 }: {
 	datum: GeoMapDatum;
-	rank: GeoMapRank | undefined;
-	total: number;
 	sizeMetric: GeoMapSizeMetric | undefined;
 }): TooltipStat[] {
-	const stats: TooltipStat[] = [];
-	if (sizeMetric) {
-		const { size } = datum;
-		stats.push({
+	if (datum.details) {
+		return datum.details;
+	}
+	if (!sizeMetric) {
+		return [];
+	}
+	const { size } = datum;
+	return [
+		{
 			label: sizeMetric.label,
 			value:
 				size != null && Number.isFinite(size) ? sizeMetric.formatValue(size) : '—',
 			testId: 'geo-map-tooltip-size',
-		});
-	}
-	if (rank) {
-		stats.push(
-			{ label: 'Rank', value: `#${rank.rank} of ${total}` },
-			{ label: 'Share of total', value: `${(rank.share * 100).toFixed(1)}%` },
-		);
-	}
-	return stats;
+		},
+	];
 }

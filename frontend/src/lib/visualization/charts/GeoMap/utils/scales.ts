@@ -18,12 +18,8 @@ export function pointAsDatum(point: GeoMapPoint): GeoMapDatum {
 		size: point.size,
 		raw: point.label,
 		color: point.color,
+		details: point.details,
 	};
-}
-
-export interface GeoMapRank {
-	rank: number;
-	share: number;
 }
 
 /**
@@ -59,17 +55,6 @@ export function createRadiusScale(
 		const share = Math.abs(size) / maxAbs;
 		return Math.sqrt(min * min + (max * max - min * min) * share);
 	};
-}
-
-export function rankData(data: GeoMapDatum[]): Map<string, GeoMapRank> {
-	const total = data.reduce((sum, datum) => sum + Math.max(datum.value, 0), 0);
-	const sorted = [...data].sort((a, b) => b.value - a.value);
-	return new Map(
-		sorted.map((datum, index) => [
-			datum.code,
-			{ rank: index + 1, share: total > 0 ? datum.value / total : 0 },
-		]),
-	);
 }
 
 /** The shared colour ramp, fed the map's values as a single row. */
