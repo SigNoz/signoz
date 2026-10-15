@@ -5,6 +5,7 @@ import DBCall from 'container/MetricsApplication/Tabs/DBCall';
 import External from 'container/MetricsApplication/Tabs/External';
 import Overview from 'container/MetricsApplication/Tabs/Overview';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
+import useReducedMotion from 'hooks/useReducedMotion';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 
@@ -20,6 +21,7 @@ function MetricsApplication(): JSX.Element {
 	}>();
 
 	const activeKey = useMetricsApplicationTabKey();
+	const prefersReducedMotion = useReducedMotion();
 
 	const urlQuery = useUrlQuery();
 	const { safeNavigate } = useSafeNavigate();
@@ -56,6 +58,7 @@ function MetricsApplication(): JSX.Element {
 				activeKey={activeKey}
 				className="service-route-tab"
 				destroyInactiveTabPane
+				animated={!prefersReducedMotion}
 				onChange={onTabChange}
 			/>
 		</div>
