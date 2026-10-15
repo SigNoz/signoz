@@ -52,7 +52,7 @@ export type GeoMapView =
 	| 'oceania'
 	| 'country';
 
-export type GeoMapLayer = 'regions' | 'bubbles';
+export type GeoMapLayer = 'regions' | 'bubbles' | 'points';
 
 export interface GeoMapViewPreset {
 	label: string;
@@ -67,6 +67,19 @@ export interface GeoMapDatum {
 	raw: string;
 	/** The second metric, read only when the map has a `sizeMetric`. */
 	size?: number | null;
+}
+
+/** One row placed by latitude and longitude, drawn on the `points` layer. */
+export interface GeoMapPoint {
+	/** Unique within the map; hover and selection key on it. */
+	id: string;
+	lat: number;
+	lon: number;
+	value: number;
+	/** The second metric, read only when the map has a `sizeMetric`. */
+	size?: number | null;
+	/** What the tooltip names it by: the group value(s), e.g. a city. */
+	label: string;
 }
 
 /** A second metric drawn as bubble size, from each datum's `size`. */
@@ -85,12 +98,16 @@ export interface GeoMapColors {
 
 export interface GeoMapSelection {
 	datum: GeoMapDatum;
+	/** Set on the `points` layer: the point clicked. */
+	point?: GeoMapPoint;
 	clientX: number;
 	clientY: number;
 }
 
 export interface GeoMapProps {
 	data: GeoMapDatum[];
+	/** Rows placed by lat/lon; drawn when `layer` is `points`. */
+	points?: GeoMapPoint[];
 	view: GeoMapView;
 	/** Whose states the `country` view draws. */
 	country?: SubdivisionCountry;

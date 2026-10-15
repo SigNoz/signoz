@@ -15,6 +15,8 @@ interface CountryTooltipProps {
 	formatValue: (value: number) => string;
 	valueLabel?: string;
 	sizeMetric?: GeoMapSizeMetric;
+	/** Replaces the code beside the name, e.g. a point's coordinates. */
+	place?: string;
 	footer?: ReactNode;
 }
 
@@ -27,6 +29,7 @@ export default function CountryTooltip({
 	formatValue,
 	valueLabel,
 	sizeMetric,
+	place,
 	footer,
 }: CountryTooltipProps): JSX.Element {
 	const stats = buildTooltipStats({ datum, rank, total, sizeMetric });
@@ -37,7 +40,7 @@ export default function CountryTooltip({
 				<span className={styles.name} title={name}>
 					{name}
 				</span>
-				<span className={styles.code}>{datum.code}</span>
+				<span className={styles.code}>{place ?? datum.code}</span>
 			</div>
 			<div className={styles.title}>
 				<span

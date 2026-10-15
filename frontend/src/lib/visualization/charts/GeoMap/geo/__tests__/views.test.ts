@@ -79,6 +79,24 @@ describe('getViewBox', () => {
 		expect(west).toBeGreaterThan(-80);
 	});
 
+	it('fits points by their own spread, with room for the edge circles', () => {
+		const points = [
+			{ lat: 47.6, lon: -122.3 }, // Seattle
+			{ lat: -36.8, lon: 174.8 }, // Auckland
+		];
+		const [[west, south], [east, north]] = getViewBox(
+			'fit',
+			[],
+			undefined,
+			points,
+		);
+
+		expect(west).toBeLessThan(-122.3 - 10);
+		expect(east).toBeGreaterThan(174.8 + 10);
+		expect(south).toBeLessThan(-36.8);
+		expect(north).toBeGreaterThan(47.6);
+	});
+
 	it('shows the world for a country view with no country', () => {
 		expect(getViewBox('country', [])).toBe(VIEW_PRESETS.world.box);
 	});

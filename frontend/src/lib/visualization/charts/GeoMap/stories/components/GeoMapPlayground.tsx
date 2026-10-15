@@ -19,7 +19,11 @@ import { FIXTURES } from '../fixtures/fixtures';
 import { FixtureDataset } from '../fixtures/types';
 import GeoMapPlaygroundMenu from './GeoMapPlaygroundMenu';
 import GeoMapPlaygroundWarnings from './GeoMapPlaygroundWarnings';
-import { formatterFor, prepareFixture } from '../fixtures/prepareFixture';
+import {
+	drilldownFieldOf,
+	formatterFor,
+	prepareFixture,
+} from '../fixtures/prepareFixture';
 import { statesFixture } from '../fixtures/stateFixtures';
 import { useSubdivisionSet } from '../../hooks/useSubdivisionSet';
 
@@ -128,7 +132,8 @@ export default function GeoMapPlayground({
 						data={prepared.data}
 						view={mapView}
 						country={fixture.country}
-						layer={layer}
+						layer={fixture.points ? 'points' : layer}
+						points={fixture.points}
 						showLabels={showLabels}
 						colors={colors}
 						bubbleRadius={bubbleRadius}
@@ -144,8 +149,12 @@ export default function GeoMapPlayground({
 			{selection && (
 				<GeoMapPlaygroundMenu
 					selection={selection}
-					name={shapes?.nameOf(selection.datum.code) ?? selection.datum.code}
-					field={fixture.country ? 'geo.region.iso_code' : 'geo.country.iso_code'}
+					name={
+						selection.point?.label ??
+						shapes?.nameOf(selection.datum.code) ??
+						selection.datum.code
+					}
+					field={drilldownFieldOf(selection, fixture.country)}
 					formatValue={formatValue}
 					onClose={closeMenu}
 				/>

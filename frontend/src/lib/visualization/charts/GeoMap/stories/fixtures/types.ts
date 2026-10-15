@@ -1,8 +1,11 @@
-import { SubdivisionCountry } from '../../types';
+import { GeoMapPoint, SubdivisionCountry } from '../../types';
 
 export type FixtureDataset =
 	| 'errorRate'
 	| 'errorRateAndRequests'
+	| 'cityLatency'
+	| 'cityLatencyAndRequests'
+	| 'manyPoints'
 	| 'requests'
 	| 'europeLatency'
 	| 'usStates'
@@ -28,6 +31,8 @@ export interface Fixture {
 	title: string;
 	unit: 'percent' | 'count' | 'ms';
 	rows: FixtureRow[];
+	/** Point datasets only: rows placed by lat/lon, drawn on the points layer. */
+	points?: GeoMapPoint[];
 	/** Two-metric datasets only: names the colour metric. */
 	valueLabel?: string;
 	sizeMetric?: FixtureSizeMetric;

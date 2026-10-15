@@ -1,3 +1,4 @@
+import type Point from 'ol/geom/Point';
 import { fromLonLat, transformExtent } from 'ol/proj';
 
 import { COUNTRY_BY_ISO2 } from '../../geo/countries';
@@ -7,6 +8,7 @@ import {
 	getViewExtent,
 	toBubbleFeatures,
 	toLabelFeatures,
+	toPointFeatures,
 	toShapeFeatures,
 } from '../olFeatures';
 
@@ -89,5 +91,19 @@ describe('toLabelFeatures', () => {
 		);
 		expect(codes).toContain('DE');
 		expect(codes).not.toContain('US');
+	});
+});
+
+describe('toPointFeatures', () => {
+	it('places each point at its lat/lon, keyed by its id', () => {
+		const [paris] = toPointFeatures([
+			{ id: 'p1', lat: 48.86, lon: 2.35, value: 1, label: 'Paris' },
+		]);
+		const [x, y] = (paris.getGeometry() as Point).getCoordinates();
+		const [ex, ey] = fromLonLat([2.35, 48.86]);
+
+		expect(paris.get('code')).toBe('p1');
+		expect(x).toBeCloseTo(ex, 3);
+		expect(y).toBeCloseTo(ey, 3);
 	});
 });

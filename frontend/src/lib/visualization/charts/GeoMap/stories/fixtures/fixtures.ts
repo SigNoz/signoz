@@ -1,5 +1,6 @@
 import { COUNTRIES } from '../../geo/countries';
 import { seededRandom } from './seededRandom';
+import { cityLatency, manyPoints } from './pointFixtures';
 import { indiaLatency, usRequests } from './stateFixtures';
 import { Fixture, FixtureDataset, FixtureRow } from './types';
 
@@ -93,6 +94,26 @@ export const FIXTURES: Record<FixtureDataset, Fixture> = {
 		unit: 'percent',
 		rows: errorRateAndRequests(),
 		valueLabel: 'Error rate',
+		sizeMetric: { label: 'Requests', unit: 'count' },
+	},
+	cityLatency: {
+		title: 'p95 latency by city',
+		unit: 'ms',
+		rows: [],
+		points: cityLatency(),
+	},
+	manyPoints: {
+		title: 'Requests by location (5,000 points)',
+		unit: 'count',
+		rows: [],
+		points: manyPoints(5_000),
+	},
+	cityLatencyAndRequests: {
+		title: 'p95 latency by city, sized by requests',
+		unit: 'ms',
+		rows: [],
+		points: cityLatency(),
+		valueLabel: 'p95 latency',
 		sizeMetric: { label: 'Requests', unit: 'count' },
 	},
 	requests: { title: 'Requests by country', unit: 'count', rows: requests() },
