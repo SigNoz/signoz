@@ -407,6 +407,8 @@ type Legend struct {
 	Position     LegendPosition    `json:"position" description:"Where the legend sits: bottom (default) or right."`
 	Mode         LegendMode        `json:"mode" description:"The legend layout. Only list is supported."`
 	CustomColors map[string]string `json:"customColors" description:"Hex colors keyed by series label, overriding the automatic palette."`
+	Order        LegendOrder       `json:"order" description:"The series order: value (default) by descending mean, or custom by customOrder."`
+	CustomOrder  map[string]int    `json:"customOrder" description:"Sort indexes keyed by series label, ascending. A label without an entry has index 0; equal indexes keep natural order."`
 }
 
 type ThresholdWithLabel struct {
@@ -555,6 +557,47 @@ func (m *LegendMode) UnmarshalJSON(data []byte) error {
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid legend mode %q: must be `list` or `table`", v)
+	}
+}
+
+// LegendOrder is the order of a panel's series in its legend. `value` sorts by
+// descending mean. `custom` sorts by ascending index in Legend.CustomOrder,
+// keyed by series label, a label without an entry having index 0, and labels
+// with equal indexes in natural order.
+type LegendOrder struct{ valuer.String }
+
+var (
+	LegendOrderValue  = LegendOrder{valuer.NewString("value")} // default
+	LegendOrderCustom = LegendOrder{valuer.NewString("custom")}
+)
+
+func (LegendOrder) Enum() []any {
+	return []any{LegendOrderValue, LegendOrderCustom}
+}
+
+func (o LegendOrder) ValueOrDefault() string {
+	if o.IsZero() {
+		return LegendOrderValue.StringValue()
+	}
+	return o.StringValue()
+}
+
+func (o LegendOrder) MarshalJSON() ([]byte, error) {
+	return json.Marshal(o.ValueOrDefault())
+}
+
+func (o *LegendOrder) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid legend order: must be a string, one of `value` or `custom`")
+	}
+	lo := LegendOrder{valuer.NewString(v)}
+	switch lo {
+	case LegendOrderValue, LegendOrderCustom:
+		*o = lo
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid legend order %q: must be `value` or `custom`", v)
 	}
 }
 

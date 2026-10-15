@@ -4861,10 +4861,22 @@ components:
             palette.
           nullable: true
           type: object
+        customOrder:
+          additionalProperties:
+            type: integer
+          description: Sort indexes keyed by series label, ascending. A label without
+            an entry has index 0; equal indexes keep natural order.
+          nullable: true
+          type: object
         mode:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesLegendMode'
           description: The legend layout. Only list is supported.
+        order:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesLegendOrder'
+          description: 'The series order: value (default) by descending mean, or custom
+            by customOrder.'
         position:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesLegendPosition'
@@ -4873,6 +4885,11 @@ components:
     DashboardtypesLegendMode:
       enum:
       - list
+      type: string
+    DashboardtypesLegendOrder:
+      enum:
+      - value
+      - custom
       type: string
     DashboardtypesLegendPosition:
       enum:
