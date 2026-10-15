@@ -1,5 +1,5 @@
 import { Form } from 'antd';
-import { ChannelType } from 'container/CreateAlertChannels/config';
+import { ChannelKind } from 'container/CreateAlertChannels/types';
 import { act, render, renderHook, screen } from 'tests/test-utils';
 
 import FormAlertChannels from '..';
@@ -18,7 +18,7 @@ describe('FormAlertChannels', () => {
 		render(
 			<FormAlertChannels
 				formInstance={formInstance}
-				type={ChannelType.Slack}
+				type={ChannelKind.slack}
 				setSelectedConfig={jest.fn()}
 				onTypeChangeHandler={jest.fn()}
 				onSaveHandler={jest.fn()}
@@ -26,7 +26,7 @@ describe('FormAlertChannels', () => {
 				testingState={false}
 				savingState={false}
 				title="Edit"
-				initialValue={{ name: 'Dummy-Channel', type: ChannelType.Slack }}
+				initialValue={{ name: 'Dummy-Channel', type: ChannelKind.slack }}
 				editing
 			/>,
 		);
@@ -34,7 +34,7 @@ describe('FormAlertChannels', () => {
 		expect(sendResolvedSwitch).not.toBeChecked();
 
 		act(() => {
-			formInstance.setFieldsValue({ send_resolved: true });
+			formInstance.setFieldsValue({ sendResolved: true });
 		});
 
 		expect(sendResolvedSwitch).toBeChecked();
