@@ -77,12 +77,11 @@ type ThreadSpan struct {
 	Attributes       map[string]any    `json:"attributes" required:"true" nullable:"false"`
 	Events           []Event           `json:"events" required:"true" nullable:"false"`
 	References       []OtelSpanRef     `json:"references" required:"true" nullable:"false"`
-	// The formatted fields hold the span's messages in the OTel GenAI shape; Formatter names the
-	// converter that produced them and FormatterWarnings what it could not resolve.
-	FormattedInput    aiobservabilitytypes.InputMessages  `json:"formatted_input" required:"true" nullable:"false"`
-	FormattedOutput   aiobservabilitytypes.OutputMessages `json:"formatted_output" required:"true" nullable:"false"`
-	Formatter         string                              `json:"formatter" required:"true"`
-	FormatterWarnings []string                            `json:"formatter_warnings" required:"true" nullable:"false"`
+	// The formatted fields hold the span's messages in the OTel GenAI shape; FormatterWarnings holds what
+	// the converter could not resolve.
+	FormattedInput    aiobservabilitytypes.InputMessages  `json:"formattedInput" required:"true" nullable:"false"`
+	FormattedOutput   aiobservabilitytypes.OutputMessages `json:"formattedOutput" required:"true" nullable:"false"`
+	FormatterWarnings []string                            `json:"formatterWarnings" required:"true" nullable:"false"`
 
 	timeUnixNano uint64
 }
@@ -199,7 +198,6 @@ func newThreadSpan(traceID string, storable *StorableSpan) *ThreadSpan {
 		References:        storable.UnmarshalledRefs(),
 		FormattedInput:    formatted.Input,
 		FormattedOutput:   formatted.Output,
-		Formatter:         formatted.Formatter,
 		FormatterWarnings: formatted.Warnings,
 		timeUnixNano:      timeUnixNano,
 	}

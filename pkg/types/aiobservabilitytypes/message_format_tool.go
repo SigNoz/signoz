@@ -20,7 +20,6 @@ func (f *formatting) tool() {
 		result := ToolCallResponsePart{Type: PartTypeToolCallResponse, ID: id, Response: toolResult(decode(raw))}
 		f.out.Output = OutputMessages{{Role: RoleTool, Parts: Parts{part(result)}}}
 	}
-	f.out.Formatter = FormatterTool
 }
 
 func toolArguments(value any) any {

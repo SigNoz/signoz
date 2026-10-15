@@ -15,7 +15,6 @@ type formatCase struct {
 	input      any
 	output     any
 	attributes map[string]any // flat dotted keys beside the two message attributes
-	formatter  string
 	warnings   []string
 	wantInput  string
 	wantOutput string
@@ -28,7 +27,6 @@ func runFormatCases(t *testing.T, testCases []formatCase) {
 			attributes := map[string]any{GenAIInputMessages: testCase.input, GenAIOutputMessages: testCase.output}
 			maps.Copy(attributes, testCase.attributes)
 			formatted := FormatMessages(document(attributes))
-			assert.Equal(t, testCase.formatter, formatted.Formatter)
 			assert.Equal(t, append([]string{}, testCase.warnings...), formatted.Warnings)
 
 			input, err := json.Marshal(formatted.Input)
@@ -83,8 +81,7 @@ Divide by 2:
   x = 0.05
 
 So, the ball costs 5 cents.`,
-			formatter: FormatterText,
-			warnings:  []string{"bare user text, role assumed", "bare assistant text, role assumed"},
+			warnings: []string{"bare user text, role assumed", "bare assistant text, role assumed"},
 			wantInput: `[
 			  {
 			    "role": "user",
@@ -111,13 +108,12 @@ So, the ball costs 5 cents.`,
 		{
 			name:       "UnrecognisedObject_GenericPart_Warns",
 			input:      `{"city": "Paris", "temp_c": 21}`,
-			formatter:  FormatterGeneric,
 			warnings:   []string{"message format not recognised, kept as generic"},
 			wantInput:  `[{"role": "", "parts": [{"type": "generic", "content": "{\"city\":\"Paris\",\"temp_c\":21}"}]}]`,
 			wantOutput: `[]`,
 		},
 		{
-			name:       "NoMessageAttributes_EmptyListsNoFormatter",
+			name:       "NoMessageAttributes_EmptyLists",
 			attributes: map[string]any{GenAIRequestModel: "gpt-4o", GenAIToolName: "get_weather"},
 			wantInput:  `[]`,
 			wantOutput: `[]`,

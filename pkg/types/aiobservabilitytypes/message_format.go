@@ -11,7 +11,6 @@ import (
 
 const (
 	FormatterSemconv    = "semconv"
-	FormatterTool       = "tool"
 	FormatterOpenAIChat = "openai.chat"
 	FormatterText       = "text"
 	FormatterGeneric    = "generic"
@@ -26,13 +25,12 @@ var finishReasonAliases = map[string]FinishReason{
 	"max_tokens": FinishReasonLength,
 }
 
-// FormattedMessages is the OTel GenAI view of one span's messages. Formatter names the converter that
-// produced it, Warnings what the converter could not resolve. The lists are never nil.
+// FormattedMessages is the OTel GenAI view of one span's messages; Warnings holds what the converter could
+// not resolve. The lists are never nil.
 type FormattedMessages struct {
-	Input     InputMessages
-	Output    OutputMessages
-	Formatter string
-	Warnings  []string
+	Input    InputMessages
+	Output   OutputMessages
+	Warnings []string
 }
 
 // FormatMessages builds the OTel GenAI view of a span's messages from the formats SDKs write. attributes
@@ -59,8 +57,7 @@ func (f *formatting) warn(format string, args ...any) {
 	f.out.Warnings = append(f.out.Warnings, fmt.Sprintf(format, args...))
 }
 
-// messages converts gen_ai.input.messages and gen_ai.output.messages, each by its own shape, and names
-// the formatter after the input side, or the output side when the input has none.
+// messages converts gen_ai.input.messages and gen_ai.output.messages, each by its own shape.
 func (f *formatting) messages() {
 	var inputLabel, outputLabel string
 	if input := attribute(f.attributes, GenAIInputMessages); input != nil {
@@ -73,10 +70,7 @@ func (f *formatting) messages() {
 	if output := attribute(f.attributes, GenAIOutputMessages); output != nil {
 		f.out.Output, outputLabel = f.side(decode(output), RoleAssistant)
 	}
-	f.out.Formatter = inputLabel
-	if inputLabel == "" {
-		f.out.Formatter = outputLabel
-	} else if outputLabel != "" && outputLabel != inputLabel {
+	if inputLabel != "" && outputLabel != "" && outputLabel != inputLabel {
 		f.warn("output formatted as %s, input as %s", outputLabel, inputLabel)
 	}
 }
