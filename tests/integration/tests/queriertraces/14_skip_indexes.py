@@ -35,7 +35,7 @@ def test_traces_filters_use_skip_indexes(
     )
     assert resp.status_code == HTTPStatus.CREATED, resp.text
     cluster = signoz.telemetrystore.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]
-    for index_name in ("attributes.index.number_probe_Float64_bloom_filter", "attributes.index.string_probe_String_bloom_filter"):
+    for index_name in ("attributes.index.number_probe_float64_bloom_filter", "attributes.index.string_probe_string_bloom_filter"):
         request.addfinalizer(lambda index_name=index_name: signoz.telemetrystore.conn.query(f"ALTER TABLE signoz_traces.signoz_index_v3 ON CLUSTER '{cluster}' DROP INDEX IF EXISTS `{index_name}`"))
 
     resp = requests.post(
@@ -50,8 +50,8 @@ def test_traces_filters_use_skip_indexes(
     insert_traces([Traces(timestamp=now - timedelta(seconds=10), attributes={"index.number_probe": 200, "index.string_probe": "probe", "http.route": "/probe", "rpc.method": "probe"})])
 
     for filter_expression, index_name in [
-        ("index.number_probe = 200", "attributes.index.number_probe_Float64_bloom_filter"),
-        ("index.string_probe = 'probe'", "attributes.index.string_probe_String_bloom_filter"),
+        ("index.number_probe = 200", "attributes.index.number_probe_float64_bloom_filter"),
+        ("index.string_probe = 'probe'", "attributes.index.string_probe_string_bloom_filter"),
         ("http.route = '/probe'", "attributes.http.route_String_bloom_filter"),
         ("rpc.method = 'probe'", "attributes.rpc.method_String_bloom_filter"),
         ("name = 'probe'", "idx_name"),
