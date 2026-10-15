@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import TooltipFooter from 'lib/visualization/panels/components/TooltipFooter';
 import {
+	ColorRampMode,
 	ColorRampPalette,
 	ColorRampScale,
 } from 'lib/visualization/colorRamp/types';
@@ -36,6 +37,9 @@ export interface GeoMapPlaygroundProps {
 	view: GeoMapView;
 	layer: GeoMapLayer;
 	showLabels: boolean;
+	mode: ColorRampMode;
+	/** Opacity mode's colour; empty uses the default fill. */
+	fill: string;
 	palette: ColorRampPalette;
 	scale: ColorRampScale;
 	steps: number;
@@ -51,6 +55,8 @@ export default function GeoMapPlayground({
 	view,
 	layer,
 	showLabels,
+	mode,
+	fill,
 	palette,
 	scale,
 	steps,
@@ -86,8 +92,8 @@ export default function GeoMapPlayground({
 		[fixture.sizeMetric],
 	);
 	const colors = useMemo(
-		() => ({ palette, scale, steps, min: null, max: null }),
-		[palette, scale, steps],
+		() => ({ mode, fill, palette, scale, steps, min: null, max: null }),
+		[mode, fill, palette, scale, steps],
 	);
 	const bubbleRadius = useMemo<[number, number]>(
 		() => [minRadius, maxRadius],

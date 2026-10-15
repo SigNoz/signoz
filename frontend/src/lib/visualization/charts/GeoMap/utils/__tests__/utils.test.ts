@@ -1,5 +1,6 @@
 import { getRampBottom } from 'lib/visualization/colorRamp/colorScale';
 import {
+	ColorRampMode,
 	ColorRampPalette,
 	ColorRampScale,
 } from 'lib/visualization/colorRamp/types';
@@ -89,11 +90,13 @@ describe('rankData', () => {
 
 describe('createGeoMapColorResolver', () => {
 	const colors = {
+		mode: ColorRampMode.Palette,
 		palette: ColorRampPalette.Lava,
 		scale: ColorRampScale.Log,
 		steps: 8,
 		min: null,
 		max: null,
+		fill: '',
 	};
 
 	it('spans the data, starting a log ramp at its floor', () => {
@@ -115,6 +118,20 @@ describe('createGeoMapColorResolver', () => {
 		expect(
 			createGeoMapColorResolver(data(1, 10), colors, true).ramp,
 		).toHaveLength(8);
+	});
+
+	it('fades one fill in opacity mode, the default when none is set', () => {
+		const opacity = { ...colors, mode: ColorRampMode.Opacity };
+		const own = createGeoMapColorResolver(
+			data(1, 10),
+			{ ...opacity, fill: '#F1575F' },
+			true,
+		);
+		const fallback = createGeoMapColorResolver(data(1, 10), opacity, true);
+
+		expect(own.colorFor(10)).toBe('rgb(241, 87, 95)');
+		expect(own.colorFor(1)).not.toBe(own.colorFor(10));
+		expect(fallback.colorFor(10)).not.toBe(own.colorFor(10));
 	});
 
 	it('colours zero from the ramp, not the panel surface', () => {

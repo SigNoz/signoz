@@ -5,6 +5,7 @@ import {
 } from 'lib/visualization/colorRamp/colorScale';
 import { ColorRampScale } from 'lib/visualization/colorRamp/types';
 
+import type { GeoMapColorKey } from '../../types';
 import SizeLegend from '../SizeLegend/SizeLegend';
 
 import styles from './MapLegend.module.scss';
@@ -23,6 +24,7 @@ interface MapLegendProps {
 	markerValue: number | null;
 	/** Names the colour bar; shown only beside a size legend, where it's ambiguous. */
 	valueLabel?: string;
+	colorKeys?: GeoMapColorKey[];
 	size?: MapLegendSize;
 }
 
@@ -32,6 +34,7 @@ export default function MapLegend({
 	formatValue,
 	markerValue,
 	valueLabel,
+	colorKeys = [],
 	size,
 }: MapLegendProps): JSX.Element {
 	const bottom = getRampBottom(resolver.domain, scale);
@@ -53,6 +56,16 @@ export default function MapLegend({
 				<span className={styles.noDataSwatch} />
 				No data
 			</span>
+			{colorKeys.map((key) => (
+				<span
+					key={`${key.label}-${key.color}`}
+					className={styles.key}
+					data-testid="geo-map-color-key"
+				>
+					<span className={styles.swatch} style={{ background: key.color }} />
+					{key.label}
+				</span>
+			))}
 			{size && (
 				<SizeLegend
 					label={size.label}

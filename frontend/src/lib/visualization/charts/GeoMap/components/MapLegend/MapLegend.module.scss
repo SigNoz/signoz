@@ -17,7 +17,8 @@
 	max-width: 360px;
 }
 
-.noDataKey {
+.noDataKey,
+.key {
 	display: flex;
 	align-items: center;
 	gap: 4px;
@@ -32,4 +33,10 @@
 	border-radius: 2px;
 	background: var(--geo-no-data);
 	border: 1px solid var(--l2-border);
+}
+
+.swatch {
+	width: 10px;
+	height: 10px;
+	border-radius: 2px;
 }

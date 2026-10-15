@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import {
+	ColorRampMode,
 	ColorRampPalette,
 	ColorRampScale,
 } from 'lib/visualization/colorRamp/types';
@@ -22,6 +23,8 @@ const meta = {
 		view: 'world',
 		layer: 'regions',
 		showLabels: true,
+		mode: ColorRampMode.Palette,
+		fill: '',
 		palette: ColorRampPalette.Lava,
 		scale: ColorRampScale.Log,
 		steps: 64,
@@ -71,6 +74,8 @@ const meta = {
 			options: ['regions', 'bubbles', 'points'],
 		},
 		showLabels: { control: 'boolean' },
+		mode: { control: 'inline-radio', options: Object.values(ColorRampMode) },
+		fill: { control: 'color', if: { arg: 'mode', eq: ColorRampMode.Opacity } },
 		palette: { control: 'select', options: Object.values(ColorRampPalette) },
 		scale: { control: 'inline-radio', options: Object.values(ColorRampScale) },
 		steps: { control: { type: 'range', min: 2, max: 128, step: 1 } },
@@ -322,4 +327,9 @@ export const SmallPanel: Story = {
 /** The bundled outlines asset: codes, regions, label points and bounds per shape. */
 export const OutlinesAsset: StoryObj = {
 	render: (): JSX.Element => <GeoMapAssetTable />,
+};
+
+/** Opacity mode: one color fades from clear to solid with the value. */
+export const OpacityMode: Story = {
+	args: { mode: ColorRampMode.Opacity, scale: ColorRampScale.Sqrt },
 };
