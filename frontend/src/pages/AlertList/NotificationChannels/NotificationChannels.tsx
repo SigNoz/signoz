@@ -173,7 +173,7 @@ function NotificationChannels(): JSX.Element {
 					<Button
 						variant="solid"
 						color="primary"
-						className={styles.newChannelButton}
+						size="sm"
 						prefix={<Plus size={14} />}
 						onClick={formView.openCreate}
 						testId="channels-create"

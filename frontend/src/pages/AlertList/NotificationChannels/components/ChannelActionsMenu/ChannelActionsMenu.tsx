@@ -7,7 +7,7 @@ import {
 	Trash2,
 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
+import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { AlertmanagertypesListedNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas';
 
 import styles from './ChannelActionsMenu.module.scss';
@@ -28,31 +28,35 @@ function ChannelActionsMenu({
 	onDelete,
 	onViewJson,
 }: ChannelActionsMenuProps): JSX.Element {
-	const menuItems = useMemo(
+	const menuItems = useMemo<DropdownItemType[]>(
 		() => [
 			{
-				key: 'open',
+				type: 'item',
+				value: 'open',
 				label: 'Edit',
-				icon: <PenLine size={14} />,
+				prefix: <PenLine size={14} />,
 				onClick: (): void => onOpen(channel),
 			},
 			{
-				key: 'open-new-tab',
+				type: 'item',
+				value: 'open-new-tab',
 				label: 'Open in New Tab',
-				icon: <SquareArrowOutUpRight size={14} />,
+				prefix: <SquareArrowOutUpRight size={14} />,
 				onClick: (): void => onOpen(channel, { newTab: true }),
 			},
 			{
-				key: 'view-json',
+				type: 'item',
+				value: 'view-json',
 				label: 'View JSON',
-				icon: <Braces size={14} />,
+				prefix: <Braces size={14} />,
 				onClick: (): void => onViewJson(channel),
 			},
-			{ key: 'divider', type: 'divider' as const },
+			{ type: 'separator', value: 'before-delete' },
 			{
-				key: 'delete',
+				type: 'item',
+				value: 'delete',
 				label: 'Delete',
-				icon: <Trash2 size={14} />,
+				prefix: <Trash2 size={14} />,
 				danger: true,
 				onClick: (): void => onDelete(channel),
 			},
@@ -67,18 +71,18 @@ function ChannelActionsMenu({
 			className={styles.actions}
 			onClick={(event): void => event.stopPropagation()}
 		>
-			<DropdownMenuSimple menu={{ items: menuItems }} align="end">
+			<Dropdown items={menuItems} nativeButton align="end" side="bottom">
 				<Button
 					variant="outlined"
 					color="secondary"
-					size="icon"
-					className={styles.actionButton}
-					data-testid={`channel-actions-${channel.id}`}
+					size="sm"
+					icon
+					testId={`channel-actions-${channel.id}`}
 					aria-label={`Actions for ${channel.displayName}`}
 				>
 					<Ellipsis size={16} />
 				</Button>
-			</DropdownMenuSimple>
+			</Dropdown>
 		</div>
 	);
 }
