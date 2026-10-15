@@ -150,6 +150,107 @@ func TestProcessScalarFormula_AppliesOrderAndLimit(t *testing.T) {
 	})
 }
 
+func TestPostProcessMetricQuery_LimitRanksByReducedValue(t *testing.T) {
+	q := &querier{
+		logger: instrumentationtest.New().Logger(),
+	}
+
+	serviceKey := telemetrytypes.TelemetryFieldKey{Name: "service.name", FieldDataType: telemetrytypes.FieldDataTypeString}
+	series := func(service string, points ...float64) *qbtypes.TimeSeries {
+		values := make([]*qbtypes.TimeSeriesValue, 0, len(points))
+		for i, point := range points {
+			values = append(values, &qbtypes.TimeSeriesValue{Timestamp: int64(i) * 60000, Value: point})
+		}
+		return &qbtypes.TimeSeries{Labels: []*qbtypes.Label{{Key: serviceKey, Value: service}}, Values: values}
+	}
+	// avg: checkout 10, payment 8.8, auth 6, search 2
+	makeResult := func() *qbtypes.Result {
+		return &qbtypes.Result{Value: &qbtypes.TimeSeriesData{
+			QueryName: "A",
+			Aggregations: []*qbtypes.AggregationBucket{{Series: []*qbtypes.TimeSeries{
+				series("checkout", 10, 10, 10, 10, 10),
+				series("payment", 1, 1, 1, 1, 40),
+				series("auth", 0, 0, 0, 0, 30),
+				series("search", 2, 2, 2, 2, 2),
+			}}},
+		}}
+	}
+	orderByValue := func(direction qbtypes.OrderDirection) []qbtypes.OrderBy {
+		return []qbtypes.OrderBy{{
+			Key:       qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: qbtypes.DefaultOrderByKey}},
+			Direction: direction,
+		}}
+	}
+
+	testCases := []struct {
+		name     string
+		reduceTo qbtypes.ReduceTo
+		order    []qbtypes.OrderBy
+		expected [][]any
+	}{
+		{
+			name:     "Max_Desc_KeepsHighestPeaks",
+			reduceTo: qbtypes.ReduceToMax,
+			order:    orderByValue(qbtypes.OrderDirectionDesc),
+			expected: [][]any{{"payment", 40.0}, {"auth", 30.0}},
+		},
+		{
+			name:     "Last_Desc_KeepsHighestLastPoints",
+			reduceTo: qbtypes.ReduceToLast,
+			order:    orderByValue(qbtypes.OrderDirectionDesc),
+			expected: [][]any{{"payment", 40.0}, {"auth", 30.0}},
+		},
+		{
+			name:     "Min_Asc_KeepsLowestMinimums",
+			reduceTo: qbtypes.ReduceToMin,
+			order:    orderByValue(qbtypes.OrderDirectionAsc),
+			expected: [][]any{{"auth", 0.0}, {"payment", 1.0}},
+		},
+		{
+			name:     "Max_NoOrder_DefaultsToDesc",
+			reduceTo: qbtypes.ReduceToMax,
+			expected: [][]any{{"payment", 40.0}, {"auth", 30.0}},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			query := qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Name:         "A",
+				Aggregations: []qbtypes.MetricAggregation{{MetricName: "http_requests_total", ReduceTo: testCase.reduceTo}},
+				Order:        testCase.order,
+				Limit:        2,
+			}
+			req := &qbtypes.QueryRangeRequest{RequestType: qbtypes.RequestTypeScalar}
+
+			out := postProcessMetricQuery(q, makeResult(), query, req)
+			scalar, ok := out.Value.(*qbtypes.ScalarData)
+			require.True(t, ok, "expected *ScalarData, got %T", out.Value)
+
+			assert.Equal(t, testCase.expected, scalar.Data)
+		})
+	}
+
+	t.Run("TimeSeries_RanksByAverage", func(t *testing.T) {
+		query := qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+			Name:         "A",
+			Aggregations: []qbtypes.MetricAggregation{{MetricName: "http_requests_total"}},
+			Order:        orderByValue(qbtypes.OrderDirectionDesc),
+			Limit:        2,
+		}
+		req := &qbtypes.QueryRangeRequest{RequestType: qbtypes.RequestTypeTimeSeries}
+
+		out := postProcessMetricQuery(q, makeResult(), query, req)
+		tsData, ok := out.Value.(*qbtypes.TimeSeriesData)
+		require.True(t, ok, "expected *TimeSeriesData, got %T", out.Value)
+		require.Len(t, tsData.Aggregations, 1)
+		require.Len(t, tsData.Aggregations[0].Series, 2)
+
+		assert.Equal(t, "checkout", tsData.Aggregations[0].Series[0].Labels[0].Value)
+		assert.Equal(t, "payment", tsData.Aggregations[0].Series[1].Labels[0].Value)
+	})
+}
+
 // Multiple series with different number of labels, shouldn't panic and should align labels correctly.
 func TestConvertTimeSeriesDataToScalar_RaggedLabels(t *testing.T) {
 	label := func(name string, value any) *qbtypes.Label {
