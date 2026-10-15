@@ -9,19 +9,25 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.querier import RequestType, build_aggregation, build_traces_scalar_query, get_preview_statements, make_preview_query_request
 from fixtures.traces import ATTRIBUTE_JSON_ROLLOUT_TIME, Traces
 
+PROMOTED_PATHS = "/api/v1/promoted_paths"
+
 
 def test_traces_number_index_prunes_granules(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    promote_paths: Callable[[str, list[dict]], requests.Response],
     insert_traces: Callable[[list[Traces]], None],
     seed_attribute_evolution: Callable[[str, datetime], None],
 ) -> None:
     seed_attribute_evolution("traces", ATTRIBUTE_JSON_ROLLOUT_TIME)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    resp = promote_paths(token, [{"signal": "traces", "context": "attribute", "path": "index.number_probe", "indexes": [{"fieldDataType": "number", "type": "bloom_filter(0.01)", "granularity": 64}]}])
+    resp = requests.post(
+        signoz.self.host_configs["8080"].get(PROMOTED_PATHS),
+        json=[{"signal": "traces", "context": "attribute", "path": "index.number_probe", "indexes": [{"fieldDataType": "number", "type": "bloom_filter(0.01)", "granularity": 64}]}],
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=30,
+    )
     assert resp.status_code == HTTPStatus.CREATED, resp.text
     [(index_name,)] = signoz.telemetrystore.conn.query("SELECT name FROM system.data_skipping_indices WHERE database = 'signoz_traces' AND table = 'signoz_index_v3' AND expr LIKE 'toFloat64OrNull(%index.number_probe%'").result_rows
 
