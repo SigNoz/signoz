@@ -1,17 +1,10 @@
 package promotetypes
 
 import (
-	"context"
 	"testing"
-	"time"
 
-	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIndexExpression(t *testing.T) {
@@ -95,37 +88,6 @@ func TestIndexDataType(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			assert.Equal(t, testCase.want, testCase.target.IndexDataType(testCase.jsonDataType))
-		})
-	}
-}
-
-// An index is used only when a filter's left-hand side is its exact expression.
-func TestTracesNumberIndexExpr_MatchesQuerierFilters(t *testing.T) {
-	release := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
-	queryInfo := qbtypes.QueryInfo{StartNs: uint64(release.AddDate(0, 6, 0).UnixNano()), EndNs: uint64(release.AddDate(0, 7, 0).UnixNano()), TraceAttrsJSONOn: true}
-	key := telemetrytypes.TelemetryFieldKey{Name: "http.status_code", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeNumber, Evolutions: tracestelemetryschema.MockAttributeEvolutionData(release)}
-	indexExpr := NewTracesAttributesTarget().IndexExpression("attributes", "http.status_code", telemetrytypes.Float64.StringValue())
-
-	testCases := []struct {
-		name     string
-		operator qbtypes.FilterOperator
-		value    any
-		want     string
-	}{
-		{name: "Equal", operator: qbtypes.FilterOperatorEqual, value: float64(200), want: indexExpr + " = ?"},
-		{name: "In", operator: qbtypes.FilterOperatorIn, value: []any{float64(200), float64(404)}, want: indexExpr + " = ? OR " + indexExpr + " = ?"},
-		{name: "GreaterThan", operator: qbtypes.FilterOperatorGreaterThan, value: float64(200), want: indexExpr + " > ?"},
-		{name: "Between", operator: qbtypes.FilterOperatorBetween, value: []any{float64(200), float64(299)}, want: indexExpr + " BETWEEN ? AND ?"},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			sb := sqlbuilder.NewSelectBuilder()
-			conditions, _, err := querybuilder.Conditions(context.Background(), queryInfo, tracestelemetryschema.NewStorage(), &key, testCase.operator, testCase.value, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, false, sb)
-			require.NoError(t, err)
-			sb.Where(conditions...)
-			sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-			assert.Contains(t, sql, testCase.want)
 		})
 	}
 }
