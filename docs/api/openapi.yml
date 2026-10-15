@@ -4017,12 +4017,16 @@ components:
       type: object
     DashboardtypesGeoMapColors:
       properties:
+        fill:
+          type: string
         max:
           nullable: true
           type: number
         min:
           nullable: true
           type: number
+        mode:
+          $ref: '#/components/schemas/DashboardtypesHeatmapColorMode'
         palette:
           $ref: '#/components/schemas/DashboardtypesHeatmapPalette'
         scale:
