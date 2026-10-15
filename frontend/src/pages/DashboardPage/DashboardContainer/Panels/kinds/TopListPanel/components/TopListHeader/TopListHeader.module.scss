@@ -1,0 +1,55 @@
+// Stays on top while rows scroll under it, so it needs the panel's surface.
+.header {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	display: grid;
+	grid-column: 1 / -1;
+	grid-template-columns: subgrid;
+	align-items: center;
+	height: var(--header-height);
+	padding: 0 8px;
+	border-bottom: 1px solid var(--l1-border);
+	background: var(--l2-background);
+	font-size: 12px;
+	line-height: 16px;
+	color: var(--l3-foreground);
+	white-space: nowrap;
+}
+
+// Capped so a long value name doesn't widen its column past the values.
+.cell {
+	justify-self: end;
+	max-width: 120px;
+	overflow: hidden;
+	text-align: right;
+	text-overflow: ellipsis;
+	cursor: default;
+}
+
+// Lines up with the labels inside the bars.
+.label {
+	justify-self: start;
+	max-width: 100%;
+	min-width: 0;
+	padding: 0 8px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	cursor: default;
+}
+
+.tooltip {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	max-width: 280px;
+}
+
+.tooltipName {
+	font-weight: var(--font-weight-medium);
+	word-break: break-word;
+}
+
+.tooltipDescription {
+	color: var(--l2-foreground);
+}

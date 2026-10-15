@@ -12,6 +12,8 @@ interface TooltipFooterProps {
 	pinKey?: string;
 	isPinned: boolean;
 	canDrilldown?: boolean;
+	/** False for a tooltip that can't be pinned, which drops the pin hint. */
+	canPin?: boolean;
 	dismiss: () => void;
 }
 
@@ -20,6 +22,7 @@ export default function TooltipFooter({
 	pinKey = DEFAULT_PIN_TOOLTIP_KEY,
 	isPinned,
 	canDrilldown = true,
+	canPin = true,
 	dismiss,
 }: TooltipFooterProps): JSX.Element {
 	const handleUnpinClick = (): void => {
@@ -53,11 +56,13 @@ export default function TooltipFooter({
 								<span>Click to drilldown</span>
 							</div>
 						)}
-						<div className={Styles.hint} data-active="false">
-							<span>Press</span>
-							<Kbd>{pinKey.toUpperCase()}</Kbd>
-							<span>to pin the tooltip</span>
-						</div>
+						{canPin && (
+							<div className={Styles.hint} data-active="false">
+								<span>Press</span>
+								<Kbd>{pinKey.toUpperCase()}</Kbd>
+								<span>to pin the tooltip</span>
+							</div>
+						)}
 					</div>
 				)}
 			</div>

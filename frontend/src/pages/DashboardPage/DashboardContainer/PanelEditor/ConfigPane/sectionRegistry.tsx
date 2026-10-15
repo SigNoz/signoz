@@ -20,6 +20,7 @@ import {
 import type { SeededPluginSpec } from 'pages/DashboardPage/DashboardContainer/Panels/utils/buildPluginSpec';
 
 import type { SectionEditorContext } from './sectionContext';
+import AppearanceSection from './sections/AppearanceSection/AppearanceSection';
 import AxesSection from './sections/AxesSection/AxesSection';
 import BucketsSection from './sections/BucketsSection/BucketsSection';
 import ChartAppearanceSection from './sections/ChartAppearanceSection/ChartAppearanceSection';
@@ -117,6 +118,13 @@ export const SECTION_REGISTRY: {
 			getPluginSlice<PanelChartAppearanceSlice>(spec, 'chartAppearance'),
 		update: (spec, chartAppearance): PanelSpec =>
 			updatePluginSlice(spec, 'chartAppearance', chartAppearance),
+	},
+	[SectionKind.Appearance]: {
+		Component: AppearanceSection,
+		get: (spec): SectionSpecMap[SectionKind.Appearance] | undefined =>
+			getPluginSlice<SectionSpecMap[SectionKind.Appearance]>(spec, 'appearance'),
+		update: (spec, appearance): PanelSpec =>
+			updatePluginSlice(spec, 'appearance', appearance),
 	},
 	[SectionKind.Visualization]: {
 		Component: VisualizationSection,
