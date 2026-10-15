@@ -10,6 +10,7 @@ import (
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 func TestParseIntoRule(t *testing.T) {
@@ -1351,4 +1352,29 @@ func TestVersionDefaultsToV5(t *testing.T) {
 	require.NoError(t, json.Unmarshal([]byte(content), &rule))
 	assert.Equal(t, "v5", rule.Version)
 	assert.NoError(t, rule.Validate())
+}
+
+func TestGetAlertManagerNotificationConfigRenotify(t *testing.T) {
+	day := valuer.MustParseTextDuration("24h")
+	testCases := []struct {
+		name       string
+		renotify   *Renotify
+		wantFiring time.Duration
+		wantNoData time.Duration
+	}{
+		{"RenotifyNil", nil, noRenotifyInterval, noRenotifyInterval},
+		{"RenotifyDisabled", &Renotify{Enabled: false, ReNotifyInterval: day}, noRenotifyInterval, noRenotifyInterval},
+		{"RenotifyEnabled_NoAlertStates", &Renotify{Enabled: true, ReNotifyInterval: day}, noRenotifyInterval, noRenotifyInterval},
+		{"RenotifyEnabled_FiringOnly", &Renotify{Enabled: true, ReNotifyInterval: day, AlertStates: []AlertState{StateFiring}}, 24 * time.Hour, noRenotifyInterval},
+		{"RenotifyEnabled_NoDataOnly", &Renotify{Enabled: true, ReNotifyInterval: day, AlertStates: []AlertState{StateNoData}}, noRenotifyInterval, 24 * time.Hour},
+		{"RenotifyEnabled_FiringAndNoData", &Renotify{Enabled: true, ReNotifyInterval: day, AlertStates: []AlertState{StateFiring, StateNoData}}, 24 * time.Hour, 24 * time.Hour},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			ns := &NotificationSettings{Renotify: testCase.renotify}
+			config := ns.GetAlertManagerNotificationConfig()
+			assert.Equal(t, testCase.wantFiring, config.Renotify.RenotifyInterval)
+			assert.Equal(t, testCase.wantNoData, config.Renotify.NoDataInterval)
+		})
+	}
 }
