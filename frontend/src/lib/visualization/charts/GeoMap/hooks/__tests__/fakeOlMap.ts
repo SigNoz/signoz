@@ -30,6 +30,7 @@ export function createFakeOlMap(): FakeOlMap {
 		members: new VectorLayer({ source: new VectorSource() }),
 		bubbles: new VectorLayer({ source: new VectorSource() }),
 		hover: new VectorLayer({ source: new VectorSource() }),
+		labels: new VectorLayer({ source: new VectorSource() }),
 	} as OlLayers;
 	const target = document.createElement('div');
 	const listeners = new Map<string, Set<Listener>>();

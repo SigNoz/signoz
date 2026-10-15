@@ -4,7 +4,12 @@ import { Fill, Stroke, Style } from 'ol/style';
 
 import { GeoMapShapes } from '../geo/shapes';
 import { GeoMapDatum, GeoMapLayer } from '../types';
-import { toBubbleFeatures, toShapeFeatures } from '../utils/olFeatures';
+import {
+	toBubbleFeatures,
+	toLabelFeatures,
+	toShapeFeatures,
+} from '../utils/olFeatures';
+import { labelFits } from '../utils/olLabels';
 import { createStyleCache, OlPalette } from '../utils/olStyles';
 import { OlMapHandle } from './useOlMap';
 
@@ -20,6 +25,7 @@ interface UseOlLayersArgs {
 	radiusFor: (size: number) => number;
 	/** Adds neutral, size-only bubbles over the shaded regions. */
 	hasSizeMetric?: boolean;
+	showLabels?: boolean;
 	hoveredCode: string | null;
 }
 
@@ -34,6 +40,7 @@ export function useOlLayers({
 	sizeByCode,
 	radiusFor,
 	hasSizeMetric = false,
+	showLabels = true,
 	hoveredCode,
 }: UseOlLayersArgs): void {
 	// Cached styles bake in the palette, so a theme change starts a fresh cache.
@@ -51,7 +58,13 @@ export function useOlLayers({
 		layers.members.getSource()?.addFeatures(members);
 		layers.context.getSource()?.clear();
 		layers.context.getSource()?.addFeatures(context);
+		layers.labels.getSource()?.clear();
+		layers.labels.getSource()?.addFeatures(toLabelFeatures(shapes, members));
 	}, [handle, shapes]);
+
+	useEffect(() => {
+		handle?.layers.labels.setVisible(showLabels);
+	}, [handle, showLabels]);
 
 	useEffect(() => {
 		if (!handle || !shapes) {
@@ -87,6 +100,13 @@ export function useOlLayers({
 				return styles.neutralBubble(radius, palette);
 			}
 			return styles.bubble(fillFor(code) ?? palette.noData, radius, palette);
+		});
+		layers.labels.setStyle((feature, resolution): Style | undefined => {
+			const name = feature.get('name') as string;
+			const box = feature.get('box') as [number, number];
+			return labelFits(name, box, resolution)
+				? styles.label(name, feature.get('area') as number, palette)
+				: undefined;
 		});
 		layers.hover.setStyle(
 			new Style({

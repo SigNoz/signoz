@@ -29,6 +29,7 @@ function setup(
 	layer: GeoMapLayer = 'regions',
 	hoveredCode: string | null = null,
 	sizeMetric?: Map<string, number>,
+	showLabels = true,
 ) {
 	const fake = createFakeOlMap();
 	const shapes = getCountryShapes('europe');
@@ -43,6 +44,7 @@ function setup(
 			sizeByCode: sizeMetric ?? VALUES,
 			radiusFor: (size) => size * 2,
 			hasSizeMetric: Boolean(sizeMetric),
+			showLabels,
 			hoveredCode,
 		}),
 	);
@@ -137,6 +139,43 @@ describe('useOlLayers', () => {
 		it('draws no bubble for a location without a size', () => {
 			const { handle } = setup('regions', null, new Map());
 			expect(bubbleCodes(handle)).toStrictEqual([]);
+		});
+	});
+
+	describe('labels', () => {
+		const labelOf = (handle: ReturnType<typeof setup>['handle'], code: string) =>
+			handle.layers.labels
+				.getSource()
+				?.getFeatures()
+				.find((feature) => feature.get('code') === code) as Feature;
+		const styleAt = (
+			handle: ReturnType<typeof setup>['handle'],
+			feature: Feature,
+			resolution: number,
+		): Style | undefined =>
+			(handle.layers.labels.getStyle() as StyleFunction)(feature, resolution) as
+				| Style
+				| undefined;
+
+		it('names a shape once it is big enough on screen, and hides it before', () => {
+			const { handle } = setup();
+			const germany = labelOf(handle, 'DE');
+
+			expect(styleAt(handle, germany, 1)?.getText()?.getText()).toBe('Germany');
+			expect(styleAt(handle, germany, 1e6)).toBeUndefined();
+		});
+
+		it('gives larger shapes first claim when names collide', () => {
+			const { handle } = setup();
+			const zIndexOf = (code: string): number | undefined =>
+				styleAt(handle, labelOf(handle, code), 1)?.getZIndex();
+
+			expect(zIndexOf('FR')).toBeLessThan(zIndexOf('BE') as number);
+		});
+
+		it('hides every label when labels are off', () => {
+			const { handle } = setup('regions', null, undefined, false);
+			expect(handle.layers.labels.getVisible()).toBe(false);
 		});
 	});
 

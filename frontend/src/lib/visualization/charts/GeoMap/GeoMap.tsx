@@ -27,6 +27,7 @@ export default function GeoMap({
 	formatValue,
 	valueLabel,
 	sizeMetric,
+	showLabels = true,
 	isDarkMode,
 	onSelect,
 	renderTooltipFooter,
@@ -105,6 +106,7 @@ export default function GeoMap({
 		sizeByCode,
 		radiusFor,
 		hasSizeMetric: Boolean(sizeMetric),
+		showLabels,
 		hoveredCode: hovered?.code ?? null,
 	});
 	const zoom = useOlView(handle, view, country, data, width, height);
