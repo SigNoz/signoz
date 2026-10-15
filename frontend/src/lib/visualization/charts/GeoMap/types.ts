@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import {
+	ColorRampMode,
 	ColorRampPalette,
 	ColorRampScale,
 } from 'lib/visualization/colorRamp/types';
@@ -67,6 +68,8 @@ export interface GeoMapDatum {
 	raw: string;
 	/** The second metric, read only when the map has a `sizeMetric`. */
 	size?: number | null;
+	/** Drawn in place of the palette colour, e.g. a matched threshold's. */
+	color?: string;
 }
 
 /** One row placed by latitude and longitude, drawn on the `points` layer. */
@@ -80,6 +83,14 @@ export interface GeoMapPoint {
 	size?: number | null;
 	/** What the tooltip names it by: the group value(s), e.g. a city. */
 	label: string;
+	/** Drawn in place of the palette colour, e.g. a matched threshold's. */
+	color?: string;
+}
+
+/** A legend key for colours drawn outside the palette, e.g. a threshold. */
+export interface GeoMapColorKey {
+	label: string;
+	color: string;
 }
 
 /** A second metric drawn as bubble size, from each datum's `size`. */
@@ -89,11 +100,15 @@ export interface GeoMapSizeMetric {
 }
 
 export interface GeoMapColors {
+	/** Palette walks a multi-colour ramp; opacity fades `fill` from clear to solid. */
+	mode: ColorRampMode;
 	palette: ColorRampPalette;
 	scale: ColorRampScale;
 	steps: number;
 	min: number | null;
 	max: number | null;
+	/** Opacity mode's colour; empty uses the default fill. */
+	fill: string;
 }
 
 export interface GeoMapSelection {
@@ -124,6 +139,8 @@ export interface GeoMapProps {
 	sizeMetric?: GeoMapSizeMetric;
 	/** Shape names, each shown once it fits inside its shape. Defaults to on. */
 	showLabels?: boolean;
+	/** Keys for the data's own `color`s, listed after the colour bar. */
+	colorKeys?: GeoMapColorKey[];
 	isDarkMode: boolean;
 	/** Hides the tooltip; the caller opens its drilldown menu from this. */
 	onSelect?: (selection: GeoMapSelection) => void;

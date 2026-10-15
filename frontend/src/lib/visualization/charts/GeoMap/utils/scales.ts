@@ -3,7 +3,6 @@ import {
 	createColorRampResolver,
 	resolveColorDomain,
 } from 'lib/visualization/colorRamp/colorScale';
-import { ColorRampMode } from 'lib/visualization/colorRamp/types';
 
 import { GeoMapColors, GeoMapDatum, GeoMapPoint } from '../types';
 
@@ -18,6 +17,7 @@ export function pointAsDatum(point: GeoMapPoint): GeoMapDatum {
 		value: point.value,
 		size: point.size,
 		raw: point.label,
+		color: point.color,
 	};
 }
 
@@ -78,15 +78,7 @@ export function createGeoMapColorResolver(
 	colors: GeoMapColors,
 	isDarkMode: boolean,
 ): ColorRampResolver {
-	const options = {
-		mode: ColorRampMode.Palette,
-		palette: colors.palette,
-		scale: colors.scale,
-		steps: colors.steps,
-		min: colors.min,
-		max: colors.max,
-		fill: '',
-	};
+	const options = { ...colors };
 	return createColorRampResolver({
 		options,
 		domain: resolveColorDomain(options, [data.map((datum) => datum.value)]),

@@ -54,7 +54,10 @@ export function useGeoMapScales(
 	const fillFor = useCallback(
 		(code: string): string | null => {
 			const datum = valueByCode.get(code);
-			return datum ? resolver.colorFor(datum.value) : null;
+			if (!datum) {
+				return null;
+			}
+			return datum.color ?? resolver.colorFor(datum.value);
 		},
 		[valueByCode, resolver],
 	);

@@ -32,6 +32,7 @@ export default function GeoMap({
 	valueLabel,
 	sizeMetric,
 	showLabels = true,
+	colorKeys,
 	isDarkMode,
 	onSelect,
 	renderTooltipFooter,
@@ -196,7 +197,7 @@ export default function GeoMap({
 							place={
 								hoveredPoint && formatCoordinates(hoveredPoint.lat, hoveredPoint.lon)
 							}
-							color={resolver.colorFor(hovered.value)}
+							color={fillFor(hovered.code) ?? resolver.colorFor(hovered.value)}
 							rank={ranks.get(hovered.code)}
 							total={scaleData.length}
 							formatValue={formatValue}
@@ -213,6 +214,7 @@ export default function GeoMap({
 				formatValue={formatValue}
 				markerValue={hovered?.value ?? null}
 				valueLabel={valueLabel}
+				colorKeys={colorKeys}
 				size={
 					sizeMetric && {
 						label: sizeMetric.label,
