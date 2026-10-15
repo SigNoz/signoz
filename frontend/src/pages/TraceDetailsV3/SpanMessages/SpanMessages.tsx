@@ -39,7 +39,9 @@ function SpanMessages({
 	if (!isFormatted) {
 		return (
 			<div className={cx(styles.root, className)} data-testid="span-messages-json">
-				<JsonBlock data={{ input: data.rawInput, output: data.rawOutput }} />
+				<JsonBlock
+					data={{ input: data.rawInput ?? [], output: data.rawOutput ?? [] }}
+				/>
 			</div>
 		);
 	}

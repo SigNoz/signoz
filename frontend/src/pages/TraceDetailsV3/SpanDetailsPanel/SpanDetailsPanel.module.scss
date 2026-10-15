@@ -34,6 +34,15 @@
 	min-width: 0;
 }
 
+// Inside the Overview tab there's no flex gap, so match .panelBody's 16px.
+.tabAiMessages {
+	margin-bottom: 16px;
+
+	&:empty {
+		display: none;
+	}
+}
+
 // Logs-tab footer. Sibling of the scrolling .panelBody inside .panel, so it's
 // a true fixed footer flush with the panel's bottom edge — always visible
 // regardless of how the body is scrolled.

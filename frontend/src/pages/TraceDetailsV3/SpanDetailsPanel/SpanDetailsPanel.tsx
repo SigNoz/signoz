@@ -286,13 +286,14 @@ function SpanDetailsContent({
 			traceEndTime={traceEndTime}
 		/>
 	);
+	const aiMessages = <SpanAIMessages span={selectedSpan} />;
 	const eventsCount = selectedSpan.events?.length || 0;
 
 	return (
 		<>
 			<div className={styles.panelBody} ref={bodyRef}>
 				{!isWide && <div className={styles.detailsSection}>{summary}</div>}
-				<SpanAIMessages span={selectedSpan} />
+				{!isWide && aiMessages}
 
 				<div className={styles.tabsSection}>
 					{/* Step 9: ContentTabs */}
@@ -322,6 +323,7 @@ function SpanDetailsContent({
 						<div className={styles.tabsScroll}>
 							<TabsContent value="overview">
 								{isWide && summary}
+								{isWide && <div className={styles.tabAiMessages}>{aiMessages}</div>}
 								<DataViewer
 									data={spanDisplayData}
 									drawerKey="trace-details"
