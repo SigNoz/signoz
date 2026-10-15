@@ -24,14 +24,22 @@ def test_thread_returns_gen_ai_spans_in_order(
     root_id, first_llm_id, tool_id, agent_id, second_llm_id, third_llm_id = (TraceIdGenerator.span_id() for _ in range(6))
     resources = {"service.name": "tracedetail-thread"}
     first_input = json.dumps([{"role": "user", "parts": [{"type": "text", "content": "weather in Bangalore?"}]}])
-    first_output = json.dumps([{"role": "assistant", "parts": [{"type": "tool_call", "id": "call_1", "name": "get_weather", "arguments": {"city": "Bangalore"}}], "finish_reason": "tool_call"}])
+    first_output = json.dumps([{"role": "assistant", "parts": [{"type": "tool_call", "id": "call_1", "name": "get_weather", "arguments": {"city": "Bangalore"}}]}])
+    first_instructions = json.dumps([{"type": "text", "content": "Answer with the tool."}])
     second_input = json.dumps([{"role": "tool", "content": "sunny", "tool_call_id": "call_1"}])
 
     insert_traces(
         [
             Traces(timestamp=now - timedelta(seconds=10), duration=timedelta(seconds=9), trace_id=trace_id, span_id=root_id, name="POST /chat", kind=TracesKind.SPAN_KIND_SERVER, resources=resources, attribute_write_mode="json_only"),
             Traces(
-                timestamp=now - timedelta(seconds=8), trace_id=trace_id, span_id=first_llm_id, parent_span_id=root_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.input.messages": first_input, "gen_ai.output.messages": first_output}, attribute_write_mode="json_only"
+                timestamp=now - timedelta(seconds=8),
+                trace_id=trace_id,
+                span_id=first_llm_id,
+                parent_span_id=root_id,
+                name="chat gpt-4o",
+                resources=resources,
+                attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.system_instructions": first_instructions, "gen_ai.input.messages": first_input, "gen_ai.output.messages": first_output, "gen_ai.response.finish_reasons": json.dumps(["tool_calls"])},
+                attribute_write_mode="json_only",
             ),
             Traces(
                 timestamp=now - timedelta(seconds=6),
@@ -73,7 +81,7 @@ def test_thread_returns_gen_ai_spans_in_order(
     assert output_only["attributes"]["gen_ai.output.messages"] == "It is sunny in Bangalore."
 
     tool_call = {"type": "tool_call", "name": "get_weather", "id": "call_1", "arguments": {"city": "Bangalore"}}
-    assert first["formattedInput"] == [{"role": "user", "parts": [{"type": "text", "content": "weather in Bangalore?"}]}]
+    assert first["formattedInput"] == [{"role": "system", "parts": [{"type": "text", "content": "Answer with the tool."}]}, {"role": "user", "parts": [{"type": "text", "content": "weather in Bangalore?"}]}]
     assert first["formattedOutput"] == [{"role": "assistant", "parts": [tool_call], "finish_reason": "tool_call"}]
     assert first["formatterWarnings"] == []
     assert tool["formattedInput"] == [{"role": "assistant", "parts": [tool_call]}]

@@ -18,9 +18,13 @@ const (
 
 var dataURL = regexp.MustCompile(`^data:([^;,]+);base64,(.+)$`)
 
-// Provider spellings of the finish reasons; the enum values themselves pass through.
+// Provider spellings of the finish reasons; the enum values themselves pass through. tool_calls and
+// function_call are OpenAI's, end_turn, stop_sequence and max_tokens Anthropic's, tool-calls the Vercel AI SDK's:
+// https://github.com/openai/openai-openapi/blob/aeb6a041dc56c011ca9f12127ec898f911100aa0/openapi.yaml#L44782
+// https://platform.claude.com/docs/en/api/messages
+// https://github.com/vercel/ai/blob/a5e92fe3c692f8e152fe1eb9ef50a4e734ad0ffb/packages/provider/src/language-model/v2/language-model-v2-finish-reason.ts
 var finishReasonAliases = map[string]FinishReason{
-	"tool_calls": FinishReasonToolCall, "function_call": FinishReasonToolCall,
+	"tool_calls": FinishReasonToolCall, "function_call": FinishReasonToolCall, "tool-calls": FinishReasonToolCall,
 	"end_turn": FinishReasonStop, "stop_sequence": FinishReasonStop,
 	"max_tokens": FinishReasonLength,
 }
@@ -36,7 +40,8 @@ type FormattedMessages struct {
 // FormatMessages builds the OTel GenAI view of a span's messages from the formats SDKs write. attributes
 // is the span's JSON attribute document, nested by key segment, so an object value is whole. Each
 // message value is a JSON string or a structured value. A tool call and its result take precedence over
-// messages beside them.
+// messages beside them. gen_ai.system_instructions leads the input and gen_ai.response.finish_reasons
+// overrides the finish reasons the converter found, whichever converter ran.
 func FormatMessages(attributes map[string]any) FormattedMessages {
 	f := &formatting{attributes: attributes, out: FormattedMessages{Input: InputMessages{}, Output: OutputMessages{}, Warnings: []string{}}}
 	switch {
@@ -45,6 +50,8 @@ func FormatMessages(attributes map[string]any) FormattedMessages {
 	case attribute(f.attributes, GenAIInputMessages) != nil || attribute(f.attributes, GenAIOutputMessages) != nil:
 		f.messages()
 	}
+	f.prependSystemInstructions()
+	f.fillFinishReasons()
 	return f.out
 }
 
@@ -72,6 +79,45 @@ func (f *formatting) messages() {
 	}
 	if inputLabel != "" && outputLabel != "" && outputLabel != inputLabel {
 		f.warn("output formatted as %s, input as %s", outputLabel, inputLabel)
+	}
+}
+
+// prependSystemInstructions adds gen_ai.system_instructions, a list of parts, as a leading system message,
+// unless the input already starts with a system message of the same text: the OpenInference strands
+// processor keeps the attribute and inserts it as message 0 as well. A span without messages, such as
+// create_agent, stays without them.
+// https://github.com/open-telemetry/semantic-conventions-genai/blob/06ec68e722c45a7218e23ea1bc1339fe4e21ecae/model/gen-ai/gen-ai-system-instructions.json
+// https://github.com/Arize-ai/openinference/blob/12f2cc035edfb00b60b656d977f07abfb7a69900/python/instrumentation/openinference-instrumentation-strands-agents/src/openinference/instrumentation/strands_agents/processor.py#L152
+// https://github.com/Arize-ai/openinference/blob/12f2cc035edfb00b60b656d977f07abfb7a69900/python/instrumentation/openinference-instrumentation-strands-agents/src/openinference/instrumentation/strands_agents/processor.py#L293
+func (f *formatting) prependSystemInstructions() {
+	raw := attribute(f.attributes, GenAISystemInstructions)
+	if raw == nil || (len(f.out.Input) == 0 && len(f.out.Output) == 0) {
+		return
+	}
+	parts := systemParts(decode(raw))
+	if len(parts) == 0 || (len(f.out.Input) > 0 && f.out.Input[0].Role == RoleSystem && textOf(f.out.Input[0].Parts) == textOf(parts)) {
+		return
+	}
+	f.out.Input = append(InputMessages{{Role: RoleSystem, Parts: parts}}, f.out.Input...)
+}
+
+// fillFinishReasons applies gen_ai.response.finish_reasons, one entry per output message, over
+// whatever the converter found in the payload.
+// https://github.com/open-telemetry/semantic-conventions-genai/blob/06ec68e722c45a7218e23ea1bc1339fe4e21ecae/model/gen-ai/registry.yaml#L210
+func (f *formatting) fillFinishReasons() {
+	raw := attribute(f.attributes, GenAIResponseFinishReasons)
+	if raw == nil || len(f.out.Output) == 0 {
+		return
+	}
+	reasons := stringList(decode(raw))
+	if len(reasons) != len(f.out.Output) {
+		f.warn("gen_ai.response.finish_reasons has %d entries for %d output messages", len(reasons), len(f.out.Output))
+		return
+	}
+	for i, reason := range reasons {
+		if fr := finishReason(reason); fr != nil {
+			f.out.Output[i].FinishReason = fr
+		}
 	}
 }
 
@@ -179,6 +225,23 @@ func finishReason(value string) *FinishReason {
 	return &fr
 }
 
+// stringList reads a list of strings, or a bare string as a list of one.
+func stringList(value any) []string {
+	switch v := value.(type) {
+	case []any:
+		out := make([]string, 0, len(v))
+		for _, item := range v {
+			out = append(out, stringOf(item))
+		}
+		return out
+	case string:
+		if v != "" {
+			return []string{v}
+		}
+	}
+	return nil
+}
+
 func optionalString(value any) *string {
 	s := stringOf(value)
 	if s == "" {
@@ -195,8 +258,37 @@ func textPart(content string) TextPart {
 	return TextPart{Type: PartTypeText, Content: content}
 }
 
-// contentPart converts one OpenAI content block, which semconv parts may also carry; a block of
-// any other type is kept as sent.
+// textOf joins the text parts, for comparing a system message with gen_ai.system_instructions.
+func textOf(parts Parts) string {
+	var texts []string
+	for _, p := range parts {
+		if t, ok := p.Value.(TextPart); ok {
+			texts = append(texts, t.Content)
+		}
+	}
+	return strings.Join(texts, "\n")
+}
+
+// systemParts reads a system prompt given outside the history, a list of parts or a bare string.
+func systemParts(value any) Parts {
+	switch v := value.(type) {
+	case []any:
+		parts := make(Parts, 0, len(v))
+		for _, item := range v {
+			parts = append(parts, contentPart(item))
+		}
+		return parts
+	case string:
+		if v != "" {
+			return Parts{part(textPart(v))}
+		}
+	}
+	return nil
+}
+
+// contentPart converts one OpenAI content block, which semconv parts may also carry; a text part
+// in the semconv spelling has content where OpenAI has text. A block of any other type is kept
+// as sent.
 func contentPart(item any) Part {
 	p, ok := item.(map[string]any)
 	if !ok {
@@ -207,6 +299,9 @@ func contentPart(item any) Part {
 	}
 	switch stringOf(p["type"]) {
 	case "text":
+		if p["text"] == nil {
+			return part(textPart(stringOf(p["content"])))
+		}
 		return part(textPart(stringOf(p["text"])))
 	case "refusal":
 		return part(textPart(stringOf(p["refusal"])))
