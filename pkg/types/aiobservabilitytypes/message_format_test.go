@@ -113,6 +113,16 @@ So, the ball costs 5 cents.`,
 			wantOutput: `[]`,
 		},
 		{
+			// openinference capture, CreateEmbeddings span: the mapper moved the request and the vectors onto
+			// the message attributes and copied the span kind onto gen_ai.operation.name
+			name:       "EmbeddingsOperation_EmptyLists",
+			input:      `{"input": ["observability is the new monitoring"], "model": "text-embedding-3-small"}`,
+			output:     `{"data":[{"embedding":[-0.0039,0.0203],"index":0}],"model":"text-embedding-3-small"}`,
+			attributes: map[string]any{GenAIOperationName: "EMBEDDING", GenAIRequestModel: "text-embedding-3-small"},
+			wantInput:  `[]`,
+			wantOutput: `[]`,
+		},
+		{
 			name:       "NoMessageAttributes_EmptyLists",
 			attributes: map[string]any{GenAIRequestModel: "gpt-4o", GenAIToolName: "get_weather"},
 			wantInput:  `[]`,
