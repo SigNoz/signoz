@@ -179,7 +179,7 @@ func newThreadSpan(traceID string, storable *StorableSpan) *ThreadSpan {
 	timeUnixNano := uint64(storable.StartTime.UnixNano())
 	attributes := threadAttributes(storable)
 	// Pre-rollout spans have an empty JSON document and format to nothing.
-	formatted := aiobservabilitytypes.FormatMessages(storable.AttributesJSON.ValuesByPath())
+	formatted := aiobservabilitytypes.FormatMessages(FlatJSONAttributes(storable.AttributesJSON))
 	return &ThreadSpan{
 		SpanID:            storable.SpanID,
 		TraceID:           traceID,
@@ -205,7 +205,7 @@ func newThreadSpan(traceID string, storable *StorableSpan) *ThreadSpan {
 // threadAttributes returns the span's flat dotted attributes, as the querier does for list
 // responses, and falls back to the legacy maps for spans written before the JSON rollout.
 func threadAttributes(storable *StorableSpan) map[string]any {
-	attributes := storable.AttributesJSON.ValuesByPath()
+	attributes := FlatJSONAttributes(storable.AttributesJSON)
 	if len(attributes) == 0 {
 		return storable.Attributes()
 	}

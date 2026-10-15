@@ -301,6 +301,23 @@ func (item *StorableSpan) Attributes() map[string]any {
 	return attributes
 }
 
+// FlatJSONAttributes returns the JSON attributes column keyed by full dotted path, dropping the null
+// paths ClickHouse materializes for a row from its data part's path schema.
+func FlatJSONAttributes(attributes chcol.JSON) map[string]any {
+	paths := attributes.ValuesByPath()
+	out := make(map[string]any, len(paths))
+	for path, value := range paths {
+		if value == nil {
+			continue
+		}
+		if variant, ok := value.(chcol.Variant); ok && variant.Nil() {
+			continue
+		}
+		out[path] = value
+	}
+	return out
+}
+
 func (item *StorableSpan) UnmarshalledEvents() []Event {
 	events := make([]Event, 0, len(item.Events))
 	for _, eventStr := range item.Events {
@@ -325,7 +342,7 @@ func (item *StorableSpan) ToWaterfallSpan(traceID string) *WaterfallSpan {
 	resources := make(map[string]string)
 	maps.Copy(resources, item.ResourcesString)
 
-	formatted := aiobservabilitytypes.FormatMessages(item.AttributesJSON.ValuesByPath())
+	formatted := aiobservabilitytypes.FormatMessages(FlatJSONAttributes(item.AttributesJSON))
 	return &WaterfallSpan{
 		Attributes:         item.Attributes(),
 		DBName:             item.DBName,

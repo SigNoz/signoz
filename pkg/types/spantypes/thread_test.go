@@ -76,6 +76,22 @@ func TestThreadAttributes(t *testing.T) {
 				"gen_ai.stream":             true,
 			},
 		},
+		{
+			// ClickHouse materializes a row's absent paths as null from the part's path schema.
+			name: "JSONColumn_DropsNullPaths",
+			span: StorableSpan{
+				AttributesJSON: jsonAttrs(map[string]any{"gen_ai.request.model": "gpt-4o", "gen_ai.output.messages": chcol.Variant{}}),
+			},
+			wantAttrs: map[string]any{"gen_ai.request.model": "gpt-4o"},
+		},
+		{
+			name: "JSONColumn_OnlyNullPaths_FallsBackToLegacyMaps",
+			span: StorableSpan{
+				AttributesJSON:   jsonAttrs(map[string]any{"gen_ai.output.messages": chcol.Variant{}}),
+				AttributesString: map[string]string{"gen_ai.input.messages": "legacy"},
+			},
+			wantAttrs: map[string]any{"gen_ai.input.messages": "legacy"},
+		},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {

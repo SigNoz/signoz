@@ -48,7 +48,7 @@ func unwrapVariant(name string, val any) any {
 		return v.Any()
 	case chcol.JSON:
 		if name == "attributes" {
-			return v.ValuesByPath()
+			return spantypes.FlatJSONAttributes(v)
 		}
 		return v.NestedMap()
 	}

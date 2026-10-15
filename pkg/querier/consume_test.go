@@ -83,6 +83,10 @@ func TestUnwrapVariant(t *testing.T) {
 	j.SetValueAtPath("level", "error")
 	j.SetValueAtPath("attrs.code", int64(500))
 
+	jNull := chcol.NewJSON()
+	jNull.SetValueAtPath("level", "error")
+	jNull.SetValueAtPath("absent", chcol.Variant{})
+
 	testCases := []struct {
 		name   string
 		column string
@@ -94,6 +98,7 @@ func TestUnwrapVariant(t *testing.T) {
 		{name: "PlainValuePassthrough", column: "", input: uint64(3), want: uint64(3)},
 		{name: "JSONColumnNested", column: "body_v2", input: *j, want: map[string]any{"level": "error", "attrs": map[string]any{"code": int64(500)}}},
 		{name: "AttributesColumnFlat", column: "attributes", input: *j, want: map[string]any{"level": "error", "attrs.code": int64(500)}},
+		{name: "AttributesColumnDropsNullPaths", column: "attributes", input: *jNull, want: map[string]any{"level": "error"}},
 	}
 
 	for _, testCase := range testCases {
