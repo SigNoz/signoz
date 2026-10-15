@@ -1,8 +1,8 @@
-import { Redirect } from 'react-router-dom';
 import { Skeleton } from 'antd';
 import ROUTES from 'constants/routes';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { matchRoute } from 'lib/router/matchRoute';
+import { Redirect } from 'lib/router/Redirect';
 import { withAuthZPage } from 'lib/authz/components/withAuthZ/withAuthZPage';
 import {
 	buildNotificationChannelReadPermission,

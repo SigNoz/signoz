@@ -57,7 +57,7 @@ function TraceDetailsHeader({
 	onFilteredSpansChange,
 	showTraceDetailsHeaderOptions,
 }: TraceDetailsHeaderProps): JSX.Element {
-	const { id: traceID } = useAppParams<'id'>();
+	const { id: traceID = '' } = useAppParams<'id'>();
 	const [showTraceDetails, setShowTraceDetails] = useState(true);
 	const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 	const [isPreviewFieldsOpen, setIsPreviewFieldsOpen] = useState(false);
