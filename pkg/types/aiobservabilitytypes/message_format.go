@@ -14,6 +14,7 @@ import (
 const (
 	FormatterSemconv         = "semconv"
 	FormatterOpenInference   = "openinference"
+	FormatterLangChain       = "langchain"
 	FormatterOpenAIChat      = "openai.chat"
 	FormatterOpenAIResponses = "openai.responses"
 	FormatterText            = "text"
@@ -151,6 +152,8 @@ func (f *formatting) side(value any, role Role) (OutputMessages, string) {
 		}
 	case map[string]any:
 		switch {
+		case isLangChainRun(v):
+			return f.langChainRun(v), FormatterLangChain
 		case isResponsesResponse(v):
 			return f.responsesResponse(v), FormatterOpenAIResponses
 		case isResponsesRequest(v):
