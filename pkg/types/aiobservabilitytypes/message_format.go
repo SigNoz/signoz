@@ -4,27 +4,31 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 const (
-	FormatterSemconv    = "semconv"
-	FormatterOpenAIChat = "openai.chat"
-	FormatterText       = "text"
-	FormatterGeneric    = "generic"
+	FormatterSemconv       = "semconv"
+	FormatterOpenInference = "openinference"
+	FormatterOpenAIChat    = "openai.chat"
+	FormatterText          = "text"
+	FormatterGeneric       = "generic"
 )
 
 var dataURL = regexp.MustCompile(`^data:([^;,]+);base64,(.+)$`)
 
 // Provider spellings of the finish reasons; the enum values themselves pass through. tool_calls and
-// function_call are OpenAI's, end_turn, stop_sequence and max_tokens Anthropic's, tool-calls the Vercel AI SDK's:
+// function_call are OpenAI's, end_turn, stop_sequence, max_tokens and tool_use Anthropic's, tool-calls the
+// Vercel AI SDK's:
 // https://github.com/openai/openai-openapi/blob/aeb6a041dc56c011ca9f12127ec898f911100aa0/openapi.yaml#L44782
 // https://platform.claude.com/docs/en/api/messages
 // https://github.com/vercel/ai/blob/a5e92fe3c692f8e152fe1eb9ef50a4e734ad0ffb/packages/provider/src/language-model/v2/language-model-v2-finish-reason.ts
 var finishReasonAliases = map[string]FinishReason{
-	"tool_calls": FinishReasonToolCall, "function_call": FinishReasonToolCall, "tool-calls": FinishReasonToolCall,
+	"tool_calls": FinishReasonToolCall, "function_call": FinishReasonToolCall, "tool-calls": FinishReasonToolCall, "tool_use": FinishReasonToolCall,
 	"end_turn": FinishReasonStop, "stop_sequence": FinishReasonStop,
 	"max_tokens": FinishReasonLength,
 }
@@ -39,12 +43,14 @@ type FormattedMessages struct {
 
 // FormatMessages builds the OTel GenAI view of a span's messages from the formats SDKs write. attributes
 // is the span's JSON attribute document, nested by key segment, so an object value is whole. Each
-// message value is a JSON string or a structured value. A tool call and its result take precedence over
-// messages beside them. gen_ai.system_instructions leads the input and gen_ai.response.finish_reasons
-// overrides the finish reasons the converter found, whichever converter ran.
+// message value is a JSON string or a structured value. OpenInference's flattened messages come first,
+// then a tool call and its result, then the message attributes. gen_ai.system_instructions leads the
+// input and gen_ai.response.finish_reasons overrides the finish reasons the converter found, whichever
+// converter ran.
 func FormatMessages(attributes map[string]any) FormattedMessages {
 	f := &formatting{attributes: attributes, out: FormattedMessages{Input: InputMessages{}, Output: OutputMessages{}, Warnings: []string{}}}
 	switch {
+	case f.openInference():
 	case attribute(f.attributes, GenAIToolCallArguments) != nil || attribute(f.attributes, GenAIToolCallResult) != nil:
 		f.tool()
 	case attribute(f.attributes, GenAIInputMessages) != nil || attribute(f.attributes, GenAIOutputMessages) != nil:
@@ -70,13 +76,15 @@ func (f *formatting) messages() {
 	if input := attribute(f.attributes, GenAIInputMessages); input != nil {
 		var msgs OutputMessages
 		msgs, inputLabel = f.side(decode(input), RoleUser)
-		for _, m := range msgs {
-			f.out.Input = append(f.out.Input, ChatMessage{Role: m.Role, Parts: m.Parts, Name: m.Name})
-		}
+		f.out.Input = inputMessages(msgs)
 	}
 	if output := attribute(f.attributes, GenAIOutputMessages); output != nil {
 		f.out.Output, outputLabel = f.side(decode(output), RoleAssistant)
 	}
+	f.warnMixedFormats(inputLabel, outputLabel)
+}
+
+func (f *formatting) warnMixedFormats(inputLabel, outputLabel string) {
 	if inputLabel != "" && outputLabel != "" && outputLabel != inputLabel {
 		f.warn("output formatted as %s, input as %s", outputLabel, inputLabel)
 	}
@@ -167,6 +175,38 @@ func attribute(doc map[string]any, key string) any {
 	return current
 }
 
+// indexed reads a flattened list, "<key>.<N>.*" keys stored as an object keyed by N, in numeric order.
+// A list value is returned as is.
+func indexed(doc map[string]any, key string) []map[string]any {
+	var items []any
+	switch v := attribute(doc, key).(type) {
+	case []any:
+		items = v
+	case map[string]any:
+		indexes := make([]int, 0, len(v))
+		byIndex := make(map[int]any, len(v))
+		for k, item := range v {
+			n, err := strconv.Atoi(k)
+			if err != nil {
+				continue
+			}
+			indexes = append(indexes, n)
+			byIndex[n] = item
+		}
+		sort.Ints(indexes)
+		for _, n := range indexes {
+			items = append(items, byIndex[n])
+		}
+	}
+	out := make([]map[string]any, 0, len(items))
+	for _, item := range items {
+		if m, ok := item.(map[string]any); ok {
+			out = append(out, m)
+		}
+	}
+	return out
+}
+
 func firstObject(list []any) (map[string]any, bool) {
 	if len(list) == 0 {
 		return nil, false
@@ -177,6 +217,31 @@ func firstObject(list []any) (map[string]any, bool) {
 
 func genericMessage(value any) OutputMessage {
 	return OutputMessage{Parts: Parts{part(GenericPart{"type": FormatterGeneric, "content": stringOf(value)})}}
+}
+
+func inputMessages(msgs OutputMessages) InputMessages {
+	out := make(InputMessages, 0, len(msgs))
+	for _, m := range msgs {
+		out = append(out, ChatMessage{Role: m.Role, Parts: m.Parts, Name: m.Name})
+	}
+	return out
+}
+
+// foldAssistant merges runs of assistant messages into one and drops messages without parts, for
+// SDKs that write one message per output item.
+func foldAssistant(msgs OutputMessages) OutputMessages {
+	out := make(OutputMessages, 0, len(msgs))
+	for _, msg := range msgs {
+		if len(out) > 0 && msg.Role == RoleAssistant && out[len(out)-1].Role == RoleAssistant {
+			out[len(out)-1].Parts = append(out[len(out)-1].Parts, msg.Parts...)
+			continue
+		}
+		if len(msg.Parts) == 0 {
+			continue
+		}
+		out = append(out, msg)
+	}
+	return out
 }
 
 // decode parses a JSON-encoded attribute value, twice when an SDK encoded the string again.
