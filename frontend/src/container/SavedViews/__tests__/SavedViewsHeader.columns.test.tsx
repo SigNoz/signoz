@@ -41,15 +41,25 @@ function Harness(): JSX.Element {
 				{columns.map((column) => column.name).join(',')}
 			</span>
 			<Button
-				data-testid="add-column"
+				size="md"
+				variant="solid"
+				color="primary"
+				testId="add-column"
 				onClick={(): void =>
 					traces.updateColumns([...columns, { name: `extra-${columns.length}` }])
 				}
-			/>
+			>
+				Add column
+			</Button>
 			<Button
-				data-testid="remount-header"
+				size="md"
+				variant="solid"
+				color="primary"
+				testId="remount-header"
 				onClick={(): void => setHeaderKey((key) => key + 1)}
-			/>
+			>
+				Remount header
+			</Button>
 		</>
 	);
 }

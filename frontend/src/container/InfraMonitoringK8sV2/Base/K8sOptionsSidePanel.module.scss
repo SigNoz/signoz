@@ -26,16 +26,9 @@
 
 .fontSizeContainer {
 	display: flex;
-	flex-direction: column;
-	padding: var(--spacing-4) 0;
-}
-
-.fontSizeOption {
-	width: 100%;
-	--button-display: flex;
-	--button-justify-content: space-between;
-	--button-align-items: center;
-	--button-padding: var(--spacing-4) var(--spacing-8);
+	flex-direction: row;
+	padding: var(--spacing-4);
+	gap: var(--spacing-4);
 }
 
 .fontSizeLabel {
@@ -85,10 +78,6 @@
 	align-items: center;
 	justify-content: space-between;
 	padding: var(--spacing-2) var(--spacing-8);
-
-	> span {
-		width: auto !important;
-	}
 
 	&:first-child {
 		padding-top: var(--spacing-8);

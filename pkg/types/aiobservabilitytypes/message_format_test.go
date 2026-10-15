@@ -2,6 +2,8 @@ package aiobservabilitytypes
 
 import (
 	"encoding/json"
+	"maps"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,7 +14,7 @@ type formatCase struct {
 	name       string
 	input      any
 	output     any
-	formatter  string
+	attributes map[string]any // flat dotted keys beside the two message attributes
 	warnings   []string
 	wantInput  string
 	wantOutput string
@@ -22,8 +24,9 @@ func runFormatCases(t *testing.T, testCases []formatCase) {
 	t.Helper()
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			formatted := FormatMessages(testCase.input, testCase.output)
-			assert.Equal(t, testCase.formatter, formatted.Formatter)
+			attributes := map[string]any{GenAIInputMessages: testCase.input, GenAIOutputMessages: testCase.output}
+			maps.Copy(attributes, testCase.attributes)
+			formatted := FormatMessages(document(attributes))
 			assert.Equal(t, append([]string{}, testCase.warnings...), formatted.Warnings)
 
 			input, err := json.Marshal(formatted.Input)
@@ -34,6 +37,25 @@ func runFormatCases(t *testing.T, testCases []formatCase) {
 			assert.JSONEq(t, testCase.wantOutput, string(output))
 		})
 	}
+}
+
+// document nests flat dotted keys the way the JSON column stores them.
+func document(flat map[string]any) map[string]any {
+	doc := map[string]any{}
+	for key, value := range flat {
+		segments := strings.Split(key, ".")
+		current := doc
+		for _, segment := range segments[:len(segments)-1] {
+			child, ok := current[segment].(map[string]any)
+			if !ok {
+				child = map[string]any{}
+				current[segment] = child
+			}
+			current = child
+		}
+		current[segments[len(segments)-1]] = value
+	}
+	return doc
 }
 
 func TestFormat(t *testing.T) {
@@ -59,8 +81,7 @@ Divide by 2:
   x = 0.05
 
 So, the ball costs 5 cents.`,
-			formatter: FormatterText,
-			warnings:  []string{"bare user text, role assumed", "bare assistant text, role assumed"},
+			warnings: []string{"bare user text, role assumed", "bare assistant text, role assumed"},
 			wantInput: `[
 			  {
 			    "role": "user",
@@ -87,13 +108,13 @@ So, the ball costs 5 cents.`,
 		{
 			name:       "UnrecognisedObject_GenericPart_Warns",
 			input:      `{"city": "Paris", "temp_c": 21}`,
-			formatter:  FormatterGeneric,
 			warnings:   []string{"message format not recognised, kept as generic"},
 			wantInput:  `[{"role": "", "parts": [{"type": "generic", "content": "{\"city\":\"Paris\",\"temp_c\":21}"}]}]`,
 			wantOutput: `[]`,
 		},
 		{
-			name:       "NoAttributes_EmptyListsNoFormatter",
+			name:       "NoMessageAttributes_EmptyLists",
+			attributes: map[string]any{GenAIRequestModel: "gpt-4o", GenAIToolName: "get_weather"},
 			wantInput:  `[]`,
 			wantOutput: `[]`,
 		},

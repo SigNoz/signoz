@@ -1,4 +1,4 @@
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
 
 import type { PanelTypeItem } from './panelTypeCatalog';
@@ -45,7 +45,7 @@ function PanelTypeTile({
 	);
 
 	return disabledReason ? (
-		<TooltipSimple title={disabledReason}>{tile}</TooltipSimple>
+		<Tooltip title={disabledReason}>{tile}</Tooltip>
 	) : (
 		tile
 	);

@@ -17,9 +17,9 @@
 	gap: 6px;
 	min-width: 150px;
 	padding: 12px 16px;
-	border: 1px solid var(--bg-slate-400, #1d212d);
+	border: 1px solid var(--l1-border);
 	border-radius: 6px;
-	background: var(--bg-ink-400, #121317);
+	background: var(--l2-background);
 }
 
 .statCardHighlighted {
@@ -40,7 +40,7 @@
 
 .statCardInfo {
 	flex-shrink: 0;
-	color: var(--bg-vanilla-400, #c0c1c3);
+	color: var(--l2-foreground);
 	line-height: 1;
 	cursor: help;
 }

@@ -26,6 +26,7 @@ import {
 	v2SaveTooltip,
 	v2TestButton,
 } from '../../../helpers/alert-forms/v2';
+import { BASE_PATH } from '../../../helpers/base-path';
 
 // CV2-* — the v2 create builder.
 //
@@ -446,7 +447,7 @@ test.describe('Alert create — v2 builder', () => {
 		await ownedRules.register(response);
 
 		expect(response.status()).toBe(201);
-		expect(new URL(response.url()).pathname).toBe('/api/v2/rules');
+		expect(new URL(response.url()).pathname).toBe(`${BASE_PATH}/api/v2/rules`);
 
 		const body = response.request().postDataJSON();
 		expect(body.schemaVersion).toBe('v2alpha1');
@@ -554,8 +555,7 @@ test.describe('Alert create — v2 builder', () => {
 
 		// `disableButtons` is one flag shared by all three, so Discard going disabled is
 		// what proves a user cannot abandon a half-created rule mid-request.
-		await expect(page.getByTestId('save-alert-rule-loader-icon')).toBeVisible();
-		await expect(page.getByTestId('save-alert-rule-check-icon')).toHaveCount(0);
+		await expect(v2SaveButton(page)).toHaveAttribute('aria-busy', 'true');
 		await expect(v2SaveButton(page)).toBeDisabled();
 		await expect(v2TestButton(page)).toBeDisabled();
 		await expect(v2DiscardButton(page)).toBeDisabled();

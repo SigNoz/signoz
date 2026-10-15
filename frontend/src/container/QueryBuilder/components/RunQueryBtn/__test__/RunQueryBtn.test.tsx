@@ -30,7 +30,7 @@ describe('RunQueryBtn', () => {
 			/>,
 		);
 		const btn = screen.getByRole('button', { name: /run query/i });
-		expect(btn).toBeEnabled();
+		expect(btn).not.toHaveAttribute('aria-disabled', 'true');
 		await user.click(btn);
 		expect(onRun).toHaveBeenCalledTimes(1);
 	});
@@ -53,7 +53,10 @@ describe('RunQueryBtn', () => {
 
 	it('disabled when disabled prop is true', () => {
 		render(<RunQueryBtn disabled />);
-		expect(screen.getByRole('button', { name: /run query/i })).toBeDisabled();
+		expect(screen.getByRole('button', { name: /run query/i })).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('disabled when no props provided', () => {

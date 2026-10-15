@@ -138,6 +138,7 @@ function RoleMappingSection({
 								noStyle
 							>
 								<Checkbox
+									color="primary"
 									id="use-role-attribute"
 									testId="role-mapping-use-role-attribute"
 									onChange={(checked: boolean): void => {
@@ -203,12 +204,13 @@ function RoleMappingSection({
 													</Form.Item>
 
 													<Button
+														size="md"
 														variant="ghost"
 														color="secondary"
-														className="role-mapping-section__remove-btn"
 														onClick={(): void => remove(field.name)}
 														aria-label="Remove mapping"
 														testId="role-mapping-remove"
+														icon
 													>
 														<Trash2 size={12} />
 													</Button>
@@ -216,6 +218,7 @@ function RoleMappingSection({
 											))}
 
 											<Button
+												size="md"
 												variant="outlined"
 												color="secondary"
 												onClick={(): void =>
