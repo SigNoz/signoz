@@ -1,4 +1,5 @@
 import { asArray } from 'ol/color';
+import type { FlatStyle } from 'ol/style/flat';
 import { Circle as CircleStyle, Fill, Stroke, Style, Text } from 'ol/style';
 
 import { LABEL_FONT } from './olLabels';
@@ -117,5 +118,18 @@ export function createStyleCache(): {
 			}
 			return style;
 		},
+	};
+}
+
+/**
+ * The GPU points layer's style: every value is read from the point, which
+ * carries its colour, radius and outline width (see `toWebGLPointFeatures`).
+ */
+export function createPointsStyle(palette: OlPalette): FlatStyle {
+	return {
+		'circle-radius': ['get', 'radius'],
+		'circle-fill-color': ['get', 'color'],
+		'circle-stroke-color': palette.bubbleStroke,
+		'circle-stroke-width': ['get', 'stroke'],
 	};
 }

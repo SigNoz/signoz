@@ -197,6 +197,8 @@ describe('useOlLayers', () => {
 					shapes: getCountryShapes('europe'),
 					data: [],
 					points: POINTS,
+					// No WebGL in jsdom: the canvas fallback.
+					pointsLayer: { layer: null, status: 'unsupported' },
 					layer: 'points',
 					palette: PALETTE,
 					fillFor: () => '#aa0000',

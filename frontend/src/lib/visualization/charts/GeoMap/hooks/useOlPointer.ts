@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import type MapBrowserEvent from 'ol/MapBrowserEvent';
 
+import type BaseLayer from 'ol/layer/Base';
+
 import { OlMapHandle } from './useOlMap';
 
 /**
@@ -14,6 +16,8 @@ export function useOlPointer(
 	handle: OlMapHandle | null,
 	onHover: (code: string | null, clientX: number, clientY: number) => void,
 	onSelect: (code: string, clientX: number, clientY: number) => void,
+	/** The lazily loaded GPU points layer, once it exists. */
+	pointsLayer: BaseLayer | null = null,
 ): void {
 	useEffect(() => {
 		if (!handle) {
@@ -23,7 +27,9 @@ export function useOlPointer(
 		const codeAt = (event: MapBrowserEvent): string | null => {
 			const feature = map.forEachFeatureAtPixel(event.pixel, (hit) => hit, {
 				layerFilter: (layer) =>
-					layer === layers.members || layer === layers.bubbles,
+					layer === layers.members ||
+					layer === layers.bubbles ||
+					layer === pointsLayer,
 				hitTolerance: 2,
 			});
 			return (feature?.get('code') as string | null | undefined) ?? null;
@@ -60,5 +66,5 @@ export function useOlPointer(
 			target.removeEventListener('click', handleDomClick);
 			target.removeEventListener('mouseleave', handleLeave);
 		};
-	}, [handle, onHover, onSelect]);
+	}, [handle, onHover, onSelect, pointsLayer]);
 }

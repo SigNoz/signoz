@@ -39,6 +39,7 @@ const meta = {
 				'cityLatency',
 				'cityLatencyAndRequests',
 				'manyPoints',
+				'maxPoints',
 				'requests',
 				'europeLatency',
 				'usStates',
@@ -200,6 +201,19 @@ export const ManyPoints: Story = {
 		await expect(screen.getByTestId('geo-map-tooltip')).toHaveTextContent(
 			'Near ',
 		);
+	},
+};
+
+/**
+ * 100,000 points, the panel's cap, drawn on the GPU. No play test: CI renders
+ * WebGL on the CPU, where this is too slow to hover reliably.
+ */
+export const MaxPoints: Story = {
+	args: {
+		dataset: 'maxPoints',
+		palette: ColorRampPalette.Ember,
+		minRadius: 1,
+		maxRadius: 4,
 	},
 };
 

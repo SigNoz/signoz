@@ -10,14 +10,17 @@ import {
 	toLabelFeatures,
 	toPointFeatures,
 	toShapeFeatures,
+	toWebGLPointFeatures,
 } from '../utils/olFeatures';
 import { labelFits } from '../utils/olLabels';
 import {
+	createPointsStyle,
 	createStyleCache,
 	MIN_OUTLINED_POINT_RADIUS,
 	OlPalette,
 } from '../utils/olStyles';
 import { OlMapHandle } from './useOlMap';
+import { OlPointsLayer } from './useOlPointsLayer';
 
 interface UseOlLayersArgs {
 	handle: OlMapHandle | null;
@@ -25,6 +28,8 @@ interface UseOlLayersArgs {
 	data: GeoMapDatum[];
 	/** Drawn instead of bubbles on the `points` layer. */
 	points?: GeoMapPoint[];
+	/** Where points go: the GPU layer, or the canvas when WebGL is unsupported. */
+	pointsLayer?: OlPointsLayer;
 	layer: GeoMapLayer;
 	palette: OlPalette | null;
 	fillFor: (code: string) => string | null;
@@ -43,6 +48,7 @@ export function useOlLayers({
 	shapes,
 	data,
 	points,
+	pointsLayer,
 	layer,
 	palette,
 	fillFor,
@@ -81,7 +87,8 @@ export function useOlLayers({
 		}
 		const source = handle.layers.bubbles.getSource();
 		source?.clear();
-		if (layer === 'points') {
+		// Points go to the GPU layer (next effect), or here without WebGL.
+		if (layer === 'points' && pointsLayer?.status === 'unsupported') {
 			source?.addFeatures(
 				toPointFeatures((points ?? []).filter((point) => sizeByCode.has(point.id))),
 			);
@@ -93,7 +100,38 @@ export function useOlLayers({
 				),
 			);
 		}
-	}, [handle, shapes, data, points, layer, showBubbles, sizeByCode]);
+	}, [
+		handle,
+		shapes,
+		data,
+		points,
+		pointsLayer,
+		layer,
+		showBubbles,
+		sizeByCode,
+	]);
+
+	const gpuLayer = pointsLayer?.layer ?? null;
+	useEffect(() => {
+		if (!gpuLayer) {
+			return;
+		}
+		const source = gpuLayer.getSource();
+		source?.clear();
+		gpuLayer.setVisible(layer === 'points');
+		if (layer !== 'points' || !palette) {
+			return;
+		}
+		gpuLayer.setStyle(createPointsStyle(palette));
+		source?.addFeatures(
+			toWebGLPointFeatures(points ?? [], {
+				fillFor,
+				radiusFor,
+				sizeByCode,
+				noData: palette.noData,
+			}),
+		);
+	}, [gpuLayer, layer, points, palette, fillFor, radiusFor, sizeByCode]);
 
 	useEffect(() => {
 		if (!handle || !palette) {
@@ -155,10 +193,12 @@ export function useOlLayers({
 			return;
 		}
 		if (layer === 'points') {
-			const point = handle.layers.bubbles
-				.getSource()
-				?.getFeatures()
-				.find((feature) => feature.get('code') === hoveredCode);
+			const point = gpuLayer
+				? gpuLayer.getSource()?.getFeatureById(hoveredCode)
+				: handle.layers.bubbles
+						.getSource()
+						?.getFeatures()
+						.find((feature) => feature.get('code') === hoveredCode);
 			if (point) {
 				source?.addFeature(
 					new Feature({
@@ -176,5 +216,5 @@ export function useOlLayers({
 		if (shape) {
 			source?.addFeature(new Feature(shape.getGeometry()?.clone()));
 		}
-	}, [handle, hoveredCode, shapes, layer, radiusFor, sizeByCode]);
+	}, [handle, hoveredCode, shapes, layer, gpuLayer, radiusFor, sizeByCode]);
 }

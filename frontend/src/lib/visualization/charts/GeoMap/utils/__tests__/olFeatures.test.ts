@@ -10,6 +10,7 @@ import {
 	toLabelFeatures,
 	toPointFeatures,
 	toShapeFeatures,
+	toWebGLPointFeatures,
 } from '../olFeatures';
 
 const datum = (code: string): GeoMapDatum => ({ code, value: 1, raw: code });
@@ -105,5 +106,43 @@ describe('toPointFeatures', () => {
 		expect(paris.get('code')).toBe('p1');
 		expect(x).toBeCloseTo(ex, 3);
 		expect(y).toBeCloseTo(ey, 3);
+	});
+});
+
+describe('toWebGLPointFeatures', () => {
+	const points = [
+		{ id: 'small', lat: 0, lon: 0, value: 1, label: 'Small' },
+		{ id: 'large', lat: 10, lon: 10, value: 9, label: 'Large' },
+		{ id: 'unsized', lat: 20, lon: 20, value: 5, label: 'Unsized' },
+	];
+	const features = toWebGLPointFeatures(points, {
+		fillFor: (code) => (code === 'large' ? '#ff0000' : null),
+		radiusFor: (size) => size,
+		sizeByCode: new Map([
+			['small', 2],
+			['large', 12],
+		]),
+		noData: '#333333',
+	});
+	const byId = (id: string) =>
+		features.find((feature) => feature.getId() === id);
+
+	it('draws largest first, so small points land on top', () => {
+		expect(features.map((feature) => feature.getId())).toStrictEqual([
+			'large',
+			'small',
+		]);
+	});
+
+	it('skips points with nothing to size them by', () => {
+		expect(byId('unsized')).toBeUndefined();
+	});
+
+	it('carries the colour, radius and outline the GPU style reads', () => {
+		expect(byId('large')?.get('color')).toStrictEqual([255, 0, 0, 0.8]);
+		expect(byId('large')?.get('radius')).toBe(12);
+		expect(byId('large')?.get('stroke')).toBe(1);
+		expect(byId('small')?.get('color')).toStrictEqual([51, 51, 51, 0.8]);
+		expect(byId('small')?.get('stroke')).toBe(0);
 	});
 });
