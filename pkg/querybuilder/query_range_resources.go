@@ -101,15 +101,6 @@ func WildcardResources(resource coretypes.Resource) coretypes.ResourceExtractor 
 	}
 }
 
-func RawStreamResources(ec coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
-	filter := ""
-	if ec.Request != nil {
-		filter = ec.Request.URL.Query().Get("filter")
-	}
-
-	return BuilderQueryResources(coretypes.ResourceTelemetryResourceLogs, filter, nil)
-}
-
 func resourcesForQuery(query gjson.Result, variables map[string]qbtypes.VariableItem) ([]coretypes.ResourceWithID, error) {
 	queryType := query.Get("type").String()
 	typeWildcard := queryType + "/" + coretypes.WildCardSelectorString

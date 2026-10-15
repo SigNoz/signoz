@@ -2,9 +2,6 @@ package querybuilder
 
 import (
 	"context"
-	"net/http"
-	"net/http/httptest"
-	"net/url"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
@@ -272,37 +269,4 @@ func TestWildcardResources(t *testing.T) {
 	refs, err := WildcardResources(coretypes.ResourceTelemetryResourceTraces)(coretypes.ExtractorContext{})
 	require.NoError(t, err)
 	assert.Equal(t, []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/*"}}, refs)
-}
-
-func TestRawStreamResources(t *testing.T) {
-	testCases := []struct {
-		name     string
-		target   string
-		expected []coretypes.ResourceWithID
-	}{
-		{
-			name:     "FilterParam_ScopedID",
-			target:   "/api/v3/logs/livetail?start=1&filter=" + url.QueryEscape("signoz.workspace.key.id = 'key-a'"),
-			expected: []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id/key-a"}},
-		},
-		{
-			name:     "NoFilterParam_Wildcard",
-			target:   "/api/v3/logs/livetail?start=1",
-			expected: []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/*"}},
-		},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			refs, err := RawStreamResources(coretypes.ExtractorContext{Request: httptest.NewRequest(http.MethodGet, testCase.target, nil)})
-			require.NoError(t, err)
-			assert.Equal(t, testCase.expected, refs)
-		})
-	}
-
-	t.Run("NilRequest_Wildcard", func(t *testing.T) {
-		refs, err := RawStreamResources(coretypes.ExtractorContext{})
-		require.NoError(t, err)
-		assert.Equal(t, []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/*"}}, refs)
-	})
 }
