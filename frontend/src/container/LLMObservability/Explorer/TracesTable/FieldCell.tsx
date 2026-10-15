@@ -3,6 +3,7 @@ import { Badge } from '@signozhq/ui/badge';
 import TanStackTable from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
+import { TraceDetailsTab } from 'pages/TraceDetailsV3/constants';
 import { getMs } from 'utils/timeUtils';
 import { useTimezone } from 'providers/Timezone';
 
@@ -44,7 +45,10 @@ function FieldCell({ name, value }: FieldCellProps): JSX.Element {
 	if (TRACE_ID_FIELD_NAMES.has(name)) {
 		return (
 			<Link
-				to={generatePath(ROUTES.TRACE_DETAIL, { id: text })}
+				to={{
+					pathname: generatePath(ROUTES.TRACE_DETAIL, { id: text }),
+					search: `?tab=${TraceDetailsTab.Thread}`,
+				}}
 				data-testid="trace-id"
 				onClick={(e): void => e.stopPropagation()}
 			>
