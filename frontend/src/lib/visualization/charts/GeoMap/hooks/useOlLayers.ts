@@ -1,22 +1,30 @@
 import { useEffect, useMemo } from 'react';
 import Feature from 'ol/Feature';
-import { Fill, Stroke, Style } from 'ol/style';
+import Point from 'ol/geom/Point';
+import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
 
 import { GeoMapShapes } from '../geo/shapes';
-import { GeoMapDatum, GeoMapLayer } from '../types';
+import { GeoMapDatum, GeoMapLayer, GeoMapPoint } from '../types';
 import {
 	toBubbleFeatures,
 	toLabelFeatures,
+	toPointFeatures,
 	toShapeFeatures,
 } from '../utils/olFeatures';
 import { labelFits } from '../utils/olLabels';
-import { createStyleCache, OlPalette } from '../utils/olStyles';
+import {
+	createStyleCache,
+	MIN_OUTLINED_POINT_RADIUS,
+	OlPalette,
+} from '../utils/olStyles';
 import { OlMapHandle } from './useOlMap';
 
 interface UseOlLayersArgs {
 	handle: OlMapHandle | null;
 	shapes: GeoMapShapes | null;
 	data: GeoMapDatum[];
+	/** Drawn instead of bubbles on the `points` layer. */
+	points?: GeoMapPoint[];
 	layer: GeoMapLayer;
 	palette: OlPalette | null;
 	fillFor: (code: string) => string | null;
@@ -34,6 +42,7 @@ export function useOlLayers({
 	handle,
 	shapes,
 	data,
+	points,
 	layer,
 	palette,
 	fillFor,
@@ -72,7 +81,11 @@ export function useOlLayers({
 		}
 		const source = handle.layers.bubbles.getSource();
 		source?.clear();
-		if (showBubbles) {
+		if (layer === 'points') {
+			source?.addFeatures(
+				toPointFeatures((points ?? []).filter((point) => sizeByCode.has(point.id))),
+			);
+		} else if (showBubbles) {
 			source?.addFeatures(
 				toBubbleFeatures(
 					data.filter((datum) => sizeByCode.has(datum.code)),
@@ -80,7 +93,7 @@ export function useOlLayers({
 				),
 			);
 		}
-	}, [handle, shapes, data, showBubbles, sizeByCode]);
+	}, [handle, shapes, data, points, layer, showBubbles, sizeByCode]);
 
 	useEffect(() => {
 		if (!handle || !palette) {
@@ -99,7 +112,12 @@ export function useOlLayers({
 			if (layer === 'regions') {
 				return styles.neutralBubble(radius, palette);
 			}
-			return styles.bubble(fillFor(code) ?? palette.noData, radius, palette);
+			return styles.bubble(
+				fillFor(code) ?? palette.noData,
+				radius,
+				palette,
+				layer !== 'points' || radius >= MIN_OUTLINED_POINT_RADIUS,
+			);
 		});
 		layers.labels.setStyle((feature, resolution): Style | undefined => {
 			const name = feature.get('name') as string;
@@ -108,11 +126,22 @@ export function useOlLayers({
 				? styles.label(name, feature.get('area') as number, palette)
 				: undefined;
 		});
+		const outline = new Stroke({ color: palette.outline, width: 1.5 });
+		const shapeHover = new Style({
+			stroke: outline,
+			fill: new Fill({ color: 'transparent' }),
+		});
+		// A hovered point gets a ring just outside its circle.
 		layers.hover.setStyle(
-			new Style({
-				stroke: new Stroke({ color: palette.outline, width: 1.5 }),
-				fill: new Fill({ color: 'transparent' }),
-			}),
+			(feature): Style =>
+				feature.getGeometry() instanceof Point
+					? new Style({
+							image: new CircleStyle({
+								radius: (feature.get('radius') as number) + 2,
+								stroke: outline,
+							}),
+						})
+					: shapeHover,
 		);
 	}, [handle, palette, layer, fillFor, radiusFor, sizeByCode, styles]);
 
@@ -125,6 +154,21 @@ export function useOlLayers({
 		if (!hoveredCode) {
 			return;
 		}
+		if (layer === 'points') {
+			const point = handle.layers.bubbles
+				.getSource()
+				?.getFeatures()
+				.find((feature) => feature.get('code') === hoveredCode);
+			if (point) {
+				source?.addFeature(
+					new Feature({
+						geometry: point.getGeometry()?.clone(),
+						radius: radiusFor(sizeByCode.get(hoveredCode) ?? 0),
+					}),
+				);
+			}
+			return;
+		}
 		const shape = handle.layers.members
 			.getSource()
 			?.getFeatures()
@@ -132,5 +176,5 @@ export function useOlLayers({
 		if (shape) {
 			source?.addFeature(new Feature(shape.getGeometry()?.clone()));
 		}
-	}, [handle, hoveredCode, shapes]);
+	}, [handle, hoveredCode, shapes, layer, radiusFor, sizeByCode]);
 }

@@ -24,14 +24,24 @@ export function readPalette(element: HTMLElement): OlPalette {
 	};
 }
 
-function withAlpha(color: string, alpha: number): number[] {
+// Below this, a point's ring covers most of it and dense clusters turn to noise.
+export const MIN_OUTLINED_POINT_RADIUS = 4;
+export const BUBBLE_ALPHA = 0.8;
+
+export function withAlpha(color: string, alpha: number): number[] {
 	const [r, g, b] = asArray(color);
 	return [r, g, b, alpha];
 }
 
 export function createStyleCache(): {
 	shape: (fill: string, palette: OlPalette) => Style;
-	bubble: (fill: string, radius: number, palette: OlPalette) => Style;
+	/** `outlined` false drops the ring, for dense points where rings read as noise. */
+	bubble: (
+		fill: string,
+		radius: number,
+		palette: OlPalette,
+		outlined?: boolean,
+	) => Style;
 	/** A size-only bubble over shaded shapes: no ramp colour, so colour keeps one meaning. */
 	neutralBubble: (radius: number, palette: OlPalette) => Style;
 	/**
@@ -56,15 +66,17 @@ export function createStyleCache(): {
 			}
 			return style;
 		},
-		bubble: (fill, radius, palette): Style => {
-			const key = `${fill}:${radius.toFixed(1)}`;
+		bubble: (fill, radius, palette, outlined = true): Style => {
+			const key = `${fill}:${radius.toFixed(1)}:${outlined}`;
 			let style = bubbles.get(key);
 			if (!style) {
 				style = new Style({
 					image: new CircleStyle({
 						radius,
-						fill: new Fill({ color: withAlpha(fill, 0.8) }),
-						stroke: new Stroke({ color: palette.bubbleStroke, width: 1 }),
+						fill: new Fill({ color: withAlpha(fill, BUBBLE_ALPHA) }),
+						stroke: outlined
+							? new Stroke({ color: palette.bubbleStroke, width: 1 })
+							: undefined,
 					}),
 					zIndex: -radius,
 				});

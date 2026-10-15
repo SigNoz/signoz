@@ -8,7 +8,12 @@ import { fromLonLat, transformExtent } from 'ol/proj';
 
 import { GeoMapShapes } from '../geo/shapes';
 import { getViewBox } from '../geo/views';
-import { GeoMapDatum, GeoMapView, SubdivisionCountry } from '../types';
+import {
+	GeoMapDatum,
+	GeoMapPoint,
+	GeoMapView,
+	SubdivisionCountry,
+} from '../types';
 
 const FORMAT = new GeoJSON();
 
@@ -84,13 +89,25 @@ export function toLabelFeatures(
 	});
 }
 
+/** One feature per point at its lat/lon, keyed by the point's id. */
+export function toPointFeatures(points: GeoMapPoint[]): Feature[] {
+	return points.map(
+		(point) =>
+			new Feature({
+				geometry: new Point(fromLonLat([point.lon, point.lat])),
+				code: point.id,
+			}),
+	);
+}
+
 /** A view's lon/lat box as a Web Mercator extent. */
 export function getViewExtent(
 	view: GeoMapView,
 	data: GeoMapDatum[],
 	country: SubdivisionCountry | undefined,
+	points?: GeoMapPoint[],
 ): Extent {
-	const [[west, south], [east, north]] = getViewBox(view, data, country);
+	const [[west, south], [east, north]] = getViewBox(view, data, country, points);
 	return transformExtent(
 		[west, Math.max(south, -85), east, Math.min(north, 85)],
 		'EPSG:4326',

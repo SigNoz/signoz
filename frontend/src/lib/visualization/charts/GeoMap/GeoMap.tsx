@@ -8,6 +8,8 @@ import MapStatus from './components/MapStatus/MapStatus';
 import ZoomControls from './components/ZoomControls/ZoomControls';
 import { useGeoMapScales } from './hooks/useGeoMapScales';
 import { useGeoMapShapes } from './hooks/useGeoMapShapes';
+import { formatCoordinates } from './utils/coordinates';
+import { pointAsDatum } from './utils/scales';
 import { GeoMapProps } from './types';
 import { useOlLayers } from './hooks/useOlLayers';
 import { useOlMap } from './hooks/useOlMap';
@@ -19,6 +21,7 @@ import styles from './GeoMap.module.scss';
 
 export default function GeoMap({
 	data,
+	points,
 	view,
 	country,
 	layer,
@@ -51,10 +54,21 @@ export default function GeoMap({
 		detectBounds: true,
 	});
 
+	// On the points layer the scales colour and size points, keyed by point id.
+	const scaleData = useMemo(
+		() => (layer === 'points' ? (points ?? []).map(pointAsDatum) : data),
+		[layer, points, data],
+	);
 	const { resolver, valueByCode, ranks, sizeByCode, radiusFor, fillFor } =
-		useGeoMapScales(data, colors, bubbleRadius, isDarkMode, Boolean(sizeMetric));
+		useGeoMapScales(
+			scaleData,
+			colors,
+			bubbleRadius,
+			isDarkMode,
+			Boolean(sizeMetric),
+		);
 	const maxSize = useMemo(
-		() => Math.max(0, ...sizeByCode.values()),
+		() => [...sizeByCode.values()].reduce((max, size) => Math.max(max, size), 0),
 		[sizeByCode],
 	);
 	const { shapes, status, retry } = useGeoMapShapes(view, country);
@@ -82,24 +96,37 @@ export default function GeoMap({
 		[valueByCode, showTooltip, hideTooltip],
 	);
 
+	const pointById = useMemo(
+		() =>
+			new Map(
+				(layer === 'points' ? (points ?? []) : []).map((point) => [
+					point.id,
+					point,
+				]),
+			),
+		[layer, points],
+	);
+
 	const handleSelect = useCallback(
 		(code: string, clientX: number, clientY: number): void => {
 			const datum = valueByCode.get(code);
 			if (datum && onSelect) {
 				hideTooltip();
-				onSelect({ datum, clientX, clientY });
+				onSelect({ datum, point: pointById.get(code), clientX, clientY });
 			}
 		},
-		[valueByCode, onSelect, hideTooltip],
+		[valueByCode, pointById, onSelect, hideTooltip],
 	);
 
 	const hovered =
 		tooltipOpen && tooltipData ? valueByCode.get(tooltipData) : undefined;
+	const hoveredPoint = hovered ? pointById.get(hovered.code) : undefined;
 
 	useOlLayers({
 		handle,
 		shapes,
 		data,
+		points,
 		layer,
 		palette,
 		fillFor,
@@ -109,7 +136,15 @@ export default function GeoMap({
 		showLabels,
 		hoveredCode: hovered?.code ?? null,
 	});
-	const zoom = useOlView(handle, view, country, data, width, height);
+	const zoom = useOlView(
+		handle,
+		view,
+		country,
+		data,
+		width,
+		height,
+		layer === 'points' ? points : undefined,
+	);
 	useOlPointer(handle, handleHover, handleSelect);
 
 	return (
@@ -152,10 +187,15 @@ export default function GeoMap({
 					>
 						<CountryTooltip
 							datum={hovered}
-							name={shapes?.nameOf(hovered.code) ?? hovered.code}
+							name={
+								hoveredPoint?.label ?? shapes?.nameOf(hovered.code) ?? hovered.code
+							}
+							place={
+								hoveredPoint && formatCoordinates(hoveredPoint.lat, hoveredPoint.lon)
+							}
 							color={resolver.colorFor(hovered.value)}
 							rank={ranks.get(hovered.code)}
-							total={data.length}
+							total={scaleData.length}
 							formatValue={formatValue}
 							valueLabel={valueLabel}
 							sizeMetric={sizeMetric}

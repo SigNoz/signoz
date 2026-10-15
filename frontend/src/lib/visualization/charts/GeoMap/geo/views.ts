@@ -208,11 +208,44 @@ function getCountryBox(iso2: SubdivisionCountry): LonLatBox | null {
 	);
 }
 
+// Points are circles with an on-screen radius, so the margin grows with the
+// spread of the points: a fixed few degrees cuts the edge circles in half.
+const POINTS_PAD_SHARE = 0.08;
+
+/** The box around lat/lon points, padded; for Fit to data on the points layer. */
+function getPointsBox(
+	points: { lat: number; lon: number }[],
+): LonLatBox | null {
+	if (points.length === 0) {
+		return null;
+	}
+	// A loop, not Math.min(...): spreading 100k arguments overflows the stack.
+	let [west, south, east, north] = [180, 90, -180, -90];
+	points.forEach(({ lat, lon }) => {
+		west = Math.min(west, lon);
+		east = Math.max(east, lon);
+		south = Math.min(south, lat);
+		north = Math.max(north, lat);
+	});
+	const pad = Math.max(
+		3,
+		Math.max(east - west, north - south) * POINTS_PAD_SHARE,
+	);
+	return padBox(
+		[
+			[west, south],
+			[east, north],
+		],
+		pad,
+	);
+}
+
 /** The lon/lat box a view frames. */
 export function getViewBox(
 	view: GeoMapView,
 	data: GeoMapDatum[],
 	country?: SubdivisionCountry,
+	points?: { lat: number; lon: number }[],
 ): LonLatBox {
 	if (view === 'country' && country) {
 		const box = getCountryBox(country);
@@ -221,7 +254,9 @@ export function getViewBox(
 		}
 	}
 	if (view === 'fit') {
-		const box = getFitBox(data.map((datum) => datum.code));
+		const box = points
+			? getPointsBox(points)
+			: getFitBox(data.map((datum) => datum.code));
 		if (box) {
 			return box;
 		}

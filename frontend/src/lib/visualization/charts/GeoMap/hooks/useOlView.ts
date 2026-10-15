@@ -2,7 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import View from 'ol/View';
 import type { Extent } from 'ol/extent';
 
-import { GeoMapDatum, GeoMapView, SubdivisionCountry } from '../types';
+import {
+	GeoMapDatum,
+	GeoMapPoint,
+	GeoMapView,
+	SubdivisionCountry,
+} from '../types';
 import { MAX_ZOOM, ZOOM_STEP } from '../utils/zoom';
 import { getViewExtent } from '../utils/olFeatures';
 import { OlMapHandle } from './useOlMap';
@@ -31,16 +36,19 @@ export function useOlView(
 	data: GeoMapDatum[],
 	width: number,
 	height: number,
+	/** Framed instead of `data` by Fit to data on the points layer. */
+	points?: GeoMapPoint[],
 ): OlZoom {
 	const extentRef = useRef<Extent | null>(null);
 	const [zoom, setZoom] = useState({ current: 0, min: 0 });
 	const fitData = view === 'fit' ? data : null;
+	const fitPoints = view === 'fit' ? points : undefined;
 
 	useEffect(() => {
 		if (!handle || width === 0 || height === 0) {
 			return undefined;
 		}
-		const extent = getViewExtent(view, fitData ?? [], country);
+		const extent = getViewExtent(view, fitData ?? [], country, fitPoints);
 		extentRef.current = extent;
 		const olView = new View({ extent, showFullExtent: true });
 		handle.map.setView(olView);
@@ -53,7 +61,7 @@ export function useOlView(
 		const sync = (): void => setZoom({ current: olView.getZoom() ?? min, min });
 		olView.on('change:resolution', sync);
 		return (): void => olView.un('change:resolution', sync);
-	}, [handle, view, country, fitData, width, height]);
+	}, [handle, view, country, fitData, fitPoints, width, height]);
 
 	const step = useCallback(
 		(levels: number) => {

@@ -1,7 +1,7 @@
 import { normalizeCountry } from '../../geo/normalizeCountry';
 import { normalizeSubdivision } from '../../geo/normalizeSubdivision';
 import { SubdivisionSet } from '../../geo/subdivisions';
-import { GeoMapDatum } from '../../types';
+import { GeoMapDatum, GeoMapSelection, SubdivisionCountry } from '../../types';
 import { Fixture, FixtureRow } from './types';
 
 export interface PreparedFixture {
@@ -54,4 +54,15 @@ export function formatterFor(unit: Fixture['unit']): (value: number) => string {
 		return (value): string => `${Math.round(value)} ms`;
 	}
 	return (value): string => COMPACT.format(value);
+}
+
+/** The group-by key a drilldown on this selection would filter by. */
+export function drilldownFieldOf(
+	selection: GeoMapSelection,
+	country: SubdivisionCountry | undefined,
+): string {
+	if (selection.point) {
+		return 'geo.location';
+	}
+	return country ? 'geo.region.iso_code' : 'geo.country.iso_code';
 }

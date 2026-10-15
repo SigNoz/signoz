@@ -36,6 +36,9 @@ const meta = {
 			options: [
 				'errorRate',
 				'errorRateAndRequests',
+				'cityLatency',
+				'cityLatencyAndRequests',
+				'manyPoints',
 				'requests',
 				'europeLatency',
 				'usStates',
@@ -62,7 +65,10 @@ const meta = {
 				Object.entries(VIEW_PRESETS).map(([key, preset]) => [key, preset.label]),
 			),
 		},
-		layer: { control: 'inline-radio', options: ['regions', 'bubbles'] },
+		layer: {
+			control: 'inline-radio',
+			options: ['regions', 'bubbles', 'points'],
+		},
 		showLabels: { control: 'boolean' },
 		palette: { control: 'select', options: Object.values(ColorRampPalette) },
 		scale: { control: 'inline-radio', options: Object.values(ColorRampScale) },
@@ -151,6 +157,59 @@ export const ErrorRateSizedByRequests: Story = {
 /** The same two metrics as bubbles alone: colour by error rate, size by requests. */
 export const BubblesColouredAndSized: Story = {
 	args: { dataset: 'errorRateAndRequests', layer: 'bubbles' },
+};
+
+/** Points: one circle per city at its lat/lon, coloured by p95 latency. */
+export const CityPoints: Story = {
+	args: { dataset: 'cityLatency', palette: ColorRampPalette.Ember },
+	tags: ['play'],
+	play: async ({ canvasElement }): Promise<void> => {
+		const point = await hoverUntilTooltip(canvasElement);
+		const tooltip = screen.getByTestId('geo-map-tooltip');
+		await expect(tooltip).toHaveTextContent(/° [NS], .*° [EW]/);
+		await expect(tooltip).toHaveTextContent('ms');
+
+		clickAt(canvasElement, point);
+		await waitFor(() =>
+			expect(screen.getByTestId('geo-map-drilldown-menu')).toHaveTextContent(
+				'geo.location',
+			),
+		);
+	},
+};
+
+/** Points coloured by latency and sized by requests: hubs stand out. */
+export const CityPointsSizedByRequests: Story = {
+	args: { dataset: 'cityLatencyAndRequests', palette: ColorRampPalette.Ember },
+};
+
+/**
+ * 5,000 points, the panel's cap: small circles so clusters read as density.
+ * Hover and zoom should stay smooth.
+ */
+export const ManyPoints: Story = {
+	args: {
+		dataset: 'manyPoints',
+		palette: ColorRampPalette.Ember,
+		minRadius: 1,
+		maxRadius: 6,
+	},
+	tags: ['play'],
+	play: async ({ canvasElement }): Promise<void> => {
+		await hoverUntilTooltip(canvasElement);
+		await expect(screen.getByTestId('geo-map-tooltip')).toHaveTextContent(
+			'Near ',
+		);
+	},
+};
+
+/** Fit to data frames the points themselves. */
+export const CityPointsFitToData: Story = {
+	args: {
+		dataset: 'cityLatency',
+		view: 'fit',
+		palette: ColorRampPalette.Ember,
+	},
 };
 
 /** Requests are dominated by the US; the default log scale keeps the rest readable. */

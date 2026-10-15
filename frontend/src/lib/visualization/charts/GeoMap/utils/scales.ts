@@ -5,11 +5,21 @@ import {
 } from 'lib/visualization/colorRamp/colorScale';
 import { ColorRampMode } from 'lib/visualization/colorRamp/types';
 
-import { GeoMapColors, GeoMapDatum } from '../types';
+import { GeoMapColors, GeoMapDatum, GeoMapPoint } from '../types';
 
 /** Enough of the palette's background-coloured end to skip that the lowest
  *  value stays apart from the map's background and no-data fill in either theme. */
 const PALETTE_START = 0.25;
+
+/** A point in the shape the scales read, keyed by its id. */
+export function pointAsDatum(point: GeoMapPoint): GeoMapDatum {
+	return {
+		code: point.id,
+		value: point.value,
+		size: point.size,
+		raw: point.label,
+	};
+}
 
 export interface GeoMapRank {
 	rank: number;
@@ -41,7 +51,7 @@ export function createRadiusScale(
 	sizes: number[],
 	[min, max]: [number, number],
 ): (size: number) => number {
-	const maxAbs = Math.max(0, ...sizes.map((size) => Math.abs(size)));
+	const maxAbs = sizes.reduce((max, size) => Math.max(max, Math.abs(size)), 0);
 	return (size: number): number => {
 		if (maxAbs === 0) {
 			return min;
