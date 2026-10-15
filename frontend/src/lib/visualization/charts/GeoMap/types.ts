@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import type { Feature, MultiPolygon, Polygon } from 'geojson';
 import type { LegendPosition } from 'lib/uPlotV2/components/types';
 import {
 	ColorRampMode,
@@ -30,15 +31,9 @@ export interface CountryProperties extends ShapeProperties {
 	regions: GeoMapView[];
 }
 
-export type ShapeFeature = GeoJSON.Feature<
-	GeoJSON.Polygon | GeoJSON.MultiPolygon,
-	ShapeProperties
->;
+export type ShapeFeature = Feature<Polygon | MultiPolygon, ShapeProperties>;
 
-export type CountryFeature = GeoJSON.Feature<
-	GeoJSON.MultiPolygon,
-	CountryProperties
->;
+export type CountryFeature = Feature<MultiPolygon, CountryProperties>;
 
 /** Countries whose states/provinces ship with the chart (see `geo/subdivisions.ts`). */
 export type SubdivisionCountry = (typeof SUBDIVISION_COUNTRY_CODES)[number];

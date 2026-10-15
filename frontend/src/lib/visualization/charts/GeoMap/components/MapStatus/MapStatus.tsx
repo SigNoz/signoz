@@ -23,7 +23,7 @@ export default function MapStatus({
 					color="secondary"
 					size="sm"
 					onClick={onRetry}
-					data-testid="geo-map-retry"
+					testId="geo-map-retry"
 				>
 					Retry
 				</Button>

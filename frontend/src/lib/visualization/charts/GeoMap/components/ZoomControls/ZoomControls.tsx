@@ -1,5 +1,6 @@
 import { Minus, Plus, RotateCcw } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
+import { Tooltip } from '@signozhq/ui/tooltip';
 
 import styles from './ZoomControls.module.scss';
 
@@ -21,39 +22,51 @@ export default function ZoomControls({
 }: ZoomControlsProps): JSX.Element {
 	return (
 		<div className={styles.controls} data-testid="geo-map-zoom-controls">
-			<Button
-				variant="solid"
-				color="secondary"
-				size="icon"
-				aria-label="Zoom in"
-				title="Zoom in"
-				prefix={<Plus size={14} />}
-				disabled={!canZoomIn}
-				onClick={onZoomIn}
-				data-testid="geo-map-zoom-in"
-			/>
-			<Button
-				variant="solid"
-				color="secondary"
-				size="icon"
-				aria-label="Zoom out"
-				title="Zoom out"
-				prefix={<Minus size={14} />}
-				disabled={!canZoomOut}
-				onClick={onZoomOut}
-				data-testid="geo-map-zoom-out"
-			/>
-			<Button
-				variant="solid"
-				color="secondary"
-				size="icon"
-				aria-label="Reset view"
-				title="Reset view"
-				prefix={<RotateCcw size={14} />}
-				disabled={!canZoomOut}
-				onClick={onReset}
-				data-testid="geo-map-zoom-reset"
-			/>
+			<Tooltip title="Zoom in" side="left">
+				<Button
+					icon
+					variant="solid"
+					color="secondary"
+					size="sm"
+					aria-label="Zoom in"
+					disabled={!canZoomIn}
+					disabledTooltip="Already zoomed in all the way"
+					onClick={onZoomIn}
+					testId="geo-map-zoom-in"
+				>
+					<Plus size={14} />
+				</Button>
+			</Tooltip>
+			<Tooltip title="Zoom out" side="left">
+				<Button
+					icon
+					variant="solid"
+					color="secondary"
+					size="sm"
+					aria-label="Zoom out"
+					disabled={!canZoomOut}
+					disabledTooltip="Already showing the whole view"
+					onClick={onZoomOut}
+					testId="geo-map-zoom-out"
+				>
+					<Minus size={14} />
+				</Button>
+			</Tooltip>
+			<Tooltip title="Reset view" side="left">
+				<Button
+					icon
+					variant="solid"
+					color="secondary"
+					size="sm"
+					aria-label="Reset view"
+					disabled={!canZoomOut}
+					disabledTooltip="Already at the starting view"
+					onClick={onReset}
+					testId="geo-map-zoom-reset"
+				>
+					<RotateCcw size={14} />
+				</Button>
+			</Tooltip>
 		</div>
 	);
 }
