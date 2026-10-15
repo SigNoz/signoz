@@ -41,6 +41,12 @@ These hold for every page. The per-pattern sections below only add to them.
    `create` on API Keys, so blocking the outer container would hide work they are allowed to do.
 7. **Verbs not covered here** (`attach`, `detach`, `assignee`) behave like `delete`: gate the control that triggers
    them, not the surrounding content.
+8. **Expose the selector.** A role is scoped to a resource by pasting its selector into the role editor, so every
+   resource a role can be scoped to shows that selector with a copy control on its detail view or drawer. The selector
+   is whatever the editor accepts for the resource (dashboard ID, service account ID, role name, ...), listed per
+   resource in [permissions.config.ts](../src/container/RolesSettings/permissions.config.ts). It is already known from
+   the row or URL, so it stays visible and copyable without `read`. Reference: the ID field in
+   [ServiceAccountDrawer/OverviewTab.tsx](../src/components/ServiceAccountDrawer/OverviewTab.tsx).
 
 ## Page patterns
 
@@ -136,6 +142,8 @@ Use the existing components. Create a new one only if none fit.
 - [ ] Am I gating a shared component rather than a page or section?
   - If so, it must stay functional with no permission. Example: the Query Builder works without field suggestions when
     the user cannot read them.
+- [ ] Does the page expose the resource's selector with a copy control (rule 8)?
+  - The expected format is the `selectorPlaceholder` for the resource in `permissions.config.ts`.
 
 ## Testing
 

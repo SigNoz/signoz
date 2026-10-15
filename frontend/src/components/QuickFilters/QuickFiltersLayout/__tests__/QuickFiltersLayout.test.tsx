@@ -47,10 +47,15 @@ jest.mock('../../QuickFilters', () => ({
 			{source}
 			{handleFilterVisibilityChange && (
 				<Button
+					size="md"
+					variant="solid"
+					color="primary"
 					aria-label="Collapse Filters"
-					data-testid="quick-filters-collapse"
+					testId="quick-filters-collapse"
 					onClick={handleFilterVisibilityChange}
-				/>
+				>
+					Collapse
+				</Button>
 			)}
 		</div>
 	),

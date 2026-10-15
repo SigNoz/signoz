@@ -167,12 +167,14 @@ function ListPanelRenderer({
 					{showPager && pagination && (
 						<div className={styles.pager} data-testid="list-panel-pager">
 							<Button
+								disabledTooltip="You are on the first page"
 								type="button"
 								variant="ghost"
 								color="secondary"
-								size="icon"
+								size="sm"
+								icon
 								aria-label="Previous page"
-								data-testid="list-panel-prev"
+								testId="list-panel-prev"
 								disabled={!pagination.canPrev}
 								onClick={pagination.goPrev}
 							>
@@ -182,12 +184,14 @@ function ListPanelRenderer({
 								Page {pagination.pageIndex + 1}
 							</span>
 							<Button
+								disabledTooltip="You are on the last page"
 								type="button"
 								variant="ghost"
 								color="secondary"
-								size="icon"
+								size="sm"
+								icon
 								aria-label="Next page"
-								data-testid="list-panel-next"
+								testId="list-panel-next"
 								disabled={!pagination.canNext}
 								onClick={pagination.goNext}
 							>

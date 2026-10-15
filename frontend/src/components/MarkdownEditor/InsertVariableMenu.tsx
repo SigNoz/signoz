@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
-import { ChevronDown, DollarSign, Search } from '@signozhq/icons';
+import { ChevronDown, DollarSign } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
+import { Dropdown, type DropdownActionItemType } from '@signozhq/ui/dropdown';
 
+import { READ_ONLY_TOOLTIP } from './constants';
 import type { EditorVariable } from './types';
 
 import styles from './MarkdownEditor.module.scss';
@@ -17,9 +18,10 @@ interface InsertVariableMenuProps {
 function toMenuItems(
 	variables: EditorVariable[],
 	onSelect: (name: string) => void,
-): MenuItem[] {
+): DropdownActionItemType[] {
 	return variables.map((variable) => ({
-		key: variable.name,
+		type: 'item',
+		value: variable.name,
 		label: (
 			<span
 				className={styles.variableRow}
@@ -60,15 +62,17 @@ function InsertVariableMenu({
 	}
 
 	return (
-		<DropdownMenuSimple
-			className={styles.variableMenu}
-			menu={{
-				items,
-				search: {
-					placeholder: 'Search variables',
-					searchIcon: <Search size={14} />,
-					onSearchChange: setSearch,
-				},
+		<Dropdown
+			items={items}
+			nativeButton
+			align="end"
+			side="bottom"
+			contentMaxWidth={320}
+			disabled={disabled}
+			disabledTooltip={READ_ONLY_TOOLTIP}
+			searchInputProps={{
+				placeholder: 'Search variables',
+				onChange: setSearch,
 			}}
 		>
 			<Button
@@ -76,15 +80,13 @@ function InsertVariableMenu({
 				variant="outlined"
 				color="secondary"
 				size="sm"
-				disabled={disabled}
 				prefix={<DollarSign size={14} className={styles.insertVariableIcon} />}
 				suffix={<ChevronDown size={14} />}
-				className={styles.insertVariable}
-				data-testid="markdown-insert-variable"
+				testId="markdown-insert-variable"
 			>
 				Insert variable
 			</Button>
-		</DropdownMenuSimple>
+		</Dropdown>
 	);
 }
 

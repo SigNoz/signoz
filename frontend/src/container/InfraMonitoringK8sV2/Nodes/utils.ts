@@ -1,12 +1,12 @@
-import { BadgeColor } from '@signozhq/ui/badge';
+import type { BadgeColorType } from '@signozhq/ui/badge';
 import { InframonitoringtypesNodeConditionDTO } from 'api/generated/services/sigNoz.schemas';
 
 export const NODE_CONDITION_COLORS: Record<
 	InframonitoringtypesNodeConditionDTO,
-	BadgeColor
+	BadgeColorType
 > = {
-	[InframonitoringtypesNodeConditionDTO.ready]: 'forest',
-	[InframonitoringtypesNodeConditionDTO.not_ready]: 'amber',
+	[InframonitoringtypesNodeConditionDTO.ready]: 'success',
+	[InframonitoringtypesNodeConditionDTO.not_ready]: 'warning',
 	[InframonitoringtypesNodeConditionDTO.no_data]: 'secondary',
 };
 

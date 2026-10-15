@@ -50,12 +50,14 @@ function QuickFiltersSettings({
 				<SignozButton
 					variant="ghost"
 					color="secondary"
-					size="icon"
+					size="sm"
+					icon
 					aria-label="Close"
-					prefix={<X size={14} />}
 					onClick={handleSettingsClose}
-					data-testid="quick-filters-settings-close"
-				/>
+					testId="quick-filters-settings-close"
+				>
+					<X size={14} />
+				</SignozButton>
 			</div>
 			<section className="search">
 				<Input

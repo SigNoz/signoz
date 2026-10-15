@@ -39,6 +39,36 @@ interface SectionHeaderProps {
 	disabledTooltip?: string;
 }
 
+function SectionDragHandleButton({
+	dragHandle,
+	sectionId,
+}: {
+	dragHandle: SectionDragHandle;
+	sectionId: string;
+}): JSX.Element {
+	const { role: _role, ...sortableAttributes } = dragHandle.attributes;
+	return (
+		<span
+			ref={dragHandle.setActivatorNodeRef}
+			{...dragHandle.listeners}
+			className={styles.dragHandle}
+		>
+			<Button
+				type="button"
+				variant="ghost"
+				color="secondary"
+				size="sm"
+				icon
+				aria-label="Drag to reorder section"
+				testId={`dashboard-section-drag-${sectionId}`}
+				{...sortableAttributes}
+			>
+				<GripVertical size={14} />
+			</Button>
+		</span>
+	);
+}
+
 function SectionHeader({
 	sectionId,
 	title,
@@ -53,37 +83,27 @@ function SectionHeader({
 	return (
 		<div className={cx(styles.header, { [styles.headerOpen]: open })}>
 			{dragHandle ? (
+				<SectionDragHandleButton dragHandle={dragHandle} sectionId={sectionId} />
+			) : null}
+			<div className={styles.toggle}>
 				<Button
+					size="md"
 					type="button"
 					variant="ghost"
 					color="secondary"
-					size="icon"
-					className={styles.dragHandle}
-					ref={dragHandle.setActivatorNodeRef}
-					aria-label="Drag to reorder section"
-					data-testid={`dashboard-section-drag-${sectionId}`}
-					{...dragHandle.attributes}
-					{...dragHandle.listeners}
+					width="100%"
+					onClick={onToggle}
+					testId={`dashboard-section-toggle-${sectionId}`}
+					prefix={open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
 				>
-					<GripVertical size={14} />
+					<Typography.Text className={styles.title}>{title}</Typography.Text>
+					{repeatVariable ? (
+						<Typography.Text className={styles.repeatBadge}>
+							(repeats per ${repeatVariable})
+						</Typography.Text>
+					) : null}
 				</Button>
-			) : null}
-			<Button
-				type="button"
-				variant="ghost"
-				color="secondary"
-				className={styles.toggle}
-				onClick={onToggle}
-				data-testid={`dashboard-section-toggle-${sectionId}`}
-			>
-				{open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-				<Typography.Text className={styles.title}>{title}</Typography.Text>
-				{repeatVariable ? (
-					<Typography.Text className={styles.repeatBadge}>
-						(repeats per ${repeatVariable})
-					</Typography.Text>
-				) : null}
-			</Button>
+			</div>
 			{actions ? (
 				<SectionActionsMenu
 					sectionId={sectionId}
