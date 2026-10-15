@@ -85,6 +85,31 @@ func PromQLResources(coretypes.ExtractorContext) ([]coretypes.ResourceWithID, er
 	}}, nil
 }
 
+func BuilderQueryResources(resource coretypes.Resource, expression string, variables map[string]qbtypes.VariableItem) ([]coretypes.ResourceWithID, error) {
+	return builderResources(qbtypes.QueryTypeBuilder.StringValue(), resource, expression, variables)
+}
+
+func FilterExpressionResources(resource coretypes.Resource, bodyPath string) coretypes.ResourceExtractor {
+	return func(ec coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
+		return BuilderQueryResources(resource, gjson.GetBytes(ec.RequestBody, bodyPath).String(), nil)
+	}
+}
+
+func WildcardResources(resource coretypes.Resource) coretypes.ResourceExtractor {
+	return func(coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
+		return BuilderQueryResources(resource, "", nil)
+	}
+}
+
+func RawStreamResources(ec coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
+	filter := ""
+	if ec.Request != nil {
+		filter = ec.Request.URL.Query().Get("filter")
+	}
+
+	return BuilderQueryResources(coretypes.ResourceTelemetryResourceLogs, filter, nil)
+}
+
 func resourcesForQuery(query gjson.Result, variables map[string]qbtypes.VariableItem) ([]coretypes.ResourceWithID, error) {
 	queryType := query.Get("type").String()
 	typeWildcard := queryType + "/" + coretypes.WildCardSelectorString
@@ -120,7 +145,11 @@ func resourcesForBuilderQuery(queryType string, spec gjson.Result, variables map
 }
 
 func builderQueryResourceRefs(queryType string, resource coretypes.Resource, spec gjson.Result, variables map[string]qbtypes.VariableItem) ([]coretypes.ResourceWithID, error) {
-	ids, err := builderQuerySelectors(queryType, spec.Get("filter.expression").String(), variables)
+	return builderResources(queryType, resource, spec.Get("filter.expression").String(), variables)
+}
+
+func builderResources(queryType string, resource coretypes.Resource, expression string, variables map[string]qbtypes.VariableItem) ([]coretypes.ResourceWithID, error) {
+	ids, err := builderQuerySelectors(queryType, expression, variables)
 	if err != nil {
 		return nil, err
 	}

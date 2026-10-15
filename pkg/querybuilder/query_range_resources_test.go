@@ -2,6 +2,9 @@ package querybuilder
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
@@ -194,4 +197,112 @@ func TestTelemetrySelector(t *testing.T) {
 	assert.Equal(t, []string{"*"}, selectorValues("*"))
 	// a value containing "/" stays one logical segment (SplitN 3).
 	assert.Equal(t, []string{"builder_query/signoz.workspace.key.id/a/b", "builder_query/signoz.workspace.key.id/*", "builder_query/*", "*"}, selectorValues("builder_query/signoz.workspace.key.id/a/b"))
+}
+
+func TestBuilderQueryResources(t *testing.T) {
+	testCases := []struct {
+		name       string
+		expression string
+		expected   []coretypes.ResourceWithID
+	}{
+		{
+			name:       "PinnedKey_ScopedID",
+			expression: "signoz.workspace.key.id = 'checkout' AND status = 500",
+			expected:   []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: "builder_query/signoz.workspace.key.id/checkout"}},
+		},
+		{
+			name:       "NoFilter_Wildcard",
+			expression: "",
+			expected:   []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: "builder_query/*"}},
+		},
+		{
+			name:       "NonGrantKey_Wildcard",
+			expression: "host.name = 'web-1'",
+			expected:   []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: "builder_query/*"}},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			refs, err := BuilderQueryResources(coretypes.ResourceTelemetryResourceMetrics, testCase.expression, nil)
+			require.NoError(t, err)
+			assert.Equal(t, testCase.expected, refs)
+		})
+	}
+}
+
+func TestFilterExpressionResources(t *testing.T) {
+	testCases := []struct {
+		name     string
+		body     string
+		expected []coretypes.ResourceWithID
+	}{
+		{
+			name:     "FilterPresent_ScopedID",
+			body:     `{"start":1,"end":2,"filter":{"expression":"signoz.workspace.key.id = 'key-a'"}}`,
+			expected: []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/signoz.workspace.key.id/key-a"}},
+		},
+		{
+			name:     "FilterAbsent_Wildcard",
+			body:     `{"start":1,"end":2}`,
+			expected: []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/*"}},
+		},
+		{
+			name:     "EmptyBody_Wildcard",
+			body:     ``,
+			expected: []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/*"}},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			refs, err := FilterExpressionResources(coretypes.ResourceTelemetryResourceTraces, "filter.expression")(coretypes.ExtractorContext{RequestBody: []byte(testCase.body)})
+			require.NoError(t, err)
+			assert.Equal(t, testCase.expected, refs)
+		})
+	}
+
+	t.Run("InvalidExpression_Error", func(t *testing.T) {
+		_, err := FilterExpressionResources(coretypes.ResourceTelemetryResourceTraces, "filter.expression")(coretypes.ExtractorContext{RequestBody: []byte(`{"filter":{"expression":"signoz.workspace.key.id = "}}`)})
+		require.Error(t, err)
+	})
+}
+
+func TestWildcardResources(t *testing.T) {
+	refs, err := WildcardResources(coretypes.ResourceTelemetryResourceTraces)(coretypes.ExtractorContext{})
+	require.NoError(t, err)
+	assert.Equal(t, []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/*"}}, refs)
+}
+
+func TestRawStreamResources(t *testing.T) {
+	testCases := []struct {
+		name     string
+		target   string
+		expected []coretypes.ResourceWithID
+	}{
+		{
+			name:     "FilterParam_ScopedID",
+			target:   "/api/v3/logs/livetail?start=1&filter=" + url.QueryEscape("signoz.workspace.key.id = 'key-a'"),
+			expected: []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id/key-a"}},
+		},
+		{
+			name:     "NoFilterParam_Wildcard",
+			target:   "/api/v3/logs/livetail?start=1",
+			expected: []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/*"}},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			refs, err := RawStreamResources(coretypes.ExtractorContext{Request: httptest.NewRequest(http.MethodGet, testCase.target, nil)})
+			require.NoError(t, err)
+			assert.Equal(t, testCase.expected, refs)
+		})
+	}
+
+	t.Run("NilRequest_Wildcard", func(t *testing.T) {
+		refs, err := RawStreamResources(coretypes.ExtractorContext{})
+		require.NoError(t, err)
+		assert.Equal(t, []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/*"}}, refs)
+	})
 }
