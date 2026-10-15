@@ -26,7 +26,6 @@ export function getChannelColumns(
 		return (
 			<TanStackTable.HoverTooltip
 				rowId={row.id}
-				arrow
 				title={formatTimezoneAdjustedTimestamp(
 					value,
 					DATE_TIME_FORMATS.DASH_DATETIME,
