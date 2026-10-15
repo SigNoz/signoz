@@ -6,6 +6,7 @@ export type FixtureDataset =
 	| 'cityLatency'
 	| 'cityLatencyAndRequests'
 	| 'manyPoints'
+	| 'maxPoints'
 	| 'requests'
 	| 'europeLatency'
 	| 'usStates'

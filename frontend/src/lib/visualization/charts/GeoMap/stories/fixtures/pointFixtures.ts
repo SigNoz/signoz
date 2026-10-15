@@ -94,7 +94,7 @@ export function cityLatency(): GeoMapPoint[] {
 }
 
 /** The panel's point cap: rows beyond it are dropped with a warning. */
-export const MAX_POINTS = 5_000;
+export const MAX_POINTS = 100_000;
 
 /**
  * Requests from `count` points scattered around the cities, denser near

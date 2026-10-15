@@ -14,6 +14,7 @@ import { GeoMapProps } from './types';
 import { useOlLayers } from './hooks/useOlLayers';
 import { useOlMap } from './hooks/useOlMap';
 import { useOlPointer } from './hooks/useOlPointer';
+import { useOlPointsLayer } from './hooks/useOlPointsLayer';
 import { useOlView } from './hooks/useOlView';
 import { OlPalette, readPalette } from './utils/olStyles';
 
@@ -73,6 +74,7 @@ export default function GeoMap({
 	);
 	const { shapes, status, retry } = useGeoMapShapes(view, country);
 	const handle = useOlMap(canvasRef);
+	const pointsLayer = useOlPointsLayer(handle, layer === 'points');
 
 	useEffect(() => {
 		if (wrapperRef.current) {
@@ -127,6 +129,7 @@ export default function GeoMap({
 		shapes,
 		data,
 		points,
+		pointsLayer,
 		layer,
 		palette,
 		fillFor,
@@ -145,7 +148,7 @@ export default function GeoMap({
 		height,
 		layer === 'points' ? points : undefined,
 	);
-	useOlPointer(handle, handleHover, handleSelect);
+	useOlPointer(handle, handleHover, handleSelect, pointsLayer.layer);
 
 	return (
 		<div

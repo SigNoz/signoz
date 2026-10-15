@@ -108,6 +108,12 @@ export const FIXTURES: Record<FixtureDataset, Fixture> = {
 		rows: [],
 		points: manyPoints(5_000),
 	},
+	maxPoints: {
+		title: 'Requests by location (100,000 points)',
+		unit: 'count',
+		rows: [],
+		points: manyPoints(),
+	},
 	cityLatencyAndRequests: {
 		title: 'p95 latency by city, sized by requests',
 		unit: 'ms',

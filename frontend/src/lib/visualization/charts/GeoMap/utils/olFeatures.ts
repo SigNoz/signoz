@@ -8,6 +8,7 @@ import { fromLonLat, transformExtent } from 'ol/proj';
 
 import { GeoMapShapes } from '../geo/shapes';
 import { getViewBox } from '../geo/views';
+import { BUBBLE_ALPHA, MIN_OUTLINED_POINT_RADIUS, withAlpha } from './olStyles';
 import {
 	GeoMapDatum,
 	GeoMapPoint,
@@ -98,6 +99,45 @@ export function toPointFeatures(points: GeoMapPoint[]): Feature[] {
 				code: point.id,
 			}),
 	);
+}
+
+/**
+ * Points for the GPU layer, each carrying the colour, radius and outline width
+ * its style reads. Largest first: the GPU draws in order, so small points land
+ * on top of big ones.
+ */
+export function toWebGLPointFeatures(
+	points: GeoMapPoint[],
+	{
+		fillFor,
+		radiusFor,
+		sizeByCode,
+		noData,
+	}: {
+		fillFor: (code: string) => string | null;
+		radiusFor: (size: number) => number;
+		sizeByCode: Map<string, number>;
+		noData: string;
+	},
+): Feature[] {
+	return points
+		.flatMap((point) => {
+			const size = sizeByCode.get(point.id);
+			if (size === undefined) {
+				return [];
+			}
+			const radius = radiusFor(size);
+			const feature = new Feature({
+				geometry: new Point(fromLonLat([point.lon, point.lat])),
+				code: point.id,
+				radius,
+				color: withAlpha(fillFor(point.id) ?? noData, BUBBLE_ALPHA),
+				stroke: radius >= MIN_OUTLINED_POINT_RADIUS ? 1 : 0,
+			});
+			feature.setId(point.id);
+			return [feature];
+		})
+		.sort((a, b) => (b.get('radius') as number) - (a.get('radius') as number));
 }
 
 /** A view's lon/lat box as a Web Mercator extent. */
