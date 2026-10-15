@@ -3,11 +3,11 @@ import {
 	AlertmanagertypesChannelKindDTO,
 	AlertmanagertypesChannelListOrderDTO,
 	AlertmanagertypesChannelListSortDTO,
-	AlertmanagertypesListedNotificationChannelDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { SortState } from 'components/TanStackTableView';
 
 import { KIND_FILTER_ALL } from '../constants';
+import type { Channel } from '../types';
 
 /** Table column ids the list API can order by. */
 const SORT_BY_COLUMN: Record<string, AlertmanagertypesChannelListSortDTO> = {
@@ -26,7 +26,7 @@ interface UseChannelsDataArgs {
 }
 
 export interface ChannelsData {
-	channels: AlertmanagertypesListedNotificationChannelDTO[];
+	channels: Channel[];
 	total: number;
 	isFetching: boolean;
 	isError: boolean;
