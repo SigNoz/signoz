@@ -1,28 +1,37 @@
+// Three groups: the colour bar with its label, the swatch keys, the size legend.
 .legend {
+	display: flex;
+	flex: 0 0 auto;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 24px;
+	padding: 8px 12px 10px;
+}
+
+.colorGroup {
+	display: flex;
+	flex: 1 1 240px;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+	max-width: 440px;
+}
+
+.legendBar {
+	flex: 1 1 auto;
+	min-width: 0;
+
+	// The bar's own padding is for a standalone legend row; the groups space it here.
+	> * {
+		padding: 0;
+	}
+}
+
+.keys {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 8px;
-	flex: 0 0 auto;
-}
-
-.legend[data-position='right'] {
-	flex-direction: column;
-	flex-wrap: nowrap;
-	align-items: flex-start;
-	gap: 16px;
-	max-width: 200px;
-	padding: 12px 16px 12px 4px;
-
-	.legendBar {
-		flex: 1 1 auto;
-		min-height: 80px;
-		max-width: none;
-	}
-
-	.noDataKey {
-		padding-right: 0;
-	}
+	gap: 6px 12px;
 }
 
 .metricLabel {
@@ -31,19 +40,13 @@
 	white-space: nowrap;
 }
 
-.legendBar {
-	flex: 1 1 auto;
-	max-width: 360px;
-}
-
-.noDataKey,
 .key {
 	display: flex;
 	align-items: center;
 	gap: 4px;
 	font-size: 11px;
 	color: var(--l3-foreground);
-	padding-right: 12px;
+	white-space: nowrap;
 }
 
 .noDataSwatch {
@@ -58,4 +61,31 @@
 	width: 10px;
 	height: 10px;
 	border-radius: 2px;
+}
+
+.legend[data-position='right'] {
+	flex-direction: column;
+	flex-wrap: nowrap;
+	align-items: flex-start;
+	gap: 16px;
+	max-width: 200px;
+	padding: 12px 16px 12px 4px;
+
+	.colorGroup {
+		flex: 1 1 auto;
+		flex-direction: column;
+		align-items: flex-start;
+		min-height: 80px;
+		max-width: none;
+	}
+
+	.legendBar {
+		flex: 1 1 auto;
+		min-height: 0;
+	}
+
+	.keys {
+		flex-direction: column;
+		align-items: flex-start;
+	}
 }

@@ -23,7 +23,7 @@ interface MapLegendProps {
 	scale: ColorRampScale;
 	formatValue: (value: number) => string;
 	markerValue: number | null;
-	/** Names the colour bar; shown only beside a size legend, where it's ambiguous. */
+	/** Names the column the colour bar shows. */
 	valueLabel?: string;
 	colorKeys?: GeoMapColorKey[];
 	position?: LegendPosition;
@@ -49,32 +49,34 @@ export default function MapLegend({
 			data-position={position}
 			data-testid="geo-map-legend"
 		>
-			{size && valueLabel && (
-				<span className={styles.metricLabel}>{valueLabel}</span>
-			)}
-			<div className={styles.legendBar}>
-				<ColorBar
-					ramp={resolver.ramp}
-					minLabel={formatValue(bottom)}
-					maxLabel={formatValue(resolver.domain.max)}
-					markerPosition={resolver.positionOf(markerValue)}
-					orientation={isRight ? 'vertical' : 'horizontal'}
-				/>
+			<div className={styles.colorGroup}>
+				{valueLabel && <span className={styles.metricLabel}>{valueLabel}</span>}
+				<div className={styles.legendBar}>
+					<ColorBar
+						ramp={resolver.ramp}
+						minLabel={formatValue(bottom)}
+						maxLabel={formatValue(resolver.domain.max)}
+						markerPosition={resolver.positionOf(markerValue)}
+						orientation={isRight ? 'vertical' : 'horizontal'}
+					/>
+				</div>
 			</div>
-			<span className={styles.noDataKey}>
-				<span className={styles.noDataSwatch} />
-				No data
-			</span>
-			{colorKeys.map((key) => (
-				<span
-					key={`${key.label}-${key.color}`}
-					className={styles.key}
-					data-testid="geo-map-color-key"
-				>
-					<span className={styles.swatch} style={{ background: key.color }} />
-					{key.label}
+			<div className={styles.keys}>
+				<span className={styles.key}>
+					<span className={styles.noDataSwatch} />
+					No data
 				</span>
-			))}
+				{colorKeys.map((key) => (
+					<span
+						key={`${key.label}-${key.color}`}
+						className={styles.key}
+						data-testid="geo-map-color-key"
+					>
+						<span className={styles.swatch} style={{ background: key.color }} />
+						{key.label}
+					</span>
+				))}
+			</div>
 			{size && (
 				<SizeLegend
 					label={size.label}

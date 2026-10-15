@@ -10,6 +10,7 @@ import ZoomControls from './components/ZoomControls/ZoomControls';
 import { useGeoMapScales } from './hooks/useGeoMapScales';
 import { useGeoMapShapes } from './hooks/useGeoMapShapes';
 import { formatCoordinates } from './utils/coordinates';
+import { findShapeAt } from './utils/olFeatures';
 import { pointAsDatum } from './utils/scales';
 import { GeoMapProps } from './types';
 import { useOlLayers } from './hooks/useOlLayers';
@@ -63,7 +64,7 @@ export default function GeoMap({
 		() => (layer === 'points' ? (points ?? []).map(pointAsDatum) : data),
 		[layer, points, data],
 	);
-	const { resolver, valueByCode, ranks, sizeByCode, radiusFor, fillFor } =
+	const { resolver, valueByCode, sizeByCode, radiusFor, fillFor } =
 		useGeoMapScales(
 			scaleData,
 			colors,
@@ -126,6 +127,17 @@ export default function GeoMap({
 	const hovered =
 		tooltipOpen && tooltipData ? valueByCode.get(tooltipData) : undefined;
 	const hoveredPoint = hovered ? pointById.get(hovered.code) : undefined;
+	// A point without a label is named by the shape it falls in.
+	const hoveredPlace = useMemo(() => {
+		if (!hoveredPoint || hoveredPoint.label || !handle || !shapes) {
+			return undefined;
+		}
+		const code = findShapeAt(
+			[handle.layers.members.getSource(), handle.layers.context.getSource()],
+			[hoveredPoint.lon, hoveredPoint.lat],
+		);
+		return code ? shapes.nameOf(code) : undefined;
+	}, [hoveredPoint, handle, shapes]);
 
 	useOlLayers({
 		handle,
@@ -195,14 +207,16 @@ export default function GeoMap({
 						<CountryTooltip
 							datum={hovered}
 							name={
-								hoveredPoint?.label ?? shapes?.nameOf(hovered.code) ?? hovered.code
+								hoveredPoint
+									? hoveredPoint.label ||
+										hoveredPlace ||
+										formatCoordinates(hoveredPoint.lat, hoveredPoint.lon)
+									: (shapes?.nameOf(hovered.code) ?? hovered.code)
 							}
 							place={
 								hoveredPoint && formatCoordinates(hoveredPoint.lat, hoveredPoint.lon)
 							}
 							color={fillFor(hovered.code) ?? resolver.colorFor(hovered.value)}
-							rank={ranks.get(hovered.code)}
-							total={scaleData.length}
 							formatValue={formatValue}
 							valueLabel={valueLabel}
 							sizeMetric={sizeMetric}

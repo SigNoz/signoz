@@ -4,6 +4,7 @@ import MultiPolygon from 'ol/geom/MultiPolygon';
 import Point from 'ol/geom/Point';
 import Polygon from 'ol/geom/Polygon';
 import type { Extent } from 'ol/extent';
+import type VectorSource from 'ol/source/Vector';
 import { fromLonLat, transformExtent } from 'ol/proj';
 
 import { GeoMapShapes } from '../geo/shapes';
@@ -31,6 +32,21 @@ export function toShapeFeatures(shapes: GeoMapShapes): {
 			{ featureProjection: 'EPSG:3857' },
 		) as Feature[];
 	return { members: read(members), context: read(context) };
+}
+
+/** Code of the first shape under a lon/lat, searching the sources in order. */
+export function findShapeAt(
+	sources: (VectorSource | null)[],
+	[lon, lat]: [number, number],
+): string | null {
+	const coordinate = fromLonLat([lon, lat]);
+	for (const source of sources) {
+		const code = source?.getFeaturesAtCoordinate(coordinate)[0]?.get('code');
+		if (typeof code === 'string' && code) {
+			return code;
+		}
+	}
+	return null;
 }
 
 /** One point per value at its shape's label point. */

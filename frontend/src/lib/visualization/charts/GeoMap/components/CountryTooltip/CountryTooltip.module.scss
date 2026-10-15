@@ -17,14 +17,35 @@
 	max-width: 360px;
 }
 
+.heading {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+	padding: var(--spacing-8) var(--gutter) var(--spacing-6);
+}
+
 .header {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	gap: var(--spacing-6);
-	padding: var(--spacing-8) var(--gutter) 0;
 	font-size: var(--font-size-sm);
 	font-weight: 500;
+}
+
+// Lines up with the name, past the marker and its gap.
+.subtitle {
+	padding-left: calc(12px + var(--spacing-3));
+	font-family: var(--font-mono);
+	font-size: var(--font-size-xs);
+	color: var(--muted-foreground);
+}
+
+.place {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	min-width: 0;
 }
 
 .name {
@@ -41,13 +62,6 @@
 	color: var(--muted-foreground);
 }
 
-.title {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-3);
-	padding: var(--spacing-4) var(--gutter) var(--spacing-6);
-}
-
 .marker {
 	width: 12px;
 	height: 12px;
@@ -59,15 +73,8 @@
 	flex-shrink: 0;
 }
 
-.metricLabel {
-	font-family: var(--font-mono);
-	font-size: var(--font-size-xs);
-	color: var(--muted-foreground);
-}
-
 .value {
-	font-family: var(--font-mono);
-	font-size: var(--font-size-xs);
+	white-space: nowrap;
 	font-weight: 700;
 	letter-spacing: -0.01em;
 	font-variant-numeric: tabular-nums;
