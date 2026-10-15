@@ -1,12 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import MEditor from '@monaco-editor/react';
-import { Color } from '@signozhq/design-tokens';
-import { Check, Copy, Eye, EyeOff } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
-import { Typography } from '@signozhq/ui/typography';
 import { useGetNotificationChannel } from 'api/generated/services/channels';
+import ErrorEmptyState from 'components/Alerts/ErrorEmptyState';
 import Spinner from 'components/Spinner';
 import { READONLY_EDITOR_OPTIONS } from 'container/RolesSettings/monaco.config';
 import {
@@ -16,6 +13,7 @@ import {
 
 import { channelToJson, hasSecrets } from '../../utils/channelJson';
 import styles from './ChannelJsonDialog.module.scss';
+import ChannelJsonToolbar from './ChannelJsonToolbar';
 
 interface ChannelJsonDialogProps {
 	channelId: string;
@@ -32,7 +30,9 @@ function ChannelJsonDialog({
 	const [copied, setCopied] = useState(false);
 	const [showSecrets, setShowSecrets] = useState(false);
 
-	const { data, isLoading } = useGetNotificationChannel({ id: channelId });
+	const { data, isLoading, refetch } = useGetNotificationChannel({
+		id: channelId,
+	});
 	const channel = data?.data;
 
 	const json = useMemo(
@@ -54,6 +54,15 @@ function ChannelJsonDialog({
 		[copyToClipboard, json],
 	);
 
+	const handleRefetch = useCallback((): void => {
+		void refetch();
+	}, [refetch]);
+
+	const handleToggleSecrets = useCallback(
+		(): void => setShowSecrets((value) => !value),
+		[],
+	);
+
 	const kindHasSecrets = channel ? hasSecrets(channel.config.kind) : false;
 
 	return (
@@ -69,46 +78,19 @@ function ChannelJsonDialog({
 			width="wide"
 			testId="channel-json-dialog"
 		>
-			{isLoading || !channel ? (
+			{isLoading ? (
 				<Spinner tip="Loading channel..." />
+			) : !channel ? (
+				<ErrorEmptyState title="Failed to load channel" onRefresh={handleRefetch} />
 			) : (
 				<div className={styles.body}>
-					<div className={styles.toolbar}>
-						{kindHasSecrets && (
-							<Typography.Text color="muted" size="sm">
-								{showSecrets ? 'Credentials are visible.' : 'Credentials are hidden.'}
-							</Typography.Text>
-						)}
-						<span className={styles.spacer} />
-						{kindHasSecrets && (
-							<Button
-								variant="outlined"
-								color="secondary"
-								size="sm"
-								prefix={showSecrets ? <EyeOff size={14} /> : <Eye size={14} />}
-								onClick={(): void => setShowSecrets((value) => !value)}
-								testId="channel-json-toggle-secrets"
-							>
-								{showSecrets ? 'Hide credentials' : 'Show credentials'}
-							</Button>
-						)}
-						<Button
-							variant="outlined"
-							color="secondary"
-							size="sm"
-							prefix={
-								copied ? (
-									<Check size={14} color={Color.BG_FOREST_400} />
-								) : (
-									<Copy size={14} />
-								)
-							}
-							onClick={handleCopy}
-							testId="channel-json-copy"
-						>
-							{copied ? 'Copied' : 'Copy'}
-						</Button>
-					</div>
+					<ChannelJsonToolbar
+						kindHasSecrets={kindHasSecrets}
+						showSecrets={showSecrets}
+						onToggleSecrets={handleToggleSecrets}
+						copied={copied}
+						onCopy={handleCopy}
+					/>
 
 					<div className={styles.editor}>
 						<MEditor
