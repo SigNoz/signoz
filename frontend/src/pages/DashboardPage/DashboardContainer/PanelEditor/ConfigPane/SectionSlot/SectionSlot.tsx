@@ -1,5 +1,8 @@
 import { type ReactNode, useCallback, useRef, useState } from 'react';
-import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	DashboardtypesGeoMapSettingsDTO,
+	DashboardtypesPanelSpecDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import {
 	type PanelFormattingSlice,
 	SECTION_METADATA,
@@ -76,13 +79,15 @@ function SectionSlot({
 	queryType,
 	stepInterval,
 	metricUnit,
+	geoMapPlacement,
 }: SectionSlotProps): JSX.Element | null {
 	const editor = resolveSectionEditor(config.kind);
 	// Controlled so the header slot can expand on click; list sections open when populated.
 	const [open, setOpen] = useState(() => {
 		if (
 			config.kind === SectionKind.Visualization ||
-			config.kind === SectionKind.Dimensions
+			config.kind === SectionKind.Dimensions ||
+			config.kind === SectionKind.Location
 		) {
 			return true;
 		}
@@ -142,6 +147,8 @@ function SectionSlot({
 		sizeColumnLabel: getSizeColumnLabel(spec, tableColumns),
 		axisColumnNames: getScatterAxisColumnNames(spec, tableColumns),
 		axisColumnUnits: getScatterAxisColumnUnits(spec, tableColumns),
+		mapLayer: (spec.plugin.spec as { map?: DashboardtypesGeoMapSettingsDTO }).map
+			?.layer,
 		signal,
 		panelKind,
 		onChangePanelKind,
@@ -149,6 +156,7 @@ function SectionSlot({
 		queryType,
 		stepInterval,
 		metricUnit,
+		geoMapPlacement,
 	};
 
 	const editorElement = (

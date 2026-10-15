@@ -55,6 +55,32 @@
 	}
 }
 
+.disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+
+	.input {
+		cursor: not-allowed;
+	}
+
+	&:hover {
+		border-color: var(--l1-border);
+	}
+}
+
+.badge {
+	position: absolute;
+	top: 6px;
+	right: 6px;
+	padding: 0 5px;
+	border-radius: 2px;
+	background: var(--bg-robin-500);
+	color: var(--bg-vanilla-100);
+	font-family: 'Geist Mono', monospace;
+	font-size: 10px;
+	line-height: 14px;
+}
+
 .label {
 	overflow: hidden;
 	white-space: nowrap;

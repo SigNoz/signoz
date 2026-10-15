@@ -9,6 +9,9 @@ export interface ConfigTileItem<T extends string = string> {
 	/** Accessible name when `label` alone is ambiguous (e.g. a bare symbol). */
 	ariaLabel?: string;
 	drawing?: ReactNode;
+	disabled?: boolean;
+	/** Short tag in the tile's corner, e.g. what auto detection picked. */
+	badge?: string;
 }
 
 interface ConfigTilesProps<T extends string> {
@@ -50,7 +53,10 @@ function ConfigTiles<T extends string>({
 						<label
 							key={item.value}
 							data-testid={`${testId}-${item.value}`}
-							className={cx(styles.tile, { [styles.selected]: selected })}
+							className={cx(styles.tile, {
+								[styles.selected]: selected,
+								[styles.disabled]: item.disabled,
+							})}
 						>
 							<input
 								type="radio"
@@ -58,9 +64,11 @@ function ConfigTiles<T extends string>({
 								name={name}
 								value={item.value}
 								checked={selected}
+								disabled={item.disabled}
 								aria-label={item.ariaLabel ?? item.label}
 								onChange={(): void => onChange(item.value)}
 							/>
+							{item.badge && <span className={styles.badge}>{item.badge}</span>}
 							{item.drawing}
 							<span className={styles.label}>{item.label}</span>
 						</label>

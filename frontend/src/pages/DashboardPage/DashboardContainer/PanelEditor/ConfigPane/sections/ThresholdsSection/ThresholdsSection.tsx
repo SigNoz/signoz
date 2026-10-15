@@ -32,6 +32,8 @@ const HELP: Record<ThresholdVariant, string> = {
 	comparison:
 		'Changes the number’s color when it crosses a value. Useful for green / amber / red status.',
 	table: 'Colors cells in a column when they cross a value.',
+	color:
+		'Colors a location when its value crosses a value, in place of the palette.',
 };
 
 // Add-button testId per variant — kept stable so existing E2E/unit selectors hold.
@@ -39,6 +41,7 @@ const ADD_TESTID: Record<ThresholdVariant, string> = {
 	label: 'panel-editor-v2-add-threshold',
 	comparison: 'panel-editor-v2-add-comparison-threshold',
 	table: 'panel-editor-v2-add-table-threshold',
+	color: 'panel-editor-v2-add-color-threshold',
 };
 
 // Seed for a freshly-added row, in the shape the variant's editor + spec expect.
@@ -54,6 +57,12 @@ function defaultThreshold(
 				color: DEFAULT_THRESHOLD_COLOR,
 				operator: DashboardtypesComparisonOperatorDTO.above,
 				format: DashboardtypesThresholdFormatDTO.text,
+			};
+		case 'color':
+			return {
+				value: 0,
+				color: DEFAULT_THRESHOLD_COLOR,
+				operator: DashboardtypesComparisonOperatorDTO.above,
 			};
 		case 'table':
 			return {
@@ -173,12 +182,13 @@ function ThresholdsSection({
 			onRemove: (): void => removeAt(index),
 		};
 
-		if (variant === 'comparison') {
+		if (variant === 'comparison' || variant === 'color') {
 			return (
 				<ComparisonThresholdRow
 					// eslint-disable-next-line react/no-array-index-key
 					key={index}
 					threshold={threshold as DashboardtypesComparisonThresholdDTO}
+					withFormat={variant === 'comparison'}
 					{...common}
 				/>
 			);

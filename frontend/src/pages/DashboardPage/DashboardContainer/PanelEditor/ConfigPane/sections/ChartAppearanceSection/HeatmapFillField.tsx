@@ -9,6 +9,8 @@ interface HeatmapFillFieldProps extends Partial<FieldResetProps> {
 	/** Empty follows the selected group's legend colour. */
 	value: string | undefined;
 	onChange: (fill: string) => void;
+	/** Off for a chart with no group colour to follow; empty then reads as the default fill. */
+	withGroupColor?: boolean;
 }
 
 /**
@@ -20,15 +22,22 @@ function HeatmapFillField({
 	onChange,
 	changed,
 	onReset,
+	withGroupColor = true,
 }: HeatmapFillFieldProps): JSX.Element {
-	const selected = value
-		? FILL_OPTIONS.find((option) => isSameColor(option.value, value))?.value
+	const options = withGroupColor
+		? FILL_OPTIONS
+		: FILL_OPTIONS.filter((option) => option.value !== GROUP_FILL);
+	const current = value || (withGroupColor ? GROUP_FILL : DEFAULT_OPACITY_FILL);
+	const selected = current
+		? options.find((option) => isSameColor(option.value, current))?.value
 		: GROUP_FILL;
 
 	return (
 		<ConfigField
 			label="Base color"
-			help="Group color gives each group its own color."
+			help={
+				withGroupColor ? 'Group color gives each group its own color.' : undefined
+			}
 			changed={changed}
 			onReset={onReset}
 		>
@@ -36,8 +45,8 @@ function HeatmapFillField({
 				testId="panel-editor-v2-heatmap-fill"
 				label="Base color"
 				value={selected}
-				options={FILL_OPTIONS}
-				dividerAfter={0}
+				options={options}
+				dividerAfter={withGroupColor ? 0 : undefined}
 				onChange={onChange}
 				custom={{
 					value: selected === undefined ? value : undefined,

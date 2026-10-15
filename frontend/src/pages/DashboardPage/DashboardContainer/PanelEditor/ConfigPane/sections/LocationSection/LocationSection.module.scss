@@ -1,0 +1,158 @@
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: 22px;
+}
+
+.group {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.empty {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 16px;
+	border: 1px dashed var(--l2-border);
+	border-radius: 4px;
+}
+
+.emptyTitle {
+	color: var(--l1-foreground);
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.muted {
+	color: var(--l2-foreground);
+	font-size: 12px;
+	line-height: 17px;
+}
+
+.chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.chip {
+	padding: 0 8px;
+	border-radius: 3px;
+	background: var(--l3-background);
+	color: var(--l1-foreground);
+	font-family: 'Geist Mono', monospace;
+	font-size: 12px;
+	line-height: 22px;
+}
+
+.error {
+	color: var(--bg-cherry-400);
+	font-size: 12px;
+	line-height: 17px;
+}
+
+.warning {
+	color: var(--bg-amber-400);
+	font-size: 12px;
+	line-height: 17px;
+}
+
+.fix {
+	align-self: flex-start;
+}
+
+.mono {
+	font-family: 'Geist Mono', monospace;
+}
+
+.status {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-top: -12px;
+}
+
+.statusLine {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.dot {
+	flex: none;
+	width: 8px;
+	height: 8px;
+	border-radius: 4px;
+
+	&[data-tone='ok'] {
+		background: var(--bg-forest-500);
+	}
+
+	&[data-tone='warn'] {
+		background: var(--bg-amber-500);
+	}
+
+	&[data-tone='error'] {
+		background: var(--bg-cherry-500);
+	}
+}
+
+.statusText {
+	flex: 1;
+	min-width: 0;
+}
+
+.unplaced {
+	display: flex;
+	flex-direction: column;
+	border: 1px solid var(--l1-border);
+	border-radius: 4px;
+	background: var(--l2-background);
+}
+
+.unplacedRow {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 8px 12px;
+
+	& + & {
+		border-top: 1px solid var(--l1-border);
+	}
+}
+
+.unplacedWhy {
+	flex: 1;
+	min-width: 0;
+	text-align: right;
+}
+
+.disclosure {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--l1-foreground);
+	font: inherit;
+	font-size: 13px;
+	text-align: left;
+	cursor: pointer;
+}
+
+.chevron {
+	display: flex;
+	color: var(--l2-foreground);
+	transition: transform 150ms;
+
+	&[data-open='true'] {
+		transform: rotate(90deg);
+	}
+}
+
+.grow {
+	flex: 1;
+}
