@@ -1,3 +1,5 @@
+import type { SpantypesWaterfallSpanDTO } from 'api/generated/services/sigNoz.schemas';
+import { pick } from 'lodash-es';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { COLOR_BY_OPTIONS } from './constants';
@@ -48,7 +50,7 @@ export function hasInfraMetadata(span: SpanV3 | undefined): boolean {
 
 // Top-level fields shown in the Span Details DataViewer. Everything else on the
 // API response (e.g. waterfall rendering data) is hidden.
-const VISIBLE_SPAN_FIELDS_IN_DETAILS_VIEW: readonly string[] = [
+const VISIBLE_SPAN_FIELDS_IN_DETAILS_VIEW = [
 	'span_id',
 	'trace_id',
 	'parent_span_id',
@@ -74,21 +76,14 @@ const VISIBLE_SPAN_FIELDS_IN_DETAILS_VIEW: readonly string[] = [
 	'external_http_method',
 	'external_http_url',
 	'response_status_code',
-];
+] as const satisfies readonly (keyof SpantypesWaterfallSpanDTO)[];
 
 /**
  * Shallow-copies the allow-listed span fields, for display in the Span Details
  * DataViewer.
  */
 export function getSpanDisplayData(span: SpanV3): Record<string, unknown> {
-	const source = span as unknown as Record<string, unknown>;
-	const result: Record<string, unknown> = {};
-	for (const key of VISIBLE_SPAN_FIELDS_IN_DETAILS_VIEW) {
-		if (key in source) {
-			result[key] = source[key];
-		}
-	}
-	return result;
+	return pick(span, VISIBLE_SPAN_FIELDS_IN_DETAILS_VIEW);
 }
 
 /**
