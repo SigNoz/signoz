@@ -144,22 +144,6 @@
 		border: none;
 		border-top: 1px solid var(--l2-border);
 	}
-
-	:global(table) {
-		margin: 0 0 var(--spacing-4);
-		border-collapse: collapse;
-	}
-
-	:global(:is(th, td)) {
-		padding: var(--spacing-2) var(--spacing-4);
-		border: 1px solid var(--l2-border);
-		text-align: left;
-	}
-
-	:global(th) {
-		background: var(--l2-background);
-		font-weight: var(--font-weight-semibold);
-	}
 }
 
 .plainText {

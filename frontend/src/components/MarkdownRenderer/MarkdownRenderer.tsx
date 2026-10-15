@@ -65,6 +65,21 @@ function Code({
 	);
 }
 
+// Untrusted images become links so viewing a message never fetches a third-party URL.
+function ImageAsLink({
+	src,
+	alt,
+}: {
+	src?: string;
+	alt?: string;
+}): JSX.Element {
+	return (
+		<a href={src} target="_blank" rel="noopener noreferrer">
+			{alt || src}
+		</a>
+	);
+}
+
 function Link({ href, children }: LinkProps): JSX.Element {
 	return (
 		<a href={href} target="_blank" rel="noopener noreferrer">
@@ -101,19 +116,22 @@ function MarkdownRenderer({
 	trackCopyAction,
 	elementDetails,
 	className,
+	isTrusted = true,
 }: {
 	markdownContent: any;
 	variables: any;
 	trackCopyAction?: boolean;
 	elementDetails?: Record<string, unknown>;
 	className?: string;
+	// False for untrusted content (e.g. telemetry): HTML renders as text, images as links.
+	isTrusted?: boolean;
 }): JSX.Element {
 	const interpolatedMarkdown = interpolateMarkdown(markdownContent, variables);
 
 	return (
 		<ReactMarkdown
 			className={className}
-			rehypePlugins={[rehypeRaw as any]}
+			rehypePlugins={isTrusted ? [rehypeRaw as any] : []}
 			components={{
 				// @ts-expect-error
 				a: Link,
@@ -125,6 +143,7 @@ function MarkdownRenderer({
 					}),
 				code: Code,
 				customtag: CustomTag,
+				...(isTrusted ? {} : { img: ImageAsLink }),
 			}}
 		>
 			{interpolatedMarkdown}
@@ -135,6 +154,7 @@ function MarkdownRenderer({
 MarkdownRenderer.defaultProps = {
 	elementDetails: {},
 	trackCopyAction: false,
+	isTrusted: true,
 };
 
 export { Code, Link, MarkdownRenderer, Pre };

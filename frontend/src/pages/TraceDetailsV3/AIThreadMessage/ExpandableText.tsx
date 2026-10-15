@@ -31,6 +31,7 @@ function ExpandableText({
 					className={styles.text}
 					markdownContent={visibleText}
 					variables={{}}
+					isTrusted={false}
 				/>
 			) : (
 				<div className={cx(styles.text, styles.plainText)}>{visibleText}</div>
