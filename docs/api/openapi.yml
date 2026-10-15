@@ -3820,6 +3820,11 @@ components:
         timePreference:
           $ref: '#/components/schemas/DashboardtypesTimePreference'
       type: object
+    DashboardtypesBubbleRadius:
+      maximum: 64
+      minimum: 1
+      nullable: true
+      type: integer
     DashboardtypesBuilderQuerySpec:
       discriminator:
         mapping:
@@ -3992,6 +3997,145 @@ components:
       minimum: 0
       nullable: true
       type: number
+    DashboardtypesGeoMapBubbles:
+      properties:
+        maxRadius:
+          $ref: '#/components/schemas/DashboardtypesBubbleRadius'
+        minRadius:
+          $ref: '#/components/schemas/DashboardtypesBubbleRadius'
+      type: object
+    DashboardtypesGeoMapChartAppearance:
+      properties:
+        bubbles:
+          $ref: '#/components/schemas/DashboardtypesGeoMapBubbles'
+        colors:
+          $ref: '#/components/schemas/DashboardtypesGeoMapColors'
+        labels:
+          description: Shows country and state names once each fits inside its shape.
+          nullable: true
+          type: boolean
+      type: object
+    DashboardtypesGeoMapColors:
+      properties:
+        max:
+          nullable: true
+          type: number
+        min:
+          nullable: true
+          type: number
+        palette:
+          $ref: '#/components/schemas/DashboardtypesHeatmapPalette'
+        scale:
+          $ref: '#/components/schemas/DashboardtypesHeatmapColorScale'
+        steps:
+          type: integer
+      type: object
+    DashboardtypesGeoMapCountryFormat:
+      enum:
+      - auto
+      - alpha2
+      - alpha3
+      - name
+      type: string
+    DashboardtypesGeoMapLayer:
+      enum:
+      - regions
+      - bubbles
+      - points
+      type: string
+    DashboardtypesGeoMapLocation:
+      properties:
+        country:
+          description: Group-by key holding the country, for the country and subdivision
+            modes.
+          type: string
+        countryFormat:
+          $ref: '#/components/schemas/DashboardtypesGeoMapCountryFormat'
+        lat:
+          description: Group-by key holding the latitude, for the coordinates mode.
+          type: string
+        lon:
+          description: Group-by key holding the longitude, for the coordinates mode.
+          type: string
+        mode:
+          $ref: '#/components/schemas/DashboardtypesGeoMapLocationMode'
+        region:
+          description: Group-by key holding the ISO 3166-2 region code (e.g. geo.region.iso_code),
+            for the subdivision mode.
+          type: string
+      type: object
+    DashboardtypesGeoMapLocationMode:
+      enum:
+      - auto
+      - country
+      - subdivision
+      - coordinates
+      type: string
+    DashboardtypesGeoMapPanelSpec:
+      properties:
+        chartAppearance:
+          $ref: '#/components/schemas/DashboardtypesGeoMapChartAppearance'
+        formatting:
+          $ref: '#/components/schemas/DashboardtypesTableFormatting'
+        legend:
+          $ref: '#/components/schemas/DashboardtypesLegend'
+        location:
+          $ref: '#/components/schemas/DashboardtypesGeoMapLocation'
+        map:
+          $ref: '#/components/schemas/DashboardtypesGeoMapSettings'
+        thresholds:
+          items:
+            $ref: '#/components/schemas/DashboardtypesGeoMapThreshold'
+          nullable: true
+          type: array
+        visualization:
+          $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+      type: object
+    DashboardtypesGeoMapSettings:
+      properties:
+        colorBy:
+          description: Value column key that sets the colour. Empty uses the first
+            value column.
+          type: string
+        layer:
+          $ref: '#/components/schemas/DashboardtypesGeoMapLayer'
+        sizeBy:
+          description: Value column key that sets the bubble or point size. Empty
+            uses colorBy.
+          type: string
+        view:
+          $ref: '#/components/schemas/DashboardtypesGeoMapView'
+        viewCountry:
+          description: ISO 3166-1 alpha-2 code of the country the country view shows.
+          type: string
+      type: object
+    DashboardtypesGeoMapThreshold:
+      properties:
+        color:
+          type: string
+        operator:
+          $ref: '#/components/schemas/DashboardtypesComparisonOperator'
+        unit:
+          type: string
+        value:
+          format: double
+          type: number
+      required:
+      - value
+      - color
+      type: object
+    DashboardtypesGeoMapView:
+      enum:
+      - world
+      - fit
+      - africa
+      - asia
+      - europe
+      - north_america
+      - south_america
+      - oceania
+      - country
+      type: string
     DashboardtypesGettableDashboardV2:
       properties:
         createdAt:
@@ -4527,6 +4671,7 @@ components:
         mapping:
           signoz/AreaChartPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec'
           signoz/BarChartPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec'
+          signoz/GeoMapPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpec'
           signoz/HeatmapPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec'
           signoz/HistogramPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec'
           signoz/ListPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec'
@@ -4551,6 +4696,7 @@ components:
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpec'
       type: object
     DashboardtypesPanelPluginKind:
       enum:
@@ -4566,6 +4712,7 @@ components:
       - signoz/HeatmapPanel
       - signoz/ScatterPlotPanel
       - signoz/TopListPanel
+      - signoz/GeoMapPanel
       type: string
     DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec:
       properties:
@@ -4587,6 +4734,18 @@ components:
           type: string
         spec:
           $ref: '#/components/schemas/DashboardtypesBarChartPanelSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/GeoMapPanel
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesGeoMapPanelSpec'
       required:
       - kind
       - spec
