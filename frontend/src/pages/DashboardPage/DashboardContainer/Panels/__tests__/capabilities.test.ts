@@ -35,6 +35,7 @@ const EXPECTED_QUERY_TYPES: Record<PanelKind, EQueryType[]> = {
 	'signoz/HeatmapPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/PieChartPanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/TopListPanel': [QUERY_BUILDER, CLICKHOUSE],
+	'signoz/GeoMapPanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/TablePanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/ListPanel': [QUERY_BUILDER],
 	'signoz/ScatterPlotPanel': [QUERY_BUILDER, CLICKHOUSE],
@@ -83,6 +84,7 @@ const EXPECTED_QUERY_MODES: Record<PanelKind, QueryMode[]> = {
 	'signoz/ListPanel': [QUERY_BUILDER, QueryMode.AI_QUERY_BUILDER],
 	'signoz/ScatterPlotPanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/TopListPanel': [QUERY_BUILDER, CLICKHOUSE],
+	'signoz/GeoMapPanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/TextPanel': [],
 };
 
@@ -96,6 +98,7 @@ const EXPECTED_SIGNALS: Record<PanelKind, TelemetrytypesSignalDTO[]> = {
 	'signoz/HeatmapPanel': [metrics],
 	'signoz/PieChartPanel': [metrics, logs, traces],
 	'signoz/TopListPanel': [metrics, logs, traces],
+	'signoz/GeoMapPanel': [metrics, logs, traces],
 	'signoz/TablePanel': [metrics, logs, traces],
 	// List renders raw rows; metrics produce no row data.
 	'signoz/ListPanel': [logs, traces],
@@ -170,7 +173,7 @@ const EXPECTED_QUERY_CAPABILITIES: Partial<
 		serverPaginated: false,
 		defaultRowLimit: 10,
 	},
-	// Only Table and Scatter Plot ask the server to join their scalar results into UI rows.
+	// Only Table, Scatter Plot and Geo Map ask the server to join their scalar results into UI rows.
 	'signoz/TablePanel': {
 		requestType: scalar,
 		formatTableResultForUI: true,
@@ -179,6 +182,14 @@ const EXPECTED_QUERY_CAPABILITIES: Partial<
 		serverPaginated: false,
 	},
 	'signoz/ScatterPlotPanel': {
+		requestType: scalar,
+		formatTableResultForUI: true,
+		bucketedStepInterval: false,
+		orderTiebreaker: false,
+		serverPaginated: false,
+		defaultRowLimit: 10_000,
+	},
+	'signoz/GeoMapPanel': {
 		requestType: scalar,
 		formatTableResultForUI: true,
 		bucketedStepInterval: false,

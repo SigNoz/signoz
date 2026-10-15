@@ -72,7 +72,9 @@ export function buildTableCsvRows({
  * reusing the on-screen formatting. Returns [] when the response has no table.
  */
 export function getTableCsvRows(
-	panel: PanelOfKind<'signoz/TablePanel' | 'signoz/ScatterPlotPanel'>,
+	panel: PanelOfKind<
+		'signoz/TablePanel' | 'signoz/ScatterPlotPanel' | 'signoz/GeoMapPanel'
+	>,
 	data: PanelQueryData,
 ): Record<string, string>[] {
 	const spec = panel.spec.plugin.spec;
