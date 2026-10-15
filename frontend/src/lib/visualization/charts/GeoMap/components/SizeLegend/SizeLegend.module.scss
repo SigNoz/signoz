@@ -5,6 +5,12 @@
 	flex: 0 0 auto;
 }
 
+.legend[data-stacked='true'] {
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 6px;
+}
+
 .label {
 	font-size: 11px;
 	color: var(--l3-foreground);

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import TooltipFooter from 'lib/visualization/panels/components/TooltipFooter';
+import { LegendPosition } from 'lib/uPlotV2/components/types';
 import {
 	ColorRampMode,
 	ColorRampPalette,
@@ -37,6 +38,7 @@ export interface GeoMapPlaygroundProps {
 	view: GeoMapView;
 	layer: GeoMapLayer;
 	showLabels: boolean;
+	legendPosition: LegendPosition;
 	mode: ColorRampMode;
 	/** Opacity mode's colour; empty uses the default fill. */
 	fill: string;
@@ -55,6 +57,7 @@ export default function GeoMapPlayground({
 	view,
 	layer,
 	showLabels,
+	legendPosition,
 	mode,
 	fill,
 	palette,
@@ -141,6 +144,7 @@ export default function GeoMapPlayground({
 						layer={fixture.points ? 'points' : layer}
 						points={fixture.points}
 						showLabels={showLabels}
+						legendPosition={legendPosition}
 						colors={colors}
 						bubbleRadius={bubbleRadius}
 						formatValue={formatValue}

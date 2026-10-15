@@ -6,6 +6,25 @@
 	flex: 0 0 auto;
 }
 
+.legend[data-position='right'] {
+	flex-direction: column;
+	flex-wrap: nowrap;
+	align-items: flex-start;
+	gap: 16px;
+	max-width: 200px;
+	padding: 12px 16px 12px 4px;
+
+	.legendBar {
+		flex: 1 1 auto;
+		min-height: 80px;
+		max-width: none;
+	}
+
+	.noDataKey {
+		padding-right: 0;
+	}
+}
+
 .metricLabel {
 	font-size: 11px;
 	color: var(--l3-foreground);

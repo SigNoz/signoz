@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
+import { LegendPosition } from 'lib/uPlotV2/components/types';
 import {
 	ColorRampMode,
 	ColorRampPalette,
@@ -23,6 +24,7 @@ const meta = {
 		view: 'world',
 		layer: 'regions',
 		showLabels: true,
+		legendPosition: LegendPosition.BOTTOM,
 		mode: ColorRampMode.Palette,
 		fill: '',
 		palette: ColorRampPalette.Lava,
@@ -74,6 +76,10 @@ const meta = {
 			options: ['regions', 'bubbles', 'points'],
 		},
 		showLabels: { control: 'boolean' },
+		legendPosition: {
+			control: 'inline-radio',
+			options: Object.values(LegendPosition),
+		},
 		mode: { control: 'inline-radio', options: Object.values(ColorRampMode) },
 		fill: { control: 'color', if: { arg: 'mode', eq: ColorRampMode.Opacity } },
 		palette: { control: 'select', options: Object.values(ColorRampPalette) },
@@ -332,4 +338,12 @@ export const OutlinesAsset: StoryObj = {
 /** Opacity mode: one color fades from clear to solid with the value. */
 export const OpacityMode: Story = {
 	args: { mode: ColorRampMode.Opacity, scale: ColorRampScale.Sqrt },
+};
+
+/** The legend in a column to the right of the map. */
+export const LegendRight: Story = {
+	args: {
+		dataset: 'errorRateAndRequests',
+		legendPosition: LegendPosition.RIGHT,
+	},
 };

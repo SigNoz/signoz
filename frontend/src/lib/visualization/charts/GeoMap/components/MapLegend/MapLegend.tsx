@@ -1,4 +1,5 @@
 import ColorBar from 'lib/uPlotV2/components/ColorBar/ColorBar';
+import { LegendPosition } from 'lib/uPlotV2/components/types';
 import {
 	type ColorRampResolver,
 	getRampBottom,
@@ -25,6 +26,7 @@ interface MapLegendProps {
 	/** Names the colour bar; shown only beside a size legend, where it's ambiguous. */
 	valueLabel?: string;
 	colorKeys?: GeoMapColorKey[];
+	position?: LegendPosition;
 	size?: MapLegendSize;
 }
 
@@ -35,12 +37,18 @@ export default function MapLegend({
 	markerValue,
 	valueLabel,
 	colorKeys = [],
+	position = LegendPosition.BOTTOM,
 	size,
 }: MapLegendProps): JSX.Element {
 	const bottom = getRampBottom(resolver.domain, scale);
+	const isRight = position === LegendPosition.RIGHT;
 
 	return (
-		<div className={styles.legend} data-testid="geo-map-legend">
+		<div
+			className={styles.legend}
+			data-position={position}
+			data-testid="geo-map-legend"
+		>
 			{size && valueLabel && (
 				<span className={styles.metricLabel}>{valueLabel}</span>
 			)}
@@ -50,6 +58,7 @@ export default function MapLegend({
 					minLabel={formatValue(bottom)}
 					maxLabel={formatValue(resolver.domain.max)}
 					markerPosition={resolver.positionOf(markerValue)}
+					orientation={isRight ? 'vertical' : 'horizontal'}
 				/>
 			</div>
 			<span className={styles.noDataKey}>
@@ -72,6 +81,7 @@ export default function MapLegend({
 					maxSize={size.maxSize}
 					radiusFor={size.radiusFor}
 					formatValue={size.formatValue}
+					stacked={isRight}
 				/>
 			)}
 		</div>

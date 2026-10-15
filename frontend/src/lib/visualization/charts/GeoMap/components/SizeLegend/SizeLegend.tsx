@@ -7,6 +7,8 @@ interface SizeLegendProps {
 	maxSize: number;
 	radiusFor: (size: number) => number;
 	formatValue: (value: number) => string;
+	/** Label above the circles instead of beside them, for a narrow column. */
+	stacked?: boolean;
 }
 
 const LABEL_GAP = 6;
@@ -23,6 +25,7 @@ export default function SizeLegend({
 	maxSize,
 	radiusFor,
 	formatValue,
+	stacked = false,
 }: SizeLegendProps): JSX.Element | null {
 	const steps = getSizeLegendSteps(maxSize);
 	if (steps.length === 0) {
@@ -33,7 +36,11 @@ export default function SizeLegend({
 	const centerX = outer + 1;
 
 	return (
-		<div className={styles.legend} data-testid="geo-map-size-legend">
+		<div
+			className={styles.legend}
+			data-stacked={stacked}
+			data-testid="geo-map-size-legend"
+		>
 			<span className={styles.label}>{label}</span>
 			<svg
 				width={centerX * 2 + LABEL_GAP + LABEL_WIDTH}
