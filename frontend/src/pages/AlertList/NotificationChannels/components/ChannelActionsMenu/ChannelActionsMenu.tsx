@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
 	Braces,
 	Ellipsis,
@@ -8,9 +8,9 @@ import {
 	Trash2,
 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { useNotificationChannelPermissions } from 'hooks/notificationChannels/useNotificationChannelPermissions';
-import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';
+import type { AuthZDropdownItemType } from 'lib/authz/components/AuthZDropdown/types';
 
 import type { Channel } from '../../types';
 import styles from './ChannelActionsMenu.module.scss';
@@ -28,30 +28,25 @@ function ChannelActionsMenu({
 	onDelete,
 	onViewJson,
 }: ChannelActionsMenuProps): JSX.Element {
-	// A list of N channels would otherwise check three verbs per row on mount,
-	// for menus nobody opened, and the authz API caps one batch at 25
-	// transactions. Only the row whose menu was opened pays for its checks.
-	const [menuOpened, setMenuOpened] = useState(false);
-	const { canEdit, canDelete, isLoading, hasError, deletePermission } =
-		useNotificationChannelPermissions(channel.id, { enabled: menuOpened });
-
-	// Unknown is not denied: before the menu is opened, while the check is in
-	// flight, and when it failed, the actions stay available and the API decides.
-	const resolved = menuOpened && !isLoading && !hasError;
-	const mayEdit = !resolved || canEdit;
-	const mayDelete = !resolved || canDelete;
+	// A list of N channels would otherwise check its verbs per row on mount, for
+	// menus nobody opened, and the authz API caps one batch at 25 transactions.
+	const [hasOpened, setHasOpened] = useState(false);
+	const { canEdit, deletePermission } = useNotificationChannelPermissions(
+		channel.id,
+		{ enabled: hasOpened },
+	);
 
 	// Without `update` the same screen is still readable, so the action opens it
 	// as a view rather than disappearing.
-	const openLabel = mayEdit ? 'Edit' : 'View';
+	const openLabel = canEdit ? 'Edit' : 'View';
 
-	const menuItems = useMemo<DropdownItemType[]>(
+	const menuItems = useMemo<AuthZDropdownItemType[]>(
 		() => [
 			{
 				type: 'item',
 				value: 'open',
 				label: openLabel,
-				prefix: mayEdit ? <PenLine size={14} /> : <Eye size={14} />,
+				prefix: canEdit ? <PenLine size={14} /> : <Eye size={14} />,
 				onClick: (): void => onOpen(channel),
 			},
 			{
@@ -72,32 +67,21 @@ function ChannelActionsMenu({
 			{
 				type: 'item',
 				value: 'delete',
-				// the tooltip is what tells a denied user why the item is dead
-				label: (
-					<AuthZTooltip checks={mayDelete ? [] : [deletePermission]} side="left">
-						<span>Delete</span>
-					</AuthZTooltip>
-				),
+				label: 'Delete',
 				prefix: <Trash2 size={14} />,
-				disabled: !mayDelete,
-				// the reason is already on the label's AuthZTooltip, which names the
-				// permission the user is missing
-				disabledTooltip: undefined,
+				checks: [deletePermission],
 				danger: true,
 				onClick: (): void => onDelete(channel),
 			},
 		],
-		[
-			openLabel,
-			mayEdit,
-			mayDelete,
-			deletePermission,
-			channel,
-			onOpen,
-			onDelete,
-			onViewJson,
-		],
+		[openLabel, canEdit, deletePermission, channel, onOpen, onDelete, onViewJson],
 	);
+
+	const handleOpenChange = useCallback((open: boolean): void => {
+		if (open) {
+			setHasOpened(true);
+		}
+	}, []);
 
 	return (
 		// the row itself opens the channel, so the actions keep their clicks
@@ -105,11 +89,14 @@ function ChannelActionsMenu({
 		<div
 			className={styles.actions}
 			onClick={(event): void => event.stopPropagation()}
-			// Radix opens the menu on pointerdown and seals the click away, so the
-			// latch has to run before that
-			onPointerDown={(): void => setMenuOpened(true)}
 		>
-			<Dropdown items={menuItems} nativeButton align="end" side="bottom">
+			<AuthZDropdown
+				items={menuItems}
+				nativeButton
+				align="end"
+				side="bottom"
+				onOpenChange={handleOpenChange}
+			>
 				<Button
 					variant="outlined"
 					color="secondary"
@@ -120,7 +107,7 @@ function ChannelActionsMenu({
 				>
 					<Ellipsis size={16} />
 				</Button>
-			</Dropdown>
+			</AuthZDropdown>
 		</div>
 	);
 }

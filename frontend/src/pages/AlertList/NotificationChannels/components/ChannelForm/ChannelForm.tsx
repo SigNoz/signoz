@@ -1,9 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import { Callout } from '@signozhq/ui/callout';
+import { Typography } from '@signozhq/ui/typography';
 import Spinner from 'components/Spinner';
 import FormAlertChannels from 'container/FormAlertChannels';
 import { useNotificationChannelPermissions } from 'hooks/notificationChannels/useNotificationChannelPermissions';
 import { NotificationChannelCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
+import CopyButton from 'periscope/components/CopyButton/CopyButton';
 
 import { useChannelFormState } from './useChannelFormState';
 import styles from './ChannelForm.module.scss';
@@ -73,6 +75,21 @@ function ChannelForm({ channelId, onDone }: ChannelFormProps): JSX.Element {
 
 	return (
 		<>
+			{/* a role is scoped to this channel by its id, so the id stays visible
+			    and copyable even without `update` */}
+			{!!channelId && (
+				<div className={styles.selectorRow} data-testid="channel-id-selector">
+					<Typography.Text color="muted" size="small">
+						{t('field_channel_id')}
+					</Typography.Text>
+					<Typography.Text size="small">{channelId}</Typography.Text>
+					<CopyButton
+						value={channelId}
+						ariaLabel={t('copy_channel_id')}
+						testId="copy-channel-id"
+					/>
+				</div>
+			)}
 			{readOnly && (
 				<Callout
 					type="info"
