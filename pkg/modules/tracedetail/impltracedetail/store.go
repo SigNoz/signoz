@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -207,7 +208,7 @@ func (s *traceStore) genAISpanColumns(ctx context.Context, orgID valuer.UUID, bo
 }
 
 func (s *traceStore) GetTraceSpans(ctx context.Context, orgID valuer.UUID, traceID string, bounds *spantypes.TraceBounds) ([]spantypes.StorableSpan, error) {
-	sb := s.selectStorableSpans(ctx, orgID, bounds.Start, bounds.End)
+	sb := s.selectStorableSpans(ctx, orgID)
 	sb.Where(
 		sb.E("trace_id", traceID),
 		sb.GE("ts_bucket_start", bounds.Start.Unix()-1800),
@@ -252,7 +253,7 @@ func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, orgID valuer.UUID, 
 	if len(spanIDs) == 0 {
 		return []spantypes.StorableSpan{}, nil
 	}
-	sb := s.selectStorableSpans(ctx, orgID, start, end)
+	sb := s.selectStorableSpans(ctx, orgID)
 	ids := make([]any, len(spanIDs))
 	for i, id := range spanIDs {
 		ids[i] = id
@@ -276,11 +277,10 @@ func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, orgID valuer.UUID, 
 
 // selectStorableSpans reads the JSON attributes column alongside the legacy maps when the
 // use_trace_attributes_json flag is on, as the query builder does.
-func (s *traceStore) selectStorableSpans(ctx context.Context, orgID valuer.UUID, start, end time.Time) *sqlbuilder.SelectBuilder {
+func (s *traceStore) selectStorableSpans(ctx context.Context, orgID valuer.UUID) *sqlbuilder.SelectBuilder {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(storableSpanColumns...)
-	q := querybuilder.NewQueryInfo(ctx, orgID, s.flagger, telemetrytypes.SignalTraces, nil, uint64(start.UnixNano()), uint64(end.UnixNano()))
-	if q.TraceAttrsJSONOn {
+	if s.flagger.BooleanOrEmpty(ctx, flagger.FeatureUseTraceAttributesJSON, featuretypes.NewFlaggerEvaluationContext(orgID)) {
 		sb.SelectMore("attributes")
 	}
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))

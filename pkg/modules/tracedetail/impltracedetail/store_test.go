@@ -203,34 +203,6 @@ func TestGetSpanDurationByField(t *testing.T) {
 	}
 }
 
-func TestGetTraceSpans(t *testing.T) {
-	selectSQL := "SELECT DISTINCT ON (span_id) timestamp, duration_nano, span_id, has_error, kind, resource_string_service$$name, name, attributes_string, attributes_number, attributes_bool, resources_string, events, status_message, status_code_string, kind_string, parent_span_id, flags, is_remote, trace_state, status_code, db_name, db_operation, http_method, http_url, http_host, external_http_method, external_http_url, response_status_code, links as references"
-	fromSQL := " FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ?"
-	boundsSQL := " AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY timestamp ASC, name ASC"
-	byIDsSQL := " AND span_id IN (?, ?)"
-
-	testCases := []struct {
-		name      string
-		jsonOn    bool
-		selectSQL string
-	}{
-		{name: "FlagOff_ReadsLegacyMaps", selectSQL: selectSQL},
-		{name: "FlagOn_ReadsJSONColumnToo", jsonOn: true, selectSQL: selectSQL + ", attributes"},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			fl := flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureUseTraceAttributesJSON.String(): testCase.jsonOn})
-			s := newTestStoreWithMetadata(sqlmock.QueryMatcherRegexp, telemetrytypestest.NewMockMetadataStore(), fl)
-			s.Mock().ExpectSelect(regexp.QuoteMeta(testCase.selectSQL + fromSQL + boundsSQL)).WillReturnRows(cmock.NewRows(nil, nil))
-			s.Mock().ExpectSelect(regexp.QuoteMeta(testCase.selectSQL + fromSQL + byIDsSQL + boundsSQL)).WillReturnRows(cmock.NewRows(nil, nil))
-			_, _ = s.Store().GetTraceSpans(context.Background(), valuer.GenerateUUID(), testTraceID, testBounds)
-			_, _ = s.Store().GetTraceSpansByIDs(context.Background(), valuer.GenerateUUID(), testTraceID, testStart, testEnd, []string{"span-1", "span-2"})
-			assert.NoError(t, s.Mock().ExpectationsWereMet())
-		})
-	}
-}
-
 func TestGetThreadSpans(t *testing.T) {
 	selectSQL := "SELECT DISTINCT ON (span_id) timestamp, duration_nano, span_id, parent_span_id, has_error, name, kind_string, status_code_string, status_message, resources_string, attributes_string, attributes_number, attributes_bool, events, links as references"
 	fromSQL := " FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND "

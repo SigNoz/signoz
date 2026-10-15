@@ -86,7 +86,7 @@ func (m *module) GetWaterfallV4(ctx context.Context, orgID valuer.UUID, traceID 
 		return nil, err
 	}
 	if trace.FormattedSpans > formattedSpansLogThreshold {
-		m.settings.Logger().InfoContext(ctx, "waterfall response carries many formatted gen_ai spans", slog.String("trace_id", traceID), slog.Int("formatted_spans", trace.FormattedSpans), slog.Int("spans", len(trace.Spans)), slog.Bool("windowed", trace.HasMore))
+		m.settings.Logger().WarnContext(ctx, "waterfall response carries many formatted gen_ai spans", slog.String("trace_id", traceID), slog.Int("formatted_spans", trace.FormattedSpans), slog.Int("spans", len(trace.Spans)), slog.Bool("windowed", trace.HasMore))
 	}
 	return trace, nil
 }
