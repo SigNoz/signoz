@@ -6,6 +6,7 @@ import { GeoMapDatum } from '../../types';
 import {
 	getViewExtent,
 	toBubbleFeatures,
+	toLabelFeatures,
 	toShapeFeatures,
 } from '../olFeatures';
 
@@ -55,5 +56,38 @@ describe('getViewExtent', () => {
 	it('frames the US by its lower 48', () => {
 		const [west] = getViewExtent('country', [], 'US');
 		expect(west).toBeGreaterThan(fromLonLat([-130, 40])[0]);
+	});
+});
+
+describe('toLabelFeatures', () => {
+	const shapes = getCountryShapes('world');
+	const { members } = toShapeFeatures(shapes);
+	const labels = toLabelFeatures(shapes, members);
+	const label = (code: string) =>
+		labels.find((feature) => feature.get('code') === code);
+
+	it('names every member that has a code', () => {
+		const coded = members.filter((feature) => feature.get('code'));
+		expect(labels).toHaveLength(coded.length);
+		expect(label('DE')?.get('name')).toBe('Germany');
+	});
+
+	it('sizes the fit by the largest polygon, so Alaska does not widen the US', () => {
+		const [usWidth] = (label('US')?.get('box') ?? [Infinity]) as [number, number];
+		const [west, , east] = transformExtent(
+			[-125, 24, -66, 50],
+			'EPSG:4326',
+			'EPSG:3857',
+		);
+		expect(usWidth).toBeLessThan((east - west) * 1.1);
+	});
+
+	it('labels members only, never the faint neighbours', () => {
+		const europe = getCountryShapes('europe');
+		const codes = toLabelFeatures(europe, toShapeFeatures(europe).members).map(
+			(feature) => feature.get('code'),
+		);
+		expect(codes).toContain('DE');
+		expect(codes).not.toContain('US');
 	});
 });

@@ -31,6 +31,7 @@ export interface GeoMapPlaygroundProps {
 	statesOf: SubdivisionCountry | 'none';
 	view: GeoMapView;
 	layer: GeoMapLayer;
+	showLabels: boolean;
 	palette: ColorRampPalette;
 	scale: ColorRampScale;
 	steps: number;
@@ -45,6 +46,7 @@ export default function GeoMapPlayground({
 	statesOf,
 	view,
 	layer,
+	showLabels,
 	palette,
 	scale,
 	steps,
@@ -127,6 +129,7 @@ export default function GeoMapPlayground({
 						view={mapView}
 						country={fixture.country}
 						layer={layer}
+						showLabels={showLabels}
 						colors={colors}
 						bubbleRadius={bubbleRadius}
 						formatValue={formatValue}

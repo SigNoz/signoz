@@ -1,6 +1,8 @@
 import Feature from 'ol/Feature';
 import GeoJSON from 'ol/format/GeoJSON';
+import MultiPolygon from 'ol/geom/MultiPolygon';
 import Point from 'ol/geom/Point';
+import Polygon from 'ol/geom/Polygon';
 import type { Extent } from 'ol/extent';
 import { fromLonLat, transformExtent } from 'ol/proj';
 
@@ -39,6 +41,44 @@ export function toBubbleFeatures(
 			new Feature({
 				geometry: new Point(fromLonLat(shape.properties.label)),
 				code: datum.code,
+			}),
+		];
+	});
+}
+
+/**
+ * A label per member shape at its label point, carrying the width and height
+ * of its largest polygon: the fit check reads that, so Alaska doesn't make the
+ * US look roomy.
+ */
+export function toLabelFeatures(
+	shapes: GeoMapShapes,
+	members: Feature[],
+): Feature[] {
+	return members.flatMap((member) => {
+		const code = member.get('code') as string | null;
+		const shape = code ? shapes.byCode.get(code) : undefined;
+		const geometry = member.getGeometry();
+		let polygons: Polygon[] = [];
+		if (geometry instanceof MultiPolygon) {
+			polygons = geometry.getPolygons();
+		} else if (geometry instanceof Polygon) {
+			polygons = [geometry];
+		}
+		if (!code || !shape || polygons.length === 0) {
+			return [];
+		}
+		const largest = polygons.reduce((a, b) =>
+			a.getArea() >= b.getArea() ? a : b,
+		);
+		const [minX, minY, maxX, maxY] = largest.getExtent();
+		return [
+			new Feature({
+				geometry: new Point(fromLonLat(shape.properties.label)),
+				code,
+				name: shapes.nameOf(code),
+				box: [maxX - minX, maxY - minY],
+				area: largest.getArea(),
 			}),
 		];
 	});

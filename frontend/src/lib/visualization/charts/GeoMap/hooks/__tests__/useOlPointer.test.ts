@@ -42,6 +42,7 @@ describe('useOlPointer', () => {
 		expect(options?.layerFilter?.(layers.members)).toBe(true);
 		expect(options?.layerFilter?.(layers.bubbles)).toBe(true);
 		expect(options?.layerFilter?.(layers.context)).toBe(false);
+		expect(options?.layerFilter?.(layers.labels)).toBe(false);
 	});
 
 	it('reports nothing while the map is being dragged', () => {

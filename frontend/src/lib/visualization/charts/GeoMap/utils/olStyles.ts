@@ -1,5 +1,7 @@
 import { asArray } from 'ol/color';
-import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
+import { Circle as CircleStyle, Fill, Stroke, Style, Text } from 'ol/style';
+
+import { LABEL_FONT } from './olLabels';
 
 export interface OlPalette {
 	noData: string;
@@ -32,10 +34,16 @@ export function createStyleCache(): {
 	bubble: (fill: string, radius: number, palette: OlPalette) => Style;
 	/** A size-only bubble over shaded shapes: no ramp colour, so colour keeps one meaning. */
 	neutralBubble: (radius: number, palette: OlPalette) => Style;
+	/**
+	 * A shape's name, haloed in the background colour so it reads on any fill.
+	 * Labels declutter in draw order, so `priority` (larger wins) draws first.
+	 */
+	label: (text: string, priority: number, palette: OlPalette) => Style;
 } {
 	const shapes = new Map<string, Style>();
 	const bubbles = new Map<string, Style>();
 	const neutralBubbles = new Map<string, Style>();
+	const labels = new Map<string, Style>();
 	return {
 		shape: (fill, palette): Style => {
 			let style = shapes.get(fill);
@@ -77,6 +85,23 @@ export function createStyleCache(): {
 					zIndex: -radius,
 				});
 				neutralBubbles.set(key, style);
+			}
+			return style;
+		},
+		label: (text, priority, palette): Style => {
+			const key = `${text}:${priority}`;
+			let style = labels.get(key);
+			if (!style) {
+				style = new Style({
+					text: new Text({
+						text,
+						font: LABEL_FONT,
+						fill: new Fill({ color: palette.outline }),
+						stroke: new Stroke({ color: palette.bubbleStroke, width: 3 }),
+					}),
+					zIndex: -priority,
+				});
+				labels.set(key, style);
 			}
 			return style;
 		},

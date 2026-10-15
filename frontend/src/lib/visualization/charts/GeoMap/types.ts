@@ -105,6 +105,8 @@ export interface GeoMapProps {
 	 * the shaded shapes; on `bubbles` they keep the value's colour.
 	 */
 	sizeMetric?: GeoMapSizeMetric;
+	/** Shape names, each shown once it fits inside its shape. Defaults to on. */
+	showLabels?: boolean;
 	isDarkMode: boolean;
 	/** Hides the tooltip; the caller opens its drilldown menu from this. */
 	onSelect?: (selection: GeoMapSelection) => void;
