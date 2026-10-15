@@ -1,10 +1,4 @@
-import {
-	act,
-	fireEvent,
-	screen,
-	waitFor,
-	within,
-} from '@testing-library/react';
+import { act, fireEvent, screen, within } from '@testing-library/react';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -116,11 +110,6 @@ async function renderPanel(
 		dataSource,
 	);
 	await screen.findByTestId('saved-views-list');
-	await waitFor(() =>
-		screen
-			.getAllByTestId('saved-views-row-name')
-			.forEach((name) => expect(name).toBeEnabled()),
-	);
 	jest.useFakeTimers();
 }
 

@@ -1,17 +1,14 @@
 import { useMemo } from 'react';
 import { Check } from '@signozhq/icons';
-import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
-import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
 import {
 	buildSavedViewUpdatePermission,
 	SavedViewCreatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
-import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { useSavedViewMenuItems } from './hooks/useSavedViewMenuItems';
 
 import SavedViewsIconButton from './SavedViewsIconButton';
-import { SaveChangesMenuProps } from './types';
-
-import styles from './SavedViewsMenu.module.scss';
+import { SaveChangesMenuProps, SavedViewMenuItem } from './types';
 
 function SaveChangesMenu({
 	viewId,
@@ -19,45 +16,27 @@ function SaveChangesMenu({
 	onSaveAsNew,
 	onUpdate,
 }: SaveChangesMenuProps): JSX.Element {
-	const updatePermission = buildSavedViewUpdatePermission(viewId);
-	const { isLoading, deniedPermissions } = useAuthZ([
-		SavedViewCreatePermission,
-		updatePermission,
-	]);
-
-	const items = useMemo<MenuItem[]>(() => {
-		const isCreateDisabled =
-			isLoading || deniedPermissions.includes(SavedViewCreatePermission);
-		const isUpdateDisabled =
-			isLoading || deniedPermissions.includes(updatePermission);
-		return [
+	const actionItems = useMemo<SavedViewMenuItem[]>(
+		() => [
 			{
 				key: 'save-as-new',
-				label: (
-					<AuthZTooltip checks={[SavedViewCreatePermission]}>
-						<span data-testid="saved-views-save-as-new">Save as new view</span>
-					</AuthZTooltip>
-				),
-				disabled: isCreateDisabled,
-				className: isCreateDisabled ? styles.deniedItem : undefined,
+				label: <span data-testid="saved-views-save-as-new">Save as new view</span>,
+				checks: [SavedViewCreatePermission],
 				onClick: onSaveAsNew,
 			},
 			{
 				key: 'update',
-				label: (
-					<AuthZTooltip checks={[updatePermission]}>
-						<span data-testid="saved-views-update">Update selected view</span>
-					</AuthZTooltip>
-				),
-				disabled: isUpdateDisabled,
-				className: isUpdateDisabled ? styles.deniedItem : undefined,
+				label: <span data-testid="saved-views-update">Update selected view</span>,
+				checks: [buildSavedViewUpdatePermission(viewId)],
 				onClick: onUpdate,
 			},
-		];
-	}, [isLoading, deniedPermissions, updatePermission, onSaveAsNew, onUpdate]);
+		],
+		[viewId, onSaveAsNew, onUpdate],
+	);
+	const items = useSavedViewMenuItems(actionItems);
 
 	return (
-		<DropdownMenuSimple menu={{ items }} align="end" className={styles.menu}>
+		<DropdownMenuSimple menu={{ items }} align="end">
 			<SavedViewsIconButton
 				title="Save changes"
 				icon={<Check size={14} />}

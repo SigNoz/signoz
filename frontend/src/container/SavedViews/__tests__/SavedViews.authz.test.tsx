@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -94,22 +94,15 @@ describe('SavedViews - AuthZ', () => {
 		expect(screen.queryByTestId('saved-views-search')).toBeNull();
 	});
 
-	it('disables only the views it cannot read', async () => {
+	it('keeps a row it cannot read clickable, the open view decides access', async () => {
 		mockSavedViewsApi([errors, slow]);
 		server.use(setupAuthzDeny(buildSavedViewReadPermission(errors.id)));
 		renderPanel();
 
 		await screen.findAllByTestId('saved-views-row');
-		await waitFor(() =>
-			expect(
-				within(rowNamed('Errors')).getByTestId('saved-views-row-name'),
-			).toBeDisabled(),
-		);
-		await waitFor(() =>
-			expect(
-				within(rowNamed('Slow spans')).getByTestId('saved-views-row-name'),
-			).toBeEnabled(),
-		);
+		expect(
+			within(rowNamed('Errors')).getByTestId('saved-views-row-name'),
+		).toBeEnabled();
 	});
 
 	it('keeps the row menu on a view it cannot read', async () => {
@@ -221,9 +214,14 @@ describe('SavedViews - AuthZ', () => {
 		);
 	});
 
-	it('says so when the open view cannot be read, naming the permission', async () => {
+	it('says no access on a 403, naming the permission when the check denies it', async () => {
 		mockSavedViewsApi([errors]);
-		server.use(setupAuthzDeny(buildSavedViewReadPermission(errors.id)));
+		server.use(
+			setupAuthzDeny(buildSavedViewReadPermission(errors.id)),
+			rest.get(`${API}/:id`, (_req, res, ctx) =>
+				res(ctx.status(403), ctx.json({ status: 'error' })),
+			),
+		);
 		renderHeader(viewUrl(PATH, errors));
 
 		await waitFor(() =>
@@ -246,7 +244,7 @@ describe('SavedViews - AuthZ', () => {
 		);
 	});
 
-	it('shows the server message when the open view fails to load', async () => {
+	it('says no access on a 403 the check allows, showing the server message', async () => {
 		const message = 'saved-view:read is missing, ask an admin for it';
 		mockSavedViewsApi([errors]);
 		server.use(
@@ -261,7 +259,7 @@ describe('SavedViews - AuthZ', () => {
 
 		await waitFor(() =>
 			expect(screen.getByTestId('saved-views-name')).toHaveTextContent(
-				'View failed to load',
+				'No access to this view',
 			),
 		);
 		await userEvent.setup().hover(screen.getByTestId('saved-views-name'));
@@ -269,5 +267,20 @@ describe('SavedViews - AuthZ', () => {
 		await waitFor(() =>
 			expect(screen.queryAllByText(message).length).toBeGreaterThan(0),
 		);
+	});
+
+	it('shows the view when the server returns it, even if the check denies read', async () => {
+		mockSavedViewsApi([errors]);
+		server.use(setupAuthzDeny(buildSavedViewReadPermission(errors.id)));
+		renderHeader(viewUrl(PATH, errors));
+
+		await waitFor(() =>
+			expect(screen.getByTestId('saved-views-name')).toHaveTextContent('Errors'),
+		);
+		// Long enough for a permission check to come back, so a denial would show.
+		await act(() => new Promise((resolve) => setTimeout(resolve, 300)));
+
+		expect(screen.getByTestId('saved-views-name')).toHaveTextContent('Errors');
+		expect(screen.getByTestId('saved-views-clear')).toBeInTheDocument();
 	});
 });

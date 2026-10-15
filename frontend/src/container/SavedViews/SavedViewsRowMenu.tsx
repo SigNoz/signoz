@@ -1,40 +1,26 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Ellipsis } from '@signozhq/icons';
-import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
-import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
-import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
+import { useSavedViewMenuItems } from './hooks/useSavedViewMenuItems';
 
 import { SAVED_VIEW_ROW_ACTIONS } from './constants';
 import SavedViewsRowButton from './SavedViewsRowButton';
-import { SavedViewsRowMenuProps } from './types';
-
-import styles from './SavedViewsMenu.module.scss';
+import { SavedViewMenuItem, SavedViewsRowMenuProps } from './types';
 
 function SavedViewsRowMenu({
 	viewId,
 	onAction,
 	onOpen,
 }: SavedViewsRowMenuProps): JSX.Element {
-	const permissions = useMemo(
-		() =>
-			SAVED_VIEW_ROW_ACTIONS.flatMap(({ buildPermission }) =>
-				buildPermission ? [buildPermission(viewId)] : [],
-			),
-		[viewId],
-	);
 	// Checked once the menu is first opened, not for every row in the list.
 	const [hasOpened, setHasOpened] = useState(false);
-	const { isLoading, deniedPermissions } = useAuthZ(permissions, {
-		enabled: hasOpened,
-	});
-	const isChecking = !hasOpened || isLoading;
 
 	const handleOpen = useCallback((): void => {
 		setHasOpened(true);
 		onOpen();
 	}, [onOpen]);
 
-	const items = useMemo<MenuItem[]>(
+	const actionItems = useMemo<SavedViewMenuItem[]>(
 		() =>
 			SAVED_VIEW_ROW_ACTIONS.flatMap(
 				({
@@ -44,43 +30,24 @@ function SavedViewsRowMenu({
 					danger,
 					hasDividerBefore,
 					buildPermission,
-				}): MenuItem[] => {
-					const permission = buildPermission?.(viewId);
-					const isDisabled =
-						!!permission && (isChecking || deniedPermissions.includes(permission));
-					const labelText = (
-						<span data-testid={`saved-views-row-menu-${key}`}>{label}</span>
-					);
-					return [
-						...(hasDividerBefore ? [{ type: 'divider' as const }] : []),
-						{
-							key,
-							label: permission ? (
-								<AuthZTooltip checks={[permission]} enabled={hasOpened}>
-									{labelText}
-								</AuthZTooltip>
-							) : (
-								labelText
-							),
-							icon: <Icon size={14} />,
-							danger,
-							disabled: isDisabled,
-							className: isDisabled ? styles.deniedItem : undefined,
-							onClick: (): void => onAction(key),
-						},
-					];
-				},
+				}): SavedViewMenuItem[] => [
+					...(hasDividerBefore ? [{ type: 'divider' as const }] : []),
+					{
+						key,
+						label: <span data-testid={`saved-views-row-menu-${key}`}>{label}</span>,
+						icon: <Icon size={14} />,
+						danger,
+						checks: buildPermission ? [buildPermission(viewId)] : undefined,
+						onClick: (): void => onAction(key),
+					},
+				],
 			),
-		[viewId, hasOpened, isChecking, deniedPermissions, onAction],
+		[viewId, onAction],
 	);
+	const items = useSavedViewMenuItems(actionItems, { enabled: hasOpened });
 
 	return (
-		<DropdownMenuSimple
-			menu={{ items }}
-			side="right"
-			align="start"
-			className={styles.menu}
-		>
+		<DropdownMenuSimple menu={{ items }} side="right" align="start">
 			<SavedViewsRowButton
 				icon={<Ellipsis size={14} />}
 				label="More options"

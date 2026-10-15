@@ -78,6 +78,7 @@ export function useActiveSavedView(
 		view,
 		isLoading: !!viewKey && isLoading,
 		isError: !!viewKey && isError,
+		isForbidden: !!viewKey && isError && error?.response?.status === 403,
 		errorMessage,
 		hasUnsavedChanges,
 	};

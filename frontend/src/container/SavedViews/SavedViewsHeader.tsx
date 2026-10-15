@@ -40,15 +40,21 @@ function SavedViewsHeader({
 	onOpenViews?: () => void;
 	onCollapse?: () => void;
 }): JSX.Element {
-	const { view, isLoading, isError, errorMessage, hasUnsavedChanges } =
-		useActiveSavedView(source);
+	const {
+		view,
+		isLoading,
+		isError,
+		isForbidden,
+		errorMessage,
+		hasUnsavedChanges,
+	} = useActiveSavedView(source);
 	const { viewKey } = useGetSavedViewParams();
+	// The server decides access; the check only words the tooltip after a 403.
 	const readPermission = buildSavedViewReadPermission(viewKey);
 	const { deniedPermissions } = useAuthZ([readPermission], {
-		enabled: !!viewKey,
+		enabled: isForbidden,
 	});
-	const isReadDenied = !!viewKey && deniedPermissions.length > 0;
-	const hasProblem = isReadDenied || isError;
+	const isReadDenied = isForbidden && deniedPermissions.length > 0;
 	const { revertView, clearView, createView, updateView, isSaving } =
 		useSavedViewActions(source);
 
@@ -66,18 +72,18 @@ function SavedViewsHeader({
 	const closeModal = useCallback((): void => setModalMode(null), []);
 
 	let name = view?.spec.displayName ?? MY_VIEW_NAME;
-	if (isReadDenied) {
+	if (isForbidden) {
 		name = SAVED_VIEW_FORBIDDEN_NAME;
 	} else if (isError) {
 		name = SAVED_VIEW_LOAD_FAILED_NAME;
 	}
-	const isDirty = !hasProblem && !!view && hasUnsavedChanges;
+	const isDirty = !isError && !!view && hasUnsavedChanges;
 
 	const nameChip = (
 		<span
 			className={cx(styles.name, {
 				[styles.isDirty]: isDirty,
-				[styles.isError]: hasProblem,
+				[styles.isError]: isError,
 			})}
 			data-testid="saved-views-name"
 		>
@@ -90,7 +96,7 @@ function SavedViewsHeader({
 		<div
 			className={cx(styles.header, {
 				[styles.isDirty]: isDirty,
-				[styles.isError]: hasProblem,
+				[styles.isError]: isError,
 			})}
 			data-testid="saved-views-header"
 			data-source={source}
@@ -120,7 +126,7 @@ function SavedViewsHeader({
 			</div>
 
 			<div className={styles.actions}>
-				{(!view || hasProblem) && (
+				{!view && (
 					<SavedViewsIconButton
 						title="Create new view"
 						icon={<Plus size={14} />}
@@ -130,7 +136,7 @@ function SavedViewsHeader({
 						testId="saved-views-create"
 					/>
 				)}
-				{(hasProblem || (view && !isDirty)) && (
+				{(isError || (view && !isDirty)) && (
 					<SavedViewsIconButton
 						title="Clear view"
 						icon={<Undo2 size={14} />}
