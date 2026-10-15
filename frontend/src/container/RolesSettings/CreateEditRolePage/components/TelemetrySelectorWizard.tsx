@@ -15,7 +15,7 @@ import { Typography } from '@signozhq/ui/typography';
 import {
 	ANY_RESOURCE_VALUE,
 	QUERY_TYPES,
-	SUPPORTED_GRANT_KEY,
+	SUPPORTED_GRANT_KEYS,
 } from './TelemetrySelectorWizard.constants';
 import { isQueryTypeAvailable } from './TelemetrySelectorWizard.utils';
 import useTelemetrySelectorWizard from './useTelemetrySelectorWizard';
@@ -38,6 +38,7 @@ function TelemetrySelectorWizard({
 		open,
 		queryType,
 		selectedQueryType,
+		grantKey,
 		value,
 		selector,
 		isAnyResource,
@@ -46,6 +47,7 @@ function TelemetrySelectorWizard({
 		canAdd,
 		handleOpenChange,
 		handleQueryTypeChange,
+		handleKeyChange,
 		handleValueChange,
 		handleAnyResourceChange,
 		handleSelectorChange,
@@ -125,12 +127,22 @@ function TelemetrySelectorWizard({
 						<Typography as="label" weight="medium">
 							Key
 						</Typography>
-						<Input
-							value={SUPPORTED_GRANT_KEY}
-							readOnly
-							disabled
-							testId={`wizard-key-input-${testId}`}
-						/>
+						<Select value={grantKey} onChange={handleKeyChange}>
+							<SelectTrigger data-testid={`wizard-key-select-${testId}`}>
+								<SelectValue>{grantKey}</SelectValue>
+							</SelectTrigger>
+							<SelectContent withPortal={false} className={styles.selectContent}>
+								{SUPPORTED_GRANT_KEYS.map((supportedKey) => (
+									<SelectItem
+										key={supportedKey}
+										value={supportedKey}
+										testId={`wizard-key-option-${supportedKey}-${testId}`}
+									>
+										{supportedKey}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
 					</div>
 				)}
 

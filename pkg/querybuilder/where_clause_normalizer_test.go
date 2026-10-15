@@ -26,6 +26,15 @@ func TestNormalizeWhereClauseEquivalenceClasses(t *testing.T) {
 			expected: "service.name = 'frontend' AND status = 200",
 		},
 		{
+			name: "nested not keeps its parentheses",
+			expressions: []string{
+				"NOT (NOT a = 1)",
+				"NOT(NOT a=1)",
+				"not (not a = 1)",
+			},
+			expected: "NOT (NOT a = 1)",
+		},
+		{
 			name: "operand order",
 			expressions: []string{
 				"a = 1 AND b = 2",
@@ -327,6 +336,8 @@ func TestNormalizeWhereClauseIdempotence(t *testing.T) {
 		"a IN [3, 1, 2] AND hasAll(tags, ['a', 'b']) AND body CONTAINS 'x'",
 		"duration BETWEEN 1 AND 10 OR duration > 100",
 		`msg = 'with \'escapes\' and "quotes"'`,
+		"NOT (NOT resource.region = 'us-east')",
+		"NOT (NOT (a = 1 OR b = 2)) AND NOT c EXISTS",
 	}
 
 	for _, expression := range expressions {
@@ -438,4 +449,34 @@ func TestFilterStringLiteral(t *testing.T) {
 			assert.Equal(t, testCase.expected, FilterStringLiteral(testCase.input))
 		})
 	}
+}
+
+func TestNormalizeWhereClauseDedupesRepeatedConditions(t *testing.T) {
+	normalized, err := NormalizeWhereClause("service.name IN ('checkout') AND service.name IN ('checkout') AND status = 500 AND status = 500", nil)
+	require.NoError(t, err)
+	assert.Equal(t, "service.name IN ('checkout') AND status = 500", normalized.Expression)
+	assert.Equal(t, []WhereClauseCondition{
+		{Key: "service.name", Operator: "IN", Values: []string{"checkout"}, TopLevel: true},
+		{Key: "status", Operator: "=", Values: []string{"500"}, TopLevel: true},
+	}, normalized.Conditions)
+}
+
+func TestNormalizeWhereClauseWithPins(t *testing.T) {
+	pinned, err := NormalizeWhereClauseWithPins(`service.name IN ('b', 'it\'s a') AND status = 500`, nil, map[string]string{"service.name": "it's a"})
+	require.NoError(t, err)
+	assert.Equal(t, `service.name = 'it\'s a' AND status = 500`, pinned.Expression)
+	require.Len(t, pinned.Conditions, 2)
+	assert.Equal(t, WhereClauseCondition{Key: "service.name", Operator: "=", Values: []string{"it's a"}, TopLevel: true}, pinned.Conditions[0])
+
+	unpinned, err := NormalizeWhereClauseWithPins("service.name IN ('a', 'b') OR status = 500", nil, map[string]string{"service.name": "a"})
+	require.NoError(t, err)
+	assert.Equal(t, "service.name IN ('a', 'b') OR status = 500", unpinned.Expression)
+
+	negated, err := NormalizeWhereClauseWithPins("NOT service.name IN ('a', 'b')", nil, map[string]string{"service.name": "a"})
+	require.NoError(t, err)
+	assert.Equal(t, "NOT service.name IN ('a', 'b')", negated.Expression)
+
+	otherKey, err := NormalizeWhereClauseWithPins("host.name IN ('a', 'b')", nil, map[string]string{"service.name": "a"})
+	require.NoError(t, err)
+	assert.Equal(t, "host.name IN ('a', 'b')", otherKey.Expression)
 }

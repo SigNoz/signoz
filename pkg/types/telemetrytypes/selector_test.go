@@ -14,11 +14,14 @@ func TestNewTelemetryGrantSelector(t *testing.T) {
 		"builder_query/*": "builder_query/*",
 		"promql":          "promql/*",
 		"clickhouse_sql":  "clickhouse_sql/*",
-		"builder_query/signoz.workspace.key.id/*":              "builder_query/signoz.workspace.key.id/*",
-		"builder_query/signoz.workspace.key.id/key-a":          "builder_query/signoz.workspace.key.id/key-a",
-		"builder_query/resource.signoz.workspace.key.id/key-a": "builder_query/signoz.workspace.key.id/key-a",
-		"builder_query/signoz.workspace.key.id/key a":          "builder_query/signoz.workspace.key.id/key a",
-		"builder_query/signoz.workspace.key.id/a/b":            "builder_query/signoz.workspace.key.id/a/b",
+		"builder_query/signoz.workspace.key.id/*":                 "builder_query/signoz.workspace.key.id/*",
+		"builder_query/signoz.workspace.key.id/key-a":             "builder_query/signoz.workspace.key.id/key-a",
+		"builder_query/resource.signoz.workspace.key.id/key-a":    "builder_query/signoz.workspace.key.id/key-a",
+		"builder_query/signoz.workspace.key.id/key a":             "builder_query/signoz.workspace.key.id/key a",
+		"builder_query/signoz.workspace.key.id/a/b":               "builder_query/signoz.workspace.key.id/a/b",
+		"builder_query/resource.service.name/frontend":            "builder_query/resource.service.name/frontend",
+		"builder_query/resource.service.name/*":                   "builder_query/resource.service.name/*",
+		"builder_query/resource.deployment.environment.name/prod": "builder_query/resource.deployment.environment.name/prod",
 	}
 	for input, expected := range valid {
 		canonical, err := NewTelemetryGrantSelector(input)
@@ -32,6 +35,10 @@ func TestNewTelemetryGrantSelector(t *testing.T) {
 		"signoz.workspace.key.id = 'key-a'",
 		"builder_trace_operator/signoz.workspace.key.id/key-a",
 		"builder_query/service.name/frontend",
+		"builder_query/deployment.environment.name/prod",
+		"builder_query/resource.deployment.environment/prod",
+		"builder_query/attribute.service.name/frontend",
+		"builder_query/host.name/frontend",
 		"builder_query/signoz.workspace.key.id/",
 		"builder_query/signoz.workspace.key.id/$svc",
 		"*/signoz.workspace.key.id/key-a",
@@ -48,8 +55,10 @@ func TestNewTelemetryGrantSelector(t *testing.T) {
 
 func TestNewTelemetryGrantKey(t *testing.T) {
 	valid := map[string]string{
-		"signoz.workspace.key.id":          "signoz.workspace.key.id",
-		"resource.signoz.workspace.key.id": "signoz.workspace.key.id",
+		"signoz.workspace.key.id":              "signoz.workspace.key.id",
+		"resource.signoz.workspace.key.id":     "signoz.workspace.key.id",
+		"resource.service.name":                "resource.service.name",
+		"resource.deployment.environment.name": "resource.deployment.environment.name",
 	}
 	for keyText, expected := range valid {
 		key, ok := NewTelemetryGrantKey(keyText)
@@ -57,7 +66,7 @@ func TestNewTelemetryGrantKey(t *testing.T) {
 		assert.Equal(t, expected, key, keyText)
 	}
 
-	for _, keyText := range []string{"service.name", "attribute.signoz.workspace.key.id", "body.signoz.workspace.key.id"} {
+	for _, keyText := range []string{"service.name", "deployment.environment.name", "resource.deployment.environment", "host.name", "attribute.signoz.workspace.key.id", "attribute.service.name", "body.signoz.workspace.key.id"} {
 		_, ok := NewTelemetryGrantKey(keyText)
 		assert.False(t, ok, keyText)
 	}

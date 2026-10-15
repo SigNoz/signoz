@@ -2,6 +2,7 @@ package querybuilder
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -39,6 +40,7 @@ const (
 type normalizedPart struct {
 	text    string
 	join    joinKind
+	negated bool
 	skipped bool
 }
 
@@ -49,6 +51,7 @@ type normalizedValue struct {
 
 type whereClauseNormalizer struct {
 	variables  map[string]qbtypes.VariableItem
+	pins       map[string]string
 	conditions []WhereClauseCondition
 	negated    bool
 	orDepth    int
@@ -56,6 +59,15 @@ type whereClauseNormalizer struct {
 }
 
 func NormalizeWhereClause(expression string, variables map[string]qbtypes.VariableItem) (*NormalizedWhereClause, error) {
+	return normalizeWhereClause(expression, variables, nil)
+}
+
+// NormalizeWhereClauseWithPins renders a top-level IN on a pinned key as an equality on the pinned value.
+func NormalizeWhereClauseWithPins(expression string, variables map[string]qbtypes.VariableItem, pins map[string]string) (*NormalizedWhereClause, error) {
+	return normalizeWhereClause(expression, variables, pins)
+}
+
+func normalizeWhereClause(expression string, variables map[string]qbtypes.VariableItem, pins map[string]string) (*NormalizedWhereClause, error) {
 	input := antlr.NewInputStream(expression)
 	lexer := grammar.NewFilterQueryLexer(input)
 
@@ -92,6 +104,7 @@ func NormalizeWhereClause(expression string, variables map[string]qbtypes.Variab
 
 	visitor := &whereClauseNormalizer{
 		variables:  variables,
+		pins:       pins,
 		conditions: make([]WhereClauseCondition, 0),
 	}
 	part := visitor.visitQuery(tree)
@@ -113,8 +126,11 @@ func NormalizeWhereClause(expression string, variables map[string]qbtypes.Variab
 	sort.Slice(visitor.conditions, func(i, j int) bool {
 		return visitor.conditions[i].sortKey() < visitor.conditions[j].sortKey()
 	})
+	conditions := slices.CompactFunc(visitor.conditions, func(left, right WhereClauseCondition) bool {
+		return left.sortKey() == right.sortKey()
+	})
 
-	return &NormalizedWhereClause{Expression: part.text, Conditions: visitor.conditions}, nil
+	return &NormalizedWhereClause{Expression: part.text, Conditions: conditions}, nil
 }
 
 func (condition WhereClauseCondition) sortKey() string {
@@ -207,10 +223,10 @@ func (visitor *whereClauseNormalizer) visitUnaryExpression(ctx grammar.IUnaryExp
 		if part.skipped {
 			return part
 		}
-		if part.join != joinKindNone {
-			return normalizedPart{text: "NOT (" + part.text + ")", join: joinKindNone}
+		if part.join != joinKindNone || part.negated {
+			return normalizedPart{text: "NOT (" + part.text + ")", negated: true}
 		}
-		return normalizedPart{text: "NOT " + part.text, join: joinKindNone}
+		return normalizedPart{text: "NOT " + part.text, negated: true}
 	}
 
 	return part
@@ -313,6 +329,11 @@ func (visitor *whereClauseNormalizer) visitInComparison(key, operator string, va
 	values, skipped := visitor.substituteListVariable(values)
 	if skipped {
 		return normalizedPart{skipped: true}
+	}
+
+	if pinned, ok := visitor.pins[key]; ok && operator == "IN" && visitor.orDepth == 0 && !visitor.negated {
+		visitor.appendCondition(key, "=", []string{pinned})
+		return normalizedPart{text: key + " = " + FilterStringLiteral(pinned)}
 	}
 
 	sort.Slice(values, func(i, j int) bool { return values[i].text < values[j].text })
