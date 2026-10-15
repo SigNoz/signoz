@@ -258,7 +258,7 @@ describe('prepareGeoMapData', () => {
 					lon: 139.69,
 					value: 4,
 					size: 2,
-					label: '35.68, 139.69',
+					label: '',
 				},
 			]);
 			expect(data.unmapped).toStrictEqual([{ raw: '120, 0', rows: 1 }]);

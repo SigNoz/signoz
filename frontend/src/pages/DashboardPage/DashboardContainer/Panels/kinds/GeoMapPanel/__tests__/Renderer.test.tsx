@@ -147,7 +147,13 @@ describe('GeoMapPanelRenderer', () => {
 		const props = lastMapProps();
 		expect(props.layer).toBe('bubbles');
 		expect(props.data).toStrictEqual([
-			{ code: 'US', value: 12.5, raw: 'US', size: 3000 },
+			{
+				code: 'US',
+				value: 12.5,
+				raw: 'US',
+				size: 3000,
+				details: [{ label: 'B', value: '3,000' }],
+			},
 		]);
 		expect(props.formatValue(12.5)).toBe('12.5%');
 		expect(props.sizeMetric?.label).toBe('B');

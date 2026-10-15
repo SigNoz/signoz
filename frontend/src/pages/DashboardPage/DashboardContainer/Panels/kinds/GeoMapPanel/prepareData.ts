@@ -73,7 +73,7 @@ const LON_KEYS = [
  * A finite number, or null. The backend sends NaN/±Inf as strings and fills
  * join misses with `"n/a"`; none of those may draw, least of all as 0.
  */
-function toFiniteNumber(value: unknown): number | null {
+export function toFiniteNumber(value: unknown): number | null {
 	if (typeof value === 'number') {
 		return Number.isFinite(value) ? value : null;
 	}
@@ -220,17 +220,15 @@ function inRange(lat: number, lon: number): boolean {
 	return Math.abs(lat) <= 90 && Math.abs(lon) <= 180;
 }
 
+/** The point's other group values; empty lets the map name it by where it falls. */
 function pointLabel(
 	row: PanelTableRow,
 	labelColumns: PanelTableColumn[],
-	lat: number,
-	lon: number,
 ): string {
-	const label = labelColumns
+	return labelColumns
 		.map((column) => toText(row.data[column.id]))
 		.filter(Boolean)
 		.join(', ');
-	return label || `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
 }
 
 type Placement =
@@ -263,7 +261,7 @@ function placeRow(
 			}
 			return {
 				kind: 'point',
-				point: { lat, lon, label: pointLabel(row, labelColumns, lat, lon) },
+				point: { lat, lon, label: pointLabel(row, labelColumns) },
 			};
 		}
 		case LocationKind.Subdivision: {
