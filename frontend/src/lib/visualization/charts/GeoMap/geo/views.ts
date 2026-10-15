@@ -1,3 +1,5 @@
+import type { MultiPolygon, Position } from 'geojson';
+
 import {
 	CountryFeature,
 	GeoMapDatum,
@@ -126,7 +128,7 @@ interface PolygonExtent {
 }
 
 /** Outer-ring box and area, in degrees with longitude scaled by latitude. */
-function extentOf([ring]: GeoJSON.Position[][]): PolygonExtent {
+function extentOf([ring]: Position[][]): PolygonExtent {
 	let [west, south, east, north] = [180, 90, -180, -90];
 	ring.forEach(([lon, lat]) => {
 		west = Math.min(west, lon);
@@ -172,7 +174,7 @@ function union(
  * (French Guiana, Réunion, Easter Island) don't drag it across an ocean. Natural
  * Earth splits polygons at the antimeridian, so a far side never counts as near.
  */
-function getFrame(geometry: GeoJSON.MultiPolygon): LonLatBox {
+function getFrame(geometry: MultiPolygon): LonLatBox {
 	const [largest, ...rest] = geometry.coordinates
 		.map(extentOf)
 		.sort((a, b) => b.area - a.area);
