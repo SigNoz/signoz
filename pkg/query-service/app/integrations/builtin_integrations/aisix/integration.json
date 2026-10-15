@@ -1,0 +1,133 @@
+{
+  "id": "aisix",
+  "title": "AISIX AI Gateway",
+  "description": "Monitor AISIX AI Gateway request rates, LLM model latency, token consumption, cache performance, and policy guardrails.",
+  "author": {
+    "name": "API7.ai / SigNoz Community",
+    "email": "integrations@signoz.io",
+    "homepage": "https://docs.api7.ai/ai-gateway"
+  },
+  "icon": "file://icon.svg",
+  "categories": [
+    "AI",
+    "Gateway",
+    "LLM"
+  ],
+  "overview": "file://overview.md",
+  "configuration": [
+    {
+      "title": "Prerequisites",
+      "instructions": "file://config/prerequisites.md"
+    },
+    {
+      "title": "Collect Metrics",
+      "instructions": "file://config/collect-metrics.md"
+    }
+  ],
+  "assets": {
+    "logs": {
+      "pipelines": []
+    },
+    "dashboards": [
+      {
+        "id": "overview",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ],
+    "alerts": []
+  },
+  "connection_tests": {
+    "metrics": {
+      "metric_name": "aisix_llm_requests_total"
+    }
+  },
+  "data_collected": {
+    "logs": [],
+    "metrics": [
+      {
+        "name": "aisix_llm_requests_total",
+        "type": "Sum",
+        "unit": "requests",
+        "description": "Total number of LLM requests processed by AISIX Gateway"
+      },
+      {
+        "name": "aisix_requests_in_flight",
+        "type": "Gauge",
+        "unit": "requests",
+        "description": "Current number of in-flight LLM requests"
+      },
+      {
+        "name": "aisix_config_reload_last_success_timestamp_seconds",
+        "type": "Gauge",
+        "unit": "s",
+        "description": "Timestamp of the last successful configuration reload"
+      },
+      {
+        "name": "aisix_config_resources_rejected_total",
+        "type": "Sum",
+        "unit": "resources",
+        "description": "Total number of rejected or incompatible configuration resources"
+      },
+      {
+        "name": "aisix_request_e2e_latency_seconds",
+        "type": "Histogram",
+        "unit": "s",
+        "description": "End-to-end latency distribution of LLM requests"
+      },
+      {
+        "name": "aisix_request_ttft_seconds",
+        "type": "Histogram",
+        "unit": "s",
+        "description": "Time to first token (TTFT) latency for streaming requests"
+      },
+      {
+        "name": "aisix_token_usage_total",
+        "type": "Sum",
+        "unit": "tokens",
+        "description": "Total input and output token consumption across models"
+      },
+      {
+        "name": "aisix_cache_outcomes_total",
+        "type": "Sum",
+        "unit": "outcomes",
+        "description": "Prompt cache outcomes (hits, semantic hits, misses, bypasses)"
+      },
+      {
+        "name": "aisix_rate_limit_rejections_total",
+        "type": "Sum",
+        "unit": "rejections",
+        "description": "Rejections due to rate limiting policy enforcement"
+      },
+      {
+        "name": "aisix_guardrail_outcomes_total",
+        "type": "Sum",
+        "unit": "outcomes",
+        "description": "Guardrail evaluation outcomes (allowed, blocked, bypassed)"
+      },
+      {
+        "name": "aisix_upstream_attempts_total",
+        "type": "Sum",
+        "unit": "attempts",
+        "description": "Upstream deployment attempt count grouped by model and outcome"
+      },
+      {
+        "name": "aisix_fallback_attempts_total",
+        "type": "Sum",
+        "unit": "attempts",
+        "description": "Fallback attempt outcomes across upstream deployment targets"
+      },
+      {
+        "name": "aisix_target_health_status",
+        "type": "Gauge",
+        "unit": "status",
+        "description": "Health state of upstream model deployment targets (1 = healthy, 0 = unhealthy)"
+      },
+      {
+        "name": "aisix_usage_event_dropped_total",
+        "type": "Sum",
+        "unit": "events",
+        "description": "Number of dropped usage events by reason"
+      }
+    ]
+  }
+}
