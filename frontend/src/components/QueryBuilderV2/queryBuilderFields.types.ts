@@ -33,11 +33,11 @@ export type SyncedQueryBuilderField =
 
 /**
  * `reason` is required on `disabled`: an inert control the user can see has to explain itself.
- * `placeholder` names the value an empty field falls back to.
+ * `placeholder` on `pinned` names the value an empty field falls back to.
  */
 export type QueryBuilderFieldRule =
 	| { state: 'hidden' }
-	| { state: 'disabled'; reason: string; placeholder?: string }
+	| { state: 'disabled'; reason: string }
 	| { state: 'pinned'; placeholder?: string };
 
 /**

@@ -45,7 +45,7 @@ export function resolveQueryBuilderField(
 ): ResolvedQueryBuilderField {
 	const rule = config?.[field];
 	const resolved = rule ? fromRule(rule) : AVAILABLE;
-	const placeholder = rule?.state === 'hidden' ? undefined : rule?.placeholder;
+	const placeholder = rule?.state === 'pinned' ? rule.placeholder : undefined;
 
 	return placeholder ? { ...resolved, placeholder } : resolved;
 }
