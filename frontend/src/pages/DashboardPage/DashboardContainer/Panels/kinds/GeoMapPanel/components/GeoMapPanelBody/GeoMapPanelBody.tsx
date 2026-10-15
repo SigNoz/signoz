@@ -11,7 +11,10 @@ import TooltipFooter from 'lib/visualization/panels/components/TooltipFooter';
 import NoData from '../../../../components/NoData/NoData';
 import PanelMessage from '../../../../components/PanelMessage/PanelMessage';
 import type { PanelRendererProps } from '../../../../types/rendererProps';
-import { resolveDecimalPrecision } from '../../../../utils/chartAppearance/resolvers';
+import {
+	resolveDecimalPrecision,
+	resolveLegendPosition,
+} from '../../../../utils/chartAppearance/resolvers';
 import { enrichGeoMapClick } from '../../../../utils/drilldown/enrichGeoMapClick';
 import { formatPanelValue } from '../../../../utils/formatPanelValue';
 import { getBuilderQueries } from '../../../../utils/getBuilderQueries';
@@ -210,6 +213,7 @@ export default function GeoMapPanelBody({
 			sizeMetric={sizeMetric}
 			showLabels={chartAppearance?.labels ?? true}
 			colorKeys={colorKeys}
+			legendPosition={resolveLegendPosition(spec.legend?.position)}
 			onSelect={enableDrillDown ? handleSelect : undefined}
 			renderTooltipFooter={enableDrillDown ? renderTooltipFooter : undefined}
 			isDarkMode={isDarkMode}

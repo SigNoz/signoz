@@ -18,6 +18,7 @@ export const sections: SectionConfig[] = [
 		kind: SectionKind.Formatting,
 		controls: { decimals: true, columnUnits: true },
 	},
+	{ kind: SectionKind.Legend, controls: { position: true } },
 	{
 		kind: SectionKind.Thresholds,
 		controls: { variant: ThresholdVariant.COLOR },
