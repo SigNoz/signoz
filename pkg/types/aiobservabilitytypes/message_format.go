@@ -16,6 +16,8 @@ const (
 	FormatterOpenInference   = "openinference"
 	FormatterLangChain       = "langchain"
 	FormatterOpenRouter      = "openrouter"
+	FormatterAnthropic       = "anthropic"
+	FormatterGemini          = "gemini"
 	FormatterOpenAIChat      = "openai.chat"
 	FormatterOpenAIResponses = "openai.responses"
 	FormatterText            = "text"
@@ -26,18 +28,21 @@ var dataURL = regexp.MustCompile(`^data:([^;,]+);base64,(.+)$`)
 
 // Provider spellings of the finish reasons; the enum values themselves pass through. tool_calls and
 // function_call are OpenAI's, completed, failed, cancelled, incomplete and max_output_tokens the Responses
-// status and incomplete reason, end_turn, stop_sequence, max_tokens and tool_use Anthropic's, tool-calls
+// status and incomplete reason, end_turn, stop_sequence, max_tokens, tool_use, refusal and
+// model_context_window_exceeded Anthropic's, the upper-case ones Gemini's, tool-calls and content-filter
 // the Vercel AI SDK's:
 // https://github.com/openai/openai-openapi/blob/aeb6a041dc56c011ca9f12127ec898f911100aa0/openapi.yaml#L44782
 // https://github.com/openai/openai-openapi/blob/aeb6a041dc56c011ca9f12127ec898f911100aa0/openapi.yaml#L69691
-// https://platform.claude.com/docs/en/api/messages
+// https://github.com/anthropics/anthropic-sdk-python/blob/2a53eaa6966b04560b6a72c28d3ace4389a9ac58/src/anthropic/types/stop_reason.py#L5
+// https://github.com/googleapis/python-genai/blob/78f6d3412caaaed44f99ce57be2d16d0b8c407cb/google/genai/types.py#L510
 // https://github.com/vercel/ai/blob/a5e92fe3c692f8e152fe1eb9ef50a4e734ad0ffb/packages/provider/src/language-model/v2/language-model-v2-finish-reason.ts
 var finishReasonAliases = map[string]FinishReason{
 	"tool_calls": FinishReasonToolCall, "function_call": FinishReasonToolCall, "tool-calls": FinishReasonToolCall, "tool_use": FinishReasonToolCall,
-	"content-filter": FinishReasonContentFilter,
-	"end_turn":       FinishReasonStop, "stop_sequence": FinishReasonStop, "completed": FinishReasonStop,
-	"max_tokens": FinishReasonLength, "max_output_tokens": FinishReasonLength,
-	"failed": FinishReasonError, "cancelled": FinishReasonError, "incomplete": FinishReasonError,
+	"end_turn": FinishReasonStop, "stop_sequence": FinishReasonStop, "completed": FinishReasonStop,
+	"max_tokens": FinishReasonLength, "max_output_tokens": FinishReasonLength, "model_context_window_exceeded": FinishReasonLength,
+	"content-filter": FinishReasonContentFilter, "refusal": FinishReasonContentFilter, "safety": FinishReasonContentFilter, "recitation": FinishReasonContentFilter,
+	"blocklist": FinishReasonContentFilter, "prohibited_content": FinishReasonContentFilter, "spii": FinishReasonContentFilter, "image_safety": FinishReasonContentFilter,
+	"failed": FinishReasonError, "cancelled": FinishReasonError, "incomplete": FinishReasonError, "malformed_function_call": FinishReasonError,
 }
 
 // FormattedMessages is the OTel GenAI view of one span's messages; Warnings holds what the converter could
@@ -95,11 +100,13 @@ func (f *formatting) messages() {
 	f.warnMixedFormats(inputLabel, outputLabel)
 }
 
-// OpenRouter's answer object beside the OpenAI chat request it answers is one format, not a mix.
+// OpenRouter's answer object or an Anthropic response beside the OpenAI chat request it answers is one
+// format, not a mix: an Anthropic request without system and without Anthropic-only blocks reads as an
+// OpenAI chat request.
 func (f *formatting) warnMixedFormats(inputLabel, outputLabel string) {
 	switch {
 	case inputLabel == "" || outputLabel == "" || outputLabel == inputLabel:
-	case inputLabel == FormatterOpenAIChat && outputLabel == FormatterOpenRouter:
+	case inputLabel == FormatterOpenAIChat && (outputLabel == FormatterOpenRouter || outputLabel == FormatterAnthropic):
 	default:
 		f.warn("output formatted as %s, input as %s", outputLabel, inputLabel)
 	}
@@ -150,10 +157,14 @@ func (f *formatting) side(value any, role Role) (OutputMessages, string) {
 	switch v := value.(type) {
 	case []any:
 		if first, ok := firstObject(v); ok {
-			if _, ok := first["parts"]; ok {
+			switch {
+			case isGeminiContent(first):
+				return f.geminiContents(v), FormatterGemini
+			case first["parts"] != nil:
 				return f.semconv(v), FormatterSemconv
-			}
-			if _, ok := first["role"]; ok {
+			case isAnthropicMessages(v):
+				return f.anthropicMessages(v), FormatterAnthropic
+			case first["role"] != nil:
 				return f.openAIChatMessages(v), FormatterOpenAIChat
 			}
 		}
@@ -167,6 +178,16 @@ func (f *formatting) side(value any, role Role) (OutputMessages, string) {
 			return f.responsesResponse(v), FormatterOpenAIResponses
 		case isResponsesRequest(v):
 			return f.responsesRequest(v), FormatterOpenAIResponses
+		case isAnthropicResponse(v):
+			return f.anthropicResponse(v), FormatterAnthropic
+		case isAnthropicRequest(v):
+			return f.anthropicRequest(v), FormatterAnthropic
+		case isGeminiResponse(v):
+			return f.geminiResponse(v), FormatterGemini
+		case isGeminiRequest(v):
+			return f.geminiRequest(v), FormatterGemini
+		case isGeminiContent(v):
+			return OutputMessages{geminiContent(v, role)}, FormatterGemini
 		}
 		if choices, ok := v["choices"].([]any); ok {
 			return f.openAIChatResponse(choices), FormatterOpenAIChat
@@ -363,6 +384,28 @@ func textOf(parts Parts) string {
 		}
 	}
 	return strings.Join(texts, "\n")
+}
+
+// splitToolResults moves tool_call_response parts out of a message into a tool message before it,
+// for APIs that carry tool results inside the next user turn.
+func splitToolResults(msg OutputMessage) OutputMessages {
+	results, rest := Parts{}, Parts{}
+	for _, p := range msg.Parts {
+		if _, ok := p.Value.(ToolCallResponsePart); ok {
+			results = append(results, p)
+		} else {
+			rest = append(rest, p)
+		}
+	}
+	if len(results) == 0 {
+		return OutputMessages{msg}
+	}
+	out := OutputMessages{{Role: RoleTool, Parts: results}}
+	if len(rest) > 0 {
+		msg.Parts = rest
+		out = append(out, msg)
+	}
+	return out
 }
 
 // systemParts reads a system prompt given outside the history, a list of parts or a bare string.

@@ -21,7 +21,7 @@ def test_thread_returns_gen_ai_spans_in_order(
     seed_attribute_evolution("traces", ATTRIBUTE_JSON_ROLLOUT_TIME)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
-    root_id, first_llm_id, tool_id, agent_id, second_llm_id, legacy_llm_id, third_llm_id, flattened_llm_id, responses_llm_id, langchain_llm_id, openrouter_llm_id, vercel_llm_id = (TraceIdGenerator.span_id() for _ in range(12))
+    root_id, first_llm_id, tool_id, agent_id, second_llm_id, legacy_llm_id, third_llm_id, flattened_llm_id, responses_llm_id, langchain_llm_id, openrouter_llm_id, vercel_llm_id, anthropic_llm_id, gemini_llm_id = (TraceIdGenerator.span_id() for _ in range(14))
     resources = {"service.name": "tracedetail-thread"}
     first_input = json.dumps([{"role": "user", "parts": [{"type": "text", "content": "weather in Bangalore?"}]}])
     first_output = json.dumps([{"role": "assistant", "parts": [{"type": "tool_call", "id": "call_1", "name": "get_weather", "arguments": {"city": "Bangalore"}}]}])
@@ -141,6 +141,34 @@ def test_thread_returns_gen_ai_spans_in_order(
                 },
                 attribute_write_mode="json_only",
             ),
+            Traces(
+                timestamp=now + timedelta(seconds=4),
+                trace_id=trace_id,
+                span_id=anthropic_llm_id,
+                parent_span_id=root_id,
+                name="messages claude-sonnet-4-5",
+                resources=resources,
+                attributes={
+                    "gen_ai.request.model": "claude-sonnet-4-5",
+                    "gen_ai.input.messages": json.dumps({"system": "Be terse.", "messages": [{"role": "user", "content": "ping"}]}),
+                    "gen_ai.output.messages": json.dumps({"type": "message", "role": "assistant", "content": [{"type": "text", "text": "pong"}], "stop_reason": "end_turn"}),
+                },
+                attribute_write_mode="json_only",
+            ),
+            Traces(
+                timestamp=now + timedelta(seconds=5),
+                trace_id=trace_id,
+                span_id=gemini_llm_id,
+                parent_span_id=root_id,
+                name="generateContent gemini-2.5-flash",
+                resources=resources,
+                attributes={
+                    "gen_ai.request.model": "gemini-2.5-flash",
+                    "gen_ai.input.messages": json.dumps({"contents": [{"role": "user", "parts": [{"text": "ping"}]}]}),
+                    "gen_ai.output.messages": json.dumps({"candidates": [{"content": {"role": "model", "parts": [{"text": "pong"}]}, "finishReason": "STOP"}]}),
+                },
+                attribute_write_mode="json_only",
+            ),
         ]
     )
 
@@ -149,10 +177,10 @@ def test_thread_returns_gen_ai_spans_in_order(
     assert response.status_code == HTTPStatus.OK, response.text
 
     thread = response.json()["data"]
-    assert [span["span_id"] for span in thread["spans"]] == [first_llm_id, tool_id, agent_id, second_llm_id, legacy_llm_id, third_llm_id, flattened_llm_id, responses_llm_id, langchain_llm_id, openrouter_llm_id, vercel_llm_id]
+    assert [span["span_id"] for span in thread["spans"]] == [first_llm_id, tool_id, agent_id, second_llm_id, legacy_llm_id, third_llm_id, flattened_llm_id, responses_llm_id, langchain_llm_id, openrouter_llm_id, vercel_llm_id, anthropic_llm_id, gemini_llm_id]
     assert "nextCursor" not in thread
 
-    first, tool, agent, input_only, legacy, output_only, flattened, responses, langchain, openrouter, vercel = thread["spans"]
+    first, tool, agent, input_only, legacy, output_only, flattened, responses, langchain, openrouter, vercel, anthropic, gemini = thread["spans"]
     assert agent["attributes"]["gen_ai.agent.name"] == "planner"
     assert agent["formattedInput"] == []
     assert agent["formattedOutput"] == []
@@ -192,6 +220,10 @@ def test_thread_returns_gen_ai_spans_in_order(
     assert openrouter["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "Yes."}]}]
     assert vercel["formattedInput"] == [{"role": "user", "parts": [{"type": "text", "content": "last one"}]}]
     assert vercel["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "Done."}], "finish_reason": "stop"}]
+    assert anthropic["formattedInput"] == [{"role": "system", "parts": [{"type": "text", "content": "Be terse."}]}, {"role": "user", "parts": [{"type": "text", "content": "ping"}]}]
+    assert anthropic["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "pong"}], "finish_reason": "stop"}]
+    assert gemini["formattedInput"] == [{"role": "user", "parts": [{"type": "text", "content": "ping"}]}]
+    assert gemini["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "pong"}], "finish_reason": "stop"}]
 
 
 def test_thread_paginates_with_cursors(
