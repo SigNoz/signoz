@@ -2,6 +2,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 
+import pytest
 import requests
 
 from fixtures import types
@@ -18,6 +19,7 @@ def test_traces_number_index_prunes_granules(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
     seed_attribute_evolution: Callable[[str, datetime], None],
+    request: pytest.FixtureRequest,
 ) -> None:
     seed_attribute_evolution("traces", ATTRIBUTE_JSON_ROLLOUT_TIME)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
@@ -30,6 +32,7 @@ def test_traces_number_index_prunes_granules(
     )
     assert resp.status_code == HTTPStatus.CREATED, resp.text
     [(index_name,)] = signoz.telemetrystore.conn.query("SELECT name FROM system.data_skipping_indices WHERE database = 'signoz_traces' AND table = 'signoz_index_v3' AND expr LIKE 'toFloat64OrNull(%index.number_probe%'").result_rows
+    request.addfinalizer(lambda: signoz.telemetrystore.conn.query(f"ALTER TABLE signoz_traces.signoz_index_v3 ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' DROP INDEX IF EXISTS `{index_name}`"))
 
     # a window no other test writes to, so every granule read was written after the index existed
     window = datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(days=1)
