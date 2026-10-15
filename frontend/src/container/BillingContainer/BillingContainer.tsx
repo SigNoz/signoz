@@ -376,7 +376,9 @@ export default function BillingContainer(): JSX.Element {
 				</Typography.Link>
 			</AuthZTooltip>
 			{` if your payment information has changed. Email us at `}
-			<Typography.Text color="muted">cloud-support@signoz.io</Typography.Text>
+			<Typography.Text as="span" color="muted">
+				cloud-support@signoz.io
+			</Typography.Text>
 			{` otherwise. Be sure to provide this information immediately to avoid interruption to your service.`}
 		</Typography>
 	);

@@ -10,6 +10,25 @@
 
 .actionsContainer {
 	display: flex;
-	justify-content: space-between;
+	justify-content: flex-end;
 	align-items: center;
+}
+
+.orderByContainer {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-4);
+}
+
+.orderByLabel {
+	color: var(--muted-foreground);
+	// Between --periscope-font-size-small (11px) and -base (13px), so literal.
+	font-size: 12px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 16px; /* 133.333% */
+
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
 }

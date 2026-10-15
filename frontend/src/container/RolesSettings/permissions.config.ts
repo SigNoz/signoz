@@ -6,6 +6,7 @@ import {
 	Gauge,
 	Grid3X3,
 	Key,
+	ListFilter,
 	Logs,
 	Receipt,
 	Shield,
@@ -85,6 +86,14 @@ export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 		icon: Receipt,
 		selectorPlaceholder: 'Type * to cover the workspace subscription',
 		docsAnchor: 'subscription',
+	},
+	'quick-filter': {
+		label: 'Quick Filters',
+		description: 'Quick filters shown in the logs, traces, and other explorers.',
+		icon: ListFilter,
+		selectorPlaceholder:
+			'Type quick filter ID, separate multiple with comma or space',
+		docsAnchor: 'quick-filter',
 	},
 	logs: {
 		label: 'Logs',

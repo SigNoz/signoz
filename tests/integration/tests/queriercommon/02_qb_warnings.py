@@ -64,8 +64,8 @@ def test_resource_default_warning(
         "Key `service.name` is ambiguous, found 2 different combinations of "
         "field context / data type: [name=service.name,context=resource,datatype=string "
         "name=service.name,context=attribute,datatype=string]. Using `resource` context "
-        "by default. To query attributes explicitly, use the fully qualified name "
-        "(e.g., 'attribute.service.name')"
+        "by default. To query another context explicitly, use the fully qualified name "
+        "(e.g., 'attribute.service.name' or 'body.service.name')"
     )
     assert warning["warnings"] == [
         {"message": expected_service_name_warning},
@@ -237,8 +237,8 @@ def test_deduped_warnings_for_single_query(
         "Key `service.name` is ambiguous, found 2 different combinations of "
         "field context / data type: [name=service.name,context=resource,datatype=string "
         "name=service.name,context=attribute,datatype=string]. Using `resource` context "
-        "by default. To query attributes explicitly, use the fully qualified name "
-        "(e.g., 'attribute.service.name')"
+        "by default. To query another context explicitly, use the fully qualified name "
+        "(e.g., 'attribute.service.name' or 'body.service.name')"
     )
     expected_status_code_warning = "Key `http.status_code` is ambiguous, found 2 different combinations of field context / data type: [name=http.status_code,context=attribute,datatype=number name=http.status_code,context=attribute,datatype=string]."
     assert warning["warnings"] == [
@@ -328,8 +328,8 @@ def test_deduped_warnings_for_multiple_queries(
         "Key `service.name` is ambiguous, found 2 different combinations of "
         "field context / data type: [name=service.name,context=resource,datatype=string "
         "name=service.name,context=attribute,datatype=string]. Using `resource` context "
-        "by default. To query attributes explicitly, use the fully qualified name "
-        "(e.g., 'attribute.service.name')"
+        "by default. To query another context explicitly, use the fully qualified name "
+        "(e.g., 'attribute.service.name' or 'body.service.name')"
     )
     expected_status_code_warning = "Key `http.status_code` is ambiguous, found 2 different combinations of field context / data type: [name=http.status_code,context=attribute,datatype=number name=http.status_code,context=attribute,datatype=string]."
     assert warning["warnings"] == [

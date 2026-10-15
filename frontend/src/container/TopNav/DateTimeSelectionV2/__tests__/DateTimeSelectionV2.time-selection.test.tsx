@@ -20,11 +20,6 @@ jest.mock('hooks/useSafeNavigate', () => ({
 	}),
 }));
 
-jest.mock('container/NewExplorerCTA', () => ({
-	__esModule: true,
-	default: (): null => null,
-}));
-
 let mockOnCustomDateHandler: ((range: [unknown, unknown]) => void) | null =
 	null;
 let mockOnValidCustomDateChange: ((data: { timeStr: string }) => void) | null =

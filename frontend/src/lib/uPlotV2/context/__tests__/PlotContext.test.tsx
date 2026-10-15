@@ -26,6 +26,7 @@ const createMockPlot = (series: MockSeries[] = []): uPlot =>
 		series,
 		batch: jest.fn((fn: () => void) => fn()),
 		setSeries: jest.fn(),
+		redraw: jest.fn(),
 	}) as unknown as uPlot;
 
 interface TestComponentProps {
@@ -44,7 +45,10 @@ const TestComponent = ({
 		syncSeriesVisibilityToLocalStorage,
 		onToggleSeriesVisibility,
 		onToggleSeriesOnOff,
+		onShowOnlySeries,
+		onShowAllSeries,
 		onFocusSeries,
+		onHighlightSeries,
 	} = usePlotContext();
 	const handleInit = (): void => {
 		if (!plot || !id || typeof shouldSaveSelectionPreference !== 'boolean') {
@@ -86,6 +90,13 @@ const TestComponent = ({
 			</button>
 			<button
 				type="button"
+				data-testid="toggle-on-off-2"
+				onClick={(): void => onToggleSeriesOnOff(2)}
+			>
+				Toggle on/off 2
+			</button>
+			<button
+				type="button"
 				data-testid="toggle-on-off-5"
 				onClick={(): void => onToggleSeriesOnOff(5)}
 			>
@@ -97,6 +108,34 @@ const TestComponent = ({
 				onClick={(): void => onFocusSeries(1)}
 			>
 				Focus series
+			</button>
+			<button
+				type="button"
+				data-testid="show-only-1"
+				onClick={(): void => onShowOnlySeries(1)}
+			>
+				Show only 1
+			</button>
+			<button
+				type="button"
+				data-testid="show-all"
+				onClick={(): void => onShowAllSeries()}
+			>
+				Show all
+			</button>
+			<button
+				type="button"
+				data-testid="highlight-1"
+				onClick={(): void => onHighlightSeries(1)}
+			>
+				Highlight 1
+			</button>
+			<button
+				type="button"
+				data-testid="clear-highlight"
+				onClick={(): void => onHighlightSeries(null)}
+			>
+				Clear highlight
 			</button>
 		</div>
 	);
@@ -273,6 +312,7 @@ describe('PlotContext', () => {
 			const series: MockSeries[] = [
 				{ label: 'x-axis', show: true },
 				{ label: 'CPU', show: true },
+				{ label: 'Memory', show: true },
 			];
 			const plot = createMockPlot(series);
 
@@ -324,6 +364,7 @@ describe('PlotContext', () => {
 			const series: MockSeries[] = [
 				{ label: 'x-axis', show: true },
 				{ label: 'CPU', show: true },
+				{ label: 'Memory', show: true },
 			];
 			const plot = createMockPlot(series);
 
@@ -342,6 +383,48 @@ describe('PlotContext', () => {
 
 			expect(plot.setSeries).toHaveBeenCalledWith(1, { show: false });
 			expect(mockUpdateSeriesVisibilityToLocalStorage).not.toHaveBeenCalled();
+		});
+
+		it('refuses to hide the last series showing', async () => {
+			const user = userEvent.setup();
+			const plot = createMockPlot([
+				{ label: 'x-axis', show: true },
+				{ label: 'CPU', show: true },
+				{ label: 'Memory', show: false },
+			]);
+
+			render(
+				<PlotContextProvider>
+					<TestComponent plot={plot} id="widget-123" shouldSaveSelectionPreference />
+				</PlotContextProvider>,
+			);
+
+			await user.click(screen.getByTestId('init'));
+			await user.click(screen.getByTestId('toggle-on-off-1'));
+
+			// An empty chart is never a state worth reaching.
+			expect(plot.setSeries).not.toHaveBeenCalled();
+			expect(mockUpdateSeriesVisibilityToLocalStorage).not.toHaveBeenCalled();
+		});
+
+		it('still shows a hidden series when only one is left showing', async () => {
+			const user = userEvent.setup();
+			const plot = createMockPlot([
+				{ label: 'x-axis', show: true },
+				{ label: 'CPU', show: false },
+				{ label: 'Memory', show: true },
+			]);
+
+			render(
+				<PlotContextProvider>
+					<TestComponent plot={plot} id="widget-123" shouldSaveSelectionPreference />
+				</PlotContextProvider>,
+			);
+
+			await user.click(screen.getByTestId('init'));
+			await user.click(screen.getByTestId('toggle-on-off-1'));
+
+			expect(plot.setSeries).toHaveBeenCalledWith(1, { show: true });
 		});
 	});
 
@@ -379,6 +462,195 @@ describe('PlotContext', () => {
 			await user.click(screen.getByTestId('focus-series'));
 
 			expect(plot.setSeries).toHaveBeenCalledWith(1, { focus: true }, false);
+		});
+	});
+	describe('onShowOnlySeries', () => {
+		const renderWithSeries = (
+			series: MockSeries[],
+		): { plot: uPlot; user: ReturnType<typeof userEvent.setup> } => {
+			const user = userEvent.setup();
+			const plot = createMockPlot(series);
+
+			render(
+				<PlotContextProvider>
+					<TestComponent plot={plot} id="widget-123" shouldSaveSelectionPreference />
+				</PlotContextProvider>,
+			);
+
+			return { plot, user };
+		};
+
+		it('hides every other series, leaving the x-axis alone', async () => {
+			const { plot, user } = renderWithSeries([
+				{ label: 'x-axis', show: true },
+				{ label: 'CPU', show: true },
+				{ label: 'Memory', show: true },
+			]);
+
+			await user.click(screen.getByTestId('init'));
+			await user.click(screen.getByTestId('show-only-1'));
+
+			expect(plot.setSeries).toHaveBeenCalledWith(1, { show: true });
+			expect(plot.setSeries).toHaveBeenCalledWith(2, { show: false });
+			expect(plot.setSeries).not.toHaveBeenCalledWith(0, expect.anything());
+			expect(mockUpdateSeriesVisibilityToLocalStorage).toHaveBeenCalled();
+		});
+
+		it('keeps isolating the series that is already the only one shown', async () => {
+			const { plot, user } = renderWithSeries([
+				{ label: 'x-axis', show: true },
+				{ label: 'CPU', show: true },
+				{ label: 'Memory', show: false },
+			]);
+
+			await user.click(screen.getByTestId('init'));
+			await user.click(screen.getByTestId('show-only-1'));
+
+			expect(plot.setSeries).toHaveBeenCalledWith(1, { show: true });
+			expect(plot.setSeries).toHaveBeenCalledWith(2, { show: false });
+		});
+	});
+
+	describe('onShowAllSeries', () => {
+		it('shows every hidden series again', async () => {
+			const user = userEvent.setup();
+			const plot = createMockPlot([
+				{ label: 'x-axis', show: true },
+				{ label: 'CPU', show: true },
+				{ label: 'Memory', show: false },
+			]);
+
+			render(
+				<PlotContextProvider>
+					<TestComponent plot={plot} id="widget-123" shouldSaveSelectionPreference />
+				</PlotContextProvider>,
+			);
+
+			await user.click(screen.getByTestId('init'));
+			await user.click(screen.getByTestId('show-all'));
+
+			expect(plot.setSeries).toHaveBeenCalledWith(1, { show: true });
+			expect(plot.setSeries).toHaveBeenCalledWith(2, { show: true });
+			expect(plot.setSeries).not.toHaveBeenCalledWith(0, expect.anything());
+		});
+	});
+
+	describe('onHighlightSeries', () => {
+		const series = (): MockSeries[] => [
+			{ label: 'x-axis', show: true },
+			{ label: 'CPU', show: true, width: 2 },
+			{ label: 'Memory', show: true, width: 2 },
+		];
+
+		it('dims the other series and thickens the highlighted one', async () => {
+			const user = userEvent.setup();
+			const plot = createMockPlot(series());
+
+			render(
+				<PlotContextProvider>
+					<TestComponent plot={plot} id="widget-123" shouldSaveSelectionPreference />
+				</PlotContextProvider>,
+			);
+
+			await user.click(screen.getByTestId('init'));
+			await user.click(screen.getByTestId('highlight-1'));
+
+			expect(plot.series[1].alpha).toBe(1);
+			expect(plot.series[1].width).toBe(3.2);
+			expect(plot.series[2].alpha).toBe(0.16);
+			expect(plot.series[2].width).toBe(2);
+			// Only the stroke changed, so the cached paths are reused.
+			expect(plot.redraw).toHaveBeenCalledWith(false);
+		});
+
+		it('restores every series when the highlight is cleared', async () => {
+			const user = userEvent.setup();
+			const plot = createMockPlot(series());
+
+			render(
+				<PlotContextProvider>
+					<TestComponent plot={plot} id="widget-123" shouldSaveSelectionPreference />
+				</PlotContextProvider>,
+			);
+
+			await user.click(screen.getByTestId('init'));
+			await user.click(screen.getByTestId('highlight-1'));
+			await user.click(screen.getByTestId('clear-highlight'));
+
+			expect(plot.series[1].alpha).toBe(1);
+			expect(plot.series[1].width).toBe(2);
+			expect(plot.series[2].alpha).toBe(1);
+			expect(plot.series[2].width).toBe(2);
+		});
+
+		it('drops the dim when the highlighted series is hidden', async () => {
+			const user = userEvent.setup();
+			const plot = createMockPlot(series());
+			// The mock's setSeries doesn't mutate, so mirror what uPlot would do.
+			(plot.setSeries as jest.Mock).mockImplementation(
+				(index: number, opts: { show?: boolean }) => {
+					if (typeof opts.show === 'boolean') {
+						(plot.series[index] as MockSeries).show = opts.show;
+					}
+				},
+			);
+
+			render(
+				<PlotContextProvider>
+					<TestComponent plot={plot} id="widget-123" shouldSaveSelectionPreference />
+				</PlotContextProvider>,
+			);
+
+			await user.click(screen.getByTestId('init'));
+			await user.click(screen.getByTestId('highlight-1'));
+			await user.click(screen.getByTestId('toggle-on-off-1'));
+
+			// Otherwise every remaining series stays faded and the panel reads as
+			// an isolation instead of one series being excluded.
+			expect(plot.series[2].alpha).toBe(1);
+			expect(plot.series[2].width).toBe(2);
+		});
+
+		it('keeps the dim when a different series is hidden', async () => {
+			const user = userEvent.setup();
+			const plot = createMockPlot(series());
+			(plot.setSeries as jest.Mock).mockImplementation(
+				(index: number, opts: { show?: boolean }) => {
+					if (typeof opts.show === 'boolean') {
+						(plot.series[index] as MockSeries).show = opts.show;
+					}
+				},
+			);
+
+			render(
+				<PlotContextProvider>
+					<TestComponent plot={plot} id="widget-123" shouldSaveSelectionPreference />
+				</PlotContextProvider>,
+			);
+
+			await user.click(screen.getByTestId('init'));
+			await user.click(screen.getByTestId('highlight-1'));
+			await user.click(screen.getByTestId('toggle-on-off-2'));
+
+			expect(plot.series[1].alpha).toBe(1);
+			expect(plot.series[2].alpha).toBe(0.16);
+		});
+
+		it('leaves visibility untouched', async () => {
+			const user = userEvent.setup();
+			const plot = createMockPlot(series());
+
+			render(
+				<PlotContextProvider>
+					<TestComponent plot={plot} id="widget-123" shouldSaveSelectionPreference />
+				</PlotContextProvider>,
+			);
+
+			await user.click(screen.getByTestId('init'));
+			await user.click(screen.getByTestId('highlight-1'));
+
+			expect(plot.setSeries).not.toHaveBeenCalled();
+			expect(mockUpdateSeriesVisibilityToLocalStorage).not.toHaveBeenCalled();
 		});
 	});
 });

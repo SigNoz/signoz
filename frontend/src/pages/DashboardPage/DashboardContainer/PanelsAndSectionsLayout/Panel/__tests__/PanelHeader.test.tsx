@@ -1,8 +1,12 @@
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	type DashboardtypesPanelDTO,
+	Querybuildertypesv5VariableTypeDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
+import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/useDashboardStore';
 import type { ReactElement } from 'react';
 import type { Warning } from 'types/api';
 
@@ -98,6 +102,30 @@ describe('PanelHeader title and description', () => {
 	it('renders the panel name', () => {
 		renderWithProvider(<PanelHeader {...baseProps} />);
 		expect(screen.getByText('My panel')).toBeInTheDocument();
+	});
+
+	it('substitutes dashboard variables into the panel name', () => {
+		useDashboardStore.setState({
+			dashboardId: 'dash-1',
+			resolvedVariables: {
+				'dash-1': {
+					service: {
+						type: Querybuildertypesv5VariableTypeDTO.query,
+						value: ['cart', 'api'],
+					},
+				},
+			},
+		});
+		renderWithProvider(
+			<PanelHeader
+				{...baseProps}
+				panel={makePanel({ name: 'Latency of $service ({{missing}})' })}
+			/>,
+		);
+		expect(
+			screen.getByText('Latency of cart, api ({{missing}})'),
+		).toBeInTheDocument();
+		useDashboardStore.setState({ dashboardId: '', resolvedVariables: {} });
 	});
 
 	it('shows the description info icon when a description is provided', () => {

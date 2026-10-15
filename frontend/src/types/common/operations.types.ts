@@ -1,5 +1,4 @@
 import { QueryProps } from 'container/QueryBuilder/type';
-import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderFormula,
@@ -17,14 +16,13 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import { SelectOption } from './select';
 
-type UseQueryOperationsParams = Pick<QueryProps, 'index' | 'query'> &
-	Pick<QueryBuilderProps, 'filterConfigs'> & {
-		isForTraceOperator?: boolean;
-		formula?: IBuilderFormula;
-		isListViewPanel?: boolean;
-		entityVersion: string;
-		savePreviousQuery?: boolean;
-	};
+type UseQueryOperationsParams = Pick<QueryProps, 'index' | 'query'> & {
+	isForTraceOperator?: boolean;
+	formula?: IBuilderFormula;
+	isRawQuery?: boolean;
+	entityVersion: string;
+	savePreviousQuery?: boolean;
+};
 
 // Generic type that can work with both legacy and V5 query types
 export type HandleChangeQueryData<T = IBuilderQuery> = <
@@ -64,7 +62,6 @@ export type UseQueryOperations = (params: UseQueryOperationsParams) => {
 	isMetricsDataSource: boolean;
 	operators: SelectOption<string, string>[];
 	spaceAggregationOptions: SelectOption<string, string>[];
-	listOfAdditionalFilters: string[];
 	handleChangeOperator: (value: string) => void;
 	handleSpaceAggregationChange: (value: string) => void;
 	handleChangeAggregatorAttribute: (
@@ -76,5 +73,4 @@ export type UseQueryOperations = (params: UseQueryOperationsParams) => {
 	handleChangeQueryData: HandleChangeQueryData;
 	handleChangeFormulaData: HandleChangeFormulaData;
 	handleQueryFunctionsUpdates: (functions: QueryFunction[]) => void;
-	listOfAdditionalFormulaFilters: string[];
 };

@@ -2,6 +2,7 @@ package logstelemetryschema
 
 import (
 	"context"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"testing"
 	"time"
 
@@ -50,8 +51,8 @@ func TestFilterExprSearch(t *testing.T) {
 	logScope := "(match(LOWER(severity_text), LOWER(?)) OR match(LOWER(trace_id), LOWER(?)) OR match(LOWER(span_id), LOWER(?)))"
 	resourceScope := "(arrayExists(x -> match(LOWER(x), LOWER(?)), mapKeys(resources_string)) OR arrayExists(x -> match(LOWER(x), LOWER(?)), mapValues(resources_string)))"
 
-	serviceNameEq := "(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? " +
-		"AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)"
+	// the read spans both eras and yields NULL for an absent key, so it takes no presence guard
+	serviceNameEq := "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ?"
 
 	testCases := []struct {
 		name                  string
@@ -243,19 +244,15 @@ func TestFilterExprSearch(t *testing.T) {
 			fl := flaggertest.WithBooleanFlags(t, map[string]bool{
 				flagger.FeatureUseJSONBody.String(): tc.jsonBodyEnabled,
 			})
-			fm := NewFieldMapper(fl)
-			cb := NewConditionBuilder(fm, fl)
+			storage := NewStorage()
 			keys := BuildCompleteFieldKeyMap(releaseTime)
 
 			opts := querybuilder.FilterExprVisitorOpts{
-				Context:          context.Background(),
-				Logger:           instrumentationtest.New().Logger(),
-				FieldMapper:      fm,
-				ConditionBuilder: cb,
-				FieldKeys:        keys,
-				FullTextColumn:   tc.fullTextColumn,
-				StartNs:          tc.startNs,
-				EndNs:            tc.endNs,
+				Context: context.Background(),
+				Logger:  instrumentationtest.New().Logger(),
+				Storage: storage, Query: querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalLogs, nil, tc.startNs, tc.endNs),
+				FieldKeys:      keys,
+				FullTextColumn: tc.fullTextColumn,
 			}
 
 			clause, err := querybuilder.PrepareWhereClause(tc.query, opts)
@@ -279,6 +276,57 @@ func TestFilterExprSearch(t *testing.T) {
 				// materializes it from config.
 				require.True(t, clause.RequiresCostGuard)
 			}
+		})
+	}
+}
+
+// A search scope is a field the resource fingerprint sub-query cannot serve,
+// so the main query keeps it when the split runs.
+func TestFilterExprSearchResourceScopeUnderSplit(t *testing.T) {
+	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	resourceScope := "(arrayExists(x -> match(LOWER(x), LOWER(?)), mapKeys(resources_string)) OR arrayExists(x -> match(LOWER(x), LOWER(?)), mapValues(resources_string)))"
+	legacyBody := "match(LOWER(body), LOWER(?))"
+
+	testCases := []struct {
+		name          string
+		query         string
+		expectedQuery string
+		expectedArgs  []any
+	}{
+		{
+			name:          "resource scope alone",
+			query:         "search('checkout', resource)",
+			expectedQuery: "WHERE (" + resourceScope + ")",
+			expectedArgs:  []any{"checkout", "checkout"},
+		},
+		{
+			name:          "resource scope in a union",
+			query:         "search('checkout', body, resource)",
+			expectedQuery: "WHERE ((" + legacyBody + ") OR (" + resourceScope + "))",
+			expectedArgs:  []any{"checkout", "checkout", "checkout"},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			fl := flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureUseJSONBody.String(): false})
+			opts := querybuilder.FilterExprVisitorOpts{
+				Context:            context.Background(),
+				Logger:             instrumentationtest.New().Logger(),
+				Storage:            NewStorage(),
+				Query:              querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalLogs, nil, uint64(releaseTime.Add(-5*time.Minute).UnixNano()), uint64(releaseTime.Add(5*time.Minute).UnixNano())),
+				FieldKeys:          BuildCompleteFieldKeyMap(releaseTime),
+				FullTextColumn:     DefaultFullTextColumn,
+				SkipResourceFilter: true,
+			}
+
+			clause, err := querybuilder.PrepareWhereClause(tc.query, opts)
+			require.NoError(t, err)
+			require.False(t, clause.IsEmpty())
+
+			sql, args := clause.WhereClause.BuildWithFlavor(sqlbuilder.ClickHouse)
+			require.Equal(t, tc.expectedQuery, sql)
+			require.Equal(t, tc.expectedArgs, args)
 		})
 	}
 }

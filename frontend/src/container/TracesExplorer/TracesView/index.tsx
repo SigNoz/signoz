@@ -2,6 +2,7 @@ import {
 	Dispatch,
 	memo,
 	MutableRefObject,
+	ReactNode,
 	SetStateAction,
 	useEffect,
 	useMemo,
@@ -40,6 +41,7 @@ interface TracesViewProps {
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
 	setIsLoadingQueries: Dispatch<SetStateAction<boolean>>;
 	queryKeyRef?: MutableRefObject<any>;
+	headerActions?: ReactNode;
 }
 
 function TracesView({
@@ -47,6 +49,7 @@ function TracesView({
 	setWarning,
 	setIsLoadingQueries,
 	queryKeyRef,
+	headerActions,
 }: TracesViewProps): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
 
@@ -155,6 +158,7 @@ function TracesView({
 				</Typography>
 
 				<div className="trace-explorer-controls">
+					{headerActions}
 					<DownloadOptionsMenu
 						dataSource={DataSource.TRACES}
 						panelType={PANEL_TYPES.TRACE}
@@ -187,6 +191,7 @@ function TracesView({
 
 TracesView.defaultProps = {
 	queryKeyRef: undefined,
+	headerActions: undefined,
 };
 
 export default memo(TracesView);

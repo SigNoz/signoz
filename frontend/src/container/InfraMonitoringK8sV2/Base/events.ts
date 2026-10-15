@@ -6,7 +6,7 @@ import { isCustomTimeRange } from 'store/globalTime';
 
 export function logInfraFilterCustomizedEvent(
 	entityType: InfraMonitoringEntity,
-	source: 'quick_filter' | 'search' | 'host_status_toggle',
+	source: 'quick_filter' | 'search' | 'host_status_toggle' | 'status_filter',
 	expression: string,
 	extraKeys?: string[],
 ): void {
@@ -97,7 +97,11 @@ export function logInfraExplorerNavigatedEvent(params: {
 		| 'logs_explorer'
 		| 'traces_explorer'
 		| 'k8s_list';
-	source: 'chart_compass_icon' | 'tab_cta_button' | 'stats_card';
+	source:
+		| 'chart_compass_icon'
+		| 'tab_cta_button'
+		| 'stats_card'
+		| 'overview_cta';
 	tab: string;
 	sourceKey: string | null;
 	drawerDurationMsAtNavigation: number | null;

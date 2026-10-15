@@ -9,15 +9,16 @@ change breaks an invariant, flag it and discuss it first.
 
 ---
 
-## Why a second provider
+## Why the provider looks like this
 
-The v1 provider (`pkg/prometheus/clickhouseprometheus`) serves the promql
-engine through the remote-read protobuf adapter. It fetches every raw sample
-of a query's union window. It serializes all of them and gives them to the
-engine. The cost follows the ingested data, not the question. This is how a
-dashboard of PromQL panels can take an instance down.
+The removed v1 provider served the promql engine through the remote-read
+protobuf adapter. It fetched every raw sample of a query's union window,
+serialized all of them, and gave them to the engine. The cost followed the
+ingested data, not the question. This is how a dashboard of PromQL panels
+could take an instance down. v2 replaced it after a byte-level parity
+rollout, and v1 was then deleted.
 
-In v2, each query runs in one of two ways. The classifier decides per query:
+Each query runs in one of two ways. The classifier decides per query:
 
 - **Transpiled**: ClickHouse evaluates the query. Only final (or near-final)
   per-group grid arrays come back. The statements use the
@@ -30,7 +31,7 @@ In v2, each query runs in one of two ways. The classifier decides per query:
 lost user. A construct that cannot reproduce engine semantics exactly falls
 back. It does not approximate.** The conformance suite
 (`tests/integration/tests/promqlconformance/`) replays Prometheus' own test
-corpus against both providers. It is the arbiter. The classification golden
+corpus against the provider. It is the arbiter. The classification golden
 (`testdata/classification_golden.json`) freezes the route of each corpus
 expression. The rest of this document is the PromQL-to-SQL story. That
 mapping is where correctness is won or lost.
@@ -263,7 +264,8 @@ per-thread partials scaled memory with the thread count. The slide then
 combines each slot's at-most-W bucket partials by direct aggregation
 (`arraySum(arraySlice(...))`). Window sums are added the way the engine adds
 them. There is no prefix-sum differencing: its large-minus-large
-cancellation would drift past the shadow tolerance on counter-sized values.
+cancellation would drift past the conformance tolerance on counter-sized
+values.
 This is correct per slot because the bucket union is the exact window
 multiset, and avg/min/max/sum/count are order-insensitive on a multiset
 (sum/avg up to summation order; see the float caveat above). A slot with
@@ -333,7 +335,7 @@ can carry them.
 ## The engine path
 
 Queries that do not transpile run in the stock engine over this package's
-`storage.Querier`. This is still not the v1 path. Samples are fetched per
+`storage.Querier`. Samples are fetched per
 selector with the engine's per-selector hints, not the query-wide union
 window. So `foo / foo offset 1d` reads two narrow windows, not the widest
 one twice. Instant selectors of subquery-free queries fetch only the last
@@ -367,9 +369,9 @@ same predicates as a shard-local semi-join, not a GLOBAL broadcast of the
 matched set. The temporality filter on every samples statement is a
 semantic no-op: the matched fingerprints already come from those
 temporalities. It engages the leading samples primary-key column.
-Delta-temporality series stay invisible to PromQL here, exactly as in v1.
-The rollout gate is parity with v1. To make Delta visible is its own change
-with its own semantics to design. A Delta stream fed to `rate()`
+Delta-temporality series stay invisible to PromQL here, as they were before
+v2. To make Delta visible is its own change with its own semantics to
+design. A Delta stream fed to `rate()`
 as-if-cumulative would be wrong, not just new.
 
 ## Observability

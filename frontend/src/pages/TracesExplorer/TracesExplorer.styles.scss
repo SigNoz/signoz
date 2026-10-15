@@ -65,8 +65,6 @@
 }
 
 .trace-explorer-page {
-	display: flex;
-
 	// Meant to fix the query builder colors
 	--input-background: var(--l2-background);
 	--input-hover-background: var(--l2-background);
@@ -75,32 +73,8 @@
 	--input-hover-border-color: var(--internal-ant-border-color-hover);
 	--input-focus-border-color: var(--internal-ant-border-color-hover);
 
-	.filter {
-		width: 260px;
-		height: 100%;
-		min-height: 100vh;
-
-		border-right: 0px;
-		border: 1px solid var(--l1-border);
-		background-color: var(--l1-background);
-
-		> .ant-card-body {
-			padding: 0;
-			width: 258px;
-		}
-	}
-
 	.trace-explorer {
-		width: 100%;
 		background: var(--l1-background);
-
-		> .ant-card-body {
-			padding: 0;
-		}
-
 		border-color: var(--l1-border);
-	}
-	.trace-explorer.filters-expanded {
-		width: calc(100% - 260px);
 	}
 }

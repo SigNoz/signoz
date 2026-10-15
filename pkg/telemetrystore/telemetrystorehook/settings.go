@@ -72,10 +72,6 @@ func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent
 		settings["result_overflow_mode"] = ctx.Value("result_overflow_mode")
 	}
 
-	// TODO(srikanthccv): enable it when the "Cannot read all data" issue is fixed
-	// https://github.com/ClickHouse/ClickHouse/issues/82283
-	settings["secondary_indices_enable_bulk_filtering"] = false
-
 	ctx = clickhouse.Context(ctx, clickhouse.WithSettings(settings))
 	return ctx
 }

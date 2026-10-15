@@ -341,7 +341,7 @@ func (b *scopedTraceStatementBuilder) buildQualifiedStatement(
 		return nil, nil, err
 	}
 	sb := sqlbuilder.NewSelectBuilder()
-	maskExpr, resolved, err := b.resolveFor(ctx, orgID, start, end, keys, sb)
+	maskExpr, resolved, err := b.resolveFor(ctx, querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end), keys, sb)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -476,15 +476,15 @@ func groupBySelectors(groupBy []qbtypes.GroupByKey) []*telemetrytypes.FieldKeySe
 	return selectors
 }
 
-// resolveGroupColumns resolves group-by keys through the field mapper for selection
+// resolveGroupColumns resolves group-by keys through the storage for selection
 // inside the per-trace scan; keys must cover the group-by selectors.
-func (b *scopedTraceStatementBuilder) resolveGroupColumns(ctx context.Context, orgID valuer.UUID, start, end uint64, groupBy []qbtypes.GroupByKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) ([]groupColumn, error) {
+func (b *scopedTraceStatementBuilder) resolveGroupColumns(ctx context.Context, q qbtypes.QueryInfo, groupBy []qbtypes.GroupByKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) ([]groupColumn, error) {
 	if len(groupBy) == 0 {
 		return nil, nil
 	}
 	out := make([]groupColumn, 0, len(groupBy))
 	for i := range groupBy {
-		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &groupBy[i].TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, q, b.storage, &groupBy[i].TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -519,12 +519,13 @@ func (b *scopedTraceStatementBuilder) newScanContext(
 ) (*scanContext, error) {
 	sc := &scanContext{sb: sqlbuilder.NewSelectBuilder()}
 	var err error
-	sc.maskExpr, sc.resolved, err = b.resolveFor(ctx, orgID, start, end, keys, sc.sb)
+	q := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end)
+	sc.maskExpr, sc.resolved, err = b.resolveFor(ctx, q, keys, sc.sb)
 	if err != nil {
 		return nil, err
 	}
 	if strings.TrimSpace(spanExpr) != "" {
-		pred, warns, url, err := b.resolveSpanPredicate(ctx, orgID, start, end, spanExpr, keys, variables, sc.sb)
+		pred, warns, url, err := b.resolveSpanPredicate(ctx, q, spanExpr, keys, variables, sc.sb)
 		if err != nil {
 			return nil, err
 		}
@@ -597,7 +598,7 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 		}
 	}
 
-	groupCols, err := b.resolveGroupColumns(ctx, orgID, start, end, query.GroupBy, keys)
+	groupCols, err := b.resolveGroupColumns(ctx, querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end), query.GroupBy, keys)
 	if err != nil {
 		return nil, err
 	}

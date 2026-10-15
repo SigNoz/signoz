@@ -10,11 +10,6 @@ from fixtures.querier import get_all_series, make_query_request
 
 MINUTE_MS = 60_000
 
-LEGS: list[tuple[str, dict | None]] = [
-    ("default", None),
-    ("clickhousev2", {"X-SigNoz-PromQL-Provider": "clickhousev2"}),
-]
-
 
 def test_promql_subquery_without_step_evaluates(
     signoz: types.SigNoz,
@@ -45,16 +40,15 @@ def test_promql_subquery_without_step_evaluates(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    for leg, headers in LEGS:
-        query = {"type": "promql", "spec": {"name": "A", "query": f"max_over_time({metric}[5m:])"}}
-        response = make_query_request(signoz, token, start_ms, end_ms, [query], headers=headers)
-        assert response.status_code == HTTPStatus.OK, f"{leg}: {response.text[:300]}"
-        series = get_all_series(response.json(), "A")
-        assert series, f"{leg}: the subquery must return the inserted series"
-        values = {point["value"] for entry in series for point in entry.get("values") or []}
-        assert values == {42.0}, f"{leg}: {sorted(values)[:5]}"
+    query = {"type": "promql", "spec": {"name": "A", "query": f"max_over_time({metric}[5m:])"}}
+    response = make_query_request(signoz, token, start_ms, end_ms, [query])
+    assert response.status_code == HTTPStatus.OK, response.text[:300]
+    series = get_all_series(response.json(), "A")
+    assert series, "the subquery must return the inserted series"
+    values = {point["value"] for entry in series for point in entry.get("values") or []}
+    assert values == {42.0}, sorted(values)[:5]
 
-    # A plain follow-up query proves the process survived the subquery legs.
+    # A plain follow-up query proves the process survived the subquery.
     response = make_query_request(
         signoz,
         token,

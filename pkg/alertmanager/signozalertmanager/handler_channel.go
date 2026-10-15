@@ -168,6 +168,37 @@ func (handler *handler) DeleteNotificationChannel(rw http.ResponseWriter, req *h
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
+func (handler *handler) RepairNotificationChannel(rw http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id, err := valuer.NewUUID(mux.Vars(req)["id"])
+	if err != nil {
+		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "id is not a valid uuid-v7"))
+		return
+	}
+
+	params := new(alertmanagertypes.RepairChannelParams)
+	if err := binding.Query.BindQuery(req.URL.Query(), params); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	repair, err := handler.alertmanager.RepairNotificationChannel(ctx, claims.OrgID, id, params.Apply)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, repair)
+}
+
 func (handler *handler) TestNotificationChannel(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()

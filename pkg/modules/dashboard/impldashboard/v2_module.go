@@ -294,6 +294,15 @@ func (module *module) DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer
 		return err
 	}
 
+	return module.deleteV2(ctx, orgID, id)
+}
+
+// DeleteUnsafeV2 deletes a v2 dashboard bypassing the guards. Intended for internal system callers.
+func (module *module) DeleteUnsafeV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	return module.deleteV2(ctx, orgID, id)
+}
+
+func (module *module) deleteV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
 	return module.store.RunInTx(ctx, func(ctx context.Context) error {
 		// Syncing to an empty tag set drops every tag link for the dashboard.
 		if _, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, id, nil); err != nil {

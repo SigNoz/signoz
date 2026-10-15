@@ -17,13 +17,13 @@ function TraceOperatorSection({
 	const { currentQuery, panelType } = useQueryBuilder();
 
 	const showTraceOperatorWarning = useMemo(() => {
-		const isListViewPanel =
+		const isRawQueryPanel =
 			panelType === PANEL_TYPES.LIST || panelType === PANEL_TYPES.TRACE;
 		const hasMultipleQueries = currentQuery.builder.queryData.length > 1;
 		const hasTraceOperator =
 			currentQuery.builder.queryTraceOperator &&
 			currentQuery.builder.queryTraceOperator.length > 0;
-		return isListViewPanel && hasMultipleQueries && !hasTraceOperator;
+		return isRawQueryPanel && hasMultipleQueries && !hasTraceOperator;
 	}, [
 		currentQuery?.builder?.queryData,
 		currentQuery?.builder?.queryTraceOperator,
@@ -77,50 +77,74 @@ export default function QueryFooter({
 	addNewBuilderQuery,
 	addNewFormula,
 	addTraceOperator,
+	showAddQuery = true,
 	showAddFormula = true,
 	showAddTraceOperator = false,
+	isAddQueryDisabled = false,
+	addQueryDisabledReason,
+	isAddFormulaDisabled = false,
+	addFormulaDisabledReason,
 }: {
 	addNewBuilderQuery: () => void;
 	addNewFormula: () => void;
 	addTraceOperator?: () => void;
 	showAddTraceOperator: boolean;
+	showAddQuery?: boolean;
 	showAddFormula?: boolean;
+	isAddQueryDisabled?: boolean;
+	addQueryDisabledReason?: string;
+	isAddFormulaDisabled?: boolean;
+	addFormulaDisabledReason?: string;
 }): JSX.Element {
 	return (
 		<div className="qb-footer">
 			<div className="qb-footer-container">
-				<div className="qb-add-new-query">
-					<Tooltip title={<div style={{ textAlign: 'center' }}>Add New Query</div>}>
-						<Button
-							className="add-new-query-button periscope-btn "
-							icon={<Plus size={16} />}
-							onClick={addNewBuilderQuery}
-						/>
-					</Tooltip>
-				</div>
+				{showAddQuery && (
+					<div className="qb-add-new-query">
+						<Tooltip
+							title={
+								addQueryDisabledReason ?? (
+									<div style={{ textAlign: 'center' }}>Add New Query</div>
+								)
+							}
+						>
+							<Button
+								className="add-new-query-button periscope-btn "
+								data-testid="add-new-query-button"
+								icon={<Plus size={16} />}
+								onClick={addNewBuilderQuery}
+								disabled={isAddQueryDisabled}
+							/>
+						</Tooltip>
+					</div>
+				)}
 
 				{showAddFormula && (
 					<div className="qb-add-formula">
 						<Tooltip
 							title={
-								<div style={{ textAlign: 'center' }}>
-									Add New Formula
-									<Typography.Link
-										href="https://signoz.io/docs/querying/multi-query-analysis/#advanced-comparisons"
-										target="_blank"
-										style={{ textDecoration: 'underline' }}
-									>
-										{' '}
-										<br />
-										Learn more
-									</Typography.Link>
-								</div>
+								addFormulaDisabledReason ?? (
+									<div style={{ textAlign: 'center' }}>
+										Add New Formula
+										<Typography.Link
+											href="https://signoz.io/docs/querying/multi-query-analysis/#advanced-comparisons"
+											target="_blank"
+											style={{ textDecoration: 'underline' }}
+										>
+											{' '}
+											<br />
+											Learn more
+										</Typography.Link>
+									</div>
+								)
 							}
 						>
 							<Button
 								className="add-formula-button periscope-btn "
+								data-testid="add-formula-button"
 								icon={<Sigma size={16} />}
 								onClick={addNewFormula}
+								disabled={isAddFormulaDisabled}
 							>
 								Add Formula
 							</Button>

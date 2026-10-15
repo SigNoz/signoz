@@ -12,11 +12,12 @@ cd frontend && pnpm storybook --ci --quiet   # :6006, background it
 A newly added `.stories.tsx` takes a few seconds to appear in `index.json` on an
 already-running server; an empty first poll is not a broken `stories` glob.
 
-Story ids come from the meta title: `Pages/Services` → `pages-services`, plus the
-story export in kebab-case. Render one story on its own:
+Story ids come from the meta title: `Pages/Services/List` →
+`pages-services-list`, plus the story export in kebab-case. Render one story on
+its own:
 
 ```
-http://localhost:6006/iframe.html?id=pages-services--default&viewMode=story
+http://localhost:6006/iframe.html?id=pages-services-list--default&viewMode=story
 ```
 
 ## Flip controls from the URL
@@ -57,8 +58,10 @@ console.log((await page.locator('body').innerText()).slice(0, 1500), problems);
 await browser.close();
 ```
 
-Screenshots are worth taking for `Default` in both themes
-(`&globals=theme:light`): text extraction does not catch an unstyled page.
+Screenshots are worth taking for `Default` in both themes: text extraction does
+not catch an unstyled page. Take them with
+[sbshot](https://github.com/SigNoz/sbshot), e.g.
+`sbshot capture http://localhost:6006 --title <story title> --theme dark,light`.
 
 ## Gates
 

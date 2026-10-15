@@ -18,7 +18,6 @@ import (
 func NewFactory(
 	telemetryStore telemetrystore.TelemetryStore,
 	prometheus prometheus.Prometheus,
-	promV2 prometheus.Prometheus,
 	metadataStore telemetrytypes.MetadataStore,
 	traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
 	aiTraceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
@@ -42,7 +41,6 @@ func NewFactory(
 				telemetryStore,
 				metadataStore,
 				prometheus,
-				promV2,
 				traceStmtBuilder,
 				aiTraceStmtBuilder,
 				logStmtBuilder,

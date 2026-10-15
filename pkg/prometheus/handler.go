@@ -10,6 +10,7 @@ import (
 
 	promModel "github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/promql"
+	"github.com/prometheus/prometheus/promql/parser"
 	"github.com/prometheus/prometheus/util/stats"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -81,36 +82,8 @@ func (h *handler) QueryRange(w http.ResponseWriter, r *http.Request) {
 	}
 	defer cancel()
 
-	if h.tryRangeExecutor(ctx, w, r, start, end, step) {
-		return
-	}
-
-	qry, err := h.prom.Engine().NewRangeQuery(ctx, h.prom.Storage(), nil, r.FormValue("query"), start, end, step)
-	if err != nil {
-		h.respondError(r.Context(), w, errBadData, err)
-		return
-	}
-	h.exec(ctx, w, r, qry)
-}
-
-// tryRangeExecutor serves the query the way a RangeExecutor provider is
-// designed to serve: evaluated inside the datastore when the shape allows.
-// It reports whether the response was written.
-func (h *handler) tryRangeExecutor(ctx context.Context, w http.ResponseWriter, r *http.Request, start, end time.Time, step time.Duration) bool {
-	re, ok := h.prom.(RangeExecutor)
-	if !ok {
-		return false
-	}
-	matrix, served, err := re.TryExecuteRange(ctx, r.FormValue("query"), start, end, step)
-	if err != nil {
-		h.respondError(ctx, w, errExec, err)
-		return true
-	}
-	if !served {
-		return false
-	}
-	h.respond(ctx, w, &queryData{ResultType: matrix.Type(), Result: matrix}, nil, nil)
-	return true
+	res, err := h.prom.QueryRange(ctx, r.FormValue("query"), start, end, step)
+	h.respondResult(ctx, w, r, res, err)
 }
 
 // Query evaluates an expression at a single instant: query and optional
@@ -134,35 +107,34 @@ func (h *handler) Query(w http.ResponseWriter, r *http.Request) {
 	}
 	defer cancel()
 
-	qry, err := h.prom.Engine().NewInstantQuery(ctx, h.prom.Storage(), nil, r.FormValue("query"), ts)
-	if err != nil {
-		h.respondError(r.Context(), w, errBadData, err)
-		return
-	}
-	h.exec(ctx, w, r, qry)
+	res, err := h.prom.Query(ctx, r.FormValue("query"), ts)
+	h.respondResult(ctx, w, r, res, err)
 }
 
-func (h *handler) exec(ctx context.Context, w http.ResponseWriter, r *http.Request, qry promql.Query) {
-	defer qry.Close()
-	res := qry.Exec(ctx)
-	if res.Err != nil {
-		h.logger.ErrorContext(ctx, "error evaluating promql query", errors.Attr(res.Err))
-		switch res.Err.(type) {
+func (h *handler) respondResult(ctx context.Context, w http.ResponseWriter, r *http.Request, res *Result, err error) {
+	if err != nil {
+		h.logger.ErrorContext(ctx, "error evaluating promql query", errors.Attr(err))
+		var parseErrs parser.ParseErrors
+		if errors.As(err, &parseErrs) {
+			h.respondError(ctx, w, errBadData, err)
+			return
+		}
+		switch err.(type) {
 		case promql.ErrQueryCanceled:
-			h.respondError(ctx, w, errCanceled, res.Err)
+			h.respondError(ctx, w, errCanceled, err)
 		case promql.ErrQueryTimeout:
-			h.respondError(ctx, w, errTimeout, res.Err)
+			h.respondError(ctx, w, errTimeout, err)
 		case promql.ErrStorage:
-			h.respondError(ctx, w, errInternal, res.Err)
+			h.respondError(ctx, w, errInternal, err)
 		default:
-			h.respondError(ctx, w, errExec, res.Err)
+			h.respondError(ctx, w, errExec, err)
 		}
 		return
 	}
 
 	data := &queryData{ResultType: res.Value.Type(), Result: res.Value}
-	if r.FormValue("stats") != "" {
-		data.Stats = stats.NewQueryStats(qry.Stats())
+	if r.FormValue("stats") != "" && res.Stats != nil {
+		data.Stats = stats.NewQueryStats(res.Stats)
 	}
 	warnings, infos := res.Warnings.AsStrings(r.FormValue("query"), 10, 10)
 	h.respond(ctx, w, data, warnings, infos)

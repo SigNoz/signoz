@@ -55,6 +55,9 @@ function TracesTable({
 	const isDataAbsent =
 		!isLoading && !isFetching && !isError && data.length === 0;
 
+	// Rows can land before the field keys, and mounting then renders a partial column set.
+	const canMountTable = !isError && !isLoading && data.length !== 0;
+
 	const handleRowClick = useCallback(
 		(row: TracesTableRow): void => {
 			history.push(getRowHref(row));
@@ -83,7 +86,7 @@ function TracesTable({
 				<EmptyLogsSearch dataSource={DataSource.TRACES} panelType={panelType} />
 			)}
 
-			{!isError && data.length !== 0 && (
+			{canMountTable && (
 				<div className={styles.tableWrapper}>
 					<TanStackTable<TracesTableRow>
 						data={data}

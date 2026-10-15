@@ -144,11 +144,10 @@ func TestReducedStatementBuilder(t *testing.T) {
 		},
 	}
 
-	fm := metricstelemetryschema.NewFieldMapper()
-	cb := metricstelemetryschema.NewConditionBuilder(fm)
+	storage := metricstelemetryschema.NewStorage()
 	fl, err := flagger.New(context.Background(), instrumentationtest.New().ToProviderSettings(), flagger.Config{}, flagger.MustNewRegistry())
 	require.NoError(t, err)
-	sb := NewMetricQueryStatementBuilder(instrumentationtest.New().ToProviderSettings(), telemetrytypestest.NewMockMetadataStore(), fm, cb, fl)
+	sb := NewMetricQueryStatementBuilder(instrumentationtest.New().ToProviderSettings(), telemetrytypestest.NewMockMetadataStore(), storage, fl)
 
 	const start, end = uint64(1747000000000), uint64(1747172800000)
 

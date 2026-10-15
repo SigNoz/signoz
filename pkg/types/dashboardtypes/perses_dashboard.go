@@ -95,6 +95,13 @@ func (d *DashboardV2) ErrIfNotUpdatable() error {
 	return nil
 }
 
+func (d *DashboardV2) ErrIfNotPublishable() error {
+	if d.Source == SourceSystem {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "system dashboards cannot be made public")
+	}
+	return d.ErrIfNotMutable()
+}
+
 func (d *DashboardV2) Update(updatable UpdatableDashboardV2, updatedBy string, resolvedTags []*tagtypes.Tag) error {
 	if err := d.ErrIfNotUpdatable(); err != nil {
 		return err

@@ -6,7 +6,7 @@ import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
-import { K8sDetailsMetadataConfig } from '../Base/K8sBaseDetails';
+import { K8sDetailsMetadataConfig } from '../Base/types';
 import {
 	getPodUtilizationByPodQueryPayloads,
 	INFRA_MONITORING_ATTR_KEYS,

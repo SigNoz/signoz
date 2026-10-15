@@ -24,10 +24,6 @@ type Config struct {
 
 	// Timeout is the maximum time a query is allowed to run before being aborted.
 	Timeout time.Duration `mapstructure:"timeout"`
-
-	// ProviderName selects the storage provider: "clickhouse" (default) or
-	// "clickhousev2".
-	ProviderName string `mapstructure:"provider"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -41,8 +37,7 @@ func newConfig() factory.Config {
 			Path:          "",
 			MaxConcurrent: 20,
 		},
-		Timeout:      2 * time.Minute,
-		ProviderName: "clickhouse",
+		Timeout: 2 * time.Minute,
 	}
 }
 
@@ -50,15 +45,9 @@ func (c Config) Validate() error {
 	if c.Timeout <= 0 {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "prometheus::timeout must be greater than 0")
 	}
-	if c.ProviderName != "" && c.ProviderName != "clickhouse" && c.ProviderName != "clickhousev2" {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "prometheus::provider must be one of [clickhouse, clickhousev2], got %q", c.ProviderName)
-	}
 	return nil
 }
 
 func (c Config) Provider() string {
-	if c.ProviderName == "" {
-		return "clickhouse"
-	}
-	return c.ProviderName
+	return "clickhousev2"
 }

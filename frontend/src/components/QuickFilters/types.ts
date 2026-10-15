@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -24,6 +25,7 @@ export enum SignalType {
 	API_MONITORING = 'api_monitoring',
 	EXCEPTIONS = 'exceptions',
 	METER_EXPLORER = 'meter',
+	AI_OBSERVABILITY = 'ai_observability',
 }
 
 /**
@@ -50,15 +52,17 @@ export interface QuickFilterChangeEventData {
 
 export interface IQuickFiltersProps {
 	config: IQuickFiltersConfig[];
-	handleFilterVisibilityChange: () => void;
+	handleFilterVisibilityChange?: () => void;
 	source: QuickFiltersSource;
 	onFilterChange?: (query: Query) => void;
 	onQuickFilterChange?: (data: QuickFilterChangeEventData) => void;
+	/** Pass to fetch quick filters for this signal; omit to use `config` as-is */
 	signal?: SignalType;
 	className?: string;
 	showFilterCollapse?: boolean;
 	showQueryName?: boolean;
 	useFieldApis?: QuickFilterCheckboxUseFieldApis;
+	savedViewsHeader?: ReactNode;
 }
 
 export enum QuickFiltersSource {
@@ -68,6 +72,7 @@ export enum QuickFiltersSource {
 	API_MONITORING = 'api-monitoring',
 	EXCEPTIONS = 'exceptions',
 	METER_EXPLORER = 'meter',
+	AI_OBSERVABILITY = 'ai-observability',
 }
 
 /**

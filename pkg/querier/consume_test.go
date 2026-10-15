@@ -195,3 +195,115 @@ func TestMergeSpanAttributeColumns_EmptyEventsAndLinks(t *testing.T) {
 		t.Fatalf("expected empty []spantypes.Link, got %#v", data["links"])
 	}
 }
+
+// Arrays stay native leaves: the collector stringifies top-level arrays and explodes nested ones
+// into indexed keys in the legacy maps; the JSON home keeps them whole and we do not mimic either.
+func TestMergeSpanAttributeColumns_JSONColumn(t *testing.T) {
+	testCases := []struct {
+		name string
+		data map[string]any
+		want map[string]any
+	}{
+		{
+			name: "JSONOnly_FlattensNestedPaths_PreservesTypes",
+			data: map[string]any{
+				"attributes": telemetrystoretypes.JSONValue{
+					"http":      map[string]any{"route": "/api/pay", "retry": map[string]any{"count": float64(3)}},
+					"cache.hit": true,
+				},
+			},
+			want: map[string]any{"http.route": "/api/pay", "http.retry.count": float64(3), "cache.hit": true},
+		},
+		{
+			name: "Straddle_MapsWinOnCollision_JSONFillsGaps",
+			data: map[string]any{
+				"attributes_string": map[string]string{"http.route": "/old", "only.map": "m"},
+				"attributes_number": map[string]float64{"http.status": 500},
+				"attributes":        telemetrystoretypes.JSONValue{"http": map[string]any{"route": "/new"}, "only.json": "j"},
+			},
+			want: map[string]any{"http.route": "/old", "only.map": "m", "http.status": float64(500), "only.json": "j"},
+		},
+		{
+			name: "MapOnly_EmptyJSONDoc_KeepsMapValues",
+			data: map[string]any{
+				"attributes_string": map[string]string{"http.route": "/map"},
+				"attributes_number": map[string]float64{"http.status": 200},
+				"attributes_bool":   map[string]bool{"cache.hit": true},
+				"attributes":        telemetrystoretypes.JSONValue{},
+			},
+			want: map[string]any{"http.route": "/map", "http.status": float64(200), "cache.hit": true},
+		},
+		{
+			name: "MapOnly_NilJSON_BehavesAsAbsent",
+			data: map[string]any{
+				"attributes_string": map[string]string{"http.route": "/map"},
+				"attributes":        telemetrystoretypes.JSONValue(nil),
+			},
+			want: map[string]any{"http.route": "/map"},
+		},
+		{
+			name: "Arrays_StayLeafValues",
+			data: map[string]any{
+				"attributes": telemetrystoretypes.JSONValue{"http": map[string]any{"tags": []any{"a", "b"}, "codes": []any{float64(1), float64(2)}}},
+			},
+			want: map[string]any{"http.tags": []any{"a", "b"}, "http.codes": []any{float64(1), float64(2)}},
+		},
+		{
+			name: "TopLevelArrayOfMaps_StaysNativeLeaf",
+			data: map[string]any{
+				"attributes": telemetrystoretypes.JSONValue{"key": []any{map[string]any{"a": float64(1)}, map[string]any{"b": float64(2)}}},
+			},
+			want: map[string]any{"key": []any{map[string]any{"a": float64(1)}, map[string]any{"b": float64(2)}}},
+		},
+		{
+			name: "NestedArrayOfMaps_StaysNativeLeaf_NoIndexPaths",
+			data: map[string]any{
+				"attributes": telemetrystoretypes.JSONValue{"http": map[string]any{"items": []any{map[string]any{"a": float64(1)}}}},
+			},
+			want: map[string]any{"http.items": []any{map[string]any{"a": float64(1)}}},
+		},
+		{
+			name: "DualWritten_NestedArray_IndexKeysAndJSONArrayCoexist",
+			data: map[string]any{
+				"attributes_number": map[string]float64{"http.items.0.a": 1},
+				"attributes":        telemetrystoretypes.JSONValue{"http": map[string]any{"items": []any{map[string]any{"a": float64(1)}}}},
+			},
+			want: map[string]any{"http.items.0.a": float64(1), "http.items": []any{map[string]any{"a": float64(1)}}},
+		},
+		{
+			name: "JSONNull_KeptAsNil",
+			data: map[string]any{
+				"attributes": telemetrystoretypes.JSONValue{"k": nil},
+			},
+			want: map[string]any{"k": nil},
+		},
+		{
+			name: "KeyIsLeafValue_NotFlattened",
+			data: map[string]any{
+				"attributes": telemetrystoretypes.JSONValue{"http": "plaintext"},
+			},
+			want: map[string]any{"http": "plaintext"},
+		},
+		{
+			name: "KeyIsParent_FlattensToDottedPath",
+			data: map[string]any{
+				"attributes": telemetrystoretypes.JSONValue{"http": map[string]any{"route": "/a"}},
+			},
+			want: map[string]any{"http.route": "/a"},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			mergeSpanAttributeColumns(testCase.data)
+
+			attrs, ok := testCase.data["attributes"].(map[string]any)
+			require.True(t, ok, "attributes should be map[string]any, got %T", testCase.data["attributes"])
+			assert.Equal(t, testCase.want, attrs)
+			for _, removed := range []string{"attributes_string", "attributes_number", "attributes_bool"} {
+				_, present := testCase.data[removed]
+				assert.False(t, present, "%s should be removed", removed)
+			}
+		})
+	}
+}

@@ -617,7 +617,7 @@ def test_ai_list_enrichment_values(
             "gen_ai.request.model": "gpt-4o-mini",
             "gen_ai.usage.input_tokens": 100,
             "gen_ai.usage.output_tokens": 20,
-            "_signoz.gen_ai.total_cost": 0.5,
+            "signoz.gen_ai.usage.tokens.cost": 0.5,
         },
     )
     agent = Traces(

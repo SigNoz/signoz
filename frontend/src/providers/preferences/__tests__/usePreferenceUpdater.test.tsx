@@ -1,7 +1,7 @@
 import { act } from 'react-dom/test-utils';
 import { renderHook } from '@testing-library/react';
 import { TelemetryFieldKey } from 'api/v5/v5';
-import { LogViewMode } from 'container/LogsTable';
+import { LogViewMode } from 'container/OptionsMenu/types';
 import { FontSize } from 'container/OptionsMenu/types';
 import {
 	FormattingOptions,

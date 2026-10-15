@@ -10,7 +10,7 @@ function Shortcuts(): JSX.Element {
 		const tableData = generateTableData(shortcutSection);
 
 		return (
-			<section className="shortcut-section">
+			<section key={shortcutSection} className="shortcut-section">
 				<Typography.Text className="shortcut-section-heading">
 					{shortcutSection}
 				</Typography.Text>

@@ -2,34 +2,9 @@ import {
 	Querybuildertypesv5RequestTypeDTO,
 	type TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import type { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
+import type { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
 
-/**
- * Query-builder field-visibility config a panel kind can declare, mirroring the
- * shape `QueryBuilderV2` consumes via its `filterConfigs` prop. Derived from that
- * prop type (the underlying `FilterConfigs` isn't exported) so the two never drift.
- */
-export type FilterConfigsPartial = NonNullable<
-	QueryBuilderProps['filterConfigs']
->;
-
-/**
- * Per-signal query-builder field rules for a panel kind. `default` applies to every
- * signal; a per-signal entry is merged over it (signal wins). The capabilities guard
- * resolves this into a single `FilterConfigsPartial` via `getHiddenQueryBuilderFields`.
- */
-export type QueryBuilderFieldRule = {
-	default?: FilterConfigsPartial;
-} & Partial<Record<TelemetrytypesSignalDTO, FilterConfigsPartial>>;
-
-/** The kind's `default` rule with its per-signal overrides merged over it (signal wins). */
-export function mergeQueryBuilderFieldRule(
-	rule: QueryBuilderFieldRule,
-	signal: TelemetrytypesSignalDTO,
-): FilterConfigsPartial {
-	const perSignal = signal ? rule[signal] : undefined;
-	return { ...rule.default, ...perSignal };
-}
+export type { QueryBuilderFieldsConfig } from 'components/QueryBuilderV2/queryBuilderFields.types';
 
 /**
  * How a kind's query-range request is shaped. Declared per-kind in
@@ -42,8 +17,9 @@ export interface PanelQueryCapabilities {
 	/** Server transposes the scalar result into UI table rows (`formatOptions.formatTableResultForUI`). */
 	formatTableResultForUI: boolean;
 	/**
-	 * Widen the step interval to cap how many buckets come back — kinds that bin
-	 * client-side from a raw time series rather than plotting every point.
+	 * Widen the step interval to cap how many points a range comes back as — kinds that
+	 * draw one mark per point (a bar, a column of cells) rather than a line through it,
+	 * where a raw-resolution series is both unreadable and more than the canvas can carry.
 	 */
 	bucketedStepInterval: boolean;
 	/**
@@ -56,4 +32,31 @@ export interface PanelQueryCapabilities {
 	 * carries no explicit limit" — an explicit limit means the user asked for a fixed set.
 	 */
 	serverPaginated: boolean;
+}
+
+/** Raw rows rather than an aggregated result — the single source for "is this raw?". */
+export function isRawRequest(capabilities: PanelQueryCapabilities): boolean {
+	return capabilities.requestType === Querybuildertypesv5RequestTypeDTO.raw;
+}
+
+export enum QueryModeKind {
+	SIGNAL = 'signal',
+	SIGNAL_LESS = 'signal-less',
+}
+
+export type QueryModeCapability =
+	| { kind: QueryModeKind.SIGNAL; signals: TelemetrytypesSignalDTO[] }
+	| { kind: QueryModeKind.SIGNAL_LESS };
+
+export type SupportedQueryModesKindMap = Partial<
+	Record<QueryMode, QueryModeCapability>
+>;
+
+/** Signals `mode` accepts; empty for a signal-less or undeclared mode. */
+export function getQueryModeSignals(
+	modes: SupportedQueryModesKindMap | undefined,
+	mode: QueryMode,
+): TelemetrytypesSignalDTO[] {
+	const capability = modes?.[mode];
+	return capability?.kind === QueryModeKind.SIGNAL ? capability.signals : [];
 }

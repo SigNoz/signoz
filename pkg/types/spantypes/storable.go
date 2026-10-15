@@ -20,7 +20,9 @@ type StorableSpanMapperGroup struct {
 	OrgID     valuer.UUID              `bun:"org_id,type:text,notnull"`
 	Name      string                   `bun:"name,type:text,notnull"`
 	Condition SpanMapperGroupCondition `bun:"condition,type:jsonb,notnull"`
-	Enabled   bool                     `bun:"enabled,notnull,default:true"`
+	Enabled   bool                     `bun:"enabled,notnull"`
+	Origin    SpanMapperOrigin         `bun:"origin,type:text,notnull"`
+	Version   int                      `bun:"version,notnull"`
 }
 
 type StorableSpanMapper struct {
@@ -34,7 +36,8 @@ type StorableSpanMapper struct {
 	Name         string           `bun:"name,type:text,notnull"`
 	FieldContext FieldContext     `bun:"field_context,type:text,notnull"`
 	Config       SpanMapperConfig `bun:"config,type:jsonb,notnull"`
-	Enabled      bool             `bun:"enabled,notnull,default:true"`
+	Enabled      bool             `bun:"enabled,notnull"`
+	Origin       SpanMapperOrigin `bun:"origin,type:text,notnull"`
 }
 
 func (c SpanMapperGroupCondition) Value() (driver.Value, error) {

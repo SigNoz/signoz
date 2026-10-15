@@ -45,11 +45,27 @@ func TestPostableChannelValidate(t *testing.T) {
 		postable    PostableNotificationChannel
 	}{
 		{
-			description: "webhook password without username",
+			description: "webhook basic auth combined with bearer token",
 			postable: PostableNotificationChannel{
 				Name:        "hook",
 				DisplayName: "hook",
-				Config:      ChannelConfig{Kind: ChannelKindWebhook, Spec: &ChannelWebhookConfig{URL: "https://a", Password: "p"}},
+				Config:      ChannelConfig{Kind: ChannelKindWebhook, Spec: &ChannelWebhookConfig{URL: "https://a", Password: "p", BearerToken: "t"}},
+			},
+		},
+		{
+			description: "slack field without a value",
+			postable: PostableNotificationChannel{
+				Name:        "slack",
+				DisplayName: "slack",
+				Config:      ChannelConfig{Kind: ChannelKindSlack, Spec: &ChannelSlackConfig{APIURL: "https://a", Fields: []ChannelSlackField{{Title: "Severity"}}}},
+			},
+		},
+		{
+			description: "slack action with neither url nor name",
+			postable: PostableNotificationChannel{
+				Name:        "slack",
+				DisplayName: "slack",
+				Config:      ChannelConfig{Kind: ChannelKindSlack, Spec: &ChannelSlackConfig{APIURL: "https://a", Actions: []ChannelSlackAction{{Type: "button", Text: "Open"}}}},
 			},
 		},
 		{

@@ -13,6 +13,7 @@ import (
 
 // SelectEvolutionsForColumns selects the appropriate evolution entries for each column based on the time range.
 // Logic:
+//   - Ignores evolutions of columns outside the candidate columns
 //   - Finds the latest base evolution (<= tsStartTime) across ALL columns
 //   - Rejects all evolutions before this latest base evolution
 //   - For duplicate evolutions it considers the oldest one (first in ReleaseTime)
@@ -21,6 +22,11 @@ import (
 func SelectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetrytypes.EvolutionEntry, tsStart, tsEnd uint64) ([]*schema.Column, []*telemetrytypes.EvolutionEntry, error) {
 	if len(evolutions) == 0 {
 		return columns, nil, nil
+	}
+
+	columnLookUpMap := make(map[string]*schema.Column, len(columns))
+	for _, column := range columns {
+		columnLookUpMap[column.Name] = column
 	}
 
 	// Derive the base column from the candidate columns.
@@ -64,17 +70,15 @@ func SelectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 		if evolution.ReleaseTime.After(tsStartTime) {
 			break
 		}
+		if _, exists := columnLookUpMap[evolution.ColumnName]; !exists {
+			continue
+		}
 		latestBaseEvolutionAcrossAll = evolution
 	}
 
 	// We shouldn't reach this, it basically means there is something wrong with the evolutions data
 	if latestBaseEvolutionAcrossAll == nil {
 		return nil, nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "no base evolution found for columns %v", columns)
-	}
-
-	columnLookUpMap := make(map[string]*schema.Column)
-	for _, column := range columns {
-		columnLookUpMap[column.Name] = column
 	}
 
 	// Collect column-evolution pairs
@@ -95,7 +99,7 @@ func SelectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 		}
 
 		if _, exists := columnLookUpMap[evolution.ColumnName]; !exists {
-			return nil, nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "evolution column %s not found in columns %v", evolution.ColumnName, columns)
+			continue
 		}
 
 		pairs = append(pairs, colEvoPair{columnLookUpMap[evolution.ColumnName], evolution})

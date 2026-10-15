@@ -246,7 +246,7 @@
       "resourceType": "containerApps",
       "metrics": {},
       "logs": {
-        "categoryGroups": ["ContainerAppConsoleLogs", "ContainerAppSystemLogs"]
+        "categoryGroups": ["allLogs"]
       }
     }
   },
