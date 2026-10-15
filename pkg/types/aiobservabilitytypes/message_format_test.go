@@ -138,6 +138,20 @@ func TestFormat_SystemInstructions(t *testing.T) {
 			wantOutput: `[]`,
 		},
 		{
+			// the OpenInference strands processor keeps gen_ai.system_instructions on the span and inserts the
+			// same prompt as message 0
+			// https://github.com/Arize-ai/openinference/blob/12f2cc035edfb00b60b656d977f07abfb7a69900/python/instrumentation/openinference-instrumentation-strands-agents/src/openinference/instrumentation/strands_agents/processor.py#L152
+			// https://github.com/Arize-ai/openinference/blob/12f2cc035edfb00b60b656d977f07abfb7a69900/python/instrumentation/openinference-instrumentation-strands-agents/src/openinference/instrumentation/strands_agents/processor.py#L293
+			name:       "SameTextLeadsInput_Skipped",
+			input:      `[{"role":"system","parts":[{"type":"text","content":"You are concise."}]},{"role":"user","parts":[{"type":"text","content":"hi"}]}]`,
+			attributes: map[string]any{GenAISystemInstructions: `[{"type": "text", "content": "You are concise."}]`},
+			wantInput: `[
+			  {"role": "system", "parts": [{"type": "text", "content": "You are concise."}]},
+			  {"role": "user", "parts": [{"type": "text", "content": "hi"}]}
+			]`,
+			wantOutput: `[]`,
+		},
+		{
 			name:       "BareString_TextPart",
 			input:      input,
 			attributes: map[string]any{GenAISystemInstructions: "be brief"},

@@ -82,17 +82,23 @@ func (f *formatting) messages() {
 	}
 }
 
-// prependSystemInstructions adds gen_ai.system_instructions, a list of parts, as a leading system message.
-// A span without messages, such as create_agent, stays without them.
+// prependSystemInstructions adds gen_ai.system_instructions, a list of parts, as a leading system message,
+// unless the input already starts with a system message of the same text: the OpenInference strands
+// processor keeps the attribute and inserts it as message 0 as well. A span without messages, such as
+// create_agent, stays without them.
 // https://github.com/open-telemetry/semantic-conventions-genai/blob/06ec68e722c45a7218e23ea1bc1339fe4e21ecae/model/gen-ai/gen-ai-system-instructions.json
+// https://github.com/Arize-ai/openinference/blob/12f2cc035edfb00b60b656d977f07abfb7a69900/python/instrumentation/openinference-instrumentation-strands-agents/src/openinference/instrumentation/strands_agents/processor.py#L152
+// https://github.com/Arize-ai/openinference/blob/12f2cc035edfb00b60b656d977f07abfb7a69900/python/instrumentation/openinference-instrumentation-strands-agents/src/openinference/instrumentation/strands_agents/processor.py#L293
 func (f *formatting) prependSystemInstructions() {
 	raw := attribute(f.attributes, GenAISystemInstructions)
 	if raw == nil || (len(f.out.Input) == 0 && len(f.out.Output) == 0) {
 		return
 	}
-	if parts := systemParts(decode(raw)); len(parts) > 0 {
-		f.out.Input = append(InputMessages{{Role: RoleSystem, Parts: parts}}, f.out.Input...)
+	parts := systemParts(decode(raw))
+	if len(parts) == 0 || (len(f.out.Input) > 0 && f.out.Input[0].Role == RoleSystem && textOf(f.out.Input[0].Parts) == textOf(parts)) {
+		return
 	}
+	f.out.Input = append(InputMessages{{Role: RoleSystem, Parts: parts}}, f.out.Input...)
 }
 
 // fillFinishReasons applies gen_ai.response.finish_reasons, one entry per output message, over
@@ -250,6 +256,17 @@ func part(value any) Part {
 
 func textPart(content string) TextPart {
 	return TextPart{Type: PartTypeText, Content: content}
+}
+
+// textOf joins the text parts, for comparing a system message with gen_ai.system_instructions.
+func textOf(parts Parts) string {
+	var texts []string
+	for _, p := range parts {
+		if t, ok := p.Value.(TextPart); ok {
+			texts = append(texts, t.Content)
+		}
+	}
+	return strings.Join(texts, "\n")
 }
 
 // systemParts reads a system prompt given outside the history, a list of parts or a bare string.
