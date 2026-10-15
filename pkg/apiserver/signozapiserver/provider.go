@@ -542,5 +542,8 @@ func newAnonymousSecuritySchemes(scopes []string) []handler.OpenAPISecuritySchem
 }
 
 func newScopedSecuritySchemes(scopes []string) []handler.OpenAPISecurityScheme {
-	return handler.NewScopedSecuritySchemes(scopes)
+	return []handler.OpenAPISecurityScheme{
+		{Name: authtypes.IdentNProviderAPIKey.StringValue(), Scopes: scopes},
+		{Name: authtypes.IdentNProviderTokenizer.StringValue(), Scopes: scopes},
+	}
 }
