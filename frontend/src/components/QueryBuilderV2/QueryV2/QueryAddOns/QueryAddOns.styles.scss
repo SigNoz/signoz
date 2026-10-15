@@ -343,8 +343,29 @@
 			font-size: 12px !important;
 		}
 
-		input {
+		// Not select search inputs: they would grow the select past 36px.
+		.input-with-label input {
 			min-height: 36px;
+		}
+
+		.input-with-label,
+		.periscope-input-with-label {
+			min-height: 36px;
+
+			.label {
+				min-width: 80px;
+			}
+
+			// `ghost` strips the border.
+			.close-btn.periscope-btn {
+				border: 1px solid var(--input-with-label-border-color, var(--l2-border));
+				background: var(--input-with-label-background-color, var(--l2-background));
+			}
+		}
+
+		.periscope-input-with-label .input .ant-select-selection-placeholder {
+			color: var(--query-builder-v2-placeholder-color, var(--l3-foreground));
+			font-size: 12px;
 		}
 	}
 }
