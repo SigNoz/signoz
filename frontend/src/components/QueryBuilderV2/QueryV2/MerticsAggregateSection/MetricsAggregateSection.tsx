@@ -14,10 +14,9 @@ import {
 	QueryBuilderField,
 	type QueryBuilderFieldsConfig,
 } from '../../queryBuilderFields.types';
-import {
-	resolveQueryBuilderField,
-	STEP_INTERVAL_PLACEHOLDER,
-} from '../../queryBuilderFields.utils';
+import { resolveQueryBuilderField } from '../../queryBuilderFields.utils';
+
+import { BUILT_IN_PLACEHOLDERS } from './constants';
 
 import './MetricsAggregateSection.styles.scss';
 
@@ -35,10 +34,9 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 	fieldsConfig?: QueryBuilderFieldsConfig;
 }): JSX.Element {
 	const { setAggregationOptions } = useQueryBuilderV2Context();
-	const placeholderOf = (key: QueryBuilderField): string | undefined =>
-		resolveQueryBuilderField(key, fieldsConfig).placeholder;
-	const stepIntervalPlaceholder =
-		placeholderOf(QueryBuilderField.StepInterval) ?? STEP_INTERVAL_PLACEHOLDER;
+	const placeholderOf = (key: keyof typeof BUILT_IN_PLACEHOLDERS): string =>
+		resolveQueryBuilderField(key, fieldsConfig).placeholder ??
+		BUILT_IN_PLACEHOLDERS[key];
 	const {
 		operators,
 		spaceAggregationOptions,
@@ -166,7 +164,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 										<InputWithLabel
 											onChange={handleChangeAggregateEvery}
 											label="Seconds"
-											placeholder={stepIntervalPlaceholder}
+											placeholder={placeholderOf(QueryBuilderField.StepInterval)}
 											labelAfter
 											initialValue={query?.stepInterval ?? null}
 										/>
@@ -289,7 +287,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 								<InputWithLabel
 									onChange={handleChangeAggregateEvery}
 									label="Seconds"
-									placeholder={stepIntervalPlaceholder}
+									placeholder={placeholderOf(QueryBuilderField.StepInterval)}
 									labelAfter
 									initialValue={query?.stepInterval ?? null}
 									className="histogram-every-input"
