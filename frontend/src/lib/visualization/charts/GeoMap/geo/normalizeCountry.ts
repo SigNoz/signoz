@@ -1,6 +1,7 @@
 import lookups from '../assets/lookups.json';
-import { COUNTRY_BY_ISO2 } from './countries';
 
+// From the lookups, not the outlines, so normalising data never loads them.
+const CODES = new Set(lookups.codes);
 const ALIASES = lookups.aliases as Record<string, string>;
 const ALPHA3 = lookups.alpha3 as Record<string, string>;
 const NAMES = lookups.names as Record<string, string>;
@@ -21,7 +22,7 @@ export function normalizeCountry(
 	}
 	const upper = value.toUpperCase();
 	if (/^[A-Z]{2}$/.test(upper)) {
-		return COUNTRY_BY_ISO2.has(upper) ? upper : (ALIASES[upper] ?? null);
+		return CODES.has(upper) ? upper : (ALIASES[upper] ?? null);
 	}
 	if (/^[A-Z]{3}$/.test(upper) && ALPHA3[upper]) {
 		return ALPHA3[upper];

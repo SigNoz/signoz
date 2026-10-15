@@ -30,6 +30,9 @@ function checkCountries({ topology, lookups, report }, problems) {
 	for (const code of duplicatesOf(codes)) {
 		problems.push(`country code ${code} is drawn twice`);
 	}
+	if (lookups.codes.join() !== [...drawn].sort().join()) {
+		problems.push('lookups.codes differs from the drawn country codes');
+	}
 	for (const [alias, target] of Object.entries(lookups.aliases)) {
 		if (!drawn.has(target)) {
 			problems.push(`country alias ${alias} → ${target}, which has no shape`);
