@@ -57,6 +57,15 @@ const HEATMAP_CELLS = [
 	[0.4, 0.85, 0.7, 0.2],
 	[0.3, 0.65, 0.9, 0.45],
 ];
+/** `[x, y, width, height, intensity]`: blocky landmasses for the geo map sketch. */
+const GEO_MAP_SHAPES = [
+	[6, 6, 30, 14, 0.85],
+	[12, 22, 18, 16, 0.4],
+	[44, 4, 20, 12, 0.6],
+	[46, 18, 16, 20, 0.95],
+	[70, 6, 40, 18, 0.5],
+	[90, 28, 18, 10, 0.3],
+];
 // Bar lengths (% of the track) for the top-list sketch, longest first.
 const TOP_LIST_BARS = [100, 76, 54, 34];
 const TEXT_ROWS = [45, 100, 92, 64].map((width, i) => [
@@ -113,6 +122,21 @@ export const PANEL_TYPE_PREVIEWS: Record<PanelKind, JSX.Element> = {
 						style={BAR_FILL}
 					/>
 				</g>
+			))}
+		</svg>
+	),
+	'signoz/GeoMapPanel': (
+		<svg viewBox="0 0 120 44" preserveAspectRatio="none" className={styles.svg}>
+			{GEO_MAP_SHAPES.map(([x, y, width, height, intensity]) => (
+				<rect
+					key={`${x}-${y}`}
+					x={x}
+					y={y}
+					width={width}
+					height={height}
+					rx={4}
+					style={{ fill: 'var(--bg-robin-500)', fillOpacity: intensity }}
+				/>
 			))}
 		</svg>
 	),

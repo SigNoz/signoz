@@ -35,6 +35,7 @@ export const getComponentForPanelType = (
 		// V2-only kind; it renders through the V2 panel registry.
 		[PANEL_TYPES.HEATMAP]: null,
 		[PANEL_TYPES.TOP_LIST]: null,
+		[PANEL_TYPES.GEO_MAP]: null,
 		// Dashboards v2 renders this kind; nothing reaches the V1 chart map for it.
 		[PANEL_TYPES.TEXT]: null,
 		[PANEL_TYPES.SCATTER]: null,
