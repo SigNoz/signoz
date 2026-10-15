@@ -129,6 +129,7 @@ describe('GeoMapPanelRenderer', () => {
 		expect(props.bubbleRadius).toStrictEqual([3, 28]);
 		expect(props.showLabels).toBe(true);
 		expect(props.sizeMetric).toBeUndefined();
+		expect(props.legendPosition).toBe('bottom');
 	});
 
 	it('sizes by a second query and formats each with its column unit', async () => {
@@ -138,6 +139,7 @@ describe('GeoMapPanelRenderer', () => {
 				formatting: { columnUnits: { A: 'percent' }, decimalPrecision: '1' },
 				map: { layer: 'bubbles', colorBy: 'A', sizeBy: 'B' },
 				chartAppearance: { labels: false, bubbles: { minRadius: 4 } },
+				legend: { position: 'right' },
 			} as DashboardtypesGeoMapPanelSpecDTO,
 		);
 
@@ -152,6 +154,7 @@ describe('GeoMapPanelRenderer', () => {
 		expect(props.sizeMetric?.formatValue(3000)).toBe('3,000');
 		expect(props.bubbleRadius).toStrictEqual([4, 28]);
 		expect(props.showLabels).toBe(false);
+		expect(props.legendPosition).toBe('right');
 	});
 
 	it('colors threshold matches and keys them in the legend', async () => {
