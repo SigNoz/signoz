@@ -25,13 +25,12 @@ var finishReasonAliases = map[string]FinishReason{
 	"max_tokens": FinishReasonLength,
 }
 
-// FormattedMessages is the OTel GenAI view of one span's messages. Formatter names the converter that
-// produced it, Warnings what the converter could not resolve. The lists are never nil.
+// FormattedMessages is the OTel GenAI view of one span's messages; Warnings holds what the converter could
+// not resolve. The lists are never nil.
 type FormattedMessages struct {
-	Input     InputMessages
-	Output    OutputMessages
-	Formatter string
-	Warnings  []string
+	Input    InputMessages
+	Output   OutputMessages
+	Warnings []string
 }
 
 // FormatMessages builds the OTel GenAI view of gen_ai.input.messages and gen_ai.output.messages from the
@@ -49,10 +48,7 @@ func FormatMessages(input, output any) FormattedMessages {
 	if output != nil {
 		f.out.Output, outputLabel = f.side(decode(output), RoleAssistant)
 	}
-	f.out.Formatter = inputLabel
-	if inputLabel == "" {
-		f.out.Formatter = outputLabel
-	} else if outputLabel != "" && outputLabel != inputLabel {
+	if inputLabel != "" && outputLabel != "" && outputLabel != inputLabel {
 		f.warn("output formatted as %s, input as %s", outputLabel, inputLabel)
 	}
 	return f.out

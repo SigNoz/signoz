@@ -49,19 +49,17 @@ def test_waterfall_formats_messages_on_gen_ai_spans(
 
     # spans without messages carry no formatted keys
     for span in (root, tool):
-        assert not {"formattedInput", "formattedOutput", "formatter", "formatterWarnings"} & span.keys(), span
+        assert not {"formattedInput", "formattedOutput", "formatterWarnings"} & span.keys(), span
     assert root["attributes"]["http.method"] == "POST"
     assert tool["attributes"]["gen_ai.tool.call.result"] == "sunny"
 
     # the raw messages stay in attributes for the raw view
     assert llm["attributes"]["gen_ai.input.messages"] == llm_input
     assert llm["attributes"]["gen_ai.output.messages"] == llm_output
-    assert llm["formatter"] == "semconv"
     assert llm["formattedInput"] == [{"role": "user", "parts": [{"type": "text", "content": "weather in Bangalore?"}]}]
     assert llm["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "tool_call", "name": "get_weather", "id": "call_1", "arguments": {"city": "Bangalore"}}], "finish_reason": "tool_call"}]
     assert "formatterWarnings" not in llm
 
-    assert output_only["formatter"] == "text"
     assert "formattedInput" not in output_only
     assert output_only["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "It is sunny in Bangalore."}]}]
     assert output_only["formatterWarnings"] == ["bare assistant text, role assumed"]

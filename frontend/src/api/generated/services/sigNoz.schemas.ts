@@ -11792,10 +11792,6 @@ export interface SpantypesThreadSpanDTO {
 	formattedInput: AiobservabilitytypesInputMessagesDTO;
 	formattedOutput: AiobservabilitytypesOutputMessagesDTO;
 	/**
-	 * @type string
-	 */
-	formatter: string;
-	/**
 	 * @type array
 	 */
 	formatterWarnings: string[];
@@ -11916,10 +11912,6 @@ export interface SpantypesWaterfallSpanDTO {
 	flags?: number;
 	formattedInput?: AiobservabilitytypesInputMessagesDTO;
 	formattedOutput?: AiobservabilitytypesOutputMessagesDTO;
-	/**
-	 * @type string
-	 */
-	formatter?: string;
 	/**
 	 * @type array
 	 */

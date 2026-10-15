@@ -10521,8 +10521,6 @@ components:
           $ref: '#/components/schemas/AiobservabilitytypesInputMessages'
         formattedOutput:
           $ref: '#/components/schemas/AiobservabilitytypesOutputMessages'
-        formatter:
-          type: string
         formatterWarnings:
           items:
             type: string
@@ -10571,7 +10569,6 @@ components:
       - references
       - formattedInput
       - formattedOutput
-      - formatter
       - formatterWarnings
       type: object
     SpantypesTraceAISummary:
@@ -10657,8 +10654,6 @@ components:
           $ref: '#/components/schemas/AiobservabilitytypesInputMessages'
         formattedOutput:
           $ref: '#/components/schemas/AiobservabilitytypesOutputMessages'
-        formatter:
-          type: string
         formatterWarnings:
           items:
             type: string
@@ -16452,10 +16447,9 @@ paths:
       deprecated: false
       description: Returns the spans carrying gen_ai input or output messages, or
         a tool execution, in timestamp order. Messages already in the OTel GenAI shape
-        are decoded into formattedInput and formattedOutput, with formatter naming
-        the converter and formatterWarnings what it could not resolve. Pass nextCursor
-        as after or prevCursor as before to page, or spanId to open the page around
-        a span.
+        are decoded into formattedInput and formattedOutput, with formatterWarnings
+        holding what the converter could not resolve. Pass nextCursor as after or
+        prevCursor as before to page, or spanId to open the page around a span.
       operationId: GetTraceThread
       parameters:
       - description: Page size, at most 100. 0 means 20.
@@ -28600,8 +28594,8 @@ paths:
       description: Returns the waterfall view of spans including all spans if total
         spans are under a limit, a max count otherwise. Aggregations are dropped compared
         to v3. A span carrying gen_ai input or output messages also has them decoded
-        into formattedInput and formattedOutput, with formatter naming the converter
-        and formatterWarnings what it could not resolve.
+        into formattedInput and formattedOutput, with formatterWarnings holding what
+        the converter could not resolve.
       operationId: GetWaterfallV4
       parameters:
       - in: path

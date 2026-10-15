@@ -12,7 +12,6 @@ type formatCase struct {
 	name       string
 	input      any
 	output     any
-	formatter  string
 	warnings   []string
 	wantInput  string
 	wantOutput string
@@ -23,7 +22,6 @@ func runFormatCases(t *testing.T, testCases []formatCase) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			formatted := FormatMessages(testCase.input, testCase.output)
-			assert.Equal(t, testCase.formatter, formatted.Formatter)
 			assert.Equal(t, append([]string{}, testCase.warnings...), formatted.Warnings)
 
 			input, err := json.Marshal(formatted.Input)
@@ -59,8 +57,7 @@ Divide by 2:
   x = 0.05
 
 So, the ball costs 5 cents.`,
-			formatter: FormatterText,
-			warnings:  []string{"bare user text, role assumed", "bare assistant text, role assumed"},
+			warnings: []string{"bare user text, role assumed", "bare assistant text, role assumed"},
 			wantInput: `[
 			  {
 			    "role": "user",
@@ -87,13 +84,12 @@ So, the ball costs 5 cents.`,
 		{
 			name:       "UnrecognisedObject_GenericPart_Warns",
 			input:      `{"city": "Paris", "temp_c": 21}`,
-			formatter:  FormatterGeneric,
 			warnings:   []string{"message format not recognised, kept as generic"},
 			wantInput:  `[{"role": "", "parts": [{"type": "generic", "content": "{\"city\":\"Paris\",\"temp_c\":21}"}]}]`,
 			wantOutput: `[]`,
 		},
 		{
-			name:       "NoAttributes_EmptyListsNoFormatter",
+			name:       "NoAttributes_EmptyLists",
 			wantInput:  `[]`,
 			wantOutput: `[]`,
 		},

@@ -84,11 +84,10 @@ type WaterfallSpan struct {
 	StatusMessage      string `json:"status_message,omitempty"`
 
 	// The formatted fields hold the span's gen_ai messages in the OTel GenAI shape, set only when the
-	// span carries gen_ai.input.messages or gen_ai.output.messages; Formatter names the converter that
-	// produced them and FormatterWarnings what it could not resolve.
+	// span carries gen_ai.input.messages or gen_ai.output.messages; FormatterWarnings holds what the
+	// converter could not resolve.
 	FormattedInput    aiobservabilitytypes.InputMessages  `json:"formattedInput,omitempty"`
 	FormattedOutput   aiobservabilitytypes.OutputMessages `json:"formattedOutput,omitempty"`
-	Formatter         string                              `json:"formatter,omitempty"`
 	FormatterWarnings []string                            `json:"formatterWarnings,omitempty"`
 
 	// Internal tree structure fields
@@ -363,7 +362,6 @@ func (item *StorableSpan) ToWaterfallSpan(traceID string) *WaterfallSpan {
 		formatted := aiobservabilitytypes.FormatMessages(input, output)
 		span.FormattedInput = formatted.Input
 		span.FormattedOutput = formatted.Output
-		span.Formatter = formatted.Formatter
 		span.FormatterWarnings = formatted.Warnings
 	}
 	return span
