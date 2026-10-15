@@ -468,7 +468,7 @@ func TestStatementBuilder(t *testing.T) {
 	storage := tracestelemetryschema.NewStorage()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage)
 
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -767,7 +767,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 	storage := tracestelemetryschema.NewStorage()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage)
 
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -1032,7 +1032,7 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 			if mockMetadataStore.KeysMap == nil {
 				mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 			}
-			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage)
 
 			statementBuilder := NewTraceQueryStatementBuilder(
 				instrumentationtest.New().ToProviderSettings(),
@@ -1102,7 +1102,7 @@ func TestStatementBuilderGroupByResourceEvolution(t *testing.T) {
 	storage := tracestelemetryschema.NewStorage()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage)
 
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -1267,7 +1267,7 @@ func TestStatementBuilderTraceQuery(t *testing.T) {
 	storage := tracestelemetryschema.NewStorage()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage)
 
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -1905,7 +1905,7 @@ func newSkipResourceFingerprintBuilder(
 	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage)
 
 	return NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -1929,7 +1929,7 @@ func TestStatementBuilderGroupByUnseenKey(t *testing.T) {
 	storage := tracestelemetryschema.NewStorage()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage)
 
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -1969,7 +1969,7 @@ func TestStatementBuilderAggregationUnseenKey(t *testing.T) {
 	storage := tracestelemetryschema.NewStorage()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage)
 
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -2042,7 +2042,7 @@ func TestStatementBuilderSemconvFamilies(t *testing.T) {
 			storage := tracestelemetryschema.NewStorage()
 			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 			mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage)
 
 			statementBuilder := NewTraceQueryStatementBuilder(
 				instrumentationtest.New().ToProviderSettings(),
@@ -2081,7 +2081,7 @@ func TestStatementBuilderSemconvSingleSpelling(t *testing.T) {
 			FieldDataType: telemetrytypes.FieldDataTypeString,
 		}},
 	}
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage)
 
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),

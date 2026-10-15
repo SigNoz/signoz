@@ -60,7 +60,7 @@ func NewFactory(
 		factory.MustNewName("logs"),
 		func(_ context.Context, settings factory.ProviderSettings, cfg statementbuilder.Config) (qbtypes.StatementBuilder[qbtypes.LogAggregation], error) {
 			storage := logstelemetryschema.NewStorage()
-			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, logstelemetryschema.DefaultFullTextColumn, storage, fl, telemetrytypes.SignalLogs)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, logstelemetryschema.DefaultFullTextColumn, storage)
 			return NewLogQueryStatementBuilder(
 				settings, metadataStore, storage, aggExprRewriter, logstelemetryschema.DefaultFullTextColumn,
 				fl, telemetryStore, cfg,
@@ -480,7 +480,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	allAggChArgs := make([]any, 0)
 	for i, agg := range query.Aggregations {
 		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
-			ctx, orgID, start, end, agg.Expression,
+			ctx, info, agg.Expression,
 			uint64(query.StepInterval.Seconds()),
 			keys,
 		)
@@ -649,7 +649,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		for idx := range query.Aggregations {
 			aggExpr := query.Aggregations[idx]
 			rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
-				ctx, orgID, start, end, aggExpr.Expression,
+				ctx, info, aggExpr.Expression,
 				rateInterval,
 				keys,
 			)

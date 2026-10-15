@@ -40,7 +40,9 @@ var (
 // every read needs, the signal and queried metric that family admission
 // needs, and the query-path flags evaluated one time per request. The
 // generic flows read FamiliesOn. Only the logs storage reads BodyJSONOn, and
-// only the traces storage reads TraceAttrsJSONOn.
+// only the traces storage reads TraceAttrsJSONOn. Evolutions holds the
+// column-wide entries (field_name `__all__`) a key metadata does not report
+// still reads through, loaded one time per request.
 type QueryInfo struct {
 	StartNs          uint64
 	EndNs            uint64
@@ -49,6 +51,7 @@ type QueryInfo struct {
 	FamiliesOn       bool
 	BodyJSONOn       bool
 	TraceAttrsJSONOn bool
+	Evolutions       []*telemetrytypes.EvolutionEntry
 }
 
 // Absent is how a field key reads for a row that does not carry it, with
@@ -214,8 +217,8 @@ type Resolved struct {
 
 type AggExprRewriter interface {
 	// Rewrite rewrites the aggregation expression to be used in the query.
-	Rewrite(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, expr string, rateInterval uint64, keys map[string][]*telemetrytypes.TelemetryFieldKey) (string, []any, error)
-	RewriteMulti(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, exprs []string, rateInterval uint64, keys map[string][]*telemetrytypes.TelemetryFieldKey) ([]string, [][]any, error)
+	Rewrite(ctx context.Context, q QueryInfo, expr string, rateInterval uint64, keys map[string][]*telemetrytypes.TelemetryFieldKey) (string, []any, error)
+	RewriteMulti(ctx context.Context, q QueryInfo, exprs []string, rateInterval uint64, keys map[string][]*telemetrytypes.TelemetryFieldKey) ([]string, [][]any, error)
 }
 
 type Statement struct {

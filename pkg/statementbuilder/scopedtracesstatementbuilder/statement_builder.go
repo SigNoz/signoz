@@ -226,7 +226,10 @@ func (b *scopedTraceStatementBuilder) buildTraceListQuery(
 		return nil, err
 	}
 	matchedSB := sqlbuilder.NewSelectBuilder()
-	q := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end)
+	q, err := querybuilder.LoadColumnEvolutions(ctx, querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end), b.metadataStore)
+	if err != nil {
+		return nil, err
+	}
 	maskExpr, resolved, err := b.resolveFor(ctx, q, keys, matchedSB)
 	if err != nil {
 		return nil, err
@@ -245,7 +248,7 @@ func (b *scopedTraceStatementBuilder) buildTraceListQuery(
 		return nil, err
 	}
 
-	fp, err := b.splitFilter(ctx, orgID, query, b.aggregateAliasSet(), keys, start, end, variables, matchedSB)
+	fp, err := b.splitFilter(ctx, q, query, b.aggregateAliasSet(), keys, variables, matchedSB)
 	if err != nil {
 		return nil, err
 	}
@@ -445,7 +448,7 @@ type filterParts struct {
 // splitFilter splits query.Filter into a span-level predicate and a trace-level
 // HAVING (explicit query.Having ANDed on before resolution); args bind into sb.
 // keys must cover the filter's span-level selectors.
-func (b *scopedTraceStatementBuilder) splitFilter(ctx context.Context, orgID valuer.UUID, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], classifySet map[string]struct{}, keys map[string][]*telemetrytypes.TelemetryFieldKey, start, end uint64, variables map[string]qbtypes.VariableItem, sb *sqlbuilder.SelectBuilder) (filterParts, error) {
+func (b *scopedTraceStatementBuilder) splitFilter(ctx context.Context, q qbtypes.QueryInfo, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], classifySet map[string]struct{}, keys map[string][]*telemetrytypes.TelemetryFieldKey, variables map[string]qbtypes.VariableItem, sb *sqlbuilder.SelectBuilder) (filterParts, error) {
 	var fp filterParts
 	havingExpr := ""
 	if query.Filter != nil && strings.TrimSpace(query.Filter.Expression) != "" {
@@ -455,7 +458,7 @@ func (b *scopedTraceStatementBuilder) splitFilter(ctx context.Context, orgID val
 		}
 		havingExpr = traceExpr
 		if strings.TrimSpace(spanExpr) != "" {
-			pred, warnings, url, err := b.resolveSpanPredicate(ctx, querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end), spanExpr, keys, variables, sb)
+			pred, warnings, url, err := b.resolveSpanPredicate(ctx, q, spanExpr, keys, variables, sb)
 			if err != nil {
 				return fp, err
 			}

@@ -220,7 +220,7 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 
 	storage := logstelemetryschema.NewStorage()
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage)
 
 	statementBuilder := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -360,7 +360,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	mockMetadataStore.KeysMap = logstelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage)
 
 	statementBuilder := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -510,7 +510,7 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	mockMetadataStore.KeysMap = logstelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage)
 
 	statementBuilder := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -585,7 +585,7 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	mockMetadataStore.KeysMap = logstelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage)
 
 	statementBuilder := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -680,7 +680,7 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 	storage := logstelemetryschema.NewStorage()
 	mockMetadataStore.KeysMap = logstelemetryschema.BuildCompleteFieldKeyMapCollision()
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage)
 
 	statementBuilder := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -903,7 +903,7 @@ func TestAdjustKey(t *testing.T) {
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = logstelemetryschema.BuildCompleteFieldKeyMapCollision()
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage)
 
 	statementBuilder := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -1048,7 +1048,7 @@ func TestStmtBuilderBodyField(t *testing.T) {
 				f := field
 				mockMetadataStore.KeysMap[field.Name] = append(mockMetadataStore.KeysMap[field.Name], &f)
 			}
-			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage)
 			statementBuilder := NewLogQueryStatementBuilder(
 				instrumentationtest.New().ToProviderSettings(),
 				mockMetadataStore,
@@ -1146,7 +1146,7 @@ func TestStmtBuilderBodyFullTextSearch(t *testing.T) {
 				f := field
 				mockMetadataStore.KeysMap[field.Name] = append(mockMetadataStore.KeysMap[field.Name], &f)
 			}
-			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage)
 			statementBuilder := NewLogQueryStatementBuilder(
 				instrumentationtest.New().ToProviderSettings(),
 				mockMetadataStore,
@@ -1258,7 +1258,7 @@ func newSkipResourceFingerprintLogsBuilder(
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = logstelemetryschema.BuildCompleteFieldKeyMap(time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC))
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), logstelemetryschema.DefaultFullTextColumn, storage, fl, telemetrytypes.SignalLogs)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), logstelemetryschema.DefaultFullTextColumn, storage)
 
 	return NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),

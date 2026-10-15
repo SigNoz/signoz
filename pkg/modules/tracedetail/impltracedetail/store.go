@@ -188,7 +188,10 @@ func (s *traceStore) genAISpanColumns(ctx context.Context, orgID valuer.UUID, bo
 		return nil, err
 	}
 
-	q := querybuilder.NewQueryInfo(ctx, orgID, s.flagger, telemetrytypes.SignalTraces, nil, uint64(bounds.Start.UnixNano()), uint64(bounds.End.UnixNano()))
+	q, err := querybuilder.LoadColumnEvolutions(ctx, querybuilder.NewQueryInfo(ctx, orgID, s.flagger, telemetrytypes.SignalTraces, nil, uint64(bounds.Start.UnixNano()), uint64(bounds.End.UnixNano())), s.metadataStore)
+	if err != nil {
+		return nil, err
+	}
 	isGenAI, err := s.anyExistsCondition(ctx, q, aiobservabilitytypes.GenAISpanGateKeys, keys, sb)
 	if err != nil {
 		return nil, err
@@ -288,7 +291,10 @@ func (s *traceStore) selectStorableSpans(ctx context.Context, orgID valuer.UUID)
 }
 
 func (s *traceStore) GetThreadSpans(ctx context.Context, orgID valuer.UUID, traceID string, bounds *spantypes.TraceBounds, page spantypes.ThreadPage) ([]spantypes.StorableSpan, error) {
-	q := querybuilder.NewQueryInfo(ctx, orgID, s.flagger, telemetrytypes.SignalTraces, nil, uint64(bounds.Start.UnixNano()), uint64(bounds.End.UnixNano()))
+	q, err := querybuilder.LoadColumnEvolutions(ctx, querybuilder.NewQueryInfo(ctx, orgID, s.flagger, telemetrytypes.SignalTraces, nil, uint64(bounds.Start.UnixNano()), uint64(bounds.End.UnixNano())), s.metadataStore)
+	if err != nil {
+		return nil, err
+	}
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(
 		"DISTINCT ON (span_id) timestamp", "duration_nano", "span_id", "parent_span_id", "has_error", "name", "kind_string",

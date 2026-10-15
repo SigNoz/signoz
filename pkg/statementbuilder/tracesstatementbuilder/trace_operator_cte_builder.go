@@ -28,6 +28,7 @@ type traceOperatorCTEBuilder struct {
 	start          uint64
 	end            uint64
 	orgID          valuer.UUID
+	queryInfo      qbtypes.QueryInfo
 	operator       *qbtypes.QueryBuilderTraceOperator
 	stmtBuilder    *traceOperatorStatementBuilder
 	queries        map[string]*qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]
@@ -265,7 +266,7 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 			query.Filter.Expression,
 			querybuilder.FilterExprVisitorOpts{
 				Context:            ctx,
-				Query:              querybuilder.NewQueryInfo(ctx, b.orgID, b.stmtBuilder.fl, telemetrytypes.SignalTraces, nil, b.start, b.end),
+				Query:              b.queryInfo,
 				Storage:            b.stmtBuilder.storage,
 				Logger:             b.stmtBuilder.logger,
 				FieldKeys:          keys,
@@ -485,7 +486,7 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 	}
 
 	// Add selectFields since we now have all base table columns
-	info := querybuilder.NewQueryInfo(ctx, b.orgID, b.stmtBuilder.fl, telemetrytypes.SignalTraces, nil, b.start, b.end)
+	info := b.queryInfo
 	for i, field := range b.operator.SelectFields {
 		if selectedFields[field.Name] {
 			continue
@@ -629,7 +630,7 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 		int64(b.operator.StepInterval.Seconds()),
 	))
 
-	info := querybuilder.NewQueryInfo(ctx, b.orgID, b.stmtBuilder.fl, telemetrytypes.SignalTraces, nil, b.start, b.end)
+	info := b.queryInfo
 	for _, gb := range b.operator.GroupBy {
 		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
@@ -647,9 +648,7 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 	for i, agg := range b.operator.Aggregations {
 		rewritten, chArgs, err := b.stmtBuilder.aggExprRewriter.Rewrite(
 			ctx,
-			b.orgID,
-			b.start,
-			b.end,
+			b.queryInfo,
 			agg.Expression,
 			uint64(b.operator.StepInterval.Seconds()),
 			keys,
@@ -726,7 +725,7 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 
 	sb := sqlbuilder.NewSelectBuilder()
 
-	info := querybuilder.NewQueryInfo(ctx, b.orgID, b.stmtBuilder.fl, telemetrytypes.SignalTraces, nil, b.start, b.end)
+	info := b.queryInfo
 	for _, gb := range b.operator.GroupBy {
 		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
@@ -746,9 +745,7 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 	for i, agg := range b.operator.Aggregations {
 		rewritten, chArgs, err := b.stmtBuilder.aggExprRewriter.Rewrite(
 			ctx,
-			b.orgID,
-			b.start,
-			b.end,
+			b.queryInfo,
 			agg.Expression,
 			rateInterval,
 			keys,
@@ -853,7 +850,7 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFromCTE string, keys map[string][]*telemetrytypes.TelemetryFieldKey) (*qbtypes.Statement, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
-	info := querybuilder.NewQueryInfo(ctx, b.orgID, b.stmtBuilder.fl, telemetrytypes.SignalTraces, nil, b.start, b.end)
+	info := b.queryInfo
 	for _, gb := range b.operator.GroupBy {
 		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
@@ -871,9 +868,7 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 	for i, agg := range b.operator.Aggregations {
 		rewritten, chArgs, err := b.stmtBuilder.aggExprRewriter.Rewrite(
 			ctx,
-			b.orgID,
-			b.start,
-			b.end,
+			b.queryInfo,
 			agg.Expression,
 			uint64((b.end-b.start)/querybuilder.NsToSeconds),
 			keys,

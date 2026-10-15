@@ -2430,6 +2430,16 @@ func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Conte
 	return entries, nil
 }
 
+func (k *telemetryMetaStore) GetColumnEvolutions(ctx context.Context, signal telemetrytypes.Signal, fieldContext telemetrytypes.FieldContext) ([]*telemetrytypes.EvolutionEntry, error) {
+	ctx = withTelemetryContext(ctx, signal, "GetColumnEvolutions")
+	selector := &telemetrytypes.EvolutionSelector{Signal: signal, FieldContext: fieldContext, FieldName: "__all__"}
+	evolutions, err := k.fetchEvolutionEntryFromClickHouse(ctx, []*telemetrytypes.EvolutionSelector{selector})
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch column evolutions")
+	}
+	return evolutions, nil
+}
+
 // updateColumnEvolutionMetadataForKeys updates the evolution field for keys.
 func (k *telemetryMetaStore) updateColumnEvolutionMetadataForKeys(ctx context.Context, keysToUpdate []*telemetrytypes.TelemetryFieldKey) error {
 	// an empty selector list would run the evolution query without a filter

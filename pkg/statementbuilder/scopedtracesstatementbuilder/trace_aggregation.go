@@ -340,8 +340,12 @@ func (b *scopedTraceStatementBuilder) buildQualifiedStatement(
 	if err != nil {
 		return nil, nil, err
 	}
+	q, err := querybuilder.LoadColumnEvolutions(ctx, querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end), b.metadataStore)
+	if err != nil {
+		return nil, nil, err
+	}
 	sb := sqlbuilder.NewSelectBuilder()
-	maskExpr, resolved, err := b.resolveFor(ctx, querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end), keys, sb)
+	maskExpr, resolved, err := b.resolveFor(ctx, q, keys, sb)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -511,15 +515,13 @@ type scanContext struct {
 
 func (b *scopedTraceStatementBuilder) newScanContext(
 	ctx context.Context,
-	orgID valuer.UUID,
-	start, end uint64,
+	q qbtypes.QueryInfo,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	spanExpr, traceExpr string,
 	variables map[string]qbtypes.VariableItem,
 ) (*scanContext, error) {
 	sc := &scanContext{sb: sqlbuilder.NewSelectBuilder()}
 	var err error
-	q := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end)
 	sc.maskExpr, sc.resolved, err = b.resolveFor(ctx, q, keys, sc.sb)
 	if err != nil {
 		return nil, err
@@ -566,6 +568,10 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 	if err != nil {
 		return nil, err
 	}
+	q, err := querybuilder.LoadColumnEvolutions(ctx, querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end), b.metadataStore)
+	if err != nil {
+		return nil, err
+	}
 
 	resourceFrag, resourceArgs, resourcePred, err := b.maybeAttachResourceFilter(ctx, orgID, query, start, end, variables)
 	if err != nil {
@@ -582,7 +588,7 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 	// __qualified: its own scan resolution, HAVING = the trace-level filter part
 	qualified := false
 	if strings.TrimSpace(traceExpr) != "" {
-		qsc, err := b.newScanContext(ctx, orgID, start, end, keys, "", traceExpr, variables)
+		qsc, err := b.newScanContext(ctx, q, keys, "", traceExpr, variables)
 		if err != nil {
 			return nil, err
 		}
@@ -598,7 +604,7 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 		}
 	}
 
-	groupCols, err := b.resolveGroupColumns(ctx, querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end), query.GroupBy, keys)
+	groupCols, err := b.resolveGroupColumns(ctx, q, query.GroupBy, keys)
 	if err != nil {
 		return nil, err
 	}
@@ -640,7 +646,7 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 	// (exact for non-composable aggregates) and prune the main scan to the top-N.
 	limitPred := ""
 	if requestType == qbtypes.RequestTypeTimeSeries && query.Limit > 0 && len(groupCols) > 0 {
-		tsc, err := b.newScanContext(ctx, orgID, start, end, keys, spanExpr, "", variables)
+		tsc, err := b.newScanContext(ctx, q, keys, spanExpr, "", variables)
 		if err != nil {
 			return nil, err
 		}
@@ -666,7 +672,7 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 			strings.Join(exprs, ", "), strings.Join(groupNames, ", "))
 	}
 
-	msc, err := b.newScanContext(ctx, orgID, start, end, keys, spanExpr, "", variables)
+	msc, err := b.newScanContext(ctx, q, keys, spanExpr, "", variables)
 	if err != nil {
 		return nil, err
 	}
