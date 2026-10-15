@@ -69,16 +69,17 @@ function LocationColumnField({
 				onChange={onChange}
 			/>
 			{isMissing && autoColumn && (
-				<Button
-					className={styles.fix}
-					variant="outlined"
-					color="secondary"
-					size="sm"
-					data-testid={`${testId}-fix`}
-					onClick={(): void => onChange('')}
-				>
-					Use <span className={styles.mono}>{autoColumn}</span>
-				</Button>
+				<div className={styles.fix}>
+					<Button
+						variant="outlined"
+						color="secondary"
+						size="sm"
+						testId={`${testId}-fix`}
+						onClick={(): void => onChange('')}
+					>
+						Use <span className={styles.mono}>{autoColumn}</span>
+					</Button>
+				</div>
 			)}
 		</ConfigField>
 	);

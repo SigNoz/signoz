@@ -115,7 +115,7 @@ function LocationSection({
 					<span className={styles.muted}>GeoIP enrichment usually names them:</span>
 					<div className={styles.chips}>
 						{SUGGESTED_KEYS.map((key) => (
-							<Badge key={key} color="secondary" variant="outline">
+							<Badge key={key} color="secondary" variant="outlined">
 								{key}
 							</Badge>
 						))}

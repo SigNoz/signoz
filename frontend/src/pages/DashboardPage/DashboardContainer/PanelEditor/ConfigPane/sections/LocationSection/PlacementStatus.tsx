@@ -29,7 +29,7 @@ function PlacementStatus({
 						variant="link"
 						color="primary"
 						size="sm"
-						data-testid="geo-location-show-unplaced"
+						testId="geo-location-show-unplaced"
 						onClick={(): void => setIsOpen((open) => !open)}
 					>
 						{isOpen ? 'Hide' : 'Show which'}
