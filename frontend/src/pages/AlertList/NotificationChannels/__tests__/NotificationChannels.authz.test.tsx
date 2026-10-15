@@ -47,7 +47,11 @@ describe('Notification channels list - AuthZ', () => {
 
 			await screen.findByText('Dummy-Channel', {}, FIND);
 			await waitFor(
-				() => expect(screen.getByTestId('channels-create')).toBeDisabled(),
+				() =>
+					expect(screen.getByTestId('channels-create')).toHaveAttribute(
+						'aria-disabled',
+						'true',
+					),
 				FIND,
 			);
 		},

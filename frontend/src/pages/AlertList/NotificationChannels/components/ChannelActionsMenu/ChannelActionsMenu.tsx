@@ -80,6 +80,9 @@ function ChannelActionsMenu({
 				),
 				prefix: <Trash2 size={14} />,
 				disabled: !mayDelete,
+				// the reason is already on the label's AuthZTooltip, which names the
+				// permission the user is missing
+				disabledTooltip: undefined,
 				danger: true,
 				onClick: (): void => onDelete(channel),
 			},
