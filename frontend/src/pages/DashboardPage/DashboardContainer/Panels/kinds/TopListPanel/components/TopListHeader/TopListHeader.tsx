@@ -1,4 +1,4 @@
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 
 import HeaderTooltip from './HeaderTooltip';
 
@@ -21,15 +21,14 @@ function TopListHeader({
 	return (
 		<li aria-hidden data-testid="top-list-header" className={styles.header}>
 			{showRank && (
-				<TooltipSimple
+				<Tooltip
 					title={<HeaderTooltip name="Rank" description="Position in the list." />}
-					arrow
 				>
 					<span className={styles.cell}>#</span>
-				</TooltipSimple>
+				</Tooltip>
 			)}
 			{labelName ? (
-				<TooltipSimple
+				<Tooltip
 					title={
 						<HeaderTooltip
 							name={labelName}
@@ -37,27 +36,25 @@ function TopListHeader({
 						/>
 					}
 					align="start"
-					arrow
 				>
 					<span className={styles.label}>{labelName}</span>
-				</TooltipSimple>
+				</Tooltip>
 			) : (
 				<span />
 			)}
 			{showShare && (
-				<TooltipSimple
+				<Tooltip
 					title={
 						<HeaderTooltip
 							name="Share"
 							description="Each row's value as a percentage of the listed rows' total."
 						/>
 					}
-					arrow
 				>
 					<span className={styles.cell}>Share</span>
-				</TooltipSimple>
+				</Tooltip>
 			)}
-			<TooltipSimple
+			<Tooltip
 				title={
 					<HeaderTooltip
 						name={valueName}
@@ -65,10 +62,9 @@ function TopListHeader({
 					/>
 				}
 				align="end"
-				arrow
 			>
 				<span className={styles.cell}>{valueName}</span>
-			</TooltipSimple>
+			</Tooltip>
 		</li>
 	);
 }

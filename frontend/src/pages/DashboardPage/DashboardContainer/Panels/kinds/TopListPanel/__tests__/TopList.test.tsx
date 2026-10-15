@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from 'tests/test-utils';
+import { act, fireEvent, render, screen, userEvent } from 'tests/test-utils';
 
 import TopList from '../components/TopList/TopList';
 import { mockListLayout } from './mockListLayout';
@@ -152,9 +152,13 @@ describe('TopList', () => {
 			/>,
 		);
 
-		fireEvent.pointerMove(screen.getByText('sum(signoz_calls_total)'));
+		await userEvent.hover(screen.getByText('sum(signoz_calls_total)'));
 
-		const tooltip = await screen.findAllByTestId('top-list-header-tooltip');
+		const tooltip = await screen.findAllByTestId(
+			'top-list-header-tooltip',
+			{},
+			{ timeout: 2000 },
+		);
 		expect(tooltip[0]).toHaveTextContent(
 			'sum(signoz_calls_total)The value each row is ranked by.',
 		);
