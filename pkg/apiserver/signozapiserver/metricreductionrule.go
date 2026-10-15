@@ -4,7 +4,10 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/metricreductionruletypes"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/gorilla/mux"
@@ -49,7 +52,7 @@ func (provider *provider) addMetricReductionRuleRoutes(router *mux.Router) error
 	}
 
 	if err := router.Handle("/api/v2/metric_reduction_rules/stats", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.metricReductionRuleHandler.Stats),
+		provider.authzMiddleware.CheckResources(provider.metricReductionRuleHandler.Stats, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetMetricReductionRuleStats",
 			Tags:                []string{"metrics"},
@@ -59,14 +62,19 @@ func (provider *provider) addMetricReductionRuleRoutes(router *mux.Router) error
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusUnauthorized, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons, http.StatusInternalServerError},
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		},
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWildcardResources(coretypes.ResourceTelemetryResourceMetrics),
+		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/metric_reduction_rules/timeseries", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.metricReductionRuleHandler.Timeseries),
+		provider.authzMiddleware.CheckResources(provider.metricReductionRuleHandler.Timeseries, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetMetricReductionRuleTimeseries",
 			Tags:                []string{"metrics"},
@@ -76,8 +84,13 @@ func (provider *provider) addMetricReductionRuleRoutes(router *mux.Router) error
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusUnauthorized, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons, http.StatusInternalServerError},
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		},
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWildcardResources(coretypes.ResourceTelemetryResourceMetrics),
+		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
