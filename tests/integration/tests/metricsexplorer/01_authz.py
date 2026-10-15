@@ -164,3 +164,33 @@ def test_filtered_routes_allow_granted_key(
     )
     assert denied.status_code == HTTPStatus.FORBIDDEN, denied.text
     assert "builder_query/signoz.workspace.key.id/key-b" in denied.text
+
+
+@pytest.mark.parametrize(
+    ("path", "scope"),
+    [("/api/v2/metrics/alerts", "rule:list"), ("/api/v3/metrics/dashboards", "dashboard:list")],
+    ids=["alerts", "dashboards"],
+)
+@pytest.mark.parametrize(
+    ("email", "expected"),
+    [(scoped_email, HTTPStatus.FORBIDDEN), (wildcard_email, HTTPStatus.FORBIDDEN), (USER_ADMIN_EMAIL, HTTPStatus.OK)],
+    ids=["metrics_scoped", "metrics_wildcard", "admin"],
+)
+def test_metaresource_lookups_need_list_grant(
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+    path: str,
+    scope: str,
+    email: str,
+    expected: HTTPStatus,
+) -> None:
+    token = get_token(email, USER_ADMIN_PASSWORD if email == USER_ADMIN_EMAIL else user_password)
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(path),
+        params={"metricName": "explorer.requests"},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=10,
+    )
+    assert response.status_code == expected, response.text
+    if expected == HTTPStatus.FORBIDDEN:
+        assert scope.split(":", maxsplit=1)[0] in response.text

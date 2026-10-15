@@ -181,7 +181,7 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/metrics/alerts", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.metricsExplorerHandler.GetMetricAlerts),
+		provider.authzMiddleware.CheckResources(provider.metricsExplorerHandler.GetMetricAlerts, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetMetricAlerts",
 			Tags:                []string{"metrics"},
@@ -195,13 +195,18 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusNotFound, http.StatusInternalServerError},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodGet).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbList)}),
+		}, handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbList,
+			Category: coretypes.ActionCategoryDataAccess,
+			Selector: coretypes.WildcardSelector,
+		}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v3/metrics/dashboards", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.metricsExplorerHandler.GetMetricDashboardsV2),
+		provider.authzMiddleware.CheckResources(provider.metricsExplorerHandler.GetMetricDashboardsV2, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetMetricDashboardsV2",
 			Tags:                []string{"metrics"},
@@ -215,8 +220,13 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusNotFound, http.StatusInternalServerError},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodGet).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceDashboard.Scope(coretypes.VerbList)}),
+		}, handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceDashboard,
+			Verb:     coretypes.VerbList,
+			Category: coretypes.ActionCategoryDataAccess,
+			Selector: coretypes.WildcardSelector,
+		}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
