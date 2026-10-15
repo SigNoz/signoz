@@ -40,8 +40,14 @@ function SavedViewsList({
 	const saveNewView = useSaveNewView(createView);
 	const { createdByMe, createdByOthers, isLoading, isError, refetch } =
 		useSavedViewsList(source, search);
-	const { copyViewLink, renameView, deleteView, isRenaming, isDeleting } =
-		useSavedViewRowActions(source);
+	const {
+		copyViewLink,
+		copyViewId,
+		renameView,
+		deleteView,
+		isRenaming,
+		isDeleting,
+	} = useSavedViewRowActions(source);
 	const [pendingAction, setPendingAction] =
 		useState<PendingSavedViewAction | null>(null);
 	const listRef = useRef<HTMLDivElement>(null);
@@ -79,10 +85,14 @@ function SavedViewsList({
 				copyViewLink(view);
 				return;
 			}
+			if (key === 'copyId') {
+				copyViewId(view);
+				return;
+			}
 			closeHoverCard();
 			setPendingAction({ key, view });
 		},
-		[copyViewLink, closeHoverCard],
+		[copyViewLink, copyViewId, closeHoverCard],
 	);
 
 	const closePendingAction = useCallback((): void => setPendingAction(null), []);

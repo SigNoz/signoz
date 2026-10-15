@@ -121,7 +121,11 @@ export interface SavedViewsListRowProps {
 	hover: SavedViewsListRowHoverProps;
 }
 
-export type SavedViewRowActionKey = 'copyLink' | 'editDetails' | 'delete';
+export type SavedViewRowActionKey =
+	| 'copyLink'
+	| 'copyId'
+	| 'editDetails'
+	| 'delete';
 
 export interface SavedViewRowActionConfig {
 	key: SavedViewRowActionKey;
@@ -133,7 +137,7 @@ export interface SavedViewRowActionConfig {
 }
 
 export interface PendingSavedViewAction {
-	key: Exclude<SavedViewRowActionKey, 'copyLink'>;
+	key: Exclude<SavedViewRowActionKey, 'copyLink' | 'copyId'>;
 	view: SavedviewtypesSavedViewDTO;
 }
 
@@ -161,6 +165,7 @@ export interface DeleteSavedViewDialogProps {
 
 export interface UseSavedViewRowActionsResult {
 	copyViewLink: (view: SavedviewtypesSavedViewDTO) => void;
+	copyViewId: (view: SavedviewtypesSavedViewDTO) => void;
 	renameView: (
 		view: SavedviewtypesSavedViewDTO,
 		displayName: string,

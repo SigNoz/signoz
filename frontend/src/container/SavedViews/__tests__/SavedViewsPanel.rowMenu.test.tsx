@@ -60,6 +60,7 @@ const row = (name: string): HTMLElement =>
 
 const ROW_MENU_ITEM_TEST_IDS: Record<string, string> = {
 	'Copy link': 'saved-views-row-menu-copyLink',
+	'Copy ID': 'saved-views-row-menu-copyId',
 	'Edit details': 'saved-views-row-menu-editDetails',
 	Delete: 'saved-views-row-menu-delete',
 };
@@ -87,7 +88,7 @@ describe('SavedViewsPanel row menu', () => {
 		jest.mocked(toast.success).mockClear();
 	});
 
-	it('offers copy link, edit details and delete', async () => {
+	it('offers copy link, copy id, edit details and delete', async () => {
 		mockSavedViewsApi([errors]);
 		renderPanelWithHeader();
 		await screen.findByTestId('saved-views-list');
@@ -102,9 +103,23 @@ describe('SavedViewsPanel row menu', () => {
 		);
 		expect(Array.from(items, (item) => item.textContent)).toStrictEqual([
 			'Copy link',
+			'Copy ID',
 			'Edit details',
 			'Delete',
 		]);
+	});
+
+	it('copies the view id', async () => {
+		mockSavedViewsApi([errors, slow]);
+		renderPanelWithHeader();
+
+		await chooseFromRowMenu('Slow spans', 'Copy ID');
+
+		expect(mockCopy).toHaveBeenCalledWith(slow.id);
+		expect(toast.success).toHaveBeenCalledWith(
+			'View ID copied',
+			expect.anything(),
+		);
 	});
 
 	it('copies a link that opens the view with its query and tab', async () => {

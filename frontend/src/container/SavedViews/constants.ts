@@ -1,4 +1,4 @@
-import { Link, PenLine, Trash2 } from '@signozhq/icons';
+import { Copy, Link, PenLine, Trash2 } from '@signozhq/icons';
 import {
 	SavedviewtypesSchemaVersionDTO,
 	SavedviewtypesSourceDTO,
@@ -53,6 +53,7 @@ export const SAVE_VIEW_MODAL_TITLE: Record<SaveViewModalMode, string> = {
 
 export const SAVED_VIEW_ROW_ACTIONS: SavedViewRowActionConfig[] = [
 	{ key: 'copyLink', label: 'Copy link', icon: Link },
+	{ key: 'copyId', label: 'Copy ID', icon: Copy },
 	{
 		key: 'editDetails',
 		label: 'Edit details',
