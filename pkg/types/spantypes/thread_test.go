@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
+	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -81,4 +82,22 @@ func TestThreadAttributes(t *testing.T) {
 			assert.Equal(t, testCase.wantAttrs, threadAttributes(&testCase.span))
 		})
 	}
+}
+
+func TestNewThreadSpan_FormatsJSONMessages(t *testing.T) {
+	storable := StorableSpan{
+		SpanID: "f1fa1bc863e94dd0",
+		AttributesJSON: jsonAttrs(map[string]any{
+			"gen_ai.input.messages":  []any{map[string]any{"role": "user", "content": "hi"}},
+			"gen_ai.output.messages": []any{map[string]any{"role": "assistant", "content": "hello"}},
+		}),
+	}
+
+	span := newThreadSpan("trace", &storable)
+
+	assert.Equal(t, aiobservabilitytypes.FormatterOpenAIChat, span.Formatter)
+	require.Len(t, span.FormattedInput, 1)
+	assert.Equal(t, aiobservabilitytypes.RoleUser, span.FormattedInput[0].Role)
+	require.Len(t, span.FormattedOutput, 1)
+	assert.Equal(t, aiobservabilitytypes.RoleAssistant, span.FormattedOutput[0].Role)
 }

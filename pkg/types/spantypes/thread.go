@@ -203,11 +203,20 @@ func newThreadSpan(traceID string, storable *StorableSpan) *ThreadSpan {
 	}
 }
 
-// threadAttributes flattens the JSON column into dotted keys, as the querier does for list
-// responses, and falls back to the legacy maps for spans written before the JSON rollout.
+// threadAttributes returns the span's flat dotted attributes as plain Go types, falling back to the
+// legacy maps for spans written before the JSON rollout. The json round-trip normalizes the driver's
+// JSON Variants, which the message formatter cannot type-assert.
 func threadAttributes(storable *StorableSpan) map[string]any {
-	attributes := storable.AttributesJSON.ValuesByPath()
-	if len(attributes) == 0 {
+	flat := storable.AttributesJSON.ValuesByPath()
+	if len(flat) == 0 {
+		return storable.Attributes()
+	}
+	raw, err := json.Marshal(flat)
+	if err != nil {
+		return storable.Attributes()
+	}
+	attributes := map[string]any{}
+	if err := json.Unmarshal(raw, &attributes); err != nil {
 		return storable.Attributes()
 	}
 	return attributes
