@@ -12,25 +12,29 @@ import (
 )
 
 const (
-	FormatterSemconv       = "semconv"
-	FormatterOpenInference = "openinference"
-	FormatterOpenAIChat    = "openai.chat"
-	FormatterText          = "text"
-	FormatterGeneric       = "generic"
+	FormatterSemconv         = "semconv"
+	FormatterOpenInference   = "openinference"
+	FormatterOpenAIChat      = "openai.chat"
+	FormatterOpenAIResponses = "openai.responses"
+	FormatterText            = "text"
+	FormatterGeneric         = "generic"
 )
 
 var dataURL = regexp.MustCompile(`^data:([^;,]+);base64,(.+)$`)
 
 // Provider spellings of the finish reasons; the enum values themselves pass through. tool_calls and
-// function_call are OpenAI's, end_turn, stop_sequence, max_tokens and tool_use Anthropic's, tool-calls the
-// Vercel AI SDK's:
+// function_call are OpenAI's, completed, failed, cancelled, incomplete and max_output_tokens the Responses
+// status and incomplete reason, end_turn, stop_sequence, max_tokens and tool_use Anthropic's, tool-calls
+// the Vercel AI SDK's:
 // https://github.com/openai/openai-openapi/blob/aeb6a041dc56c011ca9f12127ec898f911100aa0/openapi.yaml#L44782
+// https://github.com/openai/openai-openapi/blob/aeb6a041dc56c011ca9f12127ec898f911100aa0/openapi.yaml#L69691
 // https://platform.claude.com/docs/en/api/messages
 // https://github.com/vercel/ai/blob/a5e92fe3c692f8e152fe1eb9ef50a4e734ad0ffb/packages/provider/src/language-model/v2/language-model-v2-finish-reason.ts
 var finishReasonAliases = map[string]FinishReason{
 	"tool_calls": FinishReasonToolCall, "function_call": FinishReasonToolCall, "tool-calls": FinishReasonToolCall, "tool_use": FinishReasonToolCall,
-	"end_turn": FinishReasonStop, "stop_sequence": FinishReasonStop,
-	"max_tokens": FinishReasonLength,
+	"end_turn": FinishReasonStop, "stop_sequence": FinishReasonStop, "completed": FinishReasonStop,
+	"max_tokens": FinishReasonLength, "max_output_tokens": FinishReasonLength,
+	"failed": FinishReasonError, "cancelled": FinishReasonError, "incomplete": FinishReasonError,
 }
 
 // FormattedMessages is the OTel GenAI view of one span's messages; Warnings holds what the converter could
@@ -146,6 +150,12 @@ func (f *formatting) side(value any, role Role) (OutputMessages, string) {
 			}
 		}
 	case map[string]any:
+		switch {
+		case isResponsesResponse(v):
+			return f.responsesResponse(v), FormatterOpenAIResponses
+		case isResponsesRequest(v):
+			return f.responsesRequest(v), FormatterOpenAIResponses
+		}
 		if choices, ok := v["choices"].([]any); ok {
 			return f.openAIChatResponse(choices), FormatterOpenAIChat
 		}
@@ -360,9 +370,11 @@ func systemParts(value any) Parts {
 	return nil
 }
 
-// contentPart converts one OpenAI content block, which semconv parts may also carry; a text part
-// in the semconv spelling has content where OpenAI has text. A block of any other type is kept
-// as sent.
+// contentPart converts one content block in the OpenAI Chat Completions or Responses spelling, which
+// semconv parts may also carry; a text part in the semconv spelling has content where OpenAI has text.
+// A block of any other type is kept as sent.
+// https://github.com/openai/openai-openapi/blob/aeb6a041dc56c011ca9f12127ec898f911100aa0/openapi.yaml#L53827
+// https://github.com/openai/openai-openapi/blob/aeb6a041dc56c011ca9f12127ec898f911100aa0/openapi.yaml#L57589
 func contentPart(item any) Part {
 	p, ok := item.(map[string]any)
 	if !ok {
@@ -372,14 +384,14 @@ func contentPart(item any) Part {
 		return part(GenericPart{"type": FormatterGeneric, "content": stringOf(item)})
 	}
 	switch stringOf(p["type"]) {
-	case "text":
+	case "text", "input_text", "output_text", "summary_text":
 		if p["text"] == nil {
 			return part(textPart(stringOf(p["content"])))
 		}
 		return part(textPart(stringOf(p["text"])))
 	case "refusal":
 		return part(textPart(stringOf(p["refusal"])))
-	case "image_url":
+	case "image_url", "input_image":
 		url := stringOf(p["image_url"])
 		if ref, ok := p["image_url"].(map[string]any); ok {
 			url = stringOf(ref["url"])
@@ -387,9 +399,19 @@ func contentPart(item any) Part {
 		if url != "" {
 			return part(mediaPart(url, ModalityImage))
 		}
+		if id := stringOf(p["file_id"]); id != "" {
+			return part(FilePart{Type: PartTypeFile, Modality: ModalityImage, FileID: id})
+		}
 	case "file":
 		if f, ok := filePart(p); ok {
 			return f
+		}
+	case "input_file":
+		if f, ok := filePart(map[string]any{"file": p}); ok {
+			return f
+		}
+		if url := stringOf(p["file_url"]); url != "" {
+			return part(mediaPart(url, ModalityDocument))
 		}
 	}
 	return part(GenericPart(p))
