@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Select } from 'antd';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import {
@@ -7,8 +6,9 @@ import {
 	getGroupByFiltersFromGroupByValues,
 } from 'container/ApiMonitoring/utils';
 import GridCard from 'container/WidgetCard/Card';
+import { GroupByFilter } from 'container/QueryBuilder/filters/GroupByFilter/GroupByFilter';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
-import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
+import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 import { isEqual } from 'lodash-es';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -39,23 +39,6 @@ function AllEndPoints({
 	setInitialFiltersEndPointStats: (filters: IBuilderQuery['filters']) => void;
 }): JSX.Element {
 	const [params, setParams] = useApiMonitoringParams();
-	const [groupBySearchValue, setGroupBySearchValue] = useState<string>('');
-	const [allAvailableGroupByOptions, setAllAvailableGroupByOptions] = useState<{
-		[key: string]: any;
-	}>({});
-
-	const { data: groupByFiltersData, isLoading: isLoadingGroupByFilters } =
-		useGetAggregateKeys({
-			dataSource: DataSource.TRACES,
-			aggregateAttribute: '',
-			aggregateOperator: 'noop',
-			searchText: groupBySearchValue,
-			tagType: '',
-		});
-
-	const [groupByOptions, setGroupByOptions] = useState<
-		{ value: string; label: string }[]
-	>([]);
 
 	// --- FILTERS STATE SYNC ---
 	const [filters, setFilters] = useState<IBuilderQuery['filters']>(() => {
@@ -99,11 +82,12 @@ function AllEndPoints({
 						...currentQuery.builder.queryData[0],
 						dataSource: DataSource.TRACES,
 						filters, // Use the local filters state
+						groupBy,
 					},
 				],
 			},
 		}),
-		[filters, currentQuery],
+		[filters, groupBy, currentQuery],
 	);
 
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
@@ -116,32 +100,11 @@ function AllEndPoints({
 	// --- GROUP BY STATE SYNC (existing) ---
 	const handleGroupByChange = useCallback(
 		(value: IBuilderQuery['groupBy']) => {
-			const newGroupBy = [];
-
-			for (let index = 0; index < value.length; index++) {
-				const element = value[index] as unknown as string;
-
-				// Check if the key exists in our cached options first
-				if (allAvailableGroupByOptions[element]) {
-					newGroupBy.push(allAvailableGroupByOptions[element]);
-				} else {
-					// If not found in cache, check the current filtered results
-					const key = groupByFiltersData?.payload?.attributeKeys?.find(
-						(key) => key.key === element,
-					);
-
-					if (key) {
-						newGroupBy.push(key);
-					}
-				}
-			}
-
-			setGroupBy(newGroupBy);
-			setGroupBySearchValue('');
+			setGroupBy(value);
 			// Update params
-			setParams({ groupBy: newGroupBy.map((g) => g.key) });
+			setParams({ groupBy: value.map((g) => g.key) });
 		},
-		[groupByFiltersData, setGroupBy, allAvailableGroupByOptions, setParams],
+		[setGroupBy, setParams],
 	);
 
 	// Sync params to local groupBy state on param change
@@ -154,49 +117,11 @@ function AllEndPoints({
 				groupBy.map((g) => g.key),
 			)
 		) {
-			// Only update if different
-			const newGroupBy = params.groupBy
-				.map((key) => allAvailableGroupByOptions[key])
-				.filter(Boolean);
-			if (newGroupBy.length === params.groupBy.length) {
-				setGroupBy(newGroupBy);
-			}
-		}
-	}, [params.groupBy, allAvailableGroupByOptions, groupBy, setGroupBy]);
-
-	useEffect(() => {
-		if (groupByFiltersData?.payload) {
-			// Update dropdown options
-			setGroupByOptions(
-				groupByFiltersData?.payload?.attributeKeys?.map((filter) => ({
-					value: filter.key,
-					label: filter.key,
-				})) || [],
+			setGroupBy(
+				params.groupBy.map((key) => chooseAutocompleteFromCustomValue([], key)),
 			);
-
-			// Cache all available options to preserve selected values using functional update
-			setAllAvailableGroupByOptions((prevOptions) => {
-				const newOptions = { ...prevOptions };
-				groupByFiltersData?.payload?.attributeKeys?.forEach((filter) => {
-					newOptions[filter.key] = filter;
-				});
-				return newOptions;
-			});
 		}
-	}, [groupByFiltersData]); // Only depends on groupByFiltersData now
-
-	// Cache existing selected options on component mount
-	useEffect(() => {
-		if (groupBy && groupBy.length > 0) {
-			setAllAvailableGroupByOptions((prevOptions) => {
-				const newOptions = { ...prevOptions };
-				groupBy.forEach((option) => {
-					newOptions[option.key] = option;
-				});
-				return newOptions;
-			});
-		}
-	}, [groupBy]);
+	}, [params.groupBy, groupBy, setGroupBy]);
 
 	const onRowClick = useCallback(
 		(props: any): void => {
@@ -242,18 +167,12 @@ function AllEndPoints({
 			</div>
 			<div className="group-by-container">
 				<div className="group-by-label"> Group by </div>
-				<Select
-					className="group-by-select"
-					loading={isLoadingGroupByFilters}
-					mode="multiple"
-					value={groupBy}
-					allowClear
-					maxTagCount="responsive"
-					placeholder="Search for attribute"
-					options={groupByOptions}
+				<GroupByFilter
+					query={query}
 					onChange={handleGroupByChange}
-					onSearch={(value: string): void => setGroupBySearchValue(value)}
-				/>{' '}
+					disabled={false}
+					placeholder="Search for attribute"
+				/>
 			</div>
 			<div className="endpoints-table-container">
 				<GridCard

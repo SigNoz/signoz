@@ -3,7 +3,6 @@ import {
 	getAllEndpointsWidgetData,
 	getGroupByFiltersFromGroupByValues,
 } from 'container/ApiMonitoring/utils';
-import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 
 import AllEndPoints from '../Explorer/Domains/DomainDetails/AllEndPoints';
 import {
@@ -57,27 +56,28 @@ jest.mock(
 	}),
 );
 
-jest.mock('hooks/queryBuilder/useGetAggregateKeys', () => ({
-	useGetAggregateKeys: jest.fn(),
+jest.mock('container/QueryBuilder/filters/GroupByFilter/GroupByFilter', () => ({
+	GroupByFilter: jest.fn().mockImplementation(({ onChange }) => (
+		<div data-testid="select-mock">
+			<button
+				data-testid="select-change-button"
+				type="button"
+				onClick={(): void =>
+					onChange([
+						{
+							id: 'http.status_code--string--attribute',
+							key: 'http.status_code',
+							dataType: 'string',
+							type: 'attribute',
+						},
+					])
+				}
+			>
+				Change GroupBy
+			</button>
+		</div>
+	)),
 }));
-
-jest.mock('antd', () => {
-	const originalModule = jest.requireActual('antd');
-	return {
-		...originalModule,
-		Select: jest.fn().mockImplementation(({ onChange }) => (
-			<div data-testid="select-mock">
-				<button
-					data-testid="select-change-button"
-					type="button"
-					onClick={(): void => onChange(['http.status_code'])}
-				>
-					Change GroupBy
-				</button>
-			</div>
-		)),
-	};
-});
 
 // Mock useApiMonitoringParams hook
 jest.mock('container/ApiMonitoring/queryParams', () => ({
@@ -116,21 +116,6 @@ describe('AllEndPoints', () => {
 		jest.clearAllMocks();
 
 		// Setup mock implementations
-		(useGetAggregateKeys as jest.Mock).mockReturnValue({
-			data: {
-				payload: {
-					attributeKeys: [
-						{
-							key: 'http.status_code',
-							dataType: 'string',
-							type: '',
-						},
-					],
-				},
-			},
-			isLoading: false,
-		});
-
 		(getAllEndpointsWidgetData as jest.Mock).mockReturnValue({
 			id: 'test-widget',
 			title: 'Endpoint Overview',
@@ -183,8 +168,10 @@ describe('AllEndPoints', () => {
 		// Trigger group by change
 		fireEvent.click(screen.getByTestId('select-change-button'));
 
-		// Check if setGroupBy was called with updated group by value
-		expect(mockProps.setGroupBy).toHaveBeenCalled();
+		// The picked keys are stored as given and written to the URL as bare names
+		expect(mockProps.setGroupBy).toHaveBeenCalledWith([
+			expect.objectContaining({ key: 'http.status_code', type: 'attribute' }),
+		]);
 	});
 
 	it('handles row click in grid card', async () => {
