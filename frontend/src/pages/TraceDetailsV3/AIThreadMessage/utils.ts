@@ -1,6 +1,6 @@
 import { attempt, isError, isObjectLike } from 'lodash-es';
 
-import { MediaMessagePart, ThreadMessage } from './types';
+import { MediaMessagePart, MessagePart, ThreadMessage } from './types';
 
 export const MAX_TEXT_LENGTH = 1000;
 
@@ -52,6 +52,17 @@ export function toDisplayText(value: unknown): string {
 		return '';
 	}
 	return typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+}
+
+/** Text and generic parts with only whitespace have nothing to render. */
+export function isEmptyPart(part: MessagePart): boolean {
+	if (part.type === 'text') {
+		return part.content.trim() === '';
+	}
+	if (part.type === 'generic') {
+		return toDisplayText(part.content).trim() === '';
+	}
+	return false;
 }
 
 /** Blob content is inline base64; only a prefix is shown. */

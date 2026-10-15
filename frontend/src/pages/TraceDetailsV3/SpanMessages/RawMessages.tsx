@@ -9,7 +9,7 @@ interface RawMessagesProps {
 
 function RawMessages({ value }: RawMessagesProps): JSX.Element {
 	if (typeof value === 'object') {
-		return <JsonBlock data={value} />;
+		return <JsonBlock data={value} isCollapsible={false} />;
 	}
 	return (
 		<pre className={styles.raw} data-testid="span-raw-messages">

@@ -4,7 +4,20 @@ import ThinkingPart from './parts/ThinkingPart';
 import ToolCallPart from './parts/ToolCallPart';
 import ToolResultPart from './parts/ToolResultPart';
 import TextContent from './TextContent';
-import { toDisplayText, toToolCallKey, truncateBlobContent } from './utils';
+import {
+	isEmptyPart,
+	toDisplayText,
+	toToolCallKey,
+	truncateBlobContent,
+} from './utils';
+
+import styles from './AIThreadMessage.module.scss';
+
+const EMPTY_PART = (
+	<span className={styles.empty} data-testid="ai-message-empty-part">
+		No content
+	</span>
+);
 
 interface MessagePartProps {
 	part: MessagePartType;
@@ -16,7 +29,10 @@ function MessagePart({
 	part,
 	canLinkToToolCall,
 	onToolLinkClick,
-}: MessagePartProps): JSX.Element | null {
+}: MessagePartProps): JSX.Element {
+	if (isEmptyPart(part)) {
+		return EMPTY_PART;
+	}
 	switch (part.type) {
 		case 'text':
 			return <TextContent text={part.content} isMarkdown />;
@@ -77,7 +93,7 @@ function MessagePart({
 		case 'generic':
 			return <TextContent text={toDisplayText(part.content)} />;
 		default:
-			return null;
+			return EMPTY_PART;
 	}
 }
 

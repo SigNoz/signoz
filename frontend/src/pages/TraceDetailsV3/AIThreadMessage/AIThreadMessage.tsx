@@ -59,9 +59,9 @@ function AIThreadMessage({
 				</CollapsibleBlock>
 			) : (
 				<>
-					{roleLabel && (
+					{(roleLabel || isOutput) && (
 						<div className={styles.roleHeader}>
-							<RoleLabel label={roleLabel} />
+							{roleLabel && <RoleLabel label={roleLabel} />}
 							{isOutput && (
 								<Badge
 									color={tone === 'info' ? 'robin' : tone}

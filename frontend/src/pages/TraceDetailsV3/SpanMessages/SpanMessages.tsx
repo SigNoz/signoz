@@ -5,7 +5,7 @@ import { AIThreadMessageProps } from '../AIThreadMessage/AIThreadMessage';
 import { ThreadSpan, ThreadView } from '../TraceDetailsThread/types';
 import JsonBlock from '../AIThreadMessage/JsonBlock';
 import MessagesSection from './MessagesSection';
-import { getSpanMessages, hasAnyMessages } from './utils';
+import { getSpanMessages, hasFormattedMessages, hasRawMessages } from './utils';
 
 import styles from './SpanMessages.module.scss';
 
@@ -29,10 +29,14 @@ function SpanMessages({
 	const data = useMemo(() => getSpanMessages(span), [span]);
 	const isFormatted = view === ThreadView.Formatted;
 
-	if (!hasAnyMessages(data)) {
+	if (isFormatted ? !hasFormattedMessages(data) : !hasRawMessages(data)) {
 		return (
-			//TODO: add message here
-			<div className={styles.missing}></div>
+			<div
+				className={cx(styles.missing, className)}
+				data-testid="span-messages-empty"
+			>
+				This span has no input or output.
+			</div>
 		);
 	}
 
@@ -41,6 +45,7 @@ function SpanMessages({
 			<div className={cx(styles.root, className)} data-testid="span-messages-json">
 				<JsonBlock
 					data={{ input: data.rawInput ?? [], output: data.rawOutput ?? [] }}
+					expandDepth={Infinity}
 				/>
 			</div>
 		);

@@ -1,4 +1,5 @@
 import { MessagePart, MessagePartType, ThreadMessage } from './types';
+import { toDisplayText } from './utils';
 
 const PART_TYPES = new Set<string>([
 	'text',
@@ -39,7 +40,7 @@ function toPart(part: unknown): MessagePart {
 			const text = part.content ?? part.text;
 			return {
 				type: 'text',
-				content: typeof text === 'string' ? text : JSON.stringify(text ?? ''),
+				content: typeof text === 'string' ? text : toDisplayText(text),
 			};
 		}
 		case 'reasoning':

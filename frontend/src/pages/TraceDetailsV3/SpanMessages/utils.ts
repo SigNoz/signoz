@@ -40,6 +40,10 @@ export function hasFormattedMessages(data: SpanMessagesData): boolean {
 	return data.formattedInput.length > 0 || data.formattedOutput.length > 0;
 }
 
+export function hasRawMessages(data: SpanMessagesData): boolean {
+	return !!data.rawInput || !!data.rawOutput;
+}
+
 export function hasAnyMessages(data: SpanMessagesData): boolean {
-	return hasFormattedMessages(data) || !!data.rawInput || !!data.rawOutput;
+	return hasFormattedMessages(data) || hasRawMessages(data);
 }

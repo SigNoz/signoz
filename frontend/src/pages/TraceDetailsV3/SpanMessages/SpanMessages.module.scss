@@ -43,7 +43,9 @@
 }
 
 .missing {
+	padding: var(--spacing-10) var(--spacing-6);
+	border-radius: var(--radius-2);
 	font-size: var(--periscope-font-size-base);
-	font-style: italic;
 	color: var(--l2-foreground);
+	text-align: center;
 }
