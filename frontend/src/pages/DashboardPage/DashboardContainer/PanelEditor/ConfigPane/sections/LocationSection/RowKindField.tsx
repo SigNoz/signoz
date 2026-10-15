@@ -41,7 +41,7 @@ function RowKindField({
 						variant="link"
 						color="primary"
 						size="sm"
-						data-testid="panel-editor-v2-geo-location-auto"
+						testId="panel-editor-v2-geo-location-auto"
 						onClick={(): void => onPick('auto')}
 					>
 						Back to auto
