@@ -5,7 +5,6 @@ import { Input } from '@signozhq/ui/input';
 import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import { AlertmanagertypesListedNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas';
 import ErrorEmptyState from 'components/Alerts/ErrorEmptyState';
 import NoResultsEmptyState from 'components/Alerts/NoResultsEmptyState';
 import TanStackTable from 'components/TanStackTableView';
@@ -29,8 +28,7 @@ import { useChannelFormView } from './hooks/useChannelFormView';
 import { useChannelsData } from './hooks/useChannelsData';
 import styles from './NotificationChannels.module.scss';
 import { getChannelColumns } from './table.config';
-
-type Channel = AlertmanagertypesListedNotificationChannelDTO;
+import type { Channel } from './types';
 
 const QUERY_PARAMS_CONFIG = {
 	orderBy: 'orderBy',

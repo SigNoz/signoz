@@ -78,6 +78,9 @@ describe('Notification channels list', () => {
 			await user.click(screen.getByTestId('channel-actions-3'));
 			// Radix renders the menu into a portal once the trigger is activated
 			await screen.findByRole('menu', {}, FIND);
+			// the menu lives inside the row's clickable cell, so opening it must not
+			// also fire the row click and route to the edit screen
+			expect(window.location.pathname).not.toContain('/channels/edit/');
 
 			await user.click(
 				await screen.findByRole('menuitem', { name: 'Delete' }, FIND),

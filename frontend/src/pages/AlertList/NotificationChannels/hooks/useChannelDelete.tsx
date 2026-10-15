@@ -4,16 +4,17 @@ import {
 	invalidateListNotificationChannels,
 	useDeleteNotificationChannel,
 } from 'api/generated/services/channels';
-import { AlertmanagertypesListedNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas';
 import { useDeleteConfirm } from 'components/DeleteConfirmModal/useDeleteConfirm';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { ReactNode } from 'react';
 import APIError from 'types/api/error';
 
+import type { Channel } from '../types';
+
 export interface ChannelDeleteState {
 	/** Must be rendered by the caller for the confirmation to appear. */
 	contextHolder: ReactNode;
-	request: (channel: AlertmanagertypesListedNotificationChannelDTO) => void;
+	request: (channel: Channel) => void;
 }
 
 /**
@@ -26,9 +27,7 @@ export function useChannelDelete(onDeleted?: () => void): ChannelDeleteState {
 	const { contextHolder, confirmDelete } = useDeleteConfirm();
 	const { mutateAsync } = useDeleteNotificationChannel();
 
-	const request = (
-		channel: AlertmanagertypesListedNotificationChannelDTO,
-	): void => {
+	const request = (channel: Channel): void => {
 		confirmDelete({
 			title: (
 				<Typography.Title level={5}>

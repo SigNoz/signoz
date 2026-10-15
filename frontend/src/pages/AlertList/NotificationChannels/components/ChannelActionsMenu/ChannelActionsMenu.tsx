@@ -8,18 +8,15 @@ import {
 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
-import { AlertmanagertypesListedNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas';
 
+import type { Channel } from '../../types';
 import styles from './ChannelActionsMenu.module.scss';
 
 interface ChannelActionsMenuProps {
-	channel: AlertmanagertypesListedNotificationChannelDTO;
-	onOpen: (
-		channel: AlertmanagertypesListedNotificationChannelDTO,
-		options?: { newTab?: boolean },
-	) => void;
-	onDelete: (channel: AlertmanagertypesListedNotificationChannelDTO) => void;
-	onViewJson: (channel: AlertmanagertypesListedNotificationChannelDTO) => void;
+	channel: Channel;
+	onOpen: (channel: Channel, options?: { newTab?: boolean }) => void;
+	onDelete: (channel: Channel) => void;
+	onViewJson: (channel: Channel) => void;
 }
 
 function ChannelActionsMenu({
