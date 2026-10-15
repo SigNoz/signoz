@@ -21,7 +21,7 @@ def test_thread_returns_gen_ai_spans_in_order(
     seed_attribute_evolution("traces", ATTRIBUTE_JSON_ROLLOUT_TIME)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
-    root_id, first_llm_id, tool_id, agent_id, second_llm_id, legacy_llm_id, third_llm_id, flattened_llm_id, responses_llm_id, langchain_llm_id = (TraceIdGenerator.span_id() for _ in range(10))
+    root_id, first_llm_id, tool_id, agent_id, second_llm_id, legacy_llm_id, third_llm_id, flattened_llm_id, responses_llm_id, langchain_llm_id, openrouter_llm_id = (TraceIdGenerator.span_id() for _ in range(11))
     resources = {"service.name": "tracedetail-thread"}
     first_input = json.dumps([{"role": "user", "parts": [{"type": "text", "content": "weather in Bangalore?"}]}])
     first_output = json.dumps([{"role": "assistant", "parts": [{"type": "tool_call", "id": "call_1", "name": "get_weather", "arguments": {"city": "Bangalore"}}]}])
@@ -111,6 +111,20 @@ def test_thread_returns_gen_ai_spans_in_order(
                 },
                 attribute_write_mode="json_only",
             ),
+            Traces(
+                timestamp=now + timedelta(seconds=2),
+                trace_id=trace_id,
+                span_id=openrouter_llm_id,
+                parent_span_id=root_id,
+                name="LLM Generation",
+                resources=resources,
+                attributes={
+                    "gen_ai.request.model": "openai/gpt-4o-mini",
+                    "gen_ai.input.messages": json.dumps({"messages": [{"role": "user", "content": "one word"}]}),
+                    "gen_ai.output.messages": json.dumps({"completion": "Yes.", "reasoning": None, "rawRequest": {"model": "openai/gpt-4o-mini"}}),
+                },
+                attribute_write_mode="json_only",
+            ),
         ]
     )
 
@@ -119,10 +133,10 @@ def test_thread_returns_gen_ai_spans_in_order(
     assert response.status_code == HTTPStatus.OK, response.text
 
     thread = response.json()["data"]
-    assert [span["span_id"] for span in thread["spans"]] == [first_llm_id, tool_id, agent_id, second_llm_id, legacy_llm_id, third_llm_id, flattened_llm_id, responses_llm_id, langchain_llm_id]
+    assert [span["span_id"] for span in thread["spans"]] == [first_llm_id, tool_id, agent_id, second_llm_id, legacy_llm_id, third_llm_id, flattened_llm_id, responses_llm_id, langchain_llm_id, openrouter_llm_id]
     assert "nextCursor" not in thread
 
-    first, tool, agent, input_only, legacy, output_only, flattened, responses, langchain = thread["spans"]
+    first, tool, agent, input_only, legacy, output_only, flattened, responses, langchain, openrouter = thread["spans"]
     assert agent["attributes"]["gen_ai.agent.name"] == "planner"
     assert agent["formattedInput"] == []
     assert agent["formattedOutput"] == []
@@ -158,6 +172,8 @@ def test_thread_returns_gen_ai_spans_in_order(
     assert responses["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "Bye!"}], "finish_reason": "stop"}]
     assert langchain["formattedInput"] == [{"role": "user", "parts": [{"type": "text", "content": "see you"}]}]
     assert langchain["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "See you!"}], "finish_reason": "stop"}]
+    assert openrouter["formattedInput"] == [{"role": "user", "parts": [{"type": "text", "content": "one word"}]}]
+    assert openrouter["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "Yes."}]}]
 
 
 def test_thread_paginates_with_cursors(
