@@ -34,7 +34,7 @@ export const MY_VIEW_NAME = 'My view';
 
 export const SAVED_VIEW_LOAD_FAILED_NAME = 'View failed to load';
 
-export const SAVED_VIEW_FORBIDDEN_NAME = 'No access to this view';
+export const SAVED_VIEW_FORBIDDEN_NAME = 'No view access';
 
 export const SAVED_VIEWS_LIST_LOADING_ROWS = 4;
 

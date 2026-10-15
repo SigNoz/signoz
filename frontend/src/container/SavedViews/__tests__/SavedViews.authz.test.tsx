@@ -233,7 +233,7 @@ describe('SavedViews - AuthZ', () => {
 
 		await waitFor(() =>
 			expect(screen.getByTestId('saved-views-name')).toHaveTextContent(
-				'No access to this view',
+				'No view access',
 			),
 		);
 		await waitFor(() =>
@@ -266,7 +266,7 @@ describe('SavedViews - AuthZ', () => {
 
 		await waitFor(() =>
 			expect(screen.getByTestId('saved-views-name')).toHaveTextContent(
-				'No access to this view',
+				'No view access',
 			),
 		);
 		await userEvent.setup().hover(screen.getByTestId('saved-views-name'));
