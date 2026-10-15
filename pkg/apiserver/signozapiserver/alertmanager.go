@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
-	"github.com/SigNoz/signoz/pkg/ruler/rulerauthz"
+	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -408,7 +408,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 				SourceIDs:      coretypes.OneID(coretypes.ResponseJSONPath("data.id")),
 				SourceSelector: coretypes.WildcardSelector,
 				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
-				TargetIDs:      rulerauthz.NewCreateRoutePolicyChannelAttachExtractor(provider.alertmanagerService),
+				TargetIDs:      ruler.NewCreateRoutePolicyChannelAttachExtractor(provider.alertmanagerService),
 				TargetSelector: coretypes.IDSelector,
 			},
 		),
@@ -452,7 +452,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
 				SourceSelector: coretypes.IDSelector,
 				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
-				TargetIDs:      rulerauthz.NewUpdateRoutePolicyChannelAttachExtractor(provider.alertmanagerService),
+				TargetIDs:      ruler.NewUpdateRoutePolicyChannelAttachExtractor(provider.alertmanagerService),
 				TargetSelector: coretypes.IDSelector,
 			},
 			handler.AttachDetachSiblingResourceDef{
@@ -462,7 +462,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
 				SourceSelector: coretypes.IDSelector,
 				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
-				TargetIDs:      rulerauthz.NewUpdateRoutePolicyChannelDetachExtractor(provider.alertmanagerService),
+				TargetIDs:      ruler.NewUpdateRoutePolicyChannelDetachExtractor(provider.alertmanagerService),
 				TargetSelector: coretypes.IDSelector,
 			},
 		),

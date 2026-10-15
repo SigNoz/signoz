@@ -74,7 +74,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/ruler"
-	"github.com/SigNoz/signoz/pkg/ruler/rulerauthz"
 	"github.com/SigNoz/signoz/pkg/version"
 )
 
@@ -447,7 +446,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 				SourceIDs:      coretypes.OneID(coretypes.ResponseJSONPath("data.id")),
 				SourceSelector: coretypes.WildcardSelector,
 				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
-				TargetIDs:      rulerauthz.NewCreateChannelAttachExtractor(aH.Signoz.Alertmanager),
+				TargetIDs:      ruler.NewCreateChannelAttachExtractor(aH.Signoz.Alertmanager),
 				TargetSelector: coretypes.IDSelector,
 			},
 		),
@@ -477,7 +476,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
 				SourceSelector: coretypes.IDSelector,
 				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
-				TargetIDs:      rulerauthz.NewReplaceChannelAttachExtractor(aH.Signoz.Alertmanager, aH.ruleManager),
+				TargetIDs:      ruler.NewReplaceChannelAttachExtractor(aH.Signoz.Alertmanager, aH.ruleManager),
 				TargetSelector: coretypes.IDSelector,
 			},
 			handler.AttachDetachSiblingResourceDef{
@@ -487,7 +486,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
 				SourceSelector: coretypes.IDSelector,
 				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
-				TargetIDs:      rulerauthz.NewReplaceChannelDetachExtractor(aH.Signoz.Alertmanager, aH.ruleManager),
+				TargetIDs:      ruler.NewReplaceChannelDetachExtractor(aH.Signoz.Alertmanager, aH.ruleManager),
 				TargetSelector: coretypes.IDSelector,
 			},
 		),
@@ -535,7 +534,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
 				SourceSelector: coretypes.IDSelector,
 				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
-				TargetIDs:      rulerauthz.NewPatchChannelAttachExtractor(aH.Signoz.Alertmanager, aH.ruleManager),
+				TargetIDs:      ruler.NewPatchChannelAttachExtractor(aH.Signoz.Alertmanager, aH.ruleManager),
 				TargetSelector: coretypes.IDSelector,
 			},
 			handler.AttachDetachSiblingResourceDef{
@@ -545,7 +544,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
 				SourceSelector: coretypes.IDSelector,
 				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
-				TargetIDs:      rulerauthz.NewPatchChannelDetachExtractor(aH.Signoz.Alertmanager, aH.ruleManager),
+				TargetIDs:      ruler.NewPatchChannelDetachExtractor(aH.Signoz.Alertmanager, aH.ruleManager),
 				TargetSelector: coretypes.IDSelector,
 			},
 		),
@@ -573,7 +572,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 				SourceResource: coretypes.ResourceMetaResourceRule,
 				SourceSelector: coretypes.WildcardSelector,
 				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
-				TargetIDs:      rulerauthz.NewCreateChannelAttachExtractor(aH.Signoz.Alertmanager),
+				TargetIDs:      ruler.NewCreateChannelAttachExtractor(aH.Signoz.Alertmanager),
 				TargetSelector: coretypes.IDSelector,
 			},
 		),

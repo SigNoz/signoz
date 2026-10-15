@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
-	"github.com/SigNoz/signoz/pkg/ruler/rulerauthz"
+	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
@@ -119,7 +119,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 				SourceIDs:      coretypes.OneID(coretypes.ResponseJSONPath("data.id")),
 				SourceSelector: coretypes.WildcardSelector,
 				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
-				TargetIDs:      rulerauthz.NewCreateChannelAttachExtractor(provider.alertmanagerService),
+				TargetIDs:      ruler.NewCreateChannelAttachExtractor(provider.alertmanagerService),
 				TargetSelector: coretypes.IDSelector,
 			},
 		),
@@ -162,7 +162,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
 				SourceSelector: coretypes.IDSelector,
 				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
-				TargetIDs:      rulerauthz.NewReplaceChannelAttachExtractor(provider.alertmanagerService, provider.rulerService),
+				TargetIDs:      ruler.NewReplaceChannelAttachExtractor(provider.alertmanagerService, provider.rulerService),
 				TargetSelector: coretypes.IDSelector,
 			},
 			handler.AttachDetachSiblingResourceDef{
@@ -172,7 +172,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
 				SourceSelector: coretypes.IDSelector,
 				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
-				TargetIDs:      rulerauthz.NewReplaceChannelDetachExtractor(provider.alertmanagerService, provider.rulerService),
+				TargetIDs:      ruler.NewReplaceChannelDetachExtractor(provider.alertmanagerService, provider.rulerService),
 				TargetSelector: coretypes.IDSelector,
 			},
 		),
@@ -239,7 +239,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
 				SourceSelector: coretypes.IDSelector,
 				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
-				TargetIDs:      rulerauthz.NewPatchChannelAttachExtractor(provider.alertmanagerService, provider.rulerService),
+				TargetIDs:      ruler.NewPatchChannelAttachExtractor(provider.alertmanagerService, provider.rulerService),
 				TargetSelector: coretypes.IDSelector,
 			},
 			handler.AttachDetachSiblingResourceDef{
@@ -249,7 +249,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
 				SourceSelector: coretypes.IDSelector,
 				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
-				TargetIDs:      rulerauthz.NewPatchChannelDetachExtractor(provider.alertmanagerService, provider.rulerService),
+				TargetIDs:      ruler.NewPatchChannelDetachExtractor(provider.alertmanagerService, provider.rulerService),
 				TargetSelector: coretypes.IDSelector,
 			},
 		),
@@ -290,7 +290,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 				SourceResource: coretypes.ResourceMetaResourceRule,
 				SourceSelector: coretypes.WildcardSelector,
 				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
-				TargetIDs:      rulerauthz.NewCreateChannelAttachExtractor(provider.alertmanagerService),
+				TargetIDs:      ruler.NewCreateChannelAttachExtractor(provider.alertmanagerService),
 				TargetSelector: coretypes.IDSelector,
 			},
 		),
@@ -473,7 +473,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 				SourceIDs:      coretypes.OneID(coretypes.ResponseJSONPath("data.id")),
 				SourceSelector: coretypes.WildcardSelector,
 				TargetResource: coretypes.ResourceMetaResourceRule,
-				TargetIDs:      rulerauthz.DowntimeRuleIDsExtractor,
+				TargetIDs:      ruler.DowntimeRuleIDsExtractor,
 				TargetSelector: coretypes.IDSelector,
 			},
 		),
@@ -515,7 +515,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
 				SourceSelector: coretypes.IDSelector,
 				TargetResource: coretypes.ResourceMetaResourceRule,
-				TargetIDs:      rulerauthz.NewDowntimeRuleAttachExtractor(provider.rulerService),
+				TargetIDs:      ruler.NewDowntimeRuleAttachExtractor(provider.rulerService),
 				TargetSelector: coretypes.IDSelector,
 			},
 			handler.AttachDetachSiblingResourceDef{
@@ -525,7 +525,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
 				SourceSelector: coretypes.IDSelector,
 				TargetResource: coretypes.ResourceMetaResourceRule,
-				TargetIDs:      rulerauthz.NewDowntimeRuleDetachExtractor(provider.rulerService),
+				TargetIDs:      ruler.NewDowntimeRuleDetachExtractor(provider.rulerService),
 				TargetSelector: coretypes.IDSelector,
 			},
 		),
