@@ -31,7 +31,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			Verb:      coretypes.VerbRead,
 			Category:  coretypes.ActionCategoryDataAccess,
 			Selector:  querybuilder.TelemetrySelector,
-			Resources: querybuilder.FilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
 		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			Verb:      coretypes.VerbRead,
 			Category:  coretypes.ActionCategoryDataAccess,
 			Selector:  querybuilder.TelemetrySelector,
-			Resources: querybuilder.FilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
 		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			Verb:      coretypes.VerbRead,
 			Category:  coretypes.ActionCategoryDataAccess,
 			Selector:  querybuilder.TelemetrySelector,
-			Resources: querybuilder.FilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
 		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			Verb:      coretypes.VerbRead,
 			Category:  coretypes.ActionCategoryDataAccess,
 			Selector:  querybuilder.TelemetrySelector,
-			Resources: querybuilder.FilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
 		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -127,7 +127,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			Verb:      coretypes.VerbRead,
 			Category:  coretypes.ActionCategoryDataAccess,
 			Selector:  querybuilder.TelemetrySelector,
-			Resources: querybuilder.FilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
 		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -151,7 +151,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			Verb:      coretypes.VerbRead,
 			Category:  coretypes.ActionCategoryDataAccess,
 			Selector:  querybuilder.TelemetrySelector,
-			Resources: querybuilder.FilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
 		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -175,7 +175,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			Verb:      coretypes.VerbRead,
 			Category:  coretypes.ActionCategoryDataAccess,
 			Selector:  querybuilder.TelemetrySelector,
-			Resources: querybuilder.FilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
 		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -199,7 +199,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			Verb:      coretypes.VerbRead,
 			Category:  coretypes.ActionCategoryDataAccess,
 			Selector:  querybuilder.TelemetrySelector,
-			Resources: querybuilder.FilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
 		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -223,7 +223,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			Verb:      coretypes.VerbRead,
 			Category:  coretypes.ActionCategoryDataAccess,
 			Selector:  querybuilder.TelemetrySelector,
-			Resources: querybuilder.FilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
 		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -247,7 +247,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			Verb:      coretypes.VerbRead,
 			Category:  coretypes.ActionCategoryDataAccess,
 			Selector:  querybuilder.TelemetrySelector,
-			Resources: querybuilder.FilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
 		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -271,7 +271,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			Verb:      coretypes.VerbRead,
 			Category:  coretypes.ActionCategoryDataAccess,
 			Selector:  querybuilder.TelemetrySelector,
-			Resources: querybuilder.FilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
 		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -294,7 +294,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			Verb:      coretypes.VerbRead,
 			Category:  coretypes.ActionCategoryDataAccess,
 			Selector:  querybuilder.TelemetrySelector,
-			Resources: querybuilder.WildcardResources(coretypes.ResourceTelemetryResourceMetrics),
+			Resources: querybuilder.BuilderQueryWildcardResources(coretypes.ResourceTelemetryResourceMetrics),
 		}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}

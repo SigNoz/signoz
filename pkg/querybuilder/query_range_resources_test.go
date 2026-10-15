@@ -196,39 +196,7 @@ func TestTelemetrySelector(t *testing.T) {
 	assert.Equal(t, []string{"builder_query/signoz.workspace.key.id/a/b", "builder_query/signoz.workspace.key.id/*", "builder_query/*", "*"}, selectorValues("builder_query/signoz.workspace.key.id/a/b"))
 }
 
-func TestBuilderQueryResources(t *testing.T) {
-	testCases := []struct {
-		name       string
-		expression string
-		expected   []coretypes.ResourceWithID
-	}{
-		{
-			name:       "PinnedKey_ScopedID",
-			expression: "signoz.workspace.key.id = 'checkout' AND status = 500",
-			expected:   []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: "builder_query/signoz.workspace.key.id/checkout"}},
-		},
-		{
-			name:       "NoFilter_Wildcard",
-			expression: "",
-			expected:   []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: "builder_query/*"}},
-		},
-		{
-			name:       "NonGrantKey_Wildcard",
-			expression: "host.name = 'web-1'",
-			expected:   []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: "builder_query/*"}},
-		},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			refs, err := BuilderQueryResources(coretypes.ResourceTelemetryResourceMetrics, testCase.expression, nil)
-			require.NoError(t, err)
-			assert.Equal(t, testCase.expected, refs)
-		})
-	}
-}
-
-func TestFilterExpressionResources(t *testing.T) {
+func TestBuilderQueryWithFilterExpressionResources(t *testing.T) {
 	testCases := []struct {
 		name     string
 		body     string
@@ -253,20 +221,20 @@ func TestFilterExpressionResources(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			refs, err := FilterExpressionResources(coretypes.ResourceTelemetryResourceTraces, "filter.expression")(coretypes.ExtractorContext{RequestBody: []byte(testCase.body)})
+			refs, err := BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceTraces, "filter.expression")(coretypes.ExtractorContext{RequestBody: []byte(testCase.body)})
 			require.NoError(t, err)
 			assert.Equal(t, testCase.expected, refs)
 		})
 	}
 
 	t.Run("InvalidExpression_Error", func(t *testing.T) {
-		_, err := FilterExpressionResources(coretypes.ResourceTelemetryResourceTraces, "filter.expression")(coretypes.ExtractorContext{RequestBody: []byte(`{"filter":{"expression":"signoz.workspace.key.id = "}}`)})
+		_, err := BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceTraces, "filter.expression")(coretypes.ExtractorContext{RequestBody: []byte(`{"filter":{"expression":"signoz.workspace.key.id = "}}`)})
 		require.Error(t, err)
 	})
 }
 
-func TestWildcardResources(t *testing.T) {
-	refs, err := WildcardResources(coretypes.ResourceTelemetryResourceTraces)(coretypes.ExtractorContext{})
+func TestBuilderQueryWildcardResources(t *testing.T) {
+	refs, err := BuilderQueryWildcardResources(coretypes.ResourceTelemetryResourceTraces)(coretypes.ExtractorContext{})
 	require.NoError(t, err)
 	assert.Equal(t, []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/*"}}, refs)
 }

@@ -85,19 +85,15 @@ func PromQLResources(coretypes.ExtractorContext) ([]coretypes.ResourceWithID, er
 	}}, nil
 }
 
-func BuilderQueryResources(resource coretypes.Resource, expression string, variables map[string]qbtypes.VariableItem) ([]coretypes.ResourceWithID, error) {
-	return builderResources(qbtypes.QueryTypeBuilder.StringValue(), resource, expression, variables)
-}
-
-func FilterExpressionResources(resource coretypes.Resource, bodyPath string) coretypes.ResourceExtractor {
+func BuilderQueryWithFilterExpressionResources(resource coretypes.Resource, bodyPath string) coretypes.ResourceExtractor {
 	return func(ec coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
-		return BuilderQueryResources(resource, gjson.GetBytes(ec.RequestBody, bodyPath).String(), nil)
+		return builderResources(qbtypes.QueryTypeBuilder.StringValue(), resource, gjson.GetBytes(ec.RequestBody, bodyPath).String(), nil)
 	}
 }
 
-func WildcardResources(resource coretypes.Resource) coretypes.ResourceExtractor {
+func BuilderQueryWildcardResources(resource coretypes.Resource) coretypes.ResourceExtractor {
 	return func(coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
-		return BuilderQueryResources(resource, "", nil)
+		return builderResources(qbtypes.QueryTypeBuilder.StringValue(), resource, "", nil)
 	}
 }
 
