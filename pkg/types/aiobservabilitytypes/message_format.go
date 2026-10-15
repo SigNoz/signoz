@@ -15,6 +15,7 @@ const (
 	FormatterSemconv         = "semconv"
 	FormatterOpenInference   = "openinference"
 	FormatterLangChain       = "langchain"
+	FormatterOpenRouter      = "openrouter"
 	FormatterOpenAIChat      = "openai.chat"
 	FormatterOpenAIResponses = "openai.responses"
 	FormatterText            = "text"
@@ -33,7 +34,8 @@ var dataURL = regexp.MustCompile(`^data:([^;,]+);base64,(.+)$`)
 // https://github.com/vercel/ai/blob/a5e92fe3c692f8e152fe1eb9ef50a4e734ad0ffb/packages/provider/src/language-model/v2/language-model-v2-finish-reason.ts
 var finishReasonAliases = map[string]FinishReason{
 	"tool_calls": FinishReasonToolCall, "function_call": FinishReasonToolCall, "tool-calls": FinishReasonToolCall, "tool_use": FinishReasonToolCall,
-	"end_turn": FinishReasonStop, "stop_sequence": FinishReasonStop, "completed": FinishReasonStop,
+	"content-filter": FinishReasonContentFilter,
+	"end_turn":       FinishReasonStop, "stop_sequence": FinishReasonStop, "completed": FinishReasonStop,
 	"max_tokens": FinishReasonLength, "max_output_tokens": FinishReasonLength,
 	"failed": FinishReasonError, "cancelled": FinishReasonError, "incomplete": FinishReasonError,
 }
@@ -49,8 +51,8 @@ type FormattedMessages struct {
 // FormatMessages builds the OTel GenAI view of a span's messages from the formats SDKs write. attributes
 // is the span's JSON attribute document, nested by key segment, so an object value is whole. Each
 // message value is a JSON string or a structured value. OpenInference's flattened messages come first,
-// then a tool call and its result, then the message attributes, then openllmetry's flattened prompts
-// and completions. gen_ai.system_instructions leads the
+// then a tool call and its result, then the AI SDK's ai.* keys, then the message attributes, then
+// openllmetry's flattened prompts and completions. gen_ai.system_instructions leads the
 // input and gen_ai.response.finish_reasons overrides the finish reasons the converter found, whichever
 // converter ran.
 func FormatMessages(attributes map[string]any) FormattedMessages {
@@ -59,6 +61,7 @@ func FormatMessages(attributes map[string]any) FormattedMessages {
 	case f.openInference():
 	case attribute(f.attributes, GenAIToolCallArguments) != nil || attribute(f.attributes, GenAIToolCallResult) != nil:
 		f.tool()
+	case f.vercel():
 	case attribute(f.attributes, GenAIInputMessages) != nil || attribute(f.attributes, GenAIOutputMessages) != nil:
 		f.messages()
 	case f.traceloop():
@@ -92,8 +95,12 @@ func (f *formatting) messages() {
 	f.warnMixedFormats(inputLabel, outputLabel)
 }
 
+// OpenRouter's answer object beside the OpenAI chat request it answers is one format, not a mix.
 func (f *formatting) warnMixedFormats(inputLabel, outputLabel string) {
-	if inputLabel != "" && outputLabel != "" && outputLabel != inputLabel {
+	switch {
+	case inputLabel == "" || outputLabel == "" || outputLabel == inputLabel:
+	case inputLabel == FormatterOpenAIChat && outputLabel == FormatterOpenRouter:
+	default:
 		f.warn("output formatted as %s, input as %s", outputLabel, inputLabel)
 	}
 }
@@ -154,6 +161,8 @@ func (f *formatting) side(value any, role Role) (OutputMessages, string) {
 		switch {
 		case isLangChainRun(v):
 			return f.langChainRun(v), FormatterLangChain
+		case isOpenRouterCompletion(v):
+			return f.openRouterCompletion(v), FormatterOpenRouter
 		case isResponsesResponse(v):
 			return f.responsesResponse(v), FormatterOpenAIResponses
 		case isResponsesRequest(v):
@@ -431,6 +440,19 @@ func filePart(block map[string]any) (Part, bool) {
 		return part(mediaPart(data, ModalityDocument)), true
 	}
 	return Part{}, false
+}
+
+// modalityOf maps a MIME type to the schema modality, document for anything that is not media.
+func modalityOf(mimeType string) Modality {
+	switch {
+	case strings.HasPrefix(mimeType, "image/"):
+		return ModalityImage
+	case strings.HasPrefix(mimeType, "audio/"):
+		return ModalityAudio
+	case strings.HasPrefix(mimeType, "video/"):
+		return ModalityVideo
+	}
+	return ModalityDocument
 }
 
 // mediaPart places a data URL in a BlobPart, any other URL in a UriPart.
