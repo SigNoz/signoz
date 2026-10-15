@@ -9,6 +9,7 @@ import {
 } from 'tests/test-utils';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
+import { QueryBuilderField } from '../queryBuilderFields.types';
 import QueryAddOns from '../QueryV2/QueryAddOns/QueryAddOns';
 
 // Mocks: only what is required for this component to render and for us to assert handler calls
@@ -34,9 +35,10 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 }));
 
 jest.mock('container/QueryBuilder/filters/GroupByFilter/GroupByFilter', () => ({
-	GroupByFilter: ({ onChange }: any): JSX.Element => (
+	GroupByFilter: ({ onChange, placeholder }: any): JSX.Element => (
 		<button
 			data-testid="groupby"
+			data-placeholder={placeholder}
 			onClick={(): void => onChange(['service.name'])}
 		>
 			GroupByFilter
@@ -45,9 +47,10 @@ jest.mock('container/QueryBuilder/filters/GroupByFilter/GroupByFilter', () => ({
 }));
 
 jest.mock('container/QueryBuilder/filters/OrderByFilter/OrderByFilter', () => ({
-	OrderByFilter: ({ onChange }: any): JSX.Element => (
+	OrderByFilter: ({ onChange, placeholder }: any): JSX.Element => (
 		<button
 			data-testid="orderby"
+			data-placeholder={placeholder}
 			onClick={(): void => onChange([{ columnName: 'duration', order: 'desc' }])}
 		>
 			OrderByFilter
@@ -57,10 +60,11 @@ jest.mock('container/QueryBuilder/filters/OrderByFilter/OrderByFilter', () => ({
 
 jest.mock('../QueryV2/QueryAddOns/HavingFilter/HavingFilter', () => ({
 	__esModule: true,
-	default: ({ onChange, onClose }: any): JSX.Element => (
+	default: ({ onChange, onClose, placeholder }: any): JSX.Element => (
 		<div>
 			<button
 				data-testid="having-change"
+				data-placeholder={placeholder}
 				onClick={(): void => onChange('p99 > 500')}
 			>
 				HavingFilter
@@ -167,6 +171,55 @@ describe('QueryAddOns', () => {
 
 		fireEvent.change(input, { target: { value: '10' } });
 		expect(mockHandleChangeQueryData).toHaveBeenCalledWith('limit', 10);
+	});
+
+	it.each([
+		[QueryBuilderField.Limit, 'input-Limit', 'placeholder'],
+		[QueryBuilderField.Legend, 'input-Legend format', 'placeholder'],
+		[QueryBuilderField.GroupBy, 'groupby', 'data-placeholder'],
+		[QueryBuilderField.Having, 'having-change', 'data-placeholder'],
+		[QueryBuilderField.OrderBy, 'orderby', 'data-placeholder'],
+	])('shows the configured %s placeholder', (field, inputTestId, attribute) => {
+		render(
+			<QueryAddOns
+				query={baseQuery()}
+				version="v5"
+				isRawQuery={false}
+				showReduceTo={false}
+				panelType={PANEL_TYPES.TIME_SERIES}
+				index={0}
+				fieldsConfig={{
+					[field]: { state: 'pinned', placeholder: 'Default X' },
+				}}
+				isForTraceOperator={false}
+			/>,
+		);
+
+		expect(screen.getByTestId(inputTestId)).toHaveAttribute(
+			attribute,
+			'Default X',
+		);
+	});
+
+	it('keeps the built-in placeholder without a rule', () => {
+		render(
+			<QueryAddOns
+				query={baseQuery()}
+				version="v5"
+				isRawQuery={false}
+				showReduceTo={false}
+				panelType={PANEL_TYPES.TIME_SERIES}
+				index={0}
+				isForTraceOperator={false}
+			/>,
+		);
+
+		fireEvent.click(screen.getByTestId('query-add-on-limit'));
+
+		expect(screen.getByTestId('input-Limit')).toHaveAttribute(
+			'placeholder',
+			'Enter limit',
+		);
 	});
 
 	it('auto-opens Order By and Limit when present in query', () => {

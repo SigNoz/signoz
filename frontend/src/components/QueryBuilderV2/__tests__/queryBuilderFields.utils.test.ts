@@ -57,6 +57,14 @@ describe('resolveQueryBuilderField', () => {
 		expect(resolved.hidden).toBe(false);
 	});
 
+	it('carries the placeholder on a pinned field', () => {
+		const resolved = resolveQueryBuilderField(QueryBuilderField.Limit, {
+			[QueryBuilderField.Limit]: { state: 'pinned', placeholder: 'Default 10' },
+		});
+
+		expect(resolved.placeholder).toBe('Default 10');
+	});
+
 	it('only ever resolves one state at a time', () => {
 		const resolved = resolveQueryBuilderField(QueryBuilderField.Limit, {
 			[QueryBuilderField.Limit]: { state: 'disabled', reason: 'why' },
