@@ -7,12 +7,11 @@
 }
 
 .content {
-	z-index: 1100;
-	padding: 4px 0;
-	max-height: 300px;
+	// The popover shell carries no padding of its own. Block only: the rows are full-width
+	// buttons and are meant to reach the edges.
+	padding: var(--spacing-2) 0;
 	overflow-y: auto;
 	overflow-x: hidden;
-	min-width: var(--radix-popover-trigger-width);
 }
 
 .empty {

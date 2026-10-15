@@ -1,6 +1,6 @@
 .export-menu-popover {
-	width: 240px;
-	padding: 0 12px 12px 12px;
+	// The popover shell carries no padding of its own, so the content owns it.
+	padding: var(--spacing-8);
 
 	.title {
 		display: flex;

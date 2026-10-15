@@ -1,6 +1,6 @@
 import { CircleHelp } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';
+import { Popover } from '@signozhq/ui/popover';
 import { Typography } from '@signozhq/ui/typography';
 
 import { MARKDOWN_HELP_ITEMS } from './constants';
@@ -9,8 +9,14 @@ import styles from './MarkdownEditor.module.scss';
 
 function MarkdownHelp(): JSX.Element {
 	return (
-		<Popover>
-			<PopoverTrigger asChild>
+		<Popover
+			nativeButton
+			side="bottom"
+			align="end"
+			width={280}
+			maxHeight={320}
+			aria-label="Markdown syntax"
+			trigger={
 				<Button
 					type="button"
 					variant="ghost"
@@ -22,8 +28,9 @@ function MarkdownHelp(): JSX.Element {
 				>
 					<CircleHelp size={14} />
 				</Button>
-			</PopoverTrigger>
-			<PopoverContent align="end" className={styles.helpContent}>
+			}
+		>
+			<div className={styles.helpContent}>
 				<Typography.Text className={styles.helpTitle}>
 					Markdown syntax
 				</Typography.Text>
@@ -37,7 +44,7 @@ function MarkdownHelp(): JSX.Element {
 						</div>
 					))}
 				</dl>
-			</PopoverContent>
+			</div>
 		</Popover>
 	);
 }

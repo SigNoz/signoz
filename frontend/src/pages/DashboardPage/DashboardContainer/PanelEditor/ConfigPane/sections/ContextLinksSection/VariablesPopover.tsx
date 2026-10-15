@@ -1,9 +1,9 @@
-// Uses Popover (not DropdownMenu): DropdownMenuTrigger preventDefaults pointerdown,
-// which steals input focus and dismisses on every keystroke. PopoverAnchor is a passive
-// positioning element that leaves the wrapped input fully interactive.
+// Driven by a handle, not a trigger: the thing that opens this is the input taking focus, and a
+// trigger press would steal that focus and dismiss the popup on every keystroke. The handle
+// anchors the suggestions to the input's row while the caret stays where the user put it.
 import { ReactNode, useRef, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { Popover, PopoverAnchor, PopoverContent } from '@signozhq/ui/popover';
+import { Popover, usePopoverHandle } from '@signozhq/ui/popover';
 import { Typography } from '@signozhq/ui/typography';
 
 import type { VariableItem } from './types';
@@ -32,53 +32,48 @@ function VariablesPopover({
 	onVariableSelect,
 	children,
 }: VariablesPopoverProps): JSX.Element {
-	const [isOpen, setIsOpen] = useState(false);
 	const [cursorPosition, setCursorPosition] = useState<number | null>(null);
 	const anchorRef = useRef<HTMLDivElement>(null);
+	const suggestions = usePopoverHandle();
 
-	const handleOpenChange = (open: boolean): void => {
-		// Accept "close" events (outside-click, Esc) but ignore opens — opening is driven
-		// by the input's onFocus in the consumer.
+	const setIsOpen = (open: boolean): void => {
 		if (!open) {
-			setIsOpen(false);
+			suggestions.close();
+			return;
 		}
-	};
-
-	// Keep the popover open while the pointer/focus is inside the anchored input.
-	const keepOpenIfInsideAnchor = (event: {
-		target: EventTarget | null;
-	}): void => {
-		const target = event.target as Node | null;
-		if (
-			target &&
-			anchorRef.current?.contains(target) &&
-			'preventDefault' in event
-		) {
-			(event as Event).preventDefault();
+		if (anchorRef.current) {
+			suggestions.showAt(anchorRef.current);
 		}
 	};
 
 	return (
 		<div className={styles.container}>
-			<Popover open={isOpen} onOpenChange={handleOpenChange} modal={false}>
-				<PopoverAnchor asChild>
-					<div className={styles.anchor} ref={anchorRef}>
-						{children({ setIsOpen, setCursorPosition })}
-					</div>
-				</PopoverAnchor>
-				<PopoverContent
-					align="start"
-					sideOffset={4}
-					// Render inside the anchor (not a body portal): the editor lives in a modal
-					// DialogWrapper, and radix's modal sets pointer-events:none on everything
-					// portalled outside it, which would make the suggestions unclickable.
-					withPortal={false}
-					className={styles.content}
-					onOpenAutoFocus={(e): void => e.preventDefault()}
-					onCloseAutoFocus={(e): void => e.preventDefault()}
-					onInteractOutside={keepOpenIfInsideAnchor}
-					onFocusOutside={keepOpenIfInsideAnchor}
-				>
+			<div className={styles.anchor} ref={anchorRef}>
+				{children({ setIsOpen, setCursorPosition })}
+			</div>
+			<Popover
+				nativeButton
+				side="bottom"
+				align="start"
+				handle={suggestions}
+				// The caret belongs to the input the suggestions are for, on the way in and out.
+				initialFocus={false}
+				finalFocus={false}
+				// Matches the field it belongs to. Both, because the default max width would
+				// otherwise clamp a wide field's suggestions to 25rem.
+				width="var(--anchor-width)"
+				maxWidth="var(--anchor-width)"
+				maxHeight={300}
+				aria-label="Insert a variable"
+				onOpenChange={(open, eventDetails): void => {
+					// Typing, clicking and tabbing inside the input are not dismissals.
+					const target = eventDetails.event?.target as Node | null;
+					if (!open && target && anchorRef.current?.contains(target)) {
+						eventDetails.cancel();
+					}
+				}}
+			>
+				<div className={styles.content}>
 					{variables.length === 0 ? (
 						<div className={styles.empty}>No variables available</div>
 					) : (
@@ -98,7 +93,7 @@ function VariablesPopover({
 									testId={`context-link-variable-${v.name}`}
 									onClick={(): void => {
 										onVariableSelect(`{{${v.name}}}`, cursorPosition ?? undefined);
-										setIsOpen(false);
+										suggestions.close();
 									}}
 								>
 									<div className={styles.row}>
@@ -113,7 +108,7 @@ function VariablesPopover({
 							</span>
 						))
 					)}
-				</PopoverContent>
+				</div>
 			</Popover>
 		</div>
 	);
