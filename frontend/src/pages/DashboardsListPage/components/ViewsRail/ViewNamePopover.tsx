@@ -57,13 +57,7 @@ function ViewNamePopover({
 			<Tooltip title={tooltip}>
 				{trigger((anchor) => popover.showAt(anchor))}
 			</Tooltip>
-			<Popover
-				nativeButton
-				side="bottom"
-				align="start"
-				handle={popover}
-				aria-label={title}
-			>
+			<Popover side="bottom" align="start" handle={popover} aria-label={title}>
 				<div className={styles.savePopover}>
 					<div className={styles.saveTitle}>{title}</div>
 					<Typography.Text className={styles.saveLabel}>Name</Typography.Text>

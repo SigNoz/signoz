@@ -1036,7 +1036,6 @@ export default function ChatInput({
 						Add Context
 					</Button>
 					<Popover
-						nativeButton
 						side="top"
 						align="end"
 						width={480}
