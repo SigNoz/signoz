@@ -104,6 +104,7 @@ function ListViewOrderBy({
 
 	return (
 		<Select
+			data-testid="list-view-order-by"
 			showSearch
 			value={value}
 			onChange={onChange}

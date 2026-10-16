@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -8,7 +9,13 @@ import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
-import { fireEvent, render, RenderResult, waitFor } from 'tests/test-utils';
+import {
+	fireEvent,
+	render,
+	RenderResult,
+	screen,
+	waitFor,
+} from 'tests/test-utils';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 
@@ -394,6 +401,96 @@ describe('LogsExplorerViews -', () => {
 					// Ensure the query is enabled for fetch
 					expect(first.disabled).toBe(false);
 				}
+			});
+		});
+
+		it('rebuilds the List View query when the order changes', async () => {
+			(useCopyLogLink as jest.Mock).mockReturnValue({ activeLogId: undefined });
+			(useGetExplorerQueryRange as jest.Mock).mockReturnValue({
+				data: { payload: logsQueryRangeSuccessNewFormatResponse },
+			});
+
+			const stagedQueryOrderedBy = (
+				columnName: string,
+				id: string,
+			): Record<string, unknown> => ({
+				...mockQueryBuilderContextValue.stagedQuery,
+				id,
+				builder: {
+					...mockQueryBuilderContextValue.stagedQuery.builder,
+					queryData: mockQueryBuilderContextValue.stagedQuery.builder.queryData.map(
+						(item: Record<string, unknown>) => ({
+							...item,
+							orderBy: [{ columnName, order: 'desc' }],
+						}),
+					),
+				},
+			});
+
+			// `customRender` wraps a captured element, so `rerender` does not reach the
+			// tree. The order change is driven from state inside it instead.
+			function Harness(): JSX.Element {
+				const [ordered, setOrdered] = useState(false);
+				const stagedQuery = ordered
+					? stagedQueryOrderedBy('severity_text', 'query-2')
+					: stagedQueryOrderedBy('timestamp', 'query-1');
+
+				return (
+					<VirtuosoMockContext.Provider
+						value={{ viewportHeight: 300, itemHeight: 100 }}
+					>
+						<PreferenceContextProvider>
+							<QueryBuilderContext.Provider
+								value={
+									{
+										...mockQueryBuilderContextValue,
+										panelType: PANEL_TYPES.LIST,
+										stagedQuery,
+									} as any
+								}
+							>
+								<button
+									type="button"
+									data-testid="change-order"
+									onClick={(): void => setOrdered(true)}
+								/>
+								<LogsExplorerViews
+									setIsLoadingQueries={(): void => {}}
+									listQueryKeyRef={{ current: {} }}
+									chartQueryKeyRef={{ current: {} }}
+									setWarning={(): void => {}}
+									showLiveLogs={false}
+									handleChangeSelectedView={(): void => {}}
+								/>
+							</QueryBuilderContext.Provider>
+						</PreferenceContextProvider>
+					</VirtuosoMockContext.Provider>
+				);
+			}
+
+			const latestListOrderBy = (): unknown => {
+				const calls = (useGetExplorerQueryRange as jest.Mock).mock.calls.filter(
+					(call) => call[1] === PANEL_TYPES.LIST && call[0],
+				);
+				return calls[calls.length - 1]?.[0]?.builder?.queryData?.[0]?.orderBy;
+			};
+
+			render(<Harness />);
+
+			await waitFor(() => {
+				expect(latestListOrderBy()).toStrictEqual([
+					{ columnName: 'timestamp', order: 'desc' },
+					{ columnName: 'id', order: 'desc' },
+				]);
+			});
+
+			fireEvent.click(screen.getByTestId('change-order'));
+
+			await waitFor(() => {
+				expect(latestListOrderBy()).toStrictEqual([
+					{ columnName: 'severity_text', order: 'desc' },
+					{ columnName: 'id', order: 'desc' },
+				]);
 			});
 		});
 	});
