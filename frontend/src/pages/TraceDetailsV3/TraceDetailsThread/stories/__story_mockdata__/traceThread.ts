@@ -426,8 +426,6 @@ const toSpan = (
 		attributes['gen_ai.output.messages'] = JSON.stringify(rawOutput);
 	}
 
-	const isFormatted = !!(template.input || template.output);
-
 	return {
 		span_id: threadSpanIdAt(index),
 		trace_id: STORY_TRACE_ID,
@@ -448,10 +446,9 @@ const toSpan = (
 		references: [
 			{ traceId: STORY_TRACE_ID, spanId: PARENT_SPAN_ID, refType: 'CHILD_OF' },
 		],
-		formatted_input: template.input ?? [],
-		formatted_output: template.output ?? [],
-		formatter: isFormatted ? 'otel' : '',
-		formatter_warnings: [],
+		formattedInput: template.input ?? [],
+		formattedOutput: template.output ?? [],
+		formatterWarnings: [],
 	};
 };
 

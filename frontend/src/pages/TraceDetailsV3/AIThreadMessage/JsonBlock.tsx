@@ -48,13 +48,14 @@ function JsonBlock({
 				onClick={stopToggleClick}
 				data-testid="ai-json-block"
 			>
-				<CopyButton
-					value={text}
-					size={12}
-					ariaLabel="Copy JSON"
-					className={styles.jsonCopy}
-					testId="ai-json-copy"
-				/>
+				<span className={styles.jsonCopy}>
+					<CopyButton
+						value={text}
+						size={12}
+						ariaLabel="Copy JSON"
+						testId="ai-json-copy"
+					/>
+				</span>
 				<PrettyView
 					data={data as Record<string, unknown>}
 					searchable={false}

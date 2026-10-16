@@ -11,8 +11,8 @@ export function toThreadSpan(span: SpantypesThreadSpanDTO): ThreadSpan {
 		...(span as unknown as ThreadSpan),
 		'service.name': span.resource?.['service.name'] || '',
 		timestamp: span.time_unix,
-		formatted_input: toThreadMessages(span.formatted_input),
-		formatted_output: toThreadMessages(span.formatted_output),
+		formatted_input: toThreadMessages(span.formattedInput),
+		formatted_output: toThreadMessages(span.formattedOutput),
 	};
 }
 

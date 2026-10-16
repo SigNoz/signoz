@@ -25,6 +25,7 @@ function ThreadSpanNotFound({
 				<Button
 					variant="outlined"
 					color="secondary"
+					size="md"
 					prefix={<ArrowLeft size={14} />}
 					onClick={onGoBack}
 					testId="thread-span-not-found-go-back"
@@ -34,6 +35,7 @@ function ThreadSpanNotFound({
 				<Button
 					variant="solid"
 					color="primary"
+					size="md"
 					prefix={<MessagesSquare size={14} />}
 					onClick={onShowThread}
 					testId="thread-span-not-found-show-thread"

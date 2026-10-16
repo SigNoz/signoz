@@ -26,6 +26,7 @@ function ThreadNoAiSpans(): JSX.Element {
 			<Button
 				variant="solid"
 				color="secondary"
+				size="md"
 				suffix={<ArrowRight size={12} />}
 				onClick={(): void => {
 					openInNewTab(LLM_OBSERVABILITY_DOCS_URL);

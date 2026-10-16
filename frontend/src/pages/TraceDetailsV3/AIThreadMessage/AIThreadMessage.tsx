@@ -64,7 +64,8 @@ function AIThreadMessage({
 							{roleLabel && <RoleLabel label={roleLabel} />}
 							{isOutput && (
 								<Badge
-									color={tone === 'info' ? 'robin' : tone}
+									variant="solid"
+									color={tone === 'error' ? 'danger' : tone}
 									testId="ai-message-output-badge"
 								>
 									Output

@@ -1,4 +1,4 @@
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 
 import { ThreadView } from './types';
 
@@ -26,7 +26,9 @@ function ThreadViewToggle({
 	};
 
 	return (
-		<ToggleGroupSimple
+		<ToggleGroup
+			variant="outlined"
+			color="secondary"
 			type="single"
 			size="sm"
 			value={value}
