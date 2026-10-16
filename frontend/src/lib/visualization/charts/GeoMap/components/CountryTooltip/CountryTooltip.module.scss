@@ -1,0 +1,124 @@
+// Surface and type scale match the shared chart tooltips (Tooltip, HeatmapTooltip).
+// Padding lives on the sections: TooltipFooter draws its own border and corners,
+// so it has to reach the container edges.
+.container {
+	--gutter: 14px;
+
+	font-family: 'Inter';
+	font-size: 12px;
+	background: var(--l2-background);
+	-webkit-font-smoothing: antialiased;
+	color: var(--l2-foreground);
+	border-radius: 6px;
+	border: 1px solid var(--l2-border);
+	display: flex;
+	flex-direction: column;
+	min-width: 260px;
+	max-width: 360px;
+}
+
+.heading {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+	padding: var(--spacing-8) var(--gutter) var(--spacing-6);
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-6);
+	font-size: var(--font-size-sm);
+	font-weight: 500;
+}
+
+// Lines up with the name, past the marker and its gap.
+.subtitle {
+	padding-left: calc(12px + var(--spacing-3));
+	font-family: var(--font-mono);
+	font-size: var(--font-size-xs);
+	color: var(--muted-foreground);
+}
+
+.place {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	min-width: 0;
+}
+
+.name {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.code {
+	flex-shrink: 0;
+	font-family: var(--font-mono);
+	font-size: var(--font-size-xs);
+	color: var(--muted-foreground);
+}
+
+.marker {
+	width: 12px;
+	height: 12px;
+	border-radius: var(--radius);
+	border-style: solid;
+	border-width: 1.5px;
+	border-color: var(--l2-border);
+	box-sizing: border-box;
+	flex-shrink: 0;
+}
+
+.value {
+	white-space: nowrap;
+	font-weight: 700;
+	letter-spacing: -0.01em;
+	font-variant-numeric: tabular-nums;
+	color: var(--popover-foreground);
+}
+
+.divider {
+	display: block;
+	width: 100%;
+	height: 1px;
+	background-color: var(--l2-border);
+}
+
+.rows {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-3);
+	padding: var(--spacing-6) var(--gutter);
+}
+
+.row {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	font-family: var(--font-mono);
+	font-size: var(--font-size-xs);
+	letter-spacing: -0.01em;
+	font-variant-numeric: tabular-nums;
+}
+
+.rowLabel {
+	color: var(--muted-foreground);
+	white-space: nowrap;
+}
+
+.rowSeparator {
+	flex: 1;
+	min-width: 24px;
+	border-width: 0.5px;
+	border-style: dashed;
+	border-color: currentColor;
+	opacity: 0.5;
+}
+
+.rowValue {
+	white-space: nowrap;
+}
