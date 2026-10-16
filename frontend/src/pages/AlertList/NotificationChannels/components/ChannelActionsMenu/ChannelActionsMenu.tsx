@@ -1,13 +1,16 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
 	Braces,
 	Ellipsis,
+	Eye,
 	PenLine,
 	SquareArrowOutUpRight,
 	Trash2,
 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
+import { useNotificationChannelPermissions } from 'hooks/notificationChannels/useNotificationChannelPermissions';
+import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';
+import type { AuthZDropdownItemType } from 'lib/authz/components/AuthZDropdown/types';
 
 import type { Channel } from '../../types';
 import styles from './ChannelActionsMenu.module.scss';
@@ -25,13 +28,25 @@ function ChannelActionsMenu({
 	onDelete,
 	onViewJson,
 }: ChannelActionsMenuProps): JSX.Element {
-	const menuItems = useMemo<DropdownItemType[]>(
+	// A list of N channels would otherwise check its verbs per row on mount, for
+	// menus nobody opened, and the authz API caps one batch at 25 transactions.
+	const [hasOpened, setHasOpened] = useState(false);
+	const { canEdit, deletePermission } = useNotificationChannelPermissions(
+		channel.id,
+		{ enabled: hasOpened },
+	);
+
+	// Without `update` the same screen is still readable, so the action opens it
+	// as a view rather than disappearing.
+	const openLabel = canEdit ? 'Edit' : 'View';
+
+	const menuItems = useMemo<AuthZDropdownItemType[]>(
 		() => [
 			{
 				type: 'item',
 				value: 'open',
-				label: 'Edit',
-				prefix: <PenLine size={14} />,
+				label: openLabel,
+				prefix: canEdit ? <PenLine size={14} /> : <Eye size={14} />,
 				onClick: (): void => onOpen(channel),
 			},
 			{
@@ -54,12 +69,19 @@ function ChannelActionsMenu({
 				value: 'delete',
 				label: 'Delete',
 				prefix: <Trash2 size={14} />,
+				checks: [deletePermission],
 				danger: true,
 				onClick: (): void => onDelete(channel),
 			},
 		],
-		[channel, onOpen, onDelete, onViewJson],
+		[openLabel, canEdit, deletePermission, channel, onOpen, onDelete, onViewJson],
 	);
+
+	const handleOpenChange = useCallback((open: boolean): void => {
+		if (open) {
+			setHasOpened(true);
+		}
+	}, []);
 
 	return (
 		// the row itself opens the channel, so the actions keep their clicks
@@ -68,7 +90,13 @@ function ChannelActionsMenu({
 			className={styles.actions}
 			onClick={(event): void => event.stopPropagation()}
 		>
-			<Dropdown items={menuItems} nativeButton align="end" side="bottom">
+			<AuthZDropdown
+				items={menuItems}
+				nativeButton
+				align="end"
+				side="bottom"
+				onOpenChange={handleOpenChange}
+			>
 				<Button
 					variant="outlined"
 					color="secondary"
@@ -79,7 +107,7 @@ function ChannelActionsMenu({
 				>
 					<Ellipsis size={16} />
 				</Button>
-			</Dropdown>
+			</AuthZDropdown>
 		</div>
 	);
 }

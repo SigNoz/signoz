@@ -11,10 +11,13 @@
   "loading_channels_message": "Loading Channels..",
   "page_title_create": "New Notification Channel",
   "page_title_edit": "Edit Notification Channel",
+  "page_title_view": "View Notification Channel",
   "button_save_channel": "Save",
   "button_test_channel": "Test",
   "button_return": "Back",
   "field_channel_name": "Name",
+  "field_channel_id": "Channel ID",
+  "copy_channel_id": "Copy channel ID",
   "field_send_resolved": "Send resolved alerts",
   "field_channel_type": "Type",
   "field_webhook_url": "Webhook URL",
@@ -136,5 +139,7 @@
   "slack_channel_help": "Specify channel or user, use #channel-name, @username (has to be all lowercase, no whitespace)",
   "api_key_required": "API Key is mandatory",
 	"to_required": "To field is mandatory",
-	"channel_name_required": "Channel name is mandatory"
+	"channel_name_required": "Channel name is mandatory",
+  "channel_read_only_title": "You can view this channel but not change it",
+  "channel_read_only_help": "Changing a channel needs update permission on it. Ask an admin to grant it, or open the channel read-only."
 }

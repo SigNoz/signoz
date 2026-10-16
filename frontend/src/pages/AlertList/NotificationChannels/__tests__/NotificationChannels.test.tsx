@@ -1,3 +1,4 @@
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { server } from 'mocks-server/server';
 import { screen, userEvent, waitFor } from 'tests/test-utils';
 
@@ -11,6 +12,7 @@ describe('Notification channels list', () => {
 		// search, filter and page live in the url, so one test's filter would
 		// otherwise still be applied in the next
 		window.history.replaceState({}, '', '/');
+		server.use(setupAuthzAdmin());
 	});
 
 	afterEach(() => {
@@ -82,9 +84,17 @@ describe('Notification channels list', () => {
 			// also fire the row click and route to the edit screen
 			expect(window.location.pathname).not.toContain('/channels/edit/');
 
-			await user.click(
-				await screen.findByRole('menuitem', { name: 'Delete' }, FIND),
+			// Delete stays disabled until the per-channel permission check resolves
+			const deleteItem = await screen.findByRole(
+				'menuitem',
+				{ name: 'Delete' },
+				FIND,
 			);
+			await waitFor(
+				() => expect(deleteItem).not.toHaveAttribute('aria-disabled', 'true'),
+				FIND,
+			);
+			await user.click(deleteItem);
 
 			// the shared destructive confirmation, the one dashboards also use
 			await expect(

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -64,13 +64,17 @@ export const TestChannelFailure: Story = {
 	// the point of the story, not a regression.
 	parameters: { allowConsoleErrors: true },
 	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByTestId(
-				'test-channel-button',
-				undefined,
-				untilLoaded,
-			),
+		const test = await within(canvasElement).findByTestId(
+			'test-channel-button',
+			undefined,
+			untilLoaded,
 		);
+
+		// the button is disabled while its permission check is in flight, so a
+		// click any earlier lands on nothing
+		await waitFor(() => expect(test).toBeEnabled(), untilLoaded);
+		await userEvent.click(test);
+
 		await screen.findByText('Storybook forced channel failure');
 	},
 };
