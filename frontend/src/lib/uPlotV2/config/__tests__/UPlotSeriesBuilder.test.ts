@@ -398,4 +398,17 @@ describe('UPlotSeriesBuilder', () => {
 
 		expect(builder.getConfig().fill).toBeUndefined();
 	});
+
+	it('exposes partial timestamps only when there are some', () => {
+		const partialTimestamps = new Set([40]);
+
+		expect(
+			new UPlotSeriesBuilder(createBaseProps({ partialTimestamps })).getConfig(),
+		).toHaveProperty('partialTimestamps', partialTimestamps);
+		expect(
+			new UPlotSeriesBuilder(
+				createBaseProps({ partialTimestamps: new Set() }),
+			).getConfig(),
+		).not.toHaveProperty('partialTimestamps');
+	});
 });

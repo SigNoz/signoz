@@ -218,7 +218,14 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 	}
 
 	getConfig(): ExtendedSeries {
-		const { scaleKey, label, spanGaps, show = true, metric } = this.props;
+		const {
+			scaleKey,
+			label,
+			spanGaps,
+			show = true,
+			metric,
+			partialTimestamps,
+		} = this.props;
 
 		const resolvedLineColor = this.getLineColor();
 
@@ -246,6 +253,7 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 			...pathConfig,
 			points: Object.keys(pointsConfig).length > 0 ? pointsConfig : undefined,
 			metric,
+			...(partialTimestamps?.size ? { partialTimestamps } : {}),
 		};
 	}
 }
