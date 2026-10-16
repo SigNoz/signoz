@@ -61,10 +61,12 @@ jest.mock(
 			alertType,
 			panelType,
 			setQueryCategory,
+			isAnomalyDetection,
 		}: any): JSX.Element {
 			return (
 				<div data-testid="query-section-component">
 					<div data-testid="query-category">{queryCategory}</div>
+					<div data-testid="is-anomaly-detection">{String(isAnomalyDetection)}</div>
 					<div data-testid="alert-type">{alertType}</div>
 					<div data-testid="panel-type">{panelType}</div>
 					<button
@@ -127,11 +129,11 @@ const queryClient = new QueryClient({
 		},
 	},
 });
-const renderQuerySection = (): ReturnType<typeof render> =>
+const renderQuerySection = (search = ''): ReturnType<typeof render> =>
 	render(
 		<Provider store={store}>
 			<QueryClientProvider client={queryClient}>
-				<MemoryRouter>
+				<MemoryRouter initialEntries={[`/alerts/new${search}`]}>
 					<CreateAlertProvider initialAlertType={AlertTypes.METRICS_BASED_ALERT}>
 						<QuerySection />
 					</CreateAlertProvider>
@@ -199,6 +201,15 @@ describe('QuerySection', () => {
 
 		const metricsTab = screen.getByText(METRICS_TEXT).closest('button');
 		expect(metricsTab).toHaveClass(ACTIVE_TAB_CLASS);
+	});
+
+	it('keeps Metrics active and restricts query types for anomaly alerts', () => {
+		renderQuerySection(`?${QueryParams.ruleType}=anomaly_rule`);
+
+		expect(screen.getByText(METRICS_TEXT).closest('button')).toHaveClass(
+			ACTIVE_TAB_CLASS,
+		);
+		expect(screen.getByTestId('is-anomaly-detection')).toHaveTextContent('true');
 	});
 
 	it('handles alert type change when clicking on different tabs', async () => {

@@ -22,7 +22,10 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
-import { INITIAL_CREATE_ALERT_STATE } from './constants';
+import {
+	INITIAL_ANOMALY_THRESHOLD,
+	INITIAL_CREATE_ALERT_STATE,
+} from './constants';
 import {
 	EvaluationWindowPreset,
 	resolveUrlAlertPrefill,
@@ -143,12 +146,20 @@ export function CreateAlertProvider(
 
 	const handleAlertTypeChange = useCallback(
 		(value: AlertTypes): void => {
-			const queryToRedirect = buildInitialAlertDef(value);
-			const currentQueryToRedirect = mapQueryDataFromApi(
-				queryToRedirect.condition.compositeQuery,
-			);
+			// Threshold and anomaly alerts share the metric query, so switching keeps it.
+			const metricAlertTypes = [
+				AlertTypes.METRICS_BASED_ALERT,
+				AlertTypes.ANOMALY_BASED_ALERT,
+			];
+			const keepsQuery =
+				value !== alertType &&
+				metricAlertTypes.includes(value) &&
+				metricAlertTypes.includes(alertType);
+			const queryToRedirect = keepsQuery
+				? currentQuery
+				: mapQueryDataFromApi(buildInitialAlertDef(value).condition.compositeQuery);
 			redirectWithQueryBuilderData(
-				currentQueryToRedirect,
+				queryToRedirect,
 				{
 					[QueryParams.alertType]: value,
 					[QueryParams.ruleType]:
@@ -161,7 +172,7 @@ export function CreateAlertProvider(
 			);
 			setAlertType(value);
 		},
-		[redirectWithQueryBuilderData],
+		[alertType, currentQuery, redirectWithQueryBuilderData],
 	);
 
 	const ruleNameAppliedRef = useRef(false);
@@ -182,6 +193,16 @@ export function CreateAlertProvider(
 				type: 'RESET',
 			},
 		});
+
+		if (alertType === AlertTypes.ANOMALY_BASED_ALERT) {
+			setCreateAlertState({
+				slice: CreateAlertSlice.THRESHOLD,
+				action: {
+					type: 'SET_THRESHOLDS',
+					payload: [INITIAL_ANOMALY_THRESHOLD],
+				},
+			});
+		}
 
 		if (urlPrefill.thresholds) {
 			setCreateAlertState({

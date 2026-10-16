@@ -53,7 +53,7 @@ function AnomalyThreshold({
 	const updateThreshold = (
 		id: string,
 		field: string,
-		value: string | string[],
+		value: number | string[],
 	): void => {
 		setThresholdState({
 			type: 'SET_THRESHOLDS',
@@ -112,7 +112,7 @@ function AnomalyThreshold({
 							updateThreshold(
 								thresholdState.thresholds[0].id,
 								'thresholdValue',
-								value.toString(),
+								value,
 							);
 						}}
 						options={deviationOptions}
@@ -188,7 +188,7 @@ function AnomalyThreshold({
 						}}
 						options={ANOMALY_SEASONALITY_OPTIONS}
 					/>
-					{notificationSettings.routingPolicies ? (
+					{!notificationSettings.routingPolicies ? (
 						<>
 							<Typography.Text
 								data-testid="seasonality-text"
@@ -198,12 +198,13 @@ function AnomalyThreshold({
 							</Typography.Text>
 							<Select
 								value={thresholdState.thresholds[0].channels}
+								data-testid="anomaly-notification-channel-select"
 								onChange={(value): void =>
 									updateThreshold(thresholdState.thresholds[0].id, 'channels', value)
 								}
 								style={{ width: 350 }}
 								options={channels.map((channel) => ({
-									value: channel.id,
+									value: channel.name,
 									label: channel.name,
 								}))}
 								mode="multiple"
