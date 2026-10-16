@@ -1,10 +1,12 @@
+import type { BadgeColorType } from '@signozhq/ui/badge';
+
 import { AiSpanKind } from '../utils/aiTraceUtils';
 
 export const AI_SPAN_BADGES: Record<
 	AiSpanKind,
-	{ label: string; color: string }
+	{ label: string; color: BadgeColorType }
 > = {
-	[AiSpanKind.Llm]: { label: 'LLM', color: 'rgba(155, 255, 0, 1)' },
-	[AiSpanKind.Tool]: { label: 'TOOL', color: 'rgba(255, 209, 0, 1)' },
-	[AiSpanKind.Agent]: { label: 'AGENT', color: 'rgba(255, 10, 138, 1)' },
+	[AiSpanKind.Llm]: { label: 'LLM', color: 'success' },
+	[AiSpanKind.Tool]: { label: 'TOOL', color: 'warning' },
+	[AiSpanKind.Agent]: { label: 'AGENT', color: 'highlight-danger' },
 };
