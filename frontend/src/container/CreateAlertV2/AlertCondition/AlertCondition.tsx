@@ -1,12 +1,8 @@
-import { useQuery } from 'react-query';
 import { Button, Tooltip } from 'antd';
-import getAllChannels from 'api/channels/getAll';
 import classNames from 'classnames';
 import { ChartLine } from '@signozhq/icons';
-import { SuccessResponseV2 } from 'types/api';
+import { useChannelOptions } from 'hooks/notificationChannels/useChannelOptions';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
-import { Channels } from 'types/api/channels/getAll';
-import APIError from 'types/api/error';
 
 import { useCreateAlertState } from '../context';
 import AdvancedOptions from '../EvaluationSettings/AdvancedOptions';
@@ -21,14 +17,11 @@ function AlertCondition(): JSX.Element {
 	const { alertType, setAlertType } = useCreateAlertState();
 
 	const {
-		data,
+		data: channels,
 		isLoading: isLoadingChannels,
 		isError: isErrorChannels,
 		refetch: refreshChannels,
-	} = useQuery<SuccessResponseV2<Channels[]>, APIError>(['getChannels'], {
-		queryFn: () => getAllChannels(),
-	});
-	const channels = data?.data || [];
+	} = useChannelOptions();
 
 	const showMultipleTabs =
 		alertType === AlertTypes.ANOMALY_BASED_ALERT ||
