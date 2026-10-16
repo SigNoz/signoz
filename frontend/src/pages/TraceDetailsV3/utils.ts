@@ -26,7 +26,10 @@ export function getSpanAttribute(
 	key: string,
 ): string | undefined {
 	return (
-		span.resource?.[key] || span.attributes?.[key] || (span as any).tagMap?.[key]
+		span.resource?.[key] ??
+		span.attributes?.[key] ??
+		(span as any).tagMap?.[key] ??
+		undefined
 	);
 }
 
