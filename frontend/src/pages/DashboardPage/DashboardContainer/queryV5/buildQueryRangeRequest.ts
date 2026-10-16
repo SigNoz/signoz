@@ -217,6 +217,30 @@ function withPagination(
 	});
 }
 
+function withDefaultRowLimit(
+	envelopes: Querybuildertypesv5QueryEnvelopeDTO[],
+	limit: number,
+): Querybuildertypesv5QueryEnvelopeDTO[] {
+	const [envelope] = envelopes;
+	if (
+		envelopes.length !== 1 ||
+		envelope.type !==
+			Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query ||
+		envelope.spec?.limit
+	) {
+		return envelopes;
+	}
+	return [
+		{
+			...envelope,
+			spec: {
+				...envelope.spec,
+				limit,
+			} as Querybuildertypesv5BuilderQuerySpecDTO,
+		},
+	];
+}
+
 export interface BuildQueryRangeRequestArgs {
 	queries: DashboardtypesQueryDTO[];
 	/**
@@ -249,6 +273,7 @@ export function buildQueryRangeRequest({
 		formatTableResultForUI,
 		bucketedStepInterval,
 		orderTiebreaker,
+		defaultRowLimit,
 	},
 	startMs,
 	endMs,
@@ -265,6 +290,9 @@ export function buildQueryRangeRequest({
 	}
 	if (pagination) {
 		envelopes = withPagination(envelopes, pagination);
+	}
+	if (defaultRowLimit) {
+		envelopes = withDefaultRowLimit(envelopes, defaultRowLimit);
 	}
 
 	return {

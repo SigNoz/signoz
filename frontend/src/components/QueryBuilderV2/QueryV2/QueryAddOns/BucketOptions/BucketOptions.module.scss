@@ -4,27 +4,28 @@
  * `--query-builder-v2-*` surface the selects above this row already paint on.
  */
 .bucketOptions {
-	--toggle-group-radius: var(--radius-1);
-	--toggle-group-item-size: 36px;
-	--toggle-group-item-font-size: 13px;
-	--toggle-group-item-padding-left: var(--spacing-6);
-	--toggle-group-item-padding-right: var(--spacing-6);
+	--toggle-group-border-radius: var(--radius-1);
+	--toggle-group-button-block-size: calc(
+		36px - 2 * var(--toggle-group-border-width, 1px)
+	);
+	--toggle-group-button-font-size: 13px;
+	--toggle-group-button-padding-inline: var(--spacing-6);
 
 	// Repeated from `.query-add-ons` rather than inherited: the section also renders on a
 	// formula, which has no add-ons ancestor to pick the toggle palette up from.
-	--toggle-group-secondary-bg: var(
+	--toggle-group-secondary-outlined-background: var(
 		--query-builder-v2-toggle-group-background-color,
 		var(--l1-background-hover)
 	);
-	--toggle-group-secondary-border: var(
+	--toggle-group-border: var(
 		--query-builder-v2-toggle-group-border-color,
 		var(--l2-border)
 	);
-	--toggle-group-secondary-active-bg: var(
+	--toggle-group-secondary-outlined-background-active: var(
 		--query-builder-v2-toggle-group-active-background-color,
 		var(--l1-background)
 	);
-	--toggle-group-secondary-bg-hover: var(
+	--toggle-group-secondary-outlined-background-hover: var(
 		--query-builder-v2-toggle-group-background-color-hover,
 		var(--l2-background)
 	);
@@ -55,6 +56,10 @@
 	flex-wrap: wrap;
 	align-items: center;
 	gap: var(--spacing-8);
+
+	> [data-slot='button'] {
+		margin-left: auto;
+	}
 }
 
 /** One label paired with its control, at the same 10px rhythm as the aggregate rows. */
@@ -133,10 +138,4 @@
 	flex: none;
 	cursor: help;
 	color: var(--l3-foreground);
-}
-
-.closeButton {
-	margin-left: auto;
-	width: 24px;
-	height: 24px;
 }

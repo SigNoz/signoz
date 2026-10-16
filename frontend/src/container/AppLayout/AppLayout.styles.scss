@@ -139,6 +139,14 @@
 	}
 }
 
+.trial-expiry-banner {
+	display: inline-flex;
+	width: 100%;
+	justify-content: center;
+	align-items: center;
+	gap: var(--spacing-4);
+}
+
 .trial-expiry-banner,
 .slow-api-warning-banner,
 .workspace-restricted-banner {

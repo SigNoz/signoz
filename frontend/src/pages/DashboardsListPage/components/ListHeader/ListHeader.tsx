@@ -61,6 +61,8 @@ function ListHeader({
 				<div key={col.key} className={styles.metaRow}>
 					<Typography.Text className={styles.metaLabel}>{col.label}</Typography.Text>
 					<Switch
+						color="primary"
+						textPlacement="right"
 						value={visibleColumns[col.key]}
 						testId={`metadata-toggle-${col.key}`}
 						onChange={(checked): void => {
@@ -86,9 +88,10 @@ function ListHeader({
 						<div className={styles.sortContent}>
 							<Typography.Text className={styles.sortHeading}>Sort By</Typography.Text>
 							<Button
+								size="md"
 								variant="ghost"
 								color="secondary"
-								className={styles.sortButton}
+								width="100%"
 								onClick={(): void => onSortChange(DashboardtypesListSortDTO.name)}
 								testId="sort-by-name"
 								suffix={
@@ -100,9 +103,10 @@ function ListHeader({
 								Name
 							</Button>
 							<Button
+								size="md"
 								variant="ghost"
 								color="secondary"
-								className={styles.sortButton}
+								width="100%"
 								onClick={(): void => onSortChange(DashboardtypesListSortDTO.created_at)}
 								testId="sort-by-last-created"
 								suffix={
@@ -114,9 +118,10 @@ function ListHeader({
 								Last created
 							</Button>
 							<Button
+								size="md"
 								variant="ghost"
 								color="secondary"
-								className={styles.sortButton}
+								width="100%"
 								onClick={(): void => onSortChange(DashboardtypesListSortDTO.updated_at)}
 								testId="sort-by-last-updated"
 								suffix={
@@ -130,9 +135,10 @@ function ListHeader({
 							<div className={styles.sortDivider} />
 							<Typography.Text className={styles.sortHeading}>Order</Typography.Text>
 							<Button
+								size="md"
 								variant="ghost"
 								color="secondary"
-								className={styles.sortButton}
+								width="100%"
 								onClick={(): void => onOrderChange(DashboardtypesListOrderDTO.asc)}
 								testId="sort-order-asc"
 								suffix={
@@ -144,9 +150,10 @@ function ListHeader({
 								Ascending
 							</Button>
 							<Button
+								size="md"
 								variant="ghost"
 								color="secondary"
-								className={styles.sortButton}
+								width="100%"
 								onClick={(): void => onOrderChange(DashboardtypesListOrderDTO.desc)}
 								testId="sort-order-desc"
 								suffix={
@@ -193,7 +200,8 @@ function ListHeader({
 						<Button
 							variant="ghost"
 							color="secondary"
-							size="icon"
+							size="sm"
+							icon
 							aria-label="Columns"
 							testId="configure-columns-trigger"
 						>

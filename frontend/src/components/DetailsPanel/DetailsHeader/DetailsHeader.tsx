@@ -27,12 +27,14 @@ function DetailsHeader({
 	const closeButton = (
 		<Button
 			variant="ghost"
-			size="icon"
+			size="sm"
+			icon
 			color="secondary"
 			onClick={onClose}
 			aria-label="Close"
-			prefix={<X size={14} />}
-		></Button>
+		>
+			<X size={14} />
+		</Button>
 	);
 
 	return (

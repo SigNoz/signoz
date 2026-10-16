@@ -16,7 +16,8 @@ var definitionFiles embed.FS
 
 // NewSystemGroupRegistry parses every embedded definition. Definitions are
 // build-time assets validated by a test, so a failure here means the binary
-// shipped broken JSON.
+// shipped broken JSON. docs/contributing/go/spanmapper.md records where each
+// source key comes from.
 func NewSystemGroupRegistry() (spantypes.SpanMapperGroupRegistry, error) {
 	entries, err := fs.ReadDir(definitionFiles, definitionsRoot)
 	if err != nil {

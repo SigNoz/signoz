@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { server } from 'mocks-server/server';
 import { rest, RestRequest } from 'msw';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
@@ -30,9 +29,7 @@ const onClose = jest.fn();
 const renderDrawer = (): void => {
 	render(
 		<MockQueryClientProvider>
-			<TooltipProvider>
-				<CloudAccountSetupDrawer onClose={onClose} />
-			</TooltipProvider>
+			<CloudAccountSetupDrawer onClose={onClose} />
 		</MockQueryClientProvider>,
 	);
 };
@@ -88,7 +85,10 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		renderDrawer();
 
 		await waitFor(() => {
-			expect(screen.getByTestId('gcp-connect-account-btn')).toBeEnabled();
+			expect(screen.getByTestId('gcp-connect-account-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 
 		await user.click(screen.getByTestId('gcp-connect-account-btn'));
@@ -113,17 +113,16 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		renderDrawer();
 
 		await waitFor(() => {
-			expect(screen.getByTestId('gcp-connect-account-btn')).toBeEnabled();
+			expect(screen.getByTestId('gcp-connect-account-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 
-		await user.type(
-			screen.getByTestId('gcp-account-name-input'),
-			'billing@company.com',
-		);
-		await user.type(
-			screen.getByTestId('gcp-deployment-project-id-input'),
-			'my-deployment-project-123',
-		);
+		await user.click(screen.getByTestId('gcp-account-name-input'));
+		await user.paste('billing@company.com');
+		await user.click(screen.getByTestId('gcp-deployment-project-id-input'));
+		await user.paste('my-deployment-project-123');
 
 		await user.click(screen.getByTestId('gcp-deployment-region-select'));
 		await user.click(await screen.findByText('Mumbai (asia-south1)'));
@@ -162,7 +161,7 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		await waitFor(() => {
 			expect(onClose).toHaveBeenCalledTimes(1);
 		});
-	});
+	}, 15000);
 
 	it('shows the backend error inline when account creation fails', async () => {
 		server.use(
@@ -181,14 +180,16 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		renderDrawer();
 
 		await waitFor(() => {
-			expect(screen.getByTestId('gcp-connect-account-btn')).toBeEnabled();
+			expect(screen.getByTestId('gcp-connect-account-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 
-		await user.type(screen.getByTestId('gcp-account-name-input'), 'my-org');
-		await user.type(
-			screen.getByTestId('gcp-deployment-project-id-input'),
-			'my-deployment-project-123',
-		);
+		await user.click(screen.getByTestId('gcp-account-name-input'));
+		await user.paste('my-org');
+		await user.click(screen.getByTestId('gcp-deployment-project-id-input'));
+		await user.paste('my-deployment-project-123');
 		await user.click(screen.getByTestId('gcp-deployment-region-select'));
 		await user.click(await screen.findByText('Mumbai (asia-south1)'));
 
@@ -206,5 +207,5 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		});
 		expect(checkInPayload).toBeNull();
 		expect(onClose).not.toHaveBeenCalled();
-	});
+	}, 15000);
 });

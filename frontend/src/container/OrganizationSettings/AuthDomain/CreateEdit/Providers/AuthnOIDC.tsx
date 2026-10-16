@@ -149,6 +149,7 @@ function ConfigureOIDCAuthnProvider({
 							noStyle
 						>
 							<Checkbox
+								color="primary"
 								id="oidc-skip-email-verification"
 								onChange={(checked: boolean): void => {
 									form.setFieldValue(
@@ -172,6 +173,7 @@ function ConfigureOIDCAuthnProvider({
 							noStyle
 						>
 							<Checkbox
+								color="primary"
 								id="oidc-get-user-info"
 								onChange={(checked: boolean): void => {
 									form.setFieldValue(['oidcConfig', 'getUserInfo'], checked);

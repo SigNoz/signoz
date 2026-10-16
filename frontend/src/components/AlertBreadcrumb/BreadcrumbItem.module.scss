@@ -1,9 +1,5 @@
-.item {
-	--button-padding: 0;
-	--button-font-size: var(--periscope-font-size-base);
-}
-
 .itemLast {
-	color: var(--muted-foreground);
-	font-size: var(--periscope-font-size-base);
+	color: var(--button-secondary-label);
+	font-size: var(--button-font-size, var(--periscope-font-size-base));
+	line-height: var(--button-size-line-height, 16px);
 }

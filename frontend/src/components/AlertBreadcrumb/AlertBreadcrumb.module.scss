@@ -8,6 +8,10 @@
 	:global(.ant-breadcrumb-separator) {
 		color: var(--muted-foreground);
 	}
+
+	[data-slot='button'] {
+		padding: 0px;
+	}
 }
 
 .divider {
