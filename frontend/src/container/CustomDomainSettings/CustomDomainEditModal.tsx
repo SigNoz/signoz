@@ -192,12 +192,13 @@ export default function CustomDomainEditModal({
 						/>
 					) : (
 						<Button
+							disabledTooltip="Change the workspace URL first"
 							variant="solid"
 							size="md"
 							color="primary"
-							className="edit-modal-apply-btn"
+							width="100%"
 							onClick={handleSubmit}
-							disabled={isLoading || value === initialSubdomain}
+							disabled={value === initialSubdomain}
 							loading={isLoading}
 						>
 							Apply Changes

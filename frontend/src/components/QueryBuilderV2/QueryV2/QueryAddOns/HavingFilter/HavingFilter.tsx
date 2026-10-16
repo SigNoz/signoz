@@ -88,10 +88,12 @@ function HavingFilter({
 	onClose,
 	onChange,
 	queryData,
+	placeholder = 'Type Having query like count() > 10 ...',
 }: {
 	onClose: () => void;
 	onChange: (value: string) => void;
 	queryData: IBuilderQuery;
+	placeholder?: string;
 }): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const { getAggregationOptions } = useQueryBuilderV2Context();
@@ -345,7 +347,7 @@ function HavingFilter({
 							},
 						]),
 					]}
-					placeholder="Type Having query like count() > 10 ..."
+					placeholder={placeholder}
 					basicSetup={{
 						lineNumbers: false,
 						autocompletion: true,

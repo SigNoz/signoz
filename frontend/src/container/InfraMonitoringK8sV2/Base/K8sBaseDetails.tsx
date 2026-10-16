@@ -253,8 +253,7 @@ export default function K8sBaseDetails<T>({
 					size="sm"
 					color="secondary"
 					onClick={handleBack}
-					data-testid="drawer-back-button"
-					className={styles.backButton}
+					testId="drawer-back-button"
 					aria-label={backLabel}
 					prefix={<ArrowLeft size={14} />}
 				>
@@ -265,11 +264,13 @@ export default function K8sBaseDetails<T>({
 					variant="ghost"
 					size="sm"
 					color="secondary"
+					icon
+					aria-label="Close"
 					onClick={handleClose}
-					data-testid="close-drawer-button"
-					className={styles.closeButton}
-					prefix={<X />}
-				/>
+					testId="close-drawer-button"
+				>
+					<X />
+				</Button>
 			)}
 			<Divider type="vertical" />
 			<span className={styles.entityKind} data-testid="drawer-entity-kind">
@@ -285,7 +286,6 @@ export default function K8sBaseDetails<T>({
 			<CopyButton
 				value={entityName || selectedItem || ''}
 				ariaLabel={`Copy ${K8S_CATEGORY_SINGULAR_LABELS[category]} name`}
-				className={styles.copyIdButton}
 				testId="copy-id-button"
 				onCopy={handleCopyId}
 			/>

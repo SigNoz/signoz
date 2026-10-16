@@ -1,7 +1,7 @@
 .impactPanel {
-	border: 1px solid var(--bg-slate-400, #1d212d);
+	border: 1px solid var(--l1-border);
 	border-radius: 6px;
-	background: var(--bg-ink-300, #16181d);
+	background: var(--l2-background);
 	padding: 14px;
 }
 
@@ -30,7 +30,7 @@
 
 .meterInfo {
 	flex-shrink: 0;
-	color: var(--bg-vanilla-400, #c0c1c3);
+	color: var(--l2-foreground);
 	line-height: 1;
 	cursor: help;
 }

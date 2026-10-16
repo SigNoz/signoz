@@ -6,7 +6,7 @@ import { getAbsoluteUrl } from 'utils/basePath';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { toast } from '@signozhq/ui/sonner';
-import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
+import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 
 import {
 	Archive,
@@ -121,41 +121,41 @@ export default function ConversationItem({
 	// Dropdown items mirror the previous inline buttons but live in a single
 	// trigger so the row stays compact. Archive/Restore swap based on the
 	// archived state — same handler wiring as before.
-	const baseItems = [
+	const baseItems: DropdownItemType[] = [
 		{
-			key: 'rename',
+			type: 'item',
+			value: 'rename',
 			label: 'Rename',
-			icon: <Pencil size={12} />,
-			className: styles.menuItem,
+			prefix: <Pencil size={12} />,
 			onClick: (): void => startEditing(),
 		},
 		{
-			key: 'copy-link',
+			type: 'item',
+			value: 'copy-link',
 			label: 'Copy link',
-			icon: <Link size={12} />,
-			className: styles.menuItem,
+			prefix: <Link size={12} />,
 			onClick: handleCopyLink,
 		},
-		{ type: 'divider' as const, key: 'divider' },
+		{ type: 'separator', value: 'divider' },
 	];
-	const menuItems = isArchived
+	const menuItems: DropdownItemType[] = isArchived
 		? [
 				...baseItems,
 				{
-					key: 'restore',
+					type: 'item',
+					value: 'restore',
 					label: 'Restore',
-					icon: <ArchiveRestore size={12} />,
-					className: cx(styles.menuItem, styles.restoreItem),
+					prefix: <ArchiveRestore size={12} />,
 					onClick: (): void => onRestore(conversation.id),
 				},
 			]
 		: [
 				...baseItems,
 				{
-					key: 'archive',
+					type: 'item',
+					value: 'archive',
 					label: 'Archive',
-					icon: <Archive size={12} />,
-					className: cx(styles.menuItem, styles.archiveItem),
+					prefix: <Archive size={12} />,
 					onClick: (): void => onArchive(conversation.id),
 				},
 			];
@@ -204,21 +204,17 @@ export default function ConversationItem({
 					// own clicks don't bubble, but the trigger button does.
 					onClick={(e): void => e.stopPropagation()}
 				>
-					<DropdownMenuSimple
-						menu={{ items: menuItems }}
-						align="end"
-						sideOffset={4}
-						className={styles.menu}
-					>
+					<Dropdown items={menuItems} nativeButton align="end" side="bottom">
 						<Button
 							variant="link"
-							size="icon"
-							color="none"
-							className={styles.btn}
+							size="sm"
+							icon
+							color="secondary"
 							aria-label="Conversation actions"
-							prefix={<EllipsisVertical size={12} />}
-						/>
-					</DropdownMenuSimple>
+						>
+							<EllipsisVertical size={12} />
+						</Button>
+					</Dropdown>
 				</div>
 			)}
 		</div>

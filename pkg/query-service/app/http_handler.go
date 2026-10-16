@@ -15,7 +15,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/queryparser"
 
 	"log/slog"
-	"math"
 	"net/http"
 	"regexp"
 	"slices"
@@ -28,7 +27,6 @@ import (
 
 	"github.com/prometheus/prometheus/promql"
 
-	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
@@ -40,7 +38,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	_ "modernc.org/sqlite"
 
-	"github.com/SigNoz/signoz/pkg/contextlinks"
 	traceFunnelsModule "github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
@@ -58,7 +55,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
@@ -66,7 +62,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
 
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
@@ -360,243 +355,18 @@ func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
 	writeHttpResponse(w, data)
 }
 
-func newRuleHistoryV1OpenAPIDef(id string) handler.OpenAPIDef {
-	return handler.OpenAPIDef{
-		ID:                id,
-		Tags:              []string{"rules"},
-		Summary:           "Get rule history (v1, deprecated)",
-		Description:       "Deprecated legacy endpoint. Use the v2 rule history routes.",
-		SuccessStatusCode: http.StatusOK,
-		Deprecated:        true,
-	}
-}
-
-func newRuleHistoryV1ResourceDefs() handler.Option {
-	return handler.WithResourceDefs(handler.BasicResourceDef{
-		Resource: coretypes.ResourceMetaResourceRule,
-		Verb:     coretypes.VerbRead,
-		Category: coretypes.ActionCategoryDataAccess,
-		ID:       coretypes.PathParam("id"),
-		Selector: coretypes.IDSelector,
-	})
-}
-
 // RegisterRoutes registers routes for this handler on the given router
 func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/query_range", am.ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/query", am.ViewAccess(aH.queryMetrics)).Methods(http.MethodGet)
 
-	router.Handle("/api/v1/rules", handler.New(
-		am.CheckResources(aH.listRules, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
-		handler.OpenAPIDef{
-			ID:                "ListRulesV1",
-			Tags:              []string{"rules"},
-			Summary:           "List alert rules (v1, deprecated)",
-			Description:       "Deprecated legacy endpoint. Use ListRulesV3.",
-			SuccessStatusCode: http.StatusOK,
-			Deprecated:        true,
-		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceRule,
-			Verb:     coretypes.VerbList,
-			Category: coretypes.ActionCategoryDataAccess,
-			Selector: coretypes.WildcardSelector,
-		}),
-	)).Methods(http.MethodGet)
-	router.Handle("/api/v1/rules/{id}", handler.New(
-		am.CheckResources(aH.getRule, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
-		handler.OpenAPIDef{
-			ID:                "GetRuleV1",
-			Tags:              []string{"rules"},
-			Summary:           "Get alert rule (v1, deprecated)",
-			Description:       "Deprecated legacy endpoint. Use GetRuleByID.",
-			SuccessStatusCode: http.StatusOK,
-			Deprecated:        true,
-		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceRule,
-			Verb:     coretypes.VerbRead,
-			Category: coretypes.ActionCategoryDataAccess,
-			ID:       coretypes.PathParam("id"),
-			Selector: coretypes.IDSelector,
-		}),
-	)).Methods(http.MethodGet)
-	router.Handle("/api/v1/rules", handler.New(
-		am.CheckResources(aH.createRule, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
-		handler.OpenAPIDef{
-			ID:                "CreateRuleV1",
-			Tags:              []string{"rules"},
-			Summary:           "Create alert rule (v1, deprecated)",
-			Description:       "Deprecated legacy endpoint. Use CreateRule.",
-			SuccessStatusCode: http.StatusOK,
-			Deprecated:        true,
-		},
-		handler.WithResourceDefs(
-			handler.BasicResourceDef{
-				Resource: coretypes.ResourceMetaResourceRule,
-				Verb:     coretypes.VerbCreate,
-				Category: coretypes.ActionCategoryConfigurationChange,
-				ID:       coretypes.ResponseJSONPath("data.id"),
-				Selector: coretypes.WildcardSelector,
-			},
-			handler.AttachDetachSiblingResourceDef{
-				Verb:           coretypes.VerbAttach,
-				Category:       coretypes.ActionCategoryConfigurationChange,
-				SourceResource: coretypes.ResourceMetaResourceRule,
-				SourceIDs:      coretypes.OneID(coretypes.ResponseJSONPath("data.id")),
-				SourceSelector: coretypes.WildcardSelector,
-				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
-				TargetIDs:      ruler.NewCreateChannelAttachExtractor(aH.Signoz.Alertmanager),
-				TargetSelector: coretypes.IDSelector,
-			},
-		),
-	)).Methods(http.MethodPost)
-	router.Handle("/api/v1/rules/{id}", handler.New(
-		am.CheckResources(aH.editRule, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
-		handler.OpenAPIDef{
-			ID:                "UpdateRuleV1",
-			Tags:              []string{"rules"},
-			Summary:           "Update alert rule (v1, deprecated)",
-			Description:       "Deprecated legacy endpoint. Use UpdateRuleByID.",
-			SuccessStatusCode: http.StatusOK,
-			Deprecated:        true,
-		},
-		handler.WithResourceDefs(
-			handler.BasicResourceDef{
-				Resource: coretypes.ResourceMetaResourceRule,
-				Verb:     coretypes.VerbUpdate,
-				Category: coretypes.ActionCategoryConfigurationChange,
-				ID:       coretypes.PathParam("id"),
-				Selector: coretypes.IDSelector,
-			},
-			handler.AttachDetachSiblingResourceDef{
-				Verb:           coretypes.VerbAttach,
-				Category:       coretypes.ActionCategoryConfigurationChange,
-				SourceResource: coretypes.ResourceMetaResourceRule,
-				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
-				SourceSelector: coretypes.IDSelector,
-				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
-				TargetIDs:      ruler.NewReplaceChannelAttachExtractor(aH.Signoz.Alertmanager, aH.ruleManager),
-				TargetSelector: coretypes.IDSelector,
-			},
-			handler.AttachDetachSiblingResourceDef{
-				Verb:           coretypes.VerbDetach,
-				Category:       coretypes.ActionCategoryConfigurationChange,
-				SourceResource: coretypes.ResourceMetaResourceRule,
-				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
-				SourceSelector: coretypes.IDSelector,
-				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
-				TargetIDs:      ruler.NewReplaceChannelDetachExtractor(aH.Signoz.Alertmanager, aH.ruleManager),
-				TargetSelector: coretypes.IDSelector,
-			},
-		),
-	)).Methods(http.MethodPut)
-	router.Handle("/api/v1/rules/{id}", handler.New(
-		am.CheckResources(aH.deleteRule, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
-		handler.OpenAPIDef{
-			ID:                "DeleteRuleV1",
-			Tags:              []string{"rules"},
-			Summary:           "Delete alert rule (v1, deprecated)",
-			Description:       "Deprecated legacy endpoint. Use DeleteRuleByID.",
-			SuccessStatusCode: http.StatusOK,
-			Deprecated:        true,
-		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceRule,
-			Verb:     coretypes.VerbDelete,
-			Category: coretypes.ActionCategoryConfigurationChange,
-			ID:       coretypes.PathParam("id"),
-			Selector: coretypes.IDSelector,
-		}),
-	)).Methods(http.MethodDelete)
-	router.Handle("/api/v1/rules/{id}", handler.New(
-		am.CheckResources(aH.patchRule, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
-		handler.OpenAPIDef{
-			ID:                "PatchRuleV1",
-			Tags:              []string{"rules"},
-			Summary:           "Patch alert rule (v1, deprecated)",
-			Description:       "Deprecated legacy endpoint. Use PatchRuleByID.",
-			SuccessStatusCode: http.StatusOK,
-			Deprecated:        true,
-		},
-		handler.WithResourceDefs(
-			handler.BasicResourceDef{
-				Resource: coretypes.ResourceMetaResourceRule,
-				Verb:     coretypes.VerbUpdate,
-				Category: coretypes.ActionCategoryConfigurationChange,
-				ID:       coretypes.PathParam("id"),
-				Selector: coretypes.IDSelector,
-			},
-			handler.AttachDetachSiblingResourceDef{
-				Verb:           coretypes.VerbAttach,
-				Category:       coretypes.ActionCategoryConfigurationChange,
-				SourceResource: coretypes.ResourceMetaResourceRule,
-				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
-				SourceSelector: coretypes.IDSelector,
-				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
-				TargetIDs:      ruler.NewPatchChannelAttachExtractor(aH.Signoz.Alertmanager, aH.ruleManager),
-				TargetSelector: coretypes.IDSelector,
-			},
-			handler.AttachDetachSiblingResourceDef{
-				Verb:           coretypes.VerbDetach,
-				Category:       coretypes.ActionCategoryConfigurationChange,
-				SourceResource: coretypes.ResourceMetaResourceRule,
-				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
-				SourceSelector: coretypes.IDSelector,
-				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
-				TargetIDs:      ruler.NewPatchChannelDetachExtractor(aH.Signoz.Alertmanager, aH.ruleManager),
-				TargetSelector: coretypes.IDSelector,
-			},
-		),
-	)).Methods(http.MethodPatch)
-	router.Handle("/api/v1/testRule", handler.New(
-		am.CheckResources(aH.testRule, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
-		handler.OpenAPIDef{
-			ID:                "TestRuleV1",
-			Tags:              []string{"rules"},
-			Summary:           "Test alert rule (v1, deprecated)",
-			Description:       "Deprecated legacy endpoint. Use TestRule.",
-			SuccessStatusCode: http.StatusOK,
-			Deprecated:        true,
-		},
-		handler.WithResourceDefs(
-			handler.BasicResourceDef{
-				Resource: coretypes.ResourceMetaResourceRule,
-				Verb:     coretypes.VerbCreate,
-				Category: coretypes.ActionCategoryConfigurationChange,
-				Selector: coretypes.WildcardSelector,
-			},
-			handler.AttachDetachSiblingResourceDef{
-				Verb:           coretypes.VerbAttach,
-				Category:       coretypes.ActionCategoryConfigurationChange,
-				SourceResource: coretypes.ResourceMetaResourceRule,
-				SourceSelector: coretypes.WildcardSelector,
-				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
-				TargetIDs:      ruler.NewCreateChannelAttachExtractor(aH.Signoz.Alertmanager),
-				TargetSelector: coretypes.IDSelector,
-			},
-		),
-	)).Methods(http.MethodPost)
-	router.Handle("/api/v1/rules/{id}/history/stats", handler.New(
-		am.CheckResources(aH.getRuleStats, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
-		newRuleHistoryV1OpenAPIDef("GetRuleHistoryStatsV1"),
-		newRuleHistoryV1ResourceDefs(),
-	)).Methods(http.MethodPost)
-	router.Handle("/api/v1/rules/{id}/history/timeline", handler.New(
-		am.CheckResources(aH.getRuleStateHistory, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
-		newRuleHistoryV1OpenAPIDef("GetRuleHistoryTimelineV1"),
-		newRuleHistoryV1ResourceDefs(),
-	)).Methods(http.MethodPost)
-	router.Handle("/api/v1/rules/{id}/history/top_contributors", handler.New(
-		am.CheckResources(aH.getRuleStateHistoryTopContributors, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
-		newRuleHistoryV1OpenAPIDef("GetRuleHistoryTopContributorsV1"),
-		newRuleHistoryV1ResourceDefs(),
-	)).Methods(http.MethodPost)
-	router.Handle("/api/v1/rules/{id}/history/overall_status", handler.New(
-		am.CheckResources(aH.getOverallStateTransitions, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
-		newRuleHistoryV1OpenAPIDef("GetRuleHistoryOverallStatusV1"),
-		newRuleHistoryV1ResourceDefs(),
-	)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rules", am.ViewAccess(aH.listRules)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/rules/{id}", am.ViewAccess(aH.getRule)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/rules", am.EditAccess(aH.createRule)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.editRule)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.deleteRule)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.patchRule)).Methods(http.MethodPatch)
+	router.HandleFunc("/api/v1/testRule", am.EditAccess(aH.testRule)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v2/variables/query", am.ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
 
@@ -884,217 +654,6 @@ func (aH *APIHandler) testRule(w http.ResponseWriter, r *http.Request) {
 		"message":    "notification sent",
 	}
 	aH.Respond(w, response)
-}
-
-func (aH *APIHandler) getRuleStats(w http.ResponseWriter, r *http.Request) {
-	ruleID := mux.Vars(r)["id"]
-	params := model.QueryRuleStateHistory{}
-	err := json.NewDecoder(r.Body).Decode(&params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	totalCurrentTriggers, err := aH.reader.GetTotalTriggers(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-	currentTriggersSeries, err := aH.reader.GetTriggersByInterval(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	currentAvgResolutionTime, err := aH.reader.GetAvgResolutionTime(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-	currentAvgResolutionTimeSeries, err := aH.reader.GetAvgResolutionTimeByInterval(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	if params.End-params.Start >= 86400000 {
-		days := int64(math.Ceil(float64(params.End-params.Start) / 86400000))
-		params.Start -= days * 86400000
-		params.End -= days * 86400000
-	} else {
-		params.Start -= 86400000
-		params.End -= 86400000
-	}
-
-	totalPastTriggers, err := aH.reader.GetTotalTriggers(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-	pastTriggersSeries, err := aH.reader.GetTriggersByInterval(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	pastAvgResolutionTime, err := aH.reader.GetAvgResolutionTime(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-	pastAvgResolutionTimeSeries, err := aH.reader.GetAvgResolutionTimeByInterval(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-	if math.IsNaN(currentAvgResolutionTime) || math.IsInf(currentAvgResolutionTime, 0) {
-		currentAvgResolutionTime = 0
-	}
-	if math.IsNaN(pastAvgResolutionTime) || math.IsInf(pastAvgResolutionTime, 0) {
-		pastAvgResolutionTime = 0
-	}
-
-	stats := model.Stats{
-		TotalCurrentTriggers:           totalCurrentTriggers,
-		TotalPastTriggers:              totalPastTriggers,
-		CurrentTriggersSeries:          currentTriggersSeries,
-		PastTriggersSeries:             pastTriggersSeries,
-		CurrentAvgResolutionTime:       strconv.FormatFloat(currentAvgResolutionTime, 'f', -1, 64),
-		PastAvgResolutionTime:          strconv.FormatFloat(pastAvgResolutionTime, 'f', -1, 64),
-		CurrentAvgResolutionTimeSeries: currentAvgResolutionTimeSeries,
-		PastAvgResolutionTimeSeries:    pastAvgResolutionTimeSeries,
-	}
-
-	aH.Respond(w, stats)
-}
-
-func (aH *APIHandler) getOverallStateTransitions(w http.ResponseWriter, r *http.Request) {
-	ruleID := mux.Vars(r)["id"]
-	params := model.QueryRuleStateHistory{}
-	err := json.NewDecoder(r.Body).Decode(&params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	stateItems, err := aH.reader.GetOverallStateTransitions(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	aH.Respond(w, stateItems)
-}
-
-func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
-	id, err := valuer.NewUUID(idStr)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	params := model.QueryRuleStateHistory{}
-	err = json.NewDecoder(r.Body).Decode(&params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-	if err := params.Validate(); err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	res, err := aH.reader.ReadRuleStateHistoryByRuleID(r.Context(), id.StringValue(), &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	rule, err := aH.ruleManager.GetRule(r.Context(), id)
-	if err == nil {
-		for idx := range res.Items {
-			lbls := make(map[string]string)
-			err := json.Unmarshal([]byte(res.Items[idx].Labels), &lbls)
-			if err != nil {
-				continue
-			}
-			end := time.Unix(res.Items[idx].UnixMilli/1000, 0)
-			// why are we subtracting 3 minutes?
-			// the query range is calculated based on the rule's evalWindow and evalDelay
-			// alerts have 2 minutes delay built in, so we need to subtract that from the start time
-			// to get the correct query range
-			start := end.Add(-rule.EvalWindow.Duration() - 3*time.Minute)
-			if rule.AlertType == ruletypes.AlertTypeLogs {
-				// TODO(srikanthccv): re-visit this and support multiple queries
-				var q qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
-
-				for _, query := range rule.RuleCondition.CompositeQuery.Queries {
-					if query.Type == qbtypes.QueryTypeBuilder {
-						switch spec := query.Spec.(type) {
-						case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
-							q = spec
-						}
-					}
-				}
-
-				filterExpr := ""
-				if q.Filter != nil && q.Filter.Expression != "" {
-					filterExpr = q.Filter.Expression
-				}
-
-				whereClause := contextlinks.PrepareFilterExpression(lbls, filterExpr, q.GroupBy)
-
-				res.Items[idx].RelatedLogsLink = contextlinks.PrepareParamsForLogsV5(start, end, whereClause).Encode()
-			} else if rule.AlertType == ruletypes.AlertTypeTraces || rule.AlertType == ruletypes.AlertTypeAITraces {
-				// TODO(srikanthccv): re-visit this and support multiple queries
-				var q qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]
-
-				for _, query := range rule.RuleCondition.CompositeQuery.Queries {
-					if query.Type == qbtypes.QueryTypeBuilder || query.Type == qbtypes.QueryTypeBuilderAI {
-						switch spec := query.Spec.(type) {
-						case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
-							q = spec
-						}
-					}
-				}
-
-				filterExpr := ""
-				if q.Filter != nil && q.Filter.Expression != "" {
-					filterExpr = q.Filter.Expression
-				}
-
-				whereClause := contextlinks.PrepareFilterExpression(lbls, filterExpr, q.GroupBy)
-				res.Items[idx].RelatedTracesLink = contextlinks.PrepareParamsForTracesV5(start, end, whereClause, rule.AlertType.BuilderQueryType()).Encode()
-			}
-		}
-	}
-
-	aH.Respond(w, res)
-}
-
-func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
-	id, err := valuer.NewUUID(idStr)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	params := model.QueryRuleStateHistory{}
-	err = json.NewDecoder(r.Body).Decode(&params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	res, err := aH.reader.ReadRuleStateHistoryTopContributorsByRuleID(r.Context(), id.StringValue(), &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	aH.Respond(w, res)
 }
 
 func prepareQuery(r *http.Request) (string, error) {

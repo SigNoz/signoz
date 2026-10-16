@@ -14,7 +14,6 @@ from fixtures.auth import (
 from fixtures.role import find_role_by_name, transaction_group
 from fixtures.types import Operation, SigNoz, TestContainerDocker
 
-V1_RULES_URL = "/api/v1/rules"
 V2_RULES_URL = "/api/v2/rules"
 V3_RULES_URL = "/api/v3/rules"
 RULE_VIEWS_URL = "/api/v2/rule_views"
@@ -28,7 +27,6 @@ _VIEWER_PASSWORD = "password123Z$"
 
 _TARGET_RULE = "alert authz target"
 _EDITOR_RULE = "alert authz editor rule"
-_EDITOR_RULE_V1 = "alert authz editor rule v1"
 _ACTOR_EMAIL = "actor+alertauthz@integration.test"
 _ACTOR_PASSWORD = "password123Z$"
 _ACTOR_ROLE_NAME = "alert-authz-actor"
@@ -138,7 +136,7 @@ def test_setup_users_and_target(
     )
     assert response.status_code == HTTPStatus.OK, response.text
     ids = {rule["alert"]: rule["id"] for rule in response.json()["data"]["rules"]}
-    for name in (_TARGET_RULE, _EDITOR_RULE, _EDITOR_RULE_V1, _ACTOR_SWAP_RULE):
+    for name in (_TARGET_RULE, _EDITOR_RULE, _ACTOR_SWAP_RULE):
         if name in ids:
             response = requests.delete(
                 signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{ids[name]}"),
@@ -175,8 +173,6 @@ def test_viewer_allowed_on_reads(
     for path in (
         V2_RULES_URL,
         f"{V2_RULES_URL}/{target_id}",
-        V1_RULES_URL,
-        f"{V1_RULES_URL}/{target_id}",
         DOWNTIME_URL,
         ROUTE_POLICIES_URL,
     ):
@@ -241,11 +237,6 @@ def test_viewer_forbidden_on_mutations(
         ("patch", f"{V2_RULES_URL}/{target_id}"),
         ("delete", f"{V2_RULES_URL}/{target_id}"),
         ("post", f"{V2_RULES_URL}/test"),
-        ("post", V1_RULES_URL),
-        ("put", f"{V1_RULES_URL}/{target_id}"),
-        ("patch", f"{V1_RULES_URL}/{target_id}"),
-        ("delete", f"{V1_RULES_URL}/{target_id}"),
-        ("post", "/api/v1/testRule"),
         ("post", DOWNTIME_URL),
         ("put", f"{DOWNTIME_URL}/{target_id}"),
         ("delete", f"{DOWNTIME_URL}/{target_id}"),
@@ -284,22 +275,6 @@ def test_editor_allowed_on_rule_and_downtime_mutations(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(V1_RULES_URL),
-        json={**RULE_TEMPLATE, "alert": _EDITOR_RULE_V1},
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    v1_rule_id = response.json()["data"]["id"]
-
-    response = requests.delete(
-        signoz.self.host_configs["8080"].get(f"{V1_RULES_URL}/{v1_rule_id}"),
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
 
     response = requests.post(
         signoz.self.host_configs["8080"].get(DOWNTIME_URL),
@@ -765,7 +740,7 @@ def test_alert_authz_cleanup(
     )
     assert response.status_code == HTTPStatus.OK, response.text
     ids = {rule["alert"]: rule["id"] for rule in response.json()["data"]["rules"]}
-    for name in (_TARGET_RULE, _EDITOR_RULE, _EDITOR_RULE_V1, _ACTOR_SWAP_RULE):
+    for name in (_TARGET_RULE, _EDITOR_RULE, _ACTOR_SWAP_RULE):
         if name in ids:
             response = requests.delete(
                 signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{ids[name]}"),
