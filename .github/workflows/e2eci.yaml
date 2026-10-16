@@ -2,45 +2,45 @@ name: e2eci
 
 on:
   pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
-      - labeled
-  pull_request_target:
-    types:
-      - labeled
   merge_group:
     types:
       - checks_requested
 
 concurrency:
-  group: e2eci-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  group: e2eci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
+  # Labels are read live, so a re-run (see e2elabelci) picks up a newly added
+  # safe-to-e2e or safe-to-test. Fork and dependabot PRs run only on a re-run:
+  # postci strips safe-to-test on push, and a first attempt could read the
+  # label before that lands.
   changes:
     if: github.event_name != 'merge_group'
     runs-on: ubuntu-latest
     outputs:
       e2e: ${{ steps.changes.outputs.e2e }}
+      trusted: ${{ steps.changes.outputs.trusted }}
     steps:
       - name: changes
         id: changes
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          LABELED: ${{ contains(github.event.pull_request.labels.*.name, 'safe-to-e2e') }}
+          FORK: ${{ github.event.pull_request.head.repo.fork }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
+          labels=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/labels" --jq '.[].name')
           files=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" --paginate --jq '.[].filename')
-          if [ "$LABELED" = true ] || grep -qE '^(frontend|tests/e2e)/' <<< "$files"; then
+          if grep -qx safe-to-e2e <<< "$labels" || grep -qE '^(frontend|tests/e2e)/' <<< "$files"; then
             echo "e2e=true" >> "$GITHUB_OUTPUT"
+          fi
+          if { [ "$FORK" = false ] && [ "$AUTHOR" != 'dependabot[bot]' ]; } || { [ "$GITHUB_RUN_ATTEMPT" -gt 1 ] && grep -qx safe-to-test <<< "$labels"; }; then
+            echo "trusted=true" >> "$GITHUB_OUTPUT"
           fi
   fmtlint:
     needs: changes
-    if: |
-      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
-      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && needs.changes.outputs.e2e == 'true'
+    if: needs.changes.outputs.e2e == 'true' && needs.changes.outputs.trusted == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: checkout
@@ -70,9 +70,7 @@ jobs:
           - chromium
         shard: [1, 2, 3, 4]
     needs: changes
-    if: |
-      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
-      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && needs.changes.outputs.e2e == 'true'
+    if: needs.changes.outputs.e2e == 'true' && needs.changes.outputs.trusted == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -193,5 +191,5 @@ jobs:
           github.event_name != 'merge_group' && (needs.changes.result != 'success' ||
           (needs.changes.outputs.e2e == 'true' && (needs.fmtlint.result != 'success' || needs.test.result != 'success')))
         run: |
-          echo "::error::e2e did not pass. Fork and dependabot PRs need the safe-to-test label."
+          echo "::error::e2e did not pass. Fork and dependabot PRs need a maintainer to add the safe-to-test label."
           exit 1
