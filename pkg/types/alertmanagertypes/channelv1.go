@@ -128,7 +128,7 @@ func newChannelWithoutSpec(receiver *Receiver, orgID string) (*Channel, error) {
 	return &Channel{
 		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable: types.TimeAuditable{CreatedAt: time.Now(), UpdatedAt: time.Now()},
-		Name:          types.GenerateName(receiver.Name),
+		Name:          generateChannelName(receiver.Name),
 		DisplayName:   receiver.Name,
 		Type:          channelType,
 		Data:          string(data),

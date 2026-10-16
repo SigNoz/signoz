@@ -74,7 +74,7 @@ type savedViewData struct {
 const migrationSavedViewNameSuffixLen = 8
 
 // slugifySavedViewName turns a pre-existing free-text saved view name and is copy of
-// types.GenerateName.
+// dashboardtypes.generateDashboardName.
 func slugifySavedViewName(displayName string) string {
 	const dns1123LabelMaxLen = 63
 	suffixAlphabet := []byte("abcdefghijklmnopqrstuvwxyz0123456789")

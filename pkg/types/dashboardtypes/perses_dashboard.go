@@ -2,6 +2,7 @@ package dashboardtypes
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/json"
 	"regexp"
 	"strings"
@@ -16,8 +17,9 @@ import (
 )
 
 const (
-	SchemaVersion       = "v6"
-	MaxTagsPerDashboard = 10
+	SchemaVersion          = "v6"
+	MaxTagsPerDashboard    = 10
+	dashboardNameSuffixLen = 8
 )
 
 // SystemDashboardNamePrefix is reserved for dashboards SigNoz ships and owns. Generated
@@ -201,7 +203,7 @@ func (postable PostableDashboardV2) NewDashboardV2(orgID valuer.UUID, createdBy 
 
 	name := postable.Name
 	if postable.GenerateName {
-		name = types.GenerateName(postable.Spec.Display.Name)
+		name = generateDashboardName(postable.Spec.Display.Name)
 	}
 	// Checked on the final name, here rather than in validateName, because only
 	// the constructor knows the source.
@@ -279,6 +281,43 @@ func validateDashboardName(name string) error {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "name %q is invalid: %s", name, strings.Join(errs, "; "))
 	}
 	return nil
+}
+
+func generateDashboardName(displayName string) string {
+	const dns1123LabelMaxLen = 63
+	suffixAlphabet := []byte("abcdefghijklmnopqrstuvwxyz0123456789")
+
+	var b strings.Builder
+	b.Grow(len(displayName))
+	prevHyphen := false
+	for _, r := range strings.ToLower(displayName) {
+		switch {
+		case (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9'):
+			b.WriteRune(r)
+			prevHyphen = false
+		case b.Len() > 0 && !prevHyphen:
+			b.WriteByte('-')
+			prevHyphen = true
+		}
+	}
+	prefix := strings.TrimRight(b.String(), "-")
+
+	suffix := make([]byte, dashboardNameSuffixLen)
+	if _, err := rand.Read(suffix); err != nil {
+		panic(errors.WrapInternalf(err, errors.CodeInternal, "read random for dashboard name suffix"))
+	}
+	for i := range suffix {
+		suffix[i] = suffixAlphabet[int(suffix[i])%len(suffixAlphabet)]
+	}
+
+	maxPrefix := dns1123LabelMaxLen - 1 - dashboardNameSuffixLen
+	if len(prefix) > maxPrefix {
+		prefix = strings.TrimRight(prefix[:maxPrefix], "-")
+	}
+	if prefix == "" {
+		return string(suffix)
+	}
+	return prefix + "-" + string(suffix)
 }
 
 func validateDashboardTags(tags []tagtypes.PostableTag) error {

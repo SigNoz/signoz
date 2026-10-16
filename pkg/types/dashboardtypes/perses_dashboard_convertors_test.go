@@ -183,7 +183,7 @@ func TestPostableDashboardV2NewDashboardV2(t *testing.T) {
 		dashboard, err := postable.NewDashboardV2(orgID, "alice", SourceUser)
 		require.NoError(t, err)
 		assert.True(t, strings.HasPrefix(dashboard.Name, "my-dashboard-"), "expected slug prefix, got %q", dashboard.Name)
-		assert.Len(t, dashboard.Name, len("my-dashboard-")+types.GeneratedNameSuffixLen)
+		assert.Len(t, dashboard.Name, len("my-dashboard-")+dashboardNameSuffixLen)
 	})
 }
 

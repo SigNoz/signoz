@@ -186,6 +186,45 @@ func TestNewSavedView_GeneratesNameWhenEmpty(t *testing.T) {
 	assert.Equal(t, "My View!", savedView.Spec.DisplayName)
 }
 
+func TestGenerateSavedViewName(t *testing.T) {
+	tests := []struct {
+		scenario   string
+		input      string
+		wantPrefix string
+	}{
+		{scenario: "simple words with spaces", input: "My View", wantPrefix: "my-view"},
+		{scenario: "punctuation collapses", input: "Hello, World!", wantPrefix: "hello-world"},
+		{scenario: "leading and trailing whitespace", input: "  hello  ", wantPrefix: "hello"},
+		{scenario: "leading and trailing hyphens", input: "---abc---", wantPrefix: "abc"},
+		{scenario: "consecutive non-alphanumerics collapse", input: "a___b...c", wantPrefix: "a-b-c"},
+		{scenario: "digits are preserved", input: "Region us-east-1", wantPrefix: "region-us-east-1"},
+		{scenario: "no alphanumerics drops prefix and returns suffix only", input: "!!! ???", wantPrefix: ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.scenario, func(t *testing.T) {
+			got := generateSavedViewName(tt.input)
+			assert.NotEmpty(t, got)
+			assert.LessOrEqual(t, len(got), 63)
+			assert.Empty(t, validation.IsDNS1123Label(got), "result must be a valid DNS-1123 label")
+
+			if tt.wantPrefix == "" {
+				assert.Len(t, got, savedViewNameSuffixLen, "expected the bare random suffix")
+				return
+			}
+			expectedPrefix := tt.wantPrefix + "-"
+			assert.True(t, strings.HasPrefix(got, expectedPrefix), "expected prefix %q, got %q", expectedPrefix, got)
+			assert.Len(t, got, len(expectedPrefix)+savedViewNameSuffixLen)
+		})
+	}
+
+	t.Run("suffix differs across calls", func(t *testing.T) {
+		first := generateSavedViewName("collision-test")
+		second := generateSavedViewName("collision-test")
+		assert.NotEqual(t, first, second, "expected the random suffix to differ across calls")
+	})
+}
+
 func TestStorableSavedView_ToSavedView(t *testing.T) {
 	t.Run("round trip preserves populated fields", func(t *testing.T) {
 		view := &SavedView{

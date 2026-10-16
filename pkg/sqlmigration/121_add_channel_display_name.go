@@ -131,7 +131,7 @@ func (migration *addChannelDisplayName) Down(context.Context, *bun.DB) error {
 
 const migrationChannelNameSuffixLen = 8
 
-// slugifyChannelName is a copy of types.GenerateName. The
+// slugifyChannelName is a copy of dashboardtypes.generateDashboardName. The
 // random suffix is what makes the unique index safe to add without a collision
 // loop over the existing free-text names.
 func slugifyChannelName(displayName string) string {
