@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/SigNoz/signoz/pkg/factory/factorytest"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/types/promotetypes"
@@ -71,7 +72,7 @@ func TestPromotePaths(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			store := telemetrytypestest.NewMockMetadataStore()
-			m := NewModule(store, nil)
+			m := NewModule(store, nil, factorytest.NewSettings())
 
 			err := m.PromotePaths(ctx, testCase.paths...)
 			if testCase.wantErr {
@@ -194,7 +195,7 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 			ts := telemetrystoretest.New(telemetrystore.Config{}, sqlmock.QueryMatcherRegexp)
 			store := telemetrytypestest.NewMockMetadataStore()
 			store.PromotedPathsMap[telemetrytypes.SignalLogs] = testCase.promoted
-			m := NewModule(store, ts)
+			m := NewModule(store, ts, factorytest.NewSettings())
 
 			ts.Mock().ExpectExec("ADD INDEX (.+)" + regexp.QuoteMeta(testCase.wantDDLColumn)).WillReturnError(nil)
 			require.NoError(t, m.PromotePaths(ctx, testCase.path))
@@ -390,7 +391,7 @@ func TestListPromotedPaths(t *testing.T) {
 			store := telemetrytypestest.NewMockMetadataStore()
 			store.PromotedPathsMap = testCase.promoted
 			store.LogsJSONIndexes = testCase.indexes
-			m := NewModule(store, nil)
+			m := NewModule(store, nil, factorytest.NewSettings())
 
 			paths, err := m.ListPromotedPaths(ctx, testCase.filters)
 			require.NoError(t, err)
@@ -405,6 +406,107 @@ func TestListPromotedPaths(t *testing.T) {
 				require.Contains(t, byContextPath, key)
 				assert.Equal(t, want, byContextPath[key])
 			}
+		})
+	}
+}
+
+func TestIndexMaterializedPaths(t *testing.T) {
+	ctx := context.Background()
+	bloomIndex := []telemetrytypes.TelemetryFieldKeySkipIndex{{IndexType: "bloom_filter", Granularity: 4}}
+	materializedKeys := []*telemetrytypes.TelemetryFieldKey{
+		{Name: "user.id", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString, Indexes: bloomIndex},
+		{Name: "tenant.id", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "retry.count", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeNumber, Indexes: []telemetrytypes.TelemetryFieldKeySkipIndex{{IndexType: "minmax", Granularity: 1}}},
+		{Name: "k8s.pod.name", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString, Indexes: bloomIndex},
+	}
+	userIDDDL := "`attributes.user.id_String_bloom_filter` attributes.`user.id`::String TYPE bloom_filter GRANULARITY 4"
+	retryCountDDL := "`attributes.retry.count_Float64_minmax` attributes.`retry.count`::Float64 TYPE minmax GRANULARITY 1"
+
+	testCases := []struct {
+		name        string
+		req         promotetypes.PostableIndexMaterializedPaths
+		keys        []*telemetrytypes.TelemetryFieldKey
+		existing    []telemetrytypes.TelemetryFieldKeySkipIndex
+		wantIndexed []string
+		wantSkipped []string
+		wantDDL     []string
+		wantErr     bool
+	}{
+		{
+			name:        "DryRun_NoDDL",
+			req:         promotetypes.PostableIndexMaterializedPaths{Signal: "traces", DryRun: true},
+			keys:        materializedKeys,
+			wantIndexed: []string{"user.id", "retry.count"},
+			wantSkipped: []string{},
+		},
+		{
+			name:        "Run_IndexesBaseColumn",
+			req:         promotetypes.PostableIndexMaterializedPaths{Signal: "traces"},
+			keys:        materializedKeys,
+			wantIndexed: []string{"user.id", "retry.count"},
+			wantSkipped: []string{},
+			wantDDL:     []string{userIDDDL, retryCountDDL},
+		},
+		{
+			name:        "AnyIndexBuilt_Skipped",
+			req:         promotetypes.PostableIndexMaterializedPaths{Signal: "traces"},
+			keys:        materializedKeys,
+			existing:    []telemetrytypes.TelemetryFieldKeySkipIndex{{Name: "user.id", FieldContext: telemetrytypes.FieldContextAttribute, IndexType: "ngrambf_v1(4, 1024, 2, 0)"}},
+			wantIndexed: []string{"retry.count"},
+			wantSkipped: []string{"user.id"},
+			wantDDL:     []string{retryCountDDL},
+		},
+		{
+			name: "UnsupportedIndexType_LoggedAndLeftOut",
+			req:  promotetypes.PostableIndexMaterializedPaths{Signal: "traces"},
+			keys: append([]*telemetrytypes.TelemetryFieldKey{
+				{Name: "user.email", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString, Indexes: []telemetrytypes.TelemetryFieldKeySkipIndex{{IndexType: "text(tokenizer = 'splitByNonAlpha')", Granularity: 1}}},
+			}, materializedKeys...),
+			wantIndexed: []string{"user.id", "retry.count"},
+			wantSkipped: []string{},
+			wantDDL:     []string{userIDDDL, retryCountDDL},
+		},
+		{
+			name:    "LogsSignal_NoAttributeTarget_Rejected",
+			req:     promotetypes.PostableIndexMaterializedPaths{Signal: "logs"},
+			wantErr: true,
+		},
+		{
+			name:    "MissingSignal_Rejected",
+			wantErr: true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			ts := telemetrystoretest.New(telemetrystore.Config{}, sqlmock.QueryMatcherRegexp)
+			store := telemetrytypestest.NewMockMetadataStore()
+			store.MaterializedKeys = testCase.keys
+			store.LogsJSONIndexes = testCase.existing
+			m := NewModule(store, ts, factorytest.NewSettings())
+			for _, ddl := range testCase.wantDDL {
+				ts.Mock().ExpectExec("ADD INDEX (.+)" + regexp.QuoteMeta(ddl)).WillReturnError(nil)
+			}
+
+			result, err := m.IndexMaterializedPaths(ctx, testCase.req)
+			if testCase.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			indexed := []string{}
+			for _, path := range result.Indexed {
+				assert.False(t, path.Promote)
+				indexed = append(indexed, path.Path)
+			}
+			skipped := []string{}
+			for _, path := range result.Skipped {
+				skipped = append(skipped, path.Path)
+			}
+			assert.Equal(t, testCase.wantIndexed, indexed)
+			assert.Equal(t, testCase.wantSkipped, skipped)
+			assert.NoError(t, ts.Mock().ExpectationsWereMet())
 		})
 	}
 }

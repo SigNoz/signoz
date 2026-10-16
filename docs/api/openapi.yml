@@ -8046,6 +8046,31 @@ components:
       - metric
       - value
       type: object
+    PromotetypesIndexMaterializedPathsResult:
+      properties:
+        indexed:
+          items:
+            $ref: '#/components/schemas/PromotetypesPromotePath'
+          nullable: true
+          type: array
+        skipped:
+          items:
+            $ref: '#/components/schemas/PromotetypesPromotePath'
+          nullable: true
+          type: array
+      required:
+      - indexed
+      - skipped
+      type: object
+    PromotetypesPostableIndexMaterializedPaths:
+      properties:
+        dryRun:
+          type: boolean
+        signal:
+          type: string
+      required:
+      - signal
+      type: object
     PromotetypesPromotePath:
       properties:
         context:
@@ -14072,6 +14097,67 @@ paths:
       tags:
       - promote
       x-signoz-stability: alpha
+  /api/v1/promoted_paths/materialized:
+    post:
+      deprecated: false
+      description: This endpoint indexes the JSON sub-columns of materialized paths
+        whose columns are indexed and returns the indexed and skipped paths.
+      operationId: IndexMaterializedPaths
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromotetypesPostableIndexMaterializedPaths'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PromotetypesIndexMaterializedPathsResult'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - logs-field:update
+        - traces-field:update
+      - tokenizer:
+        - logs-field:update
+        - traces-field:update
+      summary: Index materialized paths
+      tags:
+      - promote
+      x-signoz-stability: alpha
   /api/v1/roles:
     get:
       deprecated: false
@@ -18914,9 +19000,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: Run Infra Monitoring Setup Checks
       tags:
       - inframonitoring
@@ -18988,9 +19074,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Clusters for Infra Monitoring
       tags:
       - inframonitoring
@@ -19072,9 +19158,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List DaemonSets for Infra Monitoring
       tags:
       - inframonitoring
@@ -19150,9 +19236,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Deployments for Infra Monitoring
       tags:
       - inframonitoring
@@ -19218,9 +19304,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Hosts for Infra Monitoring
       tags:
       - inframonitoring
@@ -19300,9 +19386,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Jobs for Infra Monitoring
       tags:
       - inframonitoring
@@ -19381,9 +19467,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Kubernetes Containers for Infra Monitoring
       tags:
       - inframonitoring
@@ -19452,9 +19538,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Namespaces for Infra Monitoring
       tags:
       - inframonitoring
@@ -19527,9 +19613,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Nodes for Infra Monitoring
       tags:
       - inframonitoring
@@ -19603,9 +19689,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Pods for Infra Monitoring
       tags:
       - inframonitoring
@@ -19674,9 +19760,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Volumes for Infra Monitoring
       tags:
       - inframonitoring
@@ -19752,9 +19838,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List StatefulSets for Infra Monitoring
       tags:
       - inframonitoring

@@ -1,4 +1,5 @@
 import { SpanV3 } from 'types/api/trace/getTraceV3';
+import { getSpanAttribute } from 'pages/TraceDetailsV3/utils';
 
 export const GEN_AI_KEYS = {
 	requestModel: 'gen_ai.request.model',
@@ -29,17 +30,8 @@ const LLM_KEYS = [
 	GEN_AI_KEYS.reasoningTokens,
 ];
 
-/** Keeps numeric 0, which `getSpanAttribute`'s `||` chain drops. */
-export function getGenAiValue(
-	span: SpanV3,
-	key: string,
-): string | number | boolean | undefined {
-	const value = span.resource?.[key] ?? span.attributes?.[key];
-	return value === '' ? undefined : value;
-}
-
 function hasAttribute(span: SpanV3, key: string): boolean {
-	return getGenAiValue(span, key) !== undefined;
+	return getSpanAttribute(span, key) !== undefined;
 }
 
 /** Tool and agent spans may also carry model or usage keys, so they win over LLM. */
@@ -125,7 +117,7 @@ function getGenAiAttributeAsString(
 	span: SpanV3,
 	key: string,
 ): string | undefined {
-	const value = getGenAiValue(span, key);
+	const value = getSpanAttribute(span, key);
 	return value === undefined ? undefined : String(value);
 }
 
@@ -133,7 +125,7 @@ function getGenAiAttributeAsNumber(
 	span: SpanV3,
 	key: string,
 ): number | undefined {
-	const value = getGenAiValue(span, key);
+	const value = getSpanAttribute(span, key);
 	if (value === undefined) {
 		return undefined;
 	}

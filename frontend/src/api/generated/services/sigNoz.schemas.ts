@@ -9878,6 +9878,28 @@ export interface PromotetypesPromotePathDTO {
 	signal: string;
 }
 
+export interface PromotetypesIndexMaterializedPathsResultDTO {
+	/**
+	 * @type array,null
+	 */
+	indexed: PromotetypesPromotePathDTO[] | null;
+	/**
+	 * @type array,null
+	 */
+	skipped: PromotetypesPromotePathDTO[] | null;
+}
+
+export interface PromotetypesPostableIndexMaterializedPathsDTO {
+	/**
+	 * @type boolean
+	 */
+	dryRun?: boolean;
+	/**
+	 * @type string
+	 */
+	signal: string;
+}
+
 export interface Querybuildertypesv5AggregationMetaDTO {
 	/**
 	 * @type array
@@ -13244,6 +13266,14 @@ export type ListPromotedPaths200 = {
 	 * @type array,null
 	 */
 	data: PromotetypesPromotePathDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type IndexMaterializedPaths200 = {
+	data: PromotetypesIndexMaterializedPathsResultDTO;
 	/**
 	 * @type string
 	 */

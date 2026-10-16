@@ -122,6 +122,27 @@ describe('Tooltip', () => {
 		expect(screen.getByText(expectedTitle)).toBeInTheDocument();
 	});
 
+	it('marks the header partial when a visible series has a partial bucket at the cursor', () => {
+		const withSeries = (series: unknown[]): uPlot =>
+			Object.assign(createUPlotInstance(0), { series });
+		const partial = { show: true, partialTimestamps: new Set([1]) };
+
+		const { unmount } = renderTooltip({
+			uPlotInstance: withSeries([{}, partial]),
+		});
+		expect(screen.getByTestId('uplot-tooltip-header-partial')).toHaveTextContent(
+			'(partial)',
+		);
+		unmount();
+
+		renderTooltip({
+			uPlotInstance: withSeries([{}, { ...partial, show: false }]),
+		});
+		expect(
+			screen.queryByTestId('uplot-tooltip-header-partial'),
+		).not.toBeInTheDocument();
+	});
+
 	it('drops the date from the header title for a point on the current day', () => {
 		const todayTimestamp = dayjs().tz('UTC').startOf('hour').unix();
 		const uPlotInstance = createUPlotInstance(0, todayTimestamp);
