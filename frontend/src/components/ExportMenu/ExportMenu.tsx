@@ -72,7 +72,6 @@ export default function ExportMenu({
 				</Button>
 			</Tooltip>
 			<Popover
-				nativeButton
 				side="bottom"
 				align="end"
 				width={240}

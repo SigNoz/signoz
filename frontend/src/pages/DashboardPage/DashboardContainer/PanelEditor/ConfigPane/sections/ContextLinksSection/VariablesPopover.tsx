@@ -52,7 +52,6 @@ function VariablesPopover({
 				{children({ setIsOpen, setCursorPosition })}
 			</div>
 			<Popover
-				nativeButton
 				side="bottom"
 				align="start"
 				handle={suggestions}

@@ -133,7 +133,6 @@ export function SpanHoverCard({
 
 	return (
 		<Popover
-			nativeButton
 			side="right"
 			align="start"
 			handle={handle}
