@@ -3,7 +3,7 @@ import { ChevronUp, Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 
-import type { SectionOption } from './types';
+import type { SectionOption } from '../../types';
 
 import styles from './AddPanelSplitButton.module.scss';
 

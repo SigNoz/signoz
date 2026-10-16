@@ -1,4 +1,4 @@
-import type { PanelKind } from '../../../Panels/types/panelKind';
+import type { PanelKind } from '../../../../../Panels/types/panelKind';
 import PreviewBars from './PreviewBars';
 import PreviewRows, { type PreviewCell } from './PreviewRows';
 

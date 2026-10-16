@@ -1,10 +1,10 @@
 import { Tooltip } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
 
-import type { PanelTypeItem } from './panelTypeCatalog';
-import PanelTypePreview from './PanelTypePreview';
+import type { PanelTypeItem } from '../PanelTypeBrowser/panelTypeCatalog';
+import PanelTypePreview from '../PanelTypePreview/PanelTypePreview';
 
-import styles from './PanelTypeBrowser.module.scss';
+import styles from './PanelTypeTile.module.scss';
 
 interface PanelTypeTileProps {
 	item: PanelTypeItem;
