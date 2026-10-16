@@ -329,6 +329,20 @@ export const accountResponse = (
 	const parsed = Number.parseInt(id.replace(`${provider}-account-`, ''), 10);
 	const index = Number.isNaN(parsed) ? 0 : Math.max(0, parsed - 1);
 
+	// A freshly created GCP agent account stays pending, so the setup drawer keeps
+	// showing its commands and waiting state instead of closing on the first poll.
+	if (provider === 'gcp' && id === `${provider}-account-new`) {
+		return {
+			status: 'success',
+			data: {
+				...account(provider, index),
+				id,
+				providerAccountId: null,
+				agentReport: null,
+			},
+		};
+	}
+
 	return { status: 'success', data: account(provider, index) };
 };
 
@@ -560,6 +574,14 @@ export const createdAccountResponse = (
 					'az deployment sub create --template-uri https://signoz.io/azure.json',
 				cloudPowerShellCommand:
 					'New-AzSubscriptionDeployment -TemplateUri https://signoz.io/azure.json',
+			},
+			gcp: {
+				createSecretsCommand:
+					"gcloud secrets create 'signoz-integration-api-credentials' --project='signoz-prod-4471'",
+				createServiceAccountCommand:
+					"gcloud iam service-accounts create 'signoz-integration-bootstrap' --project='signoz-prod-4471'",
+				cliCommand:
+					"gcloud infra-manager deployments apply 'projects/signoz-prod-4471/locations/us-central1/deployments/signoz-integration-bootstrap'",
 			},
 		},
 	},

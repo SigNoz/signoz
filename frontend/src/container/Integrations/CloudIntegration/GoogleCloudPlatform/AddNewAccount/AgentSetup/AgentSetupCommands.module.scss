@@ -1,0 +1,15 @@
+.commands {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-6);
+}
+
+.commandsHead {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-3);
+}
+
+.mono {
+	composes: mono from '../shared.module.scss';
+}
