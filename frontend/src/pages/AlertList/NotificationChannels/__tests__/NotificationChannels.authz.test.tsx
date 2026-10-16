@@ -24,7 +24,7 @@ describe('Notification channels list - AuthZ', () => {
 	});
 
 	it(
-		'hides the list when list is denied',
+		'replaces only the table when list is denied, keeping the header',
 		async () => {
 			server.use(setupAuthzDenyAll());
 
@@ -33,7 +33,10 @@ describe('Notification channels list - AuthZ', () => {
 			await expect(
 				screen.findByText(/not authorized/i, {}, FIND),
 			).resolves.toBeInTheDocument();
-			expect(screen.queryByTestId('channels-search')).not.toBeInTheDocument();
+			// the page still loads: the search and the kind filter stay, inert,
+			// the way the dashboards list keeps its filter zone
+			expect(screen.getByTestId('channels-search')).toBeDisabled();
+			expect(screen.getByTestId('channels-create')).toBeInTheDocument();
 		},
 		TEST_TIMEOUT,
 	);
@@ -59,7 +62,7 @@ describe('Notification channels list - AuthZ', () => {
 	);
 
 	it(
-		'offers Edit to a user who can update the channel',
+		'opens the channel as a view, whatever the update permission says',
 		async () => {
 			server.use(setupAuthzAdmin());
 
@@ -69,8 +72,10 @@ describe('Notification channels list - AuthZ', () => {
 			const user = userEvent.setup({ delay: null });
 			await user.click(screen.getByTestId('channel-actions-3'));
 
+			// the label never flips between Edit and View, so it cannot flash the
+			// wrong one while the check is in flight
 			await expect(
-				screen.findByRole('menuitem', { name: 'Edit' }, FIND),
+				screen.findByRole('menuitem', { name: 'View' }, FIND),
 			).resolves.toBeInTheDocument();
 		},
 		TEST_TIMEOUT,

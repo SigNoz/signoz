@@ -3,6 +3,7 @@ import { Plus, Search } from '@signozhq/icons';
 import { Input } from '@signozhq/ui/input';
 import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
+import { Skeleton } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ErrorEmptyState from 'components/Alerts/ErrorEmptyState';
 import NoResultsEmptyState from 'components/Alerts/NoResultsEmptyState';
@@ -12,7 +13,8 @@ import { useTableParams } from 'components/TanStackTableView/useTableParams';
 import TextToolTip from 'components/TextToolTip';
 import { useUrlSearchState } from 'hooks/useUrlSearchState';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
-import { withAuthZContent } from 'lib/authz/components/withAuthZ/withAuthZContent';
+import { useNotificationChannelCollectionPermissions } from 'hooks/notificationChannels/useNotificationChannelCollectionPermissions';
+import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 import {
 	NotificationChannelCreatePermission,
 	NotificationChannelListPermission,
@@ -42,6 +44,7 @@ const QUERY_PARAMS_CONFIG = {
 } as const;
 
 const CREATE_CHECKS = [NotificationChannelCreatePermission];
+const LIST_CHECKS = [NotificationChannelListPermission];
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
 
@@ -85,6 +88,7 @@ function NotificationChannels(): JSX.Element {
 		[setKind, setPage],
 	);
 
+	const { canList } = useNotificationChannelCollectionPermissions();
 	const { channels, total, isFetching, isError, refetch } = useChannelsData({
 		search: debouncedSearch,
 		kind,
@@ -193,6 +197,7 @@ function NotificationChannels(): JSX.Element {
 						placeholder="Search by channel name"
 						value={searchText}
 						onChange={handleSearchChange}
+						disabled={!canList}
 						suffix={<Search size={14} className={styles.searchIcon} />}
 						testId="channels-search"
 					/>
@@ -201,6 +206,7 @@ function NotificationChannels(): JSX.Element {
 						items={KIND_FILTER_OPTIONS}
 						value={kind}
 						onChange={handleKindChange}
+						disabled={!canList}
 						withPortal={false}
 						testId="channels-kind-filter"
 					/>
@@ -208,40 +214,49 @@ function NotificationChannels(): JSX.Element {
 			</header>
 
 			<div ref={containerRef} className={styles.tableContainer}>
-				{isError ? (
-					<ErrorEmptyState
-						title="Failed to load notification channels"
-						onRefresh={refetch}
-					/>
-				) : isEmpty && hasActiveFilters ? (
-					<NoResultsEmptyState
-						title="No matching channels"
-						subtitle="No notification channels match your search. Try adjusting your search criteria."
-						onClear={handleClearFilters}
-						clearButtonText="Clear Search"
-					/>
-				) : (
-					<TanStackTable<Channel>
-						data={channels}
-						columns={columnsWithActions}
-						isLoading={isFetching}
-						getRowKey={(row): string => row.id}
-						getItemKey={(row): string => row.id}
-						columnStorageKey="notification-channels-columns"
-						enableQueryParams={QUERY_PARAMS_CONFIG}
-						onRowClick={handleRowClick}
-						onRowClickNewTab={handleRowClickNewTab}
-						pagination={{
-							total,
-							calculatedPageSize,
-							onLimitChange: setLimit,
-							showTotalCount: true,
-						}}
-						paginationClassname={styles.paginationContainer}
-						enableAlternatingRowColors
-						plainTextCellLineClamp={1}
-					/>
-				)}
+				{/* Fails closed, unlike the guard's default: the fetch is gated on the
+				    same check, so falling open would render an empty table shell with
+				    no reason given. The header and filters stay, as on dashboards. */}
+				<AuthZGuardContent
+					checks={LIST_CHECKS}
+					onFailRenderContent={false}
+					fallbackOnLoading={<Skeleton active paragraph={{ rows: 6 }} />}
+				>
+					{isError ? (
+						<ErrorEmptyState
+							title="Failed to load notification channels"
+							onRefresh={refetch}
+						/>
+					) : isEmpty && hasActiveFilters ? (
+						<NoResultsEmptyState
+							title="No matching channels"
+							subtitle="No notification channels match your search. Try adjusting your search criteria."
+							onClear={handleClearFilters}
+							clearButtonText="Clear Search"
+						/>
+					) : (
+						<TanStackTable<Channel>
+							data={channels}
+							columns={columnsWithActions}
+							isLoading={isFetching}
+							getRowKey={(row): string => row.id}
+							getItemKey={(row): string => row.id}
+							columnStorageKey="notification-channels-columns"
+							enableQueryParams={QUERY_PARAMS_CONFIG}
+							onRowClick={handleRowClick}
+							onRowClickNewTab={handleRowClickNewTab}
+							pagination={{
+								total,
+								calculatedPageSize,
+								onLimitChange: setLimit,
+								showTotalCount: true,
+							}}
+							paginationClassname={styles.paginationContainer}
+							enableAlternatingRowColors
+							plainTextCellLineClamp={1}
+						/>
+					)}
+				</AuthZGuardContent>
 			</div>
 
 			{jsonChannel && (
@@ -257,6 +272,4 @@ function NotificationChannels(): JSX.Element {
 	);
 }
 
-export default withAuthZContent(NotificationChannels, {
-	checks: [NotificationChannelListPermission],
-});
+export default NotificationChannels;

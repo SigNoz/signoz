@@ -1,3 +1,4 @@
+import { Skeleton } from 'antd';
 import AlertBreadcrumb from 'components/AlertBreadcrumb';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
@@ -29,4 +30,5 @@ function ChannelsNew(): JSX.Element {
 
 export default withAuthZPage(ChannelsNew, {
 	checks: [NotificationChannelCreatePermission],
+	fallbackOnLoading: <Skeleton active paragraph={{ rows: 8 }} />,
 });

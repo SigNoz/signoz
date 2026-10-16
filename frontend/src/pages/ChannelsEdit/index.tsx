@@ -1,4 +1,5 @@
 import { matchPath, Redirect, useLocation } from 'react-router-dom';
+import { Skeleton } from 'antd';
 import ROUTES from 'constants/routes';
 import { withAuthZPage } from 'lib/authz/components/withAuthZ/withAuthZPage';
 import {
@@ -21,15 +22,19 @@ function ChannelsEdit(): JSX.Element {
 	return <ChannelsEditPage channelId={channelId} />;
 }
 
-// Editing needs `read` as well as `update`, per the authz guide.
+const channelIdFromRoute = (router: {
+	matchPath: <P extends Record<string, string>>(p: string) => P | null;
+}): string =>
+	router.matchPath<{ channelId: string }>(ROUTES.CHANNELS_EDIT)?.channelId ?? '';
+
 export default withAuthZPage(ChannelsEdit, {
-	checks: (_props, router) => {
-		const channelId =
-			router.matchPath<{ channelId: string }>(ROUTES.CHANNELS_EDIT)?.channelId ??
-			'';
-		return [
-			buildNotificationChannelReadPermission(channelId),
-			buildNotificationChannelUpdatePermission(channelId),
-		];
-	},
+	// `read` alone opens the screen; `update` only decides whether it can be
+	// saved, so it is warmed here and enforced on the save button.
+	checks: (_props, router) => [
+		buildNotificationChannelReadPermission(channelIdFromRoute(router)),
+	],
+	preloadChecks: (_props, router) => [
+		buildNotificationChannelUpdatePermission(channelIdFromRoute(router)),
+	],
+	fallbackOnLoading: <Skeleton active paragraph={{ rows: 8 }} />,
 });

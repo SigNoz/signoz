@@ -19,9 +19,6 @@ function ChannelForm({ channelId, onDone }: ChannelFormProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	const { draft, isLoading, loadError } = useChannelDraft(channelId);
 
-	// A reader with `read` but no `update` still gets the screen, without saving.
-	// Only a resolved denial locks it: while the check is in flight, or when it
-	// failed outright, the form stays editable and the API is the real gate.
 	const {
 		canEdit,
 		isLoading: isPermissionLoading,
@@ -72,17 +69,6 @@ function ChannelForm({ channelId, onDone }: ChannelFormProps): JSX.Element {
 						testId="copy-channel-id"
 					/>
 				</div>
-			)}
-			{readOnly && (
-				<Callout
-					type="info"
-					showIcon
-					title={t('channel_read_only_title')}
-					className={styles.readOnlyNotice}
-					testId="channel-read-only-notice"
-				>
-					{t('channel_read_only_help')}
-				</Callout>
 			)}
 			<ChannelFormBody
 				draft={draft}

@@ -90,6 +90,8 @@ function FormAlertChannels({
 	return (
 		<FormProvider {...form}>
 			<form className={styles.form}>
+				{/* the @signozhq inputs take no disabled context and the settings
+				    still render antd textareas; the fieldset turns off both. */}
 				<fieldset className={styles.fields} disabled={readOnly}>
 					<div className={styles.cards}>
 						<FormCard title={t('section_general')}>
@@ -141,34 +143,32 @@ function FormAlertChannels({
 					</div>
 				</fieldset>
 
-				{!readOnly && (
-					<div className={styles.actions}>
-						<AuthZTooltip checks={saveChecks}>
-							<Button
-								variant="solid"
-								color="primary"
-								size="md"
-								testId="save-channel-button"
-								loading={savingState}
-								onClick={onSaveHandler}
-							>
-								{t('button_save_channel')}
-							</Button>
-						</AuthZTooltip>
-						<AuthZTooltip checks={testChecks}>
-							<Button
-								variant="outlined"
-								color="secondary"
-								size="md"
-								testId="test-channel-button"
-								loading={testingState}
-								onClick={onTestHandler}
-							>
-								{t('button_test_channel')}
-							</Button>
-						</AuthZTooltip>
-					</div>
-				)}
+				<div className={styles.actions}>
+					<AuthZTooltip checks={saveChecks}>
+						<Button
+							variant="solid"
+							color="primary"
+							size="md"
+							testId="save-channel-button"
+							loading={savingState}
+							onClick={onSaveHandler}
+						>
+							{t('button_save_channel')}
+						</Button>
+					</AuthZTooltip>
+					<AuthZTooltip checks={testChecks}>
+						<Button
+							variant="outlined"
+							color="secondary"
+							size="md"
+							testId="test-channel-button"
+							loading={testingState}
+							onClick={onTestHandler}
+						>
+							{t('button_test_channel')}
+						</Button>
+					</AuthZTooltip>
+				</div>
 			</form>
 		</FormProvider>
 	);
