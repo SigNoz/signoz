@@ -20,7 +20,7 @@ func TestFormat_Tool(t *testing.T) {
 			wantOutput: `[{"role": "tool", "parts": [{"type": "tool_call_response", "response": {"city": "Bengaluru", "temp_c": 18, "summary": "Clear"}}]}]`,
 		},
 		{
-			// traceloop.entity.input and traceloop.entity.output from the @tool decorator, renamed by the mapper;
+			// traceloop.entity.input and traceloop.entity.output from the @tool decorator, copied by the mapper;
 			// the tool returned a JSON string, which json.dumps encoded again:
 			// https://github.com/traceloop/openllmetry/blob/93429cfb9767e6b51db6cb35f6b70f758117669a/packages/traceloop-sdk/traceloop/sdk/decorators/base.py#L169
 			name: "TraceloopDecorator_KwargsUnwrapped_ResultDecodedTwice",
@@ -33,7 +33,7 @@ func TestFormat_Tool(t *testing.T) {
 			wantOutput: `[{"role": "tool", "parts": [{"type": "tool_call_response", "response": {"city": "Bengaluru", "temp_c": 28, "summary": "Partly cloudy"}}]}]`,
 		},
 		{
-			// traceloop.entity.output of a @tool returning None, json.dumps(None), renamed by the mapper:
+			// traceloop.entity.output of a @tool returning None, json.dumps(None), copied by the mapper:
 			// https://github.com/traceloop/openllmetry/blob/93429cfb9767e6b51db6cb35f6b70f758117669a/packages/traceloop-sdk/traceloop/sdk/decorators/base.py#L185
 			name: "TraceloopDecorator_PositionalArgsOnly_ListKept",
 			attributes: map[string]any{
@@ -54,7 +54,7 @@ func TestFormat_Tool(t *testing.T) {
 			wantOutput: `[]`,
 		},
 		{
-			// input.value and output.value of an OpenInference TOOL span, renamed by the mapper:
+			// input.value and output.value of an OpenInference TOOL span, copied by the mapper:
 			// https://github.com/Arize-ai/openinference/blob/12f2cc035edfb00b60b656d977f07abfb7a69900/spec/traces.md
 			name: "OpenInferenceToolSpan_PlainJSONAndText",
 			attributes: map[string]any{
@@ -66,7 +66,7 @@ func TestFormat_Tool(t *testing.T) {
 			wantOutput: `[{"role": "tool", "parts": [{"type": "tool_call_response", "response": "27C, partly cloudy, light breeze from the south."}]}]`,
 		},
 		{
-			// ai.toolCall.{id,name,args,result} of a Vercel ai.toolCall span, renamed by the mapper:
+			// ai.toolCall.{id,name,args,result} of a Vercel ai.toolCall span, copied by the mapper:
 			// https://ai-sdk.dev/docs/ai-sdk-core/telemetry
 			name: "VercelToolCall_IDOnBothParts",
 			attributes: map[string]any{
