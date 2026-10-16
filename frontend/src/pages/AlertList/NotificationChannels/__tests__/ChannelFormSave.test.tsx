@@ -50,7 +50,10 @@ describe('ChannelForm save', () => {
 				'https://hooks.slack.com/services/T/B/X',
 			);
 			const save = screen.getByTestId('save-channel-button');
-			await waitFor(() => expect(save).toBeEnabled(), FIND);
+			await waitFor(
+				() => expect(save).toHaveAttribute('aria-disabled', 'false'),
+				FIND,
+			);
 			await user.click(save);
 
 			await waitFor(() => expect(onDone).toHaveBeenCalled(), FIND);
@@ -97,7 +100,10 @@ describe('ChannelForm save', () => {
 			await user.clear(screen.getByTestId('slack-channel-textbox'));
 			await user.type(screen.getByTestId('slack-channel-textbox'), '#changed');
 			const save = screen.getByTestId('save-channel-button');
-			await waitFor(() => expect(save).toBeEnabled(), FIND);
+			await waitFor(
+				() => expect(save).toHaveAttribute('aria-disabled', 'false'),
+				FIND,
+			);
 			await user.click(save);
 
 			await waitFor(() => expect(onDone).toHaveBeenCalled(), FIND);
@@ -129,12 +135,18 @@ describe('ChannelForm save', () => {
 			);
 
 			const save = screen.getByTestId('save-channel-button');
-			await waitFor(() => expect(save).toBeDisabled(), FIND);
+			await waitFor(
+				() => expect(save).toHaveAttribute('aria-disabled', 'true'),
+				FIND,
+			);
 			expect(save).toHaveAttribute(
 				'data-denied-permissions',
 				expect.stringContaining('update'),
 			);
-			expect(screen.getByTestId('test-channel-button')).toBeDisabled();
+			expect(screen.getByTestId('test-channel-button')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		},
 		TEST_TIMEOUT,
 	);
@@ -153,7 +165,10 @@ describe('ChannelForm save', () => {
 			// Save is disabled while the checks are in flight and settles once they
 			// resolve, so waiting on it means the failure has landed
 			const save = await screen.findByTestId('save-channel-button', {}, FIND);
-			await waitFor(() => expect(save).toBeEnabled(), FIND);
+			await waitFor(
+				() => expect(save).toHaveAttribute('aria-disabled', 'false'),
+				FIND,
+			);
 
 			expect(screen.getByTestId('slack-channel-textbox')).toBeEnabled();
 			expect(

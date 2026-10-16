@@ -71,8 +71,12 @@ export const TestChannelFailure: Story = {
 		);
 
 		// the button is disabled while its permission check is in flight, so a
-		// click any earlier lands on nothing
-		await waitFor(() => expect(test).toBeEnabled(), untilLoaded);
+		// click any earlier lands on nothing. It signals that through
+		// aria-disabled, which toBeEnabled does not read.
+		await waitFor(
+			() => expect(test).toHaveAttribute('aria-disabled', 'false'),
+			untilLoaded,
+		);
 		await userEvent.click(test);
 
 		await screen.findByText('Storybook forced channel failure');
