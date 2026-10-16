@@ -65,7 +65,7 @@ func Resolve(
 	if len(matches) == 0 && slices.Contains(traits.OwnContexts, key.FieldContext) {
 		// a column the storage knows under the key's own context is the key
 		// as written, and only a miss corrects to the bare spelling
-		if fallback, err := storage.Fallback(ctx, q, key, operator, value); err == nil {
+		if fallback, err := storage.Fallback(ctx, q, key, operator, value, fieldKeys); err == nil {
 			if column := alwaysPresent(ctx, q, storage, fallback); column != nil {
 				return qbtypes.Resolved{Key: key, Fields: []*telemetrytypes.LogicalField{column}, FromFallback: true}, nil
 			}
@@ -84,14 +84,14 @@ func Resolve(
 		}
 	}
 	if lookup.FieldContext == telemetrytypes.FieldContextUnspecified && len(fields) > 0 {
-		fields = intrinsicColumnFirst(ctx, q, storage, key, operator, value, fields)
+		fields = intrinsicColumnFirst(ctx, q, storage, key, operator, value, fields, fieldKeys)
 	}
 	if len(fields) > 0 {
 		resolved.Fields = fields
 		return resolved, nil
 	}
 
-	fallback, err := storage.Fallback(ctx, q, key, operator, value)
+	fallback, err := storage.Fallback(ctx, q, key, operator, value, fieldKeys)
 	if err != nil {
 		return qbtypes.Resolved{}, err
 	}
@@ -141,13 +141,14 @@ func intrinsicColumnFirst(
 	operator qbtypes.FilterOperator,
 	value any,
 	fields []*telemetrytypes.LogicalField,
+	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) []*telemetrytypes.LogicalField {
 	column := alwaysPresent(ctx, q, storage, fields)
 	fromFallback := false
 	if column == nil {
 		// a fallback that cannot answer this term has no column for it, and
 		// its error belongs to the no-match path
-		if fallback, err := storage.Fallback(ctx, q, key, operator, value); err == nil {
+		if fallback, err := storage.Fallback(ctx, q, key, operator, value, fieldKeys); err == nil {
 			column = alwaysPresent(ctx, q, storage, fallback)
 			fromFallback = column != nil
 		}

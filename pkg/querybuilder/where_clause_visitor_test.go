@@ -758,7 +758,7 @@ func (resourceStorage) Read(_ context.Context, _ qbtypes.QueryInfo, key *telemet
 	return qbtypes.Read{SQL: key.Name, Presence: "has(" + key.Name + ")", Absence: "NOT has(" + key.Name + ")", WhenAbsent: qbtypes.AbsentIsSentinel}, nil
 }
 
-func (resourceStorage) Fallback(context.Context, qbtypes.QueryInfo, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any) ([]*telemetrytypes.LogicalField, error) {
+func (resourceStorage) Fallback(context.Context, qbtypes.QueryInfo, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any, map[string][]*telemetrytypes.TelemetryFieldKey) ([]*telemetrytypes.LogicalField, error) {
 	return nil, nil
 }
 
@@ -779,7 +779,7 @@ func (mainStorage) Read(_ context.Context, _ qbtypes.QueryInfo, key *telemetryty
 	return qbtypes.Read{SQL: key.Name, Presence: "has(" + key.Name + ")", Absence: "NOT has(" + key.Name + ")", WhenAbsent: qbtypes.AbsentIsSentinel}, nil
 }
 
-func (mainStorage) Fallback(_ context.Context, _ qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, _ any) ([]*telemetrytypes.LogicalField, error) {
+func (mainStorage) Fallback(_ context.Context, _ qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, _ any, _ map[string][]*telemetrytypes.TelemetryFieldKey) ([]*telemetrytypes.LogicalField, error) {
 	if key.FieldContext != telemetrytypes.FieldContextBody {
 		return nil, nil
 	}
