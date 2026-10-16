@@ -76,14 +76,20 @@ export function SpanTooltipContent({
 				{ai?.model && <TraceTooltipRow label="model" value={ai.model} />}
 				{ai?.toolName && <TraceTooltipRow label="tool" value={ai.toolName} />}
 				{ai?.agentName && <TraceTooltipRow label="agent" value={ai.agentName} />}
-				<TraceTooltipRow label="status" value={hasError ? 'error' : 'ok'} />
+				<TraceTooltipRow
+					label="status"
+					value={hasError ? 'error' : 'ok'}
+					testId="span-hover-card-status"
+				/>
 				<TraceTooltipRow
 					label="start"
 					value={`${toFixed(relativeStartMs, 2)} ms`}
+					testId="span-hover-card-start"
 				/>
 				<TraceTooltipRow
 					label="duration"
 					value={`${toFixed(formattedDuration, 2)} ${timeUnitName}`}
+					testId="span-hover-card-duration"
 				/>
 			</TraceTooltipSection>
 			{previewRows && previewRows.length > 0 && (
