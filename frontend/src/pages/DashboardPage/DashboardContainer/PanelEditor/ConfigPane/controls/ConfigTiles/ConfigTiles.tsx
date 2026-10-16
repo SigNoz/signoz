@@ -9,6 +9,8 @@ export interface ConfigTileItem<T extends string = string> {
 	/** Accessible name when `label` alone is ambiguous (e.g. a bare symbol). */
 	ariaLabel?: string;
 	drawing?: ReactNode;
+	/** Muted second line under the label. */
+	description?: string;
 	disabled?: boolean;
 	/** Short tag in the tile's corner, e.g. what auto detection picked. */
 	badge?: string;
@@ -70,7 +72,14 @@ function ConfigTiles<T extends string>({
 							/>
 							{item.badge && <span className={styles.badge}>{item.badge}</span>}
 							{item.drawing}
-							<span className={styles.label}>{item.label}</span>
+							{item.description ? (
+								<span className={styles.text}>
+									<span className={styles.label}>{item.label}</span>
+									<span className={styles.description}>{item.description}</span>
+								</span>
+							) : (
+								<span className={styles.label}>{item.label}</span>
+							)}
 						</label>
 					);
 				})}

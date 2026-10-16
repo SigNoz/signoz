@@ -2,6 +2,8 @@ import { useRef } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import {
 	DashboardtypesGeoMapLayerDTO,
+	DashboardtypesGeoMapProjectionDTO,
+	type DashboardtypesGeoMapSettingsDTO,
 	DashboardtypesGeoMapViewDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { detectLocationColumns } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/GeoMapPanel/prepareData';
@@ -32,6 +34,8 @@ import {
 	fromAreaValue,
 	isAutoMode,
 	type LocationField,
+	patchMap,
+	PROJECTION_HELP,
 	resolveLayer,
 	resolveRowKind,
 	type RowKind,
@@ -49,6 +53,7 @@ type LocationSectionProps = SectionEditorProps<SectionKind.Location> &
 	>;
 
 const LAYER = DashboardtypesGeoMapLayerDTO;
+const PROJECTION = DashboardtypesGeoMapProjectionDTO;
 
 const SUGGESTED_KEYS = [
 	'geo.country.iso_code',
@@ -75,14 +80,15 @@ function LocationSection({
 	const layer = resolveLayer(value, kind);
 	const hasGroupBy = groupColumns.length > 0;
 	const viewCountry = value?.map?.viewCountry;
+	const projection = value?.map?.projection ?? PROJECTION.mercator;
 	const detected = detectLocationColumns(groupColumns);
 	const autoColumn = (field: LocationField): string | undefined =>
 		autoColumnFor(field, data?.location, detected);
 
 	const setLocation = (patch: GeoMapPlacementSlice['location']): void =>
 		onChange({ ...value, location: { ...value?.location, ...patch } });
-	const setMap = (patch: GeoMapPlacementSlice['map']): void =>
-		onChange({ ...value, map: { ...value?.map, ...patch } });
+	const setMap = (patch: Partial<DashboardtypesGeoMapSettingsDTO>): void =>
+		onChange({ ...value, map: patchMap(value?.map, patch) });
 	const pickKind = (to: RowKind | 'auto'): void => {
 		const change = changeRowKind(value, kind, to, {
 			previousView: previousView.current,
@@ -193,6 +199,40 @@ function LocationSection({
 					/>
 				</ConfigField>
 			)}
+
+			<ConfigField
+				label="Projection"
+				changed={projection !== PROJECTION.mercator}
+				onReset={(): void => setMap({ projection: PROJECTION.mercator })}
+				help={PROJECTION_HELP[projection]}
+			>
+				<ConfigTiles<DashboardtypesGeoMapProjectionDTO>
+					testId="panel-editor-v2-geo-map-projection"
+					aria-label="Projection"
+					value={projection}
+					items={[
+						{
+							value: PROJECTION.mercator,
+							label: 'Mercator',
+							description: 'True shapes',
+							drawing: LOCATION_DRAWINGS.mercator,
+						},
+						{
+							value: PROJECTION.equal_earth,
+							label: 'Equal Earth',
+							description: 'True areas',
+							drawing: LOCATION_DRAWINGS.equal_earth,
+						},
+						{
+							value: PROJECTION.natural_earth,
+							label: 'Natural Earth',
+							description: 'Balanced',
+							drawing: LOCATION_DRAWINGS.natural_earth,
+						},
+					]}
+					onChange={(next): void => setMap({ projection: next })}
+				/>
+			</ConfigField>
 
 			<ConfigField
 				label="Draw as"

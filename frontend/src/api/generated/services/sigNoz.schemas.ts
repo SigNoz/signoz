@@ -6073,6 +6073,11 @@ export enum DashboardtypesGeoMapLayerDTO {
 	bubbles = 'bubbles',
 	points = 'points',
 }
+export enum DashboardtypesGeoMapProjectionDTO {
+	mercator = 'mercator',
+	equal_earth = 'equal_earth',
+	natural_earth = 'natural_earth',
+}
 export enum DashboardtypesGeoMapViewDTO {
 	world = 'world',
 	fit = 'fit',
@@ -6091,6 +6096,7 @@ export interface DashboardtypesGeoMapSettingsDTO {
 	 */
 	colorBy?: string;
 	layer?: DashboardtypesGeoMapLayerDTO;
+	projection: DashboardtypesGeoMapProjectionDTO;
 	/**
 	 * @type string
 	 * @description Value column key that sets the bubble or point size. Empty uses colorBy.
