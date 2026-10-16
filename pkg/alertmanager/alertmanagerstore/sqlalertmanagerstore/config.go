@@ -9,8 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/tidwall/gjson"
-	"github.com/uptrace/bun"
 )
 
 type config struct {
@@ -237,37 +235,6 @@ func (store *config) ListAllChannels(ctx context.Context) ([]*alertmanagertypes.
 	}
 
 	return channels, nil
-}
-
-func (store *config) GetMatchers(ctx context.Context, orgID string) (map[string][]string, error) {
-	type matcher struct {
-		bun.BaseModel `bun:"table:rule"`
-		ID            valuer.UUID `bun:"id,pk"`
-		Data          string      `bun:"data"`
-	}
-
-	matchers := []matcher{}
-
-	err := store.
-		sqlstore.
-		BunDB().
-		NewSelect().
-		Column("id", "data").
-		Model(&matchers).
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	matchersMap := make(map[string][]string)
-	for _, matcher := range matchers {
-		receivers := gjson.Get(matcher.Data, "preferredChannels").Array()
-		for _, receiver := range receivers {
-			matchersMap[matcher.ID.StringValue()] = append(matchersMap[matcher.ID.StringValue()], receiver.String())
-		}
-	}
-
-	return matchersMap, nil
 }
 
 func (store *config) wrap(ctx context.Context, fn func(ctx context.Context) error, opts ...alertmanagertypes.StoreOption) error {
