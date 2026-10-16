@@ -129,8 +129,7 @@ export function useSavedViewActions(
 		const params = getUnstableCurrentSearchParams();
 		SAVED_VIEW_URL_PARAMS.forEach((param) => params.delete(param));
 		safeNavigate(`${pathname}?${params.toString()}`);
-		logSavedViewEvent(SavedViewEvents.ViewCleared);
-	}, [clearLastUsedView, pathname, safeNavigate, logSavedViewEvent]);
+	}, [clearLastUsedView, pathname, safeNavigate]);
 
 	const createView = useCallback(
 		async (

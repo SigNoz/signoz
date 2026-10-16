@@ -205,6 +205,38 @@ describe('SavedViews analytics', () => {
 		});
 	});
 
+	it('logs a view cleared from its row', async () => {
+		mockSavedViewsApi([errors]);
+		renderAll(viewUrl(PATH, errors));
+		await waitForView('Errors');
+
+		await userEvent.click(await screen.findByTestId('saved-views-row-clear'));
+
+		expect(logEventMock).toHaveBeenCalledWith(SavedViewEvents.ViewCleared, {
+			source,
+		});
+	});
+
+	it('logs only the delete when the open view is deleted', async () => {
+		mockSavedViewsApi([errors]);
+		renderAll(viewUrl(PATH, errors));
+		await waitForView('Errors');
+
+		await chooseFromRowMenu('Errors', 'Delete');
+		await userEvent.click(screen.getByTestId('delete-saved-view-confirm'));
+
+		await waitFor(() =>
+			expect(logEventMock).toHaveBeenCalledWith(SavedViewEvents.ViewDeleted, {
+				source,
+				viewId: errors.id,
+			}),
+		);
+		await waitFor(() =>
+			expect(screen.getByTestId('saved-views-name')).toHaveTextContent('My view'),
+		);
+		expect(callsOf(SavedViewEvents.ViewCleared)).toHaveLength(0);
+	});
+
 	it('logs the row menu actions', async () => {
 		mockSavedViewsApi([errors, slow]);
 		renderAll();

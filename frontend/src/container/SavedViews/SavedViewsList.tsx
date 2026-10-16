@@ -10,9 +10,10 @@ import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
 
 import { SAVED_VIEWS_LIST_LOADING_ROWS } from './constants';
 import DeleteSavedViewDialog from './DeleteSavedViewDialog';
-import { SavedViewCreatedFrom } from './events';
+import { SavedViewCreatedFrom, SavedViewEvents } from './events';
 import { useSavedViewActions } from './hooks/useSavedViewActions';
 import { useSavedViewHoverCard } from './hooks/useSavedViewHoverCard';
+import { useSavedViewLogEvent } from './hooks/useSavedViewLogEvent';
 import { useSavedViewRowActions } from './hooks/useSavedViewRowActions';
 import { useSaveNewView } from './hooks/useSaveNewView';
 import { useSavedViewsList } from './hooks/useSavedViewsList';
@@ -39,6 +40,11 @@ function SavedViewsList({
 	const { selectView, clearView, createView, isSaving } =
 		useSavedViewActions(source);
 	const saveNewView = useSaveNewView(createView);
+	const logSavedViewEvent = useSavedViewLogEvent(source);
+	const handleClear = useCallback((): void => {
+		clearView();
+		logSavedViewEvent(SavedViewEvents.ViewCleared);
+	}, [clearView, logSavedViewEvent]);
 	const { createdByMe, createdByOthers, isLoading, isError, refetch } =
 		useSavedViewsList(source, search);
 	const { copyViewLink, renameView, deleteView, isRenaming, isDeleting } =
@@ -152,7 +158,7 @@ function SavedViewsList({
 					views={createdByMe}
 					activeViewId={viewKey}
 					onSelect={selectView}
-					onClear={clearView}
+					onClear={handleClear}
 					onAction={handleAction}
 					hover={rowHover}
 					testId="saved-views-created-by-me"
@@ -164,7 +170,7 @@ function SavedViewsList({
 					views={createdByOthers}
 					activeViewId={viewKey}
 					onSelect={selectView}
-					onClear={clearView}
+					onClear={handleClear}
 					onAction={handleAction}
 					hover={rowHover}
 					testId="saved-views-created-by-others"
