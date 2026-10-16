@@ -124,15 +124,6 @@
 }
 
 .radioLabel,
-.checkboxLabel {
-	display: flex;
-	align-items: center;
-	gap: 7px;
-	font-size: 13px;
-	color: var(--l1-foreground);
-	cursor: pointer;
-}
-
 .radio,
 .checkbox {
 	accent-color: var(--accent-primary);

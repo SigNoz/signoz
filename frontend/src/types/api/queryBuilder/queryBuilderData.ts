@@ -6,6 +6,7 @@ import { TelemetryFieldKey } from 'api/v5/v5';
 import { Format } from 'constants/formats/types';
 import { EQueryType } from 'types/common/dashboard';
 import {
+	BuilderQuerySource,
 	DataSource,
 	QueryBuilderData,
 	ReduceOperators,
@@ -104,7 +105,7 @@ export type IBuilderQuery = {
 	pageSize?: number;
 	offset?: number;
 	selectColumns?: BaseAutocompleteData[] | TelemetryFieldKey[];
-	source?: 'meter' | '';
+	source?: BuilderQuerySource;
 	builderQueryType?: BuilderQueryType;
 	/** Heatmap only. */
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;

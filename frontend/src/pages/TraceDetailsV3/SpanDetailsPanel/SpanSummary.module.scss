@@ -49,13 +49,6 @@
 	flex-shrink: 0;
 }
 
-// Badges stay fit-content so short values shrink and long ones truncate.
-.serviceBadge,
-.statusMessageBadge {
-	max-width: 100%;
-	min-width: 0;
-}
-
 // Truncating text inside a badge (service name, status message).
 .badgeEllipsisText {
 	min-width: 0;

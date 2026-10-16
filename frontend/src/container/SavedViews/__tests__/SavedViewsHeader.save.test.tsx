@@ -11,12 +11,12 @@ import SavedViewsHeader from '../SavedViewsHeader';
 import {
 	explorerUrl,
 	makeView,
-	mockSavedViewsApi,
 	queryWith,
 	renderWithExplorerProviders,
 	urlParam,
 	viewUrl,
 } from './savedViewsTestUtils';
+import { mockSavedViewsApi } from './savedViewsApiMock';
 
 jest.mock('@signozhq/ui/sonner', () => ({
 	...jest.requireActual('@signozhq/ui/sonner'),
@@ -90,7 +90,10 @@ describe('SavedViewsHeader saving', () => {
 			await userEvent.click(screen.getByTestId('saved-views-create'));
 
 			expect(within(modal()).getByText('Create new view')).toBeInTheDocument();
-			expect(screen.getByTestId('save-view-submit')).toBeDisabled();
+			expect(screen.getByTestId('save-view-submit')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 
 			await submitName('Slow checkout');
 
@@ -112,7 +115,7 @@ describe('SavedViewsHeader saving', () => {
 				),
 			);
 			expect(toast.success).toHaveBeenCalledWith(
-				'You have created a new view.',
+				'View created',
 				expect.objectContaining({ position: 'top-right' }),
 			);
 			await waitFor(() => expect(isModalOpen()).toBe(false));

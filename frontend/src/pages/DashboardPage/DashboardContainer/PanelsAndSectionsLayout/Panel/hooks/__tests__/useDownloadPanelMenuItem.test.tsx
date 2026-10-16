@@ -34,7 +34,7 @@ const download = (
 	drilldown: true,
 });
 
-type Submenu = { children: { key: string; onClick: () => void }[] };
+type Submenu = { items: { value: string; onClick: () => void }[] };
 
 function render(actions: PanelActionCapabilities): { current: unknown } {
 	return renderHook(() =>
@@ -54,20 +54,20 @@ describe('useDownloadPanelMenuItem', () => {
 		const result = render(download({ csv: true, png: true, svg: true }));
 		const item = result.current as Submenu;
 
-		expect(item.children.map((c) => c.key)).toStrictEqual([
+		expect(item.items.map((c) => c.value)).toStrictEqual([
 			'download-csv',
 			'download-png',
 			'download-svg',
 		]);
 
-		item.children.find((c) => c.key === 'download-csv')?.onClick();
+		item.items.find((c) => c.value === 'download-csv')?.onClick();
 		expect(mockDownloadCsv).toHaveBeenCalledTimes(1);
 		expect(mockDownloadImage).not.toHaveBeenCalled();
 
-		item.children.find((c) => c.key === 'download-png')?.onClick();
+		item.items.find((c) => c.value === 'download-png')?.onClick();
 		expect(mockDownloadImage).toHaveBeenCalledWith('panel-1', 'CPU', 'png');
 
-		item.children.find((c) => c.key === 'download-svg')?.onClick();
+		item.items.find((c) => c.value === 'download-svg')?.onClick();
 		expect(mockDownloadImage).toHaveBeenCalledWith('panel-1', 'CPU', 'svg');
 	});
 });

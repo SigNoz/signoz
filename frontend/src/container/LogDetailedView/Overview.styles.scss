@@ -122,17 +122,5 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-
-		.action-btn {
-			border-radius: 2px;
-			border: 1px solid var(--l1-border);
-			display: flex;
-			align-items: center;
-			justify-content: center;
-
-			background: none;
-			border: none;
-			box-shadow: none;
-		}
 	}
 }
