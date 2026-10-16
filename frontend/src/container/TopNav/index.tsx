@@ -4,16 +4,34 @@ import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection
 import ROUTES from 'constants/routes';
 
 import DateTimeSelector from './DateTimeSelectionV2';
-import { routesToDisable, routesToSkip } from './DateTimeSelectionV2/constants';
+import { routesToDisable } from './DateTimeSelectionV2/constants';
 
 import './TopNav.styles.scss';
+
+const routesToShowTopNav = [
+	ROUTES.SERVICE_MAP,
+	ROUTES.TRACE,
+	ROUTES.APPLICATION,
+	ROUTES.SERVICE_METRICS,
+	ROUTES.ALL_DASHBOARD,
+	ROUTES.DASHBOARD,
+	ROUTES.ALL_ERROR,
+	ROUTES.TRACE_EXPLORER,
+	ROUTES.LOGS,
+	ROUTES.LIVE_LOGS,
+	ROUTES.MESSAGING_QUEUES_KAFKA,
+	ROUTES.MESSAGING_QUEUES_CELERY_TASK,
+	ROUTES.MESSAGING_QUEUES_OVERVIEW,
+	ROUTES.MESSAGING_QUEUES_KAFKA_DETAIL,
+	ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
+];
 
 function TopNav(): JSX.Element | null {
 	const { location } = useHistory();
 
-	const isRouteToSkip = useMemo(
+	const shouldShowTopNav = useMemo(
 		() =>
-			routesToSkip.some((route) =>
+			routesToShowTopNav.some((route) =>
 				matchPath(location.pathname, { path: route, exact: true }),
 			),
 		[location.pathname],
@@ -37,16 +55,16 @@ function TopNav(): JSX.Element | null {
 		[location.pathname],
 	);
 
-	if (isSignUpPage || isDisabled || isRouteToSkip || isAlertCreationPage) {
+	if (isSignUpPage || isDisabled || !shouldShowTopNav || isAlertCreationPage) {
 		return null;
 	}
 
-	return !isRouteToSkip ? (
+	return (
 		<div className="top-nav-container">
 			<DateTimeSelector showAutoRefresh />
 			<HeaderRightSection enableShare enableFeedback enableAnnouncements={false} />
 		</div>
-	) : null;
+	);
 }
 
 export default TopNav;
