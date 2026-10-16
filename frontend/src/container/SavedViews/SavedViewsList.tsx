@@ -10,6 +10,7 @@ import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
 
 import { SAVED_VIEWS_LIST_LOADING_ROWS } from './constants';
 import DeleteSavedViewDialog from './DeleteSavedViewDialog';
+import { SavedViewCreatedFrom } from './events';
 import { useSavedViewActions } from './hooks/useSavedViewActions';
 import { useSavedViewHoverCard } from './hooks/useSavedViewHoverCard';
 import { useSavedViewRowActions } from './hooks/useSavedViewRowActions';
@@ -131,7 +132,9 @@ function SavedViewsList({
 			<SavedViewsEmptyState
 				isSearching={search.trim().length > 0}
 				isSaving={isSaving}
-				onSave={saveNewView}
+				onSave={(displayName): Promise<boolean> =>
+					saveNewView(displayName, SavedViewCreatedFrom.EmptyState)
+				}
 			/>
 		);
 	}
