@@ -1,6 +1,7 @@
 import uPlot from 'uplot';
 
 import type { ExtendedSeries } from '../../config/types';
+import { reportBarRect } from '../../utils/barRect';
 import { partialPointsDrawHook } from '../partialPointsDrawHook';
 
 function createPlot(
@@ -17,6 +18,7 @@ function createPlot(
 		fill: jest.fn(),
 		stroke: jest.fn(),
 		setLineDash: jest.fn(),
+		strokeRect: jest.fn(),
 	};
 	const xValues = [10, 20, 30];
 	const u = {
@@ -56,5 +58,20 @@ describe('partialPointsDrawHook', () => {
 			partialPointsDrawHook(u);
 			expect(ctx.arc).not.toHaveBeenCalled();
 		});
+	});
+
+	it('draws a dotted outline around a partial bar', () => {
+		const { u, ctx } = createPlot({
+			partialTimestamps: new Set([30]),
+			paths: (plot, seriesIdx, idx) => {
+				reportBarRect(plot, seriesIdx, idx, 10, 20, 8, 30);
+				return null;
+			},
+		});
+
+		partialPointsDrawHook(u);
+
+		expect(ctx.strokeRect).toHaveBeenCalledWith(7, 17, 14, 36);
+		expect(ctx.arc).not.toHaveBeenCalled();
 	});
 });

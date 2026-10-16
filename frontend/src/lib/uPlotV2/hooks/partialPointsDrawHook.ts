@@ -1,6 +1,7 @@
 import uPlot from 'uplot';
 
 import { ExtendedSeries } from '../config/types';
+import { BarRect, measureBar } from '../utils/barRect';
 
 const DEFAULT_POINT_SIZE = 5;
 const RING_GAP = 3;
@@ -30,7 +31,22 @@ function drawRing(
 	ctx.stroke();
 }
 
-/** Marks each series' partial buckets with a dot and a dotted ring. */
+function drawBarOutline(u: uPlot, rect: BarRect): void {
+	const gap = RING_GAP * uPlot.pxRatio;
+	u.ctx.lineWidth = RING_WIDTH * uPlot.pxRatio;
+	u.ctx.setLineDash(RING_DASH.map((segment) => segment * uPlot.pxRatio));
+	u.ctx.strokeRect(
+		rect.left - gap,
+		rect.top - gap,
+		rect.width + 2 * gap,
+		rect.height + 2 * gap,
+	);
+}
+
+/**
+ * Marks each series' partial buckets: a dotted outline around bars, a dot and dotted
+ * ring on line and point series.
+ */
 export function partialPointsDrawHook(u: uPlot): void {
 	const { ctx, bbox } = u;
 	const xValues = u.data[0];
@@ -56,8 +72,14 @@ export function partialPointsDrawHook(u: uPlot): void {
 		series.partialTimestamps.forEach((timestamp) => {
 			const idx = u.valToIdx(timestamp);
 			const value = u.data[seriesIdx][idx];
-			if (xValues[idx] === timestamp && value != null) {
-				ctx.setLineDash([]);
+			if (xValues[idx] !== timestamp || value == null) {
+				return;
+			}
+			ctx.setLineDash([]);
+			const bar = measureBar(u, seriesIdx, idx);
+			if (bar) {
+				drawBarOutline(u, bar);
+			} else {
 				drawRing(u, series, idx, value);
 			}
 		});
