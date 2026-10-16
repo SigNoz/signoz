@@ -380,11 +380,6 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 
 	return m.ruleStore.EditRule(ctx, existingRule, func(ctx context.Context) error {
 		if parsedRule.NotificationSettings != nil {
-			config := parsedRule.NotificationSettings.GetAlertManagerNotificationConfig()
-			err = m.alertmanager.SetNotificationConfig(ctx, orgID, id.StringValue(), &config)
-			if err != nil {
-				return err
-			}
 			if !parsedRule.NotificationSettings.UsePolicy {
 				request, err := parsedRule.GetRuleRouteRequest(id.StringValue())
 				if err != nil {
@@ -407,6 +402,11 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 				if err != nil {
 					return err
 				}
+			}
+			// Configuration conflicts must not publish notification settings from a rejected edit.
+			config := parsedRule.NotificationSettings.GetAlertManagerNotificationConfig()
+			if err = m.alertmanager.SetNotificationConfig(ctx, orgID, id.StringValue(), &config); err != nil {
+				return err
 			}
 		}
 		err = m.syncRuleStateWithTask(ctx, orgID, prepareTaskName(existingRule.ID.StringValue()), &parsedRule)
@@ -505,17 +505,17 @@ func (m *Manager) DeleteRule(ctx context.Context, idStr string) error {
 			return err
 		}
 
-		err = m.alertmanager.DeleteNotificationConfig(ctx, orgID, id.String())
-		if err != nil {
-			return err
-		}
-
 		err = m.alertmanager.DeleteAllRoutePoliciesByRuleId(ctx, id.String())
 		if err != nil {
 			return err
 		}
 
 		err = m.alertmanager.DeleteAllInhibitRulesByRuleId(ctx, orgID, id.String())
+		if err != nil {
+			return err
+		}
+
+		err = m.alertmanager.DeleteNotificationConfig(ctx, orgID, id.String())
 		if err != nil {
 			return err
 		}
@@ -585,11 +585,6 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 
 	id, err := m.ruleStore.CreateRule(ctx, storedRule, func(ctx context.Context, id valuer.UUID) error {
 		if parsedRule.NotificationSettings != nil {
-			config := parsedRule.NotificationSettings.GetAlertManagerNotificationConfig()
-			err = m.alertmanager.SetNotificationConfig(ctx, orgID, id.StringValue(), &config)
-			if err != nil {
-				return err
-			}
 			if !parsedRule.NotificationSettings.UsePolicy {
 				request, err := parsedRule.GetRuleRouteRequest(id.StringValue())
 				if err != nil {
@@ -607,6 +602,10 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 				if err != nil {
 					return err
 				}
+			}
+			config := parsedRule.NotificationSettings.GetAlertManagerNotificationConfig()
+			if err = m.alertmanager.SetNotificationConfig(ctx, orgID, id.StringValue(), &config); err != nil {
+				return err
 			}
 		}
 
