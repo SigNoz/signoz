@@ -9,9 +9,14 @@ import {
 	RESERVED_ERROR,
 } from './utils/generateColorPair';
 
+/** Like `||`, but keeps `0`. */
+const valueOrUndefined = <T>(value: T): T | undefined =>
+	value || value === 0 ? value : undefined;
+
 /**
  * Look up an attribute from both `resource` and `attributes` on a span.
  * Resources are checked first (service.name, k8s.* etc. live there).
+ * Falsy values count as missing, except `0`.
  *
  * Accepts both `SpanV3` (waterfall) and `FlamegraphSpan` (flamegraph) by typing
  * structurally — the only fields touched are `resource` and `attributes`.
@@ -22,11 +27,14 @@ export function getSpanAttribute(
 	span: {
 		resource?: Record<string, string>;
 		attributes?: Record<string, any>;
+		tagMap?: Record<string, any>;
 	},
 	key: string,
 ): string | undefined {
 	return (
-		span.resource?.[key] || span.attributes?.[key] || (span as any).tagMap?.[key]
+		valueOrUndefined(span.resource?.[key]) ??
+		valueOrUndefined(span.attributes?.[key]) ??
+		valueOrUndefined(span.tagMap?.[key])
 	);
 }
 
