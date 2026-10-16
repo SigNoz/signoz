@@ -61,7 +61,11 @@ describe('convertV5ResponseToLegacy', () => {
 							],
 							values: [
 								{ timestamp: 1000, value: 10 } as unknown as TimeSeriesValue,
-								{ timestamp: 2000, value: 12 } as unknown as TimeSeriesValue,
+								{
+									timestamp: 2000,
+									value: 12,
+									partial: true,
+								} as unknown as TimeSeriesValue,
 							],
 						} as unknown as TimeSeries,
 					],
@@ -104,7 +108,7 @@ describe('convertV5ResponseToLegacy', () => {
 				labels: { 'service.name': 'adservice' },
 				values: [
 					{ timestamp: 1000, value: '10' },
-					{ timestamp: 2000, value: '12' },
+					{ timestamp: 2000, value: '12', partial: true },
 				],
 				metaData: expect.objectContaining({
 					alias: '__result_0',
