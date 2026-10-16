@@ -59,6 +59,8 @@ export interface PrettyViewProps {
 	 */
 	pinnedFieldsValue?: string[];
 	onPinnedFieldsChange?: (next: string[]) => void;
+	// Levels expanded on first render; deeper nodes start collapsed.
+	expandDepth?: number;
 	/**
 	 * Optional per-leaf value renderer. Return a node to override the default
 	 * `String(value)` rendering for that leaf, or `undefined` to fall back. Used
@@ -80,6 +82,7 @@ function PrettyView({
 	pinnedFieldsValue,
 	onPinnedFieldsChange,
 	renderLeafValue,
+	expandDepth = 5,
 }: PrettyViewProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const [, setCopy] = useCopyToClipboard();
@@ -116,8 +119,8 @@ function PrettyView({
 			_keyPath: readonly (string | number)[],
 			_data: unknown,
 			level: number,
-		): boolean => level < 5,
-		[],
+		): boolean => level < expandDepth,
+		[expandDepth],
 	);
 
 	const isActionVisible = useCallback(
@@ -225,6 +228,9 @@ function PrettyView({
 				isNested,
 			};
 			const menuItems = buildMenuItems(context);
+			if (menuItems.length === 0) {
+				return content;
+			}
 			return (
 				<span className="pretty-view__value-row">
 					<span>{content}</span>
