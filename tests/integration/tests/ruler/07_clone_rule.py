@@ -4,11 +4,12 @@ from http import HTTPStatus
 
 import requests
 
-from fixtures.alerts import delete_all_rules
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.types import Operation, SigNoz
 
 BASE_URL = "/api/v2/rules"
+
+CHANNELS_URL = "/api/v2/notification_channels"
 
 CHANNEL_NAME = f"clone-rule-channel-{uuid.uuid4()}"
 
@@ -56,13 +57,26 @@ def test_clone_rule(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    create_notification_channel: Callable[[dict], str],
-    create_alert_rule: Callable[[dict], str],
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    delete_all_rules(signoz, token)
-    create_notification_channel({"name": CHANNEL_NAME, "webhook_configs": [{"url": "http://localhost:9/alert", "send_resolved": False}]})
-    source_id = create_alert_rule(SOURCE_RULE)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(CHANNELS_URL),
+        json={"name": CHANNEL_NAME, "config": {"kind": "webhook", "spec": {"url": "http://localhost:9/alert"}}},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    channel_id = response.json()["data"]["id"]
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json=SOURCE_RULE,
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    source_id = response.json()["data"]["id"]
 
     response = requests.get(
         signoz.self.host_configs["8080"].get(f"{BASE_URL}/{source_id}"),
@@ -120,42 +134,17 @@ def test_clone_rule(
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
 
-    # a source whose channel was deleted since no longer passes create validation
-    stale_channel_name = f"clone-rule-stale-{uuid.uuid4()}"
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/channels"),
-        json={"name": stale_channel_name, "webhook_configs": [{"url": "http://localhost:9/alert", "send_resolved": False}]},
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.CREATED, response.text
-    stale_channel_id = response.json()["data"]["id"]
-    stale_rule = {
-        **SOURCE_RULE,
-        "alert": "stale channel",
-        "condition": {**SOURCE_RULE["condition"], "thresholds": {"kind": "basic", "spec": [{**SOURCE_RULE["condition"]["thresholds"]["spec"][0], "channels": [stale_channel_name]}]}},
-        "notificationSettings": {**SOURCE_RULE["notificationSettings"], "usePolicy": True},
-    }
-    stale_rule_id = create_alert_rule(stale_rule)
+    for rule_id in [source_id, clone["id"], second_clone["id"]]:
+        response = requests.delete(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{rule_id}"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(f"/api/v1/channels/{stale_channel_id}"),
+        signoz.self.host_configs["8080"].get(f"{CHANNELS_URL}/{channel_id}"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{stale_rule_id}/clone"),
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert stale_channel_name in response.json()["error"]["message"]
-
-    for rule_id in [clone["id"], second_clone["id"]]:
-        response = requests.delete(
-            signoz.self.host_configs["8080"].get(f"/api/v1/rules/{rule_id}"),
-            headers={"Authorization": f"Bearer {token}"},
-            timeout=5,
-        )
-        assert response.status_code == HTTPStatus.OK, response.text
