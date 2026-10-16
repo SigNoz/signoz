@@ -19,7 +19,6 @@ jest.mock(
 					<select
 						data-testid="endpoints-select"
 						onChange={(e): void => setSelectedEndPointName(e.target.value)}
-						role="combobox"
 					>
 						<option value="/api/test">/api/test</option>
 						<option value="/api/new-endpoint">/api/new-endpoint</option>
@@ -44,10 +43,7 @@ describe('TopErrors', () => {
 			startTime: 1000000000,
 			endTime: 1000010000,
 		},
-		initialFilters: {
-			items: [],
-			op: 'AND',
-		},
+		initialFilterExpression: '',
 	};
 
 	// Helper function to wait for table data to load
@@ -307,7 +303,7 @@ describe('TopErrors', () => {
 			'test-domain',
 			mockProps.timeRange.startTime,
 			mockProps.timeRange.endTime,
-			{ items: [], op: 'AND' },
+			'',
 			false,
 		);
 
