@@ -51,6 +51,8 @@ export type GeoMapView =
 
 export type GeoMapLayer = 'regions' | 'bubbles' | 'points';
 
+export type GeoMapProjection = 'mercator' | 'equal_earth' | 'natural_earth';
+
 export interface GeoMapViewPreset {
 	label: string;
 	box: LonLatBox;
@@ -132,6 +134,7 @@ export interface GeoMapProps {
 	view: GeoMapView;
 	/** Whose states the `country` view draws. */
 	country?: SubdivisionCountry;
+	projection: GeoMapProjection;
 	layer: GeoMapLayer;
 	colors: GeoMapColors;
 	bubbleRadius: [number, number];

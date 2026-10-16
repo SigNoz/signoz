@@ -27,6 +27,7 @@ export default function GeoMap({
 	points,
 	view,
 	country,
+	projection,
 	layer,
 	colors,
 	bubbleRadius,
@@ -135,13 +136,15 @@ export default function GeoMap({
 		const code = findShapeAt(
 			[handle.layers.members.getSource(), handle.layers.context.getSource()],
 			[hoveredPoint.lon, hoveredPoint.lat],
+			projection,
 		);
 		return code ? shapes.nameOf(code) : undefined;
-	}, [hoveredPoint, handle, shapes]);
+	}, [hoveredPoint, handle, shapes, projection]);
 
 	useOlLayers({
 		handle,
 		shapes,
+		projection,
 		data,
 		points,
 		pointsLayer,
@@ -157,6 +160,7 @@ export default function GeoMap({
 	const zoom = useOlView(
 		handle,
 		view,
+		projection,
 		country,
 		data,
 		width,

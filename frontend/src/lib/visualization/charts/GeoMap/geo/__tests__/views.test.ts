@@ -6,27 +6,40 @@ const datum = (code: string): GeoMapDatum => ({ code, value: 1, raw: code });
 
 describe('getViewBox', () => {
 	it('crops the world at 58°S and 75°N', () => {
-		expect(getViewBox('world', [])).toStrictEqual([
+		expect(getViewBox('world', 'mercator', [])).toStrictEqual([
 			[-180, -58],
 			[180, 75],
 		]);
 	});
 
+	it.each(['world', 'fit', 'country'] as const)(
+		'shows the Arctic up to 84°N on the %s view off Mercator',
+		(view) => {
+			const [, [, north]] = getViewBox(view, 'equal_earth', []);
+			expect(north).toBe(84);
+		},
+	);
+
 	it('frames a region preset by its own box', () => {
-		expect(getViewBox('europe', [])).toBe(VIEW_PRESETS.europe.box);
+		expect(getViewBox('europe', 'mercator', [])).toBe(VIEW_PRESETS.europe.box);
 	});
 
 	it('fits data by mainlands, so French Guiana does not drag the frame west', () => {
-		const [[west]] = getViewBox('fit', [datum('FR'), datum('DE')]);
+		const [[west]] = getViewBox('fit', 'mercator', [datum('FR'), datum('DE')]);
 		expect(west).toBeGreaterThan(-15);
 	});
 
 	it('falls back to the world when there is nothing to fit', () => {
-		expect(getViewBox('fit', [])).toBe(VIEW_PRESETS.world.box);
+		expect(getViewBox('fit', 'mercator', [])).toBe(VIEW_PRESETS.world.box);
 	});
 
 	it('frames the US by its lower 48', () => {
-		const [[west, south], [east, north]] = getViewBox('country', [], 'US');
+		const [[west, south], [east, north]] = getViewBox(
+			'country',
+			'mercator',
+			[],
+			'US',
+		);
 		const us = COUNTRY_BY_ISO2.get('US');
 		if (!us) {
 			throw new Error('no US outline');
@@ -41,33 +54,33 @@ describe('getViewBox', () => {
 	});
 
 	it('keeps India’s island states in the country frame', () => {
-		const [[west], [east]] = getViewBox('country', [], 'IN');
+		const [[west], [east]] = getViewBox('country', 'mercator', [], 'IN');
 		expect(west).toBeLessThan(72); // Lakshadweep
 		expect(east).toBeGreaterThan(93); // Andaman and Nicobar
 	});
 
 	it('leaves France’s overseas departments out of its frame', () => {
-		const [[west, south], [east]] = getViewBox('country', [], 'FR');
+		const [[west, south], [east]] = getViewBox('country', 'mercator', [], 'FR');
 		expect(west).toBeGreaterThan(-10); // French Guiana
 		expect(south).toBeGreaterThan(35); // Réunion
 		expect(east).toBeLessThan(15);
 	});
 
 	it('keeps island chains whole', () => {
-		const [[idWest], [idEast]] = getViewBox('country', [], 'ID');
+		const [[idWest], [idEast]] = getViewBox('country', 'mercator', [], 'ID');
 		expect(idWest).toBeLessThan(100); // Sumatra
 		expect(idEast).toBeGreaterThan(135); // Papua
 
-		const [[, jpSouth], [jpEast]] = getViewBox('country', [], 'JP');
+		const [[, jpSouth], [jpEast]] = getViewBox('country', 'mercator', [], 'JP');
 		expect(jpSouth).toBeLessThan(32); // Kyushu
 		expect(jpEast).toBeGreaterThan(145); // Hokkaido
 
-		const [[esWest]] = getViewBox('country', [], 'ES');
+		const [[esWest]] = getViewBox('country', 'mercator', [], 'ES');
 		expect(esWest).toBeLessThan(-15); // the Canaries
 	});
 
 	it('keeps both New Zealand islands, without the Chatham Islands across the antimeridian', () => {
-		const [[west, south], [east]] = getViewBox('country', [], 'NZ');
+		const [[west, south], [east]] = getViewBox('country', 'mercator', [], 'NZ');
 		expect(west).toBeLessThan(168);
 		expect(south).toBeLessThan(-45);
 		expect(east).toBeGreaterThan(177);
@@ -75,7 +88,7 @@ describe('getViewBox', () => {
 	});
 
 	it('leaves remote islands out (Easter Island)', () => {
-		const [[west]] = getViewBox('country', [], 'CL');
+		const [[west]] = getViewBox('country', 'mercator', [], 'CL');
 		expect(west).toBeGreaterThan(-80);
 	});
 
@@ -86,6 +99,7 @@ describe('getViewBox', () => {
 		];
 		const [[west, south], [east, north]] = getViewBox(
 			'fit',
+			'mercator',
 			[],
 			undefined,
 			points,
@@ -98,7 +112,7 @@ describe('getViewBox', () => {
 	});
 
 	it('shows the world for a country view with no country', () => {
-		expect(getViewBox('country', [])).toBe(VIEW_PRESETS.world.box);
+		expect(getViewBox('country', 'mercator', [])).toBe(VIEW_PRESETS.world.box);
 	});
 });
 

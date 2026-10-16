@@ -13,6 +13,7 @@ import { getOutsideView } from '../../geo/classify';
 import { useGeoMapShapes } from '../../hooks/useGeoMapShapes';
 import {
 	GeoMapLayer,
+	GeoMapProjection,
 	GeoMapSelection,
 	GeoMapView,
 	SubdivisionCountry,
@@ -36,6 +37,7 @@ export interface GeoMapPlaygroundProps {
 	/** Any country's states with generated values; overrides `dataset`. */
 	statesOf: SubdivisionCountry | 'none';
 	view: GeoMapView;
+	projection: GeoMapProjection;
 	layer: GeoMapLayer;
 	showLabels: boolean;
 	legendPosition: LegendPosition;
@@ -55,6 +57,7 @@ export default function GeoMapPlayground({
 	dataset,
 	statesOf,
 	view,
+	projection,
 	layer,
 	showLabels,
 	legendPosition,
@@ -140,6 +143,7 @@ export default function GeoMapPlayground({
 					<GeoMap
 						data={prepared.data}
 						view={mapView}
+						projection={projection}
 						country={fixture.country}
 						layer={fixture.points ? 'points' : layer}
 						points={fixture.points}

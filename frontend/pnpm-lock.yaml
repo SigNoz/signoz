@@ -149,6 +149,9 @@ importers:
       crypto-js:
         specifier: 4.2.0
         version: 4.2.0
+      d3-geo:
+        specifier: 3.1.1
+        version: 3.1.1
       d3-hierarchy:
         specifier: 3.1.2
         version: 3.1.2
@@ -471,9 +474,6 @@ importers:
       '@typescript/native-preview':
         specifier: 7.0.0-dev.20260430.1
         version: 7.0.0-dev.20260430.1
-      d3-geo:
-        specifier: 3.1.1
-        version: 3.1.1
       eslint-plugin-sonarjs:
         specifier: 4.0.2
         version: 4.0.2(eslint@10.2.1(jiti@2.6.1))
