@@ -13,13 +13,16 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
+// PrepareParamsForTracesV5 returns the traces explorer query params for the
+// given range and filter; the traces explorer writes its time params in
+// nanoseconds. queryType is builder_ai_query for the AI observability explorer.
 func PrepareParamsForTracesV5(start, end time.Time, whereClause string, queryType qbtypes.QueryType) url.Values {
-	// the traces explorer takes its time params in nanoseconds
 	return prepareExplorerParams("traces", queryType, start.UnixNano(), end.UnixNano(), whereClause)
 }
 
+// PrepareParamsForLogsV5 returns the logs explorer query params for the given
+// range and filter; the logs explorer writes its time params in milliseconds.
 func PrepareParamsForLogsV5(start, end time.Time, whereClause string) url.Values {
-	// the logs explorer takes its time params in milliseconds
 	return prepareExplorerParams("logs", qbtypes.QueryTypeBuilder, start.UnixMilli(), end.UnixMilli(), whereClause)
 }
 
