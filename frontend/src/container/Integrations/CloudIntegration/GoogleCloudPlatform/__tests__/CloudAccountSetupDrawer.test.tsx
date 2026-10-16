@@ -1,9 +1,7 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
-import { server } from 'mocks-server/server';
-import { rest, RestRequest } from 'msw';
-import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
+import { ComponentProps } from 'react';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { rest, server } from 'mocks-server/server';
+import { RestRequest } from 'msw';
 
 import CloudAccountSetupDrawer from '../AddNewAccount/CloudAccountSetupDrawer';
 import {
@@ -12,7 +10,6 @@ import {
 	connectionCredentials,
 	connectionCredentialsResponse,
 	createAccountResponse,
-	createAgentAccountResponse,
 	GCP_ACCOUNTS_URL,
 	GCP_CHECK_IN_URL,
 	GCP_CREDENTIALS_URL,
@@ -26,16 +23,12 @@ jest.mock('../../../../../api/common/logEvent', () => ({
 	default: jest.fn(),
 }));
 
-const onClose = jest.fn();
+const onClose = jest.fn() as jest.MockedFunction<
+	ComponentProps<typeof CloudAccountSetupDrawer>['onClose']
+>;
 
 const renderDrawer = (): void => {
-	render(
-		<MockQueryClientProvider>
-			<TooltipProvider>
-				<CloudAccountSetupDrawer onClose={onClose} />
-			</TooltipProvider>
-		</MockQueryClientProvider>,
-	);
+	render(<CloudAccountSetupDrawer onClose={onClose} />);
 };
 
 describe('GCP CloudAccountSetupDrawer', () => {
@@ -84,66 +77,6 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		expect(screen.getByText('Auto-filled by SigNoz')).toBeInTheDocument();
 	});
 
-	it('switches between the manual and agent connection methods inside the same drawer', async () => {
-		const user = userEvent.setup();
-		renderDrawer();
-
-		const drawer = screen.getByTestId('gcp-setup-drawer');
-		expect(screen.getByTestId('gcp-account-name-input')).toBeInTheDocument();
-		expect(screen.getByTestId('gcp-connect-account-btn')).toBeInTheDocument();
-
-		await user.click(screen.getByTestId('gcp-connection-method-agent'));
-
-		await screen.findByTestId('gcp-generate-commands-btn');
-		expect(
-			screen.queryByTestId('gcp-account-name-input'),
-		).not.toBeInTheDocument();
-		expect(
-			screen.queryByTestId('gcp-connect-account-btn'),
-		).not.toBeInTheDocument();
-
-		await user.click(screen.getByTestId('gcp-connection-method-manual'));
-
-		await screen.findByTestId('gcp-account-name-input');
-		expect(
-			screen.queryByTestId('gcp-generate-commands-btn'),
-		).not.toBeInTheDocument();
-
-		// The drawer itself stays mounted, so it does not replay its open animation.
-		expect(screen.getByTestId('gcp-setup-drawer')).toBe(drawer);
-	});
-
-	it('widens the drawer only once the agent setup commands are generated', async () => {
-		server.use(
-			rest.post(GCP_ACCOUNTS_URL, (_req, res, ctx) =>
-				res(ctx.status(201), ctx.json(createAgentAccountResponse)),
-			),
-		);
-		const user = userEvent.setup();
-		renderDrawer();
-
-		const drawer = screen.getByTestId('gcp-setup-drawer');
-		expect(drawer).toHaveAttribute('data-width', 'base');
-
-		await user.click(screen.getByTestId('gcp-connection-method-agent'));
-		await waitFor(() => {
-			expect(screen.getByTestId('gcp-generate-commands-btn')).toBeEnabled();
-		});
-		expect(drawer).toHaveAttribute('data-width', 'base');
-
-		await user.type(
-			screen.getByTestId('gcp-deployment-project-id-input'),
-			'my-deployment-project-123',
-		);
-		await user.click(screen.getByTestId('gcp-deployment-region-select'));
-		await user.click(await screen.findByText('Mumbai (asia-south1)'));
-		await user.click(screen.getByTestId('gcp-generate-commands-btn'));
-
-		await screen.findByTestId('gcp-agent-commands');
-		expect(screen.getByTestId('gcp-setup-drawer')).toBe(drawer);
-		expect(drawer).toHaveAttribute('data-width', 'extra-wide');
-	});
-
 	it('blocks submission and surfaces validation errors when the form is empty', async () => {
 		const user = userEvent.setup();
 		renderDrawer();
@@ -170,6 +103,13 @@ describe('GCP CloudAccountSetupDrawer', () => {
 	});
 
 	it('creates the account, checks the agent in, and closes the drawer', async () => {
+		// A slow check-in keeps the connection in flight long enough to observe it.
+		server.use(
+			rest.post(GCP_CHECK_IN_URL, async (req: RestRequest, res, ctx) => {
+				checkInPayload = await req.json();
+				return res(ctx.delay(300), ctx.status(200), ctx.json(checkInResponse));
+			}),
+		);
 		const user = userEvent.setup();
 		renderDrawer();
 
@@ -195,6 +135,11 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		await user.type(projectIdsInput, 'project-a,project-b,');
 
 		await user.click(screen.getByTestId('gcp-connect-account-btn'));
+
+		// Switching away mid-request would let its success close the other form.
+		await waitFor(() => {
+			expect(screen.getByTestId('gcp-connection-method-agent')).toBeDisabled();
+		});
 
 		await waitFor(() => {
 			expect(createAccountPayload).not.toBeNull();

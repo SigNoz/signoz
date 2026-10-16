@@ -55,6 +55,7 @@ function ManualSetup({
 			<ConnectionMethodSelector
 				value={CloudintegrationtypesGCPConnectionMethodDTO.manual}
 				onChange={onConnectionMethodChange}
+				disabled={isLoading}
 			/>
 			<SetupGuideCallout {...MANUAL_SETUP_GUIDE} />
 			<div className={styles.drawerSection}>

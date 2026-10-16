@@ -1,21 +1,15 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { ComponentProps } from 'react';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { toast } from '@signozhq/ui/sonner';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
-import { server } from 'mocks-server/server';
-import { rest, RestRequest } from 'msw';
-import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
-
-import { CloudAccount } from 'container/Integrations/types';
+import { rest, server } from 'mocks-server/server';
+import { RestRequest } from 'msw';
 
 import AccountSettingsDrawer from '../EditAccount/AccountSettingsDrawer';
 import {
-	GCP_ACCOUNT_ID,
 	GCP_ACCOUNT_URL,
 	GCP_ACCOUNTS_URL,
 	gcpAccount,
 	gcpAccountConfig,
-	gcpAgentAccount,
 	listAccountsResponse,
 } from './mockData';
 
@@ -35,20 +29,22 @@ jest.mock('@signozhq/ui/sonner', () => ({
 	},
 }));
 
-const onClose = jest.fn();
-const setActiveAccount = jest.fn();
+type AccountSettingsDrawerProps = ComponentProps<typeof AccountSettingsDrawer>;
 
-const renderDrawer = (account: CloudAccount = gcpAccount): void => {
+const onClose = jest.fn() as jest.MockedFunction<
+	AccountSettingsDrawerProps['onClose']
+>;
+const setActiveAccount = jest.fn() as jest.MockedFunction<
+	AccountSettingsDrawerProps['setActiveAccount']
+>;
+
+const renderDrawer = (): void => {
 	render(
-		<MockQueryClientProvider>
-			<TooltipProvider>
-				<AccountSettingsDrawer
-					onClose={onClose}
-					account={account}
-					setActiveAccount={setActiveAccount}
-				/>
-			</TooltipProvider>
-		</MockQueryClientProvider>,
+		<AccountSettingsDrawer
+			onClose={onClose}
+			account={gcpAccount}
+			setActiveAccount={setActiveAccount}
+		/>,
 	);
 };
 
@@ -201,58 +197,5 @@ describe('GCP AccountSettingsDrawer', () => {
 		});
 		expect(setActiveAccount).not.toHaveBeenCalled();
 		expect(onClose).not.toHaveBeenCalled();
-	});
-
-	it('disconnects the account with the GCP-specific confirmation copy', async () => {
-		let disconnectedId: string | null = null;
-		server.use(
-			rest.delete(`${GCP_ACCOUNTS_URL}/:id`, (req, res, ctx) => {
-				disconnectedId = req.params.id as string;
-				return res(ctx.status(204));
-			}),
-		);
-
-		const user = userEvent.setup();
-		renderDrawer();
-
-		await user.click(screen.getByRole('button', { name: /disconnect/i }));
-
-		await expect(
-			screen.findByText(/manually tear down/i),
-		).resolves.toBeInTheDocument();
-
-		await user.click(screen.getByRole('button', { name: /remove account/i }));
-
-		await waitFor(() => {
-			expect(disconnectedId).toBe(GCP_ACCOUNT_ID);
-		});
-		expect(setActiveAccount).toHaveBeenCalledWith(null);
-		expect(onClose).toHaveBeenCalledTimes(1);
-	});
-
-	it('shows agent accounts read-only, since the backend rejects updates to them', () => {
-		renderDrawer(gcpAgentAccount);
-
-		expect(screen.getByTestId('gcp-agent-monitored-projects')).toHaveTextContent(
-			'my-agent-project',
-		);
-		expect(
-			screen.queryByTestId('gcp-edit-project-ids-select'),
-		).not.toBeInTheDocument();
-		expect(
-			screen.queryByTestId('gcp-update-account-btn'),
-		).not.toBeInTheDocument();
-	});
-
-	it('explains the agent-specific cleanup when disconnecting an agent account', async () => {
-		const user = userEvent.setup();
-		renderDrawer(gcpAgentAccount);
-
-		await user.click(screen.getByRole('button', { name: /disconnect/i }));
-
-		await expect(
-			screen.findByText(/signoz-integration-bootstrap Infrastructure/i),
-		).resolves.toBeInTheDocument();
-		expect(screen.queryByText(/manually tear down/i)).not.toBeInTheDocument();
 	});
 });

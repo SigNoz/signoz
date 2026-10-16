@@ -35,7 +35,6 @@ interface UseAgentAccountSetupProps {
 interface UseAgentAccountSetup {
 	isLoading: boolean;
 	generateCommands: (values: GcpSetupFormValues) => Promise<void>;
-	handleClose: () => void;
 	connectionParams?: CloudintegrationtypesCredentialsDTO;
 	isConnectionParamsLoading: boolean;
 	submitError: string | null;
@@ -185,7 +184,6 @@ export function useAgentAccountSetup({
 	return {
 		isLoading,
 		generateCommands,
-		handleClose,
 		connectionParams: connectionParams?.data as
 			| CloudintegrationtypesCredentialsDTO
 			| undefined,

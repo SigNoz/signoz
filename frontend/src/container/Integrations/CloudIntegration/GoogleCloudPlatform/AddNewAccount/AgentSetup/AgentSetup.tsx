@@ -25,6 +25,8 @@ interface AgentSetupProps {
 		connectionMethod: CloudintegrationtypesGCPConnectionMethodDTO,
 	) => void;
 	onCommandsGenerated: () => void;
+	/** Asks to leave the setup; the parent may confirm before closing. */
+	onCancel: () => void;
 	onClose: () => void;
 }
 
@@ -32,12 +34,12 @@ function AgentSetup({
 	footerSlot,
 	onConnectionMethodChange,
 	onCommandsGenerated,
+	onCancel,
 	onClose,
 }: AgentSetupProps): JSX.Element {
 	const {
 		isLoading,
 		generateCommands,
-		handleClose,
 		connectionParams,
 		isConnectionParamsLoading,
 		submitError,
@@ -112,7 +114,7 @@ function AgentSetup({
 				errorTitle="Failed to generate GCP setup commands"
 				error={submitError}
 				onDismissError={clearSubmitError}
-				onCancel={handleClose}
+				onCancel={onCancel}
 			>
 				{!connectionCommands && (
 					<Button
