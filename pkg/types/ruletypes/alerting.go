@@ -111,18 +111,14 @@ type AlertCompositeQuery struct {
 
 type RuleCondition struct {
 	CompositeQuery    *AlertCompositeQuery `json:"compositeQuery" required:"true"`
-	CompareOperator   CompareOperator      `json:"op,omitzero"`
-	Target            *float64             `json:"target,omitempty" format:"double"`
 	AlertOnAbsent     bool                 `json:"alertOnAbsent,omitempty"`
 	AbsentFor         uint64               `json:"absentFor,omitempty"`
-	MatchType         MatchType            `json:"matchType,omitzero"`
-	TargetUnit        string               `json:"targetUnit,omitempty"`
 	Algorithm         string               `json:"algorithm,omitempty"`
 	Seasonality       Seasonality          `json:"seasonality,omitzero"`
 	SelectedQuery     string               `json:"selectedQueryName,omitempty"`
 	RequireMinPoints  bool                 `json:"requireMinPoints,omitempty"`
 	RequiredNumPoints int                  `json:"requiredNumPoints,omitempty"`
-	Thresholds        *RuleThresholdData   `json:"thresholds,omitempty"`
+	Thresholds        *RuleThresholdData   `json:"thresholds" required:"true"`
 }
 
 func (rc *RuleCondition) SelectedQueryName() string {

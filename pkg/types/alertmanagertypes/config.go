@@ -610,10 +610,6 @@ type ConfigStore interface {
 
 	// ListAllChannels returns the list of channels for all organizations.
 	ListAllChannels(context.Context) ([]*Channel, error)
-
-	// GetMatchers gets a list of matchers per organization.
-	// Matchers is an array of ruleId to receiver names.
-	GetMatchers(context.Context, string) (map[string][]string, error)
 }
 
 // MarshalSecretValue if set to true will expose Secret type

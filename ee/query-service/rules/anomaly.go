@@ -105,14 +105,14 @@ func (r *AnomalyRule) Type() ruletypes.RuleType {
 }
 
 func (r *AnomalyRule) prepareQueryRange(ctx context.Context, ts time.Time) *qbtypes.QueryRangeRequest {
-	r.logger.InfoContext(
-		ctx, "prepare query range request", slog.Int64("ts", ts.UnixMilli()),
-		slog.Int64("eval.window_ms", r.EvalWindow().Milliseconds()),
-		slog.Int64("eval.delay_ms", r.EvalDelay().Milliseconds()),
-	)
-
 	startTs, endTs := r.Timestamps(ts)
 	start, end := startTs.UnixMilli(), endTs.UnixMilli()
+
+	r.logger.InfoContext(
+		ctx, "prepare query range request", slog.Int64("ts", ts.UnixMilli()),
+		slog.Int64("eval.window_ms", end-start),
+		slog.Int64("eval.delay_ms", r.EvalDelay().Milliseconds()),
+	)
 
 	req := &qbtypes.QueryRangeRequest{
 		Start:       uint64(start),
@@ -423,12 +423,10 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 func (r *AnomalyRule) String() string {
 
 	ar := ruletypes.PostableRule{
-		AlertName:         r.Name(),
-		RuleCondition:     r.Condition(),
-		EvalWindow:        r.EvalWindow(),
-		Labels:            r.Labels().Map(),
-		Annotations:       r.Annotations().Map(),
-		PreferredChannels: r.PreferredChannels(),
+		AlertName:     r.Name(),
+		RuleCondition: r.Condition(),
+		Labels:        r.Labels().Map(),
+		Annotations:   r.Annotations().Map(),
 	}
 
 	byt, err := json.Marshal(ar)

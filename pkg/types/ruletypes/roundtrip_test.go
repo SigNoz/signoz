@@ -147,7 +147,7 @@ func TestV2MinimalReadShape(t *testing.T) {
 
 	body := readBody(t, stored)
 
-	for _, field := range []string{"labels", "annotations", "description", "preferredChannels", "evalWindow", "frequency"} {
+	for _, field := range []string{"labels", "annotations", "description"} {
 		assert.NotContains(t, body, field)
 	}
 

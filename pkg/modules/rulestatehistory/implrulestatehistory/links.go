@@ -49,19 +49,14 @@ func (m *module) relatedLinkBuilderForRule(ctx context.Context, orgID valuer.UUI
 		return nil
 	}
 
-	builder := &relatedLinkBuilder{alertType: rule.AlertType}
-	if rule.Evaluation != nil {
-		if evaluation, err := rule.Evaluation.GetEvaluation(); err == nil {
-			builder.evaluation = evaluation
-		}
+	if rule.Evaluation == nil {
+		return nil
 	}
-	if builder.evaluation == nil {
-		evalWindow := rule.EvalWindow
-		if evalWindow.IsZero() {
-			evalWindow = valuer.MustParseTextDuration("5m")
-		}
-		builder.evaluation = ruletypes.RollingWindow{EvalWindow: evalWindow}
+	evaluation, err := rule.Evaluation.GetEvaluation()
+	if err != nil {
+		return nil
 	}
+	builder := &relatedLinkBuilder{alertType: rule.AlertType, evaluation: evaluation}
 
 	// links are still built from the labels alone when the rule has no builder
 	// query for the signal (e.g. ClickHouse SQL alerts)

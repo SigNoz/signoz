@@ -61,15 +61,15 @@ func (r *ThresholdRule) Type() ruletypes.RuleType {
 }
 
 func (r *ThresholdRule) prepareQueryRange(ctx context.Context, ts time.Time) (*qbtypes.QueryRangeRequest, error) {
+	startTs, endTs := r.Timestamps(ts)
+	start, end := startTs.UnixMilli(), endTs.UnixMilli()
+
 	r.logger.InfoContext(
 		ctx, "prepare query range request v5",
 		slog.Int64("ts", ts.UnixMilli()),
-		slog.Int64("eval_window", r.evalWindow.Milliseconds()),
+		slog.Int64("eval_window", end-start),
 		slog.Int64("eval_delay", r.evalDelay.Milliseconds()),
 	)
-
-	startTs, endTs := r.Timestamps(ts)
-	start, end := startTs.UnixMilli(), endTs.UnixMilli()
 
 	req := &qbtypes.QueryRangeRequest{
 		Start:       uint64(start),
@@ -468,12 +468,10 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 
 func (r *ThresholdRule) String() string {
 	ar := ruletypes.PostableRule{
-		AlertName:         r.name,
-		RuleCondition:     r.ruleCondition,
-		EvalWindow:        r.evalWindow,
-		Labels:            r.labels.Map(),
-		Annotations:       r.annotations.Map(),
-		PreferredChannels: r.preferredChannels,
+		AlertName:     r.name,
+		RuleCondition: r.ruleCondition,
+		Labels:        r.labels.Map(),
+		Annotations:   r.annotations.Map(),
 	}
 
 	byt, err := json.Marshal(ar)

@@ -788,8 +788,12 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	var evaluation ruletypes.Evaluation
 	rule, err := aH.ruleManager.GetRule(r.Context(), id)
-	if err == nil {
+	if err == nil && rule.Evaluation != nil {
+		evaluation, _ = rule.Evaluation.GetEvaluation()
+	}
+	if evaluation != nil {
 		for idx := range res.Items {
 			lbls := make(map[string]string)
 			err := json.Unmarshal([]byte(res.Items[idx].Labels), &lbls)
@@ -798,10 +802,11 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 			}
 			end := time.Unix(res.Items[idx].UnixMilli/1000, 0)
 			// why are we subtracting 3 minutes?
-			// the query range is calculated based on the rule's evalWindow and evalDelay
+			// the query range is calculated based on the rule's evaluation window and evalDelay
 			// alerts have 2 minutes delay built in, so we need to subtract that from the start time
 			// to get the correct query range
-			start := end.Add(-rule.EvalWindow.Duration() - 3*time.Minute)
+			start, _ := evaluation.NextWindowFor(end)
+			start = start.Add(-3 * time.Minute)
 			if rule.AlertType == ruletypes.AlertTypeLogs {
 				// TODO(srikanthccv): re-visit this and support multiple queries
 				var q qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
