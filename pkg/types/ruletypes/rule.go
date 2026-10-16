@@ -53,7 +53,7 @@ func (rule *StorableRule) ToPostableRuleForCloning() (*PostableRule, error) {
 	if err := json.Unmarshal([]byte(rule.Data), postable); err != nil {
 		return nil, err
 	}
-	postable.AlertName = valuer.GenerateCloneName(postable.AlertName, 0)
+	postable.AlertName = postable.AlertName.GenerateCloneName()
 	return postable, nil
 }
 

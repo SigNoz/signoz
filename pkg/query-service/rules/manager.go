@@ -1119,7 +1119,7 @@ func (m *Manager) TestNotification(ctx context.Context, orgID valuer.UUID, ruleS
 		parsedRule.NotificationSettings.GroupBy = append(parsedRule.NotificationSettings.GroupBy, ruletypes.LabelThresholdName)
 	}
 	config := parsedRule.NotificationSettings.GetAlertManagerNotificationConfig()
-	err = m.alertmanager.SetNotificationConfig(ctx, orgID, parsedRule.AlertName, &config)
+	err = m.alertmanager.SetNotificationConfig(ctx, orgID, parsedRule.AlertName.StringValue(), &config)
 	if err != nil {
 		return 0, err
 	}
