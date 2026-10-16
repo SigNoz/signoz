@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
@@ -206,9 +209,70 @@ var BuildLogsPipelineTestData = []struct {
 func TestBuildLogsPipeline(t *testing.T) {
 	for _, test := range BuildLogsPipelineTestData {
 		Convey(test.Name, t, func() {
-			v, err := buildCollectorPipelineProcessorsList(test.fromCollector, test.userPipelines)
+			v, err := buildCollectorPipelineProcessorsList(test.fromCollector, test.userPipelines, nil)
 			So(err, ShouldBeNil)
 			So(v, ShouldResemble, test.finalOutput)
+		})
+	}
+}
+
+func TestBuildLogsPipelineWithNormalizer(t *testing.T) {
+	a := constants.LogsPPLPfx + "a"
+	b := constants.LogsPPLPfx + "b"
+	before := map[string]any{"opamp": map[string]any{"position": "before"}}
+	after := map[string]any{"opamp": map[string]any{"position": "after"}}
+
+	testCases := []struct {
+		name          string
+		fromCollector []string
+		userPipelines []string
+		configs       map[string]any
+		expected      []string
+	}{
+		{
+			name:          "ExistingAndStaleUserProcessorsReplaced",
+			fromCollector: []string{"memory_limiter", a, constants.LogsPPLPfx + "stale", constants.OldLogsPPLPfx + "old", "signozlogsnormalizer", "custom", "batch"},
+			userPipelines: []string{a, b},
+			expected:      []string{"memory_limiter", a, b, "signozlogsnormalizer", "custom", "batch"},
+		},
+		{
+			name:          "NamedNormalizerAfter_CustomProcessorsKeepPlace",
+			fromCollector: []string{"memory_limiter", "custom_a", "signozlogsnormalizer/x", a, "custom_b", "batch"},
+			userPipelines: []string{a},
+			configs:       map[string]any{"signozlogsnormalizer/x": after},
+			expected:      []string{"memory_limiter", "custom_a", a, "signozlogsnormalizer/x", "custom_b", "batch"},
+		},
+		{
+			name:          "FirstNormalizerAfter_SecondIgnored",
+			fromCollector: []string{"memory_limiter", "signozlogsnormalizer/first", "signozlogsnormalizer/second", "batch"},
+			userPipelines: []string{a},
+			configs:       map[string]any{"signozlogsnormalizer/first": after, "signozlogsnormalizer/second": before},
+			expected:      []string{"memory_limiter", a, "signozlogsnormalizer/first", "signozlogsnormalizer/second", "batch"},
+		},
+		{
+			name:          "FirstNormalizerBefore_SecondIgnored",
+			fromCollector: []string{"memory_limiter", "signozlogsnormalizer/first", "signozlogsnormalizer/second", "batch"},
+			userPipelines: []string{a},
+			configs:       map[string]any{"signozlogsnormalizer/first": before, "signozlogsnormalizer/second": after},
+			expected:      []string{"memory_limiter", "signozlogsnormalizer/first", a, "signozlogsnormalizer/second", "batch"},
+		},
+		{
+			name:          "NormalizerAfterBatch",
+			fromCollector: []string{"memory_limiter", "batch", "signozlogsnormalizer"},
+			userPipelines: []string{a},
+			expected:      []string{"memory_limiter", "batch", a, "signozlogsnormalizer"},
+		},
+		{
+			name:          "NoUserPipelines_StaleRemoved",
+			fromCollector: []string{"memory_limiter", a, "signozlogsnormalizer", "batch"},
+			expected:      []string{"memory_limiter", "signozlogsnormalizer", "batch"},
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			processors, err := buildCollectorPipelineProcessorsList(testCase.fromCollector, testCase.userPipelines, testCase.configs)
+			require.NoError(t, err)
+			assert.Equal(t, testCase.expected, processors)
 		})
 	}
 }
@@ -436,4 +500,62 @@ func TestPipeCharInAliasDoesntBreakCollectorConfig(t *testing.T) {
 			"test":   "val",
 		}, result[0].Attributes_string,
 	)
+}
+
+func TestRecommendAgentConfigWithNormalizerProcessorAndJSONBody(t *testing.T) {
+	userPipeline := makeTestAddAttributePipeline()
+	controller := &LogParsingPipelineController{
+		fl: flaggertest.WithUseJSONBody(t, true),
+		GetIntegrationPipelines: func(context.Context, string) ([]pipelinetypes.GettablePipeline, error) {
+			return []pipelinetypes.GettablePipeline{userPipeline}, nil
+		},
+	}
+	normalizeOperator := CollectorConfProcessorName(getNormalizePipeline())
+	user := CollectorConfProcessorName(userPipeline)
+
+	testCases := []struct {
+		name       string
+		processors string
+		logs       string
+		expected   []any
+	}{
+		{
+			name:     "NoNormalizer_OperatorPrepended",
+			logs:     "[memory_limiter, batch]",
+			expected: []any{"memory_limiter", normalizeOperator, user, "batch"},
+		},
+		{
+			name:     "NormalizerDefault_OperatorKept",
+			logs:     "[memory_limiter, signozlogsnormalizer, batch]",
+			expected: []any{"memory_limiter", normalizeOperator, user, "signozlogsnormalizer", "batch"},
+		},
+		{
+			name:       "NormalizerBefore_OperatorDropped",
+			processors: "signozlogsnormalizer:\n    opamp:\n      position: before\n",
+			logs:       "[memory_limiter, signozlogsnormalizer, batch]",
+			expected:   []any{"memory_limiter", "signozlogsnormalizer", user, "batch"},
+		},
+		{
+			name:       "NormalizerAfter_OperatorKept",
+			processors: "signozlogsnormalizer:\n    opamp:\n      position: after\n",
+			logs:       "[memory_limiter, signozlogsnormalizer, batch]",
+			expected:   []any{"memory_limiter", normalizeOperator, user, "signozlogsnormalizer", "batch"},
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			conf := fmt.Sprintf(
+				"processors:\n  memory_limiter: {}\n  batch: {}\n  %s\nservice:\n  pipelines:\n    logs:\n      receivers: [otlp]\n      processors: %s\n      exporters: [clickhouselogsexporter]\n",
+				testCase.processors, testCase.logs,
+			)
+
+			recommended, _, err := controller.RecommendAgentConfig(valuer.GenerateUUID(), []byte(conf), nil)
+			require.NoError(t, err)
+
+			var recommendedConf map[string]any
+			require.NoError(t, yaml.Unmarshal(recommended, &recommendedConf))
+			logs := recommendedConf["service"].(map[string]any)["pipelines"].(map[string]any)["logs"].(map[string]any)
+			assert.Equal(t, testCase.expected, logs["processors"])
+		})
+	}
 }

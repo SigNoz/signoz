@@ -1,6 +1,5 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 
 import type { VariableSelection } from '../selectionTypes';
 import ValueSelector from '../components/selectors/ValueSelector';
@@ -20,19 +19,23 @@ function renderSelector(
 	multiSelect = true,
 ): void {
 	render(
-		<TooltipProvider>
-			<ValueSelector
-				options={options}
-				variableType="dynamic"
-				multiSelect={multiSelect}
-				showAllOption
-				selection={selection}
-				onChange={jest.fn()}
-				emptyFallback={{ value: [], allSelected: false }}
-				testId="variable-select-env"
-			/>
-		</TooltipProvider>,
+		<ValueSelector
+			options={options}
+			variableType="dynamic"
+			multiSelect={multiSelect}
+			showAllOption
+			selection={selection}
+			onChange={jest.fn()}
+			emptyFallback={{ value: [], allSelected: false }}
+			testId="variable-select-env"
+		/>,
 	);
+}
+
+async function openDropdown(): Promise<void> {
+	const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+	const control = screen.getByTestId('variable-select-env');
+	await user.click(control.querySelector('input') as HTMLInputElement);
 }
 
 /** Hovers an element and lets the tooltip's open delay elapse. */
@@ -112,15 +115,89 @@ describe('ValueSelector', () => {
 		});
 	});
 
+	describe('a dynamic variable', () => {
+		function renderDynamic(
+			complete: boolean,
+			relatedValues: string[],
+		): jest.Mock {
+			const onSearch = jest.fn();
+			render(
+				<ValueSelector
+					options={OPTIONS}
+					variableType="dynamic"
+					multiSelect
+					showAllOption
+					selection={{ value: [], allSelected: false }}
+					onChange={jest.fn()}
+					emptyFallback={{ value: [], allSelected: false }}
+					testId="variable-select-env"
+					dynamic={{
+						values: OPTIONS,
+						relatedValues,
+						complete,
+						onSearch,
+						onSearchReset: jest.fn(),
+					}}
+				/>,
+			);
+			return onSearch;
+		}
+
+		it('splits related values out of the full list', async () => {
+			renderDynamic(true, ['checkout-service-prod']);
+
+			await openDropdown();
+
+			expect(
+				screen.getByRole('heading', { level: 2, name: /Related Values/ }),
+			).toBeInTheDocument();
+			expect(
+				screen.getByRole('heading', { level: 2, name: /All Values/ }),
+			).toBeInTheDocument();
+		});
+
+		it('still opens its dropdown in single-select', async () => {
+			// The shared single select spreads unknown props over its own handlers, so
+			// passing it an `onDropdownVisibleChange` silently kills its open state.
+			render(
+				<ValueSelector
+					options={OPTIONS}
+					variableType="dynamic"
+					multiSelect={false}
+					showAllOption={false}
+					selection={{ value: '', allSelected: false }}
+					onChange={jest.fn()}
+					emptyFallback={{ value: '', allSelected: false }}
+					testId="variable-select-env"
+					dynamic={{
+						values: OPTIONS,
+						relatedValues: [],
+						complete: false,
+						onSearch: jest.fn(),
+						onSearchReset: jest.fn(),
+					}}
+				/>,
+			);
+
+			await openDropdown();
+
+			expect(screen.getByText('cart-service-prod')).toBeInTheDocument();
+		});
+
+		it('routes typing to the API search when the list is truncated', async () => {
+			const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+			const onSearch = renderDynamic(false, []);
+
+			await openDropdown();
+			await user.keyboard('pay');
+
+			expect(onSearch).toHaveBeenLastCalledWith('pay');
+		});
+	});
+
 	describe('clearing', () => {
 		function clearIcon(): Element | null {
 			return document.querySelector('.ant-select-clear');
-		}
-
-		async function openDropdown(): Promise<void> {
-			const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-			const control = screen.getByTestId('variable-select-env');
-			await user.click(control.querySelector('input') as HTMLInputElement);
 		}
 
 		it('offers no clear icon while the list is closed', () => {
@@ -151,18 +228,16 @@ describe('ValueSelector', () => {
 			const onChange = jest.fn();
 			const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
 			render(
-				<TooltipProvider>
-					<ValueSelector
-						options={OPTIONS}
-						variableType="query"
-						multiSelect
-						showAllOption
-						selection={{ value: VALUES, allSelected: false }}
-						onChange={onChange}
-						emptyFallback={{ value: [OPTIONS[0]], allSelected: false }}
-						testId="variable-select-env"
-					/>
-				</TooltipProvider>,
+				<ValueSelector
+					options={OPTIONS}
+					variableType="query"
+					multiSelect
+					showAllOption
+					selection={{ value: VALUES, allSelected: false }}
+					onChange={onChange}
+					emptyFallback={{ value: [OPTIONS[0]], allSelected: false }}
+					testId="variable-select-env"
+				/>,
 			);
 
 			await openDropdown();
@@ -190,18 +265,16 @@ describe('ValueSelector', () => {
 		): jest.Mock {
 			const onChange = jest.fn();
 			render(
-				<TooltipProvider>
-					<ValueSelector
-						options={options}
-						variableType="dynamic"
-						multiSelect
-						showAllOption
-						selection={selection}
-						onChange={onChange}
-						emptyFallback={{ value: [], allSelected: false }}
-						testId="variable-select-env"
-					/>
-				</TooltipProvider>,
+				<ValueSelector
+					options={options}
+					variableType="dynamic"
+					multiSelect
+					showAllOption
+					selection={selection}
+					onChange={onChange}
+					emptyFallback={{ value: [], allSelected: false }}
+					testId="variable-select-env"
+				/>,
 			);
 			return onChange;
 		}

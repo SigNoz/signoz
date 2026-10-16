@@ -1,0 +1,18 @@
+.splitButton {
+	display: inline-flex;
+	min-width: 0;
+	max-width: 220px;
+
+	> [data-slot='button']:first-child {
+		--button-min-width: 0;
+		--button-border-radius: var(--radius-1) 0 0 var(--radius-1);
+	}
+
+	> [data-slot='button']:last-child {
+		--button-flex-shrink: 0;
+		--button-border-radius: 0 var(--radius-1) var(--radius-1) 0;
+
+		border-left: 1px solid
+			color-mix(in srgb, var(--l1-foreground) 25%, transparent);
+	}
+}

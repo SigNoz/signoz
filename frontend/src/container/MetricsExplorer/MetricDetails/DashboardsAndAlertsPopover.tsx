@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { generatePath } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
-import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
+import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { Skeleton } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import {
@@ -63,10 +63,11 @@ function DashboardsAndAlertsPopover({
 		);
 	}, [dashboardsData]);
 
-	const alertsPopoverContent = useMemo(() => {
+	const alertsPopoverContent = useMemo((): DropdownItemType[] | null => {
 		if (alerts && alerts.length > 0) {
 			return alerts.map((alert) => ({
-				key: alert.alertId,
+				type: 'item',
+				value: alert.alertId,
 				label: (
 					<Typography.Link
 						key={alert.alertId}
@@ -85,10 +86,11 @@ function DashboardsAndAlertsPopover({
 		return null;
 	}, [alerts]);
 
-	const dashboardsPopoverContent = useMemo(() => {
+	const dashboardsPopoverContent = useMemo((): DropdownItemType[] | null => {
 		if (dashboards && dashboards.length > 0) {
 			return dashboards.map((dashboard) => ({
-				key: dashboard.dashboardId,
+				type: 'item',
+				value: dashboard.dashboardId,
 				label: (
 					<Typography.Link
 						key={dashboard.dashboardId}
@@ -128,14 +130,15 @@ function DashboardsAndAlertsPopover({
 	return (
 		<div className="dashboards-and-alerts-popover-container">
 			{dashboardsPopoverContent && (
-				<DropdownMenuSimple
-					menu={{
-						items: dashboardsPopoverContent,
-					}}
+				<Dropdown
+					items={dashboardsPopoverContent}
+					nativeButton={false}
 					align="start"
+					side="bottom"
 				>
 					<div
 						className="dashboards-and-alerts-popover dashboards-popover"
+						data-testid="metric-dashboards-popover"
 						style={{ backgroundColor: `${Color.BG_SIENNA_500}33` }}
 					>
 						<Grid2X2 size={12} color={Color.BG_SIENNA_500} />
@@ -143,17 +146,18 @@ function DashboardsAndAlertsPopover({
 							{pluralize(dashboards.length, 'dashboard')}
 						</Typography.Text>
 					</div>
-				</DropdownMenuSimple>
+				</Dropdown>
 			)}
 			{alertsPopoverContent && (
-				<DropdownMenuSimple
-					menu={{
-						items: alertsPopoverContent,
-					}}
+				<Dropdown
+					items={alertsPopoverContent}
+					nativeButton={false}
 					align="start"
+					side="bottom"
 				>
 					<div
 						className="dashboards-and-alerts-popover alerts-popover"
+						data-testid="metric-alerts-popover"
 						style={{ backgroundColor: `${Color.BG_SAKURA_500}33` }}
 					>
 						<Bell size={12} color={Color.BG_SAKURA_500} />
@@ -161,7 +165,7 @@ function DashboardsAndAlertsPopover({
 							{pluralize(alerts.length, 'alert rule')}
 						</Typography.Text>
 					</div>
-				</DropdownMenuSimple>
+				</Dropdown>
 			)}
 		</div>
 	);

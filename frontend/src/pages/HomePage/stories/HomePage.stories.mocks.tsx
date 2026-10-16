@@ -164,10 +164,10 @@ export const homeMocks = defineStoryMocks({
 		),
 
 		rest.get(
-			'http://localhost/api/v1/explorer/views',
+			'http://localhost/api/v2/saved_views',
 			response.json((req) => {
-				const sourcePage = req.url.searchParams.get('sourcePage') ?? 'logs';
-				const signal = isSavedViewSignal(sourcePage) ? sourcePage : 'logs';
+				const source = req.url.searchParams.get('source') ?? 'logs';
+				const signal = isSavedViewSignal(source) ? source : 'logs';
 
 				return savedViewsResponse(
 					values.savedViewSignals.includes(signal) ? values.savedViews : 0,

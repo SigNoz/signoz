@@ -35,7 +35,6 @@ import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { SubscriptionManagePermissions } from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
 import { MIN_ACCOUNT_AGE_FOR_CHANGELOG } from 'constants/changelog';
 import { Events } from 'constants/events';
-import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
@@ -43,6 +42,7 @@ import { USER_PREFERENCES } from 'constants/userPreferences';
 import AIAssistantModal from 'container/AIAssistant/AIAssistantModal';
 import AIAssistantPanel from 'container/AIAssistant/AIAssistantPanel';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
+import BottomStrip from 'container/BottomStrip';
 import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
 import dayjs from 'dayjs';
@@ -51,6 +51,8 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { useNotifications } from 'hooks/useNotifications';
+import { ChatSupportState, useChatSupport } from 'hooks/useChatSupport';
+import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import useTabVisibility from 'hooks/useTabFocus';
 import history from 'lib/history';
 import { isNull } from 'lodash-es';
@@ -101,9 +103,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		trialInfo,
 		activeLicense,
 		isFetchingActiveLicense,
-		featureFlags,
-		isFetchingFeatureFlags,
-		featureFlagsFetchError,
 		userPreferences,
 		isFetchingUserPreferences,
 		updateChangelog,
@@ -402,6 +401,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	}, [pathname]);
 
 	const isToDisplayLayout = isLoggedIn;
+	const isSavedViewEnabled = useSavedViewEnabled();
 
 	const routeKey = useMemo(() => getRouteKey(pathname), [pathname]);
 	const pageTitle = t(routeKey);
@@ -489,42 +489,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		}
 	}, [isDarkMode]);
 
-	const showAddCreditCardModal = useMemo(() => {
-		if (
-			!isFetchingFeatureFlags &&
-			(featureFlags || featureFlagsFetchError) &&
-			activeLicense &&
-			trialInfo
-		) {
-			let isChatSupportEnabled = false;
-			let isPremiumSupportEnabled = false;
-			if (featureFlags && featureFlags.length > 0) {
-				isChatSupportEnabled =
-					featureFlags.find((flag) => flag.name === FeatureKeys.CHAT_SUPPORT)
-						?.active || false;
-
-				isPremiumSupportEnabled =
-					featureFlags.find((flag) => flag.name === FeatureKeys.PREMIUM_SUPPORT)
-						?.active || false;
-			}
-			return (
-				isLoggedIn &&
-				!isPremiumSupportEnabled &&
-				isChatSupportEnabled &&
-				!trialInfo?.trialConvertedToSubscription &&
-				isCloudUserVal
-			);
-		}
-		return false;
-	}, [
-		featureFlags,
-		featureFlagsFetchError,
-		isCloudUserVal,
-		isFetchingFeatureFlags,
-		isLoggedIn,
-		activeLicense,
-		trialInfo,
-	]);
+	const chatSupport = useChatSupport();
 
 	// Listen for API warnings
 	const handleWarning = (
@@ -868,6 +833,10 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 								</OverlayScrollbar>
 							</LayoutContent>
 						</Sentry.ErrorBoundary>
+
+						{isSavedViewEnabled && isToDisplayLayout && !renderFullScreen && (
+							<BottomStrip />
+						)}
 					</div>
 
 					{isLoggedIn && isAIAssistantEnabled && (
@@ -878,12 +847,16 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					)}
 				</Flex>
 
-				{showAddCreditCardModal && <ChatSupportGateway />}
+				{chatSupport === ChatSupportState.NeedsCard && !isSavedViewEnabled && (
+					<ChatSupportGateway />
+				)}
 				{showChangelogModal && changelog && (
 					<ChangelogModal changelog={changelog} onClose={toggleChangelogModal} />
 				)}
 
-				<Toaster />
+				<Toaster
+					offset={{ bottom: 'calc(var(--bottom-strip-height, 0px) + 24px)' }}
+				/>
 			</Layout>
 		</TooltipProvider>
 	);

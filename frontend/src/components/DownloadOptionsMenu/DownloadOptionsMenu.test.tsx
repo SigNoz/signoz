@@ -106,7 +106,7 @@ describe.each([
 		renderWithStore(dataSource);
 		const button = screen.getByTestId(testId);
 		expect(button).toBeInTheDocument();
-		expect(button).toHaveClass('periscope-btn', 'ghost');
+		expect(button).toHaveAccessibleName('Download');
 	});
 
 	it('shows popover with export options when download button is clicked', () => {
@@ -308,13 +308,16 @@ describe.each([
 
 		fireEvent.click(screen.getByText('Export'));
 
-		expect(screen.getByTestId(testId)).toBeDisabled();
+		expect(screen.getByTestId(testId)).toHaveAttribute('aria-disabled', 'true');
 		expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
 		resolveDownload!();
 
 		await waitFor(() => {
-			expect(screen.getByTestId(testId)).not.toBeDisabled();
+			expect(screen.getByTestId(testId)).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 	});
 });

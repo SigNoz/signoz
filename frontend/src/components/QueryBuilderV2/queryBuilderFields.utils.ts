@@ -10,6 +10,7 @@ export interface ResolvedQueryBuilderField {
 	reason?: string;
 	/** Rendered open, not dismissable, and kept out of the add-on toggle bar. */
 	pinned: boolean;
+	placeholder?: string;
 }
 
 const AVAILABLE: ResolvedQueryBuilderField = {
@@ -17,6 +18,8 @@ const AVAILABLE: ResolvedQueryBuilderField = {
 	disabled: false,
 	pinned: false,
 };
+
+export const STEP_INTERVAL_PLACEHOLDER = 'Auto';
 
 function fromRule(rule: QueryBuilderFieldRule): ResolvedQueryBuilderField {
 	switch (rule.state) {
@@ -41,8 +44,10 @@ export function resolveQueryBuilderField(
 	config?: QueryBuilderFieldsConfig,
 ): ResolvedQueryBuilderField {
 	const rule = config?.[field];
+	const resolved = rule ? fromRule(rule) : AVAILABLE;
+	const placeholder = rule?.state === 'pinned' ? rule.placeholder : undefined;
 
-	return rule ? fromRule(rule) : AVAILABLE;
+	return placeholder ? { ...resolved, placeholder } : resolved;
 }
 
 /**
@@ -76,6 +81,7 @@ export const RAW_QUERY_FIELDS: Omit<
 	[QueryBuilderField.Limit]: { state: 'hidden' },
 	[QueryBuilderField.Legend]: { state: 'hidden' },
 	[QueryBuilderField.ReduceTo]: { state: 'hidden' },
+	[QueryBuilderField.BucketOptions]: { state: 'hidden' },
 	[QueryBuilderField.Formula]: { state: 'hidden' },
 	[QueryBuilderField.OrderBy]: { state: 'pinned' },
 };

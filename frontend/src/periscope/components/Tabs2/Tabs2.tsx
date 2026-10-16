@@ -69,7 +69,11 @@ function Tabs2({
 					>
 						{tab.label}
 
-						{tab.isBeta && <Badge color="robin">Beta</Badge>}
+						{tab.isBeta && (
+							<Badge variant="solid" color="primary">
+								Beta
+							</Badge>
+						)}
 					</Button>
 				))}
 			</Button.Group>

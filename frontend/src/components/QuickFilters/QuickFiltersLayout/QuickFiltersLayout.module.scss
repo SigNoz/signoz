@@ -1,0 +1,73 @@
+// The one `overflow: hidden` in the chain. Ancestors (RouteTab, AppLayout)
+// only hand height down; each pane below owns its own scroll.
+.layout {
+	display: flex;
+	flex: 1;
+	height: 100%;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.sidebar {
+	width: 280px;
+	flex-shrink: 0;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	position: relative;
+	overflow: visible;
+	z-index: 2;
+}
+
+.savedViews {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	background: var(--l1-background);
+	border-right: 1px solid var(--l1-border);
+}
+
+.quickFilters {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	background: var(--l1-background);
+	transition: transform 0.2s ease-in-out;
+	z-index: 1;
+
+	&.isOpen {
+		transform: translateX(100%);
+	}
+}
+
+// No quick filters: the header sits in flow and the list stays under it
+.isStatic {
+	border-right: 1px solid var(--l1-border);
+
+	.quickFilters {
+		position: static;
+		flex-shrink: 0;
+	}
+
+	.savedViews {
+		border-right: 0;
+	}
+}
+
+// Bounded box for the OverlayScrollbar inside it (`.overlay-scrollbar` is
+// `height: 100%`), which owns the scrolling.
+.content {
+	flex: 1;
+	min-width: 0;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.contentInner {
+	height: 100%;
+}

@@ -69,7 +69,7 @@ function PanelMessage({
 							size="sm"
 							prefix={item.icon}
 							onClick={item.onClick}
-							data-testid={testId ? `${testId}-${suffix}` : undefined}
+							testId={testId ? `${testId}-${suffix}` : undefined}
 						>
 							{item.label}
 						</Button>

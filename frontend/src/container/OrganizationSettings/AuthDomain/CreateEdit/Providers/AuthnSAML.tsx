@@ -146,6 +146,7 @@ function ConfigureSAMLAuthnProvider({
 							noStyle
 						>
 							<Checkbox
+								color="primary"
 								id="saml-skip-signing"
 								onChange={(checked: boolean): void => {
 									form.setFieldValue(

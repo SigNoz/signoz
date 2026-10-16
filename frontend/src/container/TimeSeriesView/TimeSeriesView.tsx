@@ -1,5 +1,6 @@
 import {
 	Dispatch,
+	ReactNode,
 	SetStateAction,
 	useCallback,
 	useEffect,
@@ -10,6 +11,7 @@ import {
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
+import cx from 'classnames';
 import logEvent from 'api/common/logEvent';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import Uplot from 'components/Uplot';
@@ -50,7 +52,7 @@ import { getTimeRange } from 'utils/getTimeRange';
 
 import ExportMenu from 'components/ExportMenu/ExportMenu';
 
-import './TimeSeriesView.styles.scss';
+import styles from './TimeSeriesView.module.scss';
 
 function TimeSeriesView({
 	data,
@@ -66,6 +68,7 @@ function TimeSeriesView({
 	allowExport = false,
 	exportFileName,
 	onYAxisUnitChange,
+	headerActions,
 }: TimeSeriesViewProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 
@@ -252,28 +255,31 @@ function TimeSeriesView({
 	);
 
 	const showExport = allowExport && !!data?.rawV5Response;
-	const showHeader = showExport || !!onYAxisUnitChange;
+	const showHeader = showExport || !!onYAxisUnitChange || !!headerActions;
 
 	return (
-		<div className="time-series-view">
+		<div className={cx('time-series-view', styles.timeSeriesView)}>
 			{isError && error && <ErrorInPlace error={error as APIError} />}
 
 			{showHeader && (
-				<div className="time-series-view__header">
+				<div className={styles.header} data-testid="time-series-view-header">
 					<div>
 						{onYAxisUnitChange && (
 							<BuilderUnitsFilter onChange={onYAxisUnitChange} yAxisUnit={yAxisUnit} />
 						)}
 					</div>
-					{showExport && data?.rawV5Response && (
-						<ExportMenu
-							dataSource={dataSource}
-							yAxisUnit={yAxisUnit}
-							data={data}
-							query={currentQuery}
-							fileName={exportFileName ?? `${dataSource}-timeseries`}
-						/>
-					)}
+					<div className={styles.headerActions}>
+						{headerActions}
+						{showExport && data?.rawV5Response && (
+							<ExportMenu
+								dataSource={dataSource}
+								yAxisUnit={yAxisUnit}
+								data={data}
+								query={currentQuery}
+								fileName={exportFileName ?? `${dataSource}-timeseries`}
+							/>
+						)}
+					</div>
 				</div>
 			)}
 
@@ -344,6 +350,8 @@ interface TimeSeriesViewProps {
 	// Opt-in: render the y-axis unit selector in the header (views without their
 	// own selector, e.g. Logs). Metrics keeps its separate YAxisUnitSelector.
 	onYAxisUnitChange?: (value: string) => void;
+	// Rendered in the header ahead of the export menu.
+	headerActions?: ReactNode;
 }
 
 TimeSeriesView.defaultProps = {

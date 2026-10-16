@@ -7,6 +7,7 @@ import type {
 
 import { layoutsToSections } from '../utils';
 import DashboardEmptyState from './DashboardEmptyState/DashboardEmptyState';
+import DraftSection from './Section/DraftSection/DraftSection';
 import { useViewPanel } from './Panel/hooks/useViewPanel';
 import ViewPanelModal from './Panel/ViewPanelModal/ViewPanelModal';
 import Section from './Section/Section/Section';
@@ -72,6 +73,7 @@ function PanelsAndSectionsLayout({
 	return (
 		<div className={styles.body}>
 			{renderContent()}
+			<DraftSection />
 			<ViewPanelModal
 				open={!!expandedPanel}
 				panel={expandedPanel}

@@ -14,15 +14,14 @@ import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 
 import { useOptimisticPatch } from '../../hooks/useOptimisticPatch';
 import { transferColumnWidths } from '../../Panels/utils/columnWidthStorage';
-import { createPanelOps } from '../../patchOps';
+import { createPanelOps, type NewPanelTarget } from '../../patchOps';
 
 interface UsePanelEditorSaveArgs {
 	dashboardId: string;
 	panelId: string;
 	/** Creating a new panel (vs editing an existing one) — adds panel + layout. */
 	isNew?: boolean;
-	/** Target section for a new panel; falls back to the last/new section. */
-	layoutIndex?: number;
+	target?: NewPanelTarget;
 }
 
 interface UsePanelEditorSaveApi {
@@ -42,7 +41,7 @@ export function usePanelEditorSave({
 	dashboardId,
 	panelId,
 	isNew = false,
-	layoutIndex,
+	target,
 }: UsePanelEditorSaveArgs): UsePanelEditorSaveApi {
 	const queryClient = useQueryClient();
 	const { patchAsync, isPatching, error } = useOptimisticPatch(dashboardId);
@@ -60,7 +59,7 @@ export function usePanelEditorSave({
 				savedPanelId = uuid();
 				ops = createPanelOps({
 					layouts: cached?.data.spec.layouts ?? [],
-					layoutIndex,
+					target,
 					panelId: savedPanelId,
 					panel: { kind: DashboardtypesPanelKindDTO.Panel, spec },
 				});
@@ -89,7 +88,7 @@ export function usePanelEditorSave({
 			});
 			return savedPanelId;
 		},
-		[dashboardId, panelId, isNew, layoutIndex, patchAsync, queryClient],
+		[dashboardId, panelId, isNew, target, patchAsync, queryClient],
 	);
 
 	return { save, isSaving: isPatching, error };

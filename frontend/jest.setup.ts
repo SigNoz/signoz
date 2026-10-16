@@ -41,6 +41,20 @@ if (!HTMLElement.prototype.releasePointerCapture) {
 	HTMLElement.prototype.releasePointerCapture = function (): void {};
 }
 
+// jsdom has no PointerEvent; Base UI Switch constructs one on click.
+if (typeof window.PointerEvent === 'undefined') {
+	class PointerEventMock extends MouseEvent {
+		pointerId: number;
+		pointerType: string;
+		constructor(type: string, init: PointerEventInit = {}) {
+			super(type, init);
+			this.pointerId = init.pointerId ?? 0;
+			this.pointerType = init.pointerType ?? '';
+		}
+	}
+	(window as any).PointerEvent = PointerEventMock;
+}
+
 if (typeof window.IntersectionObserver === 'undefined') {
 	class IntersectionObserverMock {
 		observe(): void {}

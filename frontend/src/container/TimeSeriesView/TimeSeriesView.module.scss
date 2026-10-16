@@ -1,0 +1,25 @@
+.timeSeriesView {
+	height: 50vh;
+	min-height: 350px;
+	padding: 0px 12px;
+
+	:global(.ant-card-body) {
+		height: 50vh;
+		min-height: 350px;
+		padding: 0px 12px;
+	}
+}
+
+.header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 12px 0;
+	flex-shrink: 0;
+}
+
+.headerActions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}

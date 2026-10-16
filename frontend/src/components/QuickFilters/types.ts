@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -51,7 +52,7 @@ export interface QuickFilterChangeEventData {
 
 export interface IQuickFiltersProps {
 	config: IQuickFiltersConfig[];
-	handleFilterVisibilityChange: () => void;
+	handleFilterVisibilityChange?: () => void;
 	source: QuickFiltersSource;
 	onFilterChange?: (query: Query) => void;
 	onQuickFilterChange?: (data: QuickFilterChangeEventData) => void;
@@ -61,6 +62,7 @@ export interface IQuickFiltersProps {
 	showFilterCollapse?: boolean;
 	showQueryName?: boolean;
 	useFieldApis?: QuickFilterCheckboxUseFieldApis;
+	savedViewsHeader?: ReactNode;
 }
 
 export enum QuickFiltersSource {

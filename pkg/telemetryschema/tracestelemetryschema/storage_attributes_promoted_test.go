@@ -81,7 +81,7 @@ func TestConditionForAttributePromoted(t *testing.T) {
 
 	t.Run("equal reads promoted column only", func(t *testing.T) {
 		sb := sqlbuilder.NewSelectBuilder()
-		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: afterPromo[0], EndNs: afterPromo[1]}, storage, &key, qbtypes.FilterOperatorEqual, "GET", map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, false, sb)
+		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: afterPromo[0], EndNs: afterPromo[1], TraceAttrsJSONOn: true}, storage, &key, qbtypes.FilterOperatorEqual, "GET", map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, false, sb)
 		require.NoError(t, err)
 		sb.Where(conds...)
 		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -91,7 +91,7 @@ func TestConditionForAttributePromoted(t *testing.T) {
 
 	t.Run("exists uses promoted raw path", func(t *testing.T) {
 		sb := sqlbuilder.NewSelectBuilder()
-		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: afterPromo[0], EndNs: afterPromo[1]}, storage, &key, qbtypes.FilterOperatorExists, nil, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, false, sb)
+		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: afterPromo[0], EndNs: afterPromo[1], TraceAttrsJSONOn: true}, storage, &key, qbtypes.FilterOperatorExists, nil, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, false, sb)
 		require.NoError(t, err)
 		sb.Where(conds...)
 		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)

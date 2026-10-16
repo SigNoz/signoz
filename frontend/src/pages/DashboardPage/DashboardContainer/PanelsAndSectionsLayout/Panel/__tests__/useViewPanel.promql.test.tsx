@@ -6,7 +6,6 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider as ReduxProvider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import configureStore from 'redux-mock-store';
@@ -38,7 +37,7 @@ jest.mock(
 	'pages/DashboardPage/DashboardContainer/store/useDashboardStore',
 	() => ({
 		useDashboardStore: (selector: (s: unknown) => unknown): unknown =>
-			selector({ dashboardId: 'dash-1' }),
+			selector({ dashboardId: 'dash-1', resolvedVariables: {} }),
 	}),
 );
 
@@ -144,11 +143,9 @@ const renderHarness = (): void => {
 			<CompatRouter>
 				<QueryClientProvider client={new QueryClient()}>
 					<ReduxProvider store={configureStore([])(appStore.getState())}>
-						<TooltipProvider>
-							<QueryBuilderProvider>
-								<Harness />
-							</QueryBuilderProvider>
-						</TooltipProvider>
+						<QueryBuilderProvider>
+							<Harness />
+						</QueryBuilderProvider>
 					</ReduxProvider>
 				</QueryClientProvider>
 			</CompatRouter>

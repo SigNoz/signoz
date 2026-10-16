@@ -445,6 +445,8 @@ export function RoutingPolicyBanner({
 			</Typography.Text>
 			<div className="routing-policies-info-banner-right">
 				<Switch
+					color="primary"
+					textPlacement="right"
 					value={notificationSettings.routingPolicies}
 					testId="routing-policies-switch"
 					onChange={(value): void => {

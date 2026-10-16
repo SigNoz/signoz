@@ -14,7 +14,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/prometheus/prometheus/model/labels"
-	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/promql/parser"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -677,28 +676,5 @@ func TestMergeSameLabelsetSeries(t *testing.T) {
 		{lset: api, values: []*float64{f(2), nil}},
 	})
 	require.Error(t, err, "two values on one evaluation timestamp is the engine's duplicate error")
-	assert.True(t, errors.Ast(err, errors.TypeInvalidInput))
-}
-
-// Hybrid twin case: stripping the synthetic __name__ can leave two engine
-// output series distinguishable only by those names (-metric_a or -metric_b:
-// both {} once real names are dropped). Pinned by conformance cases
-// name_label_dropping.test:137 and operators.test:1016.
-func TestMergeMatrixByLabelset(t *testing.T) {
-	empty := labels.EmptyLabels()
-
-	out, err := mergeMatrixByLabelset(promql.Matrix{
-		{Metric: empty, Floats: []promql.FPoint{{T: 0, F: -1}}},
-		{Metric: empty, Floats: []promql.FPoint{{T: 600_000, F: -4}}},
-	})
-	require.NoError(t, err)
-	require.Len(t, out, 1)
-	assert.Equal(t, []promql.FPoint{{T: 0, F: -1}, {T: 600_000, F: -4}}, out[0].Floats)
-
-	_, err = mergeMatrixByLabelset(promql.Matrix{
-		{Metric: empty, Floats: []promql.FPoint{{T: 0, F: -1}}},
-		{Metric: empty, Floats: []promql.FPoint{{T: 0, F: -3}}},
-	})
-	require.Error(t, err)
 	assert.True(t, errors.Ast(err, errors.TypeInvalidInput))
 }

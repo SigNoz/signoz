@@ -88,6 +88,49 @@ def create_alert_rule_with_channel(
     return _create_alert_rule_with_channel
 
 
+def delete_all_rules(signoz: types.SigNoz, token: str) -> None:
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/rules"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK
+    for rule in response.json()["data"]:
+        delete_response = requests.delete(
+            signoz.self.host_configs["8080"].get(f"/api/v1/rules/{rule['id']}"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert delete_response.status_code == HTTPStatus.OK, f"failed to delete rule {rule['id']}: {delete_response.text}"
+
+
+@pytest.fixture(name="seed_alert_rules", scope="function")
+def seed_alert_rules(
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+    notification_channel: types.TestContainerDocker,
+    create_notification_channel: Callable[[dict], str],
+    create_alert_rule: Callable[[dict], str],
+) -> Callable[[str, list[dict]], None]:
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    # create_notification_channel rather than create_webhook_notification_channel:
+    # only the former deletes on teardown, and callers reuse one channel name
+    # across tests, so a leaked channel fails the next create as a duplicate.
+    def _seed_alert_rules(channel_name: str, rules: list[dict]) -> None:
+        delete_all_rules(signoz, admin_token)
+        create_notification_channel(
+            {
+                "name": channel_name,
+                "webhook_configs": [{"url": notification_channel.container_configs["8080"].get(f"/alert/{channel_name}"), "send_resolved": False}],
+            }
+        )
+        for rule in rules:
+            create_alert_rule(rule)
+
+    return _seed_alert_rules
+
+
 def labels_to_map(labels: list[dict]) -> dict[str, str]:
     """Converts the label list shape of the v2 rule history APIs to a plain map."""
     return {label["key"]["name"]: label["value"] for label in labels or []}
@@ -349,20 +392,40 @@ def verify_webhook_notification_expectation(
     notification_channel: types.TestContainerDocker,
     validation_data: dict,
 ) -> bool:
-    """Check if wiremock received a request at the given path
-    whose JSON body is a superset of the expected json_body."""
-    path = validation_data["path"]
-    json_body = validation_data["json_body"]
+    """Check that wiremock received the expected request(s) at the given path.
+
+    validation_data supports (all optional except one of path/path_pattern):
+      - path: request url path (matched as urlPath, so query strings are ignored)
+      - path_pattern: url path regex instead of path, for paths that embed a
+        dynamic segment (e.g. a group-hash alias)
+      - json_body: expected JSON subset of the request body
+      - count: exact number of requests required at the path
+      - min_count: minimum number of requests required (e.g. retries)
+    The body constraint must be satisfied by a single request; count constraints
+    apply to the total at the path."""
+    path = validation_data.get("path")
+    json_body = validation_data.get("json_body")
+    # urlPath ignores query strings; real webhook urls may carry their own (e.g. key/token).
+    matcher = {"method": "POST", "urlPath": path} if path is not None else {"method": "POST", "urlPathPattern": validation_data["path_pattern"]}
 
     url = notification_channel.host_configs["8080"].get("__admin/requests/find")
     try:
-        res = requests.post(url, json={"method": "POST", "url": path}, timeout=10)
+        res = requests.post(url, json=matcher, timeout=10)
     except requests.exceptions.RequestException:
         return False
     if res.status_code != HTTPStatus.OK:
         return False
 
-    for req in res.json()["requests"]:
+    reqs = res.json()["requests"]
+    if "count" in validation_data and len(reqs) != validation_data["count"]:
+        return False
+    if "min_count" in validation_data and len(reqs) < validation_data["min_count"]:
+        return False
+
+    if json_body is None:
+        return True
+
+    for req in reqs:
         body = json.loads(base64.b64decode(req["bodyAsBase64"]).decode("utf-8"))
         if _is_json_subset(json_body, body):
             return True
@@ -425,8 +488,10 @@ def _received_notifications(
             if validation.destination_type != "webhook":
                 continue
             url = notification_channel.host_configs["8080"].get("__admin/requests/find")
+            path = validation.validation_data.get("path")
+            matcher = {"method": "POST", "urlPath": path} if path is not None else {"method": "POST", "urlPathPattern": validation.validation_data["path_pattern"]}
             try:
-                res = requests.post(url, json={"method": "POST", "url": validation.validation_data["path"]}, timeout=10)
+                res = requests.post(url, json=matcher, timeout=10)
                 webhook_bodies.extend(json.loads(base64.b64decode(req["bodyAsBase64"]).decode("utf-8")) for req in res.json()["requests"])
             except requests.exceptions.RequestException as exc:
                 webhook_bodies.append(f"<failed to fetch wiremock journal: {exc}>")
@@ -455,6 +520,8 @@ def update_raw_channel_config(
         "webhook_configs": "url",
         "pagerduty_configs": "url",
         "opsgenie_configs": "api_url",
+        "googlechat_configs": "webhook_url",
+        "incidentio_configs": "url",
     }
 
     for config_key, url_field in url_field_map.items():
@@ -464,5 +531,8 @@ def update_raw_channel_config(
                     original_url = entry[url_field]
                     path = urlparse(original_url).path
                     entry[url_field] = notification_channel.container_configs["8080"].get(path)
+
+    for entry in config.get("jira_configs", []):
+        entry["site"] = notification_channel.container_configs["8080"].base()
 
     return config

@@ -1,16 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-// eslint-disable-next-line no-restricted-imports
-import { useCopyToClipboard } from 'react-use';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui/button';
 import { Drawer, Tooltip } from 'antd';
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
-import { Divider } from '@signozhq/ui/divider';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
-import cx from 'classnames';
-import LogStateIndicator, {
-	LogType,
-} from 'components/Logs/LogStateIndicator/LogStateIndicator';
+import LogStateIndicator from 'components/Logs/LogStateIndicator/LogStateIndicator';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
 import { FeatureKeys } from 'constants/features';
@@ -19,33 +14,24 @@ import ContextView from 'container/LogDetailedView/ContextView/ContextView';
 import InfraMetrics from 'container/LogDetailedView/InfraMetrics/InfraMetrics';
 import Overview from 'container/LogDetailedView/Overview';
 import {
-	aggregateAttributesResourcesToString,
 	getSanitizedLogBody,
 	removeEscapeCharacters,
 } from 'container/LogDetailedView/utils';
 import useInitialQuery from 'container/LogsExplorerContext/useInitialQuery';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { FontSize } from 'container/OptionsMenu/types';
-import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useNotifications } from 'hooks/useNotifications';
 import { cloneDeep } from 'lodash-es';
 import {
 	ArrowDown,
 	ArrowUp,
-	Braces,
-	ChevronDown,
-	ChevronUp,
-	Compass,
-	Copy,
 	Filter,
 	Histogram,
 	Table,
 	TextSelect,
 	X,
 } from '@signozhq/icons';
-import { JsonView } from 'periscope/components/JsonView';
 import { useAppContext } from 'providers/App/App';
 import { ILogBody } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -56,7 +42,6 @@ import { LogDetailInnerProps, LogDetailProps } from './LogDetail.interfaces';
 import LogDetailsHeader from './LogDetailsHeader/LogDetailsHeader';
 import { useLogNavigation } from './LogDetailsHeader/useLogNavigation';
 import LogHighlights from './LogHighlights/LogHighlights';
-import { useIsLogDetailsV2 } from './useIsLogDetailsV2';
 
 import './LogDetails.styles.scss';
 
@@ -64,11 +49,8 @@ import './LogDetails.styles.scss';
 function LogDetailInner({
 	log,
 	onClose,
-	onAddToQuery,
-	onClickActionItem,
 	selectedTab,
 	isListViewPanel = false,
-	listViewPanelSelectedFields,
 	handleChangeSelectedView,
 	logs,
 	onNavigateLog,
@@ -81,7 +63,6 @@ function LogDetailInner({
 	const [contextQuery, setContextQuery] = useState<Query | undefined>(
 		initialContextQuery,
 	);
-	const [, copyToClipboard] = useCopyToClipboard();
 	const [selectedView, setSelectedView] = useState<VIEWS>(selectedTab);
 
 	const [isFilterVisible, setIsFilterVisible] = useState<boolean>(false);
@@ -93,8 +74,6 @@ function LogDetailInner({
 	const [filters, setFilters] = useState<TagFilter | null>(null);
 	const [isEdit, setIsEdit] = useState<boolean>(false);
 	const { stagedQuery } = useQueryBuilder();
-
-	const isLogDetailsV2 = useIsLogDetailsV2();
 
 	// Handle clicks outside to close drawer, except on explicitly ignored regions
 	useEffect(() => {
@@ -108,7 +87,8 @@ function LogDetailInner({
 				target.closest('.cm-tooltip-autocomplete') ||
 				target.closest('.drawer-popover') ||
 				target.closest('.query-status-popover') ||
-				target.closest('[data-radix-popper-content-wrapper]')
+				target.closest('[data-radix-popper-content-wrapper]') ||
+				target.closest('[data-base-ui-portal]')
 			) {
 				return;
 			}
@@ -173,12 +153,6 @@ function LogDetailInner({
 
 	const isDarkMode = useIsDarkMode();
 
-	const { notifications } = useNotifications();
-
-	const { onLogCopy } = useCopyLogLink(log?.id);
-
-	const LogJsonData = log ? aggregateAttributesResourcesToString(log) : '';
-
 	const handleModeChange = (value: string): void => {
 		setSelectedView(value as VIEWS);
 		setIsEdit(false);
@@ -219,13 +193,6 @@ function LogDetailInner({
 		}),
 		[logBody],
 	);
-
-	const handleJSONCopy = (): void => {
-		copyToClipboard(LogJsonData);
-		notifications.success({
-			message: 'Copied to clipboard',
-		});
-	};
 
 	const handleQueryExpressionChange = useCallback(
 		(value: string, queryIndex: number) => {
@@ -295,8 +262,6 @@ function LogDetailInner({
 		}
 	};
 
-	const logType = log?.attributes_string?.log_level || LogType.INFO;
-
 	return (
 		<Drawer
 			width="60%"
@@ -304,69 +269,15 @@ function LogDetailInner({
 			maskClosable={false}
 			getContainer={getContainer}
 			title={
-				isLogDetailsV2 ? (
-					<LogDetailsHeader
-						log={log}
-						onNavigatePrev={goToPrev}
-						onNavigateNext={goToNext}
-						isPrevDisabled={isPrevDisabled}
-						isNextDisabled={isNextDisabled}
-						showOpenInExplorer={!!handleOpenInExplorer}
-						onOpenInExplorer={handleOpenInExplorer}
-					/>
-				) : (
-					<div className="log-detail-drawer__title" data-log-detail-ignore="true">
-						<div className="log-detail-drawer__title-left">
-							<Divider type="vertical" className={cx('log-type-indicator', LogType)} />
-							<Typography.Text className="title">Log details</Typography.Text>
-						</div>
-						<div className="log-detail-drawer__title-right">
-							<div className="log-arrows">
-								<Tooltip
-									title={isPrevDisabled ? '' : 'Move to previous log'}
-									placement="top"
-									mouseLeaveDelay={0}
-								>
-									<Button
-										variant="outlined"
-										color="secondary"
-										prefix={<ChevronUp size={14} />}
-										className="log-arrow-btn log-arrow-btn-up"
-										disabled={isPrevDisabled}
-										onClick={goToPrev}
-									/>
-								</Tooltip>
-								<Tooltip
-									title={isNextDisabled ? '' : 'Move to next log'}
-									placement="top"
-									mouseLeaveDelay={0}
-								>
-									<Button
-										variant="outlined"
-										color="secondary"
-										prefix={<ChevronDown size={14} />}
-										className="log-arrow-btn log-arrow-btn-down"
-										disabled={isNextDisabled}
-										onClick={goToNext}
-									/>
-								</Tooltip>
-							</div>
-							{handleOpenInExplorer && (
-								<div>
-									<Button
-										variant="outlined"
-										color="secondary"
-										prefix={<Compass size={16} />}
-										className="open-in-explorer-btn"
-										onClick={handleOpenInExplorer}
-									>
-										Open in Explorer
-									</Button>
-								</div>
-							)}
-						</div>
-					</div>
-				)
+				<LogDetailsHeader
+					log={log}
+					onNavigatePrev={goToPrev}
+					onNavigateNext={goToNext}
+					isPrevDisabled={isPrevDisabled}
+					isNextDisabled={isNextDisabled}
+					showOpenInExplorer={!!handleOpenInExplorer}
+					onOpenInExplorer={handleOpenInExplorer}
+				/>
 			}
 			placement="right"
 			onClose={drawerCloseHandler}
@@ -379,195 +290,156 @@ function LogDetailInner({
 			destroyOnClose
 			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
 		>
-			<div
-				className="log-detail-drawer__content"
-				data-log-detail-ignore="true"
-				data-testid="log-detail-drawer"
-			>
-				<div className="log-detail-drawer__log">
-					{isLogDetailsV2 ? (
+			<OverlayScrollbar style={{ height: '100%' }}>
+				<div
+					className="log-detail-drawer__content"
+					data-log-detail-ignore="true"
+					data-testid="log-detail-drawer"
+				>
+					<div className="log-detail-drawer__log">
 						<LogStateIndicator
 							severityText={log.severity_text}
 							severityNumber={log.severity_number}
 							fontSize={options?.fontSize ?? FontSize.MEDIUM}
 						/>
-					) : (
-						<Divider type="vertical" className={cx('log-type-indicator', logType)} />
-					)}
-					<Tooltip
-						title={removeEscapeCharacters(logBody)}
-						placement="left"
-						mouseLeaveDelay={0}
-					>
-						<div className="log-body" dangerouslySetInnerHTML={htmlBody} />
-					</Tooltip>
+						<Tooltip
+							title={removeEscapeCharacters(logBody)}
+							placement="left"
+							mouseLeaveDelay={0}
+						>
+							<div className="log-body" dangerouslySetInnerHTML={htmlBody} />
+						</Tooltip>
 
-					<div className="log-overflow-shadow">&nbsp;</div>
-				</div>
-
-				{isLogDetailsV2 && <LogHighlights log={log} />}
-
-				{isLogDetailsV2 && <div className="log-detail-drawer__section-divider" />}
-
-				<div className="tabs-and-search">
-					<ToggleGroupSimple
-						type="single"
-						className="views-tabs"
-						onChange={handleModeChange}
-						value={selectedView}
-						items={[
-							{
-								value: VIEW_TYPES.OVERVIEW,
-								label: (
-									<div className="view-title">
-										<Table size={14} />
-										Overview
-									</div>
-								),
-							},
-							// V2's DataViewer has its own Pretty/JSON toggle, so the separate
-							// JSON tab is redundant.
-							...(isLogDetailsV2
-								? []
-								: [
-										{
-											value: VIEW_TYPES.JSON,
-											label: (
-												<div className="view-title">
-													<Braces size={14} />
-													JSON
-												</div>
-											),
-										},
-									]),
-							{
-								value: VIEW_TYPES.CONTEXT,
-								label: (
-									<div className="view-title">
-										<TextSelect size={14} />
-										Context
-									</div>
-								),
-							},
-							{
-								value: VIEW_TYPES.INFRAMETRICS,
-								label: (
-									<div className="view-title">
-										<Histogram size="md" />
-										Metrics
-									</div>
-								),
-							},
-						]}
-					/>
-
-					<div className="log-detail-drawer__actions">
-						{selectedView === VIEW_TYPES.CONTEXT && (
-							<Tooltip
-								title="Show Filters"
-								placement="topLeft"
-								aria-label="Show Filters"
-								mouseLeaveDelay={0}
-							>
-								<Button
-									variant="link"
-									color="secondary"
-									size="sm"
-									prefix={<Filter size="lg" />}
-									onClick={handleFilterVisible}
-								/>
-							</Tooltip>
-						)}
-
-						{/* V2 moves copy actions into the header ⋯ menu */}
-						{!isLogDetailsV2 && (
-							<Tooltip
-								title={selectedView === VIEW_TYPES.JSON ? 'Copy JSON' : 'Copy Log Link'}
-								placement="topLeft"
-								aria-label={
-									selectedView === VIEW_TYPES.JSON ? 'Copy JSON' : 'Copy Log Link'
-								}
-								mouseLeaveDelay={0}
-							>
-								<Button
-									variant="link"
-									color="secondary"
-									size="sm"
-									prefix={<Copy size={12} />}
-									onClick={selectedView === VIEW_TYPES.JSON ? handleJSONCopy : onLogCopy}
-								/>
-							</Tooltip>
-						)}
+						<div className="log-overflow-shadow">&nbsp;</div>
 					</div>
-				</div>
-				{isFilterVisible && contextQuery?.builder.queryData[0] && (
-					<div className="log-detail-drawer-query-container">
-						<QuerySearch
-							onChange={(value): void => handleQueryExpressionChange(value, 0)}
-							dataSource={DataSource.LOGS}
-							queryData={contextQuery?.builder.queryData[0]}
-							onRun={handleRunQuery}
+
+					<LogHighlights log={log} />
+
+					<div className="log-detail-drawer__section-divider" />
+
+					<div className="tabs-and-search">
+						<ToggleGroup
+							variant="outlined"
+							color="secondary"
+							size="sm"
+							type="single"
+							testId="log-detail-views-tabs"
+							onChange={handleModeChange}
+							value={selectedView}
+							items={[
+								{
+									value: VIEW_TYPES.OVERVIEW,
+									label: (
+										<div className="view-title">
+											<Table size={14} />
+											Overview
+										</div>
+									),
+								},
+								{
+									value: VIEW_TYPES.CONTEXT,
+									label: (
+										<div className="view-title">
+											<TextSelect size={14} />
+											Context
+										</div>
+									),
+								},
+								{
+									value: VIEW_TYPES.INFRAMETRICS,
+									label: (
+										<div className="view-title">
+											<Histogram size="md" />
+											Metrics
+										</div>
+									),
+								},
+							]}
 						/>
-					</div>
-				)}
 
-				{selectedView === VIEW_TYPES.OVERVIEW && (
-					<Overview
-						logData={log}
-						onAddToQuery={onAddToQuery}
-						onClickActionItem={onClickActionItem}
-						isListViewPanel={isListViewPanel}
-						selectedOptions={options}
-						listViewPanelSelectedFields={listViewPanelSelectedFields}
-						handleChangeSelectedView={handleChangeSelectedView}
-						onApplyLogFilter={onApplyLogFilter}
-					/>
-				)}
-				{!isLogDetailsV2 && selectedView === VIEW_TYPES.JSON && (
-					<JsonView data={LogJsonData} height="68vh" />
-				)}
-
-				{selectedView === VIEW_TYPES.CONTEXT && (
-					<ContextView
-						log={log}
-						filters={filters}
-						contextQuery={contextQuery}
-						isEdit={isEdit}
-					/>
-				)}
-				{selectedView === VIEW_TYPES.INFRAMETRICS && (
-					<InfraMetrics
-						clusterName={log.resources_string?.[RESOURCE_KEYS.CLUSTER_NAME] || ''}
-						podName={log.resources_string?.[RESOURCE_KEYS.POD_NAME] || ''}
-						nodeName={log.resources_string?.[RESOURCE_KEYS.NODE_NAME] || ''}
-						hostName={log.resources_string?.[RESOURCE_KEYS.HOST_NAME] || ''}
-						timestamp={log.timestamp.toString()}
-						dataSource={DataSource.LOGS}
-					/>
-				)}
-
-				{selectedView === VIEW_TYPES.OVERVIEW && (
-					<div className="log-detail-drawer__footer-hint">
-						<div className="log-detail-drawer__footer-hint-content">
-							<Typography.Text
-								color="muted"
-								className="log-detail-drawer__footer-hint-text"
-							>
-								Use
-							</Typography.Text>
-							<ArrowUp size={14} className="log-detail-drawer__footer-hint-icon" />
-							<span>/</span>
-							<ArrowDown size={14} className="log-detail-drawer__footer-hint-icon" />
-							<Typography.Text
-								color="muted"
-								className="log-detail-drawer__footer-hint-text"
-							>
-								to view previous/next log
-							</Typography.Text>
+						<div className="log-detail-drawer__actions">
+							{selectedView === VIEW_TYPES.CONTEXT && (
+								<Tooltip
+									title="Show Filters"
+									placement="topLeft"
+									aria-label="Show Filters"
+									mouseLeaveDelay={0}
+								>
+									<Button
+										variant="link"
+										color="secondary"
+										size="sm"
+										icon
+										aria-label="Show Filters"
+										onClick={handleFilterVisible}
+									>
+										<Filter size="lg" />
+									</Button>
+								</Tooltip>
+							)}
 						</div>
 					</div>
-				)}
-			</div>
+					{isFilterVisible && contextQuery?.builder.queryData[0] && (
+						<div className="log-detail-drawer-query-container">
+							<QuerySearch
+								onChange={(value): void => handleQueryExpressionChange(value, 0)}
+								dataSource={DataSource.LOGS}
+								queryData={contextQuery?.builder.queryData[0]}
+								onRun={handleRunQuery}
+							/>
+						</div>
+					)}
+
+					{selectedView === VIEW_TYPES.OVERVIEW && (
+						<Overview
+							logData={log}
+							isListViewPanel={isListViewPanel}
+							handleChangeSelectedView={handleChangeSelectedView}
+							onApplyLogFilter={onApplyLogFilter}
+						/>
+					)}
+					{selectedView === VIEW_TYPES.CONTEXT && (
+						<ContextView
+							log={log}
+							filters={filters}
+							contextQuery={contextQuery}
+							isEdit={isEdit}
+						/>
+					)}
+					{selectedView === VIEW_TYPES.INFRAMETRICS && (
+						<InfraMetrics
+							clusterName={log.resources_string?.[RESOURCE_KEYS.CLUSTER_NAME] || ''}
+							podName={log.resources_string?.[RESOURCE_KEYS.POD_NAME] || ''}
+							nodeName={log.resources_string?.[RESOURCE_KEYS.NODE_NAME] || ''}
+							hostName={log.resources_string?.[RESOURCE_KEYS.HOST_NAME] || ''}
+							timestamp={log.timestamp.toString()}
+							dataSource={DataSource.LOGS}
+						/>
+					)}
+
+					{selectedView === VIEW_TYPES.OVERVIEW && (
+						<div className="log-detail-drawer__footer-hint">
+							<div className="log-detail-drawer__footer-hint-content">
+								<Typography.Text
+									color="muted"
+									className="log-detail-drawer__footer-hint-text"
+								>
+									Use
+								</Typography.Text>
+								<ArrowUp size={14} className="log-detail-drawer__footer-hint-icon" />
+								<span>/</span>
+								<ArrowDown size={14} className="log-detail-drawer__footer-hint-icon" />
+								<Typography.Text
+									color="muted"
+									className="log-detail-drawer__footer-hint-text"
+								>
+									to view previous/next log
+								</Typography.Text>
+							</div>
+						</div>
+					)}
+				</div>
+			</OverlayScrollbar>
 		</Drawer>
 	);
 }

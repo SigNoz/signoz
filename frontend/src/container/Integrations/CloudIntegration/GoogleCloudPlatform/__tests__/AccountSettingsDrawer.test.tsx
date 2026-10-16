@@ -1,7 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { toast } from '@signozhq/ui/sonner';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { server } from 'mocks-server/server';
 import { rest, RestRequest } from 'msw';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
@@ -38,13 +37,11 @@ const setActiveAccount = jest.fn();
 const renderDrawer = (): void => {
 	render(
 		<MockQueryClientProvider>
-			<TooltipProvider>
-				<AccountSettingsDrawer
-					onClose={onClose}
-					account={gcpAccount}
-					setActiveAccount={setActiveAccount}
-				/>
-			</TooltipProvider>
+			<AccountSettingsDrawer
+				onClose={onClose}
+				account={gcpAccount}
+				setActiveAccount={setActiveAccount}
+			/>
 		</MockQueryClientProvider>,
 	);
 };
@@ -98,12 +95,18 @@ describe('GCP AccountSettingsDrawer', () => {
 		const user = userEvent.setup();
 		renderDrawer();
 
-		expect(screen.getByTestId('gcp-update-account-btn')).toBeDisabled();
+		expect(screen.getByTestId('gcp-update-account-btn')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 
 		await user.type(getProjectIdsInput(), 'project-c,');
 
 		await waitFor(() => {
-			expect(screen.getByTestId('gcp-update-account-btn')).toBeEnabled();
+			expect(screen.getByTestId('gcp-update-account-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 	});
 
@@ -113,7 +116,10 @@ describe('GCP AccountSettingsDrawer', () => {
 
 		await user.type(getProjectIdsInput(), 'project-c,');
 		await waitFor(() => {
-			expect(screen.getByTestId('gcp-update-account-btn')).toBeEnabled();
+			expect(screen.getByTestId('gcp-update-account-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 		await user.click(screen.getByTestId('gcp-update-account-btn'));
 
@@ -159,7 +165,10 @@ describe('GCP AccountSettingsDrawer', () => {
 		}
 
 		await waitFor(() => {
-			expect(screen.getByTestId('gcp-update-account-btn')).toBeEnabled();
+			expect(screen.getByTestId('gcp-update-account-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 		await user.click(screen.getByTestId('gcp-update-account-btn'));
 
@@ -187,7 +196,10 @@ describe('GCP AccountSettingsDrawer', () => {
 
 		await user.type(getProjectIdsInput(), 'project-c,');
 		await waitFor(() => {
-			expect(screen.getByTestId('gcp-update-account-btn')).toBeEnabled();
+			expect(screen.getByTestId('gcp-update-account-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 		await user.click(screen.getByTestId('gcp-update-account-btn'));
 

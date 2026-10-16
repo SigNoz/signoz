@@ -3,6 +3,7 @@ import {
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { EQueryType } from 'types/common/dashboard';
+import { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
 
 import { UNSUPPORTED_PANEL } from '../kinds/UnsupportedPanel/definition';
 import { getPanelDefinition, isPanelKindSupported } from '../registry';
@@ -11,18 +12,19 @@ import { NO_PANEL_ACTIONS } from '../types/panelDefinition';
 import {
 	getQueryPanelDefinition,
 	requireQueryPanelDefinition,
+	getSupportedQueryModes,
 	getSupportedQueryTypes,
 	getSupportedSignals,
 	isPanelCombinationValid,
 	isQueryTypeSupportedByPanelKind,
 	isSignalSupported,
-	resolveQueryType,
+	resolveQueryMode,
 } from '../capabilities';
 import type { PanelKind } from '../types/panelKind';
 
 const { QUERY_BUILDER, CLICKHOUSE, PROM } = EQueryType;
 const { logs, traces, metrics } = TelemetrytypesSignalDTO;
-const { time_series, scalar, raw } = Querybuildertypesv5RequestTypeDTO;
+const { time_series, scalar, raw, heatmap } = Querybuildertypesv5RequestTypeDTO;
 
 const EXPECTED_QUERY_TYPES: Record<PanelKind, EQueryType[]> = {
 	'signoz/TimeSeriesPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
@@ -30,10 +32,53 @@ const EXPECTED_QUERY_TYPES: Record<PanelKind, EQueryType[]> = {
 	'signoz/AreaChartPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/NumberPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/HistogramPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
+	'signoz/HeatmapPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/PieChartPanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/TablePanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/ListPanel': [QUERY_BUILDER],
 	// Static kind: no query surface at all.
+	'signoz/TextPanel': [],
+};
+
+const EXPECTED_QUERY_MODES: Record<PanelKind, QueryMode[]> = {
+	'signoz/TimeSeriesPanel': [
+		QUERY_BUILDER,
+		CLICKHOUSE,
+		PROM,
+		QueryMode.AI_QUERY_BUILDER,
+	],
+	'signoz/BarChartPanel': [
+		QUERY_BUILDER,
+		CLICKHOUSE,
+		PROM,
+		QueryMode.AI_QUERY_BUILDER,
+	],
+	'signoz/AreaChartPanel': [
+		QUERY_BUILDER,
+		CLICKHOUSE,
+		PROM,
+		QueryMode.AI_QUERY_BUILDER,
+	],
+	'signoz/NumberPanel': [
+		QUERY_BUILDER,
+		CLICKHOUSE,
+		PROM,
+		QueryMode.AI_QUERY_BUILDER,
+	],
+	'signoz/HistogramPanel': [
+		QUERY_BUILDER,
+		CLICKHOUSE,
+		PROM,
+		QueryMode.AI_QUERY_BUILDER,
+	],
+	'signoz/HeatmapPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
+	'signoz/PieChartPanel': [
+		QUERY_BUILDER,
+		CLICKHOUSE,
+		QueryMode.AI_QUERY_BUILDER,
+	],
+	'signoz/TablePanel': [QUERY_BUILDER, CLICKHOUSE, QueryMode.AI_QUERY_BUILDER],
+	'signoz/ListPanel': [QUERY_BUILDER, QueryMode.AI_QUERY_BUILDER],
 	'signoz/TextPanel': [],
 };
 
@@ -43,6 +88,8 @@ const EXPECTED_SIGNALS: Record<PanelKind, TelemetrytypesSignalDTO[]> = {
 	'signoz/AreaChartPanel': [metrics, logs, traces],
 	'signoz/NumberPanel': [metrics, logs, traces],
 	'signoz/HistogramPanel': [metrics, logs, traces],
+	// A heatmap needs a bucket axis, which only a metric carries.
+	'signoz/HeatmapPanel': [metrics],
 	'signoz/PieChartPanel': [metrics, logs, traces],
 	'signoz/TablePanel': [metrics, logs, traces],
 	// List renders raw rows; metrics produce no row data.
@@ -83,6 +130,15 @@ const EXPECTED_QUERY_CAPABILITIES: Partial<
 		requestType: time_series,
 		formatTableResultForUI: false,
 		bucketedStepInterval: false,
+		orderTiebreaker: false,
+		serverPaginated: false,
+	},
+	// Only Heatmap asks for `heatmap`: server-bucketed counts, one set per timestamp. Like
+	// Bar it draws one mark per point, so it asks for a widened step interval too.
+	'signoz/HeatmapPanel': {
+		requestType: heatmap,
+		formatTableResultForUI: false,
+		bucketedStepInterval: true,
 		orderTiebreaker: false,
 		serverPaginated: false,
 	},
@@ -211,6 +267,15 @@ describe('panel capabilities guard', () => {
 			expect(isSignalSupported('signoz/ListPanel', logs)).toBe(true);
 			expect(isSignalSupported('signoz/ListPanel', traces)).toBe(true);
 		});
+
+		it('reads a specific mode when one is given', () => {
+			expect(
+				getSupportedSignals('signoz/TablePanel', QueryMode.AI_QUERY_BUILDER),
+			).toStrictEqual([traces]);
+			expect(
+				getSupportedSignals('signoz/TablePanel', QueryMode.CLICKHOUSE),
+			).toStrictEqual([]);
+		});
 	});
 
 	describe('isPanelCombinationValid', () => {
@@ -259,18 +324,36 @@ describe('panel capabilities guard', () => {
 		});
 	});
 
-	describe('resolveQueryType', () => {
-		it('keeps a supported query type', () => {
-			expect(resolveQueryType('signoz/TimeSeriesPanel', PROM)).toBe(PROM);
-			expect(resolveQueryType('signoz/ListPanel', QUERY_BUILDER)).toBe(
-				QUERY_BUILDER,
+	describe('getSupportedQueryModes', () => {
+		it.each(Object.entries(EXPECTED_QUERY_MODES))(
+			'%s supports %j',
+			(kind, modes) => {
+				expect(getSupportedQueryModes(kind as PanelKind)).toStrictEqual(modes);
+			},
+		);
+
+		it('keeps AI out of the query types', () => {
+			expect(getSupportedQueryTypes('signoz/TimeSeriesPanel')).not.toContain(
+				QueryMode.AI_QUERY_BUILDER,
 			);
 		});
+	});
 
-		it('coerces an unsupported query type to the first supported one', () => {
+	describe('resolveQueryMode', () => {
+		it('keeps a supported mode', () => {
+			expect(resolveQueryMode('signoz/TimeSeriesPanel', PROM)).toBe(PROM);
+			expect(
+				resolveQueryMode('signoz/TablePanel', QueryMode.AI_QUERY_BUILDER),
+			).toBe(QueryMode.AI_QUERY_BUILDER);
+			expect(
+				resolveQueryMode('signoz/ListPanel', QueryMode.AI_QUERY_BUILDER),
+			).toBe(QueryMode.AI_QUERY_BUILDER);
+		});
+
+		it('coerces an unsupported mode to the first supported one', () => {
 			// PromQL → List has no PromQL, falls back to its first (and only) type.
-			expect(resolveQueryType('signoz/ListPanel', PROM)).toBe(QUERY_BUILDER);
-			expect(resolveQueryType('signoz/TablePanel', PROM)).toBe(QUERY_BUILDER);
+			expect(resolveQueryMode('signoz/ListPanel', PROM)).toBe(QUERY_BUILDER);
+			expect(resolveQueryMode('signoz/TablePanel', PROM)).toBe(QUERY_BUILDER);
 		});
 	});
 });

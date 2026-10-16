@@ -300,14 +300,6 @@ describe('PrivateRoute', () => {
 			);
 		});
 
-		it('should redirect /logs-explorer/live to /logs/logs-explorer/live', () => {
-			renderPrivateRoute({ initialRoute: '/logs-explorer/live' });
-
-			expect(screen.getByTestId('location-display')).toHaveTextContent(
-				'/logs/logs-explorer/live',
-			);
-		});
-
 		it('should redirect /logs-save-views to /logs/saved-views', () => {
 			renderPrivateRoute({ initialRoute: '/logs-save-views' });
 
@@ -1596,7 +1588,6 @@ describe('PrivateRoute', () => {
 			// route definition comes last, and both keys are authz-aware either way.
 			LOGS: { path: ROUTES.LOGS, deniedRoles: DENIED_ROLES },
 			LOGS_EXPLORER: { path: ROUTES.LOGS_EXPLORER, deniedRoles: DENIED_ROLES },
-			LIVE_LOGS: { path: ROUTES.LIVE_LOGS, deniedRoles: DENIED_ROLES },
 			METRICS_EXPLORER: {
 				path: ROUTES.METRICS_EXPLORER,
 				deniedRoles: DENIED_ROLES,
