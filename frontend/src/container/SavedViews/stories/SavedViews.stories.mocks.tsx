@@ -4,6 +4,7 @@
  */
 
 import { rest, type RequestHandler } from 'msw';
+import { TooltipProvider } from '@signozhq/ui/tooltip';
 import remove from 'api/browser/localstorage/remove';
 import {
 	type AuthtypesTransactionDTO,
@@ -11,11 +12,13 @@ import {
 	SavedviewtypesSourceDTO,
 	type SavedviewtypesUpdatableSavedViewDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { SIDEBAR_TOOLTIP_DELAY_MS } from 'components/QuickFilters/QuickFiltersLayout/constants';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import {
 	AUTHZ_CHECK_URL,
 	authzMockResponse,
 } from 'lib/authz/utils/authz-test-utils';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { accessFor } from '@/storybook/access/access';
 import {
@@ -25,6 +28,7 @@ import {
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 import type { MockControlValues, StoryMocks } from '@/storybook/controls/types';
+import { withCanvas } from '@/storybook/decorators/withCanvas';
 import { authzMocks, type AuthzArgs } from '@/storybook/globals/authzMocks';
 import { respondWith } from '@/storybook/runtime/responseState';
 
@@ -42,6 +46,10 @@ import {
 	type SavedViewSource,
 	unreadableViewId,
 } from './__story_mockdata__/savedViews';
+
+import SavedViewsHeader from '../SavedViewsHeader';
+import SavedViewsPanel from '../SavedViewsPanel';
+import type { SavedViewRowActionKey } from '../types';
 
 const API = 'http://localhost/api/v2/saved_views';
 
@@ -216,3 +224,106 @@ export const savedViewsMocks: StoryMocks<typeof controls> = {
 	...definition,
 	read: (args) => ({ ...authzMocks.read(args), ...definition.read(args) }),
 };
+
+/** The sidebar slot of an explorer without quick filters. */
+export const sidebarCanvas = withCanvas({
+	width: 280,
+	height: 640,
+	padding: 0,
+	display: 'flex',
+	flexDirection: 'column',
+	borderRight: '1px solid var(--l1-border)',
+});
+
+/**
+ * The header above the pinned list. `onOpenViews` adds All views, which the
+ * header only shows in an explorer whose quick filters hide the list.
+ */
+export function SavedViewsSidebar({
+	source,
+	onOpenViews,
+}: {
+	source: SavedViewSource;
+	onOpenViews?: () => void;
+}): JSX.Element {
+	return (
+		<TooltipProvider delay={SIDEBAR_TOOLTIP_DELAY_MS}>
+			<SavedViewsHeader source={source} onOpenViews={onOpenViews} />
+			<SavedViewsPanel source={source} />
+		</TooltipProvider>
+	);
+}
+
+/** The panel fetches the list and checks every row's permissions before it settles. */
+export const UNTIL_LOADED = { timeout: 15_000 };
+
+/**
+ * Re-queried on every attempt: a button whose check settles is a new node, so a
+ * reference taken while it was pending never changes.
+ */
+type FindElement = () => HTMLElement;
+
+export const byTestId =
+	(testId: string): FindElement =>
+	(): HTMLElement =>
+		screen.getByTestId(testId);
+
+/** A check still in flight: `aria-busy` on a button, `data-loading` on a menu row. */
+const isPending = (element: HTMLElement): boolean =>
+	element.getAttribute('aria-busy') === 'true' ||
+	element.hasAttribute('data-loading');
+
+const isDisabled = (element: HTMLElement): boolean =>
+	element.hasAttribute('disabled') || element.hasAttribute('data-disabled');
+
+export const expectDisabled = (
+	find: FindElement,
+	disabled = true,
+): Promise<void> =>
+	waitFor(async () => {
+		const element = find();
+
+		await expect(isPending(element)).toBe(false);
+		await expect(isDisabled(element)).toBe(disabled);
+	}, UNTIL_LOADED);
+
+export const expectPending = (find: FindElement): Promise<void> =>
+	waitFor(() => expect(isPending(find())).toBe(true), UNTIL_LOADED);
+
+export const findRows = (canvasElement: HTMLElement): Promise<HTMLElement[]> =>
+	within(canvasElement).findAllByTestId(
+		'saved-views-row',
+		undefined,
+		UNTIL_LOADED,
+	);
+
+export const rowName =
+	(row: HTMLElement): FindElement =>
+	(): HTMLElement =>
+		within(row).getByTestId('saved-views-row-name');
+
+export const openRowMenu = async (row: HTMLElement): Promise<void> => {
+	await userEvent.click(within(row).getByTestId('saved-views-row-menu'));
+	await screen.findByRole('menu', undefined, UNTIL_LOADED);
+};
+
+export const rowMenuItem = (key: SavedViewRowActionKey): FindElement =>
+	byTestId(`saved-views-row-menu-item-${key}`);
+
+export const openSaveChangesMenu = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	const trigger = await waitFor(async () => {
+		const button = within(canvasElement).getByTestId('saved-views-save-changes');
+
+		await expect(button).not.toHaveAttribute('aria-busy');
+
+		return button;
+	}, UNTIL_LOADED);
+
+	await userEvent.click(trigger);
+	await screen.findByRole('menu', undefined, UNTIL_LOADED);
+};
+
+export const saveChangesItem = (key: 'save-as-new' | 'update'): FindElement =>
+	byTestId(`saved-views-save-changes-item-${key}`);

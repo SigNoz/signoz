@@ -1,22 +1,21 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
-import { SIDEBAR_TOOLTIP_DELAY_MS } from 'components/QuickFilters/QuickFiltersLayout/constants';
-import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
-import { withCanvas } from '@/storybook/decorators/withCanvas';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import SavedViewsHeader from '../SavedViewsHeader';
 import SavedViewsPanel from '../SavedViewsPanel';
-import { savedViewsMocks } from './SavedViews.stories.mocks';
+import {
+	findRows,
+	openRowMenu,
+	openSaveChangesMenu,
+	SavedViewsSidebar,
+	savedViewsMocks,
+	sidebarCanvas,
+} from './SavedViews.stories.mocks';
 
 type SavedViewsArgs = PageStoryArgs<typeof savedViewsMocks>;
 
 const componentStory = storyMocks(savedViewsMocks);
-
-/** The panel fetches the list and checks every row's permissions before it settles. */
-const untilLoaded = { timeout: 15_000 };
 
 /**
  * The saved views sidebar of an explorer without quick filters: the header with
@@ -28,25 +27,11 @@ const untilLoaded = { timeout: 15_000 };
  * `viewKey`.
  */
 const meta = {
-	title: 'Components/Saved Views',
+	title: 'Components/Saved Views/Overview',
 	tags: ['authz', 'play'],
 	component: SavedViewsPanel,
-	decorators: [
-		withCanvas({
-			width: 280,
-			height: 640,
-			padding: 0,
-			display: 'flex',
-			flexDirection: 'column',
-			borderRight: '1px solid var(--l1-border)',
-		}),
-	],
-	render: ({ source }): JSX.Element => (
-		<TooltipProvider delay={SIDEBAR_TOOLTIP_DELAY_MS}>
-			<SavedViewsHeader source={source} />
-			<SavedViewsPanel source={source} />
-		</TooltipProvider>
-	),
+	decorators: [sidebarCanvas],
+	render: ({ source }): JSX.Element => <SavedViewsSidebar source={source} />,
 	...componentStory,
 	parameters: { ...componentStory.parameters },
 } satisfies Meta<SavedViewsArgs>;
@@ -71,25 +56,15 @@ export const UnsavedChanges: Story = {
 	args: { openView: 'unsaved-changes' },
 };
 
-/** Without `list` on saved views, the panel shows the permission callout. */
-export const NoAccess: Story = {
-	args: { revoked: ['list:saved-view'] },
-};
-
 /**
  * The first row's menu. Edit details and Delete follow `update` and `delete` on
  * that view, so revoking either disables its item.
  */
 export const RowMenu: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
-		const [row] = await within(canvasElement).findAllByTestId(
-			'saved-views-row',
-			undefined,
-			untilLoaded,
-		);
+		const [row] = await findRows(canvasElement);
 
-		await userEvent.click(within(row).getByTestId('saved-views-row-menu'));
-		await screen.findByRole('menu', undefined, untilLoaded);
+		await openRowMenu(row);
 	},
 };
 
@@ -100,15 +75,6 @@ export const RowMenu: Story = {
 export const SaveChangesMenu: Story = {
 	args: { openView: 'unsaved-changes' },
 	play: async ({ canvasElement }): Promise<void> => {
-		const trigger = await waitFor(async () => {
-			const button = within(canvasElement).getByTestId('saved-views-save-changes');
-
-			await expect(button).not.toHaveAttribute('aria-busy');
-
-			return button;
-		}, untilLoaded);
-
-		await userEvent.click(trigger);
-		await screen.findByRole('menu', undefined, untilLoaded);
+		await openSaveChangesMenu(canvasElement);
 	},
 };
