@@ -18914,9 +18914,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: Run Infra Monitoring Setup Checks
       tags:
       - inframonitoring
@@ -18988,9 +18988,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Clusters for Infra Monitoring
       tags:
       - inframonitoring
@@ -19072,9 +19072,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List DaemonSets for Infra Monitoring
       tags:
       - inframonitoring
@@ -19150,9 +19150,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Deployments for Infra Monitoring
       tags:
       - inframonitoring
@@ -19218,9 +19218,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Hosts for Infra Monitoring
       tags:
       - inframonitoring
@@ -19300,9 +19300,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Jobs for Infra Monitoring
       tags:
       - inframonitoring
@@ -19381,9 +19381,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Kubernetes Containers for Infra Monitoring
       tags:
       - inframonitoring
@@ -19452,9 +19452,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Namespaces for Infra Monitoring
       tags:
       - inframonitoring
@@ -19527,9 +19527,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Nodes for Infra Monitoring
       tags:
       - inframonitoring
@@ -19603,9 +19603,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Pods for Infra Monitoring
       tags:
       - inframonitoring
@@ -19674,9 +19674,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Volumes for Infra Monitoring
       tags:
       - inframonitoring
@@ -19752,9 +19752,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List StatefulSets for Infra Monitoring
       tags:
       - inframonitoring
