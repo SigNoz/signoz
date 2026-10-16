@@ -158,7 +158,7 @@ func (d *DashboardV2) ErrIfNotClonable() error {
 
 func (d DashboardV2) ToPostableForCloning() PostableDashboardV2 {
 	spec := d.Spec
-	spec.Display.Name = types.GenerateCloneName(spec.Display.Name, MaxDisplayNameLen)
+	spec.Display.Name = valuer.GenerateCloneName(spec.Display.Name, MaxDisplayNameLen)
 	return PostableDashboardV2{
 		DashboardV2MetadataBase: d.DashboardV2MetadataBase,
 		GenerateName:            true,
