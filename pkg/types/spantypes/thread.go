@@ -6,6 +6,7 @@ import (
 	"maps"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
 )
 
 const (
@@ -76,6 +77,11 @@ type ThreadSpan struct {
 	Attributes       map[string]any    `json:"attributes" required:"true" nullable:"false"`
 	Events           []Event           `json:"events" required:"true" nullable:"false"`
 	References       []OtelSpanRef     `json:"references" required:"true" nullable:"false"`
+	// The formatted fields hold the span's messages in the OTel GenAI shape; FormatterWarnings holds what
+	// the converter could not resolve.
+	FormattedInput    aiobservabilitytypes.InputMessages  `json:"formattedInput" required:"true" nullable:"false"`
+	FormattedOutput   aiobservabilitytypes.OutputMessages `json:"formattedOutput" required:"true" nullable:"false"`
+	FormatterWarnings []string                            `json:"formatterWarnings" required:"true" nullable:"false"`
 
 	timeUnixNano uint64
 }
@@ -171,32 +177,39 @@ func newThreadSpan(traceID string, storable *StorableSpan) *ThreadSpan {
 	resources := make(map[string]string, len(storable.ResourcesString))
 	maps.Copy(resources, storable.ResourcesString)
 	timeUnixNano := uint64(storable.StartTime.UnixNano())
+	attributes := threadAttributes(storable)
+	// Spans from before the JSON rollout have no document and are not decoded: the legacy maps
+	// hold an object split into one key per field.
+	formatted := aiobservabilitytypes.FormatMessages(storable.AttributesJSON)
 	return &ThreadSpan{
-		SpanID:           storable.SpanID,
-		TraceID:          traceID,
-		ParentSpanID:     storable.ParentSpanID,
-		Name:             storable.Name,
-		KindString:       storable.SpanKind,
-		TimeUnix:         timeUnixNano / 1_000_000, // client expects millis, as in the waterfall
-		DurationNano:     storable.DurationNano,
-		HasError:         storable.HasError,
-		StatusCodeString: storable.StatusCodeString,
-		StatusMessage:    storable.StatusMessage,
-		Resource:         resources,
-		Attributes:       threadAttributes(storable),
-		Events:           storable.UnmarshalledEvents(),
-		References:       storable.UnmarshalledRefs(),
-		timeUnixNano:     timeUnixNano,
+		SpanID:            storable.SpanID,
+		TraceID:           traceID,
+		ParentSpanID:      storable.ParentSpanID,
+		Name:              storable.Name,
+		KindString:        storable.SpanKind,
+		TimeUnix:          timeUnixNano / 1_000_000, // client expects millis, as in the waterfall
+		DurationNano:      storable.DurationNano,
+		HasError:          storable.HasError,
+		StatusCodeString:  storable.StatusCodeString,
+		StatusMessage:     storable.StatusMessage,
+		Resource:          resources,
+		Attributes:        attributes,
+		Events:            storable.UnmarshalledEvents(),
+		References:        storable.UnmarshalledRefs(),
+		FormattedInput:    formatted.Input,
+		FormattedOutput:   formatted.Output,
+		FormatterWarnings: formatted.Warnings,
+		timeUnixNano:      timeUnixNano,
 	}
 }
 
-// threadAttributes reads the JSON column and falls back to the legacy maps for spans written
-// before the JSON rollout.
+// threadAttributes flattens the JSON column into dotted keys, as the querier does for list
+// responses, and falls back to the legacy maps for spans written before the JSON rollout.
 func threadAttributes(storable *StorableSpan) map[string]any {
-	if len(storable.AttributesJSON) > 0 {
-		attributes := make(map[string]any, len(storable.AttributesJSON))
-		storable.AttributesJSON.FlattenInto("", attributes)
-		return attributes
+	if len(storable.AttributesJSON) == 0 {
+		return storable.Attributes()
 	}
-	return storable.Attributes()
+	attributes := make(map[string]any, len(storable.AttributesJSON))
+	storable.AttributesJSON.FlattenInto("", attributes)
+	return attributes
 }

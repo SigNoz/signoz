@@ -1,10 +1,21 @@
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import isEqual from 'lodash-es/isEqual';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { HasUnsavedViewChangesArgs } from '../types';
+import { getSavedViewQuery } from './getSavedViewQuery';
 import { toSavedViewPanelType } from './toSavedViewSpec';
 import { getViewColumnsAndFormatting } from './getViewColumnsAndFormatting';
+
+// Legacy context names the server stores under their v5 name.
+const FIELD_CONTEXT_ALIASES: Record<string, TelemetrytypesFieldContextDTO> = {
+	tag: TelemetrytypesFieldContextDTO.attribute,
+	point: TelemetrytypesFieldContextDTO.attribute,
+	spanfield: TelemetrytypesFieldContextDTO.span,
+	logfield: TelemetrytypesFieldContextDTO.log,
+	tracefield: TelemetrytypesFieldContextDTO.trace,
+};
 
 // The server drops empty values when it stores a query, while the query
 // builder fills them with defaults, so both sides lose them before comparing.
@@ -17,7 +28,12 @@ function withoutEmptyValues(value: unknown): unknown {
 	}
 	if (value !== null && typeof value === 'object') {
 		const entries = Object.entries(value)
-			.map(([key, item]) => [key, withoutEmptyValues(item)] as const)
+			.map(([key, item]) => {
+				if (key === 'fieldContext' && typeof item === 'string') {
+					return [key, FIELD_CONTEXT_ALIASES[item] ?? item] as const;
+				}
+				return [key, withoutEmptyValues(item)] as const;
+			})
 			.filter(([, item]) => item !== undefined);
 		return entries.length > 0 ? Object.fromEntries(entries) : undefined;
 	}
@@ -27,8 +43,8 @@ function withoutEmptyValues(value: unknown): unknown {
 	return value;
 }
 
-// Compared as stored (v5 envelopes): mapped back to the builder's shape, each
-// side gets different defaults.
+// Both sides go through the v5 mapper, so fields it never writes (reduceTo on
+// a graph in older views) drop out; the builder's shape gets different defaults.
 export function hasUnsavedViewChanges({
 	view,
 	stagedQuery,
@@ -42,15 +58,16 @@ export function hasUnsavedViewChanges({
 		return true;
 	}
 
+	const { queries: storedQueries } = mapCompositeQueryFromQuery(
+		getSavedViewQuery(view),
+		panelType,
+	);
 	const { queries: stagedQueries } = mapCompositeQueryFromQuery(
 		stagedQuery,
 		panelType,
 	);
 	if (
-		!isEqual(
-			withoutEmptyValues(view.spec.queries),
-			withoutEmptyValues(stagedQueries),
-		)
+		!isEqual(withoutEmptyValues(storedQueries), withoutEmptyValues(stagedQueries))
 	) {
 		return true;
 	}

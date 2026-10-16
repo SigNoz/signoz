@@ -1,5 +1,219 @@
 components:
   schemas:
+    AiobservabilitytypesBlobPart:
+      properties:
+        content:
+          type: string
+        mime_type:
+          nullable: true
+          type: string
+        modality:
+          type: string
+        type:
+          type: string
+      required:
+      - type
+      - modality
+      - content
+      type: object
+    AiobservabilitytypesChatMessage:
+      properties:
+        name:
+          nullable: true
+          type: string
+        parts:
+          $ref: '#/components/schemas/AiobservabilitytypesParts'
+        role:
+          type: string
+      required:
+      - role
+      - parts
+      type: object
+    AiobservabilitytypesCompactionPart:
+      properties:
+        content:
+          nullable: true
+          type: string
+        id:
+          nullable: true
+          type: string
+        type:
+          type: string
+      required:
+      - type
+      type: object
+    AiobservabilitytypesFilePart:
+      properties:
+        file_id:
+          type: string
+        mime_type:
+          nullable: true
+          type: string
+        modality:
+          type: string
+        type:
+          type: string
+      required:
+      - type
+      - modality
+      - file_id
+      type: object
+    AiobservabilitytypesGenericPart:
+      additionalProperties: {}
+      type: object
+    AiobservabilitytypesGenericServerToolCall:
+      additionalProperties: {}
+      type: object
+    AiobservabilitytypesGenericServerToolCallResponse:
+      additionalProperties: {}
+      type: object
+    AiobservabilitytypesInputMessages:
+      items:
+        $ref: '#/components/schemas/AiobservabilitytypesChatMessage'
+      type: array
+    AiobservabilitytypesOutputMessage:
+      properties:
+        finish_reason:
+          nullable: true
+          type: string
+        name:
+          nullable: true
+          type: string
+        parts:
+          $ref: '#/components/schemas/AiobservabilitytypesParts'
+        role:
+          type: string
+      required:
+      - role
+      - parts
+      type: object
+    AiobservabilitytypesOutputMessages:
+      items:
+        $ref: '#/components/schemas/AiobservabilitytypesOutputMessage'
+      type: array
+    AiobservabilitytypesPart:
+      discriminator:
+        mapping:
+          blob: '#/components/schemas/AiobservabilitytypesBlobPart'
+          compaction: '#/components/schemas/AiobservabilitytypesCompactionPart'
+          file: '#/components/schemas/AiobservabilitytypesFilePart'
+          reasoning: '#/components/schemas/AiobservabilitytypesReasoningPart'
+          server_tool_call: '#/components/schemas/AiobservabilitytypesServerToolCallPart'
+          server_tool_call_response: '#/components/schemas/AiobservabilitytypesServerToolCallResponsePart'
+          text: '#/components/schemas/AiobservabilitytypesTextPart'
+          tool_call: '#/components/schemas/AiobservabilitytypesToolCallRequestPart'
+          tool_call_response: '#/components/schemas/AiobservabilitytypesToolCallResponsePart'
+          uri: '#/components/schemas/AiobservabilitytypesUriPart'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/AiobservabilitytypesTextPart'
+      - $ref: '#/components/schemas/AiobservabilitytypesToolCallRequestPart'
+      - $ref: '#/components/schemas/AiobservabilitytypesToolCallResponsePart'
+      - $ref: '#/components/schemas/AiobservabilitytypesServerToolCallPart'
+      - $ref: '#/components/schemas/AiobservabilitytypesServerToolCallResponsePart'
+      - $ref: '#/components/schemas/AiobservabilitytypesBlobPart'
+      - $ref: '#/components/schemas/AiobservabilitytypesFilePart'
+      - $ref: '#/components/schemas/AiobservabilitytypesUriPart'
+      - $ref: '#/components/schemas/AiobservabilitytypesReasoningPart'
+      - $ref: '#/components/schemas/AiobservabilitytypesCompactionPart'
+      - $ref: '#/components/schemas/AiobservabilitytypesGenericPart'
+      type: object
+    AiobservabilitytypesParts:
+      items:
+        $ref: '#/components/schemas/AiobservabilitytypesPart'
+      type: array
+    AiobservabilitytypesReasoningPart:
+      properties:
+        content:
+          type: string
+        type:
+          type: string
+      required:
+      - type
+      - content
+      type: object
+    AiobservabilitytypesServerToolCallPart:
+      properties:
+        id:
+          nullable: true
+          type: string
+        name:
+          type: string
+        server_tool_call:
+          $ref: '#/components/schemas/AiobservabilitytypesGenericServerToolCall'
+        type:
+          type: string
+      required:
+      - type
+      - name
+      - server_tool_call
+      type: object
+    AiobservabilitytypesServerToolCallResponsePart:
+      properties:
+        id:
+          nullable: true
+          type: string
+        server_tool_call_response:
+          $ref: '#/components/schemas/AiobservabilitytypesGenericServerToolCallResponse'
+        type:
+          type: string
+      required:
+      - type
+      - server_tool_call_response
+      type: object
+    AiobservabilitytypesTextPart:
+      properties:
+        content:
+          type: string
+        type:
+          type: string
+      required:
+      - type
+      - content
+      type: object
+    AiobservabilitytypesToolCallRequestPart:
+      properties:
+        arguments: {}
+        id:
+          nullable: true
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+      required:
+      - type
+      - name
+      type: object
+    AiobservabilitytypesToolCallResponsePart:
+      properties:
+        id:
+          nullable: true
+          type: string
+        response:
+          nullable: true
+        type:
+          type: string
+      required:
+      - type
+      - response
+      type: object
+    AiobservabilitytypesUriPart:
+      properties:
+        mime_type:
+          nullable: true
+          type: string
+        modality:
+          type: string
+        type:
+          type: string
+        uri:
+          type: string
+      required:
+      - type
+      - modality
+      - uri
+      type: object
     AlertmanagertypesChannel:
       properties:
         createdAt:
@@ -3367,6 +3581,69 @@ components:
         repeatVariable:
           type: string
       type: object
+    DashboardtypesAIBuilderQuerySpec:
+      properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5TraceAggregation'
+          nullable: true
+          type: array
+        bucketOptions:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketOptions'
+        cursor:
+          type: string
+        disabled:
+          type: boolean
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        functions:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5Function'
+          nullable: true
+          type: array
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
+          type: array
+        having:
+          $ref: '#/components/schemas/Querybuildertypesv5Having'
+        legend:
+          type: string
+        limit:
+          type: integer
+        limitBy:
+          $ref: '#/components/schemas/Querybuildertypesv5LimitBy'
+        name:
+          type: string
+        offset:
+          type: integer
+        order:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          nullable: true
+          type: array
+        secondaryAggregations:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
+          nullable: true
+          type: array
+        selectFields:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          nullable: true
+          type: array
+        signal:
+          enum:
+          - traces
+          type: string
+        source:
+          $ref: '#/components/schemas/TelemetrytypesSource'
+        stepInterval:
+          $ref: '#/components/schemas/Querybuildertypesv5Step'
+      required:
+      - signal
+      type: object
     DashboardtypesAreaChartAppearance:
       properties:
         fillMode:
@@ -4420,6 +4697,7 @@ components:
     DashboardtypesQueryPlugin:
       discriminator:
         mapping:
+          signoz/AIBuilderQuery: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpec'
           signoz/BuilderQuery: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpec'
           signoz/ClickHouseSQL: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQuery'
           signoz/CompositeQuery: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQuery'
@@ -4429,6 +4707,7 @@ components:
         propertyName: kind
       oneOf:
       - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpec'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpec'
       - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQuery'
       - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormula'
       - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQuery'
@@ -4438,12 +4717,25 @@ components:
     DashboardtypesQueryPluginKind:
       enum:
       - signoz/BuilderQuery
+      - signoz/AIBuilderQuery
       - signoz/CompositeQuery
       - signoz/Formula
       - signoz/PromQLQuery
       - signoz/ClickHouseSQL
       - signoz/TraceOperator
       type: string
+    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpec:
+      properties:
+        kind:
+          enum:
+          - signoz/AIBuilderQuery
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesAIBuilderQuerySpec'
+      required:
+      - kind
+      - spec
+      type: object
     DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpec:
       properties:
         kind:
@@ -10225,6 +10517,14 @@ components:
           items:
             $ref: '#/components/schemas/SpantypesEvent'
           type: array
+        formattedInput:
+          $ref: '#/components/schemas/AiobservabilitytypesInputMessages'
+        formattedOutput:
+          $ref: '#/components/schemas/AiobservabilitytypesOutputMessages'
+        formatterWarnings:
+          items:
+            type: string
+          type: array
         has_error:
           type: boolean
         kind_string:
@@ -10267,6 +10567,9 @@ components:
       - attributes
       - events
       - references
+      - formattedInput
+      - formattedOutput
+      - formatterWarnings
       type: object
     SpantypesTraceAISummary:
       properties:
@@ -10347,6 +10650,14 @@ components:
         flags:
           minimum: 0
           type: integer
+        formattedInput:
+          $ref: '#/components/schemas/AiobservabilitytypesInputMessages'
+        formattedOutput:
+          $ref: '#/components/schemas/AiobservabilitytypesOutputMessages'
+        formatterWarnings:
+          items:
+            type: string
+          type: array
         has_children:
           type: boolean
         has_error:
@@ -15753,10 +16064,8 @@ paths:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
       security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
+      - api_key: []
+      - tokenizer: []
       summary: Get stats
       tags:
       - stats
@@ -16134,9 +16443,12 @@ paths:
   /api/v1/traces/{traceID}/thread:
     get:
       deprecated: false
-      description: Returns the spans carrying gen_ai input or output messages in timestamp
-        order. Pass nextCursor as after or prevCursor as before to page, or spanId
-        to open the page around a span.
+      description: Returns the gen_ai spans of a trace, model calls, tool calls and
+        agent spans, in timestamp order. The messages a span carries are decoded into
+        formattedInput and formattedOutput, with formatterWarnings holding what the
+        converter could not resolve; a span without messages has both empty. Pass
+        nextCursor as after or prevCursor as before to page, or spanId to open the
+        page around a span.
       operationId: GetTraceThread
       parameters:
       - description: Page size, at most 100. 0 means 20.
@@ -28280,7 +28592,9 @@ paths:
       deprecated: false
       description: Returns the waterfall view of spans including all spans if total
         spans are under a limit, a max count otherwise. Aggregations are dropped compared
-        to v3
+        to v3. A span carrying gen_ai input or output messages also has them decoded
+        into formattedInput and formattedOutput, with formatterWarnings holding what
+        the converter could not resolve.
       operationId: GetWaterfallV4
       parameters:
       - in: path

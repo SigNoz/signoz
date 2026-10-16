@@ -62,7 +62,7 @@ export default function NavItem({
 
 				{isBeta && (
 					<div className="nav-item-beta">
-						<Badge color="robin" className="sidenav-beta-tag">
+						<Badge variant="solid" color="primary">
 							Beta
 						</Badge>
 					</div>
@@ -70,7 +70,7 @@ export default function NavItem({
 
 				{isNew && (
 					<div className="nav-item-new">
-						<Badge color="robin" className="sidenav-new-tag">
+						<Badge variant="solid" color="primary">
 							New
 						</Badge>
 					</div>
@@ -78,7 +78,9 @@ export default function NavItem({
 
 				{isEarlyAccess && (
 					<div className="nav-item-early-access">
-						<Badge color="robin">Early Access</Badge>
+						<Badge variant="solid" color="primary">
+							Early Access
+						</Badge>
 					</div>
 				)}
 
@@ -108,12 +110,10 @@ export default function NavItem({
 	);
 
 	// Only non-pinnable items set `tooltip`; it would nest with the pin tooltip.
-	return tooltip ? (
+	return (
 		<Tooltip title={tooltip} placement="right">
 			{navItem}
 		</Tooltip>
-	) : (
-		navItem
 	);
 }
 

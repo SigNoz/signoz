@@ -8,6 +8,7 @@ import { Labels } from 'types/api/alerts/def';
 import { v4 as uuid } from 'uuid';
 
 import { Badge } from '@signozhq/ui/badge';
+import { Pill } from '@signozhq/ui/pill';
 import { QueryChipContainer, QueryChipItem, SearchContainer } from './styles';
 import { ILabelRecord } from './types';
 import { createQuery, flattenLabels, prepareLabels } from './utils';
@@ -152,16 +153,18 @@ function LabelSelect({
 							query.key !== 'severity' && query.key !== 'description';
 						return (
 							<QueryChipContainer key={query.key}>
-								<Badge
-									color="vanilla"
-									closable={isClosable}
-									onClose={(e): void => {
-										e.preventDefault();
-										handleClose(query.key);
-									}}
-								>
-									{query.key}: {query.value}
-								</Badge>
+								{isClosable ? (
+									<Pill.Closeable
+										closeAriaLabel={`Remove ${query.key}`}
+										onClose={(): void => handleClose(query.key)}
+									>
+										{query.key}: {query.value}
+									</Pill.Closeable>
+								) : (
+									<Badge textTransform="none" variant="solid" color="secondary">
+										{query.key}: {query.value}
+									</Badge>
+								)}
 							</QueryChipContainer>
 						);
 					})}

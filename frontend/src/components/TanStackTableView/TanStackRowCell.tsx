@@ -35,7 +35,8 @@ function TanStackRowCellInner<TData>({
 		<td
 			className={cx(tableStyles.tableCell, 'tanstack-cell-' + cell.column.id)}
 			data-single-column={hasSingleColumn || undefined}
-			onClick={onClick}
+			// While loading, rowData may be a placeholder ({ id: 'skeleton-N' }).
+			onClick={showSkeleton ? undefined : onClick}
 		>
 			{showSkeleton ? (
 				<Skeleton.Input

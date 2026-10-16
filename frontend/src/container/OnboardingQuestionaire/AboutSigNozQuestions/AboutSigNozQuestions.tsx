@@ -101,6 +101,16 @@ export function AboutSigNozQuestions({
 			handleInterestChange(option, Boolean(checked));
 		};
 
+	const getNextDisabledReason = (): string => {
+		if (discoverSignoz === '') {
+			return 'Tell us how you first came across SigNoz';
+		}
+		if (interestInSignoz.length === 0) {
+			return 'Select what got you interested in SigNoz';
+		}
+		return 'Describe what got you interested in SigNoz';
+	};
+
 	const handleOnNext = (): void => {
 		setSignozDetails({
 			discoverSignoz,
@@ -145,6 +155,7 @@ export function AboutSigNozQuestions({
 							{shuffledOptionKeys.map((option: string) => (
 								<div key={option} className="checkbox-item">
 									<Checkbox
+										color="primary"
 										id={`checkbox-${option}`}
 										value={interestInSignoz.includes(option)}
 										onChange={createInterestChangeHandler(option)}
@@ -156,6 +167,7 @@ export function AboutSigNozQuestions({
 
 							<div className="checkbox-item checkbox-item-others">
 								<Checkbox
+									color="primary"
 									id="others-checkbox"
 									value={interestInSignoz.includes('Others')}
 									onChange={createInterestChangeHandler('Others')}
@@ -179,11 +191,13 @@ export function AboutSigNozQuestions({
 
 				<div className="onboarding-buttons-container">
 					<Button
+						size="md"
 						variant="solid"
 						color="primary"
-						className={`onboarding-next-button ${isNextDisabled ? 'disabled' : ''}`}
+						width="100%"
 						onClick={handleOnNext}
 						disabled={isNextDisabled}
+						disabledTooltip={getNextDisabledReason()}
 						suffix={<ArrowRight size={12} />}
 					>
 						Next

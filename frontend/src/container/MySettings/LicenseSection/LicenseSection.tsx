@@ -32,14 +32,16 @@ function LicenseSectionContent(): JSX.Element | null {
 			<div className="license-section-content-item">
 				<div className="license-section-content-item-title-action">
 					<span>License key</span>
-					<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+					<span style={{ display: 'flex', alignItems: 'center' }}>
 						<Typography.Text code>{getMaskedKey(licenseKey)}</Typography.Text>
 						<Button
-							variant="link"
-							color="none"
+							size="sm"
+							variant="outlined"
+							color="secondary"
 							aria-label="Copy license key"
-							data-testid="license-key-copy-btn"
+							testId="license-key-copy-btn"
 							onClick={(): void => handleCopyKey(licenseKey)}
+							icon
 						>
 							<Copy size={14} />
 						</Button>
