@@ -12,6 +12,7 @@ import {
 	expectRowUsable,
 	explorerUrl,
 	makeView,
+	MENU_CHECK_TIMEOUT,
 	renderWithExplorerProviders,
 	urlParam,
 	viewUrl,
@@ -73,7 +74,7 @@ async function chooseFromRowMenu(
 	await screen.findByTestId('saved-views-list');
 	fireEvent.click(within(row(viewName)).getByTestId('saved-views-row-menu'));
 	const menuItem = await screen.findByTestId(ROW_MENU_ITEM_TEST_IDS[item]);
-	await waitFor(() => expectRowUsable(menuItem));
+	await waitFor(() => expectRowUsable(menuItem), MENU_CHECK_TIMEOUT);
 	fireEvent.click(menuItem);
 }
 

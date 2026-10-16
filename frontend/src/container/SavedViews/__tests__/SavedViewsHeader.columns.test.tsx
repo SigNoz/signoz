@@ -11,6 +11,7 @@ import { mockSavedViewsApi } from './savedViewsApiMock';
 import {
 	expectRowUsable,
 	makeView,
+	MENU_CHECK_TIMEOUT,
 	renderWithExplorerProviders,
 	viewUrl,
 } from './savedViewsTestUtils';
@@ -119,7 +120,7 @@ describe('SavedViewsHeader columns', () => {
 		const update = await screen.findByTestId(
 			'saved-views-save-changes-item-update',
 		);
-		await waitFor(() => expectRowUsable(update));
+		await waitFor(() => expectRowUsable(update), MENU_CHECK_TIMEOUT);
 		await userEvent.click(update);
 		await waitFor(() => expect(isDirty()).toBe(false));
 

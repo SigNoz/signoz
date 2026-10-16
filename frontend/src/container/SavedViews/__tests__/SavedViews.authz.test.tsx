@@ -24,6 +24,7 @@ import { API, mockSavedViewsApi } from './savedViewsApiMock';
 import {
 	explorerUrl,
 	makeView,
+	MENU_CHECK_TIMEOUT,
 	queryWith,
 	renderWithExplorerProviders,
 	viewUrl,
@@ -68,8 +69,9 @@ async function openRowMenu(name: string): Promise<void> {
 
 // Resolves once the row's check is back, so its state is final.
 async function settledRow(testId: string): Promise<HTMLElement> {
-	await waitFor(() =>
-		expect(screen.getByTestId(testId)).not.toHaveAttribute('data-loading'),
+	await waitFor(
+		() => expect(screen.getByTestId(testId)).not.toHaveAttribute('data-loading'),
+		MENU_CHECK_TIMEOUT,
 	);
 	return screen.getByTestId(testId);
 }

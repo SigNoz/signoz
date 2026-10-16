@@ -13,6 +13,7 @@ import {
 	expectUsable,
 	explorerUrl,
 	makeView,
+	MENU_CHECK_TIMEOUT,
 	queryWith,
 	renderWithExplorerProviders,
 	urlParam,
@@ -77,7 +78,7 @@ const SAVE_MENU_ITEM_TEST_IDS: Record<string, string> = {
 async function chooseFromSaveMenu(item: string): Promise<void> {
 	await userEvent.click(screen.getByTestId('saved-views-save-changes'));
 	const menuItem = await screen.findByTestId(SAVE_MENU_ITEM_TEST_IDS[item]);
-	await waitFor(() => expectRowUsable(menuItem));
+	await waitFor(() => expectRowUsable(menuItem), MENU_CHECK_TIMEOUT);
 	await userEvent.click(menuItem);
 }
 
