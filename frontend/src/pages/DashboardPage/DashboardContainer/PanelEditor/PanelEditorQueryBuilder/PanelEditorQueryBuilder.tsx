@@ -19,6 +19,7 @@ import PromQLQueryContainer from 'container/QueryBuilder/rawQueryEditors/PromQL'
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useSyncQueryBuilderFields } from 'components/QueryBuilderV2/useSyncQueryBuilderFields';
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
@@ -72,6 +73,7 @@ function PanelEditorQueryBuilder({
 	const isRawQuery = isRawRequest(panelDefinition.queryCapabilities);
 	const { currentQuery } = useQueryBuilder();
 	const isDarkMode = useIsDarkMode();
+	useSyncQueryBuilderFields(panelDefinition.syncedQueryBuilderFields);
 
 	// Cleared here, not in QueryBuilderV2: builder panes unmount on every tab switch.
 	useEffect(() => {
@@ -194,7 +196,6 @@ function PanelEditorQueryBuilder({
 						<span className={styles.runQueryBtnContainer}>
 							<TextToolTip text="This will temporarily save the current query and graph state. This will persist across tab change" />
 							<RunQueryBtn
-								className="run-query-dashboard-btn"
 								label="Run Query"
 								onStageRunQuery={onStageRunQuery}
 								isLoadingQueries={isLoadingQueries}

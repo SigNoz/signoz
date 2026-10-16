@@ -7,9 +7,3 @@
 	cursor: default;
 	color: inherit;
 }
-
-// Above the floating span details panel (z-index 999).
-.tooltip {
-	composes: tooltipContent from '../shared.module.scss';
-	--tooltip-z-index: 1000;
-}

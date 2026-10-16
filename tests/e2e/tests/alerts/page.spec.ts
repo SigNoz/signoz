@@ -27,7 +27,8 @@ test.describe('Alerts page shell', () => {
 		await page.goto(ALERTS_LIST_PATH);
 
 		// No `tab` param at all — `getActiveKey()` falls back to AlertRules.
-		await expect(page).toHaveURL(ALERTS_LIST_PATH);
+		await expect(page).toHaveURL(new RegExp(`${ALERTS_LIST_PATH}(\\?|$)`));
+		await expect(page).not.toHaveURL(/[?&]tab=/);
 		await expect(
 			page.getByRole('tab', { name: TAB_NAMES.rules }),
 		).toHaveAttribute('aria-selected', 'true');

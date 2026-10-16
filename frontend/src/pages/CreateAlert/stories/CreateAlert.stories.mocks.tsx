@@ -198,6 +198,9 @@ export const clickFooterButton = async (
 ): Promise<void> => {
 	const button = await within(canvasElement).findByTestId(testId);
 
-	await waitFor(() => expect(button).toBeEnabled());
+	await waitFor(() => {
+		expect(button).toBeEnabled();
+		expect(button).not.toHaveAttribute('aria-disabled', 'true');
+	});
 	await userEvent.click(button);
 };

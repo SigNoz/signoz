@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
+import { unquote } from 'utils/stringUtils';
 
 import { applyExpression, ExpressionFilterProps } from './types';
 
@@ -13,17 +14,19 @@ const ERROR_KEY = 'has_error';
 export function useHighlightErrors(
 	props: ExpressionFilterProps,
 ): UseHighlightErrorsReturn {
-	const { expression, filters, setExpression, expressionRef, runQuery } = props;
+	const { expression, committedPairs, setExpression, expressionRef, runQuery } =
+		props;
 
-	// Derive from filters (only updates after runQuery, not on every keystroke)
+	// Derive from the committed pairs (only updates after runQuery, not on every keystroke)
 	const isHighlightErrors = useMemo(
 		() =>
-			filters.items.some(
-				(item) =>
-					item.key?.key === ERROR_KEY &&
-					(item.value === true || item.value === 'true'),
+			committedPairs.some(
+				(pair) =>
+					pair.key === ERROR_KEY &&
+					pair.operator === '=' &&
+					unquote(pair.value ?? '').toLowerCase() === 'true',
 			),
-		[filters],
+		[committedPairs],
 	);
 
 	const handleToggle = useCallback(

@@ -232,8 +232,9 @@ function LiveLogsContainer({
 					<div className="live-logs-frequency-chart-view-controller">
 						<Typography>Frequency chart</Typography>
 						<Switch
+							color="primary"
+							textPlacement="right"
 							value={showLiveLogsFrequencyChart}
-							defaultValue
 							onChange={handleToggleFrequencyChart}
 						/>
 					</div>

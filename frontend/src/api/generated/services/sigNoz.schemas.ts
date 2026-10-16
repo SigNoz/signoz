@@ -11789,16 +11789,12 @@ export interface SpantypesThreadSpanDTO {
 	 * @type array
 	 */
 	events: SpantypesEventDTO[];
-	formatted_input: AiobservabilitytypesInputMessagesDTO;
-	formatted_output: AiobservabilitytypesOutputMessagesDTO;
-	/**
-	 * @type string
-	 */
-	formatter: string;
+	formattedInput: AiobservabilitytypesInputMessagesDTO;
+	formattedOutput: AiobservabilitytypesOutputMessagesDTO;
 	/**
 	 * @type array
 	 */
-	formatter_warnings: string[];
+	formatterWarnings: string[];
 	/**
 	 * @type boolean
 	 */
@@ -11914,6 +11910,12 @@ export interface SpantypesWaterfallSpanDTO {
 	 * @minimum 0
 	 */
 	flags?: number;
+	formattedInput?: AiobservabilitytypesInputMessagesDTO;
+	formattedOutput?: AiobservabilitytypesOutputMessagesDTO;
+	/**
+	 * @type array
+	 */
+	formatterWarnings?: string[];
 	/**
 	 * @type boolean
 	 */

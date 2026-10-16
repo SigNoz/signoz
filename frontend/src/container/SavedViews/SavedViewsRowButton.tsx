@@ -1,10 +1,8 @@
 import { forwardRef } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 
 import { SavedViewsRowButtonProps } from './types';
-
-import styles from './SavedViewsList.module.scss';
 
 // forwardRef and rest props so a menu can use it as its trigger.
 const SavedViewsRowButton = forwardRef<
@@ -20,21 +18,17 @@ const SavedViewsRowButton = forwardRef<
 			variant="link"
 			color="secondary"
 			size="sm"
-			className={styles.rowButton}
+			icon
 			aria-label={label}
 			onClick={onClick}
 			{...triggerProps}
-			data-testid={testId}
+			testId={testId}
 		>
 			{icon}
 		</Button>
 	);
 
-	return tooltip ? (
-		<TooltipSimple title={tooltip}>{button}</TooltipSimple>
-	) : (
-		button
-	);
+	return tooltip ? <Tooltip title={tooltip}>{button}</Tooltip> : button;
 });
 
 export default SavedViewsRowButton;

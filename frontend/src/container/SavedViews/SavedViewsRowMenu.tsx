@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Ellipsis } from '@signozhq/icons';
-import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
+import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 
 import { SAVED_VIEW_ROW_ACTIONS } from './constants';
 import SavedViewsRowButton from './SavedViewsRowButton';
@@ -10,15 +10,24 @@ function SavedViewsRowMenu({
 	onAction,
 	onOpen,
 }: SavedViewsRowMenuProps): JSX.Element {
-	const items = useMemo<MenuItem[]>(
+	const items = useMemo<DropdownItemType[]>(
 		() =>
 			SAVED_VIEW_ROW_ACTIONS.flatMap(
-				({ key, label, icon: Icon, danger, hasDividerBefore }): MenuItem[] => [
-					...(hasDividerBefore ? [{ type: 'divider' as const }] : []),
+				({
+					key,
+					label,
+					icon: Icon,
+					danger,
+					hasDividerBefore,
+				}): DropdownItemType[] => [
+					...(hasDividerBefore
+						? [{ type: 'separator' as const, value: `separator-${key}` }]
+						: []),
 					{
-						key,
+						type: 'item' as const,
+						value: key,
 						label,
-						icon: <Icon size={14} />,
+						prefix: <Icon size={14} />,
 						danger,
 						onClick: (): void => onAction(key),
 					},
@@ -28,16 +37,24 @@ function SavedViewsRowMenu({
 	);
 
 	return (
-		<DropdownMenuSimple menu={{ items }} side="right" align="start">
+		<Dropdown
+			items={items}
+			nativeButton
+			side="right"
+			align="start"
+			onOpenChange={(open): void => {
+				if (open) {
+					onOpen();
+				}
+			}}
+		>
 			<SavedViewsRowButton
 				icon={<Ellipsis size={14} />}
 				label="More options"
 				tooltip="More options"
 				testId="saved-views-row-menu"
-				onPointerDown={onOpen}
-				onKeyDown={onOpen}
 			/>
-		</DropdownMenuSimple>
+		</Dropdown>
 	);
 }
 

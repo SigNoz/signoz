@@ -51,7 +51,10 @@ describe('ViewRolePage - Loading State', () => {
 		await expect(
 			screen.findByTestId('delete-button'),
 		).resolves.toBeInTheDocument();
-		expect(screen.getByTestId('delete-button')).toBeDisabled();
+		expect(screen.getByTestId('delete-button')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('does not fetch when roleId is missing from URL', () => {

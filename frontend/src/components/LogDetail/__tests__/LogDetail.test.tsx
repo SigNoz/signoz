@@ -129,6 +129,18 @@ describe('LogDetail drawer — header', () => {
 		});
 	});
 
+	it('keeps the drawer open when a ⋯ menu item is clicked', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const onClose = jest.fn();
+
+		renderDrawer({ onClose });
+
+		await user.click(screen.getByTestId('log-details-header-menu'));
+		await user.click(await screen.findByText('Copy log'));
+
+		expect(onClose).not.toHaveBeenCalled();
+	});
+
 	it('shows "Open in Explorer" when a handleOpenInExplorer handler is provided', () => {
 		renderDrawer({ handleOpenInExplorer: jest.fn() });
 
@@ -217,8 +229,14 @@ describe('LogDetail drawer — header', () => {
 		// Active log is the first one.
 		renderDrawer({ log: logs[0], logs, onNavigateLog });
 
-		expect(screen.getByTestId('log-details-header-prev')).toBeDisabled();
-		expect(screen.getByTestId('log-details-header-next')).toBeEnabled();
+		expect(screen.getByTestId('log-details-header-prev')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
+		expect(screen.getByTestId('log-details-header-next')).not.toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 
 		await user.click(screen.getByTestId('log-details-header-next'));
 		expect(onNavigateLog).toHaveBeenLastCalledWith(logs[1]);

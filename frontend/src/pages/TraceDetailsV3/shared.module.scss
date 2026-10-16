@@ -18,18 +18,3 @@
 	box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 	backdrop-filter: blur(20px);
 }
-
-.tooltipContent {
-	--tooltip-background: color-mix(
-		in srgb,
-		var(--l3-background) 60%,
-		transparent
-	);
-	--tooltip-border-color: var(--l2-border);
-	--tooltip-border-radius: var(--radius-2);
-	--tooltip-padding: var(--spacing-4);
-	--tooltip-box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
-	/* Above the docked span details FloatingPanel (z-index 999). */
-	--tooltip-z-index: 1000;
-	backdrop-filter: blur(20px);
-}

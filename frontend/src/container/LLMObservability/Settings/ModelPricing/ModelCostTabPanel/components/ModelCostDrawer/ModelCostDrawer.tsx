@@ -71,6 +71,7 @@ function ModelCostDrawer({
 	const footer = (
 		<div className={styles.footer}>
 			<Button
+				size="md"
 				variant="outlined"
 				color="secondary"
 				onClick={onClose}
@@ -80,10 +81,12 @@ function ModelCostDrawer({
 			</Button>
 			{canManage && (
 				<Button
+					size="md"
 					variant="solid"
 					color="primary"
 					onClick={handleSubmit(onSave)}
 					disabled={!isDirty}
+					disabledTooltip="No changes to save"
 					loading={isSaving}
 					testId="drawer-save-btn"
 				>

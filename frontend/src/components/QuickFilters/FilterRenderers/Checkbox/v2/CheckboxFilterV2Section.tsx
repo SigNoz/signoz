@@ -3,6 +3,7 @@ import {
 	CheckedState,
 } from 'components/QuickFilters/types';
 
+import { FILTER_DISABLED_REASON } from '../useCheckboxFilterState';
 import { CheckboxFilterV2ValueRow } from './CheckboxFilterV2ValueRow';
 import { SectionDivider } from './SectionDivider';
 import { Section } from './useSectionedValues';
@@ -84,6 +85,7 @@ export function CheckboxFilterV2Section(
 						value={value}
 						checkedState={checkedState}
 						disabled={isFilterDisabled}
+						disabledTooltip={FILTER_DISABLED_REASON}
 						title={filter.title}
 						badge={badge}
 						onlyButtonLabel={

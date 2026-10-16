@@ -3,7 +3,7 @@ import cx from 'classnames';
 import { ArrowUpToLine, List, Plus, Undo2, X } from '@signozhq/icons';
 import { Skeleton } from '@signozhq/ui/skeleton';
 import { toast } from '@signozhq/ui/sonner';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 
 import {
@@ -80,7 +80,7 @@ function SavedViewsHeader({
 						testId="saved-views-loading"
 					/>
 				) : (
-					<TooltipSimple title={name}>
+					<Tooltip title={name}>
 						<span
 							className={cx(styles.name, {
 								[styles.isDirty]: isDirty,
@@ -91,7 +91,7 @@ function SavedViewsHeader({
 							{isDirty && <span className={styles.dot} />}
 							<span className={styles.nameText}>{name}</span>
 						</span>
-					</TooltipSimple>
+					</Tooltip>
 				)}
 			</div>
 
@@ -101,6 +101,7 @@ function SavedViewsHeader({
 						title="Create new view"
 						icon={<Plus size={14} />}
 						disabled={isLoading}
+						disabledTooltip="Loading views"
 						onClick={(): void => setModalMode('create')}
 						testId="saved-views-create"
 					/>
@@ -127,6 +128,7 @@ function SavedViewsHeader({
 							icon={<X size={14} />}
 							color="warning"
 							disabled={isSaving}
+							disabledTooltip="Saving the view"
 							onClick={(): void => revertView(view)}
 							testId="saved-views-discard"
 						/>

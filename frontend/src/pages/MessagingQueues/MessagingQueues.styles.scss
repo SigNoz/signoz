@@ -78,33 +78,6 @@
 	.messaging-queue-details {
 		display: flex;
 		padding: 16px;
-
-		.mq-details-options {
-			letter-spacing: -0.06px;
-			cursor: pointer;
-
-			.ant-radio-button-wrapper {
-				border-color: var(--l1-border);
-				color: var(--l2-foreground);
-			}
-			.ant-radio-button-wrapper-checked {
-				background: var(--l1-border);
-				color: var(--l1-foreground);
-			}
-			.ant-radio-button-wrapper-disabled {
-				background: var(--l2-background);
-				color: var(--l3-foreground);
-			}
-			.ant-radio-button-wrapper::before {
-				width: 0px;
-			}
-
-			.disabled-option {
-				.coming-soon {
-					margin-left: 8px;
-				}
-			}
-		}
 	}
 }
 

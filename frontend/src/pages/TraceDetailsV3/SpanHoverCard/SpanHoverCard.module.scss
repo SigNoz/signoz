@@ -8,13 +8,6 @@
 	pointer-events: none;
 }
 
-.popover {
-	composes: tooltipContent from '../shared.module.scss';
-	// Hover card may be rendered while the SpanDetailsPanel is docked as
-	// a FloatingPanel (z-index 999); bump above the default tooltip z-index.
-	--tooltip-z-index: 1000;
-}
-
 .content {
 	composes: tooltipBody from '../shared.module.scss';
 	min-width: 223px;

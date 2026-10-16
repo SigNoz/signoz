@@ -134,9 +134,7 @@ test.describe('SSO auth domains', () => {
 		await openConfigureAuthDomain(page, domain);
 		await page.getByTestId('google-auth-workspace-groups-header').click();
 
-		const fetchGroups = page
-			.getByTestId('google-auth-fetch-groups')
-			.getByRole('checkbox');
+		const fetchGroups = page.getByRole('checkbox', { name: 'Fetch Groups' });
 		await expect(fetchGroups).toBeChecked();
 		await expect(
 			page

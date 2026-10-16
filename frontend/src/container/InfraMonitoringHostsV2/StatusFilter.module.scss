@@ -2,9 +2,8 @@
 	display: flex;
 	align-items: center;
 
-	--toggle-group-item-size: 100%;
-	--toggle-group-radius: 0px 2px 2px 0px;
-	--toggle-group-item-font-size: var(--periscope-font-size-base);
+	--toggle-group-border-radius: 0px 2px 2px 0px;
+	--toggle-group-button-font-size: var(--periscope-font-size-base);
 }
 
 .statusLabel {
@@ -23,10 +22,6 @@
 	justify-content: center;
 	align-items: center;
 	gap: var(--spacing-2);
-}
-
-.statusToggleGroup {
-	height: 32px;
 }
 
 .statusToggleItem {

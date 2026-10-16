@@ -118,7 +118,7 @@ function SavedViewsList({
 					color="secondary"
 					size="sm"
 					onClick={refetch}
-					data-testid="saved-views-list-retry"
+					testId="saved-views-list-retry"
 				>
 					Retry
 				</Button>

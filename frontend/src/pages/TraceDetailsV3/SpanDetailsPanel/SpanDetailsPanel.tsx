@@ -1,11 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Badge } from '@signozhq/ui/badge';
-import {
-	TabsContent,
-	TabsList,
-	TabsRoot,
-	TabsTrigger,
-} from '@signozhq/ui/tabs';
+import { Tabs, type TabsItemProps } from '@signozhq/ui/tabs';
 import { Bookmark, ChartColumnBig, List, ScrollText } from '@signozhq/icons';
 import { Skeleton } from 'antd';
 import { DetailsHeader, DetailsPanelDrawer } from 'components/DetailsPanel';
@@ -42,6 +37,7 @@ import { openInNewTab } from 'utils/navigation';
 
 import {
 	// KEY_ATTRIBUTE_KEYS, // uncomment when key attributes section is re-enabled
+	SPAN_DETAILS_PANEL_MIN_WIDTH,
 	SpanDetailVariant,
 	VISIBLE_ACTIONS,
 } from './constants';
@@ -289,6 +285,89 @@ function SpanDetailsContent({
 	const aiMessages = <SpanAIMessages span={selectedSpan} />;
 	const eventsCount = selectedSpan.events?.length || 0;
 
+	const spanDetailTabs: TabsItemProps[] = [
+		{
+			key: 'overview',
+			label: 'Overview',
+			prefixIcon: <Bookmark size={14} />,
+			children: (
+				<>
+					{isWide && summary}
+					{isWide && <div className={styles.tabAiMessages}>{aiMessages}</div>}
+					<DataViewer
+						data={spanDisplayData}
+						drawerKey="trace-details"
+						prettyViewProps={{
+							showPinned: true,
+							actions: prettyViewCustomActions,
+							visibleActions: VISIBLE_ACTIONS,
+							pinnedFieldsValue,
+							onPinnedFieldsChange,
+						}}
+					/>
+				</>
+			),
+		},
+		{
+			key: 'events',
+			label: 'Events',
+			prefixIcon: <ScrollText size={14} />,
+			suffixIcon:
+				eventsCount > 0 ? (
+					<Badge variant="solid" color="secondary">
+						{eventsCount}
+					</Badge>
+				) : undefined,
+			children: (
+				<Events
+					span={selectedSpan}
+					startTime={traceStartTime || 0}
+					isSearchVisible
+				/>
+			),
+		},
+		{
+			key: 'logs',
+			label: 'Logs',
+			prefixIcon: <List size={14} />,
+			children: (
+				<SpanLogs
+					traceId={selectedSpan.trace_id}
+					spanId={selectedSpan.span_id}
+					timeRange={{
+						startTime: (traceStartTime || 0) - FIVE_MINUTES_IN_MS,
+						endTime: (traceEndTime || 0) + FIVE_MINUTES_IN_MS,
+					}}
+					logs={logs}
+					isLoading={isLogsLoading}
+					isError={isLogsError}
+					isFetching={isLogsFetching}
+					isLogSpanRelated={isLogSpanRelated}
+					handleExplorerPageRedirect={handleExplorerPageRedirect}
+					emptyStateConfig={!hasTraceIdLogs ? emptyLogsStateConfig : undefined}
+				/>
+			),
+		},
+	];
+
+	if (infraMetadata) {
+		spanDetailTabs.push({
+			key: 'metrics',
+			label: 'Metrics',
+			prefixIcon: <ChartColumnBig size={14} />,
+			children: (
+				<InfraMetrics
+					clusterName={infraMetadata.clusterName}
+					podName={infraMetadata.podName}
+					nodeName={infraMetadata.nodeName}
+					hostName={infraMetadata.hostName}
+					timestamp={infraMetadata.spanTimestamp}
+					dataSource={DataSource.TRACES}
+				/>
+			),
+		});
+	}
+
 	return (
 		<>
 			<div className={styles.panelBody} ref={bodyRef}>
@@ -296,84 +375,16 @@ function SpanDetailsContent({
 				{!isWide && aiMessages}
 
 				<div className={styles.tabsSection}>
-					{/* Step 9: ContentTabs */}
-					<TabsRoot defaultValue="overview" onValueChange={handleTabChange}>
-						<TabsList variant="secondary">
-							<TabsTrigger value="overview" variant="secondary">
-								<Bookmark size={14} /> Overview
-							</TabsTrigger>
-							<TabsTrigger value="events" variant="secondary">
-								<ScrollText size={14} /> Events
-								{eventsCount > 0 && (
-									<Badge color="secondary" className={styles.eventsBadge}>
-										{eventsCount}
-									</Badge>
-								)}
-							</TabsTrigger>
-							<TabsTrigger value="logs" variant="secondary">
-								<List size={14} /> Logs
-							</TabsTrigger>
-							{infraMetadata && (
-								<TabsTrigger value="metrics" variant="secondary">
-									<ChartColumnBig size={14} /> Metrics
-								</TabsTrigger>
-							)}
-						</TabsList>
-
-						<div className={styles.tabsScroll}>
-							<TabsContent value="overview">
-								{isWide && summary}
-								{isWide && <div className={styles.tabAiMessages}>{aiMessages}</div>}
-								<DataViewer
-									data={spanDisplayData}
-									drawerKey="trace-details"
-									prettyViewProps={{
-										showPinned: true,
-										actions: prettyViewCustomActions,
-										visibleActions: VISIBLE_ACTIONS,
-										pinnedFieldsValue,
-										onPinnedFieldsChange,
-									}}
-								/>
-							</TabsContent>
-							<TabsContent value="events">
-								<Events
-									span={selectedSpan}
-									startTime={traceStartTime || 0}
-									isSearchVisible
-								/>
-							</TabsContent>
-							<TabsContent value="logs">
-								<SpanLogs
-									traceId={selectedSpan.trace_id}
-									spanId={selectedSpan.span_id}
-									timeRange={{
-										startTime: (traceStartTime || 0) - FIVE_MINUTES_IN_MS,
-										endTime: (traceEndTime || 0) + FIVE_MINUTES_IN_MS,
-									}}
-									logs={logs}
-									isLoading={isLogsLoading}
-									isError={isLogsError}
-									isFetching={isLogsFetching}
-									isLogSpanRelated={isLogSpanRelated}
-									handleExplorerPageRedirect={handleExplorerPageRedirect}
-									emptyStateConfig={!hasTraceIdLogs ? emptyLogsStateConfig : undefined}
-								/>
-							</TabsContent>
-							{infraMetadata && (
-								<TabsContent value="metrics">
-									<InfraMetrics
-										clusterName={infraMetadata.clusterName}
-										podName={infraMetadata.podName}
-										nodeName={infraMetadata.nodeName}
-										hostName={infraMetadata.hostName}
-										timestamp={infraMetadata.spanTimestamp}
-										dataSource={DataSource.TRACES}
-									/>
-								</TabsContent>
-							)}
-						</div>
-					</TabsRoot>
+					<Tabs
+						variant="secondary"
+						orientation="horizontal"
+						alignment="start"
+						className={styles.tabsScroll}
+						value={activeTab}
+						onChange={handleTabChange}
+						noTabContentPadding
+						items={spanDetailTabs}
+					/>
 				</div>
 			</div>
 
@@ -422,20 +433,14 @@ function SpanDetailsPanel({
 		if (onVariantChange) {
 			actions.push({
 				key: 'dock-mode',
-				component: (
-					<DockModeSwitcher
-						value={variant}
-						onChange={onVariantChange}
-						tooltipClassName={styles.dockToggleTooltip}
-					/>
-				),
+				component: <DockModeSwitcher value={variant} onChange={onVariantChange} />,
 			});
 		}
 
 		return actions;
 	}, [variant, onVariantChange]);
 
-	const PANEL_WIDTH = 500;
+	const PANEL_WIDTH = SPAN_DETAILS_PANEL_MIN_WIDTH;
 	const PANEL_MARGIN_RIGHT = 20;
 	const PANEL_MARGIN_TOP = 50;
 	const PANEL_MARGIN_BOTTOM = 25;
@@ -488,7 +493,7 @@ function SpanDetailsPanel({
 			isOpen={panelState.isOpen}
 			className={styles.panel}
 			width={PANEL_WIDTH}
-			minWidth={480}
+			minWidth={SPAN_DETAILS_PANEL_MIN_WIDTH}
 			height={window.innerHeight - PANEL_MARGIN_TOP - PANEL_MARGIN_BOTTOM}
 			defaultPosition={{
 				x: window.innerWidth - PANEL_WIDTH - PANEL_MARGIN_RIGHT,

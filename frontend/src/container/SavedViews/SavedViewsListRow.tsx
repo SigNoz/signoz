@@ -26,19 +26,23 @@ function SavedViewsListRow({
 			onMouseEnter={(event): void => hover.onRowEnter(view, event.currentTarget)}
 			onMouseLeave={hover.onRowLeave}
 		>
-			<Button
-				variant="ghost"
-				color="secondary"
-				className={styles.rowName}
-				onClick={(): void => {
-					if (!isActive) {
-						onSelect(view);
-					}
-				}}
-				data-testid="saved-views-row-name"
-			>
-				<span className={styles.rowNameText}>{name}</span>
-			</Button>
+			<div className={styles.rowName}>
+				<Button
+					size="md"
+					variant="ghost"
+					color="secondary"
+					width="100%"
+					textOverflow="ellipsis"
+					onClick={(): void => {
+						if (!isActive) {
+							onSelect(view);
+						}
+					}}
+					testId="saved-views-row-name"
+				>
+					{name}
+				</Button>
+			</div>
 			{isActive && (
 				<SavedViewsRowButton
 					icon={<Undo2 size={14} />}

@@ -129,15 +129,15 @@ describe('MySettings Flows', () => {
 
 		it('Should have Dark theme selected by default', async () => {
 			const themeSelector = screen.getByTestId(THEME_SELECTOR_TEST_ID);
-			const darkOption = within(themeSelector).getByRole('radio', {
+			const darkOption = within(themeSelector).getByRole('button', {
 				name: /Dark/,
 			});
-			expect(darkOption).toBeChecked();
+			expect(darkOption).toHaveAttribute('aria-pressed', 'true');
 		});
 
 		it('Should switch theme and log event when Light theme is selected', async () => {
 			const themeSelector = screen.getByTestId(THEME_SELECTOR_TEST_ID);
-			const lightOption = within(themeSelector).getByRole('radio', {
+			const lightOption = within(themeSelector).getByRole('button', {
 				name: /Light/,
 			});
 

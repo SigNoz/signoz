@@ -5,7 +5,6 @@ import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 import { render, RenderResult } from '@testing-library/react';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import {
 	SavedviewtypesSavedViewDTO,
@@ -232,14 +231,12 @@ export function renderWithExplorerProviders(
 						<Provider store={mockStore(store.getState())}>
 							<AppContext.Provider value={appContext}>
 								<TimezoneProvider>
-									<TooltipProvider>
-										<PreferenceContextProvider>
-											<QueryBuilderProvider>
-												<ExplorerShell dataSource={dataSource} />
-												{ui}
-											</QueryBuilderProvider>
-										</PreferenceContextProvider>
-									</TooltipProvider>
+									<PreferenceContextProvider>
+										<QueryBuilderProvider>
+											<ExplorerShell dataSource={dataSource} />
+											{ui}
+										</QueryBuilderProvider>
+									</PreferenceContextProvider>
 								</TimezoneProvider>
 							</AppContext.Provider>
 						</Provider>

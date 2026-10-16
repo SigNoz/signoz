@@ -97,9 +97,11 @@ function SourceAttributeRow({
 			<Button
 				variant="ghost"
 				color="secondary"
-				size="icon"
+				size="sm"
+				icon
 				aria-label="Remove source"
 				disabled={!canRemove}
+				disabledTooltip="A mapping needs at least one source attribute"
 				onClick={(): void => onRemove(index)}
 				testId={`mapper-form-source-remove-${index}`}
 			>

@@ -1,9 +1,14 @@
+import { X } from '@signozhq/icons';
 import {
 	convertMetricKeyToTrace,
 	getResourceDeploymentKeys,
 } from 'hooks/useResourceAttribute/utils';
 
-import { QueryChipContainer, QueryChipItem } from '../../styles';
+import {
+	QueryChipContainer,
+	QueryChipItem,
+	QueryChipRemoveButton,
+} from '../../styles';
 import { IQueryChipProps } from './types';
 
 function QueryChip({ queryData, onClose }: IQueryChipProps): JSX.Element {
@@ -15,17 +20,23 @@ function QueryChip({ queryData, onClose }: IQueryChipProps): JSX.Element {
 
 	return (
 		<QueryChipContainer>
-			<QueryChipItem color="vanilla">
-				{convertMetricKeyToTrace(queryData.tagKey)}
-			</QueryChipItem>
-			<QueryChipItem color="vanilla">{queryData.operator}</QueryChipItem>
+			<QueryChipItem>{convertMetricKeyToTrace(queryData.tagKey)}</QueryChipItem>
+			<QueryChipItem>{queryData.operator}</QueryChipItem>
 			<QueryChipItem
-				color="vanilla"
-				closable={isClosable}
-				onClose={(e): void => {
-					e.preventDefault();
-					onCloseHandler();
-				}}
+				suffix={
+					isClosable ? (
+						<QueryChipRemoveButton
+							type="button"
+							aria-label="Remove"
+							onClick={(e): void => {
+								e.preventDefault();
+								onCloseHandler();
+							}}
+						>
+							<X size={12} />
+						</QueryChipRemoveButton>
+					) : undefined
+				}
 			>
 				{queryData.tagValue.join(', ')}
 			</QueryChipItem>

@@ -142,15 +142,9 @@ export const findLabelInput = async (
 
 export const removeLabel = async (
 	canvasElement: HTMLElement,
-	label: string,
+	key: string,
 ): Promise<void> => {
-	const chip = within(canvasElement)
-		.getByText(label)
-		.closest<HTMLElement>('[data-slot="badge"]');
-
-	if (!chip) {
-		throw new Error(`Label ${label} did not render`);
-	}
-
-	await userEvent.click(within(chip).getByRole('button'));
+	await userEvent.click(
+		within(canvasElement).getByRole('button', { name: `Remove ${key}` }),
+	);
 };

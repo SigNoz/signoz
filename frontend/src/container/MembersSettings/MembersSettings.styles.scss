@@ -49,41 +49,9 @@
 	}
 }
 
-.members-filter-trigger {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-2);
-	border: 1px solid var(--l1-border);
-	border-radius: 2px;
-	background-color: var(--l2-background);
-
-	> span {
-		color: var(--foreground);
-	}
-
-	&__chevron {
-		flex-shrink: 0;
-		color: var(--foreground);
-	}
-}
-
-.members-filter-dropdown {
-	.ant-dropdown-menu {
-		padding: var(--padding-3) 14px;
-		border-radius: 4px;
-		border: 1px solid var(--l1-border);
-		background: var(--l2-background);
-		backdrop-filter: blur(20px);
-	}
-
-	.ant-dropdown-menu-item {
-		background: transparent !important;
-		padding: var(--padding-1) 0 !important;
-
-		&:hover {
-			background: transparent !important;
-		}
-	}
+.members-filter-trigger__chevron {
+	flex-shrink: 0;
+	color: var(--foreground);
 }
 
 .members-filter-option {

@@ -5,6 +5,7 @@
 	height: 100%;
 	min-height: 0;
 	overflow: auto;
+	scrollbar-gutter: stable;
 	background-color: var(--l1-background);
 	@include custom-scrollbar;
 }

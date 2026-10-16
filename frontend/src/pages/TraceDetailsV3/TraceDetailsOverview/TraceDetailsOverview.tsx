@@ -28,7 +28,10 @@ import {
 	setTraceStoreAvailableColorByFields,
 	useTraceStore,
 } from '../stores/traceStore';
-import { SpanDetailVariant } from '../SpanDetailsPanel/constants';
+import {
+	SPAN_DETAILS_PANEL_MIN_WIDTH,
+	SpanDetailVariant,
+} from '../SpanDetailsPanel/constants';
 import SpanDetailsPanel from '../SpanDetailsPanel/SpanDetailsPanel';
 import { FLAMEGRAPH_SPAN_LIMIT } from '../TraceFlamegraph/constants';
 import TraceFlamegraph from '../TraceFlamegraph/TraceFlamegraph';
@@ -305,7 +308,7 @@ function TraceDetailsOverview({
 
 	const [spanDetailVariant, handleVariantChange] = useSpanDetailVariant();
 
-	const RIGHT_DOCK_MIN = 480;
+	const RIGHT_DOCK_MIN = SPAN_DETAILS_PANEL_MIN_WIDTH;
 	const RIGHT_DOCK_MAX = 720;
 	const [rightDockWidth, setRightDockWidth] = useState(RIGHT_DOCK_MIN);
 

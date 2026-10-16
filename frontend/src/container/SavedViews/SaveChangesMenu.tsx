@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Check } from '@signozhq/icons';
-import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
+import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 
 import SavedViewsIconButton from './SavedViewsIconButton';
 import { SaveChangesMenuProps } from './types';
@@ -10,24 +10,40 @@ function SaveChangesMenu({
 	onSaveAsNew,
 	onUpdate,
 }: SaveChangesMenuProps): JSX.Element {
-	const items = useMemo<MenuItem[]>(
+	const items = useMemo<DropdownItemType[]>(
 		() => [
-			{ key: 'save-as-new', label: 'Save as new view', onClick: onSaveAsNew },
-			{ key: 'update', label: 'Update selected view', onClick: onUpdate },
+			{
+				type: 'item',
+				value: 'save-as-new',
+				label: 'Save as new view',
+				onClick: onSaveAsNew,
+			},
+			{
+				type: 'item',
+				value: 'update',
+				label: 'Update selected view',
+				onClick: onUpdate,
+			},
 		],
 		[onSaveAsNew, onUpdate],
 	);
 
 	return (
-		<DropdownMenuSimple menu={{ items }} align="end">
+		<Dropdown
+			items={items}
+			nativeButton
+			align="end"
+			side="bottom"
+			disabled={disabled}
+			disabledTooltip="Saving the view"
+		>
 			<SavedViewsIconButton
 				title="Save changes"
 				icon={<Check size={14} />}
 				color="warning"
-				disabled={disabled}
 				testId="saved-views-save-changes"
 			/>
-		</DropdownMenuSimple>
+		</Dropdown>
 	);
 }
 

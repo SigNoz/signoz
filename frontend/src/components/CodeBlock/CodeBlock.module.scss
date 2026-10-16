@@ -2,6 +2,13 @@
 	position: relative;
 }
 
+.copyButton {
+	position: absolute;
+	right: 8px;
+	top: 8px;
+	z-index: 1;
+}
+
 .codeBlockSyntaxHighlighter {
 	background-color: var(--l2-background) !important;
 	border-radius: 4px !important;
