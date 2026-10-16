@@ -53,7 +53,7 @@ describe('GCP AgentSetup form', () => {
 		).not.toBeInTheDocument();
 		expect(document.querySelector('#gcp-project-ids-select')).toBeNull();
 		expect(screen.getByTestId('gcp-setup-guide-callout')).toHaveTextContent(
-			'how the SigNoz agent integration works',
+			'SigNoz integration sets up everything needed',
 		);
 	});
 

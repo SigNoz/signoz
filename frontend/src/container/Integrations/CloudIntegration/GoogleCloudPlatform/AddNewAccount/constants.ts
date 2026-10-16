@@ -13,15 +13,15 @@ export const DEFAULT_SETUP_FORM_VALUES: GcpSetupFormValues = {
 
 export const MANUAL_SETUP_GUIDE = {
 	description:
-		'Please go through our GCP integration guide, which covers all prerequisites — service account, IAM roles, and resource setup.',
+		'Please follow our setup guide to create the resources needed to complete the integration.',
 	docsUrl: 'https://signoz.io/docs/integrations/gcp/gcp-integration/',
-	linkLabel: 'GCP integration guide',
+	linkLabel: 'View setup guide',
 };
 
 export const AGENT_SETUP_GUIDE = {
 	description:
-		'Check our docs to learn how the SigNoz agent integration works, what it deploys in your project, and the permissions needed to run the setup commands.',
+		'SigNoz integration sets up everything needed to collect telemetry from your project.',
 	// TODO: point to the agent setup docs once they are published.
 	docsUrl: 'https://signoz.io/docs/integrations/gcp/gcp-integration/',
-	linkLabel: 'GCP agent integration docs',
+	linkLabel: 'Learn more',
 };
