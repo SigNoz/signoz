@@ -115,7 +115,7 @@ func (m *storage) Read(ctx context.Context, q qbtypes.QueryInfo, key *telemetryt
 // Fallback answers every name. A column name is the column. Any other name
 // is a label. A context-qualified name is also the label spelled with its
 // context, because a context can be a legitimate prefix in user data.
-func (m *storage) Fallback(_ context.Context, _ qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, _ any) ([]*telemetrytypes.LogicalField, error) {
+func (m *storage) Fallback(_ context.Context, _ qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, _ any, _ map[string][]*telemetrytypes.TelemetryFieldKey) ([]*telemetrytypes.LogicalField, error) {
 	if column, isColumn := timeSeriesV4Columns[key.Name]; isColumn {
 		dataType := key.FieldDataType
 		if dataType == telemetrytypes.FieldDataTypeUnspecified {

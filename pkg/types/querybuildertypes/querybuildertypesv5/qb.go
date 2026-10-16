@@ -176,8 +176,10 @@ type Storage interface {
 	// body paths, and virtual keys that compile to structural predicates (a
 	// span search scope, a full-text search over a scope). value is the
 	// filter operand when the term has one, and nil otherwise. A filter's
-	// fallback can use it to narrow the variants.
-	Fallback(ctx context.Context, q QueryInfo, key *telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any) ([]*telemetrytypes.LogicalField, error)
+	// fallback can use it to narrow the variants. fieldKeys is what metadata
+	// reported for the query, including the column-wide evolutions a key it
+	// does not report still reads through.
+	Fallback(ctx context.Context, q QueryInfo, key *telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) ([]*telemetrytypes.LogicalField, error)
 
 	Traits() Traits
 

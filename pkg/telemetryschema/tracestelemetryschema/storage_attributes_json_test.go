@@ -527,3 +527,83 @@ func TestConditionForAttributeJSONStraddleAbsentKeyExclusion(t *testing.T) {
 		assert.Contains(t, sql, ", NULL) IS NULL")
 	})
 }
+
+func TestConditionForAttributeJSONUnknownKey(t *testing.T) {
+	ctx := context.Background()
+	storage := NewStorage()
+	evo := MockAttributeEvolutionData(attrJSONRelease)
+
+	build := func(t *testing.T, q qbtypes.QueryInfo, evolutions []*telemetrytypes.EvolutionEntry, key telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) string {
+		t.Helper()
+		fieldKeys := map[string][]*telemetrytypes.TelemetryFieldKey{}
+		if evolutions != nil {
+			fieldKeys[telemetrytypes.EvolutionFieldNameAll] = []*telemetrytypes.TelemetryFieldKey{telemetrytypes.NewColumnEvolutionsKey(telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute, evolutions)}
+		}
+		sb := sqlbuilder.NewSelectBuilder()
+		conds, _, err := querybuilder.Conditions(ctx, q, storage, &key, op, value, fieldKeys, false, sb)
+		require.NoError(t, err)
+		sb.Where(conds...)
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		return sql
+	}
+	query := func(window [2]uint64) qbtypes.QueryInfo {
+		return qbtypes.QueryInfo{StartNs: window[0], EndNs: window[1], TraceAttrsJSONOn: true}
+	}
+	bare := telemetrytypes.TelemetryFieldKey{Name: "unknown.attr"}
+
+	t.Run("before -> map", func(t *testing.T) {
+		sql := build(t, query(attrWindowBefore), evo, bare, qbtypes.FilterOperatorEqual, "x")
+		assert.Contains(t, sql, "attributes_string['unknown.attr'] = ?")
+		assert.NotContains(t, sql, "attributes.`unknown.attr`")
+	})
+	t.Run("after -> json", func(t *testing.T) {
+		sql := build(t, query(attrWindowAfter), evo, bare, qbtypes.FilterOperatorEqual, "x")
+		assert.Contains(t, sql, "attributes.`unknown.attr`::String = ?")
+		assert.NotContains(t, sql, "attributes_string")
+	})
+	t.Run("straddle -> dual", func(t *testing.T) {
+		sql := build(t, query(attrWindowStraddle), evo, bare, qbtypes.FilterOperatorEqual, "x")
+		assert.Contains(t, sql, "multiIf(attributes.`unknown.attr` IS NOT NULL, attributes.`unknown.attr`::String, mapContains(attributes_string, 'unknown.attr'), attributes_string['unknown.attr'], NULL) = ?")
+	})
+	t.Run("after number -> type-gated json", func(t *testing.T) {
+		sql := build(t, query(attrWindowAfter), evo, bare, qbtypes.FilterOperatorEqual, float64(1))
+		assert.Contains(t, sql, "accurateCastOrNull(attributes.`unknown.attr`, 'Float64')")
+		assert.NotContains(t, sql, "attributes_number")
+	})
+	t.Run("after exists fans out over json only", func(t *testing.T) {
+		sql := build(t, query(attrWindowAfter), evo, bare, qbtypes.FilterOperatorExists, nil)
+		assert.Contains(t, sql, "attributes.`unknown.attr` IS NOT NULL")
+		assert.NotContains(t, sql, "mapContains")
+	})
+	t.Run("after qualified attribute spelling -> json for both spellings", func(t *testing.T) {
+		qualified := telemetrytypes.TelemetryFieldKey{Name: "unknown.attr", FieldContext: telemetrytypes.FieldContextAttribute}
+		sql := build(t, query(attrWindowAfter), evo, qualified, qbtypes.FilterOperatorEqual, "x")
+		assert.Contains(t, sql, "attributes.`unknown.attr`::String = ?")
+		assert.Contains(t, sql, "attributes.`attribute.unknown.attr`::String = ?")
+		assert.NotContains(t, sql, "attributes_string")
+	})
+	t.Run("after span spelling corrects to the json attribute", func(t *testing.T) {
+		span := telemetrytypes.TelemetryFieldKey{Name: "unknown.attr", FieldContext: telemetrytypes.FieldContextSpan}
+		sql := build(t, query(attrWindowAfter), evo, span, qbtypes.FilterOperatorEqual, "x")
+		assert.Contains(t, sql, "attributes.`unknown.attr`::String = ?")
+		assert.NotContains(t, sql, "attributes_string")
+	})
+	t.Run("without column-wide evolutions -> map in every window", func(t *testing.T) {
+		sql := build(t, query(attrWindowAfter), nil, bare, qbtypes.FilterOperatorEqual, "x")
+		assert.Contains(t, sql, "attributes_string['unknown.attr'] = ?")
+		assert.NotContains(t, sql, "attributes.`unknown.attr`")
+	})
+	t.Run("flag off -> map in every window", func(t *testing.T) {
+		q := query(attrWindowAfter)
+		q.TraceAttrsJSONOn = false
+		sql := build(t, q, evo, bare, qbtypes.FilterOperatorEqual, "x")
+		assert.Contains(t, sql, "attributes_string['unknown.attr'] = ?")
+		assert.NotContains(t, sql, "attributes.`unknown.attr`")
+	})
+	t.Run("resource spelling is untouched by attribute evolutions", func(t *testing.T) {
+		resource := telemetrytypes.TelemetryFieldKey{Name: "unknown.attr", FieldContext: telemetrytypes.FieldContextResource}
+		sql := build(t, query(attrWindowAfter), evo, resource, qbtypes.FilterOperatorEqual, "x")
+		assert.Contains(t, sql, "resource.`unknown.attr`::String")
+		assert.Contains(t, sql, "resources_string['unknown.attr']")
+	})
+}
