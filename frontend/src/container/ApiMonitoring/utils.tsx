@@ -338,7 +338,7 @@ export const formatDataForTable = (
 			lastUsed:
 				row[indexMap.lastseen] === 'n/a' || row[indexMap.lastseen] === undefined
 					? '-'
-					: new Date(row[indexMap.lastseen]).toISOString(),
+					: new Date(Number(row[indexMap.lastseen]) * 1000).toISOString(), // Convert from seconds to milliseconds
 		};
 		return rowData;
 	});
