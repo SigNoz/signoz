@@ -526,11 +526,12 @@ type GeoMapLocation struct {
 // GeoMapSettings uses the Table column key for colorBy and sizeBy, so
 // formatting.columnUnits carries over between the two kinds.
 type GeoMapSettings struct {
-	Layer       GeoMapLayer `json:"layer"`
-	View        GeoMapView  `json:"view"`
-	ViewCountry string      `json:"viewCountry" validate:"omitempty,len=2,alpha,uppercase" description:"ISO 3166-1 alpha-2 code of the country the country view shows."`
-	ColorBy     string      `json:"colorBy" description:"Value column key that sets the colour. Empty uses the first value column."`
-	SizeBy      string      `json:"sizeBy" description:"Value column key that sets the bubble or point size. Empty uses colorBy."`
+	Layer       GeoMapLayer      `json:"layer"`
+	View        GeoMapView       `json:"view"`
+	ViewCountry string           `json:"viewCountry" validate:"omitempty,len=2,alpha,uppercase" description:"ISO 3166-1 alpha-2 code of the country the country view shows."`
+	Projection  GeoMapProjection `json:"projection" required:"true"`
+	ColorBy     string           `json:"colorBy" description:"Value column key that sets the colour. Empty uses the first value column."`
+	SizeBy      string           `json:"sizeBy" description:"Value column key that sets the bubble or point size. Empty uses colorBy."`
 }
 
 func (m *GeoMapSettings) UnmarshalJSON(data []byte) error {
@@ -1805,5 +1806,43 @@ func (v *GeoMapView) UnmarshalJSON(data []byte) error {
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid geo map view %q: must be `world`, `fit`, `africa`, `asia`, `europe`, `north_america`, `south_america`, `oceania`, or `country`", s)
+	}
+}
+
+type GeoMapProjection struct{ valuer.String }
+
+var (
+	GeoMapProjectionMercator     = GeoMapProjection{valuer.NewString("mercator")} // default
+	GeoMapProjectionEqualEarth   = GeoMapProjection{valuer.NewString("equal_earth")}
+	GeoMapProjectionNaturalEarth = GeoMapProjection{valuer.NewString("natural_earth")}
+)
+
+func (GeoMapProjection) Enum() []any {
+	return []any{GeoMapProjectionMercator, GeoMapProjectionEqualEarth, GeoMapProjectionNaturalEarth}
+}
+
+func (p GeoMapProjection) ValueOrDefault() string {
+	if p.IsZero() {
+		return GeoMapProjectionMercator.StringValue()
+	}
+	return p.StringValue()
+}
+
+func (p GeoMapProjection) MarshalJSON() ([]byte, error) {
+	return json.Marshal(p.ValueOrDefault())
+}
+
+func (p *GeoMapProjection) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid geo map projection: must be a string, one of `mercator`, `equal_earth`, or `natural_earth`")
+	}
+	parsed := GeoMapProjection{valuer.NewString(s)}
+	switch parsed {
+	case GeoMapProjectionMercator, GeoMapProjectionEqualEarth, GeoMapProjectionNaturalEarth:
+		*p = parsed
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid geo map projection %q: must be `mercator`, `equal_earth`, or `natural_earth`", s)
 	}
 }

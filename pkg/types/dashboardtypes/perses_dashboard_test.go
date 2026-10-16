@@ -2311,7 +2311,7 @@ func TestGeoMapPanelSpec(t *testing.T) {
 	data := geoMapDashboard(`{
 		"formatting": {"columnUnits": {"A": "percent"}, "decimalPrecision": "2"},
 		"location": {"mode": "subdivision", "country": "geo.country.iso_code", "countryFormat": "alpha2", "region": "geo.region.iso_code"},
-		"map": {"layer": "bubbles", "view": "country", "viewCountry": "FR", "colorBy": "A", "sizeBy": "A"},
+		"map": {"layer": "bubbles", "view": "country", "viewCountry": "FR", "projection": "equal_earth", "colorBy": "A", "sizeBy": "A"},
 		"chartAppearance": {
 			"colors": {"mode": "opacity", "fill": "#4E74F8", "palette": "ice", "scale": "linear", "steps": 16, "min": 0, "max": 10},
 			"bubbles": {"minRadius": 2, "maxRadius": 30},
@@ -2328,6 +2328,7 @@ func TestGeoMapPanelSpec(t *testing.T) {
 	assert.Equal(t, "subdivision", spec.Location.Mode.ValueOrDefault())
 	assert.Equal(t, "country", spec.Map.View.ValueOrDefault())
 	assert.Equal(t, "FR", spec.Map.ViewCountry)
+	assert.Equal(t, "equal_earth", spec.Map.Projection.ValueOrDefault())
 	require.NotNil(t, spec.ChartAppearance.Labels)
 	assert.False(t, *spec.ChartAppearance.Labels)
 	require.Len(t, spec.Thresholds, 1)
@@ -2348,7 +2349,7 @@ func TestGeoMapPanelSpec(t *testing.T) {
 		require.NoError(t, err)
 		output, err := json.Marshal(d.Panels["p1"].Spec.Plugin.Spec)
 		require.NoError(t, err)
-		for _, field := range []string{`"mode":"palette"`, `"mode":"auto"`, `"countryFormat":"auto"`, `"layer":"regions"`, `"view":"world"`, `"palette":"lava"`, `"scale":"log"`, `"labels":null`} {
+		for _, field := range []string{`"mode":"palette"`, `"mode":"auto"`, `"countryFormat":"auto"`, `"layer":"regions"`, `"view":"world"`, `"projection":"mercator"`, `"palette":"lava"`, `"scale":"log"`, `"labels":null`} {
 			assert.Contains(t, string(output), field)
 		}
 	})
@@ -2361,6 +2362,7 @@ func TestGeoMapPanelSpec(t *testing.T) {
 		{"threshold format", `{"thresholds": [{"value": 5, "color": "Red", "format": "background"}]}`},
 		{"unknown layer", `{"map": {"layer": "heat"}}`},
 		{"unknown view", `{"map": {"view": "emea"}}`},
+		{"unknown projection", `{"map": {"projection": "robinson"}}`},
 		{"country view without a country", `{"map": {"view": "country"}}`},
 		{"lowercase view country", `{"map": {"view": "country", "viewCountry": "fr"}}`},
 		{"unknown location mode", `{"location": {"mode": "geohash"}}`},
