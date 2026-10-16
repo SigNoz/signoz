@@ -52,7 +52,9 @@ def network(request: pytest.FixtureRequest, pytestconfig: pytest.Config) -> type
                         pass
                 time.sleep(1)
 
-        raise last_err
+        if last_err is not None:
+            raise last_err
+        raise RuntimeError(f"Failed to remove network {nw.name} after retries")
 
     def restore(existing: dict) -> types.Network:
         client = docker.from_env()
