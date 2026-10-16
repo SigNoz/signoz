@@ -30,7 +30,7 @@ function CloudAccountSetupDrawer({
 
 	return (
 		<>
-			<SetupDrawerLayout isWide={hasGeneratedCommands} onClose={requestClose}>
+			<SetupDrawerLayout onClose={requestClose}>
 				{(footerSlot): JSX.Element =>
 					connectionMethod === CloudintegrationtypesGCPConnectionMethodDTO.agent ? (
 						<AgentSetup

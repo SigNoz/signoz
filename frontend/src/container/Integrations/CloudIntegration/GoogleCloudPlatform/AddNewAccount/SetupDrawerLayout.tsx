@@ -4,7 +4,6 @@ import { DrawerWrapper } from '@signozhq/ui/drawer';
 import styles from './SetupDrawerLayout.module.scss';
 
 interface SetupDrawerLayoutProps {
-	isWide: boolean;
 	onClose: () => void;
 	/** Receives the footer slot element that SetupDrawerFooter portals into. */
 	children: (footerSlot: HTMLDivElement | null) => ReactNode;
@@ -12,7 +11,6 @@ interface SetupDrawerLayoutProps {
 
 /** Stays mounted across connection method switches so the drawer does not replay its open animation. */
 function SetupDrawerLayout({
-	isWide,
 	onClose,
 	children,
 }: SetupDrawerLayoutProps): JSX.Element {
@@ -30,7 +28,7 @@ function SetupDrawerLayout({
 			direction="right"
 			showCloseButton
 			title="Connect Google Cloud Platform"
-			width={isWide ? 'extra-wide' : 'base'}
+			width="extra-wide"
 			footer={<div ref={setFooterSlot} className={styles.footerSlot} />}
 			drawerHeaderProps={{ className: styles.title }}
 			testId="gcp-setup-drawer"

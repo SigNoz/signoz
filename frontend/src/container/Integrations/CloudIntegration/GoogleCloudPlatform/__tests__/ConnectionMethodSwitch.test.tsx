@@ -73,18 +73,18 @@ describe('GCP setup drawer connection method switch', () => {
 		expect(screen.getByTestId('gcp-setup-drawer')).toBe(drawer);
 	});
 
-	it('widens the drawer only once the agent setup commands are generated', async () => {
+	it('keeps the drawer width the same across connection methods and setup steps', async () => {
 		const user = userEvent.setup();
 		renderDrawer();
 
 		const drawer = screen.getByTestId('gcp-setup-drawer');
-		expect(drawer).toHaveAttribute('data-width', 'base');
+		expect(drawer).toHaveAttribute('data-width', 'extra-wide');
 
 		await user.click(screen.getByTestId('gcp-connection-method-agent'));
 		await waitFor(() => {
 			expect(screen.getByTestId('gcp-generate-commands-btn')).toBeEnabled();
 		});
-		expect(drawer).toHaveAttribute('data-width', 'base');
+		expect(drawer).toHaveAttribute('data-width', 'extra-wide');
 
 		await user.type(
 			screen.getByTestId('gcp-deployment-project-id-input'),

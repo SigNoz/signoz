@@ -34,7 +34,7 @@ export const onCancel = jest.fn() as jest.MockedFunction<
 
 export const renderAgentSetup = (): void => {
 	render(
-		<SetupDrawerLayout isWide={false} onClose={onClose}>
+		<SetupDrawerLayout onClose={onClose}>
 			{(footerSlot): JSX.Element => (
 				<AgentSetup
 					footerSlot={footerSlot}
