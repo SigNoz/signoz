@@ -19,6 +19,7 @@ import {
 	ConfigBuilder,
 	ConfigBuilderProps,
 	LegendItem,
+	PlotMode,
 	SelectionPreferencesSource,
 	StackMode,
 } from './types';
@@ -64,6 +65,8 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	private bands: uPlot.Band[] = [];
 
 	private stackMode: StackMode = StackMode.None;
+
+	private mode: PlotMode = PlotMode.Aligned;
 
 	private cursor: Cursor | undefined;
 
@@ -158,6 +161,10 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 
 	getStackMode(): StackMode {
 		return this.stackMode;
+	}
+
+	setMode(mode: PlotMode): void {
+		this.mode = mode;
 	}
 
 	/**
@@ -511,6 +518,10 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 			(acc, s) => ({ ...acc, ...this.resolveScale(s).getConfig() }),
 			{} as Record<string, uPlot.Scale>,
 		);
+
+		if (this.mode === PlotMode.Faceted) {
+			config.mode = this.mode as number as uPlot.Mode;
+		}
 
 		config.hooks = this.hooks;
 		config.select = this.select;

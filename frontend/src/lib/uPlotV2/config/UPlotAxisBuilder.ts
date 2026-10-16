@@ -39,6 +39,16 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 		};
 	}
 
+	/** Styled like the grid. */
+	private buildBorderConfig(
+		grid: uPlot.Axis.Grid | undefined,
+	): uPlot.Axis.Border | undefined {
+		if (this.props.showBorder === false || !grid || grid.show === false) {
+			return undefined;
+		}
+		return { show: true, stroke: grid.stroke, width: grid.width };
+	}
+
 	/**
 	 * Build ticks configuration
 	 */
@@ -57,33 +67,43 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 		};
 	}
 
-	/**
-	 * Build values formatter for X-axis (time)
-	 */
+	/** Time ticks, or unit-formatted values when a unit/precision is set. */
 	private buildXAxisValuesFormatter(): uPlot.Axis.Values | undefined {
-		const { isTimeAxis } = this.props;
+		const { isTimeAxis, yAxisUnit, decimalPrecision } = this.props;
 
 		if (isTimeAxis) {
 			return uPlotXAxisValuesFormat as uPlot.Axis.Values;
 		}
 
+		if (yAxisUnit !== undefined || decimalPrecision !== undefined) {
+			return this.buildValueAxisFormatter();
+		}
+
 		return undefined;
 	}
 
-	/**
-	 * Build values formatter for Y-axis (values with units)
-	 */
-	private buildYAxisValuesFormatter(): uPlot.Axis.Values {
-		const { yAxisUnit, decimalPrecision } = this.props;
+	/** Blanks splits outside the scale; uPlot's asinh splits always include ±threshold. */
+	private buildValueAxisFormatter(): uPlot.Axis.Values {
+		const { yAxisUnit, decimalPrecision, scaleKey } = this.props;
 
-		return (_, t): string[] =>
-			t.map((v) => {
-				if (v === null || v === undefined || Number.isNaN(v)) {
+		return (u, t): string[] => {
+			const scale = u?.scales?.[scaleKey];
+			const min = scale?.min ?? -Infinity;
+			const max = scale?.max ?? Infinity;
+			return t.map((v) => {
+				if (
+					v === null ||
+					v === undefined ||
+					Number.isNaN(v) ||
+					v < min ||
+					v > max
+				) {
 					return '';
 				}
 				const value = getToolTipValue(v.toString(), yAxisUnit, decimalPrecision);
 				return `${value}`;
 			});
+		};
 	}
 
 	/**
@@ -101,7 +121,7 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 		return scaleKey === 'x'
 			? this.buildXAxisValuesFormatter()
 			: scaleKey === 'y'
-				? this.buildYAxisValuesFormatter()
+				? this.buildValueAxisFormatter()
 				: undefined;
 	}
 
@@ -149,10 +169,12 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 			side = 2, // bottom by default
 			space,
 			splits,
+			filter,
 			gap = 5, // default gap is 5
 		} = this.props;
 
 		const grid = this.buildGridConfig();
+		const border = this.buildBorderConfig(grid);
 		const ticks = this.buildTicksConfig();
 		const values = this.buildValuesFormatter();
 		const size = this.buildSizeCalculator();
@@ -177,6 +199,9 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 		if (ticks) {
 			axisConfig.ticks = ticks;
 		}
+		if (border) {
+			axisConfig.border = border;
+		}
 		if (values) {
 			axisConfig.values = values;
 		}
@@ -188,6 +213,9 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 		}
 		if (space !== undefined) {
 			axisConfig.space = space;
+		}
+		if (filter) {
+			axisConfig.filter = filter;
 		}
 		if (size) {
 			axisConfig.size = size;
