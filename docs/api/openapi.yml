@@ -251,6 +251,7 @@ components:
           opsgenie: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfig'
           pagerduty: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelPagerdutyConfig'
           slack: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfig'
+          telegram: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfig'
           webhook: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelWebhookConfig'
         propertyName: kind
       oneOf:
@@ -264,6 +265,7 @@ components:
       - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfig'
       - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfig'
       - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfig'
       type: object
     AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfig:
       properties:
@@ -369,6 +371,18 @@ components:
           type: string
         spec:
           $ref: '#/components/schemas/AlertmanagertypesChannelSlackConfig'
+      required:
+      - kind
+      - spec
+      type: object
+    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfig:
+      properties:
+        kind:
+          enum:
+          - telegram
+          type: string
+        spec:
+          $ref: '#/components/schemas/AlertmanagertypesChannelTelegramConfig'
       required:
       - kind
       - spec
@@ -525,6 +539,7 @@ components:
       - jira
       - jsmops
       - incidentio
+      - telegram
       type: string
     AlertmanagertypesChannelListOrder:
       enum:
@@ -728,6 +743,31 @@ components:
       required:
       - title
       - value
+      type: object
+    AlertmanagertypesChannelTelegramConfig:
+      properties:
+        apiUrl:
+          type: string
+        botToken:
+          format: password
+          type: string
+        chatId:
+          format: int64
+          type: integer
+        disableNotifications:
+          type: boolean
+        message:
+          type: string
+        messageThreadId:
+          type: integer
+        sendResolved:
+          nullable: true
+          type: boolean
+        title:
+          type: string
+      required:
+      - botToken
+      - chatId
       type: object
     AlertmanagertypesChannelWebhookConfig:
       properties:
@@ -1023,6 +1063,8 @@ components:
       - required:
         - incidentio_configs
       - required:
+        - telegram_configs
+      - required:
         - discord_configs
       - required:
         - email_configs
@@ -1042,8 +1084,6 @@ components:
         - victorops_configs
       - required:
         - sns_configs
-      - required:
-        - telegram_configs
       - required:
         - webex_configs
       - required:
@@ -1119,7 +1159,7 @@ components:
           type: array
         telegram_configs:
           items:
-            $ref: '#/components/schemas/ConfigTelegramConfig'
+            $ref: '#/components/schemas/AlertmanagertypesTelegramReceiverConfig'
           type: array
         victorops_configs:
           items:
@@ -1263,7 +1303,7 @@ components:
           type: array
         telegram_configs:
           items:
-            $ref: '#/components/schemas/ConfigTelegramConfig'
+            $ref: '#/components/schemas/AlertmanagertypesTelegramReceiverConfig'
           type: array
         victorops_configs:
           items:
@@ -1333,6 +1373,34 @@ components:
       required:
       - timezone
       - startTime
+      type: object
+    AlertmanagertypesTelegramReceiverConfig:
+      properties:
+        api_url:
+          $ref: '#/components/schemas/ConfigURLType2'
+        chat:
+          format: int64
+          type: integer
+        chat_file:
+          type: string
+        disable_notifications:
+          type: boolean
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        message:
+          type: string
+        message_thread_id:
+          type: integer
+        parse_mode:
+          type: string
+        send_resolved:
+          type: boolean
+        title:
+          type: string
+        token:
+          type: string
+        token_file:
+          type: string
       type: object
     AlertmanagertypesTestableNotificationChannel:
       properties:
