@@ -150,14 +150,13 @@ def parse_related_link(link: str) -> dict:
     }
 
 
-def assert_related_link_queries(link: dict, data_source: str, expression_pieces_by_query_name: dict[str, list[str]]) -> None:
+def assert_related_link_query(link: dict, data_source: str, expression_pieces: list[str]) -> None:
     query_data = link["composite_query"]["builder"]["queryData"]
-    assert [query["queryName"] for query in query_data] == list(expression_pieces_by_query_name)
-    for query in query_data:
-        assert query["dataSource"] == data_source
-        expression = query["filter"]["expression"]
-        for piece in expression_pieces_by_query_name[query["queryName"]]:
-            assert piece in expression, f"expected {piece} in link filter expression: {expression}"
+    assert len(query_data) == 1
+    assert query_data[0]["dataSource"] == data_source
+    expression = query_data[0]["filter"]["expression"]
+    for piece in expression_pieces:
+        assert piece in expression, f"expected {piece} in link filter expression: {expression}"
 
 
 def wait_for_firing_timeline_entry(signoz: types.SigNoz, token: str, rule_id: str, start_ms: int, wait_seconds: int = 60) -> tuple[dict, int]:

@@ -17,9 +17,10 @@ import (
 // filter and the entry's labels, so a history entry can be opened in the
 // explorer with the context that produced it.
 type relatedLinkBuilder struct {
-	alertType      ruletypes.AlertType
-	evaluation     ruletypes.Evaluation
-	builderQueries []contextlinks.BuilderQuery
+	alertType  ruletypes.AlertType
+	signal     telemetrytypes.Signal
+	evaluation ruletypes.Evaluation
+	condition  *ruletypes.RuleCondition
 }
 
 // relatedLinkBuilderForRule returns nil when the rule cannot be loaded or is
@@ -48,7 +49,7 @@ func (m *module) relatedLinkBuilderForRule(ctx context.Context, orgID valuer.UUI
 		return nil
 	}
 
-	builder := &relatedLinkBuilder{alertType: rule.AlertType}
+	builder := &relatedLinkBuilder{alertType: rule.AlertType, signal: signal, condition: rule.RuleCondition}
 	if rule.Evaluation != nil {
 		if evaluation, err := rule.Evaluation.GetEvaluation(); err == nil {
 			builder.evaluation = evaluation
@@ -61,10 +62,6 @@ func (m *module) relatedLinkBuilderForRule(ctx context.Context, orgID valuer.UUI
 		}
 		builder.evaluation = ruletypes.RollingWindow{EvalWindow: evalWindow}
 	}
-
-	// links are still built from the labels alone when the rule has no builder
-	// query for the signal (e.g. ClickHouse SQL alerts)
-	builder.builderQueries = contextlinks.ExtractBuilderQueries(rule.RuleCondition, signal)
 
 	return builder
 }
@@ -88,13 +85,17 @@ func (b *relatedLinkBuilder) links(labels rulestatehistorytypes.LabelsString, st
 		return rulestatehistorytypes.RelatedLinks{}
 	}
 
+	// links are still built from the labels alone when the rule has no builder
+	// query for the signal (e.g. ClickHouse SQL alerts)
+	whereClause, _ := contextlinks.PrepareRuleFilterExpression(b.condition, b.signal, lbls)
+
 	switch b.alertType {
 	case ruletypes.AlertTypeLogs:
-		return rulestatehistorytypes.RelatedLinks{RelatedLogsLink: contextlinks.PrepareParamsForLogsV5(start, end, lbls, b.builderQueries).Encode()}
+		return rulestatehistorytypes.RelatedLinks{RelatedLogsLink: contextlinks.PrepareParamsForLogsV5(start, end, whereClause).Encode()}
 	case ruletypes.AlertTypeTraces:
-		return rulestatehistorytypes.RelatedLinks{RelatedTracesLink: contextlinks.PrepareParamsForTracesV5(start, end, lbls, b.builderQueries, qbtypes.QueryTypeBuilder).Encode()}
+		return rulestatehistorytypes.RelatedLinks{RelatedTracesLink: contextlinks.PrepareParamsForTracesV5(start, end, whereClause, qbtypes.QueryTypeBuilder).Encode()}
 	case ruletypes.AlertTypeAITraces:
-		return rulestatehistorytypes.RelatedLinks{RelatedAITracesLink: contextlinks.PrepareParamsForTracesV5(start, end, lbls, b.builderQueries, qbtypes.QueryTypeBuilderAI).Encode()}
+		return rulestatehistorytypes.RelatedLinks{RelatedAITracesLink: contextlinks.PrepareParamsForTracesV5(start, end, whereClause, qbtypes.QueryTypeBuilderAI).Encode()}
 	}
 	return rulestatehistorytypes.RelatedLinks{}
 }

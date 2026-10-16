@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestExtractBuilderQueries(t *testing.T) {
+func TestPrepareRuleFilterExpression(t *testing.T) {
 	logQuery := qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
 		Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
@@ -28,36 +28,49 @@ func TestExtractBuilderQueries(t *testing.T) {
 			Filter:   &qbtypes.Filter{Expression: "body CONTAINS 'timeout'"},
 		},
 	}
+	unfilteredLogQuery := qbtypes.QueryEnvelope{
+		Type: qbtypes.QueryTypeBuilder,
+		Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+			Name:   "C",
+			Signal: telemetrytypes.SignalLogs,
+		},
+	}
 	traceQuery := qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
 		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-			Name:   "C",
+			Name:   "D",
 			Signal: telemetrytypes.SignalTraces,
 		},
 	}
 	promQuery := qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypePromQL,
-		Spec: qbtypes.PromQuery{Name: "D"},
+		Spec: qbtypes.PromQuery{Name: "E"},
 	}
 	aiTraceQuery := qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilderAI,
 		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-			Name:    "E",
+			Name:    "F",
 			Signal:  telemetrytypes.SignalTraces,
 			Filter:  &qbtypes.Filter{Expression: "trace.input_tokens > 1000"},
 			GroupBy: []qbtypes.GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "session.id"}}},
 		},
 	}
-	formula := qbtypes.QueryEnvelope{
+	errorRateFormula := qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeFormula,
 		Spec: qbtypes.QueryBuilderFormula{Name: "F1", Expression: "B / A * 100"},
 	}
+	unfilteredFormula := qbtypes.QueryEnvelope{
+		Type: qbtypes.QueryTypeFormula,
+		Spec: qbtypes.QueryBuilderFormula{Name: "F2", Expression: "A / C"},
+	}
 
 	testCases := []struct {
-		name                   string
-		condition              *ruletypes.RuleCondition
-		signal                 telemetrytypes.Signal
-		expectedBuilderQueries []BuilderQuery
+		name               string
+		condition          *ruletypes.RuleCondition
+		signal             telemetrytypes.Signal
+		labels             map[string]string
+		expectedExpression string
+		expectedFound      bool
 	}{
 		{
 			name: "SelectedLogsQuery_AmongMixedQueries",
@@ -65,10 +78,10 @@ func TestExtractBuilderQueries(t *testing.T) {
 				SelectedQuery:  "A",
 				CompositeQuery: &ruletypes.AlertCompositeQuery{Queries: []qbtypes.QueryEnvelope{promQuery, logQuery, traceQuery}},
 			},
-			signal: telemetrytypes.SignalLogs,
-			expectedBuilderQueries: []BuilderQuery{
-				{Name: "A", Filter: "severity_text = 'ERROR'", GroupBy: []qbtypes.GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "service.name"}}}},
-			},
+			signal:             telemetrytypes.SignalLogs,
+			labels:             map[string]string{"service.name": "checkout"},
+			expectedExpression: "(severity_text='ERROR') AND service.name='checkout'",
+			expectedFound:      true,
 		},
 		{
 			name: "SelectedLogsQuery_LeavesOutUnselectedQuery",
@@ -76,88 +89,113 @@ func TestExtractBuilderQueries(t *testing.T) {
 				SelectedQuery:  "A",
 				CompositeQuery: &ruletypes.AlertCompositeQuery{Queries: []qbtypes.QueryEnvelope{logQuery, hiddenLogQuery}},
 			},
-			signal: telemetrytypes.SignalLogs,
-			expectedBuilderQueries: []BuilderQuery{
-				{Name: "A", Filter: "severity_text = 'ERROR'", GroupBy: []qbtypes.GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "service.name"}}}},
-			},
+			signal:             telemetrytypes.SignalLogs,
+			labels:             map[string]string{"service.name": "checkout"},
+			expectedExpression: "(severity_text='ERROR') AND service.name='checkout'",
+			expectedFound:      true,
 		},
 		{
-			name: "SelectedFormula_HiddenInputsInCompositeQueryOrder",
+			name: "SelectedFormula_MergesHiddenInputsInCompositeQueryOrder",
 			condition: &ruletypes.RuleCondition{
 				SelectedQuery:  "F1",
-				CompositeQuery: &ruletypes.AlertCompositeQuery{Queries: []qbtypes.QueryEnvelope{hiddenLogQuery, logQuery, formula}},
+				CompositeQuery: &ruletypes.AlertCompositeQuery{Queries: []qbtypes.QueryEnvelope{hiddenLogQuery, logQuery, errorRateFormula}},
 			},
-			signal: telemetrytypes.SignalLogs,
-			expectedBuilderQueries: []BuilderQuery{
-				{Name: "B", Filter: "body CONTAINS 'timeout'"},
-				{Name: "A", Filter: "severity_text = 'ERROR'", GroupBy: []qbtypes.GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "service.name"}}}},
+			signal:             telemetrytypes.SignalLogs,
+			labels:             map[string]string{"service.name": "checkout"},
+			expectedExpression: "((body CONTAINS 'timeout') AND service.name='checkout') OR ((severity_text='ERROR') AND service.name='checkout')",
+			expectedFound:      true,
+		},
+		{
+			name: "SelectedFormula_UnfilteredInputMatchesEverything",
+			condition: &ruletypes.RuleCondition{
+				SelectedQuery:  "F2",
+				CompositeQuery: &ruletypes.AlertCompositeQuery{Queries: []qbtypes.QueryEnvelope{logQuery, unfilteredLogQuery, unfilteredFormula}},
 			},
+			signal:             telemetrytypes.SignalLogs,
+			labels:             map[string]string{},
+			expectedExpression: "",
+			expectedFound:      true,
 		},
 		{
 			name: "NoSelectedQuery_FallsBackToFormula",
 			condition: &ruletypes.RuleCondition{
-				CompositeQuery: &ruletypes.AlertCompositeQuery{Queries: []qbtypes.QueryEnvelope{logQuery, hiddenLogQuery, formula}},
+				CompositeQuery: &ruletypes.AlertCompositeQuery{Queries: []qbtypes.QueryEnvelope{logQuery, hiddenLogQuery, errorRateFormula}},
 			},
-			signal: telemetrytypes.SignalLogs,
-			expectedBuilderQueries: []BuilderQuery{
-				{Name: "A", Filter: "severity_text = 'ERROR'", GroupBy: []qbtypes.GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "service.name"}}}},
-				{Name: "B", Filter: "body CONTAINS 'timeout'"},
-			},
+			signal:             telemetrytypes.SignalLogs,
+			labels:             map[string]string{"service.name": "checkout"},
+			expectedExpression: "((severity_text='ERROR') AND service.name='checkout') OR ((body CONTAINS 'timeout') AND service.name='checkout')",
+			expectedFound:      true,
 		},
 		{
 			name: "SelectedTracesQuery_WithoutFilter",
 			condition: &ruletypes.RuleCondition{
-				SelectedQuery:  "C",
+				SelectedQuery:  "D",
 				CompositeQuery: &ruletypes.AlertCompositeQuery{Queries: []qbtypes.QueryEnvelope{logQuery, traceQuery}},
 			},
-			signal:                 telemetrytypes.SignalTraces,
-			expectedBuilderQueries: []BuilderQuery{{Name: "C"}},
+			signal:             telemetrytypes.SignalTraces,
+			labels:             map[string]string{"service.name": "checkout"},
+			expectedExpression: "service.name='checkout'",
+			expectedFound:      true,
 		},
 		{
 			name: "SelectedAITraceQuery_CountsAsTraces",
 			condition: &ruletypes.RuleCondition{
-				SelectedQuery:  "E",
+				SelectedQuery:  "F",
 				CompositeQuery: &ruletypes.AlertCompositeQuery{Queries: []qbtypes.QueryEnvelope{logQuery, aiTraceQuery}},
 			},
-			signal: telemetrytypes.SignalTraces,
-			expectedBuilderQueries: []BuilderQuery{
-				{Name: "E", Filter: "trace.input_tokens > 1000", GroupBy: []qbtypes.GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "session.id"}}}},
-			},
+			signal:             telemetrytypes.SignalTraces,
+			labels:             map[string]string{"session.id": "s1"},
+			expectedExpression: "(trace.input_tokens>1000) AND session.id='s1'",
+			expectedFound:      true,
 		},
 		{
-			name: "SelectedQuery_OfAnotherSignal",
+			name: "SelectedQuery_OfAnotherSignal_LabelsOnly",
 			condition: &ruletypes.RuleCondition{
-				SelectedQuery:  "C",
+				SelectedQuery:  "D",
 				CompositeQuery: &ruletypes.AlertCompositeQuery{Queries: []qbtypes.QueryEnvelope{logQuery, traceQuery}},
 			},
-			signal: telemetrytypes.SignalLogs,
+			signal:             telemetrytypes.SignalLogs,
+			labels:             map[string]string{"service.name": "checkout"},
+			expectedExpression: "service.name='checkout'",
+			expectedFound:      false,
 		},
 		{
 			name: "SelectedQuery_NotABuilderQuery",
 			condition: &ruletypes.RuleCondition{
-				SelectedQuery:  "D",
+				SelectedQuery:  "E",
 				CompositeQuery: &ruletypes.AlertCompositeQuery{Queries: []qbtypes.QueryEnvelope{promQuery}},
 			},
-			signal: telemetrytypes.SignalLogs,
+			signal:             telemetrytypes.SignalLogs,
+			labels:             map[string]string{},
+			expectedExpression: "",
+			expectedFound:      false,
 		},
 		{
-			name: "UnsupportedSignal",
+			name: "UnsupportedSignal_LabelsOnly",
 			condition: &ruletypes.RuleCondition{
 				SelectedQuery:  "A",
 				CompositeQuery: &ruletypes.AlertCompositeQuery{Queries: []qbtypes.QueryEnvelope{logQuery}},
 			},
-			signal: telemetrytypes.SignalMetrics,
+			signal:             telemetrytypes.SignalMetrics,
+			labels:             map[string]string{"service.name": "checkout"},
+			expectedExpression: "service.name='checkout'",
+			expectedFound:      false,
 		},
 		{
-			name:      "NoCompositeQuery",
-			condition: &ruletypes.RuleCondition{SelectedQuery: "A"},
-			signal:    telemetrytypes.SignalLogs,
+			name:               "NoCompositeQuery",
+			condition:          &ruletypes.RuleCondition{SelectedQuery: "A"},
+			signal:             telemetrytypes.SignalLogs,
+			labels:             map[string]string{},
+			expectedExpression: "",
+			expectedFound:      false,
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			assert.Equal(t, testCase.expectedBuilderQueries, ExtractBuilderQueries(testCase.condition, testCase.signal))
+			expression, found := PrepareRuleFilterExpression(testCase.condition, testCase.signal, testCase.labels)
+			assert.Equal(t, testCase.expectedExpression, expression)
+			assert.Equal(t, testCase.expectedFound, found)
 		})
 	}
 }

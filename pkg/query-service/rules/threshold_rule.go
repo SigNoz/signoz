@@ -93,12 +93,12 @@ func (r *ThresholdRule) prepareParamsForLogs(ctx context.Context, ts time.Time, 
 	start := time.UnixMilli(int64(qr.Start))
 	end := time.UnixMilli(int64(qr.End))
 
-	builderQueries := contextlinks.ExtractBuilderQueries(r.ruleCondition, telemetrytypes.SignalLogs)
-	if len(builderQueries) == 0 {
+	whereClause, found := contextlinks.PrepareRuleFilterExpression(r.ruleCondition, telemetrytypes.SignalLogs, lbls.Map())
+	if !found {
 		return nil
 	}
 
-	return contextlinks.PrepareParamsForLogsV5(start, end, lbls.Map(), builderQueries)
+	return contextlinks.PrepareParamsForLogsV5(start, end, whereClause)
 }
 
 func (r *ThresholdRule) prepareParamsForTraces(ctx context.Context, ts time.Time, lbls ruletypes.Labels) url.Values {
@@ -109,12 +109,12 @@ func (r *ThresholdRule) prepareParamsForTraces(ctx context.Context, ts time.Time
 	start := time.UnixMilli(int64(qr.Start))
 	end := time.UnixMilli(int64(qr.End))
 
-	builderQueries := contextlinks.ExtractBuilderQueries(r.ruleCondition, telemetrytypes.SignalTraces)
-	if len(builderQueries) == 0 {
+	whereClause, found := contextlinks.PrepareRuleFilterExpression(r.ruleCondition, telemetrytypes.SignalTraces, lbls.Map())
+	if !found {
 		return nil
 	}
 
-	return contextlinks.PrepareParamsForTracesV5(start, end, lbls.Map(), builderQueries, r.typ.BuilderQueryType())
+	return contextlinks.PrepareParamsForTracesV5(start, end, whereClause, r.typ.BuilderQueryType())
 }
 
 func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, ts time.Time) (ruletypes.Vector, error) {

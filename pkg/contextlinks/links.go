@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -12,42 +13,32 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-func PrepareParamsForTracesV5(start, end time.Time, labels map[string]string, queries []BuilderQuery, queryType qbtypes.QueryType) url.Values {
+func PrepareParamsForTracesV5(start, end time.Time, whereClause string, queryType qbtypes.QueryType) url.Values {
 	// the traces explorer takes its time params in nanoseconds
-	return prepareExplorerParams("traces", queryType, start.UnixNano(), end.UnixNano(), labels, queries)
+	return prepareExplorerParams("traces", queryType, start.UnixNano(), end.UnixNano(), whereClause)
 }
 
-func PrepareParamsForLogsV5(start, end time.Time, labels map[string]string, queries []BuilderQuery) url.Values {
+func PrepareParamsForLogsV5(start, end time.Time, whereClause string) url.Values {
 	// the logs explorer takes its time params in milliseconds
-	return prepareExplorerParams("logs", qbtypes.QueryTypeBuilder, start.UnixMilli(), end.UnixMilli(), labels, queries)
+	return prepareExplorerParams("logs", qbtypes.QueryTypeBuilder, start.UnixMilli(), end.UnixMilli(), whereClause)
 }
 
 // The end link is double encoded because otherwise a filter expression with `%` somewhere in it breaks.
-func prepareExplorerParams(dataSource string, queryType qbtypes.QueryType, start, end int64, labels map[string]string, queries []BuilderQuery) url.Values {
+func prepareExplorerParams(dataSource string, queryType qbtypes.QueryType, start, end int64, whereClause string) url.Values {
 	// builder_query is the explorer default, so it is left out to keep existing links unchanged
 	builderQueryType := ""
 	if queryType != qbtypes.QueryTypeBuilder {
 		builderQueryType = queryType.StringValue()
 	}
 
-	if len(queries) == 0 {
-		queries = []BuilderQuery{{}}
-	}
-
-	queryData := make([]LinkQuery, 0, len(queries))
-	for _, query := range queries {
-		queryData = append(queryData, LinkQuery{
-			QueryName:        query.Name,
-			DataSource:       dataSource,
-			BuilderQueryType: builderQueryType,
-			Filter:           &FilterExpression{Expression: PrepareFilterExpression(labels, query.Filter, query.GroupBy)},
-		})
-	}
-
 	urlData := URLShareableCompositeQuery{
 		QueryType: "builder",
 		Builder: URLShareableBuilderQuery{
-			QueryData:     queryData,
+			QueryData: []LinkQuery{{
+				DataSource:       dataSource,
+				BuilderQueryType: builderQueryType,
+				Filter:           &FilterExpression{Expression: whereClause},
+			}},
 			QueryFormulas: make([]string, 0),
 		},
 	}
@@ -61,19 +52,30 @@ func prepareExplorerParams(dataSource string, queryType qbtypes.QueryType, start
 	return params
 }
 
-func ExtractBuilderQueries(condition *ruletypes.RuleCondition, signal telemetrytypes.Signal) []BuilderQuery {
-	if condition == nil || condition.CompositeQuery == nil {
-		return nil
+func PrepareRuleFilterExpression(condition *ruletypes.RuleCondition, signal telemetrytypes.Signal, labels map[string]string) (string, bool) {
+	var expressions []string
+	if condition != nil && condition.CompositeQuery != nil {
+		names := resolveSelectedQueryNames(condition)
+		switch signal {
+		case telemetrytypes.SignalLogs:
+			expressions = prepareFilterExpressions[qbtypes.LogAggregation](condition.CompositeQuery.Queries, names, signal, labels)
+		case telemetrytypes.SignalTraces:
+			expressions = prepareFilterExpressions[qbtypes.TraceAggregation](condition.CompositeQuery.Queries, names, signal, labels)
+		}
 	}
 
-	names := resolveSelectedQueryNames(condition)
-	switch signal {
-	case telemetrytypes.SignalLogs:
-		return extractBuilderQueries[qbtypes.LogAggregation](condition.CompositeQuery.Queries, names, signal)
-	case telemetrytypes.SignalTraces:
-		return extractBuilderQueries[qbtypes.TraceAggregation](condition.CompositeQuery.Queries, names, signal)
+	switch {
+	case len(expressions) == 0:
+		// a ClickHouse SQL alert has no builder query; its link filters on the labels alone
+		return PrepareFilterExpression(labels, "", nil), false
+	case len(expressions) == 1:
+		return expressions[0], true
+	case slices.Contains(expressions, ""):
+		// an unfiltered formula input matches everything, so the merged filter does too
+		return "", true
 	}
-	return nil
+	// the explorer list views render one query only, so a formula's inputs merge into one filter
+	return "(" + strings.Join(expressions, ") OR (") + ")", true
 }
 
 func resolveSelectedQueryNames(condition *ruletypes.RuleCondition) []string {
@@ -94,8 +96,8 @@ func resolveSelectedQueryNames(condition *ruletypes.RuleCondition) []string {
 	return nil
 }
 
-func extractBuilderQueries[T any](queries []qbtypes.QueryEnvelope, names []string, signal telemetrytypes.Signal) []BuilderQuery {
-	var matches []BuilderQuery
+func prepareFilterExpressions[T any](queries []qbtypes.QueryEnvelope, names []string, signal telemetrytypes.Signal, labels map[string]string) []string {
+	var expressions []string
 	for _, query := range queries {
 		if query.Type != qbtypes.QueryTypeBuilder && query.Type != qbtypes.QueryTypeBuilderAI {
 			continue
@@ -110,7 +112,7 @@ func extractBuilderQueries[T any](queries []qbtypes.QueryEnvelope, names []strin
 		if spec.Filter != nil {
 			filterExpr = spec.Filter.Expression
 		}
-		matches = append(matches, BuilderQuery{Name: spec.Name, Filter: filterExpr, GroupBy: spec.GroupBy})
+		expressions = append(expressions, PrepareFilterExpression(labels, filterExpr, spec.GroupBy))
 	}
-	return matches
+	return expressions
 }

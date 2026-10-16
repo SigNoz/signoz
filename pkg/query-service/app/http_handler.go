@@ -805,11 +805,11 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 			start := end.Add(-rule.EvalWindow.Duration() - 3*time.Minute)
 			switch rule.AlertType {
 			case ruletypes.AlertTypeLogs:
-				builderQueries := contextlinks.ExtractBuilderQueries(rule.RuleCondition, telemetrytypes.SignalLogs)
-				res.Items[idx].RelatedLogsLink = contextlinks.PrepareParamsForLogsV5(start, end, lbls, builderQueries).Encode()
+				whereClause, _ := contextlinks.PrepareRuleFilterExpression(rule.RuleCondition, telemetrytypes.SignalLogs, lbls)
+				res.Items[idx].RelatedLogsLink = contextlinks.PrepareParamsForLogsV5(start, end, whereClause).Encode()
 			case ruletypes.AlertTypeTraces, ruletypes.AlertTypeAITraces:
-				builderQueries := contextlinks.ExtractBuilderQueries(rule.RuleCondition, telemetrytypes.SignalTraces)
-				res.Items[idx].RelatedTracesLink = contextlinks.PrepareParamsForTracesV5(start, end, lbls, builderQueries, rule.AlertType.BuilderQueryType()).Encode()
+				whereClause, _ := contextlinks.PrepareRuleFilterExpression(rule.RuleCondition, telemetrytypes.SignalTraces, lbls)
+				res.Items[idx].RelatedTracesLink = contextlinks.PrepareParamsForTracesV5(start, end, whereClause, rule.AlertType.BuilderQueryType()).Encode()
 			}
 		}
 	}

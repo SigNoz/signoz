@@ -3,7 +3,7 @@ from datetime import UTC, datetime, timedelta
 
 from fixtures import types
 from fixtures.alerts import (
-    assert_related_link_queries,
+    assert_related_link_query,
     get_rule_history_top_contributors,
     labels_to_map,
     parse_related_link,
@@ -46,7 +46,7 @@ def test_logs_rule_history_related_links(
     link = parse_related_link(item["relatedLogsLink"])
     assert link["end"] == (item["unixMilli"] // 1000) * 1000
     assert link["end"] - link["start"] == RELATED_LINK_WINDOW_SECONDS * 1000
-    assert_related_link_queries(link, "logs", {"A": ["payment success", "service.name", "payment-service"]})
+    assert_related_link_query(link, "logs", ["payment success", "service.name", "payment-service"])
 
     contributors = get_rule_history_top_contributors(signoz, token, rule_id, query_start_ms, query_end_ms)
     contributors = [c for c in contributors if labels_to_map(c["labels"]).get("service.name") == "payment-service"]
@@ -60,7 +60,7 @@ def test_logs_rule_history_related_links(
     contributor_link = parse_related_link(contributors[0]["relatedLogsLink"])
     assert contributor_link["start"] == query_start_ms
     assert contributor_link["end"] == query_end_ms
-    assert_related_link_queries(contributor_link, "logs", {"A": ["payment success", "service.name", "payment-service"]})
+    assert_related_link_query(contributor_link, "logs", ["payment success", "service.name", "payment-service"])
 
 
 def test_traces_rule_history_related_links(
@@ -90,7 +90,7 @@ def test_traces_rule_history_related_links(
     link = parse_related_link(item["relatedTracesLink"])
     assert link["end"] == (item["unixMilli"] // 1000) * 1_000_000_000
     assert link["end"] - link["start"] == RELATED_LINK_WINDOW_SECONDS * 1_000_000_000
-    assert_related_link_queries(link, "traces", {"A": ["http.request.path", "/order", "service.name", "order-service"]})
+    assert_related_link_query(link, "traces", ["http.request.path", "/order", "service.name", "order-service"])
 
     contributors = get_rule_history_top_contributors(signoz, token, rule_id, query_start_ms, query_end_ms)
     contributors = [c for c in contributors if labels_to_map(c["labels"]).get("service.name") == "order-service"]
@@ -104,7 +104,7 @@ def test_traces_rule_history_related_links(
     contributor_link = parse_related_link(contributors[0]["relatedTracesLink"])
     assert contributor_link["start"] == query_start_ms * 1_000_000
     assert contributor_link["end"] == query_end_ms * 1_000_000
-    assert_related_link_queries(contributor_link, "traces", {"A": ["http.request.path", "/order", "service.name", "order-service"]})
+    assert_related_link_query(contributor_link, "traces", ["http.request.path", "/order", "service.name", "order-service"])
 
 
 def test_ai_traces_rule_history_related_links(
@@ -134,7 +134,7 @@ def test_ai_traces_rule_history_related_links(
     link = parse_related_link(item["relatedAITracesLink"])
     assert link["end"] == (item["unixMilli"] // 1000) * 1_000_000_000
     assert link["end"] - link["start"] == RELATED_LINK_WINDOW_SECONDS * 1_000_000_000
-    assert_related_link_queries(link, "traces", {"A": ["trace.input_tokens", "100", "service.name", "llm-gateway"]})
+    assert_related_link_query(link, "traces", ["trace.input_tokens", "100", "service.name", "llm-gateway"])
     # the AI explorer only resolves trace.* fields for builder_ai_query
     assert link["composite_query"]["builder"]["queryData"][0]["builderQueryType"] == "builder_ai_query"
 
@@ -149,7 +149,7 @@ def test_ai_traces_rule_history_related_links(
     contributor_link = parse_related_link(contributors[0]["relatedAITracesLink"])
     assert contributor_link["start"] == query_start_ms * 1_000_000
     assert contributor_link["end"] == query_end_ms * 1_000_000
-    assert_related_link_queries(contributor_link, "traces", {"A": ["trace.input_tokens", "100", "service.name", "llm-gateway"]})
+    assert_related_link_query(contributor_link, "traces", ["trace.input_tokens", "100", "service.name", "llm-gateway"])
     assert contributor_link["composite_query"]["builder"]["queryData"][0]["builderQueryType"] == "builder_ai_query"
 
 
@@ -174,9 +174,9 @@ def test_multi_query_logs_rule_history_related_links(
     assert item.get("relatedLogsLink", "") != ""
 
     # the rule evaluates query A alone, so query B plays no part in the alert
-    # and the link leaves it out
+    # and its filter stays out of the link
     link = parse_related_link(item["relatedLogsLink"])
-    assert_related_link_queries(link, "logs", {"A": ["payment success", "service.name", "payment-service"]})
+    assert link["composite_query"]["builder"]["queryData"] == [{"dataSource": "logs", "filter": {"expression": "(body CONTAINS 'payment success') AND service.name='payment-service'"}}]
 
     contributors = get_rule_history_top_contributors(signoz, token, rule_id, query_start_ms, query_end_ms)
     contributors = [c for c in contributors if labels_to_map(c["labels"]).get("service.name") == "payment-service"]
@@ -184,7 +184,7 @@ def test_multi_query_logs_rule_history_related_links(
     assert contributors[0].get("relatedLogsLink", "") != ""
 
     contributor_link = parse_related_link(contributors[0]["relatedLogsLink"])
-    assert_related_link_queries(contributor_link, "logs", {"A": ["payment success", "service.name", "payment-service"]})
+    assert contributor_link["composite_query"]["builder"]["queryData"] == [{"dataSource": "logs", "filter": {"expression": "(body CONTAINS 'payment success') AND service.name='payment-service'"}}]
 
 
 def test_formula_logs_rule_history_related_links(
@@ -208,16 +208,14 @@ def test_formula_logs_rule_history_related_links(
     assert item.get("relatedLogsLink", "") != ""
 
     # the rule evaluates formula F1 over the hidden queries A and B, so the
-    # link carries both inputs, each narrowed to the firing series' labels
+    # link's one query ORs both filters, each narrowed to the firing series' labels
     link = parse_related_link(item["relatedLogsLink"])
-    assert_related_link_queries(
-        link,
-        "logs",
+    assert link["composite_query"]["builder"]["queryData"] == [
         {
-            "A": ["payment success", "service.name", "payment-service"],
-            "B": ["severity_text", "INFO", "service.name", "payment-service"],
-        },
-    )
+            "dataSource": "logs",
+            "filter": {"expression": "((body CONTAINS 'payment success') AND service.name='payment-service') OR ((severity_text='INFO') AND service.name='payment-service')"},
+        }
+    ]
 
     contributors = get_rule_history_top_contributors(signoz, token, rule_id, query_start_ms, query_end_ms)
     contributors = [c for c in contributors if labels_to_map(c["labels"]).get("service.name") == "payment-service"]
@@ -225,11 +223,9 @@ def test_formula_logs_rule_history_related_links(
     assert contributors[0].get("relatedLogsLink", "") != ""
 
     contributor_link = parse_related_link(contributors[0]["relatedLogsLink"])
-    assert_related_link_queries(
-        contributor_link,
-        "logs",
+    assert contributor_link["composite_query"]["builder"]["queryData"] == [
         {
-            "A": ["payment success", "service.name", "payment-service"],
-            "B": ["severity_text", "INFO", "service.name", "payment-service"],
-        },
-    )
+            "dataSource": "logs",
+            "filter": {"expression": "((body CONTAINS 'payment success') AND service.name='payment-service') OR ((severity_text='INFO') AND service.name='payment-service')"},
+        }
+    ]
