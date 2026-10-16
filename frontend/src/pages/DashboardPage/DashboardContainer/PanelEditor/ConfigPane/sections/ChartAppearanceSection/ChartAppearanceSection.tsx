@@ -12,7 +12,11 @@ import ConfigTiles from '../../controls/ConfigTiles/ConfigTiles';
 import { SWITCH_SKETCHES } from '../../controls/drawings/switchSketches';
 import type { SectionEditorContext } from '../../sectionContext';
 import { createFieldResetter } from '../../utils/changes';
+import { resolveBubbleRadius } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/GeoMapPanel/chartOptions';
+
+import ConfigRangeSlider from '../../controls/ConfigRangeSlider/ConfigRangeSlider';
 import DisconnectValuesField from './DisconnectValuesField';
+import GeoMapColorsField from './GeoMapColorsField';
 import HeatmapColorsField from './HeatmapColorsField';
 import PointsFields from './PointsFields';
 import {
@@ -22,11 +26,14 @@ import {
 	LINE_INTERPOLATION_OPTIONS,
 	LINE_STYLE_OPTIONS,
 } from './options';
-import { formatOpacity } from './utils';
+import { formatOpacity, formatPointSizeRange } from './utils';
 
 import styles from './ChartAppearanceSection.module.scss';
 
 const FILL_OPACITY_STEP = 0.01;
+
+/** Geo map circle radius bounds, in px; the spec accepts the same. */
+const BUBBLE_RADIUS_BOUNDS = { min: 1, max: 64 };
 
 /**
  * Edits the `chartAppearance` slice of a panel spec: line style / interpolation, fill
@@ -41,8 +48,12 @@ function ChartAppearanceSection({
 	onChange,
 	stepInterval,
 	sizeColumnLabel,
+	mapLayer,
 }: SectionEditorProps<SectionKind.ChartAppearance> &
-	Pick<SectionEditorContext, 'stepInterval' | 'sizeColumnLabel'>): JSX.Element {
+	Pick<
+		SectionEditorContext,
+		'stepInterval' | 'sizeColumnLabel' | 'mapLayer'
+	>): JSX.Element {
 	const reset = createFieldResetter(value, savedValue, onChange);
 	const interpolation = value?.lineInterpolation;
 
@@ -148,6 +159,46 @@ function ChartAppearanceSection({
 					value={value?.colors}
 					savedValue={savedValue?.colors}
 					onChange={(colors): void => onChange({ ...value, colors })}
+				/>
+			)}
+
+			{controls.mapColors && (
+				<GeoMapColorsField
+					value={value?.colors}
+					savedValue={savedValue?.colors}
+					onChange={(colors): void => onChange({ ...value, colors })}
+				/>
+			)}
+
+			{controls.bubbles && (
+				<ConfigField
+					label="Circle size"
+					help="Radius of the smallest and largest circle, in pixels."
+					{...reset('bubbles')}
+				>
+					<ConfigRangeSlider
+						testId="panel-editor-v2-geo-map-bubble-radius"
+						// The chart's default for the layer, so thumbs start where an unset range draws.
+						value={resolveBubbleRadius(value?.bubbles, mapLayer ?? 'regions')}
+						min={BUBBLE_RADIUS_BOUNDS.min}
+						max={BUBBLE_RADIUS_BOUNDS.max}
+						step={1}
+						formatValue={formatPointSizeRange}
+						onChange={([minRadius, maxRadius]): void =>
+							onChange({ ...value, bubbles: { minRadius, maxRadius } })
+						}
+					/>
+				</ConfigField>
+			)}
+
+			{controls.labels && (
+				<ConfigSwitch
+					testId="panel-editor-v2-geo-map-labels"
+					title="Show names"
+					description="Country and state names, each once it fits inside its shape."
+					changed={reset('labels').changed}
+					value={value?.labels ?? true}
+					onChange={(labels): void => onChange({ ...value, labels })}
 				/>
 			)}
 		</>

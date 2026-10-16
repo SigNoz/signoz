@@ -118,7 +118,8 @@ export const QueryV2 = forwardRef(function QueryV2(
 				panelType === PANEL_TYPES.SCATTER ||
 				panelType === PANEL_TYPES.PIE ||
 				panelType === PANEL_TYPES.VALUE ||
-				panelType === PANEL_TYPES.TOP_LIST),
+				panelType === PANEL_TYPES.TOP_LIST ||
+				panelType === PANEL_TYPES.GEO_MAP),
 		[dataSource, panelType],
 	);
 
