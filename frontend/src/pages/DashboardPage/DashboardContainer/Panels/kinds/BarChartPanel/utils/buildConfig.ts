@@ -5,7 +5,10 @@ import {
 } from 'pages/DashboardPage/DashboardContainer/Panels/utils/baseConfigBuilder';
 import { resolveSeriesLabelV5 } from 'pages/DashboardPage/DashboardContainer/Panels/utils/resolveSeriesLabel';
 import type { PanelSeries } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
-import { toClickPluginPayload } from 'pages/DashboardPage/DashboardContainer/queryV5/uplotData';
+import {
+	getPartialTimestamps,
+	toClickPluginPayload,
+} from 'pages/DashboardPage/DashboardContainer/queryV5/uplotData';
 import getLabelName from 'lib/getLabelName';
 import { DrawStyle } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
@@ -102,6 +105,7 @@ function addSeries({
 			isDarkMode,
 			stepInterval,
 			metric: s.labels,
+			partialTimestamps: getPartialTimestamps(s.values),
 		});
 	});
 }
