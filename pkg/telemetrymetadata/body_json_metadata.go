@@ -43,7 +43,7 @@ var logsBodyIndexLookup = promotetypes.NewLogsBodyTarget().JSONIndexLookup()
 var simpleJSONSubColumnIndexExprRe = regexp.MustCompile("^CAST\\((?P<expr>(?:[^()`]|`[^`]*`)+), '(?P<type>.+)'\\)$")
 
 // ClickHouse stores a traces number index expression with its ::String unfolded to CAST.
-var jsonNumberSubColumnIndexExprRe = regexp.MustCompile(`^toFloat64OrNull\(CAST\((?P<expr>[^()]+), 'String'\)\)$`)
+var jsonNumberSubColumnIndexExprRe = regexp.MustCompile("^toFloat64OrNull\\(CAST\\((?P<expr>(?:[^()`]|`[^`]*`)+), 'String'\\)\\)$")
 
 // unfoldJSONSubColumnIndexExpr accepts the folded (lower/assumeNotNull), the
 // traces number and the bare type-cast expression forms.

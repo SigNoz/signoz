@@ -99,6 +99,12 @@ func TestUnfoldJSONSubColumnIndexExpr(t *testing.T) {
 			wantType:   "Float64",
 		},
 		{
+			name:       "TracesNumber_BacktickedParentheses",
+			expr:       "toFloat64OrNull(CAST(attributes.`latency(ms)`, 'String'))",
+			wantColumn: "attributes.`latency(ms)`",
+			wantType:   "Float64",
+		},
+		{
 			name:    "TracesNumber_NotAStringCast",
 			expr:    "toFloat64OrNull(CAST(attributes.a, 'Int64'))",
 			wantErr: true,
