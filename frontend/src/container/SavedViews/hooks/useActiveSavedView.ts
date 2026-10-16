@@ -6,6 +6,8 @@ import useOptionsMenu from 'container/OptionsMenu/useOptionsMenu';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
+import { buildSavedViewReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { DataSource } from 'types/common/queryBuilder';
 import { toAPIError } from 'utils/errorUtils';
 
@@ -24,11 +26,19 @@ export function useActiveSavedView(
 		dataSource: optionsDataSource ?? DataSource.LOGS,
 	});
 
+	const { isLoading: isCheckingRead, deniedPermissions } = useAuthZ(
+		[buildSavedViewReadPermission(viewKey)],
+		{ enabled: !!viewKey },
+	);
+	const isReadDenied = !!viewKey && deniedPermissions.length > 0;
+
+	const canFetch = !!viewKey && !isCheckingRead && !isReadDenied;
+
 	const { data, isLoading, isError, error } = useGetSavedView(
 		{ id: viewKey },
-		{ query: { enabled: !!viewKey } },
+		{ query: { enabled: canFetch } },
 	);
-	const view = viewKey ? data?.data : undefined;
+	const view = canFetch ? data?.data : undefined;
 
 	// The query builder stages the url query a render later. Until the ids
 	// match, keep the last answer for this view; another view starts clean.
@@ -76,9 +86,9 @@ export function useActiveSavedView(
 
 	return {
 		view,
-		isLoading: !!viewKey && isLoading,
-		isError: !!viewKey && isError,
-		isForbidden: !!viewKey && isError && error?.response?.status === 403,
+		isLoading: !!viewKey && (isCheckingRead || isLoading),
+		isError: !!viewKey && (isError || isReadDenied),
+		isReadDenied,
 		errorMessage,
 		hasUnsavedChanges,
 	};

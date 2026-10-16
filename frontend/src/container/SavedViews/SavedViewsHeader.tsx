@@ -12,7 +12,6 @@ import {
 	SavedViewCreatePermission,
 	SavedViewListPermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
-import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 
 import {
 	MY_VIEW_NAME,
@@ -44,17 +43,12 @@ function SavedViewsHeader({
 		view,
 		isLoading,
 		isError,
-		isForbidden,
+		isReadDenied,
 		errorMessage,
 		hasUnsavedChanges,
 	} = useActiveSavedView(source);
 	const { viewKey } = useGetSavedViewParams();
-	// The server decides access; the check only words the tooltip after a 403.
 	const readPermission = buildSavedViewReadPermission(viewKey);
-	const { deniedPermissions } = useAuthZ([readPermission], {
-		enabled: isForbidden,
-	});
-	const isReadDenied = isForbidden && deniedPermissions.length > 0;
 	const { revertView, clearView, createView, updateView, isSaving } =
 		useSavedViewActions(source);
 
@@ -72,7 +66,7 @@ function SavedViewsHeader({
 	const closeModal = useCallback((): void => setModalMode(null), []);
 
 	let name = view?.spec.displayName ?? MY_VIEW_NAME;
-	if (isForbidden) {
+	if (isReadDenied) {
 		name = SAVED_VIEW_FORBIDDEN_NAME;
 	} else if (isError) {
 		name = SAVED_VIEW_LOAD_FAILED_NAME;

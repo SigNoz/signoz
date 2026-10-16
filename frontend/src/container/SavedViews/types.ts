@@ -42,7 +42,7 @@ export interface UseActiveSavedViewResult {
 	view: SavedviewtypesSavedViewDTO | undefined;
 	isLoading: boolean;
 	isError: boolean;
-	isForbidden: boolean;
+	isReadDenied: boolean;
 	errorMessage: string | undefined;
 	hasUnsavedChanges: boolean;
 }
