@@ -116,6 +116,7 @@ describe('GeoMapPanelRenderer', () => {
 			{ code: 'DE', value: 80, raw: 'DE' },
 		]);
 		expect(props.view).toBe('world');
+		expect(props.projection).toBe('mercator');
 		expect(props.layer).toBe('regions');
 		expect(props.colors).toStrictEqual({
 			mode: 'palette',
@@ -137,7 +138,12 @@ describe('GeoMapPanelRenderer', () => {
 			dataWith(['geo.country.iso_code'], ['A', 'B'], [['US', 12.5, 3000]]),
 			{
 				formatting: { columnUnits: { A: 'percent' }, decimalPrecision: '1' },
-				map: { layer: 'bubbles', colorBy: 'A', sizeBy: 'B' },
+				map: {
+					layer: 'bubbles',
+					projection: 'equal_earth',
+					colorBy: 'A',
+					sizeBy: 'B',
+				},
 				chartAppearance: { labels: false, bubbles: { minRadius: 4 } },
 				legend: { position: 'right' },
 			} as DashboardtypesGeoMapPanelSpecDTO,
@@ -145,6 +151,7 @@ describe('GeoMapPanelRenderer', () => {
 
 		await screen.findByTestId('geo-map');
 		const props = lastMapProps();
+		expect(props.projection).toBe('equal_earth');
 		expect(props.layer).toBe('bubbles');
 		expect(props.data).toStrictEqual([
 			{

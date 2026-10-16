@@ -115,14 +115,17 @@ describe('LocationSection', () => {
 
 	it('asks for the country when states are picked, and hides the area', async () => {
 		const onChange = renderSection(['geo.country.iso_code'], COUNTRY_ROWS, {
-			map: { view: 'europe' } as GeoMapPlacementSlice['map'],
+			map: {
+				view: 'europe',
+				projection: 'equal_earth',
+			} as GeoMapPlacementSlice['map'],
 		});
 
 		await userEvent.click(screen.getByRole('radio', { name: 'State' }));
 
 		expect(onChange).toHaveBeenLastCalledWith({
 			location: { mode: 'subdivision' },
-			map: { view: 'country', viewCountry: 'US' },
+			map: { view: 'country', viewCountry: 'US', projection: 'equal_earth' },
 		});
 		expect(
 			screen.getByTestId('panel-editor-v2-geo-location-view-country'),
@@ -135,7 +138,9 @@ describe('LocationSection', () => {
 			screen.getByTestId('panel-editor-v2-geo-location-auto'),
 		);
 		expect(onChange).toHaveBeenLastCalledWith(
-			expect.objectContaining({ map: { view: 'europe', viewCountry: 'US' } }),
+			expect.objectContaining({
+				map: { view: 'europe', viewCountry: 'US', projection: 'equal_earth' },
+			}),
 		);
 	});
 
@@ -154,6 +159,29 @@ describe('LocationSection', () => {
 		expect(screen.getByText('Point size')).toBeInTheDocument();
 	});
 
+	it('starts on Mercator and switches the projection', async () => {
+		const onChange = renderSection(['geo.country.iso_code'], COUNTRY_ROWS);
+		const tile = (projection: string): HTMLElement =>
+			within(
+				screen.getByTestId(`panel-editor-v2-geo-map-projection-${projection}`),
+			).getByRole('radio');
+
+		expect(tile('mercator')).toBeChecked();
+		expect(
+			screen.getByTestId('panel-editor-v2-geo-map-projection-equal_earth'),
+		).toHaveTextContent('Equal EarthTrue areas');
+
+		await userEvent.click(tile('equal_earth'));
+
+		expect(onChange).toHaveBeenLastCalledWith({
+			map: { projection: 'equal_earth' },
+		});
+		expect(tile('equal_earth')).toBeChecked();
+		expect(
+			screen.getByText('Draws every country at its true size.'),
+		).toBeInTheDocument();
+	});
+
 	it('switches to point rows when Points is drawn', async () => {
 		const onChange = renderSection(['geo.country.iso_code'], COUNTRY_ROWS);
 
@@ -161,7 +189,7 @@ describe('LocationSection', () => {
 
 		expect(onChange).toHaveBeenLastCalledWith({
 			location: { mode: 'coordinates' },
-			map: { layer: 'points' },
+			map: { layer: 'points', projection: 'mercator' },
 		});
 		expect(
 			screen.getByText('Points need both columns; until then nothing is drawn.'),

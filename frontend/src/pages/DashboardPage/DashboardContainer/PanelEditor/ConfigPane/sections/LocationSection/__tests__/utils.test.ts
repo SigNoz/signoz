@@ -82,7 +82,9 @@ describe('resolveLayer', () => {
 describe('changeRowKind', () => {
 	it('sets the country view with the suggested country when picking states', () => {
 		const change = changeRowKind(
-			{ map: { view: 'europe', layer: 'points' } } as GeoMapPlacementSlice,
+			{
+				map: { view: 'europe', layer: 'points', projection: 'equal_earth' },
+			} as GeoMapPlacementSlice,
 			'country',
 			'state',
 			{ suggestedCountry: 'US' },
@@ -90,7 +92,12 @@ describe('changeRowKind', () => {
 
 		expect(change.next).toStrictEqual({
 			location: { mode: 'subdivision' },
-			map: { view: 'country', viewCountry: 'US', layer: 'regions' },
+			map: {
+				view: 'country',
+				viewCountry: 'US',
+				layer: 'regions',
+				projection: 'equal_earth',
+			},
 		});
 		expect(change.previousView).toBe('europe');
 	});
@@ -119,7 +126,7 @@ describe('changeRowKind', () => {
 	it('draws points for point rows and clears columns going back to auto', () => {
 		expect(changeRowKind(undefined, 'country', 'point', {}).next).toStrictEqual({
 			location: { mode: 'coordinates' },
-			map: { layer: 'points' },
+			map: { layer: 'points', projection: 'mercator' },
 		});
 		expect(
 			changeRowKind(

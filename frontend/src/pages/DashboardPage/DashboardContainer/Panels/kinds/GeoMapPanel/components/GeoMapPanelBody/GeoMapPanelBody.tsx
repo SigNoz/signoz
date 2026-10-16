@@ -209,6 +209,7 @@ export default function GeoMapPanelBody({
 			data={regions}
 			points={points}
 			view={map?.view ?? 'world'}
+			projection={map?.projection ?? 'mercator'}
 			country={country}
 			layer={geoData.layer}
 			colors={colors}

@@ -1,6 +1,8 @@
 import {
 	DashboardtypesGeoMapLayerDTO,
 	DashboardtypesGeoMapLocationModeDTO,
+	DashboardtypesGeoMapProjectionDTO,
+	type DashboardtypesGeoMapSettingsDTO,
 	DashboardtypesGeoMapViewDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { SUBDIVISION_COUNTRY_CODES } from 'lib/visualization/charts/GeoMap/geo/subdivisionCountries';
@@ -50,6 +52,18 @@ export function resolveRowKind(
 	return data?.location ? KIND_OF_LOCATION[data.location.kind] : undefined;
 }
 
+/** The map with `patch` applied; a panel without one starts on the API's default projection. */
+export function patchMap(
+	map: DashboardtypesGeoMapSettingsDTO | undefined,
+	patch: Partial<DashboardtypesGeoMapSettingsDTO> = {},
+): DashboardtypesGeoMapSettingsDTO {
+	return {
+		projection: DashboardtypesGeoMapProjectionDTO.mercator,
+		...map,
+		...patch,
+	};
+}
+
 export function isAutoMode(slice: GeoMapPlacementSlice | undefined): boolean {
 	return !slice?.location?.mode || slice.location.mode === MODE.auto;
 }
@@ -92,7 +106,7 @@ export function changeRowKind(
 	},
 ): KindChange {
 	const location = { ...slice?.location };
-	const map = { ...slice?.map };
+	const map = patchMap(slice?.map);
 	if (to === 'auto') {
 		location.mode = MODE.auto;
 		location.country = '';
@@ -191,6 +205,15 @@ export const SIZE_LABEL: Record<DashboardtypesGeoMapLayerDTO, string> = {
 	regions: 'Circle size',
 	bubbles: 'Bubble size',
 	points: 'Point size',
+};
+
+export const PROJECTION_HELP: Record<
+	DashboardtypesGeoMapProjectionDTO,
+	string
+> = {
+	mercator: 'Keeps shapes true, but land grows toward the poles.',
+	equal_earth: 'Draws every country at its true size.',
+	natural_earth: 'Balances size and shape; neither is exact.',
 };
 
 export interface UnplacedRow {
