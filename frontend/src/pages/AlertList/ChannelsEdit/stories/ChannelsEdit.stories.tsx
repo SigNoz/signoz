@@ -159,3 +159,11 @@ export const JiraServiceManagementOps: Story = {
 export const IncidentIO: Story = {
 	args: { channelType: 'incidentio' },
 };
+
+/**
+ * The Telegram channel: bot token, chat id, and an optional forum topic id so
+ * alerts land in a specific topic rather than the chat root.
+ */
+export const Telegram: Story = {
+	args: { channelType: 'telegram' },
+};

@@ -79,6 +79,7 @@ export const CHANNEL_TYPES = [
 	'jira',
 	'jsmops',
 	'incidentio',
+	'telegram',
 ] as const;
 
 export type ChannelType = (typeof CHANNEL_TYPES)[number];
@@ -683,6 +684,23 @@ const CHANNEL_SEEDS: ChannelSeed[] = [
 					title: '{{ .CommonLabels.alertname }}',
 					description: '{{ .CommonAnnotations.summary }}',
 					metadata: { team: 'platform' },
+				},
+			],
+		},
+	},
+	{
+		name: 'ops-telegram',
+		type: 'telegram',
+		receiver: {
+			telegram_configs: [
+				{
+					token: '123456:ABC-DEF-story-token',
+					chat: -1001234567890,
+					message_thread_id: 42,
+					send_resolved: true,
+					parse_mode: 'HTML',
+					message:
+						'{{ if gt (len .Alerts.Firing) 0 }}\n<b>Alerts Firing:</b>\n{{ range .Alerts.Firing -}}• <b>{{ .Labels.alertname }}</b>\n{{ end }}{{ end }}',
 				},
 			],
 		},

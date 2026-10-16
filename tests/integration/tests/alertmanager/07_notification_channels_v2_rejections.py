@@ -98,7 +98,7 @@ def test_create_rejects_a_duplicate_with_conflict(  # pylint: disable=too-many-a
         ),
         pytest.param({"name": "rejected"}, id="no_config"),
         pytest.param(
-            {"name": "rejected", "config": {"kind": "telegram", "spec": {"chatId": 1}}},
+            {"name": "rejected", "config": {"kind": "discord", "spec": {"webhookUrl": "https://discord.com/api/webhooks/1/x"}}},
             id="unmodelled_kind",
         ),
         pytest.param(
@@ -258,6 +258,25 @@ def test_create_rejects_a_duplicate_with_conflict(  # pylint: disable=too-many-a
                 },
             },
             id="incidentio_without_token",
+        ),
+        pytest.param(
+            {"name": "rejected", "config": {"kind": "telegram", "spec": {"chatId": 1}}},
+            id="telegram_without_bot_token",
+        ),
+        pytest.param(
+            {"name": "rejected", "config": {"kind": "telegram", "spec": {"botToken": "t", "chatId": 0}}},
+            id="telegram_chat_id_zero",
+        ),
+        pytest.param(
+            {
+                "name": "rejected",
+                "config": {"kind": "telegram", "spec": {"botToken": "t", "chatId": 1, "messageThreadId": 0}},
+            },
+            id="telegram_message_thread_id_zero",
+        ),
+        pytest.param(
+            {"name": "rejected", "config": {"kind": "telegram", "spec": {"botToken": "123456:ABC-DEF"}}},
+            id="telegram_without_chat_id",
         ),
         pytest.param(
             {
@@ -427,7 +446,7 @@ def test_create_rejects_invalid_bodies(
     [
         pytest.param({"sort": "data"}, id="sort_outside_the_enum"),
         pytest.param({"order": "sideways"}, id="order_outside_the_enum"),
-        pytest.param({"kind": "telegram"}, id="kind_outside_the_enum"),
+        pytest.param({"kind": "discord"}, id="kind_outside_the_enum"),
         pytest.param({"limit": -1}, id="negative_limit"),
         pytest.param({"offset": -1}, id="negative_offset"),
     ],
@@ -532,7 +551,7 @@ def test_update_rejects_invalid_bodies(  # pylint: disable=too-many-arguments,to
             id="spec_missing_required_field",
         ),
         pytest.param(
-            {"config": {"kind": "telegram", "spec": {"chatId": 1}}},
+            {"config": {"kind": "discord", "spec": {"webhookUrl": "https://discord.com/api/webhooks/1/x"}}},
             id="unmodelled_kind",
         ),
         pytest.param({}, id="no_config"),

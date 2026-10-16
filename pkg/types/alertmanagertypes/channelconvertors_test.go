@@ -258,6 +258,40 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				Metadata:     map[string]string{"team": "platform"},
 			},
 		},
+		{
+			description: "telegram",
+			kind:        ChannelKindTelegram,
+			spec: &ChannelTelegramConfig{
+				SendResolved:    &sendResolved,
+				BotToken:        "123456:ABC-DEF",
+				ChatID:          -1001234567890,
+				MessageThreadID: func() *int { id := 42; return &id }(),
+				Message:         valuer.MustNewUnsetOrNonEmptyString("telegram message"),
+			},
+			expectedRoundTrip: &ChannelTelegramConfig{
+				SendResolved:    &sendResolved,
+				BotToken:        "123456:ABC-DEF",
+				ChatID:          -1001234567890,
+				MessageThreadID: func() *int { id := 42; return &id }(),
+				Message:         valuer.MustNewUnsetOrNonEmptyString("telegram message"),
+			},
+		},
+		{
+			description: "telegram without thread id",
+			kind:        ChannelKindTelegram,
+			spec: &ChannelTelegramConfig{
+				SendResolved: &sendResolved,
+				BotToken:     "123456:ABC-DEF",
+				ChatID:       12345,
+				Message:      valuer.MustNewUnsetOrNonEmptyString("telegram message"),
+			},
+			expectedRoundTrip: &ChannelTelegramConfig{
+				SendResolved: &sendResolved,
+				BotToken:     "123456:ABC-DEF",
+				ChatID:       12345,
+				Message:      valuer.MustNewUnsetOrNonEmptyString("telegram message"),
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -396,8 +430,8 @@ func TestDeriveChannelConfigRejectsUnrepresentableChannels(t *testing.T) {
 		{
 			description: "notifier kind outside the supported set",
 			channel: Channel{
-				DisplayName: "tg",
-				Data:        `{"name":"tg","telegram_configs":[{"chat_id":1}]}`,
+				DisplayName: "discord",
+				Data:        `{"name":"discord","discord_configs":[{"webhook_url":"https://discord.com/api/webhooks/1/x"}]}`,
 			},
 		},
 		{
@@ -419,8 +453,8 @@ func TestDeriveChannelConfigRejectsUnrepresentableChannels(t *testing.T) {
 		{
 			description: "a modelled notifier kind alongside an unmodelled one",
 			channel: Channel{
-				DisplayName: "slack-and-telegram",
-				Data:        `{"name":"slack-and-telegram","slack_configs":[{"api_url":"https://a","channel":"#a"}],"telegram_configs":[{"chat_id":1,"bot_token":"t"}]}`,
+				DisplayName: "slack-and-discord",
+				Data:        `{"name":"slack-and-discord","slack_configs":[{"api_url":"https://a","channel":"#a"}],"discord_configs":[{"webhook_url":"https://discord.com/api/webhooks/1/x"}]}`,
 			},
 		},
 		{
@@ -496,6 +530,20 @@ func TestDeriveChannelConfigRejectsUnrepresentableChannels(t *testing.T) {
 			channel: Channel{
 				DisplayName: "chat-basic",
 				Data:        `{"name":"chat-basic","googlechat_configs":[{"webhook_url":"https://chat.googleapis.com/v1/spaces/A/messages","http_config":{"basic_auth":{"username":"u","password":"p"},"follow_redirects":true,"enable_http2":true}}]}`,
+			},
+		},
+		{
+			description: "telegram basic auth",
+			channel: Channel{
+				DisplayName: "tg-basic",
+				Data:        `{"name":"tg-basic","telegram_configs":[{"chat":1,"token":"t","http_config":{"basic_auth":{"username":"u","password":"p"},"follow_redirects":true,"enable_http2":true}}]}`,
+			},
+		},
+		{
+			description: "telegram token file",
+			channel: Channel{
+				DisplayName: "tg-file",
+				Data:        `{"name":"tg-file","telegram_configs":[{"chat":1,"token_file":"/run/token"}]}`,
 			},
 		},
 		{

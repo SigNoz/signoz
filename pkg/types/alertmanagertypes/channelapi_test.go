@@ -88,6 +88,32 @@ func TestPostableChannelValidate(t *testing.T) {
 				Config:      ChannelConfig{Kind: ChannelKindSlack},
 			},
 		},
+		{
+			description: "telegram chat id zero",
+			postable: PostableNotificationChannel{
+				Name:        "telegram",
+				DisplayName: "telegram",
+				Config:      ChannelConfig{Kind: ChannelKindTelegram, Spec: &ChannelTelegramConfig{BotToken: "t", ChatID: 0}},
+			},
+		},
+		{
+			description: "telegram message thread id zero",
+			postable: PostableNotificationChannel{
+				Name:        "telegram",
+				DisplayName: "telegram",
+				Config: ChannelConfig{Kind: ChannelKindTelegram, Spec: &ChannelTelegramConfig{
+					BotToken: "t", ChatID: 1, MessageThreadID: func() *int { id := 0; return &id }(),
+				}},
+			},
+		},
+		{
+			description: "telegram missing bot token",
+			postable: PostableNotificationChannel{
+				Name:        "telegram",
+				DisplayName: "telegram",
+				Config:      ChannelConfig{Kind: ChannelKindTelegram, Spec: &ChannelTelegramConfig{ChatID: 1}},
+			},
+		},
 	}
 
 	for _, testCase := range testCases {

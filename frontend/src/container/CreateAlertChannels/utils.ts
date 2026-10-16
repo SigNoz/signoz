@@ -4,6 +4,7 @@ import {
 	AlertmanagertypesJSMOpsReceiverConfigDTO,
 	AlertmanagertypesPostableChannelDTO,
 	ConfigSecretURLDTO,
+	ConfigTelegramConfigDTO,
 	ModelDurationDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
@@ -13,6 +14,7 @@ import {
 	IncidentIOChannel,
 	JiraChannel,
 	JsmOpsChannel,
+	TelegramChannel,
 } from './config';
 
 export const isChannelType = (type: string): type is ChannelType =>
@@ -218,5 +220,29 @@ export const prepareIncidentIORequest = (
 	return {
 		name: config.name || '',
 		incidentio_configs: [incidentio],
+	};
+};
+
+// create, update and test all send the same body shape. Optional thread id and
+// message are omitted when empty so the upstream telegram defaults apply.
+export const prepareTelegramRequest = (
+	config: Partial<TelegramChannel>,
+): AlertmanagertypesPostableChannelDTO => {
+	const telegram: ConfigTelegramConfigDTO = {
+		token: config.bot_token || '',
+		chat: config.chat_id,
+		send_resolved: config.send_resolved ?? true,
+	};
+
+	if (config.message_thread_id && config.message_thread_id > 0) {
+		telegram.message_thread_id = config.message_thread_id;
+	}
+	if (config.message) {
+		telegram.message = config.message;
+	}
+
+	return {
+		name: config.name || '',
+		telegram_configs: [telegram],
 	};
 };

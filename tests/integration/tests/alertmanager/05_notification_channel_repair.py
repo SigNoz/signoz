@@ -57,7 +57,7 @@ def test_repair_deletes_a_legacy_channel_of_an_unmodelled_kind(
     cleanup_notification_channels: list[str],
 ) -> None:
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    name = f"legacy-telegram-{uuid.uuid4().hex[:8]}"
+    name = f"legacy-discord-{uuid.uuid4().hex[:8]}"
 
     response = requests.post(
         signoz.self.host_configs["8080"].get(V2_BASE_URL),
@@ -68,7 +68,7 @@ def test_repair_deletes_a_legacy_channel_of_an_unmodelled_kind(
     assert response.status_code == HTTPStatus.CREATED, response.text
     channel_id = response.json()["data"]["id"]
     cleanup_notification_channels.append(channel_id)
-    rewrite_channel_as_legacy_receiver(signoz, channel_id, {"name": name, "telegram_configs": [{"chat": 12345, "token": "telegram-bot-token"}]})
+    rewrite_channel_as_legacy_receiver(signoz, channel_id, {"name": name, "discord_configs": [{"webhook_url": "https://discord.com/api/webhooks/1/x"}]})
 
     # v2 lists the row with an empty kind and refuses to read it.
     response = requests.get(
