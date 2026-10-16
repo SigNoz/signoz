@@ -253,7 +253,7 @@ func (m *module) promotePaths(ctx context.Context, target promotetypes.Target, p
 					return err
 				}
 				indexes = append(indexes, schemamigrator.Index{
-					Name:        schemamigrator.JSONSubColumnIndexName(parentColumn, it.Path, index.JSONDataType.StringValue(), typeIndex),
+					Name:        schemamigrator.JSONSubColumnIndexName(parentColumn, it.Path, strings.ToLower(index.JSONDataType.StringValue()), typeIndex),
 					Expression:  target.IndexExpression(parentColumn, it.Path, index.JSONDataType.StringValue()),
 					Type:        index.Type,
 					Granularity: index.Granularity,
