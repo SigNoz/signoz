@@ -4095,6 +4095,12 @@ components:
         visualization:
           $ref: '#/components/schemas/DashboardtypesBasicVisualization'
       type: object
+    DashboardtypesGeoMapProjection:
+      enum:
+      - mercator
+      - equal_earth
+      - natural_earth
+      type: string
     DashboardtypesGeoMapSettings:
       properties:
         colorBy:
@@ -4103,6 +4109,8 @@ components:
           type: string
         layer:
           $ref: '#/components/schemas/DashboardtypesGeoMapLayer'
+        projection:
+          $ref: '#/components/schemas/DashboardtypesGeoMapProjection'
         sizeBy:
           description: Value column key that sets the bubble or point size. Empty
             uses colorBy.
@@ -4112,6 +4120,8 @@ components:
         viewCountry:
           description: ISO 3166-1 alpha-2 code of the country the country view shows.
           type: string
+      required:
+      - projection
       type: object
     DashboardtypesGeoMapThreshold:
       properties:
