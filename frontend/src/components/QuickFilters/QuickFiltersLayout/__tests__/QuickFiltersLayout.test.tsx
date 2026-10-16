@@ -1,7 +1,7 @@
 import { Button } from '@signozhq/ui/button';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
-import { render, screen, userEvent } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import { QuickFiltersSource } from '../../types';
 import QuickFiltersLayout from '../QuickFiltersLayout';
@@ -197,6 +197,11 @@ describe('QuickFiltersLayout', () => {
 			expect(screen.queryByTestId('saved-views-panel')).not.toBeInTheDocument();
 			expect(drawer()).not.toHaveClass('isOpen');
 
+			await waitFor(() =>
+				expect(screen.getByTestId('saved-views-open')).not.toHaveAttribute(
+					'aria-busy',
+				),
+			);
 			await user.click(screen.getByTestId('saved-views-open'));
 
 			expect(screen.getByTestId('saved-views-panel')).toBeInTheDocument();
@@ -226,6 +231,11 @@ describe('QuickFiltersLayout', () => {
 			expect(screen.getByTestId('saved-views-header')).toHaveAttribute(
 				'data-source',
 				SavedviewtypesSourceDTO.traces,
+			);
+			await waitFor(() =>
+				expect(screen.getByTestId('saved-views-open')).not.toHaveAttribute(
+					'aria-busy',
+				),
 			);
 			await userEvent.setup().click(screen.getByTestId('saved-views-open'));
 			expect(screen.getByTestId('saved-views-panel')).toHaveAttribute(

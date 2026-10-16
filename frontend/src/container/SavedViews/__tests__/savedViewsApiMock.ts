@@ -1,4 +1,5 @@
 import { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 
@@ -13,6 +14,7 @@ export interface Requests {
 }
 
 // Mutates `views` on create, update and delete, so a refetch sees the change.
+// Grants every permission; a later server.use overrides it.
 export function mockSavedViewsApi(
 	views: SavedviewtypesSavedViewDTO[],
 	{
@@ -30,6 +32,7 @@ export function mockSavedViewsApi(
 	const requests: Requests = { created: [], updated: [], deleted: [] };
 	let failedLists = 0;
 	server.use(
+		setupAuthzAdmin(),
 		rest.get(API, (req, res, ctx) => {
 			if (failedLists < listFailures) {
 				failedLists += 1;
