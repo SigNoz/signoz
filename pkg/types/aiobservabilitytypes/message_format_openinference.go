@@ -115,7 +115,10 @@ func openInferenceContents(m map[string]any) Parts {
 		case "reasoning":
 			parts = append(parts, part(ReasoningPart{Type: PartTypeReasoning, Content: stringOf(content["text"])}))
 		case "image", "audio", "video":
-			if url := stringOf(attribute(content, typ+"."+typ+".url")); url != "" {
+			// the URL sits at message_content.<type>.<type>.url
+			media, _ := content[typ].(map[string]any)
+			inner, _ := media[typ].(map[string]any)
+			if url := stringOf(inner["url"]); url != "" {
 				parts = append(parts, part(mediaPart(url, Modality{valuer.NewString(typ)})))
 			}
 		case "tool_use":

@@ -54,8 +54,8 @@ type FormattedMessages struct {
 }
 
 // FormatMessages builds the OTel GenAI view of a span's messages from the formats SDKs write. attributes
-// is the span's JSON attribute document, nested by key segment, so an object value is whole. Each
-// message value is a JSON string or a structured value. An embeddings call has no messages, whatever the
+// holds the span's JSON attributes keyed by full dotted path. Each message value is a JSON string or a
+// structured value. An embeddings call has no messages, whatever the
 // mapper moved onto the message attributes. OpenInference's flattened messages come first,
 // then a tool call and its result, then the AI SDK's ai.* keys, then the message attributes, then
 // openllmetry's flattened prompts and completions. gen_ai.system_instructions leads the
@@ -227,42 +227,67 @@ func attribute(doc map[string]any, key string) any {
 	return plainJSON(doc[key])
 }
 
-// indexed reads a flattened list, "<key>.<N>.*" keys stored as an object keyed by N, in numeric order.
-// A list value is returned as is.
+// indexed reads the list written as "<key>.<N>.<field>" keys, one object per N in numeric order. Inside an
+// entry that nested rebuilt, the list is already an object keyed by N.
 func indexed(doc map[string]any, key string) []map[string]any {
-	var items []any
-	switch v := attribute(doc, key).(type) {
-	case []any:
-		items = v
-	case map[string]any:
-		indexes := make([]int, 0, len(v))
-		byIndex := make(map[int]any, len(v))
-		for k, item := range v {
-			n, err := strconv.Atoi(k)
-			if err != nil {
-				continue
-			}
-			indexes = append(indexes, n)
-			byIndex[n] = item
-		}
-		sort.Ints(indexes)
-		for _, n := range indexes {
-			items = append(items, byIndex[n])
-		}
+	object, ok := attribute(doc, key).(map[string]any)
+	if !ok {
+		object = nested(doc, key+".")
 	}
-	out := make([]map[string]any, 0, len(items))
-	for _, item := range items {
-		if m, ok := item.(map[string]any); ok {
-			out = append(out, m)
+	return byIndex(object)
+}
+
+// indexedAt reads one entry of a flattened list by its index.
+func indexedAt(doc map[string]any, key string, i int) map[string]any {
+	return nested(doc, key+"."+strconv.Itoa(i)+".")
+}
+
+// nested rebuilds the keys under prefix into one object, split on their dots. When a key is both a value
+// and the parent of other keys, the object wins, so the result does not depend on map order.
+func nested(doc map[string]any, prefix string) map[string]any {
+	out := map[string]any{}
+	for key := range doc {
+		rest, ok := strings.CutPrefix(key, prefix)
+		if !ok || rest == "" {
+			continue
+		}
+		segments := strings.Split(rest, ".")
+		current := out
+		for _, segment := range segments[:len(segments)-1] {
+			child, ok := current[segment].(map[string]any)
+			if !ok {
+				child = map[string]any{}
+				current[segment] = child
+			}
+			current = child
+		}
+		leaf := segments[len(segments)-1]
+		if _, ok := current[leaf].(map[string]any); !ok {
+			current[leaf] = attribute(doc, key)
 		}
 	}
 	return out
 }
 
-// indexedAt reads one entry of a flattened list by its index.
-func indexedAt(doc map[string]any, key string, i int) map[string]any {
-	m, _ := attribute(doc, key+"."+strconv.Itoa(i)).(map[string]any)
-	return m
+// byIndex lists the object entries keyed by a numeric index, in index order.
+func byIndex(object map[string]any) []map[string]any {
+	indexes := make([]int, 0, len(object))
+	items := make(map[int]map[string]any, len(object))
+	for k, item := range object {
+		n, err := strconv.Atoi(k)
+		entry, isObject := item.(map[string]any)
+		if err != nil || !isObject {
+			continue
+		}
+		indexes = append(indexes, n)
+		items[n] = entry
+	}
+	sort.Ints(indexes)
+	out := make([]map[string]any, 0, len(indexes))
+	for _, n := range indexes {
+		out = append(out, items[n])
+	}
+	return out
 }
 
 func firstObject(list []any) (map[string]any, bool) {

@@ -119,13 +119,18 @@ func TestIndexed(t *testing.T) {
 	}{
 		{
 			name: "NumericKeys_SortedNumerically",
-			doc:  document(map[string]any{"llm.input_messages.10.message.role": "user", "llm.input_messages.2.message.role": "system", "llm.input_messages.x.message.role": "skipped"}),
+			doc:  map[string]any{"llm.input_messages.10.message.role": "user", "llm.input_messages.2.message.role": "system", "llm.input_messages.x.message.role": "skipped"},
 			want: []map[string]any{{"message": map[string]any{"role": "system"}}, {"message": map[string]any{"role": "user"}}},
 		},
 		{
-			name: "StructuredList_KeptInOrder",
-			doc:  map[string]any{"llm": map[string]any{"input_messages": []any{map[string]any{"message": "b"}, map[string]any{"message": "a"}, "not an object"}}},
-			want: []map[string]any{{"message": "b"}, {"message": "a"}},
+			name: "ScalarAtKey_EntriesBesideItRead",
+			doc:  map[string]any{"llm.input_messages": "raw", "llm.input_messages.0.message.role": "user"},
+			want: []map[string]any{{"message": map[string]any{"role": "user"}}},
+		},
+		{
+			name: "ScalarAndObjectAtSamePath_ObjectKept",
+			doc:  map[string]any{"llm.input_messages.0.message": "raw", "llm.input_messages.0.message.role": "user"},
+			want: []map[string]any{{"message": map[string]any{"role": "user"}}},
 		},
 		{name: "Absent_Empty", doc: map[string]any{}, want: []map[string]any{}},
 	}

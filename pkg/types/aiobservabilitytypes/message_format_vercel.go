@@ -27,8 +27,10 @@ const (
 	vercelResponseFinished = "ai.response.finishReason"
 )
 
+// vercel detects the AI SDK by ai.operationId, which every span it emits carries:
+// https://github.com/vercel/ai/blob/a5e92fe3c692f8e152fe1eb9ef50a4e734ad0ffb/packages/ai/src/telemetry/assemble-operation-name.ts#L18
 func (f *formatting) vercel() bool {
-	if attribute(f.attributes, vercelOperation) == nil && attribute(f.attributes, vercelPrompt) == nil && attribute(f.attributes, "ai.response") == nil {
+	if attribute(f.attributes, vercelOperation) == nil {
 		return false
 	}
 	switch input := decode(attribute(f.attributes, GenAIInputMessages)).(type) {
