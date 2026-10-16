@@ -19,9 +19,11 @@ import {
 	SAVED_VIEW_LOAD_FAILED_NAME,
 	SAVED_VIEW_TOAST_POSITION,
 } from './constants';
+import { SavedViewCreatedFrom, SavedViewEvents } from './events';
 import { useActiveSavedView } from './hooks/useActiveSavedView';
 import { useSaveNewView } from './hooks/useSaveNewView';
 import { useSavedViewActions } from './hooks/useSavedViewActions';
+import { useSavedViewLogEvent } from './hooks/useSavedViewLogEvent';
 import SaveChangesMenu from './SaveChangesMenu';
 import SavedViewsIconButton from './SavedViewsIconButton';
 import SaveViewModal from './SaveViewModal';
@@ -52,9 +54,25 @@ function SavedViewsHeader({
 	const { revertView, clearView, createView, updateView, isSaving } =
 		useSavedViewActions(source);
 
+	const logSavedViewEvent = useSavedViewLogEvent(source);
 	const [modalMode, setModalMode] = useState<SaveViewModalMode | null>(null);
 
-	const handleSave = useSaveNewView(createView);
+	const handleClear = useCallback((): void => {
+		clearView();
+		logSavedViewEvent(SavedViewEvents.ViewCleared);
+	}, [clearView, logSavedViewEvent]);
+
+	const saveNewView = useSaveNewView(createView);
+	const handleSave = useCallback(
+		(displayName: string): Promise<boolean> =>
+			saveNewView(
+				displayName,
+				modalMode === 'saveAsNew'
+					? SavedViewCreatedFrom.SaveAsNew
+					: SavedViewCreatedFrom.Header,
+			),
+		[saveNewView, modalMode],
+	);
 
 	const handleUpdate = useCallback(async (): Promise<void> => {
 		if (view && (await updateView(view))) {
@@ -135,7 +153,7 @@ function SavedViewsHeader({
 					<SavedViewsIconButton
 						title="Clear view"
 						icon={<Undo2 size={14} />}
-						onClick={clearView}
+						onClick={handleClear}
 						testId="saved-views-clear"
 					/>
 				)}
