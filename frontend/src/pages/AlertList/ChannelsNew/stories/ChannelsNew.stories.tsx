@@ -79,9 +79,18 @@ export const TestChannelFailure: Story = {
 	// the point of the story, not a regression.
 	parameters: { allowConsoleErrors: true },
 	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByTestId('test-channel-button'),
+		const canvas = within(canvasElement);
+
+		// the form validates the configuration before it sends a test
+		await userEvent.type(
+			await canvas.findByTestId('channel-name-textbox'),
+			'Storybook channel',
 		);
+		await userEvent.type(
+			await canvas.findByTestId('webhook-url-textbox'),
+			'https://hooks.slack.com/services/storybook',
+		);
+		await userEvent.click(await canvas.findByTestId('test-channel-button'));
 		await screen.findByText('Storybook forced channel failure');
 	},
 };

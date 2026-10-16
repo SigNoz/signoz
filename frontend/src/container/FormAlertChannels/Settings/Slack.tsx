@@ -3,17 +3,28 @@ import { useTranslation } from 'react-i18next';
 import { Form, Input } from 'antd';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 
-import { SlackChannel } from '../../CreateAlertChannels/config';
+import {
+	AlertmanagertypesChannelSlackActionDTO,
+	AlertmanagertypesChannelSlackFieldDTO,
+} from 'api/generated/services/sigNoz.schemas';
+
+import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
+import SlackActions from './SlackActions';
+import SlackFields from './SlackFields';
 
 const { TextArea } = Input;
 
-function Slack({ setSelectedConfig }: SlackProps): JSX.Element {
+function Slack({
+	setSelectedConfig,
+	initialFields,
+	initialActions,
+}: SlackProps): JSX.Element {
 	const { t } = useTranslation('channels');
 
 	return (
 		<>
 			<Form.Item
-				name="api_url"
+				name="apiUrl"
 				label={t('field_webhook_url')}
 				tooltip={{
 					title: (
@@ -30,7 +41,7 @@ function Slack({ setSelectedConfig }: SlackProps): JSX.Element {
 					onChange={(event): void => {
 						setSelectedConfig((value) => ({
 							...value,
-							api_url: event.target.value,
+							apiUrl: event.target.value,
 						}));
 					}}
 					data-testid="webhook-url-textbox"
@@ -67,6 +78,18 @@ function Slack({ setSelectedConfig }: SlackProps): JSX.Element {
 				/>
 			</Form.Item>
 
+			<Form.Item name="titleLink" label={t('field_slack_title_link')}>
+				<Input
+					onChange={(event): void =>
+						setSelectedConfig((value) => ({
+							...value,
+							titleLink: event.target.value,
+						}))
+					}
+					data-testid="title-link-textbox"
+				/>
+			</Form.Item>
+
 			<Form.Item name="text" label={t('field_slack_description')}>
 				<TextArea
 					onChange={(event): void =>
@@ -79,12 +102,85 @@ function Slack({ setSelectedConfig }: SlackProps): JSX.Element {
 					data-testid="description-textarea"
 				/>
 			</Form.Item>
+
+			<Form.Item
+				name="color"
+				label={t('field_slack_color')}
+				help={t('help_slack_color')}
+			>
+				<Input
+					onChange={(event): void =>
+						setSelectedConfig((value) => ({
+							...value,
+							color: event.target.value,
+						}))
+					}
+					placeholder={t('placeholder_slack_color')}
+					data-testid="slack-color-textbox"
+				/>
+			</Form.Item>
+
+			<Form.Item
+				name="pretext"
+				label={t('field_slack_pretext')}
+				help={t('help_slack_pretext')}
+			>
+				<Input
+					onChange={(event): void =>
+						setSelectedConfig((value) => ({
+							...value,
+							pretext: event.target.value,
+						}))
+					}
+					data-testid="slack-pretext-textbox"
+				/>
+			</Form.Item>
+
+			<Form.Item
+				name="fallback"
+				label={t('field_slack_fallback')}
+				help={t('help_slack_fallback')}
+			>
+				<Input
+					onChange={(event): void =>
+						setSelectedConfig((value) => ({
+							...value,
+							fallback: event.target.value,
+						}))
+					}
+					data-testid="slack-fallback-textbox"
+				/>
+			</Form.Item>
+
+			<Form.Item name="footer" label={t('field_slack_footer')}>
+				<Input
+					onChange={(event): void =>
+						setSelectedConfig((value) => ({
+							...value,
+							footer: event.target.value,
+						}))
+					}
+					data-testid="slack-footer-textbox"
+				/>
+			</Form.Item>
+
+			<SlackFields
+				setSelectedConfig={setSelectedConfig}
+				initialFields={initialFields}
+			/>
+
+			<SlackActions
+				setSelectedConfig={setSelectedConfig}
+				initialActions={initialActions}
+			/>
 		</>
 	);
 }
 
 interface SlackProps {
-	setSelectedConfig: Dispatch<SetStateAction<Partial<SlackChannel>>>;
+	setSelectedConfig: Dispatch<SetStateAction<Partial<ChannelSpecFormValues>>>;
+	initialFields?: AlertmanagertypesChannelSlackFieldDTO[];
+	initialActions?: AlertmanagertypesChannelSlackActionDTO[];
 }
 
 export default Slack;

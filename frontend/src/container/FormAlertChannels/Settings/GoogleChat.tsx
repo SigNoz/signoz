@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Form, Input } from 'antd';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 
-import { GoogleChatChannel } from '../../CreateAlertChannels/config';
+import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
 import { isValidGoogleChatWebhookURL } from '../../CreateAlertChannels/utils';
 
 function GoogleChat({ setSelectedConfig }: GoogleChatProps): JSX.Element {
@@ -12,7 +12,7 @@ function GoogleChat({ setSelectedConfig }: GoogleChatProps): JSX.Element {
 	return (
 		<>
 			<Form.Item
-				name="webhook_url"
+				name="webhookUrl"
 				label={t('field_webhook_url')}
 				required
 				rules={[
@@ -38,7 +38,7 @@ function GoogleChat({ setSelectedConfig }: GoogleChatProps): JSX.Element {
 					onChange={(event): void => {
 						setSelectedConfig((value) => ({
 							...value,
-							webhook_url: event.target.value,
+							webhookUrl: event.target.value,
 						}));
 					}}
 					data-testid="webhook-url-textbox"
@@ -76,7 +76,7 @@ function GoogleChat({ setSelectedConfig }: GoogleChatProps): JSX.Element {
 }
 
 interface GoogleChatProps {
-	setSelectedConfig: Dispatch<SetStateAction<Partial<GoogleChatChannel>>>;
+	setSelectedConfig: Dispatch<SetStateAction<Partial<ChannelSpecFormValues>>>;
 }
 
 export default GoogleChat;
