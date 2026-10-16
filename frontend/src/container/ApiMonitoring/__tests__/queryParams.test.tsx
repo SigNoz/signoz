@@ -54,6 +54,50 @@ describe('API Monitoring Query Params', () => {
 
 			expect(getApiMonitoringParams(search)).toStrictEqual(DEFAULT_PARAMS);
 		});
+
+		it('converts filter items saved by older links into an expression', () => {
+			const legacyParams = {
+				selectedDomain: 'test-domain',
+				allEndpointsLocalFilters: {
+					op: 'AND',
+					items: [
+						{
+							id: 'a',
+							key: { key: 'service.name', dataType: 'string', type: 'resource' },
+							op: '=',
+							value: 'frontend',
+						},
+					],
+				},
+				endPointDetailsLocalFilters: {
+					op: 'AND',
+					items: [
+						{
+							id: 'b',
+							key: { key: 'http.status_code', dataType: 'string', type: '' },
+							op: '=',
+							value: '500',
+						},
+					],
+				},
+			};
+			const urlParams = new URLSearchParams();
+			urlParams.set(
+				'apiMonitoringParams',
+				encodeURIComponent(JSON.stringify(legacyParams)),
+			);
+
+			const result = getApiMonitoringParams(`?${urlParams.toString()}`);
+
+			expect(result.allEndpointsFilterExpression).toBe(
+				"service.name = 'frontend'",
+			);
+			expect(result.endPointDetailsFilterExpression).toBe(
+				"http.status_code = '500'",
+			);
+			expect(result).not.toHaveProperty('allEndpointsLocalFilters');
+			expect(result).not.toHaveProperty('endPointDetailsLocalFilters');
+		});
 	});
 
 	describe('setApiMonitoringParams', () => {

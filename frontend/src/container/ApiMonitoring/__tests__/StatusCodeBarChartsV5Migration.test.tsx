@@ -15,16 +15,12 @@
  */
 import { TraceAggregation } from 'api/v5/v5';
 import { getEndPointDetailsQueryPayload } from 'container/ApiMonitoring/utils';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 describe('StatusCodeBarCharts - V5 Migration Validation', () => {
 	const mockDomainName = '0.0.0.0';
 	const mockStartTime = 1762573673000;
 	const mockEndTime = 1762832873000;
-	const emptyFilters: IBuilderQuery['filters'] = {
-		items: [],
-		op: 'AND',
-	};
+	const emptyFilters = '';
 
 	describe('1. Number of Calls Chart - V5 Payload Structure', () => {
 		it('generates correct V5 payload for count aggregation grouped by status code', () => {
@@ -130,31 +126,8 @@ describe('StatusCodeBarCharts - V5 Migration Validation', () => {
 
 	describe('3. Custom Filters Integration', () => {
 		it('merges custom filters into filter expression for both charts', () => {
-			const customFilters: IBuilderQuery['filters'] = {
-				items: [
-					{
-						id: 'test-1',
-						key: {
-							key: 'service.name',
-							dataType: 'string' as any,
-							type: 'resource',
-						},
-						op: '=',
-						value: 'user-service',
-					},
-					{
-						id: 'test-2',
-						key: {
-							key: 'deployment.environment',
-							dataType: 'string' as any,
-							type: 'resource',
-						},
-						op: '=',
-						value: 'production',
-					},
-				],
-				op: 'AND',
-			};
+			const customFilters =
+				"service.name = 'user-service' AND deployment.environment = 'production'";
 
 			const payload = getEndPointDetailsQueryPayload(
 				mockDomainName,

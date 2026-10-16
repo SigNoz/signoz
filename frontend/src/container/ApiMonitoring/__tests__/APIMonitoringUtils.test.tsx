@@ -1,9 +1,9 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { SPAN_ATTRIBUTES } from '../Explorer/Domains/DomainDetails/constants';
 import {
+	getHttpUrlFromExpression,
+	setHttpUrlInExpression,
 	endPointStatusCodeColumns,
 	extractPortAndEndpoint,
 	formatDataForTable,
@@ -11,19 +11,12 @@ import {
 	getFormattedEndPointDropDownData,
 	getFormattedEndPointStatusCodeChartData,
 	getFormattedEndPointStatusCodeData,
-	getGroupByFiltersFromGroupByValues,
+	getGroupByExpressionFromRowData,
 	getStatusCodeBarChartWidgetData,
 	getTopErrorsColumnsConfig,
 	getTopErrorsCoRelationQueryFilters,
 } from '../utils';
 import { APIMonitoringColumnsMock } from './mock';
-
-// Mock or define DataTypes since it seems to be missing from imports
-const DataTypes = {
-	String: 'string',
-	Float64: 'float64',
-	bool: 'bool',
-};
 
 // Mock the external utils dependencies that are used within our tested functions
 jest.mock('../utils', () => {
@@ -90,140 +83,39 @@ describe('API Monitoring Utils', () => {
 			expect(result[0].lastUsed).toBe('-');
 		});
 	});
-	describe('getGroupByFiltersFromGroupByValues', () => {
-		it('should convert row data to filters correctly', () => {
-			// Arrange
-			const rowData = {
-				'http.method': 'GET',
-				'http.status_code': '200',
-				'service.name': 'api-service',
-				// Fields that should be filtered out
-				data: 'someValue',
-				key: 'someKey',
-			};
-
-			const groupBy = [
-				{
-					id: 'group-by-1',
-					key: 'http.method',
-					dataType: DataTypes.String,
-					type: '',
-				},
-				{
-					id: 'group-by-2',
-					key: 'http.status_code',
-					dataType: DataTypes.String,
-					type: '',
-				},
-				{
-					id: 'group-by-3',
-					key: 'service.name',
-					dataType: DataTypes.String,
-					type: 'tag',
-				},
-			];
-
-			// Act
-			const result = getGroupByFiltersFromGroupByValues(
-				rowData,
-				groupBy as BaseAutocompleteData[],
-			);
-
-			// Assert
-			expect(result).toBeDefined();
-			expect(result?.op).toBe('AND');
-			// The implementation includes all keys from rowData, not just those in groupBy
-			expect(result?.items?.length).toBeGreaterThanOrEqual(3);
-
-			// Verify each filter matches the corresponding groupBy
+	describe('getGroupByExpressionFromRowData', () => {
+		it('builds an AND expression from the row values, skipping the url and metric columns', () => {
 			expect(
-				result?.items?.some(
-					(item) =>
-						item.key &&
-						item.key.key === 'http.method' &&
-						item.value === 'GET' &&
-						item.op === '=',
-				),
-			).toBe(true);
-
-			expect(
-				result?.items?.some(
-					(item) =>
-						item.key &&
-						item.key.key === 'http.status_code' &&
-						item.value === '200' &&
-						item.op === '=',
-				),
-			).toBe(true);
-
-			expect(
-				result?.items?.some(
-					(item) =>
-						item.key &&
-						item.key.key === 'service.name' &&
-						item.value === 'api-service' &&
-						item.op === '=',
-				),
-			).toBe(true);
+				getGroupByExpressionFromRowData({
+					http_url: '/api/test',
+					key: '3f2a-row-uuid',
+					A: 10,
+					B: 20,
+					C: 1,
+					F1: 5,
+					'service.name': 'api-service',
+					'http.status_code': 200,
+				}),
+			).toBe("service.name = 'api-service' AND http.status_code = 200");
 		});
 
-		it('should handle fields not in groupBy', () => {
-			// Arrange
-			const rowData = {
-				'http.method': 'GET',
-				'unknown.field': 'someValue',
-			};
-
-			const groupBy = [
-				{
-					id: 'group-by-1',
-					key: 'http.method',
-					dataType: DataTypes.String,
-					type: '',
-				},
-			];
-			// Act
-			const result = getGroupByFiltersFromGroupByValues(
-				rowData,
-				groupBy as BaseAutocompleteData[],
+		it('escapes quotes in values', () => {
+			expect(getGroupByExpressionFromRowData({ 'user.name': "o'brien" })).toBe(
+				"user.name = 'o\\'brien'",
 			);
-
-			// Assert
-			expect(result).toBeDefined();
-			// The implementation includes all keys from rowData, not just those in groupBy
-			expect(result?.items?.length).toBeGreaterThanOrEqual(1);
-
-			// Should include the known field with the proper dataType from groupBy
-			const knownField = result?.items?.find(
-				(item) => item.key && item.key.key === 'http.method',
-			);
-			expect(knownField).toBeDefined();
-			if (knownField && knownField.key) {
-				expect(knownField.key.dataType).toBe(DataTypes.String);
-			}
-
-			// Should include the unknown field
-			const unknownField = result?.items?.find(
-				(item) => item.key && item.key.key === 'unknown.field',
-			);
-			expect(unknownField).toBeDefined();
-			if (unknownField && unknownField.key) {
-				expect(unknownField.key.dataType).toBe(DataTypes.String); // Default
-			}
 		});
 
-		it('should handle empty input', () => {
-			// Arrange
-			const rowData = {};
-			const groupBy: any[] = [];
+		it('matches spans without the attribute when the group has no value', () => {
+			expect(
+				getGroupByExpressionFromRowData({
+					'service.name': 'cart',
+					'ai.embeddings': null,
+				}),
+			).toBe("service.name = 'cart' AND ai.embeddings NOT EXISTS");
+		});
 
-			// Act
-			const result = getGroupByFiltersFromGroupByValues(rowData, groupBy);
-
-			// Assert
-			expect(result).toBeDefined();
-			expect(result?.op).toBe('AND');
-			expect(result?.items).toHaveLength(0);
+		it('returns an empty expression for a row without group columns', () => {
+			expect(getGroupByExpressionFromRowData({ http_url: '/x', A: 1 })).toBe('');
 		});
 	});
 
@@ -703,13 +595,9 @@ describe('API Monitoring Utils', () => {
 		it('should generate widget configuration for status code bar chart', () => {
 			// Arrange
 			const domainName = 'test-domain';
-			const filters = { items: [], op: 'AND' };
 
 			// Act
-			const result = getStatusCodeBarChartWidgetData(
-				domainName,
-				filters as IBuilderQuery['filters'],
-			);
+			const result = getStatusCodeBarChartWidgetData(domainName, '');
 
 			// Assert
 			expect(result).toBeDefined();
@@ -723,47 +611,29 @@ describe('API Monitoring Utils', () => {
 			const queryData = result.query.builder.queryData[0];
 
 			// Should have domain filter
-			const domainFilter = queryData.filters?.items?.find(
-				(item) => item.key && item.key.key === SPAN_ATTRIBUTES.SERVER_NAME,
+			expect(queryData.filter?.expression).toBe(
+				`${SPAN_ATTRIBUTES.SERVER_NAME} = '${domainName}'`,
 			);
-			expect(domainFilter).toBeDefined();
-			if (domainFilter) {
-				expect(domainFilter.value).toBe(domainName);
-			}
 		});
 
 		it('should include custom filters in the widget configuration', () => {
 			// Arrange
 			const domainName = 'test-domain';
-			const customFilter = {
-				id: 'custom-filter',
-				key: {
-					dataType: 'string',
-					key: 'custom.key',
-					type: '',
-				},
-				op: '=',
-				value: 'custom-value',
-			};
-			const filters = { items: [customFilter], op: 'AND' };
+			const customFilterExpression = "custom.key = 'custom-value'";
 
 			// Act
 			const result = getStatusCodeBarChartWidgetData(
 				domainName,
-				filters as IBuilderQuery['filters'],
+				customFilterExpression,
 			);
 
 			// Assert
 			const queryData = result.query.builder.queryData[0];
 
-			// Should include our custom filter
-			const includedFilter = queryData.filters?.items?.find(
-				(item) => item.id === 'custom-filter',
+			// Should include our custom filter after the domain filter
+			expect(queryData.filter?.expression).toBe(
+				`${SPAN_ATTRIBUTES.SERVER_NAME} = '${domainName}' AND (${customFilterExpression})`,
 			);
-			expect(includedFilter).toBeDefined();
-			if (includedFilter) {
-				expect(includedFilter.value).toBe('custom-value');
-			}
 		});
 	});
 
@@ -925,6 +795,30 @@ describe('API Monitoring Utils', () => {
 			);
 			expect(latencyColumn).toBeDefined();
 			expect(latencyColumn?.title).toBeDefined();
+		});
+	});
+
+	describe('http_url expression helpers', () => {
+		it('keeps a top-level OR in the user filter scoped to the endpoint', () => {
+			expect(
+				setHttpUrlInExpression("service.name = 'a' OR service.name = 'b'", '/x'),
+			).toBe("http_url = '/x' AND (service.name = 'a' OR service.name = 'b')");
+		});
+
+		it('replaces only the endpoint clause and keeps other http_url operators', () => {
+			expect(
+				setHttpUrlInExpression(
+					"http_url = '/a' AND http_url CONTAINS '/api'",
+					'/b',
+				),
+			).toBe("http_url = '/b' AND (http_url CONTAINS '/api')");
+			expect(getHttpUrlFromExpression("http_url CONTAINS '/api'")).toBe('');
+		});
+
+		it('round-trips an endpoint name with an apostrophe', () => {
+			const expression = setHttpUrlInExpression('', "/users/o'brien");
+
+			expect(getHttpUrlFromExpression(expression)).toBe("/users/o'brien");
 		});
 	});
 });

@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import {
 	getAllEndpointsWidgetData,
-	getGroupByFiltersFromGroupByValues,
+	getGroupByExpressionFromRowData,
 } from 'container/ApiMonitoring/utils';
 
 import AllEndPoints from '../Explorer/Domains/DomainDetails/AllEndPoints';
@@ -13,7 +13,7 @@ import {
 // Mock the dependencies
 jest.mock('container/ApiMonitoring/utils', () => ({
 	getAllEndpointsWidgetData: jest.fn(),
-	getGroupByFiltersFromGroupByValues: jest.fn(),
+	getGroupByExpressionFromRowData: jest.fn(),
 }));
 
 jest.mock('container/WidgetCard/Card', () => ({
@@ -80,8 +80,8 @@ jest.mock('container/ApiMonitoring/queryParams', () => ({
 			selectedView: 'all_endpoints',
 			selectedEndPointName: '',
 			groupBy: [],
-			allEndpointsLocalFilters: undefined,
-			endPointDetailsLocalFilters: undefined,
+			allEndpointsFilterExpression: undefined,
+			endPointDetailsFilterExpression: undefined,
 			modalTimeRange: undefined,
 			selectedInterval: undefined,
 		},
@@ -100,8 +100,8 @@ describe('AllEndPoints', () => {
 			startTime: 1609459200000,
 			endTime: 1609545600000,
 		},
-		initialFilters: { op: 'AND', items: [] },
-		setInitialFiltersEndPointStats: jest.fn(),
+		initialFilterExpression: '',
+		setInitialFilterExpressionEndPointStats: jest.fn(),
 	};
 
 	beforeEach(() => {
@@ -116,10 +116,9 @@ describe('AllEndPoints', () => {
 			queryData: [],
 		});
 
-		(getGroupByFiltersFromGroupByValues as jest.Mock).mockReturnValue({
-			items: [{ id: 'group-filter', key: 'status', op: '=', value: '200' }],
-			op: 'AND',
-		});
+		(getGroupByExpressionFromRowData as jest.Mock).mockReturnValue(
+			"status = '200'",
+		);
 	});
 
 	// Add cleanup after each test
@@ -147,15 +146,7 @@ describe('AllEndPoints', () => {
 		expect(getAllEndpointsWidgetData).toHaveBeenCalledWith(
 			expect.anything(),
 			'test-domain',
-			expect.objectContaining({
-				items: expect.arrayContaining([
-					expect.objectContaining({
-						key: expect.objectContaining({ key: 'test' }),
-						value: 'test',
-					}),
-				]),
-				op: 'AND',
-			}),
+			"test = 'test'",
 		);
 	});
 
@@ -180,7 +171,9 @@ describe('AllEndPoints', () => {
 		// Check if proper functions were called
 		expect(mockProps.setSelectedEndPointName).toHaveBeenCalledWith('/api/test');
 		expect(mockProps.setSelectedView).toHaveBeenCalledWith(VIEWS.ENDPOINT_STATS);
-		expect(mockProps.setInitialFiltersEndPointStats).toHaveBeenCalled();
-		expect(getGroupByFiltersFromGroupByValues).toHaveBeenCalled();
+		expect(
+			mockProps.setInitialFilterExpressionEndPointStats,
+		).toHaveBeenCalledWith("status = '200'");
+		expect(getGroupByExpressionFromRowData).toHaveBeenCalled();
 	});
 });

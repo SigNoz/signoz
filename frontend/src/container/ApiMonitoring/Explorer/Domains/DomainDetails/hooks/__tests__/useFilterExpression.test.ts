@@ -1,84 +1,66 @@
 import { act, renderHook } from '@testing-library/react';
 import { FocusEvent } from 'react';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { useFilterExpression } from '../useFilterExpression';
 
-const filters: IBuilderQuery['filters'] = {
-	op: 'AND',
-	items: [
-		{
-			id: 'a',
-			key: { key: 'service.name', dataType: DataTypes.String, type: '' },
-			op: '=',
-			value: 'frontend',
-		},
-	],
-};
+const expression = "service.name = 'frontend'";
 
 describe('useFilterExpression', () => {
-	it('builds a traces query that carries the items as an expression', () => {
+	it('builds a traces query that carries the expression', () => {
 		const { result } = renderHook(() =>
-			useFilterExpression({ filters, onFiltersChange: jest.fn() }),
+			useFilterExpression({ expression, onExpressionChange: jest.fn() }),
 		);
 
 		expect(result.current.queryData.dataSource).toBe('traces');
-		expect(result.current.queryData.filters).toBe(filters);
-		expect(result.current.queryData.filter?.expression).toBe(
-			"service.name = 'frontend'",
-		);
+		expect(result.current.queryData.filter?.expression).toBe(expression);
 	});
 
-	it('converts a run expression back to items', () => {
-		const onFiltersChange = jest.fn();
+	it('commits a changed expression on run', () => {
+		const onExpressionChange = jest.fn();
 		const { result } = renderHook(() =>
-			useFilterExpression({ filters, onFiltersChange }),
+			useFilterExpression({ expression, onExpressionChange }),
 		);
 
 		act(() => {
-			result.current.onRun("service.name = 'frontend' AND http.status_code = 500");
+			result.current.onRun(`${expression} AND http.status_code = 500`);
 		});
 
-		expect(onFiltersChange).toHaveBeenCalledTimes(1);
-		const next = onFiltersChange.mock.calls[0][0] as IBuilderQuery['filters'];
-		expect(next?.items.map((item) => item.key?.key)).toStrictEqual([
-			'service.name',
-			'http.status_code',
-		]);
+		expect(onExpressionChange).toHaveBeenCalledWith(
+			`${expression} AND http.status_code = 500`,
+		);
 	});
 
 	it('ignores an unchanged or invalid expression', () => {
-		const onFiltersChange = jest.fn();
+		const onExpressionChange = jest.fn();
 		const { result } = renderHook(() =>
-			useFilterExpression({ filters, onFiltersChange }),
+			useFilterExpression({ expression, onExpressionChange }),
 		);
 
 		act(() => {
-			result.current.onRun("service.name = 'frontend'");
+			result.current.onRun(expression);
 			result.current.onRun('service.name =');
 		});
 
-		expect(onFiltersChange).not.toHaveBeenCalled();
+		expect(onExpressionChange).not.toHaveBeenCalled();
 	});
 
 	it('commits the draft on blur only when focus leaves the container', () => {
-		const onFiltersChange = jest.fn();
+		const onExpressionChange = jest.fn();
 		const { result } = renderHook(() =>
-			useFilterExpression({ filters, onFiltersChange }),
+			useFilterExpression({ expression, onExpressionChange }),
 		);
 		const container = document.createElement('div');
 		const inside = document.createElement('input');
 		container.appendChild(inside);
 
 		act(() => {
-			result.current.onExpressionChange("service.name = 'cart'");
+			result.current.onDraftChange("service.name = 'cart'");
 			result.current.onBlur({
 				currentTarget: container,
 				relatedTarget: inside,
 			} as unknown as FocusEvent<HTMLDivElement>);
 		});
-		expect(onFiltersChange).not.toHaveBeenCalled();
+		expect(onExpressionChange).not.toHaveBeenCalled();
 
 		act(() => {
 			result.current.onBlur({
@@ -86,6 +68,6 @@ describe('useFilterExpression', () => {
 				relatedTarget: null,
 			} as unknown as FocusEvent<HTMLDivElement>);
 		});
-		expect(onFiltersChange).toHaveBeenCalledTimes(1);
+		expect(onExpressionChange).toHaveBeenCalledWith("service.name = 'cart'");
 	});
 });

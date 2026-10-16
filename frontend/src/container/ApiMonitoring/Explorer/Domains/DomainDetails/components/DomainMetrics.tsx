@@ -14,18 +14,17 @@ import {
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import ErrorState from './ErrorState';
 
 function DomainMetrics({
 	domainName,
 	timeRange,
-	domainListFilters,
+	domainListFilterExpression,
 }: {
 	domainName: string;
 	timeRange: { startTime: number; endTime: number };
-	domainListFilters: IBuilderQuery['filters'];
+	domainListFilterExpression: string;
 }): JSX.Element {
 	const { startTime: minTime, endTime: maxTime } = timeRange;
 
@@ -35,9 +34,9 @@ function DomainMetrics({
 				domainName,
 				minTime,
 				maxTime,
-				domainListFilters,
+				domainListFilterExpression,
 			),
-		[domainName, minTime, maxTime, domainListFilters],
+		[domainName, minTime, maxTime, domainListFilterExpression],
 	);
 
 	// Since only one query here

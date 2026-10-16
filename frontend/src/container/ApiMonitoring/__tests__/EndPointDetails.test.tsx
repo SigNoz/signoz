@@ -11,11 +11,6 @@ import {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import {
-	TagFilter,
-	TagFilterItem,
-} from 'types/api/queryBuilder/queryBuilderData';
 
 import { SPAN_ATTRIBUTES } from '../Explorer/Domains/DomainDetails/constants';
 import EndPointDetails from '../Explorer/Domains/DomainDetails/EndPointDetails';
@@ -35,8 +30,8 @@ jest.mock('container/ApiMonitoring/queryParams', () => ({
 			selectedView: 'all_endpoints',
 			selectedEndPointName: '',
 			groupBy: [],
-			allEndpointsLocalFilters: undefined,
-			endPointDetailsLocalFilters: undefined,
+			allEndpointsFilterExpression: undefined,
+			endPointDetailsFilterExpression: undefined,
 			modalTimeRange: undefined,
 			selectedInterval: undefined,
 		},
@@ -54,6 +49,13 @@ jest.mock('container/ApiMonitoring/utils', () => ({
 		'endPointStatusCodeLatencyBarChartsData',
 	],
 	extractPortAndEndpoint: jest.fn(),
+	getHttpUrlFromExpression: jest.requireActual('container/ApiMonitoring/utils')
+		.getHttpUrlFromExpression,
+	setHttpUrlInExpression: jest.requireActual('container/ApiMonitoring/utils')
+		.setHttpUrlInExpression,
+	removeHttpUrlFromExpression: jest.requireActual(
+		'container/ApiMonitoring/utils',
+	).removeHttpUrlFromExpression,
 	getEndPointDetailsQueryPayload: jest.fn(),
 	getLatencyOverTimeWidgetData: jest.fn(),
 	getRateOverTimeWidgetData: jest.fn(),
@@ -165,7 +167,7 @@ describe('EndPointDetails Component', () => {
 		domainName: 'test-domain',
 		endPointName: '/api/test',
 		setSelectedEndPointName: jest.fn(),
-		initialFilters: { items: [], op: 'AND' } as TagFilter,
+		initialFilterExpression: '',
 		timeRange: {
 			startTime: 1609459200000,
 			endTime: 1609545600000,
@@ -233,15 +235,7 @@ describe('EndPointDetails Component', () => {
 			'test-domain',
 			mockProps.timeRange.startTime,
 			mockProps.timeRange.endTime,
-			expect.objectContaining({
-				items: expect.arrayContaining([
-					expect.objectContaining({
-						key: expect.objectContaining({ key: SPAN_ATTRIBUTES.HTTP_URL }),
-						value: '/api/test',
-					}),
-				]),
-				op: 'AND',
-			}),
+			`${SPAN_ATTRIBUTES.HTTP_URL} = '/api/test'`,
 		);
 	});
 
@@ -252,14 +246,7 @@ describe('EndPointDetails Component', () => {
 			expect.anything(),
 			expect.anything(),
 			expect.anything(),
-			expect.objectContaining({
-				items: expect.arrayContaining([
-					expect.objectContaining({
-						key: expect.objectContaining({ key: SPAN_ATTRIBUTES.HTTP_URL }),
-						value: '/api/test',
-					}),
-				]),
-			}),
+			expect.stringContaining(`${SPAN_ATTRIBUTES.HTTP_URL} = '/api/test'`),
 		);
 	});
 
@@ -275,14 +262,7 @@ describe('EndPointDetails Component', () => {
 			expect.anything(),
 			expect.anything(),
 			expect.anything(),
-			expect.objectContaining({
-				items: expect.arrayContaining([
-					expect.objectContaining({
-						key: expect.objectContaining({ key: 'test.key' }),
-						value: 'test-value',
-					}),
-				]),
-			}),
+			expect.stringContaining("test.key = 'test-value'"),
 		);
 	});
 
@@ -301,21 +281,7 @@ describe('EndPointDetails Component', () => {
 	it('does not display dependent services when service filter is applied', () => {
 		const propsWithServiceFilter = {
 			...mockProps,
-			initialFilters: {
-				items: [
-					{
-						id: 'service-filter',
-						key: {
-							key: 'service.name',
-							dataType: DataTypes.String,
-							type: 'tag',
-						},
-						op: '=',
-						value: 'test-service',
-					},
-				] as TagFilterItem[],
-				op: 'AND',
-			} as TagFilter,
+			initialFilterExpression: "service.name = 'test-service'",
 		};
 
 		render(<EndPointDetails {...propsWithServiceFilter} />);
@@ -330,27 +296,13 @@ describe('EndPointDetails Component', () => {
 		expect(getRateOverTimeWidgetData).toHaveBeenCalledWith(
 			'test-domain',
 			'/api/test',
-			expect.objectContaining({
-				items: expect.arrayContaining([
-					expect.objectContaining({
-						key: expect.objectContaining({ key: SPAN_ATTRIBUTES.HTTP_URL }),
-						value: '/api/test',
-					}),
-				]),
-			}),
+			expect.stringContaining(`${SPAN_ATTRIBUTES.HTTP_URL} = '/api/test'`),
 		);
 
 		expect(getLatencyOverTimeWidgetData).toHaveBeenCalledWith(
 			'test-domain',
 			'/api/test',
-			expect.objectContaining({
-				items: expect.arrayContaining([
-					expect.objectContaining({
-						key: expect.objectContaining({ key: SPAN_ATTRIBUTES.HTTP_URL }),
-						value: '/api/test',
-					}),
-				]),
-			}),
+			expect.stringContaining(`${SPAN_ATTRIBUTES.HTTP_URL} = '/api/test'`),
 		);
 	});
 

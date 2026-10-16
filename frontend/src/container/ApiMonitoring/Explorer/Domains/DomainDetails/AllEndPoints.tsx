@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
+import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import {
 	getAllEndpointsWidgetData,
-	getGroupByFiltersFromGroupByValues,
+	getGroupByExpressionFromRowData,
 } from 'container/ApiMonitoring/utils';
 import GridCard from 'container/WidgetCard/Card';
 import { GroupByFilter } from 'container/QueryBuilder/filters/GroupByFilter/GroupByFilter';
@@ -23,8 +24,8 @@ function AllEndPoints({
 	groupBy,
 	setGroupBy,
 	timeRange,
-	initialFilters,
-	setInitialFiltersEndPointStats,
+	initialFilterExpression,
+	setInitialFilterExpressionEndPointStats,
 }: {
 	domainName: string;
 	setSelectedEndPointName: (name: string) => void;
@@ -35,55 +36,50 @@ function AllEndPoints({
 		startTime: number;
 		endTime: number;
 	};
-	initialFilters: IBuilderQuery['filters'];
-	setInitialFiltersEndPointStats: (filters: IBuilderQuery['filters']) => void;
+	initialFilterExpression: string;
+	setInitialFilterExpressionEndPointStats: (expression: string) => void;
 }): JSX.Element {
 	const [params, setParams] = useApiMonitoringParams();
 
 	// --- FILTERS STATE SYNC ---
-	const [filters, setFilters] = useState<IBuilderQuery['filters']>(() => {
-		if (params.allEndpointsLocalFilters) {
-			return params.allEndpointsLocalFilters;
-		}
-		// Initialize filters based on the initial endPointName prop
-		const initialItems = [...(initialFilters?.items || [])];
-		return { op: 'AND', items: initialItems };
-	});
+	const [filterExpression, setFilterExpression] = useState<string>(
+		() => params.allEndpointsFilterExpression ?? initialFilterExpression,
+	);
 
 	// Sync params to local filters state on param change
 	useEffect(() => {
 		if (
-			params.allEndpointsLocalFilters &&
-			!isEqual(params.allEndpointsLocalFilters, filters)
+			params.allEndpointsFilterExpression !== undefined &&
+			params.allEndpointsFilterExpression !== filterExpression
 		) {
-			setFilters(params.allEndpointsLocalFilters);
+			setFilterExpression(params.allEndpointsFilterExpression);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [params.allEndpointsLocalFilters]);
+	}, [params.allEndpointsFilterExpression]);
 
 	// Handler for changes from the QuerySearch component
 	const handleFilterChange = useCallback(
-		(newFilters: IBuilderQuery['filters']): void => {
-			setFilters(newFilters);
-			setParams({ allEndpointsLocalFilters: newFilters });
+		(expression: string): void => {
+			setFilterExpression(expression);
+			setParams({ allEndpointsFilterExpression: expression });
 		},
 		[setParams],
 	);
 
 	const {
 		queryData,
-		onExpressionChange,
+		onDraftChange,
 		onRun,
 		onBlur: handleFilterBlur,
 	} = useFilterExpression({
-		filters,
+		expression: filterExpression,
 		groupBy,
-		onFiltersChange: handleFilterChange,
+		onExpressionChange: handleFilterChange,
 	});
 
 	const allEndpointsWidgetData = useMemo(
-		() => getAllEndpointsWidgetData(groupBy, domainName, filters),
-		[groupBy, domainName, filters],
+		() => getAllEndpointsWidgetData(groupBy, domainName, filterExpression),
+		[groupBy, domainName, filterExpression],
 	);
 
 	// --- GROUP BY STATE SYNC (existing) ---
@@ -116,29 +112,22 @@ function AllEndPoints({
 		(props: any): void => {
 			setSelectedEndPointName(props[SPAN_ATTRIBUTES.HTTP_URL] as string);
 			setSelectedView(VIEWS.ENDPOINT_STATS);
-			const initialItems = [
-				...(filters?.items || []),
-				...(getGroupByFiltersFromGroupByValues(props, groupBy)?.items || []),
-			];
-			setInitialFiltersEndPointStats({
-				items: initialItems,
-				op: 'AND',
-			});
+			const statsExpression = combineInitialAndUserExpression(
+				getGroupByExpressionFromRowData(props),
+				filterExpression,
+			);
+			setInitialFilterExpressionEndPointStats(statsExpression);
 			setParams({
 				selectedEndPointName: props[SPAN_ATTRIBUTES.HTTP_URL] as string,
 				selectedView: VIEWS.ENDPOINT_STATS,
-				endPointDetailsLocalFilters: {
-					items: initialItems,
-					op: 'AND',
-				},
+				endPointDetailsFilterExpression: statsExpression,
 			});
 		},
 		[
-			filters,
-			setInitialFiltersEndPointStats,
+			filterExpression,
+			setInitialFilterExpressionEndPointStats,
 			setSelectedEndPointName,
 			setSelectedView,
-			groupBy,
 			setParams,
 		],
 	);
@@ -149,7 +138,7 @@ function AllEndPoints({
 				<div className="filter-container" onBlur={handleFilterBlur}>
 					<QuerySearch
 						queryData={queryData}
-						onChange={onExpressionChange}
+						onChange={onDraftChange}
 						onRun={onRun}
 						dataSource={DataSource.TRACES}
 						placeholder="Search for filters..."

@@ -114,10 +114,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 			const domainName = 'api.example.com';
 			const startTime = 1758259531000;
 			const endTime = 1758261331000;
-			const filters = {
-				items: [],
-				op: 'AND' as const,
-			};
+			const filters = '';
 
 			// Get the actual payload that would be generated
 			const payloads = getEndPointDetailsQueryPayload(
@@ -237,31 +234,8 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 		it('includes custom domainListFilters in all query expressions', async () => {
 			(GetMetricQueryRange as jest.Mock).mockResolvedValue(mockSuccessResponse);
 
-			const customFilters = {
-				items: [
-					{
-						id: 'test-1',
-						key: {
-							key: 'service.name',
-							dataType: 'string' as any,
-							type: 'resource',
-						},
-						op: '=',
-						value: 'payment-service',
-					},
-					{
-						id: 'test-2',
-						key: {
-							key: 'deployment.environment',
-							dataType: 'string' as any,
-							type: 'resource',
-						},
-						op: '=',
-						value: 'staging',
-					},
-				],
-				op: 'AND' as const,
-			};
+			const customFilters =
+				"service.name = 'payment-service' AND deployment.environment = 'staging'";
 
 			const payloads = getEndPointDetailsQueryPayload(
 				'api.internal.com',

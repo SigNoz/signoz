@@ -14,16 +14,12 @@ import {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { SPAN_ATTRIBUTES } from '../Explorer/Domains/DomainDetails/constants';
 
 describe('AllEndpointsWidget - V5 Migration Validation', () => {
 	const mockDomainName = 'api.example.com';
-	const emptyFilters: IBuilderQuery['filters'] = {
-		items: [],
-		op: 'AND',
-	};
+	const emptyFilters = '';
 	const emptyGroupBy: BaseAutocompleteData[] = [];
 
 	describe('1. V5 Format Migration - All Four Queries', () => {
