@@ -493,7 +493,7 @@ func appendRelatedLinkButtons(alerts []*types.Alert, bodies []string) {
 			bodies[i] += htmlButton("View Related Logs", string(link))
 		}
 		if link := alerts[i].Annotations[ruletypes.AnnotationRelatedTraces]; link != "" {
-			bodies[i] += htmlButton("View Related Traces", string(link))
+			bodies[i] += htmlButton(ruletypes.RelatedTracesLabel(string(link)), string(link))
 		}
 	}
 }
