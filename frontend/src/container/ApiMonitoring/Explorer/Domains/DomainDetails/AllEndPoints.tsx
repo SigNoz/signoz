@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import { initialQueriesMap } from 'constants/queryBuilder';
 import {
 	getAllEndpointsWidgetData,
 	getGroupByFiltersFromGroupByValues,
 } from 'container/ApiMonitoring/utils';
 import GridCard from 'container/WidgetCard/Card';
 import { GroupByFilter } from 'container/QueryBuilder/filters/GroupByFilter/GroupByFilter';
-import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 import { isEqual } from 'lodash-es';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -15,6 +14,7 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import { useApiMonitoringParams } from '../../../queryParams';
 import { SPAN_ATTRIBUTES, VIEWS } from './constants';
+import { useFilterExpression } from './hooks/useFilterExpression';
 
 function AllEndPoints({
 	domainName,
@@ -61,7 +61,7 @@ function AllEndPoints({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [params.allEndpointsLocalFilters]);
 
-	// Handler for changes from the QueryBuilderSearchV2 component
+	// Handler for changes from the QuerySearch component
 	const handleFilterChange = useCallback(
 		(newFilters: IBuilderQuery['filters']): void => {
 			setFilters(newFilters);
@@ -70,27 +70,16 @@ function AllEndPoints({
 		[setParams],
 	);
 
-	const currentQuery = initialQueriesMap[DataSource.TRACES];
-
-	const updatedCurrentQuery = useMemo(
-		() => ({
-			...currentQuery,
-			builder: {
-				...currentQuery.builder,
-				queryData: [
-					{
-						...currentQuery.builder.queryData[0],
-						dataSource: DataSource.TRACES,
-						filters, // Use the local filters state
-						groupBy,
-					},
-				],
-			},
-		}),
-		[filters, groupBy, currentQuery],
-	);
-
-	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
+	const {
+		queryData,
+		onExpressionChange,
+		onRun,
+		onBlur: handleFilterBlur,
+	} = useFilterExpression({
+		filters,
+		groupBy,
+		onFiltersChange: handleFilterChange,
+	});
 
 	const allEndpointsWidgetData = useMemo(
 		() => getAllEndpointsWidgetData(groupBy, domainName, filters),
@@ -157,10 +146,12 @@ function AllEndPoints({
 	return (
 		<div className="all-endpoints-container">
 			<div className="all-endpoints-header">
-				<div className="filter-container">
-					<QueryBuilderSearchV2
-						query={query}
-						onChange={handleFilterChange}
+				<div className="filter-container" onBlur={handleFilterBlur}>
+					<QuerySearch
+						queryData={queryData}
+						onChange={onExpressionChange}
+						onRun={onRun}
+						dataSource={DataSource.TRACES}
 						placeholder="Search for filters..."
 					/>
 				</div>
@@ -168,7 +159,7 @@ function AllEndPoints({
 			<div className="group-by-container">
 				<div className="group-by-label"> Group by </div>
 				<GroupByFilter
-					query={query}
+					query={queryData}
 					onChange={handleGroupByChange}
 					disabled={false}
 					placeholder="Search for attribute"

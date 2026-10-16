@@ -407,9 +407,9 @@
 	.endpoint-details-filters-container {
 		display: flex;
 		flex-direction: row;
-		align-items: center;
+		align-items: flex-start;
 		border: 1px solid var(--l1-border);
-		height: 36px;
+		min-height: 36px;
 		box-sizing: content-box;
 		.ant-select-selector {
 			border: none !important;

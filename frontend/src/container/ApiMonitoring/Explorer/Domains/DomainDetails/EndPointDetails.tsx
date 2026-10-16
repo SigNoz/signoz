@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
+import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import { initialQueriesMap } from 'constants/queryBuilder';
 import { useApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
 import {
 	END_POINT_DETAILS_QUERY_KEYS_ARRAY,
@@ -10,7 +10,6 @@ import {
 	getLatencyOverTimeWidgetData,
 	getRateOverTimeWidgetData,
 } from 'container/ApiMonitoring/utils';
-import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import {
 	CustomTimeType,
 	Time,
@@ -29,6 +28,7 @@ import MetricOverTimeGraph from './components/MetricOverTimeGraph';
 import StatusCodeBarCharts from './components/StatusCodeBarCharts';
 import StatusCodeTable from './components/StatusCodeTable';
 import { SPAN_ATTRIBUTES } from './constants';
+import { useFilterExpression } from './hooks/useFilterExpression';
 
 const httpUrlKey = {
 	dataType: DataTypes.String,
@@ -59,8 +59,6 @@ function EndPointDetails({
 }): JSX.Element {
 	const { startTime: minTime, endTime: maxTime } = timeRange;
 	const [params, setParams] = useApiMonitoringParams();
-
-	const currentQuery = initialQueriesMap[DataSource.TRACES];
 
 	// Local state for filters, combining endpoint filter and search filters
 	const [filters, setFilters] = useState<IBuilderQuery['filters']>(() => {
@@ -119,7 +117,7 @@ function EndPointDetails({
 		setParams({ endPointDetailsLocalFilters: filtersWithoutHttpUrl });
 	}, [filters, setParams]);
 
-	// Handler for changes from the QueryBuilderSearchV2 component
+	// Handler for changes from the QuerySearch component
 	const handleFilterChange = useCallback(
 		(newFilters: IBuilderQuery['filters']): void => {
 			// 1. Update local filters state immediately
@@ -149,24 +147,12 @@ function EndPointDetails({
 		[endPointName, setSelectedEndPointName, setParams], // Dependencies for the callback
 	);
 
-	const updatedCurrentQuery = useMemo(
-		() => ({
-			...currentQuery,
-			builder: {
-				...currentQuery.builder,
-				queryData: [
-					{
-						...currentQuery.builder.queryData[0],
-						dataSource: DataSource.TRACES,
-						filters, // Use the local filters state
-					},
-				],
-			},
-		}),
-		[filters, currentQuery],
-	);
-
-	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
+	const {
+		queryData,
+		onExpressionChange,
+		onRun,
+		onBlur: handleFilterBlur,
+	} = useFilterExpression({ filters, onFiltersChange: handleFilterChange });
 
 	const isServicesFilterApplied = useMemo(
 		() => filters?.items?.some((item) => item.key?.key === 'service.name'),
@@ -250,10 +236,15 @@ function EndPointDetails({
 						dropdownStyle={{ width: 'calc(100% - 36px)' }}
 					/>
 				</div>
-				<div className="endpoint-details-filters-container-search">
-					<QueryBuilderSearchV2
-						query={query}
-						onChange={handleFilterChange}
+				<div
+					className="endpoint-details-filters-container-search"
+					onBlur={handleFilterBlur}
+				>
+					<QuerySearch
+						queryData={queryData}
+						onChange={onExpressionChange}
+						onRun={onRun}
+						dataSource={DataSource.TRACES}
 						placeholder="Search for filters..."
 					/>
 				</div>

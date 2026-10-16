@@ -33,28 +33,20 @@ jest.mock('container/WidgetCard/Card', () => ({
 	)),
 }));
 
-jest.mock(
-	'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2',
-	() => ({
-		__esModule: true,
-		default: jest.fn().mockImplementation(({ onChange }) => (
-			<div data-testid="query-builder-mock">
-				<button
-					type="button"
-					data-testid="filter-change-button"
-					onClick={(): void =>
-						onChange({
-							items: [{ id: 'test', key: 'test', op: '=', value: 'test' }],
-							op: 'AND',
-						})
-					}
-				>
-					Change Filter
-				</button>
-			</div>
-		)),
-	}),
-);
+jest.mock('components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch', () => ({
+	__esModule: true,
+	default: jest.fn().mockImplementation(({ onRun }) => (
+		<div data-testid="query-builder-mock">
+			<button
+				type="button"
+				data-testid="filter-change-button"
+				onClick={(): void => onRun("test = 'test'")}
+			>
+				Change Filter
+			</button>
+		</div>
+	)),
+}));
 
 jest.mock('container/QueryBuilder/filters/GroupByFilter/GroupByFilter', () => ({
 	GroupByFilter: jest.fn().mockImplementation(({ onChange }) => (
@@ -156,7 +148,12 @@ describe('AllEndPoints', () => {
 			expect.anything(),
 			'test-domain',
 			expect.objectContaining({
-				items: expect.arrayContaining([expect.objectContaining({ id: 'test' })]),
+				items: expect.arrayContaining([
+					expect.objectContaining({
+						key: expect.objectContaining({ key: 'test' }),
+						value: 'test',
+					}),
+				]),
 				op: 'AND',
 			}),
 		);

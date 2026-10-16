@@ -59,39 +59,20 @@ jest.mock('container/ApiMonitoring/utils', () => ({
 	getRateOverTimeWidgetData: jest.fn(),
 }));
 
-jest.mock(
-	'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2',
-	() => ({
-		__esModule: true,
-		default: jest.fn().mockImplementation(({ onChange }) => (
-			<div data-testid="query-builder-search">
-				<button
-					type="button"
-					data-testid="filter-change-button"
-					onClick={(): void =>
-						onChange({
-							items: [
-								{
-									id: 'test-filter',
-									key: {
-										key: 'test.key',
-										dataType: DataTypes.String,
-										type: 'tag',
-									},
-									op: '=',
-									value: 'test-value',
-								},
-							],
-							op: 'AND',
-						})
-					}
-				>
-					Change Filter
-				</button>
-			</div>
-		)),
-	}),
-);
+jest.mock('components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch', () => ({
+	__esModule: true,
+	default: jest.fn().mockImplementation(({ onRun }) => (
+		<div data-testid="query-builder-search">
+			<button
+				type="button"
+				data-testid="filter-change-button"
+				onClick={(): void => onRun("test.key = 'test-value'")}
+			>
+				Change Filter
+			</button>
+		</div>
+	)),
+}));
 
 // Mock all child components to simplify testing
 jest.mock(
@@ -282,7 +263,7 @@ describe('EndPointDetails Component', () => {
 		);
 	});
 
-	it('updates filters when QueryBuilderSearch changes', () => {
+	it('updates filters when the search expression is run', () => {
 		render(<EndPointDetails {...mockProps} />);
 
 		// Trigger filter change
