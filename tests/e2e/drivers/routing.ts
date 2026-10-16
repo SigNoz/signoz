@@ -34,7 +34,7 @@ export const PATH = {
 	k8s: '/infrastructure-monitoring/kubernetes',
 	login: '/login',
 	metricsSummary: '/metrics-explorer/summary',
-	metricsViews: '/metrics-explorer/views',
+	metricsExplorer: '/metrics-explorer/explorer',
 	roles: '/settings/roles',
 	roleCreate: '/settings/roles/new',
 	services: '/services',
