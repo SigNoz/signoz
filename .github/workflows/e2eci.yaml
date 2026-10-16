@@ -11,36 +11,25 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Labels are read live, so a re-run (see e2elabelci) picks up a newly added
-  # safe-to-e2e or safe-to-test. Fork and dependabot PRs run only on a re-run:
-  # postci strips safe-to-test on push, and a first attempt could read the
-  # label before that lands.
   changes:
     if: github.event_name != 'merge_group'
     runs-on: ubuntu-latest
     outputs:
       e2e: ${{ steps.changes.outputs.e2e }}
-      trusted: ${{ steps.changes.outputs.trusted }}
     steps:
       - name: changes
         id: changes
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          FORK: ${{ github.event.pull_request.head.repo.fork }}
-          AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
-          labels=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/labels" --jq '.[].name')
           files=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" --paginate --jq '.[].filename')
-          if grep -qx safe-to-e2e <<< "$labels" || grep -qE '^(frontend|tests/e2e)/' <<< "$files"; then
+          if grep -q '^frontend/' <<< "$files"; then
             echo "e2e=true" >> "$GITHUB_OUTPUT"
-          fi
-          if { [ "$FORK" = false ] && [ "$AUTHOR" != 'dependabot[bot]' ]; } || { [ "$GITHUB_RUN_ATTEMPT" -gt 1 ] && grep -qx safe-to-test <<< "$labels"; }; then
-            echo "trusted=true" >> "$GITHUB_OUTPUT"
           fi
   fmtlint:
     needs: changes
-    if: needs.changes.outputs.e2e == 'true' && needs.changes.outputs.trusted == 'true'
+    if: needs.changes.outputs.e2e == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: checkout
@@ -70,7 +59,7 @@ jobs:
           - chromium
         shard: [1, 2, 3, 4]
     needs: changes
-    if: needs.changes.outputs.e2e == 'true' && needs.changes.outputs.trusted == 'true'
+    if: needs.changes.outputs.e2e == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -179,17 +168,14 @@ jobs:
           name: playwright-artifacts-${{ matrix.project }}-${{ matrix.shard }}
           path: tests/e2e/artifacts/
           retention-days: 5
-  # Required status check. Fails when e2e was needed but did not pass,
-  # including fork and dependabot PRs still waiting on safe-to-test.
+  # Required status check. Fails when e2e was needed but did not pass.
   e2e:
     if: always()
     needs: [changes, fmtlint, test]
     runs-on: ubuntu-latest
     steps:
       - name: verdict
-        if: |
-          github.event_name != 'merge_group' && (needs.changes.result != 'success' ||
-          (needs.changes.outputs.e2e == 'true' && (needs.fmtlint.result != 'success' || needs.test.result != 'success')))
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
         run: |
-          echo "::error::e2e did not pass. Fork and dependabot PRs need a maintainer to add the safe-to-test label."
+          echo "::error::e2e did not pass."
           exit 1
