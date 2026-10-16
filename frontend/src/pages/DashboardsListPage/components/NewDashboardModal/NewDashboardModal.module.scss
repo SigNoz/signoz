@@ -72,16 +72,6 @@
 	font-size: var(--font-size-sm);
 }
 
-.spinner {
-	animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-	to {
-		transform: rotate(360deg);
-	}
-}
-
 // "From a template" tab: a centered browse-and-request placeholder until the
 // templates BE lands. Fixed height matches .panel so switching tabs won't resize.
 .templatesPanel {

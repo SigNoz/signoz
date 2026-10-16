@@ -65,30 +65,32 @@ function PanelTypeSwitcher({
 	};
 
 	return (
-		<ConfigField label="Panel type">
-			<Button
-				variant="outlined"
-				color="secondary"
-				className={styles.trigger}
-				onClick={(): void => setIsOpen(true)}
-				testId="panel-editor-v2-type-switcher"
-			>
-				<Icon size={14} className={styles.triggerIcon} />
-				<span className={styles.triggerName}>{displayName}</span>
-				<span className={styles.triggerAction}>
-					<ArrowRightLeft size={14} />
-					Change
-				</span>
-			</Button>
+		<ConfigField label="Panel type" className={styles.field}>
+			<div className={styles.trigger}>
+				<Button
+					variant="outlined"
+					color="secondary"
+					size="md"
+					width="100%"
+					onClick={(): void => setIsOpen(true)}
+					testId="panel-editor-v2-type-switcher"
+				>
+					<Icon size={14} className={styles.triggerIcon} />
+					<span className={styles.triggerName}>{displayName}</span>
+					<span className={styles.triggerAction}>
+						<ArrowRightLeft size={14} />
+						Change
+					</span>
+				</Button>
+			</div>
 			{canRevert && (
 				<Button
 					variant="link"
 					color="primary"
 					size="sm"
 					prefix={<Undo2 />}
-					className={styles.revert}
 					disabled={!!revertBlockedReason}
-					title={revertBlockedReason}
+					disabledTooltip={revertBlockedReason}
 					onClick={(): void => onChange(originalPanelKind)}
 					testId="panel-editor-v2-type-revert"
 				>

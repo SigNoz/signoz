@@ -53,8 +53,11 @@ function DashboardEmptyState({
 						</div>
 						<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
 							<Button
+								disabledTooltip={undefined}
+								size="md"
 								variant="solid"
 								color="secondary"
+								width="140px"
 								prefix={<Configure size="md" />}
 								disabled={!isEditable}
 								onClick={(): void => requestSettings({ tab: 'Overview' })}
@@ -79,6 +82,9 @@ function DashboardEmptyState({
 						</div>
 						<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
 							<Button
+								disabledTooltip={undefined}
+								size="md"
+								variant="solid"
 								color="primary"
 								prefix={<Plus size="md" />}
 								disabled={!canAddPanel}

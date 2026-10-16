@@ -90,7 +90,10 @@ describe('SavedViewsHeader saving', () => {
 			await userEvent.click(screen.getByTestId('saved-views-create'));
 
 			expect(within(modal()).getByText('Create new view')).toBeInTheDocument();
-			expect(screen.getByTestId('save-view-submit')).toBeDisabled();
+			expect(screen.getByTestId('save-view-submit')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 
 			await submitName('Slow checkout');
 

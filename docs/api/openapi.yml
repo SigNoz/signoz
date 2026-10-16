@@ -10517,13 +10517,11 @@ components:
           items:
             $ref: '#/components/schemas/SpantypesEvent'
           type: array
-        formatted_input:
+        formattedInput:
           $ref: '#/components/schemas/AiobservabilitytypesInputMessages'
-        formatted_output:
+        formattedOutput:
           $ref: '#/components/schemas/AiobservabilitytypesOutputMessages'
-        formatter:
-          type: string
-        formatter_warnings:
+        formatterWarnings:
           items:
             type: string
           type: array
@@ -10569,10 +10567,9 @@ components:
       - attributes
       - events
       - references
-      - formatted_input
-      - formatted_output
-      - formatter
-      - formatter_warnings
+      - formattedInput
+      - formattedOutput
+      - formatterWarnings
       type: object
     SpantypesTraceAISummary:
       properties:
@@ -10653,6 +10650,14 @@ components:
         flags:
           minimum: 0
           type: integer
+        formattedInput:
+          $ref: '#/components/schemas/AiobservabilitytypesInputMessages'
+        formattedOutput:
+          $ref: '#/components/schemas/AiobservabilitytypesOutputMessages'
+        formatterWarnings:
+          items:
+            type: string
+          type: array
         has_children:
           type: boolean
         has_error:
@@ -16059,10 +16064,8 @@ paths:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
       security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
+      - api_key: []
+      - tokenizer: []
       summary: Get stats
       tags:
       - stats
@@ -16440,12 +16443,12 @@ paths:
   /api/v1/traces/{traceID}/thread:
     get:
       deprecated: false
-      description: Returns the spans carrying gen_ai input or output messages, or
-        a tool execution, in timestamp order. Messages already in the OTel GenAI shape
-        are decoded into formatted_input and formatted_output, with formatter naming
-        the converter and formatter_warnings what it could not resolve. Pass nextCursor
-        as after or prevCursor as before to page, or spanId to open the page around
-        a span.
+      description: Returns the gen_ai spans of a trace, model calls, tool calls and
+        agent spans, in timestamp order. The messages a span carries are decoded into
+        formattedInput and formattedOutput, with formatterWarnings holding what the
+        converter could not resolve; a span without messages has both empty. Pass
+        nextCursor as after or prevCursor as before to page, or spanId to open the
+        page around a span.
       operationId: GetTraceThread
       parameters:
       - description: Page size, at most 100. 0 means 20.
@@ -28589,7 +28592,9 @@ paths:
       deprecated: false
       description: Returns the waterfall view of spans including all spans if total
         spans are under a limit, a max count otherwise. Aggregations are dropped compared
-        to v3
+        to v3. A span carrying gen_ai input or output messages also has them decoded
+        into formattedInput and formattedOutput, with formatterWarnings holding what
+        the converter could not resolve.
       operationId: GetWaterfallV4
       parameters:
       - in: path

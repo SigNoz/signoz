@@ -73,7 +73,10 @@ describe('DashboardRow', () => {
 			renderRow(makeDashboard());
 
 			expect(screen.queryByTestId('dashboard-legacy-0')).not.toBeInTheDocument();
-			expect(screen.getByTestId('dashboard-pin-0')).not.toBeDisabled();
+			expect(screen.getByTestId('dashboard-pin-0')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 			expect(screen.getByTestId('actions-popover')).toHaveAttribute(
 				'data-legacy',
 				'false',
@@ -90,7 +93,10 @@ describe('DashboardRow', () => {
 			renderRow(makeDashboard({ legacy: true }));
 
 			expect(screen.getByTestId('dashboard-legacy-0')).toBeInTheDocument();
-			expect(screen.getByTestId('dashboard-pin-0')).toBeDisabled();
+			expect(screen.getByTestId('dashboard-pin-0')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 			expect(screen.getByTestId('actions-popover')).toHaveAttribute(
 				'data-legacy',
 				'true',

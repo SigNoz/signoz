@@ -154,7 +154,8 @@ function AuthDomain(): JSX.Element {
 				render: (_, record: AuthtypesGettableAuthDomainDTO): JSX.Element => (
 					<section className="auth-domain-list-column-action">
 						<Button
-							className="auth-domain-list-action-link"
+							size="md"
+							color="primary"
 							onClick={(): void => setRecord(record)}
 							variant="link"
 							testId="auth-domain-configure"
@@ -162,7 +163,8 @@ function AuthDomain(): JSX.Element {
 							Configure {SSOType.get(record.config?.kind || '')}
 						</Button>
 						<Button
-							className="auth-domain-list-action-link delete"
+							size="md"
+							color="danger"
 							onClick={(): void => showDeleteModal(record)}
 							variant="link"
 							testId="auth-domain-delete"
@@ -228,7 +230,7 @@ function AuthDomain(): JSX.Element {
 			)}
 
 			<Modal
-				className="delete-ingestion-key-modal"
+				className="delete-ingestion-key-modal auth-domain-delete-modal"
 				title={<span className="title">Delete Domain</span>}
 				open={isDeleteModalOpen}
 				closable
@@ -236,19 +238,23 @@ function AuthDomain(): JSX.Element {
 				destroyOnClose
 				footer={[
 					<Button
+						size="md"
+						variant="solid"
+						color="secondary"
 						key="cancel"
 						onClick={hideDeleteModal}
-						className="cancel-btn"
 						prefix={<X size={16} />}
 						testId="auth-domain-delete-cancel"
 					>
 						Cancel
 					</Button>,
 					<Button
+						size="md"
+						variant="solid"
+						color="danger"
 						key="submit"
 						prefix={<Trash2 size={16} />}
 						onClick={handleDeleteDomain}
-						className="delete-btn"
 						loading={isLoading}
 						testId="auth-domain-delete-confirm"
 					>

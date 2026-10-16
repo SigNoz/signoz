@@ -154,7 +154,7 @@ describe('CustomDomainSettings', () => {
 		);
 
 		// Both host URLs should appear as links in the dropdown
-		const links = await screen.findAllByRole('link');
+		const links = await screen.findAllByRole('menuitem');
 		const hostLinks = links.filter(
 			(link) =>
 				link.getAttribute('href')?.includes('test.cloud') &&

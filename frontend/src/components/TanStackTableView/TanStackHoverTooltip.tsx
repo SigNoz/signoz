@@ -1,14 +1,10 @@
-import { type ReactNode, useLayoutEffect, useMemo } from 'react';
+import { type ReactNode, useLayoutEffect } from 'react';
 
 import { chromePerformanceTanstackTableEndHover } from './perfDevtools';
 import { useIsRowHovered } from './TanStackTableStateContext';
-import {
-	TooltipContentProps,
-	TooltipSimple,
-	TooltipSimpleProps,
-} from '@signozhq/ui/tooltip';
+import { Tooltip, TooltipProps } from '@signozhq/ui/tooltip';
 
-export type HoverTooltipProps = Omit<TooltipSimpleProps, 'open'> & {
+export type HoverTooltipProps = Omit<TooltipProps, 'open'> & {
 	rowId: string;
 	children: ReactNode;
 };
@@ -26,28 +22,9 @@ export function TanStackHoverTooltip({
 		}
 	}, [isHovered, rowId]);
 
-	const tooltipContentProps = useMemo(
-		() =>
-			({
-				onPointerDownOutside: (e): void => {
-					e.preventDefault();
-					e.stopPropagation();
-				},
-			}) satisfies TooltipContentProps,
-		[],
-	);
-
 	if (!isHovered) {
 		return <>{children}</>;
 	}
 
-	return (
-		<TooltipSimple
-			delayDuration={700}
-			tooltipContentProps={tooltipContentProps}
-			{...tooltipProps}
-		>
-			{children}
-		</TooltipSimple>
-	);
+	return <Tooltip {...tooltipProps}>{children}</Tooltip>;
 }
