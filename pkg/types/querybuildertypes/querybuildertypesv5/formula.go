@@ -131,6 +131,22 @@ func (f QueryBuilderFormula) Validate() error {
 	return nil
 }
 
+func (f QueryBuilderFormula) ExtractReferencedQueryNames() []string {
+	// parsed the way the evaluator parses it, so the names match what it resolves
+	expression, err := govaluate.NewEvaluableExpressionWithFunctions(f.Expression, EvalFuncs())
+	if err != nil {
+		return nil
+	}
+
+	var names []string
+	for _, variable := range expression.Vars() {
+		if !slices.Contains(names, variable) {
+			names = append(names, variable)
+		}
+	}
+	return names
+}
+
 // small container to store the query name and index or alias reference
 // for a variable in the formula expression
 // read below for more details on aggregation references.

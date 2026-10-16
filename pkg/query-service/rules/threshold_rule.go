@@ -86,8 +86,6 @@ func (r *ThresholdRule) prepareQueryRange(ctx context.Context, ts time.Time) (*q
 }
 
 func (r *ThresholdRule) prepareParamsForLogs(ctx context.Context, ts time.Time, lbls ruletypes.Labels) url.Values {
-	selectedQuery := r.SelectedQuery(ctx)
-
 	qr, err := r.prepareQueryRange(ctx, ts)
 	if err != nil {
 		return nil
@@ -95,24 +93,15 @@ func (r *ThresholdRule) prepareParamsForLogs(ctx context.Context, ts time.Time, 
 	start := time.UnixMilli(int64(qr.Start))
 	end := time.UnixMilli(int64(qr.End))
 
-	// TODO(srikanthccv): handle formula queries
-	if selectedQuery < "A" || selectedQuery > "Z" {
-		return nil
-	}
-
-	filterExpr, groupBy, found := contextlinks.BuilderQueryForSignal(r.ruleCondition.CompositeQuery.Queries, telemetrytypes.SignalLogs)
+	whereClause, found := contextlinks.PrepareRuleFilterExpression(r.ruleCondition, telemetrytypes.SignalLogs, lbls.Map())
 	if !found {
 		return nil
 	}
-
-	whereClause := contextlinks.PrepareFilterExpression(lbls.Map(), filterExpr, groupBy)
 
 	return contextlinks.PrepareParamsForLogsV5(start, end, whereClause)
 }
 
 func (r *ThresholdRule) prepareParamsForTraces(ctx context.Context, ts time.Time, lbls ruletypes.Labels) url.Values {
-	selectedQuery := r.SelectedQuery(ctx)
-
 	qr, err := r.prepareQueryRange(ctx, ts)
 	if err != nil {
 		return nil
@@ -120,17 +109,10 @@ func (r *ThresholdRule) prepareParamsForTraces(ctx context.Context, ts time.Time
 	start := time.UnixMilli(int64(qr.Start))
 	end := time.UnixMilli(int64(qr.End))
 
-	// TODO(srikanthccv): handle formula queries
-	if selectedQuery < "A" || selectedQuery > "Z" {
-		return nil
-	}
-
-	filterExpr, groupBy, found := contextlinks.BuilderQueryForSignal(r.ruleCondition.CompositeQuery.Queries, telemetrytypes.SignalTraces)
+	whereClause, found := contextlinks.PrepareRuleFilterExpression(r.ruleCondition, telemetrytypes.SignalTraces, lbls.Map())
 	if !found {
 		return nil
 	}
-
-	whereClause := contextlinks.PrepareFilterExpression(lbls.Map(), filterExpr, groupBy)
 
 	return contextlinks.PrepareParamsForTracesV5(start, end, whereClause, r.typ.BuilderQueryType())
 }
