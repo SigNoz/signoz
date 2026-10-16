@@ -62,7 +62,7 @@ def test_clone_rule(
 
     response = requests.post(
         signoz.self.host_configs["8080"].get(CHANNELS_URL),
-        json={"name": CHANNEL_NAME, "config": {"kind": "webhook", "spec": {"url": "http://localhost:9/alert"}}},
+        json={"name": CHANNEL_NAME, "config": {"kind": "webhook", "spec": {"url": "https://webhook.test/hook"}}},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
