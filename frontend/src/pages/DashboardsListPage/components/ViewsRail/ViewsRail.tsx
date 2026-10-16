@@ -6,6 +6,7 @@ import {
 } from 'react';
 import logEvent from 'api/common/logEvent';
 import { Button } from '@signozhq/ui/button';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
 import { Bookmark, PenLine, Plus, Search, Trash2 } from '@signozhq/icons';
@@ -120,17 +121,20 @@ function ViewsRail({
 		return (
 			<div key={row.id} className={cx(styles.row, { [styles.rowActive]: active })}>
 				<Button
+					size="md"
 					variant="ghost"
 					color="secondary"
-					className={styles.item}
+					width="100%"
 					onClick={(): void => onSelect(row.id)}
 					testId={`dashboards-view-${row.id}`}
+					prefix={<Icon size={16} className={styles.itemIcon} />}
+					suffix={
+						active && isModified ? (
+							<div className={styles.dirtyDot} title="Unsaved changes" />
+						) : undefined
+					}
 				>
-					<Icon size={16} className={styles.itemIcon} />
-					<Typography.Text className={styles.itemLabel}>{row.label}</Typography.Text>
-					{active && isModified && (
-						<div className={styles.dirtyDot} title="Unsaved changes" />
-					)}
+					{row.label}
 				</Button>
 				{row.deletable && (
 					<div className={styles.itemActions}>
@@ -145,34 +149,35 @@ function ViewsRail({
 							confirmLabel="Rename"
 							initialName={row.label}
 							testIdPrefix="rename-view"
+							tooltip="Rename view"
 							trigger={
 								<Button
 									variant="ghost"
 									color="secondary"
-									size="icon"
-									className={styles.itemAction}
+									size="sm"
+									icon
 									aria-label="Rename view"
-									title="Rename view"
 									onClick={(e): void => e.stopPropagation()}
 								>
 									<PenLine size={12} />
 								</Button>
 							}
 						/>
-						<Button
-							variant="ghost"
-							color="secondary"
-							size="icon"
-							className={cx(styles.itemAction, styles.itemActionDanger)}
-							aria-label="Delete view"
-							title="Delete view"
-							onClick={(e): void => {
-								e.stopPropagation();
-								onConfirmDelete(row.id, row.label);
-							}}
-						>
-							<Trash2 size={12} />
-						</Button>
+						<Tooltip title="Delete view">
+							<Button
+								variant="ghost"
+								color="secondary"
+								size="sm"
+								icon
+								aria-label="Delete view"
+								onClick={(e): void => {
+									e.stopPropagation();
+									onConfirmDelete(row.id, row.label);
+								}}
+							>
+								<Trash2 size={12} />
+							</Button>
+						</Tooltip>
 					</div>
 				)}
 			</div>
@@ -200,12 +205,14 @@ function ViewsRail({
 							title="Save as view"
 							confirmLabel="Save view"
 							testIdPrefix="save-view"
+							tooltip="Save current filters as a view"
 							trigger={
 								<Button
+									aria-label="Save current filters as a view"
 									variant="ghost"
 									color="secondary"
-									size="icon"
-									title="Save current filters as a view"
+									size="sm"
+									icon
 									testId="dashboards-view-save-trigger"
 								>
 									<Plus size={14} />

@@ -3,16 +3,44 @@ name: e2eci
 on:
   pull_request:
     types:
+      - opened
+      - synchronize
+      - reopened
       - labeled
   pull_request_target:
     types:
       - labeled
+  merge_group:
+    types:
+      - checks_requested
+
+concurrency:
+  group: e2eci-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  changes:
+    if: github.event_name != 'merge_group'
+    runs-on: ubuntu-latest
+    outputs:
+      e2e: ${{ steps.changes.outputs.e2e }}
+    steps:
+      - name: changes
+        id: changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          LABELED: ${{ contains(github.event.pull_request.labels.*.name, 'safe-to-e2e') }}
+        run: |
+          files=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" --paginate --jq '.[].filename')
+          if [ "$LABELED" = true ] || grep -qE '^(frontend|tests/e2e)/' <<< "$files"; then
+            echo "e2e=true" >> "$GITHUB_OUTPUT"
+          fi
   fmtlint:
+    needs: changes
     if: |
       ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
-      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-e2e')
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && needs.changes.outputs.e2e == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: checkout
@@ -41,9 +69,10 @@ jobs:
         project:
           - chromium
         shard: [1, 2, 3, 4]
+    needs: changes
     if: |
       ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
-      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-e2e')
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && needs.changes.outputs.e2e == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -152,3 +181,17 @@ jobs:
           name: playwright-artifacts-${{ matrix.project }}-${{ matrix.shard }}
           path: tests/e2e/artifacts/
           retention-days: 5
+  # Required status check. Fails when e2e was needed but did not pass,
+  # including fork and dependabot PRs still waiting on safe-to-test.
+  e2e:
+    if: always()
+    needs: [changes, fmtlint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: verdict
+        if: |
+          github.event_name != 'merge_group' && (needs.changes.result != 'success' ||
+          (needs.changes.outputs.e2e == 'true' && (needs.fmtlint.result != 'success' || needs.test.result != 'success')))
+        run: |
+          echo "::error::e2e did not pass. Fork and dependabot PRs need the safe-to-test label."
+          exit 1

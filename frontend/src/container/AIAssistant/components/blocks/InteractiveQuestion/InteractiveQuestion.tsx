@@ -3,7 +3,7 @@ import cx from 'classnames';
 import { Button } from '@signozhq/ui/button';
 import logEvent from 'api/common/logEvent';
 import { Checkbox } from '@signozhq/ui/checkbox';
-import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';
+import { RadioGroup } from '@signozhq/ui/radio-group';
 
 import { AIAssistantEvents } from '../../../events';
 import { useAIAssistantAnalyticsContext } from '../../../hooks/useAIAssistantAnalyticsContext';
@@ -83,27 +83,23 @@ export default function InteractiveQuestion({
 
 			{type === 'radio' ? (
 				<RadioGroup
-					className={styles.options}
+					color="primary"
+					textOverflow="wrap"
 					onChange={(value): void => {
 						setSelected([value]);
 						handleSubmit([value]);
 					}}
-				>
-					{normalized.map((opt) => (
-						<RadioGroupItem
-							key={opt.value}
-							value={opt.value}
-							className={styles.option}
-						>
-							{opt.label}
-						</RadioGroupItem>
-					))}
-				</RadioGroup>
+					items={normalized.map((opt) => ({
+						value: opt.value,
+						label: <span className={styles.option}>{opt.label}</span>,
+					}))}
+				/>
 			) : (
 				<>
 					<div className={cx(styles.options, styles.checkbox)}>
 						{normalized.map((opt) => (
 							<Checkbox
+								color="primary"
 								key={opt.value}
 								value={selected.includes(opt.value)}
 								onChange={(checked): void => {
@@ -113,16 +109,16 @@ export default function InteractiveQuestion({
 											: prev.filter((v) => v !== opt.value),
 									);
 								}}
-								className={styles.option}
 							>
 								{opt.label}
 							</Checkbox>
 						))}
 					</div>
 					<Button
+						disabledTooltip="Select at least one option"
+						color="primary"
 						variant="solid"
 						size="sm"
-						className={styles.submit}
 						disabled={selected.length === 0}
 						onClick={(): void => handleSubmit(selected)}
 					>

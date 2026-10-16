@@ -43,8 +43,16 @@ export const getFieldKeysQueryOptions = (
 	refetchOnWindowFocus: false,
 });
 
+export type FieldKeysQueryOverrides = Partial<
+	Omit<FieldKeysQueryOptions, 'queryKey' | 'queryFn' | 'select'>
+>;
+
 export const useFieldKeysSuggestion = (
 	fieldKeysConfig: FieldKeysConfig,
 	builderQueryType?: BuilderQueryType,
+	options?: FieldKeysQueryOverrides,
 ): UseQueryResult<TelemetryFieldKey[], ErrorType<RenderErrorResponseDTO>> =>
-	useQuery(getFieldKeysQueryOptions(fieldKeysConfig, builderQueryType));
+	useQuery({
+		...getFieldKeysQueryOptions(fieldKeysConfig, builderQueryType),
+		...options,
+	});

@@ -1,6 +1,5 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 
 import TruncatedTooltip from '../TruncatedTooltip';
 
@@ -15,15 +14,13 @@ function renderRow(scrollWidth: number, clientWidth: number): void {
 		.mockReturnValue(clientWidth);
 
 	render(
-		<TooltipProvider>
-			<TruncatedTooltip title={LABEL}>
-				{(textRef): JSX.Element => (
-					<div data-testid="row">
-						<span ref={textRef}>{LABEL}</span>
-					</div>
-				)}
-			</TruncatedTooltip>
-		</TooltipProvider>,
+		<TruncatedTooltip title={LABEL}>
+			{(textRef): JSX.Element => (
+				<div data-testid="row">
+					<span ref={textRef}>{LABEL}</span>
+				</div>
+			)}
+		</TruncatedTooltip>,
 	);
 }
 

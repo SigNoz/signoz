@@ -220,7 +220,13 @@ export const savePanel = async (): Promise<void> => {
 		{ timeout: 10000 },
 	);
 
-	await waitFor(() => expect(save).toBeEnabled(), { timeout: 10000 });
+	await waitFor(
+		() => {
+			expect(save).toBeEnabled();
+			expect(save).not.toHaveAttribute('aria-disabled', 'true');
+		},
+		{ timeout: 10000 },
+	);
 	await userEvent.click(save);
 };
 

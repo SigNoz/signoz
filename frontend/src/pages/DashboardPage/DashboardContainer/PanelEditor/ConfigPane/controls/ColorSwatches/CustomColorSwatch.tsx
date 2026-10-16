@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { ColorPicker } from 'antd';
 import cx from 'classnames';
 
@@ -40,7 +40,7 @@ function CustomColorSwatch({
 			onChangeComplete={(next): void => onChange(next.toHexString())}
 		>
 			<span className={styles.customAnchor}>
-				<TooltipSimple title={title} arrow>
+				<Tooltip title={title}>
 					<button
 						type="button"
 						aria-label={title}
@@ -50,7 +50,7 @@ function CustomColorSwatch({
 						})}
 						data-testid={testId}
 					/>
-				</TooltipSimple>
+				</Tooltip>
 			</span>
 		</ColorPicker>
 	);

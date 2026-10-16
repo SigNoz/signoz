@@ -1,7 +1,6 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { VirtuosoMockContext } from 'react-virtuoso';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NuqsTestingAdapter, OnUrlUpdateFunction } from 'nuqs/adapters/testing';
@@ -87,16 +86,14 @@ function overviewTree(
 					<VirtuosoMockContext.Provider
 						value={{ viewportHeight: 800, itemHeight: 50 }}
 					>
-						<TooltipProvider>
-							<EntityOverview
-								category={InfraMonitoringEntity.NODES}
-								eventEntity="node"
-								attributes={attributes}
-								entity={{ nodeName: attributes['k8s.node.name'] }}
-								entityName={attributes['k8s.node.name']}
-								queryKeyPrefix="node"
-							/>
-						</TooltipProvider>
+						<EntityOverview
+							category={InfraMonitoringEntity.NODES}
+							eventEntity="node"
+							attributes={attributes}
+							entity={{ nodeName: attributes['k8s.node.name'] }}
+							entityName={attributes['k8s.node.name']}
+							queryKeyPrefix="node"
+						/>
 					</VirtuosoMockContext.Provider>
 				</NuqsTestingAdapter>
 			</QueryClientProvider>

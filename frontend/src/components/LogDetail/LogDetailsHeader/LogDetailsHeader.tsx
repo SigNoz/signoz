@@ -1,8 +1,8 @@
 import { Button } from '@signozhq/ui/button';
 import { Divider } from '@signozhq/ui/divider';
-import { DropdownMenuSimple as Dropdown } from '@signozhq/ui/dropdown-menu';
+import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { Typography } from '@signozhq/ui/typography';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { aggregateAttributesResourcesToString } from 'container/LogDetailedView/utils';
 import { toast } from '@signozhq/ui/sonner';
@@ -22,8 +22,6 @@ import { MouseEvent, MouseEventHandler } from 'react';
 import { useCopyToClipboard } from 'react-use';
 
 import styles from './LogDetailsHeader.module.scss';
-
-const TOOLTIP_CONTENT_PROPS = { className: styles.tooltipContent };
 
 interface LogDetailsHeaderProps {
 	log: ILog;
@@ -53,17 +51,19 @@ function LogDetailsHeader({
 		toast.success('Copied to clipboard', { position: 'bottom-right' });
 	};
 
-	const menuItems = [
+	const menuItems: DropdownItemType[] = [
 		{
-			key: 'copy-log',
+			type: 'item',
+			value: 'copy-log',
 			label: 'Copy log',
-			icon: <Copy size={14} />,
+			prefix: <Copy size={14} />,
 			onClick: handleCopyLog,
 		},
 		{
-			key: 'copy-link',
+			type: 'item',
+			value: 'copy-link',
 			label: 'Copy link to log',
-			icon: <Link size={14} />,
+			prefix: <Link size={14} />,
 			onClick: (): void => onLogCopy(),
 		},
 	];
@@ -91,6 +91,7 @@ function LogDetailsHeader({
 			<div className={styles.actions}>
 				{showOpenInExplorer && (
 					<Button
+						size="md"
 						variant="outlined"
 						color="secondary"
 						prefix={<Compass size={16} />}
@@ -100,51 +101,57 @@ function LogDetailsHeader({
 					</Button>
 				)}
 
-				<Dropdown
-					menu={{ items: menuItems }}
-					align="end"
-					className={styles.dropdownContent}
-					onClick={(e: MouseEvent): void => e.stopPropagation()}
-				>
+				<Dropdown items={menuItems} nativeButton align="end" side="bottom">
 					<Button
+						size="md"
 						variant="link"
 						color="secondary"
-						prefix={<Ellipsis size={16} />}
-						data-testid="log-details-header-menu"
-					/>
+						icon
+						aria-label="Log actions"
+						testId="log-details-header-menu"
+						onClick={(e: MouseEvent): void => e.stopPropagation()}
+					>
+						<Ellipsis size={16} />
+					</Button>
 				</Dropdown>
 
 				<div className={styles.arrows}>
-					<TooltipSimple
-						title="Move to previous log"
+					<Tooltip
+						title={isPrevDisabled ? undefined : 'Move to previous log'}
 						side="top"
-						open={isPrevDisabled ? false : undefined}
-						tooltipContentProps={TOOLTIP_CONTENT_PROPS}
 					>
 						<Button
+							disabledTooltip="No previous log"
+							size="md"
 							variant="outlined"
 							color="secondary"
-							prefix={<ChevronUp size={14} />}
+							icon
+							aria-label="Move to previous log"
 							disabled={isPrevDisabled}
 							onClick={onNavigatePrev}
-							data-testid="log-details-header-prev"
-						/>
-					</TooltipSimple>
-					<TooltipSimple
-						title="Move to next log"
+							testId="log-details-header-prev"
+						>
+							<ChevronUp size={14} />
+						</Button>
+					</Tooltip>
+					<Tooltip
+						title={isNextDisabled ? undefined : 'Move to next log'}
 						side="top"
-						open={isNextDisabled ? false : undefined}
-						tooltipContentProps={TOOLTIP_CONTENT_PROPS}
 					>
 						<Button
+							disabledTooltip="No next log"
+							size="md"
 							variant="outlined"
 							color="secondary"
-							prefix={<ChevronDown size={14} />}
+							icon
+							aria-label="Move to next log"
 							disabled={isNextDisabled}
 							onClick={onNavigateNext}
-							data-testid="log-details-header-next"
-						/>
-					</TooltipSimple>
+							testId="log-details-header-next"
+						>
+							<ChevronDown size={14} />
+						</Button>
+					</Tooltip>
 				</div>
 			</div>
 		</div>

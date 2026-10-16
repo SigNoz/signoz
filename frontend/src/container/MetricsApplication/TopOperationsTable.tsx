@@ -212,7 +212,12 @@ function TopOperationsTable({
 					/>
 				</div>
 				<div className="top-operation__entry-point">
-					<Switch value={isEntryPoint} onChange={onEntryPointToggle} />
+					<Switch
+						color="primary"
+						textPlacement="right"
+						value={isEntryPoint}
+						onChange={onEntryPointToggle}
+					/>
 					<span className="top-operation__entry-point-label">Entrypoint Spans</span>
 					<TextToolTip
 						text={entryPointSpanInfo.text}
