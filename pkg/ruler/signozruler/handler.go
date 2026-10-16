@@ -25,24 +25,6 @@ func NewHandler(ruler ruler.Ruler) ruler.Handler {
 	return &handler{ruler: ruler}
 }
 
-func (handler *handler) ListRules(rw http.ResponseWriter, req *http.Request) {
-	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
-	defer cancel()
-
-	rules, err := handler.ruler.ListRuleStates(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	view := make([]*ruletypes.Rule, 0, len(rules.Rules))
-	for _, rule := range rules.Rules {
-		view = append(view, ruletypes.NewRule(rule))
-	}
-
-	render.Success(rw, http.StatusOK, view)
-}
-
 func (handler *handler) ListRulesV3(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
