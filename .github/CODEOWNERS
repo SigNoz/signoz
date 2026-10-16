@@ -213,9 +213,7 @@ go.mod @therealpandey
 ## Notification Channels
 /frontend/src/pages/ChannelsEdit/ @SigNoz/pulse-frontend
 /frontend/src/pages/ChannelsNew/ @SigNoz/pulse-frontend
-/frontend/src/container/AllAlertChannels/ @SigNoz/pulse-frontend
 /frontend/src/container/CreateAlertChannels/ @SigNoz/pulse-frontend
-/frontend/src/container/EditAlertChannels/ @SigNoz/pulse-frontend
 /frontend/src/container/FormAlertChannels/ @SigNoz/pulse-frontend
 /frontend/src/hooks/notificationChannels/ @SigNoz/pulse-frontend
 

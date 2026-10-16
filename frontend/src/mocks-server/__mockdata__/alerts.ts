@@ -1,15 +1,3 @@
-export const allAlertChannels = [
-	{
-		id: '3',
-		created_at: '2023-08-09T04:45:19.239344617Z',
-		updated_at: '2024-06-27T11:37:14.841184399Z',
-		name: 'Dummy-Channel',
-		type: 'slack',
-		data:
-			'{"name":"Dummy-Channel","slack_configs":[{"api_url":"https://discord.com/api/webhooks/dummy_webhook_id/dummy_webhook_token/slack","channel":"#dummy_channel","send_resolved":true,"text":"{{ range .Alerts -}}\\n     *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }} dummy_summary\\n\\n     *Summary:* {{ .Annotations.summary }}\\n     *Description:* {{ .Annotations.description }}\\n\\n     *Details:*\\n       {{ range .Labels.SortedPairs }} • *{{ .Name }}:* {{ .Value }}\\n       {{ end }}\\n     {{ end }}","title":"[{{ .Status | toUpper }}{{ if eq .Status \\"firing\\" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}\\n     {{- if gt (len .CommonLabels) (len .GroupLabels) -}}\\n       {{\\" \\"}}(\\n       {{- with .CommonLabels.Remove .GroupLabels.Names }}\\n         {{- range $index, $label := .SortedPairs -}}\\n           {{ if $index }}, {{ end }}\\n           {{- $label.Name }}=\\"{{ $label.Value -}}\\"\\n         {{- end }}\\n       {{- end -}}\\n       )\\n     {{- end }}"}]}',
-	},
-];
-
 export const editAlertChannelInitialValue = {
 	api_url:
 		'https://discord.com/api/webhooks/dummy_webhook_id/dummy_webhook_token/slack',
