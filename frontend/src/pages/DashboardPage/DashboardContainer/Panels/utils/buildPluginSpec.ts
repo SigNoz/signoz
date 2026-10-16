@@ -10,6 +10,7 @@ import {
 	DashboardtypesLineStyleDTO,
 	type DashboardtypesPanelSpecDTO,
 	DashboardtypesStackModeDTO,
+	DashboardtypesThresholdAxisDTO,
 	DashboardtypesThresholdFormatDTO,
 	DashboardtypesTextAlignDTO,
 	DashboardtypesTimePreferenceDTO,
@@ -67,12 +68,14 @@ interface AnyThresholdFields {
 	format?: DashboardtypesThresholdFormatDTO;
 	columnName?: string;
 	label?: string;
+	axis?: DashboardtypesThresholdAxisDTO;
 }
 
 /** Remaps a threshold to the target variant, seeding the fields that variant needs to stay functional. */
 function toThresholdVariant(
 	source: AnyThresholdFields,
 	variant: ThresholdVariant,
+	withAxis: boolean,
 	defaultColumnName?: string,
 ): AnyThreshold {
 	const core = {
@@ -98,6 +101,7 @@ function toThresholdVariant(
 	return {
 		...core,
 		...(source.label !== undefined && { label: source.label }),
+		...(withAxis && { axis: source.axis ?? DashboardtypesThresholdAxisDTO.y }),
 	};
 }
 
@@ -307,6 +311,13 @@ const SECTION_SEEDS: SectionSeeds = {
 						decimalPrecision: old.decimalPrecision,
 					}),
 			};
+			// Kinds that both key units per column (Table ↔ Scatter Plot) share the keys.
+			if (controls.columnUnits && old?.columnUnits) {
+				if (Object.keys(old.columnUnits).length > 0) {
+					carried.columnUnits = { ...old.columnUnits };
+				}
+				return carried;
+			}
 			// A panel-wide unit fans out to every value column when the target keys units
 			// per column (→ Table). One-way: `columnUnits` never seed a panel-wide `unit`.
 			const unit = old?.unit;
@@ -337,13 +348,16 @@ const SECTION_SEEDS: SectionSeeds = {
 				variant === ThresholdVariant.TABLE
 					? getTableColumnKeys(oldSpec?.queries ?? [])[0]
 					: undefined;
-			const mapped = old.map((threshold) =>
-				toThresholdVariant(
-					threshold as AnyThresholdFields,
-					variant,
-					defaultColumnName,
-				),
-			);
+			const withAxis = !!controls.axis;
+			// Only a kind that picks the axis can place an x threshold.
+			const mapped = (old as AnyThresholdFields[])
+				.filter(
+					(threshold) =>
+						withAxis || threshold.axis !== DashboardtypesThresholdAxisDTO.x,
+				)
+				.map((threshold) =>
+					toThresholdVariant(threshold, variant, withAxis, defaultColumnName),
+				);
 			return variant === ThresholdVariant.TABLE
 				? mapped.filter((t) => (t as { columnName?: string }).columnName)
 				: mapped;
