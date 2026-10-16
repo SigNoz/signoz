@@ -42,7 +42,7 @@ func NewOperatorFactory(
 		factory.MustNewName("traceoperator"),
 		func(_ context.Context, settings factory.ProviderSettings, cfg statementbuilder.Config) (qbtypes.TraceOperatorStatementBuilder, error) {
 			storage := tracestelemetryschema.NewStorage()
-			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, storage, fl, telemetrytypes.SignalTraces)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, storage)
 			traceStmtBuilder := NewTraceQueryStatementBuilder(
 				settings, metadataStore, storage, aggExprRewriter, telemetryStore, fl,
 				cfg.SkipResourceFingerprint.Enabled, cfg.SkipResourceFingerprint.Threshold,
@@ -116,11 +116,17 @@ func (b *traceOperatorStatementBuilder) Build(
 		slog.String("expression", query.Expression),
 		slog.Any("request_type", requestType))
 
+	info, err := querybuilder.LoadColumnEvolutions(ctx, querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end), b.metadataStore)
+	if err != nil {
+		return nil, err
+	}
+
 	// Build the CTE-based query
 	builder := &traceOperatorCTEBuilder{
 		start:          start,
 		end:            end,
 		orgID:          orgID,
+		queryInfo:      info,
 		operator:       &query,
 		stmtBuilder:    b,
 		queries:        make(map[string]*qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]),

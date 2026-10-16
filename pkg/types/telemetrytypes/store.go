@@ -45,6 +45,11 @@ type MetadataStore interface {
 	// rows templated by entry; FieldName and ReleaseTime are set per path.
 	PromotePaths(ctx context.Context, entry EvolutionEntry, paths ...string) error
 
+	// GetColumnEvolutions lists the column-wide evolution entries (field_name
+	// `__all__`) of the signal's field context: the homes a key metadata does
+	// not report still reads through.
+	GetColumnEvolutions(ctx context.Context, signal Signal, fieldContext FieldContext) ([]*EvolutionEntry, error)
+
 	// GetFirstSeenFromMetricMetadata gets the first seen timestamp for a metric metadata lookup key.
 	GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []MetricMetadataLookupKey) (map[MetricMetadataLookupKey]int64, error)
 

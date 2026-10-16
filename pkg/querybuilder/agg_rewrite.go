@@ -9,7 +9,6 @@ import (
 	chparser "github.com/AfterShip/clickhouse-sql-parser/parser"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/flagger"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -20,8 +19,6 @@ type aggExprRewriter struct {
 	logger         *slog.Logger
 	fullTextColumn *telemetrytypes.TelemetryFieldKey
 	storage        qbtypes.Storage
-	flagger        flagger.Flagger
-	signal         telemetrytypes.Signal
 }
 
 var _ qbtypes.AggExprRewriter = (*aggExprRewriter)(nil)
@@ -30,8 +27,6 @@ func NewAggExprRewriter(
 	settings factory.ProviderSettings,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	storage qbtypes.Storage,
-	fl flagger.Flagger,
-	signal telemetrytypes.Signal,
 ) *aggExprRewriter {
 	set := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querybuilder/agg_rewrite")
 
@@ -39,8 +34,6 @@ func NewAggExprRewriter(
 		logger:         set.Logger(),
 		fullTextColumn: fullTextColumn,
 		storage:        storage,
-		flagger:        fl,
-		signal:         signal,
 	}
 }
 
@@ -49,9 +42,7 @@ func NewAggExprRewriter(
 // and the args if the parametric aggregation function is used.
 func (r *aggExprRewriter) Rewrite(
 	ctx context.Context,
-	orgID valuer.UUID,
-	startNs uint64,
-	endNs uint64,
+	q qbtypes.QueryInfo,
 	expr string,
 	rateInterval uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
@@ -80,7 +71,7 @@ func (r *aggExprRewriter) Rewrite(
 
 	visitor := &exprVisitor{
 		ctx:            ctx,
-		query:          NewQueryInfo(ctx, orgID, r.flagger, r.signal, nil, startNs, endNs),
+		query:          q,
 		logger:         r.logger,
 		fieldKeys:      keys,
 		fullTextColumn: r.fullTextColumn,
@@ -100,9 +91,7 @@ func (r *aggExprRewriter) Rewrite(
 // RewriteMulti rewrites a slice of expressions.
 func (r *aggExprRewriter) RewriteMulti(
 	ctx context.Context,
-	orgID valuer.UUID,
-	startNs uint64,
-	endNs uint64,
+	q qbtypes.QueryInfo,
 	exprs []string,
 	rateInterval uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
@@ -111,7 +100,7 @@ func (r *aggExprRewriter) RewriteMulti(
 	var errs []error
 	var chArgsList [][]any
 	for i, e := range exprs {
-		w, chArgs, err := r.Rewrite(ctx, orgID, startNs, endNs, e, rateInterval, keys)
+		w, chArgs, err := r.Rewrite(ctx, q, e, rateInterval, keys)
 		if err != nil {
 			errs = append(errs, err)
 			out[i] = e

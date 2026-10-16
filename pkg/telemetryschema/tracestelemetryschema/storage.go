@@ -531,7 +531,8 @@ func foldAbsentJSONReadToTypeDefault(key *telemetrytypes.TelemetryFieldKey, oper
 // real column is that column. A span or trace context is kept as written,
 // and corrects to the attribute maps when it names no column. A strict
 // context synthesizes its type variants under the stripped and the literal
-// spelling.
+// spelling. A synthesized attribute key reads through the column-wide
+// evolutions of the query, so it follows the JSON rollout like a reported one.
 func (m *storage) Fallback(ctx context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, value any) ([]*telemetrytypes.LogicalField, error) {
 	var keys []*telemetrytypes.TelemetryFieldKey
 	switch key.FieldContext {
@@ -560,7 +561,27 @@ func (m *storage) Fallback(ctx context.Context, q qbtypes.QueryInfo, key *teleme
 		literal := telemetrytypes.NewTelemetryFieldKey(key.FieldContext.StringValue()+"."+key.Name, key.FieldContext, key.FieldDataType)
 		keys = append(querybuilder.SynthesizeKeys(key, value), querybuilder.SynthesizeKeys(literal, value)...)
 	}
+	stampAttributeEvolutions(q, keys)
 	return querybuilder.WrapAsLogicalFields(key.Name, keys), nil
+}
+
+// stampAttributeEvolutions gives every synthesized attribute key without
+// evolutions the query's column-wide attribute entries.
+func stampAttributeEvolutions(q qbtypes.QueryInfo, keys []*telemetrytypes.TelemetryFieldKey) {
+	var evolutions []*telemetrytypes.EvolutionEntry
+	for _, e := range q.Evolutions {
+		if e != nil && e.FieldContext == telemetrytypes.FieldContextAttribute {
+			evolutions = append(evolutions, e)
+		}
+	}
+	if len(evolutions) == 0 {
+		return
+	}
+	for _, key := range keys {
+		if key.FieldContext == telemetrytypes.FieldContextAttribute && len(key.Evolutions) == 0 {
+			key.Evolutions = evolutions
+		}
+	}
 }
 
 // stampColumnType gives an untyped column key the data type its column reads

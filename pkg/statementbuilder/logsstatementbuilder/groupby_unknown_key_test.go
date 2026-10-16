@@ -47,7 +47,7 @@ func TestStatementBuilderGroupByUnknownKey(t *testing.T) {
 			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 			mockMetadataStore.KeysMap = logstelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 			storage := logstelemetryschema.NewStorage()
-			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage)
 			statementBuilder := NewLogQueryStatementBuilder(
 				instrumentationtest.New().ToProviderSettings(),
 				mockMetadataStore, storage, aggExprRewriter,

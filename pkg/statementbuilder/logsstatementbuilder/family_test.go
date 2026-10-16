@@ -58,7 +58,7 @@ func TestStatementBuilderResolvesLogFamilies(t *testing.T) {
 			}
 			mockMetadataStore.KeysMap = keys
 			storage := logstelemetryschema.NewStorage()
-			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage)
 			statementBuilder := NewLogQueryStatementBuilder(
 				instrumentationtest.New().ToProviderSettings(),
 				mockMetadataStore, storage, aggExprRewriter,
@@ -114,7 +114,7 @@ func TestStatementBuilderResolvesLogFamilyFilteredAggregation(t *testing.T) {
 			}
 			mockMetadataStore.KeysMap = keys
 			storage := logstelemetryschema.NewStorage()
-			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage)
 			statementBuilder := NewLogQueryStatementBuilder(
 				instrumentationtest.New().ToProviderSettings(),
 				mockMetadataStore, storage, aggExprRewriter,
@@ -169,7 +169,7 @@ func TestStatementBuilderResolvesSingleSpellingAcrossNames(t *testing.T) {
 			}}
 			mockMetadataStore.KeysMap = keys
 			storage := logstelemetryschema.NewStorage()
-			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage)
 			statementBuilder := NewLogQueryStatementBuilder(
 				instrumentationtest.New().ToProviderSettings(),
 				mockMetadataStore, storage, aggExprRewriter,
@@ -229,7 +229,7 @@ func TestStatementBuilderResolvesLogFamilyGroupBy(t *testing.T) {
 			}
 			mockMetadataStore.KeysMap = keys
 			storage := logstelemetryschema.NewStorage()
-			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage)
 			statementBuilder := NewLogQueryStatementBuilder(
 				instrumentationtest.New().ToProviderSettings(),
 				mockMetadataStore, storage, aggExprRewriter,

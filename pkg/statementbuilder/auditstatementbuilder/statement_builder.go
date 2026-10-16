@@ -42,7 +42,7 @@ func NewFactory(
 		factory.MustNewName("audit"),
 		func(_ context.Context, settings factory.ProviderSettings, _ statementbuilder.Config) (qbtypes.StatementBuilder[qbtypes.LogAggregation], error) {
 			storage := audittelemetryschema.NewStorage()
-			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, audittelemetryschema.DefaultFullTextColumn, storage, fl, telemetrytypes.SignalLogs)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, audittelemetryschema.DefaultFullTextColumn, storage)
 			return NewAuditQueryStatementBuilder(
 				settings, metadataStore, storage, aggExprRewriter, audittelemetryschema.DefaultFullTextColumn, fl,
 			), nil
@@ -354,7 +354,7 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 
 	allAggChArgs := make([]any, 0)
 	for i, agg := range query.Aggregations {
-		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(ctx, orgID, start, end, agg.Expression, uint64(query.StepInterval.Seconds()), keys)
+		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(ctx, info, agg.Expression, uint64(query.StepInterval.Seconds()), keys)
 		if err != nil {
 			return nil, err
 		}
@@ -492,7 +492,7 @@ func (b *auditQueryStatementBuilder) buildScalarQuery(
 	if len(query.Aggregations) > 0 {
 		for idx := range query.Aggregations {
 			aggExpr := query.Aggregations[idx]
-			rewritten, chArgs, err := b.aggExprRewriter.Rewrite(ctx, orgID, start, end, aggExpr.Expression, rateInterval, keys)
+			rewritten, chArgs, err := b.aggExprRewriter.Rewrite(ctx, info, aggExpr.Expression, rateInterval, keys)
 			if err != nil {
 				return nil, err
 			}

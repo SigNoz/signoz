@@ -31,6 +31,21 @@ func NewQueryInfo(ctx context.Context, orgID valuer.UUID, fl flagger.Flagger, si
 	return q
 }
 
+// LoadColumnEvolutions loads the column-wide evolution entries a key metadata
+// does not report still reads through: the JSON span attributes column, when
+// the flag puts it on the query path. Any other query keeps q as it is.
+func LoadColumnEvolutions(ctx context.Context, q qbtypes.QueryInfo, store telemetrytypes.MetadataStore) (qbtypes.QueryInfo, error) {
+	if store == nil || q.Signal != telemetrytypes.SignalTraces || !q.TraceAttrsJSONOn {
+		return q, nil
+	}
+	evolutions, err := store.GetColumnEvolutions(ctx, q.Signal, telemetrytypes.FieldContextAttribute)
+	if err != nil {
+		return q, err
+	}
+	q.Evolutions = evolutions
+	return q, nil
+}
+
 // Resolve turns one requested key into its meanings, one time for each
 // use. The order is the same for every storage, in the filter and in every
 // select field, group by, order by, and aggregation:

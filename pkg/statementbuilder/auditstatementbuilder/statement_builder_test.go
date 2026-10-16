@@ -56,7 +56,7 @@ func newTestAuditStatementBuilder(t *testing.T) *auditQueryStatementBuilder {
 	mockMetadataStore.KeysMap = auditFieldKeyMap()
 
 	storage := audittelemetryschema.NewStorage()
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage)
 
 	return NewAuditQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),

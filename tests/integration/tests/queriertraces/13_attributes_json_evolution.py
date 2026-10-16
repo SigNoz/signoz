@@ -13,8 +13,11 @@ from fixtures.querier import (
     build_aggregation,
     build_group_by_field,
     build_traces_scalar_query,
+    get_all_warnings,
+    get_preview_sql,
     get_rows,
     index_series_by_label,
+    make_preview_query_request,
     make_query_request,
 )
 from fixtures.traces import TraceIdGenerator, Traces
@@ -410,3 +413,79 @@ def test_traces_attributes_json_list_view(
         assert row["data"]["name"] == name
         # int/float compare equal in Python, so map-sourced float64 and JSON-sourced numbers both match.
         assert row["data"]["attributes"] == attributes, name
+
+
+def test_traces_attributes_json_unreported_key(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+    seed_attribute_evolution: Callable[[str, datetime], None],
+) -> None:
+    """An attribute metadata does not report follows the rollout like a reported one: the legacy
+    map before it, the attributes JSON column after it."""
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    evolution_time = datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=30)
+    seed_attribute_evolution("traces", evolution_time)
+
+    before = evolution_time - timedelta(minutes=5)
+    after = evolution_time + timedelta(minutes=5)
+    spans = [
+        Traces(
+            timestamp=before,
+            trace_id=TraceIdGenerator.trace_id(),
+            span_id=TraceIdGenerator.span_id(),
+            name="before",
+            attributes={"unreported.key": "value"},
+            attribute_write_mode="legacy_only",
+        ),
+        Traces(
+            timestamp=after,
+            trace_id=TraceIdGenerator.trace_id(),
+            span_id=TraceIdGenerator.span_id(),
+            name="after",
+            attributes={"unreported.key": "value"},
+            attribute_write_mode="json_only",
+        ),
+    ]
+    # no metadata rows, so the querier does not know the key
+    for span in spans:
+        span.attribute_keys = []
+        span.tag_attributes = []
+    insert_traces(spans)
+
+    queries = [
+        build_traces_scalar_query(
+            aggregations=[build_aggregation("count()")],
+            filter_expression="unreported.key = 'value'",
+        )
+    ]
+
+    # before the rollout -> legacy map
+    start_ms = int((before - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((before + timedelta(minutes=1)).timestamp() * 1000)
+
+    sql = get_preview_sql(make_preview_query_request(signoz, token, start_ms=start_ms, end_ms=end_ms, queries=queries), "A")
+    assert "attributes_string['unreported.key']" in sql
+    assert "attributes.`unreported.key`" not in sql
+
+    response = make_query_request(signoz, token, start_ms=start_ms, end_ms=end_ms, queries=queries)
+    assert response.status_code == HTTPStatus.OK
+    series = response.json()["data"]["data"]["results"][0]["aggregations"][0]["series"]
+    assert [value["value"] for value in series[0]["values"]] == [1]
+    assert any("not found in metadata" in warning.get("message", "") for warning in get_all_warnings(response.json()))
+
+    # after the rollout -> attributes JSON column
+    start_ms = int((after - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((after + timedelta(minutes=1)).timestamp() * 1000)
+
+    sql = get_preview_sql(make_preview_query_request(signoz, token, start_ms=start_ms, end_ms=end_ms, queries=queries), "A")
+    assert "attributes.`unreported.key`" in sql
+    assert "attributes_string" not in sql
+
+    response = make_query_request(signoz, token, start_ms=start_ms, end_ms=end_ms, queries=queries)
+    assert response.status_code == HTTPStatus.OK
+    series = response.json()["data"]["data"]["results"][0]["aggregations"][0]["series"]
+    assert [value["value"] for value in series[0]["values"]] == [1]
+    assert any("not found in metadata" in warning.get("message", "") for warning in get_all_warnings(response.json()))
