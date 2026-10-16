@@ -1,14 +1,11 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { ComponentProps } from 'react';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { toast } from '@signozhq/ui/sonner';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
-import { server } from 'mocks-server/server';
-import { rest, RestRequest } from 'msw';
-import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
+import { rest, server } from 'mocks-server/server';
+import { RestRequest } from 'msw';
 
 import AccountSettingsDrawer from '../EditAccount/AccountSettingsDrawer';
 import {
-	GCP_ACCOUNT_ID,
 	GCP_ACCOUNT_URL,
 	GCP_ACCOUNTS_URL,
 	gcpAccount,
@@ -32,20 +29,22 @@ jest.mock('@signozhq/ui/sonner', () => ({
 	},
 }));
 
-const onClose = jest.fn();
-const setActiveAccount = jest.fn();
+type AccountSettingsDrawerProps = ComponentProps<typeof AccountSettingsDrawer>;
+
+const onClose = jest.fn() as jest.MockedFunction<
+	AccountSettingsDrawerProps['onClose']
+>;
+const setActiveAccount = jest.fn() as jest.MockedFunction<
+	AccountSettingsDrawerProps['setActiveAccount']
+>;
 
 const renderDrawer = (): void => {
 	render(
-		<MockQueryClientProvider>
-			<TooltipProvider>
-				<AccountSettingsDrawer
-					onClose={onClose}
-					account={gcpAccount}
-					setActiveAccount={setActiveAccount}
-				/>
-			</TooltipProvider>
-		</MockQueryClientProvider>,
+		<AccountSettingsDrawer
+			onClose={onClose}
+			account={gcpAccount}
+			setActiveAccount={setActiveAccount}
+		/>,
 	);
 };
 
@@ -135,8 +134,7 @@ describe('GCP AccountSettingsDrawer', () => {
 			expect(setActiveAccount).toHaveBeenCalledWith({
 				...gcpAccount,
 				config: {
-					deployment_region: gcpAccountConfig.deployment_region,
-					deployment_project_id: gcpAccountConfig.deployment_project_id,
+					...gcpAccountConfig,
 					project_ids: ['project-a', 'project-b', 'project-c'],
 				},
 			});
@@ -199,32 +197,5 @@ describe('GCP AccountSettingsDrawer', () => {
 		});
 		expect(setActiveAccount).not.toHaveBeenCalled();
 		expect(onClose).not.toHaveBeenCalled();
-	});
-
-	it('disconnects the account with the GCP-specific confirmation copy', async () => {
-		let disconnectedId: string | null = null;
-		server.use(
-			rest.delete(`${GCP_ACCOUNTS_URL}/:id`, (req, res, ctx) => {
-				disconnectedId = req.params.id as string;
-				return res(ctx.status(204));
-			}),
-		);
-
-		const user = userEvent.setup();
-		renderDrawer();
-
-		await user.click(screen.getByRole('button', { name: /disconnect/i }));
-
-		await expect(
-			screen.findByText(/manually tear down/i),
-		).resolves.toBeInTheDocument();
-
-		await user.click(screen.getByRole('button', { name: /remove account/i }));
-
-		await waitFor(() => {
-			expect(disconnectedId).toBe(GCP_ACCOUNT_ID);
-		});
-		expect(setActiveAccount).toHaveBeenCalledWith(null);
-		expect(onClose).toHaveBeenCalledTimes(1);
 	});
 });

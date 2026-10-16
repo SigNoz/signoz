@@ -23,11 +23,11 @@ import { toAPIError } from 'utils/errorUtils';
 
 import logEvent from '../../../api/common/logEvent';
 
-interface UseCloudAccountSetupDrawerProps {
+interface UseManualAccountSetupProps {
 	onClose: () => void;
 }
 
-interface UseCloudAccountSetupDrawer {
+interface UseManualAccountSetup {
 	isLoading: boolean;
 	connectAccount: (values: GcpSetupFormValues) => Promise<void>;
 	handleClose: () => void;
@@ -37,9 +37,9 @@ interface UseCloudAccountSetupDrawer {
 	clearSubmitError: () => void;
 }
 
-export function useCloudAccountSetupDrawer({
+export function useManualAccountSetup({
 	onClose,
-}: UseCloudAccountSetupDrawerProps): UseCloudAccountSetupDrawer {
+}: UseManualAccountSetupProps): UseManualAccountSetup {
 	const queryClient = useQueryClient();
 	const [isLoading, setIsLoading] = useState(false);
 	const [submitError, setSubmitError] = useState<string | null>(null);

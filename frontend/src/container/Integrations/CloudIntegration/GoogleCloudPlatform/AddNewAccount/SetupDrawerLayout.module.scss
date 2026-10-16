@@ -1,0 +1,61 @@
+.setupDrawer {
+	--dialog-header-padding: var(--spacing-10) var(--spacing-12);
+	--dialog-footer-padding: var(--spacing-8) var(--spacing-12);
+
+	// Input and ComboboxSimple default to --border borders, inherited text and
+	// --muted-foreground placeholders; the drawer wants the dimmer --l2-border with
+	// brighter values and duller placeholders. Backgrounds are left alone — both
+	// components default to transparent and every field sits on an --l2-background
+	// surface already. Focus borders stay at their per-component defaults.
+	--input-border-color: var(--l2-border);
+	--input-hover-border-color: var(--l2-border);
+	--input-foreground: var(--l1-foreground);
+	--input-placeholder-color: var(--l3-foreground);
+	--combobox-trigger-border-color: var(--l2-border);
+
+	// Bounded flex column so the header/footer stay put and only the body
+	// scrolls when content overflows.
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+
+	[data-slot='drawer-header'],
+	[data-slot='drawer-footer'] {
+		flex-shrink: 0;
+	}
+
+	// The drawer body renders inside [data-slot='drawer-description'] — this is
+	// the only region allowed to scroll.
+	[data-slot='drawer-description'] {
+		display: flex;
+		flex: 1 1 auto;
+		flex-direction: column;
+		gap: var(--spacing-10);
+		min-height: 0;
+		padding: var(--spacing-10) var(--spacing-12);
+		overflow-y: auto;
+	}
+
+	[data-slot='select-content'] {
+		width: var(--radix-select-trigger-width);
+	}
+
+	[data-slot='combobox-content'] {
+		z-index: 5;
+		background: var(--l1-background);
+		border: 1px solid var(--l2-border);
+		border-radius: var(--radius-2);
+	}
+}
+
+.title {
+	h3 {
+		margin: 0;
+		font-size: var(--periscope-font-size-medium);
+		font-weight: var(--font-weight-semibold);
+	}
+}
+
+.footerSlot {
+	width: 100%;
+}

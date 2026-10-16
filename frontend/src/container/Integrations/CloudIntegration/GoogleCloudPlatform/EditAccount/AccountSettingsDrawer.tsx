@@ -5,6 +5,7 @@ import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Form, Select } from 'antd';
 import { invalidateListAccounts } from 'api/generated/services/cloudintegration';
+import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import { CloudAccount } from 'container/Integrations/types';
 import { useAccountSettingsDrawer } from 'hooks/integration/gcp/useAccountSettingsDrawer';
@@ -40,6 +41,10 @@ function AccountSettingsDrawer({
 		() => ('project_ids' in account.config ? account.config : null),
 		[account.config],
 	);
+	// The backend rejects updates to agent accounts, so their settings are read-only.
+	const isAgentAccount =
+		gcpConfig?.connection_method ===
+		CloudintegrationtypesGCPConnectionMethodDTO.agent;
 
 	return (
 		<DrawerWrapper
@@ -65,18 +70,21 @@ function AccountSettingsDrawer({
 							handleClose();
 						}}
 						cloudProvider={INTEGRATION_TYPES.GCP}
+						gcpConnectionMethod={gcpConfig?.connection_method}
 					/>
-					<Button
-						variant="solid"
-						color="secondary"
-						disabled={isSaveDisabled}
-						onClick={handleSubmit}
-						loading={isLoading}
-						prefix={<Save size={14} />}
-						data-testid="gcp-update-account-btn"
-					>
-						Update Changes
-					</Button>
+					{!isAgentAccount && (
+						<Button
+							variant="solid"
+							color="secondary"
+							disabled={isSaveDisabled}
+							onClick={handleSubmit}
+							loading={isLoading}
+							prefix={<Save size={14} />}
+							data-testid="gcp-update-account-btn"
+						>
+							Update Changes
+						</Button>
+					)}
 				</div>
 			}
 		>
@@ -118,35 +126,47 @@ function AccountSettingsDrawer({
 						</div>
 					)}
 
-					<div className={styles.regionSelector}>
-						<div className={styles.regionSelectorTitle}>Projects to monitor</div>
-						<div className={styles.regionSelectorDescription}>
-							Update the GCP project IDs that should be monitored.
+					{isAgentAccount ? (
+						<div className={styles.regionSelector}>
+							<div className={styles.regionSelectorTitle}>Projects to monitor</div>
+							<div
+								className={styles.regionSelectorDescription}
+								data-testid="gcp-agent-monitored-projects"
+							>
+								{gcpConfig?.project_ids.join(', ')}
+							</div>
 						</div>
+					) : (
+						<div className={styles.regionSelector}>
+							<div className={styles.regionSelectorTitle}>Projects to monitor</div>
+							<div className={styles.regionSelectorDescription}>
+								Update the GCP project IDs that should be monitored.
+							</div>
 
-						<Form.Item
-							name="projectIds"
-							rules={[
-								{
-									required: true,
-									type: 'array',
-									min: 1,
-									message: 'Please add at least one project ID',
-								},
-							]}
-						>
-							<Select
-								mode="tags"
-								value={projectIds}
-								tokenSeparators={[',']}
-								onChange={(values): void => {
-									setProjectIds(values);
-									form.setFieldValue('projectIds', values);
-								}}
-								data-testid="gcp-edit-project-ids-select"
-							/>
-						</Form.Item>
-					</div>
+							<Form.Item
+								name="projectIds"
+								rules={[
+									{
+										required: true,
+										type: 'array',
+										min: 1,
+										message: 'Please add at least one project ID',
+									},
+								]}
+							>
+								<Select
+									mode="tags"
+									value={projectIds}
+									tokenSeparators={[',']}
+									onChange={(values): void => {
+										setProjectIds(values);
+										form.setFieldValue('projectIds', values);
+									}}
+									data-testid="gcp-edit-project-ids-select"
+								/>
+							</Form.Item>
+						</div>
+					)}
 				</div>
 			</Form>
 		</DrawerWrapper>

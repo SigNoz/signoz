@@ -1,4 +1,7 @@
-import { CloudintegrationtypesAccountDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	CloudintegrationtypesAccountDTO,
+	CloudintegrationtypesGCPConnectionMethodDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { CloudAccount as IntegrationCloudAccount } from 'container/Integrations/types';
 
 import { CloudAccount as AwsCloudAccount } from './AmazonWebServices/types';
@@ -59,6 +62,9 @@ export function mapAccountDtoToGcpCloudAccount(
 		id: account.id,
 		cloud_account_id: account.id,
 		config: {
+			connection_method:
+				account.config?.gcp?.connectionMethod ??
+				CloudintegrationtypesGCPConnectionMethodDTO.manual,
 			deployment_region: account.config?.gcp?.deploymentRegion ?? '',
 			deployment_project_id: account.config?.gcp?.deploymentProjectId ?? '',
 			project_ids: account.config?.gcp?.projectIds ?? [],

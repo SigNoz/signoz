@@ -10,7 +10,7 @@
 	composes: drawerSurfaceHead from './shared.module.scss';
 }
 
-.flowRadioGroup {
+.methodRadioGroup {
 	--radio-group-item-border-color: var(--l2-border);
 
 	display: flex;
@@ -18,7 +18,7 @@
 	gap: var(--spacing-4);
 	width: 100%;
 
-	.flowRadio {
+	.methodRadio {
 		display: flex;
 		flex-direction: row;
 		align-items: flex-start;
@@ -53,7 +53,7 @@
 			color: inherit;
 		}
 
-		&.flowRadioManual:has(button[data-state='checked']) {
+		&:has(button[data-state='checked']) {
 			background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
 			border-color: color-mix(in srgb, var(--accent-primary) 30%, transparent);
 		}
@@ -73,12 +73,12 @@
 	}
 }
 
-.flowRadioTitle {
+.methodRadioTitle {
 	display: flex;
 	gap: var(--spacing-2);
 	align-items: center;
 }
 
-.flowRadioDesc {
+.methodRadioDesc {
 	margin-top: var(--spacing-2);
 }

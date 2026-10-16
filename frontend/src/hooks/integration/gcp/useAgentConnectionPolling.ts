@@ -1,0 +1,66 @@
+import { useEffect, useRef } from 'react';
+import { useGetAccount } from 'api/generated/services/cloudintegration';
+import { CloudintegrationtypesAccountDTO } from 'api/generated/services/sigNoz.schemas';
+import { INTEGRATION_TYPES } from 'container/Integrations/constants';
+
+const POLL_INTERVAL_MS = 10 * 1000;
+const CONNECTION_TIMEOUT_MS = 10 * 60 * 1000;
+
+interface UseAgentConnectionPollingProps {
+	accountId: string | null;
+	enabled: boolean;
+	onConnected: (account: CloudintegrationtypesAccountDTO) => void;
+	onTimeout: () => void;
+	onError: () => void;
+	refetchInterval?: number;
+	timeoutMs?: number;
+}
+
+/**
+ * Polls a GCP agent account until the agent checks in. The timeout is measured
+ * from when polling gets enabled, so re-enabling it starts a fresh window.
+ */
+export function useAgentConnectionPolling({
+	accountId,
+	enabled,
+	onConnected,
+	onTimeout,
+	onError,
+	refetchInterval = POLL_INTERVAL_MS,
+	timeoutMs = CONNECTION_TIMEOUT_MS,
+}: UseAgentConnectionPollingProps): void {
+	const isPolling = enabled && Boolean(accountId);
+	const startTimeRef = useRef<number | null>(null);
+
+	useEffect(() => {
+		startTimeRef.current = isPolling ? Date.now() : null;
+	}, [isPolling]);
+
+	useGetAccount(
+		{ cloudProvider: INTEGRATION_TYPES.GCP, id: accountId ?? '' },
+		{
+			query: {
+				enabled: isPolling,
+				refetchInterval,
+				select: (response): CloudintegrationtypesAccountDTO => response.data,
+				onSuccess: (account) => {
+					const isConnected =
+						Boolean(account.providerAccountId) && account.removedAt === null;
+
+					if (isConnected) {
+						onConnected(account);
+						return;
+					}
+
+					const startTime = startTimeRef.current ?? Date.now();
+					if (Date.now() - startTime >= timeoutMs) {
+						onTimeout();
+					}
+				},
+				onError: () => {
+					onError();
+				},
+			},
+		},
+	);
+}

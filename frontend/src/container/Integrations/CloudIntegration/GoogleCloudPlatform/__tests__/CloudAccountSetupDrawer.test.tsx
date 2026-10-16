@@ -1,9 +1,7 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
-import { server } from 'mocks-server/server';
-import { rest, RestRequest } from 'msw';
-import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
+import { ComponentProps } from 'react';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { rest, server } from 'mocks-server/server';
+import { RestRequest } from 'msw';
 
 import CloudAccountSetupDrawer from '../AddNewAccount/CloudAccountSetupDrawer';
 import {
@@ -17,7 +15,7 @@ import {
 	GCP_CREDENTIALS_URL,
 } from './mockData';
 
-// `useCloudAccountSetupDrawer` imports logEvent by relative path, which the
+// `useManualAccountSetup` imports logEvent by relative path, which the
 // jest.config moduleNameMapper (keyed on the `api/common/logEvent` alias) does
 // not intercept, so mock the resolved module directly.
 jest.mock('../../../../../api/common/logEvent', () => ({
@@ -25,16 +23,12 @@ jest.mock('../../../../../api/common/logEvent', () => ({
 	default: jest.fn(),
 }));
 
-const onClose = jest.fn();
+const onClose = jest.fn() as jest.MockedFunction<
+	ComponentProps<typeof CloudAccountSetupDrawer>['onClose']
+>;
 
 const renderDrawer = (): void => {
-	render(
-		<MockQueryClientProvider>
-			<TooltipProvider>
-				<CloudAccountSetupDrawer onClose={onClose} />
-			</TooltipProvider>
-		</MockQueryClientProvider>,
-	);
+	render(<CloudAccountSetupDrawer onClose={onClose} />);
 };
 
 describe('GCP CloudAccountSetupDrawer', () => {
@@ -109,6 +103,13 @@ describe('GCP CloudAccountSetupDrawer', () => {
 	});
 
 	it('creates the account, checks the agent in, and closes the drawer', async () => {
+		// A slow check-in keeps the connection in flight long enough to observe it.
+		server.use(
+			rest.post(GCP_CHECK_IN_URL, async (req: RestRequest, res, ctx) => {
+				checkInPayload = await req.json();
+				return res(ctx.delay(300), ctx.status(200), ctx.json(checkInResponse));
+			}),
+		);
 		const user = userEvent.setup();
 		renderDrawer();
 
@@ -134,6 +135,11 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		await user.type(projectIdsInput, 'project-a,project-b,');
 
 		await user.click(screen.getByTestId('gcp-connect-account-btn'));
+
+		// Switching away mid-request would let its success close the other form.
+		await waitFor(() => {
+			expect(screen.getByTestId('gcp-connection-method-agent')).toBeDisabled();
+		});
 
 		await waitFor(() => {
 			expect(createAccountPayload).not.toBeNull();
