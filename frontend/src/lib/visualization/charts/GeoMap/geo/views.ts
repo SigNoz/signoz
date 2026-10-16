@@ -3,6 +3,7 @@ import type { MultiPolygon, Position } from 'geojson';
 import {
 	CountryFeature,
 	GeoMapDatum,
+	GeoMapProjection,
 	GeoMapView,
 	GeoMapViewPreset,
 	LonLatBox,
@@ -15,6 +16,12 @@ import { COUNTRY_BY_ISO2 } from './countries';
 const WORLD_BOX: LonLatBox = [
 	[-180, -58],
 	[180, 75],
+];
+
+/** Equal Earth and Natural Earth don't stretch the Arctic, so it shows up to Greenland's tip. */
+const UNSTRETCHED_WORLD_BOX: LonLatBox = [
+	[-180, -58],
+	[180, 84],
 ];
 
 /**
@@ -245,6 +252,7 @@ function getPointsBox(
 /** The lon/lat box a view frames. */
 export function getViewBox(
 	view: GeoMapView,
+	projection: GeoMapProjection,
 	data: GeoMapDatum[],
 	country?: SubdivisionCountry,
 	points?: { lat: number; lon: number }[],
@@ -263,5 +271,8 @@ export function getViewBox(
 			return box;
 		}
 	}
-	return VIEW_PRESETS[view].box;
+	const { box } = VIEW_PRESETS[view];
+	return box === WORLD_BOX && projection !== 'mercator'
+		? UNSTRETCHED_WORLD_BOX
+		: box;
 }

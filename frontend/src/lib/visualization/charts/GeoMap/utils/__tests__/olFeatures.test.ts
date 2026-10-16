@@ -15,11 +15,15 @@ import {
 	toShapeFeatures,
 	toWebGLPointFeatures,
 } from '../olFeatures';
+import { toOlProjection } from '../olProjections';
 
 const datum = (code: string): GeoMapDatum => ({ code, value: 1, raw: code });
 
 describe('toShapeFeatures', () => {
-	const { members, context } = toShapeFeatures(getCountryShapes('europe'));
+	const { members, context } = toShapeFeatures(
+		getCountryShapes('europe'),
+		'mercator',
+	);
 	const codes = (features: typeof members): unknown[] =>
 		features.map((feature) => feature.get('code'));
 
@@ -37,19 +41,22 @@ describe('toShapeFeatures', () => {
 });
 
 describe('findShapeAt', () => {
-	const { members, context } = toShapeFeatures(getCountryShapes('europe'));
+	const { members, context } = toShapeFeatures(
+		getCountryShapes('europe'),
+		'mercator',
+	);
 	const sources = [
 		new VectorSource({ features: members }),
 		new VectorSource({ features: context }),
 	];
 
 	it('finds the member or context shape a point falls in', () => {
-		expect(findShapeAt(sources, [2.35, 48.86])).toBe('FR');
-		expect(findShapeAt(sources, [78.49, 17.39])).toBe('IN');
+		expect(findShapeAt(sources, [2.35, 48.86], 'mercator')).toBe('FR');
+		expect(findShapeAt(sources, [78.49, 17.39], 'mercator')).toBe('IN');
 	});
 
 	it('finds nothing at sea', () => {
-		expect(findShapeAt(sources, [-30, 30])).toBeNull();
+		expect(findShapeAt(sources, [-30, 30], 'mercator')).toBeNull();
 	});
 });
 
@@ -59,6 +66,7 @@ describe('toBubbleFeatures', () => {
 		const bubbles = toBubbleFeatures(
 			[datum('DE'), datum('US'), datum('ZZ')],
 			shapes,
+			'mercator',
 		);
 		const label = COUNTRY_BY_ISO2.get('DE')?.properties.label as [number, number];
 
@@ -71,21 +79,70 @@ describe('toBubbleFeatures', () => {
 
 describe('getViewExtent', () => {
 	it('spans the whole world in Web Mercator', () => {
-		expect(getViewExtent('world', [], undefined)).toStrictEqual(
+		expect(getViewExtent('world', 'mercator', [], undefined)).toStrictEqual(
 			transformExtent([-180, -58, 180, 75], 'EPSG:4326', 'EPSG:3857'),
 		);
 	});
 
 	it('frames the US by its lower 48', () => {
-		const [west] = getViewExtent('country', [], 'US');
+		const [west] = getViewExtent('country', 'mercator', [], 'US');
 		expect(west).toBeGreaterThan(fromLonLat([-130, 40])[0]);
+	});
+
+	describe('on Equal Earth', () => {
+		const code = toOlProjection('equal_earth');
+		const [west, , , north] = getViewExtent(
+			'world',
+			'equal_earth',
+			[],
+			undefined,
+		);
+
+		it('frames the bulge at the equator, not just the box corners', () => {
+			expect(west).toBeLessThan(fromLonLat([-180, -58], code)[0]);
+			expect(west).toBeCloseTo(fromLonLat([-180, 0], code)[0], -5);
+		});
+
+		it('shows the Arctic Mercator crops', () => {
+			expect(north).toBeCloseTo(fromLonLat([0, 84], code)[1], 3);
+		});
+	});
+});
+
+describe('on Equal Earth', () => {
+	const shapes = getCountryShapes('europe');
+	const { members, context } = toShapeFeatures(shapes, 'equal_earth');
+	const code = toOlProjection('equal_earth');
+
+	it('projects outlines and labels into it', () => {
+		const germany = members.find((feature) => feature.get('code') === 'DE');
+		const [west] = germany?.getGeometry()?.getExtent() ?? [];
+		expect(west).toBeGreaterThan(fromLonLat([5, 50], code)[0]);
+		expect(west).toBeLessThan(fromLonLat([7, 50], code)[0]);
+
+		const de = toLabelFeatures(shapes, members, 'equal_earth').find(
+			(feature) => feature.get('code') === 'DE',
+		);
+		const label = COUNTRY_BY_ISO2.get('DE')?.properties.label as [number, number];
+		expect(de?.getGeometry()?.getExtent().slice(0, 2)).toStrictEqual(
+			fromLonLat(label, code),
+		);
+	});
+
+	it('finds the shape a lon/lat falls in', () => {
+		const sources = [
+			new VectorSource({ features: members }),
+			new VectorSource({ features: context }),
+		];
+		expect(findShapeAt(sources, [2.35, 48.86], 'equal_earth')).toBe('FR');
+		expect(findShapeAt(sources, [139.7, 35.7], 'equal_earth')).toBe('JP');
 	});
 });
 
 describe('toLabelFeatures', () => {
 	const shapes = getCountryShapes('world');
-	const { members } = toShapeFeatures(shapes);
-	const labels = toLabelFeatures(shapes, members);
+	const { members } = toShapeFeatures(shapes, 'mercator');
+	const labels = toLabelFeatures(shapes, members, 'mercator');
 	const label = (code: string) =>
 		labels.find((feature) => feature.get('code') === code);
 
@@ -107,9 +164,11 @@ describe('toLabelFeatures', () => {
 
 	it('labels members only, never the faint neighbours', () => {
 		const europe = getCountryShapes('europe');
-		const codes = toLabelFeatures(europe, toShapeFeatures(europe).members).map(
-			(feature) => feature.get('code'),
-		);
+		const codes = toLabelFeatures(
+			europe,
+			toShapeFeatures(europe, 'mercator').members,
+			'mercator',
+		).map((feature) => feature.get('code'));
 		expect(codes).toContain('DE');
 		expect(codes).not.toContain('US');
 	});
@@ -117,9 +176,10 @@ describe('toLabelFeatures', () => {
 
 describe('toPointFeatures', () => {
 	it('places each point at its lat/lon, keyed by its id', () => {
-		const [paris] = toPointFeatures([
-			{ id: 'p1', lat: 48.86, lon: 2.35, value: 1, label: 'Paris' },
-		]);
+		const [paris] = toPointFeatures(
+			[{ id: 'p1', lat: 48.86, lon: 2.35, value: 1, label: 'Paris' }],
+			'mercator',
+		);
 		const [x, y] = (paris.getGeometry() as Point).getCoordinates();
 		const [ex, ey] = fromLonLat([2.35, 48.86]);
 
@@ -143,6 +203,7 @@ describe('toWebGLPointFeatures', () => {
 			['large', 12],
 		]),
 		noData: '#333333',
+		projection: 'mercator',
 	});
 	const byId = (id: string) =>
 		features.find((feature) => feature.getId() === id);

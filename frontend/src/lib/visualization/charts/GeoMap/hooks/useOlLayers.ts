@@ -4,7 +4,12 @@ import Point from 'ol/geom/Point';
 import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
 
 import { GeoMapShapes } from '../geo/shapes';
-import { GeoMapDatum, GeoMapLayer, GeoMapPoint } from '../types';
+import {
+	GeoMapDatum,
+	GeoMapLayer,
+	GeoMapPoint,
+	GeoMapProjection,
+} from '../types';
 import {
 	toBubbleFeatures,
 	toLabelFeatures,
@@ -25,6 +30,7 @@ import { OlPointsLayer } from './useOlPointsLayer';
 interface UseOlLayersArgs {
 	handle: OlMapHandle | null;
 	shapes: GeoMapShapes | null;
+	projection: GeoMapProjection;
 	data: GeoMapDatum[];
 	/** Drawn instead of bubbles on the `points` layer. */
 	points?: GeoMapPoint[];
@@ -46,6 +52,7 @@ interface UseOlLayersArgs {
 export function useOlLayers({
 	handle,
 	shapes,
+	projection,
 	data,
 	points,
 	pointsLayer,
@@ -67,15 +74,17 @@ export function useOlLayers({
 		if (!handle || !shapes) {
 			return;
 		}
-		const { members, context } = toShapeFeatures(shapes);
+		const { members, context } = toShapeFeatures(shapes, projection);
 		const { layers } = handle;
 		layers.members.getSource()?.clear();
 		layers.members.getSource()?.addFeatures(members);
 		layers.context.getSource()?.clear();
 		layers.context.getSource()?.addFeatures(context);
 		layers.labels.getSource()?.clear();
-		layers.labels.getSource()?.addFeatures(toLabelFeatures(shapes, members));
-	}, [handle, shapes]);
+		layers.labels
+			.getSource()
+			?.addFeatures(toLabelFeatures(shapes, members, projection));
+	}, [handle, shapes, projection]);
 
 	useEffect(() => {
 		handle?.layers.labels.setVisible(showLabels);
@@ -90,19 +99,24 @@ export function useOlLayers({
 		// Points go to the GPU layer (next effect), or here without WebGL.
 		if (layer === 'points' && pointsLayer?.status === 'unsupported') {
 			source?.addFeatures(
-				toPointFeatures((points ?? []).filter((point) => sizeByCode.has(point.id))),
+				toPointFeatures(
+					(points ?? []).filter((point) => sizeByCode.has(point.id)),
+					projection,
+				),
 			);
 		} else if (showBubbles) {
 			source?.addFeatures(
 				toBubbleFeatures(
 					data.filter((datum) => sizeByCode.has(datum.code)),
 					shapes,
+					projection,
 				),
 			);
 		}
 	}, [
 		handle,
 		shapes,
+		projection,
 		data,
 		points,
 		pointsLayer,
@@ -129,9 +143,19 @@ export function useOlLayers({
 				radiusFor,
 				sizeByCode,
 				noData: palette.noData,
+				projection,
 			}),
 		);
-	}, [gpuLayer, layer, points, palette, fillFor, radiusFor, sizeByCode]);
+	}, [
+		gpuLayer,
+		layer,
+		points,
+		projection,
+		palette,
+		fillFor,
+		radiusFor,
+		sizeByCode,
+	]);
 
 	useEffect(() => {
 		if (!handle || !palette) {
@@ -216,5 +240,14 @@ export function useOlLayers({
 		if (shape) {
 			source?.addFeature(new Feature(shape.getGeometry()?.clone()));
 		}
-	}, [handle, hoveredCode, shapes, layer, gpuLayer, radiusFor, sizeByCode]);
+	}, [
+		handle,
+		hoveredCode,
+		shapes,
+		projection,
+		layer,
+		gpuLayer,
+		radiusFor,
+		sizeByCode,
+	]);
 }

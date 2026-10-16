@@ -5,11 +5,13 @@ import type { Extent } from 'ol/extent';
 import {
 	GeoMapDatum,
 	GeoMapPoint,
+	GeoMapProjection,
 	GeoMapView,
 	SubdivisionCountry,
 } from '../types';
 import { MAX_ZOOM, ZOOM_STEP } from '../utils/zoom';
 import { getViewExtent } from '../utils/olFeatures';
+import { toOlProjection } from '../utils/olProjections';
 import { OlMapHandle } from './useOlMap';
 
 const PADDING = [8, 8, 8, 8];
@@ -27,11 +29,13 @@ interface OlZoom {
 
 /**
  * Frames the view's box and holds the map inside it: no zooming out past the
- * fit, no panning off its edges. Refits on view, country or size change.
+ * fit, no panning off its edges. Refits on view, projection, country or size
+ * change.
  */
 export function useOlView(
 	handle: OlMapHandle | null,
 	view: GeoMapView,
+	projection: GeoMapProjection,
 	country: SubdivisionCountry | undefined,
 	data: GeoMapDatum[],
 	width: number,
@@ -48,9 +52,19 @@ export function useOlView(
 		if (!handle || width === 0 || height === 0) {
 			return undefined;
 		}
-		const extent = getViewExtent(view, fitData ?? [], country, fitPoints);
+		const extent = getViewExtent(
+			view,
+			projection,
+			fitData ?? [],
+			country,
+			fitPoints,
+		);
 		extentRef.current = extent;
-		const olView = new View({ extent, showFullExtent: true });
+		const olView = new View({
+			extent,
+			showFullExtent: true,
+			projection: toOlProjection(projection),
+		});
 		handle.map.setView(olView);
 		handle.map.updateSize();
 		olView.fit(extent, { padding: PADDING });
@@ -61,7 +75,7 @@ export function useOlView(
 		const sync = (): void => setZoom({ current: olView.getZoom() ?? min, min });
 		olView.on('change:resolution', sync);
 		return (): void => olView.un('change:resolution', sync);
-	}, [handle, view, country, fitData, fitPoints, width, height]);
+	}, [handle, view, projection, country, fitData, fitPoints, width, height]);
 
 	const step = useCallback(
 		(levels: number) => {

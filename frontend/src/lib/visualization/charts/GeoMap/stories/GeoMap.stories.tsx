@@ -22,6 +22,7 @@ const meta = {
 		dataset: 'errorRate',
 		statesOf: 'none',
 		view: 'world',
+		projection: 'mercator',
 		layer: 'regions',
 		showLabels: true,
 		legendPosition: LegendPosition.BOTTOM,
@@ -70,6 +71,10 @@ const meta = {
 			labels: Object.fromEntries(
 				Object.entries(VIEW_PRESETS).map(([key, preset]) => [key, preset.label]),
 			),
+		},
+		projection: {
+			control: 'inline-radio',
+			options: ['mercator', 'equal_earth', 'natural_earth'],
 		},
 		layer: {
 			control: 'inline-radio',

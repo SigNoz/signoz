@@ -37,6 +37,7 @@ function setup(
 		useOlLayers({
 			handle: fake.handle,
 			shapes,
+			projection: 'mercator',
 			data: DATA,
 			layer,
 			palette: PALETTE,
@@ -195,6 +196,7 @@ describe('useOlLayers', () => {
 				useOlLayers({
 					handle: fake.handle,
 					shapes: getCountryShapes('europe'),
+					projection: 'mercator',
 					data: [],
 					points: POINTS,
 					// No WebGL in jsdom: the canvas fallback.

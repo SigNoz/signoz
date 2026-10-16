@@ -2,8 +2,9 @@ import { act, renderHook } from '@testing-library/react';
 import { getCenter } from 'ol/extent';
 import View from 'ol/View';
 
-import { GeoMapView, SubdivisionCountry } from '../../types';
+import { GeoMapProjection, GeoMapView, SubdivisionCountry } from '../../types';
 import { getViewExtent } from '../../utils/olFeatures';
+import { toOlProjection } from '../../utils/olProjections';
 import { MAX_ZOOM } from '../../utils/zoom';
 import { useOlView } from '../useOlView';
 import { createFakeOlMap } from './fakeOlMap';
@@ -11,8 +12,9 @@ import { createFakeOlMap } from './fakeOlMap';
 function setup(view: GeoMapView = 'europe', country?: SubdivisionCountry) {
 	const fake = createFakeOlMap();
 	const hook = renderHook(
-		({ width }) => useOlView(fake.handle, view, country, [], width, 400),
-		{ initialProps: { width: 800 } },
+		({ width, projection }: { width: number; projection: GeoMapProjection }) =>
+			useOlView(fake.handle, view, projection, country, [], width, 400),
+		{ initialProps: { width: 800, projection: 'mercator' } },
 	);
 	const olView = (): View => fake.handle.map.getView();
 	return { ...fake, ...hook, olView };
@@ -23,7 +25,9 @@ describe('useOlView', () => {
 		const { olView } = setup('europe');
 
 		const centre = olView().getCenter() as number[];
-		const expected = getCenter(getViewExtent('europe', [], undefined));
+		const expected = getCenter(
+			getViewExtent('europe', 'mercator', [], undefined),
+		);
 		expect(centre[0]).toBeCloseTo(expected[0], -2);
 		expect(centre[1]).toBeCloseTo(expected[1], -2);
 	});
@@ -67,7 +71,7 @@ describe('useOlView', () => {
 		act(() => result.current.reset());
 
 		expect(fit).toHaveBeenCalledWith(
-			getViewExtent('europe', [], undefined),
+			getViewExtent('europe', 'mercator', [], undefined),
 			expect.objectContaining({ duration: expect.any(Number) }),
 		);
 	});
@@ -76,15 +80,28 @@ describe('useOlView', () => {
 		const { setView, updateSize, rerender } = setup();
 		const views = setView.mock.calls.length;
 
-		rerender({ width: 600 });
+		rerender({ width: 600, projection: 'mercator' });
 
 		expect(setView.mock.calls).toHaveLength(views + 1);
 		expect(updateSize).toHaveBeenCalled();
 	});
 
+	it('refits in the new projection when it changes', () => {
+		const { rerender, olView } = setup('world');
+		expect(olView().getProjection().getCode()).toBe('EPSG:3857');
+
+		rerender({ width: 800, projection: 'equal_earth' });
+
+		expect(olView().getProjection().getCode()).toBe(
+			toOlProjection('equal_earth'),
+		);
+	});
+
 	it('waits for the panel to have a size', () => {
 		const fake = createFakeOlMap();
-		renderHook(() => useOlView(fake.handle, 'world', undefined, [], 0, 0));
+		renderHook(() =>
+			useOlView(fake.handle, 'world', 'mercator', undefined, [], 0, 0),
+		);
 		expect(fake.setView).not.toHaveBeenCalled();
 	});
 });
