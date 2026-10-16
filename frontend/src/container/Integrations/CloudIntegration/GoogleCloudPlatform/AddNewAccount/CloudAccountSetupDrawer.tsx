@@ -84,6 +84,7 @@ function CloudAccountSetupDrawer({
 			)}
 			<div className={styles.footer}>
 				<Button
+					size="md"
 					variant="outlined"
 					color="secondary"
 					onClick={handleClose}
@@ -92,11 +93,11 @@ function CloudAccountSetupDrawer({
 					Cancel
 				</Button>
 				<Button
+					size="md"
 					variant="solid"
 					color="primary"
 					onClick={handleSubmit(connectAccount)}
-					loading={isLoading}
-					disabled={isConnectionParamsLoading}
+					loading={isLoading || isConnectionParamsLoading}
 					testId="gcp-connect-account-btn"
 				>
 					Connect Account

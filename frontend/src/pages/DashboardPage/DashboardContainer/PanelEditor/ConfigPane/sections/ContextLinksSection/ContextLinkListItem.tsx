@@ -36,20 +36,22 @@ function ContextLinkListItem({
 					type="button"
 					variant="ghost"
 					color="secondary"
-					size="icon"
+					size="sm"
+					icon
 					aria-label={`Edit link ${index + 1}`}
-					data-testid={`context-link-edit-${index}`}
+					testId={`context-link-edit-${index}`}
 					onClick={onEdit}
 				>
 					<Pencil size={14} />
 				</Button>
 				<Button
 					type="button"
-					variant="ghost"
-					color="destructive"
-					size="icon"
+					variant="solid"
+					color="danger"
+					size="sm"
+					icon
 					aria-label={`Remove link ${index + 1}`}
-					data-testid={`context-link-remove-${index}`}
+					testId={`context-link-remove-${index}`}
 					onClick={onRemove}
 				>
 					<Trash2 size={14} />

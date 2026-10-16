@@ -64,8 +64,10 @@ function TokenError({ error }: TokenErrorProps): JSX.Element {
 				{error && <AuthError error={error} />}
 				<div className="reset-password-back-action">
 					<Button
+						size="md"
+						color="primary"
 						variant="solid"
-						data-testid="back-to-login"
+						testId="back-to-login"
 						prefix={<ArrowLeft size={12} />}
 						onClick={(): void => history.push(ROUTES.LOGIN)}
 					>

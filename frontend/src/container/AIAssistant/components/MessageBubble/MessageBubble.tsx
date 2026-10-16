@@ -198,17 +198,18 @@ export default function MessageBubble({
 				</div>
 
 				{showRetry && (
-					<Button
-						className={styles.retryButton}
-						size="sm"
-						variant="ghost"
-						color="secondary"
-						onClick={onRetry}
-						testId={`ai-message-retry-${message.id}`}
-					>
-						<RotateCw size={12} />
-						Retry
-					</Button>
+					<div className={styles.retryButton}>
+						<Button
+							size="sm"
+							variant="ghost"
+							color="secondary"
+							prefix={<RotateCw size={12} />}
+							onClick={onRetry}
+							testId={`ai-message-retry-${message.id}`}
+						>
+							Retry
+						</Button>
+					</div>
 				)}
 
 				{!isUser && !isError && !message.isRateLimitError && (

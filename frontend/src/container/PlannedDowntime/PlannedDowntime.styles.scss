@@ -71,6 +71,7 @@
 
 	.alert-rule-scope {
 		margin-bottom: 12px;
+		margin-top: 8px;
 
 		// `.createForm label` styles field labels (font-weight 500, 14px,
 		// 6px bottom padding). Those bleed into the @signozhq/ui RadioGroup
@@ -80,12 +81,6 @@
 			padding: 0;
 			font-weight: 400;
 			line-height: normal;
-		}
-
-		// Loosen the design-system default (grid gap 0.5rem) between options.
-		.silence-alerts-radio-group {
-			margin-top: 8px;
-			gap: 12px;
 		}
 	}
 
@@ -105,12 +100,6 @@
 		font-size: 12px;
 		font-weight: 400;
 		color: var(--l2-foreground);
-	}
-}
-
-.alert-rule-tags {
-	.non-closable-tag {
-		padding-right: 7px;
 	}
 }
 

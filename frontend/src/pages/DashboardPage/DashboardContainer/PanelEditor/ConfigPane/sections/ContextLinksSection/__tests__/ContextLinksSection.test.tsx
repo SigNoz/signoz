@@ -42,7 +42,7 @@ describe('ContextLinksSection', () => {
 		fireEvent.click(screen.getByTestId('panel-editor-v2-add-link'));
 
 		const save = await screen.findByTestId('context-link-save');
-		expect(save).toBeDisabled();
+		expect(save).toHaveAttribute('aria-disabled', 'true');
 
 		fireEvent.change(screen.getByTestId('context-link-url'), {
 			target: { value: 'https://signoz.io' },
@@ -50,7 +50,7 @@ describe('ContextLinksSection', () => {
 		fireEvent.change(screen.getByTestId('context-link-label'), {
 			target: { value: 'Docs' },
 		});
-		expect(save).not.toBeDisabled();
+		expect(save).not.toHaveAttribute('aria-disabled', 'true');
 
 		fireEvent.click(save);
 		expect(onChange).toHaveBeenCalledWith([
@@ -105,7 +105,10 @@ describe('ContextLinksSection', () => {
 
 		fireEvent.change(urlInput, { target: { value: 'not-a-url' } });
 		expect(screen.getByTestId('context-link-url-error')).toBeInTheDocument();
-		expect(screen.getByTestId('context-link-save')).toBeDisabled();
+		expect(screen.getByTestId('context-link-save')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 
 		fireEvent.change(urlInput, { target: { value: '/valid/path' } });
 		expect(

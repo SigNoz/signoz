@@ -2,7 +2,7 @@ import { KeyboardEvent, useCallback } from 'react';
 import MEditor from '@monaco-editor/react';
 import { TriangleAlert } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { Drawer } from 'antd';
@@ -97,7 +97,13 @@ function JsonEditorDrawer({
 		[apply, readOnly, onClose],
 	);
 
-	const applyDisabled = readOnly || !isDirty || !validity.valid || isSaving;
+	const applyDisabled = readOnly || !isDirty || !validity.valid;
+	let applyDisabledReason: string | undefined;
+	if (!readOnly && !isDirty) {
+		applyDisabledReason = 'No changes to apply';
+	} else if (!readOnly && !validity.valid) {
+		applyDisabledReason = 'Fix the JSON errors first';
+	}
 	const validationText = validity.valid
 		? `Valid JSON · ${validity.lineCount} lines`
 		: `Line ${validity.errorLine ?? '?'} · ${validity.message ?? 'Invalid JSON'}`;
@@ -136,10 +142,7 @@ function JsonEditorDrawer({
 							{validationText}
 						</Typography.Text>
 						{danglingWarning && (
-							<TooltipSimple
-								title={danglingPanelIds.join(', ')}
-								tooltipContentProps={{ className: styles.warningTooltip }}
-							>
+							<Tooltip title={danglingPanelIds.join(', ')}>
 								<span
 									className={styles.danglingWarning}
 									data-testid="json-editor-dangling-warning"
@@ -149,13 +152,10 @@ function JsonEditorDrawer({
 										{danglingWarning}
 									</Typography.Text>
 								</span>
-							</TooltipSimple>
+							</Tooltip>
 						)}
 						{missingRefWarning && (
-							<TooltipSimple
-								title={missingPanelRefs.join(', ')}
-								tooltipContentProps={{ className: styles.warningTooltip }}
-							>
+							<Tooltip title={missingPanelRefs.join(', ')}>
 								<span
 									className={styles.danglingWarning}
 									data-testid="json-editor-missing-ref-warning"
@@ -165,7 +165,7 @@ function JsonEditorDrawer({
 										{missingRefWarning}
 									</Typography.Text>
 								</span>
-							</TooltipSimple>
+							</Tooltip>
 						)}
 					</div>
 					<div className={styles.footerActions}>
@@ -183,11 +183,13 @@ function JsonEditorDrawer({
 							disabledTooltip={readOnly ? readOnlyTooltip : undefined}
 						>
 							<Button
+								disabledTooltip={applyDisabledReason}
 								variant="solid"
 								color="primary"
 								size="md"
 								testId="json-editor-apply"
 								disabled={applyDisabled}
+								loading={isSaving}
 								onClick={readOnly ? undefined : (): void => void apply()}
 							>
 								Apply changes

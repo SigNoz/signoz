@@ -1,9 +1,4 @@
-import {
-	TooltipRoot,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import { convertTimeToRelevantUnit } from 'utils/traceUtils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -81,14 +76,20 @@ export function SpanTooltipContent({
 				{ai?.model && <TraceTooltipRow label="model" value={ai.model} />}
 				{ai?.toolName && <TraceTooltipRow label="tool" value={ai.toolName} />}
 				{ai?.agentName && <TraceTooltipRow label="agent" value={ai.agentName} />}
-				<TraceTooltipRow label="status" value={hasError ? 'error' : 'ok'} />
+				<TraceTooltipRow
+					label="status"
+					value={hasError ? 'error' : 'ok'}
+					testId="span-hover-card-status"
+				/>
 				<TraceTooltipRow
 					label="start"
 					value={`${toFixed(relativeStartMs, 2)} ms`}
+					testId="span-hover-card-start"
 				/>
 				<TraceTooltipRow
 					label="duration"
 					value={`${toFixed(formattedDuration, 2)} ${timeUnitName}`}
+					testId="span-hover-card-duration"
 				/>
 			</TraceTooltipSection>
 			{previewRows && previewRows.length > 0 && (
@@ -117,7 +118,6 @@ export function SpanTooltipContent({
  */
 export interface SpanHoverCardProps {
 	hoveredSpanId: string | null;
-	onOpenChange: (open: boolean) => void;
 	anchorLeft: number;
 	rowHeight: number;
 	spans: SpanV3[];
@@ -126,7 +126,6 @@ export interface SpanHoverCardProps {
 
 export function SpanHoverCard({
 	hoveredSpanId,
-	onOpenChange,
 	anchorLeft,
 	rowHeight,
 	spans,
@@ -179,27 +178,23 @@ export function SpanHoverCard({
 	]);
 
 	return (
-		<TooltipProvider>
-			<TooltipRoot open={hoverCardData !== null} onOpenChange={onOpenChange}>
-				<TooltipTrigger asChild>
-					<div
-						className={styles.anchor}
-						style={{
-							top: hoverCardData?.anchorTop ?? 0,
-							left: anchorLeft,
-							height: rowHeight,
-						}}
-					/>
-				</TooltipTrigger>
-				<TooltipContent
-					side="right"
-					align="start"
-					sideOffset={8}
-					className={styles.popover}
-				>
-					{hoverCardData && <SpanTooltipContent {...hoverCardData.tooltip} />}
-				</TooltipContent>
-			</TooltipRoot>
-		</TooltipProvider>
+		<Tooltip
+			open={hoverCardData !== null}
+			side="right"
+			align="start"
+			sideOffset={8}
+			title={
+				hoverCardData ? <SpanTooltipContent {...hoverCardData.tooltip} /> : null
+			}
+		>
+			<div
+				className={styles.anchor}
+				style={{
+					top: hoverCardData?.anchorTop ?? 0,
+					left: anchorLeft,
+					height: rowHeight,
+				}}
+			/>
+		</Tooltip>
 	);
 }

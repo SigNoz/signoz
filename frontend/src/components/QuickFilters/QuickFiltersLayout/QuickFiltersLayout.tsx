@@ -79,7 +79,7 @@ function QuickFiltersLayout({
 					className={cx(styles.sidebar, { [styles.isStatic]: !hasQuickFilters })}
 					data-testid="quick-filters-layout-filters"
 				>
-					<TooltipProvider delayDuration={SIDEBAR_TOOLTIP_DELAY_MS}>
+					<TooltipProvider delay={SIDEBAR_TOOLTIP_DELAY_MS}>
 						<div
 							className={cx(styles.quickFilters, { [styles.isOpen]: isSliding })}
 							data-testid="quick-filters-layout-drawer"

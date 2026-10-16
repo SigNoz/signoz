@@ -1,5 +1,5 @@
 import { ExternalLink, SolidInfoCircle } from '@signozhq/icons';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { Events } from 'constants/events';
@@ -50,9 +50,8 @@ function CrossPanelSync({ dashboardId }: CrossPanelSyncProps): JSX.Element {
 					Cross-Panel Sync
 				</Typography.Text>
 
-				<TooltipSimple
+				<Tooltip
 					side="top"
-					withPortal={false}
 					title={
 						<div className={styles.crossPanelSyncTooltipContent}>
 							<strong className={styles.crossPanelSyncTooltipTitle}>
@@ -74,7 +73,7 @@ function CrossPanelSync({ dashboardId }: CrossPanelSyncProps): JSX.Element {
 					}
 				>
 					<SolidInfoCircle size="md" className={styles.crossPanelSyncInfoIcon} />
-				</TooltipSimple>
+				</Tooltip>
 			</div>
 
 			<div className={styles.crossPanelSyncRow}>

@@ -24,6 +24,7 @@ function DeleteSavedViewDialog({
 			footer={
 				<>
 					<Button
+						size="md"
 						variant="solid"
 						color="secondary"
 						onClick={onCancel}
@@ -33,8 +34,9 @@ function DeleteSavedViewDialog({
 						Cancel
 					</Button>
 					<Button
+						size="md"
 						variant="solid"
-						color="destructive"
+						color="danger"
 						loading={isDeleting}
 						onClick={onConfirm}
 						prefix={<Check size={12} />}

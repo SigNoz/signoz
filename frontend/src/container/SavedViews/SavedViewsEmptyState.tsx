@@ -37,7 +37,7 @@ function SavedViewsEmptyState({
 				size="sm"
 				prefix={<Plus size={12} />}
 				onClick={(): void => setIsModalOpen(true)}
-				data-testid="saved-views-list-create"
+				testId="saved-views-list-create"
 			>
 				Create view
 			</Button>

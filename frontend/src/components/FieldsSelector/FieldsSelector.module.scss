@@ -98,11 +98,15 @@
 	user-select: none;
 	font-size: 13px;
 
+	> [data-slot='button'] {
+		opacity: 0;
+		transition: opacity 0.15s ease-in-out;
+	}
+
 	&:hover {
 		background-color: var(--l2-background);
 
-		.removeBtn,
-		.addBtn {
+		> [data-slot='button'] {
 			opacity: 1;
 		}
 	}
@@ -135,14 +139,6 @@
 
 .otherFieldItem {
 	height: 32px;
-}
-
-.removeBtn,
-.addBtn {
-	padding: 4px 10px;
-	opacity: 0;
-	transition: opacity 0.15s ease-in-out;
-	flex-shrink: 0;
 }
 
 .footer {

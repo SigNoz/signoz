@@ -7,15 +7,6 @@
 	flex-shrink: 0;
 }
 
-// Strip the tooltip's own padding/width cap so the card content (which owns its
-// 16px section padding) frames cleanly — a padding-less surface, like the
-// shared WarningPopover, restyled with V2 tokens.
-.tooltipContent {
-	max-width: 520px !important;
-	padding: 0 !important;
-	overflow: hidden;
-}
-
 .content {
 	display: flex;
 	flex-direction: column;

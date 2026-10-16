@@ -564,7 +564,13 @@ export const retryMigration = async (
 	await openLegacyDialog(canvasElement);
 	const retry = await screen.findByTestId('legacy-dashboard-retry-migration');
 
-	await waitFor(() => expect(retry).toBeEnabled(), { timeout: TOAST_TIMEOUT });
+	await waitFor(
+		() => {
+			expect(retry).toBeEnabled();
+			expect(retry).not.toHaveAttribute('aria-disabled', 'true');
+		},
+		{ timeout: TOAST_TIMEOUT },
+	);
 	await userEvent.click(retry);
 };
 

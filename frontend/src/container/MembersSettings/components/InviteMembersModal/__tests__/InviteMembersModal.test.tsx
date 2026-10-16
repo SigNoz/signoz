@@ -97,7 +97,9 @@ describe('InviteMembersModal', () => {
 				}) as JSX.Element,
 			);
 
-			expect(getByRole('button', { name: /invite team members/i })).toBeDisabled();
+			expect(
+				getByRole('button', { name: /invite team members/i }),
+			).toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('shows loading state when isSubmitting=true', () => {

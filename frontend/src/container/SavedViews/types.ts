@@ -1,4 +1,4 @@
-import { ReactElement } from 'react';
+import { ReactElement, ReactNode } from 'react';
 import type { Link } from '@signozhq/icons';
 import {
 	SavedviewtypesSavedViewDTO,
@@ -81,6 +81,7 @@ export interface SavedViewsIconButtonProps {
 	testId: string;
 	color?: 'secondary' | 'warning';
 	disabled?: boolean;
+	disabledTooltip?: ReactNode;
 	onClick?: () => void;
 }
 
@@ -136,8 +137,6 @@ export interface SavedViewsRowButtonProps {
 	tooltip?: string;
 	testId: string;
 	onClick?: () => void;
-	onPointerDown?: () => void;
-	onKeyDown?: () => void;
 }
 
 export interface SavedViewsRowMenuProps {
