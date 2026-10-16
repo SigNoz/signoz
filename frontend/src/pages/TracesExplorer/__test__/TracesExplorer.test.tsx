@@ -26,9 +26,9 @@ import { optionMenuReturn, qbProviderValue } from './testUtils';
 const currentTestUrl =
 	'/traces-explorer/?panelType=list&selectedExplorerView=list';
 
-jest.mock('react-router-dom-v5-compat', () => ({
-	...jest.requireActual('react-router-dom-v5-compat'),
-	useSearchParams: jest.fn(() => {
+jest.mock('lib/router/useAppSearchParams', () => ({
+	...jest.requireActual('lib/router/useAppSearchParams'),
+	useAppSearchParams: jest.fn(() => {
 		const searchParams = new URLSearchParams();
 
 		// Parse the current test URL
@@ -52,28 +52,14 @@ jest.mock('hooks/queryBuilder/useGetPanelTypesQueryParam', () => ({
 	}),
 }));
 
-const historyPush = jest.fn();
+const mockNavigate = jest.fn();
 
 const BASE_URL = ENVIRONMENT.baseURL;
 const FILTER_SERVICE_NAME = 'Service Name';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): {
-		pathname: string;
-		search: string;
-		hash: string;
-		state: any;
-	} => ({
-		pathname: `${process.env.FRONTEND_API_ENDPOINT}${ROUTES.TRACES_EXPLORER}/`,
-		search: '',
-		hash: '',
-		state: null,
-	}),
-	useHistory: (): any => ({
-		...jest.requireActual('react-router-dom').useHistory(),
-		push: historyPush,
-	}),
+jest.mock('lib/router/navigation', () => ({
+	...jest.requireActual('lib/router/navigation'),
+	navigate: (...args: unknown[]): void => mockNavigate(...args),
 }));
 
 jest.mock(
@@ -435,7 +421,7 @@ describe('TracesExplorer -', () => {
 		expect(createAlertBtn).toBeInTheDocument();
 		fireEvent.click(createAlertBtn);
 
-		expect(historyPush).toHaveBeenCalledWith(
+		expect(mockNavigate).toHaveBeenCalledWith(
 			expect.stringContaining(`${ROUTES.ALERTS_NEW}`),
 		);
 	});

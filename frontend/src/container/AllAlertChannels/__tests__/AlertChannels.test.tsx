@@ -1,5 +1,6 @@
 import ROUTES from 'constants/routes';
 import AlertChannels from 'container/AllAlertChannels';
+import { mockAppLocation } from 'tests/router-mocks';
 import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
 
 const successNotification = jest.fn();
@@ -13,15 +14,11 @@ jest.mock('hooks/useNotifications', () => ({
 	})),
 }));
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string } => ({
-		pathname: `${process.env.FRONTEND_API_ENDPOINT}${ROUTES.ALL_CHANNELS}`,
-	}),
-}));
-
 describe('Alert Channels Settings List page', () => {
 	beforeEach(async () => {
+		mockAppLocation({
+			pathname: `${process.env.FRONTEND_API_ENDPOINT}${ROUTES.ALL_CHANNELS}`,
+		});
 		jest.useFakeTimers();
 		jest.setSystemTime(new Date('2023-10-20'));
 		render(<AlertChannels />);

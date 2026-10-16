@@ -2,7 +2,6 @@ import { useLocation } from 'react-use';
 import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
 import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
-import history from 'lib/history';
 
 import { logSaveView, logsExplorer, logsPipelines } from './constants';
 
@@ -23,7 +22,6 @@ export default function LogsModulePage(): JSX.Element {
 			className="logs-module-container"
 			routes={routes}
 			activeKey={pathname}
-			history={history}
 		/>
 	);
 }

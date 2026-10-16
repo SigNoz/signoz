@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { TestRouter } from 'tests/router';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { CreateAlertProvider } from '../../context';
@@ -100,15 +100,15 @@ const renderAlertCondition = (
 	alertType?: string,
 ): ReturnType<typeof render> => {
 	const queryClient = createTestQueryClient();
-	const initialEntries = alertType ? [`/?alertType=${alertType}`] : undefined;
+	const initialRoute = alertType ? `/?alertType=${alertType}` : '/';
 	return render(
-		<MemoryRouter initialEntries={initialEntries}>
+		<TestRouter initialRoute={initialRoute}>
 			<QueryClientProvider client={queryClient}>
 				<CreateAlertProvider initialAlertType={AlertTypes.METRICS_BASED_ALERT}>
 					<AlertCondition />
 				</CreateAlertProvider>
 			</QueryClientProvider>
-		</MemoryRouter>,
+		</TestRouter>,
 	);
 };
 

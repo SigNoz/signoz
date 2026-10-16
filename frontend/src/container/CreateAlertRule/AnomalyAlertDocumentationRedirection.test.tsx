@@ -1,4 +1,3 @@
-import { MemoryRouter, Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import * as usePrefillAlertConditions from 'container/FormAlertRules/usePrefillAlertConditions';
 import CreateAlertPage from 'pages/CreateAlert';
@@ -6,26 +5,6 @@ import { act, fireEvent, render } from 'tests/test-utils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { ALERT_TYPE_URL_MAP } from './constants';
-
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string; search: string } => ({
-		pathname: `${process.env.FRONTEND_API_ENDPOINT}${ROUTES.ALERTS_NEW}`,
-		search: 'ruleType=anomaly_rule',
-	}),
-}));
-
-jest.mock('react-router-dom-v5-compat', () => ({
-	...jest.requireActual('react-router-dom-v5-compat'),
-	useNavigationType: jest.fn(() => 'PUSH'),
-	useLocation: jest.fn(() => ({
-		pathname: '/alerts/new',
-		search: 'ruleType=anomaly_rule',
-		hash: '',
-		state: null,
-	})),
-	useSearchParams: jest.fn(() => [new URLSearchParams(), jest.fn()]),
-}));
 
 window.ResizeObserver =
 	window.ResizeObserver ||
@@ -58,13 +37,9 @@ describe('Anomaly Alert Documentation Redirection', () => {
 	});
 
 	it('should handle anomaly alert documentation redirection correctly', () => {
-		const { getByRole } = render(
-			<MemoryRouter initialEntries={['/alerts/new']}>
-				<Route path={ROUTES.ALERTS_NEW}>
-					<CreateAlertPage />
-				</Route>
-			</MemoryRouter>,
-		);
+		const { getByRole } = render(<CreateAlertPage />, undefined, {
+			initialRoute: `${ROUTES.ALERTS_NEW}?ruleType=anomaly_rule`,
+		});
 
 		const alertType = AlertTypes.ANOMALY_BASED_ALERT;
 

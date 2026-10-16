@@ -1,9 +1,9 @@
-import { useHistory } from 'react-router-dom';
 import { ConciergeBell } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import logEvent from 'api/common/logEvent';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useAppNavigate } from 'lib/router/useAppNavigate';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -22,7 +22,7 @@ function CreateAlertButton({
 	sourcepage: DataSource;
 	isOneChartPerQuery?: boolean;
 }): JSX.Element {
-	const history = useHistory();
+	const navigate = useAppNavigate();
 	const { panelType } = useQueryBuilder();
 
 	const createAlert = (): void => {
@@ -33,7 +33,7 @@ function CreateAlertButton({
 			EXPLORER_ACTION_EVENTS[sourcepage].createAlert,
 			getExplorerActionEventPayload({ sourcepage, panelType, isOneChartPerQuery }),
 		);
-		history.push(getCreateAlertLink({ query, panelType }));
+		navigate(getCreateAlertLink({ query, panelType }));
 	};
 
 	return isOneChartPerQuery ? (

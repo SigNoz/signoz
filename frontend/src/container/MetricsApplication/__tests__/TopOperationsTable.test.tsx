@@ -11,6 +11,7 @@ import {
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
+import { mockAppParams } from 'tests/router-mocks';
 
 import {
 	createMockStore,
@@ -33,12 +34,7 @@ jest.mock('hooks/useSafeNavigate', () => ({
 	}),
 }));
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useParams: (): { servicename: string } => ({
-		servicename: encodeURIComponent('test-service'),
-	}),
-}));
+mockAppParams({ servicename: encodeURIComponent('test-service') });
 
 // Mock the util functions that TopOperationsTable uses
 jest.mock('../Tabs/util', () => ({

@@ -13,18 +13,6 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import CreateAlertRule from '../index';
 
-jest.mock('react-router-dom-v5-compat', () => ({
-	...jest.requireActual('react-router-dom-v5-compat'),
-	useNavigationType: jest.fn(() => 'PUSH'),
-	useLocation: jest.fn(() => ({
-		pathname: '/alerts/new',
-		search: '',
-		hash: '',
-		state: null,
-	})),
-	useSearchParams: jest.fn(() => [new URLSearchParams(), jest.fn()]),
-}));
-
 jest.mock('container/TopNav/DateTimeSelectionV2', () => ({
 	__esModule: true,
 	default: function MockDateTimeSelector(): JSX.Element {

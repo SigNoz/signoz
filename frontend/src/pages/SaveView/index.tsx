@@ -1,7 +1,7 @@
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { ColorPicker, Modal, Table, TableProps } from 'antd';
@@ -51,7 +51,7 @@ import './SaveView.styles.scss';
 const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.AUTHOR, USER_ROLES.EDITOR];
 
 function SaveView(): JSX.Element {
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const sourcepage = ROUTES_VS_SOURCEPAGE[pathname];
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 	const [activeViewKey, setActiveViewKey] = useState<string>('');

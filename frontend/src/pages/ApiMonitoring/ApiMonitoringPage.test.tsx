@@ -1,5 +1,5 @@
-import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
+import { TestRouter } from 'tests/router';
 
 import ApiMonitoringPage from './ApiMonitoringPage';
 
@@ -28,20 +28,12 @@ jest.mock('components/RouteTab', () => ({
 	),
 }));
 
-// Mock useLocation hook to properly return the path we're testing
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string } => ({
-		pathname: '/api-monitoring/explorer',
-	}),
-}));
-
 describe('ApiMonitoringPage', () => {
 	it('should render the RouteTab with the Explorer tab', () => {
 		render(
-			<MemoryRouter initialEntries={['/api-monitoring/explorer']}>
+			<TestRouter initialRoute="/api-monitoring/explorer">
 				<ApiMonitoringPage />
-			</MemoryRouter>,
+			</TestRouter>,
 		);
 
 		// Check if the mock RouteTab is rendered

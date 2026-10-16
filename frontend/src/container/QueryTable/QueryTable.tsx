@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useAppParams } from 'lib/router/useAppParams';
 import cx from 'classnames';
 import { ResizeTable } from 'components/ResizeTable';
 import Download from 'container/Download/Download';
-import { IServiceName } from 'container/MetricsApplication/Tabs/types';
 import {
 	createTableColumnsFromQuery,
 	RowData,
@@ -36,8 +35,8 @@ export function QueryTable({
 	const { isDownloadEnabled = false, fileName = '' } = downloadOption || {};
 	const isQueryTypeBuilder = query.queryType === 'builder';
 
-	const { servicename: encodedServiceName } = useParams<IServiceName>();
-	const servicename = decodeURIComponent(encodedServiceName);
+	const { servicename: encodedServiceName } = useAppParams<'servicename'>();
+	const servicename = decodeURIComponent(encodedServiceName || '');
 	const { loading, enableDrillDown = false, contextLinks } = props;
 
 	const {

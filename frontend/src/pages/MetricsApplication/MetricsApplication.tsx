@@ -1,5 +1,5 @@
-import { useParams } from 'react-router-dom';
 import { Tabs, TabsProps } from 'antd';
+import { useAppParams } from 'lib/router/useAppParams';
 import { QueryParams } from 'constants/query';
 import DBCall from 'container/MetricsApplication/Tabs/DBCall';
 import External from 'container/MetricsApplication/Tabs/External';
@@ -15,7 +15,7 @@ import useMetricsApplicationTabKey from './useMetricsApplicationTabKey';
 import './MetricsApplication.styles.scss';
 
 function MetricsApplication(): JSX.Element {
-	const { servicename: encodedServiceName } = useParams<{
+	const { servicename: encodedServiceName } = useAppParams<{
 		servicename: string;
 	}>();
 

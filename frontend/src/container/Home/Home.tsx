@@ -30,7 +30,7 @@ import { useHomeStripInfo } from 'container/Home/useHomeStripInfo';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { AnimatePresence, motion } from 'motion/react';
 import Card from 'periscope/components/Card/Card';
@@ -371,7 +371,7 @@ export default function Home(): JSX.Element {
 													void logEvent('Homepage: Ingestion Active Explore clicked', {
 														source: 'Logs',
 													});
-													history.push(ROUTES.LOGS_EXPLORER);
+													navigate(ROUTES.LOGS_EXPLORER);
 												}
 											}}
 										>
@@ -414,7 +414,7 @@ export default function Home(): JSX.Element {
 													void logEvent('Homepage: Ingestion Active Explore clicked', {
 														source: 'Traces',
 													});
-													history.push(ROUTES.TRACES_EXPLORER);
+													navigate(ROUTES.TRACES_EXPLORER);
 												}
 											}}
 										>
@@ -457,7 +457,7 @@ export default function Home(): JSX.Element {
 													void logEvent('Homepage: Ingestion Active Explore clicked', {
 														source: 'Metrics',
 													});
-													history.push(ROUTES.METRICS_EXPLORER);
+													navigate(ROUTES.METRICS_EXPLORER);
 												}
 											}}
 										>

@@ -47,7 +47,7 @@ import {
 } from 'container/CreateAlertChannels/utils';
 import FormAlertChannels from 'container/FormAlertChannels';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import APIError from 'types/api/error';
 import { toAPIError } from 'utils/errorUtils';
 
@@ -145,7 +145,7 @@ function EditAlertChannels({
 				description: t('channel_edit_done'),
 			});
 
-			history.replace(ROUTES.ALL_CHANNELS);
+			navigate(ROUTES.ALL_CHANNELS, { replace: true });
 			return { status: 'success', statusMessage: t('channel_edit_done') };
 		} catch (error) {
 			notifications.error({
@@ -204,7 +204,7 @@ function EditAlertChannels({
 				description: t('channel_edit_done'),
 			});
 
-			history.replace(ROUTES.ALL_CHANNELS);
+			navigate(ROUTES.ALL_CHANNELS, { replace: true });
 			return { status: 'success', statusMessage: t('channel_edit_done') };
 		} catch (error) {
 			notifications.error({
@@ -243,7 +243,7 @@ function EditAlertChannels({
 				message: 'Success',
 				description: t('channel_edit_done'),
 			});
-			history.replace(ROUTES.ALL_CHANNELS);
+			navigate(ROUTES.ALL_CHANNELS, { replace: true });
 			return { status: 'success', statusMessage: t('channel_edit_done') };
 		} catch (error) {
 			notifications.error({
@@ -298,7 +298,7 @@ function EditAlertChannels({
 				message: 'Success',
 				description: t('channel_edit_done'),
 			});
-			history.replace(ROUTES.ALL_CHANNELS);
+			navigate(ROUTES.ALL_CHANNELS, { replace: true });
 			return { status: 'success', statusMessage: t('channel_edit_done') };
 		} catch (error) {
 			notifications.error({
@@ -345,7 +345,7 @@ function EditAlertChannels({
 				message: 'Success',
 				description: t('channel_edit_done'),
 			});
-			history.replace(ROUTES.ALL_CHANNELS);
+			navigate(ROUTES.ALL_CHANNELS, { replace: true });
 			return { status: 'success', statusMessage: t('channel_edit_done') };
 		} catch (error) {
 			notifications.error({
@@ -392,7 +392,7 @@ function EditAlertChannels({
 				message: 'Success',
 				description: t('channel_edit_done'),
 			});
-			history.replace(ROUTES.ALL_CHANNELS);
+			navigate(ROUTES.ALL_CHANNELS, { replace: true });
 			return { status: 'success', statusMessage: t('channel_edit_done') };
 		} catch (error) {
 			notifications.error({
@@ -443,7 +443,7 @@ function EditAlertChannels({
 				message: 'Success',
 				description: t('channel_edit_done'),
 			});
-			history.replace(ROUTES.ALL_CHANNELS);
+			navigate(ROUTES.ALL_CHANNELS, { replace: true });
 			return { status: 'success', statusMessage: t('channel_edit_done') };
 		} catch (error) {
 			const apiError = notifyError(error);
@@ -511,7 +511,7 @@ function EditAlertChannels({
 				message: 'Success',
 				description: t('channel_edit_done'),
 			});
-			history.replace(ROUTES.ALL_CHANNELS);
+			navigate(ROUTES.ALL_CHANNELS, { replace: true });
 			return { status: 'success', statusMessage: t('channel_edit_done') };
 		} catch (error) {
 			const apiError = notifyError(error);
@@ -561,7 +561,7 @@ function EditAlertChannels({
 				message: 'Success',
 				description: t('channel_edit_done'),
 			});
-			history.replace(ROUTES.ALL_CHANNELS);
+			navigate(ROUTES.ALL_CHANNELS, { replace: true });
 			return { status: 'success', statusMessage: t('channel_edit_done') };
 		} catch (error) {
 			const apiError = notifyError(error);
@@ -616,7 +616,7 @@ function EditAlertChannels({
 				message: 'Success',
 				description: t('channel_edit_done'),
 			});
-			history.replace(ROUTES.ALL_CHANNELS);
+			navigate(ROUTES.ALL_CHANNELS, { replace: true });
 			return { status: 'success', statusMessage: t('channel_edit_done') };
 		} catch (error) {
 			const apiError = notifyError(error);
