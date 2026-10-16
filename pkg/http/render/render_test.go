@@ -101,6 +101,12 @@ func TestError(t *testing.T) {
 			err:        errors.New(errors.TypeAlreadyExists, errors.MustNewCode("already_exists"), "already exists").WithUrl("https://already_exists"),
 			expected:   []byte(`{"status":"error","error":{"type":"already-exists","code":"already_exists","message":"already exists","url":"https://already_exists","errors":[],"suggestions":[]}}`),
 		},
+		"/method_not_allowed": {
+			name:       "MethodNotAllowed",
+			statusCode: http.StatusMethodNotAllowed,
+			err:        errors.NewMethodNotAllowedf(errors.CodeMethodNotAllowed, "method not allowed"),
+			expected:   []byte(`{"status":"error","error":{"type":"method-not-allowed","code":"method_not_allowed","message":"method not allowed","errors":[],"suggestions":[]}}`),
+		},
 		"/unauthenticated": {
 			name:       "Unauthenticated",
 			statusCode: http.StatusUnauthorized,
@@ -143,6 +149,7 @@ func TestError(t *testing.T) {
 
 			assert.Equal(t, tc.statusCode, res.StatusCode)
 			assert.Equal(t, tc.expected, actual)
+			assert.Equal(t, errors.AsJSON(tc.err).Type, ErrorTypeFromStatusCode(res.StatusCode))
 		})
 	}
 
