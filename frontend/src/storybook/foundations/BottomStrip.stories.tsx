@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import ROUTES from 'constants/routes';
 import { toast } from '@signozhq/ui/sonner';
-import { screen, userEvent, waitFor } from 'storybook/test';
+import { screen, userEvent } from 'storybook/test';
 
 import type { GlobalMockArgs } from '../globals';
 
@@ -14,10 +14,10 @@ function EmptyPage(): JSX.Element {
 const untilLoaded = { timeout: 10_000 };
 
 /**
- * The strip along the foot of the shell, behind the `SAVED_VIEW_ENABLED` flag:
- * what the page puts on the left, the build version when it puts nothing, and
- * the shell's own Ask Noz and Support on the right. Support follows the chat
- * support the workspace has, the way the floating bubble it replaces did.
+ * The strip along the foot of the shell: what the page puts on the left, the
+ * build version when it puts nothing, and the shell's own Ask Noz and Support
+ * on the right. Support follows the chat support the workspace has, the way
+ * the floating bubble it replaces did.
  *
  * Route: every page inside the app shell; these stories use `/home`.
  */
@@ -78,38 +78,6 @@ export const Tooltips: Story = {
 	args: { noz: true, support: 'pylon', tooltipsOpen: true },
 };
 
-/**
- * The flag off, on a cloud trial without a card: no strip, and chat support is
- * the floating bubble in the corner.
- */
-export const WithoutStrip: Story = {
-	args: { bottomStrip: false, noz: true, support: 'add-card' },
-};
-
-/** The Add Credit Card modal, opened from the floating bubble with the flag off. */
-export const WithoutStripAddCardModal: Story = {
-	args: { bottomStrip: false, noz: true, support: 'add-card' },
-	play: async (): Promise<void> => {
-		// The bubble is an icon with no label or test id of its own.
-		const bubble = await waitFor(() => {
-			const found = document.querySelector<HTMLElement>(
-				'.chat-support-gateway-btn',
-			);
-
-			if (!found) {
-				throw new Error('the floating support bubble never rendered');
-			}
-
-			return found;
-		}, untilLoaded);
-
-		await userEvent.click(bubble);
-		await screen.findByRole('dialog', {
-			name: /Add Credit Card for Chat Support/i,
-		});
-	},
-};
-
 /** Raises a toast and waits for it, so the shot is taken with it on screen. */
 const raiseToast: NonNullable<Story['play']> = async () => {
 	toast.success('Service account deleted');
@@ -117,16 +85,10 @@ const raiseToast: NonNullable<Story['play']> = async () => {
 };
 
 /**
- * A toast with the strip on. Sonner pins itself to the foot of the viewport, so
+ * A toast above the strip. Sonner pins itself to the foot of the viewport, so
  * without an offset it lands on top of Ask Noz and Support.
  */
 export const WithToast: Story = {
 	args: { noz: true, support: 'pylon' },
-	play: raiseToast,
-};
-
-/** The same toast with the flag off, back at sonner's own inset from the viewport. */
-export const WithoutStripToast: Story = {
-	args: { bottomStrip: false, noz: true, support: 'pylon' },
 	play: raiseToast,
 };

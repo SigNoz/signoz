@@ -10,7 +10,6 @@ import {
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import {
-	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -316,99 +315,17 @@ describe('TracesExplorer -', () => {
 		});
 	});
 
-	it('test for explorer options', async () => {
-		const { getByText, getByTestId } = renderWithTracesExplorerRouter(
-			<TracesExplorer />,
-			['/traces-explorer/?panelType=list&selectedExplorerView=list'],
-		);
-
-		// assert explorer options - action btns
-		[
-			'Save this view',
-			'Create an Alert',
-			'Add to Dashboard',
-			'Select a view',
-		].forEach((val) => expect(getByText(val)).toBeInTheDocument());
-
-		const hideExplorerOption = getByTestId('hide-toolbar');
-		expect(hideExplorerOption).toBeInTheDocument();
-		fireEvent.click(hideExplorerOption);
-
-		// explorer options should hide and show btn should be present
-		await expect(
-			screen.findByTestId('show-explorer-option'),
-		).resolves.toBeInTheDocument();
-		expect(screen.queryByTestId('hide-toolbar')).toBeNull();
-
-		// show explorer options
-		const showExplorerOption = screen.getByTestId('show-explorer-option');
-		expect(showExplorerOption).toBeInTheDocument();
-		fireEvent.click(showExplorerOption);
-
-		// explorer options should show and hide btn should be present
-		await expect(
-			screen.findByTestId('hide-toolbar'),
-		).resolves.toBeInTheDocument();
-	});
-
-	it('select a view options - assert and save this view', async () => {
-		const { container } = renderWithTracesExplorerRouter(<TracesExplorer />, [
-			'/traces-explorer/?panelType=list&selectedExplorerView=list',
-		]);
-
-		const viewSearchInput = await waitFor(() => {
-			const el = container.querySelector(
-				'.view-options .ant-select-selection-search-input',
-			) as HTMLElement;
-			expect(el).toBeInTheDocument();
-			return el;
-		});
-
-		fireEvent.mouseDown(viewSearchInput);
-
-		// The saved-views request has to land and re-render the dropdown before the
-		// option exists; findByRole's 1s default is not enough on a loaded runner.
-		await expect(
-			screen.findByRole('option', { name: 'R-test panel' }, { timeout: 5000 }),
-		).resolves.toBeInTheDocument();
-
-		// save this view
-		fireEvent.click(await screen.findByText('Save this view'));
-
-		const saveViewModalInput = await screen.findByPlaceholderText(
-			'e.g. External http method view',
-		);
-		expect(saveViewModalInput).toBeInTheDocument();
-
-		const saveViewModal = await waitFor(() => {
-			const el = document.querySelector('.ant-modal-content') as HTMLElement;
-			expect(el).toBeInTheDocument();
-			return el;
-		});
-
-		await act(async () =>
-			fireEvent.change(saveViewModalInput, { target: { value: 'test view' } }),
-		);
-
-		expect(saveViewModalInput).toHaveValue('test view');
-		await act(async () => {
-			fireEvent.click(within(saveViewModal).getByTestId('save-view-btn'));
-		});
-
-		await waitFor(() => {
-			expect(successNotification).toHaveBeenCalledWith({
-				message: 'View Saved Successfully',
-			});
-		});
-	}, 15000);
-
 	it('create a dashboard btn assert', async () => {
 		renderWithTracesExplorerRouter(<TracesExplorer />, [
 			'/traces-explorer/?panelType=list&selectedExplorerView=list',
 		]);
 
-		const createDashboardBtn = await screen.findByText('Add to Dashboard');
-		expect(createDashboardBtn).toBeInTheDocument();
+		const createDashboardBtn = await screen.findByTestId(
+			'explorer-add-to-dashboard',
+		);
+		await waitFor(() =>
+			expect(createDashboardBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		fireEvent.click(createDashboardBtn);
 
 		const createDashboardModal = (await screen.findByRole(
@@ -431,8 +348,10 @@ describe('TracesExplorer -', () => {
 			'/traces-explorer/?panelType=list&selectedExplorerView=list',
 		]);
 
-		const createAlertBtn = await screen.findByText('Create an Alert');
-		expect(createAlertBtn).toBeInTheDocument();
+		const createAlertBtn = await screen.findByTestId('explorer-create-alert');
+		await waitFor(() =>
+			expect(createAlertBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		fireEvent.click(createAlertBtn);
 
 		expect(historyPush).toHaveBeenCalledWith(
