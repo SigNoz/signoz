@@ -8,6 +8,7 @@ import ROUTES from 'constants/routes';
 import SavedViewsPanel from '../SavedViewsPanel';
 import { mockSavedViewsApi } from './savedViewsApiMock';
 import {
+	expectUsable,
 	explorerUrl,
 	makeView,
 	renderWithExplorerProviders,
@@ -85,7 +86,7 @@ describe('SavedViewsPanel list', () => {
 
 		await screen.findByTestId('saved-views-list');
 		const name = within(row('Slow spans')).getByTestId('saved-views-row-name');
-		await waitFor(() => expect(name).toBeEnabled());
+		await waitFor(() => expectUsable(name));
 		await userEvent.click(name);
 
 		await waitFor(() =>
@@ -162,7 +163,7 @@ describe('SavedViewsPanel list', () => {
 		const { history } = renderPanel();
 
 		const create = await screen.findByTestId('saved-views-list-create');
-		await waitFor(() => expect(create).toBeEnabled());
+		await waitFor(() => expectUsable(create));
 		await userEvent.click(create);
 		await userEvent.type(screen.getByTestId('save-view-name'), 'First view');
 		await userEvent.click(screen.getByTestId('save-view-submit'));

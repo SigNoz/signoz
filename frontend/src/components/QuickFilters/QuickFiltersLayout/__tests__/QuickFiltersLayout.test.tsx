@@ -47,10 +47,15 @@ jest.mock('../../QuickFilters', () => ({
 			{source}
 			{handleFilterVisibilityChange && (
 				<Button
+					size="md"
+					variant="solid"
+					color="primary"
 					aria-label="Collapse Filters"
-					data-testid="quick-filters-collapse"
+					testId="quick-filters-collapse"
 					onClick={handleFilterVisibilityChange}
-				/>
+				>
+					Collapse
+				</Button>
 			)}
 		</div>
 	),
@@ -193,7 +198,9 @@ describe('QuickFiltersLayout', () => {
 			expect(drawer()).not.toHaveClass('isOpen');
 
 			await waitFor(() =>
-				expect(screen.getByTestId('saved-views-open')).toBeEnabled(),
+				expect(screen.getByTestId('saved-views-open')).not.toHaveAttribute(
+					'aria-busy',
+				),
 			);
 			await user.click(screen.getByTestId('saved-views-open'));
 
@@ -226,7 +233,9 @@ describe('QuickFiltersLayout', () => {
 				SavedviewtypesSourceDTO.traces,
 			);
 			await waitFor(() =>
-				expect(screen.getByTestId('saved-views-open')).toBeEnabled(),
+				expect(screen.getByTestId('saved-views-open')).not.toHaveAttribute(
+					'aria-busy',
+				),
 			);
 			await userEvent.setup().click(screen.getByTestId('saved-views-open'));
 			expect(screen.getByTestId('saved-views-panel')).toHaveAttribute(

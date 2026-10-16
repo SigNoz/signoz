@@ -3,7 +3,7 @@ import cx from 'classnames';
 import { ArrowUpToLine, List, Plus, Undo2, X } from '@signozhq/icons';
 import { Skeleton } from '@signozhq/ui/skeleton';
 import { toast } from '@signozhq/ui/sonner';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
@@ -121,7 +121,7 @@ function SavedViewsHeader({
 				) : isReadDenied ? (
 					<AuthZTooltip checks={[readPermission]}>{nameChip}</AuthZTooltip>
 				) : (
-					<TooltipSimple title={errorMessage ?? name}>{nameChip}</TooltipSimple>
+					<Tooltip title={errorMessage ?? name}>{nameChip}</Tooltip>
 				)}
 			</div>
 
@@ -131,6 +131,7 @@ function SavedViewsHeader({
 						title="Create new view"
 						icon={<Plus size={14} />}
 						disabled={isLoading}
+						disabledTooltip="Loading views"
 						checks={[SavedViewCreatePermission]}
 						onClick={(): void => setModalMode('create')}
 						testId="saved-views-create"
@@ -159,6 +160,7 @@ function SavedViewsHeader({
 							icon={<X size={14} />}
 							color="warning"
 							disabled={isSaving}
+							disabledTooltip="Saving the view"
 							onClick={(): void => revertView(view)}
 							testId="saved-views-discard"
 						/>

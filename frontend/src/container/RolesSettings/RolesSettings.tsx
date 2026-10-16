@@ -25,9 +25,11 @@ function RolesSettings(): JSX.Element {
 			<div className={styles.rolesSettingsHeader}>
 				<h3 className={styles.rolesSettingsHeaderTitle}>Roles</h3>
 				<p className={styles.rolesSettingsHeaderDescription}>
-					{isRolesEnabled
-						? 'Create and manage custom roles for your team. '
-						: 'The built-in roles of this instance.'}{' '}
+					<span className="translate-safe">
+						{isRolesEnabled
+							? 'Create and manage custom roles for your team. '
+							: 'The built-in roles of this instance.'}
+					</span>{' '}
 					<a
 						href="https://signoz.io/docs/manage/administrator-guide/iam/roles/"
 						target="_blank"
@@ -40,7 +42,10 @@ function RolesSettings(): JSX.Element {
 			</div>
 			<div className={styles.rolesSettingsContent}>
 				<div className={styles.rolesSettingsToolbar}>
-					<AuthZTooltip checks={[RoleListPermission]}>
+					<AuthZTooltip
+						checks={[RoleListPermission]}
+						triggerClassName={styles.rolesSettingsSearch}
+					>
 						<Input
 							type="search"
 							placeholder="Search for roles..."
@@ -50,13 +55,14 @@ function RolesSettings(): JSX.Element {
 					</AuthZTooltip>
 					{isRolesEnabled && (
 						<AuthZButton
+							size="md"
 							checks={[RoleCreatePermission]}
 							variant="solid"
 							color="primary"
-							className={styles.roleSettingsToolbarButton}
+							width={156}
 							onClick={(): void => history.push(ROUTES.ROLE_CREATE)}
+							prefix={<Plus size={14} />}
 						>
-							<Plus size={14} />
 							Custom role
 						</AuthZButton>
 					)}

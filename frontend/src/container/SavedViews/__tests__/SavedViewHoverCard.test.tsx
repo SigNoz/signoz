@@ -18,6 +18,7 @@ import {
 import SavedViewsPanel from '../SavedViewsPanel';
 import { mockSavedViewsApi } from './savedViewsApiMock';
 import {
+	expectUsable,
 	explorerUrl,
 	makeView,
 	queryWith,
@@ -119,7 +120,7 @@ async function renderPanel(
 	await waitFor(() =>
 		screen
 			.getAllByTestId('saved-views-row-name')
-			.forEach((name) => expect(name).toBeEnabled()),
+			.forEach((name) => expectUsable(name)),
 	);
 	jest.useFakeTimers();
 }
@@ -212,9 +213,7 @@ describe('SavedViewHoverCard', () => {
 			await renderPanel();
 			openCard('Errors');
 
-			fireEvent.pointerDown(
-				within(row('Errors')).getByTestId('saved-views-row-menu'),
-			);
+			fireEvent.click(within(row('Errors')).getByTestId('saved-views-row-menu'));
 
 			expect(card()).toBeNull();
 		});

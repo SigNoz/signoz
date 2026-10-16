@@ -1,14 +1,14 @@
 import { useMemo } from 'react';
 import { Check } from '@signozhq/icons';
-import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
+import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';
+import type { AuthZDropdownItemType } from 'lib/authz/components/AuthZDropdown/types';
 import {
 	buildSavedViewUpdatePermission,
 	SavedViewCreatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
-import { useSavedViewMenuItems } from './hooks/useSavedViewMenuItems';
 
 import SavedViewsIconButton from './SavedViewsIconButton';
-import { SaveChangesMenuProps, SavedViewMenuItem } from './types';
+import { SaveChangesMenuProps } from './types';
 
 function SaveChangesMenu({
 	viewId,
@@ -16,35 +16,43 @@ function SaveChangesMenu({
 	onSaveAsNew,
 	onUpdate,
 }: SaveChangesMenuProps): JSX.Element {
-	const actionItems = useMemo<SavedViewMenuItem[]>(
+	const items = useMemo<AuthZDropdownItemType[]>(
 		() => [
 			{
-				key: 'save-as-new',
-				label: <span data-testid="saved-views-save-as-new">Save as new view</span>,
+				type: 'item',
+				value: 'save-as-new',
+				label: 'Save as new view',
 				checks: [SavedViewCreatePermission],
 				onClick: onSaveAsNew,
 			},
 			{
-				key: 'update',
-				label: <span data-testid="saved-views-update">Update selected view</span>,
+				type: 'item',
+				value: 'update',
+				label: 'Update selected view',
 				checks: [buildSavedViewUpdatePermission(viewId)],
 				onClick: onUpdate,
 			},
 		],
 		[viewId, onSaveAsNew, onUpdate],
 	);
-	const items = useSavedViewMenuItems(actionItems);
 
 	return (
-		<DropdownMenuSimple menu={{ items }} align="end">
+		<AuthZDropdown
+			items={items}
+			nativeButton
+			align="end"
+			side="bottom"
+			disabled={disabled}
+			disabledTooltip="Saving the view"
+			testId="saved-views-save-changes"
+		>
 			<SavedViewsIconButton
 				title="Save changes"
 				icon={<Check size={14} />}
 				color="warning"
-				disabled={disabled}
 				testId="saved-views-save-changes"
 			/>
-		</DropdownMenuSimple>
+		</AuthZDropdown>
 	);
 }
 

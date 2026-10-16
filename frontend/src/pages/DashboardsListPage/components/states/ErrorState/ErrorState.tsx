@@ -70,6 +70,7 @@ function ErrorState({
 			<section className={styles.actionButtons}>
 				{!isClientError && (
 					<Button
+						size="md"
 						variant="outlined"
 						color="secondary"
 						prefix={<RotateCw size={16} />}
@@ -80,9 +81,9 @@ function ErrorState({
 					</Button>
 				)}
 				<Button
+					size="md"
 					variant="link"
 					color="primary"
-					className={styles.learnMore}
 					onClick={handleContactSupportClick}
 					testId="dashboards-list-contact-support"
 				>

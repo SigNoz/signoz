@@ -76,15 +76,6 @@
 	opacity: 1;
 }
 
-.rowButton {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	min-width: var(--spacing-12);
-	height: var(--spacing-12);
-	padding: var(--spacing-1);
-}
-
 .rowName {
 	--button-height: 100%;
 	--button-padding: 0 var(--spacing-6);
@@ -96,12 +87,7 @@
 
 	flex: 1;
 	min-width: 0;
-}
-
-.rowNameText {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+	height: 100%;
 }
 
 .loading {

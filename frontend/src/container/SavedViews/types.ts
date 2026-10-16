@@ -1,6 +1,5 @@
-import { ReactElement } from 'react';
+import { ReactElement, ReactNode } from 'react';
 import type { Link } from '@signozhq/icons';
-import type { MenuItem } from '@signozhq/ui/dropdown-menu';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import {
 	SavedviewtypesSavedViewDTO,
@@ -86,6 +85,7 @@ export interface SavedViewsIconButtonProps {
 	testId: string;
 	color?: 'secondary' | 'warning';
 	disabled?: boolean;
+	disabledTooltip?: ReactNode;
 	checks?: BrandedPermission[];
 	onClick?: () => void;
 }
@@ -147,8 +147,6 @@ export interface SavedViewsRowButtonProps {
 	tooltip?: string;
 	testId: string;
 	onClick?: () => void;
-	onPointerDown?: () => void;
-	onKeyDown?: () => void;
 }
 
 export interface SavedViewsRowMenuProps {
@@ -219,11 +217,4 @@ export interface SavedViewsEmptyStateProps {
 	isSearching: boolean;
 	isSaving: boolean;
 	onSave: (displayName: string) => Promise<boolean>;
-}
-
-export type SavedViewMenuItem = MenuItem & { checks?: BrandedPermission[] };
-
-export interface UseSavedViewMenuItemsOptions {
-	/** False until the menu needs its checks, e.g. before it is first opened. */
-	enabled?: boolean;
 }

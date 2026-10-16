@@ -171,6 +171,7 @@ export const clickFooterButton = async (
 			const element = within(canvasElement).getByTestId(testId);
 
 			expect(element).toBeEnabled();
+			expect(element).not.toHaveAttribute('aria-disabled', 'true');
 
 			return element;
 		},

@@ -1,6 +1,0 @@
-// A denied item stays disabled but keeps pointer events, so its reason shows on hover.
-// The doubled class outranks the menu's own disabled rule.
-.deniedItem.deniedItem[data-disabled] {
-	pointer-events: auto;
-	cursor: not-allowed;
-}

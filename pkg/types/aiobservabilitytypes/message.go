@@ -1,5 +1,6 @@
 // The message types mirror the OpenTelemetry GenAI message schemas, one type per schema definition:
-// open-telemetry/semantic-conventions-genai@06ec68e, model/gen-ai/gen-ai-{input,output}-messages.json.
+// https://github.com/open-telemetry/semantic-conventions-genai/blob/06ec68e722c45a7218e23ea1bc1339fe4e21ecae/model/gen-ai/gen-ai-input-messages.json
+// https://github.com/open-telemetry/semantic-conventions-genai/blob/06ec68e722c45a7218e23ea1bc1339fe4e21ecae/model/gen-ai/gen-ai-output-messages.json
 // Keys the schema does not name are dropped; the raw attribute on the span still has them.
 
 package aiobservabilitytypes

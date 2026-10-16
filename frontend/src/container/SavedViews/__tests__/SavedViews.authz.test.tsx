@@ -1,4 +1,10 @@
-import { act, screen, waitFor, within } from '@testing-library/react';
+import {
+	act,
+	fireEvent,
+	screen,
+	waitFor,
+	within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -63,15 +69,16 @@ const rowNamed = (name: string): HTMLElement =>
 
 async function openRowMenu(name: string): Promise<void> {
 	await screen.findAllByTestId('saved-views-row');
-	await userEvent.click(
-		within(rowNamed(name)).getByTestId('saved-views-row-menu'),
-	);
+	fireEvent.click(within(rowNamed(name)).getByTestId('saved-views-row-menu'));
 }
 
-const menuItem = async (testId: string): Promise<HTMLElement> =>
-	(await screen.findByTestId(testId)).closest(
-		'[role="menuitem"]',
-	) as HTMLElement;
+// Resolves once the row's check is back, so its state is final.
+async function settledRow(testId: string): Promise<HTMLElement> {
+	await waitFor(() =>
+		expect(screen.getByTestId(testId)).not.toHaveAttribute('data-loading'),
+	);
+	return screen.getByTestId(testId);
+}
 
 describe('SavedViews - AuthZ', () => {
 	beforeEach(() => {
@@ -100,16 +107,15 @@ describe('SavedViews - AuthZ', () => {
 		renderPanel();
 
 		await screen.findAllByTestId('saved-views-row');
+		const nameOf = (view: string): HTMLElement =>
+			within(rowNamed(view)).getByTestId('saved-views-row-name');
 		await waitFor(() =>
-			expect(
-				within(rowNamed('Errors')).getByTestId('saved-views-row-name'),
-			).toBeDisabled(),
+			expect(nameOf('Errors')).toHaveAttribute('aria-disabled', 'true'),
 		);
 		await waitFor(() =>
-			expect(
-				within(rowNamed('Slow spans')).getByTestId('saved-views-row-name'),
-			).toBeEnabled(),
+			expect(nameOf('Slow spans')).not.toHaveAttribute('aria-busy'),
 		);
+		expect(nameOf('Slow spans')).not.toHaveAttribute('aria-disabled', 'true');
 	});
 
 	it('keeps the row menu on a view it cannot read', async () => {
@@ -119,21 +125,15 @@ describe('SavedViews - AuthZ', () => {
 
 		await openRowMenu('Errors');
 
-		await waitFor(async () =>
-			expect(menuItem('saved-views-row-menu-delete')).resolves.not.toHaveAttribute(
-				'data-disabled',
-			),
-		);
-		await waitFor(async () =>
-			expect(
-				menuItem('saved-views-row-menu-editDetails'),
-			).resolves.not.toHaveAttribute('data-disabled'),
-		);
-		await waitFor(async () =>
-			expect(
-				menuItem('saved-views-row-menu-copyLink'),
-			).resolves.not.toHaveAttribute('data-disabled'),
-		);
+		await expect(
+			settledRow('saved-views-row-menu-item-delete'),
+		).resolves.not.toHaveAttribute('data-disabled');
+		await expect(
+			settledRow('saved-views-row-menu-item-editDetails'),
+		).resolves.not.toHaveAttribute('data-disabled');
+		await expect(
+			settledRow('saved-views-row-menu-item-copyLink'),
+		).resolves.not.toHaveAttribute('data-disabled');
 	});
 
 	it('disables creating without create', async () => {
@@ -143,10 +143,16 @@ describe('SavedViews - AuthZ', () => {
 		renderHeader(explorerUrl(PATH, {}));
 
 		await waitFor(() =>
-			expect(screen.getByTestId('saved-views-list-create')).toBeDisabled(),
+			expect(screen.getByTestId('saved-views-list-create')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			),
 		);
 		await waitFor(() =>
-			expect(screen.getByTestId('saved-views-create')).toBeDisabled(),
+			expect(screen.getByTestId('saved-views-create')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			),
 		);
 	});
 
@@ -158,7 +164,7 @@ describe('SavedViews - AuthZ', () => {
 		renderHeader(explorerUrl(PATH, {}));
 
 		const create = screen.getByTestId('saved-views-create');
-		expect(create).toBeDisabled();
+		expect(create).toHaveAttribute('aria-busy', 'true');
 		await userEvent.click(create);
 		expect(screen.queryByTestId('save-view-name')).toBeNull();
 	});
@@ -175,21 +181,15 @@ describe('SavedViews - AuthZ', () => {
 
 		await openRowMenu('Errors');
 
-		await waitFor(async () =>
-			expect(
-				menuItem('saved-views-row-menu-editDetails'),
-			).resolves.toHaveAttribute('data-disabled'),
-		);
-		await waitFor(async () =>
-			expect(menuItem('saved-views-row-menu-delete')).resolves.toHaveAttribute(
-				'data-disabled',
-			),
-		);
-		await waitFor(async () =>
-			expect(
-				menuItem('saved-views-row-menu-copyLink'),
-			).resolves.not.toHaveAttribute('data-disabled'),
-		);
+		await expect(
+			settledRow('saved-views-row-menu-item-editDetails'),
+		).resolves.toHaveAttribute('data-disabled');
+		await expect(
+			settledRow('saved-views-row-menu-item-delete'),
+		).resolves.toHaveAttribute('data-disabled');
+		await expect(
+			settledRow('saved-views-row-menu-item-copyLink'),
+		).resolves.not.toHaveAttribute('data-disabled');
 	});
 
 	it('disables updating the open view without update, keeping save as new', async () => {
@@ -209,16 +209,12 @@ describe('SavedViews - AuthZ', () => {
 		);
 		await userEvent.click(await screen.findByTestId('saved-views-save-changes'));
 
-		await waitFor(async () =>
-			expect(menuItem('saved-views-update')).resolves.toHaveAttribute(
-				'data-disabled',
-			),
-		);
-		await waitFor(async () =>
-			expect(menuItem('saved-views-save-as-new')).resolves.not.toHaveAttribute(
-				'data-disabled',
-			),
-		);
+		await expect(
+			settledRow('saved-views-save-changes-item-update'),
+		).resolves.toHaveAttribute('data-disabled');
+		await expect(
+			settledRow('saved-views-save-changes-item-save-as-new'),
+		).resolves.not.toHaveAttribute('data-disabled');
 	});
 
 	it('says no access on a 403, naming the permission when the check denies it', async () => {

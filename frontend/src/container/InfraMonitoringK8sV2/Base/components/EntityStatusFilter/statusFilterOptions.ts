@@ -1,4 +1,4 @@
-import { BadgeColor } from '@signozhq/ui/badge';
+import type { BadgeColorType } from '@signozhq/ui/badge';
 import {
 	InframonitoringtypesContainerStatusDTO,
 	InframonitoringtypesNodeConditionDTO,
@@ -18,7 +18,7 @@ import {
 } from '../../../Containers/utils';
 import { NODE_CONDITION_LABELS } from '../../../Nodes/utils';
 
-const ERROR_BADGE_COLOR: BadgeColor = 'cherry';
+const ERROR_BADGE_COLOR: BadgeColorType = 'danger';
 
 /**
  * Splits statuses into the two sections the dropdown renders. The badge colour is
@@ -28,7 +28,7 @@ const ERROR_BADGE_COLOR: BadgeColor = 'cherry';
 function toSectionedOptions<T extends string>(
 	values: T[],
 	labels: Record<T, string>,
-	colors: Record<T, BadgeColor>,
+	colors: Record<T, BadgeColorType>,
 ): OptionData[] {
 	const toOption = (value: T): OptionData => ({
 		label: labels[value],

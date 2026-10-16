@@ -1,7 +1,6 @@
 import cx from 'classnames';
 import { Undo2 } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { buildSavedViewReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 
@@ -21,24 +20,9 @@ function SavedViewsListRow({
 }: SavedViewsListRowProps): JSX.Element {
 	const name = view.spec.displayName;
 	const readPermission = buildSavedViewReadPermission(view.id);
+	// Same cached check as the button; gates the hover card.
 	const { isLoading, deniedPermissions } = useAuthZ([readPermission]);
 	const canRead = !isLoading && deniedPermissions.length === 0;
-
-	const nameButton = (
-		<Button
-			variant="ghost"
-			color="secondary"
-			className={styles.rowName}
-			onClick={(): void => {
-				if (!isActive) {
-					onSelect(view);
-				}
-			}}
-			data-testid="saved-views-row-name"
-		>
-			<span className={styles.rowNameText}>{name}</span>
-		</Button>
-	);
 
 	return (
 		<div
@@ -52,7 +36,24 @@ function SavedViewsListRow({
 			}}
 			onMouseLeave={hover.onRowLeave}
 		>
-			<AuthZTooltip checks={[readPermission]}>{nameButton}</AuthZTooltip>
+			<div className={styles.rowName}>
+				<AuthZButton
+					checks={[readPermission]}
+					size="md"
+					variant="ghost"
+					color="secondary"
+					width="100%"
+					textOverflow="ellipsis"
+					onClick={(): void => {
+						if (!isActive) {
+							onSelect(view);
+						}
+					}}
+					testId="saved-views-row-name"
+				>
+					{name}
+				</AuthZButton>
+			</div>
 			{isActive && (
 				<SavedViewsRowButton
 					icon={<Undo2 size={14} />}

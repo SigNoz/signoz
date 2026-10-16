@@ -9,6 +9,7 @@ import { usePreferenceContext } from 'providers/preferences/context/PreferenceCo
 import SavedViewsHeader from '../SavedViewsHeader';
 import { mockSavedViewsApi } from './savedViewsApiMock';
 import {
+	expectRowUsable,
 	makeView,
 	renderWithExplorerProviders,
 	viewUrl,
@@ -41,15 +42,25 @@ function Harness(): JSX.Element {
 				{columns.map((column) => column.name).join(',')}
 			</span>
 			<Button
-				data-testid="add-column"
+				size="md"
+				variant="solid"
+				color="primary"
+				testId="add-column"
 				onClick={(): void =>
 					traces.updateColumns([...columns, { name: `extra-${columns.length}` }])
 				}
-			/>
+			>
+				Add column
+			</Button>
 			<Button
-				data-testid="remount-header"
+				size="md"
+				variant="solid"
+				color="primary"
+				testId="remount-header"
 				onClick={(): void => setHeaderKey((key) => key + 1)}
-			/>
+			>
+				Remount header
+			</Button>
 		</>
 	);
 }
@@ -105,10 +116,10 @@ describe('SavedViewsHeader columns', () => {
 		await userEvent.click(screen.getByTestId('add-column'));
 		await waitFor(() => expect(isDirty()).toBe(true));
 		await userEvent.click(screen.getByTestId('saved-views-save-changes'));
-		const update = (await screen.findByTestId('saved-views-update')).closest(
-			'[role="menuitem"]',
-		) as HTMLElement;
-		await waitFor(() => expect(update).not.toHaveAttribute('data-disabled'));
+		const update = await screen.findByTestId(
+			'saved-views-save-changes-item-update',
+		);
+		await waitFor(() => expectRowUsable(update));
 		await userEvent.click(update);
 		await waitFor(() => expect(isDirty()).toBe(false));
 

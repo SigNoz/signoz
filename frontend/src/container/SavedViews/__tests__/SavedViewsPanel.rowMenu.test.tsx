@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { toast } from '@signozhq/ui/sonner';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
@@ -9,6 +9,7 @@ import SavedViewsHeader from '../SavedViewsHeader';
 import SavedViewsPanel from '../SavedViewsPanel';
 import { mockSavedViewsApi } from './savedViewsApiMock';
 import {
+	expectRowUsable,
 	explorerUrl,
 	makeView,
 	renderWithExplorerProviders,
@@ -59,10 +60,10 @@ const row = (name: string): HTMLElement =>
 		.find((element) => element.textContent?.includes(name)) as HTMLElement;
 
 const ROW_MENU_ITEM_TEST_IDS: Record<string, string> = {
-	'Copy link': 'saved-views-row-menu-copyLink',
-	'Copy ID': 'saved-views-row-menu-copyId',
-	'Edit details': 'saved-views-row-menu-editDetails',
-	Delete: 'saved-views-row-menu-delete',
+	'Copy link': 'saved-views-row-menu-item-copyLink',
+	'Copy ID': 'saved-views-row-menu-item-copyId',
+	'Edit details': 'saved-views-row-menu-item-editDetails',
+	Delete: 'saved-views-row-menu-item-delete',
 };
 
 async function chooseFromRowMenu(
@@ -70,13 +71,10 @@ async function chooseFromRowMenu(
 	item: string,
 ): Promise<void> {
 	await screen.findByTestId('saved-views-list');
-	await userEvent.click(
-		within(row(viewName)).getByTestId('saved-views-row-menu'),
-	);
-	const label = await screen.findByTestId(ROW_MENU_ITEM_TEST_IDS[item]);
-	const menuItem = label.closest('[role="menuitem"]') as HTMLElement;
-	await waitFor(() => expect(menuItem).not.toHaveAttribute('data-disabled'));
-	await userEvent.click(menuItem);
+	fireEvent.click(within(row(viewName)).getByTestId('saved-views-row-menu'));
+	const menuItem = await screen.findByTestId(ROW_MENU_ITEM_TEST_IDS[item]);
+	await waitFor(() => expectRowUsable(menuItem));
+	fireEvent.click(menuItem);
 }
 
 const chip = (): HTMLElement => screen.getByTestId('saved-views-name');
@@ -93,15 +91,13 @@ describe('SavedViewsPanel row menu', () => {
 		renderPanelWithHeader();
 		await screen.findByTestId('saved-views-list');
 
-		await userEvent.click(
-			within(row('Errors')).getByTestId('saved-views-row-menu'),
-		);
+		fireEvent.click(within(row('Errors')).getByTestId('saved-views-row-menu'));
 
-		await screen.findByTestId('saved-views-row-menu-copyLink');
-		const items = document.querySelectorAll(
-			'[data-testid^="saved-views-row-menu-"]',
+		await screen.findByTestId(ROW_MENU_ITEM_TEST_IDS['Copy link']);
+		const items = Object.values(ROW_MENU_ITEM_TEST_IDS).map(
+			(testId) => screen.getByTestId(testId).textContent,
 		);
-		expect(Array.from(items, (item) => item.textContent)).toStrictEqual([
+		expect(items).toStrictEqual([
 			'Copy link',
 			'Copy ID',
 			'Edit details',

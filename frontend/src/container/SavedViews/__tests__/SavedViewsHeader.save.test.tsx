@@ -9,6 +9,8 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import SavedViewsHeader from '../SavedViewsHeader';
 import {
+	expectRowUsable,
+	expectUsable,
 	explorerUrl,
 	makeView,
 	queryWith,
@@ -68,22 +70,20 @@ async function openDirtyView(
 }
 
 const SAVE_MENU_ITEM_TEST_IDS: Record<string, string> = {
-	'Save as new view': 'saved-views-save-as-new',
-	'Update selected view': 'saved-views-update',
+	'Save as new view': 'saved-views-save-changes-item-save-as-new',
+	'Update selected view': 'saved-views-save-changes-item-update',
 };
 
 async function chooseFromSaveMenu(item: string): Promise<void> {
 	await userEvent.click(screen.getByTestId('saved-views-save-changes'));
-	const label = await screen.findByTestId(SAVE_MENU_ITEM_TEST_IDS[item]);
-	const menuItem = label.closest('[role="menuitem"]') as HTMLElement;
-	await waitFor(() => expect(menuItem).not.toHaveAttribute('data-disabled'));
+	const menuItem = await screen.findByTestId(SAVE_MENU_ITEM_TEST_IDS[item]);
+	await waitFor(() => expectRowUsable(menuItem));
 	await userEvent.click(menuItem);
 }
 
 async function clickCreate(): Promise<void> {
-	const create = screen.getByTestId('saved-views-create');
-	await waitFor(() => expect(create).toBeEnabled());
-	await userEvent.click(create);
+	await waitFor(() => expectUsable(screen.getByTestId('saved-views-create')));
+	await userEvent.click(screen.getByTestId('saved-views-create'));
 }
 
 async function submitName(name: string): Promise<void> {
@@ -104,7 +104,10 @@ describe('SavedViewsHeader saving', () => {
 			await clickCreate();
 
 			expect(within(modal()).getByText('Create new view')).toBeInTheDocument();
-			expect(screen.getByTestId('save-view-submit')).toBeDisabled();
+			expect(screen.getByTestId('save-view-submit')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 
 			await submitName('Slow checkout');
 
