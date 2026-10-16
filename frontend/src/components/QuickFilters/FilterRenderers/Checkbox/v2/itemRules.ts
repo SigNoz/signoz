@@ -9,7 +9,7 @@ export enum SectionType {
 export interface BadgeConfig {
 	key: string;
 	label: string;
-	color: 'robin' | 'warning' | 'secondary';
+	color: 'primary' | 'warning' | 'secondary';
 }
 
 export interface ItemConfig {

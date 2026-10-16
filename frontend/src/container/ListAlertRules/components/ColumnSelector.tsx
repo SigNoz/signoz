@@ -47,7 +47,7 @@ function ColumnSelector<TData>({
 					size="sm"
 					color="secondary"
 					prefix={<Columns3 size={14} />}
-					data-testid="alert-columns-button"
+					testId="alert-columns-button"
 				>
 					Columns
 				</Button>
@@ -62,6 +62,7 @@ function ColumnSelector<TData>({
 						return (
 							<label key={col.id} className={styles.columnItem}>
 								<Checkbox
+									color="primary"
 									id={`col-${col.id}`}
 									value={isVisible}
 									onChange={(): void => handleToggle(col.id, !isVisible)}

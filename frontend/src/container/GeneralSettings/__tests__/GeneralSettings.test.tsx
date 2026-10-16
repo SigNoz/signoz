@@ -161,7 +161,7 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 
 			// Wait for button to be enabled
 			await waitFor(() => {
-				expect(saveButton).not.toBeDisabled();
+				expect(saveButton).not.toHaveAttribute('aria-disabled', 'true');
 			});
 
 			fireEvent.click(saveButton);
@@ -261,7 +261,7 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 
 			// Wait for button to be enabled
 			await waitFor(() => {
-				expect(saveButton).not.toBeDisabled();
+				expect(saveButton).not.toHaveAttribute('aria-disabled', 'true');
 			});
 
 			// Click save button
@@ -344,7 +344,7 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			expect(saveButton).toBeInTheDocument();
 
 			// Verify save button is disabled on initial load
-			expect(saveButton).toBeDisabled();
+			expect(saveButton).toHaveAttribute('aria-disabled', 'true');
 
 			// Find the total retention input
 			const inputs = logsRow.querySelectorAll('input[type="number"]');
@@ -355,7 +355,7 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 
 			// Button should now be enabled after change
 			await waitFor(() => {
-				expect(saveButton).not.toBeDisabled();
+				expect(saveButton).not.toHaveAttribute('aria-disabled', 'true');
 			});
 
 			// Revert to original value (30 days displays as 1 Month)
@@ -363,7 +363,7 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 
 			// Button should be disabled again (back to original state)
 			await waitFor(() => {
-				expect(saveButton).toBeDisabled();
+				expect(saveButton).toHaveAttribute('aria-disabled', 'true');
 			});
 		});
 	});

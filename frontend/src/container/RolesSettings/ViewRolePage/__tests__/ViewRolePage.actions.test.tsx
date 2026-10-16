@@ -63,7 +63,7 @@ describe('ViewRolePage - Actions', () => {
 
 		const updateBtn = await screen.findByTestId('save-button');
 		await waitFor(() => {
-			expect(updateBtn).not.toBeDisabled();
+			expect(updateBtn).not.toHaveAttribute('aria-disabled', 'true');
 		});
 		await user.click(updateBtn);
 
@@ -81,7 +81,7 @@ describe('ViewRolePage - Actions', () => {
 
 		const deleteBtn = await screen.findByTestId('delete-button');
 		await waitFor(() => {
-			expect(deleteBtn).not.toBeDisabled();
+			expect(deleteBtn).not.toHaveAttribute('aria-disabled', 'true');
 		});
 		await user.click(deleteBtn);
 
@@ -113,7 +113,7 @@ describe('ViewRolePage - Actions', () => {
 
 		const deleteBtn = await screen.findByTestId('delete-button');
 		await waitFor(() => {
-			expect(deleteBtn).not.toBeDisabled();
+			expect(deleteBtn).not.toHaveAttribute('aria-disabled', 'true');
 		});
 		await user.click(deleteBtn);
 

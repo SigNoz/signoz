@@ -76,10 +76,11 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 		{ enabled: !!editKeyId },
 	);
 
-	const canUpdate = isAuthZLoading
-		? false
-		: (editPermissions?.[buildAPIKeyUpdatePermission(editKeyId ?? '')]
-				?.isGranted ?? true);
+	const isUpdateDenied =
+		!isAuthZLoading &&
+		editPermissions?.[buildAPIKeyUpdatePermission(editKeyId ?? '')]?.isGranted ===
+			false;
+	const canUpdate = !isAuthZLoading && !isUpdateDenied;
 
 	const { mutate: updateKey, isLoading: isSaving } = useUpdateServiceAccountKey({
 		mutation: {
@@ -206,6 +207,7 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 					onRevokeClick={(): void => setIsRevokeConfirmOpen(true)}
 					formatTimezoneAdjustedTimestamp={formatTimezoneAdjustedTimestamp}
 					canUpdate={canUpdate}
+					isUpdateDenied={isUpdateDenied}
 					accountId={selectedAccountId ?? ''}
 				/>
 			)}

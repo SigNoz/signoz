@@ -85,6 +85,7 @@
 	flex-direction: column;
 	align-items: flex-start;
 	width: 140px;
+	--button-justify-content: flex-start;
 }
 
 .sortHeading {
@@ -104,23 +105,6 @@
 	height: 1px;
 	background: var(--l1-border);
 	margin: 4px 0;
-}
-
-.sortButton {
-	text-align: start;
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	width: 100%;
-	color: var(--l2-foreground);
-	font-family: Inter;
-	font-size: var(--font-size-sm);
-	font-style: normal;
-	font-weight: var(--font-weight-normal);
-	line-height: normal;
-	letter-spacing: 0.14px;
-	padding: 12px 18px 12px 14px;
-	height: auto;
 }
 
 .configureContent {

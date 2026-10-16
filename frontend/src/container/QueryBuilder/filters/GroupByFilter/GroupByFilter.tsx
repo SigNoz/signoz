@@ -34,6 +34,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 	query,
 	onChange,
 	disabled,
+	placeholder = 'Everything (no breakdown)',
 }: GroupByFilterProps): JSX.Element {
 	const getPopupContainer = useSelectPopupContainer();
 	const [searchText, setSearchText] = useState<string>('');
@@ -153,7 +154,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 			onChange={handleChange}
 			data-testid="group-by"
-			placeholder={localValues?.length === 0 ? 'Everything (no breakdown)' : ''}
+			placeholder={localValues?.length === 0 ? placeholder : ''}
 		/>
 	);
 });
