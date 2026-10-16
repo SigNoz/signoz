@@ -104,6 +104,17 @@ func (handler *handler) GetNotificationChannel(rw http.ResponseWriter, req *http
 		return
 	}
 
+	// The v2 get-by-ID response carries the full channel configuration,
+	// credentials included. Only admins manage channels, so everyone else gets
+	// the credential-bearing fields redacted.
+	if !handler.isOrgAdmin(ctx, claims) {
+		gettable, err = gettable.WithSecretsRedacted()
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+	}
+
 	render.Success(rw, http.StatusOK, gettable)
 }
 
