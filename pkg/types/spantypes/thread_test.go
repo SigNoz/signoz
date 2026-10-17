@@ -5,17 +5,18 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// jsonAttrs builds a native JSON column from dotted leaf paths, as ClickHouse stores them.
-func jsonAttrs(paths map[string]any) chcol.JSON {
+// jsonAttrs builds a JSONValue from dotted leaf paths, as ClickHouse stores them.
+func jsonAttrs(paths map[string]any) telemetrystoretypes.JSONValue {
 	j := chcol.NewJSON()
 	for path, value := range paths {
 		j.SetValueAtPath(path, value)
 	}
-	return *j
+	return telemetrystoretypes.NewJSONValue(*j)
 }
 
 func TestNewThreadQuery_Cursor(t *testing.T) {

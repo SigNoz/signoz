@@ -6,6 +6,7 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -78,17 +79,17 @@ func TestMergeSpanAttributeColumns_ParsesEventsAndLinks(t *testing.T) {
 	}
 }
 
-// jsonColumn builds a native JSON column from dotted leaf paths, as ClickHouse stores them.
-func jsonColumn(paths map[string]any) chcol.JSON {
+// jsonColumn builds a JSONValue from dotted leaf paths, as ClickHouse stores them.
+func jsonColumn(paths map[string]any) telemetrystoretypes.JSONValue {
 	j := chcol.NewJSON()
 	for path, value := range paths {
 		j.SetValueAtPath(path, value)
 	}
-	return *j
+	return telemetrystoretypes.NewJSONValue(*j)
 }
 
 // A JSON path (e.g. body_v2.level) comes back as a Dynamic column scanned into a chcol.Variant
-// envelope; a whole JSON column scans into chcol.JSON, which decodes flat for the attributes bag and
+// envelope; a whole JSON column scans into a JSONValue, which decodes flat for the attributes bag and
 // nested for every other column.
 func TestUnwrapVariant(t *testing.T) {
 	jsonCol := jsonColumn(map[string]any{"level": "error", "attrs.code": int64(500)})

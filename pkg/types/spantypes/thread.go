@@ -7,7 +7,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 )
 
 const (
@@ -180,7 +179,7 @@ func newThreadSpan(traceID string, storable *StorableSpan) *ThreadSpan {
 	timeUnixNano := uint64(storable.StartTime.UnixNano())
 	attributes := threadAttributes(storable)
 	// Spans from before the JSON rollout have an empty document and format to nothing.
-	formatted := aiobservabilitytypes.FormatMessages(telemetrystoretypes.NestJSON(storable.AttributesJSON))
+	formatted := aiobservabilitytypes.FormatMessages(storable.AttributesJSON.Nest())
 	return &ThreadSpan{
 		SpanID:            storable.SpanID,
 		TraceID:           traceID,
@@ -206,7 +205,7 @@ func newThreadSpan(traceID string, storable *StorableSpan) *ThreadSpan {
 // threadAttributes flattens the JSON column into dotted keys, as the querier does for list
 // responses, and falls back to the legacy maps for spans written before the JSON rollout.
 func threadAttributes(storable *StorableSpan) map[string]any {
-	attributes := telemetrystoretypes.FlattenJSON(storable.AttributesJSON)
+	attributes := storable.AttributesJSON.Flatten()
 	if len(attributes) == 0 {
 		return storable.Attributes()
 	}

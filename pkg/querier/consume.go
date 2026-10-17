@@ -41,18 +41,18 @@ func stripKeyAlias(name string) string {
 }
 
 // unwrapVariant decodes a scan envelope: the chcol.Variant the driver scans a Dynamic column (a JSON
-// path such as body_v2.level) into, and the chcol.JSON a whole JSON column scans into. The attributes
+// path such as body_v2.level) into, and the JSONValue a whole JSON column scans into. The attributes
 // bag decodes flat so its dotted keys merge with the legacy attribute maps and a key stored at both a
 // scalar and an object path stays two keys; every other JSON column decodes nested.
 func unwrapVariant(name string, val any) any {
 	switch v := val.(type) {
 	case chcol.Variant:
 		return v.Any()
-	case chcol.JSON:
+	case telemetrystoretypes.JSONValue:
 		if name == "attributes" {
-			return telemetrystoretypes.FlattenJSON(v)
+			return v.Flatten()
 		}
-		return telemetrystoretypes.NestJSON(v)
+		return v.Nest()
 	}
 	return val
 }
@@ -212,7 +212,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 					Value: *val,
 				})
 
-			case *chcol.JSON, *chcol.Variant:
+			case *telemetrystoretypes.JSONValue, *chcol.Variant:
 				val := labelValue(derefValue(ptr))
 				lblVals = append(lblVals, val)
 				lblObjs = append(lblObjs, &qbtypes.Label{
