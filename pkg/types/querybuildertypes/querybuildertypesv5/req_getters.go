@@ -169,6 +169,20 @@ func (q *QueryEnvelope) GetLimit() int {
 	return 0
 }
 
+// GetImplicitLimit returns the row cap we imposed on an unbounded query, or 0 if the user set
+// the limit.
+func (q *QueryEnvelope) GetImplicitLimit() int {
+	switch spec := q.Spec.(type) {
+	case QueryBuilderQuery[TraceAggregation]:
+		return spec.implicitLimit
+	case QueryBuilderQuery[LogAggregation]:
+		return spec.implicitLimit
+	case QueryBuilderQuery[MetricAggregation]:
+		return spec.implicitLimit
+	}
+	return 0
+}
+
 // GetOffset returns the row offset.
 func (q *QueryEnvelope) GetOffset() int {
 	switch spec := q.Spec.(type) {
