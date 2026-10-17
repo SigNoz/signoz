@@ -4,12 +4,27 @@ import (
 	"strings"
 
 	"github.com/expr-lang/expr"
+	"github.com/expr-lang/expr/ast"
 	"github.com/prometheus/common/model"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 )
 
-var ErrCodeInvalidScopeExpression = errors.MustNewCode("invalid_scope_expression")
+var ErrCodeInvalidExpression = errors.MustNewCode("invalid_expression")
+
+// NilSafeMemberAccess rewrites every member access a.b into a?.b, so a dotted
+// label missing from the alert evaluates to nil instead of failing the run.
+type NilSafeMemberAccess struct{}
+
+func (NilSafeMemberAccess) Visit(node *ast.Node) {
+	member, ok := (*node).(*ast.MemberNode)
+	if !ok || member.Optional {
+		return
+	}
+	member.Optional = true
+	// The compiler only honours Optional inside a ChainNode.
+	ast.Patch(node, &ast.ChainNode{Node: member})
+}
 
 // ConvertLabelSetToEnv converts a label set into a map suitable for use as an
 // expr environment. Dotted keys (e.g. "kubernetes.node") are expanded into
@@ -66,23 +81,22 @@ func ConvertLabelSetToEnv(lset model.LabelSet) (map[string]any, bool) {
 	return env, conflict
 }
 
-// EvalScopeExpression compiles and runs the expression against the provided
-// labels. It returns (result, error). Callers should log the error and
-// decide how to handle a failed evaluation (the maintenance muter treats a
-// failure as "don't skip" so alerts pass through).
-func EvalScopeExpression(expression string, lset model.LabelSet) (bool, error) {
-	env, _ := ConvertLabelSetToEnv(lset)
-	program, err := expr.Compile(expression, expr.Env(env), expr.AllowUndefinedVariables())
+// EvalExpression compiles and runs the expression against env, as built by
+// ConvertLabelSetToEnv. Callers should log the error and decide how to handle
+// a failed evaluation (the maintenance muter treats a failure as "don't skip"
+// so alerts pass through).
+func EvalExpression(expression string, env map[string]any) (bool, error) {
+	program, err := expr.Compile(expression, expr.Env(env), expr.AllowUndefinedVariables(), expr.Patch(NilSafeMemberAccess{}))
 	if err != nil {
-		return false, errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeInvalidScopeExpression, "compile scope expression %q", expression)
+		return false, errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeInvalidExpression, "compile expression %q", expression)
 	}
 	output, err := expr.Run(program, env)
 	if err != nil {
-		return false, errors.Wrapf(err, errors.TypeInternal, ErrCodeInvalidScopeExpression, "run scope expression %q", expression)
+		return false, errors.Wrapf(err, errors.TypeInternal, ErrCodeInvalidExpression, "run expression %q", expression)
 	}
 	result, ok := output.(bool)
 	if !ok {
-		return false, errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidScopeExpression, "scope expression %q returned non-bool value %T (%v)", expression, output, output)
+		return false, errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidExpression, "expression %q returned non-bool value %T (%v)", expression, output, output)
 	}
 	return result, nil
 }
