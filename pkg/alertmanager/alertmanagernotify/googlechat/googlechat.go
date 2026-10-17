@@ -243,13 +243,9 @@ func statusLine(alerts []*types.Alert) string {
 // the annotations the ruler attaches to each alert. Empty links are skipped.
 func relatedButtons(alert *types.Alert) []button {
 	var buttons []button
-	add := func(text, u string) {
-		if u != "" {
-			buttons = append(buttons, button{Text: text, OnClick: onClick{OpenLink: openLink{URL: u}}})
-		}
+	for _, link := range alertmanagertypes.BuildRelatedLinks(alert.Annotations) {
+		buttons = append(buttons, button{Text: link.Label, OnClick: onClick{OpenLink: openLink{URL: link.URL}}})
 	}
-	add("View Related Logs", string(alert.Annotations[ruletypes.AnnotationRelatedLogs]))
-	add("View Related Traces", string(alert.Annotations[ruletypes.AnnotationRelatedTraces]))
 	return buttons
 }
 
