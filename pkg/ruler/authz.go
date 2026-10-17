@@ -34,6 +34,32 @@ func NewCreateChannelAttachExtractor(alertmanagerService alertmanager.Alertmanag
 	}}
 }
 
+func NewCloneChannelAttachExtractor(alertmanagerService alertmanager.Alertmanager, rulerService Ruler) coretypes.ResourceIDsExtractor {
+	return coretypes.ResourceIDsExtractor{Phase: coretypes.PhaseRequest, Fn: func(ec coretypes.ExtractorContext) ([]string, error) {
+		if ec.Request == nil {
+			return nil, nil
+		}
+
+		ctx := ec.Request.Context()
+		orgID, err := orgIDFromContext(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		ruleID, err := valuer.NewUUID(mux.Vars(ec.Request)["id"])
+		if err != nil {
+			return nil, err
+		}
+
+		stored, err := rulerService.GetRule(ctx, ruleID)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolveChannelIDs(ctx, alertmanagerService, orgID, stored.Channels())
+	}}
+}
+
 func NewReplaceChannelAttachExtractor(alertmanagerService alertmanager.Alertmanager, rulerService Ruler) coretypes.ResourceIDsExtractor {
 	return newChannelDiffExtractor(alertmanagerService, rulerService, replacedChannels, attachedSide)
 }

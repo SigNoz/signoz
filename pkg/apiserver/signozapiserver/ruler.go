@@ -127,6 +127,53 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/rules/{id}/clone", handler.New(
+		provider.authzMiddleware.CheckResources(provider.rulerHandler.CloneRuleByID, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		handler.OpenAPIDef{
+			ID:                  "CloneRuleByID",
+			Tags:                []string{"rules"},
+			Summary:             "Clone alert rule",
+			Description:         "This endpoint creates a new alert rule from the stored definition of an existing one. The clone keeps every modeled field of the source, including its enabled/disabled state, and gets the source's name suffixed with \" - Copy\" (or a bumped \" - Copy (n)\" counter when the source is itself a copy). The clone is owned by the caller.",
+			Response:            new(ruletypes.Rule),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusCreated,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			SecuritySchemes: newScopedSecuritySchemes([]string{
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbRead),
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbCreate),
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbAttach),
+				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbAttach),
+			}),
+		},
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceRule,
+				Verb:     coretypes.VerbRead,
+				Category: coretypes.ActionCategoryDataAccess,
+				ID:       coretypes.PathParam("id"),
+				Selector: coretypes.IDSelector,
+			},
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceRule,
+				Verb:     coretypes.VerbCreate,
+				Category: coretypes.ActionCategoryConfigurationChange,
+				ID:       coretypes.ResponseJSONPath("data.id"),
+				Selector: coretypes.WildcardSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourceRule,
+				SourceIDs:      coretypes.OneID(coretypes.ResponseJSONPath("data.id")),
+				SourceSelector: coretypes.WildcardSelector,
+				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
+				TargetIDs:      ruler.NewCloneChannelAttachExtractor(provider.alertmanagerService, provider.rulerService),
+				TargetSelector: coretypes.IDSelector,
+			},
+		),
+	)).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
 	if err := router.Handle("/api/v2/rules/{id}", handler.New(
 		provider.authzMiddleware.CheckResources(provider.rulerHandler.UpdateRuleByID, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
 		handler.OpenAPIDef{

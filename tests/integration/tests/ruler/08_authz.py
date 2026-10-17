@@ -236,6 +236,7 @@ def test_viewer_forbidden_on_mutations(
         ("put", f"{V2_RULES_URL}/{target_id}"),
         ("patch", f"{V2_RULES_URL}/{target_id}"),
         ("delete", f"{V2_RULES_URL}/{target_id}"),
+        ("post", f"{V2_RULES_URL}/{target_id}/clone"),
         ("post", f"{V2_RULES_URL}/test"),
         ("post", DOWNTIME_URL),
         ("put", f"{DOWNTIME_URL}/{target_id}"),
@@ -556,6 +557,30 @@ def test_rule_naming_channel_forbidden_without_channel_attach(
     assert response.status_code == HTTPStatus.FORBIDDEN, response.text
 
 
+def test_clone_forbidden_without_channel_attach(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{V3_RULES_URL}?limit=200"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    target_id = {rule["alert"]: rule["id"] for rule in response.json()["data"]["rules"]}[_TARGET_RULE]
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{target_id}/clone"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
+
+
 def test_rule_naming_channel_allowed_once_channel_attach_granted(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -582,13 +607,23 @@ def test_rule_naming_channel_allowed_once_channel_attach_granted(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.CREATED, response.text
+    rule_id = response.json()["data"]["id"]
 
-    response = requests.delete(
-        signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{response.json()['data']['id']}"),
-        headers={"Authorization": f"Bearer {admin_token}"},
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{rule_id}/clone"),
+        headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    clone_id = response.json()["data"]["id"]
+
+    for created_id in (rule_id, clone_id):
+        response = requests.delete(
+            signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{created_id}"),
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
 
 def test_channel_swap_forbidden_without_channel_detach(

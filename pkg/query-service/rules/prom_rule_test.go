@@ -35,7 +35,7 @@ func getVectorValues(vectors []ruletypes.Sample) []float64 {
 
 func TestPromRuleEval(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
-		AlertName: "Test Rule",
+		AlertName: valuer.NewDisplayName("Test Rule"),
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -746,7 +746,7 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 	evalTime := baseTime.Add(5 * time.Minute)
 
 	postableRule := ruletypes.PostableRule{
-		AlertName: "Units test",
+		AlertName: valuer.NewDisplayName("Units test"),
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -914,7 +914,7 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
 				{
-					Name:            postableRule.AlertName,
+					Name:            postableRule.AlertName.StringValue(),
 					TargetValue:     &c.target,
 					TargetUnit:      c.targetUnit,
 					MatchType:       c.matchType,
@@ -962,7 +962,7 @@ func TestPromRuleNoData(t *testing.T) {
 	evalTime := baseTime.Add(5 * time.Minute)
 
 	postableRule := ruletypes.PostableRule{
-		AlertName: "No data test",
+		AlertName: valuer.NewDisplayName("No data test"),
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -1019,7 +1019,7 @@ func TestPromRuleNoData(t *testing.T) {
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
 				{
-					Name:            postableRule.AlertName,
+					Name:            postableRule.AlertName.StringValue(),
 					TargetValue:     &target,
 					MatchType:       ruletypes.AtleastOnce,
 					CompareOperator: ruletypes.ValueIsEq,
@@ -1062,7 +1062,7 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 	evalTime := baseTime.Add(5 * time.Minute)
 
 	postableRule := ruletypes.PostableRule{
-		AlertName: "Multiple threshold test",
+		AlertName: valuer.NewDisplayName("Multiple threshold test"),
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -1261,7 +1261,7 @@ func TestPromRule_NoData(t *testing.T) {
 	evalTime := time.Now()
 
 	postableRule := ruletypes.PostableRule{
-		AlertName: "Test no data",
+		AlertName: valuer.NewDisplayName("Test no data"),
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -1357,7 +1357,7 @@ func TestPromRule_NoData_AbsentFor(t *testing.T) {
 	target := 500.0
 
 	postableRule := ruletypes.PostableRule{
-		AlertName: "Test no data with AbsentFor",
+		AlertName: valuer.NewDisplayName("Test no data with AbsentFor"),
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -1483,7 +1483,7 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 	lookBackDelta := time.Minute
 
 	postableRule := ruletypes.PostableRule{
-		AlertName: "Unit test",
+		AlertName: valuer.NewDisplayName("Unit test"),
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -1572,7 +1572,7 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
 				{
-					Name:            postableRule.AlertName,
+					Name:            postableRule.AlertName.StringValue(),
 					TargetValue:     rc.Target,
 					MatchType:       rc.MatchType,
 					CompareOperator: rc.CompareOperator,
