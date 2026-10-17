@@ -59,6 +59,14 @@ export function useSavedViewRowActions(
 		[pathname, copyToClipboard],
 	);
 
+	const copyViewId = useCallback(
+		(view: SavedviewtypesSavedViewDTO): void => {
+			copyToClipboard(view.id);
+			toast.success('View ID copied', { position: SAVED_VIEW_TOAST_POSITION });
+		},
+		[copyToClipboard],
+	);
+
 	const renameView = useCallback(
 		async (
 			view: SavedviewtypesSavedViewDTO,
@@ -101,5 +109,12 @@ export function useSavedViewRowActions(
 		[deleteSavedView, source, queryClient],
 	);
 
-	return { copyViewLink, renameView, deleteView, isRenaming, isDeleting };
+	return {
+		copyViewLink,
+		copyViewId,
+		renameView,
+		deleteView,
+		isRenaming,
+		isDeleting,
+	};
 }

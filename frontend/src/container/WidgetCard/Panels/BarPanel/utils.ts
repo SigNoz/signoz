@@ -89,6 +89,9 @@ export function prepareBarPanelConfig({
 			isDarkMode,
 			stepInterval: currentStepInterval,
 			metric: series.metric,
+			partialTimestamps: series.partialTimestamps
+				? new Set(series.partialTimestamps)
+				: undefined,
 		});
 	});
 
