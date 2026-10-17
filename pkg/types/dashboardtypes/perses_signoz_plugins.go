@@ -2,6 +2,8 @@ package dashboardtypes
 
 import (
 	"encoding/json"
+	"maps"
+	"slices"
 	"strconv"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -187,20 +189,21 @@ func (AIBuilderQuerySpec) PrepareJSONSchema(s *jsonschema.Schema) error {
 type PanelPluginKind string
 
 const (
-	PanelKindTimeSeries PanelPluginKind = "signoz/TimeSeriesPanel"
-	PanelKindBarChart   PanelPluginKind = "signoz/BarChartPanel"
-	PanelKindAreaChart  PanelPluginKind = "signoz/AreaChartPanel"
-	PanelKindNumber     PanelPluginKind = "signoz/NumberPanel"
-	PanelKindPieChart   PanelPluginKind = "signoz/PieChartPanel"
-	PanelKindTable      PanelPluginKind = "signoz/TablePanel"
-	PanelKindHistogram  PanelPluginKind = "signoz/HistogramPanel"
-	PanelKindList       PanelPluginKind = "signoz/ListPanel"
-	PanelKindText       PanelPluginKind = "signoz/TextPanel"
-	PanelKindHeatmap    PanelPluginKind = "signoz/HeatmapPanel"
+	PanelKindTimeSeries  PanelPluginKind = "signoz/TimeSeriesPanel"
+	PanelKindBarChart    PanelPluginKind = "signoz/BarChartPanel"
+	PanelKindAreaChart   PanelPluginKind = "signoz/AreaChartPanel"
+	PanelKindNumber      PanelPluginKind = "signoz/NumberPanel"
+	PanelKindPieChart    PanelPluginKind = "signoz/PieChartPanel"
+	PanelKindTable       PanelPluginKind = "signoz/TablePanel"
+	PanelKindHistogram   PanelPluginKind = "signoz/HistogramPanel"
+	PanelKindList        PanelPluginKind = "signoz/ListPanel"
+	PanelKindText        PanelPluginKind = "signoz/TextPanel"
+	PanelKindHeatmap     PanelPluginKind = "signoz/HeatmapPanel"
+	PanelKindScatterPlot PanelPluginKind = "signoz/ScatterPlotPanel"
 )
 
 func (PanelPluginKind) Enum() []any {
-	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindAreaChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList, PanelKindText, PanelKindHeatmap}
+	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindAreaChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList, PanelKindText, PanelKindHeatmap, PanelKindScatterPlot}
 }
 
 func (k PanelPluginKind) rendersWithoutQuery() bool {
@@ -350,6 +353,95 @@ type TextPanelSpec struct {
 	HeaderOptions HeaderOptions    `json:"headerOptions"`
 }
 
+type ScatterPlotPanelSpec struct {
+	Visualization   BasicVisualization         `json:"visualization"`
+	Dimensions      ScatterPlotDimensions      `json:"dimensions"`
+	Formatting      TableFormatting            `json:"formatting"`
+	Axes            ScatterPlotAxes            `json:"axes"`
+	ChartAppearance ScatterPlotChartAppearance `json:"chartAppearance"`
+	Legend          Legend                     `json:"legend"`
+	Thresholds      []ScatterPlotThreshold     `json:"thresholds" validate:"dive"`
+}
+
+func (s *ScatterPlotPanelSpec) validateAgainstQuery(query Query, path string) error {
+	composite, err := query.Spec.Plugin.buildV5CompositeQueryFromPlugin()
+	if err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s.dimensions: %s", path, err.Error())
+	}
+	keys, known := composite.CollectResultColumnKeys()
+	if !known {
+		return nil
+	}
+	for _, binding := range []struct{ field, key string }{{"x", s.Dimensions.X}, {"y", s.Dimensions.Y}, {"sizeBy", s.Dimensions.SizeBy}} {
+		// Empty is unset: the renderer picks a column or a fixed size.
+		if binding.key == "" {
+			continue
+		}
+		if _, ok := keys.Aggregations[binding.key]; !ok {
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.dimensions.%s: %q is not a value column of the panel's query; value columns: %s", path, binding.field, binding.key, allowedValuesForKind(slices.Sorted(maps.Keys(keys.Aggregations))))
+		}
+	}
+	for _, label := range s.Dimensions.ColorBy {
+		if _, ok := keys.Groups[label]; !ok {
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.dimensions.colorBy: %q is not a group-by key of the panel's query; group-by keys: %s", path, label, allowedValuesForKind(slices.Sorted(maps.Keys(keys.Groups))))
+		}
+	}
+	return nil
+}
+
+// ScatterPlotDimensions binds result columns to what a dot encodes. Value columns
+// use the Table column key, so formatting.columnUnits carries over between the
+// two kinds.
+type ScatterPlotDimensions struct {
+	X       string   `json:"x" description:"Value column key (queryName, or queryName.expression for a multi-aggregation query) plotted on the x axis. Empty uses the first value column."`
+	Y       string   `json:"y" description:"Value column key plotted on the y axis. Empty uses the second value column."`
+	SizeBy  string   `json:"sizeBy" description:"Value column key that scales dot size. Empty draws every dot at the default size."`
+	ColorBy []string `json:"colorBy" description:"Group-by label names (e.g. k8s.namespace.name) whose combined values colour dots and drive the legend. Empty colours by every group-by label."`
+}
+
+type ScatterPlotAxes struct {
+	X ScatterPlotAxis `json:"x"`
+	Y ScatterPlotAxis `json:"y"`
+}
+
+type ScatterPlotAxis struct {
+	SoftMin *float64  `json:"softMin"`
+	SoftMax *float64  `json:"softMax"`
+	Scale   AxisScale `json:"scale"`
+	Label   string    `json:"label" description:"Axis title. Empty draws none."`
+}
+
+type ScatterPlotChartAppearance struct {
+	Points ScatterPlotPoints `json:"points"`
+}
+
+// ScatterPlotPoints keeps the fixed size and the size range side by side so
+// binding or unbinding dimensions.sizeBy restores the other's last setting. Nil
+// fields resolve to the renderer default.
+type ScatterPlotPoints struct {
+	Size    *PointDiameter `json:"size" description:"Diameter of every dot when dimensions.sizeBy is unset."`
+	MinSize *PointDiameter `json:"minSize" description:"Diameter of the smallest dot when dimensions.sizeBy is set."`
+	MaxSize *PointDiameter `json:"maxSize" description:"Diameter of the largest dot when dimensions.sizeBy is set."`
+	Opacity *PointOpacity  `json:"opacity"`
+}
+
+func (p *ScatterPlotPoints) UnmarshalJSON(data []byte) error {
+	type alias ScatterPlotPoints
+	var tmp alias
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid points")
+	}
+	*p = ScatterPlotPoints(tmp)
+	return p.validate()
+}
+
+func (p ScatterPlotPoints) validate() error {
+	if p.MinSize != nil && p.MaxSize != nil && *p.MinSize > *p.MaxSize {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid points: minSize %d must not exceed maxSize %d", *p.MinSize, *p.MaxSize)
+	}
+	return nil
+}
+
 type TextPresentation struct {
 	TextAlign     TextAlign     `json:"textAlign"`
 	VerticalAlign VerticalAlign `json:"verticalAlign"`
@@ -429,6 +521,11 @@ type ComparisonThreshold struct {
 	Unit     string             `json:"unit"`
 	Color    string             `json:"color" validate:"required" required:"true"`
 	Format   ThresholdFormat    `json:"format"`
+}
+
+type ScatterPlotThreshold struct {
+	ThresholdWithLabel
+	Axis ThresholdAxis `json:"axis"`
 }
 
 type TableThreshold struct {
@@ -716,6 +813,86 @@ func (ls *LineStyle) UnmarshalJSON(data []byte) error {
 	}
 }
 
+// AxisScale `auto` leaves the choice to the renderer; `symlog` is log-like but
+// defined at and below zero.
+type AxisScale struct{ valuer.String }
+
+var (
+	AxisScaleAuto   = AxisScale{valuer.NewString("auto")} // default
+	AxisScaleLinear = AxisScale{valuer.NewString("linear")}
+	AxisScaleLog    = AxisScale{valuer.NewString("log")}
+	AxisScaleSymlog = AxisScale{valuer.NewString("symlog")}
+)
+
+func (AxisScale) Enum() []any {
+	return []any{AxisScaleAuto, AxisScaleLinear, AxisScaleLog, AxisScaleSymlog}
+}
+
+func (as AxisScale) ValueOrDefault() string {
+	if as.IsZero() {
+		return AxisScaleAuto.StringValue()
+	}
+	return as.StringValue()
+}
+
+func (as AxisScale) MarshalJSON() ([]byte, error) {
+	return json.Marshal(as.ValueOrDefault())
+}
+
+func (as *AxisScale) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid axis scale: must be a string, one of `auto`, `linear`, `log`, or `symlog`")
+	}
+	val := AxisScale{valuer.NewString(v)}
+	switch val {
+	case AxisScaleAuto, AxisScaleLinear, AxisScaleLog, AxisScaleSymlog:
+		*as = val
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid axis scale %q: must be `auto`, `linear`, `log`, or `symlog`", v)
+	}
+}
+
+// ThresholdAxis is the axis a scatter plot threshold line marks: `y` draws it
+// horizontally, `x` vertically.
+type ThresholdAxis struct{ valuer.String }
+
+var (
+	ThresholdAxisX = ThresholdAxis{valuer.NewString("x")}
+	ThresholdAxisY = ThresholdAxis{valuer.NewString("y")} // default
+)
+
+func (ThresholdAxis) Enum() []any {
+	return []any{ThresholdAxisX, ThresholdAxisY}
+}
+
+func (ta ThresholdAxis) ValueOrDefault() string {
+	if ta.IsZero() {
+		return ThresholdAxisY.StringValue()
+	}
+	return ta.StringValue()
+}
+
+func (ta ThresholdAxis) MarshalJSON() ([]byte, error) {
+	return json.Marshal(ta.ValueOrDefault())
+}
+
+func (ta *ThresholdAxis) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid threshold axis: must be a string, one of `x` or `y`")
+	}
+	val := ThresholdAxis{valuer.NewString(v)}
+	switch val {
+	case ThresholdAxisX, ThresholdAxisY:
+		*ta = val
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid threshold axis %q: must be `x` or `y`", v)
+	}
+}
+
 type FillMode struct{ valuer.String }
 
 var (
@@ -851,6 +1028,53 @@ func (o *FillOpacity) UnmarshalJSON(data []byte) error {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid fillOpacity %v: must be between 0 and 1", v)
 	}
 	*o = FillOpacity(v)
+	return nil
+}
+
+const (
+	minPointDiameter = 2
+	maxPointDiameter = 40
+)
+
+// PointDiameter is a scatter dot's diameter in whole CSS pixels.
+type PointDiameter int
+
+func (PointDiameter) PrepareJSONSchema(s *jsonschema.Schema) error {
+	s.WithMinimum(minPointDiameter).WithMaximum(maxPointDiameter)
+	return nil
+}
+
+func (d *PointDiameter) UnmarshalJSON(data []byte) error {
+	var v int
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid point diameter: must be a whole number between %d and %d", minPointDiameter, maxPointDiameter)
+	}
+	if v < minPointDiameter || v > maxPointDiameter {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid point diameter %d: must be a whole number between %d and %d", v, minPointDiameter, maxPointDiameter)
+	}
+	*d = PointDiameter(v)
+	return nil
+}
+
+const minPointOpacity = 0.1
+
+// PointOpacity is a scatter dot's fill alpha. The floor keeps a dot visible.
+type PointOpacity float64
+
+func (PointOpacity) PrepareJSONSchema(s *jsonschema.Schema) error {
+	s.WithMinimum(minPointOpacity).WithMaximum(1)
+	return nil
+}
+
+func (o *PointOpacity) UnmarshalJSON(data []byte) error {
+	var v float64
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid point opacity: must be a number between %v and 1", minPointOpacity)
+	}
+	if v < minPointOpacity || v > 1 {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid point opacity %v: must be between %v and 1", v, minPointOpacity)
+	}
+	*o = PointOpacity(v)
 	return nil
 }
 
