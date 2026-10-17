@@ -14,6 +14,8 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { getBasePath } from 'utils/basePath';
 import { eventEmitter } from 'utils/getEventEmitter';
 import { getIsNoAuthMode } from 'utils/noAuthMode';
+import { waitForPreflight } from 'utils/preflight';
+import { getIsProxyAuthMode } from 'utils/proxyAuthMode';
 
 import apiV1, { apiAlertManager, apiV2, apiV3, apiV4, apiV5 } from './apiV1';
 import { Logout } from './utils';
@@ -109,10 +111,22 @@ export const interceptorRejected = async (
 		if (axios.isAxiosError(value) && value.response) {
 			const { response } = value;
 
-			const isNoAuthMode = getIsNoAuthMode();
+			// Only 401s wait, so nothing else changes timing. The flags below are
+			// module singletons the preflight effect populates once the global
+			// config lands, and the queries that can 401 fire before that; reading
+			// them too early reports a session that does not exist.
+			if (response.status === 401) {
+				await waitForPreflight();
+			}
+
+			// Under proxy auth there is no session to rotate: identity is asserted by
+			// a header on every request. Rotating cannot help, and its failure path
+			// logs out, which under a configured logout_redirect_url sends the user
+			// to the proxy's sign-out page and back again. A 401 is final here.
+			const hasSession = !getIsNoAuthMode() && !getIsProxyAuthMode();
 
 			if (
-				!isNoAuthMode &&
+				hasSession &&
 				response.status === 401 &&
 				// if the session rotate call or the create session errors out with 401 or the delete sessions call returns 401 then we do not retry!
 				response.config.url !== '/sessions/rotate' &&
@@ -154,7 +168,7 @@ export const interceptorRejected = async (
 			}
 
 			if (
-				!isNoAuthMode &&
+				hasSession &&
 				response.status === 401 &&
 				response.config.url === '/sessions/rotate'
 			) {
