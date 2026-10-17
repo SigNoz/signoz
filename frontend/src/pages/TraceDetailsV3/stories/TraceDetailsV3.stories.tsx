@@ -39,7 +39,7 @@ const pageStory = storyMocks(traceDetailsMocks, { layout: 'app' });
  * Route: `/trace/:id`.
  */
 const meta = {
-	title: 'Pages/Traces/Trace Details',
+	title: 'Pages/Traces/Trace Details/Overview',
 	tags: ['play'],
 	component: TraceDetailsV3,
 	// The page reads the trace id out of the pathname, so it renders under its
