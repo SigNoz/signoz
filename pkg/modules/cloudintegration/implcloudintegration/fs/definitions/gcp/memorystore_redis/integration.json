@@ -5,7 +5,7 @@
   "overview": "file://overview.md",
   "supportedSignals": {
     "metrics": true,
-    "logs": false
+    "logs": true
   },
   "dataCollected": {
     "metrics": [
@@ -79,7 +79,26 @@
     "logs": []
   },
   "telemetryCollectionStrategy": {
-    "gcp": {}
+    "gcp": {
+      "metrics": {
+        "metricNames": [
+          "redis.googleapis.com/server/uptime",
+          "redis.googleapis.com/stats/memory/usage_ratio",
+          "redis.googleapis.com/stats/memory/system_memory_usage_ratio",
+          "redis.googleapis.com/stats/cpu_utilization_main_thread",
+          "redis.googleapis.com/clients/connected",
+          "redis.googleapis.com/stats/cache_hit_ratio",
+          "redis.googleapis.com/keyspace/keys",
+          "redis.googleapis.com/commands/usec_per_call",
+          "redis.googleapis.com/commands/calls",
+          "redis.googleapis.com/clients/blocked",
+          "redis.googleapis.com/stats/reject_connections_count"
+        ]
+      },
+      "logs": {
+        "sinkFilter": "resource.type=\"redis_instance\" OR (protoPayload.serviceName=\"redis.googleapis.com\" AND protoPayload.methodName:\".CloudRedis.\") OR (log_id(\"maintenance.googleapis.com/activity_log\") AND labels.activity_type_name:\"CloudRedisRollout\")"
+      }
+    }
   },
   "assets": {
     "dashboards": [

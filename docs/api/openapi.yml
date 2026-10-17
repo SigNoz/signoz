@@ -2159,6 +2159,8 @@ components:
       type: object
     CloudintegrationtypesGCPAccountConfig:
       properties:
+        connectionMethod:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPConnectionMethod'
         deploymentProjectId:
           type: string
         deploymentRegion:
@@ -2168,13 +2170,83 @@ components:
             type: string
           type: array
       required:
+      - connectionMethod
       - deploymentProjectId
       - deploymentRegion
       - projectIds
       type: object
     CloudintegrationtypesGCPConnectionArtifact:
+      properties:
+        cliCommand:
+          type: string
+        createSecretsCommand:
+          type: string
+        createServiceAccountCommand:
+          type: string
+      required:
+      - cliCommand
+      - createSecretsCommand
+      - createServiceAccountCommand
       type: object
+    CloudintegrationtypesGCPConnectionMethod:
+      enum:
+      - manual
+      - agent
+      type: string
     CloudintegrationtypesGCPIntegrationConfig:
+      properties:
+        connectionMethod:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPConnectionMethod'
+        deploymentProjectId:
+          type: string
+        deploymentRegion:
+          type: string
+        projectIds:
+          items:
+            type: string
+          type: array
+        telemetryCollectionStrategy:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPTelemetryCollectionStrategy'
+      required:
+      - connectionMethod
+      - deploymentProjectId
+      - deploymentRegion
+      - projectIds
+      - telemetryCollectionStrategy
+      type: object
+    CloudintegrationtypesGCPLogsCollectionStrategy:
+      properties:
+        sinkFilter:
+          type: string
+      required:
+      - sinkFilter
+      type: object
+    CloudintegrationtypesGCPMetricsCollectionStrategy:
+      properties:
+        metricNames:
+          items:
+            type: string
+          type: array
+      required:
+      - metricNames
+      type: object
+    CloudintegrationtypesGCPPostableAccountConfig:
+      properties:
+        connectionMethod:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPConnectionMethod'
+        deploymentProjectId:
+          type: string
+        deploymentRegion:
+          type: string
+        projectIds:
+          items:
+            type: string
+          type: array
+      required:
+      - connectionMethod
+      - deploymentProjectId
+      - deploymentRegion
+      - projectIds
       type: object
     CloudintegrationtypesGCPServiceConfig:
       properties:
@@ -2196,6 +2268,13 @@ components:
           type: boolean
       required:
       - enabled
+      type: object
+    CloudintegrationtypesGCPTelemetryCollectionStrategy:
+      properties:
+        logs:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPLogsCollectionStrategy'
+        metrics:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPMetricsCollectionStrategy'
       type: object
     CloudintegrationtypesGettableAccountWithConnectionArtifact:
       properties:
@@ -2333,7 +2412,7 @@ components:
         azure:
           $ref: '#/components/schemas/CloudintegrationtypesAzureAccountConfig'
         gcp:
-          $ref: '#/components/schemas/CloudintegrationtypesGCPAccountConfig'
+          $ref: '#/components/schemas/CloudintegrationtypesGCPPostableAccountConfig'
       type: object
     CloudintegrationtypesPostableAgentCheckIn:
       properties:
@@ -2568,7 +2647,6 @@ components:
         projectIds:
           items:
             type: string
-          nullable: true
           type: array
       required:
       - deploymentProjectId

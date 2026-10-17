@@ -5,7 +5,7 @@
   "overview": "file://overview.md",
   "supportedSignals": {
     "metrics": true,
-    "logs": false
+    "logs": true
   },
   "dataCollected": {
     "metrics": [
@@ -55,7 +55,22 @@
     "logs": []
   },
   "telemetryCollectionStrategy": {
-    "gcp": {}
+    "gcp": {
+      "metrics": {
+        "metricNames": [
+          "storage.googleapis.com/storage/v2/total_bytes",
+          "storage.googleapis.com/storage/v2/total_count",
+          "storage.googleapis.com/storage/v2/deleted_bytes",
+          "storage.googleapis.com/api/request_count",
+          "storage.googleapis.com/network/received_bytes_count",
+          "storage.googleapis.com/network/sent_bytes_count",
+          "storage.googleapis.com/authn/authentication_count"
+        ]
+      },
+      "logs": {
+        "sinkFilter": "resource.type=\"gcs_bucket\""
+      }
+    }
   },
   "assets": {
     "dashboards": [

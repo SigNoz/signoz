@@ -26,9 +26,10 @@ AWS_SERVICE_SPEC = ProviderServiceSpec(
 GCP_SERVICE_SPEC = ProviderServiceSpec(
     provider="gcp",
     service_id="cloudsql_postgres",
-    supports_logs=False,
+    supports_logs=True,
     account_config={
         "gcp": {
+            "connectionMethod": "manual",
             "deploymentProjectId": "signoz-test-project",
             "deploymentRegion": "us-central1",
             "projectIds": ["signoz-test-project"],
@@ -337,7 +338,7 @@ def test_update_gcp_service_without_metrics_config(
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
 ) -> None:
-    """GCP services support metrics only, so a config omitting metrics is rejected."""
+    """GCP services require a metrics config, so a logs-only config is rejected."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     account = create_cloud_integration_account(admin_token, "gcp", config=GCP_SERVICE_SPEC.account_config)

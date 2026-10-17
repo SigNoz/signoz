@@ -5,7 +5,7 @@
   "overview": "file://overview.md",
   "supportedSignals": {
     "metrics": true,
-    "logs": false
+    "logs": true
   },
   "dataCollected": {
     "metrics": [
@@ -76,6 +76,12 @@
         "description": ""
       },
       {
+        "name": "cloudsql.googleapis.com/database/postgresql/insights/aggregate/io_time",
+        "unit": "Microseconds",
+        "type": "Sum",
+        "description": ""
+      },
+      {
         "name": "cloudsql.googleapis.com/database/postgresql/insights/perquery/execution_time",
         "unit": "Microseconds",
         "type": "Gauge",
@@ -91,7 +97,29 @@
     "logs": []
   },
   "telemetryCollectionStrategy": {
-    "gcp": {}
+    "gcp": {
+      "metrics": {
+        "metricNames": [
+          "cloudsql.googleapis.com/database/up",
+          "cloudsql.googleapis.com/database/cpu/utilization",
+          "cloudsql.googleapis.com/database/memory/utilization",
+          "cloudsql.googleapis.com/database/memory/usage",
+          "cloudsql.googleapis.com/database/disk/bytes_used",
+          "cloudsql.googleapis.com/database/postgresql/num_backends",
+          "cloudsql.googleapis.com/database/postgresql/num_backends_by_state",
+          "cloudsql.googleapis.com/database/postgresql/transaction_count",
+          "cloudsql.googleapis.com/database/postgresql/deadlock_count",
+          "cloudsql.googleapis.com/database/postgresql/vacuum/oldest_transaction_age",
+          "cloudsql.googleapis.com/database/postgresql/insights/aggregate/execution_time",
+          "cloudsql.googleapis.com/database/postgresql/insights/aggregate/io_time",
+          "cloudsql.googleapis.com/database/postgresql/insights/perquery/execution_time",
+          "cloudsql.googleapis.com/database/postgresql/replication/replica_byte_lag"
+        ]
+      },
+      "logs": {
+        "sinkFilter": "resource.type=\"cloudsql_database\" AND (logName:\"/logs/cloudsql.googleapis.com%2Fpostgres\" OR (log_id(\"cloudaudit.googleapis.com/data_access\") AND protoPayload.request.@type=\"type.googleapis.com/google.cloud.sql.audit.v1.PgAuditEntry\"))"
+      }
+    }
   },
   "assets": {
     "dashboards": [

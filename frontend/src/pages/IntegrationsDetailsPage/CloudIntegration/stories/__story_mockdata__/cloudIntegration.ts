@@ -3,6 +3,7 @@
  * Do not hand-edit: regenerate instead.
  */
 
+import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
 import type {
 	CloudintegrationtypesAccountConfigDTO,
 	CloudintegrationtypesAccountDTO,
@@ -282,6 +283,7 @@ const accountConfig = (
 
 	return {
 		gcp: {
+			connectionMethod: CloudintegrationtypesGCPConnectionMethodDTO.manual,
 			deploymentRegion: 'us-central1',
 			deploymentProjectId: 'signoz-prod-4471',
 			projectIds: ['signoz-prod-4471', 'signoz-analytics-8820'],

@@ -11,6 +11,7 @@ import {
 } from 'api/generated/services/cloudintegration';
 import {
 	CloudintegrationtypesCredentialsDTO,
+	CloudintegrationtypesGCPConnectionMethodDTO,
 	CloudintegrationtypesPostableAccountDTO,
 	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -96,13 +97,14 @@ export function useCloudAccountSetupDrawer({
 				const payload: CloudintegrationtypesPostableAccountDTO = {
 					config: {
 						gcp: {
+							connectionMethod: CloudintegrationtypesGCPConnectionMethodDTO.manual,
 							deploymentRegion: values.deploymentRegion,
 							deploymentProjectId: values.deploymentProjectId,
 							projectIds: values.projectIds || [],
 						},
 					},
 					credentials: {
-						// Cloud users can't edit these — the backend-provided credentials are
+						// Cloud users can't edit these, the backend-provided credentials are
 						// authoritative. Enterprise users have no backend defaults and enter
 						// their own (validated non-empty), so their form values are used.
 						ingestionUrl: connectionParams?.data?.ingestionUrl || values.ingestionUrl,

@@ -18,7 +18,7 @@ import {
 
 // `useCloudAccountSetupDrawer` imports logEvent by relative path, which the
 // jest.config moduleNameMapper (keyed on the `api/common/logEvent` alias) does
-// not intercept — so mock the resolved module directly.
+// not intercept, so mock the resolved module directly.
 jest.mock('../../../../../api/common/logEvent', () => ({
 	__esModule: true,
 	default: jest.fn(),
@@ -46,7 +46,7 @@ describe('GCP CloudAccountSetupDrawer', () => {
 			rest.get(GCP_CREDENTIALS_URL, (_req, res, ctx) =>
 				res(ctx.status(200), ctx.json(connectionCredentialsResponse)),
 			),
-			// check_in is registered first — it is a more specific path than
+			// check_in is registered first, it is a more specific path than
 			// /accounts and msw matches handlers in registration order.
 			rest.post(GCP_CHECK_IN_URL, async (req: RestRequest, res, ctx) => {
 				checkInPayload = await req.json();
@@ -141,6 +141,7 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		expect(createAccountPayload).toStrictEqual({
 			config: {
 				gcp: {
+					connectionMethod: 'manual',
 					deploymentRegion: 'asia-south1',
 					deploymentProjectId: 'my-deployment-project-123',
 					projectIds: ['project-a', 'project-b'],
