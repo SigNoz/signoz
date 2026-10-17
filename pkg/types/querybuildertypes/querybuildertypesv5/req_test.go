@@ -722,6 +722,44 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "valid PromQL query with reduceTo",
+			jsonData: `{
+				"schemaVersion": "v1",
+				"start": 1640995200000,
+				"end": 1640998800000,
+				"requestType": "scalar",
+				"compositeQuery": {
+					"queries": [{
+						"type": "promql",
+						"spec": {
+							"name": "cpu_usage",
+							"query": "rate(cpu_usage_total[5m])",
+							"disabled": false,
+							"reduceTo": "sum"
+						}
+					}]
+				}
+			}`,
+			expected: QueryRangeRequest{
+				SchemaVersion: "v1",
+				Start:         1640995200000,
+				End:           1640998800000,
+				RequestType:   RequestTypeScalar,
+				CompositeQuery: CompositeQuery{
+					Queries: []QueryEnvelope{{
+						Type: QueryTypePromQL,
+						Spec: PromQuery{
+							Name:     "cpu_usage",
+							Query:    "rate(cpu_usage_total[5m])",
+							Disabled: false,
+							ReduceTo: ReduceToSum,
+						},
+					}},
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "valid ClickHouse SQL query",
 			jsonData: `{
 				"schemaVersion": "v1",
