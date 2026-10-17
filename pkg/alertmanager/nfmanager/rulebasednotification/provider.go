@@ -138,6 +138,38 @@ func (r *provider) CreateRoutePolicies(ctx context.Context, orgID string, routes
 	return r.routeStore.CreateBatch(ctx, routes)
 }
 
+func (r *provider) UpdateRoutePolicy(ctx context.Context, orgID string, route *alertmanagertypes.RoutePolicy) error {
+	if route == nil {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "route policy cannot be nil")
+	}
+
+	if err := route.Validate(); err != nil {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid route policy: %v", err)
+	}
+
+	return r.routeStore.Update(ctx, orgID, route)
+}
+
+func (r *provider) ReplaceRoutePoliciesByName(ctx context.Context, orgID string, name string, routes []*alertmanagertypes.RoutePolicy) error {
+	if orgID == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "orgID cannot be empty")
+	}
+	if name == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "name cannot be empty")
+	}
+
+	for _, route := range routes {
+		if route == nil {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "route policy cannot be nil")
+		}
+		if err := route.Validate(); err != nil {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "route policy with name %s: %s", route.Name, err.Error())
+		}
+	}
+
+	return r.routeStore.ReplaceRouteByName(ctx, orgID, name, routes)
+}
+
 func (r *provider) GetRoutePolicyByID(ctx context.Context, orgID string, routeID string) (*alertmanagertypes.RoutePolicy, error) {
 	if routeID == "" {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "routeID cannot be empty")

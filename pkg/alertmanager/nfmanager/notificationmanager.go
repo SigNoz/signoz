@@ -18,6 +18,8 @@ type NotificationManager interface {
 	// Route Policy CRUD
 	CreateRoutePolicy(ctx context.Context, orgID string, route *alertmanagertypes.RoutePolicy) error
 	CreateRoutePolicies(ctx context.Context, orgID string, routes []*alertmanagertypes.RoutePolicy) error
+	UpdateRoutePolicy(ctx context.Context, orgID string, route *alertmanagertypes.RoutePolicy) error
+	ReplaceRoutePoliciesByName(ctx context.Context, orgID string, name string, routes []*alertmanagertypes.RoutePolicy) error
 	GetRoutePolicyByID(ctx context.Context, orgID string, routeID string) (*alertmanagertypes.RoutePolicy, error)
 	GetAllRoutePolicies(ctx context.Context, orgID string) ([]*alertmanagertypes.RoutePolicy, error)
 	DeleteRoutePolicy(ctx context.Context, orgID string, routeID string) error

@@ -43,6 +43,14 @@ func (m *MockSQLRouteStore) CreateBatch(ctx context.Context, routes []*alertmana
 	return m.routeStore.CreateBatch(ctx, routes)
 }
 
+func (m *MockSQLRouteStore) Update(ctx context.Context, orgID string, route *alertmanagertypes.RoutePolicy) error {
+	return m.routeStore.Update(ctx, orgID, route)
+}
+
+func (m *MockSQLRouteStore) ReplaceRouteByName(ctx context.Context, orgID string, name string, routes []*alertmanagertypes.RoutePolicy) error {
+	return m.routeStore.ReplaceRouteByName(ctx, orgID, name, routes)
+}
+
 func (m *MockSQLRouteStore) Delete(ctx context.Context, orgId string, id string) error {
 	return m.routeStore.Delete(ctx, orgId, id)
 }
@@ -110,6 +118,11 @@ func (m *MockSQLRouteStore) ExpectCreateBatch(routes []*alertmanagertypes.RouteP
 func (m *MockSQLRouteStore) ExpectDelete(orgID, id string) {
 	m.mock.ExpectExec(`DELETE FROM "route_policy" AS "route_policy" WHERE \(org_id = '` + regexp.QuoteMeta(orgID) + `'\) AND \(id = '` + regexp.QuoteMeta(id) + `'\)`).
 		WillReturnResult(sqlmock.NewResult(0, 1))
+}
+
+func (m *MockSQLRouteStore) ExpectUpdate(orgID string, route *alertmanagertypes.RoutePolicy, rowsAffected int64) {
+	m.mock.ExpectExec(`UPDATE "route_policy" AS "route_policy" SET .+ WHERE \(org_id = '` + regexp.QuoteMeta(orgID) + `'\) AND \("route_policy"\."id" = '` + regexp.QuoteMeta(route.ID.StringValue()) + `'\)`).
+		WillReturnResult(sqlmock.NewResult(0, rowsAffected))
 }
 
 func (m *MockSQLRouteStore) ExpectGetAllByKindAndOrgID(orgID string, kind alertmanagertypes.ExpressionKind, routes []*alertmanagertypes.RoutePolicy) {
