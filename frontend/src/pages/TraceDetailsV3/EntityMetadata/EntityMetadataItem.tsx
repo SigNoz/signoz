@@ -1,11 +1,11 @@
 import { ReactNode } from 'react';
-import { Tooltip } from '@signozhq/ui/tooltip';
+import { Tooltip, TooltipProps } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 
 import styles from './EntityMetadataItem.module.scss';
 
 interface EntityMetadataItemProps {
-	tooltip: string;
+	tooltip: TooltipProps['title'];
 	icon?: ReactNode;
 	children: ReactNode;
 }
