@@ -1,5 +1,7 @@
 package ruletypes
 
+import "github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+
 const (
 	CriticalThresholdName = "critical"
 	ErrorThresholdName    = "error"
@@ -32,8 +34,8 @@ const (
 const (
 	AnnotationTitleTemplate  = "_title_template"
 	AnnotationBodyTemplate   = "_body_template"
-	AnnotationRelatedLogs    = "related_logs"
-	AnnotationRelatedTraces  = "related_traces"
+	AnnotationRelatedLogs    = alertmanagertypes.AnnotationRelatedLogs
+	AnnotationRelatedTraces  = alertmanagertypes.AnnotationRelatedTraces
 	AnnotationValue          = "value"
 	AnnotationThresholdValue = "threshold.value"
 	AnnotationCompareOp      = "compare_op"

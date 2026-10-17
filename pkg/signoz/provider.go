@@ -262,6 +262,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddRuleViewFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddFieldTuplesFactory(sqlstore),
 		sqlmigration.NewKeepRelevantLLMPricingRulesFactory(),
+		sqlmigration.NewMigrateRelatedLinksTemplateFactory(),
 	)
 }
 

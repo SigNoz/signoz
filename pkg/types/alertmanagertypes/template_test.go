@@ -201,3 +201,70 @@ func TestFromGlobs(t *testing.T) {
 		})
 	}
 }
+
+func TestFromGlobsRelatedLinks(t *testing.T) {
+	tmpl, err := FromGlobs([]string{})
+	require.NoError(t, err)
+	tmpl.ExternalURL = &url.URL{Scheme: "http", Host: "localhost:8080"}
+
+	testCases := []struct {
+		name        string
+		template    string
+		annotations model.LabelSet
+		expected    string
+	}{
+		{
+			name:        "Slack_Both_DotSeparated",
+			template:    `{{ template "signoz.relatedLinks.slack" . }}`,
+			annotations: model.LabelSet{"related_logs": "https://signoz.io/logs/logs-explorer?a=1", "related_traces": "https://signoz.io/traces-explorer?a=1"},
+			expected:    "<https://signoz.io/logs/logs-explorer?a=1|View Related Logs> · <https://signoz.io/traces-explorer?a=1|View Related Traces>",
+		},
+		{
+			name:        "Slack_LogsOnly_NoSeparator",
+			template:    `{{ template "signoz.relatedLinks.slack" . }}`,
+			annotations: model.LabelSet{"related_logs": "https://signoz.io/logs/logs-explorer?b=2"},
+			expected:    "<https://signoz.io/logs/logs-explorer?b=2|View Related Logs>",
+		},
+		{
+			name:        "Slack_NoLinks_Empty",
+			template:    `{{ template "signoz.relatedLinks.slack" . }}`,
+			annotations: model.LabelSet{"summary": "s"},
+			expected:    "",
+		},
+		{
+			name:        "Markdown_Both_BlankLineAfterEach",
+			template:    `{{ template "signoz.relatedLinks.markdown" . }}`,
+			annotations: model.LabelSet{"related_logs": "https://signoz.io/logs/logs-explorer?c=3", "related_traces": "https://signoz.io/traces-explorer?c=3"},
+			expected:    "[View Related Logs](https://signoz.io/logs/logs-explorer?c=3)\n\n[View Related Traces](https://signoz.io/traces-explorer?c=3)\n\n",
+		},
+		{
+			name:        "Markdown_TracesOnly",
+			template:    `{{ template "signoz.relatedLinks.markdown" . }}`,
+			annotations: model.LabelSet{"related_traces": "https://signoz.io/traces-explorer?d=4"},
+			expected:    "[View Related Traces](https://signoz.io/traces-explorer?d=4)\n\n",
+		},
+		{
+			name:        "Markdown_NoLinks_Empty",
+			template:    `{{ template "signoz.relatedLinks.markdown" . }}`,
+			annotations: model.LabelSet{},
+			expected:    "",
+		},
+		{
+			name:        "Function_DirectRange",
+			template:    `{{ range relatedLinks .Annotations }}{{ .Label }}={{ .URL }};{{ end }}`,
+			annotations: model.LabelSet{"related_logs": "https://signoz.io/logs/logs-explorer?e=5", "related_traces": "https://signoz.io/traces-explorer?e=5"},
+			expected:    "View Related Logs=https://signoz.io/logs/logs-explorer?e=5;View Related Traces=https://signoz.io/traces-explorer?e=5;",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			alert := &types.Alert{Alert: model.Alert{Labels: model.LabelSet{"alertname": "a"}, Annotations: testCase.annotations}, UpdatedAt: time.Now()}
+			data := tmpl.Data("__receiver", model.LabelSet{}, alert)
+
+			got, err := tmpl.ExecuteTextString(`{{ range .Alerts }}`+testCase.template+`{{ end }}`, data)
+			require.NoError(t, err)
+			assert.Equal(t, testCase.expected, got)
+		})
+	}
+}
