@@ -135,6 +135,94 @@ func (m *MockNotificationManager) CreateRoutePolicies(ctx context.Context, orgID
 	return nil
 }
 
+func (m *MockNotificationManager) UpdateRoutePolicy(ctx context.Context, orgID string, route *alertmanagertypes.RoutePolicy) error {
+	key := getKey(orgID, "update_route")
+	if err := m.errors[key]; err != nil {
+		return err
+	}
+
+	if route == nil {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "route cannot be nil")
+	}
+	if err := route.Validate(); err != nil {
+		return err
+	}
+
+	routeKey := getKey(orgID, route.ID.StringValue())
+	existing, exists := m.routes[routeKey]
+	if !exists {
+		return errors.NewNotFoundf(errors.CodeNotFound, "route with ID %s not found", route.ID.StringValue())
+	}
+
+	if existing.Name != route.Name {
+		oldNameKey := getKey(orgID, existing.Name)
+		if nameRoutes, ok := m.routesByName[oldNameKey]; ok {
+			var filtered []*alertmanagertypes.RoutePolicy
+			for _, r := range nameRoutes {
+				if r.ID.StringValue() != route.ID.StringValue() {
+					filtered = append(filtered, r)
+				}
+			}
+			if len(filtered) == 0 {
+				delete(m.routesByName, oldNameKey)
+			} else {
+				m.routesByName[oldNameKey] = filtered
+			}
+		}
+		nameKey := getKey(orgID, route.Name)
+		m.routesByName[nameKey] = append(m.routesByName[nameKey], route)
+	} else {
+		nameKey := getKey(orgID, route.Name)
+		for i, r := range m.routesByName[nameKey] {
+			if r.ID.StringValue() == route.ID.StringValue() {
+				m.routesByName[nameKey][i] = route
+			}
+		}
+	}
+
+	m.routes[routeKey] = route
+
+	return nil
+}
+
+func (m *MockNotificationManager) ReplaceRoutePoliciesByName(ctx context.Context, orgID string, name string, routes []*alertmanagertypes.RoutePolicy) error {
+	key := getKey(orgID, "replace_routes_by_name")
+	if err := m.errors[key]; err != nil {
+		return err
+	}
+
+	if orgID == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "orgID cannot be empty")
+	}
+
+	if name == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "name cannot be empty")
+	}
+
+	for i, route := range routes {
+		if route == nil {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "route at index %d cannot be nil", i)
+		}
+		if err := route.Validate(); err != nil {
+			return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "route at index %d", i)
+		}
+	}
+
+	if existing, ok := m.routesByName[getKey(orgID, name)]; ok {
+		for _, route := range existing {
+			delete(m.routes, getKey(orgID, route.ID.StringValue()))
+		}
+		delete(m.routesByName, getKey(orgID, name))
+	}
+
+	for _, route := range routes {
+		m.routes[getKey(orgID, route.ID.StringValue())] = route
+		m.routesByName[getKey(orgID, route.Name)] = append(m.routesByName[getKey(orgID, route.Name)], route)
+	}
+
+	return nil
+}
+
 func (m *MockNotificationManager) GetRoutePolicyByID(ctx context.Context, orgID string, routeID string) (*alertmanagertypes.RoutePolicy, error) {
 	key := getKey(orgID, "get_route")
 	if err := m.errors[key]; err != nil {
