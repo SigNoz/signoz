@@ -1,5 +1,12 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+	MutableRefObject,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { useParams } from 'react-router-dom';
 import {
 	ChartNoAxesGantt,
@@ -58,12 +65,14 @@ interface TraceDetailsOverviewProps {
 	filteredSpanIds: string[];
 	isFilterActive: boolean;
 	onHasTraceDataChange: (hasTraceData: boolean) => void;
+	dataLoadedFiredForRef: MutableRefObject<string>;
 }
 
 function TraceDetailsOverview({
 	filteredSpanIds,
 	isFilterActive,
 	onHasTraceDataChange,
+	dataLoadedFiredForRef,
 }: TraceDetailsOverviewProps): JSX.Element {
 	const { id: traceId } = useParams<TraceDetailV3URLProps>();
 	const urlQuery = useUrlQuery();
@@ -83,9 +92,6 @@ function TraceDetailsOverview({
 	const { safeNavigate } = useSafeNavigate();
 
 	const logTraceEvent = useTraceDetailLogEvent('v3', traceId || '');
-	// Tracks which traceId the load event already fired for, so navigating
-	// between traces (the route component stays mounted) re-fires it once each.
-	const dataLoadedFiredForRef = useRef('');
 	const colorByField = useTraceStore((s) => s.colorByField);
 	const previewFieldsCount = useTraceStore((s) => s.previewFields.length);
 	const userPrefsReady = useTraceStore((s) => s.userPreferences !== null);
@@ -214,6 +220,7 @@ function TraceDetailsOverview({
 		colorByField,
 		previewFieldsCount,
 		logTraceEvent,
+		dataLoadedFiredForRef,
 	]);
 
 	// Frontend mode: expand all parents by default when full data arrives

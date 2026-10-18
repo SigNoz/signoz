@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { TraceDetailsTab } from './constants';
 import { useTraceDetailsTab } from './hooks/useTraceDetailsTab';
@@ -13,6 +13,7 @@ function TraceDetailsV3(): JSX.Element {
 	const [filteredSpanIds, setFilteredSpanIds] = useState<string[]>([]);
 	const [isFilterActive, setIsFilterActive] = useState(false);
 	const [hasTraceData, setHasTraceData] = useState(false);
+	const dataLoadedFiredForRef = useRef<string>('');
 
 	const handleFilteredSpansChange = useCallback(
 		(spanIds: string[], isActive: boolean): void => {
@@ -41,6 +42,7 @@ function TraceDetailsV3(): JSX.Element {
 					filteredSpanIds={filteredSpanIds}
 					isFilterActive={isFilterActive}
 					onHasTraceDataChange={setHasTraceData}
+					dataLoadedFiredForRef={dataLoadedFiredForRef}
 				/>
 			) : (
 				<TraceDetailsThread />
