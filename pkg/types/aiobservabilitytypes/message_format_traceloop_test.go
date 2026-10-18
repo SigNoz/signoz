@@ -88,19 +88,33 @@ func TestFormat_Traceloop(t *testing.T) {
 			wantOutput: `[]`,
 		},
 		{
-			// litellm capture, litellm_request span: the semconv output has no part for the tool call, the
-			// gen_ai.completion.0.function_call keys beside it still carry it
-			// https://github.com/BerriAI/litellm/blob/9d72bae336ec0d14c41651adcb0d2e1149721f46/litellm/integrations/opentelemetry.py#L2365
-			// https://github.com/BerriAI/litellm/blob/9d72bae336ec0d14c41651adcb0d2e1149721f46/litellm/integrations/opentelemetry.py#L2770
-			name: "SemconvEmptyParts_ToolCallFromCompletionKeys",
+			// litellm capture, litellm_request span: the semconv output has no tool call parts; the
+			// gen_ai.completion.N.function_call keys, one N per tool call, carry them
+			// https://github.com/BerriAI/litellm/blob/9d72bae336ec0d14c41651adcb0d2e1149721f46/litellm/integrations/opentelemetry.py#L2369
+			name: "SemconvEmptyParts_ParallelToolCallsFromCompletionKeys",
 			attributes: map[string]any{
-				GenAIInputMessages:                            `[{"role": "user", "parts": [{"type": "text", "content": "What is the weather in Bengaluru in celsius?"}]}]`,
+				GenAIInputMessages:                            `[{"role": "user", "parts": [{"type": "text", "content": "What's the weather in Paris and in London? Use the tool for each."}]}]`,
 				GenAIOutputMessages:                           `[{"role": "assistant", "parts": [], "finish_reason": "tool_calls"}]`,
 				"gen_ai.completion.0.function_call.name":      "get_current_weather",
-				"gen_ai.completion.0.function_call.arguments": `{"city":"Bengaluru"}`,
+				"gen_ai.completion.0.function_call.arguments": `{"city": "Paris"}`,
+				"gen_ai.completion.1.function_call.name":      "get_current_weather",
+				"gen_ai.completion.1.function_call.arguments": `{"city": "London"}`,
 			},
-			wantInput:  `[{"role": "user", "parts": [{"type": "text", "content": "What is the weather in Bengaluru in celsius?"}]}]`,
-			wantOutput: `[{"role": "assistant", "parts": [{"type": "tool_call", "name": "get_current_weather", "arguments": {"city": "Bengaluru"}}], "finish_reason": "tool_call"}]`,
+			wantInput: `[{"role": "user", "parts": [{"type": "text", "content": "What's the weather in Paris and in London? Use the tool for each."}]}]`,
+			wantOutput: `[{"role": "assistant", "parts": [
+			  {"type": "tool_call", "name": "get_current_weather", "arguments": {"city": "Paris"}},
+			  {"type": "tool_call", "name": "get_current_weather", "arguments": {"city": "London"}}
+			], "finish_reason": "tool_call"}]`,
+		},
+		{
+			name: "SemconvTextPart_ToolCallFromCompletionKeysAdded",
+			attributes: map[string]any{
+				GenAIOutputMessages:                           `[{"role": "assistant", "parts": [{"type": "text", "content": "Let me check."}], "finish_reason": "tool_calls"}]`,
+				"gen_ai.completion.0.function_call.name":      "get_weather",
+				"gen_ai.completion.0.function_call.arguments": `{"city": "Paris"}`,
+			},
+			wantInput:  `[]`,
+			wantOutput: `[{"role": "assistant", "parts": [{"type": "text", "content": "Let me check."}, {"type": "tool_call", "name": "get_weather", "arguments": {"city": "Paris"}}], "finish_reason": "tool_call"}]`,
 		},
 	})
 }

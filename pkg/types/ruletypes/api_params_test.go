@@ -52,7 +52,7 @@ func TestParseIntoRule(t *testing.T) {
 			kind:        RuleDataKindJson,
 			expectError: false,
 			validate: func(t *testing.T, rule *PostableRule) {
-				if rule.AlertName != "TestAlert" {
+				if rule.AlertName.StringValue() != "TestAlert" {
 					t.Errorf("Expected alert name 'TestAlert', got '%s'", rule.AlertName)
 				}
 				if rule.RuleType != RuleTypeThreshold {

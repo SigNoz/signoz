@@ -152,7 +152,7 @@ func NewBaseRule(
 		id:            id,
 		orgID:         orgID,
 		externalURL:   externalURL,
-		name:          p.AlertName,
+		name:          p.AlertName.StringValue(),
 		typ:           p.AlertType,
 		ruleCondition: p.RuleCondition,
 		labels:        ruletypes.FromMap(p.Labels),

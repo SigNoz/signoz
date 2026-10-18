@@ -214,5 +214,16 @@ func TestFormat_OpenAIChat(t *testing.T) {
 			  {"role": "assistant", "parts": [{"type": "text", "content": "hi"}], "finish_reason": "stop"}
 			]`,
 		},
+		{
+			// openrouter-gateway capture: OpenRouter replaces the image with a placeholder, which is no URL
+			name:     "RedactedImageURL_GenericPart_Warns",
+			input:    `{"messages":[{"role":"user","content":[{"type":"text","text":"What animal is in this image? One sentence."},{"type":"image_url","image_url":{"url":"[OR_REDACTED]"}}]}]}`,
+			warnings: []string{"media without a URL kept as generic"},
+			wantInput: `[{"role": "user", "parts": [
+			  {"type": "text", "content": "What animal is in this image? One sentence."},
+			  {"type": "generic", "modality": "image", "content": "[OR_REDACTED]"}
+			]}]`,
+			wantOutput: `[]`,
+		},
 	})
 }
