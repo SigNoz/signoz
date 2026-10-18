@@ -32,7 +32,7 @@ import styles from './TraceDetailsHeader.module.scss';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 
 interface TraceDetailsHeaderProps {
-	onFilteredSpansChange?: (spanIds: string[], isFilterActive: boolean) => void;
+	onFilteredSpansChange: (spanIds: string[], isFilterActive: boolean) => void;
 	showTraceDetailsHeaderOptions?: boolean;
 }
 
