@@ -264,6 +264,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddFieldTuplesFactory(sqlstore),
 		sqlmigration.NewKeepRelevantLLMPricingRulesFactory(),
 		sqlmigration.NewAddAlertTuplesFactory(sqlstore),
+		sqlmigration.NewAddPlannedMaintenanceOriginFactory(sqlstore, sqlschema),
 	)
 }
 
