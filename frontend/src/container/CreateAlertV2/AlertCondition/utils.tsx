@@ -238,11 +238,14 @@ function TooltipExample({
 	);
 }
 
+const MATCH_TYPE_DOCS_URL =
+	'https://signoz.io/docs/alerts-management/user-guides/understanding-alert-evaluation-patterns/';
+
 function TooltipLink(): JSX.Element {
 	return (
 		<div className="tooltip-link">
 			<a
-				href="https://signoz.io/docs"
+				href={MATCH_TYPE_DOCS_URL}
 				target="_blank"
 				rel="noopener noreferrer"
 				className="tooltip-link-text"
