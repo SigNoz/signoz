@@ -350,12 +350,8 @@ describe('TraceDetailsHeader – tabs', () => {
 		renderHeader();
 
 		expect(screen.getByTestId('filters-stub')).toBeInTheDocument();
-		expect(
-			screen.getByRole('button', { name: /^analytics$/i }),
-		).toBeInTheDocument();
-		expect(
-			screen.getByRole('button', { name: /trace options/i }),
-		).toBeInTheDocument();
+		expect(screen.getByTestId('trace-analytics-button')).toBeInTheDocument();
+		expect(screen.getByTestId('trace-options-button')).toBeInTheDocument();
 		expect(screen.getByTestId('missing-spans-banner')).toBeInTheDocument();
 	});
 
@@ -367,11 +363,9 @@ describe('TraceDetailsHeader – tabs', () => {
 
 		expect(screen.queryByTestId('filters-stub')).not.toBeInTheDocument();
 		expect(
-			screen.queryByRole('button', { name: /^analytics$/i }),
+			screen.queryByTestId('trace-analytics-button'),
 		).not.toBeInTheDocument();
-		expect(
-			screen.queryByRole('button', { name: /trace options/i }),
-		).not.toBeInTheDocument();
+		expect(screen.queryByTestId('trace-options-button')).not.toBeInTheDocument();
 		expect(screen.queryByTestId('missing-spans-banner')).not.toBeInTheDocument();
 		expect(screen.getByText(metadataText)).toBeInTheDocument();
 	});
@@ -380,10 +374,8 @@ describe('TraceDetailsHeader – tabs', () => {
 		const user = userEvent.setup({ delay: null });
 		renderHeader();
 
-		await user.click(screen.getByRole('button', { name: /trace options/i }));
-		await user.click(
-			await screen.findByRole('menuitem', { name: /hide trace details/i }),
-		);
+		await user.click(screen.getByTestId('trace-options-button'));
+		await user.click(await screen.findByTestId('toggle-trace-details'));
 		expect(screen.queryByText(metadataText)).not.toBeInTheDocument();
 
 		await user.click(screen.getByTestId('trace-details-tab-thread'));
@@ -395,7 +387,7 @@ describe('TraceDetailsHeader – tabs', () => {
 		const user = userEvent.setup({ delay: null });
 		renderHeader();
 
-		await user.click(screen.getByRole('button', { name: /^analytics$/i }));
+		await user.click(screen.getByTestId('trace-analytics-button'));
 		expect(screen.getByTestId('analytics-panel')).toHaveAttribute(
 			'data-open',
 			'true',

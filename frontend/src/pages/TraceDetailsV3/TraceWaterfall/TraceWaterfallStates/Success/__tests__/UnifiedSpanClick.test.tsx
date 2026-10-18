@@ -445,4 +445,41 @@ describe('Span Click User Flows', () => {
 			{ replace: true },
 		);
 	});
+
+	it('keeps a tab param the router has not seen when selecting spans', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		// nuqs wrote ?tab=thread to the real URL; react-router's copy is stale.
+		__setSearchParamsGetterForTest(() => new URLSearchParams('tab=thread'));
+
+		renderWithTraceProvider(
+			<Success
+				spans={mockSpans}
+				traceMetadata={mockTraceMetadata}
+				interestedSpanId={{ spanId: '', isUncollapsed: false }}
+				uncollapsedNodes={mockSpans.map((s) => s.span_id)}
+				isFullDataLoaded={false}
+				localUncollapsedNodes={new Set()}
+				setLocalUncollapsedNodes={jest.fn()}
+				setInterestedSpanId={jest.fn()}
+				selectedSpan={undefined}
+				setSelectedSpan={jest.fn()}
+				filteredSpanIds={[]}
+				isFilterActive={false}
+			/>,
+			undefined,
+			{ initialRoute: '/trace' },
+		);
+
+		const spanOverview = screen.getByTestId(FIRST_SPAN_TEST_ID);
+		const spanElement = spanOverview.querySelector(
+			SPAN_OVERVIEW_CLASS,
+		) as HTMLElement;
+		await user.click(spanElement);
+
+		expect(mockSafeNavigate).toHaveBeenCalledWith(
+			{ search: expect.stringMatching(/tab=thread.*spanId=span-1/) },
+			{ replace: true },
+		);
+	});
 });

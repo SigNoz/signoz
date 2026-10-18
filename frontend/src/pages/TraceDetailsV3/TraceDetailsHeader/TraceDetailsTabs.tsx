@@ -22,10 +22,7 @@ function TraceDetailsTabs(): JSX.Element {
 	const [tab, setTab] = useTraceDetailsTab();
 
 	const handleChange = (value: string): void => {
-		// Clicking the active item deselects it and reports ''.
-		if (value) {
-			void setTab(value as TraceDetailsTab);
-		}
+		void setTab(value as TraceDetailsTab);
 	};
 
 	return (

@@ -152,6 +152,7 @@ function TraceDetailsHeader({
 										icon
 										color="secondary"
 										aria-label="Analytics"
+										testId="trace-analytics-button"
 										onClick={handleToggleAnalytics}
 									>
 										<ChartPie size={14} />
