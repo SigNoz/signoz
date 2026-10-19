@@ -22,7 +22,6 @@ var Resources = []Resource{
 	ResourceMetaResourceUserPreference,
 	ResourceMetaResourceOrgPreference,
 	ResourceMetaResourceQuickFilter,
-	ResourceMetaResourceMetricsMetadata,
 	ResourceMetaResourceTTLSetting,
 	ResourceMetaResourceRule,
 	ResourceMetaResourcePlannedMaintenance,
@@ -40,6 +39,7 @@ var Resources = []Resource{
 	ResourceTelemetryResourceMeterMetrics,
 	ResourceMetaResourceLogsField,
 	ResourceMetaResourceTracesField,
+	ResourceMetaResourceMetricsField,
 }
 
 var (
@@ -64,7 +64,6 @@ var (
 	ResourceMetaResourceUserPreference                   = NewResourceMetaResource(KindUserPreference)
 	ResourceMetaResourceOrgPreference                    = NewResourceMetaResource(KindOrgPreference)
 	ResourceMetaResourceQuickFilter                      = NewResourceMetaResource(KindQuickFilter, VerbList, VerbRead, VerbUpdate)
-	ResourceMetaResourceMetricsMetadata                  = NewResourceMetaResource(KindMetricsMetadata, VerbList, VerbRead, VerbUpdate)
 	ResourceMetaResourceTTLSetting                       = NewResourceMetaResource(KindTTLSetting)
 	ResourceMetaResourceRule                             = NewResourceMetaResource(KindRule)
 	ResourceMetaResourcePlannedMaintenance               = NewResourceMetaResource(KindPlannedMaintenance)
@@ -82,4 +81,5 @@ var (
 	ResourceTelemetryResourceMeterMetrics                = NewResourceTelemetryResource(KindMeterMetrics)
 	ResourceMetaResourceLogsField                        = NewResourceMetaResource(KindLogsField)
 	ResourceMetaResourceTracesField                      = NewResourceMetaResource(KindTracesField)
+	ResourceMetaResourceMetricsField                     = NewResourceMetaResource(KindMetricsField, VerbList, VerbRead, VerbUpdate)
 )

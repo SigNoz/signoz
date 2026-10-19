@@ -16,21 +16,21 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
-type addMetricsMetadataTuples struct {
+type addMetricsFieldTuples struct {
 	sqlstore sqlstore.SQLStore
 }
 
-func NewAddMetricsMetadataTuplesFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
-	return factory.NewProviderFactory(factory.MustNewName("add_metrics_metadata_tuples"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-		return &addMetricsMetadataTuples{sqlstore: sqlstore}, nil
+func NewAddMetricsFieldTuplesFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
+	return factory.NewProviderFactory(factory.MustNewName("add_metrics_field_tuples"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
+		return &addMetricsFieldTuples{sqlstore: sqlstore}, nil
 	})
 }
 
-func (migration *addMetricsMetadataTuples) Register(migrations *migrate.Migrations) error {
+func (migration *addMetricsFieldTuples) Register(migrations *migrate.Migrations) error {
 	return migrations.Register(migration.Up, migration.Down)
 }
 
-func (migration *addMetricsMetadataTuples) Up(ctx context.Context, db *bun.DB) error {
+func (migration *addMetricsFieldTuples) Up(ctx context.Context, db *bun.DB) error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -55,14 +55,14 @@ func (migration *addMetricsMetadataTuples) Up(ctx context.Context, db *bun.DB) e
 	isPG := migration.sqlstore.BunDB().Dialect().Name() == dialect.PG
 
 	tuples := []migrationTuple{
-		{authtypes.SigNozAdminRoleName, "metaresource", "metrics-metadata", "read"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "metrics-metadata", "update"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "metrics-metadata", "list"},
-		{authtypes.SigNozEditorRoleName, "metaresource", "metrics-metadata", "read"},
-		{authtypes.SigNozEditorRoleName, "metaresource", "metrics-metadata", "update"},
-		{authtypes.SigNozEditorRoleName, "metaresource", "metrics-metadata", "list"},
-		{authtypes.SigNozViewerRoleName, "metaresource", "metrics-metadata", "read"},
-		{authtypes.SigNozViewerRoleName, "metaresource", "metrics-metadata", "list"},
+		{authtypes.SigNozAdminRoleName, "metaresource", "metrics-field", "read"},
+		{authtypes.SigNozAdminRoleName, "metaresource", "metrics-field", "update"},
+		{authtypes.SigNozAdminRoleName, "metaresource", "metrics-field", "list"},
+		{authtypes.SigNozEditorRoleName, "metaresource", "metrics-field", "read"},
+		{authtypes.SigNozEditorRoleName, "metaresource", "metrics-field", "update"},
+		{authtypes.SigNozEditorRoleName, "metaresource", "metrics-field", "list"},
+		{authtypes.SigNozViewerRoleName, "metaresource", "metrics-field", "read"},
+		{authtypes.SigNozViewerRoleName, "metaresource", "metrics-field", "list"},
 	}
 
 	for _, orgID := range orgIDs {
@@ -157,6 +157,6 @@ func (migration *addMetricsMetadataTuples) Up(ctx context.Context, db *bun.DB) e
 	return tx.Commit()
 }
 
-func (migration *addMetricsMetadataTuples) Down(context.Context, *bun.DB) error {
+func (migration *addMetricsFieldTuples) Down(context.Context, *bun.DB) error {
 	return nil
 }

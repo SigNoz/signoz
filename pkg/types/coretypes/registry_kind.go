@@ -22,7 +22,6 @@ var Kinds = []Kind{
 	KindUserPreference,
 	KindOrgPreference,
 	KindQuickFilter,
-	KindMetricsMetadata,
 	KindTTLSetting,
 	KindRule,
 	KindPlannedMaintenance,
@@ -40,6 +39,7 @@ var Kinds = []Kind{
 	KindMeterMetrics,
 	KindLogsField,
 	KindTracesField,
+	KindMetricsField,
 }
 
 var (
@@ -64,7 +64,6 @@ var (
 	KindUserPreference               = MustNewKind("user-preference")
 	KindOrgPreference                = MustNewKind("org-preference")
 	KindQuickFilter                  = MustNewKind("quick-filter")
-	KindMetricsMetadata              = MustNewKind("metrics-metadata")
 	KindTTLSetting                   = MustNewKind("ttl-setting")
 	KindRule                         = MustNewKind("rule")
 	KindPlannedMaintenance           = MustNewKind("planned-maintenance")
@@ -82,4 +81,5 @@ var (
 	KindMeterMetrics                 = MustNewKind("meter-metrics")
 	KindLogsField                    = MustNewKind("logs-field")
 	KindTracesField                  = MustNewKind("traces-field")
+	KindMetricsField                 = MustNewKind("metrics-field")
 )

@@ -290,7 +290,7 @@
     },
     {
       "type": "metaresource",
-      "kind": "metrics-metadata",
+      "kind": "metrics-field",
       "verbs": [
         "read",
         "update",
@@ -521,7 +521,7 @@
     },
     {
       "type": "metaresource",
-      "kind": "metrics-metadata",
+      "kind": "metrics-field",
       "verbs": [
         "read",
         "update",
@@ -701,7 +701,7 @@
     },
     {
       "type": "metaresource",
-      "kind": "metrics-metadata",
+      "kind": "metrics-field",
       "verbs": [
         "read",
         "list"

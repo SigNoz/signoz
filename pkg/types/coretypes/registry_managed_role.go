@@ -186,10 +186,6 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindQuickFilter}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindQuickFilter}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindQuickFilter}, WildCardSelectorString)},
-		// metrics-metadata — admin and editor update, viewer reads
-		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsMetadata}, WildCardSelectorString)},
-		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsMetadata}, WildCardSelectorString)},
-		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsMetadata}, WildCardSelectorString)},
 		// ttl-setting — admin updates, viewer reads
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTTLSetting}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTTLSetting}, WildCardSelectorString)},
@@ -220,6 +216,10 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTracesField}, WildCardSelectorString)},
 	},
 	SigNozEditorRoleName: {
+		// metrics-field — editor+admin update, viewer reads
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
+		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
 		// cloud-integration — editor can read accounts
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindCloudIntegration}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindCloudIntegration}, WildCardSelectorString)},
@@ -291,10 +291,6 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		// quick-filter — read only (admin updates)
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindQuickFilter}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindQuickFilter}, WildCardSelectorString)},
-		// metrics-metadata — editor updates
-		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsMetadata}, WildCardSelectorString)},
-		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsMetadata}, WildCardSelectorString)},
-		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsMetadata}, WildCardSelectorString)},
 		// ttl-setting — read only (admin updates)
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTTLSetting}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTTLSetting}, WildCardSelectorString)},
@@ -319,6 +315,10 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTracesField}, WildCardSelectorString)},
 	},
 	SigNozViewerRoleName: {
+		// metrics-field — editor reads+updates
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
+		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
 		// cloud-integration — viewer can read accounts
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindCloudIntegration}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindCloudIntegration}, WildCardSelectorString)},
@@ -358,9 +358,6 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		// quick-filter — read only
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindQuickFilter}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindQuickFilter}, WildCardSelectorString)},
-		// metrics-metadata — read only
-		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsMetadata}, WildCardSelectorString)},
-		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsMetadata}, WildCardSelectorString)},
 		// ttl-setting — read only
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTTLSetting}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTTLSetting}, WildCardSelectorString)},
@@ -383,6 +380,9 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTracesField}, WildCardSelectorString)},
 	},
 	SigNozAnonymousRoleName: {
+		// metrics-field — viewer reads
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
 		// public-dashboard — anonymous read
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindPublicDashboard}, WildCardSelectorString)},
 	},

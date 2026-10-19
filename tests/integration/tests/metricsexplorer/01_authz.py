@@ -49,7 +49,7 @@ def test_setup(
     create_role(
         admin_token,
         metadata_role,
-        [transaction_group("read", "metaresource", "metrics-metadata", ["*"]), transaction_group("list", "metaresource", "metrics-metadata", ["*"])],
+        [transaction_group("read", "metaresource", "metrics-field", ["*"]), transaction_group("list", "metaresource", "metrics-field", ["*"])],
     )
     metadata_user = create_active_user(signoz, admin_token, email=metadata_email, role="signoz-viewer", password=user_password)
     change_user_role(signoz, admin_token, metadata_user, "signoz-viewer", metadata_role)
@@ -142,7 +142,7 @@ def test_metadata_reads_need_metadata_grant(
     )
     assert response.status_code == expected, response.text
     if expected == HTTPStatus.FORBIDDEN:
-        assert "metrics-metadata" in response.text
+        assert "metrics-field" in response.text
 
 
 @pytest.mark.parametrize(
