@@ -266,4 +266,110 @@ describe('SignUp Component - Regular Signup', () => {
 			expect(errorCallouts.length).toBeGreaterThan(0);
 		});
 	});
+
+	describe('Enter key submission', () => {
+		function mockSignup(delayMs = 0): { registerCalls: () => number } {
+			let calls = 0;
+			server.use(
+				rest.post(REGISTER_ENDPOINT, (_req, res, ctx) => {
+					calls += 1;
+					return res(
+						ctx.delay(delayMs),
+						ctx.status(200),
+						ctx.json({ data: mockSignupResponse, status: 'success' }),
+					);
+				}),
+				rest.post(EMAIL_PASSWORD_ENDPOINT, (_req, res, ctx) =>
+					res(
+						ctx.status(200),
+						ctx.json({ data: mockTokenResponse, status: 'success' }),
+					),
+				),
+			);
+			return { registerCalls: (): number => calls };
+		}
+
+		it('submits once on Enter in the confirm password field', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const { registerCalls } = mockSignup();
+
+			render(<SignUp />, undefined, { initialRoute: '/signup' });
+
+			await user.type(screen.getByLabelText(/email address/i), 'test@signoz.io');
+			await user.type(
+				screen.getByPlaceholderText(/enter new password/i),
+				'password123',
+			);
+			await user.type(
+				screen.getByPlaceholderText(/confirm your new password/i),
+				'password123{enter}',
+			);
+
+			await waitFor(() => {
+				expect(mockAfterLogin).toHaveBeenCalledWith(
+					'mock-access-token',
+					'mock-refresh-token',
+				);
+			});
+			expect(registerCalls()).toBe(1);
+		});
+
+		it('does not submit on Enter while the passwords do not match', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const { registerCalls } = mockSignup();
+
+			render(<SignUp />, undefined, { initialRoute: '/signup' });
+
+			await user.type(screen.getByLabelText(/email address/i), 'test@signoz.io');
+			await user.type(
+				screen.getByPlaceholderText(/enter new password/i),
+				'password123',
+			);
+			await user.type(
+				screen.getByPlaceholderText(/confirm your new password/i),
+				'password456',
+			);
+			expect(
+				screen.getByRole('button', { name: /access my workspace/i }),
+			).toHaveAttribute('aria-disabled', 'true');
+
+			await user.keyboard('{enter}');
+
+			// Give a wrongly sent request time to land before asserting it never did.
+			await new Promise((resolve) => setTimeout(resolve, 50));
+			expect(registerCalls()).toBe(0);
+		});
+
+		it('does not submit again on Enter while the first submit is loading', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const { registerCalls } = mockSignup(1000);
+
+			render(<SignUp />, undefined, { initialRoute: '/signup' });
+
+			const emailInput = screen.getByLabelText(/email address/i);
+			await user.type(emailInput, 'test@signoz.io');
+			await user.type(
+				screen.getByPlaceholderText(/enter new password/i),
+				'password123',
+			);
+			await user.type(
+				screen.getByPlaceholderText(/confirm your new password/i),
+				'password123{enter}',
+			);
+
+			await waitFor(() => {
+				expect(
+					screen.getByRole('button', { name: /access my workspace/i }),
+				).toHaveAttribute('aria-disabled', 'true');
+			});
+
+			// The password inputs are disabled while loading; the email input is not.
+			await user.type(emailInput, '{enter}');
+
+			await waitFor(() => {
+				expect(mockAfterLogin).toHaveBeenCalled();
+			});
+			expect(registerCalls()).toBe(1);
+		});
+	});
 });

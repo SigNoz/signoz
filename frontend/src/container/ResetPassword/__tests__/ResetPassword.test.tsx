@@ -429,4 +429,109 @@ describe('ResetPassword Component', () => {
 			});
 		});
 	});
+
+	describe('Enter key submission', () => {
+		function mockReset(delayMs = 0): { resetCalls: () => number } {
+			let calls = 0;
+			server.use(
+				rest.post(RESET_PASSWORD_ENDPOINT, (_req, res, ctx) => {
+					calls += 1;
+					return res(
+						ctx.delay(delayMs),
+						ctx.status(200),
+						ctx.json({ status: 'success', message: 'Password reset successfully' }),
+					);
+				}),
+			);
+			return { resetCalls: (): number => calls };
+		}
+
+		async function typeMatchingPasswords(
+			user: ReturnType<typeof userEvent.setup>,
+		): Promise<HTMLElement> {
+			await user.type(
+				screen.getByPlaceholderText(/enter new password/i),
+				'newPassword123',
+			);
+			const confirmPasswordInput = screen.getByPlaceholderText(
+				/confirm your new password/i,
+			);
+			await user.type(confirmPasswordInput, 'newPassword123');
+			await waitFor(() => {
+				expect(
+					screen.getByRole('button', { name: /reset password/i }),
+				).not.toHaveAttribute('aria-disabled', 'true');
+			});
+			return confirmPasswordInput;
+		}
+
+		it('resets once on Enter in the confirm password field', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const { resetCalls } = mockReset();
+
+			render(<ResetPassword version="1.0.0" />, undefined, {
+				initialRoute: '/password-reset?token=reset-token-123',
+			});
+
+			const confirmPasswordInput = await typeMatchingPasswords(user);
+			await user.type(confirmPasswordInput, '{enter}');
+
+			await waitFor(() => {
+				expect(mockHistoryPush).toHaveBeenCalledWith(ROUTES.LOGIN);
+			});
+			expect(resetCalls()).toBe(1);
+		});
+
+		it('does not reset on Enter while the passwords do not match', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const { resetCalls } = mockReset();
+
+			render(<ResetPassword version="1.0.0" />, undefined, {
+				initialRoute: '/password-reset?token=reset-token-123',
+			});
+
+			await user.type(
+				screen.getByPlaceholderText(/enter new password/i),
+				'password123',
+			);
+			await user.type(
+				screen.getByPlaceholderText(/confirm your new password/i),
+				'password456{enter}',
+			);
+			expect(
+				screen.getByRole('button', { name: /reset password/i }),
+			).toHaveAttribute('aria-disabled', 'true');
+
+			// Give a wrongly sent request time to land before asserting it never did.
+			await new Promise((resolve) => setTimeout(resolve, 150));
+			expect(resetCalls()).toBe(0);
+		});
+
+		it('does not reset again on Enter while the first reset is loading', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const { resetCalls } = mockReset(1000);
+
+			render(<ResetPassword version="1.0.0" />, undefined, {
+				initialRoute: '/password-reset?token=reset-token-123',
+			});
+
+			const confirmPasswordInput = await typeMatchingPasswords(user);
+			await user.type(confirmPasswordInput, '{enter}');
+
+			await waitFor(() => {
+				expect(
+					screen.getByRole('button', { name: /reset password/i }),
+				).toHaveAttribute('aria-disabled', 'true');
+			});
+			await user.type(confirmPasswordInput, '{enter}');
+
+			await waitFor(
+				() => {
+					expect(mockHistoryPush).toHaveBeenCalledWith(ROUTES.LOGIN);
+				},
+				{ timeout: 2000 },
+			);
+			expect(resetCalls()).toBe(1);
+		});
+	});
 });
