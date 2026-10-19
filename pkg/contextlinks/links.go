@@ -82,11 +82,7 @@ func PrepareRuleFilterExpression(condition *ruletypes.RuleCondition, signal tele
 }
 
 func resolveSelectedQueryNames(condition *ruletypes.RuleCondition) []string {
-	selected := condition.SelectedQuery
-	if selected == "" {
-		selected = condition.SelectedQueryName()
-	}
-
+	selected := condition.SelectedQueryName()
 	for _, query := range condition.CompositeQuery.Queries {
 		if query.GetQueryName() != selected {
 			continue

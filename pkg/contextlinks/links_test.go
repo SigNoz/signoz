@@ -127,6 +127,16 @@ func TestPrepareRuleFilterExpression(t *testing.T) {
 			expectedFound:      true,
 		},
 		{
+			name: "NoSelectedQuery_OnlyHiddenQueries",
+			condition: &ruletypes.RuleCondition{
+				CompositeQuery: &ruletypes.AlertCompositeQuery{Queries: []qbtypes.QueryEnvelope{hiddenLogQuery}},
+			},
+			signal:             telemetrytypes.SignalLogs,
+			labels:             map[string]string{},
+			expectedExpression: "",
+			expectedFound:      false,
+		},
+		{
 			name: "SelectedTracesQuery_WithoutFilter",
 			condition: &ruletypes.RuleCondition{
 				SelectedQuery:  "D",
