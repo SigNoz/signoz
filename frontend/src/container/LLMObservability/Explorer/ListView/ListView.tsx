@@ -12,7 +12,6 @@ import { QueryKey } from 'react-query';
 import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
-import type { TableColumnDef } from 'components/TanStackTableView/types';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
@@ -20,7 +19,6 @@ import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
 import { getTraceLink, transformSpanRows } from './utils';
-import { getFieldColumn, TracesTableRow } from '../TracesTable/getFieldColumn';
 import TracesTable from '../TracesTable/TracesTable';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -37,11 +35,8 @@ import { getListOrderBy, setListOrderBy } from 'utils/explorerUtils';
 
 import TraceExplorerControls from '../Controls';
 import { getListViewQuery } from '../explorerUtils';
-import {
-	defaultSelectedColumns,
-	PER_PAGE_OPTIONS,
-	TIMESTAMP_FIELD,
-} from './configs';
+import { PER_PAGE_OPTIONS } from './configs';
+import { useListViewColumns } from './useListViewColumns';
 import './ListView.styles.scss';
 
 import styles from './ListView.module.scss';
@@ -83,6 +78,15 @@ function ListView({
 	const paginationConfig =
 		paginationQueryData ?? getDefaultPaginationConfig(PER_PAGE_OPTIONS);
 
+	const {
+		selectedColumns,
+		selectColumnsSignature,
+		columns,
+		config,
+		onColumnOrderChange,
+		onColumnRemove,
+	} = useListViewColumns();
+
 	const requestQuery = useMemo(
 		() => getListViewQuery(stagedQuery || initialQueryAIWithType, orderBy),
 		[stagedQuery, orderBy],
@@ -97,12 +101,14 @@ function ListView({
 			stagedQuery,
 			panelType,
 			paginationConfig,
+			selectColumnsSignature,
 		],
 		[
 			stagedQuery,
 			panelType,
 			globalSelectedTime,
 			paginationConfig,
+			selectColumnsSignature,
 			maxTime,
 			minTime,
 		],
@@ -123,7 +129,7 @@ function ListView({
 			},
 			tableParams: {
 				pagination: paginationConfig,
-				selectColumns: defaultSelectedColumns,
+				selectColumns: selectedColumns,
 			},
 		},
 		ENTITY_VERSION_V5,
@@ -154,15 +160,6 @@ function ListView({
 	const queryTableData = useMemo(
 		() => queryTableDataResult || [],
 		[queryTableDataResult],
-	);
-
-	// TODO(ai-explorer): static columns until the preferences framework lands.
-	const columns = useMemo<TableColumnDef<TracesTableRow>[]>(
-		() =>
-			[TIMESTAMP_FIELD, ...defaultSelectedColumns].map((field) =>
-				getFieldColumn(field),
-			),
-		[],
 	);
 
 	const rows = useMemo(
@@ -204,6 +201,7 @@ function ListView({
 					isLoading={isFetching}
 					totalCount={rows.length}
 					perPageOptions={PER_PAGE_OPTIONS}
+					config={config}
 				/>
 			</div>
 
@@ -211,7 +209,7 @@ function ListView({
 				data={rows}
 				columns={columns}
 				columnStorageKey={LOCALSTORAGE.AI_OBSERVABILITY_LIST_COLUMNS}
-				respectColumnOrder
+				respectColumnOrder={false}
 				panelType="LIST"
 				getRowHref={getTraceLink}
 				isLoading={isLoading}
@@ -219,6 +217,8 @@ function ListView({
 				isError={isError}
 				error={error}
 				isFilterApplied={isFilterApplied}
+				onColumnOrderChange={onColumnOrderChange}
+				onColumnRemove={onColumnRemove}
 			/>
 		</div>
 	);

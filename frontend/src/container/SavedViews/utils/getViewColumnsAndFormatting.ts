@@ -6,7 +6,12 @@ import {
 	ensureLogsRequiredColumns,
 } from 'container/OptionsMenu/constants';
 import { FontSize, LogViewMode } from 'container/OptionsMenu/types';
-import { Preferences } from 'providers/preferences/types';
+import { defaultSelectedColumns as defaultAIObservabilitySelectedColumns } from 'container/LLMObservability/Explorer/ListView/configs';
+import {
+	AI_OBSERVABILITY_PREFERENCE_SOURCE,
+	Preferences,
+	PreferenceSource,
+} from 'providers/preferences/types';
 import { DataSource } from 'types/common/queryBuilder';
 
 function withColumnNames(
@@ -25,7 +30,7 @@ function withColumnNames(
 // defaults filled in where the view has none.
 export function getViewColumnsAndFormatting(
 	spec: SavedviewtypesSavedViewSpecDTO | undefined,
-	dataSource: DataSource,
+	dataSource: PreferenceSource,
 ): Preferences {
 	const selectedFields = spec?.selectedFields as TelemetryFieldKey[] | undefined;
 
@@ -44,6 +49,11 @@ export function getViewColumnsAndFormatting(
 	}
 	if (dataSource === DataSource.TRACES) {
 		return { columns: selectedFields || defaultTraceSelectedColumns };
+	}
+	if (dataSource === AI_OBSERVABILITY_PREFERENCE_SOURCE) {
+		return {
+			columns: selectedFields || defaultAIObservabilitySelectedColumns,
+		};
 	}
 	return { columns: [] };
 }

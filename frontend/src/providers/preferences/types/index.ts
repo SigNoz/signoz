@@ -1,6 +1,14 @@
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { LogViewMode } from 'container/OptionsMenu/types';
 import { FontSize } from 'container/OptionsMenu/types';
+import { DataSource } from 'types/common/queryBuilder';
+
+// AI Observability queries run on traces, so its slice needs a key of its own.
+export const AI_OBSERVABILITY_PREFERENCE_SOURCE = 'ai_observability';
+
+export type PreferenceSource =
+	| DataSource
+	| typeof AI_OBSERVABILITY_PREFERENCE_SOURCE;
 
 export enum PreferenceMode {
 	SAVED_VIEW = 'savedView',
@@ -18,6 +26,7 @@ export interface PreferenceSlice {
 export interface PreferenceContextValue {
 	logs: PreferenceSlice;
 	traces: PreferenceSlice;
+	aiObservability: PreferenceSlice;
 }
 
 export interface FormattingOptions {
