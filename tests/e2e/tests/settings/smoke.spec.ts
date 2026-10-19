@@ -100,6 +100,9 @@ const PROBES: SettingsProbe[] = [
 		markers: async (settings) => {
 			await expect(settings.billing.subtitle()).toBeVisible();
 		},
+		// The zeus mock stubs only `/v2/licenses/me`, so the usage request behind
+		// the subscription answers 404 on this stack. It lands after the subtitle.
+		allowFailures: ['/api/v1/subscriptions'],
 	},
 ];
 
