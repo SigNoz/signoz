@@ -59,7 +59,6 @@ var (
 	relatedLinksKindsByChannelType = map[string]relatedLinksChannelKind{
 		"slack":      relatedLinksSlackKind,
 		"msteams":    relatedLinksMSTeamsKind,
-		"msteamsv2":  relatedLinksMSTeamsKind,
 		"incidentio": relatedLinksIncidentIOKind,
 		"jsmops":     relatedLinksJSMOpsKind,
 	}
