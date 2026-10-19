@@ -5,7 +5,7 @@
     // transpiles with its own loader and this config only runs with `--noEmit`.
     "module": "esnext",
     "moduleResolution": "bundler",
-    // `DOM` is needed because helpers run browser code inside `page.evaluate`
+    // `DOM` is needed because drivers run browser code inside `page.evaluate`
     // callbacks (localStorage, window, document).
     "lib": ["ES2020", "DOM"],
     "strict": true,
@@ -16,10 +16,9 @@
     "types": ["node", "@playwright/test"],
     "paths": {
       "@tests/*": ["./tests/*"],
-      "@helpers/*": ["./helpers/*"],
       "@specs/*": ["./specs/*"]
     }
   },
-  "include": ["tests/**/*.ts", "drivers/**/*.ts", "helpers/**/*.ts", "fixtures/**/*.ts", "bootstrap/**/*.ts", "playwright.config.ts"],
+  "include": ["tests/**/*.ts", "drivers/**/*.ts", "bootstrap/**/*.ts", "playwright.config.ts"],
   "exclude": ["node_modules", "dist"]
 }
