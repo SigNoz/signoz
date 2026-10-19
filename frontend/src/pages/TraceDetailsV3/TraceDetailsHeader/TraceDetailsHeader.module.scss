@@ -29,6 +29,10 @@
 	}
 }
 
+.tabs {
+	flex-shrink: 0;
+}
+
 .filterSection {
 	display: flex;
 	align-items: center;
