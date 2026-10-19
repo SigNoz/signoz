@@ -359,7 +359,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 
 func (r *PromRule) String() string {
 	ar := ruletypes.PostableRule{
-		AlertName:         r.name,
+		AlertName:         valuer.NewDisplayName(r.name),
 		RuleCondition:     r.ruleCondition,
 		EvalWindow:        r.evalWindow,
 		Labels:            r.labels.Map(),

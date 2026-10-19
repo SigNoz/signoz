@@ -5,9 +5,17 @@ import { Skeleton } from '@signozhq/ui/skeleton';
 import { toast } from '@signozhq/ui/sonner';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import {
+	buildSavedViewReadPermission,
+	SavedViewCreatePermission,
+	SavedViewListPermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
 
 import {
 	MY_VIEW_NAME,
+	SAVED_VIEW_FORBIDDEN_NAME,
 	SAVED_VIEW_LOAD_FAILED_NAME,
 	SAVED_VIEW_TOAST_POSITION,
 } from './constants';
@@ -31,8 +39,16 @@ function SavedViewsHeader({
 	onOpenViews?: () => void;
 	onCollapse?: () => void;
 }): JSX.Element {
-	const { view, isLoading, isError, hasUnsavedChanges } =
-		useActiveSavedView(source);
+	const {
+		view,
+		isLoading,
+		isError,
+		isReadDenied,
+		errorMessage,
+		hasUnsavedChanges,
+	} = useActiveSavedView(source);
+	const { viewKey } = useGetSavedViewParams();
+	const readPermission = buildSavedViewReadPermission(viewKey);
 	const { revertView, clearView, createView, updateView, isSaving } =
 		useSavedViewActions(source);
 
@@ -49,10 +65,26 @@ function SavedViewsHeader({
 	const openSaveAsNew = useCallback((): void => setModalMode('saveAsNew'), []);
 	const closeModal = useCallback((): void => setModalMode(null), []);
 
-	const name = isError
-		? SAVED_VIEW_LOAD_FAILED_NAME
-		: (view?.spec.displayName ?? MY_VIEW_NAME);
+	let name = view?.spec.displayName ?? MY_VIEW_NAME;
+	if (isReadDenied) {
+		name = SAVED_VIEW_FORBIDDEN_NAME;
+	} else if (isError) {
+		name = SAVED_VIEW_LOAD_FAILED_NAME;
+	}
 	const isDirty = !isError && !!view && hasUnsavedChanges;
+
+	const nameChip = (
+		<span
+			className={cx(styles.name, {
+				[styles.isDirty]: isDirty,
+				[styles.isError]: isError,
+			})}
+			data-testid="saved-views-name"
+		>
+			{isDirty && <span className={styles.dot} />}
+			<span className={styles.nameText}>{name}</span>
+		</span>
+	);
 
 	return (
 		<div
@@ -68,6 +100,7 @@ function SavedViewsHeader({
 					<SavedViewsIconButton
 						title="All views"
 						icon={<List size={14} />}
+						checks={[SavedViewListPermission]}
 						onClick={onOpenViews}
 						testId="saved-views-open"
 					/>
@@ -79,19 +112,10 @@ function SavedViewsHeader({
 						className={styles.skeleton}
 						testId="saved-views-loading"
 					/>
+				) : isReadDenied ? (
+					<AuthZTooltip checks={[readPermission]}>{nameChip}</AuthZTooltip>
 				) : (
-					<Tooltip title={name}>
-						<span
-							className={cx(styles.name, {
-								[styles.isDirty]: isDirty,
-								[styles.isError]: isError,
-							})}
-							data-testid="saved-views-name"
-						>
-							{isDirty && <span className={styles.dot} />}
-							<span className={styles.nameText}>{name}</span>
-						</span>
-					</Tooltip>
+					<Tooltip title={errorMessage ?? name}>{nameChip}</Tooltip>
 				)}
 			</div>
 
@@ -102,6 +126,7 @@ function SavedViewsHeader({
 						icon={<Plus size={14} />}
 						disabled={isLoading}
 						disabledTooltip="Loading views"
+						checks={[SavedViewCreatePermission]}
 						onClick={(): void => setModalMode('create')}
 						testId="saved-views-create"
 					/>
@@ -117,6 +142,7 @@ function SavedViewsHeader({
 				{view && isDirty && (
 					<>
 						<SaveChangesMenu
+							viewId={view.id}
 							disabled={isSaving}
 							onSaveAsNew={openSaveAsNew}
 							onUpdate={(): void => {

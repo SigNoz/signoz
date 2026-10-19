@@ -126,7 +126,7 @@ func mergeFirstSeenMaps(maps ...map[telemetrytypes.MetricMetadataLookupKey]int64
 // createPostableRule creates a PostableRule with the given CompositeQuery
 func createPostableRule(compositeQuery *ruletypes.AlertCompositeQuery) ruletypes.PostableRule {
 	return ruletypes.PostableRule{
-		AlertName: "Test Rule",
+		AlertName: valuer.NewDisplayName("Test Rule"),
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
 		Evaluation: &ruletypes.EvaluationEnvelope{

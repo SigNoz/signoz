@@ -9,7 +9,9 @@ import { usePreferenceContext } from 'providers/preferences/context/PreferenceCo
 import SavedViewsHeader from '../SavedViewsHeader';
 import { mockSavedViewsApi } from './savedViewsApiMock';
 import {
+	expectRowUsable,
 	makeView,
+	MENU_CHECK_TIMEOUT,
 	renderWithExplorerProviders,
 	viewUrl,
 } from './savedViewsTestUtils';
@@ -115,9 +117,11 @@ describe('SavedViewsHeader columns', () => {
 		await userEvent.click(screen.getByTestId('add-column'));
 		await waitFor(() => expect(isDirty()).toBe(true));
 		await userEvent.click(screen.getByTestId('saved-views-save-changes'));
-		await userEvent.click(
-			await screen.findByRole('menuitem', { name: 'Update selected view' }),
+		const update = await screen.findByTestId(
+			'saved-views-save-changes-item-update',
 		);
+		await waitFor(() => expectRowUsable(update), MENU_CHECK_TIMEOUT);
+		await userEvent.click(update);
 		await waitFor(() => expect(isDirty()).toBe(false));
 
 		await userEvent.click(screen.getByTestId('add-column'));

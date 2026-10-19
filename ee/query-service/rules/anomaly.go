@@ -423,7 +423,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 func (r *AnomalyRule) String() string {
 
 	ar := ruletypes.PostableRule{
-		AlertName:         r.Name(),
+		AlertName:         valuer.NewDisplayName(r.Name()),
 		RuleCondition:     r.Condition(),
 		EvalWindow:        r.EvalWindow(),
 		Labels:            r.Labels().Map(),
