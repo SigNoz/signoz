@@ -83,6 +83,19 @@ const render = (ui: React.ReactElement): ReturnType<typeof rtlRender> =>
 		</MemoryRouter>,
 	);
 
+const mockSafeNavigate = jest.fn();
+jest.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: jest.Mock } => ({
+		safeNavigate: mockSafeNavigate,
+	}),
+}));
+
+const mockComponentPermission = jest.fn((): boolean[] => [true, true]);
+jest.mock('hooks/useComponentPermission', () => ({
+	__esModule: true,
+	default: (): boolean[] => mockComponentPermission(),
+}));
+
 jest.mock('hooks/queryBuilder/useCreateAlerts', () => ({
 	__esModule: true,
 	default: jest.fn(() => jest.fn()),
@@ -528,4 +541,141 @@ describe('WidgetHeader', () => {
 			expect(mockCreateAlertsHandler).toHaveBeenCalledTimes(1);
 		});
 	});
+});
+
+describe('WidgetHeader menu rows', () => {
+	const ALL_ROWS = [
+		MenuItemKeys.View,
+		MenuItemKeys.Edit,
+		MenuItemKeys.Clone,
+		MenuItemKeys.Delete,
+	];
+	const tableWidget = { ...mockWidget, panelTypes: PANEL_TYPES.TABLE };
+	const tableProcessedDataRef: MutableRefObject<RowData[]> = {
+		current: [{ timestamp: 1, key: 'k', col1: 'v1' }],
+	};
+
+	interface Props {
+		onView: jest.Mock;
+		onClone: jest.Mock;
+		onDelete: jest.Mock;
+	}
+
+	function renderHeader(): Props {
+		const props = {
+			onView: jest.fn(),
+			onClone: jest.fn(),
+			onDelete: jest.fn(),
+		};
+		render(
+			<WidgetHeader
+				title={TABLE_WIDGET_TITLE}
+				widget={tableWidget}
+				queryResponse={mockQueryResponse}
+				isWarning={false}
+				isFetchingResponse={false}
+				tableProcessedDataRef={tableProcessedDataRef}
+				setSearchTerm={jest.fn()}
+				headerMenuList={ALL_ROWS}
+				{...props}
+			/>,
+		);
+		return props;
+	}
+
+	async function openMenu(): Promise<void> {
+		await userEvent.click(screen.getByTestId(WIDGET_HEADER_OPTIONS_ID));
+	}
+
+	async function clickRow(name: string): Promise<void> {
+		await openMenu();
+		await userEvent.click(await screen.findByRole('menuitem', { name }));
+	}
+
+	beforeEach(() => {
+		jest.clearAllMocks();
+		mockComponentPermission.mockReturnValue([true, true]);
+	});
+
+	it.each([
+		['View', 'onView'],
+		['Clone', 'onClone'],
+		['Delete', 'onDelete'],
+	] as const)('%s calls %s only', async (name, prop) => {
+		const props = renderHeader();
+		await clickRow(name);
+
+		for (const key of ['onView', 'onClone', 'onDelete'] as const) {
+			expect(props[key]).toHaveBeenCalledTimes(key === prop ? 1 : 0);
+		}
+		expect(mockSafeNavigate).not.toHaveBeenCalled();
+	});
+
+	it('Edit navigates to the panel editor for this widget', async () => {
+		const props = renderHeader();
+		await clickRow('Edit');
+
+		expect(mockSafeNavigate).toHaveBeenCalledTimes(1);
+		const url = mockSafeNavigate.mock.calls[0][0] as string;
+		expect(url).toContain('new?');
+		expect(url).toContain(`widgetId=${tableWidget.id}`);
+		expect(url).toContain(`graphType=${PANEL_TYPES.TABLE}`);
+		expect(props.onView).not.toHaveBeenCalled();
+		expect(props.onClone).not.toHaveBeenCalled();
+	});
+
+	it('Download as CSV saves the table rows as a csv file', async () => {
+		const createObjectURL = jest.fn((_blob: Blob) => 'blob:csv');
+		Object.defineProperty(URL, 'createObjectURL', {
+			value: createObjectURL,
+			configurable: true,
+		});
+		const clicked: { download: string; href: string }[] = [];
+		const anchorClick = jest
+			.spyOn(HTMLAnchorElement.prototype, 'click')
+			.mockImplementation(function (this: HTMLAnchorElement) {
+				clicked.push({ download: this.download, href: this.href });
+			});
+		const props = renderHeader();
+
+		await clickRow('Download as CSV');
+
+		expect(createObjectURL).toHaveBeenCalledTimes(1);
+		expect(createObjectURL.mock.calls[0][0].type).toBe('text/csv;charset=utf-8;');
+		expect(clicked).toStrictEqual([
+			{ download: `${TABLE_WIDGET_TITLE}.csv`, href: 'blob:csv' },
+		]);
+		expect(props.onView).not.toHaveBeenCalled();
+		anchorClick.mockRestore();
+	});
+
+	it.each([
+		['Edit', 'You do not have permission to edit this panel'],
+		['Clone', 'You do not have permission to clone this panel'],
+		['Delete', 'You do not have permission to delete this panel'],
+	])(
+		'%s is disabled with its reason when the role lacks permission',
+		async (name, reason) => {
+			mockComponentPermission.mockReturnValue([false, false]);
+			const props = renderHeader();
+			await openMenu();
+
+			const row = await screen.findByRole('menuitem', { name });
+			expect(row).toHaveAttribute('aria-disabled', 'true');
+			expect(screen.getByRole('menuitem', { name: 'View' })).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
+
+			await userEvent.click(row);
+			expect(props.onClone).not.toHaveBeenCalled();
+			expect(props.onDelete).not.toHaveBeenCalled();
+			expect(mockSafeNavigate).not.toHaveBeenCalled();
+
+			await userEvent.hover(row);
+			await expect(screen.findByRole('tooltip')).resolves.toHaveTextContent(
+				reason,
+			);
+		},
+	);
 });
