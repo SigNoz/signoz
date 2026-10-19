@@ -97,6 +97,13 @@ describe('CreateAlertProvider — URL-declared prefill (issue #5291)', () => {
 		expect(screen.getByTestId('window-type')).toHaveTextContent('rolling');
 	});
 
+	it('starts new anomaly alerts at 3 deviations', () => {
+		renderWithSearch(`?ruleType=anomaly_rule`);
+
+		expect(screen.getByTestId('threshold-count')).toHaveTextContent('1');
+		expect(screen.getByTestId('threshold-value')).toHaveTextContent('3');
+	});
+
 	it('applies the meter evaluation window when the preset is declared', () => {
 		// Ingestion-style prefill: explicit in_total + meter preset.
 		renderWithSearch(

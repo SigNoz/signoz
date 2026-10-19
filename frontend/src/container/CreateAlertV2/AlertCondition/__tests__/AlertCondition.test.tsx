@@ -1,6 +1,8 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
+import * as appHooks from 'providers/App/App';
+import { createAppContextMock } from 'tests/fixtures/appContextMock';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { CreateAlertProvider } from '../../context';
@@ -65,25 +67,23 @@ jest.mock('../AnomalyThreshold', () => ({
 	},
 }));
 
+const mockHandleSetQueryData = jest.fn();
+const mockRedirectWithQueryBuilderData = jest.fn();
+const mockCurrentQuery = {
+	dataSource: 'METRICS',
+	queryName: 'A',
+	builder: {
+		queryData: [{ dataSource: 'METRICS' }],
+		queryFormulas: [],
+	},
+};
+
 // Mock useQueryBuilder hook
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
-	useQueryBuilder: (): {
-		currentQuery: {
-			builder: { queryData: unknown[]; queryFormulas: unknown[] };
-			dataSource: string;
-			queryName: string;
-		};
-		redirectWithQueryBuilderData: () => void;
-	} => ({
-		currentQuery: {
-			dataSource: 'METRICS',
-			queryName: 'A',
-			builder: {
-				queryData: [{ dataSource: 'METRICS' }],
-				queryFormulas: [],
-			},
-		},
-		redirectWithQueryBuilderData: jest.fn(),
+	useQueryBuilder: (): unknown => ({
+		currentQuery: mockCurrentQuery,
+		redirectWithQueryBuilderData: mockRedirectWithQueryBuilderData,
+		handleSetQueryData: mockHandleSetQueryData,
 	}),
 }));
 
@@ -112,7 +112,14 @@ const renderAlertCondition = (
 	);
 };
 
+const useAppContextSpy = jest.spyOn(appHooks, 'useAppContext');
+
 describe('AlertCondition', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+		useAppContextSpy.mockReturnValue(createAppContextMock('ADMIN'));
+	});
+
 	it('renders the stepper with correct step number and label', () => {
 		renderAlertCondition();
 		expect(screen.getByTestId(STEPPER_TEST_ID)).toHaveTextContent(
@@ -125,10 +132,9 @@ describe('AlertCondition', () => {
 
 		// Verify default alertType is METRICS_BASED_ALERT (shows AlertThreshold component)
 		expect(screen.getByTestId(ALERT_THRESHOLD_TEST_ID)).toBeInTheDocument();
-		// TODO: uncomment this when anomaly tab is implemented
-		// expect(
-		// 	screen.queryByTestId(ANOMALY_THRESHOLD_TEST_ID),
-		// ).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId(ANOMALY_THRESHOLD_TEST_ID),
+		).not.toBeInTheDocument();
 
 		// Verify threshold tab is active by default
 		const thresholdTab = screen.getByText(THRESHOLD_TAB_TEXT);
@@ -136,8 +142,7 @@ describe('AlertCondition', () => {
 
 		// Verify both tabs are visible (METRICS_BASED_ALERT supports multiple tabs)
 		expect(screen.getByText(THRESHOLD_TAB_TEXT)).toBeInTheDocument();
-		// TODO: uncomment this when anomaly tab is implemented
-		// expect(screen.getByText(ANOMALY_TAB_TEXT)).toBeInTheDocument();
+		expect(screen.getByText(ANOMALY_TAB_TEXT)).toBeInTheDocument();
 	});
 
 	it('renders threshold tab by default', () => {
@@ -152,8 +157,7 @@ describe('AlertCondition', () => {
 		).not.toBeInTheDocument();
 	});
 
-	// TODO: Unskip this when anomaly tab is implemented
-	it.skip('renders anomaly tab when alert type supports multiple tabs', () => {
+	it('renders anomaly tab when alert type supports multiple tabs', () => {
 		renderAlertCondition();
 		expect(screen.getByText(ANOMALY_TAB_TEXT)).toBeInTheDocument();
 		expect(screen.getByTestId(ANOMALY_VIEW_TEST_ID)).toBeInTheDocument();
@@ -167,8 +171,7 @@ describe('AlertCondition', () => {
 		).not.toBeInTheDocument();
 	});
 
-	// TODO: Unskip this when anomaly tab is implemented
-	it.skip('shows AnomalyThreshold component when alert type is anomaly based', () => {
+	it('shows AnomalyThreshold component when alert type is anomaly based', () => {
 		renderAlertCondition();
 
 		// Click on anomaly tab to switch to anomaly-based alert
@@ -179,8 +182,7 @@ describe('AlertCondition', () => {
 		expect(screen.queryByTestId(ALERT_THRESHOLD_TEST_ID)).not.toBeInTheDocument();
 	});
 
-	// TODO: Unskip this when anomaly tab is implemented
-	it.skip('switches between threshold and anomaly tabs', () => {
+	it('switches between threshold and anomaly tabs', () => {
 		renderAlertCondition();
 
 		// Initially shows threshold component
@@ -205,8 +207,36 @@ describe('AlertCondition', () => {
 		).not.toBeInTheDocument();
 	});
 
-	// TODO: Unskip this when anomaly tab is implemented
-	it.skip('applies active tab styling correctly', () => {
+	it('adds the anomaly function with the default z-score when switching to anomaly', () => {
+		renderAlertCondition();
+		expect(mockHandleSetQueryData).not.toHaveBeenCalled();
+
+		fireEvent.click(screen.getByText(ANOMALY_TAB_TEXT));
+
+		expect(mockHandleSetQueryData).toHaveBeenCalledWith(
+			0,
+			expect.objectContaining({
+				functions: [
+					{ name: 'anomaly', args: [], namedArgs: { z_score_threshold: 3 } },
+				],
+			}),
+		);
+	});
+
+	it('keeps the current query when switching between threshold and anomaly', () => {
+		renderAlertCondition();
+
+		fireEvent.click(screen.getByText(ANOMALY_TAB_TEXT));
+
+		expect(mockRedirectWithQueryBuilderData).toHaveBeenCalledWith(
+			mockCurrentQuery,
+			{ alertType: AlertTypes.ANOMALY_BASED_ALERT, ruleType: 'anomaly_rule' },
+			undefined,
+			true,
+		);
+	});
+
+	it('applies active tab styling correctly', () => {
 		renderAlertCondition();
 
 		const thresholdTab = screen.getByText(THRESHOLD_TAB_TEXT);
@@ -227,11 +257,20 @@ describe('AlertCondition', () => {
 	it('shows multiple tabs for METRICS_BASED_ALERT', () => {
 		renderAlertCondition('METRIC_BASED_ALERT');
 
-		// TODO: uncomment this when anomaly tab is implemented
 		expect(screen.getByText(THRESHOLD_TAB_TEXT)).toBeInTheDocument();
-		// expect(screen.getByText(ANOMALY_TAB_TEXT)).toBeInTheDocument();
+		expect(screen.getByText(ANOMALY_TAB_TEXT)).toBeInTheDocument();
 		expect(screen.getByTestId(THRESHOLD_VIEW_TEST_ID)).toBeInTheDocument();
-		// expect(screen.getByTestId(ANOMALY_VIEW_TEST_ID)).toBeInTheDocument();
+		expect(screen.getByTestId(ANOMALY_VIEW_TEST_ID)).toBeInTheDocument();
+	});
+
+	it('hides the anomaly tab for METRICS_BASED_ALERT when anomaly detection is off', () => {
+		useAppContextSpy.mockReturnValue(
+			createAppContextMock('ADMIN', { featureFlags: [] }),
+		);
+		renderAlertCondition('METRIC_BASED_ALERT');
+
+		expect(screen.getByText(THRESHOLD_TAB_TEXT)).toBeInTheDocument();
+		expect(screen.queryByText(ANOMALY_TAB_TEXT)).not.toBeInTheDocument();
 	});
 
 	it('shows multiple tabs for ANOMALY_BASED_ALERT', () => {
@@ -239,9 +278,8 @@ describe('AlertCondition', () => {
 
 		expect(screen.getByText(THRESHOLD_TAB_TEXT)).toBeInTheDocument();
 		expect(screen.getByTestId(THRESHOLD_VIEW_TEST_ID)).toBeInTheDocument();
-		// TODO: uncomment this when anomaly tab is implemented
-		// expect(screen.getByText(ANOMALY_TAB_TEXT)).toBeInTheDocument();
-		// expect(screen.getByTestId(ANOMALY_VIEW_TEST_ID)).toBeInTheDocument();
+		expect(screen.getByText(ANOMALY_TAB_TEXT)).toBeInTheDocument();
+		expect(screen.getByTestId(ANOMALY_VIEW_TEST_ID)).toBeInTheDocument();
 	});
 
 	it('shows only threshold tab for LOGS_BASED_ALERT', () => {

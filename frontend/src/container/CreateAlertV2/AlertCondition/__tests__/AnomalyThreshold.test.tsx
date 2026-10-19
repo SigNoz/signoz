@@ -1,7 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { createMockAlertContextState } from 'container/CreateAlertV2/EvaluationSettings/__tests__/testUtils';
 import { getAppContextMockState } from 'container/RoutingPolicies/__tests__/testUtils';
 import * as appHooks from 'providers/App/App';
+import { Channels } from 'types/api/channels/getAll';
 
 import * as context from '../../context';
 import AnomalyThreshold from '../AnomalyThreshold';
@@ -22,12 +23,11 @@ jest.mock('uplot', () => {
 
 const mockSetAlertState = jest.fn();
 const mockSetThresholdState = jest.fn();
-jest.spyOn(context, 'useCreateAlertState').mockReturnValue(
-	createMockAlertContextState({
-		setThresholdState: mockSetThresholdState,
-		setAlertState: mockSetAlertState,
-	}),
-);
+const mockContextState = createMockAlertContextState({
+	setThresholdState: mockSetThresholdState,
+	setAlertState: mockSetAlertState,
+});
+const useCreateAlertStateSpy = jest.spyOn(context, 'useCreateAlertState');
 
 // Mock useQueryBuilder hook
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
@@ -52,10 +52,12 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	}),
 }));
 
+const channels = [{ id: '1', name: 'slack-alerts' }] as Channels[];
+
 const renderAnomalyThreshold = (): ReturnType<typeof render> =>
 	render(
 		<AnomalyThreshold
-			channels={[]}
+			channels={channels}
 			isLoadingChannels={false}
 			isErrorChannels={false}
 			refreshChannels={jest.fn()}
@@ -65,7 +67,12 @@ const renderAnomalyThreshold = (): ReturnType<typeof render> =>
 describe('AnomalyThreshold', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		useCreateAlertStateSpy.mockReturnValue(mockContextState);
 	});
+
+	const openSelect = (testId: string): void => {
+		fireEvent.mouseDown(within(screen.getByTestId(testId)).getByRole('combobox'));
+	};
 
 	it('renders the first condition sentence', () => {
 		renderAnomalyThreshold();
@@ -91,5 +98,39 @@ describe('AnomalyThreshold', () => {
 		expect(screen.getByTestId('algorithm-with-text')).toBeInTheDocument();
 		expect(screen.getByTestId('seasonality-select')).toBeInTheDocument();
 		expect(screen.getByTestId('seasonality-text')).toBeInTheDocument();
+	});
+
+	it('stores the picked deviation as a number', () => {
+		renderAnomalyThreshold();
+		openSelect('threshold-value-select');
+		fireEvent.click(screen.getByTitle('4'));
+		expect(mockSetThresholdState).toHaveBeenCalledWith({
+			type: 'SET_THRESHOLDS',
+			payload: [expect.objectContaining({ thresholdValue: 4 })],
+		});
+	});
+
+	it('picks channels by name when routing policies are off', () => {
+		renderAnomalyThreshold();
+		openSelect('anomaly-notification-channel-select');
+		fireEvent.click(screen.getByTitle('slack-alerts'));
+		expect(mockSetThresholdState).toHaveBeenCalledWith({
+			type: 'SET_THRESHOLDS',
+			payload: [expect.objectContaining({ channels: ['slack-alerts'] })],
+		});
+	});
+
+	it('hides the channel picker when routing policies are on', () => {
+		useCreateAlertStateSpy.mockReturnValue({
+			...mockContextState,
+			notificationSettings: {
+				...mockContextState.notificationSettings,
+				routingPolicies: true,
+			},
+		});
+		renderAnomalyThreshold();
+		expect(
+			screen.queryByTestId('anomaly-notification-channel-select'),
+		).not.toBeInTheDocument();
 	});
 });
