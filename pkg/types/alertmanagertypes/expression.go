@@ -12,18 +12,25 @@ import (
 
 var ErrCodeInvalidExpression = errors.MustNewCode("invalid_expression")
 
-// NilSafeMemberAccess rewrites every member access a.b into a?.b, so a dotted
-// label missing from the alert evaluates to nil instead of failing the run.
+const nilSafeMemberFunc = "__nilSafeMember"
+
+// NilSafeMemberAccess rewrites every string-keyed member access a.b into a
+// lookup that yields nil unless a is a map, so a dotted label that is missing,
+// or whose prefix is a plain label, evaluates to nil instead of failing the run.
 type NilSafeMemberAccess struct{}
 
 func (NilSafeMemberAccess) Visit(node *ast.Node) {
 	member, ok := (*node).(*ast.MemberNode)
-	if !ok || member.Optional {
+	if !ok {
 		return
 	}
-	member.Optional = true
-	// The compiler only honours Optional inside a ChainNode.
-	ast.Patch(node, &ast.ChainNode{Node: member})
+	if _, ok := member.Property.(*ast.StringNode); !ok {
+		return
+	}
+	ast.Patch(node, &ast.CallNode{
+		Callee:    &ast.IdentifierNode{Value: nilSafeMemberFunc},
+		Arguments: []ast.Node{member.Node, member.Property},
+	})
 }
 
 // ConvertLabelSetToEnv converts a label set into a map suitable for use as an
@@ -86,7 +93,7 @@ func ConvertLabelSetToEnv(lset model.LabelSet) (map[string]any, bool) {
 // a failed evaluation (the maintenance muter treats a failure as "don't skip"
 // so alerts pass through).
 func EvalExpression(expression string, env map[string]any) (bool, error) {
-	program, err := expr.Compile(expression, expr.Env(env), expr.AllowUndefinedVariables(), expr.Patch(NilSafeMemberAccess{}))
+	program, err := expr.Compile(expression, expr.Env(env), expr.AllowUndefinedVariables(), expr.Function(nilSafeMemberFunc, nilSafeMember), expr.Patch(NilSafeMemberAccess{}))
 	if err != nil {
 		return false, errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeInvalidExpression, "compile expression %q", expression)
 	}
@@ -99,4 +106,13 @@ func EvalExpression(expression string, env map[string]any) (bool, error) {
 		return false, errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidExpression, "expression %q returned non-bool value %T (%v)", expression, output, output)
 	}
 	return result, nil
+}
+
+func nilSafeMember(params ...any) (any, error) {
+	m, ok := params[0].(map[string]any)
+	if !ok {
+		return nil, nil
+	}
+	key, _ := params[1].(string)
+	return m[key], nil
 }

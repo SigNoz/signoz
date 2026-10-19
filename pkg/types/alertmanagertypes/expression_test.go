@@ -386,6 +386,39 @@ func TestEvalExpression(t *testing.T) {
 			},
 			want: false,
 		},
+		{
+			name:       "MissingLeafUnderExistingPrefix_NoMatch",
+			expression: `k8s.pod.name = 'checkout'`,
+			lset: model.LabelSet{
+				"k8s.node.name": "node-1",
+			},
+			want: false,
+		},
+		{
+			name:       "PlainLabelUsedAsPrefix_IsNil",
+			expression: `deployment.environment = nil`,
+			lset: model.LabelSet{
+				"deployment": "blue",
+			},
+			want: true,
+		},
+		{
+			name:       "Or_PlainLabelUsedAsPrefix_OtherSideMatches",
+			expression: `region.zone = 'us-east-1a' OR team = 'payments'`,
+			lset: model.LabelSet{
+				"region": "us-east-1",
+				"team":   "payments",
+			},
+			want: true,
+		},
+		{
+			name:       "BracketAccessOnDottedLabel_Match",
+			expression: `cloud["provider"] = 'aws'`,
+			lset: model.LabelSet{
+				"cloud.provider": "aws",
+			},
+			want: true,
+		},
 	}
 
 	for _, testCase := range testCases {
