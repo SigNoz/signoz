@@ -301,6 +301,7 @@ export default function K8sBaseDetailsContent<T>({
 						type="single"
 						onChange={handleTabChange}
 						value={effectiveView}
+						testId="drawer-tab-bar"
 						items={[
 							...(tabVisibility.showOverview
 								? [
@@ -387,6 +388,7 @@ export default function K8sBaseDetailsContent<T>({
 								size="sm"
 								icon
 								color="secondary"
+								testId="open-logs-explorer"
 								onClick={handleExplorePagesRedirect}
 							>
 								<Compass size={18} />
@@ -401,6 +403,7 @@ export default function K8sBaseDetailsContent<T>({
 								size="sm"
 								icon
 								color="secondary"
+								testId="open-traces-explorer"
 								onClick={handleExplorePagesRedirect}
 							>
 								<Compass size={18} />

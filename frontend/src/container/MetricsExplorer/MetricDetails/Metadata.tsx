@@ -298,6 +298,7 @@ function Metadata({
 						type="text"
 						onClick={cancelEdit}
 						disabled={isUpdatingMetricsMetadata}
+						data-testid="metadata-cancel-button"
 					>
 						<X size={14} />
 						<Typography.Text>Cancel</Typography.Text>
@@ -310,6 +311,7 @@ function Metadata({
 							handleSave();
 						}}
 						disabled={isUpdatingMetricsMetadata}
+						data-testid="metadata-save-button"
 					>
 						<Save size={14} />
 						<Typography.Text>Save</Typography.Text>
@@ -330,6 +332,7 @@ function Metadata({
 						setIsEditing(true);
 					}}
 					disabled={isUpdatingMetricsMetadata || isLoadingMetricMetadata}
+					data-testid="metadata-edit-button"
 				>
 					<PenLine size={14} />
 					<Typography.Text>Edit</Typography.Text>
@@ -368,6 +371,7 @@ function Metadata({
 					</div>
 				) : (
 					<ResizeTable
+						data-testid="metric-metadata-table"
 						columns={columns}
 						tableLayout="fixed"
 						dataSource={tableData}

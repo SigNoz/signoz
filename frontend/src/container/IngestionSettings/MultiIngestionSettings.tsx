@@ -1707,6 +1707,7 @@ function MultiIngestionSettings(): JSX.Element {
 						prefix={<Plus size={14} />}
 						onClick={showAddModal}
 						width="200px"
+						testId="ingestion-key-add-btn"
 					>
 						New Ingestion key
 					</Button>

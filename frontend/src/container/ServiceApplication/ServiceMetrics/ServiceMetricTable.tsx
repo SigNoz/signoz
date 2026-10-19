@@ -102,7 +102,7 @@ function ServiceMetricTable({
 			`${range[0]}-${range[1]} of ${total} items`,
 	};
 	return (
-		<div className="service-metric-table-container">
+		<div className="service-metric-table-container" data-testid="services-table">
 			{RPS > MAX_RPS_LIMIT && (
 				<Flex justify="left">
 					<Typography.Title level={5} color="warning" style={{ marginTop: 0 }}>

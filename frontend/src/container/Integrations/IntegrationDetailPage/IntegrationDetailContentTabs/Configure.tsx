@@ -48,6 +48,7 @@ function Configure(props: ConfigurationProps): JSX.Element {
 				{configuration.map((config, index) => (
 					<Button
 						key={config.title}
+						data-testid="integration-configure-step"
 						type="text"
 						className={cx('configure-menu-item', {
 							active: selectedConfigStep === index,

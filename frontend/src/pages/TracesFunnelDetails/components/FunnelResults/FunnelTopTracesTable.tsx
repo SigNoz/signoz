@@ -26,6 +26,7 @@ interface FunnelTopTracesTableProps {
 		Error
 	>;
 	steps: FunnelStepData[];
+	testId: string;
 }
 
 function FunnelTopTracesTable({
@@ -36,6 +37,7 @@ function FunnelTopTracesTable({
 	tooltip,
 	steps,
 	useQueryHook,
+	testId,
 }: FunnelTopTracesTableProps): JSX.Element {
 	const { startTime, endTime } = useFunnelContext();
 	const payload = useMemo(
@@ -70,6 +72,7 @@ function FunnelTopTracesTable({
 		<FunnelTable
 			title={title}
 			tooltip={tooltip}
+			testId={testId}
 			columns={topTracesTableColumns}
 			data={data}
 			loading={isLoading || isFetching}

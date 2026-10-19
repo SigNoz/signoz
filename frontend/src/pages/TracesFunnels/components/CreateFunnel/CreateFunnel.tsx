@@ -122,7 +122,7 @@ function CreateFunnel({
 			getContainer={document.getElementById('root') || undefined}
 			destroyOnClose
 		>
-			<div className="funnel-modal-content">
+			<div className="funnel-modal-content" data-testid="create-funnel-modal">
 				<span className="funnel-modal-content__label">Enter funnel name</span>
 				<Input
 					className={`funnel-modal-content__input${
@@ -131,10 +131,16 @@ function CreateFunnel({
 					value={funnelName}
 					onChange={handleInputChange}
 					placeholder="Eg. checkout dropoff funnel"
+					testId="create-funnel-name-input"
 					autoFocus
 				/>
 				{inputError && (
-					<span className="funnel-modal-content__error">{inputError}</span>
+					<span
+						className="funnel-modal-content__error"
+						data-testid="create-funnel-error"
+					>
+						{inputError}
+					</span>
 				)}
 			</div>
 		</SignozModal>

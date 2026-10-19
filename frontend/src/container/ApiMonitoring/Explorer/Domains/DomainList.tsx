@@ -166,7 +166,10 @@ function DomainList(): JSX.Element {
 				!isFetching &&
 				!isLoading &&
 				formattedDataForTable.length === 0 && (
-					<div className="no-filtered-domains-message-container">
+					<div
+						className="no-filtered-domains-message-container"
+						data-testid="api-monitoring-empty-state"
+					>
 						<div className="no-filtered-domains-message-content">
 							<img
 								src={emptyStateUrl}
@@ -200,6 +203,7 @@ function DomainList(): JSX.Element {
 			{(isFetching || isLoading || formattedDataForTable.length > 0) && (
 				<Table
 					className="api-monitoring-domain-list-table"
+					data-testid="api-monitoring-domain-table"
 					dataSource={isFetching || isLoading ? [] : formattedDataForTable}
 					columns={columnsConfig}
 					loading={{
@@ -210,7 +214,10 @@ function DomainList(): JSX.Element {
 					}}
 					scroll={{ x: true }}
 					tableLayout="fixed"
-					onRow={(record, index): { onClick: () => void; className: string } => ({
+					onRow={(
+						record,
+						index,
+					): { onClick: () => void; className: string; 'data-testid': string } => ({
 						onClick: (): void => {
 							if (index !== undefined) {
 								const dataIndex = formattedDataForTable.findIndex(
@@ -222,6 +229,7 @@ function DomainList(): JSX.Element {
 							}
 						},
 						className: 'expanded-clickable-row',
+						'data-testid': `domain-row-${record.domainName}`,
 					})}
 					rowClassName={(_, index): string =>
 						index % 2 === 0 ? 'table-row-dark' : 'table-row-light'

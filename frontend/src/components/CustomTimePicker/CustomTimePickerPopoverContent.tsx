@@ -251,6 +251,7 @@ function CustomTimePickerPopoverContent({
 						<Button
 							className={cx('data-time-live', isLiveLogsEnabled ? 'active' : '')}
 							type="text"
+							data-testid="time-picker-live"
 							onClick={handleGoLive}
 						>
 							Live

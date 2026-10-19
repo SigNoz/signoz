@@ -141,6 +141,7 @@ function K8sHeader({
 					isLoadingQueries={isFetching}
 					onStageRunQuery={handleStageRunQuery}
 					handleCancelQuery={handleCancelQuery}
+					testId="list-run-query-btn"
 				/>
 			</div>
 

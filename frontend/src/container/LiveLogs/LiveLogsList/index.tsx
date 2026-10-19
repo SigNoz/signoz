@@ -186,7 +186,7 @@ function LiveLogsList({
 	);
 
 	return (
-		<div className="live-logs-list">
+		<div className="live-logs-list" data-testid="live-logs-list">
 			{(formattedLogs.length === 0 || isLoading || isLoadingList) &&
 				renderLoading()}
 
@@ -203,6 +203,7 @@ function LiveLogsList({
 							cellTypographySize={options.fontSize}
 							data={formattedLogs}
 							isLoading={false}
+							getRowTestId={(log): string => `logs-table-row-${log.id}`}
 							isRowActive={(log): boolean => log.id === activeLog?.id}
 							getRowClassName={(log): string =>
 								log.id === activeLogId ? 'logs-linked-row' : ''

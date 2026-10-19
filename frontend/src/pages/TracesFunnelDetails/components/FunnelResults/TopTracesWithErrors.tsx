@@ -15,6 +15,7 @@ function TopTracesWithErrors(props: TopTracesWithErrorsProps): JSX.Element {
 		<FunnelTopTracesTable
 			{...props}
 			title="Traces with errors"
+			testId="funnel-error-traces"
 			tooltip="A list of the traces with errors in the funnel"
 			useQueryHook={useFunnelErrorTraces}
 		/>

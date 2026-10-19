@@ -258,6 +258,7 @@ function DropRateView(): JSX.Element {
 				<EvaluationTimeSelector setInterval={setInterval} />
 			</div>
 			<Table
+				data-testid="mq-drop-rate-table"
 				className={cx('mq-table', 'pagination-left')}
 				pagination={paginationConfig}
 				size="middle"

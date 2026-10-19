@@ -15,6 +15,7 @@ function TopSlowestTraces(props: TopSlowestTracesProps): JSX.Element {
 		<FunnelTopTracesTable
 			{...props}
 			title="Slowest 5 traces"
+			testId="funnel-slowest-traces"
 			tooltip="A list of the slowest traces in the funnel"
 			useQueryHook={useFunnelSlowTraces}
 		/>

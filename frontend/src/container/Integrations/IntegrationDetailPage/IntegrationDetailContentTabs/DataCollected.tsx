@@ -57,6 +57,7 @@ function DataCollected(props: DataCollectedProps): JSX.Element {
 					<Typography.Text>Logs</Typography.Text>
 				</div>
 				<Table
+					data-testid="integration-logs-table"
 					columns={logsColumns}
 					rowClassName={(_, index): string =>
 						index % 2 === 0 ? 'table-row-dark' : ''
@@ -72,6 +73,7 @@ function DataCollected(props: DataCollectedProps): JSX.Element {
 					<Typography.Text>Metrics</Typography.Text>
 				</div>
 				<Table
+					data-testid="integration-metrics-table"
 					columns={metricsColumns}
 					rowClassName={(_, index): string =>
 						index % 2 === 0 ? 'table-row-dark' : ''

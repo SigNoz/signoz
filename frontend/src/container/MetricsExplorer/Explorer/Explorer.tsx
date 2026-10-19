@@ -379,6 +379,7 @@ function Explorer(): JSX.Element {
 							)}
 							<span>1 chart/query</span>
 							<Switch
+								testId="metrics-explorer-one-chart-per-query"
 								color="primary"
 								textPlacement="right"
 								value={showOneChartPerQuery}

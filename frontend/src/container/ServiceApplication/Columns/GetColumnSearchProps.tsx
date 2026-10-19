@@ -77,6 +77,7 @@ export const getColumnSearchProps = (
 				)}
 
 				<Link
+					data-testid={`service-link-${metrics}`}
 					to={`${ROUTES.APPLICATION}/${encodeURIComponent(
 						metrics,
 					)}?${queryString.join('')}`}

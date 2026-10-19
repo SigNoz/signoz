@@ -243,7 +243,13 @@ function PrettyView({
 							align="start"
 							side="bottom"
 						>
-							<span className="pretty-view__actions" role="button" tabIndex={0}>
+							<span
+								className="pretty-view__actions"
+								role="button"
+								tabIndex={0}
+								aria-label={`Actions for ${fieldKey}`}
+								data-testid={`pretty-view-actions-${fieldKey}`}
+							>
 								<Ellipsis size={12} />
 							</span>
 						</Dropdown>

@@ -200,13 +200,19 @@ function GraphView({
 					>
 						{metricName}
 					</Button>
-					<Button className="time-series-button-label" size="middle" disabled>
+					<Button
+						className="time-series-button-label"
+						size="middle"
+						disabled
+						data-testid="inspect-time-series-count"
+					>
 						{/* First time series in that of timestamps. Hence -1 */}
 						{`${formattedInspectMetricsTimeSeries.length - 1} time series`}
 					</Button>
 				</Button.Group>
 				<div className="view-toggle-button">
 					<Switch
+						testId="inspect-view-toggle"
 						color="primary"
 						textPlacement="right"
 						value={viewType === 'graph'}

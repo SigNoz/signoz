@@ -40,6 +40,7 @@ function FunnelsEmptyState({
 							icon={<Plus size={16} />}
 							onClick={onCreateFunnel}
 							className="funnels-empty__new-btn"
+							data-testid="traces-funnels-empty-new-btn"
 						>
 							New funnel
 						</Button>

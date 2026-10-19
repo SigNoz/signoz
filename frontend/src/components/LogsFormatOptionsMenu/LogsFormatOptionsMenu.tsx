@@ -180,6 +180,7 @@ function OptionsMenu({
 									<div
 										className="item"
 										key={item.label}
+										data-testid={`format-option-${item.key}`}
 										onClick={(): void => handleMenuItemClick(item.key)}
 									>
 										<div className={cx('item-label')}>

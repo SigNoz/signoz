@@ -22,7 +22,9 @@ function KeyCreatedPhase({
 			<div className="add-key-modal__field">
 				<span className="add-key-modal__label">Key</span>
 				<div className="add-key-modal__key-display">
-					<span className="add-key-modal__key-text">{createdKey.key}</span>
+					<span className="add-key-modal__key-text" data-testid="created-key-value">
+						{createdKey.key}
+					</span>
 					<Button
 						size="md"
 						variant="link"

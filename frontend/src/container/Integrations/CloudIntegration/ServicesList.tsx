@@ -137,6 +137,7 @@ function ServicesList({
 					active: service.id === activeService,
 				})}
 				key={service.id}
+				data-testid={`cloud-service-item-${service.id}`}
 				onClick={(): void => handleActiveService(service.id)}
 			>
 				<img
@@ -155,7 +156,7 @@ function ServicesList({
 		<div className="aws-services-list-view">
 			<div className="aws-services-list-view-sidebar">
 				<div className="aws-services-list-view-sidebar-content">
-					<div className="aws-services-enabled">
+					<div className="aws-services-enabled" data-testid="cloud-services-enabled">
 						<div className="aws-services-list-view-sidebar-content-header">
 							Enabled
 						</div>
@@ -169,7 +170,10 @@ function ServicesList({
 					</div>
 
 					{!isNotEnabledServicesEmpty && (
-						<div className="aws-services-not-enabled">
+						<div
+							className="aws-services-not-enabled"
+							data-testid="cloud-services-not-enabled"
+						>
 							<div className="aws-services-list-view-sidebar-content-header">
 								Not Enabled
 							</div>

@@ -80,6 +80,7 @@ function TimezoneAdaptation(): JSX.Element {
 					<button
 						type="button"
 						className="timezone-adaption__clear-override"
+						data-testid="timezone-clear-override"
 						onClick={handleOverrideClear}
 					>
 						<Delete height={12} width={12} color={Color.BG_ROBIN_300} />

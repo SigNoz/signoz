@@ -317,7 +317,10 @@ export default function SavedViews({
 		<Card className="saved-views-list-card home-data-card">
 			{hasSavedViews && (
 				<Card.Header>
-					<div className="saved-views-header home-data-card-header">
+					<div
+						className="saved-views-header home-data-card-header"
+						data-testid="home-section-saved-views"
+					>
 						Saved Views
 						<div className="saved-views-header-actions">
 							<Button.Group className="views-tabs">
