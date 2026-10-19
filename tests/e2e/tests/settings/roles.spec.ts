@@ -11,7 +11,7 @@ test.describe('settings — roles', () => {
 		await settings.roles.row('signoz-viewer').click();
 		await expect(settings.roles.viewPage()).toBeVisible();
 		await expect(settings.roles.deleteButton()).toBeDisabled();
-		await expect(settings.roles.saveButton()).toBeDisabled();
+		await expect(settings.roles.updateButton()).toBeDisabled();
 	});
 
 	test('TC-02 a custom role created in the editor is persisted with its grants', async ({

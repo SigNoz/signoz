@@ -151,12 +151,15 @@ export interface Settings {
 		fillName(name: string): Promise<void>;
 		fillDescription(text: string): Promise<void>;
 		grant(resource: string, verb: string, scope: Scope): Promise<void>;
-		saveButton(): Locator;
+		/** The view page's Update button, disabled for managed roles. */
+		updateButton(): Locator;
 		deleteButton(): Locator;
 		save(): Promise<void>;
 		view(id: string, name: string): Promise<void>;
 		openEdit(): Promise<void>;
 		viewPage(): Locator;
+		/** The create and edit page. */
+		editor(): Locator;
 		grantedCount(kind: string): Locator;
 		delete(): Promise<void>;
 		apiRole(id: string): Promise<AuthtypesRoleDTO>;
@@ -485,7 +488,7 @@ export function settingsDriver(page: Page): Settings {
 				page.getByRole('heading', { name: new RegExp(`^${label}`) }),
 			openCreate: async () => {
 				await page.getByTestId('create-custom-role-btn').click();
-				await expect(page.getByTestId('create-edit-role-page')).toBeVisible();
+				await expect(settings.roles.editor()).toBeVisible();
 			},
 			fillName: async (name) => {
 				await page.getByTestId('role-name-input').fill(name);
@@ -495,7 +498,7 @@ export function settingsDriver(page: Page): Settings {
 			},
 			grant: async (resource, verb, scope) => {
 				// The view page shares the header testid and can still be mounted.
-				const editor = page.getByTestId('create-edit-role-page');
+				const editor = settings.roles.editor();
 				const header = editor.getByTestId(`resource-card-header-${resource}`);
 				if ((await header.getAttribute('aria-expanded')) !== 'true') {
 					await header.click();
@@ -504,21 +507,25 @@ export function settingsDriver(page: Page): Settings {
 					.getByTestId(`action-toggle-scope-${resource}-${verb}-button-${scope}`)
 					.click();
 			},
-			saveButton: () => page.getByTestId('save-button'),
-			deleteButton: () => page.getByTestId('delete-button'),
+			// The view and edit pages share testids, and the route tab that is
+			// leaving stays mounted until its animation ends.
+			updateButton: () => settings.roles.viewPage().getByTestId('save-button'),
+			deleteButton: () => settings.roles.viewPage().getByTestId('delete-button'),
 			save: async () => {
-				await settings.roles.saveButton().click();
+				await settings.roles.editor().getByTestId('save-button').click();
 			},
 			view: async (id, name) => {
 				await page.goto(`/settings/roles/${id}?name=${encodeURIComponent(name)}`);
 				await expect(settings.roles.viewPage()).toBeVisible();
 			},
 			openEdit: async () => {
-				await settings.roles.saveButton().click();
-				await expect(page.getByTestId('create-edit-role-page')).toBeVisible();
+				await settings.roles.updateButton().click();
+				await expect(settings.roles.editor()).toBeVisible();
 			},
 			viewPage: () => page.getByTestId('view-role-page'),
-			grantedCount: (kind) => page.getByTestId(`granted-count-${kind}`),
+			editor: () => page.getByTestId('create-edit-role-page'),
+			grantedCount: (kind) =>
+				settings.roles.viewPage().getByTestId(`granted-count-${kind}`),
 			delete: async () => {
 				await settings.roles.deleteButton().click();
 				await page
