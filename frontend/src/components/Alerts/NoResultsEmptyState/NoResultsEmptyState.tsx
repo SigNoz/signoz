@@ -30,21 +30,23 @@ function NoResultsEmptyState({
 			<div className={styles.actions}>
 				{onClear && (
 					<Button
+						size="md"
 						variant="outlined"
 						color="secondary"
 						onClick={onClear}
-						data-testid="no-results-clear-button"
+						testId="no-results-clear-button"
 					>
 						{clearButtonText}
 					</Button>
 				)}
 				{onRefresh && (
 					<Button
+						size="md"
 						variant="outlined"
 						color="secondary"
 						prefix={<RefreshCw size={14} />}
 						onClick={onRefresh}
-						data-testid="no-results-refresh-button"
+						testId="no-results-refresh-button"
 					>
 						Refresh
 					</Button>

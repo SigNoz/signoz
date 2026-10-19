@@ -2,10 +2,11 @@ import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schem
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 import { toPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 
+import type { NewPanelTarget } from '../patchOps';
 import QueryEditorBody from './QueryEditorBody';
 import StaticEditorBody from './StaticEditorBody';
 import { usePanelEditorDraft } from './hooks/usePanelEditorDraft';
-import { usePanelTypeSwitch } from './hooks/usePanelTypeSwitch';
+import { usePanelKindAndQueryModeSwitch } from './hooks/usePanelKindAndQueryModeSwitch';
 
 export interface PanelEditorContainerProps {
 	dashboardId: string;
@@ -18,8 +19,7 @@ export interface PanelEditorContainerProps {
 	savedPanel?: DashboardtypesPanelDTO;
 	/** Creating a new panel (seeded default) vs editing an existing one. */
 	isNew?: boolean;
-	/** Target section for a new panel; falls back to the last/new section. */
-	layoutIndex?: number;
+	target?: NewPanelTarget;
 	/** Leave the editor (navigate back to the dashboard) without saving. */
 	onClose: () => void;
 	/** Called after a successful save — navigates back to the dashboard. */
@@ -38,12 +38,14 @@ function PanelEditorContainer(props: PanelEditorContainerProps): JSX.Element {
 
 	const panelKind = draftApi.draft.spec.plugin.kind;
 	const panelDefinition = getPanelDefinition(panelKind);
+	const originalPanelKind = (savedPanel ?? panel).spec.plugin.kind;
 
-	const { onChangePanelKind } = usePanelTypeSwitch({
-		spec: draftApi.draft.spec,
-		panelType: toPanelType(panelKind),
-		setSpec: draftApi.setSpec,
-	});
+	const { onChangePanelKind, onChangeQueryMode } =
+		usePanelKindAndQueryModeSwitch({
+			spec: draftApi.draft.spec,
+			panelType: toPanelType(panelKind),
+			setSpec: draftApi.setSpec,
+		});
 
 	if (panelDefinition.mode === 'static') {
 		return (
@@ -52,6 +54,7 @@ function PanelEditorContainer(props: PanelEditorContainerProps): JSX.Element {
 				draftApi={draftApi}
 				panelDefinition={panelDefinition}
 				onChangePanelKind={onChangePanelKind}
+				originalPanelKind={originalPanelKind}
 			/>
 		);
 	}
@@ -62,6 +65,8 @@ function PanelEditorContainer(props: PanelEditorContainerProps): JSX.Element {
 			draftApi={draftApi}
 			panelDefinition={panelDefinition}
 			onChangePanelKind={onChangePanelKind}
+			originalPanelKind={originalPanelKind}
+			onChangeQueryMode={onChangeQueryMode}
 		/>
 	);
 }

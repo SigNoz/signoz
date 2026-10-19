@@ -130,3 +130,17 @@ def test_bulk_sync(
     assert all(r["pricing"]["input"] == 5 for r in stored)
 
     delete_all_llm_pricing_rules(signoz, token)
+
+
+def test_rejects_rule_without_pattern(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    delete_all_llm_pricing_rules(signoz, token)
+
+    rules = zeus_rules(10)
+    rules[1]["modelPattern"] = []
+    assert upsert_llm_pricing_rules(signoz, token, rules).status_code == HTTPStatus.BAD_REQUEST
+    assert list_llm_pricing_rules(signoz, token) == []

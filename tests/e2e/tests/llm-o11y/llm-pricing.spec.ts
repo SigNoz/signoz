@@ -33,6 +33,8 @@ test.describe('LLM Observability — Model Pricing', () => {
 		await expect(page.getByTestId('drawer-model-id-input')).toBeVisible();
 
 		await page.getByTestId('drawer-model-id-input').fill(MODEL_NAME);
+		await page.getByTestId('drawer-pattern-input').fill(MODEL_NAME);
+		await page.getByTestId('drawer-pattern-add-btn').click();
 		await page.getByTestId('drawer-input-cost').fill(INPUT_COST);
 		await page.getByTestId('drawer-output-cost').fill(OUTPUT_COST);
 

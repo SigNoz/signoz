@@ -10,7 +10,6 @@ import { useResetPassword } from 'api/generated/services/users';
 import AuthError from 'components/AuthError/AuthError';
 import AuthPageContainer from 'components/AuthPageContainer';
 import ROUTES from 'constants/routes';
-import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { ArrowRight, CircleAlert, KeyRound } from '@signozhq/icons';
@@ -28,10 +27,7 @@ import './ResetPassword.styles.scss';
 type FormValues = { password: string; confirmPassword: string };
 
 function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
-	const [confirmPasswordError, setConfirmPasswordError] =
-		useState<boolean>(false);
-
-	const [isValidPassword, setIsValidPassword] = useState(false);
+	const [confirmPasswordTouched, setConfirmPasswordTouched] = useState(false);
 	const { t } = useTranslation(['common']);
 	const { search } = useLocation();
 	const params = new URLSearchParams(search);
@@ -42,6 +38,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 		mutate: resetPassword,
 		isLoading,
 		error: mutationError,
+		reset: resetMutation,
 	} = useResetPassword();
 
 	const errorMessage = useMemo(
@@ -52,6 +49,27 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 	const [form] = Form.useForm<FormValues>();
 	const handleFormSubmit = async (): Promise<void> => {
 		const { password } = form.getFieldsValue();
+	const password = Form.useWatch('password', form);
+	const confirmPassword = Form.useWatch('confirmPassword', form);
+
+	const isPasswordMismatch =
+		Boolean(confirmPassword) && password !== confirmPassword;
+	const showPasswordMismatchError = confirmPasswordTouched && isPasswordMismatch;
+	const isValidPassword =
+		Boolean(password?.trim()) &&
+		Boolean(confirmPassword?.trim()) &&
+		password === confirmPassword;
+
+	const handleValuesChange = (): void => {
+		if (mutationError) {
+			resetMutation();
+		}
+	};
+
+	const handleSubmit = (): void => {
+		if (!token) {
+			return;
+		}
 
 		if (!isPasswordComplex(password)) {
 			notifications.error({
@@ -63,6 +81,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 
 		resetPassword(
 			{ data: { password: await hashPassword(password), token: token || '' } },
+			{ data: { password: form.getFieldValue('password'), token } },
 			{
 				onSuccess: (): void => {
 					notifications.success({
@@ -171,6 +190,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 				<FormContainer
 					form={form}
 					onFinish={handleSubmit}
+					onValuesChange={handleValuesChange}
 					className="reset-password-form"
 				>
 					<div className="reset-password-form-container">
@@ -184,8 +204,6 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 								>
 									<AntdInput.Password
 										tabIndex={0}
-										onChange={handleValuesChange}
-										onBlur={handlePasswordBlur}
 										id="password"
 										data-testid="password"
 										placeholder="Enter new password"
@@ -202,8 +220,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 									rules={[{ required: true, message: 'Please enter confirm password!' }]}
 								>
 									<AntdInput.Password
-										onChange={handleValuesChange}
-										onBlur={handleConfirmPasswordBlur}
+										onBlur={(): void => setConfirmPasswordTouched(true)}
 										id="confirmPassword"
 										data-testid="confirmPassword"
 										placeholder="Confirm your new password"
@@ -214,7 +231,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 						</div>
 					</div>
 
-					{confirmPasswordError && (
+					{showPasswordMismatchError && (
 						<Callout
 							type="error"
 							size="small"
@@ -226,18 +243,21 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 						</Callout>
 					)}
 
-					{errorMessage && !confirmPasswordError && (
+					{errorMessage && !showPasswordMismatchError && (
 						<AuthError error={errorMessage} />
 					)}
 
 					<div className="reset-password-form-actions">
 						<Button
+							size="md"
 							variant="solid"
 							color="primary"
 							type="submit"
 							data-attr="reset-password"
-							disabled={!isValidPassword || isLoading}
-							className="reset-password-submit-button"
+							loading={isLoading}
+							disabled={!isValidPassword}
+							disabledTooltip="Enter matching passwords in both fields"
+							width="100%"
 							suffix={<ArrowRight size={16} />}
 						>
 							Reset Password

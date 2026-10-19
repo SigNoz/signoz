@@ -118,7 +118,7 @@ describe('ForgotPassword Component', () => {
 			render(<ForgotPassword {...defaultProps} />);
 
 			const submitButton = screen.getByTestId('forgot-password-submit');
-			expect(submitButton).not.toBeDisabled();
+			expect(submitButton).not.toHaveAttribute('aria-disabled', 'true');
 		});
 	});
 
@@ -139,7 +139,7 @@ describe('ForgotPassword Component', () => {
 			render(<ForgotPassword {...propsWithoutOrgId} />);
 
 			const submitButton = screen.getByTestId('forgot-password-submit');
-			expect(submitButton).toBeDisabled();
+			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('enables submit button after selecting an organization', async () => {
@@ -148,14 +148,14 @@ describe('ForgotPassword Component', () => {
 			render(<ForgotPassword {...multiOrgProps} />);
 
 			const submitButton = screen.getByTestId('forgot-password-submit');
-			expect(submitButton).toBeDisabled();
+			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
 
 			// Click on the dropdown to reveal the options
 			await user.click(screen.getByRole('combobox'));
 			await user.click(screen.getByText('Organization One'));
 
 			await waitFor(() => {
-				expect(submitButton).not.toBeDisabled();
+				expect(submitButton).not.toHaveAttribute('aria-disabled', 'true');
 			});
 		});
 
@@ -169,7 +169,7 @@ describe('ForgotPassword Component', () => {
 			render(<ForgotPassword {...propsWithOrgId} />);
 
 			const submitButton = screen.getByTestId('forgot-password-submit');
-			expect(submitButton).not.toBeDisabled();
+			expect(submitButton).not.toHaveAttribute('aria-disabled', 'true');
 		});
 	});
 
@@ -368,7 +368,7 @@ describe('ForgotPassword Component', () => {
 			await user.click(submitButton);
 
 			await waitFor(() => {
-				expect(submitButton).toBeDisabled();
+				expect(submitButton).toHaveAttribute('aria-disabled', 'true');
 			});
 		});
 	});
@@ -383,7 +383,7 @@ describe('ForgotPassword Component', () => {
 			render(<ForgotPassword {...propsWithEmptyEmail} />);
 
 			const submitButton = screen.getByTestId('forgot-password-submit');
-			expect(submitButton).toBeDisabled();
+			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('handles whitespace-only email', () => {
@@ -395,7 +395,7 @@ describe('ForgotPassword Component', () => {
 			render(<ForgotPassword {...propsWithWhitespaceEmail} />);
 
 			const submitButton = screen.getByTestId('forgot-password-submit');
-			expect(submitButton).toBeDisabled();
+			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('handles empty orgs array by disabling submission', () => {
@@ -410,7 +410,7 @@ describe('ForgotPassword Component', () => {
 			expect(screen.queryByTestId('orgId')).not.toBeInTheDocument();
 			// Submit should be disabled because no orgId can be determined
 			const submitButton = screen.getByTestId('forgot-password-submit');
-			expect(submitButton).toBeDisabled();
+			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
 		});
 	});
 });

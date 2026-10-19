@@ -116,6 +116,10 @@ Storybook fills the seams with:
   because elapsed-time code reads it — `lodash.debounce` compares two readings
   to decide its trailing call is due, and a frozen one leaves every debounced
   input in the app filtering nothing. `?storyClock=live` opts out.
+- A speech recognizer in place of the browser's, also in
+  `.storybook/preview-head.html`, because Storybook has no microphone. It
+  starts listening on `start()` and hears only what a `play` passes to
+  `webkitSpeechRecognition.listening.hear(text)`.
 - Theme from the toolbar (dark/light). `applyThemeBodyClass` puts `<body>` in the
   state the app gets from `index.html` plus `AppLayout`: `data-theme="default"`
   (every `@signozhq/design-tokens` semantic token is scoped to it, and without it
@@ -380,13 +384,12 @@ Hovering cannot do this. Radix dispatches a `tooltip.open` event on `document`
 when a tooltip opens, and every mounted tooltip closes itself on it, so exactly
 one is open at a time no matter how many providers the tree has. A tooltip whose
 `open` is controlled ignores the event, which is what the alias passes:
-`mocks/tooltip.mock.tsx` wraps `TooltipSimple` and `TooltipRoot` and hands them
-`open` while the control is on.
+`mocks/tooltip.mock.tsx` wraps `Tooltip` and hands it `open` while the control is on.
 
-Two cases keep their own state. A tooltip the page already drives, such as
-`SpanHoverCard`, is left alone: only the page knows what its popup is anchored
-to. A tooltip whose title is empty is left alone too, because there is nothing to
-show but the padding of a popup.
+A tooltip the page already drives, such as `SpanHoverCard`, keeps its own state:
+only the page knows what its popup is anchored to. A tooltip whose title is empty
+is held open like any other. It renders no popup unless a nested tooltip, such as
+a `Button`'s `disabledTooltip`, stacks its title into it.
 
 What the control cannot reach is a tooltip that is not mounted: one inside a
 closed drawer or modal, one in a row that renders its actions on hover, and
@@ -524,3 +527,18 @@ without it the story re-renders the tree the previous walk left behind and the
 control looks dead. The endpoint that settles a transition between two steps then
 needs a plain resolver rather than `response.json`, or the Data control on
 `loading` strands the walk halfway.
+
+## Screenshots
+
+To check what a CSS or component change does before Chromatic runs on the PR,
+use [sbshot](https://github.com/SigNoz/sbshot). It shoots the stories, diffs two
+runs the way Chromatic does, and opens a viewer on the changes. From `frontend/`:
+
+```bash
+sbshot capture . --name-run before --title Pages/ --theme dark,light
+# make the change
+sbshot capture . --name-run after --title Pages/ --theme dark,light
+sbshot diff before after --ui
+```
+
+Output goes to `.sbshot/`, which is gitignored.

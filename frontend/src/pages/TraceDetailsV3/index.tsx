@@ -15,6 +15,7 @@ import { useDetailsPanel } from 'components/DetailsPanel';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import useGetTraceV4 from 'hooks/trace/useGetTraceV4';
+import { useTraceDetailsStripInfo } from './useTraceDetailsStripInfo';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { ResizableBox } from 'periscope/components/ResizableBox';
@@ -25,9 +26,11 @@ import { useTraceDetailLogEvent } from './hooks/useTraceDetailLogEvent';
 import NoData from './NoData/NoData';
 import TraceStoreSync from './stores/TraceStoreSync';
 import { useTraceStore } from './stores/traceStore';
-import { SpanDetailVariant } from './SpanDetailsPanel/constants';
+import {
+	SPAN_DETAILS_PANEL_MIN_WIDTH,
+	SpanDetailVariant,
+} from './SpanDetailsPanel/constants';
 import SpanDetailsPanel from './SpanDetailsPanel/SpanDetailsPanel';
-import type { TraceMetadataForHeader } from './TraceDetailsHeader/TraceDetailsHeader';
 import TraceDetailsHeader from './TraceDetailsHeader/TraceDetailsHeader';
 import { FLAMEGRAPH_SPAN_LIMIT } from './TraceFlamegraph/constants';
 import TraceFlamegraph from './TraceFlamegraph/TraceFlamegraph';
@@ -144,6 +147,10 @@ function TraceDetailsV3(): JSX.Element {
 
 	const allSpans = traceData?.payload?.spans || [];
 	const totalSpansCount = traceData?.payload?.totalSpansCount || 0;
+	const totalErrorSpansCount = traceData?.payload?.totalErrorSpansCount || 0;
+
+	useTraceDetailsStripInfo({ totalSpansCount, totalErrorSpansCount });
+
 	const isFullDataLoaded =
 		totalSpansCount > 0 && totalSpansCount <= allSpans.length;
 
@@ -303,7 +310,7 @@ function TraceDetailsV3(): JSX.Element {
 			) as SpanDetailVariant) || SpanDetailVariant.DOCKED_RIGHT,
 	);
 
-	const RIGHT_DOCK_MIN = 480;
+	const RIGHT_DOCK_MIN = SPAN_DETAILS_PANEL_MIN_WIDTH;
 	const RIGHT_DOCK_MAX = 720;
 	const [rightDockWidth, setRightDockWidth] = useState(RIGHT_DOCK_MIN);
 
@@ -317,38 +324,6 @@ function TraceDetailsV3(): JSX.Element {
 		},
 		[],
 	);
-
-	const filterMetadata = useMemo(
-		() => ({
-			startTime: (traceData?.payload?.startTimestampMillis || 0) / 1e3,
-			endTime: (traceData?.payload?.endTimestampMillis || 0) / 1e3,
-			traceId: traceId || '',
-		}),
-		[
-			traceData?.payload?.startTimestampMillis,
-			traceData?.payload?.endTimestampMillis,
-			traceId,
-		],
-	);
-
-	const traceMetadataForHeader = useMemo(():
-		| TraceMetadataForHeader
-		| undefined => {
-		const payload = traceData?.payload;
-		if (!payload) {
-			return undefined;
-		}
-		const rootSpan = payload.spans?.find((s) => s.level === 0);
-		return {
-			startTimestampMillis: payload.startTimestampMillis,
-			endTimestampMillis: payload.endTimestampMillis,
-			rootServiceName: payload.rootServiceName,
-			rootServiceEntryPoint: payload.rootServiceEntryPoint,
-			rootSpanStatusCode: rootSpan?.response_status_code || '',
-			hasMissingSpans: payload.hasMissingSpans || false,
-			totalSpansCount: payload.totalSpansCount || 0,
-		};
-	}, [traceData?.payload]);
 
 	const showNoData =
 		!isFetchingTraceData &&
@@ -388,10 +363,10 @@ function TraceDetailsV3(): JSX.Element {
 		<TraceStoreSync availableColorByFields={availableColorByFields}>
 			<div className={styles.root}>
 				<TraceDetailsHeader
-					filterMetadata={filterMetadata}
 					onFilteredSpansChange={handleFilteredSpansChange}
-					isDataLoaded={!!traceData?.payload?.spans?.length && !showNoData}
-					traceMetadata={traceMetadataForHeader}
+					showTraceDetailsHeaderOptions={
+						!!traceData?.payload?.spans?.length && !showNoData
+					}
 				/>
 
 				{showNoData ? (
@@ -441,7 +416,10 @@ function TraceDetailsV3(): JSX.Element {
 																})}
 															>
 																<TriangleAlert size={13} />
-																Errors: {traceData.payload.totalErrorSpansCount ?? 0}
+																Errors:{' '}
+																{traceData.payload.totalErrorSpansCount ?? (
+																	<span className="translate-safe">{0}</span>
+																)}
 															</span>
 														</span>
 													) : null}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Button, Col, Popover, Row, Select, Space } from 'antd';
-import { DropdownMenuSimple, type MenuProps } from '@signozhq/ui/dropdown-menu';
+import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { Typography } from '@signozhq/ui/typography';
 import axios from 'axios';
 import TextToolTip from 'components/TextToolTip';
@@ -137,16 +137,15 @@ function ExplorerCard({
 		);
 	};
 
-	const moreOptionMenu: MenuProps = {
-		items: [
-			{
-				key: 'delete',
-				label: <Typography.Text strong>Delete</Typography.Text>,
-				onClick: onDeleteHandler,
-				icon: <Trash2 size="md" />,
-			},
-		],
-	};
+	const moreOptionItems: DropdownItemType[] = [
+		{
+			type: 'item',
+			value: 'delete',
+			label: <Typography.Text strong>Delete</Typography.Text>,
+			onClick: onDeleteHandler,
+			prefix: <Trash2 size="md" />,
+		},
+	];
 
 	const saveButtonType = isQueryUpdated ? 'default' : 'primary';
 	const saveButtonIcon = isQueryUpdated ? null : <Save size="md" />;
@@ -230,9 +229,14 @@ function ExplorerCard({
 								</Popover>
 								<Share2 onClick={onCopyUrlHandler} size="md" />
 								{viewKey && (
-									<DropdownMenuSimple menu={moreOptionMenu}>
+									<Dropdown
+										items={moreOptionItems}
+										nativeButton
+										align="end"
+										side="bottom"
+									>
 										<Button type="text" size="small" icon={<Ellipsis size="md" />} />
-									</DropdownMenuSimple>
+									</Dropdown>
 								)}
 							</Space>
 						</OffSetCol>

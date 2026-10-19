@@ -30,16 +30,6 @@ function StatefulSpanGaps({
 	);
 }
 
-// Open the antd Select by clicking its selector, then pick the option by label. The
-// line-style and fill-mode controls are ConfigSegmented (buttons), so this helper is
-// only used for the line-interpolation ConfigSelect.
-async function pickOption(triggerTestId: string, label: string): Promise<void> {
-	const user = userEvent.setup();
-	const trigger = screen.getByTestId(triggerTestId);
-	await user.click(trigger.querySelector('.ant-select-selector') as HTMLElement);
-	await user.click(await screen.findByRole('option', { name: label }));
-}
-
 const ALL_CONTROLS = {
 	lineStyle: true,
 	lineInterpolation: true,
@@ -86,6 +76,36 @@ describe('ChartAppearanceSection', () => {
 		).not.toBeInTheDocument();
 	});
 
+	it('offers the heatmap colour ramp only when the colors flag is set', () => {
+		const { unmount } = render(
+			<ChartAppearanceSection
+				value={undefined}
+				controls={ALL_CONTROLS}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(
+			screen.queryByTestId('panel-editor-v2-heatmap-color-mode'),
+		).not.toBeInTheDocument();
+		unmount();
+
+		render(
+			<ChartAppearanceSection
+				value={undefined}
+				controls={{ colors: true }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(
+			screen.getByTestId('panel-editor-v2-heatmap-color-mode'),
+		).toBeInTheDocument();
+		expect(
+			screen.queryByTestId('panel-editor-v2-line-style'),
+		).not.toBeInTheDocument();
+	});
+
 	it('writes the chosen fill mode through the segmented control', async () => {
 		const user = userEvent.setup();
 		const onChange = jest.fn();
@@ -109,7 +129,7 @@ describe('ChartAppearanceSection', () => {
 		render(
 			<ChartAppearanceSection
 				value={undefined}
-				controls={{ fillOpacity: true }}
+				controls={{ fillMode: true, fillOpacity: true }}
 				onChange={jest.fn()}
 			/>,
 		);
@@ -126,7 +146,7 @@ describe('ChartAppearanceSection', () => {
 		render(
 			<ChartAppearanceSection
 				value={{ fillOpacity: 0.25 }}
-				controls={{ fillOpacity: true }}
+				controls={{ fillMode: true, fillOpacity: true }}
 				onChange={jest.fn()}
 			/>,
 		);
@@ -165,7 +185,7 @@ describe('ChartAppearanceSection', () => {
 		expect(screen.getByText('Gradient')).toBeInTheDocument();
 	});
 
-	it('writes the chosen line interpolation through the dropdown', async () => {
+	it('writes the chosen line interpolation through the tiles', async () => {
 		const onChange = jest.fn();
 		render(
 			<ChartAppearanceSection
@@ -175,7 +195,9 @@ describe('ChartAppearanceSection', () => {
 			/>,
 		);
 
-		await pickOption('panel-editor-v2-line-interpolation', 'Spline');
+		await userEvent
+			.setup()
+			.click(screen.getByTestId('panel-editor-v2-line-interpolation-spline'));
 
 		expect(onChange).toHaveBeenCalledWith({ lineInterpolation: 'spline' });
 	});
@@ -205,7 +227,9 @@ describe('ChartAppearanceSection', () => {
 			/>,
 		);
 
-		expect(screen.getByText('Never')).toBeInTheDocument();
+		expect(
+			screen.getByTestId('panel-editor-v2-span-gaps-never'),
+		).toBeInTheDocument();
 		expect(
 			screen.queryByTestId('panel-editor-v2-span-gaps-value'),
 		).not.toBeInTheDocument();
@@ -222,7 +246,7 @@ describe('ChartAppearanceSection', () => {
 			/>,
 		);
 
-		await user.click(screen.getByText('Threshold'));
+		await user.click(screen.getByTestId('panel-editor-v2-span-gaps-threshold'));
 
 		expect(onChange).toHaveBeenLastCalledWith({
 			spanGaps: { fillOnlyBelow: true, fillLessThan: '1m' },
@@ -284,7 +308,7 @@ describe('ChartAppearanceSection', () => {
 			/>,
 		);
 
-		await user.click(screen.getByText('Never'));
+		await user.click(screen.getByTestId('panel-editor-v2-span-gaps-never'));
 
 		expect(onChange).toHaveBeenLastCalledWith({
 			spanGaps: { fillOnlyBelow: false, fillLessThan: undefined },
@@ -360,7 +384,7 @@ describe('ChartAppearanceSection', () => {
 			/>,
 		);
 
-		await user.click(screen.getByText('Threshold'));
+		await user.click(screen.getByTestId('panel-editor-v2-span-gaps-threshold'));
 
 		expect(onChange).toHaveBeenLastCalledWith({
 			spanGaps: { fillOnlyBelow: true, fillLessThan: '5m' },
@@ -388,7 +412,7 @@ describe('ChartAppearanceSection', () => {
 			/>,
 		);
 
-		await user.click(screen.getByText('Threshold'));
+		await user.click(screen.getByTestId('panel-editor-v2-span-gaps-threshold'));
 
 		// Regression: a value seeded at mount would still be the 1m fallback.
 		expect(onChange).toHaveBeenLastCalledWith({
@@ -442,7 +466,7 @@ describe('ChartAppearanceSection', () => {
 
 		// Focus the input first so clicking Never also fires its blur (the toggle race).
 		await user.click(screen.getByTestId('panel-editor-v2-span-gaps-value'));
-		await user.click(screen.getByText('Never'));
+		await user.click(screen.getByTestId('panel-editor-v2-span-gaps-never'));
 
 		expect(
 			screen.queryByTestId('panel-editor-v2-span-gaps-value'),
@@ -453,8 +477,8 @@ describe('ChartAppearanceSection', () => {
 		const user = userEvent.setup();
 		render(<StatefulSpanGaps initial={{ spanGaps: { fillLessThan: '5m' } }} />);
 
-		await user.click(screen.getByText('Never'));
-		await user.click(screen.getByText('Threshold'));
+		await user.click(screen.getByTestId('panel-editor-v2-span-gaps-never'));
+		await user.click(screen.getByTestId('panel-editor-v2-span-gaps-threshold'));
 
 		expect(screen.getByTestId('panel-editor-v2-span-gaps-value')).toHaveValue(
 			'5m',

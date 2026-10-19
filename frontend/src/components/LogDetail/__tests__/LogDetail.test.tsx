@@ -19,10 +19,6 @@ jest.mock('periscope/components/DataViewer', () => ({
 }));
 
 // Force v2 for these tests regardless of route.
-jest.mock('../useIsLogDetailsV2', () => ({
-	useIsLogDetailsV2: (): boolean => true,
-}));
-
 const mockLog: ILog = {
 	id: 'log-1',
 	timestamp: '2024-01-15T09:45:30Z',
@@ -50,15 +46,13 @@ function renderDrawer(props: Partial<LogDetailProps> = {}): void {
 		<LogDetail
 			log={mockLog}
 			selectedTab={VIEW_TYPES.OVERVIEW}
-			onAddToQuery={jest.fn()}
-			onClickActionItem={jest.fn()}
 			onClose={jest.fn()}
 			{...props}
 		/>,
 	);
 }
 
-describe('LogDetail drawer — header (isLogDetailsV2)', () => {
+describe('LogDetail drawer — header', () => {
 	afterEach(() => {
 		jest.clearAllMocks();
 		localStorage.clear();
@@ -131,6 +125,18 @@ describe('LogDetail drawer — header (isLogDetailsV2)', () => {
 		expect(toast.success).toHaveBeenCalledWith('Copied to clipboard', {
 			position: 'bottom-right',
 		});
+	});
+
+	it('keeps the drawer open when a ⋯ menu item is clicked', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const onClose = jest.fn();
+
+		renderDrawer({ onClose });
+
+		await user.click(screen.getByTestId('log-details-header-menu'));
+		await user.click(await screen.findByText('Copy log'));
+
+		expect(onClose).not.toHaveBeenCalled();
 	});
 
 	it('shows "Open in Explorer" when a handleOpenInExplorer handler is provided', () => {
@@ -221,8 +227,14 @@ describe('LogDetail drawer — header (isLogDetailsV2)', () => {
 		// Active log is the first one.
 		renderDrawer({ log: logs[0], logs, onNavigateLog });
 
-		expect(screen.getByTestId('log-details-header-prev')).toBeDisabled();
-		expect(screen.getByTestId('log-details-header-next')).toBeEnabled();
+		expect(screen.getByTestId('log-details-header-prev')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
+		expect(screen.getByTestId('log-details-header-next')).not.toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 
 		await user.click(screen.getByTestId('log-details-header-next'));
 		expect(onNavigateLog).toHaveBeenLastCalledWith(logs[1]);

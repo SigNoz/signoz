@@ -13,8 +13,6 @@ export interface CopyButtonProps {
 	size?: number;
 	/** Accessible label for the idle (not-yet-copied) state. Default "Copy". */
 	ariaLabel?: string;
-	/** Extra class merged onto the button. */
-	className?: string;
 	testId?: string;
 	/** Called after the copy is triggered (e.g. to show a toast). */
 	onCopy?: () => void;
@@ -29,7 +27,6 @@ function CopyButton({
 	value,
 	size = 14,
 	ariaLabel = 'Copy',
-	className,
 	testId,
 	onCopy,
 }: CopyButtonProps): JSX.Element {
@@ -50,8 +47,8 @@ function CopyButton({
 		<Button
 			variant="ghost"
 			color="secondary"
-			size="icon"
-			className={cx(styles.copyButton, className)}
+			size="sm"
+			icon
 			onClick={handleClick}
 			aria-label={isCopied ? 'Copied' : ariaLabel}
 			testId={testId}
@@ -67,7 +64,6 @@ function CopyButton({
 CopyButton.defaultProps = {
 	size: 14,
 	ariaLabel: 'Copy',
-	className: undefined,
 	testId: undefined,
 	onCopy: undefined,
 };

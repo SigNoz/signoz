@@ -1,5 +1,219 @@
 components:
   schemas:
+    AiobservabilitytypesBlobPart:
+      properties:
+        content:
+          type: string
+        mime_type:
+          nullable: true
+          type: string
+        modality:
+          type: string
+        type:
+          type: string
+      required:
+      - type
+      - modality
+      - content
+      type: object
+    AiobservabilitytypesChatMessage:
+      properties:
+        name:
+          nullable: true
+          type: string
+        parts:
+          $ref: '#/components/schemas/AiobservabilitytypesParts'
+        role:
+          type: string
+      required:
+      - role
+      - parts
+      type: object
+    AiobservabilitytypesCompactionPart:
+      properties:
+        content:
+          nullable: true
+          type: string
+        id:
+          nullable: true
+          type: string
+        type:
+          type: string
+      required:
+      - type
+      type: object
+    AiobservabilitytypesFilePart:
+      properties:
+        file_id:
+          type: string
+        mime_type:
+          nullable: true
+          type: string
+        modality:
+          type: string
+        type:
+          type: string
+      required:
+      - type
+      - modality
+      - file_id
+      type: object
+    AiobservabilitytypesGenericPart:
+      additionalProperties: {}
+      type: object
+    AiobservabilitytypesGenericServerToolCall:
+      additionalProperties: {}
+      type: object
+    AiobservabilitytypesGenericServerToolCallResponse:
+      additionalProperties: {}
+      type: object
+    AiobservabilitytypesInputMessages:
+      items:
+        $ref: '#/components/schemas/AiobservabilitytypesChatMessage'
+      type: array
+    AiobservabilitytypesOutputMessage:
+      properties:
+        finish_reason:
+          nullable: true
+          type: string
+        name:
+          nullable: true
+          type: string
+        parts:
+          $ref: '#/components/schemas/AiobservabilitytypesParts'
+        role:
+          type: string
+      required:
+      - role
+      - parts
+      type: object
+    AiobservabilitytypesOutputMessages:
+      items:
+        $ref: '#/components/schemas/AiobservabilitytypesOutputMessage'
+      type: array
+    AiobservabilitytypesPart:
+      discriminator:
+        mapping:
+          blob: '#/components/schemas/AiobservabilitytypesBlobPart'
+          compaction: '#/components/schemas/AiobservabilitytypesCompactionPart'
+          file: '#/components/schemas/AiobservabilitytypesFilePart'
+          reasoning: '#/components/schemas/AiobservabilitytypesReasoningPart'
+          server_tool_call: '#/components/schemas/AiobservabilitytypesServerToolCallPart'
+          server_tool_call_response: '#/components/schemas/AiobservabilitytypesServerToolCallResponsePart'
+          text: '#/components/schemas/AiobservabilitytypesTextPart'
+          tool_call: '#/components/schemas/AiobservabilitytypesToolCallRequestPart'
+          tool_call_response: '#/components/schemas/AiobservabilitytypesToolCallResponsePart'
+          uri: '#/components/schemas/AiobservabilitytypesUriPart'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/AiobservabilitytypesTextPart'
+      - $ref: '#/components/schemas/AiobservabilitytypesToolCallRequestPart'
+      - $ref: '#/components/schemas/AiobservabilitytypesToolCallResponsePart'
+      - $ref: '#/components/schemas/AiobservabilitytypesServerToolCallPart'
+      - $ref: '#/components/schemas/AiobservabilitytypesServerToolCallResponsePart'
+      - $ref: '#/components/schemas/AiobservabilitytypesBlobPart'
+      - $ref: '#/components/schemas/AiobservabilitytypesFilePart'
+      - $ref: '#/components/schemas/AiobservabilitytypesUriPart'
+      - $ref: '#/components/schemas/AiobservabilitytypesReasoningPart'
+      - $ref: '#/components/schemas/AiobservabilitytypesCompactionPart'
+      - $ref: '#/components/schemas/AiobservabilitytypesGenericPart'
+      type: object
+    AiobservabilitytypesParts:
+      items:
+        $ref: '#/components/schemas/AiobservabilitytypesPart'
+      type: array
+    AiobservabilitytypesReasoningPart:
+      properties:
+        content:
+          type: string
+        type:
+          type: string
+      required:
+      - type
+      - content
+      type: object
+    AiobservabilitytypesServerToolCallPart:
+      properties:
+        id:
+          nullable: true
+          type: string
+        name:
+          type: string
+        server_tool_call:
+          $ref: '#/components/schemas/AiobservabilitytypesGenericServerToolCall'
+        type:
+          type: string
+      required:
+      - type
+      - name
+      - server_tool_call
+      type: object
+    AiobservabilitytypesServerToolCallResponsePart:
+      properties:
+        id:
+          nullable: true
+          type: string
+        server_tool_call_response:
+          $ref: '#/components/schemas/AiobservabilitytypesGenericServerToolCallResponse'
+        type:
+          type: string
+      required:
+      - type
+      - server_tool_call_response
+      type: object
+    AiobservabilitytypesTextPart:
+      properties:
+        content:
+          type: string
+        type:
+          type: string
+      required:
+      - type
+      - content
+      type: object
+    AiobservabilitytypesToolCallRequestPart:
+      properties:
+        arguments: {}
+        id:
+          nullable: true
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+      required:
+      - type
+      - name
+      type: object
+    AiobservabilitytypesToolCallResponsePart:
+      properties:
+        id:
+          nullable: true
+          type: string
+        response:
+          nullable: true
+        type:
+          type: string
+      required:
+      - type
+      - response
+      type: object
+    AiobservabilitytypesUriPart:
+      properties:
+        mime_type:
+          nullable: true
+          type: string
+        modality:
+          type: string
+        type:
+          type: string
+        uri:
+          type: string
+      required:
+      - type
+      - modality
+      - uri
+      type: object
     AlertmanagertypesChannel:
       properties:
         createdAt:
@@ -184,6 +398,7 @@ components:
         headers:
           additionalProperties:
             type: string
+          nullable: true
           type: object
         html:
           type: string
@@ -217,6 +432,7 @@ components:
         metadata:
           additionalProperties:
             type: string
+          nullable: true
           type: object
         sendResolved:
           nullable: true
@@ -258,6 +474,7 @@ components:
           type: string
         customFields:
           additionalProperties: {}
+          nullable: true
           type: object
         description:
           type: string
@@ -268,6 +485,7 @@ components:
         labels:
           items:
             type: string
+          nullable: true
           type: array
         priority:
           type: string
@@ -346,6 +564,7 @@ components:
         details:
           additionalProperties:
             type: string
+          nullable: true
           type: object
         message:
           type: string
@@ -374,6 +593,7 @@ components:
         details:
           additionalProperties:
             type: string
+          nullable: true
           type: object
         group:
           type: string
@@ -451,6 +671,7 @@ components:
         actions:
           items:
             $ref: '#/components/schemas/AlertmanagertypesChannelSlackAction'
+          nullable: true
           type: array
         apiUrl:
           format: password
@@ -464,6 +685,7 @@ components:
         fields:
           items:
             $ref: '#/components/schemas/AlertmanagertypesChannelSlackField'
+          nullable: true
           type: array
         footer:
           type: string
@@ -1763,12 +1985,15 @@ components:
           additionalProperties: {}
           nullable: true
           type: object
+        syncState:
+          $ref: '#/components/schemas/CloudintegrationtypesSyncState'
         timestampMillis:
           format: int64
           type: integer
       required:
       - timestampMillis
       - data
+      - syncState
       type: object
     CloudintegrationtypesAzureAccountConfig:
       properties:
@@ -2013,6 +2238,8 @@ components:
           format: date-time
           nullable: true
           type: string
+        syncState:
+          $ref: '#/components/schemas/CloudintegrationtypesSyncState'
       required:
       - account_id
       - cloud_account_id
@@ -2022,6 +2249,7 @@ components:
       - providerAccountId
       - integrationConfig
       - removedAt
+      - syncState
       type: object
     CloudintegrationtypesGettableServicesMetadata:
       properties:
@@ -2121,6 +2349,9 @@ components:
           type: object
         providerAccountId:
           type: string
+        syncedVersion:
+          nullable: true
+          type: integer
       required:
       - data
       type: object
@@ -2132,6 +2363,18 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAzureIntegrationConfig'
         gcp:
           $ref: '#/components/schemas/CloudintegrationtypesGCPIntegrationConfig'
+      type: object
+    CloudintegrationtypesRegionState:
+      enum:
+      - enabled
+      - disabled
+      type: string
+    CloudintegrationtypesRegionSyncState:
+      properties:
+        state:
+          $ref: '#/components/schemas/CloudintegrationtypesRegionState'
+      required:
+      - state
       type: object
     CloudintegrationtypesService:
       properties:
@@ -2273,6 +2516,23 @@ components:
           type: boolean
         metrics:
           type: boolean
+      type: object
+    CloudintegrationtypesSyncState:
+      nullable: true
+      properties:
+        inSync:
+          type: boolean
+        regions:
+          additionalProperties:
+            $ref: '#/components/schemas/CloudintegrationtypesRegionSyncState'
+          type: object
+        version:
+          format: int64
+          type: integer
+      required:
+      - version
+      - inSync
+      - regions
       type: object
     CloudintegrationtypesUpdatableAccount:
       properties:
@@ -3321,6 +3581,69 @@ components:
         repeatVariable:
           type: string
       type: object
+    DashboardtypesAIBuilderQuerySpec:
+      properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5TraceAggregation'
+          nullable: true
+          type: array
+        bucketOptions:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketOptions'
+        cursor:
+          type: string
+        disabled:
+          type: boolean
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        functions:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5Function'
+          nullable: true
+          type: array
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
+          type: array
+        having:
+          $ref: '#/components/schemas/Querybuildertypesv5Having'
+        legend:
+          type: string
+        limit:
+          type: integer
+        limitBy:
+          $ref: '#/components/schemas/Querybuildertypesv5LimitBy'
+        name:
+          type: string
+        offset:
+          type: integer
+        order:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          nullable: true
+          type: array
+        secondaryAggregations:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
+          nullable: true
+          type: array
+        selectFields:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          nullable: true
+          type: array
+        signal:
+          enum:
+          - traces
+          type: string
+        source:
+          $ref: '#/components/schemas/TelemetrytypesSource'
+        stepInterval:
+          $ref: '#/components/schemas/Querybuildertypesv5Step'
+      required:
+      - signal
+      type: object
     DashboardtypesAreaChartAppearance:
       properties:
         fillMode:
@@ -3685,6 +4008,84 @@ components:
         hide:
           type: boolean
       type: object
+    DashboardtypesHeatmapAxes:
+      properties:
+        "y":
+          $ref: '#/components/schemas/DashboardtypesHeatmapAxis'
+      type: object
+    DashboardtypesHeatmapAxis:
+      properties:
+        scale:
+          $ref: '#/components/schemas/DashboardtypesHeatmapYScale'
+      type: object
+    DashboardtypesHeatmapChartAppearance:
+      properties:
+        colors:
+          $ref: '#/components/schemas/DashboardtypesHeatmapColors'
+      type: object
+    DashboardtypesHeatmapColorMode:
+      enum:
+      - palette
+      - opacity
+      type: string
+    DashboardtypesHeatmapColorScale:
+      enum:
+      - log
+      - sqrt
+      - linear
+      type: string
+    DashboardtypesHeatmapColors:
+      properties:
+        fill:
+          type: string
+        maxCount:
+          nullable: true
+          type: number
+        minCount:
+          nullable: true
+          type: number
+        mode:
+          $ref: '#/components/schemas/DashboardtypesHeatmapColorMode'
+        palette:
+          $ref: '#/components/schemas/DashboardtypesHeatmapPalette'
+        scale:
+          $ref: '#/components/schemas/DashboardtypesHeatmapColorScale'
+        steps:
+          type: integer
+      type: object
+    DashboardtypesHeatmapPalette:
+      enum:
+      - ice
+      - moss
+      - rust
+      - graphite
+      - ember
+      - lagoon
+      - orchid
+      - verdant
+      - lava
+      - beacon
+      type: string
+    DashboardtypesHeatmapPanelSpec:
+      properties:
+        axes:
+          $ref: '#/components/schemas/DashboardtypesHeatmapAxes'
+        chartAppearance:
+          $ref: '#/components/schemas/DashboardtypesHeatmapChartAppearance'
+        formatting:
+          $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+        legend:
+          $ref: '#/components/schemas/DashboardtypesLegend'
+        visualization:
+          $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+      type: object
+    DashboardtypesHeatmapYScale:
+      enum:
+      - auto
+      - linear
+      - log
+      - symlog
+      type: string
     DashboardtypesHistogramBuckets:
       properties:
         bucketCount:
@@ -4038,6 +4439,7 @@ components:
         mapping:
           signoz/AreaChartPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec'
           signoz/BarChartPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec'
+          signoz/HeatmapPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec'
           signoz/HistogramPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec'
           signoz/ListPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec'
           signoz/NumberPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec'
@@ -4056,6 +4458,7 @@ components:
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec'
       type: object
     DashboardtypesPanelPluginKind:
       enum:
@@ -4068,6 +4471,7 @@ components:
       - signoz/HistogramPanel
       - signoz/ListPanel
       - signoz/TextPanel
+      - signoz/HeatmapPanel
       type: string
     DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec:
       properties:
@@ -4089,6 +4493,18 @@ components:
           type: string
         spec:
           $ref: '#/components/schemas/DashboardtypesBarChartPanelSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/HeatmapPanel
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesHeatmapPanelSpec'
       required:
       - kind
       - spec
@@ -4281,6 +4697,7 @@ components:
     DashboardtypesQueryPlugin:
       discriminator:
         mapping:
+          signoz/AIBuilderQuery: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpec'
           signoz/BuilderQuery: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpec'
           signoz/ClickHouseSQL: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQuery'
           signoz/CompositeQuery: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQuery'
@@ -4290,6 +4707,7 @@ components:
         propertyName: kind
       oneOf:
       - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpec'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpec'
       - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQuery'
       - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormula'
       - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQuery'
@@ -4299,12 +4717,25 @@ components:
     DashboardtypesQueryPluginKind:
       enum:
       - signoz/BuilderQuery
+      - signoz/AIBuilderQuery
       - signoz/CompositeQuery
       - signoz/Formula
       - signoz/PromQLQuery
       - signoz/ClickHouseSQL
       - signoz/TraceOperator
       type: string
+    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpec:
+      properties:
+        kind:
+          enum:
+          - signoz/AIBuilderQuery
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesAIBuilderQuerySpec'
+      required:
+      - kind
+      - spec
+      type: object
     DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpec:
       properties:
         kind:
@@ -7615,8 +8046,35 @@ components:
       - metric
       - value
       type: object
+    PromotetypesIndexMaterializedPathsResult:
+      properties:
+        indexed:
+          items:
+            $ref: '#/components/schemas/PromotetypesPromotePath'
+          nullable: true
+          type: array
+        skipped:
+          items:
+            $ref: '#/components/schemas/PromotetypesPromotePath'
+          nullable: true
+          type: array
+      required:
+      - indexed
+      - skipped
+      type: object
+    PromotetypesPostableIndexMaterializedPaths:
+      properties:
+        dryRun:
+          type: boolean
+        signal:
+          type: string
+      required:
+      - signal
+      type: object
     PromotetypesPromotePath:
       properties:
+        context:
+          type: string
         indexes:
           items:
             $ref: '#/components/schemas/PromotetypesWrappedIndex'
@@ -7625,6 +8083,12 @@ components:
           type: string
         promote:
           type: boolean
+        signal:
+          type: string
+      required:
+      - signal
+      - context
+      - path
       type: object
     PromotetypesWrappedIndex:
       properties:
@@ -8995,6 +9459,15 @@ components:
       - alertType
       - ruleType
       type: object
+    RuletypesListableRuleViews:
+      properties:
+        views:
+          items:
+            $ref: '#/components/schemas/RuletypesRuleView'
+          type: array
+      required:
+      - views
+      type: object
     RuletypesListableRules:
       properties:
         labels:
@@ -9091,6 +9564,16 @@ components:
       - alertType
       - ruleType
       - condition
+      type: object
+    RuletypesPostableRuleView:
+      properties:
+        data:
+          $ref: '#/components/schemas/RuletypesRuleViewData'
+        name:
+          type: string
+      required:
+      - name
+      - data
       type: object
     RuletypesQueryType:
       enum:
@@ -9230,6 +9713,45 @@ components:
       - promql_rule
       - anomaly_rule
       type: string
+    RuletypesRuleView:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        data:
+          $ref: '#/components/schemas/RuletypesRuleViewData'
+        id:
+          type: string
+        name:
+          type: string
+        orgId:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - name
+      - data
+      - orgId
+      type: object
+    RuletypesRuleViewData:
+      properties:
+        order:
+          $ref: '#/components/schemas/RuletypesListOrder'
+        query:
+          type: string
+        sort:
+          $ref: '#/components/schemas/RuletypesListSort'
+        states:
+          items:
+            type: string
+          type: array
+        version:
+          type: string
+      required:
+      - version
+      type: object
     RuletypesScheduleType:
       enum:
       - hourly
@@ -9647,6 +10169,53 @@ components:
       required:
       - aggregations
       type: object
+    SpantypesGettableTraceSummary:
+      properties:
+        ai:
+          $ref: '#/components/schemas/SpantypesTraceAISummary'
+        endTimestampMillis:
+          minimum: 0
+          type: integer
+        hasMissingSpans:
+          type: boolean
+        rootServiceEntryPoint:
+          type: string
+        rootServiceName:
+          type: string
+        rootSpanStatusCode:
+          type: string
+        startTimestampMillis:
+          minimum: 0
+          type: integer
+        totalErrorSpansCount:
+          minimum: 0
+          type: integer
+        totalSpansCount:
+          minimum: 0
+          type: integer
+      required:
+      - startTimestampMillis
+      - endTimestampMillis
+      - rootServiceName
+      - rootServiceEntryPoint
+      - rootSpanStatusCode
+      - totalSpansCount
+      - totalErrorSpansCount
+      - hasMissingSpans
+      type: object
+    SpantypesGettableTraceThread:
+      properties:
+        nextCursor:
+          type: string
+        prevCursor:
+          type: string
+        spans:
+          items:
+            $ref: '#/components/schemas/SpantypesThreadSpan'
+          type: array
+      required:
+      - spans
+      type: object
     SpantypesGettableWaterfallTrace:
       properties:
         endTimestampMillis:
@@ -9961,6 +10530,105 @@ components:
           nullable: true
           type: object
       type: object
+    SpantypesThreadSpan:
+      properties:
+        attributes:
+          additionalProperties: {}
+          type: object
+        duration_nano:
+          minimum: 0
+          type: integer
+        events:
+          items:
+            $ref: '#/components/schemas/SpantypesEvent'
+          type: array
+        formattedInput:
+          $ref: '#/components/schemas/AiobservabilitytypesInputMessages'
+        formattedOutput:
+          $ref: '#/components/schemas/AiobservabilitytypesOutputMessages'
+        formatterWarnings:
+          items:
+            type: string
+          type: array
+        has_error:
+          type: boolean
+        kind_string:
+          type: string
+        name:
+          type: string
+        parent_span_id:
+          type: string
+        references:
+          items:
+            $ref: '#/components/schemas/SpantypesOtelSpanRef'
+          type: array
+        resource:
+          additionalProperties:
+            type: string
+          type: object
+        span_id:
+          type: string
+        status_code_string:
+          type: string
+        status_message:
+          type: string
+        time_unix:
+          minimum: 0
+          type: integer
+        trace_id:
+          type: string
+      required:
+      - span_id
+      - trace_id
+      - parent_span_id
+      - name
+      - kind_string
+      - time_unix
+      - duration_nano
+      - has_error
+      - status_code_string
+      - status_message
+      - resource
+      - attributes
+      - events
+      - references
+      - formattedInput
+      - formattedOutput
+      - formatterWarnings
+      type: object
+    SpantypesTraceAISummary:
+      properties:
+        tokens:
+          $ref: '#/components/schemas/SpantypesTraceAITokens'
+        totalCost:
+          type: number
+      required:
+      - tokens
+      type: object
+    SpantypesTraceAITokens:
+      properties:
+        cacheRead:
+          minimum: 0
+          type: integer
+        cacheWrite:
+          minimum: 0
+          type: integer
+        input:
+          minimum: 0
+          type: integer
+        output:
+          minimum: 0
+          type: integer
+        reasoning:
+          minimum: 0
+          type: integer
+      required:
+      - input
+      - output
+      - cacheRead
+      - cacheWrite
+      - reasoning
+      type: object
     SpantypesUpdatableSpanMapper:
       properties:
         config:
@@ -10007,6 +10675,14 @@ components:
         flags:
           minimum: 0
           type: integer
+        formattedInput:
+          $ref: '#/components/schemas/AiobservabilitytypesInputMessages'
+        formattedOutput:
+          $ref: '#/components/schemas/AiobservabilitytypesOutputMessages'
+        formatterWarnings:
+          items:
+            type: string
+          type: array
         has_children:
           type: boolean
         has_error:
@@ -13100,110 +13776,6 @@ paths:
       tags:
       - llmpricingrules
       x-signoz-stability: alpha
-  /api/v1/logs/promote_paths:
-    get:
-      deprecated: false
-      description: This endpoints promotes and indexes paths
-      operationId: ListPromotedAndIndexedPaths
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    items:
-                      $ref: '#/components/schemas/PromotetypesPromotePath'
-                    nullable: true
-                    type: array
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
-      summary: Promote and index paths
-      tags:
-      - logs
-      x-signoz-stability: alpha
-    post:
-      deprecated: false
-      description: This endpoints promotes and indexes paths
-      operationId: HandlePromoteAndIndexPaths
-      requestBody:
-        content:
-          application/json:
-            schema:
-              items:
-                $ref: '#/components/schemas/PromotetypesPromotePath'
-              nullable: true
-              type: array
-      responses:
-        "201":
-          description: Created
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - EDITOR
-      - tokenizer:
-        - EDITOR
-      summary: Promote and index paths
-      tags:
-      - logs
-      x-signoz-stability: alpha
   /api/v1/org/preferences:
     get:
       deprecated: false
@@ -13374,6 +13946,217 @@ paths:
       summary: Update org preference
       tags:
       - preferences
+      x-signoz-stability: alpha
+  /api/v1/promoted_paths:
+    get:
+      deprecated: false
+      description: This endpoint lists the promoted paths of every JSON column, each
+        annotated with its signal and context. The signal, context, promoted and indexes
+        query parameters filter the listing.
+      operationId: ListPromotedPaths
+      parameters:
+      - in: query
+        name: signal
+        schema:
+          type: string
+      - in: query
+        name: context
+        schema:
+          type: string
+      - in: query
+        name: promoted
+        schema:
+          nullable: true
+          type: boolean
+      - in: query
+        name: indexes
+        schema:
+          nullable: true
+          type: boolean
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/PromotetypesPromotePath'
+                    nullable: true
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - logs-field:list
+        - traces-field:list
+      - tokenizer:
+        - logs-field:list
+        - traces-field:list
+      summary: List promoted paths
+      tags:
+      - promote
+      x-signoz-stability: alpha
+    post:
+      deprecated: false
+      description: This endpoint promotes paths of JSON columns to their promoted
+        columns. Each path names its promotion target with its signal and context,
+        e.g. traces/attribute.
+      operationId: PromotePaths
+      requestBody:
+        content:
+          application/json:
+            examples:
+              logs_body:
+                summary: 'Logs body: promote a path and index it'
+                value:
+                - context: body
+                  indexes:
+                  - fieldDataType: string
+                    granularity: 1
+                    type: ngrambf_v1(4, 1024, 2, 0)
+                  path: user.name
+                  promote: true
+                  signal: logs
+              traces_attribute:
+                summary: 'Traces attribute: promote a path'
+                value:
+                - context: attribute
+                  path: http.method
+                  promote: true
+                  signal: traces
+            schema:
+              items:
+                $ref: '#/components/schemas/PromotetypesPromotePath'
+              nullable: true
+              type: array
+      responses:
+        "201":
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - logs-field:update
+        - traces-field:update
+      - tokenizer:
+        - logs-field:update
+        - traces-field:update
+      summary: Promote paths
+      tags:
+      - promote
+      x-signoz-stability: alpha
+  /api/v1/promoted_paths/materialized:
+    post:
+      deprecated: false
+      description: This endpoint indexes the JSON sub-columns of materialized paths
+        whose columns are indexed and returns the indexed and skipped paths.
+      operationId: IndexMaterializedPaths
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromotetypesPostableIndexMaterializedPaths'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PromotetypesIndexMaterializedPathsResult'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - logs-field:update
+        - traces-field:update
+      - tokenizer:
+        - logs-field:update
+        - traces-field:update
+      summary: Index materialized paths
+      tags:
+      - promote
       x-signoz-stability: alpha
   /api/v1/roles:
     get:
@@ -15367,10 +16150,8 @@ paths:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
       security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
+      - api_key: []
+      - tokenizer: []
       summary: Get stats
       tags:
       - stats
@@ -15682,6 +16463,166 @@ paths:
       - tokenizer:
         - VIEWER
       summary: Get aggregations for a trace
+      tags:
+      - tracedetail
+      x-signoz-stability: alpha
+  /api/v1/traces/{traceID}/summary:
+    get:
+      deprecated: false
+      description: Returns the trace's time range, root span, span and error counts,
+        and whether any spans are missing. AI traces also include token and cost totals.
+      operationId: GetTraceSummary
+      parameters:
+      - in: path
+        name: traceID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesGettableTraceSummary'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get summary for a trace
+      tags:
+      - tracedetail
+      x-signoz-stability: alpha
+  /api/v1/traces/{traceID}/thread:
+    get:
+      deprecated: false
+      description: Returns the gen_ai spans of a trace, model calls, tool calls and
+        agent spans, in timestamp order. The messages a span carries are decoded into
+        formattedInput and formattedOutput, with formatterWarnings holding what the
+        converter could not resolve; a span without messages has both empty. Pass
+        nextCursor as after or prevCursor as before to page, or spanId to open the
+        page around a span.
+      operationId: GetTraceThread
+      parameters:
+      - description: Page size, at most 100. 0 means 20.
+        in: query
+        name: limit
+        schema:
+          description: Page size, at most 100. 0 means 20.
+          type: integer
+      - description: The nextCursor of a page; returns the spans after it. Set only
+          one of after, before and spanId.
+        in: query
+        name: after
+        schema:
+          description: The nextCursor of a page; returns the spans after it. Set only
+            one of after, before and spanId.
+          type: string
+      - description: The prevCursor of a page; returns the spans before it. Set only
+          one of after, before and spanId.
+        in: query
+        name: before
+        schema:
+          description: The prevCursor of a page; returns the spans before it. Set
+            only one of after, before and spanId.
+          type: string
+      - description: Returns the page around this span. Set only one of after, before
+          and spanId.
+        in: query
+        name: spanId
+        schema:
+          description: Returns the page around this span. Set only one of after, before
+            and spanId.
+          type: string
+      - in: path
+        name: traceID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesGettableTraceThread'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get thread view for a trace
       tags:
       - tracedetail
       x-signoz-stability: alpha
@@ -18059,9 +19000,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: Run Infra Monitoring Setup Checks
       tags:
       - inframonitoring
@@ -18133,9 +19074,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Clusters for Infra Monitoring
       tags:
       - inframonitoring
@@ -18217,9 +19158,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List DaemonSets for Infra Monitoring
       tags:
       - inframonitoring
@@ -18295,9 +19236,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Deployments for Infra Monitoring
       tags:
       - inframonitoring
@@ -18363,9 +19304,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Hosts for Infra Monitoring
       tags:
       - inframonitoring
@@ -18445,9 +19386,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Jobs for Infra Monitoring
       tags:
       - inframonitoring
@@ -18526,9 +19467,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Kubernetes Containers for Infra Monitoring
       tags:
       - inframonitoring
@@ -18597,9 +19538,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Namespaces for Infra Monitoring
       tags:
       - inframonitoring
@@ -18672,9 +19613,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Nodes for Infra Monitoring
       tags:
       - inframonitoring
@@ -18748,9 +19689,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Pods for Infra Monitoring
       tags:
       - inframonitoring
@@ -18819,9 +19760,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List Volumes for Infra Monitoring
       tags:
       - inframonitoring
@@ -18897,9 +19838,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: List StatefulSets for Infra Monitoring
       tags:
       - inframonitoring
@@ -21140,12 +22081,241 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - role:read
       - tokenizer:
-        - ADMIN
+        - role:read
       summary: Get users by role id
       tags:
       - users
+      x-signoz-stability: alpha
+  /api/v2/rule_views:
+    get:
+      deprecated: false
+      description: Returns every saved view in the calling user's org. Saved views
+        are shared org-wide.
+      operationId: ListRuleViews
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RuletypesListableRuleViews'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List rule saved views
+      tags:
+      - rules
+      x-signoz-stability: alpha
+    post:
+      deprecated: false
+      description: Persists the calling user's rule listing state (query, states,
+        sort, order) as a named, reusable view shared across the org.
+      operationId: CreateRuleView
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuletypesPostableRuleView'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RuletypesRuleView'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Create rule saved view
+      tags:
+      - rules
+      x-signoz-stability: alpha
+  /api/v2/rule_views/{id}:
+    delete:
+      deprecated: false
+      description: Removes a saved view. Saved views are shared org-wide. Deleting
+        a non-existent view returns 404.
+      operationId: DeleteRuleView
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Delete rule saved view
+      tags:
+      - rules
+      x-signoz-stability: alpha
+    put:
+      deprecated: false
+      description: Replaces a saved view's name and data. Saved views are shared org-wide.
+      operationId: UpdateRuleView
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuletypesPostableRuleView'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RuletypesRuleView'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Update rule saved view
+      tags:
+      - rules
       x-signoz-stability: alpha
   /api/v2/rules:
     get:
@@ -23838,6 +25008,75 @@ paths:
       tags:
       - rules
       x-signoz-stability: alpha
+  /api/v2/rules/{id}/clone:
+    post:
+      deprecated: false
+      description: This endpoint creates a new alert rule from the stored definition
+        of an existing one. The clone keeps every modeled field of the source, including
+        its enabled/disabled state, and gets the source's name suffixed with " - Copy"
+        (or a bumped " - Copy (n)" counter when the source is itself a copy). The
+        clone is owned by the caller.
+      operationId: CloneRuleByID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RuletypesRule'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Clone alert rule
+      tags:
+      - rules
+      x-signoz-stability: alpha
   /api/v2/rules/{id}/history/filter_keys:
     get:
       deprecated: false
@@ -25728,9 +26967,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:attach
+        - role:attach
       - tokenizer:
-        - ADMIN
+        - user:attach
+        - role:attach
       summary: Create user role
       tags:
       - users
@@ -25781,9 +27022,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:detach
+        - role:detach
       - tokenizer:
-        - ADMIN
+        - user:detach
+        - role:detach
       summary: Delete user role
       tags:
       - users
@@ -25845,9 +27088,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:read
       - tokenizer:
-        - ADMIN
+        - user:read
       summary: Get user role
       tags:
       - users
@@ -25894,9 +27137,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:list
       - tokenizer:
-        - ADMIN
+        - user:list
       summary: List users v2
       tags:
       - users
@@ -25957,9 +27200,13 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:create
+        - user:attach
+        - role:attach
       - tokenizer:
-        - ADMIN
+        - user:create
+        - user:attach
+        - role:attach
       summary: Create user
       tags:
       - users
@@ -26004,9 +27251,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:delete
       - tokenizer:
-        - ADMIN
+        - user:delete
       summary: Delete user
       tags:
       - users
@@ -26062,9 +27309,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:read
       - tokenizer:
-        - ADMIN
+        - user:read
       summary: Get user by user id
       tags:
       - users
@@ -26119,9 +27366,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:update
       - tokenizer:
-        - ADMIN
+        - user:update
       summary: Update user v2
       tags:
       - users
@@ -26178,9 +27425,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - factor-password:list
       - tokenizer:
-        - ADMIN
+        - factor-password:list
       summary: Get reset password token for a user
       tags:
       - users
@@ -26244,9 +27491,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - factor-password:create
+        - user:attach
       - tokenizer:
-        - ADMIN
+        - factor-password:create
+        - user:attach
       summary: Create or regenerate reset password token for a user
       tags:
       - users
@@ -26305,9 +27554,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:read
       - tokenizer:
-        - ADMIN
+        - user:read
       summary: Get user roles
       tags:
       - users
@@ -26621,10 +27870,7 @@ paths:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
       security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
+      - tokenizer: []
       summary: Updates my password
       tags:
       - users
@@ -27501,7 +28747,9 @@ paths:
       deprecated: false
       description: Returns the waterfall view of spans including all spans if total
         spans are under a limit, a max count otherwise. Aggregations are dropped compared
-        to v3
+        to v3. A span carrying gen_ai input or output messages also has them decoded
+        into formattedInput and formattedOutput, with formatterWarnings holding what
+        the converter could not resolve.
       operationId: GetWaterfallV4
       parameters:
       - in: path

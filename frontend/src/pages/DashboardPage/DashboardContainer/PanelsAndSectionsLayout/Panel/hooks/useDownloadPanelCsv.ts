@@ -8,6 +8,8 @@ import type { PanelOfKind } from 'pages/DashboardPage/DashboardContainer/Panels/
 import { downloadCsv } from 'pages/DashboardPage/DashboardContainer/Panels/utils/downloadCsv';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
+import { usePanelTitle } from './usePanelTitle';
+
 interface UseDownloadPanelCsvArgs {
 	panel: DashboardtypesPanelDTO;
 	data: PanelQueryData;
@@ -29,7 +31,7 @@ export function useDownloadPanelCsv({
 	data,
 	canDownloadCsv,
 }: UseDownloadPanelCsvArgs): () => void {
-	const fileName = panel.spec.display.name;
+	const fileName = usePanelTitle(panel);
 
 	return useCallback((): void => {
 		if (!canDownloadCsv) {

@@ -1,3 +1,4 @@
+import { Button as SignozButton } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Button } from 'antd';
 import { Check, TableColumnsSplit, X } from '@signozhq/icons';
@@ -43,15 +44,20 @@ function QuickFiltersSettings({
 		<>
 			<div className="qf-header">
 				<div className="qf-title">
-					<TableColumnsSplit width={16} height={16} />
+					<TableColumnsSplit size={16} />
 					Edit quick filters
 				</div>
-				<X
-					className="qf-header-icon"
-					width={16}
-					height={16}
+				<SignozButton
+					variant="ghost"
+					color="secondary"
+					size="sm"
+					icon
+					aria-label="Close"
 					onClick={handleSettingsClose}
-				/>
+					testId="quick-filters-settings-close"
+				>
+					<X size={14} />
+				</SignozButton>
 			</div>
 			<section className="search">
 				<Input

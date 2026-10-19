@@ -1,4 +1,8 @@
-import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	Querybuildertypesv5RequestTypeDTO,
+	type TelemetrytypesSignalDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import type { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
 
 export type { QueryBuilderFieldsConfig } from 'components/QueryBuilderV2/queryBuilderFields.types';
 
@@ -13,8 +17,9 @@ export interface PanelQueryCapabilities {
 	/** Server transposes the scalar result into UI table rows (`formatOptions.formatTableResultForUI`). */
 	formatTableResultForUI: boolean;
 	/**
-	 * Widen the step interval to cap how many buckets come back — kinds that bin
-	 * client-side from a raw time series rather than plotting every point.
+	 * Widen the step interval to cap how many points a range comes back as — kinds that
+	 * draw one mark per point (a bar, a column of cells) rather than a line through it,
+	 * where a raw-resolution series is both unreadable and more than the canvas can carry.
 	 */
 	bucketedStepInterval: boolean;
 	/**
@@ -27,9 +32,36 @@ export interface PanelQueryCapabilities {
 	 * carries no explicit limit" — an explicit limit means the user asked for a fixed set.
 	 */
 	serverPaginated: boolean;
+	/**
+	 * `limit` for a lone builder query that sets none. Skipped with several queries,
+	 * where per-query limits can keep different groups and break the join.
+	 */
+	defaultRowLimit?: number;
 }
 
 /** Raw rows rather than an aggregated result — the single source for "is this raw?". */
 export function isRawRequest(capabilities: PanelQueryCapabilities): boolean {
 	return capabilities.requestType === Querybuildertypesv5RequestTypeDTO.raw;
+}
+
+export enum QueryModeKind {
+	SIGNAL = 'signal',
+	SIGNAL_LESS = 'signal-less',
+}
+
+export type QueryModeCapability =
+	| { kind: QueryModeKind.SIGNAL; signals: TelemetrytypesSignalDTO[] }
+	| { kind: QueryModeKind.SIGNAL_LESS };
+
+export type SupportedQueryModesKindMap = Partial<
+	Record<QueryMode, QueryModeCapability>
+>;
+
+/** Signals `mode` accepts; empty for a signal-less or undeclared mode. */
+export function getQueryModeSignals(
+	modes: SupportedQueryModesKindMap | undefined,
+	mode: QueryMode,
+): TelemetrytypesSignalDTO[] {
+	const capability = modes?.[mode];
+	return capability?.kind === QueryModeKind.SIGNAL ? capability.signals : [];
 }

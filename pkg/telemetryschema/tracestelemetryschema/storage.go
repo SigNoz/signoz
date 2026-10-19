@@ -172,7 +172,7 @@ func NewStorage() qbtypes.Storage {
 
 func (m *storage) getColumn(
 	_ context.Context,
-	_, _ uint64,
+	q qbtypes.QueryInfo,
 	key *telemetrytypes.TelemetryFieldKey,
 ) ([]*schema.Column, error) {
 	switch key.FieldContext {
@@ -194,8 +194,8 @@ func (m *storage) getColumn(
 		default:
 			return nil, qbtypes.ErrColumnNotFound
 		}
-		// The `attributes` evolution entry is the rollout control.
-		if attributeColumnEvolutionRegistered(key, SpanAttributesColumn) {
+		// The use_trace_attributes_json flag and the `attributes` evolution entry are the rollout control.
+		if q.TraceAttrsJSONOn && attributeColumnEvolutionRegistered(key, SpanAttributesColumn) {
 			cols := make([]*schema.Column, 0, 3)
 			if attributeColumnEvolutionRegistered(key, SpanAttributesPromotedColumn) {
 				cols = append(cols, indexV3Columns["attributes_promoted"])
@@ -233,15 +233,15 @@ func (m *storage) getColumn(
 // (after evolution selection); existExprs only carries guards for guardable column types.
 func (m *storage) resolveColumnExprs(
 	ctx context.Context,
-	startNs, endNs uint64,
+	q qbtypes.QueryInfo,
 	key *telemetrytypes.TelemetryFieldKey,
 ) (exprs []string, existExprs []string, columns []*schema.Column, err error) {
-	columns, err = m.getColumn(ctx, startNs, endNs, key)
+	columns, err = m.getColumn(ctx, q, key)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	newColumns, evolutionsEntries, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs)
+	newColumns, evolutionsEntries, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, q.StartNs, q.EndNs)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -273,7 +273,7 @@ func (m *storage) resolveColumnExprs(
 				}
 			case telemetrytypes.FieldContextAttribute:
 				path := fmt.Sprintf("%s.%s", columnName, clickhousesql.Identifier(key.Name))
-				expr, existExpr := attributeJSONValueExpr(path, key.FieldDataType)
+				expr, existExpr := AttributeJSONValueExpr(path, key.FieldDataType)
 				exprs = append(exprs, expr)
 				existExprs = append(existExprs, existExpr)
 			default:
@@ -330,20 +330,22 @@ func attributeColumnEvolutionRegistered(key *telemetrytypes.TelemetryFieldKey, c
 	return false
 }
 
-// attributeJSONValueExpr renders the value expression for a span attribute read from the JSON
+// AttributeJSONValueExpr renders the value expression for a span attribute read from the JSON
 // column along with its per-type existence guard.
-// Numeric and bool gate a crash-safe accurateCastOrNull by dynamicType: the cast alone coerces
-// across domains (bool true reads 1, '200' reads 200, 200.5 reads true), so the read is
-// restricted to values stored as that type — the per-type separation the typed maps gave
-// structurally. Being NULL-capable, the gated read itself is the existence guard (present AS
-// THIS TYPE). Other reads are total (::String folds absent to ” on the raw path), so the
-// guard is presence on the raw path.
-func attributeJSONValueExpr(path string, dataType telemetrytypes.FieldDataType) (string, string) {
+// Numeric reads through the string form so that a value stored as a number or as a numeric
+// string reads alike, like the attributes_number map did. Bool gates a crash-safe
+// accurateCastOrNull by dynamicType: the cast alone coerces across domains (200.5 reads
+// true), so the read is restricted to values stored as that type — the per-type separation the
+// typed maps gave structurally. Being NULL-capable, the numeric and bool reads are their own
+// existence guard (present AS THIS TYPE). Other reads are total (::String folds absent to ” on
+// the raw path), so the guard is presence on the raw path. Skip indexes are built over the value
+// expression.
+func AttributeJSONValueExpr(path string, dataType telemetrytypes.FieldDataType) (string, string) {
 	switch dataType {
 	case telemetrytypes.FieldDataTypeInt64,
 		telemetrytypes.FieldDataTypeFloat64,
 		telemetrytypes.FieldDataTypeNumber:
-		expr := fmt.Sprintf("if(dynamicType(%s) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(%s, 'Float64'), NULL)", path, path) // all numeric types to float64 like attributes_number map.
+		expr := fmt.Sprintf("toFloat64OrNull(%s::String)", path)
 		return expr, expr + " IS NOT NULL"
 	case telemetrytypes.FieldDataTypeBool:
 		expr := fmt.Sprintf("if(dynamicType(%s) = 'Bool', accurateCastOrNull(%s, 'Bool'), NULL)", path, path)
@@ -355,12 +357,12 @@ func attributeJSONValueExpr(path string, dataType telemetrytypes.FieldDataType) 
 
 // columnIsTemporal reports whether key resolves to a single time column, after evolution
 // selection. Multiple columns mean an attribute-map union, which is never temporal.
-func (m *storage) columnIsTemporal(ctx context.Context, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) (bool, error) {
-	columns, err := m.getColumn(ctx, startNs, endNs, key)
+func (m *storage) columnIsTemporal(ctx context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey) (bool, error) {
+	columns, err := m.getColumn(ctx, q, key)
 	if err != nil {
 		return false, err
 	}
-	newColumns, _, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs)
+	newColumns, _, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, q.StartNs, q.EndNs)
 	if err != nil {
 		return false, err
 	}
@@ -394,7 +396,7 @@ func (m *storage) read(ctx context.Context, q qbtypes.QueryInfo, key *telemetryt
 		return key.Name, nil
 	}
 
-	exprs, existExpr, columns, err := m.resolveColumnExprs(ctx, q.StartNs, q.EndNs, key)
+	exprs, existExpr, columns, err := m.resolveColumnExprs(ctx, q, key)
 	if err != nil {
 		return "", err
 	}
@@ -457,7 +459,7 @@ func (m *storage) Read(ctx context.Context, q qbtypes.QueryInfo, key *telemetryt
 	if isSpanSearchScopeField(key.Name) {
 		return qbtypes.Read{SQL: key.Name, Presence: "true", Absence: "false", WhenAbsent: qbtypes.AlwaysPresent}, nil
 	}
-	exprs, existExprs, columns, err := m.resolveColumnExprs(ctx, q.StartNs, q.EndNs, key)
+	exprs, existExprs, columns, err := m.resolveColumnExprs(ctx, q, key)
 	if err != nil {
 		return qbtypes.Read{}, err
 	}
@@ -469,7 +471,7 @@ func (m *storage) Read(ctx context.Context, q qbtypes.QueryInfo, key *telemetryt
 	if err != nil {
 		return qbtypes.Read{}, err
 	}
-	temporal, err := m.columnIsTemporal(ctx, q.StartNs, q.EndNs, key)
+	temporal, err := m.columnIsTemporal(ctx, q, key)
 	if err != nil {
 		return qbtypes.Read{}, err
 	}
@@ -532,18 +534,18 @@ func foldAbsentJSONReadToTypeDefault(key *telemetrytypes.TelemetryFieldKey, oper
 // and corrects to the attribute maps when it names no column. A strict
 // context synthesizes its type variants under the stripped and the literal
 // spelling.
-func (m *storage) Fallback(ctx context.Context, _ qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, value any) ([]*telemetrytypes.LogicalField, error) {
+func (m *storage) Fallback(ctx context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, value any) ([]*telemetrytypes.LogicalField, error) {
 	var keys []*telemetrytypes.TelemetryFieldKey
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextUnspecified:
 		probe := telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextSpan, key.FieldDataType)
-		if columns, err := m.getColumn(ctx, 0, 0, probe); err == nil {
+		if columns, err := m.getColumn(ctx, q, probe); err == nil {
 			keys = []*telemetrytypes.TelemetryFieldKey{stampColumnType(probe, columns)}
 		} else {
 			keys = querybuilder.SynthesizeKeys(key, value)
 		}
 	case telemetrytypes.FieldContextSpan, telemetrytypes.FieldContextTrace:
-		if columns, err := m.getColumn(ctx, 0, 0, key); err == nil {
+		if columns, err := m.getColumn(ctx, q, key); err == nil {
 			column := telemetrytypes.NewTelemetryFieldKey(key.Name, key.FieldContext, key.FieldDataType)
 			keys = []*telemetrytypes.TelemetryFieldKey{stampColumnType(column, columns)}
 		} else {

@@ -15,6 +15,7 @@ export type PartialPanelTypes = {
 	[PANEL_TYPES.VALUE]: 'value';
 	[PANEL_TYPES.PIE]: 'pie';
 	[PANEL_TYPES.HISTOGRAM]: 'histogram';
+	[PANEL_TYPES.HEATMAP]: 'heatmap';
 };
 
 export type BuilderField = keyof IBuilderQuery;
@@ -43,15 +44,18 @@ const IS_CARRIED = {
 	orderBy: true,
 	reduceTo: true,
 	legend: true,
+	// Identifies an AI query, so the panel keeps authoring in AI mode after the switch.
+	builderQueryType: true,
 	// `dataSource` is appended by the provider; the rest drive surfaces this switch
 	// does not reach.
+	// Heatmap only; listed for it below.
+	bucketOptions: false,
 	dataSource: false,
 	temporality: false,
 	pageSize: false,
 	offset: false,
 	selectColumns: false,
 	source: false,
-	builderQueryType: false,
 } satisfies Record<BuilderField, boolean>;
 
 function omit(
@@ -112,6 +116,16 @@ const RAW_ROWS_METRICS: readonly BuilderField[] = omit(
 	'functions',
 );
 
+// `functions` and `having` are dropped rather than carried: the heatmap request
+// rejects both. Logs and traces keep the metrics aggregations too, because the map is
+// keyed by the query's own signal, which a switch can still be holding.
+const HEATMAP: readonly BuilderField[] = omit(
+	SERIES_METRICS,
+	'functions',
+	'having',
+);
+const HEATMAP_METRICS: readonly BuilderField[] = [...HEATMAP, 'bucketOptions'];
+
 /** Each cell gets its own copy; a shared instance would let cells contaminate
  * each other. */
 function bySource(
@@ -133,6 +147,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 	[PANEL_TYPES.AREA]: bySource(SERIES, SERIES_METRICS),
 	[PANEL_TYPES.BAR]: bySource(SERIES, SERIES_METRICS),
 	[PANEL_TYPES.HISTOGRAM]: bySource(SERIES, SERIES_METRICS),
+	[PANEL_TYPES.HEATMAP]: bySource(HEATMAP, HEATMAP_METRICS),
 	[PANEL_TYPES.TABLE]: bySource(SERIES, SCALAR_METRICS),
 	[PANEL_TYPES.PIE]: bySource(SERIES, SCALAR_METRICS),
 	[PANEL_TYPES.VALUE]: bySource(SINGLE_VALUE, SINGLE_VALUE_METRICS),

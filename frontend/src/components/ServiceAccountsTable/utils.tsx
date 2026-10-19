@@ -28,21 +28,21 @@ export function NameEmailCell({
 export function StatusBadge({ status }: { status: string }): JSX.Element {
 	if (status?.toUpperCase() === 'ACTIVE') {
 		return (
-			<Badge color="forest" variant="outline">
+			<Badge color="success" variant="outlined">
 				ACTIVE
 			</Badge>
 		);
 	}
 	if (status?.toUpperCase() === 'DELETED') {
 		return (
-			<Badge color="cherry" variant="outline">
+			<Badge color="danger" variant="outlined">
 				DELETED
 			</Badge>
 		);
 	}
 	return (
-		<Badge color="vanilla" variant="outline" className="sa-status-badge">
-			{status ? status.toUpperCase() : 'UNKNOWN'}
+		<Badge color="secondary" variant="outlined">
+			{status || 'UNKNOWN'}
 		</Badge>
 	);
 }

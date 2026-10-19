@@ -1,6 +1,8 @@
 import { composeStoryMocks } from '../controls/composeStoryMocks';
 import { appShellMocks } from './appShellMocks';
 import { authzMocks } from './authzMocks';
+import { nozMocks } from './nozMocks';
+import { toastMocks } from './toastMocks';
 import { tooltipMocks } from './tooltipMocks';
 
 /**
@@ -11,7 +13,9 @@ import { tooltipMocks } from './tooltipMocks';
 export const globalMocks = composeStoryMocks(
 	authzMocks,
 	appShellMocks,
+	nozMocks,
 	tooltipMocks,
+	toastMocks,
 );
 
 export type GlobalMockArgs = typeof globalMocks.args;

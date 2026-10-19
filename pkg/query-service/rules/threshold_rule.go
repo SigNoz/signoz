@@ -468,7 +468,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 
 func (r *ThresholdRule) String() string {
 	ar := ruletypes.PostableRule{
-		AlertName:         r.name,
+		AlertName:         valuer.NewDisplayName(r.name),
 		RuleCondition:     r.ruleCondition,
 		EvalWindow:        r.evalWindow,
 		Labels:            r.labels.Map(),

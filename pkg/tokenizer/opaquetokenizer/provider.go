@@ -364,12 +364,26 @@ func (provider *provider) gc(ctx context.Context, org *types.Organization) error
 }
 
 func (provider *provider) flushLastObservedAt(ctx context.Context, org *types.Organization) error {
-	accessTokenToLastObservedAt, err := provider.listLastObservedAtDesc(ctx, org.ID)
+	tokens, err := provider.tokenStore.ListByOrgID(ctx, org.ID)
 	if err != nil {
 		return err
 	}
 
-	if err := provider.tokenStore.UpdateLastObservedAtByAccessToken(ctx, accessTokenToLastObservedAt); err != nil {
+	observedTokens := make([]*authtypes.StorableToken, 0, len(tokens))
+	for _, token := range tokens {
+		cachedLastObservedAt, ok := provider.lastObservedAtCache.Get(lastObservedAtCacheKey(token.AccessToken, token.UserID))
+		if !ok {
+			continue
+		}
+
+		if err := token.UpdateLastObservedAt(cachedLastObservedAt); err != nil {
+			continue
+		}
+
+		observedTokens = append(observedTokens, token)
+	}
+
+	if err := provider.tokenStore.UpdateLastObservedAt(ctx, observedTokens); err != nil {
 		return err
 	}
 

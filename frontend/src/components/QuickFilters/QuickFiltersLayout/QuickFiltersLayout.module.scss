@@ -8,9 +8,7 @@
 	overflow: hidden;
 }
 
-// Positioned so overlays (settings drawer) paint above the content pane
-// without changing this pane's layout width.
-.filters {
+.sidebar {
 	width: 280px;
 	flex-shrink: 0;
 	display: flex;
@@ -19,6 +17,44 @@
 	position: relative;
 	overflow: visible;
 	z-index: 2;
+}
+
+.savedViews {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	background: var(--l1-background);
+	border-right: 1px solid var(--l1-border);
+}
+
+.quickFilters {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	background: var(--l1-background);
+	transition: transform 0.2s ease-in-out;
+	z-index: 1;
+
+	&.isOpen {
+		transform: translateX(100%);
+	}
+}
+
+// No quick filters: the header sits in flow and the list stays under it
+.isStatic {
+	border-right: 1px solid var(--l1-border);
+
+	.quickFilters {
+		position: static;
+		flex-shrink: 0;
+	}
+
+	.savedViews {
+		border-right: 0;
+	}
 }
 
 // Bounded box for the OverlayScrollbar inside it (`.overlay-scrollbar` is
@@ -30,4 +66,8 @@
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
+}
+
+.contentInner {
+	height: 100%;
 }

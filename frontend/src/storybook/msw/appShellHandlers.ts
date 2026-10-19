@@ -71,10 +71,9 @@ export const appShellHandlers = [
 ];
 
 /**
- * A story's own `parameters.msw.handlers` are resolved ahead of
- * `appShellHandlers`, so the `Foundations/Tooltips` Noz story wires this in to
- * override the global config's `ai_assistant_url` without the default set
- * doing so for every other story.
+ * Control-driven handlers are resolved ahead of `appShellHandlers`, so the Noz
+ * control wires this in to override the global config's `ai_assistant_url`
+ * without the default set doing so for every other story.
  */
 export const nozGlobalConfigHandler = rest.get(
 	'http://localhost/api/v1/global/config',

@@ -208,6 +208,35 @@ func NewGettableUnmappedModels(items []*UnmappedModel) *GettableUnmappedModels {
 	}
 }
 
+func (u *UpdatableLLMPricingRule) UnmarshalJSON(data []byte) error {
+	type Alias UpdatableLLMPricingRule
+
+	var temp Alias
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	*u = UpdatableLLMPricingRule(temp)
+	return u.Validate()
+}
+
+// Validate mirrors the collector's pattern check: at least one pattern, none
+// empty, all valid path.Match globs.
+func (u *UpdatableLLMPricingRule) Validate() error {
+	if len(u.ModelPattern) == 0 {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodePricingRuleInvalidInput, "model %q: modelPattern must contain at least one pattern", u.Model)
+	}
+	for _, p := range u.ModelPattern {
+		if p == "" {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodePricingRuleInvalidInput, "model %q: modelPattern must not contain an empty pattern", u.Model)
+		}
+		if _, err := path.Match(p, ""); err != nil {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodePricingRuleInvalidInput, "model %q: modelPattern %q is not a valid glob", u.Model, p)
+		}
+	}
+	return nil
+}
+
 func NewLLMPricingRuleFromUpdatable(u *UpdatableLLMPricingRule, orgID valuer.UUID, userEmail string, now time.Time) *LLMPricingRule {
 	id := valuer.GenerateUUID()
 	if u.ID != nil {

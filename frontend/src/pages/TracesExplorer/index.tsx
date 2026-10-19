@@ -5,6 +5,7 @@ import * as Sentry from '@sentry/react';
 import logEvent from 'api/common/logEvent';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
@@ -13,6 +14,8 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
+import ExplorerActions from 'container/ExplorerActions/ExplorerActions';
+import { getExportPanelType } from 'container/ExplorerActions/utils';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
@@ -38,6 +41,7 @@ import {
 } from 'hooks/useHandleExplorerTabChange';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import { isEmpty } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
@@ -109,8 +113,9 @@ function TracesExplorer(): JSX.Element {
 		setIsLoadingQueries(false);
 	}, [queryClient]);
 
-	const [selectedView, setSelectedView] = useState<ExplorerViews>(() =>
-		getExplorerViewFromUrl(searchParams, panelTypesFromUrl),
+	const selectedView = useMemo(
+		() => getExplorerViewFromUrl(searchParams, panelTypesFromUrl),
+		[searchParams, panelTypesFromUrl],
 	);
 
 	const [warning, setWarning] = useState<Warning | undefined>();
@@ -130,13 +135,12 @@ function TracesExplorer(): JSX.Element {
 
 	const quickFilterFieldApis = useSignalFieldApis();
 	const { safeNavigate } = useSafeNavigate();
+	const isSavedViewEnabled = useSavedViewEnabled();
 	const getExportToDashboardLink = useGetExportToDashboardLink();
 
 	const handleChangeSelectedView = useCallback(
 		(view: ExplorerViews, querySearchParameters?: ICurrentQueryData): void => {
 			handleSetConfig(explorerViewToPanelType[view], DataSource.TRACES);
-
-			setSelectedView(view);
 
 			handleExplorerTabChange(
 				explorerViewToPanelType[view],
@@ -192,6 +196,27 @@ function TracesExplorer(): JSX.Element {
 				panelType || PANEL_TYPES.LIST,
 			),
 		[stagedQuery, panelType],
+	);
+
+	const exportDashboardQuery = useMemo(
+		() =>
+			getExportQueryData(
+				exportDefaultQuery,
+				getExportPanelType(panelType),
+				options,
+			),
+		[exportDefaultQuery, panelType, options],
+	);
+
+	const explorerActions = useMemo(
+		() => (
+			<ExplorerActions
+				query={stagedQuery ? exportDefaultQuery : null}
+				dashboardQuery={stagedQuery ? exportDashboardQuery : null}
+				sourcepage={DataSource.TRACES}
+			/>
+		),
+		[stagedQuery, exportDefaultQuery, exportDashboardQuery],
 	);
 
 	const handleExport = useCallback(
@@ -262,13 +287,12 @@ function TracesExplorer(): JSX.Element {
 			<QuickFiltersLayout
 				className="trace-explorer-page"
 				showFilters={isOpen}
+				onToggleFilters={(): void => setOpen(!isOpen)}
+				savedViewProps={{ source: SavedviewtypesSourceDTO.traces }}
 				quickFilterProps={{
 					className: 'qf-traces-explorer',
 					source: QuickFiltersSource.TRACES_EXPLORER,
 					signal: SignalType.TRACES,
-					handleFilterVisibilityChange: (): void => {
-						setOpen(!isOpen);
-					},
 					useFieldApis: quickFilterFieldApis,
 				}}
 			>
@@ -318,6 +342,7 @@ function TracesExplorer(): JSX.Element {
 									setWarning={setWarning}
 									setIsLoadingQueries={setIsLoadingQueries}
 									queryKeyRef={listQueryKeyRef}
+									headerActions={explorerActions}
 								/>
 							</div>
 						)}
@@ -329,6 +354,7 @@ function TracesExplorer(): JSX.Element {
 									setWarning={setWarning}
 									setIsLoadingQueries={setIsLoadingQueries}
 									queryKeyRef={listQueryKeyRef}
+									headerActions={explorerActions}
 								/>
 							</div>
 						)}
@@ -341,6 +367,7 @@ function TracesExplorer(): JSX.Element {
 									setWarning={setWarning}
 									setIsLoadingQueries={setIsLoadingQueries}
 									queryKeyRef={listQueryKeyRef}
+									headerActions={explorerActions}
 								/>
 							</div>
 						)}
@@ -351,18 +378,21 @@ function TracesExplorer(): JSX.Element {
 									setWarning={setWarning}
 									setIsLoadingQueries={setIsLoadingQueries}
 									queryKeyRef={listQueryKeyRef}
+									headerActions={explorerActions}
 								/>
 							</div>
 						)}
 					</div>
 
-					<ExplorerOptionWrapper
-						disabled={!stagedQuery}
-						query={exportDefaultQuery}
-						sourcepage={DataSource.TRACES}
-						onExport={handleExport}
-						handleChangeSelectedView={handleChangeSelectedView}
-					/>
+					{!isSavedViewEnabled && (
+						<ExplorerOptionWrapper
+							disabled={!stagedQuery}
+							query={exportDefaultQuery}
+							sourcepage={DataSource.TRACES}
+							onExport={handleExport}
+							handleChangeSelectedView={handleChangeSelectedView}
+						/>
+					)}
 				</div>
 			</QuickFiltersLayout>
 		</Sentry.ErrorBoundary>

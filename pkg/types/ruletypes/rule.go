@@ -48,6 +48,15 @@ func NewStatsFromRules(rules []*StorableRule) map[string]any {
 	return stats
 }
 
+func (rule *StorableRule) ToPostableRuleForCloning() (*PostableRule, error) {
+	postable := &PostableRule{}
+	if err := json.Unmarshal([]byte(rule.Data), postable); err != nil {
+		return nil, err
+	}
+	postable.AlertName = postable.AlertName.GenerateCloneName()
+	return postable, nil
+}
+
 // RuleAlert represents an alert associated with a rule, used when filtering by metric name.
 type RuleAlert struct {
 	AlertName string
@@ -65,4 +74,10 @@ type RuleStore interface {
 	GetStoredRuleLabels(context.Context, string) ([]string, error)
 	GetStoredRule(context.Context, valuer.UUID, valuer.UUID) (*StorableRule, error)
 	GetStoredRulesByMetricName(context.Context, string, string) ([]RuleAlert, error)
+
+	CreateRuleView(context.Context, *RuleView) error
+	GetRuleView(context.Context, valuer.UUID, valuer.UUID) (*RuleView, error)
+	ListRuleViews(context.Context, valuer.UUID) ([]*RuleView, error)
+	UpdateRuleView(context.Context, *RuleView) error
+	DeleteRuleView(context.Context, valuer.UUID, valuer.UUID) error
 }
