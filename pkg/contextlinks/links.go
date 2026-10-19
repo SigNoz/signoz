@@ -55,10 +55,13 @@ func prepareExplorerParams(dataSource string, queryType qbtypes.QueryType, start
 	return params
 }
 
-func PrepareRuleFilterExpression(condition *ruletypes.RuleCondition, signal telemetrytypes.Signal, labels map[string]string) (string, bool) {
+func PrepareRuleFilterExpression(condition *ruletypes.RuleCondition, signal telemetrytypes.Signal, labels map[string]string) (string, bool, error) {
 	var expressions []string
 	if condition != nil && condition.CompositeQuery != nil {
-		names := resolveSelectedQueryNames(condition)
+		names, err := resolveSelectedQueryNames(condition)
+		if err != nil {
+			return "", false, err
+		}
 		switch signal {
 		case telemetrytypes.SignalLogs:
 			expressions = prepareFilterExpressions[qbtypes.LogAggregation](condition.CompositeQuery.Queries, names, signal, labels)
@@ -70,18 +73,18 @@ func PrepareRuleFilterExpression(condition *ruletypes.RuleCondition, signal tele
 	switch {
 	case len(expressions) == 0:
 		// a ClickHouse SQL alert has no builder query; its link filters on the labels alone
-		return PrepareFilterExpression(labels, "", nil), false
+		return PrepareFilterExpression(labels, "", nil), false, nil
 	case len(expressions) == 1:
-		return expressions[0], true
+		return expressions[0], true, nil
 	case slices.Contains(expressions, ""):
 		// an unfiltered formula input matches everything, so the merged filter does too
-		return "", true
+		return "", true, nil
 	}
 	// the explorer list views render one query only, so a formula's inputs merge into one filter
-	return "(" + strings.Join(expressions, ") OR (") + ")", true
+	return "(" + strings.Join(expressions, ") OR (") + ")", true, nil
 }
 
-func resolveSelectedQueryNames(condition *ruletypes.RuleCondition) []string {
+func resolveSelectedQueryNames(condition *ruletypes.RuleCondition) ([]string, error) {
 	selected := condition.SelectedQueryName()
 	for _, query := range condition.CompositeQuery.Queries {
 		if query.GetQueryName() != selected {
@@ -90,9 +93,9 @@ func resolveSelectedQueryNames(condition *ruletypes.RuleCondition) []string {
 		if formula, ok := query.Spec.(qbtypes.QueryBuilderFormula); ok {
 			return formula.ExtractReferencedQueryNames()
 		}
-		return []string{selected}
+		return []string{selected}, nil
 	}
-	return nil
+	return nil, nil
 }
 
 func prepareFilterExpressions[T any](queries []qbtypes.QueryEnvelope, names []string, signal telemetrytypes.Signal, labels map[string]string) []string {

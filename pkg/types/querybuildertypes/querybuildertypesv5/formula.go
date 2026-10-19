@@ -131,11 +131,11 @@ func (f QueryBuilderFormula) Validate() error {
 	return nil
 }
 
-func (f QueryBuilderFormula) ExtractReferencedQueryNames() []string {
+func (f QueryBuilderFormula) ExtractReferencedQueryNames() ([]string, error) {
 	// parsed the way the evaluator parses it, so the names match what it resolves
 	expression, err := govaluate.NewEvaluableExpressionWithFunctions(f.Expression, EvalFuncs())
 	if err != nil {
-		return nil
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to parse expression for formula query %q", f.Name)
 	}
 
 	var names []string
@@ -144,7 +144,7 @@ func (f QueryBuilderFormula) ExtractReferencedQueryNames() []string {
 			names = append(names, variable)
 		}
 	}
-	return names
+	return names, nil
 }
 
 // small container to store the query name and index or alias reference

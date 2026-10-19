@@ -93,7 +93,11 @@ func (r *ThresholdRule) prepareParamsForLogs(ctx context.Context, ts time.Time, 
 	start := time.UnixMilli(int64(qr.Start))
 	end := time.UnixMilli(int64(qr.End))
 
-	whereClause, found := contextlinks.PrepareRuleFilterExpression(r.ruleCondition, telemetrytypes.SignalLogs, lbls.Map())
+	whereClause, found, err := contextlinks.PrepareRuleFilterExpression(r.ruleCondition, telemetrytypes.SignalLogs, lbls.Map())
+	if err != nil {
+		r.logger.ErrorContext(ctx, "failed to prepare the filter for the logs link", errors.Attr(err))
+		return nil
+	}
 	if !found {
 		return nil
 	}
@@ -109,7 +113,11 @@ func (r *ThresholdRule) prepareParamsForTraces(ctx context.Context, ts time.Time
 	start := time.UnixMilli(int64(qr.Start))
 	end := time.UnixMilli(int64(qr.End))
 
-	whereClause, found := contextlinks.PrepareRuleFilterExpression(r.ruleCondition, telemetrytypes.SignalTraces, lbls.Map())
+	whereClause, found, err := contextlinks.PrepareRuleFilterExpression(r.ruleCondition, telemetrytypes.SignalTraces, lbls.Map())
+	if err != nil {
+		r.logger.ErrorContext(ctx, "failed to prepare the filter for the traces link", errors.Attr(err))
+		return nil
+	}
 	if !found {
 		return nil
 	}

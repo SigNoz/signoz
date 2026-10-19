@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPrepareRuleFilterExpression(t *testing.T) {
@@ -63,12 +64,17 @@ func TestPrepareRuleFilterExpression(t *testing.T) {
 		Type: qbtypes.QueryTypeFormula,
 		Spec: qbtypes.QueryBuilderFormula{Name: "F2", Expression: "A / C"},
 	}
+	brokenFormula := qbtypes.QueryEnvelope{
+		Type: qbtypes.QueryTypeFormula,
+		Spec: qbtypes.QueryBuilderFormula{Name: "F3", Expression: "A +"},
+	}
 
 	testCases := []struct {
 		name               string
 		condition          *ruletypes.RuleCondition
 		signal             telemetrytypes.Signal
 		labels             map[string]string
+		expectedError      bool
 		expectedExpression string
 		expectedFound      bool
 	}{
@@ -115,6 +121,16 @@ func TestPrepareRuleFilterExpression(t *testing.T) {
 			labels:             map[string]string{},
 			expectedExpression: "",
 			expectedFound:      true,
+		},
+		{
+			name: "SelectedFormula_InvalidExpression",
+			condition: &ruletypes.RuleCondition{
+				SelectedQuery:  "F3",
+				CompositeQuery: &ruletypes.AlertCompositeQuery{Queries: []qbtypes.QueryEnvelope{logQuery, brokenFormula}},
+			},
+			signal:        telemetrytypes.SignalLogs,
+			labels:        map[string]string{},
+			expectedError: true,
 		},
 		{
 			name: "NoSelectedQuery_FallsBackToFormula",
@@ -191,19 +207,16 @@ func TestPrepareRuleFilterExpression(t *testing.T) {
 			expectedExpression: "service.name='checkout'",
 			expectedFound:      false,
 		},
-		{
-			name:               "NoCompositeQuery",
-			condition:          &ruletypes.RuleCondition{SelectedQuery: "A"},
-			signal:             telemetrytypes.SignalLogs,
-			labels:             map[string]string{},
-			expectedExpression: "",
-			expectedFound:      false,
-		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			expression, found := PrepareRuleFilterExpression(testCase.condition, testCase.signal, testCase.labels)
+			expression, found, err := PrepareRuleFilterExpression(testCase.condition, testCase.signal, testCase.labels)
+			if testCase.expectedError {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
 			assert.Equal(t, testCase.expectedExpression, expression)
 			assert.Equal(t, testCase.expectedFound, found)
 		})
