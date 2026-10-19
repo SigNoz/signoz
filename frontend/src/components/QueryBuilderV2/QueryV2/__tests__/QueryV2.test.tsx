@@ -1,9 +1,12 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { jest } from '@jest/globals';
 import { fireEvent, waitFor } from '@testing-library/react';
+import { ENVIRONMENT } from 'constants/env';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
 import { render, screen, userEvent } from 'tests/test-utils';
 import {
 	Having,
@@ -53,6 +56,15 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 	let baseQBContext: QueryBuilderContextType;
 
 	beforeEach(() => {
+		server.use(
+			rest.get(`${ENVIRONMENT.baseURL}/api/v1/fields/keys`, (_req, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({ status: 'success', data: { complete: true, keys: {} } }),
+				),
+			),
+		);
+
 		const mockCloneQuery = jest.fn() as jest.MockedFunction<
 			(type: string, q: IBuilderQuery) => void
 		>;
@@ -234,6 +246,71 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 		expect(
 			document.querySelector('.qb-formulas-container'),
 		).not.toBeInTheDocument();
+	});
+
+	describe('query actions menu', () => {
+		const openQueryActions = async (): Promise<void> => {
+			const trigger = document.querySelector(
+				'.query-actions-container [aria-haspopup="menu"]',
+			) as HTMLElement;
+			expect(trigger).toBeInTheDocument();
+			await userEvent.click(trigger);
+		};
+
+		it('Clone calls cloneQuery with the query', async () => {
+			render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} version="v4" />);
+
+			await openQueryActions();
+			await userEvent.click(
+				await screen.findByRole('menuitem', { name: 'Clone' }),
+			);
+
+			expect(baseQBContext.cloneQuery).toHaveBeenCalledTimes(1);
+			expect(baseQBContext.cloneQuery).toHaveBeenCalledWith(
+				'query',
+				expect.objectContaining({ queryName: 'A' }),
+			);
+		});
+
+		it('hides Delete when there is a single query', async () => {
+			render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} version="v4" />);
+
+			await openQueryActions();
+			await screen.findByRole('menuitem', { name: 'Clone' });
+
+			expect(
+				screen.queryByRole('menuitem', { name: 'Delete' }),
+			).not.toBeInTheDocument();
+		});
+
+		it('shows Delete with more than one query and deletes on click', async () => {
+			const currentQueryBase = baseQBContext.currentQuery as Query;
+			const [queryA] = currentQueryBase.builder.queryData;
+			mockedUseQueryBuilder.mockReturnValue({
+				...baseQBContext,
+				currentQuery: {
+					...currentQueryBase,
+					builder: {
+						...currentQueryBase.builder,
+						queryData: [queryA, { ...queryA, queryName: 'B', legend: 'B' }],
+					},
+				},
+			});
+			const handleDeleteQuery = jest.fn();
+			mockedUseQueryOperations.mockReturnValue({
+				...mockedUseQueryOperations({} as Parameters<UseQueryOperations>[0]),
+				handleDeleteQuery,
+			});
+
+			render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} version="v4" />);
+
+			await openQueryActions();
+			await userEvent.click(
+				await screen.findByRole('menuitem', { name: 'Delete' }),
+			);
+
+			expect(handleDeleteQuery).toHaveBeenCalledTimes(1);
+		});
 	});
 
 	it('fx button is disabled when functions already exist', () => {

@@ -279,3 +279,56 @@ describe('Dynamic Variable Suggestions', () => {
 		);
 	});
 });
+
+describe('Filter chips', () => {
+	const CHIP_LABEL = 'http.status = 200';
+	const queryWithFilter = {
+		...defaultProps.query,
+		filters: {
+			op: 'AND',
+			items: [
+				{
+					id: 'f1',
+					key: {
+						key: 'http.status',
+						dataType: DataTypes.String,
+						type: TYPE_TAG,
+						id: 'http.status--string--tag--false',
+					},
+					op: '=',
+					value: '200',
+				},
+			],
+		},
+	};
+
+	beforeEach(() => {
+		mockOnChange.mockClear();
+	});
+
+	it('removes the filter once when the chip close button is clicked', async () => {
+		const user = userEvent.setup({ delay: null });
+		renderWithContext({ query: queryWithFilter });
+
+		await user.click(
+			screen.getByRole('button', { name: `Remove ${CHIP_LABEL}` }),
+		);
+
+		expect(mockOnChange).toHaveBeenCalledTimes(1);
+		expect(mockOnChange).toHaveBeenCalledWith(
+			expect.objectContaining({ items: [] }),
+		);
+	});
+
+	it('moves the filter into the search input when the chip body is clicked', async () => {
+		const user = userEvent.setup({ delay: null });
+		renderWithContext({ query: queryWithFilter });
+
+		await user.click(screen.getByText(CHIP_LABEL));
+
+		expect(
+			screen.queryByRole('button', { name: `Remove ${CHIP_LABEL}` }),
+		).not.toBeInTheDocument();
+		expect(getSearchCombobox()).toHaveDisplayValue(CHIP_LABEL);
+	});
+});
