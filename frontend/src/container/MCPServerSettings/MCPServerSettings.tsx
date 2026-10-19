@@ -131,7 +131,7 @@ function MCPServerSettings(): JSX.Element {
 
 			<section className="mcp-settings__card">
 				<h3 className="mcp-settings__card-title">
-					<Badge color="secondary" variant="default">
+					<Badge color="secondary" variant="solid">
 						1
 					</Badge>
 					Configure your client

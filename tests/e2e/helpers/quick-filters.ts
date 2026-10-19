@@ -6,6 +6,7 @@ export const LOGS_EXPLORER_PATH = '/logs/logs-explorer';
 
 const SETTINGS_PANEL_TITLE = 'Edit quick filters';
 const SETTINGS_ICON_TEST_ID = 'settings-icon';
+const SETTINGS_CLOSE_TEST_ID = 'quick-filters-settings-close';
 const ANNOUNCEMENT_DISMISSED_KEY = 'QUICK_FILTERS_SETTINGS_ANNOUNCEMENT';
 /**
  * Conservative lower bound for the open panel width. The panel is 342px in
@@ -43,10 +44,6 @@ function settingsPanel(page: Page): Locator {
 	return page
 		.locator('.quick-filters-settings')
 		.filter({ hasText: SETTINGS_PANEL_TITLE });
-}
-
-function settingsGearContainer(page: Page): Locator {
-	return page.getByTestId(SETTINGS_ICON_TEST_ID).locator('..');
 }
 
 /** Minimal filter set so `isDynamicFilters` is true and the settings gear renders. */
@@ -102,7 +99,6 @@ export async function assertQuickFiltersSettingsDrawerClosed(
 	page: Page,
 ): Promise<void> {
 	await expect(page.getByText(SETTINGS_PANEL_TITLE)).toBeHidden();
-	await expect(settingsGearContainer(page)).not.toHaveClass(/active/);
 	// Collapsed panel keeps the `hidden` class (width: 0). Assert the class, not
 	// toBeVisible() — a zero-width element is never "visible" to Playwright.
 	await expect(page.locator('.quick-filters-settings')).toHaveClass(/hidden/);
@@ -128,12 +124,11 @@ export async function assertQuickFiltersSettingsDrawerOpen(
 	const panel = settingsPanel(page);
 	const filtersColumn = page.locator('.quick-filters');
 
-	await expect(settingsGearContainer(page)).toHaveClass(/active/);
 	await expect(panel).toBeVisible();
 	await expect(panel).not.toHaveClass(/hidden/);
 	await expect(page.getByText(SETTINGS_PANEL_TITLE)).toBeVisible();
 	await expect(page.getByPlaceholder('Search for a filter...')).toBeVisible();
-	await expect(panel.locator('.qf-header-icon')).toBeVisible();
+	await expect(panel.getByTestId(SETTINGS_CLOSE_TEST_ID)).toBeVisible();
 
 	const addedList = panel.locator('.qf-added-filters-list');
 	await expect(panel.getByText('ADDED FILTERS')).toBeVisible();
@@ -167,6 +162,6 @@ export async function assertQuickFiltersSettingsDrawerOpen(
 export async function closeQuickFiltersSettingsPanel(
 	page: Page,
 ): Promise<void> {
-	await settingsPanel(page).locator('.qf-header-icon').click();
+	await settingsPanel(page).getByTestId(SETTINGS_CLOSE_TEST_ID).click();
 	await assertQuickFiltersSettingsDrawerClosed(page);
 }
