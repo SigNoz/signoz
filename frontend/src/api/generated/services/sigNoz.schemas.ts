@@ -3194,6 +3194,7 @@ export enum CoretypesKindDTO {
 	'auth-domain' = 'auth-domain',
 	session = 'session',
 	'cloud-integration' = 'cloud-integration',
+	'metric-reduction-rule' = 'metric-reduction-rule',
 	'cloud-integration-service' = 'cloud-integration-service',
 	integration = 'integration',
 	dashboard = 'dashboard',

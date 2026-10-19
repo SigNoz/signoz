@@ -3474,6 +3474,7 @@ components:
       - auth-domain
       - session
       - cloud-integration
+      - metric-reduction-rule
       - cloud-integration-service
       - integration
       - dashboard
@@ -19952,9 +19953,9 @@ paths:
           description: Not Implemented
       security:
       - api_key:
-        - VIEWER
+        - metric-reduction-rule:list
       - tokenizer:
-        - VIEWER
+        - metric-reduction-rule:list
       summary: List metric reduction rules
       tags:
       - metrics
@@ -20028,9 +20029,9 @@ paths:
           description: Not Implemented
       security:
       - api_key:
-        - ADMIN
+        - metric-reduction-rule:create
       - tokenizer:
-        - ADMIN
+        - metric-reduction-rule:create
       summary: Create a metric reduction rule
       tags:
       - metrics
@@ -20087,9 +20088,9 @@ paths:
           description: Not Implemented
       security:
       - api_key:
-        - ADMIN
+        - metric-reduction-rule:delete
       - tokenizer:
-        - ADMIN
+        - metric-reduction-rule:delete
       summary: Delete a metric reduction rule by id
       tags:
       - metrics
@@ -20157,9 +20158,9 @@ paths:
           description: Not Implemented
       security:
       - api_key:
-        - VIEWER
+        - metric-reduction-rule:read
       - tokenizer:
-        - VIEWER
+        - metric-reduction-rule:read
       summary: Get a metric reduction rule by id
       tags:
       - metrics
@@ -20239,9 +20240,9 @@ paths:
           description: Not Implemented
       security:
       - api_key:
-        - ADMIN
+        - metric-reduction-rule:update
       - tokenizer:
-        - ADMIN
+        - metric-reduction-rule:update
       summary: Update a metric reduction rule by id
       tags:
       - metrics
@@ -20316,9 +20317,9 @@ paths:
           description: Not Implemented
       security:
       - api_key:
-        - ADMIN
+        - metric-reduction-rule:create
       - tokenizer:
-        - ADMIN
+        - metric-reduction-rule:create
       summary: Preview a metric reduction rule
       tags:
       - metrics

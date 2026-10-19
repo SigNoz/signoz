@@ -47,6 +47,7 @@
         "auth-domain",
         "session",
         "cloud-integration",
+        "metric-reduction-rule",
         "cloud-integration-service",
         "integration",
         "dashboard",
