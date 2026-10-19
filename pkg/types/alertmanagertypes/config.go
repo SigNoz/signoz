@@ -1,7 +1,6 @@
 package alertmanagertypes
 
 import (
-	"cmp"
 	"context"
 	"crypto/md5"
 	"encoding/json"
@@ -253,7 +252,6 @@ func (c *Config) Resolved() (*Config, error) {
 		storeableConfig:    &storeableConfig,
 	}
 	resolved.applyNativeDefaults()
-	resolved.resolveTelegramGlobals()
 
 	return resolved, nil
 }
@@ -497,26 +495,6 @@ func (c *Config) applyNativeDefaults() {
 		for _, tc := range custom.Telegram {
 			if tc.HTTPConfig == nil {
 				tc.HTTPConfig = httpDefault
-			}
-		}
-	}
-}
-
-// resolveTelegramGlobals fills what upstream's config resolve fills for its
-// own telegram_configs. It runs on resolve only, so the global stays live
-// instead of being copied into the stored receiver.
-func (c *Config) resolveTelegramGlobals() {
-	global := c.alertmanagerConfig.Global
-	if global == nil {
-		return
-	}
-
-	for _, custom := range c.customConfigs {
-		for _, tc := range custom.Telegram {
-			tc.APIUrl = cmp.Or(tc.APIUrl, global.TelegramAPIUrl)
-			if tc.BotToken == "" && tc.BotTokenFile == "" {
-				tc.BotToken = global.TelegramBotToken
-				tc.BotTokenFile = global.TelegramBotTokenFile
 			}
 		}
 	}

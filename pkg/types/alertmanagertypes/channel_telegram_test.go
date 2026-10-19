@@ -20,7 +20,7 @@ func TestChannelTelegramConfigDefaults(t *testing.T) {
 	assert.True(t, *spec.SendResolved, "upstream defaults telegram send_resolved on")
 	assert.Equal(t, DefaultTelegramTitleTemplate, spec.Title.StringValue())
 	assert.Equal(t, DefaultTelegramMessageTemplate, spec.Message.StringValue())
-	assert.Empty(t, spec.APIURL, "the global telegram_api_url applies when none is given")
+	assert.Empty(t, spec.APIURL, "the notifier defaults it when none is given")
 }
 
 func TestChannelTelegramConfigValidation(t *testing.T) {
@@ -107,10 +107,9 @@ func TestDefaultTelegramTemplatesEscapeAlertContent(t *testing.T) {
 	}
 }
 
-// APIUrl and HTTPConfig are filled from the global rather than the spec, and
-// the notifier refuses to start without them. A resolve that leaves either nil
-// fails the channel at delivery.
-func TestTelegramResolvesTheGlobalAPIURLAndHTTPConfig(t *testing.T) {
+// HTTPConfig is filled from the global rather than the spec, and the notifier
+// refuses to start without it. APIUrl stays unset; the notifier defaults it.
+func TestTelegramResolvesTheGlobalHTTPConfigAndLeavesAPIURLUnset(t *testing.T) {
 	cfg, err := NewDefaultConfig(GlobalConfig{}, RouteConfig{GroupInterval: 1 * time.Minute, GroupWait: 1 * time.Minute, RepeatInterval: 1 * time.Minute}, "org-1")
 	require.NoError(t, err)
 	require.NoError(t, cfg.SetGlobalConfig(GlobalConfig{}))
@@ -128,13 +127,12 @@ func TestTelegramResolvesTheGlobalAPIURLAndHTTPConfig(t *testing.T) {
 	require.Len(t, resolvedReceiver.TelegramConfigs, 1)
 
 	telegram := resolvedReceiver.TelegramConfigs[0]
-	require.NotNil(t, telegram.APIUrl)
-	assert.Equal(t, "https://api.telegram.org", telegram.APIUrl.String())
+	assert.Nil(t, telegram.APIUrl)
 	assert.NotNil(t, telegram.HTTPConfig)
 
 	stored, err := cfg.GetReceiver("tg")
 	require.NoError(t, err)
-	assert.Nil(t, stored.TelegramConfigs[0].APIUrl, "the global stays out of the stored receiver")
+	assert.Nil(t, stored.TelegramConfigs[0].APIUrl, "no default is stored in the receiver")
 }
 
 // Receivers stored before the title existed decode without one and keep

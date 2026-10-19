@@ -22,6 +22,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -52,7 +53,9 @@ func New(conf *alertmanagertypes.TelegramReceiverConfig, t *template.Template, l
 	}
 
 	if conf.APIUrl == nil {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "telegram api_url is nil")
+		withAPIURL := *conf
+		withAPIURL.APIUrl = config.DefaultGlobalConfig().TelegramAPIUrl
+		conf = &withAPIURL
 	}
 
 	// Rendering targets the HTML subset only. A receiver stored through the v1

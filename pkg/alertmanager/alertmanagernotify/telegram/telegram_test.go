@@ -295,6 +295,44 @@ func TestNewForcesParseModeHTML(t *testing.T) {
 	}
 }
 
+func TestNewDefaultsAPIURL(t *testing.T) {
+	testCases := []struct {
+		name     string
+		apiURL   string
+		expected string
+	}{
+		{"Unset_DefaultsToTelegram", "", "https://api.telegram.org"},
+		{"Set_KeepsChannelURL", "http://127.0.0.1:9099", "http://127.0.0.1:9099"},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			conf := &alertmanagertypes.TelegramReceiverConfig{
+				HTTPConfig: &commoncfg.HTTPClientConfig{},
+				BotToken:   "123456:tok",
+				ChatID:     -1001234567890,
+				ParseMode:  "HTML",
+			}
+			if testCase.apiURL != "" {
+				apiURL, err := url.Parse(testCase.apiURL)
+				require.NoError(t, err)
+				conf.APIUrl = &config.URL{URL: apiURL}
+			}
+
+			tmpl := test.CreateTmpl(t)
+			logger := slog.New(slog.DiscardHandler)
+			notifier, err := New(conf, tmpl, logger, alertmanagertemplate.New(tmpl, logger))
+			require.NoError(t, err)
+
+			require.NotNil(t, notifier.conf.APIUrl)
+			assert.Equal(t, testCase.expected, notifier.conf.APIUrl.String())
+			if testCase.apiURL == "" {
+				assert.Nil(t, conf.APIUrl, "the receiver is not modified")
+			}
+		})
+	}
+}
+
 func TestNotifySendsTheConfiguredSendOptions(t *testing.T) {
 	mock := newMockBotAPI(t)
 

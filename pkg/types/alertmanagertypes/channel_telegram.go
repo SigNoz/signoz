@@ -40,8 +40,8 @@ type ChannelTelegramConfig struct {
 	SendResolved *bool  `json:"sendResolved,omitempty"`
 	BotToken     string `json:"botToken" required:"true" format:"password"`
 	ChatID       int64  `json:"chatId" required:"true"`
-	// APIURL points at a self-hosted Bot API server. Left empty, the global
-	// telegram_api_url applies.
+	// APIURL points at a self-hosted Bot API server. Left empty, upstream's
+	// default (https://api.telegram.org) applies.
 	APIURL string `json:"apiUrl"`
 	// MessageThreadID targets a topic inside a forum group.
 	MessageThreadID      int                          `json:"messageThreadId,omitempty"`
