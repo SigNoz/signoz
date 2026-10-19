@@ -20,26 +20,32 @@ type RelatedLink struct {
 	URL   string
 }
 
-// BuildRelatedLinks accepts every annotation shape that reaches it: model.LabelSet on
-// raw alerts, template.KV in channel templates and map[string]any after custom
-// template preprocessing.
-func BuildRelatedLinks(annotations any) []RelatedLink {
+func BuildRelatedLinks(annotations model.LabelSet) []RelatedLink {
+	return newRelatedLinks(string(annotations[AnnotationRelatedLogs]), string(annotations[AnnotationRelatedTraces]))
+}
+
+// buildRelatedLinksFromTemplateData backs the relatedLinks template func, where
+// .Annotations is template.KV in channel templates and map[string]any after
+// custom template preprocessing.
+func buildRelatedLinksFromTemplateData(annotations any) []RelatedLink {
+	return newRelatedLinks(lookupTemplateAnnotation(annotations, AnnotationRelatedLogs), lookupTemplateAnnotation(annotations, AnnotationRelatedTraces))
+}
+
+func newRelatedLinks(logsURL, tracesURL string) []RelatedLink {
 	var links []RelatedLink
 
-	if url := lookupAnnotation(annotations, AnnotationRelatedLogs); url != "" {
-		links = append(links, RelatedLink{Label: relatedLogsLabel, URL: url})
+	if logsURL != "" {
+		links = append(links, RelatedLink{Label: relatedLogsLabel, URL: logsURL})
 	}
-	if url := lookupAnnotation(annotations, AnnotationRelatedTraces); url != "" {
-		links = append(links, RelatedLink{Label: relatedTracesLabel, URL: url})
+	if tracesURL != "" {
+		links = append(links, RelatedLink{Label: relatedTracesLabel, URL: tracesURL})
 	}
 
 	return links
 }
 
-func lookupAnnotation(annotations any, key string) string {
+func lookupTemplateAnnotation(annotations any, key string) string {
 	switch m := annotations.(type) {
-	case model.LabelSet:
-		return string(m[model.LabelName(key)])
 	case template.KV:
 		return m[key]
 	case map[string]string:
