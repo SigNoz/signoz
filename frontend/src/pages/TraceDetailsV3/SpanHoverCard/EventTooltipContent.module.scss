@@ -8,16 +8,12 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
-	background: var(--l2-background);
-	border: 1px solid var(--l2-border);
 	border-radius: 3px;
-	padding: 2px 6px;
 	font-size: 10px;
 	font-weight: 600;
 	text-transform: uppercase;
 	letter-spacing: 0.5px;
 	color: var(--l2-foreground);
-	margin-bottom: 6px;
 }
 
 .name {

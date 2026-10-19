@@ -24,7 +24,10 @@ const (
 	FormatterGeneric         = "generic"
 )
 
-var dataURL = regexp.MustCompile(`^data:([^;,]+);base64,(.+)$`)
+var (
+	dataURL   = regexp.MustCompile(`^data:([^;,]+);base64,(.+)$`)
+	urlScheme = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9+.-]*:`)
+)
 
 // Provider spellings of the finish reasons; the enum values themselves pass through. tool_calls and
 // function_call are OpenAI's, completed, failed, cancelled, incomplete and max_output_tokens the Responses
@@ -77,6 +80,7 @@ func FormatMessages(attributes map[string]any) FormattedMessages {
 	}
 	f.prependSystemInstructions()
 	f.fillFinishReasons()
+	f.genericMedia()
 	return f.out
 }
 
@@ -268,12 +272,6 @@ func indexed(doc map[string]any, key string) []map[string]any {
 	return out
 }
 
-// indexedAt reads one entry of a flattened list by its index.
-func indexedAt(doc map[string]any, key string, i int) map[string]any {
-	m, _ := attribute(doc, key+"."+strconv.Itoa(i)).(map[string]any)
-	return m
-}
-
 func firstObject(list []any) (map[string]any, bool) {
 	if len(list) == 0 {
 		return nil, false
@@ -388,6 +386,24 @@ func part(value any) Part {
 
 func textPart(content string) TextPart {
 	return TextPart{Type: PartTypeText, Content: content}
+}
+
+func hasToolCall(parts Parts) bool {
+	for _, p := range parts {
+		if _, ok := p.Value.(ToolCallRequestPart); ok {
+			return true
+		}
+	}
+	return false
+}
+
+func onlyText(parts Parts) bool {
+	for _, p := range parts {
+		if _, ok := p.Value.(TextPart); !ok {
+			return false
+		}
+	}
+	return true
 }
 
 // textOf joins the text parts, for comparing a system message with gen_ai.system_instructions.
@@ -513,12 +529,44 @@ func modalityOf(mimeType string) Modality {
 	return ModalityDocument
 }
 
-// mediaPart places a data URL in a BlobPart, any other URL in a UriPart.
+// mediaPart places a data URL in a BlobPart and any other URL in a UriPart. A value without a URL scheme,
+// such as a redaction placeholder, is kept as media without a URL.
 func mediaPart(url string, modality Modality) any {
 	if m := dataURL.FindStringSubmatch(url); m != nil {
 		return BlobPart{Type: PartTypeBlob, Modality: modality, MimeType: &m[1], Content: m[2]}
 	}
+	if !urlScheme.MatchString(url) {
+		return mediaWithoutURL{"type": FormatterGeneric, "modality": modality.StringValue(), "content": url}
+	}
 	return UriPart{Type: PartTypeURI, Modality: modality, URI: url}
+}
+
+// mediaWithoutURL is a generic part that FormatMessages warns about once the converters ran.
+type mediaWithoutURL GenericPart
+
+// genericMedia turns media without a URL into generic parts, with one warning.
+func (f *formatting) genericMedia() {
+	found := false
+	for i := range f.out.Input {
+		found = genericMediaParts(f.out.Input[i].Parts) || found
+	}
+	for i := range f.out.Output {
+		found = genericMediaParts(f.out.Output[i].Parts) || found
+	}
+	if found {
+		f.warn("media without a URL kept as generic")
+	}
+}
+
+func genericMediaParts(parts Parts) bool {
+	found := false
+	for i, p := range parts {
+		if media, ok := p.Value.(mediaWithoutURL); ok {
+			parts[i] = part(GenericPart(media))
+			found = true
+		}
+	}
+	return found
 }
 
 // stringOf renders nil as "" and non-strings as compact JSON.
