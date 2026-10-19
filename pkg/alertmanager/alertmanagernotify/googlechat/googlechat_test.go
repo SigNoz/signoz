@@ -334,8 +334,8 @@ func TestGoogleChatLinkButtons(t *testing.T) {
 				ruletypes.LabelRuleSource: "https://signoz.example/alerts/1",
 			},
 			annotations: model.LabelSet{
-				ruletypes.AnnotationRelatedLogs:   "https://signoz.example/logs",
-				ruletypes.AnnotationRelatedTraces: "https://signoz.example/traces",
+				alertmanagertypes.AnnotationRelatedLogs:   "https://signoz.example/logs",
+				alertmanagertypes.AnnotationRelatedTraces: "https://signoz.example/traces",
 			},
 			wantButtons: map[string]string{
 				"Open in SigNoz":      "https://signoz.example/alerts/1",
@@ -416,8 +416,8 @@ func TestGoogleChatMultiAlertSections(t *testing.T) {
 				ruletypes.LabelRuleSource: "https://signoz.example/alerts/1",
 			},
 			Annotations: model.LabelSet{
-				ruletypes.AnnotationBodyTemplate: "an alert fired",
-				ruletypes.AnnotationRelatedLogs:  model.LabelValue(logs),
+				ruletypes.AnnotationBodyTemplate:        "an alert fired",
+				alertmanagertypes.AnnotationRelatedLogs: model.LabelValue(logs),
 			},
 			StartsAt: time.Now(),
 			EndsAt:   time.Now().Add(time.Minute),
@@ -464,7 +464,7 @@ func TestGoogleChatDefaultBodyGrouped(t *testing.T) {
 				ruletypes.LabelRuleSource: "https://signoz.example/alerts/1",
 			},
 			Annotations: model.LabelSet{
-				ruletypes.AnnotationRelatedLogs: model.LabelValue("https://signoz.example/logs?pod=" + pod),
+				alertmanagertypes.AnnotationRelatedLogs: model.LabelValue("https://signoz.example/logs?pod=" + pod),
 			},
 			StartsAt: time.Now(),
 			EndsAt:   time.Now().Add(time.Minute),

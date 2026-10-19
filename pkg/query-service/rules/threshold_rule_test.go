@@ -17,6 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
@@ -906,7 +907,7 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 			assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
 			for _, item := range rule.Active {
 				for name, value := range item.Annotations.Map() {
-					if name == ruletypes.AnnotationRelatedTraces {
+					if name == alertmanagertypes.AnnotationRelatedTraces {
 						assert.NotEmpty(t, value, "case %d", idx)
 						assert.Contains(t, value, "GET")
 					}
@@ -1006,7 +1007,7 @@ func TestThresholdRuleAITracesLink(t *testing.T) {
 
 		assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
 		for _, item := range rule.Active {
-			link := item.Annotations.Map()[ruletypes.AnnotationRelatedTraces]
+			link := item.Annotations.Map()[alertmanagertypes.AnnotationRelatedTraces]
 			assert.True(t, strings.HasPrefix(link, "http://localhost:8080/ai-observability/explorer?"), "case %d: %s", idx, link)
 			assert.Contains(t, link, "builder_ai_query", "case %d", idx)
 			assert.Contains(t, link, "llm-gateway", "case %d", idx)
@@ -1122,7 +1123,7 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 			assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
 			for _, item := range rule.Active {
 				for name, value := range item.Annotations.Map() {
-					if name == ruletypes.AnnotationRelatedLogs {
+					if name == alertmanagertypes.AnnotationRelatedLogs {
 						assert.NotEmpty(t, value, "case %d", idx)
 						assert.Contains(t, value, "testcontainer")
 					}
