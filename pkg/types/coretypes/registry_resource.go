@@ -12,6 +12,7 @@ var Resources = []Resource{
 	ResourceMetaResourceAuthDomain,
 	ResourceMetaResourceSession,
 	ResourceMetaResourceCloudIntegration,
+	ResourceMetaResourceMetricReductionRule,
 	ResourceMetaResourceCloudIntegrationService,
 	ResourceMetaResourceIntegration,
 	ResourceMetaResourceDashboard,
@@ -53,6 +54,7 @@ var (
 	ResourceMetaResourceAuthDomain                       = NewResourceMetaResource(KindAuthDomain)
 	ResourceMetaResourceSession                          = NewResourceMetaResource(KindSession)
 	ResourceMetaResourceCloudIntegration                 = NewResourceMetaResource(KindCloudIntegration, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
+	ResourceMetaResourceMetricReductionRule              = NewResourceMetaResource(KindMetricReductionRule, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
 	ResourceMetaResourceCloudIntegrationService          = NewResourceMetaResource(KindCloudIntegrationService)
 	ResourceMetaResourceIntegration                      = NewResourceMetaResource(KindIntegration)
 	ResourceMetaResourceDashboard                        = NewResourceMetaResource(KindDashboard, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)

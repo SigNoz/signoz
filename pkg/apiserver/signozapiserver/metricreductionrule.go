@@ -5,7 +5,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/metricreductionruletypes"
@@ -15,7 +14,7 @@ import (
 
 func (provider *provider) addMetricReductionRuleRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v2/metric_reduction_rules", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.metricReductionRuleHandler.List),
+		provider.authzMiddleware.CheckResources(provider.metricReductionRuleHandler.List, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListMetricReductionRules",
 			Tags:                []string{"metrics"},
@@ -26,14 +25,20 @@ func (provider *provider) addMetricReductionRuleRoutes(router *mux.Router) error
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusUnauthorized, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons, http.StatusInternalServerError},
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceMetricReductionRule.Scope(coretypes.VerbList)}),
 		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceMetricReductionRule,
+			Verb:     coretypes.VerbList,
+			Category: coretypes.ActionCategoryDataAccess,
+			Selector: coretypes.WildcardSelector,
+		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/metric_reduction_rules", handler.New(
-		provider.authzMiddleware.AdminAccess(provider.metricReductionRuleHandler.Create),
+		provider.authzMiddleware.CheckResources(provider.metricReductionRuleHandler.Create, authtypes.SigNozAdminRoleName),
 		handler.OpenAPIDef{
 			ID:                  "CreateMetricReductionRule",
 			Tags:                []string{"metrics"},
@@ -45,8 +50,15 @@ func (provider *provider) addMetricReductionRuleRoutes(router *mux.Router) error
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusCreated,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusForbidden, http.StatusConflict, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons, http.StatusInternalServerError},
-			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceMetricReductionRule.Scope(coretypes.VerbCreate)}),
 		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceMetricReductionRule,
+			Verb:     coretypes.VerbCreate,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			ID:       coretypes.ResponseJSONPath("data.id"),
+			Selector: coretypes.WildcardSelector,
+		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -63,7 +75,8 @@ func (provider *provider) addMetricReductionRuleRoutes(router *mux.Router) error
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusUnauthorized, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons, http.StatusInternalServerError},
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
-		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+		},
+		handler.WithResourceDefs(handler.TelemetryResourceDef{
 			Verb:      coretypes.VerbRead,
 			Category:  coretypes.ActionCategoryDataAccess,
 			Selector:  querybuilder.TelemetrySelector,
@@ -85,7 +98,8 @@ func (provider *provider) addMetricReductionRuleRoutes(router *mux.Router) error
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusUnauthorized, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons, http.StatusInternalServerError},
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
-		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+		},
+		handler.WithResourceDefs(handler.TelemetryResourceDef{
 			Verb:      coretypes.VerbRead,
 			Category:  coretypes.ActionCategoryDataAccess,
 			Selector:  querybuilder.TelemetrySelector,
@@ -96,7 +110,7 @@ func (provider *provider) addMetricReductionRuleRoutes(router *mux.Router) error
 	}
 
 	if err := router.Handle("/api/v2/metric_reduction_rules/preview", handler.New(
-		provider.authzMiddleware.AdminAccess(provider.metricReductionRuleHandler.Preview),
+		provider.authzMiddleware.CheckResources(provider.metricReductionRuleHandler.Preview, authtypes.SigNozAdminRoleName),
 		handler.OpenAPIDef{
 			ID:                  "PreviewMetricReductionRule",
 			Tags:                []string{"metrics"},
@@ -108,14 +122,20 @@ func (provider *provider) addMetricReductionRuleRoutes(router *mux.Router) error
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons, http.StatusInternalServerError},
-			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceMetricReductionRule.Scope(coretypes.VerbCreate)}),
 		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceMetricReductionRule,
+			Verb:     coretypes.VerbCreate,
+			Category: coretypes.ActionCategoryDataAccess,
+			Selector: coretypes.WildcardSelector,
+		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/metric_reduction_rules/{id}", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.metricReductionRuleHandler.GetByID),
+		provider.authzMiddleware.CheckResources(provider.metricReductionRuleHandler.GetByID, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetMetricReductionRuleByID",
 			Tags:                []string{"metrics"},
@@ -125,14 +145,21 @@ func (provider *provider) addMetricReductionRuleRoutes(router *mux.Router) error
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusUnauthorized, http.StatusNotFound, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons, http.StatusInternalServerError},
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceMetricReductionRule.Scope(coretypes.VerbRead)}),
 		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceMetricReductionRule,
+			Verb:     coretypes.VerbRead,
+			Category: coretypes.ActionCategoryDataAccess,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/metric_reduction_rules/{id}", handler.New(
-		provider.authzMiddleware.AdminAccess(provider.metricReductionRuleHandler.UpdateByID),
+		provider.authzMiddleware.CheckResources(provider.metricReductionRuleHandler.UpdateByID, authtypes.SigNozAdminRoleName),
 		handler.OpenAPIDef{
 			ID:                  "UpdateMetricReductionRuleByID",
 			Tags:                []string{"metrics"},
@@ -144,14 +171,21 @@ func (provider *provider) addMetricReductionRuleRoutes(router *mux.Router) error
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons, http.StatusInternalServerError},
-			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceMetricReductionRule.Scope(coretypes.VerbUpdate)}),
 		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceMetricReductionRule,
+			Verb:     coretypes.VerbUpdate,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}),
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/metric_reduction_rules/{id}", handler.New(
-		provider.authzMiddleware.AdminAccess(provider.metricReductionRuleHandler.DeleteByID),
+		provider.authzMiddleware.CheckResources(provider.metricReductionRuleHandler.DeleteByID, authtypes.SigNozAdminRoleName),
 		handler.OpenAPIDef{
 			ID:                "DeleteMetricReductionRuleByID",
 			Tags:              []string{"metrics"},
@@ -159,8 +193,15 @@ func (provider *provider) addMetricReductionRuleRoutes(router *mux.Router) error
 			Description:       "Deletes a volume-control rule by its id.",
 			SuccessStatusCode: http.StatusNoContent,
 			ErrorStatusCodes:  []int{http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons, http.StatusInternalServerError},
-			SecuritySchemes:   newSecuritySchemes(types.RoleAdmin),
+			SecuritySchemes:   newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceMetricReductionRule.Scope(coretypes.VerbDelete)}),
 		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceMetricReductionRule,
+			Verb:     coretypes.VerbDelete,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}),
 	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}

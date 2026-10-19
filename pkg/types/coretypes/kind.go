@@ -52,6 +52,7 @@ func (name Kind) Enum() []any {
 		KindAuthDomain,
 		KindSession,
 		KindCloudIntegration,
+		KindMetricReductionRule,
 		KindCloudIntegrationService,
 		KindIntegration,
 		KindDashboard,

@@ -20,6 +20,12 @@ scoped_role = "metric-reduction-scope-key-a"
 scoped_email = "metric-reduction-scope-key-a@telemetry.test"
 wildcard_role = "metric-reduction-wildcard"
 wildcard_email = "metric-reduction-wildcard@telemetry.test"
+rule_reader_role = "metric-reduction-rule-reader"
+rule_reader_email = "metric-reduction-rule-reader@telemetry.test"
+viewer_email = "metric-reduction-viewer@telemetry.test"
+editor_email = "metric-reduction-editor@telemetry.test"
+
+rule_body = {"metricName": "reduction.requests", "matchType": "drop", "labels": ["host.name"]}
 
 
 def test_setup(
@@ -40,47 +46,152 @@ def test_setup(
     wildcard_user = create_active_user(signoz, admin_token, email=wildcard_email, role="signoz-viewer", password=user_password)
     change_user_role(signoz, admin_token, wildcard_user, "signoz-viewer", wildcard_role)
 
+    create_role(
+        admin_token,
+        rule_reader_role,
+        [transaction_group("read", "metaresource", "metric-reduction-rule", ["*"]), transaction_group("list", "metaresource", "metric-reduction-rule", ["*"])],
+    )
+    rule_reader = create_active_user(signoz, admin_token, email=rule_reader_email, role="signoz-viewer", password=user_password)
+    change_user_role(signoz, admin_token, rule_reader, "signoz-viewer", rule_reader_role)
+
+    create_active_user(signoz, admin_token, email=viewer_email, role="signoz-viewer", password=user_password)
+    create_active_user(signoz, admin_token, email=editor_email, role="signoz-editor", password=user_password)
+
+
+def bearer(get_token: Callable[[str, str], str], email: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {get_token(email, USER_ADMIN_PASSWORD if email == USER_ADMIN_EMAIL else user_password)}"}
+
 
 @pytest.mark.parametrize("path", ["/api/v2/metric_reduction_rules/stats", "/api/v2/metric_reduction_rules/timeseries"], ids=["stats", "timeseries"])
 @pytest.mark.parametrize(
     ("email", "expected"),
-    [(scoped_email, HTTPStatus.FORBIDDEN), (wildcard_email, HTTPStatus.OK), (USER_ADMIN_EMAIL, HTTPStatus.OK)],
-    ids=["scoped", "wildcard", "admin"],
+    [
+        (scoped_email, HTTPStatus.FORBIDDEN),
+        (wildcard_email, HTTPStatus.OK),
+        (rule_reader_email, HTTPStatus.FORBIDDEN),
+        (viewer_email, HTTPStatus.OK),
+        (editor_email, HTTPStatus.OK),
+        (USER_ADMIN_EMAIL, HTTPStatus.OK),
+    ],
+    ids=["metrics_scoped", "metrics_wildcard", "rule_reader", "viewer", "editor", "admin"],
 )
-def test_volume_routes(
+def test_volume_routes_need_metrics_read(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
     path: str,
     email: str,
     expected: HTTPStatus,
 ) -> None:
-    token = get_token(email, USER_ADMIN_PASSWORD if email == USER_ADMIN_EMAIL else user_password)
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(path),
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=10,
-    )
+    response = requests.get(signoz.self.host_configs["8080"].get(path), headers=bearer(get_token, email), timeout=10)
     assert response.status_code == expected, response.text
-    if email == scoped_email:
-        assert "builder_query/*" in response.text
+    if expected == HTTPStatus.FORBIDDEN:
+        assert "metrics" in response.text
 
 
 @pytest.mark.parametrize(
     ("email", "expected"),
-    [(scoped_email, HTTPStatus.FORBIDDEN), (wildcard_email, HTTPStatus.FORBIDDEN), (USER_ADMIN_EMAIL, HTTPStatus.OK)],
-    ids=["scoped", "wildcard", "admin"],
+    [
+        (scoped_email, HTTPStatus.FORBIDDEN),
+        (wildcard_email, HTTPStatus.FORBIDDEN),
+        (rule_reader_email, HTTPStatus.OK),
+        (viewer_email, HTTPStatus.OK),
+        (editor_email, HTTPStatus.OK),
+        (USER_ADMIN_EMAIL, HTTPStatus.OK),
+    ],
+    ids=["metrics_scoped", "metrics_wildcard", "rule_reader", "viewer", "editor", "admin"],
 )
-def test_preview_stays_admin_only(
+def test_list_needs_rule_grant(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
     email: str,
     expected: HTTPStatus,
 ) -> None:
-    token = get_token(email, USER_ADMIN_PASSWORD if email == USER_ADMIN_EMAIL else user_password)
+    response = requests.get(signoz.self.host_configs["8080"].get("/api/v2/metric_reduction_rules"), headers=bearer(get_token, email), timeout=10)
+    assert response.status_code == expected, response.text
+    if expected == HTTPStatus.FORBIDDEN:
+        assert "metric-reduction-rule" in response.text
+
+
+@pytest.mark.parametrize(
+    ("email", "expected"),
+    [
+        (rule_reader_email, HTTPStatus.FORBIDDEN),
+        (viewer_email, HTTPStatus.FORBIDDEN),
+        (editor_email, HTTPStatus.FORBIDDEN),
+        (USER_ADMIN_EMAIL, HTTPStatus.OK),
+    ],
+    ids=["rule_reader", "viewer", "editor", "admin"],
+)
+def test_preview_needs_create_grant(
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+    email: str,
+    expected: HTTPStatus,
+) -> None:
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/metric_reduction_rules/preview"),
-        json={"metricName": "reduction.preview", "matchType": "drop", "labels": ["host.name"]},
-        headers={"Authorization": f"Bearer {token}"},
+        json=rule_body,
+        headers=bearer(get_token, email),
         timeout=10,
     )
     assert response.status_code == expected, response.text
+
+
+@pytest.mark.parametrize(
+    ("email", "expected"),
+    [
+        (rule_reader_email, HTTPStatus.FORBIDDEN),
+        (viewer_email, HTTPStatus.FORBIDDEN),
+        (editor_email, HTTPStatus.FORBIDDEN),
+        (USER_ADMIN_EMAIL, HTTPStatus.CREATED),
+    ],
+    ids=["rule_reader", "viewer", "editor", "admin"],
+)
+def test_create_needs_create_grant(
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+    email: str,
+    expected: HTTPStatus,
+) -> None:
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v2/metric_reduction_rules"),
+        json={**rule_body, "metricName": f"reduction.create.{email.split('@', maxsplit=1)[0]}"},
+        headers=bearer(get_token, email),
+        timeout=10,
+    )
+    assert response.status_code == expected, response.text
+    if expected == HTTPStatus.CREATED:
+        requests.delete(
+            signoz.self.host_configs["8080"].get(f"/api/v2/metric_reduction_rules/{response.json()['data']['id']}"),
+            headers=bearer(get_token, USER_ADMIN_EMAIL),
+            timeout=10,
+        )
+
+
+def test_rule_instance_routes(
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+) -> None:
+    created = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v2/metric_reduction_rules"),
+        json={**rule_body, "metricName": "reduction.instance"},
+        headers=bearer(get_token, USER_ADMIN_EMAIL),
+        timeout=10,
+    )
+    assert created.status_code == HTTPStatus.CREATED, created.text
+    rule_url = signoz.self.host_configs["8080"].get(f"/api/v2/metric_reduction_rules/{created.json()['data']['id']}")
+
+    for email, expected in [(scoped_email, HTTPStatus.FORBIDDEN), (rule_reader_email, HTTPStatus.OK), (viewer_email, HTTPStatus.OK)]:
+        read = requests.get(rule_url, headers=bearer(get_token, email), timeout=10)
+        assert read.status_code == expected, read.text
+
+    for email in [rule_reader_email, viewer_email, editor_email]:
+        updated = requests.put(rule_url, json={"matchType": "keep", "labels": ["host.name"]}, headers=bearer(get_token, email), timeout=10)
+        assert updated.status_code == HTTPStatus.FORBIDDEN, updated.text
+        deleted = requests.delete(rule_url, headers=bearer(get_token, email), timeout=10)
+        assert deleted.status_code == HTTPStatus.FORBIDDEN, deleted.text
+
+    updated = requests.put(rule_url, json={"matchType": "keep", "labels": ["host.name"]}, headers=bearer(get_token, USER_ADMIN_EMAIL), timeout=10)
+    assert updated.status_code == HTTPStatus.OK, updated.text
+    deleted = requests.delete(rule_url, headers=bearer(get_token, USER_ADMIN_EMAIL), timeout=10)
+    assert deleted.status_code == HTTPStatus.NO_CONTENT, deleted.text

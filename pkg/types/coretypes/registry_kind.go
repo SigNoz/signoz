@@ -12,6 +12,7 @@ var Kinds = []Kind{
 	KindAuthDomain,
 	KindSession,
 	KindCloudIntegration,
+	KindMetricReductionRule,
 	KindCloudIntegrationService,
 	KindIntegration,
 	KindDashboard,
@@ -53,6 +54,7 @@ var (
 	KindAuthDomain                   = MustNewKind("auth-domain")
 	KindSession                      = MustNewKind("session")
 	KindCloudIntegration             = MustNewKind("cloud-integration")
+	KindMetricReductionRule          = MustNewKind("metric-reduction-rule")
 	KindCloudIntegrationService      = MustNewKind("cloud-integration-service")
 	KindIntegration                  = MustNewKind("integration")
 	KindDashboard                    = MustNewKind("dashboard")

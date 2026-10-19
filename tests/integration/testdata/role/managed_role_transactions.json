@@ -65,6 +65,17 @@
     },
     {
       "type": "metaresource",
+      "kind": "metric-reduction-rule",
+      "verbs": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
       "kind": "cloud-integration-service",
       "verbs": [
         "create",
@@ -379,6 +390,14 @@
     },
     {
       "type": "metaresource",
+      "kind": "metric-reduction-rule",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
       "kind": "dashboard",
       "verbs": [
         "create",
@@ -585,6 +604,14 @@
     {
       "type": "metaresource",
       "kind": "cloud-integration",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "metric-reduction-rule",
       "verbs": [
         "read",
         "list"
