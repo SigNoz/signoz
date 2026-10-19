@@ -109,10 +109,7 @@ func EvalExpression(expression string, env map[string]any) (bool, error) {
 }
 
 func nilSafeMember(params ...any) (any, error) {
-	m, ok := params[0].(map[string]any)
-	if !ok {
-		return nil, nil
-	}
+	m, _ := params[0].(map[string]any)
 	key, _ := params[1].(string)
 	return m[key], nil
 }
