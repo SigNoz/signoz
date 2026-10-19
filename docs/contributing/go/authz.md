@@ -60,7 +60,7 @@ The metrics explorer uses both on one surface:
 
 The two are independent: a role holding `metrics-field` `list` and `read` can browse the catalogue but cannot read a sample, and a role scoped to `builder_query/signoz.workspace.key.id/key-a` on `metrics` can query its samples but cannot list the catalogue.
 
-For a new route, ask what it returns. Rows or aggregates over them go on the signal's telemetry resource with an extractor; anything that names, describes or configures telemetry goes on a metaresource, usually the signal's `-field` kind.
+For a new route, ask what it returns. Rows or aggregates over them go on the signal's telemetry resource with an extractor; anything that names, describes or configures telemetry goes on a metaresource.
 
 ### Selector
 
