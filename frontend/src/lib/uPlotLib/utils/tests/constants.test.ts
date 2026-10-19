@@ -18,11 +18,13 @@ const DAY = 24 * HOUR;
 
 const toSeconds = (iso: string): number => Date.parse(iso) / 1000;
 
+const skipInitialDraw = (): void => {};
+
 const renderTickLabels = (
 	isoSplits: string[],
 	tickIncrement: number,
 	timezone: string,
-): string[] => {
+): uPlot.Axis.StaticValues => {
 	const chart = new RealUPlot(
 		{
 			width: 400,
@@ -32,14 +34,11 @@ const renderTickLabels = (
 			tzDate: (ts) => RealUPlot.tzDate(new Date(ts * 1e3), timezone),
 		},
 		[[], []],
-		// Never runs init, so uPlot never draws; jsdom has no canvas.
-		() => {},
+		skipInitialDraw,
 	);
 	const values = chart.axes[0].values as uPlot.Axis.DynamicValues;
 
-	return values(chart, isoSplits.map(toSeconds), 0, 50, tickIncrement).map(
-		String,
-	);
+	return values(chart, isoSplits.map(toSeconds), 0, 50, tickIncrement);
 };
 
 describe('uPlotXAxisValuesFormat', () => {
@@ -128,7 +127,7 @@ describe('uPlotXAxisValuesFormat', () => {
 			expected: [':59.999\n10 Aug 26 23:59', ':00.000\n11 Aug 00:00'],
 		},
 	])(
-		'renders $tier ticks in $timezone with month names',
+		'renders $tier ticks in $timezone',
 		({ splits, increment, timezone, expected }) => {
 			expect(renderTickLabels(splits, increment, timezone)).toStrictEqual(
 				expected,
