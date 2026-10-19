@@ -266,11 +266,14 @@ def test_filtered_routes_allow_granted_key(
 def test_metaresource_lookups_need_list_grant(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
     path: str,
     scope: str,
     email: str,
     expected: HTTPStatus,
 ) -> None:
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics([Metrics(metric_name="explorer.requests", labels={"signoz.workspace.key.id": "key-a"}, timestamp=now - timedelta(minutes=i + 1), value=float(i)) for i in range(3)])
     token = get_token(email, USER_ADMIN_PASSWORD if email == USER_ADMIN_EMAIL else user_password)
     response = requests.get(
         signoz.self.host_configs["8080"].get(path),
