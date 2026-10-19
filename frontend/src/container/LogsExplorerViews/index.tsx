@@ -228,8 +228,16 @@ function LogsExplorerViewsContainer({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data?.payload, data?.warning]);
 
+	const isNextPageRequestedRef = useRef(false);
+
+	useEffect(() => {
+		if (!isFetching) {
+			isNextPageRequestedRef.current = false;
+		}
+	}, [isFetching]);
+
 	const handleEndReached = useCallback(() => {
-		if (!listQuery) {
+		if (!listQuery || isNextPageRequestedRef.current) {
 			return;
 		}
 
@@ -257,6 +265,8 @@ function LogsExplorerViewsContainer({
 			page: page + 1,
 			pageSize: nextPageSize,
 		});
+
+		isNextPageRequestedRef.current = true;
 
 		setPage((prevPage) => prevPage + 1);
 
