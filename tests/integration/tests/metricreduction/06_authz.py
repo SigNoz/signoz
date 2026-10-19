@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 
 import pytest
@@ -13,6 +14,7 @@ from fixtures.auth import (
     change_user_role,
     create_active_user,
 )
+from fixtures.metrics import Metrics
 from fixtures.role import transaction_group
 
 user_password = "password123Z$"
@@ -26,6 +28,11 @@ viewer_email = "metric-reduction-viewer@telemetry.test"
 editor_email = "metric-reduction-editor@telemetry.test"
 
 rule_body = {"metricName": "reduction.requests", "matchType": "drop", "labels": ["host.name"]}
+
+
+def gauge_samples(metric_name: str) -> list[Metrics]:
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    return [Metrics(metric_name=metric_name, labels={"host.name": f"host-{i}"}, timestamp=now - timedelta(minutes=i + 1), value=0.5, type_="Gauge", is_monotonic=False) for i in range(3)]
 
 
 def test_setup(
@@ -125,9 +132,11 @@ def test_list_needs_rule_grant(
 def test_preview_needs_create_grant(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
     email: str,
     expected: HTTPStatus,
 ) -> None:
+    insert_metrics(gauge_samples(rule_body["metricName"]))
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/metric_reduction_rules/preview"),
         json=rule_body,
@@ -150,12 +159,14 @@ def test_preview_needs_create_grant(
 def test_create_needs_create_grant(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
     email: str,
     expected: HTTPStatus,
 ) -> None:
+    insert_metrics(gauge_samples("reduction.create"))
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/metric_reduction_rules"),
-        json={**rule_body, "metricName": f"reduction.create.{email.split('@', maxsplit=1)[0]}"},
+        json={**rule_body, "metricName": "reduction.create"},
         headers=bearer(get_token, email),
         timeout=10,
     )
@@ -171,7 +182,9 @@ def test_create_needs_create_grant(
 def test_rule_instance_routes(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
 ) -> None:
+    insert_metrics(gauge_samples("reduction.instance"))
     created = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/metric_reduction_rules"),
         json={**rule_body, "metricName": "reduction.instance"},
