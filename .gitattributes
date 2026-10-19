@@ -2,3 +2,9 @@
 *.stories.mocks.tsx linguist-generated=true
 **/__story_mockdata__/** linguist-generated=true
 tests/e2e/drivers/** linguist-generated=true
+
+# Transcribed E2E data: seeded telemetry, golden payloads and the entity
+# datasets. Regenerated from the seeder rather than hand-edited, and re-derived
+# by the specs that read them, so they are collapsed in review.
+tests/e2e/testdata/** linguist-generated=true
+tests/e2e/**/__generated__/** linguist-generated=true
