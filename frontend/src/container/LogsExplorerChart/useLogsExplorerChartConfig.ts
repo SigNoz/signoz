@@ -64,6 +64,7 @@ export function useLogsExplorerChartConfig({
 			maxTimeScale,
 			yAxisUnit,
 			panelType: PANEL_TYPES.BAR,
+			softMin: 0,
 		});
 
 		data.forEach((series, index) => {
