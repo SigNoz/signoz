@@ -56,7 +56,7 @@ The metrics explorer uses both on one surface:
 |---|---|---|
 | `POST /api/v2/metrics/stats` | `metrics:read` (telemetry) | Returns sample and series counts, i.e. the data. The selector comes from `filter.expression`, so a role scoped to a workspace key sees only its own samples. |
 | `GET /api/v2/metrics` | `metrics-field:list` (meta) | Lists metric names, types and units: the catalogue, not the samples. |
-| `POST /api/v2/metrics/metadata` | `metrics-field:update` (meta) | Edits a metric's type, unit and description. A telemetry resource has no `update` verb; writes always belong to a metaresource. |
+| `POST /api/v2/metrics/metadata` | `metrics-field:update` (meta) | Edits a metric's type, unit and description. |
 
 The two are independent: a role holding `metrics-field` `list` and `read` can browse the catalogue but cannot read a sample, and a role scoped to `builder_query/signoz.workspace.key.id/key-a` on `metrics` can query its samples but cannot list the catalogue.
 
