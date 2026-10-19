@@ -62,6 +62,7 @@ func (name Kind) Enum() []any {
 		KindUserPreference,
 		KindOrgPreference,
 		KindQuickFilter,
+		KindMetricsMetadata,
 		KindTTLSetting,
 		KindRule,
 		KindPlannedMaintenance,

@@ -5,7 +5,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/metricsexplorertypes"
@@ -28,12 +27,12 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
 			Deprecated:          false,
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
-		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
-			Verb:      coretypes.VerbRead,
-			Category:  coretypes.ActionCategoryDataAccess,
-			Selector:  querybuilder.TelemetrySelector,
-			Resources: querybuilder.BuilderQueryWildcardResources(coretypes.ResourceTelemetryResourceMetrics),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceMetricsMetadata.Scope(coretypes.VerbList)}),
+		}, handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceMetricsMetadata,
+			Verb:     coretypes.VerbList,
+			Category: coretypes.ActionCategoryDataAccess,
+			Selector: coretypes.WildcardSelector,
 		}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -101,12 +100,12 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusNotFound, http.StatusInternalServerError},
 			Deprecated:          false,
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
-		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
-			Verb:      coretypes.VerbRead,
-			Category:  coretypes.ActionCategoryDataAccess,
-			Selector:  querybuilder.TelemetrySelector,
-			Resources: querybuilder.BuilderQueryWildcardResources(coretypes.ResourceTelemetryResourceMetrics),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceMetricsMetadata.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceMetricsMetadata,
+			Verb:     coretypes.VerbRead,
+			Category: coretypes.ActionCategoryDataAccess,
+			Selector: coretypes.WildcardSelector,
 		}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -126,18 +125,18 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusNotFound, http.StatusInternalServerError},
 			Deprecated:          false,
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
-		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
-			Verb:      coretypes.VerbRead,
-			Category:  coretypes.ActionCategoryDataAccess,
-			Selector:  querybuilder.TelemetrySelector,
-			Resources: querybuilder.BuilderQueryWildcardResources(coretypes.ResourceTelemetryResourceMetrics),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceMetricsMetadata.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceMetricsMetadata,
+			Verb:     coretypes.VerbRead,
+			Category: coretypes.ActionCategoryDataAccess,
+			Selector: coretypes.WildcardSelector,
 		}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/metrics/metadata", handler.New(
-		provider.authzMiddleware.EditAccess(provider.metricsExplorerHandler.UpdateMetricMetadata),
+		provider.authzMiddleware.CheckResources(provider.metricsExplorerHandler.UpdateMetricMetadata, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
 		handler.OpenAPIDef{
 			ID:                  "UpdateMetricMetadata",
 			Tags:                []string{"metrics"},
@@ -150,8 +149,13 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceMetricsMetadata.Scope(coretypes.VerbUpdate)}),
+		}, handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceMetricsMetadata,
+			Verb:     coretypes.VerbUpdate,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			Selector: coretypes.WildcardSelector,
+		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
