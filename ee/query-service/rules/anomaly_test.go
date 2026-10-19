@@ -46,7 +46,7 @@ func TestAnomalyRule_NoData_AlertOnAbsent(t *testing.T) {
 	target := 500.0
 
 	postableRule := ruletypes.PostableRule{
-		AlertName: "Test anomaly no data",
+		AlertName: valuer.NewDisplayName("Test anomaly no data"),
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeAnomaly,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -149,7 +149,7 @@ func TestAnomalyRule_NoData_AbsentFor(t *testing.T) {
 	target := 500.0
 
 	postableRule := ruletypes.PostableRule{
-		AlertName: "Test anomaly no data with AbsentFor",
+		AlertName: valuer.NewDisplayName("Test anomaly no data with AbsentFor"),
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeAnomaly,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{

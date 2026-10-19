@@ -9,19 +9,26 @@ MATERIALIZED_TABLES = {
     "traces": ("signoz_traces", "signoz_index_v3", "distributed_signoz_index_v3"),
 }
 
+# data type -> (column type, attribute map)
+MATERIALIZED_COLUMN_TYPES = {
+    "string": ("LowCardinality(String)", "attributes_string"),
+    "number": ("Float64", "attributes_number"),
+}
+
 
 @pytest.fixture(name="materialize_attribute", scope="function")
-def materialize_attribute(signoz: types.SigNoz) -> Generator[Callable[[str, str, bool], str]]:
+def materialize_attribute(signoz: types.SigNoz) -> Generator[Callable[..., str]]:
     """Teardown drops the columns and every index whose expression mentions a materialized key."""
     cluster = signoz.telemetrystore.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]
     created: list[tuple[str, str, str]] = []
 
-    def materialize(signal: str, key: str, indexed: bool) -> str:
+    def materialize(signal: str, key: str, indexed: bool, data_type: str = "string") -> str:
         database, local_table, distributed_table = MATERIALIZED_TABLES[signal]
-        column = f"attribute_string_{key.replace('.', '$$')}"
+        column_type, attribute_map = MATERIALIZED_COLUMN_TYPES[data_type]
+        column = f"attribute_{data_type}_{key.replace('.', '$$')}"
         created.append((signal, key, column))
         for table in (local_table, distributed_table):
-            signoz.telemetrystore.conn.query(f"ALTER TABLE {database}.{table} ON CLUSTER '{cluster}' ADD COLUMN IF NOT EXISTS `{column}` LowCardinality(String) DEFAULT attributes_string['{key}']")
+            signoz.telemetrystore.conn.query(f"ALTER TABLE {database}.{table} ON CLUSTER '{cluster}' ADD COLUMN IF NOT EXISTS `{column}` {column_type} DEFAULT {attribute_map}['{key}']")
         if indexed:
             signoz.telemetrystore.conn.query(f"ALTER TABLE {database}.{local_table} ON CLUSTER '{cluster}' ADD INDEX IF NOT EXISTS `{column}_idx` `{column}` TYPE bloom_filter(0.01) GRANULARITY 64")
         return column

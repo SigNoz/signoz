@@ -4,15 +4,20 @@ import (
 	"context"
 	"regexp"
 	"testing"
+	"time"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/types/promotetypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 )
@@ -150,7 +155,7 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1, JSONDataType: telemetrytypes.String},
 				},
 			},
-			wantDDLColumn: "`attributes_promoted.http.method_String_ngrambf_v1` attributes_promoted.`http.method`::String",
+			wantDDLColumn: "`attributes_promoted.http.method_string_ngrambf_v1` attributes_promoted.`http.method`::String",
 		},
 		{
 			name: "TracesUnpromotedPath_IndexesBaseColumn",
@@ -162,7 +167,7 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1, JSONDataType: telemetrytypes.String},
 				},
 			},
-			wantDDLColumn: "`attributes.http.method_String_ngrambf_v1` attributes.`http.method`::String",
+			wantDDLColumn: "`attributes.http.method_string_ngrambf_v1` attributes.`http.method`::String",
 		},
 		{
 			name: "BloomFilterIndex_FullTypeInDDL",
@@ -174,7 +179,7 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "bloom_filter(0.01)", Granularity: 1, JSONDataType: telemetrytypes.String},
 				},
 			},
-			wantDDLColumn: "`body_v2.user.name_String_bloom_filter` lower(assumeNotNull(dynamicElement(body_v2.user.name, 'String'))) TYPE bloom_filter(0.01)",
+			wantDDLColumn: "`body_v2.user.name_string_bloom_filter` lower(assumeNotNull(dynamicElement(body_v2.user.name, 'String'))) TYPE bloom_filter(0.01)",
 		},
 		{
 			name: "SetIndex_FullTypeInDDL",
@@ -186,7 +191,7 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "set(100)", Granularity: 1, JSONDataType: telemetrytypes.String},
 				},
 			},
-			wantDDLColumn: "`body_v2.user.name_String_set` lower(assumeNotNull(dynamicElement(body_v2.user.name, 'String'))) TYPE set(100)",
+			wantDDLColumn: "`body_v2.user.name_string_set` lower(assumeNotNull(dynamicElement(body_v2.user.name, 'String'))) TYPE set(100)",
 		},
 	}
 
@@ -419,8 +424,8 @@ func TestIndexMaterializedPaths(t *testing.T) {
 		{Name: "retry.count", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeNumber, Indexes: []telemetrytypes.TelemetryFieldKeySkipIndex{{IndexType: "minmax", Granularity: 1}}},
 		{Name: "k8s.pod.name", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString, Indexes: bloomIndex},
 	}
-	userIDDDL := "`attributes.user.id_String_bloom_filter` attributes.`user.id`::String TYPE bloom_filter GRANULARITY 4"
-	retryCountDDL := "`attributes.retry.count_Float64_minmax` attributes.`retry.count`::Float64 TYPE minmax GRANULARITY 1"
+	userIDDDL := "`attributes.user.id_string_bloom_filter` attributes.`user.id`::String TYPE bloom_filter GRANULARITY 4"
+	retryCountDDL := "`attributes.retry.count_float64_minmax` toFloat64OrNull(attributes.`retry.count`::String) TYPE minmax GRANULARITY 1"
 
 	testCases := []struct {
 		name        string
@@ -507,6 +512,37 @@ func TestIndexMaterializedPaths(t *testing.T) {
 			assert.Equal(t, testCase.wantIndexed, indexed)
 			assert.Equal(t, testCase.wantSkipped, skipped)
 			assert.NoError(t, ts.Mock().ExpectationsWereMet())
+		})
+	}
+}
+
+// An index is used only when a filter's left-hand side is its exact expression.
+func TestTracesNumberIndexExpr_MatchesQuerierFilters(t *testing.T) {
+	release := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	queryInfo := qbtypes.QueryInfo{StartNs: uint64(release.AddDate(0, 6, 0).UnixNano()), EndNs: uint64(release.AddDate(0, 7, 0).UnixNano()), TraceAttrsJSONOn: true}
+	key := telemetrytypes.TelemetryFieldKey{Name: "http.status_code", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeNumber, Evolutions: tracestelemetryschema.MockAttributeEvolutionData(release)}
+	indexExpr := promotetypes.NewTracesAttributesTarget().IndexExpression("attributes", "http.status_code", telemetrytypes.Float64.StringValue())
+
+	testCases := []struct {
+		name     string
+		operator qbtypes.FilterOperator
+		value    any
+		want     string
+	}{
+		{name: "Equal", operator: qbtypes.FilterOperatorEqual, value: float64(200), want: indexExpr + " = ?"},
+		{name: "In", operator: qbtypes.FilterOperatorIn, value: []any{float64(200), float64(404)}, want: indexExpr + " = ? OR " + indexExpr + " = ?"},
+		{name: "GreaterThan", operator: qbtypes.FilterOperatorGreaterThan, value: float64(200), want: indexExpr + " > ?"},
+		{name: "Between", operator: qbtypes.FilterOperatorBetween, value: []any{float64(200), float64(299)}, want: indexExpr + " BETWEEN ? AND ?"},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			sb := sqlbuilder.NewSelectBuilder()
+			conditions, _, err := querybuilder.Conditions(context.Background(), queryInfo, tracestelemetryschema.NewStorage(), &key, testCase.operator, testCase.value, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, false, sb)
+			require.NoError(t, err)
+			sb.Where(conditions...)
+			sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+			assert.Contains(t, sql, testCase.want)
 		})
 	}
 }

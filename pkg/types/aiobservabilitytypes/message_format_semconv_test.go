@@ -186,5 +186,18 @@ func TestFormat_Semconv_Repairs(t *testing.T) {
 			wantInput:  `[]`,
 			wantOutput: `[{"role": "assistant", "parts": [], "finish_reason": "tool_call"}]`,
 		},
+		{
+			// litellm capture, litellm_request span: litellm keeps the OpenAI tool_calls and tool_call_id beside
+			// parts on each message:
+			// https://github.com/BerriAI/litellm/blob/9d72bae336ec0d14c41651adcb0d2e1149721f46/litellm/integrations/opentelemetry.py#L2803
+			name:  "LiteLLMToolFieldsBesideParts_ToolCallAndResponseParts",
+			input: `[{"role": "user", "parts": [{"type": "text", "content": "What's the weather in Bengaluru? Use the tool."}]}, {"role": "assistant", "parts": [], "tool_calls": [{"function": {"arguments": "{\"city\":\"Bengaluru\"}", "name": "get_current_weather"}, "id": "call_GuU9siyYfjnx3DfHKzFbRrvD", "type": "function"}]}, {"role": "tool", "parts": [{"type": "text", "content": "{\"city\": \"Bengaluru\", \"temp_c\": 28, \"summary\": \"Partly cloudy\"}"}], "tool_call_id": "call_GuU9siyYfjnx3DfHKzFbRrvD"}]`,
+			wantInput: `[
+			  {"role": "user", "parts": [{"type": "text", "content": "What's the weather in Bengaluru? Use the tool."}]},
+			  {"role": "assistant", "parts": [{"type": "tool_call", "name": "get_current_weather", "id": "call_GuU9siyYfjnx3DfHKzFbRrvD", "arguments": {"city": "Bengaluru"}}]},
+			  {"role": "tool", "parts": [{"type": "tool_call_response", "id": "call_GuU9siyYfjnx3DfHKzFbRrvD", "response": {"city": "Bengaluru", "temp_c": 28, "summary": "Partly cloudy"}}]}
+			]`,
+			wantOutput: `[]`,
+		},
 	})
 }

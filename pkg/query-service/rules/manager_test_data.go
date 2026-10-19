@@ -36,7 +36,7 @@ type PromRuleTestCase struct {
 // ThresholdRuleAtLeastOnceValueAbove creates a PostableRule for threshold rule test notifications
 func ThresholdRuleAtLeastOnceValueAbove(target float64, recovery *float64) ruletypes.PostableRule {
 	return ruletypes.PostableRule{
-		AlertName: "test-alert",
+		AlertName: valuer.NewDisplayName("test-alert"),
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -95,7 +95,7 @@ func ThresholdRuleAtLeastOnceValueAbove(target float64, recovery *float64) rulet
 // BuildPromAtLeastOnceValueAbove creates a PostableRule for PromQL rule test notifications
 func BuildPromAtLeastOnceValueAbove(target float64, recovery *float64) ruletypes.PostableRule {
 	return ruletypes.PostableRule{
-		AlertName: "test-prom-alert",
+		AlertName: valuer.NewDisplayName("test-prom-alert"),
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
