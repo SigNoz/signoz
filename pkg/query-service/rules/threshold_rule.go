@@ -85,7 +85,7 @@ func (r *ThresholdRule) prepareQueryRange(ctx context.Context, ts time.Time) (*q
 	return req, nil
 }
 
-func (r *ThresholdRule) prepareParamsForLogs(ctx context.Context, ts time.Time, lbls ruletypes.Labels) url.Values {
+func (r *ThresholdRule) prepareParamsForLogs(ctx context.Context, ts time.Time, resultLabels ruletypes.Labels) url.Values {
 	qr, err := r.prepareQueryRange(ctx, ts)
 	if err != nil {
 		return nil
@@ -93,7 +93,7 @@ func (r *ThresholdRule) prepareParamsForLogs(ctx context.Context, ts time.Time, 
 	start := time.UnixMilli(int64(qr.Start))
 	end := time.UnixMilli(int64(qr.End))
 
-	whereClause, found, err := contextlinks.PrepareRuleFilterExpression(r.ruleCondition, telemetrytypes.SignalLogs, lbls.Map())
+	whereClause, found, err := contextlinks.PrepareRuleFilterExpression(r.ruleCondition, telemetrytypes.SignalLogs, resultLabels.Map())
 	if err != nil {
 		r.logger.ErrorContext(ctx, "failed to prepare the filter for the logs link", errors.Attr(err))
 		return nil
@@ -105,7 +105,7 @@ func (r *ThresholdRule) prepareParamsForLogs(ctx context.Context, ts time.Time, 
 	return contextlinks.PrepareParamsForLogsV5(start, end, whereClause)
 }
 
-func (r *ThresholdRule) prepareParamsForTraces(ctx context.Context, ts time.Time, lbls ruletypes.Labels) url.Values {
+func (r *ThresholdRule) prepareParamsForTraces(ctx context.Context, ts time.Time, resultLabels ruletypes.Labels) url.Values {
 	qr, err := r.prepareQueryRange(ctx, ts)
 	if err != nil {
 		return nil
@@ -113,7 +113,7 @@ func (r *ThresholdRule) prepareParamsForTraces(ctx context.Context, ts time.Time
 	start := time.UnixMilli(int64(qr.Start))
 	end := time.UnixMilli(int64(qr.End))
 
-	whereClause, found, err := contextlinks.PrepareRuleFilterExpression(r.ruleCondition, telemetrytypes.SignalTraces, lbls.Map())
+	whereClause, found, err := contextlinks.PrepareRuleFilterExpression(r.ruleCondition, telemetrytypes.SignalTraces, resultLabels.Map())
 	if err != nil {
 		r.logger.ErrorContext(ctx, "failed to prepare the filter for the traces link", errors.Attr(err))
 		return nil
