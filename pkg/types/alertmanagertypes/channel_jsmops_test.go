@@ -17,7 +17,7 @@ func TestJSMOpsReceiverConfigDefaults(t *testing.T) {
 	assert.Equal(t, "key-123", string(c.APIKey))
 	assert.Equal(t, DefaultJSMOpsMessageTemplate, c.Message)
 	assert.Equal(t, DefaultJSMOpsDescriptionTemplate, c.Description)
-	assert.Equal(t, "signoz", c.Tags)
+	assert.Equal(t, "signoz-alert", c.Tags)
 	assert.False(t, c.SendResolved()) // default off when omitted, like other channels
 
 	ch, err := NewChannelFromReceiver(r, "org-1")
