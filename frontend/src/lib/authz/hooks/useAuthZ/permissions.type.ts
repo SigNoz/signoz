@@ -24,6 +24,11 @@ export default {
 				allowedVerbs: ['list', 'read', 'update'],
 			},
 			{
+				kind: 'saved-view',
+				type: 'metaresource',
+				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],
+			},
+			{
 				kind: 'subscription',
 				type: 'metaresource',
 				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],

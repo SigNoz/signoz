@@ -4,6 +4,7 @@ import { calculateWidthBasedOnStepInterval } from 'lib/uPlotV2/utils';
 import uPlot, { Series } from 'uplot';
 
 import { resolveFillOpacity, toAlphaHex } from '../utils/fillOpacity';
+import { reportBarRect } from '../utils/barRect';
 import { generateGradientFill } from '../utils/generateGradientFill';
 import { isolatedPointFilter } from '../utils/seriesPointsFilter';
 import {
@@ -218,7 +219,14 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 	}
 
 	getConfig(): ExtendedSeries {
-		const { scaleKey, label, spanGaps, show = true, metric } = this.props;
+		const {
+			scaleKey,
+			label,
+			spanGaps,
+			show = true,
+			metric,
+			partialTimestamps,
+		} = this.props;
 
 		const resolvedLineColor = this.getLineColor();
 
@@ -246,6 +254,7 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 			...pathConfig,
 			points: Object.keys(pointsConfig).length > 0 ? pointsConfig : undefined,
 			metric,
+			...(partialTimestamps?.size ? { partialTimestamps } : {}),
 		};
 	}
 }
@@ -358,6 +367,7 @@ function getBarPathBuilder({
 				builders[barsCfgKey] = barsPathBuilderFactory({
 					size: [barWidthFactor, effectiveBarMaxWidth],
 					align: barAlignment,
+					each: reportBarRect,
 				});
 			}
 
@@ -372,6 +382,7 @@ function getBarPathBuilder({
 		builders[barsCfgKey] = barsPathBuilderFactory({
 			size: [barWidthFactor, barMaxWidth],
 			align: barAlignment,
+			each: reportBarRect,
 		});
 	}
 

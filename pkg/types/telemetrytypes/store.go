@@ -45,6 +45,9 @@ type MetadataStore interface {
 	// rows templated by entry; FieldName and ReleaseTime are set per path.
 	PromotePaths(ctx context.Context, entry EvolutionEntry, paths ...string) error
 
+	// GetMaterializedKeys lists the keys materialized as dedicated columns.
+	GetMaterializedKeys(ctx context.Context, signal Signal) ([]*TelemetryFieldKey, error)
+
 	// GetFirstSeenFromMetricMetadata gets the first seen timestamp for a metric metadata lookup key.
 	GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []MetricMetadataLookupKey) (map[MetricMetadataLookupKey]int64, error)
 

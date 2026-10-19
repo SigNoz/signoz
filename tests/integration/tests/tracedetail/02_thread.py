@@ -21,17 +21,25 @@ def test_thread_returns_gen_ai_spans_in_order(
     seed_attribute_evolution("traces", ATTRIBUTE_JSON_ROLLOUT_TIME)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
-    root_id, first_llm_id, tool_id, agent_id, second_llm_id, third_llm_id = (TraceIdGenerator.span_id() for _ in range(6))
+    root_id, first_llm_id, tool_id, agent_id, second_llm_id, legacy_llm_id, third_llm_id, flattened_llm_id, responses_llm_id, langchain_llm_id, openrouter_llm_id, vercel_llm_id, anthropic_llm_id, gemini_llm_id = (TraceIdGenerator.span_id() for _ in range(14))
     resources = {"service.name": "tracedetail-thread"}
     first_input = json.dumps([{"role": "user", "parts": [{"type": "text", "content": "weather in Bangalore?"}]}])
-    first_output = json.dumps([{"role": "assistant", "parts": [{"type": "tool_call", "id": "call_1", "name": "get_weather", "arguments": {"city": "Bangalore"}}], "finish_reason": "tool_call"}])
+    first_output = json.dumps([{"role": "assistant", "parts": [{"type": "tool_call", "id": "call_1", "name": "get_weather", "arguments": {"city": "Bangalore"}}]}])
+    first_instructions = json.dumps([{"type": "text", "content": "Answer with the tool."}])
     second_input = json.dumps([{"role": "tool", "content": "sunny", "tool_call_id": "call_1"}])
 
     insert_traces(
         [
             Traces(timestamp=now - timedelta(seconds=10), duration=timedelta(seconds=9), trace_id=trace_id, span_id=root_id, name="POST /chat", kind=TracesKind.SPAN_KIND_SERVER, resources=resources, attribute_write_mode="json_only"),
             Traces(
-                timestamp=now - timedelta(seconds=8), trace_id=trace_id, span_id=first_llm_id, parent_span_id=root_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.input.messages": first_input, "gen_ai.output.messages": first_output}, attribute_write_mode="json_only"
+                timestamp=now - timedelta(seconds=8),
+                trace_id=trace_id,
+                span_id=first_llm_id,
+                parent_span_id=root_id,
+                name="chat gpt-4o",
+                resources=resources,
+                attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.system_instructions": first_instructions, "gen_ai.input.messages": first_input, "gen_ai.output.messages": first_output, "gen_ai.response.finish_reasons": json.dumps(["tool_calls"])},
+                attribute_write_mode="json_only",
             ),
             Traces(
                 timestamp=now - timedelta(seconds=6),
@@ -45,7 +53,122 @@ def test_thread_returns_gen_ai_spans_in_order(
             ),
             Traces(timestamp=now - timedelta(seconds=5), trace_id=trace_id, span_id=agent_id, parent_span_id=root_id, name="invoke_agent planner", resources=resources, attributes={"gen_ai.agent.name": "planner"}, attribute_write_mode="json_only"),
             Traces(timestamp=now - timedelta(seconds=4), trace_id=trace_id, span_id=second_llm_id, parent_span_id=root_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.input.messages": second_input}, attribute_write_mode="json_only"),
+            Traces(
+                timestamp=now - timedelta(seconds=3),
+                trace_id=trace_id,
+                span_id=legacy_llm_id,
+                parent_span_id=root_id,
+                name="openai.chat",
+                resources=resources,
+                attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.prompt.0.role": "user", "gen_ai.prompt.0.content": "and tomorrow?", "gen_ai.completion.0.role": "assistant", "gen_ai.completion.0.content": "Also sunny.", "gen_ai.completion.0.finish_reason": "stop"},
+                attribute_write_mode="json_only",
+            ),
             Traces(timestamp=now - timedelta(seconds=2), trace_id=trace_id, span_id=third_llm_id, parent_span_id=root_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.output.messages": "It is sunny in Bangalore."}, attribute_write_mode="json_only"),
+            Traces(
+                timestamp=now - timedelta(seconds=1),
+                trace_id=trace_id,
+                span_id=flattened_llm_id,
+                parent_span_id=root_id,
+                name="ChatCompletion",
+                resources=resources,
+                attributes={
+                    "gen_ai.request.model": "gpt-4o",
+                    "llm.input_messages.0.message.role": "user",
+                    "llm.input_messages.0.message.content": "thanks",
+                    "llm.output_messages.0.message.role": "assistant",
+                    "llm.output_messages.0.message.content": "You're welcome.",
+                    "llm.finish_reason": "stop",
+                },
+                attribute_write_mode="json_only",
+            ),
+            Traces(
+                timestamp=now,
+                trace_id=trace_id,
+                span_id=responses_llm_id,
+                parent_span_id=root_id,
+                name="responses gpt-4o",
+                resources=resources,
+                attributes={
+                    "gen_ai.request.model": "gpt-4o",
+                    "gen_ai.input.messages": json.dumps({"model": "gpt-4o", "instructions": "Be brief.", "input": [{"role": "user", "content": "bye"}]}),
+                    "gen_ai.output.messages": json.dumps({"object": "response", "status": "completed", "output": [{"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": "Bye!"}]}]}),
+                },
+                attribute_write_mode="json_only",
+            ),
+            Traces(
+                timestamp=now + timedelta(seconds=1),
+                trace_id=trace_id,
+                span_id=langchain_llm_id,
+                parent_span_id=root_id,
+                name="ChatOpenAI",
+                resources=resources,
+                attributes={
+                    "gen_ai.request.model": "gpt-4o",
+                    "gen_ai.input.messages": json.dumps({"messages": [[{"lc": 1, "type": "constructor", "id": ["langchain", "schema", "messages", "HumanMessage"], "kwargs": {"content": "see you", "type": "human"}}]]}),
+                    "gen_ai.output.messages": json.dumps(
+                        {"generations": [[{"text": "See you!", "generation_info": {"finish_reason": "stop"}, "type": "ChatGeneration", "message": {"lc": 1, "type": "constructor", "id": ["langchain", "schema", "messages", "AIMessage"], "kwargs": {"content": "See you!", "type": "ai"}}}]]}
+                    ),
+                },
+                attribute_write_mode="json_only",
+            ),
+            Traces(
+                timestamp=now + timedelta(seconds=2),
+                trace_id=trace_id,
+                span_id=openrouter_llm_id,
+                parent_span_id=root_id,
+                name="LLM Generation",
+                resources=resources,
+                attributes={
+                    "gen_ai.request.model": "openai/gpt-4o-mini",
+                    "gen_ai.input.messages": json.dumps({"messages": [{"role": "user", "content": "one word"}]}),
+                    "gen_ai.output.messages": json.dumps({"completion": "Yes.", "reasoning": None, "rawRequest": {"model": "openai/gpt-4o-mini"}}),
+                },
+                attribute_write_mode="json_only",
+            ),
+            Traces(
+                timestamp=now + timedelta(seconds=3),
+                trace_id=trace_id,
+                span_id=vercel_llm_id,
+                parent_span_id=root_id,
+                name="ai.generateText.doGenerate",
+                resources=resources,
+                attributes={
+                    "gen_ai.request.model": "gpt-4o-mini",
+                    "ai.operationId": "ai.generateText.doGenerate",
+                    "ai.response.finishReason": "stop",
+                    "gen_ai.input.messages": json.dumps([{"role": "user", "content": [{"type": "text", "text": "last one"}]}]),
+                    "gen_ai.output.messages": "Done.",
+                },
+                attribute_write_mode="json_only",
+            ),
+            Traces(
+                timestamp=now + timedelta(seconds=4),
+                trace_id=trace_id,
+                span_id=anthropic_llm_id,
+                parent_span_id=root_id,
+                name="messages claude-sonnet-4-5",
+                resources=resources,
+                attributes={
+                    "gen_ai.request.model": "claude-sonnet-4-5",
+                    "gen_ai.input.messages": json.dumps({"system": "Be terse.", "messages": [{"role": "user", "content": "ping"}]}),
+                    "gen_ai.output.messages": json.dumps({"type": "message", "role": "assistant", "content": [{"type": "text", "text": "pong"}], "stop_reason": "end_turn"}),
+                },
+                attribute_write_mode="json_only",
+            ),
+            Traces(
+                timestamp=now + timedelta(seconds=5),
+                trace_id=trace_id,
+                span_id=gemini_llm_id,
+                parent_span_id=root_id,
+                name="generateContent gemini-2.5-flash",
+                resources=resources,
+                attributes={
+                    "gen_ai.request.model": "gemini-2.5-flash",
+                    "gen_ai.input.messages": json.dumps({"contents": [{"role": "user", "parts": [{"text": "ping"}]}]}),
+                    "gen_ai.output.messages": json.dumps({"candidates": [{"content": {"role": "model", "parts": [{"text": "pong"}]}, "finishReason": "STOP"}]}),
+                },
+                attribute_write_mode="json_only",
+            ),
         ]
     )
 
@@ -54,10 +177,10 @@ def test_thread_returns_gen_ai_spans_in_order(
     assert response.status_code == HTTPStatus.OK, response.text
 
     thread = response.json()["data"]
-    assert [span["span_id"] for span in thread["spans"]] == [first_llm_id, tool_id, agent_id, second_llm_id, third_llm_id]
+    assert [span["span_id"] for span in thread["spans"]] == [first_llm_id, tool_id, agent_id, second_llm_id, legacy_llm_id, third_llm_id, flattened_llm_id, responses_llm_id, langchain_llm_id, openrouter_llm_id, vercel_llm_id, anthropic_llm_id, gemini_llm_id]
     assert "nextCursor" not in thread
 
-    first, tool, agent, input_only, output_only = thread["spans"]
+    first, tool, agent, input_only, legacy, output_only, flattened, responses, langchain, openrouter, vercel, anthropic, gemini = thread["spans"]
     assert agent["attributes"]["gen_ai.agent.name"] == "planner"
     assert agent["formattedInput"] == []
     assert agent["formattedOutput"] == []
@@ -73,7 +196,7 @@ def test_thread_returns_gen_ai_spans_in_order(
     assert output_only["attributes"]["gen_ai.output.messages"] == "It is sunny in Bangalore."
 
     tool_call = {"type": "tool_call", "name": "get_weather", "id": "call_1", "arguments": {"city": "Bangalore"}}
-    assert first["formattedInput"] == [{"role": "user", "parts": [{"type": "text", "content": "weather in Bangalore?"}]}]
+    assert first["formattedInput"] == [{"role": "system", "parts": [{"type": "text", "content": "Answer with the tool."}]}, {"role": "user", "parts": [{"type": "text", "content": "weather in Bangalore?"}]}]
     assert first["formattedOutput"] == [{"role": "assistant", "parts": [tool_call], "finish_reason": "tool_call"}]
     assert first["formatterWarnings"] == []
     assert tool["formattedInput"] == [{"role": "assistant", "parts": [tool_call]}]
@@ -83,6 +206,24 @@ def test_thread_returns_gen_ai_spans_in_order(
     assert output_only["formattedInput"] == []
     assert output_only["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "It is sunny in Bangalore."}]}]
     assert output_only["formatterWarnings"] == ["bare assistant text, role assumed"]
+    assert legacy["attributes"]["gen_ai.prompt.0.content"] == "and tomorrow?"
+    assert legacy["formattedInput"] == [{"role": "user", "parts": [{"type": "text", "content": "and tomorrow?"}]}]
+    assert legacy["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "Also sunny."}], "finish_reason": "stop"}]
+    assert flattened["attributes"]["llm.input_messages.0.message.content"] == "thanks"
+    assert flattened["formattedInput"] == [{"role": "user", "parts": [{"type": "text", "content": "thanks"}]}]
+    assert flattened["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "You're welcome."}], "finish_reason": "stop"}]
+    assert responses["formattedInput"] == [{"role": "system", "parts": [{"type": "text", "content": "Be brief."}]}, {"role": "user", "parts": [{"type": "text", "content": "bye"}]}]
+    assert responses["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "Bye!"}], "finish_reason": "stop"}]
+    assert langchain["formattedInput"] == [{"role": "user", "parts": [{"type": "text", "content": "see you"}]}]
+    assert langchain["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "See you!"}], "finish_reason": "stop"}]
+    assert openrouter["formattedInput"] == [{"role": "user", "parts": [{"type": "text", "content": "one word"}]}]
+    assert openrouter["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "Yes."}]}]
+    assert vercel["formattedInput"] == [{"role": "user", "parts": [{"type": "text", "content": "last one"}]}]
+    assert vercel["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "Done."}], "finish_reason": "stop"}]
+    assert anthropic["formattedInput"] == [{"role": "system", "parts": [{"type": "text", "content": "Be terse."}]}, {"role": "user", "parts": [{"type": "text", "content": "ping"}]}]
+    assert anthropic["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "pong"}], "finish_reason": "stop"}]
+    assert gemini["formattedInput"] == [{"role": "user", "parts": [{"type": "text", "content": "ping"}]}]
+    assert gemini["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "pong"}], "finish_reason": "stop"}]
 
 
 def test_thread_paginates_with_cursors(

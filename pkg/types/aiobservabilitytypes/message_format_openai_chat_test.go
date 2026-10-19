@@ -167,7 +167,8 @@ func TestFormat_OpenAIChat(t *testing.T) {
 			]`,
 		},
 		{
-			// openinference capture, input.value of the ChatCompletion span
+			// ChatCompletionRequestMessageContentPartFile {file: {file_id}}, as OpenInference records the request in input.value:
+			// https://github.com/openai/openai-openapi/blob/aeb6a041dc56c011ca9f12127ec898f911100aa0/openapi.yaml#L42650
 			name:   "FileByID_FilePart",
 			input:  `{"model": "gpt-4o-mini", "messages": [{"role": "user", "content": [{"type": "text", "text": "Summarise this document in one sentence."}, {"type": "file", "file": {"file_id": "file-6F2ksmvXxt4VdoqmHRw6kL"}}]}], "max_tokens": 60}`,
 			output: `{"id":"chatcmpl-DktFileCapture0001","object":"chat.completion","model":"gpt-4o-mini-2024-07-18","choices":[{"index":0,"finish_reason":"stop","logprobs":null,"message":{"role":"assistant","content":"The document is a short PDF about dragons.","refusal":null,"annotations":[]}}]}`,
@@ -189,7 +190,8 @@ func TestFormat_OpenAIChat(t *testing.T) {
 			]`,
 		},
 		{
-			// openinference capture, input.value of the ChatCompletion span
+			// ChatCompletionRequestMessageContentPartFile {file: {filename, file_data}}, file_data a data URL:
+			// https://github.com/openai/openai-openapi/blob/aeb6a041dc56c011ca9f12127ec898f911100aa0/openapi.yaml#L42650
 			name:  "FileInline_BlobPart",
 			input: `{"model": "gpt-4o-mini", "messages": [{"role": "user", "content": [{"type": "text", "text": "Summarise this document in one sentence."}, {"type": "file", "file": {"filename": "draconomicon.pdf", "file_data": "data:application/pdf;base64,JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZy9QYWdlcyAyIDAgUj4+ZW5kb2JqCjIgMCBvYmo8PC9UeXBlL1BhZ2VzL0tpZHNbXS9Db3VudCAwPj5lbmRvYmoKdHJhaWxlcjw8L1Jvb3QgMSAwIFI+PgolJUVPRgo="}}]}], "max_tokens": 60}`,
 			wantInput: `[
@@ -211,6 +213,17 @@ func TestFormat_OpenAIChat(t *testing.T) {
 			  {"role": "", "parts": [{"type": "generic", "content": "oops"}]},
 			  {"role": "assistant", "parts": [{"type": "text", "content": "hi"}], "finish_reason": "stop"}
 			]`,
+		},
+		{
+			// openrouter-gateway capture: OpenRouter replaces the image with a placeholder, which is no URL
+			name:     "RedactedImageURL_GenericPart_Warns",
+			input:    `{"messages":[{"role":"user","content":[{"type":"text","text":"What animal is in this image? One sentence."},{"type":"image_url","image_url":{"url":"[OR_REDACTED]"}}]}]}`,
+			warnings: []string{"media without a URL kept as generic"},
+			wantInput: `[{"role": "user", "parts": [
+			  {"type": "text", "content": "What animal is in this image? One sentence."},
+			  {"type": "generic", "modality": "image", "content": "[OR_REDACTED]"}
+			]}]`,
+			wantOutput: `[]`,
 		},
 	})
 }

@@ -1,12 +1,15 @@
 package aiobservabilitytypes
 
 // Format: gen_ai.tool.call.arguments and gen_ai.tool.call.result on an execute_tool span, each an
-// object or its JSON string (open-telemetry/semantic-conventions-genai@06ec68e, model/gen-ai/registry.yaml).
+// object or its JSON string:
+// https://github.com/open-telemetry/semantic-conventions-genai/blob/06ec68e722c45a7218e23ea1bc1339fe4e21ecae/model/gen-ai/registry.yaml#L545
 // Written by: opentelemetry-instrumentation-langchain, traceloop @tool, OpenInference TOOL spans and
 // Vercel ai.toolCall.* through the span mapper.
-// Envelopes unwrapped: LangChain's callback payloads, {input_str, tags, metadata, inputs, kwargs} and
-// {output, kwargs} (openllmetry callback_handler.py on_tool_start/on_tool_end), and the traceloop
-// decorator's {args, kwargs} (traceloop-sdk decorators/base.py _handle_span_input).
+// Envelopes unwrapped: LangChain's on_tool_start and on_tool_end payloads, {input_str, tags, metadata,
+// inputs, kwargs} and {output, kwargs}:
+// https://github.com/traceloop/openllmetry/blob/93429cfb9767e6b51db6cb35f6b70f758117669a/packages/opentelemetry-instrumentation-langchain/opentelemetry/instrumentation/langchain/callback_handler.py#L837
+// The traceloop decorator's {args, kwargs}:
+// https://github.com/traceloop/openllmetry/blob/93429cfb9767e6b51db6cb35f6b70f758117669a/packages/traceloop-sdk/traceloop/sdk/decorators/base.py#L169
 
 // tool renders the call as an assistant tool_call and the result as a tool tool_call_response, both
 // carrying gen_ai.tool.call.id so the pair can be matched.

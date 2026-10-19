@@ -1,5 +1,6 @@
 import { SeriesVisibilityItem } from 'lib/visualization/panels/types';
 import { getStoredSeriesVisibility } from 'lib/visualization/panels/utils/legendVisibilityUtils';
+import { partialPointsDrawHook } from 'lib/uPlotV2/hooks/partialPointsDrawHook';
 import { ThresholdsDrawHookOptions } from 'lib/uPlotV2/hooks/types';
 import { thresholdsDrawHook } from 'lib/uPlotV2/hooks/useThresholdsDrawHook';
 import { resolveSeriesVisibility } from 'lib/uPlotV2/utils/seriesVisibility';
@@ -80,6 +81,8 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	private select: uPlot.Select | undefined;
 
 	private thresholds: Record<string, ThresholdsDrawHookOptions> = {};
+
+	private hasPartialPointsHook = false;
 
 	private tzDate: ((timestamp: number) => Date) | undefined;
 
@@ -177,6 +180,10 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	 */
 	addSeries(props: SeriesProps): void {
 		this.series.push(new UPlotSeriesBuilder(props));
+		if (props.partialTimestamps?.size && !this.hasPartialPointsHook) {
+			this.hasPartialPointsHook = true;
+			this.addHook('draw', partialPointsDrawHook);
+		}
 	}
 
 	getSeriesSpanGapsOptions(): SeriesSpanGapsOption[] {
