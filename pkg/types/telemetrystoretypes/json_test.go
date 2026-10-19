@@ -1,10 +1,12 @@
 package telemetrystoretypes
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func jsonValue(paths map[string]any) JSONValue {
@@ -58,4 +60,15 @@ func TestNest(t *testing.T) {
 		},
 	}
 	assert.Equal(t, want, value.Nest())
+}
+
+func TestMarshalJSON(t *testing.T) {
+	value := jsonValue(map[string]any{
+		"gen_ai.request.model":   "gpt-4o",
+		"gen_ai.output.messages": chcol.Variant{},
+	})
+
+	raw, err := json.Marshal(value)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"gen_ai.request.model":"gpt-4o"}`, string(raw))
 }

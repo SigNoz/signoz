@@ -6,7 +6,10 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 )
 
-var _ chcol.JSONDeserializer = (*JSONValue)(nil)
+var (
+	_ chcol.JSONDeserializer = (*JSONValue)(nil)
+	_ json.Marshaler         = JSONValue{}
+)
 
 // JSONValue is the scan target for a ClickHouse native JSON column. It holds the column as the driver's
 // chcol.JSON, so a key stored at both a scalar and an object path (db.function and db.function.arg) stays
@@ -29,6 +32,7 @@ func (v *JSONValue) DeserializeClickHouseJSON(column *chcol.JSON) error {
 }
 
 // Flatten returns the column as a flat map of dotted path to value, the shape of an attribute bag.
+// A path whose value is null is skipped.
 func (v JSONValue) Flatten() map[string]any {
 	flat := make(map[string]any)
 	for path, value := range v.column.ValuesByPath() {
@@ -45,6 +49,12 @@ func (v JSONValue) Flatten() map[string]any {
 // https://github.com/SigNoz/events-pod/issues/8
 func (v JSONValue) Nest() map[string]any {
 	return unwrap(v.column.NestedMap())
+}
+
+// MarshalJSON renders the flat attribute bag, so a reader that stores the scan target without calling
+// Flatten or Nest serializes the column instead of the empty struct.
+func (v JSONValue) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.Flatten())
 }
 
 func isNull(value any) bool {

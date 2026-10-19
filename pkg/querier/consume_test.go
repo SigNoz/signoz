@@ -5,10 +5,11 @@ import (
 	"testing"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
-	"github.com/SigNoz/signoz/pkg/types/spantypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/SigNoz/signoz/pkg/types/spantypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 )
 
 func TestMergeSpanAttributeColumns_ParsesEventsAndLinks(t *testing.T) {
