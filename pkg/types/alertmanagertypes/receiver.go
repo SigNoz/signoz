@@ -31,6 +31,12 @@ type Receiver struct {
 	// Shadows upstream's incidentio_configs so our custom notifier (templater,
 	// group-key dedup, label metadata) handles it instead of upstream's.
 	IncidentIOConfigs []*IncidentIOReceiverConfig `json:"incidentio_configs,omitempty" yaml:"incidentio_configs,omitempty"`
+	// WebhookBodyTemplates parallels the embedded config.Receiver's
+	// webhook_configs: upstream's config.WebhookConfig cannot carry SigNoz's
+	// optional custom body template, so each entry rides alongside the
+	// webhook config at the same index. An empty entry means the notifier
+	// sends the default Alertmanager-style JSON payload.
+	WebhookBodyTemplates []string `json:"webhook_body_templates,omitempty" yaml:"webhook_body_templates,omitempty"`
 }
 
 // NewReceiver builds a Receiver from its JSON input, applying each notifier
