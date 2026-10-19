@@ -3484,7 +3484,6 @@ components:
       - user-preference
       - org-preference
       - quick-filter
-      - metrics-metadata
       - ttl-setting
       - rule
       - planned-maintenance
@@ -3502,6 +3501,7 @@ components:
       - meter-metrics
       - logs-field
       - traces-field
+      - metrics-field
       type: string
     CoretypesObject:
       properties:
@@ -20514,9 +20514,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - metrics-metadata:list
+        - metrics-field:list
       - tokenizer:
-        - metrics-metadata:list
+        - metrics-field:list
       summary: List metric names
       tags:
       - metrics
@@ -20667,9 +20667,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - metrics-metadata:read
+        - metrics-field:read
       - tokenizer:
-        - metrics-metadata:read
+        - metrics-field:read
       summary: Get metric attributes
       tags:
       - metrics
@@ -20866,9 +20866,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - metrics-metadata:read
+        - metrics-field:read
       - tokenizer:
-        - metrics-metadata:read
+        - metrics-field:read
       summary: Get metric metadata
       tags:
       - metrics
@@ -20912,9 +20912,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - metrics-metadata:update
+        - metrics-field:update
       - tokenizer:
-        - metrics-metadata:update
+        - metrics-field:update
       summary: Update metric metadata
       tags:
       - metrics

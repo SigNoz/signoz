@@ -3204,7 +3204,6 @@ export enum CoretypesKindDTO {
 	'user-preference' = 'user-preference',
 	'org-preference' = 'org-preference',
 	'quick-filter' = 'quick-filter',
-	'metrics-metadata' = 'metrics-metadata',
 	'ttl-setting' = 'ttl-setting',
 	rule = 'rule',
 	'planned-maintenance' = 'planned-maintenance',
@@ -3222,6 +3221,7 @@ export enum CoretypesKindDTO {
 	'meter-metrics' = 'meter-metrics',
 	'logs-field' = 'logs-field',
 	'traces-field' = 'traces-field',
+	'metrics-field' = 'metrics-field',
 }
 export enum CoretypesTypeDTO {
 	user = 'user',
