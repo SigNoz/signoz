@@ -12,6 +12,7 @@ function commit(
 		values,
 		options: OPTIONS,
 		showAllOption: true,
+		isDynamic: false,
 		emptyFallback: FALLBACK,
 		...overrides,
 	});
@@ -58,6 +59,20 @@ describe('selectionFromCommittedValues', () => {
 			allSelected: false,
 			customValues: ['typed-in'],
 		});
+	});
+
+	// A dynamic ALL is sent as `__all__`, so reading it as a list would filter the
+	// panels down to the truncated option set.
+	it('reads every option PLUS a value outside the list as ALL for a dynamic variable', () => {
+		expect(
+			commit([...OPTIONS, 'searched'], { isDynamic: true }).allSelected,
+		).toBe(true);
+	});
+
+	it('does not read a dynamic subset PLUS a value outside the list as ALL', () => {
+		expect(
+			commit(['checkout', 'searched'], { isDynamic: true }).allSelected,
+		).toBe(false);
 	});
 
 	// Derived from the values + options at commit time, never from the old selection.
