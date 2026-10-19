@@ -3204,6 +3204,7 @@ export enum CoretypesKindDTO {
 	'user-preference' = 'user-preference',
 	'org-preference' = 'org-preference',
 	'quick-filter' = 'quick-filter',
+	'metrics-metadata' = 'metrics-metadata',
 	'ttl-setting' = 'ttl-setting',
 	rule = 'rule',
 	'planned-maintenance' = 'planned-maintenance',

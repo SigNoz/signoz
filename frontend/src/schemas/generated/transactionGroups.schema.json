@@ -57,6 +57,7 @@
         "user-preference",
         "org-preference",
         "quick-filter",
+        "metrics-metadata",
         "ttl-setting",
         "rule",
         "planned-maintenance",

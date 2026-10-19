@@ -3484,6 +3484,7 @@ components:
       - user-preference
       - org-preference
       - quick-filter
+      - metrics-metadata
       - ttl-setting
       - rule
       - planned-maintenance
@@ -20513,9 +20514,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - metrics:read
+        - metrics-metadata:list
       - tokenizer:
-        - metrics:read
+        - metrics-metadata:list
       summary: List metric names
       tags:
       - metrics
@@ -20666,9 +20667,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - metrics:read
+        - metrics-metadata:read
       - tokenizer:
-        - metrics:read
+        - metrics-metadata:read
       summary: Get metric attributes
       tags:
       - metrics
@@ -20865,9 +20866,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - metrics:read
+        - metrics-metadata:read
       - tokenizer:
-        - metrics:read
+        - metrics-metadata:read
       summary: Get metric metadata
       tags:
       - metrics
@@ -20911,9 +20912,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - metrics-metadata:update
       - tokenizer:
-        - EDITOR
+        - metrics-metadata:update
       summary: Update metric metadata
       tags:
       - metrics
