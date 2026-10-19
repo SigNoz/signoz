@@ -747,6 +747,54 @@ export const notificationChannelsResponse = (
 	return { status: 'success', data: { channels, total: channels.length } };
 };
 
+/**
+ * The v2 list as the API answers it: search, kind and paging are applied on the
+ * server, so the story has to narrow the rows rather than hand back all of them.
+ */
+export const notificationChannelsPage = (
+	count: number,
+	params: URLSearchParams,
+): {
+	status: string;
+	data: {
+		channels: AlertmanagertypesListedNotificationChannelDTO[];
+		total: number;
+	};
+} => {
+	const query = params.get('query')?.trim().toLowerCase() ?? '';
+	const kind = params.get('kind') ?? '';
+	const limit = Number(params.get('limit')) || CHANNEL_MAX;
+	const offset = Number(params.get('offset')) || 0;
+
+	const matched = Array.from({ length: count }, (_unused, index) =>
+		buildListedChannel(index),
+	).filter(
+		(channel) =>
+			(!query || channel.displayName.toLowerCase().includes(query)) &&
+			(!kind || channel.kind === kind),
+	);
+
+	return {
+		status: 'success',
+		data: {
+			channels: matched.slice(offset, offset + limit),
+			total: matched.length,
+		},
+	};
+};
+
+/**
+ * One listed row fetched on its own, as the JSON dialog does. Indexed the same
+ * way the list builds its rows, so a row's id resolves to the kind it displays.
+ */
+export const notificationChannelByRowId = (
+	id: string,
+): ReturnType<typeof notificationChannelResponse> => {
+	const index = (Number(id) - 1 + CHANNEL_SEEDS.length) % CHANNEL_SEEDS.length;
+
+	return notificationChannelResponse(id, CHANNEL_SEEDS[index].type);
+};
+
 /** Channel names the alert form and the routing policies pick from. */
 export const channelNames = (count: number): string[] =>
 	channelsResponse(count).data.map((channel) => channel.name);
