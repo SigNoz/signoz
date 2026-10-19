@@ -5,6 +5,10 @@ import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { Channels } from 'types/api/channels/getAll';
 
 import { CreateAlertProvider } from '../../context';
+import {
+	THRESHOLD_MATCH_TYPE_OPTIONS,
+	THRESHOLD_OPERATOR_OPTIONS,
+} from '../../context/constants';
 import AlertThreshold from '../AlertThreshold';
 
 const mockChannels: Channels[] = [];
@@ -287,5 +291,50 @@ describe('AlertThreshold', () => {
 		expect(screen.getByText('critical')).toBeInTheDocument();
 		verifySelectRenders(TEST_STRINGS.IS_ABOVE);
 		verifySelectRenders(TEST_STRINGS.AT_LEAST_ONCE);
+	});
+
+	it.each([
+		[
+			'operator',
+			THRESHOLD_OPERATOR_OPTIONS,
+			[
+				'ABOVE',
+				'BELOW',
+				'EQUAL TO',
+				'NOT EQUAL TO',
+				'ABOVE OR EQUAL TO',
+				'BELOW OR EQUAL TO',
+			],
+		],
+		[
+			'match type',
+			THRESHOLD_MATCH_TYPE_OPTIONS,
+			['AT LEAST ONCE', 'ALL THE TIME', 'ON AVERAGE', 'IN TOTAL', 'LAST'],
+		],
+	])(
+		'the %s select offers exactly its documented options',
+		(_label, options, expected) => {
+			// Asserted on the options the select is fed rather than on the rendered
+			// dropdown: antd virtualises its list, so in jsdom (zero-height viewport)
+			// only the first two items exist in the DOM and their text is the wire
+			// value, not the label.
+			expect(options.map((option) => option.label)).toStrictEqual(expected);
+
+			renderAlertThreshold();
+			expect(screen.getByText(options[0].label)).toBeInTheDocument();
+		},
+	);
+
+	it('never renders the recovery threshold control', () => {
+		// `showRecoveryThreshold` starts false and its only setter is commented
+		// out, so neither the input nor its remove button can appear.
+		renderAlertThreshold();
+
+		expect(
+			screen.queryByTestId('recovery-threshold-value-input'),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId('remove-recovery-threshold-button'),
+		).not.toBeInTheDocument();
 	});
 });

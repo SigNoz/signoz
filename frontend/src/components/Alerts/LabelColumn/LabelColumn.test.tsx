@@ -2,6 +2,13 @@ import { act, render, screen } from '@testing-library/react';
 
 import LabelColumn from './LabelColumn';
 
+// The global CSS mock maps every class to undefined; keep the names so overflow is assertable.
+jest.mock('./LabelColumn.module.scss', () => ({
+	labelColumn: 'labelColumn',
+	overflowed: 'overflowed',
+	shrinkable: 'shrinkable',
+}));
+
 const BADGE_WIDTH = 60;
 
 let resizeCallbacks: ResizeObserverCallback[] = [];
@@ -74,6 +81,20 @@ describe('LabelColumn', () => {
 		expect(screen.getByTestId('label-tag-region')).toBeInTheDocument();
 
 		// Remaining in overflow badge
+		expect(screen.getByTestId('label-overflow-badge')).toHaveTextContent('+3');
+	});
+
+	it('should hide the labels past the visible count', () => {
+		const labels = ['env', 'service', 'region', 'team', 'owner', 'version'];
+
+		// 3 badges (180px) + overflow reserve (40px)
+		mockLayout(220);
+		renderWithProviders(<LabelColumn labels={labels} />);
+
+		const isHidden = (label: string): boolean =>
+			screen.getByTestId(`label-tag-${label}`).closest('.overflowed') !== null;
+
+		expect(labels.filter(isHidden)).toStrictEqual(['team', 'owner', 'version']);
 		expect(screen.getByTestId('label-overflow-badge')).toHaveTextContent('+3');
 	});
 
