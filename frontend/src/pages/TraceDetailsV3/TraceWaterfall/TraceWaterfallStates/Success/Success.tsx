@@ -20,7 +20,6 @@ import {
 } from '@tanstack/react-table';
 import { useVirtualizer, Virtualizer } from '@tanstack/react-virtual';
 import cx from 'classnames';
-import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import TimelineV3 from 'components/TimelineV3/TimelineV3';
 import { convertTimeToRelevantUnit } from 'utils/traceUtils';
 import { useCopySpanLink } from 'hooks/trace/useCopySpanLink';
@@ -28,7 +27,13 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { colorToRgb } from 'lib/uPlotLib/utils/generateColor';
-import { ChevronDown, ChevronRight, Link, ListPlus } from '@signozhq/icons';
+import {
+	ChevronDown,
+	ChevronRight,
+	Link,
+	ListPlus,
+	Sparkle,
+} from '@signozhq/icons';
 import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
 import { resolveSpanColor } from 'pages/TraceDetailsV3/utils';
 import { useBoundaryPagination } from 'pages/TraceDetailsV3/TraceWaterfall/hooks/useBoundaryPagination';
@@ -39,6 +44,8 @@ import { toFixed } from 'utils/toFixed';
 
 import { EventTooltipContent } from '../../../SpanHoverCard/EventTooltipContent';
 import { SpanHoverCard } from '../../../SpanHoverCard/SpanHoverCard';
+import SpanHintBadge from '../../../SpanHintBadge/SpanHintBadge';
+import { isAiSpan } from '../../../utils/aiTraceUtils';
 import AddSpanToFunnelModal from '../../AddSpanToFunnelModal/AddSpanToFunnelModal';
 import { IInterestedSpan } from '../../types';
 
@@ -318,14 +325,23 @@ const SpanOverview = memo(function SpanOverview({
 			</span>
 
 			{/* Colored service dot */}
-			<span
-				className={cx(styles.treeIcon, { [styles.hasError]: span.has_error })}
-				style={
-					{
-						'--service-dot-color': effectiveColor,
-					} as React.CSSProperties
-				}
-			/>
+			{isAiSpan(span) ? (
+				<Sparkle
+					size={10}
+					color={effectiveColor}
+					fill={effectiveColor}
+					className={styles.aiSpanIcon}
+				/>
+			) : (
+				<span
+					className={cx(styles.treeIcon, { [styles.hasError]: span.has_error })}
+					style={
+						{
+							'--service-dot-color': effectiveColor,
+						} as React.CSSProperties
+					}
+				/>
+			)}
 
 			{/* Span name + service name */}
 			<span className={styles.treeLabel}>
@@ -944,9 +960,7 @@ function Success(props: ISuccessProps): JSX.Element {
 									onMouseLeave={(): void => applyHoverClass(null)}
 									onClick={(): void => handleSpanClick(span)}
 								>
-									{span.response_status_code && (
-										<HttpStatusBadge statusCode={span.response_status_code} />
-									)}
+									<SpanHintBadge span={span} />
 								</div>
 							);
 						})}
