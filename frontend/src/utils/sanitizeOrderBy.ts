@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/react';
 import {
 	IBuilderQuery,
 	OrderByPayload,
@@ -20,15 +19,5 @@ export function sanitizeOrderByForExplorer(
 
 	const current = query.orderBy || [];
 
-	const hasInvalidOrderBy = current.some((o) => !allowed.has(o.columnName));
-
-	if (hasInvalidOrderBy) {
-		Sentry.captureEvent({
-			message: `Invalid orderBy: current: ${JSON.stringify(
-				current,
-			)} - allowed: ${JSON.stringify(Array.from(allowed))}`,
-			level: 'warning',
-		});
-	}
 	return current.filter((o) => allowed.has(o.columnName));
 }
