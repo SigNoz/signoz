@@ -335,14 +335,14 @@ func (r *PostableRule) Validate() error {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition: field is required")
 	}
 
-	if r.AlertType != "" {
-		switch r.AlertType {
-		case AlertTypeMetric, AlertTypeTraces, AlertTypeLogs, AlertTypeExceptions, AlertTypeAITraces:
-		default:
-			errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
-				"alertType: unsupported value %q; must be one of %q, %q, %q, %q, %q",
-				r.AlertType, AlertTypeMetric, AlertTypeTraces, AlertTypeLogs, AlertTypeExceptions, AlertTypeAITraces))
-		}
+	switch r.AlertType {
+	case AlertTypeMetric, AlertTypeTraces, AlertTypeLogs, AlertTypeExceptions, AlertTypeAITraces:
+	case "":
+		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "alertType: field is required"))
+	default:
+		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"alertType: unsupported value %q; must be one of %q, %q, %q, %q, %q",
+			r.AlertType, AlertTypeMetric, AlertTypeTraces, AlertTypeLogs, AlertTypeExceptions, AlertTypeAITraces))
 	}
 
 	if !r.RuleType.IsZero() {
@@ -360,6 +360,12 @@ func (r *PostableRule) Validate() error {
 	if r.RuleCondition.CompositeQuery == nil {
 		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.compositeQuery: field is required"))
 	} else {
+		if err := r.RuleCondition.CompositeQuery.QueryType.Validate(); err != nil {
+			errs = append(errs, err)
+		}
+		if err := r.RuleCondition.CompositeQuery.PanelType.Validate(); err != nil {
+			errs = append(errs, err)
+		}
 		if len(r.RuleCondition.CompositeQuery.Queries) == 0 {
 			errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.compositeQuery.queries: must have at least one query"))
 		} else {

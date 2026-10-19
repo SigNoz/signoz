@@ -361,7 +361,7 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 	parsedRule := ruletypes.PostableRule{}
 	err = json.Unmarshal([]byte(ruleStr), &parsedRule)
 	if err != nil {
-		return err
+		return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to unmarshal rule")
 	}
 	if err := parsedRule.Validate(); err != nil {
 		return err
@@ -548,7 +548,7 @@ func (m *Manager) deleteTask(taskName string) {
 func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.GettableRule, error) {
 	parsedRule := ruletypes.PostableRule{}
 	if err := json.Unmarshal([]byte(ruleStr), &parsedRule); err != nil {
-		return nil, err
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to unmarshal rule")
 	}
 
 	return m.createRule(ctx, parsedRule, ruleStr)
@@ -1051,7 +1051,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 
 	if err := json.Unmarshal([]byte(ruleStr), &storedRule); err != nil {
 		m.logger.ErrorContext(ctx, "failed to unmarshal patched rule with given id", slog.String("rule.id", id.StringValue()), errors.Attr(err))
-		return nil, err
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to unmarshal rule")
 	}
 	if err := storedRule.Validate(); err != nil {
 		return nil, err
