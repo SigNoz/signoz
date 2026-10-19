@@ -132,10 +132,10 @@ func convertTelegramNotifierJSON(notifier notifierJSON) (map[string]any, error) 
 	}
 
 	spec := map[string]any{}
-	if err := notifier.copyStrings(spec, map[string]string{"token": "botToken", "api_url": "apiUrl"}); err != nil {
+	if err := notifier.copyStrings(spec, map[string]string{"token": "botToken"}); err != nil {
 		return nil, err
 	}
-	if err := notifier.copyNonEmptyStrings(spec, map[string]string{"message": "message"}); err != nil {
+	if err := notifier.copyNonEmptyStrings(spec, map[string]string{"api_url": "apiUrl", "message": "message"}); err != nil {
 		return nil, err
 	}
 	if spec["botToken"] == "" {

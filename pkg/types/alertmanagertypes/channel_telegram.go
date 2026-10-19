@@ -42,7 +42,7 @@ type ChannelTelegramConfig struct {
 	ChatID       int64  `json:"chatId" required:"true"`
 	// APIURL points at a self-hosted Bot API server. Left empty, upstream's
 	// default (https://api.telegram.org) applies.
-	APIURL string `json:"apiUrl"`
+	APIURL valuer.UnsetOrNonEmptyString `json:"apiUrl,omitzero"`
 	// MessageThreadID targets a topic inside a forum group.
 	MessageThreadID      int                          `json:"messageThreadId,omitempty"`
 	Title                valuer.UnsetOrNonEmptyString `json:"title,omitzero"`
@@ -80,8 +80,8 @@ func (c ChannelTelegramConfig) Validate() error {
 
 func (c ChannelTelegramConfig) toUndefaultedReceiver(displayName string) (*Receiver, error) {
 	var apiURL *config.URL
-	if c.APIURL != "" {
-		parsed, err := parseUpstreamURL(c.APIURL)
+	if !c.APIURL.IsZero() {
+		parsed, err := parseUpstreamURL(c.APIURL.StringValue())
 		if err != nil {
 			return nil, err
 		}
@@ -132,7 +132,7 @@ func newChannelTelegramConfigFromReceiver(name string, receiver *Receiver) (Chan
 		SendResolved:         &sendResolved,
 		BotToken:             string(telegram.BotToken),
 		ChatID:               telegram.ChatID,
-		APIURL:               formatUpstreamURL(telegram.APIUrl),
+		APIURL:               valuer.UnsetIfEmpty(formatUpstreamURL(telegram.APIUrl)),
 		MessageThreadID:      telegram.MessageThreadID,
 		Title:                valuer.UnsetIfEmpty(telegram.Title),
 		Message:              valuer.UnsetIfEmpty(telegram.Message),
