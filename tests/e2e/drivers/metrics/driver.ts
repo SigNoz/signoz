@@ -56,7 +56,7 @@ export type MetadataUpdate = MetricsexplorertypesUpdateMetricMetadataRequestDTO;
 export type MetricMetadata = MetricsexplorertypesMetricMetadataDTO;
 export type ReductionRule = MetricreductionruletypesGettableReductionRuleDTO;
 
-export type SummaryTab = 'Summary' | 'Explorer' | 'Views' | 'Volume Control';
+export type SummaryTab = 'Summary' | 'Explorer' | 'Volume Control';
 export type SummaryColumn =
 	| 'METRIC'
 	| 'DESCRIPTION'
@@ -556,9 +556,8 @@ export function metricsExplorerDriver(
 				.locator('.u-legend tr.u-series th')
 				.evaluateAll((items) => items.map((item) => item.textContent ?? '')),
 
-		createAlertButton: () => page.getByTestId('explorer-options-create-alert'),
-		addToDashboardButton: () =>
-			page.getByTestId('explorer-options-add-to-dashboard'),
+		createAlertButton: () => page.getByTestId('explorer-create-alert'),
+		addToDashboardButton: () => page.getByTestId('explorer-add-to-dashboard'),
 
 		addToDashboard: async (title) => {
 			await explorer.addToDashboardButton().click();

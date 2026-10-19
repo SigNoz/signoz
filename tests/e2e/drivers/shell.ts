@@ -56,9 +56,6 @@ const selectedTab =
 	(page: Page): Locator =>
 		page.getByRole('tab', { name, selected: true });
 
-const viewsHeading = (page: Page): Locator =>
-	page.getByRole('heading', { name: 'Views', exact: true });
-
 /**
  * One row per registered top-level route. Markers come from the component the
  * route mounts, so a row fails when that component stops rendering rather than
@@ -101,9 +98,10 @@ export const ROUTES: RouteProbe[] = [
 		marker: (page) => selectedTab('Pipelines')(page).first(),
 	},
 	{
-		title: 'TC-07 /logs/saved-views renders the views page',
+		title: 'TC-07 /logs/saved-views redirects to the logs explorer',
 		path: '/logs/saved-views',
-		marker: viewsHeading,
+		expectPath: '/logs/logs-explorer',
+		marker: byTestId('search-view'),
 	},
 	{
 		title: 'TC-08 /traces-explorer renders the explorer toolbar',
@@ -111,9 +109,10 @@ export const ROUTES: RouteProbe[] = [
 		marker: byTestId('trace-view'),
 	},
 	{
-		title: 'TC-09 /traces/saved-views renders the views page',
+		title: 'TC-09 /traces/saved-views redirects to the traces explorer',
 		path: '/traces/saved-views',
-		marker: viewsHeading,
+		expectPath: '/traces-explorer',
+		marker: byTestId('trace-view'),
 	},
 	{
 		title: 'TC-10 /traces/funnels renders the funnels header',
@@ -131,9 +130,10 @@ export const ROUTES: RouteProbe[] = [
 		marker: (page) => page.getByText('1 chart/query', { exact: true }),
 	},
 	{
-		title: 'TC-13 /metrics-explorer/views renders the views page',
+		title: 'TC-13 /metrics-explorer/views redirects to the metrics explorer',
 		path: '/metrics-explorer/views',
-		marker: viewsHeading,
+		expectPath: '/metrics-explorer/explorer',
+		marker: (page) => page.getByText('1 chart/query', { exact: true }),
 	},
 	{
 		title: 'TC-14 /infrastructure-monitoring/hosts renders the hosts list',

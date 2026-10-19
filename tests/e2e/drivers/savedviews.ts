@@ -1,11 +1,19 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
-import { apiDriver } from './api';
+import type {
+	Querybuildertypesv5RequestTypeDTO,
+	SavedviewtypesPanelTypeDTO,
+	SavedviewtypesPostableSavedViewDTO,
+	SavedviewtypesSavedViewDTO,
+	SavedviewtypesSchemaVersionDTO,
+	SavedviewtypesSourceDTO,
+} from './schemas';
+import { apiDriver, type Envelope } from './api';
 
 /**
  * Saved views, shared by every explorer that has them (logs, traces, metrics,
- * meter): the ExplorerOptions toolbar, the `/<signal>/saved-views` page, and API
- * seeds. Feature drivers call {@link savedViewsDriver} with their source page.
+ * meter): the header and views list in the explorer's sidebar, and API seeds.
+ * Feature drivers call {@link savedViewsDriver} with their source.
  *
  * Views are org-wide, so every name a spec creates carries its own stamp and is
  * removed by prefix.
@@ -13,22 +21,18 @@ import { apiDriver } from './api';
 
 export type ViewSource = 'logs' | 'traces' | 'metrics' | 'meter';
 
-const VIEWS_PAGE: Record<ViewSource, string> = {
-	logs: '/logs/saved-views',
-	traces: '/traces/saved-views',
-	metrics: '/metrics-explorer/views',
-	meter: '/meter/explorer/views',
-};
+const VIEWS_API = '/api/v2/saved_views';
 
-const VIEWS_API = '/api/v1/explorer/views';
+type PanelType = `${SavedviewtypesPanelTypeDTO}`;
 
-/** `/api/v1/explorer/views` is not in `docs/api/openapi.yml`, so these are local. */
-interface ExplorerView {
-	id: string;
-	name: string;
-	sourcePage: string;
-	compositeQuery: Record<string, unknown>;
-}
+const REQUEST_TYPE: Record<PanelType, `${Querybuildertypesv5RequestTypeDTO}`> =
+	{
+		list: 'raw',
+		trace: 'trace',
+		table: 'scalar',
+		value: 'scalar',
+		graph: 'time_series',
+	};
 
 export interface ViewSeed {
 	expression: string;
@@ -40,27 +44,25 @@ export interface ViewSeed {
 }
 
 export interface SavedViews {
-	/** The explorer's view picker. */
-	select(): Locator;
-	/** Pick `name` in the explorer's picker and wait for `viewName` in the URL. */
+	/** The header's view name, "My view" while none is selected. */
+	current(): Locator;
+	/** Open the views list. The metrics explorer keeps it pinned. */
+	openList(): Promise<void>;
+	search(text: string): Promise<void>;
+	/** The list row for `name`. Search first. */
+	row(name: string): Locator;
+	/** Select `name` from the list and wait for its `viewKey` in the URL. */
 	pick(name: string): Promise<void>;
-	/** Save the current explorer query as a new view. */
+	/** Save the current query as a new view, with no view selected. */
 	saveAs(name: string): Promise<void>;
-	/** "Update this view" — only rendered once the query differs from the view. */
+	/** "Update selected view", only rendered once the query differs from the view. */
 	update(): Promise<void>;
 	clear(): Promise<void>;
-
-	gotoPage(): Promise<void>;
-	search(text: string): Promise<void>;
-	/** The row for `name` on the views page. Search first: the page size is small. */
-	row(name: string): Locator;
 	rename(name: string, next: string): Promise<void>;
 	remove(name: string): Promise<void>;
-	/** Open the view in its explorer from the views page. */
-	open(name: string): Promise<void>;
 
 	create(name: string, seed: ViewSeed): Promise<string>;
-	list(): Promise<ExplorerView[]>;
+	list(): Promise<SavedviewtypesSavedViewDTO[]>;
 	removeByPrefix(prefix: string): Promise<void>;
 }
 
@@ -78,104 +80,99 @@ export function savedViewsDriver(page: Page, source: ViewSource): SavedViews {
 	const dataSource = (seed: ViewSeed): string =>
 		seed.dataSource ?? (source === 'meter' ? 'metrics' : source);
 
+	const header = (): Locator => page.getByTestId('saved-views-header');
+	const panel = (): Locator => page.getByTestId('saved-views-panel');
+
+	// The row menu has no width until its row is hovered.
+	const openRowMenu = async (name: string): Promise<void> => {
+		const row = views.row(name);
+		await row.hover();
+		await row.getByTestId('saved-views-row-menu').click();
+	};
+
 	const views: SavedViews = {
-		select: () => page.getByTestId('explorer-views-select'),
+		current: () => header().getByTestId('saved-views-name'),
+
+		openList: async () => {
+			await expect(header()).toBeVisible();
+			const open = header().getByTestId('saved-views-open');
+			if (await open.isVisible()) {
+				await open.click();
+			}
+			await expect(panel().getByTestId('saved-views-search')).toBeVisible();
+		},
+
+		search: async (text) => {
+			await views.openList();
+			await panel().getByTestId('saved-views-search').fill(text);
+		},
+
+		row: (name) =>
+			panel()
+				.getByTestId('saved-views-row')
+				.filter({
+					has: page.getByTestId('saved-views-row-name').getByText(name, {
+						exact: true,
+					}),
+				}),
 
 		pick: async (name) => {
-			const select = views.select();
-			const box = await select.boundingBox();
-			await select.click({ position: { x: (box?.width ?? 40) - 8, y: 10 } });
-			await select.locator('input[role="combobox"]').fill(name);
-			await page
-				.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden)')
-				.locator('.ant-select-item-option')
-				.filter({ hasText: name })
-				.first()
-				.click();
-			await expect(page).toHaveURL(/viewName=/);
-			await expect(select).toContainText(name);
+			await views.search(name);
+			await views.row(name).getByTestId('saved-views-row-name').click();
+			await expect(page).toHaveURL(/viewKey=/);
+			await expect(views.current()).toContainText(name);
 		},
 
 		saveAs: async (name) => {
-			await page.getByTestId('explorer-save-view-open').click();
-			await page.getByTestId('save-view-name-input').fill(name);
+			await header().getByTestId('saved-views-create').click();
+			await page.getByTestId('save-view-name').fill(name);
 			const saved = page.waitForResponse(isViewsCall('POST'));
-			await page.getByTestId('save-view-btn').click();
+			await page.getByTestId('save-view-submit').click();
 			expect((await saved).ok()).toBe(true);
-			await expect(page).toHaveURL(/viewName=/);
+			await expect(page).toHaveURL(/viewKey=/);
+			await expect(views.current()).toContainText(name);
 		},
 
 		update: async () => {
+			await header().getByTestId('saved-views-save-changes').click();
 			const updated = page.waitForResponse(isViewsCall('PUT'));
-			await page.getByTestId('explorer-update-view').dispatchEvent('click');
+			await page.getByTestId('saved-views-save-changes-item-update').click();
 			expect((await updated).ok()).toBe(true);
 		},
 
 		clear: async () => {
-			await page.getByTestId('explorer-clear-view').dispatchEvent('click');
-			await expect(page).not.toHaveURL(/viewName=/);
+			await header().getByTestId('saved-views-clear').click();
+			await expect(page).not.toHaveURL(/viewKey=/);
 		},
-
-		gotoPage: async () => {
-			await page.goto(VIEWS_PAGE[source]);
-			await expect(page.getByTestId('saved-views-search')).toBeVisible();
-		},
-
-		search: async (text) => {
-			await page.getByTestId('saved-views-search').fill(text);
-		},
-
-		row: (name) =>
-			page.locator('[data-testid^="saved-view-row-"]').filter({
-				has: page.getByTestId('saved-view-name').getByText(name, { exact: true }),
-			}),
 
 		rename: async (name, next) => {
-			await views.row(name).getByTestId('edit-view').click();
-			await page.getByTestId('view-name').fill(next);
+			await openRowMenu(name);
+			await page.getByTestId('saved-views-row-menu-item-editDetails').click();
+			await page.getByTestId('save-view-name').fill(next);
 			const updated = page.waitForResponse(isViewsCall('PUT'));
-			await page.getByTestId('save-view').click();
+			await page.getByTestId('save-view-submit').click();
 			expect((await updated).ok()).toBe(true);
 		},
 
 		remove: async (name) => {
-			await views.row(name).getByTestId('delete-view').click();
+			await openRowMenu(name);
+			await page.getByTestId('saved-views-row-menu-item-delete').click();
 			const deleted = page.waitForResponse(isViewsCall('DELETE'));
-			await page.getByTestId('confirm-delete').click();
+			await page.getByTestId('delete-saved-view-confirm').click();
 			expect((await deleted).ok()).toBe(true);
 			await expect(views.row(name)).toHaveCount(0);
 		},
 
-		open: async (name) => {
-			await views.row(name).getByTestId('go-to-explorer').click();
-			await expect(page).toHaveURL(/viewName=/);
-		},
-
 		create: async (name, seed) => {
-			const body = await api.post<{ data: string }>(VIEWS_API, {
-				name,
-				sourcePage: source,
-				extraData: JSON.stringify({ color: '#4E74F8' }),
-				compositeQuery: {
-					queryType: 'builder',
-					panelType: seed.panelType ?? 'list',
-					builderQueries: {
-						A: {
-							queryName: 'A',
-							dataSource: dataSource(seed),
-							aggregateOperator: 'noop',
-							expression: 'A',
-							disabled: false,
-							stepInterval: 60,
-							filter: { expression: seed.expression },
-							filters: { op: 'AND', items: [] },
-							groupBy: [],
-							orderBy: [{ columnName: 'timestamp', order: 'desc' }],
-							limit: 0,
-							offset: 0,
-							pageSize: 0,
-						},
-					},
+			const panelType = seed.panelType ?? 'list';
+			const view = {
+				generateName: true,
+				source: source as SavedviewtypesSourceDTO,
+				schemaVersion: 'v2' as SavedviewtypesSchemaVersionDTO,
+				spec: {
+					displayName: name,
+					panelType: panelType as SavedviewtypesPanelTypeDTO,
+					requestType: REQUEST_TYPE[panelType] as Querybuildertypesv5RequestTypeDTO,
 					queries: [
 						{
 							type: 'builder_query',
@@ -193,14 +190,14 @@ export function savedViewsDriver(page: Page, source: ViewSource): SavedViews {
 						},
 					],
 				},
-			});
-			return body.data;
+			} as SavedviewtypesPostableSavedViewDTO;
+			return api.create(VIEWS_API, view);
 		},
 
 		list: async () =>
 			(
-				await api.get<{ data: ExplorerView[] | null }>(
-					`${VIEWS_API}?sourcePage=${source}`,
+				await api.get<Envelope<SavedviewtypesSavedViewDTO[] | null>>(
+					`${VIEWS_API}?source=${source}`,
 				)
 			).data ?? [],
 
@@ -208,7 +205,7 @@ export function savedViewsDriver(page: Page, source: ViewSource): SavedViews {
 			const all = await views.list();
 			await Promise.all(
 				all
-					.filter((view) => view.name.startsWith(prefix))
+					.filter((view) => view.spec.displayName.startsWith(prefix))
 					.map((view) => api.tryDel(`${VIEWS_API}/${view.id}`)),
 			);
 		},

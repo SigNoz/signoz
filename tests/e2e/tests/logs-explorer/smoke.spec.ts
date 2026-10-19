@@ -76,21 +76,19 @@ test.describe('Logs Explorer — smoke', () => {
 		expect(noise.failedResponses).toEqual([]);
 	});
 
-	test('TC-05 the logs tabs and the index-fields page load', async ({
+	test('TC-05 the views list, the pipelines tab and the index-fields page load', async ({
 		logs,
 		pipelines,
 		views,
 		noise,
 	}) => {
 		await logs.goto();
+		await views.openList();
 
 		await logs.openTab('Pipelines');
 		await expect(
 			pipelines.newPipelineButton().or(pipelines.editModeButton()),
 		).toBeVisible();
-
-		await logs.openTab('Views');
-		await expect(views.searchBox()).toBeVisible();
 
 		await logs.gotoIndexFields();
 		expect(noise.errors).toEqual([]);

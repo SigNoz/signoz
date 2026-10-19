@@ -1,9 +1,9 @@
 import { expect, test } from '../../drivers/metrics';
 
-// The metrics views page over views seeded through the API. Search, edit and
-// delete component behaviour is jest (pages/SaveView/__test__); the API
-// lifecycle is tests/integration/tests/savedview. This spec keeps one real
-// round trip.
+// The metrics explorer's views list over views seeded through the API. Search,
+// edit and delete component behaviour is jest (container/SavedViews/__tests__);
+// the API lifecycle is tests/integration/tests/savedview. This spec keeps one
+// real round trip.
 
 const gaugeAverage = (metricName: string): Record<string, unknown> => ({
 	aggregations: [
@@ -12,7 +12,8 @@ const gaugeAverage = (metricName: string): Record<string, unknown> => ({
 });
 
 test.describe('Metrics explorer views', () => {
-	test('TC-01 the views page lists a seeded view (smoke)', async ({
+	test('TC-01 the views list shows a seeded view (smoke)', async ({
+		metricsExplorer: explorer,
 		metricsCatalog: seed,
 		savedViews,
 		noise,
@@ -26,7 +27,7 @@ test.describe('Metrics explorer views', () => {
 		});
 
 		try {
-			await savedViews.gotoPage();
+			await explorer.goto();
 			await savedViews.search(name);
 			await expect(savedViews.row(name)).toBeVisible();
 
@@ -42,7 +43,7 @@ test.describe('Metrics explorer views', () => {
 
 	test('TC-02 rename and delete persist through the API', async ({
 		authedPage: page,
-		metrics,
+		metricsExplorer: explorer,
 		metricsCatalog: seed,
 		savedViews,
 	}) => {
@@ -56,10 +57,9 @@ test.describe('Metrics explorer views', () => {
 		});
 
 		try {
-			await savedViews.gotoPage();
+			await explorer.goto();
 			await savedViews.search(name);
 			await savedViews.rename(name, renamed);
-			await expect(metrics.toast('View Updated Successfully')).toBeVisible();
 
 			await page.reload();
 			await savedViews.search(renamed);

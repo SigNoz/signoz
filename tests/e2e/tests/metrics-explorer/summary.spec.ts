@@ -36,7 +36,7 @@ test.describe('Metrics explorer summary', () => {
 		await expect(metrics.cell(seed.sum, 'DESCRIPTION')).toHaveText('-');
 
 		await expect(metrics.treemap()).toBeVisible();
-		for (const tab of ['Summary', 'Explorer', 'Views'] as const) {
+		for (const tab of ['Summary', 'Explorer'] as const) {
 			await expect(metrics.tab(tab)).toBeVisible();
 		}
 

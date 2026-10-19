@@ -37,11 +37,11 @@ test.describe('Meter', () => {
 		await expect(explorer.addToDashboardButton()).toHaveCount(0);
 	});
 
-	test('TC-03 a seeded meter view is listed and opens the meter explorer', async ({
+	test('TC-03 a seeded meter view is listed and opens in the meter explorer', async ({
 		authedPage: page,
 		meter,
 	}) => {
-		const { views } = meter;
+		const { explorer, views } = meter;
 		const prefix = `e2e-meter-view-${Date.now()}`;
 		const name = `${prefix}-a`;
 		await views.create(name, {
@@ -59,11 +59,11 @@ test.describe('Meter', () => {
 		});
 
 		try {
-			await views.gotoPage();
+			await explorer.goto();
 			await views.search(name);
 			await expect(views.row(name)).toBeVisible();
 
-			await views.open(name);
+			await views.pick(name);
 			await expect(page).toHaveURL(/\/meter\/explorer\?/);
 		} finally {
 			await views.removeByPrefix(prefix);

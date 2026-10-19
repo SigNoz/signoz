@@ -5,25 +5,24 @@ test.describe('Logs Explorer — saved views', () => {
 		await views.removeByPrefix(views.prefix);
 	});
 
-	test('TC-01 the views page lists a seeded view and opens it in the explorer', async ({
+	test('TC-01 the views list shows a seeded view and selecting it loads the view', async ({
 		logs,
 		logsSeed,
 		views,
 	}) => {
 		const name = views.name('tc01');
 		await views.create(name, { expression: serviceFilter(logsSeed.service) });
+		await logs.goto();
 
-		await views.gotoPage();
 		await views.search(name);
 		await expect(views.row(name)).toBeVisible();
-		await views.open(name);
+		await views.pick(name);
 
 		await logs.search.expectContains(logsSeed.service);
 		await expect(logs.rowByBody(logsSeed.recent[0])).toBeVisible();
-		await expect(views.select()).toContainText(name);
 	});
 
-	test('TC-02 a view saved from the explorer appears on the views page', async ({
+	test('TC-02 a view saved from the explorer appears in the views list', async ({
 		logs,
 		logsSeed,
 		views,
@@ -39,10 +38,8 @@ test.describe('Logs Explorer — saved views', () => {
 		await views.saveAs(name);
 
 		expect(await views.names()).toContain(name);
-		await views.gotoPage();
-		await views.search(name);
-		await expect(views.row(name)).toBeVisible();
-		await views.open(name);
+		await views.clear();
+		await views.pick(name);
 		await logs.search.expectContains("e2e.kind = 'even'");
 	});
 
@@ -69,19 +66,20 @@ test.describe('Logs Explorer — saved views', () => {
 		await expect(logs.rowByBody(logsSeed.recent[1])).toHaveCount(0);
 	});
 
-	test('TC-04 renaming a view on the views page persists after a reload', async ({
+	test('TC-04 renaming a view in the views list persists after a reload', async ({
+		logs,
 		logsSeed,
 		views,
 	}) => {
 		const name = views.name('tc04');
 		const renamed = `${name}-renamed`;
 		await views.create(name, { expression: serviceFilter(logsSeed.service) });
-		await views.gotoPage();
+		await logs.goto();
 		await views.search(name);
 
 		await views.rename(name, renamed);
 
-		await views.gotoPage();
+		await logs.goto();
 		await views.search(name);
 		await expect(views.row(renamed)).toBeVisible();
 		await expect(views.row(name)).toHaveCount(0);
@@ -90,22 +88,21 @@ test.describe('Logs Explorer — saved views', () => {
 		expect(names).not.toContain(name);
 	});
 
-	test('TC-05 deleting a view removes it from the page and from the explorer select', async ({
+	test('TC-05 deleting a view removes it from the views list', async ({
 		logs,
 		logsSeed,
 		views,
 	}) => {
 		const name = views.name('tc05');
 		await views.create(name, { expression: serviceFilter(logsSeed.service) });
-		await views.gotoPage();
+		await logs.goto();
 		await views.search(name);
 
 		await views.remove(name);
 
 		expect(await views.names()).not.toContain(name);
-		await logs.gotoUntil(logsSeed.recent[0], {
-			expression: serviceFilter(logsSeed.service),
-		});
-		await views.expectNotInSelect(name);
+		await logs.goto();
+		await views.search(name);
+		await expect(views.row(name)).toHaveCount(0);
 	});
 });

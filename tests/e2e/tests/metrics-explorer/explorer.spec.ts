@@ -108,8 +108,7 @@ test.describe('Metrics explorer', () => {
 		}
 	});
 
-	test('TC-04 Save view round trips through the views page', async ({
-		authedPage: page,
+	test('TC-04 Save view round trips through the views list', async ({
 		metricsExplorer: explorer,
 		metricsCatalog: seed,
 		savedViews,
@@ -122,15 +121,12 @@ test.describe('Metrics explorer', () => {
 			await explorer.pickMetric(seed.gauge);
 			await explorer.run();
 			await savedViews.saveAs(name);
-			await expect(page).toHaveURL(/viewKey=/);
 
-			await savedViews.gotoPage();
-			await savedViews.search(name);
-			await expect(savedViews.row(name)).toBeVisible();
+			await savedViews.clear();
+			await expect(explorer.metricInput()).not.toHaveValue(seed.gauge);
 
-			await savedViews.open(name);
+			await savedViews.pick(name);
 			await expect(explorer.metricInput()).toHaveValue(seed.gauge);
-			await expect(savedViews.select()).toContainText(name);
 		} finally {
 			await savedViews.removeByPrefix(prefix);
 		}

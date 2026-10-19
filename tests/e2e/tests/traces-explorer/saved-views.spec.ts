@@ -1,7 +1,7 @@
 import { expect, test } from '../../drivers/traces-explorer';
 
 test.describe('Traces explorer, saved views', () => {
-	test('TC-01 a view saved from the explorer appears on the saved-views page', async ({
+	test('TC-01 a view saved from the explorer appears in the views list', async ({
 		traces,
 		tracesExplorerSeed: seed,
 	}) => {
@@ -11,10 +11,9 @@ test.describe('Traces explorer, saved views', () => {
 		await traces.switchView('table');
 		await traces.views.saveAs(name);
 
-		await expect(traces.toast('View Saved Successfully')).toBeVisible();
+		await expect(traces.toast('View created')).toBeVisible();
 		expect(traces.urlParam('viewKey')).toBeTruthy();
 
-		await traces.views.gotoPage();
 		await traces.views.search(name);
 		await expect(traces.views.row(name)).toBeVisible();
 	});
@@ -29,9 +28,8 @@ test.describe('Traces explorer, saved views', () => {
 			panelType: 'trace',
 		});
 
-		await traces.views.gotoPage();
-		await traces.views.search(name);
-		await traces.views.open(name);
+		await traces.goto();
+		await traces.views.pick(name);
 
 		await expect(async () => {
 			expect(traces.panelType()).toBe('trace');
@@ -55,9 +53,11 @@ test.describe('Traces explorer, saved views', () => {
 		await traces.search.apply(next);
 		await traces.views.update();
 
-		await expect(traces.toast('View Updated Successfully')).toBeVisible();
-		const stored = (await traces.views.list()).find((view) => view.name === name);
-		expect(JSON.stringify(stored?.compositeQuery)).toContain(
+		await expect(traces.toast('View updated')).toBeVisible();
+		const stored = (await traces.views.list()).find(
+			(view) => view.spec.displayName === name,
+		);
+		expect(JSON.stringify(stored?.spec.queries)).toContain(
 			"name = 'GET /orders'",
 		);
 
@@ -65,7 +65,7 @@ test.describe('Traces explorer, saved views', () => {
 		await traces.search.expectContains("name = 'GET /orders'");
 	});
 
-	test('TC-04 rename and delete round-trip through the API', async ({
+	test('TC-04 rename and delete in the views list persist through the API', async ({
 		traces,
 		tracesExplorerSeed: seed,
 	}) => {
@@ -75,25 +75,27 @@ test.describe('Traces explorer, saved views', () => {
 			expression: `service.name = '${seed.service}'`,
 		});
 
-		await traces.views.gotoPage();
+		await traces.goto();
 		await traces.views.search(seed.stamp);
 		await traces.views.rename(before, after);
 
-		await traces.views.gotoPage();
+		await traces.reload();
 		await traces.views.search(seed.stamp);
 		await expect(traces.views.row(after)).toBeVisible();
 		await expect(traces.views.row(before)).toHaveCount(0);
 
-		await traces.views.open(after);
+		await traces.views.pick(after);
 		await traces.search.expectContains(seed.service);
 
-		await traces.views.gotoPage();
 		await traces.views.search(after);
 		await traces.views.remove(after);
 
-		await traces.views.gotoPage();
+		await traces.reload();
 		await traces.views.search(after);
 		await expect(traces.views.row(after)).toHaveCount(0);
+		expect(
+			(await traces.views.list()).map((view) => view.spec.displayName),
+		).not.toContain(after);
 	});
 
 	test('TC-05 clearing a loaded view resets the explorer', async ({
