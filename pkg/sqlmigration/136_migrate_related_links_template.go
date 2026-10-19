@@ -64,7 +64,8 @@ var (
 		"jsmops":     relatedLinksJSMOpsKind,
 	}
 
-	errRelatedLinksCustomised = errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "related links section differs from the shipped defaults")
+	errRelatedLinksCustomised   = errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "related links section differs from the shipped defaults")
+	errRelatedLinksUnrecognised = errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "related links section not in the expected shape")
 )
 
 type migrateRelatedLinksTemplate struct {
@@ -336,6 +337,9 @@ func rewriteRelatedLinks(tmpl string, kind relatedLinksChannelKind) (string, boo
 	chunks := lexRelatedLinksChunks(tmpl)
 	start, end, found := findRelatedLinksSection(tmpl, chunks)
 	if !found {
+		if indexRelatedLinksAction(chunks, 0, "related_logs") >= 0 || indexRelatedLinksAction(chunks, 0, "related_traces") >= 0 {
+			return tmpl, false, errRelatedLinksUnrecognised
+		}
 		return tmpl, false, nil
 	}
 
