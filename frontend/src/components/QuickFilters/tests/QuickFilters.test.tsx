@@ -395,6 +395,70 @@ describe('Quick Filters with custom filters', () => {
 		});
 	});
 
+	it('hides trace_id and span_id from saved and suggested filters', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		server.use(
+			rest.get(quickFiltersListURL, (_req, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						...quickFiltersListResponse,
+						data: {
+							...quickFiltersListResponse.data,
+							filters: [
+								...quickFiltersListResponse.data.filters,
+								{ name: 'trace_id', fieldDataType: 'string', fieldContext: 'span' },
+							],
+						},
+					}),
+				),
+			),
+			rest.get(quickFiltersSuggestionsURL, (_req, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						status: 'success',
+						data: {
+							complete: true,
+							keys: {
+								[FILTER_K8S_DEPLOYMENT_NAME]: [
+									{
+										name: FILTER_K8S_DEPLOYMENT_NAME,
+										fieldContext: 'resource',
+										fieldDataType: 'string',
+									},
+								],
+								trace_id: [
+									{ name: 'trace_id', fieldContext: 'log', fieldDataType: 'string' },
+									{
+										name: 'trace_id',
+										fieldContext: 'attribute',
+										fieldDataType: 'string',
+									},
+								],
+								span_id: [
+									{ name: 'span_id', fieldContext: 'log', fieldDataType: 'string' },
+								],
+							},
+						},
+					}),
+				),
+			),
+		);
+
+		render(<TestQuickFilters signal={SIGNAL} />);
+		await screen.findByText(FILTER_SERVICE_NAME);
+		expect(screen.queryByText('Trace Id')).not.toBeInTheDocument();
+
+		const icon = await screen.findByTestId(SETTINGS_ICON_TEST_ID);
+		const settingsButton = icon.closest('button') ?? icon;
+		await user.click(settingsButton);
+
+		await screen.findByText(FILTER_K8S_DEPLOYMENT_NAME);
+		expect(screen.queryByText('trace_id')).not.toBeInTheDocument();
+		expect(screen.queryByText('span_id')).not.toBeInTheDocument();
+	});
+
 	it('adds a filter from OTHER FILTERS to ADDED FILTERS when clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
