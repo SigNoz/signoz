@@ -34,3 +34,19 @@ def test_last_observed_at_is_flushed(signoz: types.SigNoz, get_token: Callable[[
         time.sleep(1)
 
     raise AssertionError("last_observed_at was not flushed to the sql store within 30s")
+
+
+def test_logout_revokes_token(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
+    """Verify a token stops authenticating once its session is deleted."""
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    me = signoz.self.host_configs["8080"].get("/api/v2/users/me")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    response = requests.get(me, headers=headers, timeout=5)
+    assert response.status_code == HTTPStatus.OK
+
+    response = requests.delete(signoz.self.host_configs["8080"].get("/api/v2/sessions"), headers=headers, timeout=5)
+    assert response.status_code == HTTPStatus.NO_CONTENT
+
+    response = requests.get(me, headers=headers, timeout=5)
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
