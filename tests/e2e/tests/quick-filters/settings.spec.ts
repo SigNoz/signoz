@@ -1,24 +1,21 @@
-import { test, expect } from '../../fixtures/auth';
 import {
-	assertQuickFiltersSettingsDrawerOpen,
-	closeQuickFiltersSettingsPanel,
 	DEFAULT_CUSTOM_FILTERS,
-	gotoExplorerWithQuickFilters,
+	expect,
 	LOGS_EXPLORER_PATH,
-	openQuickFiltersSettingsPanel,
-	seedCustomFiltersViaApi,
-} from '../../helpers/quick-filters';
+	test,
+} from '../../drivers/explorers';
 
-// smoke tests for settings drawer in quick filters
 test.describe('Quick Filters — settings drawer', () => {
-	test('TC-01 logs explorer — settings gear opens a visible, populated drawer', async ({
-		authedPage: page,
+	test('TC-01 the settings gear opens a visible, populated drawer', async ({
+		quickFilters,
 	}) => {
-		await seedCustomFiltersViaApi(page, 'logs', DEFAULT_CUSTOM_FILTERS);
-		await gotoExplorerWithQuickFilters(page, LOGS_EXPLORER_PATH);
-		await openQuickFiltersSettingsPanel(page);
-		await assertQuickFiltersSettingsDrawerOpen(page, DEFAULT_CUSTOM_FILTERS);
-		await closeQuickFiltersSettingsPanel(page);
-		await expect(page.locator('.quick-filters')).toBeVisible();
+		await quickFilters.seed('logs', DEFAULT_CUSTOM_FILTERS);
+		await quickFilters.gotoExplorer(LOGS_EXPLORER_PATH);
+
+		await quickFilters.openSettings();
+		await quickFilters.expectSettingsOpen(DEFAULT_CUSTOM_FILTERS);
+		await quickFilters.closeSettings();
+
+		await expect(quickFilters.rail()).toBeVisible();
 	});
 });
