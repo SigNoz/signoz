@@ -6,22 +6,18 @@ import { randomBytes } from 'crypto';
 
 import { expect, type Locator, type Page } from '@playwright/test';
 
-import { ADMIN } from '../helpers/auth';
-import { authToken } from '../helpers/common';
-import {
-	createDashboardViaApi,
-	deleteDashboardViaApi,
-} from '../helpers/dashboards';
-import { seedPodMetricsViaSeeder } from '../helpers/infra-monitoring';
-import { gotoLogsExplorer } from '../helpers/logs-explorer';
+import { authToken } from './api';
+import { ADMIN } from './auth';
+import { dashboardsDriver } from './dashboards';
+import { seedPodMetricsViaSeeder } from './infra/pods';
+import { driver, kit, seeded } from './kit';
+import { logsExplorerDriver } from './logs/explorer';
 import {
 	gotoTraceUntilLoaded,
 	type LargeTrace,
 	loadLargeTrace,
 	seedTracesViaSeeder,
-} from '../helpers/trace-details';
-
-import { driver, kit, seeded } from './kit';
+} from './traces';
 
 // The react-router v5 -> v7 regression net. Router-sensitive mechanics (history
 // depth, POP, same-url suppression, the `newTab` branch) live here so the specs
@@ -103,7 +99,22 @@ export interface Routing {
 	): Promise<void>;
 	/** Hold every script requested during `body`, so lazy route chunks suspend. */
 	whileScriptsHeld(body: () => Promise<void>): Promise<void>;
+	/** The `Spinner` a route's Suspense fallback renders. */
+	suspenseFallback(): Locator;
+	/** Every console message and page error from now on; fills as the page runs. */
+	recordMessages(): string[];
+	/** `NotFound`, the catch-all route's screen. */
+	notFound(): Locator;
 	gotoLogsExplorer(): Promise<void>;
+	alerts: {
+		/** The rules table, or its empty state when nothing is seeded. */
+		landmark(): Locator;
+	};
+	settings: {
+		sidenav(): Locator;
+		/** An entry's testid is its `itemKey`. */
+		navItem(itemKey: string): Locator;
+	};
 	dashboards: {
 		gotoList(title?: string): Promise<void>;
 		/** Not `dashboard-title-0`: the search tokenises on hyphens and matches leftovers. */
@@ -132,6 +143,7 @@ export interface Routing {
 		cancel(): Promise<void>;
 		save(): Promise<void>;
 		discardDialog(): Locator;
+		discardDialogButton(name: 'Keep editing' | 'Discard'): Locator;
 		settings(): Locator;
 		removeByName(names: string[]): Promise<void>;
 	};
@@ -236,7 +248,30 @@ export function routingDriver(page: Page): Routing {
 			}
 		},
 
-		gotoLogsExplorer: () => gotoLogsExplorer(page),
+		suspenseFallback: () => page.getByRole('img', { name: 'loading' }).first(),
+
+		recordMessages: () => {
+			const messages: string[] = [];
+			page.on('pageerror', (error) => messages.push(error.message));
+			page.on('console', (message) => messages.push(message.text()));
+			return messages;
+		},
+
+		notFound: () => page.getByTestId('not-found'),
+
+		gotoLogsExplorer: () => logsExplorerDriver(page).goto(),
+
+		alerts: {
+			landmark: () =>
+				page
+					.getByRole('heading', { name: 'Alert Rules' })
+					.or(page.getByTestId('list-alerts-search-input')),
+		},
+
+		settings: {
+			sidenav: () => page.getByTestId('settings-page-sidenav'),
+			navItem: (itemKey) => page.getByTestId(itemKey),
+		},
 
 		dashboards: {
 			gotoList: async (title) => {
@@ -307,6 +342,8 @@ export function routingDriver(page: Page): Routing {
 				await page.getByTestId('save-button').click();
 			},
 			discardDialog: () => page.getByTestId('discard-changes-dialog'),
+			discardDialogButton: (name) =>
+				page.getByTestId('discard-changes-dialog').getByRole('button', { name }),
 			settings: () => page.getByTestId('roles-settings'),
 			removeByName: async (names) => {
 				const headers = { Authorization: `Bearer ${await authToken(page)}` };
@@ -346,11 +383,10 @@ const withDashboard = seeded(
 	'dashboard',
 	async ({ page }) => {
 		const title = `routing-${uniqueSuffix()}`;
-		const id = await createDashboardViaApi(page, title);
+		const { id } = await dashboardsDriver(page).create(title);
 		return { id, title, path: `${PATH.dashboards}/${id}` };
 	},
-	async ({ page, value }) =>
-		deleteDashboardViaApi(page.request, value.id, await authToken(page)),
+	async ({ page, value }) => dashboardsDriver(page).remove(value.id),
 );
 
 const withTrace = seeded(
