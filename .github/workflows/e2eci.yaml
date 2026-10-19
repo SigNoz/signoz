@@ -2,9 +2,6 @@ name: e2eci
 
 on:
   pull_request:
-  merge_group:
-    types:
-      - checks_requested
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -12,7 +9,6 @@ concurrency:
 
 jobs:
   changes:
-    if: github.event_name != 'merge_group'
     runs-on: ubuntu-latest
     outputs:
       e2e: ${{ steps.changes.outputs.e2e }}
