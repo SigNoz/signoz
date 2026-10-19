@@ -36,7 +36,10 @@ describe('BillingContainer - AuthZ', () => {
 			screen.findByRole('columnheader', { name: /data ingested/i }),
 		).resolves.toBeInTheDocument();
 		await waitFor(() => {
-			expect(screen.getByTestId('header-billing-button')).toBeEnabled();
+			expect(screen.getByTestId('header-billing-button')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 		expect(screen.queryByText(/not authorized/i)).not.toBeInTheDocument();
 	});
@@ -61,9 +64,15 @@ describe('BillingContainer - AuthZ', () => {
 		render(<BillingContainer />);
 
 		await waitFor(() => {
-			expect(screen.getByTestId('header-billing-button')).toBeDisabled();
+			expect(screen.getByTestId('header-billing-button')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
-		expect(screen.getByTestId('upgrade-plan-button')).toBeDisabled();
+		expect(screen.getByTestId('upgrade-plan-button')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('disables manage billing when subscription update is denied', async () => {
@@ -82,7 +91,10 @@ describe('BillingContainer - AuthZ', () => {
 		);
 
 		await waitFor(() => {
-			expect(screen.getByTestId('header-billing-button')).toBeDisabled();
+			expect(screen.getByTestId('header-billing-button')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 		expect(screen.queryByTestId('upgrade-plan-button')).not.toBeInTheDocument();
 	});
@@ -107,7 +119,10 @@ describe('BillingContainer - AuthZ', () => {
 		);
 
 		await waitFor(() => {
-			expect(screen.getByTestId('header-billing-button')).toBeDisabled();
+			expect(screen.getByTestId('header-billing-button')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 	});
 });

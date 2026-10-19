@@ -72,7 +72,9 @@ describe('LegacyDashboardDialog', () => {
 		// Retry is gated on dashboard:update, so it starts disabled until the check
 		// resolves.
 		await waitFor(() =>
-			expect(screen.getByTestId('legacy-dashboard-retry-migration')).toBeEnabled(),
+			expect(
+				screen.getByTestId('legacy-dashboard-retry-migration'),
+			).not.toHaveAttribute('aria-disabled', 'true'),
 		);
 		await userEvent.click(screen.getByTestId('legacy-dashboard-retry-migration'));
 		expect(mockRetryMigration).toHaveBeenCalledWith(DASHBOARD_ID);
@@ -81,8 +83,13 @@ describe('LegacyDashboardDialog', () => {
 	it('blocks retry and close while the migration is in flight', () => {
 		isMigrating = true;
 		setup();
-		expect(screen.getByTestId('legacy-dashboard-retry-migration')).toBeDisabled();
-		expect(screen.getByTestId('legacy-dashboard-close')).toBeDisabled();
+		expect(
+			screen.getByTestId('legacy-dashboard-retry-migration'),
+		).toHaveAttribute('aria-disabled', 'true');
+		expect(screen.getByTestId('legacy-dashboard-close')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('keeps the support path available', () => {

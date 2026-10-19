@@ -25,20 +25,20 @@ describe('PermissionEditor', () => {
 		it('defaults to interactive mode', async () => {
 			await renderCreateRolePage();
 
-			const interactiveRadio = screen.getByTestId(
+			const interactiveToggle = screen.getByTestId(
 				'permission-editor-mode-interactive',
 			);
-			expect(interactiveRadio).toBeChecked();
+			expect(interactiveToggle).toHaveAttribute('aria-pressed', 'true');
 		});
 
 		it('switches to JSON mode when clicked', async () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
 
-			const jsonRadio = screen.getByTestId('permission-editor-mode-json');
-			await user.click(jsonRadio);
+			const jsonToggle = screen.getByTestId('permission-editor-mode-json');
+			await user.click(jsonToggle);
 
-			expect(jsonRadio).toBeChecked();
+			expect(jsonToggle).toHaveAttribute('aria-pressed', 'true');
 			expect(screen.getByTestId('json-editor')).toBeInTheDocument();
 		});
 
@@ -46,15 +46,15 @@ describe('PermissionEditor', () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
 
-			const jsonRadio = screen.getByTestId('permission-editor-mode-json');
-			await user.click(jsonRadio);
+			const jsonToggle = screen.getByTestId('permission-editor-mode-json');
+			await user.click(jsonToggle);
 
-			const interactiveRadio = screen.getByTestId(
+			const interactiveToggle = screen.getByTestId(
 				'permission-editor-mode-interactive',
 			);
-			await user.click(interactiveRadio);
+			await user.click(interactiveToggle);
 
-			expect(interactiveRadio).toBeChecked();
+			expect(interactiveToggle).toHaveAttribute('aria-pressed', 'true');
 			expect(screen.queryByTestId('json-editor')).not.toBeInTheDocument();
 		});
 	});
@@ -155,8 +155,8 @@ describe('PermissionEditor', () => {
 				'action-toggle-scope-factor-api-key-read',
 			);
 			expect(
-				within(scopeToggle).getByRole('radio', { name: 'None' }),
-			).toBeChecked();
+				within(scopeToggle).getByRole('button', { name: 'None' }),
+			).toHaveAttribute('aria-pressed', 'true');
 		});
 
 		it('changes scope to All when clicked', async () => {
@@ -176,8 +176,8 @@ describe('PermissionEditor', () => {
 				'action-toggle-scope-factor-api-key-read',
 			);
 			expect(
-				within(scopeToggle).getByRole('radio', { name: 'All' }),
-			).toBeChecked();
+				within(scopeToggle).getByRole('button', { name: 'All' }),
+			).toHaveAttribute('aria-pressed', 'true');
 		});
 
 		it('updates granted count when scope changed', async () => {
@@ -485,7 +485,7 @@ describe('PermissionEditor', () => {
 			const addBtn = screen.getByTestId(
 				'item-input-selector-add-btn-factor-api-key-read',
 			);
-			expect(addBtn).toBeDisabled();
+			expect(addBtn).toHaveAttribute('aria-disabled', 'true');
 		});
 	});
 

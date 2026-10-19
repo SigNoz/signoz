@@ -1,4 +1,10 @@
-import { act, fireEvent, screen, within } from '@testing-library/react';
+import {
+	act,
+	fireEvent,
+	screen,
+	waitFor,
+	within,
+} from '@testing-library/react';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -12,6 +18,7 @@ import {
 import SavedViewsPanel from '../SavedViewsPanel';
 import { mockSavedViewsApi } from './savedViewsApiMock';
 import {
+	expectUsable,
 	explorerUrl,
 	makeView,
 	queryWith,
@@ -110,6 +117,11 @@ async function renderPanel(
 		dataSource,
 	);
 	await screen.findByTestId('saved-views-list');
+	await waitFor(() =>
+		screen
+			.getAllByTestId('saved-views-row-name')
+			.forEach((name) => expectUsable(name)),
+	);
 	jest.useFakeTimers();
 }
 
@@ -140,6 +152,10 @@ describe('SavedViewHoverCard', () => {
 	});
 
 	afterEach(() => {
+		// useAuthZ batches checks on a timer; left pending, it blocks later checks.
+		act(() => {
+			jest.runOnlyPendingTimers();
+		});
 		jest.useRealTimers();
 	});
 
@@ -197,9 +213,7 @@ describe('SavedViewHoverCard', () => {
 			await renderPanel();
 			openCard('Errors');
 
-			fireEvent.pointerDown(
-				within(row('Errors')).getByTestId('saved-views-row-menu'),
-			);
+			fireEvent.click(within(row('Errors')).getByTestId('saved-views-row-menu'));
 
 			expect(card()).toBeNull();
 		});

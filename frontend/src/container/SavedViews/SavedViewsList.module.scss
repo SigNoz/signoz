@@ -41,7 +41,7 @@
 .row {
 	display: flex;
 	align-items: center;
-	gap: var(--spacing-2);
+	gap: var(--spacing-4);
 	height: var(--spacing-16);
 	padding-right: var(--spacing-4);
 	border-radius: var(--radius-2);
@@ -71,18 +71,9 @@
 
 .row:hover .rowMenu,
 .row:focus-within .rowMenu,
-.rowMenu:has([data-state='open']) {
+.rowMenu:has([data-popup-open]) {
 	width: auto;
 	opacity: 1;
-}
-
-.rowButton {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	min-width: var(--spacing-12);
-	height: var(--spacing-12);
-	padding: var(--spacing-1);
 }
 
 .rowName {
@@ -96,12 +87,7 @@
 
 	flex: 1;
 	min-width: 0;
-}
-
-.rowNameText {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+	height: 100%;
 }
 
 .loading {

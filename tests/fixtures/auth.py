@@ -36,28 +36,6 @@ USERS_BASE = "/api/v2/users"
 USER_ROLES_BASE = "/api/v2/user_roles"
 
 
-def _login(signoz: types.SigNoz, email: str, password: str) -> str:
-    """Complete GET /sessions/context + POST /sessions/email_password; return accessToken."""
-    ctx = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v2/sessions/context"),
-        params={
-            "email": email,
-            "ref": f"{signoz.self.host_configs['8080'].base()}",
-        },
-        timeout=5,
-    )
-    assert ctx.status_code == HTTPStatus.OK
-    org_id = ctx.json()["data"]["orgs"][0]["id"]
-
-    login = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v2/sessions/email_password"),
-        json={"email": email, "password": password, "orgId": org_id},
-        timeout=5,
-    )
-    assert login.status_code == HTTPStatus.OK
-    return login.json()["data"]["accessToken"]
-
-
 def register_admin(
     signoz: types.SigNoz,
     request: pytest.FixtureRequest,
@@ -182,16 +160,14 @@ def get_tokens(signoz: types.SigNoz) -> Callable[[str, str], tuple[str, str]]:
     return tokens_getter(signoz)
 
 
-@pytest.fixture(name="apply_license", scope="package")
-def apply_license(
+def license_applier(
     signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument,redefined-outer-name
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
+    cache_key: str = "apply_license",
+    base_path: str = "",
 ) -> types.Operation:
-    """Stub Zeus license-lookup, then POST /api/v4/licenses so the BE flips
-    to ENTERPRISE. Package-scoped so an e2e bootstrap can pull it in and
-    every spec inherits the licensed state."""
+    """Apply the ENTERPRISE license and complete org onboarding, under base_path. Reuse-wrapped."""
 
     def create() -> types.Operation:
         Config.base_url = signoz.zeus.host_configs["8080"].get("/__admin")
@@ -224,12 +200,12 @@ def apply_license(
             )
         )
 
-        access_token = _login(signoz, USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+        access_token = token_getter(signoz, base_path)(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
         # 201 = applied, 409 = already applied. Retry transient failures —
         # the BE occasionally 5xxs right after startup before the license
         # sync goroutine is ready.
-        license_url = signoz.self.host_configs["8080"].get("/api/v4/licenses")
+        license_url = signoz.self.host_configs["8080"].get(f"{base_path}/api/v4/licenses")
         auth_header = {"Authorization": f"Bearer {access_token}"}
         for attempt in range(10):
             resp = requests.post(
@@ -248,7 +224,7 @@ def apply_license(
         # redirects first-time admins to a questionnaire. Mark the preference
         # complete so specs can navigate directly to the feature under test.
         pref_resp = requests.put(
-            signoz.self.host_configs["8080"].get("/api/v1/org/preferences/org_onboarding"),
+            signoz.self.host_configs["8080"].get(f"{base_path}/api/v1/org/preferences/org_onboarding"),
             json={"value": True},
             headers=auth_header,
             timeout=5,
@@ -265,12 +241,25 @@ def apply_license(
     return reuse.wrap(
         request,
         pytestconfig,
-        "apply_license",
+        cache_key,
         lambda: types.Operation(name=""),
         create,
         delete,
         restore,
     )
+
+
+@pytest.fixture(name="apply_license", scope="package")
+def apply_license(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument,redefined-outer-name
+    request: pytest.FixtureRequest,
+    pytestconfig: pytest.Config,
+) -> types.Operation:
+    """Stub Zeus license-lookup, then POST /api/v4/licenses so the BE flips
+    to ENTERPRISE. Package-scoped so an e2e bootstrap can pull it in and
+    every spec inherits the licensed state."""
+    return license_applier(signoz, request, pytestconfig)
 
 
 # This is not a fixture purposefully, we just want to add a license to the signoz instance.

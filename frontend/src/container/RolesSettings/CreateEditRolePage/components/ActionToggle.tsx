@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { ConfirmDialog } from '@signozhq/ui/dialog';
 import { Divider } from '@signozhq/ui/divider';
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
 
 import { PermissionScope } from '../../types';
@@ -109,13 +109,14 @@ function ActionToggle({
 					<Typography as="span" size="base">
 						{displayLabel}
 					</Typography>
-					<ToggleGroupSimple
+					<ToggleGroup
+						variant="outlined"
+						color="secondary"
 						type="single"
 						size="sm"
 						value={scope}
 						onChange={handleToggleChange}
 						items={scopeItems}
-						className={styles.actionToggleScopeToggle}
 						testId={`action-toggle-scope-${resource}-${action}`}
 					/>
 				</div>

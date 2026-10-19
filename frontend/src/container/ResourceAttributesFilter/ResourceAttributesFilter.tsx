@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { SolidXCircle } from '@signozhq/icons';
-import { Button, Select, Spin } from 'antd';
+import { Button, Select, SelectProps, Spin } from 'antd';
 import useResourceAttribute, {
 	isResourceEmpty,
 } from 'hooks/useResourceAttribute';
@@ -18,6 +18,10 @@ import QueryChip from './components/QueryChip';
 import { QueryChipItem, SearchContainer } from './styles';
 
 import './ResourceAttributesFilter.styles.scss';
+
+const renderValueTag: SelectProps['tagRender'] = ({ label }) => (
+	<QueryChipItem>{label}</QueryChipItem>
+);
 
 function ResourceAttributesFilter({
 	suffixIcon,
@@ -119,6 +123,7 @@ function ResourceAttributesFilter({
 						style={{ flex: 1 }}
 						options={optionsData.options}
 						mode={optionsData?.mode}
+						tagRender={renderValueTag}
 						data-testid="resource-attributes-filter"
 						onClick={handleFocus}
 						onBlur={handleBlur}

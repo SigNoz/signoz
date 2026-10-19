@@ -546,17 +546,30 @@ func (m *Manager) deleteTask(taskName string) {
 // CreateRule stores rule def into db and also
 // starts an executor for the rule, unless the rule is disabled
 func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.GettableRule, error) {
+	parsedRule := ruletypes.PostableRule{}
+	if err := json.Unmarshal([]byte(ruleStr), &parsedRule); err != nil {
+		return nil, err
+	}
+
+	return m.createRule(ctx, parsedRule, ruleStr)
+}
+
+func (m *Manager) CreatePostableRule(ctx context.Context, rule *ruletypes.PostableRule) (*ruletypes.GettableRule, error) {
+	data, err := json.Marshal(rule)
+	if err != nil {
+		return nil, err
+	}
+
+	return m.createRule(ctx, *rule, string(data))
+}
+
+func (m *Manager) createRule(ctx context.Context, parsedRule ruletypes.PostableRule, data string) (*ruletypes.GettableRule, error) {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		return nil, err
-	}
-	parsedRule := ruletypes.PostableRule{}
-	err = json.Unmarshal([]byte(ruleStr), &parsedRule)
 	if err != nil {
 		return nil, err
 	}
@@ -579,7 +592,7 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 			CreatedBy: claims.Email,
 			UpdatedBy: claims.Email,
 		},
-		Data:  ruleStr,
+		Data:  data,
 		OrgID: claims.OrgID,
 	}
 
@@ -1106,7 +1119,7 @@ func (m *Manager) TestNotification(ctx context.Context, orgID valuer.UUID, ruleS
 		parsedRule.NotificationSettings.GroupBy = append(parsedRule.NotificationSettings.GroupBy, ruletypes.LabelThresholdName)
 	}
 	config := parsedRule.NotificationSettings.GetAlertManagerNotificationConfig()
-	err = m.alertmanager.SetNotificationConfig(ctx, orgID, parsedRule.AlertName, &config)
+	err = m.alertmanager.SetNotificationConfig(ctx, orgID, parsedRule.AlertName.StringValue(), &config)
 	if err != nil {
 		return 0, err
 	}

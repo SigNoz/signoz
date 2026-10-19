@@ -23,16 +23,14 @@
 }
 
 .item {
+	display: block;
+	overflow: hidden;
 	--button-display: flex;
 	--button-justify-content: flex-start;
 	--button-height: auto;
 	--button-padding: 8px 12px;
 	--button-border-radius: 0;
 	--button-font-size: 13px;
-	--button-line-height: 1.4;
-
-	width: 100%;
-	overflow: hidden;
 }
 
 .row {

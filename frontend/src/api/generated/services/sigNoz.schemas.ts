@@ -9878,6 +9878,28 @@ export interface PromotetypesPromotePathDTO {
 	signal: string;
 }
 
+export interface PromotetypesIndexMaterializedPathsResultDTO {
+	/**
+	 * @type array,null
+	 */
+	indexed: PromotetypesPromotePathDTO[] | null;
+	/**
+	 * @type array,null
+	 */
+	skipped: PromotetypesPromotePathDTO[] | null;
+}
+
+export interface PromotetypesPostableIndexMaterializedPathsDTO {
+	/**
+	 * @type boolean
+	 */
+	dryRun?: boolean;
+	/**
+	 * @type string
+	 */
+	signal: string;
+}
+
 export interface Querybuildertypesv5AggregationMetaDTO {
 	/**
 	 * @type array
@@ -11789,16 +11811,12 @@ export interface SpantypesThreadSpanDTO {
 	 * @type array
 	 */
 	events: SpantypesEventDTO[];
-	formatted_input: AiobservabilitytypesInputMessagesDTO;
-	formatted_output: AiobservabilitytypesOutputMessagesDTO;
-	/**
-	 * @type string
-	 */
-	formatter: string;
+	formattedInput: AiobservabilitytypesInputMessagesDTO;
+	formattedOutput: AiobservabilitytypesOutputMessagesDTO;
 	/**
 	 * @type array
 	 */
-	formatter_warnings: string[];
+	formatterWarnings: string[];
 	/**
 	 * @type boolean
 	 */
@@ -11914,6 +11932,12 @@ export interface SpantypesWaterfallSpanDTO {
 	 * @minimum 0
 	 */
 	flags?: number;
+	formattedInput?: AiobservabilitytypesInputMessagesDTO;
+	formattedOutput?: AiobservabilitytypesOutputMessagesDTO;
+	/**
+	 * @type array
+	 */
+	formatterWarnings?: string[];
 	/**
 	 * @type boolean
 	 */
@@ -13242,6 +13266,14 @@ export type ListPromotedPaths200 = {
 	 * @type array,null
 	 */
 	data: PromotetypesPromotePathDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type IndexMaterializedPaths200 = {
+	data: PromotetypesIndexMaterializedPathsResultDTO;
 	/**
 	 * @type string
 	 */
@@ -14580,6 +14612,17 @@ export type PatchRuleByID200 = {
 export type UpdateRuleByIDPathParameters = {
 	id: string;
 };
+export type CloneRuleByIDPathParameters = {
+	id: string;
+};
+export type CloneRuleByID201 = {
+	data: RuletypesRuleDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetRuleHistoryFilterKeysPathParameters = {
 	id: string;
 };

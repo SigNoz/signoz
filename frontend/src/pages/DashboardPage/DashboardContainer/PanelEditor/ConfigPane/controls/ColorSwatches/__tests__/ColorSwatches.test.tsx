@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 
 import ColorSwatches, { type ColorSwatchOption } from '../ColorSwatches';
 
@@ -23,23 +22,21 @@ function renderSwatches(
 	const onChange = jest.fn();
 	const onCustom = jest.fn();
 	render(
-		<TooltipProvider>
-			<ColorSwatches
-				testId="color"
-				label="Color"
-				value="default"
-				options={OPTIONS}
-				dividerAfter={1}
-				onChange={onChange}
-				custom={{
-					value: undefined,
-					initial: '#3A2A63',
-					onChange: onCustom,
-					pickerFooter: (hex) => <span data-testid="footer">{hex}</span>,
-				}}
-				{...props}
-			/>
-		</TooltipProvider>,
+		<ColorSwatches
+			testId="color"
+			label="Color"
+			value="default"
+			options={OPTIONS}
+			dividerAfter={1}
+			onChange={onChange}
+			custom={{
+				value: undefined,
+				initial: '#3A2A63',
+				onChange: onCustom,
+				pickerFooter: (hex) => <span data-testid="footer">{hex}</span>,
+			}}
+			{...props}
+		/>,
 	);
 	return { onChange, onCustom };
 }
