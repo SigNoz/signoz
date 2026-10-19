@@ -11,13 +11,13 @@ test.describe('Routing — route matching', () => {
 		await routing.goto(PATH.metricsSummary);
 		await expect(routing.activeRouteTab(PATH.metricsSummary)).toBeVisible();
 
-		await routing.routeTab(PATH.metricsViews).click();
-		await routing.waitForPath(PATH.metricsViews);
-		await expect(routing.activeRouteTab(PATH.metricsViews)).toBeVisible();
+		await routing.routeTab(PATH.metricsExplorer).click();
+		await routing.waitForPath(PATH.metricsExplorer);
+		await expect(routing.activeRouteTab(PATH.metricsExplorer)).toBeVisible();
 
 		await routing.reload();
-		expect(routing.url().pathname).toBe(PATH.metricsViews);
-		await expect(routing.activeRouteTab(PATH.metricsViews)).toBeVisible();
+		expect(routing.url().pathname).toBe(PATH.metricsExplorer);
+		await expect(routing.activeRouteTab(PATH.metricsExplorer)).toBeVisible();
 	});
 
 	test('TC-10 a prefix-route deep link loads with the right tab selected', async ({
