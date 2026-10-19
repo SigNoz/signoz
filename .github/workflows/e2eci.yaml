@@ -6,26 +6,39 @@ on:
     types:
       - checks_requested
 
+# When called, github.workflow is the caller's name, so a labeled run never
+# cancels this PR's own run.
 concurrency:
-  group: e2eci-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   changes:
-    if: github.event_name != 'merge_group'
     runs-on: ubuntu-latest
     outputs:
       e2e: ${{ steps.changes.outputs.e2e }}
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: changes
         id: changes
         env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+          EVENT_NAME: ${{ github.event_name }}
+          FORCE: ${{ contains(github.event.pull_request.labels.*.name, 'safe-to-e2e') }}
+          BASE_REF: ${{ github.base_ref || github.event.merge_group.base_ref }}
         run: |
-          files=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" --paginate --jq '.[].filename')
-          if grep -q '^frontend/' <<< "$files"; then
+          TARGET="origin/${BASE_REF}"
+          CHANGED_FILES=$(git diff --name-only "$TARGET"...HEAD -- . ':(exclude)tests/integration/*')
+          PATTERN='^(frontend/|tests/|\.github/workflows/e2eci\.yaml$|cmd/enterprise/Dockerfile\.with-web\.integration$)'
+
+          if [ "$FORCE" = "true" ]; then
             echo "e2e=true" >> "$GITHUB_OUTPUT"
+          elif printf '%s\n' "$CHANGED_FILES" | grep -qE "$PATTERN"; then
+            echo "e2e=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "e2e=false" >> "$GITHUB_OUTPUT"
           fi
   fmtlint:
     needs: changes
