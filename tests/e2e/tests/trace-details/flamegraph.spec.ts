@@ -56,12 +56,18 @@ test.describe('Trace details — flamegraph', () => {
 	}) => {
 		await hoverFlamegraphSpan(page, trace.landmarks.errors[0]);
 
-		// "status: error" only renders in the hover card (not in waterfall rows),
+		// The status row only renders in the hover card (not in waterfall rows),
 		// so it proves both that the card opened and that we hovered the right
 		// (error) span — the bar was targeted by id via the span→rect map.
-		await expect(page.getByText('status: error')).toBeVisible();
-		await expect(page.getByText(/start: [\d.]+ ms/)).toBeVisible();
-		await expect(page.getByText(/duration: [\d.]+/)).toBeVisible();
+		await expect(page.getByTestId('span-hover-card-status')).toHaveText(
+			/status\s*error/,
+		);
+		await expect(page.getByTestId('span-hover-card-start')).toHaveText(
+			/start\s*[\d.]+ ms/,
+		);
+		await expect(page.getByTestId('span-hover-card-duration')).toHaveText(
+			/duration\s*[\d.]+/,
+		);
 	});
 
 	test('TC-02 clicking a bar selects the span, opens the drawer, and syncs the waterfall row', async ({
