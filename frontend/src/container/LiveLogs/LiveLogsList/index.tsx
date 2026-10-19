@@ -259,8 +259,6 @@ function LiveLogsList({
 					selectedTab={selectedTab}
 					log={activeLog}
 					onClose={handleCloseLogDetail}
-					onAddToQuery={onAddToQuery}
-					onClickActionItem={onAddToQuery}
 					handleChangeSelectedView={handleChangeSelectedView}
 					logs={formattedLogs}
 					onNavigateLog={handleSetActiveLog}

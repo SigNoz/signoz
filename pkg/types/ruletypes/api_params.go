@@ -60,7 +60,7 @@ const (
 
 // PostableRule is used to create alerting rule from HTTP api.
 type PostableRule struct {
-	AlertName   string              `json:"alert" required:"true"`
+	AlertName   valuer.DisplayName  `json:"alert" required:"true"`
 	AlertType   AlertType           `json:"alertType" required:"true"`
 	Description string              `json:"description,omitempty"`
 	RuleType    RuleType            `json:"ruleType" required:"true"`
@@ -403,7 +403,7 @@ func (r *PostableRule) validate() error {
 func (r *PostableRule) Validate() error {
 	var errs []error
 
-	if r.AlertName == "" {
+	if r.AlertName.IsZero() {
 		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "alert: field is required"))
 	}
 
@@ -585,7 +585,7 @@ func (r *PostableRule) validateV2Alpha1() []error {
 }
 
 func testTemplateParsing(rl *PostableRule) (errs []error) {
-	if rl.AlertName == "" {
+	if rl.AlertName.IsZero() {
 		// Not an alerting rule.
 		return errs
 	}
@@ -597,7 +597,7 @@ func testTemplateParsing(rl *PostableRule) (errs []error) {
 		tmpl := NewTemplateExpander(
 			context.TODO(),
 			defs+text,
-			"__alert_"+rl.AlertName,
+			"__alert_"+rl.AlertName.StringValue(),
 			tmplData,
 			nil,
 		)
