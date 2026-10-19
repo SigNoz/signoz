@@ -1,11 +1,9 @@
-import { expect, test } from '../../fixtures/auth';
-import { newAdminContext } from '../../helpers/auth';
 import {
-	deleteSpanMapperGroupsByName,
-	gotoAttributeMapping,
-} from '../../helpers/llm-o11y/attribute-mapping';
-import { authToken } from '../../helpers/common';
-
+	expect,
+	llmO11yDriver,
+	onAdminPage,
+	test,
+} from '../../drivers/llm-o11y';
 test.describe.configure({ mode: 'serial' });
 
 const GROUP_NAME = 'e2e-attr-mapping-happy';
@@ -15,64 +13,58 @@ const TARGET_ATTR = 'gen_ai.content.prompt';
 const SOURCE_ATTR = 'my_company.llm.input';
 
 test.afterAll(async ({ browser }) => {
-	const ctx = await newAdminContext(browser);
-	const page = await ctx.newPage();
-	try {
-		const token = await authToken(page);
-		await deleteSpanMapperGroupsByName(ctx.request, token, [GROUP_NAME]);
-	} finally {
-		await ctx.close();
-	}
+	await onAdminPage(browser, (page) =>
+		llmO11yDriver(page).deleteSpanMapperGroups([GROUP_NAME]),
+	);
 });
 
 test.describe('LLM Observability — Attribute Mapping', () => {
 	test('basic flow: add a mapping, test it, then save it to the backend', async ({
 		authedPage: page,
+		llm,
 	}) => {
-		await gotoAttributeMapping(page);
+		await llm.gotoAttributeMapping();
 
-		await page.getByTestId('add-group-row').click();
-		const groupDrawer = page.getByTestId('group-form-drawer');
+		await llm.mapping.addGroup().click();
+		const groupDrawer = llm.mapping.groupDrawer();
 		await expect(groupDrawer).toBeVisible();
-		await page.getByTestId('group-form-name').fill(GROUP_NAME);
-		await page.getByTestId('group-form-attribute-add').click();
-		await page.getByTestId('group-form-attribute-0').fill(GROUP_CONDITION);
-		await page.getByTestId('group-form-save').click();
+		await llm.mapping.groupName().fill(GROUP_NAME);
+		await llm.mapping.addGroupAttribute().click();
+		await llm.mapping.groupAttribute(0).fill(GROUP_CONDITION);
+		await llm.mapping.saveGroup().click();
 		await expect(groupDrawer).toBeHidden();
 
-		const groupHeader = page
-			.locator('[data-testid^="group-expand-"]')
-			.filter({ hasText: GROUP_NAME });
+		const groupHeader = llm.mapping.groupHeader(GROUP_NAME);
 		await expect(groupHeader).toBeVisible();
 		await groupHeader.click();
 
-		await page.locator('[data-testid^="add-mapper-"]').click();
-		const mapperDrawer = page.getByTestId('mapper-form-drawer');
+		await llm.mapping.addMapper().click();
+		const mapperDrawer = llm.mapping.mapperDrawer();
 		await expect(mapperDrawer).toBeVisible();
 
-		await page.getByTestId('mapper-form-target').fill(TARGET_ATTR);
-		await page.getByTestId('mapper-form-source-0').fill(SOURCE_ATTR);
+		await llm.mapping.mapperTarget().fill(TARGET_ATTR);
+		await llm.mapping.mapperSource(0).fill(SOURCE_ATTR);
 
-		const mapperSave = page.getByTestId('mapper-form-save');
+		const mapperSave = llm.mapping.saveMapper();
 		await expect(mapperSave).toBeEnabled();
 		await mapperSave.click();
 		await expect(mapperDrawer).toBeHidden();
 
-		await expect(page.getByTestId('unsaved-changes')).toBeVisible();
+		await expect(llm.mapping.unsavedChanges()).toBeVisible();
 
-		await page.getByRole('tab', { name: 'Test' }).click();
-		await expect(page.getByTestId('test-tab')).toBeVisible();
+		await llm.mapping.tab('Test').click();
+		await expect(llm.mapping.testTab()).toBeVisible();
 
 		const testResponse = page.waitForResponse(
 			(r) =>
 				new URL(r.url()).pathname.endsWith('/span_mapper_groups/test') &&
 				r.request().method() === 'POST',
 		);
-		await page.getByTestId('run-test-button').click();
+		await llm.mapping.runTest().click();
 		expect((await testResponse).ok()).toBeTruthy();
 
-		await expect(page.getByTestId('test-error')).toHaveCount(0);
-		await expect(page.getByTestId('test-results')).toBeVisible();
+		await expect(llm.mapping.testError()).toHaveCount(0);
+		await expect(llm.mapping.testResults()).toBeVisible();
 
 		const createGroup = page.waitForResponse(
 			(r) =>
@@ -86,12 +78,12 @@ test.describe('LLM Observability — Attribute Mapping', () => {
 				) && r.request().method() === 'POST',
 		);
 
-		await page.getByTestId('save-changes-btn').click();
+		await llm.mapping.saveChanges().click();
 
 		expect((await createGroup).ok()).toBeTruthy();
 		expect((await createMapper).ok()).toBeTruthy();
 
-		await expect(page.getByText('Attribute mapping changes saved')).toBeVisible();
-		await expect(page.getByTestId('unsaved-changes')).toHaveCount(0);
+		await expect(llm.toast('Attribute mapping changes saved')).toBeVisible();
+		await expect(llm.mapping.unsavedChanges()).toHaveCount(0);
 	});
 });
