@@ -166,6 +166,11 @@ apiserver:
       - /api/v1/version
       - /
 
+##################### OpAMP #####################
+opamp:
+  # The TCP address the OpAMP websocket server listens on, in the form "host:port".
+  address: 0.0.0.0:4320
+
 ##################### Querier #####################
 querier:
   # The TTL for cached query results.
