@@ -1,21 +1,18 @@
 .container {
-	--control-height: 2rem;
-
 	display: flex;
 	flex-direction: column;
 	height: calc(100vh - 62px);
 	min-height: 400px;
+}
 
+.headerBand {
+	--control-height: 2rem;
 	--combobox-trigger-height: var(--control-height);
 	--select-trigger-height: var(--control-height);
 	--input-height: var(--control-height);
 	--input-wrapper-height: var(--control-height);
 	--button-height: var(--control-height);
-}
 
-/* Title, count and filters sit on the page surface, with matching space above
-   and below before the table starts. */
-.headerBand {
 	display: flex;
 	flex-direction: column;
 	gap: var(--spacing-6);
