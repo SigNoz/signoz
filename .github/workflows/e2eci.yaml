@@ -40,7 +40,7 @@ jobs:
       - name: node
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: 24
       - name: install-pnpm
         uses: pnpm/action-setup@v6
         with:
@@ -98,7 +98,7 @@ jobs:
       - name: node
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: 24
       - name: install-pnpm
         uses: pnpm/action-setup@v6
         with:
@@ -156,14 +156,6 @@ jobs:
         run: |
           cd tests/e2e && \
             pnpm playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}/4
-      - name: teardown-stack
-        if: always()
-        run: |
-          cd tests && \
-            uv run pytest \
-            --basetemp=./tmp/ \
-            -vv --teardown \
-            e2e/bootstrap/setup.py::test_teardown
       - name: upload-artifacts
         if: always()
         uses: actions/upload-artifact@v4
