@@ -49,6 +49,8 @@ This command will:
 
 The `--with-web` flag builds the frontend into the SigNoz container — required for E2E. The build takes ~4 mins on a cold start; later builds are incremental.
 
+Add `--no-race` to build SigNoz without the race detector. CI keeps it on.
+
 ### Rebuilding After Source Changes
 
 The `--with-web` image bakes the built frontend in, so neither backend nor frontend changes are picked up while `--reuse` keeps the container running. `--rebuild` fixes that for both: it kills the SigNoz container, rebuilds the image incrementally (go build cache + pnpm store — a frontend-only change rebuilds in about a minute), and starts a fresh one while databases, mocks, migrations, and the seeder stay reused. The setup command above passes it, so the iteration loop is: change code → re-run the setup command → re-run your specs. `--rebuild` requires `--reuse` and cannot be combined with `--teardown` or `--clean`.
@@ -356,6 +358,7 @@ The same pytest flags integration tests expose work here, since E2E reuses the s
 - `--teardown` — tear everything down.
 - `--clean` — prune the docker build caches, forcing the next image build to start cold.
 - `--with-web` — build the frontend into the SigNoz container. **Required for E2E**; integration tests don't need it.
+- `--no-race` — build SigNoz without the race detector. CI keeps it. Applies when the image is built: a fresh stack or `--rebuild`.
 - `--sqlstore-provider`, `--postgres-version`, `--clickhouse-version`, etc. — see `docs/contributing/tests/integration.md`.
 
 ## What should I remember?
