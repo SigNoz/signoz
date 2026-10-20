@@ -186,6 +186,31 @@ export const Telegram: Story = {
 };
 
 /**
+ * Telegram's own required fields. The chat id is the form's first numeric field,
+ * and the API treats 0 as missing, so an empty box has to report the same error
+ * as a blank one rather than sending a zero.
+ */
+export const TelegramRequiredFields: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+
+		await selectChannelType(canvasElement, /^Telegram$/);
+		await userEvent.type(
+			await canvas.findByTestId('channel-name-textbox'),
+			'alerts-telegram',
+		);
+		await userEvent.click(await canvas.findByTestId('save-channel-button'));
+
+		await screen.findByText(
+			'Bot token is mandatory for creating a telegram channel',
+		);
+		await screen.findByText(
+			'Chat ID is mandatory for creating a telegram channel',
+		);
+	},
+};
+
+/**
  * The fields the API rejects a save without are marked before anything is
  * submitted, so a long form does not have to be guessed at.
  */
