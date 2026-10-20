@@ -178,6 +178,13 @@ export const IncidentIO: Story = {
 	},
 };
 
+/** The Telegram form: the bot token, the chat it posts to and the message. */
+export const Telegram: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await selectChannelType(canvasElement, /^Telegram$/);
+	},
+};
+
 /**
  * The fields the API rejects a save without are marked before anything is
  * submitted, so a long form does not have to be guessed at.

@@ -178,3 +178,8 @@ export const JiraServiceManagementOps: Story = {
 export const IncidentIO: Story = {
 	args: { channelType: 'incidentio' },
 };
+
+/** A Telegram channel, with its bot token masked behind the password field. */
+export const Telegram: Story = {
+	args: { channelType: 'telegram' },
+};
