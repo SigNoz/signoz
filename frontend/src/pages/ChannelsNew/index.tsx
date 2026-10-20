@@ -1,7 +1,8 @@
 import AlertBreadcrumb from 'components/AlertBreadcrumb';
 import ROUTES from 'constants/routes';
-import CreateAlertChannels from 'container/CreateAlertChannels';
-import { ChannelType } from 'container/CreateAlertChannels/config';
+import history from 'lib/history';
+import ChannelForm from 'pages/AlertList/NotificationChannels/components/ChannelForm/ChannelForm';
+
 import styles from './styles.module.scss';
 
 function ChannelsNew(): JSX.Element {
@@ -10,11 +11,15 @@ function ChannelsNew(): JSX.Element {
 			<AlertBreadcrumb
 				items={[
 					{ title: 'Channels', route: ROUTES.ALL_CHANNELS },
-					{ title: 'New Channel', isLast: true },
+					{ title: 'New channel', isLast: true },
 				]}
 			/>
 			<div className={styles.content}>
-				<CreateAlertChannels preType={ChannelType.Slack} />
+				<ChannelForm
+					onDone={(): void => {
+						history.replace(ROUTES.ALL_CHANNELS);
+					}}
+				/>
 			</div>
 		</>
 	);
