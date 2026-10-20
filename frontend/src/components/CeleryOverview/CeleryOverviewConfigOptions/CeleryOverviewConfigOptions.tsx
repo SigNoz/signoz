@@ -129,7 +129,7 @@ function CeleryOverviewConfigOptions(): JSX.Element {
 		{
 			placeholder: 'Service Name',
 			queryParam: QueryParams.service,
-			filterType: 'serviceName',
+			filterType: 'service.name',
 		},
 		{
 			placeholder: 'Span Name',

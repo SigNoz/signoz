@@ -73,11 +73,9 @@ export default function CeleryTaskGraphGrid({
 
 	const { options } = useCeleryFilterOptions(
 		'worker',
-		'rate',
 		DataSource.METRICS,
 		'flower_task_runtime_seconds_sum',
 		DataTypes.String,
-		'tag',
 	);
 	const isDarkMode = useIsDarkMode();
 

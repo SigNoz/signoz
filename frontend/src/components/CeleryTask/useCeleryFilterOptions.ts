@@ -8,11 +8,9 @@ import { useGetAllFilters } from './CeleryTaskConfigOptions/useGetCeleryFilters'
 
 export const useCeleryFilterOptions = (
 	type: string | string[],
-	aggregateOperator?: string,
 	dataSource?: DataSource,
-	aggregateAttribute?: string,
+	metricName?: string,
 	filterAttributeKeyDataType?: DataTypes,
-	tagType?: string,
 ): {
 	searchText: string;
 	handleSearch: (value: string) => void;
@@ -23,11 +21,9 @@ export const useCeleryFilterOptions = (
 	const { isFetching, options } = useGetAllFilters({
 		attributeKey: type,
 		searchText,
-		aggregateOperator,
 		dataSource,
-		aggregateAttribute,
+		metricName,
 		filterAttributeKeyDataType,
-		tagType,
 	});
 	const handleDebouncedSearch = useDebouncedFn((searchText): void => {
 		setSearchText(searchText as string);
