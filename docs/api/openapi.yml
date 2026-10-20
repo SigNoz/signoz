@@ -410,11 +410,14 @@ components:
     AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfig:
       properties:
         kind:
+          description: The channel provider kind this variant accepts.
           enum:
           - telegram
           type: string
         spec:
-          $ref: '#/components/schemas/AlertmanagertypesChannelTelegramConfig'
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesChannelTelegramConfig'
+          description: The provider-specific configuration for this kind.
       required:
       - kind
       - spec

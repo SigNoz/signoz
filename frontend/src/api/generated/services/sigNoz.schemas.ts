@@ -1053,6 +1053,9 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 	spec: AlertmanagertypesChannelIncidentIOConfigDTO;
 }
 
+/**
+ * The channel provider kind this variant accepts.
+ */
 export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfigDTOKind {
 	telegram = 'telegram',
 }
@@ -1097,8 +1100,12 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 	/**
 	 * @enum telegram
 	 * @type string
+	 * @description The channel provider kind this variant accepts.
 	 */
 	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfigDTOKind;
+	/**
+	 * @description The provider-specific configuration for this kind.
+	 */
 	spec: AlertmanagertypesChannelTelegramConfigDTO;
 }
 
