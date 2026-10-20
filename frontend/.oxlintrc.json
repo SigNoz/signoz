@@ -582,6 +582,16 @@
       "rules": {
         "signoz/no-dashboard-fetch-outside-root": "off"
       }
+    },
+    {
+      // TypeScript reports real redeclarations; this rule also flags `const X` + `type X` pairs.
+      "files": [
+        "**/*.ts",
+        "**/*.tsx"
+      ],
+      "rules": {
+        "no-redeclare": "off"
+      }
     }
   ]
 }
