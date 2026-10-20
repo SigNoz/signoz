@@ -10055,16 +10055,22 @@ export interface MetricsexplorertypesInspectMetricsRequestDTO {
 	/**
 	 * @type integer
 	 * @format int64
+	 * @description End of the time range as a Unix timestamp in milliseconds. At most 30 minutes after start.
 	 */
 	end: number;
+	/**
+	 * @description Query builder filter over the metric attributes, for example host.name = 'web-1'. Omit for every series.
+	 */
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
 	 * @type string
+	 * @description The name of the metric to inspect.
 	 */
 	metricName: string;
 	/**
 	 * @type integer
 	 * @format int64
+	 * @description Start of the time range as a Unix timestamp in milliseconds. Must be greater than 0 and less than end.
 	 */
 	start: number;
 }
@@ -10126,6 +10132,7 @@ export interface Querybuildertypesv5TimeSeriesDTO {
 export interface MetricsexplorertypesInspectMetricsResponseDTO {
 	/**
 	 * @type array,null
+	 * @description Raw time series, each with its labels and timestamp-value pairs.
 	 */
 	series: Querybuildertypesv5TimeSeriesDTO[] | null;
 }
@@ -10140,20 +10147,30 @@ export enum MetrictypesTypeDTO {
 export interface MetricsexplorertypesListMetricDTO {
 	/**
 	 * @type string
+	 * @description Human-readable description from the metric metadata; empty when none was reported.
 	 */
 	description: string;
 	/**
 	 * @type boolean
+	 * @description True when the metric is a monotonically increasing Sum (a counter).
 	 */
 	isMonotonic: boolean;
 	/**
 	 * @type string
+	 * @description The name of the metric.
 	 */
 	metricName: string;
+	/**
+	 * @description Aggregation temporality of the metric: cumulative, delta or unspecified.
+	 */
 	temporality: MetrictypesTemporalityDTO;
+	/**
+	 * @description The metric type, such as gauge, sum, histogram, summary or exponentialhistogram.
+	 */
 	type: MetrictypesTypeDTO;
 	/**
 	 * @type string
+	 * @description The unit reported in the metric metadata, for example ms or By; empty when none was reported.
 	 */
 	unit: string;
 }
@@ -10161,6 +10178,7 @@ export interface MetricsexplorertypesListMetricDTO {
 export interface MetricsexplorertypesListMetricsResponseDTO {
 	/**
 	 * @type array,null
+	 * @description Matching metrics with their metadata, ordered by name.
 	 */
 	metrics: MetricsexplorertypesListMetricDTO[] | null;
 }
@@ -10168,10 +10186,12 @@ export interface MetricsexplorertypesListMetricsResponseDTO {
 export interface MetricsexplorertypesMetricAlertDTO {
 	/**
 	 * @type string
+	 * @description The id of the alert rule.
 	 */
 	alertId: string;
 	/**
 	 * @type string
+	 * @description The name of the alert rule that queries the metric.
 	 */
 	alertName: string;
 }
@@ -10179,6 +10199,7 @@ export interface MetricsexplorertypesMetricAlertDTO {
 export interface MetricsexplorertypesMetricAlertsResponseDTO {
 	/**
 	 * @type array,null
+	 * @description Alert rules whose queries reference the metric.
 	 */
 	alerts: MetricsexplorertypesMetricAlertDTO[] | null;
 }
@@ -10186,15 +10207,18 @@ export interface MetricsexplorertypesMetricAlertsResponseDTO {
 export interface MetricsexplorertypesMetricAttributeDTO {
 	/**
 	 * @type string
+	 * @description The attribute (label) name.
 	 */
 	key: string;
 	/**
 	 * @type integer
 	 * @minimum 0
+	 * @description Total number of distinct values observed, which can exceed the length of values.
 	 */
 	valueCount: number;
 	/**
 	 * @type array,null
+	 * @description Distinct values observed for the attribute, capped at 1000.
 	 */
 	values: string[] | null;
 }
@@ -10202,11 +10226,13 @@ export interface MetricsexplorertypesMetricAttributeDTO {
 export interface MetricsexplorertypesMetricAttributesResponseDTO {
 	/**
 	 * @type array,null
+	 * @description Attributes of the metric, ordered by distinct value count descending.
 	 */
 	attributes: MetricsexplorertypesMetricAttributeDTO[] | null;
 	/**
 	 * @type integer
 	 * @format int64
+	 * @description Number of attributes returned.
 	 */
 	totalKeys: number;
 }
@@ -10214,6 +10240,7 @@ export interface MetricsexplorertypesMetricAttributesResponseDTO {
 export interface MetricsexplorertypesMetricDashboardPanelsResponseDTO {
 	/**
 	 * @type array,null
+	 * @description One entry per dashboard panel whose query references the metric.
 	 */
 	dashboards: DashboardtypesDashboardPanelRefDTO[] | null;
 }
@@ -10222,21 +10249,25 @@ export interface MetricsexplorertypesMetricHighlightsResponseDTO {
 	/**
 	 * @type integer
 	 * @minimum 0
+	 * @description Number of distinct time series that reported in the last 120 minutes.
 	 */
 	activeTimeSeries: number;
 	/**
 	 * @type integer
 	 * @minimum 0
+	 * @description Total number of samples ingested for the metric.
 	 */
 	dataPoints: number;
 	/**
 	 * @type integer
 	 * @minimum 0
+	 * @description Unix timestamp in milliseconds of the most recently received sample.
 	 */
 	lastReceived: number;
 	/**
 	 * @type integer
 	 * @minimum 0
+	 * @description Number of distinct time series ever seen for the metric.
 	 */
 	totalTimeSeries: number;
 }
@@ -10244,16 +10275,25 @@ export interface MetricsexplorertypesMetricHighlightsResponseDTO {
 export interface MetricsexplorertypesMetricMetadataDTO {
 	/**
 	 * @type string
+	 * @description Human-readable description of the metric; empty when none was reported.
 	 */
 	description: string;
 	/**
 	 * @type boolean
+	 * @description True when the metric is a monotonically increasing Sum (a counter).
 	 */
 	isMonotonic: boolean;
+	/**
+	 * @description Aggregation temporality of the metric: cumulative, delta or unspecified.
+	 */
 	temporality: MetrictypesTemporalityDTO;
+	/**
+	 * @description The metric type, such as gauge, sum, histogram, summary or exponentialhistogram.
+	 */
 	type: MetrictypesTypeDTO;
 	/**
 	 * @type string
+	 * @description The unit of the metric values, for example ms or By; empty when none was reported.
 	 */
 	unit: string;
 }
@@ -10261,6 +10301,7 @@ export interface MetricsexplorertypesMetricMetadataDTO {
 export interface MetricsexplorertypesMetricsOnboardingResponseDTO {
 	/**
 	 * @type boolean
+	 * @description True when at least one metric not emitted by SigNoz itself has been ingested.
 	 */
 	hasMetrics: boolean;
 }
@@ -10268,25 +10309,33 @@ export interface MetricsexplorertypesMetricsOnboardingResponseDTO {
 export interface MetricsexplorertypesStatDTO {
 	/**
 	 * @type string
+	 * @description Human-readable description from the metric metadata; empty when none was reported.
 	 */
 	description: string;
 	/**
 	 * @type string
+	 * @description The name of the metric.
 	 */
 	metricName: string;
 	/**
 	 * @type integer
 	 * @minimum 0
+	 * @description Number of samples (data points) ingested for the metric in the requested time range.
 	 */
 	samples: number;
 	/**
 	 * @type integer
 	 * @minimum 0
+	 * @description Number of distinct time series seen for the metric in the requested time range.
 	 */
 	timeseries: number;
+	/**
+	 * @description The metric type, such as gauge, sum, histogram, summary or exponentialhistogram.
+	 */
 	type: MetrictypesTypeDTO;
 	/**
 	 * @type string
+	 * @description The unit reported in the metric metadata, for example ms or By; empty when none was reported.
 	 */
 	unit: string;
 }
@@ -10295,21 +10344,31 @@ export interface MetricsexplorertypesStatsRequestDTO {
 	/**
 	 * @type integer
 	 * @format int64
+	 * @description End of the time range as a Unix timestamp in milliseconds. Must be greater than start.
 	 */
 	end: number;
+	/**
+	 * @description Query builder filter over metric attributes, for example host.name = 'web-1'. A bare word matches the metric name. Omit for every metric.
+	 */
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
 	 * @type integer
+	 * @description Maximum number of metrics to return, between 1 and 5000.
 	 */
 	limit: number;
 	/**
 	 * @type integer
+	 * @description Number of metrics to skip for pagination. Must not be negative; defaults to 0.
 	 */
 	offset?: number;
+	/**
+	 * @description Sort order; key.name is timeseries or samples, direction is asc or desc. Defaults to samples descending.
+	 */
 	orderBy?: Querybuildertypesv5OrderByDTO;
 	/**
 	 * @type integer
 	 * @format int64
+	 * @description Start of the time range as a Unix timestamp in milliseconds. Must be greater than 0 and less than end.
 	 */
 	start: number;
 }
@@ -10317,11 +10376,13 @@ export interface MetricsexplorertypesStatsRequestDTO {
 export interface MetricsexplorertypesStatsResponseDTO {
 	/**
 	 * @type array,null
+	 * @description One entry per metric on the requested page, in the requested order.
 	 */
 	metrics: MetricsexplorertypesStatDTO[] | null;
 	/**
 	 * @type integer
 	 * @minimum 0
+	 * @description Total number of metrics matching the filter across all pages.
 	 */
 	total: number;
 }
@@ -10329,16 +10390,19 @@ export interface MetricsexplorertypesStatsResponseDTO {
 export interface MetricsexplorertypesTreemapEntryDTO {
 	/**
 	 * @type string
+	 * @description The name of the metric.
 	 */
 	metricName: string;
 	/**
 	 * @type number
 	 * @format double
+	 * @description Share of the total across all metrics in the time range, from 0 to 100.
 	 */
 	percentage: number;
 	/**
 	 * @type integer
 	 * @minimum 0
+	 * @description Time series count or sample count for the metric, depending on the requested mode.
 	 */
 	totalValue: number;
 }
@@ -10351,17 +10415,26 @@ export interface MetricsexplorertypesTreemapRequestDTO {
 	/**
 	 * @type integer
 	 * @format int64
+	 * @description End of the time range as a Unix timestamp in milliseconds. Must be greater than start.
 	 */
 	end: number;
+	/**
+	 * @description Query builder filter over metric attributes, for example host.name = 'web-1'. A bare word matches the metric name. Omit for every metric.
+	 */
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
 	 * @type integer
+	 * @description Maximum number of metrics to return, between 1 and 5000, ordered by percentage descending.
 	 */
 	limit: number;
+	/**
+	 * @description What each metric is sized by: timeseries counts distinct time series, samples counts ingested data points. Only the matching response array is populated.
+	 */
 	mode: MetricsexplorertypesTreemapModeDTO;
 	/**
 	 * @type integer
 	 * @format int64
+	 * @description Start of the time range as a Unix timestamp in milliseconds. Must be greater than 0 and less than end.
 	 */
 	start: number;
 }
@@ -10369,10 +10442,12 @@ export interface MetricsexplorertypesTreemapRequestDTO {
 export interface MetricsexplorertypesTreemapResponseDTO {
 	/**
 	 * @type array,null
+	 * @description Entries sized by sample count; populated only when mode is samples.
 	 */
 	samples: MetricsexplorertypesTreemapEntryDTO[] | null;
 	/**
 	 * @type array,null
+	 * @description Entries sized by time series count; populated only when mode is timeseries.
 	 */
 	timeseries: MetricsexplorertypesTreemapEntryDTO[] | null;
 }
@@ -10380,20 +10455,30 @@ export interface MetricsexplorertypesTreemapResponseDTO {
 export interface MetricsexplorertypesUpdateMetricMetadataRequestDTO {
 	/**
 	 * @type string
+	 * @description Human-readable description of the metric.
 	 */
 	description: string;
 	/**
 	 * @type boolean
+	 * @description Whether the metric is a monotonically increasing Sum (a counter).
 	 */
 	isMonotonic: boolean;
 	/**
 	 * @type string
+	 * @description The name of the metric whose metadata to replace.
 	 */
 	metricName: string;
+	/**
+	 * @description Aggregation temporality to store: cumulative, delta or unspecified.
+	 */
 	temporality: MetrictypesTemporalityDTO;
+	/**
+	 * @description The metric type to store, such as gauge, sum, histogram, summary or exponentialhistogram.
+	 */
 	type: MetrictypesTypeDTO;
 	/**
 	 * @type string
+	 * @description The unit of the metric values, for example ms or By.
 	 */
 	unit: string;
 }
@@ -15315,27 +15400,27 @@ export type GetMetricReductionRuleTimeseries200 = {
 export type ListMetricsParams = {
 	/**
 	 * @type integer,null
-	 * @description undefined
+	 * @description Start of the time range as a Unix timestamp in milliseconds. Must be greater than 0; applied only when end is also set.
 	 */
 	start?: number | null;
 	/**
 	 * @type integer,null
-	 * @description undefined
+	 * @description End of the time range as a Unix timestamp in milliseconds. Must be greater than start; applied only when start is also set.
 	 */
 	end?: number | null;
 	/**
 	 * @type integer
-	 * @description undefined
+	 * @description Maximum number of metric names to return. Defaults to 100; must not exceed 5000.
 	 */
 	limit?: number;
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description Case-insensitive substring to match against metric names.
 	 */
 	searchText?: string;
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description Set to meter to list Cost Meter metrics instead of telemetry metrics.
 	 */
 	source?: string;
 };
