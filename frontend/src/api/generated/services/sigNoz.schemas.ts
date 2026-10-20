@@ -5306,8 +5306,7 @@ export type DashboardtypesFillOpacityDTO = number | null;
 /**
  * The fill opacity from 0 (transparent) to 1 (opaque). Null uses the chart default.
  */
-export type DashboardtypesAreaChartAppearanceDTOFillOpacity =
-	DashboardtypesFillOpacityDTO | null;
+export type DashboardtypesAreaChartAppearanceDTOFillOpacity = DashboardtypesFillOpacityDTO | null;
 
 export enum DashboardtypesAreaFillModeDTO {
 	solid = 'solid',
