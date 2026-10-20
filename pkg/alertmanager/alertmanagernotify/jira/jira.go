@@ -260,7 +260,8 @@ func deepLinks(alerts []*types.Alert) map[string]any {
 	}
 	add("Open in SigNoz", string(a.Labels[ruletypes.LabelRuleSource]))
 	add("View Related Logs", string(a.Annotations[ruletypes.AnnotationRelatedLogs]))
-	add("View Related Traces", string(a.Annotations[ruletypes.AnnotationRelatedTraces]))
+	traces := string(a.Annotations[ruletypes.AnnotationRelatedTraces])
+	add(ruletypes.RelatedTracesLabel(traces), traces)
 	if len(parts) == 0 {
 		return nil
 	}
