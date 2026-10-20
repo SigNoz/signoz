@@ -5296,10 +5296,6 @@ export interface DashboardtypesAIBuilderQuerySpecDTO {
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
 
-export enum DashboardtypesAreaFillModeDTO {
-	solid = 'solid',
-	gradient = 'gradient',
-}
 /**
  * @minimum 0
  * @maximum 1
@@ -5307,6 +5303,16 @@ export enum DashboardtypesAreaFillModeDTO {
  */
 export type DashboardtypesFillOpacityDTO = number | null;
 
+/**
+ * The fill opacity from 0 (transparent) to 1 (opaque). Null uses the chart default.
+ */
+export type DashboardtypesAreaChartAppearanceDTOFillOpacity =
+	DashboardtypesFillOpacityDTO | null;
+
+export enum DashboardtypesAreaFillModeDTO {
+	solid = 'solid',
+	gradient = 'gradient',
+}
 export enum DashboardtypesLineInterpolationDTO {
 	linear = 'linear',
 	spline = 'spline',
@@ -5331,28 +5337,47 @@ export interface DashboardtypesSpanGapsDTO {
 }
 
 export interface DashboardtypesAreaChartAppearanceDTO {
+	/**
+	 * @description The fill under each line: solid (default) or gradient.
+	 */
 	fillMode?: DashboardtypesAreaFillModeDTO;
-	fillOpacity?: DashboardtypesFillOpacityDTO | null;
+	/**
+	 * @description The fill opacity from 0 (transparent) to 1 (opaque). Null uses the chart default.
+	 */
+	fillOpacity?: DashboardtypesAreaChartAppearanceDTOFillOpacity;
+	/**
+	 * @description How points are joined: linear, spline (default), step_after or step_before.
+	 */
 	lineInterpolation?: DashboardtypesLineInterpolationDTO;
+	/**
+	 * @description The line stroke: solid (default) or dashed.
+	 */
 	lineStyle?: DashboardtypesLineStyleDTO;
 	/**
 	 * @type boolean
+	 * @description Whether each data point is marked on the line.
 	 */
 	showPoints?: boolean;
+	/**
+	 * @description Whether lines connect across missing points.
+	 */
 	spanGaps?: DashboardtypesSpanGapsDTO;
 }
 
 export interface DashboardtypesAxesDTO {
 	/**
 	 * @type boolean
+	 * @description Whether the Y axis uses a logarithmic scale.
 	 */
 	isLogScale?: boolean;
 	/**
 	 * @type number,null
+	 * @description The highest value the Y axis always shows; data above it still extends the axis. Null fits the data.
 	 */
 	softMax?: number | null;
 	/**
 	 * @type number,null
+	 * @description The lowest value the Y axis always shows; data below it still extends the axis. Null fits the data.
 	 */
 	softMin?: number | null;
 }
@@ -5366,9 +5391,13 @@ export enum DashboardtypesPrecisionOptionDTO {
 	full = 'full',
 }
 export interface DashboardtypesPanelFormattingDTO {
+	/**
+	 * @description Decimal places shown: 0, 1, 2 (default), 3, 4 or full.
+	 */
 	decimalPrecision?: DashboardtypesPrecisionOptionDTO;
 	/**
 	 * @type string
+	 * @description The unit id of the values, such as By, ms, s or percent. Empty shows plain numbers.
 	 */
 	unit?: string;
 }
@@ -5380,11 +5409,15 @@ export enum DashboardtypesLegendPositionDTO {
 	bottom = 'bottom',
 	right = 'right',
 }
+/**
+ * Hex colors keyed by series label, overriding the automatic palette.
+ */
 export type DashboardtypesLegendDTOCustomColorsAnyOf = {
 	[key: string]: string;
 };
 
 /**
+ * Hex colors keyed by series label, overriding the automatic palette.
  * @nullable
  */
 export type DashboardtypesLegendDTOCustomColors = DashboardtypesLegendDTOCustomColorsAnyOf | null;
@@ -5392,28 +5425,39 @@ export type DashboardtypesLegendDTOCustomColors = DashboardtypesLegendDTOCustomC
 export interface DashboardtypesLegendDTO {
 	/**
 	 * @type object,null
+	 * @description Hex colors keyed by series label, overriding the automatic palette.
 	 */
 	customColors?: DashboardtypesLegendDTOCustomColors;
+	/**
+	 * @description The legend layout. Only list is supported.
+	 */
 	mode?: DashboardtypesLegendModeDTO;
+	/**
+	 * @description Where the legend sits: bottom (default) or right.
+	 */
 	position?: DashboardtypesLegendPositionDTO;
 }
 
 export interface DashboardtypesThresholdWithLabelDTO {
 	/**
 	 * @type string
+	 * @description The line color: a named color such as Red or a hex value.
 	 */
 	color: string;
 	/**
 	 * @type string
+	 * @description The caption shown on the line.
 	 */
 	label?: string;
 	/**
 	 * @type string
+	 * @description The unit id of value. Empty means the panel formatting unit.
 	 */
 	unit?: string;
 	/**
 	 * @type number
 	 * @format double
+	 * @description The value the line is drawn at, in unit.
 	 */
 	value: number;
 }
@@ -5438,48 +5482,92 @@ export enum DashboardtypesTimePreferenceDTO {
 export interface DashboardtypesAreaChartVisualizationDTO {
 	/**
 	 * @type boolean
+	 * @description Whether intervals with no data are drawn as zero instead of a gap.
 	 */
 	fillSpans?: boolean;
+	/**
+	 * @description How the areas combine: none (default) overlays them, normal stacks the values, percent stacks them as shares of the total.
+	 */
 	stack?: DashboardtypesStackModeDTO;
+	/**
+	 * @description The time range the panel queries: global_time (default) follows the dashboard range; last_5_min, last_15_min, last_30_min, last_1_hr, last_6_hr, last_1_day, last_3_days, last_1_week or last_1_month pin a fixed window.
+	 */
 	timePreference?: DashboardtypesTimePreferenceDTO;
 }
 
 export interface DashboardtypesAreaChartPanelSpecDTO {
+	/**
+	 * @description Y axis bounds and scale.
+	 */
 	axes?: DashboardtypesAxesDTO;
+	/**
+	 * @description Line and fill drawing options.
+	 */
 	chartAppearance?: DashboardtypesAreaChartAppearanceDTO;
+	/**
+	 * @description Unit and decimal precision of the values.
+	 */
 	formatting?: DashboardtypesPanelFormattingDTO;
+	/**
+	 * @description Legend placement and series colors.
+	 */
 	legend?: DashboardtypesLegendDTO;
 	/**
 	 * @type array,null
+	 * @description Horizontal reference lines drawn at fixed values.
 	 */
 	thresholds?: DashboardtypesThresholdWithLabelDTO[] | null;
+	/**
+	 * @description Time range, gap handling and stacking.
+	 */
 	visualization?: DashboardtypesAreaChartVisualizationDTO;
 }
 
 export interface DashboardtypesBarChartVisualizationDTO {
 	/**
 	 * @type boolean
+	 * @description Whether intervals with no data are drawn as zero instead of a gap.
 	 */
 	fillSpans?: boolean;
 	/**
 	 * @type boolean
+	 * @description Whether the series are stacked on top of each other.
 	 */
 	stackedBarChart?: boolean;
+	/**
+	 * @description The time range the panel queries: global_time (default) follows the dashboard range; last_5_min, last_15_min, last_30_min, last_1_hr, last_6_hr, last_1_day, last_3_days, last_1_week or last_1_month pin a fixed window.
+	 */
 	timePreference?: DashboardtypesTimePreferenceDTO;
 }
 
 export interface DashboardtypesBarChartPanelSpecDTO {
+	/**
+	 * @description Y axis bounds and scale.
+	 */
 	axes?: DashboardtypesAxesDTO;
+	/**
+	 * @description Unit and decimal precision of the values.
+	 */
 	formatting?: DashboardtypesPanelFormattingDTO;
+	/**
+	 * @description Legend placement and series colors.
+	 */
 	legend?: DashboardtypesLegendDTO;
 	/**
 	 * @type array,null
+	 * @description Horizontal reference lines drawn at fixed values.
 	 */
 	thresholds?: DashboardtypesThresholdWithLabelDTO[] | null;
+	/**
+	 * @description Time range, gap handling and stacking.
+	 */
 	visualization?: DashboardtypesBarChartVisualizationDTO;
 }
 
 export interface DashboardtypesBasicVisualizationDTO {
+	/**
+	 * @description The time range the panel queries: global_time (default) follows the dashboard range; last_5_min, last_15_min, last_30_min, last_1_hr, last_6_hr, last_1_day, last_3_days, last_1_week or last_1_month pin a fixed window.
+	 */
 	timePreference?: DashboardtypesTimePreferenceDTO;
 }
 
@@ -5894,17 +5982,26 @@ export enum DashboardtypesThresholdFormatDTO {
 export interface DashboardtypesComparisonThresholdDTO {
 	/**
 	 * @type string
+	 * @description The color applied when the threshold is active: a named color such as Red or a hex value.
 	 */
 	color: string;
+	/**
+	 * @description What the color is applied to: text (default) or background.
+	 */
 	format?: DashboardtypesThresholdFormatDTO;
+	/**
+	 * @description The comparison that activates the threshold: above (default), below, above_or_equal, below_or_equal, equal or not_equal.
+	 */
 	operator?: DashboardtypesComparisonOperatorDTO;
 	/**
 	 * @type string
+	 * @description The unit id of value. Empty means the panel formatting unit.
 	 */
 	unit?: string;
 	/**
 	 * @type number
 	 * @format double
+	 * @description The value compared against, in unit.
 	 */
 	value: number;
 }
@@ -5912,6 +6009,7 @@ export interface DashboardtypesComparisonThresholdDTO {
 export interface DashboardtypesCustomVariableSpecDTO {
 	/**
 	 * @type string
+	 * @description The fixed values as a comma-separated list, such as 1,10,100.
 	 */
 	customValue: string;
 }
@@ -5919,26 +6017,32 @@ export interface DashboardtypesCustomVariableSpecDTO {
 export interface DashboardtypesDashboardPanelRefDTO {
 	/**
 	 * @type string
+	 * @description The id of the dashboard containing the panel.
 	 */
 	dashboardId: string;
 	/**
 	 * @type string
+	 * @description The dashboard title.
 	 */
 	dashboardName: string;
 	/**
 	 * @type array
+	 * @description The metric labels the panel filters on.
 	 */
 	filterBy?: string[];
 	/**
 	 * @type array
+	 * @description The metric labels the panel groups by.
 	 */
 	groupBy?: string[];
 	/**
 	 * @type string
+	 * @description The panel id within the dashboard.
 	 */
 	panelId: string;
 	/**
 	 * @type string
+	 * @description The panel title.
 	 */
 	panelName: string;
 }
@@ -5949,10 +6053,12 @@ export enum DashboardtypesPanelKindDTO {
 export interface DashboardtypesDisplayDTO {
 	/**
 	 * @type string
+	 * @description A free-text description.
 	 */
 	description?: string;
 	/**
 	 * @type string
+	 * @description The human-readable title, at most 128 characters.
 	 */
 	name: string;
 }
@@ -5960,26 +6066,34 @@ export interface DashboardtypesDisplayDTO {
 export interface DashboardtypesLinkDTO {
 	/**
 	 * @type string
+	 * @description The link label.
 	 */
 	name?: string;
 	/**
 	 * @type boolean
+	 * @description Whether dashboard variable values are substituted into url before opening it.
 	 */
 	renderVariables?: boolean;
 	/**
 	 * @type boolean
+	 * @description Whether the link opens in a new tab.
 	 */
 	targetBlank?: boolean;
 	/**
 	 * @type string
+	 * @description Hover text for the link.
 	 */
 	tooltip?: string;
 	/**
 	 * @type string
+	 * @description The link target. May reference dashboard variables as {{name}} when renderVariables is true.
 	 */
 	url?: string;
 }
 
+/**
+ * The panel kind.
+ */
 export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTOKind {
 	'signoz/TimeSeriesPanel' = 'signoz/TimeSeriesPanel',
 }
@@ -5989,33 +6103,66 @@ export enum DashboardtypesFillModeDTO {
 	none = 'none',
 }
 export interface DashboardtypesTimeSeriesChartAppearanceDTO {
+	/**
+	 * @description The fill under each line: none (default), solid or gradient.
+	 */
 	fillMode?: DashboardtypesFillModeDTO;
+	/**
+	 * @description How points are joined: linear, spline (default), step_after or step_before.
+	 */
 	lineInterpolation?: DashboardtypesLineInterpolationDTO;
+	/**
+	 * @description The line stroke: solid (default) or dashed.
+	 */
 	lineStyle?: DashboardtypesLineStyleDTO;
 	/**
 	 * @type boolean
+	 * @description Whether each data point is marked on the line.
 	 */
 	showPoints?: boolean;
+	/**
+	 * @description Whether lines connect across missing points.
+	 */
 	spanGaps?: DashboardtypesSpanGapsDTO;
 }
 
 export interface DashboardtypesTimeSeriesVisualizationDTO {
 	/**
 	 * @type boolean
+	 * @description Whether intervals with no data are drawn as zero instead of a gap.
 	 */
 	fillSpans?: boolean;
+	/**
+	 * @description The time range the panel queries: global_time (default) follows the dashboard range; last_5_min, last_15_min, last_30_min, last_1_hr, last_6_hr, last_1_day, last_3_days, last_1_week or last_1_month pin a fixed window.
+	 */
 	timePreference?: DashboardtypesTimePreferenceDTO;
 }
 
 export interface DashboardtypesTimeSeriesPanelSpecDTO {
+	/**
+	 * @description Y axis bounds and scale.
+	 */
 	axes?: DashboardtypesAxesDTO;
+	/**
+	 * @description Line drawing options.
+	 */
 	chartAppearance?: DashboardtypesTimeSeriesChartAppearanceDTO;
+	/**
+	 * @description Unit and decimal precision of the values.
+	 */
 	formatting?: DashboardtypesPanelFormattingDTO;
+	/**
+	 * @description Legend placement and series colors.
+	 */
 	legend?: DashboardtypesLegendDTO;
 	/**
 	 * @type array,null
+	 * @description Horizontal reference lines drawn at fixed values.
 	 */
 	thresholds?: DashboardtypesThresholdWithLabelDTO[] | null;
+	/**
+	 * @description Time range and gap handling.
+	 */
 	visualization?: DashboardtypesTimeSeriesVisualizationDTO;
 }
 
@@ -6023,11 +6170,18 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	/**
 	 * @enum signoz/TimeSeriesPanel
 	 * @type string
+	 * @description The panel kind.
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTOKind;
+	/**
+	 * @description The kind-specific panel options. {} accepts every default.
+	 */
 	spec: DashboardtypesTimeSeriesPanelSpecDTO;
 }
 
+/**
+ * The panel kind.
+ */
 export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpecDTOKind {
 	'signoz/BarChartPanel' = 'signoz/BarChartPanel',
 }
@@ -6035,11 +6189,18 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	/**
 	 * @enum signoz/BarChartPanel
 	 * @type string
+	 * @description The panel kind.
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpecDTOKind;
+	/**
+	 * @description The kind-specific panel options. {} accepts every default.
+	 */
 	spec: DashboardtypesBarChartPanelSpecDTO;
 }
 
+/**
+ * The panel kind.
+ */
 export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpecDTOKind {
 	'signoz/AreaChartPanel' = 'signoz/AreaChartPanel',
 }
@@ -6047,20 +6208,34 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	/**
 	 * @enum signoz/AreaChartPanel
 	 * @type string
+	 * @description The panel kind.
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpecDTOKind;
+	/**
+	 * @description The kind-specific panel options. {} accepts every default.
+	 */
 	spec: DashboardtypesAreaChartPanelSpecDTO;
 }
 
+/**
+ * The panel kind.
+ */
 export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpecDTOKind {
 	'signoz/NumberPanel' = 'signoz/NumberPanel',
 }
 export interface DashboardtypesNumberPanelSpecDTO {
+	/**
+	 * @description Unit and decimal precision of the value.
+	 */
 	formatting?: DashboardtypesPanelFormattingDTO;
 	/**
 	 * @type array,null
+	 * @description Rules that recolor the value when it compares to a threshold as specified.
 	 */
 	thresholds?: DashboardtypesComparisonThresholdDTO[] | null;
+	/**
+	 * @description The time range the value is computed over.
+	 */
 	visualization?: DashboardtypesBasicVisualizationDTO;
 }
 
@@ -6068,17 +6243,33 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	/**
 	 * @enum signoz/NumberPanel
 	 * @type string
+	 * @description The panel kind.
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpecDTOKind;
+	/**
+	 * @description The kind-specific panel options. {} accepts every default.
+	 */
 	spec: DashboardtypesNumberPanelSpecDTO;
 }
 
+/**
+ * The panel kind.
+ */
 export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpecDTOKind {
 	'signoz/PieChartPanel' = 'signoz/PieChartPanel',
 }
 export interface DashboardtypesPieChartPanelSpecDTO {
+	/**
+	 * @description Unit and decimal precision of the slice values.
+	 */
 	formatting?: DashboardtypesPanelFormattingDTO;
+	/**
+	 * @description Legend placement and slice colors.
+	 */
 	legend?: DashboardtypesLegendDTO;
+	/**
+	 * @description The time range the slices are computed over.
+	 */
 	visualization?: DashboardtypesBasicVisualizationDTO;
 }
 
@@ -6086,19 +6277,30 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	/**
 	 * @enum signoz/PieChartPanel
 	 * @type string
+	 * @description The panel kind.
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpecDTOKind;
+	/**
+	 * @description The kind-specific panel options. {} accepts every default.
+	 */
 	spec: DashboardtypesPieChartPanelSpecDTO;
 }
 
+/**
+ * The panel kind.
+ */
 export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpecDTOKind {
 	'signoz/TablePanel' = 'signoz/TablePanel',
 }
+/**
+ * Unit id per column, keyed by the query name or aggregation alias that produces the column.
+ */
 export type DashboardtypesTableFormattingDTOColumnUnitsAnyOf = {
 	[key: string]: string;
 };
 
 /**
+ * Unit id per column, keyed by the query name or aggregation alias that produces the column.
  * @nullable
  */
 export type DashboardtypesTableFormattingDTOColumnUnits = DashboardtypesTableFormattingDTOColumnUnitsAnyOf | null;
@@ -6106,39 +6308,60 @@ export type DashboardtypesTableFormattingDTOColumnUnits = DashboardtypesTableFor
 export interface DashboardtypesTableFormattingDTO {
 	/**
 	 * @type object,null
+	 * @description Unit id per column, keyed by the query name or aggregation alias that produces the column.
 	 */
 	columnUnits?: DashboardtypesTableFormattingDTOColumnUnits;
+	/**
+	 * @description Decimal places shown: 0, 1, 2 (default), 3, 4 or full.
+	 */
 	decimalPrecision?: DashboardtypesPrecisionOptionDTO;
 }
 
 export interface DashboardtypesTableThresholdDTO {
 	/**
 	 * @type string
+	 * @description The color applied when the threshold is active: a named color such as Red or a hex value.
 	 */
 	color: string;
 	/**
 	 * @type string
+	 * @description The column the rule applies to: the query name or aggregation alias that produces it.
 	 */
 	columnName: string;
+	/**
+	 * @description What the color is applied to: text (default) or background.
+	 */
 	format?: DashboardtypesThresholdFormatDTO;
+	/**
+	 * @description The comparison that activates the threshold: above (default), below, above_or_equal, below_or_equal, equal or not_equal.
+	 */
 	operator?: DashboardtypesComparisonOperatorDTO;
 	/**
 	 * @type string
+	 * @description The unit id of value. Empty means the panel formatting unit.
 	 */
 	unit?: string;
 	/**
 	 * @type number
 	 * @format double
+	 * @description The value compared against, in unit.
 	 */
 	value: number;
 }
 
 export interface DashboardtypesTablePanelSpecDTO {
+	/**
+	 * @description Per-column units and decimal precision.
+	 */
 	formatting?: DashboardtypesTableFormattingDTO;
 	/**
 	 * @type array,null
+	 * @description Rules that recolor a cell when its column value compares to a threshold as specified.
 	 */
 	thresholds?: DashboardtypesTableThresholdDTO[] | null;
+	/**
+	 * @description The time range the rows are computed over.
+	 */
 	visualization?: DashboardtypesBasicVisualizationDTO;
 }
 
@@ -6146,31 +6369,47 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	/**
 	 * @enum signoz/TablePanel
 	 * @type string
+	 * @description The panel kind.
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpecDTOKind;
+	/**
+	 * @description The kind-specific panel options. {} accepts every default.
+	 */
 	spec: DashboardtypesTablePanelSpecDTO;
 }
 
+/**
+ * The panel kind.
+ */
 export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpecDTOKind {
 	'signoz/HistogramPanel' = 'signoz/HistogramPanel',
 }
 export interface DashboardtypesHistogramBucketsDTO {
 	/**
 	 * @type number,null
+	 * @description The number of buckets. Null lets the chart choose.
 	 */
 	bucketCount?: number | null;
 	/**
 	 * @type number,null
+	 * @description The width of each bucket in the value unit. Null lets the chart choose.
 	 */
 	bucketWidth?: number | null;
 	/**
 	 * @type boolean
+	 * @description Whether every series is combined into a single histogram instead of one per series.
 	 */
 	mergeAllActiveQueries?: boolean;
 }
 
 export interface DashboardtypesHistogramPanelSpecDTO {
+	/**
+	 * @description How values are grouped into buckets.
+	 */
 	histogramBuckets?: DashboardtypesHistogramBucketsDTO;
+	/**
+	 * @description Legend placement and series colors.
+	 */
 	legend?: DashboardtypesLegendDTO;
 }
 
@@ -6178,17 +6417,25 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	/**
 	 * @enum signoz/HistogramPanel
 	 * @type string
+	 * @description The panel kind.
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpecDTOKind;
+	/**
+	 * @description The kind-specific panel options. {} accepts every default.
+	 */
 	spec: DashboardtypesHistogramPanelSpecDTO;
 }
 
+/**
+ * The panel kind.
+ */
 export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTOKind {
 	'signoz/ListPanel' = 'signoz/ListPanel',
 }
 export interface DashboardtypesListPanelSpecDTO {
 	/**
 	 * @type array,null
+	 * @description The columns shown for each row, as field keys with name and optional fieldContext, fieldDataType and signal. Empty shows the default columns.
 	 */
 	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
 }
@@ -6197,17 +6444,25 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	/**
 	 * @enum signoz/ListPanel
 	 * @type string
+	 * @description The panel kind.
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTOKind;
+	/**
+	 * @description The kind-specific panel options. {} accepts every default.
+	 */
 	spec: DashboardtypesListPanelSpecDTO;
 }
 
+/**
+ * The panel kind.
+ */
 export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTOKind {
 	'signoz/TextPanel' = 'signoz/TextPanel',
 }
 export interface DashboardtypesHeaderOptionsDTO {
 	/**
 	 * @type boolean
+	 * @description Whether the title and description row above the content is hidden.
 	 */
 	hide?: boolean;
 }
@@ -6228,18 +6483,35 @@ export enum DashboardtypesVerticalAlignDTO {
 export interface DashboardtypesTextPresentationDTO {
 	/**
 	 * @type string,null
+	 * @description A hex background color such as #1f2937. Omit for the panel default.
 	 */
 	background?: string | null;
+	/**
+	 * @description Horizontal alignment: left (default), center or right.
+	 */
 	textAlign?: DashboardtypesTextAlignDTO;
+	/**
+	 * @description Vertical alignment: top (default), center or bottom.
+	 */
 	verticalAlign?: DashboardtypesVerticalAlignDTO;
 }
 
 export interface DashboardtypesTextPanelSpecDTO {
+	/**
+	 * @description Whether the panel header is shown.
+	 */
 	headerOptions?: DashboardtypesHeaderOptionsDTO;
+	/**
+	 * @description How text is interpreted. Only markdown is supported.
+	 */
 	mode?: DashboardtypesTextModeDTO;
+	/**
+	 * @description Alignment and background of the content.
+	 */
 	presentation?: DashboardtypesTextPresentationDTO;
 	/**
 	 * @type string
+	 * @description The content to render.
 	 */
 	text?: string;
 }
@@ -6248,11 +6520,18 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	/**
 	 * @enum signoz/TextPanel
 	 * @type string
+	 * @description The panel kind.
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTOKind;
+	/**
+	 * @description The kind-specific panel options. {} accepts every default.
+	 */
 	spec: DashboardtypesTextPanelSpecDTO;
 }
 
+/**
+ * The panel kind.
+ */
 export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTOKind {
 	'signoz/HeatmapPanel' = 'signoz/HeatmapPanel',
 }
@@ -6263,10 +6542,16 @@ export enum DashboardtypesHeatmapYScaleDTO {
 	symlog = 'symlog',
 }
 export interface DashboardtypesHeatmapAxisDTO {
+	/**
+	 * @description How bucket bounds are spaced on the axis: auto (default), linear, log or symlog.
+	 */
 	scale?: DashboardtypesHeatmapYScaleDTO;
 }
 
 export interface DashboardtypesHeatmapAxesDTO {
+	/**
+	 * @description The bucket axis.
+	 */
 	y?: DashboardtypesHeatmapAxisDTO;
 }
 
@@ -6294,34 +6579,65 @@ export enum DashboardtypesHeatmapColorScaleDTO {
 export interface DashboardtypesHeatmapColorsDTO {
 	/**
 	 * @type string
+	 * @description The hex color varied in opacity mode. Empty uses the series legend color.
 	 */
 	fill?: string;
 	/**
 	 * @type number,null
+	 * @description The count mapped to the highest color. Null uses the highest count in the grid.
 	 */
 	maxCount?: number | null;
 	/**
 	 * @type number,null
+	 * @description The count mapped to the lowest color. Null uses 0. Must not exceed maxCount.
 	 */
 	minCount?: number | null;
+	/**
+	 * @description How counts are colored: palette (default) picks a hue from palette, opacity varies the opacity of fill.
+	 */
 	mode?: DashboardtypesHeatmapColorModeDTO;
+	/**
+	 * @description The named color ramp used in palette mode, such as lava (default), ice or ember.
+	 */
 	palette?: DashboardtypesHeatmapPaletteDTO;
+	/**
+	 * @description How counts map onto the color range: log (default), sqrt or linear.
+	 */
 	scale?: DashboardtypesHeatmapColorScaleDTO;
 	/**
 	 * @type integer
+	 * @description The number of distinct color steps, 2 to 128. 0 uses the chart default.
 	 */
 	steps?: number;
 }
 
 export interface DashboardtypesHeatmapChartAppearanceDTO {
+	/**
+	 * @description The color scale applied to bucket counts.
+	 */
 	colors?: DashboardtypesHeatmapColorsDTO;
 }
 
 export interface DashboardtypesHeatmapPanelSpecDTO {
+	/**
+	 * @description The Y axis scale.
+	 */
 	axes?: DashboardtypesHeatmapAxesDTO;
+	/**
+	 * @description How bucket counts map to colors.
+	 */
 	chartAppearance?: DashboardtypesHeatmapChartAppearanceDTO;
+	/**
+	 * @description Unit and decimal precision of the bucket bounds.
+	 */
 	formatting?: DashboardtypesPanelFormattingDTO;
+	/**
+	 * @description Legend placement and series colors.
+	 */
 	legend?: DashboardtypesLegendDTO;
+	/**
+	 * @description The time range the heatmap covers.
+	 */
 	visualization?: DashboardtypesBasicVisualizationDTO;
 }
 
@@ -6329,8 +6645,12 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	/**
 	 * @enum signoz/HeatmapPanel
 	 * @type string
+	 * @description The panel kind.
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTOKind;
+	/**
+	 * @description The kind-specific panel options. {} accepts every default.
+	 */
 	spec: DashboardtypesHeatmapPanelSpecDTO;
 }
 
@@ -6354,6 +6674,9 @@ export enum Querybuildertypesv5RequestTypeDTO {
 	trace = 'trace',
 	heatmap = 'heatmap',
 }
+/**
+ * The query kind.
+ */
 export enum DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpecDTOKind {
 	'signoz/BuilderQuery' = 'signoz/BuilderQuery',
 }
@@ -6361,11 +6684,18 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDa
 	/**
 	 * @enum signoz/BuilderQuery
 	 * @type string
+	 * @description The query kind.
 	 */
 	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpecDTOKind;
+	/**
+	 * @description The kind-specific query spec.
+	 */
 	spec: DashboardtypesBuilderQuerySpecDTO;
 }
 
+/**
+ * The query kind.
+ */
 export enum DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpecDTOKind {
 	'signoz/AIBuilderQuery' = 'signoz/AIBuilderQuery',
 }
@@ -6373,11 +6703,18 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDa
 	/**
 	 * @enum signoz/AIBuilderQuery
 	 * @type string
+	 * @description The query kind.
 	 */
 	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpecDTOKind;
+	/**
+	 * @description The kind-specific query spec.
+	 */
 	spec: DashboardtypesAIBuilderQuerySpecDTO;
 }
 
+/**
+ * The query kind.
+ */
 export enum DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTOKind {
 	'signoz/CompositeQuery' = 'signoz/CompositeQuery',
 }
@@ -6704,11 +7041,18 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQu
 	/**
 	 * @enum signoz/CompositeQuery
 	 * @type string
+	 * @description The query kind.
 	 */
 	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTOKind;
+	/**
+	 * @description The kind-specific query spec.
+	 */
 	spec: Querybuildertypesv5CompositeQueryDTO;
 }
 
+/**
+ * The query kind.
+ */
 export enum DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormulaDTOKind {
 	'signoz/Formula' = 'signoz/Formula',
 }
@@ -6716,11 +7060,18 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQu
 	/**
 	 * @enum signoz/Formula
 	 * @type string
+	 * @description The query kind.
 	 */
 	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormulaDTOKind;
+	/**
+	 * @description The kind-specific query spec.
+	 */
 	spec: Querybuildertypesv5QueryBuilderFormulaDTO;
 }
 
+/**
+ * The query kind.
+ */
 export enum DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQueryDTOKind {
 	'signoz/PromQLQuery' = 'signoz/PromQLQuery',
 }
@@ -6728,11 +7079,18 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQu
 	/**
 	 * @enum signoz/PromQLQuery
 	 * @type string
+	 * @description The query kind.
 	 */
 	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQueryDTOKind;
+	/**
+	 * @description The kind-specific query spec.
+	 */
 	spec: Querybuildertypesv5PromQueryDTO;
 }
 
+/**
+ * The query kind.
+ */
 export enum DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQueryDTOKind {
 	'signoz/ClickHouseSQL' = 'signoz/ClickHouseSQL',
 }
@@ -6740,11 +7098,18 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQu
 	/**
 	 * @enum signoz/ClickHouseSQL
 	 * @type string
+	 * @description The query kind.
 	 */
 	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQueryDTOKind;
+	/**
+	 * @description The kind-specific query spec.
+	 */
 	spec: Querybuildertypesv5ClickHouseQueryDTO;
 }
 
+/**
+ * The query kind.
+ */
 export enum DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperatorDTOKind {
 	'signoz/TraceOperator' = 'signoz/TraceOperator',
 }
@@ -6752,8 +7117,12 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQu
 	/**
 	 * @enum signoz/TraceOperator
 	 * @type string
+	 * @description The query kind.
 	 */
 	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperatorDTOKind;
+	/**
+	 * @description The kind-specific query spec.
+	 */
 	spec: Querybuildertypesv5QueryBuilderTraceOperatorDTO;
 }
 
@@ -6769,38 +7138,68 @@ export type DashboardtypesQueryPluginDTO =
 export interface DashboardtypesQuerySpecDTO {
 	/**
 	 * @type string
+	 * @description An optional label for the query. The name queries refer to each other by lives in the plugin spec.
 	 */
 	name?: string;
+	/**
+	 * @description The query: kind is one of signoz/BuilderQuery, signoz/AIBuilderQuery, signoz/CompositeQuery, signoz/Formula, signoz/PromQLQuery, signoz/ClickHouseSQL or signoz/TraceOperator, and spec holds that kind's query. Pie, table and heatmap panels accept a subset; list panels accept only the builder kinds.
+	 */
 	plugin: DashboardtypesQueryPluginDTO;
 }
 
 export interface DashboardtypesQueryDTO {
+	/**
+	 * @description The result shape the panel renders: time_series for charts, scalar for number and pie panels, raw for list panels, distribution for histogram and heatmap panels.
+	 */
 	kind: Querybuildertypesv5RequestTypeDTO;
+	/**
+	 * @description The query content: an optional name and the query plugin.
+	 */
 	spec: DashboardtypesQuerySpecDTO;
 }
 
 export interface DashboardtypesPanelSpecDTO {
+	/**
+	 * @description The panel title and description.
+	 */
 	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type array,null
+	 * @description External links shown in the panel header.
 	 */
 	links?: DashboardtypesLinkDTO[] | null;
+	/**
+	 * @description The visualization: kind is one of signoz/TimeSeriesPanel, signoz/BarChartPanel, signoz/AreaChartPanel, signoz/NumberPanel, signoz/PieChartPanel, signoz/TablePanel, signoz/HistogramPanel, signoz/ListPanel, signoz/TextPanel or signoz/HeatmapPanel, and spec holds that kind's options ({} accepts every default).
+	 */
 	plugin: DashboardtypesPanelPluginDTO;
 	/**
 	 * @type array
+	 * @description The panel queries. Exactly one for every kind except signoz/TextPanel, which must have [].
 	 */
 	queries: DashboardtypesQueryDTO[];
 }
 
 export interface DashboardtypesPanelDTO {
+	/**
+	 * @description The panel envelope kind. Always Panel.
+	 */
 	kind: DashboardtypesPanelKindDTO;
+	/**
+	 * @description The panel content: display, plugin, queries and links.
+	 */
 	spec: DashboardtypesPanelSpecDTO;
 }
 
+/**
+ * The panels keyed by panel id. An id has up to 75 characters from letters, digits, dot, underscore and hyphen, and is referenced by layouts as #/spec/panels/<id>. Use {} for none.
+ */
 export type DashboardtypesDashboardSpecDTOPanels = {
 	[key: string]: DashboardtypesPanelDTO;
 };
 
+/**
+ * The layout kind.
+ */
 export enum DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpecDTOKind {
 	Grid = 'Grid',
 }
@@ -6808,19 +7207,29 @@ export interface DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridL
 	/**
 	 * @enum Grid
 	 * @type string
+	 * @description The layout kind.
 	 */
 	kind: DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpecDTOKind;
+	/**
+	 * @description The grid section: an optional display title and the items that place panels. Each item has x, y, width and height on a 12-column grid and a content.$ref of #/spec/panels/<id>.
+	 */
 	spec: DashboardGridLayoutSpecDTO;
 }
 
 export type DashboardtypesLayoutDTO =
 	DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpecDTO;
 
+/**
+ * The variable kind.
+ */
 export enum DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTOKind {
 	ListVariable = 'ListVariable',
 }
 export type DashboardtypesVariableDefaultValueDTO = string | string[];
 
+/**
+ * The value source kind.
+ */
 export enum DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpecDTOKind {
 	'signoz/DynamicVariable' = 'signoz/DynamicVariable',
 }
@@ -6833,8 +7242,12 @@ export enum DashboardtypesDynamicVariableSignalDTO {
 export interface DashboardtypesDynamicVariableSpecDTO {
 	/**
 	 * @type string
+	 * @description The attribute key whose observed values populate the variable, such as service.name.
 	 */
 	name: string;
+	/**
+	 * @description The signal the values are read from: traces, logs, metrics or all (default).
+	 */
 	signal: DashboardtypesDynamicVariableSignalDTO;
 }
 
@@ -6842,17 +7255,25 @@ export interface DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgType
 	/**
 	 * @enum signoz/DynamicVariable
 	 * @type string
+	 * @description The value source kind.
 	 */
 	kind: DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpecDTOKind;
+	/**
+	 * @description The kind-specific value source spec.
+	 */
 	spec: DashboardtypesDynamicVariableSpecDTO;
 }
 
+/**
+ * The value source kind.
+ */
 export enum DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpecDTOKind {
 	'signoz/QueryVariable' = 'signoz/QueryVariable',
 }
 export interface DashboardtypesQueryVariableSpecDTO {
 	/**
 	 * @type string
+	 * @description A ClickHouse SQL query whose first result column supplies the values.
 	 */
 	queryValue: string;
 }
@@ -6861,11 +7282,18 @@ export interface DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgType
 	/**
 	 * @enum signoz/QueryVariable
 	 * @type string
+	 * @description The value source kind.
 	 */
 	kind: DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpecDTOKind;
+	/**
+	 * @description The kind-specific value source spec.
+	 */
 	spec: DashboardtypesQueryVariableSpecDTO;
 }
 
+/**
+ * The value source kind.
+ */
 export enum DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpecDTOKind {
 	'signoz/CustomVariable' = 'signoz/CustomVariable',
 }
@@ -6873,8 +7301,12 @@ export interface DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgType
 	/**
 	 * @enum signoz/CustomVariable
 	 * @type string
+	 * @description The value source kind.
 	 */
 	kind: DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpecDTOKind;
+	/**
+	 * @description The kind-specific value source spec.
+	 */
 	spec: DashboardtypesCustomVariableSpecDTO;
 }
 
@@ -6895,28 +7327,45 @@ export enum DashboardtypesListVariableSpecSortDTO {
 export interface DashboardtypesListVariableSpecDTO {
 	/**
 	 * @type boolean
+	 * @description Whether an all option is offered. Requires allowMultiple.
 	 */
 	allowAllValue?: boolean;
 	/**
 	 * @type boolean
+	 * @description Whether several values can be selected at once.
 	 */
 	allowMultiple?: boolean;
 	/**
 	 * @type string
+	 * @description A regular expression applied to each candidate value. Only matches are offered, reduced to the capture group when one is present.
 	 */
 	capturingRegexp?: string;
 	/**
 	 * @type string
+	 * @description The value substituted when all is selected, instead of every value. Requires allowAllValue.
 	 */
 	customAllValue?: string;
+	/**
+	 * @description The initially selected value: a string, or a list of strings when allowMultiple is true.
+	 */
 	defaultValue?: DashboardtypesVariableDefaultValueDTO;
+	/**
+	 * @description The label shown for the variable control.
+	 */
 	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type string
 	 * @minLength 1
+	 * @description The handle queries reference as $name. Up to 75 characters from letters, digits, dot, underscore and hyphen, not all digits, unique within the dashboard.
 	 */
 	name: string;
+	/**
+	 * @description Where the values come from: kind is signoz/DynamicVariable (observed attribute values), signoz/QueryVariable (a ClickHouse query) or signoz/CustomVariable (a fixed list), and spec holds that kind's settings.
+	 */
 	plugin?: DashboardtypesVariablePluginDTO;
+	/**
+	 * @description How the values are ordered: none (default), alphabetical-asc, alphabetical-desc, numerical-asc, numerical-desc, alphabetical-ci-asc or alphabetical-ci-desc.
+	 */
 	sort?: DashboardtypesListVariableSpecSortDTO;
 }
 
@@ -6924,27 +7373,40 @@ export interface DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDash
 	/**
 	 * @enum ListVariable
 	 * @type string
+	 * @description The variable kind.
 	 */
 	kind: DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTOKind;
+	/**
+	 * @description The kind-specific variable spec.
+	 */
 	spec: DashboardtypesListVariableSpecDTO;
 }
 
+/**
+ * The variable kind.
+ */
 export enum DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTOKind {
 	TextVariable = 'TextVariable',
 }
 export interface DashboardtypesTextVariableSpecDTO {
 	/**
 	 * @type boolean
+	 * @description Whether the value is fixed and the control is hidden.
 	 */
 	constant?: boolean;
+	/**
+	 * @description The label shown for the variable control.
+	 */
 	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type string
 	 * @minLength 1
+	 * @description The handle queries reference as $name. Up to 75 characters from letters, digits, dot, underscore and hyphen, not all digits, unique within the dashboard.
 	 */
 	name: string;
 	/**
 	 * @type string
+	 * @description The default text. Must be non-empty when constant is true.
 	 */
 	value: string;
 }
@@ -6953,8 +7415,12 @@ export interface DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDash
 	/**
 	 * @enum TextVariable
 	 * @type string
+	 * @description The variable kind.
 	 */
 	kind: DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTOKind;
+	/**
+	 * @description The kind-specific variable spec.
+	 */
 	spec: DashboardtypesTextVariableSpecDTO;
 }
 
@@ -6963,29 +7429,38 @@ export type DashboardtypesVariableDTO =
 	| DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTO;
 
 export interface DashboardtypesDashboardSpecDTO {
+	/**
+	 * @description The dashboard title and description.
+	 */
 	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type string
+	 * @description The default time range when the dashboard opens, as a Prometheus duration such as 1h or 7d.
 	 */
 	duration?: string;
 	/**
 	 * @type array
+	 * @description The Grid layouts that place panels, at most 500. Each panel can be placed at most once. Use [] for none.
 	 */
 	layouts: DashboardtypesLayoutDTO[];
 	/**
 	 * @type array,null
+	 * @description External links shown in the dashboard header.
 	 */
 	links?: DashboardtypesLinkDTO[] | null;
 	/**
 	 * @type object
+	 * @description The panels keyed by panel id. An id has up to 75 characters from letters, digits, dot, underscore and hyphen, and is referenced by layouts as #/spec/panels/<id>. Use {} for none.
 	 */
 	panels: DashboardtypesDashboardSpecDTOPanels;
 	/**
 	 * @type string
+	 * @description How often the dashboard refreshes, as a Prometheus duration such as 30s. Empty disables auto refresh.
 	 */
 	refreshInterval?: string;
 	/**
 	 * @type array
+	 * @description The dashboard variables, each a ListVariable or TextVariable envelope, referenced in queries as $name. Names must be unique. Use [] for none.
 	 */
 	variables: DashboardtypesVariableDTO[];
 }
@@ -7000,14 +7475,22 @@ export enum DashboardtypesListSortDTO {
 	name = 'name',
 }
 export interface DashboardtypesDashboardViewDataDTO {
+	/**
+	 * @description The sort direction: asc or desc (default).
+	 */
 	order?: DashboardtypesListOrderDTO;
 	/**
 	 * @type string
+	 * @description A filter expression over the reserved keys name, description, created_at, updated_at, created_by and locked, and over tag keys. At most 1024 characters. Empty matches every dashboard.
 	 */
 	query?: string;
+	/**
+	 * @description The sort field: updated_at (default), created_at or name.
+	 */
 	sort?: DashboardtypesListSortDTO;
 	/**
 	 * @type string
+	 * @description The view data schema version. Must be v1.
 	 */
 	version: string;
 }
@@ -7018,6 +7501,9 @@ export interface DashboardtypesDashboardViewDTO {
 	 * @format date-time
 	 */
 	createdAt?: string;
+	/**
+	 * @description The saved list filter and sort.
+	 */
 	data: DashboardtypesDashboardViewDataDTO;
 	/**
 	 * @type string
@@ -7025,10 +7511,12 @@ export interface DashboardtypesDashboardViewDTO {
 	id: string;
 	/**
 	 * @type string
+	 * @description The view name.
 	 */
 	name: string;
 	/**
 	 * @type string
+	 * @description The organization that owns the view.
 	 */
 	orgId: string;
 	/**
@@ -7070,28 +7558,40 @@ export interface DashboardtypesGettableDashboardV2DTO {
 	id: string;
 	/**
 	 * @type string
+	 * @description Icon or logo shown in the dashboard list: an /assets/Icons/ or /assets/Logos/ path, or a base64 image data URI. Empty for none.
 	 */
 	image?: string;
 	/**
 	 * @type boolean
+	 * @description Whether the dashboard is locked. A locked dashboard rejects update and patch until it is unlocked.
 	 */
 	locked: boolean;
 	/**
 	 * @type string
+	 * @description The dashboard's unique, immutable name, a DNS-1123 label.
 	 */
 	name: string;
 	/**
 	 * @type string
+	 * @description The organization that owns the dashboard.
 	 */
 	orgId: string;
 	/**
 	 * @type string
+	 * @description The dashboard schema version. Must be v6.
 	 */
 	schemaVersion: string;
+	/**
+	 * @description Where the dashboard came from: user, integration or system. Only user dashboards can be modified.
+	 */
 	source: DashboardtypesSourceDTO;
+	/**
+	 * @description The dashboard content: display, variables, panels, layouts and links.
+	 */
 	spec: DashboardtypesDashboardSpecDTO;
 	/**
 	 * @type array,null
+	 * @description The tags attached to the dashboard.
 	 */
 	tags: TagtypesGettableTagDTO[] | null;
 	/**
@@ -7108,20 +7608,29 @@ export interface DashboardtypesGettableDashboardV2DTO {
 export interface DashboardtypesGettablePublicDasbhboardDTO {
 	/**
 	 * @type string
+	 * @description The time range shown to anonymous viewers by default, as a duration such as 1h.
 	 */
 	defaultTimeRange?: string;
 	/**
 	 * @type string
+	 * @description The path segment of the public URL.
 	 */
 	publicPath?: string;
 	/**
 	 * @type boolean
+	 * @description Whether anonymous viewers may change the time range.
 	 */
 	timeRangeEnabled?: boolean;
 }
 
 export interface DashboardtypesGettablePublicDashboardDataV2DTO {
+	/**
+	 * @description The dashboard with panel and variable queries redacted.
+	 */
 	dashboard?: DashboardtypesGettableDashboardV2DTO;
+	/**
+	 * @description The sharing settings.
+	 */
 	publicDashboard?: DashboardtypesGettablePublicDasbhboardDTO;
 }
 
@@ -7137,28 +7646,40 @@ export interface DashboardtypesGettableSystemDashboardDTO {
 	createdBy?: string;
 	/**
 	 * @type string
+	 * @description Icon or logo shown in the dashboard list: an /assets/Icons/ or /assets/Logos/ path, or a base64 image data URI. Empty for none.
 	 */
 	image?: string;
 	/**
 	 * @type boolean
+	 * @description Whether the dashboard is locked. A locked dashboard rejects update and patch until it is unlocked.
 	 */
 	locked: boolean;
 	/**
 	 * @type string
+	 * @description The dashboard's unique, immutable name, a DNS-1123 label.
 	 */
 	name: string;
 	/**
 	 * @type string
+	 * @description The organization that owns the dashboard.
 	 */
 	orgId: string;
 	/**
 	 * @type string
+	 * @description The dashboard schema version. Must be v6.
 	 */
 	schemaVersion: string;
+	/**
+	 * @description Where the dashboard came from: user, integration or system. Only user dashboards can be modified.
+	 */
 	source: DashboardtypesSourceDTO;
+	/**
+	 * @description The dashboard content: display, variables, panels, layouts and links.
+	 */
 	spec: DashboardtypesDashboardSpecDTO;
 	/**
 	 * @type array,null
+	 * @description The tags attached to the dashboard.
 	 */
 	tags: TagtypesGettableTagDTO[] | null;
 	/**
@@ -7186,6 +7707,9 @@ export interface DashboardtypesJSONPatchOperationDTO {
 	 * @description Source JSON Pointer for move/copy ops; ignored for other ops.
 	 */
 	from?: string;
+	/**
+	 * @description The RFC 6902 verb: add, remove, replace, move, copy or test. remove on a missing path is a no-op and add creates missing parents.
+	 */
 	op: DashboardtypesPatchOpDTO;
 	/**
 	 * @type string
@@ -7199,6 +7723,9 @@ export interface DashboardtypesJSONPatchOperationDTO {
 }
 
 export interface DashboardtypesListedDashboardV2SpecDTO {
+	/**
+	 * @description The dashboard title and description.
+	 */
 	display?: DashboardtypesDisplayDTO;
 }
 
@@ -7218,36 +7745,50 @@ export interface DashboardtypesListedDashboardForUserV2DTO {
 	id: string;
 	/**
 	 * @type string
+	 * @description The icon or logo path or image data URI, when set.
 	 */
 	image?: string;
 	/**
 	 * @type boolean
+	 * @description Whether the stored dashboard is still in the v1 schema. Such rows are read best-effort and cannot be fetched or edited through the v2 endpoints.
 	 */
 	legacy: boolean;
 	/**
 	 * @type boolean
+	 * @description Whether the dashboard is locked against update and patch.
 	 */
 	locked: boolean;
 	/**
 	 * @type string
+	 * @description The dashboard's unique, immutable name.
 	 */
 	name: string;
 	/**
 	 * @type string
+	 * @description The organization that owns the dashboard.
 	 */
 	orgId: string;
 	/**
 	 * @type boolean
+	 * @description Whether the calling user has pinned the dashboard.
 	 */
 	pinned: boolean;
 	/**
 	 * @type string
+	 * @description The dashboard schema version, v6 for v2 dashboards.
 	 */
 	schemaVersion: string;
+	/**
+	 * @description Where the dashboard came from: user, integration or system.
+	 */
 	source: DashboardtypesSourceDTO;
+	/**
+	 * @description The display part of the dashboard spec. Panels, variables and layouts are not included in list rows.
+	 */
 	spec: DashboardtypesListedDashboardV2SpecDTO;
 	/**
 	 * @type array
+	 * @description The tags attached to the dashboard.
 	 */
 	tags: TagtypesGettableTagDTO[];
 	/**
@@ -7264,19 +7805,23 @@ export interface DashboardtypesListedDashboardForUserV2DTO {
 export interface DashboardtypesListableDashboardForUserV2DTO {
 	/**
 	 * @type array
+	 * @description The dashboards on this page, each with the calling user's pin state.
 	 */
 	dashboards: DashboardtypesListedDashboardForUserV2DTO[];
 	/**
 	 * @type array
+	 * @description The filter keys that address dashboard columns rather than tags.
 	 */
 	reservedKeywords: string[];
 	/**
 	 * @type array
+	 * @description Every dashboard tag in the organization, for building filters.
 	 */
 	tags: TagtypesGettableTagDTO[];
 	/**
 	 * @type integer
 	 * @format int64
+	 * @description The number of dashboards matching the filter across every page.
 	 */
 	total: number;
 }
@@ -7297,32 +7842,45 @@ export interface DashboardtypesListedDashboardV2DTO {
 	id: string;
 	/**
 	 * @type string
+	 * @description The icon or logo path or image data URI, when set.
 	 */
 	image?: string;
 	/**
 	 * @type boolean
+	 * @description Whether the stored dashboard is still in the v1 schema. Such rows are read best-effort and cannot be fetched or edited through the v2 endpoints.
 	 */
 	legacy: boolean;
 	/**
 	 * @type boolean
+	 * @description Whether the dashboard is locked against update and patch.
 	 */
 	locked: boolean;
 	/**
 	 * @type string
+	 * @description The dashboard's unique, immutable name.
 	 */
 	name: string;
 	/**
 	 * @type string
+	 * @description The organization that owns the dashboard.
 	 */
 	orgId: string;
 	/**
 	 * @type string
+	 * @description The dashboard schema version, v6 for v2 dashboards.
 	 */
 	schemaVersion: string;
+	/**
+	 * @description Where the dashboard came from: user, integration or system.
+	 */
 	source: DashboardtypesSourceDTO;
+	/**
+	 * @description The display part of the dashboard spec. Panels, variables and layouts are not included in list rows.
+	 */
 	spec: DashboardtypesListedDashboardV2SpecDTO;
 	/**
 	 * @type array
+	 * @description The tags attached to the dashboard.
 	 */
 	tags: TagtypesGettableTagDTO[];
 	/**
@@ -7339,19 +7897,23 @@ export interface DashboardtypesListedDashboardV2DTO {
 export interface DashboardtypesListableDashboardV2DTO {
 	/**
 	 * @type array
+	 * @description The dashboards on this page.
 	 */
 	dashboards: DashboardtypesListedDashboardV2DTO[];
 	/**
 	 * @type array
+	 * @description The filter keys that address dashboard columns rather than tags.
 	 */
 	reservedKeywords: string[];
 	/**
 	 * @type array
+	 * @description Every dashboard tag in the organization, for building filters.
 	 */
 	tags: TagtypesGettableTagDTO[];
 	/**
 	 * @type integer
 	 * @format int64
+	 * @description The number of dashboards matching the filter across every page.
 	 */
 	total: number;
 }
@@ -7359,6 +7921,7 @@ export interface DashboardtypesListableDashboardV2DTO {
 export interface DashboardtypesListableDashboardViewDTO {
 	/**
 	 * @type array
+	 * @description The saved dashboard list views.
 	 */
 	views: DashboardtypesDashboardViewDTO[];
 }
@@ -7376,6 +7939,7 @@ export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/HeatmapPanel' = 'signoz/HeatmapPanel',
 }
 /**
+ * The RFC 6902 operations, applied in order against the dashboard's postable shape.
  * @nullable
  */
 export type DashboardtypesPatchableDashboardV2DTO =
@@ -7396,31 +7960,43 @@ export interface TagtypesPostableTagDTO {
 export interface DashboardtypesPostableDashboardV2DTO {
 	/**
 	 * @type boolean
+	 * @description When true the server derives name from spec.display.name plus a random suffix. Requires an empty name and a non-empty spec.display.name.
 	 */
 	generateName?: boolean;
 	/**
 	 * @type string
+	 * @description Icon or logo shown in the dashboard list: an /assets/Icons/ or /assets/Logos/ path, or a base64 image data URI. Empty for none.
 	 */
 	image?: string;
 	/**
 	 * @type string
+	 * @description The dashboard's unique name, a DNS-1123 label (lowercase letters, digits and hyphens, at most 63 characters). Immutable after creation. Must be empty when generateName is true.
 	 */
 	name?: string;
 	/**
 	 * @type string
+	 * @description The dashboard schema version. Must be v6.
 	 */
 	schemaVersion: string;
+	/**
+	 * @description The dashboard content: display, variables, panels, layouts and links.
+	 */
 	spec: DashboardtypesDashboardSpecDTO;
 	/**
 	 * @type array,null
+	 * @description Up to 10 key/value tags. Keys must not be one of the reserved list filter keys: name, description, created_at, updated_at, created_by, locked, source. Use [] for none.
 	 */
 	tags: TagtypesPostableTagDTO[] | null;
 }
 
 export interface DashboardtypesPostableDashboardViewDTO {
+	/**
+	 * @description The list filter and sort to save.
+	 */
 	data: DashboardtypesDashboardViewDataDTO;
 	/**
 	 * @type string
+	 * @description The view name.
 	 */
 	name: string;
 }
@@ -7428,10 +8004,12 @@ export interface DashboardtypesPostableDashboardViewDTO {
 export interface DashboardtypesPostablePublicDashboardDTO {
 	/**
 	 * @type string
+	 * @description The time range shown to anonymous viewers by default, as a duration such as 1h.
 	 */
 	defaultTimeRange?: string;
 	/**
 	 * @type boolean
+	 * @description Whether anonymous viewers may change the time range.
 	 */
 	timeRangeEnabled?: boolean;
 }
@@ -7448,19 +8026,26 @@ export enum DashboardtypesQueryPluginKindDTO {
 export interface DashboardtypesUpdatableDashboardV2DTO {
 	/**
 	 * @type string
+	 * @description Icon or logo shown in the dashboard list: an /assets/Icons/ or /assets/Logos/ path, or a base64 image data URI. Empty for none.
 	 */
 	image?: string;
 	/**
 	 * @type string
+	 * @description The dashboard's current name. The name is immutable, so a different value is rejected.
 	 */
 	name: string;
 	/**
 	 * @type string
+	 * @description The dashboard schema version. Must be v6.
 	 */
 	schemaVersion: string;
+	/**
+	 * @description The full replacement dashboard content: display, variables, panels, layouts and links.
+	 */
 	spec: DashboardtypesDashboardSpecDTO;
 	/**
 	 * @type array,null
+	 * @description The full replacement tag set, up to 10 key/value tags. Keys must not be one of the reserved list filter keys: name, description, created_at, updated_at, created_by, locked, source.
 	 */
 	tags: TagtypesPostableTagDTO[] | null;
 }
@@ -7468,10 +8053,12 @@ export interface DashboardtypesUpdatableDashboardV2DTO {
 export interface DashboardtypesUpdatablePublicDashboardDTO {
 	/**
 	 * @type string
+	 * @description The time range shown to anonymous viewers by default, as a duration such as 1h.
 	 */
 	defaultTimeRange?: string;
 	/**
 	 * @type boolean
+	 * @description Whether anonymous viewers may change the time range.
 	 */
 	timeRangeEnabled?: boolean;
 }
@@ -14921,25 +15508,25 @@ export type UpdateDashboardView200 = {
 export type ListDashboardsV2Params = {
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description A filter expression over the reserved keys name, description, created_at, updated_at, created_by and locked, and over tag keys. At most 1024 characters. Empty matches every dashboard.
 	 */
 	query?: string;
 	/**
-	 * @description undefined
+	 * @description The sort field: updated_at (default), created_at or name.
 	 */
 	sort?: DashboardtypesListSortDTO;
 	/**
-	 * @description undefined
+	 * @description The sort direction: asc or desc (default).
 	 */
 	order?: DashboardtypesListOrderDTO;
 	/**
 	 * @type integer
-	 * @description undefined
+	 * @description The page size. Defaults to 20 and is capped at 200.
 	 */
 	limit?: number;
 	/**
 	 * @type integer
-	 * @description undefined
+	 * @description The number of dashboards to skip. Defaults to 0.
 	 */
 	offset?: number;
 };
@@ -15655,12 +16242,12 @@ export type GetPublicDashboardPanelQueryRangeV2PathParameters = {
 export type GetPublicDashboardPanelQueryRangeV2Params = {
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description Start of the time range as a Unix timestamp in milliseconds. Honored only when the public dashboard has timeRangeEnabled.
 	 */
 	startTime?: string;
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description End of the time range as a Unix timestamp in milliseconds. Honored only when the public dashboard has timeRangeEnabled.
 	 */
 	endTime?: string;
 };
@@ -16269,25 +16856,25 @@ export type GetMyUser200 = {
 export type ListDashboardsForUserV2Params = {
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description A filter expression over the reserved keys name, description, created_at, updated_at, created_by and locked, and over tag keys. At most 1024 characters. Empty matches every dashboard.
 	 */
 	query?: string;
 	/**
-	 * @description undefined
+	 * @description The sort field: updated_at (default), created_at or name.
 	 */
 	sort?: DashboardtypesListSortDTO;
 	/**
-	 * @description undefined
+	 * @description The sort direction: asc or desc (default).
 	 */
 	order?: DashboardtypesListOrderDTO;
 	/**
 	 * @type integer
-	 * @description undefined
+	 * @description The page size. Defaults to 20 and is capped at 200.
 	 */
 	limit?: number;
 	/**
 	 * @type integer
-	 * @description undefined
+	 * @description The number of dashboards to skip. Defaults to 0.
 	 */
 	offset?: number;
 };
