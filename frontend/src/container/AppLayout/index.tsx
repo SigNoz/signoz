@@ -1,5 +1,7 @@
 import {
+	lazy,
 	ReactNode,
+	Suspense,
 	useCallback,
 	useEffect,
 	useMemo,
@@ -38,8 +40,6 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
 import { USER_PREFERENCES } from 'constants/userPreferences';
-import AIAssistantModal from 'container/AIAssistant/AIAssistantModal';
-import AIAssistantPanel from 'container/AIAssistant/AIAssistantPanel';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import BottomStrip from 'container/BottomStrip';
 import SideNav from 'container/SideNav';
@@ -91,6 +91,15 @@ import { ChildrenContainer, Layout, LayoutContent } from './styles';
 import { getRouteKey } from './utils';
 
 import './AppLayout.styles.scss';
+
+// The assistant pulls in the dashboard panel registry and the query builder, so it
+// loads only for users who have it.
+const AIAssistantModal = lazy(
+	() => import('container/AIAssistant/AIAssistantModal'),
+);
+const AIAssistantPanel = lazy(
+	() => import('container/AIAssistant/AIAssistantPanel'),
+);
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function AppLayout(props: AppLayoutProps): JSX.Element {
@@ -832,10 +841,10 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					</div>
 
 					{isLoggedIn && isAIAssistantEnabled && (
-						<>
+						<Suspense fallback={null}>
 							<AIAssistantPanel />
 							<AIAssistantModal />
-						</>
+						</Suspense>
 					)}
 				</Flex>
 
