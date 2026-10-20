@@ -5,6 +5,7 @@ import {
 	useDeleteNotificationChannel,
 } from 'api/generated/services/channels';
 import { useDeleteConfirm } from 'components/DeleteConfirmModal/useDeleteConfirm';
+import styles from 'components/DeleteConfirmModal/DeleteConfirmModal.module.scss';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { ReactNode } from 'react';
 import APIError from 'types/api/error';
@@ -31,13 +32,14 @@ export function useChannelDelete(onDeleted?: () => void): ChannelDeleteState {
 		confirmDelete({
 			title: (
 				<Typography.Title level={5}>
-					Are you sure you want to delete the {channel.displayName} channel?
+					Are you sure you want to delete the
+					<Typography.Text className={styles.name}>
+						{' '}
+						{channel.displayName}{' '}
+					</Typography.Text>
+					channel?
 				</Typography.Title>
 			),
-			// Alert rules and routing policies reference a channel by name, so a
-			// delete can silence them.
-			content:
-				'Alert rules and routing policies that notify this channel will stop reaching it.',
 			// Returning the promise keeps Delete loading until the request settles.
 			onConfirm: async (): Promise<void> => {
 				try {

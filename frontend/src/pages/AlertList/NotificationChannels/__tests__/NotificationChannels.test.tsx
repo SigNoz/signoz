@@ -86,14 +86,12 @@ describe('Notification channels list', () => {
 				await screen.findByRole('menuitem', { name: 'Delete' }, FIND),
 			);
 
-			// the shared destructive confirmation, the one dashboards also use
-			await expect(
-				screen.findByText(
-					/Are you sure you want to delete the Dummy-Channel channel\?/,
-					{},
-					FIND,
-				),
-			).resolves.toBeInTheDocument();
+			// the shared destructive confirmation, the one dashboards also use. The
+			// name sits in its own element, so the sentence spans several nodes.
+			const confirmation = await screen.findByRole('dialog', {}, FIND);
+			expect(confirmation.textContent).toContain(
+				'Are you sure you want to delete the Dummy-Channel channel?',
+			);
 		},
 		TEST_TIMEOUT,
 	);

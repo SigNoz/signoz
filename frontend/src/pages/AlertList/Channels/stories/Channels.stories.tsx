@@ -170,8 +170,11 @@ export const DeleteConfirm: Story = {
 		);
 		await clickRowAction('Delete');
 
-		await screen.findByText(
+		// the name sits in its own element, so the sentence spans several nodes
+		const confirmation = await screen.findByRole('dialog');
+		await expect(confirmation.textContent).toContain(
 			'Are you sure you want to delete the ops-slack channel?',
 		);
 	},
 };
+
