@@ -1,18 +1,13 @@
 package querybuildertypesv5
 
 type PromQuery struct {
-	// name of the query
-	Name string `json:"name"`
-	// query to execute
-	Query string `json:"query"`
-	// disabled if true, the query will not be executed
-	Disabled bool `json:"disabled"`
-	// step size for the query
-	Step Step `json:"step"`
-	// stats if true, the query will return stats
-	Stats bool `json:"stats"`
+	Name     string `json:"name" description:"The unique name of the query, such as A."`
+	Query    string `json:"query" description:"The PromQL expression. Dotted metric and label names must use the UTF-8 quoted selector form, for example {'http.server.duration'}."`
+	Disabled bool   `json:"disabled" description:"When true, the query is not executed. Defaults to false."`
+	Step     Step   `json:"step" description:"The evaluation step: seconds as a number or a Go duration string such as 60s. Derived from the time range when omitted."`
+	Stats    bool   `json:"stats" description:"Reserved; currently has no effect."`
 
-	Legend string `json:"legend"`
+	Legend string `json:"legend" description:"The display name template for each series; {{label}} placeholders are replaced by label values."`
 }
 
 // Copy creates a deep copy of the PromQuery.
