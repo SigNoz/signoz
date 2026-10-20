@@ -18,9 +18,9 @@ import (
 // Name is the immutable DNS1123 identity references will point at; DisplayName is the
 // free-text label.
 type PostableNotificationChannel struct {
-	Name         string        `json:"name" description:"The immutable DNS-1123 label (lowercase letters, digits and hyphens, at most 63 characters) that routing policies and rules reference. Required unless generateName is true, in which case it must be empty."`
+	Name         string        `json:"name" description:"The immutable DNS-1123 identifier of the channel (lowercase letters, digits and hyphens, at most 63 characters). Required unless generateName is true, in which case it must be empty. Alert rules and routing policies reference displayName, not name."`
 	GenerateName bool          `json:"generateName" description:"Derive name from displayName plus a random suffix instead of supplying it. Defaults to false."`
-	DisplayName  string        `json:"displayName" description:"The free-text label shown in the UI. Defaults to name; required when generateName is true."`
+	DisplayName  string        `json:"displayName" description:"The label shown in the UI and the receiver name that alert rule channels and routing policies reference. Defaults to name; required when generateName is true."`
 	Config       ChannelConfig `json:"config" required:"true" description:"The provider kind and its spec."`
 }
 
@@ -166,8 +166,8 @@ func decodeStrict(data []byte, target any) error {
 // ════════════════════════════════════════════════════════════════════════
 
 type GettableNotificationChannel struct {
-	Name        string        `json:"name" required:"true" description:"The immutable DNS-1123 name that routing policies and rules reference."`
-	DisplayName string        `json:"displayName" required:"true" description:"The free-text label shown in the UI."`
+	Name        string        `json:"name" required:"true" description:"The immutable DNS-1123 identifier of the channel. Alert rules and routing policies reference displayName, not name."`
+	DisplayName string        `json:"displayName" required:"true" description:"The label shown in the UI and the receiver name that alert rule channels and routing policies reference."`
 	Config      ChannelConfig `json:"config" required:"true" description:"The provider kind and spec, credentials included."`
 	ID          valuer.UUID   `json:"id" required:"true" description:"The channel UUID."`
 	CreatedAt   time.Time     `json:"createdAt" required:"true" description:"When the channel was created, as an RFC 3339 timestamp."`
@@ -182,8 +182,8 @@ type GettableNotificationChannel struct {
 // included, is only returned by a fetch by ID.
 type ListedNotificationChannel struct {
 	ID          valuer.UUID `json:"id" required:"true" description:"The channel UUID."`
-	Name        string      `json:"name" required:"true" description:"The immutable DNS-1123 name that routing policies and rules reference."`
-	DisplayName string      `json:"displayName" required:"true" description:"The free-text label shown in the UI."`
+	Name        string      `json:"name" required:"true" description:"The immutable DNS-1123 identifier of the channel. Alert rules and routing policies reference displayName, not name."`
+	DisplayName string      `json:"displayName" required:"true" description:"The label shown in the UI and the receiver name that alert rule channels and routing policies reference."`
 	Kind        ChannelKind `json:"kind" required:"true" description:"The channel provider kind."`
 	CreatedAt   time.Time   `json:"createdAt" required:"true" description:"When the channel was created, as an RFC 3339 timestamp."`
 	UpdatedAt   time.Time   `json:"updatedAt" required:"true" description:"When the channel was last updated, as an RFC 3339 timestamp."`

@@ -1017,14 +1017,15 @@ components:
           format: date-time
           type: string
         displayName:
-          description: The free-text label shown in the UI.
+          description: The label shown in the UI and the receiver name that alert
+            rule channels and routing policies reference.
           type: string
         id:
           description: The channel UUID.
           type: string
         name:
-          description: The immutable DNS-1123 name that routing policies and rules
-            reference.
+          description: The immutable DNS-1123 identifier of the channel. Alert rules
+            and routing policies reference displayName, not name.
           type: string
         updatedAt:
           description: When the channel was last updated, as an RFC 3339 timestamp.
@@ -1225,7 +1226,8 @@ components:
           format: date-time
           type: string
         displayName:
-          description: The free-text label shown in the UI.
+          description: The label shown in the UI and the receiver name that alert
+            rule channels and routing policies reference.
           type: string
         id:
           description: The channel UUID.
@@ -1235,8 +1237,8 @@ components:
           - $ref: '#/components/schemas/AlertmanagertypesChannelKind'
           description: The channel provider kind.
         name:
-          description: The immutable DNS-1123 name that routing policies and rules
-            reference.
+          description: The immutable DNS-1123 identifier of the channel. Alert rules
+            and routing policies reference displayName, not name.
           type: string
         updatedAt:
           description: When the channel was last updated, as an RFC 3339 timestamp.
@@ -1434,7 +1436,8 @@ components:
           - $ref: '#/components/schemas/AlertmanagertypesChannelConfig'
           description: The provider kind and its spec.
         displayName:
-          description: The free-text label shown in the UI. Defaults to name; required
+          description: The label shown in the UI and the receiver name that alert
+            rule channels and routing policies reference. Defaults to name; required
             when generateName is true.
           type: string
         generateName:
@@ -1442,9 +1445,10 @@ components:
             supplying it. Defaults to false.
           type: boolean
         name:
-          description: The immutable DNS-1123 label (lowercase letters, digits and
-            hyphens, at most 63 characters) that routing policies and rules reference.
-            Required unless generateName is true, in which case it must be empty.
+          description: The immutable DNS-1123 identifier of the channel (lowercase
+            letters, digits and hyphens, at most 63 characters). Required unless generateName
+            is true, in which case it must be empty. Alert rules and routing policies
+            reference displayName, not name.
           type: string
       required:
       - config

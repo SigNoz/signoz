@@ -1159,7 +1159,7 @@ export interface AlertmanagertypesListedNotificationChannelDTO {
 	createdAt: string;
 	/**
 	 * @type string
-	 * @description The free-text label shown in the UI.
+	 * @description The label shown in the UI and the receiver name that alert rule channels and routing policies reference.
 	 */
 	displayName: string;
 	/**
@@ -1173,7 +1173,7 @@ export interface AlertmanagertypesListedNotificationChannelDTO {
 	kind: AlertmanagertypesChannelKindDTO;
 	/**
 	 * @type string
-	 * @description The immutable DNS-1123 name that routing policies and rules reference.
+	 * @description The immutable DNS-1123 identifier of the channel. Alert rules and routing policies reference displayName, not name.
 	 */
 	name: string;
 	/**
@@ -1289,7 +1289,7 @@ export interface AlertmanagertypesGettableNotificationChannelDTO {
 	createdAt: string;
 	/**
 	 * @type string
-	 * @description The free-text label shown in the UI.
+	 * @description The label shown in the UI and the receiver name that alert rule channels and routing policies reference.
 	 */
 	displayName: string;
 	/**
@@ -1299,7 +1299,7 @@ export interface AlertmanagertypesGettableNotificationChannelDTO {
 	id: string;
 	/**
 	 * @type string
-	 * @description The immutable DNS-1123 name that routing policies and rules reference.
+	 * @description The immutable DNS-1123 identifier of the channel. Alert rules and routing policies reference displayName, not name.
 	 */
 	name: string;
 	/**
@@ -3042,7 +3042,7 @@ export interface AlertmanagertypesPostableNotificationChannelDTO {
 	config: AlertmanagertypesChannelConfigDTO;
 	/**
 	 * @type string
-	 * @description The free-text label shown in the UI. Defaults to name; required when generateName is true.
+	 * @description The label shown in the UI and the receiver name that alert rule channels and routing policies reference. Defaults to name; required when generateName is true.
 	 */
 	displayName?: string;
 	/**
@@ -3052,7 +3052,7 @@ export interface AlertmanagertypesPostableNotificationChannelDTO {
 	generateName?: boolean;
 	/**
 	 * @type string
-	 * @description The immutable DNS-1123 label (lowercase letters, digits and hyphens, at most 63 characters) that routing policies and rules reference. Required unless generateName is true, in which case it must be empty.
+	 * @description The immutable DNS-1123 identifier of the channel (lowercase letters, digits and hyphens, at most 63 characters). Required unless generateName is true, in which case it must be empty. Alert rules and routing policies reference displayName, not name.
 	 */
 	name?: string;
 }
