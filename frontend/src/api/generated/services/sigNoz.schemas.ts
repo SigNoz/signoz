@@ -4586,10 +4586,12 @@ export enum DashboardtypesAIBuilderQuerySpecDTOSignal {
 export interface Querybuildertypesv5TraceAggregationDTO {
 	/**
 	 * @type string
+	 * @description The name the aggregation is reported under; the expression itself is used when omitted.
 	 */
 	alias?: string;
 	/**
 	 * @type string
+	 * @description The aggregation over spans, such as count(), sum(item_price), p99(duration_nano) or countIf(day > 10).
 	 */
 	expression?: string;
 }
@@ -4604,10 +4606,12 @@ export interface Querybuildertypesv5LinearBucketsSpecDTO {
 	/**
 	 * @type number
 	 * @format double
+	 * @description The upper bound of the last regular band; values above it are counted in a trailing overflow band.
 	 */
 	maxValue: number;
 	/**
 	 * @type integer
+	 * @description The number of evenly spaced bands between 0 and maxValue. A default applies when omitted or 0.
 	 */
 	numBuckets?: number;
 }
@@ -4634,6 +4638,7 @@ export enum Querybuildertypesv5BucketOptionsLogDTOKind {
 export interface Querybuildertypesv5LogBucketsSpecDTO {
 	/**
 	 * @type integer,null
+	 * @description The exponential histogram scale: 2^scale bands per doubling of the value. The maximum supported scale applies when omitted.
 	 */
 	scale?: number | null;
 }
@@ -4658,6 +4663,7 @@ export type Querybuildertypesv5BucketOptionsDTO =
 export interface Querybuildertypesv5FilterDTO {
 	/**
 	 * @type string
+	 * @description A filter in the query filter syntax, combining field comparisons with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano > 1000000.
 	 */
 	expression?: string;
 }
@@ -4667,6 +4673,7 @@ export type Querybuildertypesv5FunctionArgDTOValue = number | string;
 export interface Querybuildertypesv5FunctionArgDTO {
 	/**
 	 * @type string
+	 * @description The argument name for functions that take named arguments, such as z_score_threshold or seasonality for anomaly.
 	 */
 	name?: string;
 	value?: Querybuildertypesv5FunctionArgDTOValue;
@@ -4695,8 +4702,12 @@ export enum Querybuildertypesv5FunctionNameDTO {
 export interface Querybuildertypesv5FunctionDTO {
 	/**
 	 * @type array,null
+	 * @description The function arguments; which ones are required depends on the function, for example a threshold for the cutOff and clamp functions.
 	 */
 	args?: Querybuildertypesv5FunctionArgDTO[] | null;
+	/**
+	 * @description The function to apply, such as cutOffMin, cutOffMax, clampMin, clampMax, absolute, runningDiff, log2, log10, cumulativeSum, ewma3, ewma5, ewma7, median3, median5, median7, timeShift, anomaly or fillZero.
+	 */
 	name?: Querybuildertypesv5FunctionNameDTO;
 }
 
@@ -4758,6 +4769,7 @@ export interface Querybuildertypesv5GroupByKeyDTO {
 export interface Querybuildertypesv5HavingDTO {
 	/**
 	 * @type string
+	 * @description A condition on aggregation results in the filter syntax, referencing an alias or expression, for example count() > 100.
 	 */
 	expression?: string;
 }
@@ -4765,10 +4777,12 @@ export interface Querybuildertypesv5HavingDTO {
 export interface Querybuildertypesv5LimitByDTO {
 	/**
 	 * @type array,null
+	 * @description The group-by field names that partition the result before the limit is applied.
 	 */
 	keys?: string[] | null;
 	/**
 	 * @type string
+	 * @description The aggregation alias or expression whose value ranks entries within each partition.
 	 */
 	value?: string;
 }
@@ -4808,7 +4822,13 @@ export interface Querybuildertypesv5OrderByKeyDTO {
 }
 
 export interface Querybuildertypesv5OrderByDTO {
+	/**
+	 * @description The sort direction: asc or desc.
+	 */
 	direction?: Querybuildertypesv5OrderDirectionDTO;
+	/**
+	 * @description The field, aggregation alias or expression to sort by, for example timestamp, service.name or count().
+	 */
 	key?: Querybuildertypesv5OrderByKeyDTO;
 }
 
@@ -4820,25 +4840,36 @@ export type Querybuildertypesv5StepDTO = string | number;
 export interface Querybuildertypesv5SecondaryAggregationDTO {
 	/**
 	 * @type string
+	 * @description The name the aggregation is reported under; the expression itself is used when omitted.
 	 */
 	alias?: string;
 	/**
 	 * @type string
+	 * @description The aggregation over the primary results, such as count(), sum(item_price) or countIf(day > 10).
 	 */
 	expression?: string;
 	/**
 	 * @type array,null
+	 * @description The fields to group this aggregation by.
 	 */
 	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
 	/**
 	 * @type integer
+	 * @description The maximum number of groups to return. Unlimited when 0.
 	 */
 	limit?: number;
+	/**
+	 * @description Applies limit within each distinct combination of the given keys.
+	 */
 	limitBy?: Querybuildertypesv5LimitByDTO;
 	/**
 	 * @type array,null
+	 * @description The sort order of this aggregation result.
 	 */
 	order?: Querybuildertypesv5OrderByDTO[] | null;
+	/**
+	 * @description The time bucket for this aggregation: seconds as a number or a Go duration string. Uses the primary aggregation step when omitted.
+	 */
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
 
@@ -4879,54 +4910,78 @@ export enum TelemetrytypesSourceDTO {
 export interface DashboardtypesAIBuilderQuerySpecDTO {
 	/**
 	 * @type array,null
+	 * @description The aggregations to compute, one result per entry. Traces and logs take expressions such as count() or p99(duration_nano); metrics take a metricName with time and space aggregations. Omit for raw requests.
 	 */
 	aggregations?: Querybuildertypesv5TraceAggregationDTO[] | null;
+	/**
+	 * @description The value axis to count this query into, as a kind-discriminated linear or log bucket spec. Read only by heatmap requests, and only from the query they draw.
+	 */
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
+	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page.
 	 */
 	cursor?: string;
 	/**
 	 * @type boolean
+	 * @description When true, the query is not returned on its own but can still feed a formula or trace operator. Defaults to false.
 	 */
 	disabled?: boolean;
+	/**
+	 * @description The filter expression that selects the rows or series, for example service.name = 'frontend' AND http.status_code >= 500.
+	 */
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
 	 * @type array,null
+	 * @description Post-processing functions applied in order to each result series, such as absolute, cumulativeSum, timeShift or anomaly.
 	 */
 	functions?: Querybuildertypesv5FunctionDTO[] | null;
 	/**
 	 * @type array,null
+	 * @description The fields to group aggregations by; each group becomes a series or a row with the field as a label or column.
 	 */
 	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @description A filter applied to aggregation results, referencing aliases or expressions, for example count() > 100.
+	 */
 	having?: Querybuildertypesv5HavingDTO;
 	/**
 	 * @type string
+	 * @description The display name template for each series; {{field}} placeholders are replaced by group-by label values.
 	 */
 	legend?: string;
 	/**
 	 * @type integer
+	 * @description The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. Unlimited when 0.
 	 */
 	limit?: number;
+	/**
+	 * @description Applies limit within each distinct combination of the given group-by keys instead of across the whole result.
+	 */
 	limitBy?: Querybuildertypesv5LimitByDTO;
 	/**
 	 * @type string
+	 * @description The unique name of the query, such as A or B; formulas, trace operators and selectedQueryName refer to it.
 	 */
 	name?: string;
 	/**
 	 * @type integer
+	 * @description The number of rows to skip before returning results. Prefer cursor for raw requests.
 	 */
 	offset?: number;
 	/**
 	 * @type array,null
+	 * @description The sort order of the result. Order by a group-by field, an aggregation alias, or for raw requests a selected field such as timestamp.
 	 */
 	order?: Querybuildertypesv5OrderByDTO[] | null;
 	/**
 	 * @type array,null
+	 * @description Aggregations computed over the primary aggregation results, for example a count of groups above a threshold.
 	 */
 	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[] | null;
 	/**
 	 * @type array,null
+	 * @description The fields to return for each row in raw requests, in addition to the always-present timestamp and id columns. Ignored by aggregating requests.
 	 */
 	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
 	/**
@@ -4934,7 +4989,13 @@ export interface DashboardtypesAIBuilderQuerySpecDTO {
 	 * @type string
 	 */
 	signal: DashboardtypesAIBuilderQuerySpecDTOSignal;
+	/**
+	 * @description The data source within the signal. Set to meter for Cost Meter metrics; leave empty for regular telemetry.
+	 */
 	source?: TelemetrytypesSourceDTO;
+	/**
+	 * @description The time bucket for time_series aggregation: seconds as a number or a Go duration string such as 60s or 1m. Derived from the time range when omitted.
+	 */
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
 
@@ -5128,10 +5189,12 @@ export interface DashboardtypesBasicVisualizationDTO {
 export interface Querybuildertypesv5LogAggregationDTO {
 	/**
 	 * @type string
+	 * @description The name the aggregation is reported under; the expression itself is used when omitted.
 	 */
 	alias?: string;
 	/**
 	 * @type string
+	 * @description The aggregation over log records, such as count(), sum(item_price), count_distinct(user_id) or countIf(day > 10).
 	 */
 	expression?: string;
 }
@@ -5142,54 +5205,78 @@ export enum Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQue
 export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO {
 	/**
 	 * @type array,null
+	 * @description The aggregations to compute, one result per entry. Traces and logs take expressions such as count() or p99(duration_nano); metrics take a metricName with time and space aggregations. Omit for raw requests.
 	 */
 	aggregations?: Querybuildertypesv5LogAggregationDTO[] | null;
+	/**
+	 * @description The value axis to count this query into, as a kind-discriminated linear or log bucket spec. Read only by heatmap requests, and only from the query they draw.
+	 */
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
+	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page.
 	 */
 	cursor?: string;
 	/**
 	 * @type boolean
+	 * @description When true, the query is not returned on its own but can still feed a formula or trace operator. Defaults to false.
 	 */
 	disabled?: boolean;
+	/**
+	 * @description The filter expression that selects the rows or series, for example service.name = 'frontend' AND http.status_code >= 500.
+	 */
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
 	 * @type array,null
+	 * @description Post-processing functions applied in order to each result series, such as absolute, cumulativeSum, timeShift or anomaly.
 	 */
 	functions?: Querybuildertypesv5FunctionDTO[] | null;
 	/**
 	 * @type array,null
+	 * @description The fields to group aggregations by; each group becomes a series or a row with the field as a label or column.
 	 */
 	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @description A filter applied to aggregation results, referencing aliases or expressions, for example count() > 100.
+	 */
 	having?: Querybuildertypesv5HavingDTO;
 	/**
 	 * @type string
+	 * @description The display name template for each series; {{field}} placeholders are replaced by group-by label values.
 	 */
 	legend?: string;
 	/**
 	 * @type integer
+	 * @description The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. Unlimited when 0.
 	 */
 	limit?: number;
+	/**
+	 * @description Applies limit within each distinct combination of the given group-by keys instead of across the whole result.
+	 */
 	limitBy?: Querybuildertypesv5LimitByDTO;
 	/**
 	 * @type string
+	 * @description The unique name of the query, such as A or B; formulas, trace operators and selectedQueryName refer to it.
 	 */
 	name?: string;
 	/**
 	 * @type integer
+	 * @description The number of rows to skip before returning results. Prefer cursor for raw requests.
 	 */
 	offset?: number;
 	/**
 	 * @type array,null
+	 * @description The sort order of the result. Order by a group-by field, an aggregation alias, or for raw requests a selected field such as timestamp.
 	 */
 	order?: Querybuildertypesv5OrderByDTO[] | null;
 	/**
 	 * @type array,null
+	 * @description Aggregations computed over the primary aggregation results, for example a count of groups above a threshold.
 	 */
 	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[] | null;
 	/**
 	 * @type array,null
+	 * @description The fields to return for each row in raw requests, in addition to the always-present timestamp and id columns. Ignored by aggregating requests.
 	 */
 	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
 	/**
@@ -5197,7 +5284,13 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 * @type string
 	 */
 	signal: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTOSignal;
+	/**
+	 * @description The data source within the signal. Set to meter for Cost Meter metrics; leave empty for regular telemetry.
+	 */
 	source?: TelemetrytypesSourceDTO;
+	/**
+	 * @description The time bucket for time_series aggregation: seconds as a number or a Go duration string such as 60s or 1m. Derived from the time range when omitted.
+	 */
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
 
@@ -5255,14 +5348,30 @@ export enum MetrictypesTimeAggregationDTO {
 	'' = '',
 }
 export interface Querybuildertypesv5MetricAggregationDTO {
+	/**
+	 * @description The operator and threshold for comparison space aggregations that count series meeting a condition; ignored otherwise.
+	 */
 	comparisonSpaceAggregationParam?: MetrictypesComparisonSpaceAggregationParamDTO;
 	/**
 	 * @type string
+	 * @description The name of the metric to query, for example k8s.pod.cpu_request_utilization.
 	 */
 	metricName?: string;
+	/**
+	 * @description How a series collapses to one number in scalar requests: sum, count, avg, min, max, last or median. Ignored by time_series requests.
+	 */
 	reduceTo?: Querybuildertypesv5ReduceToDTO;
+	/**
+	 * @description How series are combined across each group, such as sum, avg, min, max or count; histograms take percentiles such as p50, p90, p95 or p99.
+	 */
 	spaceAggregation?: MetrictypesSpaceAggregationDTO;
+	/**
+	 * @description The temporality of the metric: delta, cumulative or unspecified. Resolved from the metric metadata when omitted.
+	 */
 	temporality?: MetrictypesTemporalityDTO;
+	/**
+	 * @description How samples of one series are combined within each step, such as avg, sum, min, max, count, count_distinct, latest, rate or increase.
+	 */
 	timeAggregation?: MetrictypesTimeAggregationDTO;
 }
 
@@ -5272,54 +5381,78 @@ export enum Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQue
 export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO {
 	/**
 	 * @type array,null
+	 * @description The aggregations to compute, one result per entry. Traces and logs take expressions such as count() or p99(duration_nano); metrics take a metricName with time and space aggregations. Omit for raw requests.
 	 */
 	aggregations?: Querybuildertypesv5MetricAggregationDTO[] | null;
+	/**
+	 * @description The value axis to count this query into, as a kind-discriminated linear or log bucket spec. Read only by heatmap requests, and only from the query they draw.
+	 */
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
+	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page.
 	 */
 	cursor?: string;
 	/**
 	 * @type boolean
+	 * @description When true, the query is not returned on its own but can still feed a formula or trace operator. Defaults to false.
 	 */
 	disabled?: boolean;
+	/**
+	 * @description The filter expression that selects the rows or series, for example service.name = 'frontend' AND http.status_code >= 500.
+	 */
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
 	 * @type array,null
+	 * @description Post-processing functions applied in order to each result series, such as absolute, cumulativeSum, timeShift or anomaly.
 	 */
 	functions?: Querybuildertypesv5FunctionDTO[] | null;
 	/**
 	 * @type array,null
+	 * @description The fields to group aggregations by; each group becomes a series or a row with the field as a label or column.
 	 */
 	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @description A filter applied to aggregation results, referencing aliases or expressions, for example count() > 100.
+	 */
 	having?: Querybuildertypesv5HavingDTO;
 	/**
 	 * @type string
+	 * @description The display name template for each series; {{field}} placeholders are replaced by group-by label values.
 	 */
 	legend?: string;
 	/**
 	 * @type integer
+	 * @description The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. Unlimited when 0.
 	 */
 	limit?: number;
+	/**
+	 * @description Applies limit within each distinct combination of the given group-by keys instead of across the whole result.
+	 */
 	limitBy?: Querybuildertypesv5LimitByDTO;
 	/**
 	 * @type string
+	 * @description The unique name of the query, such as A or B; formulas, trace operators and selectedQueryName refer to it.
 	 */
 	name?: string;
 	/**
 	 * @type integer
+	 * @description The number of rows to skip before returning results. Prefer cursor for raw requests.
 	 */
 	offset?: number;
 	/**
 	 * @type array,null
+	 * @description The sort order of the result. Order by a group-by field, an aggregation alias, or for raw requests a selected field such as timestamp.
 	 */
 	order?: Querybuildertypesv5OrderByDTO[] | null;
 	/**
 	 * @type array,null
+	 * @description Aggregations computed over the primary aggregation results, for example a count of groups above a threshold.
 	 */
 	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[] | null;
 	/**
 	 * @type array,null
+	 * @description The fields to return for each row in raw requests, in addition to the always-present timestamp and id columns. Ignored by aggregating requests.
 	 */
 	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
 	/**
@@ -5327,7 +5460,13 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 * @type string
 	 */
 	signal: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal;
+	/**
+	 * @description The data source within the signal. Set to meter for Cost Meter metrics; leave empty for regular telemetry.
+	 */
 	source?: TelemetrytypesSourceDTO;
+	/**
+	 * @description The time bucket for time_series aggregation: seconds as a number or a Go duration string such as 60s or 1m. Derived from the time range when omitted.
+	 */
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
 
@@ -5337,54 +5476,78 @@ export enum Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQue
 export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO {
 	/**
 	 * @type array,null
+	 * @description The aggregations to compute, one result per entry. Traces and logs take expressions such as count() or p99(duration_nano); metrics take a metricName with time and space aggregations. Omit for raw requests.
 	 */
 	aggregations?: Querybuildertypesv5TraceAggregationDTO[] | null;
+	/**
+	 * @description The value axis to count this query into, as a kind-discriminated linear or log bucket spec. Read only by heatmap requests, and only from the query they draw.
+	 */
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
+	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page.
 	 */
 	cursor?: string;
 	/**
 	 * @type boolean
+	 * @description When true, the query is not returned on its own but can still feed a formula or trace operator. Defaults to false.
 	 */
 	disabled?: boolean;
+	/**
+	 * @description The filter expression that selects the rows or series, for example service.name = 'frontend' AND http.status_code >= 500.
+	 */
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
 	 * @type array,null
+	 * @description Post-processing functions applied in order to each result series, such as absolute, cumulativeSum, timeShift or anomaly.
 	 */
 	functions?: Querybuildertypesv5FunctionDTO[] | null;
 	/**
 	 * @type array,null
+	 * @description The fields to group aggregations by; each group becomes a series or a row with the field as a label or column.
 	 */
 	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @description A filter applied to aggregation results, referencing aliases or expressions, for example count() > 100.
+	 */
 	having?: Querybuildertypesv5HavingDTO;
 	/**
 	 * @type string
+	 * @description The display name template for each series; {{field}} placeholders are replaced by group-by label values.
 	 */
 	legend?: string;
 	/**
 	 * @type integer
+	 * @description The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. Unlimited when 0.
 	 */
 	limit?: number;
+	/**
+	 * @description Applies limit within each distinct combination of the given group-by keys instead of across the whole result.
+	 */
 	limitBy?: Querybuildertypesv5LimitByDTO;
 	/**
 	 * @type string
+	 * @description The unique name of the query, such as A or B; formulas, trace operators and selectedQueryName refer to it.
 	 */
 	name?: string;
 	/**
 	 * @type integer
+	 * @description The number of rows to skip before returning results. Prefer cursor for raw requests.
 	 */
 	offset?: number;
 	/**
 	 * @type array,null
+	 * @description The sort order of the result. Order by a group-by field, an aggregation alias, or for raw requests a selected field such as timestamp.
 	 */
 	order?: Querybuildertypesv5OrderByDTO[] | null;
 	/**
 	 * @type array,null
+	 * @description Aggregations computed over the primary aggregation results, for example a count of groups above a threshold.
 	 */
 	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[] | null;
 	/**
 	 * @type array,null
+	 * @description The fields to return for each row in raw requests, in addition to the always-present timestamp and id columns. Ignored by aggregating requests.
 	 */
 	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
 	/**
@@ -5392,7 +5555,13 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 * @type string
 	 */
 	signal: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTOSignal;
+	/**
+	 * @description The data source within the signal. Set to meter for Cost Meter metrics; leave empty for regular telemetry.
+	 */
 	source?: TelemetrytypesSourceDTO;
+	/**
+	 * @description The time bucket for time_series aggregation: seconds as a number or a Go duration string such as 60s or 1m. Derived from the time range when omitted.
+	 */
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
 
@@ -5947,34 +6116,47 @@ export interface Querybuildertypesv5QueryEnvelopeBuilderAIDTO {
 }
 
 export interface Querybuildertypesv5QueryBuilderFormulaDTO {
+	/**
+	 * @description The value axis to count the formula result into, as a kind-discriminated linear or log bucket spec. Read only by heatmap requests, and only from the query they draw.
+	 */
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type boolean
+	 * @description When true, the formula is not returned. Defaults to false.
 	 */
 	disabled?: boolean;
 	/**
 	 * @type string
+	 * @description An arithmetic expression over query names, for example A / B * 100, or A.0 and A.alias to pick one aggregation of a query by index or alias.
 	 */
 	expression?: string;
 	/**
 	 * @type array,null
+	 * @description Post-processing functions applied in order to each result series.
 	 */
 	functions?: Querybuildertypesv5FunctionDTO[] | null;
+	/**
+	 * @description A condition on the computed values, for example F1 > 5.
+	 */
 	having?: Querybuildertypesv5HavingDTO;
 	/**
 	 * @type string
+	 * @description The display name template for each series; {{field}} placeholders are replaced by label values.
 	 */
 	legend?: string;
 	/**
 	 * @type integer
+	 * @description The maximum number of series or rows to return. Unlimited when 0.
 	 */
 	limit?: number;
 	/**
 	 * @type string
+	 * @description The unique name of the formula, such as F1; it can be referenced like any query name.
 	 */
 	name?: string;
 	/**
 	 * @type array,null
+	 * @description The sort order of the formula result.
 	 */
 	order?: Querybuildertypesv5OrderByDTO[] | null;
 }
@@ -6001,58 +6183,80 @@ export interface Querybuildertypesv5QueryEnvelopeFormulaDTO {
 export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
 	/**
 	 * @type array,null
+	 * @description The aggregations to compute over the matched traces for scalar and time_series requests.
 	 */
 	aggregations?: Querybuildertypesv5TraceAggregationDTO[] | null;
 	/**
 	 * @type string
+	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page.
 	 */
 	cursor?: string;
 	/**
 	 * @type boolean
+	 * @description When true, the query is not executed. Defaults to false.
 	 */
 	disabled?: boolean;
 	/**
 	 * @type string
+	 * @description A trace-structure expression over traces builder query names using => for direct child, -> for descendant, && for both present, || for either present and NOT for absence, for example A => B && NOT C. At most 10 operators.
 	 */
 	expression?: string;
+	/**
+	 * @description An additional filter applied to the matched traces.
+	 */
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
 	 * @type array,null
+	 * @description Post-processing functions applied in order to each result series.
 	 */
 	functions?: Querybuildertypesv5FunctionDTO[] | null;
 	/**
 	 * @type array,null
+	 * @description The fields to group aggregations by.
 	 */
 	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @description A condition on the aggregation results, for example count() > 10.
+	 */
 	having?: Querybuildertypesv5HavingDTO;
 	/**
 	 * @type string
+	 * @description The display name template for each series; {{field}} placeholders are replaced by group-by label values.
 	 */
 	legend?: string;
 	/**
 	 * @type integer
+	 * @description The maximum number of traces or groups to return. Unlimited when 0.
 	 */
 	limit?: number;
 	/**
 	 * @type string
+	 * @description The unique name of the trace operator query.
 	 */
 	name?: string;
 	/**
 	 * @type integer
+	 * @description The number of results to skip before returning.
 	 */
 	offset?: number;
 	/**
 	 * @type array,null
+	 * @description The sort order of the matched traces; only span_count and trace_duration may be used as keys.
 	 */
 	order?: Querybuildertypesv5OrderByDTO[] | null;
 	/**
 	 * @type string
+	 * @description The name of the operand query whose spans are returned; when empty, the spans matched by the whole expression are returned.
 	 */
 	returnSpansFrom?: string;
 	/**
 	 * @type array,null
+	 * @description The span fields to return for each row in raw requests.
 	 */
 	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
+	/**
+	 * @description The time bucket for time_series aggregation: seconds as a number or a Go duration string such as 60s.
+	 */
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
 
@@ -6078,24 +6282,32 @@ export interface Querybuildertypesv5QueryEnvelopeTraceOperatorDTO {
 export interface Querybuildertypesv5PromQueryDTO {
 	/**
 	 * @type boolean
+	 * @description When true, the query is not executed. Defaults to false.
 	 */
 	disabled?: boolean;
 	/**
 	 * @type string
+	 * @description The display name template for each series; {{label}} placeholders are replaced by label values.
 	 */
 	legend?: string;
 	/**
 	 * @type string
+	 * @description The unique name of the query, such as A.
 	 */
 	name?: string;
 	/**
 	 * @type string
+	 * @description The PromQL expression. Dotted metric and label names must use the UTF-8 quoted selector form, for example {'http.server.duration'}.
 	 */
 	query?: string;
 	/**
 	 * @type boolean
+	 * @description Reserved; currently has no effect.
 	 */
 	stats?: boolean;
+	/**
+	 * @description The evaluation step: seconds as a number or a Go duration string such as 60s. Derived from the time range when omitted.
+	 */
 	step?: Querybuildertypesv5StepDTO;
 }
 
@@ -6121,18 +6333,22 @@ export interface Querybuildertypesv5QueryEnvelopePromQLDTO {
 export interface Querybuildertypesv5ClickHouseQueryDTO {
 	/**
 	 * @type boolean
+	 * @description When true, the query is not executed. Defaults to false.
 	 */
 	disabled?: boolean;
 	/**
 	 * @type string
+	 * @description The display name template for each series; {{column}} placeholders are replaced by result column values.
 	 */
 	legend?: string;
 	/**
 	 * @type string
+	 * @description The unique name of the query, such as A.
 	 */
 	name?: string;
 	/**
 	 * @type string
+	 * @description The ClickHouse SQL statement. Reserved time placeholders such as {{.start_timestamp}}, {{.end_timestamp}}, {{.start_timestamp_ms}} and {{.start_datetime}} and dashboard variables written as {{name}}, [[name]] or $name are substituted before execution.
 	 */
 	query?: string;
 }
@@ -6170,6 +6386,7 @@ export type Querybuildertypesv5QueryEnvelopeDTO =
 export interface Querybuildertypesv5CompositeQueryDTO {
 	/**
 	 * @type array,null
+	 * @description The queries to run, each wrapped in a type-discriminated envelope. Names must be unique; formulas and trace operators reference other queries by name.
 	 */
 	queries?: Querybuildertypesv5QueryEnvelopeDTO[] | null;
 }
@@ -7406,6 +7623,7 @@ export enum InframonitoringtypesPodStatusDTO {
 export interface InframonitoringtypesClusterFilterDTO {
 	/**
 	 * @type string
+	 * @description A filter in the query filter syntax, combining field comparisons with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano > 1000000.
 	 */
 	expression?: string;
 	/**
@@ -7590,6 +7808,7 @@ export enum InframonitoringtypesResponseTypeDTO {
 export interface Querybuildertypesv5QueryWarnDataAdditionalDTO {
 	/**
 	 * @type string
+	 * @description The warning text.
 	 */
 	message?: string;
 }
@@ -7597,14 +7816,17 @@ export interface Querybuildertypesv5QueryWarnDataAdditionalDTO {
 export interface Querybuildertypesv5QueryWarnDataDTO {
 	/**
 	 * @type string
+	 * @description A summary of the warnings raised while executing the request.
 	 */
 	message?: string;
 	/**
 	 * @type string
+	 * @description A documentation link explaining the warnings.
 	 */
 	url?: string;
 	/**
 	 * @type array
+	 * @description The individual warnings.
 	 */
 	warnings?: Querybuildertypesv5QueryWarnDataAdditionalDTO[];
 }
@@ -7711,6 +7933,7 @@ export enum InframonitoringtypesContainerStatusDTO {
 export interface InframonitoringtypesContainerFilterDTO {
 	/**
 	 * @type string
+	 * @description A filter in the query filter syntax, combining field comparisons with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano > 1000000.
 	 */
 	expression?: string;
 	/**
@@ -7807,6 +8030,7 @@ export interface InframonitoringtypesContainersDTO {
 export interface InframonitoringtypesDaemonSetFilterDTO {
 	/**
 	 * @type string
+	 * @description A filter in the query filter syntax, combining field comparisons with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano > 1000000.
 	 */
 	expression?: string;
 	/**
@@ -7902,6 +8126,7 @@ export interface InframonitoringtypesDaemonSetsDTO {
 export interface InframonitoringtypesDeploymentFilterDTO {
 	/**
 	 * @type string
+	 * @description A filter in the query filter syntax, combining field comparisons with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano > 1000000.
 	 */
 	expression?: string;
 	/**
@@ -7994,6 +8219,7 @@ export enum InframonitoringtypesHostStatusDTO {
 export interface InframonitoringtypesHostFilterDTO {
 	/**
 	 * @type string
+	 * @description A filter in the query filter syntax, combining field comparisons with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano > 1000000.
 	 */
 	expression?: string;
 	filterByStatus?: InframonitoringtypesHostStatusDTO;
@@ -8073,6 +8299,7 @@ export interface InframonitoringtypesHostsDTO {
 export interface InframonitoringtypesJobFilterDTO {
 	/**
 	 * @type string
+	 * @description A filter in the query filter syntax, combining field comparisons with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano > 1000000.
 	 */
 	expression?: string;
 	/**
@@ -8168,6 +8395,7 @@ export interface InframonitoringtypesJobsDTO {
 export interface InframonitoringtypesNamespaceFilterDTO {
 	/**
 	 * @type string
+	 * @description A filter in the query filter syntax, combining field comparisons with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano > 1000000.
 	 */
 	expression?: string;
 	/**
@@ -8254,6 +8482,7 @@ export interface InframonitoringtypesNamespacesDTO {
 export interface InframonitoringtypesNodeFilterDTO {
 	/**
 	 * @type string
+	 * @description A filter in the query filter syntax, combining field comparisons with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano > 1000000.
 	 */
 	expression?: string;
 	/**
@@ -8329,6 +8558,7 @@ export interface InframonitoringtypesNodesDTO {
 export interface InframonitoringtypesPodFilterDTO {
 	/**
 	 * @type string
+	 * @description A filter in the query filter syntax, combining field comparisons with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano > 1000000.
 	 */
 	expression?: string;
 	/**
@@ -8662,6 +8892,7 @@ export interface InframonitoringtypesPostablePodsDTO {
 export interface InframonitoringtypesStatefulSetFilterDTO {
 	/**
 	 * @type string
+	 * @description A filter in the query filter syntax, combining field comparisons with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano > 1000000.
 	 */
 	expression?: string;
 	/**
@@ -9532,6 +9763,9 @@ export interface MetricsexplorertypesInspectMetricsRequestDTO {
 export type Querybuildertypesv5LabelDTOValue = string | number | boolean;
 
 export interface Querybuildertypesv5LabelDTO {
+	/**
+	 * @description The group-by field this label value belongs to.
+	 */
 	key?: TelemetrytypesTelemetryFieldKeyDTO;
 	value?: Querybuildertypesv5LabelDTOValue;
 }
@@ -9539,20 +9773,24 @@ export interface Querybuildertypesv5LabelDTO {
 export interface Querybuildertypesv5TimeSeriesValueDTO {
 	/**
 	 * @type boolean
+	 * @description True when the step is only partly covered by the requested time range, so the value is incomplete and is rendered differently.
 	 */
 	partial?: boolean;
 	/**
 	 * @type integer
 	 * @format int64
+	 * @description The start of the step as a Unix timestamp in milliseconds.
 	 */
 	timestamp?: number;
 	/**
 	 * @type number
 	 * @format double
+	 * @description The aggregated value for the step; omitted for heatmap results, which use values.
 	 */
 	value?: number;
 	/**
 	 * @type array
+	 * @description The per-band counts for heatmap results, in the order of meta.buckets plus a trailing overflow count.
 	 */
 	values?: number[];
 }
@@ -9560,10 +9798,12 @@ export interface Querybuildertypesv5TimeSeriesValueDTO {
 export interface Querybuildertypesv5TimeSeriesDTO {
 	/**
 	 * @type array
+	 * @description The group-by field values that identify this series.
 	 */
 	labels?: Querybuildertypesv5LabelDTO[];
 	/**
 	 * @type array,null
+	 * @description The data points of the series in ascending timestamp order.
 	 */
 	values?: Querybuildertypesv5TimeSeriesValueDTO[] | null;
 }
@@ -10092,10 +10332,12 @@ export interface PromotetypesPostableIndexMaterializedPathsDTO {
 export interface Querybuildertypesv5AggregationMetaDTO {
 	/**
 	 * @type array
+	 * @description The ascending upper bounds of the value bands, set only for heatmap results; each point then carries one count per bound plus a trailing overflow count in values.
 	 */
 	buckets?: number[];
 	/**
 	 * @type string
+	 * @description The unit of the aggregated values, taken from metric metadata when known.
 	 */
 	unit?: string;
 }
@@ -10103,31 +10345,41 @@ export interface Querybuildertypesv5AggregationMetaDTO {
 export interface Querybuildertypesv5AggregationBucketDTO {
 	/**
 	 * @type string
+	 * @description The alias of the aggregation, or its expression when no alias was given.
 	 */
 	alias?: string;
 	/**
 	 * @type array
+	 * @description The anomaly score per series; present only when the anomaly function is applied.
 	 */
 	anomalyScores?: Querybuildertypesv5TimeSeriesDTO[];
 	/**
 	 * @type integer
+	 * @description The zero-based position of the aggregation in the query.
 	 */
 	index?: number;
 	/**
 	 * @type array
+	 * @description The lower bound of the expected range per series; present only when the anomaly function is applied.
 	 */
 	lowerBoundSeries?: Querybuildertypesv5TimeSeriesDTO[];
+	/**
+	 * @description Display metadata for the aggregation.
+	 */
 	meta?: Querybuildertypesv5AggregationMetaDTO;
 	/**
 	 * @type array
+	 * @description The predicted values per series; present only when the anomaly function is applied.
 	 */
 	predictedSeries?: Querybuildertypesv5TimeSeriesDTO[];
 	/**
 	 * @type array,null
+	 * @description One series per group-by combination.
 	 */
 	series?: Querybuildertypesv5TimeSeriesDTO[] | null;
 	/**
 	 * @type array
+	 * @description The upper bound of the expected range per series; present only when the anomaly function is applied.
 	 */
 	upperBoundSeries?: Querybuildertypesv5TimeSeriesDTO[];
 }
@@ -10136,9 +10388,13 @@ export enum Querybuildertypesv5BucketsKindDTO {
 	linear = 'linear',
 	log = 'log',
 }
+/**
+ * Display metadata for the column.
+ */
 export type Querybuildertypesv5ColumnDescriptorDTOMeta = {
 	/**
 	 * @type string
+	 * @description The unit of the column values when known.
 	 */
 	unit?: string;
 };
@@ -10151,8 +10407,12 @@ export interface Querybuildertypesv5ColumnDescriptorDTO {
 	/**
 	 * @type integer
 	 * @format int64
+	 * @description The zero-based position of the aggregation in the query for aggregation columns.
 	 */
 	aggregationIndex?: number;
+	/**
+	 * @description Whether the column is a group-by field (group) or an aggregated value (aggregation).
+	 */
 	columnType?: Querybuildertypesv5ColumnTypeDTO;
 	/**
 	 * @type string
@@ -10169,6 +10429,7 @@ export interface Querybuildertypesv5ColumnDescriptorDTO {
 	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
 	/**
 	 * @type object
+	 * @description Display metadata for the column.
 	 */
 	meta?: Querybuildertypesv5ColumnDescriptorDTOMeta;
 	/**
@@ -10178,6 +10439,7 @@ export interface Querybuildertypesv5ColumnDescriptorDTO {
 	name: string;
 	/**
 	 * @type string
+	 * @description The name of the query that produced the column.
 	 */
 	queryName?: string;
 	/**
@@ -10191,6 +10453,9 @@ export interface Querybuildertypesv5ColumnDescriptorDTO {
 	unit?: string;
 }
 
+/**
+ * The step interval in seconds that was used for each query, keyed by query name.
+ */
 export type Querybuildertypesv5ExecStatsDTOStepIntervals = {
 	[key: string]: number;
 };
@@ -10202,20 +10467,24 @@ export interface Querybuildertypesv5ExecStatsDTO {
 	/**
 	 * @type integer
 	 * @minimum 0
+	 * @description The number of bytes the store read to answer every query in the request.
 	 */
 	bytesScanned?: number;
 	/**
 	 * @type integer
 	 * @minimum 0
+	 * @description The wall-clock execution time in milliseconds.
 	 */
 	durationMs?: number;
 	/**
 	 * @type integer
 	 * @minimum 0
+	 * @description The number of rows the store read to answer every query in the request.
 	 */
 	rowsScanned?: number;
 	/**
 	 * @type object
+	 * @description The step interval in seconds that was used for each query, keyed by query name.
 	 */
 	stepIntervals?: Querybuildertypesv5ExecStatsDTOStepIntervals;
 }
@@ -10223,38 +10492,14 @@ export interface Querybuildertypesv5ExecStatsDTO {
 export interface Querybuildertypesv5FormatOptionsDTO {
 	/**
 	 * @type boolean
+	 * @description When true, time_series results get a zero value for every missing step of additive aggregations such as count, count_distinct, sum and rate; other aggregations keep their gaps. Defaults to false.
 	 */
 	fillGaps?: boolean;
 	/**
 	 * @type boolean
+	 * @description When true, scalar results from several queries are merged into one table keyed by their group-by columns. Defaults to false.
 	 */
 	formatTableResultForUI?: boolean;
-}
-
-export interface TelemetrystoretypesEstimateEntryDTO {
-	/**
-	 * @type string
-	 */
-	database: string;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	marks: number;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	parts: number;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	rows: number;
-	/**
-	 * @type string
-	 */
-	table: string;
 }
 
 export interface TelemetrystoretypesIndexStepDTO {
@@ -10332,29 +10577,69 @@ export type TelemetrystoretypesGranulesDTO = {
 	skipped: number;
 } | null;
 
+/**
+ * The granule analysis for the statement; null unless verbose was requested.
+ */
+export type Querybuildertypesv5PreviewStatementDTOGranules =
+	TelemetrystoretypesGranulesDTO | null;
+
+export interface TelemetrystoretypesEstimateEntryDTO {
+	/**
+	 * @type string
+	 */
+	database: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	marks: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	parts: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	rows: number;
+	/**
+	 * @type string
+	 */
+	table: string;
+}
+
 export interface Querybuildertypesv5PreviewStatementDTO {
 	/**
 	 * @type array
+	 * @description The values bound to the statement placeholders, in order.
 	 */
 	'db.statement.args': unknown[];
 	/**
 	 * @type string
+	 * @description The ClickHouse SQL statement with positional parameter placeholders.
 	 */
 	'db.statement.query': string;
 	/**
 	 * @type array
+	 * @description The EXPLAIN ESTIMATE rows for the statement; empty unless verbose was requested.
 	 */
 	estimate: TelemetrystoretypesEstimateEntryDTO[];
-	granules: TelemetrystoretypesGranulesDTO | null;
+	/**
+	 * @description The granule analysis for the statement; null unless verbose was requested.
+	 */
+	granules: Querybuildertypesv5PreviewStatementDTOGranules;
 }
 
 export interface Querybuildertypesv5TimeSeriesDataDTO {
 	/**
 	 * @type array,null
+	 * @description One bucket per aggregation of the query, in request order.
 	 */
 	aggregations?: Querybuildertypesv5AggregationBucketDTO[] | null;
 	/**
 	 * @type string
+	 * @description The name of the query that produced this result.
 	 */
 	queryName?: string;
 }
@@ -10362,21 +10647,28 @@ export interface Querybuildertypesv5TimeSeriesDataDTO {
 export interface Querybuildertypesv5ScalarDataDTO {
 	/**
 	 * @type array,null
+	 * @description The column definitions, in the same order as the values in each data row.
 	 */
 	columns?: Querybuildertypesv5ColumnDescriptorDTO[] | null;
 	/**
 	 * @type array,null
+	 * @description The rows, each a list of values aligned with columns.
 	 */
 	data?: unknown[][] | null;
 	/**
 	 * @type string
+	 * @description The name of the query that produced this table.
 	 */
 	queryName?: string;
 }
 
+/**
+ * The selected field values keyed by field name.
+ */
 export type Querybuildertypesv5RawRowDTODataAnyOf = { [key: string]: unknown };
 
 /**
+ * The selected field values keyed by field name.
  * @nullable
  */
 export type Querybuildertypesv5RawRowDTOData = Querybuildertypesv5RawRowDTODataAnyOf | null;
@@ -10384,11 +10676,13 @@ export type Querybuildertypesv5RawRowDTOData = Querybuildertypesv5RawRowDTODataA
 export interface Querybuildertypesv5RawRowDTO {
 	/**
 	 * @type object,null
+	 * @description The selected field values keyed by field name.
 	 */
 	data?: Querybuildertypesv5RawRowDTOData;
 	/**
 	 * @type string
 	 * @format date-time
+	 * @description The record timestamp in RFC 3339 format.
 	 */
 	timestamp?: string;
 }
@@ -10396,14 +10690,17 @@ export interface Querybuildertypesv5RawRowDTO {
 export interface Querybuildertypesv5RawDataDTO {
 	/**
 	 * @type string
+	 * @description The cursor to pass in the next request to continue from the last row; empty when there are no more rows.
 	 */
 	nextCursor?: string;
 	/**
 	 * @type string
+	 * @description The name of the query that produced these rows.
 	 */
 	queryName?: string;
 	/**
 	 * @type array,null
+	 * @description The matching records in the requested order.
 	 */
 	rows?: Querybuildertypesv5RawRowDTO[] | null;
 }
@@ -10412,42 +10709,55 @@ export type Querybuildertypesv5QueryDataDTO =
 	| (Querybuildertypesv5TimeSeriesDataDTO & {
 			/**
 			 * @type array,null
+			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series, ScalarData for scalar and RawData for raw requests.
 			 */
 			results?: unknown[] | null;
 	  })
 	| (Querybuildertypesv5ScalarDataDTO & {
 			/**
 			 * @type array,null
+			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series, ScalarData for scalar and RawData for raw requests.
 			 */
 			results?: unknown[] | null;
 	  })
 	| (Querybuildertypesv5RawDataDTO & {
 			/**
 			 * @type array,null
+			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series, ScalarData for scalar and RawData for raw requests.
 			 */
 			results?: unknown[] | null;
 	  });
 
 export interface Querybuildertypesv5QueryPreviewDTO {
+	/**
+	 * @description The rendering error when valid is false, otherwise null.
+	 */
 	error: unknown;
 	/**
 	 * @type array
+	 * @description The ClickHouse statements the query renders to: one per PromQL metric selector, exactly one for other query types.
 	 */
 	statements: Querybuildertypesv5PreviewStatementDTO[];
 	/**
 	 * @type boolean
+	 * @description Whether the query rendered without error.
 	 */
 	valid: boolean;
 	/**
 	 * @type array
+	 * @description Warnings raised while rendering the query.
 	 */
 	warnings: string[];
 }
 
+/**
+ * The rendered statements for each query, keyed by query name.
+ */
 export type Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQueryAnyOf =
 	{ [key: string]: Querybuildertypesv5QueryPreviewDTO };
 
 /**
+ * The rendered statements for each query, keyed by query name.
  * @nullable
  */
 export type Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQuery = Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQueryAnyOf | null;
@@ -10458,6 +10768,7 @@ export type Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQuery = Quer
 export interface Querybuildertypesv5QueryRangePreviewResponseDTO {
 	/**
 	 * @type object,null
+	 * @description The rendered statements for each query, keyed by query name.
 	 */
 	compositeQuery: Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQuery;
 }
@@ -10480,10 +10791,16 @@ export type Querybuildertypesv5VariableItemDTOValue =
 	| Querybuildertypesv5VariableItemDTOValueOneOfItem[];
 
 export interface Querybuildertypesv5VariableItemDTO {
+	/**
+	 * @description The kind of dashboard variable: query, dynamic, custom or text.
+	 */
 	type?: Querybuildertypesv5VariableTypeDTO;
 	value?: Querybuildertypesv5VariableItemDTOValue;
 }
 
+/**
+ * Dashboard variable values keyed by variable name, substituted for $name or {{name}} placeholders in filters and raw queries before execution.
+ */
 export type Querybuildertypesv5QueryRangeRequestDTOVariables = {
 	[key: string]: Querybuildertypesv5VariableItemDTO;
 };
@@ -10492,29 +10809,43 @@ export type Querybuildertypesv5QueryRangeRequestDTOVariables = {
  * Request body for the v5 query range endpoint. Supports builder queries (traces, logs, metrics), formulas, joins, trace operators, PromQL, and ClickHouse SQL queries.
  */
 export interface Querybuildertypesv5QueryRangeRequestDTO {
+	/**
+	 * @description The queries to execute together; at least one is required and formulas may reference the others by name.
+	 */
 	compositeQuery?: Querybuildertypesv5CompositeQueryDTO;
 	/**
 	 * @type integer
 	 * @minimum 0
+	 * @description The end of the time range as a Unix timestamp in milliseconds; must be greater than start except for raw_stream requests.
 	 */
 	end?: number;
+	/**
+	 * @description Post-processing applied to the result before it is returned.
+	 */
 	formatOptions?: Querybuildertypesv5FormatOptionsDTO;
 	/**
 	 * @type boolean
+	 * @description When true, bypasses the query result cache and reads every bucket from the store. Defaults to false.
 	 */
 	noCache?: boolean;
+	/**
+	 * @description The shape of the result: scalar, time_series, raw, raw_stream, trace, distribution or heatmap. It decides which result type data.results carries.
+	 */
 	requestType?: Querybuildertypesv5RequestTypeDTO;
 	/**
 	 * @type string
+	 * @description The version of the request payload schema, currently v1.
 	 */
 	schemaVersion?: string;
 	/**
 	 * @type integer
 	 * @minimum 0
+	 * @description The inclusive start of the time range as a Unix timestamp in milliseconds.
 	 */
 	start?: number;
 	/**
 	 * @type object
+	 * @description Dashboard variable values keyed by variable name, substituted for $name or {{name}} placeholders in filters and raw queries before execution.
 	 */
 	variables?: Querybuildertypesv5QueryRangeRequestDTOVariables;
 }
@@ -10523,9 +10854,21 @@ export interface Querybuildertypesv5QueryRangeRequestDTO {
  * Response from the v5 query range endpoint. The data.results array contains typed results depending on the requestType: TimeSeriesData for time_series, ScalarData for scalar, or RawData for raw requests.
  */
 export interface Querybuildertypesv5QueryRangeResponseDTO {
+	/**
+	 * @description The query results.
+	 */
 	data?: Querybuildertypesv5QueryDataDTO;
+	/**
+	 * @description Execution statistics for the whole request.
+	 */
 	meta?: Querybuildertypesv5ExecStatsDTO;
+	/**
+	 * @description The request type the results are shaped for, echoed from the request.
+	 */
 	type?: Querybuildertypesv5RequestTypeDTO;
+	/**
+	 * @description Warnings raised while executing the request, if any.
+	 */
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
