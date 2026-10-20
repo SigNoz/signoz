@@ -145,7 +145,7 @@ function FunnelStep({
 									<FilterSelect
 										placeholder="Select Service"
 										queryParam={QueryParams.service}
-										filterType="serviceName"
+										filterType="service.name"
 										shouldSetQueryParams={false}
 										values={stepData.service_name}
 										isMultiple={false}
