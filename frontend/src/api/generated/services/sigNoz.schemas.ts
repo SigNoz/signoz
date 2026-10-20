@@ -5168,11 +5168,13 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 export interface MetrictypesComparisonSpaceAggregationParamDTO {
 	/**
 	 * @type string
+	 * @description Comparison applied to histogram bucket bounds when spaceAggregation is count: <= counts observations at or below threshold, > counts those above it.
 	 */
 	operator: string;
 	/**
 	 * @type number
 	 * @format double
+	 * @description Bucket bound the comparison uses, in the unit of the histogram metric. Interpolated linearly between the two nearest bucket bounds.
 	 */
 	threshold: number;
 }

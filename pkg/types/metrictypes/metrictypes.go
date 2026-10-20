@@ -277,8 +277,8 @@ type MetricValueFilter struct {
 }
 
 type ComparisonSpaceAggregationParam struct {
-	Operater  string  `json:"operator" required:"true"`
-	Threshold float64 `json:"threshold" required:"true"`
+	Operater  string  `json:"operator" required:"true" description:"Comparison applied to histogram bucket bounds when spaceAggregation is count: <= counts observations at or below threshold, > counts those above it."`
+	Threshold float64 `json:"threshold" required:"true" description:"Bucket bound the comparison uses, in the unit of the histogram metric. Interpolated linearly between the two nearest bucket bounds."`
 }
 
 func (param ComparisonSpaceAggregationParam) StringValue() string {
