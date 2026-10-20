@@ -3,6 +3,7 @@ import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import type { DefaultOptionType } from 'antd/es/select';
 import { getFieldValueSuggestions } from 'api/querySuggestions/getFieldValueSuggestions';
+import { FIELD_API_CACHE_TIME } from 'constants/queryCacheTime';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { toFieldValues } from 'hooks/querySuggestions/useFieldValuesSuggestion';
 import { AppState } from 'store/reducers';
@@ -74,6 +75,7 @@ export function useGetAllFilters(props: Filters): GetAllFiltersResponse {
 				value: val,
 			}));
 		},
+		{ staleTime: FIELD_API_CACHE_TIME },
 	);
 
 	return { options: data ?? [], isFetching: isLoading };
