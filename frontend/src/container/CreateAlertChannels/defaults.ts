@@ -7,6 +7,7 @@ import {
 	AlertmanagertypesChannelOpsgenieConfigDTO,
 	AlertmanagertypesChannelPagerdutyConfigDTO,
 	AlertmanagertypesChannelSlackConfigDTO,
+	AlertmanagertypesChannelTelegramConfigDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
 import { ChannelKind, ChannelSpecFormValues } from './types';
@@ -573,6 +574,13 @@ export const EmailInitialConfig: Partial<AlertmanagertypesChannelEmailConfigDTO>
 
 // prefilled values of every channel type, keyed by type so the form can apply
 // exactly one set of defaults and swap it when the type changes
+// `message` is left unset so the backend applies its own template; an empty
+// string would overwrite it.
+export const TelegramInitialConfig: Partial<AlertmanagertypesChannelTelegramConfigDTO> =
+	{
+		sendResolved: true,
+	};
+
 export const DEFAULT_CHANNEL_KIND = ChannelKind.slack;
 
 export const ChannelInitialConfig: Record<ChannelKind, ChannelSpecFormValues> =
@@ -587,4 +595,5 @@ export const ChannelInitialConfig: Record<ChannelKind, ChannelSpecFormValues> =
 		[ChannelKind.opsgenie]: OpsgenieInitialConfig,
 		[ChannelKind.email]: EmailInitialConfig,
 		[ChannelKind.webhook]: {},
+		[ChannelKind.telegram]: TelegramInitialConfig,
 	};

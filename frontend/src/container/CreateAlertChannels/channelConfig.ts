@@ -9,6 +9,7 @@ import {
 	AlertmanagertypesChannelOpsgenieConfigDTO,
 	AlertmanagertypesChannelPagerdutyConfigDTO,
 	AlertmanagertypesChannelSlackConfigDTO,
+	AlertmanagertypesChannelTelegramConfigDTO,
 	AlertmanagertypesChannelWebhookConfigDTO,
 	AlertmanagertypesPostableNotificationChannelDTO,
 	AlertmanagertypesTestableNotificationChannelDTO,
@@ -117,6 +118,16 @@ const SPEC_FIELDS = {
 		'metadata',
 		'sendResolved',
 	] as const satisfies readonly (keyof AlertmanagertypesChannelIncidentIOConfigDTO)[],
+	[ChannelKind.telegram]: [
+		'apiUrl',
+		'botToken',
+		'chatId',
+		'messageThreadId',
+		'title',
+		'message',
+		'disableNotifications',
+		'sendResolved',
+	] as const satisfies readonly (keyof AlertmanagertypesChannelTelegramConfigDTO)[],
 } satisfies Record<ChannelKind, readonly (keyof ChannelSpecFormValues)[]>;
 
 /**
@@ -169,6 +180,10 @@ type SpecFieldsComplete = {
 	incidentio: MissingFrom<
 		AlertmanagertypesChannelIncidentIOConfigDTO,
 		(typeof SPEC_FIELDS)['incidentio']
+	>;
+	telegram: MissingFrom<
+		AlertmanagertypesChannelTelegramConfigDTO,
+		(typeof SPEC_FIELDS)['telegram']
 	>;
 };
 

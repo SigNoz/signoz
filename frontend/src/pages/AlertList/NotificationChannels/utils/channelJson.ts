@@ -16,6 +16,7 @@ const SECRET_FIELDS_BY_KIND: Record<string, readonly string[]> = {
 	jira: ['apiToken'],
 	jsmops: ['apiKey'],
 	incidentio: ['token'],
+	telegram: ['botToken'],
 };
 
 export function channelToJson(

@@ -9,6 +9,7 @@ import {
 	AlertmanagertypesChannelOpsgenieConfigDTO,
 	AlertmanagertypesChannelPagerdutyConfigDTO,
 	AlertmanagertypesChannelSlackConfigDTO,
+	AlertmanagertypesChannelTelegramConfigDTO,
 	AlertmanagertypesChannelWebhookConfigDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
@@ -26,7 +27,8 @@ export type ChannelSpecFormValues = Partial<
 		AlertmanagertypesChannelGoogleChatConfigDTO &
 		AlertmanagertypesChannelJiraConfigDTO &
 		AlertmanagertypesChannelJSMOpsConfigDTO &
-		AlertmanagertypesChannelIncidentIOConfigDTO
+		AlertmanagertypesChannelIncidentIOConfigDTO &
+		AlertmanagertypesChannelTelegramConfigDTO
 >;
 
 export type ChannelFormValues = ChannelSpecFormValues & {

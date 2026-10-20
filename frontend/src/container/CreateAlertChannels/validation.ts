@@ -11,6 +11,7 @@ import { opsgenieSchema } from './schemas/opsgenie';
 import { pagerdutySchema } from './schemas/pagerduty';
 import { channelNameSchema } from './schemas/shared';
 import { slackSchema } from './schemas/slack';
+import { telegramSchema } from './schemas/telegram';
 import { webhookSchema } from './schemas/webhook';
 import { ChannelFormValues, ChannelKind } from './types';
 
@@ -25,6 +26,7 @@ export const CHANNEL_SCHEMAS: Record<ChannelKind, ZodType> = {
 	[ChannelKind.googlechat]: googleChatSchema,
 	[ChannelKind.jira]: jiraSchema,
 	[ChannelKind.incidentio]: incidentIOSchema,
+	[ChannelKind.telegram]: telegramSchema,
 };
 
 export function validateChannel(
