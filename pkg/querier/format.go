@@ -3,6 +3,7 @@ package querier
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -101,8 +102,10 @@ func formatValueForProm(v any) string {
 	switch x := v.(type) {
 	case int:
 		return fmt.Sprintf("%d", x)
-	case float32, float64:
-		return fmt.Sprintf("%f", x)
+	case float32:
+		return strconv.FormatFloat(float64(x), 'f', -1, 32)
+	case float64:
+		return strconv.FormatFloat(x, 'f', -1, 64)
 	case string:
 		return x
 	case bool:
