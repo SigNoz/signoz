@@ -21,6 +21,7 @@ export const CHANNEL_KIND_LABEL: Record<
 	[AlertmanagertypesChannelKindDTO.jira]: 'Jira',
 	[AlertmanagertypesChannelKindDTO.jsmops]: 'JSM Ops',
 	[AlertmanagertypesChannelKindDTO.incidentio]: 'incident.io',
+	[AlertmanagertypesChannelKindDTO.telegram]: 'Telegram',
 };
 
 export const KIND_FILTER_ALL = 'all';
