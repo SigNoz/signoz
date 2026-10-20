@@ -15,7 +15,7 @@ export default function EventsNotConfigured(): JSX.Element {
 	};
 
 	return (
-		<div className={styles.container}>
+		<div className={styles.container} data-testid="events-not-configured">
 			<div className={styles.content}>
 				<img src={emptyStateUrl} alt="not-configured" className={styles.icon} />
 				<Typography.Text>

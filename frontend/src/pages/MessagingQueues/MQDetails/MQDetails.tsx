@@ -62,6 +62,7 @@ function MessagingQueuesOptions({
 
 	return (
 		<ToggleGroup
+			testId="mq-detail-type-toggle"
 			variant="outlined"
 			color="secondary"
 			size="sm"

@@ -51,6 +51,7 @@ function RolesSettings(): JSX.Element {
 							placeholder="Search for roles..."
 							value={searchQuery}
 							onChange={(e): void => setSearchQuery(e.target.value)}
+							testId="roles-search-input"
 						/>
 					</AuthZTooltip>
 					{isRolesEnabled && (
@@ -62,6 +63,7 @@ function RolesSettings(): JSX.Element {
 							width={156}
 							onClick={(): void => history.push(ROUTES.ROLE_CREATE)}
 							prefix={<Plus size={14} />}
+							testId="create-custom-role-btn"
 						>
 							Custom role
 						</AuthZButton>

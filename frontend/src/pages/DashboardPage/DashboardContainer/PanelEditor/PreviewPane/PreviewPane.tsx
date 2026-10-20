@@ -88,6 +88,7 @@ function PreviewPane(props: PreviewPaneProps): JSX.Element {
 	return (
 		<div
 			className={cx(styles.preview, { [styles.previewStatic]: !!staticDraft })}
+			data-testid="panel-editor-v2-preview"
 		>
 			{query && !query.hideHeader && (
 				<div className={styles.header}>

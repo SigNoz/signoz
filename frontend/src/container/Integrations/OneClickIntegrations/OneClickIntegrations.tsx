@@ -71,6 +71,7 @@ function OneClickIntegrations(props: OneClickIntegrationsProps): JSX.Element {
 							<div
 								className="one-click-integrations-list-item"
 								key={integration.id}
+								data-testid={`one-click-integration-${integration.id}`}
 								onClick={(): void => handleSelectedIntegration(integration)}
 							>
 								<div className="one-click-integrations-list-item-title">

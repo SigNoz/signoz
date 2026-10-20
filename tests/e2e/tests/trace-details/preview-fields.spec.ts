@@ -1,13 +1,11 @@
-import { test, expect } from '../../fixtures/auth';
-import { newAdminContext } from '../../helpers/auth';
 import {
-	gotoTraceUntilLoaded,
-	hoverFlamegraphSpan,
+	expect,
 	loadLargeTrace,
-	resetTracePreferences,
+	onAdminPage,
 	seedTracesViaSeeder,
-	setPreviewFieldsPreference,
-} from '../../helpers/trace-details';
+	test,
+	traceDetailsDriver,
+} from '../../drivers/traces';
 
 // §6 — preview fields. A configured preview field appears as a row in the span
 // hover card (SpanTooltipContent, testid span-hover-card-preview-<key>). The
@@ -23,7 +21,6 @@ const trace = loadLargeTrace();
 // field so its value renders in the hover card.
 const PREVIEW_FIELD = 'db.system';
 const PREVIEW_VALUE = 'redis';
-const PREVIEW_TESTID = `span-hover-card-preview-${PREVIEW_FIELD}`;
 
 // Skipped wholesale until the flamegraph preview-fields fetch race (FE bug, see
 // the TC-01 FIXME + sprint task) is fixed — the only case here is that flamegraph
@@ -44,23 +41,19 @@ test.describe.skip('Trace details — preview fields in the hover card', () => {
 
 	test.afterAll(async ({ browser }) => {
 		// Reset prefs to defaults (afterAll can't use the authedPage fixture).
-		const ctx = await newAdminContext(browser);
-		const page = await ctx.newPage();
-		await resetTracePreferences(page);
-		await ctx.close();
+		await onAdminPage(browser, (page) => traceDetailsDriver(page).prefs.reset());
 	});
 
-	test.beforeEach(async ({ authedPage: page }) => {
+	test.beforeEach(async ({ traces }) => {
 		// Seed the preview field BEFORE navigating so the on-mount prefs fetch
 		// returns it and the hover card renders the row.
 		// db.system is a span ATTRIBUTE (fieldContext 'attribute', not 'span') —
 		// the flamegraph fetches fields selectively, so the wrong context means
 		// the bar's span wouldn't carry the value and the hover row wouldn't render.
-		await setPreviewFieldsPreference(page, [
+		await traces.prefs.previewFields([
 			{ name: PREVIEW_FIELD, fieldContext: 'attribute', fieldDataType: 'string' },
 		]);
-		await gotoTraceUntilLoaded(
-			page,
+		await traces.goto(
 			`/trace/${trace.traceId}`,
 			`cell-0-${trace.landmarks.root}`,
 		);
@@ -75,11 +68,12 @@ test.describe.skip('Trace details — preview fields in the hover card', () => {
 	// gates/refetches on previewFields. See sprint task.
 	test.fixme('TC-01 flamegraph hover card shows the configured preview field', async ({
 		authedPage: page,
+		traces,
 	}) => {
-		const previewRow = page.getByTestId(PREVIEW_TESTID).first();
+		const previewRow = traces.hoverCard.preview(PREVIEW_FIELD).first();
 		await expect(async () => {
 			await page.mouse.move(0, 0);
-			await hoverFlamegraphSpan(page, trace.landmarks.db);
+			await traces.flame.hover(trace.landmarks.db);
 			await expect(previewRow).toBeVisible({ timeout: 1500 });
 		}).toPass({ timeout: 15_000 });
 

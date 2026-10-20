@@ -64,7 +64,10 @@ function DependentServices({
 
 	return (
 		<div className="top-services-content">
-			<div className="dependent-services-container">
+			<div
+				className="dependent-services-container"
+				data-testid="dependent-services-table"
+			>
 				<Table
 					loading={isLoading || isRefetching}
 					dataSource={dependentServicesData || []}

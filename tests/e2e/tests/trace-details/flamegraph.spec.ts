@@ -1,20 +1,15 @@
-import { test, expect } from '../../fixtures/auth';
-import { newAdminContext } from '../../helpers/auth';
 import {
-	changeColourByViaMenu,
-	clickFlamegraphSpan,
-	getFlamegraphSpanColor,
-	gotoTraceUntilLoaded,
-	hoverFlamegraphSpan,
-	isFlamegraphSpanInView,
+	expect,
 	loadLargeTrace,
+	onAdminPage,
 	seedTracesViaSeeder,
-	setColorByPreference,
-} from '../../helpers/trace-details';
+	test,
+	traceDetailsDriver,
+} from '../../drivers/traces';
 
 // The flamegraph is canvas-rendered, so individual bars have no DOM nodes. These
 // specs drive it through the window.__sigTraceFlame__ test hook (enabled by
-// gotoTraceUntilLoaded) — see helpers/trace-details.ts — which resolves a span's
+// gotoTraceUntilLoaded) — see drivers/traces.ts — which resolves a span's
 // on-canvas point from the live span→rect map and dispatches real mouse events.
 //
 // One shared trace for the file, seeded once. Random ids per run isolate it from
@@ -35,86 +30,77 @@ test.describe('Trace details — flamegraph', () => {
 	});
 
 	test.afterAll(async ({ browser }) => {
-		// TC-04 changes colour-by — a per-user pref. Reset it so it doesn't leak to
-		// other specs (afterAll can't use the test-scoped authedPage fixture).
-		const ctx = await newAdminContext(browser);
-		const page = await ctx.newPage();
-		await setColorByPreference(page, '');
-		await ctx.close();
+		// TC-04 changes colour-by — a per-user pref. Reset it so it does not leak
+		// into other specs; `afterAll` cannot use the test-scoped `authedPage`.
+		await onAdminPage(browser, (page) =>
+			traceDetailsDriver(page).prefs.colorBy(''),
+		);
 	});
 
-	test.beforeEach(async ({ authedPage: page }) => {
-		await gotoTraceUntilLoaded(
-			page,
+	test.beforeEach(async ({ traces }) => {
+		await traces.goto(
 			`/trace/${trace.traceId}`,
 			`cell-0-${trace.landmarks.root}`,
 		);
 	});
 
 	test('TC-01 hovering an error bar opens its hover card with status/start/duration', async ({
-		authedPage: page,
+		traces,
 	}) => {
-		await hoverFlamegraphSpan(page, trace.landmarks.errors[0]);
+		await traces.flame.hover(trace.landmarks.errors[0]);
 
 		// The status row only renders in the hover card (not in waterfall rows),
 		// so it proves both that the card opened and that we hovered the right
 		// (error) span — the bar was targeted by id via the span→rect map.
-		await expect(page.getByTestId('span-hover-card-status')).toHaveText(
-			/status\s*error/,
-		);
-		await expect(page.getByTestId('span-hover-card-start')).toHaveText(
-			/start\s*[\d.]+ ms/,
-		);
-		await expect(page.getByTestId('span-hover-card-duration')).toHaveText(
+		await expect(traces.hoverCard.field('status')).toHaveText(/status\s*error/);
+		await expect(traces.hoverCard.field('start')).toHaveText(/start\s*[\d.]+ ms/);
+		await expect(traces.hoverCard.field('duration')).toHaveText(
 			/duration\s*[\d.]+/,
 		);
 	});
 
 	test('TC-02 clicking a bar selects the span, opens the drawer, and syncs the waterfall row', async ({
 		authedPage: page,
+		traces,
 	}) => {
-		await clickFlamegraphSpan(page, trace.landmarks.db);
+		await traces.flame.click(trace.landmarks.db);
 
 		// selection is reflected in the shared URL state...
 		await expect(page).toHaveURL(new RegExp(`spanId=${trace.landmarks.db}`));
 		// ...the drawer opens (Overview tab is drawer-only)...
-		await expect(page.getByRole('tab', { name: /overview/i })).toBeVisible();
+		await expect(traces.span.overviewTab()).toBeVisible();
 		// ...and the same span's waterfall row is present (views share selection).
-		await expect(page.getByTestId(`cell-0-${trace.landmarks.db}`)).toBeVisible();
+		await expect(traces.span.row(trace.landmarks.db)).toBeVisible();
 	});
 
 	test('TC-03 deep-linking a deeply-nested span scrolls it into view on the flamegraph', async ({
-		authedPage: page,
+		traces,
 	}) => {
 		// Open pre-pointed at a deep (level ~34) span; useScrollToSpan should
 		// center it, so its bar becomes drawn and inside the viewport container.
-		await gotoTraceUntilLoaded(
-			page,
+		await traces.goto(
 			`/trace/${trace.traceId}?spanId=${trace.landmarks.deepLeaf}`,
 			`cell-0-${trace.landmarks.deepLeaf}`,
 		);
 
 		await expect
-			.poll(() => isFlamegraphSpanInView(page, trace.landmarks.deepLeaf))
+			.poll(() => traces.flame.isInView(trace.landmarks.deepLeaf))
 			.toBe(true);
 	});
 
 	test('TC-04 changing colour-by recolors the flamegraph bars', async ({
-		authedPage: page,
+		traces,
 	}) => {
 		// colour-by persists per-user, so set an explicit baseline rather than
 		// assuming the default. Root's color under service.name:
-		await changeColourByViaMenu(page, 'service.name');
-		const colorByService = await getFlamegraphSpanColor(
-			page,
-			trace.landmarks.root,
-		);
+		await traces.changeColourBy('service.name');
+		const colorByService = await traces.flame.color(trace.landmarks.root);
 		expect(colorByService).not.toBeNull();
 
 		// Switch to host.name → root groups by a different value → new color.
-		await changeColourByViaMenu(page, 'host.name');
+		await traces.changeColourBy('host.name');
 		await expect
-			.poll(() => getFlamegraphSpanColor(page, trace.landmarks.root))
+			.poll(() => traces.flame.color(trace.landmarks.root))
 			.not.toBe(colorByService);
 	});
 });

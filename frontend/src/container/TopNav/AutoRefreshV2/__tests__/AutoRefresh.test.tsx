@@ -2,6 +2,7 @@
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import set from 'api/browser/localstorage/set';
 import { DASHBOARD_TIME_IN_DURATION } from 'constants/app';
 import configureStore, { MockStoreEnhanced } from 'redux-mock-store';
@@ -111,6 +112,36 @@ describe('AutoRefresh', () => {
 			jest.advanceTimersByTime(60_000);
 		});
 
+		expect(tickCount(store)).toBe(0);
+	});
+});
+
+describe('AutoRefresh disabled checkbox', () => {
+	beforeEach(() => {
+		localStorage.clear();
+	});
+
+	it('explains why it is disabled and ignores clicks', async () => {
+		const user = userEvent.setup();
+		const store = renderAutoRefresh(
+			createGlobalTimeState({ isAutoRefreshDisabled: true }),
+		);
+
+		await user.click(screen.getByTitle('Set auto refresh'));
+		const checkbox = await screen.findByRole('checkbox', {
+			name: 'Auto Refresh',
+		});
+		expect(checkbox).toHaveAttribute('aria-disabled', 'true');
+
+		await user.hover(checkbox);
+		await expect(
+			screen.findByText('Auto refresh is not available for a custom time range'),
+		).resolves.toBeInTheDocument();
+
+		await user.click(checkbox);
+
+		expect(checkbox).not.toBeChecked();
+		expect(localStorage.getItem(DASHBOARD_TIME_IN_DURATION)).toBeNull();
 		expect(tickCount(store)).toBe(0);
 	});
 });

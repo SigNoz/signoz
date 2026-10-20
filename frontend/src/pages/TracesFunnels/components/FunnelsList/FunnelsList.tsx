@@ -80,12 +80,17 @@ export function FunnelListItem({
 		<button
 			type="button"
 			className="funnel-item"
+			data-testid={`funnel-item-${funnel.funnel_id}`}
 			onClick={(): void => onFunnelClick(funnel)}
 		>
 			{content}
 		</button>
 	) : (
-		<Link to={funnelDetailsLink} className="funnel-item">
+		<Link
+			to={funnelDetailsLink}
+			className="funnel-item"
+			data-testid={`funnel-item-${funnel.funnel_id}`}
+		>
 			{content}
 		</Link>
 	);

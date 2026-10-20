@@ -242,7 +242,7 @@ function SaveView(): JSX.Element {
 				const isEditDeleteSupported = allowedRoles.includes(user.role as string);
 
 				return (
-					<div className="column-render">
+					<div className="column-render" data-testid={`saved-view-row-${view.id}`}>
 						<div className="title-with-action">
 							<div className="save-view-title">
 								<span
@@ -252,7 +252,9 @@ function SaveView(): JSX.Element {
 										boxShadow: `0px 0px 6px 0px ${bgColor}`,
 									}}
 								/>{' '}
-								<Typography.Text>{view.name}</Typography.Text>
+								<Typography.Text data-testid="saved-view-name">
+									{view.name}
+								</Typography.Text>
 							</div>
 
 							<div className="action-btn">
@@ -319,6 +321,7 @@ function SaveView(): JSX.Element {
 						value={searchValue}
 						onChange={handleSearch}
 						className="search-input"
+						data-testid="saved-views-search"
 					/>
 				</div>
 
@@ -345,6 +348,7 @@ function SaveView(): JSX.Element {
 						color="secondary"
 						onClick={hideDeleteViewModal}
 						prefix={<X size={16} />}
+						testId="cancel-delete"
 					>
 						Cancel
 					</Button>,

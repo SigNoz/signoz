@@ -54,6 +54,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
   >
     <div
       class="query-table"
+      data-testid="query-table"
     >
       <div
         class="ant-table-wrapper resize-main-table css-dev-only-do-not-override-2i2tap"

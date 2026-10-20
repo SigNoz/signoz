@@ -353,7 +353,7 @@ const SpanOverview = memo(function SpanOverview({
 			<span className={styles.rowActions}>
 				<Tooltip title="Copy Span Link">
 					<Button
-						aria-label="Action"
+						aria-label="Copy span link"
 						variant="ghost"
 						size="sm"
 						icon
@@ -365,7 +365,8 @@ const SpanOverview = memo(function SpanOverview({
 				</Tooltip>
 				<Tooltip title="Add to Trace Funnel">
 					<Button
-						aria-label="Action"
+						aria-label="Add to Trace Funnel"
+						testId="span-add-to-funnel-btn"
 						variant="ghost"
 						size="sm"
 						icon

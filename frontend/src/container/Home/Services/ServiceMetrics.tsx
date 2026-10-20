@@ -315,7 +315,10 @@ function ServiceMetrics({
 		<Card className="services-list-card home-data-card">
 			{servicesExist && (
 				<Card.Header>
-					<div className="services-header home-data-card-header">
+					<div
+						className="services-header home-data-card-header"
+						data-testid="home-section-services"
+					>
 						{' '}
 						Services
 						<div className="services-header-actions">

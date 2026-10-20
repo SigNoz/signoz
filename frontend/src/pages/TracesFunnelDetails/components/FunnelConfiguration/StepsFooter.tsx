@@ -27,13 +27,21 @@ function ValidTracesCount(): JSX.Element {
 
 	if (hasAllEmptyStepFields) {
 		return (
-			<span className="steps-footer__valid-traces">No service / span names</span>
+			<span
+				className="steps-footer__valid-traces"
+				data-testid="funnel-valid-traces-status"
+			>
+				No service / span names
+			</span>
 		);
 	}
 
 	if (hasIncompleteStepFields) {
 		return (
-			<span className="steps-footer__valid-traces">
+			<span
+				className="steps-footer__valid-traces"
+				data-testid="funnel-valid-traces-status"
+			>
 				Missing service / span names
 			</span>
 		);
@@ -45,13 +53,23 @@ function ValidTracesCount(): JSX.Element {
 
 	if (validTracesCount === 0) {
 		return (
-			<span className="steps-footer__valid-traces steps-footer__valid-traces--none">
+			<span
+				className="steps-footer__valid-traces steps-footer__valid-traces--none"
+				data-testid="funnel-valid-traces-status"
+			>
 				No valid traces found
 			</span>
 		);
 	}
 
-	return <span className="steps-footer__valid-traces">Valid traces found</span>;
+	return (
+		<span
+			className="steps-footer__valid-traces"
+			data-testid="funnel-valid-traces-status"
+		>
+			Valid traces found
+		</span>
+	);
 }
 
 function StepsFooter({ stepsCount, isSaving }: StepsFooterProps): JSX.Element {
@@ -62,7 +80,7 @@ function StepsFooter({ stepsCount, isSaving }: StepsFooterProps): JSX.Element {
 		<div className="steps-footer">
 			<div className="steps-footer__left">
 				<Cone className="funnel-icon" size={14} />
-				<span>{stepsCount} steps</span>
+				<span data-testid="funnel-steps-count">{stepsCount} steps</span>
 				<span>·</span>
 				<ValidTracesCount />
 			</div>
@@ -70,6 +88,7 @@ function StepsFooter({ stepsCount, isSaving }: StepsFooterProps): JSX.Element {
 				<Button
 					disabled={hasIncompleteStepFields || !hasUnsavedChanges}
 					onClick={handleSaveFunnel}
+					data-testid="funnel-save-btn"
 					type="primary"
 					className="steps-footer__button steps-footer__button--run"
 					icon={<Check size={14} />}

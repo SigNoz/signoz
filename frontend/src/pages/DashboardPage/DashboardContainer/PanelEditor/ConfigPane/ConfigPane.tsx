@@ -96,7 +96,7 @@ function ConfigPane({
 		onChangeSpec({ ...spec, display: { ...spec.display, [field]: value } });
 
 	return (
-		<div className={styles.config}>
+		<div className={styles.config} data-testid="panel-editor-v2-config">
 			<header className={styles.heading}>
 				<span className={styles.marker} />
 				<Typography.Text>Panel Details</Typography.Text>

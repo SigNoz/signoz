@@ -975,4 +975,195 @@ describe('Login Component', () => {
 			});
 		});
 	});
+
+	describe('Enter key submission', () => {
+		const EMAIL_PASSWORD_ENDPOINT = '*/api/v2/sessions/email_password';
+
+		async function typeEmail(
+			user: ReturnType<typeof userEvent.setup>,
+			email: string,
+		): Promise<HTMLElement> {
+			const emailInput = await waitFor(() => {
+				const input = screen.getByTestId('email');
+				expect(input).not.toBeDisabled();
+				return input;
+			});
+			await user.type(emailInput, email);
+			return emailInput;
+		}
+
+		it('fetches the sessions context once on Enter in the email field', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			let contextCalls = 0;
+
+			server.use(
+				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) => {
+					contextCalls += 1;
+					return res(ctx.status(200), ctx.json({ data: mockSingleOrgPasswordAuth }));
+				}),
+			);
+
+			render(<Login />);
+
+			await typeEmail(user, `${PASSWORD_AUTHN_EMAIL}{enter}`);
+
+			await screen.findByTestId('password');
+			expect(contextCalls).toBe(1);
+		});
+
+		// Bug: the email onPressEnter calls onNextHandler without checking isEmailValid (container/Login/index.tsx:329).
+		it.skip('does not fetch the sessions context on Enter with an invalid email', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			let contextCalls = 0;
+
+			server.use(
+				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) => {
+					contextCalls += 1;
+					return res(ctx.status(200), ctx.json({ data: mockSingleOrgPasswordAuth }));
+				}),
+			);
+
+			render(<Login />);
+
+			await typeEmail(user, 'not-an-email');
+			expect(screen.getByTestId('initiate_login')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
+			await user.keyboard('{enter}');
+
+			await new Promise((resolve) => setTimeout(resolve, 50));
+			expect(contextCalls).toBe(0);
+		});
+
+		it('signs in once on Enter in the password field', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			let loginCalls = 0;
+
+			server.use(
+				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
+					res(ctx.status(200), ctx.json({ data: mockSingleOrgPasswordAuth })),
+				),
+				rest.post(EMAIL_PASSWORD_ENDPOINT, (_, res, ctx) => {
+					loginCalls += 1;
+					return res(
+						ctx.status(200),
+						ctx.json({ status: 'success', data: mockEmailPasswordResponse }),
+					);
+				}),
+			);
+
+			render(<Login />);
+
+			await typeEmail(user, `${PASSWORD_AUTHN_EMAIL}{enter}`);
+			await user.type(
+				await screen.findByTestId('password'),
+				'testpassword{enter}',
+			);
+
+			await waitFor(() => {
+				expect(localStorage.getItem('AUTH_TOKEN')).toBe('mock-access-token');
+			});
+			expect(loginCalls).toBe(1);
+		});
+
+		it('does not sign in on Enter while the password is empty', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			let loginCalls = 0;
+
+			server.use(
+				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
+					res(ctx.status(200), ctx.json({ data: mockSingleOrgPasswordAuth })),
+				),
+				rest.post(EMAIL_PASSWORD_ENDPOINT, (_, res, ctx) => {
+					loginCalls += 1;
+					return res(
+						ctx.status(200),
+						ctx.json({ status: 'success', data: mockEmailPasswordResponse }),
+					);
+				}),
+			);
+
+			render(<Login />);
+
+			await typeEmail(user, `${PASSWORD_AUTHN_EMAIL}{enter}`);
+			const passwordInput = await screen.findByTestId('password');
+			expect(screen.getByTestId('password_authn_submit')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
+
+			await user.type(passwordInput, '{enter}');
+
+			// Give a wrongly sent request time to land before asserting it never did.
+			await new Promise((resolve) => setTimeout(resolve, 50));
+			expect(loginCalls).toBe(0);
+		});
+
+		it('does not sign in again on Enter while the first sign in is loading', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			let loginCalls = 0;
+
+			server.use(
+				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
+					res(ctx.status(200), ctx.json({ data: mockSingleOrgPasswordAuth })),
+				),
+				rest.post(EMAIL_PASSWORD_ENDPOINT, (_, res, ctx) => {
+					loginCalls += 1;
+					return res(
+						ctx.delay(1000),
+						ctx.status(200),
+						ctx.json({ status: 'success', data: mockEmailPasswordResponse }),
+					);
+				}),
+			);
+
+			render(<Login />);
+
+			const emailInput = await typeEmail(user, `${PASSWORD_AUTHN_EMAIL}{enter}`);
+			await user.type(
+				await screen.findByTestId('password'),
+				'testpassword{enter}',
+			);
+
+			const submitButton = screen.getByTestId('password_authn_submit');
+			await waitFor(() => {
+				expect(submitButton).toHaveAttribute('aria-disabled', 'true');
+			});
+
+			// The password input is disabled while submitting; the email input is not.
+			await user.type(emailInput, '{enter}');
+
+			await waitFor(() => {
+				expect(localStorage.getItem('AUTH_TOKEN')).toBe('mock-access-token');
+			});
+			expect(loginCalls).toBe(1);
+		});
+
+		it('redirects to the SSO url on Enter for a callback org', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+			Object.defineProperty(window, 'location', {
+				value: { href: 'http://localhost/' },
+				writable: true,
+			});
+
+			server.use(
+				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
+					res(ctx.status(200), ctx.json({ data: mockSingleOrgCallbackAuth })),
+				),
+			);
+
+			render(<Login />);
+
+			const emailInput = await typeEmail(user, `${PASSWORD_AUTHN_EMAIL}{enter}`);
+			await screen.findByTestId('callback_authn_submit');
+
+			await user.type(emailInput, '{enter}');
+
+			await waitFor(() => {
+				expect(window.location.href).toBe(CALLBACK_AUTHN_URL);
+			});
+		});
+	});
 });

@@ -173,4 +173,50 @@ describe('CreateAlertProvider — edit mode ignores URL prefill', () => {
 
 		expect(screen.getByTestId('threshold-value')).toHaveTextContent('245');
 	});
+
+	it('ignores prefill params that are present on an edit URL', () => {
+		// A deep link into the editor can carry the create form's prefill params.
+		// The loaded rule has to win, or opening an edited rule from such a link
+		// would silently rewrite its condition.
+		const initialAlertState = {
+			...INITIAL_CREATE_ALERT_STATE,
+			threshold: {
+				...INITIAL_CREATE_ALERT_STATE.threshold,
+				matchType: AlertThresholdMatchType.AT_LEAST_ONCE,
+				thresholds: [
+					{
+						...INITIAL_CREATE_ALERT_STATE.threshold.thresholds[0],
+						thresholdValue: 245,
+					},
+				],
+			},
+		};
+
+		const queryClient = new QueryClient({
+			defaultOptions: { queries: { retry: false } },
+		});
+		render(
+			<MemoryRouter
+				initialEntries={[
+					`/alerts/overview?ruleId=r1&matchType=in_total&compareOp=below&thresholds=${serializeThreshold(
+						90,
+					)}`,
+				]}
+			>
+				<QueryClientProvider client={queryClient}>
+					<CreateAlertProvider
+						initialAlertType={AlertTypes.METRICS_BASED_ALERT}
+						isEditMode
+						ruleId="r1"
+						initialAlertState={initialAlertState}
+					>
+						<Probe />
+					</CreateAlertProvider>
+				</QueryClientProvider>
+			</MemoryRouter>,
+		);
+
+		expect(screen.getByTestId('threshold-value')).toHaveTextContent('245');
+		expect(screen.getByTestId('match-type')).toHaveTextContent('at_least_once');
+	});
 });

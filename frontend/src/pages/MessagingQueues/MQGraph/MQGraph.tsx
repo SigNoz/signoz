@@ -80,6 +80,7 @@ function MessagingQueuesGraph(): JSX.Element {
 	};
 	return (
 		<Card
+			data-testid="mq-consumer-lag-graph"
 			isDarkMode={isDarkMode}
 			$panelType={PANEL_TYPES.TIME_SERIES}
 			className="mq-graph"

@@ -333,6 +333,7 @@ function MessagingQueuesTable({
 						</div>
 					)}
 					<Table
+						data-testid={`mq-table-${type.toLowerCase()}`}
 						className={cx(
 							'mq-table',
 							type !== 'Detail' ? 'mq-overview-row-clickable' : 'pagination-left',

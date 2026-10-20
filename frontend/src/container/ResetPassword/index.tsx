@@ -164,6 +164,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 							color="primary"
 							type="submit"
 							data-attr="reset-password"
+							testId="reset-password-submit"
 							loading={isLoading}
 							disabled={!isValidPassword}
 							disabledTooltip="Enter matching passwords in both fields"

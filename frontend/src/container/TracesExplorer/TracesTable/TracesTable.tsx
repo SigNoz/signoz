@@ -98,6 +98,7 @@ function TracesTable({
 						onRowClick={handleRowClick}
 						onRowClickNewTab={handleRowClickNewTab}
 						getRowTestId={(row): string => `traces-table-row-${row.id}`}
+						testId={`traces-table-${panelType.toLowerCase()}`}
 					/>
 				</div>
 			)}

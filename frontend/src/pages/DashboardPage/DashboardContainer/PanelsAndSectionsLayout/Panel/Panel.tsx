@@ -47,6 +47,7 @@ function Panel({
 			// Stable locator so the "Download as PNG" action can find this node to
 			// capture, without threading a ref through the header/actions chain.
 			data-panel-root={panelId}
+			data-testid={`panel-${panelId}`}
 		>
 			{panelDefinition.mode === 'static' ? (
 				<StaticPanelContent

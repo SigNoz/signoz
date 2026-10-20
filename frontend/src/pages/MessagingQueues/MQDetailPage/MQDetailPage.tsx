@@ -89,6 +89,7 @@ function MQDetailPage(): JSX.Element {
 						Kafka / views /
 					</div>
 					<Select
+						data-testid="mq-view-select"
 						className="messaging-queue-options"
 						defaultValue={MessagingQueuesViewType.consumerLag.value}
 						popupClassName="messaging-queue-options-popup"

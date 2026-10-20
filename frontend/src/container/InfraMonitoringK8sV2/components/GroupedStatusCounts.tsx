@@ -111,7 +111,7 @@ export function GroupedStatusCounts({
 	}
 
 	return (
-		<div className={styles.container}>
+		<div className={styles.container} data-testid="grouped-status-counts">
 			{visibleItems.map((item) => (
 				<TanStackTable.HoverTooltip
 					key={item.label}

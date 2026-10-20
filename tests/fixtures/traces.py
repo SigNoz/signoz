@@ -202,27 +202,63 @@ class TracesErrorEvent(ABC):
     event: TracesEvent
     error_id: str
     error_group_id: str
+    trace_id: str
+    span_id: str
+    service_name: str
+    resources: dict[str, str]
 
     def __init__(
         self,
         event: TracesEvent,
         error_id: str = "",
         error_group_id: str = "",
+        trace_id: str = "",
+        span_id: str = "",
+        service_name: str = "",
+        resources: dict[str, str] | None = None,
     ) -> None:
         self.event = event
         self.error_id = error_id
         self.error_group_id = error_group_id
+        self.trace_id = trace_id
+        self.span_id = span_id
+        self.service_name = service_name
+        self.resources = resources or {}
 
     def np_arr(self) -> np.array:
+        attrs = self.event.attribute_map
         return np.array(
             [
-                self.event.time_unix_nano,
+                datetime.datetime.fromtimestamp(int(self.event.time_unix_nano) / 1e9, tz=datetime.UTC),
                 self.error_id,
                 self.error_group_id,
-                self.event.name,
-                json.dumps(self.event.attribute_map),
-            ]
+                self.trace_id,
+                self.span_id,
+                self.service_name,
+                attrs.get("exception.type", ""),
+                attrs.get("exception.message", ""),
+                attrs.get("exception.stacktrace", ""),
+                str(attrs.get("exception.escaped", "")).lower() == "true",
+                dict(self.resources),
+            ],
+            dtype=object,
         )
+
+
+# Column order of TracesErrorEvent.np_arr.
+ERROR_INDEX_COLUMNS = [
+    "timestamp",
+    "errorID",
+    "groupID",
+    "traceID",
+    "spanID",
+    "serviceName",
+    "exceptionType",
+    "exceptionMessage",
+    "exceptionStacktrace",
+    "exceptionEscaped",
+    "resourceTagsMap",
+]
 
 
 class TracesSpanAttribute(ABC):
@@ -599,6 +635,10 @@ class Traces(ABC):
             event=event,
             error_id=error_id,
             error_group_id=error_group_id,
+            trace_id=self.trace_id,
+            span_id=self.span_id,
+            service_name=self.service_name,
+            resources=self.resources_string,
         )
 
     def _determine_is_remote(self, flags: np.uint32) -> str:
@@ -731,6 +771,14 @@ class Traces(ABC):
             trace_state=data.get("trace_state", ""),
             flags=data.get("flags", 0),
             scope=data.get("scope", {}),
+            events=[
+                TracesEvent(
+                    name=event["name"],
+                    timestamp=parse_timestamp(event["timestamp"]),
+                    attribute_map={k: str(v) for k, v in (event.get("attributes") or {}).items()},
+                )
+                for event in data.get("events") or []
+            ],
         )
 
     @classmethod
@@ -884,6 +932,7 @@ def insert_traces_to_clickhouse(conn, traces: list[Traces]) -> None:
         conn.insert(
             database="signoz_traces",
             table="distributed_signoz_error_index_v2",
+            column_names=ERROR_INDEX_COLUMNS,
             data=[error_event.np_arr() for error_event in error_events],
         )
 

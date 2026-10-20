@@ -28,6 +28,7 @@ function CeleryTaskConfigOptions(): JSX.Element {
 					Task Name
 				</Typography.Text>
 				<Select
+					data-testid="celery-task-name-select"
 					placeholder="Task Name"
 					showSearch
 					mode="multiple"

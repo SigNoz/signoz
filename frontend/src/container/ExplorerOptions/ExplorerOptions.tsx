@@ -747,6 +747,7 @@ function ExplorerOptions({
 				<Select
 					disabled={disabled}
 					className="multi-alert-button"
+					data-testid="explorer-options-create-alert"
 					placeholder={selectLabel}
 					value={selectLabel}
 					suffixIcon={null}
@@ -772,6 +773,7 @@ function ExplorerOptions({
 				disabled={disabled}
 				shape="round"
 				onClick={(): void => onCreateAlertsHandler(query)}
+				data-testid="explorer-options-create-alert"
 				icon={<ConciergeBell size={16} />}
 			>
 				Create an Alert
@@ -802,6 +804,7 @@ function ExplorerOptions({
 				<Select
 					disabled={disabled}
 					className="multi-dashboard-button"
+					data-testid="explorer-options-add-to-dashboard"
 					placeholder={selectLabel}
 					value={selectLabel}
 					suffixIcon={null}
@@ -833,6 +836,7 @@ function ExplorerOptions({
 				shape="round"
 				onClick={onAddToDashboard}
 				icon={<Plus size={16} />}
+				data-testid="explorer-options-add-to-dashboard"
 			>
 				Add to Dashboard
 			</Button>
@@ -863,6 +867,8 @@ function ExplorerOptions({
 						<Button
 							className="action-icon"
 							onClick={handleClearSelect}
+							aria-label="Clear this view"
+							data-testid="explorer-clear-view"
 							icon={<X size={14} />}
 						/>
 					</Tooltip>
@@ -882,6 +888,8 @@ function ExplorerOptions({
 									className={cx('action-icon', isEditDeleteSupported ? ' ' : 'hidden')}
 									disabled={isViewUpdating}
 									onClick={onUpdateQueryHandler}
+									aria-label="Update this view"
+									data-testid="explorer-update-view"
 									icon={<Disc3 size={14} />}
 								/>
 							</Tooltip>
@@ -910,6 +918,7 @@ function ExplorerOptions({
 							}}
 							dropdownStyle={dropdownStyle}
 							className="views-dropdown"
+							data-testid="explorer-views-select"
 							allowClear={false}
 							ref={ref}
 						>
@@ -940,6 +949,7 @@ function ExplorerOptions({
 						<Button
 							shape="round"
 							onClick={handleSaveViewModalToggle}
+							data-testid="explorer-save-view-open"
 							className={isEditDeleteSupported ? '' : 'hidden'}
 							disabled={viewsIsLoading || isRefetching}
 							icon={<Disc3 size={16} />}
@@ -1025,6 +1035,7 @@ function ExplorerOptions({
 					/>
 					<Input
 						placeholder="e.g. External http method view"
+						data-testid="save-view-name-input"
 						value={newViewName}
 						onChange={(e): void => setNewViewName(e.target.value)}
 					/>

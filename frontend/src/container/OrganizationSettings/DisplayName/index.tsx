@@ -95,6 +95,7 @@ function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 							<Input
 								{...field}
 								id="displayName"
+								data-testid="org-display-name-input"
 								size="large"
 								placeholder={t('signoz')}
 								status={fieldState.error ? 'error' : ''}
@@ -112,6 +113,7 @@ function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 					disabled={isDisabled}
 					type="primary"
 					htmlType="submit"
+					data-testid="org-display-name-submit"
 				>
 					Submit
 				</Button>

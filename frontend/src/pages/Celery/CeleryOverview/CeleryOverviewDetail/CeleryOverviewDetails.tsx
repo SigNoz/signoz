@@ -54,6 +54,7 @@ export default function CeleryOverviewDetails({
 
 	return (
 		<Drawer
+			data-testid="mq-overview-details-drawer"
 			width="60%"
 			title={
 				<div>

@@ -52,6 +52,7 @@ function QueryBuilder({
 					onStageRunQuery={applyInspectionOptions}
 					handleCancelQuery={handleCancelQuery}
 					isLoadingQueries={isLoadingQueries}
+					testId="inspect-run-query"
 				/>
 			</div>
 			<Card className="inspect-metrics-query-builder-content">

@@ -218,7 +218,12 @@ export default function AlertRules({
 		<Card className="alert-rules-card home-data-card">
 			{rulesExist && (
 				<Card.Header>
-					<div className="alert-rules-header home-data-card-header">Alerts</div>
+					<div
+						className="alert-rules-header home-data-card-header"
+						data-testid="home-section-alerts"
+					>
+						Alerts
+					</div>
 				</Card.Header>
 			)}
 			<Card.Content>

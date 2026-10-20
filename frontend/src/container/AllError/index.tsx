@@ -337,6 +337,7 @@ function AllErrors(): JSX.Element {
 			render: (value, record): JSX.Element => (
 				<Tooltip overlay={(): JSX.Element => value}>
 					<Link
+						data-testid="exception-row-link"
 						to={`${ROUTES.ERROR_DETAIL}?groupId=${
 							record.groupID
 						}&timestamp=${getNanoSeconds(record.lastSeen)}`}
@@ -482,6 +483,7 @@ function AllErrors(): JSX.Element {
 
 	return (
 		<ResizeTable
+			data-testid="exceptions-table"
 			columns={columns}
 			tableLayout="fixed"
 			dataSource={data?.payload as Exception[]}

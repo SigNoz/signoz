@@ -94,14 +94,14 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 		}
 
 		if (serviceMap.items.length === 0) {
-			return <Card>No Service Found</Card>;
+			return <Card data-testid="service-map-empty">No Service Found</Card>;
 		}
 
 		return <Map fgRef={fgRef} serviceMap={serviceMap} />;
 	};
 
 	return (
-		<Container className="service-map-container">
+		<Container className="service-map-container" data-testid="service-map">
 			<ResourceAttributesFilter
 				suffixIcon={
 					<TextToolTip

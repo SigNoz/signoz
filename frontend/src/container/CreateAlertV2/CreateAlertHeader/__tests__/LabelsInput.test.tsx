@@ -106,6 +106,41 @@ describe('LabelsInput', () => {
 			expect(mockOnLabelsChange).toHaveBeenCalledWith({ severity: 'high' });
 		});
 
+		it('rejects a key that already exists, before validating it', () => {
+			// Both rejection branches raise an antd notification rather than an
+			// inline message, so the observable outcome is that nothing is added and
+			// the editor stays on the key phase. The duplicate check short-circuits
+			// ahead of `validateLabelsKey`.
+			renderLabelsInput({ labels: { severity: 'high' } });
+
+			fireEvent.click(screen.getByText(ADD_LABELS_TEXT));
+			const input = screen.getByPlaceholderText(ENTER_KEY_PLACEHOLDER);
+			fireEvent.change(input, { target: { value: 'severity' } });
+			fireEvent.keyDown(input, { key: 'Enter' });
+
+			expect(mockValidateLabelsKey).not.toHaveBeenCalled();
+			expect(mockOnLabelsChange).not.toHaveBeenCalled();
+			expect(
+				screen.queryByPlaceholderText(ENTER_VALUE_PLACEHOLDER),
+			).not.toBeInTheDocument();
+		});
+
+		it('rejects a key the validator refuses', () => {
+			mockValidateLabelsKey.mockReturnValue('Cannot use a group-by key');
+			renderLabelsInput();
+
+			fireEvent.click(screen.getByText(ADD_LABELS_TEXT));
+			const input = screen.getByPlaceholderText(ENTER_KEY_PLACEHOLDER);
+			fireEvent.change(input, { target: { value: 'service.name' } });
+			fireEvent.keyDown(input, { key: 'Enter' });
+
+			expect(mockValidateLabelsKey).toHaveBeenCalledWith('service.name');
+			expect(mockOnLabelsChange).not.toHaveBeenCalled();
+			expect(
+				screen.queryByPlaceholderText(ENTER_VALUE_PLACEHOLDER),
+			).not.toBeInTheDocument();
+		});
+
 		it('does not switch to value input if key is empty', () => {
 			renderLabelsInput();
 

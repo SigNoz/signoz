@@ -47,6 +47,7 @@ function DashboardCard({
 					? 'aws-service-dashboard-item-clickable'
 					: 'aws-service-dashboard-item-disabled'
 			} `}
+			data-testid={`cloud-service-dashboard-${dashboardId ?? dashboard.title}`}
 			{...interactiveProps}
 		>
 			<div className="aws-service-dashboard-item-content">

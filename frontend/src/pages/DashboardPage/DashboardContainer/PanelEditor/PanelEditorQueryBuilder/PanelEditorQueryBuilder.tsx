@@ -197,6 +197,7 @@ function PanelEditorQueryBuilder({
 							<TextToolTip text="This will temporarily save the current query and graph state. This will persist across tab change" />
 							<RunQueryBtn
 								label="Run Query"
+								testId="panel-editor-v2-run-query"
 								onStageRunQuery={onStageRunQuery}
 								isLoadingQueries={isLoadingQueries}
 								handleCancelQuery={onCancelQuery}

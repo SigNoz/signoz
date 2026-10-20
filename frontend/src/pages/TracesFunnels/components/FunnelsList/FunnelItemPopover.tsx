@@ -32,6 +32,7 @@ function FunnelItemActions({
 				type="text"
 				className="funnel-item__action-btn"
 				icon={<PencilLine size={14} />}
+				data-testid="funnel-action-rename"
 				onClick={(): void => {
 					setIsPopoverOpen(false);
 					setIsRenameModalOpen(true);
@@ -43,6 +44,7 @@ function FunnelItemActions({
 				type="text"
 				className="funnel-item__action-btn funnel-item__action-btn--delete"
 				icon={<Trash2 size={14} />}
+				data-testid="funnel-action-delete"
 				onClick={(): void => {
 					setIsPopoverOpen(false);
 					setIsDeleteModalOpen(true);
@@ -113,6 +115,8 @@ function FunnelItemPopover({
 						'funnel-item__action-icon--active': isPopoverOpen,
 					})}
 					size={14}
+					data-testid="funnel-actions-trigger"
+					aria-label="Funnel actions"
 				/>
 			</Popover>
 

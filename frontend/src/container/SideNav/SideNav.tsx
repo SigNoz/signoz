@@ -111,6 +111,7 @@ function SortableFilter({ item }: { item: SidebarItem }): JSX.Element {
 				{...listeners}
 				className="reorder-shortcut-nav-item drag-handle"
 				key={item.key}
+				data-testid={`reorder-item-${item.itemKey}`}
 			>
 				<div className="reorder-shortcut-nav-item-grab-icon">
 					<GripVertical size={16} />
@@ -807,6 +808,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 						handleMenuItemClick(event, item);
 					}}
 					isPinned={isPinnedItem(item)}
+					dataTestId={item.itemKey ? `nav-item-${item.itemKey}` : undefined}
 				/>
 			))}
 		</>
@@ -953,6 +955,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 				type: 'item',
 				value: String(item.key),
 				label: item.label ?? '',
+				testId: item.itemKey ? `help-menu-${item.itemKey}` : undefined,
 				prefix: isValidElement(item.icon) ? item.icon : undefined,
 				onClick: (event: MouseEvent): void => {
 					handleHelpSupportMenuItemClick({
@@ -985,6 +988,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 				)}
 				onMouseEnter={handleMouseEnter}
 				onMouseLeave={handleMouseLeave}
+				data-testid="sidenav"
+				data-collapsed={isCollapsed}
 			>
 				<div className="brand-container">
 					<div className="brand">
@@ -1041,6 +1046,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 												<span
 													className={cx('version', changelog && 'version-clickable')}
 													onClick={onClickVersionHandler}
+													data-testid="sidenav-version"
 												>
 													{currentVersion}
 												</span>
@@ -1090,6 +1096,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 						{(pinnedMenuItems.length > 0 || !isCollapsed) && (
 							<div
 								className={cx('shortcut-nav-items', isCollapsed && 'sidebar-collapsed')}
+								data-testid="sidenav-shortcuts"
 							>
 								{!isCollapsed && (
 									<div className="nav-title-section">
@@ -1104,6 +1111,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 												<Tooltip title="Manage shortcuts" placement="right">
 													<div
 														className="nav-section-title-icon reorder"
+														data-testid="manage-shortcuts-btn"
 														onClick={(): void => {
 															void logEvent('Sidebar V2: Manage shortcuts clicked', {});
 															setIsReorderShortcutNavItemsModalOpen(true);
@@ -1141,11 +1149,14 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 									isMoreMenuCollapsed ? 'collapsed' : 'expanded',
 									isCollapsed && 'sidebar-collapsed',
 								)}
+								data-testid="sidenav-more"
 							>
 								{!isCollapsed && (
 									<div className="nav-title-section">
 										<div
 											className="nav-section-title"
+											data-testid="more-nav-toggle"
+											aria-expanded={!isMoreMenuCollapsed}
 											onClick={(): void => {
 												// Only allow toggling when sidebar is open (pinned, hovered, or dropdown open)
 												if (isCollapsed) {

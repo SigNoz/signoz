@@ -118,6 +118,7 @@ function TopOperationsTable({
 		render: (text: string): JSX.Element => (
 			<Tooltip placement="topLeft" title={text}>
 				<Typography.Link
+					testId="top-operation-link"
 					onClick={(e): void => {
 						e.stopPropagation();
 						e.preventDefault();
@@ -202,7 +203,7 @@ function TopOperationsTable({
 	};
 
 	return (
-		<div className="top-operation">
+		<div className="top-operation" data-testid="top-operations">
 			<div className="top-operation__controls">
 				<div className="top-operation__download">
 					<Download
@@ -213,6 +214,8 @@ function TopOperationsTable({
 				</div>
 				<div className="top-operation__entry-point">
 					<Switch
+						testId="top-operations-entrypoint-toggle"
+						aria-label="Entrypoint Spans"
 						color="primary"
 						textPlacement="right"
 						value={isEntryPoint}

@@ -26,6 +26,8 @@ export function ExpandButtonWrapper({
 				aria-label={localIsExpanded ? 'Collapse' : 'Expand'}
 				variant="ghost"
 				color="secondary"
+				testId="expand-row-button"
+				aria-expanded={localIsExpanded}
 				onClick={(e): void => {
 					e.stopPropagation();
 					setLocalIsExpanded((v) => !v);

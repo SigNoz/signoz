@@ -88,6 +88,7 @@ function TimezoneItem({
 	return (
 		<button
 			type="button"
+			data-testid={`timezone-item-${timezone.value}`}
 			className={cx('timezone-picker__item', {
 				selected: isSelected,
 				'has-divider': timezone.hasDivider,
