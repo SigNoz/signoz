@@ -158,8 +158,8 @@ is off, and that the denial callout is there or gone.
 **`toBeEnabled` and `toBeDisabled` are the wrong assertion here.** `@signozhq/ui`
 marks a locked control with `aria-disabled`, not the native `disabled` attribute,
 and both matchers ignore `aria-disabled` entirely, so they pass on a button the
-user cannot click. Three jest tests and a story once passed this way while
-clicking through a denial. Assert the attribute the component actually sets:
+user cannot click, and a test that clicks through a denial still goes green.
+Assert the attribute the component actually sets:
 
 ```ts
 expect(save).toHaveAttribute('aria-disabled', 'true');
@@ -182,10 +182,11 @@ that story goes red, then put it back. An assertion that cannot fail is worse
 than no assertion, because it reads as coverage.
 
 **A story asserting a conditional goes vacuous when the condition goes away.**
-Two list stories here asserted a row action read "View" rather than "Edit" under
-a denial; when the label became unconditional they passed under any permission
-set, including a full grant. When a behaviour stops depending on a permission,
-delete the story or rewrite it to pin the new decision, and say which in the PR.
+A story that checks a label, an icon or an action reads one way under a denial
+stops testing anything the moment that difference is removed: it then passes
+under every permission set, a full grant included, while still looking like
+coverage. When a behaviour stops depending on a permission, delete the story or
+rewrite it to pin the new decision, and say which in the PR.
 
 ## Rules
 
