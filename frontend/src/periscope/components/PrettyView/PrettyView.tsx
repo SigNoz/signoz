@@ -225,6 +225,13 @@ function PrettyView({
 				isNested,
 			};
 			const menuItems = buildMenuItems(context);
+			if (menuItems.length === 0) {
+				return (
+					<span className="pretty-view__value-row">
+						<span>{content}</span>
+					</span>
+				);
+			}
 			return (
 				<span className="pretty-view__value-row">
 					<span>{content}</span>
