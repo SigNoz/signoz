@@ -70,6 +70,7 @@ def create_signoz(
                 f"TARGETARCH={arch}",
                 "--build-arg",
                 f"ZEUSURL={zeus.container_configs['8080'].base()}",
+                *(["--build-arg", "RACE="] if pytestconfig.getoption("--no-race") else []),
                 str(context),
             ],
             check=True,
