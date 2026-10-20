@@ -4728,17 +4728,29 @@ export enum TelemetrytypesSignalDTO {
 export interface Querybuildertypesv5GroupByKeyDTO {
 	/**
 	 * @type string
+	 * @description Human-readable summary of the field, present only for well-known fields.
 	 */
 	description?: string;
+	/**
+	 * @description Where the field lives: resource, attribute, scope, span, trace, log, body or metric. Empty means unspecified, so the server resolves it.
+	 */
 	fieldContext?: TelemetrytypesFieldContextDTO;
+	/**
+	 * @description Data type of the field values: string, bool, int64, float64 or number. Empty means unspecified.
+	 */
 	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
 	/**
 	 * @type string
+	 * @description The field name, such as service.name or http.response.status_code. Dots are part of the name.
 	 */
 	name: string;
+	/**
+	 * @description The signal the field belongs to: traces, logs or metrics. Empty means any signal.
+	 */
 	signal?: TelemetrytypesSignalDTO;
 	/**
 	 * @type string
+	 * @description Unit of the field values, present only for well-known fields.
 	 */
 	unit?: string;
 }
@@ -4768,17 +4780,29 @@ export enum Querybuildertypesv5OrderDirectionDTO {
 export interface Querybuildertypesv5OrderByKeyDTO {
 	/**
 	 * @type string
+	 * @description Human-readable summary of the field, present only for well-known fields.
 	 */
 	description?: string;
+	/**
+	 * @description Where the field lives: resource, attribute, scope, span, trace, log, body or metric. Empty means unspecified, so the server resolves it.
+	 */
 	fieldContext?: TelemetrytypesFieldContextDTO;
+	/**
+	 * @description Data type of the field values: string, bool, int64, float64 or number. Empty means unspecified.
+	 */
 	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
 	/**
 	 * @type string
+	 * @description The field name, such as service.name or http.response.status_code. Dots are part of the name.
 	 */
 	name: string;
+	/**
+	 * @description The signal the field belongs to: traces, logs or metrics. Empty means any signal.
+	 */
 	signal?: TelemetrytypesSignalDTO;
 	/**
 	 * @type string
+	 * @description Unit of the field values, present only for well-known fields.
 	 */
 	unit?: string;
 }
@@ -4821,17 +4845,29 @@ export interface Querybuildertypesv5SecondaryAggregationDTO {
 export interface TelemetrytypesTelemetryFieldKeyDTO {
 	/**
 	 * @type string
+	 * @description Human-readable summary of the field, present only for well-known fields.
 	 */
 	description?: string;
+	/**
+	 * @description Where the field lives: resource, attribute, scope, span, trace, log, body or metric. Empty means unspecified, so the server resolves it.
+	 */
 	fieldContext?: TelemetrytypesFieldContextDTO;
+	/**
+	 * @description Data type of the field values: string, bool, int64, float64 or number. Empty means unspecified.
+	 */
 	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
 	/**
 	 * @type string
+	 * @description The field name, such as service.name or http.response.status_code. Dots are part of the name.
 	 */
 	name: string;
+	/**
+	 * @description The signal the field belongs to: traces, logs or metrics. Empty means any signal.
+	 */
 	signal?: TelemetrytypesSignalDTO;
 	/**
 	 * @type string
+	 * @description Unit of the field values, present only for well-known fields.
 	 */
 	unit?: string;
 }
@@ -10120,9 +10156,16 @@ export interface Querybuildertypesv5ColumnDescriptorDTO {
 	columnType?: Querybuildertypesv5ColumnTypeDTO;
 	/**
 	 * @type string
+	 * @description Human-readable summary of the field, present only for well-known fields.
 	 */
 	description?: string;
+	/**
+	 * @description Where the field lives: resource, attribute, scope, span, trace, log, body or metric. Empty means unspecified, so the server resolves it.
+	 */
 	fieldContext?: TelemetrytypesFieldContextDTO;
+	/**
+	 * @description Data type of the field values: string, bool, int64, float64 or number. Empty means unspecified.
+	 */
 	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
 	/**
 	 * @type object
@@ -10130,15 +10173,20 @@ export interface Querybuildertypesv5ColumnDescriptorDTO {
 	meta?: Querybuildertypesv5ColumnDescriptorDTOMeta;
 	/**
 	 * @type string
+	 * @description The field name, such as service.name or http.response.status_code. Dots are part of the name.
 	 */
 	name: string;
 	/**
 	 * @type string
 	 */
 	queryName?: string;
+	/**
+	 * @description The signal the field belongs to: traces, logs or metrics. Empty means any signal.
+	 */
 	signal?: TelemetrytypesSignalDTO;
 	/**
 	 * @type string
+	 * @description Unit of the field values, present only for well-known fields.
 	 */
 	unit?: string;
 }
@@ -12500,11 +12548,15 @@ export interface SubscriptiontypesPostableSubscriptionDTO {
 	url: string;
 }
 
+/**
+ * Matching keys grouped by name. A name maps to several entries when it exists in more than one context or data type.
+ */
 export type TelemetrytypesGettableFieldKeysDTOKeysAnyOf = {
 	[key: string]: TelemetrytypesTelemetryFieldKeyDTO[];
 };
 
 /**
+ * Matching keys grouped by name. A name maps to several entries when it exists in more than one context or data type.
  * @nullable
  */
 export type TelemetrytypesGettableFieldKeysDTOKeys = TelemetrytypesGettableFieldKeysDTOKeysAnyOf | null;
@@ -12512,10 +12564,12 @@ export type TelemetrytypesGettableFieldKeysDTOKeys = TelemetrytypesGettableField
 export interface TelemetrytypesGettableFieldKeysDTO {
 	/**
 	 * @type boolean
+	 * @description True when every matching key was returned; false when the result was cut off by limit.
 	 */
 	complete: boolean;
 	/**
 	 * @type object,null
+	 * @description Matching keys grouped by name. A name maps to several entries when it exists in more than one context or data type.
 	 */
 	keys: TelemetrytypesGettableFieldKeysDTOKeys;
 }
@@ -12523,18 +12577,22 @@ export interface TelemetrytypesGettableFieldKeysDTO {
 export interface TelemetrytypesTelemetryFieldValuesDTO {
 	/**
 	 * @type array
+	 * @description Distinct boolean values of the field.
 	 */
 	boolValues?: boolean[];
 	/**
 	 * @type array
+	 * @description Distinct numeric values of the field, up to limit.
 	 */
 	numberValues?: number[];
 	/**
 	 * @type array
+	 * @description Values of the field seen on data that also matches existingQuery. Empty when existingQuery is not set.
 	 */
 	relatedValues?: string[];
 	/**
 	 * @type array
+	 * @description Distinct string values of the field, up to limit.
 	 */
 	stringValues?: string[];
 }
@@ -12542,8 +12600,12 @@ export interface TelemetrytypesTelemetryFieldValuesDTO {
 export interface TelemetrytypesGettableFieldValuesDTO {
 	/**
 	 * @type boolean
+	 * @description True when every matching value was returned; false when the result was cut off by limit.
 	 */
 	complete: boolean;
+	/**
+	 * @description Distinct values of the key, split by data type.
+	 */
 	values: TelemetrytypesTelemetryFieldValuesDTO;
 }
 
@@ -13197,51 +13259,51 @@ export enum HandleExportRawDataPOSTFormat {
 }
 export type GetFieldsKeysParams = {
 	/**
-	 * @description undefined
+	 * @description The signal to look up keys in: traces, logs or metrics. Empty searches every signal.
 	 */
 	signal?: TelemetrytypesSignalDTO;
 	/**
-	 * @description undefined
+	 * @description The data source within the signal. Use meter for Cost Meter metrics; empty means the default source.
 	 */
 	source?: TelemetrytypesSourceDTO;
 	/**
 	 * @type integer
-	 * @description undefined
+	 * @description Maximum number of results to return. Defaults to 1000 for keys and 50 for values.
 	 */
 	limit?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description undefined
+	 * @description Start of the lookup window in Unix milliseconds, rounded down to a 6 hour boundary. Omit for no lower bound.
 	 */
 	startUnixMilli?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description undefined
+	 * @description End of the lookup window in Unix milliseconds. Omit for no upper bound.
 	 */
 	endUnixMilli?: number;
 	/**
-	 * @description undefined
+	 * @description Restricts keys to one context: resource, attribute, scope, span, trace, log, body or metric. Empty means any context.
 	 */
 	fieldContext?: TelemetrytypesFieldContextDTO;
 	/**
-	 * @description undefined
+	 * @description Restricts keys to one data type: string, bool, int64, float64 or number. Empty means any type.
 	 */
 	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description Restricts keys to those seen on this metric. Metrics signal only.
 	 */
 	metricName?: string;
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description Restricts keys to metrics in this namespace. Metrics signal only.
 	 */
 	metricNamespace?: string;
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description Case-insensitive substring to match: against key names for keys, against the values of name for values. For keys, a context prefix such as resource.service.name sets fieldContext when it is empty.
 	 */
 	searchText?: string;
 };
@@ -13256,61 +13318,61 @@ export type GetFieldsKeys200 = {
 
 export type GetFieldsValuesParams = {
 	/**
-	 * @description undefined
+	 * @description The signal to look up keys in: traces, logs or metrics. Empty searches every signal.
 	 */
 	signal?: TelemetrytypesSignalDTO;
 	/**
-	 * @description undefined
+	 * @description The data source within the signal. Use meter for Cost Meter metrics; empty means the default source.
 	 */
 	source?: TelemetrytypesSourceDTO;
 	/**
 	 * @type integer
-	 * @description undefined
+	 * @description Maximum number of results to return. Defaults to 1000 for keys and 50 for values.
 	 */
 	limit?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description undefined
+	 * @description Start of the lookup window in Unix milliseconds, rounded down to a 6 hour boundary. Omit for no lower bound.
 	 */
 	startUnixMilli?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description undefined
+	 * @description End of the lookup window in Unix milliseconds. Omit for no upper bound.
 	 */
 	endUnixMilli?: number;
 	/**
-	 * @description undefined
+	 * @description Restricts keys to one context: resource, attribute, scope, span, trace, log, body or metric. Empty means any context.
 	 */
 	fieldContext?: TelemetrytypesFieldContextDTO;
 	/**
-	 * @description undefined
+	 * @description Restricts keys to one data type: string, bool, int64, float64 or number. Empty means any type.
 	 */
 	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description Restricts keys to those seen on this metric. Metrics signal only.
 	 */
 	metricName?: string;
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description Restricts keys to metrics in this namespace. Metrics signal only.
 	 */
 	metricNamespace?: string;
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description Case-insensitive substring to match: against key names for keys, against the values of name for values. For keys, a context prefix such as resource.service.name sets fieldContext when it is empty.
 	 */
 	searchText?: string;
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description The key whose values to return, such as service.name. A context prefix such as resource.service.name sets fieldContext when it is empty.
 	 */
 	name?: string;
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description Filter expression already applied in the explorer. When set, relatedValues lists the values seen on data matching it.
 	 */
 	existingQuery?: string;
 };
@@ -14799,51 +14861,51 @@ export type GetRuleHistoryFilterKeysPathParameters = {
 };
 export type GetRuleHistoryFilterKeysParams = {
 	/**
-	 * @description undefined
+	 * @description The signal to look up keys in: traces, logs or metrics. Empty searches every signal.
 	 */
 	signal?: TelemetrytypesSignalDTO;
 	/**
-	 * @description undefined
+	 * @description The data source within the signal. Use meter for Cost Meter metrics; empty means the default source.
 	 */
 	source?: TelemetrytypesSourceDTO;
 	/**
 	 * @type integer
-	 * @description undefined
+	 * @description Maximum number of results to return. Defaults to 1000 for keys and 50 for values.
 	 */
 	limit?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description undefined
+	 * @description Start of the lookup window in Unix milliseconds, rounded down to a 6 hour boundary. Omit for no lower bound.
 	 */
 	startUnixMilli?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description undefined
+	 * @description End of the lookup window in Unix milliseconds. Omit for no upper bound.
 	 */
 	endUnixMilli?: number;
 	/**
-	 * @description undefined
+	 * @description Restricts keys to one context: resource, attribute, scope, span, trace, log, body or metric. Empty means any context.
 	 */
 	fieldContext?: TelemetrytypesFieldContextDTO;
 	/**
-	 * @description undefined
+	 * @description Restricts keys to one data type: string, bool, int64, float64 or number. Empty means any type.
 	 */
 	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description Restricts keys to those seen on this metric. Metrics signal only.
 	 */
 	metricName?: string;
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description Restricts keys to metrics in this namespace. Metrics signal only.
 	 */
 	metricNamespace?: string;
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description Case-insensitive substring to match: against key names for keys, against the values of name for values. For keys, a context prefix such as resource.service.name sets fieldContext when it is empty.
 	 */
 	searchText?: string;
 };
@@ -14861,61 +14923,61 @@ export type GetRuleHistoryFilterValuesPathParameters = {
 };
 export type GetRuleHistoryFilterValuesParams = {
 	/**
-	 * @description undefined
+	 * @description The signal to look up keys in: traces, logs or metrics. Empty searches every signal.
 	 */
 	signal?: TelemetrytypesSignalDTO;
 	/**
-	 * @description undefined
+	 * @description The data source within the signal. Use meter for Cost Meter metrics; empty means the default source.
 	 */
 	source?: TelemetrytypesSourceDTO;
 	/**
 	 * @type integer
-	 * @description undefined
+	 * @description Maximum number of results to return. Defaults to 1000 for keys and 50 for values.
 	 */
 	limit?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description undefined
+	 * @description Start of the lookup window in Unix milliseconds, rounded down to a 6 hour boundary. Omit for no lower bound.
 	 */
 	startUnixMilli?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description undefined
+	 * @description End of the lookup window in Unix milliseconds. Omit for no upper bound.
 	 */
 	endUnixMilli?: number;
 	/**
-	 * @description undefined
+	 * @description Restricts keys to one context: resource, attribute, scope, span, trace, log, body or metric. Empty means any context.
 	 */
 	fieldContext?: TelemetrytypesFieldContextDTO;
 	/**
-	 * @description undefined
+	 * @description Restricts keys to one data type: string, bool, int64, float64 or number. Empty means any type.
 	 */
 	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description Restricts keys to those seen on this metric. Metrics signal only.
 	 */
 	metricName?: string;
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description Restricts keys to metrics in this namespace. Metrics signal only.
 	 */
 	metricNamespace?: string;
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description Case-insensitive substring to match: against key names for keys, against the values of name for values. For keys, a context prefix such as resource.service.name sets fieldContext when it is empty.
 	 */
 	searchText?: string;
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description The key whose values to return, such as service.name. A context prefix such as resource.service.name sets fieldContext when it is empty.
 	 */
 	name?: string;
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description Filter expression already applied in the explorer. When set, relatedValues lists the values seen on data matching it.
 	 */
 	existingQuery?: string;
 };

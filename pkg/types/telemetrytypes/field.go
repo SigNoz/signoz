@@ -33,16 +33,16 @@ const (
 )
 
 type TelemetryFieldKey struct {
-	Name        string `json:"name" validate:"required" required:"true"`
-	Description string `json:"description,omitempty"`
-	Unit        string `json:"unit,omitempty"`
+	Name        string `json:"name" validate:"required" required:"true" description:"The field name, such as service.name or http.response.status_code. Dots are part of the name."`
+	Description string `json:"description,omitempty" description:"Human-readable summary of the field, present only for well-known fields."`
+	Unit        string `json:"unit,omitempty" description:"Unit of the field values, present only for well-known fields."`
 	// signal/fieldContext/fieldDataType always serialize (empty included): the empty
 	// value is a first-class "unspecified / any" selection a client can set, so it
 	// must round-trip verbatim rather than be dropped. Their Enum()s include the
 	// empty member so the "" is a valid schema value.
-	Signal        Signal        `json:"signal"`
-	FieldContext  FieldContext  `json:"fieldContext"`
-	FieldDataType FieldDataType `json:"fieldDataType"`
+	Signal        Signal        `json:"signal" description:"The signal the field belongs to: traces, logs or metrics. Empty means any signal."`
+	FieldContext  FieldContext  `json:"fieldContext" description:"Where the field lives: resource, attribute, scope, span, trace, log, body or metric. Empty means unspecified, so the server resolves it."`
+	FieldDataType FieldDataType `json:"fieldDataType" description:"Data type of the field values: string, bool, int64, float64 or number. Empty means unspecified."`
 
 	JSONPlan     JSONAccessPlan               `json:"-"`
 	Indexes      []TelemetryFieldKeySkipIndex `json:"-"`
@@ -225,10 +225,10 @@ func FieldKeyToMaterializedExistsCondition(key *TelemetryFieldKey, exists bool) 
 }
 
 type TelemetryFieldValues struct {
-	StringValues  []string  `json:"stringValues,omitempty"`
-	BoolValues    []bool    `json:"boolValues,omitempty"`
-	NumberValues  []float64 `json:"numberValues,omitempty"`
-	RelatedValues []string  `json:"relatedValues,omitempty"`
+	StringValues  []string  `json:"stringValues,omitempty" description:"Distinct string values of the field, up to limit."`
+	BoolValues    []bool    `json:"boolValues,omitempty" description:"Distinct boolean values of the field."`
+	NumberValues  []float64 `json:"numberValues,omitempty" description:"Distinct numeric values of the field, up to limit."`
+	RelatedValues []string  `json:"relatedValues,omitempty" description:"Values of the field seen on data that also matches existingQuery. Empty when existingQuery is not set."`
 }
 
 func (t *TelemetryFieldValues) NumValues() int {
@@ -236,21 +236,21 @@ func (t *TelemetryFieldValues) NumValues() int {
 }
 
 type MetricContext struct {
-	MetricName      string `json:"metricName"`
-	MetricNamespace string `json:"metricNamespace,omitempty"`
+	MetricName      string `json:"metricName" description:"Restricts keys and values to those seen on this metric. Metrics signal only."`
+	MetricNamespace string `json:"metricNamespace,omitempty" description:"Restricts keys and values to metrics in this namespace. Metrics signal only."`
 }
 
 type FieldKeySelector struct {
-	StartUnixMilli    int64                  `json:"startUnixMilli"`
-	EndUnixMilli      int64                  `json:"endUnixMilli"`
-	Signal            Signal                 `json:"signal"`
-	Source            Source                 `json:"source"`
-	FieldContext      FieldContext           `json:"fieldContext"`
-	FieldDataType     FieldDataType          `json:"fieldDataType"`
-	Name              string                 `json:"name"`
-	SelectorMatchType FieldSelectorMatchType `json:"selectorMatchType"`
-	Limit             int                    `json:"limit"`
-	MetricContext     *MetricContext         `json:"metricContext,omitempty"`
+	StartUnixMilli    int64                  `json:"startUnixMilli" description:"Start of the lookup window in Unix milliseconds, rounded down to a 6 hour boundary. Zero means no lower bound."`
+	EndUnixMilli      int64                  `json:"endUnixMilli" description:"End of the lookup window in Unix milliseconds. Zero means no upper bound."`
+	Signal            Signal                 `json:"signal" description:"The signal to look up keys in: traces, logs or metrics. Empty means every signal."`
+	Source            Source                 `json:"source" description:"The data source within the signal. Use meter for Cost Meter metrics; empty means the default source."`
+	FieldContext      FieldContext           `json:"fieldContext" description:"Restricts keys to one context such as resource or attribute. Empty means any context."`
+	FieldDataType     FieldDataType          `json:"fieldDataType" description:"Restricts keys to one data type such as string or float64. Empty means any type."`
+	Name              string                 `json:"name" description:"Key name to match; empty matches every key. Matched according to selectorMatchType."`
+	SelectorMatchType FieldSelectorMatchType `json:"selectorMatchType" description:"How name is matched: exact (case-insensitive equality) or fuzzy (case-insensitive substring)."`
+	Limit             int                    `json:"limit" description:"Maximum number of keys to return."`
+	MetricContext     *MetricContext         `json:"metricContext,omitempty" description:"Scopes the lookup to one metric or metric namespace. Metrics signal only."`
 }
 
 // MatchesKey reports whether a statically defined key satisfies the selector, so
@@ -276,38 +276,38 @@ func (s *FieldKeySelector) MatchesKey(key *TelemetryFieldKey) bool {
 
 type FieldValueSelector struct {
 	*FieldKeySelector
-	ExistingQuery string `json:"existingQuery"`
-	Value         string `json:"value"`
-	Limit         int    `json:"limit"`
+	ExistingQuery string `json:"existingQuery" description:"Filter expression already applied in the explorer. Used to compute relatedValues; empty disables them."`
+	Value         string `json:"value" description:"Substring the returned values must contain, matched case-insensitively. Empty returns any value."`
+	Limit         int    `json:"limit" description:"Maximum number of values to return."`
 }
 
 type GettableFieldKeys struct {
-	Keys     map[string][]*TelemetryFieldKey `json:"keys" required:"true"`
-	Complete bool                            `json:"complete" required:"true"`
+	Keys     map[string][]*TelemetryFieldKey `json:"keys" required:"true" description:"Matching keys grouped by name. A name maps to several entries when it exists in more than one context or data type."`
+	Complete bool                            `json:"complete" required:"true" description:"True when every matching key was returned; false when the result was cut off by limit."`
 }
 
 type PostableFieldKeysParams struct {
-	Signal          Signal        `query:"signal"`
-	Source          Source        `query:"source"`
-	Limit           int           `query:"limit"`
-	StartUnixMilli  int64         `query:"startUnixMilli"`
-	EndUnixMilli    int64         `query:"endUnixMilli"`
-	FieldContext    FieldContext  `query:"fieldContext"`
-	FieldDataType   FieldDataType `query:"fieldDataType"`
-	MetricName      string        `query:"metricName"`
-	MetricNamespace string        `query:"metricNamespace"`
-	SearchText      string        `query:"searchText"`
+	Signal          Signal        `query:"signal" description:"The signal to look up keys in: traces, logs or metrics. Empty searches every signal."`
+	Source          Source        `query:"source" description:"The data source within the signal. Use meter for Cost Meter metrics; empty means the default source."`
+	Limit           int           `query:"limit" description:"Maximum number of results to return. Defaults to 1000 for keys and 50 for values."`
+	StartUnixMilli  int64         `query:"startUnixMilli" description:"Start of the lookup window in Unix milliseconds, rounded down to a 6 hour boundary. Omit for no lower bound."`
+	EndUnixMilli    int64         `query:"endUnixMilli" description:"End of the lookup window in Unix milliseconds. Omit for no upper bound."`
+	FieldContext    FieldContext  `query:"fieldContext" description:"Restricts keys to one context: resource, attribute, scope, span, trace, log, body or metric. Empty means any context."`
+	FieldDataType   FieldDataType `query:"fieldDataType" description:"Restricts keys to one data type: string, bool, int64, float64 or number. Empty means any type."`
+	MetricName      string        `query:"metricName" description:"Restricts keys to those seen on this metric. Metrics signal only."`
+	MetricNamespace string        `query:"metricNamespace" description:"Restricts keys to metrics in this namespace. Metrics signal only."`
+	SearchText      string        `query:"searchText" description:"Case-insensitive substring to match: against key names for keys, against the values of name for values. For keys, a context prefix such as resource.service.name sets fieldContext when it is empty."`
 }
 
 type GettableFieldValues struct {
-	Values   *TelemetryFieldValues `json:"values" required:"true"`
-	Complete bool                  `json:"complete" required:"true"`
+	Values   *TelemetryFieldValues `json:"values" required:"true" description:"Distinct values of the key, split by data type."`
+	Complete bool                  `json:"complete" required:"true" description:"True when every matching value was returned; false when the result was cut off by limit."`
 }
 
 type PostableFieldValueParams struct {
 	PostableFieldKeysParams
-	Name          string `query:"name"`
-	ExistingQuery string `query:"existingQuery"`
+	Name          string `query:"name" description:"The key whose values to return, such as service.name. A context prefix such as resource.service.name sets fieldContext when it is empty."`
+	ExistingQuery string `query:"existingQuery" description:"Filter expression already applied in the explorer. When set, relatedValues lists the values seen on data matching it."`
 }
 
 func NewFieldKeySelectorFromPostableFieldKeysParams(params PostableFieldKeysParams) *FieldKeySelector {
