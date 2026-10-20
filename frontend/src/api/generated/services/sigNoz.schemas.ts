@@ -12143,18 +12143,22 @@ export enum RuletypesThresholdKindDTO {
 export interface SavedviewtypesDisplayDTO {
 	/**
 	 * @type string
+	 * @description The accent color the explorer uses to label the view, as a CSS color such as a hex code. Empty uses the default color.
 	 */
 	color?: string;
 	/**
 	 * @type string
+	 * @description The row font size in list views: small, medium or large. Empty leaves the explorer default.
 	 */
 	fontSize?: string;
 	/**
 	 * @type string
+	 * @description The list rendering mode in the logs explorer: raw, table or list. Empty leaves the explorer default.
 	 */
 	format?: string;
 	/**
 	 * @type integer
+	 * @description The number of lines shown per row before the body is truncated in logs list views. 0 leaves the explorer default.
 	 */
 	maxLines?: number;
 }
@@ -12177,19 +12181,31 @@ export enum SavedviewtypesSourceDTO {
 	ai_observability = 'ai_observability',
 }
 export interface SavedviewtypesSavedViewSpecDTO {
+	/**
+	 * @description Rendering preferences for list panels. All fields are optional.
+	 */
 	display?: SavedviewtypesDisplayDTO;
 	/**
 	 * @type string
+	 * @description The human readable title shown in the explorer. It may differ from the machine name and need not be unique.
 	 */
 	displayName: string;
+	/**
+	 * @description The explorer panel the view renders as: list, graph, table, value or trace.
+	 */
 	panelType: SavedviewtypesPanelTypeDTO;
 	/**
 	 * @type array
+	 * @description The query envelopes the view runs, in the v5 query builder shape. At least one is required and the set is validated for the requestType.
 	 */
 	queries: Querybuildertypesv5QueryEnvelopeDTO[];
+	/**
+	 * @description The query_range request type the panel issues: raw for list panels, time_series for graphs, scalar for table and value panels, trace for trace panels.
+	 */
 	requestType: Querybuildertypesv5RequestTypeDTO;
 	/**
 	 * @type array
+	 * @description The columns shown in list panels, each a field key with name and optionally signal, fieldContext and fieldDataType. Use an empty array when the panel has no column preference.
 	 */
 	selectedFields?: TelemetrytypesTelemetryFieldKeyDTO[];
 }
@@ -12197,14 +12213,25 @@ export interface SavedviewtypesSavedViewSpecDTO {
 export interface SavedviewtypesPostableSavedViewDTO {
 	/**
 	 * @type boolean
+	 * @description When true the server derives name from spec.displayName and appends a random suffix. Defaults to false.
 	 */
 	generateName?: boolean;
 	/**
 	 * @type string
+	 * @description The machine name of the view, a DNS-1123 label (lowercase letters, digits and hyphens, at most 63 characters) unique within the organization. Required unless generateName is true, in which case it must be empty.
 	 */
 	name?: string;
+	/**
+	 * @description The version of the spec shape. The only accepted value is v2.
+	 */
 	schemaVersion: SavedviewtypesSchemaVersionDTO;
+	/**
+	 * @description The explorer page the view belongs to: traces, logs, metrics, meter or ai_observability. Builder queries inside spec must use the matching signal; meter views use signal metrics with source meter.
+	 */
 	source: SavedviewtypesSourceDTO;
+	/**
+	 * @description The display name, panel type, request type, queries and column selection of the view.
+	 */
 	spec: SavedviewtypesSavedViewSpecDTO;
 }
 
@@ -12224,10 +12251,20 @@ export interface SavedviewtypesSavedViewDTO {
 	id: string;
 	/**
 	 * @type string
+	 * @description The machine name of the view, a DNS-1123 label unique within the organization. Immutable after creation.
 	 */
 	name?: string;
+	/**
+	 * @description The version of the spec shape. The only accepted value is v2.
+	 */
 	schemaVersion: SavedviewtypesSchemaVersionDTO;
+	/**
+	 * @description The explorer page the view belongs to: traces, logs, metrics, meter or ai_observability.
+	 */
 	source?: SavedviewtypesSourceDTO;
+	/**
+	 * @description The display name, panel type, request type, queries and column selection of the view.
+	 */
 	spec: SavedviewtypesSavedViewSpecDTO;
 	/**
 	 * @type string
@@ -12241,8 +12278,17 @@ export interface SavedviewtypesSavedViewDTO {
 }
 
 export interface SavedviewtypesUpdatableSavedViewDTO {
+	/**
+	 * @description The version of the spec shape. The only accepted value is v2.
+	 */
 	schemaVersion: SavedviewtypesSchemaVersionDTO;
+	/**
+	 * @description The explorer page the view belongs to: traces, logs, metrics, meter or ai_observability. The machine name cannot be changed; it is identified by the id in the path.
+	 */
 	source: SavedviewtypesSourceDTO;
+	/**
+	 * @description The full replacement spec. Fields left out are reset, not preserved.
+	 */
 	spec: SavedviewtypesSavedViewSpecDTO;
 }
 
@@ -15963,12 +16009,12 @@ export type TestRule200 = {
 
 export type ListSavedViewsParams = {
 	/**
-	 * @description undefined
+	 * @description Returns only the views of this explorer page: traces, logs, metrics, meter or ai_observability. Defaults to every source.
 	 */
 	source?: SavedviewtypesSourceDTO;
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description Returns only the view with this exact machine name.
 	 */
 	name?: string;
 };

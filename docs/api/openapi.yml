@@ -10990,12 +10990,20 @@ components:
     SavedviewtypesDisplay:
       properties:
         color:
+          description: The accent color the explorer uses to label the view, as a
+            CSS color such as a hex code. Empty uses the default color.
           type: string
         fontSize:
+          description: 'The row font size in list views: small, medium or large. Empty
+            leaves the explorer default.'
           type: string
         format:
+          description: 'The list rendering mode in the logs explorer: raw, table or
+            list. Empty leaves the explorer default.'
           type: string
         maxLines:
+          description: The number of lines shown per row before the body is truncated
+            in logs list views. 0 leaves the explorer default.
           type: integer
       type: object
     SavedviewtypesPanelType:
@@ -11009,15 +11017,29 @@ components:
     SavedviewtypesPostableSavedView:
       properties:
         generateName:
+          description: When true the server derives name from spec.displayName and
+            appends a random suffix. Defaults to false.
           type: boolean
         name:
+          description: The machine name of the view, a DNS-1123 label (lowercase letters,
+            digits and hyphens, at most 63 characters) unique within the organization.
+            Required unless generateName is true, in which case it must be empty.
           type: string
         schemaVersion:
-          $ref: '#/components/schemas/SavedviewtypesSchemaVersion'
+          allOf:
+          - $ref: '#/components/schemas/SavedviewtypesSchemaVersion'
+          description: The version of the spec shape. The only accepted value is v2.
         source:
-          $ref: '#/components/schemas/SavedviewtypesSource'
+          allOf:
+          - $ref: '#/components/schemas/SavedviewtypesSource'
+          description: 'The explorer page the view belongs to: traces, logs, metrics,
+            meter or ai_observability. Builder queries inside spec must use the matching
+            signal; meter views use signal metrics with source meter.'
         spec:
-          $ref: '#/components/schemas/SavedviewtypesSavedViewSpec'
+          allOf:
+          - $ref: '#/components/schemas/SavedviewtypesSavedViewSpec'
+          description: The display name, panel type, request type, queries and column
+            selection of the view.
       required:
       - source
       - schemaVersion
@@ -11033,13 +11055,23 @@ components:
         id:
           type: string
         name:
+          description: The machine name of the view, a DNS-1123 label unique within
+            the organization. Immutable after creation.
           type: string
         schemaVersion:
-          $ref: '#/components/schemas/SavedviewtypesSchemaVersion'
+          allOf:
+          - $ref: '#/components/schemas/SavedviewtypesSchemaVersion'
+          description: The version of the spec shape. The only accepted value is v2.
         source:
-          $ref: '#/components/schemas/SavedviewtypesSource'
+          allOf:
+          - $ref: '#/components/schemas/SavedviewtypesSource'
+          description: 'The explorer page the view belongs to: traces, logs, metrics,
+            meter or ai_observability.'
         spec:
-          $ref: '#/components/schemas/SavedviewtypesSavedViewSpec'
+          allOf:
+          - $ref: '#/components/schemas/SavedviewtypesSavedViewSpec'
+          description: The display name, panel type, request type, queries and column
+            selection of the view.
         updatedAt:
           format: date-time
           type: string
@@ -11053,19 +11085,35 @@ components:
     SavedviewtypesSavedViewSpec:
       properties:
         display:
-          $ref: '#/components/schemas/SavedviewtypesDisplay'
+          allOf:
+          - $ref: '#/components/schemas/SavedviewtypesDisplay'
+          description: Rendering preferences for list panels. All fields are optional.
         displayName:
+          description: The human readable title shown in the explorer. It may differ
+            from the machine name and need not be unique.
           type: string
         panelType:
-          $ref: '#/components/schemas/SavedviewtypesPanelType'
+          allOf:
+          - $ref: '#/components/schemas/SavedviewtypesPanelType'
+          description: 'The explorer panel the view renders as: list, graph, table,
+            value or trace.'
         queries:
+          description: The query envelopes the view runs, in the v5 query builder
+            shape. At least one is required and the set is validated for the requestType.
           items:
             $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelope'
           minItems: 1
           type: array
         requestType:
-          $ref: '#/components/schemas/Querybuildertypesv5RequestType'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5RequestType'
+          description: 'The query_range request type the panel issues: raw for list
+            panels, time_series for graphs, scalar for table and value panels, trace
+            for trace panels.'
         selectedFields:
+          description: The columns shown in list panels, each a field key with name
+            and optionally signal, fieldContext and fieldDataType. Use an empty array
+            when the panel has no column preference.
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
           type: array
@@ -11090,11 +11138,19 @@ components:
     SavedviewtypesUpdatableSavedView:
       properties:
         schemaVersion:
-          $ref: '#/components/schemas/SavedviewtypesSchemaVersion'
+          allOf:
+          - $ref: '#/components/schemas/SavedviewtypesSchemaVersion'
+          description: The version of the spec shape. The only accepted value is v2.
         source:
-          $ref: '#/components/schemas/SavedviewtypesSource'
+          allOf:
+          - $ref: '#/components/schemas/SavedviewtypesSource'
+          description: 'The explorer page the view belongs to: traces, logs, metrics,
+            meter or ai_observability. The machine name cannot be changed; it is identified
+            by the id in the path.'
         spec:
-          $ref: '#/components/schemas/SavedviewtypesSavedViewSpec'
+          allOf:
+          - $ref: '#/components/schemas/SavedviewtypesSavedViewSpec'
+          description: The full replacement spec. Fields left out are reset, not preserved.
       required:
       - source
       - schemaVersion
@@ -28138,13 +28194,20 @@ paths:
       description: Returns saved views, optionally filtered by source and name.
       operationId: ListSavedViews
       parameters:
-      - in: query
+      - description: 'Returns only the views of this explorer page: traces, logs,
+          metrics, meter or ai_observability. Defaults to every source.'
+        in: query
         name: source
         schema:
-          $ref: '#/components/schemas/SavedviewtypesSource'
-      - in: query
+          allOf:
+          - $ref: '#/components/schemas/SavedviewtypesSource'
+          description: 'Returns only the views of this explorer page: traces, logs,
+            metrics, meter or ai_observability. Defaults to every source.'
+      - description: Returns only the view with this exact machine name.
+        in: query
         name: name
         schema:
+          description: Returns only the view with this exact machine name.
           type: string
       responses:
         "200":
@@ -28205,6 +28268,139 @@ paths:
       requestBody:
         content:
           application/json:
+            examples:
+              logs_list_generated_name:
+                description: A list panel over error logs of one service. generateName
+                  lets the server derive the machine name from displayName; the display
+                  preferences set the row format and font size.
+                summary: Logs list view with a generated name
+                value:
+                  generateName: true
+                  schemaVersion: v2
+                  source: logs
+                  spec:
+                    display:
+                      fontSize: small
+                      format: list
+                      maxLines: 2
+                    displayName: Payment errors
+                    panelType: list
+                    queries:
+                    - spec:
+                        filter:
+                          expression: service.name = 'paymentservice' AND severity_text
+                            = 'ERROR'
+                        limit: 100
+                        name: A
+                        order:
+                        - direction: desc
+                          key:
+                            name: timestamp
+                        - direction: desc
+                          key:
+                            name: id
+                        signal: logs
+                      type: builder_query
+                    requestType: raw
+                    selectedFields:
+                    - fieldContext: resource
+                      fieldDataType: string
+                      name: service.name
+                      signal: logs
+                    - fieldContext: log
+                      fieldDataType: string
+                      name: severity_text
+                      signal: logs
+              meter_time_series:
+                description: A graph panel on the meter explorer. Meter views are
+                  queried as metrics with the builder spec source set to meter; the
+                  meter rolls up hourly, so the step is 3600 seconds.
+                summary: Cost meter graph view
+                value:
+                  name: log-ingestion-volume
+                  schemaVersion: v2
+                  source: meter
+                  spec:
+                    displayName: Log ingestion volume
+                    panelType: graph
+                    queries:
+                    - spec:
+                        aggregations:
+                        - metricName: signoz.meter.log.size
+                          spaceAggregation: sum
+                          timeAggregation: increase
+                        name: A
+                        signal: metrics
+                        source: meter
+                        stepInterval: 3600
+                      type: builder_query
+                    requestType: time_series
+                    selectedFields: []
+              metrics_time_series:
+                description: A graph panel plotting the per-second request rate of
+                  a counter, summed across series at one minute resolution.
+                summary: Metrics graph view
+                value:
+                  name: http-request-rate
+                  schemaVersion: v2
+                  source: metrics
+                  spec:
+                    displayName: HTTP request rate
+                    panelType: graph
+                    queries:
+                    - spec:
+                        aggregations:
+                        - metricName: http_requests_total
+                          spaceAggregation: sum
+                          timeAggregation: rate
+                        groupBy:
+                        - fieldContext: resource
+                          fieldDataType: string
+                          name: service.name
+                        name: A
+                        signal: metrics
+                        stepInterval: 60
+                      type: builder_query
+                    requestType: time_series
+                    selectedFields: []
+              traces_list:
+                description: A list panel over spans slower than 500ms in one service,
+                  ordered newest first, with three explorer columns.
+                summary: Traces list view with filter and columns
+                value:
+                  name: slow-checkout-traces
+                  schemaVersion: v2
+                  source: traces
+                  spec:
+                    displayName: Slow checkout traces
+                    panelType: list
+                    queries:
+                    - spec:
+                        filter:
+                          expression: service.name = 'checkoutservice' AND duration_nano
+                            > 500000000
+                        limit: 100
+                        name: A
+                        order:
+                        - direction: desc
+                          key:
+                            name: timestamp
+                        signal: traces
+                      type: builder_query
+                    requestType: raw
+                    selectedFields:
+                    - fieldContext: resource
+                      fieldDataType: string
+                      name: service.name
+                      signal: traces
+                    - fieldContext: span
+                      fieldDataType: string
+                      name: name
+                      signal: traces
+                    - fieldContext: span
+                      fieldDataType: float64
+                      name: duration_nano
+                      signal: traces
             schema:
               $ref: '#/components/schemas/SavedviewtypesPostableSavedView'
       responses:
@@ -28391,6 +28587,49 @@ paths:
       requestBody:
         content:
           application/json:
+            examples:
+              traces_list_widen_filter:
+                description: Replaces the spec of an existing traces list view with
+                  a wider latency filter and one more column. Every field of spec
+                  must be sent again; the machine name stays as created.
+                summary: Replace a traces list view
+                value:
+                  schemaVersion: v2
+                  source: traces
+                  spec:
+                    displayName: Slow checkout traces (over 250ms)
+                    panelType: list
+                    queries:
+                    - spec:
+                        filter:
+                          expression: service.name = 'checkoutservice' AND duration_nano
+                            > 250000000
+                        limit: 100
+                        name: A
+                        order:
+                        - direction: desc
+                          key:
+                            name: timestamp
+                        signal: traces
+                      type: builder_query
+                    requestType: raw
+                    selectedFields:
+                    - fieldContext: resource
+                      fieldDataType: string
+                      name: service.name
+                      signal: traces
+                    - fieldContext: span
+                      fieldDataType: string
+                      name: name
+                      signal: traces
+                    - fieldContext: span
+                      fieldDataType: float64
+                      name: duration_nano
+                      signal: traces
+                    - fieldContext: attribute
+                      fieldDataType: string
+                      name: http.status_code
+                      signal: traces
             schema:
               $ref: '#/components/schemas/SavedviewtypesUpdatableSavedView'
       responses:
