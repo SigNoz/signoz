@@ -872,6 +872,55 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 	spec: AlertmanagertypesChannelIncidentIOConfigDTO;
 }
 
+export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfigDTOKind {
+	telegram = 'telegram',
+}
+export interface AlertmanagertypesChannelTelegramConfigDTO {
+	/**
+	 * @type string
+	 */
+	apiUrl?: string;
+	/**
+	 * @type string
+	 * @format password
+	 */
+	botToken: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	chatId: number;
+	/**
+	 * @type boolean
+	 */
+	disableNotifications?: boolean;
+	/**
+	 * @type string
+	 */
+	message?: string;
+	/**
+	 * @type integer
+	 */
+	messageThreadId?: number;
+	/**
+	 * @type boolean,null
+	 */
+	sendResolved?: boolean | null;
+	/**
+	 * @type string
+	 */
+	title?: string;
+}
+
+export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfigDTO {
+	/**
+	 * @enum telegram
+	 * @type string
+	 */
+	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfigDTOKind;
+	spec: AlertmanagertypesChannelTelegramConfigDTO;
+}
+
 export type AlertmanagertypesChannelConfigDTO =
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfigDTO
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfigDTO
@@ -882,7 +931,8 @@ export type AlertmanagertypesChannelConfigDTO =
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelGoogleChatConfigDTO
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTO
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfigDTO
-	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfigDTO;
+	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfigDTO
+	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfigDTO;
 
 export enum AlertmanagertypesChannelDefectDTO {
 	none = 'none',
@@ -902,6 +952,7 @@ export enum AlertmanagertypesChannelKindDTO {
 	jira = 'jira',
 	jsmops = 'jsmops',
 	incidentio = 'incidentio',
+	telegram = 'telegram',
 }
 export enum AlertmanagertypesChannelListOrderDTO {
 	asc = 'asc',
@@ -2462,7 +2513,7 @@ export interface ConfigSNSConfigDTO {
 	topic_arn?: string;
 }
 
-export interface ConfigTelegramConfigDTO {
+export interface AlertmanagertypesTelegramReceiverConfigDTO {
 	api_url?: ConfigURLType2DTO;
 	/**
 	 * @type integer
@@ -2494,6 +2545,10 @@ export interface ConfigTelegramConfigDTO {
 	 * @type boolean
 	 */
 	send_resolved?: boolean;
+	/**
+	 * @type string
+	 */
+	title?: string;
 	/**
 	 * @type string
 	 */
@@ -2699,7 +2754,7 @@ export type AlertmanagertypesPostableChannelDTO = unknown & {
 	/**
 	 * @type array
 	 */
-	telegram_configs?: ConfigTelegramConfigDTO[];
+	telegram_configs?: AlertmanagertypesTelegramReceiverConfigDTO[];
 	/**
 	 * @type array
 	 */
@@ -2846,7 +2901,7 @@ export interface AlertmanagertypesReceiverDTO {
 	/**
 	 * @type array
 	 */
-	telegram_configs?: ConfigTelegramConfigDTO[];
+	telegram_configs?: AlertmanagertypesTelegramReceiverConfigDTO[];
 	/**
 	 * @type array
 	 */
@@ -4420,6 +4475,48 @@ export interface ConfigJiraConfigDTO {
 	 * @type string
 	 */
 	wont_fix_resolution?: string;
+}
+
+export interface ConfigTelegramConfigDTO {
+	api_url?: ConfigURLType2DTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	chat?: number;
+	/**
+	 * @type string
+	 */
+	chat_file?: string;
+	/**
+	 * @type boolean
+	 */
+	disable_notifications?: boolean;
+	http_config?: ConfigHTTPClientConfigDTO;
+	/**
+	 * @type string
+	 */
+	message?: string;
+	/**
+	 * @type integer
+	 */
+	message_thread_id?: number;
+	/**
+	 * @type string
+	 */
+	parse_mode?: string;
+	/**
+	 * @type boolean
+	 */
+	send_resolved?: boolean;
+	/**
+	 * @type string
+	 */
+	token?: string;
+	/**
+	 * @type string
+	 */
+	token_file?: string;
 }
 
 export interface DashboardGridItemDTO {
