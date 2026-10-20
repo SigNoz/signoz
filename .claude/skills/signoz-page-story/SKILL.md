@@ -152,8 +152,40 @@ that only exists on a trial needs the plan too:
 whose denial changes nothing on screen gets no story: say so in the PR.
 
 Verify these by their disabled states, not their text. The page reads the same
-either way, so a story that is wrong looks right: read `disabled` off the buttons
-the permission gates, and check the denial callout is there or gone.
+either way, so a story that is wrong looks right: check what the permission gates
+is off, and that the denial callout is there or gone.
+
+**`toBeEnabled` and `toBeDisabled` are the wrong assertion here.** `@signozhq/ui`
+marks a locked control with `aria-disabled`, not the native `disabled` attribute,
+and both matchers ignore `aria-disabled` entirely, so they pass on a button the
+user cannot click. Three jest tests and a story once passed this way while
+clicking through a denial. Assert the attribute the component actually sets:
+
+```ts
+expect(save).toHaveAttribute('aria-disabled', 'true');
+```
+
+A control can also be off while carrying no attribute at all. Anything inside a
+disabled `<fieldset>` is turned off by the browser without being marked, and a
+Radix switch renders a `<button>`, so an attribute check and a `closest(
+'fieldset[disabled]')` check both pass whether or not it really is inert. **Assert
+those behaviourally**: read the state, click, and assert it did not move.
+
+```ts
+const before = toggle.getAttribute('aria-checked');
+await userEvent.click(toggle);
+await expect(toggle.getAttribute('aria-checked')).toBe(before);
+```
+
+**Prove a new assertion can fail.** Invert it once, confirm that story and only
+that story goes red, then put it back. An assertion that cannot fail is worse
+than no assertion, because it reads as coverage.
+
+**A story asserting a conditional goes vacuous when the condition goes away.**
+Two list stories here asserted a row action read "View" rather than "Edit" under
+a denial; when the label became unconditional they passed under any permission
+set, including a full grant. When a behaviour stops depending on a permission,
+delete the story or rewrite it to pin the new decision, and say which in the PR.
 
 ## Rules
 
