@@ -241,9 +241,9 @@ describe('Tooltip renderTooltipFooter', () => {
 	});
 
 	it('renders content returned by renderTooltipFooter', () => {
-		const renderTooltipFooter = jest.fn(
-			(): JSX.Element => <div data-testid="custom-tooltip-footer">Footer</div>,
-		);
+		const renderTooltipFooter = jest.fn((): JSX.Element => (
+			<div data-testid="custom-tooltip-footer">Footer</div>
+		));
 
 		renderTooltip({ renderTooltipFooter });
 

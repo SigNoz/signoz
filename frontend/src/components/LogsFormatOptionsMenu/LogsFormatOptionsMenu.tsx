@@ -175,21 +175,19 @@ function OptionsMenu({
 						<div className="title">FORMAT</div>
 
 						<div className="menu-items">
-							{items.map(
-								(item: any): JSX.Element => (
-									<div
-										className="item"
-										key={item.label}
-										onClick={(): void => handleMenuItemClick(item.key)}
-									>
-										<div className={cx('item-label')}>
-											{item.label}
+							{items.map((item: any): JSX.Element => (
+								<div
+									className="item"
+									key={item.label}
+									onClick={(): void => handleMenuItemClick(item.key)}
+								>
+									<div className={cx('item-label')}>
+										{item.label}
 
-											{selectedItem === item.key && <Check size={12} />}
-										</div>
+										{selectedItem === item.key && <Check size={12} />}
 									</div>
-								),
-							)}
+								</div>
+							))}
 						</div>
 					</div>
 
