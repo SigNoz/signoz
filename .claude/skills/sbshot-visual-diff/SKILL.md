@@ -90,25 +90,25 @@ Do not argue about these one at a time. **Measure them**: shoot the same commit
 twice and diff those two runs against each other. Anything that moves there moved
 for no reason, so it is noise.
 
-Do it the cheap way, after the real diff rather than before. The real diff tells
-you which handful of pairs moved, and those are the only ones worth measuring:
-
 ```
-diff <baseline> <after>                              # see what moved
-capture <storybook> --name-run noise-b \
-  --stories "<the ids that moved>"                   # a second shot of just those
-diff <after> noise-b --name-diff noise               # what moved for no reason
-diff <baseline> <after> --noise noise                # mark those flaky
+capture <storybook> --name-run noise-a
+capture <storybook> --name-run noise-b     # same tree, its own fresh server
+diff noise-a noise-b --name-diff noise
+diff <baseline> <after> --noise noise      # marks the movers flaky
 ```
 
-A handful of stories takes a couple of minutes. Shooting the whole suite twice
-takes as long as the diff itself and tells you nothing extra about the pairs you
-are reviewing, so keep that for the one time you want the repo's overall
-flakiness, such as when setting a CI threshold.
+**The noise run has to cover the same stories as the real diff.** Do not scope it
+down to the few pairs that moved, however tempting that is. `--noise` marks a
+pair flaky when the noise diff does not show it as unchanged, so every story the
+noise run leaves out is marked flaky too, including the new screens the reviewer
+is there to look at. Shooting two narrow runs and diffing those against each
+other has the same problem. Either shoot the full set twice, or skip `--noise`
+and explain the few movers by hand.
 
-Pairs that moved in the noise run are marked flaky in the real diff, and the
-viewer's **hide flaky** box removes them. `--fail-over <px>` then exits non-zero
-only on a pair that is not flaky, which is what a CI gate should use.
+That is the trade: a second full capture costs about as long as the first, so on
+a small diff it is often quicker to crop the two or three movers and say what
+each one is. Use `--noise` when the diff is large, or when wiring `--fail-over`
+into CI, where something has to decide without a person looking.
 
 If a pair is flaky every run and the state it captures matters, fix the story
 rather than living with it: blur what the `play` clicked, freeze the clock, or
@@ -158,7 +158,7 @@ eye.
 - [ ] one capture per ref, each from its own freshly started Storybook
 - [ ] `--theme dark,light` on every capture
 - [ ] baseline is the merge-base
-- [ ] the pairs that moved re-shot as a noise floor and passed as `--noise`
+- [ ] noise either measured with a full second capture, or each mover explained by hand
 - [ ] every non-flaky pair opened and explained, not inferred from its size
 - [ ] the pairs that matter tagged, with a note
 - [ ] exported and hosted, and the link in the PR body
