@@ -7972,13 +7972,21 @@ components:
     MetricsexplorertypesInspectMetricsRequest:
       properties:
         end:
+          description: End of the time range as a Unix timestamp in milliseconds.
+            At most 30 minutes after start.
           format: int64
           type: integer
         filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5Filter'
+          description: Query builder filter over the metric attributes, for example
+            host.name = 'web-1'. Omit for every series.
         metricName:
+          description: The name of the metric to inspect.
           type: string
         start:
+          description: Start of the time range as a Unix timestamp in milliseconds.
+            Must be greater than 0 and less than end.
           format: int64
           type: integer
       required:
@@ -7989,6 +7997,7 @@ components:
     MetricsexplorertypesInspectMetricsResponse:
       properties:
         series:
+          description: Raw time series, each with its labels and timestamp-value pairs.
           items:
             $ref: '#/components/schemas/Querybuildertypesv5TimeSeries'
           nullable: true
@@ -7999,16 +8008,28 @@ components:
     MetricsexplorertypesListMetric:
       properties:
         description:
+          description: Human-readable description from the metric metadata; empty
+            when none was reported.
           type: string
         isMonotonic:
+          description: True when the metric is a monotonically increasing Sum (a counter).
           type: boolean
         metricName:
+          description: The name of the metric.
           type: string
         temporality:
-          $ref: '#/components/schemas/MetrictypesTemporality'
+          allOf:
+          - $ref: '#/components/schemas/MetrictypesTemporality'
+          description: 'Aggregation temporality of the metric: cumulative, delta or
+            unspecified.'
         type:
-          $ref: '#/components/schemas/MetrictypesType'
+          allOf:
+          - $ref: '#/components/schemas/MetrictypesType'
+          description: The metric type, such as gauge, sum, histogram, summary or
+            exponentialhistogram.
         unit:
+          description: The unit reported in the metric metadata, for example ms or
+            By; empty when none was reported.
           type: string
       required:
       - metricName
@@ -8021,6 +8042,7 @@ components:
     MetricsexplorertypesListMetricsResponse:
       properties:
         metrics:
+          description: Matching metrics with their metadata, ordered by name.
           items:
             $ref: '#/components/schemas/MetricsexplorertypesListMetric'
           nullable: true
@@ -8031,8 +8053,10 @@ components:
     MetricsexplorertypesMetricAlert:
       properties:
         alertId:
+          description: The id of the alert rule.
           type: string
         alertName:
+          description: The name of the alert rule that queries the metric.
           type: string
       required:
       - alertName
@@ -8041,6 +8065,7 @@ components:
     MetricsexplorertypesMetricAlertsResponse:
       properties:
         alerts:
+          description: Alert rules whose queries reference the metric.
           items:
             $ref: '#/components/schemas/MetricsexplorertypesMetricAlert'
           nullable: true
@@ -8051,11 +8076,15 @@ components:
     MetricsexplorertypesMetricAttribute:
       properties:
         key:
+          description: The attribute (label) name.
           type: string
         valueCount:
+          description: Total number of distinct values observed, which can exceed
+            the length of values.
           minimum: 0
           type: integer
         values:
+          description: Distinct values observed for the attribute, capped at 1000.
           items:
             type: string
           nullable: true
@@ -8068,11 +8097,13 @@ components:
     MetricsexplorertypesMetricAttributesResponse:
       properties:
         attributes:
+          description: Attributes of the metric, ordered by distinct value count descending.
           items:
             $ref: '#/components/schemas/MetricsexplorertypesMetricAttribute'
           nullable: true
           type: array
         totalKeys:
+          description: Number of attributes returned.
           format: int64
           type: integer
       required:
@@ -8082,6 +8113,7 @@ components:
     MetricsexplorertypesMetricDashboardPanelsResponse:
       properties:
         dashboards:
+          description: One entry per dashboard panel whose query references the metric.
           items:
             $ref: '#/components/schemas/DashboardtypesDashboardPanelRef'
           nullable: true
@@ -8092,15 +8124,21 @@ components:
     MetricsexplorertypesMetricHighlightsResponse:
       properties:
         activeTimeSeries:
+          description: Number of distinct time series that reported in the last 120
+            minutes.
           minimum: 0
           type: integer
         dataPoints:
+          description: Total number of samples ingested for the metric.
           minimum: 0
           type: integer
         lastReceived:
+          description: Unix timestamp in milliseconds of the most recently received
+            sample.
           minimum: 0
           type: integer
         totalTimeSeries:
+          description: Number of distinct time series ever seen for the metric.
           minimum: 0
           type: integer
       required:
@@ -8112,14 +8150,25 @@ components:
     MetricsexplorertypesMetricMetadata:
       properties:
         description:
+          description: Human-readable description of the metric; empty when none was
+            reported.
           type: string
         isMonotonic:
+          description: True when the metric is a monotonically increasing Sum (a counter).
           type: boolean
         temporality:
-          $ref: '#/components/schemas/MetrictypesTemporality'
+          allOf:
+          - $ref: '#/components/schemas/MetrictypesTemporality'
+          description: 'Aggregation temporality of the metric: cumulative, delta or
+            unspecified.'
         type:
-          $ref: '#/components/schemas/MetrictypesType'
+          allOf:
+          - $ref: '#/components/schemas/MetrictypesType'
+          description: The metric type, such as gauge, sum, histogram, summary or
+            exponentialhistogram.
         unit:
+          description: The unit of the metric values, for example ms or By; empty
+            when none was reported.
           type: string
       required:
       - description
@@ -8131,6 +8180,8 @@ components:
     MetricsexplorertypesMetricsOnboardingResponse:
       properties:
         hasMetrics:
+          description: True when at least one metric not emitted by SigNoz itself
+            has been ingested.
           type: boolean
       required:
       - hasMetrics
@@ -8138,18 +8189,30 @@ components:
     MetricsexplorertypesStat:
       properties:
         description:
+          description: Human-readable description from the metric metadata; empty
+            when none was reported.
           type: string
         metricName:
+          description: The name of the metric.
           type: string
         samples:
+          description: Number of samples (data points) ingested for the metric in
+            the requested time range.
           minimum: 0
           type: integer
         timeseries:
+          description: Number of distinct time series seen for the metric in the requested
+            time range.
           minimum: 0
           type: integer
         type:
-          $ref: '#/components/schemas/MetrictypesType'
+          allOf:
+          - $ref: '#/components/schemas/MetrictypesType'
+          description: The metric type, such as gauge, sum, histogram, summary or
+            exponentialhistogram.
         unit:
+          description: The unit reported in the metric metadata, for example ms or
+            By; empty when none was reported.
           type: string
       required:
       - metricName
@@ -8162,17 +8225,30 @@ components:
     MetricsexplorertypesStatsRequest:
       properties:
         end:
+          description: End of the time range as a Unix timestamp in milliseconds.
+            Must be greater than start.
           format: int64
           type: integer
         filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5Filter'
+          description: Query builder filter over metric attributes, for example host.name
+            = 'web-1'. A bare word matches the metric name. Omit for every metric.
         limit:
+          description: Maximum number of metrics to return, between 1 and 5000.
           type: integer
         offset:
+          description: Number of metrics to skip for pagination. Must not be negative;
+            defaults to 0.
           type: integer
         orderBy:
-          $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          description: Sort order; key.name is timeseries or samples, direction is
+            asc or desc. Defaults to samples descending.
         start:
+          description: Start of the time range as a Unix timestamp in milliseconds.
+            Must be greater than 0 and less than end.
           format: int64
           type: integer
       required:
@@ -8183,11 +8259,14 @@ components:
     MetricsexplorertypesStatsResponse:
       properties:
         metrics:
+          description: One entry per metric on the requested page, in the requested
+            order.
           items:
             $ref: '#/components/schemas/MetricsexplorertypesStat'
           nullable: true
           type: array
         total:
+          description: Total number of metrics matching the filter across all pages.
           minimum: 0
           type: integer
       required:
@@ -8197,11 +8276,16 @@ components:
     MetricsexplorertypesTreemapEntry:
       properties:
         metricName:
+          description: The name of the metric.
           type: string
         percentage:
+          description: Share of the total across all metrics in the time range, from
+            0 to 100.
           format: double
           type: number
         totalValue:
+          description: Time series count or sample count for the metric, depending
+            on the requested mode.
           minimum: 0
           type: integer
       required:
@@ -8217,15 +8301,28 @@ components:
     MetricsexplorertypesTreemapRequest:
       properties:
         end:
+          description: End of the time range as a Unix timestamp in milliseconds.
+            Must be greater than start.
           format: int64
           type: integer
         filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5Filter'
+          description: Query builder filter over metric attributes, for example host.name
+            = 'web-1'. A bare word matches the metric name. Omit for every metric.
         limit:
+          description: Maximum number of metrics to return, between 1 and 5000, ordered
+            by percentage descending.
           type: integer
         mode:
-          $ref: '#/components/schemas/MetricsexplorertypesTreemapMode'
+          allOf:
+          - $ref: '#/components/schemas/MetricsexplorertypesTreemapMode'
+          description: 'What each metric is sized by: timeseries counts distinct time
+            series, samples counts ingested data points. Only the matching response
+            array is populated.'
         start:
+          description: Start of the time range as a Unix timestamp in milliseconds.
+            Must be greater than 0 and less than end.
           format: int64
           type: integer
       required:
@@ -8237,11 +8334,15 @@ components:
     MetricsexplorertypesTreemapResponse:
       properties:
         samples:
+          description: Entries sized by sample count; populated only when mode is
+            samples.
           items:
             $ref: '#/components/schemas/MetricsexplorertypesTreemapEntry'
           nullable: true
           type: array
         timeseries:
+          description: Entries sized by time series count; populated only when mode
+            is timeseries.
           items:
             $ref: '#/components/schemas/MetricsexplorertypesTreemapEntry'
           nullable: true
@@ -8253,16 +8354,25 @@ components:
     MetricsexplorertypesUpdateMetricMetadataRequest:
       properties:
         description:
+          description: Human-readable description of the metric.
           type: string
         isMonotonic:
+          description: Whether the metric is a monotonically increasing Sum (a counter).
           type: boolean
         metricName:
+          description: The name of the metric whose metadata to replace.
           type: string
         temporality:
-          $ref: '#/components/schemas/MetrictypesTemporality'
+          allOf:
+          - $ref: '#/components/schemas/MetrictypesTemporality'
+          description: 'Aggregation temporality to store: cumulative, delta or unspecified.'
         type:
-          $ref: '#/components/schemas/MetrictypesType'
+          allOf:
+          - $ref: '#/components/schemas/MetrictypesType'
+          description: The metric type to store, such as gauge, sum, histogram, summary
+            or exponentialhistogram.
         unit:
+          description: The unit of the metric values, for example ms or By.
           type: string
       required:
       - metricName
@@ -21873,27 +21983,45 @@ paths:
         specified time range
       operationId: ListMetrics
       parameters:
-      - in: query
+      - description: Start of the time range as a Unix timestamp in milliseconds.
+          Must be greater than 0; applied only when end is also set.
+        in: query
         name: start
         schema:
+          description: Start of the time range as a Unix timestamp in milliseconds.
+            Must be greater than 0; applied only when end is also set.
           nullable: true
           type: integer
-      - in: query
+      - description: End of the time range as a Unix timestamp in milliseconds. Must
+          be greater than start; applied only when start is also set.
+        in: query
         name: end
         schema:
+          description: End of the time range as a Unix timestamp in milliseconds.
+            Must be greater than start; applied only when start is also set.
           nullable: true
           type: integer
-      - in: query
+      - description: Maximum number of metric names to return. Defaults to 100; must
+          not exceed 5000.
+        in: query
         name: limit
         schema:
+          description: Maximum number of metric names to return. Defaults to 100;
+            must not exceed 5000.
           type: integer
-      - in: query
+      - description: Case-insensitive substring to match against metric names.
+        in: query
         name: searchText
         schema:
+          description: Case-insensitive substring to match against metric names.
           type: string
-      - in: query
+      - description: Set to meter to list Cost Meter metrics instead of telemetry
+          metrics.
+        in: query
         name: source
         schema:
+          description: Set to meter to list Cost Meter metrics instead of telemetry
+            metrics.
           type: string
       responses:
         "200":
@@ -22457,6 +22585,29 @@ paths:
       requestBody:
         content:
           application/json:
+            examples:
+              treemap_samples_filtered:
+                description: Sizes each metric by the number of samples ingested,
+                  restricted with a query builder filter on a metric attribute. Only
+                  the `samples` array of the response is populated.
+                summary: Top metrics by sample count for one host
+                value:
+                  end: 1640998800000
+                  filter:
+                    expression: host.name = 'web-1'
+                  limit: 20
+                  mode: samples
+                  start: 1640995200000
+              treemap_timeseries:
+                description: Sizes each metric by the number of distinct time series
+                  it produced in the time range, limited to the 50 largest. Only the
+                  `timeseries` array of the response is populated.
+                summary: Top metrics by time series count
+                value:
+                  end: 1640998800000
+                  limit: 50
+                  mode: timeseries
+                  start: 1640995200000
             schema:
               $ref: '#/components/schemas/MetricsexplorertypesTreemapRequest'
       responses:
