@@ -151,25 +151,25 @@ that only exists on a trial needs the plan too:
 `args: { plan: 'on-trial', revoked: ['create:subscription'] }`. A permission
 whose denial changes nothing on screen gets no story: say so in the PR.
 
-Verify these by their disabled states, not their text. The page reads the same
-either way, so a story that is wrong looks right: check what the permission gates
-is off, and that the denial callout is there or gone.
+Check these by what is turned off, not by what the page says. The page reads the
+same either way, so a story that is wrong still looks right. Check that the
+control the permission guards is off, and that the denial message is there or
+gone.
 
-**`toBeEnabled` and `toBeDisabled` are the wrong assertion here.** `@signozhq/ui`
-marks a locked control with `aria-disabled`, not the native `disabled` attribute,
-and both matchers ignore `aria-disabled` entirely, so they pass on a button the
-user cannot click, and a test that clicks through a denial still goes green.
-Assert the attribute the component actually sets:
+**Do not use `toBeEnabled` or `toBeDisabled`.** They only look at the `disabled`
+attribute. `@signozhq/ui` turns a button off with `aria-disabled` instead, so
+these matchers pass on a button nobody can click, and the test goes green while
+clicking straight through a denial. Check the attribute the component really
+sets:
 
 ```ts
 expect(save).toHaveAttribute('aria-disabled', 'true');
 ```
 
-A control can also be off while carrying no attribute at all. Anything inside a
-disabled `<fieldset>` is turned off by the browser without being marked, and a
-Radix switch renders a `<button>`, so an attribute check and a `closest(
-'fieldset[disabled]')` check both pass whether or not it really is inert. **Assert
-those behaviourally**: read the state, click, and assert it did not move.
+**Some controls are off with no attribute at all.** The browser turns off
+everything inside a disabled `<fieldset>` without marking it, and a switch is a
+`<button>` underneath. For those, an attribute check proves nothing, and so does
+looking for a parent `fieldset[disabled]`. Click it and check nothing happened:
 
 ```ts
 const before = toggle.getAttribute('aria-checked');
@@ -177,16 +177,16 @@ await userEvent.click(toggle);
 await expect(toggle.getAttribute('aria-checked')).toBe(before);
 ```
 
-**Prove a new assertion can fail.** Invert it once, confirm that story and only
-that story goes red, then put it back. An assertion that cannot fail is worse
-than no assertion, because it reads as coverage.
+**Check that a new assertion can fail.** Flip it once and run it. If that story
+goes red and nothing else does, the assertion is real; put it back. A test that
+cannot fail is worse than no test, because it looks like coverage.
 
-**A story asserting a conditional goes vacuous when the condition goes away.**
-A story that checks a label, an icon or an action reads one way under a denial
-stops testing anything the moment that difference is removed: it then passes
-under every permission set, a full grant included, while still looking like
-coverage. When a behaviour stops depending on a permission, delete the story or
-rewrite it to pin the new decision, and say which in the PR.
+**Delete a story once its difference disappears.** Say a story checks that a
+button reads "View" rather than "Edit" when a permission is missing. If the label
+later becomes the same either way, that story passes no matter which permissions
+are held, including all of them, and it is testing nothing. When a behaviour
+stops depending on a permission, delete the story or rewrite it to lock in the
+new behaviour, and say which one you did in the PR.
 
 ## Rules
 
