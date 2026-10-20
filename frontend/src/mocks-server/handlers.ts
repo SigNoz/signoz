@@ -2,7 +2,11 @@ import { rest } from 'msw';
 
 import commonEnTranslation from '../../public/locales/en/common.json';
 import enTranslation from '../../public/locales/en/translation.json';
-import { allAlertChannels } from './__mockdata__/alerts';
+import {
+	allAlertChannels,
+	notificationChannelsV2,
+	notificationChannelV2,
+} from './__mockdata__/alerts';
 import { alertRulesFixture } from './__mockdata__/alert_rules';
 import { triggeredAlertsFixture } from './__mockdata__/triggered_alerts';
 import { billingSuccessResponse } from './__mockdata__/billing';
@@ -204,6 +208,32 @@ export const handlers = [
 
 	rest.get('http://localhost/api/v1/channels', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json({ data: allAlertChannels, status: 'success' })),
+	),
+	rest.get('http://localhost/api/v2/notification_channels', (req, res, ctx) => {
+		const query = req.url.searchParams.get('query')?.toLowerCase() ?? '';
+		const kind = req.url.searchParams.get('kind');
+		const channels = notificationChannelsV2.filter(
+			(channel) =>
+				(!query || channel.displayName.toLowerCase().includes(query)) &&
+				(!kind || channel.kind === kind),
+		);
+		return res(
+			ctx.status(200),
+			ctx.json({
+				data: { channels, total: channels.length },
+				status: 'success',
+			}),
+		);
+	}),
+	rest.get('http://localhost/api/v2/notification_channels/:id', (_, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({ data: notificationChannelV2, status: 'success' }),
+		),
+	),
+	rest.delete(
+		'http://localhost/api/v2/notification_channels/:id',
+		(_, res, ctx) => res(ctx.status(204)),
 	),
 	rest.get('http://localhost/api/v1/alerts', (_, res, ctx) =>
 		res(
