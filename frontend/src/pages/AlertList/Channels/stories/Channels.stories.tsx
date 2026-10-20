@@ -178,3 +178,17 @@ export const DeleteConfirm: Story = {
 	},
 };
 
+/** Interaction: Copy Link confirms it put the channel's URL on the clipboard. */
+export const CopyLink: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+
+		await canvas.findByText('ops-slack', undefined, UNTIL_LOADED);
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Actions for ops-slack' }),
+		);
+		await clickRowAction('Copy Link');
+
+		await screen.findByText('Link copied to clipboard', undefined, UNTIL_LOADED);
+	},
+};

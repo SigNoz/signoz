@@ -1,13 +1,19 @@
 import { useMemo } from 'react';
+import { generatePath } from 'react-router-dom';
+import { useCopyToClipboard } from 'react-use';
 import {
 	Braces,
 	Ellipsis,
-	PenLine,
+	Expand,
+	Link2,
 	SquareArrowOutUpRight,
 	Trash2,
 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
+import { toast } from '@signozhq/ui/sonner';
+import ROUTES from 'constants/routes';
+import { getAbsoluteUrl } from 'utils/basePath';
 
 import type { Channel } from '../../types';
 import styles from './ChannelActionsMenu.module.scss';
@@ -25,13 +31,15 @@ function ChannelActionsMenu({
 	onDelete,
 	onViewJson,
 }: ChannelActionsMenuProps): JSX.Element {
+	const [, setCopy] = useCopyToClipboard();
+
 	const menuItems = useMemo<DropdownItemType[]>(
 		() => [
 			{
 				type: 'item',
 				value: 'open',
-				label: 'Edit',
-				prefix: <PenLine size={14} />,
+				label: 'View',
+				prefix: <Expand size={14} />,
 				onClick: (): void => onOpen(channel),
 			},
 			{
@@ -40,6 +48,20 @@ function ChannelActionsMenu({
 				label: 'Open in New Tab',
 				prefix: <SquareArrowOutUpRight size={14} />,
 				onClick: (): void => onOpen(channel, { newTab: true }),
+			},
+			{
+				type: 'item',
+				value: 'copy-link',
+				label: 'Copy Link',
+				prefix: <Link2 size={14} />,
+				onClick: (): void => {
+					setCopy(
+						getAbsoluteUrl(
+							generatePath(ROUTES.CHANNELS_EDIT, { channelId: channel.id }),
+						),
+					);
+					toast.success('Link copied to clipboard');
+				},
 			},
 			{
 				type: 'item',
@@ -58,7 +80,7 @@ function ChannelActionsMenu({
 				onClick: (): void => onDelete(channel),
 			},
 		],
-		[channel, onOpen, onDelete, onViewJson],
+		[channel, onOpen, onDelete, onViewJson, setCopy],
 	);
 
 	return (
