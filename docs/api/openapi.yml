@@ -8300,23 +8300,37 @@ components:
         columnType:
           $ref: '#/components/schemas/Querybuildertypesv5ColumnType'
         description:
+          description: Human-readable summary of the field, present only for well-known
+            fields.
           type: string
         fieldContext:
-          $ref: '#/components/schemas/TelemetrytypesFieldContext'
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesFieldContext'
+          description: 'Where the field lives: resource, attribute, scope, span, trace,
+            log, body or metric. Empty means unspecified, so the server resolves it.'
         fieldDataType:
-          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+          description: 'Data type of the field values: string, bool, int64, float64
+            or number. Empty means unspecified.'
         meta:
           properties:
             unit:
               type: string
           type: object
         name:
+          description: The field name, such as service.name or http.response.status_code.
+            Dots are part of the name.
           type: string
         queryName:
           type: string
         signal:
-          $ref: '#/components/schemas/TelemetrytypesSignal'
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesSignal'
+          description: 'The signal the field belongs to: traces, logs or metrics.
+            Empty means any signal.'
         unit:
+          description: Unit of the field values, present only for well-known fields.
           type: string
       required:
       - name
@@ -8410,16 +8424,30 @@ components:
     Querybuildertypesv5GroupByKey:
       properties:
         description:
+          description: Human-readable summary of the field, present only for well-known
+            fields.
           type: string
         fieldContext:
-          $ref: '#/components/schemas/TelemetrytypesFieldContext'
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesFieldContext'
+          description: 'Where the field lives: resource, attribute, scope, span, trace,
+            log, body or metric. Empty means unspecified, so the server resolves it.'
         fieldDataType:
-          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+          description: 'Data type of the field values: string, bool, int64, float64
+            or number. Empty means unspecified.'
         name:
+          description: The field name, such as service.name or http.response.status_code.
+            Dots are part of the name.
           type: string
         signal:
-          $ref: '#/components/schemas/TelemetrytypesSignal'
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesSignal'
+          description: 'The signal the field belongs to: traces, logs or metrics.
+            Empty means any signal.'
         unit:
+          description: Unit of the field values, present only for well-known fields.
           type: string
       required:
       - name
@@ -8497,16 +8525,30 @@ components:
     Querybuildertypesv5OrderByKey:
       properties:
         description:
+          description: Human-readable summary of the field, present only for well-known
+            fields.
           type: string
         fieldContext:
-          $ref: '#/components/schemas/TelemetrytypesFieldContext'
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesFieldContext'
+          description: 'Where the field lives: resource, attribute, scope, span, trace,
+            log, body or metric. Empty means unspecified, so the server resolves it.'
         fieldDataType:
-          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+          description: 'Data type of the field values: string, bool, int64, float64
+            or number. Empty means unspecified.'
         name:
+          description: The field name, such as service.name or http.response.status_code.
+            Dots are part of the name.
           type: string
         signal:
-          $ref: '#/components/schemas/TelemetrytypesSignal'
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesSignal'
+          description: 'The signal the field belongs to: traces, logs or metrics.
+            Empty means any signal.'
         unit:
+          description: Unit of the field values, present only for well-known fields.
           type: string
       required:
       - name
@@ -11111,12 +11153,16 @@ components:
     TelemetrytypesGettableFieldKeys:
       properties:
         complete:
+          description: True when every matching key was returned; false when the result
+            was cut off by limit.
           type: boolean
         keys:
           additionalProperties:
             items:
               $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
             type: array
+          description: Matching keys grouped by name. A name maps to several entries
+            when it exists in more than one context or data type.
           nullable: true
           type: object
       required:
@@ -11126,9 +11172,13 @@ components:
     TelemetrytypesGettableFieldValues:
       properties:
         complete:
+          description: True when every matching value was returned; false when the
+            result was cut off by limit.
           type: boolean
         values:
-          $ref: '#/components/schemas/TelemetrytypesTelemetryFieldValues'
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesTelemetryFieldValues'
+          description: Distinct values of the key, split by data type.
       required:
       - values
       - complete
@@ -11148,16 +11198,30 @@ components:
     TelemetrytypesTelemetryFieldKey:
       properties:
         description:
+          description: Human-readable summary of the field, present only for well-known
+            fields.
           type: string
         fieldContext:
-          $ref: '#/components/schemas/TelemetrytypesFieldContext'
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesFieldContext'
+          description: 'Where the field lives: resource, attribute, scope, span, trace,
+            log, body or metric. Empty means unspecified, so the server resolves it.'
         fieldDataType:
-          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+          description: 'Data type of the field values: string, bool, int64, float64
+            or number. Empty means unspecified.'
         name:
+          description: The field name, such as service.name or http.response.status_code.
+            Dots are part of the name.
           type: string
         signal:
-          $ref: '#/components/schemas/TelemetrytypesSignal'
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesSignal'
+          description: 'The signal the field belongs to: traces, logs or metrics.
+            Empty means any signal.'
         unit:
+          description: Unit of the field values, present only for well-known fields.
           type: string
       required:
       - name
@@ -11165,19 +11229,24 @@ components:
     TelemetrytypesTelemetryFieldValues:
       properties:
         boolValues:
+          description: Distinct boolean values of the field.
           items:
             type: boolean
           type: array
         numberValues:
+          description: Distinct numeric values of the field, up to limit.
           items:
             format: double
             type: number
           type: array
         relatedValues:
+          description: Values of the field seen on data that also matches existingQuery.
+            Empty when existingQuery is not set.
           items:
             type: string
           type: array
         stringValues:
+          description: Distinct string values of the field, up to limit.
           items:
             type: string
           type: array
@@ -13416,47 +13485,91 @@ paths:
       description: This endpoint returns field keys
       operationId: GetFieldsKeys
       parameters:
-      - in: query
+      - description: 'The signal to look up keys in: traces, logs or metrics. Empty
+          searches every signal.'
+        in: query
         name: signal
         schema:
-          $ref: '#/components/schemas/TelemetrytypesSignal'
-      - in: query
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesSignal'
+          description: 'The signal to look up keys in: traces, logs or metrics. Empty
+            searches every signal.'
+      - description: The data source within the signal. Use meter for Cost Meter metrics;
+          empty means the default source.
+        in: query
         name: source
         schema:
-          $ref: '#/components/schemas/TelemetrytypesSource'
-      - in: query
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesSource'
+          description: The data source within the signal. Use meter for Cost Meter
+            metrics; empty means the default source.
+      - description: Maximum number of results to return. Defaults to 1000 for keys
+          and 50 for values.
+        in: query
         name: limit
         schema:
+          description: Maximum number of results to return. Defaults to 1000 for keys
+            and 50 for values.
           type: integer
-      - in: query
+      - description: Start of the lookup window in Unix milliseconds, rounded down
+          to a 6 hour boundary. Omit for no lower bound.
+        in: query
         name: startUnixMilli
         schema:
+          description: Start of the lookup window in Unix milliseconds, rounded down
+            to a 6 hour boundary. Omit for no lower bound.
           format: int64
           type: integer
-      - in: query
+      - description: End of the lookup window in Unix milliseconds. Omit for no upper
+          bound.
+        in: query
         name: endUnixMilli
         schema:
+          description: End of the lookup window in Unix milliseconds. Omit for no
+            upper bound.
           format: int64
           type: integer
-      - in: query
+      - description: 'Restricts keys to one context: resource, attribute, scope, span,
+          trace, log, body or metric. Empty means any context.'
+        in: query
         name: fieldContext
         schema:
-          $ref: '#/components/schemas/TelemetrytypesFieldContext'
-      - in: query
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesFieldContext'
+          description: 'Restricts keys to one context: resource, attribute, scope,
+            span, trace, log, body or metric. Empty means any context.'
+      - description: 'Restricts keys to one data type: string, bool, int64, float64
+          or number. Empty means any type.'
+        in: query
         name: fieldDataType
         schema:
-          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
-      - in: query
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+          description: 'Restricts keys to one data type: string, bool, int64, float64
+            or number. Empty means any type.'
+      - description: Restricts keys to those seen on this metric. Metrics signal only.
+        in: query
         name: metricName
         schema:
+          description: Restricts keys to those seen on this metric. Metrics signal
+            only.
           type: string
-      - in: query
+      - description: Restricts keys to metrics in this namespace. Metrics signal only.
+        in: query
         name: metricNamespace
         schema:
+          description: Restricts keys to metrics in this namespace. Metrics signal
+            only.
           type: string
-      - in: query
+      - description: 'Case-insensitive substring to match: against key names for keys,
+          against the values of name for values. For keys, a context prefix such as
+          resource.service.name sets fieldContext when it is empty.'
+        in: query
         name: searchText
         schema:
+          description: 'Case-insensitive substring to match: against key names for
+            keys, against the values of name for values. For keys, a context prefix
+            such as resource.service.name sets fieldContext when it is empty.'
           type: string
       responses:
         "200":
@@ -13506,55 +13619,107 @@ paths:
       description: This endpoint returns field values
       operationId: GetFieldsValues
       parameters:
-      - in: query
+      - description: 'The signal to look up keys in: traces, logs or metrics. Empty
+          searches every signal.'
+        in: query
         name: signal
         schema:
-          $ref: '#/components/schemas/TelemetrytypesSignal'
-      - in: query
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesSignal'
+          description: 'The signal to look up keys in: traces, logs or metrics. Empty
+            searches every signal.'
+      - description: The data source within the signal. Use meter for Cost Meter metrics;
+          empty means the default source.
+        in: query
         name: source
         schema:
-          $ref: '#/components/schemas/TelemetrytypesSource'
-      - in: query
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesSource'
+          description: The data source within the signal. Use meter for Cost Meter
+            metrics; empty means the default source.
+      - description: Maximum number of results to return. Defaults to 1000 for keys
+          and 50 for values.
+        in: query
         name: limit
         schema:
+          description: Maximum number of results to return. Defaults to 1000 for keys
+            and 50 for values.
           type: integer
-      - in: query
+      - description: Start of the lookup window in Unix milliseconds, rounded down
+          to a 6 hour boundary. Omit for no lower bound.
+        in: query
         name: startUnixMilli
         schema:
+          description: Start of the lookup window in Unix milliseconds, rounded down
+            to a 6 hour boundary. Omit for no lower bound.
           format: int64
           type: integer
-      - in: query
+      - description: End of the lookup window in Unix milliseconds. Omit for no upper
+          bound.
+        in: query
         name: endUnixMilli
         schema:
+          description: End of the lookup window in Unix milliseconds. Omit for no
+            upper bound.
           format: int64
           type: integer
-      - in: query
+      - description: 'Restricts keys to one context: resource, attribute, scope, span,
+          trace, log, body or metric. Empty means any context.'
+        in: query
         name: fieldContext
         schema:
-          $ref: '#/components/schemas/TelemetrytypesFieldContext'
-      - in: query
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesFieldContext'
+          description: 'Restricts keys to one context: resource, attribute, scope,
+            span, trace, log, body or metric. Empty means any context.'
+      - description: 'Restricts keys to one data type: string, bool, int64, float64
+          or number. Empty means any type.'
+        in: query
         name: fieldDataType
         schema:
-          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
-      - in: query
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+          description: 'Restricts keys to one data type: string, bool, int64, float64
+            or number. Empty means any type.'
+      - description: Restricts keys to those seen on this metric. Metrics signal only.
+        in: query
         name: metricName
         schema:
+          description: Restricts keys to those seen on this metric. Metrics signal
+            only.
           type: string
-      - in: query
+      - description: Restricts keys to metrics in this namespace. Metrics signal only.
+        in: query
         name: metricNamespace
         schema:
+          description: Restricts keys to metrics in this namespace. Metrics signal
+            only.
           type: string
-      - in: query
+      - description: 'Case-insensitive substring to match: against key names for keys,
+          against the values of name for values. For keys, a context prefix such as
+          resource.service.name sets fieldContext when it is empty.'
+        in: query
         name: searchText
         schema:
+          description: 'Case-insensitive substring to match: against key names for
+            keys, against the values of name for values. For keys, a context prefix
+            such as resource.service.name sets fieldContext when it is empty.'
           type: string
-      - in: query
+      - description: The key whose values to return, such as service.name. A context
+          prefix such as resource.service.name sets fieldContext when it is empty.
+        in: query
         name: name
         schema:
+          description: The key whose values to return, such as service.name. A context
+            prefix such as resource.service.name sets fieldContext when it is empty.
           type: string
-      - in: query
+      - description: Filter expression already applied in the explorer. When set,
+          relatedValues lists the values seen on data matching it.
+        in: query
         name: existingQuery
         schema:
+          description: Filter expression already applied in the explorer. When set,
+            relatedValues lists the values seen on data matching it.
           type: string
       responses:
         "200":
@@ -25215,47 +25380,91 @@ paths:
         range.
       operationId: GetRuleHistoryFilterKeys
       parameters:
-      - in: query
+      - description: 'The signal to look up keys in: traces, logs or metrics. Empty
+          searches every signal.'
+        in: query
         name: signal
         schema:
-          $ref: '#/components/schemas/TelemetrytypesSignal'
-      - in: query
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesSignal'
+          description: 'The signal to look up keys in: traces, logs or metrics. Empty
+            searches every signal.'
+      - description: The data source within the signal. Use meter for Cost Meter metrics;
+          empty means the default source.
+        in: query
         name: source
         schema:
-          $ref: '#/components/schemas/TelemetrytypesSource'
-      - in: query
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesSource'
+          description: The data source within the signal. Use meter for Cost Meter
+            metrics; empty means the default source.
+      - description: Maximum number of results to return. Defaults to 1000 for keys
+          and 50 for values.
+        in: query
         name: limit
         schema:
+          description: Maximum number of results to return. Defaults to 1000 for keys
+            and 50 for values.
           type: integer
-      - in: query
+      - description: Start of the lookup window in Unix milliseconds, rounded down
+          to a 6 hour boundary. Omit for no lower bound.
+        in: query
         name: startUnixMilli
         schema:
+          description: Start of the lookup window in Unix milliseconds, rounded down
+            to a 6 hour boundary. Omit for no lower bound.
           format: int64
           type: integer
-      - in: query
+      - description: End of the lookup window in Unix milliseconds. Omit for no upper
+          bound.
+        in: query
         name: endUnixMilli
         schema:
+          description: End of the lookup window in Unix milliseconds. Omit for no
+            upper bound.
           format: int64
           type: integer
-      - in: query
+      - description: 'Restricts keys to one context: resource, attribute, scope, span,
+          trace, log, body or metric. Empty means any context.'
+        in: query
         name: fieldContext
         schema:
-          $ref: '#/components/schemas/TelemetrytypesFieldContext'
-      - in: query
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesFieldContext'
+          description: 'Restricts keys to one context: resource, attribute, scope,
+            span, trace, log, body or metric. Empty means any context.'
+      - description: 'Restricts keys to one data type: string, bool, int64, float64
+          or number. Empty means any type.'
+        in: query
         name: fieldDataType
         schema:
-          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
-      - in: query
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+          description: 'Restricts keys to one data type: string, bool, int64, float64
+            or number. Empty means any type.'
+      - description: Restricts keys to those seen on this metric. Metrics signal only.
+        in: query
         name: metricName
         schema:
+          description: Restricts keys to those seen on this metric. Metrics signal
+            only.
           type: string
-      - in: query
+      - description: Restricts keys to metrics in this namespace. Metrics signal only.
+        in: query
         name: metricNamespace
         schema:
+          description: Restricts keys to metrics in this namespace. Metrics signal
+            only.
           type: string
-      - in: query
+      - description: 'Case-insensitive substring to match: against key names for keys,
+          against the values of name for values. For keys, a context prefix such as
+          resource.service.name sets fieldContext when it is empty.'
+        in: query
         name: searchText
         schema:
+          description: 'Case-insensitive substring to match: against key names for
+            keys, against the values of name for values. For keys, a context prefix
+            such as resource.service.name sets fieldContext when it is empty.'
           type: string
       - in: path
         name: id
@@ -25317,55 +25526,107 @@ paths:
         entries.
       operationId: GetRuleHistoryFilterValues
       parameters:
-      - in: query
+      - description: 'The signal to look up keys in: traces, logs or metrics. Empty
+          searches every signal.'
+        in: query
         name: signal
         schema:
-          $ref: '#/components/schemas/TelemetrytypesSignal'
-      - in: query
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesSignal'
+          description: 'The signal to look up keys in: traces, logs or metrics. Empty
+            searches every signal.'
+      - description: The data source within the signal. Use meter for Cost Meter metrics;
+          empty means the default source.
+        in: query
         name: source
         schema:
-          $ref: '#/components/schemas/TelemetrytypesSource'
-      - in: query
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesSource'
+          description: The data source within the signal. Use meter for Cost Meter
+            metrics; empty means the default source.
+      - description: Maximum number of results to return. Defaults to 1000 for keys
+          and 50 for values.
+        in: query
         name: limit
         schema:
+          description: Maximum number of results to return. Defaults to 1000 for keys
+            and 50 for values.
           type: integer
-      - in: query
+      - description: Start of the lookup window in Unix milliseconds, rounded down
+          to a 6 hour boundary. Omit for no lower bound.
+        in: query
         name: startUnixMilli
         schema:
+          description: Start of the lookup window in Unix milliseconds, rounded down
+            to a 6 hour boundary. Omit for no lower bound.
           format: int64
           type: integer
-      - in: query
+      - description: End of the lookup window in Unix milliseconds. Omit for no upper
+          bound.
+        in: query
         name: endUnixMilli
         schema:
+          description: End of the lookup window in Unix milliseconds. Omit for no
+            upper bound.
           format: int64
           type: integer
-      - in: query
+      - description: 'Restricts keys to one context: resource, attribute, scope, span,
+          trace, log, body or metric. Empty means any context.'
+        in: query
         name: fieldContext
         schema:
-          $ref: '#/components/schemas/TelemetrytypesFieldContext'
-      - in: query
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesFieldContext'
+          description: 'Restricts keys to one context: resource, attribute, scope,
+            span, trace, log, body or metric. Empty means any context.'
+      - description: 'Restricts keys to one data type: string, bool, int64, float64
+          or number. Empty means any type.'
+        in: query
         name: fieldDataType
         schema:
-          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
-      - in: query
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+          description: 'Restricts keys to one data type: string, bool, int64, float64
+            or number. Empty means any type.'
+      - description: Restricts keys to those seen on this metric. Metrics signal only.
+        in: query
         name: metricName
         schema:
+          description: Restricts keys to those seen on this metric. Metrics signal
+            only.
           type: string
-      - in: query
+      - description: Restricts keys to metrics in this namespace. Metrics signal only.
+        in: query
         name: metricNamespace
         schema:
+          description: Restricts keys to metrics in this namespace. Metrics signal
+            only.
           type: string
-      - in: query
+      - description: 'Case-insensitive substring to match: against key names for keys,
+          against the values of name for values. For keys, a context prefix such as
+          resource.service.name sets fieldContext when it is empty.'
+        in: query
         name: searchText
         schema:
+          description: 'Case-insensitive substring to match: against key names for
+            keys, against the values of name for values. For keys, a context prefix
+            such as resource.service.name sets fieldContext when it is empty.'
           type: string
-      - in: query
+      - description: The key whose values to return, such as service.name. A context
+          prefix such as resource.service.name sets fieldContext when it is empty.
+        in: query
         name: name
         schema:
+          description: The key whose values to return, such as service.name. A context
+            prefix such as resource.service.name sets fieldContext when it is empty.
           type: string
-      - in: query
+      - description: Filter expression already applied in the explorer. When set,
+          relatedValues lists the values seen on data matching it.
+        in: query
         name: existingQuery
         schema:
+          description: Filter expression already applied in the explorer. When set,
+            relatedValues lists the values seen on data matching it.
           type: string
       - in: path
         name: id
