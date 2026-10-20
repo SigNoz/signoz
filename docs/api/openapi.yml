@@ -4053,44 +4053,78 @@ components:
     DashboardtypesAreaChartAppearance:
       properties:
         fillMode:
-          $ref: '#/components/schemas/DashboardtypesAreaFillMode'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesAreaFillMode'
+          description: 'The fill under each line: solid (default) or gradient.'
         fillOpacity:
-          $ref: '#/components/schemas/DashboardtypesFillOpacity'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesFillOpacity'
+          description: The fill opacity from 0 (transparent) to 1 (opaque). Null uses
+            the chart default.
         lineInterpolation:
-          $ref: '#/components/schemas/DashboardtypesLineInterpolation'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesLineInterpolation'
+          description: 'How points are joined: linear, spline (default), step_after
+            or step_before.'
         lineStyle:
-          $ref: '#/components/schemas/DashboardtypesLineStyle'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesLineStyle'
+          description: 'The line stroke: solid (default) or dashed.'
         showPoints:
+          description: Whether each data point is marked on the line.
           type: boolean
         spanGaps:
-          $ref: '#/components/schemas/DashboardtypesSpanGaps'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesSpanGaps'
+          description: Whether lines connect across missing points.
       type: object
     DashboardtypesAreaChartPanelSpec:
       properties:
         axes:
-          $ref: '#/components/schemas/DashboardtypesAxes'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesAxes'
+          description: Y axis bounds and scale.
         chartAppearance:
-          $ref: '#/components/schemas/DashboardtypesAreaChartAppearance'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesAreaChartAppearance'
+          description: Line and fill drawing options.
         formatting:
-          $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+          description: Unit and decimal precision of the values.
         legend:
-          $ref: '#/components/schemas/DashboardtypesLegend'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesLegend'
+          description: Legend placement and series colors.
         thresholds:
+          description: Horizontal reference lines drawn at fixed values.
           items:
             $ref: '#/components/schemas/DashboardtypesThresholdWithLabel'
           nullable: true
           type: array
         visualization:
-          $ref: '#/components/schemas/DashboardtypesAreaChartVisualization'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesAreaChartVisualization'
+          description: Time range, gap handling and stacking.
       type: object
     DashboardtypesAreaChartVisualization:
       properties:
         fillSpans:
+          description: Whether intervals with no data are drawn as zero instead of
+            a gap.
           type: boolean
         stack:
-          $ref: '#/components/schemas/DashboardtypesStackMode'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesStackMode'
+          description: 'How the areas combine: none (default) overlays them, normal
+            stacks the values, percent stacks them as shares of the total.'
         timePreference:
-          $ref: '#/components/schemas/DashboardtypesTimePreference'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesTimePreference'
+          description: 'The time range the panel queries: global_time (default) follows
+            the dashboard range; last_5_min, last_15_min, last_30_min, last_1_hr,
+            last_6_hr, last_1_day, last_3_days, last_1_week or last_1_month pin a
+            fixed window.'
       type: object
     DashboardtypesAreaFillMode:
       enum:
@@ -4100,43 +4134,70 @@ components:
     DashboardtypesAxes:
       properties:
         isLogScale:
+          description: Whether the Y axis uses a logarithmic scale.
           type: boolean
         softMax:
+          description: The highest value the Y axis always shows; data above it still
+            extends the axis. Null fits the data.
           nullable: true
           type: number
         softMin:
+          description: The lowest value the Y axis always shows; data below it still
+            extends the axis. Null fits the data.
           nullable: true
           type: number
       type: object
     DashboardtypesBarChartPanelSpec:
       properties:
         axes:
-          $ref: '#/components/schemas/DashboardtypesAxes'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesAxes'
+          description: Y axis bounds and scale.
         formatting:
-          $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+          description: Unit and decimal precision of the values.
         legend:
-          $ref: '#/components/schemas/DashboardtypesLegend'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesLegend'
+          description: Legend placement and series colors.
         thresholds:
+          description: Horizontal reference lines drawn at fixed values.
           items:
             $ref: '#/components/schemas/DashboardtypesThresholdWithLabel'
           nullable: true
           type: array
         visualization:
-          $ref: '#/components/schemas/DashboardtypesBarChartVisualization'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesBarChartVisualization'
+          description: Time range, gap handling and stacking.
       type: object
     DashboardtypesBarChartVisualization:
       properties:
         fillSpans:
+          description: Whether intervals with no data are drawn as zero instead of
+            a gap.
           type: boolean
         stackedBarChart:
+          description: Whether the series are stacked on top of each other.
           type: boolean
         timePreference:
-          $ref: '#/components/schemas/DashboardtypesTimePreference'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesTimePreference'
+          description: 'The time range the panel queries: global_time (default) follows
+            the dashboard range; last_5_min, last_15_min, last_30_min, last_1_hr,
+            last_6_hr, last_1_day, last_3_days, last_1_week or last_1_month pin a
+            fixed window.'
       type: object
     DashboardtypesBasicVisualization:
       properties:
         timePreference:
-          $ref: '#/components/schemas/DashboardtypesTimePreference'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesTimePreference'
+          description: 'The time range the panel queries: global_time (default) follows
+            the dashboard range; last_5_min, last_15_min, last_30_min, last_1_hr,
+            last_6_hr, last_1_day, last_3_days, last_1_week or last_1_month pin a
+            fixed window.'
       type: object
     DashboardtypesBuilderQuerySpec:
       discriminator:
@@ -4162,14 +4223,23 @@ components:
     DashboardtypesComparisonThreshold:
       properties:
         color:
+          description: 'The color applied when the threshold is active: a named color
+            such as Red or a hex value.'
           type: string
         format:
-          $ref: '#/components/schemas/DashboardtypesThresholdFormat'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesThresholdFormat'
+          description: 'What the color is applied to: text (default) or background.'
         operator:
-          $ref: '#/components/schemas/DashboardtypesComparisonOperator'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesComparisonOperator'
+          description: 'The comparison that activates the threshold: above (default),
+            below, above_or_equal, below_or_equal, equal or not_equal.'
         unit:
+          description: The unit id of value. Empty means the panel formatting unit.
           type: string
         value:
+          description: The value compared against, in unit.
           format: double
           type: number
       required:
@@ -4179,6 +4249,7 @@ components:
     DashboardtypesCustomVariableSpec:
       properties:
         customValue:
+          description: The fixed values as a comma-separated list, such as 1,10,100.
           type: string
       required:
       - customValue
@@ -4186,20 +4257,26 @@ components:
     DashboardtypesDashboardPanelRef:
       properties:
         dashboardId:
+          description: The id of the dashboard containing the panel.
           type: string
         dashboardName:
+          description: The dashboard title.
           type: string
         filterBy:
+          description: The metric labels the panel filters on.
           items:
             type: string
           type: array
         groupBy:
+          description: The metric labels the panel groups by.
           items:
             type: string
           type: array
         panelId:
+          description: The panel id within the dashboard.
           type: string
         panelName:
+          description: The panel title.
           type: string
       required:
       - dashboardId
@@ -4210,14 +4287,21 @@ components:
     DashboardtypesDashboardSpec:
       properties:
         display:
-          $ref: '#/components/schemas/DashboardtypesDisplay'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesDisplay'
+          description: The dashboard title and description.
         duration:
+          description: The default time range when the dashboard opens, as a Prometheus
+            duration such as 1h or 7d.
           type: string
         layouts:
+          description: The Grid layouts that place panels, at most 500. Each panel
+            can be placed at most once. Use [] for none.
           items:
             $ref: '#/components/schemas/DashboardtypesLayout'
           type: array
         links:
+          description: External links shown in the dashboard header.
           items:
             $ref: '#/components/schemas/DashboardtypesLink'
           nullable: true
@@ -4225,10 +4309,18 @@ components:
         panels:
           additionalProperties:
             $ref: '#/components/schemas/DashboardtypesPanel'
+          description: 'The panels keyed by panel id. An id has up to 75 characters
+            from letters, digits, dot, underscore and hyphen, and is referenced by
+            layouts as #/spec/panels/<id>. Use {} for none.'
           type: object
         refreshInterval:
+          description: How often the dashboard refreshes, as a Prometheus duration
+            such as 30s. Empty disables auto refresh.
           type: string
         variables:
+          description: The dashboard variables, each a ListVariable or TextVariable
+            envelope, referenced in queries as $name. Names must be unique. Use []
+            for none.
           items:
             $ref: '#/components/schemas/DashboardtypesVariable'
           type: array
@@ -4244,12 +4336,16 @@ components:
           format: date-time
           type: string
         data:
-          $ref: '#/components/schemas/DashboardtypesDashboardViewData'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesDashboardViewData'
+          description: The saved list filter and sort.
         id:
           type: string
         name:
+          description: The view name.
           type: string
         orgId:
+          description: The organization that owns the view.
           type: string
         updatedAt:
           format: date-time
@@ -4263,12 +4359,20 @@ components:
     DashboardtypesDashboardViewData:
       properties:
         order:
-          $ref: '#/components/schemas/DashboardtypesListOrder'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesListOrder'
+          description: 'The sort direction: asc or desc (default).'
         query:
+          description: A filter expression over the reserved keys name, description,
+            created_at, updated_at, created_by and locked, and over tag keys. At most
+            1024 characters. Empty matches every dashboard.
           type: string
         sort:
-          $ref: '#/components/schemas/DashboardtypesListSort'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesListSort'
+          description: 'The sort field: updated_at (default), created_at or name.'
         version:
+          description: The view data schema version. Must be v1.
           type: string
       required:
       - version
@@ -4276,8 +4380,10 @@ components:
     DashboardtypesDisplay:
       properties:
         description:
+          description: A free-text description.
           type: string
         name:
+          description: The human-readable title, at most 128 characters.
           type: string
       required:
       - name
@@ -4292,9 +4398,14 @@ components:
     DashboardtypesDynamicVariableSpec:
       properties:
         name:
+          description: The attribute key whose observed values populate the variable,
+            such as service.name.
           type: string
         signal:
-          $ref: '#/components/schemas/DashboardtypesDynamicVariableSignal'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesDynamicVariableSignal'
+          description: 'The signal the values are read from: traces, logs, metrics
+            or all (default).'
       required:
       - name
       - signal
@@ -4320,20 +4431,34 @@ components:
         id:
           type: string
         image:
+          description: 'Icon or logo shown in the dashboard list: an /assets/Icons/
+            or /assets/Logos/ path, or a base64 image data URI. Empty for none.'
           type: string
         locked:
+          description: Whether the dashboard is locked. A locked dashboard rejects
+            update and patch until it is unlocked.
           type: boolean
         name:
+          description: The dashboard's unique, immutable name, a DNS-1123 label.
           type: string
         orgId:
+          description: The organization that owns the dashboard.
           type: string
         schemaVersion:
+          description: The dashboard schema version. Must be v6.
           type: string
         source:
-          $ref: '#/components/schemas/DashboardtypesSource'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesSource'
+          description: 'Where the dashboard came from: user, integration or system.
+            Only user dashboards can be modified.'
         spec:
-          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+          description: 'The dashboard content: display, variables, panels, layouts
+            and links.'
         tags:
+          description: The tags attached to the dashboard.
           items:
             $ref: '#/components/schemas/TagtypesGettableTag'
           nullable: true
@@ -4356,18 +4481,26 @@ components:
     DashboardtypesGettablePublicDasbhboard:
       properties:
         defaultTimeRange:
+          description: The time range shown to anonymous viewers by default, as a
+            duration such as 1h.
           type: string
         publicPath:
+          description: The path segment of the public URL.
           type: string
         timeRangeEnabled:
+          description: Whether anonymous viewers may change the time range.
           type: boolean
       type: object
     DashboardtypesGettablePublicDashboardDataV2:
       properties:
         dashboard:
-          $ref: '#/components/schemas/DashboardtypesGettableDashboardV2'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesGettableDashboardV2'
+          description: The dashboard with panel and variable queries redacted.
         publicDashboard:
-          $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
+          description: The sharing settings.
       type: object
     DashboardtypesGettableSystemDashboard:
       properties:
@@ -4377,20 +4510,34 @@ components:
         createdBy:
           type: string
         image:
+          description: 'Icon or logo shown in the dashboard list: an /assets/Icons/
+            or /assets/Logos/ path, or a base64 image data URI. Empty for none.'
           type: string
         locked:
+          description: Whether the dashboard is locked. A locked dashboard rejects
+            update and patch until it is unlocked.
           type: boolean
         name:
+          description: The dashboard's unique, immutable name, a DNS-1123 label.
           type: string
         orgId:
+          description: The organization that owns the dashboard.
           type: string
         schemaVersion:
+          description: The dashboard schema version. Must be v6.
           type: string
         source:
-          $ref: '#/components/schemas/DashboardtypesSource'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesSource'
+          description: 'Where the dashboard came from: user, integration or system.
+            Only user dashboards can be modified.'
         spec:
-          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+          description: 'The dashboard content: display, variables, panels, layouts
+            and links.'
         tags:
+          description: The tags attached to the dashboard.
           items:
             $ref: '#/components/schemas/TagtypesGettableTag'
           nullable: true
@@ -4412,22 +4559,31 @@ components:
     DashboardtypesHeaderOptions:
       properties:
         hide:
+          description: Whether the title and description row above the content is
+            hidden.
           type: boolean
       type: object
     DashboardtypesHeatmapAxes:
       properties:
         "y":
-          $ref: '#/components/schemas/DashboardtypesHeatmapAxis'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesHeatmapAxis'
+          description: The bucket axis.
       type: object
     DashboardtypesHeatmapAxis:
       properties:
         scale:
-          $ref: '#/components/schemas/DashboardtypesHeatmapYScale'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesHeatmapYScale'
+          description: 'How bucket bounds are spaced on the axis: auto (default),
+            linear, log or symlog.'
       type: object
     DashboardtypesHeatmapChartAppearance:
       properties:
         colors:
-          $ref: '#/components/schemas/DashboardtypesHeatmapColors'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesHeatmapColors'
+          description: The color scale applied to bucket counts.
       type: object
     DashboardtypesHeatmapColorMode:
       enum:
@@ -4443,20 +4599,37 @@ components:
     DashboardtypesHeatmapColors:
       properties:
         fill:
+          description: The hex color varied in opacity mode. Empty uses the series
+            legend color.
           type: string
         maxCount:
+          description: The count mapped to the highest color. Null uses the highest
+            count in the grid.
           nullable: true
           type: number
         minCount:
+          description: The count mapped to the lowest color. Null uses 0. Must not
+            exceed maxCount.
           nullable: true
           type: number
         mode:
-          $ref: '#/components/schemas/DashboardtypesHeatmapColorMode'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesHeatmapColorMode'
+          description: 'How counts are colored: palette (default) picks a hue from
+            palette, opacity varies the opacity of fill.'
         palette:
-          $ref: '#/components/schemas/DashboardtypesHeatmapPalette'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesHeatmapPalette'
+          description: The named color ramp used in palette mode, such as lava (default),
+            ice or ember.
         scale:
-          $ref: '#/components/schemas/DashboardtypesHeatmapColorScale'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesHeatmapColorScale'
+          description: 'How counts map onto the color range: log (default), sqrt or
+            linear.'
         steps:
+          description: The number of distinct color steps, 2 to 128. 0 uses the chart
+            default.
           type: integer
       type: object
     DashboardtypesHeatmapPalette:
@@ -4475,15 +4648,25 @@ components:
     DashboardtypesHeatmapPanelSpec:
       properties:
         axes:
-          $ref: '#/components/schemas/DashboardtypesHeatmapAxes'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesHeatmapAxes'
+          description: The Y axis scale.
         chartAppearance:
-          $ref: '#/components/schemas/DashboardtypesHeatmapChartAppearance'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesHeatmapChartAppearance'
+          description: How bucket counts map to colors.
         formatting:
-          $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+          description: Unit and decimal precision of the bucket bounds.
         legend:
-          $ref: '#/components/schemas/DashboardtypesLegend'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesLegend'
+          description: Legend placement and series colors.
         visualization:
-          $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+          description: The time range the heatmap covers.
       type: object
     DashboardtypesHeatmapYScale:
       enum:
@@ -4495,20 +4678,29 @@ components:
     DashboardtypesHistogramBuckets:
       properties:
         bucketCount:
+          description: The number of buckets. Null lets the chart choose.
           nullable: true
           type: number
         bucketWidth:
+          description: The width of each bucket in the value unit. Null lets the chart
+            choose.
           nullable: true
           type: number
         mergeAllActiveQueries:
+          description: Whether every series is combined into a single histogram instead
+            of one per series.
           type: boolean
       type: object
     DashboardtypesHistogramPanelSpec:
       properties:
         histogramBuckets:
-          $ref: '#/components/schemas/DashboardtypesHistogramBuckets'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesHistogramBuckets'
+          description: How values are grouped into buckets.
         legend:
-          $ref: '#/components/schemas/DashboardtypesLegend'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesLegend'
+          description: Legend placement and series colors.
       type: object
     DashboardtypesJSONPatchOperation:
       properties:
@@ -4516,7 +4708,10 @@ components:
           description: Source JSON Pointer for move/copy ops; ignored for other ops.
           type: string
         op:
-          $ref: '#/components/schemas/DashboardtypesPatchOp'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesPatchOp'
+          description: 'The RFC 6902 verb: add, remove, replace, move, copy or test.
+            remove on a missing path is a no-op and add creates missing parents.'
         path:
           description: JSON Pointer (RFC 6901) into the dashboard's postable shape
             — e.g. /spec/display/name, /spec/panels/<id>, /spec/panels/<id>/spec/queries/0,
@@ -4545,11 +4740,16 @@ components:
     DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpec:
       properties:
         kind:
+          description: The layout kind.
           enum:
           - Grid
           type: string
         spec:
-          $ref: '#/components/schemas/DashboardGridLayoutSpec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardGridLayoutSpec'
+          description: 'The grid section: an optional display title and the items
+            that place panels. Each item has x, y, width and height on a 12-column
+            grid and a content.$ref of #/spec/panels/<id>.'
       required:
       - kind
       - spec
@@ -4559,12 +4759,18 @@ components:
         customColors:
           additionalProperties:
             type: string
+          description: Hex colors keyed by series label, overriding the automatic
+            palette.
           nullable: true
           type: object
         mode:
-          $ref: '#/components/schemas/DashboardtypesLegendMode'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesLegendMode'
+          description: The legend layout. Only list is supported.
         position:
-          $ref: '#/components/schemas/DashboardtypesLegendPosition'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesLegendPosition'
+          description: 'Where the legend sits: bottom (default) or right.'
       type: object
     DashboardtypesLegendMode:
       enum:
@@ -4590,14 +4796,21 @@ components:
     DashboardtypesLink:
       properties:
         name:
+          description: The link label.
           type: string
         renderVariables:
+          description: Whether dashboard variable values are substituted into url
+            before opening it.
           type: boolean
         targetBlank:
+          description: Whether the link opens in a new tab.
           type: boolean
         tooltip:
+          description: Hover text for the link.
           type: string
         url:
+          description: The link target. May reference dashboard variables as {{name}}
+            when renderVariables is true.
           type: string
       type: object
     DashboardtypesListOrder:
@@ -4608,6 +4821,9 @@ components:
     DashboardtypesListPanelSpec:
       properties:
         selectFields:
+          description: The columns shown for each row, as field keys with name and
+            optional fieldContext, fieldDataType and signal. Empty shows the default
+            columns.
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
           nullable: true
@@ -4622,24 +4838,46 @@ components:
     DashboardtypesListVariableSpec:
       properties:
         allowAllValue:
+          description: Whether an all option is offered. Requires allowMultiple.
           type: boolean
         allowMultiple:
+          description: Whether several values can be selected at once.
           type: boolean
         capturingRegexp:
+          description: A regular expression applied to each candidate value. Only
+            matches are offered, reduced to the capture group when one is present.
           type: string
         customAllValue:
+          description: The value substituted when all is selected, instead of every
+            value. Requires allowAllValue.
           type: string
         defaultValue:
-          $ref: '#/components/schemas/DashboardtypesVariableDefaultValue'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesVariableDefaultValue'
+          description: 'The initially selected value: a string, or a list of strings
+            when allowMultiple is true.'
         display:
-          $ref: '#/components/schemas/DashboardtypesDisplay'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesDisplay'
+          description: The label shown for the variable control.
         name:
+          description: The handle queries reference as $name. Up to 75 characters
+            from letters, digits, dot, underscore and hyphen, not all digits, unique
+            within the dashboard.
           minLength: 1
           type: string
         plugin:
-          $ref: '#/components/schemas/DashboardtypesVariablePlugin'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesVariablePlugin'
+          description: 'Where the values come from: kind is signoz/DynamicVariable
+            (observed attribute values), signoz/QueryVariable (a ClickHouse query)
+            or signoz/CustomVariable (a fixed list), and spec holds that kind''s settings.'
         sort:
-          $ref: '#/components/schemas/DashboardtypesListVariableSpecSort'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesListVariableSpecSort'
+          description: 'How the values are ordered: none (default), alphabetical-asc,
+            alphabetical-desc, numerical-asc, numerical-desc, alphabetical-ci-asc
+            or alphabetical-ci-desc.'
       required:
       - display
       - name
@@ -4657,18 +4895,24 @@ components:
     DashboardtypesListableDashboardForUserV2:
       properties:
         dashboards:
+          description: The dashboards on this page, each with the calling user's pin
+            state.
           items:
             $ref: '#/components/schemas/DashboardtypesListedDashboardForUserV2'
           type: array
         reservedKeywords:
+          description: The filter keys that address dashboard columns rather than
+            tags.
           items:
             type: string
           type: array
         tags:
+          description: Every dashboard tag in the organization, for building filters.
           items:
             $ref: '#/components/schemas/TagtypesGettableTag'
           type: array
         total:
+          description: The number of dashboards matching the filter across every page.
           format: int64
           type: integer
       required:
@@ -4680,18 +4924,23 @@ components:
     DashboardtypesListableDashboardV2:
       properties:
         dashboards:
+          description: The dashboards on this page.
           items:
             $ref: '#/components/schemas/DashboardtypesListedDashboardV2'
           type: array
         reservedKeywords:
+          description: The filter keys that address dashboard columns rather than
+            tags.
           items:
             type: string
           type: array
         tags:
+          description: Every dashboard tag in the organization, for building filters.
           items:
             $ref: '#/components/schemas/TagtypesGettableTag'
           type: array
         total:
+          description: The number of dashboards matching the filter across every page.
           format: int64
           type: integer
       required:
@@ -4703,6 +4952,7 @@ components:
     DashboardtypesListableDashboardView:
       properties:
         views:
+          description: The saved dashboard list views.
           items:
             $ref: '#/components/schemas/DashboardtypesDashboardView'
           type: array
@@ -4719,24 +4969,39 @@ components:
         id:
           type: string
         image:
+          description: The icon or logo path or image data URI, when set.
           type: string
         legacy:
+          description: Whether the stored dashboard is still in the v1 schema. Such
+            rows are read best-effort and cannot be fetched or edited through the
+            v2 endpoints.
           type: boolean
         locked:
+          description: Whether the dashboard is locked against update and patch.
           type: boolean
         name:
+          description: The dashboard's unique, immutable name.
           type: string
         orgId:
+          description: The organization that owns the dashboard.
           type: string
         pinned:
+          description: Whether the calling user has pinned the dashboard.
           type: boolean
         schemaVersion:
+          description: The dashboard schema version, v6 for v2 dashboards.
           type: string
         source:
-          $ref: '#/components/schemas/DashboardtypesSource'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesSource'
+          description: 'Where the dashboard came from: user, integration or system.'
         spec:
-          $ref: '#/components/schemas/DashboardtypesListedDashboardV2Spec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesListedDashboardV2Spec'
+          description: The display part of the dashboard spec. Panels, variables and
+            layouts are not included in list rows.
         tags:
+          description: The tags attached to the dashboard.
           items:
             $ref: '#/components/schemas/TagtypesGettableTag'
           type: array
@@ -4767,22 +5032,36 @@ components:
         id:
           type: string
         image:
+          description: The icon or logo path or image data URI, when set.
           type: string
         legacy:
+          description: Whether the stored dashboard is still in the v1 schema. Such
+            rows are read best-effort and cannot be fetched or edited through the
+            v2 endpoints.
           type: boolean
         locked:
+          description: Whether the dashboard is locked against update and patch.
           type: boolean
         name:
+          description: The dashboard's unique, immutable name.
           type: string
         orgId:
+          description: The organization that owns the dashboard.
           type: string
         schemaVersion:
+          description: The dashboard schema version, v6 for v2 dashboards.
           type: string
         source:
-          $ref: '#/components/schemas/DashboardtypesSource'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesSource'
+          description: 'Where the dashboard came from: user, integration or system.'
         spec:
-          $ref: '#/components/schemas/DashboardtypesListedDashboardV2Spec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesListedDashboardV2Spec'
+          description: The display part of the dashboard spec. Panels, variables and
+            layouts are not included in list rows.
         tags:
+          description: The tags attached to the dashboard.
           items:
             $ref: '#/components/schemas/TagtypesGettableTag'
           type: array
@@ -4805,26 +5084,38 @@ components:
     DashboardtypesListedDashboardV2Spec:
       properties:
         display:
-          $ref: '#/components/schemas/DashboardtypesDisplay'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesDisplay'
+          description: The dashboard title and description.
       type: object
     DashboardtypesNumberPanelSpec:
       properties:
         formatting:
-          $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+          description: Unit and decimal precision of the value.
         thresholds:
+          description: Rules that recolor the value when it compares to a threshold
+            as specified.
           items:
             $ref: '#/components/schemas/DashboardtypesComparisonThreshold'
           nullable: true
           type: array
         visualization:
-          $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+          description: The time range the value is computed over.
       type: object
     DashboardtypesPanel:
       properties:
         kind:
-          $ref: '#/components/schemas/DashboardtypesPanelKind'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesPanelKind'
+          description: The panel envelope kind. Always Panel.
         spec:
-          $ref: '#/components/schemas/DashboardtypesPanelSpec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesPanelSpec'
+          description: 'The panel content: display, plugin, queries and links.'
       required:
       - kind
       - spec
@@ -4832,8 +5123,12 @@ components:
     DashboardtypesPanelFormatting:
       properties:
         decimalPrecision:
-          $ref: '#/components/schemas/DashboardtypesPrecisionOption'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesPrecisionOption'
+          description: 'Decimal places shown: 0, 1, 2 (default), 3, 4 or full.'
         unit:
+          description: The unit id of the values, such as By, ms, s or percent. Empty
+            shows plain numbers.
           type: string
       type: object
     DashboardtypesPanelKind:
@@ -4882,11 +5177,14 @@ components:
     DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec:
       properties:
         kind:
+          description: The panel kind.
           enum:
           - signoz/AreaChartPanel
           type: string
         spec:
-          $ref: '#/components/schemas/DashboardtypesAreaChartPanelSpec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesAreaChartPanelSpec'
+          description: The kind-specific panel options. {} accepts every default.
       required:
       - kind
       - spec
@@ -4894,11 +5192,14 @@ components:
     DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec:
       properties:
         kind:
+          description: The panel kind.
           enum:
           - signoz/BarChartPanel
           type: string
         spec:
-          $ref: '#/components/schemas/DashboardtypesBarChartPanelSpec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesBarChartPanelSpec'
+          description: The kind-specific panel options. {} accepts every default.
       required:
       - kind
       - spec
@@ -4906,11 +5207,14 @@ components:
     DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec:
       properties:
         kind:
+          description: The panel kind.
           enum:
           - signoz/HeatmapPanel
           type: string
         spec:
-          $ref: '#/components/schemas/DashboardtypesHeatmapPanelSpec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesHeatmapPanelSpec'
+          description: The kind-specific panel options. {} accepts every default.
       required:
       - kind
       - spec
@@ -4918,11 +5222,14 @@ components:
     DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec:
       properties:
         kind:
+          description: The panel kind.
           enum:
           - signoz/HistogramPanel
           type: string
         spec:
-          $ref: '#/components/schemas/DashboardtypesHistogramPanelSpec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesHistogramPanelSpec'
+          description: The kind-specific panel options. {} accepts every default.
       required:
       - kind
       - spec
@@ -4930,11 +5237,14 @@ components:
     DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec:
       properties:
         kind:
+          description: The panel kind.
           enum:
           - signoz/ListPanel
           type: string
         spec:
-          $ref: '#/components/schemas/DashboardtypesListPanelSpec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesListPanelSpec'
+          description: The kind-specific panel options. {} accepts every default.
       required:
       - kind
       - spec
@@ -4942,11 +5252,14 @@ components:
     DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec:
       properties:
         kind:
+          description: The panel kind.
           enum:
           - signoz/NumberPanel
           type: string
         spec:
-          $ref: '#/components/schemas/DashboardtypesNumberPanelSpec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesNumberPanelSpec'
+          description: The kind-specific panel options. {} accepts every default.
       required:
       - kind
       - spec
@@ -4954,11 +5267,14 @@ components:
     DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpec:
       properties:
         kind:
+          description: The panel kind.
           enum:
           - signoz/PieChartPanel
           type: string
         spec:
-          $ref: '#/components/schemas/DashboardtypesPieChartPanelSpec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesPieChartPanelSpec'
+          description: The kind-specific panel options. {} accepts every default.
       required:
       - kind
       - spec
@@ -4966,11 +5282,14 @@ components:
     DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec:
       properties:
         kind:
+          description: The panel kind.
           enum:
           - signoz/TablePanel
           type: string
         spec:
-          $ref: '#/components/schemas/DashboardtypesTablePanelSpec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesTablePanelSpec'
+          description: The kind-specific panel options. {} accepts every default.
       required:
       - kind
       - spec
@@ -4978,11 +5297,14 @@ components:
     DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec:
       properties:
         kind:
+          description: The panel kind.
           enum:
           - signoz/TextPanel
           type: string
         spec:
-          $ref: '#/components/schemas/DashboardtypesTextPanelSpec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesTextPanelSpec'
+          description: The kind-specific panel options. {} accepts every default.
       required:
       - kind
       - spec
@@ -4990,11 +5312,14 @@ components:
     DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec:
       properties:
         kind:
+          description: The panel kind.
           enum:
           - signoz/TimeSeriesPanel
           type: string
         spec:
-          $ref: '#/components/schemas/DashboardtypesTimeSeriesPanelSpec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesTimeSeriesPanelSpec'
+          description: The kind-specific panel options. {} accepts every default.
       required:
       - kind
       - spec
@@ -5002,15 +5327,26 @@ components:
     DashboardtypesPanelSpec:
       properties:
         display:
-          $ref: '#/components/schemas/DashboardtypesDisplay'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesDisplay'
+          description: The panel title and description.
         links:
+          description: External links shown in the panel header.
           items:
             $ref: '#/components/schemas/DashboardtypesLink'
           nullable: true
           type: array
         plugin:
-          $ref: '#/components/schemas/DashboardtypesPanelPlugin'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesPanelPlugin'
+          description: 'The visualization: kind is one of signoz/TimeSeriesPanel,
+            signoz/BarChartPanel, signoz/AreaChartPanel, signoz/NumberPanel, signoz/PieChartPanel,
+            signoz/TablePanel, signoz/HistogramPanel, signoz/ListPanel, signoz/TextPanel
+            or signoz/HeatmapPanel, and spec holds that kind''s options ({} accepts
+            every default).'
         queries:
+          description: The panel queries. Exactly one for every kind except signoz/TextPanel,
+            which must have [].
           items:
             $ref: '#/components/schemas/DashboardtypesQuery'
           type: array
@@ -5029,6 +5365,8 @@ components:
       - test
       type: string
     DashboardtypesPatchableDashboardV2:
+      description: The RFC 6902 operations, applied in order against the dashboard's
+        postable shape.
       items:
         $ref: '#/components/schemas/DashboardtypesJSONPatchOperation'
       nullable: true
@@ -5036,25 +5374,45 @@ components:
     DashboardtypesPieChartPanelSpec:
       properties:
         formatting:
-          $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+          description: Unit and decimal precision of the slice values.
         legend:
-          $ref: '#/components/schemas/DashboardtypesLegend'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesLegend'
+          description: Legend placement and slice colors.
         visualization:
-          $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+          description: The time range the slices are computed over.
       type: object
     DashboardtypesPostableDashboardV2:
       properties:
         generateName:
+          description: When true the server derives name from spec.display.name plus
+            a random suffix. Requires an empty name and a non-empty spec.display.name.
           type: boolean
         image:
+          description: 'Icon or logo shown in the dashboard list: an /assets/Icons/
+            or /assets/Logos/ path, or a base64 image data URI. Empty for none.'
           type: string
         name:
+          description: The dashboard's unique name, a DNS-1123 label (lowercase letters,
+            digits and hyphens, at most 63 characters). Immutable after creation.
+            Must be empty when generateName is true.
           type: string
         schemaVersion:
+          description: The dashboard schema version. Must be v6.
           type: string
         spec:
-          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+          description: 'The dashboard content: display, variables, panels, layouts
+            and links.'
         tags:
+          description: 'Up to 10 key/value tags. Keys must not be one of the reserved
+            list filter keys: name, description, created_at, updated_at, created_by,
+            locked, source. Use [] for none.'
           items:
             $ref: '#/components/schemas/TagtypesPostableTag'
           nullable: true
@@ -5067,8 +5425,11 @@ components:
     DashboardtypesPostableDashboardView:
       properties:
         data:
-          $ref: '#/components/schemas/DashboardtypesDashboardViewData'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesDashboardViewData'
+          description: The list filter and sort to save.
         name:
+          description: The view name.
           type: string
       required:
       - name
@@ -5077,8 +5438,11 @@ components:
     DashboardtypesPostablePublicDashboard:
       properties:
         defaultTimeRange:
+          description: The time range shown to anonymous viewers by default, as a
+            duration such as 1h.
           type: string
         timeRangeEnabled:
+          description: Whether anonymous viewers may change the time range.
           type: boolean
       type: object
     DashboardtypesPrecisionOption:
@@ -5093,9 +5457,15 @@ components:
     DashboardtypesQuery:
       properties:
         kind:
-          $ref: '#/components/schemas/Querybuildertypesv5RequestType'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5RequestType'
+          description: 'The result shape the panel renders: time_series for charts,
+            scalar for number and pie panels, raw for list panels, distribution for
+            histogram and heatmap panels.'
         spec:
-          $ref: '#/components/schemas/DashboardtypesQuerySpec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesQuerySpec'
+          description: 'The query content: an optional name and the query plugin.'
       required:
       - kind
       - spec
@@ -5133,11 +5503,14 @@ components:
     DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpec:
       properties:
         kind:
+          description: The query kind.
           enum:
           - signoz/AIBuilderQuery
           type: string
         spec:
-          $ref: '#/components/schemas/DashboardtypesAIBuilderQuerySpec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesAIBuilderQuerySpec'
+          description: The kind-specific query spec.
       required:
       - kind
       - spec
@@ -5145,11 +5518,14 @@ components:
     DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpec:
       properties:
         kind:
+          description: The query kind.
           enum:
           - signoz/BuilderQuery
           type: string
         spec:
-          $ref: '#/components/schemas/DashboardtypesBuilderQuerySpec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesBuilderQuerySpec'
+          description: The kind-specific query spec.
       required:
       - kind
       - spec
@@ -5157,11 +5533,14 @@ components:
     DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQuery:
       properties:
         kind:
+          description: The query kind.
           enum:
           - signoz/ClickHouseSQL
           type: string
         spec:
-          $ref: '#/components/schemas/Querybuildertypesv5ClickHouseQuery'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5ClickHouseQuery'
+          description: The kind-specific query spec.
       required:
       - kind
       - spec
@@ -5169,11 +5548,14 @@ components:
     DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQuery:
       properties:
         kind:
+          description: The query kind.
           enum:
           - signoz/CompositeQuery
           type: string
         spec:
-          $ref: '#/components/schemas/Querybuildertypesv5CompositeQuery'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5CompositeQuery'
+          description: The kind-specific query spec.
       required:
       - kind
       - spec
@@ -5181,11 +5563,14 @@ components:
     DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQuery:
       properties:
         kind:
+          description: The query kind.
           enum:
           - signoz/PromQLQuery
           type: string
         spec:
-          $ref: '#/components/schemas/Querybuildertypesv5PromQuery'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5PromQuery'
+          description: The kind-specific query spec.
       required:
       - kind
       - spec
@@ -5193,11 +5578,14 @@ components:
     DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormula:
       properties:
         kind:
+          description: The query kind.
           enum:
           - signoz/Formula
           type: string
         spec:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderFormula'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderFormula'
+          description: The kind-specific query spec.
       required:
       - kind
       - spec
@@ -5205,11 +5593,14 @@ components:
     DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperator:
       properties:
         kind:
+          description: The query kind.
           enum:
           - signoz/TraceOperator
           type: string
         spec:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderTraceOperator'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderTraceOperator'
+          description: The kind-specific query spec.
       required:
       - kind
       - spec
@@ -5217,15 +5608,25 @@ components:
     DashboardtypesQuerySpec:
       properties:
         name:
+          description: An optional label for the query. The name queries refer to
+            each other by lives in the plugin spec.
           type: string
         plugin:
-          $ref: '#/components/schemas/DashboardtypesQueryPlugin'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesQueryPlugin'
+          description: 'The query: kind is one of signoz/BuilderQuery, signoz/AIBuilderQuery,
+            signoz/CompositeQuery, signoz/Formula, signoz/PromQLQuery, signoz/ClickHouseSQL
+            or signoz/TraceOperator, and spec holds that kind''s query. Pie, table
+            and heatmap panels accept a subset; list panels accept only the builder
+            kinds.'
       required:
       - plugin
       type: object
     DashboardtypesQueryVariableSpec:
       properties:
         queryValue:
+          description: A ClickHouse SQL query whose first result column supplies the
+            values.
           type: string
       required:
       - queryValue
@@ -5259,36 +5660,57 @@ components:
         columnUnits:
           additionalProperties:
             type: string
+          description: Unit id per column, keyed by the query name or aggregation
+            alias that produces the column.
           nullable: true
           type: object
         decimalPrecision:
-          $ref: '#/components/schemas/DashboardtypesPrecisionOption'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesPrecisionOption'
+          description: 'Decimal places shown: 0, 1, 2 (default), 3, 4 or full.'
       type: object
     DashboardtypesTablePanelSpec:
       properties:
         formatting:
-          $ref: '#/components/schemas/DashboardtypesTableFormatting'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesTableFormatting'
+          description: Per-column units and decimal precision.
         thresholds:
+          description: Rules that recolor a cell when its column value compares to
+            a threshold as specified.
           items:
             $ref: '#/components/schemas/DashboardtypesTableThreshold'
           nullable: true
           type: array
         visualization:
-          $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+          description: The time range the rows are computed over.
       type: object
     DashboardtypesTableThreshold:
       properties:
         color:
+          description: 'The color applied when the threshold is active: a named color
+            such as Red or a hex value.'
           type: string
         columnName:
+          description: 'The column the rule applies to: the query name or aggregation
+            alias that produces it.'
           type: string
         format:
-          $ref: '#/components/schemas/DashboardtypesThresholdFormat'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesThresholdFormat'
+          description: 'What the color is applied to: text (default) or background.'
         operator:
-          $ref: '#/components/schemas/DashboardtypesComparisonOperator'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesComparisonOperator'
+          description: 'The comparison that activates the threshold: above (default),
+            below, above_or_equal, below_or_equal, equal or not_equal.'
         unit:
+          description: The unit id of value. Empty means the panel formatting unit.
           type: string
         value:
+          description: The value compared against, in unit.
           format: double
           type: number
       required:
@@ -5309,34 +5731,54 @@ components:
     DashboardtypesTextPanelSpec:
       properties:
         headerOptions:
-          $ref: '#/components/schemas/DashboardtypesHeaderOptions'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesHeaderOptions'
+          description: Whether the panel header is shown.
         mode:
-          $ref: '#/components/schemas/DashboardtypesTextMode'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesTextMode'
+          description: How text is interpreted. Only markdown is supported.
         presentation:
-          $ref: '#/components/schemas/DashboardtypesTextPresentation'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesTextPresentation'
+          description: Alignment and background of the content.
         text:
+          description: The content to render.
           type: string
       type: object
     DashboardtypesTextPresentation:
       properties:
         background:
+          description: 'A hex background color such as #1f2937. Omit for the panel
+            default.'
           nullable: true
           type: string
         textAlign:
-          $ref: '#/components/schemas/DashboardtypesTextAlign'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesTextAlign'
+          description: 'Horizontal alignment: left (default), center or right.'
         verticalAlign:
-          $ref: '#/components/schemas/DashboardtypesVerticalAlign'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesVerticalAlign'
+          description: 'Vertical alignment: top (default), center or bottom.'
       type: object
     DashboardtypesTextVariableSpec:
       properties:
         constant:
+          description: Whether the value is fixed and the control is hidden.
           type: boolean
         display:
-          $ref: '#/components/schemas/DashboardtypesDisplay'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesDisplay'
+          description: The label shown for the variable control.
         name:
+          description: The handle queries reference as $name. Up to 75 characters
+            from letters, digits, dot, underscore and hyphen, not all digits, unique
+            within the dashboard.
           minLength: 1
           type: string
         value:
+          description: The default text. Must be non-empty when constant is true.
           type: string
       required:
       - display
@@ -5351,12 +5793,16 @@ components:
     DashboardtypesThresholdWithLabel:
       properties:
         color:
+          description: 'The line color: a named color such as Red or a hex value.'
           type: string
         label:
+          description: The caption shown on the line.
           type: string
         unit:
+          description: The unit id of value. Empty means the panel formatting unit.
           type: string
         value:
+          description: The value the line is drawn at, in unit.
           format: double
           type: number
       required:
@@ -5379,52 +5825,91 @@ components:
     DashboardtypesTimeSeriesChartAppearance:
       properties:
         fillMode:
-          $ref: '#/components/schemas/DashboardtypesFillMode'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesFillMode'
+          description: 'The fill under each line: none (default), solid or gradient.'
         lineInterpolation:
-          $ref: '#/components/schemas/DashboardtypesLineInterpolation'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesLineInterpolation'
+          description: 'How points are joined: linear, spline (default), step_after
+            or step_before.'
         lineStyle:
-          $ref: '#/components/schemas/DashboardtypesLineStyle'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesLineStyle'
+          description: 'The line stroke: solid (default) or dashed.'
         showPoints:
+          description: Whether each data point is marked on the line.
           type: boolean
         spanGaps:
-          $ref: '#/components/schemas/DashboardtypesSpanGaps'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesSpanGaps'
+          description: Whether lines connect across missing points.
       type: object
     DashboardtypesTimeSeriesPanelSpec:
       properties:
         axes:
-          $ref: '#/components/schemas/DashboardtypesAxes'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesAxes'
+          description: Y axis bounds and scale.
         chartAppearance:
-          $ref: '#/components/schemas/DashboardtypesTimeSeriesChartAppearance'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesTimeSeriesChartAppearance'
+          description: Line drawing options.
         formatting:
-          $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+          description: Unit and decimal precision of the values.
         legend:
-          $ref: '#/components/schemas/DashboardtypesLegend'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesLegend'
+          description: Legend placement and series colors.
         thresholds:
+          description: Horizontal reference lines drawn at fixed values.
           items:
             $ref: '#/components/schemas/DashboardtypesThresholdWithLabel'
           nullable: true
           type: array
         visualization:
-          $ref: '#/components/schemas/DashboardtypesTimeSeriesVisualization'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesTimeSeriesVisualization'
+          description: Time range and gap handling.
       type: object
     DashboardtypesTimeSeriesVisualization:
       properties:
         fillSpans:
+          description: Whether intervals with no data are drawn as zero instead of
+            a gap.
           type: boolean
         timePreference:
-          $ref: '#/components/schemas/DashboardtypesTimePreference'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesTimePreference'
+          description: 'The time range the panel queries: global_time (default) follows
+            the dashboard range; last_5_min, last_15_min, last_30_min, last_1_hr,
+            last_6_hr, last_1_day, last_3_days, last_1_week or last_1_month pin a
+            fixed window.'
       type: object
     DashboardtypesUpdatableDashboardV2:
       properties:
         image:
+          description: 'Icon or logo shown in the dashboard list: an /assets/Icons/
+            or /assets/Logos/ path, or a base64 image data URI. Empty for none.'
           type: string
         name:
+          description: The dashboard's current name. The name is immutable, so a different
+            value is rejected.
           type: string
         schemaVersion:
+          description: The dashboard schema version. Must be v6.
           type: string
         spec:
-          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+          description: 'The full replacement dashboard content: display, variables,
+            panels, layouts and links.'
         tags:
+          description: 'The full replacement tag set, up to 10 key/value tags. Keys
+            must not be one of the reserved list filter keys: name, description, created_at,
+            updated_at, created_by, locked, source.'
           items:
             $ref: '#/components/schemas/TagtypesPostableTag'
           nullable: true
@@ -5438,8 +5923,11 @@ components:
     DashboardtypesUpdatablePublicDashboard:
       properties:
         defaultTimeRange:
+          description: The time range shown to anonymous viewers by default, as a
+            duration such as 1h.
           type: string
         timeRangeEnabled:
+          description: Whether anonymous viewers may change the time range.
           type: boolean
       type: object
     DashboardtypesVariable:
@@ -5461,11 +5949,14 @@ components:
     DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec:
       properties:
         kind:
+          description: The variable kind.
           enum:
           - ListVariable
           type: string
         spec:
-          $ref: '#/components/schemas/DashboardtypesListVariableSpec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesListVariableSpec'
+          description: The kind-specific variable spec.
       required:
       - kind
       - spec
@@ -5473,11 +5964,14 @@ components:
     DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpec:
       properties:
         kind:
+          description: The variable kind.
           enum:
           - TextVariable
           type: string
         spec:
-          $ref: '#/components/schemas/DashboardtypesTextVariableSpec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesTextVariableSpec'
+          description: The kind-specific variable spec.
       required:
       - kind
       - spec
@@ -5503,11 +5997,14 @@ components:
     DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpec:
       properties:
         kind:
+          description: The value source kind.
           enum:
           - signoz/CustomVariable
           type: string
         spec:
-          $ref: '#/components/schemas/DashboardtypesCustomVariableSpec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesCustomVariableSpec'
+          description: The kind-specific value source spec.
       required:
       - kind
       - spec
@@ -5515,11 +6012,14 @@ components:
     DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpec:
       properties:
         kind:
+          description: The value source kind.
           enum:
           - signoz/DynamicVariable
           type: string
         spec:
-          $ref: '#/components/schemas/DashboardtypesDynamicVariableSpec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesDynamicVariableSpec'
+          description: The kind-specific value source spec.
       required:
       - kind
       - spec
@@ -5527,11 +6027,14 @@ components:
     DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpec:
       properties:
         kind:
+          description: The value source kind.
           enum:
           - signoz/QueryVariable
           type: string
         spec:
-          $ref: '#/components/schemas/DashboardtypesQueryVariableSpec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesQueryVariableSpec'
+          description: The kind-specific value source spec.
       required:
       - kind
       - spec
@@ -18897,25 +19400,41 @@ paths:
         pagination (`limit`/`offset`).
       operationId: ListDashboardsV2
       parameters:
-      - in: query
+      - description: A filter expression over the reserved keys name, description,
+          created_at, updated_at, created_by and locked, and over tag keys. At most
+          1024 characters. Empty matches every dashboard.
+        in: query
         name: query
         schema:
+          description: A filter expression over the reserved keys name, description,
+            created_at, updated_at, created_by and locked, and over tag keys. At most
+            1024 characters. Empty matches every dashboard.
           type: string
-      - in: query
+      - description: 'The sort field: updated_at (default), created_at or name.'
+        in: query
         name: sort
         schema:
-          $ref: '#/components/schemas/DashboardtypesListSort'
-      - in: query
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesListSort'
+          description: 'The sort field: updated_at (default), created_at or name.'
+      - description: 'The sort direction: asc or desc (default).'
+        in: query
         name: order
         schema:
-          $ref: '#/components/schemas/DashboardtypesListOrder'
-      - in: query
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesListOrder'
+          description: 'The sort direction: asc or desc (default).'
+      - description: The page size. Defaults to 20 and is capped at 200.
+        in: query
         name: limit
         schema:
+          description: The page size. Defaults to 20 and is capped at 200.
           type: integer
-      - in: query
+      - description: The number of dashboards to skip. Defaults to 0.
+        in: query
         name: offset
         schema:
+          description: The number of dashboards to skip. Defaults to 0.
           type: integer
       responses:
         "200":
@@ -18973,6 +19492,217 @@ paths:
       requestBody:
         content:
           application/json:
+            examples:
+              logs_table_with_runbook:
+                description: 'A `signoz/TextPanel` renders markdown and must send
+                  `queries: []`. The table counts error logs per service as a scalar
+                  result, orders by the `errors` alias and colors cells above 1000
+                  errors.'
+                summary: Logs dashboard with a text panel and a table panel
+                value:
+                  name: error-logs-by-service
+                  schemaVersion: v6
+                  spec:
+                    display:
+                      description: ""
+                      name: Error Logs by Service
+                    layouts:
+                    - kind: Grid
+                      spec:
+                        items:
+                        - content:
+                            $ref: '#/spec/panels/runbook'
+                          height: 6
+                          width: 4
+                          x: 0
+                          "y": 0
+                        - content:
+                            $ref: '#/spec/panels/errors-by-service'
+                          height: 6
+                          width: 8
+                          x: 4
+                          "y": 0
+                    links: []
+                    panels:
+                      errors-by-service:
+                        kind: Panel
+                        spec:
+                          display:
+                            description: ""
+                            name: Error logs per service
+                          links: []
+                          plugin:
+                            kind: signoz/TablePanel
+                            spec:
+                              formatting:
+                                decimalPrecision: "0"
+                              thresholds:
+                              - color: Red
+                                columnName: errors
+                                format: background
+                                operator: above
+                                value: 1000
+                          queries:
+                          - kind: scalar
+                            spec:
+                              name: A
+                              plugin:
+                                kind: signoz/BuilderQuery
+                                spec:
+                                  aggregations:
+                                  - alias: errors
+                                    expression: count()
+                                  filter:
+                                    expression: severity_text = 'ERROR'
+                                  groupBy:
+                                  - fieldContext: resource
+                                    fieldDataType: string
+                                    name: service.name
+                                  limit: 20
+                                  name: A
+                                  order:
+                                  - direction: desc
+                                    key:
+                                      name: errors
+                                  signal: logs
+                      runbook:
+                        kind: Panel
+                        spec:
+                          display:
+                            description: What to do when errors spike
+                            name: Runbook
+                          links: []
+                          plugin:
+                            kind: signoz/TextPanel
+                            spec:
+                              headerOptions:
+                                hide: false
+                              mode: markdown
+                              presentation:
+                                textAlign: left
+                                verticalAlign: top
+                              text: |-
+                                ## Error logs
+
+                                1. Find the service with the most errors in the table.
+                                2. Open its logs and group by `code.function`.
+                          queries: []
+                    variables: []
+                  tags: []
+              service_overview:
+                description: A `$service` list variable fed by the observed `service.name`
+                  values filters both panels. The time series panel counts spans per
+                  service; the number panel renders a single scalar and turns red
+                  above 100 errors. `generateName` lets the server derive the name
+                  from the display name.
+                summary: Service overview with a variable, a time series panel and
+                  a number panel
+                value:
+                  generateName: true
+                  schemaVersion: v6
+                  spec:
+                    display:
+                      description: Request rate and errors per service
+                      name: Service Overview
+                    duration: 1h
+                    layouts:
+                    - kind: Grid
+                      spec:
+                        items:
+                        - content:
+                            $ref: '#/spec/panels/request-rate'
+                          height: 6
+                          width: 8
+                          x: 0
+                          "y": 0
+                        - content:
+                            $ref: '#/spec/panels/error-count'
+                          height: 6
+                          width: 4
+                          x: 8
+                          "y": 0
+                    links: []
+                    panels:
+                      error-count:
+                        kind: Panel
+                        spec:
+                          display:
+                            description: Spans with an error status
+                            name: Errors
+                          links: []
+                          plugin:
+                            kind: signoz/NumberPanel
+                            spec:
+                              thresholds:
+                              - color: Red
+                                format: background
+                                operator: above
+                                value: 100
+                          queries:
+                          - kind: scalar
+                            spec:
+                              name: A
+                              plugin:
+                                kind: signoz/BuilderQuery
+                                spec:
+                                  aggregations:
+                                  - alias: errors
+                                    expression: count()
+                                  filter:
+                                    expression: has_error = true AND service.name
+                                      IN $service
+                                  name: A
+                                  signal: traces
+                      request-rate:
+                        kind: Panel
+                        spec:
+                          display:
+                            description: Spans per service
+                            name: Requests
+                          links: []
+                          plugin:
+                            kind: signoz/TimeSeriesPanel
+                            spec:
+                              formatting:
+                                decimalPrecision: "0"
+                              legend:
+                                position: bottom
+                          queries:
+                          - kind: time_series
+                            spec:
+                              name: A
+                              plugin:
+                                kind: signoz/BuilderQuery
+                                spec:
+                                  aggregations:
+                                  - alias: requests
+                                    expression: count()
+                                  filter:
+                                    expression: service.name IN $service
+                                  groupBy:
+                                  - fieldContext: resource
+                                    fieldDataType: string
+                                    name: service.name
+                                  legend: '{{service.name}}'
+                                  name: A
+                                  signal: traces
+                    variables:
+                    - kind: ListVariable
+                      spec:
+                        allowAllValue: true
+                        allowMultiple: true
+                        display:
+                          name: Service
+                        name: service
+                        plugin:
+                          kind: signoz/DynamicVariable
+                          spec:
+                            name: service.name
+                            signal: traces
+                        sort: alphabetical-asc
+                  tags:
+                  - key: team
+                    value: platform
             schema:
               $ref: '#/components/schemas/DashboardtypesPostableDashboardV2'
       responses:
@@ -19160,6 +19890,56 @@ paths:
       requestBody:
         content:
           application/json:
+            examples:
+              add_panel:
+                description: 'Adding a panel takes two operations: one adds the panel
+                  under `/spec/panels/<id>`, the other appends a grid item that references
+                  it to the first layout. A panel that no layout places is accepted
+                  but not shown.'
+                summary: Add a panel and place it
+                value:
+                - op: add
+                  path: /spec/panels/error-rate
+                  value:
+                    kind: Panel
+                    spec:
+                      display:
+                        description: Spans with an error status
+                        name: Error rate
+                      links: []
+                      plugin:
+                        kind: signoz/TimeSeriesPanel
+                        spec: {}
+                      queries:
+                      - kind: time_series
+                        spec:
+                          name: A
+                          plugin:
+                            kind: signoz/BuilderQuery
+                            spec:
+                              aggregations:
+                              - expression: count()
+                              filter:
+                                expression: has_error = true
+                              name: A
+                              signal: traces
+                - op: add
+                  path: /spec/layouts/0/spec/items/-
+                  value:
+                    content:
+                      $ref: '#/spec/panels/error-rate'
+                    height: 6
+                    width: 12
+                    x: 0
+                    "y": 7
+              rename:
+                description: Replaces the display name without resending anything
+                  else.
+                summary: Rename a dashboard
+                value:
+                - op: replace
+                  path: /spec/display/name
+                  value: Service Overview (production)
             schema:
               $ref: '#/components/schemas/DashboardtypesPatchableDashboardV2'
       responses:
@@ -19230,6 +20010,70 @@ paths:
       requestBody:
         content:
           application/json:
+            examples:
+              replace_dashboard:
+                description: 'Update is a full replacement: every field is written
+                  as sent, so fetch the dashboard first and resend the unchanged parts.
+                  `name` must equal the dashboard''s current name.'
+                summary: Replace a dashboard with a single CPU time series panel
+                value:
+                  name: host-cpu
+                  schemaVersion: v6
+                  spec:
+                    display:
+                      description: CPU time by state
+                      name: Host CPU
+                    duration: 3h
+                    layouts:
+                    - kind: Grid
+                      spec:
+                        items:
+                        - content:
+                            $ref: '#/spec/panels/cpu-time'
+                          height: 7
+                          width: 12
+                          x: 0
+                          "y": 0
+                    links: []
+                    panels:
+                      cpu-time:
+                        kind: Panel
+                        spec:
+                          display:
+                            description: Rate of system.cpu.time by state
+                            name: CPU time
+                          links: []
+                          plugin:
+                            kind: signoz/TimeSeriesPanel
+                            spec:
+                              chartAppearance:
+                                fillMode: gradient
+                              legend:
+                                position: right
+                          queries:
+                          - kind: time_series
+                            spec:
+                              name: A
+                              plugin:
+                                kind: signoz/BuilderQuery
+                                spec:
+                                  aggregations:
+                                  - metricName: system.cpu.time
+                                    spaceAggregation: sum
+                                    temporality: cumulative
+                                    timeAggregation: rate
+                                  groupBy:
+                                  - fieldContext: attribute
+                                    fieldDataType: string
+                                    name: state
+                                  legend: '{{state}}'
+                                  name: A
+                                  signal: metrics
+                    refreshInterval: 30s
+                    variables: []
+                  tags:
+                  - key: team
+                    value: infra
             schema:
               $ref: '#/components/schemas/DashboardtypesUpdatableDashboardV2'
       responses:
@@ -23493,15 +24337,23 @@ paths:
         public dashboard. The panel is addressed by its key in spec.panels.
       operationId: GetPublicDashboardPanelQueryRangeV2
       parameters:
-      - in: query
+      - description: Start of the time range as a Unix timestamp in milliseconds.
+          Honored only when the public dashboard has timeRangeEnabled.
+        in: query
         name: startTime
         required: false
         schema:
+          description: Start of the time range as a Unix timestamp in milliseconds.
+            Honored only when the public dashboard has timeRangeEnabled.
           type: string
-      - in: query
+      - description: End of the time range as a Unix timestamp in milliseconds. Honored
+          only when the public dashboard has timeRangeEnabled.
+        in: query
         name: endTime
         required: false
         schema:
+          description: End of the time range as a Unix timestamp in milliseconds.
+            Honored only when the public dashboard has timeRangeEnabled.
           type: string
       - in: path
         name: id
@@ -29738,25 +30590,41 @@ paths:
         sort, order, and pagination.'
       operationId: ListDashboardsForUserV2
       parameters:
-      - in: query
+      - description: A filter expression over the reserved keys name, description,
+          created_at, updated_at, created_by and locked, and over tag keys. At most
+          1024 characters. Empty matches every dashboard.
+        in: query
         name: query
         schema:
+          description: A filter expression over the reserved keys name, description,
+            created_at, updated_at, created_by and locked, and over tag keys. At most
+            1024 characters. Empty matches every dashboard.
           type: string
-      - in: query
+      - description: 'The sort field: updated_at (default), created_at or name.'
+        in: query
         name: sort
         schema:
-          $ref: '#/components/schemas/DashboardtypesListSort'
-      - in: query
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesListSort'
+          description: 'The sort field: updated_at (default), created_at or name.'
+      - description: 'The sort direction: asc or desc (default).'
+        in: query
         name: order
         schema:
-          $ref: '#/components/schemas/DashboardtypesListOrder'
-      - in: query
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesListOrder'
+          description: 'The sort direction: asc or desc (default).'
+      - description: The page size. Defaults to 20 and is capped at 200.
+        in: query
         name: limit
         schema:
+          description: The page size. Defaults to 20 and is capped at 200.
           type: integer
-      - in: query
+      - description: The number of dashboards to skip. Defaults to 0.
+        in: query
         name: offset
         schema:
+          description: The number of dashboards to skip. Defaults to 0.
           type: integer
       responses:
         "200":

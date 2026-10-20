@@ -21,13 +21,13 @@ import (
 // dropped: SigNoz never reads it (queries carry their own signal/source), so
 // the drift test allowlists it as an intentional omission.
 type DashboardSpec struct {
-	Display         Display               `json:"display" required:"true"`
-	Variables       []Variable            `json:"variables" required:"true" nullable:"false"`
-	Panels          map[string]*Panel     `json:"panels" required:"true" nullable:"false"`
-	Layouts         []Layout              `json:"layouts" required:"true" nullable:"false"`
-	Duration        common.DurationString `json:"duration"`
-	RefreshInterval common.DurationString `json:"refreshInterval"`
-	Links           []Link                `json:"links,omitzero"`
+	Display         Display               `json:"display" required:"true" description:"The dashboard title and description."`
+	Variables       []Variable            `json:"variables" required:"true" nullable:"false" description:"The dashboard variables, each a ListVariable or TextVariable envelope, referenced in queries as $name. Names must be unique. Use [] for none."`
+	Panels          map[string]*Panel     `json:"panels" required:"true" nullable:"false" description:"The panels keyed by panel id. An id has up to 75 characters from letters, digits, dot, underscore and hyphen, and is referenced by layouts as #/spec/panels/<id>. Use {} for none."`
+	Layouts         []Layout              `json:"layouts" required:"true" nullable:"false" description:"The Grid layouts that place panels, at most 500. Each panel can be placed at most once. Use [] for none."`
+	Duration        common.DurationString `json:"duration" description:"The default time range when the dashboard opens, as a Prometheus duration such as 1h or 7d."`
+	RefreshInterval common.DurationString `json:"refreshInterval" description:"How often the dashboard refreshes, as a Prometheus duration such as 30s. Empty disables auto refresh."`
+	Links           []Link                `json:"links,omitzero" description:"External links shown in the dashboard header."`
 }
 
 // ══════════════════════════════════════════════
