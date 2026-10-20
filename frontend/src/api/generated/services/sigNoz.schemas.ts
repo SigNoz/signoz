@@ -10608,8 +10608,7 @@ export type TelemetrystoretypesGranulesDTO = {
 /**
  * The granule analysis for the statement; null unless verbose was requested.
  */
-export type Querybuildertypesv5PreviewStatementDTOGranules =
-	TelemetrystoretypesGranulesDTO | null;
+export type Querybuildertypesv5PreviewStatementDTOGranules = TelemetrystoretypesGranulesDTO | null;
 
 export interface TelemetrystoretypesEstimateEntryDTO {
 	/**
