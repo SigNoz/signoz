@@ -15,6 +15,13 @@
 	min-width: 0;
 }
 
+.fields {
+	border: 0;
+	padding: 0;
+	margin: 0;
+	min-width: 0;
+}
+
 .actions {
 	display: flex;
 	align-items: center;
@@ -22,4 +29,10 @@
 	gap: var(--spacing-3);
 	padding: var(--spacing-4) 0;
 	border-top: 1px solid var(--l1-border);
+}
+
+// TODO: @AshwinBhatkal to be removed once textarea is in signoz ui components
+.fields :global(textarea:disabled) {
+	opacity: 0.5;
+	cursor: not-allowed;
 }

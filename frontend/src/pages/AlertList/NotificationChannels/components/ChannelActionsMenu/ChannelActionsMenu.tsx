@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { generatePath } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import {
@@ -10,9 +10,11 @@ import {
 	Trash2,
 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { toast } from '@signozhq/ui/sonner';
 import ROUTES from 'constants/routes';
+import { useNotificationChannelPermissions } from 'hooks/notificationChannels/useNotificationChannelPermissions';
+import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';
+import type { AuthZDropdownItemType } from 'lib/authz/components/AuthZDropdown/types';
 import { getAbsoluteUrl } from 'utils/basePath';
 
 import type { Channel } from '../../types';
@@ -33,7 +35,14 @@ function ChannelActionsMenu({
 }: ChannelActionsMenuProps): JSX.Element {
 	const [, setCopy] = useCopyToClipboard();
 
-	const menuItems = useMemo<DropdownItemType[]>(
+	// A list of N channels would otherwise check its verbs per row on mount, for
+	// menus nobody opened, and the authz API caps one batch at 25 transactions.
+	const [hasOpened, setHasOpened] = useState(false);
+	const { deletePermission } = useNotificationChannelPermissions(channel.id, {
+		enabled: hasOpened,
+	});
+
+	const menuItems = useMemo<AuthZDropdownItemType[]>(
 		() => [
 			{
 				type: 'item',
@@ -76,12 +85,19 @@ function ChannelActionsMenu({
 				value: 'delete',
 				label: 'Delete',
 				prefix: <Trash2 size={14} />,
+				checks: [deletePermission],
 				danger: true,
 				onClick: (): void => onDelete(channel),
 			},
 		],
-		[channel, onOpen, onDelete, onViewJson, setCopy],
+		[deletePermission, channel, onOpen, onDelete, onViewJson, setCopy],
 	);
+
+	const handleOpenChange = useCallback((open: boolean): void => {
+		if (open) {
+			setHasOpened(true);
+		}
+	}, []);
 
 	return (
 		// the row itself opens the channel, so the actions keep their clicks
@@ -90,7 +106,13 @@ function ChannelActionsMenu({
 			className={styles.actions}
 			onClick={(event): void => event.stopPropagation()}
 		>
-			<Dropdown items={menuItems} nativeButton align="end" side="bottom">
+			<AuthZDropdown
+				items={menuItems}
+				nativeButton
+				align="end"
+				side="bottom"
+				onOpenChange={handleOpenChange}
+			>
 				<Button
 					variant="outlined"
 					color="secondary"
@@ -101,7 +123,7 @@ function ChannelActionsMenu({
 				>
 					<Ellipsis size={16} />
 				</Button>
-			</Dropdown>
+			</AuthZDropdown>
 		</div>
 	);
 }

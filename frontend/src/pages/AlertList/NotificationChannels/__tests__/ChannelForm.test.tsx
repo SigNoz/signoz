@@ -1,3 +1,4 @@
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { server } from 'mocks-server/server';
 import { render, screen } from 'tests/test-utils';
 
@@ -8,6 +9,7 @@ const FIND = { timeout: 5000 };
 describe('ChannelForm', () => {
 	beforeEach(() => {
 		window.history.replaceState({}, '', '/');
+		server.use(setupAuthzAdmin());
 	});
 
 	afterEach(() => {

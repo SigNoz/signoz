@@ -1,6 +1,9 @@
+import { Skeleton } from 'antd';
 import AlertBreadcrumb from 'components/AlertBreadcrumb';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
+import { withAuthZPage } from 'lib/authz/components/withAuthZ/withAuthZPage';
+import { NotificationChannelCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
 import ChannelForm from 'pages/AlertList/NotificationChannels/components/ChannelForm/ChannelForm';
 
 import styles from './styles.module.scss';
@@ -25,4 +28,11 @@ function ChannelsNew(): JSX.Element {
 	);
 }
 
-export default ChannelsNew;
+export default withAuthZPage(ChannelsNew, {
+	checks: [NotificationChannelCreatePermission],
+	fallbackOnLoading: (
+		<div className={styles.loading}>
+			<Skeleton active paragraph={{ rows: 8 }} />
+		</div>
+	),
+});

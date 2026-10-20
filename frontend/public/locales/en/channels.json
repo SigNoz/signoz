@@ -12,6 +12,7 @@
   "loading_channels_message": "Loading Channels..",
   "page_title_create": "New Notification Channel",
   "page_title_edit": "Edit Notification Channel",
+  "page_title_view": "View Notification Channel",
   "button_save_channel": "Save",
   "button_test_channel": "Test",
   "button_return": "Back",

@@ -21,7 +21,7 @@ const pageStory = storyMocks(channelsMocks, { layout: 'app' });
  */
 const meta = {
 	title: 'Pages/Alerts/Channels/List',
-	tags: ['play'],
+	tags: ['authz', 'play'],
 	component: AlertList,
 	...pageStory,
 	parameters: { ...pageStory.parameters },
