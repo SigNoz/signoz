@@ -431,8 +431,7 @@ export type AlertmanagertypesChannelEmailConfigDTOHeadersAnyOf = {
 /**
  * @nullable
  */
-export type AlertmanagertypesChannelEmailConfigDTOHeaders =
-	AlertmanagertypesChannelEmailConfigDTOHeadersAnyOf | null;
+export type AlertmanagertypesChannelEmailConfigDTOHeaders = AlertmanagertypesChannelEmailConfigDTOHeadersAnyOf | null;
 
 export interface AlertmanagertypesChannelEmailConfigDTO {
 	/**
@@ -510,8 +509,7 @@ export type AlertmanagertypesChannelPagerdutyConfigDTODetailsAnyOf = {
 /**
  * @nullable
  */
-export type AlertmanagertypesChannelPagerdutyConfigDTODetails =
-	AlertmanagertypesChannelPagerdutyConfigDTODetailsAnyOf | null;
+export type AlertmanagertypesChannelPagerdutyConfigDTODetails = AlertmanagertypesChannelPagerdutyConfigDTODetailsAnyOf | null;
 
 export interface AlertmanagertypesChannelPagerdutyConfigDTO {
 	/**
@@ -584,8 +582,7 @@ export type AlertmanagertypesChannelOpsgenieConfigDTODetailsAnyOf = {
 /**
  * @nullable
  */
-export type AlertmanagertypesChannelOpsgenieConfigDTODetails =
-	AlertmanagertypesChannelOpsgenieConfigDTODetailsAnyOf | null;
+export type AlertmanagertypesChannelOpsgenieConfigDTODetails = AlertmanagertypesChannelOpsgenieConfigDTODetailsAnyOf | null;
 
 export interface AlertmanagertypesChannelOpsgenieConfigDTO {
 	/**
@@ -706,8 +703,7 @@ export type AlertmanagertypesChannelJiraConfigDTOCustomFieldsAnyOf = {
 /**
  * @nullable
  */
-export type AlertmanagertypesChannelJiraConfigDTOCustomFields =
-	AlertmanagertypesChannelJiraConfigDTOCustomFieldsAnyOf | null;
+export type AlertmanagertypesChannelJiraConfigDTOCustomFields = AlertmanagertypesChannelJiraConfigDTOCustomFieldsAnyOf | null;
 
 export interface AlertmanagertypesChannelJiraConfigDTO {
 	/**
@@ -832,8 +828,7 @@ export type AlertmanagertypesChannelIncidentIOConfigDTOMetadataAnyOf = {
 /**
  * @nullable
  */
-export type AlertmanagertypesChannelIncidentIOConfigDTOMetadata =
-	AlertmanagertypesChannelIncidentIOConfigDTOMetadataAnyOf | null;
+export type AlertmanagertypesChannelIncidentIOConfigDTOMetadata = AlertmanagertypesChannelIncidentIOConfigDTOMetadataAnyOf | null;
 
 export interface AlertmanagertypesChannelIncidentIOConfigDTO {
 	/**
@@ -872,6 +867,55 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 	spec: AlertmanagertypesChannelIncidentIOConfigDTO;
 }
 
+export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfigDTOKind {
+	telegram = 'telegram',
+}
+export interface AlertmanagertypesChannelTelegramConfigDTO {
+	/**
+	 * @type string
+	 */
+	apiUrl?: string;
+	/**
+	 * @type string
+	 * @format password
+	 */
+	botToken: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	chatId: number;
+	/**
+	 * @type boolean
+	 */
+	disableNotifications?: boolean;
+	/**
+	 * @type string
+	 */
+	message?: string;
+	/**
+	 * @type integer
+	 */
+	messageThreadId?: number;
+	/**
+	 * @type boolean,null
+	 */
+	sendResolved?: boolean | null;
+	/**
+	 * @type string
+	 */
+	title?: string;
+}
+
+export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfigDTO {
+	/**
+	 * @enum telegram
+	 * @type string
+	 */
+	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfigDTOKind;
+	spec: AlertmanagertypesChannelTelegramConfigDTO;
+}
+
 export type AlertmanagertypesChannelConfigDTO =
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfigDTO
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfigDTO
@@ -882,7 +926,8 @@ export type AlertmanagertypesChannelConfigDTO =
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelGoogleChatConfigDTO
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTO
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfigDTO
-	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfigDTO;
+	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfigDTO
+	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfigDTO;
 
 export enum AlertmanagertypesChannelDefectDTO {
 	none = 'none',
@@ -902,6 +947,7 @@ export enum AlertmanagertypesChannelKindDTO {
 	jira = 'jira',
 	jsmops = 'jsmops',
 	incidentio = 'incidentio',
+	telegram = 'telegram',
 }
 export enum AlertmanagertypesChannelListOrderDTO {
 	asc = 'asc',
@@ -2462,7 +2508,7 @@ export interface ConfigSNSConfigDTO {
 	topic_arn?: string;
 }
 
-export interface ConfigTelegramConfigDTO {
+export interface AlertmanagertypesTelegramReceiverConfigDTO {
 	api_url?: ConfigURLType2DTO;
 	/**
 	 * @type integer
@@ -2494,6 +2540,10 @@ export interface ConfigTelegramConfigDTO {
 	 * @type boolean
 	 */
 	send_resolved?: boolean;
+	/**
+	 * @type string
+	 */
+	title?: string;
 	/**
 	 * @type string
 	 */
@@ -2699,7 +2749,7 @@ export type AlertmanagertypesPostableChannelDTO = unknown & {
 	/**
 	 * @type array
 	 */
-	telegram_configs?: ConfigTelegramConfigDTO[];
+	telegram_configs?: AlertmanagertypesTelegramReceiverConfigDTO[];
 	/**
 	 * @type array
 	 */
@@ -2846,7 +2896,7 @@ export interface AlertmanagertypesReceiverDTO {
 	/**
 	 * @type array
 	 */
-	telegram_configs?: ConfigTelegramConfigDTO[];
+	telegram_configs?: AlertmanagertypesTelegramReceiverConfigDTO[];
 	/**
 	 * @type array
 	 */
@@ -3101,8 +3151,7 @@ export type AuthtypesRoleMappingDTOGroupMappingsAnyOf = {
 /**
  * @nullable
  */
-export type AuthtypesRoleMappingDTOGroupMappings =
-	AuthtypesRoleMappingDTOGroupMappingsAnyOf | null;
+export type AuthtypesRoleMappingDTOGroupMappings = AuthtypesRoleMappingDTOGroupMappingsAnyOf | null;
 
 export interface AuthtypesRoleMappingDTO {
 	/**
@@ -3713,8 +3762,7 @@ export type CloudintegrationtypesAgentReportDTODataAnyOf = {
 /**
  * @nullable
  */
-export type CloudintegrationtypesAgentReportDTOData =
-	CloudintegrationtypesAgentReportDTODataAnyOf | null;
+export type CloudintegrationtypesAgentReportDTOData = CloudintegrationtypesAgentReportDTODataAnyOf | null;
 
 /**
  * @nullable
@@ -4200,8 +4248,7 @@ export type CloudintegrationtypesPostableAgentCheckInDTODataAnyOf = {
 /**
  * @nullable
  */
-export type CloudintegrationtypesPostableAgentCheckInDTOData =
-	CloudintegrationtypesPostableAgentCheckInDTODataAnyOf | null;
+export type CloudintegrationtypesPostableAgentCheckInDTOData = CloudintegrationtypesPostableAgentCheckInDTODataAnyOf | null;
 
 export interface CloudintegrationtypesPostableAgentCheckInDTO {
 	/**
@@ -4441,6 +4488,48 @@ export interface ConfigJiraConfigDTO {
 	 * @type string
 	 */
 	wont_fix_resolution?: string;
+}
+
+export interface ConfigTelegramConfigDTO {
+	api_url?: ConfigURLType2DTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	chat?: number;
+	/**
+	 * @type string
+	 */
+	chat_file?: string;
+	/**
+	 * @type boolean
+	 */
+	disable_notifications?: boolean;
+	http_config?: ConfigHTTPClientConfigDTO;
+	/**
+	 * @type string
+	 */
+	message?: string;
+	/**
+	 * @type integer
+	 */
+	message_thread_id?: number;
+	/**
+	 * @type string
+	 */
+	parse_mode?: string;
+	/**
+	 * @type boolean
+	 */
+	send_resolved?: boolean;
+	/**
+	 * @type string
+	 */
+	token?: string;
+	/**
+	 * @type string
+	 */
+	token_file?: string;
 }
 
 export interface DashboardGridItemDTO {
@@ -4903,8 +4992,7 @@ export type DashboardtypesLegendDTOCustomColorsAnyOf = {
 /**
  * @nullable
  */
-export type DashboardtypesLegendDTOCustomColors =
-	DashboardtypesLegendDTOCustomColorsAnyOf | null;
+export type DashboardtypesLegendDTOCustomColors = DashboardtypesLegendDTOCustomColorsAnyOf | null;
 
 export interface DashboardtypesLegendDTO {
 	/**
@@ -5496,8 +5584,7 @@ export type DashboardtypesTableFormattingDTOColumnUnitsAnyOf = {
 /**
  * @nullable
  */
-export type DashboardtypesTableFormattingDTOColumnUnits =
-	DashboardtypesTableFormattingDTOColumnUnitsAnyOf | null;
+export type DashboardtypesTableFormattingDTOColumnUnits = DashboardtypesTableFormattingDTOColumnUnitsAnyOf | null;
 
 export interface DashboardtypesTableFormattingDTO {
 	/**
@@ -6854,8 +6941,7 @@ export type FeaturetypesGettableFeatureDTOVariantsAnyOf = {
 /**
  * @nullable
  */
-export type FeaturetypesGettableFeatureDTOVariants =
-	FeaturetypesGettableFeatureDTOVariantsAnyOf | null;
+export type FeaturetypesGettableFeatureDTOVariants = FeaturetypesGettableFeatureDTOVariantsAnyOf | null;
 
 export interface FeaturetypesGettableFeatureDTO {
 	/**
@@ -7333,8 +7419,7 @@ export type InframonitoringtypesClusterRecordDTOMetaAnyOf = {
 /**
  * @nullable
  */
-export type InframonitoringtypesClusterRecordDTOMeta =
-	InframonitoringtypesClusterRecordDTOMetaAnyOf | null;
+export type InframonitoringtypesClusterRecordDTOMeta = InframonitoringtypesClusterRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesNodeCountsByReadinessDTO {
 	/**
@@ -7607,8 +7692,7 @@ export type InframonitoringtypesContainerRecordDTOMetaAnyOf = {
 /**
  * @nullable
  */
-export type InframonitoringtypesContainerRecordDTOMeta =
-	InframonitoringtypesContainerRecordDTOMetaAnyOf | null;
+export type InframonitoringtypesContainerRecordDTOMeta = InframonitoringtypesContainerRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesContainerRecordDTO {
 	containerCountsByReady: InframonitoringtypesContainerCountsByReadyDTO;
@@ -7699,8 +7783,7 @@ export type InframonitoringtypesDaemonSetRecordDTOMetaAnyOf = {
 /**
  * @nullable
  */
-export type InframonitoringtypesDaemonSetRecordDTOMeta =
-	InframonitoringtypesDaemonSetRecordDTOMetaAnyOf | null;
+export type InframonitoringtypesDaemonSetRecordDTOMeta = InframonitoringtypesDaemonSetRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesDaemonSetRecordDTO {
 	/**
@@ -7795,8 +7878,7 @@ export type InframonitoringtypesDeploymentRecordDTOMetaAnyOf = {
 /**
  * @nullable
  */
-export type InframonitoringtypesDeploymentRecordDTOMeta =
-	InframonitoringtypesDeploymentRecordDTOMetaAnyOf | null;
+export type InframonitoringtypesDeploymentRecordDTOMeta = InframonitoringtypesDeploymentRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesDeploymentRecordDTO {
 	/**
@@ -7885,8 +7967,7 @@ export type InframonitoringtypesHostRecordDTOMetaAnyOf = {
 /**
  * @nullable
  */
-export type InframonitoringtypesHostRecordDTOMeta =
-	InframonitoringtypesHostRecordDTOMetaAnyOf | null;
+export type InframonitoringtypesHostRecordDTOMeta = InframonitoringtypesHostRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesHostRecordDTO {
 	/**
@@ -7968,8 +8049,7 @@ export type InframonitoringtypesJobRecordDTOMetaAnyOf = {
 /**
  * @nullable
  */
-export type InframonitoringtypesJobRecordDTOMeta =
-	InframonitoringtypesJobRecordDTOMetaAnyOf | null;
+export type InframonitoringtypesJobRecordDTOMeta = InframonitoringtypesJobRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesJobRecordDTO {
 	/**
@@ -8087,8 +8167,7 @@ export type InframonitoringtypesNamespaceRecordDTOMetaAnyOf = {
 /**
  * @nullable
  */
-export type InframonitoringtypesNamespaceRecordDTOMeta =
-	InframonitoringtypesNamespaceRecordDTOMetaAnyOf | null;
+export type InframonitoringtypesNamespaceRecordDTOMeta = InframonitoringtypesNamespaceRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesNamespaceRecordDTO {
 	/**
@@ -8155,8 +8234,7 @@ export type InframonitoringtypesNodeRecordDTOMetaAnyOf = {
 /**
  * @nullable
  */
-export type InframonitoringtypesNodeRecordDTOMeta =
-	InframonitoringtypesNodeRecordDTOMetaAnyOf | null;
+export type InframonitoringtypesNodeRecordDTOMeta = InframonitoringtypesNodeRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesNodeRecordDTO {
 	condition: InframonitoringtypesNodeConditionDTO;
@@ -8227,8 +8305,7 @@ export type InframonitoringtypesPodRecordDTOMetaAnyOf = {
 /**
  * @nullable
  */
-export type InframonitoringtypesPodRecordDTOMeta =
-	InframonitoringtypesPodRecordDTOMetaAnyOf | null;
+export type InframonitoringtypesPodRecordDTOMeta = InframonitoringtypesPodRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesPodRecordDTO {
 	/**
@@ -8615,8 +8692,7 @@ export type InframonitoringtypesStatefulSetRecordDTOMetaAnyOf = {
 /**
  * @nullable
  */
-export type InframonitoringtypesStatefulSetRecordDTOMeta =
-	InframonitoringtypesStatefulSetRecordDTOMetaAnyOf | null;
+export type InframonitoringtypesStatefulSetRecordDTOMeta = InframonitoringtypesStatefulSetRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesStatefulSetRecordDTO {
 	/**
@@ -8692,8 +8768,7 @@ export type InframonitoringtypesVolumeRecordDTOMetaAnyOf = {
 /**
  * @nullable
  */
-export type InframonitoringtypesVolumeRecordDTOMeta =
-	InframonitoringtypesVolumeRecordDTOMetaAnyOf | null;
+export type InframonitoringtypesVolumeRecordDTOMeta = InframonitoringtypesVolumeRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesVolumeRecordDTO {
 	/**
@@ -9811,8 +9886,7 @@ export type PrometheusMatrixSeriesSchemaDTOMetricAnyOf = {
 /**
  * @nullable
  */
-export type PrometheusMatrixSeriesSchemaDTOMetric =
-	PrometheusMatrixSeriesSchemaDTOMetricAnyOf | null;
+export type PrometheusMatrixSeriesSchemaDTOMetric = PrometheusMatrixSeriesSchemaDTOMetricAnyOf | null;
 
 export interface PrometheusMatrixSeriesSchemaDTO {
 	/**
@@ -9844,8 +9918,7 @@ export type PrometheusVectorSampleSchemaDTOMetricAnyOf = {
 /**
  * @nullable
  */
-export type PrometheusVectorSampleSchemaDTOMetric =
-	PrometheusVectorSampleSchemaDTOMetricAnyOf | null;
+export type PrometheusVectorSampleSchemaDTOMetric = PrometheusVectorSampleSchemaDTOMetricAnyOf | null;
 
 export interface PrometheusVectorSampleSchemaDTO {
 	/**
@@ -10255,8 +10328,7 @@ export type Querybuildertypesv5RawRowDTODataAnyOf = { [key: string]: unknown };
 /**
  * @nullable
  */
-export type Querybuildertypesv5RawRowDTOData =
-	Querybuildertypesv5RawRowDTODataAnyOf | null;
+export type Querybuildertypesv5RawRowDTOData = Querybuildertypesv5RawRowDTODataAnyOf | null;
 
 export interface Querybuildertypesv5RawRowDTO {
 	/**
@@ -10327,8 +10399,7 @@ export type Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQueryAnyOf =
 /**
  * @nullable
  */
-export type Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQuery =
-	Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQueryAnyOf | null;
+export type Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQuery = Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQueryAnyOf | null;
 
 /**
  * Response from the v5 query range preview (dry-run) endpoint. For each query in the composite query, returns the underlying ClickHouse statement(s) it renders to without executing them (one per PromQL metric selector; exactly one for builder/ClickHouse/trace-operator queries), with the optional EXPLAIN ESTIMATE and granule analysis attached per statement when requested.
@@ -11664,8 +11735,7 @@ export type SpantypesSpanMapperTestSpanDTOAttributesAnyOf = {
 /**
  * @nullable
  */
-export type SpantypesSpanMapperTestSpanDTOAttributes =
-	SpantypesSpanMapperTestSpanDTOAttributesAnyOf | null;
+export type SpantypesSpanMapperTestSpanDTOAttributes = SpantypesSpanMapperTestSpanDTOAttributesAnyOf | null;
 
 export type SpantypesSpanMapperTestSpanDTOResourceAnyOf = {
 	[key: string]: unknown;
@@ -11674,8 +11744,7 @@ export type SpantypesSpanMapperTestSpanDTOResourceAnyOf = {
 /**
  * @nullable
  */
-export type SpantypesSpanMapperTestSpanDTOResource =
-	SpantypesSpanMapperTestSpanDTOResourceAnyOf | null;
+export type SpantypesSpanMapperTestSpanDTOResource = SpantypesSpanMapperTestSpanDTOResourceAnyOf | null;
 
 export interface SpantypesSpanMapperTestSpanDTO {
 	/**
@@ -11787,8 +11856,7 @@ export type SpantypesSpanAggregationResultDTOValueAnyOf = {
 /**
  * @nullable
  */
-export type SpantypesSpanAggregationResultDTOValue =
-	SpantypesSpanAggregationResultDTOValueAnyOf | null;
+export type SpantypesSpanAggregationResultDTOValue = SpantypesSpanAggregationResultDTOValueAnyOf | null;
 
 export interface SpantypesSpanAggregationResultDTO {
 	aggregation: SpantypesSpanAggregationTypeDTO;
@@ -11990,16 +12058,14 @@ export type SpantypesWaterfallSpanDTOAttributesAnyOf = {
 /**
  * @nullable
  */
-export type SpantypesWaterfallSpanDTOAttributes =
-	SpantypesWaterfallSpanDTOAttributesAnyOf | null;
+export type SpantypesWaterfallSpanDTOAttributes = SpantypesWaterfallSpanDTOAttributesAnyOf | null;
 
 export type SpantypesWaterfallSpanDTOResourceAnyOf = { [key: string]: string };
 
 /**
  * @nullable
  */
-export type SpantypesWaterfallSpanDTOResource =
-	SpantypesWaterfallSpanDTOResourceAnyOf | null;
+export type SpantypesWaterfallSpanDTOResource = SpantypesWaterfallSpanDTOResourceAnyOf | null;
 
 export interface SpantypesWaterfallSpanDTO {
 	/**
@@ -12439,8 +12505,7 @@ export type TelemetrytypesGettableFieldKeysDTOKeysAnyOf = {
 /**
  * @nullable
  */
-export type TelemetrytypesGettableFieldKeysDTOKeys =
-	TelemetrytypesGettableFieldKeysDTOKeysAnyOf | null;
+export type TelemetrytypesGettableFieldKeysDTOKeys = TelemetrytypesGettableFieldKeysDTOKeysAnyOf | null;
 
 export interface TelemetrytypesGettableFieldKeysDTO {
 	/**
