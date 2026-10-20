@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { useInfiniteQuery } from 'react-query';
 import {
 	getGetTraceThreadQueryKey,
@@ -76,17 +76,23 @@ export function useTraceThread({
 		[query.data],
 	);
 
-	const spansAboveFirstPage = useMemo(
-		() =>
-			query.data?.pages.reduce(
-				(count, page, index) =>
-					(query.data.pageParams[index] as PageParam | undefined)?.before
-						? count + page.data.spans.length
-						: count,
-				0,
-			) ?? 0,
-		[query.data],
-	);
+	// Index of the first span shown on mount, so it grows only on prepend (Virtuoso's firstItemIndex).
+	// Not from pageParams: a react-query v3 refetch rebuilds later pages with `after` cursors.
+	const anchorRef = useRef<{ key: string; spanId: string }>();
+	const anchorKey = `${traceId}:${interestedSpanId ?? ''}`;
+	const spansAboveFirstPage = useMemo(() => {
+		if (spans.length === 0) {
+			return 0;
+		}
+		if (anchorRef.current?.key !== anchorKey) {
+			anchorRef.current = { key: anchorKey, spanId: spans[0].span_id };
+		}
+		const { spanId } = anchorRef.current;
+		return Math.max(
+			0,
+			spans.findIndex((span) => span.span_id === spanId),
+		);
+	}, [spans, anchorKey]);
 
 	return {
 		spans,
