@@ -63,19 +63,19 @@ scope with `--stories` or `--title`, never by dropping a theme.
 <branch>`. Against a moved main, every commit main gained since the branch's base
 shows up reversed, as though the branch reverted it.
 
-**Pixel share ranks, it does not judge.** A modal that dims the page scores high
-for a one-line change while a whole new form section scores low. Open the shots
-and say what changed per screen. The largest mover is usually the least
-informative.
+**The percentage sorts the list, it does not tell you what matters.** A dialog
+that dims the page scores high for a one-line change, and a whole new form
+section can score low. Open the shots and say what changed on each screen. The
+biggest number is usually the least interesting one.
 
-**An unexplained pair is a capture bug until proven otherwise.** Open it, crop
-both sides, and compare them before calling it noise. A pixel count and a
-plausible story are not evidence.
+**If you cannot explain a pair, assume the capture is at fault, not the code.**
+Open it, crop both sides and compare them before calling it noise. A pixel count
+and a good guess are not evidence.
 
 ## Noise, and the floor that proves it
 
-Stories are not perfectly deterministic. Pairs that move for reasons unrelated to
-the change are common:
+The same story does not always render identically twice. Pairs often move for
+reasons that have nothing to do with the change:
 
 - a focus ring left on whatever a `play` function clicked last
 - a scrollbar appearing, or its thumb resting a few pixels off
@@ -109,8 +109,8 @@ assert the state instead of shooting it.
 A reviewer cannot open `localhost`, so `sbshot ui` is for you, not for them.
 
 1. `tag` the pairs that matter, with `--note` saying why. The viewer filters by
-   tag, so the reviewer lands on the real changes instead of wading through
-   artefacts ranked above them.
+   tag, so the reviewer lands on the real changes instead of scrolling past
+   noise that scored higher.
 2. `export <diff> --out <dir>`. It writes a static site carrying only the pairs
    that are not identical, converted to WebP, so a large diff stays small.
 3. Host it. A Claude artifact works: publish the export's files and give the
