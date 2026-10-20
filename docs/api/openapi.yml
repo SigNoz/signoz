@@ -220,14 +220,19 @@ components:
           format: date-time
           type: string
         data:
+          description: The receiver configuration as a JSON document.
           type: string
         id:
           type: string
         name:
+          description: The channel name, which is also the receiver name routing policies
+            and rules reference.
           type: string
         orgId:
+          description: The organization the channel belongs to.
           type: string
         type:
+          description: The notifier kind, such as slack.
           type: string
         updatedAt:
           format: date-time
@@ -270,11 +275,14 @@ components:
     AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfig:
       properties:
         kind:
+          description: The channel provider kind this variant accepts.
           enum:
           - email
           type: string
         spec:
-          $ref: '#/components/schemas/AlertmanagertypesChannelEmailConfig'
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesChannelEmailConfig'
+          description: The provider-specific configuration for this kind.
       required:
       - kind
       - spec
@@ -282,11 +290,14 @@ components:
     AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelGoogleChatConfig:
       properties:
         kind:
+          description: The channel provider kind this variant accepts.
           enum:
           - googlechat
           type: string
         spec:
-          $ref: '#/components/schemas/AlertmanagertypesChannelGoogleChatConfig'
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesChannelGoogleChatConfig'
+          description: The provider-specific configuration for this kind.
       required:
       - kind
       - spec
@@ -294,11 +305,14 @@ components:
     AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfig:
       properties:
         kind:
+          description: The channel provider kind this variant accepts.
           enum:
           - incidentio
           type: string
         spec:
-          $ref: '#/components/schemas/AlertmanagertypesChannelIncidentIOConfig'
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesChannelIncidentIOConfig'
+          description: The provider-specific configuration for this kind.
       required:
       - kind
       - spec
@@ -306,11 +320,14 @@ components:
     AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfig:
       properties:
         kind:
+          description: The channel provider kind this variant accepts.
           enum:
           - jsmops
           type: string
         spec:
-          $ref: '#/components/schemas/AlertmanagertypesChannelJSMOpsConfig'
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesChannelJSMOpsConfig'
+          description: The provider-specific configuration for this kind.
       required:
       - kind
       - spec
@@ -318,11 +335,14 @@ components:
     AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfig:
       properties:
         kind:
+          description: The channel provider kind this variant accepts.
           enum:
           - jira
           type: string
         spec:
-          $ref: '#/components/schemas/AlertmanagertypesChannelJiraConfig'
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesChannelJiraConfig'
+          description: The provider-specific configuration for this kind.
       required:
       - kind
       - spec
@@ -330,11 +350,14 @@ components:
     AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMSTeamsConfig:
       properties:
         kind:
+          description: The channel provider kind this variant accepts.
           enum:
           - msteams
           type: string
         spec:
-          $ref: '#/components/schemas/AlertmanagertypesChannelMSTeamsConfig'
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesChannelMSTeamsConfig'
+          description: The provider-specific configuration for this kind.
       required:
       - kind
       - spec
@@ -342,11 +365,14 @@ components:
     AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfig:
       properties:
         kind:
+          description: The channel provider kind this variant accepts.
           enum:
           - opsgenie
           type: string
         spec:
-          $ref: '#/components/schemas/AlertmanagertypesChannelOpsgenieConfig'
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesChannelOpsgenieConfig'
+          description: The provider-specific configuration for this kind.
       required:
       - kind
       - spec
@@ -354,11 +380,14 @@ components:
     AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelPagerdutyConfig:
       properties:
         kind:
+          description: The channel provider kind this variant accepts.
           enum:
           - pagerduty
           type: string
         spec:
-          $ref: '#/components/schemas/AlertmanagertypesChannelPagerdutyConfig'
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesChannelPagerdutyConfig'
+          description: The provider-specific configuration for this kind.
       required:
       - kind
       - spec
@@ -366,11 +395,14 @@ components:
     AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfig:
       properties:
         kind:
+          description: The channel provider kind this variant accepts.
           enum:
           - slack
           type: string
         spec:
-          $ref: '#/components/schemas/AlertmanagertypesChannelSlackConfig'
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesChannelSlackConfig'
+          description: The provider-specific configuration for this kind.
       required:
       - kind
       - spec
@@ -390,11 +422,14 @@ components:
     AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelWebhookConfig:
       properties:
         kind:
+          description: The channel provider kind this variant accepts.
           enum:
           - webhook
           type: string
         spec:
-          $ref: '#/components/schemas/AlertmanagertypesChannelWebhookConfig'
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesChannelWebhookConfig'
+          description: The provider-specific configuration for this kind.
       required:
       - kind
       - spec
@@ -412,14 +447,20 @@ components:
         headers:
           additionalProperties:
             type: string
+          description: Extra SMTP headers keyed by canonical MIME header name, such
+            as Subject.
           nullable: true
           type: object
         html:
+          description: Alertmanager template for the HTML body; defaults to the Alertmanager
+            email default.
           type: string
         sendResolved:
+          description: Also notify when the alert resolves. Defaults to false.
           nullable: true
           type: boolean
         to:
+          description: The recipient addresses, comma separated.
           type: string
       required:
       - to
@@ -427,13 +468,20 @@ components:
     AlertmanagertypesChannelGoogleChatConfig:
       properties:
         sendResolved:
+          description: Also notify when the alert resolves. Defaults to false.
           nullable: true
           type: boolean
         text:
+          description: Alertmanager template for the message body; defaults to the
+            SigNoz Google Chat default.
           type: string
         title:
+          description: Alertmanager template for the message title; defaults to the
+            SigNoz Google Chat default.
           type: string
         webhookUrl:
+          description: The Google Chat space webhook URL. A secret; returned only
+            by a fetch by ID.
           format: password
           type: string
       required:
@@ -442,21 +490,32 @@ components:
     AlertmanagertypesChannelIncidentIOConfig:
       properties:
         description:
+          description: Alertmanager template for the alert description, rendered as
+            markdown; defaults to the SigNoz incident.io default.
           type: string
         metadata:
           additionalProperties:
             type: string
+          description: Extra event metadata keyed by name, merged over the group's
+            common labels; values are Alertmanager templates.
           nullable: true
           type: object
         sendResolved:
+          description: Also notify when the alert resolves. Defaults to false.
           nullable: true
           type: boolean
         title:
+          description: Alertmanager template for the alert title; defaults to the
+            SigNoz incident.io default.
           type: string
         token:
+          description: The alert source secret token, without the Bearer prefix. A
+            secret; returned only by a fetch by ID.
           format: password
           type: string
         url:
+          description: The alert source HTTP alert events endpoint copied from its
+            setup page.
           type: string
       required:
       - url
@@ -465,18 +524,27 @@ components:
     AlertmanagertypesChannelJSMOpsConfig:
       properties:
         apiKey:
+          description: The JSM Ops integration API key. A secret; returned only by
+            a fetch by ID.
           format: password
           type: string
         description:
+          description: Alertmanager template for the alert description; defaults to
+            the SigNoz JSM Ops default.
           type: string
         message:
+          description: Alertmanager template for the alert message; defaults to the
+            SigNoz JSM Ops default.
           type: string
         priority:
+          description: The alert priority, P1 to P5.
           type: string
         sendResolved:
+          description: Also notify when the alert resolves. Defaults to false.
           nullable: true
           type: boolean
         tags:
+          description: Comma-separated tags attached to the alert; defaults to signoz.
           type: string
       required:
       - apiKey
@@ -484,41 +552,63 @@ components:
     AlertmanagertypesChannelJiraConfig:
       properties:
         apiToken:
+          description: The Atlassian API token paired with email. A secret; returned
+            only by a fetch by ID.
           format: password
           type: string
         customFields:
           additionalProperties: {}
+          description: Extra issue fields keyed by Jira field ID.
           nullable: true
           type: object
         description:
+          description: Alertmanager template for the issue description, rendered as
+            markdown; defaults to the SigNoz Jira default.
           type: string
         email:
+          description: The Atlassian account email used for basic auth.
           type: string
         issueType:
+          description: The issue type name, such as Bug.
           type: string
         labels:
+          description: Labels added to every issue.
           items:
             type: string
           nullable: true
           type: array
         priority:
+          description: The priority name assigned to new issues.
           type: string
         project:
+          description: The key of the project issues are created in.
           type: string
         reopenDuration:
+          description: How long after resolution a firing alert reopens the issue
+            instead of creating a new one, as a Prometheus duration in canonical form
+            such as 3d; defaults to 3d.
           type: string
         reopenTransition:
+          description: The transition applied when an alert fires again on a resolved
+            issue.
           type: string
         resolveTransition:
+          description: The transition applied to the issue when the alert resolves.
           type: string
         sendResolved:
+          description: Also notify when the alert resolves. Defaults to false.
           nullable: true
           type: boolean
         site:
+          description: The Jira Cloud base URL, https://<site>.atlassian.net; only
+            Jira Cloud is supported.
           type: string
         summary:
+          description: Alertmanager template for the issue summary; defaults to the
+            SigNoz Jira default.
           type: string
         wontFixResolution:
+          description: The resolution name that stops an issue from being reopened.
           type: string
       required:
       - site
@@ -555,13 +645,20 @@ components:
     AlertmanagertypesChannelMSTeamsConfig:
       properties:
         sendResolved:
+          description: Also notify when the alert resolves. Defaults to true.
           nullable: true
           type: boolean
         text:
+          description: Alertmanager template for the card body; defaults to the Alertmanager
+            Teams default.
           type: string
         title:
+          description: Alertmanager template for the card title; defaults to the Alertmanager
+            Teams default.
           type: string
         webhookUrl:
+          description: The Teams incoming webhook URL. A secret; returned only by
+            a fetch by ID.
           format: password
           type: string
       required:
@@ -570,25 +667,37 @@ components:
     AlertmanagertypesChannelOpsgenieConfig:
       properties:
         apiKey:
+          description: The Opsgenie API integration key. A secret; returned only by
+            a fetch by ID.
           format: password
           type: string
         apiUrl:
+          description: The Opsgenie API host; empty uses the global Alertmanager default.
           type: string
         description:
+          description: Alertmanager template for the alert description; defaults to
+            the Alertmanager Opsgenie default.
           type: string
         details:
           additionalProperties:
             type: string
+          description: Custom alert details keyed by name, each an Alertmanager template.
           nullable: true
           type: object
         message:
+          description: Alertmanager template for the alert message; defaults to the
+            Alertmanager Opsgenie default.
           type: string
         priority:
+          description: The alert priority, P1 to P5.
           type: string
         sendResolved:
+          description: Also notify when the alert resolves. Defaults to true.
           nullable: true
           type: boolean
         source:
+          description: Alertmanager template for the alert source; defaults to the
+            Alertmanager Opsgenie default.
           type: string
       required:
       - apiKey
@@ -596,33 +705,52 @@ components:
     AlertmanagertypesChannelPagerdutyConfig:
       properties:
         class:
+          description: The class or type of the event.
           type: string
         client:
+          description: Alertmanager template for the client identifier; defaults to
+            the Alertmanager PagerDuty default.
           type: string
         clientUrl:
+          description: Alertmanager template for the client URL; defaults to the Alertmanager
+            PagerDuty default.
           type: string
         component:
+          description: The component of the source machine that is responsible for
+            the event.
           type: string
         description:
+          description: Alertmanager template for the incident summary; defaults to
+            the Alertmanager PagerDuty default.
           type: string
         details:
           additionalProperties:
             type: string
+          description: Custom details keyed by name, each an Alertmanager template;
+            defaults to the Alertmanager firing and resolved summary set.
           nullable: true
           type: object
         group:
+          description: The logical grouping of components the event belongs to.
           type: string
         routingKey:
+          description: The Events API v2 integration key. A secret; returned only
+            by a fetch by ID.
           format: password
           type: string
         sendResolved:
+          description: Also notify when the alert resolves. Defaults to true.
           nullable: true
           type: boolean
         severity:
+          description: 'The incident severity: critical, error, warning or info.'
           type: string
         source:
+          description: Alertmanager template for the unique location of the affected
+            system; defaults to client.
           type: string
         url:
+          description: The Events API endpoint; empty uses the PagerDuty default.
           type: string
       required:
       - routingKey
@@ -630,23 +758,33 @@ components:
     AlertmanagertypesChannelRepair:
       properties:
         action:
-          $ref: '#/components/schemas/AlertmanagertypesChannelRepairAction'
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesChannelRepairAction'
+          description: 'The repair that makes the channel readable: none, retype,
+            split or delete.'
         applied:
+          description: Whether the action was written; false on a dry run.
           type: boolean
         blockers:
+          description: Why the action was not, or would not be, applied.
           items:
             type: string
           type: array
         channels:
+          description: The channels that exist once the action is applied.
           items:
             $ref: '#/components/schemas/AlertmanagertypesListedNotificationChannel'
           nullable: true
           type: array
         defect:
-          $ref: '#/components/schemas/AlertmanagertypesChannelDefect'
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesChannelDefect'
+          description: Why v2 cannot read the channel; none when it is readable.
         detail:
+          description: A human-readable explanation of the defect.
           type: string
         id:
+          description: The UUID of the diagnosed channel.
           type: string
       required:
       - id
@@ -664,18 +802,27 @@ components:
     AlertmanagertypesChannelSlackAction:
       properties:
         confirm:
-          $ref: '#/components/schemas/AlertmanagertypesChannelSlackConfirmation'
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesChannelSlackConfirmation'
+          description: A confirmation dialog shown before the action runs.
         name:
+          description: The action name Slack posts back for a message button; required
+            unless url is set.
           type: string
         style:
+          description: 'The button style: default, primary or danger.'
           type: string
         text:
+          description: The button label.
           type: string
         type:
+          description: The Slack action type, normally button.
           type: string
         url:
+          description: The link the button opens; required unless name is set.
           type: string
         value:
+          description: The value Slack posts back with a message button.
           type: string
       required:
       - type
@@ -684,36 +831,59 @@ components:
     AlertmanagertypesChannelSlackConfig:
       properties:
         actions:
+          description: Attachment buttons; each requires type and text plus url or
+            name.
           items:
             $ref: '#/components/schemas/AlertmanagertypesChannelSlackAction'
           nullable: true
           type: array
         apiUrl:
+          description: The Slack incoming webhook URL. A secret; returned only by
+            a fetch by ID.
           format: password
           type: string
         channel:
+          description: 'The channel or user to post to, such as #alerts; empty uses
+            the webhook default.'
           type: string
         color:
+          description: Alertmanager template for the attachment color; defaults to
+            the Alertmanager Slack default.
           type: string
         fallback:
+          description: Alertmanager template for the plain-text summary shown where
+            attachments cannot render; defaults to the Alertmanager Slack default.
           type: string
         fields:
+          description: Attachment fields appended to the message; each requires title
+            and value.
           items:
             $ref: '#/components/schemas/AlertmanagertypesChannelSlackField'
           nullable: true
           type: array
         footer:
+          description: Alertmanager template for the attachment footer; defaults to
+            the Alertmanager Slack default.
           type: string
         pretext:
+          description: Alertmanager template for the text shown above the attachment;
+            defaults to the Alertmanager Slack default.
           type: string
         sendResolved:
+          description: Also notify when the alert resolves. Defaults to false.
           nullable: true
           type: boolean
         text:
+          description: Alertmanager template for the message body; defaults to the
+            Alertmanager Slack default.
           type: string
         title:
+          description: Alertmanager template for the message title; defaults to the
+            Alertmanager Slack default.
           type: string
         titleLink:
+          description: Alertmanager template for the link the title opens; defaults
+            to the Alertmanager Slack default.
           type: string
       required:
       - apiUrl
@@ -721,12 +891,16 @@ components:
     AlertmanagertypesChannelSlackConfirmation:
       properties:
         dismissText:
+          description: The label of the cancel button.
           type: string
         okText:
+          description: The label of the confirm button.
           type: string
         text:
+          description: The dialog body.
           type: string
         title:
+          description: The dialog title.
           type: string
       required:
       - text
@@ -734,11 +908,14 @@ components:
     AlertmanagertypesChannelSlackField:
       properties:
         short:
+          description: Render the field side by side with other short fields.
           nullable: true
           type: boolean
         title:
+          description: The field title.
           type: string
         value:
+          description: The field value; an Alertmanager template.
           type: string
       required:
       - title
@@ -772,18 +949,25 @@ components:
     AlertmanagertypesChannelWebhookConfig:
       properties:
         bearerToken:
+          description: The bearer token sent in the Authorization header; cannot be
+            combined with username or password.
           format: password
           type: string
         password:
+          description: The basic auth password; cannot be combined with bearerToken.
           format: password
           type: string
         sendResolved:
+          description: Also notify when the alert resolves. Defaults to true.
           nullable: true
           type: boolean
         url:
+          description: The endpoint that receives the Alertmanager webhook payload.
+            A secret; returned only by a fetch by ID.
           format: password
           type: string
         username:
+          description: The basic auth user; cannot be combined with bearerToken.
           type: string
       required:
       - url
@@ -796,12 +980,14 @@ components:
           format: date-time
           type: string
         fingerprint:
+          description: The alert fingerprint, a hash of its label set.
           type: string
         generatorURL:
           type: string
         labels:
           $ref: '#/components/schemas/ModelLabelSet'
         receivers:
+          description: The names of the receivers the alert routes to.
           items:
             type: string
           nullable: true
@@ -810,7 +996,10 @@ components:
           format: date-time
           type: string
         status:
-          $ref: '#/components/schemas/TypesAlertStatus'
+          allOf:
+          - $ref: '#/components/schemas/TypesAlertStatus'
+          description: The alert state and the silences and inhibitions suppressing
+            it.
       type: object
     AlertmanagertypesExpressionKind:
       enum:
@@ -820,17 +1009,25 @@ components:
     AlertmanagertypesGettableNotificationChannel:
       properties:
         config:
-          $ref: '#/components/schemas/AlertmanagertypesChannelConfig'
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesChannelConfig'
+          description: The provider kind and spec, credentials included.
         createdAt:
+          description: When the channel was created, as an RFC 3339 timestamp.
           format: date-time
           type: string
         displayName:
+          description: The free-text label shown in the UI.
           type: string
         id:
+          description: The channel UUID.
           type: string
         name:
+          description: The immutable DNS-1123 name that routing policies and rules
+            reference.
           type: string
         updatedAt:
+          description: When the channel was last updated, as an RFC 3339 timestamp.
           format: date-time
           type: string
       required:
@@ -886,93 +1083,135 @@ components:
     AlertmanagertypesGoogleChatReceiverConfig:
       properties:
         http_config:
-          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+          allOf:
+          - $ref: '#/components/schemas/ConfigHTTPClientConfig'
+          description: HTTP client settings for the webhook call.
         send_resolved:
           type: boolean
         text:
+          description: Alertmanager template for the message body.
           type: string
         title:
+          description: Alertmanager template for the message title.
           type: string
         webhook_url:
-          $ref: '#/components/schemas/ConfigSecretURL'
+          allOf:
+          - $ref: '#/components/schemas/ConfigSecretURL'
+          description: The Google Chat space webhook URL.
       type: object
     AlertmanagertypesIncidentIOReceiverConfig:
       properties:
         description:
+          description: Alertmanager template for the alert description.
           type: string
         http_config:
-          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+          allOf:
+          - $ref: '#/components/schemas/ConfigHTTPClientConfig'
+          description: HTTP client settings for the API call.
         metadata:
           additionalProperties:
             type: string
+          description: Extra event metadata keyed by name, merged over the group's
+            common labels; values are Alertmanager templates.
           type: object
         send_resolved:
           type: boolean
         title:
+          description: Alertmanager template for the alert title.
           type: string
         token:
+          description: The alert source secret token, without the Bearer prefix.
           type: string
         url:
+          description: The alert source HTTP alert events endpoint.
           type: string
       type: object
     AlertmanagertypesJSMOpsReceiverConfig:
       properties:
         api_key:
+          description: The JSM Ops integration API key.
           type: string
         description:
+          description: Alertmanager template for the alert description.
           type: string
         http_config:
-          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+          allOf:
+          - $ref: '#/components/schemas/ConfigHTTPClientConfig'
+          description: HTTP client settings for the API call.
         message:
+          description: Alertmanager template for the alert message.
           type: string
         priority:
+          description: The alert priority, P1 to P5.
           type: string
         send_resolved:
           type: boolean
         tags:
+          description: Comma-separated tags attached to the alert.
           type: string
       type: object
     AlertmanagertypesJiraReceiverConfig:
       properties:
         custom_fields:
           additionalProperties: {}
+          description: Extra issue fields keyed by Jira field ID.
           type: object
         description:
+          description: Alertmanager template for the issue description.
           type: string
         http_config:
-          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+          allOf:
+          - $ref: '#/components/schemas/ConfigHTTPClientConfig'
+          description: HTTP client settings; basic auth carries the account email
+            and API token.
         issue_type:
+          description: The issue type name.
           type: string
         labels:
+          description: Labels added to every issue.
           items:
             type: string
           type: array
         priority:
+          description: The priority name assigned to new issues.
           type: string
         project:
+          description: The key of the project issues are created in.
           type: string
         reopen_duration:
-          $ref: '#/components/schemas/ModelDuration'
+          allOf:
+          - $ref: '#/components/schemas/ModelDuration'
+          description: How long after resolution a firing alert reopens the issue;
+            a Prometheus duration, at least 1m.
         reopen_transition:
+          description: The transition applied when an alert fires again on a resolved
+            issue.
           type: string
         resolve_transition:
+          description: The transition applied when the alert resolves.
           type: string
         send_resolved:
           type: boolean
         site:
+          description: The Jira Cloud base URL.
           type: string
         summary:
+          description: Alertmanager template for the issue summary.
           type: string
         wont_fix_resolution:
+          description: The resolution name that stops an issue from being reopened.
           type: string
       type: object
     AlertmanagertypesListableNotificationChannel:
       properties:
         channels:
+          description: The channels on this page, without their configuration; fetch
+            a channel by ID for that.
           items:
             $ref: '#/components/schemas/AlertmanagertypesListedNotificationChannel'
           type: array
         total:
+          description: The number of channels the filter matches across all pages.
           format: int64
           type: integer
       required:
@@ -982,17 +1221,25 @@ components:
     AlertmanagertypesListedNotificationChannel:
       properties:
         createdAt:
+          description: When the channel was created, as an RFC 3339 timestamp.
           format: date-time
           type: string
         displayName:
+          description: The free-text label shown in the UI.
           type: string
         id:
+          description: The channel UUID.
           type: string
         kind:
-          $ref: '#/components/schemas/AlertmanagertypesChannelKind'
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesChannelKind'
+          description: The channel provider kind.
         name:
+          description: The immutable DNS-1123 name that routing policies and rules
+            reference.
           type: string
         updatedAt:
+          description: When the channel was last updated, as an RFC 3339 timestamp.
           format: date-time
           type: string
       required:
@@ -1183,12 +1430,21 @@ components:
     AlertmanagertypesPostableNotificationChannel:
       properties:
         config:
-          $ref: '#/components/schemas/AlertmanagertypesChannelConfig'
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesChannelConfig'
+          description: The provider kind and its spec.
         displayName:
+          description: The free-text label shown in the UI. Defaults to name; required
+            when generateName is true.
           type: string
         generateName:
+          description: Derive name from displayName plus a random suffix instead of
+            supplying it. Defaults to false.
           type: boolean
         name:
+          description: The immutable DNS-1123 label (lowercase letters, digits and
+            hyphens, at most 63 characters) that routing policies and rules reference.
+            Required unless generateName is true, in which case it must be empty.
           type: string
       required:
       - config
@@ -1340,6 +1596,8 @@ components:
     AlertmanagertypesRepairChannelParams:
       properties:
         apply:
+          description: Apply the diagnosed action; defaults to false, a dry run that
+            only reports it.
           type: boolean
       type: object
     AlertmanagertypesRepeatOn:
@@ -1405,14 +1663,20 @@ components:
     AlertmanagertypesTestableNotificationChannel:
       properties:
         config:
-          $ref: '#/components/schemas/AlertmanagertypesChannelConfig'
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesChannelConfig'
+          description: The replacement provider kind and spec. Name and displayName
+            are immutable and not part of the body.
       required:
       - config
       type: object
     AlertmanagertypesUpdatableNotificationChannel:
       properties:
         config:
-          $ref: '#/components/schemas/AlertmanagertypesChannelConfig'
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesChannelConfig'
+          description: The replacement provider kind and spec. Name and displayName
+            are immutable and not part of the body.
       required:
       - config
       type: object
@@ -22186,29 +22450,44 @@ paths:
         and offset-based pagination (`limit`/`offset`).
       operationId: ListNotificationChannels
       parameters:
-      - in: query
+      - description: Case-insensitive match on the display name; at most 1024 characters.
+        in: query
         name: query
         schema:
+          description: Case-insensitive match on the display name; at most 1024 characters.
           type: string
-      - in: query
+      - description: Only channels of this provider kind.
+        in: query
         name: kind
         schema:
-          $ref: '#/components/schemas/AlertmanagertypesChannelKind'
-      - in: query
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesChannelKind'
+          description: Only channels of this provider kind.
+      - description: 'The sort column: updated_at (default), created_at or name.'
+        in: query
         name: sort
         schema:
-          $ref: '#/components/schemas/AlertmanagertypesChannelListSort'
-      - in: query
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesChannelListSort'
+          description: 'The sort column: updated_at (default), created_at or name.'
+      - description: 'The sort order: asc or desc (default).'
+        in: query
         name: order
         schema:
-          $ref: '#/components/schemas/AlertmanagertypesChannelListOrder'
-      - in: query
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesChannelListOrder'
+          description: 'The sort order: asc or desc (default).'
+      - description: The page size; defaults to 20 and is capped at 200.
+        in: query
         name: limit
         schema:
+          description: The page size; defaults to 20 and is capped at 200.
           type: integer
-      - in: query
+      - description: The number of channels to skip; defaults to 0.
+        in: query
         name: offset
         schema:
+          description: The number of channels to skip; defaults to 0.
           type: integer
       responses:
         "200":
@@ -22265,6 +22544,141 @@ paths:
       requestBody:
         content:
           application/json:
+            examples:
+              email:
+                description: Sends to a comma-separated recipient list. SMTP transport
+                  comes from the deployment's global config, so only recipients and
+                  body are configurable.
+                summary: Email recipients
+                value:
+                  config:
+                    kind: email
+                    spec:
+                      headers:
+                        Subject: '[SigNoz] {{ .CommonLabels.alertname }}'
+                      to: oncall@example.com, platform@example.com
+                  displayName: Email on-call
+                  name: email-oncall
+              googlechat:
+                description: Posts to a Google Chat space through its webhook URL.
+                summary: Google Chat space webhook
+                value:
+                  config:
+                    kind: googlechat
+                    spec:
+                      webhookUrl: https://chat.googleapis.com/v1/spaces/AAAA0000000/messages?key=XXXX&token=XXXX
+                  displayName: Google Chat platform
+                  name: googlechat-platform
+              incidentio:
+                description: Sends alert events to an incident.io HTTP alert source.
+                  `url` and `token` are copied from the source's setup page; the token
+                  goes without the Bearer prefix.
+                summary: incident.io HTTP alert source
+                value:
+                  config:
+                    kind: incidentio
+                    spec:
+                      metadata:
+                        team: platform
+                      token: XXXXXXXXXXXXXXXXXXXXXXXX
+                      url: https://api.incident.io/v2/alert_events/http/00000000-0000-0000-0000-000000000000
+                  displayName: incident.io platform
+                  name: incidentio-platform
+              jira:
+                description: Creates one Jira Cloud issue per alert group and reopens
+                  it if the alert fires again within `reopenDuration`. Authenticates
+                  with an Atlassian account email and API token.
+                summary: Jira Cloud issues
+                value:
+                  config:
+                    kind: jira
+                    spec:
+                      apiToken: XXXXXXXXXXXXXXXXXXXXXXXX
+                      email: oncall@example.com
+                      issueType: Bug
+                      labels:
+                      - signoz
+                      - alert
+                      project: OPS
+                      reopenDuration: 3d
+                      site: https://example.atlassian.net
+                  displayName: Jira platform
+                  name: jira-platform
+              jsmops:
+                description: Creates JSM Ops alerts through an integration API key.
+                  JSM Ops speaks the Opsgenie alert API, so `priority` takes P1 to
+                  P5.
+                summary: Jira Service Management Ops
+                value:
+                  config:
+                    kind: jsmops
+                    spec:
+                      apiKey: 00000000-0000-0000-0000-000000000000
+                      priority: P1
+                      tags: signoz,platform
+                  displayName: JSM Ops on-call
+                  name: jsmops-oncall
+              msteams:
+                description: Posts an adaptive card to a Teams channel through an
+                  incoming webhook.
+                summary: Microsoft Teams incoming webhook
+                value:
+                  config:
+                    kind: msteams
+                    spec:
+                      webhookUrl: https://example.webhook.office.com/webhookb2/00000000-0000-0000-0000-000000000000
+                  displayName: Teams platform
+                  name: msteams-platform
+              opsgenie:
+                description: Creates Opsgenie alerts through an API integration key,
+                  pinned to priority P2.
+                summary: Opsgenie API integration
+                value:
+                  config:
+                    kind: opsgenie
+                    spec:
+                      apiKey: 00000000-0000-0000-0000-000000000000
+                      priority: P2
+                  displayName: Opsgenie SRE
+                  name: opsgenie-sre
+              pagerduty:
+                description: Creates PagerDuty incidents through an Events API v2
+                  integration key.
+                summary: PagerDuty Events API v2
+                value:
+                  config:
+                    kind: pagerduty
+                    spec:
+                      routingKey: R0000000000000000000000000000000
+                      severity: critical
+                  displayName: PagerDuty on-call
+                  name: pagerduty-oncall
+              slack:
+                description: Posts to a Slack channel through an incoming webhook.
+                  `sendResolved` is off by default for Slack, so it is turned on here.
+                summary: Slack incoming webhook
+                value:
+                  config:
+                    kind: slack
+                    spec:
+                      apiUrl: https://hooks.slack.com/services/T000/B000/XXXXXXXX
+                      channel: '#alerts-platform'
+                      sendResolved: true
+                  displayName: Slack platform
+                  name: slack-platform
+              webhook_bearer:
+                description: Delivers the Alertmanager webhook payload to an HTTP
+                  endpoint. Use either `bearerToken` or `username`/`password`, never
+                  both.
+                summary: Webhook with a bearer token
+                value:
+                  config:
+                    kind: webhook
+                    spec:
+                      bearerToken: 00000000-0000-0000-0000-000000000000
+                      url: https://alerts.example.com/signoz
+                  displayName: Incident bot webhook
+                  name: webhook-incident-bot
             schema:
               $ref: '#/components/schemas/AlertmanagertypesPostableNotificationChannel'
       responses:
@@ -22454,6 +22868,28 @@ paths:
       requestBody:
         content:
           application/json:
+            examples:
+              slack_rotate_webhook:
+                description: Replaces the stored configuration in full; every field
+                  not sent falls back to its default.
+                summary: Replace a Slack webhook URL
+                value:
+                  config:
+                    kind: slack
+                    spec:
+                      apiUrl: https://hooks.slack.com/services/T000/B000/XXXXXXXX
+                      channel: '#alerts-platform'
+                      sendResolved: true
+              switch_to_pagerduty:
+                description: The kind may change on update, replacing the channel's
+                  notifier configuration while its name and references stay.
+                summary: Change the kind to PagerDuty
+                value:
+                  config:
+                    kind: pagerduty
+                    spec:
+                      routingKey: R0000000000000000000000000000000
+                      severity: critical
             schema:
               $ref: '#/components/schemas/AlertmanagertypesUpdatableNotificationChannel'
       responses:
@@ -22522,9 +22958,13 @@ paths:
         by default the response only shows what would happen.'
       operationId: RepairNotificationChannel
       parameters:
-      - in: query
+      - description: Apply the diagnosed action; defaults to false, a dry run that
+          only reports it.
+        in: query
         name: apply
         schema:
+          description: Apply the diagnosed action; defaults to false, a dry run that
+            only reports it.
           type: boolean
       - in: path
         name: id
@@ -22600,6 +23040,24 @@ paths:
       requestBody:
         content:
           application/json:
+            examples:
+              slack:
+                summary: Test a Slack webhook
+                value:
+                  config:
+                    kind: slack
+                    spec:
+                      apiUrl: https://hooks.slack.com/services/T000/B000/XXXXXXXX
+                      channel: '#alerts-platform'
+                      sendResolved: true
+              webhook:
+                summary: Test a webhook endpoint
+                value:
+                  config:
+                    kind: webhook
+                    spec:
+                      bearerToken: 00000000-0000-0000-0000-000000000000
+                      url: https://alerts.example.com/signoz
             schema:
               $ref: '#/components/schemas/AlertmanagertypesTestableNotificationChannel'
       responses:
