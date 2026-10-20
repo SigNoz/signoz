@@ -10,7 +10,6 @@ import {
 	userEvent,
 	waitFor,
 } from 'tests/test-utils';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { pipelineApiResponseMockData } from '../mocks/pipeline';
 import PipelineListsView from '../PipelineListsView';
@@ -85,7 +84,7 @@ jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
 }));
 
 const BASE_URL = ENVIRONMENT.baseURL;
-const attributeKeysURL = `${BASE_URL}/api/v3/filter_suggestions`;
+const fieldKeysURL = `${BASE_URL}/api/v1/fields/keys`;
 
 describe('PipelinePage container test', () => {
 	beforeAll(() => {
@@ -339,42 +338,41 @@ describe('PipelinePage container test', () => {
 		expect(screen.queryAllByText('source = nginx')).toHaveLength(2);
 
 		server.use(
-			rest.get(attributeKeysURL, (_req, res, ctx) =>
+			rest.get(fieldKeysURL, (_req, res, ctx) =>
 				res(
 					ctx.status(200),
 					ctx.json({
 						status: 'success',
 						data: {
-							attributes: [
-								{
-									key: 'otelServiceName',
-									dataType: DataTypes.String,
-									type: 'tag',
-									isColumn: false,
-									isJSON: false,
-								},
-								{
-									key: 'service.name',
-									dataType: DataTypes.String,
-									type: 'resource',
-									isColumn: false,
-									isJSON: false,
-								},
-								{
-									key: 'service.instance.id',
-									dataType: DataTypes.String,
-									type: 'resource',
-									isColumn: false,
-									isJSON: false,
-								},
-								{
-									key: 'service.name',
-									dataType: DataTypes.String,
-									type: 'tag',
-									isColumn: false,
-									isJSON: false,
-								},
-							],
+							complete: true,
+							keys: {
+								otelServiceName: [
+									{
+										name: 'otelServiceName',
+										fieldContext: 'attribute',
+										fieldDataType: 'string',
+									},
+								],
+								'service.name': [
+									{
+										name: 'service.name',
+										fieldContext: 'resource',
+										fieldDataType: 'string',
+									},
+									{
+										name: 'service.name',
+										fieldContext: 'attribute',
+										fieldDataType: 'string',
+									},
+								],
+								'service.instance.id': [
+									{
+										name: 'service.instance.id',
+										fieldContext: 'resource',
+										fieldDataType: 'string',
+									},
+								],
+							},
 						},
 					}),
 				),
