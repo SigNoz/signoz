@@ -86,15 +86,25 @@ reasons that have nothing to do with the change:
 - hover or active styling from where the pointer happened to rest
 - a late-loading font or image shifting a line of text
 
-Do not argue about these one at a time. **Measure them**: capture the same commit
-twice, diff those two runs, and pass the result to the real diff.
+Do not argue about these one at a time. **Measure them**: shoot the same commit
+twice and diff those two runs against each other. Anything that moves there moved
+for no reason, so it is noise.
+
+Do it the cheap way, after the real diff rather than before. The real diff tells
+you which handful of pairs moved, and those are the only ones worth measuring:
 
 ```
-capture <storybook> --name-run noise-a
-capture <storybook> --name-run noise-b     # same tree, fresh server
-diff noise-a noise-b --name-diff noise
-diff <baseline> <after> --noise noise
+diff <baseline> <after>                              # see what moved
+capture <storybook> --name-run noise-b \
+  --stories "<the ids that moved>"                   # a second shot of just those
+diff <after> noise-b --name-diff noise               # what moved for no reason
+diff <baseline> <after> --noise noise                # mark those flaky
 ```
+
+A handful of stories takes a couple of minutes. Shooting the whole suite twice
+takes as long as the diff itself and tells you nothing extra about the pairs you
+are reviewing, so keep that for the one time you want the repo's overall
+flakiness, such as when setting a CI threshold.
 
 Pairs that moved in the noise run are marked flaky in the real diff, and the
 viewer's **hide flaky** box removes them. `--fail-over <px>` then exits non-zero
@@ -148,7 +158,7 @@ eye.
 - [ ] one capture per ref, each from its own freshly started Storybook
 - [ ] `--theme dark,light` on every capture
 - [ ] baseline is the merge-base
-- [ ] a noise-floor diff captured and passed as `--noise`
+- [ ] the pairs that moved re-shot as a noise floor and passed as `--noise`
 - [ ] every non-flaky pair opened and explained, not inferred from its size
 - [ ] the pairs that matter tagged, with a note
 - [ ] exported and hosted, and the link in the PR body
