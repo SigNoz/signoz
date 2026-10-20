@@ -11059,8 +11059,7 @@ export enum RuletypesThresholdBasicDTOKind {
 /**
  * The basic threshold specification (array of thresholds).
  */
-export type RuletypesThresholdBasicDTOSpec =
-	RuletypesBasicRuleThresholdsDTO | null;
+export type RuletypesThresholdBasicDTOSpec = RuletypesBasicRuleThresholdsDTO | null;
 
 export interface RuletypesThresholdBasicDTO {
 	/**
