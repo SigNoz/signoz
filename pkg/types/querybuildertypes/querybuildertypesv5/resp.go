@@ -229,6 +229,7 @@ func (Label) PrepareJSONSchema(s *jsonschema.Schema) error {
 	}
 
 	value := jsonschema.Schema{}
+	value.Description = propertyDescription(s, "value")
 	value.OneOf = []jsonschema.SchemaOrBool{
 		jsonschema.String.ToSchemaOrBool(),
 		jsonschema.Number.ToSchemaOrBool(),

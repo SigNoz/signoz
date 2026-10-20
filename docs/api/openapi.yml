@@ -3716,14 +3716,15 @@ components:
           type: string
         limit:
           description: The maximum number of rows for raw requests, or of series or
-            rows for grouped aggregations, keeping the top entries by order. Unlimited
-            when 0.
+            rows for grouped aggregations, keeping the top entries by order. When
+            0, aggregations are unlimited while raw requests ordered by timestamp
+            return a page of 10000 rows; follow nextCursor for the rest.
           type: integer
         limitBy:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5LimitBy'
-          description: Applies limit within each distinct combination of the given
-            group-by keys instead of across the whole result.
+          description: Reserved for applying limit within each combination of the
+            given group-by keys. Currently stored but ignored by query execution.
         name:
           description: The unique name of the query, such as A or B; formulas, trace
             operators and selectedQueryName refer to it.
@@ -3755,6 +3756,8 @@ components:
           nullable: true
           type: array
         signal:
+          description: 'The telemetry signal to query: traces, logs or metrics. It
+            selects the aggregation shape and is required for builder_query.'
           enum:
           - traces
           type: string
@@ -8503,9 +8506,10 @@ components:
     Querybuildertypesv5FormatOptions:
       properties:
         fillGaps:
-          description: When true, time_series results get a zero value for every missing
-            step of additive aggregations such as count, count_distinct, sum and rate;
-            other aggregations keep their gaps. Defaults to false.
+          description: When true, every builder query and formula in a time_series
+            result gets a zero value for each missing step, whatever its aggregation,
+            so averages and percentiles read as zero where no data exists. PromQL
+            and ClickHouse SQL queries keep their gaps. Defaults to false.
           type: boolean
         formatTableResultForUI:
           description: When true, scalar results from several queries are merged into
@@ -8535,6 +8539,8 @@ components:
             such as z_score_threshold or seasonality for anomaly.
           type: string
         value:
+          description: The argument value as a number, string or boolean, for example
+            the threshold for cutOffMin or the duration for timeShift.
           oneOf:
           - type: number
           - type: string
@@ -8606,6 +8612,7 @@ components:
           - $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
           description: The group-by field this label value belongs to.
         value:
+          description: The label value as a string, number or boolean.
           oneOf:
           - type: string
           - type: number
@@ -8663,8 +8670,10 @@ components:
         comparisonSpaceAggregationParam:
           allOf:
           - $ref: '#/components/schemas/MetrictypesComparisonSpaceAggregationParam'
-          description: The operator and threshold for comparison space aggregations
-            that count series meeting a condition; ignored otherwise.
+          description: 'Histogram metrics with spaceAggregation count only: the comparison
+            operator and bucket bound used to estimate how many observations fall
+            at or below, or above, the threshold. Ignored for other metric types and
+            aggregations.'
         metricName:
           description: The name of the metric to query, for example k8s.pod.cpu_request_utilization.
           type: string
@@ -8889,14 +8898,15 @@ components:
           type: string
         limit:
           description: The maximum number of rows for raw requests, or of series or
-            rows for grouped aggregations, keeping the top entries by order. Unlimited
-            when 0.
+            rows for grouped aggregations, keeping the top entries by order. When
+            0, aggregations are unlimited while raw requests ordered by timestamp
+            return a page of 10000 rows; follow nextCursor for the rest.
           type: integer
         limitBy:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5LimitBy'
-          description: Applies limit within each distinct combination of the given
-            group-by keys instead of across the whole result.
+          description: Reserved for applying limit within each combination of the
+            given group-by keys. Currently stored but ignored by query execution.
         name:
           description: The unique name of the query, such as A or B; formulas, trace
             operators and selectedQueryName refer to it.
@@ -8928,6 +8938,8 @@ components:
           nullable: true
           type: array
         signal:
+          description: 'The telemetry signal to query: traces, logs or metrics. It
+            selects the aggregation shape and is required for builder_query.'
           enum:
           - logs
           type: string
@@ -8999,14 +9011,15 @@ components:
           type: string
         limit:
           description: The maximum number of rows for raw requests, or of series or
-            rows for grouped aggregations, keeping the top entries by order. Unlimited
-            when 0.
+            rows for grouped aggregations, keeping the top entries by order. When
+            0, aggregations are unlimited while raw requests ordered by timestamp
+            return a page of 10000 rows; follow nextCursor for the rest.
           type: integer
         limitBy:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5LimitBy'
-          description: Applies limit within each distinct combination of the given
-            group-by keys instead of across the whole result.
+          description: Reserved for applying limit within each combination of the
+            given group-by keys. Currently stored but ignored by query execution.
         name:
           description: The unique name of the query, such as A or B; formulas, trace
             operators and selectedQueryName refer to it.
@@ -9038,6 +9051,8 @@ components:
           nullable: true
           type: array
         signal:
+          description: 'The telemetry signal to query: traces, logs or metrics. It
+            selects the aggregation shape and is required for builder_query.'
           enum:
           - metrics
           type: string
@@ -9109,14 +9124,15 @@ components:
           type: string
         limit:
           description: The maximum number of rows for raw requests, or of series or
-            rows for grouped aggregations, keeping the top entries by order. Unlimited
-            when 0.
+            rows for grouped aggregations, keeping the top entries by order. When
+            0, aggregations are unlimited while raw requests ordered by timestamp
+            return a page of 10000 rows; follow nextCursor for the rest.
           type: integer
         limitBy:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5LimitBy'
-          description: Applies limit within each distinct combination of the given
-            group-by keys instead of across the whole result.
+          description: Reserved for applying limit within each combination of the
+            given group-by keys. Currently stored but ignored by query execution.
         name:
           description: The unique name of the query, such as A or B; formulas, trace
             operators and selectedQueryName refer to it.
@@ -9148,6 +9164,8 @@ components:
           nullable: true
           type: array
         signal:
+          description: 'The telemetry signal to query: traces, logs or metrics. It
+            selects the aggregation shape and is required for builder_query.'
           enum:
           - traces
           type: string
@@ -9671,6 +9689,8 @@ components:
           description: 'The kind of dashboard variable: query, dynamic, custom or
             text.'
         value:
+          description: 'The selected value: a string, number or boolean, or a list
+            of them for multi-select variables. The string __all__ selects every value.'
           oneOf:
           - type: string
           - type: number
