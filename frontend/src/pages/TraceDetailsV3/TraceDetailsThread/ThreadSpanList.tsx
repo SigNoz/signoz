@@ -50,7 +50,7 @@ function ThreadSpanList({
 	const components = useMemo(
 		() => ({
 			Header: (): JSX.Element | null =>
-				isFetchingPreviousPage ? (
+				hasPreviousPage || isFetchingPreviousPage ? (
 					<div className={styles.item}>
 						<ThreadPageLoader testId="thread-loading-previous" />
 					</div>
@@ -65,7 +65,7 @@ function ThreadSpanList({
 				</div>
 			),
 		}),
-		[isFetchingPreviousPage, isFetchingNextPage],
+		[hasPreviousPage, isFetchingPreviousPage, isFetchingNextPage],
 	);
 
 	return (
