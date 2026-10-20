@@ -24,7 +24,6 @@ import { fieldValuesResponse } from '@/storybook/msw/__story_mockdata__/fields';
 import {
 	EXCEPTION_CATALOGUE_SIZE,
 	EXCEPTION_QUICK_FILTER_CAP,
-	exceptionAttributeKeysResponse,
 	exceptionAttributeValuesResponse,
 	exceptionFieldKeysResponse,
 	exceptionQuickFiltersResponse,
@@ -58,7 +57,7 @@ export const exceptionsMocks = defineStoryMocks({
 		filterKeys: choiceControl<ResponseState>('Filter keys', {
 			group: FILTERS,
 			description:
-				'How `/autocomplete/attribute_keys` answers when the resource filter opens, apart from the page-wide Data control.',
+				'How `/fields/keys` answers when the resource filter opens, apart from the page-wide Data control.',
 			options: RESPONSE_STATES,
 			value: 'loaded',
 		}),
@@ -95,7 +94,7 @@ export const exceptionsMocks = defineStoryMocks({
 
 		rest.get(
 			'http://localhost/api/v1/fields/keys',
-			response.json((req) =>
+			respondWith(values.filterKeys, (req) =>
 				exceptionFieldKeysResponse(req.url.searchParams.get('searchText')),
 			),
 		),
@@ -106,23 +105,6 @@ export const exceptionsMocks = defineStoryMocks({
 				fieldValuesResponse(
 					exceptionAttributeValuesResponse(req.url.searchParams.get('name'), null)
 						.data.stringAttributeValues ?? [],
-				),
-			),
-		),
-
-		rest.get(
-			'http://localhost/api/v3/autocomplete/attribute_keys',
-			respondWith(values.filterKeys, (req) =>
-				exceptionAttributeKeysResponse(req.url.searchParams.get('searchText')),
-			),
-		),
-
-		rest.get(
-			'http://localhost/api/v3/autocomplete/attribute_values',
-			response.json((req) =>
-				exceptionAttributeValuesResponse(
-					req.url.searchParams.get('attributeKey'),
-					req.url.searchParams.get('searchText'),
 				),
 			),
 		),

@@ -17,7 +17,6 @@ import type {
 import {
 	type BaseAutocompleteData,
 	DataTypes,
-	type IQueryAutocompleteResponse,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import type { Exception, Order, OrderBy } from 'types/api/errors/getAll';
 import type { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
@@ -310,21 +309,6 @@ const ATTRIBUTE_KEYS: BaseAutocompleteData[] = [
 	{ key: 'k8s.cluster.name', dataType: DataTypes.String, type: 'resource' },
 	{ key: 'cloud.region', dataType: DataTypes.String, type: 'resource' },
 ];
-
-export const exceptionAttributeKeysResponse = (
-	searchText: string | null,
-): { status: string; data: IQueryAutocompleteResponse } => {
-	const search = (searchText ?? '').toLowerCase();
-
-	return {
-		status: 'success',
-		data: {
-			attributeKeys: ATTRIBUTE_KEYS.filter(({ key }) =>
-				key.toLowerCase().includes(search),
-			),
-		},
-	};
-};
 
 /** The quick filter settings panel lists its "other filters" from `/fields/keys`. */
 export const exceptionFieldKeysResponse = (

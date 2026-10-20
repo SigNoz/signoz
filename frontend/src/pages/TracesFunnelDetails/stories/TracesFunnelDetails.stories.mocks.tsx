@@ -3,15 +3,19 @@
  * Do not hand-edit: regenerate instead.
  */
 
+import {
+	TelemetrytypesFieldContextDTO,
+	TelemetrytypesSignalDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
 import { rest } from 'msw';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 import {
-	attributeKeysResponse,
-	attributeValuesResponse,
-} from '@/storybook/msw/__story_mockdata__/attributes';
+	fieldKeysResponse,
+	fieldValuesResponse,
+} from '@/storybook/msw/__story_mockdata__/fields';
 
 import {
 	FUNNEL_ID,
@@ -41,13 +45,9 @@ const CONVERSION: Record<DropOff, number> = {
 
 const ENTERED = 24_000;
 
-const STEP_FILTER_KEYS = [
-	'service.name',
-	'name',
-	'http.status_code',
-	'deployment.environment',
-	'hasError',
-];
+const STEP_RESOURCE_KEYS = ['service.name', 'deployment.environment'];
+
+const STEP_ATTRIBUTE_KEYS = ['name', 'http.status_code', 'hasError'];
 
 const STEP_FILTER_VALUES: Record<string, string[]> = {
 	'service.name': ['frontend', 'checkout', 'payment', 'shipping'],
@@ -115,20 +115,44 @@ export const tracesFunnelDetailsMocks = defineStoryMocks({
 				'http://localhost/api/v1/trace-funnels/analytics/error-traces',
 				response.json(() => funnelErrorTracesResponse(values.traces)),
 			),
-			// The `Where` box on every step is the trace query builder, which reads
-			// its suggestions as soon as the step renders.
+			// The `Where` box on every step reads its suggestions as soon as the step
+			// renders, and the service and span name selects read `service.name` and
+			// `name` from the same values endpoint.
 			rest.get(
-				'http://localhost/api/v3/autocomplete/attribute_keys',
-				response.json(() => attributeKeysResponse(STEP_FILTER_KEYS)),
+				'http://localhost/api/v1/fields/keys',
+				response.json(() => {
+					const signal = TelemetrytypesSignalDTO.traces;
+					const resource = fieldKeysResponse(STEP_RESOURCE_KEYS, {
+						signal,
+						fieldContext: TelemetrytypesFieldContextDTO.resource,
+					});
+					const attribute = fieldKeysResponse(STEP_ATTRIBUTE_KEYS, {
+						signal,
+						fieldContext: TelemetrytypesFieldContextDTO.attribute,
+					});
+
+					return {
+						...resource,
+						data: {
+							...resource.data,
+							keys: { ...resource.data.keys, ...attribute.data.keys },
+						},
+					};
+				}),
 			),
 			rest.get(
-				'http://localhost/api/v3/autocomplete/attribute_values',
-				response.json((req) =>
-					attributeValuesResponse(
-						STEP_FILTER_VALUES[req.url.searchParams.get('attributeKey') ?? ''] ?? [],
-						req.url.searchParams.get('searchText') ?? '',
-					),
-				),
+				'http://localhost/api/v1/fields/values',
+				response.json((req) => {
+					const searchText = (
+						req.url.searchParams.get('searchText') ?? ''
+					).toLowerCase();
+
+					return fieldValuesResponse(
+						(STEP_FILTER_VALUES[req.url.searchParams.get('name') ?? ''] ?? []).filter(
+							(value) => value.toLowerCase().includes(searchText),
+						),
+					);
+				}),
 			),
 		];
 	},
