@@ -11,25 +11,17 @@ export interface NotificationChannelPermissions {
 	canRead: boolean;
 	canUpdate: boolean;
 	canDelete: boolean;
-	/** Per the authz guide, an edit affordance needs `read` as well as `update`. */
 	canEdit: boolean;
 	isLoading: boolean;
-	/**
-	 * The check itself failed. Callers should fall open — behave as before authz
-	 * and let the API decide — rather than read an outage as a denial.
-	 */
+	/** The check failed: callers fall open and let the API decide. */
 	hasError: boolean;
 	readPermission: BrandedPermission;
 	updatePermission: BrandedPermission;
 	deletePermission: BrandedPermission;
-	/** `[read, update]`, so a denial names both. */
 	editChecks: BrandedPermission[];
 }
 
-/**
- * Resource-level notification channel permissions. Pass `enabled: false` while
- * the id is unknown, so no check fires against an empty selector.
- */
+/** Pass `enabled: false` while the id is unknown, so no check fires against an empty selector. */
 export function useNotificationChannelPermissions(
 	channelId: string,
 	options?: { enabled?: boolean },
