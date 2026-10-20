@@ -9947,15 +9947,26 @@ components:
     RuletypesAlertCompositeQuery:
       properties:
         panelType:
-          $ref: '#/components/schemas/RuletypesPanelType'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesPanelType'
+          description: 'The panel the UI renders the queries with: graph, table or
+            value. Use graph for alerts.'
         queries:
+          description: 'The queries to evaluate, at least one. Every envelope type
+            must match queryType: builder_query and builder_formula for builder, promql
+            for promql, clickhouse_sql for clickhouse_sql.'
           items:
             $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelope'
           nullable: true
           type: array
         queryType:
-          $ref: '#/components/schemas/RuletypesQueryType'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesQueryType'
+          description: 'The query language of every query: builder, promql or clickhouse_sql.'
         unit:
+          description: The unit of the query result, such as percent, ms or bytes.
+            Used to format values in notifications and to convert thresholds given
+            in a different targetUnit.
           type: string
       required:
       - queries
@@ -9982,25 +9993,44 @@ components:
     RuletypesBasicRuleThreshold:
       properties:
         channels:
+          description: Notification channel names alerts crossing this threshold are
+            sent to. Ignored when notificationSettings.usePolicy is true.
           items:
             type: string
           nullable: true
           type: array
         matchType:
-          $ref: '#/components/schemas/RuletypesMatchType'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesMatchType'
+          description: Which points in the window must satisfy op. Accepted as at_least_once,
+            all_the_times, on_average, in_total or last, their aliases avg and sum,
+            or the numeric codes 1 to 5.
         name:
+          description: The threshold name, conventionally critical, error, warning
+            or info. Alerts carry it as the threshold_name label.
           type: string
         op:
-          $ref: '#/components/schemas/RuletypesCompareOperator'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesCompareOperator'
+          description: How the value is compared with target. Accepted as above, below,
+            equal, not_equal, above_or_equal, below_or_equal or outside_bounds, their
+            symbols, or the numeric codes 1 to 7.
         recoveryTarget:
+          description: The value at which a firing alert resolves, in targetUnit.
+            Keeps an alert firing between target and recoveryTarget to avoid flapping;
+            null resolves at target.
           format: double
           nullable: true
           type: number
         target:
+          description: The value the query result is compared against, in targetUnit.
           format: double
           nullable: true
           type: number
         targetUnit:
+          description: The unit of target and recoveryTarget, such as percent or ms.
+            Converted to the query unit before comparison when the two differ; empty
+            means the query unit.
           type: string
       required:
       - name
@@ -10026,17 +10056,27 @@ components:
     RuletypesCumulativeSchedule:
       properties:
         day:
+          description: The day of the month of the reset boundary, 1 to 31. Required
+            for monthly.
           nullable: true
           type: integer
         hour:
+          description: The hour of the reset boundary, 0 to 23. Required for daily,
+            weekly and monthly.
           nullable: true
           type: integer
         minute:
+          description: The minute of the reset boundary, 0 to 59. Required for every
+            type.
           nullable: true
           type: integer
         type:
-          $ref: '#/components/schemas/RuletypesScheduleType'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesScheduleType'
+          description: 'How often the window resets: hourly, daily, weekly or monthly.'
         weekday:
+          description: The weekday of the reset boundary, 0 (Sunday) to 6 (Saturday).
+            Required for weekly.
           nullable: true
           type: integer
       required:
@@ -10045,10 +10085,17 @@ components:
     RuletypesCumulativeWindow:
       properties:
         frequency:
+          description: How often the rule is evaluated, as a Go duration such as 1m.
+            Must be positive.
           type: string
         schedule:
-          $ref: '#/components/schemas/RuletypesCumulativeSchedule'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesCumulativeSchedule'
+          description: The boundary the accumulation window starts from. Each evaluation
+            queries from the most recent boundary to now.
         timezone:
+          description: The IANA time zone the schedule is resolved in, such as UTC
+            or Asia/Kolkata.
           type: string
       required:
       - schedule
@@ -10101,15 +10148,20 @@ components:
     RuletypesGettableTestRule:
       properties:
         alertCount:
+          description: The number of alerts the rule would have fired on the most
+            recent evaluation.
           type: integer
         message:
+          description: A human readable summary of the test evaluation.
           type: string
       type: object
     RuletypesLabelPair:
       properties:
         key:
+          description: The label name.
           type: string
         value:
+          description: The label value.
           type: string
       required:
       - key
@@ -10131,28 +10183,41 @@ components:
     RuletypesListableRule:
       properties:
         alert:
+          description: The display name of the alert rule.
           type: string
         alertType:
-          $ref: '#/components/schemas/RuletypesAlertType'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesAlertType'
+          description: 'The signal the rule evaluates: METRIC_BASED_ALERT, TRACES_BASED_ALERT,
+            LOGS_BASED_ALERT, EXCEPTIONS_BASED_ALERT or AI_TRACES_BASED_ALERT.'
         createdAt:
           format: date-time
           type: string
         createdBy:
           type: string
         description:
+          description: A human readable description of what the rule monitors.
           type: string
         disabled:
+          description: Whether the rule is paused.
           type: boolean
         id:
+          description: The unique identifier of the rule.
           type: string
         labels:
           additionalProperties:
             type: string
+          description: The labels attached to alerts the rule fires.
           type: object
         ruleType:
-          $ref: '#/components/schemas/RuletypesRuleType'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesRuleType'
+          description: 'The evaluation strategy: threshold_rule, promql_rule or anomaly_rule.'
         state:
-          $ref: '#/components/schemas/RuletypesAlertState'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesAlertState'
+          description: 'The current evaluation state: inactive, pending, recovering,
+            firing, nodata or disabled.'
         updatedAt:
           format: date-time
           type: string
@@ -10177,18 +10242,24 @@ components:
     RuletypesListableRules:
       properties:
         labels:
+          description: Distinct label key and value pairs across the matching rules,
+            for building filters.
           items:
             $ref: '#/components/schemas/RuletypesLabelPair'
           type: array
         reservedKeywords:
+          description: The keys the query filter language reserves, which cannot be
+            used as label names in a query.
           items:
             type: string
           type: array
         rules:
+          description: The page of rules matching the filter.
           items:
             $ref: '#/components/schemas/RuletypesListableRule'
           type: array
         total:
+          description: The number of rules matching the filter across all pages.
           format: int64
           type: integer
       required:
@@ -10208,15 +10279,25 @@ components:
     RuletypesNotificationSettings:
       properties:
         groupBy:
+          description: Label names whose values group alerts into one notification,
+            such as service.name.
           items:
             type: string
           nullable: true
           type: array
         newGroupEvalDelay:
+          description: A grace period, as a Go duration such as 2m, during which a
+            newly seen label group is excluded from evaluation.
           type: string
         renotify:
-          $ref: '#/components/schemas/RuletypesRenotify'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesRenotify'
+          description: Whether and how often to re-send a notification for an alert
+            that stays active.
         usePolicy:
+          description: When true, alerts are routed by the organisation level notification
+            policies instead of the channels named on the thresholds. Defaults to
+            false.
           type: boolean
       type: object
     RuletypesPanelType:
@@ -10228,42 +10309,82 @@ components:
     RuletypesPostableRule:
       properties:
         alert:
+          description: The display name of the alert rule.
           type: string
         alertType:
-          $ref: '#/components/schemas/RuletypesAlertType'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesAlertType'
+          description: 'The signal the rule evaluates: METRIC_BASED_ALERT, TRACES_BASED_ALERT,
+            LOGS_BASED_ALERT, EXCEPTIONS_BASED_ALERT or AI_TRACES_BASED_ALERT.'
         annotations:
           additionalProperties:
             type: string
+          description: Free text attached to every alert, conventionally summary and
+            description. Values may use Go templates with $value, $threshold and $labels.
           type: object
         condition:
-          $ref: '#/components/schemas/RuletypesRuleCondition'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesRuleCondition'
+          description: The query to evaluate and the thresholds applied to its result.
         description:
+          description: A human readable description of what the rule monitors.
           type: string
         disabled:
+          description: Whether the rule is paused. A disabled rule is neither evaluated
+            nor notifies. Defaults to false.
           type: boolean
         evalWindow:
+          description: The lookback window as a Go duration such as 5m. Only read
+            when schemaVersion is v1, defaulting to 5m; v2alpha1 rules set it in evaluation.spec
+            instead.
           type: string
         evaluation:
-          $ref: '#/components/schemas/RuletypesEvaluationEnvelope'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesEvaluationEnvelope'
+          description: The evaluation window, as a kind and spec. Required when schemaVersion
+            is v2alpha1; derived from evalWindow and frequency for v1.
         frequency:
+          description: How often the rule is evaluated, as a Go duration such as 1m.
+            Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set
+            it in evaluation.spec instead.
           type: string
         labels:
           additionalProperties:
             type: string
+          description: Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*;
+            values may use Go templates such as {{$labels.service_name}}. severity
+            is the conventional routing label.
           type: object
         notificationSettings:
-          $ref: '#/components/schemas/RuletypesNotificationSettings'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesNotificationSettings'
+          description: Grouping, re-notification and routing behaviour. Required when
+            schemaVersion is v2alpha1; derived from the v1 fields otherwise.
         preferredChannels:
+          description: Notification channel names for schemaVersion v1 rules. Ignored
+            for v2alpha1, where each threshold carries its own channels.
           items:
             type: string
           type: array
         ruleType:
-          $ref: '#/components/schemas/RuletypesRuleType'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesRuleType'
+          description: 'The evaluation strategy: threshold_rule compares against thresholds,
+            promql_rule evaluates a PromQL expression, anomaly_rule scores deviation
+            from seasonal history. Defaults to threshold_rule for builder queries
+            and is forced to promql_rule for promql queries.'
         schemaVersion:
+          description: 'The rule payload schema: v1 (the default when omitted) uses
+            the flat condition fields, v2alpha1 uses condition.thresholds, evaluation
+            and notificationSettings.'
           type: string
         source:
+          description: The URL of the page the rule was created from. Informational;
+            it is not used for evaluation.
           type: string
         version:
+          description: The query payload version. Only v5 is accepted and it is filled
+            in when omitted.
           type: string
       required:
       - alert
@@ -10290,20 +10411,29 @@ components:
     RuletypesRenotify:
       properties:
         alertStates:
+          description: 'The alert states that are re-notified: firing, nodata or both.'
           items:
             $ref: '#/components/schemas/RuletypesAlertState'
           nullable: true
           type: array
         enabled:
+          description: Whether an active alert is re-sent after interval elapses.
+            When false an alert notifies once per firing.
           type: boolean
         interval:
+          description: The time between repeat notifications, as a Go duration such
+            as 4h. Must be positive when enabled is true.
           type: string
       type: object
     RuletypesRollingWindow:
       properties:
         evalWindow:
+          description: The sliding lookback window each evaluation queries, as a Go
+            duration such as 5m.
           type: string
         frequency:
+          description: How often the rule is evaluated, as a Go duration such as 1m.
+            Must be positive.
           type: string
       required:
       - evalWindow
@@ -10312,56 +10442,100 @@ components:
     RuletypesRule:
       properties:
         alert:
+          description: The display name of the alert rule.
           type: string
         alertType:
-          $ref: '#/components/schemas/RuletypesAlertType'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesAlertType'
+          description: 'The signal the rule evaluates: METRIC_BASED_ALERT, TRACES_BASED_ALERT,
+            LOGS_BASED_ALERT, EXCEPTIONS_BASED_ALERT or AI_TRACES_BASED_ALERT.'
         annotations:
           additionalProperties:
             type: string
+          description: Free text attached to every alert, conventionally summary and
+            description. Values may use Go templates with $value, $threshold and $labels.
           type: object
         condition:
-          $ref: '#/components/schemas/RuletypesRuleCondition'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesRuleCondition'
+          description: The query to evaluate and the thresholds applied to its result.
         createdAt:
           format: date-time
           type: string
         createdBy:
           type: string
         description:
+          description: A human readable description of what the rule monitors.
           type: string
         disabled:
+          description: Whether the rule is paused. A disabled rule is neither evaluated
+            nor notifies. Defaults to false.
           type: boolean
         evalWindow:
+          description: The lookback window as a Go duration such as 5m. Only read
+            when schemaVersion is v1, defaulting to 5m; v2alpha1 rules set it in evaluation.spec
+            instead.
           type: string
         evaluation:
-          $ref: '#/components/schemas/RuletypesEvaluationEnvelope'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesEvaluationEnvelope'
+          description: The evaluation window, as a kind and spec. Required when schemaVersion
+            is v2alpha1; derived from evalWindow and frequency for v1.
         frequency:
+          description: How often the rule is evaluated, as a Go duration such as 1m.
+            Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set
+            it in evaluation.spec instead.
           type: string
         id:
+          description: The unique identifier of the rule.
           type: string
         labels:
           additionalProperties:
             type: string
+          description: Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*;
+            values may use Go templates such as {{$labels.service_name}}. severity
+            is the conventional routing label.
           type: object
         notificationSettings:
-          $ref: '#/components/schemas/RuletypesNotificationSettings'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesNotificationSettings'
+          description: Grouping, re-notification and routing behaviour. Required when
+            schemaVersion is v2alpha1; derived from the v1 fields otherwise.
         preferredChannels:
+          description: Notification channel names for schemaVersion v1 rules. Ignored
+            for v2alpha1, where each threshold carries its own channels.
           items:
             type: string
           type: array
         ruleType:
-          $ref: '#/components/schemas/RuletypesRuleType'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesRuleType'
+          description: 'The evaluation strategy: threshold_rule compares against thresholds,
+            promql_rule evaluates a PromQL expression, anomaly_rule scores deviation
+            from seasonal history. Defaults to threshold_rule for builder queries
+            and is forced to promql_rule for promql queries.'
         schemaVersion:
+          description: 'The rule payload schema: v1 (the default when omitted) uses
+            the flat condition fields, v2alpha1 uses condition.thresholds, evaluation
+            and notificationSettings.'
           type: string
         source:
+          description: The URL of the page the rule was created from. Informational;
+            it is not used for evaluation.
           type: string
         state:
-          $ref: '#/components/schemas/RuletypesAlertState'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesAlertState'
+          description: 'The current evaluation state: inactive, pending, recovering,
+            firing, nodata or disabled.'
         updatedAt:
           format: date-time
           type: string
         updatedBy:
           type: string
         version:
+          description: The query payload version. Only v5 is accepted and it is filled
+            in when omitted.
           type: string
       required:
       - id
@@ -10374,34 +10548,70 @@ components:
     RuletypesRuleCondition:
       properties:
         absentFor:
+          description: How many minutes without data pass before the nodata alert
+            fires. Ignored unless alertOnAbsent is true.
           minimum: 0
           type: integer
         alertOnAbsent:
+          description: Whether to fire a nodata alert when the query returns no data.
+            Defaults to false.
           type: boolean
         algorithm:
+          description: 'anomaly_rule only: the anomaly detection algorithm. The supported
+            value is standard.'
           type: string
         compositeQuery:
-          $ref: '#/components/schemas/RuletypesAlertCompositeQuery'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesAlertCompositeQuery'
+          description: The queries whose result is compared against the thresholds.
         matchType:
-          $ref: '#/components/schemas/RuletypesMatchType'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesMatchType'
+          description: 'schemaVersion v1 only: which points in the window must satisfy
+            op. Accepted as at_least_once, all_the_times, on_average, in_total or
+            last, their aliases avg and sum, or the numeric codes 1 to 5. Required
+            for v1; v2alpha1 sets matchType on each threshold.'
         op:
-          $ref: '#/components/schemas/RuletypesCompareOperator'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesCompareOperator'
+          description: 'schemaVersion v1 only: how the value is compared with target.
+            Accepted as above, below, equal, not_equal, above_or_equal, below_or_equal
+            or outside_bounds, their symbols, or the numeric codes 1 to 7. Required
+            for v1; v2alpha1 sets op on each threshold.'
         requireMinPoints:
+          description: Whether a series is skipped until it has at least requiredNumPoints
+            points in the window. Defaults to false.
           type: boolean
         requiredNumPoints:
+          description: The minimum number of points a series needs before it is evaluated.
+            Must be greater than 0 when requireMinPoints is true.
           type: integer
         seasonality:
-          $ref: '#/components/schemas/RuletypesSeasonality'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesSeasonality'
+          description: 'anomaly_rule only: the seasonal period the history is compared
+            against, hourly, daily or weekly.'
         selectedQueryName:
+          description: The name of the query whose result is evaluated, such as A
+            or F1. Must match a query in compositeQuery. When omitted, F1 is used
+            if present, otherwise the enabled query with the highest name.
           type: string
         target:
+          description: 'schemaVersion v1 only: the value compared against, in targetUnit.
+            Required for v1; v2alpha1 sets target on each threshold.'
           format: double
           nullable: true
           type: number
         targetUnit:
+          description: 'schemaVersion v1 only: the unit of target, such as percent
+            or ms. Converted to compositeQuery.unit before comparison when the two
+            differ.'
           type: string
         thresholds:
-          $ref: '#/components/schemas/RuletypesRuleThresholdData'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesRuleThresholdData'
+          description: The thresholds to evaluate, as a kind and spec. Required when
+            schemaVersion is v2alpha1; derived from op, target and matchType for v1.
       required:
       - compositeQuery
       type: object
@@ -10444,12 +10654,21 @@ components:
     RuletypesRuleViewData:
       properties:
         order:
-          $ref: '#/components/schemas/RuletypesListOrder'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesListOrder'
+          description: 'The sort direction: asc or desc (the default).'
         query:
+          description: A filter expression over rule name, description, labels and
+            other fields, at most 1024 characters. Empty matches every rule.
           type: string
         sort:
-          $ref: '#/components/schemas/RuletypesListSort'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesListSort'
+          description: 'The field to sort by: updated_at (the default), created_at,
+            name, state or severity.'
         states:
+          description: 'Only return rules in these states: firing, pending, recovering,
+            inactive, nodata or disabled. Empty means every state.'
           items:
             type: string
           type: array
@@ -29234,31 +29453,53 @@ paths:
         for building filter suggestions.
       operationId: ListRulesV3
       parameters:
-      - in: query
+      - description: A filter expression over rule name, description, labels and other
+          fields, at most 1024 characters. Empty matches every rule.
+        in: query
         name: query
         schema:
+          description: A filter expression over rule name, description, labels and
+            other fields, at most 1024 characters. Empty matches every rule.
           type: string
-      - in: query
+      - description: 'Only return rules in these states: firing, pending, recovering,
+          inactive, nodata or disabled. Empty means every state.'
+        in: query
         name: states
         schema:
+          description: 'Only return rules in these states: firing, pending, recovering,
+            inactive, nodata or disabled. Empty means every state.'
           items:
             type: string
           type: array
-      - in: query
+      - description: 'The field to sort by: updated_at (the default), created_at,
+          name, state or severity.'
+        in: query
         name: sort
         schema:
-          $ref: '#/components/schemas/RuletypesListSort'
-      - in: query
+          allOf:
+          - $ref: '#/components/schemas/RuletypesListSort'
+          description: 'The field to sort by: updated_at (the default), created_at,
+            name, state or severity.'
+      - description: 'The sort direction: asc or desc (the default).'
+        in: query
         name: order
         schema:
-          $ref: '#/components/schemas/RuletypesListOrder'
-      - in: query
+          allOf:
+          - $ref: '#/components/schemas/RuletypesListOrder'
+          description: 'The sort direction: asc or desc (the default).'
+      - description: The page size, 1 to 200. Defaults to 20 and larger values are
+          clamped to 200.
+        in: query
         name: limit
         schema:
+          description: The page size, 1 to 200. Defaults to 20 and larger values are
+            clamped to 200.
           type: integer
-      - in: query
+      - description: The number of rules to skip before the page. Defaults to 0.
+        in: query
         name: offset
         schema:
+          description: The number of rules to skip before the page. Defaults to 0.
           type: integer
       responses:
         "200":
