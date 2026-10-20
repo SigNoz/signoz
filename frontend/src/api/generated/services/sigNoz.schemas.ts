@@ -2949,6 +2949,9 @@ export interface AuthtypesAttributeMappingDTO {
 	role?: string;
 }
 
+/**
+ * The kind of authn provider.
+ */
 export enum AuthtypesAuthDomainConfigSAMLDTOKind {
 	saml = 'saml',
 }
@@ -2976,11 +2979,18 @@ export interface AuthtypesAuthDomainConfigSAMLDTO {
 	/**
 	 * @type string
 	 * @enum saml
+	 * @description The kind of authn provider.
 	 */
 	kind: AuthtypesAuthDomainConfigSAMLDTOKind;
+	/**
+	 * @description The saml configuration.
+	 */
 	spec: AuthtypesSamlConfigDTO;
 }
 
+/**
+ * The kind of authn provider.
+ */
 export enum AuthtypesAuthDomainConfigGoogleDTOKind {
 	google = 'google',
 }
@@ -3029,11 +3039,18 @@ export interface AuthtypesAuthDomainConfigGoogleDTO {
 	/**
 	 * @type string
 	 * @enum google
+	 * @description The kind of authn provider.
 	 */
 	kind: AuthtypesAuthDomainConfigGoogleDTOKind;
+	/**
+	 * @description The google auth configuration.
+	 */
 	spec: AuthtypesGoogleConfigDTO;
 }
 
+/**
+ * The kind of authn provider.
+ */
 export enum AuthtypesAuthDomainConfigOIDCDTOKind {
 	oidc = 'oidc',
 }
@@ -3070,8 +3087,12 @@ export interface AuthtypesAuthDomainConfigOIDCDTO {
 	/**
 	 * @type string
 	 * @enum oidc
+	 * @description The kind of authn provider.
 	 */
 	kind: AuthtypesAuthDomainConfigOIDCDTOKind;
+	/**
+	 * @description The oidc configuration.
+	 */
 	spec: AuthtypesOIDCConfigDTO;
 }
 
@@ -4572,6 +4593,9 @@ export interface Querybuildertypesv5TraceAggregationDTO {
 	expression?: string;
 }
 
+/**
+ * How the upper bounds are spaced.
+ */
 export enum Querybuildertypesv5BucketOptionsLinearDTOKind {
 	linear = 'linear',
 }
@@ -4591,11 +4615,18 @@ export interface Querybuildertypesv5BucketOptionsLinearDTO {
 	/**
 	 * @type string
 	 * @enum linear
+	 * @description How the upper bounds are spaced.
 	 */
 	kind: Querybuildertypesv5BucketOptionsLinearDTOKind;
+	/**
+	 * @description The evenly spaced bucket specification.
+	 */
 	spec: Querybuildertypesv5LinearBucketsSpecDTO;
 }
 
+/**
+ * How the upper bounds are spaced.
+ */
 export enum Querybuildertypesv5BucketOptionsLogDTOKind {
 	log = 'log',
 }
@@ -4610,8 +4641,12 @@ export interface Querybuildertypesv5BucketOptionsLogDTO {
 	/**
 	 * @type string
 	 * @enum log
+	 * @description How the upper bounds are spaced.
 	 */
 	kind: Querybuildertypesv5BucketOptionsLogDTOKind;
+	/**
+	 * @description The logarithmic bucket specification.
+	 */
 	spec: Querybuildertypesv5LogBucketsSpecDTO;
 }
 
@@ -5834,26 +5869,40 @@ export type Querybuildertypesv5BuilderQuerySpecDTO =
 	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO
 	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO;
 
+/**
+ * The type of the query.
+ */
 export enum Querybuildertypesv5QueryEnvelopeBuilderDTOType {
 	builder_query = 'builder_query',
 }
 export interface Querybuildertypesv5QueryEnvelopeBuilderDTO {
+	/**
+	 * @description The builder query specification.
+	 */
 	spec?: Querybuildertypesv5BuilderQuerySpecDTO;
 	/**
 	 * @type string
 	 * @enum builder_query
+	 * @description The type of the query.
 	 */
 	type: Querybuildertypesv5QueryEnvelopeBuilderDTOType;
 }
 
+/**
+ * The type of the query.
+ */
 export enum Querybuildertypesv5QueryEnvelopeBuilderAIDTOType {
 	builder_ai_query = 'builder_ai_query',
 }
 export interface Querybuildertypesv5QueryEnvelopeBuilderAIDTO {
+	/**
+	 * @description The AI builder query specification.
+	 */
 	spec?: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO;
 	/**
 	 * @type string
 	 * @enum builder_ai_query
+	 * @description The type of the query.
 	 */
 	type: Querybuildertypesv5QueryEnvelopeBuilderAIDTOType;
 }
@@ -5891,14 +5940,21 @@ export interface Querybuildertypesv5QueryBuilderFormulaDTO {
 	order?: Querybuildertypesv5OrderByDTO[] | null;
 }
 
+/**
+ * The type of the query.
+ */
 export enum Querybuildertypesv5QueryEnvelopeFormulaDTOType {
 	builder_formula = 'builder_formula',
 }
 export interface Querybuildertypesv5QueryEnvelopeFormulaDTO {
+	/**
+	 * @description The formula specification.
+	 */
 	spec?: Querybuildertypesv5QueryBuilderFormulaDTO;
 	/**
 	 * @type string
 	 * @enum builder_formula
+	 * @description The type of the query.
 	 */
 	type: Querybuildertypesv5QueryEnvelopeFormulaDTOType;
 }
@@ -5961,14 +6017,21 @@ export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
 
+/**
+ * The type of the query.
+ */
 export enum Querybuildertypesv5QueryEnvelopeTraceOperatorDTOType {
 	builder_trace_operator = 'builder_trace_operator',
 }
 export interface Querybuildertypesv5QueryEnvelopeTraceOperatorDTO {
+	/**
+	 * @description The trace operator specification.
+	 */
 	spec?: Querybuildertypesv5QueryBuilderTraceOperatorDTO;
 	/**
 	 * @type string
 	 * @enum builder_trace_operator
+	 * @description The type of the query.
 	 */
 	type: Querybuildertypesv5QueryEnvelopeTraceOperatorDTOType;
 }
@@ -5997,14 +6060,21 @@ export interface Querybuildertypesv5PromQueryDTO {
 	step?: Querybuildertypesv5StepDTO;
 }
 
+/**
+ * The type of the query.
+ */
 export enum Querybuildertypesv5QueryEnvelopePromQLDTOType {
 	promql = 'promql',
 }
 export interface Querybuildertypesv5QueryEnvelopePromQLDTO {
+	/**
+	 * @description The PromQL query specification.
+	 */
 	spec?: Querybuildertypesv5PromQueryDTO;
 	/**
 	 * @type string
 	 * @enum promql
+	 * @description The type of the query.
 	 */
 	type: Querybuildertypesv5QueryEnvelopePromQLDTOType;
 }
@@ -6028,14 +6098,21 @@ export interface Querybuildertypesv5ClickHouseQueryDTO {
 	query?: string;
 }
 
+/**
+ * The type of the query.
+ */
 export enum Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType {
 	clickhouse_sql = 'clickhouse_sql',
 }
 export interface Querybuildertypesv5QueryEnvelopeClickHouseSQLDTO {
+	/**
+	 * @description The ClickHouse SQL query specification.
+	 */
 	spec?: Querybuildertypesv5ClickHouseQueryDTO;
 	/**
 	 * @type string
 	 * @enum clickhouse_sql
+	 * @description The type of the query.
 	 */
 	type: Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType;
 }
@@ -10722,6 +10799,9 @@ export interface RuletypesCumulativeWindowDTO {
 	timezone: string;
 }
 
+/**
+ * The kind of evaluation.
+ */
 export enum RuletypesEvaluationCumulativeDTOKind {
 	cumulative = 'cumulative',
 }
@@ -10729,11 +10809,18 @@ export interface RuletypesEvaluationCumulativeDTO {
 	/**
 	 * @type string
 	 * @enum cumulative
+	 * @description The kind of evaluation.
 	 */
 	kind: RuletypesEvaluationCumulativeDTOKind;
+	/**
+	 * @description The cumulative window evaluation specification.
+	 */
 	spec: RuletypesCumulativeWindowDTO;
 }
 
+/**
+ * The kind of evaluation.
+ */
 export enum RuletypesEvaluationRollingDTOKind {
 	rolling = 'rolling',
 }
@@ -10752,8 +10839,12 @@ export interface RuletypesEvaluationRollingDTO {
 	/**
 	 * @type string
 	 * @enum rolling
+	 * @description The kind of evaluation.
 	 */
 	kind: RuletypesEvaluationRollingDTOKind;
+	/**
+	 * @description The rolling window evaluation specification.
+	 */
 	spec: RuletypesRollingWindowDTO;
 }
 
@@ -10959,16 +11050,28 @@ export enum RuletypesSeasonalityDTO {
 	daily = 'daily',
 	weekly = 'weekly',
 }
+/**
+ * The kind of threshold.
+ */
 export enum RuletypesThresholdBasicDTOKind {
 	basic = 'basic',
 }
+/**
+ * The basic threshold specification (array of thresholds).
+ */
+export type RuletypesThresholdBasicDTOSpec = RuletypesBasicRuleThresholdsDTO | null;
+
 export interface RuletypesThresholdBasicDTO {
 	/**
 	 * @type string
 	 * @enum basic
+	 * @description The kind of threshold.
 	 */
 	kind: RuletypesThresholdBasicDTOKind;
-	spec: RuletypesBasicRuleThresholdsDTO | null;
+	/**
+	 * @description The basic threshold specification (array of thresholds).
+	 */
+	spec: RuletypesThresholdBasicDTOSpec;
 }
 
 export type RuletypesRuleThresholdDataDTO = RuletypesThresholdBasicDTO;
