@@ -30,5 +30,9 @@ function ChannelsNew(): JSX.Element {
 
 export default withAuthZPage(ChannelsNew, {
 	checks: [NotificationChannelCreatePermission],
-	fallbackOnLoading: <Skeleton active paragraph={{ rows: 8 }} />,
+	fallbackOnLoading: (
+		<div className={styles.loading}>
+			<Skeleton active paragraph={{ rows: 8 }} />
+		</div>
+	),
 });

@@ -30,3 +30,9 @@
 	padding: var(--spacing-4) 0;
 	border-top: 1px solid var(--l1-border);
 }
+
+// TODO: @AshwinBhatkal to be removed once textarea is in signoz ui components
+.fields :global(textarea:disabled) {
+	opacity: 0.5;
+	cursor: not-allowed;
+}

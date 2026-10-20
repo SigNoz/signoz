@@ -8,6 +8,7 @@ import {
 } from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
 
 import ChannelsEditPage from './ChannelsEditPage';
+import styles from './ChannelsEdit.module.scss';
 
 function ChannelsEdit(): JSX.Element {
 	const { pathname } = useLocation();
@@ -36,5 +37,9 @@ export default withAuthZPage(ChannelsEdit, {
 	preloadChecks: (_props, router) => [
 		buildNotificationChannelUpdatePermission(channelIdFromRoute(router)),
 	],
-	fallbackOnLoading: <Skeleton active paragraph={{ rows: 8 }} />,
+	fallbackOnLoading: (
+		<div className={styles.loading}>
+			<Skeleton active paragraph={{ rows: 8 }} />
+		</div>
+	),
 });

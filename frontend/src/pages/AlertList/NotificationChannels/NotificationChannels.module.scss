@@ -135,6 +135,10 @@
 	);
 }
 
+.guardInset {
+	margin-inline: var(--spacing-8);
+}
+
 .paginationContainer {
 	padding-right: var(--spacing-12);
 	height: 62px;

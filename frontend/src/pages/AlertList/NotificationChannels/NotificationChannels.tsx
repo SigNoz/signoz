@@ -15,6 +15,7 @@ import { useUrlSearchState } from 'hooks/useUrlSearchState';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { useNotificationChannelCollectionPermissions } from 'hooks/notificationChannels/useNotificationChannelCollectionPermissions';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
+import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
 import {
 	NotificationChannelCreatePermission,
 	NotificationChannelListPermission,
@@ -220,7 +221,17 @@ function NotificationChannels(): JSX.Element {
 				<AuthZGuardContent
 					checks={LIST_CHECKS}
 					onFailRenderContent={false}
-					fallbackOnLoading={<Skeleton active paragraph={{ rows: 6 }} />}
+					fallback={({ deniedPermissions }): JSX.Element => (
+						<PermissionDeniedCallout
+							deniedPermissions={deniedPermissions}
+							className={styles.guardInset}
+						/>
+					)}
+					fallbackOnLoading={
+						<div className={styles.guardInset}>
+							<Skeleton active paragraph={{ rows: 6 }} />
+						</div>
+					}
 				>
 					{isError ? (
 						<ErrorEmptyState
