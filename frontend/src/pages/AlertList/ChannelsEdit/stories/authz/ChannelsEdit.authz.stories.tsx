@@ -1,11 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor, within } from 'storybook/test';
+import { expect, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	CREATE,
+	DELETE,
 	expectDisabled,
 	NOTIFICATION_CHANNEL,
 	PAGE_LOAD,
@@ -88,6 +89,23 @@ export const NoCreate: Story = {
 	},
 };
 
+/**
+ * The viewer: `read` and nothing else. The page opens, every field is off, and
+ * both Save and Test are locked rather than hidden.
+ */
+export const ReadOnly: Story = {
+	args: { revoked: [UPDATE, CREATE, DELETE] },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		await expectDisabled(
+			await canvas.findByTestId('save-channel-button', undefined, PAGE_LOAD),
+		);
+		await expectDisabled(await canvas.findByTestId('test-channel-button'));
+		await expectDisabled(await canvas.findByTestId('slack-channel-textbox'));
+	},
+};
+
 /** No channel permission at all: the page is denied before the form exists. */
 export const NoChannelAccess: Story = {
 	args: { revoked: NOTIFICATION_CHANNEL },
@@ -123,6 +141,6 @@ export const CheckFailed: Story = {
 			PAGE_LOAD,
 		);
 
-		await waitFor(() => expect(save).toBeEnabled(), PAGE_LOAD);
+		await expectDisabled(save, false);
 	},
 };

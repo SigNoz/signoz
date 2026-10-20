@@ -87,24 +87,20 @@ export const NoCreate: Story = {
 };
 
 /**
- * Opening a channel needs `update` as well as `read`, so without `update` the
- * row's first action reads View rather than Edit.
+ * The list does not gate opening a channel: the row action reads View whether
+ * or not the permission is held, as it does on dashboards, and the edit page
+ * is what denies. Holding the label steady also keeps it from flipping once a
+ * late check answers.
  */
-export const NoUpdate: Story = {
-	args: { revoked: [UPDATE] },
+export const NoReadOrUpdate: Story = {
+	args: { revoked: [READ, UPDATE] },
 	play: async ({ canvasElement }) => {
 		await openRowMenu(canvasElement);
-		await rowAction('View');
+		await expectDisabled(await rowAction('View'), false);
 		await expect(
 			screen.queryByRole('menuitem', { name: 'Edit' }),
 		).not.toBeInTheDocument();
 	},
-};
-
-/** The other half of the same pair, which also turns Edit into View. */
-export const NoRead: Story = {
-	args: { revoked: [READ] },
-	play: NoUpdate.play,
 };
 
 /** Delete is locked in the row menu; View and View JSON stay open. */

@@ -1,10 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor, within } from 'storybook/test';
+import { expect, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { CREATE, PAGE_LOAD } from '../../../stories/channelAuthz';
+import {
+	CREATE,
+	expectDisabled,
+	NOTIFICATION_CHANNEL,
+	PAGE_LOAD,
+} from '../../../stories/channelAuthz';
 import { channelsNewMocks } from '../ChannelsNew.stories.mocks';
 
 import AlertList from '../../../index';
@@ -47,6 +52,12 @@ export const NoCreate: Story = {
 	},
 };
 
+/** No channel permission at all, which denies on the same `create` check. */
+export const NoChannelAccess: Story = {
+	args: { revoked: NOTIFICATION_CHANNEL },
+	play: NoCreate.play,
+};
+
 /** The page holds on its loader until the permission check answers. */
 export const CheckLoading: Story = {
 	args: { authzState: 'loading' },
@@ -76,6 +87,6 @@ export const CheckFailed: Story = {
 			PAGE_LOAD,
 		);
 
-		await waitFor(() => expect(save).toBeEnabled(), PAGE_LOAD);
+		await expectDisabled(save, false);
 	},
 };
