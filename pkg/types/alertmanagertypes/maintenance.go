@@ -109,8 +109,8 @@ func (p *PostablePlannedMaintenance) Validate() error {
 		if p.Schedule.Recurrence.RepeatType.IsZero() {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing repeat type in the payload")
 		}
-		if p.Schedule.Recurrence.Duration.IsZero() {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing duration in the payload")
+		if !p.Schedule.Recurrence.Duration.IsPositive() {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "recurrence duration must be positive")
 		}
 	}
 	if p.Scope != "" {
@@ -310,8 +310,8 @@ func (m *PlannedMaintenance) Validate() error {
 		if m.Schedule.Recurrence.RepeatType.IsZero() {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing repeat type in the payload")
 		}
-		if m.Schedule.Recurrence.Duration.IsZero() {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing duration in the payload")
+		if !m.Schedule.Recurrence.Duration.IsPositive() {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "recurrence duration must be positive")
 		}
 	}
 	if m.Scope != "" {
