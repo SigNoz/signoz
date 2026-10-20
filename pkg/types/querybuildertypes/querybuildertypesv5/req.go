@@ -357,6 +357,7 @@ func (VariableItem) PrepareJSONSchema(s *jsonschema.Schema) error {
 	list.WithItems(items)
 
 	value := jsonschema.Schema{}
+	value.Description = propertyDescription(s, "value")
 	value.OneOf = []jsonschema.SchemaOrBool{
 		jsonschema.String.ToSchemaOrBool(),
 		jsonschema.Number.ToSchemaOrBool(),
@@ -667,7 +668,7 @@ func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
 }
 
 type FormatOptions struct {
-	FillGaps               bool `json:"fillGaps,omitempty" description:"When true, time_series results get a zero value for every missing step of additive aggregations such as count, count_distinct, sum and rate; other aggregations keep their gaps. Defaults to false."`
+	FillGaps               bool `json:"fillGaps,omitempty" description:"When true, every builder query and formula in a time_series result gets a zero value for each missing step, whatever its aggregation, so averages and percentiles read as zero where no data exists. PromQL and ClickHouse SQL queries keep their gaps. Defaults to false."`
 	FormatTableResultForUI bool `json:"formatTableResultForUI,omitempty" description:"When true, scalar results from several queries are merged into one table keyed by their group-by columns. Defaults to false."`
 }
 

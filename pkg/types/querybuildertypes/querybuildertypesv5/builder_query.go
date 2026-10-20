@@ -34,9 +34,9 @@ type QueryBuilderQuery[T any] struct {
 
 	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitzero" description:"The fields to return for each row in raw requests, in addition to the always-present timestamp and id columns. Ignored by aggregating requests."`
 
-	Limit int `json:"limit,omitempty" description:"The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. Unlimited when 0."`
+	Limit int `json:"limit,omitempty" description:"The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited while raw requests ordered by timestamp return a page of 10000 rows; follow nextCursor for the rest."`
 
-	LimitBy *LimitBy `json:"limitBy,omitempty" description:"Applies limit within each distinct combination of the given group-by keys instead of across the whole result."`
+	LimitBy *LimitBy `json:"limitBy,omitempty" description:"Reserved for applying limit within each combination of the given group-by keys. Currently stored but ignored by query execution."`
 
 	Offset int `json:"offset,omitempty" description:"The number of rows to skip before returning results. Prefer cursor for raw requests."`
 
@@ -74,6 +74,7 @@ func (QueryBuilderQuery[T]) PrepareJSONSchema(s *jsonschema.Schema) error {
 		return nil
 	}
 	prop := (&jsonschema.Schema{}).WithType(jsonschema.String.Type()).WithEnum(signal.StringValue())
+	prop.Description = propertyDescription(s, "signal")
 	s.Properties["signal"] = prop.ToSchemaOrBool()
 	if !slices.Contains(s.Required, "signal") {
 		s.Required = append(s.Required, "signal")

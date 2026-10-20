@@ -523,7 +523,7 @@ type MetricAggregation struct {
 	Temporality                     metrictypes.Temporality                      `json:"temporality" description:"The temporality of the metric: delta, cumulative or unspecified. Resolved from the metric metadata when omitted."`
 	TimeAggregation                 metrictypes.TimeAggregation                  `json:"timeAggregation" description:"How samples of one series are combined within each step, such as avg, sum, min, max, count, count_distinct, latest, rate or increase."`
 	SpaceAggregation                metrictypes.SpaceAggregation                 `json:"spaceAggregation" description:"How series are combined across each group, such as sum, avg, min, max or count; histograms take percentiles such as p50, p90, p95 or p99."`
-	ComparisonSpaceAggregationParam *metrictypes.ComparisonSpaceAggregationParam `json:"comparisonSpaceAggregationParam,omitempty" description:"The operator and threshold for comparison space aggregations that count series meeting a condition; ignored otherwise."`
+	ComparisonSpaceAggregationParam *metrictypes.ComparisonSpaceAggregationParam `json:"comparisonSpaceAggregationParam,omitempty" description:"Histogram metrics with spaceAggregation count only: the comparison operator and bucket bound used to estimate how many observations fall at or below, or above, the threshold. Ignored for other metric types and aggregations."`
 	// table hints to use for the query
 	TableHints *metrictypes.MetricTableHints `json:"-"`
 	// value filter to apply to the query
@@ -671,6 +671,7 @@ func (FunctionArg) PrepareJSONSchema(s *jsonschema.Schema) error {
 	}
 
 	value := jsonschema.Schema{}
+	value.Description = propertyDescription(s, "value")
 	value.OneOf = []jsonschema.SchemaOrBool{
 		jsonschema.Number.ToSchemaOrBool(),
 		jsonschema.String.ToSchemaOrBool(),
@@ -730,4 +731,14 @@ func (l *LimitBy) Copy() *LimitBy {
 		copy(c.Keys, l.Keys)
 	}
 	return c
+}
+
+// propertyDescription returns the description the struct tag put on a reflected
+// property, so a PrepareJSONSchema hook that replaces the property schema keeps it.
+func propertyDescription(s *jsonschema.Schema, name string) *string {
+	prop, ok := s.Properties[name]
+	if !ok || prop.TypeObject == nil {
+		return nil
+	}
+	return prop.TypeObject.Description
 }
