@@ -73,8 +73,7 @@ function ChannelJsonDialog({
 					onClose();
 				}
 			}}
-			title={channelName}
-			subTitle="Channel JSON"
+			title={`${channelName} / JSON`}
 			width="wide"
 			testId="channel-json-dialog"
 		>
