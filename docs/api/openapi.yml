@@ -7900,8 +7900,13 @@ components:
     MetrictypesComparisonSpaceAggregationParam:
       properties:
         operator:
+          description: 'Comparison applied to histogram bucket bounds when spaceAggregation
+            is count: <= counts observations at or below threshold, > counts those
+            above it.'
           type: string
         threshold:
+          description: Bucket bound the comparison uses, in the unit of the histogram
+            metric. Interpolated linearly between the two nearest bucket bounds.
           format: double
           type: number
       required:
