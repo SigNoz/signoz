@@ -13,6 +13,7 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import { fieldValuesResponse } from '@/storybook/msw/__story_mockdata__/fields';
 
 import {
 	attributeValuesResponse,
@@ -91,11 +92,13 @@ export const queueOverviewMocks = defineStoryMocks({
 			rest.post('http://localhost/api/v4/query_range', queryRange),
 
 			rest.get(
-				'http://localhost/api/v3/autocomplete/attribute_values',
+				'http://localhost/api/v1/fields/values',
 				response.json((req) =>
-					attributeValuesResponse(
-						req.url.searchParams.get('attributeKey') ?? '',
-						req.url.searchParams.get('searchText') ?? '',
+					fieldValuesResponse(
+						attributeValuesResponse(
+							req.url.searchParams.get('name') ?? '',
+							req.url.searchParams.get('searchText') ?? '',
+						).data.stringAttributeValues ?? [],
 					),
 				),
 			),
