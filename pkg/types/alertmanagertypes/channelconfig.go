@@ -9,8 +9,8 @@ import (
 )
 
 type ChannelConfig struct {
-	Kind ChannelKind `json:"kind" required:"true"`
-	Spec any         `json:"spec" required:"true"`
+	Kind ChannelKind `json:"kind" required:"true" description:"The channel provider kind; one of the supported kinds listed in the enum."`
+	Spec any         `json:"spec" required:"true" description:"The provider-specific configuration; its shape is selected by kind."`
 }
 
 func (c *ChannelConfig) UnmarshalJSON(data []byte) error {
@@ -71,8 +71,8 @@ func (c ChannelConfig) Validate() error {
 // ChannelConfigVariant names one branch of the union. Each instantiation becomes
 // its own OpenAPI component with kind pinned to the one value it accepts.
 type ChannelConfigVariant[S any] struct {
-	Kind string `json:"kind" required:"true"`
-	Spec S      `json:"spec" required:"true"`
+	Kind string `json:"kind" required:"true" description:"The channel provider kind this variant accepts."`
+	Spec S      `json:"spec" required:"true" description:"The provider-specific configuration for this kind."`
 }
 
 func (v ChannelConfigVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {

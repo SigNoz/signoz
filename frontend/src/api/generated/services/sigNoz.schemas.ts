@@ -270,6 +270,7 @@ export interface AlertmanagertypesChannelDTO {
 	createdAt?: string;
 	/**
 	 * @type string
+	 * @description The receiver configuration as a JSON document.
 	 */
 	data: string;
 	/**
@@ -278,14 +279,17 @@ export interface AlertmanagertypesChannelDTO {
 	id: string;
 	/**
 	 * @type string
+	 * @description The channel name, which is also the receiver name routing policies and rules reference.
 	 */
 	name: string;
 	/**
 	 * @type string
+	 * @description The organization the channel belongs to.
 	 */
 	orgId: string;
 	/**
 	 * @type string
+	 * @description The notifier kind, such as slack.
 	 */
 	type: string;
 	/**
@@ -295,52 +299,68 @@ export interface AlertmanagertypesChannelDTO {
 	updatedAt?: string;
 }
 
+/**
+ * The channel provider kind this variant accepts.
+ */
 export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfigDTOKind {
 	slack = 'slack',
 }
 export interface AlertmanagertypesChannelSlackConfirmationDTO {
 	/**
 	 * @type string
+	 * @description The label of the cancel button.
 	 */
 	dismissText?: string;
 	/**
 	 * @type string
+	 * @description The label of the confirm button.
 	 */
 	okText?: string;
 	/**
 	 * @type string
+	 * @description The dialog body.
 	 */
 	text: string;
 	/**
 	 * @type string
+	 * @description The dialog title.
 	 */
 	title?: string;
 }
 
 export interface AlertmanagertypesChannelSlackActionDTO {
+	/**
+	 * @description A confirmation dialog shown before the action runs.
+	 */
 	confirm?: AlertmanagertypesChannelSlackConfirmationDTO;
 	/**
 	 * @type string
+	 * @description The action name Slack posts back for a message button; required unless url is set.
 	 */
 	name?: string;
 	/**
 	 * @type string
+	 * @description The button style: default, primary or danger.
 	 */
 	style?: string;
 	/**
 	 * @type string
+	 * @description The button label.
 	 */
 	text: string;
 	/**
 	 * @type string
+	 * @description The Slack action type, normally button.
 	 */
 	type: string;
 	/**
 	 * @type string
+	 * @description The link the button opens; required unless name is set.
 	 */
 	url?: string;
 	/**
 	 * @type string
+	 * @description The value Slack posts back with a message button.
 	 */
 	value?: string;
 }
@@ -348,14 +368,17 @@ export interface AlertmanagertypesChannelSlackActionDTO {
 export interface AlertmanagertypesChannelSlackFieldDTO {
 	/**
 	 * @type boolean,null
+	 * @description Render the field side by side with other short fields.
 	 */
 	short?: boolean | null;
 	/**
 	 * @type string
+	 * @description The field title.
 	 */
 	title: string;
 	/**
 	 * @type string
+	 * @description The field value; an Alertmanager template.
 	 */
 	value: string;
 }
@@ -363,51 +386,63 @@ export interface AlertmanagertypesChannelSlackFieldDTO {
 export interface AlertmanagertypesChannelSlackConfigDTO {
 	/**
 	 * @type array,null
+	 * @description Attachment buttons; each requires type and text plus url or name.
 	 */
 	actions?: AlertmanagertypesChannelSlackActionDTO[] | null;
 	/**
 	 * @type string
 	 * @format password
+	 * @description The Slack incoming webhook URL. A secret; returned only by a fetch by ID.
 	 */
 	apiUrl: string;
 	/**
 	 * @type string
+	 * @description The channel or user to post to, such as #alerts; empty uses the webhook default.
 	 */
 	channel?: string;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the attachment color; defaults to the Alertmanager Slack default.
 	 */
 	color?: string;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the plain-text summary shown where attachments cannot render; defaults to the Alertmanager Slack default.
 	 */
 	fallback?: string;
 	/**
 	 * @type array,null
+	 * @description Attachment fields appended to the message; each requires title and value.
 	 */
 	fields?: AlertmanagertypesChannelSlackFieldDTO[] | null;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the attachment footer; defaults to the Alertmanager Slack default.
 	 */
 	footer?: string;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the text shown above the attachment; defaults to the Alertmanager Slack default.
 	 */
 	pretext?: string;
 	/**
 	 * @type boolean,null
+	 * @description Also notify when the alert resolves. Defaults to false.
 	 */
 	sendResolved?: boolean | null;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the message body; defaults to the Alertmanager Slack default.
 	 */
 	text?: string;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the message title; defaults to the Alertmanager Slack default.
 	 */
 	title?: string;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the link the title opens; defaults to the Alertmanager Slack default.
 	 */
 	titleLink?: string;
 }
@@ -416,19 +451,30 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 	/**
 	 * @enum slack
 	 * @type string
+	 * @description The channel provider kind this variant accepts.
 	 */
 	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfigDTOKind;
+	/**
+	 * @description The provider-specific configuration for this kind.
+	 */
 	spec: AlertmanagertypesChannelSlackConfigDTO;
 }
 
+/**
+ * The channel provider kind this variant accepts.
+ */
 export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfigDTOKind {
 	email = 'email',
 }
+/**
+ * Extra SMTP headers keyed by canonical MIME header name, such as Subject.
+ */
 export type AlertmanagertypesChannelEmailConfigDTOHeadersAnyOf = {
 	[key: string]: string;
 };
 
 /**
+ * Extra SMTP headers keyed by canonical MIME header name, such as Subject.
  * @nullable
  */
 export type AlertmanagertypesChannelEmailConfigDTOHeaders = AlertmanagertypesChannelEmailConfigDTOHeadersAnyOf | null;
@@ -436,18 +482,22 @@ export type AlertmanagertypesChannelEmailConfigDTOHeaders = AlertmanagertypesCha
 export interface AlertmanagertypesChannelEmailConfigDTO {
 	/**
 	 * @type object,null
+	 * @description Extra SMTP headers keyed by canonical MIME header name, such as Subject.
 	 */
 	headers?: AlertmanagertypesChannelEmailConfigDTOHeaders;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the HTML body; defaults to the Alertmanager email default.
 	 */
 	html?: string;
 	/**
 	 * @type boolean,null
+	 * @description Also notify when the alert resolves. Defaults to false.
 	 */
 	sendResolved?: boolean | null;
 	/**
 	 * @type string
+	 * @description The recipient addresses, comma separated.
 	 */
 	to: string;
 }
@@ -456,11 +506,18 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 	/**
 	 * @enum email
 	 * @type string
+	 * @description The channel provider kind this variant accepts.
 	 */
 	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfigDTOKind;
+	/**
+	 * @description The provider-specific configuration for this kind.
+	 */
 	spec: AlertmanagertypesChannelEmailConfigDTO;
 }
 
+/**
+ * The channel provider kind this variant accepts.
+ */
 export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelWebhookConfigDTOKind {
 	webhook = 'webhook',
 }
@@ -468,24 +525,29 @@ export interface AlertmanagertypesChannelWebhookConfigDTO {
 	/**
 	 * @type string
 	 * @format password
+	 * @description The bearer token sent in the Authorization header; cannot be combined with username or password.
 	 */
 	bearerToken?: string;
 	/**
 	 * @type string
 	 * @format password
+	 * @description The basic auth password; cannot be combined with bearerToken.
 	 */
 	password?: string;
 	/**
 	 * @type boolean,null
+	 * @description Also notify when the alert resolves. Defaults to true.
 	 */
 	sendResolved?: boolean | null;
 	/**
 	 * @type string
 	 * @format password
+	 * @description The endpoint that receives the Alertmanager webhook payload. A secret; returned only by a fetch by ID.
 	 */
 	url: string;
 	/**
 	 * @type string
+	 * @description The basic auth user; cannot be combined with bearerToken.
 	 */
 	username?: string;
 }
@@ -494,19 +556,30 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 	/**
 	 * @enum webhook
 	 * @type string
+	 * @description The channel provider kind this variant accepts.
 	 */
 	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelWebhookConfigDTOKind;
+	/**
+	 * @description The provider-specific configuration for this kind.
+	 */
 	spec: AlertmanagertypesChannelWebhookConfigDTO;
 }
 
+/**
+ * The channel provider kind this variant accepts.
+ */
 export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelPagerdutyConfigDTOKind {
 	pagerduty = 'pagerduty',
 }
+/**
+ * Custom details keyed by name, each an Alertmanager template; defaults to the Alertmanager firing and resolved summary set.
+ */
 export type AlertmanagertypesChannelPagerdutyConfigDTODetailsAnyOf = {
 	[key: string]: string;
 };
 
 /**
+ * Custom details keyed by name, each an Alertmanager template; defaults to the Alertmanager firing and resolved summary set.
  * @nullable
  */
 export type AlertmanagertypesChannelPagerdutyConfigDTODetails = AlertmanagertypesChannelPagerdutyConfigDTODetailsAnyOf | null;
@@ -514,51 +587,63 @@ export type AlertmanagertypesChannelPagerdutyConfigDTODetails = Alertmanagertype
 export interface AlertmanagertypesChannelPagerdutyConfigDTO {
 	/**
 	 * @type string
+	 * @description The class or type of the event.
 	 */
 	class?: string;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the client identifier; defaults to the Alertmanager PagerDuty default.
 	 */
 	client?: string;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the client URL; defaults to the Alertmanager PagerDuty default.
 	 */
 	clientUrl?: string;
 	/**
 	 * @type string
+	 * @description The component of the source machine that is responsible for the event.
 	 */
 	component?: string;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the incident summary; defaults to the Alertmanager PagerDuty default.
 	 */
 	description?: string;
 	/**
 	 * @type object,null
+	 * @description Custom details keyed by name, each an Alertmanager template; defaults to the Alertmanager firing and resolved summary set.
 	 */
 	details?: AlertmanagertypesChannelPagerdutyConfigDTODetails;
 	/**
 	 * @type string
+	 * @description The logical grouping of components the event belongs to.
 	 */
 	group?: string;
 	/**
 	 * @type string
 	 * @format password
+	 * @description The Events API v2 integration key. A secret; returned only by a fetch by ID.
 	 */
 	routingKey: string;
 	/**
 	 * @type boolean,null
+	 * @description Also notify when the alert resolves. Defaults to true.
 	 */
 	sendResolved?: boolean | null;
 	/**
 	 * @type string
+	 * @description The incident severity: critical, error, warning or info.
 	 */
 	severity?: string;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the unique location of the affected system; defaults to client.
 	 */
 	source?: string;
 	/**
 	 * @type string
+	 * @description The Events API endpoint; empty uses the PagerDuty default.
 	 */
 	url?: string;
 }
@@ -567,19 +652,30 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 	/**
 	 * @enum pagerduty
 	 * @type string
+	 * @description The channel provider kind this variant accepts.
 	 */
 	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelPagerdutyConfigDTOKind;
+	/**
+	 * @description The provider-specific configuration for this kind.
+	 */
 	spec: AlertmanagertypesChannelPagerdutyConfigDTO;
 }
 
+/**
+ * The channel provider kind this variant accepts.
+ */
 export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfigDTOKind {
 	opsgenie = 'opsgenie',
 }
+/**
+ * Custom alert details keyed by name, each an Alertmanager template.
+ */
 export type AlertmanagertypesChannelOpsgenieConfigDTODetailsAnyOf = {
 	[key: string]: string;
 };
 
 /**
+ * Custom alert details keyed by name, each an Alertmanager template.
  * @nullable
  */
 export type AlertmanagertypesChannelOpsgenieConfigDTODetails = AlertmanagertypesChannelOpsgenieConfigDTODetailsAnyOf | null;
@@ -588,34 +684,42 @@ export interface AlertmanagertypesChannelOpsgenieConfigDTO {
 	/**
 	 * @type string
 	 * @format password
+	 * @description The Opsgenie API integration key. A secret; returned only by a fetch by ID.
 	 */
 	apiKey: string;
 	/**
 	 * @type string
+	 * @description The Opsgenie API host; empty uses the global Alertmanager default.
 	 */
 	apiUrl?: string;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the alert description; defaults to the Alertmanager Opsgenie default.
 	 */
 	description?: string;
 	/**
 	 * @type object,null
+	 * @description Custom alert details keyed by name, each an Alertmanager template.
 	 */
 	details?: AlertmanagertypesChannelOpsgenieConfigDTODetails;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the alert message; defaults to the Alertmanager Opsgenie default.
 	 */
 	message?: string;
 	/**
 	 * @type string
+	 * @description The alert priority, P1 to P5.
 	 */
 	priority?: string;
 	/**
 	 * @type boolean,null
+	 * @description Also notify when the alert resolves. Defaults to true.
 	 */
 	sendResolved?: boolean | null;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the alert source; defaults to the Alertmanager Opsgenie default.
 	 */
 	source?: string;
 }
@@ -624,30 +728,41 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 	/**
 	 * @enum opsgenie
 	 * @type string
+	 * @description The channel provider kind this variant accepts.
 	 */
 	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfigDTOKind;
+	/**
+	 * @description The provider-specific configuration for this kind.
+	 */
 	spec: AlertmanagertypesChannelOpsgenieConfigDTO;
 }
 
+/**
+ * The channel provider kind this variant accepts.
+ */
 export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMSTeamsConfigDTOKind {
 	msteams = 'msteams',
 }
 export interface AlertmanagertypesChannelMSTeamsConfigDTO {
 	/**
 	 * @type boolean,null
+	 * @description Also notify when the alert resolves. Defaults to true.
 	 */
 	sendResolved?: boolean | null;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the card body; defaults to the Alertmanager Teams default.
 	 */
 	text?: string;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the card title; defaults to the Alertmanager Teams default.
 	 */
 	title?: string;
 	/**
 	 * @type string
 	 * @format password
+	 * @description The Teams incoming webhook URL. A secret; returned only by a fetch by ID.
 	 */
 	webhookUrl: string;
 }
@@ -656,30 +771,41 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 	/**
 	 * @enum msteams
 	 * @type string
+	 * @description The channel provider kind this variant accepts.
 	 */
 	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMSTeamsConfigDTOKind;
+	/**
+	 * @description The provider-specific configuration for this kind.
+	 */
 	spec: AlertmanagertypesChannelMSTeamsConfigDTO;
 }
 
+/**
+ * The channel provider kind this variant accepts.
+ */
 export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelGoogleChatConfigDTOKind {
 	googlechat = 'googlechat',
 }
 export interface AlertmanagertypesChannelGoogleChatConfigDTO {
 	/**
 	 * @type boolean,null
+	 * @description Also notify when the alert resolves. Defaults to false.
 	 */
 	sendResolved?: boolean | null;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the message body; defaults to the SigNoz Google Chat default.
 	 */
 	text?: string;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the message title; defaults to the SigNoz Google Chat default.
 	 */
 	title?: string;
 	/**
 	 * @type string
 	 * @format password
+	 * @description The Google Chat space webhook URL. A secret; returned only by a fetch by ID.
 	 */
 	webhookUrl: string;
 }
@@ -688,19 +814,30 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 	/**
 	 * @enum googlechat
 	 * @type string
+	 * @description The channel provider kind this variant accepts.
 	 */
 	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelGoogleChatConfigDTOKind;
+	/**
+	 * @description The provider-specific configuration for this kind.
+	 */
 	spec: AlertmanagertypesChannelGoogleChatConfigDTO;
 }
 
+/**
+ * The channel provider kind this variant accepts.
+ */
 export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTOKind {
 	jira = 'jira',
 }
+/**
+ * Extra issue fields keyed by Jira field ID.
+ */
 export type AlertmanagertypesChannelJiraConfigDTOCustomFieldsAnyOf = {
 	[key: string]: unknown;
 };
 
 /**
+ * Extra issue fields keyed by Jira field ID.
  * @nullable
  */
 export type AlertmanagertypesChannelJiraConfigDTOCustomFields = AlertmanagertypesChannelJiraConfigDTOCustomFieldsAnyOf | null;
@@ -709,62 +846,77 @@ export interface AlertmanagertypesChannelJiraConfigDTO {
 	/**
 	 * @type string
 	 * @format password
+	 * @description The Atlassian API token paired with email. A secret; returned only by a fetch by ID.
 	 */
 	apiToken: string;
 	/**
 	 * @type object,null
+	 * @description Extra issue fields keyed by Jira field ID.
 	 */
 	customFields?: AlertmanagertypesChannelJiraConfigDTOCustomFields;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the issue description, rendered as markdown; defaults to the SigNoz Jira default.
 	 */
 	description?: string;
 	/**
 	 * @type string
+	 * @description The Atlassian account email used for basic auth.
 	 */
 	email: string;
 	/**
 	 * @type string
+	 * @description The issue type name, such as Bug.
 	 */
 	issueType: string;
 	/**
 	 * @type array,null
+	 * @description Labels added to every issue.
 	 */
 	labels?: string[] | null;
 	/**
 	 * @type string
+	 * @description The priority name assigned to new issues.
 	 */
 	priority?: string;
 	/**
 	 * @type string
+	 * @description The key of the project issues are created in.
 	 */
 	project: string;
 	/**
 	 * @type string
+	 * @description How long after resolution a firing alert reopens the issue instead of creating a new one, as a Prometheus duration in canonical form such as 3d; defaults to 3d.
 	 */
 	reopenDuration?: string;
 	/**
 	 * @type string
+	 * @description The transition applied when an alert fires again on a resolved issue.
 	 */
 	reopenTransition?: string;
 	/**
 	 * @type string
+	 * @description The transition applied to the issue when the alert resolves.
 	 */
 	resolveTransition?: string;
 	/**
 	 * @type boolean,null
+	 * @description Also notify when the alert resolves. Defaults to false.
 	 */
 	sendResolved?: boolean | null;
 	/**
 	 * @type string
+	 * @description The Jira Cloud base URL, https://<site>.atlassian.net; only Jira Cloud is supported.
 	 */
 	site: string;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the issue summary; defaults to the SigNoz Jira default.
 	 */
 	summary?: string;
 	/**
 	 * @type string
+	 * @description The resolution name that stops an issue from being reopened.
 	 */
 	wontFixResolution?: string;
 }
@@ -773,11 +925,18 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 	/**
 	 * @enum jira
 	 * @type string
+	 * @description The channel provider kind this variant accepts.
 	 */
 	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTOKind;
+	/**
+	 * @description The provider-specific configuration for this kind.
+	 */
 	spec: AlertmanagertypesChannelJiraConfigDTO;
 }
 
+/**
+ * The channel provider kind this variant accepts.
+ */
 export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfigDTOKind {
 	jsmops = 'jsmops',
 }
@@ -785,26 +944,32 @@ export interface AlertmanagertypesChannelJSMOpsConfigDTO {
 	/**
 	 * @type string
 	 * @format password
+	 * @description The JSM Ops integration API key. A secret; returned only by a fetch by ID.
 	 */
 	apiKey: string;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the alert description; defaults to the SigNoz JSM Ops default.
 	 */
 	description?: string;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the alert message; defaults to the SigNoz JSM Ops default.
 	 */
 	message?: string;
 	/**
 	 * @type string
+	 * @description The alert priority, P1 to P5.
 	 */
 	priority?: string;
 	/**
 	 * @type boolean,null
+	 * @description Also notify when the alert resolves. Defaults to false.
 	 */
 	sendResolved?: boolean | null;
 	/**
 	 * @type string
+	 * @description Comma-separated tags attached to the alert; defaults to signoz.
 	 */
 	tags?: string;
 }
@@ -813,19 +978,30 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 	/**
 	 * @enum jsmops
 	 * @type string
+	 * @description The channel provider kind this variant accepts.
 	 */
 	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfigDTOKind;
+	/**
+	 * @description The provider-specific configuration for this kind.
+	 */
 	spec: AlertmanagertypesChannelJSMOpsConfigDTO;
 }
 
+/**
+ * The channel provider kind this variant accepts.
+ */
 export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfigDTOKind {
 	incidentio = 'incidentio',
 }
+/**
+ * Extra event metadata keyed by name, merged over the group's common labels; values are Alertmanager templates.
+ */
 export type AlertmanagertypesChannelIncidentIOConfigDTOMetadataAnyOf = {
 	[key: string]: string;
 };
 
 /**
+ * Extra event metadata keyed by name, merged over the group's common labels; values are Alertmanager templates.
  * @nullable
  */
 export type AlertmanagertypesChannelIncidentIOConfigDTOMetadata = AlertmanagertypesChannelIncidentIOConfigDTOMetadataAnyOf | null;
@@ -833,27 +1009,33 @@ export type AlertmanagertypesChannelIncidentIOConfigDTOMetadata = Alertmanagerty
 export interface AlertmanagertypesChannelIncidentIOConfigDTO {
 	/**
 	 * @type string
+	 * @description Alertmanager template for the alert description, rendered as markdown; defaults to the SigNoz incident.io default.
 	 */
 	description?: string;
 	/**
 	 * @type object,null
+	 * @description Extra event metadata keyed by name, merged over the group's common labels; values are Alertmanager templates.
 	 */
 	metadata?: AlertmanagertypesChannelIncidentIOConfigDTOMetadata;
 	/**
 	 * @type boolean,null
+	 * @description Also notify when the alert resolves. Defaults to false.
 	 */
 	sendResolved?: boolean | null;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the alert title; defaults to the SigNoz incident.io default.
 	 */
 	title?: string;
 	/**
 	 * @type string
 	 * @format password
+	 * @description The alert source secret token, without the Bearer prefix. A secret; returned only by a fetch by ID.
 	 */
 	token: string;
 	/**
 	 * @type string
+	 * @description The alert source HTTP alert events endpoint copied from its setup page.
 	 */
 	url: string;
 }
@@ -862,8 +1044,12 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 	/**
 	 * @enum incidentio
 	 * @type string
+	 * @description The channel provider kind this variant accepts.
 	 */
 	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfigDTOKind;
+	/**
+	 * @description The provider-specific configuration for this kind.
+	 */
 	spec: AlertmanagertypesChannelIncidentIOConfigDTO;
 }
 
@@ -968,49 +1154,68 @@ export interface AlertmanagertypesListedNotificationChannelDTO {
 	/**
 	 * @type string
 	 * @format date-time
+	 * @description When the channel was created, as an RFC 3339 timestamp.
 	 */
 	createdAt: string;
 	/**
 	 * @type string
+	 * @description The free-text label shown in the UI.
 	 */
 	displayName: string;
 	/**
 	 * @type string
+	 * @description The channel UUID.
 	 */
 	id: string;
+	/**
+	 * @description The channel provider kind.
+	 */
 	kind: AlertmanagertypesChannelKindDTO;
 	/**
 	 * @type string
+	 * @description The immutable DNS-1123 name that routing policies and rules reference.
 	 */
 	name: string;
 	/**
 	 * @type string
 	 * @format date-time
+	 * @description When the channel was last updated, as an RFC 3339 timestamp.
 	 */
 	updatedAt: string;
 }
 
 export interface AlertmanagertypesChannelRepairDTO {
+	/**
+	 * @description The repair that makes the channel readable: none, retype, split or delete.
+	 */
 	action: AlertmanagertypesChannelRepairActionDTO;
 	/**
 	 * @type boolean
+	 * @description Whether the action was written; false on a dry run.
 	 */
 	applied: boolean;
 	/**
 	 * @type array
+	 * @description Why the action was not, or would not be, applied.
 	 */
 	blockers?: string[];
 	/**
 	 * @type array,null
+	 * @description The channels that exist once the action is applied.
 	 */
 	channels?: AlertmanagertypesListedNotificationChannelDTO[] | null;
+	/**
+	 * @description Why v2 cannot read the channel; none when it is readable.
+	 */
 	defect: AlertmanagertypesChannelDefectDTO;
 	/**
 	 * @type string
+	 * @description A human-readable explanation of the defect.
 	 */
 	detail?: string;
 	/**
 	 * @type string
+	 * @description The UUID of the diagnosed channel.
 	 */
 	id: string;
 }
@@ -1043,6 +1248,7 @@ export interface AlertmanagertypesDeprecatedGettableAlertDTO {
 	endsAt?: string;
 	/**
 	 * @type string
+	 * @description The alert fingerprint, a hash of its label set.
 	 */
 	fingerprint?: string;
 	/**
@@ -1052,6 +1258,7 @@ export interface AlertmanagertypesDeprecatedGettableAlertDTO {
 	labels?: ModelLabelSetDTO;
 	/**
 	 * @type array,null
+	 * @description The names of the receivers the alert routes to.
 	 */
 	receivers?: string[] | null;
 	/**
@@ -1059,6 +1266,9 @@ export interface AlertmanagertypesDeprecatedGettableAlertDTO {
 	 * @format date-time
 	 */
 	startsAt?: string;
+	/**
+	 * @description The alert state and the silences and inhibitions suppressing it.
+	 */
 	status?: TypesAlertStatusDTO;
 }
 
@@ -1067,27 +1277,35 @@ export enum AlertmanagertypesExpressionKindDTO {
 	policy = 'policy',
 }
 export interface AlertmanagertypesGettableNotificationChannelDTO {
+	/**
+	 * @description The provider kind and spec, credentials included.
+	 */
 	config: AlertmanagertypesChannelConfigDTO;
 	/**
 	 * @type string
 	 * @format date-time
+	 * @description When the channel was created, as an RFC 3339 timestamp.
 	 */
 	createdAt: string;
 	/**
 	 * @type string
+	 * @description The free-text label shown in the UI.
 	 */
 	displayName: string;
 	/**
 	 * @type string
+	 * @description The channel UUID.
 	 */
 	id: string;
 	/**
 	 * @type string
+	 * @description The immutable DNS-1123 name that routing policies and rules reference.
 	 */
 	name: string;
 	/**
 	 * @type string
 	 * @format date-time
+	 * @description When the channel was last updated, as an RFC 3339 timestamp.
 	 */
 	updatedAt: string;
 }
@@ -1373,6 +1591,9 @@ export interface ConfigSecretURLDTO {
 }
 
 export interface AlertmanagertypesGoogleChatReceiverConfigDTO {
+	/**
+	 * @description HTTP client settings for the webhook call.
+	 */
 	http_config?: ConfigHTTPClientConfigDTO;
 	/**
 	 * @type boolean
@@ -1380,15 +1601,23 @@ export interface AlertmanagertypesGoogleChatReceiverConfigDTO {
 	send_resolved?: boolean;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the message body.
 	 */
 	text?: string;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the message title.
 	 */
 	title?: string;
+	/**
+	 * @description The Google Chat space webhook URL.
+	 */
 	webhook_url?: ConfigSecretURLDTO;
 }
 
+/**
+ * Extra event metadata keyed by name, merged over the group's common labels; values are Alertmanager templates.
+ */
 export type AlertmanagertypesIncidentIOReceiverConfigDTOMetadata = {
 	[key: string]: string;
 };
@@ -1396,11 +1625,16 @@ export type AlertmanagertypesIncidentIOReceiverConfigDTOMetadata = {
 export interface AlertmanagertypesIncidentIOReceiverConfigDTO {
 	/**
 	 * @type string
+	 * @description Alertmanager template for the alert description.
 	 */
 	description?: string;
+	/**
+	 * @description HTTP client settings for the API call.
+	 */
 	http_config?: ConfigHTTPClientConfigDTO;
 	/**
 	 * @type object
+	 * @description Extra event metadata keyed by name, merged over the group's common labels; values are Alertmanager templates.
 	 */
 	metadata?: AlertmanagertypesIncidentIOReceiverConfigDTOMetadata;
 	/**
@@ -1409,14 +1643,17 @@ export interface AlertmanagertypesIncidentIOReceiverConfigDTO {
 	send_resolved?: boolean;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the alert title.
 	 */
 	title?: string;
 	/**
 	 * @type string
+	 * @description The alert source secret token, without the Bearer prefix.
 	 */
 	token?: string;
 	/**
 	 * @type string
+	 * @description The alert source HTTP alert events endpoint.
 	 */
 	url?: string;
 }
@@ -1424,19 +1661,26 @@ export interface AlertmanagertypesIncidentIOReceiverConfigDTO {
 export interface AlertmanagertypesJSMOpsReceiverConfigDTO {
 	/**
 	 * @type string
+	 * @description The JSM Ops integration API key.
 	 */
 	api_key?: string;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the alert description.
 	 */
 	description?: string;
+	/**
+	 * @description HTTP client settings for the API call.
+	 */
 	http_config?: ConfigHTTPClientConfigDTO;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the alert message.
 	 */
 	message?: string;
 	/**
 	 * @type string
+	 * @description The alert priority, P1 to P5.
 	 */
 	priority?: string;
 	/**
@@ -1445,10 +1689,14 @@ export interface AlertmanagertypesJSMOpsReceiverConfigDTO {
 	send_resolved?: boolean;
 	/**
 	 * @type string
+	 * @description Comma-separated tags attached to the alert.
 	 */
 	tags?: string;
 }
 
+/**
+ * Extra issue fields keyed by Jira field ID.
+ */
 export type AlertmanagertypesJiraReceiverConfigDTOCustomFields = {
 	[key: string]: unknown;
 };
@@ -1458,36 +1706,50 @@ export type ModelDurationDTO = number;
 export interface AlertmanagertypesJiraReceiverConfigDTO {
 	/**
 	 * @type object
+	 * @description Extra issue fields keyed by Jira field ID.
 	 */
 	custom_fields?: AlertmanagertypesJiraReceiverConfigDTOCustomFields;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the issue description.
 	 */
 	description?: string;
+	/**
+	 * @description HTTP client settings; basic auth carries the account email and API token.
+	 */
 	http_config?: ConfigHTTPClientConfigDTO;
 	/**
 	 * @type string
+	 * @description The issue type name.
 	 */
 	issue_type?: string;
 	/**
 	 * @type array
+	 * @description Labels added to every issue.
 	 */
 	labels?: string[];
 	/**
 	 * @type string
+	 * @description The priority name assigned to new issues.
 	 */
 	priority?: string;
 	/**
 	 * @type string
+	 * @description The key of the project issues are created in.
 	 */
 	project?: string;
+	/**
+	 * @description How long after resolution a firing alert reopens the issue; a Prometheus duration, at least 1m.
+	 */
 	reopen_duration?: ModelDurationDTO;
 	/**
 	 * @type string
+	 * @description The transition applied when an alert fires again on a resolved issue.
 	 */
 	reopen_transition?: string;
 	/**
 	 * @type string
+	 * @description The transition applied when the alert resolves.
 	 */
 	resolve_transition?: string;
 	/**
@@ -1496,14 +1758,17 @@ export interface AlertmanagertypesJiraReceiverConfigDTO {
 	send_resolved?: boolean;
 	/**
 	 * @type string
+	 * @description The Jira Cloud base URL.
 	 */
 	site?: string;
 	/**
 	 * @type string
+	 * @description Alertmanager template for the issue summary.
 	 */
 	summary?: string;
 	/**
 	 * @type string
+	 * @description The resolution name that stops an issue from being reopened.
 	 */
 	wont_fix_resolution?: string;
 }
@@ -1511,11 +1776,13 @@ export interface AlertmanagertypesJiraReceiverConfigDTO {
 export interface AlertmanagertypesListableNotificationChannelDTO {
 	/**
 	 * @type array
+	 * @description The channels on this page, without their configuration; fetch a channel by ID for that.
 	 */
 	channels: AlertmanagertypesListedNotificationChannelDTO[];
 	/**
 	 * @type integer
 	 * @format int64
+	 * @description The number of channels the filter matches across all pages.
 	 */
 	total: number;
 }
@@ -2769,17 +3036,23 @@ export type AlertmanagertypesPostableChannelDTO = unknown & {
 };
 
 export interface AlertmanagertypesPostableNotificationChannelDTO {
+	/**
+	 * @description The provider kind and its spec.
+	 */
 	config: AlertmanagertypesChannelConfigDTO;
 	/**
 	 * @type string
+	 * @description The free-text label shown in the UI. Defaults to name; required when generateName is true.
 	 */
 	displayName?: string;
 	/**
 	 * @type boolean
+	 * @description Derive name from displayName plus a random suffix instead of supplying it. Defaults to false.
 	 */
 	generateName?: boolean;
 	/**
 	 * @type string
+	 * @description The immutable DNS-1123 label (lowercase letters, digits and hyphens, at most 63 characters) that routing policies and rules reference. Required unless generateName is true, in which case it must be empty.
 	 */
 	name?: string;
 }
@@ -2918,15 +3191,22 @@ export interface AlertmanagertypesReceiverDTO {
 export interface AlertmanagertypesRepairChannelParamsDTO {
 	/**
 	 * @type boolean
+	 * @description Apply the diagnosed action; defaults to false, a dry run that only reports it.
 	 */
 	apply?: boolean;
 }
 
 export interface AlertmanagertypesTestableNotificationChannelDTO {
+	/**
+	 * @description The replacement provider kind and spec. Name and displayName are immutable and not part of the body.
+	 */
 	config: AlertmanagertypesChannelConfigDTO;
 }
 
 export interface AlertmanagertypesUpdatableNotificationChannelDTO {
+	/**
+	 * @description The replacement provider kind and spec. Name and displayName are immutable and not part of the body.
+	 */
 	config: AlertmanagertypesChannelConfigDTO;
 }
 
@@ -15124,29 +15404,29 @@ export type GetMetricsTreemap200 = {
 export type ListNotificationChannelsParams = {
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description Case-insensitive match on the display name; at most 1024 characters.
 	 */
 	query?: string;
 	/**
-	 * @description undefined
+	 * @description Only channels of this provider kind.
 	 */
 	kind?: AlertmanagertypesChannelKindDTO;
 	/**
-	 * @description undefined
+	 * @description The sort column: updated_at (default), created_at or name.
 	 */
 	sort?: AlertmanagertypesChannelListSortDTO;
 	/**
-	 * @description undefined
+	 * @description The sort order: asc or desc (default).
 	 */
 	order?: AlertmanagertypesChannelListOrderDTO;
 	/**
 	 * @type integer
-	 * @description undefined
+	 * @description The page size; defaults to 20 and is capped at 200.
 	 */
 	limit?: number;
 	/**
 	 * @type integer
-	 * @description undefined
+	 * @description The number of channels to skip; defaults to 0.
 	 */
 	offset?: number;
 };
@@ -15198,7 +15478,7 @@ export type RepairNotificationChannelPathParameters = {
 export type RepairNotificationChannelParams = {
 	/**
 	 * @type boolean
-	 * @description undefined
+	 * @description Apply the diagnosed action; defaults to false, a dry run that only reports it.
 	 */
 	apply?: boolean;
 };
