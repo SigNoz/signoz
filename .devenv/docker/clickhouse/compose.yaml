@@ -50,6 +50,19 @@ services:
     networks:
       - default
       - signoz-devenv
+  init-zookeeper:
+    image: signoz/zookeeper:3.7.1
+    container_name: init-zookeeper
+    user: "0"
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        mkdir -p /bitnami/zookeeper/data /bitnami/zookeeper/log
+        chown -R 1001:1001 /bitnami/zookeeper
+    volumes:
+      - ${PWD}/fs/tmp/zookeeper:/bitnami/zookeeper
+    restart: "no"
   zookeeper:
     image: signoz/zookeeper:3.7.1
     container_name: zookeeper
@@ -59,6 +72,9 @@ services:
       - "127.0.0.1:2181:2181"
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
+    depends_on:
+      init-zookeeper:
+        condition: service_completed_successfully
     healthcheck:
       test:
         - CMD-SHELL
