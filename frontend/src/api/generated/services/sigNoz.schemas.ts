@@ -11119,14 +11119,22 @@ export enum RuletypesQueryTypeDTO {
 	promql = 'promql',
 }
 export interface RuletypesAlertCompositeQueryDTO {
+	/**
+	 * @description The panel the UI renders the queries with: graph, table or value. Use graph for alerts.
+	 */
 	panelType: RuletypesPanelTypeDTO;
 	/**
 	 * @type array,null
+	 * @description The queries to evaluate, at least one. Every envelope type must match queryType: builder_query and builder_formula for builder, promql for promql, clickhouse_sql for clickhouse_sql.
 	 */
 	queries: Querybuildertypesv5QueryEnvelopeDTO[] | null;
+	/**
+	 * @description The query language of every query: builder, promql or clickhouse_sql.
+	 */
 	queryType: RuletypesQueryTypeDTO;
 	/**
 	 * @type string
+	 * @description The unit of the query result, such as percent, ms or bytes. Used to format values in notifications and to convert thresholds given in a different targetUnit.
 	 */
 	unit?: string;
 }
@@ -11157,26 +11165,37 @@ export enum RuletypesCompareOperatorDTO {
 export interface RuletypesBasicRuleThresholdDTO {
 	/**
 	 * @type array,null
+	 * @description Notification channel names alerts crossing this threshold are sent to. Ignored when notificationSettings.usePolicy is true.
 	 */
 	channels?: string[] | null;
+	/**
+	 * @description Which points in the window must satisfy op. Accepted as at_least_once, all_the_times, on_average, in_total or last, their aliases avg and sum, or the numeric codes 1 to 5.
+	 */
 	matchType: RuletypesMatchTypeDTO;
 	/**
 	 * @type string
+	 * @description The threshold name, conventionally critical, error, warning or info. Alerts carry it as the threshold_name label.
 	 */
 	name: string;
+	/**
+	 * @description How the value is compared with target. Accepted as above, below, equal, not_equal, above_or_equal, below_or_equal or outside_bounds, their symbols, or the numeric codes 1 to 7.
+	 */
 	op: RuletypesCompareOperatorDTO;
 	/**
 	 * @type number,null
 	 * @format double
+	 * @description The value at which a firing alert resolves, in targetUnit. Keeps an alert firing between target and recoveryTarget to avoid flapping; null resolves at target.
 	 */
 	recoveryTarget?: number | null;
 	/**
 	 * @type number,null
 	 * @format double
+	 * @description The value the query result is compared against, in targetUnit.
 	 */
 	target: number | null;
 	/**
 	 * @type string
+	 * @description The unit of target and recoveryTarget, such as percent or ms. Converted to the query unit before comparison when the two differ; empty means the query unit.
 	 */
 	targetUnit?: string;
 }
@@ -11197,19 +11216,26 @@ export enum RuletypesScheduleTypeDTO {
 export interface RuletypesCumulativeScheduleDTO {
 	/**
 	 * @type integer,null
+	 * @description The day of the month of the reset boundary, 1 to 31. Required for monthly.
 	 */
 	day?: number | null;
 	/**
 	 * @type integer,null
+	 * @description The hour of the reset boundary, 0 to 23. Required for daily, weekly and monthly.
 	 */
 	hour?: number | null;
 	/**
 	 * @type integer,null
+	 * @description The minute of the reset boundary, 0 to 59. Required for every type.
 	 */
 	minute?: number | null;
+	/**
+	 * @description How often the window resets: hourly, daily, weekly or monthly.
+	 */
 	type: RuletypesScheduleTypeDTO;
 	/**
 	 * @type integer,null
+	 * @description The weekday of the reset boundary, 0 (Sunday) to 6 (Saturday). Required for weekly.
 	 */
 	weekday?: number | null;
 }
@@ -11217,11 +11243,16 @@ export interface RuletypesCumulativeScheduleDTO {
 export interface RuletypesCumulativeWindowDTO {
 	/**
 	 * @type string
+	 * @description How often the rule is evaluated, as a Go duration such as 1m. Must be positive.
 	 */
 	frequency: string;
+	/**
+	 * @description The boundary the accumulation window starts from. Each evaluation queries from the most recent boundary to now.
+	 */
 	schedule: RuletypesCumulativeScheduleDTO;
 	/**
 	 * @type string
+	 * @description The IANA time zone the schedule is resolved in, such as UTC or Asia/Kolkata.
 	 */
 	timezone: string;
 }
@@ -11254,10 +11285,12 @@ export enum RuletypesEvaluationRollingDTOKind {
 export interface RuletypesRollingWindowDTO {
 	/**
 	 * @type string
+	 * @description The sliding lookback window each evaluation queries, as a Go duration such as 5m.
 	 */
 	evalWindow: string;
 	/**
 	 * @type string
+	 * @description How often the rule is evaluated, as a Go duration such as 1m. Must be positive.
 	 */
 	frequency: string;
 }
@@ -11286,10 +11319,12 @@ export enum RuletypesEvaluationKindDTO {
 export interface RuletypesGettableTestRuleDTO {
 	/**
 	 * @type integer
+	 * @description The number of alerts the rule would have fired on the most recent evaluation.
 	 */
 	alertCount?: number;
 	/**
 	 * @type string
+	 * @description A human readable summary of the test evaluation.
 	 */
 	message?: string;
 }
@@ -11297,10 +11332,12 @@ export interface RuletypesGettableTestRuleDTO {
 export interface RuletypesLabelPairDTO {
 	/**
 	 * @type string
+	 * @description The label name.
 	 */
 	key: string;
 	/**
 	 * @type string
+	 * @description The label value.
 	 */
 	value: string;
 }
@@ -11316,6 +11353,9 @@ export enum RuletypesListSortDTO {
 	state = 'state',
 	severity = 'severity',
 }
+/**
+ * The labels attached to alerts the rule fires.
+ */
 export type RuletypesListableRuleDTOLabels = { [key: string]: string };
 
 export enum RuletypesRuleTypeDTO {
@@ -11326,8 +11366,12 @@ export enum RuletypesRuleTypeDTO {
 export interface RuletypesListableRuleDTO {
 	/**
 	 * @type string
+	 * @description The display name of the alert rule.
 	 */
 	alert: string;
+	/**
+	 * @description The signal the rule evaluates: METRIC_BASED_ALERT, TRACES_BASED_ALERT, LOGS_BASED_ALERT, EXCEPTIONS_BASED_ALERT or AI_TRACES_BASED_ALERT.
+	 */
 	alertType: RuletypesAlertTypeDTO;
 	/**
 	 * @type string
@@ -11340,21 +11384,31 @@ export interface RuletypesListableRuleDTO {
 	createdBy?: string;
 	/**
 	 * @type string
+	 * @description A human readable description of what the rule monitors.
 	 */
 	description?: string;
 	/**
 	 * @type boolean
+	 * @description Whether the rule is paused.
 	 */
 	disabled?: boolean;
 	/**
 	 * @type string
+	 * @description The unique identifier of the rule.
 	 */
 	id: string;
 	/**
 	 * @type object
+	 * @description The labels attached to alerts the rule fires.
 	 */
 	labels?: RuletypesListableRuleDTOLabels;
+	/**
+	 * @description The evaluation strategy: threshold_rule, promql_rule or anomaly_rule.
+	 */
 	ruleType: RuletypesRuleTypeDTO;
+	/**
+	 * @description The current evaluation state: inactive, pending, recovering, firing, nodata or disabled.
+	 */
 	state: RuletypesAlertStateDTO;
 	/**
 	 * @type string
@@ -11368,14 +11422,22 @@ export interface RuletypesListableRuleDTO {
 }
 
 export interface RuletypesRuleViewDataDTO {
+	/**
+	 * @description The sort direction: asc or desc (the default).
+	 */
 	order?: RuletypesListOrderDTO;
 	/**
 	 * @type string
+	 * @description A filter expression over rule name, description, labels and other fields, at most 1024 characters. Empty matches every rule.
 	 */
 	query?: string;
+	/**
+	 * @description The field to sort by: updated_at (the default), created_at, name, state or severity.
+	 */
 	sort?: RuletypesListSortDTO;
 	/**
 	 * @type array
+	 * @description Only return rules in these states: firing, pending, recovering, inactive, nodata or disabled. Empty means every state.
 	 */
 	states?: string[];
 	/**
@@ -11420,19 +11482,23 @@ export interface RuletypesListableRuleViewsDTO {
 export interface RuletypesListableRulesDTO {
 	/**
 	 * @type array
+	 * @description Distinct label key and value pairs across the matching rules, for building filters.
 	 */
 	labels: RuletypesLabelPairDTO[];
 	/**
 	 * @type array
+	 * @description The keys the query filter language reserves, which cannot be used as label names in a query.
 	 */
 	reservedKeywords: string[];
 	/**
 	 * @type array
+	 * @description The page of rules matching the filter.
 	 */
 	rules: RuletypesListableRuleDTO[];
 	/**
 	 * @type integer
 	 * @format int64
+	 * @description The number of rules matching the filter across all pages.
 	 */
 	total: number;
 }
@@ -11440,14 +11506,17 @@ export interface RuletypesListableRulesDTO {
 export interface RuletypesRenotifyDTO {
 	/**
 	 * @type array,null
+	 * @description The alert states that are re-notified: firing, nodata or both.
 	 */
 	alertStates?: RuletypesAlertStateDTO[] | null;
 	/**
 	 * @type boolean
+	 * @description Whether an active alert is re-sent after interval elapses. When false an alert notifies once per firing.
 	 */
 	enabled?: boolean;
 	/**
 	 * @type string
+	 * @description The time between repeat notifications, as a Go duration such as 4h. Must be positive when enabled is true.
 	 */
 	interval?: string;
 }
@@ -11455,21 +11524,33 @@ export interface RuletypesRenotifyDTO {
 export interface RuletypesNotificationSettingsDTO {
 	/**
 	 * @type array,null
+	 * @description Label names whose values group alerts into one notification, such as service.name.
 	 */
 	groupBy?: string[] | null;
 	/**
 	 * @type string
+	 * @description A grace period, as a Go duration such as 2m, during which a newly seen label group is excluded from evaluation.
 	 */
 	newGroupEvalDelay?: string;
+	/**
+	 * @description Whether and how often to re-send a notification for an alert that stays active.
+	 */
 	renotify?: RuletypesRenotifyDTO;
 	/**
 	 * @type boolean
+	 * @description When true, alerts are routed by the organisation level notification policies instead of the channels named on the thresholds. Defaults to false.
 	 */
 	usePolicy?: boolean;
 }
 
+/**
+ * Free text attached to every alert, conventionally summary and description. Values may use Go templates with $value, $threshold and $labels.
+ */
 export type RuletypesPostableRuleDTOAnnotations = { [key: string]: string };
 
+/**
+ * Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. severity is the conventional routing label.
+ */
 export type RuletypesPostableRuleDTOLabels = { [key: string]: string };
 
 export enum RuletypesSeasonalityDTO {
@@ -11507,92 +11588,141 @@ export interface RuletypesRuleConditionDTO {
 	/**
 	 * @type integer
 	 * @minimum 0
+	 * @description How many minutes without data pass before the nodata alert fires. Ignored unless alertOnAbsent is true.
 	 */
 	absentFor?: number;
 	/**
 	 * @type boolean
+	 * @description Whether to fire a nodata alert when the query returns no data. Defaults to false.
 	 */
 	alertOnAbsent?: boolean;
 	/**
 	 * @type string
+	 * @description anomaly_rule only: the anomaly detection algorithm. The supported value is standard.
 	 */
 	algorithm?: string;
+	/**
+	 * @description The queries whose result is compared against the thresholds.
+	 */
 	compositeQuery: RuletypesAlertCompositeQueryDTO;
+	/**
+	 * @description schemaVersion v1 only: which points in the window must satisfy op. Accepted as at_least_once, all_the_times, on_average, in_total or last, their aliases avg and sum, or the numeric codes 1 to 5. Required for v1; v2alpha1 sets matchType on each threshold.
+	 */
 	matchType?: RuletypesMatchTypeDTO;
+	/**
+	 * @description schemaVersion v1 only: how the value is compared with target. Accepted as above, below, equal, not_equal, above_or_equal, below_or_equal or outside_bounds, their symbols, or the numeric codes 1 to 7. Required for v1; v2alpha1 sets op on each threshold.
+	 */
 	op?: RuletypesCompareOperatorDTO;
 	/**
 	 * @type boolean
+	 * @description Whether a series is skipped until it has at least requiredNumPoints points in the window. Defaults to false.
 	 */
 	requireMinPoints?: boolean;
 	/**
 	 * @type integer
+	 * @description The minimum number of points a series needs before it is evaluated. Must be greater than 0 when requireMinPoints is true.
 	 */
 	requiredNumPoints?: number;
+	/**
+	 * @description anomaly_rule only: the seasonal period the history is compared against, hourly, daily or weekly.
+	 */
 	seasonality?: RuletypesSeasonalityDTO;
 	/**
 	 * @type string
+	 * @description The name of the query whose result is evaluated, such as A or F1. Must match a query in compositeQuery. When omitted, F1 is used if present, otherwise the enabled query with the highest name.
 	 */
 	selectedQueryName?: string;
 	/**
 	 * @type number,null
 	 * @format double
+	 * @description schemaVersion v1 only: the value compared against, in targetUnit. Required for v1; v2alpha1 sets target on each threshold.
 	 */
 	target?: number | null;
 	/**
 	 * @type string
+	 * @description schemaVersion v1 only: the unit of target, such as percent or ms. Converted to compositeQuery.unit before comparison when the two differ.
 	 */
 	targetUnit?: string;
+	/**
+	 * @description The thresholds to evaluate, as a kind and spec. Required when schemaVersion is v2alpha1; derived from op, target and matchType for v1.
+	 */
 	thresholds?: RuletypesRuleThresholdDataDTO;
 }
 
 export interface RuletypesPostableRuleDTO {
 	/**
 	 * @type string
+	 * @description The display name of the alert rule.
 	 */
 	alert: string;
+	/**
+	 * @description The signal the rule evaluates: METRIC_BASED_ALERT, TRACES_BASED_ALERT, LOGS_BASED_ALERT, EXCEPTIONS_BASED_ALERT or AI_TRACES_BASED_ALERT.
+	 */
 	alertType: RuletypesAlertTypeDTO;
 	/**
 	 * @type object
+	 * @description Free text attached to every alert, conventionally summary and description. Values may use Go templates with $value, $threshold and $labels.
 	 */
 	annotations?: RuletypesPostableRuleDTOAnnotations;
+	/**
+	 * @description The query to evaluate and the thresholds applied to its result.
+	 */
 	condition: RuletypesRuleConditionDTO;
 	/**
 	 * @type string
+	 * @description A human readable description of what the rule monitors.
 	 */
 	description?: string;
 	/**
 	 * @type boolean
+	 * @description Whether the rule is paused. A disabled rule is neither evaluated nor notifies. Defaults to false.
 	 */
 	disabled?: boolean;
 	/**
 	 * @type string
+	 * @description The lookback window as a Go duration such as 5m. Only read when schemaVersion is v1, defaulting to 5m; v2alpha1 rules set it in evaluation.spec instead.
 	 */
 	evalWindow?: string;
+	/**
+	 * @description The evaluation window, as a kind and spec. Required when schemaVersion is v2alpha1; derived from evalWindow and frequency for v1.
+	 */
 	evaluation?: RuletypesEvaluationEnvelopeDTO;
 	/**
 	 * @type string
+	 * @description How often the rule is evaluated, as a Go duration such as 1m. Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set it in evaluation.spec instead.
 	 */
 	frequency?: string;
 	/**
 	 * @type object
+	 * @description Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. severity is the conventional routing label.
 	 */
 	labels?: RuletypesPostableRuleDTOLabels;
+	/**
+	 * @description Grouping, re-notification and routing behaviour. Required when schemaVersion is v2alpha1; derived from the v1 fields otherwise.
+	 */
 	notificationSettings?: RuletypesNotificationSettingsDTO;
 	/**
 	 * @type array
+	 * @description Notification channel names for schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries its own channels.
 	 */
 	preferredChannels?: string[];
+	/**
+	 * @description The evaluation strategy: threshold_rule compares against thresholds, promql_rule evaluates a PromQL expression, anomaly_rule scores deviation from seasonal history. Defaults to threshold_rule for builder queries and is forced to promql_rule for promql queries.
+	 */
 	ruleType: RuletypesRuleTypeDTO;
 	/**
 	 * @type string
+	 * @description The rule payload schema: v1 (the default when omitted) uses the flat condition fields, v2alpha1 uses condition.thresholds, evaluation and notificationSettings.
 	 */
 	schemaVersion?: string;
 	/**
 	 * @type string
+	 * @description The URL of the page the rule was created from. Informational; it is not used for evaluation.
 	 */
 	source?: string;
 	/**
 	 * @type string
+	 * @description The query payload version. Only v5 is accepted and it is filled in when omitted.
 	 */
 	version?: string;
 }
@@ -11605,20 +11735,34 @@ export interface RuletypesPostableRuleViewDTO {
 	name: string;
 }
 
+/**
+ * Free text attached to every alert, conventionally summary and description. Values may use Go templates with $value, $threshold and $labels.
+ */
 export type RuletypesRuleDTOAnnotations = { [key: string]: string };
 
+/**
+ * Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. severity is the conventional routing label.
+ */
 export type RuletypesRuleDTOLabels = { [key: string]: string };
 
 export interface RuletypesRuleDTO {
 	/**
 	 * @type string
+	 * @description The display name of the alert rule.
 	 */
 	alert: string;
+	/**
+	 * @description The signal the rule evaluates: METRIC_BASED_ALERT, TRACES_BASED_ALERT, LOGS_BASED_ALERT, EXCEPTIONS_BASED_ALERT or AI_TRACES_BASED_ALERT.
+	 */
 	alertType: RuletypesAlertTypeDTO;
 	/**
 	 * @type object
+	 * @description Free text attached to every alert, conventionally summary and description. Values may use Go templates with $value, $threshold and $labels.
 	 */
 	annotations?: RuletypesRuleDTOAnnotations;
+	/**
+	 * @description The query to evaluate and the thresholds applied to its result.
+	 */
 	condition: RuletypesRuleConditionDTO;
 	/**
 	 * @type string
@@ -11631,43 +11775,64 @@ export interface RuletypesRuleDTO {
 	createdBy?: string;
 	/**
 	 * @type string
+	 * @description A human readable description of what the rule monitors.
 	 */
 	description?: string;
 	/**
 	 * @type boolean
+	 * @description Whether the rule is paused. A disabled rule is neither evaluated nor notifies. Defaults to false.
 	 */
 	disabled?: boolean;
 	/**
 	 * @type string
+	 * @description The lookback window as a Go duration such as 5m. Only read when schemaVersion is v1, defaulting to 5m; v2alpha1 rules set it in evaluation.spec instead.
 	 */
 	evalWindow?: string;
+	/**
+	 * @description The evaluation window, as a kind and spec. Required when schemaVersion is v2alpha1; derived from evalWindow and frequency for v1.
+	 */
 	evaluation?: RuletypesEvaluationEnvelopeDTO;
 	/**
 	 * @type string
+	 * @description How often the rule is evaluated, as a Go duration such as 1m. Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set it in evaluation.spec instead.
 	 */
 	frequency?: string;
 	/**
 	 * @type string
+	 * @description The unique identifier of the rule.
 	 */
 	id: string;
 	/**
 	 * @type object
+	 * @description Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. severity is the conventional routing label.
 	 */
 	labels?: RuletypesRuleDTOLabels;
+	/**
+	 * @description Grouping, re-notification and routing behaviour. Required when schemaVersion is v2alpha1; derived from the v1 fields otherwise.
+	 */
 	notificationSettings?: RuletypesNotificationSettingsDTO;
 	/**
 	 * @type array
+	 * @description Notification channel names for schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries its own channels.
 	 */
 	preferredChannels?: string[];
+	/**
+	 * @description The evaluation strategy: threshold_rule compares against thresholds, promql_rule evaluates a PromQL expression, anomaly_rule scores deviation from seasonal history. Defaults to threshold_rule for builder queries and is forced to promql_rule for promql queries.
+	 */
 	ruleType: RuletypesRuleTypeDTO;
 	/**
 	 * @type string
+	 * @description The rule payload schema: v1 (the default when omitted) uses the flat condition fields, v2alpha1 uses condition.thresholds, evaluation and notificationSettings.
 	 */
 	schemaVersion?: string;
 	/**
 	 * @type string
+	 * @description The URL of the page the rule was created from. Informational; it is not used for evaluation.
 	 */
 	source?: string;
+	/**
+	 * @description The current evaluation state: inactive, pending, recovering, firing, nodata or disabled.
+	 */
 	state: RuletypesAlertStateDTO;
 	/**
 	 * @type string
@@ -11680,6 +11845,7 @@ export interface RuletypesRuleDTO {
 	updatedBy?: string;
 	/**
 	 * @type string
+	 * @description The query payload version. Only v5 is accepted and it is filled in when omitted.
 	 */
 	version?: string;
 }
@@ -15749,30 +15915,30 @@ export type GetMetricDashboardsV2200 = {
 export type ListRulesV3Params = {
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description A filter expression over rule name, description, labels and other fields, at most 1024 characters. Empty matches every rule.
 	 */
 	query?: string;
 	/**
 	 * @type array
-	 * @description undefined
+	 * @description Only return rules in these states: firing, pending, recovering, inactive, nodata or disabled. Empty means every state.
 	 */
 	states?: string[];
 	/**
-	 * @description undefined
+	 * @description The field to sort by: updated_at (the default), created_at, name, state or severity.
 	 */
 	sort?: RuletypesListSortDTO;
 	/**
-	 * @description undefined
+	 * @description The sort direction: asc or desc (the default).
 	 */
 	order?: RuletypesListOrderDTO;
 	/**
 	 * @type integer
-	 * @description undefined
+	 * @description The page size, 1 to 200. Defaults to 20 and larger values are clamped to 200.
 	 */
 	limit?: number;
 	/**
 	 * @type integer
-	 * @description undefined
+	 * @description The number of rules to skip before the page. Defaults to 0.
 	 */
 	offset?: number;
 };
