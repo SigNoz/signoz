@@ -92,7 +92,7 @@ type Link struct {
 // ══════════════════════════════════════════════
 
 type Query struct {
-	Kind qb.RequestType `json:"kind" required:"true" description:"The result shape the panel renders: time_series for charts, scalar for number and pie panels, raw for list panels, distribution for histogram and heatmap panels."`
+	Kind qb.RequestType `json:"kind" required:"true" description:"The result shape the panel requests: time_series for time series, bar, area and histogram panels, scalar for number, table and pie panels, raw for list panels, heatmap for heatmap panels, trace for trace panels."`
 	Spec QuerySpec      `json:"spec" required:"true" description:"The query content: an optional name and the query plugin."`
 }
 

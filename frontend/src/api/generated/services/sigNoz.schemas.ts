@@ -7149,7 +7149,7 @@ export interface DashboardtypesQuerySpecDTO {
 
 export interface DashboardtypesQueryDTO {
 	/**
-	 * @description The result shape the panel renders: time_series for charts, scalar for number and pie panels, raw for list panels, distribution for histogram and heatmap panels.
+	 * @description The result shape the panel requests: time_series for time series, bar, area and histogram panels, scalar for number, table and pie panels, raw for list panels, heatmap for heatmap panels, trace for trace panels.
 	 */
 	kind: Querybuildertypesv5RequestTypeDTO;
 	/**
