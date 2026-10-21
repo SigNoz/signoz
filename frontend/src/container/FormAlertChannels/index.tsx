@@ -1,6 +1,7 @@
 import { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Controller, FormProvider, UseFormReturn } from 'react-hook-form';
+import { X } from '@signozhq/icons';
 import { Input } from '@signozhq/ui/input';
 import { SelectSimple } from '@signozhq/ui/select';
 import { Switch } from '@signozhq/ui/switch';
@@ -48,10 +49,12 @@ function FormAlertChannels({
 	onTypeChangeHandler,
 	onTestHandler,
 	onSaveHandler,
+	onDiscardHandler,
 	savingState,
 	testingState,
 	editing = false,
 	readOnly = false,
+	hasChanges = true,
 	saveChecks = [],
 	testChecks = [],
 }: FormAlertChannelsProps): JSX.Element {
@@ -115,7 +118,10 @@ function FormAlertChannels({
 								/>
 							</FormField>
 
-							<FormField label={t('field_send_resolved')}>
+							<FormField
+								label={t('field_send_resolved')}
+								tooltip={t('tooltip_send_resolved')}
+							>
 								<Controller
 									control={control}
 									name="sendResolved"
@@ -131,7 +137,11 @@ function FormAlertChannels({
 								/>
 							</FormField>
 
-							<FormField label={t('field_channel_type')} htmlFor="channel-type">
+							<FormField
+								label={t('field_channel_type')}
+								tooltip={t('tooltip_channel_type')}
+								htmlFor="channel-type"
+							>
 								<SelectSimple
 									id="channel-type"
 									items={CHANNEL_TYPE_OPTIONS}
@@ -148,30 +158,45 @@ function FormAlertChannels({
 				</fieldset>
 
 				<div className={styles.actions}>
-					<AuthZTooltip checks={saveChecks}>
-						<Button
-							variant="solid"
-							color="primary"
-							size="md"
-							testId="save-channel-button"
-							loading={savingState}
-							onClick={onSaveHandler}
-						>
-							{t('button_save_channel')}
-						</Button>
-					</AuthZTooltip>
-					<AuthZTooltip checks={testChecks}>
-						<Button
-							variant="outlined"
-							color="secondary"
-							size="md"
-							testId="test-channel-button"
-							loading={testingState}
-							onClick={onTestHandler}
-						>
-							{t('button_test_channel')}
-						</Button>
-					</AuthZTooltip>
+					<Button
+						variant="outlined"
+						color="secondary"
+						size="md"
+						testId="discard-channel-button"
+						prefix={<X size={14} />}
+						onClick={onDiscardHandler}
+					>
+						{t('button_discard_channel')}
+					</Button>
+
+					<div className={styles.actionGroup}>
+						<AuthZTooltip checks={testChecks}>
+							<Button
+								variant="outlined"
+								color="secondary"
+								size="md"
+								testId="test-channel-button"
+								loading={testingState}
+								onClick={onTestHandler}
+							>
+								{t('button_test_channel')}
+							</Button>
+						</AuthZTooltip>
+						<AuthZTooltip checks={saveChecks}>
+							<Button
+								variant="solid"
+								color="primary"
+								size="md"
+								testId="save-channel-button"
+								loading={savingState}
+								disabled={!hasChanges}
+								disabledTooltip={t('tooltip_save_no_changes')}
+								onClick={onSaveHandler}
+							>
+								{t('button_save_channel')}
+							</Button>
+						</AuthZTooltip>
+					</div>
 				</div>
 			</form>
 		</FormProvider>
@@ -184,12 +209,15 @@ interface FormAlertChannelsProps {
 	onTypeChangeHandler: (value: ChannelKind) => void;
 	onSaveHandler: () => void;
 	onTestHandler: () => void;
+	onDiscardHandler: () => void;
 	testingState: boolean;
 	savingState: boolean;
 	// editing indicates if the form is opened in edit mode
 	editing?: boolean;
 	/** The reader has `read` but not `update`, so the fields render disabled. */
 	readOnly?: boolean;
+	/** Nothing edited yet, so there is nothing to save and nothing to discard. */
+	hasChanges?: boolean;
 	/** Gates saving; a denial disables the button and names the missing scope. */
 	saveChecks?: BrandedPermission[];
 	/** Gates a test send, which the API allows with `create`. */
@@ -199,6 +227,7 @@ interface FormAlertChannelsProps {
 FormAlertChannels.defaultProps = {
 	editing: undefined,
 	readOnly: false,
+	hasChanges: true,
 	saveChecks: [],
 	testChecks: [],
 };

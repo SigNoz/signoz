@@ -791,6 +791,22 @@ const CHANNEL_SPECS: Record<ChannelType, Record<string, unknown>> = {
 		channel: '#ops-alerts',
 		title: '[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}',
 		text: '{{ range .Alerts -}}*Alert:* {{ .Labels.alertname }}\n{{ end }}',
+		// one of each so the repeating row editors render with content
+		fields: [
+			{ title: 'Severity', value: '{{ .CommonLabels.severity }}', short: true },
+			{
+				title: 'Service',
+				value: '{{ .CommonLabels.service_name }}',
+				short: false,
+			},
+		],
+		actions: [
+			{
+				type: 'button',
+				text: 'Runbook',
+				url: 'https://runbook.example.com/{{ .CommonLabels.alertname }}',
+			},
+		],
 		sendResolved: true,
 	},
 	webhook: {

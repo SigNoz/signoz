@@ -58,9 +58,16 @@ export const ChannelTypeSelectOpen: Story = {
 /** Mutation: saving without a channel name shows the form's required-field feedback. */
 export const InvalidRequiredFields: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByTestId('save-channel-button'),
+		const canvas = within(canvasElement);
+
+		// Save stays off until the form is touched, so filling the webhook first is
+		// how a missing name is reached.
+		await userEvent.type(
+			await canvas.findByTestId('webhook-url-textbox'),
+			'https://hooks.slack.com/services/T/B/X',
 		);
+		await userEvent.click(canvas.getByTestId('save-channel-button'));
+
 		await screen.findByText('Channel name is mandatory');
 	},
 };
@@ -229,5 +236,40 @@ export const RequiredFields: Story = {
 			'aria-required',
 			'true',
 		);
+	},
+};
+
+/**
+ * The type carried in the URL. Filtering the list by a type and pressing its
+ * create button lands here with `?kind=`, so the form opens on that type with
+ * nothing to pick.
+ */
+export const KindFromUrl: Story = {
+	args: { kindInUrl: 'jira' },
+	play: async ({ canvasElement }): Promise<void> => {
+		const trigger = await within(canvasElement).findByTestId(
+			'channel-type-select',
+			undefined,
+			{ timeout: 15_000 },
+		);
+
+		await within(trigger).findByText(/^Jira$/);
+	},
+};
+
+/**
+ * A `?kind=` the app does not have. The form opens on its own default rather
+ * than on an empty type, so a stale or hand-edited link still works.
+ */
+export const UnknownKindInUrl: Story = {
+	args: { kindInUrl: 'not-a-kind' },
+	play: async ({ canvasElement }): Promise<void> => {
+		const trigger = await within(canvasElement).findByTestId(
+			'channel-type-select',
+			undefined,
+			{ timeout: 15_000 },
+		);
+
+		await within(trigger).findByText(/^Slack$/);
 	},
 };

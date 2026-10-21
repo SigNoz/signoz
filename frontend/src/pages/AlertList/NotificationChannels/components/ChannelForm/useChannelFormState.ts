@@ -31,6 +31,8 @@ import { toAPIError } from 'utils/errorUtils';
 export interface ChannelFormStateResult {
 	form: UseFormReturn<ChannelFormValues>;
 	type: ChannelKind;
+	/** False until something is edited, which is what gates saving. */
+	isDirty: boolean;
 	onTypeChange: (value: string) => void;
 	onSave: () => void;
 	onTest: () => void;
@@ -84,10 +86,13 @@ export function useChannelFormState({
 
 			setTypeState(nextType);
 
+			// shouldDirty, because the type lives outside the form: without it
+			// picking a different type leaves the form pristine and unsavable.
 			Object.entries(ChannelInitialConfig[nextType]).forEach(([field, value]) => {
 				form.setValue(
 					field as keyof ChannelFormValues,
 					value as ChannelFormValues[keyof ChannelFormValues],
+					{ shouldDirty: true },
 				);
 			});
 		},
@@ -177,6 +182,7 @@ export function useChannelFormState({
 	return {
 		form,
 		type,
+		isDirty: form.formState.isDirty,
 		onTypeChange,
 		onSave: form.handleSubmit(submitSave),
 		onTest: form.handleSubmit(submitTest),
