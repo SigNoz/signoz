@@ -18,6 +18,7 @@ import {
 	initialClickHouseData,
 	initialFormulaBuilderFormValues,
 	initialQueriesMap,
+	initialQueryAIWithType,
 	initialQueryBuilderFormTraceOperatorValues,
 	initialQueryBuilderFormValuesMap,
 	initialQueryPromQLData,
@@ -35,11 +36,15 @@ import {
 } from 'lib/query/panelTypeDataSourceFormValuesMap';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
-import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
+import {
+	getBuilderAt,
+	getBuilderSlotKey,
+	withBuilderAt,
+} from 'lib/query/builderSlot';
 import { saveRecentQuery } from 'lib/recentQueries/saveRecentQuery';
 import { replaceIncorrectObjectFields } from 'lib/replaceIncorrectObjectFields';
 import { cloneDeep, get, isEqual, set } from 'lodash-es';
@@ -136,6 +141,7 @@ export function QueryBuilderProvider({
 	const [stagedQuery, setStagedQuery] = useState<Query | null>(null);
 
 	const [queryType, setQueryType] = useState<EQueryType>(queryTypeParam);
+	const builderSlot = getBuilderSlotKey(queryType);
 
 	const getElementWithActualOperator = useCallback(
 		(
@@ -163,62 +169,73 @@ export function QueryBuilderProvider({
 
 	const prepareQueryBuilderData = useCallback(
 		(query: Query): Query => {
-			const builder: QueryBuilderData = {
-				queryData:
-					query.builder.queryData?.map((item) => ({
-						...initialQueryBuilderFormValuesMap[
-							initialDataSource || DataSource.METRICS
-						],
-						...item,
-					})) ?? [],
-				queryFormulas:
-					query.builder.queryFormulas?.map((item) => ({
-						...initialFormulaBuilderFormValues,
-						...item,
-					})) ?? [],
-				queryTraceOperator:
-					query.builder.queryTraceOperator?.map((item) => ({
-						...initialQueryBuilderFormTraceOperatorValues,
-						...item,
-					})) ?? [],
-			};
-
 			const urlPanelType = readPanelTypeFromUrl(PANEL_TYPES.LIST);
 
 			const isRawPanel =
 				urlPanelType === PANEL_TYPES.LIST || urlPanelType === PANEL_TYPES.TRACE;
 
-			const setupedQueryData = builder.queryData.map((item) => {
-				const currentElement: IBuilderQuery = {
-					...item,
-					groupBy: item.groupBy.map(({ id: _, ...item }) => ({
-						...item,
-						id: createIdFromObjectFields(item, baseAutoCompleteIdKeysOrder),
-					})),
-					aggregateAttribute: {
-						...item.aggregateAttribute,
-						id: createIdFromObjectFields(
-							item.aggregateAttribute as BaseAutocompleteData,
-							baseAutoCompleteIdKeysOrder,
-						),
-					} as BaseAutocompleteData,
+			const prepareBuilder = (source: QueryBuilderData): QueryBuilderData => {
+				const builder: QueryBuilderData = {
+					queryData:
+						source.queryData?.map((item) => ({
+							...initialQueryBuilderFormValuesMap[
+								initialDataSource || DataSource.METRICS
+							],
+							...item,
+						})) ?? [],
+					queryFormulas:
+						source.queryFormulas?.map((item) => ({
+							...initialFormulaBuilderFormValues,
+							...item,
+						})) ?? [],
+					queryTraceOperator:
+						source.queryTraceOperator?.map((item) => ({
+							...initialQueryBuilderFormTraceOperatorValues,
+							...item,
+						})) ?? [],
 				};
 
-				// Explorer pages: sanitize stale orderBy before first query
-				const isExplorer =
-					(location.pathname === ROUTES.LOGS_EXPLORER ||
-						location.pathname === ROUTES.TRACES_EXPLORER ||
-						location.pathname === ROUTES.AI_OBSERVABILITY_EXPLORER) &&
-					!isRawPanel;
-				if (isExplorer) {
-					const sanitizedOrderBy = sanitizeOrderByForExplorer(currentElement);
-					return calledFromHandleRunQuery
-						? currentElement
-						: { ...currentElement, orderBy: sanitizedOrderBy };
-				}
+				const setupedQueryData = builder.queryData.map((item) => {
+					const currentElement: IBuilderQuery = {
+						...item,
+						groupBy: item.groupBy.map(({ id: _, ...item }) => ({
+							...item,
+							id: createIdFromObjectFields(item, baseAutoCompleteIdKeysOrder),
+						})),
+						aggregateAttribute: {
+							...item.aggregateAttribute,
+							id: createIdFromObjectFields(
+								item.aggregateAttribute as BaseAutocompleteData,
+								baseAutoCompleteIdKeysOrder,
+							),
+						} as BaseAutocompleteData,
+					};
 
-				return currentElement;
-			});
+					// Explorer pages: sanitize stale orderBy before first query
+					const isExplorer =
+						(location.pathname === ROUTES.LOGS_EXPLORER ||
+							location.pathname === ROUTES.TRACES_EXPLORER ||
+							location.pathname === ROUTES.AI_OBSERVABILITY_EXPLORER) &&
+						!isRawPanel;
+					if (isExplorer) {
+						const sanitizedOrderBy = sanitizeOrderByForExplorer(currentElement);
+						return calledFromHandleRunQuery
+							? currentElement
+							: { ...currentElement, orderBy: sanitizedOrderBy };
+					}
+
+					return currentElement;
+				});
+
+				return { ...builder, queryData: setupedQueryData };
+			};
+
+			// Filled the first time AI is the active type, then kept so a tab switch can return to it.
+			const aiBuilder =
+				query.builder_ai_query ??
+				(query.queryType === EQueryType.AI_QUERY_BUILDER
+					? initialQueryAIWithType.builder
+					: undefined);
 
 			const promql: IPromQLQuery[] =
 				query.promql?.map((item) => ({
@@ -235,10 +252,8 @@ export function QueryBuilderProvider({
 			const newQueryState: QueryState = {
 				clickhouse_sql: clickHouse,
 				promql,
-				builder: {
-					...builder,
-					queryData: setupedQueryData,
-				},
+				builder: prepareBuilder(query.builder),
+				...(aiBuilder && { builder_ai_query: prepareBuilder(aiBuilder) }),
 				id: query.id,
 				unit: query.unit,
 			};
@@ -283,20 +298,19 @@ export function QueryBuilderProvider({
 			dataSource: DataSource,
 			signalSource?: 'meter' | '',
 		): Query => {
-			const queryData = query.builder.queryData?.map((item) =>
+			const slot = getBuilderSlotKey(query.queryType);
+			const builder = getBuilderAt(query, slot);
+			const queryData = builder.queryData?.map((item) =>
 				getElementWithActualOperator(item, dataSource, panelType),
 			);
 
-			return {
-				...query,
-				builder: {
-					...query.builder,
-					queryData: queryData.map((item) => ({
-						...item,
-						source: signalSource,
-					})),
-				},
-			};
+			return withBuilderAt(query, slot, {
+				...builder,
+				queryData: queryData.map((item) => ({
+					...item,
+					source: signalSource,
+				})),
+			});
 		},
 
 		[getElementWithActualOperator],
@@ -393,9 +407,11 @@ export function QueryBuilderProvider({
 				index: number,
 			) => QueryBuilderData[T][number],
 		): Query => {
-			const result = query.builder[type].map(updateCallback);
+			const slot = getBuilderSlotKey(query.queryType);
+			const builder = getBuilderAt(query, slot);
+			const result = builder[type].map(updateCallback);
 
-			return { ...query, builder: { ...query.builder, [type]: result } };
+			return withBuilderAt(query, slot, { ...builder, [type]: result });
 		},
 		[],
 	);
@@ -407,17 +423,14 @@ export function QueryBuilderProvider({
 					| IBuilderQuery
 					| IBuilderFormula
 					| IBuilderTraceOperator
-				)[] = prevState.builder[type];
+				)[] = getBuilderAt(prevState, builderSlot)[type];
 
 				const filteredArray = currentArray.filter((_, i) => index !== i);
 
-				return {
-					...prevState,
-					builder: {
-						...prevState.builder,
-						[type]: filteredArray,
-					},
-				};
+				return withBuilderAt(prevState, builderSlot, {
+					...getBuilderAt(prevState, builderSlot),
+					[type]: filteredArray,
+				});
 			});
 			// eslint-disable-next-line sonarjs/no-identical-functions
 			setSupersetQuery((prevState) => {
@@ -425,34 +438,35 @@ export function QueryBuilderProvider({
 					| IBuilderQuery
 					| IBuilderFormula
 					| IBuilderTraceOperator
-				)[] = prevState.builder[type];
+				)[] = getBuilderAt(prevState, builderSlot)[type];
 
 				const filteredArray = currentArray.filter((_, i) => index !== i);
 
-				return {
-					...prevState,
-					builder: {
-						...prevState.builder,
-						[type]: filteredArray,
-					},
-				};
+				return withBuilderAt(prevState, builderSlot, {
+					...getBuilderAt(prevState, builderSlot),
+					[type]: filteredArray,
+				});
 			});
 		},
-		[],
+		[builderSlot],
 	);
 
 	const removeAllQueryBuilderEntities = useCallback(
 		(type: keyof QueryBuilderData) => {
-			setCurrentQuery((prevState) => ({
-				...prevState,
-				builder: { ...prevState.builder, [type]: [] },
-			}));
-			setSupersetQuery((prevState) => ({
-				...prevState,
-				builder: { ...prevState.builder, [type]: [] },
-			}));
+			setCurrentQuery((prevState) =>
+				withBuilderAt(prevState, builderSlot, {
+					...getBuilderAt(prevState, builderSlot),
+					[type]: [],
+				}),
+			);
+			setSupersetQuery((prevState) =>
+				withBuilderAt(prevState, builderSlot, {
+					...getBuilderAt(prevState, builderSlot),
+					[type]: [],
+				}),
+			);
 		},
-		[setCurrentQuery, setSupersetQuery],
+		[builderSlot, setCurrentQuery, setSupersetQuery],
 	);
 
 	const removeQueryTypeItemByIndex = useCallback(
@@ -582,177 +596,180 @@ export function QueryBuilderProvider({
 
 	const addNewBuilderQuery = useCallback(() => {
 		setCurrentQuery((prevState) => {
-			if (prevState.builder.queryData.length >= MAX_QUERIES) {
+			if (getBuilderAt(prevState, builderSlot).queryData.length >= MAX_QUERIES) {
 				return prevState;
 			}
 
-			const newQuery = createNewBuilderQuery(prevState.builder.queryData);
+			const newQuery = createNewBuilderQuery(
+				getBuilderAt(prevState, builderSlot).queryData,
+			);
 
-			return {
-				...prevState,
-				builder: {
-					...prevState.builder,
-					queryData: [...prevState.builder.queryData, newQuery],
-				},
-			};
+			return withBuilderAt(prevState, builderSlot, {
+				...getBuilderAt(prevState, builderSlot),
+				queryData: [...getBuilderAt(prevState, builderSlot).queryData, newQuery],
+			});
 		});
 
 		// eslint-disable-next-line sonarjs/no-identical-functions
 		setSupersetQuery((prevState) => {
-			if (prevState.builder.queryData.length >= MAX_QUERIES) {
+			if (getBuilderAt(prevState, builderSlot).queryData.length >= MAX_QUERIES) {
 				return prevState;
 			}
 
-			const newQuery = createNewBuilderQuery(prevState.builder.queryData);
+			const newQuery = createNewBuilderQuery(
+				getBuilderAt(prevState, builderSlot).queryData,
+			);
 
-			return {
-				...prevState,
-				builder: {
-					...prevState.builder,
-					queryData: [...prevState.builder.queryData, newQuery],
-				},
-			};
+			return withBuilderAt(prevState, builderSlot, {
+				...getBuilderAt(prevState, builderSlot),
+				queryData: [...getBuilderAt(prevState, builderSlot).queryData, newQuery],
+			});
 		});
-	}, [createNewBuilderQuery]);
+	}, [builderSlot, createNewBuilderQuery]);
 
 	const cloneQuery = useCallback(
 		(type: string, query: IBuilderQuery): void => {
 			setCurrentQuery((prevState) => {
-				if (prevState.builder.queryData.length >= MAX_QUERIES) {
+				if (getBuilderAt(prevState, builderSlot).queryData.length >= MAX_QUERIES) {
 					return prevState;
 				}
 
 				const clonedQuery = cloneNewBuilderQuery(
-					prevState.builder.queryData,
+					getBuilderAt(prevState, builderSlot).queryData,
 					query,
 				);
 
-				return {
-					...prevState,
-					builder: {
-						...prevState.builder,
-						queryData: [...prevState.builder.queryData, clonedQuery],
-					},
-				};
+				return withBuilderAt(prevState, builderSlot, {
+					...getBuilderAt(prevState, builderSlot),
+					queryData: [
+						...getBuilderAt(prevState, builderSlot).queryData,
+						clonedQuery,
+					],
+				});
 			});
 			// eslint-disable-next-line sonarjs/no-identical-functions
 			setSupersetQuery((prevState) => {
-				if (prevState.builder.queryData.length >= MAX_QUERIES) {
+				if (getBuilderAt(prevState, builderSlot).queryData.length >= MAX_QUERIES) {
 					return prevState;
 				}
 
 				const clonedQuery = cloneNewBuilderQuery(
-					prevState.builder.queryData,
+					getBuilderAt(prevState, builderSlot).queryData,
 					query,
 				);
 
-				return {
-					...prevState,
-					builder: {
-						...prevState.builder,
-						queryData: [...prevState.builder.queryData, clonedQuery],
-					},
-				};
+				return withBuilderAt(prevState, builderSlot, {
+					...getBuilderAt(prevState, builderSlot),
+					queryData: [
+						...getBuilderAt(prevState, builderSlot).queryData,
+						clonedQuery,
+					],
+				});
 			});
 		},
-		[cloneNewBuilderQuery],
+		[builderSlot, cloneNewBuilderQuery],
 	);
 
 	const addNewFormula = useCallback(() => {
 		setCurrentQuery((prevState) => {
-			if (prevState.builder.queryFormulas.length >= MAX_FORMULAS) {
+			if (
+				getBuilderAt(prevState, builderSlot).queryFormulas.length >= MAX_FORMULAS
+			) {
 				return prevState;
 			}
 
-			const newFormula = createNewBuilderFormula(prevState.builder.queryFormulas);
+			const newFormula = createNewBuilderFormula(
+				getBuilderAt(prevState, builderSlot).queryFormulas,
+			);
 
-			return {
-				...prevState,
-				builder: {
-					...prevState.builder,
-					queryFormulas: [...prevState.builder.queryFormulas, newFormula],
-				},
-			};
+			return withBuilderAt(prevState, builderSlot, {
+				...getBuilderAt(prevState, builderSlot),
+				queryFormulas: [
+					...getBuilderAt(prevState, builderSlot).queryFormulas,
+					newFormula,
+				],
+			});
 		});
 		// eslint-disable-next-line sonarjs/no-identical-functions
 		setSupersetQuery((prevState) => {
-			if (prevState.builder.queryFormulas.length >= MAX_FORMULAS) {
+			if (
+				getBuilderAt(prevState, builderSlot).queryFormulas.length >= MAX_FORMULAS
+			) {
 				return prevState;
 			}
 
-			const newFormula = createNewBuilderFormula(prevState.builder.queryFormulas);
+			const newFormula = createNewBuilderFormula(
+				getBuilderAt(prevState, builderSlot).queryFormulas,
+			);
 
-			return {
-				...prevState,
-				builder: {
-					...prevState.builder,
-					queryFormulas: [...prevState.builder.queryFormulas, newFormula],
-				},
-			};
+			return withBuilderAt(prevState, builderSlot, {
+				...getBuilderAt(prevState, builderSlot),
+				queryFormulas: [
+					...getBuilderAt(prevState, builderSlot).queryFormulas,
+					newFormula,
+				],
+			});
 		});
-	}, [createNewBuilderFormula]);
+	}, [builderSlot, createNewBuilderFormula]);
 
-	const addTraceOperator = useCallback((expression = '') => {
-		const trimmed = (expression || '').trim();
+	const addTraceOperator = useCallback(
+		(expression = '') => {
+			const trimmed = (expression || '').trim();
 
-		setCurrentQuery((prevState) => {
-			const existing = prevState.builder.queryTraceOperator?.[0] || null;
-			const updated: IBuilderTraceOperator = existing
-				? { ...existing, expression: trimmed }
-				: {
-						...initialQueryBuilderFormTraceOperatorValues,
-						queryName: TRACE_OPERATOR_QUERY_NAME,
-						expression: trimmed,
-					};
+			setCurrentQuery((prevState) => {
+				const existing =
+					getBuilderAt(prevState, builderSlot).queryTraceOperator?.[0] || null;
+				const updated: IBuilderTraceOperator = existing
+					? { ...existing, expression: trimmed }
+					: {
+							...initialQueryBuilderFormTraceOperatorValues,
+							queryName: TRACE_OPERATOR_QUERY_NAME,
+							expression: trimmed,
+						};
 
-			return {
-				...prevState,
-				builder: {
-					...prevState.builder,
+				return withBuilderAt(prevState, builderSlot, {
+					...getBuilderAt(prevState, builderSlot),
 					// enforce single trace operator and replace only expression
 					queryTraceOperator: [updated],
-				},
-			};
-		});
-		// eslint-disable-next-line sonarjs/no-identical-functions
-		setSupersetQuery((prevState) => {
-			const existing = prevState.builder.queryTraceOperator?.[0] || null;
-			const updated: IBuilderTraceOperator = existing
-				? { ...existing, expression: trimmed }
-				: {
-						...initialQueryBuilderFormTraceOperatorValues,
-						queryName: TRACE_OPERATOR_QUERY_NAME,
-						expression: trimmed,
-					};
+				});
+			});
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			setSupersetQuery((prevState) => {
+				const existing =
+					getBuilderAt(prevState, builderSlot).queryTraceOperator?.[0] || null;
+				const updated: IBuilderTraceOperator = existing
+					? { ...existing, expression: trimmed }
+					: {
+							...initialQueryBuilderFormTraceOperatorValues,
+							queryName: TRACE_OPERATOR_QUERY_NAME,
+							expression: trimmed,
+						};
 
-			return {
-				...prevState,
-				builder: {
-					...prevState.builder,
+				return withBuilderAt(prevState, builderSlot, {
+					...getBuilderAt(prevState, builderSlot),
 					// enforce single trace operator and replace only expression
 					queryTraceOperator: [updated],
-				},
-			};
-		});
-	}, []);
+				});
+			});
+		},
+		[builderSlot],
+	);
 
 	const removeTraceOperator = useCallback(() => {
-		setCurrentQuery((prevState) => ({
-			...prevState,
-			builder: {
-				...prevState.builder,
+		setCurrentQuery((prevState) =>
+			withBuilderAt(prevState, builderSlot, {
+				...getBuilderAt(prevState, builderSlot),
 				queryTraceOperator: [],
-			},
-		}));
+			}),
+		);
 		// eslint-disable-next-line sonarjs/no-identical-functions
-		setSupersetQuery((prevState) => ({
-			...prevState,
-			builder: {
-				...prevState.builder,
+		setSupersetQuery((prevState) =>
+			withBuilderAt(prevState, builderSlot, {
+				...getBuilderAt(prevState, builderSlot),
 				queryTraceOperator: [],
-			},
-		}));
-	}, []);
+			}),
+		);
+	}, [builderSlot]);
 
 	const updateQueryBuilderData: <T>(
 		arr: T[],
@@ -832,110 +849,92 @@ export function QueryBuilderProvider({
 		(index: number, newQueryData: IBuilderQuery): void => {
 			setCurrentQuery((prevState) => {
 				const updatedQueryBuilderData = updateQueryBuilderData(
-					prevState.builder.queryData,
+					getBuilderAt(prevState, builderSlot).queryData,
 					index,
 					newQueryData,
 				);
 
-				return {
-					...prevState,
-					builder: {
-						...prevState.builder,
-						queryData: updatedQueryBuilderData,
-					},
-				};
+				return withBuilderAt(prevState, builderSlot, {
+					...getBuilderAt(prevState, builderSlot),
+					queryData: updatedQueryBuilderData,
+				});
 			});
 			setSupersetQuery((prevState) => {
 				const updatedQueryBuilderData = updateSuperSetQueryBuilderData(
-					prevState.builder.queryData,
+					getBuilderAt(prevState, builderSlot).queryData,
 					index,
 					newQueryData,
 				);
 
-				return {
-					...prevState,
-					builder: {
-						...prevState.builder,
-						queryData: updatedQueryBuilderData,
-					},
-				};
+				return withBuilderAt(prevState, builderSlot, {
+					...getBuilderAt(prevState, builderSlot),
+					queryData: updatedQueryBuilderData,
+				});
 			});
 		},
-		[updateQueryBuilderData, updateSuperSetQueryBuilderData],
+		[builderSlot, updateQueryBuilderData, updateSuperSetQueryBuilderData],
 	);
 
 	const handleSetTraceOperatorData = useCallback(
 		(index: number, traceOperatorData: IBuilderTraceOperator): void => {
 			setCurrentQuery((prevState) => {
 				const updatedTraceOperatorBuilderData = updateQueryBuilderData(
-					prevState.builder.queryTraceOperator,
+					getBuilderAt(prevState, builderSlot).queryTraceOperator,
 					index,
 					traceOperatorData,
 				);
 
-				return {
-					...prevState,
-					builder: {
-						...prevState.builder,
-						queryTraceOperator: updatedTraceOperatorBuilderData,
-					},
-				};
+				return withBuilderAt(prevState, builderSlot, {
+					...getBuilderAt(prevState, builderSlot),
+					queryTraceOperator: updatedTraceOperatorBuilderData,
+				});
 			});
 			// eslint-disable-next-line sonarjs/no-identical-functions
 			setSupersetQuery((prevState) => {
 				const updatedTraceOperatorBuilderData = updateQueryBuilderData(
-					prevState.builder.queryTraceOperator,
+					getBuilderAt(prevState, builderSlot).queryTraceOperator,
 					index,
 					traceOperatorData,
 				);
 
-				return {
-					...prevState,
-					builder: {
-						...prevState.builder,
-						queryTraceOperator: updatedTraceOperatorBuilderData,
-					},
-				};
+				return withBuilderAt(prevState, builderSlot, {
+					...getBuilderAt(prevState, builderSlot),
+					queryTraceOperator: updatedTraceOperatorBuilderData,
+				});
 			});
 		},
-		[updateQueryBuilderData],
+		[builderSlot, updateQueryBuilderData],
 	);
 
 	const handleSetFormulaData = useCallback(
 		(index: number, formulaData: IBuilderFormula): void => {
 			setCurrentQuery((prevState) => {
 				const updatedFormulasBuilderData = updateQueryBuilderData(
-					prevState.builder.queryFormulas,
+					getBuilderAt(prevState, builderSlot).queryFormulas,
 					index,
 					formulaData,
 				);
 
-				return {
-					...prevState,
-					builder: {
-						...prevState.builder,
-						queryFormulas: updatedFormulasBuilderData,
-					},
-				};
+				return withBuilderAt(prevState, builderSlot, {
+					...getBuilderAt(prevState, builderSlot),
+					queryFormulas: updatedFormulasBuilderData,
+				});
 			});
 			// eslint-disable-next-line sonarjs/no-identical-functions
 			setSupersetQuery((prevState) => {
 				const updatedFormulasBuilderData = updateQueryBuilderData(
-					prevState.builder.queryFormulas,
+					getBuilderAt(prevState, builderSlot).queryFormulas,
 					index,
 					formulaData,
 				);
 
-				return {
-					...prevState,
-					builder: {
-						...prevState.builder,
-						queryFormulas: updatedFormulasBuilderData,
-					},
-				};
+				return withBuilderAt(prevState, builderSlot, {
+					...getBuilderAt(prevState, builderSlot),
+					queryFormulas: updatedFormulasBuilderData,
+				});
 			});
 		},
-		[updateQueryBuilderData],
+		[builderSlot, updateQueryBuilderData],
 	);
 
 	const isStagedQueryUpdated = useCallback(
@@ -989,6 +988,9 @@ export function QueryBuilderProvider({
 			const currentGeneratedQuery: Query = {
 				queryType,
 				builder,
+				...(query.builder_ai_query && {
+					builder_ai_query: query.builder_ai_query,
+				}),
 				promql,
 				clickhouse_sql: clickhouseSql,
 				id: uuid(),
@@ -1055,42 +1057,34 @@ export function QueryBuilderProvider({
 		}
 		saveRecentQuery(currentQuery);
 
-		const currentQueryData = {
-			...currentQuery,
-			builder: {
-				...currentQuery.builder,
-				queryData: currentQuery.builder.queryData.map((item) => ({
-					...item,
-					filter: {
-						...item.filter,
-						expression:
-							item.filter?.expression.trim() === ''
-								? ''
-								: (item.filter?.expression ?? ''),
-					},
-					filters: {
-						items: [],
-						op: 'AND',
-					},
-				})),
-			},
-		};
-
-		redirectWithQueryBuilderData({
-			...{
-				...currentQueryData,
-				...updateStepInterval({
-					builder: currentQueryData.builder,
-					clickhouse_sql: currentQueryData.clickhouse_sql,
-					promql: currentQueryData.promql,
-					id: currentQueryData.id,
-					queryType,
-					unit: currentQueryData.unit,
-				}),
-			},
-			queryType,
+		const builder = getBuilderAt(currentQuery, builderSlot);
+		const currentQueryData = withBuilderAt(currentQuery, builderSlot, {
+			...builder,
+			queryData: builder.queryData.map((item) => ({
+				...item,
+				filter: {
+					...item.filter,
+					expression:
+						item.filter?.expression.trim() === ''
+							? ''
+							: (item.filter?.expression ?? ''),
+				},
+				filters: {
+					items: [],
+					op: 'AND',
+				},
+				stepInterval: item.stepInterval ?? null,
+			})),
 		});
-	}, [currentQuery, location.pathname, queryType, redirectWithQueryBuilderData]);
+
+		redirectWithQueryBuilderData({ ...currentQueryData, queryType });
+	}, [
+		builderSlot,
+		currentQuery,
+		location.pathname,
+		queryType,
+		redirectWithQueryBuilderData,
+	]);
 
 	useEffect(() => {
 		if (location.pathname !== currentPathnameRef.current) {
@@ -1121,7 +1115,10 @@ export function QueryBuilderProvider({
 			);
 
 			if (!isValid) {
-				redirectWithQueryBuilderData(validData);
+				redirectWithQueryBuilderData({
+					...validData,
+					builder_ai_query: compositeQueryParam.builder_ai_query,
+				});
 			} else {
 				initQueryBuilderData(compositeQueryParam);
 			}

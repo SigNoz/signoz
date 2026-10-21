@@ -28,12 +28,15 @@ export const useGetCompositeQueryParam = (): Query | null => {
 			);
 
 			// Add default values for optional fields if empty
-			if (parsedCompositeQuery?.builder) {
-				parsedCompositeQuery.builder.queryFormulas =
-					parsedCompositeQuery.builder.queryFormulas ?? [];
-				parsedCompositeQuery.builder.queryTraceOperator =
-					parsedCompositeQuery.builder.queryTraceOperator ?? [];
-			}
+			[
+				parsedCompositeQuery?.builder,
+				parsedCompositeQuery?.builder_ai_query,
+			].forEach((builder) => {
+				if (builder) {
+					builder.queryFormulas = builder.queryFormulas ?? [];
+					builder.queryTraceOperator = builder.queryTraceOperator ?? [];
+				}
+			});
 
 			// Convert old format to new format for each query in builder.queryData
 			if (parsedCompositeQuery?.builder?.queryData) {
