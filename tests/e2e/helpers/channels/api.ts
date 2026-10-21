@@ -2,6 +2,9 @@ import type { Page } from '@playwright/test';
 
 import { authToken } from '../common';
 
+// The v2 channel API. `helpers/alerts/api.ts` still posts to v1 for the older
+// alert specs, so the two sets of channel helpers are not interchangeable.
+
 const CHANNELS_PATH = '/api/v2/notification_channels';
 
 export interface SeededChannel {

@@ -1,52 +1,39 @@
-import { expect, test } from '../../../fixtures/auth';
+import { expect, test } from '../../../drivers/channels';
 import { deleteChannelViaApi } from '../../../helpers/channels/api';
-import {
-	channelRow,
-	CHANNELS_NEW_PATH,
-	gotoChannelList,
-} from '../../../helpers/channels/navigation';
 
 test.describe('Notification channels — create', () => {
 	test('TC-01 a webhook channel saves and shows up in the list', async ({
-		authedPage: page,
+		channels,
+		authedPage,
 	}) => {
 		const name = `e2e-ncc-${Date.now()}`;
 		let id: string | undefined;
 
 		try {
-			await page.goto(CHANNELS_NEW_PATH);
-			await page.getByTestId('channel-name-textbox').fill(name);
+			await channels.form.gotoNew();
+			await channels.form.name().fill(name);
+			await channels.form.pickType('Webhook');
+			await channels.form.fillField(
+				'webhook-url-textbox',
+				'https://example.test/e2e-hook',
+			);
 
-			await page.getByTestId('channel-type-select').click();
-			await page.getByRole('option', { name: 'Webhook', exact: true }).click();
+			id = await channels.form.saveAndReturnId();
 
-			await page
-				.getByTestId('webhook-url-textbox')
-				.fill('https://example.test/e2e-hook');
-
-			const [response] = await Promise.all([
-				page.waitForResponse(
-					(r) =>
-						r.url().includes('/api/v2/notification_channels') &&
-						r.request().method() === 'POST',
-				),
-				page.getByTestId('save-channel-button').click(),
-			]);
-			id = ((await response.json()) as { data: { id: string } }).data.id;
-
-			await gotoChannelList(page, { search: name });
-			await expect(channelRow(page, name)).toBeVisible();
+			await channels.list.goto({ search: name });
+			await expect(channels.list.row(name)).toBeVisible();
 		} finally {
-			await deleteChannelViaApi(page, id);
+			await deleteChannelViaApi(authedPage, id);
 		}
 	});
 
 	test('TC-02 saving without a name reports the missing field', async ({
-		authedPage: page,
+		channels,
+		authedPage,
 	}) => {
-		await page.goto(CHANNELS_NEW_PATH);
-		await page.getByTestId('save-channel-button').click();
+		await channels.form.gotoNew();
+		await channels.form.save();
 
-		await expect(page.getByText('Channel name is mandatory')).toBeVisible();
+		await expect(authedPage.getByText('Channel name is mandatory')).toBeVisible();
 	});
 });

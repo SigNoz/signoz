@@ -1,43 +1,29 @@
-import { expect, test } from '../../../fixtures/auth';
+import { expect, test } from '../../../drivers/channels';
 import {
 	createChannelViaApi,
 	deleteChannelViaApi,
 } from '../../../helpers/channels/api';
-import {
-	channelRow,
-	gotoChannelList,
-	openChannelRowMenu,
-} from '../../../helpers/channels/navigation';
 
 test.describe('Notification channels — delete', () => {
 	test('TC-01 deleting from the row menu takes the channel out of the list', async ({
-		authedPage: page,
+		channels,
+		authedPage,
 	}) => {
 		const name = `e2e-ncd-${Date.now()}`;
-		const { id } = await createChannelViaApi(page, name);
+		const { id } = await createChannelViaApi(authedPage, name);
 
 		try {
-			await gotoChannelList(page, { search: name });
-			await openChannelRowMenu(page, name);
-			await page.getByRole('menuitem', { name: 'Delete' }).click();
+			await channels.list.goto({ search: name });
+			await channels.list.openRowMenu(name);
+			await channels.list.chooseMenuItem('Delete');
 
-			await expect(
-				page.getByText(`Are you sure you want to delete the ${name} channel?`),
-			).toBeVisible();
+			await expect(channels.list.deletePrompt(name)).toBeVisible();
+			await channels.list.confirmDelete();
 
-			await Promise.all([
-				page.waitForResponse(
-					(r) =>
-						r.url().includes('/api/v2/notification_channels') &&
-						r.request().method() === 'DELETE',
-				),
-				page.getByRole('button', { name: 'Delete', exact: true }).click(),
-			]);
-
-			await expect(channelRow(page, name)).toHaveCount(0);
+			await expect(channels.list.row(name)).toHaveCount(0);
 		} finally {
 			// the test deletes it; this only catches a run that stopped earlier
-			await deleteChannelViaApi(page, id);
+			await deleteChannelViaApi(authedPage, id);
 		}
 	});
 });
