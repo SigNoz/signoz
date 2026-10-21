@@ -3,6 +3,7 @@
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { toWireQuery } from 'lib/query/builderSlot';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty } from 'lodash-es';
@@ -557,9 +558,15 @@ export const prepareQueryRangePayloadV5 = (
 	const requestType = mapPanelTypeToRequestType(graphType);
 	let queries: QueryEnvelope[] = [];
 
-	switch (query.queryType) {
+	const wireQuery = toWireQuery(query);
+
+	switch (wireQuery.queryType) {
 		case EQueryType.QUERY_BUILDER: {
-			const { queryData: data, queryFormulas, queryTraceOperator } = query.builder;
+			const {
+				queryData: data,
+				queryFormulas,
+				queryTraceOperator,
+			} = wireQuery.builder;
 			const currentQueryData = mapQueryDataToApi(data, 'queryName', tableParams);
 			const currentFormulas = mapQueryDataToApi(queryFormulas, 'queryName');
 
@@ -621,13 +628,13 @@ export const prepareQueryRangePayloadV5 = (
 			break;
 		}
 		case EQueryType.PROM: {
-			const promQueries = reduceQueriesToObject(query[query.queryType]);
+			const promQueries = reduceQueriesToObject(wireQuery[wireQuery.queryType]);
 			queries = convertPromQueriesToV5(promQueries.queries);
 			legendMap = promQueries.legends;
 			break;
 		}
 		case EQueryType.CLICKHOUSE: {
-			const chQueries = reduceQueriesToObject(query[query.queryType]);
+			const chQueries = reduceQueriesToObject(wireQuery[wireQuery.queryType]);
 			queries = convertClickHouseQueriesToV5(chQueries.queries);
 			legendMap = chQueries.legends;
 			break;

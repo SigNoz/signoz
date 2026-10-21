@@ -902,6 +902,40 @@ describe('prepareQueryRangePayloadV5', () => {
 		const logSpec = builderQuery.spec as LogBuilderQuery;
 		expect(logSpec.filter).toStrictEqual({ expression: '' });
 	});
+
+	it('sends the AI slot as builder_ai_query envelopes, ignoring builder', () => {
+		const props: GetQueryResultsProps = {
+			query: {
+				queryType: EQueryType.AI_QUERY_BUILDER,
+				id: 'q-ai',
+				unit: undefined,
+				promql: [],
+				clickhouse_sql: [],
+				builder: {
+					queryData: [baseBuilderQuery({ queryName: 'M' })],
+					queryFormulas: [],
+					queryTraceOperator: [],
+				},
+				builder_ai_query: {
+					queryData: [
+						baseBuilderQuery({ queryName: 'A', dataSource: DataSource.TRACES }),
+					],
+					queryFormulas: [],
+					queryTraceOperator: [],
+				},
+			},
+			graphType: PANEL_TYPES.TIME_SERIES,
+			selectedTime: 'GLOBAL_TIME',
+			start,
+			end,
+		};
+
+		const { queries } =
+			prepareQueryRangePayloadV5(props).queryPayload.compositeQuery;
+		expect(
+			queries.map((q) => [q.type, (q.spec as { name: string }).name]),
+		).toStrictEqual([['builder_ai_query', 'A']]);
+	});
 });
 
 describe('convertBuilderQueriesToV5 having normalization', () => {

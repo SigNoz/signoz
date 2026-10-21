@@ -117,6 +117,8 @@ export interface Query {
 	queryType: EQueryType;
 	promql: IPromQLQuery[];
 	builder: QueryBuilderData;
+	/** AI Query Builder queries; absent until the AI tab is used. */
+	builder_ai_query?: QueryBuilderData;
 	clickhouse_sql: IClickHouseQuery[];
 	id: string;
 	unit?: Format['id'];
