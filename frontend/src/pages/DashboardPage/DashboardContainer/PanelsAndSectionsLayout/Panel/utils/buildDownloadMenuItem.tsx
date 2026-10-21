@@ -54,15 +54,13 @@ export function buildDownloadMenuItem({
 
 	const items = DOWNLOAD_FORMAT_OPTIONS.filter(
 		({ format }) => supported[format],
-	).map(
-		({ format, label, icon }): DropdownActionItemType => ({
-			type: 'item',
-			value: `download-${format}`,
-			label,
-			prefix: icon,
-			onClick: (): void => onDownload(format),
-		}),
-	);
+	).map(({ format, label, icon }): DropdownActionItemType => ({
+		type: 'item',
+		value: `download-${format}`,
+		label,
+		prefix: icon,
+		onClick: (): void => onDownload(format),
+	}));
 
 	if (items.length === 0) {
 		return null;

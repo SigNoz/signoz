@@ -1,95 +1,100 @@
 import { useTranslation } from 'react-i18next';
-import { Form, Input } from 'antd';
-import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
+import { Controller, useFormContext } from 'react-hook-form';
+import { Input } from '@signozhq/ui/input';
+import { Input as AntdInput } from 'antd';
 
-import { OpsgenieChannel } from '../../CreateAlertChannels/config';
+import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
+import FormCard from '../FormCard';
+import FormField from '../FormField';
 
-const { TextArea } = Input;
+const { TextArea } = AntdInput;
 
-function OpsgenieForm({ setSelectedConfig }: OpsgenieFormProps): JSX.Element {
+function OpsgenieForm(): JSX.Element {
 	const { t } = useTranslation('channels');
-
-	const handleInputChange =
-		(field: string) =>
-		(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
-			setSelectedConfig((value) => ({
-				...value,
-				[field]: event.target.value,
-			}));
-		};
+	const {
+		register,
+		control,
+		formState: { errors },
+	} = useFormContext<ChannelSpecFormValues>();
 
 	return (
 		<>
-			<Form.Item
-				name="api_key"
-				label={t('field_opsgenie_api_key')}
-				tooltip={{
-					title: (
-						<MarkdownRenderer
-							markdownContent={t('tooltip_opsgenie_api_key')}
-							variables={{}}
-						/>
-					),
-					overlayInnerStyle: { maxWidth: 400 },
-					placement: 'right',
-				}}
-				required
-			>
-				<Input
-					onChange={handleInputChange('api_key')}
-					data-testid="opsgenie-api-key-textbox"
-				/>
-			</Form.Item>
+			<FormCard title={t('section_connection')}>
+				<FormField
+					label={t('field_opsgenie_api_key')}
+					tooltip={t('tooltip_opsgenie_api_key')}
+					error={errors.apiKey?.message}
+					required
+				>
+					<Input
+						{...register('apiKey')}
+						aria-required
+						data-testid="opsgenie-api-key-textbox"
+					/>
+				</FormField>
 
-			<Form.Item
-				name="message"
-				help={t('help_opsgenie_message')}
-				label={t('field_opsgenie_message')}
-				required
-			>
-				<TextArea
-					rows={4}
-					onChange={handleInputChange('message')}
-					placeholder={t('placeholder_opsgenie_message')}
-					data-testid="opsgenie-message-textarea"
-				/>
-			</Form.Item>
+				<FormField
+					help={t('help_opsgenie_message')}
+					label={t('field_opsgenie_message')}
+					error={errors.message?.message}
+				>
+					<Controller
+						control={control}
+						name="message"
+						render={({ field }): JSX.Element => (
+							<TextArea
+								rows={4}
+								placeholder={t('placeholder_opsgenie_message')}
+								data-testid="opsgenie-message-textarea"
+								value={(field.value as string) ?? ''}
+								onChange={field.onChange}
+							/>
+						)}
+					/>
+				</FormField>
 
-			<Form.Item
-				name="description"
-				help={t('help_opsgenie_description')}
-				label={t('field_opsgenie_description')}
-				required
-			>
-				<TextArea
-					rows={4}
-					onChange={handleInputChange('description')}
-					placeholder={t('placeholder_opsgenie_description')}
-					data-testid="opsgenie-description-textarea"
-				/>
-			</Form.Item>
+				<FormField
+					help={t('help_opsgenie_description')}
+					label={t('field_opsgenie_description')}
+					error={errors.description?.message}
+				>
+					<Controller
+						control={control}
+						name="description"
+						render={({ field }): JSX.Element => (
+							<TextArea
+								rows={4}
+								placeholder={t('placeholder_opsgenie_description')}
+								data-testid="opsgenie-description-textarea"
+								value={(field.value as string) ?? ''}
+								onChange={field.onChange}
+							/>
+						)}
+					/>
+				</FormField>
 
-			<Form.Item
-				name="priority"
-				help={t('help_opsgenie_priority')}
-				label={t('field_opsgenie_priority')}
-				required
-			>
-				<TextArea
-					rows={4}
-					onChange={handleInputChange('priority')}
-					placeholder={t('placeholder_opsgenie_priority')}
-					data-testid="opsgenie-priority-textarea"
-				/>
-			</Form.Item>
+				<FormField
+					help={t('help_opsgenie_priority')}
+					label={t('field_opsgenie_priority')}
+					error={errors.priority?.message}
+				>
+					<Controller
+						control={control}
+						name="priority"
+						render={({ field }): JSX.Element => (
+							<TextArea
+								rows={4}
+								placeholder={t('placeholder_opsgenie_priority')}
+								data-testid="opsgenie-priority-textarea"
+								value={(field.value as string) ?? ''}
+								onChange={field.onChange}
+							/>
+						)}
+					/>
+				</FormField>
+			</FormCard>
 		</>
 	);
-}
-
-interface OpsgenieFormProps {
-	setSelectedConfig: React.Dispatch<
-		React.SetStateAction<Partial<OpsgenieChannel>>
-	>;
 }
 
 export default OpsgenieForm;
