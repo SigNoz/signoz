@@ -96,7 +96,7 @@ type LabelPair struct {
 type ListableRules struct {
 	Rules            []*ListableRule `json:"rules" required:"true" nullable:"false" description:"The page of rules matching the filter."`
 	Total            int64           `json:"total" required:"true" description:"The number of rules matching the filter across all pages."`
-	Labels           []LabelPair     `json:"labels" required:"true" nullable:"false" description:"Distinct label key and value pairs across the matching rules, for building filters."`
+	Labels           []LabelPair     `json:"labels" required:"true" nullable:"false" description:"Organization-wide label key and value pair suggestions for building filters, independent of the current filter and page, capped at 1000 distinct pairs."`
 	ReservedKeywords []DSLKey        `json:"reservedKeywords" required:"true" nullable:"false" description:"The keys the query filter language reserves, which cannot be used as label names in a query."`
 }
 

@@ -109,11 +109,11 @@ type AlertCompositeQuery struct {
 
 type RuleCondition struct {
 	CompositeQuery    *AlertCompositeQuery `json:"compositeQuery" required:"true" description:"The queries whose result is compared against the thresholds."`
-	CompareOperator   CompareOperator      `json:"op,omitzero" description:"schemaVersion v1 only: how the value is compared with target. Accepted as above, below, equal, not_equal, above_or_equal, below_or_equal or outside_bounds, their symbols, or the numeric codes 1 to 7. Required for v1; v2alpha1 sets op on each threshold."`
+	CompareOperator   CompareOperator      `json:"op,omitzero" description:"schemaVersion v1 only: how the value is compared with target. Accepted as above, below, equal, not_equal, above_or_equal, below_or_equal or outside_bounds, their symbols, or the legacy codes as strings, '1' to '7'. Required for v1; v2alpha1 sets op on each threshold."`
 	Target            *float64             `json:"target,omitempty" format:"double" description:"schemaVersion v1 only: the value compared against, in targetUnit. Required for v1; v2alpha1 sets target on each threshold."`
 	AlertOnAbsent     bool                 `json:"alertOnAbsent,omitempty" description:"Whether to fire a nodata alert when the query returns no data. Defaults to false."`
 	AbsentFor         uint64               `json:"absentFor,omitempty" description:"How many minutes without data pass before the nodata alert fires. Ignored unless alertOnAbsent is true."`
-	MatchType         MatchType            `json:"matchType,omitzero" description:"schemaVersion v1 only: which points in the window must satisfy op. Accepted as at_least_once, all_the_times, on_average, in_total or last, their aliases avg and sum, or the numeric codes 1 to 5. Required for v1; v2alpha1 sets matchType on each threshold."`
+	MatchType         MatchType            `json:"matchType,omitzero" description:"schemaVersion v1 only: which points in the window must satisfy op. Accepted as at_least_once, all_the_times, on_average, in_total or last, their aliases avg and sum, or the legacy codes as strings, '1' to '5'. Required for v1; v2alpha1 sets matchType on each threshold."`
 	TargetUnit        string               `json:"targetUnit,omitempty" description:"schemaVersion v1 only: the unit of target, such as percent or ms. Converted to compositeQuery.unit before comparison when the two differ."`
 	Algorithm         string               `json:"algorithm,omitempty" description:"anomaly_rule only: the anomaly detection algorithm. The supported value is standard."`
 	Seasonality       Seasonality          `json:"seasonality,omitzero" description:"anomaly_rule only: the seasonal period the history is compared against, hourly, daily or weekly."`

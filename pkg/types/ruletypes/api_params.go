@@ -75,7 +75,7 @@ type PostableRule struct {
 
 	Source string `json:"source,omitempty" description:"The URL of the page the rule was created from. Informational; it is not used for evaluation."`
 
-	PreferredChannels []string `json:"preferredChannels,omitempty" description:"Notification channel names for schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries its own channels."`
+	PreferredChannels []string `json:"preferredChannels,omitempty" description:"The displayName of each notification channel to notify, for schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries its own channels."`
 
 	Version string `json:"version" description:"The query payload version. Only v5 is accepted and it is filled in when omitted."`
 
@@ -623,7 +623,7 @@ func testTemplateParsing(rl *PostableRule) (errs []error) {
 
 // GettableRules has info for all stored rules.
 type GettableTestRule struct {
-	AlertCount int    `json:"alertCount" description:"The number of alerts the rule would have fired on the most recent evaluation."`
+	AlertCount int    `json:"alertCount" description:"The number of alerts the test notification produced, including results that do not cross the threshold, since a test sends every evaluated series."`
 	Message    string `json:"message" description:"A human readable summary of the test evaluation."`
 }
 

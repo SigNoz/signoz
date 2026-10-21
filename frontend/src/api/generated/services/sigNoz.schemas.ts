@@ -11165,11 +11165,11 @@ export enum RuletypesCompareOperatorDTO {
 export interface RuletypesBasicRuleThresholdDTO {
 	/**
 	 * @type array,null
-	 * @description Notification channel names alerts crossing this threshold are sent to. Ignored when notificationSettings.usePolicy is true.
+	 * @description The displayName of each notification channel alerts crossing this threshold are sent to. Ignored when notificationSettings.usePolicy is true.
 	 */
 	channels?: string[] | null;
 	/**
-	 * @description Which points in the window must satisfy op. Accepted as at_least_once, all_the_times, on_average, in_total or last, their aliases avg and sum, or the numeric codes 1 to 5.
+	 * @description Which points in the window must satisfy op. Accepted as at_least_once, all_the_times, on_average, in_total or last, their aliases avg and sum, or the legacy codes as strings, '1' to '5'.
 	 */
 	matchType: RuletypesMatchTypeDTO;
 	/**
@@ -11178,7 +11178,7 @@ export interface RuletypesBasicRuleThresholdDTO {
 	 */
 	name: string;
 	/**
-	 * @description How the value is compared with target. Accepted as above, below, equal, not_equal, above_or_equal, below_or_equal or outside_bounds, their symbols, or the numeric codes 1 to 7.
+	 * @description How the value is compared with target. Accepted as above, below, equal, not_equal, above_or_equal, below_or_equal or outside_bounds, their symbols, or the legacy codes as strings, '1' to '7'.
 	 */
 	op: RuletypesCompareOperatorDTO;
 	/**
@@ -11319,7 +11319,7 @@ export enum RuletypesEvaluationKindDTO {
 export interface RuletypesGettableTestRuleDTO {
 	/**
 	 * @type integer
-	 * @description The number of alerts the rule would have fired on the most recent evaluation.
+	 * @description The number of alerts the test notification produced, including results that do not cross the threshold, since a test sends every evaluated series.
 	 */
 	alertCount?: number;
 	/**
@@ -11482,7 +11482,7 @@ export interface RuletypesListableRuleViewsDTO {
 export interface RuletypesListableRulesDTO {
 	/**
 	 * @type array
-	 * @description Distinct label key and value pairs across the matching rules, for building filters.
+	 * @description Organization-wide label key and value pair suggestions for building filters, independent of the current filter and page, capped at 1000 distinct pairs.
 	 */
 	labels: RuletypesLabelPairDTO[];
 	/**
@@ -11606,11 +11606,11 @@ export interface RuletypesRuleConditionDTO {
 	 */
 	compositeQuery: RuletypesAlertCompositeQueryDTO;
 	/**
-	 * @description schemaVersion v1 only: which points in the window must satisfy op. Accepted as at_least_once, all_the_times, on_average, in_total or last, their aliases avg and sum, or the numeric codes 1 to 5. Required for v1; v2alpha1 sets matchType on each threshold.
+	 * @description schemaVersion v1 only: which points in the window must satisfy op. Accepted as at_least_once, all_the_times, on_average, in_total or last, their aliases avg and sum, or the legacy codes as strings, '1' to '5'. Required for v1; v2alpha1 sets matchType on each threshold.
 	 */
 	matchType?: RuletypesMatchTypeDTO;
 	/**
-	 * @description schemaVersion v1 only: how the value is compared with target. Accepted as above, below, equal, not_equal, above_or_equal, below_or_equal or outside_bounds, their symbols, or the numeric codes 1 to 7. Required for v1; v2alpha1 sets op on each threshold.
+	 * @description schemaVersion v1 only: how the value is compared with target. Accepted as above, below, equal, not_equal, above_or_equal, below_or_equal or outside_bounds, their symbols, or the legacy codes as strings, '1' to '7'. Required for v1; v2alpha1 sets op on each threshold.
 	 */
 	op?: RuletypesCompareOperatorDTO;
 	/**
@@ -11703,7 +11703,7 @@ export interface RuletypesPostableRuleDTO {
 	notificationSettings?: RuletypesNotificationSettingsDTO;
 	/**
 	 * @type array
-	 * @description Notification channel names for schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries its own channels.
+	 * @description The displayName of each notification channel to notify, for schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries its own channels.
 	 */
 	preferredChannels?: string[];
 	/**
@@ -11813,7 +11813,7 @@ export interface RuletypesRuleDTO {
 	notificationSettings?: RuletypesNotificationSettingsDTO;
 	/**
 	 * @type array
-	 * @description Notification channel names for schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries its own channels.
+	 * @description The displayName of each notification channel to notify, for schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries its own channels.
 	 */
 	preferredChannels?: string[];
 	/**
