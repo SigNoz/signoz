@@ -431,8 +431,7 @@ export type AlertmanagertypesChannelEmailConfigDTOHeadersAnyOf = {
 /**
  * @nullable
  */
-export type AlertmanagertypesChannelEmailConfigDTOHeaders =
-	AlertmanagertypesChannelEmailConfigDTOHeadersAnyOf | null;
+export type AlertmanagertypesChannelEmailConfigDTOHeaders = AlertmanagertypesChannelEmailConfigDTOHeadersAnyOf | null;
 
 export interface AlertmanagertypesChannelEmailConfigDTO {
 	/**
@@ -510,8 +509,7 @@ export type AlertmanagertypesChannelPagerdutyConfigDTODetailsAnyOf = {
 /**
  * @nullable
  */
-export type AlertmanagertypesChannelPagerdutyConfigDTODetails =
-	AlertmanagertypesChannelPagerdutyConfigDTODetailsAnyOf | null;
+export type AlertmanagertypesChannelPagerdutyConfigDTODetails = AlertmanagertypesChannelPagerdutyConfigDTODetailsAnyOf | null;
 
 export interface AlertmanagertypesChannelPagerdutyConfigDTO {
 	/**
@@ -584,8 +582,7 @@ export type AlertmanagertypesChannelOpsgenieConfigDTODetailsAnyOf = {
 /**
  * @nullable
  */
-export type AlertmanagertypesChannelOpsgenieConfigDTODetails =
-	AlertmanagertypesChannelOpsgenieConfigDTODetailsAnyOf | null;
+export type AlertmanagertypesChannelOpsgenieConfigDTODetails = AlertmanagertypesChannelOpsgenieConfigDTODetailsAnyOf | null;
 
 export interface AlertmanagertypesChannelOpsgenieConfigDTO {
 	/**
@@ -706,8 +703,7 @@ export type AlertmanagertypesChannelJiraConfigDTOCustomFieldsAnyOf = {
 /**
  * @nullable
  */
-export type AlertmanagertypesChannelJiraConfigDTOCustomFields =
-	AlertmanagertypesChannelJiraConfigDTOCustomFieldsAnyOf | null;
+export type AlertmanagertypesChannelJiraConfigDTOCustomFields = AlertmanagertypesChannelJiraConfigDTOCustomFieldsAnyOf | null;
 
 export interface AlertmanagertypesChannelJiraConfigDTO {
 	/**
@@ -832,8 +828,7 @@ export type AlertmanagertypesChannelIncidentIOConfigDTOMetadataAnyOf = {
 /**
  * @nullable
  */
-export type AlertmanagertypesChannelIncidentIOConfigDTOMetadata =
-	AlertmanagertypesChannelIncidentIOConfigDTOMetadataAnyOf | null;
+export type AlertmanagertypesChannelIncidentIOConfigDTOMetadata = AlertmanagertypesChannelIncidentIOConfigDTOMetadataAnyOf | null;
 
 export interface AlertmanagertypesChannelIncidentIOConfigDTO {
 	/**
@@ -872,6 +867,55 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 	spec: AlertmanagertypesChannelIncidentIOConfigDTO;
 }
 
+export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfigDTOKind {
+	telegram = 'telegram',
+}
+export interface AlertmanagertypesChannelTelegramConfigDTO {
+	/**
+	 * @type string
+	 */
+	apiUrl?: string;
+	/**
+	 * @type string
+	 * @format password
+	 */
+	botToken: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	chatId: number;
+	/**
+	 * @type boolean
+	 */
+	disableNotifications?: boolean;
+	/**
+	 * @type string
+	 */
+	message?: string;
+	/**
+	 * @type integer
+	 */
+	messageThreadId?: number;
+	/**
+	 * @type boolean,null
+	 */
+	sendResolved?: boolean | null;
+	/**
+	 * @type string
+	 */
+	title?: string;
+}
+
+export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfigDTO {
+	/**
+	 * @enum telegram
+	 * @type string
+	 */
+	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfigDTOKind;
+	spec: AlertmanagertypesChannelTelegramConfigDTO;
+}
+
 export type AlertmanagertypesChannelConfigDTO =
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfigDTO
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfigDTO
@@ -882,7 +926,8 @@ export type AlertmanagertypesChannelConfigDTO =
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelGoogleChatConfigDTO
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTO
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfigDTO
-	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfigDTO;
+	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfigDTO
+	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfigDTO;
 
 export enum AlertmanagertypesChannelDefectDTO {
 	none = 'none',
@@ -902,6 +947,7 @@ export enum AlertmanagertypesChannelKindDTO {
 	jira = 'jira',
 	jsmops = 'jsmops',
 	incidentio = 'incidentio',
+	telegram = 'telegram',
 }
 export enum AlertmanagertypesChannelListOrderDTO {
 	asc = 'asc',
@@ -2462,7 +2508,7 @@ export interface ConfigSNSConfigDTO {
 	topic_arn?: string;
 }
 
-export interface ConfigTelegramConfigDTO {
+export interface AlertmanagertypesTelegramReceiverConfigDTO {
 	api_url?: ConfigURLType2DTO;
 	/**
 	 * @type integer
@@ -2494,6 +2540,10 @@ export interface ConfigTelegramConfigDTO {
 	 * @type boolean
 	 */
 	send_resolved?: boolean;
+	/**
+	 * @type string
+	 */
+	title?: string;
 	/**
 	 * @type string
 	 */
@@ -2699,7 +2749,7 @@ export type AlertmanagertypesPostableChannelDTO = unknown & {
 	/**
 	 * @type array
 	 */
-	telegram_configs?: ConfigTelegramConfigDTO[];
+	telegram_configs?: AlertmanagertypesTelegramReceiverConfigDTO[];
 	/**
 	 * @type array
 	 */
@@ -2846,7 +2896,7 @@ export interface AlertmanagertypesReceiverDTO {
 	/**
 	 * @type array
 	 */
-	telegram_configs?: ConfigTelegramConfigDTO[];
+	telegram_configs?: AlertmanagertypesTelegramReceiverConfigDTO[];
 	/**
 	 * @type array
 	 */
@@ -2899,6 +2949,9 @@ export interface AuthtypesAttributeMappingDTO {
 	role?: string;
 }
 
+/**
+ * The kind of authn provider.
+ */
 export enum AuthtypesAuthDomainConfigSAMLDTOKind {
 	saml = 'saml',
 }
@@ -2926,11 +2979,18 @@ export interface AuthtypesAuthDomainConfigSAMLDTO {
 	/**
 	 * @type string
 	 * @enum saml
+	 * @description The kind of authn provider.
 	 */
 	kind: AuthtypesAuthDomainConfigSAMLDTOKind;
+	/**
+	 * @description The saml configuration.
+	 */
 	spec: AuthtypesSamlConfigDTO;
 }
 
+/**
+ * The kind of authn provider.
+ */
 export enum AuthtypesAuthDomainConfigGoogleDTOKind {
 	google = 'google',
 }
@@ -2979,11 +3039,18 @@ export interface AuthtypesAuthDomainConfigGoogleDTO {
 	/**
 	 * @type string
 	 * @enum google
+	 * @description The kind of authn provider.
 	 */
 	kind: AuthtypesAuthDomainConfigGoogleDTOKind;
+	/**
+	 * @description The google auth configuration.
+	 */
 	spec: AuthtypesGoogleConfigDTO;
 }
 
+/**
+ * The kind of authn provider.
+ */
 export enum AuthtypesAuthDomainConfigOIDCDTOKind {
 	oidc = 'oidc',
 }
@@ -3020,8 +3087,12 @@ export interface AuthtypesAuthDomainConfigOIDCDTO {
 	/**
 	 * @type string
 	 * @enum oidc
+	 * @description The kind of authn provider.
 	 */
 	kind: AuthtypesAuthDomainConfigOIDCDTOKind;
+	/**
+	 * @description The oidc configuration.
+	 */
 	spec: AuthtypesOIDCConfigDTO;
 }
 
@@ -3080,8 +3151,7 @@ export type AuthtypesRoleMappingDTOGroupMappingsAnyOf = {
 /**
  * @nullable
  */
-export type AuthtypesRoleMappingDTOGroupMappings =
-	AuthtypesRoleMappingDTOGroupMappingsAnyOf | null;
+export type AuthtypesRoleMappingDTOGroupMappings = AuthtypesRoleMappingDTOGroupMappingsAnyOf | null;
 
 export interface AuthtypesRoleMappingDTO {
 	/**
@@ -3693,8 +3763,7 @@ export type CloudintegrationtypesAgentReportDTODataAnyOf = {
 /**
  * @nullable
  */
-export type CloudintegrationtypesAgentReportDTOData =
-	CloudintegrationtypesAgentReportDTODataAnyOf | null;
+export type CloudintegrationtypesAgentReportDTOData = CloudintegrationtypesAgentReportDTODataAnyOf | null;
 
 /**
  * @nullable
@@ -4180,8 +4249,7 @@ export type CloudintegrationtypesPostableAgentCheckInDTODataAnyOf = {
 /**
  * @nullable
  */
-export type CloudintegrationtypesPostableAgentCheckInDTOData =
-	CloudintegrationtypesPostableAgentCheckInDTODataAnyOf | null;
+export type CloudintegrationtypesPostableAgentCheckInDTOData = CloudintegrationtypesPostableAgentCheckInDTODataAnyOf | null;
 
 export interface CloudintegrationtypesPostableAgentCheckInDTO {
 	/**
@@ -4423,6 +4491,48 @@ export interface ConfigJiraConfigDTO {
 	wont_fix_resolution?: string;
 }
 
+export interface ConfigTelegramConfigDTO {
+	api_url?: ConfigURLType2DTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	chat?: number;
+	/**
+	 * @type string
+	 */
+	chat_file?: string;
+	/**
+	 * @type boolean
+	 */
+	disable_notifications?: boolean;
+	http_config?: ConfigHTTPClientConfigDTO;
+	/**
+	 * @type string
+	 */
+	message?: string;
+	/**
+	 * @type integer
+	 */
+	message_thread_id?: number;
+	/**
+	 * @type string
+	 */
+	parse_mode?: string;
+	/**
+	 * @type boolean
+	 */
+	send_resolved?: boolean;
+	/**
+	 * @type string
+	 */
+	token?: string;
+	/**
+	 * @type string
+	 */
+	token_file?: string;
+}
+
 export interface DashboardGridItemDTO {
 	content?: CommonJSONRefDTO;
 	/**
@@ -4484,6 +4594,9 @@ export interface Querybuildertypesv5TraceAggregationDTO {
 	expression?: string;
 }
 
+/**
+ * How the upper bounds are spaced.
+ */
 export enum Querybuildertypesv5BucketOptionsLinearDTOKind {
 	linear = 'linear',
 }
@@ -4503,11 +4616,18 @@ export interface Querybuildertypesv5BucketOptionsLinearDTO {
 	/**
 	 * @type string
 	 * @enum linear
+	 * @description How the upper bounds are spaced.
 	 */
 	kind: Querybuildertypesv5BucketOptionsLinearDTOKind;
+	/**
+	 * @description The evenly spaced bucket specification.
+	 */
 	spec: Querybuildertypesv5LinearBucketsSpecDTO;
 }
 
+/**
+ * How the upper bounds are spaced.
+ */
 export enum Querybuildertypesv5BucketOptionsLogDTOKind {
 	log = 'log',
 }
@@ -4522,8 +4642,12 @@ export interface Querybuildertypesv5BucketOptionsLogDTO {
 	/**
 	 * @type string
 	 * @enum log
+	 * @description How the upper bounds are spaced.
 	 */
 	kind: Querybuildertypesv5BucketOptionsLogDTOKind;
+	/**
+	 * @description The logarithmic bucket specification.
+	 */
 	spec: Querybuildertypesv5LogBucketsSpecDTO;
 }
 
@@ -4869,8 +4993,7 @@ export type DashboardtypesLegendDTOCustomColorsAnyOf = {
 /**
  * @nullable
  */
-export type DashboardtypesLegendDTOCustomColors =
-	DashboardtypesLegendDTOCustomColorsAnyOf | null;
+export type DashboardtypesLegendDTOCustomColors = DashboardtypesLegendDTOCustomColorsAnyOf | null;
 
 export interface DashboardtypesLegendDTO {
 	/**
@@ -5462,8 +5585,7 @@ export type DashboardtypesTableFormattingDTOColumnUnitsAnyOf = {
 /**
  * @nullable
  */
-export type DashboardtypesTableFormattingDTOColumnUnits =
-	DashboardtypesTableFormattingDTOColumnUnitsAnyOf | null;
+export type DashboardtypesTableFormattingDTOColumnUnits = DashboardtypesTableFormattingDTOColumnUnitsAnyOf | null;
 
 export interface DashboardtypesTableFormattingDTO {
 	/**
@@ -5748,26 +5870,40 @@ export type Querybuildertypesv5BuilderQuerySpecDTO =
 	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO
 	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO;
 
+/**
+ * The type of the query.
+ */
 export enum Querybuildertypesv5QueryEnvelopeBuilderDTOType {
 	builder_query = 'builder_query',
 }
 export interface Querybuildertypesv5QueryEnvelopeBuilderDTO {
+	/**
+	 * @description The builder query specification.
+	 */
 	spec?: Querybuildertypesv5BuilderQuerySpecDTO;
 	/**
 	 * @type string
 	 * @enum builder_query
+	 * @description The type of the query.
 	 */
 	type: Querybuildertypesv5QueryEnvelopeBuilderDTOType;
 }
 
+/**
+ * The type of the query.
+ */
 export enum Querybuildertypesv5QueryEnvelopeBuilderAIDTOType {
 	builder_ai_query = 'builder_ai_query',
 }
 export interface Querybuildertypesv5QueryEnvelopeBuilderAIDTO {
+	/**
+	 * @description The AI builder query specification.
+	 */
 	spec?: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO;
 	/**
 	 * @type string
 	 * @enum builder_ai_query
+	 * @description The type of the query.
 	 */
 	type: Querybuildertypesv5QueryEnvelopeBuilderAIDTOType;
 }
@@ -5805,14 +5941,21 @@ export interface Querybuildertypesv5QueryBuilderFormulaDTO {
 	order?: Querybuildertypesv5OrderByDTO[] | null;
 }
 
+/**
+ * The type of the query.
+ */
 export enum Querybuildertypesv5QueryEnvelopeFormulaDTOType {
 	builder_formula = 'builder_formula',
 }
 export interface Querybuildertypesv5QueryEnvelopeFormulaDTO {
+	/**
+	 * @description The formula specification.
+	 */
 	spec?: Querybuildertypesv5QueryBuilderFormulaDTO;
 	/**
 	 * @type string
 	 * @enum builder_formula
+	 * @description The type of the query.
 	 */
 	type: Querybuildertypesv5QueryEnvelopeFormulaDTOType;
 }
@@ -5875,14 +6018,21 @@ export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
 
+/**
+ * The type of the query.
+ */
 export enum Querybuildertypesv5QueryEnvelopeTraceOperatorDTOType {
 	builder_trace_operator = 'builder_trace_operator',
 }
 export interface Querybuildertypesv5QueryEnvelopeTraceOperatorDTO {
+	/**
+	 * @description The trace operator specification.
+	 */
 	spec?: Querybuildertypesv5QueryBuilderTraceOperatorDTO;
 	/**
 	 * @type string
 	 * @enum builder_trace_operator
+	 * @description The type of the query.
 	 */
 	type: Querybuildertypesv5QueryEnvelopeTraceOperatorDTOType;
 }
@@ -5911,14 +6061,21 @@ export interface Querybuildertypesv5PromQueryDTO {
 	step?: Querybuildertypesv5StepDTO;
 }
 
+/**
+ * The type of the query.
+ */
 export enum Querybuildertypesv5QueryEnvelopePromQLDTOType {
 	promql = 'promql',
 }
 export interface Querybuildertypesv5QueryEnvelopePromQLDTO {
+	/**
+	 * @description The PromQL query specification.
+	 */
 	spec?: Querybuildertypesv5PromQueryDTO;
 	/**
 	 * @type string
 	 * @enum promql
+	 * @description The type of the query.
 	 */
 	type: Querybuildertypesv5QueryEnvelopePromQLDTOType;
 }
@@ -5942,14 +6099,21 @@ export interface Querybuildertypesv5ClickHouseQueryDTO {
 	query?: string;
 }
 
+/**
+ * The type of the query.
+ */
 export enum Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType {
 	clickhouse_sql = 'clickhouse_sql',
 }
 export interface Querybuildertypesv5QueryEnvelopeClickHouseSQLDTO {
+	/**
+	 * @description The ClickHouse SQL query specification.
+	 */
 	spec?: Querybuildertypesv5ClickHouseQueryDTO;
 	/**
 	 * @type string
 	 * @enum clickhouse_sql
+	 * @description The type of the query.
 	 */
 	type: Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType;
 }
@@ -6778,8 +6942,7 @@ export type FeaturetypesGettableFeatureDTOVariantsAnyOf = {
 /**
  * @nullable
  */
-export type FeaturetypesGettableFeatureDTOVariants =
-	FeaturetypesGettableFeatureDTOVariantsAnyOf | null;
+export type FeaturetypesGettableFeatureDTOVariants = FeaturetypesGettableFeatureDTOVariantsAnyOf | null;
 
 export interface FeaturetypesGettableFeatureDTO {
 	/**
@@ -7257,8 +7420,7 @@ export type InframonitoringtypesClusterRecordDTOMetaAnyOf = {
 /**
  * @nullable
  */
-export type InframonitoringtypesClusterRecordDTOMeta =
-	InframonitoringtypesClusterRecordDTOMetaAnyOf | null;
+export type InframonitoringtypesClusterRecordDTOMeta = InframonitoringtypesClusterRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesNodeCountsByReadinessDTO {
 	/**
@@ -7531,8 +7693,7 @@ export type InframonitoringtypesContainerRecordDTOMetaAnyOf = {
 /**
  * @nullable
  */
-export type InframonitoringtypesContainerRecordDTOMeta =
-	InframonitoringtypesContainerRecordDTOMetaAnyOf | null;
+export type InframonitoringtypesContainerRecordDTOMeta = InframonitoringtypesContainerRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesContainerRecordDTO {
 	containerCountsByReady: InframonitoringtypesContainerCountsByReadyDTO;
@@ -7623,8 +7784,7 @@ export type InframonitoringtypesDaemonSetRecordDTOMetaAnyOf = {
 /**
  * @nullable
  */
-export type InframonitoringtypesDaemonSetRecordDTOMeta =
-	InframonitoringtypesDaemonSetRecordDTOMetaAnyOf | null;
+export type InframonitoringtypesDaemonSetRecordDTOMeta = InframonitoringtypesDaemonSetRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesDaemonSetRecordDTO {
 	/**
@@ -7719,8 +7879,7 @@ export type InframonitoringtypesDeploymentRecordDTOMetaAnyOf = {
 /**
  * @nullable
  */
-export type InframonitoringtypesDeploymentRecordDTOMeta =
-	InframonitoringtypesDeploymentRecordDTOMetaAnyOf | null;
+export type InframonitoringtypesDeploymentRecordDTOMeta = InframonitoringtypesDeploymentRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesDeploymentRecordDTO {
 	/**
@@ -7809,8 +7968,7 @@ export type InframonitoringtypesHostRecordDTOMetaAnyOf = {
 /**
  * @nullable
  */
-export type InframonitoringtypesHostRecordDTOMeta =
-	InframonitoringtypesHostRecordDTOMetaAnyOf | null;
+export type InframonitoringtypesHostRecordDTOMeta = InframonitoringtypesHostRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesHostRecordDTO {
 	/**
@@ -7892,8 +8050,7 @@ export type InframonitoringtypesJobRecordDTOMetaAnyOf = {
 /**
  * @nullable
  */
-export type InframonitoringtypesJobRecordDTOMeta =
-	InframonitoringtypesJobRecordDTOMetaAnyOf | null;
+export type InframonitoringtypesJobRecordDTOMeta = InframonitoringtypesJobRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesJobRecordDTO {
 	/**
@@ -8011,8 +8168,7 @@ export type InframonitoringtypesNamespaceRecordDTOMetaAnyOf = {
 /**
  * @nullable
  */
-export type InframonitoringtypesNamespaceRecordDTOMeta =
-	InframonitoringtypesNamespaceRecordDTOMetaAnyOf | null;
+export type InframonitoringtypesNamespaceRecordDTOMeta = InframonitoringtypesNamespaceRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesNamespaceRecordDTO {
 	/**
@@ -8079,8 +8235,7 @@ export type InframonitoringtypesNodeRecordDTOMetaAnyOf = {
 /**
  * @nullable
  */
-export type InframonitoringtypesNodeRecordDTOMeta =
-	InframonitoringtypesNodeRecordDTOMetaAnyOf | null;
+export type InframonitoringtypesNodeRecordDTOMeta = InframonitoringtypesNodeRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesNodeRecordDTO {
 	condition: InframonitoringtypesNodeConditionDTO;
@@ -8151,8 +8306,7 @@ export type InframonitoringtypesPodRecordDTOMetaAnyOf = {
 /**
  * @nullable
  */
-export type InframonitoringtypesPodRecordDTOMeta =
-	InframonitoringtypesPodRecordDTOMetaAnyOf | null;
+export type InframonitoringtypesPodRecordDTOMeta = InframonitoringtypesPodRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesPodRecordDTO {
 	/**
@@ -8539,8 +8693,7 @@ export type InframonitoringtypesStatefulSetRecordDTOMetaAnyOf = {
 /**
  * @nullable
  */
-export type InframonitoringtypesStatefulSetRecordDTOMeta =
-	InframonitoringtypesStatefulSetRecordDTOMetaAnyOf | null;
+export type InframonitoringtypesStatefulSetRecordDTOMeta = InframonitoringtypesStatefulSetRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesStatefulSetRecordDTO {
 	/**
@@ -8616,8 +8769,7 @@ export type InframonitoringtypesVolumeRecordDTOMetaAnyOf = {
 /**
  * @nullable
  */
-export type InframonitoringtypesVolumeRecordDTOMeta =
-	InframonitoringtypesVolumeRecordDTOMetaAnyOf | null;
+export type InframonitoringtypesVolumeRecordDTOMeta = InframonitoringtypesVolumeRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesVolumeRecordDTO {
 	/**
@@ -9735,8 +9887,7 @@ export type PrometheusMatrixSeriesSchemaDTOMetricAnyOf = {
 /**
  * @nullable
  */
-export type PrometheusMatrixSeriesSchemaDTOMetric =
-	PrometheusMatrixSeriesSchemaDTOMetricAnyOf | null;
+export type PrometheusMatrixSeriesSchemaDTOMetric = PrometheusMatrixSeriesSchemaDTOMetricAnyOf | null;
 
 export interface PrometheusMatrixSeriesSchemaDTO {
 	/**
@@ -9768,8 +9919,7 @@ export type PrometheusVectorSampleSchemaDTOMetricAnyOf = {
 /**
  * @nullable
  */
-export type PrometheusVectorSampleSchemaDTOMetric =
-	PrometheusVectorSampleSchemaDTOMetricAnyOf | null;
+export type PrometheusVectorSampleSchemaDTOMetric = PrometheusVectorSampleSchemaDTOMetricAnyOf | null;
 
 export interface PrometheusVectorSampleSchemaDTO {
 	/**
@@ -10179,8 +10329,7 @@ export type Querybuildertypesv5RawRowDTODataAnyOf = { [key: string]: unknown };
 /**
  * @nullable
  */
-export type Querybuildertypesv5RawRowDTOData =
-	Querybuildertypesv5RawRowDTODataAnyOf | null;
+export type Querybuildertypesv5RawRowDTOData = Querybuildertypesv5RawRowDTODataAnyOf | null;
 
 export interface Querybuildertypesv5RawRowDTO {
 	/**
@@ -10251,8 +10400,7 @@ export type Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQueryAnyOf =
 /**
  * @nullable
  */
-export type Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQuery =
-	Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQueryAnyOf | null;
+export type Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQuery = Querybuildertypesv5QueryRangePreviewResponseDTOCompositeQueryAnyOf | null;
 
 /**
  * Response from the v5 query range preview (dry-run) endpoint. For each query in the composite query, returns the underlying ClickHouse statement(s) it renders to without executing them (one per PromQL metric selector; exactly one for builder/ClickHouse/trace-operator queries), with the optional EXPLAIN ESTIMATE and granule analysis attached per statement when requested.
@@ -10652,6 +10800,9 @@ export interface RuletypesCumulativeWindowDTO {
 	timezone: string;
 }
 
+/**
+ * The kind of evaluation.
+ */
 export enum RuletypesEvaluationCumulativeDTOKind {
 	cumulative = 'cumulative',
 }
@@ -10659,11 +10810,18 @@ export interface RuletypesEvaluationCumulativeDTO {
 	/**
 	 * @type string
 	 * @enum cumulative
+	 * @description The kind of evaluation.
 	 */
 	kind: RuletypesEvaluationCumulativeDTOKind;
+	/**
+	 * @description The cumulative window evaluation specification.
+	 */
 	spec: RuletypesCumulativeWindowDTO;
 }
 
+/**
+ * The kind of evaluation.
+ */
 export enum RuletypesEvaluationRollingDTOKind {
 	rolling = 'rolling',
 }
@@ -10682,8 +10840,12 @@ export interface RuletypesEvaluationRollingDTO {
 	/**
 	 * @type string
 	 * @enum rolling
+	 * @description The kind of evaluation.
 	 */
 	kind: RuletypesEvaluationRollingDTOKind;
+	/**
+	 * @description The rolling window evaluation specification.
+	 */
 	spec: RuletypesRollingWindowDTO;
 }
 
@@ -10889,16 +11051,28 @@ export enum RuletypesSeasonalityDTO {
 	daily = 'daily',
 	weekly = 'weekly',
 }
+/**
+ * The kind of threshold.
+ */
 export enum RuletypesThresholdBasicDTOKind {
 	basic = 'basic',
 }
+/**
+ * The basic threshold specification (array of thresholds).
+ */
+export type RuletypesThresholdBasicDTOSpec = RuletypesBasicRuleThresholdsDTO | null;
+
 export interface RuletypesThresholdBasicDTO {
 	/**
 	 * @type string
 	 * @enum basic
+	 * @description The kind of threshold.
 	 */
 	kind: RuletypesThresholdBasicDTOKind;
-	spec: RuletypesBasicRuleThresholdsDTO | null;
+	/**
+	 * @description The basic threshold specification (array of thresholds).
+	 */
+	spec: RuletypesThresholdBasicDTOSpec;
 }
 
 export type RuletypesRuleThresholdDataDTO = RuletypesThresholdBasicDTO;
@@ -11561,8 +11735,7 @@ export type SpantypesSpanMapperTestSpanDTOAttributesAnyOf = {
 /**
  * @nullable
  */
-export type SpantypesSpanMapperTestSpanDTOAttributes =
-	SpantypesSpanMapperTestSpanDTOAttributesAnyOf | null;
+export type SpantypesSpanMapperTestSpanDTOAttributes = SpantypesSpanMapperTestSpanDTOAttributesAnyOf | null;
 
 export type SpantypesSpanMapperTestSpanDTOResourceAnyOf = {
 	[key: string]: unknown;
@@ -11571,8 +11744,7 @@ export type SpantypesSpanMapperTestSpanDTOResourceAnyOf = {
 /**
  * @nullable
  */
-export type SpantypesSpanMapperTestSpanDTOResource =
-	SpantypesSpanMapperTestSpanDTOResourceAnyOf | null;
+export type SpantypesSpanMapperTestSpanDTOResource = SpantypesSpanMapperTestSpanDTOResourceAnyOf | null;
 
 export interface SpantypesSpanMapperTestSpanDTO {
 	/**
@@ -11684,8 +11856,7 @@ export type SpantypesSpanAggregationResultDTOValueAnyOf = {
 /**
  * @nullable
  */
-export type SpantypesSpanAggregationResultDTOValue =
-	SpantypesSpanAggregationResultDTOValueAnyOf | null;
+export type SpantypesSpanAggregationResultDTOValue = SpantypesSpanAggregationResultDTOValueAnyOf | null;
 
 export interface SpantypesSpanAggregationResultDTO {
 	aggregation: SpantypesSpanAggregationTypeDTO;
@@ -11887,16 +12058,14 @@ export type SpantypesWaterfallSpanDTOAttributesAnyOf = {
 /**
  * @nullable
  */
-export type SpantypesWaterfallSpanDTOAttributes =
-	SpantypesWaterfallSpanDTOAttributesAnyOf | null;
+export type SpantypesWaterfallSpanDTOAttributes = SpantypesWaterfallSpanDTOAttributesAnyOf | null;
 
 export type SpantypesWaterfallSpanDTOResourceAnyOf = { [key: string]: string };
 
 /**
  * @nullable
  */
-export type SpantypesWaterfallSpanDTOResource =
-	SpantypesWaterfallSpanDTOResourceAnyOf | null;
+export type SpantypesWaterfallSpanDTOResource = SpantypesWaterfallSpanDTOResourceAnyOf | null;
 
 export interface SpantypesWaterfallSpanDTO {
 	/**
@@ -12336,8 +12505,7 @@ export type TelemetrytypesGettableFieldKeysDTOKeysAnyOf = {
 /**
  * @nullable
  */
-export type TelemetrytypesGettableFieldKeysDTOKeys =
-	TelemetrytypesGettableFieldKeysDTOKeysAnyOf | null;
+export type TelemetrytypesGettableFieldKeysDTOKeys = TelemetrytypesGettableFieldKeysDTOKeysAnyOf | null;
 
 export interface TelemetrytypesGettableFieldKeysDTO {
 	/**

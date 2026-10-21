@@ -201,30 +201,28 @@ export default function Support(): JSX.Element {
 				</div>
 
 				<div className="support-channels">
-					{supportChannels.map(
-						(channel): JSX.Element => (
-							<Card className="support-channel" key={channel.key}>
-								<div className="support-channel-content">
-									<Title truncate={1} level={5} className="support-channel-title">
-										{channel.icon}
-										{channel.name}{' '}
-									</Title>
-									<Text> {channel.title} </Text>
-								</div>
+					{supportChannels.map((channel): JSX.Element => (
+						<Card className="support-channel" key={channel.key}>
+							<div className="support-channel-content">
+								<Title truncate={1} level={5} className="support-channel-title">
+									{channel.icon}
+									{channel.name}{' '}
+								</Title>
+								<Text> {channel.title} </Text>
+							</div>
 
-								<div className="support-channel-action">
-									<Button
-										className="periscope-btn secondary support-channel-btn"
-										type="default"
-										onClick={(): void => handleChannelClick(channel)}
-									>
-										<Text truncate={1}>{channel.btnText} </Text>
-										{channel.isExternal && <ArrowUpRight size={14} />}
-									</Button>
-								</div>
-							</Card>
-						),
-					)}
+							<div className="support-channel-action">
+								<Button
+									className="periscope-btn secondary support-channel-btn"
+									type="default"
+									onClick={(): void => handleChannelClick(channel)}
+								>
+									<Text truncate={1}>{channel.btnText} </Text>
+									{channel.isExternal && <ArrowUpRight size={14} />}
+								</Button>
+							</div>
+						</Card>
+					))}
 				</div>
 			</div>
 
