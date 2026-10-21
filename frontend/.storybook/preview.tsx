@@ -119,7 +119,7 @@ const preview: Preview = {
 							'Planned Downtime',
 							'Routing Policies',
 							'Channels',
-							['List', 'New', 'Edit'],
+							['List', 'List Authz', 'New', 'New Authz', 'Edit', 'Edit Authz'],
 						],
 						'Dashboards',
 						[

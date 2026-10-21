@@ -144,21 +144,19 @@ const STATUS_CODE_TEMPLATES: SpanTemplate[] = [
 	['503', 'GET /status/unavailable'],
 	['504', 'GET /status/timeout'],
 	['', 'internal.compute'],
-].map(
-	([statusCode, name]): SpanTemplate => ({
-		service: 'status-api',
-		name,
-		kind: statusCode ? 'Server' : 'Internal',
-		failing: Number(statusCode) >= 500,
-		statusCode,
-		attributes: statusCode
-			? {
-					'http.method': name.split(' ')[0],
-					'http.status_code': Number(statusCode),
-				}
-			: {},
-	}),
-);
+].map(([statusCode, name]): SpanTemplate => ({
+	service: 'status-api',
+	name,
+	kind: statusCode ? 'Server' : 'Internal',
+	failing: Number(statusCode) >= 500,
+	statusCode,
+	attributes: statusCode
+		? {
+				'http.method': name.split(' ')[0],
+				'http.status_code': Number(statusCode),
+			}
+		: {},
+}));
 
 /**
  * An agent run: agent, LLM and tool spans, each badged by kind. The LLM spans

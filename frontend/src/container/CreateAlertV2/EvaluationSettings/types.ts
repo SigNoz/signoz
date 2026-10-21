@@ -16,19 +16,19 @@ export interface IAdvancedOptionItemProps {
 }
 
 export enum RollingWindowTimeframes {
-	'LAST_5_MINUTES' = '5m0s',
-	'LAST_10_MINUTES' = '10m0s',
-	'LAST_15_MINUTES' = '15m0s',
-	'LAST_30_MINUTES' = '30m0s',
-	'LAST_1_HOUR' = '1h0m0s',
-	'LAST_2_HOURS' = '2h0m0s',
-	'LAST_4_HOURS' = '4h0m0s',
+	LAST_5_MINUTES = '5m0s',
+	LAST_10_MINUTES = '10m0s',
+	LAST_15_MINUTES = '15m0s',
+	LAST_30_MINUTES = '30m0s',
+	LAST_1_HOUR = '1h0m0s',
+	LAST_2_HOURS = '2h0m0s',
+	LAST_4_HOURS = '4h0m0s',
 }
 
 export enum CumulativeWindowTimeframes {
-	'CURRENT_HOUR' = 'currentHour',
-	'CURRENT_DAY' = 'currentDay',
-	'CURRENT_MONTH' = 'currentMonth',
+	CURRENT_HOUR = 'currentHour',
+	CURRENT_DAY = 'currentDay',
+	CURRENT_MONTH = 'currentMonth',
 }
 
 export interface IEvaluationWindowPopoverProps {
