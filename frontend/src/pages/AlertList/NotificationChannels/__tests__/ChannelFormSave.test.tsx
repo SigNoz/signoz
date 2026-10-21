@@ -89,9 +89,7 @@ describe('ChannelForm save', () => {
 			render(<ChannelForm onDone={jest.fn()} />);
 
 			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
-			await user.click(
-				await screen.findByTestId('channel-type-select', {}, FIND),
-			);
+			await user.click(await screen.findByTestId('channel-type-select', {}, FIND));
 			await user.click(await screen.findByRole('option', { name: /^Telegram$/ }));
 
 			await user.type(
