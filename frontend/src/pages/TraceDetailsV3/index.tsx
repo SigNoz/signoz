@@ -13,6 +13,8 @@ function TraceDetailsV3(): JSX.Element {
 	const [filteredSpanIds, setFilteredSpanIds] = useState<string[]>([]);
 	const [isFilterActive, setIsFilterActive] = useState(false);
 	const [hasTraceData, setHasTraceData] = useState(false);
+	// Tracks which traceId the load event already fired for, so navigating
+	// between traces (the route component stays mounted) re-fires it once each.
 	const dataLoadedFiredForRef = useRef<string>('');
 
 	const handleFilteredSpansChange = useCallback(
