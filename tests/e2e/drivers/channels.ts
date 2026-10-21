@@ -30,30 +30,35 @@ export const CHANNEL_TYPES: ChannelType[] = [
 		label: 'Slack',
 		kind: 'slack',
 		fields: [['webhook-url-textbox', 'https://hooks.slack.com/services/T/B/X']],
+		edit: ['webhook-url-textbox', 'https://hooks.slack.com/services/T/B/edited'],
 		spec: { apiUrl: 'https://hooks.slack.com/services/T/B/X' },
 	},
 	{
 		label: 'Webhook',
 		kind: 'webhook',
 		fields: [['webhook-url-textbox', 'https://example.test/e2e-hook']],
+		edit: ['webhook-url-textbox', 'https://example.test/e2e-hook-edited'],
 		spec: { url: 'https://example.test/e2e-hook' },
 	},
 	{
 		label: 'Pagerduty',
 		kind: 'pagerduty',
 		fields: [['pager-routing-key-textbox', 'e2e-routing-key']],
+		edit: ['pager-routing-key-textbox', 'e2e-routing-key-edited'],
 		spec: { routingKey: 'e2e-routing-key' },
 	},
 	{
 		label: 'Opsgenie',
 		kind: 'opsgenie',
 		fields: [['opsgenie-api-key-textbox', 'e2e-api-key']],
+		edit: ['opsgenie-api-key-textbox', 'e2e-api-key-edited'],
 		spec: { apiKey: 'e2e-api-key' },
 	},
 	{
 		label: 'Email',
 		kind: 'email',
 		fields: [['email-to-textbox', 'e2e@signoz.test']],
+		edit: ['email-to-textbox', 'edited@signoz.test'],
 		spec: { to: 'e2e@signoz.test' },
 	},
 	{
@@ -61,6 +66,10 @@ export const CHANNEL_TYPES: ChannelType[] = [
 		kind: 'msteams',
 		fields: [
 			['webhook-url-textbox', 'https://outlook.office.com/webhook/e2e-teams'],
+		],
+		edit: [
+			'webhook-url-textbox',
+			'https://outlook.office.com/webhook/e2e-teams-edited',
 		],
 		spec: { webhookUrl: 'https://outlook.office.com/webhook/e2e-teams' },
 	},
@@ -73,6 +82,10 @@ export const CHANNEL_TYPES: ChannelType[] = [
 				'webhook-url-textbox',
 				'https://chat.googleapis.com/v1/spaces/AAA/messages?key=k&token=t',
 			],
+		],
+		edit: [
+			'webhook-url-textbox',
+			'https://chat.googleapis.com/v1/spaces/AAA/messages?key=k&token=edited',
 		],
 		spec: {
 			webhookUrl:
@@ -90,6 +103,7 @@ export const CHANNEL_TYPES: ChannelType[] = [
 			['jira-project-textbox', 'E2E'],
 			['jira-issue-type-textbox', 'Task'],
 		],
+		edit: ['jira-project-textbox', 'E2EEDIT'],
 		spec: {
 			site: 'https://e2e.atlassian.net',
 			email: 'e2e@signoz.test',
@@ -102,6 +116,7 @@ export const CHANNEL_TYPES: ChannelType[] = [
 		label: 'Jira Service Management Ops',
 		kind: 'jsmops',
 		fields: [['jsmops-api-key-textbox', 'e2e-api-key']],
+		edit: ['jsmops-api-key-textbox', 'e2e-api-key-edited'],
 		spec: { apiKey: 'e2e-api-key' },
 	},
 	{
@@ -115,6 +130,7 @@ export const CHANNEL_TYPES: ChannelType[] = [
 			],
 			['incidentio-token-textbox', 'e2e-token'],
 		],
+		edit: ['incidentio-token-textbox', 'e2e-token-edited'],
 		spec: {
 			url: 'https://api.incident.io/v2/alert_events/http/e2e-source',
 			token: 'e2e-token',
@@ -128,6 +144,7 @@ export const CHANNEL_TYPES: ChannelType[] = [
 			['telegram-bot-token-textbox', '123456:e2e-bot-token'],
 			['telegram-chat-id-textbox', '-1001234567890'],
 		],
+		edit: ['telegram-bot-token-textbox', '123456:e2e-bot-token-edited'],
 		spec: { botToken: '123456:e2e-bot-token', chatId: -1001234567890 },
 	},
 ];
@@ -143,6 +160,13 @@ export interface ChannelType {
 	kind: string;
 	/** Only what the form refuses to save without, in the order it is filled. */
 	fields: [string, string][];
+	/**
+	 * The field an edit pass changes, and the value to change it to. Spelled out
+	 * per type rather than derived: appending to a Jira site or a Google Chat
+	 * webhook breaks the format its validator demands, and the save then never
+	 * leaves the page.
+	 */
+	edit: [string, string];
 	spec: Record<string, unknown>;
 }
 
@@ -221,10 +245,16 @@ async function removeViaApi(page: Page, id: string | undefined): Promise<void> {
 		return;
 	}
 
-	const token = await authToken(page);
-	await page.request.delete(`${CHANNELS_API}/${id}`, {
-		headers: { Authorization: `Bearer ${token}` },
-	});
+	// A test that already failed often leaves a closed page behind, and a throw
+	// here would replace its error with one about the cleanup.
+	try {
+		const token = await authToken(page);
+		await page.request.delete(`${CHANNELS_API}/${id}`, {
+			headers: { Authorization: `Bearer ${token}` },
+		});
+	} catch {
+		/* the channel outlives the run rather than hiding why it failed */
+	}
 }
 
 function channelsDriver(page: Page): Channels {
