@@ -73,6 +73,54 @@ describe('ChannelForm save', () => {
 	);
 
 	it(
+		'sends no telegram message, so the backend keeps its own template',
+		async () => {
+			let body: Record<string, unknown> | undefined;
+			server.use(
+				rest.post(
+					'http://localhost/api/v2/notification_channels',
+					async (req, res, ctx) => {
+						body = await req.json();
+						return res(ctx.status(201), ctx.json({ status: 'success', data: {} }));
+					},
+				),
+			);
+
+			render(<ChannelForm onDone={jest.fn()} />);
+
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			await user.click(
+				await screen.findByTestId('channel-type-select', {}, FIND),
+			);
+			await user.click(await screen.findByRole('option', { name: /^Telegram$/ }));
+
+			await user.type(
+				screen.getByTestId('channel-name-textbox'),
+				'telegram alerts',
+			);
+			await user.type(screen.getByTestId('telegram-bot-token-textbox'), '123:abc');
+			await user.type(screen.getByTestId('telegram-chat-id-textbox'), '-100123');
+
+			// the box is empty on screen, and an empty box must not become an empty
+			// string in the request: that would overwrite the backend's default
+			expect(screen.getByTestId('telegram-message-textarea')).toHaveValue('');
+
+			const save = screen.getByTestId('save-channel-button');
+			await waitFor(
+				() => expect(save).toHaveAttribute('aria-disabled', 'false'),
+				FIND,
+			);
+			await user.click(save);
+
+			await waitFor(() => expect(body).toBeDefined(), FIND);
+			const spec = (body as { config: { spec: Record<string, unknown> } }).config
+				.spec;
+			expect(spec).not.toHaveProperty('message');
+		},
+		TEST_TIMEOUT,
+	);
+
+	it(
 		'updates with the config only, since both names are immutable',
 		async () => {
 			let body: Record<string, unknown> | undefined;
