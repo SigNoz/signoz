@@ -93,6 +93,23 @@ func TestUnfoldJSONSubColumnIndexExpr(t *testing.T) {
 			wantType:   "Int64",
 		},
 		{
+			name:       "TracesNumber",
+			expr:       "toFloat64OrNull(CAST(attributes.`http.status_code`, 'String'))",
+			wantColumn: "attributes.`http.status_code`",
+			wantType:   "Float64",
+		},
+		{
+			name:       "TracesNumber_BacktickedParentheses",
+			expr:       "toFloat64OrNull(CAST(attributes.`latency(ms)`, 'String'))",
+			wantColumn: "attributes.`latency(ms)`",
+			wantType:   "Float64",
+		},
+		{
+			name:    "TracesNumber_NotAStringCast",
+			expr:    "toFloat64OrNull(CAST(attributes.a, 'Int64'))",
+			wantErr: true,
+		},
+		{
 			name:    "UnrecognizedForm",
 			expr:    "toString(attributes.status)",
 			wantErr: true,
@@ -137,9 +154,25 @@ func TestUnfoldJSONSubColumnIndexExprTracesRoundTrip(t *testing.T) {
 			name:         "PlainKey_UnquotedInStorage",
 			column:       "attributes_promoted",
 			path:         "status",
-			jsonDataType: "Int64",
-			wantExpr:     "attributes_promoted.`status`::Int64",
-			storedExpr:   "CAST(attributes_promoted.status, 'Int64')",
+			jsonDataType: "String",
+			wantExpr:     "attributes_promoted.`status`::String",
+			storedExpr:   "CAST(attributes_promoted.status, 'String')",
+		},
+		{
+			name:         "DottedNumber_BackticksPreservedInStorage",
+			column:       "attributes",
+			path:         "http.status_code",
+			jsonDataType: "Float64",
+			wantExpr:     "toFloat64OrNull(attributes.`http.status_code`::String)",
+			storedExpr:   "toFloat64OrNull(CAST(attributes.`http.status_code`, 'String'))",
+		},
+		{
+			name:         "PlainNumber_UnquotedInStorage",
+			column:       "attributes_promoted",
+			path:         "latency",
+			jsonDataType: "Float64",
+			wantExpr:     "toFloat64OrNull(attributes_promoted.`latency`::String)",
+			storedExpr:   "toFloat64OrNull(CAST(attributes_promoted.latency, 'String'))",
 		},
 	}
 

@@ -227,12 +227,12 @@ function LogsExplorer(): JSX.Element {
 				<QuickFiltersLayout
 					className="logs-module-page"
 					showFilters={showFilters}
+					onToggleFilters={handleFilterVisibilityChange}
 					savedViewProps={{ source: SavedviewtypesSourceDTO.logs }}
 					quickFilterProps={{
 						className: 'qf-logs-explorer',
 						signal: SignalType.LOGS,
 						source: QuickFiltersSource.LOGS_EXPLORER,
-						handleFilterVisibilityChange,
 						useFieldApis: quickFilterFieldApis,
 					}}
 				>

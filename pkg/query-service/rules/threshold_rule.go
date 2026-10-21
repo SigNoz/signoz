@@ -295,10 +295,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		lb.Set(ruletypes.AlertRuleIDLabel, r.ID())
 		lb.Set(ruletypes.RuleSourceLabel, r.GeneratorURL())
 
-		annotations := make(ruletypes.Labels, 0, len(r.annotations.Map()))
-		for name, value := range r.annotations.Map() {
-			annotations = append(annotations, ruletypes.Label{Name: name, Value: expand(value)})
-		}
+		annotations := r.ExpandAnnotations(expand)
 		if smpl.IsMissing {
 			lb.Set(ruletypes.AlertNameLabel, "[No data] "+r.Name())
 			lb.Set(ruletypes.NoDataLabel, "true")
@@ -468,7 +465,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 
 func (r *ThresholdRule) String() string {
 	ar := ruletypes.PostableRule{
-		AlertName:         r.name,
+		AlertName:         valuer.NewDisplayName(r.name),
 		RuleCondition:     r.ruleCondition,
 		EvalWindow:        r.evalWindow,
 		Labels:            r.labels.Map(),

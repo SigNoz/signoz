@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "definition": {
     "name": "gen_ai.agent",
     "condition": {
@@ -17,6 +17,12 @@
         "fieldContext": "attribute",
         "config": {
           "sources": [
+            {
+              "key": "crewai.agent.role",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 30
+            },
             {
               "key": "agent.name",
               "context": "attribute",
@@ -37,6 +43,18 @@
         "fieldContext": "attribute",
         "config": {
           "sources": [
+            {
+              "key": "agent_id",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 30
+            },
+            {
+              "key": "crewai.agent.id",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 20
+            },
             {
               "key": "agent.id",
               "context": "attribute",
@@ -69,6 +87,32 @@
               "key": "final_result",
               "context": "attribute",
               "operation": "move",
+              "priority": 10
+            }
+          ]
+        }
+      },
+      {
+        "name": "gen_ai.operation.name",
+        "fieldContext": "attribute",
+        "config": {
+          "sources": [
+            {
+              "key": "openinference.span.kind",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 30
+            },
+            {
+              "key": "llm.request.type",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 20
+            },
+            {
+              "key": "traceloop.span.kind",
+              "context": "attribute",
+              "operation": "copy",
               "priority": 10
             }
           ]

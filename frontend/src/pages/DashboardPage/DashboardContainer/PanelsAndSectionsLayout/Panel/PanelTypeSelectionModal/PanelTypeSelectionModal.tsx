@@ -6,6 +6,7 @@ import { useDashboardSections } from '../../../hooks/useDashboardSections';
 import { releasePanelPickerTarget } from '../../../store/usePanelPickerTargetStore';
 import type { NewPanelTarget } from '../../../patchOps';
 import type { PanelKind } from '../../../Panels/types/panelKind';
+import { JS_DRIVEN_SLIDE } from '../../../utils/drawerSlide';
 import AddPanelSplitButton from './AddPanelSplitButton';
 import NewSectionNameInput from './NewSectionNameInput';
 import PanelTypeBrowser from './PanelTypeBrowser';
@@ -106,6 +107,7 @@ function PanelTypeSelectionModal({
 			direction="right"
 			width="wide"
 			testId="panel-type-drawer"
+			drawerContentProps={JS_DRIVEN_SLIDE}
 			drawerDescriptionProps={{ className: styles.body }}
 			footer={
 				<div className={styles.footer}>

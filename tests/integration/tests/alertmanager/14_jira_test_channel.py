@@ -30,7 +30,6 @@ from fixtures.notification_channel import (
     wait_for_alertmanager_sync,
 )
 
-
 # channel test (POST /api/v1/channels/test) drives the notifier once, synchronously,
 # with a hardcoded firing test alert and no retry. The search stub decides which
 # branch runs (create / update / reopen), so the whole issue lifecycle is

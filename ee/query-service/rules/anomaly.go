@@ -277,10 +277,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		lb.Set(ruletypes.AlertRuleIDLabel, r.ID())
 		lb.Set(ruletypes.RuleSourceLabel, r.GeneratorURL())
 
-		annotations := make(ruletypes.Labels, 0, len(r.Annotations().Map()))
-		for name, value := range r.Annotations().Map() {
-			annotations = append(annotations, ruletypes.Label{Name: name, Value: expand(value)})
-		}
+		annotations := r.ExpandAnnotations(expand)
 		if smpl.IsMissing {
 			lb.Set(ruletypes.AlertNameLabel, "[No data] "+r.Name())
 			lb.Set(ruletypes.NoDataLabel, "true")
@@ -423,7 +420,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 func (r *AnomalyRule) String() string {
 
 	ar := ruletypes.PostableRule{
-		AlertName:         r.Name(),
+		AlertName:         valuer.NewDisplayName(r.Name()),
 		RuleCondition:     r.Condition(),
 		EvalWindow:        r.EvalWindow(),
 		Labels:            r.Labels().Map(),

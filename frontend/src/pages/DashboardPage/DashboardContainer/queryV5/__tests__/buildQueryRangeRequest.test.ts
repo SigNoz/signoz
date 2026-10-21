@@ -71,6 +71,10 @@ const LIST_PANEL_CAPABILITIES = {
 	orderTiebreaker: true,
 	serverPaginated: true,
 };
+const DEFAULT_LIMIT_CAPABILITIES = {
+	...TABLE_CAPABILITIES,
+	defaultRowLimit: 10_000,
+};
 
 describe('requestType', () => {
 	it.each([
@@ -96,6 +100,23 @@ describe('toQueryEnvelopes', () => {
 		);
 		expect(envelopes).toStrictEqual([
 			{ type: 'builder_query', spec: { name: 'A', signal: 'metrics' } },
+		]);
+	});
+
+	it('wraps a bare AI builder plugin as a builder_ai_query envelope', () => {
+		const ai = [
+			{
+				kind: 'TimeSeriesQuery',
+				spec: {
+					plugin: {
+						kind: 'signoz/AIBuilderQuery',
+						spec: { name: 'A', signal: 'traces' },
+					},
+				},
+			},
+		] as unknown as DashboardtypesQueryDTO[];
+		expect(toQueryEnvelopes(ai)).toStrictEqual([
+			{ type: 'builder_ai_query', spec: { name: 'A', signal: 'traces' } },
 		]);
 	});
 
@@ -205,6 +226,30 @@ describe('buildQueryRangeRequest', () => {
 			fillGaps: true,
 		});
 		expect(request.formatOptions?.fillGaps).toBe(true);
+	});
+
+	it('stamps offset/limit onto an AI builder query when pagination is given', () => {
+		const request = buildQueryRangeRequest({
+			queries: [
+				{
+					kind: 'raw',
+					spec: {
+						plugin: {
+							kind: 'signoz/AIBuilderQuery',
+							spec: { name: 'A', signal: 'traces' },
+						},
+					},
+				},
+			] as unknown as DashboardtypesQueryDTO[],
+			queryCapabilities: LIST_PANEL_CAPABILITIES,
+			startMs: START_MS,
+			endMs: START_MS + HOUR_MS,
+			pagination: { offset: 25, limit: 10 },
+		});
+		expect(request.compositeQuery?.queries?.[0]).toMatchObject({
+			type: 'builder_ai_query',
+			spec: { name: 'A', signal: 'traces', offset: 25, limit: 10 },
+		});
 	});
 
 	it('stamps offset/limit onto builder queries when pagination is given', () => {
@@ -352,6 +397,51 @@ describe('buildQueryRangeRequest', () => {
 			stepInterval?: number;
 		};
 		expect(spec.stepInterval).toBeUndefined();
+	});
+});
+
+describe('defaultRowLimit', () => {
+	function limits(queries: DashboardtypesQueryDTO[]): unknown[] {
+		const request = buildQueryRangeRequest({
+			queries,
+			queryCapabilities: DEFAULT_LIMIT_CAPABILITIES,
+			startMs: START_MS,
+			endMs: START_MS + HOUR_MS,
+		});
+		return (request.compositeQuery?.queries ?? []).map(
+			(envelope) => (envelope.spec as { limit?: number }).limit,
+		);
+	}
+
+	it('limits a lone builder query', () => {
+		expect(limits(bareBuilderQuery({ name: 'A' }))).toStrictEqual([10_000]);
+	});
+
+	it('keeps a limit the user set', () => {
+		expect(limits(bareBuilderQuery({ name: 'A', limit: 50 }))).toStrictEqual([
+			50,
+		]);
+	});
+
+	it('leaves several queries unlimited so their join keeps every group', () => {
+		expect(
+			limits(
+				compositeQuery([
+					{ type: 'builder_query', spec: { name: 'A' } },
+					{ type: 'builder_query', spec: { name: 'B' } },
+				]),
+			),
+		).toStrictEqual([undefined, undefined]);
+	});
+
+	it('leaves a lone non-builder query alone', () => {
+		expect(
+			limits(
+				compositeQuery([
+					{ type: 'clickhouse_sql', spec: { name: 'A', query: 'SELECT 1' } },
+				]),
+			),
+		).toStrictEqual([undefined]);
 	});
 });
 

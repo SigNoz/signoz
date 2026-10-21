@@ -1,3 +1,4 @@
 *.css linguist-detectable=false
 *.stories.mocks.tsx linguist-generated=true
 **/__story_mockdata__/** linguist-generated=true
+tests/e2e/drivers/** linguist-generated=true

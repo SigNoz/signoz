@@ -204,6 +204,169 @@ describe('hasUnsavedViewChanges', () => {
 		});
 	});
 
+	it('ignores fields the save path never writes, kept by older views', () => {
+		const metricsView = viewFrom(
+			toSavedViewSpec({
+				query: query(DataSource.METRICS, ''),
+				panelType: PANEL_TYPES.TIME_SERIES,
+				displayName: 'Old metrics view',
+			}),
+		);
+		const [storedQuery] = metricsView.spec.queries;
+		const olderView = {
+			...metricsView,
+			spec: {
+				...metricsView.spec,
+				queries: [
+					{
+						...storedQuery,
+						spec: {
+							...storedQuery.spec,
+							aggregations: [
+								{ metricName: 'erlang_vm_msacc_sleep_seconds_total', reduceTo: 'avg' },
+							],
+						},
+					},
+				],
+			},
+		} as SavedviewtypesSavedViewDTO;
+
+		expect(
+			hasUnsavedViewChanges({
+				view: olderView,
+				stagedQuery: stagedFrom(olderView, DataSource.METRICS),
+				panelType: PANEL_TYPES.TIME_SERIES,
+			}),
+		).toBe(false);
+	});
+
+	it('reads a group-by stored as attribute and staged as tag as the same field', () => {
+		const attributeView = viewFrom(
+			toSavedViewSpec({
+				query: query(DataSource.METRICS, ''),
+				panelType: PANEL_TYPES.TIME_SERIES,
+				displayName: 'By os',
+			}),
+		);
+		const [storedQuery] = attributeView.spec.queries;
+		const storedView = {
+			...attributeView,
+			spec: {
+				...attributeView.spec,
+				queries: [
+					{
+						...storedQuery,
+						spec: {
+							...storedQuery.spec,
+							groupBy: [
+								{ name: 'os.type', fieldContext: 'attribute', fieldDataType: 'string' },
+							],
+						},
+					},
+				],
+			},
+		} as SavedviewtypesSavedViewDTO;
+		const opened = stagedFrom(storedView, DataSource.METRICS);
+		const stagedWithTag: Query = {
+			...opened,
+			builder: {
+				...opened.builder,
+				queryData: opened.builder.queryData.map((queryData) => ({
+					...queryData,
+					groupBy: [{ key: 'os.type', dataType: 'string', type: 'tag' }],
+				})),
+			},
+		} as Query;
+
+		expect(
+			hasUnsavedViewChanges({
+				view: storedView,
+				stagedQuery: stagedWithTag,
+				panelType: PANEL_TYPES.TIME_SERIES,
+			}),
+		).toBe(false);
+	});
+
+	describe('list order', () => {
+		const withOrderBy = (
+			staged: Query,
+			orderBy: Query['builder']['queryData'][number]['orderBy'],
+		): Query => ({
+			...staged,
+			builder: {
+				...staged.builder,
+				queryData: staged.builder.queryData.map((queryData) => ({
+					...queryData,
+					orderBy,
+				})),
+			},
+		});
+
+		const listView = (
+			orderBy: Query['builder']['queryData'][number]['orderBy'],
+		) =>
+			viewFrom(
+				toSavedViewSpec({
+					query: withOrderBy(query(DataSource.LOGS), orderBy),
+					panelType: PANEL_TYPES.LIST,
+					displayName: 'Errors',
+				}),
+			);
+
+		it('opens a view saved with no order clean', () => {
+			const noOrder = listView([]);
+
+			expect(noOrder.spec.queries[0].spec).not.toHaveProperty('order');
+			expect(
+				hasUnsavedViewChanges({
+					view: noOrder,
+					stagedQuery: stagedFrom(noOrder, DataSource.LOGS),
+					panelType: PANEL_TYPES.LIST,
+				}),
+			).toBe(false);
+		});
+
+		it('is dirty once the sort changes, and clean again after saving it', () => {
+			const noOrder = listView([]);
+			const sorted = withOrderBy(stagedFrom(noOrder, DataSource.LOGS), [
+				{ columnName: 'timestamp', order: 'asc' },
+			]);
+
+			expect(
+				hasUnsavedViewChanges({
+					view: noOrder,
+					stagedQuery: sorted,
+					panelType: PANEL_TYPES.LIST,
+				}),
+			).toBe(true);
+
+			const saved = listView([{ columnName: 'timestamp', order: 'asc' }]);
+			expect(
+				hasUnsavedViewChanges({
+					view: saved,
+					stagedQuery: stagedFrom(saved, DataSource.LOGS),
+					panelType: PANEL_TYPES.LIST,
+				}),
+			).toBe(false);
+		});
+
+		it('opens a legacy view sorted by timestamp and id clean', () => {
+			const legacy = listView([
+				{ columnName: 'timestamp', order: 'desc' },
+				{ columnName: 'id', order: 'desc' },
+			]);
+
+			expect(legacy.spec.queries[0].spec).toHaveProperty('order.length', 2);
+			expect(
+				hasUnsavedViewChanges({
+					view: legacy,
+					stagedQuery: stagedFrom(legacy, DataSource.LOGS),
+					panelType: PANEL_TYPES.LIST,
+				}),
+			).toBe(false);
+		});
+	});
+
 	it('ignores formatting on traces', () => {
 		expect(
 			hasUnsavedViewChanges({

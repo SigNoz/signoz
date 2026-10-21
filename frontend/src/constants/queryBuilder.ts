@@ -511,7 +511,7 @@ export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
 };
 
 export enum OperatorConfigKeys {
-	'EXCEPTIONS' = 'EXCEPTIONS',
+	EXCEPTIONS = 'EXCEPTIONS',
 }
 
 export const OPERATORS_CONFIG = {

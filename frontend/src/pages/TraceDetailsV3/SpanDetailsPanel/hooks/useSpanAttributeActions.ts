@@ -1,20 +1,12 @@
 import React, { useCallback } from 'react';
-import { useQueryClient } from 'react-query';
-import { toast } from '@signozhq/ui/sonner';
-import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import GroupByIcon from 'assets/CustomIcons/GroupByIcon';
 import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBuilderV2/utils';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
-import { PANEL_TYPES, QueryBuilderKeys } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 import { ArrowDownToDot, ArrowUpFromDot } from '@signozhq/icons';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
@@ -22,10 +14,10 @@ import { v4 as uuid } from 'uuid';
 export interface SpanAttributeAction {
 	label: string;
 	value: string;
-	icon?: React.ReactNode;
+	icon?: React.ReactElement;
 	disabled?: boolean;
 	hidden?: boolean;
-	callback: (args: { key: string; value: string; dataType?: string }) => void;
+	callback: (args: { key: string; value: string }) => void;
 	/**
 	 * Returns true if this action should be hidden. Receives the leaf key and
 	 * the full path so we can hide based on ancestor segments too.
@@ -70,82 +62,50 @@ export const SPAN_ACTION = {
 
 export function useSpanAttributeActions(): SpanAttributeAction[] {
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
-	const queryClient = useQueryClient();
-
-	const getAutocompleteKey = useCallback(
-		async (fieldKey: string): Promise<BaseAutocompleteData> => {
-			const response = await queryClient.fetchQuery(
-				[QueryBuilderKeys.GET_AGGREGATE_KEYS, fieldKey],
-				async () =>
-					getAggregateKeys({
-						searchText: fieldKey,
-						aggregateOperator:
-							currentQuery.builder.queryData[0].aggregateOperator || '',
-						dataSource: DataSource.TRACES,
-						aggregateAttribute:
-							currentQuery.builder.queryData[0].aggregateAttribute?.key || '',
-					}),
-			);
-
-			return chooseAutocompleteFromCustomValue(
-				response.payload?.attributeKeys || [],
-				fieldKey,
-				DataTypes.String,
-			);
-		},
-		[queryClient, currentQuery.builder.queryData],
-	);
 
 	const handleFilter = useCallback(
-		async (
-			{ key, value }: { key: string; value: string },
-			operator: string,
-		): Promise<void> => {
-			try {
-				const autocompleteKey = await getAutocompleteKey(key);
-				const resolvedOperator = getOperatorValue(operator);
+		({ key, value }: { key: string; value: string }, operator: string): void => {
+			const filterKey = chooseAutocompleteFromCustomValue([], key);
+			const resolvedOperator = getOperatorValue(operator);
 
-				const nextQuery: Query = {
-					...currentQuery,
-					builder: {
-						...currentQuery.builder,
-						queryData: currentQuery.builder.queryData.map((item) => {
-							const cleanedFilters = (item.filters?.items || []).filter(
-								(f) => f.key?.key !== autocompleteKey.key,
-							);
-							const newFilters = [
-								...cleanedFilters,
-								{
-									id: uuid(),
-									key: autocompleteKey,
-									op: resolvedOperator,
-									value,
-								},
-							];
-							const converted = convertFiltersToExpressionWithExistingQuery(
-								{ items: newFilters, op: item.filters?.op || 'AND' },
-								item.filter?.expression || '',
-							);
-							return {
-								...item,
-								dataSource: DataSource.TRACES,
-								filters: converted.filters,
-								filter: converted.filter,
-							};
-						}),
-					},
-				};
+			const nextQuery: Query = {
+				...currentQuery,
+				builder: {
+					...currentQuery.builder,
+					queryData: currentQuery.builder.queryData.map((item) => {
+						const cleanedFilters = (item.filters?.items || []).filter(
+							(f) => f.key?.key !== filterKey.key,
+						);
+						const newFilters = [
+							...cleanedFilters,
+							{
+								id: uuid(),
+								key: filterKey,
+								op: resolvedOperator,
+								value,
+							},
+						];
+						const converted = convertFiltersToExpressionWithExistingQuery(
+							{ items: newFilters, op: item.filters?.op || 'AND' },
+							item.filter?.expression || '',
+						);
+						return {
+							...item,
+							dataSource: DataSource.TRACES,
+							filters: converted.filters,
+							filter: converted.filter,
+						};
+					}),
+				},
+			};
 
-				redirectWithQueryBuilderData(
-					nextQuery,
-					{ panelTypes: PANEL_TYPES.LIST },
-					ROUTES.TRACES_EXPLORER,
-				);
-			} catch {
-				toast.error(SOMETHING_WENT_WRONG, { position: 'top-right' });
-			}
+			redirectWithQueryBuilderData(
+				nextQuery,
+				{ panelTypes: PANEL_TYPES.LIST },
+				ROUTES.TRACES_EXPLORER,
+			);
 		},
-		[currentQuery, getAutocompleteKey, redirectWithQueryBuilderData],
+		[currentQuery, redirectWithQueryBuilderData],
 	);
 
 	const handleFilterIn = useCallback(
@@ -163,32 +123,28 @@ export function useSpanAttributeActions(): SpanAttributeAction[] {
 	);
 
 	const handleGroupBy = useCallback(
-		async ({ key }: { key: string }): Promise<void> => {
-			try {
-				const autocompleteKey = await getAutocompleteKey(key);
+		({ key }: { key: string }): void => {
+			const groupByKey = chooseAutocompleteFromCustomValue([], key);
 
-				const nextQuery: Query = {
-					...currentQuery,
-					builder: {
-						...currentQuery.builder,
-						queryData: currentQuery.builder.queryData.map((item) => ({
-							...item,
-							dataSource: DataSource.TRACES,
-							groupBy: [...item.groupBy, autocompleteKey],
-						})),
-					},
-				};
+			const nextQuery: Query = {
+				...currentQuery,
+				builder: {
+					...currentQuery.builder,
+					queryData: currentQuery.builder.queryData.map((item) => ({
+						...item,
+						dataSource: DataSource.TRACES,
+						groupBy: [...item.groupBy, groupByKey],
+					})),
+				},
+			};
 
-				redirectWithQueryBuilderData(
-					nextQuery,
-					{ panelTypes: PANEL_TYPES.TIME_SERIES },
-					ROUTES.TRACES_EXPLORER,
-				);
-			} catch {
-				toast.error(SOMETHING_WENT_WRONG, { position: 'top-right' });
-			}
+			redirectWithQueryBuilderData(
+				nextQuery,
+				{ panelTypes: PANEL_TYPES.TIME_SERIES },
+				ROUTES.TRACES_EXPLORER,
+			);
 		},
-		[currentQuery, getAutocompleteKey, redirectWithQueryBuilderData],
+		[currentQuery, redirectWithQueryBuilderData],
 	);
 
 	return [

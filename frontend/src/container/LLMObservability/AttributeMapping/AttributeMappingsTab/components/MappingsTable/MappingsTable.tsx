@@ -125,12 +125,13 @@ function MappingsTable({
 			{canManage && (
 				<div className={styles.toolbar}>
 					<Button
+						size="md"
 						variant="solid"
 						color="primary"
 						prefix={<Plus size={14} />}
 						onClick={onAddGroup}
 						testId="add-group-row"
-						disabled={editor.isLoading}
+						loading={editor.isLoading}
 					>
 						Add a new group
 					</Button>

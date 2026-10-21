@@ -1,8 +1,6 @@
-import './FormatField.styles.scss';
-
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 
 import { FieldTitle } from '../styles';
 import { LogViewMode, OptionsMenuConfig } from '../types';
@@ -29,12 +27,13 @@ function FormatField({ config }: FormatFieldProps): JSX.Element | null {
 	return (
 		<FormatFieldWrapper direction="vertical">
 			<FieldTitle>{t('options_menu.format')}</FieldTitle>
-			<ToggleGroupSimple
+			<ToggleGroup
+				variant="outlined"
+				color="secondary"
 				type="single"
 				size="sm"
 				value={config.value}
 				onChange={onChange}
-				className="format-field-toggle-group"
 				items={[
 					{ value: 'raw', label: t('options_menu.raw') },
 					{ value: 'list', label: t('options_menu.default') },

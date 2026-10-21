@@ -88,13 +88,13 @@ export function K8sInstrumentationChecksCallout({
 					<div className={styles.header}>
 						Instrumentation checks
 						<Button
-							variant="outlined"
+							variant="solid"
 							color="warning"
 							size="sm"
 							onClick={handleRecheck}
 							loading={isFetching}
 							prefix={<RefreshCw size={12} />}
-							data-testid="instrumentation-checks-recheck-btn"
+							testId="instrumentation-checks-recheck-btn"
 						>
 							Recheck
 						</Button>

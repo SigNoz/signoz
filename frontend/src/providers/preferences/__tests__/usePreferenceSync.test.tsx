@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import { useListSavedViews } from 'api/generated/services/saved-view';
+import { useGetSavedView } from 'api/generated/services/saved-view';
 import {
 	SavedviewtypesSavedViewDTO,
 	SavedviewtypesSourceDTO,
@@ -32,8 +32,8 @@ jest.mock('../updater/usePreferenceUpdater', () => ({
 	})),
 }));
 
-const mockedUseListSavedViews = useListSavedViews as jest.MockedFunction<
-	typeof useListSavedViews
+const mockedUseGetSavedView = useGetSavedView as jest.MockedFunction<
+	typeof useGetSavedView
 >;
 
 function makeView(
@@ -55,18 +55,30 @@ function makeView(
 	} as unknown as SavedviewtypesSavedViewDTO;
 }
 
+// Stable objects, like react-query's cache; a fresh one per render loops the
+// sync effect.
 function mockViews(views: SavedviewtypesSavedViewDTO[]): void {
-	mockedUseListSavedViews.mockReturnValue({
-		data: { status: 'success', data: views },
-	} as unknown as ReturnType<typeof useListSavedViews>);
+	const responses = new Map(
+		views.map((view) => [
+			view.id,
+			{ data: { status: 'success', data: view }, dataUpdatedAt: 0 },
+		]),
+	);
+	const notLoaded = { data: undefined, dataUpdatedAt: 0 };
+	mockedUseGetSavedView.mockImplementation(
+		({ id }) =>
+			(responses.get(id) ?? notLoaded) as unknown as ReturnType<
+				typeof useGetSavedView
+			>,
+	);
 }
 
 describe('usePreferenceSync in saved view mode', () => {
 	beforeEach(() => {
-		mockedUseListSavedViews.mockReset();
+		mockedUseGetSavedView.mockReset();
 	});
 
-	it('fetches the list for the data source only in saved view mode', () => {
+	it('fetches the view only in saved view mode with a view id', () => {
 		mockViews([]);
 
 		renderHook(() =>
@@ -77,8 +89,8 @@ describe('usePreferenceSync in saved view mode', () => {
 			}),
 		);
 
-		expect(mockedUseListSavedViews).toHaveBeenCalledWith(
-			{ source: 'logs' },
+		expect(mockedUseGetSavedView).toHaveBeenCalledWith(
+			{ id: '' },
 			{ query: { enabled: false } },
 		);
 	});
@@ -184,7 +196,7 @@ describe('usePreferenceSync in saved view mode', () => {
 		);
 	});
 
-	it('uses defaults when the saved view id is not in the list', () => {
+	it('uses defaults while the saved view is not loaded', () => {
 		mockViews([makeView('other', SavedviewtypesSourceDTO.logs, {})]);
 
 		const { result } = renderHook(() =>

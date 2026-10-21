@@ -24,7 +24,6 @@ from fixtures.notification_channel import (
     wait_for_alertmanager_sync,
 )
 
-
 # channel test (POST /api/v1/channels/test) drives the notifier once, synchronously,
 # with a hardcoded firing test alert and no retry: create alert on the JSM Ops
 # gateway, then append a timeline note. Default-template events + retry are in

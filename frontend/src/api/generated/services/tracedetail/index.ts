@@ -261,7 +261,7 @@ export const invalidateGetTraceSummary = async (
 };
 
 /**
- * Returns the spans carrying gen_ai input or output messages in timestamp order. Pass nextCursor as after or prevCursor as before to page, or spanId to open the page around a span.
+ * Returns the gen_ai spans of a trace, model calls, tool calls and agent spans, in timestamp order. The messages a span carries are decoded into formattedInput and formattedOutput, with formatterWarnings holding what the converter could not resolve; a span without messages has both empty. Pass nextCursor as after or prevCursor as before to page, or spanId to open the page around a span.
  * @summary Get thread view for a trace
  */
 export const getTraceThread = (
@@ -475,7 +475,7 @@ export const useGetFlamegraph = <
 	return useMutation(getGetFlamegraphMutationOptions(options));
 };
 /**
- * Returns the waterfall view of spans including all spans if total spans are under a limit, a max count otherwise. Aggregations are dropped compared to v3
+ * Returns the waterfall view of spans including all spans if total spans are under a limit, a max count otherwise. Aggregations are dropped compared to v3. A span carrying gen_ai input or output messages also has them decoded into formattedInput and formattedOutput, with formatterWarnings holding what the converter could not resolve.
  * @summary Get waterfall view for a trace
  */
 export const getWaterfallV4 = (

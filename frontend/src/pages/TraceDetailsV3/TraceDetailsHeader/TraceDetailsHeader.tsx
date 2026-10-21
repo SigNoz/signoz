@@ -1,12 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
-import {
-	TooltipRoot,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Skeleton } from 'antd';
 import cx from 'classnames';
 import FieldsSelector from 'components/FieldsSelector';
@@ -113,8 +108,8 @@ function TraceDetailsHeader({
 						<Button
 							variant="solid"
 							color="secondary"
-							size="icon"
-							className={styles.backBtn}
+							size="sm"
+							icon
 							onClick={handlePreviousBtnClick}
 							aria-label="Back"
 						>
@@ -135,33 +130,29 @@ function TraceDetailsHeader({
 						)}
 					>
 						{!isFilterExpanded && (
-							<TooltipProvider>
-								<div className={styles.headerActions}>
-									<TooltipRoot>
-										<TooltipTrigger asChild>
-											<Button
-												variant="ghost"
-												size="icon"
-												color="secondary"
-												aria-label="Analytics"
-												onClick={handleToggleAnalytics}
-											>
-												<ChartPie size={14} />
-											</Button>
-										</TooltipTrigger>
-										<TooltipContent>Analytics</TooltipContent>
-									</TooltipRoot>
-									<TraceOptionsMenu
-										showTraceDetails={showTraceDetails}
-										onToggleTraceDetails={handleToggleTraceDetails}
-										onOpenPreviewFields={(): void => setIsPreviewFieldsOpen(true)}
-										traceId={traceID}
-										startTime={startTime}
-										endTime={endTime}
-										totalSpansCount={traceSummary.totalSpansCount}
-									/>
-								</div>
-							</TooltipProvider>
+							<div className={styles.headerActions}>
+								<Tooltip title="Analytics">
+									<Button
+										variant="ghost"
+										size="sm"
+										icon
+										color="secondary"
+										aria-label="Analytics"
+										onClick={handleToggleAnalytics}
+									>
+										<ChartPie size={14} />
+									</Button>
+								</Tooltip>
+								<TraceOptionsMenu
+									showTraceDetails={showTraceDetails}
+									onToggleTraceDetails={handleToggleTraceDetails}
+									onOpenPreviewFields={(): void => setIsPreviewFieldsOpen(true)}
+									traceId={traceID}
+									startTime={startTime}
+									endTime={endTime}
+									totalSpansCount={traceSummary.totalSpansCount}
+								/>
+							</div>
 						)}
 						<div
 							key="filter"
@@ -195,6 +186,8 @@ function TraceDetailsHeader({
 								DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS,
 							)}
 							statusCode={traceSummary.rootSpanStatusCode}
+							tokens={traceSummary.ai?.tokens}
+							cost={traceSummary.ai?.totalCost}
 						/>
 					) : (
 						<DetailsLoader />

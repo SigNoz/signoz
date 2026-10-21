@@ -1,24 +1,15 @@
-import { Dispatch, ReactElement, SetStateAction } from 'react';
+import { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Controller, FormProvider, UseFormReturn } from 'react-hook-form';
 import { Input } from '@signozhq/ui/input';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Switch } from '@signozhq/ui/switch';
-import { Form, FormInstance, Select } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
-import type { Store } from 'antd/lib/form/interface';
-import ROUTES from 'constants/routes';
 import {
-	ChannelType,
-	EmailChannel,
-	GoogleChatChannel,
-	IncidentIOChannel,
-	JiraChannel,
-	JsmOpsChannel,
-	OpsgenieChannel,
-	PagerChannel,
-	SlackChannel,
-	WebhookChannel,
-} from 'container/CreateAlertChannels/config';
-import history from 'lib/history';
+	ChannelFormValues,
+	ChannelKind,
+} from 'container/CreateAlertChannels/types';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
 import EmailSettings from './Settings/Email';
 import GoogleChatSettings from './Settings/GoogleChat';
@@ -30,218 +21,182 @@ import OpsgenieSettings from './Settings/Opsgenie';
 import PagerSettings from './Settings/Pager';
 import SlackSettings from './Settings/Slack';
 import WebhookSettings from './Settings/Webhook';
-import { Button } from './styles';
+import { Button } from '@signozhq/ui/button';
+
+import FormCard from './FormCard';
+import FormField from './FormField';
+import styles from './FormAlertChannels.module.scss';
+
+const CHANNEL_TYPE_OPTIONS = [
+	{ value: ChannelKind.slack, label: 'Slack' },
+	{ value: ChannelKind.webhook, label: 'Webhook' },
+	{ value: ChannelKind.pagerduty, label: 'Pagerduty' },
+	{ value: ChannelKind.opsgenie, label: 'Opsgenie' },
+	{ value: ChannelKind.email, label: 'Email' },
+	{ value: ChannelKind.msteams, label: 'Microsoft Teams' },
+	{ value: ChannelKind.googlechat, label: 'Google Chat' },
+	{ value: ChannelKind.jira, label: 'Jira' },
+	{ value: ChannelKind.jsmops, label: 'Jira Service Management Ops' },
+	{ value: ChannelKind.incidentio, label: 'incident.io' },
+];
 
 function FormAlertChannels({
-	formInstance,
+	form,
 	type,
-	setSelectedConfig,
 	onTypeChangeHandler,
 	onTestHandler,
 	onSaveHandler,
 	savingState,
 	testingState,
-	title,
-	initialValue,
 	editing = false,
+	readOnly = false,
+	saveChecks = [],
+	testChecks = [],
 }: FormAlertChannelsProps): JSX.Element {
 	const { t } = useTranslation('channels');
+	const {
+		register,
+		control,
+		formState: { errors },
+	} = form;
 
 	const renderSettings = (): ReactElement | null => {
 		switch (type) {
-			case ChannelType.Slack:
-				return <SlackSettings setSelectedConfig={setSelectedConfig} />;
-			case ChannelType.Webhook:
-				return <WebhookSettings setSelectedConfig={setSelectedConfig} />;
-			case ChannelType.Pagerduty:
-				return <PagerSettings setSelectedConfig={setSelectedConfig} />;
-			case ChannelType.MsTeams:
-				return <MsTeamsSettings setSelectedConfig={setSelectedConfig} />;
-			case ChannelType.GoogleChat:
-				return <GoogleChatSettings setSelectedConfig={setSelectedConfig} />;
-			case ChannelType.Jira:
-				return <JiraSettings setSelectedConfig={setSelectedConfig} />;
-			case ChannelType.JsmOps:
-				return <JsmOpsSettings setSelectedConfig={setSelectedConfig} />;
-			case ChannelType.IncidentIO:
-				return (
-					<IncidentIOSettings
-						setSelectedConfig={setSelectedConfig}
-						initialMetadata={initialValue?.metadata as Record<string, string>}
-					/>
-				);
-			case ChannelType.Opsgenie:
-				return <OpsgenieSettings setSelectedConfig={setSelectedConfig} />;
-			case ChannelType.Email:
-				return <EmailSettings setSelectedConfig={setSelectedConfig} />;
+			case ChannelKind.slack:
+				return <SlackSettings />;
+			case ChannelKind.webhook:
+				return <WebhookSettings />;
+			case ChannelKind.pagerduty:
+				return <PagerSettings />;
+			case ChannelKind.msteams:
+				return <MsTeamsSettings />;
+			case ChannelKind.googlechat:
+				return <GoogleChatSettings />;
+			case ChannelKind.jira:
+				return <JiraSettings />;
+			case ChannelKind.jsmops:
+				return <JsmOpsSettings />;
+			case ChannelKind.incidentio:
+				return <IncidentIOSettings />;
+			case ChannelKind.opsgenie:
+				return <OpsgenieSettings />;
+			case ChannelKind.email:
+				return <EmailSettings />;
 			default:
 				return null;
 		}
 	};
 
 	return (
-		<>
-			<Typography.Title level={4} className="form-alert-channels-title">
-				{title}
-			</Typography.Title>
+		<FormProvider {...form}>
+			<form className={styles.form}>
+				{/* the @signozhq inputs take no disabled context and the settings
+				    still render antd textareas; the fieldset turns off both. */}
+				<fieldset className={styles.fields} disabled={readOnly}>
+					<div className={styles.cards}>
+						<FormCard title={t('section_general')}>
+							<FormField
+								label={t('field_channel_name')}
+								help={editing ? t('help_channel_name_immutable') : undefined}
+								error={errors.name?.message}
+								htmlFor="channel-name"
+								required
+							>
+								<Input
+									id="channel-name"
+									data-testid="channel-name-textbox"
+									disabled={editing}
+									aria-required
+									{...register('name')}
+								/>
+							</FormField>
 
-			<Form initialValues={initialValue} layout="vertical" form={formInstance}>
-				<Form.Item label={t('field_channel_name')} labelAlign="left" name="name">
-					<Input
-						data-testid="channel-name-textbox"
-						disabled={editing}
-						onChange={(event): void => {
-							setSelectedConfig((state) => ({
-								...state,
-								name: event.target.value,
-							}));
-						}}
-					/>
-				</Form.Item>
+							<FormField label={t('field_send_resolved')}>
+								<Controller
+									control={control}
+									name="sendResolved"
+									render={({ field }): JSX.Element => (
+										<Switch
+											color="primary"
+											textPlacement="right"
+											testId="field-send-resolved-checkbox"
+											value={!!field.value}
+											onChange={field.onChange}
+										/>
+									)}
+								/>
+							</FormField>
 
-				<Form.Item
-					label={t('field_send_resolved')}
-					labelAlign="left"
-					name="send_resolved"
-				>
-					<Switch
-						defaultValue={initialValue?.send_resolved}
-						testId="field-send-resolved-checkbox"
-						onChange={(value): void => {
-							setSelectedConfig((state) => ({
-								...state,
-								send_resolved: value,
-							}));
-						}}
-					/>
-				</Form.Item>
+							<FormField label={t('field_channel_type')} htmlFor="channel-type">
+								<SelectSimple
+									id="channel-type"
+									items={CHANNEL_TYPE_OPTIONS}
+									value={type}
+									disabled={editing}
+									onChange={(value): void => onTypeChangeHandler(value as ChannelKind)}
+									testId="channel-type-select"
+								/>
+							</FormField>
+						</FormCard>
 
-				<Form.Item label={t('field_channel_type')} labelAlign="left" name="type">
-					<Select
-						disabled={editing}
-						onChange={onTypeChangeHandler}
-						value={type}
-						data-testid="channel-type-select"
-					>
-						<Select.Option value="slack" key="slack" data-testid="select-option">
-							Slack
-						</Select.Option>
-						<Select.Option value="webhook" key="webhook" data-testid="select-option">
-							Webhook
-						</Select.Option>
-						<Select.Option
-							value="pagerduty"
-							key="pagerduty"
-							data-testid="select-option"
+						{renderSettings()}
+					</div>
+				</fieldset>
+
+				<div className={styles.actions}>
+					<AuthZTooltip checks={saveChecks}>
+						<Button
+							variant="solid"
+							color="primary"
+							size="md"
+							testId="save-channel-button"
+							loading={savingState}
+							onClick={onSaveHandler}
 						>
-							Pagerduty
-						</Select.Option>
-						<Select.Option
-							value="opsgenie"
-							key="opsgenie"
-							data-testid="select-option"
+							{t('button_save_channel')}
+						</Button>
+					</AuthZTooltip>
+					<AuthZTooltip checks={testChecks}>
+						<Button
+							variant="outlined"
+							color="secondary"
+							size="md"
+							testId="test-channel-button"
+							loading={testingState}
+							onClick={onTestHandler}
 						>
-							Opsgenie
-						</Select.Option>
-						<Select.Option value="email" key="email" data-testid="select-option">
-							Email
-						</Select.Option>
-
-						<Select.Option value="msteams" key="msteams" data-testid="select-option">
-							Microsoft Teams
-						</Select.Option>
-
-						<Select.Option
-							value="googlechat"
-							key="googlechat"
-							data-testid="select-option"
-						>
-							Google Chat
-						</Select.Option>
-
-						<Select.Option value="jira" key="jira" data-testid="select-option">
-							Jira
-						</Select.Option>
-
-						<Select.Option value="jsmops" key="jsmops" data-testid="select-option">
-							Jira Service Management Ops
-						</Select.Option>
-
-						<Select.Option
-							value="incidentio"
-							key="incidentio"
-							data-testid="select-option"
-						>
-							incident.io
-						</Select.Option>
-					</Select>
-				</Form.Item>
-
-				<Form.Item>{renderSettings()}</Form.Item>
-
-				<Form.Item>
-					<Button
-						data-testid="save-channel-button"
-						disabled={savingState}
-						loading={savingState}
-						type="primary"
-						onClick={(): void => onSaveHandler(type)}
-					>
-						{t('button_save_channel')}
-					</Button>
-					<Button
-						data-testid="test-channel-button"
-						disabled={testingState}
-						loading={testingState}
-						onClick={(): void => onTestHandler(type)}
-					>
-						{t('button_test_channel')}
-					</Button>
-					<Button
-						data-testid="return-button"
-						onClick={(): void => {
-							history.replace(ROUTES.ALL_CHANNELS);
-						}}
-					>
-						{t('button_return')}
-					</Button>
-				</Form.Item>
-			</Form>
-		</>
+							{t('button_test_channel')}
+						</Button>
+					</AuthZTooltip>
+				</div>
+			</form>
+		</FormProvider>
 	);
 }
 
 interface FormAlertChannelsProps {
-	formInstance: FormInstance;
-	type: ChannelType;
-	setSelectedConfig: Dispatch<
-		SetStateAction<
-			Partial<
-				SlackChannel &
-					WebhookChannel &
-					PagerChannel &
-					OpsgenieChannel &
-					EmailChannel &
-					GoogleChatChannel &
-					JiraChannel &
-					JsmOpsChannel &
-					IncidentIOChannel
-			>
-		>
-	>;
-	onTypeChangeHandler: (value: ChannelType) => void;
-	onSaveHandler: (props: ChannelType) => void;
-	onTestHandler: (props: ChannelType) => void;
+	form: UseFormReturn<ChannelFormValues>;
+	type: ChannelKind;
+	onTypeChangeHandler: (value: ChannelKind) => void;
+	onSaveHandler: () => void;
+	onTestHandler: () => void;
 	testingState: boolean;
 	savingState: boolean;
-	title: string;
-	initialValue: Store;
 	// editing indicates if the form is opened in edit mode
 	editing?: boolean;
+	/** The reader has `read` but not `update`, so the fields render disabled. */
+	readOnly?: boolean;
+	/** Gates saving; a denial disables the button and names the missing scope. */
+	saveChecks?: BrandedPermission[];
+	/** Gates a test send, which the API allows with `create`. */
+	testChecks?: BrandedPermission[];
 }
 
 FormAlertChannels.defaultProps = {
 	editing: undefined,
+	readOnly: false,
+	saveChecks: [],
+	testChecks: [],
 };
 
 export default FormAlertChannels;

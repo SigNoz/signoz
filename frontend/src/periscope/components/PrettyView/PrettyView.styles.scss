@@ -102,15 +102,15 @@
 
 		// Keep actions visible on hover, or while this row's menu is open
 		&:hover .pretty-view__actions,
-		&:has(> span [data-state='open']) .pretty-view__actions {
+		&:has(> span [data-popup-open]) .pretty-view__actions {
 			opacity: 1;
 		}
 
 		// Edge-to-edge highlight, bled past indentation, clipped by `> ul`.
 		// Persists while this row's ... menu is open (the trigger stays in the
-		// row and carries data-state=open, even though the menu is portaled out).
+		// row and carries data-popup-open, even though the menu is portaled out).
 		&:hover::before,
-		&:has(> span [data-state='open'])::before {
+		&:has(> span [data-popup-open])::before {
 			content: '';
 			position: absolute;
 			inset: 0 -9999px;
@@ -127,7 +127,7 @@
 		// while the row is active (hover, or its ... menu open). !important
 		// overrides react-json-tree's per-type inline color on the value span.
 		&:hover > span,
-		&:has(> span [data-state='open']) > span {
+		&:has(> span [data-popup-open]) > span {
 			color: var(--l1-foreground-hover) !important;
 		}
 	}
@@ -148,7 +148,7 @@
 		// menu is open — `> span` scopes it so a child row's open menu (nested
 		// in `> ul`) doesn't light up this parent.
 		&:hover::before,
-		&:has(> span [data-state='open'])::before {
+		&:has(> span [data-popup-open])::before {
 			content: '';
 			position: absolute;
 			top: 0;
@@ -160,7 +160,7 @@
 		}
 
 		&:hover > label + span .pretty-view__actions,
-		&:has(> span [data-state='open']) > label + span .pretty-view__actions {
+		&:has(> span [data-popup-open]) > label + span .pretty-view__actions {
 			opacity: 1;
 		}
 
@@ -198,6 +198,10 @@
 			position: sticky;
 			top: 4px;
 		}
+	}
+
+	&__actions-boundary {
+		display: contents;
 	}
 
 	// ... actions button — hidden by default, shown on row hover
@@ -258,10 +262,4 @@
 			fill: transparent;
 		}
 	}
-}
-
-// Field-action dropdown is rendered in a portal; bump above FloatingPanel
-// (z-index 999) so it stays visible when the consumer panel is floating.
-.pretty-view-actions-dropdown {
-	--dropdown-menu-content-z-index: 1000;
 }

@@ -201,6 +201,7 @@ export enum FillMode {
 
 export type ExtendedSeries = Series & {
 	metric?: { [key: string]: string };
+	partialTimestamps?: Set<number>;
 };
 
 export interface SeriesProps extends LineConfig, PointsConfig, BarConfig {
@@ -229,6 +230,8 @@ export interface SeriesProps extends LineConfig, PointsConfig, BarConfig {
 	isDarkMode?: boolean;
 	stepInterval?: number;
 	metric?: { [key: string]: string };
+	/** Epoch-second x values whose bucket doesn't cover a full step; marked with a dotted ring. */
+	partialTimestamps?: Set<number>;
 }
 
 export interface LegendItem {

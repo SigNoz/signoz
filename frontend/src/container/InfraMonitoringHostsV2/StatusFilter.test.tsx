@@ -58,37 +58,37 @@ describe('StatusFilter', () => {
 		renderStatusFilter({});
 
 		expect(screen.getByText('Status')).toBeInTheDocument();
-		expect(screen.getByRole('radio', { name: 'All' })).toBeInTheDocument();
-		expect(screen.getByRole('radio', { name: 'Active' })).toBeInTheDocument();
-		expect(screen.getByRole('radio', { name: 'Inactive' })).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: 'All' })).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: 'Active' })).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: 'Inactive' })).toBeInTheDocument();
 	});
 
 	it('selects "All" by default when no URL param', () => {
 		renderStatusFilter({});
 
-		const allButton = screen.getByRole('radio', { name: 'All' });
-		expect(allButton).toHaveAttribute('aria-checked', 'true');
+		const allButton = screen.getByRole('button', { name: 'All' });
+		expect(allButton).toHaveAttribute('aria-pressed', 'true');
 	});
 
 	it('reads "active" from URL and shows Active selected', () => {
 		renderStatusFilter({ searchParams: { statusFilter: 'active' } });
 
-		const activeButton = screen.getByRole('radio', { name: 'Active' });
-		expect(activeButton).toHaveAttribute('aria-checked', 'true');
+		const activeButton = screen.getByRole('button', { name: 'Active' });
+		expect(activeButton).toHaveAttribute('aria-pressed', 'true');
 	});
 
 	it('reads "inactive" from URL and shows Inactive selected', () => {
 		renderStatusFilter({ searchParams: { statusFilter: 'inactive' } });
 
-		const inactiveButton = screen.getByRole('radio', { name: 'Inactive' });
-		expect(inactiveButton).toHaveAttribute('aria-checked', 'true');
+		const inactiveButton = screen.getByRole('button', { name: 'Inactive' });
+		expect(inactiveButton).toHaveAttribute('aria-pressed', 'true');
 	});
 
 	it('updates URL to "active" when Active clicked', async () => {
 		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
 		renderStatusFilter({ onUrlUpdate });
 
-		const activeButton = screen.getByRole('radio', { name: 'Active' });
+		const activeButton = screen.getByRole('button', { name: 'Active' });
 		fireEvent.click(activeButton);
 
 		await waitFor(() => {
@@ -104,7 +104,7 @@ describe('StatusFilter', () => {
 		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
 		renderStatusFilter({ onUrlUpdate });
 
-		const inactiveButton = screen.getByRole('radio', { name: 'Inactive' });
+		const inactiveButton = screen.getByRole('button', { name: 'Inactive' });
 		fireEvent.click(inactiveButton);
 
 		await waitFor(() => {
@@ -123,7 +123,7 @@ describe('StatusFilter', () => {
 			onUrlUpdate,
 		});
 
-		const allButton = screen.getByRole('radio', { name: 'All' });
+		const allButton = screen.getByRole('button', { name: 'All' });
 		fireEvent.click(allButton);
 
 		await waitFor(() => {
@@ -139,7 +139,7 @@ describe('StatusFilter', () => {
 			onUrlUpdate,
 		});
 
-		const activeButton = screen.getByRole('radio', { name: 'Active' });
+		const activeButton = screen.getByRole('button', { name: 'Active' });
 		fireEvent.click(activeButton);
 
 		await waitFor(() => {

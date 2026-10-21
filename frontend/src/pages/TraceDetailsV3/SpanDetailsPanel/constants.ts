@@ -25,6 +25,9 @@ export enum SpanDetailVariant {
 	DOCKED_RIGHT = 'right',
 }
 
+// Fits the four span detail tabs without scroll arrows
+export const SPAN_DETAILS_PANEL_MIN_WIDTH = 620;
+
 export const KEY_ATTRIBUTE_KEYS: Record<string, string[]> = {
 	traces: [
 		'service.name',

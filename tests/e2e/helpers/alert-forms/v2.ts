@@ -71,15 +71,13 @@ export async function elementAtPointClassName(
 }
 
 /**
- * Hover the (disabled) Save button and return the antd tooltip's text — this is
+ * Hover the (disabled) Save button and return the tooltip's text — this is
  * the only way to read `validateCreateAlertState`'s message, since the button
  * cannot be clicked while a message exists.
  */
 export async function v2SaveTooltip(page: Page): Promise<string> {
-	// The tooltip anchors to the wrapper span, not the disabled button: a disabled
-	// button emits no pointer events, so hovering it directly never opens.
-	await v2SaveButton(page).locator('xpath=..').hover();
-	const tooltip = page.locator('.ant-tooltip-inner').first();
+	await v2SaveButton(page).hover();
+	const tooltip = page.locator('[data-slot="tooltip-content"]').first();
 	await expect(tooltip).toBeVisible();
 	return (await tooltip.innerText()).trim();
 }

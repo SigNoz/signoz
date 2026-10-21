@@ -11,12 +11,7 @@ import {
 } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
-import {
-	TooltipRoot,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import {
 	createColumnHelper,
 	flexRender,
@@ -25,7 +20,6 @@ import {
 } from '@tanstack/react-table';
 import { useVirtualizer, Virtualizer } from '@tanstack/react-virtual';
 import cx from 'classnames';
-import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import TimelineV3 from 'components/TimelineV3/TimelineV3';
 import { convertTimeToRelevantUnit } from 'utils/traceUtils';
 import { useCopySpanLink } from 'hooks/trace/useCopySpanLink';
@@ -33,7 +27,13 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { colorToRgb } from 'lib/uPlotLib/utils/generateColor';
-import { ChevronDown, ChevronRight, Link, ListPlus } from '@signozhq/icons';
+import {
+	ChevronDown,
+	ChevronRight,
+	Link,
+	ListPlus,
+	Sparkle,
+} from '@signozhq/icons';
 import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
 import { resolveSpanColor } from 'pages/TraceDetailsV3/utils';
 import { useBoundaryPagination } from 'pages/TraceDetailsV3/TraceWaterfall/hooks/useBoundaryPagination';
@@ -44,6 +44,8 @@ import { toFixed } from 'utils/toFixed';
 
 import { EventTooltipContent } from '../../../SpanHoverCard/EventTooltipContent';
 import { SpanHoverCard } from '../../../SpanHoverCard/SpanHoverCard';
+import SpanHintBadge from '../../../SpanHintBadge/SpanHintBadge';
+import { isAiSpan } from '../../../utils/aiTraceUtils';
 import AddSpanToFunnelModal from '../../AddSpanToFunnelModal/AddSpanToFunnelModal';
 import { IInterestedSpan } from '../../types';
 
@@ -105,26 +107,19 @@ const LazyEventDotPopover = memo(function LazyEventDotPopover({
 	const eventTimeMs = event.timeUnixNano / 1e6;
 
 	return (
-		<TooltipProvider>
-			<TooltipRoot
-				open
-				onOpenChange={(open: boolean): void => {
-					if (!open) {
-						setShowPopover(false);
-					}
-				}}
-			>
-				<TooltipTrigger asChild>{dot}</TooltipTrigger>
-				<TooltipContent className={styles.popover}>
-					<EventTooltipContent
-						eventName={event.name}
-						timeOffsetMs={eventTimeMs - spanTimestamp}
-						isError={isError}
-						attributeMap={event.attributeMap || {}}
-					/>
-				</TooltipContent>
-			</TooltipRoot>
-		</TooltipProvider>
+		<Tooltip
+			open
+			title={
+				<EventTooltipContent
+					eventName={event.name}
+					timeOffsetMs={eventTimeMs - spanTimestamp}
+					isError={isError}
+					attributeMap={event.attributeMap || {}}
+				/>
+			}
+		>
+			{dot}
+		</Tooltip>
 	);
 });
 
@@ -322,20 +317,31 @@ const SpanOverview = memo(function SpanOverview({
 			<span className={styles.subtreeCountSlot}>
 				{span.has_children && (
 					<span className={styles.subtreeCount}>
-						<Badge color="vanilla">{span.sub_tree_node_count}</Badge>
+						<Badge variant="solid" color="secondary">
+							{span.sub_tree_node_count}
+						</Badge>
 					</span>
 				)}
 			</span>
 
 			{/* Colored service dot */}
-			<span
-				className={cx(styles.treeIcon, { [styles.hasError]: span.has_error })}
-				style={
-					{
-						'--service-dot-color': effectiveColor,
-					} as React.CSSProperties
-				}
-			/>
+			{isAiSpan(span) ? (
+				<Sparkle
+					size={10}
+					color={effectiveColor}
+					fill={effectiveColor}
+					className={styles.aiSpanIcon}
+				/>
+			) : (
+				<span
+					className={cx(styles.treeIcon, { [styles.hasError]: span.has_error })}
+					style={
+						{
+							'--service-dot-color': effectiveColor,
+						} as React.CSSProperties
+					}
+				/>
+			)}
 
 			{/* Span name + service name */}
 			<span className={styles.treeLabel}>
@@ -345,40 +351,30 @@ const SpanOverview = memo(function SpanOverview({
 
 			{/* Action buttons — shown on hover via CSS, right-aligned */}
 			<span className={styles.rowActions}>
-				<TooltipProvider delayDuration={200}>
-					<TooltipRoot>
-						<TooltipTrigger asChild>
-							<Button
-								variant="ghost"
-								size="icon"
-								color="secondary"
-								className={styles.actionBtn}
-								onClick={onSpanCopy}
-							>
-								<Link size={12} />
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent className={styles.actionTooltip}>
-							Copy Span Link
-						</TooltipContent>
-					</TooltipRoot>
-					<TooltipRoot>
-						<TooltipTrigger asChild>
-							<Button
-								variant="ghost"
-								size="icon"
-								color="secondary"
-								className={styles.actionBtn}
-								onClick={handleFunnelClick}
-							>
-								<ListPlus size={12} />
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent className={styles.actionTooltip}>
-							Add to Trace Funnel
-						</TooltipContent>
-					</TooltipRoot>
-				</TooltipProvider>
+				<Tooltip title="Copy Span Link">
+					<Button
+						aria-label="Action"
+						variant="ghost"
+						size="sm"
+						icon
+						color="secondary"
+						onClick={onSpanCopy}
+					>
+						<Link size={12} />
+					</Button>
+				</Tooltip>
+				<Tooltip title="Add to Trace Funnel">
+					<Button
+						aria-label="Action"
+						variant="ghost"
+						size="sm"
+						icon
+						color="secondary"
+						onClick={handleFunnelClick}
+					>
+						<ListPlus size={12} />
+					</Button>
+				</Tooltip>
 			</span>
 		</div>
 	);
@@ -841,12 +837,6 @@ function Success(props: ISuccessProps): JSX.Element {
 	const virtualItems = virtualizer.getVirtualItems();
 	const leftRows = leftTable.getRowModel().rows;
 
-	const handleHoverCardOpenChange = useCallback((open: boolean): void => {
-		if (!open) {
-			setHoveredSpanId(null);
-		}
-	}, []);
-
 	return (
 		<div className={styles.root}>
 			{isFetching && <div className={styles.loadingBar} />}
@@ -890,7 +880,6 @@ function Success(props: ISuccessProps): JSX.Element {
 					/>
 					<SpanHoverCard
 						hoveredSpanId={hoveredSpanId}
-						onOpenChange={handleHoverCardOpenChange}
 						anchorLeft={sidebarWidth}
 						rowHeight={ROW_HEIGHT}
 						spans={spans}
@@ -971,9 +960,7 @@ function Success(props: ISuccessProps): JSX.Element {
 									onMouseLeave={(): void => applyHoverClass(null)}
 									onClick={(): void => handleSpanClick(span)}
 								>
-									{span.response_status_code && (
-										<HttpStatusBadge statusCode={span.response_status_code} />
-									)}
+									<SpanHintBadge span={span} />
 								</div>
 							);
 						})}

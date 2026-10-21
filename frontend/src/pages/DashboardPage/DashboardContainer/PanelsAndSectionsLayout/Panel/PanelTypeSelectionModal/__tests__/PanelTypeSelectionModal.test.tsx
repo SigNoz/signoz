@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 
 import { useDashboardSections } from '../../../../hooks/useDashboardSections';
 import { usePanelPickerTargetStore } from '../../../../store/usePanelPickerTargetStore';
@@ -52,14 +51,12 @@ function renderDrawer(
 	const onSelect = jest.fn();
 	const onClose = jest.fn();
 	render(
-		<TooltipProvider>
-			<PanelTypeSelectionModal
-				open
-				onClose={onClose}
-				onSelect={onSelect}
-				{...props}
-			/>
-		</TooltipProvider>,
+		<PanelTypeSelectionModal
+			open
+			onClose={onClose}
+			onSelect={onSelect}
+			{...props}
+		/>,
 	);
 	return { onSelect, onClose, user };
 }
@@ -70,7 +67,7 @@ async function openSectionMenu(user: User): Promise<void> {
 
 async function startNewSection(user: User): Promise<void> {
 	await openSectionMenu(user);
-	await user.click(screen.getByTestId('panel-section-create'));
+	await user.click(await screen.findByTestId('panel-section-create'));
 	await screen.findByTestId('panel-section-name');
 }
 
@@ -135,7 +132,7 @@ describe('PanelTypeSelectionModal', () => {
 		const { onSelect, user } = renderDrawer({ defaultLayoutIndex: 1 });
 
 		await openSectionMenu(user);
-		await user.click(screen.getByTestId('panel-section-option-0'));
+		await user.click(await screen.findByTestId('panel-section-option-0'));
 		const confirm = screen.getByTestId('panel-type-confirm');
 		expect(confirm).toHaveTextContent('Add to Overview');
 		await user.click(confirm);
@@ -204,7 +201,7 @@ describe('PanelTypeSelectionModal', () => {
 
 			await startNewSection(user);
 			const confirm = screen.getByTestId('panel-type-confirm');
-			expect(confirm).toBeDisabled();
+			expect(confirm).toHaveAttribute('aria-disabled', 'true');
 			expect(confirm).toHaveTextContent('Add to new section');
 
 			await user.type(screen.getByTestId('panel-section-name'), '  Errors ');

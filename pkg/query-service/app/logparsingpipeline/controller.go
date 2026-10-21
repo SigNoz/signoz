@@ -220,26 +220,17 @@ func (ic *LogParsingPipelineController) ValidatePipelines(ctx context.Context,
 	return err
 }
 
-// withNormalizePipeline places normalize where the read path dictates. Ahead of user pipelines
-// when queries run on body_v2 (use_json_body), so operators see the body the explorer shows.
-// After them when dual ingestion alone writes body_v2, so operators keep seeing the raw body
-// users still query. Absent when neither flag is on.
-func (ic *LogParsingPipelineController) withNormalizePipeline(ctx context.Context, orgID valuer.UUID, pipelines []pipelinetypes.GettablePipeline) []pipelinetypes.GettablePipeline {
-	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
-	dualIngestion := ic.fl.BooleanOrEmpty(ctx, flagger.FeatureJSONBodyDualIngestion, evalCtx)
-	switch {
-	case ic.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, evalCtx):
-		return append([]pipelinetypes.GettablePipeline{getNormalizePipeline(dualIngestion)}, pipelines...)
-	case dualIngestion:
-		return append(slices.Clone(pipelines), getNormalizePipeline(true))
-	default:
+// withNormalizePipeline places normalize ahead of user pipelines when queries run on body_v2
+// (use_json_body), so operators see the body the explorer shows. Absent when the flag is off
+// or collectorNormalizesFirst.
+func (ic *LogParsingPipelineController) withNormalizePipeline(ctx context.Context, orgID valuer.UUID, pipelines []pipelinetypes.GettablePipeline, collectorNormalizesFirst bool) []pipelinetypes.GettablePipeline {
+	if collectorNormalizesFirst || !ic.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
 		return pipelines
 	}
+	return append([]pipelinetypes.GettablePipeline{getNormalizePipeline()}, pipelines...)
 }
 
-// stashOriginalBody makes normalize carry the pre-normalization body in an internal attribute
-// for the exporter to restore into the legacy body column.
-func getNormalizePipeline(stashOriginalBody bool) pipelinetypes.GettablePipeline {
+func getNormalizePipeline() pipelinetypes.GettablePipeline {
 	return pipelinetypes.GettablePipeline{
 		StoreablePipeline: pipelinetypes.StoreablePipeline{
 			Name:    "Default Pipeline - PreProcessing Body",
@@ -258,11 +249,10 @@ func getNormalizePipeline(stashOriginalBody bool) pipelinetypes.GettablePipeline
 		},
 		Config: []pipelinetypes.PipelineOperator{
 			{
-				ID:                    uuid.NewString(),
-				Type:                  "normalize",
-				Enabled:               true,
-				If:                    "body != nil",
-				JSONBodyDualIngestion: stashOriginalBody,
+				ID:      uuid.NewString(),
+				Type:    "normalize",
+				Enabled: true,
+				If:      "body != nil",
 			},
 		},
 	}
@@ -371,11 +361,8 @@ func (ic *LogParsingPipelineController) PreviewLogsPipelines(
 	}
 
 	// The collector gets the same pipeline prepended over opamp; see RecommendAgentConfig.
-	// Under dual ingestion alone it runs after user operators and only feeds body_v2, which
-	// the explorer does not show yet, so the preview leaves it out. The original-body stash
-	// is left off: the preview has no exporter to restore and strip it.
 	if ic.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
-		pipelines = append([]pipelinetypes.GettablePipeline{getNormalizePipeline(false)}, pipelines...)
+		pipelines = append([]pipelinetypes.GettablePipeline{getNormalizePipeline()}, pipelines...)
 	}
 
 	result, collectorLogs, err := SimulatePipelinesProcessing(ctx, pipelines, request.Logs)
@@ -396,14 +383,14 @@ func (pc *LogParsingPipelineController) AgentFeatureType() agentConf.AgentFeatur
 
 // Implements agentConf.AgentFeature interface.
 // RecommendAgentConfig generates the collector config to be sent to agents.
-// The normalize pipeline (when use_json_body or json_body_dual_ingestion is on) is placed
+// The normalize pipeline (when use_json_body is on) is placed
 // here, after rawPipelineData is serialized. So it is only present in the config sent to
 // the collector and never persisted to the database as part of the user's pipeline list.
 //
 // NOTE: The configId sent to agents is derived from the pipeline version number
 // (e.g. "LogPipelines:5"), not the YAML content. If server-side logic changes
-// the generated YAML without bumping the version (e.g. toggling the use_json_body or
-// json_body_dual_ingestion flags or updating operator IfExpressions), agents that already
+// the generated YAML without bumping the version (e.g. toggling the use_json_body
+// flag or updating operator IfExpressions), agents that already
 // applied that version will not re-apply the new config. In such cases, users must save a
 // new pipeline version via the API to force agents to pick up the change.
 func (pc *LogParsingPipelineController) RecommendAgentConfig(
@@ -431,10 +418,15 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 		return nil, "", err
 	}
 
-	// normalize is only for sending to the collector, never persisted
-	enrichedPipelines = pc.withNormalizePipeline(ctx, orgId, enrichedPipelines)
+	collectorConf, err := unmarshalCollectorConfig(currentConfYaml)
+	if err != nil {
+		return nil, "", err
+	}
 
-	updatedConf, err := GenerateCollectorConfigWithPipelines(currentConfYaml, enrichedPipelines)
+	// normalize is only for sending to the collector, never persisted
+	enrichedPipelines = pc.withNormalizePipeline(ctx, orgId, enrichedPipelines, collectorNormalizesFirst(collectorConf))
+
+	updatedConf, err := generateCollectorConfigWithPipelines(collectorConf, enrichedPipelines)
 	if err != nil {
 		return nil, "", err
 	}

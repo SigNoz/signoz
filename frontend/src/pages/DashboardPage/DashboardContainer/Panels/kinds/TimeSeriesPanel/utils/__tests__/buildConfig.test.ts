@@ -1,5 +1,6 @@
 import type { DashboardtypesTimeSeriesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import { UTC_TIMEZONE } from 'components/CustomTimePicker/timezoneUtils';
+import type { ExtendedSeries } from 'lib/uPlotV2/config/types';
 import { PanelMode } from 'lib/visualization/panels/types';
 import type { PanelSeries } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
@@ -72,5 +73,29 @@ describe('buildTimeSeriesConfig spanGaps', () => {
 		expect(
 			spanGapsFor({ fillOnlyBelow: true, fillLessThan: '10s' }),
 		).toStrictEqual([10]);
+	});
+});
+
+describe('buildTimeSeriesConfig partial buckets', () => {
+	it('passes partial timestamps (epoch seconds) to the series', () => {
+		const config = buildTimeSeriesConfig({
+			panelId: 'p1',
+			spec: {} as DashboardtypesTimeSeriesPanelSpecDTO,
+			builderQueries: [],
+			series: [
+				{
+					...series[0],
+					values: [
+						{ timestamp: 1000, value: 1 },
+						{ timestamp: 61000, value: 0.2, partial: true },
+					],
+				},
+			],
+			isDarkMode: false,
+			timezone: UTC_TIMEZONE,
+			panelMode: PanelMode.DASHBOARD_VIEW,
+		}).getConfig().series?.[1] as ExtendedSeries;
+
+		expect(config.partialTimestamps).toStrictEqual(new Set([61]));
 	});
 });

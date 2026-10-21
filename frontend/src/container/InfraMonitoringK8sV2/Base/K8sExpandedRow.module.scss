@@ -32,10 +32,8 @@
 	justify-content: flex-start;
 	gap: var(--spacing-4);
 	background-color: var(--l1-background);
-}
 
-.viewAllButton {
-	display: flex;
-	align-items: center;
-	margin: var(--spacing-4);
+	> [data-slot='button'] {
+		margin: var(--spacing-4);
+	}
 }

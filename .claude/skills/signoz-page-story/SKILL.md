@@ -151,9 +151,42 @@ that only exists on a trial needs the plan too:
 `args: { plan: 'on-trial', revoked: ['create:subscription'] }`. A permission
 whose denial changes nothing on screen gets no story: say so in the PR.
 
-Verify these by their disabled states, not their text. The page reads the same
-either way, so a story that is wrong looks right: read `disabled` off the buttons
-the permission gates, and check the denial callout is there or gone.
+Check these by what is turned off, not by what the page says. The page reads the
+same either way, so a story that is wrong still looks right. Check that the
+control the permission guards is off, and that the denial message is there or
+gone.
+
+**Do not use `toBeEnabled` or `toBeDisabled`.** They only look at the `disabled`
+attribute. `@signozhq/ui` turns a button off with `aria-disabled` instead, so
+these matchers pass on a button nobody can click, and the test goes green while
+clicking straight through a denial. Check the attribute the component really
+sets:
+
+```ts
+expect(save).toHaveAttribute('aria-disabled', 'true');
+```
+
+**Some controls are off with no attribute at all.** The browser turns off
+everything inside a disabled `<fieldset>` without marking it, and a switch is a
+`<button>` underneath. For those, an attribute check proves nothing, and so does
+looking for a parent `fieldset[disabled]`. Click it and check nothing happened:
+
+```ts
+const before = toggle.getAttribute('aria-checked');
+await userEvent.click(toggle);
+await expect(toggle.getAttribute('aria-checked')).toBe(before);
+```
+
+**Check that a new assertion can fail.** Flip it once and run it. If that story
+goes red and nothing else does, the assertion is real; put it back. A test that
+cannot fail is worse than no test, because it looks like coverage.
+
+**Delete a story once its difference disappears.** Say a story checks that a
+button reads "View" rather than "Edit" when a permission is missing. If the label
+later becomes the same either way, that story passes no matter which permissions
+are held, including all of them, and it is testing nothing. When a behaviour
+stops depending on a permission, delete the story or rewrite it to lock in the
+new behaviour, and say which one you did in the PR.
 
 ## Rules
 

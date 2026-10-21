@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Compass, Info } from '@signozhq/icons';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 
 import styles from './ChartHeader.module.scss';
 import { DOCS_BASE_URL } from 'constants/app';
@@ -28,8 +28,7 @@ function ChartHeader({
 		if (docPath) {
 			const tooltipTitle = tooltip || 'Not sure what this represents?';
 			return (
-				<TooltipSimple
-					arrow
+				<Tooltip
 					title={
 						<>
 							{tooltipTitle}{' '}
@@ -47,17 +46,17 @@ function ChartHeader({
 					<span className={styles.infoIcon} data-testid="chart-header-info-icon">
 						<Info size="md" />
 					</span>
-				</TooltipSimple>
+				</Tooltip>
 			);
 		}
 
 		if (tooltip) {
 			return (
-				<TooltipSimple title={tooltip} arrow>
+				<Tooltip title={tooltip}>
 					<span className={styles.infoIcon} data-testid="chart-header-info-icon">
 						<Info size="md" />
 					</span>
-				</TooltipSimple>
+				</Tooltip>
 			);
 		}
 
@@ -69,7 +68,7 @@ function ChartHeader({
 			<span className={styles.chartHeaderLabel}>{title}</span>
 			{renderInfoIcon()}
 			{metricsExplorerUrl && (
-				<TooltipSimple title="Go to Metrics Explorer" arrow>
+				<Tooltip title="Go to Metrics Explorer">
 					<Link
 						to={metricsExplorerUrl}
 						className={styles.metricsExplorerLink}
@@ -78,7 +77,7 @@ function ChartHeader({
 					>
 						<Compass size={14} />
 					</Link>
-				</TooltipSimple>
+				</Tooltip>
 			)}
 		</div>
 	);
