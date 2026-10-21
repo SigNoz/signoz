@@ -1,7 +1,7 @@
 import { Spinner } from '@signozhq/ui/spinner';
 import { toast } from '@signozhq/ui/sonner';
 import { useGetNotificationChannel } from 'api/generated/services/channels';
-import AlertBreadcrumb from 'components/AlertBreadcrumb';
+import BackHeader from 'components/BackHeader/BackHeader';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import ChannelForm from 'pages/AlertList/NotificationChannels/components/ChannelForm/ChannelForm';
@@ -17,49 +17,42 @@ function ChannelsEditPage({ channelId }: ChannelsEditPageProps): JSX.Element {
 	const { data, isLoading } = useGetNotificationChannel({ id: channelId });
 
 	return (
-		<>
-			<AlertBreadcrumb
-				items={[
-					{ title: 'Channels', route: ROUTES.ALL_CHANNELS },
-					{
-						title: (
-							<span className={styles.crumbName}>
-								{isLoading ? (
-									<Spinner
-										size={14}
-										aria-label="Loading channel"
-										testId="channel-name-loading"
-									/>
-								) : (
-									<>
-										<span className="translate-safe">
-											{data?.data?.displayName || 'Edit Channel'}
-										</span>
-										<CopyButton
-											value={channelId}
-											ariaLabel="Copy channel ID"
-											testId="copy-channel-id"
-											onCopy={(): void => {
-												toast.success('Channel ID copied to clipboard');
-											}}
-										/>
-									</>
-								)}
+		<div className={styles.page}>
+			<BackHeader
+				backLabel="All channels"
+				backRoute={ROUTES.ALL_CHANNELS}
+				testId="channel-edit-header"
+				title={
+					isLoading ? (
+						<Spinner
+							size={16}
+							aria-label="Loading channel"
+							testId="channel-name-loading"
+						/>
+					) : (
+						<>
+							<span className="translate-safe">
+								{data?.data?.displayName || 'Edit Channel'}
 							</span>
-						),
-						isLast: true,
-					},
-				]}
+							<CopyButton
+								value={channelId}
+								ariaLabel="Copy channel ID"
+								testId="copy-channel-id"
+								onCopy={(): void => {
+									toast.success('Channel ID copied to clipboard');
+								}}
+							/>
+						</>
+					)
+				}
 			/>
-			<div className={styles.content}>
-				<ChannelForm
-					channelId={channelId}
-					onDone={(): void => {
-						history.replace(ROUTES.ALL_CHANNELS);
-					}}
-				/>
-			</div>
-		</>
+			<ChannelForm
+				channelId={channelId}
+				onDone={(): void => {
+					history.replace(ROUTES.ALL_CHANNELS);
+				}}
+			/>
+		</div>
 	);
 }
 

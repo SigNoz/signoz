@@ -3,12 +3,6 @@
 	flex-direction: column;
 	gap: var(--spacing-3);
 	margin-bottom: var(--spacing-6);
-
-	/* The card runs the page width, so without this a token sits in a box built
-	   for a paragraph. Set on the field rather than the control so the label and
-	   the error line up with it. A block that already sizes its own columns, such
-	   as a repeating row, overrides this. */
-	max-width: var(--field-max-width, 560px);
 }
 
 .label {

@@ -200,8 +200,8 @@ function NotificationChannels(): JSX.Element {
 						testId="channels-create"
 					>
 						{filteredKind
-							? `New ${CHANNEL_KIND_LABEL[filteredKind]} channel`
-							: 'New channel'}
+							? `New ${CHANNEL_KIND_LABEL[filteredKind]} Channel`
+							: 'New Channel'}
 					</AuthZButton>
 					<TextToolTip
 						text="More details on how to configure notification channels"

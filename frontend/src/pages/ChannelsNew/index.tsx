@@ -1,6 +1,6 @@
 import { useLocation } from 'react-router-dom';
 import { Skeleton } from 'antd';
-import AlertBreadcrumb from 'components/AlertBreadcrumb';
+import BackHeader from 'components/BackHeader/BackHeader';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { withAuthZPage } from 'lib/authz/components/withAuthZ/withAuthZPage';
@@ -27,22 +27,20 @@ function ChannelsNew(): JSX.Element {
 		: ROUTES.ALL_CHANNELS;
 
 	return (
-		<>
-			<AlertBreadcrumb
-				items={[
-					{ title: 'Channels', route: listRoute },
-					{ title: 'New channel', isLast: true },
-				]}
+		<div className={styles.page}>
+			<BackHeader
+				backLabel="All channels"
+				backRoute={listRoute}
+				title="New channel"
+				testId="channel-new-header"
 			/>
-			<div className={styles.content}>
-				<ChannelForm
-					initialKind={initialKind}
-					onDone={(): void => {
-						history.replace(listRoute);
-					}}
-				/>
-			</div>
-		</>
+			<ChannelForm
+				initialKind={initialKind}
+				onDone={(): void => {
+					history.replace(listRoute);
+				}}
+			/>
+		</div>
 	);
 }
 

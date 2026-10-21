@@ -46,9 +46,12 @@
 }
 
 /* One entry per block, every input labelled. A row of bare boxes gave no way to
-   tell which column was which once a value was typed. */
+   tell which column was which once a value was typed. The block keeps a readable
+   width while the rest of the form fills the page, so its two columns do not
+   stretch into a row of six. */
 .entry {
-	border: 1px solid var(--l2-border);
+	max-width: 760px;
+	border: 1px solid var(--border);
 	border-radius: var(--radius-2);
 	background: var(--l2-background);
 	padding: var(--spacing-6) var(--spacing-7);
@@ -77,10 +80,6 @@
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 	gap: 0 var(--spacing-6);
-
-	/* The grid already decides how wide a column is, so the field's own cap
-	   would just leave a gap inside it. */
-	--field-max-width: none;
 }
 
 /* The toggle reads as a sentence, so it takes the whole width rather than
