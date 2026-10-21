@@ -104,7 +104,7 @@ func createDashboardExamples() []handler.OpenAPIExample {
 								"kind": "signoz/NumberPanel",
 								"spec": map[string]any{
 									"thresholds": []any{
-										map[string]any{"value": 100, "operator": "above", "color": "Red", "format": "background"},
+										map[string]any{"value": 100, "operator": "above", "color": "#F1575F", "format": "background"},
 									},
 								},
 							},
@@ -128,7 +128,7 @@ func createDashboardExamples() []handler.OpenAPIExample {
 		{
 			Name:        "logs_table_with_runbook",
 			Summary:     "Logs dashboard with a text panel and a table panel",
-			Description: "A `signoz/TextPanel` renders markdown and must send `queries: []`. The table counts error logs per service as a scalar result, orders by the `errors` alias and colors cells above 1000 errors.",
+			Description: "A `signoz/TextPanel` renders markdown and must send `queries: []`. The table counts error logs per service as a scalar result, orders by the `errors` alias and colors cells above 1000 errors; the threshold names the column by its key `A` (the query name), not by the alias.",
 			Value: map[string]any{
 				"schemaVersion": "v6",
 				"name":          "error-logs-by-service",
@@ -154,7 +154,7 @@ func createDashboardExamples() []handler.OpenAPIExample {
 								"spec": map[string]any{
 									"formatting": map[string]any{"decimalPrecision": "0"},
 									"thresholds": []any{
-										map[string]any{"columnName": "errors", "value": 1000, "operator": "above", "color": "Red", "format": "background"},
+										map[string]any{"columnName": "A", "value": 1000, "operator": "above", "color": "#F1575F", "format": "background"},
 									},
 								},
 							},
@@ -248,7 +248,7 @@ func patchDashboardExamples() []handler.OpenAPIExample {
 				map[string]any{
 					"op":   "add",
 					"path": "/spec/panels/error-rate",
-					"value": panel("Error rate", "Spans with an error status",
+					"value": panel("Error count", "Errored spans per time bucket",
 						map[string]any{"kind": "signoz/TimeSeriesPanel", "spec": map[string]any{}},
 						builderQuery("time_series", map[string]any{
 							"name":         "A",
