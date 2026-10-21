@@ -268,3 +268,49 @@ func TestFromGlobsRelatedLinks(t *testing.T) {
 		})
 	}
 }
+
+func TestFromGlobsRelatedLinksHTML(t *testing.T) {
+	tmpl, err := FromGlobs([]string{})
+	require.NoError(t, err)
+	tmpl.ExternalURL = &url.URL{Scheme: "http", Host: "localhost:8080"}
+
+	testCases := []struct {
+		name        string
+		annotations model.LabelSet
+		expected    string
+	}{
+		{
+			name:        "Both_EscapedHref_LineEach",
+			annotations: model.LabelSet{"related_logs": "http://localhost:8080/logs?a=1&b=2", "related_traces": "http://localhost:8080/traces?a=1&b=2"},
+			expected:    "<a href=\"http://localhost:8080/logs?a=1&amp;b=2\">View Related Logs</a>\n<a href=\"http://localhost:8080/traces?a=1&amp;b=2\">View Related Traces</a>\n",
+		},
+		{
+			name:        "LogsOnly",
+			annotations: model.LabelSet{"related_logs": "http://localhost:8080/logs?c=3"},
+			expected:    "<a href=\"http://localhost:8080/logs?c=3\">View Related Logs</a>\n",
+		},
+		{
+			name:        "NoLinks_Empty",
+			annotations: model.LabelSet{"summary": "s"},
+			expected:    "",
+		},
+	}
+
+	renderers := map[string]func(string, any) (string, error){
+		"Text": tmpl.ExecuteTextString,
+		"HTML": tmpl.ExecuteHTMLString,
+	}
+
+	for _, testCase := range testCases {
+		for engine, render := range renderers {
+			t.Run(testCase.name+"_"+engine, func(t *testing.T) {
+				alert := &types.Alert{Alert: model.Alert{Labels: model.LabelSet{"alertname": "a"}, Annotations: testCase.annotations}, UpdatedAt: time.Now()}
+				data := tmpl.Data("__receiver", model.LabelSet{}, alert)
+
+				got, err := render(`{{ range .Alerts }}{{ template "signoz.relatedLinks.html" . }}{{ end }}`, data)
+				require.NoError(t, err)
+				assert.Equal(t, testCase.expected, got)
+			})
+		}
+	}
+}

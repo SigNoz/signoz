@@ -100,9 +100,9 @@ func TestDefaultTelegramTemplatesEscapeAlertContent(t *testing.T) {
 			assert.NotContains(t, rendered, "[FIRING:1]", "the title is sent separately")
 			assert.Contains(t, rendered, "<b>Summary:</b> latency &gt; 2s")
 			assert.Contains(t, rendered, `<a href="http://localhost:8080/alerts?a=1&amp;b=2">View in SigNoz</a>`)
-			assert.Contains(t, rendered, `<a href="http://localhost:8080/logs?a=1&amp;b=2">View related logs</a>`)
+			assert.Contains(t, rendered, `<a href="http://localhost:8080/logs?a=1&amp;b=2">View Related Logs</a>`)
 			assert.NotContains(t, rendered, "&amp;lt;", "double-escaped")
-			assert.NotContains(t, rendered, "View related traces")
+			assert.NotContains(t, rendered, "View Related Traces")
 		})
 	}
 }

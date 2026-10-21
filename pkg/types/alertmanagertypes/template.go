@@ -50,6 +50,8 @@ func FromGlobs(paths []string) (*alertmanagertemplate.Template, error) {
 	{{ define "signoz.relatedLinks.markdown" }}{{ range relatedLinks .Annotations }}[{{ .Label }}]({{ .URL }})
 
 {{ end }}{{ end }}
+	{{ define "signoz.relatedLinks.html" }}{{ range relatedLinks .Annotations }}<a href="{{ .URL | html }}">{{ .Label | html }}</a>
+{{ end }}{{ end }}
 	`))); err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error parsing alertmanager templates")
 	}

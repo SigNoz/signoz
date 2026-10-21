@@ -56,11 +56,21 @@ var (
 		defaults:    relatedLinksIncidentIOKind.defaults,
 	}
 
+	relatedLinksTelegramKind = relatedLinksChannelKind{
+		configsKey:  "telegram_configs",
+		field:       "message",
+		replacement: `{{ template "signoz.relatedLinks.html" . }}`,
+		defaults: []string{
+			"{{ if .Annotations.related_logs }}<a href=\"{{ .Annotations.related_logs | html }}\">View related logs</a>\n{{ end }}{{ if .Annotations.related_traces }}<a href=\"{{ .Annotations.related_traces | html }}\">View related traces</a>\n{{ end }}",
+		},
+	}
+
 	relatedLinksKindsByChannelType = map[string]relatedLinksChannelKind{
 		"slack":      relatedLinksSlackKind,
 		"msteams":    relatedLinksMSTeamsKind,
 		"incidentio": relatedLinksIncidentIOKind,
 		"jsmops":     relatedLinksJSMOpsKind,
+		"telegram":   relatedLinksTelegramKind,
 	}
 
 	errRelatedLinksCustomised   = errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "related links section differs from the shipped defaults")
@@ -135,7 +145,7 @@ func (migration *migrateRelatedLinksTemplate) migrateConfigs(ctx context.Context
 
 		changed := false
 		for _, receiver := range receivers {
-			for _, kind := range []relatedLinksChannelKind{relatedLinksSlackKind, relatedLinksMSTeamsKind, relatedLinksIncidentIOKind, relatedLinksJSMOpsKind} {
+			for _, kind := range []relatedLinksChannelKind{relatedLinksSlackKind, relatedLinksMSTeamsKind, relatedLinksIncidentIOKind, relatedLinksJSMOpsKind, relatedLinksTelegramKind} {
 				rewritten, err := rewriteRelatedLinksInReceiver(receiver, kind)
 				if err != nil {
 					migration.logger.WarnContext(ctx, "leaving receiver related links template as is", slog.String("config_id", row.ID), slog.String("receiver", string(receiver["name"])), slog.String("configs_key", kind.configsKey), errors.Attr(err))
