@@ -1,10 +1,8 @@
 import { expect, test } from '../../../drivers/channels';
-import { deleteChannelViaApi } from '../../../helpers/channels/api';
 
 test.describe('Notification channels — create', () => {
 	test('TC-01 a webhook channel saves and shows up in the list', async ({
 		channels,
-		authedPage,
 	}) => {
 		const name = `e2e-ncc-${Date.now()}`;
 		let id: string | undefined;
@@ -23,7 +21,7 @@ test.describe('Notification channels — create', () => {
 			await channels.list.goto({ search: name });
 			await expect(channels.list.row(name)).toBeVisible();
 		} finally {
-			await deleteChannelViaApi(authedPage, id);
+			await channels.api.remove(id);
 		}
 	});
 
