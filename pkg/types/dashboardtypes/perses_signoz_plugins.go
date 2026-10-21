@@ -394,7 +394,7 @@ type AreaChartVisualization struct {
 }
 
 type PanelFormatting struct {
-	Unit             string          `json:"unit" description:"The unit id of the values, such as By, ms, s or percent. Empty shows plain numbers."`
+	Unit             string          `json:"unit" description:"The display unit of the values, such as By, ms, s, percent or percentunit. Use percent for values already expressed as percentages (95 displays as 95%) and percentunit for fractions (0.95 displays as 95%). Empty shows plain numbers."`
 	DecimalPrecision PrecisionOption `json:"decimalPrecision" description:"Decimal places shown: 0, 1, 2 (default), 3, 4 or full."`
 }
 
@@ -855,7 +855,7 @@ func (o *FillOpacity) UnmarshalJSON(data []byte) error {
 
 type SpanGaps struct {
 	FillOnlyBelow bool   `json:"fillOnlyBelow" description:"Controls whether lines connect across null values. When false (default), all gaps are connected. When true, only gaps smaller than fillLessThan are connected."`
-	FillLessThan  string `json:"fillLessThan" description:"The maximum gap size to connect when fillOnlyBelow is true. Gaps larger than this duration are left disconnected."`
+	FillLessThan  string `json:"fillLessThan" description:"The largest gap still connected when fillOnlyBelow is true; longer gaps are left disconnected. Required in that case, as a positive Prometheus duration such as 30s, 5m or 1d."`
 }
 
 func (sg *SpanGaps) UnmarshalJSON(data []byte) error {

@@ -198,7 +198,7 @@ func nextCloneDisplayName(name string) string {
 }
 
 type DashboardV2MetadataBase struct {
-	SchemaVersion string `json:"schemaVersion" required:"true" description:"The dashboard schema version. Must be v6."`
+	SchemaVersion string `json:"schemaVersion" required:"true" pattern:"^v6$" description:"The dashboard schema version. Must be v6."`
 	Image         string `json:"image" description:"Icon or logo shown in the dashboard list: an /assets/Icons/ or /assets/Logos/ path, or a base64 image data URI. Empty for none."`
 }
 
@@ -224,7 +224,7 @@ type PostableDashboardV2 struct {
 	DashboardV2MetadataBase
 	Name         string                 `json:"name" description:"The dashboard's unique name, a DNS-1123 label (lowercase letters, digits and hyphens, at most 63 characters). Immutable after creation. Must be empty when generateName is true."`
 	GenerateName bool                   `json:"generateName" description:"When true the server derives name from spec.display.name plus a random suffix. Requires an empty name and a non-empty spec.display.name."`
-	Tags         []tagtypes.PostableTag `json:"tags" required:"true" description:"Up to 10 key/value tags. Keys must not be one of the reserved list filter keys: name, description, created_at, updated_at, created_by, locked, source. Use [] for none."`
+	Tags         []tagtypes.PostableTag `json:"tags" required:"true" maxItems:"10" description:"Up to 10 key/value tags. Keys must not be one of the reserved list filter keys: name, description, created_at, updated_at, created_by, locked, source. Use [] for none."`
 	Spec         DashboardSpec          `json:"spec" required:"true" description:"The dashboard content: display, variables, panels, layouts and links."`
 }
 
@@ -457,7 +457,7 @@ type StorableDashboardV2Metadata = DashboardV2MetadataBase
 type UpdatableDashboardV2 struct {
 	DashboardV2MetadataBase
 	Name string                 `json:"name" required:"true" description:"The dashboard's current name. The name is immutable, so a different value is rejected."`
-	Tags []tagtypes.PostableTag `json:"tags" required:"true" description:"The full replacement tag set, up to 10 key/value tags. Keys must not be one of the reserved list filter keys: name, description, created_at, updated_at, created_by, locked, source."`
+	Tags []tagtypes.PostableTag `json:"tags" required:"true" maxItems:"10" description:"The full replacement tag set, up to 10 key/value tags. Keys must not be one of the reserved list filter keys: name, description, created_at, updated_at, created_by, locked, source."`
 	Spec DashboardSpec          `json:"spec" required:"true" description:"The full replacement dashboard content: display, variables, panels, layouts and links."`
 }
 

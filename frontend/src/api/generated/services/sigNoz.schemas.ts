@@ -5325,7 +5325,7 @@ export enum DashboardtypesLineStyleDTO {
 export interface DashboardtypesSpanGapsDTO {
 	/**
 	 * @type string
-	 * @description The maximum gap size to connect when fillOnlyBelow is true. Gaps larger than this duration are left disconnected.
+	 * @description The largest gap still connected when fillOnlyBelow is true; longer gaps are left disconnected. Required in that case, as a positive Prometheus duration such as 30s, 5m or 1d.
 	 */
 	fillLessThan?: string;
 	/**
@@ -5396,7 +5396,7 @@ export interface DashboardtypesPanelFormattingDTO {
 	decimalPrecision?: DashboardtypesPrecisionOptionDTO;
 	/**
 	 * @type string
-	 * @description The unit id of the values, such as By, ms, s or percent. Empty shows plain numbers.
+	 * @description The display unit of the values, such as By, ms, s, percent or percentunit. Use percent for values already expressed as percentages (95 displays as 95%) and percentunit for fractions (0.95 displays as 95%). Empty shows plain numbers.
 	 */
 	unit?: string;
 }
@@ -6057,6 +6057,7 @@ export interface DashboardtypesDisplayDTO {
 	description?: string;
 	/**
 	 * @type string
+	 * @maxLength 128
 	 * @description The human-readable title, at most 128 characters.
 	 */
 	name: string;
@@ -7141,7 +7142,7 @@ export interface DashboardtypesQuerySpecDTO {
 	 */
 	name?: string;
 	/**
-	 * @description The query: kind is one of signoz/BuilderQuery, signoz/AIBuilderQuery, signoz/CompositeQuery, signoz/Formula, signoz/PromQLQuery, signoz/ClickHouseSQL or signoz/TraceOperator, and spec holds that kind's query. Pie, table and heatmap panels accept a subset; list panels accept only the builder kinds.
+	 * @description The query: kind is one of signoz/BuilderQuery, signoz/AIBuilderQuery (builder query over AI observability traces), signoz/CompositeQuery (several named queries and formulas), signoz/Formula, signoz/PromQLQuery, signoz/ClickHouseSQL or signoz/TraceOperator, and spec holds that kind's query. Pie and table panels reject signoz/PromQLQuery; heatmap panels reject signoz/AIBuilderQuery and signoz/TraceOperator; list panels accept only signoz/BuilderQuery and signoz/AIBuilderQuery.
 	 */
 	plugin: DashboardtypesQueryPluginDTO;
 }
@@ -7173,7 +7174,7 @@ export interface DashboardtypesPanelSpecDTO {
 	plugin: DashboardtypesPanelPluginDTO;
 	/**
 	 * @type array
-	 * @description The panel queries. Exactly one for every kind except signoz/TextPanel, which must have [].
+	 * @description The queries the panel runs. Use exactly one entry for a data panel and [] for signoz/TextPanel. To run several named queries or formulas, use one entry whose spec.plugin.kind is signoz/CompositeQuery and put the constituent queries in its plugin spec.
 	 */
 	queries: DashboardtypesQueryDTO[];
 }
@@ -7190,7 +7191,7 @@ export interface DashboardtypesPanelDTO {
 }
 
 /**
- * The panels keyed by panel id. An id has up to 75 characters from letters, digits, dot, underscore and hyphen, and is referenced by layouts as #/spec/panels/<id>. Use {} for none.
+ * The panels keyed by panel id. An id has up to 75 characters from letters, digits, dot, underscore and hyphen. A panel is shown only where a layout item references it as #/spec/panels/<id>; a panel in no layout is kept but invisible. Use {} for none.
  */
 export type DashboardtypesDashboardSpecDTOPanels = {
 	[key: string]: DashboardtypesPanelDTO;
@@ -7210,7 +7211,7 @@ export interface DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridL
 	 */
 	kind: DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpecDTOKind;
 	/**
-	 * @description The grid section: an optional display title and the items that place panels. Each item has x, y, width and height on a 12-column grid and a content.$ref of #/spec/panels/<id>.
+	 * @description The grid section: an optional display title and up to 100 items that place panels. Each item has a content.$ref of #/spec/panels/<id> plus x, y, width and height on a 12-column grid: x and y at least 0, width and height at least 1, x plus width at most 12, and no two items overlapping.
 	 */
 	spec: DashboardGridLayoutSpecDTO;
 }
@@ -7449,7 +7450,7 @@ export interface DashboardtypesDashboardSpecDTO {
 	links?: DashboardtypesLinkDTO[] | null;
 	/**
 	 * @type object
-	 * @description The panels keyed by panel id. An id has up to 75 characters from letters, digits, dot, underscore and hyphen, and is referenced by layouts as #/spec/panels/<id>. Use {} for none.
+	 * @description The panels keyed by panel id. An id has up to 75 characters from letters, digits, dot, underscore and hyphen. A panel is shown only where a layout item references it as #/spec/panels/<id>; a panel in no layout is kept but invisible. Use {} for none.
 	 */
 	panels: DashboardtypesDashboardSpecDTOPanels;
 	/**
@@ -7480,7 +7481,7 @@ export interface DashboardtypesDashboardViewDataDTO {
 	order?: DashboardtypesListOrderDTO;
 	/**
 	 * @type string
-	 * @description A filter expression over the reserved keys name, description, created_at, updated_at, created_by and locked, and over tag keys. At most 1024 characters. Empty matches every dashboard.
+	 * @description A filter expression over the reserved keys name, description, created_at, updated_at, created_by and locked, and over tag keys, using the SigNoz filter grammar: comparisons such as =, !=, CONTAINS, LIKE, IN, < and >, single-quoted strings, Unix milliseconds for timestamps, combined with AND, OR and NOT, for example name CONTAINS 'overview' AND locked = false. At most 1024 characters. Empty matches every dashboard.
 	 */
 	query?: string;
 	/**
@@ -7577,6 +7578,7 @@ export interface DashboardtypesGettableDashboardV2DTO {
 	orgId: string;
 	/**
 	 * @type string
+	 * @pattern ^v6$
 	 * @description The dashboard schema version. Must be v6.
 	 */
 	schemaVersion: string;
@@ -7665,6 +7667,7 @@ export interface DashboardtypesGettableSystemDashboardDTO {
 	orgId: string;
 	/**
 	 * @type string
+	 * @pattern ^v6$
 	 * @description The dashboard schema version. Must be v6.
 	 */
 	schemaVersion: string;
@@ -7974,6 +7977,7 @@ export interface DashboardtypesPostableDashboardV2DTO {
 	name?: string;
 	/**
 	 * @type string
+	 * @pattern ^v6$
 	 * @description The dashboard schema version. Must be v6.
 	 */
 	schemaVersion: string;
@@ -8035,6 +8039,7 @@ export interface DashboardtypesUpdatableDashboardV2DTO {
 	name: string;
 	/**
 	 * @type string
+	 * @pattern ^v6$
 	 * @description The dashboard schema version. Must be v6.
 	 */
 	schemaVersion: string;
@@ -15507,7 +15512,7 @@ export type UpdateDashboardView200 = {
 export type ListDashboardsV2Params = {
 	/**
 	 * @type string
-	 * @description A filter expression over the reserved keys name, description, created_at, updated_at, created_by and locked, and over tag keys. At most 1024 characters. Empty matches every dashboard.
+	 * @description A filter expression over the reserved keys name, description, created_at, updated_at, created_by and locked, and over tag keys, using the SigNoz filter grammar: comparisons such as =, !=, CONTAINS, LIKE, IN, < and >, single-quoted strings, Unix milliseconds for timestamps, combined with AND, OR and NOT, for example name CONTAINS 'overview' AND locked = false. At most 1024 characters. Empty matches every dashboard.
 	 */
 	query?: string;
 	/**
@@ -16855,7 +16860,7 @@ export type GetMyUser200 = {
 export type ListDashboardsForUserV2Params = {
 	/**
 	 * @type string
-	 * @description A filter expression over the reserved keys name, description, created_at, updated_at, created_by and locked, and over tag keys. At most 1024 characters. Empty matches every dashboard.
+	 * @description A filter expression over the reserved keys name, description, created_at, updated_at, created_by and locked, and over tag keys, using the SigNoz filter grammar: comparisons such as =, !=, CONTAINS, LIKE, IN, < and >, single-quoted strings, Unix milliseconds for timestamps, combined with AND, OR and NOT, for example name CONTAINS 'overview' AND locked = false. At most 1024 characters. Empty matches every dashboard.
 	 */
 	query?: string;
 	/**

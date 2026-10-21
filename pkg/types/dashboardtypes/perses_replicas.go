@@ -25,7 +25,7 @@ const MaxDisplayNameLen = 128
 const MaxLayoutTitleLen = 256
 
 type Display struct {
-	Name string `json:"name" required:"true" description:"The human-readable title, at most 128 characters."`
+	Name string `json:"name" required:"true" maxLength:"128" description:"The human-readable title, at most 128 characters."`
 	// Description always serializes ("" included) so a create -> GET round-trip
 	// preserves what a typed client sent; omitempty would drop an explicit "".
 	Description string `json:"description" description:"A free-text description."`
@@ -71,7 +71,7 @@ func (k *PanelKind) UnmarshalJSON(data []byte) error {
 type PanelSpec struct {
 	Display Display     `json:"display" required:"true" description:"The panel title and description."`
 	Plugin  PanelPlugin `json:"plugin" required:"true" description:"The visualization: kind is one of signoz/TimeSeriesPanel, signoz/BarChartPanel, signoz/AreaChartPanel, signoz/NumberPanel, signoz/PieChartPanel, signoz/TablePanel, signoz/HistogramPanel, signoz/ListPanel, signoz/TextPanel or signoz/HeatmapPanel, and spec holds that kind's options ({} accepts every default)."`
-	Queries []Query     `json:"queries" required:"true" nullable:"false" description:"The panel queries. Exactly one for every kind except signoz/TextPanel, which must have []."`
+	Queries []Query     `json:"queries" required:"true" nullable:"false" description:"The queries the panel runs. Use exactly one entry for a data panel and [] for signoz/TextPanel. To run several named queries or formulas, use one entry whose spec.plugin.kind is signoz/CompositeQuery and put the constituent queries in its plugin spec."`
 	Links   []Link      `json:"links,omitzero" description:"External links shown in the panel header."`
 }
 
@@ -98,7 +98,7 @@ type Query struct {
 
 type QuerySpec struct {
 	Name   string      `json:"name,omitempty" description:"An optional label for the query. The name queries refer to each other by lives in the plugin spec."`
-	Plugin QueryPlugin `json:"plugin" required:"true" description:"The query: kind is one of signoz/BuilderQuery, signoz/AIBuilderQuery, signoz/CompositeQuery, signoz/Formula, signoz/PromQLQuery, signoz/ClickHouseSQL or signoz/TraceOperator, and spec holds that kind's query. Pie, table and heatmap panels accept a subset; list panels accept only the builder kinds."`
+	Plugin QueryPlugin `json:"plugin" required:"true" description:"The query: kind is one of signoz/BuilderQuery, signoz/AIBuilderQuery (builder query over AI observability traces), signoz/CompositeQuery (several named queries and formulas), signoz/Formula, signoz/PromQLQuery, signoz/ClickHouseSQL or signoz/TraceOperator, and spec holds that kind's query. Pie and table panels reject signoz/PromQLQuery; heatmap panels reject signoz/AIBuilderQuery and signoz/TraceOperator; list panels accept only signoz/BuilderQuery and signoz/AIBuilderQuery."`
 }
 
 // ══════════════════════════════════════════════
@@ -329,7 +329,7 @@ func (s *TextVariableSpec) validate(path string) error {
 // leaf imports.
 type Layout struct {
 	Kind dashboard.LayoutKind `json:"kind" required:"true" description:"The layout kind. Always Grid."`
-	Spec any                  `json:"spec" required:"true" description:"The grid section: an optional display title and the items that place panels. Each item has x, y, width and height on a 12-column grid and a content.$ref of #/spec/panels/<id>."`
+	Spec any                  `json:"spec" required:"true" description:"The grid section: an optional display title and up to 100 items that place panels. Each item has a content.$ref of #/spec/panels/<id> plus x, y, width and height on a 12-column grid: x and y at least 0, width and height at least 1, x plus width at most 12, and no two items overlapping."`
 }
 
 // layoutSpecs is the layout sum type factory. Perses only defines
@@ -420,7 +420,7 @@ func (Layout) JSONSchemaOneOf() []any {
 
 type LayoutEnvelope[S any] struct {
 	Kind string `json:"kind" required:"true" description:"The layout kind."`
-	Spec S      `json:"spec" required:"true" description:"The grid section: an optional display title and the items that place panels. Each item has x, y, width and height on a 12-column grid and a content.$ref of #/spec/panels/<id>."`
+	Spec S      `json:"spec" required:"true" description:"The grid section: an optional display title and up to 100 items that place panels. Each item has a content.$ref of #/spec/panels/<id> plus x, y, width and height on a 12-column grid: x and y at least 0, width and height at least 1, x plus width at most 12, and no two items overlapping."`
 }
 
 func (v LayoutEnvelope[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
