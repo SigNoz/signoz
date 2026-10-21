@@ -34,5 +34,6 @@ e2e/test-plan/user-preferences/
 /storybook-static/
 debug-storybook.log
 
-# Storybook screenshots (sbshot)
+# Storybook screenshots (sbshot) and the static site `sbshot export` writes
 /.sbshot/
+/sbshot-site/
