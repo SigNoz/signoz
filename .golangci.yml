@@ -41,7 +41,6 @@ linters:
       no-global: all
       context: all
       static-msg: true
-      key-naming-case: snake
   exclusions:
     generated: lax
     presets:
