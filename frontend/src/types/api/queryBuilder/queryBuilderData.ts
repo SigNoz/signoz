@@ -144,17 +144,3 @@ export type MapQueryDataToApiResult<T> = {
 	data: T;
 	newLegendMap: Record<string, string>;
 };
-
-/** Query Builder and AI share `Query.builder`; the variant says which one it holds. */
-export const BuilderVariant = {
-	MAIN: 'main',
-	AI: 'ai',
-} as const;
-
-export type BuilderVariant =
-	(typeof BuilderVariant)[keyof typeof BuilderVariant];
-
-/** Builder queries per variant; `Query` has one `builder` slot, so the off-screen variant lives here. */
-export type BuildersByVariant = Partial<
-	Record<BuilderVariant, Query['builder']>
->;

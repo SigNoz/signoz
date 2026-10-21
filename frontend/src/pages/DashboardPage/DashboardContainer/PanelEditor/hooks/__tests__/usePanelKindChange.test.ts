@@ -9,7 +9,7 @@ import { resolveQueryType } from 'pages/DashboardPage/DashboardContainer/Panels/
 import { getBuilderQueries } from '../../../Panels/utils/getBuilderQueries';
 import { toPerses } from '../../../queryV5/persesQueryAdapters';
 import { getSwitchedPluginSpec } from '../../getSwitchedPluginSpec';
-import { usePanelKindAndQueryModeSwitch } from '../usePanelKindAndQueryModeSwitch';
+import { usePanelKindChange } from '../usePanelKindChange';
 
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: jest.fn(),
@@ -20,8 +20,6 @@ jest.mock('lib/query/panelQuery', () => ({
 jest.mock('../../../Panels/capabilities', () => ({
 	resolveQueryType: jest.fn(),
 	getSupportedSignals: jest.fn(() => ['metrics']),
-	getQueryPanelDefinition: jest.requireActual('../../../Panels/capabilities')
-		.getQueryPanelDefinition,
 	// Real predicate: these specs use real (query) kinds and the static path is
 	// exercised through its own cases below.
 	isStaticPanelKind: jest.requireActual('../../../Panels/capabilities')
@@ -102,7 +100,7 @@ function builderState(currentQuery: Query): {
 	};
 }
 
-describe('usePanelKindAndQueryModeSwitch', () => {
+describe('usePanelKindChange', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		mockHandleQueryChange.mockReturnValue(TRANSFORMED);
@@ -120,7 +118,7 @@ describe('usePanelKindAndQueryModeSwitch', () => {
 		mockUseQueryBuilder.mockReturnValue(state);
 
 		const { result } = renderHook(() =>
-			usePanelKindAndQueryModeSwitch({
+			usePanelKindChange({
 				spec: tableSpec,
 				panelType: PANEL_TYPES.TABLE,
 				setSpec,
@@ -139,7 +137,7 @@ describe('usePanelKindAndQueryModeSwitch', () => {
 		mockUseQueryBuilder.mockReturnValue(state);
 
 		const { result } = renderHook(() =>
-			usePanelKindAndQueryModeSwitch({
+			usePanelKindChange({
 				spec: tableSpec,
 				panelType: PANEL_TYPES.TABLE,
 				setSpec,
@@ -171,7 +169,7 @@ describe('usePanelKindAndQueryModeSwitch', () => {
 		} as unknown as Query);
 
 		const { result } = renderHook(() =>
-			usePanelKindAndQueryModeSwitch({
+			usePanelKindChange({
 				spec: makeSpec('signoz/TimeSeriesPanel', {}, TABLE_QUERIES),
 				panelType: PANEL_TYPES.TIME_SERIES,
 				setSpec,
@@ -202,7 +200,7 @@ describe('usePanelKindAndQueryModeSwitch', () => {
 		} as unknown as Query);
 
 		const { result } = renderHook(() =>
-			usePanelKindAndQueryModeSwitch({
+			usePanelKindChange({
 				spec: makeSpec('signoz/TimeSeriesPanel', {}, TABLE_QUERIES),
 				panelType: PANEL_TYPES.TIME_SERIES,
 				setSpec,
@@ -238,7 +236,7 @@ describe('usePanelKindAndQueryModeSwitch', () => {
 		} as unknown as Query);
 
 		const { result } = renderHook(() =>
-			usePanelKindAndQueryModeSwitch({
+			usePanelKindChange({
 				spec: makeSpec('signoz/TimeSeriesPanel', {}, TABLE_QUERIES),
 				panelType: PANEL_TYPES.TIME_SERIES,
 				setSpec,
@@ -279,7 +277,7 @@ describe('usePanelKindAndQueryModeSwitch', () => {
 		} as unknown as Query);
 
 		const { result } = renderHook(() =>
-			usePanelKindAndQueryModeSwitch({
+			usePanelKindChange({
 				spec: makeSpec('signoz/HeatmapPanel', {}, TABLE_QUERIES),
 				panelType: PANEL_TYPES.HEATMAP,
 				setSpec,
@@ -320,7 +318,7 @@ describe('usePanelKindAndQueryModeSwitch', () => {
 		} as unknown as Query);
 
 		const { result } = renderHook(() =>
-			usePanelKindAndQueryModeSwitch({
+			usePanelKindChange({
 				spec: makeSpec('signoz/HeatmapPanel', {}, TABLE_QUERIES),
 				panelType: PANEL_TYPES.HEATMAP,
 				setSpec,
@@ -338,7 +336,7 @@ describe('usePanelKindAndQueryModeSwitch', () => {
 		mockUseQueryBuilder.mockReturnValue(builderState(promQuery));
 
 		const { result } = renderHook(() =>
-			usePanelKindAndQueryModeSwitch({
+			usePanelKindChange({
 				spec: makeSpec('signoz/TimeSeriesPanel', {}, TABLE_QUERIES),
 				panelType: PANEL_TYPES.TIME_SERIES,
 				setSpec,
@@ -386,7 +384,7 @@ describe('usePanelKindAndQueryModeSwitch', () => {
 			mockResolveQueryType.mockReturnValue('builder_ai_query');
 
 			const { result } = renderHook(() =>
-				usePanelKindAndQueryModeSwitch({
+				usePanelKindChange({
 					spec: tableSpec,
 					panelType: PANEL_TYPES.TABLE,
 					setSpec,
@@ -411,7 +409,7 @@ describe('usePanelKindAndQueryModeSwitch', () => {
 			mockResolveQueryType.mockReturnValue('builder');
 
 			const { result } = renderHook(() =>
-				usePanelKindAndQueryModeSwitch({
+				usePanelKindChange({
 					spec: tableSpec,
 					panelType: PANEL_TYPES.TABLE,
 					setSpec,
@@ -433,7 +431,7 @@ describe('usePanelKindAndQueryModeSwitch', () => {
 
 			const { result, rerender } = renderHook(
 				(props: { spec: DashboardtypesPanelSpecDTO; panelType: PANEL_TYPES }) =>
-					usePanelKindAndQueryModeSwitch({ ...props, setSpec }),
+					usePanelKindChange({ ...props, setSpec }),
 				{ initialProps: { spec: tableSpec, panelType: PANEL_TYPES.TABLE } },
 			);
 			// Leave Table on AI; on List the user moves to Query Builder, then returns.
@@ -461,7 +459,7 @@ describe('usePanelKindAndQueryModeSwitch', () => {
 
 			const { result, rerender } = renderHook(
 				(props: { spec: DashboardtypesPanelSpecDTO; panelType: PANEL_TYPES }) =>
-					usePanelKindAndQueryModeSwitch({ ...props, setSpec }),
+					usePanelKindChange({ ...props, setSpec }),
 				{ initialProps: { spec: tableSpec, panelType: PANEL_TYPES.TABLE } },
 			);
 			// Leave Table on Query Builder; on List the user writes an AI query, then returns.
@@ -490,7 +488,7 @@ describe('usePanelKindAndQueryModeSwitch', () => {
 
 		const { result, rerender } = renderHook(
 			(props: { spec: DashboardtypesPanelSpecDTO; panelType: PANEL_TYPES }) =>
-				usePanelKindAndQueryModeSwitch({ ...props, setSpec }),
+				usePanelKindChange({ ...props, setSpec }),
 			{ initialProps: { spec: tableSpec, panelType: PANEL_TYPES.TABLE } },
 		);
 

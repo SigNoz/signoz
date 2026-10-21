@@ -20,7 +20,6 @@ import { usePanelEditorQuerySync } from '../hooks/usePanelEditorQuerySync';
 import { requireQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 
 import PanelEditorQueryBuilder from '../PanelEditorQueryBuilder/PanelEditorQueryBuilder';
-import { useQueryModeChange } from '../hooks/useQueryModeChange';
 
 // jest.config maps the real hook to a no-op mock; this suite needs real navigation.
 jest.mock('hooks/useSafeNavigate', () => {
@@ -83,15 +82,10 @@ function EditorRoute(): JSX.Element {
 		savedQueries: panel.spec.queries,
 	});
 	const panelDefinition = requireQueryPanelDefinition('signoz/TimeSeriesPanel');
-	const onChangeQueryMode = useQueryModeChange({
-		panelType: PANEL_TYPES.TIME_SERIES,
-		supportedQueryTypesKindMap: panelDefinition.supportedQueryTypesKindMap,
-	});
 
 	return (
 		<PanelEditorQueryBuilder
 			panelDefinition={panelDefinition}
-			onChangeQueryMode={onChangeQueryMode}
 			isLoadingQueries={false}
 			onStageRunQuery={noop}
 			onCancelQuery={noop}

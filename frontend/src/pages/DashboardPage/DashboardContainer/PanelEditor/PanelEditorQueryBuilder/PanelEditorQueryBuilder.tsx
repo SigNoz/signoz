@@ -31,14 +31,13 @@ import type { RenderableQueryPanelDefinition } from '../../Panels/types/panelDef
 import { toPanelType } from '../../Panels/types/panelKind';
 import { isBuilderQueryType } from 'lib/query/builderSlot';
 
+import { useQueryTypeChange } from './useQueryTypeChange';
 import styles from './PanelEditorQueryBuilder.module.scss';
 
 interface PanelEditorQueryBuilderProps {
 	/** The edited kind's definition — drives supported query types, the signals the
 	 *  builder may be pointed at, and how it narrows the builder's fields. */
 	panelDefinition: RenderableQueryPanelDefinition;
-	/** Switch authoring tab; owned by the host. */
-	onChangeQueryMode: (key: string) => void;
 	/** Preview fetch in flight — drives the Stage & Run button's loading/cancel state. */
 	isLoadingQueries: boolean;
 	/** Run the current query (Stage & Run button / ⌘↵). Always re-runs. */
@@ -58,7 +57,6 @@ interface PanelEditorQueryBuilderProps {
  */
 function PanelEditorQueryBuilder({
 	panelDefinition,
-	onChangeQueryMode,
 	isLoadingQueries,
 	onStageRunQuery,
 	onCancelQuery,
@@ -68,6 +66,10 @@ function PanelEditorQueryBuilder({
 	// The shared QueryBuilderV2 provider still speaks the legacy PANEL_TYPES; what the
 	// builder offers for this kind comes from the kind's own declaration.
 	const panelType = toPanelType(panelDefinition.kind);
+	const onChangeQueryType = useQueryTypeChange({
+		panelType,
+		supportedQueryTypesKindMap: panelDefinition.supportedQueryTypesKindMap,
+	});
 	// Raw rows: the builder drops its aggregation controls, and with them the trace
 	// operator that combines aggregated trace queries (V1 parity).
 	const isRawQuery = isRawRequest(panelDefinition.queryCapabilities);
@@ -191,7 +193,7 @@ function PanelEditorQueryBuilder({
 						[styles.stickyNav]: stickyHeader,
 					})}
 					activeKey={currentQuery.queryType}
-					onChange={onChangeQueryMode}
+					onChange={onChangeQueryType}
 					tabBarExtraContent={
 						<span className={styles.runQueryBtnContainer}>
 							<TextToolTip text="This will temporarily save the current query and graph state. This will persist across tab change" />
