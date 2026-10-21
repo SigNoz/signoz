@@ -11,7 +11,7 @@ import (
 // keyed by the integration API key, which the notifier pins itself.
 type ChannelJSMOpsConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty" description:"Also notify when the alert resolves. Defaults to false."`
-	APIKey       string                       `json:"apiKey" required:"true" format:"password" description:"The JSM Ops integration API key. A secret; returned only by a fetch by ID."`
+	APIKey       string                       `json:"apiKey" required:"true" format:"password" description:"The JSM Ops integration API key. A secret; returned by create, update and fetch by ID, never by list."`
 	Message      valuer.UnsetOrNonEmptyString `json:"message,omitzero" description:"Alertmanager template for the alert message; defaults to the SigNoz JSM Ops default."`
 	Description  valuer.UnsetOrNonEmptyString `json:"description,omitzero" description:"Alertmanager template for the alert description; defaults to the SigNoz JSM Ops default."`
 	Priority     string                       `json:"priority" description:"The alert priority, P1 to P5."`

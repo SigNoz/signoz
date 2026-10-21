@@ -8,7 +8,7 @@ import (
 
 type ChannelMSTeamsConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty" description:"Also notify when the alert resolves. Defaults to true."`
-	WebhookURL   string                       `json:"webhookUrl" required:"true" format:"password" description:"The Teams incoming webhook URL. A secret; returned only by a fetch by ID."`
+	WebhookURL   string                       `json:"webhookUrl" required:"true" format:"password" description:"The Teams incoming webhook URL. A secret; returned by create, update and fetch by ID, never by list."`
 	Title        valuer.UnsetOrNonEmptyString `json:"title,omitzero" description:"Alertmanager template for the card title; defaults to the Alertmanager Teams default."`
 	Text         valuer.UnsetOrNonEmptyString `json:"text,omitzero" description:"Alertmanager template for the card body; defaults to the Alertmanager Teams default."`
 }

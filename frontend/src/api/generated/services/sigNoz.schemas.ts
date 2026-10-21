@@ -392,7 +392,7 @@ export interface AlertmanagertypesChannelSlackConfigDTO {
 	/**
 	 * @type string
 	 * @format password
-	 * @description The Slack incoming webhook URL. A secret; returned only by a fetch by ID.
+	 * @description The Slack incoming webhook URL. A secret; returned by create, update and fetch by ID, never by list.
 	 */
 	apiUrl: string;
 	/**
@@ -542,7 +542,7 @@ export interface AlertmanagertypesChannelWebhookConfigDTO {
 	/**
 	 * @type string
 	 * @format password
-	 * @description The endpoint that receives the Alertmanager webhook payload. A secret; returned only by a fetch by ID.
+	 * @description The endpoint that receives the Alertmanager webhook payload. A secret; returned by create, update and fetch by ID, never by list.
 	 */
 	url: string;
 	/**
@@ -623,7 +623,7 @@ export interface AlertmanagertypesChannelPagerdutyConfigDTO {
 	/**
 	 * @type string
 	 * @format password
-	 * @description The Events API v2 integration key. A secret; returned only by a fetch by ID.
+	 * @description The Events API v2 integration key. A secret; returned by create, update and fetch by ID, never by list.
 	 */
 	routingKey: string;
 	/**
@@ -684,7 +684,7 @@ export interface AlertmanagertypesChannelOpsgenieConfigDTO {
 	/**
 	 * @type string
 	 * @format password
-	 * @description The Opsgenie API integration key. A secret; returned only by a fetch by ID.
+	 * @description The Opsgenie API integration key. A secret; returned by create, update and fetch by ID, never by list.
 	 */
 	apiKey: string;
 	/**
@@ -762,7 +762,7 @@ export interface AlertmanagertypesChannelMSTeamsConfigDTO {
 	/**
 	 * @type string
 	 * @format password
-	 * @description The Teams incoming webhook URL. A secret; returned only by a fetch by ID.
+	 * @description The Teams incoming webhook URL. A secret; returned by create, update and fetch by ID, never by list.
 	 */
 	webhookUrl: string;
 }
@@ -805,7 +805,7 @@ export interface AlertmanagertypesChannelGoogleChatConfigDTO {
 	/**
 	 * @type string
 	 * @format password
-	 * @description The Google Chat space webhook URL. A secret; returned only by a fetch by ID.
+	 * @description The Google Chat space webhook URL. A secret; returned by create, update and fetch by ID, never by list.
 	 */
 	webhookUrl: string;
 }
@@ -830,14 +830,14 @@ export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAl
 	jira = 'jira',
 }
 /**
- * Extra issue fields keyed by Jira field ID.
+ * Extra issue fields keyed by Jira field ID. Stored, but the notifier does not currently include them in the issue it creates or updates.
  */
 export type AlertmanagertypesChannelJiraConfigDTOCustomFieldsAnyOf = {
 	[key: string]: unknown;
 };
 
 /**
- * Extra issue fields keyed by Jira field ID.
+ * Extra issue fields keyed by Jira field ID. Stored, but the notifier does not currently include them in the issue it creates or updates.
  * @nullable
  */
 export type AlertmanagertypesChannelJiraConfigDTOCustomFields = AlertmanagertypesChannelJiraConfigDTOCustomFieldsAnyOf | null;
@@ -846,12 +846,12 @@ export interface AlertmanagertypesChannelJiraConfigDTO {
 	/**
 	 * @type string
 	 * @format password
-	 * @description The Atlassian API token paired with email. A secret; returned only by a fetch by ID.
+	 * @description The Atlassian API token paired with email. A secret; returned by create, update and fetch by ID, never by list.
 	 */
 	apiToken: string;
 	/**
 	 * @type object,null
-	 * @description Extra issue fields keyed by Jira field ID.
+	 * @description Extra issue fields keyed by Jira field ID. Stored, but the notifier does not currently include them in the issue it creates or updates.
 	 */
 	customFields?: AlertmanagertypesChannelJiraConfigDTOCustomFields;
 	/**
@@ -944,7 +944,7 @@ export interface AlertmanagertypesChannelJSMOpsConfigDTO {
 	/**
 	 * @type string
 	 * @format password
-	 * @description The JSM Ops integration API key. A secret; returned only by a fetch by ID.
+	 * @description The JSM Ops integration API key. A secret; returned by create, update and fetch by ID, never by list.
 	 */
 	apiKey: string;
 	/**
@@ -1030,7 +1030,7 @@ export interface AlertmanagertypesChannelIncidentIOConfigDTO {
 	/**
 	 * @type string
 	 * @format password
-	 * @description The alert source secret token, without the Bearer prefix. A secret; returned only by a fetch by ID.
+	 * @description The alert source secret token, without the Bearer prefix. A secret; returned by create, update and fetch by ID, never by list.
 	 */
 	token: string;
 	/**
@@ -1702,7 +1702,7 @@ export interface AlertmanagertypesJSMOpsReceiverConfigDTO {
 }
 
 /**
- * Extra issue fields keyed by Jira field ID.
+ * Extra issue fields keyed by Jira field ID. Stored, but the notifier does not currently include them in the issue it creates or updates.
  */
 export type AlertmanagertypesJiraReceiverConfigDTOCustomFields = {
 	[key: string]: unknown;
@@ -1713,7 +1713,7 @@ export type ModelDurationDTO = number;
 export interface AlertmanagertypesJiraReceiverConfigDTO {
 	/**
 	 * @type object
-	 * @description Extra issue fields keyed by Jira field ID.
+	 * @description Extra issue fields keyed by Jira field ID. Stored, but the notifier does not currently include them in the issue it creates or updates.
 	 */
 	custom_fields?: AlertmanagertypesJiraReceiverConfigDTOCustomFields;
 	/**

@@ -179,7 +179,7 @@ type GettableNotificationChannel struct {
 // ════════════════════════════════════════════════════════════════════════
 
 // ListedNotificationChannel carries no configuration. The spec, credentials
-// included, is only returned by a fetch by ID.
+// included, is returned by create, update and fetch by ID, never by list.
 type ListedNotificationChannel struct {
 	ID          valuer.UUID `json:"id" required:"true" description:"The channel UUID."`
 	Name        string      `json:"name" required:"true" description:"The immutable DNS-1123 identifier of the channel. Alert rules and routing policies reference displayName, not name."`
