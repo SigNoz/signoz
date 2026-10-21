@@ -157,6 +157,12 @@ describe('useDrilldown', () => {
 			expect(result.current.enableDrillDown).toBe(true);
 		});
 
+		it('is true for an AI query', () => {
+			mockGetPanelQueryType.mockReturnValue(EQueryType.AI_QUERY_BUILDER);
+			const { result } = renderHook(() => useDrilldown(tsPanel, 'p1'));
+			expect(result.current.enableDrillDown).toBe(true);
+		});
+
 		it('is false when there is no builder query', () => {
 			mockGetBuilderQueries.mockReturnValue([]);
 			const { result } = renderHook(() => useDrilldown(tsPanel, 'p1'));

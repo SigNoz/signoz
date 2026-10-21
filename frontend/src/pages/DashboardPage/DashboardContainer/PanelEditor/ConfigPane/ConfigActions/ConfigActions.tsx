@@ -2,7 +2,6 @@ import { EQueryType } from 'types/common/dashboard';
 import { Flame } from '@signozhq/icons';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { getQueryMode } from 'lib/query/queryMode';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 import { useCreateAlertFromPanel } from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/hooks/useCreateAlertFromPanel';
 
@@ -33,7 +32,7 @@ function ConfigActions({
 	//TODO: AI query check should be removed after we support alerts on ai query @tewarig
 	if (
 		!actions.createAlert ||
-		getQueryMode(currentQuery) === EQueryType.AI_QUERY_BUILDER
+		currentQuery.queryType === EQueryType.AI_QUERY_BUILDER
 	) {
 		return null;
 	}

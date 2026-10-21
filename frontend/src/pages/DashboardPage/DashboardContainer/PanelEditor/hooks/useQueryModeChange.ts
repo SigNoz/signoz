@@ -1,34 +1,28 @@
-import { type MutableRefObject, useCallback } from 'react';
+import { useCallback } from 'react';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 
 import {
 	getQueryTypeSignals,
 	type SupportedQueryTypesKindMap,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelCapabilities';
-import {
-	type BuildersByVariant,
-	type Query,
-} from 'types/api/queryBuilder/queryBuilderData';
-import { EQueryType } from 'types/common/dashboard';
-import { getBuilderVariant, toBuilderVariant } from 'lib/query/queryMode';
 import { seedBuilderForMode } from 'pages/DashboardPage/DashboardContainer/Panels/utils/seedBuilderForMode';
 
 interface UseQueryModeChangeArgs {
 	panelType: PANEL_TYPES;
 	supportedQueryTypesKindMap: SupportedQueryTypesKindMap;
-	/** Builder queries for the variant not on screen. */
-	parkedBuilders: MutableRefObject<BuildersByVariant>;
 }
 
 /**
- * Tab switching. Query Builder and AI share `currentQuery.builder`, so crossing between
- * them swaps in the parked query, seeding a first visit; ClickHouse and PromQL pass through.
+ * Tab switching: each query type keeps its own slot, so a switch only changes `queryType`.
+ * A builder slot is seeded when it can't be used as-is: an AI slot never opened, or
+ * Query Builder queries on a signal this kind can't author (an AI panel's default).
  */
 export function useQueryModeChange({
 	panelType,
 	supportedQueryTypesKindMap,
-	parkedBuilders,
 }: UseQueryModeChangeArgs): (key: string) => void {
 	const {
 		currentQuery,
@@ -38,43 +32,38 @@ export function useQueryModeChange({
 
 	return useCallback(
 		(key: string): void => {
-			const targetMode = key as EQueryType;
-			const targetVariant = toBuilderVariant(targetMode);
-			const heldVariant = getBuilderVariant(currentQuery.builder);
-
-			const seedFor = (mode: EQueryType): Query['builder'] =>
+			const queryType = key as EQueryType;
+			const builderSignals = getQueryTypeSignals(
+				supportedQueryTypesKindMap,
+				EQueryType.QUERY_BUILDER,
+			);
+			const seed = (): Query['builder'] =>
 				seedBuilderForMode({
-					mode,
-					defaultSignal: getQueryTypeSignals(
-						supportedQueryTypesKindMap,
-						EQueryType.QUERY_BUILDER,
-					)[0],
+					mode: queryType,
+					defaultSignal: builderSignals[0],
 					panelType,
 					updateAllQueriesOperators,
 				});
 
-			// Keyed on what `builder` holds, not the active tab: ClickHouse → QB must not reseed.
-			let { builder } = currentQuery;
-			if (targetVariant && targetVariant !== heldVariant) {
-				parkedBuilders.current[heldVariant] = currentQuery.builder;
-				builder = parkedBuilders.current[targetVariant] ?? seedFor(targetMode);
-				delete parkedBuilders.current[targetVariant];
+			const next: Query = { ...currentQuery, queryType };
+			if (queryType === EQueryType.AI_QUERY_BUILDER && !next.builder_ai_query) {
+				next.builder_ai_query = seed();
+			}
+			const authorableSignals = new Set<string>(builderSignals);
+			const builderFitsKind =
+				next.builder.queryData.length > 0 &&
+				next.builder.queryData.every((query) =>
+					authorableSignals.has(query.dataSource),
+				);
+			if (queryType === EQueryType.QUERY_BUILDER && !builderFitsKind) {
+				next.builder = seed();
 			}
 
-			redirectWithQueryBuilderData({
-				...currentQuery,
-				// An AI query is a builder query carrying the AI tag; its query type stays `builder`.
-				queryType:
-					targetMode === EQueryType.AI_QUERY_BUILDER
-						? EQueryType.QUERY_BUILDER
-						: targetMode,
-				builder,
-			});
+			redirectWithQueryBuilderData(next);
 		},
 		[
 			currentQuery,
 			panelType,
-			parkedBuilders,
 			redirectWithQueryBuilderData,
 			supportedQueryTypesKindMap,
 			updateAllQueriesOperators,
