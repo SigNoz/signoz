@@ -14,12 +14,12 @@ import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
+import { getActiveBuilder, isBuilderQueryType } from 'lib/query/builderSlot';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import {
 	getCustomTimeRangeWindowSweepInMS,
 	getStartAndEndTimesInMilliseconds,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
-import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { useGraphClickToShowButton } from 'container/WidgetCard/hooks/useGraphClickToShowButton';
@@ -132,13 +132,13 @@ function WidgetGraphComponent({
 
 	const [searchTerm, setSearchTerm] = useState<string>('');
 
+	const widgetQueryData = widget?.query
+		? getActiveBuilder(widget.query)?.queryData
+		: undefined;
+
 	const graphClick = useGraphClickToShowButton({
 		graphRef: currentGraphRef?.current ? currentGraphRef : graphRef,
-		isButtonEnabled: (widget?.query?.builder?.queryData &&
-		Array.isArray(widget.query.builder.queryData)
-			? widget.query.builder.queryData
-			: []
-		).some(
+		isButtonEnabled: (Array.isArray(widgetQueryData) ? widgetQueryData : []).some(
 			(q) =>
 				q.dataSource === DataSource.TRACES || q.dataSource === DataSource.LOGS,
 		),
@@ -219,7 +219,7 @@ function WidgetGraphComponent({
 					customOnDragSelect={customOnDragSelect}
 					setCurrentGraphRef={setCurrentGraphRef}
 					enableDrillDown={
-						enableDrillDown && widget?.query?.queryType === EQueryType.QUERY_BUILDER
+						enableDrillDown && isBuilderQueryType(widget?.query?.queryType)
 					}
 				/>
 			</Modal>

@@ -4,6 +4,8 @@ function QueryTypeTag({ queryType }: IQueryTypeTagProps): JSX.Element {
 	switch (queryType) {
 		case EQueryType.QUERY_BUILDER:
 			return <span>Query Builder</span>;
+		case EQueryType.AI_QUERY_BUILDER:
+			return <span>AI Query Builder</span>;
 
 		case EQueryType.CLICKHOUSE:
 			return <span>ClickHouse Query</span>;

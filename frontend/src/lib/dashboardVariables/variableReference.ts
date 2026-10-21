@@ -1,6 +1,8 @@
 import { escapeRegExp, isArray } from 'lodash-es';
+import { getActiveBuilder, isBuilderQueryType } from 'lib/query/builderSlot';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
+import type { QueryBuilderData } from 'types/common/queryBuilder';
 
 /**
  * Builds a RegExp that matches any recognized variable reference syntax:
@@ -50,9 +52,11 @@ export function containsAnyVariableReference(text: string): boolean {
 	return !!text && ANY_VARIABLE_REFERENCE.test(text);
 }
 
-function extractQueryBuilderTexts(query: Query): string[] {
+function extractQueryBuilderTexts(
+	builder: QueryBuilderData | undefined,
+): string[] {
 	const texts: string[] = [];
-	const queryDataList = query.builder?.queryData;
+	const queryDataList = builder?.queryData;
 	if (isArray(queryDataList)) {
 		queryDataList.forEach((queryData) => {
 			queryData.filters?.items?.forEach((filter: TagFilterItem) => {
@@ -102,13 +106,13 @@ function extractClickhouseSQLTexts(query: Query): string[] {
 /**
  * Extracts all text strings from a widget Query that could contain variable
  * references. Covers:
- * - QUERY_BUILDER: filter items' string values + filter.expression
+ * - QUERY_BUILDER / AI_QUERY_BUILDER: filter items' string values + filter.expression
  * - PROM: each promql[].query
  * - CLICKHOUSE: each clickhouse_sql[].query
  */
 export function extractQueryTextStrings(query: Query): string[] {
-	if (query.queryType === EQueryType.QUERY_BUILDER) {
-		return extractQueryBuilderTexts(query);
+	if (isBuilderQueryType(query.queryType)) {
+		return extractQueryBuilderTexts(getActiveBuilder(query));
 	}
 
 	if (query.queryType === EQueryType.PROM) {

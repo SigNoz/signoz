@@ -1,4 +1,5 @@
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 
 import {
 	createColumnsAndDataSource,
@@ -45,6 +46,18 @@ describe('Table Panel utils', () => {
 
 		// should return undefined when legend not present
 		expect(getQueryLegend(query, 'B')).toBeUndefined();
+	});
+
+	it('getQueryLegend reads the AI builder slot', () => {
+		const builderQuery = widgetQueryWithLegend as Query;
+		const query: Query = {
+			...builderQuery,
+			queryType: EQueryType.AI_QUERY_BUILDER,
+			builder: { queryData: [], queryFormulas: [], queryTraceOperator: [] },
+			builder_ai_query: builderQuery.builder,
+		};
+
+		expect(getQueryLegend(query, 'A')).toBe('p99');
 	});
 
 	it('sorter function for table sorting', () => {

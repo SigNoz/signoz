@@ -9,6 +9,11 @@ import {
 	QUERY_BUILDER_FUNCTIONS,
 } from 'constants/antlrQueryConstants';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
+import {
+	getActiveBuilder,
+	getBuilderSlotKey,
+	isBuilderQueryType,
+} from 'lib/query/builderSlot';
 import FilterQueryLexer from 'parser/FilterQueryLexer';
 import FilterQueryParser, {
 	AndExpressionContext,
@@ -33,7 +38,6 @@ import {
 	MetricAggregation,
 	TraceAggregation,
 } from 'types/api/v5/queryRange';
-import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { extractQueryPairs } from 'utils/queryContextUtils';
 import { isQuoted, unquote } from 'utils/stringUtils';
@@ -1013,8 +1017,9 @@ export function getQueryLabelWithAggregation(
 }
 
 export const adjustQueryForV5 = (currentQuery: Query): Query => {
-	if (currentQuery.queryType === EQueryType.QUERY_BUILDER) {
-		const newQueryData = currentQuery.builder.queryData.map((query) => {
+	if (isBuilderQueryType(currentQuery.queryType)) {
+		const activeBuilder = getActiveBuilder(currentQuery);
+		const newQueryData = activeBuilder.queryData.map((query) => {
 			const aggregations = query.aggregations?.map((aggregation) => {
 				if (query.dataSource === DataSource.METRICS) {
 					const metricAggregation = aggregation as MetricAggregation;
@@ -1055,8 +1060,8 @@ export const adjustQueryForV5 = (currentQuery: Query): Query => {
 
 		return {
 			...currentQuery,
-			builder: {
-				...currentQuery.builder,
+			[getBuilderSlotKey(currentQuery.queryType)]: {
+				...activeBuilder,
 				queryData: newQueryData,
 			},
 		};
