@@ -1,5 +1,6 @@
 import WidgetHeader from 'container/WidgetCard/Header';
 import { fireEvent, render } from 'tests/test-utils';
+import { EQueryType } from 'types/common/dashboard';
 
 import { QueryTable } from '../QueryTable';
 import { QueryTableProps, WidgetHeaderProps } from './mocks';
@@ -32,6 +33,21 @@ describe('QueryTable -', () => {
 		);
 		const tableRows = container.querySelectorAll('tr.ant-table-row');
 		expect(tableRows).toHaveLength(3);
+	});
+
+	it('should enable drilldown cells for AI query builder queries', () => {
+		const { container } = render(
+			<QueryTable
+				{...QueryTableProps}
+				query={{
+					...QueryTableProps.query,
+					queryType: EQueryType.AI_QUERY_BUILDER,
+					builder_ai_query: QueryTableProps.query.builder,
+				}}
+				enableDrillDown
+			/>,
+		);
+		expect(container.querySelector('.clickable-cell')).toBeInTheDocument();
 	});
 });
 

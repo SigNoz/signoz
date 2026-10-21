@@ -71,8 +71,6 @@ interface QueryEditorBodyProps {
 	/** Kind switch, owned by the shell (its cache must survive the fork swap). */
 	onChangePanelKind: (kind: PanelKind) => void;
 	originalPanelKind?: PanelKind;
-	/** Tab switch, owned by the shell alongside the kind switch it shares memory with. */
-	onChangeQueryMode: (key: string) => void;
 }
 
 /**
@@ -94,7 +92,6 @@ function QueryEditorBody({
 	panelDefinition,
 	onChangePanelKind,
 	originalPanelKind,
-	onChangeQueryMode,
 }: QueryEditorBodyProps): JSX.Element {
 	// Read here rather than taken as props: this renders inside a loaded dashboard
 	// subtree, so it resolves the same context every other consumer does.
@@ -310,7 +307,6 @@ function QueryEditorBody({
 						panelDefinition={panelDefinition}
 						signal={listSignal}
 						isLoadingQueries={isFetching}
-						onChangeQueryMode={onChangeQueryMode}
 						onStageRunQuery={runQuery}
 						onCancelQuery={cancelQuery}
 						spec={spec}

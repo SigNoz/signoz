@@ -8,7 +8,6 @@ import PanelEditorQueryBuilder from './PanelEditorQueryBuilder';
 function QueryBuilderEditorPane({
 	panelDefinition,
 	isLoadingQueries,
-	onChangeQueryMode,
 	onStageRunQuery,
 	onCancelQuery,
 	stickyHeader,
@@ -17,7 +16,6 @@ function QueryBuilderEditorPane({
 		<PanelEditorQueryBuilder
 			panelDefinition={panelDefinition}
 			isLoadingQueries={isLoadingQueries}
-			onChangeQueryMode={onChangeQueryMode}
 			onStageRunQuery={onStageRunQuery}
 			onCancelQuery={onCancelQuery}
 			stickyHeader={stickyHeader}

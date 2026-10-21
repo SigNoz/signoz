@@ -60,9 +60,8 @@ jest.mock('../hooks/usePanelEditorQuerySync', () => ({
 }));
 
 const mockUseTypeSwitch = jest.fn();
-jest.mock('../hooks/usePanelKindAndQueryModeSwitch', () => ({
-	usePanelKindAndQueryModeSwitch: (args: unknown): unknown =>
-		mockUseTypeSwitch(args),
+jest.mock('../hooks/usePanelKindChange', () => ({
+	usePanelKindChange: (args: unknown): unknown => mockUseTypeSwitch(args),
 }));
 
 jest.mock('../hooks/usePanelEditorSave', () => ({

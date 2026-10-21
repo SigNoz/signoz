@@ -1,3 +1,4 @@
+import { EQueryType } from 'types/common/dashboard';
 import {
 	type KeyboardEvent,
 	type ReactNode,
@@ -23,22 +24,20 @@ import { useSyncQueryBuilderFields } from 'components/QueryBuilderV2/useSyncQuer
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
-	getQueryModeSignals,
+	getQueryTypeSignals,
 	isRawRequest,
 } from '../../Panels/types/panelCapabilities';
 import type { RenderableQueryPanelDefinition } from '../../Panels/types/panelDefinition';
 import { toPanelType } from '../../Panels/types/panelKind';
-import { getQueryMode, isBuilderMode } from 'lib/query/queryMode';
-import { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
+import { isBuilderQueryType } from 'lib/query/builderSlot';
 
+import { useQueryTypeChange } from './useQueryTypeChange';
 import styles from './PanelEditorQueryBuilder.module.scss';
 
 interface PanelEditorQueryBuilderProps {
 	/** The edited kind's definition — drives supported query types, the signals the
 	 *  builder may be pointed at, and how it narrows the builder's fields. */
 	panelDefinition: RenderableQueryPanelDefinition;
-	/** Switch authoring tab; owned by the host, which remembers the Query Builder query. */
-	onChangeQueryMode: (key: string) => void;
 	/** Preview fetch in flight — drives the Stage & Run button's loading/cancel state. */
 	isLoadingQueries: boolean;
 	/** Run the current query (Stage & Run button / ⌘↵). Always re-runs. */
@@ -58,7 +57,6 @@ interface PanelEditorQueryBuilderProps {
  */
 function PanelEditorQueryBuilder({
 	panelDefinition,
-	onChangeQueryMode,
 	isLoadingQueries,
 	onStageRunQuery,
 	onCancelQuery,
@@ -68,6 +66,10 @@ function PanelEditorQueryBuilder({
 	// The shared QueryBuilderV2 provider still speaks the legacy PANEL_TYPES; what the
 	// builder offers for this kind comes from the kind's own declaration.
 	const panelType = toPanelType(panelDefinition.kind);
+	const onChangeQueryType = useQueryTypeChange({
+		panelType,
+		supportedQueryTypesKindMap: panelDefinition.supportedQueryTypesKindMap,
+	});
 	// Raw rows: the builder drops its aggregation controls, and with them the trace
 	// operator that combines aggregated trace queries (V1 parity).
 	const isRawQuery = isRawRequest(panelDefinition.queryCapabilities);
@@ -99,10 +101,10 @@ function PanelEditorQueryBuilder({
 
 	const items = useMemo(() => {
 		const queryTypeComponents: Record<
-			QueryMode,
+			EQueryType,
 			{ icon: ReactNode; label: string; component: ReactNode }
 		> = {
-			[QueryMode.QUERY_BUILDER]: {
+			[EQueryType.QUERY_BUILDER]: {
 				icon: <Atom size={14} />,
 				label: 'Query Builder',
 				component: (
@@ -110,9 +112,9 @@ function PanelEditorQueryBuilder({
 						<QueryBuilderV2
 							panelType={panelType}
 							fieldsConfig={panelDefinition.queryBuilderFields}
-							allowedDataSources={getQueryModeSignals(
-								panelDefinition.supportedQueryModesKindMap,
-								QueryMode.QUERY_BUILDER,
+							allowedDataSources={getQueryTypeSignals(
+								panelDefinition.supportedQueryTypesKindMap,
+								EQueryType.QUERY_BUILDER,
 							)}
 							showTraceOperator={!isRawQuery}
 							version="v3"
@@ -123,12 +125,12 @@ function PanelEditorQueryBuilder({
 					</div>
 				),
 			},
-			[QueryMode.CLICKHOUSE]: {
+			[EQueryType.CLICKHOUSE]: {
 				icon: <Terminal size={14} />,
 				label: 'ClickHouse Query',
 				component: <ClickHouseQueryContainer />,
 			},
-			[QueryMode.PROM]: {
+			[EQueryType.PROM]: {
 				icon: (
 					<PromQLIcon
 						fillColor={isDarkMode ? Color.BG_VANILLA_200 : Color.BG_INK_300}
@@ -137,7 +139,7 @@ function PanelEditorQueryBuilder({
 				label: 'PromQL',
 				component: <PromQLQueryContainer />,
 			},
-			[QueryMode.AI_QUERY_BUILDER]: {
+			[EQueryType.AI_QUERY_BUILDER]: {
 				icon: <Brain size={14} />,
 				label: 'AI Query Builder',
 				component: (
@@ -160,8 +162,8 @@ function PanelEditorQueryBuilder({
 		};
 
 		const modes = Object.keys(
-			panelDefinition.supportedQueryModesKindMap,
-		) as QueryMode[];
+			panelDefinition.supportedQueryTypesKindMap,
+		) as EQueryType[];
 
 		return modes.map((queryType) => ({
 			key: queryType,
@@ -173,7 +175,7 @@ function PanelEditorQueryBuilder({
 			),
 			children: queryTypeComponents[queryType].component,
 			// QB wants a null data source and AI pins traces: both mounted, they overwrite each other's provider config in a loop.
-			destroyInactiveTabPane: isBuilderMode(queryType),
+			destroyInactiveTabPane: isBuilderQueryType(queryType),
 		}));
 	}, [panelDefinition, panelType, isDarkMode, isRawQuery]);
 
@@ -190,8 +192,8 @@ function PanelEditorQueryBuilder({
 					className={cx(styles.tabsContainer, {
 						[styles.stickyNav]: stickyHeader,
 					})}
-					activeKey={getQueryMode(currentQuery)}
-					onChange={onChangeQueryMode}
+					activeKey={currentQuery.queryType}
+					onChange={onChangeQueryType}
 					tabBarExtraContent={
 						<span className={styles.runQueryBtnContainer}>
 							<TextToolTip text="This will temporarily save the current query and graph state. This will persist across tab change" />

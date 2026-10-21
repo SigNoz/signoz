@@ -22,7 +22,7 @@ import { getPanelQueryType } from 'pages/DashboardPage/DashboardContainer/Panels
 import { fromPerses } from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';
 import { dynamicSignalFromQuerySignal } from 'pages/DashboardPage/DashboardContainer/Panels/utils/drilldown/signal';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
-import { EQueryType } from 'types/common/dashboard';
+import { isBuilderQueryType, toWireQuery } from 'lib/query/builderSlot';
 
 import DrilldownAggregateMenu from '../DrilldownMenu/DrilldownAggregateMenu';
 import DrilldownBreakoutMenu from '../DrilldownMenu/DrilldownBreakoutMenu';
@@ -87,13 +87,13 @@ export function useDrilldown(
 	const enableDrillDown = useMemo(
 		() =>
 			getPanelDefinition(kind).actions.drilldown &&
-			getPanelQueryType(panel) === EQueryType.QUERY_BUILDER &&
+			isBuilderQueryType(getPanelQueryType(panel)) &&
 			getBuilderQueries(queries).length > 0,
 		[kind, panel, queries],
 	);
 
 	const v1Query = useMemo(
-		() => fromPerses(queries, panelType),
+		() => toWireQuery(fromPerses(queries, panelType)),
 		[queries, panelType],
 	);
 

@@ -12,7 +12,7 @@ import type { SyncedQueryBuilderField } from 'components/QueryBuilderV2/queryBui
 import type {
 	PanelQueryCapabilities,
 	QueryBuilderFieldsConfig,
-	SupportedQueryModesKindMap,
+	SupportedQueryTypesKindMap,
 } from './panelCapabilities';
 import type {
 	BaseRendererProps,
@@ -95,8 +95,6 @@ export interface QueryEditorPaneProps {
 	panelDefinition: RenderableQueryPanelDefinition;
 	signal: TelemetrytypesSignalDTO;
 	isLoadingQueries: boolean;
-	/** Switch authoring tab (Query Builder / AI / ClickHouse / PromQL), owned by the host. */
-	onChangeQueryMode: (key: string) => void;
 	onStageRunQuery: () => void;
 	onCancelQuery: () => void;
 	/** Pin the tabs row to the pane top; the View modal opts out. */
@@ -118,7 +116,7 @@ export interface QueryPanelDefinition<
 	/** Lower editor pane — the shared query-builder pane, or a kind wrapper of it. */
 	EditorPane: ComponentType<QueryEditorPaneProps>;
 	/** Authoring modes (Query Builder / ClickHouse / PromQL / AI) and the signals each accepts. */
-	supportedQueryModesKindMap: SupportedQueryModesKindMap;
+	supportedQueryTypesKindMap: SupportedQueryTypesKindMap;
 	queryBuilderFields: QueryBuilderFieldsConfig;
 	/** How this kind's query-range request is shaped (request type, paging, result formatting). */
 	queryCapabilities: PanelQueryCapabilities;

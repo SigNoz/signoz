@@ -1,13 +1,16 @@
 import { negateOperator, OPERATORS } from 'constants/antlrQueryConstants';
+import { initialQueryBuilderFormValuesMap } from 'constants/queryBuilder';
 import {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { extractQueryPairs } from 'utils/queryContextUtils';
 
 import {
+	adjustQueryForV5,
 	convertAggregationToExpression,
 	convertExpressionToFilters,
 	convertFiltersToExpression,
@@ -1630,5 +1633,33 @@ describe('formatValueForExpression', () => {
 			);
 			expect(pass2.filter.expression).toBe(EXPR);
 		});
+	});
+});
+
+describe('adjustQueryForV5', () => {
+	it('adjusts the AI builder slot for AI query builder queries', () => {
+		const emptyBuilder = {
+			queryData: [],
+			queryFormulas: [],
+			queryTraceOperator: [],
+		};
+		const query: Query = {
+			id: 'q',
+			queryType: EQueryType.AI_QUERY_BUILDER,
+			promql: [],
+			clickhouse_sql: [],
+			builder: emptyBuilder,
+			builder_ai_query: {
+				...emptyBuilder,
+				queryData: [initialQueryBuilderFormValuesMap.logs],
+			},
+		};
+
+		const result = adjustQueryForV5(query);
+
+		expect(result.builder).toBe(emptyBuilder);
+		expect(result.builder_ai_query?.queryData[0]).not.toHaveProperty(
+			'aggregateOperator',
+		);
 	});
 });

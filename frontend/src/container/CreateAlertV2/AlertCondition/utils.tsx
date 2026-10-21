@@ -38,6 +38,7 @@ export function getQueryNames(currentQuery: Query): BaseOptionType[] {
 		[EQueryType.PROM]: () => getSelectedQueryOptions(currentQuery.promql),
 		[EQueryType.CLICKHOUSE]: () =>
 			getSelectedQueryOptions(currentQuery.clickhouse_sql),
+		[EQueryType.AI_QUERY_BUILDER]: () => [],
 	};
 
 	return queryConfig[currentQuery.queryType]?.() || [];
