@@ -263,6 +263,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddFieldTuplesFactory(sqlstore),
 		sqlmigration.NewKeepRelevantLLMPricingRulesFactory(),
 		sqlmigration.NewBackfillTelegramChannelSpecFactory(),
+		sqlmigration.NewAddMetricsFieldTuplesFactory(sqlstore),
 		sqlmigration.NewMigrateRelatedLinksTemplateFactory(),
 	)
 }
