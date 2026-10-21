@@ -13,11 +13,9 @@ import {
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { FillMode, StackMode } from 'lib/uPlotV2/config/types';
-import { clampColorSteps } from 'lib/uPlotV2/plugins/HeatmapPlugin/colorScale';
-import {
-	HeatmapAxisScale,
-	type HeatmapColorOptions,
-} from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
+import { clampColorSteps } from 'lib/visualization/colorRamp/colorScale';
+import { HeatmapAxisScale } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
+import type { ColorRampOptions } from 'lib/visualization/colorRamp/types';
 
 import {
 	AREA_FILL_MODE_MAP,
@@ -137,7 +135,7 @@ export function resolveHeatmapAxisScale(
  */
 export function resolveHeatmapColors(
 	colors: DashboardtypesHeatmapColorsDTO | undefined,
-): Partial<HeatmapColorOptions> {
+): Partial<ColorRampOptions> {
 	if (!colors) {
 		return {};
 	}
@@ -146,8 +144,8 @@ export function resolveHeatmapColors(
 		...(colors.scale && { scale: HEATMAP_COLOR_SCALE_MAP[colors.scale] }),
 		...(colors.palette && { palette: HEATMAP_PALETTE_MAP[colors.palette] }),
 		...(colors.steps && { steps: clampColorSteps(colors.steps) }),
-		...(colors.minCount !== undefined && { minCount: colors.minCount }),
-		...(colors.maxCount !== undefined && { maxCount: colors.maxCount }),
+		...(colors.minCount !== undefined && { min: colors.minCount }),
+		...(colors.maxCount !== undefined && { max: colors.maxCount }),
 		...(colors.fill !== undefined && { fill: colors.fill }),
 	};
 }

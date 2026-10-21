@@ -1,0 +1,38 @@
+.legend {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex: 0 0 auto;
+}
+
+.legend[data-stacked='true'] {
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 6px;
+}
+
+.label {
+	font-size: 11px;
+	color: var(--l3-foreground);
+	white-space: nowrap;
+}
+
+.circle {
+	fill: none;
+	stroke: var(--l2-foreground);
+	stroke-width: 1;
+	opacity: 0.8;
+}
+
+.tick {
+	stroke: var(--l2-foreground);
+	stroke-width: 0.5;
+	stroke-dasharray: 2 2;
+	opacity: 0.6;
+}
+
+.value {
+	font-size: 10px;
+	font-variant-numeric: tabular-nums;
+	fill: var(--l2-foreground);
+}

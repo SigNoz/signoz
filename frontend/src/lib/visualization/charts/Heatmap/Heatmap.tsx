@@ -8,11 +8,12 @@ import {
 	TooltipRenderArgs,
 } from 'lib/uPlotV2/components/types';
 import {
-	createHeatmapColorResolver,
-	DEFAULT_HEATMAP_COLORS,
-	resolveCountDomain,
+	createColorRampResolver,
+	DEFAULT_COLOR_RAMP_OPTIONS,
+	getRampBottom,
+	resolveColorDomain,
 	resolveExtremeColor,
-} from 'lib/uPlotV2/plugins/HeatmapPlugin/colorScale';
+} from 'lib/visualization/colorRamp/colorScale';
 import type { LegendItem } from 'lib/uPlotV2/config/types';
 import {
 	cropHeatmapYAxis,
@@ -94,13 +95,13 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 	const groups = useMemo(() => resolveGroupOrder(series), [series]);
 
 	const colors = useMemo(
-		() => ({ ...DEFAULT_HEATMAP_COLORS, ...props.colors }),
+		() => ({ ...DEFAULT_COLOR_RAMP_OPTIONS, ...props.colors }),
 		[props.colors],
 	);
 
 	// The opacity fill no longer follows a group colour: with several groups enabled
 	// at once there is no single one to follow.
-	const resolvedSeriesColor = seriesColor ?? DEFAULT_HEATMAP_COLORS.fill;
+	const resolvedSeriesColor = seriesColor ?? DEFAULT_COLOR_RAMP_OPTIONS.fill;
 
 	// Opacity mode keeps the solid fill; a partially transparent marker is hard to
 	// read against the panel.
@@ -146,9 +147,9 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 
 	const colorResolver = useMemo(
 		() =>
-			createHeatmapColorResolver({
+			createColorRampResolver({
 				options: colors,
-				domain: resolveCountDomain(colors, grid.counts),
+				domain: resolveColorDomain(colors, grid.counts),
 				isDarkMode,
 				seriesColor: resolvedSeriesColor,
 			}),
@@ -300,13 +301,23 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 			<ColorBar
 				label="count"
 				ramp={colorResolver.ramp}
-				minLabel={colorResolver.domain.min.toLocaleString()}
+				minLabel={getRampBottom(
+					colorResolver.domain,
+					colors.scale,
+				).toLocaleString()}
 				maxLabel={colorResolver.domain.max.toLocaleString()}
 				markerPosition={colorResolver.positionOf(hoveredCell?.count ?? null)}
 				showNoDataKey={hasMissingCells(grid.counts)}
 			/>
 		);
-	}, [showVisualMap, hasGrid, colorResolver, hoveredCell, grid.counts]);
+	}, [
+		showVisualMap,
+		hasGrid,
+		colorResolver,
+		colors.scale,
+		hoveredCell,
+		grid.counts,
+	]);
 
 	return (
 		<ChartWrapper
