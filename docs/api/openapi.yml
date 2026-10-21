@@ -9993,8 +9993,9 @@ components:
     RuletypesBasicRuleThreshold:
       properties:
         channels:
-          description: Notification channel names alerts crossing this threshold are
-            sent to. Ignored when notificationSettings.usePolicy is true.
+          description: The displayName of each notification channel alerts crossing
+            this threshold are sent to. Ignored when notificationSettings.usePolicy
+            is true.
           items:
             type: string
           nullable: true
@@ -10004,7 +10005,7 @@ components:
           - $ref: '#/components/schemas/RuletypesMatchType'
           description: Which points in the window must satisfy op. Accepted as at_least_once,
             all_the_times, on_average, in_total or last, their aliases avg and sum,
-            or the numeric codes 1 to 5.
+            or the legacy codes as strings, '1' to '5'.
         name:
           description: The threshold name, conventionally critical, error, warning
             or info. Alerts carry it as the threshold_name label.
@@ -10014,7 +10015,7 @@ components:
           - $ref: '#/components/schemas/RuletypesCompareOperator'
           description: How the value is compared with target. Accepted as above, below,
             equal, not_equal, above_or_equal, below_or_equal or outside_bounds, their
-            symbols, or the numeric codes 1 to 7.
+            symbols, or the legacy codes as strings, '1' to '7'.
         recoveryTarget:
           description: The value at which a firing alert resolves, in targetUnit.
             Keeps an alert firing between target and recoveryTarget to avoid flapping;
@@ -10148,8 +10149,9 @@ components:
     RuletypesGettableTestRule:
       properties:
         alertCount:
-          description: The number of alerts the rule would have fired on the most
-            recent evaluation.
+          description: The number of alerts the test notification produced, including
+            results that do not cross the threshold, since a test sends every evaluated
+            series.
           type: integer
         message:
           description: A human readable summary of the test evaluation.
@@ -10242,8 +10244,9 @@ components:
     RuletypesListableRules:
       properties:
         labels:
-          description: Distinct label key and value pairs across the matching rules,
-            for building filters.
+          description: Organization-wide label key and value pair suggestions for
+            building filters, independent of the current filter and page, capped at
+            1000 distinct pairs.
           items:
             $ref: '#/components/schemas/RuletypesLabelPair'
           type: array
@@ -10361,8 +10364,9 @@ components:
           description: Grouping, re-notification and routing behaviour. Required when
             schemaVersion is v2alpha1; derived from the v1 fields otherwise.
         preferredChannels:
-          description: Notification channel names for schemaVersion v1 rules. Ignored
-            for v2alpha1, where each threshold carries its own channels.
+          description: The displayName of each notification channel to notify, for
+            schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries
+            its own channels.
           items:
             type: string
           type: array
@@ -10502,8 +10506,9 @@ components:
           description: Grouping, re-notification and routing behaviour. Required when
             schemaVersion is v2alpha1; derived from the v1 fields otherwise.
         preferredChannels:
-          description: Notification channel names for schemaVersion v1 rules. Ignored
-            for v2alpha1, where each threshold carries its own channels.
+          description: The displayName of each notification channel to notify, for
+            schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries
+            its own channels.
           items:
             type: string
           type: array
@@ -10569,15 +10574,15 @@ components:
           - $ref: '#/components/schemas/RuletypesMatchType'
           description: 'schemaVersion v1 only: which points in the window must satisfy
             op. Accepted as at_least_once, all_the_times, on_average, in_total or
-            last, their aliases avg and sum, or the numeric codes 1 to 5. Required
-            for v1; v2alpha1 sets matchType on each threshold.'
+            last, their aliases avg and sum, or the legacy codes as strings, ''1''
+            to ''5''. Required for v1; v2alpha1 sets matchType on each threshold.'
         op:
           allOf:
           - $ref: '#/components/schemas/RuletypesCompareOperator'
           description: 'schemaVersion v1 only: how the value is compared with target.
             Accepted as above, below, equal, not_equal, above_or_equal, below_or_equal
-            or outside_bounds, their symbols, or the numeric codes 1 to 7. Required
-            for v1; v2alpha1 sets op on each threshold.'
+            or outside_bounds, their symbols, or the legacy codes as strings, ''1''
+            to ''7''. Required for v1; v2alpha1 sets op on each threshold.'
         requireMinPoints:
           description: Whether a series is skipped until it has at least requiredNumPoints
             points in the window. Defaults to false.
