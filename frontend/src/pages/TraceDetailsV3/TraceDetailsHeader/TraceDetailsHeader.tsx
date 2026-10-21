@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
@@ -13,8 +13,10 @@ import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { TraceDetailsTab } from '../constants';
 import { TraceDetailEventKeys, TraceDetailEvents } from '../events';
 import { useTraceDetailLogEvent } from '../hooks/useTraceDetailLogEvent';
+import { useTraceDetailsTab } from '../hooks/useTraceDetailsTab';
 import { useTraceStore } from '../stores/traceStore';
 import TraceDownloadPanel from './TraceDownloadPanel';
 import EntityMetadataRow from '../EntityMetadata/EntityMetadataRow';
@@ -22,8 +24,9 @@ import AnalyticsPanel from '../SpanDetailsPanel/AnalyticsPanel/AnalyticsPanel';
 import Filters from '../TraceWaterfall/TraceWaterfallStates/Success/Filters/Filters';
 import { useTraceDetailsStripInfo } from '../useTraceDetailsStripInfo';
 import MissingSpansBanner from './MissingSpansBanner';
-import TraceOptionsMenu from './TraceOptionsMenu';
 import { useTraceSummary } from './useTraceSummary';
+import TraceDetailsTabs from './TraceDetailsTabs';
+import TraceOptionsMenu from './TraceOptionsMenu';
 
 import styles from './TraceDetailsHeader.module.scss';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -61,6 +64,14 @@ function TraceDetailsHeader({
 	const [isPreviewFieldsOpen, setIsPreviewFieldsOpen] = useState(false);
 	const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
 	const { data: traceSummary } = useTraceSummary(traceID);
+	const [tab] = useTraceDetailsTab();
+	const isOverview = tab === TraceDetailsTab.Overview;
+
+	// Overview-only panels must not linger over another tab.
+	useEffect(() => {
+		setIsPreviewFieldsOpen(false);
+		setIsAnalyticsOpen(false);
+	}, [tab]);
 	const previewFields = useTraceStore((s) => s.previewFields);
 	const setPreviewFields = useTraceStore((s) => s.setPreviewFields);
 
@@ -102,10 +113,6 @@ function TraceDetailsHeader({
 	const startTime = (traceSummary?.startTimestampMillis ?? 0) / 1e3;
 	const endTime = (traceSummary?.endTimestampMillis ?? 0) / 1e3;
 
-	const durationMs = traceSummary
-		? traceSummary.endTimestampMillis - traceSummary.startTimestampMillis
-		: 0;
-
 	return (
 		<div className={styles.wrapper}>
 			<div className={styles.header}>
@@ -126,9 +133,10 @@ function TraceDetailsHeader({
 							badgeValue={traceID}
 							maxCharacters={100}
 						/>
+						<TraceDetailsTabs />
 					</div>
 				)}
-				{showTraceDetailsHeaderOptions && traceSummary && (
+				{isOverview && showTraceDetailsHeaderOptions && traceSummary && (
 					<div
 						className={cx(
 							styles.filterSection,
@@ -144,6 +152,7 @@ function TraceDetailsHeader({
 										icon
 										color="secondary"
 										aria-label="Analytics"
+										testId="trace-analytics-button"
 										onClick={handleToggleAnalytics}
 									>
 										<ChartPie size={14} />
@@ -178,16 +187,20 @@ function TraceDetailsHeader({
 				)}
 			</div>
 
-			{showTraceDetails && (
+			{(showTraceDetails || !isOverview) && (
 				<div className={styles.subHeader}>
-					{traceSummary ? (
+					{!traceSummary ? (
+						<DetailsLoader />
+					) : (
 						<EntityMetadataRow
 							entity="trace"
 							service={{
 								name: traceSummary.rootServiceName,
 								entryPoint: traceSummary.rootServiceEntryPoint,
 							}}
-							durationMs={durationMs}
+							durationMs={
+								traceSummary.endTimestampMillis - traceSummary.startTimestampMillis
+							}
 							timestamp={dayjs(traceSummary.startTimestampMillis).format(
 								DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS,
 							)}
@@ -195,13 +208,11 @@ function TraceDetailsHeader({
 							tokens={traceSummary.ai?.tokens}
 							cost={traceSummary.ai?.totalCost}
 						/>
-					) : (
-						<DetailsLoader />
 					)}
 				</div>
 			)}
 
-			{traceSummary?.hasMissingSpans && <MissingSpansBanner />}
+			{isOverview && traceSummary?.hasMissingSpans && <MissingSpansBanner />}
 
 			<FieldsSelector
 				isOpen={isPreviewFieldsOpen}
