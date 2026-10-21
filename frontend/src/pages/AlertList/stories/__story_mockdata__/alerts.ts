@@ -81,6 +81,7 @@ export const CHANNEL_TYPES = [
 	'jira',
 	'jsmops',
 	'incidentio',
+	'telegram',
 ] as const;
 
 export type ChannelType = (typeof CHANNEL_TYPES)[number];
@@ -845,6 +846,13 @@ const CHANNEL_SPECS: Record<ChannelType, Record<string, unknown>> = {
 		url: 'https://api.incident.io/v2/alert_events/http/story',
 		token: 'story-incidentio-token',
 		title: '{{ .CommonLabels.alertname }}',
+		sendResolved: true,
+	},
+	telegram: {
+		botToken: '123456789:AA-story-telegram-token',
+		chatId: -1001234567890,
+		title: '{{ .CommonLabels.alertname }}',
+		message: '{{ range .Alerts -}}{{ .Annotations.description }}\n{{ end }}',
 		sendResolved: true,
 	},
 };

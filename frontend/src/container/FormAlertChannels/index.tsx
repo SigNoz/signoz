@@ -20,6 +20,7 @@ import MsTeamsSettings from './Settings/MsTeams';
 import OpsgenieSettings from './Settings/Opsgenie';
 import PagerSettings from './Settings/Pager';
 import SlackSettings from './Settings/Slack';
+import TelegramSettings from './Settings/Telegram';
 import WebhookSettings from './Settings/Webhook';
 import { Button } from '@signozhq/ui/button';
 
@@ -38,6 +39,7 @@ const CHANNEL_TYPE_OPTIONS = [
 	{ value: ChannelKind.jira, label: 'Jira' },
 	{ value: ChannelKind.jsmops, label: 'Jira Service Management Ops' },
 	{ value: ChannelKind.incidentio, label: 'incident.io' },
+	{ value: ChannelKind.telegram, label: 'Telegram' },
 ];
 
 function FormAlertChannels({
@@ -80,6 +82,8 @@ function FormAlertChannels({
 				return <IncidentIOSettings />;
 			case ChannelKind.opsgenie:
 				return <OpsgenieSettings />;
+			case ChannelKind.telegram:
+				return <TelegramSettings />;
 			case ChannelKind.email:
 				return <EmailSettings />;
 			default:

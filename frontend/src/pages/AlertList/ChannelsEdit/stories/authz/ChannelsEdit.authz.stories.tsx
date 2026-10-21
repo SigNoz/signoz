@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, within } from 'storybook/test';
+import { expect, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -103,6 +103,39 @@ export const ReadOnly: Story = {
 		);
 		await expectDisabled(await canvas.findByTestId('test-channel-button'));
 		await expectDisabled(await canvas.findByTestId('slack-channel-textbox'));
+	},
+};
+
+/**
+ * The same denial on a Telegram channel. Its fields are the kind the form gained
+ * last, including the only toggle a settings panel renders, so this is where a
+ * gap in the gating would show first.
+ *
+ * The switch is checked by behaviour, not by an attribute: it is a button inside
+ * the disabled fieldset, so it carries no `disabled` of its own and an
+ * attribute check would pass whether or not the browser actually turned it off.
+ */
+export const TelegramReadOnly: Story = {
+	args: { channelType: 'telegram', revoked: [UPDATE, CREATE, DELETE] },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		await expectDisabled(
+			await canvas.findByTestId(
+				'telegram-bot-token-textbox',
+				undefined,
+				PAGE_LOAD,
+			),
+		);
+		await expectDisabled(await canvas.findByTestId('telegram-chat-id-textbox'));
+		await expectDisabled(await canvas.findByTestId('telegram-message-textarea'));
+
+		const toggle = await canvas.findByTestId(
+			'telegram-disable-notifications-switch',
+		);
+		const before = toggle.getAttribute('aria-checked');
+		await userEvent.click(toggle);
+		await expect(toggle.getAttribute('aria-checked')).toBe(before);
 	},
 };
 
