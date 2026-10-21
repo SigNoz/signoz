@@ -91,7 +91,6 @@ function DimensionsSection({
 			>
 				<ConfigMultiSelect
 					testId="panel-editor-v2-dimension-colorBy"
-					aria-label="Color by"
 					value={colorBy}
 					items={colorItems}
 					placeholder={

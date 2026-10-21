@@ -10,11 +10,7 @@ const ITEMS = [
 
 async function open(): Promise<ReturnType<typeof userEvent.setup>> {
 	const user = userEvent.setup();
-	await user.click(
-		screen
-			.getByTestId('multi')
-			.querySelector('.ant-select-selector') as HTMLElement,
-	);
+	await user.click(screen.getByTestId('multi'));
 	return user;
 }
 

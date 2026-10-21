@@ -146,7 +146,7 @@ function ScatterPlotPanelRenderer({
 		[readyData],
 	);
 
-	const resolvePointLabels = useCallback(
+	const resolvePointGroupValues = useCallback(
 		(seriesIndex: number, dataIndex: number): ScatterPointLabel[] =>
 			readyData?.pointLabels[seriesIndex - 1]?.[dataIndex] ?? [],
 		[readyData],
@@ -218,7 +218,7 @@ function ScatterPlotPanelRenderer({
 							config={config}
 							data={chartData}
 							channels={readyData.channels}
-							resolvePointLabels={resolvePointLabels}
+							resolvePointGroupValues={resolvePointGroupValues}
 							legendConfig={{ position: legendPosition }}
 							decimalPrecision={decimalPrecision}
 							canPinTooltip

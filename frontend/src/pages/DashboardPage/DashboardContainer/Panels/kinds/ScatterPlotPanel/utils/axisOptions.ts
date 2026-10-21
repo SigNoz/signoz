@@ -7,7 +7,7 @@ import {
 import {
 	type ScatterAxisOptions,
 	ScatterAxisScale,
-} from 'lib/visualization/charts/Scatter/utils';
+} from 'lib/visualization/charts/Scatter/types';
 
 import { mapThresholds } from '../../../utils/baseConfigBuilder';
 

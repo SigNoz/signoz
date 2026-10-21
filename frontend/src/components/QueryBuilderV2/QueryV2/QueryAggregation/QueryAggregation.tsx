@@ -18,6 +18,7 @@ import {
 	STEP_INTERVAL_PLACEHOLDER,
 } from '../../queryBuilderFields.utils';
 
+import { isScalarPanelType } from '../panelTypes';
 import QueryAggregationSelect from './QueryAggregationSelect';
 
 import './QueryAggregation.styles.scss';
@@ -45,12 +46,7 @@ function QueryAggregationOptions({
 		const isNonMetricSource =
 			dataSource === DataSource.TRACES || dataSource === DataSource.LOGS;
 
-		if (
-			isNonMetricSource &&
-			(panelType === PANEL_TYPES.TABLE ||
-				panelType === PANEL_TYPES.SCATTER ||
-				panelType === PANEL_TYPES.PIE)
-		) {
+		if (isNonMetricSource && isScalarPanelType(panelType)) {
 			return { hidden: true, disabled: false, pinned: false };
 		}
 

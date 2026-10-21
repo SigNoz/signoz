@@ -18,9 +18,7 @@ function LabelWithInfo({
 		<span className={styles.labelWithInfo}>
 			{label}
 			<Tooltip title={info}>
-				<span className={styles.info} data-testid={testId}>
-					<Info size={12} />
-				</span>
+				<Info size={12} className={styles.info} data-testid={testId} />
 			</Tooltip>
 		</span>
 	);
