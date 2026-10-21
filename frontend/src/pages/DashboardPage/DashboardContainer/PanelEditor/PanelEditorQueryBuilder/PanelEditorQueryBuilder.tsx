@@ -29,7 +29,7 @@ import {
 } from '../../Panels/types/panelCapabilities';
 import type { RenderableQueryPanelDefinition } from '../../Panels/types/panelDefinition';
 import { toPanelType } from '../../Panels/types/panelKind';
-import { getQueryMode, isBuilderMode } from 'lib/query/queryMode';
+import { isBuilderQueryType } from 'lib/query/builderSlot';
 
 import styles from './PanelEditorQueryBuilder.module.scss';
 
@@ -37,7 +37,7 @@ interface PanelEditorQueryBuilderProps {
 	/** The edited kind's definition — drives supported query types, the signals the
 	 *  builder may be pointed at, and how it narrows the builder's fields. */
 	panelDefinition: RenderableQueryPanelDefinition;
-	/** Switch authoring tab; owned by the host, which remembers the Query Builder query. */
+	/** Switch authoring tab; owned by the host. */
 	onChangeQueryMode: (key: string) => void;
 	/** Preview fetch in flight — drives the Stage & Run button's loading/cancel state. */
 	isLoadingQueries: boolean;
@@ -173,7 +173,7 @@ function PanelEditorQueryBuilder({
 			),
 			children: queryTypeComponents[queryType].component,
 			// QB wants a null data source and AI pins traces: both mounted, they overwrite each other's provider config in a loop.
-			destroyInactiveTabPane: isBuilderMode(queryType),
+			destroyInactiveTabPane: isBuilderQueryType(queryType),
 		}));
 	}, [panelDefinition, panelType, isDarkMode, isRawQuery]);
 
@@ -190,7 +190,7 @@ function PanelEditorQueryBuilder({
 					className={cx(styles.tabsContainer, {
 						[styles.stickyNav]: stickyHeader,
 					})}
-					activeKey={getQueryMode(currentQuery)}
+					activeKey={currentQuery.queryType}
 					onChange={onChangeQueryMode}
 					tabBarExtraContent={
 						<span className={styles.runQueryBtnContainer}>

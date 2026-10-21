@@ -11,7 +11,6 @@ import { NO_PANEL_ACTIONS } from '../types/panelDefinition';
 import {
 	getQueryPanelDefinition,
 	requireQueryPanelDefinition,
-	getSupportedQueryModes,
 	getSupportedQueryTypes,
 	getSupportedSignals,
 	isPanelCombinationValid,
@@ -26,20 +25,6 @@ const { logs, traces, metrics } = TelemetrytypesSignalDTO;
 const { time_series, scalar, raw, heatmap } = Querybuildertypesv5RequestTypeDTO;
 
 const EXPECTED_QUERY_TYPES: Record<PanelKind, EQueryType[]> = {
-	'signoz/TimeSeriesPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
-	'signoz/BarChartPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
-	'signoz/AreaChartPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
-	'signoz/NumberPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
-	'signoz/HistogramPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
-	'signoz/HeatmapPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
-	'signoz/PieChartPanel': [QUERY_BUILDER, CLICKHOUSE],
-	'signoz/TablePanel': [QUERY_BUILDER, CLICKHOUSE],
-	'signoz/ListPanel': [QUERY_BUILDER],
-	// Static kind: no query surface at all.
-	'signoz/TextPanel': [],
-};
-
-const EXPECTED_QUERY_MODES: Record<PanelKind, EQueryType[]> = {
 	'signoz/TimeSeriesPanel': [
 		QUERY_BUILDER,
 		CLICKHOUSE,
@@ -320,21 +305,6 @@ describe('panel capabilities guard', () => {
 					queryType: QUERY_BUILDER,
 				}),
 			).toBe(true);
-		});
-	});
-
-	describe('getSupportedQueryModes', () => {
-		it.each(Object.entries(EXPECTED_QUERY_MODES))(
-			'%s supports %j',
-			(kind, modes) => {
-				expect(getSupportedQueryModes(kind as PanelKind)).toStrictEqual(modes);
-			},
-		);
-
-		it('keeps AI out of the query types', () => {
-			expect(getSupportedQueryTypes('signoz/TimeSeriesPanel')).not.toContain(
-				EQueryType.AI_QUERY_BUILDER,
-			);
 		});
 	});
 

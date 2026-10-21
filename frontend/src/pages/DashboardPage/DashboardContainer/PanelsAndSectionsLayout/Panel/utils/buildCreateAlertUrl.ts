@@ -13,6 +13,7 @@ import {
 	type PanelFormattingSlice,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 import { getSectionControls } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getSectionControls';
+import { toWireQuery } from 'lib/query/builderSlot';
 import { fromPerses } from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -74,7 +75,7 @@ export function buildAlertUrl(
  */
 export function buildCreateAlertUrl(panel: DashboardtypesPanelDTO): string {
 	const panelType = toPanelType(panel.spec.plugin.kind);
-	const query = fromPerses(panel.spec.queries, panelType);
+	const query = toWireQuery(fromPerses(panel.spec.queries, panelType));
 	const unit = readPanelUnit(panel.spec.plugin);
 	return buildAlertUrl(
 		query,
