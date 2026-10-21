@@ -32,12 +32,12 @@ def create_alert_rule(signoz: types.SigNoz, get_token: Callable[[str, str], str]
 
     def _create_alert_rule(rule_data: dict) -> str:
         response = requests.post(
-            signoz.self.host_configs["8080"].get("/api/v1/rules"),
+            signoz.self.host_configs["8080"].get("/api/v2/rules"),
             json=rule_data,
             headers={"Authorization": f"Bearer {admin_token}"},
             timeout=5,
         )
-        assert response.status_code == HTTPStatus.OK, f"Failed to create rule, api returned {response.status_code} with response: {response.text}"
+        assert response.status_code == HTTPStatus.CREATED, f"Failed to create rule, api returned {response.status_code} with response: {response.text}"
         rule_id = response.json()["data"]["id"]
         rule_ids.append(rule_id)
         return rule_id
@@ -45,11 +45,11 @@ def create_alert_rule(signoz: types.SigNoz, get_token: Callable[[str, str], str]
     def _delete_alert_rule(rule_id: str):
         logger.info("Deleting rule: %s", {"rule_id": rule_id})
         response = requests.delete(
-            signoz.self.host_configs["8080"].get(f"/api/v1/rules/{rule_id}"),
+            signoz.self.host_configs["8080"].get(f"/api/v2/rules/{rule_id}"),
             headers={"Authorization": f"Bearer {admin_token}"},
             timeout=5,
         )
-        if response.status_code != HTTPStatus.OK:
+        if response.status_code != HTTPStatus.NO_CONTENT:
             raise Exception(  # pylint: disable=broad-exception-raised
                 f"Failed to delete rule, api returned {response.status_code} with response: {response.text}"
             )
@@ -89,19 +89,22 @@ def create_alert_rule_with_channel(
 
 
 def delete_all_rules(signoz: types.SigNoz, token: str) -> None:
+    # the v3 list is paginated; 200 is its maximum page and more rules than
+    # that would mean a seeding bug, not a second page
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v2/rules"),
+        signoz.self.host_configs["8080"].get("/api/v3/rules"),
+        params={"limit": 200},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK
-    for rule in response.json()["data"]:
+    for rule in response.json()["data"]["rules"]:
         delete_response = requests.delete(
-            signoz.self.host_configs["8080"].get(f"/api/v1/rules/{rule['id']}"),
+            signoz.self.host_configs["8080"].get(f"/api/v2/rules/{rule['id']}"),
             headers={"Authorization": f"Bearer {token}"},
             timeout=5,
         )
-        assert delete_response.status_code == HTTPStatus.OK, f"failed to delete rule {rule['id']}: {delete_response.text}"
+        assert delete_response.status_code == HTTPStatus.NO_CONTENT, f"failed to delete rule {rule['id']}: {delete_response.text}"
 
 
 @pytest.fixture(name="seed_alert_rules", scope="function")

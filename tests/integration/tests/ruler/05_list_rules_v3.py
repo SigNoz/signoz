@@ -573,24 +573,3 @@ def test_error_contract(
         error = response.json()["error"]
         assert error["code"] == expected_code, f"params {params!r}"
         assert expected_message_part in error["message"], f"params {params!r}: {error['message']}"
-
-
-def test_v2_list_still_serves_bare_array(
-    signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    seed_alert_rules: Callable[[str, list[dict]], None],
-):
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    seed_alert_rules(SEED_CHANNEL_NAME, SEED_RULES)
-
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v2/rules"),
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-
-    assert response.status_code == HTTPStatus.OK
-    data = response.json()["data"]
-    assert isinstance(data, list), "deprecated v2 must keep returning a bare array"
-    assert {rule["alert"] for rule in data} == {r["alert"] for r in SEED_RULES}

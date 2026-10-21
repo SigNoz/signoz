@@ -5,6 +5,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -77,6 +78,15 @@ func (PanelType) Enum() []any {
 	}
 }
 
+func (p PanelType) Validate() error {
+	switch p {
+	case PanelTypeValue, PanelTypeTable, PanelTypeGraph:
+		return nil
+	default:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.compositeQuery.panelType: unsupported value %q; must be one of value, table, graph", p.StringValue())
+	}
+}
+
 // Note: this is used to represent the state of the alert query
 // i.e the active tab which should be used to represent the selection
 
@@ -99,6 +109,15 @@ func (QueryType) Enum() []any {
 	}
 }
 
+func (q QueryType) Validate() error {
+	switch q {
+	case QueryTypeBuilder, QueryTypeClickHouseSQL, QueryTypePromQL:
+		return nil
+	default:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.compositeQuery.queryType: unsupported value %q; must be one of builder, clickhouse_sql, promql", q.StringValue())
+	}
+}
+
 type AlertCompositeQuery struct {
 	Queries []qbtypes.QueryEnvelope `json:"queries" required:"true"`
 
@@ -111,18 +130,14 @@ type AlertCompositeQuery struct {
 
 type RuleCondition struct {
 	CompositeQuery    *AlertCompositeQuery `json:"compositeQuery" required:"true"`
-	CompareOperator   CompareOperator      `json:"op,omitzero"`
-	Target            *float64             `json:"target,omitempty" format:"double"`
 	AlertOnAbsent     bool                 `json:"alertOnAbsent,omitempty"`
 	AbsentFor         uint64               `json:"absentFor,omitempty"`
-	MatchType         MatchType            `json:"matchType,omitzero"`
-	TargetUnit        string               `json:"targetUnit,omitempty"`
 	Algorithm         string               `json:"algorithm,omitempty"`
 	Seasonality       Seasonality          `json:"seasonality,omitzero"`
 	SelectedQuery     string               `json:"selectedQueryName,omitempty"`
 	RequireMinPoints  bool                 `json:"requireMinPoints,omitempty"`
 	RequiredNumPoints int                  `json:"requiredNumPoints,omitempty"`
-	Thresholds        *RuleThresholdData   `json:"thresholds,omitempty"`
+	Thresholds        *RuleThresholdData   `json:"thresholds" required:"true"`
 }
 
 func (rc *RuleCondition) SelectedQueryName() string {

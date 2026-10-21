@@ -356,12 +356,10 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 
 func (r *PromRule) String() string {
 	ar := ruletypes.PostableRule{
-		AlertName:         valuer.NewDisplayName(r.name),
-		RuleCondition:     r.ruleCondition,
-		EvalWindow:        r.evalWindow,
-		Labels:            r.labels.Map(),
-		Annotations:       r.annotations.Map(),
-		PreferredChannels: r.preferredChannels,
+		AlertName:     valuer.NewDisplayName(r.name),
+		RuleCondition: r.ruleCondition,
+		Labels:        r.labels.Map(),
+		Annotations:   r.annotations.Map(),
 	}
 
 	byt, err := json.Marshal(ar)
