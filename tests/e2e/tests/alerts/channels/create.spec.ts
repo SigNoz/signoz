@@ -32,6 +32,12 @@ test.describe('Notification channels — create', () => {
 		authedPage,
 	}) => {
 		await channels.form.gotoNew();
+		// Save stays off until the form is touched, so the webhook goes in first and
+		// the name is what is left missing.
+		await channels.form.fillField(
+			'webhook-url-textbox',
+			'https://hooks.slack.com/services/T/B/X',
+		);
 		await channels.form.save();
 
 		await expect(authedPage.getByText('Channel name is mandatory')).toBeVisible();
