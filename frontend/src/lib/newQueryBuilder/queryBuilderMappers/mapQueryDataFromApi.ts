@@ -15,6 +15,7 @@ import {
 	PromQuery,
 	QueryBuilderFormula,
 } from 'types/api/v5/queryRange';
+import { EQueryType } from 'types/common/dashboard';
 import {
 	convertBuilderQueryToIBuilderQuery,
 	convertQueryBuilderFormulaToIBuilderFormula,
@@ -87,8 +88,16 @@ const mapQueryFromV5 = (compositeQuery: ICompositeMetricQuery): Query => {
 			});
 		}
 	});
+
+	const builder = transformQueryBuilderDataModel(
+		builderQueries,
+		builderQueryTypes,
+	);
+	const isAIQuery = compositeQuery.queryType === EQueryType.AI_QUERY_BUILDER;
+
 	return {
-		builder: transformQueryBuilderDataModel(builderQueries, builderQueryTypes),
+		builder: isAIQuery ? transformQueryBuilderDataModel({}) : builder,
+		...(isAIQuery && { builder_ai_query: builder }),
 		promql: promQueries,
 		clickhouse_sql: clickhouseQueries,
 		queryType: compositeQuery.queryType,
