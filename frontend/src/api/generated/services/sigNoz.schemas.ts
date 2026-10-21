@@ -4666,7 +4666,7 @@ export type Querybuildertypesv5BucketOptionsDTO =
 export interface Querybuildertypesv5FilterDTO {
 	/**
 	 * @type string
-	 * @description A filter in the query filter syntax, combining field comparisons with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano > 1000000.
+	 * @description A filter in the query filter syntax: comparisons such as =, !=, <, >, IN, LIKE, CONTAINS and EXISTS on field names, combined with AND, OR and NOT, with string values in single quotes, for example key = 'value' AND other_key > 10. Which fields exist depends on the signal or endpoint the filter is used with.
 	 */
 	expression?: string;
 }
@@ -4937,7 +4937,7 @@ export interface DashboardtypesAIBuilderQuerySpecDTO {
 	 */
 	disabled?: boolean;
 	/**
-	 * @description The filter expression that selects the rows or series, for example service.name = 'frontend' AND http.status_code >= 500.
+	 * @description The filter that selects spans, in the query filter syntax, for example service.name = 'frontend' AND http.response.status_code >= 500.
 	 */
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
@@ -5236,7 +5236,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 */
 	disabled?: boolean;
 	/**
-	 * @description The filter expression that selects the rows or series, for example service.name = 'frontend' AND http.status_code >= 500.
+	 * @description The filter that selects log records, in the query filter syntax, for example severity_text = 'ERROR' AND body CONTAINS 'timeout'.
 	 */
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
@@ -5416,7 +5416,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 */
 	disabled?: boolean;
 	/**
-	 * @description The filter expression that selects the rows or series, for example service.name = 'frontend' AND http.status_code >= 500.
+	 * @description The filter that selects series by their attributes, in the query filter syntax, for example k8s.namespace.name = 'prod' AND k8s.pod.name LIKE 'api%'.
 	 */
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
@@ -5515,7 +5515,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 */
 	disabled?: boolean;
 	/**
-	 * @description The filter expression that selects the rows or series, for example service.name = 'frontend' AND http.status_code >= 500.
+	 * @description The filter that selects spans, in the query filter syntax, for example service.name = 'frontend' AND http.response.status_code >= 500.
 	 */
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
@@ -7645,7 +7645,7 @@ export enum InframonitoringtypesPodStatusDTO {
 export interface InframonitoringtypesClusterFilterDTO {
 	/**
 	 * @type string
-	 * @description A filter in the query filter syntax, combining field comparisons with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano > 1000000.
+	 * @description A filter in the query filter syntax: comparisons such as =, !=, <, >, IN, LIKE, CONTAINS and EXISTS on field names, combined with AND, OR and NOT, with string values in single quotes, for example key = 'value' AND other_key > 10. Which fields exist depends on the signal or endpoint the filter is used with.
 	 */
 	expression?: string;
 	/**
@@ -7955,7 +7955,7 @@ export enum InframonitoringtypesContainerStatusDTO {
 export interface InframonitoringtypesContainerFilterDTO {
 	/**
 	 * @type string
-	 * @description A filter in the query filter syntax, combining field comparisons with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano > 1000000.
+	 * @description A filter in the query filter syntax: comparisons such as =, !=, <, >, IN, LIKE, CONTAINS and EXISTS on field names, combined with AND, OR and NOT, with string values in single quotes, for example key = 'value' AND other_key > 10. Which fields exist depends on the signal or endpoint the filter is used with.
 	 */
 	expression?: string;
 	/**
@@ -8052,7 +8052,7 @@ export interface InframonitoringtypesContainersDTO {
 export interface InframonitoringtypesDaemonSetFilterDTO {
 	/**
 	 * @type string
-	 * @description A filter in the query filter syntax, combining field comparisons with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano > 1000000.
+	 * @description A filter in the query filter syntax: comparisons such as =, !=, <, >, IN, LIKE, CONTAINS and EXISTS on field names, combined with AND, OR and NOT, with string values in single quotes, for example key = 'value' AND other_key > 10. Which fields exist depends on the signal or endpoint the filter is used with.
 	 */
 	expression?: string;
 	/**
@@ -8148,7 +8148,7 @@ export interface InframonitoringtypesDaemonSetsDTO {
 export interface InframonitoringtypesDeploymentFilterDTO {
 	/**
 	 * @type string
-	 * @description A filter in the query filter syntax, combining field comparisons with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano > 1000000.
+	 * @description A filter in the query filter syntax: comparisons such as =, !=, <, >, IN, LIKE, CONTAINS and EXISTS on field names, combined with AND, OR and NOT, with string values in single quotes, for example key = 'value' AND other_key > 10. Which fields exist depends on the signal or endpoint the filter is used with.
 	 */
 	expression?: string;
 	/**
@@ -8241,7 +8241,7 @@ export enum InframonitoringtypesHostStatusDTO {
 export interface InframonitoringtypesHostFilterDTO {
 	/**
 	 * @type string
-	 * @description A filter in the query filter syntax, combining field comparisons with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano > 1000000.
+	 * @description A filter in the query filter syntax: comparisons such as =, !=, <, >, IN, LIKE, CONTAINS and EXISTS on field names, combined with AND, OR and NOT, with string values in single quotes, for example key = 'value' AND other_key > 10. Which fields exist depends on the signal or endpoint the filter is used with.
 	 */
 	expression?: string;
 	filterByStatus?: InframonitoringtypesHostStatusDTO;
@@ -8321,7 +8321,7 @@ export interface InframonitoringtypesHostsDTO {
 export interface InframonitoringtypesJobFilterDTO {
 	/**
 	 * @type string
-	 * @description A filter in the query filter syntax, combining field comparisons with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano > 1000000.
+	 * @description A filter in the query filter syntax: comparisons such as =, !=, <, >, IN, LIKE, CONTAINS and EXISTS on field names, combined with AND, OR and NOT, with string values in single quotes, for example key = 'value' AND other_key > 10. Which fields exist depends on the signal or endpoint the filter is used with.
 	 */
 	expression?: string;
 	/**
@@ -8417,7 +8417,7 @@ export interface InframonitoringtypesJobsDTO {
 export interface InframonitoringtypesNamespaceFilterDTO {
 	/**
 	 * @type string
-	 * @description A filter in the query filter syntax, combining field comparisons with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano > 1000000.
+	 * @description A filter in the query filter syntax: comparisons such as =, !=, <, >, IN, LIKE, CONTAINS and EXISTS on field names, combined with AND, OR and NOT, with string values in single quotes, for example key = 'value' AND other_key > 10. Which fields exist depends on the signal or endpoint the filter is used with.
 	 */
 	expression?: string;
 	/**
@@ -8504,7 +8504,7 @@ export interface InframonitoringtypesNamespacesDTO {
 export interface InframonitoringtypesNodeFilterDTO {
 	/**
 	 * @type string
-	 * @description A filter in the query filter syntax, combining field comparisons with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano > 1000000.
+	 * @description A filter in the query filter syntax: comparisons such as =, !=, <, >, IN, LIKE, CONTAINS and EXISTS on field names, combined with AND, OR and NOT, with string values in single quotes, for example key = 'value' AND other_key > 10. Which fields exist depends on the signal or endpoint the filter is used with.
 	 */
 	expression?: string;
 	/**
@@ -8580,7 +8580,7 @@ export interface InframonitoringtypesNodesDTO {
 export interface InframonitoringtypesPodFilterDTO {
 	/**
 	 * @type string
-	 * @description A filter in the query filter syntax, combining field comparisons with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano > 1000000.
+	 * @description A filter in the query filter syntax: comparisons such as =, !=, <, >, IN, LIKE, CONTAINS and EXISTS on field names, combined with AND, OR and NOT, with string values in single quotes, for example key = 'value' AND other_key > 10. Which fields exist depends on the signal or endpoint the filter is used with.
 	 */
 	expression?: string;
 	/**
@@ -8914,7 +8914,7 @@ export interface InframonitoringtypesPostablePodsDTO {
 export interface InframonitoringtypesStatefulSetFilterDTO {
 	/**
 	 * @type string
-	 * @description A filter in the query filter syntax, combining field comparisons with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano > 1000000.
+	 * @description A filter in the query filter syntax: comparisons such as =, !=, <, >, IN, LIKE, CONTAINS and EXISTS on field names, combined with AND, OR and NOT, with string values in single quotes, for example key = 'value' AND other_key > 10. Which fields exist depends on the signal or endpoint the filter is used with.
 	 */
 	expression?: string;
 	/**

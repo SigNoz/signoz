@@ -26,7 +26,7 @@ type QueryBuilderQuery[T any] struct {
 
 	Disabled bool `json:"disabled" description:"When true, the result is excluded from the response but the query still runs and can feed a formula or trace operator. Defaults to false."`
 
-	Filter *Filter `json:"filter,omitempty" description:"The filter expression that selects the rows or series, for example service.name = 'frontend' AND http.status_code >= 500."`
+	Filter *Filter `json:"filter,omitempty" description:"The filter expression that selects the rows or series of this signal."`
 
 	GroupBy []GroupByKey `json:"groupBy,omitzero" description:"The fields to group aggregations by; each group becomes a series or a row with the field as a label or column."`
 
@@ -76,6 +76,7 @@ func (QueryBuilderQuery[T]) PrepareJSONSchema(s *jsonschema.Schema) error {
 	prop := (&jsonschema.Schema{}).WithType(jsonschema.String.Type()).WithEnum(signal.StringValue())
 	prop.Description = propertyDescription(s, "signal")
 	s.Properties["signal"] = prop.ToSchemaOrBool()
+	describePropertyForSignal(s, "filter", filterDescriptionsBySignal[signal])
 	if !slices.Contains(s.Required, "signal") {
 		s.Required = append(s.Required, "signal")
 	}
@@ -270,4 +271,24 @@ func CanShortCircuitReduced(metricAgg MetricAggregation) bool {
 	}
 
 	return false
+}
+
+// filterDescriptionsBySignal gives each QueryBuilderQuery instantiation a filter
+// example drawn from its own signal, so the traces example never shows up on a
+// logs or metrics query. The shared Filter schema stays signal-neutral.
+var filterDescriptionsBySignal = map[telemetrytypes.Signal]string{
+	telemetrytypes.SignalTraces:  "The filter that selects spans, in the query filter syntax, for example service.name = 'frontend' AND http.response.status_code >= 500.",
+	telemetrytypes.SignalLogs:    "The filter that selects log records, in the query filter syntax, for example severity_text = 'ERROR' AND body CONTAINS 'timeout'.",
+	telemetrytypes.SignalMetrics: "The filter that selects series by their attributes, in the query filter syntax, for example k8s.namespace.name = 'prod' AND k8s.pod.name LIKE 'api%'.",
+}
+
+// describePropertyForSignal replaces a property's description with a
+// signal-specific one, keeping whatever schema shape the property already has.
+func describePropertyForSignal(s *jsonschema.Schema, name, description string) {
+	prop, ok := s.Properties[name]
+	if !ok || prop.TypeObject == nil || description == "" {
+		return
+	}
+	prop.TypeObject.Description = &description
+	s.Properties[name] = prop
 }

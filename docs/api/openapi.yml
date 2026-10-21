@@ -3690,8 +3690,9 @@ components:
         filter:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5Filter'
-          description: The filter expression that selects the rows or series, for
-            example service.name = 'frontend' AND http.status_code >= 500.
+          description: The filter that selects spans, in the query filter syntax,
+            for example service.name = 'frontend' AND http.response.status_code >=
+            500.
         functions:
           description: Post-processing functions applied in order to each result series,
             such as absolute, cumulativeSum, timeShift or anomaly.
@@ -5659,9 +5660,11 @@ components:
     InframonitoringtypesClusterFilter:
       properties:
         expression:
-          description: A filter in the query filter syntax, combining field comparisons
-            with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano
-            > 1000000.
+          description: 'A filter in the query filter syntax: comparisons such as =,
+            !=, <, >, IN, LIKE, CONTAINS and EXISTS on field names, combined with
+            AND, OR and NOT, with string values in single quotes, for example key
+            = ''value'' AND other_key > 10. Which fields exist depends on the signal
+            or endpoint the filter is used with.'
           type: string
         filterByNodeReadiness:
           items:
@@ -5814,9 +5817,11 @@ components:
     InframonitoringtypesContainerFilter:
       properties:
         expression:
-          description: A filter in the query filter syntax, combining field comparisons
-            with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano
-            > 1000000.
+          description: 'A filter in the query filter syntax: comparisons such as =,
+            !=, <, >, IN, LIKE, CONTAINS and EXISTS on field names, combined with
+            AND, OR and NOT, with string values in single quotes, for example key
+            = ''value'' AND other_key > 10. Which fields exist depends on the signal
+            or endpoint the filter is used with.'
           type: string
         filterByContainerStatus:
           items:
@@ -5926,9 +5931,11 @@ components:
     InframonitoringtypesDaemonSetFilter:
       properties:
         expression:
-          description: A filter in the query filter syntax, combining field comparisons
-            with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano
-            > 1000000.
+          description: 'A filter in the query filter syntax: comparisons such as =,
+            !=, <, >, IN, LIKE, CONTAINS and EXISTS on field names, combined with
+            AND, OR and NOT, with string values in single quotes, for example key
+            = ''value'' AND other_key > 10. Which fields exist depends on the signal
+            or endpoint the filter is used with.'
           type: string
         filterByPodStatus:
           items:
@@ -6011,9 +6018,11 @@ components:
     InframonitoringtypesDeploymentFilter:
       properties:
         expression:
-          description: A filter in the query filter syntax, combining field comparisons
-            with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano
-            > 1000000.
+          description: 'A filter in the query filter syntax: comparisons such as =,
+            !=, <, >, IN, LIKE, CONTAINS and EXISTS on field names, combined with
+            AND, OR and NOT, with string values in single quotes, for example key
+            = ''value'' AND other_key > 10. Which fields exist depends on the signal
+            or endpoint the filter is used with.'
           type: string
         filterByPodStatus:
           items:
@@ -6090,9 +6099,11 @@ components:
     InframonitoringtypesHostFilter:
       properties:
         expression:
-          description: A filter in the query filter syntax, combining field comparisons
-            with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano
-            > 1000000.
+          description: 'A filter in the query filter syntax: comparisons such as =,
+            !=, <, >, IN, LIKE, CONTAINS and EXISTS on field names, combined with
+            AND, OR and NOT, with string values in single quotes, for example key
+            = ''value'' AND other_key > 10. Which fields exist depends on the signal
+            or endpoint the filter is used with.'
           type: string
         filterByStatus:
           $ref: '#/components/schemas/InframonitoringtypesHostStatus'
@@ -6168,9 +6179,11 @@ components:
     InframonitoringtypesJobFilter:
       properties:
         expression:
-          description: A filter in the query filter syntax, combining field comparisons
-            with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano
-            > 1000000.
+          description: 'A filter in the query filter syntax: comparisons such as =,
+            !=, <, >, IN, LIKE, CONTAINS and EXISTS on field names, combined with
+            AND, OR and NOT, with string values in single quotes, for example key
+            = ''value'' AND other_key > 10. Which fields exist depends on the signal
+            or endpoint the filter is used with.'
           type: string
         filterByPodStatus:
           items:
@@ -6304,9 +6317,11 @@ components:
     InframonitoringtypesNamespaceFilter:
       properties:
         expression:
-          description: A filter in the query filter syntax, combining field comparisons
-            with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano
-            > 1000000.
+          description: 'A filter in the query filter syntax: comparisons such as =,
+            !=, <, >, IN, LIKE, CONTAINS and EXISTS on field names, combined with
+            AND, OR and NOT, with string values in single quotes, for example key
+            = ''value'' AND other_key > 10. Which fields exist depends on the signal
+            or endpoint the filter is used with.'
           type: string
         filterByPodStatus:
           items:
@@ -6398,9 +6413,11 @@ components:
     InframonitoringtypesNodeFilter:
       properties:
         expression:
-          description: A filter in the query filter syntax, combining field comparisons
-            with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano
-            > 1000000.
+          description: 'A filter in the query filter syntax: comparisons such as =,
+            !=, <, >, IN, LIKE, CONTAINS and EXISTS on field names, combined with
+            AND, OR and NOT, with string values in single quotes, for example key
+            = ''value'' AND other_key > 10. Which fields exist depends on the signal
+            or endpoint the filter is used with.'
           type: string
         filterByNodeReadiness:
           items:
@@ -6532,9 +6549,11 @@ components:
     InframonitoringtypesPodFilter:
       properties:
         expression:
-          description: A filter in the query filter syntax, combining field comparisons
-            with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano
-            > 1000000.
+          description: 'A filter in the query filter syntax: comparisons such as =,
+            !=, <, >, IN, LIKE, CONTAINS and EXISTS on field names, combined with
+            AND, OR and NOT, with string values in single quotes, for example key
+            = ''value'' AND other_key > 10. Which fields exist depends on the signal
+            or endpoint the filter is used with.'
           type: string
         filterByPodStatus:
           items:
@@ -6929,9 +6948,11 @@ components:
     InframonitoringtypesStatefulSetFilter:
       properties:
         expression:
-          description: A filter in the query filter syntax, combining field comparisons
-            with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano
-            > 1000000.
+          description: 'A filter in the query filter syntax: comparisons such as =,
+            !=, <, >, IN, LIKE, CONTAINS and EXISTS on field names, combined with
+            AND, OR and NOT, with string values in single quotes, for example key
+            = ''value'' AND other_key > 10. Which fields exist depends on the signal
+            or endpoint the filter is used with.'
           type: string
         filterByPodStatus:
           items:
@@ -8504,9 +8525,11 @@ components:
     Querybuildertypesv5Filter:
       properties:
         expression:
-          description: A filter in the query filter syntax, combining field comparisons
-            with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano
-            > 1000000.
+          description: 'A filter in the query filter syntax: comparisons such as =,
+            !=, <, >, IN, LIKE, CONTAINS and EXISTS on field names, combined with
+            AND, OR and NOT, with string values in single quotes, for example key
+            = ''value'' AND other_key > 10. Which fields exist depends on the signal
+            or endpoint the filter is used with.'
           type: string
       type: object
     Querybuildertypesv5FormatOptions:
@@ -8881,8 +8904,8 @@ components:
         filter:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5Filter'
-          description: The filter expression that selects the rows or series, for
-            example service.name = 'frontend' AND http.status_code >= 500.
+          description: The filter that selects log records, in the query filter syntax,
+            for example severity_text = 'ERROR' AND body CONTAINS 'timeout'.
         functions:
           description: Post-processing functions applied in order to each result series,
             such as absolute, cumulativeSum, timeShift or anomaly.
@@ -8995,8 +9018,9 @@ components:
         filter:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5Filter'
-          description: The filter expression that selects the rows or series, for
-            example service.name = 'frontend' AND http.status_code >= 500.
+          description: The filter that selects series by their attributes, in the
+            query filter syntax, for example k8s.namespace.name = 'prod' AND k8s.pod.name
+            LIKE 'api%'.
         functions:
           description: Post-processing functions applied in order to each result series,
             such as absolute, cumulativeSum, timeShift or anomaly.
@@ -9109,8 +9133,9 @@ components:
         filter:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5Filter'
-          description: The filter expression that selects the rows or series, for
-            example service.name = 'frontend' AND http.status_code >= 500.
+          description: The filter that selects spans, in the query filter syntax,
+            for example service.name = 'frontend' AND http.response.status_code >=
+            500.
         functions:
           description: Post-processing functions applied in order to each result series,
             such as absolute, cumulativeSum, timeShift or anomaly.
