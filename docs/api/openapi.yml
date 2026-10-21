@@ -8319,8 +8319,9 @@ components:
               type: string
           type: object
         name:
-          description: The field name, such as service.name or http.response.status_code.
-            Dots are part of the name.
+          description: The field name, such as service.name, k8s.pod.name or http.response.status_code.
+            Dots are part of the name, and the names available depend on the signal
+            and the data ingested.
           type: string
         queryName:
           type: string
@@ -8438,8 +8439,9 @@ components:
           description: 'Data type of the field values: string, bool, int64, float64
             or number. Empty means unspecified.'
         name:
-          description: The field name, such as service.name or http.response.status_code.
-            Dots are part of the name.
+          description: The field name, such as service.name, k8s.pod.name or http.response.status_code.
+            Dots are part of the name, and the names available depend on the signal
+            and the data ingested.
           type: string
         signal:
           allOf:
@@ -8539,8 +8541,9 @@ components:
           description: 'Data type of the field values: string, bool, int64, float64
             or number. Empty means unspecified.'
         name:
-          description: The field name, such as service.name or http.response.status_code.
-            Dots are part of the name.
+          description: The field name, such as service.name, k8s.pod.name or http.response.status_code.
+            Dots are part of the name, and the names available depend on the signal
+            and the data ingested.
           type: string
         signal:
           allOf:
@@ -11212,8 +11215,9 @@ components:
           description: 'Data type of the field values: string, bool, int64, float64
             or number. Empty means unspecified.'
         name:
-          description: The field name, such as service.name or http.response.status_code.
-            Dots are part of the name.
+          description: The field name, such as service.name, k8s.pod.name or http.response.status_code.
+            Dots are part of the name, and the names available depend on the signal
+            and the data ingested.
           type: string
         signal:
           allOf:
