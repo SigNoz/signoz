@@ -414,8 +414,8 @@ type ThresholdWithLabel struct {
 	// threshold, so it drops validate:"required" — go-playground's required treats a
 	// zero float as unset and would wrongly reject value: 0.
 	Value float64 `json:"value" required:"true" description:"The value the line is drawn at, in unit."`
-	Unit  string  `json:"unit" description:"The unit id of value. Empty means the panel formatting unit."`
-	Color string  `json:"color" validate:"required" required:"true" description:"The line color: a named color such as Red or a hex value."`
+	Unit  string  `json:"unit" description:"The unit id of value, such as ms or percent. Empty means the panel's unit, or the column's unit for a table threshold. Prefer the panel's unit; a different unit works only when it converts to it, such as s against a panel in ms."`
+	Color string  `json:"color" validate:"required" required:"true" description:"The CSS color of the line, for example #F1575F, which matches the SigNoz red preset; CSS named colors such as red also work."`
 	Label string  `json:"label" description:"The caption shown on the line."`
 }
 
@@ -425,8 +425,8 @@ type ComparisonThreshold struct {
 	// zero float as unset and would wrongly reject value: 0.
 	Value    float64            `json:"value" required:"true" description:"The value compared against, in unit."`
 	Operator ComparisonOperator `json:"operator" description:"The comparison that activates the threshold: above (default), below, above_or_equal, below_or_equal, equal or not_equal."`
-	Unit     string             `json:"unit" description:"The unit id of value. Empty means the panel formatting unit."`
-	Color    string             `json:"color" validate:"required" required:"true" description:"The color applied when the threshold is active: a named color such as Red or a hex value."`
+	Unit     string             `json:"unit" description:"The unit id of value, such as ms or percent. Empty means the panel's unit, or the column's unit for a table threshold. Prefer the panel's unit; a different unit works only when it converts to it, such as s against a panel in ms."`
+	Color    string             `json:"color" validate:"required" required:"true" description:"The CSS color applied to the text or background, per format, while the threshold is active. For example #F1575F matches the SigNoz red preset; CSS named colors such as red also work."`
 	Format   ThresholdFormat    `json:"format" description:"What the color is applied to: text (default) or background."`
 }
 

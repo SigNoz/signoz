@@ -4223,8 +4223,9 @@ components:
     DashboardtypesComparisonThreshold:
       properties:
         color:
-          description: 'The color applied when the threshold is active: a named color
-            such as Red or a hex value.'
+          description: 'The CSS color applied to the text or background, per format,
+            while the threshold is active. For example #F1575F matches the SigNoz
+            red preset; CSS named colors such as red also work.'
           type: string
         format:
           allOf:
@@ -4236,7 +4237,10 @@ components:
           description: 'The comparison that activates the threshold: above (default),
             below, above_or_equal, below_or_equal, equal or not_equal.'
         unit:
-          description: The unit id of value. Empty means the panel formatting unit.
+          description: The unit id of value, such as ms or percent. Empty means the
+            panel's unit, or the column's unit for a table threshold. Prefer the panel's
+            unit; a different unit works only when it converts to it, such as s against
+            a panel in ms.
           type: string
         value:
           description: The value compared against, in unit.
@@ -4436,8 +4440,10 @@ components:
         id:
           type: string
         image:
-          description: 'Icon or logo shown in the dashboard list: an /assets/Icons/
-            or /assets/Logos/ path, or a base64 image data URI. Empty for none.'
+          description: 'Icon or logo shown in the dashboard list: the path of an icon
+            or logo bundled with the UI under /assets/Icons/ or /assets/Logos/ (only
+            the prefix is validated), or a base64 image data URI for png, jpeg, gif,
+            webp, avif or svg. Empty for none.'
           type: string
         locked:
           description: Whether the dashboard is locked. A locked dashboard rejects
@@ -4464,7 +4470,8 @@ components:
           description: 'The dashboard content: display, variables, panels, layouts
             and links.'
         tags:
-          description: The tags attached to the dashboard.
+          description: The key/value tags attached to the dashboard, for example key
+            team with value payments.
           items:
             $ref: '#/components/schemas/TagtypesGettableTag'
           nullable: true
@@ -4488,7 +4495,8 @@ components:
       properties:
         defaultTimeRange:
           description: The time range shown to anonymous viewers by default, as a
-            duration such as 1h.
+            Go duration such as 30m, 1h or 24h. Accepted units are ns, us, ms, s,
+            m and h; write a day as 24h.
           type: string
         publicPath:
           description: The path segment of the public URL.
@@ -4516,8 +4524,10 @@ components:
         createdBy:
           type: string
         image:
-          description: 'Icon or logo shown in the dashboard list: an /assets/Icons/
-            or /assets/Logos/ path, or a base64 image data URI. Empty for none.'
+          description: 'Icon or logo shown in the dashboard list: the path of an icon
+            or logo bundled with the UI under /assets/Icons/ or /assets/Logos/ (only
+            the prefix is validated), or a base64 image data URI for png, jpeg, gif,
+            webp, avif or svg. Empty for none.'
           type: string
         locked:
           description: Whether the dashboard is locked. A locked dashboard rejects
@@ -4544,7 +4554,8 @@ components:
           description: 'The dashboard content: display, variables, panels, layouts
             and links.'
         tags:
-          description: The tags attached to the dashboard.
+          description: The key/value tags attached to the dashboard, for example key
+            team with value payments.
           items:
             $ref: '#/components/schemas/TagtypesGettableTag'
           nullable: true
@@ -5194,7 +5205,8 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesAreaChartPanelSpec'
-          description: The kind-specific panel options. {} accepts every default.
+          description: 'Options for an area chart panel: visualization, formatting,
+            chartAppearance, axes, legend and thresholds. {} accepts every default.'
       required:
       - kind
       - spec
@@ -5209,7 +5221,8 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesBarChartPanelSpec'
-          description: The kind-specific panel options. {} accepts every default.
+          description: 'Options for a bar chart panel: visualization, formatting,
+            axes, legend and thresholds. {} accepts every default.'
       required:
       - kind
       - spec
@@ -5224,7 +5237,8 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesHeatmapPanelSpec'
-          description: The kind-specific panel options. {} accepts every default.
+          description: 'Options for a heatmap panel: visualization, formatting, axes,
+            legend and chartAppearance. {} accepts every default.'
       required:
       - kind
       - spec
@@ -5239,7 +5253,8 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesHistogramPanelSpec'
-          description: The kind-specific panel options. {} accepts every default.
+          description: 'Options for a histogram panel: histogramBuckets and legend.
+            {} accepts every default.'
       required:
       - kind
       - spec
@@ -5254,7 +5269,8 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesListPanelSpec'
-          description: The kind-specific panel options. {} accepts every default.
+          description: 'Options for a list panel: selectFields, the columns shown
+            for each row. {} accepts every default.'
       required:
       - kind
       - spec
@@ -5269,7 +5285,8 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesNumberPanelSpec'
-          description: The kind-specific panel options. {} accepts every default.
+          description: 'Options for a number panel: visualization, formatting and
+            comparison thresholds that recolor the value. {} accepts every default.'
       required:
       - kind
       - spec
@@ -5284,7 +5301,8 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesPieChartPanelSpec'
-          description: The kind-specific panel options. {} accepts every default.
+          description: 'Options for a pie chart panel: visualization, formatting and
+            legend. {} accepts every default.'
       required:
       - kind
       - spec
@@ -5299,7 +5317,8 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesTablePanelSpec'
-          description: The kind-specific panel options. {} accepts every default.
+          description: 'Options for a table panel: visualization, formatting (including
+            per-column units) and thresholds. {} accepts every default.'
       required:
       - kind
       - spec
@@ -5314,7 +5333,8 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesTextPanelSpec'
-          description: The kind-specific panel options. {} accepts every default.
+          description: 'Options for a text panel: mode, the text to render, presentation
+            and headerOptions.'
       required:
       - kind
       - spec
@@ -5329,7 +5349,8 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesTimeSeriesPanelSpec'
-          description: The kind-specific panel options. {} accepts every default.
+          description: 'Options for a time series panel: visualization, formatting,
+            chartAppearance, axes, legend and thresholds. {} accepts every default.'
       required:
       - kind
       - spec
@@ -5405,8 +5426,10 @@ components:
             a random suffix. Requires an empty name and a non-empty spec.display.name.
           type: boolean
         image:
-          description: 'Icon or logo shown in the dashboard list: an /assets/Icons/
-            or /assets/Logos/ path, or a base64 image data URI. Empty for none.'
+          description: 'Icon or logo shown in the dashboard list: the path of an icon
+            or logo bundled with the UI under /assets/Icons/ or /assets/Logos/ (only
+            the prefix is validated), or a base64 image data URI for png, jpeg, gif,
+            webp, avif or svg. Empty for none.'
           type: string
         name:
           description: The dashboard's unique name, a DNS-1123 label (lowercase letters,
@@ -5423,9 +5446,9 @@ components:
           description: 'The dashboard content: display, variables, panels, layouts
             and links.'
         tags:
-          description: 'Up to 10 key/value tags. Keys must not be one of the reserved
-            list filter keys: name, description, created_at, updated_at, created_by,
-            locked, source. Use [] for none.'
+          description: 'Up to 10 key/value tags, for example key team with value payments.
+            Keys must not be one of the reserved list filter keys: name, description,
+            created_at, updated_at, created_by, locked, source. Use [] for none.'
           items:
             $ref: '#/components/schemas/TagtypesPostableTag'
           maxItems: 10
@@ -5453,7 +5476,8 @@ components:
       properties:
         defaultTimeRange:
           description: The time range shown to anonymous viewers by default, as a
-            duration such as 1h.
+            Go duration such as 30m, 1h or 24h. Accepted units are ns, us, ms, s,
+            m and h; write a day as 24h.
           type: string
         timeRangeEnabled:
           description: Whether anonymous viewers may change the time range.
@@ -5525,7 +5549,8 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesAIBuilderQuerySpec'
-          description: The kind-specific query spec.
+          description: A builder query over AI observability traces, with the trace
+            builder query fields.
       required:
       - kind
       - spec
@@ -5540,7 +5565,8 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesBuilderQuerySpec'
-          description: The kind-specific query spec.
+          description: 'A builder query over logs, traces or metrics: signal, aggregations,
+            filter, groupBy, order, limit and functions.'
       required:
       - kind
       - spec
@@ -5555,7 +5581,7 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5ClickHouseQuery'
-          description: The kind-specific query spec.
+          description: 'A ClickHouse SQL query: name, query and legend.'
       required:
       - kind
       - spec
@@ -5570,7 +5596,8 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5CompositeQuery'
-          description: The kind-specific query spec.
+          description: 'Several named builder queries and formulas run together: a
+            list of query envelopes, each with a type and a spec.'
       required:
       - kind
       - spec
@@ -5585,7 +5612,7 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5PromQuery'
-          description: The kind-specific query spec.
+          description: 'A PromQL query: name, query, step and legend.'
       required:
       - kind
       - spec
@@ -5600,7 +5627,8 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderFormula'
-          description: The kind-specific query spec.
+          description: A formula over other query names in the same panel, such as
+            A / B * 100.
       required:
       - kind
       - spec
@@ -5615,7 +5643,8 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderTraceOperator'
-          description: The kind-specific query spec.
+          description: A trace operator expression that combines span queries, such
+            as A => B.
       required:
       - kind
       - spec
@@ -5708,8 +5737,9 @@ components:
     DashboardtypesTableThreshold:
       properties:
         color:
-          description: 'The color applied when the threshold is active: a named color
-            such as Red or a hex value.'
+          description: 'The CSS color applied to the text or background, per format,
+            while the threshold is active. For example #F1575F matches the SigNoz
+            red preset; CSS named colors such as red also work.'
           type: string
         columnName:
           description: 'The column the rule applies to: the query name or aggregation
@@ -5725,7 +5755,10 @@ components:
           description: 'The comparison that activates the threshold: above (default),
             below, above_or_equal, below_or_equal, equal or not_equal.'
         unit:
-          description: The unit id of value. Empty means the panel formatting unit.
+          description: The unit id of value, such as ms or percent. Empty means the
+            panel's unit, or the column's unit for a table threshold. Prefer the panel's
+            unit; a different unit works only when it converts to it, such as s against
+            a panel in ms.
           type: string
         value:
           description: The value compared against, in unit.
@@ -5811,13 +5844,17 @@ components:
     DashboardtypesThresholdWithLabel:
       properties:
         color:
-          description: 'The line color: a named color such as Red or a hex value.'
+          description: 'The CSS color of the line, for example #F1575F, which matches
+            the SigNoz red preset; CSS named colors such as red also work.'
           type: string
         label:
           description: The caption shown on the line.
           type: string
         unit:
-          description: The unit id of value. Empty means the panel formatting unit.
+          description: The unit id of value, such as ms or percent. Empty means the
+            panel's unit, or the column's unit for a table threshold. Prefer the panel's
+            unit; a different unit works only when it converts to it, such as s against
+            a panel in ms.
           type: string
         value:
           description: The value the line is drawn at, in unit.
@@ -5909,8 +5946,10 @@ components:
     DashboardtypesUpdatableDashboardV2:
       properties:
         image:
-          description: 'Icon or logo shown in the dashboard list: an /assets/Icons/
-            or /assets/Logos/ path, or a base64 image data URI. Empty for none.'
+          description: 'Icon or logo shown in the dashboard list: the path of an icon
+            or logo bundled with the UI under /assets/Icons/ or /assets/Logos/ (only
+            the prefix is validated), or a base64 image data URI for png, jpeg, gif,
+            webp, avif or svg. Empty for none.'
           type: string
         name:
           description: The dashboard's current name. The name is immutable, so a different
@@ -5926,9 +5965,10 @@ components:
           description: 'The full replacement dashboard content: display, variables,
             panels, layouts and links.'
         tags:
-          description: 'The full replacement tag set, up to 10 key/value tags. Keys
-            must not be one of the reserved list filter keys: name, description, created_at,
-            updated_at, created_by, locked, source.'
+          description: 'The full replacement tag set, up to 10 key/value tags, for
+            example key team with value payments. Keys must not be one of the reserved
+            list filter keys: name, description, created_at, updated_at, created_by,
+            locked, source.'
           items:
             $ref: '#/components/schemas/TagtypesPostableTag'
           maxItems: 10
@@ -5944,7 +5984,8 @@ components:
       properties:
         defaultTimeRange:
           description: The time range shown to anonymous viewers by default, as a
-            duration such as 1h.
+            Go duration such as 30m, 1h or 24h. Accepted units are ns, us, ms, s,
+            m and h; write a day as 24h.
           type: string
         timeRangeEnabled:
           description: Whether anonymous viewers may change the time range.
@@ -6024,7 +6065,7 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesCustomVariableSpec'
-          description: The kind-specific value source spec.
+          description: customValue, the fixed list of values.
       required:
       - kind
       - spec
@@ -6039,7 +6080,8 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesDynamicVariableSpec'
-          description: The kind-specific value source spec.
+          description: 'The attribute whose observed values populate the variable:
+            name and signal.'
       required:
       - kind
       - spec
@@ -6054,7 +6096,7 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesQueryVariableSpec'
-          description: The kind-specific value source spec.
+          description: queryValue, the query whose results populate the variable.
       required:
       - kind
       - spec

@@ -80,6 +80,7 @@ type PanelPluginVariant[S any] struct {
 }
 
 func (v PanelPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
+	describeSpecForKind(s, panelSpecDescriptions[PanelPluginKind(v.Kind)])
 	return restrictKindToOneValue(s, v.Kind)
 }
 
@@ -173,6 +174,7 @@ type QueryPluginVariant[S any] struct {
 }
 
 func (v QueryPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
+	describeSpecForKind(s, querySpecDescriptions[QueryPluginKind(v.Kind)])
 	return restrictKindToOneValue(s, v.Kind)
 }
 
@@ -225,6 +227,7 @@ type VariablePluginVariant[S any] struct {
 }
 
 func (v VariablePluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
+	describeSpecForKind(s, variableSpecDescriptions[VariablePluginKind(v.Kind)])
 	return restrictKindToOneValue(s, v.Kind)
 }
 
@@ -342,6 +345,52 @@ func markDiscriminator(s *jsonschema.Schema, propertyName string, mapping map[st
 // restrictKindToOneValue ensures that the schema only allows one Kind value for a type.
 // For eg. PanelPluginVariant[TimeSeriesPanelSpec]{Kind: string(PanelKindTimeSeries)} should
 // only allow "signoz/TimeSeriesPanel" in its kind field.
+// Per-kind descriptions for each variant's `spec`, so a reader of the
+// discriminated schema learns what that kind's options are without opening the
+// referenced spec schema.
+var (
+	panelSpecDescriptions = map[PanelPluginKind]string{
+		PanelKindTimeSeries: "Options for a time series panel: visualization, formatting, chartAppearance, axes, legend and thresholds. {} accepts every default.",
+		PanelKindBarChart:   "Options for a bar chart panel: visualization, formatting, axes, legend and thresholds. {} accepts every default.",
+		PanelKindAreaChart:  "Options for an area chart panel: visualization, formatting, chartAppearance, axes, legend and thresholds. {} accepts every default.",
+		PanelKindNumber:     "Options for a number panel: visualization, formatting and comparison thresholds that recolor the value. {} accepts every default.",
+		PanelKindPieChart:   "Options for a pie chart panel: visualization, formatting and legend. {} accepts every default.",
+		PanelKindTable:      "Options for a table panel: visualization, formatting (including per-column units) and thresholds. {} accepts every default.",
+		PanelKindHistogram:  "Options for a histogram panel: histogramBuckets and legend. {} accepts every default.",
+		PanelKindList:       "Options for a list panel: selectFields, the columns shown for each row. {} accepts every default.",
+		PanelKindText:       "Options for a text panel: mode, the text to render, presentation and headerOptions.",
+		PanelKindHeatmap:    "Options for a heatmap panel: visualization, formatting, axes, legend and chartAppearance. {} accepts every default.",
+	}
+	querySpecDescriptions = map[QueryPluginKind]string{
+		QueryKindBuilder:       "A builder query over logs, traces or metrics: signal, aggregations, filter, groupBy, order, limit and functions.",
+		QueryKindAIBuilder:     "A builder query over AI observability traces, with the trace builder query fields.",
+		QueryKindComposite:     "Several named builder queries and formulas run together: a list of query envelopes, each with a type and a spec.",
+		QueryKindFormula:       "A formula over other query names in the same panel, such as A / B * 100.",
+		QueryKindPromQL:        "A PromQL query: name, query, step and legend.",
+		QueryKindClickHouseSQL: "A ClickHouse SQL query: name, query and legend.",
+		QueryKindTraceOperator: "A trace operator expression that combines span queries, such as A => B.",
+	}
+	variableSpecDescriptions = map[VariablePluginKind]string{
+		VariableKindDynamic: "The attribute whose observed values populate the variable: name and signal.",
+		VariableKindQuery:   "queryValue, the query whose results populate the variable.",
+		VariableKindCustom:  "customValue, the fixed list of values.",
+	}
+)
+
+// describeSpecForKind replaces the generic description of a variant's `spec`
+// property with the kind-specific one; an unknown kind keeps the generic text.
+func describeSpecForKind(schema *jsonschema.Schema, description string) {
+	if description == "" {
+		return
+	}
+	prop, ok := schema.Properties["spec"]
+	if !ok || prop.TypeObject == nil {
+		return
+	}
+	prop.TypeObject.Description = &description
+	schema.Properties["spec"] = prop
+}
+
 func restrictKindToOneValue(schema *jsonschema.Schema, kind string) error {
 	kindProp, ok := schema.Properties["kind"]
 	if !ok || kindProp.TypeObject == nil {
