@@ -7,6 +7,7 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { OptionsQuery } from 'container/OptionsMenu/types';
+import { PreferenceSource } from 'providers/preferences/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -29,6 +30,7 @@ export interface HasUnsavedViewChangesArgs {
 	view: SavedviewtypesSavedViewDTO;
 	stagedQuery: Query | null;
 	panelType: PANEL_TYPES;
+	preferenceSource?: PreferenceSource;
 	options?: SavedViewOptions;
 }
 

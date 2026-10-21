@@ -2,18 +2,16 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useGetSavedView } from 'api/generated/services/saved-view';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import useOptionsMenu from 'container/OptionsMenu/useOptionsMenu';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
 import { buildSavedViewReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
-import { DataSource } from 'types/common/queryBuilder';
 import { toAPIError } from 'utils/errorUtils';
 
-import { SAVED_VIEW_OPTIONS_DATA_SOURCE } from '../constants';
 import { UseActiveSavedViewResult } from '../types';
 import { hasUnsavedViewChanges } from '../utils/hasUnsavedViewChanges';
+import { useSavedViewOptions } from './useSavedViewOptions';
 
 export function useActiveSavedView(
 	source: SavedviewtypesSourceDTO,
@@ -21,10 +19,7 @@ export function useActiveSavedView(
 	const { viewKey } = useGetSavedViewParams();
 	const { stagedQuery, panelType } = useQueryBuilder();
 
-	const optionsDataSource = SAVED_VIEW_OPTIONS_DATA_SOURCE[source];
-	const { options } = useOptionsMenu({
-		dataSource: optionsDataSource ?? DataSource.LOGS,
-	});
+	const { preferenceSource, options } = useSavedViewOptions(source, panelType);
 
 	const { isLoading: isCheckingRead, deniedPermissions } = useAuthZ(
 		[buildSavedViewReadPermission(viewKey)],
@@ -63,7 +58,8 @@ export function useActiveSavedView(
 			view,
 			stagedQuery,
 			panelType: panelType ?? PANEL_TYPES.LIST,
-			options: optionsDataSource ? options : undefined,
+			preferenceSource,
+			options,
 		});
 	}, [
 		view,
@@ -71,7 +67,7 @@ export function useActiveSavedView(
 		isStagedQueryCurrent,
 		stagedQuery,
 		panelType,
-		optionsDataSource,
+		preferenceSource,
 		options,
 	]);
 
