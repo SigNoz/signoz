@@ -58,5 +58,7 @@ describe('Quadtree', () => {
 
 		expect(collect(tree, 40, 40, 5, 5).has(99)).toBe(true);
 		expect(collect(tree, 55, 55, 5, 5).has(99)).toBe(true);
+		// A zero-size query exactly on both midlines.
+		expect(collect(tree, 50, 50, 0, 0).has(99)).toBe(true);
 	});
 });

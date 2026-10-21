@@ -67,7 +67,10 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 		};
 	}
 
-	/** Time ticks, or unit-formatted values when a unit/precision is set. */
+	/**
+	 * Build values formatter for X-axis (time)
+	 * A non-time x axis with a unit or precision formats like a value axis.
+	 */
 	private buildXAxisValuesFormatter(): uPlot.Axis.Values | undefined {
 		const { isTimeAxis, yAxisUnit, decimalPrecision } = this.props;
 
@@ -82,7 +85,10 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 		return undefined;
 	}
 
-	/** Blanks splits outside the scale; uPlot's asinh splits always include ±threshold. */
+	/**
+	 * Build values formatter for Y-axis (values with units)
+	 * Blanks splits outside the scale; uPlot's asinh splits always include ±threshold.
+	 */
 	private buildValueAxisFormatter(): uPlot.Axis.Values {
 		const { yAxisUnit, decimalPrecision, scaleKey } = this.props;
 

@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import cx from 'classnames';
 import { Pin } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
+import { Typography } from '@signozhq/ui/typography';
 
 import { ScatterTooltipProps } from '../types';
 import { buildChannelRows, resolveHoveredPoint } from './scatterTooltipContent';
@@ -13,31 +15,37 @@ export default function ScatterTooltip({
 	dataIndexes,
 	seriesIndex,
 	channels,
-	resolvePointLabels,
+	resolvePointGroupValues,
 	decimalPrecision,
 	isPinned,
 	dismiss,
 	renderTooltipFooter,
 }: ScatterTooltipProps): JSX.Element | null {
-	const point = useMemo(
+	const hoveredPoint = useMemo(
 		() => resolveHoveredPoint(uPlotInstance, seriesIndex, dataIndexes),
 		[uPlotInstance, seriesIndex, dataIndexes],
 	);
 
 	const rows = useMemo(
-		() => (point ? buildChannelRows(point, channels, decimalPrecision) : []),
-		[point, channels, decimalPrecision],
+		() =>
+			hoveredPoint
+				? buildChannelRows(hoveredPoint, channels, decimalPrecision)
+				: [],
+		[hoveredPoint, channels, decimalPrecision],
 	);
 
 	const labels = useMemo(
 		() =>
-			point
-				? (resolvePointLabels?.(point.seriesIndex, point.dataIndex) ?? [])
+			hoveredPoint
+				? (resolvePointGroupValues?.(
+						hoveredPoint.seriesIndex,
+						hoveredPoint.dataIndex,
+					) ?? [])
 				: [],
-		[point, resolvePointLabels],
+		[hoveredPoint, resolvePointGroupValues],
 	);
 
-	if (!point) {
+	if (!hoveredPoint) {
 		return null;
 	}
 
@@ -48,19 +56,28 @@ export default function ScatterTooltip({
 			data-testid="scatter-tooltip"
 		>
 			<div className={Styles.header}>
-				<span className={Styles.marker} style={{ backgroundColor: point.color }} />
 				<span
+					className={Styles.marker}
+					style={{ backgroundColor: hoveredPoint.color }}
+				/>
+				<Typography.Text
+					as="span"
 					className={Styles.title}
-					title={point.label}
-					data-testid="scatter-tooltip-title"
+					title={hoveredPoint.label}
+					testId="scatter-tooltip-title"
 				>
-					{point.label}
-				</span>
+					{hoveredPoint.label}
+				</Typography.Text>
 				{isPinned && (
-					<span className={Styles.status} data-testid="scatter-tooltip-status">
-						<Pin size={12} />
-						<span>Pinned</span>
-					</span>
+					<Button
+						variant="ghost"
+						color="secondary"
+						size="sm"
+						prefix={<Pin size={12} />}
+						testId="scatter-tooltip-status"
+					>
+						Pinned
+					</Button>
 				)}
 			</div>
 
@@ -73,8 +90,12 @@ export default function ScatterTooltip({
 						className={Styles.row}
 						data-testid="scatter-tooltip-row"
 					>
-						<span className={Styles.rowLabel}>{row.label}</span>
-						<span className={Styles.rowValue}>{row.value}</span>
+						<Typography.Text as="span" className={Styles.rowLabel}>
+							{row.label}
+						</Typography.Text>
+						<Typography.Text as="span" className={Styles.rowValue}>
+							{row.value}
+						</Typography.Text>
 					</div>
 				))}
 			</div>
@@ -89,12 +110,20 @@ export default function ScatterTooltip({
 								className={cx(Styles.row, Styles.rowMuted)}
 								data-testid="scatter-tooltip-label"
 							>
-								<span className={Styles.rowLabel} title={label.key}>
+								<Typography.Text
+									as="span"
+									className={Styles.rowLabel}
+									title={label.key}
+								>
 									{label.key}
-								</span>
-								<span className={Styles.rowValue} title={label.value}>
+								</Typography.Text>
+								<Typography.Text
+									as="span"
+									className={Styles.rowValue}
+									title={label.value}
+								>
 									{label.value}
-								</span>
+								</Typography.Text>
 							</div>
 						))}
 					</div>

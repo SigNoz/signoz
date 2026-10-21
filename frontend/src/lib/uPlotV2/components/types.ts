@@ -127,7 +127,7 @@ export interface ScatterTooltipProps
 	extends BaseTooltipProps, TooltipRenderArgs {
 	channels: ScatterChannels;
 	/** The group values behind a point, e.g. `service.name` → `cart`. */
-	resolvePointLabels?: (
+	resolvePointGroupValues?: (
 		seriesIndex: number,
 		dataIndex: number,
 	) => ScatterPointLabel[];

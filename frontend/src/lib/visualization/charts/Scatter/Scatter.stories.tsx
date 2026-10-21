@@ -6,12 +6,8 @@ import type { Threshold } from 'lib/uPlotV2/hooks/types';
 import type { ScatterPointLabel } from 'lib/uPlotV2/plugins/ScatterPlugin/types';
 
 import Scatter from './Scatter';
-import {
-	buildScatterConfig,
-	prepareScatterChartData,
-	ScatterAxisScale,
-	ScatterSeries,
-} from './utils';
+import { ScatterAxisScale, type ScatterSeries } from './types';
+import { buildScatterConfig, prepareScatterChartData } from './utils';
 
 const SERVICES = [
 	'frontend',
@@ -137,7 +133,7 @@ function ScatterStory(props: ScatterStoryProps): JSX.Element {
 
 	const data = useMemo(() => prepareScatterChartData(series), [series]);
 
-	const resolvePointLabels = (
+	const resolvePointGroupValues = (
 		seriesIndex: number,
 		dataIndex: number,
 	): ScatterPointLabel[] => [
@@ -161,7 +157,7 @@ function ScatterStory(props: ScatterStoryProps): JSX.Element {
 					y: { label: 'p99 latency', unit: 'ms' },
 					...(sized && { size: { label: 'Errors', unit: 'short' } }),
 				}}
-				resolvePointLabels={resolvePointLabels}
+				resolvePointGroupValues={resolvePointGroupValues}
 				canPinTooltip
 			/>
 		</div>

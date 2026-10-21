@@ -50,15 +50,6 @@
 	white-space: nowrap;
 }
 
-.status {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-1);
-	font-size: 11px;
-	color: var(--text-vanilla-400);
-	flex-shrink: 0;
-}
-
 .rows {
 	display: flex;
 	flex-direction: column;

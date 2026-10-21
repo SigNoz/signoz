@@ -21,6 +21,13 @@ describe('logScaleSplits', () => {
 		expect(splitsFor(0.1, 10)).toStrictEqual([0.1, 0.2, 0.5, 1, 2, 5, 10]);
 	});
 
+	it('steps evenly through a range too narrow for two 1/2/5 splits', () => {
+		expect(splitsFor(7.6, 9.4)).toStrictEqual([8, 9]);
+		expect(splitsFor(8.12, 8.19)).toStrictEqual([
+			8.12, 8.13, 8.14, 8.15, 8.16, 8.17, 8.18, 8.19,
+		]);
+	});
+
 	it('is empty for a range a log scale cannot hold', () => {
 		expect(splitsFor(0, 10)).toStrictEqual([]);
 		expect(splitsFor(5, 5)).toStrictEqual([]);

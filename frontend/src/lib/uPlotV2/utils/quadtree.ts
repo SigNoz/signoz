@@ -81,8 +81,9 @@ export class Quadtree<T extends QuadtreeRect = QuadtreeRect> {
 		const midY = this.y + this.h / 2;
 		const startsNorth = rect.y < midY;
 		const startsWest = rect.x < midX;
-		const endsEast = rect.x + rect.w > midX;
-		const endsSouth = rect.y + rect.h > midY;
+		// Inclusive, so a zero-size query on a midline still reaches a quadrant.
+		const endsEast = rect.x + rect.w >= midX;
+		const endsSouth = rect.y + rect.h >= midY;
 
 		if (startsNorth && endsEast) {
 			visit(this.quadrants[0]);

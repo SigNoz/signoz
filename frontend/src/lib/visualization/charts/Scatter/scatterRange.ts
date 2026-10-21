@@ -2,12 +2,11 @@ import { DistributionType } from 'lib/uPlotV2/config/types';
 import { DEFAULT_ASINH_THRESHOLD } from 'lib/uPlotV2/utils/scale';
 import uPlot from 'uplot';
 
-import type { AxisDistribution } from './utils';
-
-interface ScaleTransform {
-	forward: (value: number) => number;
-	inverse: (position: number) => number;
-}
+import type {
+	AxisDistribution,
+	ScaleTransform,
+	ScatterRangeOptions,
+} from './types';
 
 export function getScaleTransform({
 	distribution,
@@ -51,14 +50,6 @@ function resolveExtent(
 	return lows.length > 0 && highs.length > 0
 		? [Math.min(...lows), Math.max(...highs)]
 		: null;
-}
-
-export interface ScatterRangeOptions extends AxisDistribution {
-	dimension: 'x' | 'y';
-	/** CSS pixels kept clear at each end so the largest dot draws whole. */
-	marginPx: number;
-	softMin?: number | null;
-	softMax?: number | null;
 }
 
 /** Data extent padded by `marginPx` so edge dots draw whole; log stays unsnapped (snapping after the margin can add an empty decade). */
