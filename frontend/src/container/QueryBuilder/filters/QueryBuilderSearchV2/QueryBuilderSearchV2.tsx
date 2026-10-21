@@ -9,6 +9,7 @@ import {
 	useState,
 } from 'react';
 import { Select, Spin } from 'antd';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import { Pill } from '@signozhq/ui/pill';
 import cx from 'classnames';
 import {
@@ -857,14 +858,10 @@ function QueryBuilderSearchV2(
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [query]);
 
-	const isLastQuery = useMemo(
-		() =>
-			isEqual(
-				currentQuery.builder.queryData[currentQuery.builder.queryData.length - 1],
-				query,
-			),
-		[currentQuery, query],
-	);
+	const isLastQuery = useMemo(() => {
+		const { queryData } = getActiveBuilder(currentQuery);
+		return isEqual(queryData[queryData.length - 1], query);
+	}, [currentQuery, query]);
 
 	useEffect(() => {
 		if (isLastQuery) {
