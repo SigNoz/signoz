@@ -6149,7 +6149,7 @@ export interface Querybuildertypesv5QueryBuilderFormulaDTO {
 	disabled?: boolean;
 	/**
 	 * @type string
-	 * @description An arithmetic expression over query names, for example A / B * 100, or A.0 and A.alias to pick one aggregation of a query by index or alias.
+	 * @description An arithmetic expression over builder query names, for example A / B * 100, or A.0 and A.alias to pick one aggregation of a query by index or alias. Reference queries, not other formulas.
 	 */
 	expression?: string;
 	/**
@@ -6173,7 +6173,7 @@ export interface Querybuildertypesv5QueryBuilderFormulaDTO {
 	limit?: number;
 	/**
 	 * @type string
-	 * @description The unique name of the formula, such as F1; it can be referenced like any query name.
+	 * @description The unique name of the formula, such as F1, used by selectedQueryName and by panels. Referencing a formula from another formula is not reliable, because formulas are evaluated in no fixed order.
 	 */
 	name?: string;
 	/**
@@ -6258,7 +6258,7 @@ export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
 	name?: string;
 	/**
 	 * @type integer
-	 * @description The number of results to skip before returning.
+	 * @description The number of raw results to skip before returning. Aggregation requests ignore it.
 	 */
 	offset?: number;
 	/**
@@ -10373,7 +10373,7 @@ export interface Querybuildertypesv5AggregationMetaDTO {
 export interface Querybuildertypesv5AggregationBucketDTO {
 	/**
 	 * @type string
-	 * @description The alias of the aggregation, or its expression when no alias was given.
+	 * @description The alias of the aggregation, or the internal name __result_N, with N its index, when no alias was given.
 	 */
 	alias?: string;
 	/**
@@ -10661,7 +10661,7 @@ export interface Querybuildertypesv5PreviewStatementDTO {
 export interface Querybuildertypesv5TimeSeriesDataDTO {
 	/**
 	 * @type array,null
-	 * @description One bucket per aggregation of the query, in request order.
+	 * @description One bucket per aggregation of the query. The order is not guaranteed; match buckets to aggregations by index.
 	 */
 	aggregations?: Querybuildertypesv5AggregationBucketDTO[] | null;
 	/**
@@ -10812,7 +10812,7 @@ export type Querybuildertypesv5VariableItemDTOValueOneOfItem =
 	| boolean;
 
 /**
- * The selected value: a string, number or boolean, or a list of them for multi-select variables. The string __all__ selects every value.
+ * The selected value: a string, number or boolean, or a list of them for multi-select variables. The string __all__ is special only for dynamic variables in builder filters and PromQL, where it removes the condition that references the variable; query, custom and text variables, and ClickHouse SQL for every type, substitute it literally.
  */
 export type Querybuildertypesv5VariableItemDTOValue =
 	| string
@@ -10826,13 +10826,13 @@ export interface Querybuildertypesv5VariableItemDTO {
 	 */
 	type?: Querybuildertypesv5VariableTypeDTO;
 	/**
-	 * @description The selected value: a string, number or boolean, or a list of them for multi-select variables. The string __all__ selects every value.
+	 * @description The selected value: a string, number or boolean, or a list of them for multi-select variables. The string __all__ is special only for dynamic variables in builder filters and PromQL, where it removes the condition that references the variable; query, custom and text variables, and ClickHouse SQL for every type, substitute it literally.
 	 */
 	value?: Querybuildertypesv5VariableItemDTOValue;
 }
 
 /**
- * Dashboard variable values keyed by variable name, substituted for $name or {{name}} placeholders in filters and raw queries before execution.
+ * Dashboard variable values keyed by variable name. Builder filters substitute only the $name form and leave a quoted {{name}} unchanged; PromQL and ClickHouse SQL substitute $name, {{name}}, [[name]] and the Go template form {{.name}}.
  */
 export type Querybuildertypesv5QueryRangeRequestDTOVariables = {
 	[key: string]: Querybuildertypesv5VariableItemDTO;
@@ -10878,7 +10878,7 @@ export interface Querybuildertypesv5QueryRangeRequestDTO {
 	start?: number;
 	/**
 	 * @type object
-	 * @description Dashboard variable values keyed by variable name, substituted for $name or {{name}} placeholders in filters and raw queries before execution.
+	 * @description Dashboard variable values keyed by variable name. Builder filters substitute only the $name form and leave a quoted {{name}} unchanged; PromQL and ClickHouse SQL substitute $name, {{name}}, [[name]] and the Go template form {{.name}}.
 	 */
 	variables?: Querybuildertypesv5QueryRangeRequestDTOVariables;
 }

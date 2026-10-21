@@ -134,12 +134,12 @@ func (q *QueryRangeResponse) PrepareJSONSchema(schema *jsonschema.Schema) error 
 
 type TimeSeriesData struct {
 	QueryName    string               `json:"queryName" description:"The name of the query that produced this result."`
-	Aggregations []*AggregationBucket `json:"aggregations" description:"One bucket per aggregation of the query, in request order."`
+	Aggregations []*AggregationBucket `json:"aggregations" description:"One bucket per aggregation of the query. The order is not guaranteed; match buckets to aggregations by index."`
 }
 
 type AggregationBucket struct {
 	Index  int             `json:"index" description:"The zero-based position of the aggregation in the query."`
-	Alias  string          `json:"alias" description:"The alias of the aggregation, or its expression when no alias was given."`
+	Alias  string          `json:"alias" description:"The alias of the aggregation, or the internal name __result_N, with N its index, when no alias was given."`
 	Meta   AggregationMeta `json:"meta,omitempty" description:"Display metadata for the aggregation."`
 	Series []*TimeSeries   `json:"series" description:"One series per group-by combination."`
 

@@ -331,7 +331,7 @@ func (VariableType) Enum() []any {
 
 type VariableItem struct {
 	Type  VariableType `json:"type" description:"The kind of dashboard variable: query, dynamic, custom or text."`
-	Value any          `json:"value" description:"The selected value: a string, number or boolean, or a list of them for multi-select variables. The string __all__ selects every value."`
+	Value any          `json:"value" description:"The selected value: a string, number or boolean, or a list of them for multi-select variables. The string __all__ is special only for dynamic variables in builder filters and PromQL, where it removes the condition that references the variable; query, custom and text variables, and ClickHouse SQL for every type, substitute it literally."`
 }
 
 var _ jsonschema.Preparer = VariableItem{}
@@ -375,7 +375,7 @@ type QueryRangeRequest struct {
 	End            uint64                  `json:"end" description:"The end of the time range as a Unix timestamp in milliseconds; must be greater than start except for raw_stream requests."`
 	RequestType    RequestType             `json:"requestType" description:"The shape of the result: scalar, time_series, raw, raw_stream, trace, distribution or heatmap. It decides which result type data.results carries."`
 	CompositeQuery CompositeQuery          `json:"compositeQuery" description:"The queries to execute together; at least one is required and formulas may reference the others by name."`
-	Variables      map[string]VariableItem `json:"variables,omitempty" description:"Dashboard variable values keyed by variable name, substituted for $name or {{name}} placeholders in filters and raw queries before execution."`
+	Variables      map[string]VariableItem `json:"variables,omitempty" description:"Dashboard variable values keyed by variable name. Builder filters substitute only the $name form and leave a quoted {{name}} unchanged; PromQL and ClickHouse SQL substitute $name, {{name}}, [[name]] and the Go template form {{.name}}."`
 
 	NoCache bool `json:"noCache,omitempty" description:"When true, bypasses the query result cache and reads every bucket from the store. Defaults to false."`
 

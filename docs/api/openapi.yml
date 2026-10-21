@@ -8270,8 +8270,8 @@ components:
     Querybuildertypesv5AggregationBucket:
       properties:
         alias:
-          description: The alias of the aggregation, or its expression when no alias
-            was given.
+          description: The alias of the aggregation, or the internal name __result_N,
+            with N its index, when no alias was given.
           type: string
         anomalyScores:
           description: The anomaly score per series; present only when the anomaly
@@ -8816,9 +8816,9 @@ components:
             formula is still evaluated. Defaults to false.
           type: boolean
         expression:
-          description: An arithmetic expression over query names, for example A /
-            B * 100, or A.0 and A.alias to pick one aggregation of a query by index
-            or alias.
+          description: An arithmetic expression over builder query names, for example
+            A / B * 100, or A.0 and A.alias to pick one aggregation of a query by
+            index or alias. Reference queries, not other formulas.
           type: string
         functions:
           description: Post-processing functions applied in order to each result series.
@@ -8840,8 +8840,9 @@ components:
             0.
           type: integer
         name:
-          description: The unique name of the formula, such as F1; it can be referenced
-            like any query name.
+          description: The unique name of the formula, such as F1, used by selectedQueryName
+            and by panels. Referencing a formula from another formula is not reliable,
+            because formulas are evaluated in no fixed order.
           type: string
         order:
           description: The sort order of the formula result.
@@ -9249,7 +9250,8 @@ components:
           description: The unique name of the trace operator query.
           type: string
         offset:
-          description: The number of results to skip before returning.
+          description: The number of raw results to skip before returning. Aggregation
+            requests ignore it.
           type: integer
         order:
           description: The sort order of the matched traces; only span_count and trace_duration
@@ -9464,8 +9466,10 @@ components:
         variables:
           additionalProperties:
             $ref: '#/components/schemas/Querybuildertypesv5VariableItem'
-          description: Dashboard variable values keyed by variable name, substituted
-            for $name or {{name}} placeholders in filters and raw queries before execution.
+          description: Dashboard variable values keyed by variable name. Builder filters
+            substitute only the $name form and leave a quoted {{name}} unchanged;
+            PromQL and ClickHouse SQL substitute $name, {{name}}, [[name]] and the
+            Go template form {{.name}}.
           type: object
       type: object
     Querybuildertypesv5QueryRangeResponse:
@@ -9650,7 +9654,8 @@ components:
     Querybuildertypesv5TimeSeriesData:
       properties:
         aggregations:
-          description: One bucket per aggregation of the query, in request order.
+          description: One bucket per aggregation of the query. The order is not guaranteed;
+            match buckets to aggregations by index.
           items:
             $ref: '#/components/schemas/Querybuildertypesv5AggregationBucket'
           nullable: true
@@ -9702,7 +9707,10 @@ components:
             text.'
         value:
           description: 'The selected value: a string, number or boolean, or a list
-            of them for multi-select variables. The string __all__ selects every value.'
+            of them for multi-select variables. The string __all__ is special only
+            for dynamic variables in builder filters and PromQL, where it removes
+            the condition that references the variable; query, custom and text variables,
+            and ClickHouse SQL for every type, substitute it literally.'
           oneOf:
           - type: string
           - type: number
