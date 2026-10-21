@@ -11529,7 +11529,7 @@ export interface RuletypesNotificationSettingsDTO {
 	groupBy?: string[] | null;
 	/**
 	 * @type string
-	 * @description A grace period, as a Go duration such as 2m, during which a newly seen label group is excluded from evaluation.
+	 * @description A grace period, as a Go duration such as 2m, during which a newly seen label group is excluded from evaluation; log and trace builder queries are never suppressed. For metric queries, new means the latest first-seen time of the series' group-by attribute values in the metric metadata, and a series whose values have no metadata is evaluated at once.
 	 */
 	newGroupEvalDelay?: string;
 	/**
