@@ -554,7 +554,7 @@ func (m MetricAggregation) Copy() MetricAggregation {
 }
 
 type Filter struct {
-	Expression string `json:"expression" description:"A filter in the query filter syntax, combining field comparisons with AND, OR and NOT, for example service.name = 'frontend' AND duration_nano > 1000000."`
+	Expression string `json:"expression" description:"A filter in the query filter syntax: comparisons such as =, !=, <, >, IN, LIKE, CONTAINS and EXISTS on field names, combined with AND, OR and NOT, with string values in single quotes, for example key = 'value' AND other_key > 10. Which fields exist depends on the signal or endpoint the filter is used with."`
 }
 
 // Copy creates a deep copy of Filter.
