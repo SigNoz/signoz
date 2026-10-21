@@ -87,7 +87,7 @@ function EditorRoute(): JSX.Element {
 	const parkedBuilders = useRef<BuildersByVariant>({});
 	const onChangeQueryMode = useQueryModeChange({
 		panelType: PANEL_TYPES.TIME_SERIES,
-		supportedQueryModesKindMap: panelDefinition.supportedQueryModesKindMap,
+		supportedQueryTypesKindMap: panelDefinition.supportedQueryTypesKindMap,
 		parkedBuilders,
 	});
 

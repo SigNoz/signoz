@@ -12,7 +12,7 @@ import type { SyncedQueryBuilderField } from 'components/QueryBuilderV2/queryBui
 import type {
 	PanelQueryCapabilities,
 	QueryBuilderFieldsConfig,
-	SupportedQueryModesKindMap,
+	SupportedQueryTypesKindMap,
 } from './panelCapabilities';
 import type {
 	BaseRendererProps,
@@ -118,7 +118,7 @@ export interface QueryPanelDefinition<
 	/** Lower editor pane — the shared query-builder pane, or a kind wrapper of it. */
 	EditorPane: ComponentType<QueryEditorPaneProps>;
 	/** Authoring modes (Query Builder / ClickHouse / PromQL / AI) and the signals each accepts. */
-	supportedQueryModesKindMap: SupportedQueryModesKindMap;
+	supportedQueryTypesKindMap: SupportedQueryTypesKindMap;
 	queryBuilderFields: QueryBuilderFieldsConfig;
 	/** How this kind's query-range request is shaped (request type, paging, result formatting). */
 	queryCapabilities: PanelQueryCapabilities;

@@ -1,3 +1,4 @@
+import { EQueryType } from 'types/common/dashboard';
 import {
 	type KeyboardEvent,
 	type ReactNode,
@@ -23,13 +24,12 @@ import { useSyncQueryBuilderFields } from 'components/QueryBuilderV2/useSyncQuer
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
-	getQueryModeSignals,
+	getQueryTypeSignals,
 	isRawRequest,
 } from '../../Panels/types/panelCapabilities';
 import type { RenderableQueryPanelDefinition } from '../../Panels/types/panelDefinition';
 import { toPanelType } from '../../Panels/types/panelKind';
 import { getQueryMode, isBuilderMode } from 'lib/query/queryMode';
-import { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
 
 import styles from './PanelEditorQueryBuilder.module.scss';
 
@@ -99,10 +99,10 @@ function PanelEditorQueryBuilder({
 
 	const items = useMemo(() => {
 		const queryTypeComponents: Record<
-			QueryMode,
+			EQueryType,
 			{ icon: ReactNode; label: string; component: ReactNode }
 		> = {
-			[QueryMode.QUERY_BUILDER]: {
+			[EQueryType.QUERY_BUILDER]: {
 				icon: <Atom size={14} />,
 				label: 'Query Builder',
 				component: (
@@ -110,9 +110,9 @@ function PanelEditorQueryBuilder({
 						<QueryBuilderV2
 							panelType={panelType}
 							fieldsConfig={panelDefinition.queryBuilderFields}
-							allowedDataSources={getQueryModeSignals(
-								panelDefinition.supportedQueryModesKindMap,
-								QueryMode.QUERY_BUILDER,
+							allowedDataSources={getQueryTypeSignals(
+								panelDefinition.supportedQueryTypesKindMap,
+								EQueryType.QUERY_BUILDER,
 							)}
 							showTraceOperator={!isRawQuery}
 							version="v3"
@@ -123,12 +123,12 @@ function PanelEditorQueryBuilder({
 					</div>
 				),
 			},
-			[QueryMode.CLICKHOUSE]: {
+			[EQueryType.CLICKHOUSE]: {
 				icon: <Terminal size={14} />,
 				label: 'ClickHouse Query',
 				component: <ClickHouseQueryContainer />,
 			},
-			[QueryMode.PROM]: {
+			[EQueryType.PROM]: {
 				icon: (
 					<PromQLIcon
 						fillColor={isDarkMode ? Color.BG_VANILLA_200 : Color.BG_INK_300}
@@ -137,7 +137,7 @@ function PanelEditorQueryBuilder({
 				label: 'PromQL',
 				component: <PromQLQueryContainer />,
 			},
-			[QueryMode.AI_QUERY_BUILDER]: {
+			[EQueryType.AI_QUERY_BUILDER]: {
 				icon: <Brain size={14} />,
 				label: 'AI Query Builder',
 				component: (
@@ -160,8 +160,8 @@ function PanelEditorQueryBuilder({
 		};
 
 		const modes = Object.keys(
-			panelDefinition.supportedQueryModesKindMap,
-		) as QueryMode[];
+			panelDefinition.supportedQueryTypesKindMap,
+		) as EQueryType[];
 
 		return modes.map((queryType) => ({
 			key: queryType,

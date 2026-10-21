@@ -5,7 +5,7 @@ import { handleQueryChange } from 'lib/query/panelQuery';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import { resolveQueryMode } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
+import { resolveQueryType } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 import { getBuilderQueries } from '../../../Panels/utils/getBuilderQueries';
 import { toPerses } from '../../../queryV5/persesQueryAdapters';
 import { getSwitchedPluginSpec } from '../../getSwitchedPluginSpec';
@@ -18,7 +18,7 @@ jest.mock('lib/query/panelQuery', () => ({
 	handleQueryChange: jest.fn(),
 }));
 jest.mock('../../../Panels/capabilities', () => ({
-	resolveQueryMode: jest.fn(),
+	resolveQueryType: jest.fn(),
 	getSupportedSignals: jest.fn(() => ['metrics']),
 	getQueryPanelDefinition: jest.requireActual('../../../Panels/capabilities')
 		.getQueryPanelDefinition,
@@ -39,7 +39,7 @@ jest.mock('../../../Panels/utils/getBuilderQueries', () => ({
 
 const mockUseQueryBuilder = useQueryBuilder as unknown as jest.Mock;
 const mockHandleQueryChange = handleQueryChange as unknown as jest.Mock;
-const mockResolveQueryMode = resolveQueryMode as unknown as jest.Mock;
+const mockResolveQueryMode = resolveQueryType as unknown as jest.Mock;
 const mockToPerses = toPerses as unknown as jest.Mock;
 const mockGetSwitchedPluginSpec = getSwitchedPluginSpec as unknown as jest.Mock;
 const mockGetBuilderQueries = getBuilderQueries as unknown as jest.Mock;

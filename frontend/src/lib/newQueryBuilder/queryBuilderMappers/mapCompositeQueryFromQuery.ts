@@ -91,7 +91,12 @@ const buildPromQuery = (
 	return compositeQuery;
 };
 
-const queryTypeMethodMapping = {
+const queryTypeMethodMapping: Partial<
+	Record<
+		EQueryType,
+		(query: Query, panelType: PANEL_TYPES | null) => ICompositeMetricQuery
+	>
+> = {
 	[EQueryType.QUERY_BUILDER]: buildBuilderQuery,
 	[EQueryType.CLICKHOUSE]: buildClickHouseQuery,
 	[EQueryType.PROM]: buildPromQuery,
