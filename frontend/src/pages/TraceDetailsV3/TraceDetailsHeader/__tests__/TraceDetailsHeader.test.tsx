@@ -383,6 +383,16 @@ describe('TraceDetailsHeader – tabs', () => {
 		expect(screen.getByText(metadataText)).toBeInTheDocument();
 	});
 
+	it('clears the filter result when switching to the Thread tab', async () => {
+		const user = userEvent.setup({ delay: null });
+		renderHeader();
+		baseProps.onFilteredSpansChange.mockClear();
+
+		await user.click(screen.getByTestId('trace-details-tab-thread'));
+
+		expect(baseProps.onFilteredSpansChange).toHaveBeenCalledWith([], false);
+	});
+
 	it('closes the Analytics panel when switching to the Thread tab', async () => {
 		const user = userEvent.setup({ delay: null });
 		renderHeader();

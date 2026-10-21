@@ -68,10 +68,13 @@ function TraceDetailsHeader({
 	const isOverview = tab === TraceDetailsTab.Overview;
 
 	// Overview-only panels must not linger over another tab.
+	// The filter query lives in Filters' local state, which unmounts with the
+	// Overview tab; drop its result too so both start empty on return.
 	useEffect(() => {
 		setIsPreviewFieldsOpen(false);
 		setIsAnalyticsOpen(false);
-	}, [tab]);
+		onFilteredSpansChange([], false);
+	}, [tab, onFilteredSpansChange]);
 	const previewFields = useTraceStore((s) => s.previewFields);
 	const setPreviewFields = useTraceStore((s) => s.setPreviewFields);
 
