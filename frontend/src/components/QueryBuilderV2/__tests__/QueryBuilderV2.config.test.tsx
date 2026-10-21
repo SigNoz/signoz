@@ -1,8 +1,8 @@
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { render } from 'tests/test-utils';
-import { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { QueryBuilderV2 } from '../QueryBuilderV2';
@@ -19,7 +19,7 @@ const aiQuery: Query = {
 		...initialQueriesMap.traces.builder,
 		queryData: initialQueriesMap.traces.builder.queryData.map((query) => ({
 			...query,
-			builderQueryType: QueryMode.AI_QUERY_BUILDER,
+			builderQueryType: EQueryType.AI_QUERY_BUILDER,
 		})),
 	},
 };

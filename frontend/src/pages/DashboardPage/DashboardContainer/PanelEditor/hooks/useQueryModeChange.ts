@@ -3,20 +3,20 @@ import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 
 import {
-	getQueryModeSignals,
-	type SupportedQueryModesKindMap,
+	getQueryTypeSignals,
+	type SupportedQueryTypesKindMap,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelCapabilities';
 import {
 	type BuildersByVariant,
 	type Query,
-	QueryMode,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 import { getBuilderVariant, toBuilderVariant } from 'lib/query/queryMode';
 import { seedBuilderForMode } from 'pages/DashboardPage/DashboardContainer/Panels/utils/seedBuilderForMode';
 
 interface UseQueryModeChangeArgs {
 	panelType: PANEL_TYPES;
-	supportedQueryModesKindMap: SupportedQueryModesKindMap;
+	supportedQueryTypesKindMap: SupportedQueryTypesKindMap;
 	/** Builder queries for the variant not on screen. */
 	parkedBuilders: MutableRefObject<BuildersByVariant>;
 }
@@ -27,7 +27,7 @@ interface UseQueryModeChangeArgs {
  */
 export function useQueryModeChange({
 	panelType,
-	supportedQueryModesKindMap,
+	supportedQueryTypesKindMap,
 	parkedBuilders,
 }: UseQueryModeChangeArgs): (key: string) => void {
 	const {
@@ -38,16 +38,16 @@ export function useQueryModeChange({
 
 	return useCallback(
 		(key: string): void => {
-			const targetMode = key as QueryMode;
+			const targetMode = key as EQueryType;
 			const targetVariant = toBuilderVariant(targetMode);
 			const heldVariant = getBuilderVariant(currentQuery.builder);
 
-			const seedFor = (mode: QueryMode): Query['builder'] =>
+			const seedFor = (mode: EQueryType): Query['builder'] =>
 				seedBuilderForMode({
 					mode,
-					defaultSignal: getQueryModeSignals(
-						supportedQueryModesKindMap,
-						QueryMode.QUERY_BUILDER,
+					defaultSignal: getQueryTypeSignals(
+						supportedQueryTypesKindMap,
+						EQueryType.QUERY_BUILDER,
 					)[0],
 					panelType,
 					updateAllQueriesOperators,
@@ -65,8 +65,8 @@ export function useQueryModeChange({
 				...currentQuery,
 				// An AI query is a builder query carrying the AI tag; its query type stays `builder`.
 				queryType:
-					targetMode === QueryMode.AI_QUERY_BUILDER
-						? QueryMode.QUERY_BUILDER
+					targetMode === EQueryType.AI_QUERY_BUILDER
+						? EQueryType.QUERY_BUILDER
 						: targetMode,
 				builder,
 			});
@@ -76,7 +76,7 @@ export function useQueryModeChange({
 			panelType,
 			parkedBuilders,
 			redirectWithQueryBuilderData,
-			supportedQueryModesKindMap,
+			supportedQueryTypesKindMap,
 			updateAllQueriesOperators,
 		],
 	);

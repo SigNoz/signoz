@@ -1,7 +1,8 @@
+import { EQueryType } from 'types/common/dashboard';
 import { List } from '@signozhq/icons';
 
 import type { PanelDefinition } from '../../types/panelDefinition';
-import { QueryModeKind } from '../../types/panelCapabilities';
+import { QueryTypeKind } from '../../types/panelCapabilities';
 import ListEditorPane from './ListEditorPane';
 import Renderer from './Renderer';
 import { sections } from './sections';
@@ -9,7 +10,6 @@ import {
 	Querybuildertypesv5RequestTypeDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
 
 export const definition: PanelDefinition<'signoz/ListPanel'> = {
 	kind: 'signoz/ListPanel',
@@ -19,13 +19,13 @@ export const definition: PanelDefinition<'signoz/ListPanel'> = {
 	Renderer,
 	EditorPane: ListEditorPane,
 	// Raw records come from logs and traces; metrics don't produce row data.
-	supportedQueryModesKindMap: {
-		[QueryMode.QUERY_BUILDER]: {
-			kind: QueryModeKind.SIGNAL,
+	supportedQueryTypesKindMap: {
+		[EQueryType.QUERY_BUILDER]: {
+			kind: QueryTypeKind.SIGNAL,
 			signals: [TelemetrytypesSignalDTO.logs, TelemetrytypesSignalDTO.traces],
 		},
-		[QueryMode.AI_QUERY_BUILDER]: {
-			kind: QueryModeKind.SIGNAL,
+		[EQueryType.AI_QUERY_BUILDER]: {
+			kind: QueryTypeKind.SIGNAL,
 			signals: [TelemetrytypesSignalDTO.traces],
 		},
 	},
