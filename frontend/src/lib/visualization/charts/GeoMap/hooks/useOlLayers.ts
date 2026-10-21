@@ -194,16 +194,15 @@ export function useOlLayers({
 			fill: new Fill({ color: 'transparent' }),
 		});
 		// A hovered point gets a ring just outside its circle.
-		layers.hover.setStyle(
-			(feature): Style =>
-				feature.getGeometry() instanceof Point
-					? new Style({
-							image: new CircleStyle({
-								radius: (feature.get('radius') as number) + 2,
-								stroke: outline,
-							}),
-						})
-					: shapeHover,
+		layers.hover.setStyle((feature): Style =>
+			feature.getGeometry() instanceof Point
+				? new Style({
+						image: new CircleStyle({
+							radius: (feature.get('radius') as number) + 2,
+							stroke: outline,
+						}),
+					})
+				: shapeHover,
 		);
 	}, [handle, palette, layer, fillFor, radiusFor, sizeByCode, styles]);
 
