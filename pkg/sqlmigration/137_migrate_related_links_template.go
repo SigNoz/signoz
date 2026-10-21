@@ -145,11 +145,13 @@ func (migration *migrateRelatedLinksTemplate) migrateConfigs(ctx context.Context
 
 		changed := false
 		for _, receiver := range receivers {
+			var receiverName string
+			_ = json.Unmarshal(receiver["name"], &receiverName)
+
 			for _, kind := range []relatedLinksChannelKind{relatedLinksSlackKind, relatedLinksMSTeamsKind, relatedLinksIncidentIOKind, relatedLinksJSMOpsKind, relatedLinksTelegramKind} {
 				rewritten, err := rewriteRelatedLinksInReceiver(receiver, kind)
 				if err != nil {
-					migration.logger.WarnContext(ctx, "leaving receiver related links template as is", slog.String("config_id", row.ID), slog.String("receiver", string(receiver["name"])), slog.String("configs_key", kind.configsKey), errors.Attr(err))
-					continue
+					migration.logger.WarnContext(ctx, "leaving receiver related links template as is", slog.String("config_id", row.ID), slog.String("receiver", receiverName), slog.String("configs_key", kind.configsKey), errors.Attr(err))
 				}
 				changed = changed || rewritten
 			}
@@ -340,8 +342,9 @@ func rewriteRelatedLinksInField(object map[string]json.RawMessage, kind relatedL
 }
 
 // rewriteRelatedLinks swaps the related links section of tmpl for the kind's
-// block call. It returns the input unchanged when no section is present, and an
-// error when a section is present but was customised or does not parse.
+// block call. It returns the input unchanged when tmpl never references the
+// related links annotations, and an error when it does but the section was
+// customised, is not in the expected shape or does not parse.
 func rewriteRelatedLinks(tmpl string, kind relatedLinksChannelKind) (string, bool, error) {
 	chunks := lexRelatedLinksChunks(tmpl)
 	start, end, found := findRelatedLinksSection(tmpl, chunks)
