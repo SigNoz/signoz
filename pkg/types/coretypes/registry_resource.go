@@ -39,6 +39,7 @@ var Resources = []Resource{
 	ResourceTelemetryResourceMeterMetrics,
 	ResourceMetaResourceLogsField,
 	ResourceMetaResourceTracesField,
+	ResourceMetaResourceMetricsField,
 }
 
 var (
@@ -80,4 +81,5 @@ var (
 	ResourceTelemetryResourceMeterMetrics                = NewResourceTelemetryResource(KindMeterMetrics)
 	ResourceMetaResourceLogsField                        = NewResourceMetaResource(KindLogsField)
 	ResourceMetaResourceTracesField                      = NewResourceMetaResource(KindTracesField)
+	ResourceMetaResourceMetricsField                     = NewResourceMetaResource(KindMetricsField, VerbList, VerbRead, VerbUpdate)
 )

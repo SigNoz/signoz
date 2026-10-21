@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -239,6 +240,94 @@ func TestDiffLinks(t *testing.T) {
 
 			assert.Equal(t, testCase.wantAttached, attached)
 			assert.Equal(t, testCase.wantDetached, detached)
+		})
+	}
+}
+
+func TestFieldResourcesFromCompositeQuery(t *testing.T) {
+	testCases := []struct {
+		name      string
+		body      string
+		wantKinds []coretypes.Kind
+		wantErr   bool
+	}{
+		{
+			name:      "Builder_Logs_LogsField",
+			body:      `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"logs"}}]}}`,
+			wantKinds: []coretypes.Kind{coretypes.KindLogsField},
+		},
+		{
+			name:      "Builder_Traces_TracesField",
+			body:      `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"traces"}}]}}`,
+			wantKinds: []coretypes.Kind{coretypes.KindTracesField},
+		},
+		{
+			name:      "Builder_Metrics_MetricsField",
+			body:      `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"metrics"}}]}}`,
+			wantKinds: []coretypes.Kind{coretypes.KindMetricsField},
+		},
+		{
+			name:      "SubQuery_Metrics_MetricsField",
+			body:      `{"compositeQuery":{"queries":[{"type":"builder_sub_query","spec":{"signal":"metrics"}}]}}`,
+			wantKinds: []coretypes.Kind{coretypes.KindMetricsField},
+		},
+		{
+			name:      "BuilderAI_TracesField",
+			body:      `{"compositeQuery":{"queries":[{"type":"builder_ai_query","spec":{}}]}}`,
+			wantKinds: []coretypes.Kind{coretypes.KindTracesField},
+		},
+		{
+			name:      "PromQL_MetricsField",
+			body:      `{"compositeQuery":{"queries":[{"type":"promql","spec":{}}]}}`,
+			wantKinds: []coretypes.Kind{coretypes.KindMetricsField},
+		},
+		{
+			name:      "ClickHouseSQL_AllThreeFields",
+			body:      `{"compositeQuery":{"queries":[{"type":"clickhouse_sql","spec":{}}]}}`,
+			wantKinds: []coretypes.Kind{coretypes.KindLogsField, coretypes.KindTracesField, coretypes.KindMetricsField},
+		},
+		{
+			name:      "TwoBuilderSameSignal_Deduped",
+			body:      `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"metrics"}},{"type":"builder_query","spec":{"signal":"metrics"}}]}}`,
+			wantKinds: []coretypes.Kind{coretypes.KindMetricsField},
+		},
+		{
+			name:      "FormulaAlongsideBuilder_FormulaSkipped",
+			body:      `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"logs"}},{"type":"builder_formula","spec":{}}]}}`,
+			wantKinds: []coretypes.Kind{coretypes.KindLogsField},
+		},
+		{
+			name:    "NoQueries_Errors",
+			body:    `{"compositeQuery":{"queries":[]}}`,
+			wantErr: true,
+		},
+		{
+			name:    "UnknownSignal_Errors",
+			body:    `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"events"}}]}}`,
+			wantErr: true,
+		},
+		{
+			name:    "UnknownQueryType_Errors",
+			body:    `{"compositeQuery":{"queries":[{"type":"graphql","spec":{}}]}}`,
+			wantErr: true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			refs, err := fieldResourcesFromCompositeQuery([]byte(testCase.body))
+
+			if testCase.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			kinds := make([]coretypes.Kind, 0, len(refs))
+			for _, ref := range refs {
+				kinds = append(kinds, ref.Resource.Kind())
+			}
+			assert.Equal(t, testCase.wantKinds, kinds)
 		})
 	}
 }

@@ -108,12 +108,10 @@ export function getTableData(
 	}
 
 	const tableData: RowData[] =
-		data?.result?.[0]?.table?.rows?.map(
-			(row, index: number): RowData => ({
-				...row.data,
-				key: index,
-			}),
-		) || [];
+		data?.result?.[0]?.table?.rows?.map((row, index: number): RowData => ({
+			...row.data,
+			key: index,
+		})) || [];
 
 	return tableData;
 }

@@ -2,8 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { Button, InputNumber, Popover, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
-import { LogViewMode } from 'container/OptionsMenu/types';
-import { FontSize, OptionsMenuConfig } from 'container/OptionsMenu/types';
+import {
+	LogViewMode,
+	FontSize,
+	OptionsMenuConfig,
+} from 'container/OptionsMenu/types';
 import {
 	Check,
 	ChevronLeft,
@@ -175,21 +178,19 @@ function OptionsMenu({
 						<div className="title">FORMAT</div>
 
 						<div className="menu-items">
-							{items.map(
-								(item: any): JSX.Element => (
-									<div
-										className="item"
-										key={item.label}
-										onClick={(): void => handleMenuItemClick(item.key)}
-									>
-										<div className={cx('item-label')}>
-											{item.label}
+							{items.map((item: any): JSX.Element => (
+								<div
+									className="item"
+									key={item.label}
+									onClick={(): void => handleMenuItemClick(item.key)}
+								>
+									<div className={cx('item-label')}>
+										{item.label}
 
-											{selectedItem === item.key && <Check size={12} />}
-										</div>
+										{selectedItem === item.key && <Check size={12} />}
 									</div>
-								),
-							)}
+								</div>
+							))}
 						</div>
 					</div>
 

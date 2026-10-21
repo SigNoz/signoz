@@ -298,6 +298,15 @@
     },
     {
       "type": "metaresource",
+      "kind": "metrics-field",
+      "verbs": [
+        "read",
+        "update",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
       "kind": "ttl-setting",
       "verbs": [
         "read",
@@ -526,6 +535,15 @@
     },
     {
       "type": "metaresource",
+      "kind": "metrics-field",
+      "verbs": [
+        "read",
+        "update",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
       "kind": "ttl-setting",
       "verbs": [
         "read",
@@ -690,6 +708,14 @@
     {
       "type": "metaresource",
       "kind": "quick-filter",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "metrics-field",
       "verbs": [
         "read",
         "list"

@@ -29,6 +29,7 @@ var (
 	ChannelKindJira       = ChannelKind{valuer.NewString("jira")}
 	ChannelKindJSMOps     = ChannelKind{valuer.NewString("jsmops")}
 	ChannelKindIncidentIO = ChannelKind{valuer.NewString("incidentio")}
+	ChannelKindTelegram   = ChannelKind{valuer.NewString("telegram")}
 )
 
 func (ChannelKind) Enum() []any {

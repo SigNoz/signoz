@@ -12,7 +12,10 @@ import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { useCopyToClipboard } from 'react-use';
 import { toast } from '@signozhq/ui/sonner';
 
-import { defineJsonEditorTheme, JSON_EDITOR_THEME } from './editorTheme';
+import {
+	defineJsonEditorTheme,
+	JSON_EDITOR_THEME,
+} from 'lib/monaco/jsonEditorTheme';
 import styles from './JsonEditorDrawer.module.scss';
 import JsonEditorToolbar from './JsonEditorToolbar';
 import { useJsonEditor } from './useJsonEditor';

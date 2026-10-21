@@ -4,6 +4,8 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/rulestatehistorytypes"
@@ -50,14 +52,13 @@ func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbRead)}),
+			SecuritySchemes:     newScopedSecuritySchemes(telemetryReadScopes()),
 		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceRule,
-			Verb:     coretypes.VerbRead,
-			Category: coretypes.ActionCategoryDataAccess,
-			ID:       coretypes.PathParam("id"),
-			Selector: coretypes.IDSelector,
+		handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: ruler.NewRuleQueryTelemetryResources(provider.rulerService),
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -75,14 +76,13 @@ func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbRead)}),
+			SecuritySchemes:     newScopedSecuritySchemes(telemetryReadScopes()),
 		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceRule,
-			Verb:     coretypes.VerbRead,
-			Category: coretypes.ActionCategoryDataAccess,
-			ID:       coretypes.PathParam("id"),
-			Selector: coretypes.IDSelector,
+		handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: ruler.NewRuleQueryTelemetryResources(provider.rulerService),
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -100,14 +100,13 @@ func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbRead)}),
+			SecuritySchemes:     newScopedSecuritySchemes(fieldScopes(coretypes.VerbList)),
 		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceRule,
-			Verb:     coretypes.VerbRead,
-			Category: coretypes.ActionCategoryDataAccess,
-			ID:       coretypes.PathParam("id"),
-			Selector: coretypes.IDSelector,
+		handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbList,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  coretypes.WildcardSelector,
+			Resources: ruler.NewRuleQueryFieldResources(provider.rulerService),
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -125,14 +124,13 @@ func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbRead)}),
+			SecuritySchemes:     newScopedSecuritySchemes(fieldScopes(coretypes.VerbRead)),
 		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceRule,
-			Verb:     coretypes.VerbRead,
-			Category: coretypes.ActionCategoryDataAccess,
-			ID:       coretypes.PathParam("id"),
-			Selector: coretypes.IDSelector,
+		handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  coretypes.WildcardSelector,
+			Resources: ruler.NewRuleQueryFieldResources(provider.rulerService),
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -164,4 +162,12 @@ func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
 	}
 
 	return nil
+}
+
+func fieldScopes(verb coretypes.Verb) []string {
+	return []string{
+		coretypes.ResourceMetaResourceLogsField.Scope(verb),
+		coretypes.ResourceMetaResourceTracesField.Scope(verb),
+		coretypes.ResourceMetaResourceMetricsField.Scope(verb),
+	}
 }

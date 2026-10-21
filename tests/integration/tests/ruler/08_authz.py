@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from datetime import UTC, datetime
 from http import HTTPStatus
 
 import requests
@@ -506,6 +507,81 @@ def test_setup_channel_scoped_actor(
     if _ACTOR_EMAIL not in {user["email"] for user in response.json()["data"]}:
         user_id = create_active_user(signoz, admin_token, email=_ACTOR_EMAIL, role="signoz-viewer", password=_ACTOR_PASSWORD, name="alert authz actor")
         change_user_role(signoz, admin_token, user_id, "signoz-viewer", _ACTOR_ROLE_NAME)
+
+
+def test_history_labels_need_telemetry_and_field_grants(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{V3_RULES_URL}?limit=200"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    target_id = {rule["alert"]: rule["id"] for rule in response.json()["data"]["rules"]}[_TARGET_RULE]
+
+    end_ms = int(datetime.now(tz=UTC).timestamp() * 1000)
+    start_ms = end_ms - 30 * 60 * 1000
+    history_url = f"{V2_RULES_URL}/{target_id}/history"
+    rule_scoped = (
+        (f"{history_url}/stats", {"start": start_ms, "end": end_ms}),
+        (f"{history_url}/overall_status", {"start": start_ms, "end": end_ms}),
+    )
+    label_scoped = (
+        (f"{history_url}/timeline", {"start": start_ms, "end": end_ms}),
+        (f"{history_url}/top_contributors", {"start": start_ms, "end": end_ms}),
+        (f"{history_url}/filter_keys", {"startUnixMilli": start_ms, "endUnixMilli": end_ms}),
+        (f"{history_url}/filter_values", {"startUnixMilli": start_ms, "endUnixMilli": end_ms, "name": "severity"}),
+    )
+
+    for path, params in rule_scoped:
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(path),
+            params=params,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK, f"GET {path}: expected 200, got {response.status_code}: {response.text}"
+
+    for path, params in label_scoped:
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(path),
+            params=params,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.FORBIDDEN, f"GET {path}: expected 403, got {response.status_code}: {response.text}"
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{find_role_by_name(signoz, admin_token, _ACTOR_ROLE_NAME)}"),
+        json={
+            "description": "",
+            "transactionGroups": _ACTOR_BASE_TRANSACTION_GROUPS
+            + [
+                transaction_group("read", "telemetryresource", "metrics", ["builder_query/*"]),
+                transaction_group("list", "metaresource", "metrics-field", ["*"]),
+                transaction_group("read", "metaresource", "metrics-field", ["*"]),
+            ],
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
+    for path, params in label_scoped:
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(path),
+            params=params,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK, f"GET {path}: expected 200, got {response.status_code}: {response.text}"
 
 
 def test_rule_without_channels_allowed_without_channel_attach(
