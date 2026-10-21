@@ -8,7 +8,7 @@ import (
 
 type ChannelOpsgenieConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty" description:"Also notify when the alert resolves. Defaults to true."`
-	APIKey       string                       `json:"apiKey" required:"true" format:"password" description:"The Opsgenie API integration key. A secret; returned only by a fetch by ID."`
+	APIKey       string                       `json:"apiKey" required:"true" format:"password" description:"The Opsgenie API integration key. A secret; returned by create, update and fetch by ID, never by list."`
 	APIURL       string                       `json:"apiUrl" description:"The Opsgenie API host; empty uses the global Alertmanager default."`
 	Message      valuer.UnsetOrNonEmptyString `json:"message,omitzero" description:"Alertmanager template for the alert message; defaults to the Alertmanager Opsgenie default."`
 	Description  valuer.UnsetOrNonEmptyString `json:"description,omitzero" description:"Alertmanager template for the alert description; defaults to the Alertmanager Opsgenie default."`

@@ -483,8 +483,8 @@ components:
             SigNoz Google Chat default.
           type: string
         webhookUrl:
-          description: The Google Chat space webhook URL. A secret; returned only
-            by a fetch by ID.
+          description: The Google Chat space webhook URL. A secret; returned by create,
+            update and fetch by ID, never by list.
           format: password
           type: string
       required:
@@ -513,7 +513,7 @@ components:
           type: string
         token:
           description: The alert source secret token, without the Bearer prefix. A
-            secret; returned only by a fetch by ID.
+            secret; returned by create, update and fetch by ID, never by list.
           format: password
           type: string
         url:
@@ -527,8 +527,8 @@ components:
     AlertmanagertypesChannelJSMOpsConfig:
       properties:
         apiKey:
-          description: The JSM Ops integration API key. A secret; returned only by
-            a fetch by ID.
+          description: The JSM Ops integration API key. A secret; returned by create,
+            update and fetch by ID, never by list.
           format: password
           type: string
         description:
@@ -556,12 +556,13 @@ components:
       properties:
         apiToken:
           description: The Atlassian API token paired with email. A secret; returned
-            only by a fetch by ID.
+            by create, update and fetch by ID, never by list.
           format: password
           type: string
         customFields:
           additionalProperties: {}
-          description: Extra issue fields keyed by Jira field ID.
+          description: Extra issue fields keyed by Jira field ID. Stored, but the
+            notifier does not currently include them in the issue it creates or updates.
           nullable: true
           type: object
         description:
@@ -660,8 +661,8 @@ components:
             Teams default.
           type: string
         webhookUrl:
-          description: The Teams incoming webhook URL. A secret; returned only by
-            a fetch by ID.
+          description: The Teams incoming webhook URL. A secret; returned by create,
+            update and fetch by ID, never by list.
           format: password
           type: string
       required:
@@ -670,8 +671,8 @@ components:
     AlertmanagertypesChannelOpsgenieConfig:
       properties:
         apiKey:
-          description: The Opsgenie API integration key. A secret; returned only by
-            a fetch by ID.
+          description: The Opsgenie API integration key. A secret; returned by create,
+            update and fetch by ID, never by list.
           format: password
           type: string
         apiUrl:
@@ -737,8 +738,8 @@ components:
           description: The logical grouping of components the event belongs to.
           type: string
         routingKey:
-          description: The Events API v2 integration key. A secret; returned only
-            by a fetch by ID.
+          description: The Events API v2 integration key. A secret; returned by create,
+            update and fetch by ID, never by list.
           format: password
           type: string
         sendResolved:
@@ -841,8 +842,8 @@ components:
           nullable: true
           type: array
         apiUrl:
-          description: The Slack incoming webhook URL. A secret; returned only by
-            a fetch by ID.
+          description: The Slack incoming webhook URL. A secret; returned by create,
+            update and fetch by ID, never by list.
           format: password
           type: string
         channel:
@@ -966,7 +967,7 @@ components:
           type: boolean
         url:
           description: The endpoint that receives the Alertmanager webhook payload.
-            A secret; returned only by a fetch by ID.
+            A secret; returned by create, update and fetch by ID, never by list.
           format: password
           type: string
         username:
@@ -1158,7 +1159,8 @@ components:
       properties:
         custom_fields:
           additionalProperties: {}
-          description: Extra issue fields keyed by Jira field ID.
+          description: Extra issue fields keyed by Jira field ID. Stored, but the
+            notifier does not currently include them in the issue it creates or updates.
           type: object
         description:
           description: Alertmanager template for the issue description.

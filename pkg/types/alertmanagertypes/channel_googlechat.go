@@ -9,7 +9,7 @@ import (
 
 type ChannelGoogleChatConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty" description:"Also notify when the alert resolves. Defaults to false."`
-	WebhookURL   string                       `json:"webhookUrl" required:"true" format:"password" description:"The Google Chat space webhook URL. A secret; returned only by a fetch by ID."`
+	WebhookURL   string                       `json:"webhookUrl" required:"true" format:"password" description:"The Google Chat space webhook URL. A secret; returned by create, update and fetch by ID, never by list."`
 	Title        valuer.UnsetOrNonEmptyString `json:"title,omitzero" description:"Alertmanager template for the message title; defaults to the SigNoz Google Chat default."`
 	Text         valuer.UnsetOrNonEmptyString `json:"text,omitzero" description:"Alertmanager template for the message body; defaults to the SigNoz Google Chat default."`
 }

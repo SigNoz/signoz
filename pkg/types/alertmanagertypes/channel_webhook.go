@@ -17,7 +17,7 @@ const bearerAuthorizationType = "Bearer"
 // as upstream allows, but not together with BearerToken.
 type ChannelWebhookConfig struct {
 	SendResolved *bool  `json:"sendResolved,omitempty" description:"Also notify when the alert resolves. Defaults to true."`
-	URL          string `json:"url" required:"true" format:"password" description:"The endpoint that receives the Alertmanager webhook payload. A secret; returned only by a fetch by ID."`
+	URL          string `json:"url" required:"true" format:"password" description:"The endpoint that receives the Alertmanager webhook payload. A secret; returned by create, update and fetch by ID, never by list."`
 	Username     string `json:"username" description:"The basic auth user; cannot be combined with bearerToken."`
 	Password     string `json:"password" format:"password" description:"The basic auth password; cannot be combined with bearerToken."`
 	BearerToken  string `json:"bearerToken" format:"password" description:"The bearer token sent in the Authorization header; cannot be combined with username or password."`

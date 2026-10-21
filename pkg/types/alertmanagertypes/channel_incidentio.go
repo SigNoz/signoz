@@ -12,7 +12,7 @@ import (
 type ChannelIncidentIOConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty" description:"Also notify when the alert resolves. Defaults to false."`
 	URL          string                       `json:"url" required:"true" description:"The alert source HTTP alert events endpoint copied from its setup page."`
-	Token        string                       `json:"token" required:"true" format:"password" description:"The alert source secret token, without the Bearer prefix. A secret; returned only by a fetch by ID."`
+	Token        string                       `json:"token" required:"true" format:"password" description:"The alert source secret token, without the Bearer prefix. A secret; returned by create, update and fetch by ID, never by list."`
 	Title        valuer.UnsetOrNonEmptyString `json:"title,omitzero" description:"Alertmanager template for the alert title; defaults to the SigNoz incident.io default."`
 	Description  valuer.UnsetOrNonEmptyString `json:"description,omitzero" description:"Alertmanager template for the alert description, rendered as markdown; defaults to the SigNoz incident.io default."`
 	Metadata     map[string]string            `json:"metadata,omitzero" description:"Extra event metadata keyed by name, merged over the group's common labels; values are Alertmanager templates."`

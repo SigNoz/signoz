@@ -8,7 +8,7 @@ import (
 
 type ChannelSlackConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty" description:"Also notify when the alert resolves. Defaults to false."`
-	APIURL       string                       `json:"apiUrl" required:"true" format:"password" description:"The Slack incoming webhook URL. A secret; returned only by a fetch by ID."`
+	APIURL       string                       `json:"apiUrl" required:"true" format:"password" description:"The Slack incoming webhook URL. A secret; returned by create, update and fetch by ID, never by list."`
 	Channel      string                       `json:"channel" description:"The channel or user to post to, such as #alerts; empty uses the webhook default."`
 	Title        valuer.UnsetOrNonEmptyString `json:"title,omitzero" description:"Alertmanager template for the message title; defaults to the Alertmanager Slack default."`
 	Text         valuer.UnsetOrNonEmptyString `json:"text,omitzero" description:"Alertmanager template for the message body; defaults to the Alertmanager Slack default."`

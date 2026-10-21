@@ -8,7 +8,7 @@ import (
 
 type ChannelPagerdutyConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty" description:"Also notify when the alert resolves. Defaults to true."`
-	RoutingKey   string                       `json:"routingKey" required:"true" format:"password" description:"The Events API v2 integration key. A secret; returned only by a fetch by ID."`
+	RoutingKey   string                       `json:"routingKey" required:"true" format:"password" description:"The Events API v2 integration key. A secret; returned by create, update and fetch by ID, never by list."`
 	URL          string                       `json:"url" description:"The Events API endpoint; empty uses the PagerDuty default."`
 	Source       valuer.UnsetOrNonEmptyString `json:"source,omitzero" description:"Alertmanager template for the unique location of the affected system; defaults to client."`
 	Client       valuer.UnsetOrNonEmptyString `json:"client,omitzero" description:"Alertmanager template for the client identifier; defaults to the Alertmanager PagerDuty default."`
