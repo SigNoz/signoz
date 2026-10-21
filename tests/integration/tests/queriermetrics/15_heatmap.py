@@ -301,11 +301,6 @@ def test_linear_buckets(
         [0, 0, 0, 0, 1],
     ]
 
-
-# neither axis can place a value at or below zero, so those share a bucket of
-# their own beneath the rest. on the log axis 128 is spanned to separate it from
-# the bucket holding 256; on the linear axis the rung under (0, 256] is 0, the
-# zero bucket itself, so nothing sits between them
 @pytest.mark.parametrize(
     "bucket_options, expected_buckets, expected_columns",
     [
@@ -847,10 +842,6 @@ def test_metric_with_no_data(
     assert get_heatmap_columns(data, "A") == []
     assert any(missing_metric in warning["message"] for warning in get_all_warnings(data))
 
-
-# nothing is open below either axis the way the overflow is open above: -1500
-# shares the zero bucket with -50 and 0 however far down it is, and the rung
-# spanned under 250's bucket sits above that zero bucket
 @pytest.mark.parametrize(
     "bucket_options, expected_buckets",
     [
