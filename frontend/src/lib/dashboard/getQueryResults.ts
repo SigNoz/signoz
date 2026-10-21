@@ -27,7 +27,7 @@ import {
 	QueryRangeResponseV5,
 } from 'types/api/v5/queryRange';
 import { QueryData } from 'types/api/widgets/getQuery';
-import { EQueryType } from 'types/common/dashboard';
+import { getActiveBuilder, isBuilderQueryType } from 'lib/query/builderSlot';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { prepareQueryRangePayload } from './prepareQueryRangePayload';
@@ -36,11 +36,11 @@ import { prepareQueryRangePayload } from './prepareQueryRangePayload';
  * Validates if metric name is available for METRICS data source
  */
 function validateMetricNameForMetricsDataSource(query: Query): boolean {
-	if (query.queryType !== 'builder') {
+	if (!isBuilderQueryType(query.queryType)) {
 		return true; // Non-builder queries don't need this validation
 	}
 
-	const { queryData } = query.builder;
+	const { queryData } = getActiveBuilder(query);
 
 	// Check if any METRICS data source queries exist
 	const metricsQueries = queryData.filter(
@@ -124,14 +124,15 @@ export const getLegend = (
 	labelName: string,
 ): string => {
 	// For non-query builder queries, return the label name directly
-	if (payloadQuery.queryType !== EQueryType.QUERY_BUILDER) {
+	if (!isBuilderQueryType(payloadQuery.queryType)) {
 		return labelName;
 	}
 
+	const activeBuilder = getActiveBuilder(payloadQuery);
 	// Combine queryData and queryTraceOperator
 	const allQueries = [
-		...(payloadQuery?.builder?.queryData || []),
-		...(payloadQuery?.builder?.queryTraceOperator || []),
+		...(activeBuilder?.queryData || []),
+		...(activeBuilder?.queryTraceOperator || []),
 	];
 
 	const aggregationPerQuery = allQueries.reduce((acc, query) => {

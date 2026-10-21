@@ -12,6 +12,7 @@ import {
 import { FORMULA_REGEXP } from 'constants/regExp';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
+import { getActiveBuilder, isBuilderQueryType } from 'lib/query/builderSlot';
 import { get, isEqual, isNaN, isObject } from 'lodash-es';
 import {
 	IBuilderFormula,
@@ -93,8 +94,8 @@ const getQueryByName = <T extends keyof QueryBuilderData>(
 			queryArray.find((q) => q.name === currentQueryName) || defaultQueryValue
 		);
 	}
-	if (query.queryType === EQueryType.QUERY_BUILDER) {
-		const queryArray = (query.builder[type] || []) as (
+	if (isBuilderQueryType(query.queryType)) {
+		const queryArray = (getActiveBuilder(query)[type] || []) as (
 			| IBuilderQuery
 			| IBuilderFormula
 		)[];
@@ -173,7 +174,7 @@ const addOperatorFormulaColumns = (
 		return;
 	}
 
-	if (queryType === EQueryType.QUERY_BUILDER) {
+	if (isBuilderQueryType(queryType)) {
 		const currentQueryData = query as IBuilderQuery;
 		let operatorLabel = `${currentQueryData.aggregateOperator}`;
 		if (currentQueryData.aggregateAttribute?.key) {

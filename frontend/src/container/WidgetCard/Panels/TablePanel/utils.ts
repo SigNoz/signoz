@@ -4,6 +4,7 @@ import { ThresholdProps } from 'types/api/widgets/threshold';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import { isEmpty, isNaN } from 'lodash-es';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
@@ -119,14 +120,15 @@ export function getQueryLegend(
 	let legend: string | undefined;
 	switch (currentQuery.queryType) {
 		case EQueryType.QUERY_BUILDER:
+		case EQueryType.AI_QUERY_BUILDER:
 			// check if the value is present in the queries
-			legend = currentQuery?.builder?.queryData?.find(
+			legend = getActiveBuilder(currentQuery)?.queryData?.find(
 				(query) => query.queryName === queryName,
 			)?.legend;
 
 			if (!legend) {
 				// check if the value is present in the formula
-				legend = currentQuery?.builder?.queryFormulas?.find(
+				legend = getActiveBuilder(currentQuery)?.queryFormulas?.find(
 					(query) => query.queryName === queryName,
 				)?.legend;
 			}
@@ -199,7 +201,7 @@ export function createColumnsAndDataSource(
 				: undefined;
 
 			const isNewAggregation =
-				currentQuery?.builder?.queryData?.find(
+				getActiveBuilder(currentQuery).queryData?.find(
 					(query) => query.queryName === item.queryName,
 				)?.aggregations?.length || 0;
 
