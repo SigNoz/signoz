@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { TraceDetailsTab } from './constants';
 import { useTraceDetailsTab } from './hooks/useTraceDetailsTab';
@@ -24,14 +24,6 @@ function TraceDetailsV3(): JSX.Element {
 		},
 		[],
 	);
-
-	// The filter query lives in Filters' local state, which unmounts with the
-	// Overview tab; drop its result too so both start empty on return.
-	useEffect(() => {
-		if (!isOverview) {
-			handleFilteredSpansChange([], false);
-		}
-	}, [isOverview, handleFilteredSpansChange]);
 
 	return (
 		<TraceDetailsWrapper>
