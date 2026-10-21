@@ -13503,50 +13503,64 @@ paths:
           - $ref: '#/components/schemas/TelemetrytypesSource'
           description: The data source within the signal. Use meter for Cost Meter
             metrics; empty means the default source.
-      - description: Maximum number of results to return. Defaults to 1000 for keys
-          and 50 for values.
+      - description: Maximum number of results read per signal. Defaults to 1000 for
+          keys and 50 for values. For keys, intrinsic and materialized fields are
+          added on top, and an empty signal applies the limit to traces, logs and
+          metrics separately, so the response can exceed it.
         in: query
         name: limit
         schema:
-          description: Maximum number of results to return. Defaults to 1000 for keys
-            and 50 for values.
+          description: Maximum number of results read per signal. Defaults to 1000
+            for keys and 50 for values. For keys, intrinsic and materialized fields
+            are added on top, and an empty signal applies the limit to traces, logs
+            and metrics separately, so the response can exceed it.
           type: integer
-      - description: Start of the lookup window in Unix milliseconds, rounded down
-          to a 6 hour boundary. Omit for no lower bound.
+      - description: Start of the lookup window in Unix milliseconds. Key lookups
+          ignore it. Trace and log value lookups keep values seen from the start's
+          calendar day on; metric value lookups keep attributes last reported at or
+          after it. Omit for no lower bound.
         in: query
         name: startUnixMilli
         schema:
-          description: Start of the lookup window in Unix milliseconds, rounded down
-            to a 6 hour boundary. Omit for no lower bound.
+          description: Start of the lookup window in Unix milliseconds. Key lookups
+            ignore it. Trace and log value lookups keep values seen from the start's
+            calendar day on; metric value lookups keep attributes last reported at
+            or after it. Omit for no lower bound.
           format: int64
           type: integer
-      - description: End of the lookup window in Unix milliseconds. Omit for no upper
-          bound.
+      - description: End of the lookup window in Unix milliseconds. Key lookups and
+          trace and log value lookups ignore it; metric value lookups keep attributes
+          first reported at or before it. Omit for no upper bound.
         in: query
         name: endUnixMilli
         schema:
-          description: End of the lookup window in Unix milliseconds. Omit for no
-            upper bound.
+          description: End of the lookup window in Unix milliseconds. Key lookups
+            and trace and log value lookups ignore it; metric value lookups keep attributes
+            first reported at or before it. Omit for no upper bound.
           format: int64
           type: integer
       - description: 'Restricts keys to one context: resource, attribute, scope, span,
-          trace, log, body or metric. Empty means any context.'
+          trace, log, body or metric. Applied to trace and log keys; metric attribute
+          keys ignore it. Empty means any context.'
         in: query
         name: fieldContext
         schema:
           allOf:
           - $ref: '#/components/schemas/TelemetrytypesFieldContext'
           description: 'Restricts keys to one context: resource, attribute, scope,
-            span, trace, log, body or metric. Empty means any context.'
+            span, trace, log, body or metric. Applied to trace and log keys; metric
+            attribute keys ignore it. Empty means any context.'
       - description: 'Restricts keys to one data type: string, bool, int64, float64
-          or number. Empty means any type.'
+          or number. Applied to trace and log keys; metric attribute keys ignore it.
+          Empty means any type.'
         in: query
         name: fieldDataType
         schema:
           allOf:
           - $ref: '#/components/schemas/TelemetrytypesFieldDataType'
           description: 'Restricts keys to one data type: string, bool, int64, float64
-            or number. Empty means any type.'
+            or number. Applied to trace and log keys; metric attribute keys ignore
+            it. Empty means any type.'
       - description: Restricts keys to those seen on this metric. Metrics signal only.
         in: query
         name: metricName
@@ -13637,50 +13651,64 @@ paths:
           - $ref: '#/components/schemas/TelemetrytypesSource'
           description: The data source within the signal. Use meter for Cost Meter
             metrics; empty means the default source.
-      - description: Maximum number of results to return. Defaults to 1000 for keys
-          and 50 for values.
+      - description: Maximum number of results read per signal. Defaults to 1000 for
+          keys and 50 for values. For keys, intrinsic and materialized fields are
+          added on top, and an empty signal applies the limit to traces, logs and
+          metrics separately, so the response can exceed it.
         in: query
         name: limit
         schema:
-          description: Maximum number of results to return. Defaults to 1000 for keys
-            and 50 for values.
+          description: Maximum number of results read per signal. Defaults to 1000
+            for keys and 50 for values. For keys, intrinsic and materialized fields
+            are added on top, and an empty signal applies the limit to traces, logs
+            and metrics separately, so the response can exceed it.
           type: integer
-      - description: Start of the lookup window in Unix milliseconds, rounded down
-          to a 6 hour boundary. Omit for no lower bound.
+      - description: Start of the lookup window in Unix milliseconds. Key lookups
+          ignore it. Trace and log value lookups keep values seen from the start's
+          calendar day on; metric value lookups keep attributes last reported at or
+          after it. Omit for no lower bound.
         in: query
         name: startUnixMilli
         schema:
-          description: Start of the lookup window in Unix milliseconds, rounded down
-            to a 6 hour boundary. Omit for no lower bound.
+          description: Start of the lookup window in Unix milliseconds. Key lookups
+            ignore it. Trace and log value lookups keep values seen from the start's
+            calendar day on; metric value lookups keep attributes last reported at
+            or after it. Omit for no lower bound.
           format: int64
           type: integer
-      - description: End of the lookup window in Unix milliseconds. Omit for no upper
-          bound.
+      - description: End of the lookup window in Unix milliseconds. Key lookups and
+          trace and log value lookups ignore it; metric value lookups keep attributes
+          first reported at or before it. Omit for no upper bound.
         in: query
         name: endUnixMilli
         schema:
-          description: End of the lookup window in Unix milliseconds. Omit for no
-            upper bound.
+          description: End of the lookup window in Unix milliseconds. Key lookups
+            and trace and log value lookups ignore it; metric value lookups keep attributes
+            first reported at or before it. Omit for no upper bound.
           format: int64
           type: integer
       - description: 'Restricts keys to one context: resource, attribute, scope, span,
-          trace, log, body or metric. Empty means any context.'
+          trace, log, body or metric. Applied to trace and log keys; metric attribute
+          keys ignore it. Empty means any context.'
         in: query
         name: fieldContext
         schema:
           allOf:
           - $ref: '#/components/schemas/TelemetrytypesFieldContext'
           description: 'Restricts keys to one context: resource, attribute, scope,
-            span, trace, log, body or metric. Empty means any context.'
+            span, trace, log, body or metric. Applied to trace and log keys; metric
+            attribute keys ignore it. Empty means any context.'
       - description: 'Restricts keys to one data type: string, bool, int64, float64
-          or number. Empty means any type.'
+          or number. Applied to trace and log keys; metric attribute keys ignore it.
+          Empty means any type.'
         in: query
         name: fieldDataType
         schema:
           allOf:
           - $ref: '#/components/schemas/TelemetrytypesFieldDataType'
           description: 'Restricts keys to one data type: string, bool, int64, float64
-            or number. Empty means any type.'
+            or number. Applied to trace and log keys; metric attribute keys ignore
+            it. Empty means any type.'
       - description: Restricts keys to those seen on this metric. Metrics signal only.
         in: query
         name: metricName
@@ -25398,50 +25426,64 @@ paths:
           - $ref: '#/components/schemas/TelemetrytypesSource'
           description: The data source within the signal. Use meter for Cost Meter
             metrics; empty means the default source.
-      - description: Maximum number of results to return. Defaults to 1000 for keys
-          and 50 for values.
+      - description: Maximum number of results read per signal. Defaults to 1000 for
+          keys and 50 for values. For keys, intrinsic and materialized fields are
+          added on top, and an empty signal applies the limit to traces, logs and
+          metrics separately, so the response can exceed it.
         in: query
         name: limit
         schema:
-          description: Maximum number of results to return. Defaults to 1000 for keys
-            and 50 for values.
+          description: Maximum number of results read per signal. Defaults to 1000
+            for keys and 50 for values. For keys, intrinsic and materialized fields
+            are added on top, and an empty signal applies the limit to traces, logs
+            and metrics separately, so the response can exceed it.
           type: integer
-      - description: Start of the lookup window in Unix milliseconds, rounded down
-          to a 6 hour boundary. Omit for no lower bound.
+      - description: Start of the lookup window in Unix milliseconds. Key lookups
+          ignore it. Trace and log value lookups keep values seen from the start's
+          calendar day on; metric value lookups keep attributes last reported at or
+          after it. Omit for no lower bound.
         in: query
         name: startUnixMilli
         schema:
-          description: Start of the lookup window in Unix milliseconds, rounded down
-            to a 6 hour boundary. Omit for no lower bound.
+          description: Start of the lookup window in Unix milliseconds. Key lookups
+            ignore it. Trace and log value lookups keep values seen from the start's
+            calendar day on; metric value lookups keep attributes last reported at
+            or after it. Omit for no lower bound.
           format: int64
           type: integer
-      - description: End of the lookup window in Unix milliseconds. Omit for no upper
-          bound.
+      - description: End of the lookup window in Unix milliseconds. Key lookups and
+          trace and log value lookups ignore it; metric value lookups keep attributes
+          first reported at or before it. Omit for no upper bound.
         in: query
         name: endUnixMilli
         schema:
-          description: End of the lookup window in Unix milliseconds. Omit for no
-            upper bound.
+          description: End of the lookup window in Unix milliseconds. Key lookups
+            and trace and log value lookups ignore it; metric value lookups keep attributes
+            first reported at or before it. Omit for no upper bound.
           format: int64
           type: integer
       - description: 'Restricts keys to one context: resource, attribute, scope, span,
-          trace, log, body or metric. Empty means any context.'
+          trace, log, body or metric. Applied to trace and log keys; metric attribute
+          keys ignore it. Empty means any context.'
         in: query
         name: fieldContext
         schema:
           allOf:
           - $ref: '#/components/schemas/TelemetrytypesFieldContext'
           description: 'Restricts keys to one context: resource, attribute, scope,
-            span, trace, log, body or metric. Empty means any context.'
+            span, trace, log, body or metric. Applied to trace and log keys; metric
+            attribute keys ignore it. Empty means any context.'
       - description: 'Restricts keys to one data type: string, bool, int64, float64
-          or number. Empty means any type.'
+          or number. Applied to trace and log keys; metric attribute keys ignore it.
+          Empty means any type.'
         in: query
         name: fieldDataType
         schema:
           allOf:
           - $ref: '#/components/schemas/TelemetrytypesFieldDataType'
           description: 'Restricts keys to one data type: string, bool, int64, float64
-            or number. Empty means any type.'
+            or number. Applied to trace and log keys; metric attribute keys ignore
+            it. Empty means any type.'
       - description: Restricts keys to those seen on this metric. Metrics signal only.
         in: query
         name: metricName
@@ -25544,50 +25586,64 @@ paths:
           - $ref: '#/components/schemas/TelemetrytypesSource'
           description: The data source within the signal. Use meter for Cost Meter
             metrics; empty means the default source.
-      - description: Maximum number of results to return. Defaults to 1000 for keys
-          and 50 for values.
+      - description: Maximum number of results read per signal. Defaults to 1000 for
+          keys and 50 for values. For keys, intrinsic and materialized fields are
+          added on top, and an empty signal applies the limit to traces, logs and
+          metrics separately, so the response can exceed it.
         in: query
         name: limit
         schema:
-          description: Maximum number of results to return. Defaults to 1000 for keys
-            and 50 for values.
+          description: Maximum number of results read per signal. Defaults to 1000
+            for keys and 50 for values. For keys, intrinsic and materialized fields
+            are added on top, and an empty signal applies the limit to traces, logs
+            and metrics separately, so the response can exceed it.
           type: integer
-      - description: Start of the lookup window in Unix milliseconds, rounded down
-          to a 6 hour boundary. Omit for no lower bound.
+      - description: Start of the lookup window in Unix milliseconds. Key lookups
+          ignore it. Trace and log value lookups keep values seen from the start's
+          calendar day on; metric value lookups keep attributes last reported at or
+          after it. Omit for no lower bound.
         in: query
         name: startUnixMilli
         schema:
-          description: Start of the lookup window in Unix milliseconds, rounded down
-            to a 6 hour boundary. Omit for no lower bound.
+          description: Start of the lookup window in Unix milliseconds. Key lookups
+            ignore it. Trace and log value lookups keep values seen from the start's
+            calendar day on; metric value lookups keep attributes last reported at
+            or after it. Omit for no lower bound.
           format: int64
           type: integer
-      - description: End of the lookup window in Unix milliseconds. Omit for no upper
-          bound.
+      - description: End of the lookup window in Unix milliseconds. Key lookups and
+          trace and log value lookups ignore it; metric value lookups keep attributes
+          first reported at or before it. Omit for no upper bound.
         in: query
         name: endUnixMilli
         schema:
-          description: End of the lookup window in Unix milliseconds. Omit for no
-            upper bound.
+          description: End of the lookup window in Unix milliseconds. Key lookups
+            and trace and log value lookups ignore it; metric value lookups keep attributes
+            first reported at or before it. Omit for no upper bound.
           format: int64
           type: integer
       - description: 'Restricts keys to one context: resource, attribute, scope, span,
-          trace, log, body or metric. Empty means any context.'
+          trace, log, body or metric. Applied to trace and log keys; metric attribute
+          keys ignore it. Empty means any context.'
         in: query
         name: fieldContext
         schema:
           allOf:
           - $ref: '#/components/schemas/TelemetrytypesFieldContext'
           description: 'Restricts keys to one context: resource, attribute, scope,
-            span, trace, log, body or metric. Empty means any context.'
+            span, trace, log, body or metric. Applied to trace and log keys; metric
+            attribute keys ignore it. Empty means any context.'
       - description: 'Restricts keys to one data type: string, bool, int64, float64
-          or number. Empty means any type.'
+          or number. Applied to trace and log keys; metric attribute keys ignore it.
+          Empty means any type.'
         in: query
         name: fieldDataType
         schema:
           allOf:
           - $ref: '#/components/schemas/TelemetrytypesFieldDataType'
           description: 'Restricts keys to one data type: string, bool, int64, float64
-            or number. Empty means any type.'
+            or number. Applied to trace and log keys; metric attribute keys ignore
+            it. Empty means any type.'
       - description: Restricts keys to those seen on this metric. Metrics signal only.
         in: query
         name: metricName

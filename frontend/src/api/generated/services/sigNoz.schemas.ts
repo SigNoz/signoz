@@ -13268,27 +13268,27 @@ export type GetFieldsKeysParams = {
 	source?: TelemetrytypesSourceDTO;
 	/**
 	 * @type integer
-	 * @description Maximum number of results to return. Defaults to 1000 for keys and 50 for values.
+	 * @description Maximum number of results read per signal. Defaults to 1000 for keys and 50 for values. For keys, intrinsic and materialized fields are added on top, and an empty signal applies the limit to traces, logs and metrics separately, so the response can exceed it.
 	 */
 	limit?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description Start of the lookup window in Unix milliseconds, rounded down to a 6 hour boundary. Omit for no lower bound.
+	 * @description Start of the lookup window in Unix milliseconds. Key lookups ignore it. Trace and log value lookups keep values seen from the start's calendar day on; metric value lookups keep attributes last reported at or after it. Omit for no lower bound.
 	 */
 	startUnixMilli?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description End of the lookup window in Unix milliseconds. Omit for no upper bound.
+	 * @description End of the lookup window in Unix milliseconds. Key lookups and trace and log value lookups ignore it; metric value lookups keep attributes first reported at or before it. Omit for no upper bound.
 	 */
 	endUnixMilli?: number;
 	/**
-	 * @description Restricts keys to one context: resource, attribute, scope, span, trace, log, body or metric. Empty means any context.
+	 * @description Restricts keys to one context: resource, attribute, scope, span, trace, log, body or metric. Applied to trace and log keys; metric attribute keys ignore it. Empty means any context.
 	 */
 	fieldContext?: TelemetrytypesFieldContextDTO;
 	/**
-	 * @description Restricts keys to one data type: string, bool, int64, float64 or number. Empty means any type.
+	 * @description Restricts keys to one data type: string, bool, int64, float64 or number. Applied to trace and log keys; metric attribute keys ignore it. Empty means any type.
 	 */
 	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
 	/**
@@ -13327,27 +13327,27 @@ export type GetFieldsValuesParams = {
 	source?: TelemetrytypesSourceDTO;
 	/**
 	 * @type integer
-	 * @description Maximum number of results to return. Defaults to 1000 for keys and 50 for values.
+	 * @description Maximum number of results read per signal. Defaults to 1000 for keys and 50 for values. For keys, intrinsic and materialized fields are added on top, and an empty signal applies the limit to traces, logs and metrics separately, so the response can exceed it.
 	 */
 	limit?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description Start of the lookup window in Unix milliseconds, rounded down to a 6 hour boundary. Omit for no lower bound.
+	 * @description Start of the lookup window in Unix milliseconds. Key lookups ignore it. Trace and log value lookups keep values seen from the start's calendar day on; metric value lookups keep attributes last reported at or after it. Omit for no lower bound.
 	 */
 	startUnixMilli?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description End of the lookup window in Unix milliseconds. Omit for no upper bound.
+	 * @description End of the lookup window in Unix milliseconds. Key lookups and trace and log value lookups ignore it; metric value lookups keep attributes first reported at or before it. Omit for no upper bound.
 	 */
 	endUnixMilli?: number;
 	/**
-	 * @description Restricts keys to one context: resource, attribute, scope, span, trace, log, body or metric. Empty means any context.
+	 * @description Restricts keys to one context: resource, attribute, scope, span, trace, log, body or metric. Applied to trace and log keys; metric attribute keys ignore it. Empty means any context.
 	 */
 	fieldContext?: TelemetrytypesFieldContextDTO;
 	/**
-	 * @description Restricts keys to one data type: string, bool, int64, float64 or number. Empty means any type.
+	 * @description Restricts keys to one data type: string, bool, int64, float64 or number. Applied to trace and log keys; metric attribute keys ignore it. Empty means any type.
 	 */
 	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
 	/**
@@ -14870,27 +14870,27 @@ export type GetRuleHistoryFilterKeysParams = {
 	source?: TelemetrytypesSourceDTO;
 	/**
 	 * @type integer
-	 * @description Maximum number of results to return. Defaults to 1000 for keys and 50 for values.
+	 * @description Maximum number of results read per signal. Defaults to 1000 for keys and 50 for values. For keys, intrinsic and materialized fields are added on top, and an empty signal applies the limit to traces, logs and metrics separately, so the response can exceed it.
 	 */
 	limit?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description Start of the lookup window in Unix milliseconds, rounded down to a 6 hour boundary. Omit for no lower bound.
+	 * @description Start of the lookup window in Unix milliseconds. Key lookups ignore it. Trace and log value lookups keep values seen from the start's calendar day on; metric value lookups keep attributes last reported at or after it. Omit for no lower bound.
 	 */
 	startUnixMilli?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description End of the lookup window in Unix milliseconds. Omit for no upper bound.
+	 * @description End of the lookup window in Unix milliseconds. Key lookups and trace and log value lookups ignore it; metric value lookups keep attributes first reported at or before it. Omit for no upper bound.
 	 */
 	endUnixMilli?: number;
 	/**
-	 * @description Restricts keys to one context: resource, attribute, scope, span, trace, log, body or metric. Empty means any context.
+	 * @description Restricts keys to one context: resource, attribute, scope, span, trace, log, body or metric. Applied to trace and log keys; metric attribute keys ignore it. Empty means any context.
 	 */
 	fieldContext?: TelemetrytypesFieldContextDTO;
 	/**
-	 * @description Restricts keys to one data type: string, bool, int64, float64 or number. Empty means any type.
+	 * @description Restricts keys to one data type: string, bool, int64, float64 or number. Applied to trace and log keys; metric attribute keys ignore it. Empty means any type.
 	 */
 	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
 	/**
@@ -14932,27 +14932,27 @@ export type GetRuleHistoryFilterValuesParams = {
 	source?: TelemetrytypesSourceDTO;
 	/**
 	 * @type integer
-	 * @description Maximum number of results to return. Defaults to 1000 for keys and 50 for values.
+	 * @description Maximum number of results read per signal. Defaults to 1000 for keys and 50 for values. For keys, intrinsic and materialized fields are added on top, and an empty signal applies the limit to traces, logs and metrics separately, so the response can exceed it.
 	 */
 	limit?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description Start of the lookup window in Unix milliseconds, rounded down to a 6 hour boundary. Omit for no lower bound.
+	 * @description Start of the lookup window in Unix milliseconds. Key lookups ignore it. Trace and log value lookups keep values seen from the start's calendar day on; metric value lookups keep attributes last reported at or after it. Omit for no lower bound.
 	 */
 	startUnixMilli?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description End of the lookup window in Unix milliseconds. Omit for no upper bound.
+	 * @description End of the lookup window in Unix milliseconds. Key lookups and trace and log value lookups ignore it; metric value lookups keep attributes first reported at or before it. Omit for no upper bound.
 	 */
 	endUnixMilli?: number;
 	/**
-	 * @description Restricts keys to one context: resource, attribute, scope, span, trace, log, body or metric. Empty means any context.
+	 * @description Restricts keys to one context: resource, attribute, scope, span, trace, log, body or metric. Applied to trace and log keys; metric attribute keys ignore it. Empty means any context.
 	 */
 	fieldContext?: TelemetrytypesFieldContextDTO;
 	/**
-	 * @description Restricts keys to one data type: string, bool, int64, float64 or number. Empty means any type.
+	 * @description Restricts keys to one data type: string, bool, int64, float64 or number. Applied to trace and log keys; metric attribute keys ignore it. Empty means any type.
 	 */
 	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
 	/**
