@@ -6149,7 +6149,7 @@ export interface Querybuildertypesv5QueryBuilderFormulaDTO {
 	disabled?: boolean;
 	/**
 	 * @type string
-	 * @description An arithmetic expression over builder query names, for example A / B * 100, or A.0 and A.alias to pick one aggregation of a query by index or alias. Reference queries, not other formulas.
+	 * @description An arithmetic expression over builder query names, for example A / B * 100. Reference queries, not other formulas.
 	 */
 	expression?: string;
 	/**
