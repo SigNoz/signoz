@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -20,7 +21,8 @@ export function useSyncQueryBuilderFields(
 	fields: SyncedQueryBuilderField[] = NO_FIELDS,
 ): void {
 	const { currentQuery, handleSetQueryData } = useQueryBuilder();
-	const queries = currentQuery.builder.queryData;
+	const activeBuilder = getActiveBuilder(currentQuery);
+	const queries = activeBuilder.queryData;
 	const previousRef = useRef<Map<string, IBuilderQuery>>();
 	const enabled = fields.length > 0;
 
