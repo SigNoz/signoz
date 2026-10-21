@@ -1,3 +1,4 @@
+import { Spinner } from '@signozhq/ui/spinner';
 import { toast } from '@signozhq/ui/sonner';
 import { useGetNotificationChannel } from 'api/generated/services/channels';
 import AlertBreadcrumb from 'components/AlertBreadcrumb';
@@ -13,7 +14,7 @@ interface ChannelsEditPageProps {
 }
 
 function ChannelsEditPage({ channelId }: ChannelsEditPageProps): JSX.Element {
-	const { data } = useGetNotificationChannel({ id: channelId });
+	const { data, isLoading } = useGetNotificationChannel({ id: channelId });
 
 	return (
 		<>
@@ -23,17 +24,27 @@ function ChannelsEditPage({ channelId }: ChannelsEditPageProps): JSX.Element {
 					{
 						title: (
 							<span className={styles.crumbName}>
-								<span className="translate-safe">
-									{data?.data?.displayName || 'Edit Channel'}
-								</span>
-								<CopyButton
-									value={channelId}
-									ariaLabel="Copy channel ID"
-									testId="copy-channel-id"
-									onCopy={(): void => {
-										toast.success('Channel ID copied to clipboard');
-									}}
-								/>
+								{isLoading ? (
+									<Spinner
+										size={14}
+										aria-label="Loading channel"
+										testId="channel-name-loading"
+									/>
+								) : (
+									<>
+										<span className="translate-safe">
+											{data?.data?.displayName || 'Edit Channel'}
+										</span>
+										<CopyButton
+											value={channelId}
+											ariaLabel="Copy channel ID"
+											testId="copy-channel-id"
+											onCopy={(): void => {
+												toast.success('Channel ID copied to clipboard');
+											}}
+										/>
+									</>
+								)}
 							</span>
 						),
 						isLast: true,
