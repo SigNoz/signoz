@@ -234,4 +234,40 @@ describe('mapQueryDataFromApi', (): void => {
 		expect(result.builder.queryData[0].queryName).toBe('A');
 		expect(result.builder.queryData[0].dataSource).toBe(DataSource.TRACES);
 	});
+
+	it('puts an AI-typed composite in the AI slot, leaving builder empty', () => {
+		const compositeQuery: ICompositeMetricQuery = {
+			queryType: EQueryType.AI_QUERY_BUILDER,
+			panelType: PANEL_TYPES.TIME_SERIES,
+			unit: undefined,
+			queries: [
+				{
+					type: 'builder_ai_query',
+					spec: {
+						name: 'A',
+						signal: 'traces',
+						aggregations: [{ expression: 'count()' }],
+					},
+				} as QueryEnvelope,
+				{
+					type: 'builder_formula',
+					spec: { name: 'F1', expression: 'A * 2' },
+				} as QueryEnvelope,
+			],
+		};
+
+		const result = mapQueryDataFromApi(compositeQuery);
+
+		expect(result.queryType).toBe(EQueryType.AI_QUERY_BUILDER);
+		expect(result.builder).toStrictEqual({
+			queryData: [],
+			queryFormulas: [],
+			queryTraceOperator: [],
+		});
+		expect(result.builder_ai_query?.queryData[0]).toMatchObject({
+			queryName: 'A',
+			builderQueryType: 'builder_ai_query',
+		});
+		expect(result.builder_ai_query?.queryFormulas[0].queryName).toBe('F1');
+	});
 });
