@@ -5,14 +5,14 @@ import {
 	type PANEL_TYPES,
 } from 'constants/queryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 import {
 	DataSource,
 	type QueryBuilderContextType,
 } from 'types/common/queryBuilder';
 
 interface SeedBuilderForModeArgs {
-	mode: QueryMode;
+	mode: EQueryType;
 	/** The kind's first Query Builder signal; what a fresh panel of this kind starts on. */
 	defaultSignal?: TelemetrytypesSignalDTO;
 	panelType: PANEL_TYPES;
@@ -26,7 +26,7 @@ export function seedBuilderForMode({
 	panelType,
 	updateAllQueriesOperators,
 }: SeedBuilderForModeArgs): Query['builder'] {
-	if (mode === QueryMode.AI_QUERY_BUILDER) {
+	if (mode === EQueryType.AI_QUERY_BUILDER) {
 		return updateAllQueriesOperators(
 			initialQueryAIWithType,
 			panelType,
