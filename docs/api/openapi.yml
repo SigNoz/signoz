@@ -4295,8 +4295,9 @@ components:
           - $ref: '#/components/schemas/DashboardtypesDisplay'
           description: The dashboard title and description.
         duration:
-          description: The default time range when the dashboard opens, as a Prometheus
-            duration such as 1h or 7d.
+          description: The intended default time range, as a Prometheus duration such
+            as 1h or 7d. Stored, but the current UI uses its own time picker state
+            and does not read it.
           type: string
         layouts:
           description: The Grid layouts that place panels, at most 500. Each panel
@@ -4305,7 +4306,8 @@ components:
             $ref: '#/components/schemas/DashboardtypesLayout'
           type: array
         links:
-          description: External links shown in the dashboard header.
+          description: External links stored with the dashboard. The current UI does
+            not render them.
           items:
             $ref: '#/components/schemas/DashboardtypesLink'
           nullable: true
@@ -4319,8 +4321,9 @@ components:
             layout is kept but invisible. Use {} for none.'
           type: object
         refreshInterval:
-          description: How often the dashboard refreshes, as a Prometheus duration
-            such as 30s. Empty disables auto refresh.
+          description: The intended auto refresh interval, as a Prometheus duration
+            such as 30s. Stored, but the current UI uses its own refresh control and
+            does not read it.
           type: string
         variables:
           description: The dashboard variables, each a ListVariable or TextVariable
@@ -4371,9 +4374,10 @@ components:
           description: 'A filter expression over the reserved keys name, description,
             created_at, updated_at, created_by and locked, and over tag keys, using
             the SigNoz filter grammar: comparisons such as =, !=, CONTAINS, LIKE,
-            IN, < and >, single-quoted strings, Unix milliseconds for timestamps,
-            combined with AND, OR and NOT, for example name CONTAINS ''overview''
-            AND locked = false. At most 1024 characters. Empty matches every dashboard.'
+            IN, < and >, single-quoted strings, RFC3339 timestamps in quotes for created_at
+            and updated_at, combined with AND, OR and NOT, for example name CONTAINS
+            ''overview'' AND created_at >= ''2026-10-21T00:00:00Z''. At most 1024
+            characters. Empty matches every dashboard.'
           type: string
         sort:
           allOf:
@@ -4696,12 +4700,14 @@ components:
     DashboardtypesHistogramBuckets:
       properties:
         bucketCount:
-          description: The number of buckets. Null lets the chart choose.
+          description: 'The target number of buckets, approximate: the chart picks
+            the nearest predefined width that fits the range. Ignored when bucketWidth
+            is set. Null uses the chart default.'
           nullable: true
           type: number
         bucketWidth:
-          description: The width of each bucket in the value unit. Null lets the chart
-            choose.
+          description: The width of each bucket in the value unit; takes precedence
+            over bucketCount. Null lets the chart choose.
           nullable: true
           type: number
         mergeAllActiveQueries:
@@ -4825,7 +4831,8 @@ components:
           description: Whether the link opens in a new tab.
           type: boolean
         tooltip:
-          description: Hover text for the link.
+          description: Hover text for the link. Stored, but the drilldown menu does
+            not display it.
           type: string
         url:
           description: The link target. May reference dashboard variables as {{name}}
@@ -4863,12 +4870,14 @@ components:
           description: Whether several values can be selected at once.
           type: boolean
         capturingRegexp:
-          description: A regular expression applied to each candidate value. Only
-            matches are offered, reduced to the capture group when one is present.
+          description: A regular expression meant to keep only matching values, reduced
+            to the capture group when one is present. Stored, but the current UI ignores
+            it and offers every value.
           type: string
         customAllValue:
-          description: The value substituted when all is selected, instead of every
-            value. Requires allowAllValue.
+          description: The value meant to replace every value when all is selected.
+            Requires allowAllValue. Stored, but the current UI ignores it and substitutes
+            every value.
           type: string
         defaultValue:
           allOf:
@@ -5362,7 +5371,8 @@ components:
           - $ref: '#/components/schemas/DashboardtypesDisplay'
           description: The panel title and description.
         links:
-          description: External links shown in the panel header.
+          description: Context links offered in the data point drilldown menu of the
+            panel, with dashboard variables resolved in the URL.
           items:
             $ref: '#/components/schemas/DashboardtypesLink'
           nullable: true
@@ -5671,8 +5681,8 @@ components:
     DashboardtypesQueryVariableSpec:
       properties:
         queryValue:
-          description: A ClickHouse SQL query whose first result column supplies the
-            values.
+          description: A ClickHouse SQL query returning one column of selectable values.
+            Every column of every row is offered, so select only the value column.
           type: string
       required:
       - queryValue
@@ -5707,8 +5717,11 @@ components:
         columnUnits:
           additionalProperties:
             type: string
-          description: Unit id per column, keyed by the query name or aggregation
-            alias that produces the column.
+          description: 'Unit id per value column, keyed by the column key: the query
+            name for a builder query with one aggregation (A), the query name dotted
+            with the aggregation expression for several (A.count()), or the SQL alias
+            for a ClickHouse SQL column. Aggregation aliases are display labels, not
+            keys.'
           nullable: true
           type: object
         decimalPrecision:
@@ -5742,8 +5755,11 @@ components:
             red preset; CSS named colors such as red also work.'
           type: string
         columnName:
-          description: 'The column the rule applies to: the query name or aggregation
-            alias that produces it.'
+          description: 'The key of the column the rule applies to: the query name
+            for a builder query with one aggregation (A), the query name dotted with
+            the aggregation expression for several (A.count()), a group-by field name,
+            or the SQL alias for a ClickHouse SQL column. Aggregation aliases are
+            display labels, not keys.'
           type: string
         format:
           allOf:
@@ -5816,7 +5832,8 @@ components:
     DashboardtypesTextVariableSpec:
       properties:
         constant:
-          description: Whether the value is fixed and the control is hidden.
+          description: Whether the value is meant to be fixed. Stored, but the current
+            UI still shows the control and lets the value change.
           type: boolean
         display:
           allOf:
@@ -19465,18 +19482,20 @@ paths:
       - description: 'A filter expression over the reserved keys name, description,
           created_at, updated_at, created_by and locked, and over tag keys, using
           the SigNoz filter grammar: comparisons such as =, !=, CONTAINS, LIKE, IN,
-          < and >, single-quoted strings, Unix milliseconds for timestamps, combined
-          with AND, OR and NOT, for example name CONTAINS ''overview'' AND locked
-          = false. At most 1024 characters. Empty matches every dashboard.'
+          < and >, single-quoted strings, RFC3339 timestamps in quotes for created_at
+          and updated_at, combined with AND, OR and NOT, for example name CONTAINS
+          ''overview'' AND created_at >= ''2026-10-21T00:00:00Z''. At most 1024 characters.
+          Empty matches every dashboard.'
         in: query
         name: query
         schema:
           description: 'A filter expression over the reserved keys name, description,
             created_at, updated_at, created_by and locked, and over tag keys, using
             the SigNoz filter grammar: comparisons such as =, !=, CONTAINS, LIKE,
-            IN, < and >, single-quoted strings, Unix milliseconds for timestamps,
-            combined with AND, OR and NOT, for example name CONTAINS ''overview''
-            AND locked = false. At most 1024 characters. Empty matches every dashboard.'
+            IN, < and >, single-quoted strings, RFC3339 timestamps in quotes for created_at
+            and updated_at, combined with AND, OR and NOT, for example name CONTAINS
+            ''overview'' AND created_at >= ''2026-10-21T00:00:00Z''. At most 1024
+            characters. Empty matches every dashboard.'
           type: string
       - description: 'The sort field: updated_at (default), created_at or name.'
         in: query
@@ -19565,7 +19584,8 @@ paths:
                 description: 'A `signoz/TextPanel` renders markdown and must send
                   `queries: []`. The table counts error logs per service as a scalar
                   result, orders by the `errors` alias and colors cells above 1000
-                  errors.'
+                  errors; the threshold names the column by its key `A` (the query
+                  name), not by the alias.'
                 summary: Logs dashboard with a text panel and a table panel
                 value:
                   name: error-logs-by-service
@@ -19605,8 +19625,8 @@ paths:
                               formatting:
                                 decimalPrecision: "0"
                               thresholds:
-                              - color: Red
-                                columnName: errors
+                              - color: '#F1575F'
+                                columnName: A
                                 format: background
                                 operator: above
                                 value: 1000
@@ -19702,7 +19722,7 @@ paths:
                             kind: signoz/NumberPanel
                             spec:
                               thresholds:
-                              - color: Red
+                              - color: '#F1575F'
                                 format: background
                                 operator: above
                                 value: 100
@@ -19972,8 +19992,8 @@ paths:
                     kind: Panel
                     spec:
                       display:
-                        description: Spans with an error status
-                        name: Error rate
+                        description: Errored spans per time bucket
+                        name: Error count
                       links: []
                       plugin:
                         kind: signoz/TimeSeriesPanel
@@ -30661,18 +30681,20 @@ paths:
       - description: 'A filter expression over the reserved keys name, description,
           created_at, updated_at, created_by and locked, and over tag keys, using
           the SigNoz filter grammar: comparisons such as =, !=, CONTAINS, LIKE, IN,
-          < and >, single-quoted strings, Unix milliseconds for timestamps, combined
-          with AND, OR and NOT, for example name CONTAINS ''overview'' AND locked
-          = false. At most 1024 characters. Empty matches every dashboard.'
+          < and >, single-quoted strings, RFC3339 timestamps in quotes for created_at
+          and updated_at, combined with AND, OR and NOT, for example name CONTAINS
+          ''overview'' AND created_at >= ''2026-10-21T00:00:00Z''. At most 1024 characters.
+          Empty matches every dashboard.'
         in: query
         name: query
         schema:
           description: 'A filter expression over the reserved keys name, description,
             created_at, updated_at, created_by and locked, and over tag keys, using
             the SigNoz filter grammar: comparisons such as =, !=, CONTAINS, LIKE,
-            IN, < and >, single-quoted strings, Unix milliseconds for timestamps,
-            combined with AND, OR and NOT, for example name CONTAINS ''overview''
-            AND locked = false. At most 1024 characters. Empty matches every dashboard.'
+            IN, < and >, single-quoted strings, RFC3339 timestamps in quotes for created_at
+            and updated_at, combined with AND, OR and NOT, for example name CONTAINS
+            ''overview'' AND created_at >= ''2026-10-21T00:00:00Z''. At most 1024
+            characters. Empty matches every dashboard.'
           type: string
       - description: 'The sort field: updated_at (default), created_at or name.'
         in: query

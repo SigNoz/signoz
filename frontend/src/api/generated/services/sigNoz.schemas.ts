@@ -6081,7 +6081,7 @@ export interface DashboardtypesLinkDTO {
 	targetBlank?: boolean;
 	/**
 	 * @type string
-	 * @description Hover text for the link.
+	 * @description Hover text for the link. Stored, but the drilldown menu does not display it.
 	 */
 	tooltip?: string;
 	/**
@@ -6293,14 +6293,14 @@ export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboa
 	'signoz/TablePanel' = 'signoz/TablePanel',
 }
 /**
- * Unit id per column, keyed by the query name or aggregation alias that produces the column.
+ * Unit id per value column, keyed by the column key: the query name for a builder query with one aggregation (A), the query name dotted with the aggregation expression for several (A.count()), or the SQL alias for a ClickHouse SQL column. Aggregation aliases are display labels, not keys.
  */
 export type DashboardtypesTableFormattingDTOColumnUnitsAnyOf = {
 	[key: string]: string;
 };
 
 /**
- * Unit id per column, keyed by the query name or aggregation alias that produces the column.
+ * Unit id per value column, keyed by the column key: the query name for a builder query with one aggregation (A), the query name dotted with the aggregation expression for several (A.count()), or the SQL alias for a ClickHouse SQL column. Aggregation aliases are display labels, not keys.
  * @nullable
  */
 export type DashboardtypesTableFormattingDTOColumnUnits = DashboardtypesTableFormattingDTOColumnUnitsAnyOf | null;
@@ -6308,7 +6308,7 @@ export type DashboardtypesTableFormattingDTOColumnUnits = DashboardtypesTableFor
 export interface DashboardtypesTableFormattingDTO {
 	/**
 	 * @type object,null
-	 * @description Unit id per column, keyed by the query name or aggregation alias that produces the column.
+	 * @description Unit id per value column, keyed by the column key: the query name for a builder query with one aggregation (A), the query name dotted with the aggregation expression for several (A.count()), or the SQL alias for a ClickHouse SQL column. Aggregation aliases are display labels, not keys.
 	 */
 	columnUnits?: DashboardtypesTableFormattingDTOColumnUnits;
 	/**
@@ -6325,7 +6325,7 @@ export interface DashboardtypesTableThresholdDTO {
 	color: string;
 	/**
 	 * @type string
-	 * @description The column the rule applies to: the query name or aggregation alias that produces it.
+	 * @description The key of the column the rule applies to: the query name for a builder query with one aggregation (A), the query name dotted with the aggregation expression for several (A.count()), a group-by field name, or the SQL alias for a ClickHouse SQL column. Aggregation aliases are display labels, not keys.
 	 */
 	columnName: string;
 	/**
@@ -6387,12 +6387,12 @@ export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboa
 export interface DashboardtypesHistogramBucketsDTO {
 	/**
 	 * @type number,null
-	 * @description The number of buckets. Null lets the chart choose.
+	 * @description The target number of buckets, approximate: the chart picks the nearest predefined width that fits the range. Ignored when bucketWidth is set. Null uses the chart default.
 	 */
 	bucketCount?: number | null;
 	/**
 	 * @type number,null
-	 * @description The width of each bucket in the value unit. Null lets the chart choose.
+	 * @description The width of each bucket in the value unit; takes precedence over bucketCount. Null lets the chart choose.
 	 */
 	bucketWidth?: number | null;
 	/**
@@ -7165,7 +7165,7 @@ export interface DashboardtypesPanelSpecDTO {
 	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type array,null
-	 * @description External links shown in the panel header.
+	 * @description Context links offered in the data point drilldown menu of the panel, with dashboard variables resolved in the URL.
 	 */
 	links?: DashboardtypesLinkDTO[] | null;
 	/**
@@ -7273,7 +7273,7 @@ export enum DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDash
 export interface DashboardtypesQueryVariableSpecDTO {
 	/**
 	 * @type string
-	 * @description A ClickHouse SQL query whose first result column supplies the values.
+	 * @description A ClickHouse SQL query returning one column of selectable values. Every column of every row is offered, so select only the value column.
 	 */
 	queryValue: string;
 }
@@ -7337,12 +7337,12 @@ export interface DashboardtypesListVariableSpecDTO {
 	allowMultiple?: boolean;
 	/**
 	 * @type string
-	 * @description A regular expression applied to each candidate value. Only matches are offered, reduced to the capture group when one is present.
+	 * @description A regular expression meant to keep only matching values, reduced to the capture group when one is present. Stored, but the current UI ignores it and offers every value.
 	 */
 	capturingRegexp?: string;
 	/**
 	 * @type string
-	 * @description The value substituted when all is selected, instead of every value. Requires allowAllValue.
+	 * @description The value meant to replace every value when all is selected. Requires allowAllValue. Stored, but the current UI ignores it and substitutes every value.
 	 */
 	customAllValue?: string;
 	/**
@@ -7391,7 +7391,7 @@ export enum DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboard
 export interface DashboardtypesTextVariableSpecDTO {
 	/**
 	 * @type boolean
-	 * @description Whether the value is fixed and the control is hidden.
+	 * @description Whether the value is meant to be fixed. Stored, but the current UI still shows the control and lets the value change.
 	 */
 	constant?: boolean;
 	/**
@@ -7435,7 +7435,7 @@ export interface DashboardtypesDashboardSpecDTO {
 	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type string
-	 * @description The default time range when the dashboard opens, as a Prometheus duration such as 1h or 7d.
+	 * @description The intended default time range, as a Prometheus duration such as 1h or 7d. Stored, but the current UI uses its own time picker state and does not read it.
 	 */
 	duration?: string;
 	/**
@@ -7445,7 +7445,7 @@ export interface DashboardtypesDashboardSpecDTO {
 	layouts: DashboardtypesLayoutDTO[];
 	/**
 	 * @type array,null
-	 * @description External links shown in the dashboard header.
+	 * @description External links stored with the dashboard. The current UI does not render them.
 	 */
 	links?: DashboardtypesLinkDTO[] | null;
 	/**
@@ -7455,7 +7455,7 @@ export interface DashboardtypesDashboardSpecDTO {
 	panels: DashboardtypesDashboardSpecDTOPanels;
 	/**
 	 * @type string
-	 * @description How often the dashboard refreshes, as a Prometheus duration such as 30s. Empty disables auto refresh.
+	 * @description The intended auto refresh interval, as a Prometheus duration such as 30s. Stored, but the current UI uses its own refresh control and does not read it.
 	 */
 	refreshInterval?: string;
 	/**
@@ -7481,7 +7481,7 @@ export interface DashboardtypesDashboardViewDataDTO {
 	order?: DashboardtypesListOrderDTO;
 	/**
 	 * @type string
-	 * @description A filter expression over the reserved keys name, description, created_at, updated_at, created_by and locked, and over tag keys, using the SigNoz filter grammar: comparisons such as =, !=, CONTAINS, LIKE, IN, < and >, single-quoted strings, Unix milliseconds for timestamps, combined with AND, OR and NOT, for example name CONTAINS 'overview' AND locked = false. At most 1024 characters. Empty matches every dashboard.
+	 * @description A filter expression over the reserved keys name, description, created_at, updated_at, created_by and locked, and over tag keys, using the SigNoz filter grammar: comparisons such as =, !=, CONTAINS, LIKE, IN, < and >, single-quoted strings, RFC3339 timestamps in quotes for created_at and updated_at, combined with AND, OR and NOT, for example name CONTAINS 'overview' AND created_at >= '2026-10-21T00:00:00Z'. At most 1024 characters. Empty matches every dashboard.
 	 */
 	query?: string;
 	/**
@@ -15512,7 +15512,7 @@ export type UpdateDashboardView200 = {
 export type ListDashboardsV2Params = {
 	/**
 	 * @type string
-	 * @description A filter expression over the reserved keys name, description, created_at, updated_at, created_by and locked, and over tag keys, using the SigNoz filter grammar: comparisons such as =, !=, CONTAINS, LIKE, IN, < and >, single-quoted strings, Unix milliseconds for timestamps, combined with AND, OR and NOT, for example name CONTAINS 'overview' AND locked = false. At most 1024 characters. Empty matches every dashboard.
+	 * @description A filter expression over the reserved keys name, description, created_at, updated_at, created_by and locked, and over tag keys, using the SigNoz filter grammar: comparisons such as =, !=, CONTAINS, LIKE, IN, < and >, single-quoted strings, RFC3339 timestamps in quotes for created_at and updated_at, combined with AND, OR and NOT, for example name CONTAINS 'overview' AND created_at >= '2026-10-21T00:00:00Z'. At most 1024 characters. Empty matches every dashboard.
 	 */
 	query?: string;
 	/**
@@ -16860,7 +16860,7 @@ export type GetMyUser200 = {
 export type ListDashboardsForUserV2Params = {
 	/**
 	 * @type string
-	 * @description A filter expression over the reserved keys name, description, created_at, updated_at, created_by and locked, and over tag keys, using the SigNoz filter grammar: comparisons such as =, !=, CONTAINS, LIKE, IN, < and >, single-quoted strings, Unix milliseconds for timestamps, combined with AND, OR and NOT, for example name CONTAINS 'overview' AND locked = false. At most 1024 characters. Empty matches every dashboard.
+	 * @description A filter expression over the reserved keys name, description, created_at, updated_at, created_by and locked, and over tag keys, using the SigNoz filter grammar: comparisons such as =, !=, CONTAINS, LIKE, IN, < and >, single-quoted strings, RFC3339 timestamps in quotes for created_at and updated_at, combined with AND, OR and NOT, for example name CONTAINS 'overview' AND created_at >= '2026-10-21T00:00:00Z'. At most 1024 characters. Empty matches every dashboard.
 	 */
 	query?: string;
 	/**

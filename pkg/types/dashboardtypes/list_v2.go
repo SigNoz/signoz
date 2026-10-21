@@ -52,7 +52,7 @@ func (o ListOrder) IsValid() bool {
 var ErrCodeDashboardListInvalid = errors.MustNewCode("dashboard_list_invalid")
 
 type ListFilter struct {
-	Query string    `query:"query" json:"query" description:"A filter expression over the reserved keys name, description, created_at, updated_at, created_by and locked, and over tag keys, using the SigNoz filter grammar: comparisons such as =, !=, CONTAINS, LIKE, IN, < and >, single-quoted strings, Unix milliseconds for timestamps, combined with AND, OR and NOT, for example name CONTAINS 'overview' AND locked = false. At most 1024 characters. Empty matches every dashboard."`
+	Query string    `query:"query" json:"query" description:"A filter expression over the reserved keys name, description, created_at, updated_at, created_by and locked, and over tag keys, using the SigNoz filter grammar: comparisons such as =, !=, CONTAINS, LIKE, IN, < and >, single-quoted strings, RFC3339 timestamps in quotes for created_at and updated_at, combined with AND, OR and NOT, for example name CONTAINS 'overview' AND created_at >= '2026-10-21T00:00:00Z'. At most 1024 characters. Empty matches every dashboard."`
 	Sort  ListSort  `query:"sort" json:"sort" description:"The sort field: updated_at (default), created_at or name."`
 	Order ListOrder `query:"order" json:"order" description:"The sort direction: asc or desc (default)."`
 }

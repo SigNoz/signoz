@@ -77,7 +77,7 @@ func (s *DynamicVariableSignal) UnmarshalJSON(data []byte) error {
 }
 
 type QueryVariableSpec struct {
-	QueryValue string `json:"queryValue" validate:"required" required:"true" description:"A ClickHouse SQL query whose first result column supplies the values."`
+	QueryValue string `json:"queryValue" validate:"required" required:"true" description:"A ClickHouse SQL query returning one column of selectable values. Every column of every row is offered, so select only the value column."`
 }
 
 type CustomVariableSpec struct {
@@ -279,8 +279,8 @@ type HistogramPanelSpec struct {
 }
 
 type HistogramBuckets struct {
-	BucketCount           *float64 `json:"bucketCount" description:"The number of buckets. Null lets the chart choose."`
-	BucketWidth           *float64 `json:"bucketWidth" description:"The width of each bucket in the value unit. Null lets the chart choose."`
+	BucketCount           *float64 `json:"bucketCount" description:"The target number of buckets, approximate: the chart picks the nearest predefined width that fits the range. Ignored when bucketWidth is set. Null uses the chart default."`
+	BucketWidth           *float64 `json:"bucketWidth" description:"The width of each bucket in the value unit; takes precedence over bucketCount. Null lets the chart choose."`
 	MergeAllActiveQueries bool     `json:"mergeAllActiveQueries" description:"Whether every series is combined into a single histogram instead of one per series."`
 }
 
@@ -399,7 +399,7 @@ type PanelFormatting struct {
 }
 
 type TableFormatting struct {
-	ColumnUnits      map[string]string `json:"columnUnits" description:"Unit id per column, keyed by the query name or aggregation alias that produces the column."`
+	ColumnUnits      map[string]string `json:"columnUnits" description:"Unit id per value column, keyed by the column key: the query name for a builder query with one aggregation (A), the query name dotted with the aggregation expression for several (A.count()), or the SQL alias for a ClickHouse SQL column. Aggregation aliases are display labels, not keys."`
 	DecimalPrecision PrecisionOption   `json:"decimalPrecision" description:"Decimal places shown: 0, 1, 2 (default), 3, 4 or full."`
 }
 
@@ -432,7 +432,7 @@ type ComparisonThreshold struct {
 
 type TableThreshold struct {
 	ComparisonThreshold
-	ColumnName string `json:"columnName" validate:"required" required:"true" description:"The column the rule applies to: the query name or aggregation alias that produces it."`
+	ColumnName string `json:"columnName" validate:"required" required:"true" description:"The key of the column the rule applies to: the query name for a builder query with one aggregation (A), the query name dotted with the aggregation expression for several (A.count()), a group-by field name, or the SQL alias for a ClickHouse SQL column. Aggregation aliases are display labels, not keys."`
 }
 
 // ══════════════════════════════════════════════
