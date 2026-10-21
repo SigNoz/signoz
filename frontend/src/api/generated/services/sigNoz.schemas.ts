@@ -5440,7 +5440,7 @@ export interface DashboardtypesLegendDTO {
 export interface DashboardtypesThresholdWithLabelDTO {
 	/**
 	 * @type string
-	 * @description The line color: a named color such as Red or a hex value.
+	 * @description The CSS color of the line, for example #F1575F, which matches the SigNoz red preset; CSS named colors such as red also work.
 	 */
 	color: string;
 	/**
@@ -5450,7 +5450,7 @@ export interface DashboardtypesThresholdWithLabelDTO {
 	label?: string;
 	/**
 	 * @type string
-	 * @description The unit id of value. Empty means the panel formatting unit.
+	 * @description The unit id of value, such as ms or percent. Empty means the panel's unit, or the column's unit for a table threshold. Prefer the panel's unit; a different unit works only when it converts to it, such as s against a panel in ms.
 	 */
 	unit?: string;
 	/**
@@ -5981,7 +5981,7 @@ export enum DashboardtypesThresholdFormatDTO {
 export interface DashboardtypesComparisonThresholdDTO {
 	/**
 	 * @type string
-	 * @description The color applied when the threshold is active: a named color such as Red or a hex value.
+	 * @description The CSS color applied to the text or background, per format, while the threshold is active. For example #F1575F matches the SigNoz red preset; CSS named colors such as red also work.
 	 */
 	color: string;
 	/**
@@ -5994,7 +5994,7 @@ export interface DashboardtypesComparisonThresholdDTO {
 	operator?: DashboardtypesComparisonOperatorDTO;
 	/**
 	 * @type string
-	 * @description The unit id of value. Empty means the panel formatting unit.
+	 * @description The unit id of value, such as ms or percent. Empty means the panel's unit, or the column's unit for a table threshold. Prefer the panel's unit; a different unit works only when it converts to it, such as s against a panel in ms.
 	 */
 	unit?: string;
 	/**
@@ -6174,7 +6174,7 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTOKind;
 	/**
-	 * @description The kind-specific panel options. {} accepts every default.
+	 * @description Options for a time series panel: visualization, formatting, chartAppearance, axes, legend and thresholds. {} accepts every default.
 	 */
 	spec: DashboardtypesTimeSeriesPanelSpecDTO;
 }
@@ -6193,7 +6193,7 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpecDTOKind;
 	/**
-	 * @description The kind-specific panel options. {} accepts every default.
+	 * @description Options for a bar chart panel: visualization, formatting, axes, legend and thresholds. {} accepts every default.
 	 */
 	spec: DashboardtypesBarChartPanelSpecDTO;
 }
@@ -6212,7 +6212,7 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpecDTOKind;
 	/**
-	 * @description The kind-specific panel options. {} accepts every default.
+	 * @description Options for an area chart panel: visualization, formatting, chartAppearance, axes, legend and thresholds. {} accepts every default.
 	 */
 	spec: DashboardtypesAreaChartPanelSpecDTO;
 }
@@ -6247,7 +6247,7 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpecDTOKind;
 	/**
-	 * @description The kind-specific panel options. {} accepts every default.
+	 * @description Options for a number panel: visualization, formatting and comparison thresholds that recolor the value. {} accepts every default.
 	 */
 	spec: DashboardtypesNumberPanelSpecDTO;
 }
@@ -6281,7 +6281,7 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpecDTOKind;
 	/**
-	 * @description The kind-specific panel options. {} accepts every default.
+	 * @description Options for a pie chart panel: visualization, formatting and legend. {} accepts every default.
 	 */
 	spec: DashboardtypesPieChartPanelSpecDTO;
 }
@@ -6320,7 +6320,7 @@ export interface DashboardtypesTableFormattingDTO {
 export interface DashboardtypesTableThresholdDTO {
 	/**
 	 * @type string
-	 * @description The color applied when the threshold is active: a named color such as Red or a hex value.
+	 * @description The CSS color applied to the text or background, per format, while the threshold is active. For example #F1575F matches the SigNoz red preset; CSS named colors such as red also work.
 	 */
 	color: string;
 	/**
@@ -6338,7 +6338,7 @@ export interface DashboardtypesTableThresholdDTO {
 	operator?: DashboardtypesComparisonOperatorDTO;
 	/**
 	 * @type string
-	 * @description The unit id of value. Empty means the panel formatting unit.
+	 * @description The unit id of value, such as ms or percent. Empty means the panel's unit, or the column's unit for a table threshold. Prefer the panel's unit; a different unit works only when it converts to it, such as s against a panel in ms.
 	 */
 	unit?: string;
 	/**
@@ -6373,7 +6373,7 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpecDTOKind;
 	/**
-	 * @description The kind-specific panel options. {} accepts every default.
+	 * @description Options for a table panel: visualization, formatting (including per-column units) and thresholds. {} accepts every default.
 	 */
 	spec: DashboardtypesTablePanelSpecDTO;
 }
@@ -6421,7 +6421,7 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpecDTOKind;
 	/**
-	 * @description The kind-specific panel options. {} accepts every default.
+	 * @description Options for a histogram panel: histogramBuckets and legend. {} accepts every default.
 	 */
 	spec: DashboardtypesHistogramPanelSpecDTO;
 }
@@ -6448,7 +6448,7 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTOKind;
 	/**
-	 * @description The kind-specific panel options. {} accepts every default.
+	 * @description Options for a list panel: selectFields, the columns shown for each row. {} accepts every default.
 	 */
 	spec: DashboardtypesListPanelSpecDTO;
 }
@@ -6524,7 +6524,7 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTOKind;
 	/**
-	 * @description The kind-specific panel options. {} accepts every default.
+	 * @description Options for a text panel: mode, the text to render, presentation and headerOptions.
 	 */
 	spec: DashboardtypesTextPanelSpecDTO;
 }
@@ -6649,7 +6649,7 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTOKind;
 	/**
-	 * @description The kind-specific panel options. {} accepts every default.
+	 * @description Options for a heatmap panel: visualization, formatting, axes, legend and chartAppearance. {} accepts every default.
 	 */
 	spec: DashboardtypesHeatmapPanelSpecDTO;
 }
@@ -6688,7 +6688,7 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDa
 	 */
 	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpecDTOKind;
 	/**
-	 * @description The kind-specific query spec.
+	 * @description A builder query over logs, traces or metrics: signal, aggregations, filter, groupBy, order, limit and functions.
 	 */
 	spec: DashboardtypesBuilderQuerySpecDTO;
 }
@@ -6707,7 +6707,7 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDa
 	 */
 	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpecDTOKind;
 	/**
-	 * @description The kind-specific query spec.
+	 * @description A builder query over AI observability traces, with the trace builder query fields.
 	 */
 	spec: DashboardtypesAIBuilderQuerySpecDTO;
 }
@@ -7045,7 +7045,7 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQu
 	 */
 	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTOKind;
 	/**
-	 * @description The kind-specific query spec.
+	 * @description Several named builder queries and formulas run together: a list of query envelopes, each with a type and a spec.
 	 */
 	spec: Querybuildertypesv5CompositeQueryDTO;
 }
@@ -7064,7 +7064,7 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQu
 	 */
 	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormulaDTOKind;
 	/**
-	 * @description The kind-specific query spec.
+	 * @description A formula over other query names in the same panel, such as A / B * 100.
 	 */
 	spec: Querybuildertypesv5QueryBuilderFormulaDTO;
 }
@@ -7083,7 +7083,7 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQu
 	 */
 	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQueryDTOKind;
 	/**
-	 * @description The kind-specific query spec.
+	 * @description A PromQL query: name, query, step and legend.
 	 */
 	spec: Querybuildertypesv5PromQueryDTO;
 }
@@ -7102,7 +7102,7 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQu
 	 */
 	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQueryDTOKind;
 	/**
-	 * @description The kind-specific query spec.
+	 * @description A ClickHouse SQL query: name, query and legend.
 	 */
 	spec: Querybuildertypesv5ClickHouseQueryDTO;
 }
@@ -7121,7 +7121,7 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQu
 	 */
 	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperatorDTOKind;
 	/**
-	 * @description The kind-specific query spec.
+	 * @description A trace operator expression that combines span queries, such as A => B.
 	 */
 	spec: Querybuildertypesv5QueryBuilderTraceOperatorDTO;
 }
@@ -7259,7 +7259,7 @@ export interface DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgType
 	 */
 	kind: DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpecDTOKind;
 	/**
-	 * @description The kind-specific value source spec.
+	 * @description The attribute whose observed values populate the variable: name and signal.
 	 */
 	spec: DashboardtypesDynamicVariableSpecDTO;
 }
@@ -7286,7 +7286,7 @@ export interface DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgType
 	 */
 	kind: DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpecDTOKind;
 	/**
-	 * @description The kind-specific value source spec.
+	 * @description queryValue, the query whose results populate the variable.
 	 */
 	spec: DashboardtypesQueryVariableSpecDTO;
 }
@@ -7305,7 +7305,7 @@ export interface DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgType
 	 */
 	kind: DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpecDTOKind;
 	/**
-	 * @description The kind-specific value source spec.
+	 * @description customValue, the fixed list of values.
 	 */
 	spec: DashboardtypesCustomVariableSpecDTO;
 }
@@ -7558,7 +7558,7 @@ export interface DashboardtypesGettableDashboardV2DTO {
 	id: string;
 	/**
 	 * @type string
-	 * @description Icon or logo shown in the dashboard list: an /assets/Icons/ or /assets/Logos/ path, or a base64 image data URI. Empty for none.
+	 * @description Icon or logo shown in the dashboard list: the path of an icon or logo bundled with the UI under /assets/Icons/ or /assets/Logos/ (only the prefix is validated), or a base64 image data URI for png, jpeg, gif, webp, avif or svg. Empty for none.
 	 */
 	image?: string;
 	/**
@@ -7592,7 +7592,7 @@ export interface DashboardtypesGettableDashboardV2DTO {
 	spec: DashboardtypesDashboardSpecDTO;
 	/**
 	 * @type array,null
-	 * @description The tags attached to the dashboard.
+	 * @description The key/value tags attached to the dashboard, for example key team with value payments.
 	 */
 	tags: TagtypesGettableTagDTO[] | null;
 	/**
@@ -7609,7 +7609,7 @@ export interface DashboardtypesGettableDashboardV2DTO {
 export interface DashboardtypesGettablePublicDasbhboardDTO {
 	/**
 	 * @type string
-	 * @description The time range shown to anonymous viewers by default, as a duration such as 1h.
+	 * @description The time range shown to anonymous viewers by default, as a Go duration such as 30m, 1h or 24h. Accepted units are ns, us, ms, s, m and h; write a day as 24h.
 	 */
 	defaultTimeRange?: string;
 	/**
@@ -7647,7 +7647,7 @@ export interface DashboardtypesGettableSystemDashboardDTO {
 	createdBy?: string;
 	/**
 	 * @type string
-	 * @description Icon or logo shown in the dashboard list: an /assets/Icons/ or /assets/Logos/ path, or a base64 image data URI. Empty for none.
+	 * @description Icon or logo shown in the dashboard list: the path of an icon or logo bundled with the UI under /assets/Icons/ or /assets/Logos/ (only the prefix is validated), or a base64 image data URI for png, jpeg, gif, webp, avif or svg. Empty for none.
 	 */
 	image?: string;
 	/**
@@ -7681,7 +7681,7 @@ export interface DashboardtypesGettableSystemDashboardDTO {
 	spec: DashboardtypesDashboardSpecDTO;
 	/**
 	 * @type array,null
-	 * @description The tags attached to the dashboard.
+	 * @description The key/value tags attached to the dashboard, for example key team with value payments.
 	 */
 	tags: TagtypesGettableTagDTO[] | null;
 	/**
@@ -7967,7 +7967,7 @@ export interface DashboardtypesPostableDashboardV2DTO {
 	generateName?: boolean;
 	/**
 	 * @type string
-	 * @description Icon or logo shown in the dashboard list: an /assets/Icons/ or /assets/Logos/ path, or a base64 image data URI. Empty for none.
+	 * @description Icon or logo shown in the dashboard list: the path of an icon or logo bundled with the UI under /assets/Icons/ or /assets/Logos/ (only the prefix is validated), or a base64 image data URI for png, jpeg, gif, webp, avif or svg. Empty for none.
 	 */
 	image?: string;
 	/**
@@ -7987,7 +7987,7 @@ export interface DashboardtypesPostableDashboardV2DTO {
 	spec: DashboardtypesDashboardSpecDTO;
 	/**
 	 * @type array,null
-	 * @description Up to 10 key/value tags. Keys must not be one of the reserved list filter keys: name, description, created_at, updated_at, created_by, locked, source. Use [] for none.
+	 * @description Up to 10 key/value tags, for example key team with value payments. Keys must not be one of the reserved list filter keys: name, description, created_at, updated_at, created_by, locked, source. Use [] for none.
 	 */
 	tags: TagtypesPostableTagDTO[] | null;
 }
@@ -8007,7 +8007,7 @@ export interface DashboardtypesPostableDashboardViewDTO {
 export interface DashboardtypesPostablePublicDashboardDTO {
 	/**
 	 * @type string
-	 * @description The time range shown to anonymous viewers by default, as a duration such as 1h.
+	 * @description The time range shown to anonymous viewers by default, as a Go duration such as 30m, 1h or 24h. Accepted units are ns, us, ms, s, m and h; write a day as 24h.
 	 */
 	defaultTimeRange?: string;
 	/**
@@ -8029,7 +8029,7 @@ export enum DashboardtypesQueryPluginKindDTO {
 export interface DashboardtypesUpdatableDashboardV2DTO {
 	/**
 	 * @type string
-	 * @description Icon or logo shown in the dashboard list: an /assets/Icons/ or /assets/Logos/ path, or a base64 image data URI. Empty for none.
+	 * @description Icon or logo shown in the dashboard list: the path of an icon or logo bundled with the UI under /assets/Icons/ or /assets/Logos/ (only the prefix is validated), or a base64 image data URI for png, jpeg, gif, webp, avif or svg. Empty for none.
 	 */
 	image?: string;
 	/**
@@ -8049,7 +8049,7 @@ export interface DashboardtypesUpdatableDashboardV2DTO {
 	spec: DashboardtypesDashboardSpecDTO;
 	/**
 	 * @type array,null
-	 * @description The full replacement tag set, up to 10 key/value tags. Keys must not be one of the reserved list filter keys: name, description, created_at, updated_at, created_by, locked, source.
+	 * @description The full replacement tag set, up to 10 key/value tags, for example key team with value payments. Keys must not be one of the reserved list filter keys: name, description, created_at, updated_at, created_by, locked, source.
 	 */
 	tags: TagtypesPostableTagDTO[] | null;
 }
@@ -8057,7 +8057,7 @@ export interface DashboardtypesUpdatableDashboardV2DTO {
 export interface DashboardtypesUpdatablePublicDashboardDTO {
 	/**
 	 * @type string
-	 * @description The time range shown to anonymous viewers by default, as a duration such as 1h.
+	 * @description The time range shown to anonymous viewers by default, as a Go duration such as 30m, 1h or 24h. Accepted units are ns, us, ms, s, m and h; write a day as 24h.
 	 */
 	defaultTimeRange?: string;
 	/**
