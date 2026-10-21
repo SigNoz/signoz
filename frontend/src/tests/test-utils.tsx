@@ -4,7 +4,6 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { NuqsAdapter } from 'nuqs/adapters/react';
 import { AppContext } from 'providers/App/App';
@@ -146,11 +145,9 @@ export function AllTheProviders({
 							<ResourceProvider>
 								<ErrorModalProvider>
 									<TimezoneProvider>
-										<TooltipProvider>
-											<PreferenceContextProvider>
-												{queryBuilderContent}
-											</PreferenceContextProvider>
-										</TooltipProvider>
+										<PreferenceContextProvider>
+											{queryBuilderContent}
+										</PreferenceContextProvider>
 									</TimezoneProvider>
 								</ErrorModalProvider>
 							</ResourceProvider>

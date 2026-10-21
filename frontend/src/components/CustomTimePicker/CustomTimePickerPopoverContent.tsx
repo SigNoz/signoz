@@ -180,6 +180,7 @@ function CustomTimePickerPopoverContent({
 						type="text"
 						className="time-btns"
 						key={option.label + option.value}
+						data-testid={`time-chip-${option.value}`}
 						onClick={(): void => {
 							handleExitLiveLogs();
 							onSelectHandler(option.label, option.value);
@@ -259,6 +260,7 @@ function CustomTimePickerPopoverContent({
 						<Button
 							type="text"
 							key={option.label + option.value}
+							data-testid={`time-option-${option.value}`}
 							onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
 								e.stopPropagation();
 								e.preventDefault();

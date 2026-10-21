@@ -82,7 +82,6 @@ function DataSourceInfo({
 								variant="solid"
 								color="primary"
 								size="sm"
-								className="periscope-btn primary"
 								prefix={<img src={containerPlusUrl} alt="plus" />}
 								onClick={handleConnect}
 								// TODO - Support tabindex, keyboard events - @H4ad

@@ -52,16 +52,19 @@ function MapConfirmDialog({
 	const footer = (
 		<div className={styles.footer}>
 			<Button
+				size="md"
 				variant="outlined"
 				color="secondary"
 				onClick={onCancel}
 				disabled={isSaving}
+				disabledTooltip="Wait for the mapping to finish"
 				prefix={<X size={12} />}
 				testId="unpriced-map-cancel-btn"
 			>
 				Cancel
 			</Button>
 			<Button
+				size="md"
 				variant="solid"
 				color="primary"
 				loading={isSaving}

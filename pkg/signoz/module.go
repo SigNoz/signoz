@@ -155,7 +155,7 @@ func NewModules(
 		MetricsExplorer:      implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, fl, providerSettings, config.MetricsExplorer),
 		MetricReductionRule:  metricReductionRule,
 		InfraMonitoring:      implinframonitoring.NewModule(telemetryStore, telemetryMetadataStore, querier, fl, providerSettings, config.InfraMonitoring),
-		Promote:              implpromote.NewModule(telemetryMetadataStore, telemetryStore),
+		Promote:              implpromote.NewModule(telemetryMetadataStore, telemetryStore, providerSettings),
 		ServiceAccount:       serviceAccount,
 		ServiceAccountGetter: serviceAccountGetter,
 		LogsPipeline:         impllogspipeline.NewModule(sqlstore),

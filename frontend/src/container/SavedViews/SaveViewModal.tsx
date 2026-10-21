@@ -59,11 +59,13 @@ function SaveViewModal({
 						Cancel
 					</Button>
 					<Button
+						variant="solid"
 						color="primary"
 						size="md"
 						prefix={<Check size={14} />}
 						loading={isSaving}
 						disabled={!displayName}
+						disabledTooltip="Enter a view name"
 						onClick={(): void => {
 							void handleSave();
 						}}

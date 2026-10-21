@@ -6,7 +6,6 @@ import {
 	within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import {
 	DashboardtypesTextAlignDTO,
 	DashboardtypesVerticalAlignDTO,
@@ -25,7 +24,7 @@ const value = {
 
 // The swatch tooltips need a provider; AppLayout supplies one at runtime.
 function render(ui: ReactElement): RenderResult {
-	return rtlRender(<TooltipProvider>{ui}</TooltipProvider>);
+	return rtlRender(ui);
 }
 
 // The theme context defaults to dark, so the swatches paint the dark pairs.

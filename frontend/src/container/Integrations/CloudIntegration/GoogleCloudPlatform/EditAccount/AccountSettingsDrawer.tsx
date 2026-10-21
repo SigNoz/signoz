@@ -67,13 +67,15 @@ function AccountSettingsDrawer({
 						cloudProvider={INTEGRATION_TYPES.GCP}
 					/>
 					<Button
+						disabledTooltip="Change the project IDs first"
+						size="md"
 						variant="solid"
 						color="secondary"
 						disabled={isSaveDisabled}
 						onClick={handleSubmit}
 						loading={isLoading}
 						prefix={<Save size={14} />}
-						data-testid="gcp-update-account-btn"
+						testId="gcp-update-account-btn"
 					>
 						Update Changes
 					</Button>

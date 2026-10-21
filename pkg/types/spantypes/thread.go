@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"maps"
-	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
@@ -78,12 +77,11 @@ type ThreadSpan struct {
 	Attributes       map[string]any    `json:"attributes" required:"true" nullable:"false"`
 	Events           []Event           `json:"events" required:"true" nullable:"false"`
 	References       []OtelSpanRef     `json:"references" required:"true" nullable:"false"`
-	// The formatted fields hold the span's messages in the OTel GenAI shape; Formatter names the
-	// converter that produced them and FormatterWarnings what it could not resolve.
-	FormattedInput    aiobservabilitytypes.InputMessages  `json:"formatted_input" required:"true" nullable:"false"`
-	FormattedOutput   aiobservabilitytypes.OutputMessages `json:"formatted_output" required:"true" nullable:"false"`
-	Formatter         string                              `json:"formatter" required:"true"`
-	FormatterWarnings []string                            `json:"formatter_warnings" required:"true" nullable:"false"`
+	// The formatted fields hold the span's messages in the OTel GenAI shape; FormatterWarnings holds what
+	// the converter could not resolve.
+	FormattedInput    aiobservabilitytypes.InputMessages  `json:"formattedInput" required:"true" nullable:"false"`
+	FormattedOutput   aiobservabilitytypes.OutputMessages `json:"formattedOutput" required:"true" nullable:"false"`
+	FormatterWarnings []string                            `json:"formatterWarnings" required:"true" nullable:"false"`
 
 	timeUnixNano uint64
 }
@@ -180,7 +178,9 @@ func newThreadSpan(traceID string, storable *StorableSpan) *ThreadSpan {
 	maps.Copy(resources, storable.ResourcesString)
 	timeUnixNano := uint64(storable.StartTime.UnixNano())
 	attributes := threadAttributes(storable)
-	formatted := aiobservabilitytypes.FormatMessages(rawAttribute(storable, aiobservabilitytypes.GenAIInputMessages), rawAttribute(storable, aiobservabilitytypes.GenAIOutputMessages))
+	// Spans from before the JSON rollout have no document and are not decoded: the legacy maps
+	// hold an object split into one key per field.
+	formatted := aiobservabilitytypes.FormatMessages(storable.AttributesJSON)
 	return &ThreadSpan{
 		SpanID:            storable.SpanID,
 		TraceID:           traceID,
@@ -198,7 +198,6 @@ func newThreadSpan(traceID string, storable *StorableSpan) *ThreadSpan {
 		References:        storable.UnmarshalledRefs(),
 		FormattedInput:    formatted.Input,
 		FormattedOutput:   formatted.Output,
-		Formatter:         formatted.Formatter,
 		FormatterWarnings: formatted.Warnings,
 		timeUnixNano:      timeUnixNano,
 	}
@@ -213,21 +212,4 @@ func threadAttributes(storable *StorableSpan) map[string]any {
 	attributes := make(map[string]any, len(storable.AttributesJSON))
 	storable.AttributesJSON.FlattenInto("", attributes)
 	return attributes
-}
-
-// rawAttribute reads one attribute for decoding from the JSON document, where an object value is
-// still whole. The legacy maps hold objects split into one key per field, so spans from before
-// the JSON rollout are not decoded. Not handled: a list of JSON strings, which formats as generic,
-// and a scalar at a prefix of the path, such as gen_ai.input beside gen_ai.input.messages, which
-// ends the walk early.
-func rawAttribute(storable *StorableSpan, key string) any {
-	var current any = map[string]any(storable.AttributesJSON)
-	for segment := range strings.SplitSeq(key, ".") {
-		object, ok := current.(map[string]any)
-		if !ok {
-			return nil
-		}
-		current = object[segment]
-	}
-	return current
 }

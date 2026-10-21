@@ -9,10 +9,9 @@ import {
 	Query,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
-import cx from 'classnames';
 import { v4 as uuidv4 } from 'uuid';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import type { MessageActionDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 import {
 	ApplyFilterSignalDTO,
@@ -33,7 +32,6 @@ import {
 	ExternalLink,
 	Eye,
 	Filter,
-	LoaderCircle,
 	MessageCircle,
 	RotateCcw,
 	Sparkles,
@@ -614,14 +612,11 @@ export default function ActionsSection({
 					// "applied"). Without a documented terminal vocabulary we don't auto-
 					// disable on it — only the local in-flight click result does. The state
 					// is still surfaced visually via the suffix pill below.
-					const isDisabled = isLoading || isSuccess;
 
 					const tooltip = isError ? result.error : (action.tooltip ?? undefined);
 
 					let icon: JSX.Element;
-					if (isLoading) {
-						icon = <LoaderCircle size={12} className={styles.spin} />;
-					} else if (isSuccess) {
+					if (isSuccess) {
 						icon = <Check size={12} />;
 					} else if (isError) {
 						icon = <TriangleAlert size={12} />;
@@ -631,12 +626,13 @@ export default function ActionsSection({
 
 					const chip = (
 						<Button
+							disabledTooltip="This action already ran"
 							variant="outlined"
 							color="secondary"
 							size="sm"
-							className={cx(styles.chip, { [styles.error]: isError })}
 							onClick={(): void => handleClick(key, action)}
-							disabled={isDisabled}
+							disabled={isSuccess}
+							loading={isLoading}
 							aria-label={action.label}
 							prefix={icon}
 						>
@@ -644,12 +640,10 @@ export default function ActionsSection({
 						</Button>
 					);
 
-					return tooltip ? (
-						<TooltipSimple key={key} title={tooltip}>
+					return (
+						<Tooltip key={key} title={tooltip}>
 							{chip}
-						</TooltipSimple>
-					) : (
-						<span key={key}>{chip}</span>
+						</Tooltip>
 					);
 				})}
 			</div>

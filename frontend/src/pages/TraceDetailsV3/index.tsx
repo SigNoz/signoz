@@ -26,7 +26,10 @@ import { useTraceDetailLogEvent } from './hooks/useTraceDetailLogEvent';
 import NoData from './NoData/NoData';
 import TraceStoreSync from './stores/TraceStoreSync';
 import { useTraceStore } from './stores/traceStore';
-import { SpanDetailVariant } from './SpanDetailsPanel/constants';
+import {
+	SPAN_DETAILS_PANEL_MIN_WIDTH,
+	SpanDetailVariant,
+} from './SpanDetailsPanel/constants';
 import SpanDetailsPanel from './SpanDetailsPanel/SpanDetailsPanel';
 import TraceDetailsHeader from './TraceDetailsHeader/TraceDetailsHeader';
 import { FLAMEGRAPH_SPAN_LIMIT } from './TraceFlamegraph/constants';
@@ -307,7 +310,7 @@ function TraceDetailsV3(): JSX.Element {
 			) as SpanDetailVariant) || SpanDetailVariant.DOCKED_RIGHT,
 	);
 
-	const RIGHT_DOCK_MIN = 480;
+	const RIGHT_DOCK_MIN = SPAN_DETAILS_PANEL_MIN_WIDTH;
 	const RIGHT_DOCK_MAX = 720;
 	const [rightDockWidth, setRightDockWidth] = useState(RIGHT_DOCK_MIN);
 

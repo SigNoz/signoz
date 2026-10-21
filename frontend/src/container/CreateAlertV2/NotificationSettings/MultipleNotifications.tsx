@@ -85,34 +85,34 @@ function MultipleNotifications(): JSX.Element {
 		const placeholder = isMultipleNotificationsEnabled
 			? 'Select fields to group by (optional)'
 			: 'No grouping fields available';
-		let input = (
-			<div>
-				<Select
-					options={spaceAggregationOptions}
-					onChange={onSelectChange}
-					value={notificationSettings.multipleNotifications}
-					mode="multiple"
-					placeholder={placeholder}
-					disabled={!isMultipleNotificationsEnabled}
-					aria-disabled={!isMultipleNotificationsEnabled}
-					maxTagCount={3}
-					data-testid="multiple-notifications-select"
-				/>
-				{isMultipleNotificationsEnabled && (
-					<Typography.Text className="multiple-notifications-select-description">
-						{groupByDescription}
-					</Typography.Text>
-				)}
-			</div>
+		return (
+			<Tooltip
+				title={
+					isMultipleNotificationsEnabled
+						? undefined
+						: "Add 'Group by' fields to your query to enable alert grouping"
+				}
+			>
+				<div>
+					<Select
+						options={spaceAggregationOptions}
+						onChange={onSelectChange}
+						value={notificationSettings.multipleNotifications}
+						mode="multiple"
+						placeholder={placeholder}
+						disabled={!isMultipleNotificationsEnabled}
+						aria-disabled={!isMultipleNotificationsEnabled}
+						maxTagCount={3}
+						data-testid="multiple-notifications-select"
+					/>
+					{isMultipleNotificationsEnabled && (
+						<Typography.Text className="multiple-notifications-select-description">
+							{groupByDescription}
+						</Typography.Text>
+					)}
+				</div>
+			</Tooltip>
 		);
-		if (!isMultipleNotificationsEnabled) {
-			input = (
-				<Tooltip title="Add 'Group by' fields to your query to enable alert grouping">
-					{input}
-				</Tooltip>
-			);
-		}
-		return input;
 	}, [
 		groupByDescription,
 		isMultipleNotificationsEnabled,

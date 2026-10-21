@@ -4,7 +4,6 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { render, screen } from '@testing-library/react';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import {
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
@@ -15,6 +14,7 @@ import * as useQueryBuilderHooks from 'hooks/queryBuilder/useQueryBuilder';
 import * as useHandleExplorerTabChangeHooks from 'hooks/useHandleExplorerTabChange';
 import * as appContextHooks from 'providers/App/App';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
+import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import * as timezoneHooks from 'providers/Timezone';
 import store from 'store';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
@@ -147,11 +147,11 @@ function renderExplorer(): void {
 		<QueryClientProvider client={queryClient}>
 			<MemoryRouter>
 				<Provider store={store}>
-					<TooltipProvider>
-						<ErrorModalProvider>
+					<ErrorModalProvider>
+						<PreferenceContextProvider>
 							<Explorer />
-						</ErrorModalProvider>
-					</TooltipProvider>
+						</PreferenceContextProvider>
+					</ErrorModalProvider>
 				</Provider>
 			</MemoryRouter>
 		</QueryClientProvider>,
@@ -267,7 +267,7 @@ describe('Explorer', () => {
 
 		const oneChartPerQueryToggle = screen.getByRole('switch');
 		expect(oneChartPerQueryToggle).toBeChecked();
-		expect(oneChartPerQueryToggle).toBeDisabled();
+		expect(oneChartPerQueryToggle).toHaveAttribute('aria-disabled', 'true');
 	});
 
 	it('should render empty y axis unit selector for a single metric with no unit', () => {
@@ -303,7 +303,7 @@ describe('Explorer', () => {
 
 		const oneChartPerQueryToggle = screen.getByRole('switch');
 		expect(oneChartPerQueryToggle).not.toBeChecked();
-		expect(oneChartPerQueryToggle).toBeDisabled();
+		expect(oneChartPerQueryToggle).toHaveAttribute('aria-disabled', 'true');
 	});
 
 	it('one chart per query should enabled by default when there are multiple metrics with the same unit', () => {

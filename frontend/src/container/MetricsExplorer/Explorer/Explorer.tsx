@@ -2,11 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
-import { Tooltip } from 'antd';
 import { Filter } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Switch } from '@signozhq/ui/switch';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import logEvent from 'api/common/logEvent';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
@@ -364,29 +363,29 @@ function Explorer(): JSX.Element {
 					<div className="explore-header">
 						<div className="explore-header-left-actions">
 							{!showSidebar && (
-								<TooltipSimple title="Show Views">
+								<Tooltip title="Show Views">
 									<Button
 										variant="outlined"
 										color="secondary"
-										size="icon"
+										size="sm"
+										icon
 										aria-label="Show Views"
-										prefix={<Filter size={16} />}
 										onClick={(): void => setShowSidebar(true)}
-										data-testid="metrics-explorer-show-sidebar"
-									/>
-								</TooltipSimple>
+										testId="metrics-explorer-show-sidebar"
+									>
+										<Filter size={16} />
+									</Button>
+								</Tooltip>
 							)}
 							<span>1 chart/query</span>
-							<Tooltip
-								open={disableOneChartPerQuery ? undefined : false}
-								title={oneChartPerQueryDisabledTooltip}
-							>
-								<Switch
-									value={showOneChartPerQuery}
-									onChange={handleToggleShowOneChartPerQuery}
-									disabled={disableOneChartPerQuery || splitedQueries.length <= 1}
-								/>
-							</Tooltip>
+							<Switch
+								color="primary"
+								textPlacement="right"
+								value={showOneChartPerQuery}
+								onChange={handleToggleShowOneChartPerQuery}
+								disabled={disableOneChartPerQuery || splitedQueries.length <= 1}
+								disabledTooltip={oneChartPerQueryDisabledTooltip}
+							/>
 						</div>
 						<div className="explore-header-right-actions">
 							{!isEmpty(warning) && <WarningPopover warningData={warning} />}

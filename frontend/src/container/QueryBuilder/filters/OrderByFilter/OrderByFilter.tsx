@@ -21,6 +21,7 @@ export function OrderByFilter({
 	isRawQuery = false,
 	entityVersion,
 	isNewQueryV2 = false,
+	placeholder,
 }: OrderByFilterProps): JSX.Element {
 	const getPopupContainer = useSelectPopupContainer();
 	const {
@@ -101,6 +102,7 @@ export function OrderByFilter({
 			options={optionsData}
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 			onChange={handleChange}
+			placeholder={placeholder}
 			data-testid="order-by"
 		/>
 	);

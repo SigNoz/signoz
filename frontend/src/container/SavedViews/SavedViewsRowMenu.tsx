@@ -1,43 +1,65 @@
 import { useMemo } from 'react';
 import { Ellipsis } from '@signozhq/icons';
-import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
+import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';
+import type { AuthZDropdownItemType } from 'lib/authz/components/AuthZDropdown/types';
 
 import { SAVED_VIEW_ROW_ACTIONS } from './constants';
 import SavedViewsRowButton from './SavedViewsRowButton';
 import { SavedViewsRowMenuProps } from './types';
 
 function SavedViewsRowMenu({
+	viewId,
 	onAction,
 	onOpen,
 }: SavedViewsRowMenuProps): JSX.Element {
-	const items = useMemo<MenuItem[]>(
+	const items = useMemo<AuthZDropdownItemType[]>(
 		() =>
 			SAVED_VIEW_ROW_ACTIONS.flatMap(
-				({ key, label, icon: Icon, danger, hasDividerBefore }): MenuItem[] => [
-					...(hasDividerBefore ? [{ type: 'divider' as const }] : []),
+				({
+					key,
+					label,
+					icon: Icon,
+					danger,
+					hasDividerBefore,
+					buildPermission,
+				}): AuthZDropdownItemType[] => [
+					...(hasDividerBefore
+						? [{ type: 'separator' as const, value: `separator-${key}` }]
+						: []),
 					{
-						key,
+						type: 'item' as const,
+						value: key,
 						label,
-						icon: <Icon size={14} />,
+						prefix: <Icon size={14} />,
 						danger,
+						checks: buildPermission ? [buildPermission(viewId)] : undefined,
 						onClick: (): void => onAction(key),
 					},
 				],
 			),
-		[onAction],
+		[viewId, onAction],
 	);
 
 	return (
-		<DropdownMenuSimple menu={{ items }} side="right" align="start">
+		<AuthZDropdown
+			items={items}
+			nativeButton
+			side="right"
+			align="start"
+			onOpenChange={(open): void => {
+				if (open) {
+					onOpen();
+				}
+			}}
+			testId="saved-views-row-menu"
+		>
 			<SavedViewsRowButton
 				icon={<Ellipsis size={14} />}
 				label="More options"
 				tooltip="More options"
 				testId="saved-views-row-menu"
-				onPointerDown={onOpen}
-				onKeyDown={onOpen}
 			/>
-		</DropdownMenuSimple>
+		</AuthZDropdown>
 	);
 }
 

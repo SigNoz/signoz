@@ -15,7 +15,8 @@ test.describe('Alert details — page chrome', () => {
 		await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
 
 		await gotoAlertHistory(page, alertHistory.ruleId);
-		const expected = page.url();
+		// The served URL: base path mode strips the prefix from `page.url()`.
+		const expected = page.mainFrame().url();
 
 		await page.getByRole('button', { name: 'Copy link' }).click();
 		await expect(page.getByText('Copied')).toBeVisible();

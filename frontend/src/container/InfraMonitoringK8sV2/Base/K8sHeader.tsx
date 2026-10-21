@@ -141,7 +141,6 @@ function K8sHeader({
 					isLoadingQueries={isFetching}
 					onStageRunQuery={handleStageRunQuery}
 					handleCancelQuery={handleCancelQuery}
-					className={styles.k8SRunButton}
 				/>
 			</div>
 

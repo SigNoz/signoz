@@ -8,7 +8,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@signozhq/ui/select';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import {
 	QuerySearchV2Provider,
@@ -251,20 +251,19 @@ function EntityOverviewContent({
 							</SelectContent>
 						</Select>
 
-						<TooltipSimple
-							title={`View on ${targetLabel.toLowerCase()} page`}
-							side="top"
-							arrow
-						>
+						<Tooltip title={`View on ${targetLabel.toLowerCase()} page`} side="top">
 							<Button
 								variant="ghost"
-								size="icon"
+								size="sm"
+								icon
 								color="secondary"
+								aria-label={`View on ${targetLabel.toLowerCase()} page`}
 								onClick={handleNavigate}
-								data-testid="overview-view-on-list-page"
-								prefix={<Compass size={16} />}
-							/>
-						</TooltipSimple>
+								testId="overview-view-on-list-page"
+							>
+								<Compass size={16} />
+							</Button>
+						</Tooltip>
 					</div>
 				}
 				listConfig={targetConfig.list}

@@ -1,23 +1,10 @@
-import { Button } from '@signozhq/ui/button';
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuRadioGroup,
-	DropdownMenuRadioItem,
-	DropdownMenuSub,
-	DropdownMenuSubContent,
-	DropdownMenuSubTrigger,
-	DropdownMenuTrigger,
-} from '@signozhq/ui/dropdown-menu';
 import { Settings2 } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
+import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { ExportFormat } from 'lib/exportData/types';
 
 import { useTraceStore } from '../stores/traceStore';
 import { useDownloadTrace } from './useDownloadTrace';
-
-import styles from './TraceOptionsMenu.module.scss';
 
 interface TraceOptionsMenuProps {
 	showTraceDetails: boolean;
@@ -29,9 +16,6 @@ interface TraceOptionsMenuProps {
 	totalSpansCount: number;
 }
 
-// Composed from dropdown-menu primitives (instead of DropdownMenuSimple)
-// because the simple preset offers no way to style the submenu content,
-// which renders in its own portal and needs a z-index above FloatingPanel.
 function TraceOptionsMenu({
 	showTraceDetails,
 	onToggleTraceDetails,
@@ -61,71 +45,92 @@ function TraceOptionsMenu({
 		}
 	};
 
+	const items: DropdownItemType[] = [
+		{
+			type: 'item',
+			value: 'toggle-trace-details',
+			label: showTraceDetails ? 'Hide trace details' : 'Show trace details',
+			onClick: onToggleTraceDetails,
+		},
+		{
+			type: 'item',
+			value: 'preview-fields',
+			label: 'Preview fields',
+			onClick: onOpenPreviewFields,
+		},
+	];
+
+	// Only show the "Colour by" submenu if there's an actual choice to make.
+	if (availableColorByOptions.length > 1) {
+		items.push({
+			type: 'submenu',
+			value: 'colour-by',
+			label: 'Colour by',
+			items: [
+				{
+					type: 'group',
+					value: 'colour-by-options',
+					label: 'Colour by',
+					items: [
+						{
+							type: 'radio-group',
+							name: 'colour-by',
+							value: colorByField.name,
+							onChange: handleColorByChange,
+							items: availableColorByOptions.map((opt) => ({
+								value: opt.field.name,
+								label: opt.label,
+							})),
+						},
+					],
+				},
+			],
+		});
+	}
+
+	if (!isExportDisabled) {
+		items.push({
+			type: 'submenu',
+			value: 'download-trace',
+			label: 'Download trace',
+			testId: 'download-trace-submenu',
+			loading: isDownloading,
+			loadingTooltip: 'Downloading trace',
+			items: [
+				{
+					type: 'item',
+					value: 'csv',
+					label: 'CSV',
+					testId: 'download-trace-csv',
+					onClick: (): void => {
+						downloadTrace(ExportFormat.Csv);
+					},
+				},
+				{
+					type: 'item',
+					value: 'jsonl',
+					label: 'JSONL',
+					testId: 'download-trace-jsonl',
+					onClick: (): void => {
+						downloadTrace(ExportFormat.Jsonl);
+					},
+				},
+			],
+		});
+	}
+
 	return (
-		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
-				<Button
-					variant="ghost"
-					size="icon"
-					color="secondary"
-					aria-label="Trace options"
-					prefix={<Settings2 size={14} />}
-				/>
-			</DropdownMenuTrigger>
-			<DropdownMenuContent align="start" className={styles.traceOptionsDropdown}>
-				<DropdownMenuItem clickable onSelect={onToggleTraceDetails}>
-					{showTraceDetails ? 'Hide trace details' : 'Show trace details'}
-				</DropdownMenuItem>
-				<DropdownMenuItem clickable onSelect={onOpenPreviewFields}>
-					Preview fields
-				</DropdownMenuItem>
-				{/* Only show the "Colour by" submenu if there's an actual choice to make. */}
-				{availableColorByOptions.length > 1 && (
-					<DropdownMenuSub>
-						<DropdownMenuSubTrigger>Colour by</DropdownMenuSubTrigger>
-						<DropdownMenuSubContent className={styles.traceOptionsDropdown}>
-							<DropdownMenuLabel>COLOUR BY</DropdownMenuLabel>
-							<DropdownMenuRadioGroup
-								value={colorByField.name}
-								onValueChange={handleColorByChange}
-							>
-								{availableColorByOptions.map((opt) => (
-									<DropdownMenuRadioItem key={opt.field.name} value={opt.field.name}>
-										{opt.label}
-									</DropdownMenuRadioItem>
-								))}
-							</DropdownMenuRadioGroup>
-						</DropdownMenuSubContent>
-					</DropdownMenuSub>
-				)}
-				{!isExportDisabled && (
-					<DropdownMenuSub>
-						<DropdownMenuSubTrigger
-							disabled={isDownloading}
-							data-testid="download-trace-submenu"
-						>
-							Download trace
-						</DropdownMenuSubTrigger>
-						<DropdownMenuSubContent className={styles.traceOptionsDropdown}>
-							<DropdownMenuItem
-								clickable
-								onSelect={(): void => downloadTrace(ExportFormat.Csv)}
-								testId="download-trace-csv"
-							>
-								CSV
-							</DropdownMenuItem>
-							<DropdownMenuItem
-								clickable
-								onSelect={(): void => downloadTrace(ExportFormat.Jsonl)}
-								testId="download-trace-jsonl"
-							>
-								JSONL
-							</DropdownMenuItem>
-						</DropdownMenuSubContent>
-					</DropdownMenuSub>
-				)}
-			</DropdownMenuContent>
-		</DropdownMenu>
+		<Dropdown items={items} nativeButton align="start" side="bottom">
+			<Button
+				variant="ghost"
+				size="sm"
+				icon
+				color="secondary"
+				aria-label="Trace options"
+			>
+				<Settings2 size={14} />
+			</Button>
+		</Dropdown>
 	);
 }
 

@@ -41,8 +41,8 @@ function NewSectionNameInput({
 				<Button
 					variant="ghost"
 					color="secondary"
-					size="icon"
-					className={styles.clear}
+					size="sm"
+					icon
 					aria-label="Cancel new section"
 					onClick={onCancel}
 					testId="panel-section-name-cancel"
