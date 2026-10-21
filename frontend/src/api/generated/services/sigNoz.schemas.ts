@@ -6325,7 +6325,7 @@ export interface DashboardtypesTableThresholdDTO {
 	color: string;
 	/**
 	 * @type string
-	 * @description The key of the column the rule applies to: the query name for a builder query with one aggregation (A), the query name dotted with the aggregation expression for several (A.count()), a group-by field name, or the SQL alias for a ClickHouse SQL column. Aggregation aliases are display labels, not keys.
+	 * @description The key of the value column the rule applies to: the query name for a builder query with one aggregation (A), the query name dotted with the aggregation expression for several (A.count()), or the SQL alias for a ClickHouse SQL column. Group-by columns are never colored, and aggregation aliases are display labels, not keys.
 	 */
 	columnName: string;
 	/**
@@ -6387,12 +6387,12 @@ export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboa
 export interface DashboardtypesHistogramBucketsDTO {
 	/**
 	 * @type number,null
-	 * @description The target number of buckets, approximate: the chart picks the nearest predefined width that fits the range. Ignored when bucketWidth is set. Null uses the chart default.
+	 * @description The target number of buckets, approximate: the chart uses the first predefined width larger than the value range divided by this count. Ignored when bucketWidth is positive. Null uses the chart default.
 	 */
 	bucketCount?: number | null;
 	/**
 	 * @type number,null
-	 * @description The width of each bucket in the value unit; takes precedence over bucketCount. Null lets the chart choose.
+	 * @description The width of each bucket in the value unit. A positive value takes precedence over bucketCount; null or 0 lets the chart choose.
 	 */
 	bucketWidth?: number | null;
 	/**
@@ -7342,7 +7342,7 @@ export interface DashboardtypesListVariableSpecDTO {
 	capturingRegexp?: string;
 	/**
 	 * @type string
-	 * @description The value meant to replace every value when all is selected. Requires allowAllValue. Stored, but the current UI ignores it and substitutes every value.
+	 * @description The value meant to replace every value when all is selected. Requires allowAllValue. Stored, but currently ignored by the UI.
 	 */
 	customAllValue?: string;
 	/**
