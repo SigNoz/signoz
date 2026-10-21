@@ -30,11 +30,6 @@ editor_email = "metric-reduction-editor@telemetry.test"
 rule_body = {"metricName": "reduction.requests", "matchType": "drop", "labels": ["host.name"]}
 
 
-def gauge_samples(metric_name: str) -> list[Metrics]:
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    return [Metrics(metric_name=metric_name, labels={"host.name": f"host-{i}"}, timestamp=now - timedelta(minutes=i + 1), value=0.5, type_="Gauge", is_monotonic=False) for i in range(3)]
-
-
 def test_setup(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -65,10 +60,6 @@ def test_setup(
     create_active_user(signoz, admin_token, email=editor_email, role="signoz-editor", password=user_password)
 
 
-def bearer(get_token: Callable[[str, str], str], email: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {get_token(email, USER_ADMIN_PASSWORD if email == USER_ADMIN_EMAIL else user_password)}"}
-
-
 @pytest.mark.parametrize("path", ["/api/v2/metric_reduction_rules/stats", "/api/v2/metric_reduction_rules/timeseries"], ids=["stats", "timeseries"])
 @pytest.mark.parametrize(
     ("email", "expected"),
@@ -89,7 +80,7 @@ def test_volume_routes_need_metrics_read(
     email: str,
     expected: HTTPStatus,
 ) -> None:
-    response = requests.get(signoz.self.host_configs["8080"].get(path), headers=bearer(get_token, email), timeout=10)
+    response = requests.get(signoz.self.host_configs["8080"].get(path), headers={"Authorization": f"Bearer {get_token(email, USER_ADMIN_PASSWORD if email == USER_ADMIN_EMAIL else user_password)}"}, timeout=10)
     assert response.status_code == expected, response.text
     if expected == HTTPStatus.FORBIDDEN:
         assert "metrics" in response.text
@@ -113,7 +104,7 @@ def test_list_needs_rule_grant(
     email: str,
     expected: HTTPStatus,
 ) -> None:
-    response = requests.get(signoz.self.host_configs["8080"].get("/api/v2/metric_reduction_rules"), headers=bearer(get_token, email), timeout=10)
+    response = requests.get(signoz.self.host_configs["8080"].get("/api/v2/metric_reduction_rules"), headers={"Authorization": f"Bearer {get_token(email, USER_ADMIN_PASSWORD if email == USER_ADMIN_EMAIL else user_password)}"}, timeout=10)
     assert response.status_code == expected, response.text
     if expected == HTTPStatus.FORBIDDEN:
         assert "metric-reduction-rule" in response.text
@@ -136,11 +127,11 @@ def test_preview_needs_create_grant(
     email: str,
     expected: HTTPStatus,
 ) -> None:
-    insert_metrics(gauge_samples(rule_body["metricName"]))
+    insert_metrics([Metrics(metric_name=rule_body["metricName"], labels={"host.name": f"host-{i}"}, timestamp=datetime.now(tz=UTC) - timedelta(minutes=i + 1), value=0.5, type_="Gauge", is_monotonic=False) for i in range(3)])
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/metric_reduction_rules/preview"),
         json=rule_body,
-        headers=bearer(get_token, email),
+        headers={"Authorization": f"Bearer {get_token(email, USER_ADMIN_PASSWORD if email == USER_ADMIN_EMAIL else user_password)}"},
         timeout=10,
     )
     assert response.status_code == expected, response.text
@@ -163,18 +154,18 @@ def test_create_needs_create_grant(
     email: str,
     expected: HTTPStatus,
 ) -> None:
-    insert_metrics(gauge_samples("reduction.create"))
+    insert_metrics([Metrics(metric_name="reduction.create", labels={"host.name": f"host-{i}"}, timestamp=datetime.now(tz=UTC) - timedelta(minutes=i + 1), value=0.5, type_="Gauge", is_monotonic=False) for i in range(3)])
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/metric_reduction_rules"),
         json={**rule_body, "metricName": "reduction.create"},
-        headers=bearer(get_token, email),
+        headers={"Authorization": f"Bearer {get_token(email, USER_ADMIN_PASSWORD if email == USER_ADMIN_EMAIL else user_password)}"},
         timeout=10,
     )
     assert response.status_code == expected, response.text
     if expected == HTTPStatus.CREATED:
         requests.delete(
             signoz.self.host_configs["8080"].get(f"/api/v2/metric_reduction_rules/{response.json()['data']['id']}"),
-            headers=bearer(get_token, USER_ADMIN_EMAIL),
+            headers={"Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"},
             timeout=10,
         )
 
@@ -184,27 +175,27 @@ def test_rule_instance_routes(
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[list[Metrics]], None],
 ) -> None:
-    insert_metrics(gauge_samples("reduction.instance"))
+    insert_metrics([Metrics(metric_name="reduction.instance", labels={"host.name": f"host-{i}"}, timestamp=datetime.now(tz=UTC) - timedelta(minutes=i + 1), value=0.5, type_="Gauge", is_monotonic=False) for i in range(3)])
     created = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/metric_reduction_rules"),
         json={**rule_body, "metricName": "reduction.instance"},
-        headers=bearer(get_token, USER_ADMIN_EMAIL),
+        headers={"Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"},
         timeout=10,
     )
     assert created.status_code == HTTPStatus.CREATED, created.text
     rule_url = signoz.self.host_configs["8080"].get(f"/api/v2/metric_reduction_rules/{created.json()['data']['id']}")
 
     for email, expected in [(scoped_email, HTTPStatus.FORBIDDEN), (rule_reader_email, HTTPStatus.OK), (viewer_email, HTTPStatus.OK)]:
-        read = requests.get(rule_url, headers=bearer(get_token, email), timeout=10)
+        read = requests.get(rule_url, headers={"Authorization": f"Bearer {get_token(email, USER_ADMIN_PASSWORD if email == USER_ADMIN_EMAIL else user_password)}"}, timeout=10)
         assert read.status_code == expected, read.text
 
     for email in [rule_reader_email, viewer_email, editor_email]:
-        updated = requests.put(rule_url, json={"matchType": "keep", "labels": ["host.name"]}, headers=bearer(get_token, email), timeout=10)
+        updated = requests.put(rule_url, json={"matchType": "keep", "labels": ["host.name"]}, headers={"Authorization": f"Bearer {get_token(email, USER_ADMIN_PASSWORD if email == USER_ADMIN_EMAIL else user_password)}"}, timeout=10)
         assert updated.status_code == HTTPStatus.FORBIDDEN, updated.text
-        deleted = requests.delete(rule_url, headers=bearer(get_token, email), timeout=10)
+        deleted = requests.delete(rule_url, headers={"Authorization": f"Bearer {get_token(email, USER_ADMIN_PASSWORD if email == USER_ADMIN_EMAIL else user_password)}"}, timeout=10)
         assert deleted.status_code == HTTPStatus.FORBIDDEN, deleted.text
 
-    updated = requests.put(rule_url, json={"matchType": "keep", "labels": ["host.name"]}, headers=bearer(get_token, USER_ADMIN_EMAIL), timeout=10)
+    updated = requests.put(rule_url, json={"matchType": "keep", "labels": ["host.name"]}, headers={"Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}, timeout=10)
     assert updated.status_code == HTTPStatus.OK, updated.text
-    deleted = requests.delete(rule_url, headers=bearer(get_token, USER_ADMIN_EMAIL), timeout=10)
+    deleted = requests.delete(rule_url, headers={"Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}, timeout=10)
     assert deleted.status_code == HTTPStatus.NO_CONTENT, deleted.text
