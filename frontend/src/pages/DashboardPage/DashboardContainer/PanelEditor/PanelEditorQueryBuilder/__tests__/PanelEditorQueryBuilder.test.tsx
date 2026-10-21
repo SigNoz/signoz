@@ -3,13 +3,9 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { EQueryType } from 'types/common/dashboard';
 
 import { requireQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
-import {
-	toPanelType,
-	type PanelKind,
-} from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
+import type { PanelKind } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 
 import PanelEditorQueryBuilder from '../PanelEditorQueryBuilder';
-import { useQueryModeChange } from '../../hooks/useQueryModeChange';
 
 // Capture the props the (real-guard-fed) QueryBuilderV2 receives without rendering it.
 const mockQueryBuilderV2 = jest.fn();
@@ -62,17 +58,12 @@ const AI_QUERY = {
 	},
 };
 
-/** Stands in for the editor shell, which owns the tab switch. */
+/** Stands in for the editor shell. */
 function BuilderHost({ panelKind }: { panelKind: PanelKind }): JSX.Element {
 	const panelDefinition = requireQueryPanelDefinition(panelKind);
-	const onChangeQueryMode = useQueryModeChange({
-		panelType: toPanelType(panelKind),
-		supportedQueryTypesKindMap: panelDefinition.supportedQueryTypesKindMap,
-	});
 	return (
 		<PanelEditorQueryBuilder
 			panelDefinition={panelDefinition}
-			onChangeQueryMode={onChangeQueryMode}
 			isLoadingQueries={false}
 			onStageRunQuery={jest.fn()}
 			onCancelQuery={jest.fn()}

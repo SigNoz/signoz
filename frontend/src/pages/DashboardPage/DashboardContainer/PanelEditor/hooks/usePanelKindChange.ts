@@ -18,7 +18,6 @@ import type {
 import { EQueryType } from 'types/common/dashboard';
 
 import {
-	getQueryPanelDefinition,
 	isStaticPanelKind,
 	resolveQueryType,
 } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
@@ -33,7 +32,6 @@ import {
 	withPercentileHistogramAggregation,
 	withSingleHeatmapQuery,
 } from '../utils/heatmapQuery';
-import { useQueryModeChange } from './useQueryModeChange';
 
 // V1's handleQueryChange clears orderBy for lists; re-seed the fresh-list default (timestamp desc).
 const DEFAULT_LIST_ORDER_BY: OrderByPayload[] = [
@@ -61,17 +59,15 @@ interface KindState {
 	query: Query;
 }
 
-interface UsePanelKindAndQueryModeSwitchArgs {
+interface UsePanelKindChangeArgs {
 	spec: DashboardtypesPanelSpecDTO;
 	panelType: PANEL_TYPES;
 	setSpec: (next: DashboardtypesPanelSpecDTO) => void;
 }
 
-interface UsePanelKindAndQueryModeSwitchApi {
+interface UsePanelKindChangeApi {
 	/** Switch the panel to `newKind`, transforming/restoring its query + spec. */
 	onChangePanelKind: (newKind: PanelKind) => void;
-	/** Switch authoring tab. */
-	onChangeQueryMode: (key: string) => void;
 }
 
 /**
@@ -81,11 +77,11 @@ interface UsePanelKindAndQueryModeSwitchApi {
  * (`Table → List → Table` restores the original query + spec), and, on first visit to a
  * kind, a query rebuild (`handleQueryChange`) + spec reset (`getSwitchedPluginSpec`).
  */
-export function usePanelKindAndQueryModeSwitch({
+export function usePanelKindChange({
 	spec,
 	panelType,
 	setSpec,
-}: UsePanelKindAndQueryModeSwitchArgs): UsePanelKindAndQueryModeSwitchApi {
+}: UsePanelKindChangeArgs): UsePanelKindChangeApi {
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 
 	const cacheRef = useRef<Map<PanelKind, KindState>>(new Map());
@@ -97,13 +93,6 @@ export function usePanelKindAndQueryModeSwitch({
 	queryRef.current = currentQuery;
 	const panelTypeRef = useRef(panelType);
 	panelTypeRef.current = panelType;
-
-	const onChangeQueryMode = useQueryModeChange({
-		panelType,
-		supportedQueryTypesKindMap:
-			getQueryPanelDefinition(spec.plugin.kind as PanelKind)
-				?.supportedQueryTypesKindMap ?? {},
-	});
 
 	const onChangePanelKind = useCallback(
 		(newKind: PanelKind): void => {
@@ -225,5 +214,5 @@ export function usePanelKindAndQueryModeSwitch({
 		[setSpec, redirectWithQueryBuilderData],
 	);
 
-	return { onChangePanelKind, onChangeQueryMode };
+	return { onChangePanelKind };
 }
