@@ -82,6 +82,12 @@ export const NoCreate: Story = {
 		await expectDisabled(
 			await canvas.findByTestId('test-channel-button', undefined, PAGE_LOAD),
 		);
+		// Save is also off until the form is edited, so the edit comes first and
+		// what is left is the permission.
+		await userEvent.type(
+			await canvas.findByTestId('slack-channel-textbox', undefined, PAGE_LOAD),
+			'-edited',
+		);
 		await expectDisabled(
 			await canvas.findByTestId('save-channel-button', undefined, PAGE_LOAD),
 			false,
@@ -168,12 +174,13 @@ export const CheckFailed: Story = {
 	// point of the story, not a regression.
 	parameters: { allowConsoleErrors: true },
 	play: async ({ canvasElement }) => {
-		const save = await within(canvasElement).findByTestId(
-			'save-channel-button',
-			undefined,
-			PAGE_LOAD,
+		const canvas = within(canvasElement);
+
+		await userEvent.type(
+			await canvas.findByTestId('slack-channel-textbox', undefined, PAGE_LOAD),
+			'-edited',
 		);
 
-		await expectDisabled(save, false);
+		await expectDisabled(canvas.getByTestId('save-channel-button'), false);
 	},
 };

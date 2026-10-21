@@ -162,18 +162,86 @@ describe('ChannelForm save', () => {
 
 			render(<ChannelForm channelId="3" onDone={jest.fn()} />);
 
-			// Save is disabled while the checks are in flight and settles once they
-			// resolve, so waiting on it means the failure has landed
-			const save = await screen.findByTestId('save-channel-button', {}, FIND);
+			const channel = await screen.findByTestId('slack-channel-textbox', {}, FIND);
+			await waitFor(() => expect(channel).toBeEnabled(), FIND);
+
+			// Save is off until something changes, so one edit is what tells a
+			// settled failure apart from a denial
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			await user.type(channel, '-edited');
+
+			const save = screen.getByTestId('save-channel-button');
 			await waitFor(
 				() => expect(save).toHaveAttribute('aria-disabled', 'false'),
 				FIND,
 			);
 
-			expect(screen.getByTestId('slack-channel-textbox')).toBeEnabled();
 			expect(
 				screen.queryByTestId('channel-read-only-notice'),
 			).not.toBeInTheDocument();
+		},
+		TEST_TIMEOUT,
+	);
+
+	it(
+		'keeps save off until something is edited',
+		async () => {
+			render(<ChannelForm channelId="3" onDone={jest.fn()} />);
+
+			// Save is also off while the permission checks are in flight. Test is
+			// gated on those checks alone, so it settling means Save is only off
+			// because nothing has changed.
+			const testButton = await screen.findByTestId(
+				'test-channel-button',
+				{},
+				FIND,
+			);
+			await waitFor(
+				() => expect(testButton).toHaveAttribute('aria-disabled', 'false'),
+				FIND,
+			);
+
+			const save = screen.getByTestId('save-channel-button');
+			expect(save).toHaveAttribute('aria-disabled', 'true');
+
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			await user.type(screen.getByTestId('slack-channel-textbox'), '-edited');
+
+			await waitFor(
+				() => expect(save).toHaveAttribute('aria-disabled', 'false'),
+				FIND,
+			);
+		},
+		TEST_TIMEOUT,
+	);
+
+	it(
+		'asks before discarding an edited form, and leaves straight away otherwise',
+		async () => {
+			const onDone = jest.fn();
+			render(<ChannelForm channelId="3" onDone={onDone} />);
+
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const discard = await screen.findByTestId(
+				'discard-channel-button',
+				{},
+				FIND,
+			);
+
+			await user.click(discard);
+			expect(onDone).toHaveBeenCalledTimes(1);
+
+			await user.type(screen.getByTestId('slack-channel-textbox'), '-edited');
+			await user.click(discard);
+
+			// the test harness stubs `t`, so the modal renders the keys themselves
+			await screen.findByText('discard_changes_title', {}, FIND);
+			expect(onDone).toHaveBeenCalledTimes(1);
+
+			await user.click(
+				screen.getByRole('button', { name: 'button_discard_confirm' }),
+			);
+			await waitFor(() => expect(onDone).toHaveBeenCalledTimes(2));
 		},
 		TEST_TIMEOUT,
 	);
