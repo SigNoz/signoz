@@ -279,8 +279,8 @@ type HistogramPanelSpec struct {
 }
 
 type HistogramBuckets struct {
-	BucketCount           *float64 `json:"bucketCount" description:"The target number of buckets, approximate: the chart picks the nearest predefined width that fits the range. Ignored when bucketWidth is set. Null uses the chart default."`
-	BucketWidth           *float64 `json:"bucketWidth" description:"The width of each bucket in the value unit; takes precedence over bucketCount. Null lets the chart choose."`
+	BucketCount           *float64 `json:"bucketCount" description:"The target number of buckets, approximate: the chart uses the first predefined width larger than the value range divided by this count. Ignored when bucketWidth is positive. Null uses the chart default."`
+	BucketWidth           *float64 `json:"bucketWidth" description:"The width of each bucket in the value unit. A positive value takes precedence over bucketCount; null or 0 lets the chart choose."`
 	MergeAllActiveQueries bool     `json:"mergeAllActiveQueries" description:"Whether every series is combined into a single histogram instead of one per series."`
 }
 
@@ -432,7 +432,7 @@ type ComparisonThreshold struct {
 
 type TableThreshold struct {
 	ComparisonThreshold
-	ColumnName string `json:"columnName" validate:"required" required:"true" description:"The key of the column the rule applies to: the query name for a builder query with one aggregation (A), the query name dotted with the aggregation expression for several (A.count()), a group-by field name, or the SQL alias for a ClickHouse SQL column. Aggregation aliases are display labels, not keys."`
+	ColumnName string `json:"columnName" validate:"required" required:"true" description:"The key of the value column the rule applies to: the query name for a builder query with one aggregation (A), the query name dotted with the aggregation expression for several (A.count()), or the SQL alias for a ClickHouse SQL column. Group-by columns are never colored, and aggregation aliases are display labels, not keys."`
 }
 
 // ══════════════════════════════════════════════

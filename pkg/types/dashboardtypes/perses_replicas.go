@@ -169,7 +169,7 @@ type ListVariableSpec struct {
 	DefaultValue    *VariableDefaultValue `json:"defaultValue,omitempty" description:"The initially selected value: a string, or a list of strings when allowMultiple is true."`
 	AllowAllValue   bool                  `json:"allowAllValue" description:"Whether an all option is offered. Requires allowMultiple."`
 	AllowMultiple   bool                  `json:"allowMultiple" description:"Whether several values can be selected at once."`
-	CustomAllValue  string                `json:"customAllValue" description:"The value meant to replace every value when all is selected. Requires allowAllValue. Stored, but the current UI ignores it and substitutes every value."`
+	CustomAllValue  string                `json:"customAllValue" description:"The value meant to replace every value when all is selected. Requires allowAllValue. Stored, but currently ignored by the UI."`
 	CapturingRegexp string                `json:"capturingRegexp" description:"A regular expression meant to keep only matching values, reduced to the capture group when one is present. Stored, but the current UI ignores it and offers every value."`
 	Sort            ListVariableSpecSort  `json:"sort" description:"How the values are ordered: none (default), alphabetical-asc, alphabetical-desc, numerical-asc, numerical-desc, alphabetical-ci-asc or alphabetical-ci-desc."`
 	Plugin          VariablePlugin        `json:"plugin" description:"Where the values come from: kind is signoz/DynamicVariable (observed attribute values), signoz/QueryVariable (a ClickHouse query) or signoz/CustomVariable (a fixed list), and spec holds that kind's settings."`
