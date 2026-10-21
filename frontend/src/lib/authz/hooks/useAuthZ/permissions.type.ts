@@ -19,6 +19,11 @@ export default {
 				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],
 			},
 			{
+				kind: 'notification-channel',
+				type: 'metaresource',
+				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],
+			},
+			{
 				kind: 'quick-filter',
 				type: 'metaresource',
 				allowedVerbs: ['list', 'read', 'update'],
