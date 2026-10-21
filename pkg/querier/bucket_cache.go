@@ -676,27 +676,22 @@ func (bc *bucketCache) resultToBuckets(ctx context.Context, result *qbtypes.Resu
 }
 
 // mergeAndDeduplicateBuckets combines and deduplicates bucket lists.
+// Existing buckets overlapping a fresh one are dropped; the fresh bucket holds the merged result for its range.
 func (bc *bucketCache) mergeAndDeduplicateBuckets(existing, fresh []*qbtypes.CachedBucket) []*qbtypes.CachedBucket {
-	// Create a map to deduplicate by time range
-	bucketMap := make(map[string]*qbtypes.CachedBucket)
+	result := make([]*qbtypes.CachedBucket, 0, len(existing)+len(fresh))
 
 	// Add existing buckets
 	for _, bucket := range existing {
-		key := fmt.Sprintf("%d-%d", bucket.StartMs, bucket.EndMs)
-		bucketMap[key] = bucket
+		overlaps := slices.ContainsFunc(fresh, func(f *qbtypes.CachedBucket) bool {
+			return bucket.StartMs < f.EndMs && f.StartMs < bucket.EndMs
+		})
+		if !overlaps {
+			result = append(result, bucket)
+		}
 	}
 
 	// Add/update with fresh buckets
-	for _, bucket := range fresh {
-		key := fmt.Sprintf("%d-%d", bucket.StartMs, bucket.EndMs)
-		bucketMap[key] = bucket
-	}
-
-	// Convert back to slice with pre-allocated capacity
-	result := make([]*qbtypes.CachedBucket, 0, len(bucketMap))
-	for _, bucket := range bucketMap {
-		result = append(result, bucket)
-	}
+	result = append(result, fresh...)
 
 	// Sort by start time
 	slices.SortFunc(result, func(a, b *qbtypes.CachedBucket) int {
