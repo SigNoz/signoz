@@ -18,7 +18,7 @@ import (
 
 type QueryBuilderFormula struct {
 	Name       string `json:"name" description:"The unique name of the formula, such as F1, used by selectedQueryName and by panels. Referencing a formula from another formula is not reliable, because formulas are evaluated in no fixed order."`
-	Expression string `json:"expression" description:"An arithmetic expression over builder query names, for example A / B * 100, or A.0 and A.alias to pick one aggregation of a query by index or alias. Reference queries, not other formulas."`
+	Expression string `json:"expression" description:"An arithmetic expression over builder query names, for example A / B * 100. Reference queries, not other formulas."`
 
 	Disabled bool `json:"disabled" description:"When true, the result is excluded from the response but the formula is still evaluated. Defaults to false."`
 

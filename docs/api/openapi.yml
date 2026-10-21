@@ -8817,8 +8817,7 @@ components:
           type: boolean
         expression:
           description: An arithmetic expression over builder query names, for example
-            A / B * 100, or A.0 and A.alias to pick one aggregation of a query by
-            index or alias. Reference queries, not other formulas.
+            A / B * 100. Reference queries, not other formulas.
           type: string
         functions:
           description: Post-processing functions applied in order to each result series.
