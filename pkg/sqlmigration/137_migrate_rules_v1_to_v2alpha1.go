@@ -109,14 +109,16 @@ func (migration *migrateRulesV1ToV2Alpha1) convertOrg(ctx context.Context, orgID
 			continue
 		}
 
-		route, err := selectRoute(routesByName[stored.ID], rule.PreferredChannels)
-		if err != nil {
+		routes := routesByName[stored.ID]
+		if err := validateRoutes(routes, rule.PreferredChannels); err != nil {
 			unmigratable++
 			migration.logger.WarnContext(ctx, "leaving rule at v1", slog.String("org_id", orgID), slog.String("rule_id", stored.ID), errors.Attr(err))
 			continue
 		}
+		var route *routePolicyRow
 		expression := ""
-		if route != nil {
+		if len(routes) == 1 {
+			route = routes[0]
 			expression = route.Expression
 		}
 
@@ -177,21 +179,18 @@ func convertRule(ruleID string, rule *postableRule, route *routePolicyRow) error
 	return nil
 }
 
-// selectRoute picks the rule's route_policy row, named after the rule. A rule
-// that never had channels got no row from migration 049 and migrates with
+// validateRoutes checks the rule's route_policy rows, named after the rule. A
+// rule that never had channels got no row from migration 049 and migrates with
 // none; a rule with preferred channels but no row would lose them, so it is
 // left at v1.
-func selectRoute(routes []*routePolicyRow, preferredChannels []string) (*routePolicyRow, error) {
-	switch {
-	case len(routes) == 1:
-		return routes[0], nil
-	case len(routes) > 1:
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "expected one route_policy row, found %d", len(routes))
-	case len(preferredChannels) > 0:
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "no route_policy row for a rule with %d preferred channels", len(preferredChannels))
-	default:
-		return nil, nil
+func validateRoutes(routes []*routePolicyRow, preferredChannels []string) error {
+	if len(routes) > 1 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "expected one route_policy row, found %d", len(routes))
 	}
+	if len(routes) == 0 && len(preferredChannels) > 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "no route_policy row for a rule with %d preferred channels", len(preferredChannels))
+	}
+	return nil
 }
 
 type ruleRow struct {
