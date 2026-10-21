@@ -10059,7 +10059,7 @@ export interface MetricsexplorertypesInspectMetricsRequestDTO {
 	 */
 	end: number;
 	/**
-	 * @description Query builder filter over the metric attributes, for example host.name = 'web-1'. Omit for every series.
+	 * @description Query builder filter over the metric attributes, for example host.name = 'web-1'. Omitting it applies no attribute restriction; inspection returns at most 50 series either way.
 	 */
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
@@ -10132,7 +10132,7 @@ export interface Querybuildertypesv5TimeSeriesDTO {
 export interface MetricsexplorertypesInspectMetricsResponseDTO {
 	/**
 	 * @type array,null
-	 * @description Raw time series, each with its labels and timestamp-value pairs.
+	 * @description Raw time series, at most 50, each with its labels and timestamp-value pairs.
 	 */
 	series: Querybuildertypesv5TimeSeriesDTO[] | null;
 }
@@ -10255,7 +10255,7 @@ export interface MetricsexplorertypesMetricHighlightsResponseDTO {
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description Total number of samples ingested for the metric.
+	 * @description Number of samples ingested for the metric across the data still retained, summed from the 30-minute aggregate table; older data is excluded by retention.
 	 */
 	dataPoints: number;
 	/**
@@ -10267,7 +10267,7 @@ export interface MetricsexplorertypesMetricHighlightsResponseDTO {
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description Number of distinct time series ever seen for the metric.
+	 * @description Number of distinct time series for the metric across the retained weekly metadata buckets, so it falls as retention expires rather than counting everything ever seen.
 	 */
 	totalTimeSeries: number;
 }
@@ -10326,7 +10326,7 @@ export interface MetricsexplorertypesStatDTO {
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description Number of distinct time series seen for the metric in the requested time range.
+	 * @description Number of distinct time series for the metric, counted from metadata buckets whose start is rounded down to an hour, six hours, a day or a week depending on the range, so series active shortly before start are included.
 	 */
 	timeseries: number;
 	/**
@@ -10428,7 +10428,7 @@ export interface MetricsexplorertypesTreemapRequestDTO {
 	 */
 	limit: number;
 	/**
-	 * @description What each metric is sized by: timeseries counts distinct time series, samples counts ingested data points. Only the matching response array is populated.
+	 * @description What each metric is sized by: timeseries counts distinct time series, samples counts ingested data points among the limit plus 50 metrics with the most time series. Only the matching response array is populated.
 	 */
 	mode: MetricsexplorertypesTreemapModeDTO;
 	/**
@@ -10442,7 +10442,7 @@ export interface MetricsexplorertypesTreemapRequestDTO {
 export interface MetricsexplorertypesTreemapResponseDTO {
 	/**
 	 * @type array,null
-	 * @description Entries sized by sample count; populated only when mode is samples.
+	 * @description Entries sized by sample count, chosen among the metrics with the most time series; populated only when mode is samples.
 	 */
 	samples: MetricsexplorertypesTreemapEntryDTO[] | null;
 	/**
@@ -10469,7 +10469,7 @@ export interface MetricsexplorertypesUpdateMetricMetadataRequestDTO {
 	 */
 	metricName: string;
 	/**
-	 * @description Aggregation temporality to store: cumulative, delta or unspecified.
+	 * @description Aggregation temporality to store. Required as delta or cumulative when type is sum, histogram or exponentialhistogram; gauges are stored as unspecified and summaries as cumulative whatever is sent. A non-monotonic cumulative sum is stored as a gauge.
 	 */
 	temporality: MetrictypesTemporalityDTO;
 	/**
