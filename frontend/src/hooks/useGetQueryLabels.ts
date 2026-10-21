@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { getQueryLabelWithAggregation } from 'components/QueryBuilderV2/utils';
+import { getActiveBuilder, isBuilderQueryType } from 'lib/query/builderSlot';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
@@ -7,11 +8,12 @@ export const useGetQueryLabels = (
 	currentQuery: Query,
 ): { label: string; value: string }[] =>
 	useMemo(() => {
-		if (currentQuery?.queryType === EQueryType.QUERY_BUILDER) {
+		if (currentQuery && isBuilderQueryType(currentQuery.queryType)) {
+			const activeBuilder = getActiveBuilder(currentQuery);
 			const queryLabels = getQueryLabelWithAggregation(
-				currentQuery?.builder?.queryData || [],
+				activeBuilder?.queryData || [],
 			);
-			const formulaLabels = (currentQuery?.builder?.queryFormulas ?? []).map(
+			const formulaLabels = (activeBuilder?.queryFormulas ?? []).map(
 				(formula) => ({
 					label: formula.queryName,
 					value: formula.queryName,
