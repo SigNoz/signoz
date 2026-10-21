@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { message } from 'antd';
 import configureStore from 'redux-mock-store';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import store from 'store';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
@@ -79,11 +80,14 @@ const createMockStagedQuery = (dataSource: DataSource): Query => ({
 	clickhouse_sql: [],
 });
 
-const renderWithStore = (dataSource: DataSource): void => {
+const renderWithStore = (
+	dataSource: DataSource,
+	panelType?: PANEL_TYPES,
+): void => {
 	const mockReduxStore = createMockReduxStore();
 	render(
 		<Provider store={mockReduxStore}>
-			<DownloadOptionsMenu dataSource={dataSource} />
+			<DownloadOptionsMenu dataSource={dataSource} panelType={panelType} />
 		</Provider>,
 	);
 };
@@ -118,11 +122,14 @@ describe.each([
 		expect(screen.getByText('FORMAT')).toBeInTheDocument();
 		expect(screen.getByText('Number of Rows')).toBeInTheDocument();
 
-		if (dataSource === DataSource.TRACES) {
-			expect(screen.queryByText('Columns')).not.toBeInTheDocument();
-		} else {
-			expect(screen.getByText('Columns')).toBeInTheDocument();
-		}
+		expect(screen.getByText('Columns')).toBeInTheDocument();
+	});
+
+	it('hides columns scope in the trace view', () => {
+		renderWithStore(dataSource, PANEL_TYPES.TRACE);
+		fireEvent.click(screen.getByTestId(testId));
+
+		expect(screen.queryByText('Columns')).not.toBeInTheDocument();
 	});
 
 	it('allows changing export format', () => {
@@ -152,17 +159,6 @@ describe.each([
 	});
 
 	it('allows changing columns scope', () => {
-		if (dataSource === DataSource.TRACES) {
-			renderWithStore(dataSource);
-			fireEvent.click(screen.getByTestId(testId));
-
-			expect(screen.queryByRole('radio', { name: 'All' })).not.toBeInTheDocument();
-			expect(
-				screen.queryByRole('radio', { name: 'Selected' }),
-			).not.toBeInTheDocument();
-			return;
-		}
-
 		renderWithStore(dataSource);
 		fireEvent.click(screen.getByTestId(testId));
 
@@ -246,12 +242,7 @@ describe.each([
 		mockUseQueryBuilder.mockReturnValue({ stagedQuery: mockQuery });
 		renderWithStore(dataSource);
 		fireEvent.click(screen.getByTestId(testId));
-
-		// For traces, column scope is always Selected and the radio is hidden
-		if (dataSource !== DataSource.TRACES) {
-			fireEvent.click(screen.getByRole('radio', { name: 'Selected' }));
-		}
-
+		fireEvent.click(screen.getByRole('radio', { name: 'Selected' }));
 		fireEvent.click(screen.getByText('Export'));
 
 		await waitFor(() => {
@@ -268,11 +259,6 @@ describe.each([
 	});
 
 	it('sends no selectFields when column scope is All', async () => {
-		// For traces, column scope is always Selected — this test only applies to other sources
-		if (dataSource === DataSource.TRACES) {
-			return;
-		}
-
 		renderWithStore(dataSource);
 		fireEvent.click(screen.getByTestId(testId));
 		fireEvent.click(screen.getByRole('radio', { name: 'All' }));
