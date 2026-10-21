@@ -85,6 +85,9 @@ export function deriveQueryType(
 	) {
 		return EQueryType.CLICKHOUSE;
 	}
+	if (envelopes.some(isAIBuilderEnvelope)) {
+		return EQueryType.AI_QUERY_BUILDER;
+	}
 	return EQueryType.QUERY_BUILDER;
 }
 
