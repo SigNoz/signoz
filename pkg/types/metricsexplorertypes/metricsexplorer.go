@@ -41,7 +41,7 @@ func (TreemapMode) Enum() []any {
 
 // StatsRequest represents the payload accepted by the metrics stats endpoint.
 type StatsRequest struct {
-	Filter  *qbtypes.Filter  `json:"filter,omitempty" description:"Query builder filter over metric attributes, for example host.name = 'web-1'. A bare word matches the metric name. Omit for every metric."`
+	Filter  *qbtypes.Filter  `json:"filter,omitempty" description:"Query builder filter over metric attributes, for example host.name = 'web-1'. A bare word matches the metric name. Omitting it applies no restriction, but metrics whose name starts with signoz are always excluded."`
 	Start   int64            `json:"start" required:"true" description:"Start of the time range as a Unix timestamp in milliseconds. Must be greater than 0 and less than end."`
 	End     int64            `json:"end" required:"true" description:"End of the time range as a Unix timestamp in milliseconds. Must be greater than start."`
 	Limit   int              `json:"limit" required:"true" description:"Maximum number of metrics to return, between 1 and 5000."`
@@ -148,7 +148,7 @@ type UpdateMetricMetadataRequest struct {
 
 // TreemapRequest represents the payload for the metrics treemap endpoint.
 type TreemapRequest struct {
-	Filter *qbtypes.Filter `json:"filter,omitempty" description:"Query builder filter over metric attributes, for example host.name = 'web-1'. A bare word matches the metric name. Omit for every metric."`
+	Filter *qbtypes.Filter `json:"filter,omitempty" description:"Query builder filter over metric attributes, for example host.name = 'web-1'. A bare word matches the metric name. Omitting it applies no restriction, but metrics whose name starts with signoz are always excluded."`
 	Start  int64           `json:"start" required:"true" description:"Start of the time range as a Unix timestamp in milliseconds. Must be greater than 0 and less than end."`
 	End    int64           `json:"end" required:"true" description:"End of the time range as a Unix timestamp in milliseconds. Must be greater than start."`
 	Limit  int             `json:"limit" required:"true" description:"Maximum number of metrics to return, between 1 and 5000, ordered by percentage descending."`
@@ -261,7 +261,7 @@ type MetricHighlightsResponse struct {
 	DataPoints       uint64 `json:"dataPoints" required:"true" description:"Number of samples ingested for the metric across the data still retained, summed from the 30-minute aggregate table; older data is excluded by retention."`
 	LastReceived     uint64 `json:"lastReceived" required:"true" description:"Unix timestamp in milliseconds of the most recently received sample."`
 	TotalTimeSeries  uint64 `json:"totalTimeSeries" required:"true" description:"Number of distinct time series for the metric across the retained weekly metadata buckets, so it falls as retention expires rather than counting everything ever seen."`
-	ActiveTimeSeries uint64 `json:"activeTimeSeries" required:"true" description:"Number of distinct time series that reported in the last 120 minutes."`
+	ActiveTimeSeries uint64 `json:"activeTimeSeries" required:"true" description:"Number of distinct time series with an hourly metadata bucket in the last 120 minutes. Buckets are keyed by hour start, so a series that last reported early in the cutoff hour can be missed."`
 }
 
 // MetricNameQuery represents the query parameters for endpoints that take a metric name.
