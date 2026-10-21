@@ -20,13 +20,13 @@ type QueryBuilderFormula struct {
 	Name       string `json:"name" description:"The unique name of the formula, such as F1; it can be referenced like any query name."`
 	Expression string `json:"expression" description:"An arithmetic expression over query names, for example A / B * 100, or A.0 and A.alias to pick one aggregation of a query by index or alias."`
 
-	Disabled bool `json:"disabled" description:"When true, the formula is not returned. Defaults to false."`
+	Disabled bool `json:"disabled" description:"When true, the result is excluded from the response but the formula is still evaluated. Defaults to false."`
 
 	Order []OrderBy `json:"order,omitzero" description:"The sort order of the formula result."`
 
 	Limit int `json:"limit,omitempty" description:"The maximum number of series or rows to return. Unlimited when 0."`
 
-	Having *Having `json:"having,omitempty" description:"A condition on the computed values, for example F1 > 5."`
+	Having *Having `json:"having,omitempty" description:"Accepted but currently ignored; the computed values are returned unfiltered."`
 
 	Functions []Function `json:"functions,omitzero" description:"Post-processing functions applied in order to each result series."`
 

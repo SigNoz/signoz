@@ -4933,7 +4933,7 @@ export interface DashboardtypesAIBuilderQuerySpecDTO {
 	cursor?: string;
 	/**
 	 * @type boolean
-	 * @description When true, the query is not returned on its own but can still feed a formula or trace operator. Defaults to false.
+	 * @description When true, the result is excluded from the response but the query still runs and can feed a formula or trace operator. Defaults to false.
 	 */
 	disabled?: boolean;
 	/**
@@ -4985,12 +4985,12 @@ export interface DashboardtypesAIBuilderQuerySpecDTO {
 	order?: Querybuildertypesv5OrderByDTO[] | null;
 	/**
 	 * @type array,null
-	 * @description Aggregations computed over the primary aggregation results, for example a count of groups above a threshold.
+	 * @description Accepted but currently ignored by query execution, including their nested order, limit and limitBy.
 	 */
 	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[] | null;
 	/**
 	 * @type array,null
-	 * @description The fields to return for each row in raw requests, in addition to the always-present timestamp and id columns. Ignored by aggregating requests.
+	 * @description The fields to return for each row in raw requests, in addition to the columns always present: timestamp and id for logs, timestamp, trace_id and span_id for traces. Ignored by aggregating requests.
 	 */
 	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
 	/**
@@ -5232,7 +5232,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	cursor?: string;
 	/**
 	 * @type boolean
-	 * @description When true, the query is not returned on its own but can still feed a formula or trace operator. Defaults to false.
+	 * @description When true, the result is excluded from the response but the query still runs and can feed a formula or trace operator. Defaults to false.
 	 */
 	disabled?: boolean;
 	/**
@@ -5284,12 +5284,12 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	order?: Querybuildertypesv5OrderByDTO[] | null;
 	/**
 	 * @type array,null
-	 * @description Aggregations computed over the primary aggregation results, for example a count of groups above a threshold.
+	 * @description Accepted but currently ignored by query execution, including their nested order, limit and limitBy.
 	 */
 	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[] | null;
 	/**
 	 * @type array,null
-	 * @description The fields to return for each row in raw requests, in addition to the always-present timestamp and id columns. Ignored by aggregating requests.
+	 * @description The fields to return for each row in raw requests, in addition to the columns always present: timestamp and id for logs, timestamp, trace_id and span_id for traces. Ignored by aggregating requests.
 	 */
 	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
 	/**
@@ -5412,7 +5412,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	cursor?: string;
 	/**
 	 * @type boolean
-	 * @description When true, the query is not returned on its own but can still feed a formula or trace operator. Defaults to false.
+	 * @description When true, the result is excluded from the response but the query still runs and can feed a formula or trace operator. Defaults to false.
 	 */
 	disabled?: boolean;
 	/**
@@ -5464,12 +5464,12 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	order?: Querybuildertypesv5OrderByDTO[] | null;
 	/**
 	 * @type array,null
-	 * @description Aggregations computed over the primary aggregation results, for example a count of groups above a threshold.
+	 * @description Accepted but currently ignored by query execution, including their nested order, limit and limitBy.
 	 */
 	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[] | null;
 	/**
 	 * @type array,null
-	 * @description The fields to return for each row in raw requests, in addition to the always-present timestamp and id columns. Ignored by aggregating requests.
+	 * @description The fields to return for each row in raw requests, in addition to the columns always present: timestamp and id for logs, timestamp, trace_id and span_id for traces. Ignored by aggregating requests.
 	 */
 	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
 	/**
@@ -5511,7 +5511,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	cursor?: string;
 	/**
 	 * @type boolean
-	 * @description When true, the query is not returned on its own but can still feed a formula or trace operator. Defaults to false.
+	 * @description When true, the result is excluded from the response but the query still runs and can feed a formula or trace operator. Defaults to false.
 	 */
 	disabled?: boolean;
 	/**
@@ -5563,12 +5563,12 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	order?: Querybuildertypesv5OrderByDTO[] | null;
 	/**
 	 * @type array,null
-	 * @description Aggregations computed over the primary aggregation results, for example a count of groups above a threshold.
+	 * @description Accepted but currently ignored by query execution, including their nested order, limit and limitBy.
 	 */
 	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[] | null;
 	/**
 	 * @type array,null
-	 * @description The fields to return for each row in raw requests, in addition to the always-present timestamp and id columns. Ignored by aggregating requests.
+	 * @description The fields to return for each row in raw requests, in addition to the columns always present: timestamp and id for logs, timestamp, trace_id and span_id for traces. Ignored by aggregating requests.
 	 */
 	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
 	/**
@@ -6144,7 +6144,7 @@ export interface Querybuildertypesv5QueryBuilderFormulaDTO {
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type boolean
-	 * @description When true, the formula is not returned. Defaults to false.
+	 * @description When true, the result is excluded from the response but the formula is still evaluated. Defaults to false.
 	 */
 	disabled?: boolean;
 	/**
@@ -6158,7 +6158,7 @@ export interface Querybuildertypesv5QueryBuilderFormulaDTO {
 	 */
 	functions?: Querybuildertypesv5FunctionDTO[] | null;
 	/**
-	 * @description A condition on the computed values, for example F1 > 5.
+	 * @description Accepted but currently ignored; the computed values are returned unfiltered.
 	 */
 	having?: Querybuildertypesv5HavingDTO;
 	/**
@@ -6210,12 +6210,12 @@ export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
 	aggregations?: Querybuildertypesv5TraceAggregationDTO[] | null;
 	/**
 	 * @type string
-	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page.
+	 * @description Accepted but currently ignored by the trace operator; page raw results with offset.
 	 */
 	cursor?: string;
 	/**
 	 * @type boolean
-	 * @description When true, the query is not executed. Defaults to false.
+	 * @description When true, the result is excluded from the response but the query may still run. Defaults to false.
 	 */
 	disabled?: boolean;
 	/**
@@ -6224,7 +6224,7 @@ export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
 	 */
 	expression?: string;
 	/**
-	 * @description An additional filter applied to the matched traces.
+	 * @description Accepted but currently not applied to the matched traces; it only widens field discovery. Put filters on the operand queries instead.
 	 */
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
@@ -6248,7 +6248,7 @@ export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
 	legend?: string;
 	/**
 	 * @type integer
-	 * @description The maximum number of traces or groups to return. Unlimited when 0.
+	 * @description The maximum number of traces or groups to return. For raw requests 0 means 100 rows; for aggregations 0 means unlimited.
 	 */
 	limit?: number;
 	/**
@@ -6273,7 +6273,7 @@ export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
 	returnSpansFrom?: string;
 	/**
 	 * @type array,null
-	 * @description The span fields to return for each row in raw requests.
+	 * @description The span fields to return for each row in raw requests, in addition to the always-present timestamp, trace_id and span_id columns.
 	 */
 	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
 	/**
@@ -6304,7 +6304,7 @@ export interface Querybuildertypesv5QueryEnvelopeTraceOperatorDTO {
 export interface Querybuildertypesv5PromQueryDTO {
 	/**
 	 * @type boolean
-	 * @description When true, the query is not executed. Defaults to false.
+	 * @description When true, the result is excluded from the response but the query may still run. Defaults to false.
 	 */
 	disabled?: boolean;
 	/**
@@ -6355,7 +6355,7 @@ export interface Querybuildertypesv5QueryEnvelopePromQLDTO {
 export interface Querybuildertypesv5ClickHouseQueryDTO {
 	/**
 	 * @type boolean
-	 * @description When true, the query is not executed. Defaults to false.
+	 * @description When true, the result is excluded from the response but the query may still run. Defaults to false.
 	 */
 	disabled?: boolean;
 	/**
@@ -10501,7 +10501,7 @@ export interface Querybuildertypesv5ExecStatsDTO {
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description The wall-clock execution time in milliseconds.
+	 * @description The sum of the execution durations of the statements run for this query, in milliseconds; not the request latency.
 	 */
 	durationMs?: number;
 	/**

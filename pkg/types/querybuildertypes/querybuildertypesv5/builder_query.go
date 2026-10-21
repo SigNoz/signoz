@@ -24,7 +24,7 @@ type QueryBuilderQuery[T any] struct {
 
 	BucketOptions *BucketOptions `json:"bucketOptions,omitempty" description:"The value axis to count this query into, as a kind-discriminated linear or log bucket spec. Read only by heatmap requests, and only from the query they draw."`
 
-	Disabled bool `json:"disabled" description:"When true, the query is not returned on its own but can still feed a formula or trace operator. Defaults to false."`
+	Disabled bool `json:"disabled" description:"When true, the result is excluded from the response but the query still runs and can feed a formula or trace operator. Defaults to false."`
 
 	Filter *Filter `json:"filter,omitempty" description:"The filter expression that selects the rows or series, for example service.name = 'frontend' AND http.status_code >= 500."`
 
@@ -32,7 +32,7 @@ type QueryBuilderQuery[T any] struct {
 
 	Order []OrderBy `json:"order,omitzero" description:"The sort order of the result. Order by a group-by field, an aggregation alias, or for raw requests a selected field such as timestamp."`
 
-	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitzero" description:"The fields to return for each row in raw requests, in addition to the always-present timestamp and id columns. Ignored by aggregating requests."`
+	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitzero" description:"The fields to return for each row in raw requests, in addition to the columns always present: timestamp and id for logs, timestamp, trace_id and span_id for traces. Ignored by aggregating requests."`
 
 	Limit int `json:"limit,omitempty" description:"The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited while raw requests ordered by timestamp return a page of 10000 rows; follow nextCursor for the rest."`
 
@@ -44,7 +44,7 @@ type QueryBuilderQuery[T any] struct {
 
 	Having *Having `json:"having,omitempty" description:"A filter applied to aggregation results, referencing aliases or expressions, for example count() > 100."`
 
-	SecondaryAggregations []SecondaryAggregation `json:"secondaryAggregations,omitzero" description:"Aggregations computed over the primary aggregation results, for example a count of groups above a threshold."`
+	SecondaryAggregations []SecondaryAggregation `json:"secondaryAggregations,omitzero" description:"Accepted but currently ignored by query execution, including their nested order, limit and limitBy."`
 
 	Functions []Function `json:"functions,omitzero" description:"Post-processing functions applied in order to each result series, such as absolute, cumulativeSum, timeShift or anomaly."`
 

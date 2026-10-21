@@ -38,11 +38,11 @@ const (
 
 type QueryBuilderTraceOperator struct {
 	Name     string `json:"name" description:"The unique name of the trace operator query."`
-	Disabled bool   `json:"disabled" description:"When true, the query is not executed. Defaults to false."`
+	Disabled bool   `json:"disabled" description:"When true, the result is excluded from the response but the query may still run. Defaults to false."`
 
 	Expression string `json:"expression" description:"A trace-structure expression over traces builder query names using => for direct child, -> for descendant, && for both present, || for either present and NOT for absence, for example A => B && NOT C. At most 10 operators."`
 
-	Filter *Filter `json:"filter,omitempty" description:"An additional filter applied to the matched traces."`
+	Filter *Filter `json:"filter,omitempty" description:"Accepted but currently not applied to the matched traces; it only widens field discovery. Put filters on the operand queries instead."`
 
 	ReturnSpansFrom string `json:"returnSpansFrom,omitempty" description:"The name of the operand query whose spans are returned; when empty, the spans matched by the whole expression are returned."`
 
@@ -54,13 +54,13 @@ type QueryBuilderTraceOperator struct {
 
 	Having *Having `json:"having,omitempty" description:"A condition on the aggregation results, for example count() > 10."`
 
-	Limit  int    `json:"limit,omitempty" description:"The maximum number of traces or groups to return. Unlimited when 0."`
+	Limit  int    `json:"limit,omitempty" description:"The maximum number of traces or groups to return. For raw requests 0 means 100 rows; for aggregations 0 means unlimited."`
 	Offset int    `json:"offset,omitempty" description:"The number of results to skip before returning."`
-	Cursor string `json:"cursor,omitempty" description:"The opaque nextCursor value from a previous raw result, used to fetch the next page."`
+	Cursor string `json:"cursor,omitempty" description:"Accepted but currently ignored by the trace operator; page raw results with offset."`
 
 	Legend string `json:"legend" description:"The display name template for each series; {{field}} placeholders are replaced by group-by label values."`
 
-	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitzero" description:"The span fields to return for each row in raw requests."`
+	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitzero" description:"The span fields to return for each row in raw requests, in addition to the always-present timestamp, trace_id and span_id columns."`
 	Functions    []Function                         `json:"functions,omitzero" description:"Post-processing functions applied in order to each result series."`
 
 	// Internal parsed representation (not exposed in JSON)
