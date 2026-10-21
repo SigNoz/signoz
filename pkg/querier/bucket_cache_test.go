@@ -530,7 +530,7 @@ func TestBucketCache_FindMissingRanges_EdgeCases(t *testing.T) {
 	}
 
 	// Query range that spans all buckets
-	missing := bc.findMissingRangesWithStep(buckets, 500, 6500, 500, 0)
+	missing := bc.findMissingRangesWithStep(buckets, 500, 6500, 500)
 
 	// Expected missing ranges: 500-1000, 2000-2500, 4000-5000, 6000-6500
 	assert.Len(t, missing, 4)
@@ -1147,14 +1147,13 @@ func TestBucketCache_FindMissingRangesWithStep(t *testing.T) {
 	bc := createTestBucketCache(t)
 
 	tests := []struct {
-		name          string
-		buckets       []*qbtypes.CachedBucket
-		startMs       uint64
-		endMs         uint64
-		stepMs        uint64
-		startOffsetMs uint64
-		expectedMiss  []*qbtypes.TimeRange
-		description   string
+		name         string
+		buckets      []*qbtypes.CachedBucket
+		startMs      uint64
+		endMs        uint64
+		stepMs       uint64
+		expectedMiss []*qbtypes.TimeRange
+		description  string
 	}{
 		{
 			name:    "start_not_aligned_to_step",
@@ -1205,32 +1204,6 @@ func TestBucketCache_FindMissingRangesWithStep(t *testing.T) {
 			description: "Window smaller than step should use basic algorithm",
 		},
 		{
-			name:          "start_aligned_to_its_own_offset",
-			buckets:       []*qbtypes.CachedBucket{},
-			startMs:       1500,
-			endMs:         5000,
-			stepMs:        1000,
-			startOffsetMs: 500,
-			expectedMiss: []*qbtypes.TimeRange{
-				{From: 1500, To: 5000},
-			},
-			description: "A query reporting every 1000ms from 1500 needs no partial window at its own start",
-		},
-		{
-			name: "gap_lands_on_the_offset",
-			buckets: []*qbtypes.CachedBucket{
-				{StartMs: 1500, EndMs: 3500},
-			},
-			startMs:       1500,
-			endMs:         5500,
-			stepMs:        1000,
-			startOffsetMs: 500,
-			expectedMiss: []*qbtypes.TimeRange{
-				{From: 3500, To: 5500},
-			},
-			description: "The refetched range starts where the cached one ends, on an instant the query reports at",
-		},
-		{
 			name:    "zero_step_uses_basic_algorithm",
 			buckets: []*qbtypes.CachedBucket{},
 			startMs: 1000,
@@ -1246,7 +1219,7 @@ func TestBucketCache_FindMissingRangesWithStep(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Mock current time for flux boundary tests
-			result := bc.findMissingRangesWithStep(tt.buckets, tt.startMs, tt.endMs, tt.stepMs, tt.startOffsetMs)
+			result := bc.findMissingRangesWithStep(tt.buckets, tt.startMs, tt.endMs, tt.stepMs)
 
 			// Compare lengths first
 			assert.Len(t, result, len(tt.expectedMiss), tt.description)

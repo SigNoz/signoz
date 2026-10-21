@@ -237,39 +237,40 @@ def test_promql_shifting_the_time_range(
     aligned_and_cached = make_query_request(signoz, token, aligned_start_time_ms, aligned_end_time_ms, query, no_cache=False)
     assert aligned_and_cached.status_code == HTTPStatus.OK, aligned_and_cached.text
 
-    # what the cache now holds, and what the unaligned query must not be served
-    points = sorted(get_series_values(aligned_and_cached.json(), "A"), key=lambda point: point["timestamp"])
-    returned_points = [(point["timestamp"], point["value"]) for point in points]
     ## at each timestamp t, promql takes the highest sample in (t-2minutes, t],
     ## which is the one at t itself since the gauge only rises.
-    assert returned_points == [
+    aligned_points = [
         (aligned_start_time_ms, 400),  # t = 0
         (aligned_start_time_ms + MINUTE_MS, 600),  # t = 1m
         (aligned_start_time_ms + 2 * MINUTE_MS, 800),  # t = 2m
         (aligned_end_time_ms, 1000),  # t = 3m
     ]
+    points = sorted(get_series_values(aligned_and_cached.json(), "A"), key=lambda point: point["timestamp"])
+    assert [(point["timestamp"], point["value"]) for point in points] == aligned_points
 
-    unaligned_and_uncached = make_query_request(signoz, token, unaligned_start_time_ms, unaligned_end_time_ms, query, no_cache=True)
-    assert unaligned_and_uncached.status_code == HTTPStatus.OK, unaligned_and_uncached.text
+    # an unaligned range is rounded down to the step, so this asks for the same
+    # instants as the aligned query and gets the same answer
+    unaligned_and_cached = make_query_request(signoz, token, unaligned_start_time_ms, unaligned_end_time_ms, query, no_cache=False)
+    assert unaligned_and_cached.status_code == HTTPStatus.OK, unaligned_and_cached.text
+    points = sorted(get_series_values(unaligned_and_cached.json(), "A"), key=lambda point: point["timestamp"])
+    assert [(point["timestamp"], point["value"]) for point in points] == aligned_points, "unaligned query, rounded to the step"
+    assert_results_equal(unaligned_and_cached.json(), aligned_and_cached.json(), "A", "unaligned query, rounded to the step")
 
-    # promql reports at the range start plus whole steps, so these points sit 30s
-    # off the cached ones. The first run stores them, the second reads them back
+    # skipping the alignment keeps the range as asked, so promql reports 30s off
+    # the cached points, on samples the aligned query never saw. Such a query is
+    # never cached, so repeating it never gets the aligned answer either
+    unaligned_query = [{"type": "promql", "spec": {"name": "A", "query": f"max_over_time({metric_name}[2m])", "step": 60, "skipStepAlignment": True}}]
+    unaligned_points = [
+        (unaligned_start_time_ms, 500),  # t = 30s
+        (unaligned_start_time_ms + MINUTE_MS, 700),  # t = 1m30s
+        (unaligned_start_time_ms + 2 * MINUTE_MS, 900),  # t = 2m30s
+        (unaligned_end_time_ms, 1100),  # t = 3m30s
+    ]
     for run in ("first", "second"):
-        unaligned_and_cached = make_query_request(signoz, token, unaligned_start_time_ms, unaligned_end_time_ms, query, no_cache=False)
-        assert unaligned_and_cached.status_code == HTTPStatus.OK, unaligned_and_cached.text
-        assert_results_equal(unaligned_and_cached.json(), unaligned_and_uncached.json(), "A", f"unaligned query, {run} run")
-
-        points = sorted(get_series_values(unaligned_and_cached.json(), "A"), key=lambda point: point["timestamp"])
-        returned_points = [(point["timestamp"], point["value"]) for point in points]
-        ## every point falls on a sample the aligned run never reported, so being
-        ## served the cached run's answer shows up in the values and not only the
-        ## timestamps.
-        assert returned_points == [
-            (unaligned_start_time_ms, 500),  # t = 30s
-            (unaligned_start_time_ms + MINUTE_MS, 700),  # t = 1m30s
-            (unaligned_start_time_ms + 2 * MINUTE_MS, 900),  # t = 2m30s
-            (unaligned_end_time_ms, 1100),  # t = 3m30s
-        ], f"unaligned query, {run} run"
+        unaligned_as_asked = make_query_request(signoz, token, unaligned_start_time_ms, unaligned_end_time_ms, unaligned_query, no_cache=False)
+        assert unaligned_as_asked.status_code == HTTPStatus.OK, unaligned_as_asked.text
+        points = sorted(get_series_values(unaligned_as_asked.json(), "A"), key=lambda point: point["timestamp"])
+        assert [(point["timestamp"], point["value"]) for point in points] == unaligned_points, f"unaligned query as asked, {run} run"
 
 
 def test_builder_refreshing_a_sliding_time_range(

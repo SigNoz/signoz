@@ -56,7 +56,6 @@ func (bc *bucketCache) GetMissRanges(
 	startMs, endMs := q.Window()
 
 	stepMs := uint64(step.Milliseconds())
-	startOffsetMs := calculateStartOffset(q, startMs, stepMs)
 
 	bc.logger.DebugContext(ctx, "getting miss ranges", slog.String("fingerprint", q.Fingerprint()), slog.Uint64("start", startMs), slog.Uint64("end", endMs))
 
@@ -78,7 +77,7 @@ func (bc *bucketCache) GetMissRanges(
 	}
 
 	// Find missing ranges with step alignment
-	missing = bc.findMissingRangesWithStep(data.Buckets, startMs, endMs, stepMs, startOffsetMs)
+	missing = bc.findMissingRangesWithStep(data.Buckets, startMs, endMs, stepMs)
 	bc.logger.DebugContext(ctx, "missing ranges", slog.Any("missing", missing), slog.Uint64("step", stepMs))
 
 	// If no cached data overlaps with requested range, return empty result
@@ -106,7 +105,6 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 	startMs, endMs := q.Window()
 
 	stepMs := uint64(step.Milliseconds())
-	startOffsetMs := calculateStartOffset(q, startMs, stepMs)
 
 	// Calculate the flux boundary - data after this point should not be cached
 	currentMs := uint64(time.Now().UnixMilli())
@@ -152,10 +150,10 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 	// If we have a step interval, adjust boundaries to only cache complete intervals
 	if stepMs > 0 {
 		// If start is not aligned, round up to next step boundary (first complete interval)
-		cachableStartMs = alignUpToStep(startMs, stepMs, startOffsetMs)
+		cachableStartMs = alignUpToStep(startMs, stepMs)
 
 		// If end is not aligned, round down to previous step boundary (last complete interval)
-		cachableEndMs = alignDownToStep(cachableEndMs, stepMs, startOffsetMs)
+		cachableEndMs = alignDownToStep(cachableEndMs, stepMs)
 
 		// If after adjustment we have no complete intervals, don't cache
 		if cachableStartMs >= cachableEndMs {
@@ -203,9 +201,8 @@ func (bc *bucketCache) generateCacheKey(q qbtypes.Query) string {
 	return fmt.Sprintf("v5:query:%s", fingerprint)
 }
 
-// findMissingRangesWithStep identifies time ranges not covered by cached buckets
-// with step alignment. Boundaries are whole steps from startOffsetMs.
-func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket, startMs, endMs uint64, stepMs uint64, startOffsetMs uint64) []*qbtypes.TimeRange {
+// findMissingRangesWithStep identifies time ranges not covered by cached buckets with step alignment.
+func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket, startMs, endMs uint64, stepMs uint64) []*qbtypes.TimeRange {
 	// When step is 0 or window is too small to be cached, use simple algorithm
 	if stepMs == 0 || (startMs+stepMs) > endMs {
 		return bc.findMissingRangesBasic(buckets, startMs, endMs)
@@ -218,7 +215,7 @@ func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket
 		currentMs := startMs
 
 		// Check if start is not aligned - add partial window
-		if nextAggStart := alignUpToStep(startMs, stepMs, startOffsetMs); nextAggStart != startMs {
+		if nextAggStart := alignUpToStep(startMs, stepMs); nextAggStart != startMs {
 			missing = append(missing, &qbtypes.TimeRange{
 				From: startMs,
 				To:   min(nextAggStart, endMs),
@@ -264,7 +261,7 @@ func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket
 	currentMs := startMs
 
 	// Check if start is not aligned - add partial window
-	if nextAggStart := alignUpToStep(startMs, stepMs, startOffsetMs); nextAggStart != startMs {
+	if nextAggStart := alignUpToStep(startMs, stepMs); nextAggStart != startMs {
 		missing = append(missing, &qbtypes.TimeRange{
 			From: startMs,
 			To:   min(nextAggStart, endMs),
@@ -283,7 +280,7 @@ func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket
 		}
 
 		// Align bucket boundaries to step intervals
-		alignedBucketStart := alignUpToStep(bucket.StartMs, stepMs, startOffsetMs)
+		alignedBucketStart := alignUpToStep(bucket.StartMs, stepMs)
 
 		// Add gap before this bucket if needed
 		if currentMs < alignedBucketStart && currentMs < endMs {
@@ -298,10 +295,10 @@ func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket
 		bucketEnd := min(bucket.EndMs, endMs)
 		// The step the window ends inside reaches past it, so that stretch is
 		// missing however far the bucket runs.
-		bucketEnd = min(bucketEnd, alignDownToStep(endMs, stepMs, startOffsetMs))
+		bucketEnd = min(bucketEnd, alignDownToStep(endMs, stepMs))
 		if bucketEnd < endMs {
 			// Round down to step boundary
-			bucketEnd = alignDownToStep(bucketEnd, stepMs, startOffsetMs)
+			bucketEnd = alignDownToStep(bucketEnd, stepMs)
 		}
 		currentMs = max(currentMs, bucketEnd)
 	}
@@ -318,40 +315,17 @@ func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket
 	return missing
 }
 
-// calculateStartOffset returns how far into a step a query's values sit. Only
-// promql reports at the window start and every step after it; the rest report
-// on absolute step boundaries.
-func calculateStartOffset(q qbtypes.Query, startMs, stepMs uint64) uint64 {
-	if _, isPromQL := q.(*promqlQuery); !isPromQL || stepMs == 0 {
-		return 0
+// alignUpToStep returns the first step boundary at or after timestampMs.
+func alignUpToStep(timestampMs, stepMs uint64) uint64 {
+	if offset := timestampMs % stepMs; offset != 0 {
+		return timestampMs - offset + stepMs
 	}
-	return startMs % stepMs
+	return timestampMs
 }
 
-// With a 5m step and no offset the times seen by a query are 10:00, 10:05, 10:10. So 10:07
-// is at an offset of 2m, and 10:05 is at 0.
-//
-// With a 1m step and a 30s offset the times seen are 10:00:30, 10:01:30, 10:02:30. So 10:01:00
-// is at an offset of 30s.
-func calculateOffsetIntoStep(timestampMs, stepMs, startOffsetMs uint64) uint64 {
-	if stepMs == 0 {
-		return 0
-	}
-	return ((timestampMs % stepMs) + stepMs - startOffsetMs%stepMs) % stepMs
-}
-
-// alignUpToStep returns the first time seen by a query at or after timestampMs.
-func alignUpToStep(timestampMs, stepMs, startOffsetMs uint64) uint64 {
-	offset := calculateOffsetIntoStep(timestampMs, stepMs, startOffsetMs)
-	if offset == 0 {
-		return timestampMs
-	}
-	return timestampMs - offset + stepMs
-}
-
-// alignDownToStep returns the last time seen by a query at or before timestampMs.
-func alignDownToStep(timestampMs, stepMs, startOffsetMs uint64) uint64 {
-	return timestampMs - calculateOffsetIntoStep(timestampMs, stepMs, startOffsetMs)
+// alignDownToStep returns the last step boundary at or before timestampMs.
+func alignDownToStep(timestampMs, stepMs uint64) uint64 {
+	return timestampMs - timestampMs%stepMs
 }
 
 // findMissingRangesBasic is the simple algorithm without step alignment.

@@ -8538,6 +8538,8 @@ components:
           type: string
         query:
           type: string
+        skipStepAlignment:
+          type: boolean
         stats:
           type: boolean
         step:

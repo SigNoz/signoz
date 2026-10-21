@@ -115,6 +115,13 @@ func newPromqlQuery(
 	requestType qbv5.RequestType,
 	variables map[string]qbv5.VariableItem,
 ) *promqlQuery {
+	// promql evaluates at tr.From and every step after it, so two windows a few
+	// seconds apart ask for different instants and could never share a cache
+	// entry. Rounding both ends down to the step makes them the same query.
+	if stepMs := uint64(query.Step.Milliseconds()); stepMs > 0 && !query.SkipStepAlignment {
+		tr.From -= tr.From % stepMs
+		tr.To -= tr.To % stepMs
+	}
 	return &promqlQuery{
 		logger:      logger,
 		promEngine:  promEngine,
@@ -133,6 +140,12 @@ func (q *promqlQuery) Fingerprint() string {
 		return ""
 	}
 
+	// an unaligned window evaluates at instants no other window asks for, so
+	// there is nothing to share
+	if q.query.SkipStepAlignment {
+		return ""
+	}
+
 	query, err := q.renderVars(q.query.Query, q.vars, q.tr.From, q.tr.To)
 	if err != nil {
 		q.logger.ErrorContext(context.TODO(), "failed render template variables", slog.String("query", q.query.Query))
@@ -144,12 +157,6 @@ func (q *promqlQuery) Fingerprint() string {
 		fmt.Sprintf("requestType=%s", q.requestType.StringValue()),
 		query,
 		q.query.Step.String(),
-	}
-
-	// Two windows a fraction of a step apart describe different instants, so
-	// they must not share an entry.
-	if stepMs := uint64(q.query.Step.Milliseconds()); stepMs > 0 && q.tr.From%stepMs != 0 {
-		parts = append(parts, fmt.Sprintf("offset=%d", q.tr.From%stepMs))
 	}
 
 	return strings.Join(parts, "&")
