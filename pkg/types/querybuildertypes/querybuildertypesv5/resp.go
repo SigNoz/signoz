@@ -59,7 +59,7 @@ func (QueryData) JSONSchemaOneOf() []any {
 type QueryRangeResponse struct {
 	Type RequestType `json:"type" description:"The request type the results are shaped for, echoed from the request."`
 	Data QueryData   `json:"data" description:"The query results."`
-	Meta ExecStats   `json:"meta" description:"Execution statistics for the whole request."`
+	Meta ExecStats   `json:"meta" description:"Execution statistics for the whole request: a rough measure of how expensive the query was. Use the results, not these numbers, to decide whether data exists; an empty result can still scan many rows."`
 
 	Warning *QueryWarnData `json:"warning,omitempty" description:"Warnings raised while executing the request, if any."`
 

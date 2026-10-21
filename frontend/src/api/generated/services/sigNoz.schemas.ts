@@ -10495,19 +10495,19 @@ export interface Querybuildertypesv5ExecStatsDTO {
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description The number of bytes the store read to answer every query in the request.
+	 * @description The number of bytes the store read to answer every query in the request. A cost indicator only; it does not indicate whether any data matched.
 	 */
 	bytesScanned?: number;
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description The sum of the execution durations of the statements run for this query, in milliseconds; not the request latency.
+	 * @description The sum of the execution durations of the statements run for this query, in milliseconds. A cost indicator only, not the request latency and not a sign that data exists.
 	 */
 	durationMs?: number;
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description The number of rows the store read to answer every query in the request.
+	 * @description The number of rows the store read to answer every query in the request. A cost indicator only: rows are scanned whether or not any matched, so it says nothing about whether data exists.
 	 */
 	rowsScanned?: number;
 	/**
@@ -10892,7 +10892,7 @@ export interface Querybuildertypesv5QueryRangeResponseDTO {
 	 */
 	data?: Querybuildertypesv5QueryDataDTO;
 	/**
-	 * @description Execution statistics for the whole request.
+	 * @description Execution statistics for the whole request: a rough measure of how expensive the query was. Use the results, not these numbers, to decide whether data exists; an empty result can still scan many rows.
 	 */
 	meta?: Querybuildertypesv5ExecStatsDTO;
 	/**

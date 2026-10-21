@@ -8477,17 +8477,20 @@ components:
       properties:
         bytesScanned:
           description: The number of bytes the store read to answer every query in
-            the request.
+            the request. A cost indicator only; it does not indicate whether any data
+            matched.
           minimum: 0
           type: integer
         durationMs:
           description: The sum of the execution durations of the statements run for
-            this query, in milliseconds; not the request latency.
+            this query, in milliseconds. A cost indicator only, not the request latency
+            and not a sign that data exists.
           minimum: 0
           type: integer
         rowsScanned:
-          description: The number of rows the store read to answer every query in
-            the request.
+          description: 'The number of rows the store read to answer every query in
+            the request. A cost indicator only: rows are scanned whether or not any
+            matched, so it says nothing about whether data exists.'
           minimum: 0
           type: integer
         stepIntervals:
@@ -9483,7 +9486,9 @@ components:
         meta:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5ExecStats'
-          description: Execution statistics for the whole request.
+          description: 'Execution statistics for the whole request: a rough measure
+            of how expensive the query was. Use the results, not these numbers, to
+            decide whether data exists; an empty result can still scan many rows.'
         type:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5RequestType'
