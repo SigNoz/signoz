@@ -89,7 +89,7 @@ type NotificationSettings struct {
 	GroupBy           []string            `json:"groupBy,omitzero" description:"Label names whose values group alerts into one notification, such as service.name."`
 	Renotify          *Renotify           `json:"renotify,omitempty" description:"Whether and how often to re-send a notification for an alert that stays active."`
 	UsePolicy         bool                `json:"usePolicy" description:"When true, alerts are routed by the organisation level notification policies instead of the channels named on the thresholds. Defaults to false."`
-	NewGroupEvalDelay valuer.TextDuration `json:"newGroupEvalDelay,omitzero" description:"A grace period, as a Go duration such as 2m, during which a newly seen label group is excluded from evaluation."`
+	NewGroupEvalDelay valuer.TextDuration `json:"newGroupEvalDelay,omitzero" description:"A grace period, as a Go duration such as 2m, during which a newly seen label group is excluded from evaluation; log and trace builder queries are never suppressed. For metric queries, new means the latest first-seen time of the series' group-by attribute values in the metric metadata, and a series whose values have no metadata is evaluated at once."`
 }
 
 type Renotify struct {
