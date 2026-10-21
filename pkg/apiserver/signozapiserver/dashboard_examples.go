@@ -209,7 +209,6 @@ func updateDashboardExamples() []handler.OpenAPIExample {
 								"signal": "metrics",
 								"aggregations": []any{map[string]any{
 									"metricName":       "system.cpu.time",
-									"temporality":      "cumulative",
 									"timeAggregation":  "rate",
 									"spaceAggregation": "sum",
 								}},

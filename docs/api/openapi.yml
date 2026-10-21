@@ -20148,7 +20148,6 @@ paths:
                                   aggregations:
                                   - metricName: system.cpu.time
                                     spaceAggregation: sum
-                                    temporality: cumulative
                                     timeAggregation: rate
                                   groupBy:
                                   - fieldContext: attribute
