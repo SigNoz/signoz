@@ -30,6 +30,13 @@ describe('TooltipFooter', () => {
 			expect(screen.getByText('to pin the tooltip')).toBeInTheDocument();
 		});
 
+		it('hides the pin hint when canPin is false', () => {
+			render(<TooltipFooter {...defaultProps} canPin={false} />);
+
+			expect(screen.getByText('Click to drilldown')).toBeInTheDocument();
+			expect(screen.queryByText('to pin the tooltip')).not.toBeInTheDocument();
+		});
+
 		it('renders a custom pin key in uppercase', () => {
 			render(<TooltipFooter {...defaultProps} pinKey="x" />);
 

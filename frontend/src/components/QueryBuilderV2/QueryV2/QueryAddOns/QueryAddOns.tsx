@@ -146,10 +146,21 @@ function QueryAddOns({
 		[resolvedFields],
 	);
 
+	// A panel's default limit applies only to a lone query: per-query limits can keep
+	// different groups and break a formula's join.
+	const isLoneQuery =
+		(currentQuery.builder?.queryData?.length ?? 1) +
+			(currentQuery.builder?.queryFormulas?.length ?? 0) +
+			(currentQuery.builder?.queryTraceOperator?.length ?? 0) <=
+		1;
+
 	const placeholderOf = useCallback(
 		(key: InputAddOnField): string =>
-			resolvedFields.get(key)?.placeholder ?? ADD_ON_DEFINITIONS[key].placeholder,
-		[resolvedFields],
+			(key === QueryBuilderField.Limit && !isLoneQuery
+				? undefined
+				: resolvedFields.get(key)?.placeholder) ??
+			ADD_ON_DEFINITIONS[key].placeholder,
+		[resolvedFields, isLoneQuery],
 	);
 
 	const isDisabled = useCallback(

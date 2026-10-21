@@ -18,6 +18,7 @@ import {
 	type TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
+import { DEFAULT_BAR_COLOR } from '../kinds/TopListPanel/constants';
 import { defaultColumnsForSignal } from '../../PanelEditor/ListColumnsEditor/selectFields';
 import {
 	type AnyThreshold,
@@ -37,6 +38,7 @@ export interface SeededPluginSpec {
 	axes?: SectionSpecMap[SectionKind.Axes];
 	legend?: SectionSpecMap[SectionKind.Legend];
 	chartAppearance?: SectionSpecMap[SectionKind.ChartAppearance];
+	appearance?: SectionSpecMap[SectionKind.Appearance];
 	formatting?: Pick<
 		PanelFormattingSlice,
 		'unit' | 'decimalPrecision' | 'columnUnits'
@@ -166,6 +168,23 @@ function translateStackingForKind(
 }
 
 const SECTION_SEEDS: SectionSeeds = {
+	[SectionKind.Appearance]: {
+		specKey: 'appearance',
+		// Carries the toggles the target kind declares; unset reads as off.
+		seed: (
+			controls,
+			{ oldPluginSpec },
+		): SectionSpecMap[SectionKind.Appearance] => {
+			const old = oldPluginSpec?.appearance;
+			return {
+				barColor: (controls.barColor && old?.barColor) || DEFAULT_BAR_COLOR,
+				...(controls.showRank &&
+					old?.showRank !== undefined && { showRank: old.showRank }),
+				...(controls.showShare &&
+					old?.showShare !== undefined && { showShare: old.showShare }),
+			};
+		},
+	},
 	[SectionKind.TextLayout]: {
 		specKey: 'presentation',
 		// Explicit alignment defaults (not the API's implicit ones) so the controls
