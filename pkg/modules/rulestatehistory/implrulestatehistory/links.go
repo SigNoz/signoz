@@ -52,7 +52,7 @@ func (m *module) relatedLinkBuilderForRule(ctx context.Context, orgID valuer.UUI
 		return nil
 	}
 
-	builder := &relatedLinkBuilder{alertType: rule.AlertType, signal: signal, condition: rule.RuleCondition, logger: m.logger.With(slog.String("rule_id", ruleID))}
+	builder := &relatedLinkBuilder{alertType: rule.AlertType, signal: signal, condition: rule.RuleCondition, logger: m.logger.With(slog.String("rule.id", ruleID))}
 	if rule.Evaluation != nil {
 		if evaluation, err := rule.Evaluation.GetEvaluation(); err == nil {
 			builder.evaluation = evaluation
