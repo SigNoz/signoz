@@ -93,6 +93,8 @@ describe('resolveHit', () => {
 		tree.add(hit(1, 0, 10, 10, 6));
 
 		expect(resolveHit(tree, 30, 30, 0)).toBeNull();
+		// Inside the disc's bounding square, outside the disc.
+		expect(resolveHit(tree, 15.8, 15.8, 0)).toBeNull();
 	});
 
 	it('tolerance widens each disc', () => {

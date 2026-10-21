@@ -12,6 +12,34 @@ function isDecade(value: number): boolean {
 
 const LOG_SPLIT_MULTIPLES = [1, 2, 5];
 
+/** Decades finer than the range's own span that the fallback steps through. */
+const FALLBACK_STEP_DECADES = 3;
+
+/** Rounded through toPrecision so 0.1 × 3 noise can't fall outside [min, max]. */
+function roundSplit(value: number): number {
+	return Number(value.toPrecision(12));
+}
+
+/** Evenly stepped splits for a range too narrow to hold two 1/2/5 splits. */
+function narrowRangeSplits(min: number, max: number): number[] {
+	const coarsest = Math.floor(Math.log10(max - min));
+	for (
+		let exponent = coarsest;
+		exponent > coarsest - FALLBACK_STEP_DECADES;
+		exponent--
+	) {
+		const step = 10 ** exponent;
+		const first = Math.ceil(roundSplit(min / step));
+		const last = Math.floor(roundSplit(max / step));
+		if (last > first) {
+			return Array.from({ length: last - first + 1 }, (_, index) =>
+				roundSplit((first + index) * step),
+			);
+		}
+	}
+	return [];
+}
+
 /** 1, 2, 5 × 10ⁿ in range; uPlot's log splits step from an unsnapped min (10.79, 21.58…). */
 export const logScaleSplits: uPlot.Axis.Splits = (_u, _axisIdx, min, max) => {
 	if (!(min > 0) || !(max > min)) {
@@ -24,14 +52,17 @@ export const logScaleSplits: uPlot.Axis.Splits = (_u, _axisIdx, min, max) => {
 		exponent++
 	) {
 		LOG_SPLIT_MULTIPLES.forEach((multiple) => {
-			// Rounded through toPrecision so 0.1 × 3 noise can't fall outside [min, max].
-			const split = Number((multiple * 10 ** exponent).toPrecision(12));
+			const split = roundSplit(multiple * 10 ** exponent);
 			if (split >= min && split <= max) {
 				splits.push(split);
 			}
 		});
 	}
-	return splits;
+	if (splits.length >= 2) {
+		return splits;
+	}
+	const narrow = narrowRangeSplits(min, max);
+	return narrow.length > splits.length ? narrow : splits;
 };
 
 /** Labels every decade, plus any 2 or 5 at least `space` px clear. */

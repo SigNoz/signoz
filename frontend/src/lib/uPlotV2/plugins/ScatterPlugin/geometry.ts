@@ -28,7 +28,10 @@ export function resolveSizeDomain(data: uPlot.AlignedData): SizeDomain | null {
 	return min <= max ? { min, max } : null;
 }
 
-/** Area, not diameter, scales with the value. */
+/**
+ * Diameter for a size-channel value. Grows the disc's area, not its width,
+ * linearly with the value, so a value twice as large reads as twice the ink.
+ */
 export function resolvePointDiameter(
 	size: number | null | undefined,
 	domain: SizeDomain | null,
@@ -49,7 +52,10 @@ export function resolvePointDiameter(
 	return Math.sqrt(minArea + (maxArea - minArea) * t);
 }
 
-/** Disc whose centre is closest, within `tolerance` px; `null` if none. */
+/**
+ * The disc under the cursor, counting `tolerance` px beyond its edge as a hit.
+ * Where discs overlap, the one whose centre is closest wins; `null` if none.
+ */
 export function resolveHit(
 	tree: Quadtree<ScatterHit>,
 	cx: number,
@@ -65,16 +71,13 @@ export function resolveHit(
 		tolerance * 2,
 		tolerance * 2,
 		(hit) => {
-			const left = hit.x - tolerance;
-			const top = hit.y - tolerance;
-			const right = hit.x + hit.w + tolerance;
-			const bottom = hit.y + hit.h + tolerance;
-			if (cx < left || cx > right || cy < top || cy > bottom) {
-				return;
-			}
 			const dx = cx - (hit.x + hit.w / 2);
 			const dy = cy - (hit.y + hit.h / 2);
 			const distance = dx * dx + dy * dy;
+			const reach = hit.w / 2 + tolerance;
+			if (distance > reach * reach) {
+				return;
+			}
 			if (distance < bestDistance) {
 				best = hit;
 				bestDistance = distance;

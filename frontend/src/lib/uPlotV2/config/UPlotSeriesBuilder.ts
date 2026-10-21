@@ -125,7 +125,7 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 			return { paths: pathBuilder };
 		}
 
-		if (drawStyle === DrawStyle.Points || drawStyle === DrawStyle.Scatter) {
+		if (isMarkerOnlyDrawStyle(drawStyle)) {
 			return { paths: (): null => null };
 		}
 
@@ -278,6 +278,11 @@ interface PathBuilders {
 /**
  * Get path builder based on draw style and interpolation
  */
+/** Draws standalone markers, never a connecting line. */
+function isMarkerOnlyDrawStyle(drawStyle: DrawStyle): boolean {
+	return drawStyle === DrawStyle.Points || drawStyle === DrawStyle.Scatter;
+}
+
 function getPathBuilder({
 	drawStyle,
 	lineInterpolation,

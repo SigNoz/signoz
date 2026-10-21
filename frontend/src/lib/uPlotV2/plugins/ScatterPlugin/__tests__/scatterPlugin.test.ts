@@ -94,12 +94,16 @@ describe('createScatterPlugin', () => {
 		(globalThis as { Path2D?: unknown }).Path2D = FakePath2D;
 	});
 
+	let orient: jest.SpyInstance;
+
 	beforeEach(() => {
-		(uPlot.orient as jest.Mock).mockImplementation(orientWithIdentityScales);
+		orient = jest
+			.spyOn(uPlot, 'orient')
+			.mockImplementation(orientWithIdentityScales);
 	});
 
 	afterEach(() => {
-		(uPlot.orient as jest.Mock).mockReset();
+		orient.mockReset();
 	});
 
 	function drawAll(

@@ -78,7 +78,7 @@ export interface AxisProps {
 	};
 	/** Explicit tick formatter, replacing the scale's default (time / unit-formatted). */
 	values?: uPlot.Axis.Values;
-	/** Explicit tick positions, replacing uPlot's per-distribution default. */
+	/** Explicit axis splits, overriding the default tick calculation. */
 	splits?: uPlot.Axis.Splits;
 	/** Which splits get a label, replacing uPlot's per-distribution default. */
 	filter?: uPlot.Axis.Filter;
@@ -94,7 +94,7 @@ export interface AxisProps {
 	isDarkMode?: boolean;
 	/** Axis is on a log scale — thins the grid lines to keep dense decades readable. */
 	isLogScale?: boolean;
-	/** Unit the value ticks are formatted in (`spec.formatting.unit`); a non-time x axis reads it too. */
+	/** Unit the y axis ticks are formatted in (`spec.formatting.unit`); a non-time x axis reads it too. */
 	yAxisUnit?: string;
 	/**
 	 * X axis carries timestamps, so its ticks format as dates/times. Declared by the caller
@@ -117,7 +117,6 @@ export enum DistributionType {
 	SymmetricLog = 'symlog',
 }
 
-/** uPlot's data layout: one shared x per chart, or per-series x/y columns. */
 export enum PlotMode {
 	Aligned = 1,
 	Faceted = 2,
@@ -160,7 +159,6 @@ export enum DrawStyle {
 	Points = 'points',
 	Bar = 'bar',
 	Histogram = 'histogram',
-	/** Mode 2; drawn by the caller's `pathBuilder`. */
 	Scatter = 'scatter',
 }
 

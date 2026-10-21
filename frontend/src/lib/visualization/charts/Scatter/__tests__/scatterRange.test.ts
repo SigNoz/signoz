@@ -1,7 +1,8 @@
 import { DistributionType } from 'lib/uPlotV2/config/types';
 import uPlot from 'uplot';
 
-import { createScatterRange, type ScatterRangeOptions } from '../scatterRange';
+import { createScatterRange } from '../scatterRange';
+import type { ScatterRangeOptions } from '../types';
 
 /** A 220px-tall, 420px-wide plot at a device pixel ratio of 1. */
 const plot = { bbox: { width: 420, height: 220 } } as unknown as uPlot;

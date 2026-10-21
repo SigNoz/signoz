@@ -104,7 +104,7 @@ export interface ScatterPointClick {
 /** `data` is mode-2 (`prepareScatterChartData`); `config` comes from `buildScatterConfig`. */
 export interface ScatterChartProps extends ChartWrapperProps {
 	channels: ScatterChannels;
-	resolvePointLabels?: (
+	resolvePointGroupValues?: (
 		seriesIndex: number,
 		dataIndex: number,
 	) => ScatterPointLabel[];
