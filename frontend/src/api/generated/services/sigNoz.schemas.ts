@@ -10249,7 +10249,7 @@ export interface MetricsexplorertypesMetricHighlightsResponseDTO {
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description Number of distinct time series that reported in the last 120 minutes.
+	 * @description Number of distinct time series with an hourly metadata bucket in the last 120 minutes. Buckets are keyed by hour start, so a series that last reported early in the cutoff hour can be missed.
 	 */
 	activeTimeSeries: number;
 	/**
@@ -10348,7 +10348,7 @@ export interface MetricsexplorertypesStatsRequestDTO {
 	 */
 	end: number;
 	/**
-	 * @description Query builder filter over metric attributes, for example host.name = 'web-1'. A bare word matches the metric name. Omit for every metric.
+	 * @description Query builder filter over metric attributes, for example host.name = 'web-1'. A bare word matches the metric name. Omitting it applies no restriction, but metrics whose name starts with signoz are always excluded.
 	 */
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
@@ -10419,7 +10419,7 @@ export interface MetricsexplorertypesTreemapRequestDTO {
 	 */
 	end: number;
 	/**
-	 * @description Query builder filter over metric attributes, for example host.name = 'web-1'. A bare word matches the metric name. Omit for every metric.
+	 * @description Query builder filter over metric attributes, for example host.name = 'web-1'. A bare word matches the metric name. Omitting it applies no restriction, but metrics whose name starts with signoz are always excluded.
 	 */
 	filter?: Querybuildertypesv5FilterDTO;
 	/**

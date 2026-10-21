@@ -8126,8 +8126,9 @@ components:
     MetricsexplorertypesMetricHighlightsResponse:
       properties:
         activeTimeSeries:
-          description: Number of distinct time series that reported in the last 120
-            minutes.
+          description: Number of distinct time series with an hourly metadata bucket
+            in the last 120 minutes. Buckets are keyed by hour start, so a series
+            that last reported early in the cutoff hour can be missed.
           minimum: 0
           type: integer
         dataPoints:
@@ -8241,7 +8242,8 @@ components:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5Filter'
           description: Query builder filter over metric attributes, for example host.name
-            = 'web-1'. A bare word matches the metric name. Omit for every metric.
+            = 'web-1'. A bare word matches the metric name. Omitting it applies no
+            restriction, but metrics whose name starts with signoz are always excluded.
         limit:
           description: Maximum number of metrics to return, between 1 and 5000.
           type: integer
@@ -8317,7 +8319,8 @@ components:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5Filter'
           description: Query builder filter over metric attributes, for example host.name
-            = 'web-1'. A bare word matches the metric name. Omit for every metric.
+            = 'web-1'. A bare word matches the metric name. Omitting it applies no
+            restriction, but metrics whose name starts with signoz are always excluded.
         limit:
           description: Maximum number of metrics to return, between 1 and 5000, ordered
             by percentage descending.
