@@ -58,6 +58,12 @@ export const Default: Story = {};
 /** A workspace with nowhere to send an alert yet. */
 export const NoChannels: Story = {
 	args: { channels: 0 },
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+
+		await canvas.findByTestId('channels-empty-state', undefined, UNTIL_LOADED);
+		await canvas.findByTestId('channels-empty-create');
+	},
 };
 
 /** Data: the channel list's existing loading spinner. */
@@ -105,6 +111,20 @@ export const KindFilter: Story = {
 			UNTIL_LOADED,
 		);
 		await canvas.findByText('sre-email');
+		// the heading and the create button both name the filtered type
+		await canvas.findByText('All Email channels');
+	},
+};
+
+/** Interaction: the column menu, which turns table columns off and on. */
+export const ColumnSelector: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+
+		await canvas.findByText('ops-slack', undefined, UNTIL_LOADED);
+		await userEvent.click(canvas.getByTestId('channels-columns'));
+
+		await screen.findByText('Toggle Columns');
 	},
 };
 
