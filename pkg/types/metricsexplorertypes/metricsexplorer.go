@@ -108,7 +108,7 @@ type Stat struct {
 	Description string           `json:"description" required:"true" description:"Human-readable description from the metric metadata; empty when none was reported."`
 	MetricType  metrictypes.Type `json:"type" required:"true" description:"The metric type, such as gauge, sum, histogram, summary or exponentialhistogram."`
 	MetricUnit  string           `json:"unit" required:"true" description:"The unit reported in the metric metadata, for example ms or By; empty when none was reported."`
-	TimeSeries  uint64           `json:"timeseries" required:"true" description:"Number of distinct time series seen for the metric in the requested time range."`
+	TimeSeries  uint64           `json:"timeseries" required:"true" description:"Number of distinct time series for the metric, counted from metadata buckets whose start is rounded down to an hour, six hours, a day or a week depending on the range, so series active shortly before start are included."`
 	Samples     uint64           `json:"samples" required:"true" description:"Number of samples (data points) ingested for the metric in the requested time range."`
 }
 
@@ -142,7 +142,7 @@ type UpdateMetricMetadataRequest struct {
 	Type        metrictypes.Type        `json:"type" required:"true" description:"The metric type to store, such as gauge, sum, histogram, summary or exponentialhistogram."`
 	Description string                  `json:"description" required:"true" description:"Human-readable description of the metric."`
 	Unit        string                  `json:"unit" required:"true" description:"The unit of the metric values, for example ms or By."`
-	Temporality metrictypes.Temporality `json:"temporality" required:"true" description:"Aggregation temporality to store: cumulative, delta or unspecified."`
+	Temporality metrictypes.Temporality `json:"temporality" required:"true" description:"Aggregation temporality to store. Required as delta or cumulative when type is sum, histogram or exponentialhistogram; gauges are stored as unspecified and summaries as cumulative whatever is sent. A non-monotonic cumulative sum is stored as a gauge."`
 	IsMonotonic bool                    `json:"isMonotonic" required:"true" description:"Whether the metric is a monotonically increasing Sum (a counter)."`
 }
 
@@ -152,7 +152,7 @@ type TreemapRequest struct {
 	Start  int64           `json:"start" required:"true" description:"Start of the time range as a Unix timestamp in milliseconds. Must be greater than 0 and less than end."`
 	End    int64           `json:"end" required:"true" description:"End of the time range as a Unix timestamp in milliseconds. Must be greater than start."`
 	Limit  int             `json:"limit" required:"true" description:"Maximum number of metrics to return, between 1 and 5000, ordered by percentage descending."`
-	Mode   TreemapMode     `json:"mode" required:"true" description:"What each metric is sized by: timeseries counts distinct time series, samples counts ingested data points. Only the matching response array is populated."`
+	Mode   TreemapMode     `json:"mode" required:"true" description:"What each metric is sized by: timeseries counts distinct time series, samples counts ingested data points among the limit plus 50 metrics with the most time series. Only the matching response array is populated."`
 }
 
 // Validate enforces basic constraints on TreemapRequest.
@@ -226,7 +226,7 @@ type TreemapEntry struct {
 // TreemapResponse is the output structure for the treemap endpoint.
 type TreemapResponse struct {
 	TimeSeries []TreemapEntry `json:"timeseries" required:"true" nullable:"true" description:"Entries sized by time series count; populated only when mode is timeseries."`
-	Samples    []TreemapEntry `json:"samples" required:"true" nullable:"true" description:"Entries sized by sample count; populated only when mode is samples."`
+	Samples    []TreemapEntry `json:"samples" required:"true" nullable:"true" description:"Entries sized by sample count, chosen among the metrics with the most time series; populated only when mode is samples."`
 }
 
 // MetricAlert represents an alert associated with a metric.
@@ -258,9 +258,9 @@ func NewMetricDashboardPanelsResponse(refs []dashboardtypes.DashboardPanelRef) *
 
 // MetricHighlightsResponse is the output structure for the metric highlights endpoint.
 type MetricHighlightsResponse struct {
-	DataPoints       uint64 `json:"dataPoints" required:"true" description:"Total number of samples ingested for the metric."`
+	DataPoints       uint64 `json:"dataPoints" required:"true" description:"Number of samples ingested for the metric across the data still retained, summed from the 30-minute aggregate table; older data is excluded by retention."`
 	LastReceived     uint64 `json:"lastReceived" required:"true" description:"Unix timestamp in milliseconds of the most recently received sample."`
-	TotalTimeSeries  uint64 `json:"totalTimeSeries" required:"true" description:"Number of distinct time series ever seen for the metric."`
+	TotalTimeSeries  uint64 `json:"totalTimeSeries" required:"true" description:"Number of distinct time series for the metric across the retained weekly metadata buckets, so it falls as retention expires rather than counting everything ever seen."`
 	ActiveTimeSeries uint64 `json:"activeTimeSeries" required:"true" description:"Number of distinct time series that reported in the last 120 minutes."`
 }
 
@@ -376,7 +376,7 @@ type InspectMetricsRequest struct {
 	MetricName string          `json:"metricName" required:"true" description:"The name of the metric to inspect."`
 	Start      int64           `json:"start" required:"true" description:"Start of the time range as a Unix timestamp in milliseconds. Must be greater than 0 and less than end."`
 	End        int64           `json:"end" required:"true" description:"End of the time range as a Unix timestamp in milliseconds. At most 30 minutes after start."`
-	Filter     *qbtypes.Filter `json:"filter,omitempty" description:"Query builder filter over the metric attributes, for example host.name = 'web-1'. Omit for every series."`
+	Filter     *qbtypes.Filter `json:"filter,omitempty" description:"Query builder filter over the metric attributes, for example host.name = 'web-1'. Omitting it applies no attribute restriction; inspection returns at most 50 series either way."`
 }
 
 // Validate ensures the request is valid.
@@ -399,5 +399,5 @@ func (r *InspectMetricsRequest) Validate() error {
 
 // InspectMetricsResponse is the response for the inspect metrics endpoint.
 type InspectMetricsResponse struct {
-	Series []*qbtypes.TimeSeries `json:"series" required:"true" nullable:"true" description:"Raw time series, each with its labels and timestamp-value pairs."`
+	Series []*qbtypes.TimeSeries `json:"series" required:"true" nullable:"true" description:"Raw time series, at most 50, each with its labels and timestamp-value pairs."`
 }

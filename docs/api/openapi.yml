@@ -7980,7 +7980,8 @@ components:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5Filter'
           description: Query builder filter over the metric attributes, for example
-            host.name = 'web-1'. Omit for every series.
+            host.name = 'web-1'. Omitting it applies no attribute restriction; inspection
+            returns at most 50 series either way.
         metricName:
           description: The name of the metric to inspect.
           type: string
@@ -7997,7 +7998,8 @@ components:
     MetricsexplorertypesInspectMetricsResponse:
       properties:
         series:
-          description: Raw time series, each with its labels and timestamp-value pairs.
+          description: Raw time series, at most 50, each with its labels and timestamp-value
+            pairs.
           items:
             $ref: '#/components/schemas/Querybuildertypesv5TimeSeries'
           nullable: true
@@ -8129,7 +8131,9 @@ components:
           minimum: 0
           type: integer
         dataPoints:
-          description: Total number of samples ingested for the metric.
+          description: Number of samples ingested for the metric across the data still
+            retained, summed from the 30-minute aggregate table; older data is excluded
+            by retention.
           minimum: 0
           type: integer
         lastReceived:
@@ -8138,7 +8142,9 @@ components:
           minimum: 0
           type: integer
         totalTimeSeries:
-          description: Number of distinct time series ever seen for the metric.
+          description: Number of distinct time series for the metric across the retained
+            weekly metadata buckets, so it falls as retention expires rather than
+            counting everything ever seen.
           minimum: 0
           type: integer
       required:
@@ -8201,8 +8207,10 @@ components:
           minimum: 0
           type: integer
         timeseries:
-          description: Number of distinct time series seen for the metric in the requested
-            time range.
+          description: Number of distinct time series for the metric, counted from
+            metadata buckets whose start is rounded down to an hour, six hours, a
+            day or a week depending on the range, so series active shortly before
+            start are included.
           minimum: 0
           type: integer
         type:
@@ -8318,8 +8326,8 @@ components:
           allOf:
           - $ref: '#/components/schemas/MetricsexplorertypesTreemapMode'
           description: 'What each metric is sized by: timeseries counts distinct time
-            series, samples counts ingested data points. Only the matching response
-            array is populated.'
+            series, samples counts ingested data points among the limit plus 50 metrics
+            with the most time series. Only the matching response array is populated.'
         start:
           description: Start of the time range as a Unix timestamp in milliseconds.
             Must be greater than 0 and less than end.
@@ -8334,8 +8342,8 @@ components:
     MetricsexplorertypesTreemapResponse:
       properties:
         samples:
-          description: Entries sized by sample count; populated only when mode is
-            samples.
+          description: Entries sized by sample count, chosen among the metrics with
+            the most time series; populated only when mode is samples.
           items:
             $ref: '#/components/schemas/MetricsexplorertypesTreemapEntry'
           nullable: true
@@ -8365,7 +8373,10 @@ components:
         temporality:
           allOf:
           - $ref: '#/components/schemas/MetrictypesTemporality'
-          description: 'Aggregation temporality to store: cumulative, delta or unspecified.'
+          description: Aggregation temporality to store. Required as delta or cumulative
+            when type is sum, histogram or exponentialhistogram; gauges are stored
+            as unspecified and summaries as cumulative whatever is sent. A non-monotonic
+            cumulative sum is stored as a gauge.
         type:
           allOf:
           - $ref: '#/components/schemas/MetrictypesType'
