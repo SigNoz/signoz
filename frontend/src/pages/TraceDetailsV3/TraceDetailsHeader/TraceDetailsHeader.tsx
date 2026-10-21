@@ -20,6 +20,7 @@ import TraceDownloadPanel from './TraceDownloadPanel';
 import EntityMetadataRow from '../EntityMetadata/EntityMetadataRow';
 import AnalyticsPanel from '../SpanDetailsPanel/AnalyticsPanel/AnalyticsPanel';
 import Filters from '../TraceWaterfall/TraceWaterfallStates/Success/Filters/Filters';
+import { useTraceDetailsStripInfo } from '../useTraceDetailsStripInfo';
 import MissingSpansBanner from './MissingSpansBanner';
 import TraceOptionsMenu from './TraceOptionsMenu';
 import { useTraceSummary } from './useTraceSummary';
@@ -92,6 +93,11 @@ function TraceDetailsHeader({
 	const handleToggleTraceDetails = useCallback((): void => {
 		setShowTraceDetails((prev) => !prev);
 	}, []);
+
+	useTraceDetailsStripInfo({
+		totalSpansCount: traceSummary?.totalSpansCount ?? 0,
+		totalErrorSpansCount: traceSummary?.totalErrorSpansCount ?? 0,
+	});
 
 	const startTime = (traceSummary?.startTimestampMillis ?? 0) / 1e3;
 	const endTime = (traceSummary?.endTimestampMillis ?? 0) / 1e3;
