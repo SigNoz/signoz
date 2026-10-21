@@ -25,9 +25,9 @@ type Result struct {
 }
 
 type ExecStats struct {
-	RowsScanned   uint64            `json:"rowsScanned" description:"The number of rows the store read to answer every query in the request."`
-	BytesScanned  uint64            `json:"bytesScanned" description:"The number of bytes the store read to answer every query in the request."`
-	DurationMS    uint64            `json:"durationMs" description:"The sum of the execution durations of the statements run for this query, in milliseconds; not the request latency."`
+	RowsScanned   uint64            `json:"rowsScanned" description:"The number of rows the store read to answer every query in the request. A cost indicator only: rows are scanned whether or not any matched, so it says nothing about whether data exists."`
+	BytesScanned  uint64            `json:"bytesScanned" description:"The number of bytes the store read to answer every query in the request. A cost indicator only; it does not indicate whether any data matched."`
+	DurationMS    uint64            `json:"durationMs" description:"The sum of the execution durations of the statements run for this query, in milliseconds. A cost indicator only, not the request latency and not a sign that data exists."`
 	StepIntervals map[string]uint64 `json:"stepIntervals,omitempty" description:"The step interval in seconds that was used for each query, keyed by query name."`
 }
 
