@@ -14,6 +14,17 @@ import BaseScatterPlotPanelRenderer from '../Renderer';
 const ScatterPlotPanelRenderer =
 	BaseScatterPlotPanelRenderer as React.FC<BaseRendererProps>;
 
+jest.mock('hooks/useDimensions', () => ({
+	useResizeObserver: (): { width: number; height: number } => ({
+		width: 400,
+		height: 300,
+	}),
+}));
+jest.mock('lib/visualization/charts/Scatter/Scatter', () => ({
+	__esModule: true,
+	default: (): JSX.Element => <div data-testid="scatter-chart" />,
+}));
+
 window.ResizeObserver =
 	window.ResizeObserver ||
 	jest.fn().mockImplementation(() => ({
@@ -111,6 +122,7 @@ describe('ScatterPlotPanelRenderer', () => {
 		);
 
 		expect(getByTestId('scatter-plot-panel-renderer')).toBeInTheDocument();
+		expect(getByTestId('scatter-chart')).toBeInTheDocument();
 		expect(queryByTestId('panel-no-data')).not.toBeInTheDocument();
 	});
 
@@ -141,6 +153,7 @@ describe('ScatterPlotPanelRenderer', () => {
 		}
 		render(<Harness />);
 		const chartArea = screen.getByTestId('scatter-plot-chart-area');
+		expect(screen.getByTestId('scatter-chart')).toBeInTheDocument();
 
 		await user.click(screen.getByRole('button', { name: 'mismatch' }));
 		expect(screen.getByTestId('scatter-plot-empty-message')).toBeInTheDocument();
@@ -149,5 +162,6 @@ describe('ScatterPlotPanelRenderer', () => {
 		await user.click(screen.getByRole('button', { name: 'ready' }));
 		expect(screen.getByTestId('scatter-plot-chart-area')).toBe(chartArea);
 		expect(chartArea).toBeVisible();
+		expect(screen.getByTestId('scatter-chart')).toBeInTheDocument();
 	});
 });

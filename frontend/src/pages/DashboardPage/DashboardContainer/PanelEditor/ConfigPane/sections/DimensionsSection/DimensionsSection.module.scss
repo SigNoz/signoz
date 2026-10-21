@@ -11,7 +11,7 @@
 }
 
 .info {
-	display: inline-flex;
+	flex-shrink: 0;
 	color: var(--l3-foreground);
 	cursor: help;
 }

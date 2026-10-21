@@ -124,10 +124,7 @@ describe('DimensionsSection', () => {
 			/>,
 		);
 
-		const trigger = screen.getByTestId('panel-editor-v2-dimension-colorBy');
-		await user.click(
-			trigger.querySelector('.ant-select-selector') as HTMLElement,
-		);
+		await user.click(screen.getByTestId('panel-editor-v2-dimension-colorBy'));
 		await user.click(
 			await screen.findByRole('option', { name: 'k8s.namespace.name' }),
 		);
@@ -181,9 +178,7 @@ describe('DimensionsSection', () => {
 
 		expect(screen.getByText('No group-by labels')).toBeInTheDocument();
 		expect(
-			screen
-				.getByTestId('panel-editor-v2-dimension-colorBy')
-				.classList.contains('ant-select-disabled'),
-		).toBe(true);
+			screen.getByTestId('panel-editor-v2-dimension-colorBy'),
+		).toHaveAttribute('aria-disabled', 'true');
 	});
 });

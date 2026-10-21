@@ -23,7 +23,8 @@ interface BuildTableCsvRowsArgs {
 /**
  * Column key → CSV header. Rows are keyed by header, so two columns sharing a
  * name (`count()` on two queries) would collapse into one; those take their
- * query-prefixed label instead.
+ * query-prefixed label instead. A header still taken after that (two
+ * aggregations aliased alike in one query) gets a ` (2)`, ` (3)`… suffix.
  */
 function getCsvHeaders(table: PanelTable): Record<string, string> {
 	const nameCounts = new Map<string, number>();
@@ -31,11 +32,18 @@ function getCsvHeaders(table: PanelTable): Record<string, string> {
 		nameCounts.set(col.name, (nameCounts.get(col.name) ?? 0) + 1),
 	);
 	const labels = getValueColumnLabels(table.columns);
+	const taken = new Set<string>();
 	return Object.fromEntries(
 		table.columns.map((col) => {
 			const key = col.id || col.name;
 			const collides = (nameCounts.get(col.name) ?? 0) > 1;
-			return [key, collides ? (labels[key] ?? col.name) : col.name];
+			const base = collides ? (labels[key] ?? col.name) : col.name;
+			let header = base;
+			for (let copy = 2; taken.has(header); copy++) {
+				header = `${base} (${copy})`;
+			}
+			taken.add(header);
+			return [key, header];
 		}),
 	);
 }

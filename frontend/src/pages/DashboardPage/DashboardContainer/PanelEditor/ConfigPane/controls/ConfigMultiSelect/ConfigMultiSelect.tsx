@@ -1,4 +1,4 @@
-import { Select } from 'antd';
+import { ComboboxSimple } from '@signozhq/ui/combobox';
 
 import styles from './ConfigMultiSelect.module.scss';
 
@@ -14,7 +14,6 @@ interface ConfigMultiSelectProps<T extends string = string> {
 	items: ConfigMultiSelectItem<T>[];
 	onChange: (value: T[]) => void;
 	disabled?: boolean;
-	'aria-label'?: string;
 }
 
 /** Emits picks in items order, so the stored value is stable. */
@@ -25,26 +24,24 @@ function ConfigMultiSelect<T extends string = string>({
 	items,
 	onChange,
 	disabled,
-	'aria-label': ariaLabel,
 }: ConfigMultiSelectProps<T>): JSX.Element {
 	return (
-		<Select<T[]>
-			mode="multiple"
+		<ComboboxSimple
+			multiple
 			className={styles.select}
-			data-testid={testId}
-			aria-label={ariaLabel}
+			testId={testId}
 			value={value}
 			placeholder={placeholder}
 			disabled={disabled}
-			virtual={false}
-			options={items}
-			onChange={(next): void =>
+			items={items}
+			onChange={(next): void => {
+				const picked = Array.isArray(next) ? next : [];
 				onChange(
 					items
 						.map((item) => item.value)
-						.filter((candidate) => next.includes(candidate)),
-				)
-			}
+						.filter((candidate) => picked.includes(candidate)),
+				);
+			}}
 		/>
 	);
 }

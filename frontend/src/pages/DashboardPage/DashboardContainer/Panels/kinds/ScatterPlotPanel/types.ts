@@ -2,7 +2,7 @@ import type {
 	DashboardtypesScatterPlotAxesDTO,
 	DashboardtypesScatterPlotDimensionsDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import type { ScatterSeries } from 'lib/visualization/charts/Scatter/utils';
+import type { ScatterSeries } from 'lib/visualization/charts/Scatter/types';
 import type {
 	ScatterChannels,
 	ScatterPointLabel,

@@ -1,4 +1,4 @@
-import { Input } from 'antd';
+import { Input } from '@signozhq/ui/input';
 import {
 	DashboardtypesAxisScaleDTO,
 	type DashboardtypesScatterPlotAxisDTO,
@@ -31,7 +31,7 @@ function ScatterAxisFields({
 		<AxisFields>
 			<ConfigInlineField label="Label">
 				<Input
-					data-testid={`panel-editor-v2-${axis}-label`}
+					testId={`panel-editor-v2-${axis}-label`}
 					aria-label={`${name}-axis label`}
 					placeholder={columnName ?? 'None'}
 					value={value?.label ?? ''}

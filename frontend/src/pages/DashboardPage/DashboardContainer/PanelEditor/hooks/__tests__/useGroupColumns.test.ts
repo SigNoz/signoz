@@ -1,7 +1,10 @@
-import { renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { prepareScalarTables } from 'pages/DashboardPage/DashboardContainer/queryV5/prepareScalarTables';
-import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
+import type {
+	PanelQueryData,
+	PanelTable,
+} from 'pages/DashboardPage/DashboardContainer/queryV5/types';
+import { renderHook } from 'tests/test-utils';
 
 import { useGroupColumns } from '../useGroupColumns';
 
@@ -14,7 +17,7 @@ jest.mock(
 	() => ({ getScalarResults: jest.fn(() => []) }),
 );
 
-const mockPrepareScalarTables = prepareScalarTables as unknown as jest.Mock;
+const mockPrepareScalarTables = jest.mocked(prepareScalarTables);
 
 const DATA = {
 	response: undefined,
@@ -44,19 +47,31 @@ describe('useGroupColumns', () => {
 	});
 
 	it('keeps only the group-by columns, by key', () => {
+		const empty: PanelTable = {
+			queryName: 'A',
+			legend: '',
+			columns: [],
+			rows: [],
+		};
 		mockPrepareScalarTables.mockReturnValue([
-			{ columns: [], rows: [] },
+			empty,
 			{
+				...empty,
 				columns: [
 					{
 						id: 'k8s.namespace.name',
 						name: 'k8s.namespace.name',
+						queryName: '',
 						isValueColumn: false,
 					},
-					{ id: 'A', name: 'cpu', isValueColumn: true },
-					{ id: 'k8s.pod.name', name: 'k8s.pod.name', isValueColumn: false },
+					{ id: 'A', name: 'cpu', queryName: 'A', isValueColumn: true },
+					{
+						id: 'k8s.pod.name',
+						name: 'k8s.pod.name',
+						queryName: '',
+						isValueColumn: false,
+					},
 				],
-				rows: [],
 			},
 		]);
 

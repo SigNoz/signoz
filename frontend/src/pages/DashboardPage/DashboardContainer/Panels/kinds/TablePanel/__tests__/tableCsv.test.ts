@@ -100,6 +100,23 @@ describe('buildTableCsvRows headers', () => {
 			{ service: 'cart', 'A.count()': '120', p99: '4', 'B.count()': '3' },
 		]);
 	});
+
+	it('suffixes a header still shared by two aggregations aliased alike in one query', () => {
+		const rows = buildTableCsvRows({
+			table: {
+				queryName: 'A',
+				legend: '',
+				columns: [
+					{ name: 'total', queryName: 'A', isValueColumn: true, id: 'A.count()' },
+					{ name: 'total', queryName: 'A', isValueColumn: true, id: 'A.p99' },
+				],
+				rows: [{ data: { 'A.count()': 120, 'A.p99': 4 } }],
+			},
+			columnUnits: {},
+		});
+
+		expect(rows).toStrictEqual([{ 'A.total': '120', 'A.total (2)': '4' }]);
+	});
 });
 
 describe('getTableCsvRows', () => {

@@ -2,7 +2,7 @@ import {
 	DashboardtypesAxisScaleDTO,
 	type DashboardtypesScatterPlotAxisDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import type { ScatterSeries } from 'lib/visualization/charts/Scatter/utils';
+import type { ScatterSeries } from 'lib/visualization/charts/Scatter/types';
 import type { ScatterPointLabel } from 'lib/uPlotV2/plugins/ScatterPlugin/types';
 import type {
 	PanelTableColumn,
@@ -78,6 +78,25 @@ function getPointLabels(
 export const MAX_PLOTTED_GROUPS = 10_000;
 
 export const COLOR_LABEL_SEPARATOR = ', ';
+
+/** Quotes a value holding the separator or a quote, so distinct groups never share a label. */
+function toColorLabelPart(value: string): string {
+	return value.includes(COLOR_LABEL_SEPARATOR) || value.includes('"')
+		? JSON.stringify(value)
+		: value;
+}
+
+/** The colour group's label, which doubles as its series, colour and legend key. */
+function getColorGroupLabel(
+	row: PanelTableRow,
+	colorColumns: PanelTableColumn[],
+): string {
+	return colorColumns.length > 0
+		? colorColumns
+				.map((column) => toColorLabelPart(toLabelValue(row.data[column.id])))
+				.join(COLOR_LABEL_SEPARATOR)
+		: UNGROUPED_SERIES_LABEL;
+}
 
 /**
  * The selected colour keys the result has; every group-by column when none
@@ -162,12 +181,7 @@ export function prepareScatterPlotData({
 			cappedGroups += 1;
 			return;
 		}
-		const label =
-			colorColumns.length > 0
-				? colorColumns
-						.map((column) => toLabelValue(row.data[column.id]))
-						.join(COLOR_LABEL_SEPARATOR)
-				: UNGROUPED_SERIES_LABEL;
+		const label = getColorGroupLabel(row, colorColumns);
 		let entry = seriesByLabel.get(label);
 		if (!entry) {
 			entry = {
@@ -211,4 +225,17 @@ export function prepareScatterPlotData({
 		cappedGroups,
 		staleDimensions: findStaleDimensions(valueColumns, groupColumns, dimensions),
 	};
+}
+
+/** Each colour group's label in row order, without preparing any points. */
+export function getColorGroupLabels(
+	table: PrepareScatterPlotDataArgs['table'],
+	colorBy: string[] | null | undefined,
+): string[] {
+	const columns = table?.columns ?? [];
+	const colorColumns = resolveColorColumns(
+		columns.filter((column) => !column.isValueColumn),
+		colorBy,
+	);
+	return (table?.rows ?? []).map((row) => getColorGroupLabel(row, colorColumns));
 }
