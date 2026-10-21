@@ -3291,6 +3291,7 @@ export enum CoretypesKindDTO {
 	'meter-metrics' = 'meter-metrics',
 	'logs-field' = 'logs-field',
 	'traces-field' = 'traces-field',
+	'metrics-field' = 'metrics-field',
 }
 export enum CoretypesTypeDTO {
 	user = 'user',
