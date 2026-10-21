@@ -99,8 +99,6 @@ export interface QueryEditorPaneProps {
 	panelDefinition: RenderableQueryPanelDefinition;
 	signal: TelemetrytypesSignalDTO;
 	isLoadingQueries: boolean;
-	/** Switch authoring tab (Query Builder / AI / ClickHouse / PromQL), owned by the host. */
-	onChangeQueryMode: (key: string) => void;
 	onStageRunQuery: () => void;
 	onCancelQuery: () => void;
 	/** Pin the tabs row to the pane top; the View modal opts out. */

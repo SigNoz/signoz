@@ -10,7 +10,7 @@ import {
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelCapabilities';
 import { seedBuilderForMode } from 'pages/DashboardPage/DashboardContainer/Panels/utils/seedBuilderForMode';
 
-interface UseQueryModeChangeArgs {
+interface UseQueryTypeChangeArgs {
 	panelType: PANEL_TYPES;
 	supportedQueryTypesKindMap: SupportedQueryTypesKindMap;
 }
@@ -20,10 +20,10 @@ interface UseQueryModeChangeArgs {
  * A builder slot is seeded when it can't be used as-is: an AI slot never opened, or
  * Query Builder queries on a signal this kind can't author (an AI panel's default).
  */
-export function useQueryModeChange({
+export function useQueryTypeChange({
 	panelType,
 	supportedQueryTypesKindMap,
-}: UseQueryModeChangeArgs): (key: string) => void {
+}: UseQueryTypeChangeArgs): (key: string) => void {
 	const {
 		currentQuery,
 		redirectWithQueryBuilderData,
