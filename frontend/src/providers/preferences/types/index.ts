@@ -6,9 +6,15 @@ import { DataSource } from 'types/common/queryBuilder';
 // AI Observability queries run on traces, so its slice needs a key of its own.
 export const AI_OBSERVABILITY_PREFERENCE_SOURCE = 'ai_observability';
 
+// The trace view shares a page with the list view, so it keeps its columns under a URL param of its own.
+export const AI_OBSERVABILITY_TRACE_VIEW_PREFERENCE_SOURCE =
+	'ai_observability_trace_view';
+export const AI_OBSERVABILITY_TRACE_VIEW_URL_OPTIONS = 'traceViewOptions';
+
 export type PreferenceSource =
 	| DataSource
-	| typeof AI_OBSERVABILITY_PREFERENCE_SOURCE;
+	| typeof AI_OBSERVABILITY_PREFERENCE_SOURCE
+	| typeof AI_OBSERVABILITY_TRACE_VIEW_PREFERENCE_SOURCE;
 
 export enum PreferenceMode {
 	SAVED_VIEW = 'savedView',
@@ -27,6 +33,7 @@ export interface PreferenceContextValue {
 	logs: PreferenceSlice;
 	traces: PreferenceSlice;
 	aiObservability: PreferenceSlice;
+	aiObservabilityTraceView: PreferenceSlice;
 }
 
 export interface FormattingOptions {

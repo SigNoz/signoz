@@ -8,6 +8,7 @@ import React, {
 import useUrlQuery from 'hooks/useUrlQuery';
 import {
 	AI_OBSERVABILITY_PREFERENCE_SOURCE,
+	AI_OBSERVABILITY_TRACE_VIEW_PREFERENCE_SOURCE,
 	PreferenceContextValue,
 	PreferenceMode,
 } from 'providers/preferences/types';
@@ -54,13 +55,20 @@ export function PreferenceContextProvider({
 		dataSource: AI_OBSERVABILITY_PREFERENCE_SOURCE,
 	});
 
+	const aiObservabilityTraceViewSlice = usePreferenceSync({
+		mode: savedViewId ? PreferenceMode.SAVED_VIEW : PreferenceMode.DIRECT,
+		savedViewId: savedViewId || undefined,
+		dataSource: AI_OBSERVABILITY_TRACE_VIEW_PREFERENCE_SOURCE,
+	});
+
 	const value = useMemo<PreferenceContextValue>(
 		() => ({
 			logs: logsSlice,
 			traces: tracesSlice,
 			aiObservability: aiObservabilitySlice,
+			aiObservabilityTraceView: aiObservabilityTraceViewSlice,
 		}),
-		[logsSlice, tracesSlice, aiObservabilitySlice],
+		[logsSlice, tracesSlice, aiObservabilitySlice, aiObservabilityTraceViewSlice],
 	);
 
 	return (

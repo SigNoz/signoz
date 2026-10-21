@@ -5,10 +5,12 @@ import { has } from 'lodash-es';
 import { DataSource } from 'types/common/queryBuilder';
 
 import aiObservabilityLoaderConfig from '../configs/aiObservabilityLoaderConfig';
+import aiObservabilityTraceViewLoaderConfig from '../configs/aiObservabilityTraceViewLoaderConfig';
 import logsLoaderConfig from '../configs/logsLoaderConfig';
 import tracesLoaderConfig from '../configs/tracesLoaderConfig';
 import {
 	AI_OBSERVABILITY_PREFERENCE_SOURCE,
+	AI_OBSERVABILITY_TRACE_VIEW_PREFERENCE_SOURCE,
 	FormattingOptions,
 	Preferences,
 	PreferenceSource,
@@ -77,6 +79,12 @@ function aiObservabilityPreferencesLoader(): {
 	return preferencesLoader(aiObservabilityLoaderConfig);
 }
 
+function aiObservabilityTraceViewPreferencesLoader(): {
+	columns: TelemetryFieldKey[];
+} {
+	return preferencesLoader(aiObservabilityTraceViewLoaderConfig);
+}
+
 export function usePreferenceLoader({
 	dataSource,
 	reSync,
@@ -103,6 +111,10 @@ export function usePreferenceLoader({
 			const { columns } = aiObservabilityPreferencesLoader();
 			return { columns };
 		}
+		if (dataSource === AI_OBSERVABILITY_TRACE_VIEW_PREFERENCE_SOURCE) {
+			const { columns } = aiObservabilityTraceViewPreferencesLoader();
+			return { columns };
+		}
 		return null;
 	});
 	const [error, setError] = useState<Error | null>(null);
@@ -124,6 +136,11 @@ export function usePreferenceLoader({
 
 				if (dataSource === AI_OBSERVABILITY_PREFERENCE_SOURCE) {
 					const { columns } = aiObservabilityPreferencesLoader();
+					setPreferences({ columns });
+				}
+
+				if (dataSource === AI_OBSERVABILITY_TRACE_VIEW_PREFERENCE_SOURCE) {
+					const { columns } = aiObservabilityTraceViewPreferencesLoader();
 					setPreferences({ columns });
 				}
 			} catch (e) {
