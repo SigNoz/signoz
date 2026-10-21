@@ -128,7 +128,7 @@ export const ColumnSelector: Story = {
 	},
 };
 
-/** Interaction: a search matching nothing offers to clear itself. */
+/** Interaction: a search that matches no channel. */
 export const NoResults: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		const canvas = within(canvasElement);
@@ -140,6 +140,21 @@ export const NoResults: Story = {
 		);
 
 		await canvas.findByText('No matching channels', undefined, UNTIL_LOADED);
+	},
+};
+
+/** Interaction: clearing the search from the empty state brings the list back. */
+export const ClearSearch: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+
+		await canvas.findByText('ops-slack', undefined, UNTIL_LOADED);
+		await userEvent.type(
+			canvas.getByTestId('channels-search'),
+			'no-such-channel',
+		);
+		await canvas.findByText('No matching channels', undefined, UNTIL_LOADED);
+
 		await userEvent.click(canvas.getByRole('button', { name: 'Clear Search' }));
 		await canvas.findByText('ops-slack', undefined, UNTIL_LOADED);
 	},
