@@ -7,6 +7,7 @@ const SCALAR_PANEL_TYPES: ReadonlySet<string> = new Set<string>([
 	PANEL_TYPES.PIE,
 	PANEL_TYPES.VALUE,
 	PANEL_TYPES.TOP_LIST,
+	PANEL_TYPES.GEO_MAP,
 ]);
 
 export function isScalarPanelType(panelType?: string | null): boolean {

@@ -5095,6 +5095,13 @@ export interface DashboardtypesBasicVisualizationDTO {
 	timePreference?: DashboardtypesTimePreferenceDTO;
 }
 
+/**
+ * @minimum 1
+ * @maximum 64
+ * @nullable
+ */
+export type DashboardtypesBubbleRadiusDTO = number | null;
+
 export interface Querybuildertypesv5LogAggregationDTO {
 	/**
 	 * @type string
@@ -5984,6 +5991,164 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	spec: DashboardtypesTopListPanelSpecDTO;
 }
 
+export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpecDTOKind {
+	'signoz/GeoMapPanel' = 'signoz/GeoMapPanel',
+}
+export interface DashboardtypesGeoMapBubblesDTO {
+	maxRadius?: DashboardtypesBubbleRadiusDTO | null;
+	minRadius?: DashboardtypesBubbleRadiusDTO | null;
+}
+
+export interface DashboardtypesGeoMapColorsDTO {
+	/**
+	 * @type string
+	 */
+	fill?: string;
+	/**
+	 * @type number,null
+	 */
+	max?: number | null;
+	/**
+	 * @type number,null
+	 */
+	min?: number | null;
+	mode?: DashboardtypesHeatmapColorModeDTO;
+	palette?: DashboardtypesHeatmapPaletteDTO;
+	scale?: DashboardtypesHeatmapColorScaleDTO;
+	/**
+	 * @type integer
+	 */
+	steps?: number;
+}
+
+export interface DashboardtypesGeoMapChartAppearanceDTO {
+	bubbles?: DashboardtypesGeoMapBubblesDTO;
+	colors?: DashboardtypesGeoMapColorsDTO;
+	/**
+	 * @type boolean,null
+	 * @description Shows country and state names once each fits inside its shape.
+	 */
+	labels?: boolean | null;
+}
+
+export enum DashboardtypesGeoMapCountryFormatDTO {
+	auto = 'auto',
+	alpha2 = 'alpha2',
+	alpha3 = 'alpha3',
+	name = 'name',
+}
+export enum DashboardtypesGeoMapLocationModeDTO {
+	auto = 'auto',
+	country = 'country',
+	subdivision = 'subdivision',
+	coordinates = 'coordinates',
+}
+export interface DashboardtypesGeoMapLocationDTO {
+	/**
+	 * @type string
+	 * @description Group-by key holding the country, for the country and subdivision modes.
+	 */
+	country?: string;
+	countryFormat?: DashboardtypesGeoMapCountryFormatDTO;
+	/**
+	 * @type string
+	 * @description Group-by key holding the latitude, for the coordinates mode.
+	 */
+	lat?: string;
+	/**
+	 * @type string
+	 * @description Group-by key holding the longitude, for the coordinates mode.
+	 */
+	lon?: string;
+	mode?: DashboardtypesGeoMapLocationModeDTO;
+	/**
+	 * @type string
+	 * @description Group-by key holding the ISO 3166-2 region code (e.g. geo.region.iso_code), for the subdivision mode.
+	 */
+	region?: string;
+}
+
+export enum DashboardtypesGeoMapLayerDTO {
+	regions = 'regions',
+	bubbles = 'bubbles',
+	points = 'points',
+}
+export enum DashboardtypesGeoMapProjectionDTO {
+	mercator = 'mercator',
+	equal_earth = 'equal_earth',
+	natural_earth = 'natural_earth',
+}
+export enum DashboardtypesGeoMapViewDTO {
+	world = 'world',
+	fit = 'fit',
+	africa = 'africa',
+	asia = 'asia',
+	europe = 'europe',
+	north_america = 'north_america',
+	south_america = 'south_america',
+	oceania = 'oceania',
+	country = 'country',
+}
+export interface DashboardtypesGeoMapSettingsDTO {
+	/**
+	 * @type string
+	 * @description Value column key that sets the colour. Empty uses the first value column.
+	 */
+	colorBy?: string;
+	layer?: DashboardtypesGeoMapLayerDTO;
+	projection: DashboardtypesGeoMapProjectionDTO;
+	/**
+	 * @type string
+	 * @description Value column key that sets the bubble or point size. Empty uses colorBy.
+	 */
+	sizeBy?: string;
+	view?: DashboardtypesGeoMapViewDTO;
+	/**
+	 * @type string
+	 * @description ISO 3166-1 alpha-2 code of the country the country view shows.
+	 */
+	viewCountry?: string;
+}
+
+export interface DashboardtypesGeoMapThresholdDTO {
+	/**
+	 * @type string
+	 */
+	color: string;
+	operator?: DashboardtypesComparisonOperatorDTO;
+	/**
+	 * @type string
+	 */
+	unit?: string;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	value: number;
+}
+
+export interface DashboardtypesGeoMapPanelSpecDTO {
+	chartAppearance?: DashboardtypesGeoMapChartAppearanceDTO;
+	formatting?: DashboardtypesTableFormattingDTO;
+	legend?: DashboardtypesLegendDTO;
+	location?: DashboardtypesGeoMapLocationDTO;
+	map?: DashboardtypesGeoMapSettingsDTO;
+	/**
+	 * @type array,null
+	 */
+	thresholds?: DashboardtypesGeoMapThresholdDTO[] | null;
+	visualization?: DashboardtypesBasicVisualizationDTO;
+}
+
+export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpecDTO {
+	/**
+	 * @enum signoz/GeoMapPanel
+	 * @type string
+	 */
+	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpecDTOKind;
+	spec: DashboardtypesGeoMapPanelSpecDTO;
+}
+
 export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpecDTO
@@ -5996,7 +6161,8 @@ export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpecDTO
-	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpecDTO;
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpecDTO;
 
 export enum Querybuildertypesv5RequestTypeDTO {
 	scalar = 'scalar',
@@ -6980,6 +7146,7 @@ export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/HeatmapPanel' = 'signoz/HeatmapPanel',
 	'signoz/ScatterPlotPanel' = 'signoz/ScatterPlotPanel',
 	'signoz/TopListPanel' = 'signoz/TopListPanel',
+	'signoz/GeoMapPanel' = 'signoz/GeoMapPanel',
 }
 /**
  * @nullable

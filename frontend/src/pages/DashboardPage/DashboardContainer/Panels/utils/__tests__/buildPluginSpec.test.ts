@@ -15,6 +15,8 @@ import {
 import { DEFAULT_BAR_COLOR } from '../../kinds/TopListPanel/constants';
 import { defaultColumnsForSignal } from '../../../PanelEditor/ListColumnsEditor/selectFields';
 import { sections as areaSections } from '../../kinds/AreaChartPanel/sections';
+import { sections as geoMapSections } from '../../kinds/GeoMapPanel/sections';
+import { sections as heatmapSections } from '../../kinds/HeatmapPanel/sections';
 import { sections as listSections } from '../../kinds/ListPanel/sections';
 import { sections as timeSeriesSections } from '../../kinds/TimeSeriesPanel/sections';
 import {
@@ -841,6 +843,79 @@ describe('buildPluginSpec', () => {
 
 		it('returns an empty spec for List (only switchPanelKind, nothing to seed)', () => {
 			expect(buildPluginSpec(listSections)).toStrictEqual({});
+		});
+	});
+
+	describe('geo map', () => {
+		it('seeds the ramp only, so every other field reads as derived', () => {
+			expect(buildPluginSpec(geoMapSections)).toStrictEqual({
+				visualization: { timePreference: 'global_time' },
+				chartAppearance: {
+					colors: { mode: 'palette', palette: 'lava', scale: 'log' },
+				},
+				legend: { position: 'bottom' },
+			});
+		});
+
+		it('keeps the ramp across a heatmap switch but not the fields the other kind lacks', () => {
+			const fromHeatmap = oldSpecWith({
+				chartAppearance: {
+					colors: {
+						mode: 'opacity',
+						palette: 'ice',
+						scale: 'sqrt',
+						steps: 16,
+						minCount: 1,
+						fill: '#fff',
+					},
+				},
+			});
+			expect(
+				buildPluginSpec(geoMapSections, { oldSpec: fromHeatmap }).chartAppearance,
+			).toStrictEqual({
+				colors: {
+					mode: 'opacity',
+					fill: '#fff',
+					palette: 'ice',
+					scale: 'sqrt',
+					steps: 16,
+				},
+			});
+
+			const fromGeoMap = oldSpecWith({
+				chartAppearance: {
+					colors: { palette: 'ice', scale: 'linear', min: 0, max: 10 },
+					bubbles: { minRadius: 2 },
+					labels: false,
+				},
+			});
+			expect(
+				buildPluginSpec(heatmapSections, { oldSpec: fromGeoMap }).chartAppearance,
+			).toStrictEqual({
+				colors: { palette: 'ice', scale: 'linear', mode: 'palette' },
+			});
+		});
+
+		it('carries comparison thresholds without their format', () => {
+			const fromNumber = oldSpecWith({
+				thresholds: [
+					{ value: 5, color: 'Red', operator: 'below', format: 'background' },
+				],
+			});
+
+			expect(
+				buildPluginSpec(geoMapSections, { oldSpec: fromNumber }).thresholds,
+			).toStrictEqual([{ value: 5, color: 'Red', operator: 'below' }]);
+		});
+
+		it('shares column units with Table', () => {
+			const fromTable = oldSpecWith({
+				formatting: { columnUnits: { A: 'percent' }, decimalPrecision: '2' },
+			});
+
+			expect(
+				buildPluginSpec(geoMapSections, { oldSpec: fromTable }).formatting,
+			).toStrictEqual({ columnUnits: { A: 'percent' }, decimalPrecision: '2' });
 		});
 	});
 });

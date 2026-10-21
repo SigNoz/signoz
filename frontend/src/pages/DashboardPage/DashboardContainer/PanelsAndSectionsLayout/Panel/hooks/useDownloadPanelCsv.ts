@@ -16,7 +16,7 @@ interface UseDownloadPanelCsvArgs {
 	data: PanelQueryData;
 	/**
 	 * Whether the kind's definition declares CSV as a downloadable format
-	 * (`actions.download.csv`). Only Table, Scatter Plot and Top List carry tabular
+	 * (`actions.download.csv`). Only Table, Scatter Plot, Top List and Geo Map carry tabular
 	 * data, so this is the same gate the menu uses — kept here so the callback stays a
 	 * no-op when invoked for a kind that can't produce CSV.
 	 */
@@ -42,7 +42,9 @@ export function useDownloadPanelCsv({
 			panel.spec.plugin.kind === 'signoz/TopListPanel'
 				? getTopListCsvRows(panel as PanelOfKind<'signoz/TopListPanel'>, data)
 				: getTableCsvRows(
-						panel as PanelOfKind<'signoz/TablePanel' | 'signoz/ScatterPlotPanel'>,
+						panel as PanelOfKind<
+							'signoz/TablePanel' | 'signoz/ScatterPlotPanel' | 'signoz/GeoMapPanel'
+						>,
 						data,
 					);
 		if (rows.length === 0) {

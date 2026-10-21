@@ -13,6 +13,8 @@ import { resolveSignal } from 'pages/DashboardPage/DashboardContainer/Panels/uti
 import type { EQueryType } from 'types/common/dashboard';
 
 import type { LegendSeries } from 'pages/DashboardPage/DashboardContainer/Panels/utils/legendSeries';
+import type { GeoMapPlacement } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/GeoMapPanel/types';
+
 import type { TableColumnOption } from '../hooks/useTableColumns';
 import ConfigActions from './ConfigActions/ConfigActions';
 import PanelTitleInput from './PanelTitleInput/PanelTitleInput';
@@ -52,6 +54,7 @@ interface ConfigPaneProps {
 	panelId: string;
 	/** Unit the selected metric was sent with; drives the unit selector's mismatch warning. */
 	metricUnit?: string;
+	geoMapPlacement?: GeoMapPlacement;
 }
 
 /**
@@ -74,6 +77,7 @@ function ConfigPane({
 	panel,
 	panelId,
 	metricUnit,
+	geoMapPlacement,
 }: ConfigPaneProps): JSX.Element {
 	const panelKind = spec.plugin.kind;
 	const definition = getPanelDefinition(panelKind);
@@ -172,6 +176,7 @@ function ConfigPane({
 									queryType={queryType}
 									stepInterval={stepInterval}
 									metricUnit={metricUnit}
+									geoMapPlacement={geoMapPlacement}
 								/>
 							))}
 						</div>

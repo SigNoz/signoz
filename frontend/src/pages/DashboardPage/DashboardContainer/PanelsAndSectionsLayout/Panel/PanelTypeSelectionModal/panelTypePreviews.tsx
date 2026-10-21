@@ -1,4 +1,5 @@
 import type { PanelKind } from '../../../Panels/types/panelKind';
+import { WORLD_DOTS } from './geoMapPreviewDots';
 import PreviewBars from './PreviewBars';
 import PreviewRows, { type PreviewCell } from './PreviewRows';
 
@@ -113,6 +114,19 @@ export const PANEL_TYPE_PREVIEWS: Record<PanelKind, JSX.Element> = {
 						style={BAR_FILL}
 					/>
 				</g>
+			))}
+		</svg>
+	),
+	'signoz/GeoMapPanel': (
+		<svg viewBox="0 0 36 14" className={styles.svg}>
+			{WORLD_DOTS.map(([cx, cy, intensity]) => (
+				<circle
+					key={`${cx}-${cy}`}
+					cx={cx}
+					cy={cy}
+					r={0.36}
+					style={{ fill: 'var(--bg-robin-500)', fillOpacity: intensity }}
+				/>
 			))}
 		</svg>
 	),
