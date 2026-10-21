@@ -1,6 +1,6 @@
 import { ApiRoutingPolicy } from 'api/routingPolicies/getRoutingPolicies';
 import { IAppContext, IUser } from 'providers/App/types';
-import { Channels } from 'types/api/channels/getAll';
+import { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
 
 import { RoutingPolicy, UseRoutingPoliciesReturn } from '../types';
 
@@ -28,21 +28,13 @@ export const MOCK_ROUTING_POLICY_2: RoutingPolicy = {
 	updatedBy: 'user2@signoz.io',
 };
 
-export const MOCK_CHANNEL_1: Channels = {
+export const MOCK_CHANNEL_1: ChannelOption = {
 	name: 'Channel 1',
-	created_at: '2021-01-01',
-	data: 'data 1',
 	id: '1',
-	type: 'type 1',
-	updated_at: '2021-01-01',
 };
-export const MOCK_CHANNEL_2: Channels = {
+export const MOCK_CHANNEL_2: ChannelOption = {
 	name: 'Channel 2',
-	created_at: '2021-01-02',
-	data: 'data 2',
 	id: '2',
-	type: 'type 2',
-	updated_at: '2021-01-02',
 };
 
 export function getUseRoutingPoliciesMockData(

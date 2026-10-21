@@ -10,6 +10,9 @@ test.describe('Notification channels — edit', () => {
 	// channel id out of the old pathname, so every save PUT went to an empty id
 	// and no edit ever persisted. Nothing in the suite navigated into the edit
 	// page, so the whole class of "edits silently do nothing" was invisible.
+	//
+	// The screen now reads and writes through /api/v2/notification_channels; the
+	// seed helper still posts the v1 shape, which the same store backs.
 	test('TC-01 an edited recipient persists after reload', async ({
 		authedPage: page,
 	}) => {
@@ -29,7 +32,8 @@ test.describe('Notification channels — edit', () => {
 			await Promise.all([
 				page.waitForResponse(
 					(r) =>
-						r.url().includes('/api/v1/channels') && r.request().method() === 'PUT',
+						r.url().includes('/api/v2/notification_channels') &&
+						r.request().method() === 'PUT',
 				),
 				page.getByTestId('save-channel-button').click(),
 			]);
