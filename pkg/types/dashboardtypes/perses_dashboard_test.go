@@ -2287,6 +2287,145 @@ func TestTopListPanelSpec(t *testing.T) {
 	})
 }
 
+func geoMapDashboard(spec, queryPlugin string) []byte {
+	return []byte(`{
+		"variables": [],
+		"panels": {
+			"p1": {
+				"kind": "Panel",
+				"spec": {
+					"links": [],
+					"plugin": {"kind": "signoz/GeoMapPanel", "spec": ` + spec + `},
+					"queries": [{"kind": "scalar", "spec": {"plugin": ` + queryPlugin + `}}]
+				}
+			}
+		},
+		"links": [],
+		"layouts": []
+	}`)
+}
+
+const geoMapClickHouseQuery = `{"kind": "signoz/ClickHouseSQL", "spec": {"name": "A", "query": "SELECT 1"}}`
+
+func TestGeoMapPanelSpec(t *testing.T) {
+	data := geoMapDashboard(`{
+		"formatting": {"columnUnits": {"A": "percent"}, "decimalPrecision": "2"},
+		"location": {"mode": "subdivision", "country": "geo.country.iso_code", "countryFormat": "alpha2", "region": "geo.region.iso_code"},
+		"map": {"layer": "bubbles", "view": "country", "viewCountry": "FR", "projection": "equal_earth", "colorBy": "A", "sizeBy": "A"},
+		"chartAppearance": {
+			"colors": {"mode": "opacity", "fill": "#4E74F8", "palette": "ice", "scale": "linear", "steps": 16, "min": 0, "max": 10},
+			"bubbles": {"minRadius": 2, "maxRadius": 30},
+			"labels": false
+		},
+		"legend": {"position": "right"},
+		"thresholds": [{"value": 5, "operator": "above", "unit": "percent", "color": "#F24769"}]
+	}`, geoMapClickHouseQuery)
+	d, err := unmarshalDashboard(data)
+	require.NoError(t, err, "unmarshal and validate failed")
+
+	require.IsType(t, &GeoMapPanelSpec{}, d.Panels["p1"].Spec.Plugin.Spec)
+	spec := d.Panels["p1"].Spec.Plugin.Spec.(*GeoMapPanelSpec)
+	assert.Equal(t, "subdivision", spec.Location.Mode.ValueOrDefault())
+	assert.Equal(t, "country", spec.Map.View.ValueOrDefault())
+	assert.Equal(t, "FR", spec.Map.ViewCountry)
+	assert.Equal(t, "equal_earth", spec.Map.Projection.ValueOrDefault())
+	require.NotNil(t, spec.ChartAppearance.Labels)
+	assert.False(t, *spec.ChartAppearance.Labels)
+	require.Len(t, spec.Thresholds, 1)
+
+	output, err := json.Marshal(d)
+	require.NoError(t, err, "marshal dashboard failed")
+	roundTripped, err := unmarshalDashboard(output)
+	require.NoError(t, err, "round trip failed")
+	roundTrippedSpec := roundTripped.Panels["p1"].Spec.Plugin.Spec.(*GeoMapPanelSpec)
+	assert.Equal(t, spec.Formatting, roundTrippedSpec.Formatting)
+	assert.Equal(t, spec.Location, roundTrippedSpec.Location)
+	assert.Equal(t, spec.Map, roundTrippedSpec.Map)
+	assert.Equal(t, spec.ChartAppearance, roundTrippedSpec.ChartAppearance)
+	assert.Equal(t, spec.Thresholds, roundTrippedSpec.Thresholds)
+
+	t.Run("Defaults", func(t *testing.T) {
+		d, err := unmarshalDashboard(geoMapDashboard(`{}`, geoMapClickHouseQuery))
+		require.NoError(t, err)
+		output, err := json.Marshal(d.Panels["p1"].Spec.Plugin.Spec)
+		require.NoError(t, err)
+		for _, field := range []string{`"mode":"palette"`, `"mode":"auto"`, `"countryFormat":"auto"`, `"layer":"regions"`, `"view":"world"`, `"projection":"mercator"`, `"palette":"lava"`, `"scale":"log"`, `"labels":null`} {
+			assert.Contains(t, string(output), field)
+		}
+	})
+
+	invalid := []struct {
+		scenario string
+		spec     string
+	}{
+		{"unknown field", `{"unit": "ms"}`},
+		{"threshold format", `{"thresholds": [{"value": 5, "color": "Red", "format": "background"}]}`},
+		{"unknown layer", `{"map": {"layer": "heat"}}`},
+		{"unknown view", `{"map": {"view": "emea"}}`},
+		{"unknown projection", `{"map": {"projection": "robinson"}}`},
+		{"country view without a country", `{"map": {"view": "country"}}`},
+		{"lowercase view country", `{"map": {"view": "country", "viewCountry": "fr"}}`},
+		{"unknown location mode", `{"location": {"mode": "geohash"}}`},
+		{"unknown country format", `{"location": {"countryFormat": "numeric"}}`},
+		{"colour min above max", `{"chartAppearance": {"colors": {"min": 10, "max": 1}}}`},
+		{"unknown color mode", `{"chartAppearance": {"colors": {"mode": "gradient"}}}`},
+		{"too few steps", `{"chartAppearance": {"colors": {"steps": 1}}}`},
+		{"radius out of range", `{"chartAppearance": {"bubbles": {"maxRadius": 65}}}`},
+		{"min radius above max", `{"chartAppearance": {"bubbles": {"minRadius": 20, "maxRadius": 10}}}`},
+	}
+	for _, test := range invalid {
+		t.Run("Rejects "+test.scenario, func(t *testing.T) {
+			_, err := unmarshalDashboard(geoMapDashboard(test.spec, geoMapClickHouseQuery))
+			assert.Error(t, err)
+		})
+	}
+}
+
+func TestGeoMapPanelBindsToQuery(t *testing.T) {
+	builderQuery := `{"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "groupBy": [{"name": "geo.country.iso_code"}]}}`
+	tests := []struct {
+		scenario               string
+		queryPlugin            string
+		spec                   string
+		expectedErrorSubstring string
+	}{
+		{
+			scenario:    "location and value columns of the query",
+			queryPlugin: builderQuery,
+			spec:        `{"location": {"mode": "country", "country": "geo.country.iso_code"}, "map": {"colorBy": "A", "sizeBy": "A"}}`,
+		},
+		{
+			scenario:               "a location key the query does not group by",
+			queryPlugin:            builderQuery,
+			spec:                   `{"location": {"mode": "coordinates", "lat": "geo.location.lat"}}`,
+			expectedErrorSubstring: "location.lat: \"geo.location.lat\" is not a group-by key of the panel's query; group-by keys: `geo.country.iso_code`",
+		},
+		{
+			scenario:               "a value column the query does not have",
+			queryPlugin:            builderQuery,
+			spec:                   `{"map": {"sizeBy": "B"}}`,
+			expectedErrorSubstring: "map.sizeBy: \"B\" is not a value column of the panel's query; value columns: `A`",
+		},
+		{
+			scenario:    "clickhouse columns are only known at run time, so the bindings go unchecked",
+			queryPlugin: geoMapClickHouseQuery,
+			spec:        `{"location": {"country": "country"}, "map": {"colorBy": "errors"}}`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.scenario, func(t *testing.T) {
+			_, err := unmarshalDashboard(geoMapDashboard(test.spec, test.queryPlugin))
+			if test.expectedErrorSubstring == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), test.expectedErrorSubstring, "unexpected error message: %s", err.Error())
+		})
+	}
+}
+
 // TestPersesFixtureStorageRoundTrip exercises the typed → map[string]any →
 // typed cycle that the create/get path performs against the kitchen-sink
 // fixture. Catches plugin specs whose UnmarshalJSON expects a different shape
@@ -2608,7 +2747,7 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 		switch panelKind {
 		case "signoz/ListPanel":
 			return "raw"
-		case "signoz/TablePanel", "signoz/NumberPanel", "signoz/PieChartPanel", "signoz/HistogramPanel", "signoz/ScatterPlotPanel", "signoz/TopListPanel":
+		case "signoz/TablePanel", "signoz/NumberPanel", "signoz/PieChartPanel", "signoz/HistogramPanel", "signoz/ScatterPlotPanel", "signoz/TopListPanel", "signoz/GeoMapPanel":
 			return "scalar"
 		default:
 			return "time_series"
@@ -2672,6 +2811,12 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 		{"TopList+Composite(clickhouse)", mkComposite("signoz/TopListPanel", "clickhouse_sql", `{"name":"A","query":"SELECT 1"}`), false},
 		{"TopList+Composite(formula)", mkComposite("signoz/TopListPanel", "builder_formula", `{"name":"F1","expression":"A+B"}`), false},
 		{"TopList+Composite(promql)", mkComposite("signoz/TopListPanel", "promql", `{"name":"A","query":"up"}`), true},
+		{"GeoMap+ClickHouse", mkQuery("signoz/GeoMapPanel", "signoz/ClickHouseSQL", `{"name":"A","query":"SELECT 1"}`), false},
+		{"GeoMap+PromQL", mkQuery("signoz/GeoMapPanel", "signoz/PromQLQuery", `{"name":"A","query":"up"}`), true},
+		{"GeoMap+Formula", mkQuery("signoz/GeoMapPanel", "signoz/Formula", `{"name":"F1","expression":"A+B"}`), false},
+		{"GeoMap+TraceOperator", mkQuery("signoz/GeoMapPanel", "signoz/TraceOperator", `{"name":"T1","expression":"A => B"}`), false},
+		{"GeoMap+Composite(formula)", mkComposite("signoz/GeoMapPanel", "builder_formula", `{"name":"F1","expression":"A+B"}`), false},
+		{"GeoMap+Composite(promql)", mkComposite("signoz/GeoMapPanel", "promql", `{"name":"A","query":"up"}`), true},
 	}
 
 	for _, tc := range cases {
