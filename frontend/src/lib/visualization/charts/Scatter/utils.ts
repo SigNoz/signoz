@@ -95,9 +95,8 @@ export function prepareScatterChartData(
 ): uPlot.AlignedData {
 	const data: ScatterChartData = [
 		null,
-		...series.map(
-			(entry): ScatterSeriesData =>
-				entry.sizes ? [entry.xs, entry.ys, entry.sizes] : [entry.xs, entry.ys],
+		...series.map((entry): ScatterSeriesData =>
+			entry.sizes ? [entry.xs, entry.ys, entry.sizes] : [entry.xs, entry.ys],
 		),
 	];
 	return data as unknown as uPlot.AlignedData;
