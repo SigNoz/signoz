@@ -33,7 +33,7 @@ const (
 )
 
 type TelemetryFieldKey struct {
-	Name        string `json:"name" validate:"required" required:"true" description:"The field name, such as service.name or http.response.status_code. Dots are part of the name."`
+	Name        string `json:"name" validate:"required" required:"true" description:"The field name, such as service.name, k8s.pod.name or http.response.status_code. Dots are part of the name, and the names available depend on the signal and the data ingested."`
 	Description string `json:"description,omitempty" description:"Human-readable summary of the field, present only for well-known fields."`
 	Unit        string `json:"unit,omitempty" description:"Unit of the field values, present only for well-known fields."`
 	// signal/fieldContext/fieldDataType always serialize (empty included): the empty

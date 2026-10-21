@@ -4741,7 +4741,7 @@ export interface Querybuildertypesv5GroupByKeyDTO {
 	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
 	/**
 	 * @type string
-	 * @description The field name, such as service.name or http.response.status_code. Dots are part of the name.
+	 * @description The field name, such as service.name, k8s.pod.name or http.response.status_code. Dots are part of the name, and the names available depend on the signal and the data ingested.
 	 */
 	name: string;
 	/**
@@ -4793,7 +4793,7 @@ export interface Querybuildertypesv5OrderByKeyDTO {
 	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
 	/**
 	 * @type string
-	 * @description The field name, such as service.name or http.response.status_code. Dots are part of the name.
+	 * @description The field name, such as service.name, k8s.pod.name or http.response.status_code. Dots are part of the name, and the names available depend on the signal and the data ingested.
 	 */
 	name: string;
 	/**
@@ -4858,7 +4858,7 @@ export interface TelemetrytypesTelemetryFieldKeyDTO {
 	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
 	/**
 	 * @type string
-	 * @description The field name, such as service.name or http.response.status_code. Dots are part of the name.
+	 * @description The field name, such as service.name, k8s.pod.name or http.response.status_code. Dots are part of the name, and the names available depend on the signal and the data ingested.
 	 */
 	name: string;
 	/**
@@ -10173,7 +10173,7 @@ export interface Querybuildertypesv5ColumnDescriptorDTO {
 	meta?: Querybuildertypesv5ColumnDescriptorDTOMeta;
 	/**
 	 * @type string
-	 * @description The field name, such as service.name or http.response.status_code. Dots are part of the name.
+	 * @description The field name, such as service.name, k8s.pod.name or http.response.status_code. Dots are part of the name, and the names available depend on the signal and the data ingested.
 	 */
 	name: string;
 	/**
