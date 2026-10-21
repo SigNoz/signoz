@@ -18,6 +18,7 @@ import useGetTraceV4 from 'hooks/trace/useGetTraceV4';
 import { useTraceDetailsStripInfo } from '../useTraceDetailsStripInfo';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 import { ResizableBox } from 'periscope/components/ResizableBox';
 import { SpanV3, TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
 
@@ -82,9 +83,10 @@ function TraceDetailsOverview(): JSX.Element {
 	const userPrefsReady = useTraceStore((s) => s.userPreferences !== null);
 
 	const handleSpanDetailsClose = useCallback((): void => {
-		urlQuery.delete('spanId');
-		safeNavigate({ search: urlQuery.toString() }, { replace: true });
-	}, [urlQuery, safeNavigate]);
+		const params = getUnstableCurrentSearchParams();
+		params.delete('spanId');
+		safeNavigate({ search: params.toString() }, { replace: true });
+	}, [safeNavigate]);
 
 	const handleFilteredSpansChange = useCallback(
 		(spanIds: string[], isActive: boolean): void => {
