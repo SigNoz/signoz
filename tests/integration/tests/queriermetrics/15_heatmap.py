@@ -301,6 +301,7 @@ def test_linear_buckets(
         [0, 0, 0, 0, 1],
     ]
 
+
 @pytest.mark.parametrize(
     "bucket_options, expected_buckets, expected_columns",
     [
@@ -841,6 +842,7 @@ def test_metric_with_no_data(
     assert get_heatmap_buckets(data, "A") == []
     assert get_heatmap_columns(data, "A") == []
     assert any(missing_metric in warning["message"] for warning in get_all_warnings(data))
+
 
 @pytest.mark.parametrize(
     "bucket_options, expected_buckets",
