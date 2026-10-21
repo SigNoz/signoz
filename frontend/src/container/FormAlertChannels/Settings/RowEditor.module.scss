@@ -1,0 +1,37 @@
+.row {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	margin-bottom: var(--spacing-2);
+}
+
+.field {
+	flex: 1 1 0;
+	min-width: 0;
+	max-width: 300px;
+}
+
+.row > :not(.field) {
+	flex: 0 0 auto;
+}
+
+.heading {
+	font-size: 11px;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--muted-foreground);
+}
+
+.add {
+	margin-top: var(--spacing-1);
+}
+
+@media (max-width: 720px) {
+	.row {
+		flex-wrap: wrap;
+	}
+
+	.field {
+		max-width: none;
+	}
+}
