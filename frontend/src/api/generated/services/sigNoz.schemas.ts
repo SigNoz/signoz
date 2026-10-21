@@ -12587,7 +12587,7 @@ export interface TelemetrytypesTelemetryFieldValuesDTO {
 	numberValues?: number[];
 	/**
 	 * @type array
-	 * @description Values of the field seen on data that also matches existingQuery. Empty when existingQuery is not set.
+	 * @description Values of the field seen on data that also matches existingQuery, within the startUnixMilli and endUnixMilli bounds. Empty when existingQuery is not set.
 	 */
 	relatedValues?: string[];
 	/**
@@ -13274,13 +13274,13 @@ export type GetFieldsKeysParams = {
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description Start of the lookup window in Unix milliseconds. Key lookups ignore it. Trace and log value lookups keep values seen from the start's calendar day on; metric value lookups keep attributes last reported at or after it. Omit for no lower bound.
+	 * @description Start of the lookup window in Unix milliseconds, rounded down to a 6 hour boundary before use. Key lookups and meter lookups ignore it. Trace and log value lookups keep values from the rounded start's calendar day on, metric attribute values keep attributes last reported at or after it, and relatedValues keep rows at or after it. Omit for no lower bound.
 	 */
 	startUnixMilli?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description End of the lookup window in Unix milliseconds. Key lookups and trace and log value lookups ignore it; metric value lookups keep attributes first reported at or before it. Omit for no upper bound.
+	 * @description End of the lookup window in Unix milliseconds. Key lookups, trace and log value lookups and meter lookups ignore it. Metric attribute values keep attributes first reported at or before it, and relatedValues keep rows at or before it. Omit for no upper bound.
 	 */
 	endUnixMilli?: number;
 	/**
@@ -13303,7 +13303,7 @@ export type GetFieldsKeysParams = {
 	metricNamespace?: string;
 	/**
 	 * @type string
-	 * @description Case-insensitive substring to match: against key names for keys, against the values of name for values. For keys, a context prefix such as resource.service.name sets fieldContext when it is empty.
+	 * @description Substring to match: against key names for keys, against the values of name for values. Case-insensitive for traces, logs and metrics; the meter source matches case-sensitively and treats % and _ as LIKE wildcards. For keys, a context prefix such as resource.service.name sets fieldContext when it is empty.
 	 */
 	searchText?: string;
 };
@@ -13333,13 +13333,13 @@ export type GetFieldsValuesParams = {
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description Start of the lookup window in Unix milliseconds. Key lookups ignore it. Trace and log value lookups keep values seen from the start's calendar day on; metric value lookups keep attributes last reported at or after it. Omit for no lower bound.
+	 * @description Start of the lookup window in Unix milliseconds, rounded down to a 6 hour boundary before use. Key lookups and meter lookups ignore it. Trace and log value lookups keep values from the rounded start's calendar day on, metric attribute values keep attributes last reported at or after it, and relatedValues keep rows at or after it. Omit for no lower bound.
 	 */
 	startUnixMilli?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description End of the lookup window in Unix milliseconds. Key lookups and trace and log value lookups ignore it; metric value lookups keep attributes first reported at or before it. Omit for no upper bound.
+	 * @description End of the lookup window in Unix milliseconds. Key lookups, trace and log value lookups and meter lookups ignore it. Metric attribute values keep attributes first reported at or before it, and relatedValues keep rows at or before it. Omit for no upper bound.
 	 */
 	endUnixMilli?: number;
 	/**
@@ -13362,7 +13362,7 @@ export type GetFieldsValuesParams = {
 	metricNamespace?: string;
 	/**
 	 * @type string
-	 * @description Case-insensitive substring to match: against key names for keys, against the values of name for values. For keys, a context prefix such as resource.service.name sets fieldContext when it is empty.
+	 * @description Substring to match: against key names for keys, against the values of name for values. Case-insensitive for traces, logs and metrics; the meter source matches case-sensitively and treats % and _ as LIKE wildcards. For keys, a context prefix such as resource.service.name sets fieldContext when it is empty.
 	 */
 	searchText?: string;
 	/**
@@ -14876,13 +14876,13 @@ export type GetRuleHistoryFilterKeysParams = {
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description Start of the lookup window in Unix milliseconds. Key lookups ignore it. Trace and log value lookups keep values seen from the start's calendar day on; metric value lookups keep attributes last reported at or after it. Omit for no lower bound.
+	 * @description Start of the lookup window in Unix milliseconds, rounded down to a 6 hour boundary before use. Key lookups and meter lookups ignore it. Trace and log value lookups keep values from the rounded start's calendar day on, metric attribute values keep attributes last reported at or after it, and relatedValues keep rows at or after it. Omit for no lower bound.
 	 */
 	startUnixMilli?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description End of the lookup window in Unix milliseconds. Key lookups and trace and log value lookups ignore it; metric value lookups keep attributes first reported at or before it. Omit for no upper bound.
+	 * @description End of the lookup window in Unix milliseconds. Key lookups, trace and log value lookups and meter lookups ignore it. Metric attribute values keep attributes first reported at or before it, and relatedValues keep rows at or before it. Omit for no upper bound.
 	 */
 	endUnixMilli?: number;
 	/**
@@ -14905,7 +14905,7 @@ export type GetRuleHistoryFilterKeysParams = {
 	metricNamespace?: string;
 	/**
 	 * @type string
-	 * @description Case-insensitive substring to match: against key names for keys, against the values of name for values. For keys, a context prefix such as resource.service.name sets fieldContext when it is empty.
+	 * @description Substring to match: against key names for keys, against the values of name for values. Case-insensitive for traces, logs and metrics; the meter source matches case-sensitively and treats % and _ as LIKE wildcards. For keys, a context prefix such as resource.service.name sets fieldContext when it is empty.
 	 */
 	searchText?: string;
 };
@@ -14938,13 +14938,13 @@ export type GetRuleHistoryFilterValuesParams = {
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description Start of the lookup window in Unix milliseconds. Key lookups ignore it. Trace and log value lookups keep values seen from the start's calendar day on; metric value lookups keep attributes last reported at or after it. Omit for no lower bound.
+	 * @description Start of the lookup window in Unix milliseconds, rounded down to a 6 hour boundary before use. Key lookups and meter lookups ignore it. Trace and log value lookups keep values from the rounded start's calendar day on, metric attribute values keep attributes last reported at or after it, and relatedValues keep rows at or after it. Omit for no lower bound.
 	 */
 	startUnixMilli?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description End of the lookup window in Unix milliseconds. Key lookups and trace and log value lookups ignore it; metric value lookups keep attributes first reported at or before it. Omit for no upper bound.
+	 * @description End of the lookup window in Unix milliseconds. Key lookups, trace and log value lookups and meter lookups ignore it. Metric attribute values keep attributes first reported at or before it, and relatedValues keep rows at or before it. Omit for no upper bound.
 	 */
 	endUnixMilli?: number;
 	/**
@@ -14967,7 +14967,7 @@ export type GetRuleHistoryFilterValuesParams = {
 	metricNamespace?: string;
 	/**
 	 * @type string
-	 * @description Case-insensitive substring to match: against key names for keys, against the values of name for values. For keys, a context prefix such as resource.service.name sets fieldContext when it is empty.
+	 * @description Substring to match: against key names for keys, against the values of name for values. Case-insensitive for traces, logs and metrics; the meter source matches case-sensitively and treats % and _ as LIKE wildcards. For keys, a context prefix such as resource.service.name sets fieldContext when it is empty.
 	 */
 	searchText?: string;
 	/**
