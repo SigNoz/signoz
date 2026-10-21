@@ -241,15 +241,15 @@ type MetricContext struct {
 }
 
 type FieldKeySelector struct {
-	StartUnixMilli    int64                  `json:"startUnixMilli" description:"Start of the lookup window in Unix milliseconds, rounded down to a 6 hour boundary. Zero means no lower bound."`
-	EndUnixMilli      int64                  `json:"endUnixMilli" description:"End of the lookup window in Unix milliseconds. Zero means no upper bound."`
+	StartUnixMilli    int64                  `json:"startUnixMilli" description:"Start of the lookup window in Unix milliseconds. Key lookups ignore it. Trace and log value lookups keep rows from the start's calendar day on; metric value lookups keep attributes last reported at or after it. Zero means no lower bound."`
+	EndUnixMilli      int64                  `json:"endUnixMilli" description:"End of the lookup window in Unix milliseconds. Key lookups and trace and log value lookups ignore it; metric value lookups keep attributes first reported at or before it. Zero means no upper bound."`
 	Signal            Signal                 `json:"signal" description:"The signal to look up keys in: traces, logs or metrics. Empty means every signal."`
 	Source            Source                 `json:"source" description:"The data source within the signal. Use meter for Cost Meter metrics; empty means the default source."`
-	FieldContext      FieldContext           `json:"fieldContext" description:"Restricts keys to one context such as resource or attribute. Empty means any context."`
-	FieldDataType     FieldDataType          `json:"fieldDataType" description:"Restricts keys to one data type such as string or float64. Empty means any type."`
+	FieldContext      FieldContext           `json:"fieldContext" description:"Restricts keys to one context such as resource or attribute. Applied to trace and log keys; metric attribute keys ignore it. Empty means any context."`
+	FieldDataType     FieldDataType          `json:"fieldDataType" description:"Restricts keys to one data type such as string or float64. Applied to trace and log keys; metric attribute keys ignore it. Empty means any type."`
 	Name              string                 `json:"name" description:"Key name to match; empty matches every key. Matched according to selectorMatchType."`
-	SelectorMatchType FieldSelectorMatchType `json:"selectorMatchType" description:"How name is matched: exact (case-insensitive equality) or fuzzy (case-insensitive substring)."`
-	Limit             int                    `json:"limit" description:"Maximum number of keys to return."`
+	SelectorMatchType FieldSelectorMatchType `json:"selectorMatchType" description:"How name is matched: exact (case-sensitive equality in the key tables) or fuzzy (case-insensitive substring). The API always uses fuzzy."`
+	Limit             int                    `json:"limit" description:"Maximum number of keys read from the key tables per signal. Intrinsic and materialized fields are added on top, and an unspecified signal applies the limit to traces, logs and metrics separately."`
 	MetricContext     *MetricContext         `json:"metricContext,omitempty" description:"Scopes the lookup to one metric or metric namespace. Metrics signal only."`
 }
 
@@ -289,11 +289,11 @@ type GettableFieldKeys struct {
 type PostableFieldKeysParams struct {
 	Signal          Signal        `query:"signal" description:"The signal to look up keys in: traces, logs or metrics. Empty searches every signal."`
 	Source          Source        `query:"source" description:"The data source within the signal. Use meter for Cost Meter metrics; empty means the default source."`
-	Limit           int           `query:"limit" description:"Maximum number of results to return. Defaults to 1000 for keys and 50 for values."`
-	StartUnixMilli  int64         `query:"startUnixMilli" description:"Start of the lookup window in Unix milliseconds, rounded down to a 6 hour boundary. Omit for no lower bound."`
-	EndUnixMilli    int64         `query:"endUnixMilli" description:"End of the lookup window in Unix milliseconds. Omit for no upper bound."`
-	FieldContext    FieldContext  `query:"fieldContext" description:"Restricts keys to one context: resource, attribute, scope, span, trace, log, body or metric. Empty means any context."`
-	FieldDataType   FieldDataType `query:"fieldDataType" description:"Restricts keys to one data type: string, bool, int64, float64 or number. Empty means any type."`
+	Limit           int           `query:"limit" description:"Maximum number of results read per signal. Defaults to 1000 for keys and 50 for values. For keys, intrinsic and materialized fields are added on top, and an empty signal applies the limit to traces, logs and metrics separately, so the response can exceed it."`
+	StartUnixMilli  int64         `query:"startUnixMilli" description:"Start of the lookup window in Unix milliseconds. Key lookups ignore it. Trace and log value lookups keep values seen from the start's calendar day on; metric value lookups keep attributes last reported at or after it. Omit for no lower bound."`
+	EndUnixMilli    int64         `query:"endUnixMilli" description:"End of the lookup window in Unix milliseconds. Key lookups and trace and log value lookups ignore it; metric value lookups keep attributes first reported at or before it. Omit for no upper bound."`
+	FieldContext    FieldContext  `query:"fieldContext" description:"Restricts keys to one context: resource, attribute, scope, span, trace, log, body or metric. Applied to trace and log keys; metric attribute keys ignore it. Empty means any context."`
+	FieldDataType   FieldDataType `query:"fieldDataType" description:"Restricts keys to one data type: string, bool, int64, float64 or number. Applied to trace and log keys; metric attribute keys ignore it. Empty means any type."`
 	MetricName      string        `query:"metricName" description:"Restricts keys to those seen on this metric. Metrics signal only."`
 	MetricNamespace string        `query:"metricNamespace" description:"Restricts keys to metrics in this namespace. Metrics signal only."`
 	SearchText      string        `query:"searchText" description:"Case-insensitive substring to match: against key names for keys, against the values of name for values. For keys, a context prefix such as resource.service.name sets fieldContext when it is empty."`
