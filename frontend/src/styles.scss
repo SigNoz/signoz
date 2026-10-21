@@ -11,6 +11,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Geist+Mono&wght@100;200;300;400;500;600;700;800;900&display=swap');
 
+/* A button does not inherit font-family, and the UI kit's Button sets only its
+   size and weight, so without this every button falls back to the browser's own
+   face instead of Inter. */
+button {
+	font-family: inherit;
+}
+
 #root,
 html,
 body {
