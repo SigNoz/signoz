@@ -3,7 +3,7 @@ import { useQueryClient } from 'react-query';
 import { Save } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
-import { Form, Select } from 'antd';
+import { Form } from 'antd';
 import { invalidateListAccounts } from 'api/generated/services/cloudintegration';
 import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
@@ -11,6 +11,7 @@ import { CloudAccount } from 'container/Integrations/types';
 import { useAccountSettingsDrawer } from 'hooks/integration/gcp/useAccountSettingsDrawer';
 
 import RemoveIntegrationAccount from '../../RemoveAccount/RemoveIntegrationAccount';
+import ProjectIdsInput from '../ProjectIdsInput';
 
 import styles from './AccountSettingsDrawer.module.scss';
 
@@ -126,47 +127,45 @@ function AccountSettingsDrawer({
 						</div>
 					)}
 
-					{isAgentAccount ? (
-						<div className={styles.regionSelector}>
-							<div className={styles.regionSelectorTitle}>Projects to monitor</div>
+					<div className={styles.regionSelector}>
+						<div className={styles.regionSelectorTitle}>Projects to monitor</div>
+						{isAgentAccount ? (
 							<div
 								className={styles.regionSelectorDescription}
 								data-testid="gcp-agent-monitored-projects"
 							>
 								{gcpConfig?.project_ids.join(', ')}
 							</div>
-						</div>
-					) : (
-						<div className={styles.regionSelector}>
-							<div className={styles.regionSelectorTitle}>Projects to monitor</div>
-							<div className={styles.regionSelectorDescription}>
-								Update the GCP project IDs that should be monitored.
-							</div>
+						) : (
+							<>
+								<div className={styles.regionSelectorDescription}>
+									Update the GCP project IDs that should be monitored.
+								</div>
 
-							<Form.Item
-								name="projectIds"
-								rules={[
-									{
-										required: true,
-										type: 'array',
-										min: 1,
-										message: 'Please add at least one project ID',
-									},
-								]}
-							>
-								<Select
-									mode="tags"
-									value={projectIds}
-									tokenSeparators={[',']}
-									onChange={(values): void => {
-										setProjectIds(values);
-										form.setFieldValue('projectIds', values);
-									}}
-									data-testid="gcp-edit-project-ids-select"
-								/>
-							</Form.Item>
-						</div>
-					)}
+								<Form.Item
+									name="projectIds"
+									rules={[
+										{
+											required: true,
+											type: 'array',
+											min: 1,
+											message: 'Please add at least one project ID',
+										},
+									]}
+								>
+									<ProjectIdsInput
+										id="gcp-edit-project-ids-select"
+										testId="gcp-edit-project-ids-select"
+										value={projectIds}
+										onChange={(values): void => {
+											setProjectIds(values);
+											form.setFieldValue('projectIds', values);
+										}}
+									/>
+								</Form.Item>
+							</>
+						)}
+					</div>
 				</div>
 			</Form>
 		</DrawerWrapper>

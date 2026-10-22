@@ -1,5 +1,6 @@
 import { ComboboxSimple } from '@signozhq/ui/combobox';
 import { Typography } from '@signozhq/ui/typography';
+import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 import { GCP_REGIONS } from 'container/Integrations/constants';
 import { Control, Controller } from 'react-hook-form';
@@ -9,6 +10,13 @@ import { GcpSetupFormValues } from '../types';
 
 import styles from './Fields.module.scss';
 
+const TOOLTIPS: Record<CloudintegrationtypesGCPConnectionMethodDTO, string> = {
+	[CloudintegrationtypesGCPConnectionMethodDTO.manual]:
+		'The GCP region where your OTel Collector will be deployed',
+	[CloudintegrationtypesGCPConnectionMethodDTO.agent]:
+		'The GCP region where the agent resources are deployed',
+};
+
 const REGION_ITEMS = GCP_REGIONS.map((region) => ({
 	value: region.value,
 	label: `${region.label} (${region.value})`,
@@ -16,19 +24,19 @@ const REGION_ITEMS = GCP_REGIONS.map((region) => ({
 
 interface DeploymentRegionFieldProps {
 	control: Control<GcpSetupFormValues>;
-	tooltip: string;
+	connectionMethod: CloudintegrationtypesGCPConnectionMethodDTO;
 }
 
 function DeploymentRegionField({
 	control,
-	tooltip,
+	connectionMethod,
 }: DeploymentRegionFieldProps): JSX.Element {
 	return (
 		<div className={styles.drawerSection}>
 			<FieldLabel
 				htmlFor="gcp-deployment-region-select"
 				label="Deployment Region"
-				tooltip={tooltip}
+				tooltip={TOOLTIPS[connectionMethod]}
 				required
 			/>
 			<Controller

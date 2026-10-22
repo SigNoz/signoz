@@ -3,8 +3,8 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { rest, server } from 'mocks-server/server';
 import { RestRequest } from 'msw';
 
-import AgentSetup from '../AddNewAccount/AgentSetup/AgentSetup';
-import SetupDrawerLayout from '../AddNewAccount/SetupDrawerLayout';
+import AgentSetup from '../AgentSetup';
+import SetupDrawerLayout from '../../SetupDrawerLayout';
 import {
 	connectionCredentialsResponse,
 	createAgentAccountResponse,
@@ -13,7 +13,7 @@ import {
 	GCP_CHECK_IN_URL,
 	GCP_CREDENTIALS_URL,
 	pendingAgentAccountResponse,
-} from './mockData';
+} from '../../../__tests__/mockData';
 
 export const DEPLOYMENT_PROJECT_ID = 'my-deployment-project-123';
 

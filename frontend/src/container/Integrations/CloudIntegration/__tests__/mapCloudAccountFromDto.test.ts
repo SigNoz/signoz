@@ -5,9 +5,7 @@ import {
 
 import { mapAccountDtoToGcpCloudAccount } from '../mapCloudAccountFromDto';
 
-const gcpAccountDto = (
-	connectionMethod?: CloudintegrationtypesGCPConnectionMethodDTO,
-): CloudintegrationtypesAccountDTO => ({
+const gcpAccountDto: CloudintegrationtypesAccountDTO = {
 	id: 'acc-gcp-1',
 	orgId: 'org-1',
 	provider: 'gcp',
@@ -16,20 +14,17 @@ const gcpAccountDto = (
 	agentReport: { timestampMillis: 1_700_000_000_000, data: {}, syncState: null },
 	config: {
 		gcp: {
-			connectionMethod:
-				connectionMethod as CloudintegrationtypesGCPConnectionMethodDTO,
+			connectionMethod: CloudintegrationtypesGCPConnectionMethodDTO.agent,
 			deploymentProjectId: 'my-project',
 			deploymentRegion: 'us-central1',
 			projectIds: ['my-project'],
 		},
 	},
-});
+};
 
 describe('mapAccountDtoToGcpCloudAccount', () => {
-	it('keeps the connection method of the account', () => {
-		const account = mapAccountDtoToGcpCloudAccount(
-			gcpAccountDto(CloudintegrationtypesGCPConnectionMethodDTO.agent),
-		);
+	it('maps the GCP config, including its connection method', () => {
+		const account = mapAccountDtoToGcpCloudAccount(gcpAccountDto);
 
 		expect(account?.config).toStrictEqual({
 			connection_method: CloudintegrationtypesGCPConnectionMethodDTO.agent,
@@ -39,12 +34,18 @@ describe('mapAccountDtoToGcpCloudAccount', () => {
 		});
 	});
 
-	it('treats an account without a connection method as manual', () => {
-		const account = mapAccountDtoToGcpCloudAccount(gcpAccountDto());
+	it('skips an account that has no GCP config', () => {
+		expect(
+			mapAccountDtoToGcpCloudAccount({ ...gcpAccountDto, config: {} }),
+		).toBeNull();
+	});
 
-		expect(account?.config).toHaveProperty(
-			'connection_method',
-			CloudintegrationtypesGCPConnectionMethodDTO.manual,
-		);
+	it('skips an account the agent has not checked in for yet', () => {
+		expect(
+			mapAccountDtoToGcpCloudAccount({
+				...gcpAccountDto,
+				providerAccountId: null,
+			}),
+		).toBeNull();
 	});
 });

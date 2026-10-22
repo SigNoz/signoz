@@ -7,7 +7,8 @@ const POLL_INTERVAL_MS = 10 * 1000;
 const CONNECTION_TIMEOUT_MS = 10 * 60 * 1000;
 
 interface UseAgentConnectionPollingProps {
-	accountId: string | null;
+	accountId: string;
+	/** Polls exactly while true; the caller decides when there is an account to poll. */
 	enabled: boolean;
 	onConnected: (account: CloudintegrationtypesAccountDTO) => void;
 	onTimeout: () => void;
@@ -29,18 +30,17 @@ export function useAgentConnectionPolling({
 	refetchInterval = POLL_INTERVAL_MS,
 	timeoutMs = CONNECTION_TIMEOUT_MS,
 }: UseAgentConnectionPollingProps): void {
-	const isPolling = enabled && Boolean(accountId);
 	const startTimeRef = useRef<number | null>(null);
 
 	useEffect(() => {
-		startTimeRef.current = isPolling ? Date.now() : null;
-	}, [isPolling]);
+		startTimeRef.current = enabled ? Date.now() : null;
+	}, [enabled]);
 
 	useGetAccount(
-		{ cloudProvider: INTEGRATION_TYPES.GCP, id: accountId ?? '' },
+		{ cloudProvider: INTEGRATION_TYPES.GCP, id: accountId },
 		{
 			query: {
-				enabled: isPolling,
+				enabled,
 				refetchInterval,
 				select: (response): CloudintegrationtypesAccountDTO => response.data,
 				onSuccess: (account) => {

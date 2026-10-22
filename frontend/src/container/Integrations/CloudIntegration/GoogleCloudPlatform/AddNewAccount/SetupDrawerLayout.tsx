@@ -30,7 +30,6 @@ function SetupDrawerLayout({
 			title="Connect Google Cloud Platform"
 			width="extra-wide"
 			footer={<div ref={setFooterSlot} className={styles.footerSlot} />}
-			drawerHeaderProps={{ className: styles.title }}
 			testId="gcp-setup-drawer"
 		>
 			{children(footerSlot)}

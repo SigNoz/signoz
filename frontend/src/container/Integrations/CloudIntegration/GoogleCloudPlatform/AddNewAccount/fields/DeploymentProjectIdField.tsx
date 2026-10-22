@@ -1,5 +1,6 @@
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
+import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 import { Control, Controller } from 'react-hook-form';
 
@@ -8,21 +9,28 @@ import { GcpSetupFormValues } from '../types';
 
 import styles from './Fields.module.scss';
 
+const TOOLTIPS: Record<CloudintegrationtypesGCPConnectionMethodDTO, string> = {
+	[CloudintegrationtypesGCPConnectionMethodDTO.manual]:
+		'The GCP project that hosts your OTel Collector deployment, often separate from the projects you actually monitor',
+	[CloudintegrationtypesGCPConnectionMethodDTO.agent]:
+		'The GCP project where SigNoz deploys the agent. The agent monitors this project.',
+};
+
 interface DeploymentProjectIdFieldProps {
 	control: Control<GcpSetupFormValues>;
-	tooltip: string;
+	connectionMethod: CloudintegrationtypesGCPConnectionMethodDTO;
 }
 
 function DeploymentProjectIdField({
 	control,
-	tooltip,
+	connectionMethod,
 }: DeploymentProjectIdFieldProps): JSX.Element {
 	return (
 		<div className={styles.drawerSection}>
 			<FieldLabel
 				htmlFor="gcp-deployment-project-id-input"
 				label="Deployment Project ID"
-				tooltip={tooltip}
+				tooltip={TOOLTIPS[connectionMethod]}
 				required
 			/>
 			<Controller

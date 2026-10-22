@@ -1,13 +1,11 @@
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
-import { Select } from 'antd';
 import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
-import cx from 'classnames';
 import { useManualAccountSetup } from 'hooks/integration/gcp/useManualAccountSetup';
 import { Controller, useForm } from 'react-hook-form';
-import { popupContainer } from 'utils/selectPopupContainer';
 
+import ProjectIdsInput from '../../ProjectIdsInput';
 import ConnectionSecretsFields from '../ConnectionSecretsFields';
 import FieldLabel from '../FieldLabel';
 import DeploymentProjectIdField from '../fields/DeploymentProjectIdField';
@@ -95,11 +93,11 @@ function ManualSetup({
 			</div>
 			<DeploymentProjectIdField
 				control={control}
-				tooltip="The GCP project that hosts your OTel Collector deployment — often separate from the projects you actually monitor"
+				connectionMethod={CloudintegrationtypesGCPConnectionMethodDTO.manual}
 			/>
 			<DeploymentRegionField
 				control={control}
-				tooltip="The GCP region where your OTel Collector will be deployed"
+				connectionMethod={CloudintegrationtypesGCPConnectionMethodDTO.manual}
 			/>
 			<div className={styles.drawerSection}>
 				<FieldLabel
@@ -117,18 +115,11 @@ function ManualSetup({
 					}}
 					render={({ field, fieldState }): JSX.Element => (
 						<>
-							<Select
+							<ProjectIdsInput
 								id="gcp-project-ids-select"
-								className={cx(styles.fullWidth, styles.projectIdsSelect)}
-								mode="tags"
+								testId="gcp-project-ids-select"
 								value={field.value}
-								onChange={(value): void => field.onChange(value)}
-								placeholder="Add project IDs…"
-								tokenSeparators={[',', ' ']}
-								notFoundContent={null}
-								suffixIcon={null}
-								getPopupContainer={popupContainer}
-								data-testid="gcp-project-ids-select"
+								onChange={field.onChange}
 							/>
 							{fieldState.error && (
 								<Typography.Text

@@ -343,6 +343,17 @@ export const connectAzureAccount = async (
 	);
 };
 
+const addGcpProjectId = async (
+	testId: string,
+	projectId: string,
+): Promise<void> => {
+	await userEvent.click(screen.getByTestId(testId));
+	await userEvent.type(
+		await screen.findByPlaceholderText('Type a project ID and press Enter'),
+		`${projectId}{Enter}`,
+	);
+};
+
 export const connectGcpAccount = async (
 	canvasElement: HTMLElement,
 ): Promise<void> => {
@@ -357,10 +368,7 @@ export const connectGcpAccount = async (
 	);
 	await userEvent.click(screen.getByTestId('gcp-deployment-region-select'));
 	await userEvent.click(await screen.findByText('Mumbai (asia-south1)'));
-	await userEvent.type(
-		document.querySelector<HTMLElement>('#gcp-project-ids-select') as HTMLElement,
-		'project-a,',
-	);
+	await addGcpProjectId('gcp-project-ids-select', 'project-a');
 	await userEvent.click(screen.getByTestId('gcp-connect-account-btn'));
 };
 
@@ -411,6 +419,17 @@ export const updateAwsAccount = async (
 	await userEvent.click(
 		await screen.findByRole('checkbox', { name: /us-east-2/i }),
 	);
+	await userEvent.click(
+		await screen.findByRole('button', { name: /update changes/i }),
+	);
+};
+
+export const updateGcpProjects = async (
+	canvasElement: HTMLElement,
+	projectId: string,
+): Promise<void> => {
+	await openEditAccount(canvasElement);
+	await addGcpProjectId('gcp-edit-project-ids-select', projectId);
 	await userEvent.click(
 		await screen.findByRole('button', { name: /update changes/i }),
 	);

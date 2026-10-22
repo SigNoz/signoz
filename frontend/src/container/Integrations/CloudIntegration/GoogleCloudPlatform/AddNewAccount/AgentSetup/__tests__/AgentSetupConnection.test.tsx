@@ -11,12 +11,12 @@ import {
 	connectedAgentAccountResponse,
 	GCP_AGENT_ACCOUNT_URL,
 	pendingAgentAccountResponse,
-} from './mockData';
+} from '../../../__tests__/mockData';
 
 // `useAgentAccountSetup` imports logEvent by relative path, which the
 // jest.config moduleNameMapper (keyed on the `api/common/logEvent` alias) does
 // not intercept, so mock the resolved module directly.
-jest.mock('../../../../../api/common/logEvent', () => ({
+jest.mock('../../../../../../../api/common/logEvent', () => ({
 	__esModule: true,
 	default: jest.fn(),
 }));

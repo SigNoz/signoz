@@ -35,23 +35,6 @@ describe('useAgentConnectionPolling polling window', () => {
 		expect(onConnected).not.toHaveBeenCalled();
 	});
 
-	it('does not poll without an account id', async () => {
-		const { requestCount } = mockAccountResponses(connectedAccount);
-
-		renderHook(
-			() =>
-				useAgentConnectionPolling({
-					accountId: null,
-					enabled: true,
-					...callbacks,
-				}),
-			{ wrapper: AllTheProviders },
-		);
-
-		await sleep(50);
-		expect(requestCount()).toBe(0);
-	});
-
 	it('reports a timeout once the deadline passes without a check-in', async () => {
 		mockAccountResponses(pendingAccount);
 

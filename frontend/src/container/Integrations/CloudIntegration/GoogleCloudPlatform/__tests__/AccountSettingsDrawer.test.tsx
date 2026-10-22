@@ -12,6 +12,7 @@ import {
 	gcpAccountConfig,
 	listAccountsResponse,
 } from './mockData';
+import { addProjectIds } from './projectIdsTestUtils';
 
 // `useAccountSettingsDrawer` imports logEvent by relative path, which the
 // jest.config moduleNameMapper (keyed on the `api/common/logEvent` alias) does
@@ -48,16 +49,10 @@ const renderDrawer = (): void => {
 	);
 };
 
-/** The antd tags Select renders its text input inside the testId wrapper. */
-const getProjectIdsInput = (): HTMLElement =>
-	within(screen.getByTestId('gcp-edit-project-ids-select')).getByRole(
-		'combobox',
-	);
-
-/** Each selected tag carries an antd "close" icon that removes it. */
-const getProjectIdTagRemoveButtons = (): HTMLElement[] =>
+/** Each selected project ID renders as a pill with its own remove button. */
+const getProjectIdRemoveButtons = (): HTMLElement[] =>
 	within(screen.getByTestId('gcp-edit-project-ids-select')).queryAllByLabelText(
-		'close',
+		/^Remove /,
 	);
 
 describe('GCP AccountSettingsDrawer', () => {
@@ -88,8 +83,9 @@ describe('GCP AccountSettingsDrawer', () => {
 			screen.getByText(gcpAccountConfig.deployment_region),
 		).toBeInTheDocument();
 
+		const projectIdsInput = screen.getByTestId('gcp-edit-project-ids-select');
 		gcpAccountConfig.project_ids.forEach((projectId) => {
-			expect(screen.getByTitle(projectId)).toBeInTheDocument();
+			expect(projectIdsInput).toHaveTextContent(projectId);
 		});
 	});
 
@@ -99,7 +95,7 @@ describe('GCP AccountSettingsDrawer', () => {
 
 		expect(screen.getByTestId('gcp-update-account-btn')).toBeDisabled();
 
-		await user.type(getProjectIdsInput(), 'project-c,');
+		await addProjectIds(user, 'gcp-edit-project-ids-select', ['project-c']);
 
 		await waitFor(() => {
 			expect(screen.getByTestId('gcp-update-account-btn')).toBeEnabled();
@@ -110,7 +106,7 @@ describe('GCP AccountSettingsDrawer', () => {
 		const user = userEvent.setup();
 		renderDrawer();
 
-		await user.type(getProjectIdsInput(), 'project-c,');
+		await addProjectIds(user, 'gcp-edit-project-ids-select', ['project-c']);
 		await waitFor(() => {
 			expect(screen.getByTestId('gcp-update-account-btn')).toBeEnabled();
 		});
@@ -151,9 +147,9 @@ describe('GCP AccountSettingsDrawer', () => {
 		renderDrawer();
 
 		// Strip every tag via its remove icon; the list shrinks as we go.
-		while (getProjectIdTagRemoveButtons().length > 0) {
+		while (getProjectIdRemoveButtons().length > 0) {
 			// eslint-disable-next-line no-await-in-loop
-			await user.click(getProjectIdTagRemoveButtons()[0]);
+			await user.click(getProjectIdRemoveButtons()[0]);
 		}
 
 		await waitFor(() => {
@@ -183,7 +179,7 @@ describe('GCP AccountSettingsDrawer', () => {
 		const user = userEvent.setup();
 		renderDrawer();
 
-		await user.type(getProjectIdsInput(), 'project-c,');
+		await addProjectIds(user, 'gcp-edit-project-ids-select', ['project-c']);
 		await waitFor(() => {
 			expect(screen.getByTestId('gcp-update-account-btn')).toBeEnabled();
 		});

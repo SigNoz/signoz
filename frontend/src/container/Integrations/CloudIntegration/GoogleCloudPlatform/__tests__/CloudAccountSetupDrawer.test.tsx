@@ -14,6 +14,7 @@ import {
 	GCP_CHECK_IN_URL,
 	GCP_CREDENTIALS_URL,
 } from './mockData';
+import { addProjectIds } from './projectIdsTestUtils';
 
 // `useManualAccountSetup` imports logEvent by relative path, which the
 // jest.config moduleNameMapper (keyed on the `api/common/logEvent` alias) does
@@ -129,10 +130,10 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		await user.click(screen.getByTestId('gcp-deployment-region-select'));
 		await user.click(await screen.findByText('Mumbai (asia-south1)'));
 
-		const projectIdsInput = document.querySelector(
-			'#gcp-project-ids-select',
-		) as HTMLInputElement;
-		await user.type(projectIdsInput, 'project-a,project-b,');
+		await addProjectIds(user, 'gcp-project-ids-select', [
+			'project-a',
+			'project-b',
+		]);
 
 		await user.click(screen.getByTestId('gcp-connect-account-btn'));
 
@@ -199,10 +200,7 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		await user.click(screen.getByTestId('gcp-deployment-region-select'));
 		await user.click(await screen.findByText('Mumbai (asia-south1)'));
 
-		const projectIdsInput = document.querySelector(
-			'#gcp-project-ids-select',
-		) as HTMLInputElement;
-		await user.type(projectIdsInput, 'project-a,');
+		await addProjectIds(user, 'gcp-project-ids-select', ['project-a']);
 
 		await user.click(screen.getByTestId('gcp-connect-account-btn'));
 

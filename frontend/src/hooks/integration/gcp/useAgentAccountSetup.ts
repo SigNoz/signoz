@@ -174,8 +174,8 @@ export function useAgentAccountSetup({
 	}, []);
 
 	useAgentConnectionPolling({
-		accountId,
-		enabled: modalState === ModalStateEnum.WAITING,
+		accountId: accountId ?? '',
+		enabled: modalState === ModalStateEnum.WAITING && accountId !== null,
 		onConnected: handleConnected,
 		onTimeout: handleTimeout,
 		onError: handlePollingError,

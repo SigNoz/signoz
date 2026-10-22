@@ -19,6 +19,7 @@ import {
 	openGcpAgentSetup,
 	untilLoaded,
 	updateAwsAccount,
+	updateGcpProjects,
 	updateTaggedAccount,
 } from './CloudIntegration.stories.mocks';
 
@@ -410,7 +411,7 @@ export const AzureAccountSettingsUpdateErrorToast: Story = {
 export const GcpAccountSettingsUpdatedToast: Story = {
 	args: { provider: 'gcp' },
 	play: async ({ canvasElement, args }): Promise<void> => {
-		await updateTaggedAccount(canvasElement, 'extra-project');
+		await updateGcpProjects(canvasElement, 'extra-project');
 		if (args.accountUpdate === 'success') {
 			await expectToast(/account settings updated successfully/i);
 		}
@@ -421,7 +422,7 @@ export const GcpAccountSettingsUpdatedToast: Story = {
 export const GcpAccountSettingsUpdateErrorToast: Story = {
 	args: { provider: 'gcp', accountUpdate: 'error' },
 	play: async ({ canvasElement, args }): Promise<void> => {
-		await updateTaggedAccount(canvasElement, 'extra-project');
+		await updateGcpProjects(canvasElement, 'extra-project');
 		if (args.accountUpdate === 'error') {
 			await expectToast(/failed to update account settings/i);
 		}

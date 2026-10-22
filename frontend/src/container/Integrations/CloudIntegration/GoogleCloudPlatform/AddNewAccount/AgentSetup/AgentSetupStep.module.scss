@@ -54,23 +54,11 @@
 }
 
 .toggle {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: var(--spacing-3);
-	width: 100%;
-	min-height: 24px;
-	padding: 0;
-	color: var(--l1-foreground);
-	text-align: left;
-	cursor: pointer;
-	background: none;
-	border: 0;
-}
+	// Lines the title up with the step's description and command below it.
+	--button-padding: var(--spacing-3) 0;
 
-.chevron {
-	flex-shrink: 0;
-	color: var(--l3-foreground);
+	justify-content: space-between;
+	width: 100%;
 }
 
 .actions {

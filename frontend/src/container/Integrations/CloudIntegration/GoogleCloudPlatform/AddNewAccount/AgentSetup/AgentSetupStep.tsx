@@ -40,23 +40,22 @@ function AgentSetupStep({
 				{!isLastStep && <span className={styles.connector} />}
 			</div>
 			<div className={styles.content}>
-				<button
-					type="button"
+				<Button
+					variant="ghost"
+					color="secondary"
 					className={styles.toggle}
 					onClick={onToggle}
 					aria-expanded={isExpanded}
 					aria-controls={bodyId}
-					data-testid={`${testId}-toggle`}
+					suffix={
+						isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />
+					}
+					testId={`${testId}-toggle`}
 				>
 					<Typography.Text weight="semibold" size="base">
 						{title}
 					</Typography.Text>
-					{isExpanded ? (
-						<ChevronDown size={14} className={styles.chevron} />
-					) : (
-						<ChevronRight size={14} className={styles.chevron} />
-					)}
-				</button>
+				</Button>
 				{isExpanded && (
 					<div id={bodyId} className={styles.body}>
 						<Typography.Text as="p" size="small" color="muted">

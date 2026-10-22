@@ -96,11 +96,11 @@ function AgentSetup({
 				<>
 					<DeploymentProjectIdField
 						control={control}
-						tooltip="The GCP project where SigNoz deploys the agent. The agent monitors this project."
+						connectionMethod={CloudintegrationtypesGCPConnectionMethodDTO.agent}
 					/>
 					<DeploymentRegionField
 						control={control}
-						tooltip="The GCP region where the agent resources are deployed"
+						connectionMethod={CloudintegrationtypesGCPConnectionMethodDTO.agent}
 					/>
 					<ConnectionSecretsFields
 						control={control}

@@ -20,11 +20,13 @@ function ConnectionMethodSelector({
 }: ConnectionMethodSelectorProps): JSX.Element {
 	return (
 		<div className={cx(styles.drawerSection, styles.drawerSurface)}>
-			<div className={styles.drawerSurfaceHead}>
-				<Typography.Text weight="bold" size="base">
-					Connection method
-				</Typography.Text>
-			</div>
+			<Typography.Text
+				weight="bold"
+				size="base"
+				className={styles.drawerSurfaceHead}
+			>
+				Connection method
+			</Typography.Text>
 
 			<RadioGroup
 				value={value}
@@ -39,11 +41,9 @@ function ConnectionMethodSelector({
 					containerClassName={styles.methodRadio}
 					testId="gcp-connection-method-manual"
 				>
-					<div className={styles.methodRadioTitle}>
-						<Typography.Text weight="semibold" size="base">
-							Connect Manually
-						</Typography.Text>
-					</div>
+					<Typography.Text weight="semibold" size="base" display="block">
+						Connect Manually
+					</Typography.Text>
 					<Typography.Text
 						as="p"
 						size="small"
@@ -59,11 +59,9 @@ function ConnectionMethodSelector({
 					containerClassName={styles.methodRadio}
 					testId="gcp-connection-method-agent"
 				>
-					<div className={styles.methodRadioTitle}>
-						<Typography.Text weight="semibold" size="base">
-							Connect via Agent
-						</Typography.Text>
-					</div>
+					<Typography.Text weight="semibold" size="base" display="block">
+						Connect via Agent
+					</Typography.Text>
 					<Typography.Text
 						as="p"
 						size="small"
