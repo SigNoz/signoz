@@ -199,3 +199,43 @@ def test_rule_instance_routes(
     assert updated.status_code == HTTPStatus.OK, updated.text
     deleted = requests.delete(rule_url, headers={"Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}, timeout=10)
     assert deleted.status_code == HTTPStatus.NO_CONTENT, deleted.text
+
+
+def test_single_rule_grant_scopes_instance_routes(
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+    create_role: Callable[..., str],
+    insert_metrics: Callable[[list[Metrics]], None],
+) -> None:
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    insert_metrics([Metrics(metric_name=metric_name, labels={"host.name": f"host-{i}"}, timestamp=datetime.now(tz=UTC) - timedelta(minutes=i + 1), value=0.5, type_="Gauge", is_monotonic=False) for metric_name in ["reduction.granted", "reduction.other"] for i in range(3)])
+    rule_urls = {}
+    for metric_name in ["reduction.granted", "reduction.other"]:
+        created = requests.post(
+            signoz.self.host_configs["8080"].get("/api/v2/metric_reduction_rules"),
+            json={**rule_body, "metricName": metric_name},
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=10,
+        )
+        assert created.status_code == HTTPStatus.CREATED, created.text
+        rule_urls[metric_name] = signoz.self.host_configs["8080"].get(f"/api/v2/metric_reduction_rules/{created.json()['data']['id']}")
+
+    granted_id = rule_urls["reduction.granted"].rsplit("/", maxsplit=1)[1]
+    create_role(
+        admin_token,
+        "metric-reduction-single-rule",
+        [transaction_group("read", "metaresource", "metric-reduction-rule", [granted_id]), transaction_group("update", "metaresource", "metric-reduction-rule", [granted_id]), transaction_group("delete", "metaresource", "metric-reduction-rule", [granted_id])],
+    )
+    single_rule_user = create_active_user(signoz, admin_token, email="metric-reduction-single-rule@telemetry.test", role="signoz-viewer", password=user_password)
+    change_user_role(signoz, admin_token, single_rule_user, "signoz-viewer", "metric-reduction-single-rule")
+    headers = {"Authorization": f"Bearer {get_token('metric-reduction-single-rule@telemetry.test', user_password)}"}
+
+    assert requests.get(rule_urls["reduction.granted"], headers=headers, timeout=10).status_code == HTTPStatus.OK
+    assert requests.get(rule_urls["reduction.other"], headers=headers, timeout=10).status_code == HTTPStatus.FORBIDDEN
+    assert requests.put(rule_urls["reduction.granted"], json={"matchType": "keep", "labels": ["host.name"]}, headers=headers, timeout=10).status_code == HTTPStatus.OK
+    assert requests.put(rule_urls["reduction.other"], json={"matchType": "keep", "labels": ["host.name"]}, headers=headers, timeout=10).status_code == HTTPStatus.FORBIDDEN
+    assert requests.get(signoz.self.host_configs["8080"].get("/api/v2/metric_reduction_rules"), headers=headers, timeout=10).status_code == HTTPStatus.FORBIDDEN
+    assert requests.delete(rule_urls["reduction.other"], headers=headers, timeout=10).status_code == HTTPStatus.FORBIDDEN
+    assert requests.delete(rule_urls["reduction.granted"], headers=headers, timeout=10).status_code == HTTPStatus.NO_CONTENT
+
+    assert requests.delete(rule_urls["reduction.other"], headers={"Authorization": f"Bearer {admin_token}"}, timeout=10).status_code == HTTPStatus.NO_CONTENT
