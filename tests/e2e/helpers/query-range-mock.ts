@@ -16,7 +16,7 @@ import type { Page, Route } from '@playwright/test';
 
 const QUERY_RANGE_GLOB = '**/api/v5/query_range';
 
-type RequestType = 'time_series' | 'scalar' | 'raw' | 'trace';
+type RequestType = 'time_series' | 'scalar' | 'raw' | 'trace' | 'heatmap';
 
 export interface QueryRangeBody {
 	status: string;
@@ -55,6 +55,17 @@ export interface SeriesSpec {
 	points: TimeSeriesPoint[];
 }
 
+export interface HeatmapPoint {
+	timestamp: number;
+	/** One count per bucket bound, plus a trailing open-above overflow. */
+	counts: number[];
+}
+
+export interface HeatmapSeriesSpec {
+	labels: Record<string, string>;
+	points: HeatmapPoint[];
+}
+
 /** Evenly spaced epoch-ms timestamps ending at `endMs`. */
 export function timestamps(
 	count: number,
@@ -90,6 +101,22 @@ export function flat(
 	return timestamps(count, 5, endMs).map((timestamp) => ({
 		timestamp,
 		value,
+	}));
+}
+
+/**
+ * `count` columns of `width` cells, every count non-zero and growing with both
+ * time and bucket, so any hovered cell has a value and the colour domain is known:
+ * 1 … count × width.
+ */
+export function heatmapPoints(
+	count: number,
+	width: number,
+	endMs = defaultEndMs(),
+): HeatmapPoint[] {
+	return timestamps(count, 5, endMs).map((timestamp, i) => ({
+		timestamp,
+		counts: Array.from({ length: width }, (_, j) => (i + 1) * (j + 1)),
 	}));
 }
 
@@ -164,6 +191,39 @@ export const QueryRange = {
 							: new Date(Number(data.timestamp ?? 0)).toISOString(),
 					data,
 				})),
+			},
+		]);
+	},
+
+	/**
+	 * Bucket bounds sit on the aggregation's `meta`; without them the panel
+	 * draws no grid. `series: []` is the heatmap's own no-data body.
+	 */
+	heatmap(
+		buckets: number[],
+		series: HeatmapSeriesSpec[],
+		queryName = 'A',
+	): QueryRangeBody {
+		return envelope('heatmap', [
+			{
+				queryName,
+				aggregations: [
+					{
+						index: 0,
+						alias: '',
+						meta: { buckets },
+						series: series.map((s) => ({
+							labels: Object.entries(s.labels).map(([name, value]) => ({
+								key: { name },
+								value,
+							})),
+							values: s.points.map((p) => ({
+								timestamp: p.timestamp,
+								values: p.counts,
+							})),
+						})),
+					},
+				],
 			},
 		]);
 	},

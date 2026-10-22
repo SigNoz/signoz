@@ -38,11 +38,14 @@ export const PanelMessageText = {
 export const RENDERER_TESTID: Record<PanelKind, string> = {
 	[PanelKind.TimeSeries]: 'time-series-renderer',
 	[PanelKind.BarChart]: 'bar-panel-renderer',
+	[PanelKind.AreaChart]: 'area-chart-renderer',
 	[PanelKind.Histogram]: 'histogram-panel-renderer',
 	[PanelKind.Number]: 'number-panel-renderer',
 	[PanelKind.PieChart]: 'pie-panel-renderer',
 	[PanelKind.Table]: 'table-panel-renderer',
 	[PanelKind.List]: 'list-panel-renderer',
+	[PanelKind.Heatmap]: 'heatmap-panel-renderer',
+	[PanelKind.Text]: 'text-panel',
 };
 
 export interface PanelHandle {

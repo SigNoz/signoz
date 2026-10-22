@@ -346,6 +346,9 @@ export { expect } from './kit';
 export * from '../helpers/dashboard-v2-spec';
 export {
 	flat,
+	type HeatmapPoint,
+	heatmapPoints,
+	type HeatmapSeriesSpec,
 	QueryRange,
 	type QueryRangeBody,
 	ramp,

@@ -3,6 +3,7 @@ import {
 	PanelKind,
 	clickhouseQuery,
 	dashboardV2,
+	heatmapQuery,
 	metricsQuery,
 	panel,
 	promqlQuery,
@@ -158,6 +159,8 @@ export interface SinglePanelOptions {
 	query?: Query;
 	/** Context links attached to the panel. */
 	links?: ContextLink[];
+	/** Attaches the `VARIABLE_NAMES` variables, for interpolation cases. */
+	withVariables?: boolean;
 }
 
 /**
@@ -170,6 +173,7 @@ export function singlePanelDashboard(
 ): PostableDashboardV2 {
 	return dashboardV2({
 		title: options.title ?? `v2-single-${Date.now()}-${uniqueSuffix()}`,
+		...(options.withVariables ? { variables: VARIABLES } : {}),
 		sections: [
 			{
 				title: 'Section',
@@ -290,6 +294,64 @@ export function variablesDashboard(
 								filter: `service.name = $${VARIABLE_NAMES.custom}`,
 							}),
 					}),
+				},
+			},
+		],
+	});
+}
+
+// ─── Area / Heatmap / Text ───────────────────────────────────────────────
+
+export const NEW_KINDS_PANELS = {
+	area: 'area-panel',
+	heatmap: 'heatmap-panel',
+	text: 'md-panel',
+} as const;
+
+export const NEW_KINDS_MARKDOWN =
+	'## Runbook\n\nCheck the **checkout** path first.';
+
+/**
+ * One Area, one Heatmap and one Text panel — the kinds added after the
+ * all-kinds fixture, kept apart so its seven queries don't grow.
+ */
+export function newKindsDashboard(title?: string): PostableDashboardV2 {
+	return dashboardV2({
+		title: title ?? `v2-new-kinds-${Date.now()}-${uniqueSuffix()}`,
+		sections: [
+			{
+				title: 'New kinds',
+				panels: {
+					[NEW_KINDS_PANELS.area]: panel(PanelKind.AreaChart, {
+						name: 'Calls area',
+					}),
+					[NEW_KINDS_PANELS.heatmap]: panel(PanelKind.Heatmap, {
+						name: 'Calls heatmap',
+						query: heatmapQuery(),
+					}),
+					[NEW_KINDS_PANELS.text]: panel(PanelKind.Text, {
+						name: 'Runbook',
+						pluginSpec: { text: NEW_KINDS_MARKDOWN },
+					}),
+				},
+			},
+		],
+	});
+}
+
+/** Invalid on purpose: Text must carry `queries: []`; the server rejects this. */
+export function textPanelWithQueryDashboard(): PostableDashboardV2 {
+	const text = panel(PanelKind.Text, { name: 'Notes' });
+	return dashboardV2({
+		title: `v2-text-with-query-${Date.now()}-${uniqueSuffix()}`,
+		sections: [
+			{
+				title: 'Section',
+				panels: {
+					[SINGLE_PANEL_ID]: {
+						...text,
+						spec: { ...text.spec, queries: [metricsQuery()] },
+					},
 				},
 			},
 		],

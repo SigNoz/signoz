@@ -3,7 +3,7 @@
 //
 // Three server rules that surface as an opaque 400:
 //   1. POST decodes with DisallowUnknownFields — any stray key rejects it all.
-//   2. Every panel needs EXACTLY ONE query.
+//   2. Every panel needs EXACTLY ONE query; Text needs `queries: []`.
 //   3. Panel keys match /^[a-zA-Z0-9_.-]+$/, so readable ids double as test
 //      handles (`panel-actions-${id}`).
 
@@ -12,11 +12,14 @@
 export const PanelKind = {
 	TimeSeries: 'signoz/TimeSeriesPanel',
 	BarChart: 'signoz/BarChartPanel',
+	AreaChart: 'signoz/AreaChartPanel',
 	Histogram: 'signoz/HistogramPanel',
 	Number: 'signoz/NumberPanel',
 	PieChart: 'signoz/PieChartPanel',
 	Table: 'signoz/TablePanel',
 	List: 'signoz/ListPanel',
+	Heatmap: 'signoz/HeatmapPanel',
+	Text: 'signoz/TextPanel',
 } as const;
 
 export type PanelKind = (typeof PanelKind)[keyof typeof PanelKind];
@@ -57,8 +60,11 @@ export type QueryPlugin =
 	| { kind: 'signoz/PromQLQuery'; spec: { name: string; query: string } }
 	| { kind: 'signoz/ClickHouseSQL'; spec: { name: string; query: string } };
 
-/** List reads `raw`; every other kind reads `time_series`. Mixing them renders empty. */
-export type QueryResultKind = 'time_series' | 'raw';
+/**
+ * List reads `raw`, Heatmap `heatmap`; every other kind reads `time_series`.
+ * Mixing them renders empty.
+ */
+export type QueryResultKind = 'time_series' | 'raw' | 'heatmap';
 
 export interface Query {
 	kind: QueryResultKind;
@@ -83,11 +89,50 @@ export interface Threshold {
 	columnName?: string;
 }
 
+export type StackMode = 'none' | 'normal' | 'percent';
+
+export type HeatmapPalette =
+	| 'ice'
+	| 'moss'
+	| 'rust'
+	| 'graphite'
+	| 'ember'
+	| 'lagoon'
+	| 'orchid'
+	| 'verdant'
+	| 'lava'
+	| 'beacon';
+
+export interface HeatmapColors {
+	mode?: 'palette' | 'opacity';
+	palette?: HeatmapPalette;
+	scale?: 'log' | 'sqrt' | 'linear';
+	/** 2–128. */
+	steps?: number;
+	minCount?: number | null;
+	maxCount?: number | null;
+	/** Opacity mode only. */
+	fill?: string;
+}
+
+export interface TextPresentation {
+	textAlign?: 'left' | 'center' | 'right';
+	verticalAlign?: 'top' | 'center' | 'bottom';
+	/** A hex colour. */
+	background?: string;
+}
+
+/**
+ * One bag for every kind; the server's strict decoder rejects a key the kind
+ * does not declare, so a mismatch fails the seed rather than rendering wrong.
+ */
 export interface PanelPluginSpec {
 	visualization?: {
 		timePreference?: string;
 		fillSpans?: boolean;
 		stackedBarChart?: boolean;
+		/** Area only. */
+		stack?: StackMode;
 	};
 	formatting?: {
 		unit?: string;
@@ -98,6 +143,8 @@ export interface PanelPluginSpec {
 		softMin?: number | null;
 		softMax?: number | null;
 		isLogScale?: boolean;
+		/** Heatmap only, and its only axis key. */
+		y?: { scale: 'auto' | 'linear' | 'log' | 'symlog' };
 	};
 	legend?: {
 		position?: 'bottom' | 'right';
@@ -106,9 +153,14 @@ export interface PanelPluginSpec {
 	chartAppearance?: {
 		lineStyle?: 'solid' | 'dashed';
 		lineInterpolation?: 'linear' | 'spline' | 'step_before' | 'step_after';
+		/** Area drops `none`. */
 		fillMode?: 'none' | 'solid' | 'gradient';
+		/** Area only, 0–1. */
+		fillOpacity?: number;
 		showPoints?: boolean;
 		spanGaps?: { fillOnlyBelow?: boolean; fillLessThan?: string };
+		/** Heatmap only, and its only appearance key. */
+		colors?: HeatmapColors;
 	};
 	histogramBuckets?: {
 		bucketCount?: number;
@@ -117,6 +169,11 @@ export interface PanelPluginSpec {
 	};
 	selectFields?: { name: string; signal?: Signal; fieldDataType?: string }[];
 	thresholds?: Threshold[];
+	/** Text only. */
+	mode?: 'markdown';
+	text?: string;
+	presentation?: TextPresentation;
+	headerOptions?: { hide: boolean };
 }
 
 /**
@@ -138,6 +195,7 @@ export interface Panel {
 		display: { name: string; description?: string };
 		links: ContextLink[];
 		plugin: { kind: PanelKind; spec: PanelPluginSpec };
+		/** Empty for Text, exactly one query for every other kind. */
 		queries: Query[];
 	};
 }
@@ -334,6 +392,13 @@ export function logsCountQuery(options?: {
 	};
 }
 
+/** A metrics builder query shaped as `heatmap`, the only result kind Heatmap reads. */
+export function heatmapQuery(
+	options?: Parameters<typeof metricsQuery>[0],
+): Query {
+	return { ...metricsQuery(options), kind: 'heatmap' };
+}
+
 export function promqlQuery(query: string, name = 'A'): Query {
 	return {
 		kind: 'time_series',
@@ -354,13 +419,25 @@ export interface PanelOptions {
 	name: string;
 	description?: string;
 	pluginSpec?: PanelPluginSpec;
-	/** Defaults to a metrics query for every kind except List, which needs `raw`. */
+	/**
+	 * Defaults to a metrics query shaped for the kind: `raw` for List, `heatmap`
+	 * for Heatmap. Ignored for Text, which carries none.
+	 */
 	query?: Query;
 	links?: ContextLink[];
 }
 
+function defaultQueryFor(kind: PanelKind): Query {
+	if (kind === PanelKind.List) {
+		return rawQuery();
+	}
+	if (kind === PanelKind.Heatmap) {
+		return heatmapQuery();
+	}
+	return metricsQuery();
+}
+
 export function panel(kind: PanelKind, options: PanelOptions): Panel {
-	const defaultQuery = kind === PanelKind.List ? rawQuery() : metricsQuery();
 	return {
 		kind: 'Panel',
 		spec: {
@@ -372,7 +449,8 @@ export function panel(kind: PanelKind, options: PanelOptions): Panel {
 			},
 			links: options.links ?? [],
 			plugin: { kind, spec: options.pluginSpec ?? {} },
-			queries: [options.query ?? defaultQuery],
+			queries:
+				kind === PanelKind.Text ? [] : [options.query ?? defaultQueryFor(kind)],
 		},
 	};
 }
