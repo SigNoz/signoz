@@ -88,7 +88,9 @@ tests/
     │   └── setup.py           # test_setup / test_teardown — pytest lifecycle
     ├── drivers/               # the driver kit and one driver per feature
     │   ├── kit.ts
-    │   └── routing.ts
+    │   ├── routing.ts
+    │   ├── dashboards.ts      # V2 seeding + query_range mocks; panels → panel-editor → panel-config extend it
+    │   └── panels.ts
     ├── fixtures/              # Playwright test fixtures (test.extend) only
     │   └── auth.ts
     ├── helpers/               # function helpers + the constants they share with tests
@@ -128,7 +130,8 @@ test('TC-09 RouteTab switches the url', async ({ routing }) => {
 });
 ```
 
-- `driver(name, build)` adds a test-scoped fixture built on `authedPage`.
+- `driver(name, build, dispose?)` adds a test-scoped fixture built on `authedPage`. `dispose` runs after the test on the same page, so a driver can delete what it seeded.
+- Drivers layer: `drivers/panels.ts` exports `withPanels(dashboardsTest)` and re-exports `drivers/dashboards.ts`, so a spec still imports one module.
 - `seeded(name, open, close)` adds a worker-scoped seed. `open` and `close` run on a throwaway admin page.
 - A driver reuses helpers by calling them, never by reaching for another fixture.
 - `drivers/` is AI-owned: coding agents generate and maintain it with the specs, and `.gitattributes` collapses it in diffs.
