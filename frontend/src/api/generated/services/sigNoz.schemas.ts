@@ -10249,13 +10249,13 @@ export interface MetricsexplorertypesMetricHighlightsResponseDTO {
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description Number of distinct time series with an hourly metadata bucket in the last 120 minutes. Buckets are keyed by hour start, so a series that last reported early in the cutoff hour can be missed.
+	 * @description Number of distinct time series active in the last 120 minutes, approximate: a series that last reported early in that window can be missed.
 	 */
 	activeTimeSeries: number;
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description Number of samples ingested for the metric across the data still retained, summed from the 30-minute aggregate table; older data is excluded by retention.
+	 * @description Number of samples ingested for the metric over retained data.
 	 */
 	dataPoints: number;
 	/**
@@ -10267,7 +10267,7 @@ export interface MetricsexplorertypesMetricHighlightsResponseDTO {
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description Number of distinct time series for the metric across the retained weekly metadata buckets, so it falls as retention expires rather than counting everything ever seen.
+	 * @description Number of distinct time series for the metric over retained data.
 	 */
 	totalTimeSeries: number;
 }
@@ -10326,7 +10326,7 @@ export interface MetricsexplorertypesStatDTO {
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description Number of distinct time series for the metric, counted from metadata buckets whose start is rounded down to an hour, six hours, a day or a week depending on the range, so series active shortly before start are included.
+	 * @description Number of distinct time series active in the time range, approximate: it can include series last active shortly before start.
 	 */
 	timeseries: number;
 	/**
@@ -10428,7 +10428,7 @@ export interface MetricsexplorertypesTreemapRequestDTO {
 	 */
 	limit: number;
 	/**
-	 * @description What each metric is sized by: timeseries counts distinct time series, samples counts ingested data points among the limit plus 50 metrics with the most time series. Only the matching response array is populated.
+	 * @description What each metric is sized by: timeseries counts distinct time series; samples counts ingested data points, ranked among a shortlist of the metrics with the most time series. Only the matching response array is populated.
 	 */
 	mode: MetricsexplorertypesTreemapModeDTO;
 	/**
