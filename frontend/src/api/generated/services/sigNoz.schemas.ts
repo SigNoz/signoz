@@ -4589,7 +4589,7 @@ export enum DashboardtypesAIBuilderQuerySpecDTOSignal {
 export interface Querybuildertypesv5TraceAggregationDTO {
 	/**
 	 * @type string
-	 * @description The name the aggregation is reported under; the expression itself is used when omitted.
+	 * @description The name the aggregation is reported under; when omitted, the result carries the alias __result_N, with N the zero-based index of the aggregation.
 	 */
 	alias?: string;
 	/**
@@ -4849,7 +4849,7 @@ export type Querybuildertypesv5StepDTO = string | number;
 export interface Querybuildertypesv5SecondaryAggregationDTO {
 	/**
 	 * @type string
-	 * @description The name the aggregation is reported under; the expression itself is used when omitted.
+	 * @description The name the aggregation is reported under; when omitted, the result carries the alias __result_N, with N the zero-based index of the aggregation.
 	 */
 	alias?: string;
 	/**
@@ -4933,7 +4933,7 @@ export interface DashboardtypesAIBuilderQuerySpecDTO {
 	cursor?: string;
 	/**
 	 * @type boolean
-	 * @description When true, the result is excluded from the response but the query still runs and can feed a formula or trace operator. Defaults to false.
+	 * @description When true, the result is excluded from the response; the query may still run and can still feed a formula or trace operator. Defaults to false.
 	 */
 	disabled?: boolean;
 	/**
@@ -4965,7 +4965,7 @@ export interface DashboardtypesAIBuilderQuerySpecDTO {
 	 */
 	limit?: number;
 	/**
-	 * @description Reserved for applying limit within each combination of the given group-by keys. Currently stored but ignored by query execution.
+	 * @description Reserved for applying limit within each combination of the given group-by keys. Accepted but currently ignored.
 	 */
 	limitBy?: Querybuildertypesv5LimitByDTO;
 	/**
@@ -4985,7 +4985,7 @@ export interface DashboardtypesAIBuilderQuerySpecDTO {
 	order?: Querybuildertypesv5OrderByDTO[] | null;
 	/**
 	 * @type array,null
-	 * @description Accepted but currently ignored by query execution, including their nested order, limit and limitBy.
+	 * @description Accepted but currently ignored, including their nested order, limit and limitBy.
 	 */
 	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[] | null;
 	/**
@@ -5199,7 +5199,7 @@ export interface DashboardtypesBasicVisualizationDTO {
 export interface Querybuildertypesv5LogAggregationDTO {
 	/**
 	 * @type string
-	 * @description The name the aggregation is reported under; the expression itself is used when omitted.
+	 * @description The name the aggregation is reported under; when omitted, the result carries the alias __result_N, with N the zero-based index of the aggregation.
 	 */
 	alias?: string;
 	/**
@@ -5232,7 +5232,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	cursor?: string;
 	/**
 	 * @type boolean
-	 * @description When true, the result is excluded from the response but the query still runs and can feed a formula or trace operator. Defaults to false.
+	 * @description When true, the result is excluded from the response; the query may still run and can still feed a formula or trace operator. Defaults to false.
 	 */
 	disabled?: boolean;
 	/**
@@ -5264,7 +5264,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 */
 	limit?: number;
 	/**
-	 * @description Reserved for applying limit within each combination of the given group-by keys. Currently stored but ignored by query execution.
+	 * @description Reserved for applying limit within each combination of the given group-by keys. Accepted but currently ignored.
 	 */
 	limitBy?: Querybuildertypesv5LimitByDTO;
 	/**
@@ -5284,7 +5284,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	order?: Querybuildertypesv5OrderByDTO[] | null;
 	/**
 	 * @type array,null
-	 * @description Accepted but currently ignored by query execution, including their nested order, limit and limitBy.
+	 * @description Accepted but currently ignored, including their nested order, limit and limitBy.
 	 */
 	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[] | null;
 	/**
@@ -5412,7 +5412,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	cursor?: string;
 	/**
 	 * @type boolean
-	 * @description When true, the result is excluded from the response but the query still runs and can feed a formula or trace operator. Defaults to false.
+	 * @description When true, the result is excluded from the response; the query may still run and can still feed a formula or trace operator. Defaults to false.
 	 */
 	disabled?: boolean;
 	/**
@@ -5444,7 +5444,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 */
 	limit?: number;
 	/**
-	 * @description Reserved for applying limit within each combination of the given group-by keys. Currently stored but ignored by query execution.
+	 * @description Reserved for applying limit within each combination of the given group-by keys. Accepted but currently ignored.
 	 */
 	limitBy?: Querybuildertypesv5LimitByDTO;
 	/**
@@ -5464,7 +5464,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	order?: Querybuildertypesv5OrderByDTO[] | null;
 	/**
 	 * @type array,null
-	 * @description Accepted but currently ignored by query execution, including their nested order, limit and limitBy.
+	 * @description Accepted but currently ignored, including their nested order, limit and limitBy.
 	 */
 	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[] | null;
 	/**
@@ -5511,7 +5511,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	cursor?: string;
 	/**
 	 * @type boolean
-	 * @description When true, the result is excluded from the response but the query still runs and can feed a formula or trace operator. Defaults to false.
+	 * @description When true, the result is excluded from the response; the query may still run and can still feed a formula or trace operator. Defaults to false.
 	 */
 	disabled?: boolean;
 	/**
@@ -5543,7 +5543,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 */
 	limit?: number;
 	/**
-	 * @description Reserved for applying limit within each combination of the given group-by keys. Currently stored but ignored by query execution.
+	 * @description Reserved for applying limit within each combination of the given group-by keys. Accepted but currently ignored.
 	 */
 	limitBy?: Querybuildertypesv5LimitByDTO;
 	/**
@@ -5563,7 +5563,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	order?: Querybuildertypesv5OrderByDTO[] | null;
 	/**
 	 * @type array,null
-	 * @description Accepted but currently ignored by query execution, including their nested order, limit and limitBy.
+	 * @description Accepted but currently ignored, including their nested order, limit and limitBy.
 	 */
 	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[] | null;
 	/**
@@ -6144,7 +6144,7 @@ export interface Querybuildertypesv5QueryBuilderFormulaDTO {
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type boolean
-	 * @description When true, the result is excluded from the response but the formula is still evaluated. Defaults to false.
+	 * @description When true, the result is excluded from the response; the formula may still be evaluated. Defaults to false.
 	 */
 	disabled?: boolean;
 	/**
@@ -6173,7 +6173,7 @@ export interface Querybuildertypesv5QueryBuilderFormulaDTO {
 	limit?: number;
 	/**
 	 * @type string
-	 * @description The unique name of the formula, such as F1, used by selectedQueryName and by panels. Referencing a formula from another formula is not reliable, because formulas are evaluated in no fixed order.
+	 * @description The unique name of the formula, such as F1, used by selectedQueryName and by panels. Referencing a formula from another formula is not reliable.
 	 */
 	name?: string;
 	/**
@@ -6224,7 +6224,7 @@ export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
 	 */
 	expression?: string;
 	/**
-	 * @description Accepted but currently not applied to the matched traces; it only widens field discovery. Put filters on the operand queries instead.
+	 * @description Accepted but currently not applied to the matched traces. Put filters on the operand queries instead.
 	 */
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
@@ -9801,7 +9801,7 @@ export interface Querybuildertypesv5LabelDTO {
 export interface Querybuildertypesv5TimeSeriesValueDTO {
 	/**
 	 * @type boolean
-	 * @description True when the step is only partly covered by the requested time range, so the value is incomplete and is rendered differently.
+	 * @description True when the step is only partly covered by the requested time range, so the value is incomplete.
 	 */
 	partial?: boolean;
 	/**
@@ -10489,25 +10489,25 @@ export type Querybuildertypesv5ExecStatsDTOStepIntervals = {
 };
 
 /**
- * Execution statistics for the query, including rows scanned, bytes scanned, and duration.
+ * Execution cost of the request: rows and bytes scanned and execution time. A measure of cost, not of whether data exists.
  */
 export interface Querybuildertypesv5ExecStatsDTO {
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description The number of bytes the store read to answer every query in the request. A cost indicator only; it does not indicate whether any data matched.
+	 * @description Bytes scanned to answer every query in the request. A cost indicator only; it does not indicate whether any data matched.
 	 */
 	bytesScanned?: number;
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description The sum of the execution durations of the statements run for this query, in milliseconds. A cost indicator only, not the request latency and not a sign that data exists.
+	 * @description Total execution time across the queries in the request, in milliseconds. A cost indicator only, not the request latency and not a sign that data exists.
 	 */
 	durationMs?: number;
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description The number of rows the store read to answer every query in the request. A cost indicator only: rows are scanned whether or not any matched, so it says nothing about whether data exists.
+	 * @description Rows scanned to answer every query in the request. A cost indicator only: rows are scanned whether or not any matched, so it says nothing about whether data exists.
 	 */
 	rowsScanned?: number;
 	/**
@@ -10839,7 +10839,7 @@ export type Querybuildertypesv5QueryRangeRequestDTOVariables = {
 };
 
 /**
- * Request body for the v5 query range endpoint. Supports builder queries (traces, logs, metrics), formulas, joins, trace operators, PromQL, and ClickHouse SQL queries.
+ * Request body for the v5 query range endpoint. Supports builder queries (traces, logs, metrics), formulas, trace operators, PromQL, and ClickHouse SQL queries.
  */
 export interface Querybuildertypesv5QueryRangeRequestDTO {
 	/**
@@ -10858,7 +10858,7 @@ export interface Querybuildertypesv5QueryRangeRequestDTO {
 	formatOptions?: Querybuildertypesv5FormatOptionsDTO;
 	/**
 	 * @type boolean
-	 * @description When true, bypasses the query result cache and reads every bucket from the store. Defaults to false.
+	 * @description When true, results are computed fresh instead of being served from the query result cache. Defaults to false.
 	 */
 	noCache?: boolean;
 	/**

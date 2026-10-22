@@ -291,7 +291,7 @@ type TimeSeriesValue struct {
 	Timestamp int64   `json:"timestamp" description:"The start of the step as a Unix timestamp in milliseconds."`
 	Value     float64 `json:"value" description:"The aggregated value for the step; omitted for heatmap results, which use values."`
 
-	Partial bool `json:"partial,omitempty" description:"True when the step is only partly covered by the requested time range, so the value is incomplete and is rendered differently."`
+	Partial bool `json:"partial,omitempty" description:"True when the step is only partly covered by the requested time range, so the value is incomplete."`
 
 	Values []float64 `json:"values,omitempty" description:"The per-band counts for heatmap results, in the order of meta.buckets plus a trailing overflow count."`
 }

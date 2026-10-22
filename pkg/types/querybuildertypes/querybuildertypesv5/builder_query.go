@@ -24,7 +24,7 @@ type QueryBuilderQuery[T any] struct {
 
 	BucketOptions *BucketOptions `json:"bucketOptions,omitempty" description:"The value axis to count this query into, as a kind-discriminated linear or log bucket spec. Read only by heatmap requests, and only from the query they draw."`
 
-	Disabled bool `json:"disabled" description:"When true, the result is excluded from the response but the query still runs and can feed a formula or trace operator. Defaults to false."`
+	Disabled bool `json:"disabled" description:"When true, the result is excluded from the response; the query may still run and can still feed a formula or trace operator. Defaults to false."`
 
 	Filter *Filter `json:"filter,omitempty" description:"The filter expression that selects the rows or series of this signal."`
 
@@ -36,7 +36,7 @@ type QueryBuilderQuery[T any] struct {
 
 	Limit int `json:"limit,omitempty" description:"The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited while raw requests ordered by timestamp return a page of 10000 rows; follow nextCursor for the rest."`
 
-	LimitBy *LimitBy `json:"limitBy,omitempty" description:"Reserved for applying limit within each combination of the given group-by keys. Currently stored but ignored by query execution."`
+	LimitBy *LimitBy `json:"limitBy,omitempty" description:"Reserved for applying limit within each combination of the given group-by keys. Accepted but currently ignored."`
 
 	Offset int `json:"offset,omitempty" description:"The number of rows to skip before returning results. Prefer cursor for raw requests."`
 
@@ -44,7 +44,7 @@ type QueryBuilderQuery[T any] struct {
 
 	Having *Having `json:"having,omitempty" description:"A filter applied to aggregation results, referencing aliases or expressions, for example count() > 100."`
 
-	SecondaryAggregations []SecondaryAggregation `json:"secondaryAggregations,omitzero" description:"Accepted but currently ignored by query execution, including their nested order, limit and limitBy."`
+	SecondaryAggregations []SecondaryAggregation `json:"secondaryAggregations,omitzero" description:"Accepted but currently ignored, including their nested order, limit and limitBy."`
 
 	Functions []Function `json:"functions,omitzero" description:"Post-processing functions applied in order to each result series, such as absolute, cumulativeSum, timeShift or anomaly."`
 
