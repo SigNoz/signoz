@@ -203,7 +203,7 @@ describe('EditRolePage', () => {
 			});
 
 			const saveBtn = screen.getByTestId('save-button');
-			expect(saveBtn).toBeDisabled();
+			expect(saveBtn).toHaveAttribute('aria-disabled', 'true');
 		});
 	});
 
@@ -217,7 +217,7 @@ describe('EditRolePage', () => {
 			await user.type(descInput, 'New description');
 
 			const saveBtn = screen.getByTestId('save-button');
-			expect(saveBtn).not.toBeDisabled();
+			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('shows unsaved indicator when description modified', async () => {
@@ -241,13 +241,19 @@ describe('EditRolePage', () => {
 
 			await user.clear(descInput);
 			await user.type(descInput, 'Temporary change');
-			expect(screen.getByTestId('save-button')).not.toBeDisabled();
+			expect(screen.getByTestId('save-button')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 
 			await user.clear(descInput);
 			await user.type(descInput, originalValue);
 
 			await waitFor(() => {
-				expect(screen.getByTestId('save-button')).toBeDisabled();
+				expect(screen.getByTestId('save-button')).toHaveAttribute(
+					'aria-disabled',
+					'true',
+				);
 			});
 		});
 	});
@@ -399,7 +405,10 @@ describe('EditRolePage', () => {
 			await expect(
 				screen.findByText('Unsaved changes'),
 			).resolves.toBeInTheDocument();
-			expect(screen.getByTestId('save-button')).not.toBeDisabled();
+			expect(screen.getByTestId('save-button')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 	});
 });

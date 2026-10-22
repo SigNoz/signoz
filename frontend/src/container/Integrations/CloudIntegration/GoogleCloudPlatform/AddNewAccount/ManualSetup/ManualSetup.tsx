@@ -148,11 +148,11 @@ function ManualSetup({
 				onCancel={handleClose}
 			>
 				<Button
+					size="md"
 					variant="solid"
 					color="primary"
 					onClick={handleSubmit(connectAccount)}
-					loading={isLoading}
-					disabled={isConnectionParamsLoading}
+					loading={isLoading || isConnectionParamsLoading}
 					testId="gcp-connect-account-btn"
 				>
 					Connect Account

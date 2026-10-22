@@ -29,12 +29,12 @@ const renderDrawer = (): void => {
 	render(<CloudAccountSetupDrawer onClose={onClose} />);
 };
 
-const generateAgentCommands = async (
+const generateAgentCommand = async (
 	user: ReturnType<typeof userEvent.setup>,
 ): Promise<void> => {
 	await user.click(screen.getByTestId('gcp-connection-method-agent'));
 	await waitFor(() => {
-		expect(screen.getByTestId('gcp-generate-commands-btn')).toBeEnabled();
+		expect(screen.getByTestId('gcp-generate-command-btn')).toBeEnabled();
 	});
 	await user.type(
 		screen.getByTestId('gcp-deployment-project-id-input'),
@@ -42,8 +42,8 @@ const generateAgentCommands = async (
 	);
 	await user.click(screen.getByTestId('gcp-deployment-region-select'));
 	await user.click(await screen.findByText('Mumbai (asia-south1)'));
-	await user.click(screen.getByTestId('gcp-generate-commands-btn'));
-	await screen.findByTestId('gcp-agent-commands');
+	await user.click(screen.getByTestId('gcp-generate-command-btn'));
+	await screen.findByTestId('gcp-agent-command');
 };
 
 describe('GCP setup drawer close confirmation', () => {
@@ -62,7 +62,7 @@ describe('GCP setup drawer close confirmation', () => {
 		);
 	});
 
-	it('closes right away when no setup commands have been generated', async () => {
+	it('closes right away when no setup command has been generated', async () => {
 		const user = userEvent.setup();
 		renderDrawer();
 
@@ -77,7 +77,7 @@ describe('GCP setup drawer close confirmation', () => {
 		const user = userEvent.setup();
 		renderDrawer();
 
-		await generateAgentCommands(user);
+		await generateAgentCommand(user);
 		await user.click(screen.getByTestId('gcp-cancel-btn'));
 
 		await screen.findByText(/start the installation process again/i);
@@ -90,7 +90,7 @@ describe('GCP setup drawer close confirmation', () => {
 				screen.queryByText(/start the installation process again/i),
 			).not.toBeInTheDocument();
 		});
-		expect(screen.getByTestId('gcp-agent-commands')).toBeInTheDocument();
+		expect(screen.getByTestId('gcp-agent-command')).toBeInTheDocument();
 		expect(onClose).not.toHaveBeenCalled();
 	});
 
@@ -98,7 +98,7 @@ describe('GCP setup drawer close confirmation', () => {
 		const user = userEvent.setup();
 		renderDrawer();
 
-		await generateAgentCommands(user);
+		await generateAgentCommand(user);
 		await user.click(screen.getByRole('button', { name: 'Close' }));
 		await user.click(await screen.findByTestId('gcp-close-setup-btn'));
 
@@ -116,7 +116,7 @@ describe('GCP setup drawer close confirmation', () => {
 		const user = userEvent.setup();
 		renderDrawer();
 
-		await generateAgentCommands(user);
+		await generateAgentCommand(user);
 
 		await waitFor(() => {
 			expect(onClose).toHaveBeenCalledTimes(1);

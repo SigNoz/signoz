@@ -38,14 +38,21 @@ var logsBodyPromotedEntry = promotetypes.NewLogsBodyTarget().Entry
 
 var logsBodyIndexLookup = promotetypes.NewLogsBodyTarget().JSONIndexLookup()
 
-// ClickHouse stores a `col.path::Type` skip index expression as CAST(col.path, 'Type').
-var simpleJSONSubColumnIndexExprRe = regexp.MustCompile(`^CAST\((?P<expr>[^()]+), '(?P<type>.+)'\)$`)
+// ClickHouse stores a `col.path::Type` skip index expression as CAST(col.path, 'Type');
+// a backtick-quoted path may hold any character, parentheses included.
+var simpleJSONSubColumnIndexExprRe = regexp.MustCompile("^CAST\\((?P<expr>(?:[^()`]|`[^`]*`)+), '(?P<type>.+)'\\)$")
 
-// unfoldJSONSubColumnIndexExpr accepts both the folded (lower/assumeNotNull)
-// and the bare type-cast expression forms.
+// ClickHouse stores a traces number index expression with its ::String unfolded to CAST.
+var jsonNumberSubColumnIndexExprRe = regexp.MustCompile("^toFloat64OrNull\\(CAST\\((?P<expr>(?:[^()`]|`[^`]*`)+), 'String'\\)\\)$")
+
+// unfoldJSONSubColumnIndexExpr accepts the folded (lower/assumeNotNull), the
+// traces number and the bare type-cast expression forms.
 func unfoldJSONSubColumnIndexExpr(expr string) (string, string, error) {
 	if columnExpr, columnType, err := schemamigrator.UnfoldJSONSubColumnIndexExpr(expr); err == nil {
 		return columnExpr, columnType, nil
+	}
+	if matches := jsonNumberSubColumnIndexExprRe.FindStringSubmatch(expr); matches != nil {
+		return matches[1], telemetrytypes.Float64.StringValue(), nil
 	}
 	matches := simpleJSONSubColumnIndexExprRe.FindStringSubmatch(expr)
 	if matches == nil {
@@ -198,7 +205,8 @@ func (t *telemetryMetaStore) ListJSONIndexes(ctx context.Context, lookup telemet
 
 		columnExpr, columnType, err := unfoldJSONSubColumnIndexExpr(expr)
 		if err != nil {
-			return nil, errors.WrapInternalf(err, CodeFailLoadLogsJSONIndexes, "failed to unfold JSON sub column index expression: %s", expr)
+			t.logger.WarnContext(ctx, "skipping JSON sub column index with unrecognized expression", slog.String("index", name), slog.String("expr", expr), errors.Attr(err))
+			continue
 		}
 
 		fdt, found := telemetrytypes.MappingJSONDataTypeToFieldDataType[columnType]

@@ -144,7 +144,7 @@ export const cloudIntegrationMocks = defineStoryMocks({
 		newAccountCheckIn: choiceControl<NewAccountCheckIn>('New account check-in', {
 			group: MUTATIONS,
 			description:
-				'How the poll for the account the connect flow just created answers. `checked-in` connects it on the first poll and the drawer closes with the success toast, `pending` keeps the drawer waiting on the agent (the GCP agent setup commands stay up), `error` fails the poll so the drawer reports it could not connect.',
+				'How the poll for the account the connect flow just created answers. `checked-in` connects it on the first poll and the drawer closes with the success toast, `pending` keeps the drawer waiting on the agent (the GCP agent setup command stays up), `error` fails the poll so the drawer reports it could not connect.',
 			options: NEW_ACCOUNT_CHECK_INS,
 			value: 'checked-in',
 		}),
@@ -383,10 +383,10 @@ export const openGcpAgentSetup = async (
 			untilLoaded,
 		),
 	);
-	await screen.findByTestId('gcp-generate-commands-btn', undefined, untilLoaded);
+	await screen.findByTestId('gcp-generate-command-btn', undefined, untilLoaded);
 };
 
-export const generateGcpAgentCommands = async (
+export const generateGcpAgentCommand = async (
 	canvasElement: HTMLElement,
 ): Promise<void> => {
 	await openGcpAgentSetup(canvasElement);
@@ -396,7 +396,7 @@ export const generateGcpAgentCommands = async (
 	);
 	await userEvent.click(screen.getByTestId('gcp-deployment-region-select'));
 	await userEvent.click(await screen.findByText('Council Bluffs (us-central1)'));
-	await userEvent.click(screen.getByTestId('gcp-generate-commands-btn'));
+	await userEvent.click(screen.getByTestId('gcp-generate-command-btn'));
 };
 
 export const openEditAccount = async (

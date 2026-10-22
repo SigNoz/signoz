@@ -12,6 +12,7 @@ interface ValueRowProps {
 	value: string;
 	checkedState: CheckedState;
 	disabled: boolean;
+	disabledTooltip?: string;
 	title: string;
 	onlyButtonLabel: string;
 	customRendererForValue?: (value: string) => JSX.Element;
@@ -36,6 +37,7 @@ export function CheckboxFilterV2ValueRow({
 	value,
 	checkedState,
 	disabled,
+	disabledTooltip,
 	title,
 	onlyButtonLabel,
 	customRendererForValue,
@@ -54,6 +56,7 @@ export function CheckboxFilterV2ValueRow({
 		>
 			<div className={styles.checkbox}>
 				<Checkbox
+					disabledTooltip={disabledTooltip}
 					onChange={(isChecked): void =>
 						onCheckboxChange(isChecked === true, checkedState)
 					}
@@ -97,18 +100,18 @@ export function CheckboxFilterV2ValueRow({
 				<div className={styles.actions}>
 					{badge && (
 						<Badge
-							variant="outline"
+							variant="outlined"
 							color={badge.color}
-							className={styles.badge}
+							data-action="badge"
 							testId={`badge-${badge.key}`}
 						>
 							{badge.label}
 						</Badge>
 					)}
-					<Button variant="ghost" color="secondary" className={styles.onlyButton}>
+					<Button size="md" variant="ghost" color="secondary" data-action="only">
 						{onlyButtonLabel}
 					</Button>
-					<Button variant="ghost" color="secondary" className={styles.toggleButton}>
+					<Button size="md" variant="ghost" color="secondary" data-action="toggle">
 						Toggle
 					</Button>
 				</div>

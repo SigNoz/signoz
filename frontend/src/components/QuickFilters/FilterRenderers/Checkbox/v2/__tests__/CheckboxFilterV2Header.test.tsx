@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 
 import { CheckboxFilterV2Header } from '../CheckboxFilterV2Header';
 
@@ -158,11 +157,7 @@ describe('CheckboxFilterV2Header', () => {
 		it('shows the full name on hover when the title is truncated', async () => {
 			mockTitleWidths(200, 100);
 			const user = userEvent.setup();
-			render(
-				<TooltipProvider>
-					<CheckboxFilterV2Header {...defaultProps} />
-				</TooltipProvider>,
-			);
+			render(<CheckboxFilterV2Header {...defaultProps} />);
 
 			await user.hover(screen.getByText(defaultProps.title));
 
@@ -174,11 +169,7 @@ describe('CheckboxFilterV2Header', () => {
 		it('shows no tooltip when the title fits', async () => {
 			mockTitleWidths(100, 100);
 			const user = userEvent.setup();
-			render(
-				<TooltipProvider>
-					<CheckboxFilterV2Header {...defaultProps} />
-				</TooltipProvider>,
-			);
+			render(<CheckboxFilterV2Header {...defaultProps} />);
 
 			await user.hover(screen.getByText(defaultProps.title));
 

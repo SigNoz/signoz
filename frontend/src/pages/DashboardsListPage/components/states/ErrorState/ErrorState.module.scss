@@ -27,10 +27,6 @@
 	margin-top: 20px;
 }
 
-.learnMore {
-	composes: learnMoreLink from '../states.module.scss';
-}
-
 .learnMoreArrow {
 	composes: learnMoreArrow from '../states.module.scss';
 }

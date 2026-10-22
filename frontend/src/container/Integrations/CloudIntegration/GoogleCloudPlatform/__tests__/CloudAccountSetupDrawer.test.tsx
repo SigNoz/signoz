@@ -18,7 +18,7 @@ import { addProjectIds } from './projectIdsTestUtils';
 
 // `useManualAccountSetup` imports logEvent by relative path, which the
 // jest.config moduleNameMapper (keyed on the `api/common/logEvent` alias) does
-// not intercept, so mock the resolved module directly.
+// not intercept — so mock the resolved module directly.
 jest.mock('../../../../../api/common/logEvent', () => ({
 	__esModule: true,
 	default: jest.fn(),
@@ -44,7 +44,7 @@ describe('GCP CloudAccountSetupDrawer', () => {
 			rest.get(GCP_CREDENTIALS_URL, (_req, res, ctx) =>
 				res(ctx.status(200), ctx.json(connectionCredentialsResponse)),
 			),
-			// check_in is registered first, it is a more specific path than
+			// check_in is registered first — it is a more specific path than
 			// /accounts and msw matches handlers in registration order.
 			rest.post(GCP_CHECK_IN_URL, async (req: RestRequest, res, ctx) => {
 				checkInPayload = await req.json();
@@ -83,7 +83,10 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		renderDrawer();
 
 		await waitFor(() => {
-			expect(screen.getByTestId('gcp-connect-account-btn')).toBeEnabled();
+			expect(screen.getByTestId('gcp-connect-account-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 
 		await user.click(screen.getByTestId('gcp-connect-account-btn'));
@@ -115,17 +118,16 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		renderDrawer();
 
 		await waitFor(() => {
-			expect(screen.getByTestId('gcp-connect-account-btn')).toBeEnabled();
+			expect(screen.getByTestId('gcp-connect-account-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 
-		await user.type(
-			screen.getByTestId('gcp-account-name-input'),
-			'billing@company.com',
-		);
-		await user.type(
-			screen.getByTestId('gcp-deployment-project-id-input'),
-			'my-deployment-project-123',
-		);
+		await user.click(screen.getByTestId('gcp-account-name-input'));
+		await user.paste('billing@company.com');
+		await user.click(screen.getByTestId('gcp-deployment-project-id-input'));
+		await user.paste('my-deployment-project-123');
 
 		await user.click(screen.getByTestId('gcp-deployment-region-select'));
 		await user.click(await screen.findByText('Mumbai (asia-south1)'));
@@ -139,7 +141,10 @@ describe('GCP CloudAccountSetupDrawer', () => {
 
 		// Switching away mid-request would let its success close the other form.
 		await waitFor(() => {
-			expect(screen.getByTestId('gcp-connection-method-agent')).toBeDisabled();
+			expect(screen.getByRole('radiogroup')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 
 		await waitFor(() => {
@@ -170,7 +175,7 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		await waitFor(() => {
 			expect(onClose).toHaveBeenCalledTimes(1);
 		});
-	});
+	}, 15000);
 
 	it('shows the backend error inline when account creation fails', async () => {
 		server.use(
@@ -189,14 +194,16 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		renderDrawer();
 
 		await waitFor(() => {
-			expect(screen.getByTestId('gcp-connect-account-btn')).toBeEnabled();
+			expect(screen.getByTestId('gcp-connect-account-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 
-		await user.type(screen.getByTestId('gcp-account-name-input'), 'my-org');
-		await user.type(
-			screen.getByTestId('gcp-deployment-project-id-input'),
-			'my-deployment-project-123',
-		);
+		await user.click(screen.getByTestId('gcp-account-name-input'));
+		await user.paste('my-org');
+		await user.click(screen.getByTestId('gcp-deployment-project-id-input'));
+		await user.paste('my-deployment-project-123');
 		await user.click(screen.getByTestId('gcp-deployment-region-select'));
 		await user.click(await screen.findByText('Mumbai (asia-south1)'));
 
@@ -211,5 +218,5 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		});
 		expect(checkInPayload).toBeNull();
 		expect(onClose).not.toHaveBeenCalled();
-	});
+	}, 15000);
 });

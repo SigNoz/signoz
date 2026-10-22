@@ -1,6 +1,5 @@
 import { IOption } from 'hooks/useResourceAttribute/types';
 import { parse } from 'papaparse';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
 	OrderByPayload,
@@ -34,11 +33,8 @@ export const transformToOrderByStringValues = (
 	return prepareSelectedValue;
 };
 
-export function mapLabelValuePairs(
-	arr: BaseAutocompleteData[],
-): Array<IOption>[] {
-	return arr.map((item) => {
-		const value = item.key;
+export function mapLabelValuePairs(keys: string[]): Array<IOption>[] {
+	return keys.map((value) => {
 		return [
 			{
 				label: `${value} ${ORDERBY_FILTERS.ASC}`,

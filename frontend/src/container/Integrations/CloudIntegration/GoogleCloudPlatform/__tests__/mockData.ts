@@ -81,19 +81,16 @@ export const checkInResponse = {
 	data: {},
 };
 
-export const gcpConnectionCommands = {
-	createSecretsCommand:
-		"gcloud secrets create 'signoz-integration-api-credentials'",
-	createServiceAccountCommand:
-		"gcloud iam service-accounts create 'signoz-integration-bootstrap'",
-	cliCommand: 'gcloud infra-manager deployments apply',
+export const gcpConnectionCommand = {
+	cliCommand:
+		"curl -fsSL 'https://signoz.io/foundry.sh' | bash -s -- cloudintegration gcp terraform --gcp-project 'my-deployment-project-123'",
 };
 
 export const createAgentAccountResponse = {
 	status: 'success',
 	data: {
 		id: CLOUD_INTEGRATION_ID,
-		connectionArtifact: { gcp: gcpConnectionCommands },
+		connectionArtifact: { gcp: gcpConnectionCommand },
 	},
 };
 

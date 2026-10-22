@@ -38,12 +38,10 @@ export function getTableData(data: DropRateResponse[]): RowData[] {
 	}
 
 	const tableData: RowData[] =
-		data?.map(
-			(row: DropRateResponse, index: number): RowData => ({
-				...(row.data as any), // todo-sagar
-				key: index,
-			}),
-		) || [];
+		data?.map((row: DropRateResponse, index: number): RowData => ({
+			...(row.data as any), // todo-sagar
+			key: index,
+		})) || [];
 
 	return tableData;
 }

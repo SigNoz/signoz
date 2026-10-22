@@ -381,8 +381,6 @@ function LogsExplorerList({
 							selectedTab={selectedTab}
 							log={activeLog}
 							onClose={handleCloseLogDetail}
-							onAddToQuery={onAddToQuery}
-							onClickActionItem={onAddToQuery}
 							handleChangeSelectedView={handleChangeSelectedView}
 							logs={logs}
 							onNavigateLog={handleSetActiveLog}

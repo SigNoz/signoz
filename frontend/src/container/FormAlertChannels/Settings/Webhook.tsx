@@ -1,77 +1,65 @@
-import { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useFormContext } from 'react-hook-form';
 import { Input } from '@signozhq/ui/input';
-import { Form } from 'antd';
-import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 
-import { WebhookChannel } from '../../CreateAlertChannels/config';
+import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
+import FormCard from '../FormCard';
+import FormField from '../FormField';
 
-function WebhookSettings({ setSelectedConfig }: WebhookProps): JSX.Element {
+function WebhookSettings(): JSX.Element {
 	const { t } = useTranslation('channels');
+	const {
+		register,
+		formState: { errors },
+	} = useFormContext<ChannelSpecFormValues>();
 
 	return (
 		<>
-			<Form.Item
-				name="api_url"
-				label={t('field_webhook_url')}
-				tooltip={{
-					title: (
-						<MarkdownRenderer
-							markdownContent={t('tooltip_webhook_url')}
-							variables={{}}
-						/>
-					),
-					overlayInnerStyle: { maxWidth: 400 },
-					placement: 'right',
-				}}
-			>
-				<Input
-					onChange={(event): void => {
-						setSelectedConfig((value) => ({
-							...value,
-							api_url: event.target.value,
-						}));
-					}}
-					data-testid="webhook-url-textbox"
-				/>
-			</Form.Item>
-			<Form.Item
-				name="username"
-				label={t('field_webhook_username')}
-				help={t('help_webhook_username')}
-			>
-				<Input
-					onChange={(event): void => {
-						setSelectedConfig((value) => ({
-							...value,
-							username: event.target.value,
-						}));
-					}}
-					data-testid="webhook-username-textbox"
-				/>
-			</Form.Item>
-			<Form.Item
-				name="password"
-				label="Password (optional)"
-				help={t('help_webhook_password')}
-			>
-				<Input
-					type="password"
-					onChange={(event): void => {
-						setSelectedConfig((value) => ({
-							...value,
-							password: event.target.value,
-						}));
-					}}
-					data-testid="webhook-password-textbox"
-				/>
-			</Form.Item>
+			<FormCard title={t('section_connection')}>
+				<FormField
+					label={t('field_webhook_url')}
+					tooltip={t('tooltip_webhook_url')}
+					error={errors.url?.message}
+					required
+				>
+					<Input
+						{...register('url')}
+						aria-required
+						data-testid="webhook-url-textbox"
+					/>
+				</FormField>
+				<FormField
+					label={t('field_webhook_username')}
+					help={t('help_webhook_username')}
+					error={errors.username?.message}
+				>
+					<Input {...register('username')} data-testid="webhook-username-textbox" />
+				</FormField>
+				<FormField
+					label="Password (optional)"
+					help={t('help_webhook_password')}
+					error={errors.password?.message}
+				>
+					<Input
+						{...register('password')}
+						type="password"
+						data-testid="webhook-password-textbox"
+					/>
+				</FormField>
+				<FormField
+					label={t('field_webhook_bearer_token')}
+					help={t('help_webhook_bearer_token')}
+					error={errors.bearerToken?.message}
+				>
+					<Input
+						{...register('bearerToken')}
+						type="password"
+						data-testid="webhook-bearer-token-textbox"
+					/>
+				</FormField>
+			</FormCard>
 		</>
 	);
-}
-
-interface WebhookProps {
-	setSelectedConfig: Dispatch<SetStateAction<Partial<WebhookChannel>>>;
 }
 
 export default WebhookSettings;

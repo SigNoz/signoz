@@ -5,7 +5,6 @@ import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 import { render, RenderResult } from '@testing-library/react';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import {
 	SavedviewtypesSavedViewDTO,
@@ -19,12 +18,11 @@ import { createMemoryHistory, MemoryHistory } from 'history';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import { server } from 'mocks-server/server';
-import { rest } from 'msw';
 import { NuqsAdapter } from 'nuqs/adapters/react';
 import { AppContext } from 'providers/App/App';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
+import TimezoneProvider from 'providers/Timezone';
 import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import store from 'store';
@@ -35,8 +33,7 @@ import { __setSearchParamsGetterForTest } from 'utils/getUnstableCurrentSearchPa
 
 import { getSavedViewQuery } from '../utils/getSavedViewQuery';
 import { toSavedViewSpec } from '../utils/toSavedViewSpec';
-
-export const API = 'http://localhost/api/v2/saved_views';
+import { TEST_USER_EMAIL } from './savedViewsApiMock';
 
 // The server stores queries through typed structs: nulls, empty strings,
 // zeros and empty lists do not come back.
@@ -78,17 +75,25 @@ export function makeView({
 	source = SavedviewtypesSourceDTO.traces,
 	dataSource = DataSource.TRACES,
 	expression = 'has_error = true',
+	query = queryWith(dataSource, expression),
 	panelType = PANEL_TYPES.LIST,
+	createdBy = TEST_USER_EMAIL,
+	updatedBy = createdBy,
+	updatedAt,
 }: {
 	id: string;
 	displayName: string;
 	source?: SavedviewtypesSourceDTO;
 	dataSource?: DataSource;
 	expression?: string;
+	query?: Query;
 	panelType?: PANEL_TYPES;
+	createdBy?: string;
+	updatedBy?: string;
+	updatedAt?: string;
 }): SavedviewtypesSavedViewDTO {
 	const spec = toSavedViewSpec({
-		query: queryWith(dataSource, expression),
+		query,
 		panelType,
 		displayName,
 	});
@@ -97,8 +102,9 @@ export function makeView({
 		name: `${displayName.toLowerCase()}-abc`,
 		source,
 		schemaVersion: SavedviewtypesSchemaVersionDTO.v2,
-		createdBy: 'test@signoz.io',
-		updatedBy: 'test@signoz.io',
+		createdBy,
+		updatedBy,
+		updatedAt,
 		spec: {
 			...spec,
 			queries: asStoredByServer(
@@ -151,69 +157,6 @@ export function viewUrl(
 		viewKey: view.id,
 		relativeTime,
 	});
-}
-
-export interface Requests {
-	created: unknown[];
-	updated: { id: string; body: unknown }[];
-}
-
-export function mockSavedViewsApi(
-	views: SavedviewtypesSavedViewDTO[],
-	{
-		createStatus = 201,
-		createdId = 'view-new',
-		getDelay = 0,
-	}: { createStatus?: number; createdId?: string; getDelay?: number } = {},
-): Requests {
-	const requests: Requests = { created: [], updated: [] };
-	server.use(
-		rest.get(API, (req, res, ctx) => {
-			const source = req.url.searchParams.get('source');
-			return res(
-				ctx.status(200),
-				ctx.json({
-					status: 'success',
-					data: views.filter((view) => !source || view.source === source),
-				}),
-			);
-		}),
-		rest.get(`${API}/:id`, (req, res, ctx) => {
-			const view = views.find((v) => v.id === req.params.id);
-			if (!view) {
-				return res(ctx.status(404), ctx.json({ status: 'error' }));
-			}
-			return res(
-				ctx.delay(getDelay),
-				ctx.status(200),
-				ctx.json({ status: 'success', data: view }),
-			);
-		}),
-		rest.post(API, async (req, res, ctx) => {
-			const body = await req.json();
-			requests.created.push(body);
-			if (createStatus >= 400) {
-				return res(
-					ctx.status(createStatus),
-					ctx.json({
-						status: 'error',
-						error: { code: 'internal', message: 'boom' },
-					}),
-				);
-			}
-			views.push({ ...body, id: createdId } as SavedviewtypesSavedViewDTO);
-			return res(
-				ctx.status(createStatus),
-				ctx.json({ status: 'success', data: { id: createdId } }),
-			);
-		}),
-		rest.put(`${API}/:id`, async (req, res, ctx) => {
-			const body = await req.json();
-			requests.updated.push({ id: String(req.params.id), body });
-			return res(ctx.status(204));
-		}),
-	);
-	return requests;
 }
 
 const mockStore = configureStore([thunk]);
@@ -274,21 +217,27 @@ export function renderWithExplorerProviders(
 		},
 	});
 
+	const defaultAppContext = getAppContextMock('ADMIN');
+	const appContext = {
+		...defaultAppContext,
+		user: { ...defaultAppContext.user, email: TEST_USER_EMAIL },
+	};
+
 	const result = render(
 		<Router history={history}>
 			<CompatRouter>
 				<NuqsAdapter>
 					<QueryClientProvider client={queryClient}>
 						<Provider store={mockStore(store.getState())}>
-							<AppContext.Provider value={getAppContextMock('ADMIN')}>
-								<TooltipProvider>
+							<AppContext.Provider value={appContext}>
+								<TimezoneProvider>
 									<PreferenceContextProvider>
 										<QueryBuilderProvider>
 											<ExplorerShell dataSource={dataSource} />
 											{ui}
 										</QueryBuilderProvider>
 									</PreferenceContextProvider>
-								</TooltipProvider>
+								</TimezoneProvider>
 							</AppContext.Provider>
 						</Provider>
 					</QueryClientProvider>
@@ -301,4 +250,21 @@ export function renderWithExplorerProviders(
 
 export function urlParam(history: MemoryHistory, key: string): string | null {
 	return new URLSearchParams(history.location.search).get(key);
+}
+
+// The ui Button marks a pending check with aria-busy and a block with
+// aria-disabled, never the disabled attribute.
+export function expectUsable(element: HTMLElement): void {
+	expect(element).not.toHaveAttribute('aria-busy');
+	expect(element).not.toHaveAttribute('aria-disabled', 'true');
+}
+
+// A menu checks its rows on first open; on a loaded CI runner that outlasts
+// waitFor's 1s default.
+export const MENU_CHECK_TIMEOUT = { timeout: 5000 };
+
+// A menu row waiting on its check is data-loading, not yet data-disabled.
+export function expectRowUsable(row: HTMLElement): void {
+	expect(row).not.toHaveAttribute('data-loading');
+	expect(row).not.toHaveAttribute('data-disabled');
 }

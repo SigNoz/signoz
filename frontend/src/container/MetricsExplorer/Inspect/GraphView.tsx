@@ -207,6 +207,8 @@ function GraphView({
 				</Button.Group>
 				<div className="view-toggle-button">
 					<Switch
+						color="primary"
+						textPlacement="right"
 						value={viewType === 'graph'}
 						onChange={(checked): void => {
 							const newViewType = checked ? 'graph' : 'table';

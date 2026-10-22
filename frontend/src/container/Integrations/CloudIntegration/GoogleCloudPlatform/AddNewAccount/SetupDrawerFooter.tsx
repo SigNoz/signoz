@@ -43,6 +43,7 @@ function SetupDrawerFooter({
 			)}
 			<div className={styles.footer}>
 				<Button
+					size="md"
 					variant="outlined"
 					color="secondary"
 					onClick={onCancel}

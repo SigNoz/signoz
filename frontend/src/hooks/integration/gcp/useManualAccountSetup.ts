@@ -104,7 +104,7 @@ export function useManualAccountSetup({
 						},
 					},
 					credentials: {
-						// Cloud users can't edit these, the backend-provided credentials are
+						// Cloud users can't edit these — the backend-provided credentials are
 						// authoritative. Enterprise users have no backend defaults and enter
 						// their own (validated non-empty), so their form values are used.
 						ingestionUrl: connectionParams?.data?.ingestionUrl || values.ingestionUrl,

@@ -23,6 +23,25 @@ export const QueryChipContainer = styled.span`
 	}
 `;
 
-export const QueryChipItem = styled(Badge)`
+export const QueryChipItem = styled(Badge).attrs({
+	color: 'secondary' as const,
+	variant: 'solid' as const,
+	textTransform: 'none' as const,
+})`
 	margin-right: 0.1rem;
+`;
+
+export const QueryChipRemoveButton = styled.button`
+	display: flex;
+	align-items: center;
+	padding: 0;
+	border: none;
+	background: none;
+	color: inherit;
+	cursor: pointer;
+	opacity: 0.6;
+
+	&:hover {
+		opacity: 1;
+	}
 `;

@@ -25,8 +25,8 @@ export const onClose = jest.fn() as jest.MockedFunction<
 export const onConnectionMethodChange = jest.fn() as jest.MockedFunction<
 	AgentSetupProps['onConnectionMethodChange']
 >;
-export const onCommandsGenerated = jest.fn() as jest.MockedFunction<
-	AgentSetupProps['onCommandsGenerated']
+export const onCommandGenerated = jest.fn() as jest.MockedFunction<
+	AgentSetupProps['onCommandGenerated']
 >;
 export const onCancel = jest.fn() as jest.MockedFunction<
 	AgentSetupProps['onCancel']
@@ -39,7 +39,7 @@ export const renderAgentSetup = (): void => {
 				<AgentSetup
 					footerSlot={footerSlot}
 					onConnectionMethodChange={onConnectionMethodChange}
-					onCommandsGenerated={onCommandsGenerated}
+					onCommandGenerated={onCommandGenerated}
 					onCancel={onCancel}
 					onClose={onClose}
 				/>
@@ -52,7 +52,7 @@ export const fillAgentForm = async (
 	user: ReturnType<typeof userEvent.setup>,
 ): Promise<void> => {
 	await waitFor(() => {
-		expect(screen.getByTestId('gcp-generate-commands-btn')).toBeEnabled();
+		expect(screen.getByTestId('gcp-generate-command-btn')).toBeEnabled();
 	});
 	await user.type(
 		screen.getByTestId('gcp-deployment-project-id-input'),

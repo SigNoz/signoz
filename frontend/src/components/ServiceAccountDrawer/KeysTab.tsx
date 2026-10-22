@@ -112,25 +112,26 @@ function buildColumns({
 				style: { cursor: 'default' },
 			}),
 			render: (_, record): JSX.Element => {
-				const tooltipTitle = isDisabled ? 'Service account disabled' : 'Revoke Key';
 				return (
-					<Tooltip title={tooltipTitle} placement="bottom">
+					<Tooltip title={isDisabled ? undefined : 'Revoke Key'} placement="bottom">
 						<AuthZButton
 							checks={[
 								buildAPIKeyDeletePermission(record.id),
 								buildSADetachPermission(accountId),
 							]}
 							authZEnabled={!isDisabled && !!accountId}
-							withPortal={false}
-							variant="ghost"
+							variant="solid"
 							size="sm"
-							color="destructive"
+							color="danger"
+							icon
+							aria-label="Revoke Key"
 							disabled={isDisabled}
+							disabledTooltip={isDisabled ? 'Service account disabled' : undefined}
 							onClick={(e): void => {
 								e.stopPropagation();
 								onRevokeClick(record.id);
 							}}
-							className="keys-tab__revoke-btn"
+							testId="keys-tab-revoke-btn"
 						>
 							<X size={12} />
 						</AuthZButton>
@@ -213,9 +214,9 @@ function KeysTab({
 					</a>
 				</p>
 				<AuthZButton
+					size="md"
 					checks={[APIKeyCreatePermission, buildSAAttachPermission(accountId)]}
 					authZEnabled={!isDisabled && !!accountId}
-					withPortal={false}
 					variant="link"
 					color="primary"
 					onClick={async (): Promise<void> => {

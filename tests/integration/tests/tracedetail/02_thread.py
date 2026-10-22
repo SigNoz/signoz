@@ -11,7 +11,7 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.traces import ATTRIBUTE_JSON_ROLLOUT_TIME, TraceIdGenerator, Traces, TracesKind
 
 
-def test_thread_returns_message_spans_in_order(
+def test_thread_returns_gen_ai_spans_in_order(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -21,17 +21,25 @@ def test_thread_returns_message_spans_in_order(
     seed_attribute_evolution("traces", ATTRIBUTE_JSON_ROLLOUT_TIME)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
-    root_id, first_llm_id, tool_id, agent_id, second_llm_id, third_llm_id = (TraceIdGenerator.span_id() for _ in range(6))
+    root_id, first_llm_id, tool_id, agent_id, second_llm_id, legacy_llm_id, third_llm_id, flattened_llm_id, responses_llm_id, langchain_llm_id, openrouter_llm_id, vercel_llm_id, anthropic_llm_id, gemini_llm_id = (TraceIdGenerator.span_id() for _ in range(14))
     resources = {"service.name": "tracedetail-thread"}
     first_input = json.dumps([{"role": "user", "parts": [{"type": "text", "content": "weather in Bangalore?"}]}])
-    first_output = json.dumps([{"role": "assistant", "parts": [{"type": "tool_call", "id": "call_1", "name": "get_weather", "arguments": {"city": "Bangalore"}}], "finish_reason": "tool_call"}])
+    first_output = json.dumps([{"role": "assistant", "parts": [{"type": "tool_call", "id": "call_1", "name": "get_weather", "arguments": {"city": "Bangalore"}}]}])
+    first_instructions = json.dumps([{"type": "text", "content": "Answer with the tool."}])
     second_input = json.dumps([{"role": "tool", "content": "sunny", "tool_call_id": "call_1"}])
 
     insert_traces(
         [
             Traces(timestamp=now - timedelta(seconds=10), duration=timedelta(seconds=9), trace_id=trace_id, span_id=root_id, name="POST /chat", kind=TracesKind.SPAN_KIND_SERVER, resources=resources, attribute_write_mode="json_only"),
             Traces(
-                timestamp=now - timedelta(seconds=8), trace_id=trace_id, span_id=first_llm_id, parent_span_id=root_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.input.messages": first_input, "gen_ai.output.messages": first_output}, attribute_write_mode="json_only"
+                timestamp=now - timedelta(seconds=8),
+                trace_id=trace_id,
+                span_id=first_llm_id,
+                parent_span_id=root_id,
+                name="chat gpt-4o",
+                resources=resources,
+                attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.system_instructions": first_instructions, "gen_ai.input.messages": first_input, "gen_ai.output.messages": first_output, "gen_ai.response.finish_reasons": json.dumps(["tool_calls"])},
+                attribute_write_mode="json_only",
             ),
             Traces(
                 timestamp=now - timedelta(seconds=6),
@@ -45,7 +53,122 @@ def test_thread_returns_message_spans_in_order(
             ),
             Traces(timestamp=now - timedelta(seconds=5), trace_id=trace_id, span_id=agent_id, parent_span_id=root_id, name="invoke_agent planner", resources=resources, attributes={"gen_ai.agent.name": "planner"}, attribute_write_mode="json_only"),
             Traces(timestamp=now - timedelta(seconds=4), trace_id=trace_id, span_id=second_llm_id, parent_span_id=root_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.input.messages": second_input}, attribute_write_mode="json_only"),
+            Traces(
+                timestamp=now - timedelta(seconds=3),
+                trace_id=trace_id,
+                span_id=legacy_llm_id,
+                parent_span_id=root_id,
+                name="openai.chat",
+                resources=resources,
+                attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.prompt.0.role": "user", "gen_ai.prompt.0.content": "and tomorrow?", "gen_ai.completion.0.role": "assistant", "gen_ai.completion.0.content": "Also sunny.", "gen_ai.completion.0.finish_reason": "stop"},
+                attribute_write_mode="json_only",
+            ),
             Traces(timestamp=now - timedelta(seconds=2), trace_id=trace_id, span_id=third_llm_id, parent_span_id=root_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.output.messages": "It is sunny in Bangalore."}, attribute_write_mode="json_only"),
+            Traces(
+                timestamp=now - timedelta(seconds=1),
+                trace_id=trace_id,
+                span_id=flattened_llm_id,
+                parent_span_id=root_id,
+                name="ChatCompletion",
+                resources=resources,
+                attributes={
+                    "gen_ai.request.model": "gpt-4o",
+                    "llm.input_messages.0.message.role": "user",
+                    "llm.input_messages.0.message.content": "thanks",
+                    "llm.output_messages.0.message.role": "assistant",
+                    "llm.output_messages.0.message.content": "You're welcome.",
+                    "llm.finish_reason": "stop",
+                },
+                attribute_write_mode="json_only",
+            ),
+            Traces(
+                timestamp=now,
+                trace_id=trace_id,
+                span_id=responses_llm_id,
+                parent_span_id=root_id,
+                name="responses gpt-4o",
+                resources=resources,
+                attributes={
+                    "gen_ai.request.model": "gpt-4o",
+                    "gen_ai.input.messages": json.dumps({"model": "gpt-4o", "instructions": "Be brief.", "input": [{"role": "user", "content": "bye"}]}),
+                    "gen_ai.output.messages": json.dumps({"object": "response", "status": "completed", "output": [{"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": "Bye!"}]}]}),
+                },
+                attribute_write_mode="json_only",
+            ),
+            Traces(
+                timestamp=now + timedelta(seconds=1),
+                trace_id=trace_id,
+                span_id=langchain_llm_id,
+                parent_span_id=root_id,
+                name="ChatOpenAI",
+                resources=resources,
+                attributes={
+                    "gen_ai.request.model": "gpt-4o",
+                    "gen_ai.input.messages": json.dumps({"messages": [[{"lc": 1, "type": "constructor", "id": ["langchain", "schema", "messages", "HumanMessage"], "kwargs": {"content": "see you", "type": "human"}}]]}),
+                    "gen_ai.output.messages": json.dumps(
+                        {"generations": [[{"text": "See you!", "generation_info": {"finish_reason": "stop"}, "type": "ChatGeneration", "message": {"lc": 1, "type": "constructor", "id": ["langchain", "schema", "messages", "AIMessage"], "kwargs": {"content": "See you!", "type": "ai"}}}]]}
+                    ),
+                },
+                attribute_write_mode="json_only",
+            ),
+            Traces(
+                timestamp=now + timedelta(seconds=2),
+                trace_id=trace_id,
+                span_id=openrouter_llm_id,
+                parent_span_id=root_id,
+                name="LLM Generation",
+                resources=resources,
+                attributes={
+                    "gen_ai.request.model": "openai/gpt-4o-mini",
+                    "gen_ai.input.messages": json.dumps({"messages": [{"role": "user", "content": "one word"}]}),
+                    "gen_ai.output.messages": json.dumps({"completion": "Yes.", "reasoning": None, "rawRequest": {"model": "openai/gpt-4o-mini"}}),
+                },
+                attribute_write_mode="json_only",
+            ),
+            Traces(
+                timestamp=now + timedelta(seconds=3),
+                trace_id=trace_id,
+                span_id=vercel_llm_id,
+                parent_span_id=root_id,
+                name="ai.generateText.doGenerate",
+                resources=resources,
+                attributes={
+                    "gen_ai.request.model": "gpt-4o-mini",
+                    "ai.operationId": "ai.generateText.doGenerate",
+                    "ai.response.finishReason": "stop",
+                    "gen_ai.input.messages": json.dumps([{"role": "user", "content": [{"type": "text", "text": "last one"}]}]),
+                    "gen_ai.output.messages": "Done.",
+                },
+                attribute_write_mode="json_only",
+            ),
+            Traces(
+                timestamp=now + timedelta(seconds=4),
+                trace_id=trace_id,
+                span_id=anthropic_llm_id,
+                parent_span_id=root_id,
+                name="messages claude-sonnet-4-5",
+                resources=resources,
+                attributes={
+                    "gen_ai.request.model": "claude-sonnet-4-5",
+                    "gen_ai.input.messages": json.dumps({"system": "Be terse.", "messages": [{"role": "user", "content": "ping"}]}),
+                    "gen_ai.output.messages": json.dumps({"type": "message", "role": "assistant", "content": [{"type": "text", "text": "pong"}], "stop_reason": "end_turn"}),
+                },
+                attribute_write_mode="json_only",
+            ),
+            Traces(
+                timestamp=now + timedelta(seconds=5),
+                trace_id=trace_id,
+                span_id=gemini_llm_id,
+                parent_span_id=root_id,
+                name="generateContent gemini-2.5-flash",
+                resources=resources,
+                attributes={
+                    "gen_ai.request.model": "gemini-2.5-flash",
+                    "gen_ai.input.messages": json.dumps({"contents": [{"role": "user", "parts": [{"text": "ping"}]}]}),
+                    "gen_ai.output.messages": json.dumps({"candidates": [{"content": {"role": "model", "parts": [{"text": "pong"}]}, "finishReason": "STOP"}]}),
+                },
+                attribute_write_mode="json_only",
+            ),
         ]
     )
 
@@ -54,10 +177,13 @@ def test_thread_returns_message_spans_in_order(
     assert response.status_code == HTTPStatus.OK, response.text
 
     thread = response.json()["data"]
-    assert [span["span_id"] for span in thread["spans"]] == [first_llm_id, tool_id, second_llm_id, third_llm_id]
+    assert [span["span_id"] for span in thread["spans"]] == [first_llm_id, tool_id, agent_id, second_llm_id, legacy_llm_id, third_llm_id, flattened_llm_id, responses_llm_id, langchain_llm_id, openrouter_llm_id, vercel_llm_id, anthropic_llm_id, gemini_llm_id]
     assert "nextCursor" not in thread
 
-    first, tool, input_only, output_only = thread["spans"]
+    first, tool, agent, input_only, legacy, output_only, flattened, responses, langchain, openrouter, vercel, anthropic, gemini = thread["spans"]
+    assert agent["attributes"]["gen_ai.agent.name"] == "planner"
+    assert agent["formattedInput"] == []
+    assert agent["formattedOutput"] == []
     assert tool["attributes"]["gen_ai.tool.call.arguments"] == json.dumps({"city": "Bangalore"})
     assert tool["attributes"]["gen_ai.tool.call.result"] == "sunny"
     assert first["time_unix"] == int((now - timedelta(seconds=8)).timestamp() * 1000)
@@ -70,21 +196,34 @@ def test_thread_returns_message_spans_in_order(
     assert output_only["attributes"]["gen_ai.output.messages"] == "It is sunny in Bangalore."
 
     tool_call = {"type": "tool_call", "name": "get_weather", "id": "call_1", "arguments": {"city": "Bangalore"}}
-    assert first["formatter"] == "semconv"
-    assert first["formatted_input"] == [{"role": "user", "parts": [{"type": "text", "content": "weather in Bangalore?"}]}]
-    assert first["formatted_output"] == [{"role": "assistant", "parts": [tool_call], "finish_reason": "tool_call"}]
-    assert first["formatter_warnings"] == []
-    # tool spans carry no messages until their converter lands
-    assert tool["formatter"] == ""
-    assert tool["formatted_input"] == []
-    assert tool["formatted_output"] == []
-    assert input_only["formatter"] == "openai.chat"
-    assert input_only["formatted_input"] == [{"role": "tool", "parts": [{"type": "tool_call_response", "id": "call_1", "response": "sunny"}]}]
-    assert input_only["formatted_output"] == []
-    assert output_only["formatter"] == "text"
-    assert output_only["formatted_input"] == []
-    assert output_only["formatted_output"] == [{"role": "assistant", "parts": [{"type": "text", "content": "It is sunny in Bangalore."}]}]
-    assert output_only["formatter_warnings"] == ["bare assistant text, role assumed"]
+    assert first["formattedInput"] == [{"role": "system", "parts": [{"type": "text", "content": "Answer with the tool."}]}, {"role": "user", "parts": [{"type": "text", "content": "weather in Bangalore?"}]}]
+    assert first["formattedOutput"] == [{"role": "assistant", "parts": [tool_call], "finish_reason": "tool_call"}]
+    assert first["formatterWarnings"] == []
+    assert tool["formattedInput"] == [{"role": "assistant", "parts": [tool_call]}]
+    assert tool["formattedOutput"] == [{"role": "tool", "parts": [{"type": "tool_call_response", "id": "call_1", "response": "sunny"}]}]
+    assert input_only["formattedInput"] == [{"role": "tool", "parts": [{"type": "tool_call_response", "id": "call_1", "response": "sunny"}]}]
+    assert input_only["formattedOutput"] == []
+    assert output_only["formattedInput"] == []
+    assert output_only["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "It is sunny in Bangalore."}]}]
+    assert output_only["formatterWarnings"] == ["bare assistant text, role assumed"]
+    assert legacy["attributes"]["gen_ai.prompt.0.content"] == "and tomorrow?"
+    assert legacy["formattedInput"] == [{"role": "user", "parts": [{"type": "text", "content": "and tomorrow?"}]}]
+    assert legacy["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "Also sunny."}], "finish_reason": "stop"}]
+    assert flattened["attributes"]["llm.input_messages.0.message.content"] == "thanks"
+    assert flattened["formattedInput"] == [{"role": "user", "parts": [{"type": "text", "content": "thanks"}]}]
+    assert flattened["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "You're welcome."}], "finish_reason": "stop"}]
+    assert responses["formattedInput"] == [{"role": "system", "parts": [{"type": "text", "content": "Be brief."}]}, {"role": "user", "parts": [{"type": "text", "content": "bye"}]}]
+    assert responses["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "Bye!"}], "finish_reason": "stop"}]
+    assert langchain["formattedInput"] == [{"role": "user", "parts": [{"type": "text", "content": "see you"}]}]
+    assert langchain["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "See you!"}], "finish_reason": "stop"}]
+    assert openrouter["formattedInput"] == [{"role": "user", "parts": [{"type": "text", "content": "one word"}]}]
+    assert openrouter["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "Yes."}]}]
+    assert vercel["formattedInput"] == [{"role": "user", "parts": [{"type": "text", "content": "last one"}]}]
+    assert vercel["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "Done."}], "finish_reason": "stop"}]
+    assert anthropic["formattedInput"] == [{"role": "system", "parts": [{"type": "text", "content": "Be terse."}]}, {"role": "user", "parts": [{"type": "text", "content": "ping"}]}]
+    assert anthropic["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "pong"}], "finish_reason": "stop"}]
+    assert gemini["formattedInput"] == [{"role": "user", "parts": [{"type": "text", "content": "ping"}]}]
+    assert gemini["formattedOutput"] == [{"role": "assistant", "parts": [{"type": "text", "content": "pong"}], "finish_reason": "stop"}]
 
 
 def test_thread_paginates_with_cursors(
@@ -102,7 +241,7 @@ def test_thread_paginates_with_cursors(
     timestamps = [now - timedelta(seconds=6), now - timedelta(seconds=3), now - timedelta(seconds=3)]
     insert_traces(
         [
-            Traces(timestamp=timestamp, trace_id=trace_id, span_id=span_id, name="chat gpt-4o", resources={"service.name": "tracedetail-thread-pages"}, attributes={"gen_ai.input.messages": json.dumps([{"role": "user", "content": span_id}])}, attribute_write_mode="json_only")
+            Traces(timestamp=timestamp, trace_id=trace_id, span_id=span_id, name="chat gpt-4o", resources={"service.name": "tracedetail-thread-pages"}, attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.input.messages": json.dumps([{"role": "user", "content": span_id}])}, attribute_write_mode="json_only")
             for span_id, timestamp in zip(span_ids, timestamps, strict=True)
         ]
     )
@@ -164,7 +303,7 @@ def test_thread_paginates_across_buckets(
     span_ids = [TraceIdGenerator.span_id() for _ in timestamps]
     insert_traces(
         [
-            Traces(timestamp=timestamp, trace_id=trace_id, span_id=span_id, name="chat gpt-4o", resources={"service.name": "tracedetail-thread-buckets"}, attributes={"gen_ai.input.messages": json.dumps([{"role": "user", "content": span_id}])}, attribute_write_mode="json_only")
+            Traces(timestamp=timestamp, trace_id=trace_id, span_id=span_id, name="chat gpt-4o", resources={"service.name": "tracedetail-thread-buckets"}, attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.input.messages": json.dumps([{"role": "user", "content": span_id}])}, attribute_write_mode="json_only")
             for span_id, timestamp in zip(span_ids, timestamps, strict=True)
         ]
     )
@@ -209,16 +348,25 @@ def test_thread_opens_around_span(
     resources = {"service.name": "tracedetail-thread-anchor"}
     root_id = TraceIdGenerator.span_id()
     llm_ids = [TraceIdGenerator.span_id() for _ in range(5)]
-    agent_id = TraceIdGenerator.span_id()
-    # agent span, not a thread row, sits between the third and fourth llm spans
+    http_id = TraceIdGenerator.span_id()
+    # http span, not a thread row, sits between the third and fourth llm spans
     insert_traces(
         [
             Traces(timestamp=now - timedelta(seconds=20), duration=timedelta(seconds=19), trace_id=trace_id, span_id=root_id, name="POST /chat", kind=TracesKind.SPAN_KIND_SERVER, resources=resources, attribute_write_mode="json_only"),
             *(
-                Traces(timestamp=now - timedelta(seconds=18 - 3 * i), trace_id=trace_id, span_id=span_id, parent_span_id=root_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.input.messages": json.dumps([{"role": "user", "content": span_id}])}, attribute_write_mode="json_only")
+                Traces(
+                    timestamp=now - timedelta(seconds=18 - 3 * i),
+                    trace_id=trace_id,
+                    span_id=span_id,
+                    parent_span_id=root_id,
+                    name="chat gpt-4o",
+                    resources=resources,
+                    attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.input.messages": json.dumps([{"role": "user", "content": span_id}])},
+                    attribute_write_mode="json_only",
+                )
                 for i, span_id in enumerate(llm_ids)
             ),
-            Traces(timestamp=now - timedelta(seconds=11), trace_id=trace_id, span_id=agent_id, parent_span_id=root_id, name="invoke_agent planner", resources=resources, attributes={"gen_ai.agent.name": "planner"}, attribute_write_mode="json_only"),
+            Traces(timestamp=now - timedelta(seconds=11), trace_id=trace_id, span_id=http_id, parent_span_id=root_id, name="GET /weather", resources=resources, attributes={"http.request.method": "GET"}, attribute_write_mode="json_only"),
         ]
     )
 
@@ -231,7 +379,7 @@ def test_thread_opens_around_span(
         assert response.status_code == HTTPStatus.OK, f"{params}: {response.text}"
         return response.json()["data"]
 
-    # span with messages: included with its neighbours
+    # thread span: included with its neighbours
     around = get_page({"limit": 3, "spanId": llm_ids[2]})
     assert [span["span_id"] for span in around["spans"]] == llm_ids[1:4]
     assert around["prevCursor"]
@@ -239,11 +387,11 @@ def test_thread_opens_around_span(
     assert [span["span_id"] for span in get_page({"limit": 3, "before": around["prevCursor"]})["spans"]] == llm_ids[:1]
     assert [span["span_id"] for span in get_page({"limit": 3, "after": around["nextCursor"]})["spans"]] == llm_ids[4:]
 
-    # span without messages: only its neighbours
-    around_agent = get_page({"limit": 2, "spanId": agent_id})
-    assert [span["span_id"] for span in around_agent["spans"]] == llm_ids[2:4]
-    assert around_agent["prevCursor"]
-    assert around_agent["nextCursor"]
+    # span outside the thread: only its neighbours
+    around_http = get_page({"limit": 2, "spanId": http_id})
+    assert [span["span_id"] for span in around_http["spans"]] == llm_ids[2:4]
+    assert around_http["prevCursor"]
+    assert around_http["nextCursor"]
 
     # near the start, the short side gives its room to the other
     at_start = get_page({"limit": 3, "spanId": llm_ids[0]})
@@ -287,11 +435,11 @@ def test_thread_reads_spans_across_json_rollout(
     legacy_id, json_id = TraceIdGenerator.span_id(), TraceIdGenerator.span_id()
     insert_traces(
         [
-            Traces(timestamp=rollout - timedelta(minutes=10), trace_id=before_trace_id, span_id=before_ids[0], name="chat gpt-4o", resources=resources, attributes={"gen_ai.input.messages": json.dumps([{"role": "user", "content": "first"}])}, attribute_write_mode="legacy_only"),
-            Traces(timestamp=rollout - timedelta(minutes=8), trace_id=before_trace_id, span_id=TraceIdGenerator.span_id(), name="invoke_agent planner", resources=resources, attributes={"gen_ai.agent.name": "planner"}, attribute_write_mode="legacy_only"),
-            Traces(timestamp=rollout - timedelta(minutes=5), trace_id=before_trace_id, span_id=before_ids[1], name="chat gpt-4o", resources=resources, attributes={"gen_ai.output.messages": json.dumps([{"role": "assistant", "content": "second"}])}, attribute_write_mode="legacy_only"),
-            Traces(timestamp=rollout - timedelta(minutes=5), trace_id=straddle_trace_id, span_id=legacy_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.input.messages": json.dumps([{"role": "user", "content": "legacy"}])}, attribute_write_mode="legacy_only"),
-            Traces(timestamp=rollout + timedelta(minutes=5), trace_id=straddle_trace_id, span_id=json_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.input.messages": json.dumps([{"role": "user", "content": "json"}])}, attribute_write_mode="json_only"),
+            Traces(timestamp=rollout - timedelta(minutes=10), trace_id=before_trace_id, span_id=before_ids[0], name="chat gpt-4o", resources=resources, attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.input.messages": json.dumps([{"role": "user", "content": "first"}])}, attribute_write_mode="legacy_only"),
+            Traces(timestamp=rollout - timedelta(minutes=8), trace_id=before_trace_id, span_id=TraceIdGenerator.span_id(), name="GET /weather", resources=resources, attributes={"http.request.method": "GET"}, attribute_write_mode="legacy_only"),
+            Traces(timestamp=rollout - timedelta(minutes=5), trace_id=before_trace_id, span_id=before_ids[1], name="chat gpt-4o", resources=resources, attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.output.messages": json.dumps([{"role": "assistant", "content": "second"}])}, attribute_write_mode="legacy_only"),
+            Traces(timestamp=rollout - timedelta(minutes=5), trace_id=straddle_trace_id, span_id=legacy_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.input.messages": json.dumps([{"role": "user", "content": "legacy"}])}, attribute_write_mode="legacy_only"),
+            Traces(timestamp=rollout + timedelta(minutes=5), trace_id=straddle_trace_id, span_id=json_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.request.model": "gpt-4o", "gen_ai.input.messages": json.dumps([{"role": "user", "content": "json"}])}, attribute_write_mode="json_only"),
         ]
     )
 
@@ -306,9 +454,8 @@ def test_thread_reads_spans_across_json_rollout(
     assert before_spans[1]["attributes"]["gen_ai.output.messages"] == json.dumps([{"role": "assistant", "content": "second"}])
     # messages are decoded from the JSON column only, never from the legacy maps
     for span in before_spans:
-        assert span["formatter"] == ""
-        assert span["formatted_input"] == []
-        assert span["formatted_output"] == []
+        assert span["formattedInput"] == []
+        assert span["formattedOutput"] == []
 
     straddle = requests.get(signoz.self.host_configs["8080"].get(f"/api/v1/traces/{straddle_trace_id}/thread"), headers=headers, timeout=10)
     assert straddle.status_code == HTTPStatus.OK, straddle.text
@@ -316,13 +463,11 @@ def test_thread_reads_spans_across_json_rollout(
     assert [span["span_id"] for span in straddle_spans] == [legacy_id, json_id]
     assert straddle_spans[0]["attributes"]["gen_ai.input.messages"] == json.dumps([{"role": "user", "content": "legacy"}])
     assert straddle_spans[1]["attributes"]["gen_ai.input.messages"] == json.dumps([{"role": "user", "content": "json"}])
-    assert straddle_spans[0]["formatter"] == ""
-    assert straddle_spans[0]["formatted_input"] == []
-    assert straddle_spans[1]["formatter"] == "openai.chat"
-    assert straddle_spans[1]["formatted_input"] == [{"role": "user", "parts": [{"type": "text", "content": "json"}]}]
+    assert straddle_spans[0]["formattedInput"] == []
+    assert straddle_spans[1]["formattedInput"] == [{"role": "user", "parts": [{"type": "text", "content": "json"}]}]
 
 
-def test_thread_without_messages_is_empty(
+def test_thread_without_gen_ai_spans_is_empty(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -331,7 +476,14 @@ def test_thread_without_messages_is_empty(
 ) -> None:
     seed_attribute_evolution("traces", ATTRIBUTE_JSON_ROLLOUT_TIME)
     trace_id = TraceIdGenerator.trace_id()
-    insert_traces([Traces(timestamp=datetime.now(tz=UTC) - timedelta(seconds=5), trace_id=trace_id, span_id=TraceIdGenerator.span_id(), name="GET /health", resources={"service.name": "tracedetail-thread-empty"}, attribute_write_mode="json_only")])
+    resources = {"service.name": "tracedetail-thread-empty"}
+    # messages without a gate key, as a failed call or an unmapped SDK writes them, are not a row either
+    insert_traces(
+        [
+            Traces(timestamp=datetime.now(tz=UTC) - timedelta(seconds=5), trace_id=trace_id, span_id=TraceIdGenerator.span_id(), name="GET /health", resources=resources, attribute_write_mode="json_only"),
+            Traces(timestamp=datetime.now(tz=UTC) - timedelta(seconds=4), trace_id=trace_id, span_id=TraceIdGenerator.span_id(), name="chat", resources=resources, attributes={"gen_ai.input.messages": json.dumps([{"role": "user", "content": "hi"}])}, attribute_write_mode="json_only"),
+        ]
+    )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = requests.get(signoz.self.host_configs["8080"].get(f"/api/v1/traces/{trace_id}/thread"), headers={"Authorization": f"Bearer {token}"}, timeout=10)

@@ -126,6 +126,8 @@ describe('ServiceAccountDrawer — permissions', () => {
 		const deleteBtn = screen.getByRole('button', {
 			name: /Delete Service Account/i,
 		});
-		await waitFor(() => expect(deleteBtn).toBeDisabled());
+		await waitFor(() =>
+			expect(deleteBtn).toHaveAttribute('aria-disabled', 'true'),
+		);
 	});
 });

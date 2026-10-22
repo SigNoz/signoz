@@ -10,7 +10,6 @@ import {
 import {
 	CloudintegrationtypesAccountDTO,
 	CloudintegrationtypesCredentialsDTO,
-	CloudintegrationtypesGCPConnectionArtifactDTO,
 	CloudintegrationtypesGCPConnectionMethodDTO,
 	CloudintegrationtypesPostableAccountDTO,
 	RenderErrorResponseDTO,
@@ -25,37 +24,38 @@ import { toAPIError } from 'utils/errorUtils';
 import logEvent from '../../../api/common/logEvent';
 import { useAgentConnectionPolling } from './useAgentConnectionPolling';
 
-const GENERATE_COMMANDS_ERROR = 'Failed to generate GCP setup commands';
+const GENERATE_COMMAND_ERROR = 'Failed to generate the GCP setup command';
 
 interface UseAgentAccountSetupProps {
 	onClose: () => void;
-	onCommandsGenerated: () => void;
+	onCommandGenerated: () => void;
 }
 
 interface UseAgentAccountSetup {
 	isLoading: boolean;
-	generateCommands: (values: GcpSetupFormValues) => Promise<void>;
+	generateCommand: (values: GcpSetupFormValues) => Promise<void>;
 	connectionParams?: CloudintegrationtypesCredentialsDTO;
 	isConnectionParamsLoading: boolean;
 	submitError: string | null;
 	clearSubmitError: () => void;
-	connectionCommands: CloudintegrationtypesGCPConnectionArtifactDTO | null;
-	/** The project the generated commands target, as submitted. */
-	commandsProjectId: string;
+	connectionCommand: string | null;
+	/** The project the generated command targets, as submitted. */
+	commandProjectId: string;
 	modalState: ModalStateEnum;
 	checkConnectionAgain: () => void;
 }
 
 export function useAgentAccountSetup({
 	onClose,
-	onCommandsGenerated,
+	onCommandGenerated,
 }: UseAgentAccountSetupProps): UseAgentAccountSetup {
 	const queryClient = useQueryClient();
 	const [isLoading, setIsLoading] = useState(false);
 	const [submitError, setSubmitError] = useState<string | null>(null);
-	const [connectionCommands, setConnectionCommands] =
-		useState<CloudintegrationtypesGCPConnectionArtifactDTO | null>(null);
-	const [commandsProjectId, setCommandsProjectId] = useState('');
+	const [connectionCommand, setConnectionCommand] = useState<string | null>(
+		null,
+	);
+	const [commandProjectId, setCommandProjectId] = useState('');
 	const [accountId, setAccountId] = useState<string | null>(null);
 	const [modalState, setModalState] = useState<ModalStateEnum>(
 		ModalStateEnum.FORM,
@@ -84,7 +84,7 @@ export function useAgentAccountSetup({
 		onClose();
 	}, [onClose]);
 
-	const generateCommands = useCallback(
+	const generateCommand = useCallback(
 		async (values: GcpSetupFormValues): Promise<void> => {
 			try {
 				setIsLoading(true);
@@ -113,32 +113,32 @@ export function useAgentAccountSetup({
 					data: payload,
 				});
 
-				const commands = response.data.connectionArtifact.gcp;
-				if (!commands) {
-					setSubmitError(GENERATE_COMMANDS_ERROR);
+				const command = response.data.connectionArtifact.gcp?.cliCommand;
+				if (!command) {
+					setSubmitError(GENERATE_COMMAND_ERROR);
 					return;
 				}
 
 				setAccountId(response.data.id);
-				setCommandsProjectId(values.deploymentProjectId);
-				setConnectionCommands(commands);
+				setCommandProjectId(values.deploymentProjectId);
+				setConnectionCommand(command);
 				setModalState(ModalStateEnum.WAITING);
-				onCommandsGenerated();
+				onCommandGenerated();
 
-				void logEvent('GCP Integration: Account connection commands generated', {
+				void logEvent('GCP Integration: Account connection command generated', {
 					id: response.data.id,
 				});
 			} catch (error) {
 				const message = toAPIError(
 					error as ErrorType<RenderErrorResponseDTO>,
-					GENERATE_COMMANDS_ERROR,
+					GENERATE_COMMAND_ERROR,
 				).getErrorMessage();
 				setSubmitError(message);
 			} finally {
 				setIsLoading(false);
 			}
 		},
-		[connectionParams, createAccount, onCommandsGenerated],
+		[connectionParams, createAccount, onCommandGenerated],
 	);
 
 	const handleConnected = useCallback(
@@ -183,15 +183,15 @@ export function useAgentAccountSetup({
 
 	return {
 		isLoading,
-		generateCommands,
+		generateCommand,
 		connectionParams: connectionParams?.data as
 			| CloudintegrationtypesCredentialsDTO
 			| undefined,
 		isConnectionParamsLoading,
 		submitError,
 		clearSubmitError,
-		connectionCommands,
-		commandsProjectId,
+		connectionCommand,
+		commandProjectId,
 		modalState,
 		checkConnectionAgain,
 	};

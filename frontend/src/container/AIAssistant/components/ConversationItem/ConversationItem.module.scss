@@ -100,23 +100,8 @@
 	--actions-pointer: auto;
 }
 
-.btn {
-	padding: 2px !important;
-	height: auto !important;
-	min-height: 0 !important;
-
-	&.danger:hover {
-		color: var(--accent-cherry) !important;
-	}
-}
-
 // Compact menu — narrower than the design-system default so the
 // content (Rename / Copy link / Archive) doesn't dwarf the row.
-.menu {
-	min-width: 160px !important;
-	width: 160px !important;
-}
-
 // Shared sizing for every dropdown item so the menu reads compact —
 // matches the row's own 12px label scale.
 .menuItem {

@@ -33,18 +33,16 @@ function PublicDashboardActions({
 	onUpdate,
 	onUnpublish,
 }: PublicDashboardActionsProps): JSX.Element {
-	const disabled = isLoading;
-
 	return (
 		<div className={styles.footer}>
 			{isPublic ? (
 				<>
 					<AuthZTooltip checks={checks}>
 						<Button
-							variant="outlined"
-							color="destructive"
-							disabled={disabled}
-							loading={isUnpublishing}
+							size="md"
+							variant="solid"
+							color="danger"
+							loading={isLoading || isUnpublishing}
 							prefix={<Trash size={15} />}
 							testId="public-dashboard-unpublish"
 							onClick={onUnpublish}
@@ -54,10 +52,10 @@ function PublicDashboardActions({
 					</AuthZTooltip>
 					<AuthZTooltip checks={checks}>
 						<Button
+							size="md"
 							variant="solid"
 							color="primary"
-							disabled={disabled}
-							loading={isUpdating}
+							loading={isLoading || isUpdating}
 							prefix={<RefreshCw size={15} />}
 							testId="public-dashboard-update"
 							onClick={onUpdate}
@@ -69,10 +67,10 @@ function PublicDashboardActions({
 			) : (
 				<AuthZTooltip checks={checks}>
 					<Button
+						size="md"
 						variant="solid"
 						color="primary"
-						disabled={disabled}
-						loading={isPublishing}
+						loading={isLoading || isPublishing}
 						prefix={<Globe size={15} />}
 						testId="public-dashboard-publish"
 						onClick={onPublish}

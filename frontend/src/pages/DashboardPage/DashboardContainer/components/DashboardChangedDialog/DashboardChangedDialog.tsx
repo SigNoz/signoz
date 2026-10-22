@@ -39,6 +39,7 @@ function DashboardChangedDialog({
 	const footer = (
 		<div className={styles.footer}>
 			<Button
+				size="md"
 				variant="solid"
 				color="secondary"
 				onClick={handleDismiss}
@@ -47,6 +48,7 @@ function DashboardChangedDialog({
 				Dismiss
 			</Button>
 			<Button
+				size="md"
 				variant="solid"
 				color="primary"
 				prefix={<RotateCcw size={12} />}

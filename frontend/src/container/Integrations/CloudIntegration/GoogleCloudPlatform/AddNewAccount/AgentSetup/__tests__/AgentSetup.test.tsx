@@ -5,7 +5,7 @@ import {
 	DEPLOYMENT_PROJECT_ID,
 	fillAgentForm,
 	onClose,
-	onCommandsGenerated,
+	onCommandGenerated,
 	renderAgentSetup,
 	mockAgentSetupApi,
 	AgentSetupApiMock,
@@ -14,7 +14,7 @@ import {
 	connectionCredentials,
 	createAgentAccountResponse,
 	GCP_ACCOUNTS_URL,
-	gcpConnectionCommands,
+	gcpConnectionCommand,
 } from '../../../__tests__/mockData';
 
 // `useAgentAccountSetup` imports logEvent by relative path, which the
@@ -62,9 +62,9 @@ describe('GCP AgentSetup form', () => {
 		renderAgentSetup();
 
 		await waitFor(() => {
-			expect(screen.getByTestId('gcp-generate-commands-btn')).toBeEnabled();
+			expect(screen.getByTestId('gcp-generate-command-btn')).toBeEnabled();
 		});
-		await user.click(screen.getByTestId('gcp-generate-commands-btn'));
+		await user.click(screen.getByTestId('gcp-generate-command-btn'));
 
 		await waitFor(() => {
 			expect(
@@ -75,15 +75,15 @@ describe('GCP AgentSetup form', () => {
 		expect(api.createAccountPayload).toBeNull();
 	});
 
-	it('creates an agent account and shows the setup commands in order', async () => {
+	it('creates an agent account and shows its setup command', async () => {
 		const user = userEvent.setup();
 		renderAgentSetup();
 
 		await fillAgentForm(user);
-		await user.click(screen.getByTestId('gcp-generate-commands-btn'));
+		await user.click(screen.getByTestId('gcp-generate-command-btn'));
 
 		await waitFor(() => {
-			expect(screen.getByTestId('gcp-agent-commands')).toBeInTheDocument();
+			expect(screen.getByTestId('gcp-agent-command')).toBeInTheDocument();
 		});
 
 		expect(api.createAccountPayload).toStrictEqual({
@@ -98,21 +98,24 @@ describe('GCP AgentSetup form', () => {
 			credentials: connectionCredentials,
 		});
 
-		expect(screen.getByTestId('gcp-agent-step-1')).toHaveTextContent(
-			gcpConnectionCommands.createSecretsCommand,
+		expect(screen.getByTestId('gcp-agent-command')).toHaveTextContent(
+			gcpConnectionCommand.cliCommand,
 		);
-		expect(screen.getByTestId('gcp-agent-commands')).toHaveTextContent(
+		expect(screen.getByTestId('gcp-agent-command')).toHaveTextContent(
 			DEPLOYMENT_PROJECT_ID,
 		);
 
 		expect(
-			screen.queryByTestId('gcp-generate-commands-btn'),
+			screen.queryByTestId('gcp-generate-command-btn'),
 		).not.toBeInTheDocument();
 		expect(
 			screen.queryByTestId('gcp-deployment-project-id-input'),
 		).not.toBeInTheDocument();
-		expect(screen.getByTestId('gcp-connection-method-manual')).toBeDisabled();
-		expect(onCommandsGenerated).toHaveBeenCalledTimes(1);
+		expect(screen.getByRole('radiogroup')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
+		expect(onCommandGenerated).toHaveBeenCalledTimes(1);
 
 		expect(api.checkInCalled).toBe(false);
 		expect(onClose).not.toHaveBeenCalled();
@@ -138,18 +141,18 @@ describe('GCP AgentSetup form', () => {
 		renderAgentSetup();
 
 		await fillAgentForm(user);
-		await user.click(screen.getByTestId('gcp-generate-commands-btn'));
+		await user.click(screen.getByTestId('gcp-generate-command-btn'));
 
 		await waitFor(() => {
 			expect(screen.getByTestId('gcp-connect-error')).toHaveTextContent(
 				'projectIds must contain only deploymentProjectId for GCP agent setup',
 			);
 		});
-		expect(screen.queryByTestId('gcp-agent-commands')).not.toBeInTheDocument();
-		expect(screen.getByTestId('gcp-generate-commands-btn')).toBeInTheDocument();
+		expect(screen.queryByTestId('gcp-agent-command')).not.toBeInTheDocument();
+		expect(screen.getByTestId('gcp-generate-command-btn')).toBeInTheDocument();
 	});
 
-	it('locks the connection method and keeps the submitted project while commands are generating', async () => {
+	it('locks the connection method and keeps the submitted project while the command is generating', async () => {
 		server.use(
 			rest.post(GCP_ACCOUNTS_URL, (_req, res, ctx) =>
 				res(ctx.delay(300), ctx.status(201), ctx.json(createAgentAccountResponse)),
@@ -159,10 +162,13 @@ describe('GCP AgentSetup form', () => {
 		renderAgentSetup();
 
 		await fillAgentForm(user);
-		await user.click(screen.getByTestId('gcp-generate-commands-btn'));
+		await user.click(screen.getByTestId('gcp-generate-command-btn'));
 
 		await waitFor(() => {
-			expect(screen.getByTestId('gcp-connection-method-manual')).toBeDisabled();
+			expect(screen.getByRole('radiogroup')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 
 		await user.type(
@@ -170,7 +176,7 @@ describe('GCP AgentSetup form', () => {
 			'-edited',
 		);
 
-		const commands = await screen.findByTestId('gcp-agent-commands');
+		const commands = await screen.findByTestId('gcp-agent-command');
 		expect(commands).toHaveTextContent(`signed in to ${DEPLOYMENT_PROJECT_ID}.`);
 		expect(commands).not.toHaveTextContent(`${DEPLOYMENT_PROJECT_ID}-edited`);
 	});

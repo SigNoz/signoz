@@ -27,12 +27,12 @@ describe('GCP AgentSetup connection polling', () => {
 		mockAgentSetupApi();
 	});
 
-	it('waits for the agent after showing the commands', async () => {
+	it('waits for the agent after showing the command', async () => {
 		const user = userEvent.setup();
 		renderAgentSetup();
 
 		await fillAgentForm(user);
-		await user.click(screen.getByTestId('gcp-generate-commands-btn'));
+		await user.click(screen.getByTestId('gcp-generate-command-btn'));
 
 		await screen.findByTestId('gcp-agent-waiting');
 		expect(
@@ -51,7 +51,7 @@ describe('GCP AgentSetup connection polling', () => {
 		renderAgentSetup();
 
 		await fillAgentForm(user);
-		await user.click(screen.getByTestId('gcp-generate-commands-btn'));
+		await user.click(screen.getByTestId('gcp-generate-command-btn'));
 
 		await waitFor(() => {
 			expect(onClose).toHaveBeenCalledTimes(1);
@@ -84,7 +84,7 @@ describe('GCP AgentSetup connection polling', () => {
 			renderAgentSetup();
 
 			await fillAgentForm(user);
-			await user.click(screen.getByTestId('gcp-generate-commands-btn'));
+			await user.click(screen.getByTestId('gcp-generate-command-btn'));
 
 			await screen.findByTestId('gcp-agent-connection-error');
 			expect(onClose).not.toHaveBeenCalled();
@@ -109,7 +109,7 @@ describe('GCP AgentSetup connection polling', () => {
 		renderAgentSetup();
 
 		await fillAgentForm(user);
-		await user.click(screen.getByTestId('gcp-generate-commands-btn'));
+		await user.click(screen.getByTestId('gcp-generate-command-btn'));
 
 		await screen.findByTestId('gcp-agent-connection-error');
 		expect(screen.getByTestId('gcp-check-connection-btn')).toBeInTheDocument();

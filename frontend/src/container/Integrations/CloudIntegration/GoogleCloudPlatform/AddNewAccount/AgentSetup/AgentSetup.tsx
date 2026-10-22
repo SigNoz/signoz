@@ -15,7 +15,7 @@ import SetupDrawerFooter from '../SetupDrawerFooter';
 import SetupGuideCallout from '../SetupGuideCallout';
 import { GcpSetupFormValues } from '../types';
 import { usePrefillCredentials } from '../usePrefillCredentials';
-import AgentSetupCommands from './AgentSetupCommands';
+import AgentSetupCommand from './AgentSetupCommand';
 
 import styles from './AgentSetup.module.scss';
 
@@ -24,7 +24,7 @@ interface AgentSetupProps {
 	onConnectionMethodChange: (
 		connectionMethod: CloudintegrationtypesGCPConnectionMethodDTO,
 	) => void;
-	onCommandsGenerated: () => void;
+	onCommandGenerated: () => void;
 	/** Asks to leave the setup; the parent may confirm before closing. */
 	onCancel: () => void;
 	onClose: () => void;
@@ -33,22 +33,22 @@ interface AgentSetupProps {
 function AgentSetup({
 	footerSlot,
 	onConnectionMethodChange,
-	onCommandsGenerated,
+	onCommandGenerated,
 	onCancel,
 	onClose,
 }: AgentSetupProps): JSX.Element {
 	const {
 		isLoading,
-		generateCommands,
+		generateCommand,
 		connectionParams,
 		isConnectionParamsLoading,
 		submitError,
 		clearSubmitError,
-		connectionCommands,
-		commandsProjectId,
+		connectionCommand,
+		commandProjectId,
 		modalState,
 		checkConnectionAgain,
-	} = useAgentAccountSetup({ onClose, onCommandsGenerated });
+	} = useAgentAccountSetup({ onClose, onCommandGenerated });
 
 	const { control, handleSubmit, setValue } = useForm<GcpSetupFormValues>({
 		defaultValues: DEFAULT_SETUP_FORM_VALUES,
@@ -61,14 +61,14 @@ function AgentSetup({
 			<ConnectionMethodSelector
 				value={CloudintegrationtypesGCPConnectionMethodDTO.agent}
 				onChange={onConnectionMethodChange}
-				disabled={isLoading || Boolean(connectionCommands)}
+				disabled={isLoading || Boolean(connectionCommand)}
 			/>
 			<SetupGuideCallout {...AGENT_SETUP_GUIDE} />
-			{connectionCommands ? (
+			{connectionCommand ? (
 				<>
-					<AgentSetupCommands
-						deploymentProjectId={commandsProjectId}
-						commands={connectionCommands}
+					<AgentSetupCommand
+						deploymentProjectId={commandProjectId}
+						command={connectionCommand}
 					/>
 					{modalState === ModalStateEnum.WAITING && (
 						<Callout
@@ -111,25 +111,26 @@ function AgentSetup({
 			)}
 			<SetupDrawerFooter
 				slot={footerSlot}
-				errorTitle="Failed to generate GCP setup commands"
+				errorTitle="Failed to generate the GCP setup command"
 				error={submitError}
 				onDismissError={clearSubmitError}
 				onCancel={onCancel}
 			>
-				{!connectionCommands && (
+				{!connectionCommand && (
 					<Button
+						size="md"
 						variant="solid"
 						color="primary"
-						onClick={handleSubmit(generateCommands)}
-						loading={isLoading}
-						disabled={isConnectionParamsLoading}
-						testId="gcp-generate-commands-btn"
+						onClick={handleSubmit(generateCommand)}
+						loading={isLoading || isConnectionParamsLoading}
+						testId="gcp-generate-command-btn"
 					>
-						Generate Commands
+						Generate Command
 					</Button>
 				)}
 				{modalState === ModalStateEnum.ERROR && (
 					<Button
+						size="md"
 						variant="solid"
 						color="primary"
 						onClick={checkConnectionAgain}

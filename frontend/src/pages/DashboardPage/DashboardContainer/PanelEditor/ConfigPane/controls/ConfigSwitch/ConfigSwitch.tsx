@@ -34,7 +34,13 @@ function ConfigSwitch({
 				</span>
 				{description && <span className={styles.description}>{description}</span>}
 			</div>
-			<Switch testId={testId} value={value} onChange={onChange} />
+			<Switch
+				color="primary"
+				textPlacement="right"
+				testId={testId}
+				value={value}
+				onChange={onChange}
+			/>
 		</div>
 	);
 }

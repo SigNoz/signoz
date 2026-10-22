@@ -194,39 +194,18 @@ def test_create_gcp_agent_account_connection_command(
         config={"gcp": {"connectionMethod": "agent", "deploymentProjectId": "signoz-agent-project", "deploymentRegion": "us-central1", "projectIds": ["signoz-agent-project"]}},
     )
     artifact = account["connectionArtifact"]["gcp"]
-    service_account_command = artifact["createServiceAccountCommand"]
-    secrets_command = artifact["createSecretsCommand"]
-    deploy_command = artifact["cliCommand"]
+    assert set(artifact) == {"cliCommand"}
 
-    assert "gcloud iam service-accounts create 'signoz-integration-bootstrap'" in service_account_command
-    assert "executor_email='signoz-integration-bootstrap@signoz-agent-project.iam.gserviceaccount.com'" in service_account_command
-    assert "roles/config.agent" in service_account_command
-    assert "--role=roles/secretmanager.admin" in service_account_command
-
-    for prerequisite_command in (service_account_command, secrets_command):
-        assert "project_id='signoz-agent-project'" in prerequisite_command
-        assert "api_secret_id='signoz-integration-api-credentials'" in prerequisite_command
-        assert "ingestion_secret_id='signoz-integration-ingestion-key-credential'" in prerequisite_command
-
-    assert "region='us-central1'" in secrets_command
-    assert 'gcloud secrets create "$api_secret_id"' in secrets_command
-    assert 'gcloud secrets create "$ingestion_secret_id"' in secrets_command
-    assert "--replication-policy=user-managed" in secrets_command
-    assert secrets_command.count("--labels=managed-by=signoz &&") == 2
-    assert """printf '%s' '{"api_key":"test-api-key-789"}'""" in secrets_command
-    assert "printf '%s' 'test-ingestion-key-123456'" in secrets_command
-
-    assert "gcloud infra-manager deployments apply" in deploy_command
-    assert "projects/signoz-agent-project/locations/us-central1/deployments/signoz-integration-bootstrap" in deploy_command
-    assert "--gcs-source='gs://signoz-cloud-integration/gcp/v0.0.8/bootstrap/'" in deploy_command
-    assert "project_id=signoz-agent-project,deployment_region=us-central1" in deploy_command
-    assert f"integration_account_id={account['id']}" in deploy_command
-    assert "api_secret_id=signoz-integration-api-credentials" in deploy_command
-    assert "ingestion_secret_id=signoz-integration-ingestion-key-credential" in deploy_command
-    assert 'api_secret_version="${api_secret_version:-latest}"' in deploy_command
-    assert 'ingestion_secret_version="${ingestion_secret_version:-latest}"' in deploy_command
-    assert "test-api-key-789" not in deploy_command
-    assert "test-ingestion-key-123456" not in deploy_command
+    command = artifact["cliCommand"]
+    assert command.startswith("curl -fsSL 'https://signoz.io/foundry.sh' | bash -s -- cloudintegration gcp terraform")
+    assert "--region 'us-central1'" in command
+    assert "--gcp-project 'signoz-agent-project'" in command
+    assert f"--account-id '{account['id']}'" in command
+    assert "--signoz-api-url 'https://test-deployment.test.signoz.cloud'" in command
+    assert "--signoz-api-key 'test-api-key-789'" in command
+    assert "--ingestion-url 'https://ingest.test.signoz.cloud'" in command
+    assert "--ingestion-key 'test-ingestion-key-123456'" in command
+    assert "--agent-version 'v0.0.8'" in command
 
 
 def test_create_account_unsupported_provider(

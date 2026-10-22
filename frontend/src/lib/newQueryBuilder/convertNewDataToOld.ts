@@ -25,11 +25,16 @@ export const convertNewDataToOld = (
 					return [...acc, renderValues];
 				}, []);
 
+				const partialTimestamps = series.values
+					.filter((value) => value.partial)
+					.map((value) => value.timestamp / 1000);
+
 				const result: QueryData = {
 					metric: series.labels,
 					values,
 					queryName: `${item.queryName}`,
 					metaData: series.metaData,
+					...(partialTimestamps.length ? { partialTimestamps } : {}),
 				};
 
 				oldResult.push(result);

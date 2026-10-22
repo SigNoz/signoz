@@ -5,7 +5,6 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { MemoryRouter as MemoryRouterV5 } from 'react-router-dom-v5-compat';
 import { VirtuosoMockContext } from 'react-virtuoso';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { InfraMonitoringEvents } from 'constants/events';
@@ -204,12 +203,10 @@ function renderComponent<
 									<VirtuosoMockContext.Provider
 										value={{ viewportHeight: 800, itemHeight: 50 }}
 									>
-										<TooltipProvider>
-											<K8sBaseList<T, TItemKey>
-												{...props}
-												detailsQueryKeyPrefix={detailsQueryKeyPrefix}
-											/>
-										</TooltipProvider>
+										<K8sBaseList<T, TItemKey>
+											{...props}
+											detailsQueryKeyPrefix={detailsQueryKeyPrefix}
+										/>
 									</VirtuosoMockContext.Provider>
 								</NuqsTestingAdapter>
 							</Provider>

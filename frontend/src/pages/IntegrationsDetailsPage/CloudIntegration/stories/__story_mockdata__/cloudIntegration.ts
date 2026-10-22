@@ -366,40 +366,17 @@ export const accountResponse = (
 	};
 };
 
-/** The shape of the backend's command templates, for the story's project and region. */
-const GCP_AGENT_COMMANDS = {
-	createSecretsCommand: `project_id='signoz-prod-4471'
-region='us-central1'
-api_secret_id='signoz-integration-api-credentials'
-ingestion_secret_id='signoz-integration-ingestion-key-credential'
-
-gcloud services enable config.googleapis.com cloudbuild.googleapis.com \\
-  storage.googleapis.com iam.googleapis.com secretmanager.googleapis.com \\
-  --project="$project_id" &&
-sleep 60 &&
-
-gcloud secrets create "$api_secret_id" \\
-  --project="$project_id" --replication-policy=user-managed \\
-  --locations="$region" --labels=managed-by=signoz`,
-	createServiceAccountCommand: `project_id='signoz-prod-4471'
-executor_email='signoz-integration-bootstrap@signoz-prod-4471.iam.gserviceaccount.com'
-
-gcloud iam service-accounts create 'signoz-integration-bootstrap' \\
-  --project="$project_id" --display-name="SigNoz bootstrap executor"
-
-for executor_role in roles/config.agent roles/iam.serviceAccountUser roles/run.admin
-do
-  gcloud projects add-iam-policy-binding "$project_id" \\
-    --member="serviceAccount:\${executor_email}" --role="$executor_role" \\
-    --condition=None
-done`,
-	cliCommand: `gcloud infra-manager deployments apply \\
-  'projects/signoz-prod-4471/locations/us-central1/deployments/signoz-integration-bootstrap' \\
-  --project='signoz-prod-4471' \\
-  --service-account='projects/signoz-prod-4471/serviceAccounts/signoz-integration-bootstrap@signoz-prod-4471.iam.gserviceaccount.com' \\
-  --gcs-source='gs://signoz-cloud-integration/gcp/v0.0.8/bootstrap/' \\
-  --tf-version-constraint='=1.5.7' \\
-  --input-values='project_id=signoz-prod-4471,deployment_region=us-central1,integration_account_id=gcp-account-new'`,
+/** The backend's command template, filled in for the story's project and region. */
+const GCP_AGENT_COMMAND = {
+	cliCommand: `curl -fsSL 'https://signoz.io/foundry.sh' | bash -s -- cloudintegration gcp terraform \\
+  --region 'us-central1' \\
+  --gcp-project 'signoz-prod-4471' \\
+  --account-id 'gcp-account-new' \\
+  --signoz-api-url 'https://story.us.signoz.cloud' \\
+  --signoz-api-key 'story-api-key-8b7d02' \\
+  --ingestion-url 'https://ingest.us.signoz.cloud:443' \\
+  --ingestion-key 'story-ingestion-key-2f9c41' \\
+  --agent-version 'v0.0.8'`,
 };
 
 export const newAccountId = (provider: CloudProvider): string =>
@@ -638,7 +615,7 @@ export const credentialsResponse = (): GetConnectionCredentials200 => ({
 /**
  * The connection URL is what the setup flow opens in a new tab, which the story
  * reports through the navigation overlay rather than following. GCP returns its
- * setup commands only for an agent connection; a manual one gets none.
+ * setup command only for an agent connection; a manual one gets none.
  */
 export const createdAccountResponse = (
 	provider: CloudProvider,
@@ -659,7 +636,7 @@ export const createdAccountResponse = (
 			},
 			...(gcpConnectionMethod ===
 				CloudintegrationtypesGCPConnectionMethodDTO.agent && {
-				gcp: GCP_AGENT_COMMANDS,
+				gcp: GCP_AGENT_COMMAND,
 			}),
 		},
 	},

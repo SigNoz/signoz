@@ -64,7 +64,7 @@ describe('CheckboxFilterV2ValueRow', () => {
 			render(
 				<CheckboxFilterV2ValueRow
 					{...defaultProps}
-					badge={{ key: 'related', label: 'Related', color: 'robin' }}
+					badge={{ key: 'related', label: 'Related', color: 'primary' }}
 				/>,
 			);
 

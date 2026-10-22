@@ -13,7 +13,7 @@ import {
 	connectAzureAccount,
 	connectGcpAccount,
 	expectToast,
-	generateGcpAgentCommands,
+	generateGcpAgentCommand,
 	openConnectFlow,
 	openEditAccount,
 	openGcpAgentSetup,
@@ -269,15 +269,15 @@ export const GcpAgentSetup: Story = {
 };
 
 /**
- * The setup commands the agent connection generates, one step open at a time,
- * with the drawer waiting for the agent to check in. Set New account check-in to
+ * The setup command the agent connection generates, with the drawer waiting for
+ * the agent to check in. Set New account check-in to
  * `checked-in` or `error` to see it connect or fail.
  */
-export const GcpAgentCommands: Story = {
+export const GcpAgentCommand: Story = {
 	args: { provider: 'gcp', accounts: 0, newAccountCheckIn: 'pending' },
 	play: async ({ canvasElement }): Promise<void> => {
-		await generateGcpAgentCommands(canvasElement);
-		await screen.findByTestId('gcp-agent-commands', undefined, untilLoaded);
+		await generateGcpAgentCommand(canvasElement);
+		await screen.findByTestId('gcp-agent-command', undefined, untilLoaded);
 	},
 };
 
@@ -285,7 +285,7 @@ export const GcpAgentCommands: Story = {
 export const GcpAgentConnectedToast: Story = {
 	args: { provider: 'gcp', accounts: 0, newAccountCheckIn: 'checked-in' },
 	play: async ({ canvasElement, args }): Promise<void> => {
-		await generateGcpAgentCommands(canvasElement);
+		await generateGcpAgentCommand(canvasElement);
 		if (args.newAccountCheckIn === 'checked-in') {
 			await expectToast(/gcp account connected successfully/i);
 		}
@@ -299,7 +299,7 @@ export const GcpAgentConnectedToast: Story = {
 export const GcpAgentConnectionError: Story = {
 	args: { provider: 'gcp', accounts: 0, newAccountCheckIn: 'error' },
 	play: async ({ canvasElement }): Promise<void> => {
-		await generateGcpAgentCommands(canvasElement);
+		await generateGcpAgentCommand(canvasElement);
 		await screen.findByTestId(
 			'gcp-agent-connection-error',
 			undefined,
@@ -315,7 +315,7 @@ export const GcpAgentConnectionError: Story = {
 export const GcpAgentCloseConfirm: Story = {
 	args: { provider: 'gcp', accounts: 0, newAccountCheckIn: 'pending' },
 	play: async ({ canvasElement }): Promise<void> => {
-		await generateGcpAgentCommands(canvasElement);
+		await generateGcpAgentCommand(canvasElement);
 		await userEvent.click(
 			await screen.findByTestId('gcp-cancel-btn', undefined, untilLoaded),
 		);

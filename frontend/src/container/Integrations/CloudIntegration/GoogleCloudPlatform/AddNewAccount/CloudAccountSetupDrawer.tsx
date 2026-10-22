@@ -16,12 +16,12 @@ function CloudAccountSetupDrawer({
 		useState<CloudintegrationtypesGCPConnectionMethodDTO>(
 			CloudintegrationtypesGCPConnectionMethodDTO.manual,
 		);
-	// Set once agent commands exist; closing after that loses the pending setup.
-	const [hasGeneratedCommands, setHasGeneratedCommands] = useState(false);
+	// Set once the agent command exists; closing after that loses the pending setup.
+	const [hasGeneratedCommand, setHasGeneratedCommand] = useState(false);
 	const [isCloseConfirmOpen, setIsCloseConfirmOpen] = useState(false);
 
 	const requestClose = (): void => {
-		if (hasGeneratedCommands) {
+		if (hasGeneratedCommand) {
 			setIsCloseConfirmOpen(true);
 			return;
 		}
@@ -36,7 +36,7 @@ function CloudAccountSetupDrawer({
 						<AgentSetup
 							footerSlot={footerSlot}
 							onConnectionMethodChange={setConnectionMethod}
-							onCommandsGenerated={(): void => setHasGeneratedCommands(true)}
+							onCommandGenerated={(): void => setHasGeneratedCommand(true)}
 							onCancel={requestClose}
 							onClose={onClose}
 						/>
@@ -57,14 +57,16 @@ function CloudAccountSetupDrawer({
 				footer={
 					<>
 						<Button
-							variant="outlined"
-							color="destructive"
+							size="md"
+							variant="solid"
+							color="highlight-danger"
 							onClick={onClose}
 							testId="gcp-close-setup-btn"
 						>
 							Close Setup
 						</Button>
 						<Button
+							size="md"
 							variant="solid"
 							color="primary"
 							onClick={(): void => setIsCloseConfirmOpen(false)}
@@ -77,7 +79,7 @@ function CloudAccountSetupDrawer({
 			>
 				<Typography>
 					The agent has not connected yet. If you close now, you will have to start
-					the installation process again with new setup commands.
+					the installation process again with a new setup command.
 				</Typography>
 			</DialogWrapper>
 		</>

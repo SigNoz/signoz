@@ -2,10 +2,12 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
 import { Check, ChevronDown, Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
+import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { Input } from '@signozhq/ui/input';
-import { useListServiceAccounts } from 'api/generated/services/serviceaccount';
-import { invalidateListServiceAccounts } from 'api/generated/services/serviceaccount';
+import {
+	invalidateListServiceAccounts,
+	useListServiceAccounts,
+} from 'api/generated/services/serviceaccount';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
@@ -136,9 +138,10 @@ function ServiceAccountsSettings(): JSX.Element {
 
 	const totalCount = allAccounts.length;
 
-	const filterMenuItems: MenuItem[] = [
+	const filterMenuItems: DropdownItemType[] = [
 		{
-			key: FilterMode.All,
+			type: 'item',
+			value: FilterMode.All,
 			label: (
 				<div className="sa-settings-filter-option">
 					<span>All accounts ⎯ {totalCount}</span>
@@ -151,7 +154,8 @@ function ServiceAccountsSettings(): JSX.Element {
 			},
 		},
 		{
-			key: FilterMode.Active,
+			type: 'item',
+			value: FilterMode.Active,
 			label: (
 				<div className="sa-settings-filter-option">
 					<span>Active ⎯ {activeCount}</span>
@@ -164,7 +168,8 @@ function ServiceAccountsSettings(): JSX.Element {
 			},
 		},
 		{
-			key: FilterMode.Deleted,
+			type: 'item',
+			value: FilterMode.Deleted,
 			label: (
 				<div className="sa-settings-filter-option">
 					<span>Deleted ⎯ {deletedCount}</span>
@@ -230,28 +235,32 @@ function ServiceAccountsSettings(): JSX.Element {
 				<div className="sa-settings__controls">
 					<AuthZTooltip checks={[SAListPermission]}>
 						<span>
-							<DropdownMenuSimple
-								menu={{ items: filterMenuItems }}
-								className="sa-settings-filter-dropdown"
-							>
+							<Dropdown items={filterMenuItems} nativeButton align="end" side="bottom">
 								<Button
+									size="md"
 									variant="solid"
 									color="secondary"
-									className="sa-settings-filter-trigger"
-									disabled={controlsDisabled}
+									loading={isAuthZLoading}
+									disabled={!canListServiceAccounts}
+									disabledTooltip={undefined}
+									suffix={
+										<ChevronDown
+											size={12}
+											className="sa-settings-filter-trigger__chevron"
+										/>
+									}
 								>
 									<span>{filterLabel}</span>
-									<ChevronDown
-										size={12}
-										className="sa-settings-filter-trigger__chevron"
-									/>
 								</Button>
-							</DropdownMenuSimple>
+							</Dropdown>
 						</span>
 					</AuthZTooltip>
 
 					<div className="sa-settings__search">
-						<AuthZTooltip checks={[SAListPermission]}>
+						<AuthZTooltip
+							checks={[SAListPermission]}
+							triggerClassName="sa-settings__search-trigger"
+						>
 							<Input
 								type="search"
 								name="service-accounts-search"
@@ -268,14 +277,15 @@ function ServiceAccountsSettings(): JSX.Element {
 					</div>
 
 					<AuthZButton
+						size="md"
 						checks={[SACreatePermission]}
 						variant="solid"
 						color="primary"
 						onClick={async (): Promise<void> => {
 							await setIsCreateModalOpen(true);
 						}}
+						prefix={<Plus size={12} />}
 					>
-						<Plus size={12} />
 						New Service Account
 					</AuthZButton>
 				</div>

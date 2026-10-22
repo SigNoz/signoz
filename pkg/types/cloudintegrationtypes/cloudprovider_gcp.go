@@ -2,8 +2,6 @@ package cloudintegrationtypes
 
 import (
 	"bytes"
-	"encoding/json"
-	"fmt"
 	"slices"
 	"strings"
 	"text/template"
@@ -16,20 +14,13 @@ var (
 	GCPConnectionMethodManual = GCPConnectionMethod{valuer.NewString("manual")}
 	GCPConnectionMethodAgent  = GCPConnectionMethod{valuer.NewString("agent")}
 
-	// TODO: Confirm the published bootstrap module location before release.
-	AgentGCPTerraformModuleStorePath = "gs://signoz-cloud-integration/gcp/%s/bootstrap/"
-	AgentGCPBootstrapDeploymentName  = "signoz-integration-bootstrap"
-	gcpBootstrapExecutorName         = "signoz-integration-bootstrap"
-	gcpAPISecretID                   = "signoz-integration-api-credentials"
-	gcpIngestionSecretID             = "signoz-integration-ingestion-key-credential"
+	foundryScriptURL = "https://signoz.io/foundry.sh"
 
 	gcpCLITemplate = template.Must(template.New("gcpCLI").Funcs(template.FuncMap{
 		"shellQuote": func(value string) string {
 			return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'"
 		},
 	}).Parse(gcpCLITemplateStr()))
-	gcpCreateServiceAccountTemplate = template.Must(gcpCLITemplate.New("gcpCreateServiceAccount").Parse(gcpCreateServiceAccountTemplateStr()))
-	gcpCreateSecretsTemplate        = template.Must(gcpCLITemplate.New("gcpCreateSecrets").Parse(gcpCreateSecretsTemplateStr()))
 )
 
 type GCPConnectionMethod struct{ valuer.String }
@@ -69,9 +60,7 @@ type UpdatableGCPAccountConfig struct {
 }
 
 type GCPConnectionArtifact struct {
-	CLICommand                  string `json:"cliCommand" required:"true"`
-	CreateSecretsCommand        string `json:"createSecretsCommand" required:"true"`
-	CreateServiceAccountCommand string `json:"createServiceAccountCommand" required:"true"`
+	CLICommand string `json:"cliCommand" required:"true"`
 }
 
 type GCPIntegrationConfig struct {
@@ -80,8 +69,8 @@ type GCPIntegrationConfig struct {
 }
 
 type GCPTelemetryCollectionStrategy struct {
-	Metrics *GCPMetricsCollectionStrategy `json:"metrics,omitempty" required:"false" nullable:"false"`
-	Logs    *GCPLogsCollectionStrategy    `json:"logs,omitempty" required:"false" nullable:"false"`
+	Metrics *GCPMetricsCollectionStrategy `json:"metrics" required:"true" nullable:"true"`
+	Logs    *GCPLogsCollectionStrategy    `json:"logs" required:"true" nullable:"true"`
 }
 
 type GCPMetricsCollectionStrategy struct {
@@ -89,6 +78,7 @@ type GCPMetricsCollectionStrategy struct {
 }
 
 type GCPLogsCollectionStrategy struct {
+	// Cloud Logging filter for the log sink, https://cloud.google.com/logging/docs/view/logging-query-language
 	SinkFilter string `json:"sinkFilter" required:"true"`
 }
 
@@ -128,48 +118,22 @@ func (config *GCPAccountConfig) ErrIfInvalid() error {
 }
 
 func NewGCPConnectionArtifact(accountID valuer.UUID, agentVersion string, creds *Credentials, cfg *GCPAccountConfig) (*GCPConnectionArtifact, error) {
-	apiSecretJSON, err := json.Marshal(map[string]string{"api_key": creds.SigNozAPIKey})
-	if err != nil {
-		return nil, err
-	}
-
-	executorEmail := fmt.Sprintf("%s@%s.iam.gserviceaccount.com", gcpBootstrapExecutorName, cfg.DeploymentProjectID)
 	data := gcpTemplateData{
-		DeploymentName:    fmt.Sprintf("projects/%s/locations/%s/deployments/%s", cfg.DeploymentProjectID, cfg.DeploymentRegion, AgentGCPBootstrapDeploymentName),
-		ProjectID:         cfg.DeploymentProjectID,
-		Region:            cfg.DeploymentRegion,
-		ServiceAccount:    fmt.Sprintf("projects/%s/serviceAccounts/%s", cfg.DeploymentProjectID, executorEmail),
-		ExecutorName:      gcpBootstrapExecutorName,
-		ExecutorEmail:     executorEmail,
-		APISecretID:       gcpAPISecretID,
-		IngestionSecretID: gcpIngestionSecretID,
-		APISecretJSON:     string(apiSecretJSON),
-		IngestionKey:      creds.IngestionKey,
-		ModuleURL:         fmt.Sprintf(AgentGCPTerraformModuleStorePath, agentVersion),
-		InputValues: fmt.Sprintf(
-			"project_id=%s,deployment_region=%s,integration_account_id=%s,signoz_api_url=%s,ingestion_url=%s,"+
-				"api_secret_id=%s,ingestion_secret_id=%s",
-			cfg.DeploymentProjectID, cfg.DeploymentRegion, accountID.StringValue(), creds.SigNozAPIURL, creds.IngestionURL, gcpAPISecretID, gcpIngestionSecretID,
-		),
+		FoundryScriptURL: foundryScriptURL,
+		ProjectID:        cfg.DeploymentProjectID,
+		Region:           cfg.DeploymentRegion,
+		AccountID:        accountID.StringValue(),
+		AgentVersion:     agentVersion,
+		Credentials:      creds,
 	}
 
-	cliCommand, err := newGCPConnectionCommand(gcpCLITemplate, data)
-	if err != nil {
-		return nil, err
-	}
-	createServiceAccountCommand, err := newGCPConnectionCommand(gcpCreateServiceAccountTemplate, data)
-	if err != nil {
-		return nil, err
-	}
-	createSecretsCommand, err := newGCPConnectionCommand(gcpCreateSecretsTemplate, data)
-	if err != nil {
+	var command bytes.Buffer
+	if err := gcpCLITemplate.Execute(&command, data); err != nil {
 		return nil, err
 	}
 
 	return &GCPConnectionArtifact{
-		CLICommand:                  cliCommand,
-		CreateServiceAccountCommand: createServiceAccountCommand,
-		CreateSecretsCommand:        createSecretsCommand,
+		CLICommand: command.String(),
 	}, nil
 }
 
@@ -201,102 +165,24 @@ func NewGCPIntegrationConfig(config *GCPAccountConfig, metricNames, sinkFilters 
 }
 
 type gcpTemplateData struct {
-	DeploymentName    string
-	ProjectID         string
-	Region            string
-	ServiceAccount    string
-	ExecutorName      string
-	ExecutorEmail     string
-	APISecretID       string
-	IngestionSecretID string
-	APISecretJSON     string
-	IngestionKey      string
-	ModuleURL         string
-	InputValues       string
-}
-
-func newGCPConnectionCommand(commandTemplate *template.Template, data gcpTemplateData) (string, error) {
-	var buf bytes.Buffer
-	if err := commandTemplate.Execute(&buf, data); err != nil {
-		return "", err
-	}
-	return buf.String(), nil
+	FoundryScriptURL string
+	ProjectID        string
+	Region           string
+	AccountID        string
+	AgentVersion     string
+	Credentials      *Credentials
 }
 
 func gcpCLITemplateStr() string {
-	return `gcloud infra-manager deployments apply \
-  {{.DeploymentName | shellQuote}} \
-  --project={{.ProjectID | shellQuote}} \
-  --service-account={{.ServiceAccount | shellQuote}} \
-  --gcs-source={{.ModuleURL | shellQuote}} \
-  --tf-version-constraint='=1.5.7' \
-  --input-values={{.InputValues | shellQuote}},api_secret_version="${api_secret_version:-latest}",ingestion_secret_version="${ingestion_secret_version:-latest}"`
-}
-
-func gcpCreateServiceAccountTemplateStr() string {
-	return `project_id={{.ProjectID | shellQuote}}
-executor_email={{.ExecutorEmail | shellQuote}}
-api_secret_id={{.APISecretID | shellQuote}}
-ingestion_secret_id={{.IngestionSecretID | shellQuote}}
-caller_email=$(gcloud config get-value account)
-
-gcloud iam service-accounts create {{.ExecutorName | shellQuote}} \
-  --project="$project_id" --display-name="SigNoz bootstrap executor"
-
-for executor_role in \
-  roles/config.agent \
-  roles/serviceusage.serviceUsageAdmin \
-  roles/resourcemanager.projectIamAdmin \
-  roles/iam.serviceAccountAdmin \
-  roles/iam.serviceAccountUser \
-  roles/run.admin \
-  roles/pubsub.admin \
-  roles/logging.configWriter
-do
-  gcloud projects add-iam-policy-binding "$project_id" \
-    --member="serviceAccount:${executor_email}" --role="$executor_role" \
-    --condition=None
-done
-
-for secret_id in "$api_secret_id" "$ingestion_secret_id"
-do
-  gcloud secrets add-iam-policy-binding "$secret_id" \
-    --project="$project_id" --member="serviceAccount:${executor_email}" \
-    --role=roles/secretmanager.admin --condition=None
-done
-
-gcloud iam service-accounts add-iam-policy-binding "$executor_email" \
-  --project="$project_id" --member="user:${caller_email}" \
-  --role=roles/iam.serviceAccountUser --condition=None`
-}
-
-func gcpCreateSecretsTemplateStr() string {
-	return `project_id={{.ProjectID | shellQuote}}
-region={{.Region | shellQuote}}
-api_secret_id={{.APISecretID | shellQuote}}
-ingestion_secret_id={{.IngestionSecretID | shellQuote}}
-
-gcloud services enable config.googleapis.com cloudbuild.googleapis.com \
-  storage.googleapis.com iam.googleapis.com serviceusage.googleapis.com \
-  cloudresourcemanager.googleapis.com secretmanager.googleapis.com \
-  --project="$project_id" &&
-sleep 60 &&
-
-gcloud secrets create "$api_secret_id" \
-  --project="$project_id" --replication-policy=user-managed \
-  --locations="$region" --labels=managed-by=signoz &&
-
-gcloud secrets create "$ingestion_secret_id" \
-  --project="$project_id" --replication-policy=user-managed \
-  --locations="$region" --labels=managed-by=signoz &&
-
-api_secret_version=$(printf '%s' {{.APISecretJSON | shellQuote}} | \
-  gcloud secrets versions add "$api_secret_id" \
-    --project="$project_id" --data-file=- --format='value(name.basename())') &&
-
-ingestion_secret_version=$(printf '%s' {{.IngestionKey | shellQuote}} | \
-  gcloud secrets versions add "$ingestion_secret_id" \
-    --project="$project_id" --data-file=- --format='value(name.basename())')`
+	return `curl -fsSL {{.FoundryScriptURL | shellQuote}} | bash -s -- cloudintegration gcp terraform \
+  --region {{.Region | shellQuote}} \
+  --gcp-project {{.ProjectID | shellQuote}} \
+  --account-id {{.AccountID | shellQuote}} \
+  --signoz-api-url {{.Credentials.SigNozAPIURL | shellQuote}} \
+  --signoz-api-key {{.Credentials.SigNozAPIKey | shellQuote}} \
+  --ingestion-url {{.Credentials.IngestionURL | shellQuote}} \
+  --ingestion-key {{.Credentials.IngestionKey | shellQuote}} \
+  --agent-version {{.AgentVersion | shellQuote}}`
 }
 
 func validateGCPDeploymentProjectID(projectID string) error {

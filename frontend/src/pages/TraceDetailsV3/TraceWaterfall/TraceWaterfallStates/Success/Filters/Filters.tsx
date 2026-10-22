@@ -1,31 +1,27 @@
-import { useCallback, useRef, useState } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import { ArrowRightFromLine, Search, X } from '@signozhq/icons';
 import { Switch } from '@signozhq/ui/switch';
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Button } from '@signozhq/ui/button';
-import {
-	TooltipRoot,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
-import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
-import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { uniqBy } from 'lodash-es';
+import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 import NozButton from 'pages/TraceDetailsV3/TraceDetailsHeader/NozButton';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	DataSource,
 	TracesAggregatorOperator,
 } from 'types/common/queryBuilder';
+import { extractQueryPairs } from 'utils/queryContextUtils';
+import { validateQuery } from 'utils/queryValidationUtils';
 
 import { BASE_FILTER_QUERY } from './constants';
 import { useHighlightErrors } from './hooks/useHighlightErrors';
@@ -37,7 +33,7 @@ import QueryResult from './QueryResult';
 
 import styles from './Filters.module.scss';
 
-function prepareQuery(filters: TagFilter, traceID: string): Query {
+function prepareQuery(expression: string, traceID: string): Query {
 	return {
 		...initialQueriesMap.traces,
 		builder: {
@@ -47,23 +43,7 @@ function prepareQuery(filters: TagFilter, traceID: string): Query {
 					...initialQueriesMap.traces.builder.queryData[0],
 					aggregateOperator: TracesAggregatorOperator.NOOP,
 					orderBy: [{ columnName: 'timestamp', order: 'asc' }],
-					filters: {
-						...filters,
-						items: [
-							...filters.items,
-							{
-								id: '5ab8e1cf',
-								key: {
-									key: 'trace_id',
-									dataType: DataTypes.String,
-									type: '',
-									id: 'trace_id--string----true',
-								},
-								op: '=',
-								value: traceID,
-							},
-						],
-					},
+					filter: { expression: `(${expression}) AND trace_id = '${traceID}'` },
 					selectColumns: [],
 				},
 			],
@@ -88,10 +68,8 @@ function Filters({
 	onExpand: () => void;
 	onCollapse: () => void;
 }): JSX.Element {
-	const [filters, setFilters] = useState<TagFilter>(
-		BASE_FILTER_QUERY.filters || { items: [], op: 'AND' },
-	);
 	const [expression, setExpression] = useState<string>('');
+	const [committedExpression, setCommittedExpression] = useState<string>('');
 	const [noData, setNoData] = useState<boolean>(false);
 	const [filteredSpanIds, setFilteredSpanIds] = useState<string[]>([]);
 	const [currentSearchedIndex, setCurrentSearchedIndex] = useState<number>(0);
@@ -100,10 +78,12 @@ function Filters({
 
 	const runQuery = useCallback(
 		(value: string): void => {
-			const items = convertExpressionToFilters(value);
-			setFilters({ items, op: 'AND' });
-			// Clear results when expression produces no filters
-			if (items.length === 0) {
+			if (!validateQuery(value).isValid) {
+				return;
+			}
+			setCommittedExpression(value);
+			// Clear results when expression is empty
+			if (!value.trim()) {
 				setFilteredSpanIds([]);
 				onFilteredSpansChange?.([], false);
 				setCurrentSearchedIndex(0);
@@ -120,7 +100,7 @@ function Filters({
 			expressionRef.current = value;
 			// Clear results when expression is emptied
 			if (!value.trim()) {
-				setFilters({ items: [], op: 'AND' });
+				setCommittedExpression('');
 				setFilteredSpanIds([]);
 				onFilteredSpansChange?.([], false);
 				setCurrentSearchedIndex(0);
@@ -146,17 +126,22 @@ function Filters({
 	const handleClear = useCallback((): void => {
 		setExpression('');
 		expressionRef.current = '';
-		setFilters({ items: [], op: 'AND' });
+		setCommittedExpression('');
 		setFilteredSpanIds([]);
 		onFilteredSpansChange?.([], false);
 		setCurrentSearchedIndex(0);
 		setNoData(false);
 	}, [onFilteredSpansChange]);
 
+	const committedPairs = useMemo(
+		() => extractQueryPairs(committedExpression),
+		[committedExpression],
+	);
+
 	// Expression-based filter hooks
 	const filterProps = {
 		expression,
-		filters,
+		committedPairs,
 		setExpression,
 		expressionRef,
 		runQuery,
@@ -179,12 +164,11 @@ function Filters({
 	const { selectedCategory, categories, handleCategoryChange } =
 		useSpanCategoryFilter(filterProps);
 
-	const { search } = useLocation();
 	const history = useHistory();
 
 	const handlePrevNext = useCallback(
 		(index: number, spanId?: string): void => {
-			const searchParams = new URLSearchParams(search);
+			const searchParams = getUnstableCurrentSearchParams();
 			if (spanId) {
 				searchParams.set('spanId', spanId);
 			} else {
@@ -193,12 +177,14 @@ function Filters({
 
 			history.replace({ search: searchParams.toString() });
 		},
-		[filteredSpanIds, history, search],
+		[filteredSpanIds, history],
 	);
+
+	const isFilterActive = committedExpression.trim().length > 0;
 
 	const { isFetching, error } = useGetQueryRange(
 		{
-			query: prepareQuery(filters, traceID),
+			query: prepareQuery(committedExpression, traceID),
 			graphType: PANEL_TYPES.LIST,
 			selectedTime: 'GLOBAL_TIME',
 			start: startTime,
@@ -222,12 +208,11 @@ function Filters({
 				],
 			},
 		},
-		DEFAULT_ENTITY_VERSION,
+		ENTITY_VERSION_V5,
 		{
-			queryKey: [filters],
-			enabled: filters.items.length > 0,
+			queryKey: [committedExpression, traceID, startTime, endTime],
+			enabled: isFilterActive,
 			onSuccess: (data) => {
-				const isFilterActive = filters.items.length > 0;
 				if (data?.payload.data.newResult.data.result[0].list) {
 					const uniqueSpans = uniqBy(
 						data?.payload.data.newResult.data.result[0].list,
@@ -247,7 +232,6 @@ function Filters({
 				}
 			},
 			onError: () => {
-				const isFilterActive = filters.items.length > 0;
 				setNoData(false);
 				setFilteredSpanIds([]);
 				onFilteredSpansChange?.([], isFilterActive);
@@ -263,7 +247,8 @@ function Filters({
 		>
 			<Typography.Text>Highlight errors</Typography.Text>
 			<Switch
-				color="cherry"
+				textPlacement="right"
+				color="danger"
 				value={isHighlightErrors}
 				onChange={handleToggleHighlightErrors}
 			/>
@@ -292,21 +277,24 @@ function Filters({
 		</div>
 	);
 
-	const pillWithPopover = expression ? (
-		<TooltipRoot>
-			<TooltipTrigger asChild>{pill}</TooltipTrigger>
-			<TooltipContent side="bottom" align="start">
-				<div className={styles.pillPopover}>
-					<div className={styles.pillPopoverHeader}>
-						<Typography.Text>Search query</Typography.Text>
-						<CopyButton value={expression} size={12} />
+	const pillWithPopover = (
+		<Tooltip
+			title={
+				expression ? (
+					<div className={styles.pillPopover}>
+						<div className={styles.pillPopoverHeader}>
+							<Typography.Text>Search query</Typography.Text>
+							<CopyButton value={expression} size={12} />
+						</div>
+						<div className={styles.pillPopoverExpression}>{expression}</div>
 					</div>
-					<div className={styles.pillPopoverExpression}>{expression}</div>
-				</div>
-			</TooltipContent>
-		</TooltipRoot>
-	) : (
-		pill
+				) : undefined
+			}
+			side="bottom"
+			align="start"
+		>
+			{pill}
+		</Tooltip>
 	);
 
 	// Mode-conditional render: only one of (pill | QuerySearch) is mounted
@@ -314,112 +302,110 @@ function Filters({
 	// dropped, so collapse can't accidentally commit a malformed expression
 	// and fire an erroring /query_range request.
 	return (
-		<TooltipProvider>
-			{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
-			<div
-				className={cx(styles.root, isExpanded && styles.isExpanded)}
-				ref={containerRef}
-				onBlur={(e): void => {
-					const relatedTarget = e.relatedTarget as Node | null;
-					const blurredIntoSelf = !!containerRef.current?.contains(relatedTarget);
-					if (!blurredIntoSelf) {
-						handleBlur();
-					}
-				}}
-			>
+		// eslint-disable-next-line jsx-a11y/no-static-element-interactions
+		<div
+			className={cx(styles.root, isExpanded && styles.isExpanded)}
+			ref={containerRef}
+			onBlur={(e): void => {
+				const relatedTarget = e.relatedTarget as Node | null;
+				const blurredIntoSelf = !!containerRef.current?.contains(relatedTarget);
+				if (!blurredIntoSelf) {
+					handleBlur();
+				}
+			}}
+		>
+			{isExpanded && (
+				<div className={styles.categoryControls}>
+					<ToggleGroup
+						variant="outlined"
+						color="secondary"
+						type="single"
+						value={selectedCategory}
+						onChange={(value: string): void => {
+							if (value) {
+								handleCategoryChange(value as SpanCategory);
+							}
+						}}
+						size="sm"
+						items={categories.map((category) => ({
+							value: category,
+							label: category,
+						}))}
+					/>
+				</div>
+			)}
+
+			<div className={styles.searchInput}>
+				{isExpanded ? (
+					<div className={styles.searchAndNav}>
+						<div className={styles.searchContainer}>
+							<QuerySearch
+								queryData={{
+									...BASE_FILTER_QUERY,
+									filter: { expression },
+								}}
+								onChange={handleExpressionChange}
+								onRun={handleRunQuery}
+								dataSource={DataSource.TRACES}
+								placeholder="Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')"
+							/>
+						</div>
+					</div>
+				) : (
+					<div className={styles.searchPill}>{pillWithPopover}</div>
+				)}
+			</div>
+
+			<div className={styles.resultActions}>
+				<QueryResult
+					hasExpression={hasExpression}
+					hasResults={hasResults}
+					isFetching={isFetching}
+					error={error}
+					noData={noData}
+					currentIndex={currentSearchedIndex}
+					total={filteredSpanIds.length}
+					onPrev={handlePrev}
+					onNext={handleNext}
+					showNavigation={isExpanded}
+				/>
 				{isExpanded && (
-					<div className={styles.categoryControls}>
-						<ToggleGroupSimple
-							type="single"
-							value={selectedCategory}
-							onChange={(value: SpanCategory): void => {
-								if (value) {
-									handleCategoryChange(value as SpanCategory);
-								}
-							}}
-							size="sm"
-							items={categories.map((category) => ({
-								value: category,
-								label: category,
-							}))}
-						/>
+					<div className={styles.expandedActions}>
+						{hasExpression && (
+							<Tooltip title="Clear filter">
+								<Button
+									aria-label="Action"
+									variant="ghost"
+									size="sm"
+									icon
+									color="secondary"
+									onClick={handleClear}
+									testId="clear-filter"
+								>
+									<X size={14} />
+								</Button>
+							</Tooltip>
+						)}
+						<Tooltip title="Collapse filters">
+							<Button
+								aria-label="Action"
+								variant="ghost"
+								size="sm"
+								icon
+								color="secondary"
+								onClick={onCollapse}
+							>
+								<ArrowRightFromLine size={14} />
+							</Button>
+						</Tooltip>
 					</div>
 				)}
-
-				<div className={styles.searchInput}>
-					{isExpanded ? (
-						<div className={styles.searchAndNav}>
-							<div className={styles.searchContainer}>
-								<QuerySearch
-									queryData={{
-										...BASE_FILTER_QUERY,
-										filters,
-										filter: { expression },
-									}}
-									onChange={handleExpressionChange}
-									onRun={handleRunQuery}
-									dataSource={DataSource.TRACES}
-									placeholder="Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')"
-								/>
-							</div>
-						</div>
-					) : (
-						<div className={styles.searchPill}>{pillWithPopover}</div>
-					)}
-				</div>
-
-				<div className={styles.resultActions}>
-					<QueryResult
-						hasExpression={hasExpression}
-						hasResults={hasResults}
-						isFetching={isFetching}
-						error={error}
-						noData={noData}
-						currentIndex={currentSearchedIndex}
-						total={filteredSpanIds.length}
-						onPrev={handlePrev}
-						onNext={handleNext}
-						showNavigation={isExpanded}
-					/>
-					{isExpanded && (
-						<div className={styles.expandedActions}>
-							{hasExpression && (
-								<TooltipRoot>
-									<TooltipTrigger asChild>
-										<Button
-											variant="ghost"
-											size="icon"
-											color="secondary"
-											onClick={handleClear}
-										>
-											<X size={14} />
-										</Button>
-									</TooltipTrigger>
-									<TooltipContent>Clear filter</TooltipContent>
-								</TooltipRoot>
-							)}
-							<TooltipRoot>
-								<TooltipTrigger asChild>
-									<Button
-										variant="ghost"
-										size="icon"
-										color="secondary"
-										onClick={onCollapse}
-									>
-										<ArrowRightFromLine size={14} />
-									</Button>
-								</TooltipTrigger>
-								<TooltipContent>Collapse filters</TooltipContent>
-							</TooltipRoot>
-						</div>
-					)}
-				</div>
-
-				<NozButton />
-
-				<div className={styles.highlightControl}>{highlightErrorsToggle}</div>
 			</div>
-		</TooltipProvider>
+
+			<NozButton />
+
+			<div className={styles.highlightControl}>{highlightErrorsToggle}</div>
+		</div>
 	);
 }
 

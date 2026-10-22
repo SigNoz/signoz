@@ -15,7 +15,7 @@ import {
 } from '@signozhq/ui/combobox';
 import { Skeleton } from 'antd';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -216,13 +216,13 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 				</Combobox>
 			) : (
 				displayedQueryName && (
-					<TooltipSimple
+					<Tooltip
 						title={`Filter currently in sync with query ${displayedQueryName}`}
 					>
 						<Typography.Text className="sync-tag">
 							{displayedQueryName}
 						</Typography.Text>
-					</TooltipSimple>
+					</Tooltip>
 				)
 			)}
 		</section>
@@ -230,27 +230,31 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 
 	const renderRightActions = (): JSX.Element => (
 		<section className="right-actions">
-			<TooltipSimple title="Reset All">
+			<Tooltip title="Reset All">
 				<Button
 					variant="ghost"
 					color="secondary"
-					size="icon"
+					size="sm"
+					icon
 					aria-label="Reset All"
 					onClick={handleReset}
-					prefix={<RefreshCw size={14} />}
-				/>
-			</TooltipSimple>
-			{showFilterCollapse && (
-				<TooltipSimple title="Collapse Filters">
+				>
+					<RefreshCw size={14} />
+				</Button>
+			</Tooltip>
+			{showFilterCollapse && handleFilterVisibilityChange && (
+				<Tooltip title="Collapse Filters">
 					<Button
 						variant="ghost"
 						color="secondary"
-						size="icon"
+						size="sm"
+						icon
 						aria-label="Collapse Filters"
 						onClick={handleFilterVisibilityChange}
-						prefix={<ArrowUpToLine style={{ rotate: '270deg' }} size={14} />}
-					/>
-				</TooltipSimple>
+					>
+						<ArrowUpToLine style={{ rotate: '270deg' }} size={14} />
+					</Button>
+				</Tooltip>
 			)}
 			{isDynamicFilters &&
 				(isSettingsDisabled ? (
@@ -258,25 +262,29 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 						checks={QuickFilterManagePermissions}
 						variant="ghost"
 						color="secondary"
-						size="icon"
+						size="sm"
+						icon
 						aria-label="Settings"
 						onClick={(): void => setIsSettingsOpen(true)}
 						testId="settings-icon-container"
-						prefix={<SettingsIcon data-testid="settings-icon" size={14} />}
-					/>
+					>
+						<SettingsIcon data-testid="settings-icon" size={14} />
+					</AuthZButton>
 				) : (
-					<TooltipSimple title="Settings">
+					<Tooltip title="Settings">
 						<Button
 							variant="ghost"
 							color="secondary"
-							size="icon"
+							size="sm"
+							icon
 							aria-label="Settings"
-							className={classNames({ active: isSettingsOpen })}
+							aria-expanded={isSettingsOpen}
 							onClick={(): void => setIsSettingsOpen(true)}
-							data-testid="settings-icon-container"
-							prefix={<SettingsIcon data-testid="settings-icon" size={14} />}
-						/>
-					</TooltipSimple>
+							testId="settings-icon-container"
+						>
+							<SettingsIcon data-testid="settings-icon" size={14} />
+						</Button>
+					</Tooltip>
 				))}
 		</section>
 	);
@@ -287,7 +295,8 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 				<div className="api-quick-filters-header">
 					<Typography.Text>Show IP addresses</Typography.Text>
 					<Switch
-						style={{ marginLeft: 'auto' }}
+						color="primary"
+						textPlacement="right"
 						value={showIP ?? true}
 						onChange={(checked): void => {
 							logEvent('API Monitoring: Show IP addresses clicked', {

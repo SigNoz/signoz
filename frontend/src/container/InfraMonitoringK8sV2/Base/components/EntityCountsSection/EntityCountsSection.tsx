@@ -1,5 +1,5 @@
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import { Compass } from '@signozhq/icons';
 import { TextNoData } from '../../../components/TextNoData';
@@ -79,20 +79,22 @@ export function EntityCountsSection<T>({
 						to={buildK8sListNavigationUrl(config.targetCategory, filterExpression)}
 						onClick={(): void => handleCardNavigate(config.label)}
 						data-testid={`navigate-${config.label.toLowerCase().replace(/\s+/g, '-')}`}
+						className={styles.navigateButton}
 					>
-						<TooltipSimple
+						<Tooltip
 							title={`View ${config.label.toLowerCase()} of '${selectedItem}'`}
 							side="top"
-							arrow
 						>
 							<Button
-								size="icon"
+								aria-label="Action"
+								size="sm"
+								icon
 								variant="ghost"
 								color="secondary"
-								className={styles.navigateButton}
-								prefix={<Compass size={14} />}
-							/>
-						</TooltipSimple>
+							>
+								<Compass size={14} />
+							</Button>
+						</Tooltip>
 					</Link>
 				</div>
 			))}

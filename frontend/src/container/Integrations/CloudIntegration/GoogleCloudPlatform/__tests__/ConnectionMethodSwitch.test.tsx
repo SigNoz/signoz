@@ -54,7 +54,7 @@ describe('GCP setup drawer connection method switch', () => {
 
 		await user.click(screen.getByTestId('gcp-connection-method-agent'));
 
-		await screen.findByTestId('gcp-generate-commands-btn');
+		await screen.findByTestId('gcp-generate-command-btn');
 		expect(
 			screen.queryByTestId('gcp-account-name-input'),
 		).not.toBeInTheDocument();
@@ -66,7 +66,7 @@ describe('GCP setup drawer connection method switch', () => {
 
 		await screen.findByTestId('gcp-account-name-input');
 		expect(
-			screen.queryByTestId('gcp-generate-commands-btn'),
+			screen.queryByTestId('gcp-generate-command-btn'),
 		).not.toBeInTheDocument();
 
 		// The drawer itself stays mounted, so it does not replay its open animation.
@@ -82,7 +82,7 @@ describe('GCP setup drawer connection method switch', () => {
 
 		await user.click(screen.getByTestId('gcp-connection-method-agent'));
 		await waitFor(() => {
-			expect(screen.getByTestId('gcp-generate-commands-btn')).toBeEnabled();
+			expect(screen.getByTestId('gcp-generate-command-btn')).toBeEnabled();
 		});
 		expect(drawer).toHaveAttribute('data-width', 'extra-wide');
 
@@ -92,9 +92,9 @@ describe('GCP setup drawer connection method switch', () => {
 		);
 		await user.click(screen.getByTestId('gcp-deployment-region-select'));
 		await user.click(await screen.findByText('Mumbai (asia-south1)'));
-		await user.click(screen.getByTestId('gcp-generate-commands-btn'));
+		await user.click(screen.getByTestId('gcp-generate-command-btn'));
 
-		await screen.findByTestId('gcp-agent-commands');
+		await screen.findByTestId('gcp-agent-command');
 		expect(screen.getByTestId('gcp-setup-drawer')).toBe(drawer);
 		expect(drawer).toHaveAttribute('data-width', 'extra-wide');
 	});
