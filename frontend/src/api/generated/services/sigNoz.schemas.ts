@@ -6057,6 +6057,10 @@ export interface Querybuildertypesv5PromQueryDTO {
 	/**
 	 * @type boolean
 	 */
+	skipStepAlignment?: boolean;
+	/**
+	 * @type boolean
+	 */
 	stats?: boolean;
 	step?: Querybuildertypesv5StepDTO;
 }
