@@ -292,14 +292,8 @@ func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket
 
 		// Update current position to the end of this bucket
 		// But ensure it's aligned to step boundary
-		bucketEnd := min(bucket.EndMs, endMs)
-		// The step the window ends inside reaches past it, so that stretch is
-		// missing however far the bucket runs.
-		bucketEnd = min(bucketEnd, alignDownToStep(endMs, stepMs))
-		if bucketEnd < endMs {
-			// Round down to step boundary
-			bucketEnd = alignDownToStep(bucketEnd, stepMs)
-		}
+		// The step the window ends inside is missing however far the bucket runs.
+		bucketEnd := alignDownToStep(min(bucket.EndMs, endMs), stepMs)
 		currentMs = max(currentMs, bucketEnd)
 	}
 
