@@ -10,7 +10,7 @@ const FIND = { timeout: 5000 };
 interface PrefillCase {
 	kind: string;
 	spec: Record<string, unknown>;
-	fields: [string, string][];
+	fields: [string, string | number][];
 }
 
 const CASES: PrefillCase[] = [
@@ -184,6 +184,25 @@ const CASES: PrefillCase[] = [
 			['incidentio-token-textbox', 'incident-token'],
 			['incidentio-title-textarea', 'incident title'],
 			['incidentio-description-textarea', 'incident description'],
+		],
+	},
+	{
+		kind: 'telegram',
+		spec: {
+			botToken: '123456789:AA-token',
+			chatId: -1001234567890,
+			messageThreadId: 42,
+			title: 'telegram title',
+			message: 'telegram message',
+			apiUrl: 'https://api.telegram.org',
+		},
+		fields: [
+			['telegram-bot-token-textbox', '123456789:AA-token'],
+			['telegram-chat-id-textbox', -1001234567890],
+			['telegram-message-thread-id-textbox', 42],
+			['telegram-title-textarea', 'telegram title'],
+			['telegram-message-textarea', 'telegram message'],
+			['telegram-api-url-textbox', 'https://api.telegram.org'],
 		],
 	},
 ];

@@ -6,10 +6,10 @@ import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { toast } from '@signozhq/ui/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
-	createRule,
 	deleteRuleByID,
 	invalidateListRules,
 	patchRuleByID,
+	cloneRuleByID,
 } from 'api/generated/services/rules';
 import type {
 	RenderErrorResponseDTO,
@@ -62,10 +62,9 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 	const handleClone = useCallback((): void => {
 		alertActionLogEvent(ALERT_ACTIONS.CLONE, rule);
 		toast.promise(
-			createRule({
-				...rule,
-				alert: `${rule.alert} - Copy`,
-			} as RuletypesPostableRuleDTO).then(async (response) => {
+			cloneRuleByID({
+				id: rule.id,
+			}).then(async (response) => {
 				await invalidateListRules(queryClient);
 				const newRule = response.data;
 				if (newRule) {
