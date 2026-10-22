@@ -20442,9 +20442,9 @@ paths:
           description: Not Implemented
       security:
       - api_key:
-        - metric-reduction-rule:create
+        - metrics:read
       - tokenizer:
-        - metric-reduction-rule:create
+        - metrics:read
       summary: Preview a metric reduction rule
       tags:
       - metrics
