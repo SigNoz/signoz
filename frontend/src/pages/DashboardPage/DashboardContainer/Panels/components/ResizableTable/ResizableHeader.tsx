@@ -16,6 +16,8 @@ export interface ResizableHeaderProps extends Omit<
 > {
 	width?: number;
 	onResize?: (e: SyntheticEvent<Element>, data: ResizeCallbackData) => void;
+	/** Column key, used only to give the drag grip a stable test handle. */
+	columnKey?: string;
 }
 
 /**
@@ -27,6 +29,7 @@ export interface ResizableHeaderProps extends Omit<
 function ResizableHeader({
 	width,
 	onResize,
+	columnKey,
 	...restProps
 }: ResizableHeaderProps): JSX.Element {
 	const handle = useMemo(
@@ -34,13 +37,14 @@ function ResizableHeader({
 			<span
 				className={styles.handle}
 				role="presentation"
+				data-testid={columnKey ? `column-resize-${columnKey}` : undefined}
 				// Stop the grip's click from reaching the column sorter underneath.
 				// The grip is a pointer-only resize affordance, not keyboard-actionable.
 				// oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
 				onClick={(e): void => e.stopPropagation()}
 			/>
 		),
-		[],
+		[columnKey],
 	);
 
 	if (!width || !onResize) {
@@ -64,6 +68,7 @@ function ResizableHeader({
 ResizableHeader.defaultProps = {
 	width: undefined,
 	onResize: undefined,
+	columnKey: undefined,
 };
 
 export default ResizableHeader;
