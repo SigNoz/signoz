@@ -3,10 +3,22 @@ package spantypes
 import (
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 )
+
+// jsonAttrs builds a JSONValue from dotted leaf paths, as ClickHouse stores them.
+func jsonAttrs(paths map[string]any) telemetrystoretypes.JSONValue {
+	j := chcol.NewJSON()
+	for path, value := range paths {
+		j.SetValueAtPath(path, value)
+	}
+	return telemetrystoretypes.NewJSONValue(*j)
+}
 
 func TestNewThreadQuery_Cursor(t *testing.T) {
 	testCases := []struct {
@@ -48,7 +60,7 @@ func TestThreadAttributes(t *testing.T) {
 		{
 			name: "JSONColumnPresent_LegacyMapsIgnored",
 			span: StorableSpan{
-				AttributesJSON:   telemetrystoretypes.JSONValue{"gen_ai": map[string]any{"request": map[string]any{"model": "json"}}},
+				AttributesJSON:   jsonAttrs(map[string]any{"gen_ai.request.model": "json"}),
 				AttributesString: map[string]string{"gen_ai.request.model": "map", "http.method": "GET"},
 			},
 			wantAttrs: map[string]any{"gen_ai.request.model": "json"},
@@ -66,6 +78,22 @@ func TestThreadAttributes(t *testing.T) {
 				"gen_ai.stream":             true,
 			},
 		},
+		{
+			// ClickHouse materializes a row's absent paths as null from the part's path schema.
+			name: "JSONColumn_DropsNullPaths",
+			span: StorableSpan{
+				AttributesJSON: jsonAttrs(map[string]any{"gen_ai.request.model": "gpt-4o", "gen_ai.output.messages": chcol.Variant{}}),
+			},
+			wantAttrs: map[string]any{"gen_ai.request.model": "gpt-4o"},
+		},
+		{
+			name: "JSONColumn_OnlyNullPaths_FallsBackToLegacyMaps",
+			span: StorableSpan{
+				AttributesJSON:   jsonAttrs(map[string]any{"gen_ai.output.messages": chcol.Variant{}}),
+				AttributesString: map[string]string{"gen_ai.input.messages": "legacy"},
+			},
+			wantAttrs: map[string]any{"gen_ai.input.messages": "legacy"},
+		},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -74,34 +102,14 @@ func TestThreadAttributes(t *testing.T) {
 	}
 }
 
-func TestRawAttribute(t *testing.T) {
-	arguments := map[string]any{"city": "Paris", "days": []any{1.0, 2.0}}
-	testCases := []struct {
-		name     string
-		storable StorableSpan
-		key      string
-		want     any
-	}{
-		{
-			name:     "JSONColumn_ObjectReturnedWhole",
-			storable: StorableSpan{AttributesJSON: telemetrystoretypes.JSONValue{"gen_ai": map[string]any{"tool": map[string]any{"call": map[string]any{"arguments": arguments}}}}},
-			key:      "gen_ai.tool.call.arguments",
-			want:     arguments,
-		},
-		{
-			name:     "JSONColumn_MissingPath_Nil",
-			storable: StorableSpan{AttributesJSON: telemetrystoretypes.JSONValue{"gen_ai": map[string]any{"tool": map[string]any{"name": "get_weather"}}}},
-			key:      "gen_ai.tool.call.arguments",
-		},
-		{
-			name:     "LegacyMapsOnly_Nil",
-			storable: StorableSpan{AttributesString: map[string]string{"gen_ai.output.messages": "sunny", "gen_ai.tool.call.arguments.city": "Paris"}},
-			key:      "gen_ai.output.messages",
-		},
+func TestNewThreadSpan_FormatsJSONMessages(t *testing.T) {
+	storable := StorableSpan{
+		SpanID:         "f1fa1bc863e94dd0",
+		AttributesJSON: jsonAttrs(map[string]any{"gen_ai.input.messages": `[{"role":"user","content":"hi"}]`}),
 	}
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			assert.Equal(t, testCase.want, rawAttribute(&testCase.storable, testCase.key))
-		})
-	}
+
+	span := newThreadSpan("trace", &storable)
+
+	require.Len(t, span.FormattedInput, 1)
+	assert.Equal(t, aiobservabilitytypes.RoleUser, span.FormattedInput[0].Role)
 }

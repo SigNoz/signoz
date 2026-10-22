@@ -94,7 +94,18 @@
         "description": ""
       }
     ],
-    "logs": []
+    "logs": [
+      {
+        "name": "Project",
+        "path": "gcp.project",
+        "type": "string"
+      },
+      {
+        "name": "Resource Type",
+        "path": "gcp.resource_type",
+        "type": "string"
+      }
+    ]
   },
   "telemetryCollectionStrategy": {
     "gcp": {

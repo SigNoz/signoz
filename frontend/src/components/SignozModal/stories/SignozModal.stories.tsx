@@ -13,7 +13,13 @@ function ModalFixture(): JSX.Element {
 
 	return (
 		<>
-			<Button data-testid="open-signoz-modal" onClick={(): void => setOpen(true)}>
+			<Button
+				size="md"
+				variant="solid"
+				color="primary"
+				testId="open-signoz-modal"
+				onClick={(): void => setOpen(true)}
+			>
 				Open modal
 			</Button>
 			<SignozModal

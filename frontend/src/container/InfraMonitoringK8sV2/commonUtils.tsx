@@ -1,5 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
-import { BadgeColor } from '@signozhq/ui/badge';
+import type { BadgeColorType } from '@signozhq/ui/badge';
 import {
 	InframonitoringtypesPodCountsByStatusDTO,
 	InframonitoringtypesPodStatusDTO,
@@ -28,27 +28,27 @@ export function formatBytes(bytes: number, decimals = 2): string {
 
 export const POD_STATUS_COLORS: Record<
 	InframonitoringtypesPodStatusDTO,
-	BadgeColor
+	BadgeColorType
 > = {
-	[InframonitoringtypesPodStatusDTO.running]: 'forest',
-	[InframonitoringtypesPodStatusDTO.completed]: 'robin',
-	[InframonitoringtypesPodStatusDTO.pending]: 'amber',
-	[InframonitoringtypesPodStatusDTO.unknown]: 'vanilla',
-	[InframonitoringtypesPodStatusDTO.no_data]: 'vanilla',
-	[InframonitoringtypesPodStatusDTO.failed]: 'cherry',
-	[InframonitoringtypesPodStatusDTO.crashloopbackoff]: 'cherry',
-	[InframonitoringtypesPodStatusDTO.imagepullbackoff]: 'cherry',
-	[InframonitoringtypesPodStatusDTO.errimagepull]: 'cherry',
-	[InframonitoringtypesPodStatusDTO.createcontainerconfigerror]: 'cherry',
-	[InframonitoringtypesPodStatusDTO.containercreating]: 'amber',
-	[InframonitoringtypesPodStatusDTO.oomkilled]: 'cherry',
-	[InframonitoringtypesPodStatusDTO.error]: 'cherry',
-	[InframonitoringtypesPodStatusDTO.containercannotrun]: 'cherry',
-	[InframonitoringtypesPodStatusDTO.evicted]: 'cherry',
-	[InframonitoringtypesPodStatusDTO.nodeaffinity]: 'cherry',
-	[InframonitoringtypesPodStatusDTO.nodelost]: 'cherry',
-	[InframonitoringtypesPodStatusDTO.shutdown]: 'cherry',
-	[InframonitoringtypesPodStatusDTO.unexpectedadmissionerror]: 'cherry',
+	[InframonitoringtypesPodStatusDTO.running]: 'success',
+	[InframonitoringtypesPodStatusDTO.completed]: 'primary',
+	[InframonitoringtypesPodStatusDTO.pending]: 'warning',
+	[InframonitoringtypesPodStatusDTO.unknown]: 'secondary',
+	[InframonitoringtypesPodStatusDTO.no_data]: 'secondary',
+	[InframonitoringtypesPodStatusDTO.failed]: 'danger',
+	[InframonitoringtypesPodStatusDTO.crashloopbackoff]: 'danger',
+	[InframonitoringtypesPodStatusDTO.imagepullbackoff]: 'danger',
+	[InframonitoringtypesPodStatusDTO.errimagepull]: 'danger',
+	[InframonitoringtypesPodStatusDTO.createcontainerconfigerror]: 'danger',
+	[InframonitoringtypesPodStatusDTO.containercreating]: 'warning',
+	[InframonitoringtypesPodStatusDTO.oomkilled]: 'danger',
+	[InframonitoringtypesPodStatusDTO.error]: 'danger',
+	[InframonitoringtypesPodStatusDTO.containercannotrun]: 'danger',
+	[InframonitoringtypesPodStatusDTO.evicted]: 'danger',
+	[InframonitoringtypesPodStatusDTO.nodeaffinity]: 'danger',
+	[InframonitoringtypesPodStatusDTO.nodelost]: 'danger',
+	[InframonitoringtypesPodStatusDTO.shutdown]: 'danger',
+	[InframonitoringtypesPodStatusDTO.unexpectedadmissionerror]: 'danger',
 };
 
 /** kubectl prints these as single CamelCase words, so the enum value alone is not a usable label. */
@@ -111,9 +111,9 @@ const POD_STATUS_CATEGORY_MAP: Record<
 };
 
 type ErrorStatusKey = {
-	[K in keyof InframonitoringtypesPodCountsByStatusDTO]: (typeof POD_STATUS_CATEGORY_MAP)[K] extends 'error'
-		? K
-		: never;
+	[
+		K in keyof InframonitoringtypesPodCountsByStatusDTO
+	]: (typeof POD_STATUS_CATEGORY_MAP)[K] extends 'error' ? K : never;
 }[keyof InframonitoringtypesPodCountsByStatusDTO];
 
 const ERROR_STATUS_LABELS: Record<ErrorStatusKey, string> = {

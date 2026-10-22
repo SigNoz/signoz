@@ -3,16 +3,13 @@ package querier
 import (
 	"reflect"
 	"testing"
-	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
-	cmock "github.com/SigNoz/clickhouse-go-mock"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/spantypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/SigNoz/signoz/pkg/types/spantypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 )
 
 func TestMergeSpanAttributeColumns_ParsesEventsAndLinks(t *testing.T) {
@@ -83,101 +80,40 @@ func TestMergeSpanAttributeColumns_ParsesEventsAndLinks(t *testing.T) {
 	}
 }
 
-// A ClickHouse query can put a JSON column in the result of any request type — e.g.
-// `select * from signoz_logs.logs_v2` on a body_v2 stack, where `*` covers body_v2.
-func TestConsume_JSONColumn(t *testing.T) {
-	ts := time.Date(2026, 8, 14, 10, 0, 0, 0, time.UTC)
-	body := `{"level":"error","attrs":{"code":500}}`
-	wantBody := telemetrystoretypes.JSONValue{
-		"level": "error",
-		"attrs": map[string]any{"code": float64(500)},
+// jsonColumn builds a JSONValue from dotted leaf paths, as ClickHouse stores them.
+func jsonColumn(paths map[string]any) telemetrystoretypes.JSONValue {
+	j := chcol.NewJSON()
+	for path, value := range paths {
+		j.SetValueAtPath(path, value)
 	}
-
-	// the scalar reader reuses its scan slots across rows, so each row must still carry its own body
-	t.Run("scalar", func(t *testing.T) {
-		rows := telemetrystore.WrapRows(cmock.NewRows([]cmock.ColumnType{
-			{Name: "body_v2", Type: "JSON"},
-			{Name: "__result_0", Type: "UInt64"},
-		}, [][]any{{body, uint64(3)}, {`{"level":"warn"}`, uint64(1)}}))
-
-		payload, err := consume(rows, qbtypes.RequestTypeScalar, nil, qbtypes.Step{}, "A")
-		require.NoError(t, err)
-
-		data := payload.(*qbtypes.ScalarData)
-		require.Len(t, data.Data, 2)
-		assert.Equal(t, wantBody, data.Data[0][0])
-		assert.Equal(t, uint64(3), data.Data[0][1])
-		assert.Equal(t, telemetrystoretypes.JSONValue{"level": "warn"}, data.Data[1][0])
-		assert.Equal(t, uint64(1), data.Data[1][1])
-	})
-
-	t.Run("time series", func(t *testing.T) {
-		rows := telemetrystore.WrapRows(cmock.NewRows([]cmock.ColumnType{
-			{Name: "ts", Type: "DateTime"},
-			{Name: "body_v2", Type: "JSON"},
-			{Name: "__result_0", Type: "UInt64"},
-		}, [][]any{{ts, body, uint64(3)}}))
-
-		payload, err := consume(rows, qbtypes.RequestTypeTimeSeries, nil, qbtypes.Step{}, "A")
-		require.NoError(t, err)
-
-		data := payload.(*qbtypes.TimeSeriesData)
-		require.Len(t, data.Aggregations, 1)
-		require.Len(t, data.Aggregations[0].Series, 1)
-		require.Len(t, data.Aggregations[0].Series[0].Values, 1)
-		assert.Equal(t, float64(3), data.Aggregations[0].Series[0].Values[0].Value)
-	})
-
-	// grouping by a JSON column is legal in ClickHouse, so each document has to label its own
-	// series rather than being dropped, which would merge every group into one
-	t.Run("time series grouped by the JSON column", func(t *testing.T) {
-		rows := telemetrystore.WrapRows(cmock.NewRows([]cmock.ColumnType{
-			{Name: "ts", Type: "DateTime"},
-			{Name: "body_v2", Type: "JSON"},
-			{Name: "__result_0", Type: "UInt64"},
-		}, [][]any{
-			{ts, `{"level":"error"}`, uint64(7)},
-			{ts, `{"level":"warn"}`, uint64(2)},
-		}))
-
-		payload, err := consume(rows, qbtypes.RequestTypeTimeSeries, nil, qbtypes.Step{}, "A")
-		require.NoError(t, err)
-
-		data := payload.(*qbtypes.TimeSeriesData)
-		require.Len(t, data.Aggregations, 1)
-		require.Len(t, data.Aggregations[0].Series, 2)
-
-		got := map[string]float64{}
-		for _, series := range data.Aggregations[0].Series {
-			require.Len(t, series.Labels, 1)
-			require.Len(t, series.Values, 1)
-			got[series.Labels[0].Value.(string)] = series.Values[0].Value
-		}
-		assert.Equal(t, map[string]float64{`{"level":"error"}`: 7, `{"level":"warn"}`: 2}, got)
-	})
-
-	t.Run("raw", func(t *testing.T) {
-		rows := telemetrystore.WrapRows(cmock.NewRows([]cmock.ColumnType{
-			{Name: "timestamp", Type: "DateTime"},
-			{Name: "body_v2", Type: "JSON"},
-		}, [][]any{{ts, body}}))
-
-		payload, err := consume(rows, qbtypes.RequestTypeRaw, nil, qbtypes.Step{}, "A")
-		require.NoError(t, err)
-
-		data := payload.(*qbtypes.RawData)
-		require.Len(t, data.Rows, 1)
-		assert.Equal(t, ts, data.Rows[0].Timestamp.UTC())
-		assert.Equal(t, wantBody, data.Rows[0].Data["body_v2"])
-	})
+	return telemetrystoretypes.NewJSONValue(*j)
 }
 
-// A JSON path (e.g. `body_v2.level`) comes back as a Dynamic column, which the driver scans
-// into a chcol.Variant envelope rather than the value itself.
+// A JSON path (e.g. body_v2.level) comes back as a Dynamic column scanned into a chcol.Variant
+// envelope; a whole JSON column scans into a JSONValue, which decodes flat for the attributes bag and
+// nested for every other column.
 func TestUnwrapVariant(t *testing.T) {
-	assert.Equal(t, "error", unwrapVariant(chcol.NewDynamicWithType("error", "String")))
-	assert.Nil(t, unwrapVariant(chcol.Dynamic{}))
-	assert.Equal(t, uint64(3), unwrapVariant(uint64(3)))
+	jsonCol := jsonColumn(map[string]any{"level": "error", "attrs.code": int64(500)})
+	nullCol := jsonColumn(map[string]any{"level": "error", "absent": chcol.Variant{}})
+
+	testCases := []struct {
+		name   string
+		column string
+		input  any
+		want   any
+	}{
+		{name: "VariantScalar", column: "", input: chcol.NewDynamicWithType("error", "String"), want: "error"},
+		{name: "EmptyDynamic", column: "", input: chcol.Dynamic{}, want: nil},
+		{name: "PlainValuePassthrough", column: "", input: uint64(3), want: uint64(3)},
+		{name: "JSONColumnNested", column: "body_v2", input: jsonCol, want: map[string]any{"level": "error", "attrs": map[string]any{"code": float64(500)}}},
+		{name: "AttributesColumnFlat", column: "attributes", input: jsonCol, want: map[string]any{"level": "error", "attrs.code": float64(500)}},
+		{name: "AttributesColumnDropsNullPaths", column: "attributes", input: nullCol, want: map[string]any{"level": "error"}},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.want, unwrapVariant(testCase.column, testCase.input))
+		})
+	}
 }
 
 func TestMergeSpanAttributeColumns_EmptyEventsAndLinks(t *testing.T) {
@@ -196,8 +132,8 @@ func TestMergeSpanAttributeColumns_EmptyEventsAndLinks(t *testing.T) {
 	}
 }
 
-// Arrays stay native leaves: the collector stringifies top-level arrays and explodes nested ones
-// into indexed keys in the legacy maps; the JSON home keeps them whole and we do not mimic either.
+// readAsRaw decodes the JSON column into a flat bag of dotted keys before this runs; mergeSpanAttributeColumns
+// copies that bag and overlays the legacy string/number/bool maps, which win on collision.
 func TestMergeSpanAttributeColumns_JSONColumn(t *testing.T) {
 	testCases := []struct {
 		name string
@@ -205,12 +141,9 @@ func TestMergeSpanAttributeColumns_JSONColumn(t *testing.T) {
 		want map[string]any
 	}{
 		{
-			name: "JSONOnly_FlattensNestedPaths_PreservesTypes",
+			name: "JSONOnly_FlatBagCopied_PreservesTypes",
 			data: map[string]any{
-				"attributes": telemetrystoretypes.JSONValue{
-					"http":      map[string]any{"route": "/api/pay", "retry": map[string]any{"count": float64(3)}},
-					"cache.hit": true,
-				},
+				"attributes": map[string]any{"http.route": "/api/pay", "http.retry.count": float64(3), "cache.hit": true},
 			},
 			want: map[string]any{"http.route": "/api/pay", "http.retry.count": float64(3), "cache.hit": true},
 		},
@@ -219,17 +152,17 @@ func TestMergeSpanAttributeColumns_JSONColumn(t *testing.T) {
 			data: map[string]any{
 				"attributes_string": map[string]string{"http.route": "/old", "only.map": "m"},
 				"attributes_number": map[string]float64{"http.status": 500},
-				"attributes":        telemetrystoretypes.JSONValue{"http": map[string]any{"route": "/new"}, "only.json": "j"},
+				"attributes":        map[string]any{"http.route": "/new", "only.json": "j"},
 			},
 			want: map[string]any{"http.route": "/old", "only.map": "m", "http.status": float64(500), "only.json": "j"},
 		},
 		{
-			name: "MapOnly_EmptyJSONDoc_KeepsMapValues",
+			name: "MapOnly_EmptyJSONBag_KeepsMapValues",
 			data: map[string]any{
 				"attributes_string": map[string]string{"http.route": "/map"},
 				"attributes_number": map[string]float64{"http.status": 200},
 				"attributes_bool":   map[string]bool{"cache.hit": true},
-				"attributes":        telemetrystoretypes.JSONValue{},
+				"attributes":        map[string]any{},
 			},
 			want: map[string]any{"http.route": "/map", "http.status": float64(200), "cache.hit": true},
 		},
@@ -237,59 +170,38 @@ func TestMergeSpanAttributeColumns_JSONColumn(t *testing.T) {
 			name: "MapOnly_NilJSON_BehavesAsAbsent",
 			data: map[string]any{
 				"attributes_string": map[string]string{"http.route": "/map"},
-				"attributes":        telemetrystoretypes.JSONValue(nil),
+				"attributes":        map[string]any(nil),
 			},
 			want: map[string]any{"http.route": "/map"},
 		},
 		{
 			name: "Arrays_StayLeafValues",
 			data: map[string]any{
-				"attributes": telemetrystoretypes.JSONValue{"http": map[string]any{"tags": []any{"a", "b"}, "codes": []any{float64(1), float64(2)}}},
+				"attributes": map[string]any{"http.tags": []any{"a", "b"}, "http.codes": []any{float64(1), float64(2)}},
 			},
 			want: map[string]any{"http.tags": []any{"a", "b"}, "http.codes": []any{float64(1), float64(2)}},
 		},
 		{
-			name: "TopLevelArrayOfMaps_StaysNativeLeaf",
+			name: "ScalarAndObjectKey_BothSurvive",
 			data: map[string]any{
-				"attributes": telemetrystoretypes.JSONValue{"key": []any{map[string]any{"a": float64(1)}, map[string]any{"b": float64(2)}}},
+				"attributes": map[string]any{"db.function": "refresh", "db.function.arg": float64(2)},
 			},
-			want: map[string]any{"key": []any{map[string]any{"a": float64(1)}, map[string]any{"b": float64(2)}}},
+			want: map[string]any{"db.function": "refresh", "db.function.arg": float64(2)},
 		},
 		{
-			name: "NestedArrayOfMaps_StaysNativeLeaf_NoIndexPaths",
-			data: map[string]any{
-				"attributes": telemetrystoretypes.JSONValue{"http": map[string]any{"items": []any{map[string]any{"a": float64(1)}}}},
-			},
-			want: map[string]any{"http.items": []any{map[string]any{"a": float64(1)}}},
-		},
-		{
-			name: "DualWritten_NestedArray_IndexKeysAndJSONArrayCoexist",
+			name: "DualWritten_IndexKeysAndJSONArrayCoexist",
 			data: map[string]any{
 				"attributes_number": map[string]float64{"http.items.0.a": 1},
-				"attributes":        telemetrystoretypes.JSONValue{"http": map[string]any{"items": []any{map[string]any{"a": float64(1)}}}},
+				"attributes":        map[string]any{"http.items": []any{map[string]any{"a": float64(1)}}},
 			},
 			want: map[string]any{"http.items.0.a": float64(1), "http.items": []any{map[string]any{"a": float64(1)}}},
 		},
 		{
-			name: "JSONNull_KeptAsNil",
+			name: "ScalarValueStaysScalar",
 			data: map[string]any{
-				"attributes": telemetrystoretypes.JSONValue{"k": nil},
-			},
-			want: map[string]any{"k": nil},
-		},
-		{
-			name: "KeyIsLeafValue_NotFlattened",
-			data: map[string]any{
-				"attributes": telemetrystoretypes.JSONValue{"http": "plaintext"},
+				"attributes": map[string]any{"http": "plaintext"},
 			},
 			want: map[string]any{"http": "plaintext"},
-		},
-		{
-			name: "KeyIsParent_FlattensToDottedPath",
-			data: map[string]any{
-				"attributes": telemetrystoretypes.JSONValue{"http": map[string]any{"route": "/a"}},
-			},
-			want: map[string]any{"http.route": "/a"},
 		},
 	}
 

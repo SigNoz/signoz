@@ -100,20 +100,23 @@ function ContextLinkDialog({
 			footer={
 				<>
 					<Button
+						size="md"
 						type="button"
 						variant="outlined"
 						color="secondary"
-						data-testid="context-link-cancel"
+						testId="context-link-cancel"
 						onClick={(): void => onOpenChange(false)}
 					>
 						Cancel
 					</Button>
 					<Button
+						disabledTooltip={urlInvalid ? URL_ERROR : 'Enter a URL first'}
+						size="md"
 						type="button"
 						variant="solid"
 						color="primary"
 						disabled={!canSave}
-						data-testid="context-link-save"
+						testId="context-link-save"
 						onClick={handleSave}
 					>
 						Save
@@ -213,11 +216,12 @@ function ContextLinkDialog({
 									</VariablesPopover>
 									<Button
 										type="button"
-										variant="ghost"
-										color="destructive"
-										size="icon"
+										variant="solid"
+										color="danger"
+										size="sm"
+										icon
 										aria-label={`Remove parameter ${index + 1}`}
-										data-testid={`context-link-param-remove-${index}`}
+										testId={`context-link-param-remove-${index}`}
 										onClick={(): void =>
 											applyParams(params.filter((_, i) => i !== index))
 										}
@@ -231,11 +235,12 @@ function ContextLinkDialog({
 				)}
 
 				<Button
+					size="md"
 					type="button"
 					variant="dashed"
 					color="secondary"
 					prefix={<Plus size={12} />}
-					data-testid="context-link-add-param"
+					testId="context-link-add-param"
 					onClick={addParam}
 				>
 					Add URL parameter
@@ -243,6 +248,8 @@ function ContextLinkDialog({
 
 				<div className={styles.newTab}>
 					<Switch
+						color="primary"
+						textPlacement="right"
 						testId="context-link-newtab"
 						value={targetBlank}
 						onChange={setTargetBlank}

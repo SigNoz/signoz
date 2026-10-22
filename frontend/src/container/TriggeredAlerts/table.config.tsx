@@ -18,7 +18,7 @@ export function getAlertColumns(
 			id: 'status',
 			header: 'Status',
 			accessorFn: (row) => row.status?.state,
-			width: { fixed: '100px' },
+			width: { fixed: '130px' },
 			enableSort: false,
 			enableMove: false,
 			cell: ({ row, value }): JSX.Element => (
@@ -59,8 +59,9 @@ export function getAlertColumns(
 				}
 				return (
 					<Badge
+						textTransform="none"
 						color={SEVERITY_BADGE_COLORS[severity] ?? 'secondary'}
-						variant="outline"
+						variant="outlined"
 						testId={testId}
 					>
 						{severity}
@@ -100,7 +101,9 @@ export function getAlertColumns(
 					return <TanStackTable.Text>-</TanStackTable.Text>;
 				}
 
-				return <LabelColumn labels={tagKeys} value={labels} color="sakura" />;
+				return (
+					<LabelColumn labels={tagKeys} value={labels} color="highlight-danger" />
+				);
 			},
 		},
 	];

@@ -4,7 +4,6 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { MemoryRouter as MemoryRouterV5 } from 'react-router-dom-v5-compat';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { NuqsTestingAdapter, UrlUpdateEvent } from 'nuqs/adapters/testing';
 import { AppProvider } from 'providers/App/App';
@@ -53,11 +52,9 @@ function renderPage(
 									searchParams={queryParams}
 									onUrlUpdate={onUrlUpdate}
 								>
-									<TooltipProvider>
-										<QueryBuilderProvider>
-											<InfraMonitoringK8s />
-										</QueryBuilderProvider>
-									</TooltipProvider>
+									<QueryBuilderProvider>
+										<InfraMonitoringK8s />
+									</QueryBuilderProvider>
 								</NuqsTestingAdapter>
 							</Provider>
 						</AppProvider>

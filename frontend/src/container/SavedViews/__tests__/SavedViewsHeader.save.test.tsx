@@ -9,14 +9,17 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import SavedViewsHeader from '../SavedViewsHeader';
 import {
+	expectRowUsable,
+	expectUsable,
 	explorerUrl,
 	makeView,
-	mockSavedViewsApi,
+	MENU_CHECK_TIMEOUT,
 	queryWith,
 	renderWithExplorerProviders,
 	urlParam,
 	viewUrl,
 } from './savedViewsTestUtils';
+import { mockSavedViewsApi } from './savedViewsApiMock';
 
 jest.mock('@signozhq/ui/sonner', () => ({
 	...jest.requireActual('@signozhq/ui/sonner'),
@@ -67,9 +70,21 @@ async function openDirtyView(
 	return rendered;
 }
 
+const SAVE_MENU_ITEM_TEST_IDS: Record<string, string> = {
+	'Save as new view': 'saved-views-save-changes-item-save-as-new',
+	'Update selected view': 'saved-views-save-changes-item-update',
+};
+
 async function chooseFromSaveMenu(item: string): Promise<void> {
 	await userEvent.click(screen.getByTestId('saved-views-save-changes'));
-	await userEvent.click(await screen.findByRole('menuitem', { name: item }));
+	const menuItem = await screen.findByTestId(SAVE_MENU_ITEM_TEST_IDS[item]);
+	await waitFor(() => expectRowUsable(menuItem), MENU_CHECK_TIMEOUT);
+	await userEvent.click(menuItem);
+}
+
+async function clickCreate(): Promise<void> {
+	await waitFor(() => expectUsable(screen.getByTestId('saved-views-create')));
+	await userEvent.click(screen.getByTestId('saved-views-create'));
 }
 
 async function submitName(name: string): Promise<void> {
@@ -87,10 +102,13 @@ describe('SavedViewsHeader saving', () => {
 			const requests = mockSavedViewsApi([], { createdId: 'view-new' });
 			const { history } = renderHeader(explorerUrl(PATH, {}));
 
-			await userEvent.click(screen.getByTestId('saved-views-create'));
+			await clickCreate();
 
 			expect(within(modal()).getByText('Create new view')).toBeInTheDocument();
-			expect(screen.getByTestId('save-view-submit')).toBeDisabled();
+			expect(screen.getByTestId('save-view-submit')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 
 			await submitName('Slow checkout');
 
@@ -112,7 +130,7 @@ describe('SavedViewsHeader saving', () => {
 				),
 			);
 			expect(toast.success).toHaveBeenCalledWith(
-				'You have created a new view.',
+				'View created',
 				expect.objectContaining({ position: 'top-right' }),
 			);
 			await waitFor(() => expect(isModalOpen()).toBe(false));
@@ -127,7 +145,7 @@ describe('SavedViewsHeader saving', () => {
 			const requests = mockSavedViewsApi([], { createStatus: 500 });
 			const { history } = renderHeader(explorerUrl(PATH, {}));
 
-			await userEvent.click(screen.getByTestId('saved-views-create'));
+			await clickCreate();
 			await submitName('Slow checkout');
 
 			await waitFor(() => expect(toast.error).toHaveBeenCalled());
@@ -142,7 +160,7 @@ describe('SavedViewsHeader saving', () => {
 			const requests = mockSavedViewsApi([]);
 			renderHeader(explorerUrl(PATH, {}));
 
-			await userEvent.click(screen.getByTestId('saved-views-create'));
+			await clickCreate();
 			await userEvent.type(screen.getByTestId('save-view-name'), 'Draft');
 			await userEvent.click(screen.getByTestId('save-view-cancel'));
 

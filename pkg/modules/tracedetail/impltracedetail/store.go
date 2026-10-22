@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -23,6 +24,17 @@ import (
 )
 
 const colServiceName = `resource_string_service$$$$name` // $ gets escaped so $$$$ converts to $$.
+
+// storableSpanColumns are the columns a waterfall span scans; the JSON attributes column is added per flag.
+var storableSpanColumns = []string{
+	"DISTINCT ON (span_id) timestamp", "duration_nano", "span_id", "has_error", "kind",
+	colServiceName, "name",
+	"attributes_string", "attributes_number", "attributes_bool", "resources_string",
+	"events", "status_message", "status_code_string", "kind_string", "parent_span_id",
+	"flags", "is_remote", "trace_state", "status_code",
+	"db_name", "db_operation", "http_method", "http_url", "http_host",
+	"external_http_method", "external_http_url", "response_status_code", "links as references",
+}
 
 func buildFieldExpr(fieldKey telemetrytypes.TelemetryFieldKey) (string, error) {
 	switch fieldKey.FieldContext {
@@ -195,33 +207,22 @@ func (s *traceStore) genAISpanColumns(ctx context.Context, orgID valuer.UUID, bo
 	return columns, nil
 }
 
-func (s *traceStore) GetTraceSpans(ctx context.Context, traceID string, bounds *spantypes.TraceBounds) ([]spantypes.StorableSpan, error) {
-	// DISTINCT ON (span_id) is ClickHouse-specific syntax not supported by sqlbuilder
-	query := fmt.Sprintf(`
-		SELECT DISTINCT ON (span_id)
-			timestamp, duration_nano, span_id, has_error, kind,
-			resource_string_service$$name, name,
-			attributes_string, attributes_number, attributes_bool, resources_string,
-			events, status_message, status_code_string, kind_string, parent_span_id,
-			flags, is_remote, trace_state, status_code,
-			db_name, db_operation, http_method, http_url, http_host,
-			external_http_method, external_http_url, response_status_code, links as references
-		FROM %s.%s
-		WHERE trace_id=? AND ts_bucket_start>=? AND ts_bucket_start<=?
-		ORDER BY timestamp ASC, name ASC`,
-		spantypes.TraceDB, spantypes.TraceTable,
+func (s *traceStore) GetTraceSpans(ctx context.Context, orgID valuer.UUID, traceID string, bounds *spantypes.TraceBounds) ([]spantypes.StorableSpan, error) {
+	sb := s.selectStorableSpans(ctx, orgID)
+	sb.Where(
+		sb.E("trace_id", traceID),
+		sb.GE("ts_bucket_start", bounds.Start.Unix()-1800),
+		sb.LE("ts_bucket_start", bounds.End.Unix()),
 	)
-	var spanItems []spantypes.StorableSpan
-	err := s.telemetryStore.ClickhouseDB().Select(
-		ctx, &spanItems, query,
-		traceID,
-		bounds.Start.Unix()-1800,
-		bounds.End.Unix(),
-	)
-	if err != nil {
+	sb.OrderByAsc("timestamp")
+	sb.OrderByAsc("name")
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	var spans []spantypes.StorableSpan
+	if err := s.telemetryStore.ClickhouseDB().Select(ctx, &spans, query, args...); err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying trace spans")
 	}
-	return spanItems, nil
+	return spans, nil
 }
 
 func (s *traceStore) GetMinimalSpans(ctx context.Context, traceID string, start, end time.Time) ([]spantypes.MinimalSpan, error) {
@@ -248,21 +249,11 @@ func (s *traceStore) GetMinimalSpans(ctx context.Context, traceID string, start,
 	return spans, nil
 }
 
-func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, start, end time.Time, spanIDs []string) ([]spantypes.StorableSpan, error) {
+func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, orgID valuer.UUID, traceID string, start, end time.Time, spanIDs []string) ([]spantypes.StorableSpan, error) {
 	if len(spanIDs) == 0 {
 		return []spantypes.StorableSpan{}, nil
 	}
-	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select(
-		"DISTINCT ON (span_id) timestamp", "duration_nano", "span_id", "has_error", "kind",
-		colServiceName, "name",
-		"attributes_string", "attributes_number", "attributes_bool", "resources_string",
-		"events", "status_message", "status_code_string", "kind_string", "parent_span_id",
-		"flags", "is_remote", "trace_state", "status_code",
-		"db_name", "db_operation", "http_method", "http_url", "http_host",
-		"external_http_method", "external_http_url", "response_status_code", "links as references",
-	)
-	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
+	sb := s.selectStorableSpans(ctx, orgID)
 	ids := make([]any, len(spanIDs))
 	for i, id := range spanIDs {
 		ids[i] = id
@@ -284,6 +275,18 @@ func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, sta
 	return spans, nil
 }
 
+// selectStorableSpans reads the JSON attributes column alongside the legacy maps when the
+// use_trace_attributes_json flag is on, as the query builder does.
+func (s *traceStore) selectStorableSpans(ctx context.Context, orgID valuer.UUID) *sqlbuilder.SelectBuilder {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select(storableSpanColumns...)
+	if s.flagger.BooleanOrEmpty(ctx, flagger.FeatureUseTraceAttributesJSON, featuretypes.NewFlaggerEvaluationContext(orgID)) {
+		sb.SelectMore("attributes")
+	}
+	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
+	return sb
+}
+
 func (s *traceStore) GetThreadSpans(ctx context.Context, orgID valuer.UUID, traceID string, bounds *spantypes.TraceBounds, page spantypes.ThreadPage) ([]spantypes.StorableSpan, error) {
 	q := querybuilder.NewQueryInfo(ctx, orgID, s.flagger, telemetrytypes.SignalTraces, nil, uint64(bounds.Start.UnixNano()), uint64(bounds.End.UnixNano()))
 	sb := sqlbuilder.NewSelectBuilder()
@@ -297,11 +300,11 @@ func (s *traceStore) GetThreadSpans(ctx context.Context, orgID valuer.UUID, trac
 		sb.SelectMore("attributes")
 	}
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
-	keys, err := s.genAIFieldKeys(ctx, orgID, aiobservabilitytypes.GenAIThreadKeys)
+	keys, err := s.genAIFieldKeys(ctx, orgID, aiobservabilitytypes.GenAISpanGateKeys)
 	if err != nil {
 		return nil, err
 	}
-	isThreadSpan, err := s.anyExistsCondition(ctx, q, aiobservabilitytypes.GenAIThreadKeys, keys, sb)
+	isThreadSpan, err := s.anyExistsCondition(ctx, q, aiobservabilitytypes.GenAISpanGateKeys, keys, sb)
 	if err != nil {
 		return nil, err
 	}

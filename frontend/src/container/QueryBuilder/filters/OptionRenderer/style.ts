@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 export const TagContainer = styled(Badge).attrs({
 	color: 'secondary',
-	variant: 'outline',
+	variant: 'outlined',
 })`
 	&&& {
 		display: flex;

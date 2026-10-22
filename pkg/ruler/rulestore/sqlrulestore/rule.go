@@ -235,7 +235,7 @@ func (r *rule) GetStoredRulesByMetricName(ctx context.Context, orgID string, met
 		if found && !seen[storedRule.ID.StringValue()] {
 			seen[storedRule.ID.StringValue()] = true
 			alerts = append(alerts, ruletypes.RuleAlert{
-				AlertName: ruleData.AlertName,
+				AlertName: ruleData.AlertName.StringValue(),
 				AlertID:   storedRule.ID.StringValue(),
 			})
 		}

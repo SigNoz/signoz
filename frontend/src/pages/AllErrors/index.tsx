@@ -14,7 +14,7 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import ResourceAttributesFilterV2 from 'container/ResourceAttributeFilterV2/ResourceAttributesFilterV2';
 import Toolbar from 'container/Toolbar/Toolbar';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useRunQueryWithFilterItems } from 'hooks/queryBuilder/useRunQueryWithFilterItems';
 import history from 'lib/history';
 import { isNull } from 'lodash-es';
 
@@ -25,7 +25,7 @@ import './AllErrors.styles.scss';
 
 function AllErrors(): JSX.Element {
 	const { pathname } = useLocation();
-	const { handleRunQuery } = useQueryBuilder();
+	const handleRunQuery = useRunQueryWithFilterItems();
 	const queryClient = useQueryClient();
 
 	const isLoadingQueries = useAllErrorsQueryState((s) => s.isFetching);
@@ -61,11 +61,11 @@ function AllErrors(): JSX.Element {
 			className="all-errors-page"
 			contentClassName="all-errors-right-section"
 			showFilters={showFilters}
+			onToggleFilters={handleFilterVisibilityChange}
 			quickFilterProps={{
 				className: 'qf-exceptions',
 				source: QuickFiltersSource.EXCEPTIONS,
 				signal: SignalType.EXCEPTIONS,
-				handleFilterVisibilityChange,
 				useFieldApis: quickFilterFieldApis,
 			}}
 		>

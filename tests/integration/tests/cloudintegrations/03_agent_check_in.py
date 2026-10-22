@@ -197,7 +197,7 @@ def test_gcp_agent_check_in_returns_collection_strategy(
         "deploymentProjectId": project_id,
         "deploymentRegion": "us-central1",
         "projectIds": [project_id],
-        "telemetryCollectionStrategy": {},
+        "telemetryCollectionStrategy": {"metrics": None, "logs": None},
     }
 
     for service_id, service_config in (

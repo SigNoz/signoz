@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import * as appContextHooks from 'providers/App/App';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
@@ -67,9 +66,9 @@ jest.mock('../MetricsTable', () => ({
 	__esModule: true,
 	MetricsTable: jest
 		.fn()
-		.mockImplementation(
-			(): JSX.Element => <div data-testid="metrics-table">Metrics Table</div>,
-		),
+		.mockImplementation((): JSX.Element => (
+			<div data-testid="metrics-table">Metrics Table</div>
+		)),
 }));
 
 const mockUseQuery = jest.fn();
@@ -292,16 +291,14 @@ const renderEntityMetrics = (overrides = {}): any => {
 
 	return render(
 		<MemoryRouter>
-			<TooltipProvider>
-				<EntityMetrics
-					entity={defaultProps.entity}
-					eventEntity="test"
-					entityWidgetInfo={defaultProps.entityWidgetInfo}
-					getEntityQueryPayload={defaultProps.getEntityQueryPayload}
-					queryKey={defaultProps.queryKey}
-					category={defaultProps.category}
-				/>
-			</TooltipProvider>
+			<EntityMetrics
+				entity={defaultProps.entity}
+				eventEntity="test"
+				entityWidgetInfo={defaultProps.entityWidgetInfo}
+				getEntityQueryPayload={defaultProps.getEntityQueryPayload}
+				queryKey={defaultProps.queryKey}
+				category={defaultProps.category}
+			/>
 		</MemoryRouter>,
 	);
 };

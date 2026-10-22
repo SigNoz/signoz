@@ -1,0 +1,265 @@
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import ROUTES from 'constants/routes';
+import {
+	buildSavedViewDeletePermission,
+	buildSavedViewReadPermission,
+	buildSavedViewUpdatePermission,
+	SavedViewCreatePermission,
+	SavedViewListPermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
+import {
+	AUTHZ_CHECK_URL,
+	setupAuthzDeny,
+} from 'lib/authz/utils/authz-test-utils';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
+import { DataSource } from 'types/common/queryBuilder';
+
+import SavedViewsHeader from '../SavedViewsHeader';
+import SavedViewsPanel from '../SavedViewsPanel';
+import { API, mockSavedViewsApi } from './savedViewsApiMock';
+import {
+	explorerUrl,
+	makeView,
+	MENU_CHECK_TIMEOUT,
+	queryWith,
+	renderWithExplorerProviders,
+	viewUrl,
+} from './savedViewsTestUtils';
+
+const PATH = ROUTES.TRACES_EXPLORER;
+
+const errors = makeView({ id: 'view-1', displayName: 'Errors' });
+const slow = makeView({ id: 'view-2', displayName: 'Slow spans' });
+
+function renderPanel(url = explorerUrl(PATH, {})): void {
+	renderWithExplorerProviders(
+		<SavedViewsPanel
+			source={SavedviewtypesSourceDTO.traces}
+			onClose={jest.fn()}
+		/>,
+		url,
+	);
+}
+
+function renderHeader(
+	url: string,
+): ReturnType<typeof renderWithExplorerProviders> {
+	return renderWithExplorerProviders(
+		<SavedViewsHeader
+			source={SavedviewtypesSourceDTO.traces}
+			onOpenViews={jest.fn()}
+		/>,
+		url,
+	);
+}
+
+const rowNamed = (name: string): HTMLElement =>
+	screen
+		.getAllByTestId('saved-views-row')
+		.find((row) => row.textContent?.includes(name)) as HTMLElement;
+
+async function openRowMenu(name: string): Promise<void> {
+	await screen.findAllByTestId('saved-views-row');
+	fireEvent.click(within(rowNamed(name)).getByTestId('saved-views-row-menu'));
+}
+
+// Resolves once the row's check is back, so its state is final.
+async function settledRow(testId: string): Promise<HTMLElement> {
+	await waitFor(
+		() => expect(screen.getByTestId(testId)).not.toHaveAttribute('data-loading'),
+		MENU_CHECK_TIMEOUT,
+	);
+	return screen.getByTestId(testId);
+}
+
+describe('SavedViews - AuthZ', () => {
+	beforeEach(() => {
+		localStorage.clear();
+	});
+
+	afterEach(() => {
+		server.resetHandlers();
+	});
+
+	it('shows the denied callout instead of the list without list', async () => {
+		mockSavedViewsApi([errors]);
+		server.use(setupAuthzDeny(SavedViewListPermission));
+		renderPanel();
+
+		await expect(
+			screen.findByText(/not authorized/i),
+		).resolves.toBeInTheDocument();
+		expect(screen.queryByTestId('saved-views-list')).toBeNull();
+		expect(screen.queryByTestId('saved-views-search')).toBeNull();
+	});
+
+	it('disables only the views it cannot read', async () => {
+		mockSavedViewsApi([errors, slow]);
+		server.use(setupAuthzDeny(buildSavedViewReadPermission(errors.id)));
+		renderPanel();
+
+		await screen.findAllByTestId('saved-views-row');
+		const nameOf = (view: string): HTMLElement =>
+			within(rowNamed(view)).getByTestId('saved-views-row-name');
+		await waitFor(() =>
+			expect(nameOf('Errors')).toHaveAttribute('aria-disabled', 'true'),
+		);
+		await waitFor(() =>
+			expect(nameOf('Slow spans')).not.toHaveAttribute('aria-busy'),
+		);
+		expect(nameOf('Slow spans')).not.toHaveAttribute('aria-disabled', 'true');
+	});
+
+	it('keeps the row menu on a view it cannot read', async () => {
+		mockSavedViewsApi([errors]);
+		server.use(setupAuthzDeny(buildSavedViewReadPermission(errors.id)));
+		renderPanel();
+
+		await openRowMenu('Errors');
+
+		await expect(
+			settledRow('saved-views-row-menu-item-delete'),
+		).resolves.not.toHaveAttribute('data-disabled');
+		await expect(
+			settledRow('saved-views-row-menu-item-editDetails'),
+		).resolves.not.toHaveAttribute('data-disabled');
+		await expect(
+			settledRow('saved-views-row-menu-item-copyLink'),
+		).resolves.not.toHaveAttribute('data-disabled');
+	});
+
+	it('disables creating without create', async () => {
+		mockSavedViewsApi([]);
+		server.use(setupAuthzDeny(SavedViewCreatePermission));
+		renderPanel();
+		renderHeader(explorerUrl(PATH, {}));
+
+		await waitFor(() =>
+			expect(screen.getByTestId('saved-views-list-create')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			),
+		);
+		await waitFor(() =>
+			expect(screen.getByTestId('saved-views-create')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			),
+		);
+	});
+
+	it('keeps create disabled while the check is pending', async () => {
+		mockSavedViewsApi([]);
+		server.use(
+			rest.post(AUTHZ_CHECK_URL, (_req, res, ctx) => res(ctx.delay('infinite'))),
+		);
+		renderHeader(explorerUrl(PATH, {}));
+
+		const create = screen.getByTestId('saved-views-create');
+		expect(create).toHaveAttribute('aria-busy', 'true');
+		await userEvent.click(create);
+		expect(screen.queryByTestId('save-view-name')).toBeNull();
+	});
+
+	it('disables edit details without update and delete without delete', async () => {
+		mockSavedViewsApi([errors]);
+		server.use(
+			setupAuthzDeny(
+				buildSavedViewUpdatePermission(errors.id),
+				buildSavedViewDeletePermission(errors.id),
+			),
+		);
+		renderPanel();
+
+		await openRowMenu('Errors');
+
+		await expect(
+			settledRow('saved-views-row-menu-item-editDetails'),
+		).resolves.toHaveAttribute('data-disabled');
+		await expect(
+			settledRow('saved-views-row-menu-item-delete'),
+		).resolves.toHaveAttribute('data-disabled');
+		await expect(
+			settledRow('saved-views-row-menu-item-copyLink'),
+		).resolves.not.toHaveAttribute('data-disabled');
+	});
+
+	it('disables updating the open view without update, keeping save as new', async () => {
+		mockSavedViewsApi([errors]);
+		server.use(setupAuthzDeny(buildSavedViewUpdatePermission(errors.id)));
+		const { history } = renderHeader(viewUrl(PATH, errors));
+		await waitFor(() =>
+			expect(screen.getByTestId('saved-views-name')).toHaveTextContent('Errors'),
+		);
+
+		history.push(
+			explorerUrl(PATH, {
+				query: queryWith(DataSource.TRACES, 'has_error = false'),
+				panelType: PANEL_TYPES.LIST,
+				viewKey: errors.id,
+			}),
+		);
+		await userEvent.click(await screen.findByTestId('saved-views-save-changes'));
+
+		await expect(
+			settledRow('saved-views-save-changes-item-update'),
+		).resolves.toHaveAttribute('data-disabled');
+		await expect(
+			settledRow('saved-views-save-changes-item-save-as-new'),
+		).resolves.not.toHaveAttribute('data-disabled');
+	});
+
+	it('says no access when the check denies read, even if the server returns the view', async () => {
+		mockSavedViewsApi([errors]);
+		server.use(setupAuthzDeny(buildSavedViewReadPermission(errors.id)));
+		renderHeader(viewUrl(PATH, errors));
+
+		await waitFor(() =>
+			expect(screen.getByTestId('saved-views-name')).toHaveTextContent(
+				'No view access',
+			),
+		);
+		await waitFor(() =>
+			expect(screen.getByTestId('saved-views-name')).toHaveAttribute(
+				'data-denied-permissions',
+			),
+		);
+		await userEvent.setup().hover(screen.getByTestId('saved-views-name'));
+
+		await waitFor(() =>
+			expect(
+				screen.queryAllByText(/is not authorized to perform read:saved-view:view-1/)
+					.length,
+			).toBeGreaterThan(0),
+		);
+	});
+
+	it('treats a 403 the check allowed as a failed load, showing the server message', async () => {
+		const message = 'saved-view:read is missing, ask an admin for it';
+		mockSavedViewsApi([errors]);
+		server.use(
+			rest.get(`${API}/:id`, (_req, res, ctx) =>
+				res(
+					ctx.status(403),
+					ctx.json({ status: 'error', error: { code: 'forbidden', message } }),
+				),
+			),
+		);
+		renderHeader(viewUrl(PATH, errors));
+
+		await waitFor(() =>
+			expect(screen.getByTestId('saved-views-name')).toHaveTextContent(
+				'View failed to load',
+			),
+		);
+		await userEvent.setup().hover(screen.getByTestId('saved-views-name'));
+
+		await waitFor(() =>
+			expect(screen.queryAllByText(message).length).toBeGreaterThan(0),
+		);
+	});
+});

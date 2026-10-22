@@ -69,8 +69,8 @@ type GCPIntegrationConfig struct {
 }
 
 type GCPTelemetryCollectionStrategy struct {
-	Metrics *GCPMetricsCollectionStrategy `json:"metrics,omitempty" required:"false" nullable:"false"`
-	Logs    *GCPLogsCollectionStrategy    `json:"logs,omitempty" required:"false" nullable:"false"`
+	Metrics *GCPMetricsCollectionStrategy `json:"metrics" required:"true" nullable:"true"`
+	Logs    *GCPLogsCollectionStrategy    `json:"logs" required:"true" nullable:"true"`
 }
 
 type GCPMetricsCollectionStrategy struct {
@@ -78,6 +78,7 @@ type GCPMetricsCollectionStrategy struct {
 }
 
 type GCPLogsCollectionStrategy struct {
+	// Cloud Logging filter for the log sink, https://cloud.google.com/logging/docs/view/logging-query-language
 	SinkFilter string `json:"sinkFilter" required:"true"`
 }
 

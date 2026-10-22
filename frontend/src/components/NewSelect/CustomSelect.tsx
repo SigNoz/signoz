@@ -16,7 +16,6 @@ import {
 	X,
 } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { Select } from 'antd';
 import cx from 'classnames';
 import TextToolTip from 'components/TextToolTip';
@@ -740,36 +739,33 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 
 	// ===== Component Rendering =====
 	return (
-		// Self-provided so label tooltips work wherever this select is rendered.
-		<TooltipProvider>
-			<Select
-				ref={selectRef}
-				className={cx('custom-select', className)}
-				placeholder={placeholder}
-				showSearch
-				filterOption={false}
-				onSearch={handleSearch}
-				value={value}
-				onChange={onChange}
-				onDropdownVisibleChange={handleDropdownVisibleChange}
-				open={isOpen}
-				options={optionsWithHighlight}
-				defaultActiveFirstOption={defaultActiveFirstOption}
-				popupMatchSelectWidth={popupMatchSelectWidth}
-				allowClear={allowClear ? { clearIcon } : false}
-				getPopupContainer={getPopupContainer ?? popupContainer}
-				suffixIcon={<ChevronDown style={{ cursor: 'default' }} size="md" />}
-				dropdownRender={customDropdownRender}
-				menuItemSelectedIcon={null}
-				popupClassName={cx('custom-select-dropdown-container', popupClassName)}
-				listHeight={300}
-				placement={placement}
-				optionFilterProp="label"
-				notFoundContent={<div className="empty-message">{noDataMessage}</div>}
-				onKeyDown={handleKeyDown}
-				{...rest}
-			/>
-		</TooltipProvider>
+		<Select
+			ref={selectRef}
+			className={cx('custom-select', className)}
+			placeholder={placeholder}
+			showSearch
+			filterOption={false}
+			onSearch={handleSearch}
+			value={value}
+			onChange={onChange}
+			onDropdownVisibleChange={handleDropdownVisibleChange}
+			open={isOpen}
+			options={optionsWithHighlight}
+			defaultActiveFirstOption={defaultActiveFirstOption}
+			popupMatchSelectWidth={popupMatchSelectWidth}
+			allowClear={allowClear ? { clearIcon } : false}
+			getPopupContainer={getPopupContainer ?? popupContainer}
+			suffixIcon={<ChevronDown style={{ cursor: 'default' }} size="md" />}
+			dropdownRender={customDropdownRender}
+			menuItemSelectedIcon={null}
+			popupClassName={cx('custom-select-dropdown-container', popupClassName)}
+			listHeight={300}
+			placement={placement}
+			optionFilterProp="label"
+			notFoundContent={<div className="empty-message">{noDataMessage}</div>}
+			onKeyDown={handleKeyDown}
+			{...rest}
+		/>
 	);
 };
 

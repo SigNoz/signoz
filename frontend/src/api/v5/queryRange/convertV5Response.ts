@@ -125,6 +125,7 @@ function convertTimeSeriesData(
 				values: series.values.map((value: any) => ({
 					timestamp: value.timestamp,
 					value: String(value.value),
+					...(value.partial ? { partial: true } : {}),
 				})),
 				metaData: {
 					alias,

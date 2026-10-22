@@ -73,10 +73,11 @@ type customReceiverConfigs struct {
 	Jira       []*JiraReceiverConfig
 	JSMOps     []*JSMOpsReceiverConfig
 	IncidentIO []*IncidentIOReceiverConfig
+	Telegram   []*TelegramReceiverConfig
 }
 
 func (c customReceiverConfigs) isEmpty() bool {
-	return len(c.GoogleChat) == 0 && len(c.Jira) == 0 && len(c.JSMOps) == 0 && len(c.IncidentIO) == 0
+	return len(c.GoogleChat) == 0 && len(c.Jira) == 0 && len(c.JSMOps) == 0 && len(c.IncidentIO) == 0 && len(c.Telegram) == 0
 }
 
 func customConfigsOf(receiver *Receiver) customReceiverConfigs {
@@ -85,6 +86,7 @@ func customConfigsOf(receiver *Receiver) customReceiverConfigs {
 		Jira:       receiver.JiraConfigs,
 		JSMOps:     receiver.JSMOpsConfigs,
 		IncidentIO: receiver.IncidentIOConfigs,
+		Telegram:   receiver.TelegramConfigs,
 	}
 }
 
@@ -196,6 +198,7 @@ func extendedReceivers(c *config.Config, customConfigs map[string]customReceiver
 			JiraConfigs:       custom.Jira,
 			JSMOpsConfigs:     custom.JSMOps,
 			IncidentIOConfigs: custom.IncidentIO,
+			TelegramConfigs:   custom.Telegram,
 		}
 	}
 
@@ -394,6 +397,7 @@ func (c *Config) GetReceiver(name string) (*Receiver, error) {
 				JiraConfigs:       custom.Jira,
 				JSMOpsConfigs:     custom.JSMOps,
 				IncidentIOConfigs: custom.IncidentIO,
+				TelegramConfigs:   custom.Telegram,
 			}, nil
 		}
 	}
@@ -486,6 +490,11 @@ func (c *Config) applyNativeDefaults() {
 		for _, ic := range custom.IncidentIO {
 			if ic.HTTPConfig == nil {
 				ic.HTTPConfig = httpDefault
+			}
+		}
+		for _, tc := range custom.Telegram {
+			if tc.HTTPConfig == nil {
+				tc.HTTPConfig = httpDefault
 			}
 		}
 	}

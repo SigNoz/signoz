@@ -3,8 +3,6 @@ import { useQueryClient } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { toast } from '@signozhq/ui/sonner';
 import {
-	invalidateGetSavedView,
-	invalidateListSavedViews,
 	useCreateSavedView,
 	useUpdateSavedView,
 } from 'api/generated/services/saved-view';
@@ -21,6 +19,7 @@ import useOptionsMenu from 'container/OptionsMenu/useOptionsMenu';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 import { DataSource } from 'types/common/queryBuilder';
 import { toAPIError } from 'utils/errorUtils';
 import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
@@ -33,6 +32,8 @@ import {
 } from '../constants';
 import { UseSavedViewActionsResult } from '../types';
 import { getSavedViewQuery } from '../utils/getSavedViewQuery';
+import { getViewColumnsAndFormatting } from '../utils/getViewColumnsAndFormatting';
+import { invalidateSavedViews } from '../utils/invalidateSavedViews';
 import { toSavedViewSpec } from '../utils/toSavedViewSpec';
 import { useLastUsedView } from './useLastUsedView';
 
@@ -54,6 +55,11 @@ export function useSavedViewActions(
 	const { options } = useOptionsMenu({
 		dataSource: optionsDataSource ?? DataSource.LOGS,
 	});
+	const preferences = usePreferenceContext();
+	const preferencesSlice =
+		optionsDataSource === DataSource.TRACES
+			? preferences.traces
+			: preferences.logs;
 
 	const { mutateAsync: createSavedView, isLoading: isCreating } =
 		useCreateSavedView();
@@ -61,14 +67,7 @@ export function useSavedViewActions(
 		useUpdateSavedView();
 
 	const invalidateViews = useCallback(
-		async (id?: string): Promise<void> => {
-			await Promise.all([
-				invalidateListSavedViews(queryClient),
-				id ? invalidateGetSavedView(queryClient, { id }) : undefined,
-				// The saved views bar still lists through v1.
-				queryClient.invalidateQueries([{ sourcepage: source }]),
-			]);
-		},
+		(id?: string): Promise<void> => invalidateSavedViews(queryClient, source, id),
 		[queryClient, source],
 	);
 
@@ -95,14 +94,21 @@ export function useSavedViewActions(
 		[handleExplorerTabChange, setLastUsedView],
 	);
 
-	// The preference provider re-reads a view's columns only when its list
-	// changes, so the list is refetched as the view is applied again.
 	const revertView = useCallback(
 		(view: SavedviewtypesSavedViewDTO): void => {
-			void invalidateListSavedViews(queryClient);
+			if (optionsDataSource) {
+				const { columns, formatting } = getViewColumnsAndFormatting(
+					view.spec,
+					optionsDataSource,
+				);
+				preferencesSlice.updateColumns(columns);
+				if (formatting) {
+					preferencesSlice.updateFormatting(formatting);
+				}
+			}
 			selectView(view);
 		},
-		[queryClient, selectView],
+		[optionsDataSource, preferencesSlice, selectView],
 	);
 
 	// The query builder redirects only ever add params, so the url is rebuilt

@@ -14,11 +14,12 @@ const NAME_INPUT_ID = 'save-view-name';
 
 function SaveViewModal({
 	mode,
+	initialName = '',
 	isSaving,
 	onClose,
 	onSave,
 }: SaveViewModalProps): JSX.Element {
-	const [name, setName] = useState('');
+	const [name, setName] = useState(initialName);
 	const displayName = name.trim();
 
 	const handleSave = async (): Promise<void> => {
@@ -58,11 +59,13 @@ function SaveViewModal({
 						Cancel
 					</Button>
 					<Button
+						variant="solid"
 						color="primary"
 						size="md"
 						prefix={<Check size={14} />}
 						loading={isSaving}
 						disabled={!displayName}
+						disabledTooltip="Enter a view name"
 						onClick={(): void => {
 							void handleSave();
 						}}

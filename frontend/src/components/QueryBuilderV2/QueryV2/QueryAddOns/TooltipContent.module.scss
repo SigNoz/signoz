@@ -1,0 +1,24 @@
+.content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	max-width: 300px;
+}
+
+.label {
+	font-size: var(--font-size-sm);
+}
+
+.description {
+	font-size: var(--font-size-xs);
+	line-height: var(--line-height-normal);
+}
+
+.docLink {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	margin-top: var(--spacing-2);
+	color: var(--accent-primary);
+	font-size: var(--font-size-xs);
+}
