@@ -869,11 +869,11 @@ func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, q qbtypes
 // carries buckets only the dropped columns reached. Left there, they show as
 // empty rows the same window never has when the cache did not answer it.
 func (bc *bucketCache) trimHeatmapAxisToTheWindow(q qbtypes.Query, tsData *qbtypes.TimeSeriesData) {
-	// promql and clickhouse name their own buckets, and an empty one of theirs
-	// still belongs on the axis
-	switch q.(type) {
-	case *builderQuery[qbtypes.MetricAggregation], *builderQuery[qbtypes.LogAggregation], *builderQuery[qbtypes.TraceAggregation]:
-	default:
+	// only an axis derived from the values can be cut back. A histogram, promql
+	// or clickhouse query names its own buckets, and an empty one of theirs still
+	// belongs on the axis
+	metricQuery, isMetricQuery := q.(*builderQuery[qbtypes.MetricAggregation])
+	if !isMetricQuery || len(metricQuery.spec.Aggregations) == 0 || metricQuery.spec.Aggregations[0].HeatmapBucketing == nil {
 		return
 	}
 
