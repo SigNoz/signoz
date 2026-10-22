@@ -31,13 +31,7 @@ func TelemetrySelector(_ context.Context, resource coretypes.Resource, id string
 	return selectors, nil
 }
 
-func NewQueryRangeResources(maxDisjuncts int) coretypes.ResourceExtractor {
-	return func(ec coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
-		return queryRangeResources(ec, maxDisjuncts)
-	}
-}
-
-func queryRangeResources(ec coretypes.ExtractorContext, maxDisjuncts int) ([]coretypes.ResourceWithID, error) {
+func QueryRangeResources(ec coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
 	queries := gjson.GetBytes(ec.RequestBody, "compositeQuery.queries")
 	if !queries.IsArray() || len(queries.Array()) == 0 {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "atleast one query is required")
@@ -51,7 +45,7 @@ func queryRangeResources(ec coretypes.ExtractorContext, maxDisjuncts int) ([]cor
 	refs := make([]coretypes.ResourceWithID, 0, len(queries.Array()))
 	seen := make(map[string]struct{})
 	for _, query := range queries.Array() {
-		queryRefs, err := resourcesForQuery(query, variables, maxDisjuncts)
+		queryRefs, err := resourcesForQuery(query, variables)
 		if err != nil {
 			return nil, err
 		}
@@ -94,16 +88,16 @@ func PromQLResources(coretypes.ExtractorContext) ([]coretypes.ResourceWithID, er
 	}}, nil
 }
 
-func resourcesForQuery(query gjson.Result, variables map[string]qbtypes.VariableItem, maxDisjuncts int) ([]coretypes.ResourceWithID, error) {
+func resourcesForQuery(query gjson.Result, variables map[string]qbtypes.VariableItem) ([]coretypes.ResourceWithID, error) {
 	queryType := query.Get("type").String()
 	typeWildcard := queryType + "/" + coretypes.WildCardSelectorString
 
 	switch queryType {
 	case qbtypes.QueryTypeBuilder.StringValue(), qbtypes.QueryTypeSubQuery.StringValue():
-		return resourcesForBuilderQuery(queryType, query.Get("spec"), variables, maxDisjuncts)
+		return resourcesForBuilderQuery(queryType, query.Get("spec"), variables)
 	case qbtypes.QueryTypeBuilderAI.StringValue():
 		// always a traces query; the signal may be absent from the payload
-		return builderQueryResourceRefs(queryType, coretypes.ResourceTelemetryResourceTraces, query.Get("spec"), variables, maxDisjuncts)
+		return builderQueryResourceRefs(queryType, coretypes.ResourceTelemetryResourceTraces, query.Get("spec"), variables)
 	case qbtypes.QueryTypePromQL.StringValue():
 		return []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: typeWildcard}}, nil
 	case qbtypes.QueryTypeClickHouseSQL.StringValue():
@@ -120,16 +114,16 @@ func resourcesForQuery(query gjson.Result, variables map[string]qbtypes.Variable
 	}
 }
 
-func resourcesForBuilderQuery(queryType string, spec gjson.Result, variables map[string]qbtypes.VariableItem, maxDisjuncts int) ([]coretypes.ResourceWithID, error) {
+func resourcesForBuilderQuery(queryType string, spec gjson.Result, variables map[string]qbtypes.VariableItem) ([]coretypes.ResourceWithID, error) {
 	resource, err := builderQueryResource(spec)
 	if err != nil {
 		return nil, err
 	}
-	return builderQueryResourceRefs(queryType, resource, spec, variables, maxDisjuncts)
+	return builderQueryResourceRefs(queryType, resource, spec, variables)
 }
 
-func builderQueryResourceRefs(queryType string, resource coretypes.Resource, spec gjson.Result, variables map[string]qbtypes.VariableItem, maxDisjuncts int) ([]coretypes.ResourceWithID, error) {
-	ids, err := builderQuerySelectors(queryType, spec.Get("filter.expression").String(), variables, maxDisjuncts)
+func builderQueryResourceRefs(queryType string, resource coretypes.Resource, spec gjson.Result, variables map[string]qbtypes.VariableItem) ([]coretypes.ResourceWithID, error) {
+	ids, err := builderQuerySelectors(queryType, spec.Get("filter.expression").String(), variables)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +157,7 @@ func builderQueryResource(spec gjson.Result) (coretypes.Resource, error) {
 	}
 }
 
-func builderQuerySelectors(queryType, expression string, variables map[string]qbtypes.VariableItem, maxDisjuncts int) ([]string, error) {
+func builderQuerySelectors(queryType, expression string, variables map[string]qbtypes.VariableItem) ([]string, error) {
 	typeWildcard := queryType + "/" + coretypes.WildCardSelectorString
 
 	if strings.TrimSpace(expression) == "" {
@@ -178,57 +172,50 @@ func builderQuerySelectors(queryType, expression string, variables map[string]qb
 		return []string{typeWildcard}, nil
 	}
 
+	pins := make(map[string]string)
 	lists := make([]WhereClauseCondition, 0)
 	seenKeys := make(map[string]struct{})
-	expandable := true
-	disjuncts := 1
 	for _, condition := range normalized.Conditions {
-		if !condition.TopLevel || condition.Operator != "IN" {
+		if !condition.TopLevel || condition.Operator != "IN" || len(condition.Values) == 0 {
 			continue
 		}
-		key, ok := telemetrytypes.NewTelemetryGrantKey(condition.Key)
-		if !ok {
+		if _, ok := telemetrytypes.NewTelemetryGrantKey(condition.Key); !ok {
 			continue
 		}
-		_, dup := seenKeys[key]
-		seenKeys[key] = struct{}{}
+		if _, dup := seenKeys[condition.Key]; dup {
+			return []string{queryType + "/" + normalized.Expression}, nil
+		}
+		seenKeys[condition.Key] = struct{}{}
+		if len(condition.Values) == 1 {
+			pins[condition.Key] = condition.Values[0]
+			continue
+		}
 		lists = append(lists, condition)
-		if dup || len(condition.Values) == 0 || disjuncts > maxDisjuncts/len(condition.Values) {
-			expandable = false
-			continue
-		}
-		disjuncts *= len(condition.Values)
 	}
 
-	if len(lists) == 0 || !expandable {
-		return []string{queryType + "/" + normalized.Expression}, nil
-	}
-
-	ids := make([]string, 0, disjuncts)
-	indices := make([]int, len(lists))
-	for {
-		pins := make(map[string]string, len(lists))
-		for i, list := range lists {
-			pins[list.Key] = list.Values[indices[i]]
+	if len(lists) != 1 {
+		if len(pins) == 0 {
+			return []string{queryType + "/" + normalized.Expression}, nil
 		}
 		pinned, err := NormalizeWhereClauseWithPins(expression, variables, pins)
 		if err != nil {
 			return nil, err
 		}
-		ids = append(ids, queryType+"/"+pinned.Expression)
-
-		position := len(indices) - 1
-		for ; position >= 0; position-- {
-			indices[position]++
-			if indices[position] < len(lists[position].Values) {
-				break
-			}
-			indices[position] = 0
-		}
-		if position < 0 {
-			return ids, nil
-		}
+		return []string{queryType + "/" + pinned.Expression}, nil
 	}
+
+	list := lists[0]
+	ids := make([]string, 0, len(list.Values))
+	for _, value := range list.Values {
+		pins[list.Key] = value
+		pinned, err := NormalizeWhereClauseWithPins(expression, variables, pins)
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, queryType+"/"+pinned.Expression)
+	}
+
+	return ids, nil
 }
 
 func telemetrySelectorValues(id string) ([]string, error) {
@@ -251,10 +238,10 @@ func telemetrySelectorValues(id string) ([]string, error) {
 		if !ok {
 			continue
 		}
-		switch condition.Operator {
-		case "=":
+		switch {
+		case condition.Operator == "=", condition.Operator == "IN" && len(condition.Values) == 1:
 			values = append(values, queryType+"/"+key+"/"+condition.Values[0], queryType+"/"+key+"/"+coretypes.WildCardSelectorString)
-		case "IN":
+		case condition.Operator == "IN":
 			values = append(values, queryType+"/"+key+"/"+coretypes.WildCardSelectorString)
 		}
 	}

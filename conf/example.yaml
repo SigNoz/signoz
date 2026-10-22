@@ -494,11 +494,6 @@ authz:
   openfga:
     # maximum tuples allowed per openfga write operation.
     max_tuples_per_write: 300
-  telemetry:
-    # Maximum number of IN value combinations one builder query is split into
-    # for the access check. Beyond it the query is checked as one resource and
-    # an IN is only covered by its key wildcard grant.
-    max_query_disjuncts: 64
 
 ##################### Meter Reporter #####################
 meterreporter:

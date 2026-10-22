@@ -2,7 +2,6 @@ package signoz
 
 import (
 	"context"
-	"github.com/SigNoz/signoz/pkg/authz"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -102,7 +101,6 @@ func TestNewProviderFactories(t *testing.T) {
 			Modules{},
 			Handlers{},
 			global.Config{},
-			authz.Config{},
 			nil,
 			nil,
 			nil,

@@ -107,7 +107,6 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ statsreporter.Handler }{},
 		struct{ savedview.Handler }{},
 		global.Config{},
-		authz.Config{},
 		struct{ identn.IdentNResolver }{},
 		struct{ sharder.Sharder }{},
 		struct{ auditor.Auditor }{},

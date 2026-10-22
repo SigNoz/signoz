@@ -464,7 +464,7 @@ func (provider *provider) addQuerierRoutes(router *mux.Router) error {
 		Verb:      coretypes.VerbRead,
 		Category:  coretypes.ActionCategoryDataAccess,
 		Selector:  querybuilder.TelemetrySelector,
-		Resources: querybuilder.NewQueryRangeResources(provider.authzConfig.Telemetry.MaxQueryDisjuncts),
+		Resources: querybuilder.QueryRangeResources,
 	}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -486,7 +486,7 @@ func (provider *provider) addQuerierRoutes(router *mux.Router) error {
 		Verb:      coretypes.VerbRead,
 		Category:  coretypes.ActionCategoryDataAccess,
 		Selector:  querybuilder.TelemetrySelector,
-		Resources: querybuilder.NewQueryRangeResources(provider.authzConfig.Telemetry.MaxQueryDisjuncts),
+		Resources: querybuilder.QueryRangeResources,
 	}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
