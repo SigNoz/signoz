@@ -23,7 +23,7 @@ test.describe('Alert details — header', () => {
 		await expect(nameInput).toBeEditable();
 
 		await page.getByTestId('alert-actions-menu').click();
-		await expect(page.getByRole('menuitem', { name: 'Duplicate' })).toBeVisible();
+		await expect(page.getByRole('menuitem', { name: 'Clone' })).toBeVisible();
 		await expect(page.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
 		await expect(page.getByRole('menuitem', { name: 'Rename' })).toHaveCount(0);
 	});
