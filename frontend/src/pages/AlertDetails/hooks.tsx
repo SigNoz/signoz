@@ -6,7 +6,7 @@ import type { FilterValue, SorterResult } from 'antd/es/table/interface';
 import { patchRulePartial } from 'api/alerts/patchRulePartial';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
-	createRule,
+	cloneRuleByID,
 	deleteRuleByID,
 	getGetRuleByIDQueryKey,
 	getGetRuleHistoryTimelineQueryOptions,
@@ -17,7 +17,6 @@ import {
 	useGetRuleHistoryOverallStatus,
 	useGetRuleHistoryStats,
 	useGetRuleHistoryTopContributors,
-	useListRules,
 } from 'api/generated/services/rules';
 import {
 	Querybuildertypesv5OrderDirectionDTO,
@@ -478,39 +477,32 @@ export const useAlertRuleStatusToggle = ({
 	return { handleAlertStateToggle };
 };
 
-export const useAlertRuleDuplicate = ({
-	alertDetails,
+export const useAlertRuleClone = ({
+	ruleId,
 }: {
-	alertDetails: AlertDef;
+	ruleId: string;
 }): {
-	handleAlertDuplicate: () => void;
+	handleAlertClone: () => void;
 } => {
 	const { notifications } = useNotifications();
+	const queryClient = useQueryClient();
 
 	const params = useUrlQuery();
 
-	const { refetch } = useListRules({
-		query: { cacheTime: 0 },
-	});
 	const { showErrorModal } = useErrorModal();
-	const { mutate: duplicateAlert } = useMutation(
-		[REACT_QUERY_KEY.DUPLICATE_ALERT_RULE],
-		(args: { data: AlertDef }) =>
-			createRule(toPostableRuleDTOFromAlertDef(args.data)),
+	const { mutate: cloneAlert } = useMutation(
+		[REACT_QUERY_KEY.CLONE_ALERT_RULE],
+		() => cloneRuleByID({ id: ruleId }),
 		{
-			onSuccess: async () => {
+			onSuccess: async (response) => {
 				notifications.success({
 					message: `Success`,
 				});
 
-				const { data: allAlertsData } = await refetch();
+				await invalidateListRules(queryClient);
 
-				const rules = allAlertsData?.data;
-				if (rules && rules.length > 0) {
-					const clonedAlert = rules[rules.length - 1];
-					params.set(QueryParams.ruleId, String(clonedAlert.id));
-					history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
-				}
+				params.set(QueryParams.ruleId, response.data.id);
+				history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 			},
 			onError: (error) =>
 				showErrorModal(
@@ -519,15 +511,13 @@ export const useAlertRuleDuplicate = ({
 		},
 	);
 
-	const handleAlertDuplicate = (): void => {
-		const args = {
-			data: { ...alertDetails, alert: alertDetails.alert?.concat(' - Copy') },
-		};
-		duplicateAlert(args);
+	const handleAlertClone = (): void => {
+		cloneAlert();
 	};
 
-	return { handleAlertDuplicate };
+	return { handleAlertClone };
 };
+
 export const useAlertRuleUpdate = ({
 	alertDetails,
 	setAlertRuleName,
