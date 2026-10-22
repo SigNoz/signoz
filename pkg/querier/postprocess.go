@@ -497,6 +497,9 @@ func bucketFormulaOutputAsHeatmap(tsData *qbtypes.TimeSeriesData, bucketing qbty
 // to stay identical to them: a formula heatmap and a metric heatmap that
 // disagreed here would put their counts in different buckets.
 func calculateLinearValueUpperBound(bucketing qbtypes.HeatmapBucketing, value float64) float64 {
+	if value <= 0 {
+		return 0
+	}
 	if value > bucketing.MaxValue {
 		return math.Inf(1)
 	}
