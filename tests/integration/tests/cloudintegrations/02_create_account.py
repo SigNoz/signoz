@@ -200,7 +200,7 @@ def test_create_gcp_agent_account_connection_command(
     assert command.startswith("curl -fsSL 'https://signoz.io/foundry.sh' | bash -s -- cloudintegration gcp terraform")
     assert "--region 'us-central1'" in command
     assert "--gcp-project 'signoz-agent-project'" in command
-    assert f"--account-id '{account['id']}'" in command
+    assert f"--integration-account-id '{account['id']}'" in command
     assert "--signoz-api-url 'https://test-deployment.test.signoz.cloud'" in command
     assert "--signoz-api-key 'test-api-key-789'" in command
     assert "--ingestion-url 'https://ingest.test.signoz.cloud'" in command
