@@ -270,7 +270,7 @@ export interface AlertmanagertypesChannelDTO {
 	createdAt?: string;
 	/**
 	 * @type string
-	 * @description The receiver configuration as a JSON document.
+	 * @description The channel configuration as a JSON document.
 	 */
 	data: string;
 	/**
@@ -279,7 +279,7 @@ export interface AlertmanagertypesChannelDTO {
 	id: string;
 	/**
 	 * @type string
-	 * @description The channel name, which is also the receiver name routing policies and rules reference.
+	 * @description The channel name. Alert rules and routing policies reference it.
 	 */
 	name: string;
 	/**
@@ -289,7 +289,7 @@ export interface AlertmanagertypesChannelDTO {
 	orgId: string;
 	/**
 	 * @type string
-	 * @description The notifier kind, such as slack.
+	 * @description The channel kind, such as slack.
 	 */
 	type: string;
 	/**
@@ -830,14 +830,14 @@ export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAl
 	jira = 'jira',
 }
 /**
- * Extra issue fields keyed by Jira field ID. Stored, but the notifier does not currently include them in the issue it creates or updates.
+ * Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives.
  */
 export type AlertmanagertypesChannelJiraConfigDTOCustomFieldsAnyOf = {
 	[key: string]: unknown;
 };
 
 /**
- * Extra issue fields keyed by Jira field ID. Stored, but the notifier does not currently include them in the issue it creates or updates.
+ * Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives.
  * @nullable
  */
 export type AlertmanagertypesChannelJiraConfigDTOCustomFields = AlertmanagertypesChannelJiraConfigDTOCustomFieldsAnyOf | null;
@@ -851,7 +851,7 @@ export interface AlertmanagertypesChannelJiraConfigDTO {
 	apiToken: string;
 	/**
 	 * @type object,null
-	 * @description Extra issue fields keyed by Jira field ID. Stored, but the notifier does not currently include them in the issue it creates or updates.
+	 * @description Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives.
 	 */
 	customFields?: AlertmanagertypesChannelJiraConfigDTOCustomFields;
 	/**
@@ -1166,7 +1166,7 @@ export interface AlertmanagertypesListedNotificationChannelDTO {
 	createdAt: string;
 	/**
 	 * @type string
-	 * @description The label shown in the UI and the receiver name that alert rule channels and routing policies reference.
+	 * @description The label shown in the UI. Alert rules and routing policies reference it, not name.
 	 */
 	displayName: string;
 	/**
@@ -1265,7 +1265,7 @@ export interface AlertmanagertypesDeprecatedGettableAlertDTO {
 	labels?: ModelLabelSetDTO;
 	/**
 	 * @type array,null
-	 * @description The names of the receivers the alert routes to.
+	 * @description The display names of the channels the alert is routed to.
 	 */
 	receivers?: string[] | null;
 	/**
@@ -1296,7 +1296,7 @@ export interface AlertmanagertypesGettableNotificationChannelDTO {
 	createdAt: string;
 	/**
 	 * @type string
-	 * @description The label shown in the UI and the receiver name that alert rule channels and routing policies reference.
+	 * @description The label shown in the UI. Alert rules and routing policies reference it, not name.
 	 */
 	displayName: string;
 	/**
@@ -1702,7 +1702,7 @@ export interface AlertmanagertypesJSMOpsReceiverConfigDTO {
 }
 
 /**
- * Extra issue fields keyed by Jira field ID. Stored, but the notifier does not currently include them in the issue it creates or updates.
+ * Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives.
  */
 export type AlertmanagertypesJiraReceiverConfigDTOCustomFields = {
 	[key: string]: unknown;
@@ -1713,7 +1713,7 @@ export type ModelDurationDTO = number;
 export interface AlertmanagertypesJiraReceiverConfigDTO {
 	/**
 	 * @type object
-	 * @description Extra issue fields keyed by Jira field ID. Stored, but the notifier does not currently include them in the issue it creates or updates.
+	 * @description Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives.
 	 */
 	custom_fields?: AlertmanagertypesJiraReceiverConfigDTOCustomFields;
 	/**
@@ -3049,7 +3049,7 @@ export interface AlertmanagertypesPostableNotificationChannelDTO {
 	config: AlertmanagertypesChannelConfigDTO;
 	/**
 	 * @type string
-	 * @description The label shown in the UI and the receiver name that alert rule channels and routing policies reference. Defaults to name; required when generateName is true.
+	 * @description The label shown in the UI. Alert rules and routing policies reference it, not name. Defaults to name; required when generateName is true.
 	 */
 	displayName?: string;
 	/**
