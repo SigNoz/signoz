@@ -11319,7 +11319,7 @@ export enum RuletypesEvaluationKindDTO {
 export interface RuletypesGettableTestRuleDTO {
 	/**
 	 * @type integer
-	 * @description The number of alerts the test notification produced, including results that do not cross the threshold, since a test sends every evaluated series.
+	 * @description The number of alerts the test notification produced. Counts every evaluated series, including those that did not cross the threshold.
 	 */
 	alertCount?: number;
 	/**
@@ -11529,7 +11529,7 @@ export interface RuletypesNotificationSettingsDTO {
 	groupBy?: string[] | null;
 	/**
 	 * @type string
-	 * @description A grace period, as a Go duration such as 2m, during which a newly seen label group is excluded from evaluation; log and trace builder queries are never suppressed. For metric queries, new means the latest first-seen time of the series' group-by attribute values in the metric metadata, and a series whose values have no metadata is evaluated at once.
+	 * @description A grace period, as a Go duration such as 2m, during which a newly seen label group is excluded from evaluation. Applies to metric rules only; log and trace rules are never delayed. A group whose values are not yet known is evaluated immediately.
 	 */
 	newGroupEvalDelay?: string;
 	/**
