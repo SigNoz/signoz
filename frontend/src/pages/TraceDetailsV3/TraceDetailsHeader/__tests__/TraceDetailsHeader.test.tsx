@@ -2,6 +2,7 @@ import { fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import type { SpantypesGettableTraceSummaryDTO } from 'api/generated/services/sigNoz.schemas';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import ROUTES from 'constants/routes';
 import { render } from 'tests/test-utils';
 
@@ -313,5 +314,100 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 
 		expect(screen.queryByText(/inventory-frontend/)).not.toBeInTheDocument();
 		expect(container.querySelectorAll('.ant-skeleton-input')).toHaveLength(3);
+	});
+});
+
+const metadataText = /Missing Span/;
+
+describe('TraceDetailsHeader – tabs', () => {
+	beforeEach(() => {
+		jest.mocked(useTraceSummary).mockReturnValue({
+			data: {
+				...SUMMARY,
+				rootServiceEntryPoint: 'Missing Span',
+				hasMissingSpans: true,
+			},
+			isLoading: false,
+		});
+	});
+
+	afterEach(() => {
+		jest
+			.mocked(useTraceSummary)
+			.mockReturnValue({ data: undefined, isLoading: false });
+	});
+
+	// In-memory URL state, so a tab switch can't leak into the next test.
+	const renderHeader = (): void => {
+		render(
+			<NuqsTestingAdapter hasMemory>
+				<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />
+			</NuqsTestingAdapter>,
+		);
+	};
+
+	it('shows the Overview-only sections on the Overview tab', () => {
+		renderHeader();
+
+		expect(screen.getByTestId('filters-stub')).toBeInTheDocument();
+		expect(screen.getByTestId('trace-analytics-button')).toBeInTheDocument();
+		expect(screen.getByTestId('trace-options-button')).toBeInTheDocument();
+		expect(screen.getByTestId('missing-spans-banner')).toBeInTheDocument();
+	});
+
+	it('keeps only the metadata row on the Thread tab', async () => {
+		const user = userEvent.setup({ delay: null });
+		renderHeader();
+
+		await user.click(screen.getByTestId('trace-details-tab-thread'));
+
+		expect(screen.queryByTestId('filters-stub')).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId('trace-analytics-button'),
+		).not.toBeInTheDocument();
+		expect(screen.queryByTestId('trace-options-button')).not.toBeInTheDocument();
+		expect(screen.queryByTestId('missing-spans-banner')).not.toBeInTheDocument();
+		expect(screen.getByText(metadataText)).toBeInTheDocument();
+	});
+
+	it('shows the metadata row on the Thread tab even when hidden on Overview', async () => {
+		const user = userEvent.setup({ delay: null });
+		renderHeader();
+
+		await user.click(screen.getByTestId('trace-options-button'));
+		await user.click(await screen.findByTestId('toggle-trace-details'));
+		expect(screen.queryByText(metadataText)).not.toBeInTheDocument();
+
+		await user.click(screen.getByTestId('trace-details-tab-thread'));
+
+		expect(screen.getByText(metadataText)).toBeInTheDocument();
+	});
+
+	it('clears the filter result when switching to the Thread tab', async () => {
+		const user = userEvent.setup({ delay: null });
+		renderHeader();
+		baseProps.onFilteredSpansChange.mockClear();
+
+		await user.click(screen.getByTestId('trace-details-tab-thread'));
+
+		expect(baseProps.onFilteredSpansChange).toHaveBeenCalledWith([], false);
+	});
+
+	it('closes the Analytics panel when switching to the Thread tab', async () => {
+		const user = userEvent.setup({ delay: null });
+		renderHeader();
+
+		await user.click(screen.getByTestId('trace-analytics-button'));
+		expect(screen.getByTestId('analytics-panel')).toHaveAttribute(
+			'data-open',
+			'true',
+		);
+
+		await user.click(screen.getByTestId('trace-details-tab-thread'));
+
+		expect(screen.getByTestId('analytics-panel')).toHaveAttribute(
+			'data-open',
+			'false',
+		);
 	});
 });
