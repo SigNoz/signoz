@@ -111,9 +111,9 @@ const POD_STATUS_CATEGORY_MAP: Record<
 };
 
 type ErrorStatusKey = {
-	[K in keyof InframonitoringtypesPodCountsByStatusDTO]: (typeof POD_STATUS_CATEGORY_MAP)[K] extends 'error'
-		? K
-		: never;
+	[
+		K in keyof InframonitoringtypesPodCountsByStatusDTO
+	]: (typeof POD_STATUS_CATEGORY_MAP)[K] extends 'error' ? K : never;
 }[keyof InframonitoringtypesPodCountsByStatusDTO];
 
 const ERROR_STATUS_LABELS: Record<ErrorStatusKey, string> = {

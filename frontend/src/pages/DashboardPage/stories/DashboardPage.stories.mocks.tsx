@@ -338,10 +338,12 @@ export const dashboardMocks = defineStoryMocks({
 
 			// The header reads the public link on every load, so it answers even while
 			// the panels are held in the loading or failed state.
-			rest.get('http://localhost/api/v1/dashboards/:id/public', (_req, res, ctx) =>
-				values.published
-					? res(ctx.status(200), ctx.json(publicMeta()))
-					: res(ctx.status(404), ctx.json(NOT_PUBLIC)),
+			rest.get(
+				'http://localhost/api/v1/dashboards/:id/public',
+				(_req, res, ctx) =>
+					values.published
+						? res(ctx.status(200), ctx.json(publicMeta()))
+						: res(ctx.status(404), ctx.json(NOT_PUBLIC)),
 			),
 
 			rest.post('http://localhost/api/v1/dashboards/:id/public', (req, res, ctx) =>

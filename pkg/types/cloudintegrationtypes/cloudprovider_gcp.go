@@ -24,7 +24,19 @@ type GCPConnectionArtifact struct{}
 
 type GCPIntegrationConfig struct{}
 
-type GCPTelemetryCollectionStrategy struct{}
+type GCPTelemetryCollectionStrategy struct {
+	Metrics *GCPMetricsCollectionStrategy `json:"metrics" required:"false" nullable:"false"`
+	Logs    *GCPLogsCollectionStrategy    `json:"logs" required:"false" nullable:"false"`
+}
+
+type GCPMetricsCollectionStrategy struct {
+	MetricNames []string `json:"metricNames" required:"true" nullable:"false"`
+}
+
+type GCPLogsCollectionStrategy struct {
+	// Cloud Logging filter for the log sink, https://cloud.google.com/logging/docs/view/logging-query-language
+	SinkFilter string `json:"sinkFilter" required:"true"`
+}
 
 type GCPServiceConfig struct {
 	Logs    *GCPServiceLogsConfig    `json:"logs,omitempty" required:"false"`

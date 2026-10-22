@@ -20,7 +20,7 @@ import {
 import {
 	alertRuleByIdResponse,
 	ALERT_SCHEMAS,
-	channelsResponse,
+	notificationChannelsResponse,
 	CHANNEL_MAX,
 	type AlertSchema,
 } from '../../AlertList/stories/__story_mockdata__/alerts';
@@ -77,8 +77,8 @@ export const editRulesMocks = defineStoryMocks({
 		),
 
 		rest.get(
-			'http://localhost/api/v1/channels',
-			response.json(() => channelsResponse(values.channels)),
+			'http://localhost/api/v2/notification_channels',
+			response.json(() => notificationChannelsResponse(values.channels)),
 		),
 
 		rest.post(
