@@ -110,7 +110,7 @@ func (provider *provider) addMetricReductionRuleRoutes(router *mux.Router) error
 	}
 
 	if err := router.Handle("/api/v2/metric_reduction_rules/preview", handler.New(
-		provider.authzMiddleware.CheckResources(provider.metricReductionRuleHandler.Preview, authtypes.SigNozAdminRoleName),
+		provider.authzMiddleware.CheckResources(provider.metricReductionRuleHandler.Preview, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "PreviewMetricReductionRule",
 			Tags:                []string{"metrics"},
@@ -122,13 +122,13 @@ func (provider *provider) addMetricReductionRuleRoutes(router *mux.Router) error
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons, http.StatusInternalServerError},
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceMetricReductionRule.Scope(coretypes.VerbCreate)}),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
 		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceMetricReductionRule,
-			Verb:     coretypes.VerbCreate,
-			Category: coretypes.ActionCategoryDataAccess,
-			Selector: coretypes.WildcardSelector,
+		handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWildcardResources(coretypes.ResourceTelemetryResourceMetrics),
 		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err

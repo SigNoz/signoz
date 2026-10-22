@@ -113,14 +113,16 @@ def test_list_needs_rule_grant(
 @pytest.mark.parametrize(
     ("email", "expected"),
     [
+        (scoped_email, HTTPStatus.FORBIDDEN),
+        (wildcard_email, HTTPStatus.OK),
         (rule_reader_email, HTTPStatus.FORBIDDEN),
-        (viewer_email, HTTPStatus.FORBIDDEN),
-        (editor_email, HTTPStatus.FORBIDDEN),
+        (viewer_email, HTTPStatus.OK),
+        (editor_email, HTTPStatus.OK),
         (USER_ADMIN_EMAIL, HTTPStatus.OK),
     ],
-    ids=["rule_reader", "viewer", "editor", "admin"],
+    ids=["metrics_scoped", "metrics_wildcard", "rule_reader", "viewer", "editor", "admin"],
 )
-def test_preview_needs_create_grant(
+def test_preview_needs_metrics_read(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[list[Metrics]], None],
@@ -135,6 +137,8 @@ def test_preview_needs_create_grant(
         timeout=10,
     )
     assert response.status_code == expected, response.text
+    if expected == HTTPStatus.FORBIDDEN:
+        assert "metrics" in response.text
 
 
 @pytest.mark.parametrize(
