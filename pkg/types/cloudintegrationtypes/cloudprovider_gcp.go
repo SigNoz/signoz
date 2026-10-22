@@ -30,33 +30,26 @@ func (GCPConnectionMethod) Enum() []any {
 }
 
 type GCPAccountConfig struct {
-	ConnectionMethod GCPConnectionMethod `json:"connectionMethod" required:"true"`
-	// DeploymentProjectID is the project hosting the integration resources.
-	DeploymentProjectID string `json:"deploymentProjectId" required:"true"`
-	// DeploymentRegion is the region used for the integration resources.
-	DeploymentRegion string `json:"deploymentRegion" required:"true"`
+	ConnectionMethod    GCPConnectionMethod `json:"connectionMethod" required:"true"`
+	DeploymentProjectID string              `json:"deploymentProjectId" required:"true"`
+	DeploymentRegion    string              `json:"deploymentRegion" required:"true"`
 	// Agent accounts store exactly the deployment project; manual accounts may monitor multiple projects.
 	ProjectIDs []string `json:"projectIds" required:"true" nullable:"false"`
 }
 
 type GCPPostableAccountConfig struct {
-	ConnectionMethod GCPConnectionMethod `json:"connectionMethod" required:"true"`
-	// DeploymentProjectID is the project hosting the integration resources.
-	DeploymentProjectID string `json:"deploymentProjectId" required:"true"`
-	// DeploymentRegion is the region used for the integration resources.
-	DeploymentRegion string `json:"deploymentRegion" required:"true"`
+	ConnectionMethod    GCPConnectionMethod `json:"connectionMethod" required:"true"`
+	DeploymentProjectID string              `json:"deploymentProjectId" required:"true"`
+	DeploymentRegion    string              `json:"deploymentRegion" required:"true"`
 	// Agent setup requires exactly DeploymentProjectID; manual setup may select multiple projects.
 	ProjectIDs []string `json:"projectIds" required:"true" nullable:"false"`
 }
 
 // UpdatableGCPAccountConfig contains settings for manual integrations only.
 type UpdatableGCPAccountConfig struct {
-	// DeploymentProjectID is the project hosting the manually configured integration resources.
-	DeploymentProjectID string `json:"deploymentProjectId" required:"true"`
-	// DeploymentRegion is the region used for the manually configured integration resources.
-	DeploymentRegion string `json:"deploymentRegion" required:"true"`
-	// ProjectIDs lists the projects monitored by the manual integration.
-	ProjectIDs []string `json:"projectIds" required:"true" nullable:"false"`
+	DeploymentProjectID string   `json:"deploymentProjectId" required:"true"`
+	DeploymentRegion    string   `json:"deploymentRegion" required:"true"`
+	ProjectIDs          []string `json:"projectIds" required:"true" nullable:"false"`
 }
 
 type GCPConnectionArtifact struct {
@@ -117,14 +110,14 @@ func (config *GCPAccountConfig) ErrIfInvalid() error {
 	return nil
 }
 
-func NewGCPConnectionArtifact(accountID valuer.UUID, agentVersion string, creds *Credentials, cfg *GCPAccountConfig) (*GCPConnectionArtifact, error) {
+func NewGCPConnectionArtifact(integrationAccountID valuer.UUID, agentVersion string, creds *Credentials, cfg *GCPAccountConfig) (*GCPConnectionArtifact, error) {
 	data := gcpTemplateData{
-		FoundryScriptURL: foundryScriptURL,
-		ProjectID:        cfg.DeploymentProjectID,
-		Region:           cfg.DeploymentRegion,
-		AccountID:        accountID.StringValue(),
-		AgentVersion:     agentVersion,
-		Credentials:      creds,
+		FoundryScriptURL:     foundryScriptURL,
+		ProjectID:            cfg.DeploymentProjectID,
+		Region:               cfg.DeploymentRegion,
+		IntegrationAccountID: integrationAccountID.StringValue(),
+		AgentVersion:         agentVersion,
+		Credentials:          creds,
 	}
 
 	var command bytes.Buffer
@@ -165,19 +158,19 @@ func NewGCPIntegrationConfig(config *GCPAccountConfig, metricNames, sinkFilters 
 }
 
 type gcpTemplateData struct {
-	FoundryScriptURL string
-	ProjectID        string
-	Region           string
-	AccountID        string
-	AgentVersion     string
-	Credentials      *Credentials
+	FoundryScriptURL     string
+	ProjectID            string
+	Region               string
+	IntegrationAccountID string
+	AgentVersion         string
+	Credentials          *Credentials
 }
 
 func gcpCLITemplateStr() string {
 	return `curl -fsSL {{.FoundryScriptURL | shellQuote}} | bash -s -- cloudintegration gcp terraform \
   --region {{.Region | shellQuote}} \
   --gcp-project {{.ProjectID | shellQuote}} \
-  --account-id {{.AccountID | shellQuote}} \
+  --integration-account-id {{.IntegrationAccountID | shellQuote}} \
   --signoz-api-url {{.Credentials.SigNozAPIURL | shellQuote}} \
   --signoz-api-key {{.Credentials.SigNozAPIKey | shellQuote}} \
   --ingestion-url {{.Credentials.IngestionURL | shellQuote}} \
