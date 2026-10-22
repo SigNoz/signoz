@@ -73,4 +73,21 @@ describe('KeyboardHotkeysProvider', () => {
 
 		expect(handleShortcut).not.toHaveBeenCalled();
 	});
+
+	it('ignores keydown events dispatched on document itself', () => {
+		const handleShortcut = jest.fn();
+
+		render(
+			<KeyboardHotkeysProvider>
+				<TestComponentWithRegister handleShortcut={handleShortcut} />
+			</KeyboardHotkeysProvider>,
+		);
+
+		expect(() =>
+			document.dispatchEvent(new KeyboardEvent('keydown', { key: 'a' })),
+		).not.toThrow();
+		document.dispatchEvent(new KeyboardEvent('keyup', { key: 'a' }));
+
+		expect(handleShortcut).not.toHaveBeenCalled();
+	});
 });
