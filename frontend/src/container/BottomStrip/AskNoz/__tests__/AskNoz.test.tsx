@@ -1,4 +1,9 @@
 import { fireEvent } from '@testing-library/react';
+import logEvent from 'api/common/logEvent';
+import {
+	AIAssistantEvents,
+	AIAssistantOpenSource,
+} from 'container/AIAssistant/events';
 import { openAIAssistant } from 'container/AIAssistant/store/useAIAssistantStore';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { render } from 'tests/test-utils';
@@ -6,6 +11,10 @@ import { render } from 'tests/test-utils';
 import AskNoz from '../AskNoz';
 
 jest.mock('hooks/useIsAIAssistantEnabled');
+jest.mock('api/common/logEvent', () => ({
+	__esModule: true,
+	default: jest.fn(),
+}));
 jest.mock('container/AIAssistant/store/useAIAssistantStore', () => ({
 	openAIAssistant: jest.fn(),
 	useAIAssistantStore: jest.fn(),
@@ -90,6 +99,17 @@ describe('AskNoz', () => {
 			fireEvent.click(getByRole('button'));
 
 			expect(mockOpen).toHaveBeenCalledTimes(1);
+		});
+
+		it('reports the open as coming from the strip', () => {
+			const { getByRole } = render(<AskNoz />);
+
+			fireEvent.click(getByRole('button'));
+
+			expect(logEvent).toHaveBeenCalledWith(
+				AIAssistantEvents.Opened,
+				expect.objectContaining({ source: AIAssistantOpenSource.BottomStrip }),
+			);
 		});
 	});
 

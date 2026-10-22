@@ -1,8 +1,15 @@
 import { fireEvent } from '@testing-library/react';
+import logEvent from 'api/common/logEvent';
 import { ChatSupportState, useChatSupport } from 'hooks/useChatSupport';
 import { render } from 'tests/test-utils';
 
+import { BottomStripEvents, BottomStripSupportType } from '../../events';
 import SupportButton from '../SupportButton';
+
+jest.mock('api/common/logEvent', () => ({
+	__esModule: true,
+	default: jest.fn(),
+}));
 
 jest.mock('hooks/useChatSupport', () => ({
 	...jest.requireActual('hooks/useChatSupport'),
@@ -37,6 +44,9 @@ describe('SupportButton', () => {
 			fireEvent.click(getByTestId(BUTTON));
 
 			expect(window.Pylon).toHaveBeenCalledWith('show');
+			expect(logEvent).toHaveBeenCalledWith(BottomStripEvents.SupportClicked, {
+				type: BottomStripSupportType.Pylon,
+			});
 		});
 
 		it('does not open the credit card modal', () => {
@@ -64,6 +74,9 @@ describe('SupportButton', () => {
 
 			expect(getByText(MODAL_TITLE)).toBeInTheDocument();
 			expect(window.Pylon).not.toHaveBeenCalled();
+			expect(logEvent).toHaveBeenCalledWith(BottomStripEvents.SupportClicked, {
+				type: BottomStripSupportType.AddCard,
+			});
 		});
 	});
 
