@@ -11,13 +11,12 @@
 	--select-trigger-height: var(--control-height);
 	--input-height: var(--control-height);
 	--input-wrapper-height: var(--control-height);
-	--button-height: var(--control-height);
 
 	display: flex;
 	flex-direction: column;
 	gap: var(--spacing-6);
 	flex-shrink: 0;
-	padding: var(--spacing-6) var(--spacing-8);
+	padding: 0 var(--spacing-8) var(--spacing-6) var(--spacing-8);
 }
 
 /* Title and count on the left, the create action at the far end, the way the
@@ -25,7 +24,7 @@
 .commandHeader {
 	display: flex;
 	align-items: center;
-	gap: 12px;
+	gap: var(--spacing-4);
 }
 
 .headingBlock {

@@ -105,6 +105,13 @@ is there to look at. Shooting two narrow runs and diffing those against each
 other has the same problem. Either shoot the full set twice, or skip `--noise`
 and explain the few movers by hand.
 
+**`--noise` ignores how far a pair moved.** A pair is marked flaky when the
+noise diff does not show it as unchanged, so a 70-pixel flicker in the noise run
+hides a real 8% change in the real one. Compare the two numbers before trusting
+the mark. When most of the flaky marks are hiding real changes, run the diff
+without `--noise` and tag the genuinely noisy pairs by hand instead, so nothing
+real is filtered out of the reviewer's view.
+
 That is the trade: a second full capture costs about as long as the first, so on
 a small diff it is often quicker to crop the two or three movers and say what
 each one is. Use `--noise` when the diff is large, or when wiring `--fail-over`
@@ -138,6 +145,15 @@ eye.
 
 - A full capture is hundreds of shots. Scope with `--title "Pages/Alerts"` or
   `--stories "a,b,c"` (substring match on id or Title/Name, repeatable).
+- **On macOS a capture can pin itself to one story at a time.** sbshot picks how
+  many to shoot at once by sampling free memory, and off Linux it reads
+  `os.freemem()`, which counts only truly free pages. macOS parks almost
+  everything in "inactive" instead, which is reclaimable on demand, so the
+  sampler can read ~100 MB on a 25 GB machine and shrink to one forever.
+  `--jobs` does not help: it is only an upper cap. Check `parallelism` in
+  `<run>/events.ndjson`; if it sits at 1 while `vm_stat` shows gigabytes
+  inactive, that is this. A 124-shot run takes about 90 minutes pinned and about
+  6 minutes at four at a time, so it is worth spotting before a long capture.
 - A fresh worktree cannot build Storybook: `i18n-translations-hash.json` is
   gitignored and generated. Run `node ./i18-generate-hash.cjs` in
   `<worktree>/frontend`, and symlink `node_modules` from the main checkout.
