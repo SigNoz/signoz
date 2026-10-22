@@ -98,7 +98,7 @@ def test_allowed(
 @pytest.mark.parametrize(
     ("email", "expression", "denied_resource"),
     [
-        (service_email, "service.name = 'checkout'", "builder_query/service.name = 'checkout'"),  # bare customer key never selects
+        (service_email, "service.name = 'checkout'", "builder_query/*"),  # bare customer key never selects
         (service_email, "resource.deployment.environment.name = 'prod'", "builder_query/resource.deployment.environment.name = 'prod'"),
         (service_email, "resource.service.name = 'frontend'", "builder_query/resource.service.name = 'frontend'"),
         (env_email, "resource.service.name = 'checkout'", "builder_query/resource.service.name = 'checkout'"),

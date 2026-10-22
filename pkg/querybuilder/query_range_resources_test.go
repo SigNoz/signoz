@@ -24,7 +24,7 @@ func TestQueryRangeResources(t *testing.T) {
 			name: "TopLevelEquality_OneResource",
 			body: builderQueryBody("logs", "signoz.workspace.key.id = 'checkout' AND status = 500"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id = 'checkout' AND status = 500"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id = 'checkout'"},
 			},
 		},
 		{
@@ -101,10 +101,10 @@ func TestQueryRangeResources(t *testing.T) {
 			},
 		},
 		{
-			name: "OldEnvironmentSpelling_InIDNotSelector",
+			name: "OldEnvironmentSpelling_NotAnAtom",
 			body: builderQueryBody("traces", "resource.deployment.environment = 'prod'"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/resource.deployment.environment = 'prod'"},
+				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/*"},
 			},
 		},
 		{
@@ -116,10 +116,10 @@ func TestQueryRangeResources(t *testing.T) {
 			},
 		},
 		{
-			name: "BareCustomerKey_InIDNotSelector",
+			name: "BareCustomerKey_NotAnAtom",
 			body: builderQueryBody("logs", "service.name = 'checkout'"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name = 'checkout'"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/*"},
 			},
 		},
 		{
@@ -130,17 +130,17 @@ func TestQueryRangeResources(t *testing.T) {
 			},
 		},
 		{
-			name: "TopLevelOr_WholeFilterID",
+			name: "TopLevelOr_NoAtoms",
 			body: builderQueryBody("logs", "signoz.workspace.key.id = 'a' OR status = 500"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id = 'a' OR status = 500"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/*"},
 			},
 		},
 		{
-			name: "ListUnderOr_NotExpanded",
+			name: "ListUnderOr_NoAtoms",
 			body: builderQueryBody("logs", "signoz.workspace.key.id IN ('a', 'b') OR status = 500"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/signoz.workspace.key.id IN ('a', 'b') OR status = 500"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/*"},
 			},
 		},
 		{
@@ -198,7 +198,6 @@ func TestQueryRangeResources(t *testing.T) {
 			body: `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"name":"A","signal":"traces","disabled":true,"filter":{"expression":"signoz.workspace.key.id = 'checkout'"}}},{"type":"builder_query","spec":{"name":"B","signal":"traces","disabled":true,"filter":{"expression":"signoz.workspace.key.id = 'checkout' AND has_error = true"}}},{"type":"builder_trace_operator","spec":{"name":"T1","expression":"A => B","returnSpansFrom":"A"}}]}}`,
 			expected: []coretypes.ResourceWithID{
 				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/signoz.workspace.key.id = 'checkout'"},
-				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/has_error = true AND signoz.workspace.key.id = 'checkout'"},
 			},
 		},
 		{

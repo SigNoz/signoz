@@ -3,6 +3,7 @@ package querybuilder
 import (
 	"context"
 	"encoding/json"
+	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -184,54 +185,64 @@ func builderQuerySelectors(queryType, expression string, variables map[string]qb
 	if err != nil {
 		return nil, err
 	}
-	if normalized.Expression == "" {
-		return []string{typeWildcard}, nil
-	}
 
-	pins := make(map[string]string)
-	lists := make([]WhereClauseCondition, 0)
-	seenKeys := make(map[string]struct{})
+	atoms := make([]WhereClauseCondition, 0)
 	for _, condition := range normalized.Conditions {
-		if !condition.TopLevel || condition.Operator != "IN" || len(condition.Values) == 0 {
+		if !condition.TopLevel || len(condition.Values) == 0 {
+			continue
+		}
+		if condition.Operator != "=" && condition.Operator != "IN" {
 			continue
 		}
 		if _, ok := telemetrytypes.NewTelemetryGrantKey(condition.Key); !ok {
 			continue
 		}
-		if _, dup := seenKeys[condition.Key]; dup {
-			return []string{queryType + "/" + normalized.Expression}, nil
-		}
-		seenKeys[condition.Key] = struct{}{}
-		if len(condition.Values) == 1 {
-			pins[condition.Key] = condition.Values[0]
+		atoms = append(atoms, condition)
+	}
+	if len(atoms) == 0 {
+		return []string{typeWildcard}, nil
+	}
+
+	listIndex := -1
+	for index, atom := range atoms {
+		if atom.Operator != "IN" || len(atom.Values) < 2 {
 			continue
 		}
-		lists = append(lists, condition)
+		if listIndex >= 0 {
+			return []string{queryType + "/" + telemetryAtomsFilter(atoms)}, nil
+		}
+		listIndex = index
+	}
+	if listIndex < 0 {
+		return []string{queryType + "/" + telemetryAtomsFilter(atoms)}, nil
 	}
 
-	if len(lists) != 1 {
-		if len(pins) == 0 {
-			return []string{queryType + "/" + normalized.Expression}, nil
-		}
-		pinned, err := NormalizeWhereClauseWithPins(expression, variables, pins)
-		if err != nil {
-			return nil, err
-		}
-		return []string{queryType + "/" + pinned.Expression}, nil
-	}
-
-	list := lists[0]
+	list := atoms[listIndex]
 	ids := make([]string, 0, len(list.Values))
 	for _, value := range list.Values {
-		pins[list.Key] = value
-		pinned, err := NormalizeWhereClauseWithPins(expression, variables, pins)
-		if err != nil {
-			return nil, err
-		}
-		ids = append(ids, queryType+"/"+pinned.Expression)
+		atoms[listIndex] = WhereClauseCondition{Key: list.Key, Operator: "=", Values: []string{value}}
+		ids = append(ids, queryType+"/"+telemetryAtomsFilter(atoms))
 	}
 
 	return ids, nil
+}
+
+func telemetryAtomsFilter(atoms []WhereClauseCondition) string {
+	parts := make([]string, 0, len(atoms))
+	for _, atom := range atoms {
+		literals := make([]string, 0, len(atom.Values))
+		for _, value := range atom.Values {
+			literals = append(literals, FilterStringLiteral(value))
+		}
+		if len(literals) == 1 {
+			parts = append(parts, atom.Key+" = "+literals[0])
+			continue
+		}
+		parts = append(parts, atom.Key+" IN ("+strings.Join(literals, ", ")+")")
+	}
+	slices.Sort(parts)
+
+	return strings.Join(slices.Compact(parts), " AND ")
 }
 
 func telemetrySelectorValues(id string) ([]string, error) {
