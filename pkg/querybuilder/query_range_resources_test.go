@@ -287,7 +287,7 @@ func TestBuilderQueryWithFilterExpressionResources(t *testing.T) {
 		{
 			name:     "FilterPresent_ScopedID",
 			body:     `{"start":1,"end":2,"filter":{"expression":"signoz.workspace.key.id = 'key-a'"}}`,
-			expected: []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/signoz.workspace.key.id/key-a"}},
+			expected: []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/signoz.workspace.key.id = 'key-a'"}},
 		},
 		{
 			name:     "FilterAbsent_Wildcard",

@@ -250,7 +250,7 @@ def test_filtered_routes_allow_granted_key(
         timeout=10,
     )
     assert denied.status_code == HTTPStatus.FORBIDDEN, denied.text
-    assert "builder_query/signoz.workspace.key.id/key-b" in denied.text
+    assert "builder_query/signoz.workspace.key.id = 'key-b'" in denied.text
 
 
 @pytest.mark.parametrize(
