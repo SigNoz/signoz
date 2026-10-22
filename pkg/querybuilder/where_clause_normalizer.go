@@ -51,7 +51,6 @@ type normalizedValue struct {
 
 type whereClauseNormalizer struct {
 	variables  map[string]qbtypes.VariableItem
-	pins       map[string]string
 	conditions []WhereClauseCondition
 	negated    bool
 	orDepth    int
@@ -59,15 +58,6 @@ type whereClauseNormalizer struct {
 }
 
 func NormalizeWhereClause(expression string, variables map[string]qbtypes.VariableItem) (*NormalizedWhereClause, error) {
-	return normalizeWhereClause(expression, variables, nil)
-}
-
-// NormalizeWhereClauseWithPins renders a top-level IN on a pinned key as an equality on the pinned value.
-func NormalizeWhereClauseWithPins(expression string, variables map[string]qbtypes.VariableItem, pins map[string]string) (*NormalizedWhereClause, error) {
-	return normalizeWhereClause(expression, variables, pins)
-}
-
-func normalizeWhereClause(expression string, variables map[string]qbtypes.VariableItem, pins map[string]string) (*NormalizedWhereClause, error) {
 	input := antlr.NewInputStream(expression)
 	lexer := grammar.NewFilterQueryLexer(input)
 
@@ -104,7 +94,6 @@ func normalizeWhereClause(expression string, variables map[string]qbtypes.Variab
 
 	visitor := &whereClauseNormalizer{
 		variables:  variables,
-		pins:       pins,
 		conditions: make([]WhereClauseCondition, 0),
 	}
 	part := visitor.visitQuery(tree)
@@ -329,11 +318,6 @@ func (visitor *whereClauseNormalizer) visitInComparison(key, operator string, va
 	values, skipped := visitor.substituteListVariable(values)
 	if skipped {
 		return normalizedPart{skipped: true}
-	}
-
-	if pinned, ok := visitor.pins[key]; ok && operator == "IN" && visitor.orDepth == 0 && !visitor.negated {
-		visitor.appendCondition(key, "=", []string{pinned})
-		return normalizedPart{text: key + " = " + FilterStringLiteral(pinned)}
 	}
 
 	sort.Slice(values, func(i, j int) bool { return values[i].text < values[j].text })

@@ -381,6 +381,12 @@ func toMatrix(series []transpiledSeries, startMs, stepMs int64) promql.Matrix {
 // lookback cannot resurrect the previous grid point. Each unit's synthetic
 // samples sit on its own grid: the query grid, or the subquery grid for
 // units inside subqueries.
+//
+// Synthetic series carry no __name__: substituted units all drop it, so
+// nameless matches the replaced expressions' output. A stamped name splits
+// or arms into per-unit series that a later name drop collides into the
+// duplicate-labelset error. hybridQuerier.Select resolves the selector
+// from the matcher, not from series labels.
 func (e *executor) executeHybrid(ctx context.Context, plan *transpilePlan, results [][]transpiledSeries) (promql.Matrix, error) {
 	synthetic := make(map[string][]*series, len(plan.units))
 	staleMarker := math.Float64frombits(promValue.StaleNaN)
@@ -395,9 +401,7 @@ func (e *executor) executeHybrid(ctx context.Context, plan *transpilePlan, resul
 		}
 		list := make([]*series, 0, len(results[i]))
 		for _, cs := range results[i] {
-			builder := labels.NewBuilder(cs.lset)
-			builder.Set(metricNameLabel, unit.name)
-			s := &series{lset: builder.Labels()}
+			s := &series{lset: cs.lset}
 			s.ts = make([]int64, 0, gridLen)
 			s.vs = make([]float64, 0, gridLen)
 			for idx := 0; idx < gridLen; idx++ {
@@ -440,62 +444,14 @@ func (e *executor) executeHybrid(ctx context.Context, plan *transpilePlan, resul
 		return nil, err
 	}
 
-	// Deep-copy before Close returns the result's slices to the engine pool,
-	// and drop the synthetic __name__ that filter comparisons preserve.
+	// Deep-copy before Close returns the result's slices to the engine pool.
 	out := make(promql.Matrix, 0, len(matrix))
 	for _, s := range matrix {
-		lset := s.Metric
-		if name := lset.Get(metricNameLabel); len(name) >= len(syntheticNamePrefix) && name[:len(syntheticNamePrefix)] == syntheticNamePrefix {
-			builder := labels.NewBuilder(lset)
-			builder.Del(metricNameLabel)
-			lset = builder.Labels()
-		}
 		floats := make([]promql.FPoint, len(s.Floats))
 		copy(floats, s.Floats)
-		out = append(out, promql.Series{Metric: lset.Copy(), Floats: floats})
-	}
-	// The strip can leave twins: two units' outputs that only their
-	// synthetic names told apart (e.g. -metric_a or -metric_b, both {}
-	// once real names are dropped). The engine assembles its matrix by
-	// labelset. It merges such temporally-disjoint elements into one
-	// series. Reproduce that, with its duplicate error on same-timestamp
-	// overlap.
-	out, err = mergeMatrixByLabelset(out)
-	if err != nil {
-		return nil, err
+		out = append(out, promql.Series{Metric: s.Metric.Copy(), Floats: floats})
 	}
 	sort.Slice(out, func(i, j int) bool { return labels.Compare(out[i].Metric, out[j].Metric) < 0 })
-	return out, nil
-}
-
-// mergeMatrixByLabelset merges series that share a labelset. It interleaves
-// their points in timestamp order. A timestamp present in both is the
-// engine's duplicate-labelset error.
-func mergeMatrixByLabelset(matrix promql.Matrix) (promql.Matrix, error) {
-	index := make(map[uint64]int, len(matrix))
-	out := matrix[:0]
-	for _, s := range matrix {
-		hash := s.Metric.Hash()
-		idx, ok := index[hash]
-		if ok && labels.Equal(out[idx].Metric, s.Metric) {
-			merged := make([]promql.FPoint, 0, len(out[idx].Floats)+len(s.Floats))
-			a, b := out[idx].Floats, s.Floats
-			for len(a) > 0 && len(b) > 0 {
-				switch {
-				case a[0].T < b[0].T:
-					merged, a = append(merged, a[0]), a[1:]
-				case b[0].T < a[0].T:
-					merged, b = append(merged, b[0]), b[1:]
-				default:
-					return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "vector cannot contain metrics with the same labelset")
-				}
-			}
-			out[idx].Floats = append(append(merged, a...), b...)
-			continue
-		}
-		index[hash] = len(out)
-		out = append(out, s)
-	}
 	return out, nil
 }
 

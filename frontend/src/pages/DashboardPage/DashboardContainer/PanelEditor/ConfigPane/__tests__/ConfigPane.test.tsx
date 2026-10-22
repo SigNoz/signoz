@@ -23,6 +23,11 @@ jest.mock(
 	}),
 );
 
+jest.mock(
+	'pages/DashboardPage/DashboardContainer/hooks/useDashboardVariableNames',
+	() => ({ useDashboardVariableNames: (): string[] => [] }),
+);
+
 function textSpec(): DashboardtypesPanelSpecDTO {
 	return {
 		display: { name: 'Runbook', description: 'steps' },
@@ -47,6 +52,7 @@ function renderConfigPane(
 ): React.ComponentProps<typeof ConfigPane> {
 	const props: React.ComponentProps<typeof ConfigPane> = {
 		spec: spec(),
+		savedSpec: spec(),
 		onChangeSpec: jest.fn(),
 		onChangePanelKind: jest.fn(),
 		queryType: EQueryType.QUERY_BUILDER,
@@ -108,7 +114,7 @@ describe('ConfigPane', () => {
 
 		const toggle = screen.getByTestId('panel-header-hide');
 		expect(toggle).toBeInTheDocument();
-		expect(screen.getByText('Hide header')).toBeInTheDocument();
+		expect(screen.getByText('Hide panel header')).toBeInTheDocument();
 		// No collapsible wrapper of its own.
 		expect(screen.queryByText('Panel header')).not.toBeInTheDocument();
 	});

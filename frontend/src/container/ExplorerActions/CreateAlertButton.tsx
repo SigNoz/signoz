@@ -1,7 +1,7 @@
 import { useHistory } from 'react-router-dom';
 import { ConciergeBell } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import logEvent from 'api/common/logEvent';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -36,25 +36,35 @@ function CreateAlertButton({
 		history.push(getCreateAlertLink({ query, panelType }));
 	};
 
-	const button = (
+	return isOneChartPerQuery ? (
+		<Tooltip title="Create an alert">
+			<Button
+				variant="ghost"
+				color="secondary"
+				size="sm"
+				icon
+				disabled={!query}
+				disabledTooltip="Run a query first"
+				onClick={createAlert}
+				aria-label="Create an alert"
+				testId="explorer-create-alert"
+			>
+				<ConciergeBell size={16} />
+			</Button>
+		</Tooltip>
+	) : (
 		<Button
 			variant="ghost"
 			color="secondary"
-			size={isOneChartPerQuery ? 'icon' : 'md'}
+			size="md"
 			disabled={!query}
+			disabledTooltip="Run a query first"
 			onClick={createAlert}
 			prefix={<ConciergeBell size={16} />}
-			aria-label="Create an alert"
-			data-testid="explorer-create-alert"
+			testId="explorer-create-alert"
 		>
-			{!isOneChartPerQuery && 'Create an alert'}
+			Create an alert
 		</Button>
-	);
-
-	return isOneChartPerQuery ? (
-		<TooltipSimple title="Create an alert">{button}</TooltipSimple>
-	) : (
-		button
 	);
 }
 

@@ -5,6 +5,7 @@
 
 import ROUTES from 'constants/routes';
 import { rest } from 'msw';
+import { userEvent, within } from 'storybook/test';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
@@ -19,7 +20,7 @@ import {
 import {
 	alertRuleByIdResponse,
 	ALERT_SCHEMAS,
-	channelsResponse,
+	notificationChannelsResponse,
 	CHANNEL_MAX,
 	type AlertSchema,
 } from '../../AlertList/stories/__story_mockdata__/alerts';
@@ -76,8 +77,8 @@ export const editRulesMocks = defineStoryMocks({
 		),
 
 		rest.get(
-			'http://localhost/api/v1/channels',
-			response.json(() => channelsResponse(values.channels)),
+			'http://localhost/api/v2/notification_channels',
+			response.json(() => notificationChannelsResponse(values.channels)),
 		),
 
 		rest.post(
@@ -120,3 +121,30 @@ export const editRulesMocks = defineStoryMocks({
 		route: `${ROUTES.EDIT_ALERTS}?ruleId=${STORY_RULE_ID}&relativeTime=6h`,
 	}),
 });
+
+/** The page fetches the rule before it renders the form, which outlasts the 1s default. */
+const untilLoaded = { timeout: 15_000 };
+
+const LABEL_INPUT = 'alert-labels-input-v1';
+
+/** The labels field, scrolled into view once the rule has loaded. */
+export const findLabelInput = async (
+	canvasElement: HTMLElement,
+): Promise<HTMLElement> => {
+	const input = await within(canvasElement).findByTestId(
+		LABEL_INPUT,
+		undefined,
+		untilLoaded,
+	);
+	input.scrollIntoView({ block: 'center' });
+	return input;
+};
+
+export const removeLabel = async (
+	canvasElement: HTMLElement,
+	key: string,
+): Promise<void> => {
+	await userEvent.click(
+		within(canvasElement).getByRole('button', { name: `Remove ${key}` }),
+	);
+};

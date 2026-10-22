@@ -346,3 +346,15 @@ export const recentDashboardIds = (count: number): string[] =>
 		{ length: count },
 		(_, index) => `storybook-dashboard-${index + 4}`,
 	);
+
+export const WRITE_STATES = ['success', 'loading', 'error'] as const;
+
+export type WriteState = (typeof WRITE_STATES)[number];
+
+export const PIN_WRITES = ['success', 'limit', 'error'] as const;
+
+export type PinWrite = (typeof PIN_WRITES)[number];
+
+export const TEMPLATE_REQUESTS = ['success', 'error', 'rejected'] as const;
+
+export type TemplateRequest = (typeof TEMPLATE_REQUESTS)[number];

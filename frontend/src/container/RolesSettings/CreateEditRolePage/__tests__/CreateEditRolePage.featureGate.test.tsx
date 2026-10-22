@@ -87,7 +87,7 @@ describe('CreateEditRolePage - Feature Gate', () => {
 			renderCreatePage({ activeLicense: invalidLicense });
 
 			const cancelButton = await screen.findByTestId('cancel-button');
-			expect(cancelButton).not.toBeDisabled();
+			expect(cancelButton).not.toHaveAttribute('aria-disabled', 'true');
 		});
 	});
 

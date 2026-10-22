@@ -3,7 +3,12 @@ import { HAVING_FILTER_REGEXP } from 'constants/regExp';
 import { IOption } from 'hooks/useResourceAttribute/types';
 import uniqWith from 'lodash-es/unionWith';
 import { parse } from 'papaparse';
-import { HavingForm } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	HavingForm,
+	IBuilderQuery,
+} from 'types/api/queryBuilder/queryBuilderData';
+import { MetricAggregation } from 'types/api/v5/queryRange';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { ORDERBY_FILTERS } from './OrderByFilter/config';
 import {
@@ -109,5 +114,19 @@ export const filterByOperatorConfig = (
 	}
 	return options.filter((option) =>
 		OPERATORS_CONFIG[key].includes(option.label),
+	);
+};
+
+export const getMetricNameForQuery = (
+	query: IBuilderQuery,
+): string | undefined => {
+	if (query.dataSource !== DataSource.METRICS) {
+		return undefined;
+	}
+
+	return (
+		(query.aggregations?.[0] as MetricAggregation)?.metricName ||
+		query.aggregateAttribute?.key ||
+		undefined
 	);
 };

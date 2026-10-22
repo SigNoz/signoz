@@ -28,20 +28,22 @@ function AttributeMappingActions({
 				Unsaved changes
 			</span>
 			<Button
+				size="md"
 				variant="outlined"
 				color="secondary"
 				onClick={onDiscard}
 				disabled={isSaving}
+				disabledTooltip="Wait for the save to finish"
 				testId="discard-changes-btn"
 			>
 				Discard
 			</Button>
 			<Button
+				size="md"
 				variant="solid"
 				color="primary"
 				onClick={onSave}
 				loading={isSaving}
-				disabled={isSaving}
 				testId="save-changes-btn"
 			>
 				{isSaving ? 'Saving…' : 'Save changes'}

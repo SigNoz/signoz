@@ -1,4 +1,4 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { ATTRIBUTE_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	fireEvent,
 	render,
@@ -9,6 +9,7 @@ import {
 } from 'tests/test-utils';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
+import { QueryBuilderField } from '../queryBuilderFields.types';
 import QueryAddOns from '../QueryV2/QueryAddOns/QueryAddOns';
 
 // Mocks: only what is required for this component to render and for us to assert handler calls
@@ -26,15 +27,18 @@ jest.mock('hooks/queryBuilder/useQueryBuilderOperations', () => ({
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: (): {
 		handleSetQueryData: typeof mockHandleSetQueryData;
+		currentQuery: { unit: string | undefined };
 	} => ({
 		handleSetQueryData: mockHandleSetQueryData,
+		currentQuery: { unit: undefined },
 	}),
 }));
 
 jest.mock('container/QueryBuilder/filters/GroupByFilter/GroupByFilter', () => ({
-	GroupByFilter: ({ onChange }: any): JSX.Element => (
+	GroupByFilter: ({ onChange, placeholder }: any): JSX.Element => (
 		<button
 			data-testid="groupby"
+			data-placeholder={placeholder}
 			onClick={(): void => onChange(['service.name'])}
 		>
 			GroupByFilter
@@ -43,9 +47,10 @@ jest.mock('container/QueryBuilder/filters/GroupByFilter/GroupByFilter', () => ({
 }));
 
 jest.mock('container/QueryBuilder/filters/OrderByFilter/OrderByFilter', () => ({
-	OrderByFilter: ({ onChange }: any): JSX.Element => (
+	OrderByFilter: ({ onChange, placeholder }: any): JSX.Element => (
 		<button
 			data-testid="orderby"
+			data-placeholder={placeholder}
 			onClick={(): void => onChange([{ columnName: 'duration', order: 'desc' }])}
 		>
 			OrderByFilter
@@ -55,10 +60,11 @@ jest.mock('container/QueryBuilder/filters/OrderByFilter/OrderByFilter', () => ({
 
 jest.mock('../QueryV2/QueryAddOns/HavingFilter/HavingFilter', () => ({
 	__esModule: true,
-	default: ({ onChange, onClose }: any): JSX.Element => (
+	default: ({ onChange, onClose, placeholder }: any): JSX.Element => (
 		<div>
 			<button
 				data-testid="having-change"
+				data-placeholder={placeholder}
 				onClick={(): void => onChange('p99 > 500')}
 			>
 				HavingFilter
@@ -165,6 +171,55 @@ describe('QueryAddOns', () => {
 
 		fireEvent.change(input, { target: { value: '10' } });
 		expect(mockHandleChangeQueryData).toHaveBeenCalledWith('limit', 10);
+	});
+
+	it.each([
+		[QueryBuilderField.Limit, 'input-Limit', 'placeholder'],
+		[QueryBuilderField.Legend, 'input-Legend format', 'placeholder'],
+		[QueryBuilderField.GroupBy, 'groupby', 'data-placeholder'],
+		[QueryBuilderField.Having, 'having-change', 'data-placeholder'],
+		[QueryBuilderField.OrderBy, 'orderby', 'data-placeholder'],
+	])('shows the configured %s placeholder', (field, inputTestId, attribute) => {
+		render(
+			<QueryAddOns
+				query={baseQuery()}
+				version="v5"
+				isRawQuery={false}
+				showReduceTo={false}
+				panelType={PANEL_TYPES.TIME_SERIES}
+				index={0}
+				fieldsConfig={{
+					[field]: { state: 'pinned', placeholder: 'Default X' },
+				}}
+				isForTraceOperator={false}
+			/>,
+		);
+
+		expect(screen.getByTestId(inputTestId)).toHaveAttribute(
+			attribute,
+			'Default X',
+		);
+	});
+
+	it('keeps the built-in placeholder without a rule', () => {
+		render(
+			<QueryAddOns
+				query={baseQuery()}
+				version="v5"
+				isRawQuery={false}
+				showReduceTo={false}
+				panelType={PANEL_TYPES.TIME_SERIES}
+				index={0}
+				isForTraceOperator={false}
+			/>,
+		);
+
+		fireEvent.click(screen.getByTestId('query-add-on-limit'));
+
+		expect(screen.getByTestId('input-Limit')).toHaveAttribute(
+			'placeholder',
+			'Enter limit',
+		);
 	});
 
 	it('auto-opens Order By and Limit when present in query', () => {
@@ -303,6 +358,29 @@ describe('QueryAddOns', () => {
 		);
 	});
 
+	it('closes the only open add-on when its tab is clicked again', async () => {
+		const user = userEvent.setup();
+
+		render(
+			<QueryAddOns
+				query={baseQuery()}
+				version="v5"
+				isRawQuery={false}
+				showReduceTo={false}
+				panelType={PANEL_TYPES.TIME_SERIES}
+				index={0}
+				isForTraceOperator={false}
+			/>,
+		);
+
+		const legendTab = screen.getByTestId('query-add-on-legend_format');
+		await user.click(legendTab);
+		expect(screen.getByTestId('legend-format-content')).toBeInTheDocument();
+
+		await user.click(legendTab);
+		expect(screen.queryByTestId('legend-format-content')).not.toBeInTheDocument();
+	});
+
 	it('does not override existing legend when enabling Legend format', async () => {
 		const user = userEvent.setup();
 		const query = baseQuery({
@@ -329,5 +407,188 @@ describe('QueryAddOns', () => {
 			'legend',
 			expect.anything(),
 		);
+	});
+	describe('bucket options', () => {
+		function renderHeatmap(overrides: Partial<any> = {}): void {
+			render(
+				<QueryAddOns
+					query={baseQuery({ dataSource: DataSource.METRICS, ...overrides })}
+					version="v5"
+					isRawQuery={false}
+					showReduceTo={false}
+					panelType={PANEL_TYPES.HEATMAP}
+					index={0}
+					isForTraceOperator={false}
+				/>,
+			);
+		}
+
+		it('is offered on a metrics heatmap only', () => {
+			renderHeatmap();
+
+			expect(
+				screen.getByTestId('query-add-on-bucket_options'),
+			).toBeInTheDocument();
+		});
+
+		it('is not offered on other panel types', () => {
+			render(
+				<QueryAddOns
+					query={baseQuery({ dataSource: DataSource.METRICS })}
+					version="v5"
+					isRawQuery={false}
+					showReduceTo={false}
+					panelType={PANEL_TYPES.TIME_SERIES}
+					index={0}
+					isForTraceOperator={false}
+				/>,
+			);
+
+			expect(
+				screen.queryByTestId('query-add-on-bucket_options'),
+			).not.toBeInTheDocument();
+		});
+
+		it('is not offered on a heatmap over another signal', () => {
+			render(
+				<QueryAddOns
+					query={baseQuery({ dataSource: DataSource.LOGS })}
+					version="v5"
+					isRawQuery={false}
+					showReduceTo={false}
+					panelType={PANEL_TYPES.HEATMAP}
+					index={0}
+					isForTraceOperator={false}
+				/>,
+			);
+
+			expect(
+				screen.queryByTestId('query-add-on-bucket_options'),
+			).not.toBeInTheDocument();
+		});
+
+		it.each([ATTRIBUTE_TYPES.HISTOGRAM, ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM])(
+			'is not offered for a %s metric, which carries its own buckets',
+			(type) => {
+				renderHeatmap({
+					aggregateAttribute: { key: 'http_duration_bucket', type },
+				});
+
+				expect(
+					screen.queryByTestId('query-add-on-bucket_options'),
+				).not.toBeInTheDocument();
+			},
+		);
+
+		it("auto-opens on the query's own kind", () => {
+			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 0 } } });
+
+			expect(screen.getByTestId('bucket-options-content')).toBeInTheDocument();
+			expect(screen.getByRole('button', { name: 'Log' })).toHaveAttribute(
+				'aria-pressed',
+				'true',
+			);
+			expect(screen.getByRole('button', { name: '0' })).toHaveAttribute(
+				'aria-pressed',
+				'true',
+			);
+		});
+
+		it('shows the server default, log at scale 4, without sending it', async () => {
+			const user = userEvent.setup();
+			renderHeatmap();
+
+			await user.click(screen.getByTestId('query-add-on-bucket_options'));
+
+			expect(screen.getByRole('button', { name: 'Log' })).toHaveAttribute(
+				'aria-pressed',
+				'true',
+			);
+			expect(screen.getByRole('button', { name: '4' })).toHaveAttribute(
+				'aria-pressed',
+				'true',
+			);
+			expect(
+				screen.queryByRole('button', { name: 'Auto' }),
+			).not.toBeInTheDocument();
+			expect(mockHandleChangeQueryData).not.toHaveBeenCalledWith(
+				'bucketOptions',
+				expect.anything(),
+			);
+		});
+
+		it('sends the picked scale', async () => {
+			const user = userEvent.setup();
+			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 4 } } });
+
+			await user.click(screen.getByRole('button', { name: '0' }));
+
+			expect(mockHandleChangeQueryData).toHaveBeenCalledWith('bucketOptions', {
+				kind: 'log',
+				spec: { scale: 0 },
+			});
+		});
+
+		it('offers the coarser scales the request accepts below one band per doubling', async () => {
+			const user = userEvent.setup();
+			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 0 } } });
+
+			await user.click(screen.getByRole('button', { name: '-4' }));
+
+			expect(mockHandleChangeQueryData).toHaveBeenCalledWith('bucketOptions', {
+				kind: 'log',
+				spec: { scale: -4 },
+			});
+		});
+
+		it('previews the bounds the picked axis will carry', () => {
+			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 0 } } });
+
+			const bounds = within(screen.getByTestId('bucket-options-bounds'));
+			['1', '2', '4', '8', '16', '32', '64', '128', '+Inf'].forEach((bound) => {
+				expect(bounds.getByText(bound)).toBeInTheDocument();
+			});
+		});
+
+		it('sends nothing for a linear axis until it has a max value', async () => {
+			const user = userEvent.setup();
+			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 0 } } });
+
+			await user.click(screen.getByRole('button', { name: 'Linear' }));
+
+			expect(mockHandleChangeQueryData).toHaveBeenLastCalledWith(
+				'bucketOptions',
+				undefined,
+			);
+			expect(
+				screen.getByText('Set a max value to see the bounds'),
+			).toBeInTheDocument();
+		});
+
+		it('sends the linear axis once a max value is filled in', async () => {
+			const user = userEvent.setup();
+			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 0 } } });
+
+			await user.click(screen.getByRole('button', { name: 'Linear' }));
+			await user.type(screen.getByTestId('bucket-options-max-value'), '500');
+
+			await waitFor(() => {
+				expect(mockHandleChangeQueryData).toHaveBeenLastCalledWith(
+					'bucketOptions',
+					{ kind: 'linear', spec: { maxValue: 500 } },
+				);
+			});
+		});
+
+		it('closes back to the toggle bar', async () => {
+			const user = userEvent.setup();
+			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 0 } } });
+
+			await user.click(screen.getByTestId('bucket-options-close'));
+
+			expect(
+				screen.queryByTestId('bucket-options-content'),
+			).not.toBeInTheDocument();
+		});
 	});
 });

@@ -146,7 +146,7 @@
 			}
 
 			// Hovering the checkbox reveals the "Toggle" action.
-			.check-box:hover ~ .checkbox-value-section .toggle-btn {
+			[data-slot='checkbox']:hover ~ .checkbox-value-section .toggle-btn {
 				display: flex;
 				opacity: 1;
 				transform: translateX(0);

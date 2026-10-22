@@ -21,6 +21,8 @@ two_keys_role = "telemetry-scope-two-keys"
 two_keys_email = "scope-two-keys@telemetry.test"
 mixed_role = "telemetry-scope-mixed"
 mixed_email = "scope-mixed@telemetry.test"
+key_wild_role = "telemetry-scope-key-wild"
+key_wild_email = "scope-key-wild@telemetry.test"
 
 two_lists = "resource.service.name IN ('checkout', 'frontend') AND signoz.workspace.key.id IN ('k1', 'k2')"
 
@@ -39,6 +41,7 @@ def test_setup(
         (two_services_role, two_services_email, ["builder_query/resource.service.name/checkout", "builder_query/resource.service.name/frontend"]),
         (two_keys_role, two_keys_email, ["builder_query/signoz.workspace.key.id/k1", "builder_query/signoz.workspace.key.id/k2"]),
         (mixed_role, mixed_email, ["builder_query/resource.service.name/checkout", "builder_query/signoz.workspace.key.id/k2"]),
+        (key_wild_role, key_wild_email, ["builder_query/signoz.workspace.key.id/*"]),
     ]:
         create_role(admin_token, role, [transaction_group("read", "telemetryresource", "logs", selectors)])
         user_id = create_active_user(signoz, admin_token, email=email, role="signoz-viewer", password=user_password)
@@ -67,9 +70,11 @@ def seed_logs_fixture(insert_logs: Callable[[list[Logs]], None]) -> datetime:
         (service_email, "resource.service.name = 'checkout' AND resource.deployment.environment.name = 'prod'"),
         (env_email, "resource.service.name = 'checkout' AND resource.deployment.environment.name = 'prod'"),
         (service_email, "resource.service.name IN ('checkout') AND signoz.workspace.key.id IN ('k1', 'k2')"),
-        # a list is a union: every value, or every value of the other list, must be granted
-        (two_services_email, two_lists),
-        (two_keys_email, two_lists),
+        # a single list is a union: every value, or another granted atom, covers it
+        (two_services_email, "resource.service.name IN ('checkout', 'frontend') AND signoz.workspace.key.id IN ('k1')"),
+        (two_keys_email, "resource.service.name IN ('checkout') AND signoz.workspace.key.id IN ('k1', 'k2')"),
+        # two lists are not expanded: only a key wildcard covers them
+        (key_wild_email, two_lists),
     ],
 )
 def test_allowed(
@@ -93,7 +98,7 @@ def test_allowed(
 @pytest.mark.parametrize(
     ("email", "expression", "denied_resource"),
     [
-        (service_email, "service.name = 'checkout'", "builder_query/service.name = 'checkout'"),  # bare customer key never selects
+        (service_email, "service.name = 'checkout'", "builder_query/*"),  # bare customer key never selects
         (service_email, "resource.deployment.environment.name = 'prod'", "builder_query/resource.deployment.environment.name = 'prod'"),
         (service_email, "resource.service.name = 'frontend'", "builder_query/resource.service.name = 'frontend'"),
         (env_email, "resource.service.name = 'checkout'", "builder_query/resource.service.name = 'checkout'"),
@@ -102,8 +107,10 @@ def test_allowed(
             "resource.service.name IN ('checkout', 'frontend') AND resource.deployment.environment.name = 'prod'",
             "builder_query/resource.deployment.environment.name = 'prod' AND resource.service.name = 'frontend'",
         ),
-        # one service and one key leave the (frontend, k1) slice unselected
-        (mixed_email, two_lists, "builder_query/resource.service.name = 'frontend' AND signoz.workspace.key.id = 'k1'"),
+        # two lists are not expanded, so value grants never cover them
+        (two_services_email, two_lists, "builder_query/resource.service.name IN ('checkout', 'frontend') AND signoz.workspace.key.id IN ('k1', 'k2')"),
+        (two_keys_email, two_lists, "builder_query/resource.service.name IN ('checkout', 'frontend') AND signoz.workspace.key.id IN ('k1', 'k2')"),
+        (mixed_email, two_lists, "builder_query/resource.service.name IN ('checkout', 'frontend') AND signoz.workspace.key.id IN ('k1', 'k2')"),
     ],
 )
 def test_denied(

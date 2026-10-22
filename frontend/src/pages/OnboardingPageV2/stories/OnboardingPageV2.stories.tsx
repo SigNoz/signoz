@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -165,5 +165,57 @@ export const NoSearchResults: Story = {
 
 		// The search is debounced, so the miss lands a beat after the last keystroke.
 		await canvas.findByText(/no results for ledger/i, undefined, untilRendered);
+	},
+};
+
+/**
+ * Inviting a teammate from the header: an email and a role, then Send Invites.
+ * The modal closes and "Invites sent successfully" is raised once the request
+ * is accepted; Invite result changes how it answers.
+ */
+export const InvitesSentToast: Story = {
+	play: async ({ mount, args, canvasElement }): Promise<void> => {
+		await mount();
+
+		await userEvent.click(
+			await within(canvasElement).findByRole(
+				'button',
+				{ name: /invite a teammate/i },
+				untilRendered,
+			),
+		);
+
+		const dialog = await screen.findByRole('dialog', undefined, untilRendered);
+		const [email] = await within(dialog).findAllByTestId(
+			/^invite-email-/,
+			undefined,
+			untilRendered,
+		);
+
+		await userEvent.type(email, 'jon@winterfell.dev');
+		const [roles] = await within(dialog).findAllByRole('combobox');
+
+		await userEvent.click(roles);
+		const viewers = await screen.findAllByText(
+			'viewer',
+			undefined,
+			untilRendered,
+		);
+
+		await userEvent.click(
+			viewers[viewers.length - 1].closest(
+				'.ant-select-item-option',
+			) as HTMLElement,
+		);
+		await userEvent.keyboard('{Escape}');
+		await userEvent.click(
+			await within(dialog).findByRole('button', { name: /send invites/i }),
+		);
+
+		if (args.invite === 'success') {
+			await waitFor(() =>
+				expect(screen.getByText(/invites sent successfully/i)).toBeVisible(),
+			);
+		}
 	},
 };

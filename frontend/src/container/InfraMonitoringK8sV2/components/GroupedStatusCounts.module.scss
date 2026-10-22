@@ -45,3 +45,25 @@
 .tooltipValue {
 	font-variant-numeric: tabular-nums;
 }
+
+.itemSelectable {
+	cursor: pointer;
+
+	&:hover {
+		text-decoration: underline;
+	}
+}
+
+.tooltipRowSelectable {
+	width: 100%;
+	background: none;
+	border: none;
+	padding: 0;
+	cursor: pointer;
+	font: inherit;
+	text-align: left;
+
+	&:hover {
+		text-decoration: underline;
+	}
+}

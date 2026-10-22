@@ -1,6 +1,6 @@
 import { useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import Noz from 'components/Noz/Noz';
 import { NOZ_TOOLTIP_TITLE } from 'components/Noz/Noz.constants';
 import { selectPendingUserInputStreamCount } from 'container/AIAssistant/store/pendingInputSelectors';
@@ -50,25 +50,26 @@ function AskNoz(): JSX.Element | null {
 					</span>
 				</span>
 			)}
-			<TooltipSimple title={NOZ_TOOLTIP_TITLE}>
-				<Button
-					variant="ghost"
-					color="secondary"
-					size="sm"
-					className="noz-wave"
-					prefix={<Noz size={16} />}
-					onClick={(): void => openAIAssistant()}
-					aria-label={
-						showPendingBadge
-							? `Ask Noz, ${pendingUserInputCount} ${
-									pendingUserInputCount === 1 ? 'action needs' : 'actions need'
-								} your response`
-							: 'Ask Noz'
-					}
-				>
-					Ask Noz
-				</Button>
-			</TooltipSimple>
+			<span className="noz-wave">
+				<Tooltip title={NOZ_TOOLTIP_TITLE}>
+					<Button
+						variant="ghost"
+						color="secondary"
+						size="sm"
+						prefix={<Noz size={16} />}
+						onClick={(): void => openAIAssistant()}
+						aria-label={
+							showPendingBadge
+								? `Ask Noz, ${pendingUserInputCount} ${
+										pendingUserInputCount === 1 ? 'action needs' : 'actions need'
+									} your response`
+								: 'Ask Noz'
+						}
+					>
+						Ask Noz
+					</Button>
+				</Tooltip>
+			</span>
 		</div>
 	);
 }

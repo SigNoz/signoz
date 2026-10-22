@@ -4,7 +4,7 @@ import MEditor from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
 import { Check, Copy } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
 import {
@@ -57,24 +57,28 @@ function ReadOnlyJsonViewer({
 			data-testid="read-only-json-viewer"
 		>
 			<div className={styles.editorContainer}>
-				<TooltipSimple title={copied ? 'Copied!' : 'Copy JSON'}>
-					<Button
-						variant="ghost"
-						size="sm"
-						className={styles.copyButton}
-						onClick={handleCopy}
-						data-testid="read-only-json-viewer-copy-button"
-					>
-						{copied ? (
-							<Check size={14} color={Color.BG_FOREST_400} />
-						) : (
-							<Copy
-								size={14}
-								color={isDarkMode ? Color.BG_VANILLA_400 : Color.TEXT_INK_400}
-							/>
-						)}
-					</Button>
-				</TooltipSimple>
+				<div className={styles.copyButton}>
+					<Tooltip title={copied ? 'Copied!' : 'Copy JSON'}>
+						<Button
+							color="secondary"
+							variant="ghost"
+							size="sm"
+							onClick={handleCopy}
+							testId="read-only-json-viewer-copy-button"
+							icon
+							aria-label={copied ? 'Copied' : 'Copy JSON'}
+						>
+							{copied ? (
+								<Check size={14} color={Color.BG_FOREST_400} />
+							) : (
+								<Copy
+									size={14}
+									color={isDarkMode ? Color.BG_VANILLA_400 : Color.TEXT_INK_400}
+								/>
+							)}
+						</Button>
+					</Tooltip>
+				</div>
 				<MEditor
 					value={jsonContent}
 					language="json"

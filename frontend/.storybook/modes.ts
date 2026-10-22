@@ -1,7 +1,7 @@
 /**
  * Chromatic modes: one snapshot per entry, per story. The globals in a mode are
  * Storybook's own, so `theme` is the toolbar's theme and the story renders the
- * way it does locally. The width matches `scripts/story-shots.mjs` (`--width`),
+ * way it does locally. The width matches sbshot's default `--width`,
  * so a cloud snapshot and a local shot frame the same page.
  */
 export const allModes = {

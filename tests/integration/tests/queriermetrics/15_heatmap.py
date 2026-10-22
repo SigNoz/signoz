@@ -7,6 +7,7 @@ import pytest
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
+from fixtures.meter import MeterSample
 from fixtures.metrics import Metrics
 from fixtures.querier import (
     RequestType,
@@ -154,6 +155,56 @@ def test_sum_heatmap(
         assert [sum(columns[minute]["values"][slot] for columns in columns_by_endpoint.values()) for slot in range(6)] == [0, 8, 0, 0, 8, 0]
 
 
+def test_meter_heatmap(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_meter_samples: Callable[[list[MeterSample]], None],
+) -> None:
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    start_ms = int((now - timedelta(hours=4)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    metric_name = "test_heatmap_meter"
+
+    # a meter's finest step is an hour, so one sample an hour is one column each
+    values = [100, 250, 1500]
+    insert_meter_samples(
+        [
+            MeterSample(
+                metric_name=metric_name,
+                labels={"service": "api"},
+                timestamp=now - timedelta(hours=len(values) - hour),
+                value=value,
+                temporality="Delta",
+                type_="Sum",
+            )
+            for hour, value in enumerate(values)
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms,
+        end_ms,
+        [build_builder_query("A", metric_name, "sum", "sum", source="meter", temporality="delta", step_interval=3600, bucket_options=build_linear_bucket_options(1000, 10))],
+        request_type=RequestType.HEATMAP,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    data = response.json()
+    # 1000 split into 10 buckets gives (0, 100], (100, 200], ... (900, 1000]:
+    # 100 lands in the first, 250 in the third, and 1500 is past 1000 so it
+    # counts in the overflow
+    assert get_heatmap_buckets(data, "A") == pytest.approx([0.0, 100.0, 200.0, 300.0])
+    assert [column["values"] for column in get_heatmap_columns(data, "A")] == [
+        [0, 1, 0, 0, 0],
+        [0, 0, 0, 1, 0],
+        [0, 0, 0, 0, 1],
+    ]
+
+
 def test_histogram_heatmap(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
@@ -209,8 +260,9 @@ def test_linear_buckets(
     end_ms = int(now.timestamp() * 1000)
     metric_name = "test_heatmap_linear"
 
-    # 100 wide buckets: 100 lands on the first, 250 on the third, and 1500 is
-    # past maxValue so it counts in the overflow
+    # 1000 split into 10 buckets gives (0, 100], (100, 200], ... (900, 1000]:
+    # 100 lands in the first, 250 in the third, and 1500 is past 1000 so it
+    # counts in the overflow
     values = [100, 250, 1500]
     insert_metrics(
         [
@@ -250,11 +302,30 @@ def test_linear_buckets(
     ]
 
 
+@pytest.mark.parametrize(
+    "bucket_options, expected_buckets, expected_columns",
+    [
+        (
+            build_log_bucket_options(0),
+            [0.0, 128.0, 256.0, 512.0, 1024.0],
+            [[1, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0], [0, 0, 0, 0, 1, 0]],
+        ),
+        (
+            build_linear_bucket_options(1024, 4),
+            [0.0, 256.0, 512.0, 768.0, 1024.0],
+            [[1, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0], [0, 0, 0, 0, 1, 0]],
+        ),
+    ],
+    ids=["log", "linear"],
+)
 def test_zero_bucket(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[list[Metrics]], None],
+    bucket_options: dict,
+    expected_buckets: list[float],
+    expected_columns: list[list[int]],
 ) -> None:
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=30)).timestamp() * 1000)
@@ -282,23 +353,16 @@ def test_zero_bucket(
         token,
         start_ms,
         end_ms,
-        [build_builder_query("A", metric_name, "max", "max", bucket_options=build_log_bucket_options(0))],
+        [build_builder_query("A", metric_name, "max", "max", bucket_options=bucket_options)],
         request_type=RequestType.HEATMAP,
     )
     assert response.status_code == HTTPStatus.OK, response.text
 
     data = response.json()
-    # a log axis cannot place a value at or below zero, so those share a bucket
-    # of their own beneath the rest. 128 separates that bucket from the lowest
-    # one holding anything, and 512 is spanned above it
-    assert get_heatmap_buckets(data, "A") == pytest.approx([0.0, 128.0, 256.0, 512.0, 1024.0])
+    assert get_heatmap_buckets(data, "A") == pytest.approx(expected_buckets)
 
     columns = get_heatmap_columns(data, "A")
-    assert [column["values"] for column in columns] == [
-        [1, 0, 0, 0, 0, 0],
-        [0, 0, 1, 0, 0, 0],
-        [0, 0, 0, 0, 1, 0],
-    ]
+    assert [column["values"] for column in columns] == expected_columns
 
 
 def test_single_bucket(
@@ -778,3 +842,127 @@ def test_metric_with_no_data(
     assert get_heatmap_buckets(data, "A") == []
     assert get_heatmap_columns(data, "A") == []
     assert any(missing_metric in warning["message"] for warning in get_all_warnings(data))
+
+
+@pytest.mark.parametrize(
+    "bucket_options, expected_buckets",
+    [
+        (build_linear_bucket_options(1000, 10), [0.0, 200.0, 300.0]),
+        (build_log_bucket_options(0), [0.0, 128.0, 256.0]),
+    ],
+    ids=["linear", "log"],
+)
+def test_negative_values(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
+    bucket_options: dict,
+    expected_buckets: list[float],
+) -> None:
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    start_ms = int((now - timedelta(minutes=30)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    metric_name = "test_heatmap_negative_values"
+
+    values = [-1500, -50, 0, 250]
+    insert_metrics(
+        [
+            Metrics(
+                metric_name=metric_name,
+                labels={"service": "api"},
+                timestamp=now - timedelta(minutes=len(values) - minute),
+                value=value,
+                type_="Gauge",
+                is_monotonic=False,
+            )
+            for minute, value in enumerate(values)
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms,
+        end_ms,
+        [build_builder_query("A", metric_name, "max", "max", bucket_options=bucket_options)],
+        request_type=RequestType.HEATMAP,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    data = response.json()
+    assert get_heatmap_buckets(data, "A") == pytest.approx(expected_buckets)
+
+    columns = get_heatmap_columns(data, "A")
+    assert [column["values"] for column in columns] == [
+        [1, 0, 0, 0],
+        [1, 0, 0, 0],
+        [1, 0, 0, 0],
+        [0, 0, 1, 0],
+    ]
+
+
+# a formula's output is bucketed after the query runs rather than by it, and
+# has to put everything at or below zero where a metric query does: in the zero
+# bucket, never in the lowest bucket above it
+@pytest.mark.parametrize(
+    "bucket_options, expected_buckets",
+    [
+        (build_linear_bucket_options(1000, 10), [0.0, 200.0, 300.0]),
+        (build_log_bucket_options(0), [0.0, 128.0, 256.0]),
+    ],
+    ids=["linear", "log"],
+)
+def test_formula_negative_values(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
+    bucket_options: dict,
+    expected_buckets: list[float],
+) -> None:
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    start_ms = int((now - timedelta(minutes=30)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    metric_name = "test_heatmap_formula_negative_values"
+
+    values = [-1500, -50, 0, 250]
+    insert_metrics(
+        [
+            Metrics(
+                metric_name=metric_name,
+                labels={"service": "api"},
+                timestamp=now - timedelta(minutes=len(values) - minute),
+                value=value,
+                type_="Gauge",
+                is_monotonic=False,
+            )
+            for minute, value in enumerate(values)
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms,
+        end_ms,
+        [
+            build_builder_query("A", metric_name, "max", "max", disabled=True),
+            build_formula_query("F1", "A", bucket_options=bucket_options),
+        ],
+        request_type=RequestType.HEATMAP,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    data = response.json()
+    assert get_heatmap_buckets(data, "F1") == pytest.approx(expected_buckets)
+
+    columns = get_heatmap_columns(data, "F1")
+    assert [column["values"] for column in columns] == [
+        [1, 0, 0, 0],
+        [1, 0, 0, 0],
+        [1, 0, 0, 0],
+        [0, 0, 1, 0],
+    ]

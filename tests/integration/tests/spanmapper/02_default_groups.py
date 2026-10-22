@@ -41,7 +41,7 @@ def test_default_groups_are_seeded_and_shipped_items_are_toggle_only(
         assert groups[name]["version"] >= 1
         assert groups[name]["createdBy"] == "signoz"
     llm = groups["gen_ai.llm"]
-    assert llm["condition"]["attributes"] == [{"value": "model", "enabled": True, "origin": "system"}]
+    assert llm["condition"]["attributes"] == [{"value": "model", "enabled": True, "origin": "system"}, {"value": "llm.input_messages", "enabled": True, "origin": "system"}]
 
     list_mappers = requests.get(signoz.self.host_configs["8080"].get(f"{GROUPS_PATH}/{llm['id']}/span_mappers"), timeout=10, headers=headers)
     assert list_mappers.status_code == HTTPStatus.OK
@@ -130,6 +130,7 @@ def test_default_groups_are_seeded_and_shipped_items_are_toggle_only(
     llm_after = {g["name"]: g for g in list_groups.json()["data"]["items"]}["gen_ai.llm"]
     assert llm_after["condition"]["attributes"] == [
         {"value": "model", "enabled": False, "origin": "system"},
+        {"value": "llm.input_messages", "enabled": True, "origin": "system"},
         {"value": "gen_ai.request.model", "enabled": True, "origin": "user"},
     ]
     assert llm_after["origin"] == "system"

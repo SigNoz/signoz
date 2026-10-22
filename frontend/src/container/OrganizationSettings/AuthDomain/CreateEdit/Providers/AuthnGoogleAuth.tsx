@@ -146,6 +146,7 @@ function ConfigureGoogleAuthAuthnProvider({
 							noStyle
 						>
 							<Checkbox
+								color="primary"
 								id="google-skip-email-verification"
 								testId="google-auth-skip-email-verified"
 								onChange={(checked: boolean): void => {
@@ -228,6 +229,7 @@ function ConfigureGoogleAuthAuthnProvider({
 										noStyle
 									>
 										<Checkbox
+											color="primary"
 											id="google-fetch-groups"
 											testId="google-auth-fetch-groups"
 											onChange={(checked: boolean): void => {
@@ -279,6 +281,7 @@ function ConfigureGoogleAuthAuthnProvider({
 												noStyle
 											>
 												<Checkbox
+													color="primary"
 													id="google-transitive-membership"
 													testId="google-auth-transitive-membership"
 													onChange={(checked: boolean): void => {

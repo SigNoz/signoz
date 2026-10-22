@@ -1,4 +1,8 @@
-import { MenuProps } from 'antd';
+import type { MouseEvent } from 'react';
+import type {
+	DropdownActionItemType,
+	DropdownItemType,
+} from '@signozhq/ui/dropdown';
 import ROUTES from 'constants/routes';
 import {
 	ArrowUpRight,
@@ -489,11 +493,30 @@ export const helpSupportDropdownMenuItems: SidebarItem[] = [
 	},
 ];
 
+export type UserSettingsMenuKey =
+	| 'workspace'
+	| 'account'
+	| 'license'
+	| 'keyboard-shortcuts'
+	| 'logout';
+
+export const USER_SETTINGS_MENU_LABELS: Record<UserSettingsMenuKey, string> = {
+	workspace: 'Workspace Settings',
+	account: 'Account Settings',
+	license: 'Manage License',
+	'keyboard-shortcuts': 'Keyboard Shortcuts',
+	logout: 'Sign out',
+};
+
+export const WORKSPACE_LOCKED_TOOLTIP =
+	'Unavailable while the workspace is locked';
+
 export interface UserSettingsMenuItemsParams {
 	userEmail: string;
 	isWorkspaceBlocked: boolean;
 	isEnterpriseSelfHostedUser: boolean;
 	isCommunityEnterpriseUser: boolean;
+	onSelect: (key: UserSettingsMenuKey, event: MouseEvent) => void;
 }
 
 export const getUserSettingsDropdownMenuItems = ({
@@ -501,65 +524,74 @@ export const getUserSettingsDropdownMenuItems = ({
 	isWorkspaceBlocked,
 	isEnterpriseSelfHostedUser,
 	isCommunityEnterpriseUser,
-}: UserSettingsMenuItemsParams): MenuProps['items'] =>
-	[
+	onSelect,
+}: UserSettingsMenuItemsParams): DropdownItemType[] => {
+	const settingsRows: DropdownActionItemType[] = [
 		{
-			key: 'label',
+			type: 'item',
+			value: 'workspace',
+			label: USER_SETTINGS_MENU_LABELS.workspace,
+			prefix: <Building2 size={14} color={Style.L1_FOREGROUND} />,
+			testId: 'workspace-settings-nav-item',
+			disabled: isWorkspaceBlocked,
+			disabledTooltip: WORKSPACE_LOCKED_TOOLTIP,
+			onClick: (event): void => onSelect('workspace', event),
+		},
+		{
+			type: 'item',
+			value: 'account',
+			label: USER_SETTINGS_MENU_LABELS.account,
+			prefix: <User size={14} color={Style.L1_FOREGROUND} />,
+			testId: 'account-settings-nav-item',
+			onClick: (event): void => onSelect('account', event),
+		},
+	];
+
+	if (isEnterpriseSelfHostedUser || isCommunityEnterpriseUser) {
+		settingsRows.push({
+			type: 'item',
+			value: 'license',
+			label: USER_SETTINGS_MENU_LABELS.license,
+			prefix: <Shield size={14} color={Style.L1_FOREGROUND} />,
+			testId: 'manage-license-nav-item',
+			onClick: (event): void => onSelect('license', event),
+		});
+	}
+
+	settingsRows.push({
+		type: 'item',
+		value: 'keyboard-shortcuts',
+		label: USER_SETTINGS_MENU_LABELS['keyboard-shortcuts'],
+		prefix: <Keyboard size={14} color={Style.L1_FOREGROUND} />,
+		testId: 'keyboard-shortcuts-nav-item',
+		onClick: (event): void => onSelect('keyboard-shortcuts', event),
+	});
+
+	return [
+		{
+			type: 'group',
+			value: 'logged-in-as',
 			label: (
 				<div className="user-settings-dropdown-logged-in-section">
 					<span className="user-settings-dropdown-label-text">LOGGED IN AS</span>
 					<span className="user-settings-dropdown-label-email">{userEmail}</span>
 				</div>
 			),
-			disabled: true,
-			dataTestId: 'logged-in-as-nav-item',
+			testId: 'logged-in-as-nav-item',
+			items: settingsRows,
 		},
-		{ type: 'divider' as const },
+		{ type: 'separator', value: 'before-logout' },
 		{
-			key: 'workspace',
-			label: 'Workspace Settings',
-			icon: <Building2 size={14} color={Style.L1_FOREGROUND} />,
-			disabled: isWorkspaceBlocked,
-			dataTestId: 'workspace-settings-nav-item',
+			type: 'item',
+			value: 'logout',
+			label: USER_SETTINGS_MENU_LABELS.logout,
+			prefix: <LogOut size={14} />,
+			testId: 'logout-nav-item',
+			danger: true,
+			onClick: (event): void => onSelect('logout', event),
 		},
-		{
-			key: 'account',
-			label: 'Account Settings',
-			icon: <User size={14} color={Style.L1_FOREGROUND} />,
-			dataTestId: 'account-settings-nav-item',
-		},
-		...(isEnterpriseSelfHostedUser || isCommunityEnterpriseUser
-			? [
-					{
-						key: 'license',
-						label: 'Manage License',
-						icon: <Shield size={14} color={Style.L1_FOREGROUND} />,
-						dataTestId: 'manage-license-nav-item',
-					},
-				]
-			: []),
-		{
-			key: 'keyboard-shortcuts',
-			label: 'Keyboard Shortcuts',
-			icon: <Keyboard size={14} color={Style.L1_FOREGROUND} />,
-			dataTestId: 'keyboard-shortcuts-nav-item',
-		},
-		{ type: 'divider' as const },
-		{
-			key: 'logout',
-			label: (
-				<span className="user-settings-dropdown-logout-section">Sign out</span>
-			),
-			icon: (
-				<LogOut
-					size={14}
-					className="user-settings-dropdown-logout-section"
-					color={Style.DANGER_BACKGROUND}
-				/>
-			),
-			dataTestId: 'logout-nav-item',
-		},
-	].filter(Boolean);
+	];
+};
 
 /** Mapping of some newly added routes and their corresponding active sidebar menu key
     This is used to highlight the correct menu item when the user navigates to a new route

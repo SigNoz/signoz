@@ -24,6 +24,7 @@ export default function Legend({
 	focusedSeriesIndex,
 	onAction,
 	showCopy = true,
+	itemLabel = 'series',
 }: LegendProps): JSX.Element {
 	const legendContainerRef = useRef<HTMLDivElement | null>(null);
 	const [filterQuery, setFilterQuery] = useState('');
@@ -92,11 +93,12 @@ export default function Legend({
 					position={position}
 					filterQuery={filterQuery}
 					onFilterQueryChange={setFilterQuery}
+					itemLabel={itemLabel}
 				/>
 			)}
 			{isEmptyState ? (
 				<div className={styles.emptyState}>
-					No series found matching &quot;{effectiveQuery}&quot;
+					No {itemLabel} found matching &quot;{effectiveQuery}&quot;
 				</div>
 			) : (
 				<VirtuosoGrid

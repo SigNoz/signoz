@@ -70,3 +70,49 @@
 		Object.defineProperty(window, 'Date', { value: FrozenDate, writable: true });
 	})();
 </script>
+
+<script>
+	// Storybook has no microphone. Chromium's recognizer asks for one and for
+	// Google's speech service, and the `not-allowed` or `network` it reports makes
+	// the assistant hide its mic for the rest of the tab. This one starts
+	// listening at once and hears only what a story passes to `hear`.
+	(() => {
+		class StorySpeechRecognition extends EventTarget {
+			static listening = null;
+			lang = 'en-US';
+			continuous = false;
+			interimResults = false;
+			onstart = null;
+			onresult = null;
+			onerror = null;
+			onend = null;
+
+			start() {
+				StorySpeechRecognition.listening = this;
+				setTimeout(() => this.onstart?.());
+			}
+
+			stop() {
+				if (StorySpeechRecognition.listening === this) {
+					StorySpeechRecognition.listening = null;
+				}
+				setTimeout(() => this.onend?.());
+			}
+
+			abort() {
+				this.stop();
+			}
+
+			/** An interim result: the words so far, still listening. */
+			hear(transcript) {
+				const result = Object.assign([{ transcript, confidence: 1 }], {
+					isFinal: false,
+				});
+				this.onresult?.({ resultIndex: 0, results: [result] });
+			}
+		}
+
+		window.SpeechRecognition = StorySpeechRecognition;
+		window.webkitSpeechRecognition = StorySpeechRecognition;
+	})();
+</script>

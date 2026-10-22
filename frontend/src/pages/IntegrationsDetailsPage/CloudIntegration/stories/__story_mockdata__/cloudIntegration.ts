@@ -20,6 +20,9 @@ import { monogramIcon } from '@/pages/IntegrationsModulePage/stories/__story_moc
 export const CLOUD_PROVIDERS = ['aws', 'azure', 'gcp'] as const;
 export type CloudProvider = (typeof CLOUD_PROVIDERS)[number];
 
+export const MUTATION_STATES = ['success', 'loading', 'error'] as const;
+export type MutationState = (typeof MUTATION_STATES)[number];
+
 interface CloudServiceSeed {
 	id: string;
 	title: string;
@@ -321,10 +324,8 @@ export const accountResponse = (
 	provider: CloudProvider,
 	id: string,
 ): GetAccount200 => {
-	const index = Math.max(
-		0,
-		Number.parseInt(id.replace(`${provider}-account-`, ''), 10) - 1,
-	);
+	const parsed = Number.parseInt(id.replace(`${provider}-account-`, ''), 10);
+	const index = Number.isNaN(parsed) ? 0 : Math.max(0, parsed - 1);
 
 	return { status: 'success', data: account(provider, index) };
 };
@@ -551,6 +552,12 @@ export const createdAccountResponse = (
 		connectionArtifact: {
 			aws: {
 				connectionUrl: `https://console.aws.amazon.com/cloudformation/home#/stacks/create?templateURL=https://signoz.io/${provider}.yaml`,
+			},
+			azure: {
+				cliCommand:
+					'az deployment sub create --template-uri https://signoz.io/azure.json',
+				cloudPowerShellCommand:
+					'New-AzSubscriptionDeployment -TemplateUri https://signoz.io/azure.json',
 			},
 		},
 	},

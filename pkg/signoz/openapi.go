@@ -107,7 +107,6 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ statsreporter.Handler }{},
 		struct{ savedview.Handler }{},
 		global.Config{},
-		authz.Config{},
 		struct{ identn.IdentNResolver }{},
 		struct{ sharder.Sharder }{},
 		struct{ auditor.Auditor }{},
@@ -131,7 +130,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		}
 
 		return defaultDefName
-	}))
+	}), jsonschema.InterceptProp(keepDescriptionOnReferencedProperty))
 
 	reflector.Spec.WithInfo(*(&openapi3.Info{}).
 		WithTitle("SigNoz").
@@ -168,6 +167,27 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		reflector: reflector,
 		collector: collector,
 	}, nil
+}
+
+// keepDescriptionOnReferencedProperty wraps a referenced property schema in
+// allOf when the field carries a description. OpenAPI 3.0 allows no siblings
+// next to $ref, so without this the description tag on a field whose type is a
+// named schema (an enum or a struct) is silently dropped from the spec.
+func keepDescriptionOnReferencedProperty(params jsonschema.InterceptPropParams) error {
+	if !params.Processed || params.PropertySchema == nil {
+		return nil
+	}
+
+	schema := params.PropertySchema
+	if schema.Ref == nil || schema.Description == nil || *schema.Description == "" {
+		return nil
+	}
+
+	ref := *schema.Ref
+	schema.Ref = nil
+	schema.AllOf = []jsonschema.SchemaOrBool{(&jsonschema.Schema{}).WithRef(ref).ToSchemaOrBool()}
+
+	return nil
 }
 
 func (openapi *OpenAPI) CreateAndWrite(path string) error {

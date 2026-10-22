@@ -113,12 +113,14 @@ function ModelCostTabPanel(): JSX.Element {
 								<Button
 									variant="ghost"
 									color="secondary"
-									size="icon"
-									prefix={<X size={14} />}
+									size="sm"
+									icon
 									onClick={clearSearch}
 									aria-label="Clear search"
 									testId="model-cost-search-clear"
-								/>
+								>
+									<X size={14} />
+								</Button>
 							) : undefined
 						}
 						testId="model-cost-search"
@@ -133,6 +135,7 @@ function ModelCostTabPanel(): JSX.Element {
 				</div>
 				{canManagePricing && (
 					<Button
+						size="md"
 						variant="solid"
 						color="primary"
 						prefix={<Plus size={14} />}

@@ -24,11 +24,16 @@ function makeSpec(thresholds: unknown[] = []): DashboardtypesPanelSpecDTO {
 
 // Stateful harness so onChange feeds back into the spec (as ConfigPane owns it).
 function Harness({ initial = [] }: { initial?: unknown[] } = {}): JSX.Element {
-	const [spec, setSpec] = useState<DashboardtypesPanelSpecDTO>(
-		makeSpec(initial),
-	);
+	const [savedSpec] = useState(() => makeSpec(initial));
+	const [spec, setSpec] = useState<DashboardtypesPanelSpecDTO>(savedSpec);
 	return (
-		<SectionSlot config={THRESHOLDS_CONFIG} spec={spec} onChangeSpec={setSpec} />
+		<SectionSlot
+			config={THRESHOLDS_CONFIG}
+			spec={spec}
+			savedSpec={savedSpec}
+			defaults={{}}
+			onChangeSpec={setSpec}
+		/>
 	);
 }
 
@@ -68,5 +73,51 @@ describe('SectionSlot header action', () => {
 			screen.getByTestId('panel-editor-v2-add-threshold'),
 		).toBeInTheDocument();
 		expect(screen.getByTestId('threshold-value-0')).toBeInTheDocument();
+	});
+});
+
+describe('SectionSlot changed marker', () => {
+	it('shows no marker when the section matches the saved spec', () => {
+		render(
+			<Harness initial={[{ value: 80, color: '#F5B225', label: 'High' }]} />,
+		);
+
+		expect(screen.queryByTestId('config-changed-dot')).not.toBeInTheDocument();
+	});
+
+	it('marks a section edited since the last save', async () => {
+		const user = userEvent.setup();
+		render(<Harness />);
+
+		await user.click(screen.getByTestId('panel-editor-v2-add-threshold-header'));
+
+		expect(screen.getByTestId('config-changed-dot')).toBeInTheDocument();
+	});
+
+	it('treats an unset saved slice and an explicit empty one as unchanged', () => {
+		const savedSpec = {
+			display: { name: 'CPU' },
+			plugin: { kind: 'signoz/TimeSeriesPanel', spec: {} },
+			queries: [],
+		} as unknown as DashboardtypesPanelSpecDTO;
+		const spec = {
+			...savedSpec,
+			plugin: {
+				kind: 'signoz/TimeSeriesPanel',
+				spec: { formatting: { unit: '' } },
+			},
+		} as unknown as DashboardtypesPanelSpecDTO;
+
+		render(
+			<SectionSlot
+				config={{ kind: SectionKind.Formatting, controls: { decimals: true } }}
+				spec={spec}
+				savedSpec={savedSpec}
+				defaults={{}}
+				onChangeSpec={jest.fn()}
+			/>,
+		);
+
+		expect(screen.queryByTestId('config-changed-dot')).not.toBeInTheDocument();
 	});
 });

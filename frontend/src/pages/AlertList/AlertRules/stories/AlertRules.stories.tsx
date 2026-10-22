@@ -1,10 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { alertRulesMocks } from './AlertRules.stories.mocks';
+import {
+	alertRulesMocks,
+	runRowAction,
+	untilLoaded,
+} from './AlertRules.stories.mocks';
 
 import AlertList from '../../index';
 import { RULE_MAX } from '../../stories/__story_mockdata__/alerts';
@@ -30,9 +34,6 @@ const meta = {
 export default meta;
 
 type Story = StoryObj<AlertRulesArgs>;
-
-/** The page fetches before it renders a row, which outlasts the 1s default. */
-const untilLoaded = { timeout: 15_000 };
 
 /**
  * Every alert rule the org has configured, with the state each one evaluated to
@@ -147,5 +148,97 @@ export const BottomStripPaginated: Story = {
 	args: { bottomStrip: true, rules: RULE_MAX },
 	parameters: {
 		signoz: { route: '/alerts?tab=AlertRules&page=2&limit=10' },
+	},
+};
+
+/** Enable or Disable from the row menu: the promise toast, pending then settled. */
+export const ToggleAlertToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await runRowAction(canvasElement, /^(enable|disable)$/i);
+		if (args.toggleState === 'success') {
+			await waitFor(() =>
+				expect(screen.getByText(/alert (enabled|disabled)/i)).toBeVisible(),
+			);
+		}
+	},
+};
+
+/** The PATCH never answers: the "Enabling or Disabling alert..." toast stays pending. */
+export const ToggleAlertLoadingToast: Story = {
+	args: { toggleState: 'loading' },
+	play: ToggleAlertToast.play,
+};
+
+/** The PATCH failed: the promise toast settles with the server message. */
+export const ToggleAlertErrorToast: Story = {
+	args: { toggleState: 'error' },
+	parameters: { allowConsoleErrors: true },
+	play: ToggleAlertToast.play,
+};
+
+/** Clone from the row menu. */
+export const CloneAlertToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await runRowAction(canvasElement, /^clone$/i);
+		if (args.cloneState === 'success') {
+			await waitFor(() =>
+				expect(screen.getByText(/alert cloned successfully/i)).toBeVisible(),
+			);
+		}
+	},
+};
+
+/** The POST never answers: "Cloning alert..." stays pending. */
+export const CloneAlertLoadingToast: Story = {
+	args: { cloneState: 'loading' },
+	play: CloneAlertToast.play,
+};
+
+/** The POST failed. */
+export const CloneAlertErrorToast: Story = {
+	args: { cloneState: 'error' },
+	parameters: { allowConsoleErrors: true },
+	play: CloneAlertToast.play,
+};
+
+/** Delete from the row menu. */
+export const DeleteAlertToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await runRowAction(canvasElement, /^delete$/i);
+		if (args.deleteState === 'success') {
+			await waitFor(() =>
+				expect(screen.getByText(/alert deleted successfully/i)).toBeVisible(),
+			);
+		}
+	},
+};
+
+/** The DELETE never answers: "Deleting alert..." stays pending. */
+export const DeleteAlertLoadingToast: Story = {
+	args: { deleteState: 'loading' },
+	play: DeleteAlertToast.play,
+};
+
+/** The DELETE failed. */
+export const DeleteAlertErrorToast: Story = {
+	args: { deleteState: 'error' },
+	parameters: { allowConsoleErrors: true },
+	play: DeleteAlertToast.play,
+};
+
+/** The copy button in a label badge's tooltip, clicked. */
+export const LabelCopiedToast: Story = {
+	args: { tooltipsOpen: true },
+	play: async (): Promise<void> => {
+		const [copy] = await screen.findAllByRole(
+			'button',
+			{ name: 'Copy to clipboard' },
+			untilLoaded,
+		);
+
+		await userEvent.click(copy);
+		await waitFor(() =>
+			expect(screen.getByText(/copied! use in search/i)).toBeVisible(),
+		);
 	},
 };

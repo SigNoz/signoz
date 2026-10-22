@@ -339,6 +339,7 @@ export enum PANEL_TYPES {
 	AREA = 'area',
 	PIE = 'pie',
 	HISTOGRAM = 'histogram',
+	HEATMAP = 'heatmap',
 	TEXT = 'text',
 	EMPTY_WIDGET = 'EMPTY_WIDGET',
 }
@@ -510,7 +511,7 @@ export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
 };
 
 export enum OperatorConfigKeys {
-	'EXCEPTIONS' = 'EXCEPTIONS',
+	EXCEPTIONS = 'EXCEPTIONS',
 }
 
 export const OPERATORS_CONFIG = {

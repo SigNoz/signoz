@@ -918,6 +918,10 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 		sb.OrderBy("__result_0 DESC")
 	}
 
+	if b.operator.Limit > 0 {
+		sb.Limit(b.operator.Limit)
+	}
+
 	combinedArgs := allAggChArgs
 
 	// Add HAVING clause if specified

@@ -12,6 +12,7 @@ import {
 import type { SpantypesPostableTraceAggregationsDTO } from 'api/generated/services/sigNoz.schemas';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { USER_PREFERENCES } from 'constants/userPreferences';
+import { screen, userEvent, within } from 'storybook/test';
 import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
 import {
@@ -44,11 +45,20 @@ import {
 	traceDetailFieldKeys,
 	traceDetailFieldValues,
 	traceFlamegraphResponse,
+	traceSummaryResponse,
+	TRACE_SCENARIOS,
+	type TraceScenario,
 	traceWaterfallResponse,
 } from './__story_mockdata__/traceDetails';
 
 const TRACE = 'Trace · trace';
 const PANEL = 'Trace · span panel';
+
+const EXPORT = 'Trace · export';
+
+const EXPORT_STATES = ['success', 'loading', 'error'] as const;
+
+type ExportState = (typeof EXPORT_STATES)[number];
 
 const PANEL_POSITIONS = [
 	SpanDetailVariant.DOCKED_RIGHT,
@@ -95,6 +105,13 @@ const spanLogScopeOf = (body: QueryRangeRequestV5): SpanLogScope => {
 
 export const traceDetailsMocks = defineStoryMocks({
 	controls: {
+		scenario: choiceControl<TraceScenario>('Scenario', {
+			group: TRACE,
+			description:
+				'The spans the trace is built from: a checkout, one span per HTTP status badge, or an agent run with LLM, tool and agent spans and the AI totals in the header.',
+			options: TRACE_SCENARIOS,
+			value: 'checkout',
+		}),
 		spans: countControl('Spans', {
 			group: TRACE,
 			description:
@@ -133,19 +150,48 @@ export const traceDetailsMocks = defineStoryMocks({
 			value: 8,
 			max: 20,
 		}),
+		exportState: choiceControl<ExportState>('Trace export', {
+			group: EXPORT,
+			description:
+				'How export_raw_data answers behind Download trace. `success` raises "Export completed successfully", `loading` never answers so the download panel stays open (cancelling it raises "Export cancelled"), `error` raises "Failed to download trace".',
+			options: EXPORT_STATES,
+			value: 'success',
+		}),
 	},
 	handlers: (values, response) => {
 		const trace = {
+			scenario: values.scenario,
 			spans: values.spans,
 			errors: values.errors,
 			traceStart: traceStartOf(),
 		};
 
 		return [
+			rest.post('http://localhost/api/v1/export_raw_data', (_req, res, ctx) => {
+				if (values.exportState === 'loading') {
+					return res(ctx.delay('infinite'));
+				}
+
+				return values.exportState === 'error'
+					? res(ctx.status(500), ctx.json({ status: 'error' }))
+					: res(
+							ctx.status(200),
+							ctx.set('Content-Type', 'text/csv'),
+							ctx.body('trace_id,span_id\n'),
+						);
+			}),
+
 			rest.post(
 				'http://localhost/api/v4/traces/:traceId/waterfall',
 				response.json(() =>
 					traceWaterfallResponse({ ...trace, missingSpans: values.missingSpans }),
+				),
+			),
+
+			rest.get(
+				'http://localhost/api/v1/traces/:traceId/summary',
+				response.json(() =>
+					traceSummaryResponse({ ...trace, missingSpans: values.missingSpans }),
 				),
 			),
 
@@ -252,10 +298,63 @@ export const traceDetailsMocks = defineStoryMocks({
 	},
 	config: (values) => ({
 		route: values.spanPanel
-			? `/trace/${STORY_TRACE_ID}?spanId=${spanIdAt(focusSpanIndex(values.spans))}`
+			? `/trace/${STORY_TRACE_ID}?spanId=${spanIdAt(focusSpanIndex(values.scenario, values.spans))}`
 			: `/trace/${STORY_TRACE_ID}`,
 	}),
 	effect: (values) => {
 		set(LOCALSTORAGE.TRACE_DETAILS_SPAN_DETAILS_POSITION, values.panelPosition);
 	},
 });
+
+/** The waterfall renders once the trace resolves, which outlasts the 1s default. */
+export const untilLoaded = { timeout: 15_000 };
+
+/** Opens the pretty view's action menu on the first row that offers `item`. */
+export const openRowMenu = async (
+	canvasElement: HTMLElement,
+	item: string,
+): Promise<void> => {
+	await within(canvasElement).findAllByText(
+		/rpc\.method/,
+		undefined,
+		untilLoaded,
+	);
+
+	const triggers = Array.from(
+		canvasElement.querySelectorAll<HTMLElement>('.pretty-view__actions'),
+	);
+
+	for (const trigger of triggers) {
+		// eslint-disable-next-line no-await-in-loop
+		await userEvent.click(trigger);
+
+		// eslint-disable-next-line no-await-in-loop
+		const match = await screen
+			.findByRole('menuitem', { name: item })
+			.catch(() => null);
+
+		if (match) {
+			await userEvent.click(match);
+			return;
+		}
+
+		// eslint-disable-next-line no-await-in-loop
+		await userEvent.keyboard('{Escape}');
+	}
+
+	throw new Error(`no row offers "${item}"`);
+};
+
+export const startDownload = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	await userEvent.click(
+		await within(canvasElement).findByRole(
+			'button',
+			{ name: 'Trace options' },
+			untilLoaded,
+		),
+	);
+	await userEvent.click(await screen.findByTestId('download-trace-submenu'));
+	await userEvent.click(await screen.findByTestId('download-trace-csv'));
+};

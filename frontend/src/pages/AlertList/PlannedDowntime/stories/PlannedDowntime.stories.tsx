@@ -4,7 +4,11 @@ import { screen, userEvent, within } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { plannedDowntimeMocks } from './PlannedDowntime.stories.mocks';
+import {
+	clickFirstRowAction,
+	plannedDowntimeMocks,
+	untilLoaded,
+} from './PlannedDowntime.stories.mocks';
 import { FIRST_DOWNTIME_NAME } from './__story_mockdata__/plannedDowntime';
 
 import AlertList from '../../index';
@@ -30,9 +34,6 @@ const meta = {
 export default meta;
 
 type Story = StoryObj<PlannedDowntimeArgs>;
-
-/** The page fetches before it renders a row, which outlasts the 1s default. */
-const untilLoaded = { timeout: 15_000 };
 
 /**
  * The windows where alerting is held back: what is running now, what is
@@ -82,24 +83,33 @@ export const NewDowntime: Story = {
 /** The deletion confirmation opened from the first schedule's real row action. */
 export const DeleteDowntimeConfirm: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
-		const action = (
-			await within(canvasElement).findByText(
-				FIRST_DOWNTIME_NAME,
-				undefined,
-				untilLoaded,
-			)
-		)
-			.closest('.header-content')
-			// The row action holds edit then delete, neither of them labelled.
-			?.querySelectorAll('.action-btn svg')[1];
-
-		if (!action) {
-			throw new Error('Downtime delete action did not render');
-		}
-
-		await userEvent.click(action);
+		await clickFirstRowAction(canvasElement, 'delete');
 		// The modal titles itself and its confirm button the same.
 		await screen.findByRole('button', { name: 'Delete Schedule' });
+	},
+};
+
+/**
+ * The first schedule opened for editing: the specific rules it silences sit
+ * above the rule picker, each with its own remove button.
+ */
+export const EditDowntime: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await clickFirstRowAction(canvasElement, 'edit');
+		await screen.findByText(/edit planned downtime/i);
+		await screen.findByText(/^Postgres connections/);
+	},
+};
+
+/** The new-downtime form set to repeat weekly, which adds the days and duration. */
+export const NewDowntimeRecurring: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await NewDowntime.play?.({ canvasElement } as never);
+		await userEvent.click(
+			await screen.findByRole('combobox', { name: 'Repeats every' }),
+		);
+		await userEvent.click(await screen.findByText('Weekly'));
+		await screen.findByText('Duration');
 	},
 };
 

@@ -11,6 +11,8 @@ interface ConfigSliderProps {
 	/** Renders the current value beside the track (e.g. as a percentage). */
 	formatValue?: (value: number) => string;
 	onChange: (value: number) => void;
+	/** Fires once on release, for a value too costly to write on every step. */
+	onChangeEnd?: (value: number) => void;
 }
 
 /**
@@ -25,6 +27,7 @@ function ConfigSlider({
 	step,
 	formatValue,
 	onChange,
+	onChangeEnd,
 }: ConfigSliderProps): JSX.Element {
 	return (
 		<div className={styles.row}>
@@ -36,6 +39,10 @@ function ConfigSlider({
 				max={max}
 				step={step}
 				onChange={(next): void => onChange(Array.isArray(next) ? next[0] : next)}
+				onAfterChange={
+					onChangeEnd &&
+					((next): void => onChangeEnd(Array.isArray(next) ? next[0] : next))
+				}
 			/>
 			<span className={styles.value}>
 				{formatValue ? formatValue(value) : value}

@@ -4,6 +4,7 @@
  */
 
 import { rest } from 'msw';
+import { userEvent, within } from 'storybook/test';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
@@ -11,8 +12,9 @@ import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 import {
 	DOWNTIME_KINDS,
 	DOWNTIME_MAX,
-	downtimeSchedulesResponse,
 	type DowntimeKind,
+	downtimeSchedulesResponse,
+	FIRST_DOWNTIME_NAME,
 } from './__story_mockdata__/plannedDowntime';
 
 import {
@@ -101,3 +103,28 @@ export const plannedDowntimeMocks = defineStoryMocks({
 		route: `/alerts?tab=${AlertListTabs.CONFIGURATION}&subTab=${AlertListSubTabs.PLANNED_DOWNTIME}`,
 	}),
 });
+
+/** The page fetches before it renders a row, which outlasts the 1s default. */
+export const untilLoaded = { timeout: 15_000 };
+
+export const clickFirstRowAction = async (
+	canvasElement: HTMLElement,
+	action: 'edit' | 'delete',
+): Promise<void> => {
+	const icon = (
+		await within(canvasElement).findByText(
+			FIRST_DOWNTIME_NAME,
+			undefined,
+			untilLoaded,
+		)
+	)
+		.closest('.header-content')
+		// The row action holds edit then delete, neither of them labelled.
+		?.querySelectorAll('.action-btn svg')[action === 'edit' ? 0 : 1];
+
+	if (!icon) {
+		throw new Error(`Downtime ${action} action did not render`);
+	}
+
+	await userEvent.click(icon);
+};

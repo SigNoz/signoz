@@ -26,9 +26,7 @@ function Explorer(): JSX.Element {
 					className: 'qf-api-monitoring',
 					source: QuickFiltersSource.API_MONITORING,
 					signal: SignalType.API_MONITORING,
-					showFilterCollapse: false,
 					showQueryName: false,
-					handleFilterVisibilityChange: (): void => {},
 					useFieldApis: quickFilterFieldApis,
 				}}
 			>

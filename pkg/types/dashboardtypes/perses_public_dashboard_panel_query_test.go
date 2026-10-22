@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -160,6 +161,11 @@ func TestDashboardV2GetPanelQuery(t *testing.T) {
 			expectedType qb.QueryType
 		}{
 			{
+				description:  "AI builder query",
+				plugin:       QueryPlugin{Kind: QueryKindAIBuilder, Spec: &AIBuilderQuerySpec{Name: "A"}},
+				expectedType: qb.QueryTypeBuilderAI,
+			},
+			{
 				description:  "promql",
 				plugin:       QueryPlugin{Kind: QueryKindPromQL, Spec: &qb.PromQuery{Name: "A", Query: "up"}},
 				expectedType: qb.QueryTypePromQL,
@@ -207,6 +213,42 @@ func TestDashboardV2GetPanelQuery(t *testing.T) {
 				assert.Equal(t, tc.expectedType, req.CompositeQuery.Queries[0].Type)
 			})
 		}
+	})
+
+	// The gen_ai statement builder only reads traces, so an AI builder query
+	// carries no signal of its own and unwraps to a traces builder query.
+	t.Run("unwraps an AI builder query to a traces builder query", func(t *testing.T) {
+		dashboard := &DashboardV2{
+			Spec: DashboardSpec{
+				Panels: map[string]*Panel{
+					"panel-1": {
+						Spec: PanelSpec{
+							Plugin: PanelPlugin{Kind: PanelKindTimeSeries},
+							Queries: []Query{
+								{
+									Kind: qb.RequestTypeTimeSeries,
+									Spec: QuerySpec{
+										Plugin: QueryPlugin{
+											Kind: QueryKindAIBuilder,
+											Spec: &AIBuilderQuerySpec{Name: "A", Signal: telemetrytypes.SignalTraces},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		req, err := dashboard.GetPanelQuery(1, 2, "panel-1")
+		require.NoError(t, err)
+		require.Len(t, req.CompositeQuery.Queries, 1)
+
+		spec, ok := req.CompositeQuery.Queries[0].Spec.(qb.QueryBuilderQuery[qb.TraceAggregation])
+		require.True(t, ok, "expected traces builder query, got %T", req.CompositeQuery.Queries[0].Spec)
+		assert.Equal(t, "A", spec.Name)
+		assert.Equal(t, telemetrytypes.SignalTraces, spec.Signal)
 	})
 
 	t.Run("sets FormatTableResultForUI only for table panels", func(t *testing.T) {

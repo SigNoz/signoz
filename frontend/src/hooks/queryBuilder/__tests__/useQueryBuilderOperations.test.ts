@@ -62,14 +62,14 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 		legend: '',
 	};
 
-	const setupMockQueryBuilder = (): void => {
+	const setupMockQueryBuilder = (panelType = 'time_series'): void => {
 		(useQueryBuilder as jest.Mock).mockReturnValue({
 			handleSetQueryData: mockHandleSetQueryData,
 			handleSetFormulaData: mockHandleSetFormulaData,
 			removeQueryBuilderEntityByIndex: mockRemoveQueryBuilderEntityByIndex,
 			setLastUsedQuery: mockSetLastUsedQuery,
 			redirectWithQueryBuilderData: mockRedirectWithQueryBuilderData,
-			panelType: 'time_series',
+			panelType,
 			currentQuery: {
 				builder: {
 					queryData: [defaultMockQuery, defaultMockQuery],
@@ -329,6 +329,107 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 						},
 					],
 				}),
+			);
+		});
+	});
+
+	describe('spaceAggregationOptions for a histogram metric', () => {
+		const histogramQuery: IBuilderQuery = {
+			...defaultMockQuery,
+			aggregateAttribute: {
+				key: 'signoz_latency',
+				dataType: DataTypes.Float64,
+				type: ATTRIBUTE_TYPES.HISTOGRAM,
+			} as BaseAutocompleteData,
+		};
+
+		it('offers the percentiles on a time series panel', () => {
+			const result = renderHookWithProps({ query: histogramQuery });
+
+			expect(
+				result.current.spaceAggregationOptions.map((o) => o.value),
+			).toStrictEqual([
+				MetricAggregateOperator.P50,
+				MetricAggregateOperator.P75,
+				MetricAggregateOperator.P90,
+				MetricAggregateOperator.P95,
+				MetricAggregateOperator.P99,
+			]);
+		});
+
+		it('offers count alone on a heatmap panel, whose Y axis is the `le` labels', () => {
+			setupMockQueryBuilder('heatmap');
+
+			const result = renderHookWithProps({ query: histogramQuery });
+
+			expect(
+				result.current.spaceAggregationOptions.map((o) => o.value),
+			).toStrictEqual([MetricAggregateOperator.COUNT]);
+		});
+	});
+
+	describe('picking a histogram metric', () => {
+		const histogramAttribute: BaseAutocompleteData = {
+			key: 'http.client.duration.bucket',
+			dataType: DataTypes.Float64,
+			type: ATTRIBUTE_TYPES.HISTOGRAM,
+		};
+
+		it('defaults the spatial aggregation to p90 on a time series panel', () => {
+			const result = renderHookWithProps({ entityVersion: ENTITY_VERSION_V5 });
+			act(() => {
+				result.current.handleChangeAggregatorAttribute(histogramAttribute);
+			});
+
+			expect(mockHandleSetQueryData).toHaveBeenLastCalledWith(
+				0,
+				expect.objectContaining({
+					aggregations: [
+						expect.objectContaining({
+							spaceAggregation: MetricAggregateOperator.P90,
+						}),
+					],
+				}),
+			);
+		});
+
+		it('defaults it to count on a heatmap panel, which offers nothing else', () => {
+			setupMockQueryBuilder('heatmap');
+
+			const result = renderHookWithProps({ entityVersion: ENTITY_VERSION_V5 });
+			act(() => {
+				result.current.handleChangeAggregatorAttribute(histogramAttribute);
+			});
+
+			expect(mockHandleSetQueryData).toHaveBeenLastCalledWith(
+				0,
+				expect.objectContaining({
+					aggregations: [
+						expect.objectContaining({
+							spaceAggregation: MetricAggregateOperator.COUNT,
+						}),
+					],
+				}),
+			);
+		});
+
+		it('drops the bucket axis a gauge had chosen, since `le` is the axis now', () => {
+			setupMockQueryBuilder('heatmap');
+
+			const result = renderHookWithProps({
+				entityVersion: ENTITY_VERSION_V5,
+				query: {
+					...defaultMockQuery,
+					bucketOptions: { kind: 'log', spec: { scale: 2 } },
+				},
+			});
+			act(() => {
+				result.current.handleChangeAggregatorAttribute(histogramAttribute);
+			});
+
+			expect(mockHandleSetQueryData).toHaveBeenLastCalledWith(
+				0,
+				expect.objectContaining({ bucketOptions: undefined }),
 			);
 		});
 	});

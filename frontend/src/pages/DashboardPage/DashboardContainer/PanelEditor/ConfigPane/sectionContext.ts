@@ -16,6 +16,8 @@ export interface SectionEditorContext {
 	signal?: TelemetrytypesSignalDTO;
 	panelKind?: PanelKind;
 	onChangePanelKind?: (kind: PanelKind) => void;
+	/** Kind the panel was opened with, offered as a revert target. */
+	originalPanelKind?: PanelKind;
 	yAxisUnit?: string;
 	queryType?: EQueryType;
 	stepInterval?: number;

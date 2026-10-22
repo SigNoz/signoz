@@ -57,11 +57,12 @@ function TelemetrySelectorWizard({
 
 	const trigger = (
 		<Button
+			color="primary"
 			variant="solid"
 			size="sm"
-			data-testid={`telemetry-wizard-trigger-${testId}`}
+			testId={`telemetry-wizard-trigger-${testId}`}
+			prefix={<Wand size={14} />}
 		>
-			<Wand size={14} />
 			Wizard
 		</Button>
 	);
@@ -69,6 +70,7 @@ function TelemetrySelectorWizard({
 	const footer = (
 		<>
 			<Button
+				size="md"
 				variant="ghost"
 				color="secondary"
 				onClick={(): void => handleOpenChange(false)}
@@ -76,10 +78,13 @@ function TelemetrySelectorWizard({
 				Cancel
 			</Button>
 			<Button
+				size="md"
+				color="primary"
 				variant="solid"
 				onClick={handleAdd}
 				disabled={!canAdd}
-				data-testid={`wizard-add-btn-${testId}`}
+				disabledTooltip={validation.message}
+				testId={`wizard-add-btn-${testId}`}
 			>
 				Add Selector
 			</Button>
@@ -165,9 +170,11 @@ function TelemetrySelectorWizard({
 							testId={`wizard-value-input-${testId}`}
 						/>
 						<Checkbox
+							color="primary"
 							id={`wizard-any-resource-${testId}`}
 							value={isAnyResource}
 							disabled={!supportsKeyScoping}
+							disabledTooltip="This query type does not support key scoping"
 							onChange={(checked): void => handleAnyResourceChange(checked === true)}
 							testId={`wizard-any-resource-checkbox-${testId}`}
 						>

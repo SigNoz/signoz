@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -156,5 +156,50 @@ export const DeleteDomain: Story = {
 			undefined,
 			untilLoaded,
 		);
+	},
+};
+
+/**
+ * The org's display name saved: the toast confirming it. Set Display name
+ * update to `error` or `loading` to see the modal instead.
+ */
+export const DisplayNameUpdatedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		const input = await within(canvasElement).findByLabelText(
+			/display name/i,
+			undefined,
+			untilLoaded,
+		);
+
+		await userEvent.clear(input);
+		await userEvent.type(input, 'Night Watch');
+		await userEvent.click(
+			await within(canvasElement).findByRole('button', { name: /^submit$/i }),
+		);
+		if (args.displayNameUpdate === 'success') {
+			await waitFor(() => expect(screen.getByText(/^success$/i)).toBeVisible());
+		}
+	},
+};
+
+/**
+ * A domain removed: the toast confirming it. Set Domain delete to `error` or
+ * `loading` to see the modal instead.
+ */
+export const DomainDeletedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await clickFirst(canvasElement, 'auth-domain-delete');
+		await userEvent.click(
+			await screen.findByTestId(
+				'auth-domain-delete-confirm',
+				undefined,
+				untilLoaded,
+			),
+		);
+		if (args.domainDelete === 'success') {
+			await waitFor(() =>
+				expect(screen.getByText(/domain deleted successfully/i)).toBeVisible(),
+			);
+		}
 	},
 };

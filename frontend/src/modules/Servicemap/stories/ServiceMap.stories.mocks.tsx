@@ -8,6 +8,7 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { encode } from 'js-base64';
 import type { Tags } from 'hooks/useResourceAttribute/types';
+import { fireEvent, userEvent, waitFor, within } from 'storybook/test';
 
 import {
 	choiceControl,
@@ -30,6 +31,9 @@ import {
 	SERVICE_HEALTH,
 	type ServiceHealth,
 } from './__story_mockdata__/serviceMap';
+
+/** The keys are only fetched once the select opens, past the 1s default. */
+const untilLoaded = { timeout: 15_000 };
 
 const GRAPH = 'Service map · graph';
 const FILTERS = 'Service map · filters';
@@ -129,3 +133,80 @@ export const serviceMapMocks = defineStoryMocks({
 	],
 	config: (values) => ({ route: serviceMapRoute(values.filters) }),
 });
+
+/** Opens the select under a test id; it closes again after every pick. */
+export const openSelect = async (
+	canvasElement: HTMLElement,
+	testId: string,
+): Promise<void> => {
+	const select = await within(canvasElement).findByTestId(
+		testId,
+		undefined,
+		untilLoaded,
+	);
+
+	await userEvent.click(within(select).getByRole('combobox'));
+};
+
+export const OPEN_DROPDOWN =
+	'.ant-select-dropdown:not(.ant-select-dropdown-hidden)';
+
+/** antd keeps a hidden copy of each label for screen readers; the title skips it. */
+const visibleOption = (title: string): HTMLElement | null =>
+	document.querySelector<HTMLElement>(
+		`${OPEN_DROPDOWN} .ant-select-item-option[title="${title}"]`,
+	);
+
+/**
+ * Picks the option titled `title` in the open dropdown. `userEvent.click`
+ * moves focus off the select on the way, which closes it before the option
+ * takes the click.
+ */
+export const pickOption = async (title: string): Promise<void> => {
+	const option = await waitFor(() => {
+		const match = visibleOption(title);
+
+		if (!match) {
+			throw new Error(`option "${title}" not found`);
+		}
+
+		return match;
+	}, untilLoaded);
+
+	await fireEvent.click(option);
+};
+
+/**
+ * Opens the attribute filter on its next step. Each single-choice pick closes
+ * the dropdown and swaps the select for the next step's, and a click that lands
+ * before the swap opens nothing, so it opens again until `title` shows.
+ */
+export const openAttributeFilterOn = (
+	canvasElement: HTMLElement,
+	title: string,
+): Promise<void> =>
+	waitFor(
+		async () => {
+			if (visibleOption(title)) {
+				return;
+			}
+
+			if (!document.querySelector(OPEN_DROPDOWN)) {
+				await openSelect(canvasElement, 'resource-attributes-filter');
+			}
+
+			throw new Error(`option "${title}" not shown`);
+		},
+		{ ...untilLoaded, interval: 500 },
+	);
+
+/** Stages `k8s.cluster.name IN` and leaves the filter open on its values. */
+export const stageClusterIn = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	await openAttributeFilterOn(canvasElement, 'k8s.cluster.name');
+	await pickOption('k8s.cluster.name');
+	await openAttributeFilterOn(canvasElement, 'IN');
+	await pickOption('IN');
+	await openAttributeFilterOn(canvasElement, 'staging-eu');
+};

@@ -1,5 +1,7 @@
 import type { Browser, BrowserContext, Page } from '@playwright/test';
 
+import { storageKey } from './base-path';
+
 export type User = { email: string; password: string };
 
 /** Default user — admin from the pytest bootstrap (.env.local) or staging .env. */
@@ -57,7 +59,8 @@ async function login(page: Page, user: User): Promise<void> {
 async function pinSidenav(page: Page): Promise<void> {
 	const token = await page.evaluate(
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		() => (globalThis as any).localStorage.getItem('AUTH_TOKEN') || '',
+		(key) => (globalThis as any).localStorage.getItem(key) || '',
+		storageKey('AUTH_TOKEN'),
 	);
 	const res = await page.request.put('/api/v1/user/preferences/sidenav_pinned', {
 		data: { value: true },

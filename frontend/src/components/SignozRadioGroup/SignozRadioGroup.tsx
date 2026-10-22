@@ -1,4 +1,4 @@
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 
 import './SignozRadioGroup.styles.scss';
 
@@ -12,40 +12,39 @@ interface SignozRadioGroupProps {
 	value: string;
 	options: Option[];
 	onChange: (value: string) => void;
-	className?: string;
 	disabled?: boolean;
+	disabledTooltip?: string;
 }
 
 function SignozRadioGroup({
 	value,
 	options,
 	onChange,
-	className = '',
 	disabled = false,
+	disabledTooltip,
 }: SignozRadioGroupProps): JSX.Element {
 	return (
-		<ToggleGroupSimple
+		<ToggleGroup
+			variant="outlined"
+			color="secondary"
+			size="sm"
 			type="single"
 			value={value}
-			className={`signoz-radio-group ${className}`}
 			onChange={onChange}
 			disabled={disabled}
+			disabledTooltip={disabledTooltip}
 			items={options.map((option) => ({
 				value: option.value,
-				label: (
-					<div className="view-title-container">
-						{option.icon && <div className="icon-container">{option.icon}</div>}
-						{option.label}
-					</div>
-				),
+				label: <div className="view-title-container">{option.label}</div>,
+				prefix: option.icon ? <>{option.icon}</> : undefined,
 			}))}
 		/>
 	);
 }
 
 SignozRadioGroup.defaultProps = {
-	className: '',
 	disabled: false,
+	disabledTooltip: undefined,
 };
 
 export default SignozRadioGroup;
