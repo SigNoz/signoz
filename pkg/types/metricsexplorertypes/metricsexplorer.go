@@ -108,7 +108,7 @@ type Stat struct {
 	Description string           `json:"description" required:"true" description:"Human-readable description from the metric metadata; empty when none was reported."`
 	MetricType  metrictypes.Type `json:"type" required:"true" description:"The metric type, such as gauge, sum, histogram, summary or exponentialhistogram."`
 	MetricUnit  string           `json:"unit" required:"true" description:"The unit reported in the metric metadata, for example ms or By; empty when none was reported."`
-	TimeSeries  uint64           `json:"timeseries" required:"true" description:"Number of distinct time series for the metric, counted from metadata buckets whose start is rounded down to an hour, six hours, a day or a week depending on the range, so series active shortly before start are included."`
+	TimeSeries  uint64           `json:"timeseries" required:"true" description:"Number of distinct time series active in the time range, approximate: it can include series last active shortly before start."`
 	Samples     uint64           `json:"samples" required:"true" description:"Number of samples (data points) ingested for the metric in the requested time range."`
 }
 
@@ -152,7 +152,7 @@ type TreemapRequest struct {
 	Start  int64           `json:"start" required:"true" description:"Start of the time range as a Unix timestamp in milliseconds. Must be greater than 0 and less than end."`
 	End    int64           `json:"end" required:"true" description:"End of the time range as a Unix timestamp in milliseconds. Must be greater than start."`
 	Limit  int             `json:"limit" required:"true" description:"Maximum number of metrics to return, between 1 and 5000, ordered by percentage descending."`
-	Mode   TreemapMode     `json:"mode" required:"true" description:"What each metric is sized by: timeseries counts distinct time series, samples counts ingested data points among the limit plus 50 metrics with the most time series. Only the matching response array is populated."`
+	Mode   TreemapMode     `json:"mode" required:"true" description:"What each metric is sized by: timeseries counts distinct time series; samples counts ingested data points, ranked among a shortlist of the metrics with the most time series. Only the matching response array is populated."`
 }
 
 // Validate enforces basic constraints on TreemapRequest.
@@ -258,10 +258,10 @@ func NewMetricDashboardPanelsResponse(refs []dashboardtypes.DashboardPanelRef) *
 
 // MetricHighlightsResponse is the output structure for the metric highlights endpoint.
 type MetricHighlightsResponse struct {
-	DataPoints       uint64 `json:"dataPoints" required:"true" description:"Number of samples ingested for the metric across the data still retained, summed from the 30-minute aggregate table; older data is excluded by retention."`
+	DataPoints       uint64 `json:"dataPoints" required:"true" description:"Number of samples ingested for the metric over retained data."`
 	LastReceived     uint64 `json:"lastReceived" required:"true" description:"Unix timestamp in milliseconds of the most recently received sample."`
-	TotalTimeSeries  uint64 `json:"totalTimeSeries" required:"true" description:"Number of distinct time series for the metric across the retained weekly metadata buckets, so it falls as retention expires rather than counting everything ever seen."`
-	ActiveTimeSeries uint64 `json:"activeTimeSeries" required:"true" description:"Number of distinct time series with an hourly metadata bucket in the last 120 minutes. Buckets are keyed by hour start, so a series that last reported early in the cutoff hour can be missed."`
+	TotalTimeSeries  uint64 `json:"totalTimeSeries" required:"true" description:"Number of distinct time series for the metric over retained data."`
+	ActiveTimeSeries uint64 `json:"activeTimeSeries" required:"true" description:"Number of distinct time series active in the last 120 minutes, approximate: a series that last reported early in that window can be missed."`
 }
 
 // MetricNameQuery represents the query parameters for endpoints that take a metric name.
