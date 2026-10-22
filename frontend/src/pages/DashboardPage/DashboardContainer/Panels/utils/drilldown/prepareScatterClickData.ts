@@ -7,7 +7,7 @@ import type { DrilldownClickPayload } from '../../types/drilldown';
 import { getGroupByFilters } from './getGroupByFilters';
 import { resolveDrilldownSignal } from './signal';
 
-interface EnrichScatterClickArgs {
+interface PrepareScatterClickDataArgs {
 	labels: ScatterPointLabel[];
 	/** Legend label. */
 	label: string;
@@ -21,7 +21,7 @@ interface EnrichScatterClickArgs {
 }
 
 /** Drilldown filtered to the dot's group, via Y's builder query else X's; null if neither. */
-export function enrichScatterClick({
+export function prepareScatterClickData({
 	labels,
 	label,
 	color,
@@ -29,7 +29,7 @@ export function enrichScatterClick({
 	builderQueries,
 	coordinates,
 	timeRange,
-}: EnrichScatterClickArgs): DrilldownClickPayload | null {
+}: PrepareScatterClickDataArgs): DrilldownClickPayload | null {
 	const queryName = [axisQueries.y, axisQueries.x].find(
 		(name) =>
 			isValidQueryName(name) &&

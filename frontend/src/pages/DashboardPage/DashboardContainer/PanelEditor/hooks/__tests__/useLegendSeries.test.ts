@@ -5,7 +5,10 @@ import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { preparePieData } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/PieChartPanel/prepareData';
 import { prepareScalarTables } from 'pages/DashboardPage/DashboardContainer/queryV5/prepareScalarTables';
 import { resolveSeriesLabelV5 } from 'pages/DashboardPage/DashboardContainer/Panels/utils/resolveSeriesLabel';
-import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
+import type {
+	PanelQueryData,
+	PanelSeries,
+} from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 import { flattenTimeSeries } from 'pages/DashboardPage/DashboardContainer/queryV5/v5ResponseData';
 
 import { useLegendSeries } from '../useLegendSeries';
@@ -43,12 +46,12 @@ jest.mock(
 	() => ({ preparePieData: jest.fn(() => []) }),
 );
 
-const mockUseIsDarkMode = useIsDarkMode as unknown as jest.Mock;
-const mockFlatten = flattenTimeSeries as unknown as jest.Mock;
-const mockResolveLabel = resolveSeriesLabelV5 as unknown as jest.Mock;
-const mockGenerateColor = generateColor as unknown as jest.Mock;
-const mockPreparePie = preparePieData as unknown as jest.Mock;
-const mockPrepareScalarTables = prepareScalarTables as unknown as jest.Mock;
+const mockUseIsDarkMode = jest.mocked(useIsDarkMode);
+const mockFlatten = jest.mocked(flattenTimeSeries);
+const mockResolveLabel = jest.mocked(resolveSeriesLabelV5);
+const mockGenerateColor = jest.mocked(generateColor);
+const mockPreparePie = jest.mocked(preparePieData);
+const mockPrepareScalarTables = jest.mocked(prepareScalarTables);
 
 const PANEL = {
 	kind: 'Panel',
@@ -76,15 +79,22 @@ const scatterPanel = (colorBy?: string[]): DashboardtypesPanelDTO =>
 const DATA = { response: {}, legendMap: {} } as unknown as PanelQueryData;
 
 // Each flattened series carries the label resolveSeriesLabelV5 should report.
-function seriesWithLabels(labels: string[]): { __label: string }[] {
-	return labels.map((__label) => ({ __label }));
+function seriesWithLabels(labels: string[]): PanelSeries[] {
+	return labels.map((legend) => ({
+		queryName: 'A',
+		legend,
+		labels: {},
+		values: [],
+		kind: 'series',
+		aggregation: { index: 0, alias: '' },
+	}));
 }
 
 describe('useLegendSeries', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		mockUseIsDarkMode.mockReturnValue(true);
-		mockResolveLabel.mockImplementation((s: { __label: string }) => s.__label);
+		mockResolveLabel.mockImplementation((s) => s.legend);
 	});
 
 	it('is empty when there are no series', () => {
@@ -133,9 +143,9 @@ describe('useLegendSeries', () => {
 
 	it('resolves pie panels from their scalar slices, deduped by label', () => {
 		mockPreparePie.mockReturnValue([
-			{ label: 'x', color: 'c1' },
-			{ label: 'y', color: 'c2' },
-			{ label: 'x', color: 'c1' },
+			{ label: 'x', value: 1, color: 'c1' },
+			{ label: 'y', value: 1, color: 'c2' },
+			{ label: 'x', value: 1, color: 'c1' },
 		]);
 		const { result } = renderHook(() => useLegendSeries(PIE_PANEL, DATA));
 		expect(result.current).toStrictEqual([

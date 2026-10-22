@@ -1,6 +1,6 @@
 import type { BuilderQuery } from 'types/api/v5/queryRange';
 
-import { enrichScatterClick } from '../enrichScatterClick';
+import { prepareScatterClickData } from '../prepareScatterClickData';
 
 const builderQuery = (spec: Record<string, unknown>): BuilderQuery =>
 	spec as unknown as BuilderQuery;
@@ -26,8 +26,8 @@ const LABELS = [
 const click = (
 	axisQueries: { x: string; y: string },
 	builderQueries = QUERIES,
-): ReturnType<typeof enrichScatterClick> =>
-	enrichScatterClick({
+): ReturnType<typeof prepareScatterClickData> =>
+	prepareScatterClickData({
 		labels: LABELS,
 		label: 'checkout, prod',
 		color: '#4E74F8',
@@ -37,7 +37,7 @@ const click = (
 		timeRange: { startTime: 1, endTime: 2 },
 	});
 
-describe('enrichScatterClick', () => {
+describe('prepareScatterClickData', () => {
 	it("follows Y's query and filters to the dot's group", () => {
 		expect(click({ x: 'B', y: 'A' })).toStrictEqual({
 			coordinates: { x: 7, y: 8 },
