@@ -1,4 +1,4 @@
-import { render, screen } from 'tests/test-utils';
+import { render, screen, within } from 'tests/test-utils';
 
 import { ThreadSpan, ThreadView } from '../../TraceDetailsThread/types';
 import { GEN_AI_KEYS } from '../../utils/aiTraceUtils';
@@ -19,13 +19,33 @@ describe('SpanMessages', () => {
 	it('shows the empty state when there are no formatted messages', () => {
 		const span = makeSpan({
 			attributes: { [GEN_AI_KEYS.inputMessages]: '[{"role":"user"}]' },
-		} as Partial<ThreadSpan>);
+		});
 
 		render(<SpanMessages span={span} view={ThreadView.Formatted} />);
 
 		expect(screen.getByTestId('span-messages-empty')).toHaveTextContent(
 			'This span has no input or output.',
 		);
+	});
+
+	it('renders formatted input and output messages', () => {
+		const span = makeSpan({
+			formattedInput: [
+				{ role: 'user', parts: [{ type: 'text', content: 'question' }] },
+			],
+			formattedOutput: [
+				{ role: 'assistant', parts: [{ type: 'text', content: 'answer' }] },
+			],
+		});
+
+		render(<SpanMessages span={span} view={ThreadView.Formatted} />);
+
+		expect(
+			within(screen.getByTestId('span-messages-input')).getByText('question'),
+		).toBeInTheDocument();
+		expect(
+			within(screen.getByTestId('span-messages-output')).getByText('answer'),
+		).toBeInTheDocument();
 	});
 
 	it('shows the empty state in JSON view when there are no raw messages', () => {
@@ -37,7 +57,7 @@ describe('SpanMessages', () => {
 	it('renders raw messages in JSON view', () => {
 		const span = makeSpan({
 			attributes: { [GEN_AI_KEYS.outputMessages]: '[{"role":"assistant"}]' },
-		} as Partial<ThreadSpan>);
+		});
 
 		render(<SpanMessages span={span} view={ThreadView.Json} />);
 
@@ -49,7 +69,7 @@ describe('SpanMessages', () => {
 			attributes: {
 				[GEN_AI_KEYS.inputMessages]: '[{"role":"user","content":"visible-text"}]',
 			},
-		} as Partial<ThreadSpan>);
+		});
 
 		render(<SpanMessages span={span} view={ThreadView.Json} />);
 
@@ -60,10 +80,10 @@ describe('SpanMessages', () => {
 		const span = makeSpan({
 			attributes: {
 				[GEN_AI_KEYS.inputMessages]: JSON.stringify([
-					{ role: 'user', content: 'x'.repeat(2000) },
+					{ role: 'user', content: 'hi' },
 				]),
 			},
-		} as Partial<ThreadSpan>);
+		});
 
 		render(<SpanMessages span={span} view={ThreadView.Json} />);
 

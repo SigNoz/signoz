@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from 'tests/test-utils';
+import { render, screen, userEvent } from 'tests/test-utils';
 
 import AIThreadMessage from '../AIThreadMessage';
 import JsonBlock from '../JsonBlock';
@@ -12,6 +12,10 @@ jest.mock('hooks/useDimensions', () => ({
 		height: mockTreeHeight,
 	}),
 }));
+
+beforeEach(() => {
+	mockTreeHeight = 0;
+});
 
 describe('AIThreadMessage', () => {
 	it('shows the Output badge when the message has no role', () => {
@@ -35,16 +39,46 @@ describe('AIThreadMessage', () => {
 			'No content',
 		);
 	});
+
+	it('hides system message parts until the toggle is clicked', async () => {
+		const user = userEvent.setup();
+		render(
+			<AIThreadMessage
+				message={{ role: 'system', parts: [{ type: 'text', content: 'be brief' }] }}
+			/>,
+		);
+
+		expect(screen.queryByText('be brief')).not.toBeInTheDocument();
+		await user.click(screen.getByTestId('ai-message-system-toggle'));
+		expect(screen.getByText('be brief')).toBeInTheDocument();
+	});
+
+	it('shows the finish reason', () => {
+		render(
+			<AIThreadMessage
+				message={{
+					role: 'assistant',
+					parts: [{ type: 'text', content: 'hi' }],
+					finish_reason: 'stop',
+				}}
+			/>,
+		);
+
+		expect(screen.getByTestId('ai-message-finish-reason')).toHaveTextContent(
+			'stop',
+		);
+	});
 });
 
 describe('JsonBlock', () => {
-	it('collapses JSON taller than 10 rows behind Show more', () => {
+	it('collapses JSON taller than 10 rows behind Show more', async () => {
 		mockTreeHeight = 300;
+		const user = userEvent.setup();
 		render(<JsonBlock data={{ a: 1 }} />);
 
 		const toggle = screen.getByTestId('ai-json-show-more');
 		expect(toggle).toHaveTextContent('Show more');
-		fireEvent.click(toggle);
+		await user.click(toggle);
 		expect(toggle).toHaveTextContent('Show less');
 	});
 
