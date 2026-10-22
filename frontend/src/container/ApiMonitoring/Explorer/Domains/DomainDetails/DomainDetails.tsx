@@ -34,14 +34,14 @@ function DomainDetails({
 	selectedDomainIndex,
 	setSelectedDomainIndex,
 	domainListLength,
-	domainListFilters,
+	domainListFilterExpression,
 }: {
 	domainData: any;
 	handleClose: () => void;
 	selectedDomainIndex: number;
 	setSelectedDomainIndex: (index: number) => void;
 	domainListLength: number;
-	domainListFilters: IBuilderQuery['filters'];
+	domainListFilterExpression: string;
 }): JSX.Element {
 	const [params, setParams] = useApiMonitoringParams();
 	const [selectedView, setSelectedView] = useState<VIEWS>(
@@ -53,8 +53,10 @@ function DomainDetails({
 	const [endPointsGroupBy, setEndPointsGroupBy] = useState<
 		IBuilderQuery['groupBy']
 	>([]);
-	const [initialFiltersEndPointStats, setInitialFiltersEndPointStats] =
-		useState<IBuilderQuery['filters']>(domainListFilters);
+	const [
+		initialFilterExpressionEndPointStats,
+		setInitialFilterExpressionEndPointStats,
+	] = useState<string>(domainListFilterExpression);
 
 	const handleTabChange = (value: string): void => {
 		setSelectedView(value as VIEWS);
@@ -221,7 +223,7 @@ function DomainDetails({
 				<>
 					<DomainMetrics
 						domainName={domainData.domainName}
-						domainListFilters={domainListFilters}
+						domainListFilterExpression={domainListFilterExpression}
 						timeRange={modalTimeRange}
 					/>
 					<div className="views-tabs-container">
@@ -247,8 +249,10 @@ function DomainDetails({
 							groupBy={endPointsGroupBy}
 							setGroupBy={setEndPointsGroupBy}
 							timeRange={modalTimeRange}
-							initialFilters={domainListFilters}
-							setInitialFiltersEndPointStats={setInitialFiltersEndPointStats}
+							initialFilterExpression={domainListFilterExpression}
+							setInitialFilterExpressionEndPointStats={
+								setInitialFilterExpressionEndPointStats
+							}
 						/>
 					)}
 
@@ -257,7 +261,7 @@ function DomainDetails({
 							domainName={domainData.domainName}
 							endPointName={selectedEndPointName}
 							setSelectedEndPointName={handleEndPointChange}
-							initialFilters={initialFiltersEndPointStats}
+							initialFilterExpression={initialFilterExpressionEndPointStats}
 							timeRange={modalTimeRange}
 							handleTimeChange={handleTimeChange}
 						/>
@@ -267,7 +271,7 @@ function DomainDetails({
 						<TopErrors
 							domainName={domainData.domainName}
 							timeRange={modalTimeRange}
-							initialFilters={domainListFilters}
+							initialFilterExpression={domainListFilterExpression}
 						/>
 					)}
 				</>

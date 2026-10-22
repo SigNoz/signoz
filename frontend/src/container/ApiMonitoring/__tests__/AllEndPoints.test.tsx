@@ -1,9 +1,8 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import {
 	getAllEndpointsWidgetData,
-	getGroupByFiltersFromGroupByValues,
+	getGroupByExpressionFromRowData,
 } from 'container/ApiMonitoring/utils';
-import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 
 import AllEndPoints from '../Explorer/Domains/DomainDetails/AllEndPoints';
 import {
@@ -14,7 +13,7 @@ import {
 // Mock the dependencies
 jest.mock('container/ApiMonitoring/utils', () => ({
 	getAllEndpointsWidgetData: jest.fn(),
-	getGroupByFiltersFromGroupByValues: jest.fn(),
+	getGroupByExpressionFromRowData: jest.fn(),
 }));
 
 jest.mock('container/WidgetCard/Card', () => ({
@@ -34,50 +33,43 @@ jest.mock('container/WidgetCard/Card', () => ({
 	)),
 }));
 
-jest.mock(
-	'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2',
-	() => ({
-		__esModule: true,
-		default: jest.fn().mockImplementation(({ onChange }) => (
-			<div data-testid="query-builder-mock">
-				<button
-					type="button"
-					data-testid="filter-change-button"
-					onClick={(): void =>
-						onChange({
-							items: [{ id: 'test', key: 'test', op: '=', value: 'test' }],
-							op: 'AND',
-						})
-					}
-				>
-					Change Filter
-				</button>
-			</div>
-		)),
-	}),
-);
-
-jest.mock('hooks/queryBuilder/useGetAggregateKeys', () => ({
-	useGetAggregateKeys: jest.fn(),
+jest.mock('components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch', () => ({
+	__esModule: true,
+	default: jest.fn().mockImplementation(({ onRun }) => (
+		<div data-testid="query-builder-mock">
+			<button
+				type="button"
+				data-testid="filter-change-button"
+				onClick={(): void => onRun("test = 'test'")}
+			>
+				Change Filter
+			</button>
+		</div>
+	)),
 }));
 
-jest.mock('antd', () => {
-	const originalModule = jest.requireActual('antd');
-	return {
-		...originalModule,
-		Select: jest.fn().mockImplementation(({ onChange }) => (
-			<div data-testid="select-mock">
-				<button
-					data-testid="select-change-button"
-					type="button"
-					onClick={(): void => onChange(['http.status_code'])}
-				>
-					Change GroupBy
-				</button>
-			</div>
-		)),
-	};
-});
+jest.mock('container/QueryBuilder/filters/GroupByFilter/GroupByFilter', () => ({
+	GroupByFilter: jest.fn().mockImplementation(({ onChange }) => (
+		<div data-testid="select-mock">
+			<button
+				data-testid="select-change-button"
+				type="button"
+				onClick={(): void =>
+					onChange([
+						{
+							id: 'http.status_code--string--attribute',
+							key: 'http.status_code',
+							dataType: 'string',
+							type: 'attribute',
+						},
+					])
+				}
+			>
+				Change GroupBy
+			</button>
+		</div>
+	)),
+}));
 
 // Mock useApiMonitoringParams hook
 jest.mock('container/ApiMonitoring/queryParams', () => ({
@@ -88,8 +80,8 @@ jest.mock('container/ApiMonitoring/queryParams', () => ({
 			selectedView: 'all_endpoints',
 			selectedEndPointName: '',
 			groupBy: [],
-			allEndpointsLocalFilters: undefined,
-			endPointDetailsLocalFilters: undefined,
+			allEndpointsFilterExpression: undefined,
+			endPointDetailsFilterExpression: undefined,
 			modalTimeRange: undefined,
 			selectedInterval: undefined,
 		},
@@ -108,29 +100,14 @@ describe('AllEndPoints', () => {
 			startTime: 1609459200000,
 			endTime: 1609545600000,
 		},
-		initialFilters: { op: 'AND', items: [] },
-		setInitialFiltersEndPointStats: jest.fn(),
+		initialFilterExpression: '',
+		setInitialFilterExpressionEndPointStats: jest.fn(),
 	};
 
 	beforeEach(() => {
 		jest.clearAllMocks();
 
 		// Setup mock implementations
-		(useGetAggregateKeys as jest.Mock).mockReturnValue({
-			data: {
-				payload: {
-					attributeKeys: [
-						{
-							key: 'http.status_code',
-							dataType: 'string',
-							type: '',
-						},
-					],
-				},
-			},
-			isLoading: false,
-		});
-
 		(getAllEndpointsWidgetData as jest.Mock).mockReturnValue({
 			id: 'test-widget',
 			title: 'Endpoint Overview',
@@ -139,10 +116,9 @@ describe('AllEndPoints', () => {
 			queryData: [],
 		});
 
-		(getGroupByFiltersFromGroupByValues as jest.Mock).mockReturnValue({
-			items: [{ id: 'group-filter', key: 'status', op: '=', value: '200' }],
-			op: 'AND',
-		});
+		(getGroupByExpressionFromRowData as jest.Mock).mockReturnValue(
+			"status = '200'",
+		);
 	});
 
 	// Add cleanup after each test
@@ -170,10 +146,7 @@ describe('AllEndPoints', () => {
 		expect(getAllEndpointsWidgetData).toHaveBeenCalledWith(
 			expect.anything(),
 			'test-domain',
-			expect.objectContaining({
-				items: expect.arrayContaining([expect.objectContaining({ id: 'test' })]),
-				op: 'AND',
-			}),
+			"test = 'test'",
 		);
 	});
 
@@ -183,8 +156,10 @@ describe('AllEndPoints', () => {
 		// Trigger group by change
 		fireEvent.click(screen.getByTestId('select-change-button'));
 
-		// Check if setGroupBy was called with updated group by value
-		expect(mockProps.setGroupBy).toHaveBeenCalled();
+		// The picked keys are stored as given and written to the URL as bare names
+		expect(mockProps.setGroupBy).toHaveBeenCalledWith([
+			expect.objectContaining({ key: 'http.status_code', type: 'attribute' }),
+		]);
 	});
 
 	it('handles row click in grid card', async () => {
@@ -196,7 +171,9 @@ describe('AllEndPoints', () => {
 		// Check if proper functions were called
 		expect(mockProps.setSelectedEndPointName).toHaveBeenCalledWith('/api/test');
 		expect(mockProps.setSelectedView).toHaveBeenCalledWith(VIEWS.ENDPOINT_STATS);
-		expect(mockProps.setInitialFiltersEndPointStats).toHaveBeenCalled();
-		expect(getGroupByFiltersFromGroupByValues).toHaveBeenCalled();
+		expect(
+			mockProps.setInitialFilterExpressionEndPointStats,
+		).toHaveBeenCalledWith("status = '200'");
+		expect(getGroupByExpressionFromRowData).toHaveBeenCalled();
 	});
 });

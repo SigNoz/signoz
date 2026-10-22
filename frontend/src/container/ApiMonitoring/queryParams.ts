@@ -1,5 +1,7 @@
 import { useCallback } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
+import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
+import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 // --- Types for all API Monitoring query params ---
 export interface ApiMonitoringParams {
@@ -8,8 +10,8 @@ export interface ApiMonitoringParams {
 	selectedView?: string;
 	selectedEndPointName?: string;
 	groupBy?: string[];
-	allEndpointsLocalFilters?: any;
-	endPointDetailsLocalFilters?: any;
+	allEndpointsFilterExpression?: string;
+	endPointDetailsFilterExpression?: string;
 	modalTimeRange?: { startTime: number; endTime: number };
 	selectedInterval?: string;
 	// Add more params as needed
@@ -21,8 +23,8 @@ export const DEFAULT_PARAMS: ApiMonitoringParams = {
 	selectedView: 'all_endpoints',
 	selectedEndPointName: '',
 	groupBy: [],
-	allEndpointsLocalFilters: undefined,
-	endPointDetailsLocalFilters: undefined,
+	allEndpointsFilterExpression: undefined,
+	endPointDetailsFilterExpression: undefined,
 	modalTimeRange: undefined,
 	selectedInterval: undefined,
 };
@@ -34,12 +36,43 @@ function encodeParams(params: ApiMonitoringParams): string {
 	return encodeURIComponent(JSON.stringify(params));
 }
 
+// Older shared links carry the filters as TagFilter items.
+type LegacyApiMonitoringParams = ApiMonitoringParams & {
+	allEndpointsLocalFilters?: TagFilter;
+	endPointDetailsLocalFilters?: TagFilter;
+};
+
+function migrateLegacyFilters({
+	allEndpointsLocalFilters,
+	endPointDetailsLocalFilters,
+	...params
+}: LegacyApiMonitoringParams): ApiMonitoringParams {
+	const migrated: ApiMonitoringParams = { ...params };
+	if (
+		migrated.allEndpointsFilterExpression === undefined &&
+		allEndpointsLocalFilters
+	) {
+		migrated.allEndpointsFilterExpression = convertFiltersToExpression(
+			allEndpointsLocalFilters,
+		).expression;
+	}
+	if (
+		migrated.endPointDetailsFilterExpression === undefined &&
+		endPointDetailsLocalFilters
+	) {
+		migrated.endPointDetailsFilterExpression = convertFiltersToExpression(
+			endPointDetailsLocalFilters,
+		).expression;
+	}
+	return migrated;
+}
+
 function decodeParams(value: string | null): ApiMonitoringParams {
 	if (!value) {
 		return DEFAULT_PARAMS;
 	}
 	try {
-		return JSON.parse(decodeURIComponent(value));
+		return migrateLegacyFilters(JSON.parse(decodeURIComponent(value)));
 	} catch {
 		return DEFAULT_PARAMS;
 	}

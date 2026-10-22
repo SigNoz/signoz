@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
-import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
-import { initialQueriesMap } from 'constants/queryBuilder';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { useApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
 import {
 	END_POINT_DETAILS_QUERY_KEYS_ARRAY,
 	extractPortAndEndpoint,
 	getEndPointDetailsQueryPayload,
+	getHttpUrlFromExpression,
 	getLatencyOverTimeWidgetData,
 	getRateOverTimeWidgetData,
+	removeHttpUrlFromExpression,
+	setHttpUrlInExpression,
 } from 'container/ApiMonitoring/utils';
-import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import {
 	CustomTimeType,
 	Time,
@@ -19,9 +20,8 @@ import {
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+import { extractQueryPairs } from 'utils/queryContextUtils';
 
 import DependentServices from './components/DependentServices';
 import EndPointMetrics from './components/EndPointMetrics';
@@ -29,26 +29,20 @@ import EndPointsDropDown from './components/EndPointsDropDown';
 import MetricOverTimeGraph from './components/MetricOverTimeGraph';
 import StatusCodeBarCharts from './components/StatusCodeBarCharts';
 import StatusCodeTable from './components/StatusCodeTable';
-import { SPAN_ATTRIBUTES } from './constants';
-
-const httpUrlKey = {
-	dataType: DataTypes.String,
-	key: SPAN_ATTRIBUTES.HTTP_URL,
-	type: 'tag',
-};
+import { useFilterExpression } from './hooks/useFilterExpression';
 
 function EndPointDetails({
 	domainName,
 	endPointName,
 	setSelectedEndPointName,
-	initialFilters,
+	initialFilterExpression,
 	timeRange,
 	handleTimeChange,
 }: {
 	domainName: string;
 	endPointName: string;
 	setSelectedEndPointName: (value: string) => void;
-	initialFilters: IBuilderQuery['filters'];
+	initialFilterExpression: string;
 	timeRange: {
 		startTime: number;
 		endTime: number;
@@ -61,151 +55,85 @@ function EndPointDetails({
 	const { startTime: minTime, endTime: maxTime } = timeRange;
 	const [params, setParams] = useApiMonitoringParams();
 
-	const currentQuery = initialQueriesMap[DataSource.TRACES];
-
 	// Local state for filters, combining endpoint filter and search filters
-	const [filters, setFilters] = useState<IBuilderQuery['filters']>(() => {
-		// Initialize filters based on the initial endPointName prop
-		const initialItems = params.endPointDetailsLocalFilters
-			? [...(params.endPointDetailsLocalFilters?.items || [])]
-			: [...(initialFilters?.items || [])];
-		if (endPointName) {
-			initialItems.push({
-				id: '92b8a1c1',
-				key: httpUrlKey,
-				op: '=',
-				value: endPointName,
-			});
-		}
-		return { op: 'AND', items: initialItems };
-	});
+	const [filterExpression, setFilterExpression] = useState<string>(() =>
+		setHttpUrlInExpression(
+			params.endPointDetailsFilterExpression ?? initialFilterExpression,
+			endPointName,
+		),
+	);
 
 	// Effect to synchronize local filters when the endPointName prop changes (e.g., from dropdown)
 	useEffect(() => {
-		setFilters((currentFilters) => {
-			const existingHttpUrlFilter = currentFilters?.items?.find(
-				(item) => item.key?.key === httpUrlKey.key,
-			);
-			const existingHttpUrlValue = (existingHttpUrlFilter?.value as string) || '';
-
-			// Only update filters if the prop value is different from what's already in filters
-			if (endPointName === existingHttpUrlValue) {
-				return currentFilters; // No change needed, prevents loop
-			}
-
-			// Rebuild filters: Keep non-http_url filters and add/update http_url filter based on prop
-			const otherFilters = currentFilters?.items?.filter(
-				(item) => item.key?.key !== httpUrlKey.key,
-			);
-			const newItems = [...(otherFilters || [])];
-			if (endPointName) {
-				newItems.push({
-					id: '92b8a1c1',
-					key: httpUrlKey,
-					op: '=',
-					value: endPointName,
-				});
-			}
-			return { op: 'AND', items: newItems };
-		});
+		setFilterExpression((current) =>
+			getHttpUrlFromExpression(current) === endPointName
+				? current
+				: setHttpUrlInExpression(current, endPointName),
+		);
 	}, [endPointName]);
 
 	// Separate effect to update params when filters change
 	useEffect(() => {
-		const filtersWithoutHttpUrl = {
-			op: 'AND',
-			items:
-				filters?.items?.filter((item) => item.key?.key !== httpUrlKey.key) || [],
-		};
-		setParams({ endPointDetailsLocalFilters: filtersWithoutHttpUrl });
-	}, [filters, setParams]);
+		setParams({
+			endPointDetailsFilterExpression:
+				removeHttpUrlFromExpression(filterExpression),
+		});
+	}, [filterExpression, setParams]);
 
-	// Handler for changes from the QueryBuilderSearchV2 component
+	// Handler for changes from the QuerySearch component
 	const handleFilterChange = useCallback(
-		(newFilters: IBuilderQuery['filters']): void => {
-			// 1. Update local filters state immediately
-			setFilters(newFilters);
-			// Filter out http_url filter before saving to params
-			const filteredNewFilters = {
-				op: 'AND',
-				items:
-					newFilters?.items?.filter((item) => item.key?.key !== httpUrlKey.key) ||
-					[],
-			};
-			setParams({ endPointDetailsLocalFilters: filteredNewFilters });
+		(expression: string): void => {
+			setFilterExpression(expression);
 
-			// 2. Derive the endpoint name from the *new* filters state
-			const httpUrlFilter = newFilters?.items?.find(
-				(item) => item.key?.key === httpUrlKey.key,
-			);
-			const derivedEndPointName = (httpUrlFilter?.value as string) || '';
-
-			// 3. If the derived endpoint name is different from the current prop,
-			//    it means the search change modified the effective endpoint.
-			//    Notify the parent component.
+			// The search change may have modified the effective endpoint; notify the parent.
+			const derivedEndPointName = getHttpUrlFromExpression(expression);
 			if (derivedEndPointName !== endPointName) {
 				setSelectedEndPointName(derivedEndPointName);
 			}
 		},
-		[endPointName, setSelectedEndPointName, setParams], // Dependencies for the callback
+		[endPointName, setSelectedEndPointName],
 	);
 
-	const updatedCurrentQuery = useMemo(
-		() => ({
-			...currentQuery,
-			builder: {
-				...currentQuery.builder,
-				queryData: [
-					{
-						...currentQuery.builder.queryData[0],
-						dataSource: DataSource.TRACES,
-						filters, // Use the local filters state
-					},
-				],
-			},
-		}),
-		[filters, currentQuery],
-	);
-
-	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
+	const {
+		queryData,
+		onDraftChange,
+		onRun,
+		onBlur: handleFilterBlur,
+	} = useFilterExpression({
+		expression: filterExpression,
+		onExpressionChange: handleFilterChange,
+	});
 
 	const isServicesFilterApplied = useMemo(
-		() => filters?.items?.some((item) => item.key?.key === 'service.name'),
-		[filters],
+		() =>
+			extractQueryPairs(filterExpression).some(
+				(pair) => pair.key === 'service.name',
+			),
+		[filterExpression],
 	);
 
 	const endPointDetailsQueryPayload = useMemo(
-		() => getEndPointDetailsQueryPayload(domainName, minTime, maxTime, filters),
-		[domainName, filters, minTime, maxTime],
+		() =>
+			getEndPointDetailsQueryPayload(
+				domainName,
+				minTime,
+				maxTime,
+				filterExpression,
+			),
+		[domainName, filterExpression, minTime, maxTime],
 	);
 
-	const V5_QUERIES = [
-		REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_DATA,
-		REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_BAR_CHARTS_DATA,
-		REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_LATENCY_BAR_CHARTS_DATA,
-		REACT_QUERY_KEY.GET_ENDPOINT_METRICS_DATA,
-		REACT_QUERY_KEY.GET_ENDPOINT_DEPENDENT_SERVICES_DATA,
-		REACT_QUERY_KEY.GET_ENDPOINT_DROPDOWN_DATA,
-	] as const;
-
 	const endPointDetailsDataQueries = useQueries(
-		endPointDetailsQueryPayload.map((payload, index) => {
-			const queryKey = END_POINT_DETAILS_QUERY_KEYS_ARRAY[index];
-			const version = (V5_QUERIES as readonly string[]).includes(queryKey)
-				? ENTITY_VERSION_V5
-				: ENTITY_VERSION_V4;
-			return {
-				queryKey: [
-					END_POINT_DETAILS_QUERY_KEYS_ARRAY[index],
-					payload,
-					...(filters?.items?.length ? filters.items : []), // Include filters.items in queryKey for better caching
-					version,
-				],
-				queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
-					GetMetricQueryRange(payload, version),
-				enabled: !!payload,
-			};
-		}),
+		endPointDetailsQueryPayload.map((payload, index) => ({
+			queryKey: [
+				END_POINT_DETAILS_QUERY_KEYS_ARRAY[index],
+				payload,
+				ENTITY_VERSION_V5,
+			],
+			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
+				GetMetricQueryRange(payload, ENTITY_VERSION_V5),
+			enabled: !!payload,
+		})),
 	);
 
 	const [
@@ -234,10 +162,10 @@ function EndPointDetails({
 
 	const [rateOverTimeWidget, latencyOverTimeWidget] = useMemo(
 		() => [
-			getRateOverTimeWidgetData(domainName, endPointName, filters),
-			getLatencyOverTimeWidgetData(domainName, endPointName, filters),
+			getRateOverTimeWidgetData(domainName, endPointName, filterExpression),
+			getLatencyOverTimeWidgetData(domainName, endPointName, filterExpression),
 		],
-		[domainName, endPointName, filters], // Use combinedFilters
+		[domainName, endPointName, filterExpression],
 	);
 
 	// // [TODO] Fix this later
@@ -266,10 +194,15 @@ function EndPointDetails({
 						dropdownStyle={{ width: 'calc(100% - 36px)' }}
 					/>
 				</div>
-				<div className="endpoint-details-filters-container-search">
-					<QueryBuilderSearchV2
-						query={query}
-						onChange={handleFilterChange}
+				<div
+					className="endpoint-details-filters-container-search"
+					onBlur={handleFilterBlur}
+				>
+					<QuerySearch
+						queryData={queryData}
+						onChange={onDraftChange}
+						onRun={onRun}
+						dataSource={DataSource.TRACES}
 						placeholder="Search for filters..."
 					/>
 				</div>
@@ -299,7 +232,7 @@ function EndPointDetails({
 					endPointStatusCodeLatencyBarChartsDataQuery
 				}
 				domainName={domainName}
-				filters={filters}
+				filterExpression={filterExpression}
 				timeRange={timeRange}
 				onDragSelect={onDragSelect}
 			/>

@@ -17,31 +17,29 @@ import {
 	getTopErrorsColumnsConfig,
 	getTopErrorsCoRelationQueryFilters,
 	getTopErrorsQueryPayload,
+	setHttpUrlInExpression,
 } from 'container/ApiMonitoring/utils';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { SuccessResponse, SuccessResponseV2 } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 
 import EndPointsDropDown from './components/EndPointsDropDown';
 import ErrorState from './components/ErrorState';
-import { SPAN_ATTRIBUTES } from './constants';
 
 function TopErrors({
 	domainName,
 	timeRange,
-	initialFilters,
+	initialFilterExpression,
 }: {
 	domainName: string;
 	timeRange: {
 		startTime: number;
 		endTime: number;
 	};
-	initialFilters: IBuilderQuery['filters'];
+	initialFilterExpression: string;
 }): JSX.Element {
 	const { startTime: minTime, endTime: maxTime } = timeRange;
 
@@ -55,27 +53,9 @@ function TopErrors({
 				domainName,
 				minTime,
 				maxTime,
-				{
-					items: endPointName
-						? [
-								// Remove any existing http_url filters from initialFilters to avoid duplicates
-								...(initialFilters?.items?.filter(
-									(item) => item.key?.key !== SPAN_ATTRIBUTES.HTTP_URL,
-								) || []),
-								{
-									id: '92b8a1c1',
-									key: {
-										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.HTTP_URL,
-										type: 'tag',
-									},
-									op: '=',
-									value: endPointName,
-								},
-							]
-						: [...(initialFilters?.items || [])],
-					op: 'AND',
-				},
+				endPointName
+					? setHttpUrlInExpression(initialFilterExpression, endPointName)
+					: initialFilterExpression,
 				showStatusCodeErrors,
 			),
 		[
@@ -83,7 +63,7 @@ function TopErrors({
 			endPointName,
 			minTime,
 			maxTime,
-			initialFilters,
+			initialFilterExpression,
 			showStatusCodeErrors,
 		],
 	);
@@ -121,12 +101,7 @@ function TopErrors({
 	);
 
 	const endPointDropDownQueryPayload = useMemo(
-		() => [
-			getEndPointDetailsQueryPayload(domainName, minTime, maxTime, {
-				items: [],
-				op: 'AND',
-			})[2],
-		],
+		() => [getEndPointDetailsQueryPayload(domainName, minTime, maxTime, '')[2]],
 		[domainName, minTime, maxTime],
 	);
 
