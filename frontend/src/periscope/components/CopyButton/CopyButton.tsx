@@ -5,6 +5,7 @@ import cx from 'classnames';
 
 import styles from './CopyButton.module.scss';
 import { useCopyButton } from './useCopyButton';
+import { Tooltip } from '@signozhq/ui/tooltip';
 
 export interface CopyButtonProps {
 	/** Text written to the clipboard on click. */
@@ -16,6 +17,8 @@ export interface CopyButtonProps {
 	testId?: string;
 	/** Called after the copy is triggered (e.g. to show a toast). */
 	onCopy?: () => void;
+	/** Side on which the tooltip should appear. Default "right". */
+	tooltipSide?: 'top' | 'right' | 'bottom' | 'left';
 }
 
 /**
@@ -29,6 +32,7 @@ function CopyButton({
 	ariaLabel = 'Copy',
 	testId,
 	onCopy,
+	tooltipSide = 'top',
 }: CopyButtonProps): JSX.Element {
 	const { copyToClipboard, isCopied } = useCopyButton();
 
@@ -44,20 +48,27 @@ function CopyButton({
 	const stackStyle: CSSProperties = { width: size, height: size };
 
 	return (
-		<Button
-			variant="ghost"
-			color="secondary"
-			size="sm"
-			icon
-			onClick={handleClick}
-			aria-label={isCopied ? 'Copied' : ariaLabel}
-			testId={testId}
-		>
-			<span className={styles.iconStack} style={stackStyle} data-copied={isCopied}>
-				<Copy size={size} className={cx(styles.icon, styles.copyIcon)} />
-				<Check size={size} className={cx(styles.icon, styles.checkIcon)} />
-			</span>
-		</Button>
+		// TODO: remove wrapper once Button supports tooltip
+		<Tooltip title={isCopied ? 'Copied' : ariaLabel} side={tooltipSide}>
+			<Button
+				variant="ghost"
+				color="secondary"
+				size="sm"
+				icon
+				onClick={handleClick}
+				aria-label={isCopied ? 'Copied' : ariaLabel}
+				testId={testId}
+			>
+				<span
+					className={styles.iconStack}
+					style={stackStyle}
+					data-copied={isCopied}
+				>
+					<Copy size={size} className={cx(styles.icon, styles.copyIcon)} />
+					<Check size={size} className={cx(styles.icon, styles.checkIcon)} />
+				</span>
+			</Button>
+		</Tooltip>
 	);
 }
 

@@ -101,6 +101,16 @@ const SPECS: Record<string, Record<string, unknown>> = {
 		metadata: { team: 'ops' },
 		sendResolved: true,
 	},
+	telegram: {
+		apiUrl: 'https://api.telegram.org',
+		botToken: '123456789:AA-token',
+		chatId: -1001234567890,
+		messageThreadId: 42,
+		title: 't',
+		message: 'm',
+		disableNotifications: true,
+		sendResolved: true,
+	},
 };
 
 describe('load then save round trip', () => {

@@ -22,12 +22,17 @@ export function defineJsonEditorTheme(monaco: Monaco, el: HTMLElement): void {
 	const keyColor = token(el, '--bg-vanilla-400');
 	const valueColor = token(el, '--bg-robin-400');
 
+	// Both token colours are picked to read on a dark surface, so on a light one
+	// they wash out, the keys worst of all. Monaco's own `vs` palette is built
+	// for that surface, so let it keep its colours there, as the role viewer does.
 	const rules: { token: string; foreground: string }[] = [];
-	if (keyColor) {
-		rules.push({ token: 'string.key.json', foreground: keyColor });
-	}
-	if (valueColor) {
-		rules.push({ token: 'string.value.json', foreground: valueColor });
+	if (isDark(background)) {
+		if (keyColor) {
+			rules.push({ token: 'string.key.json', foreground: keyColor });
+		}
+		if (valueColor) {
+			rules.push({ token: 'string.value.json', foreground: valueColor });
+		}
 	}
 
 	const colors: Record<string, string> = {};

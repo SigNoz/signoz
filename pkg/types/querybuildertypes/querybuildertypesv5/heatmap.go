@@ -242,19 +242,28 @@ func addHeatmapBucketsWithNoCountsForAggregation(aggBucket *AggregationBucket, b
 		}
 		indexes[i] = bucketing.calculateIndexOfUpperBound(upperBound)
 	}
-	lowest, highest := slices.Min(indexes), slices.Max(indexes)
+	lowestIndexOnAxis, highestIndexOnAxis := slices.Min(indexes), slices.Max(indexes)
 
-	// The lowest bucket reached needs the rung under it on the axis, or its own
-	// lower bound goes unstated and it reads as holding everything below. That
-	// one rung is enough: everything under it merges into the single leading
-	// bucket, which no series reached.
-	from := lowest - 1
-	if offset == 1 && bucketing.calculateUpperBoundAtIndex(from) <= aggBucket.Meta.Buckets[0] {
-		from = lowest
+	// Start one rung below the lowest bucket that holds a count, so its lower
+	// bound is on the axis. The axis may already begin with an empty bucket that
+	// states that bound, in which case nothing is added beneath it.
+	firstDenseIndex := lowestIndexOnAxis
+	for _, series := range aggBucket.Series {
+		for _, point := range series.Values {
+			for i := offset; i < len(point.Values) && i < len(aggBucket.Meta.Buckets); i++ {
+				if point.Values[i] != 0 {
+					firstDenseIndex = min(firstDenseIndex, indexes[i-offset]-1)
+				}
+			}
+		}
+	}
+	// The zero bucket is the floor, so no rung goes at or under it.
+	if offset == 1 && bucketing.calculateUpperBoundAtIndex(firstDenseIndex) <= aggBucket.Meta.Buckets[0] {
+		firstDenseIndex = lowestIndexOnAxis
 	}
 
 	denseUpperBounds := append([]float64{}, aggBucket.Meta.Buckets[:offset]...)
-	for index := from; index <= highest; index++ {
+	for index := firstDenseIndex; index <= highestIndexOnAxis; index++ {
 		denseUpperBounds = append(denseUpperBounds, bucketing.calculateUpperBoundAtIndex(index))
 	}
 	if len(denseUpperBounds) == len(aggBucket.Meta.Buckets) {
@@ -266,7 +275,7 @@ func addHeatmapBucketsWithNoCountsForAggregation(aggBucket *AggregationBucket, b
 	// lands where it came from.
 	shiftedTo := make([]int, len(aggBucket.Meta.Buckets))
 	for i, index := range indexes {
-		shiftedTo[i+offset] = index - from + offset
+		shiftedTo[i+offset] = index - firstDenseIndex + offset
 	}
 
 	overflowIndex := len(denseUpperBounds)
