@@ -66,18 +66,17 @@ function MessagesAccordion({
 								{title}
 							</span>
 						),
-						extra: isOpen &&
-							canFormat && (
-								// The view toggle lives in the header; its clicks must not fold the panel.
-								// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-								<span onClick={stopToggle}>
-									<ThreadViewToggle
-										value={effectiveView}
-										onChange={setView}
-										testId={`${testId}-view-toggle`}
-									/>
-								</span>
-							),
+						extra: isOpen && canFormat && (
+							// The view toggle lives in the header; its clicks must not fold the panel.
+							// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+							<span onClick={stopToggle}>
+								<ThreadViewToggle
+									value={effectiveView}
+									onChange={setView}
+									testId={`${testId}-view-toggle`}
+								/>
+							</span>
+						),
 						children: (
 							<MessagesSection
 								view={effectiveView}
