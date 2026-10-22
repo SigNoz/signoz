@@ -498,7 +498,7 @@ func FunctionReduceTo(result *TimeSeries, reduceTo ReduceTo) *TimeSeries {
 
 type TraceAggregation struct {
 	Expression string `json:"expression" description:"The aggregation over spans, such as count(), sum(item_price), p99(duration_nano) or countIf(day > 10)."`
-	Alias      string `json:"alias,omitempty" description:"The name the aggregation is reported under; the expression itself is used when omitted."`
+	Alias      string `json:"alias,omitempty" description:"The name the aggregation is reported under; when omitted, the result carries the alias __result_N, with N the zero-based index of the aggregation."`
 }
 
 // Copy creates a deep copy of TraceAggregation.
@@ -508,7 +508,7 @@ func (t TraceAggregation) Copy() TraceAggregation {
 
 type LogAggregation struct {
 	Expression string `json:"expression" description:"The aggregation over log records, such as count(), sum(item_price), count_distinct(user_id) or countIf(day > 10)."`
-	Alias      string `json:"alias,omitempty" description:"The name the aggregation is reported under; the expression itself is used when omitted."`
+	Alias      string `json:"alias,omitempty" description:"The name the aggregation is reported under; when omitted, the result carries the alias __result_N, with N the zero-based index of the aggregation."`
 }
 
 // Copy creates a deep copy of LogAggregation.
@@ -617,7 +617,7 @@ func (o OrderBy) Copy() OrderBy {
 type SecondaryAggregation struct {
 	StepInterval Step         `json:"stepInterval,omitzero" description:"The time bucket for this aggregation: seconds as a number or a Go duration string. Uses the primary aggregation step when omitted."`
 	Expression   string       `json:"expression" description:"The aggregation over the primary results, such as count(), sum(item_price) or countIf(day > 10)."`
-	Alias        string       `json:"alias,omitempty" description:"The name the aggregation is reported under; the expression itself is used when omitted."`
+	Alias        string       `json:"alias,omitempty" description:"The name the aggregation is reported under; when omitted, the result carries the alias __result_N, with N the zero-based index of the aggregation."`
 	GroupBy      []GroupByKey `json:"groupBy,omitzero" description:"The fields to group this aggregation by."`
 	Order        []OrderBy    `json:"order,omitzero" description:"The sort order of this aggregation result."`
 	Limit        int          `json:"limit,omitempty" description:"The maximum number of groups to return. Unlimited when 0."`

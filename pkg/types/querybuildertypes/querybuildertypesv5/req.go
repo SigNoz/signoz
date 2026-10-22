@@ -377,14 +377,14 @@ type QueryRangeRequest struct {
 	CompositeQuery CompositeQuery          `json:"compositeQuery" description:"The queries to execute together; at least one is required and formulas may reference the others by name."`
 	Variables      map[string]VariableItem `json:"variables,omitempty" description:"Dashboard variable values keyed by variable name. Builder filters substitute only the $name form and leave a quoted {{name}} unchanged; PromQL and ClickHouse SQL substitute $name, {{name}}, [[name]] and the Go template form {{.name}}."`
 
-	NoCache bool `json:"noCache,omitempty" description:"When true, bypasses the query result cache and reads every bucket from the store. Defaults to false."`
+	NoCache bool `json:"noCache,omitempty" description:"When true, results are computed fresh instead of being served from the query result cache. Defaults to false."`
 
 	FormatOptions *FormatOptions `json:"formatOptions,omitempty" description:"Post-processing applied to the result before it is returned."`
 }
 
 // PrepareJSONSchema adds description to the QueryRangeRequest schema.
 func (q *QueryRangeRequest) PrepareJSONSchema(schema *jsonschema.Schema) error {
-	schema.WithDescription("Request body for the v5 query range endpoint. Supports builder queries (traces, logs, metrics), formulas, joins, trace operators, PromQL, and ClickHouse SQL queries.")
+	schema.WithDescription("Request body for the v5 query range endpoint. Supports builder queries (traces, logs, metrics), formulas, trace operators, PromQL, and ClickHouse SQL queries.")
 	return nil
 }
 

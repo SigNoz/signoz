@@ -42,7 +42,7 @@ type QueryBuilderTraceOperator struct {
 
 	Expression string `json:"expression" description:"A trace-structure expression over traces builder query names using => for direct child, -> for descendant, && for both present, || for either present and NOT for absence, for example A => B && NOT C. At most 10 operators."`
 
-	Filter *Filter `json:"filter,omitempty" description:"Accepted but currently not applied to the matched traces; it only widens field discovery. Put filters on the operand queries instead."`
+	Filter *Filter `json:"filter,omitempty" description:"Accepted but currently not applied to the matched traces. Put filters on the operand queries instead."`
 
 	ReturnSpansFrom string `json:"returnSpansFrom,omitempty" description:"The name of the operand query whose spans are returned; when empty, the spans matched by the whole expression are returned."`
 

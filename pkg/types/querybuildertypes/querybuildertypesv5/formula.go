@@ -17,10 +17,10 @@ import (
 )
 
 type QueryBuilderFormula struct {
-	Name       string `json:"name" description:"The unique name of the formula, such as F1, used by selectedQueryName and by panels. Referencing a formula from another formula is not reliable, because formulas are evaluated in no fixed order."`
+	Name       string `json:"name" description:"The unique name of the formula, such as F1, used by selectedQueryName and by panels. Referencing a formula from another formula is not reliable."`
 	Expression string `json:"expression" description:"An arithmetic expression over builder query names, for example A / B * 100. Reference queries, not other formulas."`
 
-	Disabled bool `json:"disabled" description:"When true, the result is excluded from the response but the formula is still evaluated. Defaults to false."`
+	Disabled bool `json:"disabled" description:"When true, the result is excluded from the response; the formula may still be evaluated. Defaults to false."`
 
 	Order []OrderBy `json:"order,omitzero" description:"The sort order of the formula result."`
 

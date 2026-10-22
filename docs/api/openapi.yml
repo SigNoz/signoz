@@ -3683,9 +3683,9 @@ components:
             to fetch the next page.
           type: string
         disabled:
-          description: When true, the result is excluded from the response but the
-            query still runs and can feed a formula or trace operator. Defaults to
-            false.
+          description: When true, the result is excluded from the response; the query
+            may still run and can still feed a formula or trace operator. Defaults
+            to false.
           type: boolean
         filter:
           allOf:
@@ -3726,7 +3726,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5LimitBy'
           description: Reserved for applying limit within each combination of the
-            given group-by keys. Currently stored but ignored by query execution.
+            given group-by keys. Accepted but currently ignored.
         name:
           description: The unique name of the query, such as A or B; formulas, trace
             operators and selectedQueryName refer to it.
@@ -3743,8 +3743,8 @@ components:
           nullable: true
           type: array
         secondaryAggregations:
-          description: Accepted but currently ignored by query execution, including
-            their nested order, limit and limitBy.
+          description: Accepted but currently ignored, including their nested order,
+            limit and limitBy.
           items:
             $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
           nullable: true
@@ -8493,25 +8493,24 @@ components:
           type: array
       type: object
     Querybuildertypesv5ExecStats:
-      description: Execution statistics for the query, including rows scanned, bytes
-        scanned, and duration.
+      description: 'Execution cost of the request: rows and bytes scanned and execution
+        time. A measure of cost, not of whether data exists.'
       properties:
         bytesScanned:
-          description: The number of bytes the store read to answer every query in
-            the request. A cost indicator only; it does not indicate whether any data
-            matched.
+          description: Bytes scanned to answer every query in the request. A cost
+            indicator only; it does not indicate whether any data matched.
           minimum: 0
           type: integer
         durationMs:
-          description: The sum of the execution durations of the statements run for
-            this query, in milliseconds. A cost indicator only, not the request latency
-            and not a sign that data exists.
+          description: Total execution time across the queries in the request, in
+            milliseconds. A cost indicator only, not the request latency and not a
+            sign that data exists.
           minimum: 0
           type: integer
         rowsScanned:
-          description: 'The number of rows the store read to answer every query in
-            the request. A cost indicator only: rows are scanned whether or not any
-            matched, so it says nothing about whether data exists.'
+          description: 'Rows scanned to answer every query in the request. A cost
+            indicator only: rows are scanned whether or not any matched, so it says
+            nothing about whether data exists.'
           minimum: 0
           type: integer
         stepIntervals:
@@ -8678,8 +8677,9 @@ components:
     Querybuildertypesv5LogAggregation:
       properties:
         alias:
-          description: The name the aggregation is reported under; the expression
-            itself is used when omitted.
+          description: The name the aggregation is reported under; when omitted, the
+            result carries the alias __result_N, with N the zero-based index of the
+            aggregation.
           type: string
         expression:
           description: The aggregation over log records, such as count(), sum(item_price),
@@ -8838,8 +8838,8 @@ components:
             linear or log bucket spec. Read only by heatmap requests, and only from
             the query they draw.
         disabled:
-          description: When true, the result is excluded from the response but the
-            formula is still evaluated. Defaults to false.
+          description: When true, the result is excluded from the response; the formula
+            may still be evaluated. Defaults to false.
           type: boolean
         expression:
           description: An arithmetic expression over builder query names, for example
@@ -8866,8 +8866,7 @@ components:
           type: integer
         name:
           description: The unique name of the formula, such as F1, used by selectedQueryName
-            and by panels. Referencing a formula from another formula is not reliable,
-            because formulas are evaluated in no fixed order.
+            and by panels. Referencing a formula from another formula is not reliable.
           type: string
         order:
           description: The sort order of the formula result.
@@ -8897,9 +8896,9 @@ components:
             to fetch the next page.
           type: string
         disabled:
-          description: When true, the result is excluded from the response but the
-            query still runs and can feed a formula or trace operator. Defaults to
-            false.
+          description: When true, the result is excluded from the response; the query
+            may still run and can still feed a formula or trace operator. Defaults
+            to false.
           type: boolean
         filter:
           allOf:
@@ -8939,7 +8938,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5LimitBy'
           description: Reserved for applying limit within each combination of the
-            given group-by keys. Currently stored but ignored by query execution.
+            given group-by keys. Accepted but currently ignored.
         name:
           description: The unique name of the query, such as A or B; formulas, trace
             operators and selectedQueryName refer to it.
@@ -8956,8 +8955,8 @@ components:
           nullable: true
           type: array
         secondaryAggregations:
-          description: Accepted but currently ignored by query execution, including
-            their nested order, limit and limitBy.
+          description: Accepted but currently ignored, including their nested order,
+            limit and limitBy.
           items:
             $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
           nullable: true
@@ -9011,9 +9010,9 @@ components:
             to fetch the next page.
           type: string
         disabled:
-          description: When true, the result is excluded from the response but the
-            query still runs and can feed a formula or trace operator. Defaults to
-            false.
+          description: When true, the result is excluded from the response; the query
+            may still run and can still feed a formula or trace operator. Defaults
+            to false.
           type: boolean
         filter:
           allOf:
@@ -9054,7 +9053,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5LimitBy'
           description: Reserved for applying limit within each combination of the
-            given group-by keys. Currently stored but ignored by query execution.
+            given group-by keys. Accepted but currently ignored.
         name:
           description: The unique name of the query, such as A or B; formulas, trace
             operators and selectedQueryName refer to it.
@@ -9071,8 +9070,8 @@ components:
           nullable: true
           type: array
         secondaryAggregations:
-          description: Accepted but currently ignored by query execution, including
-            their nested order, limit and limitBy.
+          description: Accepted but currently ignored, including their nested order,
+            limit and limitBy.
           items:
             $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
           nullable: true
@@ -9126,9 +9125,9 @@ components:
             to fetch the next page.
           type: string
         disabled:
-          description: When true, the result is excluded from the response but the
-            query still runs and can feed a formula or trace operator. Defaults to
-            false.
+          description: When true, the result is excluded from the response; the query
+            may still run and can still feed a formula or trace operator. Defaults
+            to false.
           type: boolean
         filter:
           allOf:
@@ -9169,7 +9168,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5LimitBy'
           description: Reserved for applying limit within each combination of the
-            given group-by keys. Currently stored but ignored by query execution.
+            given group-by keys. Accepted but currently ignored.
         name:
           description: The unique name of the query, such as A or B; formulas, trace
             operators and selectedQueryName refer to it.
@@ -9186,8 +9185,8 @@ components:
           nullable: true
           type: array
         secondaryAggregations:
-          description: Accepted but currently ignored by query execution, including
-            their nested order, limit and limitBy.
+          description: Accepted but currently ignored, including their nested order,
+            limit and limitBy.
           items:
             $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
           nullable: true
@@ -9246,8 +9245,8 @@ components:
         filter:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5Filter'
-          description: Accepted but currently not applied to the matched traces; it
-            only widens field discovery. Put filters on the operand queries instead.
+          description: Accepted but currently not applied to the matched traces. Put
+            filters on the operand queries instead.
         functions:
           description: Post-processing functions applied in order to each result series.
           items:
@@ -9455,8 +9454,8 @@ components:
       type: object
     Querybuildertypesv5QueryRangeRequest:
       description: Request body for the v5 query range endpoint. Supports builder
-        queries (traces, logs, metrics), formulas, joins, trace operators, PromQL,
-        and ClickHouse SQL queries.
+        queries (traces, logs, metrics), formulas, trace operators, PromQL, and ClickHouse
+        SQL queries.
       properties:
         compositeQuery:
           allOf:
@@ -9473,8 +9472,8 @@ components:
           - $ref: '#/components/schemas/Querybuildertypesv5FormatOptions'
           description: Post-processing applied to the result before it is returned.
         noCache:
-          description: When true, bypasses the query result cache and reads every
-            bucket from the store. Defaults to false.
+          description: When true, results are computed fresh instead of being served
+            from the query result cache. Defaults to false.
           type: boolean
         requestType:
           allOf:
@@ -9623,8 +9622,9 @@ components:
     Querybuildertypesv5SecondaryAggregation:
       properties:
         alias:
-          description: The name the aggregation is reported under; the expression
-            itself is used when omitted.
+          description: The name the aggregation is reported under; when omitted, the
+            result carries the alias __result_N, with N the zero-based index of the
+            aggregation.
           type: string
         expression:
           description: The aggregation over the primary results, such as count(),
@@ -9697,7 +9697,7 @@ components:
       properties:
         partial:
           description: True when the step is only partly covered by the requested
-            time range, so the value is incomplete and is rendered differently.
+            time range, so the value is incomplete.
           type: boolean
         timestamp:
           description: The start of the step as a Unix timestamp in milliseconds.
@@ -9719,8 +9719,9 @@ components:
     Querybuildertypesv5TraceAggregation:
       properties:
         alias:
-          description: The name the aggregation is reported under; the expression
-            itself is used when omitted.
+          description: The name the aggregation is reported under; when omitted, the
+            result carries the alias __result_N, with N the zero-based index of the
+            aggregation.
           type: string
         expression:
           description: The aggregation over spans, such as count(), sum(item_price),
