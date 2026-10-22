@@ -220,19 +220,19 @@ components:
           format: date-time
           type: string
         data:
-          description: The receiver configuration as a JSON document.
+          description: The channel configuration as a JSON document.
           type: string
         id:
           type: string
         name:
-          description: The channel name, which is also the receiver name routing policies
-            and rules reference.
+          description: The channel name. Alert rules and routing policies reference
+            it.
           type: string
         orgId:
           description: The organization the channel belongs to.
           type: string
         type:
-          description: The notifier kind, such as slack.
+          description: The channel kind, such as slack.
           type: string
         updatedAt:
           format: date-time
@@ -561,8 +561,8 @@ components:
           type: string
         customFields:
           additionalProperties: {}
-          description: Extra issue fields keyed by Jira field ID. Stored, but the
-            notifier does not currently include them in the issue it creates or updates.
+          description: Extra issue fields keyed by Jira field ID. Stored, but not
+            currently included in the issue Jira receives.
           nullable: true
           type: object
         description:
@@ -991,7 +991,7 @@ components:
         labels:
           $ref: '#/components/schemas/ModelLabelSet'
         receivers:
-          description: The names of the receivers the alert routes to.
+          description: The display names of the channels the alert is routed to.
           items:
             type: string
           nullable: true
@@ -1021,8 +1021,8 @@ components:
           format: date-time
           type: string
         displayName:
-          description: The label shown in the UI and the receiver name that alert
-            rule channels and routing policies reference.
+          description: The label shown in the UI. Alert rules and routing policies
+            reference it, not name.
           type: string
         id:
           description: The channel UUID.
@@ -1159,8 +1159,8 @@ components:
       properties:
         custom_fields:
           additionalProperties: {}
-          description: Extra issue fields keyed by Jira field ID. Stored, but the
-            notifier does not currently include them in the issue it creates or updates.
+          description: Extra issue fields keyed by Jira field ID. Stored, but not
+            currently included in the issue Jira receives.
           type: object
         description:
           description: Alertmanager template for the issue description.
@@ -1231,8 +1231,8 @@ components:
           format: date-time
           type: string
         displayName:
-          description: The label shown in the UI and the receiver name that alert
-            rule channels and routing policies reference.
+          description: The label shown in the UI. Alert rules and routing policies
+            reference it, not name.
           type: string
         id:
           description: The channel UUID.
@@ -1441,9 +1441,9 @@ components:
           - $ref: '#/components/schemas/AlertmanagertypesChannelConfig'
           description: The provider kind and its spec.
         displayName:
-          description: The label shown in the UI and the receiver name that alert
-            rule channels and routing policies reference. Defaults to name; required
-            when generateName is true.
+          description: The label shown in the UI. Alert rules and routing policies
+            reference it, not name. Defaults to name; required when generateName is
+            true.
           type: string
         generateName:
           description: Derive name from displayName plus a random suffix instead of

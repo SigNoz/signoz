@@ -36,10 +36,10 @@ type Channel struct {
 	// DisplayName is the receiver name inside Data and what policies and rules
 	// reference, so it keeps the v1 wire tag and Name stays off the v1 contract.
 	Name        string `json:"-" bun:"name"`
-	DisplayName string `json:"name" required:"true" bun:"display_name" description:"The channel name, which is also the receiver name routing policies and rules reference."`
+	DisplayName string `json:"name" required:"true" bun:"display_name" description:"The channel name. Alert rules and routing policies reference it."`
 	// TODO: type this as ChannelKind once v1 is gone.
-	Type  string `json:"type" required:"true" bun:"type" description:"The notifier kind, such as slack."`
-	Data  string `json:"data" required:"true" bun:"data" description:"The receiver configuration as a JSON document."`
+	Type  string `json:"type" required:"true" bun:"type" description:"The channel kind, such as slack."`
+	Data  string `json:"data" required:"true" bun:"data" description:"The channel configuration as a JSON document."`
 	OrgID string `json:"orgId" required:"true" bun:"org_id" description:"The organization the channel belongs to."`
 
 	// Spec is the v2 spec a read returns, of the kind Type names. A v2 write

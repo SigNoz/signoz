@@ -27,7 +27,7 @@ type ChannelJiraConfig struct {
 	ReopenTransition  string                       `json:"reopenTransition" description:"The transition applied when an alert fires again on a resolved issue."`
 	ReopenDuration    valuer.UnsetOrNonEmptyString `json:"reopenDuration,omitzero" description:"How long after resolution a firing alert reopens the issue instead of creating a new one, as a Prometheus duration in canonical form such as 3d; defaults to 3d."`
 	WontFixResolution string                       `json:"wontFixResolution" description:"The resolution name that stops an issue from being reopened."`
-	CustomFields      map[string]any               `json:"customFields,omitzero" description:"Extra issue fields keyed by Jira field ID. Stored, but the notifier does not currently include them in the issue it creates or updates."`
+	CustomFields      map[string]any               `json:"customFields,omitzero" description:"Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives."`
 
 	Email    string `json:"email" required:"true" description:"The Atlassian account email used for basic auth."`
 	APIToken string `json:"apiToken" required:"true" format:"password" description:"The Atlassian API token paired with email. A secret; returned by create, update and fetch by ID, never by list."`
@@ -204,7 +204,7 @@ type JiraReceiverConfig struct {
 	ReopenTransition  string                      `json:"reopen_transition,omitempty" yaml:"reopen_transition,omitempty" description:"The transition applied when an alert fires again on a resolved issue."`
 	ReopenDuration    model.Duration              `json:"reopen_duration" yaml:"reopen_duration" description:"How long after resolution a firing alert reopens the issue; a Prometheus duration, at least 1m."`
 	WontFixResolution string                      `json:"wont_fix_resolution,omitempty" yaml:"wont_fix_resolution,omitempty" description:"The resolution name that stops an issue from being reopened."`
-	CustomFields      map[string]any              `json:"custom_fields,omitempty" yaml:"custom_fields,omitempty" description:"Extra issue fields keyed by Jira field ID. Stored, but the notifier does not currently include them in the issue it creates or updates."`
+	CustomFields      map[string]any              `json:"custom_fields,omitempty" yaml:"custom_fields,omitempty" description:"Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives."`
 	HTTPConfig        *commoncfg.HTTPClientConfig `json:"http_config,omitempty" yaml:"http_config,omitempty" description:"HTTP client settings; basic auth carries the account email and API token."`
 }
 
