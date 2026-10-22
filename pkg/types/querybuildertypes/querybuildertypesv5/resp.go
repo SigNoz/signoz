@@ -93,7 +93,7 @@ type QueryPreview struct {
 	Valid      bool               `json:"valid" required:"true" nullable:"false" description:"Whether the query rendered without error."`
 	Error      error              `json:"error" required:"true" description:"The rendering error when valid is false, otherwise null."`
 	Warnings   []string           `json:"warnings" required:"true" nullable:"false" description:"Warnings raised while rendering the query."`
-	Statements []PreviewStatement `json:"statements" required:"true" nullable:"false" description:"The ClickHouse statements the query renders to: one per PromQL metric selector, exactly one for other query types."`
+	Statements []PreviewStatement `json:"statements" required:"true" nullable:"false" description:"The rendered statements, returned only when verbose is true: one per PromQL metric selector, one for builder, ClickHouse SQL and trace operator queries, none for formulas. Empty otherwise."`
 }
 
 // PreviewStatement is one rendered ClickHouse statement with its args and, when

@@ -11725,7 +11725,7 @@ export interface Querybuildertypesv5QueryPreviewDTO {
 	error: unknown;
 	/**
 	 * @type array
-	 * @description The ClickHouse statements the query renders to: one per PromQL metric selector, exactly one for other query types.
+	 * @description The rendered statements, returned only when verbose is true: one per PromQL metric selector, one for builder, ClickHouse SQL and trace operator queries, none for formulas. Empty otherwise.
 	 */
 	statements: Querybuildertypesv5PreviewStatementDTO[];
 	/**
