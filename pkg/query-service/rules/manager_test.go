@@ -36,7 +36,7 @@ func TestManager_ListRules_ValidatesParams(t *testing.T) {
 	_, err = m.ListRules(context.Background(), &ruletypes.ListRulesParams{Limit: -1})
 	require.ErrorContains(t, err, "invalid limit")
 
-	_, err = m.ListRules(context.Background(), &ruletypes.ListRulesParams{States: []string{"bogus"}})
+	_, err = m.ListRules(context.Background(), &ruletypes.ListRulesParams{ListFilter: ruletypes.ListFilter{States: []string{"bogus"}}})
 	require.ErrorContains(t, err, `invalid state "bogus"`)
 }
 

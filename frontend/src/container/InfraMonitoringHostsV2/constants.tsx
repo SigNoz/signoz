@@ -5,7 +5,7 @@ import {
 	InframonitoringtypesHostRecordDTO,
 	InframonitoringtypesHostStatusDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { K8sDetailsMetadataConfig } from 'container/InfraMonitoringK8sV2/Base/K8sBaseDetails';
+import { K8sDetailsMetadataConfig } from 'container/InfraMonitoringK8sV2/Base/types';
 import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
 import { TextNoData } from 'container/InfraMonitoringK8sV2/components';
@@ -15,8 +15,6 @@ import {
 	getHostQueryPayload,
 	hostWidgetInfo,
 } from 'container/LogDetailedView/InfraMetrics/constants';
-
-import infraHostsStyles from './InfraMonitoringHosts.module.scss';
 
 export type HostDetailMetadataConfigType =
 	K8sDetailsMetadataConfig<InframonitoringtypesHostRecordDTO>;
@@ -30,12 +28,7 @@ export const hostDetailsMetadataConfig: HostDetailMetadataConfigType[] = [
 		render: (value, h): React.ReactNode => {
 			const isActive = h.status === InframonitoringtypesHostStatusDTO.active;
 			return (
-				<Badge
-					variant="outline"
-					className={`${infraHostsStyles.infraMonitoringTags} ${
-						isActive ? infraHostsStyles.tagsActive : infraHostsStyles.tagsInactive
-					}`}
-				>
+				<Badge color={isActive ? 'success' : 'secondary'} variant="outlined">
 					{value}
 				</Badge>
 			);
@@ -46,7 +39,7 @@ export const hostDetailsMetadataConfig: HostDetailMetadataConfigType[] = [
 		getValue: (h): string => h.meta?.[INFRA_MONITORING_ATTR_KEYS.OS_TYPE] || '-',
 		render: (value): React.ReactNode =>
 			value !== '-' ? (
-				<Badge variant="outline" className={infraHostsStyles.infraMonitoringTags}>
+				<Badge textTransform="none" color="primary" variant="outlined">
 					{value}
 				</Badge>
 			) : (

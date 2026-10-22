@@ -1,0 +1,80 @@
+.row {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+}
+
+.grid {
+	display: grid;
+	flex: none;
+	grid-template-columns: repeat(3, 28px);
+	gap: 4px;
+	padding: 6px;
+	border: 1px solid var(--l1-border);
+	border-radius: 4px;
+	background: var(--l2-background);
+}
+
+.cell {
+	position: relative;
+	display: grid;
+	place-items: center;
+	width: 28px;
+	height: 22px;
+	padding: 0;
+	border: 1px solid transparent;
+	border-radius: 3px;
+	background: transparent;
+	cursor: pointer;
+
+	&:hover {
+		background: var(--l3-background);
+	}
+
+	&:has(:focus-visible) {
+		outline: 1px solid var(--bg-robin-500);
+	}
+}
+
+.input {
+	position: absolute;
+	inset: 0;
+	margin: 0;
+	opacity: 0;
+	cursor: pointer;
+}
+
+.mark {
+	width: 10px;
+	height: 3px;
+	border-radius: 2px;
+	background: var(--l3-foreground);
+}
+
+.selected {
+	border-color: var(--bg-robin-500);
+	background: color-mix(in srgb, var(--bg-robin-500) 12%, transparent);
+
+	.mark {
+		width: 14px;
+		background: var(--bg-robin-400);
+	}
+}
+
+.text {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	min-width: 0;
+}
+
+.label {
+	font-size: 14px;
+	color: var(--l1-foreground);
+}
+
+.description {
+	font-size: 12px;
+	line-height: 17px;
+	color: var(--l2-foreground);
+}

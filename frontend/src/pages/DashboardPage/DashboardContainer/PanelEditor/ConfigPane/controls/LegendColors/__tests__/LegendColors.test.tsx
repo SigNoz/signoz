@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import type { LegendSeries } from 'pages/DashboardPage/DashboardContainer/Panels/utils/legendSeries';
 import LegendColors from '../LegendColors';
@@ -15,7 +16,7 @@ describe('LegendColors', () => {
 		expect(
 			screen.queryByTestId('panel-editor-v2-legend-colors'),
 		).not.toBeInTheDocument();
-		expect(screen.getByText(/run the panel/i)).toBeInTheDocument();
+		expect(screen.getByText(/run the query/i)).toBeInTheDocument();
 	});
 
 	it('renders the search box once series are present', () => {
@@ -28,14 +29,14 @@ describe('LegendColors', () => {
 		).toBeInTheDocument();
 	});
 
-	it('shows a no-match message when the search filters everything out', () => {
+	it('shows a no-match message when the search filters everything out', async () => {
+		const user = userEvent.setup();
 		render(
 			<LegendColors series={SERIES} value={undefined} onChange={jest.fn()} />,
 		);
 
-		fireEvent.change(screen.getByTestId('panel-editor-v2-legend-search'), {
-			target: { value: 'zzz' },
-		});
+		await user.clear(screen.getByTestId('panel-editor-v2-legend-search'));
+		await user.type(screen.getByTestId('panel-editor-v2-legend-search'), 'zzz');
 
 		expect(screen.getByText(/no series match/i)).toBeInTheDocument();
 	});

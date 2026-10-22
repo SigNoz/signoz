@@ -259,6 +259,11 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddAIObservabilityQuickFiltersFactory(sqlstore),
 		sqlmigration.NewAddChannelSpecFactory(sqlschema),
 		sqlmigration.NewAddUserTuplesFactory(sqlstore),
+		sqlmigration.NewAddRuleViewFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddFieldTuplesFactory(sqlstore),
+		sqlmigration.NewKeepRelevantLLMPricingRulesFactory(),
+		sqlmigration.NewBackfillTelegramChannelSpecFactory(),
+		sqlmigration.NewAddMetricsFieldTuplesFactory(sqlstore),
 	)
 }
 

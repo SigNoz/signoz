@@ -4,7 +4,12 @@ function Tags({ tags }: TagsProps): JSX.Element {
 	return (
 		<span>
 			{tags?.map((tag) => (
-				<Badge color="sakura" key={tag}>
+				<Badge
+					textTransform="none"
+					variant="solid"
+					color="highlight-danger"
+					key={tag}
+				>
 					{tag}
 				</Badge>
 			))}

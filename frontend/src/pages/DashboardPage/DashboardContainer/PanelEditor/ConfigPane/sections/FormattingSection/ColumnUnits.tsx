@@ -31,7 +31,7 @@ function ColumnUnits({
 	if (columns.length === 0) {
 		return (
 			<Typography.Text className={styles.columnUnitsHint}>
-				Run the panel to set per-column units.
+				Run the query to set a unit for each value column.
 			</Typography.Text>
 		);
 	}
@@ -50,7 +50,7 @@ function ColumnUnits({
 		<div className={styles.columnUnits}>
 			{columns.map((column) => (
 				<div className={styles.columnField} key={column.key}>
-					<Typography.Text>{column.label}</Typography.Text>
+					<span className={styles.columnLabel}>{column.label}</span>
 					<YAxisUnitSelector
 						data-testid={`panel-editor-v2-column-unit-${column.key}`}
 						placeholder="Select unit"

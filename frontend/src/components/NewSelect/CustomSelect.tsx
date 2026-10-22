@@ -25,6 +25,7 @@ import { capitalize, isEmpty } from 'lodash-es';
 import type { BaseSelectRef } from 'rc-select';
 import { popupContainer } from 'utils/selectPopupContainer';
 
+import TruncatedTooltip from './TruncatedTooltip';
 import { CustomSelectProps, OptionData } from './types';
 import {
 	filterOptionsBySearch,
@@ -207,41 +208,46 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 			const optionId = `option-${index}`;
 
 			return (
-				<div
-					key={option.value}
-					id={optionId}
-					ref={(el): void => {
-						if (index !== undefined) {
-							optionRefs.current[index] = el;
-						}
-					}}
-					className={cx('option-item', {
-						selected: isSelected,
-						active: isActive,
-					})}
-					onClick={(e): void => {
-						e.stopPropagation();
-						handleSelection();
-					}}
-					onKeyDown={(e): void => {
-						if (e.key === 'Enter' || e.key === SPACEKEY) {
-							e.preventDefault();
-							handleSelection();
-						}
-					}}
-					onMouseEnter={(): void => setActiveOptionIndex(index || -1)}
-					role="option"
-					aria-selected={isSelected}
-					aria-disabled={option.disabled}
-					tabIndex={isActive ? 0 : -1}
-				>
-					<div className="option-content">
-						<div>{highlightMatchedText(String(option.label || ''), searchText)}</div>
-						{option.type === 'custom' && (
-							<div className="option-badge">{capitalize(option.type)}</div>
-						)}
-					</div>
-				</div>
+				<TruncatedTooltip key={option.value} title={String(option.label || '')}>
+					{(textRef): JSX.Element => (
+						<div
+							id={optionId}
+							ref={(el): void => {
+								if (index !== undefined) {
+									optionRefs.current[index] = el;
+								}
+							}}
+							className={cx('option-item', {
+								selected: isSelected,
+								active: isActive,
+							})}
+							onClick={(e): void => {
+								e.stopPropagation();
+								handleSelection();
+							}}
+							onKeyDown={(e): void => {
+								if (e.key === 'Enter' || e.key === SPACEKEY) {
+									e.preventDefault();
+									handleSelection();
+								}
+							}}
+							onMouseEnter={(): void => setActiveOptionIndex(index || -1)}
+							role="option"
+							aria-selected={isSelected}
+							aria-disabled={option.disabled}
+							tabIndex={isActive ? 0 : -1}
+						>
+							<div className="option-content">
+								<span ref={textRef} className="option-label-text">
+									{highlightMatchedText(String(option.label || ''), searchText)}
+								</span>
+								{option.type === 'custom' && (
+									<div className="option-badge">{capitalize(option.type)}</div>
+								)}
+							</div>
+						</div>
+					)}
+				</TruncatedTooltip>
 			);
 		},
 		[highlightMatchedText, searchText, onChange, activeOptionIndex],
@@ -702,20 +708,34 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	// ===== Final Processing =====
 
 	// Apply highlight to matched text in options
-	const optionsWithHighlight = useMemo(
-		() =>
-			options
-				?.filter((option) =>
-					String(option.label || '')
-						.toLowerCase()
-						.includes(searchText.toLowerCase()),
-				)
-				?.map((option) => ({
-					...option,
-					label: highlightMatchedText(String(option.label || ''), searchText),
-				})),
-		[options, searchText, highlightMatchedText],
-	);
+	const optionsWithHighlight = useMemo(() => {
+		const matching =
+			options?.filter((option) =>
+				String(option.label || '')
+					.toLowerCase()
+					.includes(searchText.toLowerCase()),
+			) ?? [];
+
+		// antd shows a value with no matching option as a bare string, so keep the
+		// selected value listed to render it through the tooltip label below.
+		return (
+			isEmpty(value)
+				? matching
+				: prioritizeOrAddOptionForSingleSelect(matching, value)
+		).map((option) => ({
+			...option,
+			// Rendered as the selected value in the closed control.
+			label: (
+				<TruncatedTooltip title={String(option.label || '')} side="bottom">
+					{(textRef): JSX.Element => (
+						<span ref={textRef} className="option-label-text">
+							{highlightMatchedText(String(option.label || ''), searchText)}
+						</span>
+					)}
+				</TruncatedTooltip>
+			),
+		}));
+	}, [options, searchText, value, highlightMatchedText]);
 
 	// ===== Component Rendering =====
 	return (

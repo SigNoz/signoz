@@ -6,6 +6,7 @@
 import type {
 	GetFlamegraph200,
 	GetTraceAggregations200,
+	GetTraceSummary200,
 	GetWaterfallV4200,
 	SpantypesFlamegraphSpanDTO,
 	SpantypesSpanAggregationDTO,
@@ -22,6 +23,10 @@ interface SpanTemplate {
 	name: string;
 	kind: string;
 	failing?: boolean;
+	/** The span the panel opens on when nothing fails. */
+	focus?: boolean;
+	/** `response_status_code`; failing spans default to 503, the rest to 200. */
+	statusCode?: string;
 	attributes: Record<string, string | number | boolean>;
 }
 
@@ -122,6 +127,143 @@ const SPAN_TEMPLATES: SpanTemplate[] = [
 	},
 ];
 
+/** One span per badge colour, plus a span with no status code and so no badge. */
+const STATUS_CODE_TEMPLATES: SpanTemplate[] = [
+	['200', 'GET /status/ok'],
+	['101', 'GET /ws/upgrade'],
+	['201', 'POST /status/created'],
+	['204', 'DELETE /status/no-content'],
+	['301', 'GET /status/moved'],
+	['304', 'GET /status/not-modified'],
+	['400', 'POST /status/bad-request'],
+	['401', 'GET /status/unauthorized'],
+	['404', 'GET /status/not-found'],
+	['429', 'GET /status/rate-limited'],
+	['500', 'GET /status/internal-error'],
+	['502', 'GET /status/bad-gateway'],
+	['503', 'GET /status/unavailable'],
+	['504', 'GET /status/timeout'],
+	['', 'internal.compute'],
+].map(([statusCode, name]): SpanTemplate => ({
+	service: 'status-api',
+	name,
+	kind: statusCode ? 'Server' : 'Internal',
+	failing: Number(statusCode) >= 500,
+	statusCode,
+	attributes: statusCode
+		? {
+				'http.method': name.split(' ')[0],
+				'http.status_code': Number(statusCode),
+			}
+		: {},
+}));
+
+/**
+ * An agent run: agent, LLM and tool spans, each badged by kind. The LLM spans
+ * cover cache counted inside input (OpenAI), cache counted beside it
+ * (Anthropic), reasoning, and an embedding with input only.
+ */
+const AI_TEMPLATES: SpanTemplate[] = [
+	{
+		service: 'support-agent',
+		name: 'invoke_agent support-agent',
+		kind: 'Internal',
+		attributes: { 'gen_ai.agent.name': 'support-agent' },
+	},
+	{
+		service: 'support-agent',
+		name: 'chat gpt-4o',
+		kind: 'Client',
+		attributes: {
+			'gen_ai.request.model': 'gpt-4o-2024-08-06',
+			'gen_ai.usage.input_tokens': 1840,
+			'gen_ai.usage.output_tokens': 212,
+			'gen_ai.usage.cache_read.input_tokens': 1024,
+			'gen_ai.usage.cache_creation.input_tokens': 0,
+			'signoz.gen_ai.usage.tokens.cost': 0.00566,
+		},
+	},
+	{
+		service: 'support-agent',
+		name: 'execute_tool search_docs',
+		kind: 'Internal',
+		attributes: { 'gen_ai.tool.name': 'search_docs' },
+	},
+	{
+		service: 'support-agent',
+		name: 'chat claude-sonnet-4',
+		kind: 'Client',
+		focus: true,
+		attributes: {
+			'gen_ai.request.model': 'claude-sonnet-4-20250514',
+			'gen_ai.usage.input_tokens': 86,
+			'gen_ai.usage.output_tokens': 640,
+			'gen_ai.usage.cache_read.input_tokens': 4200,
+			'gen_ai.usage.cache_creation.input_tokens': 1300,
+			'signoz.gen_ai.usage.tokens.cost': 0.01853,
+		},
+	},
+	{
+		service: 'docs-api',
+		name: 'GET /docs/search',
+		kind: 'Server',
+		attributes: {
+			'http.method': 'GET',
+			'http.route': '/docs/search',
+			'http.status_code': 200,
+		},
+	},
+	{
+		service: 'support-agent',
+		name: 'execute_tool fetch_ticket',
+		kind: 'Internal',
+		failing: true,
+		attributes: { 'gen_ai.tool.name': 'fetch_ticket' },
+	},
+	{
+		service: 'support-agent',
+		name: 'invoke_agent triage-agent',
+		kind: 'Internal',
+		attributes: { 'gen_ai.agent.name': 'triage-agent' },
+	},
+	{
+		service: 'support-agent',
+		name: 'embeddings text-embedding-3-small',
+		kind: 'Client',
+		attributes: {
+			'gen_ai.request.model': 'text-embedding-3-small',
+			'gen_ai.usage.input_tokens': 312,
+			'signoz.gen_ai.usage.tokens.cost': 0.00000624,
+		},
+	},
+	{
+		service: 'support-agent',
+		name: 'chat o3-mini',
+		kind: 'Client',
+		attributes: {
+			'gen_ai.request.model': 'o3-mini-2025-01-31',
+			'gen_ai.usage.input_tokens': 920,
+			'gen_ai.usage.output_tokens': 1480,
+			'gen_ai.usage.reasoning.output_tokens': 1152,
+			'signoz.gen_ai.usage.tokens.cost': 0.007524,
+		},
+	},
+];
+
+export const TRACE_SCENARIOS = ['checkout', 'status-codes', 'ai'] as const;
+
+export type TraceScenario = (typeof TRACE_SCENARIOS)[number];
+
+const SCENARIO_TEMPLATES: Record<TraceScenario, SpanTemplate[]> = {
+	checkout: SPAN_TEMPLATES,
+	'status-codes': STATUS_CODE_TEMPLATES,
+	ai: AI_TEMPLATES,
+};
+
+/** Spans it takes for the scenario to show every template once. */
+export const scenarioSpanCount = (scenario: TraceScenario): number =>
+	SCENARIO_TEMPLATES[scenario].length;
+
 const TRACE_SERVICES = [
 	...new Set(SPAN_TEMPLATES.map(({ service }) => service)),
 ];
@@ -145,6 +287,7 @@ interface BuiltSpan {
 }
 
 interface TraceOptions {
+	scenario: TraceScenario;
 	spans: number;
 	errors: boolean;
 	/** Epoch milliseconds the root span starts at. */
@@ -155,24 +298,33 @@ export const spanIdAt = (index: number): string =>
 	`b17e${index.toString(16).padStart(12, '0')}`;
 
 /**
- * The span the story opens the panel on: the first failing one, so its events
- * and error styling are on screen, and the root when nothing fails.
+ * The span the story opens the panel on: the scenario's focus span, else the
+ * first failing one, so its events and error styling are on screen, and the
+ * root when neither is in the trace.
  */
-export const focusSpanIndex = (spans: number): number => {
-	const failing = SPAN_TEMPLATES.findIndex(({ failing }) => failing);
+export const focusSpanIndex = (
+	scenario: TraceScenario,
+	spans: number,
+): number => {
+	const templates = SCENARIO_TEMPLATES[scenario];
+	const focus = templates.findIndex((template) => template.focus);
+	const failing = templates.findIndex((template) => template.failing);
+	const index = focus >= 0 ? focus : failing;
 
-	return failing >= 0 && failing < spans ? failing : 0;
+	return index >= 0 && index < spans ? index : 0;
 };
 
 const buildSpans = ({
+	scenario,
 	spans,
 	errors,
 	traceStart,
 }: TraceOptions): BuiltSpan[] => {
 	const built: BuiltSpan[] = [];
+	const templates = SCENARIO_TEMPLATES[scenario];
 
 	for (let index = 0; index < spans; index += 1) {
-		const template = SPAN_TEMPLATES[index % SPAN_TEMPLATES.length];
+		const template = templates[index % templates.length];
 		const parent = index === 0 ? undefined : built[parentIndexOf(index)];
 		// Children fit inside their parent's window, second child after the first,
 		// so no span outlives its parent and no two siblings overlap.
@@ -256,7 +408,8 @@ const waterfallSpan = (span: BuiltSpan): SpantypesWaterfallSpanDTO => ({
 	status_code: span.hasError ? 2 : 1,
 	status_code_string: span.hasError ? 'Error' : 'Ok',
 	status_message: span.hasError ? 'upstream unavailable' : '',
-	response_status_code: span.hasError ? '503' : '200',
+	response_status_code:
+		span.template.statusCode ?? (span.hasError ? '503' : '200'),
 	has_children: span.hasChildren,
 	sub_tree_node_count: span.subTreeNodeCount,
 	level: span.level,
@@ -299,6 +452,58 @@ export const traceWaterfallResponse = (
 			totalErrorSpansCount: spans.filter(({ hasError }) => hasError).length,
 			rootServiceName: root?.template.service ?? '',
 			rootServiceEntryPoint: root?.template.name ?? '',
+		},
+	};
+};
+
+const numberAttribute = (span: BuiltSpan, key: string): number =>
+	Number(span.template.attributes[key] ?? 0);
+
+/** The trace's AI totals, summed over its spans the way the backend does. */
+const traceAiSummary = (
+	spans: BuiltSpan[],
+): GetTraceSummary200['data']['ai'] => {
+	const aiSpans = spans.filter(({ template }) =>
+		Object.keys(template.attributes).some((key) => key.includes('gen_ai.')),
+	);
+
+	if (aiSpans.length === 0) {
+		return undefined;
+	}
+
+	const sum = (key: string): number =>
+		aiSpans.reduce((total, span) => total + numberAttribute(span, key), 0);
+
+	return {
+		tokens: {
+			input: sum('gen_ai.usage.input_tokens'),
+			output: sum('gen_ai.usage.output_tokens'),
+			cacheRead: sum('gen_ai.usage.cache_read.input_tokens'),
+			cacheWrite: sum('gen_ai.usage.cache_creation.input_tokens'),
+			reasoning: sum('gen_ai.usage.reasoning.output_tokens'),
+		},
+		totalCost: sum('signoz.gen_ai.usage.tokens.cost'),
+	};
+};
+
+export const traceSummaryResponse = (
+	options: TraceOptions & { missingSpans: boolean },
+): GetTraceSummary200 => {
+	const spans = buildSpans(options);
+	const root = spans[0];
+
+	return {
+		status: 'success',
+		data: {
+			startTimestampMillis: Math.round(options.traceStart),
+			endTimestampMillis: Math.round(options.traceStart + ROOT_DURATION_MS),
+			rootServiceName: root?.template.service ?? '',
+			rootServiceEntryPoint: root?.template.name ?? '',
+			rootSpanStatusCode: root?.hasError ? '503' : '200',
+			totalSpansCount: spans.length,
+			totalErrorSpansCount: spans.filter(({ hasError }) => hasError).length,
+			hasMissingSpans: options.missingSpans,
+			ai: traceAiSummary(spans),
 		},
 	};
 };
@@ -450,7 +655,7 @@ export const spanLogRows = (
 ): RawRow[] => {
 	const step = ROOT_DURATION_MS / Math.max(count, 1);
 	const spans = buildSpans(options);
-	const focus = spans[focusSpanIndex(options.spans)];
+	const focus = spans[focusSpanIndex(options.scenario, options.spans)];
 
 	return Array.from({ length: count }, (_, index) => {
 		const at = options.traceStart + SCOPE_OFFSET_MS[scope] + index * step;

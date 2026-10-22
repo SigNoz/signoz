@@ -73,26 +73,16 @@
 
 	[role='tablist'] {
 		flex-shrink: 0;
+
+		// Default 20px badge is taller than the 16px tab icon and grows the tab bar.
+		--badge-height: 16px;
+		--badge-padding: 0 var(--spacing-3);
 	}
 
 	[class*='tabs__list-wrapper'] {
 		padding-left: 0 !important;
+		flex-shrink: 0;
 	}
-}
-
-// The Badge is already pill-rounded, so an 18x18 box renders a circle for a
-// single digit and a capsule for more.
-.eventsBadge {
-	// l3 background (!important beats the Badge's [data-color] rule).
-	--badge-background: var(--l3-background) !important;
-	--badge-padding: 0 5px;
-	// Static count, not interactive — cancel the Badge's hover background change.
-	--badge-hover-background: var(--badge-background) !important;
-
-	margin-left: var(--spacing-3);
-	min-width: 18px;
-	height: 18px;
-	vertical-align: middle;
 }
 
 .tabsScroll {
@@ -107,12 +97,7 @@
 		padding: 0;
 		flex: 1;
 		min-height: 0;
+		overflow-y: auto;
+		scrollbar-width: none;
 	}
-}
-
-// Tooltip is rendered in a portal but the SpanDetailsPanel can be docked as a
-// FloatingPanel (z-index 999), which would otherwise sit on top of the default
-// tooltip (z-index 50). Bump the tooltip above the panel.
-.dockToggleTooltip {
-	--tooltip-z-index: 1000;
 }

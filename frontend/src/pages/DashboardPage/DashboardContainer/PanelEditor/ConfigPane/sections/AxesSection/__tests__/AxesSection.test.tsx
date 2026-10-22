@@ -1,3 +1,4 @@
+import { DashboardtypesHeatmapYScaleDTO } from 'api/generated/services/sigNoz.schemas';
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import AxesSection from '../AxesSection';
@@ -64,6 +65,56 @@ describe('AxesSection', () => {
 		expect(onChange).toHaveBeenCalledWith({ softMax: null });
 	});
 
+	it('offers the bucket-axis scale instead of the soft bounds when y is on', () => {
+		render(
+			<AxesSection
+				value={undefined}
+				controls={{ y: true }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(screen.getByTestId('panel-editor-v2-y-scale')).toBeInTheDocument();
+		expect(
+			screen.queryByTestId('panel-editor-v2-soft-min'),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId('panel-editor-v2-log-scale'),
+		).not.toBeInTheDocument();
+	});
+
+	it('offers every bucket-axis scale, symmetric log included', async () => {
+		const user = userEvent.setup();
+		const onChange = jest.fn();
+		render(
+			<AxesSection value={undefined} controls={{ y: true }} onChange={onChange} />,
+		);
+
+		['auto', 'linear', 'log', 'symlog'].forEach((scale) =>
+			expect(
+				screen.getByTestId(`panel-editor-v2-y-scale-${scale}`),
+			).toBeInTheDocument(),
+		);
+
+		await user.click(screen.getByTestId('panel-editor-v2-y-scale-symlog'));
+
+		expect(onChange).toHaveBeenCalledWith({
+			y: { scale: DashboardtypesHeatmapYScaleDTO.symlog },
+		});
+	});
+
+	it('shows the help for the scale the spec asks for', () => {
+		render(
+			<AxesSection
+				value={{ y: { scale: DashboardtypesHeatmapYScaleDTO.symlog } }}
+				controls={{ y: true }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(screen.getByText(/Log on both sides of zero/)).toBeInTheDocument();
+	});
+
 	it('toggles the logarithmic scale through onChange', async () => {
 		const user = userEvent.setup();
 		const onChange = jest.fn();
@@ -75,8 +126,25 @@ describe('AxesSection', () => {
 			/>,
 		);
 
-		await user.click(screen.getByText('Log'));
+		await user.click(screen.getByTestId('panel-editor-v2-log-scale-log'));
 
 		expect(onChange).toHaveBeenCalledWith({ isLogScale: true });
+	});
+
+	it('flags a soft min above the soft max', () => {
+		render(
+			<AxesSection
+				value={{ softMin: 23, softMax: 12 }}
+				controls={{ minMax: true }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(
+			screen.getByText("Min can't be greater than Max."),
+		).toBeInTheDocument();
+		expect(
+			screen.queryByText(/The axis always shows at least this range/),
+		).not.toBeInTheDocument();
 	});
 });

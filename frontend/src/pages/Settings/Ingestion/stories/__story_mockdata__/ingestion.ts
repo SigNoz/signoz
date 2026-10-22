@@ -7,6 +7,7 @@ import type {
 	GatewaytypesIngestionKeyDTO,
 	GatewaytypesLimitDTO,
 	GetIngestionKeys200,
+	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { IngestionInfo } from 'types/api/settings/ingestion';
 
@@ -20,6 +21,10 @@ export type LimitSignal = (typeof LIMIT_SIGNALS)[number];
 export const EXPIRIES = ['none', 'soon', 'expired'] as const;
 
 export type Expiry = (typeof EXPIRIES)[number];
+
+export const CREATE_OUTCOMES = ['succeeds', 'fails', 'hangs'] as const;
+
+export type CreateOutcome = (typeof CREATE_OUTCOMES)[number];
 
 const KEY_NAMES = [
 	'production-us-east',
@@ -114,6 +119,18 @@ export const ingestionKeysResponse = (
 			total: keys,
 			pages: Math.max(1, Math.ceil(keys / KEYS_PER_PAGE)),
 		},
+	},
+});
+
+export const ingestionKeyCreateError = (): RenderErrorResponseDTO => ({
+	status: 'error',
+	error: {
+		code: 'already_exists',
+		type: 'already_exists',
+		message: 'An ingestion key with this name already exists.',
+		url: '',
+		errors: [],
+		suggestions: [],
 	},
 });
 

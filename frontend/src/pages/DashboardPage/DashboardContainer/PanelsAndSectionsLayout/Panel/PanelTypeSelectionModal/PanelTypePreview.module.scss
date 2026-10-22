@@ -1,0 +1,124 @@
+.preview {
+	height: 66px;
+	padding: 10px;
+	box-sizing: border-box;
+	overflow: hidden;
+	border: 1px solid var(--l1-border);
+	border-radius: 4px;
+	background: var(--l1-background);
+}
+
+.svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+.bars,
+.histogram {
+	display: flex;
+	align-items: flex-end;
+	height: 100%;
+}
+
+.bars {
+	gap: 7px;
+}
+
+.histogram {
+	gap: 2px;
+}
+
+.bar {
+	flex: 1;
+	border-radius: 1px;
+	background: var(--bg-robin-500);
+}
+
+.number {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 1px;
+	height: 100%;
+}
+
+.numberValue {
+	color: var(--l1-foreground);
+	font-size: 21px;
+	font-weight: 600;
+	line-height: 1;
+	letter-spacing: -0.5px;
+}
+
+.numberUnit {
+	color: var(--l3-foreground);
+	font-size: 12px;
+}
+
+.numberLabel {
+	color: var(--l3-foreground);
+	font-size: 8px;
+	letter-spacing: 0.6px;
+	text-transform: uppercase;
+}
+
+.rows {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	height: 100%;
+}
+
+.tableRow {
+	display: grid;
+	grid-template-columns: 1.4fr 1fr 0.7fr;
+	gap: 8px;
+}
+
+.listRow {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+
+	.cell {
+		flex: 1;
+	}
+}
+
+.cell,
+.headCell,
+.accentCell {
+	display: block;
+	height: 4px;
+	border-radius: 2px;
+}
+
+.cell {
+	background: var(--l3-background);
+}
+
+.headCell {
+	background: var(--l3-border);
+}
+
+.accentCell {
+	background: var(--bg-robin-500);
+	opacity: 0.6;
+}
+
+.dot,
+.accentDot {
+	width: 4px;
+	height: 4px;
+	border-radius: 50%;
+}
+
+.dot {
+	background: var(--l3-border);
+}
+
+.accentDot {
+	background: var(--bg-robin-500);
+}

@@ -650,4 +650,20 @@ describe('UPlotConfigBuilder stacking', () => {
 
 		expect(builder.getConfig().bands).toStrictEqual([{ series: [1, 3] }]);
 	});
+
+	it('registers the partial points draw hook once, only for series with partial timestamps', () => {
+		const props: SeriesProps = {
+			scaleKey: 'y',
+			label: 'Requests',
+			colorMapping: {},
+			drawStyle: DrawStyle.Line,
+		};
+		const builder = new UPlotConfigBuilder({ id: 'partial' });
+		builder.addSeries(props);
+		expect(builder.getConfig().hooks?.draw ?? []).toHaveLength(0);
+
+		builder.addSeries({ ...props, partialTimestamps: new Set([40]) });
+		builder.addSeries({ ...props, partialTimestamps: new Set([40]) });
+		expect(builder.getConfig().hooks?.draw).toHaveLength(1);
+	});
 });

@@ -1,0 +1,1 @@
+export const SIDEBAR_TOOLTIP_DELAY_MS = 500;

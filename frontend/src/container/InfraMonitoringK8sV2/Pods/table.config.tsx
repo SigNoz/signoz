@@ -1,5 +1,4 @@
 import { Container } from '@signozhq/icons';
-import { Badge } from '@signozhq/ui/badge';
 import {
 	InframonitoringtypesPodRecordDTO,
 	InframonitoringtypesPodStatusDTO,
@@ -10,15 +9,17 @@ import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
+import ClickableStatusBadge from '../Base/components/StatusFilterCells/ClickableStatusBadge';
+import ClickableStatusCounts from '../Base/components/StatusFilterCells/ClickableStatusCounts';
 import {
 	formatBytes,
 	getPodStatusItems,
 	POD_STATUS_COLORS,
+	POD_STATUS_LABELS,
 } from '../commonUtils';
 import {
 	EntityProgressBar,
 	EntityProgressThresholds,
-	GroupedStatusCounts,
 	TextNoData,
 	ValidateColumnValueWrapper,
 } from '../components';
@@ -100,7 +101,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 		width: { min: 250 },
 		enableSort: false,
 		visibilityBehavior: 'hidden-on-expand',
-		cell: ({ row }): React.ReactNode => {
+		cell: ({ row, rowId }): React.ReactNode => {
 			if (!row.podStatus) {
 				return <></>;
 			}
@@ -110,11 +111,14 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 			}
 
 			const color = POD_STATUS_COLORS[row.podStatus] || POD_STATUS_COLORS.unknown;
-			const label = row.podStatus.charAt(0).toUpperCase() + row.podStatus.slice(1);
 			return (
-				<Badge color={color} variant="outline">
-					{label}
-				</Badge>
+				<ClickableStatusBadge
+					color={color}
+					label={POD_STATUS_LABELS[row.podStatus]}
+					status={row.podStatus}
+					kind="pod"
+					rowId={rowId}
+				/>
 			);
 		},
 	},
@@ -136,7 +140,8 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 				return <TextNoData type="tanstack" />;
 			}
 			return (
-				<GroupedStatusCounts
+				<ClickableStatusCounts
+					kind="pod"
 					items={getPodStatusItems(row.podCountsByStatus)}
 					rowId={rowId}
 				/>

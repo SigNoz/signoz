@@ -1,0 +1,7 @@
+.timeText {
+	display: inline-block;
+	white-space: nowrap;
+	font-size: var(--tanstack-plain-cell-font-size, 14px);
+	line-height: var(--tanstack-plain-cell-line-height, 18px);
+	color: inherit;
+}

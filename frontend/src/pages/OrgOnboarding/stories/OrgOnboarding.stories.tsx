@@ -117,3 +117,13 @@ export const YourScale: Story = {
 export const InviteTeam: Story = {
 	args: { page: 'invite-team' },
 };
+
+/**
+ * Saving the answers fails on the scale page. The failure is a toast and the
+ * questionnaire still opens the last page.
+ */
+export const ProfileSaveErrorToast: Story = {
+	args: { page: 'invite-team', profileUpdate: 'error' },
+	// The deliberate 500 is the state under test.
+	parameters: { allowConsoleErrors: true },
+};

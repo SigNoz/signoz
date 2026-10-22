@@ -110,3 +110,12 @@ export const wideConditionGroupsResponse = (): ListSpanMapperGroups200 => {
 		},
 	};
 };
+
+export const GROUP_SAVES = [
+	'success',
+	'loading',
+	'error',
+	'refreshFailed',
+] as const;
+
+export type GroupSave = (typeof GROUP_SAVES)[number];

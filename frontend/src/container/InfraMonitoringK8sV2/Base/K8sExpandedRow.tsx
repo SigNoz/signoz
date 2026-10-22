@@ -30,6 +30,7 @@ import {
 	useInfraMonitoringPageListing,
 	useInfraMonitoringSelectedItemParams,
 } from '../hooks';
+import { resetDrawerHistory } from './useDrawerHistoryStore';
 import { K8sBaseFilters } from './types';
 import { useLogEventForColumnCustomized } from './useLogEventForColumnCustomized';
 import { useInfraMonitoringFontSize } from './useInfraMonitoringTablePreferencesStore';
@@ -219,6 +220,8 @@ export function K8sExpandedRow<
 				queryClient.setQueryData(detailQueryKey, { data: row });
 			}
 
+			// Opening from the list starts a fresh trail for the drawer's back control
+			resetDrawerHistory();
 			setSelectedItemParams(params);
 		},
 		[
@@ -288,11 +291,11 @@ export function K8sExpandedRow<
 
 	const footerContent = hasMoreItems ? (
 		<Button
+			size="md"
 			type="button"
 			color="secondary"
 			variant="outlined"
-			className={styles.viewAllButton}
-			data-testid="expanded-row-view-all"
+			testId="expanded-row-view-all"
 			onClick={handleViewAllClick}
 			prefix={<CornerDownRight size={14} />}
 		>

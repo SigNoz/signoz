@@ -60,6 +60,7 @@ jobs:
           - rawexportdata
           - promqlconformance
           - promapiconformance
+          - promote
           - querierauthz
           - role
           - rootuser
@@ -68,11 +69,13 @@ jobs:
           - semconvfamilies
           - serviceaccount
           - spanmapper
+          - tracedetail
           - querier_json_body
           - querier_skip_resource_fingerprint
           - ttl
           - clickhousecluster
           - metricreduction
+          - metricsexplorer
         sqlstore-provider:
           - postgres
           - sqlite

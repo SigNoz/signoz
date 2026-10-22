@@ -58,8 +58,14 @@ console.log((await page.locator('body').innerText()).slice(0, 1500), problems);
 await browser.close();
 ```
 
-Screenshots are worth taking for `Default` in both themes
-(`&globals=theme:light`): text extraction does not catch an unstyled page.
+Screenshots are worth taking for `Default` in both themes: text extraction does
+not catch an unstyled page. Take them with
+[sbshot](https://github.com/SigNoz/sbshot), e.g.
+`sbshot capture http://localhost:6006 --title <story title> --theme dark,light`.
+
+That is one run, for checking the story you just wrote. Comparing two branches is
+a different job: see the `sbshot-visual-diff` skill, which covers the baseline to
+pick, measuring the noise and exporting something a reviewer can open.
 
 ## Gates
 

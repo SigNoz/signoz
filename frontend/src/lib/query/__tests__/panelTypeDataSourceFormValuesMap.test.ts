@@ -61,6 +61,16 @@ describe('panelTypeDataSourceFormValuesMap', () => {
 		expect(uncovered).toStrictEqual([]);
 	});
 
+	// The AI tab is derived from this tag, so a panel that drops it on a switch falls
+	// back to plain Query Builder mid-edit.
+	it('carries the AI query tag into every panel type', () => {
+		Object.values(panelTypeDataSourceFormValuesMap).forEach((sources) => {
+			expect(sources[DataSource.TRACES].builder.queryData).toContain(
+				'builderQueryType',
+			);
+		});
+	});
+
 	it('shares one builder surface between logs and traces', () => {
 		Object.values(panelTypeDataSourceFormValuesMap).forEach((sources) => {
 			expect(sources[DataSource.LOGS].builder.queryData).toStrictEqual(

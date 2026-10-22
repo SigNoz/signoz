@@ -262,23 +262,20 @@
     // React Hooks rules - Enforces Rules of Hooks (only call at top level)
     "react-hooks/exhaustive-deps": "warn",
     // Warns about missing dependencies in useEffect/useMemo/useCallback
-    // NOTE: The following react-hooks rules are not supported right know, follow the progress at https://github.com/oxc-project/oxc/issues/1022
-    // Most of them are for React Compiler, which we don't have enabled right know
-    // "react-hooks/config": "error",
-    // "react-hooks/error-boundaries": "error",
-    // "react-hooks/component-hook-factories": "error",
-    // "react-hooks/gating": "error",
-    // "react-hooks/globals": "error",
-    // "react-hooks/immutability": "error",
-    // "react-hooks/preserve-manual-memoization": "error",
-    // "react-hooks/purity": "error",
-    // "react-hooks/refs": "error",
-    // "react-hooks/set-state-in-effect": "error",
-    // "react-hooks/set-state-in-render": "error",
-    // "react-hooks/static-components": "error",
-    // "react-hooks/unsupported-syntax": "warn",
-    // "react-hooks/use-memo": "error",
-    // "react-hooks/incompatible-library": "warn",
+    // React Compiler rules, off because we don't have React Compiler enabled
+    "react/error-boundaries": "off",
+    "react/globals": "off",
+    "react/immutability": "off",
+    "react/incompatible-library": "off",
+    "react/preserve-manual-memoization": "off",
+    "react/purity": "off",
+    "react/refs": "off",
+    "react/set-state-in-effect": "off",
+    "react/set-state-in-render": "off",
+    "react/static-components": "off",
+    "react/unsupported-syntax": "off",
+    "react/use-memo": "off",
+    "react/void-use-memo": "off",
     "signoz/no-unsupported-asset-pattern": "error",
     // Prevents the wrong usage of assets to break custom base path installations
     "signoz/no-zustand-getstate-in-hooks": "error",
@@ -338,6 +335,10 @@
             "name": "api/generated/services/dashboard",
             "importNames": ["patchDashboardV2", "usePatchDashboardV2"],
             "message": "[dashboard-v2] Don't call patchDashboardV2/usePatchDashboardV2 directly — use useOptimisticPatch().patchAsync so spec edits update the react-query cache optimistically and reconcile on settle."
+          },
+          {
+            "name": "motion/react-client",
+            "message": "[motion] motion/react-client is for React Server Components only. Use 'motion/react' instead — it provides the same exports and works correctly in client-side SPAs."
           }
         ]
       }
@@ -580,14 +581,13 @@
       }
     },
     {
-      // Dev-tooling CLIs: stdout is their output, and they carry ported pixel/heap
-      // algorithms that read worse when split up.
+      // TypeScript reports real redeclarations; this rule also flags `const X` + `type X` pairs.
       "files": [
-        "scripts/**"
+        "**/*.ts",
+        "**/*.tsx"
       ],
       "rules": {
-        "no-console": "off",
-        "sonarjs/cognitive-complexity": "off"
+        "no-redeclare": "off"
       }
     }
   ]

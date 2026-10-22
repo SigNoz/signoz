@@ -1,6 +1,6 @@
 import { randomBytes } from 'crypto';
 
-import type { APIRequestContext, Page } from '@playwright/test';
+import { expect, type APIRequestContext, type Page } from '@playwright/test';
 
 import largeTraceRecords from '../testdata/traces/large-trace.json';
 import { authToken, seederUrl } from './common';
@@ -136,6 +136,12 @@ export async function changeColourByViaMenu(
 	await page
 		.getByRole('menuitemradio', { name: fieldName, exact: true })
 		.click();
+	await expect(async () => {
+		if (await page.getByRole('menu').count()) {
+			await page.keyboard.press('Escape');
+		}
+		await expect(page.getByRole('menu')).toHaveCount(0, { timeout: 500 });
+	}).toPass();
 }
 
 // ── Large trace fixture (tests/e2e/testdata/traces/large-trace.json) ─────────

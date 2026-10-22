@@ -232,7 +232,11 @@ func postProcessMetricQuery(
 		}
 	}
 
-	result = q.applySeriesLimit(result, query.Limit, query.Order)
+	reducesToScalar := req.RequestType == qbtypes.RequestTypeScalar && config.ReduceTo != qbtypes.ReduceToUnknown
+
+	if !reducesToScalar {
+		result = q.applySeriesLimit(result, query.Limit, query.Order)
+	}
 
 	if len(query.Functions) > 0 {
 		step := query.StepInterval.Milliseconds()
@@ -241,9 +245,11 @@ func postProcessMetricQuery(
 	}
 
 	// Apply reduce to for scalar request type
-	if req.RequestType == qbtypes.RequestTypeScalar {
-		if len(query.Aggregations) > 0 && query.Aggregations[0].ReduceTo != qbtypes.ReduceToUnknown {
-			result = q.applyMetricReduceTo(result, query.Aggregations[0].ReduceTo)
+	if reducesToScalar {
+		result = q.applyMetricReduceTo(result, config.ReduceTo)
+		result = q.applySeriesLimit(result, query.Limit, query.Order)
+		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
+			result.Value = convertTimeSeriesDataToScalar(tsData, tsData.QueryName)
 		}
 	}
 
@@ -286,9 +292,6 @@ func (q *querier) applyMetricReduceTo(result *qbtypes.Result, reduceOp qbtypes.R
 			}
 		}
 	}
-
-	scalarData := convertTimeSeriesDataToScalar(tsData, tsData.QueryName)
-	result.Value = scalarData
 
 	return result
 }
@@ -497,6 +500,9 @@ func bucketFormulaOutputAsHeatmap(tsData *qbtypes.TimeSeriesData, bucketing qbty
 // to stay identical to them: a formula heatmap and a metric heatmap that
 // disagreed here would put their counts in different buckets.
 func calculateLinearValueUpperBound(bucketing qbtypes.HeatmapBucketing, value float64) float64 {
+	if value <= 0 {
+		return 0
+	}
 	if value > bucketing.MaxValue {
 		return math.Inf(1)
 	}

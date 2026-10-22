@@ -69,7 +69,7 @@ func (b *meterQueryStatementBuilder) Build(
 	orgID valuer.UUID,
 	start uint64,
 	end uint64,
-	_ qbtypes.RequestType,
+	requestType qbtypes.RequestType,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
@@ -81,13 +81,14 @@ func (b *meterQueryStatementBuilder) Build(
 
 	start, end = querybuilder.AdjustedMetricTimeRange(start, end, uint64(query.StepInterval.Seconds()), query)
 
-	return b.buildPipelineStatement(ctx, orgID, start, end, query, keys, variables)
+	return b.buildPipelineStatement(ctx, orgID, start, end, requestType, query, keys, variables)
 }
 
 func (b *meterQueryStatementBuilder) buildPipelineStatement(
 	ctx context.Context,
 	orgID valuer.UUID,
 	start, end uint64,
+	requestType qbtypes.RequestType,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
@@ -124,7 +125,7 @@ func (b *meterQueryStatementBuilder) buildPipelineStatement(
 	}
 
 	// final SELECT
-	return b.metricsStatementBuilder.BuildFinalSelect(cteFragments, cteArgs, qbtypes.RequestTypeTimeSeries, query)
+	return b.metricsStatementBuilder.BuildFinalSelect(cteFragments, cteArgs, requestType, query)
 }
 
 func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(

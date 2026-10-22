@@ -1,10 +1,10 @@
 import { useCallback, useRef, useState } from 'react';
 import { Info, Plus } from '@signozhq/icons';
-import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
+import { Pill, type PillCloseEvent } from '@signozhq/ui/pill';
 import { Typography } from '@signozhq/ui/typography';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
 
 import styles from './ItemInputSelector.module.scss';
@@ -93,7 +93,7 @@ function ItemInputSelector({
 	);
 
 	const handleBadgeClose = useCallback(
-		(e: React.MouseEvent, itemId: string, index: number): void => {
+		(e: PillCloseEvent, itemId: string, index: number): void => {
 			e.preventDefault();
 			handleRemove(itemId);
 
@@ -135,13 +135,15 @@ function ItemInputSelector({
 				prefix={prefixElement}
 				suffix={
 					<Button
+						color="primary"
 						variant="solid"
 						size="sm"
 						onClick={handleAddClick}
 						disabled={!inputValue.trim()}
-						data-testid={`item-input-selector-add-btn-${testId}`}
+						disabledTooltip="Enter a value first"
+						testId={`item-input-selector-add-btn-${testId}`}
+						prefix={<Plus size={14} />}
 					>
-						<Plus size={14} />
 						Add
 					</Button>
 				}
@@ -151,22 +153,19 @@ function ItemInputSelector({
 				<div className={styles.itemInputSelectorFooter}>
 					<div ref={badgesRef} className={styles.itemInputSelectorBadges}>
 						{selectedIds.map((id, index) => (
-							<Badge
+							<Pill.Closeable
 								key={id}
-								color="secondary"
-								className={styles.itemInputSelectorBadge}
 								testId={`item-badge-${testId}-${index}`}
-								closable
 								closeAriaLabel={`Remove ${id}`}
 								onClose={(e): void => handleBadgeClose(e, id, index)}
 							>
 								<Typography as="span" size="small" truncate={1} title={id}>
 									{id}
 								</Typography>
-							</Badge>
+							</Pill.Closeable>
 						))}
 					</div>
-					<TooltipSimple
+					<Tooltip
 						title={
 							<Typography align="left">
 								Still not sure on how to add selectors? <br />
@@ -182,7 +181,7 @@ function ItemInputSelector({
 						}
 					>
 						<Info size={16} className={styles.itemInputSelectorInfoIcon} />
-					</TooltipSimple>
+					</Tooltip>
 				</div>
 			) : (
 				<Typography className={styles.itemInputSelectorHint}>

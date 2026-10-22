@@ -404,7 +404,7 @@ def test_indexed_paths(
         token,
         [
             {
-                "path": "body.user.raw-data.name",
+                "path": "user.raw-data.name",
                 "indexes": [
                     {
                         "fieldDataType": "string",
@@ -414,7 +414,7 @@ def test_indexed_paths(
                 ],
             },
             {
-                "path": "body.user.raw-data.age",
+                "path": "user.raw-data.age",
                 "indexes": [
                     {
                         "fieldDataType": "int64",

@@ -12,6 +12,7 @@ import { useConfirmableAction } from 'hooks/useConfirmableAction';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import { useUnloadPrompt } from '../hooks/useUnloadPrompt';
 import styles from './Header.module.scss';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
@@ -41,6 +42,8 @@ function Header({
 	onSwitchToView,
 	onClose,
 }: HeaderProps): JSX.Element {
+	useUnloadPrompt(isDirty);
+
 	const discard = useConfirmableAction(
 		useCallback(async (): Promise<void> => {
 			// Only reachable after confirming a discard, which is gated on unsaved edits.
@@ -64,17 +67,24 @@ function Header({
 		<div className={styles.header}>
 			<div className={styles.title}>
 				<Button
+					aria-label="Close"
 					variant="ghost"
 					color="secondary"
-					size="icon"
-					suffix={<X size={14} />}
-					data-testid="panel-editor-v2-close"
+					size="sm"
+					icon
+					testId="panel-editor-v2-close"
 					onClick={handleCloseClick}
-				/>
+				>
+					<X size={14} />
+				</Button>
 				<Divider type="vertical" />
 				<Typography.Text>Configure panel</Typography.Text>
 				{isDirty && (
-					<Badge color="warning" data-testid="panel-editor-v2-unsaved-badge">
+					<Badge
+						variant="solid"
+						color="warning"
+						testId="panel-editor-v2-unsaved-badge"
+					>
 						Unsaved Changes
 					</Badge>
 				)}
@@ -87,9 +97,10 @@ function Header({
 				/>
 				{showSwitchToView && (
 					<Button
+						size="md"
 						variant="outlined"
 						color="secondary"
-						data-testid="panel-editor-v2-switch-to-view"
+						testId="panel-editor-v2-switch-to-view"
 						onClick={onSwitchToView}
 					>
 						Switch to View Mode
@@ -100,10 +111,12 @@ function Header({
 					disabledTooltip={readOnly ? readOnlyTooltip : undefined}
 				>
 					<Button
+						disabledTooltip={undefined}
+						size="md"
 						variant="solid"
 						color="primary"
-						data-testid="panel-editor-v2-save"
-						disabled={readOnly || isSaving}
+						testId="panel-editor-v2-save"
+						disabled={readOnly}
 						loading={!readOnly && isSaving}
 						onClick={readOnly ? undefined : onSave}
 					>
@@ -125,20 +138,22 @@ function Header({
 				footer={
 					<>
 						<Button
+							size="md"
 							type="button"
 							variant="solid"
-							color="destructive"
-							data-testid="panel-editor-v2-discard-confirm"
+							color="danger"
+							testId="panel-editor-v2-discard-confirm"
 							loading={discard.isPending}
 							onClick={discard.confirm}
 						>
 							Discard
 						</Button>
 						<Button
+							size="md"
 							type="button"
 							variant="outlined"
 							color="secondary"
-							data-testid="panel-editor-v2-discard-cancel"
+							testId="panel-editor-v2-discard-cancel"
 							onClick={discard.cancel}
 						>
 							Keep editing

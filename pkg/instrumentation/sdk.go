@@ -58,7 +58,9 @@ func New(ctx context.Context, cfg Config, build version.Build, serviceName strin
 
 	// Prepare the resource configuration by merging
 	// resource and attributes.
-	sch := semconv.SchemaURL
+	// contribsdkconfig merges this resource with sdkresource.Default().
+	// The merge fails if the schema URLs are different.
+	sch := sdkresource.Default().SchemaURL()
 	configResource := contribsdkconfig.Resource{
 		Attributes: mergeAttributes(cfg.Resource.Attributes, resource),
 		Detectors:  nil,

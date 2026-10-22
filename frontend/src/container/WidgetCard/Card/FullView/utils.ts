@@ -62,25 +62,21 @@ export const getAbbreviatedLabel = (label: string): string => {
 export const showAllDataSetFromApiResponse = (
 	apiResponse: QueryData[],
 ): LegendEntryProps[] =>
-	apiResponse.map(
-		(item): LegendEntryProps => ({
-			label: getLabelName(
-				item.metric || {},
-				item.queryName || '',
-				item.legend || '',
-			),
-			show: true,
-		}),
-	);
+	apiResponse.map((item): LegendEntryProps => ({
+		label: getLabelName(
+			item.metric || {},
+			item.queryName || '',
+			item.legend || '',
+		),
+		show: true,
+	}));
 
 export const showAllDataSet = (options: uPlot.Options): LegendEntryProps[] =>
 	options.series
-		.map(
-			(item): LegendEntryProps => ({
-				label: item.label || '',
-				show: true,
-			}),
-		)
+		.map((item): LegendEntryProps => ({
+			label: item.label || '',
+			show: true,
+		}))
 		.filter((_, index) => index !== 0);
 
 export const saveLegendEntriesToLocalStorage = ({
@@ -90,12 +86,10 @@ export const saveLegendEntriesToLocalStorage = ({
 }: SaveLegendEntriesToLocalStoreProps): void => {
 	const newLegendEntry = {
 		name,
-		dataIndex: options.series.map(
-			(item, index): LegendEntryProps => ({
-				label: item.label || '',
-				show: graphVisibilityState[index],
-			}),
-		),
+		dataIndex: options.series.map((item, index): LegendEntryProps => ({
+			label: item.label || '',
+			show: graphVisibilityState[index],
+		})),
 	};
 
 	let existingEntries: { name: string; dataIndex: LegendEntryProps[] }[] = [];

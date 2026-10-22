@@ -1,30 +1,31 @@
 .card {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
-	gap: 12px;
-	padding: 12px 14px;
-	border: 1px solid var(--l2-border);
-	border-radius: 2px;
-	background: var(--l2-background-60);
+	gap: 14px;
+	padding: 14px 16px;
+	border: 1px solid var(--l1-border);
+	border-radius: 4px;
+	background: var(--l2-background);
 }
 
 .text {
 	display: flex;
+	flex: 1;
 	flex-direction: column;
-	gap: 2px;
+	gap: 3px;
 	min-width: 0;
 }
 
 .title {
-	font-size: 12px;
-	font-weight: 600;
-	letter-spacing: 0.06em;
-	text-transform: uppercase;
-	color: var(--l2-foreground);
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 14px;
+	color: var(--l1-foreground);
 }
 
 .description {
 	font-size: 12px;
-	color: var(--l3-foreground);
+	line-height: 17px;
+	color: var(--l2-foreground);
 }

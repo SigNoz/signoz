@@ -1,10 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { membersMocks } from './Members.stories.mocks';
+import {
+	membersMocks,
+	openMember,
+	openResetLink,
+	sendInvites,
+	untilLoaded,
+} from './Members.stories.mocks';
 
 import SettingsPage from '../../Settings';
 
@@ -30,28 +36,8 @@ export default meta;
 
 type Story = StoryObj<MembersArgs>;
 
-/** The table fetches before it renders a row, which outlasts the 1s default. */
-const untilLoaded = { timeout: 15_000 };
-
 /** One more than the twenty rows a page holds. */
 const OVER_ONE_PAGE = 21;
-
-/**
- * The click handler sits on the row rather than the cell, and the header row
- * resolves before the body has one: wait on a cell, then click the row it is in.
- */
-const openMember = async (
-	canvasElement: HTMLElement,
-	name: RegExp,
-): Promise<void> => {
-	const cell = await within(canvasElement).findByText(
-		name,
-		undefined,
-		untilLoaded,
-	);
-
-	await userEvent.click(cell.closest('tr') as HTMLElement);
-};
 
 const openPendingMember = async ({
 	canvasElement,
@@ -212,5 +198,163 @@ export const InviteMembers: Story = {
 		);
 		// The form opens with a row per seat, each carrying its own email field.
 		await screen.findAllByTestId(/^invite-email-/, undefined, untilLoaded);
+	},
+};
+
+/**
+ * Invites sent to every address: the toast confirming it. Set Sending invites
+ * to `error` or `loading` to see the form instead.
+ */
+export const InvitesSentToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await sendInvites(canvasElement, [
+			'bran@nightswatch.io',
+			'hodor@nightswatch.io',
+		]);
+		if (args.invite === 'success') {
+			await waitFor(() =>
+				expect(screen.getByText(/invites sent successfully/i)).toBeVisible(),
+			);
+		}
+	},
+};
+
+/** One address refused out of two: the warning that some invites failed. */
+export const InvitesPartiallyFailedToast: Story = {
+	// The 409 for the refused address is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await sendInvites(canvasElement, [
+			'bran@nightswatch.io',
+			'hodor@blocked.example',
+		]);
+		if (args.invite === 'success') {
+			await waitFor(() =>
+				expect(screen.getByText(/some invites failed/i)).toBeVisible(),
+			);
+		}
+	},
+};
+
+/**
+ * A member's name changed and saved: the toast confirming it. Set Saving the
+ * member to `error` or `loading` to see the drawer instead.
+ */
+export const MemberUpdatedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await openMember(canvasElement, /jon snow/i);
+		const name = await screen.findByPlaceholderText(
+			/enter name/i,
+			undefined,
+			untilLoaded,
+		);
+
+		await waitFor(() => expect(name).toHaveValue('Jon Snow'), untilLoaded);
+		await userEvent.type(name, ' Targaryen');
+		await userEvent.click(
+			await screen.findByRole('button', { name: 'Save Member Details' }),
+		);
+		if (args.memberUpdate === 'success') {
+			await waitFor(() =>
+				expect(
+					screen.getByText(/member details updated successfully/i),
+				).toBeVisible(),
+			);
+		}
+	},
+};
+
+/**
+ * A member deleted from the confirmation: the toast confirming it. Set Deleting
+ * the member to `error` or `loading` to see the dialog instead.
+ */
+export const MemberDeletedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await openMember(canvasElement, /jon snow/i);
+		await userEvent.click(
+			await screen.findByRole('button', { name: 'Delete Member' }),
+		);
+		const dialog = await screen.findByRole('dialog', { name: 'Delete Member' });
+
+		await userEvent.click(
+			within(dialog).getByRole('button', { name: 'Delete Member' }),
+		);
+		if (args.memberDelete === 'success') {
+			await waitFor(() =>
+				expect(screen.getByText(/member deleted successfully/i)).toBeVisible(),
+			);
+		}
+	},
+};
+
+/**
+ * A pending invite revoked from the confirmation: the toast confirming it. Set
+ * Deleting the member to `error` or `loading` to see the dialog instead.
+ */
+export const InviteRevokedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await openPendingMember({ canvasElement });
+		await userEvent.click(
+			await screen.findByRole('button', { name: 'Revoke Invite' }),
+		);
+		const dialog = await screen.findByRole('dialog', { name: 'Revoke Invite' });
+
+		await userEvent.click(
+			within(dialog).getByRole('button', { name: 'Revoke Invite' }),
+		);
+		if (args.memberDelete === 'success') {
+			await waitFor(() =>
+				expect(screen.getByText(/invite revoked successfully/i)).toBeVisible(),
+			);
+		}
+	},
+};
+
+/**
+ * The generated password reset link copied from its dialog: the toast
+ * confirming it.
+ */
+export const ResetLinkCopiedToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openResetLink(canvasElement);
+		await userEvent.click(
+			await screen.findByRole('button', { name: /^copy$/i }, untilLoaded),
+		);
+		await screen.findByText(/reset link copied to clipboard/i);
+	},
+};
+
+/**
+ * The invite link of a pending member copied from its dialog: the toast
+ * confirming it.
+ */
+export const InviteLinkCopiedToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openPendingMember({ canvasElement });
+		await userEvent.click(
+			await screen.findByRole('button', { name: /invite link/i }, untilLoaded),
+		);
+		await userEvent.click(
+			await screen.findByRole('button', { name: /^copy$/i }, untilLoaded),
+		);
+		await screen.findByText(/invite link copied to clipboard/i);
+	},
+};
+
+/**
+ * A reset link request that answers without a token: the toast reporting the
+ * failure. Set Generating a link to `success` for the dialog instead.
+ */
+export const ResetLinkFailedToast: Story = {
+	args: { resetLink: 'no-token' },
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await openResetLink(canvasElement);
+		if (args.resetLink === 'no-token') {
+			await waitFor(() =>
+				expect(
+					screen.getByText(/failed to generate password reset link/i),
+				).toBeVisible(),
+			);
+		}
 	},
 };

@@ -1,6 +1,7 @@
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { cloneDeep } from 'lodash-es';
 import { OrderByPayload, Query } from 'types/api/queryBuilder/queryBuilderData';
+import { parseListOrderBy } from 'utils/explorerUtils';
 
 export const getListViewQuery = (
 	stagedQuery: Query,
@@ -11,12 +12,7 @@ export const getListViewQuery = (
 		: cloneDeep(initialQueriesMap.traces);
 
 	const orderByPayload: OrderByPayload[] = orderBy
-		? [
-				{
-					columnName: orderBy.split(':')[0],
-					order: orderBy.split(':')[1] as 'asc' | 'desc',
-				},
-			]
+		? [parseListOrderBy(orderBy)]
 		: [];
 
 	for (let i = 0; i < query.builder.queryData.length; i++) {

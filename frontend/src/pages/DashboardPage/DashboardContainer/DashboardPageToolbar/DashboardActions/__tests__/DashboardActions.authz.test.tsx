@@ -100,11 +100,20 @@ describe('DashboardActions - AuthZ', () => {
 			renderActions();
 
 			await waitFor(() => {
-				expect(screen.getByTestId('show-drawer')).toBeDisabled();
+				expect(screen.getByTestId('show-drawer')).toHaveAttribute(
+					'aria-disabled',
+					'true',
+				);
 			});
-			expect(screen.getByTestId('add-panel-header')).toBeDisabled();
+			expect(screen.getByTestId('add-panel-header')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 			// JSON stays available — it's a read-only inspect.
-			expect(screen.getByTestId('edit-json')).toBeEnabled();
+			expect(screen.getByTestId('edit-json')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 
 		it('keeps the menu items present and disabled', async () => {
@@ -126,6 +135,29 @@ describe('DashboardActions - AuthZ', () => {
 			expect(screen.getByText('Clone dashboard')).toBeInTheDocument();
 			// Full screen never depended on permission.
 			expect(screen.getByText('Full screen')).toBeInTheDocument();
+
+			expect(screen.getByTestId('dashboard-action-rename')).toHaveAttribute(
+				'data-disabled',
+			);
+			expect(screen.getByTestId('dashboard-action-delete')).toHaveAttribute(
+				'data-disabled',
+			);
+			await waitFor(
+				() => {
+					expect(screen.getByTestId('dashboard-action-clone')).toHaveAttribute(
+						'data-disabled',
+					);
+				},
+				{ timeout: 3000 },
+			);
+			expect(
+				screen.getByTestId('dashboard-action-fullscreen'),
+			).not.toHaveAttribute('data-disabled');
+
+			await userEvent.hover(screen.getByTestId('dashboard-action-rename'));
+			await expect(screen.findByRole('tooltip')).resolves.toHaveTextContent(
+				'no permission',
+			);
 		});
 	});
 
@@ -142,7 +174,10 @@ describe('DashboardActions - AuthZ', () => {
 			renderActions();
 
 			await waitFor(() => {
-				expect(screen.getByTestId('show-drawer')).toBeDisabled();
+				expect(screen.getByTestId('show-drawer')).toHaveAttribute(
+					'aria-disabled',
+					'true',
+				);
 			});
 			await openActionsMenu();
 			await expect(
@@ -164,12 +199,32 @@ describe('DashboardActions - AuthZ', () => {
 			renderActions();
 
 			await waitFor(() => {
-				expect(screen.getByTestId('show-drawer')).toBeEnabled();
+				expect(screen.getByTestId('show-drawer')).not.toHaveAttribute(
+					'aria-disabled',
+					'true',
+				);
 			});
 			await openActionsMenu();
 			await expect(
 				screen.findByText('Clone dashboard'),
 			).resolves.toBeInTheDocument();
+
+			await waitFor(
+				() => {
+					expect(screen.getByTestId('dashboard-action-clone')).toHaveAttribute(
+						'data-disabled',
+					);
+				},
+				{ timeout: 3000 },
+			);
+			expect(screen.getByTestId('dashboard-action-rename')).not.toHaveAttribute(
+				'data-disabled',
+			);
+
+			await userEvent.hover(screen.getByTestId('dashboard-action-clone'));
+			await expect(screen.findByRole('tooltip')).resolves.toHaveTextContent(
+				'is not authorized to perform create',
+			);
 		});
 	});
 
@@ -181,9 +236,15 @@ describe('DashboardActions - AuthZ', () => {
 			renderActions();
 
 			await waitFor(() => {
-				expect(screen.getByTestId('show-drawer')).toBeEnabled();
+				expect(screen.getByTestId('show-drawer')).not.toHaveAttribute(
+					'aria-disabled',
+					'true',
+				);
 			});
-			expect(screen.getByTestId('add-panel-header')).toBeEnabled();
+			expect(screen.getByTestId('add-panel-header')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 	});
 });

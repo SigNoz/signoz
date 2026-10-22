@@ -398,6 +398,19 @@ func NewTelemetryFieldKey(name string, fieldContext FieldContext, fieldDataType 
 	}
 }
 
+// JSONIndexLookup locates one domain's JSON sub-column indexes in
+// system.data_skipping_indices: the table to read, the base and promoted
+// column prefixes to match index expressions against, and the signal and
+// context to stamp on the results.
+type JSONIndexLookup struct {
+	Signal               Signal
+	FieldContext         FieldContext
+	DBName               string
+	LocalTableName       string
+	BaseColumnPrefix     string
+	PromotedColumnPrefix string
+}
+
 type TelemetryFieldKeySkipIndex struct {
 	Name            string        `json:"name"` // Name is TelemetryFieldKey.Name not IndexName from ClickHouse
 	FieldContext    FieldContext  `json:"fieldContext,omitzero"`

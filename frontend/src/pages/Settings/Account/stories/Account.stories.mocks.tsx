@@ -10,6 +10,12 @@ import { choiceControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 
 import {
+	MUTATION_OUTCOMES,
+	type MutationOutcome,
+	mutationResolver,
+} from '../../stories/__story_mockdata__/mutationOutcome';
+
+import {
 	seedTimezone,
 	TIMEZONES,
 	type TimezoneChoice,
@@ -17,6 +23,7 @@ import {
 } from './__story_mockdata__/account';
 
 const PREFERENCES = 'Account · preferences';
+const PROFILE = 'Account · profile';
 
 export const accountMocks = defineStoryMocks({
 	controls: {
@@ -27,16 +34,30 @@ export const accountMocks = defineStoryMocks({
 			options: TIMEZONES,
 			value: 'browser',
 		}),
+		nameUpdate: choiceControl<MutationOutcome>('Name update', {
+			group: PROFILE,
+			description:
+				'How the PATCH behind "Update name" answers. `success` raises the "Name updated" toast, `loading` never answers, `error` opens the error modal.',
+			options: MUTATION_OUTCOMES,
+			value: 'success',
+		}),
+		passwordUpdate: choiceControl<MutationOutcome>('Password update', {
+			group: PROFILE,
+			description:
+				'How the request behind "Reset password" answers. `success` raises the "Password updated" toast, `loading` never answers, `error` opens the error modal.',
+			options: MUTATION_OUTCOMES,
+			value: 'success',
+		}),
 	},
-	handlers: (_values, response) => [
-		rest.patch(
+	handlers: (values) => [
+		rest.put(
 			'http://localhost/api/v2/users/me',
-			response.json(() => updatedUserResponse()),
+			mutationResolver(values.nameUpdate, updatedUserResponse()),
 		),
 
-		rest.post(
+		rest.put(
 			'http://localhost/api/v2/users/me/factor_password',
-			response.json(() => updatedUserResponse()),
+			mutationResolver(values.passwordUpdate, updatedUserResponse()),
 		),
 	],
 	config: () => ({ route: ROUTES.MY_SETTINGS }),

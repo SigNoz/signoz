@@ -14,6 +14,7 @@ export interface LegendToolbarProps {
 	position: LegendPosition;
 	filterQuery: string;
 	onFilterQueryChange: (query: string) => void;
+	itemLabel: string;
 }
 
 /** Legend chrome: the series search box and the "Showing N of M" readout. */
@@ -23,6 +24,7 @@ export default function LegendToolbar({
 	position,
 	filterQuery,
 	onFilterQueryChange,
+	itemLabel,
 }: LegendToolbarProps): JSX.Element {
 	const handleFilterChange = useCallback(
 		(event: ChangeEvent<HTMLInputElement>): void =>
@@ -48,7 +50,7 @@ export default function LegendToolbar({
 			aria-live="polite"
 			data-testid="legend-status"
 		>
-			{`Showing ${visibleCount} of ${totalCount} series`}
+			{`Showing ${visibleCount} of ${totalCount} ${itemLabel}`}
 		</span>
 	);
 

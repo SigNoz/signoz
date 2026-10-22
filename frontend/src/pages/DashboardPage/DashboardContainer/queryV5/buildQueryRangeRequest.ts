@@ -5,18 +5,21 @@ import type {
 	Querybuildertypesv5CompositeQueryDTO,
 	Querybuildertypesv5OrderByDTO,
 	Querybuildertypesv5PromQueryDTO,
+	Querybuildertypesv5QueryEnvelopeBuilderAIDTO,
 	Querybuildertypesv5QueryEnvelopeDTO,
 	Querybuildertypesv5QueryRangeRequestDTO,
 	Querybuildertypesv5QueryRangeRequestDTOVariables,
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	Querybuildertypesv5OrderDirectionDTO,
+	Querybuildertypesv5QueryEnvelopeBuilderAIDTOType,
 	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
 	Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType,
 	Querybuildertypesv5QueryEnvelopePromQLDTOType,
 } from 'api/generated/services/sigNoz.schemas';
 
 import type { PanelQueryCapabilities } from '../Panels/types/panelCapabilities';
+import { isBuilderEnvelope } from 'lib/query/builderEnvelope';
 
 // Narrow view over the envelope spec variants. Orval erases envelope `spec` to `unknown`, so
 // shared fields are read through this view with a localized cast at the envelope boundary.
@@ -58,6 +61,15 @@ export function toQueryEnvelopes(
 					spec: plugin.spec as Querybuildertypesv5BuilderQuerySpecDTO,
 				},
 			];
+		case 'signoz/AIBuilderQuery':
+			// Same spec shape as a traces builder query. The envelope type is what
+			// tells the querier to run the AI statement builder.
+			return [
+				{
+					type: Querybuildertypesv5QueryEnvelopeBuilderAIDTOType.builder_ai_query,
+					spec: plugin.spec,
+				} as unknown as Querybuildertypesv5QueryEnvelopeBuilderAIDTO,
+			];
 		case 'signoz/PromQLQuery':
 			return [
 				{
@@ -88,10 +100,11 @@ export function toQueryEnvelopes(
 }
 
 /**
- * Step interval (seconds) for BAR panels capping the bar count (~80 max). Duplicated from V1
- * `getBarStepIntervalPoints` per the V1/V2 split policy.
+ * Step interval (seconds) capping how many points a range comes back as (~80 max), for the
+ * kinds that draw one mark per point. Duplicated from V1 `getBarStepIntervalPoints` per the
+ * V1/V2 split policy.
  */
-export function getBarStepIntervalSeconds(
+export function getBucketedStepIntervalSeconds(
 	startMs: number,
 	endMs: number,
 ): number {
@@ -115,23 +128,21 @@ export function getBarStepIntervalSeconds(
 }
 
 /**
- * BAR panels: builder queries without a user-set stepInterval get the range-derived one so bars
- * align (V1 parity: `updateBarStepInterval`).
+ * Builder queries without a user-set stepInterval get the range-derived one, so a wide range
+ * comes back as a readable number of marks instead of one per raw point (V1 parity:
+ * `updateBarStepInterval`). An explicit interval is the user's call and is left alone.
  */
-function withBarStepInterval(
+function withBucketedStepInterval(
 	envelopes: Querybuildertypesv5QueryEnvelopeDTO[],
 	startMs: number,
 	endMs: number,
 ): Querybuildertypesv5QueryEnvelopeDTO[] {
-	const stepInterval = getBarStepIntervalSeconds(startMs, endMs);
+	const stepInterval = getBucketedStepIntervalSeconds(startMs, endMs);
 	return envelopes.map((envelope) => {
-		if (
-			envelope.type !==
-			Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query
-		) {
+		if (!isBuilderEnvelope(envelope)) {
 			return envelope;
 		}
-		if (envelope.spec?.stepInterval) {
+		if ((envelope.spec as QuerySpecView)?.stepInterval) {
 			return envelope;
 		}
 		return {
@@ -139,8 +150,8 @@ function withBarStepInterval(
 			spec: {
 				...envelope.spec,
 				stepInterval,
-			} as Querybuildertypesv5BuilderQuerySpecDTO,
-		};
+			},
+		} as Querybuildertypesv5QueryEnvelopeDTO;
 	});
 }
 
@@ -153,10 +164,7 @@ function withListOrderTiebreaker(
 	envelopes: Querybuildertypesv5QueryEnvelopeDTO[],
 ): Querybuildertypesv5QueryEnvelopeDTO[] {
 	return envelopes.map((envelope) => {
-		if (
-			envelope.type !==
-			Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query
-		) {
+		if (!isBuilderEnvelope(envelope)) {
 			return envelope;
 		}
 		const spec = envelope.spec as QuerySpecView;
@@ -181,8 +189,8 @@ function withListOrderTiebreaker(
 					...primary,
 					{ key: { name: 'id' }, direction: primary[0].direction },
 				],
-			} as Querybuildertypesv5BuilderQuerySpecDTO,
-		};
+			},
+		} as Querybuildertypesv5QueryEnvelopeDTO;
 	});
 }
 
@@ -195,10 +203,7 @@ function withPagination(
 	{ offset, limit }: { offset: number; limit: number },
 ): Querybuildertypesv5QueryEnvelopeDTO[] {
 	return envelopes.map((envelope) => {
-		if (
-			envelope.type !==
-			Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query
-		) {
+		if (!isBuilderEnvelope(envelope)) {
 			return envelope;
 		}
 		return {
@@ -207,9 +212,33 @@ function withPagination(
 				...envelope.spec,
 				offset,
 				limit,
-			} as Querybuildertypesv5BuilderQuerySpecDTO,
-		};
+			},
+		} as Querybuildertypesv5QueryEnvelopeDTO;
 	});
+}
+
+function withDefaultRowLimit(
+	envelopes: Querybuildertypesv5QueryEnvelopeDTO[],
+	limit: number,
+): Querybuildertypesv5QueryEnvelopeDTO[] {
+	const [envelope] = envelopes;
+	if (
+		envelopes.length !== 1 ||
+		envelope.type !==
+			Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query ||
+		envelope.spec?.limit
+	) {
+		return envelopes;
+	}
+	return [
+		{
+			...envelope,
+			spec: {
+				...envelope.spec,
+				limit,
+			} as Querybuildertypesv5BuilderQuerySpecDTO,
+		},
+	];
 }
 
 export interface BuildQueryRangeRequestArgs {
@@ -244,6 +273,7 @@ export function buildQueryRangeRequest({
 		formatTableResultForUI,
 		bucketedStepInterval,
 		orderTiebreaker,
+		defaultRowLimit,
 	},
 	startMs,
 	endMs,
@@ -253,13 +283,16 @@ export function buildQueryRangeRequest({
 }: BuildQueryRangeRequestArgs): Querybuildertypesv5QueryRangeRequestDTO {
 	let envelopes = toQueryEnvelopes(queries);
 	if (bucketedStepInterval) {
-		envelopes = withBarStepInterval(envelopes, startMs, endMs);
+		envelopes = withBucketedStepInterval(envelopes, startMs, endMs);
 	}
 	if (orderTiebreaker) {
 		envelopes = withListOrderTiebreaker(envelopes);
 	}
 	if (pagination) {
 		envelopes = withPagination(envelopes, pagination);
+	}
+	if (defaultRowLimit) {
+		envelopes = withDefaultRowLimit(envelopes, defaultRowLimit);
 	}
 
 	return {
@@ -301,11 +334,7 @@ export function hasRunnableQueries(queries: DashboardtypesQueryDTO[]): boolean {
 	}
 
 	const metricsSpecs = envelopes
-		.filter(
-			(envelope) =>
-				envelope.type ===
-				Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query,
-		)
+		.filter(isBuilderEnvelope)
 		.map((envelope) => envelope.spec as QuerySpecView)
 		.filter((spec) => spec.signal === 'metrics');
 

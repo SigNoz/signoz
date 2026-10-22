@@ -18,6 +18,7 @@ import {
 } from 'constants/queryBuilder';
 import {
 	metricsGaugeSpaceAggregateOperatorOptions,
+	metricsHeatmapHistogramSpaceAggregateOperatorOptions,
 	metricsHistogramSpaceAggregateOperatorOptions,
 	metricsSumSpaceAggregateOperatorOptions,
 	metricsUnknownSpaceAggregateOperatorOptions,
@@ -176,6 +177,11 @@ export const useQueryOperations: UseQueryOperations = ({
 							(aggregateAttribute?.type as ATTRIBUTE_TYPES) || ATTRIBUTE_TYPES.GAUGE,
 					});
 
+			const histogramSpaceAggregationOptions =
+				panelType === PANEL_TYPES.HEATMAP
+					? metricsHeatmapHistogramSpaceAggregateOperatorOptions
+					: metricsHistogramSpaceAggregateOperatorOptions;
+
 			switch (aggregateAttribute?.type) {
 				case ATTRIBUTE_TYPES.SUM:
 					setSpaceAggregationOptions(metricsSumSpaceAggregateOperatorOptions);
@@ -185,11 +191,11 @@ export const useQueryOperations: UseQueryOperations = ({
 					break;
 
 				case ATTRIBUTE_TYPES.HISTOGRAM:
-					setSpaceAggregationOptions(metricsHistogramSpaceAggregateOperatorOptions);
+					setSpaceAggregationOptions(histogramSpaceAggregationOptions);
 					break;
 
 				case ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM:
-					setSpaceAggregationOptions(metricsHistogramSpaceAggregateOperatorOptions);
+					setSpaceAggregationOptions(histogramSpaceAggregationOptions);
 					break;
 				default:
 					setSpaceAggregationOptions(metricsUnknownSpaceAggregateOperatorOptions);
@@ -298,10 +304,17 @@ export const useQueryOperations: UseQueryOperations = ({
 									timeAggregation: '',
 									metricName: newQuery.aggregateAttribute?.key || '',
 									temporality: '',
-									spaceAggregation: MetricAggregateOperator.P90,
+									// A heatmap cell holds a count of observations per `le` band, which is
+									// the one option the kind offers — a percentile default would sit in the
+									// selector with nothing behind it.
+									spaceAggregation:
+										panelType === PANEL_TYPES.HEATMAP
+											? MetricAggregateOperator.COUNT
+											: MetricAggregateOperator.P90,
 									reduceTo: ReduceOperators.AVG,
 								},
 							];
+							newQuery.bucketOptions = undefined;
 						} else {
 							newQuery.aggregations = [
 								{
@@ -388,6 +401,7 @@ export const useQueryOperations: UseQueryOperations = ({
 			index,
 			handleMetricAggregateAtributeTypes,
 			previousMetricInfo,
+			panelType,
 		],
 	);
 
