@@ -46,7 +46,11 @@ function QuerySection({
 }: QuerySectionProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
-	const [currentTab, setCurrentTab] = useState(queryCategory);
+	const [currentTab, setCurrentTab] = useState(
+		alertType === AlertTypes.EXCEPTIONS_BASED_ALERT
+			? EQueryType.CLICKHOUSE
+			: queryCategory,
+	);
 	const [signalSource, setSignalSource] = useState<string>('metrics');
 
 	const handleQueryCategoryChange = (queryType: string): void => {
@@ -144,6 +148,16 @@ function QuerySection({
 		}
 	}, [isAnomalyDetection, queryCategory, setQueryCategory]);
 
+	useEffect(() => {
+		if (
+			alertType === AlertTypes.EXCEPTIONS_BASED_ALERT &&
+			queryCategory !== EQueryType.CLICKHOUSE
+		) {
+			setQueryCategory(EQueryType.CLICKHOUSE);
+			setCurrentTab(EQueryType.CLICKHOUSE);
+		}
+	}, [alertType, queryCategory, setQueryCategory]);
+
 	const items = useMemo(
 		() => [
 			{
@@ -219,6 +233,11 @@ function QuerySection({
 	}, [runQuery]);
 
 	const renderTabs = (typ: AlertTypes): JSX.Element | null => {
+		const supportedTabs =
+			typ === AlertTypes.EXCEPTIONS_BASED_ALERT
+				? tabs.filter(({ key }) => key === EQueryType.CLICKHOUSE)
+				: tabs;
+
 		switch (typ) {
 			case AlertTypes.TRACES_BASED_ALERT:
 			case AlertTypes.LOGS_BASED_ALERT:
@@ -248,7 +267,7 @@ function QuerySection({
 									/>
 								</span>
 							}
-							items={tabs}
+							items={supportedTabs}
 						/>
 					</div>
 				);
