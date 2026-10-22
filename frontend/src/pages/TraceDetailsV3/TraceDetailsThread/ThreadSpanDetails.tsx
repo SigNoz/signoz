@@ -5,13 +5,16 @@ import { ResizableBox } from 'periscope/components/ResizableBox';
 import { TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
 
 import SpanDetailsPanel from '../SpanDetailsPanel/SpanDetailsPanel';
-import { SpanDetailVariant } from '../SpanDetailsPanel/constants';
+import {
+	SPAN_DETAILS_PANEL_MIN_WIDTH,
+	SpanDetailVariant,
+} from '../SpanDetailsPanel/constants';
 import { useTraceSummary } from '../TraceDetailsHeader/useTraceSummary';
 import { ThreadSpan } from './types';
 
 import styles from './TraceDetailsThread.module.scss';
 
-const RIGHT_DOCK_MIN = 480;
+const RIGHT_DOCK_MIN = SPAN_DETAILS_PANEL_MIN_WIDTH;
 const RIGHT_DOCK_MAX = 720;
 const BOTTOM_DOCK_DEFAULT = 360;
 const BOTTOM_DOCK_MIN = 200;
