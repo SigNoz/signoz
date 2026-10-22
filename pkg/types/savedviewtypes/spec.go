@@ -23,7 +23,7 @@ type Display struct {
 	MaxLines int    `json:"maxLines" description:"The number of lines shown per row before the body is truncated in logs list views. 0 leaves the explorer default."`
 	FontSize string `json:"fontSize" description:"The row font size in list views: small, medium or large. Empty leaves the explorer default."`
 	Format   string `json:"format" description:"The list rendering mode in the logs explorer: raw, table or list. Empty leaves the explorer default."`
-	Color    string `json:"color" description:"A CSS color stored with the view, such as a hex code. The legacy explorer view picker shows it as the view's dot; the saved views panel does not use it. Empty leaves the default."`
+	Color    string `json:"color" description:"A CSS color such as a hex code, shown as the view's color in the explorer view picker; the saved views panel does not use it. Empty leaves the default."`
 }
 
 // SavedViewSpec is the typed content of a saved view.
@@ -32,7 +32,7 @@ type SavedViewSpec struct {
 	PanelType      PanelType                          `json:"panelType" required:"true" description:"The explorer panel the view renders as: list, graph, table, value or trace."`
 	RequestType    qbtypes.RequestType                `json:"requestType" required:"true" description:"The query_range request type the panel issues: raw for list panels, time_series for graphs, scalar for table and value panels, trace for trace panels."`
 	Queries        []qbtypes.QueryEnvelope            `json:"queries" required:"true" nullable:"false" minItems:"1" description:"The query envelopes the view runs, in the v5 query builder shape. At least one is required and the set is validated for the requestType."`
-	SelectedFields []telemetrytypes.TelemetryFieldKey `json:"selectedFields" nullable:"false" description:"The columns shown in list panels, each a field key with name and optionally signal, fieldContext and fieldDataType. Send explicit columns for traces and logs list views: the saved views panel treats an empty array as no columns for traces and as only the required columns for logs, while the legacy explorer picker falls back to the default columns. Use an empty array for graph views."`
+	SelectedFields []telemetrytypes.TelemetryFieldKey `json:"selectedFields" nullable:"false" description:"The columns shown in list panels, each a field key with name and optionally signal, fieldContext and fieldDataType. Send explicit columns for list views: an empty array yields no trace columns and only the required log columns. Use an empty array for graph views."`
 	Display        Display                            `json:"display" description:"Rendering preferences for list panels. All fields are optional."`
 }
 

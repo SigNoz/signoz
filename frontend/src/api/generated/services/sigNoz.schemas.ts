@@ -12143,7 +12143,7 @@ export enum RuletypesThresholdKindDTO {
 export interface SavedviewtypesDisplayDTO {
 	/**
 	 * @type string
-	 * @description A CSS color stored with the view, such as a hex code. The legacy explorer view picker shows it as the view's dot; the saved views panel does not use it. Empty leaves the default.
+	 * @description A CSS color such as a hex code, shown as the view's color in the explorer view picker; the saved views panel does not use it. Empty leaves the default.
 	 */
 	color?: string;
 	/**
@@ -12205,7 +12205,7 @@ export interface SavedviewtypesSavedViewSpecDTO {
 	requestType: Querybuildertypesv5RequestTypeDTO;
 	/**
 	 * @type array
-	 * @description The columns shown in list panels, each a field key with name and optionally signal, fieldContext and fieldDataType. Send explicit columns for traces and logs list views: the saved views panel treats an empty array as no columns for traces and as only the required columns for logs, while the legacy explorer picker falls back to the default columns. Use an empty array for graph views.
+	 * @description The columns shown in list panels, each a field key with name and optionally signal, fieldContext and fieldDataType. Send explicit columns for list views: an empty array yields no trace columns and only the required log columns. Use an empty array for graph views.
 	 */
 	selectedFields?: TelemetrytypesTelemetryFieldKeyDTO[];
 }
