@@ -13268,19 +13268,19 @@ export type GetFieldsKeysParams = {
 	source?: TelemetrytypesSourceDTO;
 	/**
 	 * @type integer
-	 * @description Maximum number of results read per signal. Defaults to 1000 for keys and 50 for values. For keys, intrinsic and materialized fields are added on top, and an empty signal applies the limit to traces, logs and metrics separately, so the response can exceed it.
+	 * @description Maximum number of results per signal. Defaults to 1000 for keys and 50 for values. For keys, intrinsic and materialized fields are added on top, and an empty signal applies the limit to traces, logs and metrics separately, so the response can exceed it.
 	 */
 	limit?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description Start of the lookup window in Unix milliseconds, rounded down to a 6 hour boundary before use. Key lookups and meter lookups ignore it. Trace and log value lookups keep values from the rounded start's calendar day on, metric attribute values keep attributes last reported at or after it, and relatedValues keep rows at or after it. Omit for no lower bound.
+	 * @description Start of the lookup window in Unix milliseconds, rounded down to a 6 hour boundary. Ignored for key lookups and meter lookups; trace and log values apply it at calendar-day granularity; metric attribute values and relatedValues apply it. Omit for no lower bound.
 	 */
 	startUnixMilli?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description End of the lookup window in Unix milliseconds. Key lookups, trace and log value lookups and meter lookups ignore it. Metric attribute values keep attributes first reported at or before it, and relatedValues keep rows at or before it. Omit for no upper bound.
+	 * @description End of the lookup window in Unix milliseconds. Ignored for key lookups, trace and log value lookups and meter lookups; applied to metric attribute values and relatedValues. Omit for no upper bound.
 	 */
 	endUnixMilli?: number;
 	/**
@@ -13303,7 +13303,7 @@ export type GetFieldsKeysParams = {
 	metricNamespace?: string;
 	/**
 	 * @type string
-	 * @description Substring to match: against key names for keys, against the values of name for values. Case-insensitive for traces, logs and metrics; the meter source matches case-sensitively and treats % and _ as LIKE wildcards. For keys, a context prefix such as resource.service.name sets fieldContext when it is empty.
+	 * @description Substring to match: against key names for keys, against the values of name for values. Case-insensitive except for the meter source, where it is case-sensitive and % and _ act as wildcards. For keys, a context prefix such as resource.service.name sets fieldContext when it is empty.
 	 */
 	searchText?: string;
 };
@@ -13327,19 +13327,19 @@ export type GetFieldsValuesParams = {
 	source?: TelemetrytypesSourceDTO;
 	/**
 	 * @type integer
-	 * @description Maximum number of results read per signal. Defaults to 1000 for keys and 50 for values. For keys, intrinsic and materialized fields are added on top, and an empty signal applies the limit to traces, logs and metrics separately, so the response can exceed it.
+	 * @description Maximum number of results per signal. Defaults to 1000 for keys and 50 for values. For keys, intrinsic and materialized fields are added on top, and an empty signal applies the limit to traces, logs and metrics separately, so the response can exceed it.
 	 */
 	limit?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description Start of the lookup window in Unix milliseconds, rounded down to a 6 hour boundary before use. Key lookups and meter lookups ignore it. Trace and log value lookups keep values from the rounded start's calendar day on, metric attribute values keep attributes last reported at or after it, and relatedValues keep rows at or after it. Omit for no lower bound.
+	 * @description Start of the lookup window in Unix milliseconds, rounded down to a 6 hour boundary. Ignored for key lookups and meter lookups; trace and log values apply it at calendar-day granularity; metric attribute values and relatedValues apply it. Omit for no lower bound.
 	 */
 	startUnixMilli?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description End of the lookup window in Unix milliseconds. Key lookups, trace and log value lookups and meter lookups ignore it. Metric attribute values keep attributes first reported at or before it, and relatedValues keep rows at or before it. Omit for no upper bound.
+	 * @description End of the lookup window in Unix milliseconds. Ignored for key lookups, trace and log value lookups and meter lookups; applied to metric attribute values and relatedValues. Omit for no upper bound.
 	 */
 	endUnixMilli?: number;
 	/**
@@ -13362,7 +13362,7 @@ export type GetFieldsValuesParams = {
 	metricNamespace?: string;
 	/**
 	 * @type string
-	 * @description Substring to match: against key names for keys, against the values of name for values. Case-insensitive for traces, logs and metrics; the meter source matches case-sensitively and treats % and _ as LIKE wildcards. For keys, a context prefix such as resource.service.name sets fieldContext when it is empty.
+	 * @description Substring to match: against key names for keys, against the values of name for values. Case-insensitive except for the meter source, where it is case-sensitive and % and _ act as wildcards. For keys, a context prefix such as resource.service.name sets fieldContext when it is empty.
 	 */
 	searchText?: string;
 	/**
@@ -14870,19 +14870,19 @@ export type GetRuleHistoryFilterKeysParams = {
 	source?: TelemetrytypesSourceDTO;
 	/**
 	 * @type integer
-	 * @description Maximum number of results read per signal. Defaults to 1000 for keys and 50 for values. For keys, intrinsic and materialized fields are added on top, and an empty signal applies the limit to traces, logs and metrics separately, so the response can exceed it.
+	 * @description Maximum number of results per signal. Defaults to 1000 for keys and 50 for values. For keys, intrinsic and materialized fields are added on top, and an empty signal applies the limit to traces, logs and metrics separately, so the response can exceed it.
 	 */
 	limit?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description Start of the lookup window in Unix milliseconds, rounded down to a 6 hour boundary before use. Key lookups and meter lookups ignore it. Trace and log value lookups keep values from the rounded start's calendar day on, metric attribute values keep attributes last reported at or after it, and relatedValues keep rows at or after it. Omit for no lower bound.
+	 * @description Start of the lookup window in Unix milliseconds, rounded down to a 6 hour boundary. Ignored for key lookups and meter lookups; trace and log values apply it at calendar-day granularity; metric attribute values and relatedValues apply it. Omit for no lower bound.
 	 */
 	startUnixMilli?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description End of the lookup window in Unix milliseconds. Key lookups, trace and log value lookups and meter lookups ignore it. Metric attribute values keep attributes first reported at or before it, and relatedValues keep rows at or before it. Omit for no upper bound.
+	 * @description End of the lookup window in Unix milliseconds. Ignored for key lookups, trace and log value lookups and meter lookups; applied to metric attribute values and relatedValues. Omit for no upper bound.
 	 */
 	endUnixMilli?: number;
 	/**
@@ -14905,7 +14905,7 @@ export type GetRuleHistoryFilterKeysParams = {
 	metricNamespace?: string;
 	/**
 	 * @type string
-	 * @description Substring to match: against key names for keys, against the values of name for values. Case-insensitive for traces, logs and metrics; the meter source matches case-sensitively and treats % and _ as LIKE wildcards. For keys, a context prefix such as resource.service.name sets fieldContext when it is empty.
+	 * @description Substring to match: against key names for keys, against the values of name for values. Case-insensitive except for the meter source, where it is case-sensitive and % and _ act as wildcards. For keys, a context prefix such as resource.service.name sets fieldContext when it is empty.
 	 */
 	searchText?: string;
 };
@@ -14932,19 +14932,19 @@ export type GetRuleHistoryFilterValuesParams = {
 	source?: TelemetrytypesSourceDTO;
 	/**
 	 * @type integer
-	 * @description Maximum number of results read per signal. Defaults to 1000 for keys and 50 for values. For keys, intrinsic and materialized fields are added on top, and an empty signal applies the limit to traces, logs and metrics separately, so the response can exceed it.
+	 * @description Maximum number of results per signal. Defaults to 1000 for keys and 50 for values. For keys, intrinsic and materialized fields are added on top, and an empty signal applies the limit to traces, logs and metrics separately, so the response can exceed it.
 	 */
 	limit?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description Start of the lookup window in Unix milliseconds, rounded down to a 6 hour boundary before use. Key lookups and meter lookups ignore it. Trace and log value lookups keep values from the rounded start's calendar day on, metric attribute values keep attributes last reported at or after it, and relatedValues keep rows at or after it. Omit for no lower bound.
+	 * @description Start of the lookup window in Unix milliseconds, rounded down to a 6 hour boundary. Ignored for key lookups and meter lookups; trace and log values apply it at calendar-day granularity; metric attribute values and relatedValues apply it. Omit for no lower bound.
 	 */
 	startUnixMilli?: number;
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description End of the lookup window in Unix milliseconds. Key lookups, trace and log value lookups and meter lookups ignore it. Metric attribute values keep attributes first reported at or before it, and relatedValues keep rows at or before it. Omit for no upper bound.
+	 * @description End of the lookup window in Unix milliseconds. Ignored for key lookups, trace and log value lookups and meter lookups; applied to metric attribute values and relatedValues. Omit for no upper bound.
 	 */
 	endUnixMilli?: number;
 	/**
@@ -14967,7 +14967,7 @@ export type GetRuleHistoryFilterValuesParams = {
 	metricNamespace?: string;
 	/**
 	 * @type string
-	 * @description Substring to match: against key names for keys, against the values of name for values. Case-insensitive for traces, logs and metrics; the meter source matches case-sensitively and treats % and _ as LIKE wildcards. For keys, a context prefix such as resource.service.name sets fieldContext when it is empty.
+	 * @description Substring to match: against key names for keys, against the values of name for values. Case-insensitive except for the meter source, where it is case-sensitive and % and _ act as wildcards. For keys, a context prefix such as resource.service.name sets fieldContext when it is empty.
 	 */
 	searchText?: string;
 	/**

@@ -13508,44 +13508,40 @@ paths:
           - $ref: '#/components/schemas/TelemetrytypesSource'
           description: The data source within the signal. Use meter for Cost Meter
             metrics; empty means the default source.
-      - description: Maximum number of results read per signal. Defaults to 1000 for
-          keys and 50 for values. For keys, intrinsic and materialized fields are
-          added on top, and an empty signal applies the limit to traces, logs and
-          metrics separately, so the response can exceed it.
+      - description: Maximum number of results per signal. Defaults to 1000 for keys
+          and 50 for values. For keys, intrinsic and materialized fields are added
+          on top, and an empty signal applies the limit to traces, logs and metrics
+          separately, so the response can exceed it.
         in: query
         name: limit
         schema:
-          description: Maximum number of results read per signal. Defaults to 1000
-            for keys and 50 for values. For keys, intrinsic and materialized fields
-            are added on top, and an empty signal applies the limit to traces, logs
-            and metrics separately, so the response can exceed it.
+          description: Maximum number of results per signal. Defaults to 1000 for
+            keys and 50 for values. For keys, intrinsic and materialized fields are
+            added on top, and an empty signal applies the limit to traces, logs and
+            metrics separately, so the response can exceed it.
           type: integer
       - description: Start of the lookup window in Unix milliseconds, rounded down
-          to a 6 hour boundary before use. Key lookups and meter lookups ignore it.
-          Trace and log value lookups keep values from the rounded start's calendar
-          day on, metric attribute values keep attributes last reported at or after
-          it, and relatedValues keep rows at or after it. Omit for no lower bound.
+          to a 6 hour boundary. Ignored for key lookups and meter lookups; trace and
+          log values apply it at calendar-day granularity; metric attribute values
+          and relatedValues apply it. Omit for no lower bound.
         in: query
         name: startUnixMilli
         schema:
           description: Start of the lookup window in Unix milliseconds, rounded down
-            to a 6 hour boundary before use. Key lookups and meter lookups ignore
-            it. Trace and log value lookups keep values from the rounded start's calendar
-            day on, metric attribute values keep attributes last reported at or after
-            it, and relatedValues keep rows at or after it. Omit for no lower bound.
+            to a 6 hour boundary. Ignored for key lookups and meter lookups; trace
+            and log values apply it at calendar-day granularity; metric attribute
+            values and relatedValues apply it. Omit for no lower bound.
           format: int64
           type: integer
-      - description: End of the lookup window in Unix milliseconds. Key lookups, trace
-          and log value lookups and meter lookups ignore it. Metric attribute values
-          keep attributes first reported at or before it, and relatedValues keep rows
-          at or before it. Omit for no upper bound.
+      - description: End of the lookup window in Unix milliseconds. Ignored for key
+          lookups, trace and log value lookups and meter lookups; applied to metric
+          attribute values and relatedValues. Omit for no upper bound.
         in: query
         name: endUnixMilli
         schema:
-          description: End of the lookup window in Unix milliseconds. Key lookups,
-            trace and log value lookups and meter lookups ignore it. Metric attribute
-            values keep attributes first reported at or before it, and relatedValues
-            keep rows at or before it. Omit for no upper bound.
+          description: End of the lookup window in Unix milliseconds. Ignored for
+            key lookups, trace and log value lookups and meter lookups; applied to
+            metric attribute values and relatedValues. Omit for no upper bound.
           format: int64
           type: integer
       - description: 'Restricts keys to one context: resource, attribute, scope, span,
@@ -13585,18 +13581,16 @@ paths:
             only.
           type: string
       - description: 'Substring to match: against key names for keys, against the
-          values of name for values. Case-insensitive for traces, logs and metrics;
-          the meter source matches case-sensitively and treats % and _ as LIKE wildcards.
-          For keys, a context prefix such as resource.service.name sets fieldContext
-          when it is empty.'
+          values of name for values. Case-insensitive except for the meter source,
+          where it is case-sensitive and % and _ act as wildcards. For keys, a context
+          prefix such as resource.service.name sets fieldContext when it is empty.'
         in: query
         name: searchText
         schema:
           description: 'Substring to match: against key names for keys, against the
-            values of name for values. Case-insensitive for traces, logs and metrics;
-            the meter source matches case-sensitively and treats % and _ as LIKE wildcards.
-            For keys, a context prefix such as resource.service.name sets fieldContext
-            when it is empty.'
+            values of name for values. Case-insensitive except for the meter source,
+            where it is case-sensitive and % and _ act as wildcards. For keys, a context
+            prefix such as resource.service.name sets fieldContext when it is empty.'
           type: string
       responses:
         "200":
@@ -13664,44 +13658,40 @@ paths:
           - $ref: '#/components/schemas/TelemetrytypesSource'
           description: The data source within the signal. Use meter for Cost Meter
             metrics; empty means the default source.
-      - description: Maximum number of results read per signal. Defaults to 1000 for
-          keys and 50 for values. For keys, intrinsic and materialized fields are
-          added on top, and an empty signal applies the limit to traces, logs and
-          metrics separately, so the response can exceed it.
+      - description: Maximum number of results per signal. Defaults to 1000 for keys
+          and 50 for values. For keys, intrinsic and materialized fields are added
+          on top, and an empty signal applies the limit to traces, logs and metrics
+          separately, so the response can exceed it.
         in: query
         name: limit
         schema:
-          description: Maximum number of results read per signal. Defaults to 1000
-            for keys and 50 for values. For keys, intrinsic and materialized fields
-            are added on top, and an empty signal applies the limit to traces, logs
-            and metrics separately, so the response can exceed it.
+          description: Maximum number of results per signal. Defaults to 1000 for
+            keys and 50 for values. For keys, intrinsic and materialized fields are
+            added on top, and an empty signal applies the limit to traces, logs and
+            metrics separately, so the response can exceed it.
           type: integer
       - description: Start of the lookup window in Unix milliseconds, rounded down
-          to a 6 hour boundary before use. Key lookups and meter lookups ignore it.
-          Trace and log value lookups keep values from the rounded start's calendar
-          day on, metric attribute values keep attributes last reported at or after
-          it, and relatedValues keep rows at or after it. Omit for no lower bound.
+          to a 6 hour boundary. Ignored for key lookups and meter lookups; trace and
+          log values apply it at calendar-day granularity; metric attribute values
+          and relatedValues apply it. Omit for no lower bound.
         in: query
         name: startUnixMilli
         schema:
           description: Start of the lookup window in Unix milliseconds, rounded down
-            to a 6 hour boundary before use. Key lookups and meter lookups ignore
-            it. Trace and log value lookups keep values from the rounded start's calendar
-            day on, metric attribute values keep attributes last reported at or after
-            it, and relatedValues keep rows at or after it. Omit for no lower bound.
+            to a 6 hour boundary. Ignored for key lookups and meter lookups; trace
+            and log values apply it at calendar-day granularity; metric attribute
+            values and relatedValues apply it. Omit for no lower bound.
           format: int64
           type: integer
-      - description: End of the lookup window in Unix milliseconds. Key lookups, trace
-          and log value lookups and meter lookups ignore it. Metric attribute values
-          keep attributes first reported at or before it, and relatedValues keep rows
-          at or before it. Omit for no upper bound.
+      - description: End of the lookup window in Unix milliseconds. Ignored for key
+          lookups, trace and log value lookups and meter lookups; applied to metric
+          attribute values and relatedValues. Omit for no upper bound.
         in: query
         name: endUnixMilli
         schema:
-          description: End of the lookup window in Unix milliseconds. Key lookups,
-            trace and log value lookups and meter lookups ignore it. Metric attribute
-            values keep attributes first reported at or before it, and relatedValues
-            keep rows at or before it. Omit for no upper bound.
+          description: End of the lookup window in Unix milliseconds. Ignored for
+            key lookups, trace and log value lookups and meter lookups; applied to
+            metric attribute values and relatedValues. Omit for no upper bound.
           format: int64
           type: integer
       - description: 'Restricts keys to one context: resource, attribute, scope, span,
@@ -13741,18 +13731,16 @@ paths:
             only.
           type: string
       - description: 'Substring to match: against key names for keys, against the
-          values of name for values. Case-insensitive for traces, logs and metrics;
-          the meter source matches case-sensitively and treats % and _ as LIKE wildcards.
-          For keys, a context prefix such as resource.service.name sets fieldContext
-          when it is empty.'
+          values of name for values. Case-insensitive except for the meter source,
+          where it is case-sensitive and % and _ act as wildcards. For keys, a context
+          prefix such as resource.service.name sets fieldContext when it is empty.'
         in: query
         name: searchText
         schema:
           description: 'Substring to match: against key names for keys, against the
-            values of name for values. Case-insensitive for traces, logs and metrics;
-            the meter source matches case-sensitively and treats % and _ as LIKE wildcards.
-            For keys, a context prefix such as resource.service.name sets fieldContext
-            when it is empty.'
+            values of name for values. Case-insensitive except for the meter source,
+            where it is case-sensitive and % and _ act as wildcards. For keys, a context
+            prefix such as resource.service.name sets fieldContext when it is empty.'
           type: string
       - description: The key whose values to return, such as service.name. A context
           prefix such as resource.service.name sets fieldContext when it is empty.
@@ -25447,44 +25435,40 @@ paths:
           - $ref: '#/components/schemas/TelemetrytypesSource'
           description: The data source within the signal. Use meter for Cost Meter
             metrics; empty means the default source.
-      - description: Maximum number of results read per signal. Defaults to 1000 for
-          keys and 50 for values. For keys, intrinsic and materialized fields are
-          added on top, and an empty signal applies the limit to traces, logs and
-          metrics separately, so the response can exceed it.
+      - description: Maximum number of results per signal. Defaults to 1000 for keys
+          and 50 for values. For keys, intrinsic and materialized fields are added
+          on top, and an empty signal applies the limit to traces, logs and metrics
+          separately, so the response can exceed it.
         in: query
         name: limit
         schema:
-          description: Maximum number of results read per signal. Defaults to 1000
-            for keys and 50 for values. For keys, intrinsic and materialized fields
-            are added on top, and an empty signal applies the limit to traces, logs
-            and metrics separately, so the response can exceed it.
+          description: Maximum number of results per signal. Defaults to 1000 for
+            keys and 50 for values. For keys, intrinsic and materialized fields are
+            added on top, and an empty signal applies the limit to traces, logs and
+            metrics separately, so the response can exceed it.
           type: integer
       - description: Start of the lookup window in Unix milliseconds, rounded down
-          to a 6 hour boundary before use. Key lookups and meter lookups ignore it.
-          Trace and log value lookups keep values from the rounded start's calendar
-          day on, metric attribute values keep attributes last reported at or after
-          it, and relatedValues keep rows at or after it. Omit for no lower bound.
+          to a 6 hour boundary. Ignored for key lookups and meter lookups; trace and
+          log values apply it at calendar-day granularity; metric attribute values
+          and relatedValues apply it. Omit for no lower bound.
         in: query
         name: startUnixMilli
         schema:
           description: Start of the lookup window in Unix milliseconds, rounded down
-            to a 6 hour boundary before use. Key lookups and meter lookups ignore
-            it. Trace and log value lookups keep values from the rounded start's calendar
-            day on, metric attribute values keep attributes last reported at or after
-            it, and relatedValues keep rows at or after it. Omit for no lower bound.
+            to a 6 hour boundary. Ignored for key lookups and meter lookups; trace
+            and log values apply it at calendar-day granularity; metric attribute
+            values and relatedValues apply it. Omit for no lower bound.
           format: int64
           type: integer
-      - description: End of the lookup window in Unix milliseconds. Key lookups, trace
-          and log value lookups and meter lookups ignore it. Metric attribute values
-          keep attributes first reported at or before it, and relatedValues keep rows
-          at or before it. Omit for no upper bound.
+      - description: End of the lookup window in Unix milliseconds. Ignored for key
+          lookups, trace and log value lookups and meter lookups; applied to metric
+          attribute values and relatedValues. Omit for no upper bound.
         in: query
         name: endUnixMilli
         schema:
-          description: End of the lookup window in Unix milliseconds. Key lookups,
-            trace and log value lookups and meter lookups ignore it. Metric attribute
-            values keep attributes first reported at or before it, and relatedValues
-            keep rows at or before it. Omit for no upper bound.
+          description: End of the lookup window in Unix milliseconds. Ignored for
+            key lookups, trace and log value lookups and meter lookups; applied to
+            metric attribute values and relatedValues. Omit for no upper bound.
           format: int64
           type: integer
       - description: 'Restricts keys to one context: resource, attribute, scope, span,
@@ -25524,18 +25508,16 @@ paths:
             only.
           type: string
       - description: 'Substring to match: against key names for keys, against the
-          values of name for values. Case-insensitive for traces, logs and metrics;
-          the meter source matches case-sensitively and treats % and _ as LIKE wildcards.
-          For keys, a context prefix such as resource.service.name sets fieldContext
-          when it is empty.'
+          values of name for values. Case-insensitive except for the meter source,
+          where it is case-sensitive and % and _ act as wildcards. For keys, a context
+          prefix such as resource.service.name sets fieldContext when it is empty.'
         in: query
         name: searchText
         schema:
           description: 'Substring to match: against key names for keys, against the
-            values of name for values. Case-insensitive for traces, logs and metrics;
-            the meter source matches case-sensitively and treats % and _ as LIKE wildcards.
-            For keys, a context prefix such as resource.service.name sets fieldContext
-            when it is empty.'
+            values of name for values. Case-insensitive except for the meter source,
+            where it is case-sensitive and % and _ act as wildcards. For keys, a context
+            prefix such as resource.service.name sets fieldContext when it is empty.'
           type: string
       - in: path
         name: id
@@ -25615,44 +25597,40 @@ paths:
           - $ref: '#/components/schemas/TelemetrytypesSource'
           description: The data source within the signal. Use meter for Cost Meter
             metrics; empty means the default source.
-      - description: Maximum number of results read per signal. Defaults to 1000 for
-          keys and 50 for values. For keys, intrinsic and materialized fields are
-          added on top, and an empty signal applies the limit to traces, logs and
-          metrics separately, so the response can exceed it.
+      - description: Maximum number of results per signal. Defaults to 1000 for keys
+          and 50 for values. For keys, intrinsic and materialized fields are added
+          on top, and an empty signal applies the limit to traces, logs and metrics
+          separately, so the response can exceed it.
         in: query
         name: limit
         schema:
-          description: Maximum number of results read per signal. Defaults to 1000
-            for keys and 50 for values. For keys, intrinsic and materialized fields
-            are added on top, and an empty signal applies the limit to traces, logs
-            and metrics separately, so the response can exceed it.
+          description: Maximum number of results per signal. Defaults to 1000 for
+            keys and 50 for values. For keys, intrinsic and materialized fields are
+            added on top, and an empty signal applies the limit to traces, logs and
+            metrics separately, so the response can exceed it.
           type: integer
       - description: Start of the lookup window in Unix milliseconds, rounded down
-          to a 6 hour boundary before use. Key lookups and meter lookups ignore it.
-          Trace and log value lookups keep values from the rounded start's calendar
-          day on, metric attribute values keep attributes last reported at or after
-          it, and relatedValues keep rows at or after it. Omit for no lower bound.
+          to a 6 hour boundary. Ignored for key lookups and meter lookups; trace and
+          log values apply it at calendar-day granularity; metric attribute values
+          and relatedValues apply it. Omit for no lower bound.
         in: query
         name: startUnixMilli
         schema:
           description: Start of the lookup window in Unix milliseconds, rounded down
-            to a 6 hour boundary before use. Key lookups and meter lookups ignore
-            it. Trace and log value lookups keep values from the rounded start's calendar
-            day on, metric attribute values keep attributes last reported at or after
-            it, and relatedValues keep rows at or after it. Omit for no lower bound.
+            to a 6 hour boundary. Ignored for key lookups and meter lookups; trace
+            and log values apply it at calendar-day granularity; metric attribute
+            values and relatedValues apply it. Omit for no lower bound.
           format: int64
           type: integer
-      - description: End of the lookup window in Unix milliseconds. Key lookups, trace
-          and log value lookups and meter lookups ignore it. Metric attribute values
-          keep attributes first reported at or before it, and relatedValues keep rows
-          at or before it. Omit for no upper bound.
+      - description: End of the lookup window in Unix milliseconds. Ignored for key
+          lookups, trace and log value lookups and meter lookups; applied to metric
+          attribute values and relatedValues. Omit for no upper bound.
         in: query
         name: endUnixMilli
         schema:
-          description: End of the lookup window in Unix milliseconds. Key lookups,
-            trace and log value lookups and meter lookups ignore it. Metric attribute
-            values keep attributes first reported at or before it, and relatedValues
-            keep rows at or before it. Omit for no upper bound.
+          description: End of the lookup window in Unix milliseconds. Ignored for
+            key lookups, trace and log value lookups and meter lookups; applied to
+            metric attribute values and relatedValues. Omit for no upper bound.
           format: int64
           type: integer
       - description: 'Restricts keys to one context: resource, attribute, scope, span,
@@ -25692,18 +25670,16 @@ paths:
             only.
           type: string
       - description: 'Substring to match: against key names for keys, against the
-          values of name for values. Case-insensitive for traces, logs and metrics;
-          the meter source matches case-sensitively and treats % and _ as LIKE wildcards.
-          For keys, a context prefix such as resource.service.name sets fieldContext
-          when it is empty.'
+          values of name for values. Case-insensitive except for the meter source,
+          where it is case-sensitive and % and _ act as wildcards. For keys, a context
+          prefix such as resource.service.name sets fieldContext when it is empty.'
         in: query
         name: searchText
         schema:
           description: 'Substring to match: against key names for keys, against the
-            values of name for values. Case-insensitive for traces, logs and metrics;
-            the meter source matches case-sensitively and treats % and _ as LIKE wildcards.
-            For keys, a context prefix such as resource.service.name sets fieldContext
-            when it is empty.'
+            values of name for values. Case-insensitive except for the meter source,
+            where it is case-sensitive and % and _ act as wildcards. For keys, a context
+            prefix such as resource.service.name sets fieldContext when it is empty.'
           type: string
       - description: The key whose values to return, such as service.name. A context
           prefix such as resource.service.name sets fieldContext when it is empty.
