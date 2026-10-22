@@ -2,6 +2,7 @@ import {
 	clickhouseQuery,
 	expect,
 	GOLDEN,
+	heatmapQuery,
 	logsCountQuery,
 	metricsQuery,
 	PanelKind,
@@ -12,6 +13,7 @@ import {
 	SINGLE_PANEL_ID,
 	singlePanelDashboard,
 	test,
+	textPanelWithQueryDashboard,
 } from '../../../../drivers/panel-editor';
 
 // Scope: the panelKind × queryType × signal matrix, as the editor surfaces it.
@@ -47,6 +49,9 @@ test.describe('Dashboards V2 — editor capabilities matrix', () => {
 			'Bar Chart',
 			'Pie Chart',
 			'Histogram',
+			'Area Chart',
+			'Heatmap',
+			'Text',
 		]) {
 			expect(optionFor(options, label).disabled).toBe(false);
 		}
@@ -191,5 +196,63 @@ test.describe('Dashboards V2 — editor capabilities matrix', () => {
 			),
 			// Quotes in the message are JSON-escaped, so match around them.
 		).rejects.toThrow(/PromQLQuery.*not supported by panel kind.*PieChartPanel/);
+	});
+
+	test('TC-10 a logs query keeps Area and Text selectable but disables Heatmap', async ({
+		dashboards,
+		editor,
+		panels,
+	}) => {
+		await dashboards.seedAndEdit(
+			singlePanelDashboard({ query: logsCountQuery() }),
+			SINGLE_PANEL_ID,
+		);
+
+		const options = await editor.typeOptions();
+		expect(optionFor(options, 'Area Chart').disabled).toBe(false);
+		// Text renders without a query, so it pairs with any.
+		expect(optionFor(options, 'Text').disabled).toBe(false);
+		// Only metrics carry a bucket axis.
+		expect(optionFor(options, 'Heatmap').disabled).toBe(true);
+
+		await editor.typeOption(PanelKind.Heatmap).hover();
+		await expect(
+			panels.tooltip.text("Heatmap doesn't support logs data"),
+		).toBeVisible();
+	});
+
+	test('TC-11 an Area panel offers every query tab; a Heatmap drops AI', async ({
+		dashboards,
+		editor,
+	}) => {
+		await dashboards.seedAndEdit(
+			singlePanelDashboard({ kind: PanelKind.AreaChart }),
+			SINGLE_PANEL_ID,
+		);
+		for (const tab of [
+			QueryTab.builder,
+			QueryTab.clickhouse,
+			QueryTab.promql,
+			QueryTab.ai,
+		]) {
+			await expect(editor.query.tab(tab)).toBeVisible();
+		}
+
+		await dashboards.seedAndEdit(
+			singlePanelDashboard({ kind: PanelKind.Heatmap, query: heatmapQuery() }),
+			SINGLE_PANEL_ID,
+		);
+		await expect(editor.query.tab(QueryTab.builder)).toBeVisible();
+		await expect(editor.query.tab(QueryTab.clickhouse)).toBeVisible();
+		await expect(editor.query.tab(QueryTab.promql)).toBeVisible();
+		await expect(editor.query.tab(QueryTab.ai)).toHaveCount(0);
+	});
+
+	test('TC-12 the backend rejects a Text panel that carries a query', async ({
+		dashboards,
+	}) => {
+		await expect(dashboards.seed(textPanelWithQueryDashboard())).rejects.toThrow(
+			/renders without a query and must have queries: \[\]/,
+		);
 	});
 });

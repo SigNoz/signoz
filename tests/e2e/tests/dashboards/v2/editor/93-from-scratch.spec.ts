@@ -12,7 +12,7 @@ import {
 
 /** Text carries no query. */
 const QUERYABLE = PANEL_TYPE_TILES.filter(
-	(tile) => tile.kind !== 'signoz/TextPanel',
+	(tile) => tile.kind !== PanelKind.Text,
 );
 
 /** List seeds a logs query that saves as-is; every other kind seeds metrics. */
