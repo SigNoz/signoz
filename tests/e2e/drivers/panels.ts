@@ -12,7 +12,14 @@ import { actionsAt, PanelAction, type PanelActions } from './panels/actions';
 import { type Chart, chartAt } from './panels/chart';
 import { openSelectOption } from './panels/dom';
 import { gridAt, type PanelGrid } from './panels/grid';
+import {
+	type HeatmapPanel,
+	type HeatmapTooltip,
+	heatmapAt,
+	heatmapTooltipAt,
+} from './panels/heatmap';
 import { type Legend, legendAt } from './panels/legend';
+import { type Markdown, markdownAt } from './panels/markdown';
 import {
 	type ListPager,
 	pagerAt,
@@ -71,6 +78,10 @@ export interface PanelHandle {
 	text(text: string): Locator;
 	numberValue(): Locator;
 	numberNoData(): Locator;
+	/** Replaces the header when a Text panel hides it; carries the drag class. */
+	hiddenHeaderHandle(): Locator;
+	markdown: Markdown;
+	heatmap: HeatmapPanel;
 	chart: Chart;
 	legend: Legend;
 	actions: PanelActions;
@@ -94,6 +105,7 @@ export interface Panels {
 		statusContent(): Locator;
 		/** Free text inside any open tooltip. */
 		text(text: string): Locator;
+		heatmap: HeatmapTooltip;
 	};
 	drilldown: {
 		menu(): Locator;
@@ -113,6 +125,9 @@ export interface Panels {
 		switchToEdit(): Locator;
 		chart: Chart;
 		renderer(kind: PanelKind): Locator;
+		markdown: Markdown;
+		/** Text only: the Markdown editor in the query builder's slot. */
+		textEditor(): Locator;
 		/** Changes the kind for this session only. */
 		switchType(label: string): Promise<void>;
 	};
@@ -157,6 +172,9 @@ function panelHandle(page: Page, id: string): PanelHandle {
 		text: (text) => root().getByText(text),
 		numberValue: () => byTestId('number-panel-value'),
 		numberNoData: () => byTestId('number-panel-no-data'),
+		hiddenHeaderHandle: () => byTestId('hidden-header-drag-handle'),
+		markdown: markdownAt(() => byTestId(RENDERER_TESTID[PanelKind.Text])),
+		heatmap: heatmapAt(root),
 		chart: chartAt(page, () => byTestId('uplot-main-div')),
 		legend: legendAt(root),
 		actions: actionsAt(page, id, root),
@@ -185,6 +203,7 @@ function panelsDriver(page: Page): Panels {
 			statusContent: () =>
 				page.getByRole('tooltip').getByTestId('panel-status-content'),
 			text: (text) => page.getByText(text),
+			heatmap: heatmapTooltipAt(page),
 		},
 		drilldown: {
 			menu,
@@ -215,6 +234,10 @@ function panelsDriver(page: Page): Panels {
 			switchToEdit: () => page.getByTestId('view-panel-switch-to-edit'),
 			chart: chartAt(page, () => viewContent().getByTestId('uplot-main-div')),
 			renderer: (kind) => viewContent().getByTestId(RENDERER_TESTID[kind]),
+			markdown: markdownAt(() =>
+				viewContent().getByTestId(RENDERER_TESTID[PanelKind.Text]),
+			),
+			textEditor: () => viewContent().getByTestId('text-panel-editor-pane'),
 			async switchType(label) {
 				await page.getByTestId('view-panel-type-selector').click();
 				await openSelectOption(page, label).click();
@@ -241,5 +264,7 @@ export * from './panels/actions';
 export * from './panels/chart';
 export * from './panels/dom';
 export * from './panels/grid';
+export * from './panels/heatmap';
 export * from './panels/legend';
+export * from './panels/markdown';
 export * from './panels/table';

@@ -4,9 +4,8 @@
  */
 import { expect, type Locator, type Page } from '@playwright/test';
 
-import type { PanelKind } from '../../helpers/dashboard-v2-spec';
+import { PanelKind } from '../../helpers/dashboard-v2-spec';
 
-import { type PickerKind } from './picker';
 import { type SelectOption } from './select';
 
 const TYPE_SWITCHER_DRAWER = 'panel-type-switcher-drawer';
@@ -16,7 +15,7 @@ export interface TypeSwitcher {
 	/** Opens the kind picker drawer and picks one. */
 	switchType(kind: PanelKind): Promise<void>;
 	/** A tile in the open type-switcher drawer. */
-	typeOption(kind: PickerKind): Locator;
+	typeOption(kind: PanelKind): Locator;
 	openTypeSwitcher(): Promise<Locator>;
 	/** Every tile in the type switcher, opening it; `disabled` reads aria-disabled. */
 	typeOptions(): Promise<SelectOption[]>;

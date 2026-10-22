@@ -4,13 +4,14 @@
  */
 import { expect, type Locator, type Page } from '@playwright/test';
 
-import type { PanelKind } from '../helpers/dashboard-v2-spec';
+import { PanelKind } from '../helpers/dashboard-v2-spec';
 
 import { EDITOR_ROOT } from './dashboards';
 import { driver } from './kit';
 import { newPanelDriver } from './panel-editor/picker';
 import { type QueryPane, queryPaneAt } from './panel-editor/query';
 import { type EditorSelects, selectsAt } from './panel-editor/select';
+import { type TextPane, textPaneAt } from './panel-editor/text';
 import {
 	type TypeSwitcher,
 	typeSwitcherAt,
@@ -18,6 +19,8 @@ import {
 import {
 	type Chart,
 	chartAt,
+	type Markdown,
+	markdownAt,
 	RENDERER_TESTID,
 	test as panelsTest,
 } from './panels';
@@ -54,6 +57,8 @@ export const Section = {
 	buckets: 'Buckets',
 	thresholds: 'Thresholds',
 	contextLinks: 'Context Links',
+	/** Text only. */
+	panelAppearance: 'Panel appearance',
 } as const;
 
 /** Config controls, each testid'd as `panel-editor-v2-<name>`. */
@@ -80,6 +85,14 @@ export type EditorControl =
 	| 'bucket-count'
 	| 'bucket-width'
 	| 'merge-queries'
+	| 'heatmap-color-mode'
+	| 'heatmap-palette'
+	| 'heatmap-color-scale'
+	| 'heatmap-color-steps'
+	| 'heatmap-min-count'
+	| 'heatmap-max-count'
+	| 'heatmap-fill'
+	| 'heatmap-preview'
 	| 'type-revert';
 
 export interface PatchOperation {
@@ -131,6 +144,12 @@ export interface PanelEditor extends EditorSelects, TypeSwitcher {
 	 * `beforeunload` prompt, checked without leaving the page.
 	 */
 	blocksUnload(): Promise<boolean>;
+	/**
+	 * Drives a slider control from the keyboard ('Home', 'End', 'ArrowRight', …);
+	 * a key commits like a released drag.
+	 */
+	pressSlider(name: EditorControl, key: string): Promise<void>;
+	text: TextPane;
 	/** The heading text, which carries no testid. */
 	heading(): Locator;
 	/** A disabled Save swallows pointer events, so this hovers its tooltip trigger. */
@@ -140,6 +159,7 @@ export interface PanelEditor extends EditorSelects, TypeSwitcher {
 		root(): Locator;
 		renderer(kind: PanelKind): Locator;
 		chart: Chart;
+		markdown: Markdown;
 	};
 }
 
@@ -233,6 +253,12 @@ function editorDriver(page: Page): PanelEditor {
 				window.dispatchEvent(event);
 				return event.defaultPrevented;
 			}),
+		async pressSlider(name, key) {
+			const thumb = byTestId(name).getByRole('slider');
+			await thumb.focus();
+			await thumb.press(key);
+		},
+		text: textPaneAt(page),
 		...selectsAt(page),
 		heading: () => editor.root().getByText(EditorText.title),
 		async hoverSave() {
@@ -247,6 +273,9 @@ function editorDriver(page: Page): PanelEditor {
 			root: preview,
 			renderer: (kind) => preview().getByTestId(RENDERER_TESTID[kind]),
 			chart: chartAt(page, () => preview().getByTestId('uplot-main-div')),
+			markdown: markdownAt(() =>
+				preview().getByTestId(RENDERER_TESTID[PanelKind.Text]),
+			),
 		},
 	};
 
@@ -262,4 +291,5 @@ export * from './panels';
 export * from './panel-editor/picker';
 export * from './panel-editor/query';
 export * from './panel-editor/select';
+export * from './panel-editor/text';
 export * from './panel-editor/type-switcher';

@@ -4,57 +4,47 @@
  */
 import { expect, type Locator, type Page } from '@playwright/test';
 
-import type { PanelKind } from '../../helpers/dashboard-v2-spec';
+import { PanelKind } from '../../helpers/dashboard-v2-spec';
 import { PATH } from '../dashboards';
 
 const NEW_PANEL_DRAWER = 'panel-type-drawer';
 
-/**
- * Every kind the type browser offers. Wider than `PanelKind`, which only names
- * the kinds the spec builders can seed.
- */
-export type PickerKind =
-	| PanelKind
-	| 'signoz/AreaChartPanel'
-	| 'signoz/HeatmapPanel'
-	| 'signoz/TextPanel';
-
 /** The type browser's catalog, in render order. */
 export const PANEL_TYPE_TILES: {
-	kind: PickerKind;
+	kind: PanelKind;
 	label: string;
 	category: string;
 }[] = [
 	{
-		kind: 'signoz/TimeSeriesPanel',
+		kind: PanelKind.TimeSeries,
 		label: 'Time Series',
 		category: 'Trends over time',
 	},
 	{
-		kind: 'signoz/AreaChartPanel',
+		kind: PanelKind.AreaChart,
 		label: 'Area Chart',
 		category: 'Trends over time',
 	},
 	{
-		kind: 'signoz/BarChartPanel',
+		kind: PanelKind.BarChart,
 		label: 'Bar Chart',
 		category: 'Compare & rank',
 	},
 	{
-		kind: 'signoz/PieChartPanel',
+		kind: PanelKind.PieChart,
 		label: 'Pie Chart',
 		category: 'Compare & rank',
 	},
 	{
-		kind: 'signoz/HistogramPanel',
+		kind: PanelKind.Histogram,
 		label: 'Histogram',
 		category: 'Distributions',
 	},
-	{ kind: 'signoz/HeatmapPanel', label: 'Heatmap', category: 'Distributions' },
-	{ kind: 'signoz/NumberPanel', label: 'Number', category: 'Single values' },
-	{ kind: 'signoz/TablePanel', label: 'Table', category: 'Raw records' },
-	{ kind: 'signoz/ListPanel', label: 'List', category: 'Raw records' },
-	{ kind: 'signoz/TextPanel', label: 'Text', category: 'Documentation' },
+	{ kind: PanelKind.Heatmap, label: 'Heatmap', category: 'Distributions' },
+	{ kind: PanelKind.Number, label: 'Number', category: 'Single values' },
+	{ kind: PanelKind.Table, label: 'Table', category: 'Raw records' },
+	{ kind: PanelKind.List, label: 'List', category: 'Raw records' },
+	{ kind: PanelKind.Text, label: 'Text', category: 'Documentation' },
 ];
 
 /**
@@ -63,7 +53,7 @@ export const PANEL_TYPE_TILES: {
  */
 export interface NewPanelPicker {
 	root(): Locator;
-	tile(kind: PickerKind): Locator;
+	tile(kind: PanelKind): Locator;
 	/** Visible tiles, in render order. */
 	tiles(): Locator;
 	/** Visible group headings, in render order. */
@@ -75,10 +65,10 @@ export interface NewPanelPicker {
 	/** Reads "Add panel", or "Add to <section>" once there is a choice. */
 	confirmButton(): Locator;
 	/** Selects without confirming. */
-	pick(kind: PickerKind): Promise<void>;
+	pick(kind: PanelKind): Promise<void>;
 	confirm(): Promise<void>;
 	/** Selects and confirms, landing on the editor route. */
-	choose(kind: PickerKind): Promise<void>;
+	choose(kind: PanelKind): Promise<void>;
 	/** `value` is the layoutIndex, or 'root' for a root yet to be created. */
 	chooseSection(value: string): Promise<void>;
 	/** Switches the target to a new section named `title`. */

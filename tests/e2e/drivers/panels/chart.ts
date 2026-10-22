@@ -17,6 +17,10 @@ export interface UPlotSeriesState {
 	dash?: number[];
 	/** uPlot only sets a fill when the panel asks for one. */
 	hasFill: boolean;
+	/** The resolved fill: a colour (`#rrggbbaa` when solid) or 'gradient'. */
+	fill: string | null;
+	/** Largest finite value plotted, after any stacking; null when none. */
+	max: number | null;
 	/** A predicate cannot cross `evaluate`, so it reports as 'fn'. */
 	pointsShow?: boolean | 'fn' | null;
 	width?: number;
@@ -35,6 +39,8 @@ export interface UPlotState {
 	scales: Record<string, UPlotScaleState>;
 	/** Points in the x series. */
 	pointCount: number;
+	/** Fill bands between series; a stacked chart has one per adjacent pair. */
+	bandCount: number;
 }
 
 /**
@@ -81,6 +87,7 @@ async function readUplot(host: Locator): Promise<UPlotState> {
 					}[];
 					scales: Record<string, { min?: number; max?: number; distr?: number }>;
 					data: unknown[][];
+					bands?: unknown[];
 			  }
 			| undefined;
 
@@ -90,12 +97,34 @@ async function readUplot(host: Locator): Promise<UPlotState> {
 			);
 		}
 
+		// uPlot wraps every fill in a function; calling it yields the colour or gradient.
+		const resolveFill = (fill: unknown, seriesIndex: number): string | null => {
+			const value =
+				typeof fill === 'function'
+					? (fill as (u: unknown, i: number) => unknown)(plot, seriesIndex)
+					: fill;
+			if (typeof value === 'string') {
+				return value;
+			}
+			return value instanceof CanvasGradient ? 'gradient' : null;
+		};
+
+		const maxOf = (values: unknown[] | undefined): number | null => {
+			const finite = (values ?? []).filter(
+				(value): value is number =>
+					typeof value === 'number' && Number.isFinite(value),
+			);
+			return finite.length > 0 ? Math.max(...finite) : null;
+		};
+
 		return {
-			series: plot.series.slice(1).map((series) => ({
+			series: plot.series.slice(1).map((series, index) => ({
 				label: series.label,
 				show: series.show !== false,
 				dash: series.dash,
 				hasFill: series.fill != null,
+				fill: resolveFill(series.fill, index + 1),
+				max: maxOf(plot.data?.[index + 1]),
 				pointsShow:
 					typeof series.points?.show === 'function'
 						? ('fn' as const)
@@ -109,6 +138,7 @@ async function readUplot(host: Locator): Promise<UPlotState> {
 				]),
 			),
 			pointCount: plot.data?.[0]?.length ?? 0,
+			bandCount: plot.bands?.length ?? 0,
 		};
 	});
 }
