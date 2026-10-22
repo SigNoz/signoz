@@ -5,22 +5,25 @@
 	border-radius: var(--radius-2);
 	background: var(--l2-background);
 
-	:global(.ant-collapse-item) {
+	// Direct children only, so nested collapses keep their own styles.
+	> :global(.ant-collapse-item) {
 		border: none;
 	}
 
-	:global(.ant-collapse-header) {
+	> :global(.ant-collapse-item > .ant-collapse-header) {
 		align-items: center !important;
 		height: 40px;
 		padding: 0 var(--spacing-4) !important;
 	}
 
-	:global(.ant-collapse-content) {
+	> :global(.ant-collapse-item > .ant-collapse-content) {
 		background: transparent;
 		border-top: 1px solid var(--l2-border);
 	}
 
-	:global(.ant-collapse-content-box) {
+	> :global(
+		.ant-collapse-item > .ant-collapse-content > .ant-collapse-content-box
+	) {
 		@include custom-scrollbar;
 
 		max-height: 150px;
