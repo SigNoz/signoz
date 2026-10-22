@@ -20,7 +20,7 @@ import NoData from '../../components/NoData/NoData';
 import PanelMessage from '../../components/PanelMessage/PanelMessage';
 import PanelStyles from '../../panel.module.scss';
 import type { PanelRendererProps } from '../../types/rendererProps';
-import { enrichScatterClick } from '../../utils/drilldown/enrichScatterClick';
+import { prepareScatterClickData } from '../../utils/drilldown/prepareScatterClickData';
 import { getBuilderQueries } from '../../utils/getBuilderQueries';
 import { getJoinedScalarTable } from '../../utils/getJoinedScalarTable';
 import { getPanelTimeRange } from '../../utils/getPanelTimeRange';
@@ -157,7 +157,7 @@ function ScatterPlotPanelRenderer({
 			if (!onClick || !readyData) {
 				return;
 			}
-			const payload = enrichScatterClick({
+			const payload = prepareScatterClickData({
 				labels: readyData.pointLabels[seriesIndex - 1]?.[dataIndex] ?? [],
 				label: readyData.series[seriesIndex - 1]?.label ?? '',
 				color,
