@@ -23,11 +23,11 @@ import (
 type DashboardSpec struct {
 	Display         Display               `json:"display" required:"true" description:"The dashboard title and description."`
 	Variables       []Variable            `json:"variables" required:"true" nullable:"false" description:"The dashboard variables, each a ListVariable or TextVariable envelope, referenced in queries as $name. Names must be unique. Use [] for none."`
-	Panels          map[string]*Panel     `json:"panels" required:"true" nullable:"false" description:"The panels keyed by panel id. An id has up to 75 characters from letters, digits, dot, underscore and hyphen. A panel is shown only where a layout item references it as #/spec/panels/<id>; a panel in no layout is kept but invisible. Use {} for none."`
+	Panels          map[string]*Panel     `json:"panels" required:"true" nullable:"false" description:"The panels keyed by panel id. An id has up to 75 characters from letters, digits, dot, underscore and hyphen. A panel is shown only where a layout item references it as #/spec/panels/<id>. Use {} for none."`
 	Layouts         []Layout              `json:"layouts" required:"true" nullable:"false" description:"The Grid layouts that place panels, at most 500. Each panel can be placed at most once. Use [] for none."`
-	Duration        common.DurationString `json:"duration" description:"The intended default time range, as a Prometheus duration such as 1h or 7d. Stored, but the current UI uses its own time picker state and does not read it."`
-	RefreshInterval common.DurationString `json:"refreshInterval" description:"The intended auto refresh interval, as a Prometheus duration such as 30s. Stored, but the current UI uses its own refresh control and does not read it."`
-	Links           []Link                `json:"links,omitzero" description:"External links stored with the dashboard. The current UI does not render them."`
+	Duration        common.DurationString `json:"duration" description:"The default time range, as a Prometheus duration such as 1h or 7d. Stored, but not applied by the UI."`
+	RefreshInterval common.DurationString `json:"refreshInterval" description:"The auto refresh interval, as a Prometheus duration such as 30s. Stored, but not applied by the UI."`
+	Links           []Link                `json:"links,omitzero" description:"External links stored with the dashboard. Not shown by the UI."`
 }
 
 // ══════════════════════════════════════════════

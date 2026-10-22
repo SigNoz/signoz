@@ -77,7 +77,7 @@ func (s *DynamicVariableSignal) UnmarshalJSON(data []byte) error {
 }
 
 type QueryVariableSpec struct {
-	QueryValue string `json:"queryValue" validate:"required" required:"true" description:"A ClickHouse SQL query returning one column of selectable values. Every column of every row is offered, so select only the value column."`
+	QueryValue string `json:"queryValue" validate:"required" required:"true" description:"A ClickHouse SQL query returning one column of selectable values; every returned column is offered."`
 }
 
 type CustomVariableSpec struct {
@@ -279,7 +279,7 @@ type HistogramPanelSpec struct {
 }
 
 type HistogramBuckets struct {
-	BucketCount           *float64 `json:"bucketCount" description:"The target number of buckets, approximate: the chart uses the first predefined width larger than the value range divided by this count. Ignored when bucketWidth is positive. Null uses the chart default."`
+	BucketCount           *float64 `json:"bucketCount" description:"The approximate target number of buckets. Ignored when bucketWidth is positive. Null uses the chart default."`
 	BucketWidth           *float64 `json:"bucketWidth" description:"The width of each bucket in the value unit. A positive value takes precedence over bucketCount; null or 0 lets the chart choose."`
 	MergeAllActiveQueries bool     `json:"mergeAllActiveQueries" description:"Whether every series is combined into a single histogram instead of one per series."`
 }

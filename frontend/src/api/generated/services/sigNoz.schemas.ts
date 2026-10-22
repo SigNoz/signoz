@@ -6081,7 +6081,7 @@ export interface DashboardtypesLinkDTO {
 	targetBlank?: boolean;
 	/**
 	 * @type string
-	 * @description Hover text for the link. Stored, but the drilldown menu does not display it.
+	 * @description Hover text for the link. Stored, but not shown by the UI.
 	 */
 	tooltip?: string;
 	/**
@@ -6387,7 +6387,7 @@ export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboa
 export interface DashboardtypesHistogramBucketsDTO {
 	/**
 	 * @type number,null
-	 * @description The target number of buckets, approximate: the chart uses the first predefined width larger than the value range divided by this count. Ignored when bucketWidth is positive. Null uses the chart default.
+	 * @description The approximate target number of buckets. Ignored when bucketWidth is positive. Null uses the chart default.
 	 */
 	bucketCount?: number | null;
 	/**
@@ -7191,7 +7191,7 @@ export interface DashboardtypesPanelDTO {
 }
 
 /**
- * The panels keyed by panel id. An id has up to 75 characters from letters, digits, dot, underscore and hyphen. A panel is shown only where a layout item references it as #/spec/panels/<id>; a panel in no layout is kept but invisible. Use {} for none.
+ * The panels keyed by panel id. An id has up to 75 characters from letters, digits, dot, underscore and hyphen. A panel is shown only where a layout item references it as #/spec/panels/<id>. Use {} for none.
  */
 export type DashboardtypesDashboardSpecDTOPanels = {
 	[key: string]: DashboardtypesPanelDTO;
@@ -7273,7 +7273,7 @@ export enum DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDash
 export interface DashboardtypesQueryVariableSpecDTO {
 	/**
 	 * @type string
-	 * @description A ClickHouse SQL query returning one column of selectable values. Every column of every row is offered, so select only the value column.
+	 * @description A ClickHouse SQL query returning one column of selectable values; every returned column is offered.
 	 */
 	queryValue: string;
 }
@@ -7337,7 +7337,7 @@ export interface DashboardtypesListVariableSpecDTO {
 	allowMultiple?: boolean;
 	/**
 	 * @type string
-	 * @description A regular expression meant to keep only matching values, reduced to the capture group when one is present. Stored, but the current UI ignores it and offers every value.
+	 * @description A regular expression meant to keep only matching values, reduced to the capture group when one is present. Stored, but not applied by the UI.
 	 */
 	capturingRegexp?: string;
 	/**
@@ -7391,7 +7391,7 @@ export enum DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboard
 export interface DashboardtypesTextVariableSpecDTO {
 	/**
 	 * @type boolean
-	 * @description Whether the value is meant to be fixed. Stored, but the current UI still shows the control and lets the value change.
+	 * @description Whether the value is meant to be fixed. Stored, but not applied by the UI.
 	 */
 	constant?: boolean;
 	/**
@@ -7435,7 +7435,7 @@ export interface DashboardtypesDashboardSpecDTO {
 	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type string
-	 * @description The intended default time range, as a Prometheus duration such as 1h or 7d. Stored, but the current UI uses its own time picker state and does not read it.
+	 * @description The default time range, as a Prometheus duration such as 1h or 7d. Stored, but not applied by the UI.
 	 */
 	duration?: string;
 	/**
@@ -7445,17 +7445,17 @@ export interface DashboardtypesDashboardSpecDTO {
 	layouts: DashboardtypesLayoutDTO[];
 	/**
 	 * @type array,null
-	 * @description External links stored with the dashboard. The current UI does not render them.
+	 * @description External links stored with the dashboard. Not shown by the UI.
 	 */
 	links?: DashboardtypesLinkDTO[] | null;
 	/**
 	 * @type object
-	 * @description The panels keyed by panel id. An id has up to 75 characters from letters, digits, dot, underscore and hyphen. A panel is shown only where a layout item references it as #/spec/panels/<id>; a panel in no layout is kept but invisible. Use {} for none.
+	 * @description The panels keyed by panel id. An id has up to 75 characters from letters, digits, dot, underscore and hyphen. A panel is shown only where a layout item references it as #/spec/panels/<id>. Use {} for none.
 	 */
 	panels: DashboardtypesDashboardSpecDTOPanels;
 	/**
 	 * @type string
-	 * @description The intended auto refresh interval, as a Prometheus duration such as 30s. Stored, but the current UI uses its own refresh control and does not read it.
+	 * @description The auto refresh interval, as a Prometheus duration such as 30s. Stored, but not applied by the UI.
 	 */
 	refreshInterval?: string;
 	/**

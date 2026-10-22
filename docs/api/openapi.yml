@@ -4295,9 +4295,8 @@ components:
           - $ref: '#/components/schemas/DashboardtypesDisplay'
           description: The dashboard title and description.
         duration:
-          description: The intended default time range, as a Prometheus duration such
-            as 1h or 7d. Stored, but the current UI uses its own time picker state
-            and does not read it.
+          description: The default time range, as a Prometheus duration such as 1h
+            or 7d. Stored, but not applied by the UI.
           type: string
         layouts:
           description: The Grid layouts that place panels, at most 500. Each panel
@@ -4306,8 +4305,8 @@ components:
             $ref: '#/components/schemas/DashboardtypesLayout'
           type: array
         links:
-          description: External links stored with the dashboard. The current UI does
-            not render them.
+          description: External links stored with the dashboard. Not shown by the
+            UI.
           items:
             $ref: '#/components/schemas/DashboardtypesLink'
           nullable: true
@@ -4317,13 +4316,11 @@ components:
             $ref: '#/components/schemas/DashboardtypesPanel'
           description: 'The panels keyed by panel id. An id has up to 75 characters
             from letters, digits, dot, underscore and hyphen. A panel is shown only
-            where a layout item references it as #/spec/panels/<id>; a panel in no
-            layout is kept but invisible. Use {} for none.'
+            where a layout item references it as #/spec/panels/<id>. Use {} for none.'
           type: object
         refreshInterval:
-          description: The intended auto refresh interval, as a Prometheus duration
-            such as 30s. Stored, but the current UI uses its own refresh control and
-            does not read it.
+          description: The auto refresh interval, as a Prometheus duration such as
+            30s. Stored, but not applied by the UI.
           type: string
         variables:
           description: The dashboard variables, each a ListVariable or TextVariable
@@ -4700,9 +4697,8 @@ components:
     DashboardtypesHistogramBuckets:
       properties:
         bucketCount:
-          description: 'The target number of buckets, approximate: the chart uses
-            the first predefined width larger than the value range divided by this
-            count. Ignored when bucketWidth is positive. Null uses the chart default.'
+          description: The approximate target number of buckets. Ignored when bucketWidth
+            is positive. Null uses the chart default.
           nullable: true
           type: number
         bucketWidth:
@@ -4831,8 +4827,7 @@ components:
           description: Whether the link opens in a new tab.
           type: boolean
         tooltip:
-          description: Hover text for the link. Stored, but the drilldown menu does
-            not display it.
+          description: Hover text for the link. Stored, but not shown by the UI.
           type: string
         url:
           description: The link target. May reference dashboard variables as {{name}}
@@ -4871,8 +4866,8 @@ components:
           type: boolean
         capturingRegexp:
           description: A regular expression meant to keep only matching values, reduced
-            to the capture group when one is present. Stored, but the current UI ignores
-            it and offers every value.
+            to the capture group when one is present. Stored, but not applied by the
+            UI.
           type: string
         customAllValue:
           description: The value meant to replace every value when all is selected.
@@ -5680,8 +5675,8 @@ components:
     DashboardtypesQueryVariableSpec:
       properties:
         queryValue:
-          description: A ClickHouse SQL query returning one column of selectable values.
-            Every column of every row is offered, so select only the value column.
+          description: A ClickHouse SQL query returning one column of selectable values;
+            every returned column is offered.
           type: string
       required:
       - queryValue
@@ -5831,8 +5826,8 @@ components:
     DashboardtypesTextVariableSpec:
       properties:
         constant:
-          description: Whether the value is meant to be fixed. Stored, but the current
-            UI still shows the control and lets the value change.
+          description: Whether the value is meant to be fixed. Stored, but not applied
+            by the UI.
           type: boolean
         display:
           allOf:

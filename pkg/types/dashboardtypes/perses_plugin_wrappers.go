@@ -90,7 +90,7 @@ func (v PanelPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
 
 type QueryPlugin struct {
 	Kind QueryPluginKind `json:"kind" required:"true" description:"The query kind. It decides the shape of spec."`
-	Spec any             `json:"spec" required:"true" description:"The kind-specific query spec. A builder query is dispatched on its signal field."`
+	Spec any             `json:"spec" required:"true" description:"The kind-specific query spec. A builder query's shape depends on its signal."`
 }
 
 func (QueryPlugin) PrepareJSONSchema(s *jsonschema.Schema) error {

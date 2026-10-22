@@ -82,7 +82,7 @@ type PanelSpec struct {
 type Link struct {
 	Name            string `json:"name" description:"The link label."`
 	URL             string `json:"url" description:"The link target. May reference dashboard variables as {{name}} when renderVariables is true."`
-	Tooltip         string `json:"tooltip" description:"Hover text for the link. Stored, but the drilldown menu does not display it."`
+	Tooltip         string `json:"tooltip" description:"Hover text for the link. Stored, but not shown by the UI."`
 	RenderVariables bool   `json:"renderVariables" description:"Whether dashboard variable values are substituted into url before opening it."`
 	TargetBlank     bool   `json:"targetBlank" description:"Whether the link opens in a new tab."`
 }
@@ -170,7 +170,7 @@ type ListVariableSpec struct {
 	AllowAllValue   bool                  `json:"allowAllValue" description:"Whether an all option is offered. Requires allowMultiple."`
 	AllowMultiple   bool                  `json:"allowMultiple" description:"Whether several values can be selected at once."`
 	CustomAllValue  string                `json:"customAllValue" description:"The value meant to replace every value when all is selected. Requires allowAllValue. Stored, but currently ignored by the UI."`
-	CapturingRegexp string                `json:"capturingRegexp" description:"A regular expression meant to keep only matching values, reduced to the capture group when one is present. Stored, but the current UI ignores it and offers every value."`
+	CapturingRegexp string                `json:"capturingRegexp" description:"A regular expression meant to keep only matching values, reduced to the capture group when one is present. Stored, but not applied by the UI."`
 	Sort            ListVariableSpecSort  `json:"sort" description:"How the values are ordered: none (default), alphabetical-asc, alphabetical-desc, numerical-asc, numerical-desc, alphabetical-ci-asc or alphabetical-ci-desc."`
 	Plugin          VariablePlugin        `json:"plugin" description:"Where the values come from: kind is signoz/DynamicVariable (observed attribute values), signoz/QueryVariable (a ClickHouse query) or signoz/CustomVariable (a fixed list), and spec holds that kind's settings."`
 	Name            string                `json:"name" required:"true" minLength:"1" description:"The handle queries reference as $name. Up to 75 characters from letters, digits, dot, underscore and hyphen, not all digits, unique within the dashboard."`
@@ -296,7 +296,7 @@ func (s *ListVariableSpecSort) UnmarshalJSON(data []byte) error {
 type TextVariableSpec struct {
 	Display  Display `json:"display" required:"true" description:"The label shown for the variable control."`
 	Value    string  `json:"value" required:"true" description:"The default text. Must be non-empty when constant is true."`
-	Constant bool    `json:"constant" description:"Whether the value is meant to be fixed. Stored, but the current UI still shows the control and lets the value change."`
+	Constant bool    `json:"constant" description:"Whether the value is meant to be fixed. Stored, but not applied by the UI."`
 	Name     string  `json:"name" required:"true" minLength:"1" description:"The handle queries reference as $name. Up to 75 characters from letters, digits, dot, underscore and hyphen, not all digits, unique within the dashboard."`
 }
 
