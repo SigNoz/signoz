@@ -14,7 +14,8 @@ const DOCLINKS = {
 		'https://signoz.io/docs/userguide/logs_clickhouse_queries/',
 	QUERY_CLICKHOUSE_METRICS:
 		'https://signoz.io/docs/userguide/write-a-metrics-clickhouse-query/',
-	AGENT_SKILL_INSTALL: 'https://signoz.io/docs/ai/agent-skills/#installation',
+	AGENT_SKILL_INSTALL:
+		'https://signoz.io/docs/ai/agent-skills/#install-the-plugin',
 };
 
 export default DOCLINKS;

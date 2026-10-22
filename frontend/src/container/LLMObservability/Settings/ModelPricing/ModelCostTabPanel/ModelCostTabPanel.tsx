@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { SelectSimple } from '@signozhq/ui/select';
-import { Typography } from '@signozhq/ui/typography';
 import { Plus, Search, X } from '@signozhq/icons';
 import { useListLLMPricingRules } from 'api/generated/services/llmpricingrules';
 import { type ListLLMPricingRulesParams } from 'api/generated/services/sigNoz.schemas';
@@ -114,12 +113,14 @@ function ModelCostTabPanel(): JSX.Element {
 								<Button
 									variant="ghost"
 									color="secondary"
-									size="icon"
-									prefix={<X size={14} />}
+									size="sm"
+									icon
 									onClick={clearSearch}
 									aria-label="Clear search"
 									testId="model-cost-search-clear"
-								/>
+								>
+									<X size={14} />
+								</Button>
 							) : undefined
 						}
 						testId="model-cost-search"
@@ -134,6 +135,7 @@ function ModelCostTabPanel(): JSX.Element {
 				</div>
 				{canManagePricing && (
 					<Button
+						size="md"
 						variant="solid"
 						color="primary"
 						prefix={<Plus size={14} />}
@@ -160,12 +162,6 @@ function ModelCostTabPanel(): JSX.Element {
 				onEdit={drawer.openForEdit}
 				onDelete={deletion.requestDelete}
 			/>
-
-			<footer>
-				<Typography.Text color="muted" size="small">
-					All prices per 1M tokens (USD)
-				</Typography.Text>
-			</footer>
 
 			{drawer.isOpen && (
 				<ModelCostDrawer

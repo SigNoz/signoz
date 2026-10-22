@@ -21,12 +21,9 @@ import { getQueryBuilderQuerieswithFormula } from './MetricsPageQueriesFactory';
 
 export const topOperationQueries = ({
 	servicename,
-	dotMetricsEnabled,
 }: TopOperationQueryFactoryProps): QueryBuilderData => {
 	const latencyAutoCompleteData: BaseAutocompleteData = {
-		key: dotMetricsEnabled
-			? WidgetKeys.Signoz_latency_bucket
-			: WidgetKeys.Signoz_latency_bucket_norm,
+		key: WidgetKeys.SignozLatencyBucket,
 		dataType: DataTypes.Float64,
 		type: '',
 	};
@@ -38,9 +35,7 @@ export const topOperationQueries = ({
 	};
 
 	const numOfCallAutoCompleteData: BaseAutocompleteData = {
-		key: dotMetricsEnabled
-			? WidgetKeys.SignozLatencyCount
-			: WidgetKeys.SignozLatencyCountNorm,
+		key: WidgetKeys.SignozLatencyCount,
 		dataType: DataTypes.Float64,
 		type: '',
 	};
@@ -49,9 +44,7 @@ export const topOperationQueries = ({
 		{
 			id: '',
 			key: {
-				key: dotMetricsEnabled
-					? WidgetKeys.Service_name
-					: WidgetKeys.Service_name_norm,
+				key: WidgetKeys.OTelServiceName,
 				dataType: DataTypes.String,
 				type: MetricsType.Resource,
 			},
@@ -65,9 +58,7 @@ export const topOperationQueries = ({
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				key: dotMetricsEnabled
-					? WidgetKeys.Service_name
-					: WidgetKeys.Service_name_norm,
+				key: WidgetKeys.OTelServiceName,
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,
@@ -77,7 +68,7 @@ export const topOperationQueries = ({
 			id: '',
 			key: {
 				dataType: DataTypes.Int64,
-				key: dotMetricsEnabled ? WidgetKeys.StatusCode : WidgetKeys.StatusCodeNorm,
+				key: WidgetKeys.StatusCode,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,

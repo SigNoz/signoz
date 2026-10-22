@@ -4,10 +4,9 @@ import useDebounce from 'hooks/useDebounce';
 import { IOption } from 'hooks/useResourceAttribute/types';
 import { isEqual, uniqWith } from 'lodash-es';
 import { parse } from 'papaparse';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { OrderByPayload } from 'types/api/queryBuilder/queryBuilderData';
 
-import { getRemoveOrderFromValue } from '../QueryBuilderSearch/utils';
+import { getRemoveOrderFromValue } from '../QueryBuilderSearchV2/utils';
 import { getUniqueOrderByValues, getValidOrderByResult } from '../utils';
 import { ORDERBY_FILTERS } from './config';
 import { SIGNOZ_VALUE } from './constants';
@@ -25,7 +24,7 @@ export type UseOrderByFilterResult = {
 	selectedValue: IOption[];
 	aggregationOptions: IOption[];
 	generateOptions: (options: IOption[]) => IOption[];
-	createOptions: (data: BaseAutocompleteData[]) => IOption[];
+	createOptions: (keys: string[]) => IOption[];
 	handleChange: (values: IOption[]) => void;
 	handleSearchKeys: (search: string) => void;
 };
@@ -121,7 +120,7 @@ export const useOrderByFilter = ({
 	};
 
 	const createOptions = useCallback(
-		(data: BaseAutocompleteData[]): IOption[] => mapLabelValuePairs(data).flat(),
+		(keys: string[]): IOption[] => mapLabelValuePairs(keys).flat(),
 		[],
 	);
 

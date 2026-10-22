@@ -8,12 +8,14 @@ export interface AlertBreadcrumbProps {
 	items: BreadcrumbItemConfig[];
 	className?: string;
 	showDivider?: boolean;
+	testId?: string;
 }
 
 function AlertBreadcrumb({
 	items,
 	className,
 	showDivider = true,
+	testId,
 }: AlertBreadcrumbProps): JSX.Element {
 	const breadcrumbItems = items.map((item) => ({
 		title: <BreadcrumbItem {...item} />,
@@ -24,6 +26,7 @@ function AlertBreadcrumb({
 			<Breadcrumb
 				className={`${styles.breadcrumb} ${className || ''}`}
 				items={breadcrumbItems}
+				data-testid={testId}
 			/>
 			{showDivider && <Divider className={styles.divider} />}
 		</>

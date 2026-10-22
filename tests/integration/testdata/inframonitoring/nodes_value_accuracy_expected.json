@@ -7,8 +7,7 @@
       "nodeMemory": 2000000000.0,
       "nodeMemoryAllocatable": 8000000000.0,
       "condition": "ready",
-      "nodeCountsByReadiness": {"ready": 1, "notReady": 0},
-      "podCountsByPhase": {"pending": 0, "running": 1, "succeeded": 0, "failed": 0, "unknown": 0}
+      "nodeCountsByReadiness": {"ready": 1, "notReady": 0}
     },
     {
       "nodeName": "acc-n2",
@@ -17,8 +16,7 @@
       "nodeMemory": 4000000000.0,
       "nodeMemoryAllocatable": 32000000000.0,
       "condition": "ready",
-      "nodeCountsByReadiness": {"ready": 1, "notReady": 0},
-      "podCountsByPhase": {"pending": 0, "running": 1, "succeeded": 0, "failed": 0, "unknown": 0}
+      "nodeCountsByReadiness": {"ready": 1, "notReady": 0}
     }
   ]
 }

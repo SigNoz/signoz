@@ -1,0 +1,15 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+	// Page chain isn't a flex column, so anchor the virtualized table against the viewport.
+	height: calc(100vh - 240px);
+	min-height: 400px;
+}
+
+.actionsContainer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}

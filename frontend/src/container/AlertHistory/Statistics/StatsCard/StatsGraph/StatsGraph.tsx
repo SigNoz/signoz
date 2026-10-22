@@ -81,7 +81,11 @@ function StatsGraph({ timeSeries, changeDirection }: Props): JSX.Element {
 	);
 
 	return (
-		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
+		<div
+			style={{ height: '100%', width: '100%' }}
+			ref={graphRef}
+			data-testid="stats-card-sparkline"
+		>
 			<Uplot data={[xData, yData]} options={options} />
 		</div>
 	);

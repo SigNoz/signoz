@@ -45,7 +45,7 @@ func newConfig() factory.Config {
 	return &Config{
 		Tokenizer: TokenizerConfig{
 			Enabled: true,
-			Headers: []string{"Authorization", "Sec-WebSocket-Protocol"},
+			Headers: []string{"Authorization"},
 		},
 		APIKeyConfig: APIKeyConfig{
 			Enabled: true,

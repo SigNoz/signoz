@@ -1,0 +1,17 @@
+.llmObservabilityAttributeMapping {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+
+	:global(.ant-tabs-tabpane) {
+		padding: var(--spacing-0) var(--spacing-8);
+	}
+}
+
+.pageError {
+	padding: var(--padding-3) var(--padding-4);
+	border-radius: var(--radius-2);
+	background: var(--callout-error-background);
+	color: var(--callout-error-title);
+	font-size: var(--periscope-font-size-base);
+}

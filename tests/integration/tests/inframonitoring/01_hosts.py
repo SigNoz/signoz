@@ -1,5 +1,3 @@
-"""Integration tests for v2 infra-monitoring host endpoints."""
-
 import json
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
@@ -200,6 +198,7 @@ def test_hosts_warnings(
             {"prod-linux-1", "dev-linux-1"},
             id="in_contains",
         ),
+        pytest.param("host.namee = 'prod-linux-1'", set(), id="unresolved_key"),
     ],
 )
 def test_hosts_filter(
@@ -257,7 +256,6 @@ def test_hosts_filter(
 @pytest.mark.parametrize(
     "expression,err_substr",
     [
-        pytest.param("host.namee = 'prod-linux-1'", "host.namee", id="bad_attr_name"),
         pytest.param("host.name =", None, id="trailing_op"),
         pytest.param("(host.name = 'prod-linux-1'", None, id="unclosed_paren"),
         # Cases dropped — parser is permissive and accepts these silently:
@@ -274,8 +272,8 @@ def test_hosts_filter_invalid(
     expression: str,
     err_substr,
 ) -> None:
-    """Invalid filter expressions (typo'd attribute key, malformed grammar) return
-    400 invalid_input with structured errors; bad attribute keys are named in them."""
+    """Malformed filter grammar (trailing operator, unclosed paren) returns
+    400 invalid_input with structured errors."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(

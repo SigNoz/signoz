@@ -29,6 +29,7 @@ export enum InfraMonitoringEvents {
 	MetricsView = 'metrics',
 	Total = 'total',
 	Cluster = 'cluster',
+	Container = 'container',
 	DaemonSet = 'daemonSet',
 	Deployment = 'deployment',
 	Job = 'job',

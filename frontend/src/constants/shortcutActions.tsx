@@ -15,7 +15,6 @@ import {
 	ListMinus,
 	ScrollText,
 	Settings,
-	TowerControl,
 	Workflow,
 } from '@signozhq/icons';
 import Noz from 'components/Noz/Noz';
@@ -43,10 +42,17 @@ type ActionDeps = {
 	aiAssistant?: {
 		open: () => void;
 	};
+	/**
+	 * Provided only in development mode. Opens the AuthZ DevTools modal
+	 * for testing permission overrides.
+	 */
+	authzDevTools?: {
+		open: () => void;
+	};
 };
 
 export function createShortcutActions(deps: ActionDeps): CmdAction[] {
-	const { navigate, handleThemeChange, aiAssistant } = deps;
+	const { navigate, handleThemeChange, aiAssistant, authzDevTools } = deps;
 
 	const actions: CmdAction[] = [
 		{
@@ -131,16 +137,6 @@ export function createShortcutActions(deps: ActionDeps): CmdAction[] {
 			roles: ['ADMIN', 'EDITOR', 'VIEWER'],
 			perform: (): void => navigate(ROUTES.LOGS_PIPELINES),
 		},
-		{
-			id: 'logs',
-			name: 'Go to Logs Views',
-			shortcut: [GlobalShortcutsName.NavigateToLogsViews],
-			keywords: 'logs views',
-			section: 'Logs',
-			icon: <TowerControl size={14} />,
-			roles: ['ADMIN', 'EDITOR', 'VIEWER'],
-			perform: (): void => navigate(ROUTES.LOGS_SAVE_VIEWS),
-		},
 
 		// metrics
 		{
@@ -162,16 +158,6 @@ export function createShortcutActions(deps: ActionDeps): CmdAction[] {
 			icon: <Compass size={14} />,
 			roles: ['ADMIN', 'EDITOR', 'VIEWER'],
 			perform: (): void => navigate(ROUTES.METRICS_EXPLORER_EXPLORER),
-		},
-		{
-			id: 'metrics-views',
-			name: 'Go to Metrics Views',
-			shortcut: [GlobalShortcutsName.NavigateToMetricsViews],
-			keywords: 'metrics views',
-			section: 'Metrics',
-			icon: <TowerControl size={14} />,
-			roles: ['ADMIN', 'EDITOR', 'VIEWER'],
-			perform: (): void => navigate(ROUTES.METRICS_EXPLORER_VIEWS),
 		},
 
 		// Traces
@@ -299,6 +285,18 @@ export function createShortcutActions(deps: ActionDeps): CmdAction[] {
 			icon: <Noz size={16} />,
 			roles: ['ADMIN', 'EDITOR', 'VIEWER'],
 			perform: aiAssistant.open,
+		});
+	}
+
+	if (authzDevTools) {
+		actions.push({
+			id: 'authz-devtools',
+			name: 'AuthZ DevTools',
+			keywords: 'authz permissions rbac debug devtools override testing',
+			section: 'Dev',
+			icon: <Settings size={14} />,
+			roles: ['ADMIN', 'EDITOR', 'VIEWER'],
+			perform: authzDevTools.open,
 		});
 	}
 

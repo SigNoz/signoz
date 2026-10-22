@@ -8,7 +8,7 @@ type ClickHouseQuery struct {
 	// disabled if true, the query will not be executed
 	Disabled bool `json:"disabled"`
 
-	Legend string `json:"legend,omitempty"`
+	Legend string `json:"legend"`
 }
 
 // Copy creates a deep copy of the ClickHouseQuery.

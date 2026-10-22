@@ -66,13 +66,15 @@
         "factor-api-key",
         "license",
         "subscription",
+        "deployment-host",
         "logs",
         "traces",
         "metrics",
         "audit-logs",
         "meter-metrics",
         "logs-field",
-        "traces-field"
+        "traces-field",
+        "metrics-field"
       ],
       "type": "string"
     },

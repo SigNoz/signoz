@@ -1,0 +1,64 @@
+.body {
+	display: flex;
+	flex-direction: column;
+	gap: 17px;
+	border-radius: 3px;
+}
+
+.connectedAccountDetails {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+}
+
+.connectedAccountDetailsTitle {
+	color: var(--l1-foreground);
+	font-size: 14px;
+	font-weight: var(--font-weight-medium);
+	line-height: var(--line-height-20);
+	letter-spacing: -0.07px;
+}
+
+.accountId {
+	color: var(--l2-foreground);
+	font-size: 12px;
+	line-height: 18px;
+	letter-spacing: -0.06px;
+}
+
+.accountIdValue {
+	font-family: 'Geist Mono';
+	font-size: 12px;
+	font-weight: var(--font-weight-bold);
+	line-height: 18px;
+	letter-spacing: -0.06px;
+}
+
+.regionSelector {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+}
+
+.regionSelectorTitle {
+	color: var(--l1-foreground);
+	font-size: 14px;
+	font-weight: var(--font-weight-medium);
+	line-height: var(--line-height-20);
+	letter-spacing: -0.07px;
+}
+
+.regionSelectorDescription {
+	color: var(--l2-foreground);
+	font-size: 12px;
+	line-height: 18px;
+	letter-spacing: -0.06px;
+}
+
+.footer {
+	display: flex;
+	flex-direction: row;
+	gap: var(--spacing-5);
+	justify-content: space-between;
+	width: 100%;
+}

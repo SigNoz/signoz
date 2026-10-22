@@ -1,0 +1,45 @@
+.strip {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-6);
+
+	flex-shrink: 0;
+	height: var(--bottom-strip-height);
+	padding: 0 var(--spacing-6);
+
+	background: var(--l2-background);
+	border-top: 1px solid var(--l2-border);
+
+	--button-font-size: 12px;
+
+	font-family: var(--font-family-sf-mono, monospace);
+
+	// Above page content, below the body-portalled overlays that are meant to
+	// cover the strip.
+	position: relative;
+	z-index: 1;
+}
+
+.left,
+.right {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-4);
+	min-width: 0;
+}
+
+.left {
+	cursor: default;
+}
+
+// separator b/w strip entities
+.left > *:not(:last-child)::after,
+.right > *:not(:last-child)::after {
+	content: '';
+	flex-shrink: 0;
+	width: 1px;
+	height: 14px;
+	background: var(--l2-border);
+	margin-left: var(--spacing-4);
+}

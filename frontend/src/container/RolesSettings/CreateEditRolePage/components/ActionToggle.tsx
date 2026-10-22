@@ -1,12 +1,13 @@
 import { useCallback, useMemo, useState } from 'react';
 import { ConfirmDialog } from '@signozhq/ui/dialog';
 import { Divider } from '@signozhq/ui/divider';
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
 
 import { PermissionScope } from '../../types';
 import { getResourcePanel } from '../../permissions.config';
 import ItemInputSelector from './ItemInputSelector';
+import TelemetrySelectorWizard from './TelemetrySelectorWizard';
 
 import styles from './ActionToggle.module.scss';
 import { AuthZResource, AuthZVerb } from 'lib/authz/hooks/useAuthZ/types';
@@ -39,10 +40,13 @@ function ActionToggle({
 	onSelectedIdsChange,
 	hasError = false,
 }: ActionToggleProps): JSX.Element {
+	const panel = getResourcePanel(resource);
+
 	const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 	const [pendingScope, setPendingScope] = useState<PermissionScope | null>(null);
 
 	const displayLabel = getActionLabel(action);
+	const selectorTestId = `${resource}-${action}`;
 
 	const scopeItems: Array<{ value: PermissionScope; label: string }> =
 		useMemo(() => {
@@ -105,13 +109,14 @@ function ActionToggle({
 					<Typography as="span" size="base">
 						{displayLabel}
 					</Typography>
-					<ToggleGroupSimple
+					<ToggleGroup
+						variant="outlined"
+						color="secondary"
 						type="single"
 						size="sm"
 						value={scope}
 						onChange={handleToggleChange}
 						items={scopeItems}
-						className={styles.actionToggleScopeToggle}
 						testId={`action-toggle-scope-${resource}-${action}`}
 					/>
 				</div>
@@ -121,11 +126,25 @@ function ActionToggle({
 						<Divider />
 
 						<ItemInputSelector
-							placeholder={getResourcePanel(resource).selectorPlaceholder}
+							placeholder={panel.selectorPlaceholder}
 							selectedIds={selectedIds}
 							onChange={onSelectedIdsChange}
-							docsAnchor={getResourcePanel(resource).docsAnchor}
+							testId={selectorTestId}
+							docsAnchor={panel.docsAnchor}
 							hasError={hasError}
+							prefixElement={
+								panel.selectorType === 'telemetryBuilder' ? (
+									<TelemetrySelectorWizard
+										resource={resource}
+										testId={selectorTestId}
+										onAdd={(selector): void => {
+											if (!selectedIds.includes(selector)) {
+												onSelectedIdsChange([...selectedIds, selector]);
+											}
+										}}
+									/>
+								) : null
+							}
 						/>
 					</div>
 				)}

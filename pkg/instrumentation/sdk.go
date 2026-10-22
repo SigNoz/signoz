@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/instrumentation/tracehandler"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
@@ -57,7 +58,9 @@ func New(ctx context.Context, cfg Config, build version.Build, serviceName strin
 
 	// Prepare the resource configuration by merging
 	// resource and attributes.
-	sch := semconv.SchemaURL
+	// contribsdkconfig merges this resource with sdkresource.Default().
+	// The merge fails if the schema URLs are different.
+	sch := sdkresource.Default().SchemaURL()
 	configResource := contribsdkconfig.Resource{
 		Attributes: mergeAttributes(cfg.Resource.Attributes, resource),
 		Detectors:  nil,
@@ -108,7 +111,7 @@ func New(ctx context.Context, cfg Config, build version.Build, serviceName strin
 	}
 
 	// Set the global tracer provider to the sdk tracer provider so that external packages can use this
-	otel.SetTracerProvider(sdk.TracerProvider())
+	otel.SetTracerProvider(tracehandler.New(sdk.TracerProvider(), tracehandler.NewPromQL()))
 
 	return &SDK{
 		sdk:                       sdk,

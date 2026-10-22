@@ -1,0 +1,85 @@
+import { Check, Clock, RotateCcw, X, Zap } from '@signozhq/icons';
+import { Typography } from '@signozhq/ui/typography';
+
+import type { BrandedPermission } from '../../hooks/useAuthZ/types';
+import { OverrideState } from '../types';
+
+import styles from './OverrideControl.module.css';
+import { Button } from '@signozhq/ui/button';
+import { Tooltip } from '@signozhq/ui/tooltip';
+
+type OverrideControlProps = {
+	permission: BrandedPermission;
+	value: OverrideState;
+	onSelect: (permission: BrandedPermission, state: OverrideState) => void;
+};
+
+type OverrideOption = {
+	state: OverrideState;
+	label: string;
+	icon: React.ReactElement;
+};
+
+const OVERRIDE_OPTIONS: OverrideOption[] = [
+	{
+		state: OverrideState.Reset,
+		label: 'Auto',
+		icon: <RotateCcw size={13} />,
+	},
+	{
+		state: OverrideState.Granted,
+		label: 'Grant',
+		icon: <Check size={13} />,
+	},
+	{
+		state: OverrideState.Denied,
+		label: 'Deny',
+		icon: <X size={13} />,
+	},
+	{
+		state: OverrideState.Delay,
+		label: 'Delay',
+		icon: <Clock size={13} />,
+	},
+	{
+		state: OverrideState.Error,
+		label: 'Error',
+		icon: <Zap size={13} />,
+	},
+];
+
+export function OverrideControl({
+	permission,
+	value,
+	onSelect,
+}: OverrideControlProps): JSX.Element {
+	return (
+		<div className={styles.segmented}>
+			{OVERRIDE_OPTIONS.map((option) => {
+				const isActive = value === option.state;
+				return (
+					<Tooltip key={option.state} title={option.label}>
+						<Button
+							size="md"
+							type="button"
+							aria-pressed={isActive}
+							aria-label={option.label}
+							data-option={option.state}
+							variant="ghost"
+							color="secondary"
+							onClick={(): void => onSelect(permission, option.state)}
+							testId={`override-${option.state}-${permission}`}
+							prefix={option.icon}
+						>
+							{isActive && (
+								<Typography.Text as="span" size="small" weight="medium">
+									{option.label}
+								</Typography.Text>
+							)}
+						</Button>
+					</Tooltip>
+				);
+			})}
+		</div>
+	);
+}

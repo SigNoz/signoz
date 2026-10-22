@@ -19,7 +19,7 @@ var jobNameGroupByKey = qbtypes.GroupByKey{
 
 // jobsTableMetricNamesList drives the existence/retention check.
 // Includes k8s.pod.phase even though phase isn't part of the QB composite query —
-// it is queried separately via getPerGroupPodPhaseCounts, and we want the
+// it is queried separately via getPerGroupPodStatusCounts, and we want the
 // response to short-circuit cleanly when the phase metric is absent.
 var jobsTableMetricNamesList = []string{
 	"k8s.pod.phase",
@@ -37,8 +37,7 @@ var jobsTableMetricNamesList = []string{
 	"k8s.job.desired_successful_pods",
 }
 
-// Carried forward from v1 jobAttrsToEnrich
-// (pkg/query-service/app/inframetrics/jobs.go:31-35).
+// Carried forward from v1 jobAttrsToEnrich (removed).
 var jobAttrKeysForMetadata = []string{
 	"k8s.job.name",
 	"k8s.namespace.name",

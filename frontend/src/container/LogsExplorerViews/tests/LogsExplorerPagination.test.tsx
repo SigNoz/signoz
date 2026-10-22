@@ -179,7 +179,10 @@ const setupServer = (capturedPayloads: QueryRangePayloadV5[]): void => {
 		),
 		// Add handler for the fields endpoint that's causing warnings
 		rest.get(`${ENVIRONMENT.baseURL}/api/v1/fields/keys`, async (req, res, ctx) =>
-			res(ctx.status(200), ctx.json([])),
+			res(
+				ctx.status(200),
+				ctx.json({ status: 'success', data: { complete: true, keys: {} } }),
+			),
 		),
 	);
 };
@@ -545,5 +548,5 @@ describe('Logs Explorer -> stage and run query', () => {
 		// Verify that the IDs have changed (this confirms the Stage & Run Query button worked)
 		expect(currentStagedQuery.id).not.toBe(initialStagedQueryId);
 		expect(currentCurrentQuery.id).not.toBe(initialCurrentQueryId);
-	});
+	}, 15000);
 });

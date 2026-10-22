@@ -2,11 +2,13 @@ import { Button } from 'antd';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
+import { Tooltip } from '@signozhq/ui/tooltip';
 
 interface CheckboxValueRowProps {
 	value: string;
 	checked: boolean;
 	disabled: boolean;
+	disabledTooltip?: string;
 	title: string;
 	onlyButtonLabel: string;
 	customRendererForValue?: (value: string) => JSX.Element;
@@ -18,6 +20,7 @@ function CheckboxValueRow({
 	value,
 	checked,
 	disabled,
+	disabledTooltip,
 	title,
 	onlyButtonLabel,
 	customRendererForValue,
@@ -27,10 +30,11 @@ function CheckboxValueRow({
 	return (
 		<div className="value">
 			<Checkbox
+				color="primary"
+				disabledTooltip={disabledTooltip}
 				onChange={(isChecked): void => onCheckboxChange(isChecked === true)}
 				value={checked}
 				disabled={disabled}
-				className="check-box"
 			/>
 
 			<div
@@ -46,22 +50,27 @@ function CheckboxValueRow({
 				{customRendererForValue ? (
 					customRendererForValue(value)
 				) : (
-					<Typography.Text className="value-string" truncate={1}>
-						{String(value)}
-					</Typography.Text>
+					<Tooltip title={String(value)} side="top" align="start">
+						<Typography.Text className="value-string" truncate={1}>
+							{String(value)}
+						</Typography.Text>
+					</Tooltip>
 				)}
-				<Button type="text" className="only-btn">
-					{onlyButtonLabel}
-				</Button>
-				<Button type="text" className="toggle-btn">
-					Toggle
-				</Button>
+				<div className="value-actions">
+					<Button type="text" className="only-btn">
+						{onlyButtonLabel}
+					</Button>
+					<Button type="text" className="toggle-btn">
+						Toggle
+					</Button>
+				</div>
 			</div>
 		</div>
 	);
 }
 
 CheckboxValueRow.defaultProps = {
+	disabledTooltip: undefined,
 	customRendererForValue: undefined,
 };
 

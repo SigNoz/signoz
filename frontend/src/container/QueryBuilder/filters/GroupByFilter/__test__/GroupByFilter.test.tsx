@@ -9,137 +9,140 @@ import { IBuilderQuery } from '../../../../../types/api/queryBuilder/queryBuilde
 import { DataSource } from '../../../../../types/common/queryBuilder';
 import { GroupByFilter } from '../GroupByFilter';
 
-const BASE_URL = ENVIRONMENT.baseURL;
-const attributeKeysURL = `${BASE_URL}/api/v3/autocomplete/attribute_keys`;
+const fieldKeysURL = `${ENVIRONMENT.baseURL}/api/v1/fields/keys`;
 
-function setup(
-	overrides?: Partial<React.ComponentProps<typeof GroupByFilter>>,
-): { onChange: jest.Mock } {
+type FieldKeyVariant = {
+	name: string;
+	fieldContext: string;
+	fieldDataType?: string;
+};
+
+const fieldKeysBody = (
+	variants: FieldKeyVariant[],
+): Record<string, unknown> => ({
+	status: 'success',
+	data: {
+		complete: true,
+		keys: variants.reduce<Record<string, FieldKeyVariant[]>>(
+			(acc, variant) => ({
+				...acc,
+				[variant.name]: [...(acc[variant.name] ?? []), variant],
+			}),
+			{},
+		),
+	},
+});
+
+const groupByInput = (): HTMLInputElement =>
+	screen.getByTestId('group-by').querySelector('input') as HTMLInputElement;
+
+function setup(queryOverrides?: Partial<IBuilderQuery>): {
+	onChange: jest.Mock;
+} {
 	const onChange = jest.fn();
 	const query = {
 		dataSource: DataSource.METRICS,
-		aggregateAttribute: { key: 'service.name' },
+		aggregateAttribute: { key: 'signoz_calls_total' },
 		aggregateOperator: 'COUNT',
 		groupBy: [],
+		...queryOverrides,
 	} as unknown as IBuilderQuery;
-	render(
-		<GroupByFilter
-			query={query}
-			onChange={onChange}
-			disabled={false}
-			signalSource="meter"
-			{...overrides}
-		/>,
-	);
+	render(<GroupByFilter query={query} onChange={onChange} disabled={false} />);
 	return { onChange };
 }
 
+// wait for dropdown and select the option instead of hitting Enter
+async function clickOption(label: string): Promise<void> {
+	const user = userEvent.setup({ pointerEventsCheck: 0 });
+	const option = await screen.findByText(
+		(content, el) =>
+			content.trim() === label && !!el?.closest('.ant-select-item-option'),
+	);
+	await user.click(option);
+}
+
 describe('GroupByFilter', () => {
-	const dataSourceCalls: string[] = [];
-	let callCount = 0;
+	const requests: URLSearchParams[] = [];
 
 	beforeAll(() => {
 		server.listen();
 	});
 	afterEach(() => {
 		server.resetHandlers();
-		dataSourceCalls.length = 0;
-		callCount = 0;
+		requests.length = 0;
 		jest.clearAllMocks();
 	});
 	afterAll(() => {
 		server.close();
 	});
 
-	it('uses meter datasource for suggestions and normalization', async () => {
+	function useFieldKeys(variants: FieldKeyVariant[]): void {
 		server.use(
-			rest.get(attributeKeysURL, (req, res, ctx) => {
-				const ds = req.url.searchParams.get('dataSource') || '';
-				dataSourceCalls.push(ds);
-				callCount += 1;
-				const attributeKeys =
-					callCount === 1
-						? [
-								{
-									id: 'service.name--string--',
-									key: 'service.name',
-									dataType: 'string',
-									type: '',
-								},
-							]
-						: [];
-				return res(
-					ctx.status(200),
-					ctx.json({
-						data: { attributeKeys },
-					}),
-				);
+			rest.get(fieldKeysURL, (req, res, ctx) => {
+				requests.push(req.url.searchParams);
+				return res(ctx.status(200), ctx.json(fieldKeysBody(variants)));
 			}),
 		);
+	}
 
-		const { onChange } = setup();
+	it('asks the fields API for meter keys and emits a typed custom key', async () => {
+		useFieldKeys([]);
+		const { onChange } = setup({ source: 'meter' });
 
-		const select = screen.getByTestId('group-by');
-		fireEvent.focus(select);
+		fireEvent.focus(screen.getByTestId('group-by'));
 
-		await waitFor(() => expect(dataSourceCalls.length).toBeGreaterThanOrEqual(1));
-		expect(dataSourceCalls[0]).toBe('meter');
+		await waitFor(() => expect(requests.length).toBeGreaterThanOrEqual(1));
+		expect(requests[0].get('signal')).toBe('metrics');
+		expect(requests[0].get('source')).toBe('meter');
+		expect(requests[0].get('metricName')).toBe('signoz_calls_total');
 
-		const input = select.querySelector('input') as HTMLInputElement;
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		await user.type(input, 'custom.attr');
-		// wait for dropdown and select the option instead of hitting Enter
-		await screen.findByRole('listbox');
-		const option = await screen.findByRole('option', { name: 'custom.attr' });
-		await user.click(option);
+		await user.type(groupByInput(), 'custom.attr');
+		await clickOption('custom.attr');
 
 		expect(onChange).toHaveBeenCalled();
-		expect(dataSourceCalls[dataSourceCalls.length - 1]).toBe('meter');
-
 		const emitted = onChange.mock.calls[0][0][0];
 		expect(emitted.key).toBe('custom.attr');
 		expect(emitted.id).toBeTruthy();
 		expect(emitted.id).not.toBe('----');
 	});
-	it('clicks suggested option and emits proper value', async () => {
-		server.use(
-			rest.get(attributeKeysURL, (_req, res, ctx) =>
-				res(
-					ctx.status(200),
-					ctx.json({
-						status: 'success',
-						data: {
-							attributeKeys: [
-								{
-									id: 'service.name--string--',
-									key: 'service.name',
-									dataType: 'string',
-									type: '',
-								},
-							],
-						},
-					}),
-				),
-			),
-		);
 
+	it('emits the picked suggestion with its context and data type', async () => {
+		useFieldKeys([
+			{ name: 'service.name', fieldContext: 'resource', fieldDataType: 'string' },
+		]);
 		const { onChange } = setup();
-		const combo = screen.getByRole('combobox');
+
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		await user.click(combo);
+		await user.click(groupByInput());
+		await clickOption('service.name');
 
-		await screen.findByRole('listbox');
-		const option = await screen.findByText(
-			(content, el) =>
-				content.trim() === 'service.name' &&
-				!!el?.closest('.ant-select-item-option'),
-		);
-		await user.click(option);
-
-		// Expect payload to be resolved to the exact attribute returned by MSW
 		await waitFor(() => expect(onChange).toHaveBeenCalled());
-		const emitted = onChange.mock.calls[0][0][0];
-		expect(emitted.key).toBe('service.name');
-		expect(emitted.id).toBe('service.name--string--');
+		// Expect payload to be resolved to the exact attribute returned by MSW
+		expect(onChange.mock.calls[0][0][0]).toMatchObject({
+			key: 'service.name',
+			type: 'resource',
+			dataType: 'string',
+			id: 'service.name--string--resource',
+		});
+	});
+
+	it('offers each context of a name as its own option', async () => {
+		useFieldKeys([
+			{ name: 'service.name', fieldContext: 'resource', fieldDataType: 'string' },
+			{ name: 'service.name', fieldContext: 'attribute', fieldDataType: 'string' },
+		]);
+		setup();
+
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		await user.click(groupByInput());
+
+		await waitFor(() =>
+			expect(
+				screen
+					.getAllByText('service.name')
+					.filter((el) => !!el.closest('.ant-select-item-option')),
+			).toHaveLength(2),
+		);
 	});
 });

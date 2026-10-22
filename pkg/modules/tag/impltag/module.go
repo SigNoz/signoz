@@ -45,17 +45,17 @@ func (m *module) createMany(ctx context.Context, orgID valuer.UUID, kind coretyp
 		return []*tagtypes.Tag{}, nil
 	}
 
-	toCreate, matched, err := m.resolve(ctx, orgID, kind, postable)
+	ordered, toCreate, err := m.resolve(ctx, orgID, kind, postable)
 	if err != nil {
 		return nil, err
 	}
 
-	created, err := m.store.CreateOrGet(ctx, toCreate)
-	if err != nil {
+	// CreateOrGet fills new rows' IDs in place; ordered shares those pointers.
+	if _, err := m.store.CreateOrGet(ctx, toCreate); err != nil {
 		return nil, err
 	}
 
-	return append(matched, created...), nil
+	return ordered, nil
 }
 
 func (m *module) syncLinksForResource(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, resourceID valuer.UUID, tagIDs []valuer.UUID) error {

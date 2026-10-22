@@ -114,10 +114,12 @@ describe('InviteTeamMembers', () => {
 		it('disables buttons when isLoading=true', () => {
 			renderComponent({ isLoading: true });
 
-			expect(screen.getByRole('button', { name: /send invites/i })).toBeDisabled();
+			expect(
+				screen.getByRole('button', { name: /send invites/i }),
+			).toHaveAttribute('aria-disabled', 'true');
 			expect(
 				screen.getByRole('button', { name: /i'll do this later/i }),
-			).toBeDisabled();
+			).toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('disables Send Invites when canSubmit=false from InviteMembers', () => {
@@ -134,8 +136,14 @@ describe('InviteTeamMembers', () => {
 				}) as JSX.Element,
 			);
 
-			expect(getByTestId('send-invites-button')).toBeDisabled();
-			expect(getByTestId('do-later-button')).not.toBeDisabled();
+			expect(getByTestId('send-invites-button')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
+			expect(getByTestId('do-later-button')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 
 		it('disables buttons when isSubmitting=true from InviteMembers', () => {
@@ -152,8 +160,14 @@ describe('InviteTeamMembers', () => {
 				}) as JSX.Element,
 			);
 
-			expect(getByTestId('send-invites-button')).toBeDisabled();
-			expect(getByTestId('do-later-button')).toBeDisabled();
+			expect(getByTestId('send-invites-button')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
+			expect(getByTestId('do-later-button')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 	});
 
@@ -166,8 +180,8 @@ describe('InviteTeamMembers', () => {
 				{ email: 'user2@test.com', success: true },
 			];
 			const mockRows: InviteMemberRow[] = [
-				{ id: 'row-1', email: 'user1@test.com', roleId: 'role-viewer-id' },
-				{ id: 'row-2', email: 'user2@test.com', roleId: 'role-editor-id' },
+				{ id: 'row-1', email: 'user1@test.com', roleIds: ['role-viewer-id'] },
+				{ id: 'row-2', email: 'user2@test.com', roleIds: ['role-editor-id'] },
 			];
 			mockInviteMembersProps?.onSuccess?.(mockResults, mockRows);
 
@@ -177,14 +191,14 @@ describe('InviteTeamMembers', () => {
 					teamMembers: [
 						{
 							email: 'user1@test.com',
-							role: 'VIEWER',
+							roles: ['VIEWER'],
 							name: '',
 							frontendBaseUrl: 'http://localhost:3301',
 							id: 'row-1',
 						},
 						{
 							email: 'user2@test.com',
-							role: 'EDITOR',
+							roles: ['EDITOR'],
 							name: '',
 							frontendBaseUrl: 'http://localhost:3301',
 							id: 'row-2',
@@ -211,8 +225,8 @@ describe('InviteTeamMembers', () => {
 				{ email: 'user2@test.com', success: false, error: 'Already exists' },
 			];
 			const mockRows: InviteMemberRow[] = [
-				{ id: 'row-1', email: 'user1@test.com', roleId: 'role-viewer-id' },
-				{ id: 'row-2', email: 'user2@test.com', roleId: 'role-admin-id' },
+				{ id: 'row-1', email: 'user1@test.com', roleIds: ['role-viewer-id'] },
+				{ id: 'row-2', email: 'user2@test.com', roleIds: ['role-admin-id'] },
 			];
 			mockInviteMembersProps?.onPartialSuccess?.(mockResults, mockRows);
 
@@ -222,14 +236,14 @@ describe('InviteTeamMembers', () => {
 					teamMembers: [
 						{
 							email: 'user1@test.com',
-							role: 'VIEWER',
+							roles: ['VIEWER'],
 							name: '',
 							frontendBaseUrl: 'http://localhost:3301',
 							id: 'row-1',
 						},
 						{
 							email: 'user2@test.com',
-							role: 'ADMIN',
+							roles: ['ADMIN'],
 							name: '',
 							frontendBaseUrl: 'http://localhost:3301',
 							id: 'row-2',
@@ -252,8 +266,8 @@ describe('InviteTeamMembers', () => {
 				{ email: 'user2@test.com', success: false, error: 'Error 2' },
 			];
 			const mockRows: InviteMemberRow[] = [
-				{ id: 'row-1', email: 'user1@test.com', roleId: 'role-editor-id' },
-				{ id: 'row-2', email: 'user2@test.com', roleId: 'role-viewer-id' },
+				{ id: 'row-1', email: 'user1@test.com', roleIds: ['role-editor-id'] },
+				{ id: 'row-2', email: 'user2@test.com', roleIds: ['role-viewer-id'] },
 			];
 			mockInviteMembersProps?.onAllFailed?.(mockResults, mockRows);
 
@@ -263,14 +277,14 @@ describe('InviteTeamMembers', () => {
 					teamMembers: [
 						{
 							email: 'user1@test.com',
-							role: 'EDITOR',
+							roles: ['EDITOR'],
 							name: '',
 							frontendBaseUrl: 'http://localhost:3301',
 							id: 'row-1',
 						},
 						{
 							email: 'user2@test.com',
-							role: 'VIEWER',
+							roles: ['VIEWER'],
 							name: '',
 							frontendBaseUrl: 'http://localhost:3301',
 							id: 'row-2',

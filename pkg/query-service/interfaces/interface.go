@@ -17,12 +17,12 @@ type Reader interface {
 	GetInstantQueryMetricsResult(ctx context.Context, query *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
 	GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
 	GetTopLevelOperations(ctx context.Context, start, end time.Time, services []string) (*map[string][]string, *model.ApiError)
-	GetEntryPointOperations(ctx context.Context, query *model.GetTopOperationsParams) (*[]model.TopOperationsItem, error)
-	GetServices(ctx context.Context, query *model.GetServicesParams) (*[]model.ServiceItem, *model.ApiError)
-	GetTopOperations(ctx context.Context, query *model.GetTopOperationsParams) (*[]model.TopOperationsItem, *model.ApiError)
+	GetEntryPointOperations(ctx context.Context, orgID valuer.UUID, query *model.GetTopOperationsParams) (*[]model.TopOperationsItem, error)
+	GetServices(ctx context.Context, orgID valuer.UUID, query *model.GetServicesParams) (*[]model.ServiceItem, *model.ApiError)
+	GetTopOperations(ctx context.Context, orgID valuer.UUID, query *model.GetTopOperationsParams) (*[]model.TopOperationsItem, *model.ApiError)
 	GetUsage(ctx context.Context, query *model.GetUsageParams) (*[]model.UsageItem, error)
 	GetServicesList(ctx context.Context) (*[]string, error)
-	GetDependencyGraph(ctx context.Context, query *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error)
+	GetDependencyGraph(ctx context.Context, orgID valuer.UUID, query *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error)
 
 	GetTTL(ctx context.Context, orgID string, ttlParams *retentiontypes.GetTTLParams) (*retentiontypes.GetTTLResponseItem, *model.ApiError)
 	GetCustomRetentionTTL(ctx context.Context, orgID string) (*retentiontypes.GetCustomRetentionTTLResponse, error)
@@ -79,26 +79,7 @@ type Reader interface {
 
 	GetMetricMetadata(context.Context, valuer.UUID, string, string) (*v3.MetricMetadataResponse, error)
 
-	AddRuleStateHistory(ctx context.Context, ruleStateHistory []model.RuleStateHistory) error
-	GetOverallStateTransitions(ctx context.Context, ruleID string, params *model.QueryRuleStateHistory) ([]model.ReleStateItem, error)
-	ReadRuleStateHistoryByRuleID(ctx context.Context, ruleID string, params *model.QueryRuleStateHistory) (*model.RuleStateTimeline, error)
-	GetTotalTriggers(ctx context.Context, ruleID string, params *model.QueryRuleStateHistory) (uint64, error)
-	GetTriggersByInterval(ctx context.Context, ruleID string, params *model.QueryRuleStateHistory) (*v3.Series, error)
-	GetAvgResolutionTime(ctx context.Context, ruleID string, params *model.QueryRuleStateHistory) (float64, error)
-	GetAvgResolutionTimeByInterval(ctx context.Context, ruleID string, params *model.QueryRuleStateHistory) (*v3.Series, error)
-	ReadRuleStateHistoryTopContributorsByRuleID(ctx context.Context, ruleID string, params *model.QueryRuleStateHistory) ([]model.RuleStateHistoryContributor, error)
-	GetLastSavedRuleStateHistory(ctx context.Context, ruleID string) ([]model.RuleStateHistory, error)
-
 	GetMinAndMaxTimestampForTraceID(ctx context.Context, traceID []string) (int64, int64, error)
-
-	// Query Progress tracking helpers.
-	ReportQueryStartForProgressTracking(queryId string) (reportQueryFinished func(), apiErr *model.ApiError)
-	SubscribeToQueryProgress(queryId string) (<-chan model.QueryProgress, func(), *model.ApiError)
-
-	GetCountOfThings(ctx context.Context, query string) (uint64, error)
-	GetActiveHostsFromMetricMetadata(ctx context.Context, metricNames []string, hostNameAttr string, sinceUnixMilli int64) (map[string]bool, error)
-
-	GetMetricsExistenceAndEarliestTime(ctx context.Context, metricNames []string) (uint64, uint64, error)
 
 	//trace
 	GetTraceFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError)
@@ -108,7 +89,6 @@ type Reader interface {
 	GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUID, metricNames ...string) (map[string]*model.UpdateMetricsMetadata, *model.ApiError)
 
 	CheckForLabelsInMetric(ctx context.Context, orgID valuer.UUID, metricName string, labels []string) (bool, *model.ApiError)
-	GetNormalizedStatus(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]bool, error)
 }
 
 type Querier interface {

@@ -10,13 +10,8 @@
       "daemonSetMemoryLimit": 0.4,
       "desiredNodes": 3,
       "currentNodes": 2,
-      "podCountsByPhase": {
-        "pending": 0,
-        "running": 2,
-        "succeeded": 0,
-        "failed": 0,
-        "unknown": 0
-      }
+      "readyNodes": 2,
+      "misscheduledNodes": 1
     },
     {
       "daemonSetName": "acc-ds-2",
@@ -28,13 +23,8 @@
       "daemonSetMemoryLimit": 0.3,
       "desiredNodes": 4,
       "currentNodes": 4,
-      "podCountsByPhase": {
-        "pending": 0,
-        "running": 3,
-        "succeeded": 0,
-        "failed": 0,
-        "unknown": 0
-      }
+      "readyNodes": 4,
+      "misscheduledNodes": 0
     }
   ]
 }

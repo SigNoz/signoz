@@ -1,17 +1,21 @@
-import { AttributeValuesMap } from 'components/ClientSideQBSearch/ClientSideQBSearch';
 import { OperatorConfigKeys, OPERATORS_CONFIG } from 'constants/queryBuilder';
 import { HAVING_FILTER_REGEXP } from 'constants/regExp';
 import { IOption } from 'hooks/useResourceAttribute/types';
 import uniqWith from 'lodash-es/unionWith';
 import { parse } from 'papaparse';
-import { HavingForm } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	HavingForm,
+	IBuilderQuery,
+} from 'types/api/queryBuilder/queryBuilderData';
+import { MetricAggregation } from 'types/api/v5/queryRange';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { ORDERBY_FILTERS } from './OrderByFilter/config';
 import {
 	orderByValueDelimiter,
 	splitOrderByFromString,
 } from './OrderByFilter/utils';
-import { getRemoveOrderFromValue } from './QueryBuilderSearch/utils';
+import { getRemoveOrderFromValue } from './QueryBuilderSearchV2/utils';
 
 export const handleKeyDownLimitFilter: React.KeyboardEventHandler<
 	HTMLInputElement
@@ -101,23 +105,6 @@ export const getValidOrderByResult = (result: IOption[]): IOption[] =>
 		return acc;
 	}, []);
 
-export const transformKeyValuesToAttributeValuesMap = (
-	attributeValuesMap: Record<string, string[] | number[] | boolean[]>,
-): AttributeValuesMap =>
-	Object.fromEntries(
-		Object.entries(attributeValuesMap || {}).map(([key, values]) => [
-			key,
-			{
-				stringAttributeValues:
-					typeof values[0] === 'string' ? (values as string[]) : [],
-				numberAttributeValues:
-					typeof values[0] === 'number' ? (values as number[]) : [],
-				boolAttributeValues:
-					typeof values[0] === 'boolean' ? (values as boolean[]) : [],
-			},
-		]),
-	);
-
 export const filterByOperatorConfig = (
 	options: IOption[],
 	key?: OperatorConfigKeys,
@@ -127,5 +114,19 @@ export const filterByOperatorConfig = (
 	}
 	return options.filter((option) =>
 		OPERATORS_CONFIG[key].includes(option.label),
+	);
+};
+
+export const getMetricNameForQuery = (
+	query: IBuilderQuery,
+): string | undefined => {
+	if (query.dataSource !== DataSource.METRICS) {
+		return undefined;
+	}
+
+	return (
+		(query.aggregations?.[0] as MetricAggregation)?.metricName ||
+		query.aggregateAttribute?.key ||
+		undefined
 	);
 };

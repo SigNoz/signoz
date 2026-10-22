@@ -1,5 +1,6 @@
 import { useLocation } from 'react-router-dom';
 import { Button, Col, Tooltip } from 'antd';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 import ROUTES from 'constants/routes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -26,6 +27,8 @@ interface QBEntityOptionsProps {
 	query?: IBuilderQuery;
 	isMetricsDataSource?: boolean;
 	showFunctions?: boolean;
+	areFunctionsDisabled?: boolean;
+	functionsDisabledReason?: string;
 	isCollapsed: boolean;
 	entityType: string;
 	entityData: any;
@@ -36,7 +39,8 @@ interface QBEntityOptionsProps {
 	onQueryFunctionsUpdates?: (functions: QueryFunction[]) => void;
 	showDeleteButton?: boolean;
 	showCloneOption?: boolean;
-	isListViewPanel?: boolean;
+	isRawQuery?: boolean;
+	allowedDataSources?: TelemetrytypesSignalDTO[];
 	index?: number;
 	showTraceOperator?: boolean;
 	hasTraceOperator?: boolean;
@@ -50,12 +54,15 @@ export default function QBEntityOptions({
 	isMetricsDataSource,
 	isCollapsed,
 	showFunctions,
+	areFunctionsDisabled,
+	functionsDisabledReason,
 	entityType,
 	entityData,
 	onToggleVisibility,
 	onCollapseEntity,
 	onQueryFunctionsUpdates,
-	isListViewPanel,
+	isRawQuery,
+	allowedDataSources,
 	onDelete,
 	showDeleteButton,
 	showCloneOption,
@@ -100,7 +107,7 @@ export default function QBEntityOptions({
 									value="query-builder"
 									className="periscope-btn visibility-toggle"
 									onClick={onToggleVisibility}
-									disabled={isListViewPanel && !showTraceOperator}
+									disabled={isRawQuery && !showTraceOperator}
 								>
 									{entityData.disabled ? <EyeOff size={16} /> : <Eye size={16} />}
 								</Button>
@@ -119,7 +126,7 @@ export default function QBEntityOptions({
 									'periscope-btn',
 									entityType === 'query' ? 'query-name' : 'formula-name',
 									query?.dataSource === DataSource.TRACES &&
-										(hasTraceOperator || (showTraceOperator && isListViewPanel))
+										(hasTraceOperator || (showTraceOperator && isRawQuery))
 										? 'has-trace-operator'
 										: '',
 									isLogsExplorerPage && lastUsedQuery === index ? 'sync-btn' : '',
@@ -138,24 +145,33 @@ export default function QBEntityOptions({
 										}}
 										data-testid={`query-data-source-selector-${index}`}
 										value={query?.dataSource || DataSource.METRICS}
-										isListViewPanel={isListViewPanel}
+										allowedDataSources={allowedDataSources}
 										className="query-data-source-dropdown"
 									/>
 								</div>
 							)}
 
 							{showFunctions &&
-								!isListViewPanel &&
+								!isRawQuery &&
 								(isMetricsDataSource || isLogsDataSource) &&
 								query &&
 								onQueryFunctionsUpdates && (
-									<QueryFunctions
-										query={query}
-										queryFunctions={query.functions || []}
-										key={query.functions?.toString()}
-										onChange={onQueryFunctionsUpdates}
-										maxFunctions={isLogsDataSource ? 1 : 3}
-									/>
+									<Tooltip title={functionsDisabledReason}>
+										<div
+											className={cx('query-functions-container', {
+												'query-functions-container--disabled': areFunctionsDisabled,
+											})}
+											aria-disabled={areFunctionsDisabled}
+										>
+											<QueryFunctions
+												query={query}
+												queryFunctions={query.functions || []}
+												key={query.functions?.toString()}
+												onChange={onQueryFunctionsUpdates}
+												maxFunctions={isLogsDataSource ? 1 : 3}
+											/>
+										</div>
+									</Tooltip>
 								)}
 						</Button.Group>
 					</div>
@@ -168,7 +184,7 @@ export default function QBEntityOptions({
 					)}
 				</div>
 
-				{showDeleteButton && !isListViewPanel && (
+				{showDeleteButton && !isRawQuery && (
 					<Button className="periscope-btn ghost" onClick={onDelete}>
 						<Trash2 size={14} />
 					</Button>
@@ -179,11 +195,14 @@ export default function QBEntityOptions({
 }
 
 QBEntityOptions.defaultProps = {
-	isListViewPanel: false,
+	isRawQuery: false,
+	allowedDataSources: undefined,
 	query: undefined,
 	isMetricsDataSource: false,
 	onQueryFunctionsUpdates: undefined,
 	showFunctions: false,
+	areFunctionsDisabled: false,
+	functionsDisabledReason: undefined,
 	onCloneQuery: noop,
 	index: 0,
 	onDelete: noop,

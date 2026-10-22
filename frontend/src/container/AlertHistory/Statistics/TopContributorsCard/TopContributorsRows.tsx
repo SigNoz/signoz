@@ -68,7 +68,10 @@ function TopContributorsRows({
 					relatedTracesLink={record.relatedTracesLink}
 					relatedLogsLink={record.relatedLogsLink}
 				>
-					<div className="total-contribution">
+					<div
+						className="total-contribution"
+						data-testid="top-contributors-row-count"
+					>
 						{count}/{totalCurrentTriggers}
 					</div>
 				</ConditionalAlertPopover>
@@ -78,7 +81,10 @@ function TopContributorsRows({
 
 	const handleRowClick = (
 		record: AlertRuleTopContributors,
-	): HTMLAttributes<AlertRuleTimelineTableResponse> => ({
+	): HTMLAttributes<AlertRuleTimelineTableResponse> & {
+		'data-testid': string;
+	} => ({
+		'data-testid': 'top-contributors-row',
 		onClick: (): void => {
 			logEvent('Alert history: Top contributors row: Clicked', {
 				labels: record.labels,

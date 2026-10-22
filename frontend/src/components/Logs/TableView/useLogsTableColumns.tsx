@@ -2,13 +2,15 @@ import type { ReactElement } from 'react';
 import { useMemo } from 'react';
 import TanStackTable from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
+import { FeatureKeys } from 'constants/features';
 import {
 	getBodyDisplayString,
 	getSanitizedLogBody,
 } from 'container/LogDetailedView/utils';
 import { FontSize } from 'container/OptionsMenu/types';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
-import { FlatLogData } from 'lib/logs/flatLogData';
+import { getLogFieldValue } from 'lib/logs/flatLogData';
+import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
@@ -26,6 +28,10 @@ export function useLogsTableColumns({
 	fontSize,
 }: UseLogsTableColumnsProps): TableColumnDef<ILog>[] {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+	const { featureFlags } = useAppContext();
+	const isBodyJsonEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.USE_JSON_BODY)
+			?.active || false;
 
 	return useMemo<TableColumnDef<ILog>[]>(() => {
 		const stateIndicatorCol: TableColumnDef<ILog> = {
@@ -86,9 +92,10 @@ export function useLogsTableColumns({
 		};
 
 		const makeUserFieldCol = (f: IField): TableColumnDef<ILog> => ({
-			id: buildCompositeKey(f.name, f.type),
+			id: buildCompositeKey(f.name, f.type, f.dataType),
 			header: f.name,
-			accessorFn: (log): unknown => FlatLogData(log)[f.name],
+			accessorFn: (log): unknown =>
+				getLogFieldValue(log, f.name, isBodyJsonEnabled),
 			enableRemove: true,
 			width: { min: 192 },
 			cell: ({ value }): ReactElement => (
@@ -115,5 +122,5 @@ export function useLogsTableColumns({
 			.filter((c): c is TableColumnDef<ILog> => c !== null);
 
 		return [stateIndicatorCol, ...fieldCols];
-	}, [fields, fontSize, formatTimezoneAdjustedTimestamp]);
+	}, [fields, fontSize, formatTimezoneAdjustedTimestamp, isBodyJsonEnabled]);
 }

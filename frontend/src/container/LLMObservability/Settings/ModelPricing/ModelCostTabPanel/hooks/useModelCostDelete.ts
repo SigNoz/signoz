@@ -1,11 +1,13 @@
 import { useCallback, useState } from 'react';
 import { toast } from '@signozhq/ui/sonner';
 import { useQueryClient } from 'react-query';
+import logEvent from 'api/common/logEvent';
 import {
 	getListLLMPricingRulesQueryKey,
 	useDeleteLLMPricingRule,
 } from 'api/generated/services/llmpricingrules';
 
+import { TOAST_MODEL_COST_DELETED } from '../../constants';
 import type { PricingRule } from '../../types';
 
 // The minimal slice of a rule the delete-confirm flow needs: the id to delete
@@ -45,11 +47,14 @@ export function useModelCostDelete(): UseModelCostDeleteResult {
 		}
 		try {
 			await deleteRuleApi({ pathParams: { id: pendingDelete.id } });
+			void logEvent('AI Observability Model Pricing: Model cost deleted', {
+				modelName: pendingDelete.modelName,
+			});
 			await queryClient.invalidateQueries({
 				queryKey: getListLLMPricingRulesQueryKey(),
 			});
 			setPendingDelete(null);
-			toast.success('Model cost deleted');
+			toast.success(TOAST_MODEL_COST_DELETED);
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Delete failed';
 			toast.error(message);

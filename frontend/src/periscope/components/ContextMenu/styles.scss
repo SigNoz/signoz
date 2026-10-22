@@ -77,6 +77,11 @@
 	color: var(--muted-foreground);
 }
 
+// Body-portaled overlay: stay clickable when a modal sets `body { pointer-events: none }`.
+.context-menu {
+	pointer-events: auto;
+}
+
 .context-menu .ant-popover-inner {
 	padding: 0;
 	border-radius: 6px;

@@ -7,4 +7,5 @@ export const SIGNAL_DATA_SOURCE_MAP = {
 	[SignalType.EXCEPTIONS]: DataSource.TRACES,
 	[SignalType.API_MONITORING]: DataSource.TRACES,
 	[SignalType.METER_EXPLORER]: DataSource.METRICS,
+	[SignalType.AI_OBSERVABILITY]: DataSource.TRACES,
 };

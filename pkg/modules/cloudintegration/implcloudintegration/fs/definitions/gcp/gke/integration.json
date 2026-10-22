@@ -1,0 +1,159 @@
+{
+  "id": "gke",
+  "title": "GCP Kubernetes Engine",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supportedSignals": {
+    "metrics": true,
+    "logs": true
+  },
+  "dataCollected": {
+    "metrics": [
+      {
+        "name": "kubernetes.io/container/cpu/limit_utilization",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "kubernetes.io/container/cpu/request_utilization",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "kubernetes.io/container/memory/limit_utilization",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "kubernetes.io/container/memory/request_utilization",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "kubernetes.io/container/restart_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "kubernetes.io/pod/latencies/pod_first_ready",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "kubernetes.io/pod/network/received_bytes_count",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "kubernetes.io/pod/network/sent_bytes_count",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "kubernetes.io/pod/volume/utilization",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "kubernetes.io/node/cpu/allocatable_utilization",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "kubernetes.io/node/memory/allocatable_utilization",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "kubernetes.io/node/ephemeral_storage/used_bytes",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "kubernetes.io/node/ephemeral_storage/allocatable_bytes",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "kubernetes.io/node/network/received_bytes_count",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "kubernetes.io/node/network/sent_bytes_count",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "kubernetes.io/node/status_condition",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      }
+    ],
+    "logs": [
+      {
+        "name": "Project",
+        "path": "gcp.project",
+        "type": "string"
+      },
+      {
+        "name": "Resource Type",
+        "path": "gcp.resource_type",
+        "type": "string"
+      }
+    ]
+  },
+  "telemetryCollectionStrategy": {
+    "gcp": {
+      "metrics": {
+        "metricNames": [
+          "kubernetes.io/container/cpu/limit_utilization",
+          "kubernetes.io/container/cpu/request_utilization",
+          "kubernetes.io/container/memory/limit_utilization",
+          "kubernetes.io/container/memory/request_utilization",
+          "kubernetes.io/container/restart_count",
+          "kubernetes.io/pod/latencies/pod_first_ready",
+          "kubernetes.io/pod/network/received_bytes_count",
+          "kubernetes.io/pod/network/sent_bytes_count",
+          "kubernetes.io/pod/volume/utilization",
+          "kubernetes.io/node/cpu/allocatable_utilization",
+          "kubernetes.io/node/memory/allocatable_utilization",
+          "kubernetes.io/node/ephemeral_storage/used_bytes",
+          "kubernetes.io/node/ephemeral_storage/allocatable_bytes",
+          "kubernetes.io/node/network/received_bytes_count",
+          "kubernetes.io/node/network/sent_bytes_count",
+          "kubernetes.io/node/status_condition"
+        ]
+      },
+      "logs": {
+        "sinkFilter": "resource.type=(\"k8s_container\" OR \"k8s_pod\" OR \"k8s_node\" OR \"k8s_cluster\" OR \"k8s_control_plane_component\" OR \"gke_cluster\" OR \"gke_nodepool\")"
+      }
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "GCP Kubernetes Engine Overview",
+        "description": "Overview of GCP Kubernetes Engine metrics",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}

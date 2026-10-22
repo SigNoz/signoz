@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { CircleAlert } from '@signozhq/icons';
-import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
+import { ThresholdProps } from 'types/api/widgets/threshold';
 
 import { getBackgroundColorAndThresholdCheck } from './utils';
 

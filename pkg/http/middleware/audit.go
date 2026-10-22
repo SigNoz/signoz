@@ -118,6 +118,10 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 	extractorCtx := coretypes.ExtractorContext{Request: req, ResponseBody: writer.BodyBytes()}
 
 	for _, resource := range resolved {
+		if err := resource.Err(); err != nil {
+			continue
+		}
+
 		resource.ResolveResponse(extractorCtx)
 		verb, category := resource.Verb(), resource.Category()
 

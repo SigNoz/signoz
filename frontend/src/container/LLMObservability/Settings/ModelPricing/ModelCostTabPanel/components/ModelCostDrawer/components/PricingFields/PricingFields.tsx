@@ -24,9 +24,7 @@ function PricingFields({
 	return (
 		<div className={cx(styles.drawerSection, styles.drawerSurface)}>
 			<div className={styles.drawerSurfaceHead}>
-				<Typography.Text size="base" weight="bold">
-					Pricing (per 1M tokens, USD)
-				</Typography.Text>
+				<span className={styles.fieldLabel}>Pricing (per 1M tokens, USD)</span>
 
 				{isReadOnly && (
 					<span className={styles.managedLabel} data-testid="drawer-readonly-label">
@@ -38,8 +36,8 @@ function PricingFields({
 			</div>
 			<div className={styles.pricingGrid}>
 				<div className={styles.pricingField}>
-					<label htmlFor="input-cost">
-						Input cost{' '}
+					<label htmlFor="input-cost" className={styles.fieldLabel}>
+						Input Cost{' '}
 						<span className={styles.required} aria-hidden="true">
 							*
 						</span>
@@ -58,8 +56,8 @@ function PricingFields({
 					/>
 				</div>
 				<div className={styles.pricingField}>
-					<label htmlFor="output-cost">
-						Output cost{' '}
+					<label htmlFor="output-cost" className={styles.fieldLabel}>
+						Output Cost{' '}
 						<span className={styles.required} aria-hidden="true">
 							*
 						</span>

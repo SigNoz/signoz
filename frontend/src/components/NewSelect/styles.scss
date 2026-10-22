@@ -29,6 +29,13 @@ $custom-border-color: #2c3044;
 		background-color: var(--l2-background);
 		color: color-mix(in srgb, var(--border) 70%, transparent);
 	}
+
+	// The search input overlays the selected value; lift the value above it while
+	// closed so hovers reach its tooltip. Clicks still open the select and focus the input.
+	&:not(.ant-select-open) .ant-select-selection-item {
+		position: relative;
+		z-index: 1;
+	}
 }
 
 // Keep chip styles ONLY in the multi-select
@@ -223,6 +230,33 @@ $custom-border-color: #2c3044;
 	}
 }
 
+// Ellipsized option label; also the selected value in the closed single select.
+.option-label-text {
+	display: block;
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+// overscroll-behavior only holds on a box that overflows; a 1px sentinel past
+// the bottom makes even a short list overflow, so the wheel never scrolls the page.
+.custom-select-dropdown,
+.custom-multiselect-dropdown {
+	position: relative;
+	overscroll-behavior: contain;
+
+	&::after {
+		content: '';
+		position: absolute;
+		top: 100%;
+		left: 0;
+		width: 1px;
+		height: 1px;
+	}
+}
+
 // Custom dropdown styles for single select
 .custom-select-dropdown {
 	padding: 8px 0 0 0;
@@ -258,6 +292,10 @@ $custom-border-color: #2c3044;
 		overflow: hidden;
 
 		.group-label {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+
 			font-weight: 500;
 			padding: 4px 12px;
 			font-size: 13px;
@@ -442,7 +480,7 @@ $custom-border-color: #2c3044;
 		.group-label {
 			display: flex;
 			align-items: center;
-			justify-content: space-between;
+			gap: 4px;
 
 			font-weight: 500;
 			padding: 4px 12px;
@@ -458,7 +496,9 @@ $custom-border-color: #2c3044;
 
 	.option-item {
 		padding: 8px 12px;
-		cursor: pointer;
+		// Not the whole row — only the checkbox and the action buttons get the
+		// pointer (set below), so inert areas don't look clickable.
+		cursor: default;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -492,88 +532,93 @@ $custom-border-color: #2c3044;
 			margin-bottom: 8px;
 		}
 
-		.option-checkbox {
+		.all-option-text {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			width: 100%;
+		}
+
+		.option-content {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
 			width: 100%;
 
-			// @signozhq/ui Checkbox renders children inside a <label> that is
-			// content-sized by default. Make it fill the row (min-width: 0 lets it
-			// shrink) so the option text below can truncate instead of overflowing.
-			> label {
+			.option-label-text {
 				flex: 1 1 auto;
 				min-width: 0;
+				margin-bottom: 0;
+				overflow: hidden;
+				white-space: nowrap;
+				text-overflow: ellipsis;
 			}
 
-			.all-option-text {
-				display: flex;
-				align-items: center;
-				justify-content: space-between;
-				width: 100%;
-			}
-
-			.option-content {
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-				width: 100%;
-
-				.option-label-text {
-					flex: 1 1 auto;
-					min-width: 0;
-					margin-bottom: 0;
-					overflow: hidden;
-					white-space: nowrap;
-					text-overflow: ellipsis;
-				}
-
-				.option-badge {
-					font-size: 12px;
-					padding: 2px 6px;
-					border-radius: 4px;
-					background-color: $custom-border-color;
-					color: var(--l2-foreground);
-					margin-left: 8px;
-				}
-			}
-
-			// Size the buttons to the row's resting content height (20px) and fully
-			// override antd's default 32px Button box, so revealing them on hover
-			// never changes the row height.
-			.only-btn,
-			.toggle-btn {
-				display: none;
-				align-items: center;
-				justify-content: center;
-				height: 18px;
-				min-height: 0;
-				padding: 0 6px;
+			.option-badge {
 				font-size: 12px;
-				line-height: 1;
-				border: none;
-				box-shadow: none;
-
-				&:hover {
-					background-color: unset;
-				}
-			}
-
-			.option-content:hover {
-				.only-btn {
-					display: flex;
-				}
-				.toggle-btn {
-					display: none;
-				}
-
-				.option-badge {
-					display: none;
-				}
+				padding: 2px 6px;
+				border-radius: 4px;
+				background-color: $custom-border-color;
+				color: var(--l2-foreground);
+				margin-left: 8px;
 			}
 		}
 
-		.option-checkbox:hover {
+		// "Only"/"All" is the primary action — a filled pill that reads as a
+		// button; "Toggle" is a secondary hint in plain text. Sized to the row's
+		// resting height so revealing them on hover never shifts it.
+		.only-btn,
+		.toggle-btn {
+			display: none;
+			align-items: center;
+			justify-content: center;
+			height: 18px;
+			min-height: 0;
+			font-size: 12px;
+			line-height: 1;
+			box-shadow: none;
+		}
+
+		.only-btn {
+			padding: 4px 8px;
+			// Black interior + a visible border so the pill stands out clearly
+			// against the near-black row when revealed on hover.
+			border: 1px solid var(--l3-border);
+			border-radius: 3px;
+			background-color: var(--bg-ink-500, #0b0c0e);
+			color: var(--l1-foreground);
+			cursor: pointer;
+		}
+
+		.toggle-btn {
+			padding: 0 6px;
+			border: none;
+			background-color: transparent;
+			color: var(--l2-foreground);
+			cursor: pointer;
+		}
+
+		// Toggle appears over the checkbox area; "Only/All" takes over the row
+		// content and hides Toggle there (higher specificity wins).
+		&:hover {
 			.toggle-btn {
 				display: flex;
 			}
+
+			.option-badge {
+				display: none;
+			}
+		}
+
+		.option-content:hover {
+			.only-btn {
+				display: flex;
+			}
+
+			.toggle-btn {
+				display: none;
+			}
+
 			.option-badge {
 				display: none;
 			}

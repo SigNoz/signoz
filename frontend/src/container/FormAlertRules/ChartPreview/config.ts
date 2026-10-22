@@ -4,7 +4,7 @@ import {
 	MiscellaneousFormats,
 	ThroughputFormats,
 	TimeFormats,
-} from 'container/NewWidget/RightContainer/types';
+} from 'constants/formats/types';
 
 export const dataFormatConfig: Record<DataFormats, number> = {
 	[DataFormats.BytesIEC]: 1,

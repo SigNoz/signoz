@@ -316,17 +316,17 @@ func (e *ClickHouseFilterExtractor) extractColumnStrByExpr(expr clickhouse.Expr)
 	// FunctionExpr is a function call like "toDate(timestamp)"
 	case *clickhouse.FunctionExpr:
 		// For function expressions, return the complete function call string
-		return ex.String()
+		return clickhouse.Format(ex)
 	// ColumnExpr is a column expression like "m.region", "toDate(timestamp)"
 	case *clickhouse.ColumnExpr:
 		// ColumnExpr wraps another expression - extract the underlying expression
 		if ex.Expr != nil {
 			return e.extractColumnStrByExpr(ex.Expr)
 		}
-		return ex.String()
+		return clickhouse.Format(ex)
 	default:
 		// For other expression types, return the string representation
-		return expr.String()
+		return clickhouse.Format(expr)
 	}
 }
 
@@ -524,7 +524,7 @@ func (e *ClickHouseFilterExtractor) extractFullExpression(expr clickhouse.Expr) 
 	if expr == nil {
 		return ""
 	}
-	return expr.String()
+	return clickhouse.Format(expr)
 }
 
 // isSimpleColumnReference checks if an expression is just a simple column reference
@@ -657,7 +657,7 @@ func (e *ClickHouseFilterExtractor) extractCTEName(cte *clickhouse.CTEStmt) stri
 	case *clickhouse.Ident:
 		return name.Name
 	default:
-		return cte.Expr.String()
+		return clickhouse.Format(cte.Expr)
 	}
 }
 

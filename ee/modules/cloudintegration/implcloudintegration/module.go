@@ -183,32 +183,52 @@ func (module *module) AgentCheckIn(ctx context.Context, orgID valuer.UUID, provi
 		return nil, errors.New(errors.TypeAlreadyExists, cloudintegrationtypes.ErrCodeCloudIntegrationAlreadyConnected, errMessage)
 	}
 
-	account, err := module.store.GetAccountByID(ctx, orgID, req.CloudIntegrationID, provider)
+	storableAccount, err := module.store.GetAccountByID(ctx, orgID, req.CloudIntegrationID, provider)
 	if err != nil {
 		return nil, err
 	}
 
+	account, err := cloudintegrationtypes.NewAccountFromStorable(storableAccount)
+	if err != nil {
+		return nil, err
+	}
+
+	syncState := account.NextSyncState(req.SyncedVersion)
+
 	// If account has been removed (disconnected), return a minimal response with empty integration config.
-	// The agent uses this response to clean up resources
 	if account.RemovedAt != nil {
+		// Heartbeat stays frozen after removal, only the sync state is updated.
+		if account.AgentReport != nil && syncState != nil {
+			account.UpdateSyncState(syncState)
+
+			storableAccount, err = cloudintegrationtypes.NewStorableCloudIntegration(account)
+			if err != nil {
+				return nil, err
+			}
+
+			err = module.store.UpdateAgentReport(ctx, storableAccount)
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		return cloudintegrationtypes.NewAgentCheckInResponse(
 			req.ProviderAccountID,
 			account.ID.StringValue(),
 			new(cloudintegrationtypes.ProviderIntegrationConfig),
 			account.RemovedAt,
+			syncState,
 		), nil
 	}
 
-	// update account with cloud provider account id and agent report (heartbeat)
-	account.Update(&req.ProviderAccountID, cloudintegrationtypes.NewAgentReport(req.Data))
+	account.UpdateAgentReport(&req.ProviderAccountID, cloudintegrationtypes.NewAgentReport(req.Data, syncState))
 
-	err = module.store.UpdateAccount(ctx, account)
+	storableAccount, err = cloudintegrationtypes.NewStorableCloudIntegration(account)
 	if err != nil {
 		return nil, err
 	}
 
-	// Get account as domain object for config access (enabled regions, etc.)
-	domainAccount, err := cloudintegrationtypes.NewAccountFromStorable(account)
+	err = module.store.UpdateAgentReport(ctx, storableAccount)
 	if err != nil {
 		return nil, err
 	}
@@ -223,8 +243,7 @@ func (module *module) AgentCheckIn(ctx context.Context, orgID valuer.UUID, provi
 		return nil, err
 	}
 
-	// Delegate integration config building entirely to the provider module
-	integrationConfig, err := cloudProvider.BuildIntegrationConfig(ctx, domainAccount, storedServices)
+	integrationConfig, err := cloudProvider.BuildIntegrationConfig(ctx, account, storedServices)
 	if err != nil {
 		return nil, err
 	}
@@ -234,6 +253,7 @@ func (module *module) AgentCheckIn(ctx context.Context, orgID valuer.UUID, provi
 		account.ID.StringValue(),
 		integrationConfig,
 		account.RemovedAt,
+		syncState,
 	), nil
 }
 
@@ -551,12 +571,12 @@ func (module *module) provisionDashboards(ctx context.Context, orgID valuer.UUID
 			continue
 		}
 
-		createdDashboard, err := module.dashboardModule.Create(ctx, orgID, createdBy, creator, dashboardtypes.SourceIntegration, dashboardtypes.PostableDashboard(dashboard.Definition))
+		createdDashboard, err := module.dashboardModule.CreateV2(ctx, orgID, createdBy, creator, dashboardtypes.SourceIntegration, dashboard.Definition)
 		if err != nil {
 			return err
 		}
 
-		integrationDashboard := cloudintegrationtypes.NewStorableIntegrationDashboard(createdDashboard.ID, cloudintegrationtypes.IntegrationDashboardProviderCloudIntegration, slug)
+		integrationDashboard := cloudintegrationtypes.NewStorableIntegrationDashboard(createdDashboard.ID.StringValue(), cloudintegrationtypes.IntegrationDashboardProviderCloudIntegration, slug)
 		if err := module.store.CreateIntegrationDashboard(ctx, integrationDashboard); err != nil {
 			return err
 		}
@@ -583,7 +603,7 @@ func (module *module) deprovisionDashboards(ctx context.Context, orgID valuer.UU
 			return err
 		}
 
-		if err := module.dashboardModule.DeleteUnsafe(ctx, orgID, dashID); err != nil {
+		if err := module.dashboardModule.DeleteUnsafeV2(ctx, orgID, dashID); err != nil {
 			return err
 		}
 	}

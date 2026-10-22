@@ -13,10 +13,9 @@ import (
 // the existing tags for an org. Lookup is case-insensitive on both key and
 // value (matching the storage uniqueness rule); when an existing row matches,
 // its display casing is reused. Inputs are deduped on (LOWER(key), LOWER(value));
-// the first input's casing wins on collisions. Returns:
-//   - toCreate: new Tag rows the caller should insert (with pre-generated IDs)
-//   - matched: existing rows the caller's input already pointed to. They
-//     already carry authoritative IDs from the store.
+// the first input's casing wins on collisions. Returns the resolved tags in
+// request order (deduped) plus the new subset to insert; the new tags share
+// pointers with the ordered slice, so their IDs populate in place on insert.
 func (m *module) resolve(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, postable []tagtypes.PostableTag) ([]*tagtypes.Tag, []*tagtypes.Tag, error) {
 	if len(postable) == 0 {
 		return nil, nil, nil
@@ -34,8 +33,8 @@ func (m *module) resolve(ctx context.Context, orgID valuer.UUID, kind coretypes.
 	}
 
 	seenInRequestAlready := make(map[string]struct{}, len(postable)) // postable can have the same tag multiple times
+	ordered := make([]*tagtypes.Tag, 0, len(postable))
 	toCreate := make([]*tagtypes.Tag, 0)
-	matched := make([]*tagtypes.Tag, 0)
 
 	for _, p := range postable {
 		key, value, err := tagtypes.ValidatePostableTag(p)
@@ -49,11 +48,13 @@ func (m *module) resolve(ctx context.Context, orgID valuer.UUID, kind coretypes.
 		seenInRequestAlready[lookup] = struct{}{}
 
 		if existingTag, ok := lowercaseTagsMap[lookup]; ok {
-			matched = append(matched, existingTag)
+			ordered = append(ordered, existingTag)
 			continue
 		}
-		toCreate = append(toCreate, tagtypes.NewTag(orgID, kind, key, value))
+		newTag := tagtypes.NewTag(orgID, kind, key, value)
+		ordered = append(ordered, newTag)
+		toCreate = append(toCreate, newTag)
 	}
 
-	return toCreate, matched, nil
+	return ordered, toCreate, nil
 }

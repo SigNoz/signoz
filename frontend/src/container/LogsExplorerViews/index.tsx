@@ -18,13 +18,18 @@ import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { QueryParams } from 'constants/query';
-import { initialFilters, PANEL_TYPES } from 'constants/queryBuilder';
+import {
+	initialFilters,
+	initialQueriesMap,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import GoToTop from 'container/GoToTop';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
+import ExportMenu from 'components/ExportMenu/ExportMenu';
 import LogsExplorerTable from 'container/LogsExplorerTable';
 import {
 	getExportQueryData,
@@ -32,19 +37,21 @@ import {
 	getListQuery,
 	getQueryByPanelType,
 } from 'container/LogsExplorerViews/explorerUtils';
-import { BuilderUnitsFilter } from 'container/QueryBuilder/filters/BuilderUnitsFilter';
+import ExplorerActions from 'container/ExplorerActions/ExplorerActions';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
+import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
+import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashboardLink';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import useUrlYAxisUnit from 'hooks/useUrlYAxisUnit';
 import { isEmpty, isUndefined } from 'lodash-es';
 import LiveLogs from 'pages/LiveLogs';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
-import { Dashboard } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
 import { ILog } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -52,8 +59,8 @@ import { Filter } from 'types/api/v5/queryRange';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 } from 'uuid';
+import { getListOrderBy, setListOrderBy } from 'utils/explorerUtils';
 
 import LogsActionsContainer from './LogsActionsContainer';
 
@@ -76,6 +83,8 @@ function LogsExplorerViewsContainer({
 	handleChangeSelectedView: ChangeViewFunctionType;
 }): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
+	const isSavedViewEnabled = useSavedViewEnabled();
+	const getExportToDashboardLink = useGetExportToDashboardLink();
 
 	const [showFrequencyChart, setShowFrequencyChart] = useState(
 		() => getFromLocalstorage(LOCALSTORAGE.SHOW_FREQUENCY_CHART) === 'true',
@@ -95,7 +104,8 @@ function LogsExplorerViewsContainer({
 	const currentMinTimeRef = useRef<number>(minTime);
 
 	// Context
-	const { stagedQuery, panelType } = useQueryBuilder();
+	const { stagedQuery, currentQuery, redirectWithQueryBuilderData, panelType } =
+		useQueryBuilder();
 
 	const selectedPanelType = panelType || PANEL_TYPES.LIST;
 
@@ -103,10 +113,9 @@ function LogsExplorerViewsContainer({
 	const [page, setPage] = useState<number>(1);
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [requestData, setRequestData] = useState<Query | null>(null);
-	const [queryId, setQueryId] = useState<string>(v4());
 	const [listChartQuery, setListChartQuery] = useState<Query | null>(null);
 
-	const [orderBy, setOrderBy] = useState<string>('timestamp:desc');
+	const orderBy = useMemo(() => getListOrderBy(stagedQuery), [stagedQuery]);
 
 	const { yAxisUnit, onUnitChange } = useUrlYAxisUnit('');
 
@@ -134,6 +143,13 @@ function LogsExplorerViewsContainer({
 	const exportDefaultQuery = useMemo(
 		() => getExportQueryData(requestData, selectedPanelType),
 		[selectedPanelType, requestData],
+	);
+
+	const explorerActions = useMemo(
+		() => (
+			<ExplorerActions query={exportDefaultQuery} sourcepage={DataSource.LOGS} />
+		),
+		[exportDefaultQuery],
 	);
 
 	const {
@@ -175,15 +191,17 @@ function LogsExplorerViewsContainer({
 			},
 			undefined,
 			listQueryKeyRef,
-			{
-				...(!isEmpty(queryId) &&
-					selectedPanelType !== PANEL_TYPES.LIST && {
-						'X-SIGNOZ-QUERY-ID': queryId,
-					}),
-			},
+			undefined,
 			// custom selected time interval to prevent recalculating the start and end timestamps before fetching next pages
 			'custom',
 		);
+
+	const handleOrderChange = useCallback(
+		(value: string): void => {
+			redirectWithQueryBuilderData(setListOrderBy(currentQuery, value));
+		},
+		[currentQuery, redirectWithQueryBuilderData],
+	);
 
 	const getRequestData = useCallback(
 		(
@@ -245,10 +263,6 @@ function LogsExplorerViewsContainer({
 		setRequestData(newRequestData);
 	}, [isLimit, logs, listQuery, pageSize, stagedQuery, getRequestData, page]);
 
-	useEffect(() => {
-		setQueryId(v4());
-	}, [data]);
-
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
 		if (!logEventCalledRef.current && !isUndefined(data?.payload)) {
@@ -263,7 +277,7 @@ function LogsExplorerViewsContainer({
 	}, [data?.payload]);
 
 	const handleExport = useCallback(
-		(dashboard: Dashboard | null, isNewDashboard?: boolean): void => {
+		(dashboard: ExportDashboard | null, isNewDashboard?: boolean): void => {
 			if (!dashboard || !selectedPanelType) {
 				return;
 			}
@@ -283,19 +297,26 @@ function LogsExplorerViewsContainer({
 			logEvent('Logs Explorer: Add to dashboard successful', {
 				panelType: selectedPanelType,
 				isNewDashboard,
-				dashboardName: dashboard?.data?.title,
+				dashboardName: dashboard?.title,
 			});
 
-			const dashboardEditView = generateExportToDashboardLink({
+			const dashboardEditView = getExportToDashboardLink({
 				query: exportDefaultQuery,
 				panelType: panelTypeParam,
 				dashboardId: dashboard.id,
 				widgetId,
 			});
 
-			safeNavigate(dashboardEditView);
+			if (dashboardEditView) {
+				safeNavigate(dashboardEditView);
+			}
 		},
-		[safeNavigate, exportDefaultQuery, selectedPanelType],
+		[
+			safeNavigate,
+			exportDefaultQuery,
+			selectedPanelType,
+			getExportToDashboardLink,
+		],
 	);
 
 	useEffect(() => {
@@ -313,18 +334,10 @@ function LogsExplorerViewsContainer({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data]);
 
-	// Store previous orderDirection to detect changes
-	const prevOrderByRef = useRef(orderBy);
-
 	useEffect(() => {
-		const orderByChanged =
-			prevOrderByRef.current !== orderBy && selectedPanelType === PANEL_TYPES.LIST;
-		prevOrderByRef.current = orderBy;
-
 		if (
 			requestData?.id !== stagedQuery?.id ||
-			currentMinTimeRef.current !== minTime ||
-			orderByChanged
+			currentMinTimeRef.current !== minTime
 		) {
 			const newRequestData = getRequestData(stagedQuery, {
 				filters: listQuery?.filters || initialFilters,
@@ -348,7 +361,6 @@ function LogsExplorerViewsContainer({
 		activeLogId,
 		selectedPanelType,
 		maxTime,
-		orderBy,
 	]);
 
 	const chartData = useMemo(() => {
@@ -414,14 +426,14 @@ function LogsExplorerViewsContainer({
 	return (
 		<div className="logs-explorer-views-container">
 			<div className="logs-explorer-views-types">
-				{!showLiveLogs && (
+				{!showLiveLogs && selectedPanelType === PANEL_TYPES.LIST && (
 					<LogsActionsContainer
 						listQuery={listQuery}
-						selectedPanelType={selectedPanelType}
 						showFrequencyChart={showFrequencyChart}
 						handleToggleFrequencyChart={handleToggleFrequencyChart}
 						orderBy={orderBy}
-						setOrderBy={setOrderBy}
+						onOrderChange={handleOrderChange}
+						explorerActions={explorerActions}
 					/>
 				)}
 
@@ -461,23 +473,34 @@ function LogsExplorerViewsContainer({
 					)}
 					{selectedPanelType === PANEL_TYPES.TIME_SERIES && !showLiveLogs && (
 						<div className="time-series-view-container">
-							<div className="time-series-view-container-header">
-								<BuilderUnitsFilter onChange={onUnitChange} yAxisUnit={yAxisUnit} />
-							</div>
 							<TimeSeriesView
 								isLoading={isLoading || isFetching}
 								data={data}
 								isError={isError}
 								error={error as APIError}
 								yAxisUnit={yAxisUnit}
+								onYAxisUnitChange={onUnitChange}
 								isFilterApplied={!isEmpty(listQuery?.filters?.items)}
 								dataSource={DataSource.LOGS}
 								setWarning={setWarning}
+								allowExport
+								headerActions={explorerActions}
 							/>
 						</div>
 					)}
 					{selectedPanelType === PANEL_TYPES.TABLE && !showLiveLogs && (
 						<div className="table-view-container">
+							<div className="table-view-container-header">
+								{explorerActions}
+								{data && !isError && (
+									<ExportMenu
+										dataSource={DataSource.LOGS}
+										data={data}
+										query={stagedQuery || initialQueriesMap.metrics}
+										fileName="logs-table"
+									/>
+								)}
+							</div>
 							<LogsExplorerTable
 								data={
 									(data?.payload?.data?.newResult?.data?.result ||
@@ -495,13 +518,15 @@ function LogsExplorerViewsContainer({
 
 			<GoToTop />
 
-			<ExplorerOptionWrapper
-				disabled={!stagedQuery}
-				query={exportDefaultQuery}
-				onExport={handleExport}
-				sourcepage={DataSource.LOGS}
-				handleChangeSelectedView={handleChangeSelectedView}
-			/>
+			{!isSavedViewEnabled && (
+				<ExplorerOptionWrapper
+					disabled={!stagedQuery}
+					query={exportDefaultQuery}
+					onExport={handleExport}
+					sourcepage={DataSource.LOGS}
+					handleChangeSelectedView={handleChangeSelectedView}
+				/>
+			)}
 		</div>
 	);
 }

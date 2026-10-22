@@ -51,7 +51,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	}, nil
 }
 
-func (provider *Provider) GetLicense(ctx context.Context, key string) ([]byte, error) {
+func (provider *Provider) GetLicense(ctx context.Context, key string) (*zeustypes.License, error) {
 	response, err := provider.do(
 		ctx,
 		provider.config.URL.JoinPath("/v2/licenses/me"),
@@ -63,7 +63,12 @@ func (provider *Provider) GetLicense(ctx context.Context, key string) ([]byte, e
 		return nil, err
 	}
 
-	return []byte(gjson.GetBytes(response, "data").String()), nil
+	license := new(zeustypes.License)
+	if err := json.Unmarshal([]byte(gjson.GetBytes(response, "data").String()), license); err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, zeus.ErrCodeResponseMalformed, "failed to unmarshal license data")
+	}
+
+	return license, nil
 }
 
 func (provider *Provider) GetCheckoutURL(ctx context.Context, key string, body []byte) ([]byte, error) {

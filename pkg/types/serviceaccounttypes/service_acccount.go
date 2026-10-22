@@ -69,10 +69,6 @@ type PostableServiceAccount struct {
 	Name string `json:"name" required:"true"`
 }
 
-type DeprecatedPostableServiceAccountRole struct {
-	ID valuer.UUID `json:"id" required:"true"`
-}
-
 type PostableServiceAccountRole struct {
 	ServiceAccountID valuer.UUID `json:"serviceAccountId" required:"true"`
 	RoleID           valuer.UUID `json:"roleId" required:"true"`

@@ -1,0 +1,40 @@
+.body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-6);
+}
+
+.mapping {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-4);
+	flex-wrap: wrap;
+}
+
+.arrow {
+	flex-shrink: 0;
+	opacity: 0.6;
+}
+
+.pricing {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-3);
+	padding: var(--spacing-6);
+	border-radius: var(--radius-2);
+	border: 1px solid var(--l2-border);
+	background: var(--l3-background);
+}
+
+.pricingRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-6);
+}
+
+.footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--spacing-4);
+}

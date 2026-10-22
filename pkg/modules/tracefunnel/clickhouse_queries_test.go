@@ -3,6 +3,8 @@ package tracefunnel
 import (
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBuildFunnelValidationQuery(t *testing.T) {
@@ -388,5 +390,45 @@ func TestTemporalOrderingLogic(t *testing.T) {
 		if !strings.Contains(query, check) {
 			t.Errorf("Missing temporal ordering check: %s", check)
 		}
+	}
+}
+
+func TestBuildFunnelQueriesQuoteStepNames(t *testing.T) {
+	validationQuery := BuildFunnelValidationQuery([]struct {
+		ServiceName   string
+		SpanName      string
+		ContainsError int
+		Clause        string
+	}{
+		{ServiceName: "svc'1') OR 1=1 --", SpanName: `span\`},
+	}, 1000000000, 2000000000)
+
+	overviewQuery := BuildFunnelOverviewQuery([]struct {
+		ServiceName    string
+		SpanName       string
+		ContainsError  int
+		LatencyPointer string
+		Clause         string
+	}{
+		{ServiceName: "svc'1", SpanName: "span'1", LatencyPointer: "end' OR '1'='1"},
+		{ServiceName: "svc2", SpanName: "span2", ContainsError: 1, LatencyPointer: "start"},
+	}, 1000000000, 2000000000)
+
+	testCases := []struct {
+		name     string
+		query    string
+		expected string
+	}{
+		{name: "ValidationQuery_QuoteInStepNames", query: validationQuery, expected: `('svc\'1\') OR 1=1 --','span\\') AS step1`},
+		{name: "OverviewQuery_QuoteInStepNames", query: overviewQuery, expected: `('svc\'1','span\'1') AS step1`},
+		{name: "OverviewQuery_QuoteInLatencyPointer", query: overviewQuery, expected: `'end\' OR \'1\'=\'1' AS latency_pointer_t1`},
+		{name: "OverviewQuery_PlainStepNames", query: overviewQuery, expected: `('svc2','span2') AS step2`},
+		{name: "OverviewQuery_PlainLatencyPointer", query: overviewQuery, expected: `'start' AS latency_pointer_t2`},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Contains(t, testCase.query, testCase.expected)
+		})
 	}
 }

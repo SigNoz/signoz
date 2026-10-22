@@ -1,6 +1,6 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GlobalTime } from 'types/actions/globalTime';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 
 const GetMaxMinTime = ({
 	graphType,

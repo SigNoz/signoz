@@ -89,5 +89,17 @@ export type UseAuthZResult = {
 	isFetching: boolean;
 	error: Error | null;
 	permissions: AuthZCheckResponse | null;
+	/**
+	 * True if every check is granted. False while loading or on error.
+	 */
+	allowed: boolean;
+	/**
+	 * Checks that resolved as not granted (empty while loading/error).
+	 */
+	deniedPermissions: BrandedPermission[];
+	/**
+	 * Use this to check if a specific permission is granted, false while loading or on error.
+	 */
+	isGranted: (permission: BrandedPermission) => boolean;
 	refetchPermissions: () => void;
 };

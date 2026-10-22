@@ -10,7 +10,7 @@ import DateTimeSelection from '../index';
 import {
 	__resetSearchParamsGetter,
 	__setSearchParamsGetterForTest,
-} from '../utils/getUnstableCurrentSearchParams';
+} from 'utils/getUnstableCurrentSearchParams';
 import { queryClient, TestWrapper } from './testUtils';
 
 const mockSafeNavigate = jest.fn();
@@ -18,11 +18,6 @@ jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): { safeNavigate: jest.Mock } => ({
 		safeNavigate: mockSafeNavigate,
 	}),
-}));
-
-jest.mock('container/NewExplorerCTA', () => ({
-	__esModule: true,
-	default: (): null => null,
 }));
 
 jest.mock('components/CustomTimePicker/CustomTimePicker', () => ({

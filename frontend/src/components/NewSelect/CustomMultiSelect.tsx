@@ -20,7 +20,7 @@ import {
 import { Color } from '@signozhq/design-tokens';
 import { Button, Select } from 'antd';
 import { Checkbox } from '@signozhq/ui/checkbox';
-import { Typography } from '@signozhq/ui/typography';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
 import TextToolTip from 'components/TextToolTip/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -29,11 +29,14 @@ import { capitalize, isEmpty } from 'lodash-es';
 import type { BaseSelectRef } from 'rc-select';
 import { popupContainer } from 'utils/selectPopupContainer';
 
+import TruncatedTooltip from './TruncatedTooltip';
 import { CustomMultiSelectProps, CustomTagProps, OptionData } from './types';
 import {
 	ALL_SELECTED_VALUE,
 	filterOptionsBySearch,
+	findOptionLabelText,
 	handleScrollToBottom,
+	findOptionLabel,
 	prioritizeOrAddOptionForMultiSelect,
 	SPACEKEY,
 } from './utils';
@@ -71,6 +74,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	onDropdownVisibleChange,
 	showIncompleteDataMessage = false,
 	showLabels = false,
+	preserveOptionOrder = false,
 	enableRegexOption = false,
 	isDynamicVariable = false,
 	showRetryButton = true,
@@ -309,7 +313,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			]);
 		} else {
 			setVisibleOptions(
-				selectedValues.length > 0 && isEmpty(searchText)
+				selectedValues.length > 0 && isEmpty(searchText) && !preserveOptionOrder
 					? prioritizeOrAddOptionForMultiSelect(filteredOptions, selectedValues)
 					: filteredOptions,
 			);
@@ -713,71 +717,90 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				}
 			};
 
+			// Row buttons select without letting the wrapping checkbox also toggle:
+			// stop propagation, run the selection, then drop the active/chip focus.
+			const selectFromButton = (
+				e: React.MouseEvent,
+				source: 'option' | 'checkbox',
+			): void => {
+				e.stopPropagation();
+				e.preventDefault();
+				handleItemSelection(source);
+				setActiveChipIndex(-1);
+				setActiveIndex(-1);
+			};
+
 			return (
-				<div
+				<TruncatedTooltip
 					key={option.value || `option-${index}`}
-					id={optionId}
-					ref={(el): void => {
-						if (index !== undefined) {
-							optionRefs.current[index] = el;
-						}
-					}}
-					className={cx('option-item', {
-						selected: isSelected,
-						active: isActive,
-					})}
-					onClick={(e): void => {
-						e.stopPropagation();
-						e.preventDefault();
-						handleItemSelection('option');
-						setActiveChipIndex(-1);
-						setActiveIndex(-1);
-					}}
-					onKeyDown={(e): void => {
-						if ((e.key === 'Enter' || e.key === SPACEKEY) && isActive) {
-							e.stopPropagation();
-							e.preventDefault();
-							handleItemSelection();
-						}
-					}}
-					onMouseEnter={(): void => {
-						setActiveIndex(index ?? -1);
-						setActiveChipIndex(-1); // Clear chip selection when hovering ALL option
-					}}
-					role="option"
-					aria-selected={isSelected}
-					aria-disabled={option.disabled}
-					tabIndex={isActive ? 0 : -1}
+					title={String(option.label || '')}
 				>
-					<Checkbox
-						value={isSelected}
-						className="option-checkbox"
-						onClick={(e): void => {
-							e.stopPropagation();
-							e.preventDefault();
-							handleItemSelection('checkbox');
-							setActiveChipIndex(-1);
-							setActiveIndex(-1);
-						}}
-					>
-						<div className="option-content">
-							<Typography.Text truncate={1} className="option-label-text">
-								{highlightMatchedText(String(option.label || ''), searchText)}
-							</Typography.Text>
-							{(option.type === 'custom' || option.type === 'regex') && (
-								<div className="option-badge">{capitalize(option.type)}</div>
-							)}
-							{option.value && ensureValidOption(option.value) && (
-								<Button type="text" className="only-btn">
-									{currentToggleTagValue({ option: option.value })}
-								</Button>
-							)}
-							<Button type="text" className="toggle-btn">
-								Toggle
-							</Button>
+					{(textRef): JSX.Element => (
+						<div
+							id={optionId}
+							ref={(el): void => {
+								if (index !== undefined) {
+									optionRefs.current[index] = el;
+								}
+							}}
+							className={cx('option-item', {
+								selected: isSelected,
+								active: isActive,
+							})}
+							onKeyDown={(e): void => {
+								if ((e.key === 'Enter' || e.key === SPACEKEY) && isActive) {
+									e.stopPropagation();
+									e.preventDefault();
+									handleItemSelection();
+								}
+							}}
+							onMouseEnter={(): void => {
+								setActiveIndex(index ?? -1);
+								setActiveChipIndex(-1); // Clear chip selection when hovering ALL option
+							}}
+							role="option"
+							aria-selected={isSelected}
+							aria-disabled={option.disabled}
+							tabIndex={isActive ? 0 : -1}
+						>
+							<Checkbox
+								color="primary"
+								value={isSelected}
+								width="100%"
+								onChange={(): void => {
+									handleItemSelection('checkbox');
+									setActiveChipIndex(-1);
+									setActiveIndex(-1);
+								}}
+							>
+								<div className="option-content">
+									<span ref={textRef} className="option-label-text">
+										{highlightMatchedText(String(option.label || ''), searchText)}
+									</span>
+									{(option.type === 'custom' || option.type === 'regex') && (
+										<div className="option-badge">{capitalize(option.type)}</div>
+									)}
+									{option.value && ensureValidOption(option.value) && (
+										<Button
+											type="text"
+											className="only-btn"
+											onClick={(e): void => selectFromButton(e, 'option')}
+										>
+											{currentToggleTagValue({ option: option.value })}
+										</Button>
+									)}
+									<Button
+										type="text"
+										className="toggle-btn"
+										onClick={(e): void => selectFromButton(e, 'checkbox')}
+									>
+										Toggle
+									</Button>
+								</div>
+							</Checkbox>
 						</div>
-					</Checkbox>
-				</div>
+					)}
+				</TruncatedTooltip>
 			);
 		},
 		[
@@ -1459,6 +1482,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		const shouldPrioritize =
 			selectedValues.length > 0 &&
 			isEmpty(searchText) &&
+			!preserveOptionOrder &&
 			!(hasSections && (allOptionShown || isAllSelected));
 
 		const processedOptions = shouldPrioritize
@@ -1585,7 +1609,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							}}
 						>
 							<div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-								<Checkbox value={allOptionsSelected} className="option-checkbox">
+								<Checkbox color="primary" value={allOptionsSelected} width="100%">
 									<div className="option-content">
 										<div className="all-option-text">ALL</div>
 									</div>
@@ -1789,6 +1813,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		isDynamicVariable,
 		showRetryButton,
 		waitingMessage,
+		preserveOptionOrder,
 	]);
 
 	// Custom handler for dropdown visibility changes
@@ -1876,7 +1901,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			const { label: labelProp, value, closable, onClose } = props;
 
 			const label = showLabels
-				? options.find((option) => option.value === value)?.label || labelProp
+				? findOptionLabel(options, value) || labelProp
 				: labelProp;
 
 			// If the display value is the special ALL value, render the ALL tag
@@ -1929,7 +1954,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					}
 				};
 
-				return (
+				const tag = (
 					<div
 						className={cx('ant-select-selection-item', {
 							'ant-select-selection-item-active': isActive,
@@ -1959,13 +1984,28 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						)}
 					</div>
 				);
+
+				// `label` arrives already cut to maxTagTextLength, so the reveal reads the
+				// option's own text (falling back to the raw value for freeform tags).
+				return (
+					<Tooltip side="top" title={findOptionLabelText(options, value)}>
+						{tag}
+					</Tooltip>
+				);
 			}
 
 			// Fallback for safety, should not be reached
 			return <div />;
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[isAllSelected, activeChipIndex, selectedChips, selectedValues, maxTagCount],
+		[
+			isAllSelected,
+			activeChipIndex,
+			selectedChips,
+			selectedValues,
+			maxTagCount,
+			options,
+		],
 	);
 
 	// Simple onClear handler to prevent clearing ALL
@@ -1984,6 +2024,8 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 	// ===== Component Rendering =====
 	return (
+		// Self-provided so the per-tag tooltips work wherever this select is rendered,
+		// without every consumer having to sit under an app-level provider.
 		<div
 			className={cx('custom-multiselect-wrapper', {
 				'all-selected': allOptionShown || isAllSelected,

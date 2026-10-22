@@ -1,7 +1,7 @@
 import { useQueryClient } from 'react-query';
 import { Trash2, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import {
 	buildAPIKeyDeletePermission,
 	buildSADetachPermission,
@@ -41,27 +41,30 @@ export function RevokeKeyFooter({
 }: RevokeKeyFooterProps): JSX.Element {
 	return (
 		<>
-			<Button variant="solid" color="secondary" onClick={onCancel}>
-				<X size={12} />
+			<Button
+				size="md"
+				variant="solid"
+				color="secondary"
+				onClick={onCancel}
+				prefix={<X size={12} />}
+			>
 				Cancel
 			</Button>
-			<AuthZTooltip
+			<AuthZButton
+				size="md"
 				checks={[
 					buildAPIKeyDeletePermission(keyId ?? ''),
 					buildSADetachPermission(accountId ?? ''),
 				]}
-				enabled={!!accountId && !!keyId}
+				authZEnabled={!!accountId && !!keyId}
+				variant="solid"
+				color="danger"
+				loading={isRevoking}
+				onClick={onConfirm}
+				prefix={<Trash2 size={12} />}
 			>
-				<Button
-					variant="solid"
-					color="destructive"
-					loading={isRevoking}
-					onClick={onConfirm}
-				>
-					<Trash2 size={12} />
-					Revoke Key
-				</Button>
-			</AuthZTooltip>
+				Revoke Key
+			</AuthZButton>
 		</>
 	);
 }
@@ -111,7 +114,7 @@ function RevokeKeyModal(): JSX.Element {
 	}
 
 	function handleCancel(): void {
-		setRevokeKeyId(null);
+		void setRevokeKeyId(null);
 	}
 
 	return (

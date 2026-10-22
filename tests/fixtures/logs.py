@@ -311,7 +311,6 @@ class Logs(ABC):
         self.attribute_keys.append(LogsResourceOrAttributeKeys(name="severity_number", datatype="float64"))
 
     def _get_severity_number(self, severity_text: str) -> np.uint8:
-        """Convert severity text to numeric value"""
         severity_map = {
             "TRACE": 1,
             "DEBUG": 5,
@@ -324,7 +323,6 @@ class Logs(ABC):
         return np.uint8(severity_map.get(severity_text.upper(), 9))  # Default to INFO
 
     def np_arr(self) -> np.array:
-        """Return log data as numpy array for database insertion"""
         return np.array(
             [
                 self.ts_bucket_start,
@@ -356,7 +354,6 @@ class Logs(ABC):
         cls,
         data: dict,
     ) -> "Logs":
-        """Create a Logs instance from a dict."""
         # parse timestamp from iso format
         timestamp = parse_timestamp(data["timestamp"])
         return cls(
@@ -540,6 +537,34 @@ def insert_logs(
         clickhouse.conn,
         clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"],
     )
+
+
+@pytest.fixture(name="insert_logs_with_unknown_keys", scope="function")
+def insert_logs_with_unknown_keys(
+    insert_logs: Callable[[list[Logs]], None],
+) -> Callable[[list[Logs], set[str]], None]:
+    """Insert logs while treating the named ATTRIBUTE keys as absent from field-key
+    metadata.
+
+    Each named key keeps its value in the row's attribute maps but has its attribute
+    metadata dropped (attribute_keys -> distributed_logs_attribute_keys and the tag
+    entry in distributed_tag_attributes_v2), so the querier can't resolve it and falls
+    back to the unknown-key synthesize path. This is the only way to drive the
+    synthesized attribute-map branches with real data — a normally-seeded attribute is
+    always registered in metadata and so never counts as "unknown".
+
+    Only attribute-side metadata is stripped: resource keys always keep their metadata
+    (resource metadata is assumed never missing), so passing a resource key here has no
+    effect. Teardown/truncation is inherited from the underlying insert_logs fixture.
+    """
+
+    def _insert(logs: list[Logs], unknown_keys: set[str]) -> None:
+        for log in logs:
+            log.attribute_keys = [k for k in log.attribute_keys if k.name not in unknown_keys]
+            log.tag_attributes = [t for t in log.tag_attributes if not (t.tag_key in unknown_keys and t.tag_type == "tag")]
+        insert_logs(logs)
+
+    return _insert
 
 
 @pytest.fixture(name="materialize_log_field", scope="function")

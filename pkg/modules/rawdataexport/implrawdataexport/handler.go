@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
 	"slices"
 	"strconv"
 	"time"
@@ -284,6 +285,13 @@ func constructCSVRecordFromQueryResponse(data map[string]any, headerToIndexMappi
 
 	for key, value := range data {
 		if index, exists := headerToIndexMapping[key]; exists && value != nil {
+
+			if rv := reflect.ValueOf(value); rv.Kind() == reflect.Pointer {
+				if rv.IsNil() {
+					continue
+				}
+				value = rv.Elem().Interface()
+			}
 
 			var valueStr string
 			switch v := value.(type) {

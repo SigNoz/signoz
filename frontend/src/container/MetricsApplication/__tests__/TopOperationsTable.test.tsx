@@ -56,10 +56,6 @@ jest.mock('../Tabs/util', () => ({
 }));
 
 // Mock the resourceAttributesToTracesFilterItems function
-jest.mock('container/TraceDetail/utils', () => ({
-	resourceAttributesToTracesFilterItems: (): any[] => [],
-}));
-
 const mockedUseResourceAttribute = useResourceAttribute as jest.MockedFunction<
 	typeof useResourceAttribute
 >;

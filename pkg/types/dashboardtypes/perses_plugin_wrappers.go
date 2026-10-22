@@ -30,11 +30,14 @@ func (PanelPlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
 	return markDiscriminator(s, "kind", map[string]string{
 		string(PanelKindTimeSeries): schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec"),
 		string(PanelKindBarChart):   schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec"),
+		string(PanelKindAreaChart):  schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec"),
 		string(PanelKindNumber):     schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec"),
 		string(PanelKindPieChart):   schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpec"),
 		string(PanelKindTable):      schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec"),
 		string(PanelKindHistogram):  schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec"),
 		string(PanelKindList):       schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec"),
+		string(PanelKindText):       schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec"),
+		string(PanelKindHeatmap):    schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec"),
 	})
 }
 
@@ -60,11 +63,14 @@ func (PanelPlugin) JSONSchemaOneOf() []any {
 	return []any{
 		PanelPluginVariant[TimeSeriesPanelSpec]{Kind: string(PanelKindTimeSeries)},
 		PanelPluginVariant[BarChartPanelSpec]{Kind: string(PanelKindBarChart)},
+		PanelPluginVariant[AreaChartPanelSpec]{Kind: string(PanelKindAreaChart)},
 		PanelPluginVariant[NumberPanelSpec]{Kind: string(PanelKindNumber)},
 		PanelPluginVariant[PieChartPanelSpec]{Kind: string(PanelKindPieChart)},
 		PanelPluginVariant[TablePanelSpec]{Kind: string(PanelKindTable)},
 		PanelPluginVariant[HistogramPanelSpec]{Kind: string(PanelKindHistogram)},
 		PanelPluginVariant[ListPanelSpec]{Kind: string(PanelKindList)},
+		PanelPluginVariant[TextPanelSpec]{Kind: string(PanelKindText)},
+		PanelPluginVariant[HeatmapPanelSpec]{Kind: string(PanelKindHeatmap)},
 	}
 }
 
@@ -89,6 +95,7 @@ type QueryPlugin struct {
 func (QueryPlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
 	return markDiscriminator(s, "kind", map[string]string{
 		string(QueryKindBuilder):       schemaRef("DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpec"),
+		string(QueryKindAIBuilder):     schemaRef("DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpec"),
 		string(QueryKindComposite):     schemaRef("DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQuery"),
 		string(QueryKindFormula):       schemaRef("DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormula"),
 		string(QueryKindPromQL):        schemaRef("DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQuery"),
@@ -118,6 +125,7 @@ func (p *QueryPlugin) UnmarshalJSON(data []byte) error {
 func (QueryPlugin) JSONSchemaOneOf() []any {
 	return []any{
 		QueryPluginVariant[BuilderQuerySpec]{Kind: string(QueryKindBuilder)},
+		QueryPluginVariant[AIBuilderQuerySpec]{Kind: string(QueryKindAIBuilder)},
 		QueryPluginVariant[CompositeQuerySpec]{Kind: string(QueryKindComposite)},
 		QueryPluginVariant[FormulaSpec]{Kind: string(QueryKindFormula)},
 		QueryPluginVariant[PromQLQuerySpec]{Kind: string(QueryKindPromQL)},
@@ -138,6 +146,11 @@ func (plugin QueryPlugin) buildV5CompositeQueryFromPlugin() (qb.CompositeQuery, 
 			return qb.CompositeQuery{}, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "builder query is empty")
 		}
 		return wrapEnvelope(qb.QueryTypeBuilder, spec.Spec), nil
+	case *AIBuilderQuerySpec:
+		if spec == nil {
+			return qb.CompositeQuery{}, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "AI builder query is empty")
+		}
+		return wrapEnvelope(qb.QueryTypeBuilderAI, qb.QueryBuilderQuery[qb.TraceAggregation](*spec)), nil
 	case *qb.PromQuery:
 		return wrapEnvelope(qb.QueryTypePromQL, *spec), nil
 	case *qb.ClickHouseQuery:
@@ -216,54 +229,6 @@ func (v VariablePluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error 
 }
 
 // ══════════════════════════════════════════════
-// Datasource plugin
-// ══════════════════════════════════════════════
-
-type DatasourcePlugin struct {
-	Kind DatasourcePluginKind `json:"kind" required:"true"`
-	Spec any                  `json:"spec" required:"true"`
-}
-
-func (DatasourcePlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return markDiscriminator(s, "kind", map[string]string{
-		string(DatasourceKindSigNoz): schemaRef("DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpec"),
-	})
-}
-
-func (p *DatasourcePlugin) UnmarshalJSON(data []byte) error {
-	kind, specJSON, err := extractKindAndSpec(data)
-	if err != nil {
-		return err
-	}
-	factory, ok := datasourcePluginSpecs[DatasourcePluginKind(kind)]
-	if !ok {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "unknown datasource plugin kind %q; allowed values: %s", kind, allowedValuesForKind(slices.Sorted(maps.Keys(datasourcePluginSpecs))))
-	}
-	spec, err := decodeSpec(specJSON, factory(), kind)
-	if err != nil {
-		return err
-	}
-	p.Kind = DatasourcePluginKind(kind)
-	p.Spec = *spec
-	return nil
-}
-
-func (DatasourcePlugin) JSONSchemaOneOf() []any {
-	return []any{
-		DatasourcePluginVariant[SigNozDatasourceSpec]{Kind: string(DatasourceKindSigNoz)},
-	}
-}
-
-type DatasourcePluginVariant[S any] struct {
-	Kind string `json:"kind" required:"true"`
-	Spec S      `json:"spec" required:"true"`
-}
-
-func (v DatasourcePluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return restrictKindToOneValue(s, v.Kind)
-}
-
-// ══════════════════════════════════════════════
 // Helpers
 // ══════════════════════════════════════════════
 
@@ -271,14 +236,18 @@ var (
 	panelPluginSpecs = map[PanelPluginKind]func() any{
 		PanelKindTimeSeries: func() any { return new(TimeSeriesPanelSpec) },
 		PanelKindBarChart:   func() any { return new(BarChartPanelSpec) },
+		PanelKindAreaChart:  func() any { return new(AreaChartPanelSpec) },
 		PanelKindNumber:     func() any { return new(NumberPanelSpec) },
 		PanelKindPieChart:   func() any { return new(PieChartPanelSpec) },
 		PanelKindTable:      func() any { return new(TablePanelSpec) },
 		PanelKindHistogram:  func() any { return new(HistogramPanelSpec) },
 		PanelKindList:       func() any { return new(ListPanelSpec) },
+		PanelKindText:       func() any { return new(TextPanelSpec) },
+		PanelKindHeatmap:    func() any { return new(HeatmapPanelSpec) },
 	}
 	queryPluginSpecs = map[QueryPluginKind]func() any{
 		QueryKindBuilder:       func() any { return new(BuilderQuerySpec) },
+		QueryKindAIBuilder:     func() any { return new(AIBuilderQuerySpec) },
 		QueryKindComposite:     func() any { return new(CompositeQuerySpec) },
 		QueryKindFormula:       func() any { return new(FormulaSpec) },
 		QueryKindPromQL:        func() any { return new(PromQLQuerySpec) },
@@ -290,18 +259,17 @@ var (
 		VariableKindQuery:   func() any { return new(QueryVariableSpec) },
 		VariableKindCustom:  func() any { return new(CustomVariableSpec) },
 	}
-	datasourcePluginSpecs = map[DatasourcePluginKind]func() any{
-		DatasourceKindSigNoz: func() any { return new(SigNozDatasourceSpec) },
-	}
-
 	allowedQueryKinds = map[PanelPluginKind][]QueryPluginKind{
-		PanelKindTimeSeries: {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
-		PanelKindBarChart:   {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
-		PanelKindNumber:     {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
-		PanelKindHistogram:  {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
-		PanelKindPieChart:   {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
-		PanelKindTable:      {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
-		PanelKindList:       {QueryKindBuilder},
+		PanelKindTimeSeries: {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindBarChart:   {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindAreaChart:  {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindNumber:     {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindHistogram:  {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindPieChart:   {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
+		PanelKindTable:      {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
+		PanelKindList:       {QueryKindBuilder, QueryKindAIBuilder},
+		PanelKindText:       {},
+		PanelKindHeatmap:    {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindPromQL, QueryKindClickHouseSQL},
 	}
 )
 

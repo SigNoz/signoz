@@ -3,7 +3,7 @@ import { TableColumnsType as ColumnsType } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { IField } from 'types/api/logs/fields';
 
 export const getLogPanelColumnsList = (

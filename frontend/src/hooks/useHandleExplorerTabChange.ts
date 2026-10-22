@@ -2,16 +2,15 @@ import { useCallback } from 'react';
 import { QueryParams } from 'constants/query';
 import { initialAutocompleteData, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/constants';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { useGetSearchQueryParam } from './queryBuilder/useGetSearchQueryParam';
+import { useGetSavedViewParams } from './saveViews/useGetSavedViewParams';
 import { useQueryBuilder } from './queryBuilder/useQueryBuilder';
 
 export interface ICurrentQueryData {
-	name: string;
-	id: string;
+	viewName?: string;
+	viewKey?: string;
 	query: Query;
 }
 
@@ -31,9 +30,7 @@ export const useHandleExplorerTabChange = (): {
 		updateQueriesData,
 	} = useQueryBuilder();
 
-	const viewName = useGetSearchQueryParam(QueryParams.viewName) || '';
-
-	const viewKey = useGetSearchQueryParam(QueryParams.viewKey) || '';
+	const { viewName, viewKey } = useGetSavedViewParams();
 
 	const getUpdateQuery = useCallback(
 		(newPanelType: PANEL_TYPES): Query => {
@@ -49,7 +46,7 @@ export const useHandleExplorerTabChange = (): {
 			) {
 				query = updateQueriesData(query, 'queryData', (item) => ({
 					...item,
-					orderBy: item.orderBy.filter((item) => item.columnName !== SIGNOZ_VALUE),
+					orderBy: [],
 					aggregateAttribute: initialAutocompleteData,
 				}));
 			}
@@ -59,6 +56,8 @@ export const useHandleExplorerTabChange = (): {
 		[currentQuery, updateAllQueriesOperators, updateQueriesData],
 	);
 
+	//TODO: this util is used not just to change explorer tab but also
+	// for changing just the query or saved view. consider renaming this.
 	const handleExplorerTabChange = useCallback(
 		(
 			type: string,
@@ -73,32 +72,20 @@ export const useHandleExplorerTabChange = (): {
 			}
 
 			const query = currentQueryData?.query || getUpdateQuery(newPanelType);
+			const nextViewKey = currentQueryData?.viewKey || viewKey;
+			const nextViewName = currentQueryData?.viewName || viewName;
 
-			if (redirectToUrl) {
-				redirectWithQueryBuilderData(
-					query,
-					{
-						[QueryParams.panelTypes]: newPanelType,
-						[QueryParams.viewName]: currentQueryData?.name || viewName,
-						[QueryParams.viewKey]: currentQueryData?.id || viewKey,
-					},
-					redirectToUrl,
-					undefined,
-					newTab,
-				);
-			} else {
-				redirectWithQueryBuilderData(
-					query,
-					{
-						[QueryParams.panelTypes]: newPanelType,
-						[QueryParams.viewName]: currentQueryData?.name || viewName,
-						[QueryParams.viewKey]: currentQueryData?.id || viewKey,
-					},
-					undefined,
-					undefined,
-					newTab,
-				);
-			}
+			redirectWithQueryBuilderData(
+				query,
+				{
+					[QueryParams.panelTypes]: newPanelType,
+					...(nextViewKey ? { [QueryParams.viewKey]: nextViewKey } : {}),
+					...(nextViewName ? { [QueryParams.viewName]: nextViewName } : {}),
+				},
+				redirectToUrl,
+				undefined,
+				newTab,
+			);
 		},
 		[panelType, getUpdateQuery, redirectWithQueryBuilderData, viewName, viewKey],
 	);

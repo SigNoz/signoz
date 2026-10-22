@@ -106,7 +106,7 @@ describe.each([
 		renderWithStore(dataSource);
 		const button = screen.getByTestId(testId);
 		expect(button).toBeInTheDocument();
-		expect(button).toHaveClass('periscope-btn', 'ghost');
+		expect(button).toHaveAccessibleName('Download');
 	});
 
 	it('shows popover with export options when download button is clicked', () => {
@@ -213,7 +213,9 @@ describe.each([
 			const callArgs = mockDownloadExportData.mock.calls[0][0];
 			const query = callArgs.body.compositeQuery.queries[0];
 			expect(query.spec.groupBy).toBeUndefined();
-			expect(query.spec.having).toStrictEqual({ expression: '' });
+			// An empty having ({ expression: '' }) is a no-op filter and serializes to
+			// undefined — same as the cleared groupBy above.
+			expect(query.spec.having).toBeUndefined();
 		});
 	});
 
@@ -306,13 +308,16 @@ describe.each([
 
 		fireEvent.click(screen.getByText('Export'));
 
-		expect(screen.getByTestId(testId)).toBeDisabled();
+		expect(screen.getByTestId(testId)).toHaveAttribute('aria-disabled', 'true');
 		expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
 		resolveDownload!();
 
 		await waitFor(() => {
-			expect(screen.getByTestId(testId)).not.toBeDisabled();
+			expect(screen.getByTestId(testId)).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 	});
 });

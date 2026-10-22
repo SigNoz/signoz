@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';
+import { RadioGroup } from '@signozhq/ui/radio-group';
 import { Lock } from '@signozhq/icons';
-import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 
 import styles from './SourceSelector.module.scss';
@@ -42,9 +41,7 @@ function SourceSelector({
 	return (
 		<div className={cx(styles.drawerSection, styles.drawerSurface)}>
 			<div className={styles.drawerSurfaceHead}>
-				<Typography.Text weight="bold" size="base">
-					Source
-				</Typography.Text>
+				<span className={styles.fieldLabel}>Source</span>
 
 				{isReadOnly && (
 					<span className={styles.managedLabel} data-testid="drawer-managed-label">
@@ -54,34 +51,53 @@ function SourceSelector({
 				)}
 			</div>
 			<RadioGroup
+				color="primary"
+				textOverflow="wrap"
 				value={isOverride ? 'override' : 'auto'}
 				onChange={(value): void => handleSourceChange(value as 'auto' | 'override')}
-				className={styles.sourceRadioGroup}
-			>
-				<RadioGroupItem
-					value="auto"
-					containerClassName={cx(styles.sourceRadio, styles.sourceRadioAuto)}
-					testId="drawer-source-auto"
-					disabled={disableAuto}
-				>
-					<div className={styles.sourceRadioTitle}>Auto-populated</div>
-					<div className={styles.sourceRadioDesc}>
-						{disableAuto
-							? 'Available once SigNoz has default pricing for this model.'
-							: 'Default pricing from SigNoz.'}
-					</div>
-				</RadioGroupItem>
-				<RadioGroupItem
-					value="override"
-					containerClassName={cx(styles.sourceRadio, styles.sourceRadioOverride)}
-					testId="drawer-source-override"
-				>
-					<div className={styles.sourceRadioTitle}>User override</div>
-					<div className={styles.sourceRadioDesc}>
-						Custom pricing. Takes precedence.
-					</div>
-				</RadioGroupItem>
-			</RadioGroup>
+				items={[
+					disableAuto
+						? {
+								value: 'auto',
+								testId: 'drawer-source-auto',
+								disabled: true,
+								disabledTooltip:
+									'Available once SigNoz has default pricing for this model.',
+								label: (
+									<>
+										<div className={styles.sourceRadioTitle}>Auto-populated</div>
+										<div className={styles.sourceRadioDesc}>
+											Available once SigNoz has default pricing for this model.
+										</div>
+									</>
+								),
+							}
+						: {
+								value: 'auto',
+								testId: 'drawer-source-auto',
+								label: (
+									<>
+										<div className={styles.sourceRadioTitle}>Auto-populated</div>
+										<div className={styles.sourceRadioDesc}>
+											Default pricing from SigNoz.
+										</div>
+									</>
+								),
+							},
+					{
+						value: 'override',
+						testId: 'drawer-source-override',
+						label: (
+							<>
+								<div className={styles.sourceRadioTitle}>User override</div>
+								<div className={styles.sourceRadioDesc}>
+									Custom pricing. Takes precedence.
+								</div>
+							</>
+						),
+					},
+				]}
+			/>
 			{showResetConfirm && (
 				<div className={styles.resetConfirm} aria-label="Reset to default pricing">
 					<p>
@@ -90,6 +106,7 @@ function SourceSelector({
 					</p>
 					<div className={styles.resetConfirmActions}>
 						<Button
+							size="md"
 							variant="outlined"
 							color="secondary"
 							onClick={(): void => setShowResetConfirm(false)}
@@ -98,6 +115,7 @@ function SourceSelector({
 							Keep
 						</Button>
 						<Button
+							size="md"
 							variant="solid"
 							color="primary"
 							onClick={confirmReset}

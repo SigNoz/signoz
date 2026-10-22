@@ -3,7 +3,7 @@ import { Badge } from '@signozhq/ui/badge';
 import { Button, Table, TableProps } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { themeColors } from 'constants/theme';
-import { StyledCSS } from 'container/GantChart/Trace/styles';
+import { StyledCSS } from 'types/styledComponents';
 import styled from 'styled-components';
 
 export const FooterButton = styled(Button)`
@@ -41,7 +41,11 @@ export function ProcessorIndexIcon({
 }: {
 	children: ReactNode;
 }): JSX.Element {
-	return <Badge color="robin">{children}</Badge>;
+	return (
+		<Badge variant="solid" color="primary">
+			{children}
+		</Badge>
+	);
 }
 
 export const StyledTable: React.FC<TableProps<any> & { isDarkMode: boolean }> =

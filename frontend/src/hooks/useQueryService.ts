@@ -11,7 +11,7 @@ import {
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
 import { PayloadProps } from 'types/api/metrics/getService';
-import { Tags } from 'types/reducer/trace';
+import { Tags } from 'hooks/useResourceAttribute/types';
 
 export const useQueryService = ({
 	minTime,

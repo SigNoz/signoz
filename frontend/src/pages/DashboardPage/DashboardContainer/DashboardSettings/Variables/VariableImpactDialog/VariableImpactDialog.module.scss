@@ -1,0 +1,81 @@
+.body {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	max-height: 60vh;
+	overflow-y: auto;
+}
+
+.intro {
+	color: var(--l2-foreground);
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.rows {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.row {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 12px;
+	border: 1px solid var(--l2-border);
+	border-radius: 6px;
+	background: var(--l1-background);
+}
+
+.rowHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.sourceLabel {
+	color: var(--l1-foreground);
+	font-weight: 600;
+	font-size: 13px;
+}
+
+.kindTag {
+	color: var(--l2-foreground);
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	padding: 2px 8px;
+	border: 1px solid var(--l2-border);
+	border-radius: 4px;
+	white-space: nowrap;
+}
+
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.fieldLabel {
+	color: var(--l2-foreground);
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.textArea {
+	font-family: var(--font-mono, monospace);
+	font-size: 12px;
+}
+
+.disabled {
+	opacity: 0.6;
+}
+
+.footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+}

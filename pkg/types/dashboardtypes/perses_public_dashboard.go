@@ -10,6 +10,12 @@ import (
 // Gettable
 // ════════════════════════════════════════════════════════════════════════
 
+// PublicWidgetQueryRangeParams are the query params of the public panel query-range endpoint.
+type PublicWidgetQueryRangeParams struct {
+	StartTime string `query:"startTime" required:"false"`
+	EndTime   string `query:"endTime" required:"false"`
+}
+
 // GettablePublicDashboardDataV2 is the anonymous-facing payload of a v2 dashboard.
 type GettablePublicDashboardDataV2 struct {
 	Dashboard       *GettableDashboardV2      `json:"dashboard"`
@@ -100,6 +106,13 @@ func redactQuery(spec any) any {
 			return spec
 		}
 		return &BuilderQuerySpec{Spec: redactLeafQuery(s.Spec)}
+	case *AIBuilderQuerySpec:
+		if s == nil {
+			return spec
+		}
+		redacted := redactLeafQuery(qb.QueryBuilderQuery[qb.TraceAggregation](*s)).(qb.QueryBuilderQuery[qb.TraceAggregation])
+		out := AIBuilderQuerySpec(redacted)
+		return &out
 	case *qb.PromQuery:
 		return redactQueryPtr(s)
 	case *qb.ClickHouseQuery:
@@ -166,7 +179,12 @@ func (d *DashboardV2) GetPanelQuery(startTime, endTime uint64, panelKey string) 
 	if !ok || panel == nil {
 		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidInput, "panel with key %q doesn't exist", panelKey)
 	}
-	// Validator guarantees exactly one query per panel.
+	// A panel kind that renders from its own plugin spec has no query to execute;
+	// asking for its query range is a client mistake.
+	if panel.Spec.Plugin.Kind.rendersWithoutQuery() {
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "panel %q is a %q and has no query to execute", panelKey, panel.Spec.Plugin.Kind)
+	}
+	// Validator guarantees exactly one query for every other panel kind.
 	if len(panel.Spec.Queries) != 1 {
 		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "panel %q must have exactly one query", panelKey)
 	}
@@ -177,7 +195,8 @@ func (d *DashboardV2) GetPanelQuery(startTime, endTime uint64, panelKey string) 
 		return nil, err
 	}
 
-	// fillGaps lives on the panel visualization; only timeseries and bar chart carry it.
+	// fillGaps lives on the panel visualization; only timeseries, bar chart and
+	// area chart carry it.
 	fillGaps := false
 	switch panelSpec := panel.Spec.Plugin.Spec.(type) {
 	case *TimeSeriesPanelSpec:
@@ -185,6 +204,10 @@ func (d *DashboardV2) GetPanelQuery(startTime, endTime uint64, panelKey string) 
 			fillGaps = panelSpec.Visualization.FillSpans
 		}
 	case *BarChartPanelSpec:
+		if panelSpec != nil {
+			fillGaps = panelSpec.Visualization.FillSpans
+		}
+	case *AreaChartPanelSpec:
 		if panelSpec != nil {
 			fillGaps = panelSpec.Visualization.FillSpans
 		}

@@ -1,8 +1,16 @@
+import { useEffect, useState } from 'react';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { UrlUpdateEvent } from 'nuqs/adapters/testing';
 
-import { renderTanStackTable } from './testUtils';
+import TanStackTable from '../index';
+import type { TableColumnDef } from '../types';
+import {
+	defaultData,
+	renderTanStackTable,
+	renderWithProviders,
+	type TestRow,
+} from './testUtils';
 
 jest.mock('hooks/useDarkMode', () => ({
 	useIsDarkMode: (): boolean => false,
@@ -81,6 +89,18 @@ describe('TanStackTableView Integration', () => {
 			});
 			// Table should still be in the DOM for skeleton rows
 			expect(screen.getByRole('table')).toBeInTheDocument();
+		});
+
+		it('does not call onRowClick for skeleton rows', async () => {
+			const user = userEvent.setup();
+			const onRowClick = jest.fn();
+			renderTanStackTable({
+				props: { data: [], isLoading: true, onRowClick },
+			});
+
+			await user.click(screen.getAllByRole('cell')[0]);
+
+			expect(onRowClick).not.toHaveBeenCalled();
 		});
 
 		it('shows loading spinner for infinite scroll when loading', () => {
@@ -611,6 +631,36 @@ describe('TanStackTableView Integration', () => {
 			expect(onRowClick).toHaveBeenCalledWith(
 				expect.objectContaining({ id: '1', name: 'Item 1' }),
 				'1',
+				{ isActive: false },
+			);
+		});
+
+		it('calls onRowClick with object itemKey when getItemKey returns object', async () => {
+			type SelectionParams = { id: string; name: string };
+			const user = userEvent.setup();
+			const onRowClick = jest.fn<void, [unknown, SelectionParams]>();
+
+			renderTanStackTable<
+				(typeof import('./testUtils').defaultData)[0],
+				SelectionParams
+			>({
+				props: {
+					onRowClick,
+					getRowKey: (row) => row.id,
+					getItemKey: (row) => ({ id: row.id, name: row.name }),
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+			});
+
+			await user.click(screen.getByText('Item 1'));
+
+			expect(onRowClick).toHaveBeenCalledWith(
+				expect.objectContaining({ id: '1', name: 'Item 1' }),
+				{ id: '1', name: 'Item 1' },
+				{ isActive: false },
 			);
 		});
 
@@ -631,15 +681,15 @@ describe('TanStackTableView Integration', () => {
 			expect(row).toHaveClass('tableRowActive');
 		});
 
-		it('calls onRowDeactivate when clicking active row', async () => {
+		it('calls onRowClick with isActive: true when clicking the active row', async () => {
+			// The consumer owns open/close routing — the table just reports the
+			// active state via the click context.
 			const user = userEvent.setup();
 			const onRowClick = jest.fn();
-			const onRowDeactivate = jest.fn();
 
 			renderTanStackTable({
 				props: {
 					onRowClick,
-					onRowDeactivate,
 					isRowActive: (row) => row.id === '1',
 				},
 			});
@@ -650,8 +700,11 @@ describe('TanStackTableView Integration', () => {
 
 			await user.click(screen.getByText('Item 1'));
 
-			expect(onRowDeactivate).toHaveBeenCalled();
-			expect(onRowClick).not.toHaveBeenCalled();
+			expect(onRowClick).toHaveBeenCalledWith(
+				expect.objectContaining({ id: '1' }),
+				expect.anything(),
+				{ isActive: true },
+			);
 		});
 
 		it('opens in new tab on ctrl+click', async () => {
@@ -774,6 +827,58 @@ describe('TanStackTableView Integration', () => {
 			// Verify all 3 data rows plus 1 expansion row = 4 tr elements in tbody
 			const tbody = screen.getByRole('table').querySelector('tbody');
 			expect(tbody?.querySelectorAll('tr')).toHaveLength(4);
+		});
+	});
+
+	describe('cell identity', () => {
+		it('keeps cells mounted across re-renders that pass new inline row callbacks', async () => {
+			const user = userEvent.setup();
+			const onMount = jest.fn();
+
+			function MountTracker({ id }: { id: string }): JSX.Element {
+				useEffect(() => onMount(id), [id]);
+				return <span data-testid={`tracked-${id}`}>Row {id}</span>;
+			}
+
+			const columns: TableColumnDef<TestRow>[] = [
+				{
+					id: 'id',
+					header: 'ID',
+					accessorKey: 'id',
+					cell: ({ row }): JSX.Element => <MountTracker id={row.id} />,
+				},
+			];
+
+			function Harness(): JSX.Element {
+				const [, setRenders] = useState(0);
+
+				return (
+					<>
+						<button
+							type="button"
+							data-testid="rerender"
+							onClick={(): void => setRenders((count) => count + 1)}
+						>
+							Re-render
+						</button>
+						<TanStackTable<TestRow>
+							data={defaultData}
+							columns={columns}
+							getRowKey={(row): string => row.id}
+							isRowActive={(row): boolean => row.id === '1'}
+						/>
+					</>
+				);
+			}
+
+			renderWithProviders(<Harness />);
+			await screen.findByTestId('tracked-2');
+			onMount.mockClear();
+
+			await user.click(screen.getByTestId('rerender'));
+			await user.hover(screen.getByTestId('tracked-2'));
+
+			expect(onMount).not.toHaveBeenCalled();
 		});
 	});
 

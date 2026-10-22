@@ -2,14 +2,13 @@ package implpromote
 
 import (
 	"context"
-	"maps"
-	"slices"
+	"log/slog"
 	"strings"
 
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
-	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
@@ -25,52 +24,83 @@ var (
 type module struct {
 	metadataStore  telemetrytypes.MetadataStore
 	telemetryStore telemetrystore.TelemetryStore
+	settings       factory.ScopedProviderSettings
 }
 
-func NewModule(metadataStore telemetrytypes.MetadataStore, telemetrystore telemetrystore.TelemetryStore) promote.Module {
-	return &module{metadataStore: metadataStore, telemetryStore: telemetrystore}
+func NewModule(metadataStore telemetrytypes.MetadataStore, telemetrystore telemetrystore.TelemetryStore, providerSettings factory.ProviderSettings) promote.Module {
+	return &module{
+		metadataStore:  metadataStore,
+		telemetryStore: telemetrystore,
+		settings:       factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/promote/implpromote"),
+	}
 }
 
-func (m *module) ListPromotedAndIndexedPaths(ctx context.Context) ([]promotetypes.PromotePath, error) {
-	indexes, err := m.metadataStore.ListLogsJSONIndexes(ctx)
+func (m *module) ListPromotedPaths(ctx context.Context, filters promotetypes.ListPromotedPathsFilters) ([]promotetypes.PromotePath, error) {
+	response := make([]promotetypes.PromotePath, 0)
+	for _, target := range promotetypes.Targets() {
+		if !filters.MatchesTarget(target) {
+			continue
+		}
+		paths, err := m.listPromotedPaths(ctx, target)
+		if err != nil {
+			return nil, err
+		}
+		for _, path := range paths {
+			if filters.MatchesPath(path) {
+				response = append(response, path)
+			}
+		}
+	}
+	return response, nil
+}
+
+func (m *module) listPromotedPaths(ctx context.Context, target promotetypes.Target) ([]promotetypes.PromotePath, error) {
+	promotedPaths, err := m.metadataStore.GetPromotedPaths(ctx, target.Entry)
 	if err != nil {
 		return nil, err
 	}
 
+	response := make([]promotetypes.PromotePath, 0, len(promotedPaths))
+	for path := range promotedPaths {
+		response = append(response, promotetypes.PromotePath{
+			Signal:  target.Entry.Signal.StringValue(),
+			Context: target.Entry.FieldContext.StringValue(),
+			Path:    path,
+			Promote: true,
+		})
+	}
+
+	indexes, err := m.metadataStore.ListJSONIndexes(ctx, target.JSONIndexLookup())
+	if err != nil {
+		return nil, err
+	}
+
+	// aggr keys are full sub-column paths: index.BaseColumn carries the
+	// column prefix and index.Name the bare path.
 	aggr := map[string][]promotetypes.WrappedIndex{}
 	for _, index := range indexes {
-		aggr[index.Name] = append(aggr[index.Name], promotetypes.WrappedIndex{
+		fullPath := index.BaseColumn + index.Name
+		aggr[fullPath] = append(aggr[fullPath], promotetypes.WrappedIndex{
 			FieldDataType: index.FieldDataType,
 			Type:          index.IndexType,
 			Granularity:   index.Granularity,
 		})
 	}
-	promotedPaths, err := m.listPromotedPaths(ctx)
-	if err != nil {
-		return nil, err
-	}
 
-	response := []promotetypes.PromotePath{}
-	for _, path := range promotedPaths {
-		fullPath := telemetrylogs.BodyPromotedColumnPrefix + path
-		path = telemetrytypes.BodyJSONStringSearchPrefix + path
-		item := promotetypes.PromotePath{
-			Path:    path,
-			Promote: true,
-		}
-		indexes, ok := aggr[fullPath]
-		if ok {
-			item.Indexes = indexes
+	for i := range response {
+		fullPath := target.PromotedColumnPrefix() + response[i].Path
+		if indexes, ok := aggr[fullPath]; ok {
+			response[i].Indexes = indexes
 			delete(aggr, fullPath)
 		}
-		response = append(response, item)
 	}
 
-	// add the paths that are not promoted but have indexes
-	for path, indexes := range aggr {
-		path := strings.TrimPrefix(path, telemetrylogs.BodyV2ColumnPrefix)
-		path = telemetrytypes.BodyJSONStringSearchPrefix + path
+	for fullPath, indexes := range aggr {
+		path := strings.TrimPrefix(fullPath, target.BaseColumnPrefix())
+		path = strings.TrimPrefix(path, target.PromotedColumnPrefix())
 		response = append(response, promotetypes.PromotePath{
+			Signal:  target.Entry.Signal.StringValue(),
+			Context: target.Entry.FieldContext.StringValue(),
 			Path:    path,
 			Indexes: indexes,
 		})
@@ -78,27 +108,97 @@ func (m *module) ListPromotedAndIndexedPaths(ctx context.Context) ([]promotetype
 	return response, nil
 }
 
-func (m *module) listPromotedPaths(ctx context.Context) ([]string, error) {
-	paths, err := m.metadataStore.GetPromotedPaths(ctx)
+func (m *module) IndexMaterializedPaths(ctx context.Context, req promotetypes.PostableIndexMaterializedPaths) (*promotetypes.IndexMaterializedPathsResult, error) {
+	target, err := req.Target()
 	if err != nil {
 		return nil, err
 	}
-	return slices.Collect(maps.Keys(paths)), nil
-}
 
-// PromotePaths inserts provided JSON paths into the promoted paths table for logs queries.
-func (m *module) PromotePaths(ctx context.Context, paths []string) error {
-	if len(paths) == 0 {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "paths cannot be empty")
+	keys, err := m.metadataStore.GetMaterializedKeys(ctx, target.Entry.Signal)
+	if err != nil {
+		return nil, err
 	}
 
-	return m.metadataStore.PromotePaths(ctx, paths...)
+	paths := []*promotetypes.PromotePath{}
+	names := []string{}
+	for _, key := range keys {
+		if key.FieldContext != target.Entry.FieldContext || len(key.Indexes) == 0 {
+			continue
+		}
+		path, err := promotetypes.NewMaterializedPromotePath(target, key)
+		if err != nil {
+			m.settings.Logger().WarnContext(ctx, "skipping materialized path that cannot be indexed", slog.String("path", key.Name), errors.Attr(err))
+			continue
+		}
+		paths = append(paths, path)
+		names = append(names, path.Path)
+	}
+
+	result := &promotetypes.IndexMaterializedPathsResult{Indexed: []*promotetypes.PromotePath{}, Skipped: []*promotetypes.PromotePath{}}
+	if len(paths) > 0 {
+		existing, err := m.metadataStore.ListJSONIndexes(ctx, target.JSONIndexLookup(), names...)
+		if err != nil {
+			return nil, err
+		}
+		existingByPath := map[string][]promotetypes.WrappedIndex{}
+		for _, index := range existing {
+			existingByPath[index.Name] = append(existingByPath[index.Name], promotetypes.WrappedIndex{FieldDataType: index.FieldDataType, Type: index.IndexType, Granularity: index.Granularity})
+		}
+		for _, path := range paths {
+			if indexes, ok := existingByPath[path.Path]; ok {
+				path.Indexes = indexes
+				result.Skipped = append(result.Skipped, path)
+				continue
+			}
+			result.Indexed = append(result.Indexed, path)
+		}
+	}
+
+	if !req.DryRun && len(result.Indexed) > 0 {
+		if err := m.promotePaths(ctx, target, result.Indexed...); err != nil {
+			return nil, err
+		}
+	}
+
+	indexed := make([]string, 0, len(result.Indexed))
+	for _, path := range result.Indexed {
+		indexed = append(indexed, path.Path)
+	}
+	skipped := make([]string, 0, len(result.Skipped))
+	for _, path := range result.Skipped {
+		skipped = append(skipped, path.Path)
+	}
+	m.settings.Logger().InfoContext(ctx, "indexed materialized paths", slog.String("signal", req.Signal), slog.Bool("dry_run", req.DryRun), slog.Int("indexed_count", len(indexed)), slog.Any("indexed", indexed), slog.Int("skipped_count", len(skipped)), slog.Any("skipped", skipped))
+
+	return result, nil
+}
+
+func (m *module) PromotePaths(ctx context.Context, paths ...*promotetypes.PromotePath) error {
+	byTarget := map[promotetypes.Target][]*promotetypes.PromotePath{}
+	targets := []promotetypes.Target{}
+	for _, path := range paths {
+		target, err := path.Target()
+		if err != nil {
+			return err
+		}
+		if _, ok := byTarget[target]; !ok {
+			targets = append(targets, target)
+		}
+		byTarget[target] = append(byTarget[target], path)
+	}
+
+	for _, target := range targets {
+		if err := m.promotePaths(ctx, target, byTarget[target]...); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // createIndexes creates string ngram + token filter indexes on JSON path subcolumns for LIKE queries.
-func (m *module) createIndexes(ctx context.Context, indexes []schemamigrator.Index) error {
+func (m *module) createIndexes(ctx context.Context, target promotetypes.Target, indexes []schemamigrator.Index) error {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
-		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
+		instrumentationtypes.TelemetrySignal:  target.Entry.Signal.StringValue(),
 		instrumentationtypes.CodeNamespace:    "promote",
 		instrumentationtypes.CodeFunctionName: "createIndexes",
 	})
@@ -108,8 +208,8 @@ func (m *module) createIndexes(ctx context.Context, indexes []schemamigrator.Ind
 
 	for _, index := range indexes {
 		alterStmt := schemamigrator.AlterTableAddIndex{
-			Database: telemetrylogs.DBName,
-			Table:    telemetrylogs.LogsV2LocalTableName,
+			Database: target.DBName,
+			Table:    target.LocalTableName,
 			Index:    index,
 		}
 		op := alterStmt.OnCluster(m.telemetryStore.Cluster())
@@ -121,25 +221,13 @@ func (m *module) createIndexes(ctx context.Context, indexes []schemamigrator.Ind
 	return nil
 }
 
-// PromoteAndIndexPaths handles promoting paths and creating indexes in one call.
-func (m *module) PromoteAndIndexPaths(
-	ctx context.Context,
-	paths ...*promotetypes.PromotePath,
-) error {
-	if len(paths) == 0 {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "paths cannot be empty")
-	}
-
+func (m *module) promotePaths(ctx context.Context, target promotetypes.Target, paths ...*promotetypes.PromotePath) error {
 	pathsStr := []string{}
-	// validate the paths
 	for _, path := range paths {
-		if err := path.ValidateAndSetDefaults(); err != nil {
-			return err
-		}
 		pathsStr = append(pathsStr, path.Path)
 	}
 
-	existingPromotedPaths, err := m.metadataStore.GetPromotedPaths(ctx, pathsStr...)
+	existingPromotedPaths, err := m.metadataStore.GetPromotedPaths(ctx, target.Entry, pathsStr...)
 	if err != nil {
 		return err
 	}
@@ -153,27 +241,20 @@ func (m *module) PromoteAndIndexPaths(
 			}
 		}
 		if len(it.Indexes) > 0 {
-			parentColumn := telemetrylogs.LogsV2BodyV2Column
+			parentColumn := target.BaseColumn
 			// if the path is already promoted or is being promoted, add it to the promoted column
 			if _, promoted := existingPromotedPaths[it.Path]; promoted || it.Promote {
-				parentColumn = telemetrylogs.LogsV2BodyPromotedColumn
+				parentColumn = target.PromotedColumn()
 			}
 
 			for _, index := range it.Indexes {
-				var typeIndex schemamigrator.IndexType
-				switch {
-				case strings.HasPrefix(index.Type, string(schemamigrator.IndexTypeNGramBF)):
-					typeIndex = schemamigrator.IndexTypeNGramBF
-				case strings.HasPrefix(index.Type, string(schemamigrator.IndexTypeTokenBF)):
-					typeIndex = schemamigrator.IndexTypeTokenBF
-				case strings.HasPrefix(index.Type, string(schemamigrator.IndexTypeMinMax)):
-					typeIndex = schemamigrator.IndexTypeMinMax
-				default:
-					return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid index type: %s", index.Type)
+				typeIndex, err := index.SkipIndexType()
+				if err != nil {
+					return err
 				}
 				indexes = append(indexes, schemamigrator.Index{
-					Name:        schemamigrator.JSONSubColumnIndexName(parentColumn, it.Path, index.JSONDataType.StringValue(), typeIndex),
-					Expression:  schemamigrator.JSONSubColumnIndexExpr(parentColumn, it.Path, index.JSONDataType.StringValue()),
+					Name:        schemamigrator.JSONSubColumnIndexName(parentColumn, it.Path, strings.ToLower(index.JSONDataType.StringValue()), typeIndex),
+					Expression:  target.IndexExpression(parentColumn, it.Path, index.JSONDataType.StringValue()),
 					Type:        index.Type,
 					Granularity: index.Granularity,
 				})
@@ -182,14 +263,14 @@ func (m *module) PromoteAndIndexPaths(
 	}
 
 	if len(toInsert) > 0 {
-		err := m.PromotePaths(ctx, toInsert)
+		err := m.metadataStore.PromotePaths(ctx, target.Entry, toInsert...)
 		if err != nil {
 			return err
 		}
 	}
 
 	if len(indexes) > 0 {
-		if err := m.createIndexes(ctx, indexes); err != nil {
+		if err := m.createIndexes(ctx, target, indexes); err != nil {
 			return err
 		}
 	}

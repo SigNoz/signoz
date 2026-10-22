@@ -46,14 +46,34 @@ const EMPTY_FORM_VALUES: ServiceConfigFormValues = {
 	s3BucketsByRegion: {},
 };
 
+const GCP_METRICS_INFO_TOOLTIP =
+	'These are suggested metrics for your OpenTelemetry Collector Configuration. The metrics you actually receive may vary based on the metrics listed in your collector config.';
+
+function getIntegrationServiceConfig(
+	type: IntegrationType,
+	serviceDetailsData?: ServiceDetailsData,
+):
+	| { logs?: { enabled?: boolean }; metrics?: { enabled?: boolean } }
+	| undefined {
+	const config = serviceDetailsData?.cloudIntegrationService?.config;
+
+	if (type === IntegrationType.AWS_SERVICES) {
+		return config?.aws;
+	}
+	if (type === IntegrationType.GCP_SERVICES) {
+		return config?.gcp;
+	}
+	return config?.azure;
+}
+
 function getInitialFormValues(
 	type: IntegrationType,
 	serviceDetailsData?: ServiceDetailsData,
 ): ServiceConfigFormValues {
-	const integrationConfig =
-		type === IntegrationType.AWS_SERVICES
-			? serviceDetailsData?.cloudIntegrationService?.config?.aws
-			: serviceDetailsData?.cloudIntegrationService?.config?.azure;
+	const integrationConfig = getIntegrationServiceConfig(
+		type,
+		serviceDetailsData,
+	);
 
 	return {
 		logsEnabled: integrationConfig?.logs?.enabled || false,
@@ -98,16 +118,21 @@ function getServiceConfigPayload({
 		};
 	}
 
-	return {
-		azure: {
-			logs: {
-				enabled: isLogsSupported ? logsEnabled : false,
-			},
-			metrics: {
-				enabled: isMetricsSupported ? metricsEnabled : false,
-			},
+	// Azure and GCP share the same simple logs/metrics enable-flag shape.
+	const signalConfig = {
+		logs: {
+			enabled: isLogsSupported ? logsEnabled : false,
+		},
+		metrics: {
+			enabled: isMetricsSupported ? metricsEnabled : false,
 		},
 	};
+
+	if (type === IntegrationType.GCP_SERVICES) {
+		return { gcp: signalConfig };
+	}
+
+	return { azure: signalConfig };
 }
 
 function ServiceDetails({
@@ -147,7 +172,6 @@ function ServiceDetails({
 			cloudProvider: type,
 			serviceId: serviceId || '',
 		},
-		undefined,
 		{
 			query: {
 				enabled: !!serviceId && !cloudAccountId,
@@ -163,10 +187,10 @@ function ServiceDetails({
 		? isAccountServiceLoading
 		: isReadOnlyServiceLoading;
 
-	const integrationConfig =
-		type === IntegrationType.AWS_SERVICES
-			? serviceDetailsData?.cloudIntegrationService?.config?.aws
-			: serviceDetailsData?.cloudIntegrationService?.config?.azure;
+	const integrationConfig = getIntegrationServiceConfig(
+		type,
+		serviceDetailsData,
+	);
 	const isServiceEnabledInPersistedConfig =
 		Boolean(integrationConfig?.logs?.enabled) ||
 		Boolean(integrationConfig?.metrics?.enabled);
@@ -376,6 +400,13 @@ function ServiceDetails({
 											name="logsEnabled"
 											render={({ field }): JSX.Element => (
 												<Switch
+													color="primary"
+													textPlacement="right"
+													disabledTooltip={
+														isReadOnly
+															? 'Connect an AWS account first'
+															: 'Wait for the changes to save'
+													}
 													value={field.value}
 													disabled={isUpdatingServiceConfig || isReadOnly}
 													onChange={(checked): void => {
@@ -417,6 +448,13 @@ function ServiceDetails({
 											name="metricsEnabled"
 											render={({ field }): JSX.Element => (
 												<Switch
+													color="primary"
+													textPlacement="right"
+													disabledTooltip={
+														isReadOnly
+															? 'Connect an AWS account first'
+															: 'Wait for the changes to save'
+													}
 													value={field.value}
 													disabled={isUpdatingServiceConfig || isReadOnly}
 													onChange={field.onChange}
@@ -431,26 +469,28 @@ function ServiceDetails({
 						{hasUnsavedChanges && !isReadOnly && (
 							<div className="aws-service-details-overview-configuration-actions">
 								<Button
+									disabledTooltip="Wait for the changes to save"
 									variant="solid"
 									color="secondary"
 									onClick={handleDiscard}
 									disabled={isUpdatingServiceConfig}
 									size="sm"
 									prefix={<X size={14} />}
-									className="discard-btn"
+									width={100}
 									type="button"
 								>
 									Discard
 								</Button>
 								<Button
+									disabledTooltip="Select at least one S3 bucket"
 									variant="solid"
 									color="primary"
 									size="sm"
-									className="save-btn"
+									width={100}
 									prefix={<Save size={14} />}
 									type="submit"
 									loading={isUpdatingServiceConfig}
-									disabled={isS3SyncBucketsMissing || isUpdatingServiceConfig}
+									disabled={isS3SyncBucketsMissing}
 								>
 									Save
 								</Button>
@@ -478,6 +518,11 @@ function ServiceDetails({
 				<CloudServiceDataCollected
 					logsData={serviceDetailsData?.dataCollected?.logs || []}
 					metricsData={serviceDetailsData?.dataCollected?.metrics || []}
+					metricsInfoTooltip={
+						type === IntegrationType.GCP_SERVICES
+							? GCP_METRICS_INFO_TOOLTIP
+							: undefined
+					}
 				/>
 			</div>
 		);
@@ -486,6 +531,8 @@ function ServiceDetails({
 	return (
 		<div className="aws-service-details-container">
 			<Tabs
+				orientation="horizontal"
+				alignment="start"
 				defaultValue="overview"
 				className="aws-service-details-tabs"
 				items={[

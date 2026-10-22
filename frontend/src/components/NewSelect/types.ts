@@ -66,6 +66,7 @@ export interface CustomMultiSelectProps extends Omit<
 	maxTagTextLength?: number;
 	showIncompleteDataMessage?: boolean;
 	showLabels?: boolean;
+	preserveOptionOrder?: boolean;
 	enableRegexOption?: boolean;
 	isDynamicVariable?: boolean;
 	showRetryButton?: boolean;

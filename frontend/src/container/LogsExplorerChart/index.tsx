@@ -1,24 +1,28 @@
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo, useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import Graph from 'components/Graph';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
-import { themeColors } from 'constants/theme';
+import BarChart from 'lib/visualization/charts/BarChart/BarChart';
+import { useResizeObserver } from 'hooks/useDimensions';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import getChartData, { GetChartDataProps } from 'lib/getChartData';
 import GetMinMax from 'lib/getMinMax';
-import { colors } from 'lib/getRandomColor';
+import { LegendPosition } from 'lib/uPlotV2/components/types';
+import { StackMode } from 'lib/uPlotV2/config/types';
+import { useTimezone } from 'providers/Timezone';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { LogsExplorerChartProps } from './LogsExplorerChart.interfaces';
-import { getColorsForSeverityLabels } from './utils';
+import { useLogsExplorerChartConfig } from './useLogsExplorerChartConfig';
 
 import './LogsExplorerChart.styles.scss';
+
+// Axis and tooltip format separately; both need this or only one abbreviates.
+const Y_AXIS_UNIT = 'short';
 
 function LogsExplorerChart({
 	data,
@@ -37,24 +41,6 @@ function LogsExplorerChart({
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const handleCreateDatasets: Required<GetChartDataProps>['createDataset'] =
-		useCallback(
-			(element, index, allLabels) => ({
-				data: element,
-				backgroundColor: isLogsExplorerViews
-					? getColorsForSeverityLabels(allLabels[index], index)
-					: colors[index % colors.length] || themeColors.red,
-				borderColor: isLogsExplorerViews
-					? getColorsForSeverityLabels(allLabels[index], index)
-					: colors[index % colors.length] || themeColors.red,
-				...(isLabelEnabled
-					? {
-							label: allLabels[index],
-						}
-					: {}),
-			}),
-			[isLabelEnabled, isLogsExplorerViews],
-		);
 
 	const onDragSelect = useCallback(
 		(start: number, end: number): void => {
@@ -86,44 +72,47 @@ function LogsExplorerChart({
 		[dispatch, location.pathname, safeNavigate, urlQuery, isShowingLiveLogs],
 	);
 
-	const graphData = useMemo(
-		() =>
-			getChartData({
-				queryData: [
-					{
-						queryData: data,
-					},
-				],
-				createDataset: handleCreateDatasets,
-			}),
-		[data, handleCreateDatasets],
-	);
-
-	// Convert nanosecond timestamps to milliseconds for Chart.js
-	const { chartMinTime, chartMaxTime } = useMemo(
+	// uPlot plots the series on a seconds-based x scale
+	const { minTimeScale, maxTimeScale } = useMemo(
 		() => ({
-			chartMinTime: minTime ? Math.floor(minTime / 1e6) : undefined,
-			chartMaxTime: maxTime ? Math.floor(maxTime / 1e6) : undefined,
+			minTimeScale: minTime ? Math.floor(minTime / 1e9) : undefined,
+			maxTimeScale: maxTime ? Math.floor(maxTime / 1e9) : undefined,
 		}),
 		[minTime, maxTime],
 	);
 
+	const { timezone } = useTimezone();
+	const graphRef = useRef<HTMLDivElement>(null);
+	const dimensions = useResizeObserver(graphRef);
+
+	const { config, chartData } = useLogsExplorerChartConfig({
+		data,
+		isLogsExplorerViews,
+		isLabelEnabled,
+		onDragSelect,
+		minTimeScale,
+		maxTimeScale,
+		yAxisUnit: Y_AXIS_UNIT,
+	});
+
 	return (
-		<div className={`${className} logs-frequency-chart-container`}>
+		<div ref={graphRef} className={`${className} logs-frequency-chart-container`}>
 			{isLoading ? (
 				<div className="logs-frequency-chart-loading">
 					<Spinner size="default" height="100%" />
 				</div>
 			) : (
-				<Graph
-					name="logsExplorerChart"
-					data={graphData.data}
-					isStacked={isLogsExplorerViews}
-					type="bar"
-					animate
-					onDragSelect={onDragSelect}
-					minTime={chartMinTime}
-					maxTime={chartMaxTime}
+				<BarChart
+					config={config}
+					data={chartData}
+					width={dimensions.width}
+					height={dimensions.height}
+					stack={isLogsExplorerViews ? StackMode.Normal : StackMode.None}
+					showLegend={isLabelEnabled}
+					legendConfig={{ position: LegendPosition.BOTTOM }}
+					timezone={timezone}
+					data-testid="logs-frequency-chart"
+					yAxisUnit={Y_AXIS_UNIT}
 				/>
 			)}
 		</div>

@@ -4,9 +4,10 @@ import { LockKeyhole, Trash2, X } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { DatePicker } from 'antd';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import {
 	buildAPIKeyDeletePermission,
@@ -31,6 +32,7 @@ export interface EditKeyFormProps {
 	onRevokeClick: () => void;
 	formatTimezoneAdjustedTimestamp: (ts: string, format: string) => string;
 	canUpdate?: boolean;
+	isUpdateDenied?: boolean;
 	accountId?: string;
 }
 
@@ -46,6 +48,7 @@ function EditKeyForm({
 	onRevokeClick,
 	formatTimezoneAdjustedTimestamp,
 	canUpdate = true,
+	isUpdateDenied = false,
 	accountId = '',
 }: EditKeyFormProps): JSX.Element {
 	return (
@@ -59,6 +62,7 @@ function EditKeyForm({
 						<AuthZTooltip
 							checks={[buildAPIKeyUpdatePermission(keyItem?.id ?? '')]}
 							enabled={!!keyItem?.id}
+							withPortal={false}
 						>
 							<div className="edit-key-modal__key-display">
 								<span className="edit-key-modal__id-text">{keyItem?.name || '—'}</span>
@@ -101,7 +105,9 @@ function EditKeyForm({
 						name="expiryMode"
 						control={control}
 						render={({ field }): JSX.Element => (
-							<ToggleGroupSimple
+							<ToggleGroup
+								variant="outlined"
+								color="secondary"
 								type="single"
 								value={field.value}
 								onChange={(val: string): void => {
@@ -111,7 +117,12 @@ function EditKeyForm({
 								}}
 								size="sm"
 								disabled={!canUpdate}
-								className="edit-key-modal__expiry-toggle"
+								disabledTooltip={
+									isUpdateDenied
+										? 'You do not have permission to update this key'
+										: undefined
+								}
+								width="60%"
 								items={[
 									{ value: ExpiryMode.NONE, label: 'No Expiration' },
 									{ value: ExpiryMode.DATE, label: 'Set Expiration Date' },
@@ -148,7 +159,7 @@ function EditKeyForm({
 
 				<div className="edit-key-modal__meta">
 					<span className="edit-key-modal__meta-label">Last Observed At</span>
-					<Badge color="vanilla">
+					<Badge textTransform="none" variant="solid" color="secondary">
 						{formatLastObservedAt(
 							keyItem?.lastObservedAt ?? null,
 							formatTimezoneAdjustedTimestamp,
@@ -158,38 +169,43 @@ function EditKeyForm({
 			</form>
 
 			<div className="edit-key-modal__footer">
-				<AuthZTooltip
+				<AuthZButton
+					size="md"
 					checks={[
 						buildAPIKeyDeletePermission(keyItem?.id ?? ''),
 						buildSADetachPermission(accountId ?? ''),
 					]}
-					enabled={!!accountId && !!keyItem?.id}
+					authZEnabled={!!accountId && !!keyItem?.id}
+					variant="link"
+					color="danger"
+					onClick={onRevokeClick}
+					prefix={<Trash2 size={12} />}
 				>
-					<Button variant="link" color="destructive" onClick={onRevokeClick}>
-						<Trash2 size={12} />
-						Revoke Key
-					</Button>
-				</AuthZTooltip>
+					Revoke Key
+				</AuthZButton>
 				<div className="edit-key-modal__footer-right">
-					<Button variant="solid" color="secondary" onClick={onClose}>
-						<X size={12} />
+					<Button
+						size="md"
+						variant="solid"
+						color="secondary"
+						onClick={onClose}
+						prefix={<X size={12} />}
+					>
 						Cancel
 					</Button>
-					<AuthZTooltip
+					<AuthZButton
+						size="md"
 						checks={[buildAPIKeyUpdatePermission(keyItem?.id ?? '')]}
-						enabled={!!accountId && !!keyItem?.id}
+						authZEnabled={!!accountId && !!keyItem?.id}
+						type="submit"
+						form={FORM_ID}
+						variant="solid"
+						color="primary"
+						loading={isSaving}
+						disabled={!isDirty}
 					>
-						<Button
-							type="submit"
-							form={FORM_ID}
-							variant="solid"
-							color="primary"
-							loading={isSaving}
-							disabled={!isDirty}
-						>
-							Save Changes
-						</Button>
-					</AuthZTooltip>
+						Save Changes
+					</AuthZButton>
 				</div>
 			</div>
 		</>

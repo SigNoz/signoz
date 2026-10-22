@@ -4,9 +4,12 @@ import { useHistory, useLocation } from 'react-router-dom';
 import { Button, Card, Modal } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import updateCreditCardApi from 'api/v1/checkout/create';
+import { createSubscription } from 'api/generated/services/subscriptions';
+import type { CreateSubscription201 } from 'api/generated/services/sigNoz.schemas';
 import { FeatureKeys } from 'constants/features';
 import { useNotifications } from 'hooks/useNotifications';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import { SubscriptionCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
 import {
 	ArrowUpRight,
 	Book,
@@ -18,8 +21,6 @@ import {
 	X,
 } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
-import { SuccessResponseV2 } from 'types/api';
-import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import APIError from 'types/api/error';
 import { getBaseUrl } from 'utils/basePath';
 import { openInNewTab } from 'utils/navigation';
@@ -116,9 +117,7 @@ export default function Support(): JSX.Element {
 	const showAddCreditCardModal =
 		!isPremiumChatSupportEnabled && !trialInfo?.trialConvertedToSubscription;
 
-	const handleBillingOnSuccess = (
-		data: SuccessResponseV2<CheckoutSuccessPayloadProps>,
-	): void => {
+	const handleBillingOnSuccess = (data: CreateSubscription201): void => {
 		if (data?.data?.redirectURL) {
 			const newTab = document.createElement('a');
 			newTab.href = data.data.redirectURL;
@@ -136,7 +135,7 @@ export default function Support(): JSX.Element {
 	};
 
 	const { mutate: updateCreditCard, isLoading: isLoadingBilling } = useMutation(
-		updateCreditCardApi,
+		createSubscription,
 		{
 			onSuccess: (data) => {
 				handleBillingOnSuccess(data);
@@ -202,30 +201,28 @@ export default function Support(): JSX.Element {
 				</div>
 
 				<div className="support-channels">
-					{supportChannels.map(
-						(channel): JSX.Element => (
-							<Card className="support-channel" key={channel.key}>
-								<div className="support-channel-content">
-									<Title truncate={1} level={5} className="support-channel-title">
-										{channel.icon}
-										{channel.name}{' '}
-									</Title>
-									<Text> {channel.title} </Text>
-								</div>
+					{supportChannels.map((channel): JSX.Element => (
+						<Card className="support-channel" key={channel.key}>
+							<div className="support-channel-content">
+								<Title truncate={1} level={5} className="support-channel-title">
+									{channel.icon}
+									{channel.name}{' '}
+								</Title>
+								<Text> {channel.title} </Text>
+							</div>
 
-								<div className="support-channel-action">
-									<Button
-										className="periscope-btn secondary support-channel-btn"
-										type="default"
-										onClick={(): void => handleChannelClick(channel)}
-									>
-										<Text truncate={1}>{channel.btnText} </Text>
-										{channel.isExternal && <ArrowUpRight size={14} />}
-									</Button>
-								</div>
-							</Card>
-						),
-					)}
+							<div className="support-channel-action">
+								<Button
+									className="periscope-btn secondary support-channel-btn"
+									type="default"
+									onClick={(): void => handleChannelClick(channel)}
+								>
+									<Text truncate={1}>{channel.btnText} </Text>
+									{channel.isExternal && <ArrowUpRight size={14} />}
+								</Button>
+							</div>
+						</Card>
+					))}
 				</div>
 			</div>
 
@@ -246,18 +243,23 @@ export default function Support(): JSX.Element {
 					>
 						Cancel
 					</Button>,
-					<Button
+					<AuthZTooltip
 						key="submit"
-						type="primary"
-						icon={<CreditCard size={16} />}
-						size="middle"
-						loading={isLoadingBilling}
-						disabled={isLoadingBilling}
-						onClick={handleAddCreditCard}
-						className="add-credit-card-btn periscope-btn primary"
+						checks={[SubscriptionCreatePermission]}
+						withPortal={false}
 					>
-						Add Credit Card
-					</Button>,
+						<Button
+							type="primary"
+							icon={<CreditCard size={16} />}
+							size="middle"
+							loading={isLoadingBilling}
+							disabled={isLoadingBilling}
+							onClick={handleAddCreditCard}
+							className="add-credit-card-btn periscope-btn primary"
+						>
+							Add Credit Card
+						</Button>
+					</AuthZTooltip>,
 				]}
 			>
 				<Typography.Text className="add-credit-card-text">

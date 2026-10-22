@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
-import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
+import { ThresholdProps } from 'types/api/widgets/threshold';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 const THRESHOLD_COLORS_SORTING_ORDER = ['Red', 'Orange', 'Green', 'Blue'];

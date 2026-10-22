@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -24,7 +25,13 @@ export enum SignalType {
 	API_MONITORING = 'api_monitoring',
 	EXCEPTIONS = 'exceptions',
 	METER_EXPLORER = 'meter',
+	AI_OBSERVABILITY = 'ai_observability',
 }
+
+/**
+ * Missing export from signozhq/ui/checkbox, TODO(H4ad): Add and remove this type definition
+ */
+export type CheckedState = 'checked' | 'unchecked' | 'indeterminate';
 
 export interface IQuickFiltersConfig {
 	type: FiltersType;
@@ -37,15 +44,25 @@ export interface IQuickFiltersConfig {
 	defaultOpen: boolean;
 }
 
+export interface QuickFilterChangeEventData {
+	filterKey: string;
+	expression: string;
+	filterItemKeys: string[];
+}
+
 export interface IQuickFiltersProps {
 	config: IQuickFiltersConfig[];
-	handleFilterVisibilityChange: () => void;
+	handleFilterVisibilityChange?: () => void;
 	source: QuickFiltersSource;
 	onFilterChange?: (query: Query) => void;
+	onQuickFilterChange?: (data: QuickFilterChangeEventData) => void;
+	/** Pass to fetch quick filters for this signal; omit to use `config` as-is */
 	signal?: SignalType;
 	className?: string;
 	showFilterCollapse?: boolean;
 	showQueryName?: boolean;
+	useFieldApis?: QuickFilterCheckboxUseFieldApis;
+	savedViewsHeader?: ReactNode;
 }
 
 export enum QuickFiltersSource {
@@ -55,4 +72,21 @@ export enum QuickFiltersSource {
 	API_MONITORING = 'api-monitoring',
 	EXCEPTIONS = 'exceptions',
 	METER_EXPLORER = 'meter',
+	AI_OBSERVABILITY = 'ai-observability',
 }
+
+/**
+ * Opt-in: fetch values from the /v1/fields/values API instead of /v3/autocomplete/attribute_values
+ */
+export type QuickFilterCheckboxUseFieldApis = {
+	startUnixMilli: number;
+	endUnixMilli: number;
+	/**
+	 * If you didn't specify a string, we automatically try to extract this from the currentQuery,
+	 * from the filter.expression or filter.items.
+	 *
+	 * Use null to ignore/disable this behavior.
+	 */
+	existingQuery?: string | null;
+	metricNamespace?: string;
+};

@@ -16,13 +16,19 @@ import (
 	"github.com/swaggest/jsonschema-go"
 )
 
-// MaxDisplayNameLen bounds every human-readable display name — dashboard, panel,
-// and variable display names, plus the grid layout title.
+// MaxDisplayNameLen bounds the human-readable display names — dashboard, panel,
+// and variable. The grid layout title has its own, larger bound (MaxLayoutTitleLen).
 const MaxDisplayNameLen = 128
 
+// MaxLayoutTitleLen bounds a grid layout title. It is larger than MaxDisplayNameLen
+// because v1 section (row) titles ran longer.
+const MaxLayoutTitleLen = 256
+
 type Display struct {
-	Name        string `json:"name" required:"true"`
-	Description string `json:"description,omitempty"`
+	Name string `json:"name" required:"true"`
+	// Description always serializes ("" included) so a create -> GET round-trip
+	// preserves what a typed client sent; omitempty would drop an explicit "".
+	Description string `json:"description"`
 }
 
 func (d Display) Validate(label, path string) error {
@@ -30,16 +36,6 @@ func (d Display) Validate(label, path string) error {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: %s name must be at most %d characters, got %d", path, label, MaxDisplayNameLen, n)
 	}
 	return nil
-}
-
-// ══════════════════════════════════════════════
-// Datasource
-// ══════════════════════════════════════════════
-
-type DatasourceSpec struct {
-	Display *common.Display  `json:"display,omitempty"`
-	Default bool             `json:"default"`
-	Plugin  DatasourcePlugin `json:"plugin"`
 }
 
 // ══════════════════════════════════════════════
@@ -73,10 +69,22 @@ func (k *PanelKind) UnmarshalJSON(data []byte) error {
 }
 
 type PanelSpec struct {
-	Display Display          `json:"display" required:"true"`
-	Plugin  PanelPlugin      `json:"plugin" required:"true"`
-	Queries []Query          `json:"queries" required:"true" nullable:"false"`
-	Links   []dashboard.Link `json:"links,omitempty"`
+	Display Display     `json:"display" required:"true"`
+	Plugin  PanelPlugin `json:"plugin" required:"true"`
+	Queries []Query     `json:"queries" required:"true" nullable:"false"`
+	Links   []Link      `json:"links,omitzero"`
+}
+
+// Link replicates dashboard.Link (Perses) so its zero-valued fields survive the
+// create -> GET round-trip. Perses tags name/tooltip/renderVariables/targetBlank
+// omitempty, which drops "" and false; here every field always serializes so a
+// typed client reads back exactly what it sent.
+type Link struct {
+	Name            string `json:"name"`
+	URL             string `json:"url"`
+	Tooltip         string `json:"tooltip"`
+	RenderVariables bool   `json:"renderVariables"`
+	TargetBlank     bool   `json:"targetBlank"`
 }
 
 // ══════════════════════════════════════════════
@@ -161,9 +169,9 @@ type ListVariableSpec struct {
 	DefaultValue    *VariableDefaultValue `json:"defaultValue,omitempty"`
 	AllowAllValue   bool                  `json:"allowAllValue"`
 	AllowMultiple   bool                  `json:"allowMultiple"`
-	CustomAllValue  string                `json:"customAllValue,omitempty"`
-	CapturingRegexp string                `json:"capturingRegexp,omitempty"`
-	Sort            ListVariableSpecSort  `json:"sort,omitzero"`
+	CustomAllValue  string                `json:"customAllValue"`
+	CapturingRegexp string                `json:"capturingRegexp"`
+	Sort            ListVariableSpecSort  `json:"sort"`
 	Plugin          VariablePlugin        `json:"plugin"`
 	Name            string                `json:"name" required:"true" minLength:"1"`
 }
@@ -217,6 +225,9 @@ func (s *ListVariableSpec) validate(path string) error {
 	if s.CustomAllValue != "" && !s.AllowAllValue {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: customAllValue cannot be set if allowAllValue is not set to true", path)
 	}
+	if s.AllowAllValue && !s.AllowMultiple {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: allowAllValue cannot be set if allowMultiple is not set to true", path)
+	}
 	if s.DefaultValue != nil && len(s.DefaultValue.SliceValues) > 0 && !s.AllowMultiple {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: defaultValue cannot be a list if allowMultiple is not set to true", path)
 	}
@@ -253,17 +264,24 @@ func (s ListVariableSpecSort) IsValid() bool {
 	return slices.ContainsFunc(s.Enum(), func(v any) bool { return v == s })
 }
 
+func (s ListVariableSpecSort) ValueOrDefault() string {
+	if s.IsZero() {
+		return SortNone.StringValue()
+	}
+	return s.StringValue()
+}
+
+func (s ListVariableSpecSort) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.ValueOrDefault())
+}
+
 // UnmarshalJSON validates against the enum on decode (valuer.String alone
-// accepts any string). An empty value is allowed and means "no sort", matching
-// Perses.
+// accepts any string). An omitted sort defaults to `none` via ValueOrDefault; an
+// explicit value present in the JSON — including `""` — is validated as-is.
 func (s *ListVariableSpecSort) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid sort: must be a string, one of `none`, `alphabetical-asc`, `alphabetical-desc`, `numerical-asc`, `numerical-desc`, `alphabetical-ci-asc`, or `alphabetical-ci-desc`")
-	}
-	if v == "" {
-		*s = ListVariableSpecSort{}
-		return nil
 	}
 	sort := ListVariableSpecSort{valuer.NewString(v)}
 	if !sort.IsValid() {
@@ -278,7 +296,7 @@ func (s *ListVariableSpecSort) UnmarshalJSON(data []byte) error {
 type TextVariableSpec struct {
 	Display  Display `json:"display" required:"true"`
 	Value    string  `json:"value" required:"true"`
-	Constant bool    `json:"constant,omitempty"`
+	Constant bool    `json:"constant"`
 	Name     string  `json:"name" required:"true" minLength:"1"`
 }
 

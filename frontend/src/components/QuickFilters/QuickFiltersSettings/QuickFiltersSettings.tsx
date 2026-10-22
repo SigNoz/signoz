@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+import { Button as SignozButton } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Button } from 'antd';
 import { Check, TableColumnsSplit, X } from '@signozhq/icons';
-import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
+import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 import { SignalType } from '../types';
 import AddedFilters from './AddedFilters';
@@ -19,7 +19,7 @@ function QuickFiltersSettings({
 }: {
 	signal: SignalType | undefined;
 	setIsSettingsOpen: (isSettingsOpen: boolean) => void;
-	customFilters: FilterType[];
+	customFilters: TelemetryFieldKey[];
 	refetchCustomFilters: () => void;
 }): JSX.Element {
 	const {
@@ -28,6 +28,7 @@ function QuickFiltersSettings({
 		addedFilters,
 		setAddedFilters,
 		handleSaveChanges,
+		hasUnsavedChanges,
 		isUpdatingCustomFilters,
 		inputValue,
 		handleInputChange,
@@ -39,31 +40,24 @@ function QuickFiltersSettings({
 		signal,
 	});
 
-	const hasUnsavedChanges = useMemo(
-		() =>
-			// check if both arrays have the same length and same order of elements
-			!(
-				addedFilters.length === customFilters.length &&
-				addedFilters.every(
-					(filter, index) => filter.key === customFilters[index].key,
-				)
-			),
-		[addedFilters, customFilters],
-	);
-
 	return (
 		<>
 			<div className="qf-header">
 				<div className="qf-title">
-					<TableColumnsSplit width={16} height={16} />
+					<TableColumnsSplit size={16} />
 					Edit quick filters
 				</div>
-				<X
-					className="qf-header-icon"
-					width={16}
-					height={16}
+				<SignozButton
+					variant="ghost"
+					color="secondary"
+					size="sm"
+					icon
+					aria-label="Close"
 					onClick={handleSettingsClose}
-				/>
+					testId="quick-filters-settings-close"
+				>
+					<X size={14} />
+				</SignozButton>
 			</div>
 			<section className="search">
 				<Input

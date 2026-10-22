@@ -46,14 +46,25 @@ func (extractor ResourceIDsExtractor) IsPhase(phase ExtractPhase) bool {
 
 // OneID lifts a single-id extractor into a one-element ids extractor.
 func OneID(extractor ResourceIDExtractor) ResourceIDsExtractor {
+	if extractor.Fn == nil {
+		return ResourceIDsExtractor{}
+	}
+
 	return ResourceIDsExtractor{Phase: extractor.Phase, Fn: func(ec ExtractorContext) ([]string, error) {
 		id, err := extractor.Fn(ec)
-		if err != nil || id == "" {
+		if err != nil {
 			return nil, err
 		}
 		return []string{id}, nil
 	}}
 }
+
+type ResourceWithID struct {
+	Resource Resource
+	ID       string
+}
+
+type ResourceExtractor func(ExtractorContext) ([]ResourceWithID, error)
 
 func PathParam(name string) ResourceIDExtractor {
 	return ResourceIDExtractor{Phase: PhaseRequest, Fn: func(ec ExtractorContext) (string, error) {

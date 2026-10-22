@@ -1,5 +1,3 @@
-"""Shared constants/helpers for v2 infra-monitoring pod-status tests."""
-
 # All 18 PodCountsByStatus buckets (camelCase, matches inframonitoringtypes.PodCountsByStatus / the API response).
 STATUS_BUCKETS = (
     "pending",
@@ -48,5 +46,24 @@ STATUS_TO_BUCKET = {
 def expected_status_counts(**nonzero: int) -> dict:
     """Full 19-bucket PodCountsByStatus with the given buckets set, rest 0."""
     counts = {bucket: 0 for bucket in STATUS_BUCKETS}
+    counts.update(nonzero)
+    return counts
+
+
+# All buckets of the clusters-API per-group resource counts (camelCase, matches
+# inframonitoringtypes ClusterRecord.Counts / the API response).
+RESOURCE_COUNT_BUCKETS = (
+    "nodes",
+    "namespaces",
+    "deployments",
+    "daemonSets",
+    "jobs",
+    "statefulSets",
+)
+
+
+def expected_resource_counts(**nonzero: int) -> dict:
+    """Full resource-counts dict with the given buckets set, rest 0."""
+    counts = {bucket: 0 for bucket in RESOURCE_COUNT_BUCKETS}
     counts.update(nonzero)
     return counts

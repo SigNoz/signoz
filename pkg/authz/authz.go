@@ -30,26 +30,20 @@ type AuthZ interface {
 	// Write accepts the insertion tuples and the deletion tuples.
 	Write(context.Context, []*openfgav1.TupleKey, []*openfgav1.TupleKey) error
 
-	// Lists the selectors for objects assigned to subject (s) with relation (r) on resource (s)
-	ListObjects(context.Context, string, authtypes.Relation, coretypes.Type) ([]*coretypes.Object, error)
+	// ReadTuples reads tuples from the authorization server matching the given tuple key filter.
+	ReadTuples(context.Context, *openfgav1.ReadRequestTupleKey) ([]*openfgav1.TupleKey, error)
 
 	// Creates the role with its transaction groups.
-	Create(context.Context, valuer.UUID, *authtypes.RoleWithTransactionGroups) error
-
-	// Gets the role if it exists or creates one.
-	GetOrCreate(context.Context, valuer.UUID, *authtypes.Role) (*authtypes.Role, error)
+	Create(context.Context, valuer.UUID, *authtypes.Role) error
 
 	// Updates the role's metadata and reconciles its transaction groups.
-	Update(context.Context, valuer.UUID, *authtypes.RoleWithTransactionGroups) error
+	Update(context.Context, valuer.UUID, *authtypes.Role) error
 
 	// Deletes the role and tuples in authorization server.
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
 
 	// Gets the role
 	Get(context.Context, valuer.UUID, valuer.UUID) (*authtypes.Role, error)
-
-	// Gets the role with transaction groups
-	GetWithTransactionGroups(context.Context, valuer.UUID, valuer.UUID) (*authtypes.RoleWithTransactionGroups, error)
 
 	// Gets the role by org_id and name
 	GetByOrgIDAndName(context.Context, valuer.UUID, string) (*authtypes.Role, error)
@@ -80,9 +74,6 @@ type AuthZ interface {
 
 	// Bootstrap managed roles transactions and user assignments
 	CreateManagedUserRoleTransactions(context.Context, valuer.UUID, valuer.UUID) error
-
-	// ReadTuples reads tuples from the authorization server matching the given tuple key filter.
-	ReadTuples(context.Context, *openfgav1.ReadRequestTupleKey) ([]*openfgav1.TupleKey, error)
 }
 
 // OnBeforeRoleDelete is a callback invoked before a role is deleted.

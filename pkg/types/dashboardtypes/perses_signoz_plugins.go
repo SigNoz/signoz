@@ -8,6 +8,7 @@ import (
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/prometheus/common/model"
 	"github.com/swaggest/jsonschema-go"
 )
 
@@ -31,7 +32,49 @@ type DynamicVariableSpec struct {
 	// Name is the name of the attribute being fetched dynamically from the
 	// signal. This could be extended to a richer selector in the future.
 	Name   string                `json:"name" validate:"required" required:"true"`
-	Signal telemetrytypes.Signal `json:"signal"`
+	Signal DynamicVariableSignal `json:"signal" required:"true" nullable:"false"`
+}
+
+// DynamicVariableSignal is the telemetry signal a dynamic variable draws its
+// values from. Separate from telemetrytypes.Signal because it carries "all"
+// (values span every signal) rather than "" for an unpinned query signal.
+type DynamicVariableSignal struct{ valuer.String }
+
+var (
+	DynamicVariableSignalTraces  = DynamicVariableSignal{valuer.NewString("traces")}
+	DynamicVariableSignalLogs    = DynamicVariableSignal{valuer.NewString("logs")}
+	DynamicVariableSignalMetrics = DynamicVariableSignal{valuer.NewString("metrics")}
+	DynamicVariableSignalAll     = DynamicVariableSignal{valuer.NewString("all")} // default
+)
+
+func (DynamicVariableSignal) Enum() []any {
+	return []any{DynamicVariableSignalTraces, DynamicVariableSignalLogs, DynamicVariableSignalMetrics, DynamicVariableSignalAll}
+}
+
+func (s DynamicVariableSignal) ValueOrDefault() string {
+	if s.IsZero() {
+		return DynamicVariableSignalAll.StringValue()
+	}
+	return s.StringValue()
+}
+
+func (s DynamicVariableSignal) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.ValueOrDefault())
+}
+
+func (s *DynamicVariableSignal) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid signal: must be a string, one of `traces`, `logs`, `metrics`, or `all`")
+	}
+	sig := DynamicVariableSignal{valuer.NewString(v)}
+	switch sig {
+	case DynamicVariableSignalTraces, DynamicVariableSignalLogs, DynamicVariableSignalMetrics, DynamicVariableSignalAll:
+		*s = sig
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid signal %q: must be `traces`, `logs`, `metrics`, or `all`", v)
+	}
 }
 
 type QueryVariableSpec struct {
@@ -50,6 +93,7 @@ type QueryPluginKind string
 
 const (
 	QueryKindBuilder       QueryPluginKind = "signoz/BuilderQuery"
+	QueryKindAIBuilder     QueryPluginKind = "signoz/AIBuilderQuery"
 	QueryKindComposite     QueryPluginKind = "signoz/CompositeQuery"
 	QueryKindFormula       QueryPluginKind = "signoz/Formula"
 	QueryKindPromQL        QueryPluginKind = "signoz/PromQLQuery"
@@ -58,7 +102,7 @@ const (
 )
 
 func (QueryPluginKind) Enum() []any {
-	return []any{QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindPromQL, QueryKindClickHouseSQL, QueryKindTraceOperator}
+	return []any{QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindPromQL, QueryKindClickHouseSQL, QueryKindTraceOperator}
 }
 
 type (
@@ -116,6 +160,26 @@ func (BuilderQuerySpec) JSONSchemaOneOf() []any {
 	}
 }
 
+// AIBuilderQuerySpec is the spec of a signoz/AIBuilderQuery plugin: a gen_ai-scoped
+// (AI observability) traces builder query, executed as qb.QueryTypeBuilderAI. The
+// signal is implied by the kind and pinned to traces, mirroring the builder_ai_query
+// QueryEnvelope decode.
+type AIBuilderQuerySpec qb.QueryBuilderQuery[qb.TraceAggregation]
+
+func (b *AIBuilderQuerySpec) UnmarshalJSON(data []byte) error {
+	var spec qb.QueryBuilderQuery[qb.TraceAggregation]
+	if err := json.Unmarshal(data, &spec); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid AI builder query spec")
+	}
+	spec.Signal = telemetrytypes.SignalTraces
+	*b = AIBuilderQuerySpec(spec)
+	return nil
+}
+
+func (AIBuilderQuerySpec) PrepareJSONSchema(s *jsonschema.Schema) error {
+	return (qb.QueryBuilderQuery[qb.TraceAggregation]{}).PrepareJSONSchema(s)
+}
+
 // ══════════════════════════════════════════════
 // SigNoz panel plugin specs
 // ══════════════════════════════════════════════
@@ -125,31 +189,23 @@ type PanelPluginKind string
 const (
 	PanelKindTimeSeries PanelPluginKind = "signoz/TimeSeriesPanel"
 	PanelKindBarChart   PanelPluginKind = "signoz/BarChartPanel"
+	PanelKindAreaChart  PanelPluginKind = "signoz/AreaChartPanel"
 	PanelKindNumber     PanelPluginKind = "signoz/NumberPanel"
 	PanelKindPieChart   PanelPluginKind = "signoz/PieChartPanel"
 	PanelKindTable      PanelPluginKind = "signoz/TablePanel"
 	PanelKindHistogram  PanelPluginKind = "signoz/HistogramPanel"
 	PanelKindList       PanelPluginKind = "signoz/ListPanel"
+	PanelKindText       PanelPluginKind = "signoz/TextPanel"
+	PanelKindHeatmap    PanelPluginKind = "signoz/HeatmapPanel"
 )
 
 func (PanelPluginKind) Enum() []any {
-	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList}
+	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindAreaChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList, PanelKindText, PanelKindHeatmap}
 }
 
-type DatasourcePluginKind string
-
-const (
-	DatasourceKindSigNoz DatasourcePluginKind = "signoz/Datasource"
-)
-
-func (DatasourcePluginKind) Enum() []any {
-	return []any{DatasourceKindSigNoz}
+func (k PanelPluginKind) rendersWithoutQuery() bool {
+	return k == PanelKindText
 }
-
-// SigNozDatasourceSpec is the (empty) signoz/Datasource plugin spec. Naming the
-// type gives the variant a concrete, non-nullable spec schema instead of an
-// inline free-form one.
-type SigNozDatasourceSpec struct{}
 
 type TimeSeriesPanelSpec struct {
 	Visualization   TimeSeriesVisualization   `json:"visualization"`
@@ -174,6 +230,30 @@ type BarChartPanelSpec struct {
 	Axes          Axes                  `json:"axes"`
 	Legend        Legend                `json:"legend"`
 	Thresholds    []ThresholdWithLabel  `json:"thresholds" validate:"dive"`
+}
+
+type AreaChartPanelSpec struct {
+	Visualization   AreaChartVisualization `json:"visualization"`
+	Formatting      PanelFormatting        `json:"formatting"`
+	ChartAppearance AreaChartAppearance    `json:"chartAppearance"`
+	Axes            Axes                   `json:"axes"`
+	Legend          Legend                 `json:"legend"`
+	Thresholds      []ThresholdWithLabel   `json:"thresholds" validate:"dive"`
+}
+
+// AreaChartAppearance repeats the line-drawing fields rather than embedding
+// TimeSeriesChartAppearance: both carry a `fillMode` under different enums, and
+// a duplicated json tag across an embed boundary is resolved by depth, which the
+// schema reflector does not model.
+type AreaChartAppearance struct {
+	LineInterpolation LineInterpolation `json:"lineInterpolation"`
+	ShowPoints        bool              `json:"showPoints"`
+	LineStyle         LineStyle         `json:"lineStyle"`
+	FillMode          AreaFillMode      `json:"fillMode"`
+	// FillOpacity is a pointer so an omitted field resolves to the kind default at
+	// render time; a plain value would make the Go zero value a transparent fill.
+	FillOpacity *FillOpacity `json:"fillOpacity"`
+	SpanGaps    SpanGaps     `json:"spanGaps"`
 }
 
 type NumberPanelSpec struct {
@@ -206,7 +286,74 @@ type HistogramBuckets struct {
 }
 
 type ListPanelSpec struct {
-	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty" validate:"dive"`
+	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitzero" validate:"dive"`
+}
+
+type HeatmapPanelSpec struct {
+	Visualization   BasicVisualization     `json:"visualization"`
+	Formatting      PanelFormatting        `json:"formatting"`
+	Axes            HeatmapAxes            `json:"axes"`
+	Legend          Legend                 `json:"legend"`
+	ChartAppearance HeatmapChartAppearance `json:"chartAppearance"`
+}
+
+// HeatmapAxes carries only the Y scale. The shared Axes type models a value
+// axis with soft bounds, where a heatmap's Y axis is the bucket boundaries the
+// response already fixed.
+type HeatmapAxes struct {
+	Y HeatmapAxis `json:"y"`
+}
+
+type HeatmapAxis struct {
+	Scale HeatmapYScale `json:"scale"`
+}
+
+type HeatmapChartAppearance struct {
+	Colors HeatmapColors `json:"colors"`
+}
+
+type HeatmapColors struct {
+	Mode    HeatmapColorMode  `json:"mode"`
+	Palette HeatmapPalette    `json:"palette"`
+	Scale   HeatmapColorScale `json:"scale"`
+	Steps   int               `json:"steps" validate:"omitempty,min=2,max=128"`
+	// MinCount and MaxCount clamp the colour scale; nil derives them from the
+	// grid, 0 and the highest count in it.
+	MinCount *float64 `json:"minCount"`
+	MaxCount *float64 `json:"maxCount"`
+	// Fill applies in opacity mode; empty means the selected group's legend colour.
+	Fill string `json:"fill"`
+}
+
+func (c *HeatmapColors) UnmarshalJSON(data []byte) error {
+	type alias HeatmapColors
+	var tmp alias
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid heatmap colors")
+	}
+	*c = HeatmapColors(tmp)
+	return c.validate()
+}
+
+func (c HeatmapColors) validate() error {
+	if c.MinCount != nil && c.MaxCount != nil && *c.MinCount > *c.MaxCount {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
+			"heatmap colors.minCount %v is greater than colors.maxCount %v", *c.MinCount, *c.MaxCount)
+	}
+	return nil
+}
+
+type TextPanelSpec struct {
+	Mode          TextMode         `json:"mode"`
+	Text          string           `json:"text"`
+	Presentation  TextPresentation `json:"presentation"`
+	HeaderOptions HeaderOptions    `json:"headerOptions"`
+}
+
+type TextPresentation struct {
+	TextAlign     TextAlign     `json:"textAlign"`
+	VerticalAlign VerticalAlign `json:"verticalAlign"`
+	Background    *string       `json:"background,omitempty" validate:"omitempty,hexcolor"`
 }
 
 // ══════════════════════════════════════════════
@@ -217,6 +364,13 @@ type Axes struct {
 	SoftMin    *float64 `json:"softMin"`
 	SoftMax    *float64 `json:"softMax"`
 	IsLogScale bool     `json:"isLogScale"`
+}
+
+// HeaderOptions controls the panel card's header strip — the title/description
+// row above the panel content. Phrased as hide so the zero value shows the
+// header, matching every other panel kind.
+type HeaderOptions struct {
+	Hide bool `json:"hide"`
 }
 
 type BasicVisualization struct {
@@ -232,6 +386,12 @@ type BarChartVisualization struct {
 	BasicVisualization
 	FillSpans       bool `json:"fillSpans"`
 	StackedBarChart bool `json:"stackedBarChart"`
+}
+
+type AreaChartVisualization struct {
+	BasicVisualization
+	FillSpans bool      `json:"fillSpans"`
+	Stack     StackMode `json:"stack"`
 }
 
 type PanelFormatting struct {
@@ -251,14 +411,20 @@ type Legend struct {
 }
 
 type ThresholdWithLabel struct {
-	Value float64 `json:"value" validate:"required" required:"true"`
+	// Value is always present in the schema (required:"true"), but 0 is a legitimate
+	// threshold, so it drops validate:"required" — go-playground's required treats a
+	// zero float as unset and would wrongly reject value: 0.
+	Value float64 `json:"value" required:"true"`
 	Unit  string  `json:"unit"`
 	Color string  `json:"color" validate:"required" required:"true"`
 	Label string  `json:"label"`
 }
 
 type ComparisonThreshold struct {
-	Value    float64            `json:"value" validate:"required" required:"true"`
+	// Value is always present in the schema (required:"true"), but 0 is a legitimate
+	// threshold, so it drops validate:"required" — go-playground's required treats a
+	// zero float as unset and would wrongly reject value: 0.
+	Value    float64            `json:"value" required:"true"`
 	Operator ComparisonOperator `json:"operator"`
 	Unit     string             `json:"unit"`
 	Color    string             `json:"color" validate:"required" required:"true"`
@@ -309,10 +475,6 @@ func (t *TimePreference) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid timePreference: must be a string, one of `global_time`, `last_5_min`, `last_15_min`, `last_30_min`, `last_1_hr`, `last_6_hr`, `last_1_day`, `last_3_days`, `last_1_week`, or `last_1_month`")
 	}
-	if v == "" {
-		*t = TimePreferenceGlobalTime
-		return nil
-	}
 	tp := TimePreference{valuer.NewString(v)}
 	switch tp {
 	case TimePreferenceGlobalTime, TimePreferenceLast5Min, TimePreferenceLast15Min, TimePreferenceLast30Min, TimePreferenceLast1Hr, TimePreferenceLast6Hr, TimePreferenceLast1Day, TimePreferenceLast3Days, TimePreferenceLast1Week, TimePreferenceLast1Month:
@@ -349,10 +511,6 @@ func (l *LegendPosition) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid legend position: must be a string, one of `bottom` or `right`")
-	}
-	if v == "" {
-		*l = LegendPositionBottom
-		return nil
 	}
 	lp := LegendPosition{valuer.NewString(v)}
 	switch lp {
@@ -391,10 +549,6 @@ func (m *LegendMode) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid legend mode: must be a string, one of `list` or `table`")
 	}
-	if v == "" {
-		*m = LegendModeList
-		return nil
-	}
 	lm := LegendMode{valuer.NewString(v)}
 	switch lm {
 	case LegendModeList, LegendModeTable:
@@ -431,10 +585,6 @@ func (f *ThresholdFormat) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid threshold format: must be a string, one of `text` or `background`")
-	}
-	if v == "" {
-		*f = ThresholdFormatText
-		return nil
 	}
 	tf := ThresholdFormat{valuer.NewString(v)}
 	switch tf {
@@ -479,10 +629,6 @@ func (o *ComparisonOperator) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid comparison operator: must be a string, one of `above`, `below`, `above_or_equal`, `below_or_equal`, `equal`, or `not_equal`")
 	}
-	if v == "" {
-		*o = ComparisonOperatorAbove
-		return nil
-	}
 	co := ComparisonOperator{valuer.NewString(v)}
 	switch co {
 	case ComparisonOperatorAbove, ComparisonOperatorBelow, ComparisonOperatorAboveOrEqual, ComparisonOperatorBelowOrEqual,
@@ -523,10 +669,6 @@ func (li *LineInterpolation) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid line interpolation: must be a string, one of `linear`, `spline`, `step_after`, or `step_before`")
 	}
-	if v == "" {
-		*li = LineInterpolationSpline
-		return nil
-	}
 	val := LineInterpolation{valuer.NewString(v)}
 	switch val {
 	case LineInterpolationLinear, LineInterpolationSpline, LineInterpolationStepAfter, LineInterpolationStepBefore:
@@ -563,10 +705,6 @@ func (ls *LineStyle) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid line style: must be a string, one of `solid` or `dashed`")
-	}
-	if v == "" {
-		*ls = LineStyleSolid
-		return nil
 	}
 	val := LineStyle{valuer.NewString(v)}
 	switch val {
@@ -606,10 +744,6 @@ func (fm *FillMode) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid fill mode: must be a string, one of `solid`, `gradient`, or `none`")
 	}
-	if v == "" {
-		*fm = FillModeNone
-		return nil
-	}
 	val := FillMode{valuer.NewString(v)}
 	switch val {
 	case FillModeSolid, FillModeGradient, FillModeNone:
@@ -620,9 +754,252 @@ func (fm *FillMode) UnmarshalJSON(data []byte) error {
 	}
 }
 
+type AreaFillMode struct{ valuer.String }
+
+var (
+	AreaFillModeSolid    = AreaFillMode{valuer.NewString("solid")} // default
+	AreaFillModeGradient = AreaFillMode{valuer.NewString("gradient")}
+)
+
+func (AreaFillMode) Enum() []any {
+	return []any{AreaFillModeSolid, AreaFillModeGradient}
+}
+
+func (fm AreaFillMode) ValueOrDefault() string {
+	if fm.IsZero() {
+		return AreaFillModeSolid.StringValue()
+	}
+	return fm.StringValue()
+}
+
+func (fm AreaFillMode) MarshalJSON() ([]byte, error) {
+	return json.Marshal(fm.ValueOrDefault())
+}
+
+func (fm *AreaFillMode) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid fill mode: must be a string, one of `solid`, `gradient`, or `none`")
+	}
+	val := AreaFillMode{valuer.NewString(v)}
+	switch val {
+	case AreaFillModeSolid, AreaFillModeGradient:
+		*fm = val
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid fill mode %q: must be `solid`, `gradient`, or `none`", v)
+	}
+}
+
+// StackMode is area-only. Bar stacking stays on BarChartVisualization.StackedBarChart,
+// so `percent` is not reachable from a bar panel.
+type StackMode struct{ valuer.String }
+
+var (
+	StackModeNone    = StackMode{valuer.NewString("none")} // default
+	StackModeNormal  = StackMode{valuer.NewString("normal")}
+	StackModePercent = StackMode{valuer.NewString("percent")}
+)
+
+func (StackMode) Enum() []any {
+	return []any{StackModeNone, StackModeNormal, StackModePercent}
+}
+
+func (sm StackMode) ValueOrDefault() string {
+	if sm.IsZero() {
+		return StackModeNone.StringValue()
+	}
+	return sm.StringValue()
+}
+
+func (sm StackMode) MarshalJSON() ([]byte, error) {
+	return json.Marshal(sm.ValueOrDefault())
+}
+
+func (sm *StackMode) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid stack mode: must be a string, one of `none`, `normal`, or `percent`")
+	}
+	val := StackMode{valuer.NewString(v)}
+	switch val {
+	case StackModeNone, StackModeNormal, StackModePercent:
+		*sm = val
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid stack mode %q: must be `none`, `normal`, or `percent`", v)
+	}
+}
+
+// FillOpacity is the alpha of an area fill, in 0–1 because that is what the
+// chart layer consumes directly. Unlike the enums in this section it has no
+// ValueOrDefault: 0 is a legitimate value, so the kind default lives at render
+// time behind a nil pointer.
+type FillOpacity float64
+
+func (FillOpacity) PrepareJSONSchema(s *jsonschema.Schema) error {
+	s.WithMinimum(0).WithMaximum(1)
+	return nil
+}
+
+func (o *FillOpacity) UnmarshalJSON(data []byte) error {
+	var v float64
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid fillOpacity: must be a number between 0 and 1")
+	}
+	if v < 0 || v > 1 {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid fillOpacity %v: must be between 0 and 1", v)
+	}
+	*o = FillOpacity(v)
+	return nil
+}
+
 type SpanGaps struct {
-	FillOnlyBelow bool                `json:"fillOnlyBelow" description:"Controls whether lines connect across null values. When false (default), all gaps are connected. When true, only gaps smaller than fillLessThan are connected."`
-	FillLessThan  valuer.TextDuration `json:"fillLessThan" description:"The maximum gap size to connect when fillOnlyBelow is true. Gaps larger than this duration are left disconnected."`
+	FillOnlyBelow bool   `json:"fillOnlyBelow" description:"Controls whether lines connect across null values. When false (default), all gaps are connected. When true, only gaps smaller than fillLessThan are connected."`
+	FillLessThan  string `json:"fillLessThan" description:"The maximum gap size to connect when fillOnlyBelow is true. Gaps larger than this duration are left disconnected."`
+}
+
+func (sg *SpanGaps) UnmarshalJSON(data []byte) error {
+	type alias SpanGaps
+	var tmp alias
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid spanGaps")
+	}
+	*sg = SpanGaps(tmp)
+	return sg.validate()
+}
+
+// validate enforces FillLessThan only when FillOnlyBelow is set, since that is
+// the only mode in which it applies. It must then be a valid positive duration.
+// prometheus's parser accepts day/week/year units (e.g. "1d"); time.ParseDuration
+// caps at hours.
+func (sg SpanGaps) validate() error {
+	if !sg.FillOnlyBelow {
+		return nil
+	}
+	if sg.FillLessThan == "" {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spanGaps.fillLessThan is required when fillOnlyBelow is true")
+	}
+	d, err := model.ParseDuration(sg.FillLessThan)
+	if err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid spanGaps.fillLessThan duration %q", sg.FillLessThan)
+	}
+	if d <= 0 {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spanGaps.fillLessThan duration must be positive, got %q", sg.FillLessThan)
+	}
+	return nil
+}
+
+// TextMode is how a text panel interprets its `text`. Only markdown is
+// rendered today; further modes (e.g. plain text, HTML) are expected.
+type TextMode struct{ valuer.String }
+
+var TextModeMarkdown = TextMode{valuer.NewString("markdown")} // default
+
+func (TextMode) Enum() []any {
+	return []any{TextModeMarkdown}
+}
+
+func (m TextMode) ValueOrDefault() string {
+	if m.IsZero() {
+		return TextModeMarkdown.StringValue()
+	}
+	return m.StringValue()
+}
+
+func (m TextMode) MarshalJSON() ([]byte, error) {
+	return json.Marshal(m.ValueOrDefault())
+}
+
+func (m *TextMode) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid text mode: must be the string `markdown`")
+	}
+	tm := TextMode{valuer.NewString(v)}
+	switch tm {
+	case TextModeMarkdown:
+		*m = tm
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid text mode %q: must be `markdown`", v)
+	}
+}
+
+type TextAlign struct{ valuer.String }
+
+var (
+	TextAlignLeft   = TextAlign{valuer.NewString("left")} // default
+	TextAlignCenter = TextAlign{valuer.NewString("center")}
+	TextAlignRight  = TextAlign{valuer.NewString("right")}
+)
+
+func (TextAlign) Enum() []any {
+	return []any{TextAlignLeft, TextAlignCenter, TextAlignRight}
+}
+
+func (a TextAlign) ValueOrDefault() string {
+	if a.IsZero() {
+		return TextAlignLeft.StringValue()
+	}
+	return a.StringValue()
+}
+
+func (a TextAlign) MarshalJSON() ([]byte, error) {
+	return json.Marshal(a.ValueOrDefault())
+}
+
+func (a *TextAlign) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid text align: must be a string, one of `left`, `center`, or `right`")
+	}
+	val := TextAlign{valuer.NewString(v)}
+	switch val {
+	case TextAlignLeft, TextAlignCenter, TextAlignRight:
+		*a = val
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid text align %q: must be `left`, `center`, or `right`", v)
+	}
+}
+
+type VerticalAlign struct{ valuer.String }
+
+var (
+	VerticalAlignTop    = VerticalAlign{valuer.NewString("top")} // default
+	VerticalAlignCenter = VerticalAlign{valuer.NewString("center")}
+	VerticalAlignBottom = VerticalAlign{valuer.NewString("bottom")}
+)
+
+func (VerticalAlign) Enum() []any {
+	return []any{VerticalAlignTop, VerticalAlignCenter, VerticalAlignBottom}
+}
+
+func (a VerticalAlign) ValueOrDefault() string {
+	if a.IsZero() {
+		return VerticalAlignTop.StringValue()
+	}
+	return a.StringValue()
+}
+
+func (a VerticalAlign) MarshalJSON() ([]byte, error) {
+	return json.Marshal(a.ValueOrDefault())
+}
+
+func (a *VerticalAlign) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid vertical align: must be a string, one of `top`, `center`, or `bottom`")
+	}
+	val := VerticalAlign{valuer.NewString(v)}
+	switch val {
+	case VerticalAlignTop, VerticalAlignCenter, VerticalAlignBottom:
+		*a = val
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid vertical align %q: must be `top`, `center`, or `bottom`", v)
+	}
 }
 
 type PrecisionOption struct{ valuer.String }
@@ -667,10 +1044,6 @@ func (p *PrecisionOption) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid precision option: must be `0`, `1`, `2`, `3`, `4`, or `full`")
 	}
-	if v == "" {
-		*p = PrecisionOption2
-		return nil
-	}
 	val := PrecisionOption{valuer.NewString(v)}
 	switch val {
 	case PrecisionOption0, PrecisionOption1, PrecisionOption2, PrecisionOption3, PrecisionOption4, PrecisionOptionFull:
@@ -678,5 +1051,170 @@ func (p *PrecisionOption) UnmarshalJSON(data []byte) error {
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid precision option %q: must be `0`, `1`, `2`, `3`, `4`, or `full`", v)
+	}
+}
+
+type HeatmapColorMode struct{ valuer.String }
+
+var (
+	HeatmapColorModePalette = HeatmapColorMode{valuer.NewString("palette")} // default
+	HeatmapColorModeOpacity = HeatmapColorMode{valuer.NewString("opacity")}
+)
+
+func (HeatmapColorMode) Enum() []any {
+	return []any{HeatmapColorModePalette, HeatmapColorModeOpacity}
+}
+
+func (m HeatmapColorMode) ValueOrDefault() string {
+	if m.IsZero() {
+		return HeatmapColorModePalette.StringValue()
+	}
+	return m.StringValue()
+}
+
+func (m HeatmapColorMode) MarshalJSON() ([]byte, error) {
+	return json.Marshal(m.ValueOrDefault())
+}
+
+func (m *HeatmapColorMode) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid heatmap color mode: must be a string, one of `palette` or `opacity`")
+	}
+	mode := HeatmapColorMode{valuer.NewString(v)}
+	switch mode {
+	case HeatmapColorModePalette, HeatmapColorModeOpacity:
+		*m = mode
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid heatmap color mode %q: must be `palette` or `opacity`", v)
+	}
+}
+
+type HeatmapPalette struct{ valuer.String }
+
+var (
+	HeatmapPaletteIce      = HeatmapPalette{valuer.NewString("ice")}
+	HeatmapPaletteMoss     = HeatmapPalette{valuer.NewString("moss")}
+	HeatmapPaletteRust     = HeatmapPalette{valuer.NewString("rust")}
+	HeatmapPaletteGraphite = HeatmapPalette{valuer.NewString("graphite")}
+	HeatmapPaletteEmber    = HeatmapPalette{valuer.NewString("ember")}
+	HeatmapPaletteLagoon   = HeatmapPalette{valuer.NewString("lagoon")}
+	HeatmapPaletteOrchid   = HeatmapPalette{valuer.NewString("orchid")}
+	HeatmapPaletteVerdant  = HeatmapPalette{valuer.NewString("verdant")}
+	HeatmapPaletteLava     = HeatmapPalette{valuer.NewString("lava")} // default
+	HeatmapPaletteBeacon   = HeatmapPalette{valuer.NewString("beacon")}
+)
+
+func (HeatmapPalette) Enum() []any {
+	return []any{
+		HeatmapPaletteIce, HeatmapPaletteMoss, HeatmapPaletteRust, HeatmapPaletteGraphite,
+		HeatmapPaletteEmber, HeatmapPaletteLagoon, HeatmapPaletteOrchid, HeatmapPaletteVerdant,
+		HeatmapPaletteLava, HeatmapPaletteBeacon,
+	}
+}
+
+func (p HeatmapPalette) ValueOrDefault() string {
+	if p.IsZero() {
+		return HeatmapPaletteLava.StringValue()
+	}
+	return p.StringValue()
+}
+
+func (p HeatmapPalette) MarshalJSON() ([]byte, error) {
+	return json.Marshal(p.ValueOrDefault())
+}
+
+func (p *HeatmapPalette) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid heatmap palette: must be a string, one of `ice`, `moss`, `rust`, `graphite`, `ember`, `lagoon`, `orchid`, `verdant`, `lava`, or `beacon`")
+	}
+	palette := HeatmapPalette{valuer.NewString(v)}
+	switch palette {
+	case HeatmapPaletteIce, HeatmapPaletteMoss, HeatmapPaletteRust, HeatmapPaletteGraphite,
+		HeatmapPaletteEmber, HeatmapPaletteLagoon, HeatmapPaletteOrchid, HeatmapPaletteVerdant,
+		HeatmapPaletteLava, HeatmapPaletteBeacon:
+		*p = palette
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid heatmap palette %q: must be `ice`, `moss`, `rust`, `graphite`, `ember`, `lagoon`, `orchid`, `verdant`, `lava`, or `beacon`", v)
+	}
+}
+
+type HeatmapYScale struct{ valuer.String }
+
+var (
+	HeatmapYScaleAuto   = HeatmapYScale{valuer.NewString("auto")} // default
+	HeatmapYScaleLinear = HeatmapYScale{valuer.NewString("linear")}
+	HeatmapYScaleLog    = HeatmapYScale{valuer.NewString("log")}
+	HeatmapYScaleSymlog = HeatmapYScale{valuer.NewString("symlog")}
+)
+
+func (HeatmapYScale) Enum() []any {
+	return []any{HeatmapYScaleAuto, HeatmapYScaleLinear, HeatmapYScaleLog, HeatmapYScaleSymlog}
+}
+
+func (s HeatmapYScale) ValueOrDefault() string {
+	if s.IsZero() {
+		return HeatmapYScaleAuto.StringValue()
+	}
+	return s.StringValue()
+}
+
+func (s HeatmapYScale) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.ValueOrDefault())
+}
+
+func (s *HeatmapYScale) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid heatmap y scale: must be a string, one of `auto`, `linear`, `log`, or `symlog`")
+	}
+	scale := HeatmapYScale{valuer.NewString(v)}
+	switch scale {
+	case HeatmapYScaleAuto, HeatmapYScaleLinear, HeatmapYScaleLog, HeatmapYScaleSymlog:
+		*s = scale
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid heatmap y scale %q: must be `auto`, `linear`, `log`, or `symlog`", v)
+	}
+}
+
+type HeatmapColorScale struct{ valuer.String }
+
+var (
+	HeatmapColorScaleLog    = HeatmapColorScale{valuer.NewString("log")} // default
+	HeatmapColorScaleSqrt   = HeatmapColorScale{valuer.NewString("sqrt")}
+	HeatmapColorScaleLinear = HeatmapColorScale{valuer.NewString("linear")}
+)
+
+func (HeatmapColorScale) Enum() []any {
+	return []any{HeatmapColorScaleLog, HeatmapColorScaleSqrt, HeatmapColorScaleLinear}
+}
+
+func (s HeatmapColorScale) ValueOrDefault() string {
+	if s.IsZero() {
+		return HeatmapColorScaleLog.StringValue()
+	}
+	return s.StringValue()
+}
+
+func (s HeatmapColorScale) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.ValueOrDefault())
+}
+
+func (s *HeatmapColorScale) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid heatmap color scale: must be a string, one of `log`, `sqrt`, or `linear`")
+	}
+	scale := HeatmapColorScale{valuer.NewString(v)}
+	switch scale {
+	case HeatmapColorScaleLog, HeatmapColorScaleSqrt, HeatmapColorScaleLinear:
+		*s = scale
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid heatmap color scale %q: must be `log`, `sqrt`, or `linear`", v)
 	}
 }

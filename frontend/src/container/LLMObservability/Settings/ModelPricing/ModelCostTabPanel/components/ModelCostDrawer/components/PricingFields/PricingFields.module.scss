@@ -1,3 +1,7 @@
+.fieldLabel {
+	composes: fieldLabel from '../../shared.module.scss';
+}
+
 .drawerSection {
 	composes: drawerSection from '../../shared.module.scss';
 }

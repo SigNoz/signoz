@@ -10,7 +10,7 @@ import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute
 import { AppState } from 'store/reducers';
 import { PayloadProps } from 'types/api/metrics/getTopOperations';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { Tags } from 'types/reducer/trace';
+import { Tags } from 'hooks/useResourceAttribute/types';
 
 function TopOperation(): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(

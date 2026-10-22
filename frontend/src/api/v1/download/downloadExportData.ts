@@ -1,26 +1,50 @@
 import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
-import { AxiosError } from 'axios';
+import { AxiosError, AxiosResponse } from 'axios';
 import { ErrorV2Resp } from 'types/api';
 import { ExportRawDataProps } from 'types/api/exportRawData/getExportRawData';
+
+export interface FetchExportDataProps extends ExportRawDataProps {
+	signal?: AbortSignal;
+}
+
+async function postExportRawData({
+	format,
+	body,
+	signal,
+}: FetchExportDataProps): Promise<AxiosResponse<Blob>> {
+	return axios.post<Blob>(
+		`export_raw_data?format=${encodeURIComponent(format)}`,
+		body,
+		{
+			responseType: 'blob',
+			decompress: true,
+			headers: {
+				Accept: 'application/octet-stream',
+				'Content-Type': 'application/json',
+			},
+			timeout: 0,
+			signal,
+		},
+	);
+}
+
+/**
+ * Fetches a single export_raw_data page and returns it as a Blob.
+ * Callers own retry/cancel/error UX.
+ */
+export async function fetchExportData(
+	props: FetchExportDataProps,
+): Promise<Blob> {
+	const response = await postExportRawData(props);
+	return response.data;
+}
 
 export const downloadExportData = async (
 	props: ExportRawDataProps,
 ): Promise<void> => {
 	try {
-		const response = await axios.post<Blob>(
-			`export_raw_data?format=${encodeURIComponent(props.format)}`,
-			props.body,
-			{
-				responseType: 'blob',
-				decompress: true,
-				headers: {
-					Accept: 'application/octet-stream',
-					'Content-Type': 'application/json',
-				},
-				timeout: 0,
-			},
-		);
+		const response = await postExportRawData(props);
 
 		if (response.status !== 200) {
 			throw new Error(

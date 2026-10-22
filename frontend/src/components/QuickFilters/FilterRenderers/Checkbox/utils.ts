@@ -39,3 +39,16 @@ export function isKeyMatch(
 ): boolean {
 	return getKeyWithoutPrefix(itemKey) === getKeyWithoutPrefix(filterKey);
 }
+
+/**
+ * Every spelling of a key that `isKeyMatch` treats as equal: the base name plus
+ * each context-prefixed form. Expression rewrites match keys literally, so they
+ * need the whole list where the items side only needs `isKeyMatch`.
+ */
+export function getKeySpellings(key: string | undefined): string[] {
+	const base = getKeyWithoutPrefix(key);
+	if (!base) {
+		return [];
+	}
+	return [base, ...FIELD_CONTEXT_PREFIXES.map((prefix) => `${prefix}.${base}`)];
+}

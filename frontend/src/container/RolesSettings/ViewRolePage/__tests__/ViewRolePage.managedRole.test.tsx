@@ -1,5 +1,4 @@
-import { TooltipProvider } from '@signozhq/ui/tooltip';
-import { render, screen } from 'tests/test-utils';
+import { render, screen, waitFor } from 'tests/test-utils';
 
 import ViewRolePage from '../ViewRolePage';
 
@@ -19,45 +18,39 @@ describe('ViewRolePage - Managed Role', () => {
 		jest.restoreAllMocks();
 	});
 
-	it('disables Delete button for managed roles', () => {
-		render(
-			<TooltipProvider>
-				<ViewRolePage />
-			</TooltipProvider>,
-			undefined,
-			{
-				initialRoute: buildViewRoleRoute(MANAGED_ROLE_ID, MANAGED_ROLE_NAME),
-			},
-		);
+	it('disables Delete button for managed roles', async () => {
+		render(<ViewRolePage />, undefined, {
+			initialRoute: buildViewRoleRoute(MANAGED_ROLE_ID, MANAGED_ROLE_NAME),
+		});
 
-		expect(screen.getByTestId('delete-button')).toBeDisabled();
+		await waitFor(() => {
+			expect(screen.getByTestId('delete-button')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
+		});
 	});
 
-	it('disables Update button for managed roles', () => {
-		render(
-			<TooltipProvider>
-				<ViewRolePage />
-			</TooltipProvider>,
-			undefined,
-			{
-				initialRoute: buildViewRoleRoute(MANAGED_ROLE_ID, MANAGED_ROLE_NAME),
-			},
-		);
+	it('disables Update button for managed roles', async () => {
+		render(<ViewRolePage />, undefined, {
+			initialRoute: buildViewRoleRoute(MANAGED_ROLE_ID, MANAGED_ROLE_NAME),
+		});
 
-		expect(screen.getByTestId('save-button')).toBeDisabled();
+		await waitFor(() => {
+			expect(screen.getByTestId('save-button')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
+		});
 	});
 
-	it('still shows Cancel button for managed roles', () => {
-		render(
-			<TooltipProvider>
-				<ViewRolePage />
-			</TooltipProvider>,
-			undefined,
-			{
-				initialRoute: buildViewRoleRoute(MANAGED_ROLE_ID, MANAGED_ROLE_NAME),
-			},
-		);
+	it('still shows Cancel button for managed roles', async () => {
+		render(<ViewRolePage />, undefined, {
+			initialRoute: buildViewRoleRoute(MANAGED_ROLE_ID, MANAGED_ROLE_NAME),
+		});
 
-		expect(screen.getByTestId('cancel-button')).toBeInTheDocument();
+		await expect(
+			screen.findByTestId('cancel-button'),
+		).resolves.toBeInTheDocument();
 	});
 });

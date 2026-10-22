@@ -1,30 +1,10 @@
 package inframonitoringtypes
 
-import "github.com/SigNoz/signoz/pkg/valuer"
+import (
+	"slices"
 
-type PodPhase struct {
-	valuer.String
-}
-
-var (
-	PodPhasePending   = PodPhase{valuer.NewString("pending")}
-	PodPhaseRunning   = PodPhase{valuer.NewString("running")}
-	PodPhaseSucceeded = PodPhase{valuer.NewString("succeeded")}
-	PodPhaseFailed    = PodPhase{valuer.NewString("failed")}
-	PodPhaseUnknown   = PodPhase{valuer.NewString("unknown")}
-	PodPhaseNoData    = PodPhase{valuer.NewString("no_data")}
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
-
-func (PodPhase) Enum() []any {
-	return []any{
-		PodPhasePending,
-		PodPhaseRunning,
-		PodPhaseSucceeded,
-		PodPhaseFailed,
-		PodPhaseUnknown,
-		PodPhaseNoData,
-	}
-}
 
 // PodStatus is the kubectl-style pod display status, derived from
 // k8s.pod.phase + k8s.pod.status_reason + k8s.container.status.reason
@@ -90,15 +70,11 @@ func (PodStatus) Enum() []any {
 	}
 }
 
-// Numeric pod phase values emitted by the k8s.pod.phase metric
-// (source: OTel kubeletstats receiver).
-const (
-	PodPhaseNumPending   = 1
-	PodPhaseNumRunning   = 2
-	PodPhaseNumSucceeded = 3
-	PodPhaseNumFailed    = 4
-	PodPhaseNumUnknown   = 5
-)
+// IsFilterable reports whether s is a concrete, user-filterable pod
+// status: any Enum() member except the no_data sentinel.
+func (s PodStatus) IsFilterable() bool {
+	return s != PodStatusNoData && slices.Contains((PodStatus{}).Enum(), any(s))
+}
 
 const PodNameAttrKey = "k8s.pod.name"
 

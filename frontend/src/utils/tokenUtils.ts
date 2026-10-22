@@ -77,6 +77,7 @@ export function isFunctionToken(tokenType: number): boolean {
 		FilterQueryLexer.HASANY,
 		FilterQueryLexer.HASALL,
 		FilterQueryLexer.HASTOKEN,
+		FilterQueryLexer.SEARCH,
 	].includes(tokenType);
 }
 

@@ -6,11 +6,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,39 +21,7 @@ func TestPipelinePreview(t *testing.T) {
 	require := require.New(t)
 
 	testPipelines := []pipelinetypes.GettablePipeline{
-		{
-			StoreablePipeline: pipelinetypes.StoreablePipeline{
-				OrderID: 1,
-				Name:    "pipeline1",
-				Alias:   "pipeline1",
-				Enabled: true,
-			},
-			Filter: &v3.FilterSet{
-				Operator: "AND",
-				Items: []v3.FilterItem{
-					{
-						Key: v3.AttributeKey{
-							Key:      "method",
-							DataType: v3.AttributeKeyDataTypeString,
-							Type:     v3.AttributeKeyTypeTag,
-						},
-						Operator: "=",
-						Value:    "GET",
-					},
-				},
-			},
-			Config: []pipelinetypes.PipelineOperator{
-				{
-					OrderId: 1,
-					ID:      "add",
-					Type:    "add",
-					Field:   "attributes.test",
-					Value:   "val",
-					Enabled: true,
-					Name:    "test add",
-				},
-			},
-		},
+		makeTestAddAttributePipeline(),
 		{
 			StoreablePipeline: pipelinetypes.StoreablePipeline{
 				OrderID: 2,
@@ -146,6 +117,93 @@ func TestPipelinePreview(t *testing.T) {
 		result[1].Resources_string,
 	)
 
+}
+
+func TestPipelinePreviewNormalizesBodyWithJSONBodyEnabled(t *testing.T) {
+	controller := &LogParsingPipelineController{fl: flaggertest.WithUseJSONBody(t, true)}
+
+	result, err := controller.PreviewLogsPipelines(
+		context.Background(),
+		valuer.GenerateUUID(),
+		&PipelinesPreviewRequest{
+			Pipelines: []pipelinetypes.GettablePipeline{makeTestAddAttributePipeline()},
+			Logs: []model.SignozLog{
+				makeTestSignozLog("test log body", map[string]interface{}{"method": "GET"}),
+				makeTestSignozLog(
+					`{"level":"error","msg":"json log body"}`,
+					map[string]interface{}{"method": "GET"},
+				),
+			},
+		},
+	)
+
+	require.NoError(t, err)
+	require.Len(t, result.OutputLogs, 2)
+
+	assert.Equal(t, `{"message":"test log body"}`, result.OutputLogs[0].Body)
+	assert.Equal(
+		t,
+		`{"level":"error","message":"json log body"}`,
+		result.OutputLogs[1].Body,
+	)
+	assert.Equal(t, "val", result.OutputLogs[0].Attributes_string["test"])
+}
+
+func TestPipelinePreviewKeepsBodyAsIsWithJSONBodyDisabled(t *testing.T) {
+	controller := &LogParsingPipelineController{fl: flaggertest.WithUseJSONBody(t, false)}
+
+	result, err := controller.PreviewLogsPipelines(
+		context.Background(),
+		valuer.GenerateUUID(),
+		&PipelinesPreviewRequest{
+			Pipelines: []pipelinetypes.GettablePipeline{makeTestAddAttributePipeline()},
+			Logs: []model.SignozLog{
+				makeTestSignozLog("test log body", map[string]interface{}{"method": "GET"}),
+			},
+		},
+	)
+
+	require.NoError(t, err)
+	require.Len(t, result.OutputLogs, 1)
+
+	assert.Equal(t, "test log body", result.OutputLogs[0].Body)
+	assert.Equal(t, "val", result.OutputLogs[0].Attributes_string["test"])
+}
+
+func makeTestAddAttributePipeline() pipelinetypes.GettablePipeline {
+	return pipelinetypes.GettablePipeline{
+		StoreablePipeline: pipelinetypes.StoreablePipeline{
+			OrderID: 1,
+			Name:    "pipeline1",
+			Alias:   "pipeline1",
+			Enabled: true,
+		},
+		Filter: &v3.FilterSet{
+			Operator: "AND",
+			Items: []v3.FilterItem{
+				{
+					Key: v3.AttributeKey{
+						Key:      "method",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeTag,
+					},
+					Operator: "=",
+					Value:    "GET",
+				},
+			},
+		},
+		Config: []pipelinetypes.PipelineOperator{
+			{
+				OrderId: 1,
+				ID:      "add",
+				Type:    "add",
+				Field:   "attributes.test",
+				Value:   "val",
+				Enabled: true,
+				Name:    "test add",
+			},
+		},
+	}
 }
 
 func TestGrokParsingProcessor(t *testing.T) {

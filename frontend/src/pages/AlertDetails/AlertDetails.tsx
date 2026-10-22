@@ -94,6 +94,8 @@ function AlertDetails(): JSX.Element {
 		>
 			<div
 				className={classNames('alert-details', { 'alert-details-v2': isV2Alert })}
+				data-testid="alert-details-root"
+				data-schema-version={isV2Alert ? NEW_ALERT_SCHEMA_VERSION : 'v1'}
 			>
 				<AlertBreadcrumb
 					className="alert-details__breadcrumb"

@@ -1,0 +1,133 @@
+/**
+ * AI-owned. Generated and maintained by the `signoz-page-story` skill.
+ * Do not hand-edit: regenerate instead.
+ */
+
+import ROUTES from 'constants/routes';
+import { rest } from 'msw';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { RoleType } from 'types/roles';
+
+import { choiceControl } from '@/storybook/controls/controls';
+import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+
+import {
+	MUTATION_OUTCOMES,
+	type MutationOutcome,
+	mutationResolver,
+} from '../../../stories/__story_mockdata__/mutationOutcome';
+import {
+	CUSTOM_ROLE_ID,
+	PERMISSION_BREADTHS,
+	type PermissionBreadth,
+	roleResponse,
+} from '../../../stories/__story_mockdata__/roles';
+
+const EDITOR = 'Role editor · editor';
+
+const MODES = ['create', 'edit'] as const;
+
+type Mode = (typeof MODES)[number];
+
+const EDITORS = ['interactive', 'json'] as const;
+
+type Editor = (typeof EDITORS)[number];
+
+const CUSTOM_ROLE_NAME = 'oncall-responder';
+
+/**
+ * Create and edit are the same page on two routes: `roles/new` reads as create,
+ * anything else as an edit of the role in the pathname.
+ */
+const routeFor = (mode: Mode, editor: Editor): string => {
+	const search = `viewMode=${editor}`;
+
+	return mode === 'create'
+		? `${ROUTES.ROLE_CREATE}?${search}`
+		: `${ROUTES.ROLE_EDIT.replace(':roleId', CUSTOM_ROLE_ID)}?name=${CUSTOM_ROLE_NAME}&${search}`;
+};
+
+export const roleEditorMocks = defineStoryMocks({
+	controls: {
+		mode: choiceControl<Mode>('Mode', {
+			group: EDITOR,
+			description:
+				'Whether the page is writing a new role or changing one that exists. Create starts from nothing and asks for a name.',
+			options: MODES,
+			value: 'create',
+		}),
+		editor: choiceControl<Editor>('Editor', {
+			group: EDITOR,
+			description:
+				'The permission editor: resource cards, or the JSON the API stores.',
+			options: EDITORS,
+			value: 'interactive',
+		}),
+		grants: choiceControl<PermissionBreadth>('Granted permissions', {
+			group: EDITOR,
+			description: 'What the edited role already grants. Ignored while creating.',
+			options: PERMISSION_BREADTHS,
+			value: 'broad',
+		}),
+		roleSave: choiceControl<MutationOutcome>('Saving the role', {
+			group: EDITOR,
+			description:
+				'How the request behind the save button answers. `success` raises the created or updated toast, `loading` leaves the button spinning, `error` shows the failure above the form.',
+			options: MUTATION_OUTCOMES,
+			value: 'success',
+		}),
+	},
+	handlers: (values, response) => [
+		rest.get(
+			'http://localhost/api/v1/roles/:id',
+			response.json((req) =>
+				roleResponse(String(req.params.id), RoleType.CUSTOM, values.grants),
+			),
+		),
+
+		rest.post(
+			'http://localhost/api/v1/roles',
+			mutationResolver(values.roleSave, {
+				status: 'success',
+				data: { id: CUSTOM_ROLE_ID },
+			}),
+		),
+
+		rest.put(
+			'http://localhost/api/v1/roles/:id',
+			mutationResolver(values.roleSave),
+		),
+	],
+	config: (values) => ({ route: routeFor(values.mode, values.editor) }),
+});
+
+/** Opens the Logs card and returns it. */
+export const openLogsCard = async (
+	canvasElement: HTMLElement,
+): Promise<HTMLElement> => {
+	const header = await within(canvasElement).findByRole(
+		'button',
+		{ name: /^Logs:/ },
+		{ timeout: 15_000 },
+	);
+
+	await userEvent.click(header);
+
+	return header.parentElement as HTMLElement;
+};
+
+/** Clicks save once the permission check behind the button has answered. */
+export const save = async (canvasElement: HTMLElement): Promise<void> => {
+	const button = await waitFor(
+		() => {
+			const found = within(canvasElement).getByTestId('save-button');
+
+			expect(found).not.toHaveAttribute('aria-disabled', 'true');
+
+			return found;
+		},
+		{ timeout: 15_000 },
+	);
+
+	await userEvent.click(button);
+};

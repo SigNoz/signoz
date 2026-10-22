@@ -8,13 +8,15 @@ import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
-import { useIsAIObservabilityEnabled } from 'hooks/useIsAIObservabilityEnabled';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 import { OrgPreference } from 'types/api/preferences/preference';
 import { USER_ROLES } from 'types/roles';
-import { routePermission } from 'utils/permission';
+import {
+	routePermission,
+	routeWithInitialAuthZSupport,
+} from 'utils/permission';
 
 import routes, {
 	LIST_LICENSES,
@@ -41,8 +43,6 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
-	const isAIObservabilityEnabled = useIsAIObservabilityEnabled();
-
 	const mapRoutes = useMemo(
 		() =>
 			new Map(
@@ -133,14 +133,6 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		return <Redirect to={ROUTES.HOME} />;
 	}
 
-	if (
-		(pathname.startsWith(`${ROUTES.LLM_OBSERVABILITY_BASE}/`) ||
-			pathname === ROUTES.LLM_OBSERVABILITY_BASE) &&
-		!isAIObservabilityEnabled
-	) {
-		return <Redirect to={ROUTES.HOME} />;
-	}
-
 	// Check for workspace access restriction (cloud only)
 	const isCloudPlatform = activeLicense?.platform === LicensePlatform.CLOUD;
 
@@ -167,12 +159,12 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	// Check for workspace blocked (trial expired)
 	if (!isFetchingActiveLicense && isCloudPlatform && trialInfo?.workSpaceBlock) {
 		const isRouteEnabledForWorkspaceBlockedState =
-			isAdmin &&
-			(pathname === ROUTES.SETTINGS ||
-				pathname === ROUTES.ORG_SETTINGS ||
-				pathname === ROUTES.MEMBERS_SETTINGS ||
-				pathname === ROUTES.BILLING ||
-				pathname === ROUTES.MY_SETTINGS);
+			pathname === ROUTES.SETTINGS ||
+			pathname === ROUTES.BILLING ||
+			(isAdmin &&
+				(pathname === ROUTES.ORG_SETTINGS ||
+					pathname === ROUTES.MEMBERS_SETTINGS ||
+					pathname === ROUTES.MY_SETTINGS));
 
 		if (
 			pathname !== ROUTES.WORKSPACE_LOCKED &&
@@ -226,7 +218,16 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		if (isPrivate) {
 			if (isLoggedInState) {
 				const route = routePermission[key];
-				if (route && route.find((e) => e === user.role) === undefined) {
+				const hasInitialAuthZSupport = Object.hasOwn(
+					routeWithInitialAuthZSupport,
+					key,
+				);
+
+				if (
+					route &&
+					route.find((e) => e === user.role) === undefined &&
+					hasInitialAuthZSupport === false
+				) {
 					return <Redirect to={ROUTES.UN_AUTHORIZED} />;
 				}
 			} else {

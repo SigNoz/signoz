@@ -84,6 +84,11 @@ func TestPostableChecks_Validate(t *testing.T) {
 			req:     &PostableChecks{Type: CheckTypeVolumes},
 			wantErr: false,
 		},
+		{
+			name:    "kube_containers",
+			req:     &PostableChecks{Type: CheckTypeKubeContainers},
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {

@@ -22,7 +22,7 @@ import listUserPreferences from 'api/v1/user/preferences/list';
 import getUserVersion from 'api/v1/version/get';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import dayjs from 'dayjs';
-import useActiveLicenseV3 from 'hooks/useActiveLicenseV3/useActiveLicenseV3';
+import useActiveLicense from 'hooks/useActiveLicense/useActiveLicense';
 import {
 	IsAdminPermission,
 	IsEditorPermission,
@@ -210,35 +210,34 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		}
 	}, [userData, isFetchingUserData]);
 
-	// fetcher for licenses v3
+	// fetcher for the active license
 	const {
 		data: activeLicenseData,
 		isFetching: isFetchingActiveLicense,
 		error: activeLicenseFetchError,
 		refetch: activeLicenseRefetch,
-	} = useActiveLicenseV3(isLoggedIn);
+	} = useActiveLicense(isLoggedIn);
 	useEffect(() => {
-		if (!isFetchingActiveLicense && activeLicenseData && activeLicenseData.data) {
-			setActiveLicense(activeLicenseData.data);
+		if (!isFetchingActiveLicense && activeLicenseData) {
+			setActiveLicense(activeLicenseData);
 
-			const isOnTrial = dayjs(
-				activeLicenseData.data.free_until || Date.now(),
-			).isAfter(dayjs());
+			const freeUntilUnix = dayjs(activeLicenseData.freeUntil).unix();
+			const scheduledAtUnix = dayjs(
+				activeLicenseData.eventQueue.scheduledAt,
+			).unix();
 
 			const trialInfo: TrialInfo = {
-				trialStart: activeLicenseData.data.valid_from,
-				trialEnd: dayjs(activeLicenseData.data.free_until || Date.now()).unix(),
-				onTrial: isOnTrial,
+				trialStart: activeLicenseData.validFrom,
+				trialEnd: freeUntilUnix > 0 ? freeUntilUnix : dayjs().unix(),
+				onTrial: dayjs(activeLicenseData.freeUntil).isAfter(dayjs()),
 				workSpaceBlock:
-					activeLicenseData.data.state === LicenseState.EVALUATION_EXPIRED &&
-					activeLicenseData.data.platform === LicensePlatform.CLOUD,
+					activeLicenseData.state === LicenseState.EVALUATION_EXPIRED &&
+					activeLicenseData.platform === LicensePlatform.CLOUD,
 				trialConvertedToSubscription:
-					activeLicenseData.data.state !== LicenseState.ISSUED &&
-					activeLicenseData.data.state !== LicenseState.EVALUATING &&
-					activeLicenseData.data.state !== LicenseState.EVALUATION_EXPIRED,
-				gracePeriodEnd: dayjs(
-					activeLicenseData.data.event_queue.scheduled_at || Date.now(),
-				).unix(),
+					activeLicenseData.state !== LicenseState.ISSUED &&
+					activeLicenseData.state !== LicenseState.EVALUATING &&
+					activeLicenseData.state !== LicenseState.EVALUATION_EXPIRED,
+				gracePeriodEnd: scheduledAtUnix > 0 ? scheduledAtUnix : dayjs().unix(),
 			};
 
 			setTrialInfo(trialInfo);
@@ -434,6 +433,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			isFetchingHosts,
 			isFetchingFeatureFlags,
 			isFetchingOrgPreferences,
+			isFetchingUserPreferences,
 			userFetchError,
 			activeLicenseFetchError,
 			hostsFetchError,
@@ -464,6 +464,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			isFetchingHosts,
 			isFetchingFeatureFlags,
 			isFetchingOrgPreferences,
+			isFetchingUserPreferences,
 			isFetchingUser,
 			isLoggedIn,
 			hostsData,

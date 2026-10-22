@@ -220,7 +220,17 @@ func (ic *LogParsingPipelineController) ValidatePipelines(ctx context.Context,
 	return err
 }
 
-func (ic *LogParsingPipelineController) getNormalizePipeline() pipelinetypes.GettablePipeline {
+// withNormalizePipeline places normalize ahead of user pipelines when queries run on body_v2
+// (use_json_body), so operators see the body the explorer shows. Absent when the flag is off
+// or collectorNormalizesFirst.
+func (ic *LogParsingPipelineController) withNormalizePipeline(ctx context.Context, orgID valuer.UUID, pipelines []pipelinetypes.GettablePipeline, collectorNormalizesFirst bool) []pipelinetypes.GettablePipeline {
+	if collectorNormalizesFirst || !ic.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
+		return pipelines
+	}
+	return append([]pipelinetypes.GettablePipeline{getNormalizePipeline()}, pipelines...)
+}
+
+func getNormalizePipeline() pipelinetypes.GettablePipeline {
 	return pipelinetypes.GettablePipeline{
 		StoreablePipeline: pipelinetypes.StoreablePipeline{
 			Name:    "Default Pipeline - PreProcessing Body",
@@ -342,11 +352,17 @@ type PipelinesPreviewResponse struct {
 
 func (ic *LogParsingPipelineController) PreviewLogsPipelines(
 	ctx context.Context,
+	orgID valuer.UUID,
 	request *PipelinesPreviewRequest,
 ) (*PipelinesPreviewResponse, error) {
 	pipelines, err := ic.enrichPipelinesFilters(ctx, request.Pipelines)
 	if err != nil {
 		return nil, err
+	}
+
+	// The collector gets the same pipeline prepended over opamp; see RecommendAgentConfig.
+	if ic.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
+		pipelines = append([]pipelinetypes.GettablePipeline{getNormalizePipeline()}, pipelines...)
 	}
 
 	result, collectorLogs, err := SimulatePipelinesProcessing(ctx, pipelines, request.Logs)
@@ -367,16 +383,16 @@ func (pc *LogParsingPipelineController) AgentFeatureType() agentConf.AgentFeatur
 
 // Implements agentConf.AgentFeature interface.
 // RecommendAgentConfig generates the collector config to be sent to agents.
-// The normalize pipeline (when use_json_body feature flag is on) is injected here, after
-// rawPipelineData is serialized. So it is only present in the config sent to
+// The normalize pipeline (when use_json_body is on) is placed
+// here, after rawPipelineData is serialized. So it is only present in the config sent to
 // the collector and never persisted to the database as part of the user's pipeline list.
 //
 // NOTE: The configId sent to agents is derived from the pipeline version number
 // (e.g. "LogPipelines:5"), not the YAML content. If server-side logic changes
 // the generated YAML without bumping the version (e.g. toggling the use_json_body
-// flag or updating operator IfExpressions), agents that already applied that version will
-// not re-apply the new config. In such cases, users must save a new pipeline version
-// via the API to force agents to pick up the change.
+// flag or updating operator IfExpressions), agents that already
+// applied that version will not re-apply the new config. In such cases, users must save a
+// new pipeline version via the API to force agents to pick up the change.
 func (pc *LogParsingPipelineController) RecommendAgentConfig(
 	orgId valuer.UUID,
 	currentConfYaml []byte,
@@ -402,13 +418,15 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 		return nil, "", err
 	}
 
-	// TODO(Tushar): thread orgID here to evaluate correctly
-	if pc.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgId)) {
-		// add default normalize pipeline at the beginning, only for sending to collector
-		enrichedPipelines = append([]pipelinetypes.GettablePipeline{pc.getNormalizePipeline()}, enrichedPipelines...)
+	collectorConf, err := unmarshalCollectorConfig(currentConfYaml)
+	if err != nil {
+		return nil, "", err
 	}
 
-	updatedConf, err := GenerateCollectorConfigWithPipelines(currentConfYaml, enrichedPipelines)
+	// normalize is only for sending to the collector, never persisted
+	enrichedPipelines = pc.withNormalizePipeline(ctx, orgId, enrichedPipelines, collectorNormalizesFirst(collectorConf))
+
+	updatedConf, err := generateCollectorConfigWithPipelines(collectorConf, enrichedPipelines)
 	if err != nil {
 		return nil, "", err
 	}

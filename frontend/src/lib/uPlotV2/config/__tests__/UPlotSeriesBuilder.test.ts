@@ -1,9 +1,10 @@
 import { themeColors } from 'constants/theme';
 import uPlot from 'uplot';
 
+import { reportBarRect } from '../../utils/barRect';
 import { isolatedPointFilter } from '../../utils/seriesPointsFilter';
 import type { SeriesProps } from '../types';
-import { DrawStyle, LineInterpolation, LineStyle } from '../types';
+import { DrawStyle, FillMode, LineInterpolation, LineStyle } from '../types';
 import { POINT_SIZE_FACTOR, UPlotSeriesBuilder } from '../UPlotSeriesBuilder';
 
 const createBaseProps = (
@@ -297,7 +298,7 @@ describe('UPlotSeriesBuilder', () => {
 		);
 
 		const config = builder.getConfig();
-		expect(config.stroke).toBe('#E64A3C');
+		expect(config.stroke).toBe('#AD42E0');
 	});
 
 	it('passes through pointsFilter when provided', () => {
@@ -361,5 +362,66 @@ describe('UPlotSeriesBuilder', () => {
 
 		expect(config.points?.filter).toBeUndefined();
 		expect(config.points?.show).toBe(true);
+	});
+
+	// Pins the alpha the solid fill hardcoded before opacity was configurable.
+	it('fills a solid series at the default opacity', () => {
+		const builder = new UPlotSeriesBuilder(
+			createBaseProps({
+				fillColor: '#112233',
+				fillMode: FillMode.Solid,
+			}),
+		);
+
+		expect(builder.getConfig().fill).toBe('#11223370');
+	});
+
+	it('fills a solid series at the declared opacity', () => {
+		const builder = new UPlotSeriesBuilder(
+			createBaseProps({
+				fillColor: '#112233',
+				fillMode: FillMode.Solid,
+				fillOpacity: 0.5,
+			}),
+		);
+
+		expect(builder.getConfig().fill).toBe('#11223380');
+	});
+
+	it('leaves an unfilled series without a fill', () => {
+		const builder = new UPlotSeriesBuilder(
+			createBaseProps({
+				fillColor: '#112233',
+				fillMode: FillMode.None,
+				fillOpacity: 0.5,
+			}),
+		);
+
+		expect(builder.getConfig().fill).toBeUndefined();
+	});
+
+	it('exposes partial timestamps only when there are some', () => {
+		const partialTimestamps = new Set([40]);
+
+		expect(
+			new UPlotSeriesBuilder(createBaseProps({ partialTimestamps })).getConfig(),
+		).toHaveProperty('partialTimestamps', partialTimestamps);
+		expect(
+			new UPlotSeriesBuilder(
+				createBaseProps({ partialTimestamps: new Set() }),
+			).getConfig(),
+		).not.toHaveProperty('partialTimestamps');
+	});
+
+	it('reports bar rects from bar path builders', () => {
+		const config = new UPlotSeriesBuilder(
+			createBaseProps({ drawStyle: DrawStyle.Bar, barMaxWidth: 321 }),
+		).getConfig();
+
+		config.paths?.({} as uPlot, 1, 0, 1);
+
+		expect(uPlot.paths.bars).toHaveBeenCalledWith(
+			expect.objectContaining({ each: reportBarRect }),
+		);
 	});
 });

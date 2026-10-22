@@ -3,15 +3,22 @@ import {
 	MessageActionKindDTO,
 	SavedViewEntityDTO,
 } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
-import { getAllViews } from 'api/saveView/getAllViews';
-import { getViewById } from 'api/saveView/getViewById';
+import {
+	getSavedView,
+	listSavedViews,
+} from 'api/generated/services/saved-view';
+import {
+	GetSavedView200,
+	ListSavedViews200,
+	SavedviewtypesPanelTypeDTO,
+	SavedviewtypesSavedViewDTO,
+	SavedviewtypesSchemaVersionDTO,
+	SavedviewtypesSourceDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
-import { AllViewsProps, ViewProps } from 'types/api/saveViews/types';
 import { DataSource } from 'types/common/queryBuilder';
-import { AxiosResponse } from 'axios';
 import type { History } from 'history';
 
 import {
@@ -31,8 +38,7 @@ import {
 } from '../resolveOpenResource';
 import { resourceRoute, ResourceType } from '../resourceRoute';
 
-jest.mock('api/saveView/getAllViews');
-jest.mock('api/saveView/getViewById');
+jest.mock('api/generated/services/saved-view');
 
 jest.mock(
 	'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi',
@@ -48,43 +54,45 @@ jest.mock(
 	}),
 );
 
-const mockedGetAllViews = getAllViews as jest.MockedFunction<
-	typeof getAllViews
+const mockedListSavedViews = listSavedViews as jest.MockedFunction<
+	typeof listSavedViews
 >;
-const mockedGetViewById = getViewById as jest.MockedFunction<
-	typeof getViewById
+const mockedGetSavedView = getSavedView as jest.MockedFunction<
+	typeof getSavedView
 >;
 
-function makeView(id: string, sourcePage: DataSource): ViewProps {
+function makeView(
+	id: string,
+	source: SavedviewtypesSourceDTO,
+): SavedviewtypesSavedViewDTO {
 	return {
 		id,
-		name: `View ${id}`,
-		category: 'test',
+		name: `view-${id}`,
+		source,
+		schemaVersion: SavedviewtypesSchemaVersionDTO.v2,
 		createdAt: '2021-07-07T06:31:00.000Z',
 		createdBy: 'user',
 		updatedAt: '2021-07-07T06:33:00.000Z',
 		updatedBy: 'user',
-		sourcePage,
-		tags: [],
-		extraData: '',
-		compositeQuery: {
-			panelType: PANEL_TYPES.LIST,
-		} as ICompositeMetricQuery,
-	};
+		spec: {
+			displayName: `View ${id}`,
+			panelType: SavedviewtypesPanelTypeDTO.list,
+			requestType: 'raw',
+			queries: [{ type: 'builder_query', spec: { name: 'A', signal: source } }],
+		},
+	} as unknown as SavedviewtypesSavedViewDTO;
 }
 
-function mockViewsResponse(views: ViewProps[]): AxiosResponse<AllViewsProps> {
-	return {
-		data: { status: 'success', data: views },
-	} as AxiosResponse<AllViewsProps>;
+function mockViewsResponse(
+	views: SavedviewtypesSavedViewDTO[],
+): ListSavedViews200 {
+	return { status: 'success', data: views };
 }
 
 function mockViewByIdResponse(
-	view: ViewProps,
-): AxiosResponse<{ status: string; data: ViewProps }> {
-	return {
-		data: { status: 'success', data: view },
-	} as AxiosResponse<{ status: string; data: ViewProps }>;
+	view: SavedviewtypesSavedViewDTO,
+): GetSavedView200 {
+	return { status: 'success', data: view };
 }
 
 describe('resourceRoute', () => {
@@ -190,18 +198,33 @@ describe('resolveOpenResource', () => {
 
 describe('findSavedViewInLists', () => {
 	beforeEach(() => {
-		mockedGetAllViews.mockReset();
+		mockedListSavedViews.mockReset();
 	});
 
 	it('loads only the hinted source when entity is provided', async () => {
-		const tracesView = makeView('view-traces', DataSource.TRACES);
-		mockedGetAllViews.mockResolvedValueOnce(mockViewsResponse([tracesView]));
+		const tracesView = makeView('view-traces', SavedviewtypesSourceDTO.traces);
+		mockedListSavedViews.mockResolvedValueOnce(mockViewsResponse([tracesView]));
 
 		const result = await findSavedViewInLists('view-traces', DataSource.TRACES);
 
 		expect(result).toStrictEqual(tracesView);
-		expect(mockedGetAllViews).toHaveBeenCalledTimes(1);
-		expect(mockedGetAllViews).toHaveBeenCalledWith(DataSource.TRACES);
+		expect(mockedListSavedViews).toHaveBeenCalledTimes(1);
+		expect(mockedListSavedViews).toHaveBeenCalledWith({
+			source: SavedviewtypesSourceDTO.traces,
+		});
+	});
+
+	it('treats a null list as empty and probes the next source', async () => {
+		const metricsView = makeView('view-metrics', SavedviewtypesSourceDTO.metrics);
+		mockedListSavedViews
+			.mockResolvedValueOnce({ status: 'success', data: null })
+			.mockResolvedValueOnce(mockViewsResponse([]))
+			.mockResolvedValueOnce(mockViewsResponse([metricsView]));
+
+		const result = await findSavedViewInLists('view-metrics');
+
+		expect(result).toStrictEqual(metricsView);
+		expect(mockedListSavedViews).toHaveBeenCalledTimes(3);
 	});
 });
 
@@ -227,52 +250,75 @@ describe('openSavedView', () => {
 	it('navigates with history.push and view query params', () => {
 		const push = jest.fn();
 		const history = { push } as unknown as History;
-		const view = makeView('view-logs', DataSource.LOGS);
+		const view = makeView('view-logs', SavedviewtypesSourceDTO.logs);
 
 		openSavedView(view, history);
 
 		expect(push).toHaveBeenCalledTimes(1);
 		const pushedUrl = push.mock.calls[0][0] as string;
 		expect(pushedUrl).toContain(ROUTES.LOGS_EXPLORER);
-		expect(pushedUrl).toContain(QueryParams.viewKey);
+		const params = new URLSearchParams(pushedUrl.split('?')[1]);
+		expect(params.get(QueryParams.viewKey)).toBe('"view-logs"');
+		expect(params.get(QueryParams.viewName)).toBe('"View view-logs"');
+		expect(params.get(QueryParams.panelTypes)).toBe('"list"');
+	});
+
+	it('throws when the view has no source', () => {
+		const view = makeView('view-logs', SavedviewtypesSourceDTO.logs);
+		delete view.source;
+
+		expect(() =>
+			openSavedView(view, { push: jest.fn() } as unknown as History),
+		).toThrow('Unsupported saved view source');
+	});
+
+	it('throws when the view has no queries', () => {
+		const view = makeView('view-logs', SavedviewtypesSourceDTO.logs);
+		view.spec.queries = [];
+
+		expect(() =>
+			openSavedView(view, { push: jest.fn() } as unknown as History),
+		).toThrow('Saved view is missing query data');
 	});
 });
 
 describe('openSavedViewByKey', () => {
 	beforeEach(() => {
-		mockedGetAllViews.mockReset();
-		mockedGetViewById.mockReset();
+		mockedListSavedViews.mockReset();
+		mockedGetSavedView.mockReset();
 	});
 
 	it('prefers the direct view lookup endpoint', async () => {
-		const view = makeView('view-logs', DataSource.LOGS);
-		mockedGetViewById.mockResolvedValueOnce(mockViewByIdResponse(view));
+		const view = makeView('view-logs', SavedviewtypesSourceDTO.logs);
+		mockedGetSavedView.mockResolvedValueOnce(mockViewByIdResponse(view));
 		const push = jest.fn();
 		const history = { push } as unknown as History;
 
 		await openSavedViewByKey('view-logs', DataSource.LOGS, history);
 
-		expect(mockedGetViewById).toHaveBeenCalledWith('view-logs');
-		expect(mockedGetAllViews).not.toHaveBeenCalled();
+		expect(mockedGetSavedView).toHaveBeenCalledWith({ id: 'view-logs' });
+		expect(mockedListSavedViews).not.toHaveBeenCalled();
 		expect(push).toHaveBeenCalled();
 	});
 
 	it('falls back to list probing when direct lookup fails', async () => {
-		const view = makeView('view-traces', DataSource.TRACES);
-		mockedGetViewById.mockRejectedValueOnce(new Error('not found'));
-		mockedGetAllViews.mockResolvedValueOnce(mockViewsResponse([view]));
+		const view = makeView('view-traces', SavedviewtypesSourceDTO.traces);
+		mockedGetSavedView.mockRejectedValueOnce(new Error('not found'));
+		mockedListSavedViews.mockResolvedValueOnce(mockViewsResponse([view]));
 		const push = jest.fn();
 		const history = { push } as unknown as History;
 
 		await openSavedViewByKey('view-traces', DataSource.TRACES, history);
 
-		expect(mockedGetAllViews).toHaveBeenCalledWith(DataSource.TRACES);
+		expect(mockedListSavedViews).toHaveBeenCalledWith({
+			source: SavedviewtypesSourceDTO.traces,
+		});
 		expect(push).toHaveBeenCalled();
 	});
 
 	it('throws when the saved view does not exist', async () => {
-		mockedGetViewById.mockRejectedValueOnce(new Error('not found'));
-		mockedGetAllViews.mockResolvedValue(mockViewsResponse([]));
+		mockedGetSavedView.mockRejectedValueOnce(new Error('not found'));
+		mockedListSavedViews.mockResolvedValue(mockViewsResponse([]));
 
 		await expect(
 			openSavedViewByKey('missing', DataSource.LOGS, {

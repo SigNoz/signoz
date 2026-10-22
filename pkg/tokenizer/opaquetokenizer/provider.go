@@ -159,12 +159,14 @@ func (provider *provider) RotateToken(ctx context.Context, accessToken string, r
 	var rotatedToken *authtypes.Token
 
 	if err := provider.tokenStore.GetOrUpdateByAccessTokenOrPrevAccessToken(ctx, accessToken, func(ctx context.Context, token *authtypes.StorableToken) error {
+		currentAccessToken := token.AccessToken
+
 		if err := token.Rotate(accessToken, refreshToken, provider.config.Rotation.Duration, provider.config.Lifetime.Idle, provider.config.Lifetime.Max); err != nil {
 			return err
 		}
 
-		// If the token passed the Rotate method and is the same as the input token, return the same token.
-		if token.AccessToken == accessToken && token.RefreshToken == refreshToken {
+		// If the token passed the Rotate method and is the same as the stored token, return the same token.
+		if token.AccessToken == currentAccessToken {
 			rotatedToken = token
 			return nil
 		}
@@ -362,12 +364,26 @@ func (provider *provider) gc(ctx context.Context, org *types.Organization) error
 }
 
 func (provider *provider) flushLastObservedAt(ctx context.Context, org *types.Organization) error {
-	accessTokenToLastObservedAt, err := provider.listLastObservedAtDesc(ctx, org.ID)
+	tokens, err := provider.tokenStore.ListByOrgID(ctx, org.ID)
 	if err != nil {
 		return err
 	}
 
-	if err := provider.tokenStore.UpdateLastObservedAtByAccessToken(ctx, accessTokenToLastObservedAt); err != nil {
+	observedTokens := make([]*authtypes.StorableToken, 0, len(tokens))
+	for _, token := range tokens {
+		cachedLastObservedAt, ok := provider.lastObservedAtCache.Get(lastObservedAtCacheKey(token.AccessToken, token.UserID))
+		if !ok {
+			continue
+		}
+
+		if err := token.UpdateLastObservedAt(cachedLastObservedAt); err != nil {
+			continue
+		}
+
+		observedTokens = append(observedTokens, token)
+	}
+
+	if err := provider.tokenStore.UpdateLastObservedAt(ctx, observedTokens); err != nil {
 		return err
 	}
 

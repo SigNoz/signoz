@@ -10,12 +10,13 @@
         "ready": 2,
         "notReady": 0
       },
-      "podCountsByPhase": {
-        "pending": 0,
-        "running": 2,
-        "succeeded": 0,
-        "failed": 0,
-        "unknown": 0
+      "counts": {
+        "nodes": 2,
+        "namespaces": 2,
+        "deployments": 2,
+        "daemonSets": 1,
+        "jobs": 1,
+        "statefulSets": 1
       }
     },
     {
@@ -28,12 +29,13 @@
         "ready": 3,
         "notReady": 0
       },
-      "podCountsByPhase": {
-        "pending": 0,
-        "running": 3,
-        "succeeded": 0,
-        "failed": 0,
-        "unknown": 0
+      "counts": {
+        "nodes": 3,
+        "namespaces": 2,
+        "deployments": 1,
+        "daemonSets": 1,
+        "jobs": 1,
+        "statefulSets": 0
       }
     }
   ]

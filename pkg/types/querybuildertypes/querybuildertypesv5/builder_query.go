@@ -16,32 +16,36 @@ type QueryBuilderQuery[T any] struct {
 	Name string `json:"name"`
 
 	// stepInterval of the query
-	StepInterval Step `json:"stepInterval,omitempty"`
+	StepInterval Step `json:"stepInterval,omitzero"`
 
 	// signal to query
 	Signal telemetrytypes.Signal `json:"signal,omitempty"`
 
 	// source for query
-	Source telemetrytypes.Source `json:"source,omitempty"`
+	Source telemetrytypes.Source `json:"source"`
 
 	// we want to support multiple aggregations
 	// currently supported: []Aggregation, []MetricAggregation
-	Aggregations []T `json:"aggregations,omitempty"`
+	Aggregations []T `json:"aggregations,omitzero"`
+
+	// BucketOptions is the bucket axis to count this query's values into. Only a
+	// heatmap request reads it, and only from the query it draws.
+	BucketOptions *BucketOptions `json:"bucketOptions,omitempty"`
 
 	// disabled if true, the query will not be executed
-	Disabled bool `json:"disabled,omitempty"`
+	Disabled bool `json:"disabled"`
 
 	// search query is simple string
 	Filter *Filter `json:"filter,omitempty"`
 
 	// group by keys to group by
-	GroupBy []GroupByKey `json:"groupBy,omitempty"`
+	GroupBy []GroupByKey `json:"groupBy,omitzero"`
 
 	// order by keys and directions
-	Order []OrderBy `json:"order,omitempty"`
+	Order []OrderBy `json:"order,omitzero"`
 
 	// select columns to select
-	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty"`
+	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitzero"`
 
 	// limit the maximum number of rows to return
 	Limit int `json:"limit,omitempty"`
@@ -61,12 +65,12 @@ type QueryBuilderQuery[T any] struct {
 
 	// secondary aggregation to apply to the query
 	// on top of the primary aggregation
-	SecondaryAggregations []SecondaryAggregation `json:"secondaryAggregations,omitempty"`
+	SecondaryAggregations []SecondaryAggregation `json:"secondaryAggregations,omitzero"`
 
 	// functions to apply to the query
-	Functions []Function `json:"functions,omitempty"`
+	Functions []Function `json:"functions,omitzero"`
 
-	Legend string `json:"legend,omitempty"`
+	Legend string `json:"legend"`
 
 	// ShiftBy is extracted from timeShift function for internal use
 	// This field is not serialized to JSON
@@ -152,6 +156,11 @@ func (q QueryBuilderQuery[T]) Copy() QueryBuilderQuery[T] {
 
 	if q.Having != nil {
 		c.Having = q.Having.Copy()
+	}
+
+	if q.BucketOptions != nil {
+		bucketOptionsCopy := *q.BucketOptions
+		c.BucketOptions = &bucketOptionsCopy
 	}
 
 	return c
@@ -251,6 +260,33 @@ func CanShortCircuitDelta(metricAgg MetricAggregation) bool {
 		return true
 	}
 	if metricAgg.Type == metrictypes.ExpHistogramType && sa.IsPercentile() {
+		return true
+	}
+
+	return false
+}
+
+// CanShortCircuitReduced is like CanShortCircuitDelta but for reduced.
+func CanShortCircuitReduced(metricAgg MetricAggregation) bool {
+	if metricAgg.ValueFilter != nil {
+		return false
+	}
+
+	ta := metricAgg.TimeAggregation
+	sa := metricAgg.SpaceAggregation
+
+	if metricAgg.Type == metrictypes.SumType || metricAgg.Type == metrictypes.HistogramType {
+		return (ta == metrictypes.TimeAggregationRate || ta == metrictypes.TimeAggregationIncrease || ta == metrictypes.TimeAggregationSum) &&
+			sa == metrictypes.SpaceAggregationSum
+	}
+
+	if ta == metrictypes.TimeAggregationSum && sa == metrictypes.SpaceAggregationSum {
+		return true
+	}
+	if ta == metrictypes.TimeAggregationMin && sa == metrictypes.SpaceAggregationMin {
+		return true
+	}
+	if ta == metrictypes.TimeAggregationMax && sa == metrictypes.SpaceAggregationMax {
 		return true
 	}
 

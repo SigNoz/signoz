@@ -14,7 +14,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/gorilla/mux"
 )
 
 const (
@@ -147,40 +146,6 @@ func (middleware *AuthZ) AdminAccess(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		next(rw, req)
-	})
-}
-
-func (middleware *AuthZ) SelfAccess(next http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		claims, err := authtypes.ClaimsFromContext(req.Context())
-		if err != nil {
-			render.Error(rw, err)
-			return
-		}
-
-		selectors := []coretypes.Selector{
-			coretypes.TypeRole.MustSelector(authtypes.SigNozAdminRoleName),
-		}
-
-		err = middleware.authzService.CheckWithTupleCreation(
-			req.Context(),
-			claims,
-			valuer.MustNewUUID(claims.OrgID),
-			authtypes.Relation{Verb: coretypes.VerbAssignee},
-			coretypes.NewResourceRole(),
-			selectors,
-			selectors,
-		)
-
-		if err != nil {
-			id := mux.Vars(req)["id"]
-			if err := claims.IsSelfAccess(id); err != nil {
-				middleware.logger.WarnContext(req.Context(), authzDeniedMessage, slog.Any("claims", claims))
-				render.Error(rw, err)
-				return
-			}
-		}
 		next(rw, req)
 	})
 }

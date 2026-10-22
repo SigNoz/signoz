@@ -21,7 +21,7 @@ import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
 import FieldRenderer from 'container/LogDetailedView/FieldRenderer';
-import { DataType } from 'container/LogDetailedView/TableView';
+import { DataType } from 'container/LogDetailedView/LogDetailedView.types';
 import { useNotifications } from 'hooks/useNotifications';
 import { PenLine, Save, X } from '@signozhq/icons';
 

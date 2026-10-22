@@ -3,14 +3,16 @@ package inframonitoringtypes
 const DaemonSetNameAttrKey = "k8s.daemonset.name"
 
 const (
-	DaemonSetsOrderByCPU           = "cpu"
-	DaemonSetsOrderByCPURequest    = "cpu_request"
-	DaemonSetsOrderByCPULimit      = "cpu_limit"
-	DaemonSetsOrderByMemory        = "memory"
-	DaemonSetsOrderByMemoryRequest = "memory_request"
-	DaemonSetsOrderByMemoryLimit   = "memory_limit"
-	DaemonSetsOrderByDesiredNodes  = "desired_nodes"
-	DaemonSetsOrderByCurrentNodes  = "current_nodes"
+	DaemonSetsOrderByCPU               = "cpu"
+	DaemonSetsOrderByCPURequest        = "cpu_request"
+	DaemonSetsOrderByCPULimit          = "cpu_limit"
+	DaemonSetsOrderByMemory            = "memory"
+	DaemonSetsOrderByMemoryRequest     = "memory_request"
+	DaemonSetsOrderByMemoryLimit       = "memory_limit"
+	DaemonSetsOrderByDesiredNodes      = "desired_nodes"
+	DaemonSetsOrderByCurrentNodes      = "current_nodes"
+	DaemonSetsOrderByReadyNodes        = "ready_nodes"
+	DaemonSetsOrderByMisscheduledNodes = "misscheduled_nodes"
 )
 
 var DaemonSetsValidOrderByKeys = []string{
@@ -22,5 +24,7 @@ var DaemonSetsValidOrderByKeys = []string{
 	DaemonSetsOrderByMemoryLimit,
 	DaemonSetsOrderByDesiredNodes,
 	DaemonSetsOrderByCurrentNodes,
+	DaemonSetsOrderByReadyNodes,
+	DaemonSetsOrderByMisscheduledNodes,
 	DaemonSetNameAttrKey,
 }

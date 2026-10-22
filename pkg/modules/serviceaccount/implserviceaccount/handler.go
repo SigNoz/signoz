@@ -214,64 +214,6 @@ func (handler *handler) UpdateMe(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-func (handler *handler) SetRole(rw http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	id, err := valuer.NewUUID(mux.Vars(r)["id"])
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	req := new(serviceaccounttypes.DeprecatedPostableServiceAccountRole)
-	if err := binding.JSON.BindBody(r.Body, req); err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	_, err = handler.module.SetRole(ctx, valuer.MustNewUUID(claims.OrgID), id, req.ID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusNoContent, nil)
-}
-
-func (handler *handler) DeleteRole(rw http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	id, err := valuer.NewUUID(mux.Vars(r)["id"])
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	roleID, err := valuer.NewUUID(mux.Vars(r)["rid"])
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	err = handler.module.DeleteRole(ctx, valuer.MustNewUUID(claims.OrgID), id, roleID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusNoContent, nil)
-}
-
 func (handler *handler) CreateServiceAccountRole(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	claims, err := authtypes.ClaimsFromContext(ctx)

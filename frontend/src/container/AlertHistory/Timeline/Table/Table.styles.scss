@@ -1,11 +1,35 @@
 .timeline-table {
 	border-top: 1px solid var(--l1-border);
 	border-radius: 6px;
-	overflow: hidden;
 	margin-top: 4px;
 	min-height: 600px;
+
+	&__filter {
+		padding: 12px 16px;
+		background: var(--l1-background);
+		border-bottom: 1px solid var(--l1-border);
+	}
+
+	&__filter-row {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	&__filter-search {
+		flex: 1;
+	}
+
+	&__filter--loading,
+	&__filter--loading-skeleton {
+		width: 100% !important;
+	}
+
 	.ant-table {
 		background: var(--l1-background);
+		&-placeholder {
+			background: var(--l1-background) !important;
+		}
 		&-cell {
 			padding: 12px 16px !important;
 			vertical-align: baseline;
@@ -22,6 +46,9 @@
 		}
 		&-tbody > tr > td {
 			border: none;
+		}
+		&-footer {
+			background-color: var(--l1-background);
 		}
 	}
 
@@ -84,6 +111,40 @@
 		.ant-select-selector {
 			border: none;
 			background: var(--l2-background);
+		}
+	}
+
+	&__error {
+		display: flex;
+		align-self: flex-start;
+		justify-content: flex-start;
+		text-align: left;
+	}
+
+	&__pagination {
+		display: flex;
+		justify-content: flex-end;
+		align-items: center;
+		gap: var(--spacing-4);
+		padding: var(--spacing-6) var(--spacing-8);
+		background: var(--l1-background);
+
+		.pagination-controls {
+			display: flex;
+			gap: 4px;
+
+			.ant-btn {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 4px;
+				min-width: 24px;
+				height: 24px;
+
+				&:disabled {
+					opacity: 0.4;
+				}
+			}
 		}
 	}
 }

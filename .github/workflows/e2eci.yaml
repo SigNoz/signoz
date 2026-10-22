@@ -2,17 +2,37 @@ name: e2eci
 
 on:
   pull_request:
-    types:
-      - labeled
-  pull_request_target:
-    types:
-      - labeled
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      e2e: ${{ steps.changes.outputs.e2e }}
+    steps:
+      - name: changes
+        id: changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          FORCE: ${{ contains(github.event.pull_request.labels.*.name, 'safe-to-e2e') }}
+        run: |
+          CHANGED_FILES=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" --paginate --jq '.[].filename | select(startswith("tests/integration/") | not)')
+          PATTERN='^(frontend/|tests/|\.github/workflows/e2eci\.yaml$|cmd/enterprise/Dockerfile\.with-web\.integration$)'
+
+          if [ "$FORCE" = "true" ]; then
+            echo "e2e=true" >> "$GITHUB_OUTPUT"
+          elif printf '%s\n' "$CHANGED_FILES" | grep -qE "$PATTERN"; then
+            echo "e2e=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "e2e=false" >> "$GITHUB_OUTPUT"
+          fi
   fmtlint:
-    if: |
-      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
-      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-e2e')
+    needs: changes
+    if: needs.changes.outputs.e2e == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: checkout
@@ -40,20 +60,41 @@ jobs:
       matrix:
         project:
           - chromium
-    if: |
-      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
-      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-e2e')
+        shard: [1, 2, 3, 4]
+    needs: changes
+    if: needs.changes.outputs.e2e == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - name: checkout
         uses: actions/checkout@v4
+      # Images bring-up-stack would otherwise pull, at the tests/conftest.py
+      # defaults. A stale tag only loses the head start.
+      - name: pull-images
+        id: pull-images
+        background: true
+        run: |
+          printf '%s\n' \
+            node:22-bookworm \
+            golang:1.25-bookworm \
+            python:3.13-slim \
+            postgres:15 \
+            clickhouse/clickhouse-server:25.12.5 \
+            clickhouse/clickhouse-keeper:25.12.5 \
+            signoz/signoz-schema-migrator:v0.144.9 \
+            wiremock/wiremock:2.35.1-1 \
+            | xargs -P 0 -n 1 docker pull -q
       - name: python
         uses: actions/setup-python@v5
         with:
           python-version: 3.13
       - name: uv
         uses: astral-sh/setup-uv@v4
+      - name: python-install
+        id: python-install
+        background: true
+        run: |
+          cd tests && uv sync
       - name: node
         uses: actions/setup-node@v4
         with:
@@ -62,13 +103,40 @@ jobs:
         uses: pnpm/action-setup@v6
         with:
           version: 10
-      - name: python-install
-        run: |
-          cd tests && uv sync
       - name: pnpm-install
         run: |
           cd tests/e2e && pnpm install --frozen-lockfile
+      # Restore-only: the cacheci workflow owns cache saves. Seeds the
+      # BuildKit cache mounts so the in-test image build is incremental.
+      - name: restore
+        id: restore
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/cacheci
+          key: tests-primary
+          restore-keys: |
+            tests-secondary
+      - name: inject
+        if: steps.restore.outputs.cache-matched-key != ''
+        run: |
+          cat > "$RUNNER_TEMP/inject.Dockerfile" <<'EOF'
+          FROM busybox:1.37
+          RUN --mount=type=cache,target=/root/.cache/go-build \
+              --mount=type=cache,target=/go/pkg/mod \
+              --mount=type=cache,target=/pnpm/store \
+              --mount=type=bind,target=/restored \
+              tar -xf /restored/go-build.tar -C /root/.cache/go-build && \
+              tar -xf /restored/go-mod.tar -C /go/pkg/mod && \
+              tar -xf /restored/pnpm-store.tar -C /pnpm/store
+          EOF
+          docker build -f "$RUNNER_TEMP/inject.Dockerfile" "$RUNNER_TEMP/cacheci"
+      - name: wait-stack-deps
+        wait: [pull-images, python-install]
+      # Started after the pulls so its download overlaps the CPU-bound
+      # image build instead of competing for the network.
       - name: playwright-browsers
+        id: playwright-browsers
+        background: true
         run: |
           docker create --name pw mcr.microsoft.com/playwright:v1.57.0-noble
           docker cp pw:/ms-playwright "$RUNNER_TEMP/ms-playwright"
@@ -82,10 +150,12 @@ jobs:
             --basetemp=./tmp/ \
             -vv --reuse --with-web \
             e2e/bootstrap/setup.py::test_setup
+      - name: wait-playwright-browsers
+        wait: playwright-browsers
       - name: playwright-test
         run: |
           cd tests/e2e && \
-            pnpm playwright test --project=${{ matrix.project }}
+            pnpm playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}/4
       - name: teardown-stack
         if: always()
         run: |
@@ -98,6 +168,17 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-artifacts-${{ matrix.project }}
+          name: playwright-artifacts-${{ matrix.project }}-${{ matrix.shard }}
           path: tests/e2e/artifacts/
           retention-days: 5
+  # Required status check. Fails when e2e was needed but did not pass.
+  e2e:
+    if: always()
+    needs: [changes, fmtlint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: verdict
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: |
+          echo "::error::e2e did not pass."
+          exit 1

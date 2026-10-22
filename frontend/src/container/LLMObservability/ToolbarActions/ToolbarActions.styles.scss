@@ -1,0 +1,125 @@
+.left-toolbar {
+	display: flex;
+	align-items: center;
+
+	.filter-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-shadow: none;
+		height: 32px;
+		margin-right: 12px;
+		border: 1px solid var(--l1-border);
+	}
+
+	.left-toolbar-query-actions {
+		display: flex;
+		border-radius: 2px;
+		border: 1px solid var(--l1-border);
+		background: var(--l1-background);
+		flex-direction: row;
+		border-bottom: none;
+		margin-bottom: -1px;
+
+		.prom-ql-icon {
+			height: 14px;
+			width: 14px;
+		}
+
+		.explorer-view-option {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			flex-direction: row;
+			border: none;
+			padding: 9px;
+			box-shadow: none;
+			border-radius: 0px;
+			border-left: 1px solid var(--l1-border);
+			border-bottom: 1px solid var(--l1-border);
+
+			gap: 8px;
+
+			&.active-tab {
+				background-color: var(--primary-background);
+				border-bottom: 1px solid var(--primary-background);
+				color: var(--primary-foreground);
+
+				&:hover {
+					background-color: var(--primary-background) !important;
+				}
+			}
+
+			&:disabled {
+				background-color: var(--l3-background);
+				opacity: 0.6;
+			}
+
+			&:first-child {
+				border-left: 1px solid transparent;
+			}
+
+			&:hover {
+				background-color: transparent !important;
+				border-left: 1px solid transparent !important;
+				color: var(--l1-foreground);
+			}
+		}
+	}
+
+	.frequency-chart-view-controller {
+		display: flex;
+		align-items: center;
+		padding-left: 8px;
+		gap: 8px;
+	}
+}
+
+.right-toolbar {
+	display: flex;
+	align-items: center;
+	background-color: var(--bg-robin-600);
+}
+
+.right-actions {
+	display: flex;
+	align-items: center;
+}
+
+.loading-container {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+
+	.loading-btn {
+		display: flex;
+		width: 32px;
+		height: 33px;
+		padding: 4px 10px;
+		justify-content: center;
+		align-items: center;
+		gap: 6px;
+		flex-shrink: 0;
+		border-radius: 2px;
+		background: var(--l3-background);
+		box-shadow: none;
+		border: none;
+	}
+
+	.cancel-run {
+		display: flex;
+		height: 33px;
+		padding: 4px 10px;
+		justify-content: center;
+		align-items: center;
+		gap: 6px;
+		flex: 1 0 0;
+		border-radius: 2px;
+		background: var(--danger-background);
+		border: none;
+	}
+	.cancel-run:hover {
+		background-color: var(--bg-cherry-400) !important;
+		color: var(--l1-foreground) !important;
+	}
+}

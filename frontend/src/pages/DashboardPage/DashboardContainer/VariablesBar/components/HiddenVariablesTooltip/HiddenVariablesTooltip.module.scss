@@ -1,0 +1,39 @@
+.tooltip {
+	display: flex;
+	max-width: 360px;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.row {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.name {
+	--typography-text-display: block;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+// A lone value, ALL, or the unset dash.
+.value {
+	--typography-text-display: block;
+	font-weight: var(--font-weight-medium);
+	overflow-wrap: anywhere;
+}
+
+// One bullet per value when a variable holds several.
+.values {
+	margin: 0;
+	padding-left: 14px;
+	list-style: disc outside;
+}
+
+.valueItem {
+	font-weight: var(--font-weight-medium);
+	overflow-wrap: anywhere;
+}

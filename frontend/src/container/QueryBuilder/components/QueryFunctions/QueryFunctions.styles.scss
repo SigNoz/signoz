@@ -27,8 +27,11 @@
 		border-top-left-radius: 0px !important;
 		border-bottom-left-radius: 0px !important;
 
-		background-color: var(--l1-border) !important;
-		opacity: 0.8;
+		background-color: var(
+			--query-builder-v2-background-color,
+			var(--l2-background)
+		) !important;
+		margin-left: -1px;
 
 		&:disabled {
 			opacity: 0.4;
@@ -86,8 +89,8 @@
 			border-bottom-left-radius: 3px;
 
 			.ant-select-selector {
-				border: none;
-				background: var(--l3-background);
+				border: 1px solid var(--query-builder-v2-border-color, none);
+				background: var(--query-builder-v2-background-color, var(--l3-background));
 			}
 
 			&.showInput {
@@ -101,12 +104,20 @@
 		.query-function-value {
 			width: 70px;
 			border-left: 0;
-			background: var(--l2-background);
+			background: var(--query-builder-v2-background-color, var(--l2-background));
 			border-radius: 0;
 			border: 1px solid transparent;
+			border-top: 1px solid var(--query-builder-v2-border-color, var(--l2-border));
+			border-bottom: 1px solid
+				var(--query-builder-v2-border-color, var(--l2-border));
+			height: 32px;
 
 			&:focus {
-				border-color: transparent !important;
+				border-color: var(--internal-ant-border-color-focus);
+			}
+
+			&:hover {
+				border-color: var(--internal-ant-border-color-hover);
 			}
 		}
 
@@ -114,7 +125,7 @@
 			border-top-right-radius: 3px;
 			border-bottom-right-radius: 3px;
 
-			border-left: 1px solid var(--l2-border);
+			border-left: 1px solid var(--query-builder-v2-border-color, var(--l2-border));
 
 			border-top-left-radius: 0px !important;
 			border-bottom-left-radius: 0px !important;

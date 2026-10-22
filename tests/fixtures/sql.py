@@ -7,9 +7,6 @@ from fixtures import types
 def sqlstore(
     request: pytest.FixtureRequest,
 ) -> types.TestContainerSQL:
-    """
-    Packaged-scoped fixture for creating sql store.
-    """
     provider = request.config.getoption("--sqlstore-provider")
 
     if provider == "postgres":

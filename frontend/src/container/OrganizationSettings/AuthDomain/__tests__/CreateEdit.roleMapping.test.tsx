@@ -188,8 +188,8 @@ describe('CreateEdit — role mapping uses API roles', () => {
 
 		// SSO role mapping matches roles by name, so the payload carries the
 		// role *name*, not the opaque id.
-		expect(payload.get().config.roleMapping.defaultRole).toBe(editorRole.name);
-		expect(payload.get().config.roleMapping.defaultRole).not.toBe(editorRole.id);
+		expect(payload.get().roleMapping.defaultRole).toBe(editorRole.name);
+		expect(payload.get().roleMapping.defaultRole).not.toBe(editorRole.id);
 	});
 
 	it('defaults a fresh role mapping to the signoz-viewer role name', async () => {
@@ -221,8 +221,8 @@ describe('CreateEdit — role mapping uses API roles', () => {
 
 		await waitFor(() => expect(payload.get()).not.toBeNull());
 
-		expect(payload.get().config.roleMapping.defaultRole).toBe(viewerRole.name);
-		expect(payload.get().config.roleMapping.defaultRole).not.toBe(viewerRole.id);
+		expect(payload.get().roleMapping.defaultRole).toBe(viewerRole.name);
+		expect(payload.get().roleMapping.defaultRole).not.toBe(viewerRole.id);
 	});
 
 	it('still defaults to signoz-viewer when the roles fetch returns empty', async () => {
@@ -249,7 +249,7 @@ describe('CreateEdit — role mapping uses API roles', () => {
 		await waitFor(() => expect(payload.get()).not.toBeNull());
 
 		// The Form.Item initialValue (signoz-viewer) survives an empty roles list.
-		expect(payload.get().config.roleMapping.defaultRole).toBe(viewerRole.name);
+		expect(payload.get().roleMapping.defaultRole).toBe(viewerRole.name);
 	});
 
 	it('loads a stored role mapping by role name and round-trips it on save', async () => {
@@ -280,8 +280,8 @@ describe('CreateEdit — role mapping uses API roles', () => {
 
 		await waitFor(() => expect(payload.get()).not.toBeNull());
 
-		expect(payload.get().config.roleMapping.defaultRole).toBe(editorRole.name);
-		expect(payload.get().config.roleMapping.groupMappings).toStrictEqual({
+		expect(payload.get().roleMapping.defaultRole).toBe(editorRole.name);
+		expect(payload.get().roleMapping.groupMappings).toStrictEqual({
 			'admin-group': 'signoz-admin',
 			'dev-team': 'signoz-editor',
 			viewers: 'signoz-viewer',

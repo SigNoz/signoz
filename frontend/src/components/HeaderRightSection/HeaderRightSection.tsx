@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Dot } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import Noz from 'components/Noz/Noz';
 import { NOZ_TOOLTIP_TITLE } from 'components/Noz/Noz.constants';
 import { Popover } from 'antd';
@@ -20,7 +20,7 @@ import { Globe, Inbox, SquarePen } from '@signozhq/icons';
 
 import AnnouncementsModal from './AnnouncementsModal';
 import FeedbackModal from './FeedbackModal';
-import ShareURLModal from './ShareURLModal';
+import ShareURLModal, { type ShareURLExtraOption } from './ShareURLModal';
 
 import './HeaderRightSection.styles.scss';
 import { Typography } from '@signozhq/ui/typography';
@@ -29,12 +29,15 @@ interface HeaderRightSectionProps {
 	enableAnnouncements: boolean;
 	enableShare: boolean;
 	enableFeedback: boolean;
+	/** Optional page-specific toggle for the share dialog (e.g. "Include variables"). */
+	shareModalExtraOption?: ShareURLExtraOption;
 }
 
 function HeaderRightSection({
 	enableAnnouncements,
 	enableShare,
 	enableFeedback,
+	shareModalExtraOption,
 }: HeaderRightSectionProps): JSX.Element | null {
 	const location = useLocation();
 
@@ -110,24 +113,26 @@ function HeaderRightSection({
 						</span>
 					) : null}
 
-					<TooltipSimple title={NOZ_TOOLTIP_TITLE}>
-						<Button
-							variant="solid"
-							color="secondary"
-							className="noz-wave"
-							onClick={handleOpenAIAssistant}
-							aria-label={
-								showHeaderPendingBadge
-									? pendingUserInputCount === 1
-										? 'Open Noz, 1 action needs your response'
-										: `Open Noz, ${pendingUserInputCount} actions need your response`
-									: 'Open Noz'
-							}
-							prefix={<Noz size={20} />}
-						>
-							<Typography.Text>Noz</Typography.Text>
-						</Button>
-					</TooltipSimple>
+					<span className="noz-wave">
+						<Tooltip title={NOZ_TOOLTIP_TITLE}>
+							<Button
+								size="md"
+								variant="ghost"
+								color="secondary"
+								onClick={handleOpenAIAssistant}
+								aria-label={
+									showHeaderPendingBadge
+										? pendingUserInputCount === 1
+											? 'Open Noz, 1 action needs your response'
+											: `Open Noz, ${pendingUserInputCount} actions need your response`
+										: 'Open Noz'
+								}
+								prefix={<Noz size={20} />}
+							>
+								<Typography.Text>Noz</Typography.Text>
+							</Button>
+						</Tooltip>
+					</span>
 				</div>
 			)}
 
@@ -144,13 +149,15 @@ function HeaderRightSection({
 					onOpenChange={handleOpenFeedbackModalChange}
 				>
 					<Button
-						variant="ghost"
-						size="icon"
-						className="share-feedback-btn"
+						color="primary"
+						variant="link"
+						size="md"
+						icon
 						aria-label="Feedback"
-						prefix={<SquarePen size={14} />}
 						onClick={handleOpenFeedbackModal}
-					/>
+					>
+						<SquarePen size={14} />
+					</Button>
 				</Popover>
 			)}
 
@@ -167,16 +174,19 @@ function HeaderRightSection({
 					onOpenChange={handleOpenAnnouncementsModalChange}
 				>
 					<Button
-						variant="ghost"
-						size="icon"
+						color="primary"
+						variant="link"
+						size="md"
+						icon
 						aria-label="Announcements"
-						prefix={<Inbox size={14} />}
 						onClick={(): void => {
 							logEvent('Announcements: Clicked', {
 								page: location.pathname,
 							});
 						}}
-					/>
+					>
+						<Inbox size={14} />
+					</Button>
 				</Popover>
 			)}
 
@@ -185,7 +195,7 @@ function HeaderRightSection({
 					rootClassName="header-section-popover-root"
 					className="shareable-link-popover"
 					placement="bottomRight"
-					content={<ShareURLModal />}
+					content={<ShareURLModal extraOption={shareModalExtraOption} />}
 					open={openShareURLModal}
 					destroyTooltipOnHide
 					arrow={false}
@@ -193,12 +203,15 @@ function HeaderRightSection({
 					onOpenChange={handleOpenShareURLModalChange}
 				>
 					<Button
-						variant="ghost"
-						size="icon"
+						color="primary"
+						variant="link"
+						size="md"
+						icon
 						aria-label="Share"
-						prefix={<Globe size={14} />}
 						onClick={handleOpenShareURLModal}
-					/>
+					>
+						<Globe size={14} />
+					</Button>
 				</Popover>
 			)}
 		</div>

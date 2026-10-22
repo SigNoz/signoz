@@ -10,13 +10,17 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apiserver"
 	"github.com/SigNoz/signoz/pkg/apiserver/signozapiserver"
+	"github.com/SigNoz/signoz/pkg/auditor"
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/gateway"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/handler"
+	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/SigNoz/signoz/pkg/licensing"
+	"github.com/SigNoz/signoz/pkg/modules/aiobservability"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
@@ -28,17 +32,23 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
+	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
+	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
+	"github.com/SigNoz/signoz/pkg/subscription"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/SigNoz/signoz/pkg/zeus"
 	"github.com/swaggest/jsonschema-go"
 	"github.com/swaggest/openapi-go"
@@ -62,6 +72,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ user.Handler }{},
 		struct{ session.Handler }{},
 		struct{ authdomain.Handler }{},
+		struct{ authdomain.Module }{},
 		struct{ preference.Handler }{},
 		struct{ global.Handler }{},
 		struct{ promote.Handler }{},
@@ -72,22 +83,36 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ metricreductionrule.Handler }{},
 		struct{ inframonitoring.Handler }{},
 		struct{ gateway.Handler }{},
+		struct{ gateway.Gateway }{},
 		struct{ fields.Handler }{},
+		struct{ aiobservability.Handler }{},
 		struct{ authz.Handler }{},
 		struct{ rawdataexport.Handler }{},
 		struct{ zeus.Handler }{},
+		struct{ licensing.Handler }{},
+		struct{ subscription.Handler }{},
 		struct{ querier.Handler }{},
 		struct{ serviceaccount.Handler }{},
 		struct{ serviceaccount.Getter }{},
+		struct{ user.Getter }{},
 		struct{ factory.Handler }{},
 		struct{ cloudintegration.Handler }{},
 		struct{ rulestatehistory.Handler }{},
 		struct{ spanmapper.Handler }{},
 		struct{ alertmanager.Handler }{},
+		struct{ prometheus.Handler }{},
 		struct{ llmpricingrule.Handler }{},
 		struct{ tracedetail.Handler }{},
 		struct{ ruler.Handler }{},
 		struct{ statsreporter.Handler }{},
+		struct{ savedview.Handler }{},
+		global.Config{},
+		struct{ identn.IdentNResolver }{},
+		struct{ sharder.Sharder }{},
+		struct{ auditor.Auditor }{},
+		struct{ web.Web }{},
+		struct{ quickfilter.Module }{},
+		struct{ quickfilter.Handler }{},
 	).New(ctx, instrumentation.ToProviderSettings(), apiserver.Config{})
 	if err != nil {
 		return nil, err
@@ -105,7 +130,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		}
 
 		return defaultDefName
-	}))
+	}), jsonschema.InterceptProp(keepDescriptionOnReferencedProperty))
 
 	reflector.Spec.WithInfo(*(&openapi3.Info{}).
 		WithTitle("SigNoz").
@@ -144,12 +169,34 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 	}, nil
 }
 
+// keepDescriptionOnReferencedProperty wraps a referenced property schema in
+// allOf when the field carries a description. OpenAPI 3.0 allows no siblings
+// next to $ref, so without this the description tag on a field whose type is a
+// named schema (an enum or a struct) is silently dropped from the spec.
+func keepDescriptionOnReferencedProperty(params jsonschema.InterceptPropParams) error {
+	if !params.Processed || params.PropertySchema == nil {
+		return nil
+	}
+
+	schema := params.PropertySchema
+	if schema.Ref == nil || schema.Description == nil || *schema.Description == "" {
+		return nil
+	}
+
+	ref := *schema.Ref
+	schema.Ref = nil
+	schema.AllOf = []jsonschema.SchemaOrBool{(&jsonschema.Schema{}).WithRef(ref).ToSchemaOrBool()}
+
+	return nil
+}
+
 func (openapi *OpenAPI) CreateAndWrite(path string) error {
 	if err := openapi.apiserver.Router().Walk(openapi.collector.Walker); err != nil {
 		return err
 	}
 
 	attachDiscriminators(openapi.reflector.Spec)
+	openapi.collector.AttachStabilities(openapi.reflector.Spec)
 
 	// The library's MarshalYAML does a JSON round-trip that converts all numbers
 	// to float64, causing large integers (e.g. epoch millisecond timestamps) to

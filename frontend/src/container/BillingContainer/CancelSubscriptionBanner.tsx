@@ -11,6 +11,8 @@ import { Button } from '@signozhq/ui/button';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
 import logEvent from 'api/common/logEvent';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import { SubscriptionDeletePermission } from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
 import { pick } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { useCopyToClipboard } from 'react-use';
@@ -139,6 +141,7 @@ function CancelSubscriptionBanner(): JSX.Element {
 	const confirmFooter = (
 		<>
 			<Button
+				size="md"
 				variant="solid"
 				color="secondary"
 				prefix={<Undo2 size={14} />}
@@ -147,12 +150,14 @@ function CancelSubscriptionBanner(): JSX.Element {
 				Go back
 			</Button>
 			<Button
+				disabledTooltip="Type cancel to confirm"
+				size="md"
 				variant="solid"
-				color="destructive"
+				color="danger"
 				prefix={<X size={14} />}
 				disabled={confirmText !== 'cancel'}
 				onClick={handleContactSupport}
-				data-testid="cancel-subscription-confirm-btn"
+				testId="cancel-subscription-confirm-btn"
 			>
 				Cancel subscription
 			</Button>
@@ -160,7 +165,7 @@ function CancelSubscriptionBanner(): JSX.Element {
 	);
 
 	const fallbackFooter = (
-		<Button variant="solid" color="secondary" onClick={handleClose}>
+		<Button size="md" variant="solid" color="secondary" onClick={handleClose}>
 			Close
 		</Button>
 	);
@@ -178,15 +183,17 @@ function CancelSubscriptionBanner(): JSX.Element {
 						immediately and removed from our servers.
 					</span>
 				</div>
-				<Button
+				<AuthZButton
+					size="md"
+					checks={[SubscriptionDeletePermission]}
 					variant="solid"
 					color="secondary"
 					prefix={<X size={12} />}
 					onClick={handleOpenCancelDialog}
-					className={styles.cancelButton}
+					testId="cancel-subscription-btn"
 				>
 					Cancel Subscription
-				</Button>
+				</AuthZButton>
 			</div>
 			<DialogWrapper
 				open={dialogView !== null}
@@ -222,30 +229,32 @@ function CancelSubscriptionBanner(): JSX.Element {
 						<span className={styles.fallbackEmail}>{SUPPORT_EMAIL}</span>
 						<div className={styles.fallbackActions}>
 							<Button
+								size="md"
 								variant="outlined"
 								color="secondary"
 								prefix={copied ? <CircleCheck size={14} /> : <Copy size={14} />}
 								onClick={handleCopyTemplate}
-								data-testid="copy-email-template-btn"
+								testId="copy-email-template-btn"
 							>
 								{copied ? 'Copied!' : 'Copy email template'}
 							</Button>
 							<Button
-								asChild
+								size="md"
 								variant="outlined"
 								color="secondary"
-								data-testid="retry-mailto-btn"
+								testId="retry-mailto-btn"
+								prefix={<MailOpen size={14} />}
+								onClick={(): void => {
+									handleRetryMailto();
+									// oxlint-disable-next-line signoz/no-raw-absolute-path -- mailto is an external mail client URL, not an in-app path
+									window.open(
+										buildMailtoUri(orgName, userEmail),
+										'_blank',
+										'noopener,noreferrer',
+									);
+								}}
 							>
-								<a
-									href={buildMailtoUri(orgName, userEmail)}
-									onClick={handleRetryMailto}
-									className={styles.retryLink}
-									target="_blank"
-									rel="noopener noreferrer"
-								>
-									<MailOpen size={14} />
-									Reopen email client
-								</a>
+								Reopen email client
 							</Button>
 						</div>
 					</div>

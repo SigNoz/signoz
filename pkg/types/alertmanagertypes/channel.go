@@ -1,24 +1,22 @@
 package alertmanagertypes
 
 import (
+	"context"
+	"crypto/rand"
 	"encoding/json"
-	"reflect"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/prometheus/alertmanager/config"
-	"github.com/swaggest/jsonschema-go"
 	"github.com/uptrace/bun"
 )
 
 var (
-	ErrCodeAlertmanagerChannelNotFound     = errors.MustNewCode("alertmanager_channel_not_found")
-	ErrCodeAlertmanagerChannelNameMismatch = errors.MustNewCode("alertmanager_channel_name_mismatch")
-	ErrCodeAlertmanagerChannelInvalid      = errors.MustNewCode("alertmanager_channel_invalid")
+	ErrCodeAlertmanagerChannelNotFound      = errors.MustNewCode("alertmanager_channel_not_found")
+	ErrCodeAlertmanagerChannelNameMismatch  = errors.MustNewCode("alertmanager_channel_name_mismatch")
+	ErrCodeAlertmanagerChannelInvalid       = errors.MustNewCode("alertmanager_channel_invalid")
+	ErrCodeAlertmanagerChannelAlreadyExists = errors.MustNewCode("alertmanager_channel_already_exists")
 )
 
 var (
@@ -28,102 +26,103 @@ var (
 
 type Channels = []*Channel
 
-type GettableChannels = []*Channel
-
-// TODO: the oneOf emitted by JSONSchema is not the shape OpenAPI wants for a
-// discriminated union. OpenAPI's discriminator requires every oneOf branch to
-// be a $ref to a named component and a sibling property whose value selects
-// the variant. Our payload instead uses the *presence* of one of the 18
-// *_configs arrays to imply the type, so no discriminator can be attached.
-// Refactor PostableChannel into a {name, type, config} envelope (see
-// ruletypes.RuleThresholdData for the pattern) so each notification kind
-// becomes a named component and the discriminator can be wired up properly.
-type PostableChannel struct {
-	Receiver
-}
-
 // Channel represents a single receiver of the alertmanager config.
 type Channel struct {
 	bun.BaseModel `bun:"table:notification_channel"`
 
 	types.Identifiable
 	types.TimeAuditable
-	Name  string `json:"name" required:"true" bun:"name"`
+	// Name is the DNS1123 identity references will migrate onto. Until then
+	// DisplayName is the receiver name inside Data and what policies and rules
+	// reference, so it keeps the v1 wire tag and Name stays off the v1 contract.
+	Name        string `json:"-" bun:"name"`
+	DisplayName string `json:"name" required:"true" bun:"display_name"`
+	// TODO: type this as ChannelKind once v1 is gone.
 	Type  string `json:"type" required:"true" bun:"type"`
 	Data  string `json:"data" required:"true" bun:"data"`
 	OrgID string `json:"orgId" required:"true" bun:"org_id"`
+
+	// Spec is the v2 spec a read returns, of the kind Type names. A v2 write
+	// stores it as the caller wrote it and a v1 write derives it from the
+	// defaulted receiver. Only a row the migration could not backfill has none.
+	// StoredSpec is the column, written by fillSpec and decoded by AfterScanRow.
+	Spec       ChannelSpec `json:"-" bun:"-"`
+	StoredSpec string      `json:"-" bun:"spec,type:text,nullzero"`
 }
 
-// NewChannelFromReceiver creates a new Channel from a Receiver.
-// It can return nil if the receiver is the default receiver.
-func NewChannelFromReceiver(receiver *Receiver, orgID string) (*Channel, error) {
-	if receiver.Name == DefaultReceiverName {
-		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelInvalid, "cannot use %s name as a channel name", receiver.Name)
+var _ bun.AfterScanRowHook = (*Channel)(nil)
+
+// AfterScanRow decodes the stored spec under Type, which bun cannot do column by
+// column because the spec's Go type depends on it.
+func (c *Channel) AfterScanRow(context.Context) error {
+	if c.StoredSpec == "" {
+		c.Spec = nil
+		return nil
 	}
 
-	// Initialize channel with common fields
-	channel := Channel{
-		Identifiable: types.Identifiable{
-			ID: valuer.GenerateUUID(),
-		},
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		},
-		Name:  receiver.Name,
-		OrgID: orgID,
+	channelKind, ok := parseChannelKind(c.Type)
+	if !ok {
+		return errors.NewInternalf(errors.CodeInternal, "channel %q stores a spec under unmodelled type %q", c.DisplayName, c.Type)
 	}
 
-	data, err := json.Marshal(receiver)
+	spec, _ := buildEmptyChannelSpecForKind(channelKind)
+	if err := json.Unmarshal([]byte(c.StoredSpec), spec); err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "unmarshal channel %q spec", c.DisplayName)
+	}
+	c.Spec = spec
+
+	return nil
+}
+
+func (c *Channel) fillSpec(spec ChannelSpec) error {
+	stored, err := json.Marshal(spec)
 	if err != nil {
-		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "marshal receiver")
+		return errors.WrapInternalf(err, errors.CodeInternal, "marshal channel %q spec", c.DisplayName)
 	}
-	channel.Data = string(data)
+	c.Spec, c.StoredSpec = spec, string(stored)
 
-	channel.Type = receiverChannelType(receiver)
-	if channel.Type == "" {
-		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelInvalid, "channel '%s' must have at least one notification configuration (e.g., email_configs, webhook_configs, slack_configs)", receiver.Name)
-	}
-
-	return &channel, nil
+	return nil
 }
 
-// receiverChannelType returns the channel.Type discriminator. Walks
-// Receiver's own fields first (native), then the embed (upstream); first
-// non-empty *_configs slice wins.
-func receiverChannelType(receiver *Receiver) string {
-	if t := nonEmptyConfigsField(reflect.ValueOf(*receiver)); t != "" {
-		return t
-	}
-	if t := nonEmptyConfigsField(reflect.ValueOf(*receiver.Receiver)); t != "" {
-		return t
-	}
-	return ""
-}
+const channelNameSuffixLen = 8
 
-func nonEmptyConfigsField(v reflect.Value) string {
-	t := v.Type()
-	for i := 0; i < t.NumField(); i++ {
-		field := t.Field(i)
-		fieldVal := v.Field(i)
+// generateChannelName is a copy of dashboardtypes.generateDashboardName: slugify
+// the display name, then append a random suffix rather than looping on collisions.
+func generateChannelName(displayName string) string {
+	const dns1123LabelMaxLen = 63
+	suffixAlphabet := []byte("abcdefghijklmnopqrstuvwxyz0123456789")
 
-		if fieldVal.Kind() != reflect.Slice || fieldVal.Len() == 0 {
-			continue
+	var b strings.Builder
+	b.Grow(len(displayName))
+	prevHyphen := false
+	for _, r := range strings.ToLower(displayName) {
+		switch {
+		case (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9'):
+			b.WriteRune(r)
+			prevHyphen = false
+		case b.Len() > 0 && !prevHyphen:
+			b.WriteByte('-')
+			prevHyphen = true
 		}
-
-		yamlTag := field.Tag.Get("yaml")
-		if yamlTag == "" {
-			continue
-		}
-
-		// Extract the base type name (e.g., "email_configs" -> "email").
-		matches := receiverTypeRegex.FindStringSubmatch(yamlTag)
-		if len(matches) != 2 {
-			continue
-		}
-		return matches[1]
 	}
-	return ""
+	prefix := strings.TrimRight(b.String(), "-")
+
+	suffix := make([]byte, channelNameSuffixLen)
+	if _, err := rand.Read(suffix); err != nil {
+		panic(errors.WrapInternalf(err, errors.CodeInternal, "read random for channel name suffix"))
+	}
+	for i := range suffix {
+		suffix[i] = suffixAlphabet[int(suffix[i])%len(suffixAlphabet)]
+	}
+
+	maxPrefix := dns1123LabelMaxLen - 1 - channelNameSuffixLen
+	if len(prefix) > maxPrefix {
+		prefix = strings.TrimRight(prefix[:maxPrefix], "-")
+	}
+	if prefix == "" {
+		return string(suffix)
+	}
+	return prefix + "-" + string(suffix)
 }
 
 func NewConfigFromChannels(globalConfig GlobalConfig, routeConfig RouteConfig, channels Channels, orgID string) (*Config, error) {
@@ -151,26 +150,6 @@ func NewConfigFromChannels(globalConfig GlobalConfig, routeConfig RouteConfig, c
 	return cfg, nil
 }
 
-func GetChannelByID(channels Channels, id valuer.UUID) (int, *Channel, error) {
-	for i, channel := range channels {
-		if channel.ID == id {
-			return i, channel, nil
-		}
-	}
-
-	return 0, nil, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerChannelNotFound, "cannot find channel with id %s", id.StringValue())
-}
-
-func GetChannelByName(channels Channels, name string) (int, *Channel, error) {
-	for i, channel := range channels {
-		if channel.Name == name {
-			return i, channel, nil
-		}
-	}
-
-	return 0, nil, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerChannelNotFound, "cannot find channel with name %s", name)
-}
-
 func NewStatsFromChannels(channels Channels) map[string]any {
 	stats := make(map[string]any)
 	for _, channel := range channels {
@@ -185,52 +164,4 @@ func NewStatsFromChannels(channels Channels) map[string]any {
 
 	stats["alertmanager.channel.count"] = int64(len(channels))
 	return stats
-}
-
-func (c *Channel) Update(receiver *Receiver) error {
-	channel, err := NewChannelFromReceiver(receiver, c.OrgID)
-	if err != nil {
-		return err
-	}
-
-	if c.Name != channel.Name {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelNameMismatch, "cannot update channel name")
-	}
-
-	c.Type = channel.Type
-	c.Data = channel.Data
-	c.UpdatedAt = time.Now()
-
-	return nil
-}
-
-func (PostableChannel) JSONSchema() (jsonschema.Schema, error) {
-	type alias PostableChannel
-	reflector := &jsonschema.Reflector{}
-
-	schema, err := reflector.Reflect(alias{}, jsonschema.DefinitionsPrefix("#/components/schemas/"))
-	if err != nil {
-		return jsonschema.Schema{}, err
-	}
-
-	schema.WithRequired("name")
-
-	var oneOf []jsonschema.SchemaOrBool
-	// Walk both halves: native fields on Receiver, upstream on the embed.
-	collect := func(t reflect.Type) {
-		for i := 0; i < t.NumField(); i++ {
-			jsonTag := strings.Split(t.Field(i).Tag.Get("json"), ",")[0]
-			if !strings.HasSuffix(jsonTag, "_configs") {
-				continue
-			}
-			branch := (&jsonschema.Schema{}).WithRequired(jsonTag)
-			oneOf = append(oneOf, branch.ToSchemaOrBool())
-		}
-	}
-	collect(reflect.TypeOf(Receiver{}))
-	collect(reflect.TypeOf(config.Receiver{}))
-
-	schema.WithOneOf(oneOf...)
-
-	return schema, nil
 }

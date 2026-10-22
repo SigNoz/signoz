@@ -1,20 +1,19 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-use';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
 import { Form, Input as AntdInput } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import resetPasswordApi from 'api/v1/factor_password/resetPassword';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import { useResetPassword } from 'api/generated/services/users';
 import AuthError from 'components/AuthError/AuthError';
 import AuthPageContainer from 'components/AuthPageContainer';
 import ROUTES from 'constants/routes';
-import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { ArrowRight, CircleAlert, KeyRound } from '@signozhq/icons';
 import { Label } from 'pages/SignUp/styles';
-import APIError from 'types/api/error';
 
 import { FormContainer } from './styles';
 
@@ -23,117 +22,61 @@ import './ResetPassword.styles.scss';
 type FormValues = { password: string; confirmPassword: string };
 
 function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
-	const [confirmPasswordError, setConfirmPasswordError] =
-		useState<boolean>(false);
-
-	const [errorMessage, setErrorMessage] = useState<APIError | null>();
-
-	const [isValidPassword, setIsValidPassword] = useState(false);
-	const [loading, setLoading] = useState(false);
+	const [confirmPasswordTouched, setConfirmPasswordTouched] = useState(false);
 	const { t } = useTranslation(['common']);
 	const { search } = useLocation();
 	const params = new URLSearchParams(search);
 	const token = params.get('token');
 	const { notifications } = useNotifications();
 
+	const {
+		mutate: resetPassword,
+		isLoading,
+		error: mutationError,
+		reset: resetMutation,
+	} = useResetPassword();
+
+	const errorMessage = useMemo(
+		() => convertToApiError(mutationError),
+		[mutationError],
+	);
+
 	const [form] = Form.useForm<FormValues>();
-	const handleFormSubmit: () => Promise<void> = async () => {
-		try {
-			setLoading(true);
-			setErrorMessage(null);
-			const { password } = form.getFieldsValue();
+	const password = Form.useWatch('password', form);
+	const confirmPassword = Form.useWatch('confirmPassword', form);
 
-			await resetPasswordApi({
-				password,
-				token: token || '',
-			});
+	const isPasswordMismatch =
+		Boolean(confirmPassword) && password !== confirmPassword;
+	const showPasswordMismatchError = confirmPasswordTouched && isPasswordMismatch;
+	const isValidPassword =
+		Boolean(password?.trim()) &&
+		Boolean(confirmPassword?.trim()) &&
+		password === confirmPassword;
 
-			notifications.success({
-				message: t('success', {
-					ns: 'common',
-				}),
-			});
-			history.push(ROUTES.LOGIN);
-
-			setLoading(false);
-		} catch (error) {
-			setLoading(false);
-			setErrorMessage(error as APIError);
-		}
-	};
-
-	const validatePassword = (): boolean => {
-		const { password, confirmPassword } = form.getFieldsValue();
-
-		if (
-			password &&
-			confirmPassword &&
-			password.trim() &&
-			confirmPassword.trim() &&
-			password.length > 0 &&
-			confirmPassword.length > 0
-		) {
-			return password === confirmPassword;
-		}
-
-		return false;
-	};
-
-	const handleValuesChange = useDebouncedFn((): void => {
-		const { password, confirmPassword } = form.getFieldsValue();
-
-		if (!password || !confirmPassword) {
-			setIsValidPassword(false);
-		}
-
-		// Only clear error if passwords match while typing (but don't set error until blur)
-		if (
-			password &&
-			confirmPassword &&
-			password.trim() &&
-			confirmPassword.trim()
-		) {
-			const isValid = validatePassword();
-			setIsValidPassword(isValid);
-
-			// Only clear error if passwords match, don't set error on mismatch
-			if (isValid) {
-				setConfirmPasswordError(false);
-			}
-		}
-	}, 100);
-
-	const handlePasswordBlur = (): void => {
-		const { confirmPassword } = form.getFieldsValue();
-		// Only validate if confirm password has a value
-		if (confirmPassword && confirmPassword.trim()) {
-			const isValid = validatePassword();
-			setIsValidPassword(isValid);
-			setConfirmPasswordError(!isValid);
-		}
-	};
-
-	const handleConfirmPasswordBlur = (): void => {
-		const { password, confirmPassword } = form.getFieldsValue();
-		if (
-			password &&
-			password.trim() &&
-			confirmPassword &&
-			confirmPassword.trim()
-		) {
-			const isValid = validatePassword();
-			setIsValidPassword(isValid);
-			setConfirmPasswordError(!isValid);
+	const handleValuesChange = (): void => {
+		if (mutationError) {
+			resetMutation();
 		}
 	};
 
 	const handleSubmit = (): void => {
-		const isValid = validatePassword();
-		setIsValidPassword(isValid);
-
-		if (token) {
-			handleFormSubmit();
+		if (!token) {
+			return;
 		}
+
+		resetPassword(
+			{ data: { password: form.getFieldValue('password'), token } },
+			{
+				onSuccess: (): void => {
+					notifications.success({
+						message: t('success', {
+							ns: 'common',
+						}),
+					});
+					history.push(ROUTES.LOGIN);
+				},
+			},
+		);
 	};
 
 	return (
@@ -157,6 +100,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 				<FormContainer
 					form={form}
 					onFinish={handleSubmit}
+					onValuesChange={handleValuesChange}
 					className="reset-password-form"
 				>
 					<div className="reset-password-form-container">
@@ -170,8 +114,6 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 								>
 									<AntdInput.Password
 										tabIndex={0}
-										onChange={handleValuesChange}
-										onBlur={handlePasswordBlur}
 										id="password"
 										data-testid="password"
 										placeholder="Enter new password"
@@ -188,8 +130,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 									rules={[{ required: true, message: 'Please enter confirm password!' }]}
 								>
 									<AntdInput.Password
-										onChange={handleValuesChange}
-										onBlur={handleConfirmPasswordBlur}
+										onBlur={(): void => setConfirmPasswordTouched(true)}
 										id="confirmPassword"
 										data-testid="confirmPassword"
 										placeholder="Confirm your new password"
@@ -200,7 +141,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 						</div>
 					</div>
 
-					{confirmPasswordError && (
+					{showPasswordMismatchError && (
 						<Callout
 							type="error"
 							size="small"
@@ -212,18 +153,21 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 						</Callout>
 					)}
 
-					{errorMessage && !confirmPasswordError && (
+					{errorMessage && !showPasswordMismatchError && (
 						<AuthError error={errorMessage} />
 					)}
 
 					<div className="reset-password-form-actions">
 						<Button
+							size="md"
 							variant="solid"
 							color="primary"
 							type="submit"
 							data-attr="reset-password"
-							disabled={!isValidPassword || loading}
-							className="reset-password-submit-button"
+							loading={isLoading}
+							disabled={!isValidPassword}
+							disabledTooltip="Enter matching passwords in both fields"
+							width="100%"
 							suffix={<ArrowRight size={16} />}
 						>
 							Reset Password

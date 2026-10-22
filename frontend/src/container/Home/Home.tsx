@@ -26,13 +26,13 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
+import { useHomeStripInfo } from 'container/Home/useHomeStripInfo';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import history from 'lib/history';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { AnimatePresence } from 'motion/react';
-import * as motion from 'motion/react-client';
+import { AnimatePresence, motion } from 'motion/react';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
 import { UserPreference } from 'types/api/preferences/preference';
@@ -64,6 +64,8 @@ const homeInterval = 30 * 60 * 1000;
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function Home(): JSX.Element {
+	useHomeStripInfo();
+
 	const { user } = useAppContext();
 	const { safeNavigate } = useSafeNavigate();
 	const isDarkMode = useIsDarkMode();
@@ -311,6 +313,7 @@ export default function Home(): JSX.Element {
 									rootClassName="welcome-checklist-popover"
 								>
 									<Button
+										size="md"
 										variant="solid"
 										color="secondary"
 										prefix={<ClipboardList size={14} />}
@@ -494,9 +497,9 @@ export default function Home(): JSX.Element {
 
 										<div className="section-actions">
 											<Button
+												size="md"
 												variant="solid"
 												color="secondary"
-												className="periscope-btn secondary"
 												prefix={<Wrench size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													void logEvent('Homepage: Explore clicked', {
@@ -511,9 +514,9 @@ export default function Home(): JSX.Element {
 											</Button>
 
 											<Button
+												size="md"
 												variant="solid"
 												color="secondary"
-												className="periscope-btn secondary"
 												prefix={<Wrench size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													void logEvent('Homepage: Explore clicked', {
@@ -528,9 +531,9 @@ export default function Home(): JSX.Element {
 											</Button>
 
 											<Button
+												size="md"
 												variant="solid"
 												color="secondary"
-												className="periscope-btn secondary"
 												prefix={<Wrench size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													void logEvent('Homepage: Explore clicked', {
@@ -567,9 +570,9 @@ export default function Home(): JSX.Element {
 
 										<div className="section-actions">
 											<Button
+												size="md"
 												variant="solid"
 												color="secondary"
-												className="periscope-btn secondary"
 												prefix={<Plus size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													void logEvent('Homepage: Explore clicked', {
@@ -612,9 +615,9 @@ export default function Home(): JSX.Element {
 
 										<div className="section-actions">
 											<Button
+												size="md"
 												variant="solid"
 												color="secondary"
-												className="periscope-btn secondary"
 												prefix={<Plus size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													void logEvent('Homepage: Explore clicked', {
@@ -694,6 +697,7 @@ export default function Home(): JSX.Element {
 								<Card.Footer>
 									<div className="checklist-footer-container">
 										<Button
+											size="md"
 											variant="link"
 											color="secondary"
 											onClick={handleWillDoThisLater}

@@ -24,7 +24,22 @@ const routesToBeSharedWithTime = [
 	ROUTES.METER_EXPLORER,
 ];
 
-function ShareURLModal(): JSX.Element {
+/**
+ * An optional, page-specific toggle in the share dialog (e.g. a dashboard's
+ * "Include variables"). When enabled, `apply` mutates the URL params that go into
+ * the shared link. Keeps this shared modal generic — the page owns what it adds.
+ */
+export interface ShareURLExtraOption {
+	label: string;
+	defaultEnabled?: boolean;
+	apply: (params: URLSearchParams) => void;
+}
+
+interface ShareURLModalProps {
+	extraOption?: ShareURLExtraOption;
+}
+
+function ShareURLModal({ extraOption }: ShareURLModalProps): JSX.Element {
 	const urlQuery = useUrlQuery();
 	const location = useLocation();
 	const { selectedTime } = useSelector<AppState, GlobalReducer>(
@@ -33,6 +48,9 @@ function ShareURLModal(): JSX.Element {
 
 	const [enableAbsoluteTime, setEnableAbsoluteTime] = useState(
 		selectedTime !== 'custom',
+	);
+	const [enableExtraOption, setEnableExtraOption] = useState(
+		extraOption?.defaultEnabled ?? false,
 	);
 
 	const startTime = urlQuery.get(QueryParams.startTime);
@@ -93,6 +111,11 @@ function ShareURLModal(): JSX.Element {
 			}
 		}
 
+		if (extraOption && enableExtraOption) {
+			extraOption.apply(urlQuery);
+			currentUrl = getAbsoluteUrl(`${location.pathname}?${urlQuery.toString()}`);
+		}
+
 		return currentUrl;
 	};
 
@@ -126,6 +149,9 @@ function ShareURLModal(): JSX.Element {
 								<Info size={14} color={Color.BG_AMBER_600} />
 							)}
 							<Switch
+								color="primary"
+								textPlacement="right"
+								disabledTooltip="Please select / enter valid relative time to toggle."
 								value={enableAbsoluteTime}
 								disabled={!isValidateRelativeTime}
 								onChange={(): void => {
@@ -141,6 +167,22 @@ function ShareURLModal(): JSX.Element {
 						</div>
 					)}
 				</>
+			)}
+
+			{extraOption && (
+				<div className="absolute-relative-time-toggler-container">
+					<Typography.Text className="absolute-relative-time-toggler-label">
+						{extraOption.label}
+					</Typography.Text>
+					<div className="absolute-relative-time-toggler">
+						<Switch
+							color="primary"
+							textPlacement="right"
+							value={enableExtraOption}
+							onChange={(): void => setEnableExtraOption((prev) => !prev)}
+						/>
+					</div>
+				</div>
 			)}
 
 			<div className="share-link">

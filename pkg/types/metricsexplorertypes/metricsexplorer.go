@@ -240,19 +240,6 @@ type MetricAlertsResponse struct {
 	Alerts []MetricAlert `json:"alerts" required:"true" nullable:"true"`
 }
 
-// MetricDashboard represents a dashboard/widget referencing a metric.
-type MetricDashboard struct {
-	DashboardName string `json:"dashboardName" required:"true"`
-	DashboardID   string `json:"dashboardId" required:"true"`
-	WidgetID      string `json:"widgetId" required:"true"`
-	WidgetName    string `json:"widgetName" required:"true"`
-}
-
-// MetricDashboardsResponse represents the response for metric dashboards endpoint.
-type MetricDashboardsResponse struct {
-	Dashboards []MetricDashboard `json:"dashboards" required:"true" nullable:"true"`
-}
-
 // MetricDashboardPanelsResponse is the response for the v2 metric dashboards
 // endpoint: the dashboard panels that reference the metric.
 type MetricDashboardPanelsResponse struct {

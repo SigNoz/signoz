@@ -1,3 +1,9 @@
+import { SubscriptionDeletePermission } from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
+import {
+	setupAuthzAdmin,
+	setupAuthzDeny,
+} from 'lib/authz/utils/authz-test-utils';
+import { server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import CancelSubscriptionBanner from './CancelSubscriptionBanner';
@@ -36,8 +42,25 @@ function mockMailto(): {
 }
 
 describe('CancelSubscriptionBanner', () => {
+	beforeEach(() => {
+		server.use(setupAuthzAdmin());
+	});
+
 	afterEach(() => {
+		server.resetHandlers();
 		jest.restoreAllMocks();
+	});
+
+	it('disables Cancel Subscription when subscription delete is denied', async () => {
+		server.use(setupAuthzDeny(SubscriptionDeletePermission));
+		render(<CancelSubscriptionBanner />);
+
+		await waitFor(() => {
+			expect(screen.getByTestId('cancel-subscription-btn')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
+		});
 	});
 
 	it('renders banner with title and subtitle', () => {
@@ -56,9 +79,13 @@ describe('CancelSubscriptionBanner', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<CancelSubscriptionBanner />);
 
-		await user.click(
-			screen.getByRole('button', { name: /cancel subscription/i }),
-		);
+		await waitFor(() => {
+			expect(screen.getByTestId('cancel-subscription-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
+		});
+		await user.click(screen.getByTestId('cancel-subscription-btn'));
 
 		expect(screen.getByRole('dialog')).toBeInTheDocument();
 		expect(
@@ -76,28 +103,36 @@ describe('CancelSubscriptionBanner', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<CancelSubscriptionBanner />);
 
-		await user.click(
-			screen.getByRole('button', { name: /cancel subscription/i }),
-		);
+		await waitFor(() => {
+			expect(screen.getByTestId('cancel-subscription-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
+		});
+		await user.click(screen.getByTestId('cancel-subscription-btn'));
 
 		const confirmButton = screen.getByTestId('cancel-subscription-confirm-btn');
-		expect(confirmButton).toBeDisabled();
+		expect(confirmButton).toHaveAttribute('aria-disabled', 'true');
 
 		const input = screen.getByTestId('cancel-confirm-input');
 		await user.type(input, 'canc');
-		expect(confirmButton).toBeDisabled();
+		expect(confirmButton).toHaveAttribute('aria-disabled', 'true');
 
 		await user.type(input, 'el');
-		expect(confirmButton).toBeEnabled();
+		expect(confirmButton).not.toHaveAttribute('aria-disabled', 'true');
 	});
 
 	it('closes dialog and resets input when Go back is clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<CancelSubscriptionBanner />);
 
-		await user.click(
-			screen.getByRole('button', { name: /cancel subscription/i }),
-		);
+		await waitFor(() => {
+			expect(screen.getByTestId('cancel-subscription-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
+		});
+		await user.click(screen.getByTestId('cancel-subscription-btn'));
 
 		const input = screen.getByTestId('cancel-confirm-input');
 		await user.type(input, 'cancel');
@@ -107,9 +142,13 @@ describe('CancelSubscriptionBanner', () => {
 			expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
 		);
 
-		await user.click(
-			screen.getByRole('button', { name: /cancel subscription/i }),
-		);
+		await waitFor(() => {
+			expect(screen.getByTestId('cancel-subscription-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
+		});
+		await user.click(screen.getByTestId('cancel-subscription-btn'));
 		expect(screen.getByTestId('cancel-confirm-input')).toHaveValue('');
 	});
 
@@ -119,9 +158,13 @@ describe('CancelSubscriptionBanner', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<CancelSubscriptionBanner />);
 
-		await user.click(
-			screen.getByRole('button', { name: /cancel subscription/i }),
-		);
+		await waitFor(() => {
+			expect(screen.getByTestId('cancel-subscription-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
+		});
+		await user.click(screen.getByTestId('cancel-subscription-btn'));
 		await user.type(screen.getByTestId('cancel-confirm-input'), 'cancel');
 		await user.click(screen.getByTestId('cancel-subscription-confirm-btn'));
 
@@ -151,9 +194,13 @@ describe('CancelSubscriptionBanner', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<CancelSubscriptionBanner />);
 
-		await user.click(
-			screen.getByRole('button', { name: /cancel subscription/i }),
-		);
+		await waitFor(() => {
+			expect(screen.getByTestId('cancel-subscription-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
+		});
+		await user.click(screen.getByTestId('cancel-subscription-btn'));
 		await user.type(screen.getByTestId('cancel-confirm-input'), 'cancel');
 		await user.click(screen.getByTestId('cancel-subscription-confirm-btn'));
 
@@ -166,23 +213,28 @@ describe('CancelSubscriptionBanner', () => {
 		);
 	});
 
-	it('retry link is a native anchor with correct mailto href in fallback view', async () => {
+	it('retry button opens the mailto link in fallback view', async () => {
 		mockMailto();
+		const openSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
 
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<CancelSubscriptionBanner />);
 
-		await user.click(
-			screen.getByRole('button', { name: /cancel subscription/i }),
-		);
+		await waitFor(() => {
+			expect(screen.getByTestId('cancel-subscription-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
+		});
+		await user.click(screen.getByTestId('cancel-subscription-btn'));
 		await user.type(screen.getByTestId('cancel-confirm-input'), 'cancel');
 		await user.click(screen.getByTestId('cancel-subscription-confirm-btn'));
 
-		const retryLink = screen.getByTestId('retry-mailto-btn');
-		expect(retryLink.tagName).toBe('A');
-		expect(retryLink).toHaveAttribute(
-			'href',
+		await user.click(screen.getByTestId('retry-mailto-btn'));
+		expect(openSpy).toHaveBeenCalledWith(
 			expect.stringContaining('mailto:cloud-support@signoz.io'),
+			'_blank',
+			'noopener,noreferrer',
 		);
 	});
 
@@ -192,9 +244,13 @@ describe('CancelSubscriptionBanner', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<CancelSubscriptionBanner />);
 
-		await user.click(
-			screen.getByRole('button', { name: /cancel subscription/i }),
-		);
+		await waitFor(() => {
+			expect(screen.getByTestId('cancel-subscription-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
+		});
+		await user.click(screen.getByTestId('cancel-subscription-btn'));
 		await user.type(screen.getByTestId('cancel-confirm-input'), 'cancel');
 		await user.click(screen.getByTestId('cancel-subscription-confirm-btn'));
 

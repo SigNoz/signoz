@@ -6,9 +6,6 @@ import isodate
 
 # parses the given timestamp string from ISO format to datetime.datetime
 def parse_timestamp(ts_str: str) -> datetime.datetime:
-    """
-    Parse a timestamp string from ISO format.
-    """
     if ts_str.endswith("Z"):
         ts_str = ts_str[:-1] + "+00:00"
     return datetime.datetime.fromisoformat(ts_str)
@@ -16,9 +13,6 @@ def parse_timestamp(ts_str: str) -> datetime.datetime:
 
 # parses the given duration to datetime.timedelta
 def parse_duration(duration: Any) -> datetime.timedelta:
-    """
-    Parse a duration string from ISO format.
-    """
     # if it's string then parse it as iso format
     if isinstance(duration, str):
         return isodate.parse_duration(duration)

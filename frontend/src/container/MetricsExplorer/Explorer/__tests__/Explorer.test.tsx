@@ -10,11 +10,11 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import * as useOptionsMenuHooks from 'container/OptionsMenu';
-import * as useUpdateDashboardHooks from 'hooks/dashboard/useUpdateDashboard';
 import * as useQueryBuilderHooks from 'hooks/queryBuilder/useQueryBuilder';
 import * as useHandleExplorerTabChangeHooks from 'hooks/useHandleExplorerTabChange';
 import * as appContextHooks from 'providers/App/App';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
+import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import * as timezoneHooks from 'providers/Timezone';
 import store from 'store';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
@@ -95,10 +95,6 @@ jest.mock('react-redux', () => ({
 	}),
 }));
 
-jest.spyOn(useUpdateDashboardHooks, 'useUpdateDashboard').mockReturnValue({
-	mutate: jest.fn(),
-	isLoading: false,
-} as any);
 jest.spyOn(useOptionsMenuHooks, 'useOptionsMenu').mockReturnValue({
 	options: {
 		selectColumns: [],
@@ -152,7 +148,9 @@ function renderExplorer(): void {
 			<MemoryRouter>
 				<Provider store={store}>
 					<ErrorModalProvider>
-						<Explorer />
+						<PreferenceContextProvider>
+							<Explorer />
+						</PreferenceContextProvider>
 					</ErrorModalProvider>
 				</Provider>
 			</MemoryRouter>
@@ -269,7 +267,7 @@ describe('Explorer', () => {
 
 		const oneChartPerQueryToggle = screen.getByRole('switch');
 		expect(oneChartPerQueryToggle).toBeChecked();
-		expect(oneChartPerQueryToggle).toBeDisabled();
+		expect(oneChartPerQueryToggle).toHaveAttribute('aria-disabled', 'true');
 	});
 
 	it('should render empty y axis unit selector for a single metric with no unit', () => {
@@ -305,7 +303,7 @@ describe('Explorer', () => {
 
 		const oneChartPerQueryToggle = screen.getByRole('switch');
 		expect(oneChartPerQueryToggle).not.toBeChecked();
-		expect(oneChartPerQueryToggle).toBeDisabled();
+		expect(oneChartPerQueryToggle).toHaveAttribute('aria-disabled', 'true');
 	});
 
 	it('one chart per query should enabled by default when there are multiple metrics with the same unit', () => {

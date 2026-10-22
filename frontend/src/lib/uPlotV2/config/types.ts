@@ -1,5 +1,4 @@
 import { PrecisionOption } from 'components/Graph/types';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import uPlot, { Series } from 'uplot';
 
 import { ThresholdsDrawHookOptions } from '../hooks/types';
@@ -33,6 +32,13 @@ export enum SelectionPreferencesSource {
 /**
  * Props for configuring the uPlot config builder
  */
+/** `Percent` rescales each x-slice to its column total, so every column fills to 100. */
+export enum StackMode {
+	None = 'none',
+	Normal = 'normal',
+	Percent = 'percent',
+}
+
 export interface ConfigBuilderProps {
 	id: string;
 	onDragSelect?: (startTime: number, endTime: number) => void;
@@ -46,31 +52,53 @@ export interface ConfigBuilderProps {
  * Props for configuring an axis
  */
 export interface AxisProps {
+	/** Scale this axis is drawn against — `'x'` / `'y'`, matching an `addScale` key. Also
+	 * selects the default tick formatter and sizing (x: time, y: value + unit). */
 	scaleKey: string;
+	/** Axis title drawn alongside the ticks; omitted when there's nothing to name. */
 	label?: string;
+	/** Render the axis at all; false keeps the scale but draws no ticks or labels. */
 	show?: boolean;
-	side?: 0 | 1 | 2 | 3; // top, right, bottom, left
+	/** Which edge of the plot the axis sits on: 0 | 1 | 2 | 3 — top, right, bottom, left. */
+	side?: 0 | 1 | 2 | 3;
+	/** Tick/label color. Defaults to black or white from `isDarkMode`. */
 	stroke?: string;
+	/** Partial override of the grid lines; unset keys fall back to the theme defaults. */
 	grid?: {
 		stroke?: string;
 		width?: number;
 		show?: boolean;
 	};
+	/** Partial override of the tick marks; provided as-is to uPlot when set. */
 	ticks?: {
 		stroke?: string;
 		width?: number;
 		show?: boolean;
 		size?: number;
 	};
+	/** Explicit tick formatter, replacing the scale's default (time / unit-formatted). */
 	values?: uPlot.Axis.Values;
+	/** Explicit axis splits, overriding the default tick calculation. */
+	splits?: uPlot.Axis.Splits;
+	/** Pixels between the ticks and their labels; also feeds the y axis width calculation. */
 	gap?: number;
+	/** Explicit axis thickness. Left unset, the y axis sizes itself to its widest label. */
 	size?: uPlot.Axis.Size;
-	formatValue?: (v: number) => string;
-	space?: number; // Space for log scale axes
+	/** Minimum pixels between ticks, capping how many uPlot draws. For log scale axes. */
+	space?: number;
+	/** Picks the dark or light default for stroke and grid color. */
 	isDarkMode?: boolean;
+	/** Axis is on a log scale — thins the grid lines to keep dense decades readable. */
 	isLogScale?: boolean;
+	/** Unit the y axis ticks are formatted in (`spec.formatting.unit`). */
 	yAxisUnit?: string;
-	panelType?: PANEL_TYPES;
+	/**
+	 * X axis carries timestamps, so its ticks format as dates/times. Declared by the caller
+	 * rather than inferred from a panel type — a chart whose x axis is buckets or categories
+	 * (histogram) leaves it off.
+	 */
+	isTimeAxis?: boolean;
+	/** Decimal places for y axis tick values; unset lets the unit formatter decide. */
 	decimalPrecision?: PrecisionOption;
 }
 
@@ -173,6 +201,7 @@ export enum FillMode {
 
 export type ExtendedSeries = Series & {
 	metric?: { [key: string]: string };
+	partialTimestamps?: Set<number>;
 };
 
 export interface SeriesProps extends LineConfig, PointsConfig, BarConfig {
@@ -196,9 +225,13 @@ export interface SeriesProps extends LineConfig, PointsConfig, BarConfig {
 	spanGaps?: boolean | number;
 	fillColor?: string;
 	fillMode?: FillMode;
+	/** 0–1, for `Solid` and `Gradient`; unset uses `DEFAULT_FILL_OPACITY`. */
+	fillOpacity?: number;
 	isDarkMode?: boolean;
 	stepInterval?: number;
 	metric?: { [key: string]: string };
+	/** Epoch-second x values whose bucket doesn't cover a full step; marked with a dotted ring. */
+	partialTimestamps?: Set<number>;
 }
 
 export interface LegendItem {

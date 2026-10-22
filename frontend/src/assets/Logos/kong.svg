@@ -1,0 +1,24 @@
+<svg viewBox="0 0 44.8 40" xmlns="http://www.w3.org/2000/svg">
+	<defs>
+		<linearGradient id="kong-a" x1="38.204" x2="8.732" y1="18.417" y2="48.543" gradientUnits="userSpaceOnUse">
+			<stop stop-color="#11A06B" />
+			<stop offset="1" stop-color="#286FEB" />
+		</linearGradient>
+		<linearGradient id="kong-b" x1="38.107" x2="8.635" y1="18.322" y2="48.448" gradientUnits="userSpaceOnUse">
+			<stop stop-color="#11A06B" />
+			<stop offset="1" stop-color="#286FEB" />
+		</linearGradient>
+		<linearGradient id="kong-c" x1="29.439" x2="-0.033" y1="9.842" y2="39.968" gradientUnits="userSpaceOnUse">
+			<stop stop-color="#11A06B" />
+			<stop offset="1" stop-color="#286FEB" />
+		</linearGradient>
+		<linearGradient id="kong-d" x1="30.291" x2="0.819" y1="10.676" y2="40.801" gradientUnits="userSpaceOnUse">
+			<stop stop-color="#11A06B" />
+			<stop offset="1" stop-color="#286FEB" />
+		</linearGradient>
+	</defs>
+	<path d="m14.7 32.9-1.1 1.4 2.5 3.9-.3 1.8h10.6l.7-1.8-4.2-5.3z" fill="url(#kong-a)" />
+	<path d="M20.5 9.4 16.7 16l18.6 22-.5 2h8.5l1.5-7.1L24.9 9.4z" fill="url(#kong-b)" />
+	<path d="m23 4.4-1.8 3.3h4.5l7.7 9.2 4.6-3.8v-2.4l-1.6-2.2 1.2-1.2L28.4 0z" fill="url(#kong-c)" />
+	<path d="M9.1 22.9H6.6L0 31.3V40h7.1l1.3-1.6 5.5-7.1h7.9l2.4-3.7-8.6-10.2z" fill="url(#kong-d)" />
+</svg>

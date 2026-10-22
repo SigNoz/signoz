@@ -33,14 +33,20 @@ export const getRoutes = (
 	const isAdmin = userRole === USER_ROLES.ADMIN;
 	const isEditor = userRole === USER_ROLES.EDITOR;
 
-	if (isWorkspaceBlocked && isAdmin) {
-		settings.push(
-			...organizationSettings(t),
-			...membersSettings(t),
-			...mySettings(t),
-			...billingSettings(t),
-			...keyboardShortcuts(t),
-		);
+	if (isWorkspaceBlocked) {
+		if (isAdmin) {
+			settings.push(
+				...organizationSettings(t),
+				...membersSettings(t),
+				...mySettings(t),
+			);
+		}
+
+		settings.push(...billingSettings(t));
+
+		if (isAdmin) {
+			settings.push(...keyboardShortcuts(t));
+		}
 
 		return settings;
 	}
@@ -73,7 +79,7 @@ export const getRoutes = (
 		settings.push(...membersSettings(t));
 	}
 
-	if ((isCloudUser || isEnterpriseSelfHostedUser) && isAdmin) {
+	if (isCloudUser || isEnterpriseSelfHostedUser) {
 		settings.push(...billingSettings(t));
 	}
 

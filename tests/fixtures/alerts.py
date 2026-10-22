@@ -1,9 +1,13 @@
 import base64
 import json
+import re
 import time
+import urllib.parse
+import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
+from urllib.parse import urlparse
 
 import pytest
 import requests
@@ -13,6 +17,7 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
 from fixtures.logger import setup_logger
 from fixtures.logs import Logs
+from fixtures.maildev import get_all_mails, verify_email_received
 from fixtures.metrics import Metrics
 from fixtures.traces import Traces
 
@@ -56,6 +61,217 @@ def create_alert_rule(signoz: types.SigNoz, get_token: Callable[[str, str], str]
             _delete_alert_rule(rule_id)
         except Exception as e:  # pylint: disable=broad-exception-caught
             logger.error("Error deleting rule: %s", {"rule_id": rule_id, "error": e})
+
+
+@pytest.fixture(name="create_alert_rule_with_channel", scope="function")
+def create_alert_rule_with_channel(
+    notification_channel: types.TestContainerDocker,
+    create_webhook_notification_channel: Callable[[str, str, dict, bool], str],
+    create_alert_rule: Callable[[dict], str],
+) -> Callable[[str], str]:
+    """Creates the rule from the given testdata path with a throwaway webhook channel."""
+
+    def _create_alert_rule_with_channel(rule_path: str) -> str:
+        channel_name = str(uuid.uuid4())
+        create_webhook_notification_channel(
+            channel_name=channel_name,
+            webhook_url=notification_channel.container_configs["8080"].get(f"/alert/{channel_name}"),
+            http_config={},
+            send_resolved=False,
+        )
+
+        with open(get_testdata_file_path(rule_path), encoding="utf-8") as f:
+            rule_data = json.loads(f.read())
+        update_rule_channel_name(rule_data, channel_name)
+        return create_alert_rule(rule_data)
+
+    return _create_alert_rule_with_channel
+
+
+@pytest.fixture(name="create_route_policy", scope="function")
+def create_route_policy(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> Callable[[dict], str]:
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    policy_ids = []
+
+    def _create_route_policy(policy: dict) -> str:
+        response = requests.post(
+            signoz.self.host_configs["8080"].get("/api/v1/route_policies"),
+            json=policy,
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.CREATED, f"Failed to create route policy, api returned {response.status_code} with response: {response.text}"
+        policy_id = response.json()["data"]["id"]
+        policy_ids.append(policy_id)
+        return policy_id
+
+    yield _create_route_policy
+
+    for policy_id in policy_ids:
+        response = requests.delete(
+            signoz.self.host_configs["8080"].get(f"/api/v1/route_policies/{policy_id}"),
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=5,
+        )
+        if response.status_code != HTTPStatus.NO_CONTENT:
+            logger.error("Failed to delete route policy: %s", {"policy_id": policy_id, "status": response.status_code, "response": response.text})
+
+
+@pytest.fixture(name="create_downtime_schedule", scope="function")
+def create_downtime_schedule(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> Callable[[dict], str]:
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    schedules = {}
+
+    def _create_downtime_schedule(schedule: dict) -> str:
+        response = requests.post(
+            signoz.self.host_configs["8080"].get("/api/v1/downtime_schedules"),
+            json=schedule,
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.CREATED, f"Failed to create downtime schedule, api returned {response.status_code} with response: {response.text}"
+        schedule_id = response.json()["data"]["id"]
+        schedules[schedule_id] = schedule
+        return schedule_id
+
+    yield _create_downtime_schedule
+
+    for schedule_id, schedule in schedules.items():
+        # a schedule still referencing rules cannot be deleted
+        requests.put(
+            signoz.self.host_configs["8080"].get(f"/api/v1/downtime_schedules/{schedule_id}"),
+            json={**schedule, "alertIds": []},
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=5,
+        )
+        response = requests.delete(
+            signoz.self.host_configs["8080"].get(f"/api/v1/downtime_schedules/{schedule_id}"),
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=5,
+        )
+        if response.status_code != HTTPStatus.NO_CONTENT:
+            logger.error("Failed to delete downtime schedule: %s", {"schedule_id": schedule_id, "status": response.status_code, "response": response.text})
+
+
+def delete_all_rules(signoz: types.SigNoz, token: str) -> None:
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/rules"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK
+    for rule in response.json()["data"]:
+        delete_response = requests.delete(
+            signoz.self.host_configs["8080"].get(f"/api/v1/rules/{rule['id']}"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert delete_response.status_code == HTTPStatus.OK, f"failed to delete rule {rule['id']}: {delete_response.text}"
+
+
+@pytest.fixture(name="seed_alert_rules", scope="function")
+def seed_alert_rules(
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+    notification_channel: types.TestContainerDocker,
+    create_notification_channel: Callable[[dict], str],
+    create_alert_rule: Callable[[dict], str],
+) -> Callable[[str, list[dict]], None]:
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    # create_notification_channel rather than create_webhook_notification_channel:
+    # only the former deletes on teardown, and callers reuse one channel name
+    # across tests, so a leaked channel fails the next create as a duplicate.
+    def _seed_alert_rules(channel_name: str, rules: list[dict]) -> None:
+        delete_all_rules(signoz, admin_token)
+        create_notification_channel(
+            {
+                "name": channel_name,
+                "webhook_configs": [{"url": notification_channel.container_configs["8080"].get(f"/alert/{channel_name}"), "send_resolved": False}],
+            }
+        )
+        for rule in rules:
+            create_alert_rule(rule)
+
+    return _seed_alert_rules
+
+
+def labels_to_map(labels: list[dict]) -> dict[str, str]:
+    """Converts the label list shape of the v2 rule history APIs to a plain map."""
+    return {label["key"]["name"]: label["value"] for label in labels or []}
+
+
+def parse_related_link(link: str) -> dict:
+    """Parses the query params of a related logs/traces explorer link."""
+    params = urllib.parse.parse_qs(link)
+    for key in ("compositeQuery", "startTime", "endTime"):
+        assert key in params, f"related link is missing param {key}, link: {link}"
+    return {
+        "start": int(params["startTime"][0]),
+        "end": int(params["endTime"][0]),
+        # the compositeQuery value is query-escaped before being encoded into
+        # the params, so it needs one more unquote than the other params
+        "composite_query": json.loads(urllib.parse.unquote_plus(params["compositeQuery"][0])),
+    }
+
+
+def assert_related_link_query(link: dict, data_source: str, expression_pieces: list[str]) -> None:
+    query_data = link["composite_query"]["builder"]["queryData"]
+    assert len(query_data) == 1
+    assert query_data[0]["dataSource"] == data_source
+    expression = query_data[0]["filter"]["expression"]
+    for piece in expression_pieces:
+        assert piece in expression, f"expected {piece} in link filter expression: {expression}"
+
+
+def wait_for_firing_timeline_entry(signoz: types.SigNoz, token: str, rule_id: str, start_ms: int, wait_seconds: int = 60) -> tuple[dict, int]:
+    """Polls the v2 timeline API until the rule records a firing entry.
+
+    Rules in the alert scenarios evaluate every 15s and their data is set up to
+    fire on the first evaluation, so the default wait leaves plenty of slack.
+    Returns the firing entry and the end of the queried range.
+    """
+    deadline = time.time() + wait_seconds
+    items = []
+    while time.time() < deadline:
+        end_ms = int(datetime.now(tz=UTC).timestamp() * 1000) + 60_000
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(f"/api/v2/rules/{rule_id}/history/timeline"),
+            params={"start": start_ms, "end": end_ms, "limit": 50, "order": "desc"},
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK, f"Failed to get rule history timeline, api returned {response.status_code} with response: {response.text}"
+        items = response.json()["data"]["items"] or []
+        firing = [item for item in items if item["state"] == "firing"]
+        if len(firing) > 0:
+            return (firing[0], end_ms)
+        time.sleep(2)
+
+    raise AssertionError(f"No firing entry recorded in rule state history within {wait_seconds}s, items: {items}")
+
+
+def get_rule(signoz: types.SigNoz, token: str, rule_id: str) -> dict:
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v2/rules/{rule_id}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, f"Failed to get rule, api returned {response.status_code} with response: {response.text}"
+    return response.json()["data"]
+
+
+def get_rule_history_top_contributors(signoz: types.SigNoz, token: str, rule_id: str, start_ms: int, end_ms: int) -> list[dict]:
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v2/rules/{rule_id}/history/top_contributors"),
+        params={"start": start_ms, "end": end_ms},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, f"Failed to get rule history top contributors, api returned {response.status_code} with response: {response.text}"
+    return response.json()["data"] or []
 
 
 @pytest.fixture(name="insert_alert_data", scope="function")
@@ -218,3 +434,172 @@ def update_rule_channel_name(rule_data: dict, channel_name: str):
         # loop over all the sepcs and update the channels
         for spec in thresholds["spec"]:
             spec["channels"] = [channel_name]
+
+
+def _is_json_subset(subset, superset) -> bool:
+    """Check if subset is contained within superset recursively.
+    - For dicts: all keys in subset must exist in superset with matching values
+    - For lists: all items in subset must be present in superset
+    - For scalars: exact equality
+    """
+    if isinstance(subset, dict):
+        if not isinstance(superset, dict):
+            return False
+        return all(key in superset and _is_json_subset(value, superset[key]) for key, value in subset.items())
+    if isinstance(subset, list):
+        if not isinstance(superset, list):
+            return False
+        return all(any(_is_json_subset(sub_item, sup_item) for sup_item in superset) for sub_item in subset)
+    if isinstance(subset, re.Pattern):
+        return isinstance(superset, str) and subset.search(superset) is not None
+    return subset == superset
+
+
+def verify_webhook_notification_expectation(
+    notification_channel: types.TestContainerDocker,
+    validation_data: dict,
+) -> bool:
+    """Check that wiremock received the expected request(s) at the given path.
+
+    validation_data supports (all optional except one of path/path_pattern):
+      - path: request url path (matched as urlPath, so query strings are ignored)
+      - path_pattern: url path regex instead of path, for paths that embed a
+        dynamic segment (e.g. a group-hash alias)
+      - json_body: expected JSON subset of the request body
+      - count: exact number of requests required at the path
+      - min_count: minimum number of requests required (e.g. retries)
+    The body constraint must be satisfied by a single request; count constraints
+    apply to the total at the path."""
+    path = validation_data.get("path")
+    json_body = validation_data.get("json_body")
+    # urlPath ignores query strings; real webhook urls may carry their own (e.g. key/token).
+    matcher = {"method": "POST", "urlPath": path} if path is not None else {"method": "POST", "urlPathPattern": validation_data["path_pattern"]}
+
+    url = notification_channel.host_configs["8080"].get("__admin/requests/find")
+    try:
+        res = requests.post(url, json=matcher, timeout=10)
+    except requests.exceptions.RequestException:
+        return False
+    if res.status_code != HTTPStatus.OK:
+        return False
+
+    reqs = res.json()["requests"]
+    if "count" in validation_data and len(reqs) != validation_data["count"]:
+        return False
+    if "min_count" in validation_data and len(reqs) < validation_data["min_count"]:
+        return False
+
+    if json_body is None:
+        return True
+
+    for req in reqs:
+        body = json.loads(base64.b64decode(req["bodyAsBase64"]).decode("utf-8"))
+        if _is_json_subset(json_body, body):
+            return True
+    return False
+
+
+def _check_notification_validation(
+    validation: types.NotificationValidation,
+    notification_channel: types.TestContainerDocker,
+    maildev: types.TestContainerDocker,
+) -> bool:
+    """Dispatch a single validation check to the appropriate verifier."""
+    if validation.destination_type == "webhook":
+        return verify_webhook_notification_expectation(notification_channel, validation.validation_data)
+    if validation.destination_type == "email":
+        return verify_email_received(maildev, validation.validation_data)
+    raise ValueError(f"Invalid destination type: {validation.destination_type}")
+
+
+def verify_notification_expectation(
+    notification_channel: types.TestContainerDocker,
+    maildev: types.TestContainerDocker,
+    expected_notification: types.AMNotificationExpectation,
+) -> bool:
+    """Poll for expected notifications across webhook and email channels."""
+    time_to_wait = datetime.now() + timedelta(seconds=expected_notification.wait_time_seconds)
+
+    while datetime.now() < time_to_wait:
+        all_found = all(_check_notification_validation(v, notification_channel, maildev) for v in expected_notification.notification_validations)
+
+        if expected_notification.should_notify and all_found:
+            logger.info("All expected notifications found")
+            return True
+
+        time.sleep(1)
+
+    # Timeout reached
+    if not expected_notification.should_notify:
+        # Verify no notifications were received
+        for validation in expected_notification.notification_validations:
+            found = _check_notification_validation(validation, notification_channel, maildev)
+            assert not found, f"Expected no notification but found one for {validation.destination_type} with data {validation.validation_data}"
+        logger.info("No notifications found, as expected")
+        return True
+
+    missing = [v for v in expected_notification.notification_validations if not _check_notification_validation(v, notification_channel, maildev)]
+    assert len(missing) == 0, f"Expected all notifications to be found but missing: {missing}, received: {_received_notifications(notification_channel, maildev, missing)}"
+    return True
+
+
+def _received_notifications(
+    notification_channel: types.TestContainerDocker,
+    maildev: types.TestContainerDocker,
+    missing: list[types.NotificationValidation],
+) -> dict:
+    received = {}
+    if any(v.destination_type == "webhook" for v in missing):
+        webhook_bodies = []
+        for validation in missing:
+            if validation.destination_type != "webhook":
+                continue
+            url = notification_channel.host_configs["8080"].get("__admin/requests/find")
+            path = validation.validation_data.get("path")
+            matcher = {"method": "POST", "urlPath": path} if path is not None else {"method": "POST", "urlPathPattern": validation.validation_data["path_pattern"]}
+            try:
+                res = requests.post(url, json=matcher, timeout=10)
+                webhook_bodies.extend(json.loads(base64.b64decode(req["bodyAsBase64"]).decode("utf-8")) for req in res.json()["requests"])
+            except requests.exceptions.RequestException as exc:
+                webhook_bodies.append(f"<failed to fetch wiremock journal: {exc}>")
+        received["webhook"] = webhook_bodies
+    if any(v.destination_type == "email" for v in missing):
+        received["email"] = get_all_mails(maildev)
+    return received
+
+
+def update_raw_channel_config(
+    channel_config: dict,
+    channel_name: str,
+    notification_channel: types.TestContainerDocker,
+) -> dict:
+    """
+    Updates the channel config to point to the given wiremock
+    notification_channel container to receive notifications.
+    """
+    config = channel_config.copy()
+
+    config["name"] = channel_name
+
+    url_field_map = {
+        "slack_configs": "api_url",
+        "msteamsv2_configs": "webhook_url",
+        "webhook_configs": "url",
+        "pagerduty_configs": "url",
+        "opsgenie_configs": "api_url",
+        "googlechat_configs": "webhook_url",
+        "incidentio_configs": "url",
+    }
+
+    for config_key, url_field in url_field_map.items():
+        if config_key in config:
+            for entry in config[config_key]:
+                if url_field in entry:
+                    original_url = entry[url_field]
+                    path = urlparse(original_url).path
+                    entry[url_field] = notification_channel.container_configs["8080"].get(path)
+
+    for entry in config.get("jira_configs", []):
+        entry["site"] = notification_channel.container_configs["8080"].base()
+
+    return config

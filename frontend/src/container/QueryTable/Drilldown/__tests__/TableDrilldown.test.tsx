@@ -58,16 +58,6 @@ jest.mock('react-redux', () => ({
 	}),
 }));
 
-jest.mock('container/QueryTable/Drilldown/useDashboardVarConfig', () => ({
-	__esModule: true,
-	default: (): any => ({
-		dashbaordVariablesConfig: {
-			items: <>items</>,
-		},
-		// contextItems: <></>,
-	}),
-}));
-
 function MockTableDrilldown(): JSX.Element {
 	const {
 		coordinates,

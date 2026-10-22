@@ -211,10 +211,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		lb.Set(ruletypes.AlertRuleIDLabel, r.ID())
 		lb.Set(ruletypes.RuleSourceLabel, r.GeneratorURL())
 
-		annotations := make(ruletypes.Labels, 0, len(r.annotations.Map()))
-		for name, value := range r.annotations.Map() {
-			annotations = append(annotations, ruletypes.Label{Name: name, Value: expand(value)})
-		}
+		annotations := r.ExpandAnnotations(expand)
 		if result.IsMissing {
 			lb.Set(ruletypes.AlertNameLabel, "[No data] "+r.Name())
 			lb.Set(ruletypes.NoDataLabel, "true")
@@ -359,7 +356,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 
 func (r *PromRule) String() string {
 	ar := ruletypes.PostableRule{
-		AlertName:         r.name,
+		AlertName:         valuer.NewDisplayName(r.name),
 		RuleCondition:     r.ruleCondition,
 		EvalWindow:        r.evalWindow,
 		Labels:            r.labels.Map(),
@@ -376,18 +373,7 @@ func (r *PromRule) String() string {
 }
 
 func (r *PromRule) RunAlertQuery(ctx context.Context, qs string, start, end time.Time, interval time.Duration) (promql.Matrix, error) {
-	q, err := r.prometheus.Engine().NewRangeQuery(ctx, r.prometheus.Storage(), nil, qs, start, end, interval)
-	if err != nil {
-		return nil, err
-	}
-
-	res := q.Exec(ctx)
-
-	if res.Err != nil {
-		return nil, res.Err
-	}
-
-	err = prometheus.RemoveExtraLabels(res, prometheus.FingerprintAsPromLabelName)
+	res, err := r.prometheus.QueryRange(ctx, qs, start, end, interval)
 	if err != nil {
 		return nil, err
 	}

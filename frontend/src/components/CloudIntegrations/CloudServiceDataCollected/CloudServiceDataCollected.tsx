@@ -3,16 +3,19 @@ import {
 	CloudintegrationtypesCollectedLogAttributeDTO,
 	CloudintegrationtypesCollectedMetricDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { BarChart, ScrollText } from '@signozhq/icons';
+import { BarChart, Info, ScrollText } from '@signozhq/icons';
+import { Tooltip } from '@signozhq/ui/tooltip';
 
 import './CloudServiceDataCollected.styles.scss';
 
 function CloudServiceDataCollected({
 	logsData,
 	metricsData,
+	metricsInfoTooltip,
 }: {
 	logsData: CloudintegrationtypesCollectedLogAttributeDTO[] | null | undefined;
 	metricsData: CloudintegrationtypesCollectedMetricDTO[] | null | undefined;
+	metricsInfoTooltip?: string;
 }): JSX.Element {
 	const logsColumns = [
 		{
@@ -84,6 +87,17 @@ function CloudServiceDataCollected({
 					<div className="cloud-service-data-collected-table-heading">
 						<BarChart size={14} />
 						Metrics
+						{metricsInfoTooltip && (
+							<Tooltip title={metricsInfoTooltip} side="top">
+								<span
+									className="cloud-service-data-collected-table-heading-info"
+									aria-label="About the metrics listed below"
+									data-testid="data-collected-metrics-info"
+								>
+									<Info size={12} />
+								</span>
+							</Tooltip>
+						)}
 					</div>
 					<Table
 						columns={metricsColumns}
@@ -96,5 +110,9 @@ function CloudServiceDataCollected({
 		</div>
 	);
 }
+
+CloudServiceDataCollected.defaultProps = {
+	metricsInfoTooltip: undefined,
+};
 
 export default CloudServiceDataCollected;

@@ -155,7 +155,7 @@ def test_create_api_key_with_expiry(
 
     # key should work since it hasn't expired
     dash_resp = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
+        signoz.self.host_configs["8080"].get("/api/v2/dashboards"),
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
     )
@@ -211,7 +211,7 @@ def test_create_api_key_no_expiry(
     api_key = response.json()["data"]["key"]
 
     dash_resp = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
+        signoz.self.host_configs["8080"].get("/api/v2/dashboards"),
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
     )
@@ -259,7 +259,7 @@ def test_update_api_key_expiry(
 
     # key should still work since the update was rejected
     dash_resp = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
+        signoz.self.host_configs["8080"].get("/api/v2/dashboards"),
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
     )

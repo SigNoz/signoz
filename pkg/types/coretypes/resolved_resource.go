@@ -30,6 +30,19 @@ func NewResolvedResource(
 	return resolved
 }
 
+func NewResolvedResourceWithID(verb Verb, category ActionCategory, resource Resource, id string, selector SelectorFunc) ResolvedResource {
+	resolved := &resolvedResource{verb: verb, category: category, resource: resource, selector: selector}
+	if id != "" {
+		resolved.ids = []string{id}
+	}
+
+	return resolved
+}
+
+func NewResolvedResourceWithError(verb Verb, category ActionCategory, err error) ResolvedResource {
+	return &resolvedResource{verb: verb, category: category, err: err}
+}
+
 func (resolved *resolvedResource) fill(phase ExtractPhase, ec ExtractorContext) {
 	if !resolved.idExtractor.IsPhase(phase) {
 		return

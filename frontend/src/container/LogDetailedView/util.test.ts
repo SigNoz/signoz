@@ -1,11 +1,120 @@
+import { ILog } from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import {
+	aggregateAttributesResourcesToObject,
+	buildPrettyViewData,
 	flattenObject,
 	getDataTypes,
 	getSanitizedLogBody,
+	parseJsonStringValue,
 	recursiveParseJSON,
 } from './utils';
+
+describe('parseJsonStringValue', () => {
+	it('parses a JSON-object string into an object', () => {
+		expect(parseJsonStringValue('{"a":1,"b":{"c":2}}')).toStrictEqual({
+			a: 1,
+			b: { c: 2 },
+		});
+	});
+
+	it('parses a JSON-array string into an array', () => {
+		expect(parseJsonStringValue('[1,2,3]')).toStrictEqual([1, 2, 3]);
+	});
+
+	it('returns a plain (non-JSON) string unchanged', () => {
+		expect(parseJsonStringValue('plain log line')).toBe('plain log line');
+	});
+
+	it('returns a string that is not object/array-looking unchanged', () => {
+		expect(parseJsonStringValue('42')).toBe('42');
+	});
+
+	it('returns an invalid JSON string unchanged', () => {
+		expect(parseJsonStringValue('{not valid}')).toBe('{not valid}');
+	});
+
+	it('returns an already-object value unchanged (same reference)', () => {
+		const value = { message: 'hi', a: 1 };
+		expect(parseJsonStringValue(value)).toBe(value);
+	});
+
+	it('leaves a value larger than the 128KB parse guard as a string', () => {
+		const huge = `{"x":"${'a'.repeat(130 * 1024)}"}`;
+		expect(parseJsonStringValue(huge)).toBe(huge);
+	});
+});
+
+describe('buildPrettyViewData', () => {
+	const baseRaw = {
+		id: 'log-1',
+		timestamp: 1234,
+		body: 'hello',
+		attributes: {},
+		resource: {},
+		scope: {},
+	} as any;
+
+	it('parses a JSON-string body into a tree', () => {
+		const result = buildPrettyViewData({ ...baseRaw, body: '{"a":1}' });
+		expect(result.body).toStrictEqual({ a: 1 });
+	});
+
+	it('parses attribute values that are JSON strings, leaves others as-is', () => {
+		const result = buildPrettyViewData({
+			...baseRaw,
+			attributes: { payload: '{"x":1}', name: 'cart', count: 3 },
+		});
+		expect(result.attributes).toStrictEqual({
+			payload: { x: 1 },
+			name: 'cart',
+			count: 3,
+		});
+	});
+
+	it('drops undefined fields so they do not render as empty rows', () => {
+		const result = buildPrettyViewData({ ...baseRaw, trace_id: undefined });
+		expect('trace_id' in result).toBe(false);
+	});
+});
+
+describe('aggregateAttributesResourcesToObject', () => {
+	const mockLog = {
+		id: 'log-1',
+		timestamp: 1234,
+		body: 'hello',
+		severity_text: 'INFO',
+		severity_number: 9,
+		attributes_string: { 'http.method': 'GET' },
+		attributes_int: { retries: 3 },
+		resources_string: { 'service.name': 'cart' },
+		scope_string: { lib: 'otel' },
+	} as unknown as ILog;
+
+	it('merges attributes_/resources_/scope_ maps and keeps scalars + body', () => {
+		const result = aggregateAttributesResourcesToObject(mockLog);
+
+		expect(result.attributes).toStrictEqual({
+			'http.method': 'GET',
+			retries: 3,
+		});
+		expect(result.resource).toStrictEqual({ 'service.name': 'cart' });
+		expect(result.scope).toStrictEqual({ lib: 'otel' });
+		expect(result.body).toBe('hello');
+		expect(result.id).toBe('log-1');
+		expect(result.severity_text).toBe('INFO');
+	});
+
+	it('does not parse a JSON-string body (leaves it raw)', () => {
+		const result = aggregateAttributesResourcesToObject({
+			...mockLog,
+			body: '{"a":1}',
+		} as unknown as ILog);
+
+		expect(result.body).toBe('{"a":1}');
+	});
+});
 
 describe('recursiveParseJSON', () => {
 	it('should return an empty object if the input is not valid JSON', () => {

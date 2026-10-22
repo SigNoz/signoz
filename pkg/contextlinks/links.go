@@ -2,329 +2,119 @@ package contextlinks
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/url"
+	"slices"
 	"strconv"
+	"strings"
 	"time"
 
-	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-func PrepareLinksToTraces(start, end time.Time, filterItems []v3.FilterItem) string {
-
-	// Traces list view expects time in nanoseconds
-	tr := URLShareableTimeRange{
-		Start:    start.UnixNano(),
-		End:      end.UnixNano(),
-		PageSize: 100,
-	}
-
-	options := URLShareableOptions{
-		MaxLines:      2,
-		Format:        "list",
-		SelectColumns: tracesV3.TracesListViewDefaultSelectedColumns,
-	}
-
-	period, _ := json.Marshal(tr)
-	urlEncodedTimeRange := url.QueryEscape(string(period))
-
-	builderQuery := v3.BuilderQuery{
-		DataSource:         v3.DataSourceTraces,
-		QueryName:          "A",
-		AggregateOperator:  v3.AggregateOperatorNoOp,
-		AggregateAttribute: v3.AttributeKey{},
-		Filters: &v3.FilterSet{
-			Items:    filterItems,
-			Operator: "AND",
-		},
-		Expression:   "A",
-		Disabled:     false,
-		Having:       []v3.Having{},
-		StepInterval: 60,
-		OrderBy: []v3.OrderBy{
-			{
-				ColumnName: "timestamp",
-				Order:      "desc",
-			},
-		},
-	}
-
-	urlData := URLShareableCompositeQuery{
-		QueryType: string(v3.QueryTypeBuilder),
-		Builder: URLShareableBuilderQuery{
-			QueryData: []LinkQuery{
-				{BuilderQuery: builderQuery},
-			},
-			QueryFormulas: make([]string, 0),
-		},
-	}
-
-	data, _ := json.Marshal(urlData)
-	compositeQuery := url.QueryEscape(url.QueryEscape(string(data)))
-
-	optionsData, _ := json.Marshal(options)
-	urlEncodedOptions := url.QueryEscape(string(optionsData))
-
-	return fmt.Sprintf("compositeQuery=%s&timeRange=%s&startTime=%d&endTime=%d&options=%s", compositeQuery, urlEncodedTimeRange, tr.Start, tr.End, urlEncodedOptions)
+// PrepareParamsForTracesV5 returns the traces explorer query params for the
+// given range and filter; the traces explorer writes its time params in
+// nanoseconds. queryType is builder_ai_query for the AI observability explorer.
+func PrepareParamsForTracesV5(start, end time.Time, whereClause string, queryType qbtypes.QueryType) url.Values {
+	return prepareExplorerParams("traces", queryType, start.UnixNano(), end.UnixNano(), whereClause)
 }
 
-func PrepareLinksToLogs(start, end time.Time, filterItems []v3.FilterItem) string {
-
-	// Logs list view expects time in milliseconds
-	tr := URLShareableTimeRange{
-		Start:    start.UnixMilli(),
-		End:      end.UnixMilli(),
-		PageSize: 100,
-	}
-
-	options := URLShareableOptions{
-		MaxLines:      2,
-		Format:        "list",
-		SelectColumns: []v3.AttributeKey{},
-	}
-
-	period, _ := json.Marshal(tr)
-	urlEncodedTimeRange := url.QueryEscape(string(period))
-
-	builderQuery := v3.BuilderQuery{
-		DataSource:         v3.DataSourceLogs,
-		QueryName:          "A",
-		AggregateOperator:  v3.AggregateOperatorNoOp,
-		AggregateAttribute: v3.AttributeKey{},
-		Filters: &v3.FilterSet{
-			Items:    filterItems,
-			Operator: "AND",
-		},
-		Expression:   "A",
-		Disabled:     false,
-		Having:       []v3.Having{},
-		StepInterval: 60,
-		OrderBy: []v3.OrderBy{
-			{
-				ColumnName: "timestamp",
-				Order:      "desc",
-			},
-		},
-	}
-
-	urlData := URLShareableCompositeQuery{
-		QueryType: string(v3.QueryTypeBuilder),
-		Builder: URLShareableBuilderQuery{
-			QueryData: []LinkQuery{
-				{BuilderQuery: builderQuery},
-			},
-			QueryFormulas: make([]string, 0),
-		},
-	}
-
-	data, _ := json.Marshal(urlData)
-	compositeQuery := url.QueryEscape(url.QueryEscape(string(data)))
-
-	optionsData, _ := json.Marshal(options)
-	urlEncodedOptions := url.QueryEscape(string(optionsData))
-
-	return fmt.Sprintf("compositeQuery=%s&timeRange=%s&startTime=%d&endTime=%d&options=%s", compositeQuery, urlEncodedTimeRange, tr.Start, tr.End, urlEncodedOptions)
-}
-
-// The following function is used to prepare the where clause for the query
-// `lbls` contains the key value pairs of the labels from the result of the query
-// We iterate over the where clause and replace the labels with the actual values
-// There are two cases:
-// 1. The label is present in the where clause
-// 2. The label is not present in the where clause
-//
-// Example for case 2:
-// Latency by serviceName without any filter
-// In this case, for each service with latency > threshold we send a notification
-// The expectation will be that clicking on the related traces for service A, will
-// take us to the traces page with the filter serviceName=A
-// So for all the missing labels in the where clause, we add them as key = value
-//
-// Example for case 1:
-// Severity text IN (WARN, ERROR)
-// In this case, the Severity text will appear in the `lbls` if it were part of the group
-// by clause, in which case we replace it with the actual value for the notification
-// i.e Severity text = WARN
-// If the Severity text is not part of the group by clause, then we add it as it is.
-func PrepareFilters(labels map[string]string, whereClauseItems []v3.FilterItem, groupByItems []v3.AttributeKey, keys map[string]v3.AttributeKey) []v3.FilterItem {
-	filterItems := make([]v3.FilterItem, 0)
-
-	//delete predefined alert labels
-	for _, label := range PredefinedAlertLabels {
-		delete(labels, label)
-	}
-
-	added := make(map[string]struct{})
-
-	for _, item := range whereClauseItems {
-		exists := false
-		for key, value := range labels {
-			if item.Key.Key == key {
-				// if the label is present in the where clause, replace it with key = value
-				filterItems = append(filterItems, v3.FilterItem{
-					Key:      item.Key,
-					Operator: v3.FilterOperatorEqual,
-					Value:    value,
-				})
-				exists = true
-				added[key] = struct{}{}
-				break
-			}
-		}
-
-		if !exists {
-			// if there is no label for the filter item, add it as it is
-			filterItems = append(filterItems, item)
-		}
-	}
-
-	// if there are labels which are not part of the where clause, but
-	// exist in the result, then they could be part of the group by clause
-	for key, value := range labels {
-		if _, ok := added[key]; !ok {
-			// start by taking the attribute key from the keys map, if not present, create a new one
-			var attributeKey v3.AttributeKey
-			var attrFound bool
-
-			// as of now this logic will only apply for logs
-			for _, tKey := range utils.GenerateEnrichmentKeys(v3.AttributeKey{Key: key}) {
-				if val, ok := keys[tKey]; ok {
-					attributeKey = val
-					attrFound = true
-					break
-				}
-			}
-
-			// check if the attribute key is directly present, as of now this will always be false for logs
-			// as for logs it will be satisfied in the condition above
-			if !attrFound {
-				attributeKey, attrFound = keys[key]
-			}
-
-			// if the attribute key is not present, create a new one
-			if !attrFound {
-				attributeKey = v3.AttributeKey{Key: key}
-			}
-
-			// if there is a group by item with the same key, use that instead
-			for _, groupByItem := range groupByItems {
-				if groupByItem.Key == key {
-					attributeKey = groupByItem
-					break
-				}
-			}
-
-			filterItems = append(filterItems, v3.FilterItem{
-				Key:      attributeKey,
-				Operator: v3.FilterOperatorEqual,
-				Value:    value,
-			})
-		}
-	}
-
-	return filterItems
-}
-
-func PrepareParamsForTracesV5(start, end time.Time, whereClause string) url.Values {
-
-	// Traces list view expects time in nanoseconds
-	tr := URLShareableTimeRange{
-		Start:    start.UnixNano(),
-		End:      end.UnixNano(),
-		PageSize: 100,
-	}
-
-	options := URLShareableOptions{}
-
-	period, _ := json.Marshal(tr)
-
-	linkQuery := LinkQuery{
-		BuilderQuery: v3.BuilderQuery{
-			DataSource:         v3.DataSourceTraces,
-			QueryName:          "A",
-			AggregateOperator:  v3.AggregateOperatorNoOp,
-			AggregateAttribute: v3.AttributeKey{},
-			Expression:         "A",
-			Disabled:           false,
-			Having:             []v3.Having{},
-			StepInterval:       60,
-		},
-		Filter: &FilterExpression{Expression: whereClause},
-	}
-
-	urlData := URLShareableCompositeQuery{
-		QueryType: string(v3.QueryTypeBuilder),
-		Builder: URLShareableBuilderQuery{
-			QueryData: []LinkQuery{
-				linkQuery,
-			},
-			QueryFormulas: make([]string, 0),
-		},
-	}
-
-	data, _ := json.Marshal(urlData)
-	compositeQuery := url.QueryEscape(string(data))
-
-	optionsData, _ := json.Marshal(options)
-
-	params := url.Values{}
-	params.Set("compositeQuery", compositeQuery)
-	params.Set("timeRange", string(period))
-	params.Set("startTime", strconv.FormatInt(tr.Start, 10))
-	params.Set("endTime", strconv.FormatInt(tr.End, 10))
-	params.Set("options", string(optionsData))
-	return params
-}
-
+// PrepareParamsForLogsV5 returns the logs explorer query params for the given
+// range and filter; the logs explorer writes its time params in milliseconds.
 func PrepareParamsForLogsV5(start, end time.Time, whereClause string) url.Values {
+	return prepareExplorerParams("logs", qbtypes.QueryTypeBuilder, start.UnixMilli(), end.UnixMilli(), whereClause)
+}
 
-	// Logs list view expects time in milliseconds
-	tr := URLShareableTimeRange{
-		Start:    start.UnixMilli(),
-		End:      end.UnixMilli(),
-		PageSize: 100,
-	}
-
-	options := URLShareableOptions{}
-
-	period, _ := json.Marshal(tr)
-
-	linkQuery := LinkQuery{
-		BuilderQuery: v3.BuilderQuery{
-			DataSource:         v3.DataSourceLogs,
-			QueryName:          "A",
-			AggregateOperator:  v3.AggregateOperatorNoOp,
-			AggregateAttribute: v3.AttributeKey{},
-			Expression:         "A",
-			Disabled:           false,
-			Having:             []v3.Having{},
-			StepInterval:       60,
-		},
-		Filter: &FilterExpression{Expression: whereClause},
+// The end link is double encoded because otherwise a filter expression with `%` somewhere in it breaks.
+func prepareExplorerParams(dataSource string, queryType qbtypes.QueryType, start, end int64, whereClause string) url.Values {
+	// builder_query is the explorer default, so it is left out to keep existing links unchanged
+	builderQueryType := ""
+	if queryType != qbtypes.QueryTypeBuilder {
+		builderQueryType = queryType.StringValue()
 	}
 
 	urlData := URLShareableCompositeQuery{
-		QueryType: string(v3.QueryTypeBuilder),
+		QueryType: "builder",
 		Builder: URLShareableBuilderQuery{
-			QueryData: []LinkQuery{
-				linkQuery,
-			},
+			QueryData: []LinkQuery{{
+				DataSource:       dataSource,
+				BuilderQueryType: builderQueryType,
+				Filter:           &FilterExpression{Expression: whereClause},
+			}},
 			QueryFormulas: make([]string, 0),
 		},
 	}
 
 	data, _ := json.Marshal(urlData)
-	compositeQuery := url.QueryEscape(string(data))
-
-	optionsData, _ := json.Marshal(options)
 
 	params := url.Values{}
-	params.Set("compositeQuery", compositeQuery)
-	params.Set("timeRange", string(period))
-	params.Set("startTime", strconv.FormatInt(tr.Start, 10))
-	params.Set("endTime", strconv.FormatInt(tr.End, 10))
-	params.Set("options", string(optionsData))
+	params.Set("compositeQuery", url.QueryEscape(string(data)))
+	params.Set("startTime", strconv.FormatInt(start, 10))
+	params.Set("endTime", strconv.FormatInt(end, 10))
 	return params
+}
+
+func PrepareRuleFilterExpression(condition *ruletypes.RuleCondition, signal telemetrytypes.Signal, labels map[string]string) (string, bool, error) {
+	var expressions []string
+	if condition != nil && condition.CompositeQuery != nil {
+		names, err := resolveSelectedQueryNames(condition)
+		if err != nil {
+			return "", false, err
+		}
+		switch signal {
+		case telemetrytypes.SignalLogs:
+			expressions = prepareFilterExpressions[qbtypes.LogAggregation](condition.CompositeQuery.Queries, names, signal, labels)
+		case telemetrytypes.SignalTraces:
+			expressions = prepareFilterExpressions[qbtypes.TraceAggregation](condition.CompositeQuery.Queries, names, signal, labels)
+		}
+	}
+
+	switch {
+	case len(expressions) == 0:
+		// a ClickHouse SQL alert has no builder query; its link filters on the labels alone
+		return PrepareFilterExpression(labels, "", nil), false, nil
+	case len(expressions) == 1:
+		return expressions[0], true, nil
+	case slices.Contains(expressions, ""):
+		// an unfiltered formula input matches everything, so the merged filter does too
+		return "", true, nil
+	}
+	// the explorer list views render one query only, so a formula's inputs merge into one filter
+	return "(" + strings.Join(expressions, ") OR (") + ")", true, nil
+}
+
+func resolveSelectedQueryNames(condition *ruletypes.RuleCondition) ([]string, error) {
+	selected := condition.SelectedQueryName()
+	for _, query := range condition.CompositeQuery.Queries {
+		if query.GetQueryName() != selected {
+			continue
+		}
+		if formula, ok := query.Spec.(qbtypes.QueryBuilderFormula); ok {
+			return formula.ExtractReferencedQueryNames()
+		}
+		return []string{selected}, nil
+	}
+	return nil, nil
+}
+
+func prepareFilterExpressions[T any](queries []qbtypes.QueryEnvelope, names []string, signal telemetrytypes.Signal, labels map[string]string) []string {
+	var expressions []string
+	for _, query := range queries {
+		if query.Type != qbtypes.QueryTypeBuilder && query.Type != qbtypes.QueryTypeBuilderAI {
+			continue
+		}
+		spec, ok := query.Spec.(qbtypes.QueryBuilderQuery[T])
+		// spec.Disabled is deliberately not checked: a formula's inputs are
+		// usually hidden in the UI but must still make it into the link
+		if !ok || spec.Signal != signal || !slices.Contains(names, spec.Name) {
+			continue
+		}
+		filterExpr := ""
+		if spec.Filter != nil {
+			filterExpr = spec.Filter.Expression
+		}
+		expressions = append(expressions, PrepareFilterExpression(labels, filterExpr, spec.GroupBy))
+	}
+	return expressions
 }

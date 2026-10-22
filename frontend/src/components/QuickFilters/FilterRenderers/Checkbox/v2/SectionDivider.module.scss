@@ -1,0 +1,29 @@
+.divider {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-4);
+	padding: var(--spacing-2) 0;
+
+	margin-bottom: calc(-1 * var(--spacing-4));
+}
+
+.line {
+	flex: 1;
+	height: 1px;
+	background: var(--l1-border);
+}
+
+.label {
+	font-size: var(--periscope-font-size-small);
+	font-weight: var(--font-weight-semibold);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: var(--l3-foreground);
+	white-space: nowrap;
+}
+
+.infoIcon {
+	color: var(--l3-foreground);
+	cursor: help;
+	flex-shrink: 0;
+}

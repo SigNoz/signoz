@@ -1,0 +1,9 @@
+.denied {
+	display: contents;
+}
+
+// The popup is portalled away from its trigger, so the content marks it.
+:global([data-slot='tooltip-content']):has(.denied) {
+	--tooltip-background-color: var(--callout-error-background);
+	--tooltip-border-color: var(--callout-error-border);
+}

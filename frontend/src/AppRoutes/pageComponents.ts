@@ -53,17 +53,6 @@ export const TracesFunnelDetails = Loadable(
 		),
 );
 
-export const TraceFilter = Loadable(
-	() => import(/* webpackChunkName: "Trace Filter Page" */ 'pages/Trace'),
-);
-
-export const TraceDetailOldRedirect = Loadable(
-	() =>
-		import(
-			/* webpackChunkName: "TraceDetailOldRedirect" */ 'pages/TraceDetailOldRedirect/index'
-		),
-);
-
 export const TraceDetailV3 = Loadable(
 	() =>
 		import(
@@ -102,15 +91,10 @@ export const DashboardPage = Loadable(
 	() => import(/* webpackChunkName: "DashboardPage" */ 'pages/DashboardPage'),
 );
 
-export const DashboardWidget = Loadable(
-	() =>
-		import(/* webpackChunkName: "DashboardWidgetPage" */ 'pages/DashboardWidget'),
-);
-
 export const DashboardPanelEditorPage = Loadable(
 	() =>
 		import(
-			/* webpackChunkName: "DashboardPanelEditorPage" */ 'pages/DashboardPageV2/PanelEditorPage/PanelEditorPage'
+			/* webpackChunkName: "DashboardPanelEditorPage" */ 'pages/DashboardPage/PanelEditorPage/PanelEditorPage'
 		),
 );
 
@@ -168,18 +152,6 @@ export const MySettings = Loadable(
 
 export const Logs = Loadable(
 	() => import(/* webpackChunkName: "Logs" */ 'pages/LogsModulePage'),
-);
-
-export const LogsExplorer = Loadable(
-	() => import(/* webpackChunkName: "Logs Explorer" */ 'pages/LogsModulePage'),
-);
-
-export const OldLogsExplorer = Loadable(
-	() => import(/* webpackChunkName: "Logs Explorer" */ 'pages/Logs'),
-);
-
-export const LiveLogs = Loadable(
-	() => import(/* webpackChunkName: "Live Logs" */ 'pages/LiveLogs'),
 );
 
 export const PipelinePage = Loadable(
@@ -327,12 +299,5 @@ export const LLMObservabilityPage = Loadable(
 	() =>
 		import(
 			/* webpackChunkName: "LLM Observability Page" */ 'pages/LLMObservability'
-		),
-);
-
-export const LLMObservabilityModelPricingPage = Loadable(
-	() =>
-		import(
-			/* webpackChunkName: "LLM Observability Model Pricing Page" */ 'pages/LLMObservabilityModelPricing'
 		),
 );

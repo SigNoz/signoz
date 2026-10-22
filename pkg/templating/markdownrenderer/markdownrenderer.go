@@ -7,6 +7,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer/blockkit"
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer/mrkdwn"
+	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer/plaintext"
+	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer/telegram"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 )
@@ -32,6 +34,16 @@ var (
 			return goldmark.New(goldmark.WithExtensions(mrkdwn.Extender))
 		},
 	}
+	plaintextPool = sync.Pool{
+		New: func() any {
+			return goldmark.New(goldmark.WithExtensions(plaintext.Extender))
+		},
+	}
+	telegramPool = sync.Pool{
+		New: func() any {
+			return goldmark.New(goldmark.WithExtensions(telegram.Extender))
+		},
+	}
 )
 
 // RenderHTML converts markdown to HTML.
@@ -51,6 +63,22 @@ func RenderSlackMrkdwn(markdown string) (string, error) {
 	md := mrkdwnPool.Get().(goldmark.Markdown)
 	defer mrkdwnPool.Put(md)
 	return render(md, markdown, "Slack mrkdwn")
+}
+
+// RenderPlainText converts markdown to plain text: no markers, links flattened
+// to "text (url)".
+func RenderPlainText(markdown string) (string, error) {
+	md := plaintextPool.Get().(goldmark.Markdown)
+	defer plaintextPool.Put(md)
+	return render(md, markdown, "plain text")
+}
+
+// RenderTelegramHTML converts markdown to the HTML subset Telegram's
+// parse_mode HTML accepts, flattening constructs it has no tag for.
+func RenderTelegramHTML(markdown string) (string, error) {
+	md := telegramPool.Get().(goldmark.Markdown)
+	defer telegramPool.Put(md)
+	return render(md, markdown, "Telegram HTML")
 }
 
 func render(md goldmark.Markdown, markdown string, format string) (string, error) {

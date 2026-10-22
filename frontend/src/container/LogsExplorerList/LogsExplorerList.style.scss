@@ -74,12 +74,7 @@
 				}
 
 				tr:has(.active-log) {
-					background-color: rgba(
-						78,
-						116,
-						248,
-						0.5
-					) !important; // same as bg-robin-500
+					background-color: rgba(78, 116, 248, 0.5) !important; // same as bg-robin-500
 					color: var(--l1-foreground) !important;
 				}
 			}
@@ -322,4 +317,8 @@
 			}
 		}
 	}
+}
+
+.logs-linked-row td {
+	background-color: var(--row-active-bg) !important;
 }

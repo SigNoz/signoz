@@ -342,3 +342,61 @@ func TestDependsOnCycleReturnsError(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "dependency cycles detected")
 }
+
+func TestRegistryAdd(t *testing.T) {
+	s1 := newTestService(t)
+	s2 := newTestService(t)
+
+	registry, err := NewRegistry(context.Background(), slog.New(slog.DiscardHandler), NewNamedService(MustNewName("s1"), s1))
+	require.NoError(t, err)
+
+	require.NoError(t, registry.Add(context.Background(), NewNamedService(MustNewName("s2"), s2)))
+
+	ctx := context.Background()
+	registry.Start(ctx)
+
+	require.NoError(t, registry.AwaitHealthy(ctx))
+	byState := registry.ServicesByState()
+	assert.Len(t, byState[StateRunning], 2)
+	assert.True(t, registry.IsHealthy())
+
+	assert.NoError(t, registry.Stop(ctx))
+}
+
+func TestRegistryAddDuplicateReturnsError(t *testing.T) {
+	s1 := newTestService(t)
+
+	registry, err := NewRegistry(context.Background(), slog.New(slog.DiscardHandler), NewNamedService(MustNewName("s1"), s1))
+	require.NoError(t, err)
+
+	err = registry.Add(context.Background(), NewNamedService(MustNewName("s1"), newTestService(t)))
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "duplicate service name")
+}
+
+func TestRegistryAddWithDependency(t *testing.T) {
+	s1 := newHealthyTestService(t)
+	s2 := newTestService(t)
+
+	registry, err := NewRegistry(context.Background(), slog.New(slog.DiscardHandler), NewNamedService(MustNewName("s1"), s1))
+	require.NoError(t, err)
+
+	// s2 depends on the already registered s1.
+	require.NoError(t, registry.Add(context.Background(), NewNamedService(MustNewName("s2"), s2, MustNewName("s1"))))
+
+	ctx := context.Background()
+	registry.Start(ctx)
+
+	// s2 stays in STARTING until s1 is healthy.
+	require.Eventually(t, func() bool {
+		byState := registry.ServicesByState()
+		return len(byState[StateStarting]) == 2
+	}, time.Second, time.Millisecond)
+
+	close(s1.healthyC)
+
+	require.NoError(t, registry.AwaitHealthy(ctx))
+	assert.True(t, registry.IsHealthy())
+
+	assert.NoError(t, registry.Stop(ctx))
+}

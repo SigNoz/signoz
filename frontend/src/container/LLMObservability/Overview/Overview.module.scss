@@ -1,0 +1,26 @@
+.overview {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-8);
+	padding: var(--spacing-0) var(--spacing-0);
+	//TODO: remove this once we have a proper dashboard page.
+	// The embedded V2 DashboardContainer renders its own page header (dashboard
+	// title + share/feedback chrome) removed it for now
+	:global([class*='dashboardPageHeader']),
+	:global([class*='dashboardInfoWithActions']) {
+		display: none;
+	}
+	// Embedded read-only: the add-variable and panel-action triggers are dead here.
+	:global([class*='addSlot']),
+	:global([data-testid^='panel-actions-']) {
+		display: none;
+	}
+}
+
+.errorState {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--spacing-2);
+	padding: var(--spacing-8);
+}

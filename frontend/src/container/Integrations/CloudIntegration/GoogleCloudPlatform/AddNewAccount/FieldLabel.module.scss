@@ -1,0 +1,16 @@
+.fieldLabel {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2);
+}
+
+.required {
+	composes: required from './shared.module.scss';
+}
+
+.infoTrigger {
+	display: inline-flex;
+	align-items: center;
+	color: var(--l3-foreground);
+	cursor: help;
+}

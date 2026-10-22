@@ -69,6 +69,10 @@ func (h *handler) CreateGroup(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, err)
 		return
 	}
+	if err := req.Validate(); err != nil {
+		render.Error(rw, err)
+		return
+	}
 
 	group := spantypes.NewSpanMapperGroup(orgID, claims.Email, req)
 
@@ -191,6 +195,10 @@ func (h *handler) CreateMapper(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, err)
 		return
 	}
+	if err := req.Validate(); err != nil {
+		render.Error(rw, err)
+		return
+	}
 	mapper := spantypes.NewSpanMapper(groupID, claims.Email, req)
 
 	if err := h.module.CreateMapper(ctx, orgID, groupID, mapper); err != nil {
@@ -271,6 +279,35 @@ func (h *handler) DeleteMapper(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(rw, http.StatusNoContent, nil)
+}
+
+// TestMappers handles POST /api/v1/span_mapper_groups/test.
+func (h *handler) TestMappers(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	req := new(spantypes.PostableSpanMapperTest)
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	groups := spantypes.NewSpanMapperGroupsWithMappersFromPostable(orgID, req.Groups)
+	out, collectorLogs, err := h.module.TestMappers(ctx, orgID, req.Spans, groups)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, &spantypes.GettableSpanMapperTest{Spans: out, CollectorLogs: collectorLogs})
 }
 
 // groupIDFromPath extracts and validates the {id} or {groupId} path variable.

@@ -4,8 +4,10 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
+	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -14,10 +16,12 @@ type setter struct {
 	store        types.OrganizationStore
 	alertmanager alertmanager.Alertmanager
 	quickfilter  quickfilter.Module
+	dashboard    dashboard.Module
+	spanMapper   spanmapper.Module
 }
 
-func NewSetter(store types.OrganizationStore, alertmanager alertmanager.Alertmanager, quickfilter quickfilter.Module) organization.Setter {
-	return &setter{store: store, alertmanager: alertmanager, quickfilter: quickfilter}
+func NewSetter(store types.OrganizationStore, alertmanager alertmanager.Alertmanager, quickfilter quickfilter.Module, dashboard dashboard.Module, spanMapper spanmapper.Module) organization.Setter {
+	return &setter{store: store, alertmanager: alertmanager, quickfilter: quickfilter, dashboard: dashboard, spanMapper: spanMapper}
 }
 
 func (module *setter) Create(ctx context.Context, organization *types.Organization, createManagedRoles func(context.Context, valuer.UUID) error) error {
@@ -34,6 +38,14 @@ func (module *setter) Create(ctx context.Context, organization *types.Organizati
 	}
 
 	if err := createManagedRoles(ctx, organization.ID); err != nil {
+		return err
+	}
+
+	if err := module.dashboard.ReconcileSystemDashboards(ctx, organization.ID); err != nil {
+		return err
+	}
+
+	if err := module.spanMapper.ReconcileSystemGroups(ctx, organization.ID); err != nil {
 		return err
 	}
 

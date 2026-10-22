@@ -1,0 +1,192 @@
+import uPlot from 'uplot';
+import type { MouseEvent as ReactMouseEvent } from 'react';
+import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
+import { PrecisionOption } from 'components/Graph/types';
+import {
+	IRenderTooltipFooterArgs,
+	LegendConfig,
+	LegendPosition,
+	TooltipRenderArgs,
+} from 'lib/uPlotV2/components/types';
+import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
+import type { LegendLayout } from 'lib/visualization/layout/ChartLayout/ChartLayout';
+import type {
+	HeatmapAxisScale,
+	HeatmapCell,
+	HeatmapColorOptions,
+	HeatmapSeries,
+} from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
+import {
+	DashboardCursorSync,
+	SyncTooltipFilterMode,
+	ChartClickData,
+} from 'lib/uPlotV2/plugins/TooltipPlugin/types';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { StackMode } from 'lib/uPlotV2/config/types';
+
+interface BaseChartProps {
+	width: number;
+	height: number;
+	showTooltip?: boolean;
+	showLegend?: boolean;
+	canPinTooltip?: boolean;
+	/** Key that pins the tooltip while hovering. Defaults to DEFAULT_PIN_TOOLTIP_KEY ('l'). */
+	pinKey?: string;
+	/** Called when the user clicks the uPlot overlay. Receives resolved click data. */
+	onClick?: (clickData: ChartClickData) => void;
+	yAxisUnit?: string;
+	decimalPrecision?: PrecisionOption;
+	pinnedTooltipElement?: (clickData: ChartClickData) => React.ReactNode;
+	renderTooltipFooter?: (args: IRenderTooltipFooterArgs) => React.ReactNode;
+	customTooltip?: (props: TooltipRenderArgs) => React.ReactNode;
+	tooltipPortalRoot?: HTMLElement | null;
+	/** Replaces the config-driven legend, for charts whose legend lists something
+	 *  other than uPlot series — heatmap groups, where the series are bucket rows. */
+	customLegend?: (layout: LegendLayout) => React.ReactNode;
+	/** Measured against for the chart/legend split. Pair with `customLegend`. */
+	legendLabels?: string[];
+	/** Rendered under the plot but above the legend, inside the chart column. */
+	contentFooter?: React.ReactNode;
+	'data-testid'?: string;
+}
+interface UPlotBasedChartProps {
+	config: UPlotConfigBuilder;
+	data: uPlot.AlignedData;
+	legendConfig: LegendConfig;
+	syncMode?: DashboardCursorSync;
+	syncKey?: string;
+	syncFilterMode?: SyncTooltipFilterMode;
+	plotRef?: (plot: uPlot | null) => void;
+	onDestroy?: (plot: uPlot) => void;
+	children?: React.ReactNode;
+	layoutChildren?: React.ReactNode;
+}
+
+interface UPlotChartDataProps {
+	yAxisUnit?: string;
+	decimalPrecision?: PrecisionOption;
+	groupByPerQuery?: Record<string, BaseAutocompleteData[]>;
+}
+
+/** Everything the shared uPlot shell consumes; each chart's props narrow it. */
+export interface ChartWrapperProps
+	extends BaseChartProps, UPlotBasedChartProps, UPlotChartDataProps {}
+
+export interface TimeSeriesChartProps extends ChartWrapperProps {
+	timezone?: Timezone;
+	/** How series compose. Defaults to `none`, which draws them independently. */
+	stack?: StackMode;
+}
+
+export interface BarChartProps extends ChartWrapperProps {
+	timezone?: Timezone;
+	/** How series compose. Defaults to `none`, which draws them independently. */
+	stack?: StackMode;
+}
+
+export interface HistogramChartProps extends ChartWrapperProps {
+	isQueriesMerged?: boolean;
+}
+
+/**
+ * Data arrives as the query response carries it — bucket bounds plus one series per
+ * group — and the chart pivots and sums it, so no caller has to get the transpose
+ * or the combined view right. It builds its own `UPlotConfigBuilder` too, since the
+ * y axis *is* the bucket axis and `buckets` fully determines it.
+ *
+ * `buckets`, `series` and `colors` must be referentially stable: a new identity
+ * rebuilds the config, which recreates the plot.
+ */
+export interface HeatmapChartProps {
+	/** Widget id; the group selection persists under it. */
+	id: string;
+	/** Ascending. N boundaries describe N+1 rows. */
+	buckets: number[];
+	/** The *effective* step the server used (`meta.stepIntervals[queryName]`), not
+	 *  the requested one. Cannot be inferred: the last column has no successor. */
+	step: number;
+	/** One entry per group; a query without grouping yields one series. */
+	series: HeatmapSeries[];
+	width: number;
+	height: number;
+	isDarkMode: boolean;
+	/** Overrides on top of `DEFAULT_HEATMAP_COLORS`. */
+	colors?: Partial<HeatmapColorOptions>;
+	/** Default auto: the boundaries pick between log, symmetric log and
+	 *  linear. */
+	axisScale?: HeatmapAxisScale;
+	/** Unit of the bucket boundaries; counts are always plain numbers. */
+	yAxisUnit?: string;
+	decimalPrecision?: PrecisionOption;
+	timezone?: Timezone;
+	/** Colour bar below the grid. Default true. */
+	showVisualMap?: boolean;
+	/** Default true; hidden anyway when there is only one group. The label isolates
+	 *  one, the marker excludes one. */
+	showLegend?: boolean;
+	legendPosition?: LegendPosition;
+	/** Default true. */
+	dimOnHover?: boolean;
+	showTooltip?: boolean;
+	canPinTooltip?: boolean;
+	pinKey?: string;
+	/** Overrides the opacity-mode fill, which otherwise follows the selected
+	 *  group's legend colour so the grid matches the swatch that was clicked. */
+	seriesColor?: string;
+	/** Query window, in seconds. Falls back to the data's own extent. */
+	minTimeScale?: number;
+	maxTimeScale?: number;
+	onDragSelect?: (startTime: number, endTime: number) => void;
+	onCellClick?: (cell: HeatmapCell, clickData: ChartClickData) => void;
+	renderTooltipFooter?: (args: IRenderTooltipFooterArgs) => React.ReactNode;
+	tooltipPortalRoot?: HTMLElement | null;
+	layoutChildren?: React.ReactNode;
+	'data-testid'?: string;
+}
+
+/**
+ * One resolved pie/donut slice: a display label, its (already parsed) positive
+ * numeric value, and the colour used for the arc + legend swatch.
+ */
+export interface PieSlice {
+	label: string;
+	value: number;
+	color: string;
+	/** Source query of the slice's value column — the drill-down target (present for V2 panels). */
+	queryName?: string;
+	/** Group-by key→value of the slice's source row, used to build drill-down filters. */
+	labels?: Record<string, string>;
+}
+
+/**
+ * Props for the Pie chart. Unlike the others above, Pie is NOT uPlot-based
+ * (it renders with @visx), so it deliberately does not extend BaseChartProps /
+ * UPlotBasedChartProps — it takes pre-resolved slices and self-measures its
+ * draw area rather than receiving a uPlot config + aligned data.
+ */
+export interface PieChartProps {
+	data: PieSlice[];
+	yAxisUnit?: string;
+	decimalPrecision?: PrecisionOption;
+	isDarkMode: boolean;
+	/** Legend placement. Drives the chart-vs-legend layout. Default BOTTOM. */
+	position?: LegendPosition;
+	/**
+	 * Widget id used to persist per-slice hide/unhide state to localStorage
+	 * (shared GRAPH_VISIBILITY_STATES, keyed by label). Omit to disable persistence.
+	 */
+	id?: string;
+	/** Fired when a slice's arc is clicked; carries the DOM event for popover positioning. */
+	onSliceClick?: (slice: PieSlice, event: ReactMouseEvent) => void;
+	'data-testid'?: string;
+}
+
+/** A uPlot series enriched with the aggregates the legend table shows. */
+export type ExtendedChartDataset = uPlot.Series & {
+	show: boolean;
+	sum: number;
+	avg: number;
+	min: number;
+	max: number;
+	index: number;
+};

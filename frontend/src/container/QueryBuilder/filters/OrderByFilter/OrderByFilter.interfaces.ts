@@ -6,9 +6,10 @@ import {
 export type OrderByFilterProps = {
 	query: IBuilderQuery;
 	onChange: (values: OrderByPayload[]) => void;
-	isListViewPanel?: boolean;
+	isRawQuery?: boolean;
 	entityVersion?: string;
 	isNewQueryV2?: boolean;
+	placeholder?: string;
 };
 
 export type OrderByFilterValue = {

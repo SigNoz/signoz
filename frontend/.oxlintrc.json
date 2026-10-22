@@ -262,23 +262,20 @@
     // React Hooks rules - Enforces Rules of Hooks (only call at top level)
     "react-hooks/exhaustive-deps": "warn",
     // Warns about missing dependencies in useEffect/useMemo/useCallback
-    // NOTE: The following react-hooks rules are not supported right know, follow the progress at https://github.com/oxc-project/oxc/issues/1022
-    // Most of them are for React Compiler, which we don't have enabled right know
-    // "react-hooks/config": "error",
-    // "react-hooks/error-boundaries": "error",
-    // "react-hooks/component-hook-factories": "error",
-    // "react-hooks/gating": "error",
-    // "react-hooks/globals": "error",
-    // "react-hooks/immutability": "error",
-    // "react-hooks/preserve-manual-memoization": "error",
-    // "react-hooks/purity": "error",
-    // "react-hooks/refs": "error",
-    // "react-hooks/set-state-in-effect": "error",
-    // "react-hooks/set-state-in-render": "error",
-    // "react-hooks/static-components": "error",
-    // "react-hooks/unsupported-syntax": "warn",
-    // "react-hooks/use-memo": "error",
-    // "react-hooks/incompatible-library": "warn",
+    // React Compiler rules, off because we don't have React Compiler enabled
+    "react/error-boundaries": "off",
+    "react/globals": "off",
+    "react/immutability": "off",
+    "react/incompatible-library": "off",
+    "react/preserve-manual-memoization": "off",
+    "react/purity": "off",
+    "react/refs": "off",
+    "react/set-state-in-effect": "off",
+    "react/set-state-in-render": "off",
+    "react/static-components": "off",
+    "react/unsupported-syntax": "off",
+    "react/use-memo": "off",
+    "react/void-use-memo": "off",
     "signoz/no-unsupported-asset-pattern": "error",
     // Prevents the wrong usage of assets to break custom base path installations
     "signoz/no-zustand-getstate-in-hooks": "error",
@@ -295,6 +292,8 @@
     // Prevents bracket access on CSS modules (styles['kebab-case']) which fails with camelCaseOnly config
     "signoz/no-dashboard-fetch-outside-root": "error",
     // Forces useDashboardFetchRequired() outside the root V2 pages (allowlisted in overrides below)
+    "signoz/no-msw-in-story-file": "error",
+    // Bans msw imports in *.stories.tsx; handlers/mock data belong in the sibling .stories.mocks.tsx
     "no-restricted-globals": [
       "error",
       {
@@ -323,9 +322,10 @@
             "name": "react",
             "importNames": [
               "createContext",
-              "useContext"
+              "useContext",
+              "useSyncExternalStore"
             ],
-            "message": "[State mgmt] React Context is deprecated. Migrate shared state to Zustand."
+            "message": "[State mgmt] React Context and hand-rolled external stores are deprecated. Migrate shared state to Zustand."
           },
           {
             "name": "immer",
@@ -335,6 +335,10 @@
             "name": "api/generated/services/dashboard",
             "importNames": ["patchDashboardV2", "usePatchDashboardV2"],
             "message": "[dashboard-v2] Don't call patchDashboardV2/usePatchDashboardV2 directly — use useOptimisticPatch().patchAsync so spec edits update the react-query cache optimistically and reconcile on settle."
+          },
+          {
+            "name": "motion/react-client",
+            "message": "[motion] motion/react-client is for React Server Components only. Use 'motion/react' instead — it provides the same exports and works correctly in client-side SPAs."
           }
         ]
       }
@@ -487,8 +491,11 @@
     // Simplifies boolean returns
     "sonarjs/prefer-while": "error",
     // Suggests while loops over for loops
-    "sonarjs/elseif-without-else": "off"
+    "sonarjs/elseif-without-else": "off",
     // Requires final else in if-else-if chains (was disabled)
+    "signoz/no-conditional-text-nodes-with-siblings": "warn",
+    // Vendored from eslint-plugin-react-google-translate
+    "signoz/no-return-text-nodes": "warn"
   },
   "ignorePatterns": [
     "src/parser/*.ts",
@@ -562,15 +569,25 @@
       }
     },
     {
-      // Root V2 pages own the dashboard fetch lifecycle; useDashboardFetchRequired wraps it.
+      // Root dashboard pages own the fetch lifecycle; useDashboardFetchRequired wraps it.
       // Everywhere else must use useDashboardFetchRequired().
       "files": [
-        "src/pages/DashboardPageV2/DashboardPageV2.tsx",
-        "src/pages/DashboardPageV2/PanelEditorPage/PanelEditorPage.tsx",
-        "src/pages/DashboardPageV2/DashboardContainer/hooks/useDashboardFetchRequired.ts"
+        "src/pages/DashboardPage/DashboardPage.tsx",
+        "src/pages/DashboardPage/PanelEditorPage/PanelEditorPage.tsx",
+        "src/pages/DashboardPage/DashboardContainer/hooks/useDashboardFetchRequired.ts"
       ],
       "rules": {
         "signoz/no-dashboard-fetch-outside-root": "off"
+      }
+    },
+    {
+      // TypeScript reports real redeclarations; this rule also flags `const X` + `type X` pairs.
+      "files": [
+        "**/*.ts",
+        "**/*.tsx"
+      ],
+      "rules": {
+        "no-redeclare": "off"
       }
     }
   ]

@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
+import { convertTimeToRelevantUnit } from 'utils/traceUtils';
 import { getSpanAttribute } from 'pages/TraceDetailsV3/utils';
 import {
 	ColorPair,

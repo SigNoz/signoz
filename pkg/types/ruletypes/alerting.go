@@ -112,7 +112,7 @@ type AlertCompositeQuery struct {
 type RuleCondition struct {
 	CompositeQuery    *AlertCompositeQuery `json:"compositeQuery" required:"true"`
 	CompareOperator   CompareOperator      `json:"op,omitzero"`
-	Target            *float64             `json:"target,omitempty"`
+	Target            *float64             `json:"target,omitempty" format:"double"`
 	AlertOnAbsent     bool                 `json:"alertOnAbsent,omitempty"`
 	AbsentFor         uint64               `json:"absentFor,omitempty"`
 	MatchType         MatchType            `json:"matchType,omitzero"`
@@ -126,6 +126,12 @@ type RuleCondition struct {
 }
 
 func (rc *RuleCondition) SelectedQueryName() string {
+	if rc.SelectedQuery != "" {
+		return rc.SelectedQuery
+	}
+	if rc.CompositeQuery == nil {
+		return ""
+	}
 
 	queryNames := map[string]struct{}{}
 
@@ -169,6 +175,9 @@ func (rc *RuleCondition) SelectedQueryName() string {
 	for k := range queryNames {
 		keys = append(keys, k)
 	}
+	if len(keys) == 0 {
+		return ""
+	}
 	sort.Strings(keys)
 	return keys[len(keys)-1]
 }
@@ -187,4 +196,3 @@ func (rc *RuleCondition) String() string {
 	data, _ := json.Marshal(*rc)
 	return string(data)
 }
-

@@ -1,10 +1,4 @@
-import {
-	MouseEventHandler,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
+import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -46,14 +40,14 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 		[pathname],
 	);
 
-	const onLogCopy: MouseEventHandler<HTMLElement> = useCallback(
-		(event) => {
+	const onLogCopy = useCallback(
+		(event?: MouseEvent<HTMLElement>): void => {
 			if (!logId) {
 				return;
 			}
 
-			event.preventDefault();
-			event.stopPropagation();
+			event?.preventDefault();
+			event?.stopPropagation();
 
 			urlQuery.delete(QueryParams.activeLogId);
 			urlQuery.delete(QueryParams.relativeTime);
@@ -66,7 +60,7 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 
 			setCopy(link);
 
-			toast.success('Copied to clipboard', { position: 'top-right' });
+			toast.success('Copied to clipboard', { position: 'bottom-right' });
 		},
 		[logId, urlQuery, minTime, maxTime, pathname, setCopy],
 	);

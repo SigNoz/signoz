@@ -22,7 +22,7 @@ import { FlatLogData } from 'lib/logs/flatLogData';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { useTimezone } from 'providers/Timezone';
 import { SuccessResponse } from 'types/api';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import { getLogPanelColumnsList } from './utils';
@@ -34,6 +34,7 @@ function LogsPanelComponent({
 	setRequestData,
 	queryResponse,
 	onColumnWidthsChange,
+	hidePagination,
 }: LogsPanelComponentProps): JSX.Element {
 	const [pageSize, setPageSize] = useState<number>(10);
 	const [offset, setOffset] = useState<number>(0);
@@ -90,13 +91,8 @@ function LogsPanelComponent({
 		() => logs.map((log) => FlatLogData(log) as RowData),
 		[logs],
 	);
-	const {
-		activeLog,
-		onAddToQuery,
-		selectedTab,
-		handleSetActiveLog,
-		handleCloseLogDetail,
-	} = useLogDetailHandlers();
+	const { activeLog, selectedTab, handleSetActiveLog, handleCloseLogDetail } =
+		useLogDetailHandlers();
 
 	const handleRow = useCallback(
 		(record: RowData): HTMLAttributes<RowData> => ({
@@ -158,7 +154,7 @@ function LogsPanelComponent({
 						/>
 					</OverlayScrollbar>
 				</div>
-				{!widget.query.builder.queryData[0].limit && (
+				{!hidePagination && !widget.query.builder.queryData[0].limit && (
 					<div className="controller">
 						<Controls
 							totalCount={totalCount}
@@ -178,8 +174,6 @@ function LogsPanelComponent({
 					selectedTab={selectedTab}
 					log={activeLog}
 					onClose={handleCloseLogDetail}
-					onAddToQuery={onAddToQuery}
-					onClickActionItem={onAddToQuery}
 					isListViewPanel
 					listViewPanelSelectedFields={widget?.selectedLogFields}
 					logs={logs}
@@ -198,6 +192,7 @@ export type LogsPanelComponentProps = {
 	>;
 	widget: Widgets;
 	onColumnWidthsChange?: (widths: Record<string, number>) => void;
+	hidePagination?: boolean;
 };
 
 export default LogsPanelComponent;

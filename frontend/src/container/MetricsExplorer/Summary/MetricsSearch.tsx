@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
+import { saveRecentQueryByExpression } from 'lib/recentQueries/saveRecentQuery';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { MetricsSearchProps } from './types';
@@ -23,12 +24,14 @@ function MetricsSearch({
 	);
 
 	const handleStageAndRunQuery = useCallback(() => {
+		saveRecentQueryByExpression(DataSource.METRICS, currentQueryFilterExpression);
 		onChange(currentQueryFilterExpression);
 		onRunQuery?.();
 	}, [currentQueryFilterExpression, onChange, onRunQuery]);
 
 	const handleRunQuery = useCallback(
 		(expression: string): void => {
+			saveRecentQueryByExpression(DataSource.METRICS, expression);
 			setCurrentQueryFilterExpression(expression);
 			onChange(expression);
 		},

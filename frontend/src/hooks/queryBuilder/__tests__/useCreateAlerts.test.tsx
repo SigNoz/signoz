@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { act, renderHook } from '@testing-library/react';
 import { QueryParams } from 'constants/query';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { EQueryType } from 'types/common/dashboard';
 
 import useCreateAlerts from '../useCreateAlerts';
@@ -32,26 +32,14 @@ jest.mock(
 	}),
 );
 
-jest.mock('hooks/dashboard/useDashboardVariables', () => ({
-	useDashboardVariables: (): unknown => ({ dashboardVariables: {} }),
-}));
-
-jest.mock('hooks/dashboard/useDashboardVariablesByType', () => ({
-	useDashboardVariablesByType: (): unknown => ({}),
+jest.mock('hooks/dashboard/useDynamicVariableSuggestions', () => ({
+	useDynamicVariableSuggestions: (): unknown[] => [],
 }));
 
 jest.mock('hooks/useNotifications', () => ({
 	useNotifications: (): unknown => ({
 		notifications: { error: jest.fn() },
 	}),
-}));
-
-jest.mock('lib/dashboardVariables/getDashboardVariables', () => ({
-	getDashboardVariables: (): unknown => ({}),
-}));
-
-jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
-	useDashboardStore: (): unknown => ({ dashboardData: undefined }),
 }));
 
 jest.mock('utils/getGraphType', () => ({

@@ -1,19 +1,49 @@
 /* eslint-disable sonarjs/no-identical-functions */
-import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
+import {
+	convertFiltersToExpressionWithExistingQuery,
+	removeKeysFromExpression,
+} from 'components/QueryBuilderV2/utils';
 import {
 	IQuickFiltersConfig,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
 import { OPERATORS } from 'constants/antlrQueryConstants';
-import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
 import { cloneDeep, isArray } from 'lodash-es';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
-import { isKeyMatch } from './utils';
+import { getKeySpellings, isKeyMatch } from './utils';
+import { CheckedState } from '../../types';
+import { SectionType } from './v2/itemRules';
 
 export const SELECTED_OPERATORS = [OPERATORS['='], 'in'];
 export const NON_SELECTED_OPERATORS = [OPERATORS['!='], 'not in', 'nin'];
+
+// The operators this algebra emits, and so the only ones it may rewrite out of an
+// expression. A hand-written clause on the same key (CONTAINS, EXISTS, a range) is
+// none of its business and has to survive a toggle.
+export const MANAGED_OPERATORS = [
+	OPERATORS['='],
+	OPERATORS['!='],
+	'in',
+	'not in',
+];
+
+/**
+ * Drops this filter's own clauses for `key` from `expression`, leaving every other
+ * key and any clause the checkbox does not manage untouched. Matches all context
+ * prefixes, since `isKeyMatch` treats `service.name` and `resource.service.name` as
+ * the same filter but expression rewrites match keys literally.
+ */
+export function removeManagedClauses(expression: string, key: string): string {
+	return removeKeysFromExpression(
+		expression,
+		getKeySpellings(key),
+		false,
+		MANAGED_OPERATORS,
+	);
+}
 
 // Sources that use backend APIs expecting short operator format (e.g., 'nin' instead of 'not in')
 const SOURCES_WITH_SHORT_OPERATORS = [QuickFiltersSource.INFRA_MONITORING];
@@ -99,45 +129,6 @@ export function deriveCheckboxState({
 	return filterState;
 }
 
-/**
- * Returns a new query with every clause for this attribute key removed, both
- * from the structured filter items and the raw filter expression.
- */
-export function clearFilterFromQuery({
-	currentQuery,
-	filter,
-	activeQueryIndex,
-}: {
-	currentQuery: Query;
-	filter: IQuickFiltersConfig;
-	activeQueryIndex: number;
-}): Query {
-	return {
-		...currentQuery,
-		builder: {
-			...currentQuery.builder,
-			queryData: currentQuery.builder.queryData.map((item, idx) => ({
-				...item,
-				filter: {
-					expression: removeKeysFromExpression(item.filter?.expression ?? '', [
-						filter.attributeKey.key,
-					]),
-				},
-				filters: {
-					...item.filters,
-					items:
-						idx === activeQueryIndex
-							? item.filters?.items?.filter(
-									(fil) => !isKeyMatch(fil.key?.key, filter.attributeKey.key),
-								) || []
-							: [...(item.filters?.items || [])],
-					op: item.filters?.op || 'AND',
-				},
-			})),
-		},
-	};
-}
-
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export function applyCheckboxToggle({
 	currentQuery,
@@ -148,6 +139,8 @@ export function applyCheckboxToggle({
 	value,
 	checked,
 	isOnlyOrAllClicked,
+	previousState,
+	sectionType,
 }: {
 	currentQuery: Query;
 	activeQueryIndex: number;
@@ -157,6 +150,8 @@ export function applyCheckboxToggle({
 	value: string;
 	checked: boolean;
 	isOnlyOrAllClicked: boolean;
+	previousState?: CheckedState;
+	sectionType?: SectionType;
 }): Query {
 	const activeItems =
 		currentQuery.builder.queryData?.[activeQueryIndex]?.filters?.items;
@@ -188,12 +183,6 @@ export function applyCheckboxToggle({
 			(q) => !isKeyMatch(q.key?.key, filter.attributeKey.key),
 		);
 
-		if (query.filter?.expression) {
-			query.filter.expression = removeKeysFromExpression(query.filter.expression, [
-				filter.attributeKey.key,
-			]);
-		}
-
 		if (isOnlyOrAll === 'Only') {
 			const newFilterItem: TagFilterItem = {
 				id: uuid(),
@@ -216,6 +205,7 @@ export function applyCheckboxToggle({
 			);
 			if (currentFilter) {
 				const runningOperator = currentFilter?.op;
+
 				switch (runningOperator) {
 					case 'in':
 						if (checked) {
@@ -246,9 +236,23 @@ export function applyCheckboxToggle({
 								});
 							}
 						} else if (!checked) {
-							// if we are removing some value when the running operator is IN we filter.
-							// example - key IN [value1,currentSelectedValue] becomes key IN [value1] in case of array
-							if (isArray(currentFilter.value)) {
+							// Related section: clicking to exclude creates NOT_IN for just this value
+							if (sectionType === SectionType.RELATED) {
+								const newFilter: TagFilterItem = {
+									id: uuid(),
+									op: getNotInOperator(source),
+									key: filter.attributeKey,
+									value,
+								};
+								query.filters.items = query.filters.items.map((item) => {
+									if (isKeyMatch(item.key?.key, filter.attributeKey.key)) {
+										return newFilter;
+									}
+									return item;
+								});
+							} else if (isArray(currentFilter.value)) {
+								// if we are removing some value when the running operator is IN we filter.
+								// example - key IN [value1,currentSelectedValue] becomes key IN [value1] in case of array
 								const newFilter = {
 									...currentFilter,
 									value: currentFilter.value.filter((val) => val !== value),
@@ -275,11 +279,33 @@ export function applyCheckboxToggle({
 						}
 						break;
 					case 'nin':
-					case 'not in':
-						// if the current running operator is NIN then when unchecking the value it gets
-						// added to the clause like key NIN [value1 , currentUnselectedValue]
-						if (!checked) {
-							// in case of array add the currentUnselectedValue to the list.
+					case 'not in': {
+						// NOT IN means "exclude these values"
+						// Check if value is currently in the exclusion list
+						const isValueInFilter = isArray(currentFilter.value)
+							? currentFilter.value.includes(value)
+							: currentFilter.value === value;
+
+						// When clicking an unchecked value that is not itself excluded, the user
+						// wants to SELECT it: replace the NOT IN filter with IN [value]. A value
+						// that IS in the exclusion list falls through to the removal branch below.
+						if (previousState === 'unchecked' && checked && !isValueInFilter) {
+							const newFilter: TagFilterItem = {
+								id: uuid(),
+								op: getOperatorValue(OPERATORS.IN),
+								key: filter.attributeKey,
+								value,
+							};
+							query.filters.items = query.filters.items.map((item) => {
+								if (isKeyMatch(item.key?.key, filter.attributeKey.key)) {
+									return newFilter;
+								}
+								return item;
+							});
+						} else if (!checked || !isValueInFilter) {
+							// Add to NOT IN when:
+							// - checked=false (user explicitly unchecked to exclude)
+							// - checked=true but value not in filter (clicking "other" value to exclude)
 							if (isArray(currentFilter.value)) {
 								const newFilter = {
 									...currentFilter,
@@ -292,7 +318,6 @@ export function applyCheckboxToggle({
 									return item;
 								});
 							} else {
-								// in case of not an array make it one!
 								const newFilter = {
 									...currentFilter,
 									value: [currentFilter.value as string, value],
@@ -304,8 +329,9 @@ export function applyCheckboxToggle({
 									return item;
 								});
 							}
-						} else if (checked) {
-							// opposite of above!
+						} else {
+							// Remove from NOT IN when value IS in filter and checked=true
+							// (user wants to include this value back)
 							if (isArray(currentFilter.value)) {
 								const newFilter = {
 									...currentFilter,
@@ -315,12 +341,6 @@ export function applyCheckboxToggle({
 									query.filters.items = query.filters.items.filter(
 										(item) => !isKeyMatch(item.key?.key, filter.attributeKey.key),
 									);
-									if (query.filter?.expression) {
-										query.filter.expression = removeKeysFromExpression(
-											query.filter.expression,
-											[filter.attributeKey.key],
-										);
-									}
 								} else {
 									query.filters.items = query.filters.items.map((item) => {
 										if (isKeyMatch(item.key?.key, filter.attributeKey.key)) {
@@ -330,22 +350,13 @@ export function applyCheckboxToggle({
 									});
 								}
 							} else {
-								const newFilter = {
-									...currentFilter,
-									value: currentFilter.value === value ? null : currentFilter.value,
-								};
-								if (newFilter.value === null && query.filter?.expression) {
-									query.filter.expression = removeKeysFromExpression(
-										query.filter.expression,
-										[filter.attributeKey.key],
-									);
-								}
 								query.filters.items = query.filters.items.filter(
 									(item) => !isKeyMatch(item.key?.key, filter.attributeKey.key),
 								);
 							}
 						}
 						break;
+					}
 					case '=':
 						if (checked) {
 							const newFilter = {
@@ -389,15 +400,28 @@ export function applyCheckboxToggle({
 				}
 			}
 		} else {
-			// case  - when there is no filter for the current key that means all are selected right now.
+			// No filter for this key - all are visually selected.
+			// checked=true → user wants to select (IN), checked=false → exclude (NOT IN)
 			const newFilterItem: TagFilterItem = {
 				id: uuid(),
-				op: getNotInOperator(source),
+				op: checked ? getOperatorValue(OPERATORS.IN) : getNotInOperator(source),
 				key: filter.attributeKey,
 				value,
 			};
 			query.filters.items = [...query.filters.items, newFilterItem];
 		}
+	}
+
+	if (query) {
+		const synced = convertFiltersToExpressionWithExistingQuery(
+			query.filters ?? { items: [], op: 'AND' },
+			removeManagedClauses(
+				query.filter?.expression ?? '',
+				filter.attributeKey.key,
+			),
+		);
+		query.filter = synced.filter;
+		query.filters = synced.filters;
 	}
 
 	return {

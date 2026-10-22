@@ -1,8 +1,17 @@
 import { fireEvent, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
+import type { SpantypesGettableTraceSummaryDTO } from 'api/generated/services/sigNoz.schemas';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import ROUTES from 'constants/routes';
 import { render } from 'tests/test-utils';
 
 import TraceDetailsHeader from '../TraceDetailsHeader';
+import { useTraceSummary } from '../useTraceSummary';
+
+jest.mock('../useTraceSummary', () => ({
+	useTraceSummary: jest.fn(() => ({ data: undefined, isLoading: false })),
+}));
 
 const mockGoBack = jest.fn();
 const mockPush = jest.fn();
@@ -49,13 +58,19 @@ jest.mock('components/FieldsSelector', () => ({
 }));
 
 const baseProps = {
-	filterMetadata: {
-		startTime: 0,
-		endTime: 1,
-		traceId: 'trace-123',
-	},
 	onFilteredSpansChange: jest.fn(),
-	isDataLoaded: false,
+	showTraceDetailsHeaderOptions: false,
+};
+
+const SUMMARY = {
+	startTimestampMillis: 1_700_000_000_000,
+	endTimestampMillis: 1_700_000_120_000,
+	rootServiceName: 'frontend',
+	rootServiceEntryPoint: 'GET /checkout',
+	rootSpanStatusCode: '200',
+	hasMissingSpans: false,
+	totalSpansCount: 3,
+	totalErrorSpansCount: 0,
 };
 
 describe('TraceDetailsHeader – back button', () => {
@@ -90,10 +105,32 @@ describe('TraceDetailsHeader – back button', () => {
 describe('TraceDetailsHeader – action cluster', () => {
 	beforeEach(() => {
 		mockReplace.mockClear();
+		jest
+			.mocked(useTraceSummary)
+			.mockReturnValue({ data: SUMMARY, isLoading: false });
+	});
+
+	afterEach(() => {
+		jest
+			.mocked(useTraceSummary)
+			.mockReturnValue({ data: undefined, isLoading: false });
+	});
+
+	it('does not render the action buttons until the summary loads', () => {
+		jest
+			.mocked(useTraceSummary)
+			.mockReturnValue({ data: undefined, isLoading: true });
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+
+		expect(
+			screen.queryByRole('button', { name: /^analytics$/i }),
+		).not.toBeInTheDocument();
 	});
 
 	it('does not render the action buttons while data is still loading', () => {
-		render(<TraceDetailsHeader {...baseProps} isDataLoaded={false} />);
+		render(
+			<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions={false} />,
+		);
 
 		expect(
 			screen.queryByRole('button', { name: /^analytics$/i }),
@@ -104,7 +141,7 @@ describe('TraceDetailsHeader – action cluster', () => {
 	});
 
 	it('renders Analytics and Settings action buttons once data is loaded', () => {
-		render(<TraceDetailsHeader {...baseProps} isDataLoaded />);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
 
 		expect(
 			screen.getByRole('button', { name: /^analytics$/i }),
@@ -115,7 +152,7 @@ describe('TraceDetailsHeader – action cluster', () => {
 	});
 
 	it('toggles the AnalyticsPanel open state when the Analytics button is clicked', () => {
-		render(<TraceDetailsHeader {...baseProps} isDataLoaded />);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
 
 		const panel = screen.getByTestId('analytics-panel');
 		expect(panel).toHaveAttribute('data-open', 'false');
@@ -127,5 +164,250 @@ describe('TraceDetailsHeader – action cluster', () => {
 
 		fireEvent.click(analyticsBtn);
 		expect(panel).toHaveAttribute('data-open', 'false');
+	});
+});
+
+describe('TraceDetailsHeader – trace metadata row', () => {
+	// useTraceSummary is mocked, so no API call is made.
+	const traceMetadata = {
+		startTimestampMillis: 1_700_000_000_000,
+		endTimestampMillis: 1_700_000_120_000, // +120000ms = 2 min
+		rootServiceName: 'inventory-frontend',
+		rootServiceEntryPoint: 'large-trace-root',
+		rootSpanStatusCode: '404',
+		hasMissingSpans: false,
+		totalSpansCount: 42,
+		totalErrorSpansCount: 0,
+		ai: {
+			tokens: {
+				input: 12040,
+				output: 3110,
+				cacheRead: 0,
+				cacheWrite: 0,
+				reasoning: 0,
+			},
+			totalCost: 0.0421,
+		},
+	};
+
+	const mockSummary = (data?: SpantypesGettableTraceSummaryDTO): void => {
+		jest.mocked(useTraceSummary).mockReturnValue({ data, isLoading: false });
+	};
+
+	afterEach(() => {
+		mockSummary(undefined);
+	});
+
+	it('renders the metadata (service, entry point, duration, status) when provided', () => {
+		mockSummary(traceMetadata);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+
+		expect(screen.getByText(/inventory-frontend/)).toBeInTheDocument();
+		expect(screen.getByText('large-trace-root')).toBeInTheDocument();
+		expect(screen.getByText('404')).toBeInTheDocument();
+		// Duration goes through the shared formatter (e.g. "2 min").
+		const duration = getYAxisFormattedValue(
+			`${traceMetadata.endTimestampMillis - traceMetadata.startTimestampMillis}`,
+			'ms',
+		);
+		expect(screen.getByText(duration)).toBeInTheDocument();
+	});
+
+	it('renders AI tokens and cost when the summary has them', () => {
+		mockSummary(traceMetadata);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+
+		expect(screen.getByText('Tokens: 12,040 → 3,110')).toBeInTheDocument();
+		expect(screen.getByText('Cost — $ 0.0421')).toBeInTheDocument();
+	});
+
+	it('omits AI tokens and cost when the summary has no ai field', () => {
+		mockSummary({ ...traceMetadata, ai: undefined });
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+
+		expect(screen.queryByText(/^Tokens:/)).not.toBeInTheDocument();
+		expect(screen.queryByText(/^Cost —/)).not.toBeInTheDocument();
+	});
+
+	it('shows AI tokens when input and output are both zero', () => {
+		mockSummary({
+			...traceMetadata,
+			ai: {
+				...traceMetadata.ai,
+				tokens: { ...traceMetadata.ai.tokens, input: 0, output: 0 },
+			},
+		} as SpantypesGettableTraceSummaryDTO);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+
+		expect(screen.getByText('Tokens: 0 → 0')).toBeInTheDocument();
+		expect(screen.getByText('Cost — $ 0.0421')).toBeInTheDocument();
+	});
+
+	it('shows zero for a missing input', () => {
+		mockSummary({
+			...traceMetadata,
+			ai: {
+				...traceMetadata.ai,
+				tokens: { ...traceMetadata.ai.tokens, input: undefined },
+			},
+		} as unknown as SpantypesGettableTraceSummaryDTO);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+
+		expect(screen.getByText('Tokens: 0 → 3,110')).toBeInTheDocument();
+	});
+
+	it('shows zero AI tokens when input and output are both missing', () => {
+		mockSummary({
+			...traceMetadata,
+			ai: {
+				...traceMetadata.ai,
+				tokens: {
+					...traceMetadata.ai.tokens,
+					input: undefined,
+					output: undefined,
+				},
+			},
+		} as unknown as SpantypesGettableTraceSummaryDTO);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+
+		expect(screen.getByText('Tokens: 0 → 0')).toBeInTheDocument();
+	});
+
+	it('omits the cost when the summary sends null', () => {
+		mockSummary({
+			...traceMetadata,
+			ai: { ...traceMetadata.ai, totalCost: null },
+		} as unknown as SpantypesGettableTraceSummaryDTO);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+
+		expect(screen.getByText('Tokens: 12,040 → 3,110')).toBeInTheDocument();
+		expect(screen.queryByText(/^Cost —/)).not.toBeInTheDocument();
+	});
+
+	it('is shown by default and can be hidden / shown again via the Trace options menu', async () => {
+		const user = userEvent.setup({ delay: null });
+		mockSummary(traceMetadata);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+
+		// Visible by default (showTraceDetails defaults to true).
+		expect(screen.getByText(/inventory-frontend/)).toBeInTheDocument();
+
+		// Hide it.
+		await user.click(screen.getByRole('button', { name: /trace options/i }));
+		await user.click(
+			await screen.findByRole('menuitem', { name: /hide trace details/i }),
+		);
+		expect(screen.queryByText(/inventory-frontend/)).not.toBeInTheDocument();
+
+		// Show it again.
+		await user.click(screen.getByRole('button', { name: /trace options/i }));
+		await user.click(
+			await screen.findByRole('menuitem', { name: /show trace details/i }),
+		);
+		expect(screen.getByText(/inventory-frontend/)).toBeInTheDocument();
+	});
+
+	it('shows skeletons instead of the metadata when the summary is absent', () => {
+		const { container } = render(
+			<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />,
+		);
+
+		expect(screen.queryByText(/inventory-frontend/)).not.toBeInTheDocument();
+		expect(container.querySelectorAll('.ant-skeleton-input')).toHaveLength(3);
+	});
+});
+
+const metadataText = /Missing Span/;
+
+describe('TraceDetailsHeader – tabs', () => {
+	beforeEach(() => {
+		jest.mocked(useTraceSummary).mockReturnValue({
+			data: {
+				...SUMMARY,
+				rootServiceEntryPoint: 'Missing Span',
+				hasMissingSpans: true,
+			},
+			isLoading: false,
+		});
+	});
+
+	afterEach(() => {
+		jest
+			.mocked(useTraceSummary)
+			.mockReturnValue({ data: undefined, isLoading: false });
+	});
+
+	// In-memory URL state, so a tab switch can't leak into the next test.
+	const renderHeader = (): void => {
+		render(
+			<NuqsTestingAdapter hasMemory>
+				<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />
+			</NuqsTestingAdapter>,
+		);
+	};
+
+	it('shows the Overview-only sections on the Overview tab', () => {
+		renderHeader();
+
+		expect(screen.getByTestId('filters-stub')).toBeInTheDocument();
+		expect(screen.getByTestId('trace-analytics-button')).toBeInTheDocument();
+		expect(screen.getByTestId('trace-options-button')).toBeInTheDocument();
+		expect(screen.getByTestId('missing-spans-banner')).toBeInTheDocument();
+	});
+
+	it('keeps only the metadata row on the Thread tab', async () => {
+		const user = userEvent.setup({ delay: null });
+		renderHeader();
+
+		await user.click(screen.getByTestId('trace-details-tab-thread'));
+
+		expect(screen.queryByTestId('filters-stub')).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId('trace-analytics-button'),
+		).not.toBeInTheDocument();
+		expect(screen.queryByTestId('trace-options-button')).not.toBeInTheDocument();
+		expect(screen.queryByTestId('missing-spans-banner')).not.toBeInTheDocument();
+		expect(screen.getByText(metadataText)).toBeInTheDocument();
+	});
+
+	it('shows the metadata row on the Thread tab even when hidden on Overview', async () => {
+		const user = userEvent.setup({ delay: null });
+		renderHeader();
+
+		await user.click(screen.getByTestId('trace-options-button'));
+		await user.click(await screen.findByTestId('toggle-trace-details'));
+		expect(screen.queryByText(metadataText)).not.toBeInTheDocument();
+
+		await user.click(screen.getByTestId('trace-details-tab-thread'));
+
+		expect(screen.getByText(metadataText)).toBeInTheDocument();
+	});
+
+	it('clears the filter result when switching to the Thread tab', async () => {
+		const user = userEvent.setup({ delay: null });
+		renderHeader();
+		baseProps.onFilteredSpansChange.mockClear();
+
+		await user.click(screen.getByTestId('trace-details-tab-thread'));
+
+		expect(baseProps.onFilteredSpansChange).toHaveBeenCalledWith([], false);
+	});
+
+	it('closes the Analytics panel when switching to the Thread tab', async () => {
+		const user = userEvent.setup({ delay: null });
+		renderHeader();
+
+		await user.click(screen.getByTestId('trace-analytics-button'));
+		expect(screen.getByTestId('analytics-panel')).toHaveAttribute(
+			'data-open',
+			'true',
+		);
+
+		await user.click(screen.getByTestId('trace-details-tab-thread'));
+
+		expect(screen.getByTestId('analytics-panel')).toHaveAttribute(
+			'data-open',
+			'false',
+		);
 	});
 });

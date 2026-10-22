@@ -4,7 +4,37 @@ export default {
 	data: {
 		resources: [
 			{
+				kind: 'dashboard',
+				type: 'metaresource',
+				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],
+			},
+			{
 				kind: 'factor-api-key',
+				type: 'metaresource',
+				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],
+			},
+			{
+				kind: 'license',
+				type: 'metaresource',
+				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],
+			},
+			{
+				kind: 'notification-channel',
+				type: 'metaresource',
+				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],
+			},
+			{
+				kind: 'quick-filter',
+				type: 'metaresource',
+				allowedVerbs: ['list', 'read', 'update'],
+			},
+			{
+				kind: 'saved-view',
+				type: 'metaresource',
+				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],
+			},
+			{
+				kind: 'subscription',
 				type: 'metaresource',
 				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],
 			},
@@ -35,6 +65,26 @@ export default {
 					'update',
 				],
 			},
+			{
+				kind: 'logs',
+				type: 'telemetryresource',
+				allowedVerbs: ['read'],
+			},
+			{
+				kind: 'meter-metrics',
+				type: 'telemetryresource',
+				allowedVerbs: ['read'],
+			},
+			{
+				kind: 'metrics',
+				type: 'telemetryresource',
+				allowedVerbs: ['read'],
+			},
+			{
+				kind: 'traces',
+				type: 'telemetryresource',
+				allowedVerbs: ['read'],
+			},
 		],
 		relations: {
 			assignee: ['role'],
@@ -43,7 +93,7 @@ export default {
 			delete: ['metaresource', 'role', 'serviceaccount'],
 			detach: ['metaresource', 'role', 'serviceaccount'],
 			list: ['metaresource', 'role', 'serviceaccount'],
-			read: ['metaresource', 'role', 'serviceaccount'],
+			read: ['metaresource', 'role', 'serviceaccount', 'telemetryresource'],
 			update: ['metaresource', 'role', 'serviceaccount'],
 		},
 	},

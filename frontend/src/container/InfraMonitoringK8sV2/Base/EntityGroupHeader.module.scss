@@ -1,0 +1,23 @@
+.entityGroupHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-5);
+
+	// A block span leaves the icon on the text baseline, a couple of pixels
+	// above the centre of the row it sits in
+	[data-slot='icon'] {
+		display: inline-flex;
+		align-items: center;
+	}
+}
+
+.infoIcon {
+	display: inline-flex;
+	align-items: center;
+	color: var(--text-slate-secondary);
+	cursor: pointer;
+
+	&:hover {
+		color: var(--text-slate-primary);
+	}
+}

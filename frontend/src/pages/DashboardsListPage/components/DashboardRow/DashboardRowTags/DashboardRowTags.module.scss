@@ -1,0 +1,16 @@
+.tags {
+	display: flex;
+	flex: 0 1 auto;
+	min-width: 0;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+}
+
+.extraTags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	max-width: 320px;
+}

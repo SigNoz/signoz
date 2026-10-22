@@ -5,10 +5,9 @@ import {
 	useCreateResetPasswordToken,
 	useDeleteUser,
 	useGetResetPasswordToken,
-	useGetRolesByUserID,
+	useCreateUserRole,
+	useDeleteUserRole,
 	useGetUser,
-	useRemoveUserRoleByUserIDAndRoleID,
-	useSetRoleByUserID,
 	useUpdateMyUserV2,
 	useUpdateUser,
 } from 'api/generated/services/users';
@@ -25,15 +24,14 @@ import EditMemberDrawer, { EditMemberDrawerProps } from '../EditMemberDrawer';
 jest.mock('api/generated/services/users', () => ({
 	useDeleteUser: jest.fn(),
 	useGetUser: jest.fn(),
-	useGetRolesByUserID: jest.fn(),
-	useRemoveUserRoleByUserIDAndRoleID: jest.fn(),
+	useDeleteUserRole: jest.fn(),
 	useUpdateUser: jest.fn(),
 	useUpdateMyUserV2: jest.fn(),
-	useSetRoleByUserID: jest.fn(),
+	useCreateUserRole: jest.fn(),
 	useGetResetPasswordToken: jest.fn(),
 	useCreateResetPasswordToken: jest.fn(),
-	getGetRolesByUserIDQueryKey: ({ id }: { id: string }): string[] => [
-		`/api/v2/users/${id}/roles`,
+	getGetUserQueryKey: ({ id }: { id: string }): string[] => [
+		`/api/v2/users/${id}`,
 	],
 }));
 
@@ -194,11 +192,7 @@ describe('EditMemberDrawer', () => {
 			isLoading: false,
 			refetch: jest.fn(),
 		});
-		(useGetRolesByUserID as jest.Mock).mockReturnValue({
-			data: { data: [managedRoles[0]] },
-			isLoading: false,
-		});
-		(useRemoveUserRoleByUserIDAndRoleID as jest.Mock).mockReturnValue({
+		(useDeleteUserRole as jest.Mock).mockReturnValue({
 			mutateAsync: mockRemoveMutateAsync.mockResolvedValue({}),
 			isLoading: false,
 		});
@@ -210,7 +204,7 @@ describe('EditMemberDrawer', () => {
 			mutateAsync: jest.fn().mockResolvedValue({}),
 			isLoading: false,
 		});
-		(useSetRoleByUserID as jest.Mock).mockReturnValue({
+		(useCreateUserRole as jest.Mock).mockReturnValue({
 			mutateAsync: jest.fn().mockResolvedValue({}),
 			isLoading: false,
 		});
@@ -257,7 +251,7 @@ describe('EditMemberDrawer', () => {
 		expect(screen.getByText('ACTIVE')).toBeInTheDocument();
 		expect(
 			screen.getByRole('button', { name: /save member details/i }),
-		).toBeDisabled();
+		).toHaveAttribute('aria-disabled', 'true');
 	});
 
 	it('enables Save after editing name and calls updateUser on confirm', async () => {
@@ -277,7 +271,9 @@ describe('EditMemberDrawer', () => {
 		await user.type(nameInput, 'Alice Updated');
 
 		const saveBtn = screen.getByRole('button', { name: /save member details/i });
-		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 
 		await user.click(saveBtn);
 
@@ -301,7 +297,9 @@ describe('EditMemberDrawer', () => {
 		await user.type(nameInput, 'Alice Updated');
 
 		const saveBtn = screen.getByRole('button', { name: /save member details/i });
-		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		await user.click(saveBtn);
 
 		await waitFor(() => {
@@ -312,12 +310,12 @@ describe('EditMemberDrawer', () => {
 		expect(onClose).not.toHaveBeenCalled();
 	});
 
-	it('adding a new role calls setRole without removing existing ones', async () => {
+	it('adding a new role creates a user role without removing existing ones', async () => {
 		const onComplete = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const mockSet = jest.fn().mockResolvedValue({});
 
-		(useSetRoleByUserID as jest.Mock).mockReturnValue({
+		(useCreateUserRole as jest.Mock).mockReturnValue({
 			mutateAsync: mockSet,
 			isLoading: false,
 		});
@@ -329,20 +327,21 @@ describe('EditMemberDrawer', () => {
 		await user.click(await screen.findByTitle('signoz-editor'));
 
 		const saveBtn = screen.getByRole('button', { name: /save member details/i });
-		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		await user.click(saveBtn);
 
 		await waitFor(() => {
 			expect(mockSet).toHaveBeenCalledWith({
-				pathParams: { id: 'user-1' },
-				data: { name: 'signoz-editor' },
+				data: { userId: 'user-1', roleId: managedRoles[1].id },
 			});
 			expect(mockRemoveMutateAsync).not.toHaveBeenCalled();
 			expect(onComplete).toHaveBeenCalled();
 		});
 	});
 
-	it('deselecting a role calls removeRole with the role id', async () => {
+	it('deselecting a role deletes the user role by its assignment id', async () => {
 		const onComplete = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
@@ -356,12 +355,14 @@ describe('EditMemberDrawer', () => {
 		await user.click(removeBtn);
 
 		const saveBtn = screen.getByRole('button', { name: /save member details/i });
-		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		await user.click(saveBtn);
 
 		await waitFor(() => {
 			expect(mockRemoveMutateAsync).toHaveBeenCalledWith({
-				pathParams: { id: 'user-1', roleId: managedRoles[0].id },
+				pathParams: { id: 'ur-1' },
 			});
 			expect(onComplete).toHaveBeenCalled();
 		});
@@ -512,7 +513,9 @@ describe('EditMemberDrawer', () => {
 		await user.type(nameInput, 'Bob Updated');
 
 		const saveBtn = screen.getByRole('button', { name: /save member details/i });
-		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		await user.click(saveBtn);
 
 		await waitFor(() => {
@@ -548,7 +551,9 @@ describe('EditMemberDrawer', () => {
 			await user.type(nameInput, 'Alice Updated');
 
 			const saveBtn = screen.getByRole('button', { name: /save member details/i });
-			await waitFor(() => expect(saveBtn).not.toBeDisabled());
+			await waitFor(() =>
+				expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true'),
+			);
 			await user.click(saveBtn);
 
 			await waitFor(() => {
@@ -626,7 +631,7 @@ describe('EditMemberDrawer', () => {
 			renderDrawer({ member: selfMember });
 			expect(
 				screen.getByRole('button', { name: /delete member/i }),
-			).toBeDisabled();
+			).toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('does not open delete confirm dialog when Delete is clicked while disabled (isSelf)', async () => {
@@ -649,7 +654,7 @@ describe('EditMemberDrawer', () => {
 			renderDrawer({ member: selfMember });
 			expect(
 				screen.getByRole('button', { name: /generate password reset link/i }),
-			).not.toBeDisabled();
+			).not.toHaveAttribute('aria-disabled', 'true');
 		});
 	});
 
@@ -671,21 +676,21 @@ describe('EditMemberDrawer', () => {
 			renderDrawer();
 			expect(
 				screen.getByRole('button', { name: /delete member/i }),
-			).toBeDisabled();
+			).toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('disables Reset Link button for root user', () => {
 			renderDrawer();
 			expect(
 				screen.getByRole('button', { name: /generate password reset link/i }),
-			).toBeDisabled();
+			).toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('disables Save button for root user', () => {
 			renderDrawer();
 			expect(
 				screen.getByRole('button', { name: /save member details/i }),
-			).toBeDisabled();
+			).toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('does not open delete confirm dialog when Delete is clicked while disabled (root)', async () => {

@@ -1,0 +1,159 @@
+{
+  "id": "computeengine",
+  "title": "GCP Compute Engine",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supportedSignals": {
+    "metrics": true,
+    "logs": true
+  },
+  "dataCollected": {
+    "metrics": [
+      {
+        "name": "compute.googleapis.com/instance/uptime_total",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "compute.googleapis.com/instance/cpu/utilization",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "compute.googleapis.com/guest/memory/bytes_used",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "compute.googleapis.com/guest/memory/percent_used",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "agent.googleapis.com/memory/percent_used",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "compute.googleapis.com/instance/disk/average_io_latency",
+        "unit": "Microseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "compute.googleapis.com/instance/disk/read_bytes_count",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "compute.googleapis.com/instance/disk/write_bytes_count",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "compute.googleapis.com/instance/disk/read_ops_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "compute.googleapis.com/instance/disk/write_ops_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "compute.googleapis.com/instance/disk/performance_status",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "compute.googleapis.com/instance/network/received_bytes_count",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "compute.googleapis.com/instance/network/sent_bytes_count",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "compute.googleapis.com/instance/network/received_packets_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "compute.googleapis.com/instance/network/sent_packets_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "compute.googleapis.com/firewall/dropped_packets_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      }
+    ],
+    "logs": [
+      {
+        "name": "Project",
+        "path": "gcp.project",
+        "type": "string"
+      },
+      {
+        "name": "Resource Type",
+        "path": "gcp.resource_type",
+        "type": "string"
+      }
+    ]
+  },
+  "telemetryCollectionStrategy": {
+    "gcp": {
+      "metrics": {
+        "metricNames": [
+          "compute.googleapis.com/instance/uptime_total",
+          "compute.googleapis.com/instance/cpu/utilization",
+          "compute.googleapis.com/guest/memory/bytes_used",
+          "compute.googleapis.com/guest/memory/percent_used",
+          "agent.googleapis.com/memory/percent_used",
+          "compute.googleapis.com/instance/disk/average_io_latency",
+          "compute.googleapis.com/instance/disk/read_bytes_count",
+          "compute.googleapis.com/instance/disk/write_bytes_count",
+          "compute.googleapis.com/instance/disk/read_ops_count",
+          "compute.googleapis.com/instance/disk/write_ops_count",
+          "compute.googleapis.com/instance/disk/performance_status",
+          "compute.googleapis.com/instance/network/received_bytes_count",
+          "compute.googleapis.com/instance/network/sent_bytes_count",
+          "compute.googleapis.com/instance/network/received_packets_count",
+          "compute.googleapis.com/instance/network/sent_packets_count",
+          "compute.googleapis.com/firewall/dropped_packets_count"
+        ]
+      },
+      "logs": {
+        "sinkFilter": "resource.type=\"gce_instance\" OR protoPayload.serviceName=\"compute.googleapis.com\""
+      }
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "GCP Compute Engine Overview",
+        "description": "Overview of GCP Compute Engine metrics",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}

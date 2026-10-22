@@ -11,8 +11,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/services"
 	"github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -39,7 +39,7 @@ func (m *module) FetchTopLevelOperations(ctx context.Context, start time.Time, s
 	ctx = m.withServicesContext(ctx, "FetchTopLevelOperations")
 
 	db := m.TelemetryStore.ClickhouseDB()
-	query := fmt.Sprintf("SELECT name, serviceName, max(time) as ts FROM %s.%s WHERE time >= @start", telemetrytraces.DBName, telemetrytraces.TopLevelOperationsTableName)
+	query := fmt.Sprintf("SELECT name, serviceName, max(time) as ts FROM %s.%s WHERE time >= @start", tracestelemetryschema.DBName, tracestelemetryschema.TopLevelOperationsTableName)
 	args := []any{clickhouse.Named("start", start)}
 	if len(services) > 0 {
 		query += " AND serviceName IN @services"

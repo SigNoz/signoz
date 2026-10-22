@@ -1,6 +1,8 @@
 .explorer-options-container {
 	position: fixed;
-	bottom: 0px;
+	// Lifted above the bottom strip. Don't extend this pattern — new fixed-bottom
+	// UI belongs in the bounded layout, not in another offset here.
+	bottom: var(--bottom-strip-height, 0px);
 	left: calc(50% + 240px);
 	transform: translate(calc(-50% - 120px), 0);
 	transition: left 0.2s linear;

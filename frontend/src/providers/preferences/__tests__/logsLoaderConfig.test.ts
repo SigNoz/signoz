@@ -1,5 +1,5 @@
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { LogViewMode } from 'container/LogsTable';
+import { LogViewMode } from 'container/OptionsMenu/types';
 import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
 import { FontSize } from 'container/OptionsMenu/types';
 import { FormattingOptions } from 'providers/preferences/types';

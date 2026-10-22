@@ -151,6 +151,7 @@ function AddKeyModal(): JSX.Element {
 			className="add-key-modal"
 			showCloseButton
 			disableOutsideClick={isErrorModalVisible}
+			testId="add-key-modal"
 		>
 			{phase === Phase.FORM && (
 				<KeyFormPhase

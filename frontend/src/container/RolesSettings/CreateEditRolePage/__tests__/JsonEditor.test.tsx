@@ -1,35 +1,29 @@
 import { Route, Switch } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { server } from 'mocks-server/server';
 import { render, screen, userEvent, within } from 'tests/test-utils';
-import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
-import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 
 import CreateEditRolePage from '../CreateEditRolePage';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
-
-jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
-const mockUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
 
 beforeEach(() => {
-	mockUseAuthZ.mockImplementation(mockUseAuthZGrantAll);
+	server.use(setupAuthzAdmin());
 });
 
 afterEach(() => {
-	jest.clearAllMocks();
+	server.resetHandlers();
 });
 
 function renderPage(): ReturnType<typeof render> {
 	return render(
-		<TooltipProvider>
-			<Switch>
-				<Route path={ROUTES.ROLES_SETTINGS} exact>
-					<div data-testid="roles-list-redirect" />
-				</Route>
-				<Route path={ROUTES.ROLE_CREATE}>
-					<CreateEditRolePage />
-				</Route>
-			</Switch>
-		</TooltipProvider>,
+		<Switch>
+			<Route path={ROUTES.ROLES_SETTINGS} exact>
+				<div data-testid="roles-list-redirect" />
+			</Route>
+			<Route path={ROUTES.ROLE_CREATE}>
+				<CreateEditRolePage />
+			</Route>
+		</Switch>,
 		undefined,
 		{ initialRoute: '/settings/roles/new' },
 	);
@@ -37,16 +31,16 @@ function renderPage(): ReturnType<typeof render> {
 
 async function switchToJsonMode(): Promise<void> {
 	const user = userEvent.setup();
-	const jsonRadio = screen.getByTestId('permission-editor-mode-json');
-	await user.click(jsonRadio);
+	const jsonToggle = await screen.findByTestId('permission-editor-mode-json');
+	await user.click(jsonToggle);
 }
 
 async function switchToInteractiveMode(): Promise<void> {
 	const user = userEvent.setup();
-	const interactiveRadio = screen.getByTestId(
+	const interactiveToggle = await screen.findByTestId(
 		'permission-editor-mode-interactive',
 	);
-	await user.click(interactiveRadio);
+	await user.click(interactiveToggle);
 }
 
 describe('JsonEditor', () => {
@@ -112,17 +106,17 @@ describe('JsonEditor', () => {
 
 			await switchToJsonMode();
 
-			const interactiveRadio = screen.getByTestId(
+			const interactiveToggle = screen.getByTestId(
 				'permission-editor-mode-interactive',
 			);
-			await user.click(interactiveRadio);
+			await user.click(interactiveToggle);
 
 			const scopeToggle = within(
 				screen.getByTestId('action-toggle-factor-api-key-create'),
 			).getByTestId('action-toggle-scope-factor-api-key-create');
 			expect(
-				within(scopeToggle).getByRole('radio', { name: 'All' }),
-			).toBeChecked();
+				within(scopeToggle).getByRole('button', { name: 'All' }),
+			).toHaveAttribute('aria-pressed', 'true');
 		});
 	});
 
@@ -154,7 +148,9 @@ describe('JsonEditor', () => {
 			);
 			await user.click(await within(readToggle).findByText('Only selected'));
 
-			const input = screen.getByTestId('item-input-selector-input');
+			const input = screen.getByTestId(
+				'item-input-selector-input-factor-api-key-read',
+			);
 			await user.type(input, 'test-key-123{enter}');
 
 			await switchToJsonMode();
@@ -194,10 +190,10 @@ describe('JsonEditor', () => {
 			await screen.findByTestId('permission-editor');
 			await switchToJsonMode();
 
-			const interactiveRadio = screen.getByTestId(
+			const interactiveToggle = screen.getByTestId(
 				'permission-editor-mode-interactive',
 			);
-			await user.click(interactiveRadio);
+			await user.click(interactiveToggle);
 
 			const apiKeyCard = await screen.findByTestId('resource-card-factor-api-key');
 			const header = within(apiKeyCard).getByTestId(

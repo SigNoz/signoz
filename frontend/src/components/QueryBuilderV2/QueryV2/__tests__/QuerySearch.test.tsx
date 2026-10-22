@@ -1,95 +1,29 @@
 import { EditorView } from '@uiw/react-codemirror';
-import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
-import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
+import { getFieldKeySuggestions } from 'api/querySuggestions/getFieldKeySuggestions';
+import { getFieldValueSuggestions } from 'api/querySuggestions/getFieldValueSuggestions';
 import { initialQueriesMap } from 'constants/queryBuilder';
-import { fireEvent, render, userEvent, waitFor } from 'tests/test-utils';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+} from 'tests/test-utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import type { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
 
 import QuerySearch from '../QuerySearch/QuerySearch';
+import { mockCodeMirrorDomApis } from './codemirrorDomMocks';
 
 const CM_EDITOR_SELECTOR = '.cm-editor .cm-content';
 
 // Mock DOM APIs that CodeMirror needs
 beforeAll(() => {
-	// Mock getClientRects and getBoundingClientRect for Range objects
-	const mockRect: DOMRect = {
-		width: 100,
-		height: 20,
-		top: 0,
-		left: 0,
-		right: 100,
-		bottom: 20,
-		x: 0,
-		y: 0,
-		toJSON: (): DOMRect => mockRect,
-	} as DOMRect;
-
-	// Create a minimal Range mock with only what CodeMirror actually uses
-	const createMockRange = (): Range => {
-		let startContainer: Node = document.createTextNode('');
-		let endContainer: Node = document.createTextNode('');
-		let startOffset = 0;
-		let endOffset = 0;
-
-		const mockRange = {
-			// CodeMirror uses these for text measurement
-			getClientRects: (): DOMRectList =>
-				({
-					length: 1,
-					item: (index: number): DOMRect | null => (index === 0 ? mockRect : null),
-					0: mockRect,
-					*[Symbol.iterator](): Generator<DOMRect> {
-						yield mockRect;
-					},
-				}) as unknown as DOMRectList,
-			getBoundingClientRect: (): DOMRect => mockRect,
-			// CodeMirror calls these to set up text ranges
-			setStart: (node: Node, offset: number): void => {
-				startContainer = node;
-				startOffset = offset;
-			},
-			setEnd: (node: Node, offset: number): void => {
-				endContainer = node;
-				endOffset = offset;
-			},
-			// Minimal Range properties (TypeScript requires these)
-			get startContainer(): Node {
-				return startContainer;
-			},
-			get endContainer(): Node {
-				return endContainer;
-			},
-			get startOffset(): number {
-				return startOffset;
-			},
-			get endOffset(): number {
-				return endOffset;
-			},
-			get collapsed(): boolean {
-				return startContainer === endContainer && startOffset === endOffset;
-			},
-			commonAncestorContainer: document.body,
-		};
-		return mockRange as unknown as Range;
-	};
-
-	// Mock document.createRange to return a new Range instance each time
-	document.createRange = (): Range => createMockRange();
-
-	// Mock getBoundingClientRect for elements
-	Element.prototype.getBoundingClientRect = (): DOMRect => mockRect;
+	mockCodeMirrorDomApis();
 });
 
 jest.mock('hooks/useDarkMode', () => ({
 	useIsDarkMode: (): boolean => false,
-}));
-
-jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
-	useDashboardStore: (): { dashboardData: undefined } => ({
-		dashboardData: undefined,
-	}),
 }));
 
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => {
@@ -101,17 +35,25 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => {
 	};
 });
 
-jest.mock('api/querySuggestions/getKeySuggestions', () => ({
-	getKeySuggestions: jest.fn().mockResolvedValue({
-		data: {
-			data: { keys: {} as Record<string, QueryKeyDataSuggestionsProps[]> },
-		},
+jest.mock('api/querySuggestions/getFieldKeySuggestions', () => ({
+	getFieldKeySuggestions: jest.fn().mockResolvedValue({
+		status: 'success',
+		data: { complete: true, keys: {} },
 	}),
 }));
 
-jest.mock('api/querySuggestions/getValueSuggestion', () => ({
-	getValueSuggestions: jest.fn().mockResolvedValue({
-		data: { data: { values: { stringValues: [], numberValues: [] } } },
+jest.mock('api/querySuggestions/getFieldValueSuggestions', () => ({
+	getFieldValueSuggestions: jest.fn().mockResolvedValue({
+		status: 'success',
+		data: {
+			complete: true,
+			values: {
+				stringValues: [],
+				numberValues: [],
+				boolValues: [],
+				relatedValues: [],
+			},
+		},
 	}),
 }));
 
@@ -139,8 +81,8 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 
 	it('fetches key suggestions when typing a key (debounced)', async () => {
 		// Use real timers for CodeMirror integration tests
-		const mockedGetKeys = getKeySuggestions as jest.MockedFunction<
-			typeof getKeySuggestions
+		const mockedGetKeys = getFieldKeySuggestions as jest.MockedFunction<
+			typeof getFieldKeySuggestions
 		>;
 		mockedGetKeys.mockClear();
 
@@ -173,10 +115,22 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 
 	it('fetches value suggestions when editing value context', async () => {
 		// Use real timers for CodeMirror integration tests
-		const mockedGetValues = getValueSuggestions as jest.MockedFunction<
-			typeof getValueSuggestions
+		const mockedGetValues = getFieldValueSuggestions as jest.MockedFunction<
+			typeof getFieldValueSuggestions
 		>;
 		mockedGetValues.mockClear();
+		mockedGetValues.mockResolvedValueOnce({
+			status: 'success',
+			data: {
+				complete: true,
+				values: {
+					stringValues: ['payment-service'],
+					numberValues: [200],
+					boolValues: [],
+					relatedValues: [],
+				},
+			},
+		});
 
 		render(
 			<QuerySearch
@@ -200,12 +154,18 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		await waitFor(() => expect(mockedGetValues).toHaveBeenCalled(), {
 			timeout: 2000,
 		});
+
+		// the string and number values off the response both reach the dropdown
+		await expect(
+			screen.findByText('payment-service'),
+		).resolves.toBeInTheDocument();
+		await expect(screen.findByText('200')).resolves.toBeInTheDocument();
 	});
 
 	it('fetches key suggestions on mount for LOGS', async () => {
 		// Use real timers for CodeMirror integration tests
-		const mockedGetKeysOnMount = getKeySuggestions as jest.MockedFunction<
-			typeof getKeySuggestions
+		const mockedGetKeysOnMount = getFieldKeySuggestions as jest.MockedFunction<
+			typeof getFieldKeySuggestions
 		>;
 		mockedGetKeysOnMount.mockClear();
 
@@ -217,15 +177,17 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 			/>,
 		);
 
-		// Wait for debounced API call (300ms debounce + some buffer)
-		await waitFor(() => expect(mockedGetKeysOnMount).toHaveBeenCalled(), {
-			timeout: 2000,
-		});
-
-		const lastArgs = mockedGetKeysOnMount.mock.calls[
-			mockedGetKeysOnMount.mock.calls.length - 1
-		]?.[0] as { signal: unknown; searchText: string };
-		expect(lastArgs).toMatchObject({ signal: DataSource.LOGS, searchText: '' });
+		// Wait for the mount fetch specifically. A debounced fetch from an earlier test
+		// can still land after mockClear(), so waiting on "any call" would let this
+		// assert against that one instead and make the result order-dependent.
+		await waitFor(
+			() =>
+				expect(mockedGetKeysOnMount).toHaveBeenCalledWith(
+					expect.objectContaining({ signal: DataSource.LOGS, searchText: '' }),
+					undefined,
+				),
+			{ timeout: 2000 },
+		);
 	});
 
 	it('calls provided onRun on Mod-Enter', async () => {
@@ -366,9 +328,69 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		dispatchSpy.mockRestore();
 	});
 
+	it('does not crash when the expression contains CRLF line breaks (issue #5869)', async () => {
+		const dispatchSpy = jest.spyOn(EditorView.prototype, 'dispatch');
+		const onChange = jest.fn() as jest.MockedFunction<(v: string) => void>;
+		const initialExpression = "service.name = 'frontend'";
+		// Filtering on a multi-line log value (CRLF) used to throw
+		// "RangeError: Selection points outside of document".
+		const crlfExpression = "body CONTAINS 'line1\r\nline2\r\nline3'";
+
+		const baseQueryData = {
+			...initialQueriesMap.logs.builder.queryData[0],
+			filter: { expression: initialExpression },
+		};
+
+		const { rerender } = render(
+			<QuerySearch
+				onChange={onChange}
+				queryData={baseQueryData}
+				dataSource={DataSource.LOGS}
+			/>,
+		);
+
+		await waitFor(
+			() => {
+				const editorContent = document.querySelector(
+					CM_EDITOR_SELECTOR,
+				) as HTMLElement;
+				expect(editorContent.textContent || '').toBe(initialExpression);
+			},
+			{ timeout: 3000 },
+		);
+
+		rerender(
+			<QuerySearch
+				onChange={onChange}
+				queryData={{ ...baseQueryData, filter: { expression: crlfExpression } }}
+				dataSource={DataSource.LOGS}
+			/>,
+		);
+
+		// The programmatic replace dispatched without throwing, and the selection anchor
+		// stayed within the CRLF-normalized document (the bug set it past the end).
+		await waitFor(() => {
+			const spec = dispatchSpy.mock.calls
+				.map(
+					(call) =>
+						call[0] as {
+							selection?: { anchor?: number };
+							changes?: { newLength?: number };
+						},
+				)
+				.find((s) => s?.selection?.anchor != null && s?.changes?.newLength != null);
+			expect(spec).toBeDefined();
+			expect(spec?.selection?.anchor).toBeLessThanOrEqual(
+				spec?.changes?.newLength as number,
+			);
+		});
+
+		dispatchSpy.mockRestore();
+	});
+
 	it('fetches key suggestions for metrics even without aggregateAttribute.key when showFilterSuggestionsWithoutMetric is true', async () => {
-		const mockedGetKeys = getKeySuggestions as jest.MockedFunction<
-			typeof getKeySuggestions
+		const mockedGetKeys = getFieldKeySuggestions as jest.MockedFunction<
+			typeof getFieldKeySuggestions
 		>;
 		mockedGetKeys.mockClear();
 

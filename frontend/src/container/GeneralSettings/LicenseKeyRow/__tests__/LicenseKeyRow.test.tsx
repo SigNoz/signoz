@@ -1,6 +1,12 @@
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import useActiveLicenseKey from 'hooks/useActiveLicenseKey/useActiveLicenseKey';
 
 import LicenseKeyRow from '../LicenseKeyRow';
+
+jest.mock('hooks/useActiveLicenseKey/useActiveLicenseKey');
+const mockUseActiveLicenseKey = useActiveLicenseKey as jest.MockedFunction<
+	typeof useActiveLicenseKey
+>;
 
 const mockCopyToClipboard = jest.fn();
 
@@ -23,20 +29,22 @@ describe('LicenseKeyRow', () => {
 		jest.clearAllMocks();
 	});
 
-	it('renders nothing when activeLicense key is absent', () => {
-		const { container } = render(<LicenseKeyRow />, undefined, {
-			appContextOverrides: { activeLicense: null },
+	it('renders nothing when the license key is absent', () => {
+		mockUseActiveLicenseKey.mockReturnValue({
+			licenseKey: undefined,
+			isLoading: false,
 		});
+		const { container } = render(<LicenseKeyRow />);
 
 		expect(container).toBeEmptyDOMElement();
 	});
 
-	it('renders label and masked key when activeLicense key exists', () => {
-		render(<LicenseKeyRow />, undefined, {
-			appContextOverrides: {
-				activeLicense: { key: 'abcdefghij' } as any,
-			},
+	it('renders label and masked key when the license key exists', () => {
+		mockUseActiveLicenseKey.mockReturnValue({
+			licenseKey: 'abcdefghij',
+			isLoading: false,
 		});
+		render(<LicenseKeyRow />);
 
 		expect(screen.getByText('SigNoz License Key')).toBeInTheDocument();
 		expect(screen.getByText('ab·······ij')).toBeInTheDocument();
@@ -45,6 +53,10 @@ describe('LicenseKeyRow', () => {
 	it('calls copyToClipboard and shows success toast when clipboard is available', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
+		mockUseActiveLicenseKey.mockReturnValue({
+			licenseKey: 'test-key',
+			isLoading: false,
+		});
 		render(<LicenseKeyRow />);
 
 		await user.click(screen.getByRole('button', { name: /copy license key/i }));

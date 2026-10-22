@@ -13,6 +13,9 @@ type Store interface {
 
 	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableDashboard, error)
 
+	// GetByName resolves a dashboard by its per-org unique name.
+	GetByName(ctx context.Context, orgID valuer.UUID, name string) (*StorableDashboard, error)
+
 	GetPublic(context.Context, string) (*StorablePublicDashboard, error)
 
 	GetDashboardByOrgsAndPublicID(context.Context, []string, string) (*StorableDashboard, error)
@@ -24,6 +27,10 @@ type Store interface {
 	ListPublic(context.Context, valuer.UUID) ([]*StorablePublicDashboard, error)
 
 	Update(context.Context, valuer.UUID, *StorableDashboard) error
+
+	// UpdateName updates only the name column of a dashboard, leaving its data
+	// untouched — used to backfill the name of a dashboard whose data fails to migrate.
+	UpdateName(ctx context.Context, orgID valuer.UUID, id valuer.UUID, name string) error
 
 	UpdatePublic(context.Context, *StorablePublicDashboard) error
 
@@ -68,4 +75,13 @@ type Store interface {
 	UpdateDashboardView(ctx context.Context, view *DashboardView) error
 
 	DeleteDashboardView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
+
+	// ════════════════════════════════════════════════════════════════════════
+	// System dashboard methods
+	// ════════════════════════════════════════════════════════════════════════
+	CreateSystemDashboard(ctx context.Context, storable *StorableSystemDashboard) error
+
+	GetSystemDashboard(ctx context.Context, orgID valuer.UUID, name string) (*StorableSystemDashboard, error)
+
+	UpdateSystemDashboardVersion(ctx context.Context, orgID valuer.UUID, name string, version int) error
 }

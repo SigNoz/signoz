@@ -33,7 +33,13 @@ func (handler *handler) GetFieldsKeys(rw http.ResponseWriter, req *http.Request)
 
 	fieldKeySelector := telemetrytypes.NewFieldKeySelectorFromPostableFieldKeysParams(params)
 
-	keys, complete, err := handler.telemetryMetadataStore.GetKeys(ctx, fieldKeySelector)
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	keys, complete, err := handler.telemetryMetadataStore.GetKeys(ctx, valuer.MustNewUUID(claims.OrgID), fieldKeySelector)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -68,7 +74,7 @@ func (handler *handler) GetFieldsValues(rw http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	relatedValues, relatedComplete, err := handler.telemetryMetadataStore.GetRelatedValues(ctx, fieldValueSelector)
+	relatedValues, relatedComplete, err := handler.telemetryMetadataStore.GetRelatedValues(ctx, valuer.MustNewUUID(claims.OrgID), fieldValueSelector)
 	if err != nil {
 		// we don't want to return error if we fail to get related values for some reason
 		relatedValues = []string{}
@@ -76,6 +82,7 @@ func (handler *handler) GetFieldsValues(rw http.ResponseWriter, req *http.Reques
 
 	values := &telemetrytypes.TelemetryFieldValues{
 		StringValues:  allValues.StringValues,
+		BoolValues:    allValues.BoolValues,
 		NumberValues:  allValues.NumberValues,
 		RelatedValues: relatedValues,
 	}

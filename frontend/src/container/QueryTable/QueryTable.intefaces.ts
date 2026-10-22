@@ -4,7 +4,7 @@ import { TableProps } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { DownloadOptions } from 'container/Download/Download.types';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { ContextLinksData } from 'types/api/dashboard/getAll';
+import { ContextLinksData } from 'types/api/widgets/widget';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';

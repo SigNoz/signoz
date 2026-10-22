@@ -1,7 +1,7 @@
 import { useQueryClient } from 'react-query';
 import { Trash2, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { buildSADeletePermission } from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { toast } from '@signozhq/ui/sonner';
@@ -80,24 +80,28 @@ function DeleteAccountModal(): JSX.Element {
 
 	const footer = (
 		<div className="sa-delete-dialog__footer">
-			<Button variant="solid" color="secondary" onClick={handleCancel}>
-				<X size={12} />
+			<Button
+				size="md"
+				variant="solid"
+				color="secondary"
+				onClick={handleCancel}
+				prefix={<X size={12} />}
+			>
 				Cancel
 			</Button>
-			<AuthZTooltip
+			<AuthZButton
+				size="md"
 				checks={[buildSADeletePermission(accountId ?? '')]}
-				enabled={!!accountId}
+				authZEnabled={!!accountId}
+				variant="solid"
+				color="danger"
+				loading={isDeleting}
+				onClick={handleConfirm}
+				data-testid="confirm-delete-btn"
+				prefix={<Trash2 size={12} />}
 			>
-				<Button
-					variant="solid"
-					color="destructive"
-					loading={isDeleting}
-					onClick={handleConfirm}
-				>
-					<Trash2 size={12} />
-					Delete
-				</Button>
-			</AuthZTooltip>
+				Delete
+			</AuthZButton>
 		</div>
 	);
 
@@ -114,6 +118,7 @@ function DeleteAccountModal(): JSX.Element {
 			className="alert-dialog sa-delete-dialog"
 			showCloseButton={false}
 			disableOutsideClick={isErrorModalVisible}
+			testId="delete-service-account-modal"
 			footer={footer}
 		>
 			{content}

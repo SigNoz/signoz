@@ -9,6 +9,8 @@ const PAGE_METADATA_TO_DTO: Record<string, PageTypeDTO> = {
 	dashboard_detail: PageTypeDTO.dashboard_detail,
 	dashboard_list: PageTypeDTO.dashboard_list,
 	panel_edit: PageTypeDTO.panel_edit,
+	// There is no panel_create, so sending panel_edit temporarily
+	panel_create: PageTypeDTO.panel_edit,
 	panel_fullscreen: PageTypeDTO.panel_fullscreen,
 	logs_explorer: PageTypeDTO.logs_explorer,
 	trace_detail: PageTypeDTO.trace_detail,

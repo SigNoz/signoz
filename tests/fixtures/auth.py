@@ -16,6 +16,7 @@ from wiremock.resources.mappings import (
 
 from fixtures import reuse, types
 from fixtures.logger import setup_logger
+from fixtures.role import find_role_by_name
 
 logger = setup_logger(__name__)
 
@@ -32,28 +33,7 @@ USER_VIEWER_EMAIL = "viewer@integration.test"
 USER_VIEWER_PASSWORD = "password123Z$"
 
 USERS_BASE = "/api/v2/users"
-
-
-def _login(signoz: types.SigNoz, email: str, password: str) -> str:
-    """Complete GET /sessions/context + POST /sessions/email_password; return accessToken."""
-    ctx = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v2/sessions/context"),
-        params={
-            "email": email,
-            "ref": f"{signoz.self.host_configs['8080'].base()}",
-        },
-        timeout=5,
-    )
-    assert ctx.status_code == HTTPStatus.OK
-    org_id = ctx.json()["data"]["orgs"][0]["id"]
-
-    login = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v2/sessions/email_password"),
-        json={"email": email, "password": password, "orgId": org_id},
-        timeout=5,
-    )
-    assert login.status_code == HTTPStatus.OK
-    return login.json()["data"]["accessToken"]
+USER_ROLES_BASE = "/api/v2/user_roles"
 
 
 def register_admin(
@@ -77,7 +57,7 @@ def register_admin(
             timeout=5,
         )
 
-        assert response.status_code == HTTPStatus.OK
+        assert response.status_code == HTTPStatus.OK, f"failed to register admin: {response.status_code} {response.text}"
 
         return types.Operation(name="create_user_admin")
 
@@ -180,16 +160,14 @@ def get_tokens(signoz: types.SigNoz) -> Callable[[str, str], tuple[str, str]]:
     return tokens_getter(signoz)
 
 
-@pytest.fixture(name="apply_license", scope="package")
-def apply_license(
+def license_applier(
     signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument,redefined-outer-name
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
+    cache_key: str = "apply_license",
+    base_path: str = "",
 ) -> types.Operation:
-    """Stub Zeus license-lookup, then POST /api/v3/licenses so the BE flips
-    to ENTERPRISE. Package-scoped so an e2e bootstrap can pull it in and
-    every spec inherits the licensed state."""
+    """Apply the ENTERPRISE license and complete org onboarding, under base_path. Reuse-wrapped."""
 
     def create() -> types.Operation:
         Config.base_url = signoz.zeus.host_configs["8080"].get("/__admin")
@@ -222,12 +200,12 @@ def apply_license(
             )
         )
 
-        access_token = _login(signoz, USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+        access_token = token_getter(signoz, base_path)(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-        # 202 = applied, 409 = already applied. Retry transient failures —
+        # 201 = applied, 409 = already applied. Retry transient failures —
         # the BE occasionally 5xxs right after startup before the license
         # sync goroutine is ready.
-        license_url = signoz.self.host_configs["8080"].get("/api/v3/licenses")
+        license_url = signoz.self.host_configs["8080"].get(f"{base_path}/api/v4/licenses")
         auth_header = {"Authorization": f"Bearer {access_token}"}
         for attempt in range(10):
             resp = requests.post(
@@ -236,7 +214,7 @@ def apply_license(
                 headers=auth_header,
                 timeout=5,
             )
-            if resp.status_code in (HTTPStatus.ACCEPTED, HTTPStatus.CONFLICT):
+            if resp.status_code in (HTTPStatus.CREATED, HTTPStatus.CONFLICT):
                 break
             if attempt == 9:
                 resp.raise_for_status()
@@ -246,7 +224,7 @@ def apply_license(
         # redirects first-time admins to a questionnaire. Mark the preference
         # complete so specs can navigate directly to the feature under test.
         pref_resp = requests.put(
-            signoz.self.host_configs["8080"].get("/api/v1/org/preferences/org_onboarding"),
+            signoz.self.host_configs["8080"].get(f"{base_path}/api/v1/org/preferences/org_onboarding"),
             json={"value": True},
             headers=auth_header,
             timeout=5,
@@ -263,12 +241,25 @@ def apply_license(
     return reuse.wrap(
         request,
         pytestconfig,
-        "apply_license",
+        cache_key,
         lambda: types.Operation(name=""),
         create,
         delete,
         restore,
     )
+
+
+@pytest.fixture(name="apply_license", scope="package")
+def apply_license(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument,redefined-outer-name
+    request: pytest.FixtureRequest,
+    pytestconfig: pytest.Config,
+) -> types.Operation:
+    """Stub Zeus license-lookup, then POST /api/v4/licenses so the BE flips
+    to ENTERPRISE. Package-scoped so an e2e bootstrap can pull it in and
+    every spec inherits the licensed state."""
+    return license_applier(signoz, request, pytestconfig)
 
 
 # This is not a fixture purposefully, we just want to add a license to the signoz instance.
@@ -316,7 +307,7 @@ def add_license(
     access_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.post(
-        url=signoz.self.host_configs["8080"].get(f"{base_path}/api/v3/licenses"),
+        url=signoz.self.host_configs["8080"].get(f"{base_path}/api/v4/licenses"),
         json={"key": "secret-key"},
         headers={"Authorization": "Bearer " + access_token},
         timeout=5,
@@ -325,7 +316,7 @@ def add_license(
     if response.status_code == HTTPStatus.CONFLICT:
         return
 
-    assert response.status_code == HTTPStatus.ACCEPTED
+    assert response.status_code == HTTPStatus.CREATED
 
     response = requests.post(
         url=signoz.zeus.host_configs["8080"].get("/__admin/requests/count"),
@@ -344,24 +335,38 @@ def create_active_user(
     password: str,
     name: str = "",
 ) -> str:
-    """Invite a user and activate via resetPassword. Returns user ID."""
+    """Create a pending invite user and activate it by setting a password.
+
+    role is a managed role name, e.g. signoz-viewer. Returns the user ID.
+    """
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": email, "role": role, "name": name},
+        signoz.self.host_configs["8080"].get(USERS_BASE),
+        json={
+            "email": email,
+            "displayName": name,
+            "userRoles": [{"id": find_role_by_name(signoz, admin_token, role)}],
+        },
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
     assert response.status_code == HTTPStatus.CREATED, response.text
-    invited_user = response.json()["data"]
+    user_id = response.json()["data"]["id"]
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{user_id}/reset_password_tokens"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
 
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
-        json={"password": password, "token": invited_user["token"]},
+        signoz.self.host_configs["8080"].get("/api/v2/factor_password/reset"),
+        json={"password": password, "token": response.json()["data"]["token"]},
         timeout=5,
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
-    return invited_user["id"]
+    return user_id
 
 
 def find_user_by_email(signoz: types.SigNoz, token: str, email: str) -> dict:
@@ -409,21 +414,21 @@ def change_user_role(
 
     Role names should be managed role names (e.g. signoz-editor).
     """
-    # Get current roles to find the old role's ID
+    # Get current roles to find the old role's user_role entry ID
     response = requests.get(
-        signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{user_id}/roles"),
+        signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{user_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
-    roles = response.json()["data"]
+    user_roles = response.json()["data"]["userRoles"]
 
-    old_role_entry = next((r for r in roles if r["name"] == old_role), None)
+    old_role_entry = next((ur for ur in user_roles if ur["role"]["name"] == old_role), None)
     assert old_role_entry is not None, f"User does not have role '{old_role}'"
 
     # Remove old role
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{user_id}/roles/{old_role_entry['id']}"),
+        signoz.self.host_configs["8080"].get(f"{USER_ROLES_BASE}/{old_role_entry['id']}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
@@ -431,9 +436,9 @@ def change_user_role(
 
     # Assign new role
     response = requests.post(
-        signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{user_id}/roles"),
-        json={"name": new_role},
+        signoz.self.host_configs["8080"].get(USER_ROLES_BASE),
+        json={"userId": user_id, "roleId": find_role_by_name(signoz, admin_token, new_role)},
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.status_code == HTTPStatus.CREATED, response.text

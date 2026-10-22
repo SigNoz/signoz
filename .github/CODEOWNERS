@@ -15,6 +15,10 @@
 .github @therealpandey
 go.mod @therealpandey
 
+# Security
+
+/SECURITY.md @therealpandey
+
 # Scaffold Owners
 
 /pkg/config/ @therealpandey
@@ -152,44 +156,36 @@ go.mod @therealpandey
 
 ## Dashboard Types
 
-/frontend/src/api/types/dashboard/ @SigNoz/pulse-frontend
+/frontend/src/types/api/dashboard/ @SigNoz/pulse-frontend
+/frontend/src/types/api/widgets/ @SigNoz/pulse-frontend
 
-## Dashboard List
+## Widget Card
 
-/frontend/src/pages/DashboardsListPage/ @SigNoz/pulse-frontend
-/frontend/src/container/ListOfDashboard/ @SigNoz/pulse-frontend
-
-# Dashboard Widget Page
-
-/frontend/src/pages/DashboardWidget/ @SigNoz/pulse-frontend
-/frontend/src/container/NewWidget/ @SigNoz/pulse-frontend
-
-## Dashboard Page
-
-/frontend/src/pages/DashboardPage/ @SigNoz/pulse-frontend
-/frontend/src/container/DashboardContainer/ @SigNoz/pulse-frontend
-/frontend/src/container/GridCardLayout/ @SigNoz/pulse-frontend
+/frontend/src/container/WidgetCard/ @SigNoz/pulse-frontend
 
 ## Public Dashboard Page
 
 /frontend/src/pages/PublicDashboard/ @SigNoz/pulse-frontend
-/frontend/src/container/PublicDashboardContainer/ @SigNoz/pulse-frontend
 
 ## Dashboard Libs + Components
 
 /frontend/src/lib/uPlotV2/ @SigNoz/pulse-frontend
+/frontend/src/lib/visualization/ @SigNoz/pulse-frontend
 /frontend/src/lib/dashboard/ @SigNoz/pulse-frontend
 /frontend/src/lib/dashboardVariables/ @SigNoz/pulse-frontend
 /frontend/src/components/NewSelect/ @SigNoz/pulse-frontend
 
-## Dashboard V2
-/frontend/src/pages/DashboardPageV2/ @SigNoz/pulse-frontend
-/frontend/src/pages/DashboardsListPageV2/ @SigNoz/pulse-frontend
+## Dashboard Pages
+
+/frontend/src/pages/DashboardPage/ @SigNoz/pulse-frontend
+/frontend/src/pages/DashboardsListPage/ @SigNoz/pulse-frontend
 
 ## Infrastructure Monitoring
 /frontend/src/pages/InfrastructureMonitoring/ @SigNoz/pulse-frontend
 /frontend/src/container/InfraMonitoringHosts/ @SigNoz/pulse-frontend
+/frontend/src/container/InfraMonitoringHostsV2/ @SigNoz/pulse-frontend
 /frontend/src/container/InfraMonitoringK8s/ @SigNoz/pulse-frontend
+/frontend/src/container/InfraMonitoringK8sV2/ @SigNoz/pulse-frontend
 
 ## Alerts
 /frontend/src/pages/AlertList/ @SigNoz/pulse-frontend
@@ -204,13 +200,22 @@ go.mod @therealpandey
 /frontend/src/container/ListAlertRules/ @SigNoz/pulse-frontend
 /frontend/src/container/TriggeredAlerts/ @SigNoz/pulse-frontend
 /frontend/src/container/AnomalyAlertEvaluationView/ @SigNoz/pulse-frontend
+/frontend/src/container/RoutingPolicies/ @SigNoz/pulse-frontend
+/frontend/src/components/AlertBreadcrumb/ @SigNoz/pulse-frontend
+/frontend/src/container/EditRules/ @SigNoz/pulse-frontend
+/frontend/src/components/AlertDetailsFilters/ @SigNoz/pulse-frontend
+/frontend/src/components/Alerts/ @SigNoz/pulse-frontend
+/frontend/src/hooks/routingPolicies/ @SigNoz/pulse-frontend
+/frontend/src/types/api/alerts/ @SigNoz/pulse-frontend
+/frontend/src/providers/Alert.tsx @SigNoz/pulse-frontend
+/frontend/src/constants/alerts.ts @SigNoz/pulse-frontend
 
 ## Notification Channels
 /frontend/src/pages/ChannelsEdit/ @SigNoz/pulse-frontend
 /frontend/src/pages/ChannelsNew/ @SigNoz/pulse-frontend
-/frontend/src/container/AllAlertChannels/ @SigNoz/pulse-frontend
 /frontend/src/container/CreateAlertChannels/ @SigNoz/pulse-frontend
-/frontend/src/container/EditAlertChannels/ @SigNoz/pulse-frontend
+/frontend/src/container/FormAlertChannels/ @SigNoz/pulse-frontend
+/frontend/src/hooks/notificationChannels/ @SigNoz/pulse-frontend
 
 ## OpenAPI Schema - Generated
 /frontend/src/api/generated/services/ @therealpandey @vikrantgupta25 @srikanthccv
@@ -284,3 +289,8 @@ go.mod @therealpandey
 /frontend/src/components/MessagingQueues/ @SigNoz/events-frontend
 /frontend/src/components/MessagingQueueHealthCheck/ @SigNoz/events-frontend
 /frontend/src/hooks/messagingQueue/ @SigNoz/events-frontend
+
+## Storybook
+/frontend/.storybook/ @H4ad
+/frontend/src/storybook/ @H4ad
+/.claude/skills/signoz-page-story/ @H4ad

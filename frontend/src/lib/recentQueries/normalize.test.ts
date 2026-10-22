@@ -34,7 +34,7 @@ describe('normalizeFilterExpression', () => {
 		);
 	});
 
-	it('lowercases HAS / HASANY / HASALL / HASTOKEN function names', () => {
+	it('lowercases HAS / HASANY / HASALL / HASTOKEN / SEARCH function names', () => {
 		expect(normalizeFilterExpression('HAS(tags, "x")')).toBe(
 			normalizeFilterExpression('has(tags, "x")'),
 		);
@@ -46,6 +46,9 @@ describe('normalizeFilterExpression', () => {
 		);
 		expect(normalizeFilterExpression('HASTOKEN(msg, "err")')).toBe(
 			normalizeFilterExpression('hasToken(msg, "err")'),
+		);
+		expect(normalizeFilterExpression('SEARCH("err")')).toBe(
+			normalizeFilterExpression('search("err")'),
 		);
 	});
 

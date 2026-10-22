@@ -28,6 +28,7 @@ import (
 	eequerier "github.com/SigNoz/signoz/ee/querier"
 	enterpriseapp "github.com/SigNoz/signoz/ee/query-service/app"
 	eerules "github.com/SigNoz/signoz/ee/query-service/rules"
+	"github.com/SigNoz/signoz/ee/subscription/httpsubscription"
 	enterprisezeus "github.com/SigNoz/signoz/ee/zeus"
 	"github.com/SigNoz/signoz/ee/zeus/httpzeus"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
@@ -60,9 +61,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/ruler/signozruler"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/subscription"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
@@ -102,6 +105,9 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		func(sqlstore sqlstore.SQLStore, zeus zeus.Zeus, orgGetter organization.Getter, analytics analytics.Analytics) factory.ProviderFactory[licensing.Licensing, licensing.Config] {
 			return httplicensing.NewProviderFactory(sqlstore, zeus, orgGetter, analytics)
 		},
+		func(zeus zeus.Zeus, licensing licensing.Licensing) subscription.Subscription {
+			return httpsubscription.New(zeus, licensing)
+		},
 		signoz.NewEmailingProviderFactories(),
 		signoz.NewCacheProviderFactories(),
 		signoz.NewWebProviderFactories(config.Global),
@@ -136,8 +142,8 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 			}
 			return openfgaauthz.NewProviderFactory(sqlstore, openfgaschema.NewSchema().Get(ctx), openfgaDataStore, licensing, onBeforeRoleDelete, authtypes.NewRegistry()), nil
 		},
-		func(store sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing, tagModule tag.Module) dashboard.Module {
-			return impldashboard.NewModule(pkgimpldashboard.NewStore(store), settings, analytics, orgGetter, queryParser, querier, licensing, tagModule)
+		func(store sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing, tagModule tag.Module, systemDashboardRegistry dashboardtypes.SystemDashboardRegistry) dashboard.Module {
+			return impldashboard.NewModule(pkgimpldashboard.NewStore(store), settings, analytics, orgGetter, queryParser, querier, licensing, tagModule, systemDashboardRegistry)
 		},
 		func(licensing licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config] {
 			return httpgateway.NewProviderFactory(licensing)

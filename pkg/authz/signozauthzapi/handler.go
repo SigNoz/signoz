@@ -36,14 +36,14 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	roleWithTransactionGroups := authtypes.NewRoleWithTransactionGroups(req.Name, req.Description, authtypes.RoleTypeCustom, valuer.MustNewUUID(claims.OrgID), req.TransactionGroups)
-	err = handler.authz.Create(ctx, valuer.MustNewUUID(claims.OrgID), roleWithTransactionGroups)
+	role := authtypes.NewRole(req.Name, req.Description, authtypes.RoleTypeCustom, valuer.MustNewUUID(claims.OrgID), req.TransactionGroups)
+	err = handler.authz.Create(ctx, valuer.MustNewUUID(claims.OrgID), role)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, types.Identifiable{ID: roleWithTransactionGroups.ID})
+	render.Success(rw, http.StatusCreated, types.Identifiable{ID: role.ID})
 }
 
 func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
@@ -65,13 +65,13 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	roleWithTransactionGroups, err := handler.authz.GetWithTransactionGroups(ctx, valuer.MustNewUUID(claims.OrgID), roleID)
+	role, err := handler.authz.Get(ctx, valuer.MustNewUUID(claims.OrgID), roleID)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, roleWithTransactionGroups)
+	render.Success(rw, http.StatusOK, role)
 }
 
 func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
@@ -88,7 +88,7 @@ func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, roles)
+	render.Success(rw, http.StatusOK, authtypes.NewGettableRolesFromRoles(roles))
 }
 
 func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
@@ -117,14 +117,13 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	roleWithTransactionGroups := authtypes.MakeRoleWithTransactionGroups(role, nil)
-	err = roleWithTransactionGroups.Update(req.Description, req.TransactionGroups)
+	err = role.Update(req.Description, req.TransactionGroups)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	err = handler.authz.Update(ctx, valuer.MustNewUUID(claims.OrgID), roleWithTransactionGroups)
+	err = handler.authz.Update(ctx, valuer.MustNewUUID(claims.OrgID), role)
 	if err != nil {
 		render.Error(rw, err)
 		return

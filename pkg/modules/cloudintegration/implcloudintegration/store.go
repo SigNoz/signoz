@@ -134,6 +134,24 @@ func (store *store) UpdateAccount(ctx context.Context, account *cloudintegration
 		BunDBCtx(ctx).
 		NewUpdate().
 		Model(account).
+		Column("config").
+		Column("updated_at").
+		WherePK().
+		Where("org_id = ?", account.OrgID).
+		Where("provider = ?", account.Provider).
+		Exec(ctx)
+
+	return err
+}
+
+func (store *store) UpdateAgentReport(ctx context.Context, account *cloudintegrationtypes.StorableCloudIntegration) error {
+	_, err := store.
+		store.
+		BunDBCtx(ctx).
+		NewUpdate().
+		Model(account).
+		Column("account_id").
+		Column("last_agent_report").
 		WherePK().
 		Where("org_id = ?", account.OrgID).
 		Where("provider = ?", account.Provider).

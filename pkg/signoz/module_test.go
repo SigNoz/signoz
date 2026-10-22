@@ -21,6 +21,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/retention/implretention"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount/implserviceaccount"
+	"github.com/SigNoz/signoz/pkg/modules/spanmapper/implspanmapper"
 	"github.com/SigNoz/signoz/pkg/modules/tag/impltag"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/queryparser"
@@ -51,7 +52,9 @@ func TestNewModules(t *testing.T) {
 	queryParser := queryparser.New(providerSettings)
 	require.NoError(t, err)
 	tagModule := impltag.NewModule(impltag.NewStore(sqlstore))
-	dashboardModule := impldashboard.NewModule(impldashboard.NewStore(sqlstore), providerSettings, nil, orgGetter, queryParser, tagModule)
+	systemDashboardRegistry, err := impldashboard.NewSystemDashboardRegistry()
+	require.NoError(t, err)
+	dashboardModule := impldashboard.NewModule(impldashboard.NewStore(sqlstore), providerSettings, nil, orgGetter, queryParser, tagModule, systemDashboardRegistry)
 
 	flagger, err := flagger.New(context.Background(), instrumentationtest.New().ToProviderSettings(), flagger.Config{}, flagger.MustNewRegistry())
 	require.NoError(t, err)
@@ -66,7 +69,11 @@ func TestNewModules(t *testing.T) {
 
 	retentionGetter := implretention.NewGetter(implretention.NewStore(sqlstore))
 
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, userGetter, userRoleStore, serviceAccount, serviceAccountGetter, implcloudintegration.NewModule(), retentionGetter, flagger, tagModule, implmetricreductionrule.NewModule())
+	spanMapperRegistry, err := implspanmapper.NewSystemGroupRegistry()
+	require.NoError(t, err)
+	spanMapperModule := implspanmapper.NewModule(implspanmapper.NewStore(sqlstore), spanMapperRegistry, providerSettings)
+
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, userGetter, userRoleStore, serviceAccount, serviceAccountGetter, implcloudintegration.NewModule(), retentionGetter, flagger, tagModule, implmetricreductionrule.NewModule(), spanMapperModule)
 
 	reflectVal := reflect.ValueOf(modules)
 	for i := 0; i < reflectVal.NumField(); i++ {

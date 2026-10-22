@@ -22,10 +22,10 @@ type QueryBuilderFormula struct {
 	// expression to apply to the query
 	Expression string `json:"expression"`
 
-	Disabled bool `json:"disabled,omitempty"`
+	Disabled bool `json:"disabled"`
 
 	// order by keys and directions
-	Order []OrderBy `json:"order,omitempty"`
+	Order []OrderBy `json:"order,omitzero"`
 
 	// limit the maximum number of rows to return
 	Limit int `json:"limit,omitempty"`
@@ -34,9 +34,13 @@ type QueryBuilderFormula struct {
 	Having *Having `json:"having,omitempty"`
 
 	// functions to apply to the formula result
-	Functions []Function `json:"functions,omitempty"`
+	Functions []Function `json:"functions,omitzero"`
 
-	Legend string `json:"legend,omitempty"`
+	// BucketOptions is the bucket axis to count the formula's results into.
+	// Only a heatmap request reads it, and only from the query it draws.
+	BucketOptions *BucketOptions `json:"bucketOptions,omitempty"`
+
+	Legend string `json:"legend"`
 }
 
 // Copy creates a deep copy of the QueryBuilderFormula.
@@ -59,6 +63,11 @@ func (f QueryBuilderFormula) Copy() QueryBuilderFormula {
 
 	if f.Having != nil {
 		c.Having = f.Having.Copy()
+	}
+
+	if f.BucketOptions != nil {
+		bucketOptionsCopy := *f.BucketOptions
+		c.BucketOptions = &bucketOptionsCopy
 	}
 
 	return c
@@ -120,6 +129,22 @@ func (f QueryBuilderFormula) Validate() error {
 	}
 
 	return nil
+}
+
+func (f QueryBuilderFormula) ExtractReferencedQueryNames() ([]string, error) {
+	// parsed the way the evaluator parses it, so the names match what it resolves
+	expression, err := govaluate.NewEvaluableExpressionWithFunctions(f.Expression, EvalFuncs())
+	if err != nil {
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to parse expression for formula query %q", f.Name)
+	}
+
+	var names []string
+	for _, variable := range expression.Vars() {
+		if !slices.Contains(names, variable) {
+			names = append(names, variable)
+		}
+	}
+	return names, nil
 }
 
 // small container to store the query name and index or alias reference

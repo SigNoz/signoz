@@ -36,6 +36,7 @@
 				"./__mocks__/*"
 			],
 			"api": ["./src/api"],
+			"app/*": ["./src/app/*"],
 			"AppRoutes": ["./src/AppRoutes"],
 			"ReactI18": ["./src/ReactI18"],
 			"store": ["./src/store"],
@@ -76,6 +77,7 @@
 	],
 	"include": [
 		"./src",
+		"./.storybook",
 		"./__mocks__",
 		"./babel.config.cjs",
 		"./jest.config.ts",

@@ -21,10 +21,19 @@ func NewMockAlertmanager(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockAlertmanager {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockAlertmanager{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -78,7 +87,7 @@ type MockAlertmanager_Collect_Call struct {
 // Collect is a helper method to define mock.On call
 //   - context1 context.Context
 //   - uUID valuer.UUID
-func (_e *MockAlertmanager_Expecter) Collect(context1 interface{}, uUID interface{}) *MockAlertmanager_Collect_Call {
+func (_e *MockAlertmanager_Expecter) Collect(context1 any, uUID any) *MockAlertmanager_Collect_Call {
 	return &MockAlertmanager_Collect_Call{Call: _e.mock.On("Collect", context1, uUID)}
 }
 
@@ -100,8 +109,8 @@ func (_c *MockAlertmanager_Collect_Call) Run(run func(context1 context.Context, 
 	return _c
 }
 
-func (_c *MockAlertmanager_Collect_Call) Return(stringToV map[string]any, err error) *MockAlertmanager_Collect_Call {
-	_c.Call.Return(stringToV, err)
+func (_c *MockAlertmanager_Collect_Call) Return(stringToAnyMoqParam map[string]any, err error) *MockAlertmanager_Collect_Call {
+	_c.Call.Return(stringToAnyMoqParam, err)
 	return _c
 }
 
@@ -155,8 +164,8 @@ func (_c *MockAlertmanager_Config_Call) RunAndReturn(run func() alertmanagerserv
 }
 
 // CreateChannel provides a mock function for the type MockAlertmanager
-func (_mock *MockAlertmanager) CreateChannel(context1 context.Context, s string, v *alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error) {
-	ret := _mock.Called(context1, s, v)
+func (_mock *MockAlertmanager) CreateChannel(context1 context.Context, s string, receiver *alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error) {
+	ret := _mock.Called(context1, s, receiver)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateChannel")
@@ -165,17 +174,17 @@ func (_mock *MockAlertmanager) CreateChannel(context1 context.Context, s string,
 	var r0 *alertmanagertypes.Channel
 	var r1 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error)); ok {
-		return returnFunc(context1, s, v)
+		return returnFunc(context1, s, receiver)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *alertmanagertypes.Receiver) *alertmanagertypes.Channel); ok {
-		r0 = returnFunc(context1, s, v)
+		r0 = returnFunc(context1, s, receiver)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*alertmanagertypes.Channel)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, *alertmanagertypes.Receiver) error); ok {
-		r1 = returnFunc(context1, s, v)
+		r1 = returnFunc(context1, s, receiver)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -190,12 +199,12 @@ type MockAlertmanager_CreateChannel_Call struct {
 // CreateChannel is a helper method to define mock.On call
 //   - context1 context.Context
 //   - s string
-//   - v *alertmanagertypes.Receiver
-func (_e *MockAlertmanager_Expecter) CreateChannel(context1 interface{}, s interface{}, v interface{}) *MockAlertmanager_CreateChannel_Call {
-	return &MockAlertmanager_CreateChannel_Call{Call: _e.mock.On("CreateChannel", context1, s, v)}
+//   - receiver *alertmanagertypes.Receiver
+func (_e *MockAlertmanager_Expecter) CreateChannel(context1 any, s any, receiver any) *MockAlertmanager_CreateChannel_Call {
+	return &MockAlertmanager_CreateChannel_Call{Call: _e.mock.On("CreateChannel", context1, s, receiver)}
 }
 
-func (_c *MockAlertmanager_CreateChannel_Call) Run(run func(context1 context.Context, s string, v *alertmanagertypes.Receiver)) *MockAlertmanager_CreateChannel_Call {
+func (_c *MockAlertmanager_CreateChannel_Call) Run(run func(context1 context.Context, s string, receiver *alertmanagertypes.Receiver)) *MockAlertmanager_CreateChannel_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -223,7 +232,7 @@ func (_c *MockAlertmanager_CreateChannel_Call) Return(channel *alertmanagertypes
 	return _c
 }
 
-func (_c *MockAlertmanager_CreateChannel_Call) RunAndReturn(run func(context1 context.Context, s string, v *alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error)) *MockAlertmanager_CreateChannel_Call {
+func (_c *MockAlertmanager_CreateChannel_Call) RunAndReturn(run func(context1 context.Context, s string, receiver *alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error)) *MockAlertmanager_CreateChannel_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -254,7 +263,7 @@ type MockAlertmanager_CreateInhibitRules_Call struct {
 //   - ctx context.Context
 //   - orgID valuer.UUID
 //   - rules []config.InhibitRule
-func (_e *MockAlertmanager_Expecter) CreateInhibitRules(ctx interface{}, orgID interface{}, rules interface{}) *MockAlertmanager_CreateInhibitRules_Call {
+func (_e *MockAlertmanager_Expecter) CreateInhibitRules(ctx any, orgID any, rules any) *MockAlertmanager_CreateInhibitRules_Call {
 	return &MockAlertmanager_CreateInhibitRules_Call{Call: _e.mock.On("CreateInhibitRules", ctx, orgID, rules)}
 }
 
@@ -287,6 +296,80 @@ func (_c *MockAlertmanager_CreateInhibitRules_Call) Return(err error) *MockAlert
 }
 
 func (_c *MockAlertmanager_CreateInhibitRules_Call) RunAndReturn(run func(ctx context.Context, orgID valuer.UUID, rules []config.InhibitRule) error) *MockAlertmanager_CreateInhibitRules_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CreateNotificationChannel provides a mock function for the type MockAlertmanager
+func (_mock *MockAlertmanager) CreateNotificationChannel(context1 context.Context, s string, postableNotificationChannel alertmanagertypes.PostableNotificationChannel) (*alertmanagertypes.Channel, error) {
+	ret := _mock.Called(context1, s, postableNotificationChannel)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateNotificationChannel")
+	}
+
+	var r0 *alertmanagertypes.Channel
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, alertmanagertypes.PostableNotificationChannel) (*alertmanagertypes.Channel, error)); ok {
+		return returnFunc(context1, s, postableNotificationChannel)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, alertmanagertypes.PostableNotificationChannel) *alertmanagertypes.Channel); ok {
+		r0 = returnFunc(context1, s, postableNotificationChannel)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*alertmanagertypes.Channel)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, alertmanagertypes.PostableNotificationChannel) error); ok {
+		r1 = returnFunc(context1, s, postableNotificationChannel)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAlertmanager_CreateNotificationChannel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateNotificationChannel'
+type MockAlertmanager_CreateNotificationChannel_Call struct {
+	*mock.Call
+}
+
+// CreateNotificationChannel is a helper method to define mock.On call
+//   - context1 context.Context
+//   - s string
+//   - postableNotificationChannel alertmanagertypes.PostableNotificationChannel
+func (_e *MockAlertmanager_Expecter) CreateNotificationChannel(context1 any, s any, postableNotificationChannel any) *MockAlertmanager_CreateNotificationChannel_Call {
+	return &MockAlertmanager_CreateNotificationChannel_Call{Call: _e.mock.On("CreateNotificationChannel", context1, s, postableNotificationChannel)}
+}
+
+func (_c *MockAlertmanager_CreateNotificationChannel_Call) Run(run func(context1 context.Context, s string, postableNotificationChannel alertmanagertypes.PostableNotificationChannel)) *MockAlertmanager_CreateNotificationChannel_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 alertmanagertypes.PostableNotificationChannel
+		if args[2] != nil {
+			arg2 = args[2].(alertmanagertypes.PostableNotificationChannel)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAlertmanager_CreateNotificationChannel_Call) Return(channel *alertmanagertypes.Channel, err error) *MockAlertmanager_CreateNotificationChannel_Call {
+	_c.Call.Return(channel, err)
+	return _c
+}
+
+func (_c *MockAlertmanager_CreateNotificationChannel_Call) RunAndReturn(run func(context1 context.Context, s string, postableNotificationChannel alertmanagertypes.PostableNotificationChannel) (*alertmanagertypes.Channel, error)) *MockAlertmanager_CreateNotificationChannel_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -327,7 +410,7 @@ type MockAlertmanager_CreateRoutePolicies_Call struct {
 // CreateRoutePolicies is a helper method to define mock.On call
 //   - ctx context.Context
 //   - routeRequests []*alertmanagertypes.PostableRoutePolicy
-func (_e *MockAlertmanager_Expecter) CreateRoutePolicies(ctx interface{}, routeRequests interface{}) *MockAlertmanager_CreateRoutePolicies_Call {
+func (_e *MockAlertmanager_Expecter) CreateRoutePolicies(ctx any, routeRequests any) *MockAlertmanager_CreateRoutePolicies_Call {
 	return &MockAlertmanager_CreateRoutePolicies_Call{Call: _e.mock.On("CreateRoutePolicies", ctx, routeRequests)}
 }
 
@@ -395,7 +478,7 @@ type MockAlertmanager_CreateRoutePolicy_Call struct {
 // CreateRoutePolicy is a helper method to define mock.On call
 //   - ctx context.Context
 //   - route *alertmanagertypes.PostableRoutePolicy
-func (_e *MockAlertmanager_Expecter) CreateRoutePolicy(ctx interface{}, route interface{}) *MockAlertmanager_CreateRoutePolicy_Call {
+func (_e *MockAlertmanager_Expecter) CreateRoutePolicy(ctx any, route any) *MockAlertmanager_CreateRoutePolicy_Call {
 	return &MockAlertmanager_CreateRoutePolicy_Call{Call: _e.mock.On("CreateRoutePolicy", ctx, route)}
 }
 
@@ -453,7 +536,7 @@ type MockAlertmanager_DeleteAllInhibitRulesByRuleId_Call struct {
 //   - ctx context.Context
 //   - orgID valuer.UUID
 //   - ruleId string
-func (_e *MockAlertmanager_Expecter) DeleteAllInhibitRulesByRuleId(ctx interface{}, orgID interface{}, ruleId interface{}) *MockAlertmanager_DeleteAllInhibitRulesByRuleId_Call {
+func (_e *MockAlertmanager_Expecter) DeleteAllInhibitRulesByRuleId(ctx any, orgID any, ruleId any) *MockAlertmanager_DeleteAllInhibitRulesByRuleId_Call {
 	return &MockAlertmanager_DeleteAllInhibitRulesByRuleId_Call{Call: _e.mock.On("DeleteAllInhibitRulesByRuleId", ctx, orgID, ruleId)}
 }
 
@@ -515,7 +598,7 @@ type MockAlertmanager_DeleteAllRoutePoliciesByRuleId_Call struct {
 // DeleteAllRoutePoliciesByRuleId is a helper method to define mock.On call
 //   - ctx context.Context
 //   - ruleId string
-func (_e *MockAlertmanager_Expecter) DeleteAllRoutePoliciesByRuleId(ctx interface{}, ruleId interface{}) *MockAlertmanager_DeleteAllRoutePoliciesByRuleId_Call {
+func (_e *MockAlertmanager_Expecter) DeleteAllRoutePoliciesByRuleId(ctx any, ruleId any) *MockAlertmanager_DeleteAllRoutePoliciesByRuleId_Call {
 	return &MockAlertmanager_DeleteAllRoutePoliciesByRuleId_Call{Call: _e.mock.On("DeleteAllRoutePoliciesByRuleId", ctx, ruleId)}
 }
 
@@ -573,7 +656,7 @@ type MockAlertmanager_DeleteChannelByID_Call struct {
 //   - context1 context.Context
 //   - s string
 //   - uUID valuer.UUID
-func (_e *MockAlertmanager_Expecter) DeleteChannelByID(context1 interface{}, s interface{}, uUID interface{}) *MockAlertmanager_DeleteChannelByID_Call {
+func (_e *MockAlertmanager_Expecter) DeleteChannelByID(context1 any, s any, uUID any) *MockAlertmanager_DeleteChannelByID_Call {
 	return &MockAlertmanager_DeleteChannelByID_Call{Call: _e.mock.On("DeleteChannelByID", context1, s, uUID)}
 }
 
@@ -636,7 +719,7 @@ type MockAlertmanager_DeleteNotificationConfig_Call struct {
 //   - ctx context.Context
 //   - orgID valuer.UUID
 //   - ruleId string
-func (_e *MockAlertmanager_Expecter) DeleteNotificationConfig(ctx interface{}, orgID interface{}, ruleId interface{}) *MockAlertmanager_DeleteNotificationConfig_Call {
+func (_e *MockAlertmanager_Expecter) DeleteNotificationConfig(ctx any, orgID any, ruleId any) *MockAlertmanager_DeleteNotificationConfig_Call {
 	return &MockAlertmanager_DeleteNotificationConfig_Call{Call: _e.mock.On("DeleteNotificationConfig", ctx, orgID, ruleId)}
 }
 
@@ -698,7 +781,7 @@ type MockAlertmanager_DeleteRoutePolicyByID_Call struct {
 // DeleteRoutePolicyByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - routeID string
-func (_e *MockAlertmanager_Expecter) DeleteRoutePolicyByID(ctx interface{}, routeID interface{}) *MockAlertmanager_DeleteRoutePolicyByID_Call {
+func (_e *MockAlertmanager_Expecter) DeleteRoutePolicyByID(ctx any, routeID any) *MockAlertmanager_DeleteRoutePolicyByID_Call {
 	return &MockAlertmanager_DeleteRoutePolicyByID_Call{Call: _e.mock.On("DeleteRoutePolicyByID", ctx, routeID)}
 }
 
@@ -767,7 +850,7 @@ type MockAlertmanager_GetAlerts_Call struct {
 //   - context1 context.Context
 //   - s string
 //   - gettableAlertsParams alertmanagertypes.GettableAlertsParams
-func (_e *MockAlertmanager_Expecter) GetAlerts(context1 interface{}, s interface{}, gettableAlertsParams interface{}) *MockAlertmanager_GetAlerts_Call {
+func (_e *MockAlertmanager_Expecter) GetAlerts(context1 any, s any, gettableAlertsParams any) *MockAlertmanager_GetAlerts_Call {
 	return &MockAlertmanager_GetAlerts_Call{Call: _e.mock.On("GetAlerts", context1, s, gettableAlertsParams)}
 }
 
@@ -794,8 +877,8 @@ func (_c *MockAlertmanager_GetAlerts_Call) Run(run func(context1 context.Context
 	return _c
 }
 
-func (_c *MockAlertmanager_GetAlerts_Call) Return(v alertmanagertypes.DeprecatedGettableAlerts, err error) *MockAlertmanager_GetAlerts_Call {
-	_c.Call.Return(v, err)
+func (_c *MockAlertmanager_GetAlerts_Call) Return(deprecatedGettableAlerts alertmanagertypes.DeprecatedGettableAlerts, err error) *MockAlertmanager_GetAlerts_Call {
+	_c.Call.Return(deprecatedGettableAlerts, err)
 	return _c
 }
 
@@ -839,7 +922,7 @@ type MockAlertmanager_GetAllRoutePolicies_Call struct {
 
 // GetAllRoutePolicies is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockAlertmanager_Expecter) GetAllRoutePolicies(ctx interface{}) *MockAlertmanager_GetAllRoutePolicies_Call {
+func (_e *MockAlertmanager_Expecter) GetAllRoutePolicies(ctx any) *MockAlertmanager_GetAllRoutePolicies_Call {
 	return &MockAlertmanager_GetAllRoutePolicies_Call{Call: _e.mock.On("GetAllRoutePolicies", ctx)}
 }
 
@@ -903,7 +986,7 @@ type MockAlertmanager_GetChannelByID_Call struct {
 //   - context1 context.Context
 //   - s string
 //   - uUID valuer.UUID
-func (_e *MockAlertmanager_Expecter) GetChannelByID(context1 interface{}, s interface{}, uUID interface{}) *MockAlertmanager_GetChannelByID_Call {
+func (_e *MockAlertmanager_Expecter) GetChannelByID(context1 any, s any, uUID any) *MockAlertmanager_GetChannelByID_Call {
 	return &MockAlertmanager_GetChannelByID_Call{Call: _e.mock.On("GetChannelByID", context1, s, uUID)}
 }
 
@@ -976,7 +1059,7 @@ type MockAlertmanager_GetConfig_Call struct {
 // GetConfig is a helper method to define mock.On call
 //   - context1 context.Context
 //   - s string
-func (_e *MockAlertmanager_Expecter) GetConfig(context1 interface{}, s interface{}) *MockAlertmanager_GetConfig_Call {
+func (_e *MockAlertmanager_Expecter) GetConfig(context1 any, s any) *MockAlertmanager_GetConfig_Call {
 	return &MockAlertmanager_GetConfig_Call{Call: _e.mock.On("GetConfig", context1, s)}
 }
 
@@ -1044,7 +1127,7 @@ type MockAlertmanager_GetRoutePolicyByID_Call struct {
 // GetRoutePolicyByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - routeID string
-func (_e *MockAlertmanager_Expecter) GetRoutePolicyByID(ctx interface{}, routeID interface{}) *MockAlertmanager_GetRoutePolicyByID_Call {
+func (_e *MockAlertmanager_Expecter) GetRoutePolicyByID(ctx any, routeID any) *MockAlertmanager_GetRoutePolicyByID_Call {
 	return &MockAlertmanager_GetRoutePolicyByID_Call{Call: _e.mock.On("GetRoutePolicyByID", ctx, routeID)}
 }
 
@@ -1111,7 +1194,7 @@ type MockAlertmanager_ListAllChannels_Call struct {
 
 // ListAllChannels is a helper method to define mock.On call
 //   - context1 context.Context
-func (_e *MockAlertmanager_Expecter) ListAllChannels(context1 interface{}) *MockAlertmanager_ListAllChannels_Call {
+func (_e *MockAlertmanager_Expecter) ListAllChannels(context1 any) *MockAlertmanager_ListAllChannels_Call {
 	return &MockAlertmanager_ListAllChannels_Call{Call: _e.mock.On("ListAllChannels", context1)}
 }
 
@@ -1174,7 +1257,7 @@ type MockAlertmanager_ListChannels_Call struct {
 // ListChannels is a helper method to define mock.On call
 //   - context1 context.Context
 //   - s string
-func (_e *MockAlertmanager_Expecter) ListChannels(context1 interface{}, s interface{}) *MockAlertmanager_ListChannels_Call {
+func (_e *MockAlertmanager_Expecter) ListChannels(context1 any, s any) *MockAlertmanager_ListChannels_Call {
 	return &MockAlertmanager_ListChannels_Call{Call: _e.mock.On("ListChannels", context1, s)}
 }
 
@@ -1206,9 +1289,83 @@ func (_c *MockAlertmanager_ListChannels_Call) RunAndReturn(run func(context1 con
 	return _c
 }
 
+// ListNotificationChannels provides a mock function for the type MockAlertmanager
+func (_mock *MockAlertmanager) ListNotificationChannels(context1 context.Context, s string, listChannelsParams *alertmanagertypes.ListChannelsParams) (*alertmanagertypes.ListableNotificationChannel, error) {
+	ret := _mock.Called(context1, s, listChannelsParams)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListNotificationChannels")
+	}
+
+	var r0 *alertmanagertypes.ListableNotificationChannel
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *alertmanagertypes.ListChannelsParams) (*alertmanagertypes.ListableNotificationChannel, error)); ok {
+		return returnFunc(context1, s, listChannelsParams)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *alertmanagertypes.ListChannelsParams) *alertmanagertypes.ListableNotificationChannel); ok {
+		r0 = returnFunc(context1, s, listChannelsParams)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*alertmanagertypes.ListableNotificationChannel)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, *alertmanagertypes.ListChannelsParams) error); ok {
+		r1 = returnFunc(context1, s, listChannelsParams)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAlertmanager_ListNotificationChannels_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListNotificationChannels'
+type MockAlertmanager_ListNotificationChannels_Call struct {
+	*mock.Call
+}
+
+// ListNotificationChannels is a helper method to define mock.On call
+//   - context1 context.Context
+//   - s string
+//   - listChannelsParams *alertmanagertypes.ListChannelsParams
+func (_e *MockAlertmanager_Expecter) ListNotificationChannels(context1 any, s any, listChannelsParams any) *MockAlertmanager_ListNotificationChannels_Call {
+	return &MockAlertmanager_ListNotificationChannels_Call{Call: _e.mock.On("ListNotificationChannels", context1, s, listChannelsParams)}
+}
+
+func (_c *MockAlertmanager_ListNotificationChannels_Call) Run(run func(context1 context.Context, s string, listChannelsParams *alertmanagertypes.ListChannelsParams)) *MockAlertmanager_ListNotificationChannels_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 *alertmanagertypes.ListChannelsParams
+		if args[2] != nil {
+			arg2 = args[2].(*alertmanagertypes.ListChannelsParams)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAlertmanager_ListNotificationChannels_Call) Return(listableNotificationChannel *alertmanagertypes.ListableNotificationChannel, err error) *MockAlertmanager_ListNotificationChannels_Call {
+	_c.Call.Return(listableNotificationChannel, err)
+	return _c
+}
+
+func (_c *MockAlertmanager_ListNotificationChannels_Call) RunAndReturn(run func(context1 context.Context, s string, listChannelsParams *alertmanagertypes.ListChannelsParams) (*alertmanagertypes.ListableNotificationChannel, error)) *MockAlertmanager_ListNotificationChannels_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // PutAlerts provides a mock function for the type MockAlertmanager
-func (_mock *MockAlertmanager) PutAlerts(context1 context.Context, s string, v alertmanagertypes.PostableAlerts) error {
-	ret := _mock.Called(context1, s, v)
+func (_mock *MockAlertmanager) PutAlerts(context1 context.Context, s string, postableAlerts alertmanagertypes.PostableAlerts) error {
+	ret := _mock.Called(context1, s, postableAlerts)
 
 	if len(ret) == 0 {
 		panic("no return value specified for PutAlerts")
@@ -1216,7 +1373,7 @@ func (_mock *MockAlertmanager) PutAlerts(context1 context.Context, s string, v a
 
 	var r0 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, alertmanagertypes.PostableAlerts) error); ok {
-		r0 = returnFunc(context1, s, v)
+		r0 = returnFunc(context1, s, postableAlerts)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -1231,12 +1388,12 @@ type MockAlertmanager_PutAlerts_Call struct {
 // PutAlerts is a helper method to define mock.On call
 //   - context1 context.Context
 //   - s string
-//   - v alertmanagertypes.PostableAlerts
-func (_e *MockAlertmanager_Expecter) PutAlerts(context1 interface{}, s interface{}, v interface{}) *MockAlertmanager_PutAlerts_Call {
-	return &MockAlertmanager_PutAlerts_Call{Call: _e.mock.On("PutAlerts", context1, s, v)}
+//   - postableAlerts alertmanagertypes.PostableAlerts
+func (_e *MockAlertmanager_Expecter) PutAlerts(context1 any, s any, postableAlerts any) *MockAlertmanager_PutAlerts_Call {
+	return &MockAlertmanager_PutAlerts_Call{Call: _e.mock.On("PutAlerts", context1, s, postableAlerts)}
 }
 
-func (_c *MockAlertmanager_PutAlerts_Call) Run(run func(context1 context.Context, s string, v alertmanagertypes.PostableAlerts)) *MockAlertmanager_PutAlerts_Call {
+func (_c *MockAlertmanager_PutAlerts_Call) Run(run func(context1 context.Context, s string, postableAlerts alertmanagertypes.PostableAlerts)) *MockAlertmanager_PutAlerts_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1264,7 +1421,87 @@ func (_c *MockAlertmanager_PutAlerts_Call) Return(err error) *MockAlertmanager_P
 	return _c
 }
 
-func (_c *MockAlertmanager_PutAlerts_Call) RunAndReturn(run func(context1 context.Context, s string, v alertmanagertypes.PostableAlerts) error) *MockAlertmanager_PutAlerts_Call {
+func (_c *MockAlertmanager_PutAlerts_Call) RunAndReturn(run func(context1 context.Context, s string, postableAlerts alertmanagertypes.PostableAlerts) error) *MockAlertmanager_PutAlerts_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RepairNotificationChannel provides a mock function for the type MockAlertmanager
+func (_mock *MockAlertmanager) RepairNotificationChannel(context1 context.Context, s string, uUID valuer.UUID, b bool) (*alertmanagertypes.ChannelRepair, error) {
+	ret := _mock.Called(context1, s, uUID, b)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RepairNotificationChannel")
+	}
+
+	var r0 *alertmanagertypes.ChannelRepair
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, valuer.UUID, bool) (*alertmanagertypes.ChannelRepair, error)); ok {
+		return returnFunc(context1, s, uUID, b)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, valuer.UUID, bool) *alertmanagertypes.ChannelRepair); ok {
+		r0 = returnFunc(context1, s, uUID, b)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*alertmanagertypes.ChannelRepair)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, valuer.UUID, bool) error); ok {
+		r1 = returnFunc(context1, s, uUID, b)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAlertmanager_RepairNotificationChannel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RepairNotificationChannel'
+type MockAlertmanager_RepairNotificationChannel_Call struct {
+	*mock.Call
+}
+
+// RepairNotificationChannel is a helper method to define mock.On call
+//   - context1 context.Context
+//   - s string
+//   - uUID valuer.UUID
+//   - b bool
+func (_e *MockAlertmanager_Expecter) RepairNotificationChannel(context1 any, s any, uUID any, b any) *MockAlertmanager_RepairNotificationChannel_Call {
+	return &MockAlertmanager_RepairNotificationChannel_Call{Call: _e.mock.On("RepairNotificationChannel", context1, s, uUID, b)}
+}
+
+func (_c *MockAlertmanager_RepairNotificationChannel_Call) Run(run func(context1 context.Context, s string, uUID valuer.UUID, b bool)) *MockAlertmanager_RepairNotificationChannel_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 valuer.UUID
+		if args[2] != nil {
+			arg2 = args[2].(valuer.UUID)
+		}
+		var arg3 bool
+		if args[3] != nil {
+			arg3 = args[3].(bool)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAlertmanager_RepairNotificationChannel_Call) Return(channelRepair *alertmanagertypes.ChannelRepair, err error) *MockAlertmanager_RepairNotificationChannel_Call {
+	_c.Call.Return(channelRepair, err)
+	return _c
+}
+
+func (_c *MockAlertmanager_RepairNotificationChannel_Call) RunAndReturn(run func(context1 context.Context, s string, uUID valuer.UUID, b bool) (*alertmanagertypes.ChannelRepair, error)) *MockAlertmanager_RepairNotificationChannel_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1294,7 +1531,7 @@ type MockAlertmanager_SetConfig_Call struct {
 // SetConfig is a helper method to define mock.On call
 //   - context1 context.Context
 //   - config1 *alertmanagertypes.Config
-func (_e *MockAlertmanager_Expecter) SetConfig(context1 interface{}, config1 interface{}) *MockAlertmanager_SetConfig_Call {
+func (_e *MockAlertmanager_Expecter) SetConfig(context1 any, config1 any) *MockAlertmanager_SetConfig_Call {
 	return &MockAlertmanager_SetConfig_Call{Call: _e.mock.On("SetConfig", context1, config1)}
 }
 
@@ -1351,7 +1588,7 @@ type MockAlertmanager_SetDefaultConfig_Call struct {
 // SetDefaultConfig is a helper method to define mock.On call
 //   - context1 context.Context
 //   - s string
-func (_e *MockAlertmanager_Expecter) SetDefaultConfig(context1 interface{}, s interface{}) *MockAlertmanager_SetDefaultConfig_Call {
+func (_e *MockAlertmanager_Expecter) SetDefaultConfig(context1 any, s any) *MockAlertmanager_SetDefaultConfig_Call {
 	return &MockAlertmanager_SetDefaultConfig_Call{Call: _e.mock.On("SetDefaultConfig", context1, s)}
 }
 
@@ -1410,7 +1647,7 @@ type MockAlertmanager_SetNotificationConfig_Call struct {
 //   - orgID valuer.UUID
 //   - ruleId string
 //   - config1 *alertmanagertypes.NotificationConfig
-func (_e *MockAlertmanager_Expecter) SetNotificationConfig(ctx interface{}, orgID interface{}, ruleId interface{}, config1 interface{}) *MockAlertmanager_SetNotificationConfig_Call {
+func (_e *MockAlertmanager_Expecter) SetNotificationConfig(ctx any, orgID any, ruleId any, config1 any) *MockAlertmanager_SetNotificationConfig_Call {
 	return &MockAlertmanager_SetNotificationConfig_Call{Call: _e.mock.On("SetNotificationConfig", ctx, orgID, ruleId, config1)}
 }
 
@@ -1476,7 +1713,7 @@ type MockAlertmanager_Start_Call struct {
 
 // Start is a helper method to define mock.On call
 //   - context1 context.Context
-func (_e *MockAlertmanager_Expecter) Start(context1 interface{}) *MockAlertmanager_Start_Call {
+func (_e *MockAlertmanager_Expecter) Start(context1 any) *MockAlertmanager_Start_Call {
 	return &MockAlertmanager_Start_Call{Call: _e.mock.On("Start", context1)}
 }
 
@@ -1527,7 +1764,7 @@ type MockAlertmanager_Stop_Call struct {
 
 // Stop is a helper method to define mock.On call
 //   - context1 context.Context
-func (_e *MockAlertmanager_Expecter) Stop(context1 interface{}) *MockAlertmanager_Stop_Call {
+func (_e *MockAlertmanager_Expecter) Stop(context1 any) *MockAlertmanager_Stop_Call {
 	return &MockAlertmanager_Stop_Call{Call: _e.mock.On("Stop", context1)}
 }
 
@@ -1581,7 +1818,7 @@ type MockAlertmanager_TestAlert_Call struct {
 //   - orgID string
 //   - ruleID string
 //   - receiversMap map[*alertmanagertypes.PostableAlert][]string
-func (_e *MockAlertmanager_Expecter) TestAlert(ctx interface{}, orgID interface{}, ruleID interface{}, receiversMap interface{}) *MockAlertmanager_TestAlert_Call {
+func (_e *MockAlertmanager_Expecter) TestAlert(ctx any, orgID any, ruleID any, receiversMap any) *MockAlertmanager_TestAlert_Call {
 	return &MockAlertmanager_TestAlert_Call{Call: _e.mock.On("TestAlert", ctx, orgID, ruleID, receiversMap)}
 }
 
@@ -1623,9 +1860,72 @@ func (_c *MockAlertmanager_TestAlert_Call) RunAndReturn(run func(ctx context.Con
 	return _c
 }
 
+// TestNotificationChannel provides a mock function for the type MockAlertmanager
+func (_mock *MockAlertmanager) TestNotificationChannel(context1 context.Context, s string, testableNotificationChannel alertmanagertypes.TestableNotificationChannel) error {
+	ret := _mock.Called(context1, s, testableNotificationChannel)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TestNotificationChannel")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, alertmanagertypes.TestableNotificationChannel) error); ok {
+		r0 = returnFunc(context1, s, testableNotificationChannel)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockAlertmanager_TestNotificationChannel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TestNotificationChannel'
+type MockAlertmanager_TestNotificationChannel_Call struct {
+	*mock.Call
+}
+
+// TestNotificationChannel is a helper method to define mock.On call
+//   - context1 context.Context
+//   - s string
+//   - testableNotificationChannel alertmanagertypes.TestableNotificationChannel
+func (_e *MockAlertmanager_Expecter) TestNotificationChannel(context1 any, s any, testableNotificationChannel any) *MockAlertmanager_TestNotificationChannel_Call {
+	return &MockAlertmanager_TestNotificationChannel_Call{Call: _e.mock.On("TestNotificationChannel", context1, s, testableNotificationChannel)}
+}
+
+func (_c *MockAlertmanager_TestNotificationChannel_Call) Run(run func(context1 context.Context, s string, testableNotificationChannel alertmanagertypes.TestableNotificationChannel)) *MockAlertmanager_TestNotificationChannel_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 alertmanagertypes.TestableNotificationChannel
+		if args[2] != nil {
+			arg2 = args[2].(alertmanagertypes.TestableNotificationChannel)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAlertmanager_TestNotificationChannel_Call) Return(err error) *MockAlertmanager_TestNotificationChannel_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockAlertmanager_TestNotificationChannel_Call) RunAndReturn(run func(context1 context.Context, s string, testableNotificationChannel alertmanagertypes.TestableNotificationChannel) error) *MockAlertmanager_TestNotificationChannel_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // TestReceiver provides a mock function for the type MockAlertmanager
-func (_mock *MockAlertmanager) TestReceiver(context1 context.Context, s string, v *alertmanagertypes.Receiver) error {
-	ret := _mock.Called(context1, s, v)
+func (_mock *MockAlertmanager) TestReceiver(context1 context.Context, s string, receiver *alertmanagertypes.Receiver) error {
+	ret := _mock.Called(context1, s, receiver)
 
 	if len(ret) == 0 {
 		panic("no return value specified for TestReceiver")
@@ -1633,7 +1933,7 @@ func (_mock *MockAlertmanager) TestReceiver(context1 context.Context, s string, 
 
 	var r0 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *alertmanagertypes.Receiver) error); ok {
-		r0 = returnFunc(context1, s, v)
+		r0 = returnFunc(context1, s, receiver)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -1648,12 +1948,12 @@ type MockAlertmanager_TestReceiver_Call struct {
 // TestReceiver is a helper method to define mock.On call
 //   - context1 context.Context
 //   - s string
-//   - v *alertmanagertypes.Receiver
-func (_e *MockAlertmanager_Expecter) TestReceiver(context1 interface{}, s interface{}, v interface{}) *MockAlertmanager_TestReceiver_Call {
-	return &MockAlertmanager_TestReceiver_Call{Call: _e.mock.On("TestReceiver", context1, s, v)}
+//   - receiver *alertmanagertypes.Receiver
+func (_e *MockAlertmanager_Expecter) TestReceiver(context1 any, s any, receiver any) *MockAlertmanager_TestReceiver_Call {
+	return &MockAlertmanager_TestReceiver_Call{Call: _e.mock.On("TestReceiver", context1, s, receiver)}
 }
 
-func (_c *MockAlertmanager_TestReceiver_Call) Run(run func(context1 context.Context, s string, v *alertmanagertypes.Receiver)) *MockAlertmanager_TestReceiver_Call {
+func (_c *MockAlertmanager_TestReceiver_Call) Run(run func(context1 context.Context, s string, receiver *alertmanagertypes.Receiver)) *MockAlertmanager_TestReceiver_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1681,7 +1981,7 @@ func (_c *MockAlertmanager_TestReceiver_Call) Return(err error) *MockAlertmanage
 	return _c
 }
 
-func (_c *MockAlertmanager_TestReceiver_Call) RunAndReturn(run func(context1 context.Context, s string, v *alertmanagertypes.Receiver) error) *MockAlertmanager_TestReceiver_Call {
+func (_c *MockAlertmanager_TestReceiver_Call) RunAndReturn(run func(context1 context.Context, s string, receiver *alertmanagertypes.Receiver) error) *MockAlertmanager_TestReceiver_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1712,7 +2012,7 @@ type MockAlertmanager_UpdateAllRoutePoliciesByRuleId_Call struct {
 //   - ctx context.Context
 //   - ruleId string
 //   - routes []*alertmanagertypes.PostableRoutePolicy
-func (_e *MockAlertmanager_Expecter) UpdateAllRoutePoliciesByRuleId(ctx interface{}, ruleId interface{}, routes interface{}) *MockAlertmanager_UpdateAllRoutePoliciesByRuleId_Call {
+func (_e *MockAlertmanager_Expecter) UpdateAllRoutePoliciesByRuleId(ctx any, ruleId any, routes any) *MockAlertmanager_UpdateAllRoutePoliciesByRuleId_Call {
 	return &MockAlertmanager_UpdateAllRoutePoliciesByRuleId_Call{Call: _e.mock.On("UpdateAllRoutePoliciesByRuleId", ctx, ruleId, routes)}
 }
 
@@ -1750,8 +2050,8 @@ func (_c *MockAlertmanager_UpdateAllRoutePoliciesByRuleId_Call) RunAndReturn(run
 }
 
 // UpdateChannelByReceiverAndID provides a mock function for the type MockAlertmanager
-func (_mock *MockAlertmanager) UpdateChannelByReceiverAndID(context1 context.Context, s string, v *alertmanagertypes.Receiver, uUID valuer.UUID) error {
-	ret := _mock.Called(context1, s, v, uUID)
+func (_mock *MockAlertmanager) UpdateChannelByReceiverAndID(context1 context.Context, s string, receiver *alertmanagertypes.Receiver, uUID valuer.UUID) error {
+	ret := _mock.Called(context1, s, receiver, uUID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateChannelByReceiverAndID")
@@ -1759,7 +2059,7 @@ func (_mock *MockAlertmanager) UpdateChannelByReceiverAndID(context1 context.Con
 
 	var r0 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *alertmanagertypes.Receiver, valuer.UUID) error); ok {
-		r0 = returnFunc(context1, s, v, uUID)
+		r0 = returnFunc(context1, s, receiver, uUID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -1774,13 +2074,13 @@ type MockAlertmanager_UpdateChannelByReceiverAndID_Call struct {
 // UpdateChannelByReceiverAndID is a helper method to define mock.On call
 //   - context1 context.Context
 //   - s string
-//   - v *alertmanagertypes.Receiver
+//   - receiver *alertmanagertypes.Receiver
 //   - uUID valuer.UUID
-func (_e *MockAlertmanager_Expecter) UpdateChannelByReceiverAndID(context1 interface{}, s interface{}, v interface{}, uUID interface{}) *MockAlertmanager_UpdateChannelByReceiverAndID_Call {
-	return &MockAlertmanager_UpdateChannelByReceiverAndID_Call{Call: _e.mock.On("UpdateChannelByReceiverAndID", context1, s, v, uUID)}
+func (_e *MockAlertmanager_Expecter) UpdateChannelByReceiverAndID(context1 any, s any, receiver any, uUID any) *MockAlertmanager_UpdateChannelByReceiverAndID_Call {
+	return &MockAlertmanager_UpdateChannelByReceiverAndID_Call{Call: _e.mock.On("UpdateChannelByReceiverAndID", context1, s, receiver, uUID)}
 }
 
-func (_c *MockAlertmanager_UpdateChannelByReceiverAndID_Call) Run(run func(context1 context.Context, s string, v *alertmanagertypes.Receiver, uUID valuer.UUID)) *MockAlertmanager_UpdateChannelByReceiverAndID_Call {
+func (_c *MockAlertmanager_UpdateChannelByReceiverAndID_Call) Run(run func(context1 context.Context, s string, receiver *alertmanagertypes.Receiver, uUID valuer.UUID)) *MockAlertmanager_UpdateChannelByReceiverAndID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1813,7 +2113,87 @@ func (_c *MockAlertmanager_UpdateChannelByReceiverAndID_Call) Return(err error) 
 	return _c
 }
 
-func (_c *MockAlertmanager_UpdateChannelByReceiverAndID_Call) RunAndReturn(run func(context1 context.Context, s string, v *alertmanagertypes.Receiver, uUID valuer.UUID) error) *MockAlertmanager_UpdateChannelByReceiverAndID_Call {
+func (_c *MockAlertmanager_UpdateChannelByReceiverAndID_Call) RunAndReturn(run func(context1 context.Context, s string, receiver *alertmanagertypes.Receiver, uUID valuer.UUID) error) *MockAlertmanager_UpdateChannelByReceiverAndID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateNotificationChannel provides a mock function for the type MockAlertmanager
+func (_mock *MockAlertmanager) UpdateNotificationChannel(context1 context.Context, s string, uUID valuer.UUID, updatableNotificationChannel alertmanagertypes.UpdatableNotificationChannel) (*alertmanagertypes.Channel, error) {
+	ret := _mock.Called(context1, s, uUID, updatableNotificationChannel)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateNotificationChannel")
+	}
+
+	var r0 *alertmanagertypes.Channel
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, valuer.UUID, alertmanagertypes.UpdatableNotificationChannel) (*alertmanagertypes.Channel, error)); ok {
+		return returnFunc(context1, s, uUID, updatableNotificationChannel)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, valuer.UUID, alertmanagertypes.UpdatableNotificationChannel) *alertmanagertypes.Channel); ok {
+		r0 = returnFunc(context1, s, uUID, updatableNotificationChannel)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*alertmanagertypes.Channel)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, valuer.UUID, alertmanagertypes.UpdatableNotificationChannel) error); ok {
+		r1 = returnFunc(context1, s, uUID, updatableNotificationChannel)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAlertmanager_UpdateNotificationChannel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateNotificationChannel'
+type MockAlertmanager_UpdateNotificationChannel_Call struct {
+	*mock.Call
+}
+
+// UpdateNotificationChannel is a helper method to define mock.On call
+//   - context1 context.Context
+//   - s string
+//   - uUID valuer.UUID
+//   - updatableNotificationChannel alertmanagertypes.UpdatableNotificationChannel
+func (_e *MockAlertmanager_Expecter) UpdateNotificationChannel(context1 any, s any, uUID any, updatableNotificationChannel any) *MockAlertmanager_UpdateNotificationChannel_Call {
+	return &MockAlertmanager_UpdateNotificationChannel_Call{Call: _e.mock.On("UpdateNotificationChannel", context1, s, uUID, updatableNotificationChannel)}
+}
+
+func (_c *MockAlertmanager_UpdateNotificationChannel_Call) Run(run func(context1 context.Context, s string, uUID valuer.UUID, updatableNotificationChannel alertmanagertypes.UpdatableNotificationChannel)) *MockAlertmanager_UpdateNotificationChannel_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 valuer.UUID
+		if args[2] != nil {
+			arg2 = args[2].(valuer.UUID)
+		}
+		var arg3 alertmanagertypes.UpdatableNotificationChannel
+		if args[3] != nil {
+			arg3 = args[3].(alertmanagertypes.UpdatableNotificationChannel)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAlertmanager_UpdateNotificationChannel_Call) Return(channel *alertmanagertypes.Channel, err error) *MockAlertmanager_UpdateNotificationChannel_Call {
+	_c.Call.Return(channel, err)
+	return _c
+}
+
+func (_c *MockAlertmanager_UpdateNotificationChannel_Call) RunAndReturn(run func(context1 context.Context, s string, uUID valuer.UUID, updatableNotificationChannel alertmanagertypes.UpdatableNotificationChannel) (*alertmanagertypes.Channel, error)) *MockAlertmanager_UpdateNotificationChannel_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1855,7 +2235,7 @@ type MockAlertmanager_UpdateRoutePolicyByID_Call struct {
 //   - ctx context.Context
 //   - routeID string
 //   - route *alertmanagertypes.PostableRoutePolicy
-func (_e *MockAlertmanager_Expecter) UpdateRoutePolicyByID(ctx interface{}, routeID interface{}, route interface{}) *MockAlertmanager_UpdateRoutePolicyByID_Call {
+func (_e *MockAlertmanager_Expecter) UpdateRoutePolicyByID(ctx any, routeID any, route any) *MockAlertmanager_UpdateRoutePolicyByID_Call {
 	return &MockAlertmanager_UpdateRoutePolicyByID_Call{Call: _e.mock.On("UpdateRoutePolicyByID", ctx, routeID, route)}
 }
 
@@ -1898,10 +2278,19 @@ func NewMockHandler(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockHandler {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockHandler{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -1933,7 +2322,7 @@ type MockHandler_CreateChannel_Call struct {
 // CreateChannel is a helper method to define mock.On call
 //   - responseWriter http.ResponseWriter
 //   - request *http.Request
-func (_e *MockHandler_Expecter) CreateChannel(responseWriter interface{}, request interface{}) *MockHandler_CreateChannel_Call {
+func (_e *MockHandler_Expecter) CreateChannel(responseWriter any, request any) *MockHandler_CreateChannel_Call {
 	return &MockHandler_CreateChannel_Call{Call: _e.mock.On("CreateChannel", responseWriter, request)}
 }
 
@@ -1965,6 +2354,52 @@ func (_c *MockHandler_CreateChannel_Call) RunAndReturn(run func(responseWriter h
 	return _c
 }
 
+// CreateNotificationChannel provides a mock function for the type MockHandler
+func (_mock *MockHandler) CreateNotificationChannel(responseWriter http.ResponseWriter, request *http.Request) {
+	_mock.Called(responseWriter, request)
+	return
+}
+
+// MockHandler_CreateNotificationChannel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateNotificationChannel'
+type MockHandler_CreateNotificationChannel_Call struct {
+	*mock.Call
+}
+
+// CreateNotificationChannel is a helper method to define mock.On call
+//   - responseWriter http.ResponseWriter
+//   - request *http.Request
+func (_e *MockHandler_Expecter) CreateNotificationChannel(responseWriter any, request any) *MockHandler_CreateNotificationChannel_Call {
+	return &MockHandler_CreateNotificationChannel_Call{Call: _e.mock.On("CreateNotificationChannel", responseWriter, request)}
+}
+
+func (_c *MockHandler_CreateNotificationChannel_Call) Run(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_CreateNotificationChannel_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 http.ResponseWriter
+		if args[0] != nil {
+			arg0 = args[0].(http.ResponseWriter)
+		}
+		var arg1 *http.Request
+		if args[1] != nil {
+			arg1 = args[1].(*http.Request)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockHandler_CreateNotificationChannel_Call) Return() *MockHandler_CreateNotificationChannel_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockHandler_CreateNotificationChannel_Call) RunAndReturn(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_CreateNotificationChannel_Call {
+	_c.Run(run)
+	return _c
+}
+
 // CreateRoutePolicy provides a mock function for the type MockHandler
 func (_mock *MockHandler) CreateRoutePolicy(responseWriter http.ResponseWriter, request *http.Request) {
 	_mock.Called(responseWriter, request)
@@ -1979,7 +2414,7 @@ type MockHandler_CreateRoutePolicy_Call struct {
 // CreateRoutePolicy is a helper method to define mock.On call
 //   - responseWriter http.ResponseWriter
 //   - request *http.Request
-func (_e *MockHandler_Expecter) CreateRoutePolicy(responseWriter interface{}, request interface{}) *MockHandler_CreateRoutePolicy_Call {
+func (_e *MockHandler_Expecter) CreateRoutePolicy(responseWriter any, request any) *MockHandler_CreateRoutePolicy_Call {
 	return &MockHandler_CreateRoutePolicy_Call{Call: _e.mock.On("CreateRoutePolicy", responseWriter, request)}
 }
 
@@ -2025,7 +2460,7 @@ type MockHandler_DeleteChannelByID_Call struct {
 // DeleteChannelByID is a helper method to define mock.On call
 //   - responseWriter http.ResponseWriter
 //   - request *http.Request
-func (_e *MockHandler_Expecter) DeleteChannelByID(responseWriter interface{}, request interface{}) *MockHandler_DeleteChannelByID_Call {
+func (_e *MockHandler_Expecter) DeleteChannelByID(responseWriter any, request any) *MockHandler_DeleteChannelByID_Call {
 	return &MockHandler_DeleteChannelByID_Call{Call: _e.mock.On("DeleteChannelByID", responseWriter, request)}
 }
 
@@ -2057,6 +2492,52 @@ func (_c *MockHandler_DeleteChannelByID_Call) RunAndReturn(run func(responseWrit
 	return _c
 }
 
+// DeleteNotificationChannel provides a mock function for the type MockHandler
+func (_mock *MockHandler) DeleteNotificationChannel(responseWriter http.ResponseWriter, request *http.Request) {
+	_mock.Called(responseWriter, request)
+	return
+}
+
+// MockHandler_DeleteNotificationChannel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteNotificationChannel'
+type MockHandler_DeleteNotificationChannel_Call struct {
+	*mock.Call
+}
+
+// DeleteNotificationChannel is a helper method to define mock.On call
+//   - responseWriter http.ResponseWriter
+//   - request *http.Request
+func (_e *MockHandler_Expecter) DeleteNotificationChannel(responseWriter any, request any) *MockHandler_DeleteNotificationChannel_Call {
+	return &MockHandler_DeleteNotificationChannel_Call{Call: _e.mock.On("DeleteNotificationChannel", responseWriter, request)}
+}
+
+func (_c *MockHandler_DeleteNotificationChannel_Call) Run(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_DeleteNotificationChannel_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 http.ResponseWriter
+		if args[0] != nil {
+			arg0 = args[0].(http.ResponseWriter)
+		}
+		var arg1 *http.Request
+		if args[1] != nil {
+			arg1 = args[1].(*http.Request)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockHandler_DeleteNotificationChannel_Call) Return() *MockHandler_DeleteNotificationChannel_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockHandler_DeleteNotificationChannel_Call) RunAndReturn(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_DeleteNotificationChannel_Call {
+	_c.Run(run)
+	return _c
+}
+
 // DeleteRoutePolicyByID provides a mock function for the type MockHandler
 func (_mock *MockHandler) DeleteRoutePolicyByID(responseWriter http.ResponseWriter, request *http.Request) {
 	_mock.Called(responseWriter, request)
@@ -2071,7 +2552,7 @@ type MockHandler_DeleteRoutePolicyByID_Call struct {
 // DeleteRoutePolicyByID is a helper method to define mock.On call
 //   - responseWriter http.ResponseWriter
 //   - request *http.Request
-func (_e *MockHandler_Expecter) DeleteRoutePolicyByID(responseWriter interface{}, request interface{}) *MockHandler_DeleteRoutePolicyByID_Call {
+func (_e *MockHandler_Expecter) DeleteRoutePolicyByID(responseWriter any, request any) *MockHandler_DeleteRoutePolicyByID_Call {
 	return &MockHandler_DeleteRoutePolicyByID_Call{Call: _e.mock.On("DeleteRoutePolicyByID", responseWriter, request)}
 }
 
@@ -2117,7 +2598,7 @@ type MockHandler_GetAlerts_Call struct {
 // GetAlerts is a helper method to define mock.On call
 //   - responseWriter http.ResponseWriter
 //   - request *http.Request
-func (_e *MockHandler_Expecter) GetAlerts(responseWriter interface{}, request interface{}) *MockHandler_GetAlerts_Call {
+func (_e *MockHandler_Expecter) GetAlerts(responseWriter any, request any) *MockHandler_GetAlerts_Call {
 	return &MockHandler_GetAlerts_Call{Call: _e.mock.On("GetAlerts", responseWriter, request)}
 }
 
@@ -2163,7 +2644,7 @@ type MockHandler_GetAllRoutePolicies_Call struct {
 // GetAllRoutePolicies is a helper method to define mock.On call
 //   - responseWriter http.ResponseWriter
 //   - request *http.Request
-func (_e *MockHandler_Expecter) GetAllRoutePolicies(responseWriter interface{}, request interface{}) *MockHandler_GetAllRoutePolicies_Call {
+func (_e *MockHandler_Expecter) GetAllRoutePolicies(responseWriter any, request any) *MockHandler_GetAllRoutePolicies_Call {
 	return &MockHandler_GetAllRoutePolicies_Call{Call: _e.mock.On("GetAllRoutePolicies", responseWriter, request)}
 }
 
@@ -2209,7 +2690,7 @@ type MockHandler_GetChannelByID_Call struct {
 // GetChannelByID is a helper method to define mock.On call
 //   - responseWriter http.ResponseWriter
 //   - request *http.Request
-func (_e *MockHandler_Expecter) GetChannelByID(responseWriter interface{}, request interface{}) *MockHandler_GetChannelByID_Call {
+func (_e *MockHandler_Expecter) GetChannelByID(responseWriter any, request any) *MockHandler_GetChannelByID_Call {
 	return &MockHandler_GetChannelByID_Call{Call: _e.mock.On("GetChannelByID", responseWriter, request)}
 }
 
@@ -2241,6 +2722,52 @@ func (_c *MockHandler_GetChannelByID_Call) RunAndReturn(run func(responseWriter 
 	return _c
 }
 
+// GetNotificationChannel provides a mock function for the type MockHandler
+func (_mock *MockHandler) GetNotificationChannel(responseWriter http.ResponseWriter, request *http.Request) {
+	_mock.Called(responseWriter, request)
+	return
+}
+
+// MockHandler_GetNotificationChannel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetNotificationChannel'
+type MockHandler_GetNotificationChannel_Call struct {
+	*mock.Call
+}
+
+// GetNotificationChannel is a helper method to define mock.On call
+//   - responseWriter http.ResponseWriter
+//   - request *http.Request
+func (_e *MockHandler_Expecter) GetNotificationChannel(responseWriter any, request any) *MockHandler_GetNotificationChannel_Call {
+	return &MockHandler_GetNotificationChannel_Call{Call: _e.mock.On("GetNotificationChannel", responseWriter, request)}
+}
+
+func (_c *MockHandler_GetNotificationChannel_Call) Run(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_GetNotificationChannel_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 http.ResponseWriter
+		if args[0] != nil {
+			arg0 = args[0].(http.ResponseWriter)
+		}
+		var arg1 *http.Request
+		if args[1] != nil {
+			arg1 = args[1].(*http.Request)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockHandler_GetNotificationChannel_Call) Return() *MockHandler_GetNotificationChannel_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockHandler_GetNotificationChannel_Call) RunAndReturn(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_GetNotificationChannel_Call {
+	_c.Run(run)
+	return _c
+}
+
 // GetRoutePolicyByID provides a mock function for the type MockHandler
 func (_mock *MockHandler) GetRoutePolicyByID(responseWriter http.ResponseWriter, request *http.Request) {
 	_mock.Called(responseWriter, request)
@@ -2255,7 +2782,7 @@ type MockHandler_GetRoutePolicyByID_Call struct {
 // GetRoutePolicyByID is a helper method to define mock.On call
 //   - responseWriter http.ResponseWriter
 //   - request *http.Request
-func (_e *MockHandler_Expecter) GetRoutePolicyByID(responseWriter interface{}, request interface{}) *MockHandler_GetRoutePolicyByID_Call {
+func (_e *MockHandler_Expecter) GetRoutePolicyByID(responseWriter any, request any) *MockHandler_GetRoutePolicyByID_Call {
 	return &MockHandler_GetRoutePolicyByID_Call{Call: _e.mock.On("GetRoutePolicyByID", responseWriter, request)}
 }
 
@@ -2301,7 +2828,7 @@ type MockHandler_ListAllChannels_Call struct {
 // ListAllChannels is a helper method to define mock.On call
 //   - responseWriter http.ResponseWriter
 //   - request *http.Request
-func (_e *MockHandler_Expecter) ListAllChannels(responseWriter interface{}, request interface{}) *MockHandler_ListAllChannels_Call {
+func (_e *MockHandler_Expecter) ListAllChannels(responseWriter any, request any) *MockHandler_ListAllChannels_Call {
 	return &MockHandler_ListAllChannels_Call{Call: _e.mock.On("ListAllChannels", responseWriter, request)}
 }
 
@@ -2347,7 +2874,7 @@ type MockHandler_ListChannels_Call struct {
 // ListChannels is a helper method to define mock.On call
 //   - responseWriter http.ResponseWriter
 //   - request *http.Request
-func (_e *MockHandler_Expecter) ListChannels(responseWriter interface{}, request interface{}) *MockHandler_ListChannels_Call {
+func (_e *MockHandler_Expecter) ListChannels(responseWriter any, request any) *MockHandler_ListChannels_Call {
 	return &MockHandler_ListChannels_Call{Call: _e.mock.On("ListChannels", responseWriter, request)}
 }
 
@@ -2379,6 +2906,144 @@ func (_c *MockHandler_ListChannels_Call) RunAndReturn(run func(responseWriter ht
 	return _c
 }
 
+// ListNotificationChannels provides a mock function for the type MockHandler
+func (_mock *MockHandler) ListNotificationChannels(responseWriter http.ResponseWriter, request *http.Request) {
+	_mock.Called(responseWriter, request)
+	return
+}
+
+// MockHandler_ListNotificationChannels_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListNotificationChannels'
+type MockHandler_ListNotificationChannels_Call struct {
+	*mock.Call
+}
+
+// ListNotificationChannels is a helper method to define mock.On call
+//   - responseWriter http.ResponseWriter
+//   - request *http.Request
+func (_e *MockHandler_Expecter) ListNotificationChannels(responseWriter any, request any) *MockHandler_ListNotificationChannels_Call {
+	return &MockHandler_ListNotificationChannels_Call{Call: _e.mock.On("ListNotificationChannels", responseWriter, request)}
+}
+
+func (_c *MockHandler_ListNotificationChannels_Call) Run(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_ListNotificationChannels_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 http.ResponseWriter
+		if args[0] != nil {
+			arg0 = args[0].(http.ResponseWriter)
+		}
+		var arg1 *http.Request
+		if args[1] != nil {
+			arg1 = args[1].(*http.Request)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockHandler_ListNotificationChannels_Call) Return() *MockHandler_ListNotificationChannels_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockHandler_ListNotificationChannels_Call) RunAndReturn(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_ListNotificationChannels_Call {
+	_c.Run(run)
+	return _c
+}
+
+// RepairNotificationChannel provides a mock function for the type MockHandler
+func (_mock *MockHandler) RepairNotificationChannel(responseWriter http.ResponseWriter, request *http.Request) {
+	_mock.Called(responseWriter, request)
+	return
+}
+
+// MockHandler_RepairNotificationChannel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RepairNotificationChannel'
+type MockHandler_RepairNotificationChannel_Call struct {
+	*mock.Call
+}
+
+// RepairNotificationChannel is a helper method to define mock.On call
+//   - responseWriter http.ResponseWriter
+//   - request *http.Request
+func (_e *MockHandler_Expecter) RepairNotificationChannel(responseWriter any, request any) *MockHandler_RepairNotificationChannel_Call {
+	return &MockHandler_RepairNotificationChannel_Call{Call: _e.mock.On("RepairNotificationChannel", responseWriter, request)}
+}
+
+func (_c *MockHandler_RepairNotificationChannel_Call) Run(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_RepairNotificationChannel_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 http.ResponseWriter
+		if args[0] != nil {
+			arg0 = args[0].(http.ResponseWriter)
+		}
+		var arg1 *http.Request
+		if args[1] != nil {
+			arg1 = args[1].(*http.Request)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockHandler_RepairNotificationChannel_Call) Return() *MockHandler_RepairNotificationChannel_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockHandler_RepairNotificationChannel_Call) RunAndReturn(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_RepairNotificationChannel_Call {
+	_c.Run(run)
+	return _c
+}
+
+// TestNotificationChannel provides a mock function for the type MockHandler
+func (_mock *MockHandler) TestNotificationChannel(responseWriter http.ResponseWriter, request *http.Request) {
+	_mock.Called(responseWriter, request)
+	return
+}
+
+// MockHandler_TestNotificationChannel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TestNotificationChannel'
+type MockHandler_TestNotificationChannel_Call struct {
+	*mock.Call
+}
+
+// TestNotificationChannel is a helper method to define mock.On call
+//   - responseWriter http.ResponseWriter
+//   - request *http.Request
+func (_e *MockHandler_Expecter) TestNotificationChannel(responseWriter any, request any) *MockHandler_TestNotificationChannel_Call {
+	return &MockHandler_TestNotificationChannel_Call{Call: _e.mock.On("TestNotificationChannel", responseWriter, request)}
+}
+
+func (_c *MockHandler_TestNotificationChannel_Call) Run(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_TestNotificationChannel_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 http.ResponseWriter
+		if args[0] != nil {
+			arg0 = args[0].(http.ResponseWriter)
+		}
+		var arg1 *http.Request
+		if args[1] != nil {
+			arg1 = args[1].(*http.Request)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockHandler_TestNotificationChannel_Call) Return() *MockHandler_TestNotificationChannel_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockHandler_TestNotificationChannel_Call) RunAndReturn(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_TestNotificationChannel_Call {
+	_c.Run(run)
+	return _c
+}
+
 // TestReceiver provides a mock function for the type MockHandler
 func (_mock *MockHandler) TestReceiver(responseWriter http.ResponseWriter, request *http.Request) {
 	_mock.Called(responseWriter, request)
@@ -2393,7 +3058,7 @@ type MockHandler_TestReceiver_Call struct {
 // TestReceiver is a helper method to define mock.On call
 //   - responseWriter http.ResponseWriter
 //   - request *http.Request
-func (_e *MockHandler_Expecter) TestReceiver(responseWriter interface{}, request interface{}) *MockHandler_TestReceiver_Call {
+func (_e *MockHandler_Expecter) TestReceiver(responseWriter any, request any) *MockHandler_TestReceiver_Call {
 	return &MockHandler_TestReceiver_Call{Call: _e.mock.On("TestReceiver", responseWriter, request)}
 }
 
@@ -2439,7 +3104,7 @@ type MockHandler_UpdateChannelByID_Call struct {
 // UpdateChannelByID is a helper method to define mock.On call
 //   - responseWriter http.ResponseWriter
 //   - request *http.Request
-func (_e *MockHandler_Expecter) UpdateChannelByID(responseWriter interface{}, request interface{}) *MockHandler_UpdateChannelByID_Call {
+func (_e *MockHandler_Expecter) UpdateChannelByID(responseWriter any, request any) *MockHandler_UpdateChannelByID_Call {
 	return &MockHandler_UpdateChannelByID_Call{Call: _e.mock.On("UpdateChannelByID", responseWriter, request)}
 }
 
@@ -2471,6 +3136,52 @@ func (_c *MockHandler_UpdateChannelByID_Call) RunAndReturn(run func(responseWrit
 	return _c
 }
 
+// UpdateNotificationChannel provides a mock function for the type MockHandler
+func (_mock *MockHandler) UpdateNotificationChannel(responseWriter http.ResponseWriter, request *http.Request) {
+	_mock.Called(responseWriter, request)
+	return
+}
+
+// MockHandler_UpdateNotificationChannel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateNotificationChannel'
+type MockHandler_UpdateNotificationChannel_Call struct {
+	*mock.Call
+}
+
+// UpdateNotificationChannel is a helper method to define mock.On call
+//   - responseWriter http.ResponseWriter
+//   - request *http.Request
+func (_e *MockHandler_Expecter) UpdateNotificationChannel(responseWriter any, request any) *MockHandler_UpdateNotificationChannel_Call {
+	return &MockHandler_UpdateNotificationChannel_Call{Call: _e.mock.On("UpdateNotificationChannel", responseWriter, request)}
+}
+
+func (_c *MockHandler_UpdateNotificationChannel_Call) Run(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_UpdateNotificationChannel_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 http.ResponseWriter
+		if args[0] != nil {
+			arg0 = args[0].(http.ResponseWriter)
+		}
+		var arg1 *http.Request
+		if args[1] != nil {
+			arg1 = args[1].(*http.Request)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockHandler_UpdateNotificationChannel_Call) Return() *MockHandler_UpdateNotificationChannel_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockHandler_UpdateNotificationChannel_Call) RunAndReturn(run func(responseWriter http.ResponseWriter, request *http.Request)) *MockHandler_UpdateNotificationChannel_Call {
+	_c.Run(run)
+	return _c
+}
+
 // UpdateRoutePolicy provides a mock function for the type MockHandler
 func (_mock *MockHandler) UpdateRoutePolicy(responseWriter http.ResponseWriter, request *http.Request) {
 	_mock.Called(responseWriter, request)
@@ -2485,7 +3196,7 @@ type MockHandler_UpdateRoutePolicy_Call struct {
 // UpdateRoutePolicy is a helper method to define mock.On call
 //   - responseWriter http.ResponseWriter
 //   - request *http.Request
-func (_e *MockHandler_Expecter) UpdateRoutePolicy(responseWriter interface{}, request interface{}) *MockHandler_UpdateRoutePolicy_Call {
+func (_e *MockHandler_Expecter) UpdateRoutePolicy(responseWriter any, request any) *MockHandler_UpdateRoutePolicy_Call {
 	return &MockHandler_UpdateRoutePolicy_Call{Call: _e.mock.On("UpdateRoutePolicy", responseWriter, request)}
 }
 

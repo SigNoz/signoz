@@ -10,7 +10,7 @@ import useResourceAttribute from 'hooks/useResourceAttribute';
 import { resourceAttributesToTracesFilterItems } from 'hooks/useResourceAttribute/utils';
 import createQueryParams from 'lib/createQueryParams';
 import { prepareQueryWithDefaultTimestamp } from 'pages/LogsExplorer/utils';
-import { traceFilterKeys } from 'pages/TracesExplorer/Filter/filterUtils';
+import { traceFilterKeys } from 'constants/traceFilterKeys';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -21,7 +21,7 @@ import {
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { Tags } from 'types/reducer/trace';
+import { Tags } from 'hooks/useResourceAttribute/types';
 import { isModifierKeyPressed } from 'utils/app';
 import { secondsToMilliseconds } from 'utils/timeUtils';
 import { v4 as uuid } from 'uuid';
@@ -102,7 +102,7 @@ export function onViewTracePopupClick({
 		urlParams.set(QueryParams.startTime, startTime.toString());
 		urlParams.set(QueryParams.endTime, endTime.toString());
 		urlParams.delete(QueryParams.relativeTime);
-		const avialableParams = routeConfig[ROUTES.TRACE];
+		const avialableParams = routeConfig[ROUTES.TRACES_EXPLORER];
 		const queryString = getQueryString(avialableParams, urlParams);
 
 		const JSONCompositeQuery = encodeURIComponent(

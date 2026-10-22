@@ -1,0 +1,340 @@
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { Route } from 'react-router-dom';
+import ROUTES from 'constants/routes';
+import {
+	expect,
+	fireEvent,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+} from 'storybook/test';
+
+import { storyMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
+
+import {
+	focusSpanIndex,
+	scenarioSpanCount,
+	spanIdAt,
+	STORY_TRACE_ID,
+} from './__story_mockdata__/traceDetails';
+import {
+	openRowMenu,
+	startDownload,
+	traceDetailsMocks,
+	untilLoaded,
+} from './TraceDetailsV3.stories.mocks';
+import TraceDetailsV3 from '../index';
+
+type TraceDetailsArgs = PageStoryArgs<typeof traceDetailsMocks>;
+
+const pageStory = storyMocks(traceDetailsMocks, { layout: 'app' });
+
+/**
+ * One trace: the waterfall, the flamegraph, and the span panel with its
+ * attributes, events and logs. A trace with spans the backend never received shows
+ * them as gaps.
+ *
+ * Route: `/trace/:id`.
+ */
+const meta = {
+	title: 'Pages/Traces/Trace Details',
+	tags: ['play'],
+	component: TraceDetailsV3,
+	// The page reads the trace id out of the pathname, so it renders under its
+	// own route rather than being mounted on its own.
+	render: (): JSX.Element => (
+		<Route path={ROUTES.TRACE_DETAIL} component={TraceDetailsV3} />
+	),
+	...pageStory,
+	parameters: { ...pageStory.parameters },
+} satisfies Meta<TraceDetailsArgs>;
+
+export default meta;
+
+type Story = StoryObj<TraceDetailsArgs>;
+
+/**
+ * A checkout trace whose payment call failed: the flamegraph and the waterfall
+ * over its spans, and the span details panel open on the span that errored,
+ * with its percentile, attributes, events and logs.
+ */
+export const Default: Story = {};
+
+/**
+ * A deep trace: sixty spans over six levels, which is where the waterfall
+ * scrolls and the flamegraph starts packing rows.
+ */
+export const LargeTrace: Story = {
+	args: { spans: 60 },
+};
+
+/**
+ * A trace the backend has nothing for, which is what a link to a trace past its
+ * retention window opens.
+ */
+export const NoTrace: Story = {
+	args: { spans: 0 },
+};
+
+/** The waterfall and the flamegraph mid-fetch, shell included. */
+export const Loading: Story = {
+	args: { dataState: 'loading' },
+};
+
+/**
+ * The trace's span and error counts in the bottom strip, in place of the build
+ * version, the error icon red while any span failed.
+ */
+export const BottomStrip: Story = {
+	args: { bottomStrip: true },
+};
+
+/** The strip over a trace with no failing span: the error icon stays neutral. */
+export const BottomStripNoErrors: Story = {
+	args: { bottomStrip: true, errors: false },
+};
+
+/** The strip mid-fetch, whose counts read zero until the trace resolves. */
+export const BottomStripLoading: Story = {
+	args: { bottomStrip: true, dataState: 'loading' },
+};
+
+/**
+ * One span per HTTP status badge the waterfall draws: informational, success,
+ * redirect, client and server errors, and a span with no status code and so no
+ * badge.
+ */
+export const StatusCodes: Story = {
+	args: {
+		scenario: 'status-codes',
+		spans: scenarioSpanCount('status-codes'),
+		spanPanel: false,
+	},
+};
+
+const AI_SPANS = scenarioSpanCount('ai');
+
+/**
+ * An agent run: LLM, tool and agent badges with sparkle icons in the waterfall,
+ * token and cost totals in the header, the span panel on an LLM call with its
+ * tokens and cost, and that span's hover card open on its usage breakdown.
+ */
+export const AiTrace: Story = {
+	args: { scenario: 'ai', spans: AI_SPANS },
+	play: async ({ canvasElement }): Promise<void> => {
+		const row = await within(canvasElement).findByTestId(
+			`cell-0-${spanIdAt(focusSpanIndex('ai', AI_SPANS))}`,
+			undefined,
+			untilLoaded,
+		);
+
+		await fireEvent.mouseOver(row);
+		await screen.findByText('Usage Breakdown', undefined, untilLoaded);
+	},
+};
+
+/**
+ * Turns on Highlight errors, which writes `has_error = true` into the filter and
+ * expands the bar to show it.
+ */
+const highlightErrors = async (canvasElement: HTMLElement): Promise<void> => {
+	const toggle = await within(canvasElement).findByTestId(
+		'highlight-errors-toggle',
+		undefined,
+		untilLoaded,
+	);
+
+	await userEvent.click(within(toggle).getByRole('switch'));
+};
+
+/**
+ * Every tooltip the trace carries, held open at once: the panel's dock modes and
+ * its span metadata, the trace metadata over the header, Analytics, the search
+ * pill's own popover over the filter the Highlight errors switch wrote, the copy
+ * and funnel actions on every span row, the card a hovered row raises, and the
+ * details behind a hovered event dot.
+ */
+export const Tooltips: Story = {
+	args: { tooltipsOpen: true },
+	play: async ({ canvasElement }): Promise<void> => {
+		await highlightErrors(canvasElement);
+
+		// Collapsing puts the filter back behind the pill, which is where it carries
+		// its popover. Neither expanded action carries a label of its own, so the
+		// row is located by its container and the collapse is its last button.
+		const actions = await waitFor(() => {
+			const found = canvasElement.querySelector<HTMLElement>(
+				'[class*="expandedActions"]',
+			);
+
+			if (!found) {
+				throw new Error('Filter row is not expanded');
+			}
+
+			return found;
+		}, untilLoaded);
+		const expandedActions = within(actions).getAllByRole('button');
+
+		await userEvent.click(expandedActions[expandedActions.length - 1]);
+
+		// `userEvent.hover` tracks the pointer, so hovering the dot would fire the
+		// row's mouseleave and drop the hover card. `mouseOver` is what React reads
+		// to synthesise mouseenter, and it leaves the previous target alone, so both
+		// stay open. The dot has no test id.
+		const [row] = await within(canvasElement).findAllByTestId(
+			/^cell-0-/,
+			undefined,
+			untilLoaded,
+		);
+
+		await fireEvent.mouseOver(row);
+
+		await waitFor(async () => {
+			const dot = canvasElement.querySelector('[class*="eventDot"]');
+
+			if (!dot) {
+				throw new Error('no event dot rendered');
+			}
+
+			await fireEvent.mouseOver(dot);
+		}, untilLoaded);
+
+		// The dot opens its card on a 200ms timer rather than on the event itself.
+		await screen.findByRole('tooltip', { name: /event details/i }, untilLoaded);
+	},
+};
+
+/**
+ * The filter bar expanded, where the query editor stands in for the pill and the
+ * header's own actions: the clear and collapse buttons beside it, clear being
+ * there because Highlight errors has written a filter to clear.
+ */
+export const TooltipsInFilterBar: Story = {
+	args: { tooltipsOpen: true },
+	play: async ({ canvasElement }): Promise<void> => {
+		await highlightErrors(canvasElement);
+	},
+};
+
+/**
+ * The trace options menu, open off the header: the trace details toggle, preview
+ * fields, and the Colour by submenu over the fields the spans can be coloured
+ * on.
+ */
+export const TraceOptionsMenu: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByRole(
+				'button',
+				{ name: 'Trace options' },
+				untilLoaded,
+			),
+		);
+		await screen.findByText('Preview fields');
+	},
+};
+
+/** The span panel moved from the right edge to the bottom through its dock toggle. */
+export const DockModeSwitched: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		// The dock options are icon-only and carry no accessible name.
+		const option = await within(canvasElement).findByTestId(
+			'dock-mode-docked',
+			undefined,
+			untilLoaded,
+		);
+
+		await userEvent.click(option.querySelector('button') ?? option);
+	},
+};
+
+/** The span's percentile badge expanded into the distribution it was ranked in. */
+export const SpanPercentileOpen: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByRole(
+				'button',
+				{ name: /^p\d+/ },
+				untilLoaded,
+			),
+		);
+		await screen.findByText(/This span duration is/);
+	},
+};
+
+/** The span's trace id clicked in the panel, which copies it. */
+export const TraceIdCopiedToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByRole(
+				'button',
+				{ name: STORY_TRACE_ID },
+				untilLoaded,
+			),
+		);
+		await expect(
+			await screen.findByText('Trace ID copied to clipboard'),
+		).toBeVisible();
+	},
+};
+
+/** "Copy Value" picked from a row of the span panel's pretty view. */
+export const PrettyViewValueCopiedToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openRowMenu(canvasElement, 'Copy Value');
+		await expect(await screen.findByText('Copied to clipboard')).toBeVisible();
+	},
+};
+
+/** The copy-link button on a waterfall row, which copies the span's URL. */
+export const SpanLinkCopiedToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const [row] = await within(canvasElement).findAllByTestId(
+			/^cell-0-/,
+			undefined,
+			untilLoaded,
+		);
+
+		await fireEvent.mouseOver(row);
+		// The hover re-renders the row, so the button has to be looked up after it settles.
+		await new Promise((resolve) => {
+			setTimeout(resolve, 300);
+		});
+		const [hovered] = within(canvasElement).getAllByTestId(/^cell-0-/);
+		// The row's hover actions have no accessible name; copy link comes first.
+		const [link] = within(hovered).getAllByRole('button');
+
+		await fireEvent.click(link);
+		await waitFor(() =>
+			expect(screen.getByText('Copied to clipboard')).toBeVisible(),
+		);
+	},
+};
+
+/** "Download trace" as CSV, finished. */
+export const TraceExportedToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await startDownload(canvasElement);
+	},
+};
+
+/** "Download trace" whose export request fails. */
+export const TraceExportErrorToast: Story = {
+	args: { exportState: 'error' },
+	// The deliberate 500 is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: async ({ canvasElement }): Promise<void> => {
+		await startDownload(canvasElement);
+	},
+};
+
+/** "Download trace" cancelled from the download panel while the export runs. */
+export const TraceExportCancelledToast: Story = {
+	args: { exportState: 'loading' },
+	play: async ({ canvasElement }): Promise<void> => {
+		await startDownload(canvasElement);
+		await userEvent.click(await screen.findByTestId('trace-download-cancel'));
+	},
+};

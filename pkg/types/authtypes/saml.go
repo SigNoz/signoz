@@ -7,14 +7,14 @@ import (
 )
 
 type SamlConfig struct {
-	// The entityID of the SAML identity provider. It can typically be found in the EntityID attribute of the EntityDescriptor element in the SAML metadata of the identity provider. Example: <md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="{samlEntity}">
-	SamlEntity string `json:"samlEntity"`
+	// The entityID of the SAML identity provider. It can typically be found in the EntityID attribute of the EntityDescriptor element in the SAML metadata of the identity provider. Example: <md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="{entityId}">
+	EntityID string `json:"entityId" required:"true"`
 
-	// The SSO endpoint of the SAML identity provider. It can typically be found in the SingleSignOnService element in the SAML metadata of the identity provider. Example: <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="{samlIdp}"/>
-	SamlIdp string `json:"samlIdp"`
+	// The SSO endpoint of the SAML identity provider. It can typically be found in the Location attribute of the SingleSignOnService element in the SAML metadata of the identity provider. Example: <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="{location}"/>
+	Location string `json:"location" required:"true"`
 
-	// The certificate of the SAML identity provider. It can typically be found in the X509Certificate element in the SAML metadata of the identity provider. Example: <ds:X509Certificate><ds:X509Certificate>{samlCert}</ds:X509Certificate></ds:X509Certificate>
-	SamlCert string `json:"samlCert"`
+	// The certificate of the SAML identity provider. It can typically be found in the X509Certificate element in the SAML metadata of the identity provider. Example: <ds:X509Certificate><ds:X509Certificate>{certificate}</ds:X509Certificate></ds:X509Certificate>
+	Certificate string `json:"certificate" required:"true"`
 
 	// Whether to skip signing the SAML requests. It can typically be found in the WantAuthnRequestsSigned attribute of the IDPSSODescriptor element in the SAML metadata of the identity provider. Example: <md:IDPSSODescriptor WantAuthnRequestsSigned="false" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
 	// For providers like jumpcloud, this should be set to true.
@@ -33,24 +33,34 @@ func (config *SamlConfig) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if temp.SamlEntity == "" {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "samlEntity is required")
+	samlConfig := SamlConfig(temp)
+	if err := samlConfig.validate(); err != nil {
+		return err
 	}
 
-	if temp.SamlIdp == "" {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "samlIdp is required")
+	*config = samlConfig
+	return nil
+}
+
+// validate also assigns the default attribute mapping when none is present.
+func (config *SamlConfig) validate() error {
+	if config.EntityID == "" {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "entityId is required")
 	}
 
-	if temp.SamlCert == "" {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "samlCert is required")
+	if config.Location == "" {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "location is required")
 	}
 
-	if temp.AttributeMapping == (AttributeMapping{}) {
-		if err := json.Unmarshal([]byte("{}"), &temp.AttributeMapping); err != nil {
+	if config.Certificate == "" {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "certificate is required")
+	}
+
+	if config.AttributeMapping == (AttributeMapping{}) {
+		if err := json.Unmarshal([]byte("{}"), &config.AttributeMapping); err != nil {
 			return err
 		}
 	}
 
-	*config = SamlConfig(temp)
 	return nil
 }

@@ -67,11 +67,9 @@ function ExtraPricingBuckets({
 	return (
 		<div className={cx(styles.extraBucketsSection, styles.drawerSection)}>
 			<div className={styles.extraBucketsSectionHead}>
+				<span className={styles.fieldLabel}>Extra Pricing Buckets</span>
 				<Typography.Text as="span" size="small" color="muted">
-					Extra pricing buckets
-				</Typography.Text>
-				<Typography.Text as="span" size="small" color="muted">
-					optional
+					Optional
 				</Typography.Text>
 			</div>
 
@@ -102,21 +100,25 @@ function ExtraPricingBuckets({
 
 					{!isReadOnly && (
 						<Button
-							size="icon"
-							variant="ghost"
-							color="destructive"
+							size="md"
+							icon
+							variant="link"
+							color="danger"
 							onClick={(): void => removeBucket(bucket.key)}
 							aria-label={`Remove ${bucket.label}`}
-							data-testid={`drawer-remove-${bucket.testId}`}
-							prefix={<Trash2 size={14} />}
-						/>
+							testId={`drawer-remove-${bucket.testId}`}
+						>
+							<Trash2 size={14} />
+						</Button>
 					)}
 				</div>
 			))}
 
 			{addedBuckets.length > 0 && (
 				<div className={cx(styles.pricingField, styles.cacheModeField)}>
-					<label htmlFor="cache-mode">Cache mode</label>
+					<label htmlFor="cache-mode" className={styles.fieldLabel}>
+						Cache mode
+					</label>
 					<SelectSimple
 						id="cache-mode"
 						value={pricing.cacheMode}
@@ -132,9 +134,10 @@ function ExtraPricingBuckets({
 
 			{!isReadOnly && !isExtraPricingBucketOpen && availableBuckets.length > 0 && (
 				<Button
+					size="md"
 					variant="dashed"
 					color="secondary"
-					className={styles.bucketAddBtn}
+					width="100%"
 					prefix={<Plus size={14} />}
 					onClick={(): void => setIsExtraPricingBucketOpen(true)}
 					testId="drawer-add-bucket-btn"

@@ -11,17 +11,17 @@ import (
 type MetadataStore interface {
 	// GetKeys returns a map of field keys types.TelemetryFieldKey by name, there can be multiple keys with the same name
 	// if they have different types or data types.
-	GetKeys(ctx context.Context, fieldKeySelector *FieldKeySelector) (map[string][]*TelemetryFieldKey, bool, error)
+	GetKeys(ctx context.Context, orgID valuer.UUID, fieldKeySelector *FieldKeySelector) (map[string][]*TelemetryFieldKey, bool, error)
 
 	// GetKeys but with any number of fieldKeySelectors.
-	GetKeysMulti(ctx context.Context, fieldKeySelectors []*FieldKeySelector) (map[string][]*TelemetryFieldKey, bool, error)
+	GetKeysMulti(ctx context.Context, orgID valuer.UUID, fieldKeySelectors []*FieldKeySelector) (map[string][]*TelemetryFieldKey, bool, error)
 
 	// GetKey returns a list of keys with the given name.
-	GetKey(ctx context.Context, fieldKeySelector *FieldKeySelector) ([]*TelemetryFieldKey, error)
+	GetKey(ctx context.Context, orgID valuer.UUID, fieldKeySelector *FieldKeySelector) ([]*TelemetryFieldKey, error)
 
 	// GetRelatedValues returns a list of related values for the given key name
 	// and the existing selection of keys.
-	GetRelatedValues(ctx context.Context, fieldValueSelector *FieldValueSelector) ([]string, bool, error)
+	GetRelatedValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *FieldValueSelector) ([]string, bool, error)
 
 	// GetAllValues returns a list of all values.
 	GetAllValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *FieldValueSelector) (*TelemetryFieldValues, bool, error)
@@ -34,14 +34,19 @@ type MetadataStore interface {
 
 	FetchTemporalityAndTypeMulti(ctx context.Context, orgID valuer.UUID, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, map[string]metrictypes.Type, map[string]bool, error)
 
-	// ListLogsJSONIndexes lists the JSON indexes for the logs table.
-	ListLogsJSONIndexes(ctx context.Context, filters ...string) ([]TelemetryFieldKeySkipIndex, error)
+	// ListJSONIndexes lists the per-path JSON skip indexes of the given source.
+	ListJSONIndexes(ctx context.Context, lookup JSONIndexLookup, filters ...string) ([]TelemetryFieldKeySkipIndex, error)
 
-	// ListPromotedPaths lists the promoted paths.
-	GetPromotedPaths(ctx context.Context, paths ...string) (map[string]bool, error)
+	// GetPromotedPaths lists the promoted paths recorded in the column
+	// evolution table for the entry's signal, column and field context.
+	GetPromotedPaths(ctx context.Context, entry EvolutionEntry, paths ...string) (map[string]bool, error)
 
-	// PromotePaths promotes the paths.
-	PromotePaths(ctx context.Context, paths ...string) error
+	// PromotePaths records promoted paths in the column evolution table as
+	// rows templated by entry; FieldName and ReleaseTime are set per path.
+	PromotePaths(ctx context.Context, entry EvolutionEntry, paths ...string) error
+
+	// GetMaterializedKeys lists the keys materialized as dedicated columns.
+	GetMaterializedKeys(ctx context.Context, signal Signal) ([]*TelemetryFieldKey, error)
 
 	// GetFirstSeenFromMetricMetadata gets the first seen timestamp for a metric metadata lookup key.
 	GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []MetricMetadataLookupKey) (map[MetricMetadataLookupKey]int64, error)

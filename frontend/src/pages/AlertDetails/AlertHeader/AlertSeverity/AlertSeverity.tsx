@@ -32,8 +32,10 @@ const severityConfig: Record<string, Record<string, string | JSX.Element>> = {
 
 export default function AlertSeverity({
 	severity,
+	testId,
 }: {
 	severity: string;
+	testId?: string;
 }): JSX.Element {
 	const severityDetails = useMemo(() => {
 		if (severityConfig[severity]) {
@@ -52,9 +54,16 @@ export default function AlertSeverity({
 		};
 	}, [severity]);
 	return (
-		<div className={`alert-severity ${severityDetails.className}`}>
+		<div
+			className={`alert-severity ${severityDetails.className}`}
+			data-testid={testId}
+		>
 			<div className="alert-severity__icon">{severityDetails.icon}</div>
 			<div className="alert-severity__text">{severityDetails.text}</div>
 		</div>
 	);
 }
+
+AlertSeverity.defaultProps = {
+	testId: undefined,
+};

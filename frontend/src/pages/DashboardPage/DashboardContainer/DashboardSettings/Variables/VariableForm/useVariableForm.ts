@@ -1,0 +1,250 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import logEvent from 'api/common/logEvent';
+import { commaValuesParser } from 'lib/dashboardVariables/customCommaValuesParser';
+import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
+import type { PayloadVariables } from 'types/api/dashboard/variables/query';
+
+import type { VariableSelectionMap } from '../../../VariablesBar/selectionTypes';
+import { useDashboardStore } from '../../../store/useDashboardStore';
+import { detectVariableCycle } from '../utils/variableCycleDetection';
+import {
+	sortValuesByOrder,
+	VARIABLE_TYPE_EVENT_LABEL,
+	type VariableFormModel,
+	type VariableType,
+} from '../variableFormModel';
+import { getAttributeError, getNameError } from './variableValidation';
+
+// Stable reference so the zustand selector never returns a fresh object (which
+// would make useSyncExternalStore loop) when this dashboard has no selections.
+const EMPTY_SELECTIONS: VariableSelectionMap = {};
+
+interface UseVariableFormArgs {
+	initial: VariableFormModel;
+	siblings: VariableFormModel[];
+	isNew: boolean;
+	onSave: (model: VariableFormModel) => void;
+}
+
+export interface UseVariableForm {
+	model: VariableFormModel;
+	set: (patch: Partial<VariableFormModel>) => void;
+	onNameChange: (value: string) => void;
+	selectType: (type: VariableType) => void;
+	onCustomChange: (value: string) => void;
+	onDynamicChange: (patch: Partial<VariableFormModel>) => void;
+	setRawPreview: (values: (string | number)[]) => void;
+	previewValues: (string | number)[];
+	previewError: string | null;
+	setPreviewError: (message: string | null) => void;
+	defaultValue: string;
+	setDefaultValue: (value: string) => void;
+	visibleNameError: string | null;
+	nameError: string | null;
+	attributeError: string | undefined;
+	cycleError: string | null;
+	isListType: boolean;
+	showAllOptionField: boolean;
+	payloadVariables: PayloadVariables;
+	handleSave: () => void;
+}
+
+// `defaultValue` is a string | string[] on the wire; the editor uses a single
+// string, so take the first when it's an array.
+const readDefaultValue = (model: VariableFormModel): string => {
+	const dv = model.defaultValue;
+	return Array.isArray(dv) ? (dv[0] ?? '') : (dv ?? '');
+};
+
+/** Form state, derivations and handlers for the variable editor. */
+export function useVariableForm({
+	initial,
+	siblings,
+	isNew,
+	onSave,
+}: UseVariableFormArgs): UseVariableForm {
+	const [model, setModel] = useState<VariableFormModel>(initial);
+	// Raw, unsorted preview; `previewValues` applies the chosen sort so a shown
+	// preview re-sorts when Sort changes.
+	const [rawPreview, setRawPreview] = useState<(string | number)[]>([]);
+	const [previewError, setPreviewError] = useState<string | null>(null);
+	const [cycleError, setCycleError] = useState<string | null>(null);
+	// In add mode, mirror the chosen attribute into the name until the user types.
+	const [nameTouched, setNameTouched] = useState(false);
+	const [defaultValue, setDefaultValue] = useState<string>(
+		readDefaultValue(initial),
+	);
+
+	useEffect(() => {
+		setModel(initial);
+		setRawPreview([]);
+		setPreviewError(null);
+		setCycleError(null);
+		setNameTouched(false);
+		setDefaultValue(readDefaultValue(initial));
+	}, [initial]);
+
+	const set = (patch: Partial<VariableFormModel>): void =>
+		setModel((prev) => ({ ...prev, ...patch }));
+
+	const previewValues = useMemo(
+		() => sortValuesByOrder(rawPreview, model.sort) as (string | number)[],
+		[rawPreview, model.sort],
+	);
+
+	// QUERY: drop a now-invalid default when the user re-runs the query and the
+	// returned values actually change. The query preview is populated only by the
+	// manual "Test Run" (never on edit-open), so keying off `rawPreview` here is
+	// effectively "on run"; the signature guard skips a re-run that yields the same
+	// values so a still-valid default is left untouched. DYNAMIC/CUSTOM resets are
+	// handled in their change handlers instead (see below).
+	const lastQueryPreviewRef = useRef<string | null>(null);
+	useEffect(() => {
+		lastQueryPreviewRef.current = null;
+	}, [initial]);
+
+	useEffect(() => {
+		if (model.type !== 'QUERY' || rawPreview.length === 0) {
+			return;
+		}
+		const optionValues = rawPreview.map(String);
+		const signature = JSON.stringify(optionValues);
+		if (signature === lastQueryPreviewRef.current) {
+			return;
+		}
+
+		lastQueryPreviewRef.current = signature;
+
+		// Clear a now-invalid default; resolution falls back to the first option/ALL.
+		setDefaultValue((current) =>
+			current && !optionValues.includes(current) ? '' : current,
+		);
+	}, [rawPreview, model.type]);
+
+	const existingNames = useMemo(() => siblings.map((v) => v.name), [siblings]);
+
+	const existingDynamicAttributes = useMemo(
+		() =>
+			siblings
+				.filter((v) => v.type === 'DYNAMIC' && v.dynamicAttribute)
+				.map((v) => v.dynamicAttribute),
+		[siblings],
+	);
+
+	// Sibling selections feed the Query "Test Run" so dependent `$vars` resolve.
+	const dashboardId = useDashboardStore((s) => s.dashboardId);
+	const selections = useDashboardStore(
+		(s) => s.variableValues[dashboardId ?? ''] ?? EMPTY_SELECTIONS,
+	);
+	const payloadVariables = useMemo<PayloadVariables>(() => {
+		const out: PayloadVariables = {};
+		siblings.forEach((v) => {
+			if (v.name) {
+				out[v.name] = selections[v.name]?.value ?? null;
+			}
+		});
+		return out;
+	}, [siblings, selections]);
+
+	const trimmedName = model.name.trim();
+	const nameError = getNameError(trimmedName, existingNames, initial.name);
+	// Surface the message only once the field is dirty; Save stays disabled regardless.
+	const visibleNameError = nameTouched ? nameError : null;
+	const attributeError = getAttributeError(model, existingDynamicAttributes);
+
+	const isListType =
+		model.type === 'QUERY' || model.type === 'CUSTOM' || model.type === 'DYNAMIC';
+	const showAllOptionField = model.type === 'QUERY' || model.type === 'CUSTOM';
+
+	const onNameChange = (value: string): void => {
+		setNameTouched(true);
+		set({ name: value });
+	};
+
+	const selectType = (type: VariableType): void => {
+		set({ type });
+		setRawPreview([]);
+		setPreviewError(null);
+	};
+
+	const onCustomChange = (value: string): void => {
+		set({ customValue: value });
+		const parsed = commaValuesParser(value);
+		setRawPreview(parsed);
+
+		const optionValues = parsed.map(String);
+		setDefaultValue((current) =>
+			current && !optionValues.includes(current) ? '' : current,
+		);
+	};
+
+	// In add mode, mirror the selected attribute into the name until the user
+	// edits the name themselves (matches the V1 dynamic-variable behaviour).
+	const onDynamicChange = (patch: Partial<VariableFormModel>): void => {
+		const attributeChanged =
+			patch.dynamicAttribute !== undefined &&
+			patch.dynamicAttribute !== model.dynamicAttribute;
+		const signalChanged =
+			patch.dynamicSignal !== undefined &&
+			patch.dynamicSignal !== model.dynamicSignal;
+		if (attributeChanged || signalChanged) {
+			setDefaultValue('');
+		}
+
+		if (isNew && !nameTouched && patch.dynamicAttribute) {
+			set({ ...patch, name: patch.dynamicAttribute });
+		} else {
+			set(patch);
+		}
+	};
+
+	const handleSave = (): void => {
+		const next: VariableFormModel = {
+			...model,
+			name: trimmedName,
+			defaultValue: defaultValue || undefined,
+		};
+
+		const cycle = detectVariableCycle([...siblings, next]);
+		if (cycle) {
+			setCycleError(
+				`Cannot save: circular dependency detected between variables: ${cycle.join(
+					' → ',
+				)}`,
+			);
+			return;
+		}
+		setCycleError(null);
+		void logEvent(DashboardDetailEvents.VariableSaved, {
+			variableType: VARIABLE_TYPE_EVENT_LABEL[next.type],
+			multiSelect: next.multiSelect,
+			hasAllOption: next.showAllOption,
+			isNew,
+			dashboardId,
+		});
+		onSave(next);
+	};
+
+	return {
+		model,
+		set,
+		onNameChange,
+		selectType,
+		onCustomChange,
+		onDynamicChange,
+		setRawPreview,
+		previewValues,
+		previewError,
+		setPreviewError,
+		defaultValue,
+		setDefaultValue,
+		visibleNameError,
+		nameError,
+		attributeError,
+		cycleError,
+		isListType,
+		showAllOptionField,
+		payloadVariables,
+		handleSave,
+	};
+}

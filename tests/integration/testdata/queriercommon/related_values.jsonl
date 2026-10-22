@@ -1,0 +1,18 @@
+{"data_source": "logs", "resource_attributes": {"k8s.cluster.name": "c1", "k8s.namespace.name": "ns-a", "k8s.statefulset.name": "sts-a", "k8s.pod.name": "podA1-logs"}}
+{"data_source": "logs", "resource_attributes": {"k8s.cluster.name": "c1", "k8s.namespace.name": "ns-a", "k8s.deployment.name": "dep-a", "k8s.pod.name": "podA2-logs"}}
+{"data_source": "logs", "resource_attributes": {"k8s.cluster.name": "c1", "k8s.namespace.name": "ns-b", "k8s.pod.name": "podB1-logs"}}
+{"data_source": "logs", "resource_attributes": {"k8s.cluster.name": "c1", "k8s.pod.name": "podOrphan-logs"}}
+{"data_source": "traces", "resource_attributes": {"k8s.cluster.name": "c1", "k8s.namespace.name": "ns-a", "k8s.statefulset.name": "sts-a", "k8s.pod.name": "podA1-traces"}}
+{"data_source": "traces", "resource_attributes": {"k8s.cluster.name": "c1", "k8s.namespace.name": "ns-a", "k8s.deployment.name": "dep-a", "k8s.pod.name": "podA2-traces"}}
+{"data_source": "traces", "resource_attributes": {"k8s.cluster.name": "c1", "k8s.namespace.name": "ns-b", "k8s.pod.name": "podB1-traces"}}
+{"data_source": "traces", "resource_attributes": {"k8s.cluster.name": "c1", "k8s.pod.name": "podOrphan-traces"}}
+{"data_source": "metrics", "resource_attributes": {"k8s.cluster.name": "c1", "k8s.namespace.name": "ns-a", "k8s.statefulset.name": "sts-a", "k8s.pod.name": "podA1-metrics"}}
+{"data_source": "metrics", "resource_attributes": {"k8s.cluster.name": "c1", "k8s.namespace.name": "ns-a", "k8s.deployment.name": "dep-a", "k8s.pod.name": "podA2-metrics"}}
+{"data_source": "metrics", "resource_attributes": {"k8s.cluster.name": "c1", "k8s.namespace.name": "ns-b", "k8s.pod.name": "podB1-metrics"}}
+{"data_source": "metrics", "resource_attributes": {"k8s.cluster.name": "c1", "k8s.pod.name": "podOrphan-metrics"}}
+{"data_source": "logs", "resource_attributes": {"k8s.cluster.name": "c1", "k8s.namespace.name": "", "k8s.pod.name": "podEmpty-logs"}}
+{"data_source": "logs", "resource_attributes": {"k8s.cluster.name": "c1", "host.name": "host-res-logs"}}
+{"data_source": "logs", "resource_attributes": {"k8s.cluster.name": "c1"}, "attributes": {"host.name": "host-attr-logs"}}
+{"data_source": "metrics", "resource_attributes": {"k8s.cluster.name": "c1", "host.name": "host-res-metrics"}}
+{"data_source": "metrics", "resource_attributes": {"k8s.cluster.name": "c1"}, "attributes": {"host.name": "host-attr-metrics"}}
+{"data_source": "traces", "resource_attributes": {"k8s.cluster.name": "c1", "host.name": "host-rest"}, "attributes": {"host.name": "host-attributes"}}

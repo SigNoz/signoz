@@ -204,6 +204,9 @@ function LiveLogsList({
 							data={formattedLogs}
 							isLoading={false}
 							isRowActive={(log): boolean => log.id === activeLog?.id}
+							getRowClassName={(log): string =>
+								log.id === activeLogId ? 'logs-linked-row' : ''
+							}
 							getRowStyle={(log): CSSProperties =>
 								({
 									'--row-active-bg': getRowBackgroundColor(
@@ -216,10 +219,13 @@ function LiveLogsList({
 									),
 								}) as CSSProperties
 							}
-							onRowClick={(log): void => {
-								handleSetActiveLog(log);
+							onRowClick={(log, _itemKey, { isActive }): void => {
+								if (isActive) {
+									handleCloseLogDetail();
+								} else {
+									handleSetActiveLog(log);
+								}
 							}}
-							onRowDeactivate={handleCloseLogDetail}
 							activeRowIndex={activeLogIndex}
 							renderRowActions={(log): ReactNode => (
 								<LogLinesActionButtons
@@ -253,8 +259,6 @@ function LiveLogsList({
 					selectedTab={selectedTab}
 					log={activeLog}
 					onClose={handleCloseLogDetail}
-					onAddToQuery={onAddToQuery}
-					onClickActionItem={onAddToQuery}
 					handleChangeSelectedView={handleChangeSelectedView}
 					logs={formattedLogs}
 					onNavigateLog={handleSetActiveLog}

@@ -4,14 +4,16 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	"github.com/gorilla/mux"
 )
 
 func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v2/infra_monitoring/hosts", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListHosts),
+		provider.authzMiddleware.CheckResources(provider.infraMonitoringHandler.ListHosts, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListHosts",
 			Tags:                []string{"inframonitoring"},
@@ -24,18 +26,23 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/pods", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListPods),
+		provider.authzMiddleware.CheckResources(provider.infraMonitoringHandler.ListPods, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListPods",
 			Tags:                []string{"inframonitoring"},
 			Summary:             "List Pods for Infra Monitoring",
-			Description:         "Returns a paginated list of Kubernetes pods with key metrics: CPU usage, CPU request/limit utilization, memory working set, memory request/limit utilization, current pod phase (pending/running/succeeded/failed/unknown/no_data), and pod age (ms since start time). Each pod includes metadata attributes (namespace, node, workload owner such as deployment/statefulset/daemonset/job/cronjob, cluster). Supports filtering via a filter expression, custom groupBy to aggregate pods by any attribute, ordering by any of the six metrics (cpu, cpu_request, cpu_limit, memory, memory_request, memory_limit), and pagination via offset/limit. The response type is 'list' for the default k8s.pod.uid grouping (each row is one pod with its current phase) or 'grouped_list' for custom groupBy keys (each row aggregates pods in the group with per-phase counts under podCountsByPhase: { pending, running, succeeded, failed, unknown } derived from each pod's latest phase in the window). Also reports whether the requested time range falls before the data retention boundary. Numeric metric fields (podCPU, podCPURequest, podCPULimit, podMemory, podMemoryRequest, podMemoryLimit, podAge) return -1 as a sentinel when no data is available for that field.",
+			Description:         "Returns a paginated list of Kubernetes pods with key metrics: CPU usage, CPU request/limit utilization, memory working set, memory request/limit utilization, current pod status (kubectl-style display status such as Running/Pending/CrashLoopBackOff, or no_data), and pod age (ms since start time). Each pod includes metadata attributes (namespace, node, workload owner such as deployment/statefulset/daemonset/job/cronjob, cluster). Supports filtering via a filter expression, custom groupBy to aggregate pods by any attribute, ordering by any of the six metrics (cpu, cpu_request, cpu_limit, memory, memory_request, memory_limit), and pagination via offset/limit. The response type is 'list' for the default k8s.pod.uid grouping (each row is one pod with its current status) or 'grouped_list' for custom groupBy keys (each row aggregates pods in the group with per-status counts under podCountsByStatus: { pending, running, failed, unknown, crashLoopBackOff, imagePullBackOff, errImagePull, createContainerConfigError, containerCreating, oomKilled, completed, error, containerCannotRun, evicted, nodeAffinity, nodeLost, shutdown, unexpectedAdmissionError } derived from each pod's latest kubectl-style display status in the window). Also reports whether the requested time range falls before the data retention boundary. Numeric metric fields (podCPU, podCPURequest, podCPULimit, podMemory, podMemoryRequest, podMemoryLimit, podAge) return -1 as a sentinel when no data is available for that field.",
 			Request:             new(inframonitoringtypes.PostablePods),
 			RequestContentType:  "application/json",
 			Response:            new(inframonitoringtypes.Pods),
@@ -43,18 +50,47 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+		}))).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/infra_monitoring/kube_containers", handler.New(
+		provider.authzMiddleware.CheckResources(provider.infraMonitoringHandler.ListContainers, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		handler.OpenAPIDef{
+			ID:                  "ListContainers",
+			Tags:                []string{"inframonitoring"},
+			Summary:             "List Kubernetes Containers for Infra Monitoring",
+			Description:         "Returns a paginated list of Kubernetes containers with key kubeletstats metrics: CPU usage (cores), CPU request/limit utilization, memory working set, and memory request/limit utilization. Each container also reports health signals from the k8s_cluster receiver: status (kubectl-style display status derived from k8s.container.status.state + k8s.container.status.reason), restarts (absolute count from k8s.container.restarts), and ready (ready/not_ready from k8s.container.ready). The row identity is (k8s.pod.uid, k8s.container.name), stable across container restarts. Each container includes metadata attributes (k8s.container.name, k8s.pod.name, container.image.name, container.image.tag, k8s.namespace.name, k8s.node.name, k8s.cluster.name, and workload owner such as deployment/statefulset/daemonset/job). The response type is 'list' for the default (k8s.pod.uid, k8s.container.name) grouping (each row is one container with its current status and ready state) or 'grouped_list' for custom groupBy keys (each row aggregates containers in the group with per-status counts under containerCountsByStatus, per-readiness counts under containerCountsByReady, and restarts as the group sum). Status requires the optional k8s.container.status.state and k8s.container.status.reason metrics; when either is missing, status is omitted and a warning is returned while restarts and ready are still computed. Supports filtering via a filter expression, custom groupBy, ordering by any of the six metrics (cpu, cpu_request, cpu_limit, memory, memory_request, memory_limit), and pagination via offset/limit. Also reports whether the requested time range falls before the data retention boundary. Numeric metric fields (cpu, cpuRequestUtilization, cpuLimitUtilization, memory, memoryRequestUtilization, memoryLimitUtilization) and restarts return -1 as a sentinel when no data is available for that field.",
+			Request:             new(inframonitoringtypes.PostableContainers),
+			RequestContentType:  "application/json",
+			Response:            new(inframonitoringtypes.Containers),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
+			Deprecated:          false,
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/nodes", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListNodes),
+		provider.authzMiddleware.CheckResources(provider.infraMonitoringHandler.ListNodes, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListNodes",
 			Tags:                []string{"inframonitoring"},
 			Summary:             "List Nodes for Infra Monitoring",
-			Description:         "Returns a paginated list of Kubernetes nodes with key metrics: CPU usage, CPU allocatable, memory working set, memory allocatable, per-group nodeCountsByReadiness ({ ready, notReady } from each node's latest k8s.node.condition_ready in the window) and per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown } for pods scheduled on the listed nodes). Each node includes metadata attributes (k8s.node.uid, k8s.cluster.name). The response type is 'list' for the default k8s.node.name grouping (each row is one node with its current condition string: ready / not_ready / no_data) or 'grouped_list' for custom groupBy keys (each row aggregates nodes in the group; condition stays no_data). Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_allocatable / memory / memory_allocatable, and pagination via offset/limit. Also reports whether the requested time range falls before the data retention boundary. Numeric metric fields (nodeCPU, nodeCPUAllocatable, nodeMemory, nodeMemoryAllocatable) return -1 as a sentinel when no data is available for that field.",
+			Description:         "Returns a paginated list of Kubernetes nodes with key metrics: CPU usage, CPU allocatable, memory working set, memory allocatable, per-group nodeCountsByReadiness ({ ready, notReady } from each node's latest k8s.node.condition_ready in the window) and per-group podCountsByStatus ({ pending, running, failed, unknown, crashLoopBackOff, imagePullBackOff, errImagePull, createContainerConfigError, containerCreating, oomKilled, completed, error, containerCannotRun, evicted, nodeAffinity, nodeLost, shutdown, unexpectedAdmissionError } for pods scheduled on the listed nodes, reflecting each pod's latest kubectl-style display status). Each node includes metadata attributes (k8s.node.uid, k8s.cluster.name). The response type is 'list' for the default k8s.node.name grouping (each row is one node with its current condition string: ready / not_ready / no_data) or 'grouped_list' for custom groupBy keys (each row aggregates nodes in the group; condition stays no_data). Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_allocatable / memory / memory_allocatable, and pagination via offset/limit. Also reports whether the requested time range falls before the data retention boundary. Numeric metric fields (nodeCPU, nodeCPUAllocatable, nodeMemory, nodeMemoryAllocatable) return -1 as a sentinel when no data is available for that field.",
 			Request:             new(inframonitoringtypes.PostableNodes),
 			RequestContentType:  "application/json",
 			Response:            new(inframonitoringtypes.Nodes),
@@ -62,18 +98,23 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/namespaces", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListNamespaces),
+		provider.authzMiddleware.CheckResources(provider.infraMonitoringHandler.ListNamespaces, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListNamespaces",
 			Tags:                []string{"inframonitoring"},
 			Summary:             "List Namespaces for Infra Monitoring",
-			Description:         "Returns a paginated list of Kubernetes namespaces with key aggregated pod metrics: CPU usage and memory working set (summed across pods in the group), plus per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each pod's latest k8s.pod.phase value in the window). Each namespace includes metadata attributes (k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.namespace.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / memory, and pagination via offset/limit. Also reports whether the requested time range falls before the data retention boundary. Numeric metric fields (namespaceCPU, namespaceMemory) return -1 as a sentinel when no data is available for that field.",
+			Description:         "Returns a paginated list of Kubernetes namespaces with key aggregated pod metrics: CPU usage and memory working set (summed across pods in the group), plus per-group podCountsByStatus ({ pending, running, failed, unknown, crashLoopBackOff, imagePullBackOff, errImagePull, createContainerConfigError, containerCreating, oomKilled, completed, error, containerCannotRun, evicted, nodeAffinity, nodeLost, shutdown, unexpectedAdmissionError } reflecting each pod's latest kubectl-style display status in the window). Each namespace includes metadata attributes (k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.namespace.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / memory, and pagination via offset/limit. Also reports whether the requested time range falls before the data retention boundary. Numeric metric fields (namespaceCPU, namespaceMemory) return -1 as a sentinel when no data is available for that field.",
 			Request:             new(inframonitoringtypes.PostableNamespaces),
 			RequestContentType:  "application/json",
 			Response:            new(inframonitoringtypes.Namespaces),
@@ -81,18 +122,23 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/clusters", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListClusters),
+		provider.authzMiddleware.CheckResources(provider.infraMonitoringHandler.ListClusters, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListClusters",
 			Tags:                []string{"inframonitoring"},
 			Summary:             "List Clusters for Infra Monitoring",
-			Description:         "Returns a paginated list of Kubernetes clusters with key aggregated metrics derived by summing per-node values within the group: CPU usage, CPU allocatable, memory working set, memory allocatable. Each row also reports per-group nodeCountsByReadiness ({ ready, notReady } from each node's latest k8s.node.condition_ready value) and per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each pod's latest k8s.pod.phase value). Each cluster includes metadata attributes (k8s.cluster.name). The response type is 'list' for the default k8s.cluster.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates nodes and pods in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_allocatable / memory / memory_allocatable, and pagination via offset/limit. Also reports whether the requested time range falls before the data retention boundary. Numeric metric fields (clusterCPU, clusterCPUAllocatable, clusterMemory, clusterMemoryAllocatable) return -1 as a sentinel when no data is available for that field.",
+			Description:         "Returns a paginated list of Kubernetes clusters with key aggregated metrics derived by summing per-node values within the group: CPU usage, CPU allocatable, memory working set, memory allocatable. Each row also reports per-group nodeCountsByReadiness ({ ready, notReady } from each node's latest k8s.node.condition_ready value) and per-group podCountsByStatus ({ pending, running, failed, unknown, crashLoopBackOff, imagePullBackOff, errImagePull, createContainerConfigError, containerCreating, oomKilled, completed, error, containerCannotRun, evicted, nodeAffinity, nodeLost, shutdown, unexpectedAdmissionError } reflecting each pod's latest kubectl-style display status). Each cluster includes metadata attributes (k8s.cluster.name). The response type is 'list' for the default k8s.cluster.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates nodes and pods in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_allocatable / memory / memory_allocatable, and pagination via offset/limit. Also reports whether the requested time range falls before the data retention boundary. Numeric metric fields (clusterCPU, clusterCPUAllocatable, clusterMemory, clusterMemoryAllocatable) return -1 as a sentinel when no data is available for that field.",
 			Request:             new(inframonitoringtypes.PostableClusters),
 			RequestContentType:  "application/json",
 			Response:            new(inframonitoringtypes.Clusters),
@@ -100,13 +146,18 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/pvcs", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListVolumes),
+		provider.authzMiddleware.CheckResources(provider.infraMonitoringHandler.ListVolumes, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListVolumes",
 			Tags:                []string{"inframonitoring"},
@@ -119,18 +170,23 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/deployments", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListDeployments),
+		provider.authzMiddleware.CheckResources(provider.infraMonitoringHandler.ListDeployments, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListDeployments",
 			Tags:                []string{"inframonitoring"},
 			Summary:             "List Deployments for Infra Monitoring",
-			Description:         "Returns a paginated list of Kubernetes Deployments with key aggregated pod metrics: CPU usage and memory working set summed across pods owned by the deployment, plus average CPU/memory request and limit utilization (deploymentCPURequest, deploymentCPULimit, deploymentMemoryRequest, deploymentMemoryLimit). Each row also reports the latest known desiredPods (k8s.deployment.desired) and availablePods (k8s.deployment.available) replica counts and per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each pod's latest k8s.pod.phase value). Each deployment includes metadata attributes (k8s.deployment.name, k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.deployment.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods owned by deployments in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit / desired_pods / available_pods, and pagination via offset/limit. Also reports whether the requested time range falls before the data retention boundary. Numeric metric fields (deploymentCPU, deploymentCPURequest, deploymentCPULimit, deploymentMemory, deploymentMemoryRequest, deploymentMemoryLimit, desiredPods, availablePods) return -1 as a sentinel when no data is available for that field.",
+			Description:         "Returns a paginated list of Kubernetes Deployments with key aggregated pod metrics: CPU usage and memory working set summed across pods owned by the deployment, plus average CPU/memory request and limit utilization (deploymentCPURequest, deploymentCPULimit, deploymentMemoryRequest, deploymentMemoryLimit). Each row also reports the latest known desiredPods (k8s.deployment.desired) and availablePods (k8s.deployment.available) replica counts and per-group podCountsByStatus ({ pending, running, failed, unknown, crashLoopBackOff, imagePullBackOff, errImagePull, createContainerConfigError, containerCreating, oomKilled, completed, error, containerCannotRun, evicted, nodeAffinity, nodeLost, shutdown, unexpectedAdmissionError } reflecting each pod's latest kubectl-style display status). Each deployment includes metadata attributes (k8s.deployment.name, k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.deployment.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods owned by deployments in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit / desired_pods / available_pods, and pagination via offset/limit. Also reports whether the requested time range falls before the data retention boundary. Numeric metric fields (deploymentCPU, deploymentCPURequest, deploymentCPULimit, deploymentMemory, deploymentMemoryRequest, deploymentMemoryLimit, desiredPods, availablePods) return -1 as a sentinel when no data is available for that field.",
 			Request:             new(inframonitoringtypes.PostableDeployments),
 			RequestContentType:  "application/json",
 			Response:            new(inframonitoringtypes.Deployments),
@@ -138,18 +194,23 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/statefulsets", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListStatefulSets),
+		provider.authzMiddleware.CheckResources(provider.infraMonitoringHandler.ListStatefulSets, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListStatefulSets",
 			Tags:                []string{"inframonitoring"},
 			Summary:             "List StatefulSets for Infra Monitoring",
-			Description:         "Returns a paginated list of Kubernetes StatefulSets with key aggregated pod metrics: CPU usage and memory working set summed across pods owned by the statefulset, plus average CPU/memory request and limit utilization (statefulSetCPURequest, statefulSetCPULimit, statefulSetMemoryRequest, statefulSetMemoryLimit). Each row also reports the latest known desiredPods (k8s.statefulset.desired_pods) and currentPods (k8s.statefulset.current_pods) replica counts and per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each pod's latest k8s.pod.phase value). Each statefulset includes metadata attributes (k8s.statefulset.name, k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.statefulset.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods owned by statefulsets in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit / desired_pods / current_pods, and pagination via offset/limit. Also reports whether the requested time range falls before the data retention boundary. Numeric metric fields (statefulSetCPU, statefulSetCPURequest, statefulSetCPULimit, statefulSetMemory, statefulSetMemoryRequest, statefulSetMemoryLimit, desiredPods, currentPods) return -1 as a sentinel when no data is available for that field.",
+			Description:         "Returns a paginated list of Kubernetes StatefulSets with key aggregated pod metrics: CPU usage and memory working set summed across pods owned by the statefulset, plus average CPU/memory request and limit utilization (statefulSetCPURequest, statefulSetCPULimit, statefulSetMemoryRequest, statefulSetMemoryLimit). Each row also reports the latest known desiredPods (k8s.statefulset.desired_pods) and currentPods (k8s.statefulset.current_pods) replica counts and per-group podCountsByStatus ({ pending, running, failed, unknown, crashLoopBackOff, imagePullBackOff, errImagePull, createContainerConfigError, containerCreating, oomKilled, completed, error, containerCannotRun, evicted, nodeAffinity, nodeLost, shutdown, unexpectedAdmissionError } reflecting each pod's latest kubectl-style display status). Each statefulset includes metadata attributes (k8s.statefulset.name, k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.statefulset.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods owned by statefulsets in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit / desired_pods / current_pods, and pagination via offset/limit. Also reports whether the requested time range falls before the data retention boundary. Numeric metric fields (statefulSetCPU, statefulSetCPURequest, statefulSetCPULimit, statefulSetMemory, statefulSetMemoryRequest, statefulSetMemoryLimit, desiredPods, currentPods) return -1 as a sentinel when no data is available for that field.",
 			Request:             new(inframonitoringtypes.PostableStatefulSets),
 			RequestContentType:  "application/json",
 			Response:            new(inframonitoringtypes.StatefulSets),
@@ -157,18 +218,23 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/jobs", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListJobs),
+		provider.authzMiddleware.CheckResources(provider.infraMonitoringHandler.ListJobs, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListJobs",
 			Tags:                []string{"inframonitoring"},
 			Summary:             "List Jobs for Infra Monitoring",
-			Description:         "Returns a paginated list of Kubernetes Jobs with key aggregated pod metrics: CPU usage and memory working set summed across pods owned by the job, plus average CPU/memory request and limit utilization (jobCPURequest, jobCPULimit, jobMemoryRequest, jobMemoryLimit). Each row also reports the latest known job-level counters from kube-state-metrics: desiredSuccessfulPods (k8s.job.desired_successful_pods, the target completion count), activePods (k8s.job.active_pods), failedPods (k8s.job.failed_pods, cumulative across the lifetime of the job), and successfulPods (k8s.job.successful_pods, cumulative). It also reports per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each pod's latest k8s.pod.phase value); note podCountsByPhase.failed (current pod-phase) is distinct from failedPods (cumulative job kube-state-metric). Each job includes metadata attributes (k8s.job.name, k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.job.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods owned by jobs in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit / desired_successful_pods / active_pods / failed_pods / successful_pods, and pagination via offset/limit. Also reports whether the requested time range falls before the data retention boundary. Numeric metric fields (jobCPU, jobCPURequest, jobCPULimit, jobMemory, jobMemoryRequest, jobMemoryLimit, desiredSuccessfulPods, activePods, failedPods, successfulPods) return -1 as a sentinel when no data is available for that field.",
+			Description:         "Returns a paginated list of Kubernetes Jobs with key aggregated pod metrics: CPU usage and memory working set summed across pods owned by the job, plus average CPU/memory request and limit utilization (jobCPURequest, jobCPULimit, jobMemoryRequest, jobMemoryLimit). Each row also reports the latest known job-level counters from kube-state-metrics: desiredSuccessfulPods (k8s.job.desired_successful_pods, the target completion count), activePods (k8s.job.active_pods), failedPods (k8s.job.failed_pods, cumulative across the lifetime of the job), and successfulPods (k8s.job.successful_pods, cumulative). It also reports per-group podCountsByStatus ({ pending, running, failed, unknown, crashLoopBackOff, imagePullBackOff, errImagePull, createContainerConfigError, containerCreating, oomKilled, completed, error, containerCannotRun, evicted, nodeAffinity, nodeLost, shutdown, unexpectedAdmissionError } reflecting each pod's latest kubectl-style display status); note podCountsByStatus.failed (current pod status) is distinct from failedPods (cumulative job kube-state-metric). Each job includes metadata attributes (k8s.job.name, k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.job.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods owned by jobs in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit / desired_successful_pods / active_pods / failed_pods / successful_pods, and pagination via offset/limit. Also reports whether the requested time range falls before the data retention boundary. Numeric metric fields (jobCPU, jobCPURequest, jobCPULimit, jobMemory, jobMemoryRequest, jobMemoryLimit, desiredSuccessfulPods, activePods, failedPods, successfulPods) return -1 as a sentinel when no data is available for that field.",
 			Request:             new(inframonitoringtypes.PostableJobs),
 			RequestContentType:  "application/json",
 			Response:            new(inframonitoringtypes.Jobs),
@@ -176,18 +242,23 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/daemonsets", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListDaemonSets),
+		provider.authzMiddleware.CheckResources(provider.infraMonitoringHandler.ListDaemonSets, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListDaemonSets",
 			Tags:                []string{"inframonitoring"},
 			Summary:             "List DaemonSets for Infra Monitoring",
-			Description:         "Returns a paginated list of Kubernetes DaemonSets with key aggregated pod metrics: CPU usage and memory working set summed across pods owned by the daemonset, plus average CPU/memory request and limit utilization (daemonSetCPURequest, daemonSetCPULimit, daemonSetMemoryRequest, daemonSetMemoryLimit). Each row also reports the latest known node-level counters from kube-state-metrics: desiredNodes (k8s.daemonset.desired_scheduled_nodes, the number of nodes the daemonset wants to run on) and currentNodes (k8s.daemonset.current_scheduled_nodes, the number of nodes the daemonset currently runs on) — note these are node counts, not pod counts. It also reports per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each pod's latest k8s.pod.phase value). Each daemonset includes metadata attributes (k8s.daemonset.name, k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.daemonset.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods owned by daemonsets in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit / desired_nodes / current_nodes, and pagination via offset/limit. Also reports whether the requested time range falls before the data retention boundary. Numeric metric fields (daemonSetCPU, daemonSetCPURequest, daemonSetCPULimit, daemonSetMemory, daemonSetMemoryRequest, daemonSetMemoryLimit, desiredNodes, currentNodes) return -1 as a sentinel when no data is available for that field.",
+			Description:         "Returns a paginated list of Kubernetes DaemonSets with key aggregated pod metrics: CPU usage and memory working set summed across pods owned by the daemonset, plus average CPU/memory request and limit utilization (daemonSetCPURequest, daemonSetCPULimit, daemonSetMemoryRequest, daemonSetMemoryLimit). Each row also reports the latest known node-level counters from kube-state-metrics: desiredNodes (k8s.daemonset.desired_scheduled_nodes, the number of nodes the daemonset wants to run on), currentNodes (k8s.daemonset.current_scheduled_nodes, the number of nodes the daemonset currently runs on), readyNodes (k8s.daemonset.ready_nodes, the number of nodes running at least one ready daemon pod) and misscheduledNodes (k8s.daemonset.misscheduled_nodes, the number of nodes running the daemon pod but not supposed to) — note these are node counts, not pod counts. It also reports per-group podCountsByStatus ({ pending, running, failed, unknown, crashLoopBackOff, imagePullBackOff, errImagePull, createContainerConfigError, containerCreating, oomKilled, completed, error, containerCannotRun, evicted, nodeAffinity, nodeLost, shutdown, unexpectedAdmissionError } reflecting each pod's latest kubectl-style display status). Each daemonset includes metadata attributes (k8s.daemonset.name, k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.daemonset.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods owned by daemonsets in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit / desired_nodes / current_nodes / ready_nodes / misscheduled_nodes, and pagination via offset/limit. Also reports whether the requested time range falls before the data retention boundary. Numeric metric fields (daemonSetCPU, daemonSetCPURequest, daemonSetCPULimit, daemonSetMemory, daemonSetMemoryRequest, daemonSetMemoryLimit, desiredNodes, currentNodes, readyNodes, misscheduledNodes) return -1 as a sentinel when no data is available for that field.",
 			Request:             new(inframonitoringtypes.PostableDaemonSets),
 			RequestContentType:  "application/json",
 			Response:            new(inframonitoringtypes.DaemonSets),
@@ -195,13 +266,18 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/checks", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.GetChecks),
+		provider.authzMiddleware.CheckResources(provider.infraMonitoringHandler.GetChecks, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetChecks",
 			Tags:                []string{"inframonitoring"},
@@ -213,8 +289,13 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodGet).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWildcardResources(coretypes.ResourceTelemetryResourceMetrics),
+		}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 

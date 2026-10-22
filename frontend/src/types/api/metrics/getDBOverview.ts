@@ -1,4 +1,4 @@
-import { Tags } from 'types/reducer/trace';
+import { Tags } from 'hooks/useResourceAttribute/types';
 
 export interface Props {
 	service: string;

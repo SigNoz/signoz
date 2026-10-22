@@ -1,7 +1,11 @@
 import { Dispatch, SetStateAction } from 'react';
+import {
+	TelemetrytypesSignalDTO,
+	TelemetrytypesSourceDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { Format } from 'container/NewWidget/RightContainer/types';
+import { Format } from 'constants/formats/types';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import {
 	IBuilderFormula,
@@ -21,6 +25,40 @@ export enum DataSource {
 	TRACES = 'traces',
 	LOGS = 'logs',
 }
+
+export const DATA_SOURCE_TO_SIGNAL: Record<
+	DataSource,
+	TelemetrytypesSignalDTO
+> = {
+	[DataSource.METRICS]: TelemetrytypesSignalDTO.metrics,
+	[DataSource.TRACES]: TelemetrytypesSignalDTO.traces,
+	[DataSource.LOGS]: TelemetrytypesSignalDTO.logs,
+};
+
+// Total, not Partial, so a signal added to the generated enum has to be mapped here
+// before it compiles.
+export const SIGNAL_TO_DATA_SOURCE: Record<
+	TelemetrytypesSignalDTO,
+	DataSource | undefined
+> = {
+	[TelemetrytypesSignalDTO.logs]: DataSource.LOGS,
+	[TelemetrytypesSignalDTO.metrics]: DataSource.METRICS,
+	[TelemetrytypesSignalDTO.traces]: DataSource.TRACES,
+	// The "unset" member: not a data source a query can be built against.
+	[TelemetrytypesSignalDTO['']]: undefined,
+};
+
+export type BuilderQuerySource = `${TelemetrytypesSourceDTO}`;
+
+// `source` tells meter and metrics apart, since both share the metrics signal:
+// meter sends 'meter', the rest is ''.
+export const QUERY_SOURCE_TO_FIELD_SOURCE: Record<
+	BuilderQuerySource,
+	TelemetrytypesSourceDTO | undefined
+> = {
+	meter: TelemetrytypesSourceDTO.meter,
+	'': undefined,
+};
 
 export enum StringOperators {
 	NOOP = 'noop',
@@ -211,13 +249,11 @@ export enum QueryFunctionsTypes {
 	FILL_ZERO = 'fillZero',
 }
 
-export type PanelTypeKeys =
-	| 'TIME_SERIES'
-	| 'VALUE'
-	| 'TABLE'
-	| 'LIST'
-	| 'TRACE'
-	| 'EMPTY_WIDGET';
+/**
+ * Key names of {@link PANEL_TYPES}. Derived rather than listed: the hand-written
+ * version had fallen behind the enum by three members (`BAR`, `PIE`, `HISTOGRAM`).
+ */
+export type PanelTypeKeys = keyof typeof PANEL_TYPES;
 
 export enum ReduceOperators {
 	LAST = 'last',
@@ -304,11 +340,6 @@ export type QueryBuilderContextType = {
 		options: OptionsQuery,
 	) => boolean;
 	isDefaultQuery: (props: IsDefaultQueryProps) => boolean;
-};
-
-export type QueryAdditionalFilter = {
-	field: keyof IBuilderQuery;
-	text: string;
 };
 
 export type IsDefaultQueryProps = {

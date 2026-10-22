@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
@@ -81,6 +83,12 @@ type WaterfallSpan struct {
 	StatusCodeString   string `json:"status_code_string,omitempty"`
 	StatusMessage      string `json:"status_message,omitempty"`
 
+	// The formatted fields hold the span's gen_ai messages or tool call in the OTel GenAI shape, omitted
+	// when the span carries neither; FormatterWarnings holds what the converter could not resolve.
+	FormattedInput    aiobservabilitytypes.InputMessages  `json:"formattedInput,omitempty"`
+	FormattedOutput   aiobservabilitytypes.OutputMessages `json:"formattedOutput,omitempty"`
+	FormatterWarnings []string                            `json:"formatterWarnings,omitempty"`
+
 	// Internal tree structure fields
 	Children         []*WaterfallSpan `json:"-"`
 	SubTreeNodeCount uint64           `json:"sub_tree_node_count"`
@@ -93,35 +101,36 @@ type WaterfallSpan struct {
 
 // StorableSpan is the ClickHouse scan struct for the v3 waterfall query.
 type StorableSpan struct {
-	StartTime          time.Time          `ch:"timestamp"`
-	DurationNano       uint64             `ch:"duration_nano"`
-	SpanID             string             `ch:"span_id"`
-	HasError           bool               `ch:"has_error"`
-	Kind               int8               `ch:"kind"`
-	ServiceName        string             `ch:"resource_string_service$$name"`
-	Name               string             `ch:"name"`
-	AttributesString   map[string]string  `ch:"attributes_string"`
-	AttributesNumber   map[string]float64 `ch:"attributes_number"`
-	AttributesBool     map[string]bool    `ch:"attributes_bool"`
-	ResourcesString    map[string]string  `ch:"resources_string"`
-	Events             []string           `ch:"events"`
-	StatusMessage      string             `ch:"status_message"`
-	StatusCodeString   string             `ch:"status_code_string"`
-	SpanKind           string             `ch:"kind_string"`
-	ParentSpanID       string             `ch:"parent_span_id"`
-	Flags              uint32             `ch:"flags"`
-	IsRemote           string             `ch:"is_remote"`
-	TraceState         string             `ch:"trace_state"`
-	StatusCode         int16              `ch:"status_code"`
-	DBName             string             `ch:"db_name"`
-	DBOperation        string             `ch:"db_operation"`
-	HTTPMethod         string             `ch:"http_method"`
-	HTTPURL            string             `ch:"http_url"`
-	HTTPHost           string             `ch:"http_host"`
-	ExternalHTTPMethod string             `ch:"external_http_method"`
-	ExternalHTTPURL    string             `ch:"external_http_url"`
-	ResponseStatusCode string             `ch:"response_status_code"`
-	References         string             `ch:"references"`
+	StartTime          time.Time                     `ch:"timestamp"`
+	DurationNano       uint64                        `ch:"duration_nano"`
+	SpanID             string                        `ch:"span_id"`
+	HasError           bool                          `ch:"has_error"`
+	Kind               int8                          `ch:"kind"`
+	ServiceName        string                        `ch:"resource_string_service$$name"`
+	Name               string                        `ch:"name"`
+	AttributesString   map[string]string             `ch:"attributes_string"`
+	AttributesNumber   map[string]float64            `ch:"attributes_number"`
+	AttributesBool     map[string]bool               `ch:"attributes_bool"`
+	AttributesJSON     telemetrystoretypes.JSONValue `ch:"attributes"`
+	ResourcesString    map[string]string             `ch:"resources_string"`
+	Events             []string                      `ch:"events"`
+	StatusMessage      string                        `ch:"status_message"`
+	StatusCodeString   string                        `ch:"status_code_string"`
+	SpanKind           string                        `ch:"kind_string"`
+	ParentSpanID       string                        `ch:"parent_span_id"`
+	Flags              uint32                        `ch:"flags"`
+	IsRemote           string                        `ch:"is_remote"`
+	TraceState         string                        `ch:"trace_state"`
+	StatusCode         int16                         `ch:"status_code"`
+	DBName             string                        `ch:"db_name"`
+	DBOperation        string                        `ch:"db_operation"`
+	HTTPMethod         string                        `ch:"http_method"`
+	HTTPURL            string                        `ch:"http_url"`
+	HTTPHost           string                        `ch:"http_host"`
+	ExternalHTTPMethod string                        `ch:"external_http_method"`
+	ExternalHTTPURL    string                        `ch:"external_http_url"`
+	ResponseStatusCode string                        `ch:"response_status_code"`
+	References         string                        `ch:"references"`
 }
 
 // MinimalSpan with only the fields needed to build the parent-child tree.
@@ -315,6 +324,7 @@ func (item *StorableSpan) ToWaterfallSpan(traceID string) *WaterfallSpan {
 	resources := make(map[string]string)
 	maps.Copy(resources, item.ResourcesString)
 
+	formatted := aiobservabilitytypes.FormatMessages(item.AttributesJSON.Nest())
 	return &WaterfallSpan{
 		Attributes:         item.Attributes(),
 		DBName:             item.DBName,
@@ -345,6 +355,9 @@ func (item *StorableSpan) ToWaterfallSpan(traceID string) *WaterfallSpan {
 		TimeUnix:           uint64(item.StartTime.UnixNano()),
 		ServiceName:        item.ServiceName,
 		References:         item.UnmarshalledRefs(),
+		FormattedInput:     formatted.Input,
+		FormattedOutput:    formatted.Output,
+		FormatterWarnings:  formatted.Warnings,
 	}
 }
 

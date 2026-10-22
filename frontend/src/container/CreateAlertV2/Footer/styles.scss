@@ -1,6 +1,8 @@
 .create-alert-v2-footer {
 	position: fixed;
-	bottom: 0;
+	// Lifted above the bottom strip. Don't extend this pattern — new fixed-bottom
+	// UI belongs in the bounded layout, not in another offset here.
+	bottom: var(--bottom-strip-height, 0px);
 	left: 63px;
 	right: 0;
 	background-color: var(--l1-background);

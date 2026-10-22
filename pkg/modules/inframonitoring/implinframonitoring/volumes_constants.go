@@ -26,8 +26,7 @@ var volumesTableMetricNamesList = []string{
 	"k8s.volume.inodes.used",
 }
 
-// Carried forward from v1 volumeAttrsToEnrich
-// (pkg/query-service/app/inframetrics/pvcs.go:23-31).
+// Carried forward from v1 volumeAttrsToEnrich (removed).
 var volumeAttrKeysForMetadata = []string{
 	"k8s.persistentvolumeclaim.name",
 	"k8s.pod.uid",

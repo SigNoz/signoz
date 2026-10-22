@@ -1,60 +1,16 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQueryClient } from 'react-query';
-// eslint-disable-next-line no-restricted-imports
-import { useDispatch, useSelector } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
-import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { QueryParams } from 'constants/query';
-import { OPERATORS, QueryBuilderKeys } from 'constants/queryBuilder';
-import ROUTES from 'constants/routes';
-import { MetricsType } from 'container/MetricsApplication/constant';
-import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import { getFilterQueryData } from 'container/LogDetailedView/logAttributeActions.utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { getGeneratedFilterQueryString } from 'lib/getGeneratedFilterQueryString';
-import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
-import { AppState } from 'store/reducers';
-import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { ILog } from 'types/api/logs/log';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { ILogsReducer } from 'types/reducer/logs';
-import { v4 as uuid } from 'uuid';
 
 import { UseActiveLog } from './types';
 
-export function getOldLogsOperatorFromNew(operator: string): string {
-	switch (operator) {
-		case OPERATORS['=']:
-			return OPERATORS.IN;
-		case OPERATORS['!=']:
-			return OPERATORS.NIN;
-		default:
-			return operator;
-	}
-}
-// eslint-disable-next-line sonarjs/cognitive-complexity
 export const useActiveLog = (): UseActiveLog => {
-	const dispatch = useDispatch();
-
-	const {
-		searchFilter: { queryString },
-	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
-	const queryClient = useQueryClient();
-	const { pathname } = useLocation();
-	const history = useHistory();
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
-	const { notifications } = useNotifications();
-
-	const isLogsPage = useMemo(
-		() => pathname === ROUTES.OLD_LOGS_EXPLORER,
-		[pathname],
-	);
 
 	const [activeLog, setActiveLog] = useState<ILog | null>(null);
 
@@ -72,158 +28,38 @@ export const useActiveLog = (): UseActiveLog => {
 		prevQueryRef.current = compositeQuery;
 	}, [compositeQuery]);
 
-	const onSetDetailedLogData = useCallback(
-		(logData: ILog) => {
-			dispatch({
-				type: SET_DETAILED_LOG_DATA,
-				payload: logData,
-			});
-		},
-		[dispatch],
-	);
-
-	const onSetActiveLog = useCallback(
-		(nextActiveLog: ILog): void => {
-			if (isLogsPage) {
-				onSetDetailedLogData(nextActiveLog);
-			} else {
-				setActiveLog(nextActiveLog);
-			}
-		},
-		[isLogsPage, onSetDetailedLogData],
-	);
+	const onSetActiveLog = useCallback((nextActiveLog: ILog): void => {
+		setActiveLog(nextActiveLog);
+	}, []);
 
 	const onClearActiveLog = useCallback((): void => setActiveLog(null), []);
 
-	const onAddToQueryExplorer = useCallback(
-		async (
+	const onAddToQuery = useCallback(
+		(
 			fieldKey: string,
 			fieldValue: string,
 			operator: string,
 			dataType?: DataTypes,
-			fieldType?: MetricsType | undefined,
-		): Promise<void> => {
-			try {
-				const keysAutocompleteResponse = await queryClient.fetchQuery(
-					[QueryBuilderKeys.GET_AGGREGATE_KEYS, fieldKey],
-					async () =>
-						getAggregateKeys({
-							searchText: fieldKey,
-							aggregateOperator:
-								currentQuery.builder.queryData[0].aggregateOperator || '',
-							dataSource: currentQuery.builder.queryData[0].dataSource,
-							aggregateAttribute:
-								currentQuery.builder.queryData[0].aggregateAttribute?.key || '',
-						}),
-				);
+		): void => {
+			const nextQuery: Query = {
+				...currentQuery,
+				builder: {
+					...currentQuery.builder,
+					queryData: currentQuery.builder.queryData.map((item) =>
+						getFilterQueryData(item, { fieldKey, dataType }, fieldValue, operator),
+					),
+				},
+			};
 
-				const keysAutocomplete: BaseAutocompleteData[] =
-					keysAutocompleteResponse.payload?.attributeKeys || [];
-
-				const existAutocompleteKey = chooseAutocompleteFromCustomValue(
-					keysAutocomplete,
-					fieldKey,
-					dataType,
-					fieldType,
-				);
-
-				const currentOperator = getOperatorValue(operator);
-
-				const nextQuery: Query = {
-					...currentQuery,
-					builder: {
-						...currentQuery.builder,
-						queryData: currentQuery.builder.queryData.map((item) => ({
-							...item,
-							filters: {
-								...item.filters,
-								items: [
-									...(item.filters?.items || []),
-									{
-										id: uuid(),
-										key: existAutocompleteKey,
-										op: currentOperator,
-										value: fieldValue,
-									},
-								],
-								op: item.filters?.op || 'AND',
-							},
-						})),
-					},
-				};
-
-				redirectWithQueryBuilderData(nextQuery);
-			} catch {
-				notifications.error({ message: SOMETHING_WENT_WRONG });
-			}
+			redirectWithQueryBuilderData(nextQuery);
 		},
-		[currentQuery, notifications, queryClient, redirectWithQueryBuilderData],
-	);
-
-	const onGroupByAttribute = useCallback(
-		async (fieldKey: string, dataType?: DataTypes): Promise<void> => {
-			try {
-				const keysAutocompleteResponse = await queryClient.fetchQuery(
-					[QueryBuilderKeys.GET_AGGREGATE_KEYS, fieldKey],
-					// eslint-disable-next-line sonarjs/no-identical-functions
-					async () =>
-						getAggregateKeys({
-							searchText: fieldKey,
-							aggregateOperator:
-								currentQuery.builder.queryData[0].aggregateOperator || '',
-							dataSource: currentQuery.builder.queryData[0].dataSource,
-							aggregateAttribute:
-								currentQuery.builder.queryData[0].aggregateAttribute?.key || '',
-						}),
-				);
-
-				const keysAutocomplete: BaseAutocompleteData[] =
-					keysAutocompleteResponse.payload?.attributeKeys || [];
-
-				const existAutocompleteKey = chooseAutocompleteFromCustomValue(
-					keysAutocomplete,
-					fieldKey,
-					dataType,
-				);
-
-				const nextQuery: Query = {
-					...currentQuery,
-					builder: {
-						...currentQuery.builder,
-						queryData: currentQuery.builder.queryData.map((item) => ({
-							...item,
-							groupBy: [...item.groupBy, existAutocompleteKey],
-						})),
-					},
-				};
-
-				redirectWithQueryBuilderData(nextQuery);
-			} catch {
-				notifications.error({ message: SOMETHING_WENT_WRONG });
-			}
-		},
-		[currentQuery, notifications, queryClient, redirectWithQueryBuilderData],
-	);
-	const onAddToQueryLogs = useCallback(
-		(fieldKey: string, fieldValue: string, operator: string) => {
-			const newOperator = getOldLogsOperatorFromNew(operator);
-			const updatedQueryString = getGeneratedFilterQueryString(
-				fieldKey,
-				fieldValue,
-				newOperator,
-				queryString,
-			);
-
-			history.replace(`${ROUTES.OLD_LOGS_EXPLORER}?q=${updatedQueryString}`);
-		},
-		[history, queryString],
+		[currentQuery, redirectWithQueryBuilderData],
 	);
 
 	return {
 		activeLog,
 		onSetActiveLog,
 		onClearActiveLog,
-		onAddToQuery: isLogsPage ? onAddToQueryLogs : onAddToQueryExplorer,
-		onGroupByAttribute,
+		onAddToQuery,
 	};
 };

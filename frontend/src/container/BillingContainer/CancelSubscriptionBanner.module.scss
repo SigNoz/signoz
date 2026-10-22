@@ -6,7 +6,7 @@
 	border-radius: 4px;
 	border: 1px solid var(--l1-border);
 	background-color: var(--l2-background);
-	margin: var(--spacing-4) 0 var(--spacing-12);
+	margin: var(--spacing-4) 0;
 }
 
 .info {
@@ -61,11 +61,6 @@
 		font-family: var(--font-mono);
 		color: var(--l1-foreground);
 	}
-}
-
-.cancelButton {
-	background: var(--secondary-background);
-	border: 1px solid var(--l1-border);
 }
 
 .fallbackBody {

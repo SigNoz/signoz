@@ -1,12 +1,5 @@
-import { MemoryRouter } from 'react-router-dom-v5-compat';
-import userEvent from '@testing-library/user-event';
 import { ENVIRONMENT } from 'constants/env';
-import {
-	initialQueriesMap,
-	initialQueryBuilderFormValues,
-} from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import * as compositeQueryHook from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { quickFiltersListResponse } from 'mocks-server/__mockdata__/customQuickFilters';
 import {
 	queryRangeForListView,
@@ -17,7 +10,6 @@ import {
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import {
-	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -28,19 +20,7 @@ import {
 import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
 
 import TracesExplorer from '..';
-import { Filter } from '../Filter/Filter';
-import { AllTraceFilterKeyValue } from '../Filter/filterUtils';
-import {
-	checkForSectionContent,
-	checkIfSectionIsNotOpen,
-	checkIfSectionIsOpen,
-	compositeQuery,
-	defaultClosedSections,
-	defaultOpenSections,
-	optionMenuReturn,
-	qbProviderValue,
-	redirectWithQueryBuilderData,
-} from './testUtils';
+import { optionMenuReturn, qbProviderValue } from './testUtils';
 
 const currentTestUrl =
 	'/traces-explorer/?panelType=list&selectedExplorerView=list';
@@ -148,20 +128,6 @@ jest.mock('hooks/useSafeNavigate', () => ({
 	}),
 }));
 
-const checkFilterValues = (
-	getByText: (text: string) => HTMLElement,
-	getAllByText: (text: string) => HTMLElement[],
-): void => {
-	Object.values(AllTraceFilterKeyValue).forEach((filter) => {
-		try {
-			expect(getByText(filter)).toBeInTheDocument();
-		} catch (error) {
-			// If getByText fails, try getAllByText
-			expect(getAllByText(filter)[0]).toBeInTheDocument();
-		}
-	});
-};
-
 const renderWithTracesExplorerRouter = (
 	component: React.ReactElement,
 	initialEntries: string[] = [
@@ -177,323 +143,6 @@ const renderWithTracesExplorerRouter = (
 		},
 	);
 
-describe('TracesExplorer - Filters', () => {
-	// Initial filter panel rendering
-	// Test the initial state like which filters section are opened, default state of duration slider, etc.
-	it('should render the Trace filter', async () => {
-		const { getByText, getAllByText, getByTestId } =
-			renderWithTracesExplorerRouter(<Filter setOpen={jest.fn()} />, [
-				`${process.env.FRONTEND_API_ENDPOINT}${ROUTES.TRACES_EXPLORER}/?panelType=list&selectedExplorerView=list`,
-			]);
-
-		checkFilterValues(getByText, getAllByText);
-
-		// Check default state of duration slider
-		const minDuration = getByTestId('min-input') as HTMLInputElement;
-		const maxDuration = getByTestId('max-input') as HTMLInputElement;
-		expect(minDuration).toHaveValue(null);
-		expect(minDuration).toHaveProperty('placeholder', '0');
-		expect(maxDuration).toHaveValue(null);
-		expect(maxDuration).toHaveProperty('placeholder', '100000000');
-
-		// Check which all filter section are opened by default
-		defaultOpenSections.forEach((section) =>
-			checkIfSectionIsOpen(getByTestId, section),
-		);
-
-		// Check which all filter section are closed by default
-		defaultClosedSections.forEach((section) =>
-			checkIfSectionIsNotOpen(getByTestId, section),
-		);
-
-		// check for the status section content
-		await checkForSectionContent(['Ok', 'Error']);
-
-		// check for the service name section content from API response
-		await checkForSectionContent([
-			'customer',
-			'demo-app',
-			'driver',
-			'frontend',
-			'mysql',
-			'redis',
-			'route',
-			'go-grpc-otel-server',
-			'test',
-		]);
-	});
-
-	// test the filter panel actions like opening and closing the sections, etc.
-	it('filter panel actions', async () => {
-		const { getByTestId } = render(
-			<MemoryRouter>
-				<Filter setOpen={jest.fn()} />,
-			</MemoryRouter>,
-			{},
-			{
-				initialRoute: '/traces-explorer/?panelType=list&selectedExplorerView=list',
-			},
-		);
-
-		// Check if the section is closed
-		checkIfSectionIsNotOpen(getByTestId, 'name');
-		// Open the section
-		const name = getByTestId('collapse-name');
-		expect(name).toBeInTheDocument();
-
-		userEvent.click(within(name).getByText(AllTraceFilterKeyValue.name));
-		await waitFor(() => checkIfSectionIsOpen(getByTestId, 'name'));
-
-		await checkForSectionContent([
-			'HTTP GET',
-			'HTTP GET /customer',
-			'HTTP GET /dispatch',
-			'HTTP GET /route',
-		]);
-
-		// Close the section
-		userEvent.click(within(name).getByText(AllTraceFilterKeyValue.name));
-		await waitFor(() => checkIfSectionIsNotOpen(getByTestId, 'name'));
-	});
-
-	it('checking filters should update the query', async () => {
-		const { getByText } = render(
-			<Filter setOpen={jest.fn()} />,
-			{},
-			{
-				queryBuilderOverrides: {
-					...qbProviderValue,
-					currentQuery: {
-						...initialQueriesMap.traces,
-						builder: {
-							...initialQueriesMap.traces.builder,
-							queryData: [initialQueryBuilderFormValues],
-						},
-					},
-				},
-			},
-		);
-
-		const okCheckbox = getByText('Ok');
-		fireEvent.click(okCheckbox);
-		expect(
-			redirectWithQueryBuilderData.mock.calls[
-				redirectWithQueryBuilderData.mock.calls.length - 1
-			][0].builder.queryData[0].filters.items,
-		).toStrictEqual(
-			expect.arrayContaining([
-				expect.objectContaining({
-					key: {
-						id: expect.any(String),
-						key: 'hasError',
-						type: 'tag',
-						dataType: 'bool',
-					},
-					op: 'in',
-					value: ['false'],
-				}),
-			]),
-		);
-
-		// Check if the query is updated when the error checkbox is clicked
-		const errorCheckbox = getByText('Error');
-		fireEvent.click(errorCheckbox);
-		expect(
-			redirectWithQueryBuilderData.mock.calls[
-				redirectWithQueryBuilderData.mock.calls.length - 1
-			][0].builder.queryData[0].filters.items,
-		).toStrictEqual(
-			expect.arrayContaining([
-				expect.objectContaining({
-					key: {
-						id: expect.any(String),
-						key: 'hasError',
-						type: 'tag',
-						dataType: 'bool',
-					},
-					op: 'in',
-					value: ['false', 'true'],
-				}),
-			]),
-		);
-	});
-
-	it('should render the trace filter with the given query', async () => {
-		jest
-			.spyOn(compositeQueryHook, 'useGetCompositeQueryParam')
-			.mockReturnValue(compositeQuery);
-
-		const { findByText, getByTestId } = render(<Filter setOpen={jest.fn()} />);
-
-		// check if the default query is applied - composite query has filters - serviceName : demo-app and name : HTTP GET /customer
-		await expect(findByText('demo-app')).resolves.toBeInTheDocument();
-		expect(
-			getByTestId('serviceName-demo-app').querySelector('[role="checkbox"]'),
-		).toHaveAttribute('data-state', 'checked');
-		await expect(findByText('HTTP GET /customer')).resolves.toBeInTheDocument();
-		expect(
-			getByTestId('name-HTTP GET /customer').querySelector('[role="checkbox"]'),
-		).toHaveAttribute('data-state', 'checked');
-	});
-
-	it('test edge cases of undefined filters', async () => {
-		jest.spyOn(compositeQueryHook, 'useGetCompositeQueryParam').mockReturnValue({
-			...compositeQuery,
-			builder: {
-				...compositeQuery.builder,
-				queryData: compositeQuery.builder.queryData.map(
-					(item) =>
-						({
-							...item,
-							filters: undefined,
-						}) as any,
-				),
-			},
-		});
-
-		const { getByText, getAllByText } = render(
-			<Filter setOpen={jest.fn()} />,
-			{},
-			{
-				initialRoute: '/traces-explorer/?panelType=list&selectedExplorerView=list',
-			},
-		);
-
-		checkFilterValues(getByText, getAllByText);
-	});
-
-	it('test edge cases of undefined filters - items', async () => {
-		jest.spyOn(compositeQueryHook, 'useGetCompositeQueryParam').mockReturnValue({
-			...compositeQuery,
-			builder: {
-				...compositeQuery.builder,
-				queryData: compositeQuery.builder.queryData.map(
-					(item) =>
-						({
-							...item,
-							filters: {
-								...item.filters,
-								items: undefined,
-							},
-						}) as any,
-				),
-			},
-		});
-
-		const { getByText, getAllByText } = render(<Filter setOpen={jest.fn()} />);
-
-		checkFilterValues(getByText, getAllByText);
-	});
-
-	it('should clear filter on clear & reset button click', async () => {
-		const { getByText, getByTestId } = render(
-			<Filter setOpen={jest.fn()} />,
-			{},
-			{
-				initialRoute: '/traces-explorer/?panelType=list&selectedExplorerView=list',
-				queryBuilderOverrides: {
-					currentQuery: {
-						...initialQueriesMap.traces,
-						builder: {
-							...initialQueriesMap.traces.builder,
-							queryData: [initialQueryBuilderFormValues],
-						},
-					},
-					redirectWithQueryBuilderData,
-				},
-			},
-		);
-
-		// check for the status section content
-		await checkForSectionContent(['Ok', 'Error']);
-
-		// check for the service name section content from API response
-		await checkForSectionContent([
-			'customer',
-			'demo-app',
-			'driver',
-			'frontend',
-			'mysql',
-			'redis',
-			'route',
-			'go-grpc-otel-server',
-			'test',
-		]);
-
-		const okCheckbox = getByText('Ok');
-		fireEvent.click(okCheckbox);
-
-		const frontendCheckbox = getByText('frontend');
-		fireEvent.click(frontendCheckbox);
-
-		// check if checked and present in query
-		expect(
-			redirectWithQueryBuilderData.mock.calls[
-				redirectWithQueryBuilderData.mock.calls.length - 1
-			][0].builder.queryData[0].filters.items,
-		).toStrictEqual(
-			expect.arrayContaining([
-				expect.objectContaining({
-					key: {
-						id: expect.any(String),
-						key: 'hasError',
-						type: 'tag',
-						dataType: 'bool',
-					},
-					op: 'in',
-					value: ['false'],
-				}),
-				expect.objectContaining({
-					key: {
-						key: 'serviceName',
-						dataType: 'string',
-						type: 'tag',
-						id: expect.any(String),
-					},
-					op: 'in',
-					value: ['frontend'],
-				}),
-			]),
-		);
-
-		const clearButton = getByTestId('collapse-serviceName-clearBtn');
-		expect(clearButton).toBeInTheDocument();
-		fireEvent.click(clearButton);
-
-		// check if cleared and not present in query
-		expect(
-			redirectWithQueryBuilderData.mock.calls[
-				redirectWithQueryBuilderData.mock.calls.length - 1
-			][0].builder.queryData[0].filters.items,
-		).not.toStrictEqual(
-			expect.arrayContaining([
-				expect.objectContaining({
-					key: {
-						key: 'serviceName',
-						dataType: 'string',
-						type: 'tag',
-						id: expect.any(String),
-					},
-					op: 'in',
-					value: ['frontend'],
-				}),
-			]),
-		);
-
-		// check if reset button is present
-		const resetButton = getByTestId('reset-filters');
-		expect(resetButton).toBeInTheDocument();
-		fireEvent.click(resetButton);
-
-		// check if reset id done
-		expect(
-			redirectWithQueryBuilderData.mock.calls[
-				redirectWithQueryBuilderData.mock.calls.length - 1
-			][0].builder.queryData[0].filters.items,
-		).toStrictEqual([]);
-	});
-});
-
 const handleExplorerTabChangeTest = jest.fn();
 jest.mock('hooks/useHandleExplorerTabChange', () => ({
 	useHandleExplorerTabChange: jest.fn(() => ({
@@ -504,7 +153,7 @@ jest.mock('hooks/useHandleExplorerTabChange', () => ({
 let capturedPayload: QueryRangePayloadV5;
 
 describe('TracesExplorer -', () => {
-	const quickFiltersListURL = `${BASE_URL}/api/v1/orgs/me/filters/traces`;
+	const quickFiltersListURL = `${BASE_URL}/api/v2/quick_filters/traces`;
 
 	const setupServer = (): void => {
 		server.use(
@@ -666,112 +315,31 @@ describe('TracesExplorer -', () => {
 		});
 	});
 
-	it('test for explorer options', async () => {
-		const { getByText, getByTestId } = renderWithTracesExplorerRouter(
-			<TracesExplorer />,
-			['/traces-explorer/?panelType=list&selectedExplorerView=list'],
-		);
-
-		// assert explorer options - action btns
-		[
-			'Save this view',
-			'Create an Alert',
-			'Add to Dashboard',
-			'Select a view',
-		].forEach((val) => expect(getByText(val)).toBeInTheDocument());
-
-		const hideExplorerOption = getByTestId('hide-toolbar');
-		expect(hideExplorerOption).toBeInTheDocument();
-		fireEvent.click(hideExplorerOption);
-
-		// explorer options should hide and show btn should be present
-		await expect(
-			screen.findByTestId('show-explorer-option'),
-		).resolves.toBeInTheDocument();
-		expect(screen.queryByTestId('hide-toolbar')).toBeNull();
-
-		// show explorer options
-		const showExplorerOption = screen.getByTestId('show-explorer-option');
-		expect(showExplorerOption).toBeInTheDocument();
-		fireEvent.click(showExplorerOption);
-
-		// explorer options should show and hide btn should be present
-		await expect(
-			screen.findByTestId('hide-toolbar'),
-		).resolves.toBeInTheDocument();
-	});
-
-	it('select a view options - assert and save this view', async () => {
-		const { container } = renderWithTracesExplorerRouter(<TracesExplorer />, [
-			'/traces-explorer/?panelType=list&selectedExplorerView=list',
-		]);
-
-		const viewSearchInput = await waitFor(() => {
-			const el = container.querySelector(
-				'.view-options .ant-select-selection-search-input',
-			) as HTMLElement;
-			expect(el).toBeInTheDocument();
-			return el;
-		});
-
-		fireEvent.mouseDown(viewSearchInput);
-
-		await expect(
-			screen.findByRole('option', { name: 'R-test panel' }),
-		).resolves.toBeInTheDocument();
-
-		// save this view
-		fireEvent.click(await screen.findByText('Save this view'));
-
-		const saveViewModalInput = await screen.findByPlaceholderText(
-			'e.g. External http method view',
-		);
-		expect(saveViewModalInput).toBeInTheDocument();
-
-		const saveViewModal = await waitFor(() => {
-			const el = document.querySelector('.ant-modal-content') as HTMLElement;
-			expect(el).toBeInTheDocument();
-			return el;
-		});
-
-		await act(async () =>
-			fireEvent.change(saveViewModalInput, { target: { value: 'test view' } }),
-		);
-
-		expect(saveViewModalInput).toHaveValue('test view');
-		await act(async () => {
-			fireEvent.click(within(saveViewModal).getByTestId('save-view-btn'));
-		});
-
-		await waitFor(() => {
-			expect(successNotification).toHaveBeenCalledWith({
-				message: 'View Saved Successfully',
-			});
-		});
-	}, 15000);
-
 	it('create a dashboard btn assert', async () => {
 		renderWithTracesExplorerRouter(<TracesExplorer />, [
 			'/traces-explorer/?panelType=list&selectedExplorerView=list',
 		]);
 
-		const createDashboardBtn = await screen.findByText('Add to Dashboard');
-		expect(createDashboardBtn).toBeInTheDocument();
+		const createDashboardBtn = await screen.findByTestId(
+			'explorer-add-to-dashboard',
+		);
+		await waitFor(() =>
+			expect(createDashboardBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		fireEvent.click(createDashboardBtn);
 
-		await expect(screen.findByText('Export Panel')).resolves.toBeInTheDocument();
-		const createDashboardModal = document.querySelector(
-			'.ant-modal-content',
-		) as HTMLElement;
+		const createDashboardModal = (await screen.findByRole(
+			'dialog',
+		)) as HTMLElement;
 		expect(createDashboardModal).toBeInTheDocument();
 
 		// assert modal content
 		expect(
-			within(createDashboardModal).getByText('Select Dashboard'),
+			within(createDashboardModal).getByTestId('export-panel-new-dashboard'),
 		).toBeInTheDocument();
 
 		expect(
-			within(createDashboardModal).getByText('New Dashboard'),
+			within(createDashboardModal).getByTestId('export-panel-export'),
 		).toBeInTheDocument();
 	});
 
@@ -780,8 +348,10 @@ describe('TracesExplorer -', () => {
 			'/traces-explorer/?panelType=list&selectedExplorerView=list',
 		]);
 
-		const createAlertBtn = await screen.findByText('Create an Alert');
-		expect(createAlertBtn).toBeInTheDocument();
+		const createAlertBtn = await screen.findByTestId('explorer-create-alert');
+		await waitFor(() =>
+			expect(createAlertBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		fireEvent.click(createAlertBtn);
 
 		expect(historyPush).toHaveBeenCalledWith(

@@ -1,6 +1,7 @@
 package llmpricingruletypes
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -90,6 +91,15 @@ func TestGenerateCollectorConfigWithLLMPricingProcessor(t *testing.T) {
 			},
 			expectedFile: "collector_rule_cache_mode_unknown.yaml",
 		},
+		// Negative in/out drops the rule; a negative cache price drops only the cache block.
+		{
+			name: "negative_prices",
+			rules: []*LLMPricingRule{
+				makePricingRule("openrouter/auto", []string{"openrouter/auto", "auto"}, LLMPricingRuleCacheModeSubtract, -1, -1, -1, -1),
+				makePricingRule("gpt-4o", []string{"gpt-4o*"}, LLMPricingRuleCacheModeSubtract, 5.0, 15.0, -1, 0),
+			},
+			expectedFile: "collector_rule_without_cache.yaml",
+		},
 	}
 
 	input, err := os.ReadFile(filepath.Join("testdata", "collector_baseline.yaml"))
@@ -115,5 +125,36 @@ func TestGenerateCollectorConfig_EmptyInputPassthrough(t *testing.T) {
 		out, err := GenerateCollectorConfigWithLLMPricingProcessor(in, rules)
 		require.NoError(t, err)
 		assert.Equal(t, in, out)
+	}
+}
+
+func TestUpdatableLLMPricingRuleUnmarshalJSON(t *testing.T) {
+	tests := []struct {
+		name    string
+		pattern string
+		wantErr bool
+	}{
+		{name: "valid", pattern: `["gpt-4o*", "gpt-4o"]`},
+		{name: "missing", pattern: ``, wantErr: true},
+		{name: "null", pattern: `null`, wantErr: true},
+		{name: "empty_list", pattern: `[]`, wantErr: true},
+		{name: "empty_entry", pattern: `["gpt-4o*", ""]`, wantErr: true},
+		{name: "bad_glob", pattern: `["gpt-["]`, wantErr: true},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			body := `{"modelName": "gpt-4o"}`
+			if tc.pattern != "" {
+				body = `{"modelName": "gpt-4o", "modelPattern": ` + tc.pattern + `}`
+			}
+			var req UpdatableLLMPricingRules
+			err := json.Unmarshal([]byte(`{"rules": [`+body+`]}`), &req)
+			if tc.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
 	}
 }

@@ -1,6 +1,5 @@
 import { ReactNode } from 'react';
 import { VirtuosoMockContext } from 'react-virtuoso';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { render, RenderResult } from '@testing-library/react';
 import { NuqsTestingAdapter, OnUrlUpdateFunction } from 'nuqs/adapters/testing';
 
@@ -42,14 +41,14 @@ export const defaultData: TestRow[] = [
 	{ id: '3', name: 'Item 3', value: 300 },
 ];
 
-export type RenderTanStackTableOptions<T> = {
-	props?: Partial<TanStackTableProps<T>>;
+export type RenderTanStackTableOptions<T, TItemKey = string> = {
+	props?: Partial<TanStackTableProps<T, TItemKey>>;
 	queryParams?: Record<string, string>;
 	onUrlUpdate?: OnUrlUpdateFunction;
 };
 
-export function renderTanStackTable<T = TestRow>(
-	options: RenderTanStackTableOptions<T> = {},
+export function renderTanStackTable<T = TestRow, TItemKey = string>(
+	options: RenderTanStackTableOptions<T, TItemKey> = {},
 ): RenderResult {
 	const { props = {}, queryParams, onUrlUpdate } = options;
 
@@ -57,16 +56,14 @@ export function renderTanStackTable<T = TestRow>(
 		data: defaultData as unknown as T[],
 		columns: defaultColumns as unknown as TableColumnDef<T>[],
 		...props,
-	} as TanStackTableProps<T>;
+	} as TanStackTableProps<T, TItemKey>;
 
 	return render(
 		<NuqsTestingAdapter searchParams={queryParams} onUrlUpdate={onUrlUpdate}>
 			<VirtuosoMockContext.Provider
 				value={{ viewportHeight: 500, itemHeight: 50 }}
 			>
-				<TooltipProvider>
-					<TanStackTable<T> {...mergedProps} />
-				</TooltipProvider>
+				<TanStackTable<T, TItemKey> {...mergedProps} />
 			</VirtuosoMockContext.Provider>
 		</NuqsTestingAdapter>,
 	);
@@ -87,7 +84,7 @@ export function renderWithProviders(
 			<VirtuosoMockContext.Provider
 				value={{ viewportHeight: 500, itemHeight: 50 }}
 			>
-				<TooltipProvider>{ui}</TooltipProvider>
+				{ui}
 			</VirtuosoMockContext.Provider>
 		</NuqsTestingAdapter>,
 	);

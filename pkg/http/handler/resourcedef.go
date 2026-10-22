@@ -1,6 +1,9 @@
 package handler
 
-import "github.com/SigNoz/signoz/pkg/types/coretypes"
+import (
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
+)
 
 type ResourceDef interface {
 	// resolveRequest is unexported to seal the interface. It returns a slice so a
@@ -53,20 +56,23 @@ type AttachDetachSiblingResourceDef struct {
 }
 
 func (def AttachDetachSiblingResourceDef) resolveRequest(ec coretypes.ExtractorContext) []coretypes.ResolvedResource {
-	return []coretypes.ResolvedResource{
-		coretypes.NewResolvedResourceWithTarget(
-			def.Verb,
-			def.Category,
-			def.SourceResource,
-			def.SourceIDs,
-			def.SourceSelector,
-			def.TargetResource,
-			def.TargetIDs,
-			def.TargetSelector,
-			false,
-			ec,
-		),
+	resolved := coretypes.NewResolvedResourceWithTarget(
+		def.Verb,
+		def.Category,
+		def.SourceResource,
+		def.SourceIDs,
+		def.SourceSelector,
+		def.TargetResource,
+		def.TargetIDs,
+		def.TargetSelector,
+		false,
+		ec,
+	)
+	if resolved.HasNoLinks() {
+		return nil
 	}
+
+	return []coretypes.ResolvedResource{resolved}
 }
 
 // AttachDetachParentChildResourceDef authz-checks only the parent; the child
@@ -96,4 +102,32 @@ func (def AttachDetachParentChildResourceDef) resolveRequest(ec coretypes.Extrac
 			ec,
 		),
 	}
+}
+
+type TelemetryResourceDef struct {
+	Verb      coretypes.Verb
+	Category  coretypes.ActionCategory
+	Selector  coretypes.SelectorFunc
+	Resources coretypes.ResourceExtractor
+}
+
+func (def TelemetryResourceDef) resolveRequest(ec coretypes.ExtractorContext) []coretypes.ResolvedResource {
+	refs, err := def.Resources(ec)
+	if err != nil {
+		return []coretypes.ResolvedResource{coretypes.NewResolvedResourceWithError(def.Verb, def.Category, err)}
+	}
+	if len(refs) == 0 {
+		return []coretypes.ResolvedResource{coretypes.NewResolvedResourceWithError(
+			def.Verb,
+			def.Category,
+			errors.NewInvalidInputf(errors.CodeInvalidInput, "request resolved to no resources"),
+		)}
+	}
+
+	resolved := make([]coretypes.ResolvedResource, 0, len(refs))
+	for _, ref := range refs {
+		resolved = append(resolved, coretypes.NewResolvedResourceWithID(def.Verb, def.Category, ref.Resource, ref.ID, def.Selector))
+	}
+
+	return resolved
 }

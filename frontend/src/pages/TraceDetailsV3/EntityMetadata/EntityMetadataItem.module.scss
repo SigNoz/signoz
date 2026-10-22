@@ -1,0 +1,9 @@
+// A single metadata cell: non-interactive, so keep the default arrow cursor.
+.item {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	white-space: nowrap;
+	cursor: default;
+	color: inherit;
+}

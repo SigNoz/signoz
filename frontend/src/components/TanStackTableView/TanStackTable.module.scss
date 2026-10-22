@@ -161,7 +161,7 @@
 .tableHeaderCell {
 	padding: var(--tanstack-cell-padding-top) var(--tanstack-cell-padding-right)
 		var(--tanstack-cell-padding-bottom) var(--tanstack-cell-padding-left);
-	height: 36px;
+	height: var(--tanstack-table-header-height, 36px);
 	text-align: left;
 	font-size: 14px;
 	font-style: normal;

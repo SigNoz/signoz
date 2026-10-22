@@ -1,0 +1,93 @@
+import { memo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Settings } from '@signozhq/icons';
+import { FieldKeysConfigProp } from 'api/querySuggestions/types';
+import FieldsSelector from 'components/FieldsSelector';
+import Controls, { ControlsProps } from 'container/Controls';
+import { OptionsMenuConfig } from 'container/OptionsMenu/types';
+import useQueryPagination from 'hooks/queryPagination/useQueryPagination';
+import { BuilderQueryType, TelemetryFieldKey } from 'types/api/v5/queryRange';
+import { DataSource } from 'types/common/queryBuilder';
+
+import styles from './Controls.module.scss';
+
+function TraceExplorerControls({
+	isLoading,
+	totalCount,
+	perPageOptions,
+	config,
+	fieldKeysConfig,
+	builderQueryType,
+	extraFields,
+	requiredFields,
+}: TraceExplorerControlsProps): JSX.Element | null {
+	const { t } = useTranslation(['trace']);
+	const [isFieldsSelectorOpen, setIsFieldsSelectorOpen] = useState(false);
+
+	const {
+		pagination,
+		handleCountItemsPerPageChange,
+		handleNavigateNext,
+		handleNavigatePrevious,
+	} = useQueryPagination(totalCount, perPageOptions);
+
+	return (
+		<div className={styles.container}>
+			{config?.fieldsSelector && (
+				<>
+					<div
+						className={styles.optionsTrigger}
+						onClick={(): void => setIsFieldsSelectorOpen(true)}
+					>
+						{t('options_menu.options')}
+						<Settings size="md" />
+					</div>
+					<FieldsSelector
+						isOpen={isFieldsSelectorOpen}
+						title="Edit columns"
+						fields={config.fieldsSelector.value}
+						onFieldsChange={config.fieldsSelector.onFieldsChange}
+						onClose={(): void => setIsFieldsSelectorOpen(false)}
+						signal={DataSource.TRACES}
+						fieldKeysConfig={fieldKeysConfig}
+						builderQueryType={builderQueryType}
+						extraFields={extraFields}
+						requiredFields={requiredFields}
+					/>
+				</>
+			)}
+
+			<Controls
+				isLoading={isLoading}
+				totalCount={totalCount}
+				offset={pagination.offset}
+				countPerPage={pagination.limit}
+				perPageOptions={perPageOptions}
+				handleCountItemsPerPageChange={handleCountItemsPerPageChange}
+				handleNavigateNext={handleNavigateNext}
+				handleNavigatePrevious={handleNavigatePrevious}
+			/>
+		</div>
+	);
+}
+
+type TraceExplorerControlsProps = Pick<
+	ControlsProps,
+	'isLoading' | 'totalCount' | 'perPageOptions'
+> & {
+	config?: OptionsMenuConfig | null;
+	fieldKeysConfig?: FieldKeysConfigProp;
+	builderQueryType?: BuilderQueryType;
+	extraFields?: TelemetryFieldKey[];
+	requiredFields?: readonly string[];
+};
+
+TraceExplorerControls.defaultProps = {
+	config: null,
+	fieldKeysConfig: undefined,
+	builderQueryType: undefined,
+	extraFields: undefined,
+	requiredFields: undefined,
+};
+
+export default memo(TraceExplorerControls);

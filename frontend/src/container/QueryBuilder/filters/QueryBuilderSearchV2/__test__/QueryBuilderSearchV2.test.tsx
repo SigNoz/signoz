@@ -1,18 +1,12 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
-import {
-	act,
-	fireEvent,
-	render,
-	RenderResult,
-	screen,
-} from '@testing-library/react';
+import { render, RenderResult, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import {
 	initialQueriesMap,
 	initialQueryBuilderFormValues,
 } from 'constants/queryBuilder';
-import { IUseDashboardVariablesReturn } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
+import { DynamicVariableSuggestion } from 'providers/Dashboard/store/dynamicVariableSuggestions';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
-import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -91,6 +85,9 @@ const renderWithContext = (props = {}): RenderResult => {
 	);
 };
 
+const getSearchCombobox = (): HTMLElement =>
+	within(screen.getByTestId('qb-search-select')).getByRole('combobox');
+
 // Constants to fix linter errors
 const TYPE_TAG = 'tag';
 const IS_COLUMN_FALSE = false;
@@ -112,6 +109,14 @@ const mockAggregateKeysData = {
 				isColumn: IS_COLUMN_FALSE,
 				isJSON: IS_JSON_FALSE,
 				id: 'service.name--string--tag--false',
+			},
+			{
+				key: 'unmapped.attribute',
+				dataType: 'not-a-real-data-type' as unknown as DataTypes,
+				type: TYPE_TAG,
+				isColumn: IS_COLUMN_FALSE,
+				isJSON: IS_JSON_FALSE,
+				id: 'unmapped.attribute--String--tag--false',
 			},
 		],
 	},
@@ -144,62 +149,39 @@ jest.mock('hooks/useSafeNavigate', () => ({
 	}),
 }));
 
-// Mock dashboard variables
-const dashboardVariables = {
-	service: {
-		id: 'service',
-		name: 'service',
-		type: 'DYNAMIC' as IDashboardVariable['type'],
-		dynamicVariablesAttribute: 'service.name',
-		description: '',
-		sort: 'DISABLED' as IDashboardVariable['sort'],
-		multiSelect: false,
-		showALLOption: false,
-	},
-};
+// Mock the dynamic variables the open dashboard would publish
+const dynamicVariableSuggestions = [
+	{ name: 'service', attribute: 'service.name' },
+];
 
-jest.mock('hooks/dashboard/useDashboardVariables', () => ({
-	useDashboardVariables: (): IUseDashboardVariablesReturn => ({
-		dashboardVariables: dashboardVariables,
-	}),
+jest.mock('hooks/dashboard/useDynamicVariableSuggestions', () => ({
+	useDynamicVariableSuggestions: (): DynamicVariableSuggestion[] =>
+		dynamicVariableSuggestions,
 }));
 
 describe('Suggestion Key -> Operator -> Value Flow', () => {
-	beforeEach(() => {
-		jest.clearAllMocks();
-	});
 	it('should complete full flow from key selection to value', async () => {
-		const { container } = renderWithContext();
+		const user = userEvent.setup({ delay: null });
+		renderWithContext();
 
-		// Get the combobox input specifically
-		const combobox = container.querySelector(
-			'.query-builder-search-v2 .ant-select-selection-search-input',
-		) as HTMLInputElement;
+		const combobox = getSearchCombobox();
 
 		// 1. Focus and type to trigger key suggestions
-		await act(async () => {
-			fireEvent.focus(combobox);
-			fireEvent.change(combobox, { target: { value: 'http.' } });
-		});
+		await user.click(combobox);
+		await user.type(combobox, 'http.');
 
 		// Wait for dropdown to appear
 		await screen.findByRole('listbox');
 
 		// 2. Select a key from suggestions
-		const statusOption = await screen.findByText('http.status');
-		await act(async () => {
-			fireEvent.click(statusOption);
-		});
+		await user.click(await screen.findByText('http.status'));
 
 		// Should show operator suggestions
 		expect(screen.getByText('=')).toBeInTheDocument();
 		expect(screen.getByText('!=')).toBeInTheDocument();
 
 		// 3. Select an operator
-		const equalsOption = screen.getByText('=');
-		await act(async () => {
-			fireEvent.click(equalsOption);
-		});
+		await user.click(screen.getByText('='));
 
 		// Should show value suggestions
 		expect(screen.getByText('200')).toBeInTheDocument();
@@ -207,10 +189,7 @@ describe('Suggestion Key -> Operator -> Value Flow', () => {
 		expect(screen.getByText('500')).toBeInTheDocument();
 
 		// 4. Select a value
-		const valueOption = screen.getByText('200');
-		await act(async () => {
-			fireEvent.click(valueOption);
-		});
+		await user.click(screen.getByText('200'));
 
 		// Verify final filter
 		expect(mockOnChange).toHaveBeenCalledWith(
@@ -227,39 +206,52 @@ describe('Suggestion Key -> Operator -> Value Flow', () => {
 	});
 });
 
-describe('Dynamic Variable Suggestions', () => {
-	beforeEach(() => {
-		jest.clearAllMocks();
+describe('Operator suggestions for data types missing from the operators map', () => {
+	it('should fall back to universal operators for a non-canonical data type', async () => {
+		const user = userEvent.setup({ delay: null });
+		renderWithContext();
+
+		const combobox = getSearchCombobox();
+
+		await user.click(combobox);
+		await user.type(combobox, 'unmapped.');
+
+		await screen.findByRole('listbox');
+
+		await user.click(await screen.findByText('unmapped.attribute'));
+
+		expect(screen.getByText('=')).toBeInTheDocument();
+		expect(screen.getByText('!=')).toBeInTheDocument();
+		expect(screen.getByText('>')).toBeInTheDocument();
+		expect(screen.getByText('<')).toBeInTheDocument();
+
+		expect(screen.queryByText('REGEX')).not.toBeInTheDocument();
+
+		await user.click(screen.getByText('='));
+
+		expect(combobox).toHaveDisplayValue(/unmapped\.attribute =/);
 	});
+});
 
+describe('Dynamic Variable Suggestions', () => {
 	it('should suggest dynamic variable when key matches a variable attribute', async () => {
-		const { container } = renderWithContext();
+		const user = userEvent.setup({ delay: null });
+		renderWithContext();
 
-		// Get the combobox input
-		const combobox = container.querySelector(
-			'.query-builder-search-v2 .ant-select-selection-search-input',
-		) as HTMLInputElement;
+		const combobox = getSearchCombobox();
 
 		// Focus and type to trigger key suggestions for service.name
-		await act(async () => {
-			fireEvent.focus(combobox);
-			fireEvent.change(combobox, { target: { value: 'service.' } });
-		});
+		await user.click(combobox);
+		await user.type(combobox, 'service.');
 
 		// Wait for dropdown to appear
 		await screen.findByRole('listbox');
 
 		// Select service.name key from suggestions
-		const serviceNameOption = await screen.findByText('service.name');
-		await act(async () => {
-			fireEvent.click(serviceNameOption);
-		});
+		await user.click(await screen.findByText('service.name'));
 
 		// Select equals operator
-		await act(async () => {
-			const equalsOption = screen.getByText('=');
-			fireEvent.click(equalsOption);
-		});
+		await user.click(screen.getByText('='));
 
 		// Should show value suggestions including the dynamic variable
 		// For 'service.name', we expect to see '$service' as the first suggestion
@@ -271,9 +263,7 @@ describe('Dynamic Variable Suggestions', () => {
 		expect(screen.getByText('404')).toBeInTheDocument();
 
 		// Select the variable suggestion
-		await act(async () => {
-			fireEvent.click(variableSuggestion);
-		});
+		await user.click(variableSuggestion);
 
 		// Verify the query was updated with the variable as value
 		expect(mockOnChange).toHaveBeenCalledWith(

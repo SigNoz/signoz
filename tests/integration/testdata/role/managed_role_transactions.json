@@ -47,7 +47,9 @@
         "read",
         "update",
         "delete",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {
@@ -230,7 +232,9 @@
         "read",
         "update",
         "delete",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {
@@ -286,11 +290,28 @@
     },
     {
       "type": "metaresource",
+      "kind": "metrics-field",
+      "verbs": [
+        "read",
+        "update",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
       "kind": "ttl-setting",
       "verbs": [
         "read",
         "update",
         "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "deployment-host",
+      "verbs": [
+        "list",
+        "update"
       ]
     },
     {
@@ -357,6 +378,14 @@
     }
   ],
   "signoz-editor": [
+    {
+      "type": "metaresource",
+      "kind": "cloud-integration",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
     {
       "type": "metaresource",
       "kind": "dashboard",
@@ -442,7 +471,9 @@
         "read",
         "update",
         "delete",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {
@@ -490,9 +521,25 @@
     },
     {
       "type": "metaresource",
+      "kind": "metrics-field",
+      "verbs": [
+        "read",
+        "update",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
       "kind": "ttl-setting",
       "verbs": [
         "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "deployment-host",
+      "verbs": [
         "list"
       ]
     },
@@ -527,6 +574,13 @@
       ]
     },
     {
+      "type": "telemetryresource",
+      "kind": "meter-metrics",
+      "verbs": [
+        "read"
+      ]
+    },
+    {
       "type": "metaresource",
       "kind": "logs-field",
       "verbs": [
@@ -546,6 +600,14 @@
     }
   ],
   "signoz-viewer": [
+    {
+      "type": "metaresource",
+      "kind": "cloud-integration",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
     {
       "type": "metaresource",
       "kind": "dashboard",
@@ -639,9 +701,24 @@
     },
     {
       "type": "metaresource",
+      "kind": "metrics-field",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
       "kind": "ttl-setting",
       "verbs": [
         "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "deployment-host",
+      "verbs": [
         "list"
       ]
     },
@@ -671,6 +748,13 @@
     {
       "type": "telemetryresource",
       "kind": "metrics",
+      "verbs": [
+        "read"
+      ]
+    },
+    {
+      "type": "telemetryresource",
+      "kind": "meter-metrics",
       "verbs": [
         "read"
       ]

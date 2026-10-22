@@ -6,6 +6,7 @@ import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty } from 'lodash-es';
+import { DynamicVariableSuggestion } from 'providers/Dashboard/store/dynamicVariableSuggestions';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
@@ -134,6 +135,21 @@ function getFilter(queryData: IBuilderQuery): Filter {
 	};
 }
 
+/**
+ * Normalizes a builder query's `having` to the V5 shape, treating "no having filter" as absent.
+ * V4 stored it as an array; V5 expects `{ expression }`. An array (legacy), a nullish value, or a
+ * blank expression — the query builder seeds `{ expression: '' }` for an empty having — all mean
+ * "no having" and must serialize to `undefined`. Emitting an empty `{ expression: '' }` sends a
+ * no-op filter and, because a saved panel never carries one, reads an untouched panel as dirty.
+ */
+function normalizeHaving(having: unknown): Having | undefined {
+	if (having == null || Array.isArray(having)) {
+		return undefined;
+	}
+	const { expression } = having as Having;
+	return expression?.trim() ? (having as Having) : undefined;
+}
+
 function createBaseSpec(
 	queryData: IBuilderQuery,
 	requestType: RequestType,
@@ -149,17 +165,15 @@ function createBaseSpec(
 		filter: getFilter(queryData),
 		groupBy:
 			queryData.groupBy?.length > 0
-				? queryData.groupBy.map(
-						(item: any): GroupByKey => ({
-							name: item.key,
-							fieldDataType: item?.dataType || '',
-							fieldContext: item?.type || '',
-							description: item?.description,
-							unit: item?.unit,
-							signal: item?.signal,
-							materialized: item?.materialized,
-						}),
-					)
+				? queryData.groupBy.map((item: any): GroupByKey => ({
+						name: item.key,
+						fieldDataType: item?.dataType || '',
+						fieldContext: item?.type || '',
+						description: item?.description,
+						unit: item?.unit,
+						signal: item?.signal,
+						materialized: item?.materialized,
+					}))
 				: undefined,
 		limit:
 			panelType === PANEL_TYPES.TABLE || panelType === PANEL_TYPES.LIST
@@ -171,22 +185,16 @@ function createBaseSpec(
 				: undefined,
 		order:
 			queryData.orderBy?.length > 0
-				? queryData.orderBy.map(
-						(order: any): OrderBy => ({
-							key: {
-								name: order.columnName,
-							},
-							direction: order.order,
-						}),
-					)
+				? queryData.orderBy.map((order: any): OrderBy => ({
+						key: {
+							name: order.columnName,
+						},
+						direction: order.order,
+					}))
 				: undefined,
 		legend: isEmpty(queryData.legend) ? undefined : queryData.legend,
-		// V4 uses having as array, V5 uses having as object with expression field
-		// If having is an array (V4 format), treat it as undefined for V5
-		having:
-			isEmpty(queryData.having) || Array.isArray(queryData.having)
-				? undefined
-				: (queryData?.having as Having),
+		having: normalizeHaving(queryData.having),
+		bucketOptions: queryData.bucketOptions,
 		functions: isEmpty(queryData.functions)
 			? undefined
 			: queryData.functions.map((func: QueryFunction): QueryFunction => {
@@ -354,7 +362,7 @@ export function convertBuilderQueriesToV5(
 			}
 
 			return {
-				type: 'builder_query' as QueryType,
+				type: queryData.builderQueryType ?? 'builder_query',
 				spec,
 			};
 		},
@@ -385,17 +393,15 @@ function createTraceOperatorBaseSpec(
 		stepInterval: stepInterval || undefined,
 		groupBy:
 			groupBy?.length > 0
-				? groupBy.map(
-						(item: any): GroupByKey => ({
-							name: item.key,
-							fieldDataType: item?.dataType,
-							fieldContext: item?.type,
-							description: item?.description,
-							unit: item?.unit,
-							signal: item?.signal,
-							materialized: item?.materialized,
-						}),
-					)
+				? groupBy.map((item: any): GroupByKey => ({
+						name: item.key,
+						fieldDataType: item?.dataType,
+						fieldContext: item?.type,
+						description: item?.description,
+						unit: item?.unit,
+						signal: item?.signal,
+						materialized: item?.materialized,
+					}))
 				: undefined,
 		limit:
 			panelType === PANEL_TYPES.TABLE || panelType === PANEL_TYPES.LIST
@@ -404,31 +410,24 @@ function createTraceOperatorBaseSpec(
 		offset: requestType === 'raw' || requestType === 'trace' ? offset : undefined,
 		order:
 			orderBy?.length > 0
-				? orderBy.map(
-						(order: any): OrderBy => ({
-							key: {
-								name: order.columnName,
-							},
-							direction: order.order,
-						}),
-					)
+				? orderBy.map((order: any): OrderBy => ({
+						key: {
+							name: order.columnName,
+						},
+						direction: order.order,
+					}))
 				: undefined,
 		legend: isEmpty(legend) ? undefined : legend,
-		// V4 uses having as array, V5 uses having as object with expression field
-		// If having is an array (V4 format), treat it as undefined for V5
-		having:
-			isEmpty(having) || Array.isArray(having) ? undefined : (having as Having),
+		having: normalizeHaving(having),
 		selectFields: isEmpty(nonEmptySelectColumns)
 			? undefined
-			: nonEmptySelectColumns?.map(
-					(column: any): TelemetryFieldKey => ({
-						name: column.name ?? column.key,
-						fieldDataType:
-							column?.fieldDataType ?? (column?.dataType as FieldDataType),
-						fieldContext: column?.fieldContext ?? (column?.type as FieldContext),
-						signal: column?.signal ?? undefined,
-					}),
-				),
+			: nonEmptySelectColumns?.map((column: any): TelemetryFieldKey => ({
+					name: column.name ?? column.key,
+					fieldDataType:
+						column?.fieldDataType ?? (column?.dataType as FieldDataType),
+					fieldContext: column?.fieldContext ?? (column?.type as FieldContext),
+					signal: column?.signal ?? undefined,
+				})),
 	};
 }
 
@@ -538,20 +537,22 @@ function reduceQueriesToObject(queryArray: any[]): {
 /**
  * Prepares V5 query range payload from GetQueryResultsProps
  */
-export const prepareQueryRangePayloadV5 = ({
-	query,
-	globalSelectedInterval,
-	graphType,
-	selectedTime,
-	tableParams,
-	variables = {},
-	start: startTime,
-	end: endTime,
-	formatForWeb,
-	originalGraphType,
-	fillGaps,
-	dynamicVariables,
-}: GetQueryResultsProps): PrepareQueryRangePayloadV5Result => {
+export const prepareQueryRangePayloadV5 = (
+	{
+		query,
+		globalSelectedInterval,
+		graphType,
+		selectedTime,
+		tableParams,
+		variables = {},
+		start: startTime,
+		end: endTime,
+		formatForWeb,
+		originalGraphType,
+		fillGaps,
+	}: GetQueryResultsProps,
+	dynamicVariables: DynamicVariableSuggestion[] = [],
+): PrepareQueryRangePayloadV5Result => {
 	let legendMap: Record<string, string> = {};
 	const requestType = mapPanelTypeToRequestType(graphType);
 	let queries: QueryEnvelope[] = [];
@@ -599,14 +600,12 @@ export const prepareQueryRangePayloadV5 = ({
 						disabled: formulaData.disabled,
 						limit: formulaData.limit ?? undefined,
 						legend: isEmpty(formulaData.legend) ? undefined : formulaData.legend,
-						order: formulaData.orderBy?.map(
-							(order: any): OrderBy => ({
-								key: {
-									name: order.columnName,
-								},
-								direction: order.order,
-							}),
-						),
+						order: formulaData.orderBy?.map((order: any): OrderBy => ({
+							key: {
+								name: order.columnName,
+							},
+							direction: order.order,
+						})),
 					},
 				}),
 			);
@@ -664,9 +663,9 @@ export const prepareQueryRangePayloadV5 = ({
 			(acc, [key, value]) => {
 				acc[key] = {
 					value,
-					type: dynamicVariables
-						?.find((v) => v.name === key)
-						?.type?.toLowerCase() as VariableType,
+					type: dynamicVariables.some((v) => v.name === key)
+						? ('dynamic' as VariableType)
+						: undefined,
 				};
 				return acc;
 			},

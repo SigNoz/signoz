@@ -42,9 +42,9 @@ export function getModelCostsColumns({
 			cell: ({ row }): JSX.Element => (
 				<div className={styles.modelCell}>
 					<Typography.Text
-						weight="semibold"
 						truncate={1}
 						testId={`model-cell-name-${row.id}`}
+						className={styles.tableCellStyles}
 					>
 						{row.modelName}
 					</Typography.Text>
@@ -59,7 +59,11 @@ export function getModelCostsColumns({
 			accessorKey: 'provider',
 			width: { min: 140 },
 			enableMove: false,
-			cell: ({ row }): string => row.provider ?? '',
+			cell: ({ row }): JSX.Element => (
+				<Typography.Text className={styles.tableCellStyles}>
+					{row.provider ?? ''}
+				</Typography.Text>
+			),
 		},
 		{
 			id: 'input',
@@ -67,7 +71,7 @@ export function getModelCostsColumns({
 			width: { min: 120 },
 			enableMove: false,
 			cell: ({ row }): JSX.Element => (
-				<Typography.Text>
+				<Typography.Text className={styles.tableCellStyles}>
 					{formatPricePerMillion(row.pricing?.input)}
 				</Typography.Text>
 			),
@@ -78,7 +82,7 @@ export function getModelCostsColumns({
 			width: { min: 120 },
 			enableMove: false,
 			cell: ({ row }): JSX.Element => (
-				<Typography.Text>
+				<Typography.Text className={styles.tableCellStyles}>
 					{formatPricePerMillion(row.pricing?.output)}
 				</Typography.Text>
 			),
@@ -92,7 +96,7 @@ export function getModelCostsColumns({
 				const buckets = getExtraBuckets(row);
 				if (buckets.length === 0) {
 					return (
-						<Typography.Text color="muted" as="span">
+						<Typography.Text as="span" className={styles.tableCellStyles}>
 							—
 						</Typography.Text>
 					);
@@ -101,15 +105,24 @@ export function getModelCostsColumns({
 					<div className={styles.extraBuckets}>
 						{buckets.map((bucket) => (
 							<Badge
+								textTransform="none"
 								key={bucket.key}
-								color="vanilla"
-								variant="outline"
-								className={styles.extraBucketsChip}
+								color="secondary"
+								variant="outlined"
 							>
-								<Typography.Text as="span" size="small">
+								<Typography.Text
+									as="span"
+									size="small"
+									className={styles.tableCellStyles}
+								>
 									{startCase(bucket.key)}
-								</Typography.Text>
-								<Typography.Text as="span" size="small" weight="semibold">
+								</Typography.Text>{' '}
+								<Typography.Text
+									as="span"
+									size="small"
+									weight="semibold"
+									className={styles.tableCellStyles}
+								>
 									{formatPricePerMillion(bucket.pricePerMillion)}
 								</Typography.Text>
 							</Badge>
@@ -125,10 +138,10 @@ export function getModelCostsColumns({
 			enableMove: false,
 			cell: ({ row }): JSX.Element => (
 				<Badge
-					color={row.isOverride ? 'amber' : 'robin'}
-					variant="outline"
-					className={styles.sourceBadge}
-					data-testid={`source-badge-${row.id}`}
+					textTransform="none"
+					color={row.isOverride ? 'warning' : 'primary'}
+					variant="outlined"
+					testId={`source-badge-${row.id}`}
 				>
 					{getSourceLabel(row)}
 				</Badge>
@@ -139,7 +152,11 @@ export function getModelCostsColumns({
 			header: 'Last seen',
 			width: { min: 120 },
 			enableMove: false,
-			cell: ({ row }): string => getRelativeLastSeen(row),
+			cell: ({ row }): JSX.Element => (
+				<Typography.Text className={styles.tableCellStyles}>
+					{getRelativeLastSeen(row)}
+				</Typography.Text>
+			),
 		},
 		{
 			id: 'actions',

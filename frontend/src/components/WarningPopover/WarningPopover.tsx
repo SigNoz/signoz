@@ -2,6 +2,7 @@ import { ReactNode, useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Popover, PopoverProps } from 'antd';
 import ErrorIcon from 'assets/Error';
+import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { BookOpenText, ChevronsDown, TriangleAlert } from '@signozhq/icons';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
@@ -30,16 +31,18 @@ export function WarningContent({ warning }: WarningContentProps): JSX.Element {
 			{/* Summary Header */}
 			<section className="warning-content__summary-section">
 				<header className="warning-content__summary">
-					<div className="warning-content__summary-left">
-						<div className="warning-content__icon-wrapper">
-							<ErrorIcon />
-						</div>
+					{(warningCode || warningMessage) && (
+						<div className="warning-content__summary-left">
+							<div className="warning-content__icon-wrapper">
+								<ErrorIcon />
+							</div>
 
-						<div className="warning-content__summary-text">
-							<h2 className="warning-content__warning-code">{warningCode}</h2>
-							<p className="warning-content__warning-message">{warningMessage}</p>
+							<div className="warning-content__summary-text">
+								<h2 className="warning-content__warning-code">{warningCode}</h2>
+								<p className="warning-content__warning-message">{warningMessage}</p>
+							</div>
 						</div>
-					</div>
+					)}
 
 					{warningUrl && (
 						<div className="warning-content__summary-right">
@@ -154,6 +157,10 @@ function WarningPopover({
 			overlayInnerStyle={{ padding: 0 }}
 			autoAdjustOverflow
 			{...popoverProps}
+			overlayClassName={cx(
+				'warning-popover-overlay',
+				popoverProps.overlayClassName,
+			)}
 		>
 			{children || (
 				<TriangleAlert
