@@ -89,7 +89,7 @@ type NotificationSettings struct {
 	GroupBy           []string            `json:"groupBy,omitzero" description:"Label names whose values group alerts into one notification, such as service.name."`
 	Renotify          *Renotify           `json:"renotify,omitempty" description:"Whether and how often to re-send a notification for an alert that stays active."`
 	UsePolicy         bool                `json:"usePolicy" description:"When true, alerts are routed by the organisation level notification policies instead of the channels named on the thresholds. Defaults to false."`
-	NewGroupEvalDelay valuer.TextDuration `json:"newGroupEvalDelay,omitzero" description:"A grace period, as a Go duration such as 2m, during which a newly seen label group is excluded from evaluation; log and trace builder queries are never suppressed. For metric queries, new means the latest first-seen time of the series' group-by attribute values in the metric metadata, and a series whose values have no metadata is evaluated at once."`
+	NewGroupEvalDelay valuer.TextDuration `json:"newGroupEvalDelay,omitzero" description:"A grace period, as a Go duration such as 2m, during which a newly seen label group is excluded from evaluation. Applies to metric rules only; log and trace rules are never delayed. A group whose values are not yet known is evaluated immediately."`
 }
 
 type Renotify struct {
@@ -623,12 +623,12 @@ func testTemplateParsing(rl *PostableRule) (errs []error) {
 
 // GettableRules has info for all stored rules.
 type GettableTestRule struct {
-	AlertCount int    `json:"alertCount" description:"The number of alerts the test notification produced, including results that do not cross the threshold, since a test sends every evaluated series."`
+	AlertCount int    `json:"alertCount" description:"The number of alerts the test notification produced. Counts every evaluated series, including those that did not cross the threshold."`
 	Message    string `json:"message" description:"A human readable summary of the test evaluation."`
 }
 
 type GettableRules struct {
-	Rules []*GettableRule `json:"rules" description:"The stored rules."`
+	Rules []*GettableRule `json:"rules" description:"The rules."`
 }
 
 // GettableRule has info for an alerting rules.
