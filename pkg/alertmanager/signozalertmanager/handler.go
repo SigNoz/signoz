@@ -12,16 +12,47 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
 
-type handler struct {
-	alertmanager alertmanager.Alertmanager
+// roleChecker is the subset of authz.AuthZ the channel handlers need to tell
+// channel managers (admins) apart from read-only callers (viewers/editors).
+// The full authz.AuthZ service satisfies it; the narrow interface keeps the
+// handlers unit-testable without a live OpenFGA server.
+type roleChecker interface {
+	CheckWithTupleCreation(context.Context, authtypes.Claims, valuer.UUID, authtypes.Relation, coretypes.Resource, []coretypes.Selector, []coretypes.Selector) error
 }
 
-func NewHandler(alertmanager alertmanager.Alertmanager) alertmanager.Handler {
-	return &handler{alertmanager: alertmanager}
+type handler struct {
+	alertmanager alertmanager.Alertmanager
+	roleChecker  roleChecker
+}
+
+func NewHandler(alertmanager alertmanager.Alertmanager, roleChecker roleChecker) alertmanager.Handler {
+	return &handler{alertmanager: alertmanager, roleChecker: roleChecker}
+}
+
+// isOrgAdmin reports whether the caller holds the admin role in the request's
+// organization. Any check failure (including a forbidden verdict) is treated
+// as non-admin, so channel secrets are redacted rather than leaked.
+func (handler *handler) isOrgAdmin(ctx context.Context, claims authtypes.Claims) bool {
+	selectors := []coretypes.Selector{
+		coretypes.TypeRole.MustSelector(authtypes.SigNozAdminRoleName),
+	}
+
+	err := handler.roleChecker.CheckWithTupleCreation(
+		ctx,
+		claims,
+		valuer.MustNewUUID(claims.OrgID),
+		authtypes.Relation{Verb: coretypes.VerbAssignee},
+		coretypes.NewResourceRole(),
+		selectors,
+		selectors,
+	)
+
+	return err == nil
 }
 
 func (handler *handler) GetAlerts(rw http.ResponseWriter, req *http.Request) {
@@ -103,6 +134,15 @@ func (handler *handler) ListChannels(rw http.ResponseWriter, req *http.Request) 
 		v1Channels = append(v1Channels, channel.ToV1Channel())
 	}
 
+	// Channel configurations carry reusable credentials (webhook URLs, basic
+	// auth passwords, bearer tokens). Only admins manage channels, so everyone
+	// else gets the credential-bearing fields redacted.
+	if !handler.isOrgAdmin(ctx, claims) {
+		for i, channel := range v1Channels {
+			v1Channels[i] = channel.WithSecretsRedacted()
+		}
+	}
+
 	render.Success(rw, http.StatusOK, v1Channels)
 }
 
@@ -153,7 +193,14 @@ func (handler *handler) GetChannelByID(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
-	render.Success(rw, http.StatusOK, channel.ToV1Channel())
+	v1Channel := channel.ToV1Channel()
+
+	// See ListChannels: credential-bearing fields are only served to admins.
+	if !handler.isOrgAdmin(ctx, claims) {
+		v1Channel = v1Channel.WithSecretsRedacted()
+	}
+
+	render.Success(rw, http.StatusOK, v1Channel)
 }
 
 func (handler *handler) UpdateChannelByID(rw http.ResponseWriter, req *http.Request) {
