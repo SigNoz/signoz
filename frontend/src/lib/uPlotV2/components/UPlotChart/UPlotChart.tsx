@@ -8,7 +8,7 @@ import uPlot, { AlignedData, Options } from 'uplot';
 
 import { usePlotContext } from '../../context/PlotContext';
 import { UPlotChartProps } from '../types';
-import { prepareAlignedData } from './utils';
+import { prepareAlignedData, setInstanceHandle } from './utils';
 
 /**
  * Check if dimensions have changed
@@ -58,6 +58,7 @@ export default function UPlotChart({
 			onDestroy?.(plotInstanceRef.current);
 			plotInstanceRef.current.destroy();
 			plotInstanceRef.current = null;
+			setInstanceHandle(containerRef.current, null);
 			setPlotContextInitialState({ uPlotInstance: null });
 			plotRef?.(null);
 		}
@@ -101,6 +102,7 @@ export default function UPlotChart({
 		});
 
 		plotInstanceRef.current = plot;
+		setInstanceHandle(containerRef.current, plot);
 	}, [
 		config,
 		data,
