@@ -5,7 +5,6 @@ import {
 	type DashboardtypesPanelDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import type { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import type { RenderableQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
 import type { PanelKind } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
@@ -19,7 +18,6 @@ import { getBuilderQueries } from 'pages/DashboardPage/DashboardContainer/Panels
 import { useErrorModal } from 'providers/ErrorModalProvider';
 
 import { useDashboardEditContext } from '../hooks/useDashboardEditContext';
-import { useDashboardFetchRequired } from '../hooks/useDashboardFetchRequired';
 import { getExecStats } from '../queryV5/v5ResponseData';
 import { usePanelInteractions } from '../PanelsAndSectionsLayout/Panel/hooks/usePanelInteractions';
 import { useScrollIntoViewStore } from '../store/useScrollIntoViewStore';
@@ -97,7 +95,6 @@ function QueryEditorBody({
 	// subtree, so it resolves the same context every other consumer does.
 	const { isEditable, editChecks, editDisabledTooltip } =
 		useDashboardEditContext();
-	const { dashboard } = useDashboardFetchRequired();
 
 	// Shared editing pipeline (draft + query + staged-query sync + kind switch). A new
 	// panel always serializes its seed query and seeds the builder's default signal.
@@ -300,9 +297,6 @@ function QueryEditorBody({
 					refetch={refetch}
 					onDragSelect={onDragSelect}
 					pagination={pagination}
-					fallbackRelativeTime={
-						(dashboard.spec.duration as Time | undefined) || undefined
-					}
 				/>
 			}
 			editor={

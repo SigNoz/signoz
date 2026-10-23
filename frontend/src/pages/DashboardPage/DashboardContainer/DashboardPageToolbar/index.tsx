@@ -8,7 +8,6 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 import { resolveDashboardImage } from 'pages/DashboardPage/DashboardContainer/dashboardIcons';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
-import type { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { useDashboardLockPermission } from 'hooks/dashboards/useDashboardLockPermission';
 import { useToggleDashboardLock } from 'hooks/dashboards/useToggleDashboardLock';
@@ -195,13 +194,7 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 			    collapses to one line and, when expanded, wraps full-width under it. */}
 			<div className={styles.toolbarRow}>
 				<div className={styles.timeCluster}>
-					<DateTimeSelectionV2
-						showAutoRefresh
-						hideShareModal
-						fallbackRelativeTime={
-							(dashboard.spec.duration as Time | undefined) || undefined
-						}
-					/>
+					<DateTimeSelectionV2 showAutoRefresh hideShareModal />
 				</div>
 				<VariablesBar dashboard={dashboard} />
 			</div>
