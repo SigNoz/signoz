@@ -65,8 +65,7 @@ import { useAppContext } from 'providers/App/App';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
-import { checkVersionState } from 'utils/app';
-import { isModifierKeyPressed } from 'utils/app';
+import { checkVersionState, isModifierKeyPressed } from 'utils/app';
 import { showErrorNotification } from 'utils/error';
 import { openInNewTab } from 'utils/navigation';
 
