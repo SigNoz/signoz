@@ -1,55 +1,80 @@
 package telemetrystoretypes
 
 import (
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/bytedance/sonic"
+	"encoding/json"
+
+	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 )
 
-var ErrCodeUnmarshalJSONColumn = errors.MustNewCode("fail_unmarshal_json_column")
+var (
+	_ chcol.JSONDeserializer = (*JSONValue)(nil)
+	_ json.Marshaler         = JSONValue{}
+)
 
-// JSONValue is the scan target for a ClickHouse JSON column: the connection sets
-// output_format_native_write_json_as_string, so the column arrives as a raw document rather than
-// the chcol.JSON the driver reports as its scan type.
-type JSONValue map[string]any
+// JSONValue is the scan target for a ClickHouse native JSON column. It holds the column as the driver's
+// chcol.JSON, so a key stored at both a scalar and an object path (db.function and db.function.arg) stays
+// two paths that nesting would collapse into one. Read it with Flatten for the flat attribute bag or Nest
+// for a nested document; both drop the null paths ClickHouse materializes for a row from its data part's
+// shared path schema.
+type JSONValue struct {
+	column chcol.JSON
+}
 
-// Scan decodes into a fresh map every time: a scan target is reused across rows, and unmarshalling
-// into the map already there would both keep its keys and hand every row the same map.
-func (v *JSONValue) Scan(src any) error {
-	var raw []byte
-	switch value := src.(type) {
-	case nil:
-		*v = nil
-		return nil
-	case string:
-		raw = []byte(value)
-	case []byte:
-		raw = value
-	default:
-		return errors.NewInternalf(ErrCodeUnmarshalJSONColumn, "cannot decode %T as a JSON column", src)
-	}
+// NewJSONValue wraps a chcol.JSON a caller holds outside the native scan path.
+func NewJSONValue(column chcol.JSON) JSONValue {
+	return JSONValue{column: column}
+}
 
-	decoded := JSONValue{}
-	if err := sonic.Unmarshal(raw, &decoded); err != nil {
-		return errors.WrapInternalf(err, ErrCodeUnmarshalJSONColumn, "failed to unmarshal JSON column")
-	}
-	*v = decoded
+// DeserializeClickHouseJSON lets the native driver scan a JSON column straight into the wrapper.
+func (v *JSONValue) DeserializeClickHouseJSON(column *chcol.JSON) error {
+	v.column = *column
 	return nil
 }
 
-// FlattenInto writes v into out under dotted keys, overwriting existing keys.
-func (v JSONValue) FlattenInto(prefix string, out map[string]any) {
-	for k, value := range v {
-		key := k
-		if prefix != "" {
-			key = prefix + "." + k
+// Flatten returns the column as a flat map of dotted path to value, the shape of an attribute bag.
+// A path whose value is null is skipped.
+func (v JSONValue) Flatten() map[string]any {
+	flat := make(map[string]any)
+	for path, value := range v.column.ValuesByPath() {
+		if isNull(value) {
+			continue
 		}
-		switch child := value.(type) {
-		case map[string]any:
-			JSONValue(child).FlattenInto(key, out)
-		case JSONValue:
-			child.FlattenInto(key, out)
-		default:
-			out[key] = value
-		}
+		flat[path] = value
 	}
+	return unwrap(flat)
+}
+
+// Nest returns the column as a nested document, the shape the logs body is returned to the client in.
+// A key stored at both a scalar and an object path collapses here, which Flatten avoids:
+// https://github.com/SigNoz/events-pod/issues/8
+func (v JSONValue) Nest() map[string]any {
+	return unwrap(v.column.NestedMap())
+}
+
+// MarshalJSON renders the flat attribute bag, so a reader that stores the scan target without calling
+// Flatten or Nest serializes the column instead of the empty struct.
+func (v JSONValue) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.Flatten())
+}
+
+func isNull(value any) bool {
+	if value == nil {
+		return true
+	}
+	variant, ok := value.(chcol.Variant)
+	return ok && variant.Nil()
+}
+
+// unwrap resolves the driver's Dynamic and Variant wrappers to plain Go types through a JSON round-trip,
+// so callers can type-assert the values. A document that does not round-trip is returned unchanged.
+func unwrap(doc map[string]any) map[string]any {
+	raw, err := json.Marshal(doc)
+	if err != nil {
+		return doc
+	}
+	out := make(map[string]any, len(doc))
+	if err := json.Unmarshal(raw, &out); err != nil {
+		return doc
+	}
+	return out
 }
