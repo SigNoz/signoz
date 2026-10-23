@@ -38,18 +38,15 @@ function TraceFlamegraph({
 		setFirstSpanAtFetchLevel(urlQuery.get('spanId') || '');
 	}, [urlQuery]);
 
-	const handleSpanClick = useCallback(
-		(spanId: string): void => {
-			setFirstSpanAtFetchLevel(spanId);
-			const searchParams = getUnstableCurrentSearchParams();
-			//tood: use from query params constants
-			if (searchParams.get('spanId') !== spanId) {
-				searchParams.set('spanId', spanId);
-				navigate({ search: searchParams.toString() }, { replace: true });
-			}
-		},
-		[],
-	);
+	const handleSpanClick = useCallback((spanId: string): void => {
+		setFirstSpanAtFetchLevel(spanId);
+		const searchParams = getUnstableCurrentSearchParams();
+		//tood: use from query params constants
+		if (searchParams.get('spanId') !== spanId) {
+			searchParams.set('spanId', spanId);
+			navigate({ search: searchParams.toString() }, { replace: true });
+		}
+	}, []);
 
 	const previewFields = useTraceStore((s) => s.previewFields);
 	// Gate the fetch until prefs load, else selectFields (in the query key)
