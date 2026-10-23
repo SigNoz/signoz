@@ -12,7 +12,6 @@ import { toPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types
 import { getPanelQueryType } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getPanelQueryType';
 import { useDashboardEventMeta } from 'pages/DashboardPage/DashboardContainer/hooks/useDashboardEventMeta';
 import { buildQueryRangeRequest } from 'pages/DashboardPage/DashboardContainer/queryV5/buildQueryRangeRequest';
-import { toWireQuery } from 'lib/query/builderSlot';
 import { envelopesToQuery } from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';
 import { selectResolvedVariables } from 'pages/DashboardPage/DashboardContainer/store/slices/variableSelectionSlice';
 import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/useDashboardStore';
@@ -82,8 +81,9 @@ export function useCreateAlertFromPanel(): (
 				{ data: request },
 				{
 					onSuccess: (response) => {
-						const query = toWireQuery(
-							envelopesToQuery(response.data.compositeQuery?.queries ?? [], panelType),
+						const query = envelopesToQuery(
+							response.data.compositeQuery?.queries ?? [],
+							panelType,
 						);
 						const unit = readPanelUnit(panel.spec.plugin);
 						const url = buildAlertUrl(
