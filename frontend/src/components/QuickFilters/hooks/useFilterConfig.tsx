@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useGetQuickFilters } from 'api/generated/services/quick-filter';
+import { EXCLUDED_QUICK_FILTER_NAMES } from 'components/QuickFilters/QuickFiltersSettings/constants';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 import { IQuickFiltersConfig, SignalType } from '../types';
@@ -31,7 +32,10 @@ const useFilterConfig = ({
 	);
 
 	const customFilters = useMemo<TelemetryFieldKey[]>(
-		() => (data?.data?.filters ?? []) as TelemetryFieldKey[],
+		() =>
+			((data?.data?.filters ?? []) as TelemetryFieldKey[]).filter(
+				(filter) => !EXCLUDED_QUICK_FILTER_NAMES.has(filter.name),
+			),
 		[data],
 	);
 

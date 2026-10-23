@@ -9,3 +9,8 @@ export const SIGNAL_DATA_SOURCE_MAP = {
 	[SignalType.METER_EXPLORER]: DataSource.METRICS,
 	[SignalType.AI_OBSERVABILITY]: DataSource.TRACES,
 };
+
+export const EXCLUDED_QUICK_FILTER_NAMES: ReadonlySet<string> = new Set([
+	'trace_id',
+	'span_id',
+]);

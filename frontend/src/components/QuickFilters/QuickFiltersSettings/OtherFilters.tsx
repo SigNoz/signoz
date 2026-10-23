@@ -3,7 +3,10 @@ import { Button, Skeleton } from 'antd';
 import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { FieldKeysConfig } from 'api/querySuggestions/types';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { SIGNAL_DATA_SOURCE_MAP } from 'components/QuickFilters/QuickFiltersSettings/constants';
+import {
+	EXCLUDED_QUICK_FILTER_NAMES,
+	SIGNAL_DATA_SOURCE_MAP,
+} from 'components/QuickFilters/QuickFiltersSettings/constants';
 import { SignalType } from 'components/QuickFilters/types';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
@@ -80,7 +83,11 @@ function OtherFilters({
 				buildCompositeKey(filter.name, filter.fieldContext, filter.fieldDataType),
 			),
 		);
-		return suggestions.filter((attr) => !addedKeys.has(attr.key as string));
+		return suggestions.filter(
+			(attr) =>
+				!addedKeys.has(attr.key as string) &&
+				!EXCLUDED_QUICK_FILTER_NAMES.has(attr.name),
+		);
 	}, [fetchedKeys, addedFilters]);
 
 	const handleAddFilter = (filter: TelemetryFieldKey): void => {
