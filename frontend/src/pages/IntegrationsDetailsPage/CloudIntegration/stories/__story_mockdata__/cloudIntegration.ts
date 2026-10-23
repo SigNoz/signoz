@@ -371,7 +371,7 @@ const GCP_AGENT_COMMAND = {
 	cliCommand: `curl -fsSL 'https://signoz.io/foundry.sh' | bash -s -- cloudintegration gcp terraform \\
   --region 'us-central1' \\
   --gcp-project 'signoz-prod-4471' \\
-  --account-id 'gcp-account-new' \\
+  --integration-account-id 'gcp-account-new' \\
   --signoz-api-url 'https://story.us.signoz.cloud' \\
   --signoz-api-key 'story-api-key-8b7d02' \\
   --ingestion-url 'https://ingest.us.signoz.cloud:443' \\

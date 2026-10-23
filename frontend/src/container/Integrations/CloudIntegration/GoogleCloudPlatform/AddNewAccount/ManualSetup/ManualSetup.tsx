@@ -1,13 +1,12 @@
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { Typography } from '@signozhq/ui/typography';
 import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
 import { useManualAccountSetup } from 'hooks/integration/gcp/useManualAccountSetup';
 import { Controller, useForm } from 'react-hook-form';
 
 import ProjectIdsInput from '../../ProjectIdsInput';
 import ConnectionSecretsFields from '../ConnectionSecretsFields';
-import FieldLabel from '../FieldLabel';
+import FormField from '../FormField';
 import DeploymentProjectIdField from '../fields/DeploymentProjectIdField';
 import DeploymentRegionField from '../fields/DeploymentRegionField';
 import ConnectionMethodSelector from '../ConnectionMethodSelector';
@@ -35,7 +34,6 @@ function ManualSetup({
 	const {
 		isLoading,
 		connectAccount,
-		handleClose,
 		connectionParams,
 		isConnectionParamsLoading,
 		submitError,
@@ -56,41 +54,29 @@ function ManualSetup({
 				disabled={isLoading}
 			/>
 			<SetupGuideCallout {...MANUAL_SETUP_GUIDE} />
-			<div className={styles.drawerSection}>
-				<FieldLabel
-					htmlFor="gcp-account-name-input"
-					label="Account Name"
-					tooltip="A label to identify this group of GCP projects (org ID, billing email, or any descriptive name)"
-					required
-				/>
-				<Controller
-					name="accountName"
-					control={control}
-					rules={{ required: 'Please enter an account name' }}
-					render={({ field, fieldState }): JSX.Element => (
-						<>
-							<Input
-								id="gcp-account-name-input"
-								className={styles.fullWidth}
-								placeholder="e.g. my-org or billing@company.com"
-								value={field.value}
-								onChange={(e): void => field.onChange(e.target.value)}
-								testId="gcp-account-name-input"
-							/>
-							{fieldState.error && (
-								<Typography.Text
-									as="span"
-									size="small"
-									role="alert"
-									className={styles.fieldError}
-								>
-									{fieldState.error.message}
-								</Typography.Text>
-							)}
-						</>
-					)}
-				/>
-			</div>
+			<Controller
+				name="accountName"
+				control={control}
+				rules={{ required: 'Please enter an account name' }}
+				render={({ field, fieldState }): JSX.Element => (
+					<FormField
+						htmlFor="gcp-account-name-input"
+						label="Account Name"
+						tooltip="A label to identify this group of GCP projects (org ID, billing email, or any descriptive name)"
+						required
+						error={fieldState.error}
+					>
+						<Input
+							id="gcp-account-name-input"
+							className={styles.fullWidth}
+							placeholder="e.g. my-org or billing@company.com"
+							value={field.value}
+							onChange={(e): void => field.onChange(e.target.value)}
+							testId="gcp-account-name-input"
+						/>
+					</FormField>
+				)}
+			/>
 			<DeploymentProjectIdField
 				control={control}
 				connectionMethod={CloudintegrationtypesGCPConnectionMethodDTO.manual}
@@ -99,42 +85,30 @@ function ManualSetup({
 				control={control}
 				connectionMethod={CloudintegrationtypesGCPConnectionMethodDTO.manual}
 			/>
-			<div className={styles.drawerSection}>
-				<FieldLabel
-					htmlFor="gcp-project-ids-select"
-					label="Projects to Monitor"
-					tooltip="Enter each GCP project ID then press Enter"
-					required
-				/>
-				<Controller
-					name="projectIds"
-					control={control}
-					rules={{
-						validate: (value): true | string =>
-							value.length > 0 || 'Please add at least one project ID',
-					}}
-					render={({ field, fieldState }): JSX.Element => (
-						<>
-							<ProjectIdsInput
-								id="gcp-project-ids-select"
-								testId="gcp-project-ids-select"
-								value={field.value}
-								onChange={field.onChange}
-							/>
-							{fieldState.error && (
-								<Typography.Text
-									as="span"
-									size="small"
-									role="alert"
-									className={styles.fieldError}
-								>
-									{fieldState.error.message}
-								</Typography.Text>
-							)}
-						</>
-					)}
-				/>
-			</div>
+			<Controller
+				name="projectIds"
+				control={control}
+				rules={{
+					validate: (value): true | string =>
+						value.length > 0 || 'Please add at least one project ID',
+				}}
+				render={({ field, fieldState }): JSX.Element => (
+					<FormField
+						htmlFor="gcp-project-ids-select"
+						label="Projects to Monitor"
+						tooltip="Enter each GCP project ID then press Enter"
+						required
+						error={fieldState.error}
+					>
+						<ProjectIdsInput
+							id="gcp-project-ids-select"
+							testId="gcp-project-ids-select"
+							value={field.value}
+							onChange={field.onChange}
+						/>
+					</FormField>
+				)}
+			/>
 			<ConnectionSecretsFields
 				control={control}
 				isLoading={isConnectionParamsLoading}
@@ -145,7 +119,7 @@ function ManualSetup({
 				errorTitle="Failed to connect GCP account"
 				error={submitError}
 				onDismissError={clearSubmitError}
-				onCancel={handleClose}
+				onCancel={onClose}
 			>
 				<Button
 					size="md"

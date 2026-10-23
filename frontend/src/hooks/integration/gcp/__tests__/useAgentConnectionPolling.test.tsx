@@ -1,7 +1,11 @@
-import { AllTheProviders, renderHook, waitFor } from 'tests/test-utils';
+import { act, AllTheProviders, renderHook, waitFor } from 'tests/test-utils';
 import { rest, server } from 'mocks-server/server';
 
-import { useAgentConnectionPolling } from '../useAgentConnectionPolling';
+import {
+	CONNECTION_TIMEOUT_MS,
+	POLL_INTERVAL_MS,
+	useAgentConnectionPolling,
+} from '../useAgentConnectionPolling';
 import {
 	ACCOUNT_ID,
 	ACCOUNT_URL,
@@ -14,9 +18,26 @@ import {
 	pendingAccount,
 } from './pollingTestHelpers';
 
+const renderPolling = (): void => {
+	renderHook(
+		() =>
+			useAgentConnectionPolling({
+				accountId: ACCOUNT_ID,
+				enabled: true,
+				...callbacks,
+			}),
+		{ wrapper: AllTheProviders },
+	);
+};
+
 describe('useAgentConnectionPolling outcomes', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		jest.useFakeTimers();
+	});
+
+	afterEach(() => {
+		jest.useRealTimers();
 	});
 
 	it('keeps polling until the agent checks in, then reports the connection', async () => {
@@ -25,41 +46,35 @@ describe('useAgentConnectionPolling outcomes', () => {
 			pendingAccount,
 			connectedAccount,
 		);
+		renderPolling();
 
-		renderHook(
-			() =>
-				useAgentConnectionPolling({
-					accountId: ACCOUNT_ID,
-					enabled: true,
-					refetchInterval: 20,
-					...callbacks,
-				}),
-			{ wrapper: AllTheProviders },
+		await waitFor(() => expect(requestCount()).toBe(1));
+		await act(async () => {
+			jest.advanceTimersByTime(POLL_INTERVAL_MS);
+		});
+		await waitFor(() => expect(requestCount()).toBe(2));
+		await act(async () => {
+			jest.advanceTimersByTime(POLL_INTERVAL_MS);
+		});
+
+		await waitFor(() =>
+			expect(onConnected).toHaveBeenCalledWith(connectedAccount),
 		);
-
-		await waitFor(() => expect(onConnected).toHaveBeenCalled());
-		expect(requestCount()).toBeGreaterThanOrEqual(3);
-		expect(onConnected).toHaveBeenCalledWith(connectedAccount);
 		expect(onTimeout).not.toHaveBeenCalled();
 		expect(onError).not.toHaveBeenCalled();
 	});
 
 	it('does not treat a removed account as connected', async () => {
-		mockAccountResponses({
+		const { requestCount } = mockAccountResponses({
 			...connectedAccount,
 			removedAt: '2026-01-01T00:00:00Z',
 		});
+		renderPolling();
 
-		renderHook(
-			() =>
-				useAgentConnectionPolling({
-					accountId: ACCOUNT_ID,
-					enabled: true,
-					timeoutMs: 0,
-					...callbacks,
-				}),
-			{ wrapper: AllTheProviders },
-		);
+		await waitFor(() => expect(requestCount()).toBe(1));
+		await act(async () => {
+			jest.advanceTimersByTime(CONNECTION_TIMEOUT_MS);
+		});
 
 		await waitFor(() => expect(onTimeout).toHaveBeenCalled());
 		expect(onConnected).not.toHaveBeenCalled();
@@ -71,16 +86,7 @@ describe('useAgentConnectionPolling outcomes', () => {
 				res(ctx.status(500), ctx.json({ status: 'error' })),
 			),
 		);
-
-		renderHook(
-			() =>
-				useAgentConnectionPolling({
-					accountId: ACCOUNT_ID,
-					enabled: true,
-					...callbacks,
-				}),
-			{ wrapper: AllTheProviders },
-		);
+		renderPolling();
 
 		await waitFor(() => expect(onError).toHaveBeenCalled());
 		expect(onConnected).not.toHaveBeenCalled();

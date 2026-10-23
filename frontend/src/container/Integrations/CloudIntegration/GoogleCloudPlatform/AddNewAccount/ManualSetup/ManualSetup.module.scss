@@ -1,11 +1,3 @@
-.drawerSection {
-	composes: drawerSection from '../shared.module.scss';
-}
-
 .fullWidth {
 	width: 100%;
-}
-
-.fieldError {
-	composes: fieldError from '../shared.module.scss';
 }

@@ -3,8 +3,8 @@ import { useGetAccount } from 'api/generated/services/cloudintegration';
 import { CloudintegrationtypesAccountDTO } from 'api/generated/services/sigNoz.schemas';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 
-const POLL_INTERVAL_MS = 10 * 1000;
-const CONNECTION_TIMEOUT_MS = 10 * 60 * 1000;
+export const POLL_INTERVAL_MS = 10 * 1000;
+export const CONNECTION_TIMEOUT_MS = 10 * 60 * 1000;
 
 interface UseAgentConnectionPollingProps {
 	accountId: string;
@@ -13,8 +13,6 @@ interface UseAgentConnectionPollingProps {
 	onConnected: (account: CloudintegrationtypesAccountDTO) => void;
 	onTimeout: () => void;
 	onError: () => void;
-	refetchInterval?: number;
-	timeoutMs?: number;
 }
 
 /**
@@ -27,8 +25,6 @@ export function useAgentConnectionPolling({
 	onConnected,
 	onTimeout,
 	onError,
-	refetchInterval = POLL_INTERVAL_MS,
-	timeoutMs = CONNECTION_TIMEOUT_MS,
 }: UseAgentConnectionPollingProps): void {
 	const startTimeRef = useRef<number | null>(null);
 
@@ -41,7 +37,7 @@ export function useAgentConnectionPolling({
 		{
 			query: {
 				enabled,
-				refetchInterval,
+				refetchInterval: POLL_INTERVAL_MS,
 				select: (response): CloudintegrationtypesAccountDTO => response.data,
 				onSuccess: (account) => {
 					const isConnected =
@@ -53,7 +49,7 @@ export function useAgentConnectionPolling({
 					}
 
 					const startTime = startTimeRef.current ?? Date.now();
-					if (Date.now() - startTime >= timeoutMs) {
+					if (Date.now() - startTime >= CONNECTION_TIMEOUT_MS) {
 						onTimeout();
 					}
 				},

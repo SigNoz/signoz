@@ -1,27 +1,14 @@
-import { useCallback, useState } from 'react';
-import { useQueryClient } from 'react-query';
-import { toast } from '@signozhq/ui/sonner';
-import {
-	CreateAccountMutationResult,
-	GetConnectionCredentialsQueryResult,
-	invalidateListAccounts,
-	useAgentCheckIn,
-	useCreateAccount,
-	useGetConnectionCredentials,
-} from 'api/generated/services/cloudintegration';
+import { useCallback } from 'react';
+import { useAgentCheckIn } from 'api/generated/services/cloudintegration';
 import {
 	CloudintegrationtypesCredentialsDTO,
 	CloudintegrationtypesGCPConnectionMethodDTO,
-	CloudintegrationtypesPostableAccountDTO,
-	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { ErrorType } from 'api/generatedAPIInstance';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import { GcpSetupFormValues } from 'container/Integrations/CloudIntegration/GoogleCloudPlatform/AddNewAccount/types';
-import useAxiosError from 'hooks/useAxiosError';
-import { toAPIError } from 'utils/errorUtils';
 
 import logEvent from '../../../api/common/logEvent';
+import { useGcpAccountSetup } from './useGcpAccountSetup';
 
 interface UseManualAccountSetupProps {
 	onClose: () => void;
@@ -30,7 +17,6 @@ interface UseManualAccountSetupProps {
 interface UseManualAccountSetup {
 	isLoading: boolean;
 	connectAccount: (values: GcpSetupFormValues) => Promise<void>;
-	handleClose: () => void;
 	connectionParams?: CloudintegrationtypesCredentialsDTO;
 	isConnectionParamsLoading: boolean;
 	submitError: string | null;
@@ -40,87 +26,34 @@ interface UseManualAccountSetup {
 export function useManualAccountSetup({
 	onClose,
 }: UseManualAccountSetupProps): UseManualAccountSetup {
-	const queryClient = useQueryClient();
-	const [isLoading, setIsLoading] = useState(false);
-	const [submitError, setSubmitError] = useState<string | null>(null);
+	const {
+		connectionParams,
+		isConnectionParamsLoading,
+		isLoading,
+		submitError,
+		clearSubmitError,
+		createGcpAccount,
+		runSubmit,
+		handleConnected,
+	} = useGcpAccountSetup({ onClose });
 
-	const clearSubmitError = useCallback((): void => {
-		setSubmitError(null);
-	}, []);
-
-	const { mutateAsync: createAccount } = useCreateAccount();
 	const { mutateAsync: checkIn } = useAgentCheckIn();
-	const handleError = useAxiosError();
-
-	const { data: connectionParams, isLoading: isConnectionParamsLoading } =
-		useGetConnectionCredentials<GetConnectionCredentialsQueryResult>(
-			{
-				cloudProvider: INTEGRATION_TYPES.GCP,
-			},
-			{
-				query: {
-					onError: handleError,
-				},
-			},
-		);
-
-	const handleClose = useCallback((): void => {
-		onClose();
-	}, [onClose]);
-
-	const handleConnectionSuccess = useCallback(
-		(payload: {
-			cloudIntegrationId: string;
-			providerAccountId: string;
-		}): void => {
-			void logEvent('GCP Integration: Account connected', {
-				cloudIntegrationId: payload.cloudIntegrationId,
-				providerAccountId: payload.providerAccountId,
-			});
-			toast.success('GCP account connected successfully', {
-				position: 'bottom-right',
-			});
-			void invalidateListAccounts(queryClient, {
-				cloudProvider: INTEGRATION_TYPES.GCP,
-			});
-			handleClose();
-		},
-		[handleClose, queryClient],
-	);
 
 	const connectAccount = useCallback(
-		async (values: GcpSetupFormValues): Promise<void> => {
-			try {
-				setIsLoading(true);
-				setSubmitError(null);
-
-				const payload: CloudintegrationtypesPostableAccountDTO = {
-					config: {
-						gcp: {
-							connectionMethod: CloudintegrationtypesGCPConnectionMethodDTO.manual,
-							deploymentRegion: values.deploymentRegion,
-							deploymentProjectId: values.deploymentProjectId,
-							projectIds: values.projectIds || [],
-						},
-					},
-					credentials: {
-						// Cloud users can't edit these — the backend-provided credentials are
-						// authoritative. Enterprise users have no backend defaults and enter
-						// their own (validated non-empty), so their form values are used.
-						ingestionUrl: connectionParams?.data?.ingestionUrl || values.ingestionUrl,
-						ingestionKey: connectionParams?.data?.ingestionKey || values.ingestionKey,
-						sigNozApiUrl: connectionParams?.data?.sigNozApiUrl || values.sigNozApiUrl,
-						sigNozApiKey: connectionParams?.data?.sigNozApiKey || values.sigNozApiKey,
-					},
-				};
-
+		(values: GcpSetupFormValues): Promise<void> =>
+			runSubmit(async () => {
 				// Step 1: create the integration account.
-				const createResponse: CreateAccountMutationResult = await createAccount({
-					pathParams: { cloudProvider: INTEGRATION_TYPES.GCP },
-					data: payload,
-				});
+				const account = await createGcpAccount(
+					{
+						connectionMethod: CloudintegrationtypesGCPConnectionMethodDTO.manual,
+						deploymentRegion: values.deploymentRegion,
+						deploymentProjectId: values.deploymentProjectId,
+						projectIds: values.projectIds || [],
+					},
+					values,
+				);
 
-				const cloudIntegrationId = createResponse.data.id;
+				const cloudIntegrationId = account.id;
 				const providerAccountId = values.accountName;
 
 				void logEvent('GCP Integration: Account created', {
@@ -137,29 +70,15 @@ export function useManualAccountSetup({
 					},
 				});
 
-				handleConnectionSuccess({ cloudIntegrationId, providerAccountId });
-			} catch (error) {
-				// Surface the backend's message inline in the drawer instead of a
-				// generic failure string.
-				const message = toAPIError(
-					error as ErrorType<RenderErrorResponseDTO>,
-					'Failed to connect GCP account',
-				).getErrorMessage();
-				setSubmitError(message);
-			} finally {
-				setIsLoading(false);
-			}
-		},
-		[connectionParams, createAccount, checkIn, handleConnectionSuccess],
+				handleConnected({ cloudIntegrationId, providerAccountId });
+			}, 'Failed to connect GCP account'),
+		[checkIn, createGcpAccount, handleConnected, runSubmit],
 	);
 
 	return {
 		isLoading,
 		connectAccount,
-		handleClose,
-		connectionParams: connectionParams?.data as
-			| CloudintegrationtypesCredentialsDTO
-			| undefined,
+		connectionParams,
 		isConnectionParamsLoading,
 		submitError,
 		clearSubmitError,
