@@ -5,7 +5,7 @@ import (
 )
 
 // EvolutionFieldNameAll is the field name of an evolution entry that applies
-// to every field of its column. A keys map carries those entries under it.
+// to every field of its column.
 const EvolutionFieldNameAll = "__all__"
 
 type EvolutionEntry struct {
@@ -28,20 +28,12 @@ func (e *EvolutionSelector) QualifiedName() string {
 	return e.Signal.StringValue() + ":" + e.FieldContext.StringValue() + ":" + e.FieldName
 }
 
-// NewColumnEvolutionsKey is the keys map entry that carries the column-wide
-// evolutions of one signal and context.
-func NewColumnEvolutionsKey(signal Signal, fieldContext FieldContext, evolutions []*EvolutionEntry) *TelemetryFieldKey {
-	return &TelemetryFieldKey{Name: EvolutionFieldNameAll, Signal: signal, FieldContext: fieldContext, Evolutions: evolutions}
-}
-
-// ColumnEvolutions returns the column-wide evolutions keys carries for one
-// signal and context.
-func ColumnEvolutions(keys map[string][]*TelemetryFieldKey, signal Signal, fieldContext FieldContext) []*EvolutionEntry {
-	var evolutions []*EvolutionEntry
-	for _, key := range keys[EvolutionFieldNameAll] {
-		if key.Signal == signal && key.FieldContext == fieldContext {
-			evolutions = append(evolutions, key.Evolutions...)
+func ColumnEvolutionsOf(columnEvolutions []*EvolutionEntry, signal Signal, fieldContext FieldContext) []*EvolutionEntry {
+	var out []*EvolutionEntry
+	for _, entry := range columnEvolutions {
+		if entry.Signal == signal && entry.FieldContext == fieldContext {
+			out = append(out, entry)
 		}
 	}
-	return evolutions
+	return out
 }

@@ -221,18 +221,18 @@ func (b *scopedTraceStatementBuilder) buildTraceListQuery(
 	}
 	// Condition args bind into the builder an expression is embedded in, so the
 	// matched and enrichment passes each resolve against their own builder.
-	keys, err := b.fetchKeys(ctx, orgID, spanFilterSelectors(filterExpr)...)
+	keys, columnEvolutions, err := b.fetchKeys(ctx, orgID, spanFilterSelectors(filterExpr)...)
 	if err != nil {
 		return nil, err
 	}
 	matchedSB := sqlbuilder.NewSelectBuilder()
 	q := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end)
-	maskExpr, resolved, err := b.resolveFor(ctx, q, keys, matchedSB)
+	maskExpr, resolved, err := b.resolveFor(ctx, q, keys, columnEvolutions, matchedSB)
 	if err != nil {
 		return nil, err
 	}
 	enrichSB := sqlbuilder.NewSelectBuilder()
-	_, enrichResolved, err := b.resolveFor(ctx, q, keys, enrichSB)
+	_, enrichResolved, err := b.resolveFor(ctx, q, keys, columnEvolutions, enrichSB)
 	if err != nil {
 		return nil, err
 	}
@@ -245,7 +245,7 @@ func (b *scopedTraceStatementBuilder) buildTraceListQuery(
 		return nil, err
 	}
 
-	fp, err := b.splitFilter(ctx, orgID, query, b.aggregateAliasSet(), keys, start, end, variables, matchedSB)
+	fp, err := b.splitFilter(ctx, orgID, query, b.aggregateAliasSet(), keys, columnEvolutions, start, end, variables, matchedSB)
 	if err != nil {
 		return nil, err
 	}
@@ -306,7 +306,7 @@ func (b *scopedTraceStatementBuilder) maybeAttachResourceFilter(
 		"resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)", nil
 }
 
-func (b *scopedTraceStatementBuilder) fetchKeys(ctx context.Context, orgID valuer.UUID, extra ...*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, error) {
+func (b *scopedTraceStatementBuilder) fetchKeys(ctx context.Context, orgID valuer.UUID, extra ...*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, []*telemetrytypes.EvolutionEntry, error) {
 	fields := b.resolverFieldKeys()
 	selectors := make([]*telemetrytypes.FieldKeySelector, 0, len(fields)+len(extra))
 	selectors = append(selectors, extra...)
@@ -318,8 +318,8 @@ func (b *scopedTraceStatementBuilder) fetchKeys(ctx context.Context, orgID value
 			SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeExact,
 		})
 	}
-	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, b.fl, selectors))
-	return keys, err
+	keys, columnEvolutions, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, b.fl, selectors))
+	return keys, columnEvolutions, err
 }
 
 func (b *scopedTraceStatementBuilder) resolverFieldKeys() []*telemetrytypes.TelemetryFieldKey {
@@ -348,9 +348,9 @@ func (b *scopedTraceStatementBuilder) resolverFieldKeys() []*telemetrytypes.Tele
 
 // resolveFor renders the gate mask and every scope column with condition args bound
 // into sb.
-func (b *scopedTraceStatementBuilder) resolveFor(ctx context.Context, q qbtypes.QueryInfo, keys map[string][]*telemetrytypes.TelemetryFieldKey, sb *sqlbuilder.SelectBuilder) (string, []resolvedColumn, error) {
-	cols := newColumnResolver(b.storage, keys)
-	preds := newPredicateResolver(b.storage, keys, sb)
+func (b *scopedTraceStatementBuilder) resolveFor(ctx context.Context, q qbtypes.QueryInfo, keys map[string][]*telemetrytypes.TelemetryFieldKey, columnEvolutions []*telemetrytypes.EvolutionEntry, sb *sqlbuilder.SelectBuilder) (string, []resolvedColumn, error) {
+	cols := newColumnResolver(b.storage, keys, columnEvolutions)
+	preds := newPredicateResolver(b.storage, keys, columnEvolutions, sb)
 	maskExpr, err := b.resolveMask(ctx, q, preds)
 	if err != nil {
 		return "", nil, err
@@ -445,7 +445,7 @@ type filterParts struct {
 // splitFilter splits query.Filter into a span-level predicate and a trace-level
 // HAVING (explicit query.Having ANDed on before resolution); args bind into sb.
 // keys must cover the filter's span-level selectors.
-func (b *scopedTraceStatementBuilder) splitFilter(ctx context.Context, orgID valuer.UUID, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], classifySet map[string]struct{}, keys map[string][]*telemetrytypes.TelemetryFieldKey, start, end uint64, variables map[string]qbtypes.VariableItem, sb *sqlbuilder.SelectBuilder) (filterParts, error) {
+func (b *scopedTraceStatementBuilder) splitFilter(ctx context.Context, orgID valuer.UUID, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], classifySet map[string]struct{}, keys map[string][]*telemetrytypes.TelemetryFieldKey, columnEvolutions []*telemetrytypes.EvolutionEntry, start, end uint64, variables map[string]qbtypes.VariableItem, sb *sqlbuilder.SelectBuilder) (filterParts, error) {
 	var fp filterParts
 	havingExpr := ""
 	if query.Filter != nil && strings.TrimSpace(query.Filter.Expression) != "" {
@@ -455,7 +455,7 @@ func (b *scopedTraceStatementBuilder) splitFilter(ctx context.Context, orgID val
 		}
 		havingExpr = traceExpr
 		if strings.TrimSpace(spanExpr) != "" {
-			pred, warnings, url, err := b.resolveSpanPredicate(ctx, querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end), spanExpr, keys, variables, sb)
+			pred, warnings, url, err := b.resolveSpanPredicate(ctx, querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end), spanExpr, keys, columnEvolutions, variables, sb)
 			if err != nil {
 				return fp, err
 			}
@@ -484,14 +484,15 @@ func (b *scopedTraceStatementBuilder) splitFilter(ctx context.Context, orgID val
 
 // resolveSpanPredicate resolves a span-level filter expression to a bare boolean
 // predicate, args bound into sb; keys must cover the expression's selectors.
-func (b *scopedTraceStatementBuilder) resolveSpanPredicate(ctx context.Context, q qbtypes.QueryInfo, expr string, keys map[string][]*telemetrytypes.TelemetryFieldKey, variables map[string]qbtypes.VariableItem, sb *sqlbuilder.SelectBuilder) (string, []string, string, error) {
+func (b *scopedTraceStatementBuilder) resolveSpanPredicate(ctx context.Context, q qbtypes.QueryInfo, expr string, keys map[string][]*telemetrytypes.TelemetryFieldKey, columnEvolutions []*telemetrytypes.EvolutionEntry, variables map[string]qbtypes.VariableItem, sb *sqlbuilder.SelectBuilder) (string, []string, string, error) {
 	prepared, err := querybuilder.PrepareWhereClause(expr, querybuilder.FilterExprVisitorOpts{
-		Context:   ctx,
-		Query:     q,
-		Storage:   b.storage,
-		Logger:    b.logger,
-		FieldKeys: keys,
-		Builder:   sb,
+		Context:          ctx,
+		Query:            q,
+		Storage:          b.storage,
+		Logger:           b.logger,
+		FieldKeys:        keys,
+		ColumnEvolutions: columnEvolutions,
+		Builder:          sb,
 		// resource conditions are handled by __resource_filter
 		SkipResourceFilter: true,
 		Variables:          variables,

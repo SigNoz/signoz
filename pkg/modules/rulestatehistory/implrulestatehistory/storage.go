@@ -78,7 +78,7 @@ func (m *storage) Read(ctx context.Context, q qbtypes.QueryInfo, key *telemetryt
 
 // Fallback returns nil: rule-state history has no attribute-map fallback, so
 // a key metadata does not hold stays unresolved and the caller errors.
-func (m *storage) Fallback(context.Context, qbtypes.QueryInfo, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any, map[string][]*telemetrytypes.TelemetryFieldKey) ([]*telemetrytypes.LogicalField, error) {
+func (m *storage) Fallback(context.Context, qbtypes.QueryInfo, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any, []*telemetrytypes.EvolutionEntry) ([]*telemetrytypes.LogicalField, error) {
 	return nil, nil
 }
 

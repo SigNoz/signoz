@@ -176,10 +176,10 @@ type Storage interface {
 	// body paths, and virtual keys that compile to structural predicates (a
 	// span search scope, a full-text search over a scope). value is the
 	// filter operand when the term has one, and nil otherwise. A filter's
-	// fallback can use it to narrow the variants. fieldKeys is what metadata
-	// reported for the query, including the column-wide evolutions a key it
-	// does not report still reads through.
-	Fallback(ctx context.Context, q QueryInfo, key *telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) ([]*telemetrytypes.LogicalField, error)
+	// fallback can use it to narrow the variants. columnEvolutions are the
+	// column-wide evolutions metadata reported, which a key it does not
+	// report still reads through.
+	Fallback(ctx context.Context, q QueryInfo, key *telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any, columnEvolutions []*telemetrytypes.EvolutionEntry) ([]*telemetrytypes.LogicalField, error)
 
 	Traits() Traits
 
@@ -216,8 +216,8 @@ type Resolved struct {
 
 type AggExprRewriter interface {
 	// Rewrite rewrites the aggregation expression to be used in the query.
-	Rewrite(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, expr string, rateInterval uint64, keys map[string][]*telemetrytypes.TelemetryFieldKey) (string, []any, error)
-	RewriteMulti(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, exprs []string, rateInterval uint64, keys map[string][]*telemetrytypes.TelemetryFieldKey) ([]string, [][]any, error)
+	Rewrite(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, expr string, rateInterval uint64, keys map[string][]*telemetrytypes.TelemetryFieldKey, columnEvolutions []*telemetrytypes.EvolutionEntry) (string, []any, error)
+	RewriteMulti(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, exprs []string, rateInterval uint64, keys map[string][]*telemetrytypes.TelemetryFieldKey, columnEvolutions []*telemetrytypes.EvolutionEntry) ([]string, [][]any, error)
 }
 
 type Statement struct {

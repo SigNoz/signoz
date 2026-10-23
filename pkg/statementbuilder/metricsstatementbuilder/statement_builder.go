@@ -120,7 +120,7 @@ func (b *StatementBuilder) Build(
 	keySelectors := querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, b.flagger, GetKeySelectors(query))
 	metricNames := querybuilder.FamilyMetricNames(ctx, orgID, b.flagger, query.Aggregations[0].MetricName)
 	keySelectors = expandSelectorsForMetricNames(keySelectors, metricNames)
-	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
+	keys, _, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +320,7 @@ func (b *StatementBuilder) buildReducedTimeSeriesCTE(
 	sb.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.TimeseriesV4ReducedLocalTableName))
 	sb.Select("fingerprint")
 	for i, g := range query.GroupBy {
-		col, err := querybuilder.ResolveColumn(ctx, info, b.storage, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		col, err := querybuilder.ResolveColumn(ctx, info, b.storage, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys, nil)
 		if err != nil {
 			return "", nil, err
 		}
@@ -545,7 +545,7 @@ func (b *StatementBuilder) buildTimeSeriesCTE(
 
 	sb.Select("fingerprint")
 	for i, g := range query.GroupBy {
-		col, err := querybuilder.ResolveColumn(ctx, info, b.storage, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		col, err := querybuilder.ResolveColumn(ctx, info, b.storage, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys, nil)
 		if err != nil {
 			return "", nil, nil, err
 		}

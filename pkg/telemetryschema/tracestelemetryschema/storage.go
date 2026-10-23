@@ -533,7 +533,7 @@ func foldAbsentJSONReadToTypeDefault(key *telemetrytypes.TelemetryFieldKey, oper
 // context synthesizes its type variants under the stripped and the literal
 // spelling. An attribute key takes the column-wide attribute evolutions
 // metadata reported, so it follows the same rollout as a reported key.
-func (m *storage) Fallback(ctx context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, value any, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) ([]*telemetrytypes.LogicalField, error) {
+func (m *storage) Fallback(ctx context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, value any, columnEvolutions []*telemetrytypes.EvolutionEntry) ([]*telemetrytypes.LogicalField, error) {
 	var keys []*telemetrytypes.TelemetryFieldKey
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextUnspecified:
@@ -561,7 +561,7 @@ func (m *storage) Fallback(ctx context.Context, q qbtypes.QueryInfo, key *teleme
 		literal := telemetrytypes.NewTelemetryFieldKey(key.FieldContext.StringValue()+"."+key.Name, key.FieldContext, key.FieldDataType)
 		keys = append(querybuilder.SynthesizeKeys(key, value), querybuilder.SynthesizeKeys(literal, value)...)
 	}
-	attributeEvolutions := telemetrytypes.ColumnEvolutions(fieldKeys, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
+	attributeEvolutions := telemetrytypes.ColumnEvolutionsOf(columnEvolutions, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
 	for _, synthesized := range keys {
 		if synthesized.FieldContext == telemetrytypes.FieldContextAttribute && len(synthesized.Evolutions) == 0 {
 			synthesized.Evolutions = attributeEvolutions

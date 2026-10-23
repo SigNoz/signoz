@@ -31,6 +31,7 @@ type filterExpressionVisitor struct {
 	warnings           []string
 	mainWarnURL        string
 	fieldKeys          map[string][]*telemetrytypes.TelemetryFieldKey
+	columnEvolutions   []*telemetrytypes.EvolutionEntry
 	errors             []string
 	mainErrorURL       string
 	builder            *sqlbuilder.SelectBuilder
@@ -52,6 +53,7 @@ type FilterExprVisitorOpts struct {
 	Storage            qbtypes.Storage
 	Logger             *slog.Logger
 	FieldKeys          map[string][]*telemetrytypes.TelemetryFieldKey
+	ColumnEvolutions   []*telemetrytypes.EvolutionEntry
 	Builder            *sqlbuilder.SelectBuilder
 	FullTextColumn     *telemetrytypes.TelemetryFieldKey
 	SkipResourceFilter bool
@@ -66,6 +68,7 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		query:              opts.Query,
 		storage:            opts.Storage,
 		fieldKeys:          opts.FieldKeys,
+		columnEvolutions:   opts.ColumnEvolutions,
 		builder:            opts.Builder,
 		fullTextColumn:     opts.FullTextColumn,
 		skipResourceFilter: opts.SkipResourceFilter,
@@ -928,7 +931,7 @@ func (v *filterExpressionVisitor) buildConditions(key *telemetrytypes.TelemetryF
 	} else if skip {
 		return nil, true
 	}
-	resolved, err := Resolve(v.context, v.query, v.storage, key, op, value, v.fieldKeys)
+	resolved, err := Resolve(v.context, v.query, v.storage, key, op, value, v.fieldKeys, v.columnEvolutions)
 	if err != nil {
 		v.recordError(err)
 		return nil, false

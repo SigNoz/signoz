@@ -126,7 +126,7 @@ func (b *logQueryStatementBuilder) Build(
 
 	keySelectors, warnings := getKeySelectors(query, bodyJSONEnabled)
 	keySelectors = querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, b.fl, keySelectors)
-	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
+	keys, _, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
 	if err != nil {
 		return nil, err
 	}
@@ -377,7 +377,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 			}
 
 			// get column expression for the field - use array index directly to avoid pointer to loop variable
-			colExpr, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&query.SelectFields[index]), telemetrytypes.FieldDataTypeUnspecified, keys)
+			colExpr, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&query.SelectFields[index]), telemetrytypes.FieldDataTypeUnspecified, keys, nil)
 			if err != nil {
 				return nil, err
 			}
@@ -396,7 +396,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	// Add order by
 	for _, orderBy := range query.Order {
 
-		colExpr, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&orderBy.Key.TelemetryFieldKey), telemetrytypes.FieldDataTypeUnspecified, keys)
+		colExpr, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&orderBy.Key.TelemetryFieldKey), telemetrytypes.FieldDataTypeUnspecified, keys, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -466,7 +466,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		if !info.BodyJSONOn && (strings.Contains(gb.Name, telemetrytypes.ArraySep) || strings.Contains(gb.Name, telemetrytypes.ArrayAnyIndex)) {
 			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the Array Paths: %s", gb.Name)
 		}
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&gb.TelemetryFieldKey), telemetrytypes.FieldDataTypeString, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&gb.TelemetryFieldKey), telemetrytypes.FieldDataTypeString, keys, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -482,7 +482,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
 			ctx, orgID, start, end, agg.Expression,
 			uint64(query.StepInterval.Seconds()),
-			keys,
+			keys, nil,
 		)
 		if err != nil {
 			return nil, err
@@ -631,7 +631,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		if !info.BodyJSONOn && (strings.Contains(gb.Name, telemetrytypes.ArraySep) || strings.Contains(gb.Name, telemetrytypes.ArrayAnyIndex)) {
 			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the Array Paths: %s", gb.Name)
 		}
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&gb.TelemetryFieldKey), telemetrytypes.FieldDataTypeString, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&gb.TelemetryFieldKey), telemetrytypes.FieldDataTypeString, keys, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -651,7 +651,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 			rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
 				ctx, orgID, start, end, aggExpr.Expression,
 				rateInterval,
-				keys,
+				keys, nil,
 			)
 			if err != nil {
 				return nil, err

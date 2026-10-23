@@ -96,7 +96,7 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 	q.From(fmt.Sprintf("%s.%s", b.dbName, b.tableName))
 
 	keySelectors := querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, b.flagger, b.getKeySelectors(query))
-	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
+	keys, _, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
 	if err != nil {
 		return nil, err
 	}

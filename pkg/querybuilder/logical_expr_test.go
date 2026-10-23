@@ -18,7 +18,7 @@ func (stubStorage) Read(_ context.Context, _ qbtypes.QueryInfo, key *telemetryty
 	return qbtypes.Read{SQL: "value(" + key.Name + ")", Presence: "has(" + key.Name + ")", Absence: "NOT has(" + key.Name + ")", WhenAbsent: qbtypes.AbsentIsSentinel}, nil
 }
 
-func (stubStorage) Fallback(context.Context, qbtypes.QueryInfo, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any, map[string][]*telemetrytypes.TelemetryFieldKey) ([]*telemetrytypes.LogicalField, error) {
+func (stubStorage) Fallback(context.Context, qbtypes.QueryInfo, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any, []*telemetrytypes.EvolutionEntry) ([]*telemetrytypes.LogicalField, error) {
 	return nil, nil
 }
 
