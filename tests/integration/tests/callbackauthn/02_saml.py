@@ -608,3 +608,52 @@ def test_saml_sso_deleted_user_gets_new_user_on_login(
     assert response.status_code == HTTPStatus.OK
     found_user = response.json()["data"]
     assert_user_has_role(found_user, "signoz-viewer")  # default role from SSO domain config
+
+
+def test_saml_sso_matches_mixed_case_stored_email(
+    signoz: SigNoz,
+    idp: TestContainerIDP,  # pylint: disable=unused-argument
+    driver: webdriver.Chrome,
+    create_user_idp: Callable[[str, str, bool, str, str], None],
+    idp_login: Callable[[str, str], None],
+    get_token: Callable[[str, str], str],
+    get_session_context: Callable[[str], str],
+) -> None:
+    """
+    Users created before emails were lowercased may be stored mixed case.
+    SSO login must reuse that user instead of provisioning a duplicate.
+    """
+    email = "sso-mixed-case@saml.integration.test"
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    user_id = create_active_user(
+        signoz,
+        admin_token,
+        email=email,
+        role="signoz-editor",
+        password="password123Z$",
+        name="SAML SSO Mixed Case User",
+    )
+
+    with signoz.sqlstore.conn.connect() as conn:
+        conn.execute(
+            sql.text("UPDATE users SET email = :email WHERE id = :user_id"),
+            {"email": "SSO-Mixed-Case@saml.integration.test", "user_id": user_id},
+        )
+        conn.commit()
+
+    create_user_idp(email, "password", True, "SAML", "MixedCase")
+
+    perform_saml_login(signoz, driver, get_session_context, idp_login, email, "password")
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/users"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK
+    matches = [user for user in response.json()["data"] if user["email"] == email and user["status"] != "deleted"]
+    assert [user["id"] for user in matches] == [user_id]
+
+    found_user = find_user_with_roles_by_email(signoz, admin_token, email)
+    assert_user_has_role(found_user, "signoz-editor")
