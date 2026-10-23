@@ -1,0 +1,359 @@
+/**
+ * AI-owned. Generated and maintained by coding agents alongside the specs that
+ * use it. Do not hand-edit: regenerate it with the spec that needs the change.
+ */
+import {
+	expect,
+	type Locator,
+	type Page,
+	type Request,
+	type Route,
+} from '@playwright/test';
+
+import { authToken } from '../helpers/common';
+import type {
+	PanelKind,
+	PostableDashboardV2,
+} from '../helpers/dashboard-v2-spec';
+import {
+	mockQueryRange,
+	mockQueryRangeError,
+	mockQueryRangeSequence,
+	type MockOptions,
+	type QueryRangeBody,
+	unmockQueryRange,
+} from '../helpers/query-range-mock';
+
+import { driver, kit } from './kit';
+
+// `POST /api/v2/dashboards` takes the full perses spec in one call; the v1
+// endpoints the older helpers use answer NewV1DeprecatedError.
+
+export const DASHBOARDS_API = '/api/v2/dashboards';
+
+const QUERY_RANGE_GLOB = '**/api/v5/query_range';
+
+export const PATH = {
+	dashboard: (id: string): string => `/dashboard/${id}`,
+	/** `panelId` is 'new' for creation. */
+	editor: (id: string, panelId: string): string =>
+		`/dashboard/${id}/panel/${panelId}`,
+	/** Matches the dashboard route itself, with or without a query string. */
+	onDashboard: (id: string): RegExp => new RegExp(`/dashboard/${id}(\\?|$)`),
+	/** Matches the dashboard route once the View modal has written its params. */
+	onDashboardWithParams: (id: string): RegExp =>
+		new RegExp(`/dashboard/${id}\\?`),
+	newPanel: /\/panel\/new\?/,
+} as const;
+
+/**
+ * `panel-editor-v2` is not unique: the ResizablePanelGroup derives the same
+ * testid from its `id`, which is also its localStorage layout key.
+ */
+export const EDITOR_ROOT = '[data-testid="panel-editor-v2"]:not([data-group])';
+
+export interface GettableDashboardV2 {
+	id: string;
+	name: string;
+	locked: boolean;
+	tags: { key: string; value: string }[];
+	spec: PostableDashboardV2['spec'];
+}
+
+export interface Dashboards {
+	/** Created for this test and deleted when it ends. */
+	seed(dashboard: PostableDashboardV2): Promise<string>;
+	seedAndOpen(dashboard: PostableDashboardV2): Promise<string>;
+	seedAndEdit(dashboard: PostableDashboardV2, panelId: string): Promise<string>;
+	/** Deletes a dashboard the UI created when the test ends. */
+	track(id: string): void;
+	/** The open dashboard's heading. */
+	title(): Locator;
+	/** Waits for the grid, not just the shell. */
+	open(id: string): Promise<void>;
+	/** For a dashboard with no panels: waits for the empty state instead. */
+	openEmpty(id: string): Promise<void>;
+	openEditor(id: string, panelId: string): Promise<void>;
+	/** `kind` is required: without it the route bounces to the dashboard. */
+	openNewPanel(id: string, kind: PanelKind, layoutIndex?: number): Promise<void>;
+	/** Navigates without waiting for anything, for routes expected to redirect. */
+	visit(path: string): Promise<void>;
+	reload(): Promise<void>;
+	get(id: string): Promise<GettableDashboardV2>;
+	setLocked(id: string, locked: boolean): Promise<void>;
+	/** A panel's grid geometry as persisted, not as rendered. */
+	gridItem(id: string, panelId: string): Promise<GridGeometry>;
+	/** A query param of the current URL, where the time window lives. */
+	param(name: string): string | null;
+	emptyAddPanel(): Locator;
+	headerAddPanel(): Locator;
+	zoomOut(): Locator;
+	variable(name: string): Locator;
+	confirmDelete(): Locator;
+	/** Free text anywhere on the page, e.g. a confirm dialog's title. */
+	text(text: string): Locator;
+}
+
+export interface GridGeometry {
+	x: number;
+	y: number;
+	width: number;
+	height: number;
+}
+
+export interface QueryRangeMock {
+	/** Fulfils every call with one body. Install before navigating. */
+	respond(body: QueryRangeBody, options?: MockOptions): Promise<void>;
+	fail(
+		message?: string,
+		options?: MockOptions & { status?: number },
+	): Promise<void>;
+	/** One body per call, repeating the last. */
+	sequence(bodies: QueryRangeBody[]): Promise<void>;
+	/** Holds every call until `release` is called, then serves `body`. */
+	hold(body: QueryRangeBody): Promise<{ release: () => void }>;
+	/** Drops interception so later calls reach the backend. */
+	reset(): Promise<void>;
+	/** Resolves with the next query_range request. */
+	nextRequest(): Promise<Request>;
+	/** The paging of the first query in the next query_range request. */
+	nextPaging(): Promise<{ offset?: number; limit?: number }>;
+	/** Counts query_range requests from now on. */
+	countRequests(): { readonly count: number };
+}
+
+async function bearer(page: Page): Promise<{ Authorization: string }> {
+	return { Authorization: `Bearer ${await authToken(page)}` };
+}
+
+/**
+ * A 400 is almost always the strict decoder rejecting a stray key; the body
+ * names the field, so it is surfaced verbatim.
+ */
+async function createViaApi(
+	page: Page,
+	dashboard: PostableDashboardV2,
+): Promise<string> {
+	const res = await page.request.post(DASHBOARDS_API, {
+		data: dashboard,
+		headers: await bearer(page),
+	});
+	if (!res.ok()) {
+		throw new Error(
+			`POST ${DASHBOARDS_API} ${res.status()}: ${await res.text()}`,
+		);
+	}
+	return ((await res.json()) as { data: GettableDashboardV2 }).data.id;
+}
+
+export async function getViaApi(
+	page: Page,
+	id: string,
+): Promise<GettableDashboardV2> {
+	const res = await page.request.get(`${DASHBOARDS_API}/${id}`, {
+		headers: await bearer(page),
+	});
+	if (!res.ok()) {
+		throw new Error(
+			`GET ${DASHBOARDS_API}/${id} ${res.status()}: ${await res.text()}`,
+		);
+	}
+	return ((await res.json()) as { data: GettableDashboardV2 }).data;
+}
+
+/** Same path, no body: PUT locks, DELETE unlocks. */
+async function setLockedViaApi(
+	page: Page,
+	id: string,
+	locked: boolean,
+): Promise<void> {
+	const url = `${DASHBOARDS_API}/${id}/lock`;
+	const headers = await bearer(page);
+	const res = locked
+		? await page.request.put(url, { headers })
+		: await page.request.delete(url, { headers });
+	if (!res.ok()) {
+		throw new Error(
+			`${locked ? 'PUT' : 'DELETE'} ${url} ${res.status()}: ${await res.text()}`,
+		);
+	}
+}
+
+const trackedByPage = new WeakMap<Page, string[]>();
+
+/** Registers a dashboard for deletion when the test owning `page` ends. */
+export function trackDashboard(page: Page, id: string): void {
+	trackedByPage.set(page, [...(trackedByPage.get(page) ?? []), id]);
+}
+
+/**
+ * Not asserted: a test that deleted its own dashboard, or left a closed page
+ * behind, must not fail on cleanup.
+ */
+export async function removeTrackedDashboards(page: Page): Promise<void> {
+	const ids = trackedByPage.get(page) ?? [];
+	trackedByPage.delete(page);
+	if (ids.length === 0) {
+		return;
+	}
+	try {
+		const headers = await bearer(page);
+		for (const id of ids) {
+			await page.request
+				.delete(`${DASHBOARDS_API}/${id}`, { headers })
+				.catch(() => undefined);
+		}
+	} catch {
+		/* the dashboards outlive the run rather than hiding why it failed */
+	}
+}
+
+function dashboardsDriver(page: Page): Dashboards {
+	const editorRoot = (): Locator => page.locator(EDITOR_ROOT);
+
+	const dashboards: Dashboards = {
+		async seed(dashboard) {
+			const id = await createViaApi(page, dashboard);
+			trackDashboard(page, id);
+			return id;
+		},
+		track: (id) => trackDashboard(page, id),
+		title: () => page.getByTestId('dashboard-title'),
+		async seedAndOpen(dashboard) {
+			const id = await dashboards.seed(dashboard);
+			await dashboards.open(id);
+			return id;
+		},
+		async seedAndEdit(dashboard, panelId) {
+			const id = await dashboards.seed(dashboard);
+			await dashboards.openEditor(id, panelId);
+			return id;
+		},
+		async open(id) {
+			await page.goto(PATH.dashboard(id));
+			await page
+				.locator('[data-panel-root]')
+				.first()
+				.waitFor({ state: 'attached' });
+		},
+		async openEmpty(id) {
+			await page.goto(PATH.dashboard(id));
+			await expect(dashboards.emptyAddPanel()).toBeVisible();
+		},
+		async openEditor(id, panelId) {
+			await page.goto(PATH.editor(id, panelId));
+			await expect(editorRoot()).toBeVisible();
+		},
+		async openNewPanel(id, kind, layoutIndex = 0) {
+			const search = new URLSearchParams({
+				panelKind: kind,
+				layoutIndex: String(layoutIndex),
+			});
+			await page.goto(`${PATH.editor(id, 'new')}?${search.toString()}`);
+			await expect(editorRoot()).toBeVisible();
+		},
+		async visit(path) {
+			await page.goto(path);
+		},
+		async reload() {
+			await page.reload();
+		},
+		get: (id) => getViaApi(page, id),
+		setLocked: (id, locked) => setLockedViaApi(page, id, locked),
+		async gridItem(id, panelId) {
+			const { spec } = await getViaApi(page, id);
+			for (const layout of spec.layouts) {
+				const item = layout.spec.items.find(
+					(candidate) => candidate.content.$ref === `#/spec/panels/${panelId}`,
+				);
+				if (item) {
+					return { x: item.x, y: item.y, width: item.width, height: item.height };
+				}
+			}
+			throw new Error(`no grid item for panel ${panelId}`);
+		},
+		param: (name) => new URL(page.url()).searchParams.get(name),
+		emptyAddPanel: () => page.getByTestId('add-panel'),
+		headerAddPanel: () => page.getByTestId('add-panel-header'),
+		zoomOut: () => page.getByTestId('zoom-out-btn'),
+		variable: (name) => page.getByTestId(`variable-${name}`),
+		confirmDelete: () => page.getByTestId('confirm-delete'),
+		text: (text) => page.getByText(text),
+	};
+
+	return dashboards;
+}
+
+function queryRangeDriver(page: Page): QueryRangeMock {
+	const isQueryRange = (url: string): boolean => url.includes('/query_range');
+
+	return {
+		respond: (body, options) => mockQueryRange(page, body, options),
+		fail: (message, options) => mockQueryRangeError(page, message, options),
+		sequence: (bodies) => mockQueryRangeSequence(page, bodies),
+		async hold(body) {
+			let release: () => void = () => undefined;
+			const gate = new Promise<void>((resolve) => {
+				release = resolve;
+			});
+			await page.route(QUERY_RANGE_GLOB, async (route: Route) => {
+				await gate;
+				await route.fulfill({
+					status: 200,
+					contentType: 'application/json',
+					body: JSON.stringify(body),
+				});
+			});
+			return { release: () => release() };
+		},
+		reset: () => unmockQueryRange(page),
+		nextRequest: () => page.waitForRequest((r) => isQueryRange(r.url())),
+		async nextPaging() {
+			const request = await page.waitForRequest((r) => isQueryRange(r.url()));
+			const body = request.postDataJSON() as {
+				compositeQuery?: {
+					queries?: { spec?: { offset?: number; limit?: number } }[];
+				};
+			} | null;
+			const spec = body?.compositeQuery?.queries?.[0]?.spec;
+			return { offset: spec?.offset, limit: spec?.limit };
+		},
+		countRequests() {
+			const counter = { count: 0 };
+			page.on('request', (request) => {
+				if (isQueryRange(request.url())) {
+					counter.count += 1;
+				}
+			});
+			return counter;
+		},
+	};
+}
+
+const withDashboards = driver(
+	'dashboards',
+	({ page }) => dashboardsDriver(page),
+	(_, { page }) => removeTrackedDashboards(page),
+);
+
+const withQueryRange = driver('queryRange', ({ page }) =>
+	queryRangeDriver(page),
+);
+
+export const test = withQueryRange(withDashboards(kit));
+
+export { expect } from './kit';
+export * from '../helpers/dashboard-v2-spec';
+export {
+	flat,
+	type HeatmapPoint,
+	heatmapPoints,
+	type HeatmapSeriesSpec,
+	QueryRange,
+	type QueryRangeBody,
+	ramp,
+	type SeriesSpec,
+	timestamps,
+	type TimeSeriesPoint,
+} from '../helpers/query-range-mock';
+export * from '../testdata/v2/panels-dashboard';
