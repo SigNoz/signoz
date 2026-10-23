@@ -6,6 +6,7 @@ import {
 	DashboardtypesLineStyleDTO,
 	type DashboardtypesPanelSpecDTO,
 	DashboardtypesStackModeDTO,
+	DashboardtypesThresholdAxisDTO,
 	DashboardtypesThresholdFormatDTO,
 	DashboardtypesTimePreferenceDTO,
 	TelemetrytypesSignalDTO,
@@ -535,6 +536,40 @@ describe('buildPluginSpec', () => {
 			});
 		});
 
+		it('carries per-column units between kinds that both key them by column (Table ↔ Scatter Plot)', () => {
+			const sections: SectionConfig[] = [
+				{
+					kind: SectionKind.Formatting,
+					controls: { decimals: true, columnUnits: true },
+				},
+			];
+			const oldSpec = oldSpecWith(
+				{
+					formatting: {
+						columnUnits: { 'A.count()': 'short', 'A.p99(duration_nano)': 'ns' },
+						decimalPrecision: 1,
+					},
+				},
+				[builderQueryNamed('A')],
+			);
+
+			expect(buildPluginSpec(sections, { oldSpec }).formatting).toStrictEqual({
+				decimalPrecision: 1,
+				columnUnits: { 'A.count()': 'short', 'A.p99(duration_nano)': 'ns' },
+			});
+		});
+
+		it('keeps an emptied column unit map empty rather than fanning a unit out', () => {
+			const sections: SectionConfig[] = [
+				{ kind: SectionKind.Formatting, controls: { columnUnits: true } },
+			];
+			const oldSpec = oldSpecWith({ formatting: { columnUnits: {} } }, [
+				builderQueryNamed('A'),
+			]);
+
+			expect(buildPluginSpec(sections, { oldSpec }).formatting).toBeUndefined();
+		});
+
 		it('never seeds a panel-wide unit from per-column units (Table → TimeSeries)', () => {
 			const sections: SectionConfig[] = [
 				{ kind: SectionKind.Formatting, controls: { unit: true, decimals: true } },
@@ -604,9 +639,10 @@ describe('buildPluginSpec', () => {
 			variant: ThresholdVariant | undefined,
 			thresholds: unknown[],
 			queries: unknown[] = [],
+			axis?: boolean,
 		): unknown {
 			const sections: SectionConfig[] = [
-				{ kind: SectionKind.Thresholds, controls: { variant } },
+				{ kind: SectionKind.Thresholds, controls: { variant, axis } },
 			];
 			return buildPluginSpec(sections, {
 				oldSpec: oldSpecWith({ thresholds }, queries),
@@ -699,6 +735,37 @@ describe('buildPluginSpec', () => {
 					},
 				]),
 			).toStrictEqual([{ value: 0, color: '#F1575F' }]);
+		});
+
+		it('drops x thresholds and the axis field for a kind without an axis picker', () => {
+			expect(
+				switchThresholds(ThresholdVariant.LABEL, [
+					{ value: 5, color: '#F1575F', axis: DashboardtypesThresholdAxisDTO.x },
+					{ value: 80, color: '#F1575F', axis: DashboardtypesThresholdAxisDTO.y },
+				]),
+			).toStrictEqual([{ value: 80, color: '#F1575F' }]);
+			expect(
+				switchThresholds(ThresholdVariant.COMPARISON, [
+					{ value: 5, color: '#F1575F', axis: DashboardtypesThresholdAxisDTO.x },
+				]),
+			).toBeUndefined();
+		});
+
+		it('keeps the axis for a kind with an axis picker, defaulting to y', () => {
+			expect(
+				switchThresholds(
+					ThresholdVariant.LABEL,
+					[
+						{ value: 5, color: '#F1575F', axis: DashboardtypesThresholdAxisDTO.x },
+						{ value: 80, color: '#F1575F' },
+					],
+					[],
+					true,
+				),
+			).toStrictEqual([
+				{ value: 5, color: '#F1575F', axis: DashboardtypesThresholdAxisDTO.x },
+				{ value: 80, color: '#F1575F', axis: DashboardtypesThresholdAxisDTO.y },
+			]);
 		});
 
 		it('seeds nothing for an empty or absent threshold list', () => {

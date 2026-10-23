@@ -1,3 +1,5 @@
+import type uPlot from 'uplot';
+
 import { ScatterAxisScale, type ScatterSeries } from '../types';
 import { buildScatterConfig } from '../utils';
 
@@ -79,10 +81,33 @@ describe('buildScatterConfig', () => {
 
 	it('registers a y threshold draw hook when thresholds are given', () => {
 		const config = build({
-			thresholds: [{ thresholdValue: 300, thresholdUnit: 'ms' }],
+			y: {
+				unit: 'ms',
+				thresholds: [{ thresholdValue: 300, thresholdUnit: 'ms' }],
+			},
 		}).getConfig();
 
 		expect(config.hooks?.draw).toHaveLength(1);
 		expect(build().getConfig().hooks?.draw).toBeUndefined();
+	});
+
+	it('registers one draw hook per axis with thresholds', () => {
+		const config = build({
+			x: { unit: 'reqps', thresholds: [{ thresholdValue: 15 }] },
+			y: { unit: 'ms', thresholds: [{ thresholdValue: 300 }] },
+		}).getConfig();
+
+		expect(config.hooks?.draw).toHaveLength(2);
+	});
+
+	it('stretches the x range to reach an x threshold', () => {
+		const config = build({
+			x: { unit: 'reqps', thresholds: [{ thresholdValue: 1000 }] },
+		}).getConfig();
+		const range = config.scales?.x?.range as uPlot.Range.Function;
+		const plot = { bbox: { width: 0, height: 0 } } as uPlot;
+		const [, max] = range(plot, 10, 30, 'x');
+
+		expect(max).toBeGreaterThanOrEqual(1000);
 	});
 });
