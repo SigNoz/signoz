@@ -51,11 +51,11 @@ func (o ListOrder) IsValid() bool {
 
 // ListFilter is the rule listing state shared by the v3 list params and saved views.
 type ListFilter struct {
-	Query string `query:"query" json:"query"`
+	Query string `query:"query" json:"query" description:"A filter expression over rule name, description, labels and other fields, at most 1024 characters. Empty matches every rule."`
 	// gin cannot bind a slice of valuer enums; GetAlertStates converts these.
-	States []string  `query:"states" json:"states" nullable:"false"`
-	Sort   ListSort  `query:"sort" json:"sort"`
-	Order  ListOrder `query:"order" json:"order"`
+	States []string  `query:"states" json:"states" nullable:"false" description:"Only return rules in these states: firing, pending, recovering, inactive, nodata or disabled. Empty means every state."`
+	Sort   ListSort  `query:"sort" json:"sort" description:"The field to sort by: updated_at (the default), created_at, name, state or severity."`
+	Order  ListOrder `query:"order" json:"order" description:"The sort direction: asc or desc (the default)."`
 }
 
 // Validate normalizes in place; zero sort/order get the defaults, nil states an empty slice.
@@ -119,8 +119,8 @@ func parseAlertState(raw string) (AlertState, error) {
 
 type ListRulesParams struct {
 	ListFilter
-	Limit  int `query:"limit"`
-	Offset int `query:"offset"`
+	Limit  int `query:"limit" description:"The page size, 1 to 200. Defaults to 20 and larger values are clamped to 200."`
+	Offset int `query:"offset" description:"The number of rules to skip before the page. Defaults to 0."`
 }
 
 // Validate normalizes in place; an over-max limit is clamped, not rejected.
