@@ -2,6 +2,7 @@ package querybuilder
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -39,6 +40,7 @@ const (
 type normalizedPart struct {
 	text    string
 	join    joinKind
+	negated bool
 	skipped bool
 }
 
@@ -48,11 +50,12 @@ type normalizedValue struct {
 }
 
 type whereClauseNormalizer struct {
-	variables  map[string]qbtypes.VariableItem
-	conditions []WhereClauseCondition
-	negated    bool
-	orDepth    int
-	errors     []string
+	variables     map[string]qbtypes.VariableItem
+	conditions    []WhereClauseCondition
+	negated       bool
+	orDepth       int
+	negationDepth int
+	errors        []string
 }
 
 func NormalizeWhereClause(expression string, variables map[string]qbtypes.VariableItem) (*NormalizedWhereClause, error) {
@@ -113,8 +116,11 @@ func NormalizeWhereClause(expression string, variables map[string]qbtypes.Variab
 	sort.Slice(visitor.conditions, func(i, j int) bool {
 		return visitor.conditions[i].sortKey() < visitor.conditions[j].sortKey()
 	})
+	conditions := slices.CompactFunc(visitor.conditions, func(left, right WhereClauseCondition) bool {
+		return left.sortKey() == right.sortKey()
+	})
 
-	return &NormalizedWhereClause{Expression: part.text, Conditions: visitor.conditions}, nil
+	return &NormalizedWhereClause{Expression: part.text, Conditions: conditions}, nil
 }
 
 func (condition WhereClauseCondition) sortKey() string {
@@ -197,20 +203,22 @@ func (visitor *whereClauseNormalizer) visitUnaryExpression(ctx grammar.IUnaryExp
 	negated := ctx.NOT() != nil
 	if negated {
 		visitor.negated = !visitor.negated
+		visitor.negationDepth++
 	}
 
 	part := visitor.visitPrimary(ctx.Primary())
 
 	if negated {
 		visitor.negated = !visitor.negated
+		visitor.negationDepth--
 
 		if part.skipped {
 			return part
 		}
-		if part.join != joinKindNone {
-			return normalizedPart{text: "NOT (" + part.text + ")", join: joinKindNone}
+		if part.join != joinKindNone || part.negated {
+			return normalizedPart{text: "NOT (" + part.text + ")", negated: true}
 		}
-		return normalizedPart{text: "NOT " + part.text, join: joinKindNone}
+		return normalizedPart{text: "NOT " + part.text, negated: true}
 	}
 
 	return part
@@ -439,7 +447,7 @@ func (visitor *whereClauseNormalizer) appendCondition(key, operator string, valu
 		Operator: operator,
 		Values:   values,
 		Negated:  visitor.negated,
-		TopLevel: visitor.orDepth == 0 && !visitor.negated,
+		TopLevel: visitor.orDepth == 0 && visitor.negationDepth == 0,
 	})
 }
 
