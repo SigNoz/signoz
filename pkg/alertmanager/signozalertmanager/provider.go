@@ -565,19 +565,15 @@ func (provider *provider) CreateRoutePolicy(ctx context.Context, routeRequest *a
 	}, nil
 }
 
-func (provider *provider) CreateRoutePolicies(ctx context.Context, routeRequests []*alertmanagertypes.PostableRoutePolicy) ([]*alertmanagertypes.GettableRoutePolicy, error) {
+func (provider *provider) buildRoutePolicies(ctx context.Context, routeRequests []*alertmanagertypes.PostableRoutePolicy) (string, []*alertmanagertypes.RoutePolicy, []*alertmanagertypes.GettableRoutePolicy, error) {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
-		return nil, err
+		return "", nil, nil, err
 	}
 
 	orgID, err := valuer.NewUUID(claims.OrgID)
 	if err != nil {
-		return nil, err
-	}
-
-	if len(routeRequests) == 0 {
-		return []*alertmanagertypes.GettableRoutePolicy{}, nil
+		return "", nil, nil, err
 	}
 
 	routes := make([]*alertmanagertypes.RoutePolicy, 0, len(routeRequests))
@@ -585,7 +581,7 @@ func (provider *provider) CreateRoutePolicies(ctx context.Context, routeRequests
 
 	for _, routeRequest := range routeRequests {
 		if err := routeRequest.Validate(); err != nil {
-			return nil, err
+			return "", nil, nil, err
 		}
 
 		route := &alertmanagertypes.RoutePolicy{
@@ -621,7 +617,20 @@ func (provider *provider) CreateRoutePolicies(ctx context.Context, routeRequests
 		})
 	}
 
-	err = provider.notificationManager.CreateRoutePolicies(ctx, orgID.String(), routes)
+	return orgID.String(), routes, results, nil
+}
+
+func (provider *provider) CreateRoutePolicies(ctx context.Context, routeRequests []*alertmanagertypes.PostableRoutePolicy) ([]*alertmanagertypes.GettableRoutePolicy, error) {
+	orgID, routes, results, err := provider.buildRoutePolicies(ctx, routeRequests)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(routes) == 0 {
+		return []*alertmanagertypes.GettableRoutePolicy{}, nil
+	}
+
+	err = provider.notificationManager.CreateRoutePolicies(ctx, orgID, routes)
 	if err != nil {
 		return nil, err
 	}
@@ -744,12 +753,7 @@ func (provider *provider) UpdateRoutePolicyByID(ctx context.Context, routeID str
 		},
 	}
 
-	err = provider.notificationManager.DeleteRoutePolicy(ctx, orgID.String(), routeID)
-	if err != nil {
-		return nil, errors.NewInvalidInputf(errors.CodeInternal, "error deleting existing route: %v", err)
-	}
-
-	err = provider.notificationManager.CreateRoutePolicy(ctx, orgID.String(), updatedRoute)
+	err = provider.notificationManager.UpdateRoutePolicy(ctx, orgID.String(), updatedRoute)
 	if err != nil {
 		return nil, err
 	}
@@ -806,12 +810,12 @@ func (provider *provider) DeleteAllRoutePoliciesByRuleId(ctx context.Context, na
 }
 
 func (provider *provider) UpdateAllRoutePoliciesByRuleId(ctx context.Context, names string, routes []*alertmanagertypes.PostableRoutePolicy) error {
-	err := provider.DeleteAllRoutePoliciesByRuleId(ctx, names)
+	orgID, built, _, err := provider.buildRoutePolicies(ctx, routes)
 	if err != nil {
-		return errors.NewInvalidInputf(errors.CodeInternal, "error deleting the routes: %v", err)
+		return err
 	}
-	_, err = provider.CreateRoutePolicies(ctx, routes)
-	return err
+
+	return provider.notificationManager.ReplaceRoutePoliciesByName(ctx, orgID, names, built)
 }
 
 func (provider *provider) DeleteAllInhibitRulesByRuleId(ctx context.Context, orgID valuer.UUID, ruleId string) error {
