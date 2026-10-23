@@ -23,8 +23,6 @@ func specWithDuration(duration string) []byte {
 }
 
 func TestDashboardSpecDuration(t *testing.T) {
-	// Decode accepts anything Perses does: a stored dashboard must stay readable
-	// even when its window predates the narrower write-time rule.
 	testCases := []struct {
 		name        string
 		duration    string
@@ -64,9 +62,6 @@ func TestDashboardSpecDuration(t *testing.T) {
 }
 
 func TestPostableDashboardDuration(t *testing.T) {
-	// The write path additionally rejects the durations the time picker can't apply.
-	pickerGrammar := "must be a positive whole number of minutes, hours, days or weeks"
-
 	postable := func(duration string) []byte {
 		return fmt.Appendf(nil, `{"schemaVersion": %q, "name": "durations", "tags": [], "spec": %s}`, SchemaVersion, specWithDuration(duration))
 	}
@@ -83,11 +78,11 @@ func TestPostableDashboardDuration(t *testing.T) {
 		{name: "Empty_Unset", duration: ""},
 		{name: "NotADuration", duration: "abc", wantContain: []string{`"abc"`}},
 		{name: "UnknownUnit", duration: "30x", wantContain: []string{`"30x"`}},
-		{name: "CompoundWindow_PickerCannotApply", duration: "1h30m", wantContain: []string{pickerGrammar, `got "1h30m"`}},
-		{name: "Seconds_PickerCannotApply", duration: "15s", wantContain: []string{pickerGrammar, `got "15s"`}},
-		{name: "Years_PickerCannotApply", duration: "1y", wantContain: []string{pickerGrammar, `got "1y"`}},
-		{name: "Zero_PickerCannotApply", duration: "0m", wantContain: []string{pickerGrammar, `got "0m"`}},
-		{name: "LeadingZero_PickerCannotApply", duration: "01h", wantContain: []string{pickerGrammar, `got "01h"`}},
+		{name: "CompoundWindow", duration: "1h30m"},
+		{name: "Seconds", duration: "15s"},
+		{name: "Years", duration: "1y"},
+		{name: "Zero", duration: "0m"},
+		{name: "LeadingZero", duration: "01h"},
 	}
 
 	for _, testCase := range testCases {
@@ -99,13 +94,23 @@ func TestPostableDashboardDuration(t *testing.T) {
 				for _, want := range testCase.wantContain {
 					assert.Contains(t, err.Error(), want)
 				}
-				assert.True(t, errors.Ast(err, errors.TypeInvalidInput), "a window the time picker cannot apply is invalid input")
+				assert.True(t, errors.Ast(err, errors.TypeInvalidInput))
 				return
 			}
 			require.NoError(t, err)
 			assert.Equal(t, testCase.duration, string(p.Spec.Duration))
 		})
 	}
+}
+
+func TestDashboardSpecValidateRejectsInvalidDuration(t *testing.T) {
+	spec, err := unmarshalDashboard(specWithDuration("1h"))
+	require.NoError(t, err)
+	spec.Duration = "invalid"
+	err = spec.Validate()
+	require.Error(t, err)
+	assert.True(t, errors.Ast(err, errors.TypeInvalidInput))
+	assert.Contains(t, err.Error(), "spec.duration")
 }
 
 func TestStoredDashboardDurationStaysReadable(t *testing.T) {
@@ -121,12 +126,13 @@ func TestStoredDashboardDurationStaysReadable(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "1h30m", string(out.Spec.Duration))
 
-	// The dashboard can still be repaired through the patch path.
+	// Editing an unrelated field must preserve a Perses-valid stored duration.
 	var patch PatchableDashboardV2
-	require.NoError(t, json.Unmarshal([]byte(`[{"op": "replace", "path": "/spec/duration", "value": "1h"}]`), &patch))
+	require.NoError(t, json.Unmarshal([]byte(`[{"op": "replace", "path": "/spec/display/name", "value": "Renamed"}]`), &patch))
 	fixed, err := patch.Apply(out)
 	require.NoError(t, err)
-	assert.Equal(t, "1h", string(fixed.Spec.Duration))
+	assert.Equal(t, "1h30m", string(fixed.Spec.Duration))
+	assert.Equal(t, "Renamed", fixed.Spec.Display.Name)
 }
 
 func TestPatchDashboardDuration(t *testing.T) {
@@ -160,8 +166,9 @@ func TestPatchDashboardDuration(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("Replace_PickerCannotApply_Rejected", func(t *testing.T) {
-		_, err := apply(t, `[{"op": "replace", "path": "/spec/duration", "value": "1h30m"}]`)
-		assert.Error(t, err)
+	t.Run("Replace_CompoundWindow_Accepted", func(t *testing.T) {
+		out, err := apply(t, `[{"op": "replace", "path": "/spec/duration", "value": "1h30m"}]`)
+		require.NoError(t, err)
+		assert.Equal(t, "1h30m", string(out.Spec.Duration))
 	})
 }

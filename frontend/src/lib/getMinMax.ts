@@ -12,8 +12,7 @@ const validCustomTimeRegex = /^(\d+)(months?|[mhdw])$/;
 export const isValidShortHandDateTimeFormat = (time: string): boolean =>
 	validCustomTimeRegex.test(time);
 
-// Mirrors the backend grammar for a dashboard's spec.duration: no months, no
-// zero-length window.
+// The picker fallback supports whole m/h/d/w units and a positive window.
 const validDashboardDurationRegex = /^[1-9]\d*[mhdw]$/;
 
 export const isValidDashboardDuration = (time: string): boolean =>
