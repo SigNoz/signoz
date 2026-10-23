@@ -1,6 +1,5 @@
 import { createPortal } from 'react-dom';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, userEvent } from 'tests/test-utils';
 
 import { useCloseOnOutsidePress } from '../useCloseOnOutsidePress';
 
@@ -35,7 +34,7 @@ function Harness({
 
 describe('useCloseOnOutsidePress', () => {
 	it('closes on a press outside', async () => {
-		const onClose = jest.fn();
+		const onClose: jest.MockedFunction<() => void> = jest.fn();
 		render(<Harness enabled onClose={onClose} />);
 
 		await userEvent.click(screen.getByTestId('outside'));
@@ -44,7 +43,7 @@ describe('useCloseOnOutsidePress', () => {
 	});
 
 	it('stays open on a press inside, including a portal rendered from inside', async () => {
-		const onClose = jest.fn();
+		const onClose: jest.MockedFunction<() => void> = jest.fn();
 		render(<Harness enabled onClose={onClose} />);
 
 		await userEvent.click(screen.getByTestId('inside'));
@@ -54,7 +53,7 @@ describe('useCloseOnOutsidePress', () => {
 	});
 
 	it('does nothing while disabled', async () => {
-		const onClose = jest.fn();
+		const onClose: jest.MockedFunction<() => void> = jest.fn();
 		render(<Harness enabled={false} onClose={onClose} />);
 
 		await userEvent.click(screen.getByTestId('outside'));
