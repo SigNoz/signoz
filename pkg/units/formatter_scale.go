@@ -123,9 +123,6 @@ func scaledUnits(factor float64, extArray []string, offset int) ValueFormatter {
 		}
 
 		siIndex := int(math.Floor(logb(factor, math.Abs(value))))
-		if value < 0 {
-			siIndex = -siIndex
-		}
 		siIndex = lo.Clamp(siIndex+offset, 0, len(extArray)-1)
 
 		suffix := extArray[siIndex]
