@@ -144,6 +144,13 @@ func TestQueryRangeResources(t *testing.T) {
 			},
 		},
 		{
+			name: "NestedNegationUnion_NoAtoms",
+			body: builderQueryBody("logs", "NOT (NOT resource.service.name = 'checkout' AND NOT resource.service.name = 'frontend')"),
+			expected: []coretypes.ResourceWithID{
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/*"},
+			},
+		},
+		{
 			name: "ValueWithSpacesAndSlashes_Plaintext",
 			body: builderQueryBody("logs", "signoz.workspace.key.id = 'check out/2'"),
 			expected: []coretypes.ResourceWithID{
