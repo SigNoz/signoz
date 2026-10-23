@@ -275,7 +275,7 @@ func TestNotifyRichDescriptionPanelAndLinks(t *testing.T) {
 	m := newMockJira(t)
 	a := alert(true)
 	a.Labels[ruletypes.LabelRuleSource] = model.LabelValue("https://app.signoz.io/alerts?ruleId=1")
-	a.Annotations[ruletypes.AnnotationRelatedLogs] = model.LabelValue("https://app.signoz.io/logs")
+	a.Annotations[alertmanagertypes.AnnotationRelatedLogs] = model.LabelValue("https://app.signoz.io/logs")
 
 	_, err := newNotifier(t, m).Notify(ctx(), a)
 	require.NoError(t, err)
