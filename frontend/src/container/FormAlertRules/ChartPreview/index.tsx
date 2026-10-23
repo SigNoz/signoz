@@ -40,6 +40,7 @@ import { Warning } from 'types/api';
 import { AlertDef } from 'types/api/alerts/def';
 import APIError from 'types/api/error';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
@@ -159,11 +160,12 @@ function ChartPreview({
 					query.clickhouse_sql?.length > 0 &&
 					query.clickhouse_sql[0].query?.length > 0
 				);
+			// TODO:check this
 			case EQueryType.QUERY_BUILDER:
-				return (
-					query.builder.queryData.length > 0 &&
-					query.builder.queryData[0].queryName !== ''
-				);
+			case EQueryType.AI_QUERY_BUILDER: {
+				const { queryData } = getActiveBuilder(query);
+				return queryData.length > 0 && queryData[0].queryName !== '';
+			}
 			default:
 				return false;
 		}

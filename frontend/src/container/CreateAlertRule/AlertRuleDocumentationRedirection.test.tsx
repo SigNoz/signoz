@@ -120,7 +120,11 @@ describe('Alert rule documentation redirection', () => {
 
 describe('Create alert page redirection', () => {
 	Object.values(AlertTypes)
-		.filter((type) => type !== AlertTypes.ANOMALY_BASED_ALERT)
+		.filter(
+			(type) =>
+				type !== AlertTypes.ANOMALY_BASED_ALERT &&
+				type !== AlertTypes.AI_TRACES_BASED_ALERT,
+		)
 		.forEach((alertType) => {
 			it(`should redirect to create alert page for ${alertType} and "Check an example alert" should redirect to the correct documentation`, () => {
 				const { getByRole } = render(
