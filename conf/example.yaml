@@ -178,6 +178,8 @@ querier:
   # range with padding to include slightly delayed log exports. Logs only; set
   # to 0 to disable.
   log_trace_id_window_padding: 5m
+  # The maximum time range of a query range request. Set to 0 to disable.
+  max_time_range: 17520h
 
 ##################### TelemetryStore #####################
 telemetrystore:

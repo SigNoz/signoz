@@ -140,7 +140,9 @@ func (handler *handler) QueryRawStream(rw http.ResponseWriter, req *http.Request
 	}
 	// create the v5 request param
 	queryRangeRequest := qbtypes.QueryRangeRequest{
-		Start:       start,
+		// Coerce the window to epoch milliseconds up front (End may be 0 for the
+		// open-ended stream, which ToMilliSecs leaves untouched).
+		Start:       qbtypes.ToMilliSecs(start),
 		RequestType: qbtypes.RequestTypeRawStream,
 		CompositeQuery: qbtypes.CompositeQuery{
 			Queries: []qbtypes.QueryEnvelope{

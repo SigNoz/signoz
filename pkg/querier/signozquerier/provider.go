@@ -52,6 +52,7 @@ func NewFactory(
 				flagger,
 				cfg.LogTraceIDWindowPadding,
 				cfg.MaxConcurrentQueries,
+				cfg.MaxTimeRange,
 			), nil
 		},
 	)
