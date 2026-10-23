@@ -348,7 +348,7 @@ func TestConditionFor(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &tc.key, tc.operator, tc.value, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}, false, sb)
+			cond, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &tc.key, tc.operator, tc.value, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}, nil, false, sb)
 			sb.Where(cond...)
 
 			if tc.expectedError != nil {
@@ -402,7 +402,7 @@ func TestConditionForMultipleKeys(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var err error
 			for _, key := range tc.keys {
-				cond, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, tc.operator, tc.value, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, false, sb)
+				cond, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, tc.operator, tc.value, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, nil, false, sb)
 				sb.Where(cond...)
 				if err != nil {
 					t.Fatalf("Error getting condition for key %s: %v", key.Name, err)
@@ -486,7 +486,7 @@ func TestConditionForKeyNotInMetadata(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			sb := sqlbuilder.NewSelectBuilder()
-			cond, warnings, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &tc.key, tc.operator, tc.value, tc.fieldKeys, false, sb)
+			cond, warnings, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &tc.key, tc.operator, tc.value, tc.fieldKeys, nil, false, sb)
 			require.NoError(t, err)
 			sb.Where(cond...)
 			sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)

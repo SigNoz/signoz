@@ -214,8 +214,10 @@ func (t *telemetryMetaStore) tracesTblStatementToFieldKeys(ctx context.Context) 
 	return materialisedKeys, nil
 }
 
-// getTracesKeys returns the keys from the spans that match the field selection criteria.
-func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
+// getTracesKeys returns the keys from the spans that match the field selection criteria,
+// and the column-wide evolutions of the span attributes column, which a key metadata does
+// not report still reads through.
+func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, []*telemetrytypes.EvolutionEntry, bool, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
 		instrumentationtypes.CodeNamespace:    "metadata",
@@ -223,13 +225,13 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 	})
 
 	if len(fieldKeySelectors) == 0 {
-		return nil, true, nil
+		return nil, nil, true, nil
 	}
 
 	// pre-fetch the materialised keys from the traces table
 	matKeys, err := t.tracesTblStatementToFieldKeys(ctx)
 	if err != nil {
-		return nil, false, err
+		return nil, nil, false, err
 	}
 	mapOfKeys := make(map[string]*telemetrytypes.TelemetryFieldKey)
 	for _, key := range matKeys {
@@ -304,7 +306,7 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
+		return nil, nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
 	}
 	defer rows.Close()
 	keys := []*telemetrytypes.TelemetryFieldKey{}
@@ -322,7 +324,7 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		var priority uint8
 		err = rows.Scan(&name, &fieldContext, &fieldDataType, &priority)
 		if err != nil {
-			return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
+			return nil, nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
 		}
 		key, ok := mapOfKeys[name+";"+fieldContext.StringValue()+";"+fieldDataType.StringValue()]
 
@@ -341,7 +343,7 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 	}
 
 	if rows.Err() != nil {
-		return nil, false, errors.Wrap(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
+		return nil, nil, false, errors.Wrap(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
 	}
 
 	// hit the limit? (only counting DB results)
@@ -363,11 +365,13 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		keys = append(keys, &field)
 	}
 
-	if err = t.updateColumnEvolutionMetadataForKeys(ctx, keys); err != nil {
-		return nil, false, err
+	attributesColumn := &telemetrytypes.EvolutionSelector{Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldName: telemetrytypes.EvolutionFieldNameAll}
+	columnEvolutions, err := t.updateColumnEvolutionMetadataForKeys(ctx, keys, attributesColumn)
+	if err != nil {
+		return nil, nil, false, err
 	}
 
-	return keys, complete, nil
+	return keys, columnEvolutions, complete, nil
 }
 
 // logsTblStatementToFieldKeys returns materialised attribute/resource/scope keys from the logs table.
@@ -684,7 +688,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, orgID valuer.UUID,
 		}
 	}
 
-	if err := t.updateColumnEvolutionMetadataForKeys(ctx, keys); err != nil {
+	if _, err := t.updateColumnEvolutionMetadataForKeys(ctx, keys); err != nil {
 		return nil, false, err
 	}
 
@@ -1206,7 +1210,7 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, orgID valuer.UUID, fie
 
 	switch fieldKeySelector.Signal {
 	case telemetrytypes.SignalTraces:
-		keys, complete, err = t.getTracesKeys(ctx, selectors)
+		keys, _, complete, err = t.getTracesKeys(ctx, selectors)
 	case telemetrytypes.SignalLogs:
 		if fieldKeySelector.Source == telemetrytypes.SourceAudit {
 			keys, complete, err = t.getAuditKeys(ctx, selectors)
@@ -1221,7 +1225,7 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, orgID valuer.UUID, fie
 		}
 	case telemetrytypes.SignalUnspecified:
 		// get traces keys
-		tracesKeys, tracesComplete, err := t.getTracesKeys(ctx, selectors)
+		tracesKeys, _, tracesComplete, err := t.getTracesKeys(ctx, selectors)
 		if err != nil {
 			return nil, false, err
 		}
@@ -1258,7 +1262,7 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, orgID valuer.UUID, fie
 	return mapOfKeys, complete, nil
 }
 
-func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID, fieldKeySelectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
+func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID, fieldKeySelectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, []*telemetrytypes.EvolutionEntry, bool, error) {
 
 	logsSelectors := []*telemetrytypes.FieldKeySelector{}
 	auditSelectors := []*telemetrytypes.FieldKeySelector{}
@@ -1291,24 +1295,24 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID
 
 	logsKeys, logsComplete, err := t.getLogsKeys(ctx, orgID, logsSelectors)
 	if err != nil {
-		return nil, false, err
+		return nil, nil, false, err
 	}
 	auditKeys, auditComplete, err := t.getAuditKeys(ctx, auditSelectors)
 	if err != nil {
-		return nil, false, err
+		return nil, nil, false, err
 	}
-	tracesKeys, tracesComplete, err := t.getTracesKeys(ctx, tracesSelectors)
+	tracesKeys, tracesColumnEvolutions, tracesComplete, err := t.getTracesKeys(ctx, tracesSelectors)
 	if err != nil {
-		return nil, false, err
+		return nil, nil, false, err
 	}
 	metricsKeys, metricsComplete, err := t.getMetricsKeys(ctx, metricsSelectors)
 	if err != nil {
-		return nil, false, err
+		return nil, nil, false, err
 	}
 
 	meterSourceMetricsKeys, _, err := t.getMeterSourceMetricKeys(ctx, meterSourceMetricsSelectors)
 	if err != nil {
-		return nil, false, err
+		return nil, nil, false, err
 	}
 	// Complete only if all queries are complete
 	complete := logsComplete && auditComplete && tracesComplete && metricsComplete
@@ -1333,7 +1337,7 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID
 	applyBackwardCompatibleKeys(mapOfKeys)
 	mapOfKeys = enrichWithIntrinsicMetricKeys(mapOfKeys, fieldKeySelectors)
 
-	return mapOfKeys, complete, nil
+	return mapOfKeys, tracesColumnEvolutions, complete, nil
 }
 
 func (t *telemetryMetaStore) GetKey(ctx context.Context, orgID valuer.UUID, fieldKeySelector *telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, error) {
@@ -1408,7 +1412,7 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 			keySelector.Signal = fieldValueSelector.Signal
 		}
 		keySelectors = querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, t.fl, keySelectors)
-		keys, _, err := t.GetKeysMulti(ctx, orgID, keySelectors)
+		keys, _, _, err := t.GetKeysMulti(ctx, orgID, keySelectors)
 		if err != nil {
 			return nil, false, err
 		}
@@ -2500,14 +2504,16 @@ func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Conte
 	return entries, nil
 }
 
-// updateColumnEvolutionMetadataForKeys updates the evolution field for keys.
-func (k *telemetryMetaStore) updateColumnEvolutionMetadataForKeys(ctx context.Context, keysToUpdate []*telemetrytypes.TelemetryFieldKey) error {
+// updateColumnEvolutionMetadataForKeys updates the evolution field for keys. In
+// the same query it fetches the entries of columns, column-wide selectors read
+// even when no key is found, and returns them.
+func (k *telemetryMetaStore) updateColumnEvolutionMetadataForKeys(ctx context.Context, keysToUpdate []*telemetrytypes.TelemetryFieldKey, columns ...*telemetrytypes.EvolutionSelector) ([]*telemetrytypes.EvolutionEntry, error) {
 	// an empty selector list would run the evolution query without a filter
-	if len(keysToUpdate) == 0 {
-		return nil
+	if len(keysToUpdate) == 0 && len(columns) == 0 {
+		return nil, nil
 	}
 
-	var metadataKeySelectors []*telemetrytypes.EvolutionSelector
+	metadataKeySelectors := append([]*telemetrytypes.EvolutionSelector{}, columns...)
 	for _, keySelector := range keysToUpdate {
 		selector := &telemetrytypes.EvolutionSelector{
 			Signal:       keySelector.Signal,
@@ -2519,7 +2525,7 @@ func (k *telemetryMetaStore) updateColumnEvolutionMetadataForKeys(ctx context.Co
 
 	evolutions, err := k.fetchEvolutionEntryFromClickHouse(ctx, metadataKeySelectors)
 	if err != nil {
-		return errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to fetch evolution from clickhouse %s", err.Error())
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to fetch evolution from clickhouse %s", err.Error())
 	}
 
 	evolutionsByUniqueKey := make(map[string][]*telemetrytypes.EvolutionEntry)
@@ -2537,7 +2543,7 @@ func (k *telemetryMetaStore) updateColumnEvolutionMetadataForKeys(ctx context.Co
 			selector := &telemetrytypes.EvolutionSelector{
 				Signal:       key.Signal,
 				FieldContext: key.FieldContext,
-				FieldName:    "__all__",
+				FieldName:    telemetrytypes.EvolutionFieldNameAll,
 			}
 			// the per-field entries add to the column-wide ones, they don't replace them.
 			// NOTE: if a field evolved to its own column before an __all__ migration for the
@@ -2552,7 +2558,12 @@ func (k *telemetryMetaStore) updateColumnEvolutionMetadataForKeys(ctx context.Co
 			}
 		}
 	}
-	return nil
+
+	var columnEvolutions []*telemetrytypes.EvolutionEntry
+	for _, column := range columns {
+		columnEvolutions = append(columnEvolutions, evolutionsByUniqueKey[column.QualifiedName()]...)
+	}
+	return columnEvolutions, nil
 }
 
 // chunkSizeFirstSeenMetricMetadata limits the number of tuples per SQL query to avoid hitting the max_query_size limit.
@@ -2714,7 +2725,7 @@ func (t *telemetryMetaStore) containsConditions(ctx context.Context, q qbtypes.Q
 			FieldDataType: dataType,
 		}}
 	}
-	conds, _, err := querybuilder.Conditions(ctx, q, t.storage, key, qbtypes.FilterOperatorContains, value, fieldKeys, false, sb)
+	conds, _, err := querybuilder.Conditions(ctx, q, t.storage, key, qbtypes.FilterOperatorContains, value, fieldKeys, nil, false, sb)
 	return conds, err
 }
 

@@ -95,7 +95,7 @@ func (b *auditQueryStatementBuilder) Build(
 	end = querybuilder.ToNanoSecs(end)
 
 	keySelectors := getKeySelectors(query)
-	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
+	keys, _, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
 	if err != nil {
 		return nil, err
 	}
@@ -263,7 +263,7 @@ func (b *auditQueryStatementBuilder) buildListQuery(
 				continue
 			}
 
-			colExpr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &query.SelectFields[index], telemetrytypes.FieldDataTypeUnspecified, keys)
+			colExpr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &query.SelectFields[index], telemetrytypes.FieldDataTypeUnspecified, keys, nil)
 			if err != nil {
 				return nil, err
 			}
@@ -279,7 +279,7 @@ func (b *auditQueryStatementBuilder) buildListQuery(
 	}
 
 	for _, orderBy := range query.Order {
-		colExpr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys)
+		colExpr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -342,7 +342,7 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalLogs, nil, start, end)
 	for _, gb := range query.GroupBy {
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -354,7 +354,7 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 
 	allAggChArgs := make([]any, 0)
 	for i, agg := range query.Aggregations {
-		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(ctx, orgID, start, end, agg.Expression, uint64(query.StepInterval.Seconds()), keys)
+		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(ctx, orgID, start, end, agg.Expression, uint64(query.StepInterval.Seconds()), keys, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -478,7 +478,7 @@ func (b *auditQueryStatementBuilder) buildScalarQuery(
 
 	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalLogs, nil, start, end)
 	for _, gb := range query.GroupBy {
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -492,7 +492,7 @@ func (b *auditQueryStatementBuilder) buildScalarQuery(
 	if len(query.Aggregations) > 0 {
 		for idx := range query.Aggregations {
 			aggExpr := query.Aggregations[idx]
-			rewritten, chArgs, err := b.aggExprRewriter.Rewrite(ctx, orgID, start, end, aggExpr.Expression, rateInterval, keys)
+			rewritten, chArgs, err := b.aggExprRewriter.Rewrite(ctx, orgID, start, end, aggExpr.Expression, rateInterval, keys, nil)
 			if err != nil {
 				return nil, err
 			}

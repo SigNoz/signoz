@@ -92,7 +92,7 @@ func (m *MockMetadataStore) GetKeys(ctx context.Context, _ valuer.UUID, fieldKey
 }
 
 // GetKeysMulti applies multiple selectors and returns combined results.
-func (m *MockMetadataStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID, fieldKeySelectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
+func (m *MockMetadataStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID, fieldKeySelectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, []*telemetrytypes.EvolutionEntry, bool, error) {
 	result := make(map[string][]*telemetrytypes.TelemetryFieldKey)
 
 	// Process each selector
@@ -100,7 +100,7 @@ func (m *MockMetadataStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID,
 		selectorCopy := selector // Create a copy to avoid issues with pointer semantics
 		selectorResults, _, err := m.GetKeys(ctx, orgID, selectorCopy)
 		if err != nil {
-			return nil, false, err
+			return nil, nil, false, err
 		}
 
 		// Merge results
@@ -128,7 +128,18 @@ func (m *MockMetadataStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID,
 		m.updateColumnEvolutionMetadataForKeys(ctx, v)
 	}
 
-	return result, true, nil
+	// the span attributes column-wide evolutions, mirroring the real store
+	var columnEvolutions []*telemetrytypes.EvolutionEntry
+	for _, selector := range fieldKeySelectors {
+		if selector.Signal != telemetrytypes.SignalTraces && selector.Signal != telemetrytypes.SignalUnspecified {
+			continue
+		}
+		attributesColumn := &telemetrytypes.EvolutionSelector{Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldName: telemetrytypes.EvolutionFieldNameAll}
+		columnEvolutions = m.ColumnEvolutionMetadataMap[attributesColumn.QualifiedName()]
+		break
+	}
+
+	return result, columnEvolutions, true, nil
 }
 
 // GetKey returns a list of keys with the given name.

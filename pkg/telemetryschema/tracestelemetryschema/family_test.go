@@ -56,7 +56,7 @@ func TestConditionForFamilyMergesMembersCurrentFirst(t *testing.T) {
 	// The requested spelling is the old name; precedence must still be
 	// current-first.
 	sb := sqlbuilder.NewSelectBuilder()
-	conds, warnings, err := querybuilder.Conditions(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, startNs, endNs), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment"}, qbtypes.FilterOperatorEqual, "production", fieldKeys, false, sb)
+	conds, warnings, err := querybuilder.Conditions(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, startNs, endNs), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment"}, qbtypes.FilterOperatorEqual, "production", fieldKeys, nil, false, sb)
 	require.NoError(t, err)
 	require.Empty(t, warnings, "a family is one logical field, never ambiguous with itself")
 	require.Len(t, conds, 1)
@@ -90,7 +90,7 @@ func TestConditionForFamilyNegativeKeepsKeylessRows(t *testing.T) {
 	storage := NewStorage()
 
 	sb := sqlbuilder.NewSelectBuilder()
-	conds, _, err := querybuilder.Conditions(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, startNs, endNs), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, qbtypes.FilterOperatorNotEqual, "production", fieldKeys, false, sb)
+	conds, _, err := querybuilder.Conditions(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, startNs, endNs), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, qbtypes.FilterOperatorNotEqual, "production", fieldKeys, nil, false, sb)
 	require.NoError(t, err)
 	require.Len(t, conds, 1)
 
@@ -125,7 +125,7 @@ func TestConditionForFamilyExists(t *testing.T) {
 	storage := NewStorage()
 
 	sb := sqlbuilder.NewSelectBuilder()
-	conds, _, err := querybuilder.Conditions(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, startNs, endNs), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, qbtypes.FilterOperatorNotExists, nil, fieldKeys, false, sb)
+	conds, _, err := querybuilder.Conditions(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, startNs, endNs), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, qbtypes.FilterOperatorNotExists, nil, fieldKeys, nil, false, sb)
 	require.NoError(t, err)
 	require.Len(t, conds, 1)
 
@@ -160,7 +160,7 @@ func TestConditionForFamilyOffByDefault(t *testing.T) {
 	storage := NewStorage()
 
 	sb := sqlbuilder.NewSelectBuilder()
-	conds, _, err := querybuilder.Conditions(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, startNs, endNs), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, qbtypes.FilterOperatorEqual, "production", fieldKeys, false, sb)
+	conds, _, err := querybuilder.Conditions(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, startNs, endNs), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, qbtypes.FilterOperatorEqual, "production", fieldKeys, nil, false, sb)
 	require.NoError(t, err)
 	require.Len(t, conds, 1)
 
@@ -196,7 +196,7 @@ func TestConditionForSingleMemberIsUnchanged(t *testing.T) {
 	storage := NewStorage()
 
 	sb := sqlbuilder.NewSelectBuilder()
-	conds, _, err := querybuilder.Conditions(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, startNs, endNs), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, qbtypes.FilterOperatorEqual, "production", fieldKeys, false, sb)
+	conds, _, err := querybuilder.Conditions(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, startNs, endNs), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, qbtypes.FilterOperatorEqual, "production", fieldKeys, nil, false, sb)
 	require.NoError(t, err)
 	require.Len(t, conds, 1)
 
@@ -228,7 +228,7 @@ func TestColumnExpressionForFamilyGroupBy(t *testing.T) {
 	fl := familyFlagOn(t)
 	storage := NewStorage()
 
-	expr, err := querybuilder.ResolveColumn(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, startNs, endNs), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, telemetrytypes.FieldDataTypeString, fieldKeys)
+	expr, err := querybuilder.ResolveColumn(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, startNs, endNs), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, telemetrytypes.FieldDataTypeString, fieldKeys, nil)
 	require.NoError(t, err)
 	require.Equal(t, "multiIf((multiIf(resource.`deployment.environment.name` IS NOT NULL, resource.`deployment.environment.name`::String, mapContains(resources_string, 'deployment.environment.name'), resources_string['deployment.environment.name'], NULL) IS NOT NULL OR multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL) IS NOT NULL), COALESCE(NULLIF(multiIf(resource.`deployment.environment.name` IS NOT NULL, resource.`deployment.environment.name`::String, mapContains(resources_string, 'deployment.environment.name'), resources_string['deployment.environment.name'], NULL), ''), NULLIF(multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL), ''), ''), NULL)", expr)
 }

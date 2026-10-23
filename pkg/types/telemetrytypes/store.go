@@ -13,8 +13,10 @@ type MetadataStore interface {
 	// if they have different types or data types.
 	GetKeys(ctx context.Context, orgID valuer.UUID, fieldKeySelector *FieldKeySelector) (map[string][]*TelemetryFieldKey, bool, error)
 
-	// GetKeys but with any number of fieldKeySelectors.
-	GetKeysMulti(ctx context.Context, orgID valuer.UUID, fieldKeySelectors []*FieldKeySelector) (map[string][]*TelemetryFieldKey, bool, error)
+	// GetKeys but with any number of fieldKeySelectors. It also returns the
+	// column-wide evolutions of the looked-up signals, which a key metadata
+	// does not report still reads through.
+	GetKeysMulti(ctx context.Context, orgID valuer.UUID, fieldKeySelectors []*FieldKeySelector) (map[string][]*TelemetryFieldKey, []*EvolutionEntry, bool, error)
 
 	// GetKey returns a list of keys with the given name.
 	GetKey(ctx context.Context, orgID valuer.UUID, fieldKeySelector *FieldKeySelector) ([]*TelemetryFieldKey, error)
