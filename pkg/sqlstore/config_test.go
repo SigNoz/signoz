@@ -56,3 +56,49 @@ func TestNewWithEnvProvider(t *testing.T) {
 	assert.Equal(t, expected, actual)
 	assert.NoError(t, actual.Validate())
 }
+
+func TestNewWithEnvProviderMySQL(t *testing.T) {
+	t.Setenv("SIGNOZ_SQLSTORE_PROVIDER", "mysql")
+	t.Setenv("SIGNOZ_SQLSTORE_MYSQL_DSN", "root:secret@tcp(127.0.0.1:3306)/signoz?parseTime=true")
+	t.Setenv("SIGNOZ_SQLSTORE_MAX__OPEN__CONNS", "50")
+	t.Setenv("SIGNOZ_SQLSTORE_MAX__CONN__LIFETIME", "3h")
+
+	conf, err := config.New(
+		context.Background(),
+		config.ResolverConfig{
+			Uris: []string{"env:"},
+			ProviderFactories: []config.ProviderFactory{
+				envprovider.NewFactory(),
+			},
+		},
+		[]factory.ConfigFactory{
+			NewConfigFactory(),
+		},
+	)
+	require.NoError(t, err)
+
+	actual := &Config{}
+	err = conf.Unmarshal("sqlstore", actual)
+	require.NoError(t, err)
+
+	expected := &Config{
+		Provider: "mysql",
+		Connection: ConnectionConfig{
+			MaxOpenConns:    50,
+			MaxConnLifetime: time.Hour * 3,
+		},
+		MySQL: MySQLConfig{
+			DSN: "root:secret@tcp(127.0.0.1:3306)/signoz?parseTime=true",
+		},
+		Sqlite: SqliteConfig{
+			Path:            "/var/lib/signoz/signoz.db",
+			Mode:            "wal",
+			BusyTimeout:     10 * time.Second,
+			TransactionMode: "immediate",
+		},
+	}
+
+	assert.Equal(t, expected, actual)
+	assert.NoError(t, actual.Validate())
+}
+
