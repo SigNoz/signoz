@@ -67,7 +67,7 @@ func TestNewHandlers(t *testing.T) {
 	spanMapperModule := implspanmapper.NewModule(implspanmapper.NewStore(sqlstore), spanMapperRegistry, providerSettings)
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, userGetter, userRoleStore, nil, nil, nil, retentionGetter, flagger, tagModule, nil, spanMapperModule)
 
-	querierHandler := querier.NewHandler(providerSettings, nil, nil)
+	querierHandler := querier.NewHandler(providerSettings, nil, nil, querier.Config{})
 	registryHandler := factory.NewHandler(nil)
 	handlers := NewHandlers(modules, providerSettings, nil, querierHandler, nil, nil, nil, nil, nil, nil, nil, nil, registryHandler, alertmanager, nil, nil, nil)
 	reflectVal := reflect.ValueOf(handlers)

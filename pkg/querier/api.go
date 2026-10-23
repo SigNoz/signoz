@@ -33,10 +33,11 @@ type handler struct {
 	set       factory.ProviderSettings
 	analytics analytics.Analytics
 	querier   Querier
+	config    Config
 }
 
-func NewHandler(set factory.ProviderSettings, querier Querier, analytics analytics.Analytics) Handler {
-	return &handler{set: set, querier: querier, analytics: analytics}
+func NewHandler(set factory.ProviderSettings, querier Querier, analytics analytics.Analytics, config Config) Handler {
+	return &handler{set: set, querier: querier, analytics: analytics, config: config}
 }
 
 func (handler *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
@@ -59,7 +60,7 @@ func (handler *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	// Validate the query request
-	if err := queryRangeRequest.Validate(); err != nil {
+	if err := queryRangeRequest.Validate(qbtypes.WithMaxTimeRange(handler.config.MaxTimeRange)); err != nil {
 		render.Error(rw, err)
 		return
 	}

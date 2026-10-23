@@ -114,10 +114,6 @@ func New(
 
 func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error) {
 
-	if err := req.ValidateMaxTimeRange(q.maxTimeRange); err != nil {
-		return nil, err
-	}
-
 	event := &qbtypes.QBEvent{
 		Version:         "v5",
 		NumberOfQueries: len(req.CompositeQuery.Queries),

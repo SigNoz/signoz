@@ -86,6 +86,7 @@ type validationConfig struct {
 	skipGroupByValidation          bool
 	withTimestampGroupByValidation bool
 	withReduceToValidation         bool
+	maxTimeRange                   time.Duration
 }
 
 func applyValidationOptions(opts []ValidationOption) validationConfig {
@@ -94,6 +95,13 @@ func applyValidationOptions(opts []ValidationOption) validationConfig {
 		opt(&cfg)
 	}
 	return cfg
+}
+
+// WithMaxTimeRange rejects requests whose window is longer than maxTimeRange; 0 disables the limit.
+func WithMaxTimeRange(maxTimeRange time.Duration) ValidationOption {
+	return func(cfg *validationConfig) {
+		cfg.maxTimeRange = maxTimeRange
+	}
 }
 
 // SkipLimitOffsetValidation returns a ValidationOption that skips the limit and offset range checks.
@@ -578,7 +586,7 @@ func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
 
 // Validate validates the entire query range request.
 func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
-	if err := r.validateTimeRange(); err != nil {
+	if err := r.validateTimeRange(applyValidationOptions(opts)); err != nil {
 		return err
 	}
 
@@ -630,15 +638,14 @@ func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
 // specs) and returns the request type's ValidationOptions. The dry-run path uses
 // this so per-query errors can be attributed individually via QueryEnvelope.Validate
 // instead of failing fast like Validate does.
-func (r *QueryRangeRequest) ValidateRequestScope() ([]ValidationOption, error) {
-	if err := r.validateTimeRange(); err != nil {
+func (r *QueryRangeRequest) ValidateRequestScope(opts ...ValidationOption) ([]ValidationOption, error) {
+	if err := r.validateTimeRange(applyValidationOptions(opts)); err != nil {
 		return nil, err
 	}
 
-	var opts []ValidationOption
 	switch r.RequestType {
 	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeTimeSeries, RequestTypeScalar, RequestTypeHeatmap:
-		opts = GetValidationOptions(r.RequestType)
+		opts = append(opts, GetValidationOptions(r.RequestType)...)
 	default:
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid request type: %s", r.RequestType).
 			WithAdditional("Valid request types are: raw, timeseries, scalar, heatmap")
@@ -695,19 +702,11 @@ func (p *QueryRangePreviewParams) Validate() (QueryRangePreviewOptions, error) {
 
 // Validate validates a single query envelope's spec — the per-query counterpart
 // to ValidateRequestScope, letting the dry-run report errors independently.
-// ValidateMaxTimeRange rejects a window longer than maxTimeRange; 0 disables the limit.
-func (r *QueryRangeRequest) ValidateMaxTimeRange(maxTimeRange time.Duration) error {
-	if maxTimeRange > 0 && r.End > r.Start && time.Duration(r.End-r.Start)*time.Millisecond > maxTimeRange {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "query time range must not exceed %d days", int64(maxTimeRange/(24*time.Hour)))
-	}
-	return nil
-}
-
 func (e QueryEnvelope) Validate(opts ...ValidationOption) error {
 	return validateQueryEnvelope(e, opts...)
 }
 
-func (r *QueryRangeRequest) validateTimeRange() error {
+func (r *QueryRangeRequest) validateTimeRange(cfg validationConfig) error {
 	if r.RequestType == RequestTypeRawStream {
 		return nil
 	}
@@ -719,6 +718,9 @@ func (r *QueryRangeRequest) validateTimeRange() error {
 	}
 	if r.End > uint64(time.Now().Add(maxEndTimeAhead).UnixMilli()) {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "end time %s is too far in the future", time.UnixMilli(int64(r.End)).UTC().Format(time.RFC3339))
+	}
+	if cfg.maxTimeRange > 0 && time.Duration(r.End-r.Start)*time.Millisecond > cfg.maxTimeRange {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "query time range must not exceed %d days", int64(cfg.maxTimeRange/(24*time.Hour)))
 	}
 	return nil
 }

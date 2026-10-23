@@ -23,7 +23,7 @@ func (q *querier) QueryRangePreview(
 	opts qbtypes.QueryRangePreviewOptions,
 ) (*qbtypes.QueryRangePreviewResponse, error) {
 
-	validationOpts, err := req.ValidateRequestScope()
+	validationOpts, err := req.ValidateRequestScope(qbtypes.WithMaxTimeRange(q.maxTimeRange))
 	if err != nil {
 		return nil, err
 	}
