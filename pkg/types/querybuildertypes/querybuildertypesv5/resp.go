@@ -191,7 +191,8 @@ func (a *AggregationBucket) ReindexValuesToNewUpperBounds(onto []float64) {
 
 // TrimAxisToCountedBuckets drops the buckets at either end of Meta.Buckets that hold
 // no counts, since an axis runs from the lowest value in the window to the highest.
-// Not for a query that chose its own buckets: an empty `le` is still one it reported.
+// Call it only when the buckets were chosen from the values. A histogram's `le`
+// buckets are fixed, so an empty one of those still has to stay on the axis.
 func (a *AggregationBucket) TrimAxisToCountedBuckets() {
 	if a == nil || len(a.Meta.Buckets) == 0 {
 		return
