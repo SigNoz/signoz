@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -318,11 +319,11 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest},
-			SecuritySchemes: newScopedSecuritySchemes([]string{
+			SecuritySchemes: newScopedSecuritySchemes(append([]string{
 				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbCreate),
 				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbAttach),
 				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbAttach),
-			}),
+			}, telemetryReadScopes()...)),
 		},
 		handler.WithResourceDefs(
 			handler.BasicResourceDef{
@@ -339,6 +340,12 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
 				TargetIDs:      ruler.NewCreateChannelAttachExtractor(provider.alertmanagerService),
 				TargetSelector: coretypes.IDSelector,
+			},
+			handler.TelemetryResourceDef{
+				Verb:      coretypes.VerbRead,
+				Category:  coretypes.ActionCategoryDataAccess,
+				Selector:  querybuilder.TelemetrySelector,
+				Resources: ruler.NewRuleBodyTelemetryResources(),
 			},
 		),
 	)).Methods(http.MethodPost).GetError(); err != nil {

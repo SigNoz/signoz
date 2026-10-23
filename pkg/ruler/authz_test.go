@@ -331,3 +331,52 @@ func TestFieldResourcesFromCompositeQuery(t *testing.T) {
 		})
 	}
 }
+
+func TestRuleBodyTelemetryResources(t *testing.T) {
+	testCases := []struct {
+		name     string
+		body     string
+		wantKind coretypes.Kind
+		wantID   string
+		wantErr  bool
+	}{
+		{
+			name:     "V5Body_NoFilter_MetricsWildcard",
+			body:     v2RuleJSON(`[]`),
+			wantKind: coretypes.KindMetrics,
+			wantID:   "builder_query/*",
+		},
+		{
+			name:     "V1Body_PreferredChannels_MetricsWildcard",
+			body:     v1RuleJSON(`, "preferredChannels": ["slack"]`),
+			wantKind: coretypes.KindMetrics,
+			wantID:   "builder_query/*",
+		},
+		{
+			name:    "MissingCondition_Errors",
+			body:    `{"alert": "TestAlert", "version": "v5"}`,
+			wantErr: true,
+		},
+		{
+			name:    "NotJSON_Errors",
+			body:    "not json",
+			wantErr: true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			refs, err := NewRuleBodyTelemetryResources()(coretypes.ExtractorContext{RequestBody: []byte(testCase.body)})
+
+			if testCase.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Len(t, refs, 1)
+			assert.Equal(t, testCase.wantKind, refs[0].Resource.Kind())
+			assert.Equal(t, testCase.wantID, refs[0].ID)
+		})
+	}
+}

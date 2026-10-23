@@ -509,6 +509,62 @@ def test_setup_channel_scoped_actor(
         change_user_role(signoz, admin_token, user_id, "signoz-viewer", _ACTOR_ROLE_NAME)
 
 
+def test_test_rule_needs_telemetry_grant(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
+
+    condition = {
+        **RULE_CONDITION,
+        "thresholds": {"kind": "basic", "spec": [{"name": "critical", "target": 90, "matchType": "at_least_once", "op": "above", "channels": []}]},
+    }
+    body = {
+        **RULE_TEMPLATE,
+        "alert": _ACTOR_RULE,
+        "condition": condition,
+        "notificationSettings": {**RULE_TEMPLATE["notificationSettings"], "usePolicy": True},
+    }
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/test"),
+        json=body,
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{find_role_by_name(signoz, admin_token, _ACTOR_ROLE_NAME)}"),
+        json={
+            "description": "",
+            "transactionGroups": _ACTOR_BASE_TRANSACTION_GROUPS + [transaction_group("read", "telemetryresource", "metrics", ["builder_query/*"])],
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/test"),
+        json=body,
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{find_role_by_name(signoz, admin_token, _ACTOR_ROLE_NAME)}"),
+        json={"description": "", "transactionGroups": _ACTOR_BASE_TRANSACTION_GROUPS},
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+
 def test_history_labels_need_telemetry_and_field_grants(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument

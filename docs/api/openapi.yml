@@ -26640,10 +26640,20 @@ paths:
         - rule:create
         - rule:attach
         - notification-channel:attach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
         - rule:create
         - rule:attach
         - notification-channel:attach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Test alert rule
       tags:
       - rules

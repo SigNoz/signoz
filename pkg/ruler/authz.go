@@ -332,6 +332,22 @@ func NewRuleQueryFieldResources(rulerService Ruler) coretypes.ResourceExtractor 
 	}
 }
 
+func NewRuleBodyTelemetryResources() coretypes.ResourceExtractor {
+	return func(ec coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
+		compositeQuery := gjson.GetBytes(ec.RequestBody, "condition.compositeQuery")
+		if !compositeQuery.Exists() {
+			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.compositeQuery is required")
+		}
+
+		body, err := json.Marshal(map[string]json.RawMessage{"compositeQuery": json.RawMessage(compositeQuery.Raw)})
+		if err != nil {
+			return nil, err
+		}
+
+		return querybuilder.QueryRangeResources(coretypes.ExtractorContext{Request: ec.Request, RequestBody: body})
+	}
+}
+
 func storedCompositeQuery(ec coretypes.ExtractorContext, rulerService Ruler) ([]byte, error) {
 	if ec.Request == nil {
 		return nil, nil
