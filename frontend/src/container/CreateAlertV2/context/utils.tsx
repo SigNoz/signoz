@@ -2,6 +2,7 @@ import { UTC_TIMEZONE } from 'components/CustomTimePicker/timezoneUtils';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { QueryParams } from 'constants/query';
 import {
+	aiTraceAlertDefaults,
 	alertDefaults,
 	anamolyAlertDefaults,
 	exceptionAlertDefaults,
@@ -92,6 +93,8 @@ export function buildInitialAlertDef(alertType: AlertTypes): AlertDef {
 			return exceptionAlertDefaults;
 		case AlertTypes.ANOMALY_BASED_ALERT:
 			return anamolyAlertDefaults;
+		case AlertTypes.AI_TRACES_BASED_ALERT:
+			return aiTraceAlertDefaults;
 		case AlertTypes.METRICS_BASED_ALERT:
 			return alertDefaults;
 		default:

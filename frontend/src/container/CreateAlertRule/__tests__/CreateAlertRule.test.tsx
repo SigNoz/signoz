@@ -254,6 +254,21 @@ describe('CreateAlertRule', () => {
 			expect(mockSafeNavigate).toHaveBeenCalled();
 		});
 
+		it('should navigate with threshold alert params for AI traces alert', () => {
+			render(<CreateAlertRule />);
+			fireEvent.click(screen.getByText('ai_traces_based_alert'));
+
+			expect(mockSetUrlQuery).toHaveBeenCalledWith(
+				QueryParams.ruleType,
+				'threshold_rule',
+			);
+			expect(mockSetUrlQuery).toHaveBeenCalledWith(
+				QueryParams.alertType,
+				AlertTypes.AI_TRACES_BASED_ALERT,
+			);
+			expect(mockSafeNavigate).toHaveBeenCalled();
+		});
+
 		it('should navigate with threshold alert params for exceptions alert', () => {
 			render(<CreateAlertRule />);
 			fireEvent.click(screen.getByText('exceptions_based_alert'));

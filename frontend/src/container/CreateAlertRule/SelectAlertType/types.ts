@@ -5,4 +5,5 @@ export interface OptionType {
 	selection: AlertTypes;
 	description: string;
 	isBeta?: boolean;
+	hideSampleAlertLink?: boolean;
 }
