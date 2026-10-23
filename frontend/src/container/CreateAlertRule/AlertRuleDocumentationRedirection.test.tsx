@@ -94,7 +94,7 @@ describe('Alert rule documentation redirection', () => {
 			'Click here to see how to create a sample alert.',
 		);
 
-		expect(clickHereLinks).toHaveLength(5);
+		expect(clickHereLinks).toHaveLength(Object.keys(AlertTypes).length);
 	});
 
 	it('should redirect to correct documentation for each alert type', () => {
