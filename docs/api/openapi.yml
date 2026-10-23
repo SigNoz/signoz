@@ -10346,6 +10346,8 @@ components:
         endTimestampMillis:
           minimum: 0
           type: integer
+        endTimestampUnixNano:
+          type: string
         hasMissingSpans:
           type: boolean
         hasMore:
@@ -10362,6 +10364,8 @@ components:
         startTimestampMillis:
           minimum: 0
           type: integer
+        startTimestampUnixNano:
+          type: string
         totalErrorSpansCount:
           minimum: 0
           type: integer
@@ -10854,6 +10858,8 @@ components:
         time_unix:
           minimum: 0
           type: integer
+        time_unix_nano:
+          type: string
         trace_id:
           type: string
         trace_state:
