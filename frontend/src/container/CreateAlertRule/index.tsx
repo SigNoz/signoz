@@ -100,10 +100,12 @@ function CreateRules(): JSX.Element {
 			return <SelectAlertType onSelect={handleSelectType} />;
 		}
 
-		if (
-			showClassicCreateAlertsPageFlag ||
-			alertType === AlertTypes.ANOMALY_BASED_ALERT
-		) {
+		const isClassicPage =
+			(showClassicCreateAlertsPageFlag &&
+				alertType !== AlertTypes.AI_TRACES_BASED_ALERT) ||
+			alertType === AlertTypes.ANOMALY_BASED_ALERT;
+
+		if (isClassicPage) {
 			return (
 				<FormAlertRules
 					alertType={alertType}

@@ -164,6 +164,10 @@ function ChartPreview({
 					query.builder.queryData.length > 0 &&
 					query.builder.queryData[0].queryName !== ''
 				);
+			case EQueryType.AI_QUERY_BUILDER: {
+				const queryData = query.builder_ai_query?.queryData ?? [];
+				return queryData.length > 0 && queryData[0].queryName !== '';
+			}
 			default:
 				return false;
 		}

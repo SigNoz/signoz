@@ -7,6 +7,7 @@ import {
 	INITIAL_NOTIFICATION_SETTINGS_STATE,
 } from 'container/CreateAlertV2/context/constants';
 import { createMockAlertContextState } from 'container/CreateAlertV2/EvaluationSettings/__tests__/testUtils';
+import { EQueryType } from 'types/common/dashboard';
 
 import MultipleNotifications from '../MultipleNotifications';
 
@@ -140,6 +141,32 @@ describe('MultipleNotifications', () => {
 		).toBeInTheDocument();
 		const select = screen.getByRole(COMBOBOX_ROLE);
 		expect(select).toHaveAttribute(ARIA_DISABLED_ATTR, FALSE);
+	});
+
+	it('should list the group by fields of an AI query', async () => {
+		useQueryBuilder.mockReturnValue({
+			currentQuery: {
+				queryType: EQueryType.AI_QUERY_BUILDER,
+				builder: { queryData: [] },
+				builder_ai_query: {
+					queryData: [
+						{
+							queryName: TEST_QUERY,
+							groupBy: [{ key: 'gen_ai.request.model' }],
+						},
+					],
+				},
+			},
+		});
+
+		render(<MultipleNotifications />);
+
+		const select = screen.getByRole(COMBOBOX_ROLE);
+		expect(select).toHaveAttribute(ARIA_DISABLED_ATTR, FALSE);
+		await userEvent.click(select);
+		expect(
+			screen.getByRole('option', { name: 'gen_ai.request.model' }),
+		).toBeInTheDocument();
 	});
 
 	it('should render unique group by options from all queries', async () => {
