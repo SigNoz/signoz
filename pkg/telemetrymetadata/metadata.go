@@ -2434,9 +2434,8 @@ func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Conte
 	return entries, nil
 }
 
-// updateColumnEvolutionMetadataForKeys updates the evolution field for keys. In
-// the same query it fetches the entries of columns, column-wide selectors read
-// even when no key is found, and returns them.
+// updateColumnEvolutionMetadataForKeys sets each key's evolutions and returns
+// the entries of columns, fetched in the same query.
 func (k *telemetryMetaStore) updateColumnEvolutionMetadataForKeys(ctx context.Context, keysToUpdate []*telemetrytypes.TelemetryFieldKey, columns ...*telemetrytypes.EvolutionSelector) ([]*telemetrytypes.EvolutionEntry, error) {
 	// an empty selector list would run the evolution query without a filter
 	if len(keysToUpdate) == 0 && len(columns) == 0 {

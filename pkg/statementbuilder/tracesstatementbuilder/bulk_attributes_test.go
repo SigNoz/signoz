@@ -216,3 +216,85 @@ func TestUnknownAttributeFollowsRollout(t *testing.T) {
 		})
 	}
 }
+
+func TestUnknownAttributeFollowsRolloutAfterRelease(t *testing.T) {
+	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
+	startMs := uint64(releaseTime.Add(24 * time.Hour).UnixMilli())
+	endMs := uint64(releaseTime.Add(48 * time.Hour).UnixMilli())
+
+	b := newBulkTestBuilder(t, releaseTime)
+
+	testCases := []struct {
+		name            string
+		requestType     qbtypes.RequestType
+		query           qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]
+		wantContains    []string
+		wantNotContains []string
+	}{
+		{
+			name:        "AggregationArgument_ReadsJSONOnly",
+			requestType: qbtypes.RequestTypeTimeSeries,
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Aggregations: []qbtypes.TraceAggregation{{Expression: "sum(unknown.num)"}},
+			},
+			wantContains:    []string{"attributes.`unknown.num`"},
+			wantNotContains: []string{"attributes_number['unknown.num']"},
+		},
+		{
+			name:        "RawSelectAndOrder_ReadsJSONOnly",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				SelectFields: []telemetrytypes.TelemetryFieldKey{{Name: "unknown.attr"}},
+				Order:        []qbtypes.OrderBy{{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "unknown.attr"}}, Direction: qbtypes.OrderDirectionAsc}},
+				Limit:        10,
+			},
+			wantContains:    []string{"attributes.`unknown.attr`"},
+			wantNotContains: []string{"attributes_string['unknown.attr']"},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			stmt, err := b.Build(context.Background(), valuer.UUID{}, startMs, endMs, testCase.requestType, testCase.query, nil)
+			require.NoError(t, err)
+			for _, want := range testCase.wantContains {
+				assert.Contains(t, stmt.Query, want)
+			}
+			for _, unwanted := range testCase.wantNotContains {
+				assert.NotContains(t, stmt.Query, unwanted)
+			}
+		})
+	}
+}
+
+func TestTraceOperatorUnknownAttributeFollowsRollout(t *testing.T) {
+	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
+	startMs := uint64(releaseTime.Add(24 * time.Hour).UnixMilli())
+	endMs := uint64(releaseTime.Add(48 * time.Hour).UnixMilli())
+
+	fl := flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureUseTraceAttributesJSON.String(): true})
+	storage := tracestelemetryschema.NewStorage()
+	store := telemetrytypestest.NewMockMetadataStore()
+	store.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
+	store.ColumnEvolutionMetadataMap["traces:attribute:__all__"] = tracestelemetryschema.MockAttributeEvolutionData(releaseTime)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
+	traceStmtBuilder := NewTraceQueryStatementBuilder(instrumentationtest.New().ToProviderSettings(), store, storage, aggExprRewriter, nil, fl, false, 100000)
+	b := NewTraceOperatorStatementBuilder(instrumentationtest.New().ToProviderSettings(), store, storage, traceStmtBuilder, aggExprRewriter, fl)
+
+	operator := qbtypes.QueryBuilderTraceOperator{Expression: "A => B", Limit: 10}
+	require.NoError(t, operator.ParseExpression())
+	compositeQuery := &qbtypes.CompositeQuery{Queries: []qbtypes.QueryEnvelope{
+		{Type: qbtypes.QueryTypeBuilder, Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{Name: "A", Signal: telemetrytypes.SignalTraces, Filter: &qbtypes.Filter{Expression: "unknown.attr = 'x'"}}},
+		{Type: qbtypes.QueryTypeBuilder, Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{Name: "B", Signal: telemetrytypes.SignalTraces, Filter: &qbtypes.Filter{Expression: "unknown.other = 'y'"}}},
+	}}
+
+	stmt, err := b.Build(context.Background(), valuer.UUID{}, startMs, endMs, qbtypes.RequestTypeRaw, operator, compositeQuery)
+	require.NoError(t, err)
+	assert.Contains(t, stmt.Query, "attributes.`unknown.attr`::String = ?")
+	assert.Contains(t, stmt.Query, "attributes.`unknown.other`::String = ?")
+	assert.NotContains(t, stmt.Query, "attributes_string['unknown.attr']")
+	assert.NotContains(t, stmt.Query, "attributes_string['unknown.other']")
+}

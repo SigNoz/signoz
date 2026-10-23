@@ -143,8 +143,9 @@ func SynthesizeKeys(field *telemetrytypes.TelemetryFieldKey, value any) []*telem
 	evolutions := evolutionsOf(field.Evolutions, fieldContext, field.Name)
 
 	// A set data type needs only one synthesized key. It keeps the request
-	// key's physical data (evolutions, materialization, JSON plan): a key the
-	// caller decorated reads through those even when metadata is silent.
+	// key's physical data (evolutions of its context, materialization, JSON
+	// plan): a key the caller decorated reads through those even when
+	// metadata is silent.
 	if fieldDataType != telemetrytypes.FieldDataTypeUnspecified {
 		key := *field
 		key.FieldContext = fieldContext
