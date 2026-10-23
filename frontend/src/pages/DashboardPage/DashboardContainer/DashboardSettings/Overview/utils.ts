@@ -28,9 +28,9 @@ export function stringsToTags(tagStrings: string[]): TagtypesPostableTagDTO[] {
 // under a sentinel and is mapped back to '' on the way out.
 export const DEFAULT_TIME_RANGE_UNSET = '__unset__';
 
-// `1month` is excluded: the backend only accepts m/h/d/w units.
+// The default entry represents 30m; months are not supported by the picker fallback.
 const SELECTABLE_DURATIONS = RelativeDurationOptions.filter(
-	(option) => option.value !== '1month',
+	(option) => option.value !== '1month' && option.value !== '30m',
 );
 
 // A window set through the API may sit outside the list; it's appended so the
@@ -45,7 +45,7 @@ export function buildDefaultTimeRangeItems(
 			label: option.label,
 		})),
 	];
-	if (value && !items.some((item) => item.value === value)) {
+	if (value && value !== '30m' && !items.some((item) => item.value === value)) {
 		items.push({ value, label: `Last ${value}` });
 	}
 	return items;

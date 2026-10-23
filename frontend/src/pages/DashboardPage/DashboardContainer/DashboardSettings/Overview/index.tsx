@@ -13,6 +13,7 @@ import APIError from 'types/api/error';
 
 import { useOptimisticPatch } from '../../hooks/useOptimisticPatch';
 import CrossPanelSync from './CrossPanelSync/CrossPanelSync';
+import DefaultTimeRange from './DefaultTimeRange/DefaultTimeRange';
 import DashboardInfoForm from './DashboardInfoForm/DashboardInfoForm';
 import UnsavedChangesFooter from './UnsavedChangesFooter/UnsavedChangesFooter';
 import { stringsToTags, tagsToStrings } from './utils';
@@ -193,12 +194,14 @@ function Overview({ dashboard }: OverviewProps): JSX.Element {
 				description={updatedDescription}
 				image={updatedImage}
 				tags={updatedTags}
-				defaultTimeRange={updatedDefaultTimeRange}
 				onTitleChange={setUpdatedTitle}
 				onDescriptionChange={setUpdatedDescription}
 				onImageChange={setUpdatedImage}
 				onTagsChange={setUpdatedTags}
-				onDefaultTimeRangeChange={setUpdatedDefaultTimeRange}
+			/>
+			<DefaultTimeRange
+				value={updatedDefaultTimeRange}
+				onChange={setUpdatedDefaultTimeRange}
 			/>
 			<CrossPanelSync dashboardId={id} />
 			{numberOfUnsavedChanges > 0 && (

@@ -57,7 +57,7 @@ describe('Dashboard settings - default time range', () => {
 		render(<Overview dashboard={buildDashboard('30m')} />);
 
 		const trigger = await screen.findByTestId('dashboard-default-time-range');
-		expect(trigger).toHaveTextContent('Last 30 minutes');
+		expect(trigger).toHaveTextContent('Default (Last 30 minutes)');
 
 		await selectOption('Last 1 hour');
 
@@ -71,6 +71,21 @@ describe('Dashboard settings - default time range', () => {
 				{ op: 'replace', path: '/spec/duration', value: '1h' },
 			]);
 		});
+	});
+
+	it('offers the 30-minute default once', async () => {
+		render(<Overview dashboard={buildDashboard('1h')} />);
+
+		await userEvent.click(
+			await screen.findByTestId('dashboard-default-time-range'),
+		);
+
+		expect(
+			screen.getByRole('option', { name: 'Default (Last 30 minutes)' }),
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole('option', { name: 'Last 30 minutes', exact: true }),
+		).not.toBeInTheDocument();
 	});
 
 	it('patches an empty window when the setting is cleared', async () => {
