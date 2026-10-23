@@ -13,9 +13,10 @@ import {
 	type PanelFormattingSlice,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 import { getSectionControls } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getSectionControls';
-import { toWireQuery } from 'lib/query/builderSlot';
 import { fromPerses } from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 
 import { deriveAlertPrefill, PanelAlertPrefill } from './deriveAlertPrefill';
 
@@ -52,6 +53,9 @@ export function buildAlertUrl(
 	params.set(QueryParams.panelTypes, panelType);
 	params.set(QueryParams.version, ENTITY_VERSION_V5);
 	params.set(QueryParams.source, YAxisSource.DASHBOARDS);
+	if (query.queryType === EQueryType.AI_QUERY_BUILDER) {
+		params.set(QueryParams.alertType, AlertTypes.AI_TRACES_BASED_ALERT);
+	}
 
 	if (prefill?.threshold) {
 		// Raw JSON: URLSearchParams encodes once; the alert page uses a bare JSON.parse.
@@ -75,7 +79,7 @@ export function buildAlertUrl(
  */
 export function buildCreateAlertUrl(panel: DashboardtypesPanelDTO): string {
 	const panelType = toPanelType(panel.spec.plugin.kind);
-	const query = toWireQuery(fromPerses(panel.spec.queries, panelType));
+	const query = fromPerses(panel.spec.queries, panelType);
 	const unit = readPanelUnit(panel.spec.plugin);
 	return buildAlertUrl(
 		query,

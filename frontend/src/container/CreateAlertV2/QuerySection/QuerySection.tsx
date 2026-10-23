@@ -12,6 +12,7 @@ import { getMetricNameFromQueryData } from 'hooks/useGetYAxisUnit';
 import useUrlQuery from 'hooks/useUrlQuery';
 import {
 	BarChart,
+	Brain,
 	DraftingCompass,
 	FileText,
 	ScrollText,
@@ -121,6 +122,11 @@ function QuerySection(): JSX.Element {
 			label: 'Traces',
 			icon: <DraftingCompass size={14} data-testid="traces-view" />,
 			value: AlertTypes.TRACES_BASED_ALERT,
+		},
+		{
+			label: 'AI Traces',
+			icon: <Brain size={14} data-testid="ai-traces-view" />,
+			value: AlertTypes.AI_TRACES_BASED_ALERT,
 		},
 		{
 			label: 'Exceptions',

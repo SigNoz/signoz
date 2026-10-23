@@ -35,6 +35,12 @@ export const ALERT_TYPE_URL_MAP: Record<
 		creation:
 			'https://signoz.io/docs/alerts-management/anomaly-based-alerts/?utm_source=product&utm_medium=alert-creation-page',
 	},
+	[AlertTypes.AI_TRACES_BASED_ALERT]: {
+		selection:
+			'https://signoz.io/docs/alerts-management/trace-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples',
+		creation:
+			'https://signoz.io/docs/alerts-management/trace-based-alerts/?utm_source=product&utm_medium=alert-creation-page',
+	},
 };
 
 export const ALERT_TYPE_TO_TITLE: Record<AlertTypes, string> = {
@@ -43,4 +49,5 @@ export const ALERT_TYPE_TO_TITLE: Record<AlertTypes, string> = {
 	[AlertTypes.TRACES_BASED_ALERT]: 'traces_based_alert',
 	[AlertTypes.EXCEPTIONS_BASED_ALERT]: 'exceptions_based_alert',
 	[AlertTypes.ANOMALY_BASED_ALERT]: 'anomaly_based_alert',
+	[AlertTypes.AI_TRACES_BASED_ALERT]: 'ai_traces_based_alert',
 };

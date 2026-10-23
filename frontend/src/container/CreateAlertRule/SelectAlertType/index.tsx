@@ -40,6 +40,7 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 					'https://signoz.io/docs/alerts-management/log-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples';
 				break;
 			case AlertTypes.TRACES_BASED_ALERT:
+			case AlertTypes.AI_TRACES_BASED_ALERT:
 				url =
 					'https://signoz.io/docs/alerts-management/trace-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples';
 				break;

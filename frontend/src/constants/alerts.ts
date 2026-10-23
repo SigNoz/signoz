@@ -8,6 +8,7 @@ export const ALERTS_DATA_SOURCE_MAP: Record<AlertTypes, DataSource> = {
 	[AlertTypes.LOGS_BASED_ALERT]: DataSource.LOGS,
 	[AlertTypes.TRACES_BASED_ALERT]: DataSource.TRACES,
 	[AlertTypes.EXCEPTIONS_BASED_ALERT]: DataSource.TRACES,
+	[AlertTypes.AI_TRACES_BASED_ALERT]: DataSource.TRACES,
 };
 
 export function dataSourceForAlertType(

@@ -4,6 +4,7 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { fromPerses } from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
@@ -142,5 +143,71 @@ describe('buildCreateAlertUrl', () => {
 		const thresholds = JSON.parse(params.get(QueryParams.thresholds) as string);
 		expect(thresholds).toHaveLength(1);
 		expect(thresholds[0].thresholdValue).toBe(90);
+	});
+
+	describe('for an AI panel', () => {
+		const aiQuery: Query = {
+			...translatedQuery,
+			queryType: EQueryType.AI_QUERY_BUILDER,
+			builder_ai_query: {
+				queryData: [
+					{
+						queryName: 'A',
+						builderQueryType: 'builder_ai_query',
+						aggregations: [{ reduceTo: 'sum' }],
+					},
+				],
+				queryFormulas: [],
+				queryTraceOperator: [],
+			} as unknown as Query['builder'],
+		};
+
+		it('opens an AI traces alert', () => {
+			mockFromPerses.mockReturnValue({ ...aiQuery });
+			const params = parse(buildCreateAlertUrl(makePanel()));
+
+			expect(params.get(QueryParams.alertType)).toBe(
+				AlertTypes.AI_TRACES_BASED_ALERT,
+			);
+		});
+
+		it('keeps the query in the AI slot', () => {
+			mockFromPerses.mockReturnValue({ ...aiQuery });
+			const params = parse(buildCreateAlertUrl(makePanel()));
+
+			const decoded = JSON.parse(
+				decodeURIComponent(params.get(QueryParams.compositeQuery) as string),
+			);
+			expect(decoded.queryType).toBe(EQueryType.AI_QUERY_BUILDER);
+			expect(decoded.builder.queryData).toHaveLength(0);
+			expect(decoded.builder_ai_query.queryData[0].queryName).toBe('A');
+		});
+
+		it('seeds the alert condition from the AI query Reduce To', () => {
+			mockFromPerses.mockReturnValue({ ...aiQuery });
+			const numberPanel = {
+				kind: 'Panel',
+				spec: {
+					display: { name: 'Tokens' },
+					plugin: {
+						kind: 'signoz/NumberPanel',
+						spec: {
+							thresholds: [{ color: '#F1575F', value: 90, operator: 'above' }],
+						},
+					},
+					queries: [{ some: 'query' }],
+				},
+			} as unknown as DashboardtypesPanelDTO;
+
+			const params = parse(buildCreateAlertUrl(numberPanel));
+
+			expect(params.get(QueryParams.matchType)).toBe('in_total');
+		});
+	});
+
+	it('leaves the alert type to the alert page for a non-AI panel', () => {
+		const params = parse(buildCreateAlertUrl(makePanel()));
+
+		expect(params.get(QueryParams.alertType)).toBeNull();
 	});
 });

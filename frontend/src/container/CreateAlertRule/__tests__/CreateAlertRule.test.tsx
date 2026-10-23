@@ -114,6 +114,23 @@ describe('CreateAlertRule', () => {
 		expect(screen.getByText(FORM_ALERT_RULES_TEXT)).toBeInTheDocument();
 	});
 
+	it('should render the new flow for an AI traces alert even when showClassicCreateAlertsPage is true', () => {
+		mockGetUrlQuery.mockImplementation((key: string) => {
+			if (key === QueryParams.showClassicCreateAlertsPage) {
+				return 'true';
+			}
+			if (key === QueryParams.alertType) {
+				return AlertTypes.AI_TRACES_BASED_ALERT;
+			}
+			return null;
+		});
+		render(<CreateAlertRule />);
+		expect(screen.queryByText(FORM_ALERT_RULES_TEXT)).not.toBeInTheDocument();
+		expect(
+			screen.getByText(AlertTypes.AI_TRACES_BASED_ALERT),
+		).toBeInTheDocument();
+	});
+
 	it('should render new flow when alertType is provided', () => {
 		mockGetUrlQuery.mockImplementation((key: string) => {
 			if (key === QueryParams.alertType) {
@@ -250,6 +267,21 @@ describe('CreateAlertRule', () => {
 			expect(mockSetUrlQuery).toHaveBeenCalledWith(
 				QueryParams.alertType,
 				AlertTypes.TRACES_BASED_ALERT,
+			);
+			expect(mockSafeNavigate).toHaveBeenCalled();
+		});
+
+		it('should navigate with threshold alert params for AI traces alert', () => {
+			render(<CreateAlertRule />);
+			fireEvent.click(screen.getByText('ai_traces_based_alert'));
+
+			expect(mockSetUrlQuery).toHaveBeenCalledWith(
+				QueryParams.ruleType,
+				'threshold_rule',
+			);
+			expect(mockSetUrlQuery).toHaveBeenCalledWith(
+				QueryParams.alertType,
+				AlertTypes.AI_TRACES_BASED_ALERT,
 			);
 			expect(mockSafeNavigate).toHaveBeenCalled();
 		});

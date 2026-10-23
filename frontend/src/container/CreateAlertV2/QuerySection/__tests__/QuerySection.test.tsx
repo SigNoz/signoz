@@ -144,6 +144,7 @@ const METRICS_TEXT = 'Metrics';
 const QUERY_BUILDER_TEXT = 'query_builder';
 const LOGS_TEXT = 'Logs';
 const TRACES_TEXT = 'Traces';
+const AI_TRACES_TEXT = 'AI Traces';
 const ACTIVE_TAB_CLASS = 'active-tab';
 
 describe('QuerySection', () => {
@@ -354,6 +355,34 @@ describe('QuerySection', () => {
 		expect(result[1]).toStrictEqual({
 			[QueryParams.alertType]: AlertTypes.METRICS_BASED_ALERT,
 			[QueryParams.ruleType]: AlertDetectionTypes.THRESHOLD_ALERT,
+		});
+	});
+
+	it('renders the AI traces alert type tab', () => {
+		renderQuerySection();
+
+		expect(screen.getByText(AI_TRACES_TEXT)).toBeInTheDocument();
+		expect(screen.getByTestId('ai-traces-view')).toBeInTheDocument();
+	});
+
+	it('loads the AI default into the AI slot when the AI traces tab is clicked', async () => {
+		const user = userEvent.setup();
+		renderQuerySection();
+
+		await user.click(screen.getByText(AI_TRACES_TEXT));
+
+		const [query, params] =
+			mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
+
+		expect(params).toStrictEqual({
+			[QueryParams.alertType]: AlertTypes.AI_TRACES_BASED_ALERT,
+			[QueryParams.ruleType]: AlertDetectionTypes.THRESHOLD_ALERT,
+		});
+		expect(query.queryType).toBe(EQueryType.AI_QUERY_BUILDER);
+		expect(query.builder.queryData).toHaveLength(0);
+		expect(query.builder_ai_query.queryData[0]).toMatchObject({
+			dataSource: DataSource.TRACES,
+			builderQueryType: 'builder_ai_query',
 		});
 	});
 

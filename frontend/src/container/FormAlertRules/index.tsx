@@ -91,6 +91,8 @@ const ALERT_SETUP_GUIDE_URLS: Record<AlertTypes, string> = {
 		'https://signoz.io/docs/alerts-management/exceptions-based-alerts/?utm_source=product&utm_medium=alert-creation-page',
 	[AlertTypes.ANOMALY_BASED_ALERT]:
 		'https://signoz.io/docs/alerts-management/anomaly-based-alerts/?utm_source=product&utm_medium=alert-creation-page',
+	[AlertTypes.AI_TRACES_BASED_ALERT]:
+		'https://signoz.io/docs/alerts-management/trace-based-alerts/?utm_source=product&utm_medium=alert-creation-page',
 };
 
 function FormAlertRules({
