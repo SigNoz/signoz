@@ -10,6 +10,7 @@ import {
 	buildQueryBuilderOverrides,
 	DEFAULT_FILTER,
 	DEFAULT_USE_FIELD_APIS,
+	EXTRA_VALUES,
 	getFilterFromCall,
 	mockFieldsValuesAPI,
 	renderWithFilter,
@@ -30,7 +31,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 
 					const values =
 						searchTextReceived === ''
-							? ['production', 'staging', 'development']
+							? ['production', 'staging', 'development', ...EXTRA_VALUES]
 							: ['production'];
 
 					return res(
@@ -60,7 +61,6 @@ describe('CheckboxFilterV2 - interactions', () => {
 			await screen.findByTestId('checkbox-value-row-production');
 			expect(screen.getByTestId('checkbox-value-row-staging')).toBeInTheDocument();
 
-			await user.click(screen.getByTestId('checkbox-filter-search-toggle'));
 			const searchInput = screen.getByTestId('checkbox-filter-search');
 			await user.type(searchInput, 'prod');
 
@@ -73,6 +73,41 @@ describe('CheckboxFilterV2 - interactions', () => {
 					screen.queryByTestId('checkbox-value-row-staging'),
 				).not.toBeInTheDocument();
 			});
+			expect(screen.getByTestId('checkbox-filter-search')).toBeInTheDocument();
+		});
+
+		it('shows no search box when every value fits', async () => {
+			mockFieldsValuesAPI({ stringValues: EXTRA_VALUES });
+
+			render(
+				<CheckboxFilterV2
+					filter={DEFAULT_FILTER}
+					source={QuickFiltersSource.TRACES_EXPLORER}
+					useFieldApis={DEFAULT_USE_FIELD_APIS}
+				/>,
+			);
+
+			await screen.findByTestId(`checkbox-value-row-${EXTRA_VALUES[0]}`);
+
+			expect(
+				screen.queryByTestId('checkbox-filter-search'),
+			).not.toBeInTheDocument();
+		});
+
+		it('shows the search box once there are more values than fit', async () => {
+			mockFieldsValuesAPI({ stringValues: ['production', ...EXTRA_VALUES] });
+
+			render(
+				<CheckboxFilterV2
+					filter={DEFAULT_FILTER}
+					source={QuickFiltersSource.TRACES_EXPLORER}
+					useFieldApis={DEFAULT_USE_FIELD_APIS}
+				/>,
+			);
+
+			await expect(
+				screen.findByTestId('checkbox-filter-search'),
+			).resolves.toBeInTheDocument();
 		});
 
 		it('filters values via search while preserving existingQuery context', async () => {
@@ -92,7 +127,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 								data: {
 									values: {
 										relatedValues: ['production'],
-										stringValues: ['staging', 'development'],
+										stringValues: ['staging', 'development', ...EXTRA_VALUES],
 										numberValues: [],
 									},
 								},
@@ -144,7 +179,6 @@ describe('CheckboxFilterV2 - interactions', () => {
 			// Related values now appear in "Related" section (no badge, uses divider instead)
 			expect(screen.getByTestId('section-divider-related')).toBeInTheDocument();
 
-			await user.click(screen.getByTestId('checkbox-filter-search-toggle'));
 			const searchInput = screen.getByTestId('checkbox-filter-search');
 			await user.type(searchInput, 'prod');
 
@@ -172,7 +206,10 @@ describe('CheckboxFilterV2 - interactions', () => {
 							data: {
 								values: {
 									relatedValues: [],
-									stringValues: searchText === '' ? ['prod', 'staging'] : ['prod-match'],
+									stringValues:
+										searchText === ''
+											? ['prod', 'staging', ...EXTRA_VALUES]
+											: ['prod-match'],
 									numberValues: [],
 								},
 							},
@@ -194,7 +231,6 @@ describe('CheckboxFilterV2 - interactions', () => {
 
 			await screen.findByTestId('checkbox-value-row-prod');
 
-			await user.click(screen.getByTestId('checkbox-filter-search-toggle'));
 			const searchInput = screen.getByTestId('checkbox-filter-search');
 			await user.type(searchInput, 'prod');
 
@@ -220,7 +256,8 @@ describe('CheckboxFilterV2 - interactions', () => {
 							data: {
 								values: {
 									relatedValues: [],
-									stringValues: searchText === '' ? ['prod', 'staging'] : [],
+									stringValues:
+										searchText === '' ? ['prod', 'staging', ...EXTRA_VALUES] : [],
 									numberValues: [],
 								},
 							},
@@ -239,7 +276,6 @@ describe('CheckboxFilterV2 - interactions', () => {
 
 			await screen.findByTestId('checkbox-value-row-prod');
 
-			await user.click(screen.getByTestId('checkbox-filter-search-toggle'));
 			const searchInput = screen.getByTestId('checkbox-filter-search');
 			await user.type(searchInput, 'xyz-no-match');
 
@@ -316,7 +352,9 @@ describe('CheckboxFilterV2 - interactions', () => {
 					const relatedValues =
 						searchText === '' ? ['pod-a-v1', 'pod-b-v1', 'pod-c-v1'] : ['pod-a-v1']; // filtered to match 'pod-a'
 					const stringValues =
-						searchText === '' ? ['pod-a-v2', 'pod-b-v2', 'pod-c-v2'] : ['pod-a-v2']; // filtered to match 'pod-a'
+						searchText === ''
+							? ['pod-a-v2', 'pod-b-v2', 'pod-c-v2', ...EXTRA_VALUES]
+							: ['pod-a-v2']; // filtered to match 'pod-a'
 
 					return res(
 						ctx.status(200),
@@ -347,7 +385,6 @@ describe('CheckboxFilterV2 - interactions', () => {
 
 			await screen.findByTestId('checkbox-value-row-pod-a-v1');
 
-			await user.click(screen.getByTestId('checkbox-filter-search-toggle'));
 			const searchInput = screen.getByTestId('checkbox-filter-search');
 			await user.type(searchInput, 'pod-a');
 
@@ -520,7 +557,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			expect(screen.getByTestId('checkbox-filter-clear-all')).toBeInTheDocument();
 		});
 
-		it('shows the reset action when expanded even with no active filter', async () => {
+		it('hides reset when the section has no filter applied', async () => {
 			mockFieldsValuesAPI({
 				stringValues: ['production'],
 			});
@@ -535,45 +572,9 @@ describe('CheckboxFilterV2 - interactions', () => {
 
 			await screen.findByTestId('checkbox-value-row-production');
 
-			// Reset is always available on an expanded section now (hover-gated via
-			// CSS), not conditional on an active filter.
-			expect(screen.getByTestId('checkbox-filter-clear-all')).toBeInTheDocument();
-		});
-
-		it('does not dispatch on clear when the key has no filter', async () => {
-			const user = userEvent.setup();
-			const onFilterChange = jest.fn();
-
-			mockFieldsValuesAPI({
-				stringValues: ['production'],
-			});
-
-			render(
-				<CheckboxFilterV2
-					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
-					useFieldApis={DEFAULT_USE_FIELD_APIS}
-					onFilterChange={onFilterChange}
-				/>,
-				undefined,
-				{
-					queryBuilderOverrides: buildQueryBuilderOverrides({
-						builder: {
-							queryData: [
-								{
-									filters: { items: [], op: 'AND' },
-									filter: { expression: '' },
-								},
-							],
-						},
-					}),
-				},
-			);
-
-			await screen.findByTestId('checkbox-value-row-production');
-			await user.click(screen.getByTestId('checkbox-filter-clear-all'));
-
-			expect(onFilterChange).not.toHaveBeenCalled();
+			expect(
+				screen.queryByTestId('checkbox-filter-clear-all'),
+			).not.toBeInTheDocument();
 		});
 
 		it('calls onFilterChange when clear clicked', async () => {
