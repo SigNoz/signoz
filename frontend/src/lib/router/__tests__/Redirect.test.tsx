@@ -1,5 +1,5 @@
-import { MemoryRouter, useHistory } from 'react-router-dom';
-import { render, screen } from '@testing-library/react';
+import { useHistory } from 'react-router-dom';
+import { render, screen } from 'tests/test-utils';
 
 import { Redirect, type RedirectProps } from '../Redirect';
 import { useAppLocation } from '../useAppLocation';
@@ -20,10 +20,10 @@ function LocationProbe(): JSX.Element {
 
 function renderRedirect(props: RedirectProps): void {
 	render(
-		<MemoryRouter initialEntries={['/']}>
+		<>
 			<Redirect {...props} />
 			<LocationProbe />
-		</MemoryRouter>,
+		</>,
 	);
 }
 
@@ -38,6 +38,7 @@ describe('Redirect', () => {
 	it('replaces by default, so Back does not re-run the redirect', () => {
 		renderRedirect({ to: '/logs' });
 
+		expect(screen.getByTestId('pathname')).toHaveTextContent('/logs');
 		expect(screen.getByTestId('action')).toHaveTextContent('REPLACE');
 	});
 

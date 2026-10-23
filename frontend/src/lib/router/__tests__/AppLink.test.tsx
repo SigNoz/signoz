@@ -1,7 +1,7 @@
 import { createRef } from 'react';
 import type { ReactNode } from 'react';
-import { MemoryRouter, useHistory } from 'react-router-dom';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { useHistory } from 'react-router-dom';
+import { cleanup, fireEvent, render, screen } from 'tests/test-utils';
 
 import { AppLink, type AppLinkProps } from '../AppLink';
 import { useAppLocation } from '../useAppLocation';
@@ -27,10 +27,12 @@ function renderLink(
 	initialEntry = '/',
 ): void {
 	render(
-		<MemoryRouter initialEntries={[initialEntry]}>
+		<>
 			<AppLink {...props}>{children}</AppLink>
 			<LocationProbe />
-		</MemoryRouter>,
+		</>,
+		undefined,
+		{ initialRoute: initialEntry },
 	);
 }
 
@@ -160,11 +162,9 @@ describe('AppLink', () => {
 	it('forwards a ref to the anchor', () => {
 		const ref = createRef<HTMLAnchorElement>();
 		render(
-			<MemoryRouter initialEntries={['/']}>
-				<AppLink ref={ref} to="/logs">
-					go
-				</AppLink>
-			</MemoryRouter>,
+			<AppLink ref={ref} to="/logs">
+				go
+			</AppLink>,
 		);
 
 		expect(ref.current).toBeInstanceOf(HTMLAnchorElement);

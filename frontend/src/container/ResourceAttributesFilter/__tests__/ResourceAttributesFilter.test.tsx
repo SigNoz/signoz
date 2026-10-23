@@ -6,7 +6,8 @@ import ROUTES from 'constants/routes';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { IResourceAttribute } from 'hooks/useResourceAttribute/types';
 import { encode } from 'js-base64';
-import { resetTestRoute, TestRouter } from 'tests/router';
+import { TestRouter } from 'tests/router';
+import { resetTestRoute } from 'tests/router-utils';
 
 import ResourceAttributesFilter from '../ResourceAttributesFilter';
 

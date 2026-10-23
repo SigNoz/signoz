@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react';
-import { MemoryRouter } from 'react-router-dom';
-import { renderHook } from '@testing-library/react';
+import { TestRouter } from 'tests/router';
+import { renderHook } from 'tests/test-utils';
 
+import { navigate } from '../navigation';
 import { useAppLocation } from '../useAppLocation';
 
-function wrapperAt(entry: string | { pathname: string; state?: unknown }) {
+function wrapperAt(route: string) {
 	return function Wrapper({ children }: { children: ReactNode }): JSX.Element {
-		return <MemoryRouter initialEntries={[entry]}>{children}</MemoryRouter>;
+		return <TestRouter initialRoute={route}>{children}</TestRouter>;
 	};
 }
 
@@ -24,8 +25,9 @@ describe('useAppLocation', () => {
 	});
 
 	it('returns the entry state', () => {
+		navigate('/logs', { replace: true, state: { from: 'test' } });
 		const { result } = renderHook(() => useAppLocation<{ from: string }>(), {
-			wrapper: wrapperAt({ pathname: '/logs', state: { from: 'test' } }),
+			wrapper: TestRouter,
 		});
 
 		expect(result.current.state.from).toBe('test');

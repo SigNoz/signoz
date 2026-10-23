@@ -4,12 +4,14 @@ import {
 	getApiMonitoringParams,
 	setApiMonitoringParams,
 } from 'container/ApiMonitoring/queryParams';
+import { mockNavigate } from 'tests/router-mocks';
 
-// Mock navigation module
-const mockNavigate = jest.fn();
-jest.mock('lib/router/navigation', () => ({
-	navigate: (...args: any[]) => mockNavigate(...args),
-}));
+const navigateSpy = mockNavigate();
+
+function navigatedSearch(): string | undefined {
+	const [to] = navigateSpy.mock.calls[0];
+	return typeof to === 'string' ? to : to.search;
+}
 
 describe('API Monitoring Query Params', () => {
 	describe('getApiMonitoringParams', () => {
@@ -53,10 +55,6 @@ describe('API Monitoring Query Params', () => {
 	});
 
 	describe('setApiMonitoringParams', () => {
-		beforeEach(() => {
-			mockNavigate.mockClear();
-		});
-
 		it('updates URL with new params (push mode)', () => {
 			const search = '';
 			const newParams: Partial<ApiMonitoringParams> = {
@@ -66,13 +64,13 @@ describe('API Monitoring Query Params', () => {
 
 			setApiMonitoringParams(newParams, search, false);
 
-			expect(mockNavigate).toHaveBeenCalledWith(
+			expect(navigateSpy).toHaveBeenCalledWith(
 				{ search: expect.stringContaining('apiMonitoringParams') },
 				{ replace: false },
 			);
 
 			// Verify that the search string contains the expected encoded params
-			const searchArg = mockNavigate.mock.calls[0][0].search;
+			const searchArg = navigatedSearch();
 			const params = new URLSearchParams(searchArg);
 			const decoded = JSON.parse(
 				decodeURIComponent(params.get('apiMonitoringParams') || ''),
@@ -92,7 +90,7 @@ describe('API Monitoring Query Params', () => {
 
 			setApiMonitoringParams(newParams, search, true);
 
-			expect(mockNavigate).toHaveBeenCalledWith(
+			expect(navigateSpy).toHaveBeenCalledWith(
 				{ search: expect.stringContaining('apiMonitoringParams') },
 				{ replace: true },
 			);
@@ -122,7 +120,7 @@ describe('API Monitoring Query Params', () => {
 			setApiMonitoringParams(newParams, search, false);
 
 			// Verify merged params
-			const searchArg = mockNavigate.mock.calls[0][0].search;
+			const searchArg = navigatedSearch();
 			const params = new URLSearchParams(searchArg);
 			const decoded = JSON.parse(
 				decodeURIComponent(params.get('apiMonitoringParams') || ''),
@@ -184,12 +182,12 @@ describe('API Monitoring Query Params', () => {
 			// Manually execute the core logic of the hook's setParams function
 			setApiMonitoringParams(newParams, location.search);
 
-			expect(mockNavigate).toHaveBeenCalledWith(
+			expect(navigateSpy).toHaveBeenCalledWith(
 				{ search: expect.stringContaining('apiMonitoringParams') },
 				{ replace: false },
 			);
 
-			const searchArg = mockNavigate.mock.calls[0][0].search;
+			const searchArg = navigatedSearch();
 			const params = new URLSearchParams(searchArg);
 			const decoded = JSON.parse(
 				decodeURIComponent(params.get('apiMonitoringParams') || ''),
@@ -221,10 +219,10 @@ describe('API Monitoring Query Params', () => {
 			setApiMonitoringParams({ selectedView: 'new-view' }, location.search);
 
 			// Verify history was updated
-			expect(mockNavigate).toHaveBeenCalled();
+			expect(navigateSpy).toHaveBeenCalled();
 
 			// Parse the new query params from the URL
-			const searchArg = mockNavigate.mock.calls[0][0].search;
+			const searchArg = navigatedSearch();
 			const params = new URLSearchParams(searchArg);
 			const decoded = JSON.parse(
 				decodeURIComponent(params.get('apiMonitoringParams') || ''),

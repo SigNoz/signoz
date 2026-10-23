@@ -1,15 +1,15 @@
 import type { ReactNode } from 'react';
-import { MemoryRouter, Route } from 'react-router-dom';
-import { renderHook } from '@testing-library/react';
+import { TestRouter } from 'tests/router';
+import { renderHook } from 'tests/test-utils';
 
 import { useAppParams } from '../useAppParams';
 
-function wrapperAt(entry: string, path: string) {
+function wrapperAt(route: string, routePath: string) {
 	return function Wrapper({ children }: { children: ReactNode }): JSX.Element {
 		return (
-			<MemoryRouter initialEntries={[entry]}>
-				<Route path={path}>{children}</Route>
-			</MemoryRouter>
+			<TestRouter initialRoute={route} routePath={routePath}>
+				{children}
+			</TestRouter>
 		);
 	};
 }

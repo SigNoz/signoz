@@ -2,7 +2,8 @@ import { render, screen } from '@testing-library/react';
 import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
 
-import { resetTestRoute, TestRouter } from './router';
+import { TestRouter } from './router';
+import { resetTestRoute } from './router-utils';
 
 function Pathname(): JSX.Element {
 	const { pathname } = useAppLocation();

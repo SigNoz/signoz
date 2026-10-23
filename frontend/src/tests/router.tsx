@@ -3,6 +3,8 @@ import { Route, Router } from 'react-router-dom';
 import { CompatRouter, useInRouterContext } from 'react-router-dom-v5-compat';
 import history from 'lib/history';
 
+import { resetTestRoute } from './router-utils';
+
 // Mounts on the `lib/history` singleton like `src/AppRoutes/index.tsx`, so
 // imperative `navigate()` calls move the router. `CompatRouter` is always
 // present for the v6-only facade hooks. A `TestRouter` inside another renders
@@ -70,11 +72,6 @@ TestRouter.defaultProps = {
 	initialRoute: undefined,
 	routePath: undefined,
 };
-
-/** Returns the history singleton to the state a suite should start each test in. */
-export function resetTestRoute(): void {
-	history.replace('/');
-}
 
 // Registered here rather than in `test-utils` so a suite that mounts
 // `TestRouter` without importing the harness starts every test at `/` too.

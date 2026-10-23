@@ -1,5 +1,5 @@
-import { MemoryRouter, useHistory } from 'react-router-dom';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { useHistory } from 'react-router-dom';
+import { fireEvent, render, screen } from 'tests/test-utils';
 
 import type { NavigateOptions, To } from '../types';
 import { useAppLocation } from '../useAppLocation';
@@ -33,11 +33,7 @@ function Probe({
 }
 
 function renderProbe(to: To, options?: NavigateOptions): void {
-	render(
-		<MemoryRouter initialEntries={['/']}>
-			<Probe to={to} options={options} />
-		</MemoryRouter>,
-	);
+	render(<Probe to={to} options={options} />);
 }
 
 describe('useAppNavigate', () => {
