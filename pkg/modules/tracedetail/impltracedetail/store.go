@@ -197,7 +197,7 @@ func (s *traceStore) genAISpanColumns(ctx context.Context, orgID valuer.UUID, bo
 
 	for _, value := range values {
 		// lookup by number, the type metadata stores numeric attributes under; float64 is only the output cast
-		expr, err := querybuilder.ResolveColumn(ctx, q, s.storage, attributeKey(value.key, telemetrytypes.FieldDataTypeNumber), telemetrytypes.FieldDataTypeFloat64, keys, columnEvolutions)
+		expr, err := querybuilder.ResolveColumn(ctx, q, s.storage, querybuilder.WithColumnEvolutions(attributeKey(value.key, telemetrytypes.FieldDataTypeNumber), columnEvolutions), telemetrytypes.FieldDataTypeFloat64, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -517,7 +517,7 @@ func (s *traceStore) genAIFieldKeys(ctx context.Context, orgID valuer.UUID, name
 func (s *traceStore) anyExistsCondition(ctx context.Context, q qbtypes.QueryInfo, names []string, keys map[string][]*telemetrytypes.TelemetryFieldKey, columnEvolutions []*telemetrytypes.EvolutionEntry, sb *sqlbuilder.SelectBuilder) (string, error) {
 	conds := make([]string, 0, len(names))
 	for _, name := range names {
-		keyConds, _, err := querybuilder.Conditions(ctx, q, s.storage, attributeKey(name, telemetrytypes.FieldDataTypeString), qbtypes.FilterOperatorExists, nil, keys, columnEvolutions, false, sb)
+		keyConds, _, err := querybuilder.Conditions(ctx, q, s.storage, querybuilder.WithColumnEvolutions(attributeKey(name, telemetrytypes.FieldDataTypeString), columnEvolutions), qbtypes.FilterOperatorExists, nil, keys, false, sb)
 		if err != nil {
 			return "", err
 		}

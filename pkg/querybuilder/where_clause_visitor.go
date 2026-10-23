@@ -931,7 +931,7 @@ func (v *filterExpressionVisitor) buildConditions(key *telemetrytypes.TelemetryF
 	} else if skip {
 		return nil, true
 	}
-	resolved, err := Resolve(v.context, v.query, v.storage, key, op, value, v.fieldKeys, v.columnEvolutions)
+	resolved, err := Resolve(v.context, v.query, v.storage, WithColumnEvolutions(key, v.columnEvolutions), op, value, v.fieldKeys)
 	if err != nil {
 		v.recordError(err)
 		return nil, false

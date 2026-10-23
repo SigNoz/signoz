@@ -132,7 +132,7 @@ func TestExistsConditionForWithEvolutions(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, _, err := querybuilder.Conditions(ctx, querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalLogs, nil, tc.startTs, tc.endTs), storage, &tc.key, tc.operator, tc.value, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}, nil, false, sb)
+			cond, _, err := querybuilder.Conditions(ctx, querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalLogs, nil, tc.startTs, tc.endTs), storage, &tc.key, tc.operator, tc.value, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}, false, sb)
 			sb.Where(cond...)
 
 			if tc.expectedError != nil {
@@ -522,7 +522,7 @@ func TestConditionFor(t *testing.T) {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
 			tc.key.Evolutions = tc.evolutions
-			cond, _, err := querybuilder.Conditions(ctx, querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalLogs, nil, 0, 0), storage, &tc.key, tc.operator, tc.value, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}, nil, false, sb)
+			cond, _, err := querybuilder.Conditions(ctx, querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalLogs, nil, 0, 0), storage, &tc.key, tc.operator, tc.value, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}, false, sb)
 			sb.Where(cond...)
 
 			if tc.expectedError != nil {
@@ -547,7 +547,7 @@ func TestConditionForSynthesizedPrefixedKeys(t *testing.T) {
 	t.Run("bare intrinsic column resolves to the column, not synthesized attributes", func(t *testing.T) {
 		sb := sqlbuilder.NewSelectBuilder()
 		key := telemetrytypes.TelemetryFieldKey{Name: "severity_text"}
-		conds, _, err := querybuilder.Conditions(ctx, querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalLogs, nil, 0, 0), storage, &key, qbtypes.FilterOperatorEqual, "ERROR", nil, nil, false, sb)
+		conds, _, err := querybuilder.Conditions(ctx, querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalLogs, nil, 0, 0), storage, &key, qbtypes.FilterOperatorEqual, "ERROR", nil, false, sb)
 		require.NoError(t, err)
 		require.Len(t, conds, 1)
 		sb.Where(conds...)
@@ -559,7 +559,7 @@ func TestConditionForSynthesizedPrefixedKeys(t *testing.T) {
 	t.Run("attribute context", func(t *testing.T) {
 		sb := sqlbuilder.NewSelectBuilder()
 		key := telemetrytypes.TelemetryFieldKey{Name: "custom.key", FieldContext: telemetrytypes.FieldContextAttribute}
-		conds, warnings, err := querybuilder.Conditions(ctx, querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalLogs, nil, 0, 0), storage, &key, qbtypes.FilterOperatorEqual, "v", nil, nil, false, sb)
+		conds, warnings, err := querybuilder.Conditions(ctx, querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalLogs, nil, 0, 0), storage, &key, qbtypes.FilterOperatorEqual, "v", nil, false, sb)
 		require.NoError(t, err)
 		assert.NotEmpty(t, warnings)
 		require.Len(t, conds, 2)
@@ -570,7 +570,7 @@ func TestConditionForSynthesizedPrefixedKeys(t *testing.T) {
 	t.Run("resource context", func(t *testing.T) {
 		sb := sqlbuilder.NewSelectBuilder()
 		key := telemetrytypes.TelemetryFieldKey{Name: "custom.key", FieldContext: telemetrytypes.FieldContextResource}
-		conds, warnings, err := querybuilder.Conditions(ctx, querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalLogs, nil, 0, 0), storage, &key, qbtypes.FilterOperatorEqual, "v", nil, nil, false, sb)
+		conds, warnings, err := querybuilder.Conditions(ctx, querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalLogs, nil, 0, 0), storage, &key, qbtypes.FilterOperatorEqual, "v", nil, false, sb)
 		require.NoError(t, err)
 		assert.NotEmpty(t, warnings)
 		require.Len(t, conds, 2)
@@ -585,7 +585,7 @@ func TestConditionForSynthesizedPrefixedKeys(t *testing.T) {
 	t.Run("log context folds to attributes then body", func(t *testing.T) {
 		sb := sqlbuilder.NewSelectBuilder()
 		key := telemetrytypes.TelemetryFieldKey{Name: "custom.key", FieldContext: telemetrytypes.FieldContextLog}
-		conds, warnings, err := querybuilder.Conditions(ctx, querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalLogs, nil, 0, 0), storage, &key, qbtypes.FilterOperatorEqual, "v", nil, nil, false, sb)
+		conds, warnings, err := querybuilder.Conditions(ctx, querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalLogs, nil, 0, 0), storage, &key, qbtypes.FilterOperatorEqual, "v", nil, false, sb)
 		require.NoError(t, err)
 		assert.NotEmpty(t, warnings)
 		require.Len(t, conds, 4)
@@ -942,7 +942,7 @@ func TestConditionForBodyIn(t *testing.T) {
 			}
 			sb := sqlbuilder.NewSelectBuilder()
 			sb.Select("1").From("t")
-			cond, _, err := querybuilder.Conditions(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalLogs, nil, 0, 0), storage, &key, qbtypes.FilterOperatorIn, tc.values, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, nil, false, sb)
+			cond, _, err := querybuilder.Conditions(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalLogs, nil, 0, 0), storage, &key, qbtypes.FilterOperatorIn, tc.values, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, false, sb)
 			require.NoError(t, err)
 			sb.Where(cond...)
 

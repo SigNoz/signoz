@@ -377,7 +377,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 			}
 
 			// get column expression for the field - use array index directly to avoid pointer to loop variable
-			colExpr, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&query.SelectFields[index]), telemetrytypes.FieldDataTypeUnspecified, keys, nil)
+			colExpr, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&query.SelectFields[index]), telemetrytypes.FieldDataTypeUnspecified, keys)
 			if err != nil {
 				return nil, err
 			}
@@ -396,7 +396,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	// Add order by
 	for _, orderBy := range query.Order {
 
-		colExpr, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&orderBy.Key.TelemetryFieldKey), telemetrytypes.FieldDataTypeUnspecified, keys, nil)
+		colExpr, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&orderBy.Key.TelemetryFieldKey), telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -466,7 +466,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		if !info.BodyJSONOn && (strings.Contains(gb.Name, telemetrytypes.ArraySep) || strings.Contains(gb.Name, telemetrytypes.ArrayAnyIndex)) {
 			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the Array Paths: %s", gb.Name)
 		}
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&gb.TelemetryFieldKey), telemetrytypes.FieldDataTypeString, keys, nil)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&gb.TelemetryFieldKey), telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -631,7 +631,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		if !info.BodyJSONOn && (strings.Contains(gb.Name, telemetrytypes.ArraySep) || strings.Contains(gb.Name, telemetrytypes.ArrayAnyIndex)) {
 			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the Array Paths: %s", gb.Name)
 		}
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&gb.TelemetryFieldKey), telemetrytypes.FieldDataTypeString, keys, nil)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&gb.TelemetryFieldKey), telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}

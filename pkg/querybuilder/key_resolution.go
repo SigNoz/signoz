@@ -113,9 +113,22 @@ func NewKeyNotFoundWarning(name string) string {
 	return fmt.Sprintf("key `%s` not found in metadata; querying the underlying data directly. If this is unexpected, check the key name for typos.", name)
 }
 
+// WithColumnEvolutions returns a copy of key that carries the column-wide
+// evolutions, so a key metadata does not report reads through the same
+// rollout. A key with evolutions of its own is returned as is.
+func WithColumnEvolutions(key *telemetrytypes.TelemetryFieldKey, columnEvolutions []*telemetrytypes.EvolutionEntry) *telemetrytypes.TelemetryFieldKey {
+	if len(key.Evolutions) > 0 || len(columnEvolutions) == 0 {
+		return key
+	}
+	withEvolutions := *key
+	withEvolutions.Evolutions = columnEvolutions
+	return &withEvolutions
+}
+
 // SynthesizeKeys builds the field keys to query when metadata has no match: a qualified
 // key is honored as-is; a bare key defaults to attribute context with the data type
 // inferred from the operand, or fanned out across string/number/bool without one.
+// Each keeps the evolutions field carries for its context and name.
 func SynthesizeKeys(field *telemetrytypes.TelemetryFieldKey, value any) []*telemetrytypes.TelemetryFieldKey {
 	fieldContext := field.FieldContext
 	if fieldContext == telemetrytypes.FieldContextUnspecified {
@@ -127,6 +140,7 @@ func SynthesizeKeys(field *telemetrytypes.TelemetryFieldKey, value any) []*telem
 		fieldDataType == telemetrytypes.FieldDataTypeUnspecified {
 		fieldDataType = telemetrytypes.FieldDataTypeString
 	}
+	evolutions := evolutionsOf(field.Evolutions, fieldContext, field.Name)
 
 	// A set data type needs only one synthesized key. It keeps the request
 	// key's physical data (evolutions, materialization, JSON plan): a key the
@@ -135,15 +149,28 @@ func SynthesizeKeys(field *telemetrytypes.TelemetryFieldKey, value any) []*telem
 		key := *field
 		key.FieldContext = fieldContext
 		key.FieldDataType = fieldDataType
+		key.Evolutions = evolutions
 		return []*telemetrytypes.TelemetryFieldKey{&key}
 	}
 
 	dataTypes := inferDataTypesFromOperand(value)
 	keys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(dataTypes))
 	for _, dt := range dataTypes {
-		keys = append(keys, telemetrytypes.NewTelemetryFieldKey(field.Name, fieldContext, dt))
+		key := telemetrytypes.NewTelemetryFieldKey(field.Name, fieldContext, dt)
+		key.Evolutions = evolutions
+		keys = append(keys, key)
 	}
 	return keys
+}
+
+func evolutionsOf(evolutions []*telemetrytypes.EvolutionEntry, fieldContext telemetrytypes.FieldContext, name string) []*telemetrytypes.EvolutionEntry {
+	var out []*telemetrytypes.EvolutionEntry
+	for _, entry := range evolutions {
+		if entry.FieldContext == fieldContext && (entry.FieldName == telemetrytypes.EvolutionFieldNameAll || entry.FieldName == name) {
+			out = append(out, entry)
+		}
+	}
+	return out
 }
 
 // allVariantDataTypes is the fanout used when no operand pins the type (exists / group by).

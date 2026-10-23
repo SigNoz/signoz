@@ -57,7 +57,6 @@ func Resolve(
 	operator qbtypes.FilterOperator,
 	value any,
 	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
-	columnEvolutions []*telemetrytypes.EvolutionEntry,
 ) (qbtypes.Resolved, error) {
 	traits := storage.Traits()
 
@@ -66,7 +65,7 @@ func Resolve(
 	if len(matches) == 0 && slices.Contains(traits.OwnContexts, key.FieldContext) {
 		// a column the storage knows under the key's own context is the key
 		// as written, and only a miss corrects to the bare spelling
-		if fallback, err := storage.Fallback(ctx, q, key, operator, value, columnEvolutions); err == nil {
+		if fallback, err := storage.Fallback(ctx, q, key, operator, value); err == nil {
 			if column := alwaysPresent(ctx, q, storage, fallback); column != nil {
 				return qbtypes.Resolved{Key: key, Fields: []*telemetrytypes.LogicalField{column}, FromFallback: true}, nil
 			}
@@ -85,14 +84,14 @@ func Resolve(
 		}
 	}
 	if lookup.FieldContext == telemetrytypes.FieldContextUnspecified && len(fields) > 0 {
-		fields = intrinsicColumnFirst(ctx, q, storage, key, operator, value, fields, columnEvolutions)
+		fields = intrinsicColumnFirst(ctx, q, storage, key, operator, value, fields)
 	}
 	if len(fields) > 0 {
 		resolved.Fields = fields
 		return resolved, nil
 	}
 
-	fallback, err := storage.Fallback(ctx, q, key, operator, value, columnEvolutions)
+	fallback, err := storage.Fallback(ctx, q, key, operator, value)
 	if err != nil {
 		return qbtypes.Resolved{}, err
 	}
@@ -120,9 +119,8 @@ func ResolveColumn(
 	key *telemetrytypes.TelemetryFieldKey,
 	target telemetrytypes.FieldDataType,
 	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
-	columnEvolutions []*telemetrytypes.EvolutionEntry,
 ) (string, error) {
-	resolved, err := Resolve(ctx, q, storage, key, qbtypes.FilterOperatorUnknown, nil, fieldKeys, columnEvolutions)
+	resolved, err := Resolve(ctx, q, storage, key, qbtypes.FilterOperatorUnknown, nil, fieldKeys)
 	if err != nil {
 		return "", err
 	}
@@ -143,14 +141,13 @@ func intrinsicColumnFirst(
 	operator qbtypes.FilterOperator,
 	value any,
 	fields []*telemetrytypes.LogicalField,
-	columnEvolutions []*telemetrytypes.EvolutionEntry,
 ) []*telemetrytypes.LogicalField {
 	column := alwaysPresent(ctx, q, storage, fields)
 	fromFallback := false
 	if column == nil {
 		// a fallback that cannot answer this term has no column for it, and
 		// its error belongs to the no-match path
-		if fallback, err := storage.Fallback(ctx, q, key, operator, value, columnEvolutions); err == nil {
+		if fallback, err := storage.Fallback(ctx, q, key, operator, value); err == nil {
 			column = alwaysPresent(ctx, q, storage, fallback)
 			fromFallback = column != nil
 		}

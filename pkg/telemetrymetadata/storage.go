@@ -79,7 +79,7 @@ func (m *storage) Read(ctx context.Context, q qbtypes.QueryInfo, key *telemetryt
 
 // Fallback returns nil: the metadata tables have no attribute synthesis, so
 // a key metadata does not hold yields no condition.
-func (m *storage) Fallback(context.Context, qbtypes.QueryInfo, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any, []*telemetrytypes.EvolutionEntry) ([]*telemetrytypes.LogicalField, error) {
+func (m *storage) Fallback(context.Context, qbtypes.QueryInfo, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any) ([]*telemetrytypes.LogicalField, error) {
 	return nil, nil
 }
 

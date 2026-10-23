@@ -213,7 +213,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		for i := 0; i < len(args)-1; i++ {
 			origVal := chparser.Format(args[i])
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(origVal)
-			expr, err := ResolveColumn(v.ctx, v.query, v.storage, &fieldKey, dataType, v.fieldKeys, v.columnEvolutions)
+			expr, err := ResolveColumn(v.ctx, v.query, v.storage, WithColumnEvolutions(&fieldKey, v.columnEvolutions), dataType, v.fieldKeys)
 			if err != nil {
 				return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to get table field name for %q", origVal)
 			}
@@ -230,7 +230,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		for i, arg := range args {
 			orig := chparser.Format(arg)
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(orig)
-			expr, err := ResolveColumn(v.ctx, v.query, v.storage, &fieldKey, dataType, v.fieldKeys, v.columnEvolutions)
+			expr, err := ResolveColumn(v.ctx, v.query, v.storage, WithColumnEvolutions(&fieldKey, v.columnEvolutions), dataType, v.fieldKeys)
 			if err != nil {
 				return err
 			}

@@ -382,7 +382,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 
 	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end)
 	for i, field := range query.SelectFields {
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &field, telemetrytypes.FieldDataTypeUnspecified, keys, columnEvolutions)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, querybuilder.WithColumnEvolutions(&field, columnEvolutions), telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -406,7 +406,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 
 	// Add order by
 	for _, orderBy := range query.Order {
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys, columnEvolutions)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, querybuilder.WithColumnEvolutions(&orderBy.Key.TelemetryFieldKey, columnEvolutions), telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -598,7 +598,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end)
 	for i, gb := range query.GroupBy {
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys, columnEvolutions)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, querybuilder.WithColumnEvolutions(&gb.TelemetryFieldKey, columnEvolutions), telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -764,7 +764,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end)
 	for i, gb := range query.GroupBy {
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys, columnEvolutions)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, querybuilder.WithColumnEvolutions(&gb.TelemetryFieldKey, columnEvolutions), telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}

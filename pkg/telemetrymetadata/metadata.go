@@ -2655,7 +2655,7 @@ func (t *telemetryMetaStore) containsConditions(ctx context.Context, q qbtypes.Q
 			FieldDataType: dataType,
 		}}
 	}
-	conds, _, err := querybuilder.Conditions(ctx, q, t.storage, key, qbtypes.FilterOperatorContains, value, fieldKeys, nil, false, sb)
+	conds, _, err := querybuilder.Conditions(ctx, q, t.storage, key, qbtypes.FilterOperatorContains, value, fieldKeys, false, sb)
 	return conds, err
 }
 

@@ -103,14 +103,13 @@ func Conditions(
 	operator qbtypes.FilterOperator,
 	value any,
 	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
-	columnEvolutions []*telemetrytypes.EvolutionEntry,
 	dropResourceFields bool,
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
 	if _, err := RejectsBodyFunction(storage.Traits(), operator); err != nil {
 		return nil, nil, err
 	}
-	resolved, err := Resolve(ctx, q, storage, key, operator, value, fieldKeys, columnEvolutions)
+	resolved, err := Resolve(ctx, q, storage, key, operator, value, fieldKeys)
 	if err != nil {
 		return nil, nil, err
 	}

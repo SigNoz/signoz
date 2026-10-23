@@ -491,7 +491,7 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 		if selectedFields[field.Name] {
 			continue
 		}
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &field, telemetrytypes.FieldDataTypeUnspecified, keys, columnEvolutions)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, querybuilder.WithColumnEvolutions(&field, columnEvolutions), telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			b.stmtBuilder.logger.WarnContext(ctx, "failed to map select field",
 				slog.String("field", field.Name), errors.Attr(err))
@@ -512,7 +512,7 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 	// Add order by support
 	orderApplied := false
 	for _, orderBy := range b.operator.Order {
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys, columnEvolutions)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, querybuilder.WithColumnEvolutions(&orderBy.Key.TelemetryFieldKey, columnEvolutions), telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -632,7 +632,7 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 
 	info := querybuilder.NewQueryInfo(ctx, b.orgID, b.stmtBuilder.fl, telemetrytypes.SignalTraces, nil, b.start, b.end)
 	for _, gb := range b.operator.GroupBy {
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys, columnEvolutions)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, querybuilder.WithColumnEvolutions(&gb.TelemetryFieldKey, columnEvolutions), telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
@@ -730,7 +730,7 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 
 	info := querybuilder.NewQueryInfo(ctx, b.orgID, b.stmtBuilder.fl, telemetrytypes.SignalTraces, nil, b.start, b.end)
 	for _, gb := range b.operator.GroupBy {
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys, columnEvolutions)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, querybuilder.WithColumnEvolutions(&gb.TelemetryFieldKey, columnEvolutions), telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
@@ -858,7 +858,7 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 
 	info := querybuilder.NewQueryInfo(ctx, b.orgID, b.stmtBuilder.fl, telemetrytypes.SignalTraces, nil, b.start, b.end)
 	for _, gb := range b.operator.GroupBy {
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys, columnEvolutions)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, querybuilder.WithColumnEvolutions(&gb.TelemetryFieldKey, columnEvolutions), telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, errors.NewInvalidInputf(
 				errors.CodeInvalidInput,

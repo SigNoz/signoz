@@ -498,7 +498,7 @@ func (m *storage) Read(ctx context.Context, q qbtypes.QueryInfo, key *telemetryt
 // column. A body path is itself. Any other name synthesizes its type
 // variants under the stripped and the literal spelling, with the body path
 // last. A body function narrows the answer to body paths.
-func (m *storage) Fallback(_ context.Context, _ qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any, _ []*telemetrytypes.EvolutionEntry) ([]*telemetrytypes.LogicalField, error) {
+func (m *storage) Fallback(_ context.Context, _ qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any) ([]*telemetrytypes.LogicalField, error) {
 	if key.FieldContext == telemetrytypes.FieldContextBody && key.Name == "" {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "missing key for body json search - expected key of the form `body.key` (ex: `body.status`)")
 	}

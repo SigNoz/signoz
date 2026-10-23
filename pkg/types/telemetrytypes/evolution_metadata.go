@@ -27,13 +27,3 @@ type EvolutionSelector struct {
 func (e *EvolutionSelector) QualifiedName() string {
 	return e.Signal.StringValue() + ":" + e.FieldContext.StringValue() + ":" + e.FieldName
 }
-
-func ColumnEvolutionsOf(columnEvolutions []*EvolutionEntry, signal Signal, fieldContext FieldContext) []*EvolutionEntry {
-	var out []*EvolutionEntry
-	for _, entry := range columnEvolutions {
-		if entry.Signal == signal && entry.FieldContext == fieldContext {
-			out = append(out, entry)
-		}
-	}
-	return out
-}

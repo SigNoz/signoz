@@ -37,7 +37,7 @@ func TestFamilyEqualWidensIndexHintsToAnyMember(t *testing.T) {
 	}
 
 	sb := sqlbuilder.NewSelectBuilder()
-	conds, _, err := querybuilder.Conditions(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, 0, 0), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, qbtypes.FilterOperatorEqual, "production", fieldKeys, nil, false, sb)
+	conds, _, err := querybuilder.Conditions(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, 0, 0), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, qbtypes.FilterOperatorEqual, "production", fieldKeys, false, sb)
 	require.NoError(t, err)
 	require.Len(t, conds, 1)
 	sb.Where(conds...)
@@ -65,7 +65,7 @@ func TestFamilyNotEqualDropsNegatedValueHint(t *testing.T) {
 	}
 
 	sb := sqlbuilder.NewSelectBuilder()
-	conds, _, err := querybuilder.Conditions(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, 0, 0), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, qbtypes.FilterOperatorNotEqual, "production", fieldKeys, nil, false, sb)
+	conds, _, err := querybuilder.Conditions(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, 0, 0), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, qbtypes.FilterOperatorNotEqual, "production", fieldKeys, false, sb)
 	require.NoError(t, err)
 	require.Len(t, conds, 1)
 	sb.Where(conds...)
@@ -93,7 +93,7 @@ func TestFamilyExistsIsAnyMemberPresence(t *testing.T) {
 	}
 
 	sb := sqlbuilder.NewSelectBuilder()
-	conds, _, err := querybuilder.Conditions(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, 0, 0), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, qbtypes.FilterOperatorExists, nil, fieldKeys, nil, false, sb)
+	conds, _, err := querybuilder.Conditions(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, 0, 0), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, qbtypes.FilterOperatorExists, nil, fieldKeys, false, sb)
 	require.NoError(t, err)
 	require.Len(t, conds, 1)
 	sb.Where(conds...)
@@ -102,7 +102,7 @@ func TestFamilyExistsIsAnyMemberPresence(t *testing.T) {
 	require.Equal(t, []any{true, true, "%deployment.environment.name%", "%deployment.environment%"}, args)
 
 	sb = sqlbuilder.NewSelectBuilder()
-	conds, _, err = querybuilder.Conditions(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, 0, 0), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, qbtypes.FilterOperatorNotExists, nil, fieldKeys, nil, false, sb)
+	conds, _, err = querybuilder.Conditions(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, 0, 0), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, qbtypes.FilterOperatorNotExists, nil, fieldKeys, false, sb)
 	require.NoError(t, err)
 	require.Len(t, conds, 1)
 	sb.Where(conds...)
@@ -126,7 +126,7 @@ func TestSingleMemberShapesUnchanged(t *testing.T) {
 	}
 
 	sb := sqlbuilder.NewSelectBuilder()
-	conds, _, err := querybuilder.Conditions(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, 0, 0), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, qbtypes.FilterOperatorNotEqual, "production", fieldKeys, nil, false, sb)
+	conds, _, err := querybuilder.Conditions(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, 0, 0), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, qbtypes.FilterOperatorNotEqual, "production", fieldKeys, false, sb)
 	require.NoError(t, err)
 	require.Len(t, conds, 1)
 	sb.Where(conds...)

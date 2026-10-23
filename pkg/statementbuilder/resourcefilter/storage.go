@@ -77,7 +77,7 @@ func (m *storage) Read(ctx context.Context, q qbtypes.QueryInfo, key *telemetryt
 
 // Fallback returns nil: the fingerprint table holds only what the metadata
 // reports, and a term it cannot serve is the main query's to evaluate.
-func (m *storage) Fallback(context.Context, qbtypes.QueryInfo, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any, []*telemetrytypes.EvolutionEntry) ([]*telemetrytypes.LogicalField, error) {
+func (m *storage) Fallback(context.Context, qbtypes.QueryInfo, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any) ([]*telemetrytypes.LogicalField, error) {
 	return nil, nil
 }
 
