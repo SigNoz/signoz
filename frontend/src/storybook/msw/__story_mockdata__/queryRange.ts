@@ -3,6 +3,11 @@
  * Do not hand-edit: regenerate instead.
  */
 
+import {
+	Querybuildertypesv5RequestTypeDTO,
+	type QueryRangeV5200,
+	type Querybuildertypesv5TimeSeriesDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import type { Warning } from 'types/api';
 import type { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
 import type {
@@ -471,3 +476,38 @@ export const queryRangeV3ForRequest = (
 	body.compositeQuery.panelType === 'table'
 		? builderTableResponse(body, options)
 		: builderTimeSeriesResponse(body, options);
+
+export interface HeatmapResponseSpec {
+	/** Ascending bucket upper bounds; each point carries one count per bound plus the open-above overflow. */
+	buckets: number[];
+	series: Querybuildertypesv5TimeSeriesDTO[];
+	stepSeconds?: number;
+	queryName?: string;
+}
+
+/**
+ * A heatmap panel's answer: the time-series tree with the bucket bounds on the
+ * aggregation's `meta`. `series: []` is the heatmap's own empty body.
+ */
+export const queryRangeV5HeatmapResponse = ({
+	buckets,
+	series,
+	stepSeconds = 60,
+	queryName = 'A',
+}: HeatmapResponseSpec): QueryRangeV5200 => ({
+	status: 'success',
+	data: {
+		type: Querybuildertypesv5RequestTypeDTO.heatmap,
+		data: {
+			results: [
+				{ queryName, aggregations: [{ index: 0, meta: { buckets }, series }] },
+			],
+		},
+		meta: {
+			rowsScanned: 0,
+			bytesScanned: 0,
+			durationMs: 0,
+			stepIntervals: { [queryName]: stepSeconds },
+		},
+	},
+});
