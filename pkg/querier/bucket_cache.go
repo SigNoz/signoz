@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -865,15 +866,20 @@ func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, q qbtypes
 	return result
 }
 
-// a cached range covers more than the window now being asked for, so its axis
-// carries buckets only the dropped columns reached. Left there, they show as
-// empty rows the same window never has when the cache did not answer it.
+// A cache entry can hold a longer time range than the one now requested, and its
+// bucket axis spans every sample value seen across that longer range. Once the
+// points outside the requested range are dropped, the axis may still list
+// buckets that only those dropped points counted into. Left there, they render
+// as empty rows that the same request never has when it bypasses the cache.
+//
+// PromQL and ClickHouse queries name their own buckets, and a histogram's are
+// its `le` labels, so only a gauge, sum or summary axis is cut.
 func (bc *bucketCache) trimHeatmapAxisToTheWindow(q qbtypes.Query, tsData *qbtypes.TimeSeriesData) {
-	// only an axis derived from the values can be cut back. A histogram, promql
-	// or clickhouse query names its own buckets, and an empty one of theirs still
-	// belongs on the axis
 	metricQuery, isMetricQuery := q.(*builderQuery[qbtypes.MetricAggregation])
-	if !isMetricQuery || len(metricQuery.spec.Aggregations) == 0 || metricQuery.spec.Aggregations[0].HeatmapBucketing == nil {
+	if !isMetricQuery {
+		return
+	}
+	if metricQuery.spec.Aggregations[0].Type == metrictypes.HistogramType {
 		return
 	}
 
