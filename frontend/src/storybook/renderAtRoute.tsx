@@ -11,7 +11,7 @@ export const renderAtRoute = (
 	Component: ComponentType,
 ): (() => JSX.Element) => {
 	function StoryAtRoute(): JSX.Element {
-		return <Route path={path} component={Component} />;
+		return <Route exact path={path} component={Component} />;
 	}
 
 	return StoryAtRoute;
