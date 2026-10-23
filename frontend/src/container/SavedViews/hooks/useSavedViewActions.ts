@@ -15,27 +15,29 @@ import {
 import { ErrorType } from 'api/generatedAPIInstance';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import useOptionsMenu from 'container/OptionsMenu/useOptionsMenu';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
-import { DataSource } from 'types/common/queryBuilder';
 import { toAPIError } from 'utils/errorUtils';
 import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 
 import {
-	SAVED_VIEW_OPTIONS_DATA_SOURCE,
 	SAVED_VIEW_SCHEMA_VERSION,
 	SAVED_VIEW_TOAST_POSITION,
 	SAVED_VIEW_URL_PARAMS,
 } from '../constants';
 import { UseSavedViewActionsResult } from '../types';
+import {
+	getPreferenceSlice,
+	getSavedViewPreferenceSource,
+} from '../utils/getSavedViewPreferenceSource';
 import { getSavedViewQuery } from '../utils/getSavedViewQuery';
 import { getViewColumnsAndFormatting } from '../utils/getViewColumnsAndFormatting';
 import { invalidateSavedViews } from '../utils/invalidateSavedViews';
 import { toSavedViewSpec } from '../utils/toSavedViewSpec';
 import { useLastUsedView } from './useLastUsedView';
+import { useSavedViewOptions } from './useSavedViewOptions';
 
 // Columns and formatting need no handling here: with a viewKey in the url the
 // preference provider reads them from the view, and without one it falls back
@@ -51,15 +53,8 @@ export function useSavedViewActions(
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 	const { setLastUsedView, clearLastUsedView } = useLastUsedView(source);
 
-	const optionsDataSource = SAVED_VIEW_OPTIONS_DATA_SOURCE[source];
-	const { options } = useOptionsMenu({
-		dataSource: optionsDataSource ?? DataSource.LOGS,
-	});
+	const { options } = useSavedViewOptions(source, panelType);
 	const preferences = usePreferenceContext();
-	const preferencesSlice =
-		optionsDataSource === DataSource.TRACES
-			? preferences.traces
-			: preferences.logs;
 
 	const { mutateAsync: createSavedView, isLoading: isCreating } =
 		useCreateSavedView();
@@ -77,10 +72,10 @@ export function useSavedViewActions(
 				query: stagedQuery ?? currentQuery,
 				panelType: panelType ?? PANEL_TYPES.LIST,
 				displayName,
-				options: optionsDataSource ? options : undefined,
+				options,
 				color,
 			}),
-		[stagedQuery, currentQuery, panelType, optionsDataSource, options],
+		[stagedQuery, currentQuery, panelType, options],
 	);
 
 	const selectView = useCallback(
@@ -96,19 +91,27 @@ export function useSavedViewActions(
 
 	const revertView = useCallback(
 		(view: SavedviewtypesSavedViewDTO): void => {
-			if (optionsDataSource) {
+			const viewPreferenceSource = getSavedViewPreferenceSource(
+				source,
+				view.spec.panelType,
+			);
+			const viewPreferencesSlice = getPreferenceSlice(
+				preferences,
+				viewPreferenceSource,
+			);
+			if (viewPreferenceSource && viewPreferencesSlice) {
 				const { columns, formatting } = getViewColumnsAndFormatting(
 					view.spec,
-					optionsDataSource,
+					viewPreferenceSource,
 				);
-				preferencesSlice.updateColumns(columns);
+				viewPreferencesSlice.updateColumns(columns);
 				if (formatting) {
-					preferencesSlice.updateFormatting(formatting);
+					viewPreferencesSlice.updateFormatting(formatting);
 				}
 			}
 			selectView(view);
 		},
-		[optionsDataSource, preferencesSlice, selectView],
+		[source, preferences, selectView],
 	);
 
 	// The query builder redirects only ever add params, so the url is rebuilt

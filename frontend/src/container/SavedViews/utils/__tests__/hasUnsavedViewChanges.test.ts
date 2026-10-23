@@ -120,6 +120,7 @@ describe('hasUnsavedViewChanges', () => {
 				view,
 				stagedQuery: staged,
 				panelType: PANEL_TYPES.LIST,
+				preferenceSource: DataSource.TRACES,
 				options: { ...options, selectColumns: [columns[0]] },
 			}),
 		).toBe(true);
@@ -139,6 +140,7 @@ describe('hasUnsavedViewChanges', () => {
 				view: bare,
 				stagedQuery: stagedFrom(bare, DataSource.TRACES),
 				panelType: PANEL_TYPES.LIST,
+				preferenceSource: DataSource.TRACES,
 				options: { ...options, selectColumns: defaultTraceSelectedColumns },
 			}),
 		).toBe(false);
@@ -163,6 +165,7 @@ describe('hasUnsavedViewChanges', () => {
 					view: logsView,
 					stagedQuery: logsStaged,
 					panelType: PANEL_TYPES.LIST,
+					preferenceSource: DataSource.LOGS,
 					options: { selectColumns: shownColumns, ...formatting },
 				}),
 			).toBe(false);
@@ -174,6 +177,7 @@ describe('hasUnsavedViewChanges', () => {
 					view: logsView,
 					stagedQuery: logsStaged,
 					panelType: PANEL_TYPES.LIST,
+					preferenceSource: DataSource.LOGS,
 					options: { selectColumns: shownColumns, ...formatting, maxLines: 5 },
 				}),
 			).toBe(true);
@@ -193,6 +197,7 @@ describe('hasUnsavedViewChanges', () => {
 					view: bare,
 					stagedQuery: stagedFrom(bare, DataSource.LOGS),
 					panelType: PANEL_TYPES.LIST,
+					preferenceSource: DataSource.LOGS,
 					options: {
 						selectColumns: defaultLogsSelectedColumns,
 						format: 'table',
@@ -373,6 +378,7 @@ describe('hasUnsavedViewChanges', () => {
 				view,
 				stagedQuery: staged,
 				panelType: PANEL_TYPES.LIST,
+				preferenceSource: DataSource.TRACES,
 				options: { ...options, ...formatting, maxLines: 5 },
 			}),
 		).toBe(false);

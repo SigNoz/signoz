@@ -1,4 +1,7 @@
-import { SavedviewtypesSavedViewSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	SavedviewtypesPanelTypeDTO,
+	SavedviewtypesSavedViewSpecDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import {
 	defaultLogsSelectedColumns,
@@ -9,6 +12,7 @@ import { FontSize, LogViewMode } from 'container/OptionsMenu/types';
 import { defaultSelectedColumns as defaultAIObservabilitySelectedColumns } from 'container/LLMObservability/Explorer/ListView/configs';
 import {
 	AI_OBSERVABILITY_PREFERENCE_SOURCE,
+	AI_OBSERVABILITY_TRACE_VIEW_PREFERENCE_SOURCE,
 	Preferences,
 	PreferenceSource,
 } from 'providers/preferences/types';
@@ -50,9 +54,19 @@ export function getViewColumnsAndFormatting(
 	if (dataSource === DataSource.TRACES) {
 		return { columns: selectedFields || defaultTraceSelectedColumns };
 	}
+	// An AI view saves the columns of its own tab only; the other tab keeps its defaults.
 	if (dataSource === AI_OBSERVABILITY_PREFERENCE_SOURCE) {
 		return {
-			columns: selectedFields || defaultAIObservabilitySelectedColumns,
+			columns:
+				(spec?.panelType === SavedviewtypesPanelTypeDTO.list && selectedFields) ||
+				defaultAIObservabilitySelectedColumns,
+		};
+	}
+	if (dataSource === AI_OBSERVABILITY_TRACE_VIEW_PREFERENCE_SOURCE) {
+		return {
+			columns:
+				(spec?.panelType === SavedviewtypesPanelTypeDTO.trace && selectedFields) ||
+				[],
 		};
 	}
 	return { columns: [] };
