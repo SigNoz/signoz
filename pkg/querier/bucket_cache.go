@@ -56,8 +56,6 @@ func (bc *bucketCache) GetMissRanges(
 	// Get query window
 	startMs, endMs := q.Window()
 
-	stepMs := uint64(step.Milliseconds())
-
 	bc.logger.DebugContext(ctx, "getting miss ranges", slog.String("fingerprint", q.Fingerprint()), slog.Uint64("start", startMs), slog.Uint64("end", endMs))
 
 	// Generate cache key
@@ -77,6 +75,9 @@ func (bc *bucketCache) GetMissRanges(
 		return nil, missing
 	}
 
+	// Extract step interval if this is a builder query
+	stepMs := uint64(step.Milliseconds())
+
 	// Find missing ranges with step alignment
 	missing = bc.findMissingRangesWithStep(data.Buckets, startMs, endMs, stepMs)
 	bc.logger.DebugContext(ctx, "missing ranges", slog.Any("missing", missing), slog.Uint64("step", stepMs))
@@ -95,6 +96,7 @@ func (bc *bucketCache) GetMissRanges(
 	// Merge buckets into a single result
 	mergedResult := bc.mergeBuckets(ctx, relevantBuckets, data.Warnings)
 
+	// Filter the merged result to only include values within the requested time range
 	mergedResult = bc.filterResultToTimeRange(mergedResult, q, startMs, endMs, stepMs)
 
 	return mergedResult, missing
@@ -104,8 +106,6 @@ func (bc *bucketCache) GetMissRanges(
 func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Query, step qbtypes.Step, fresh *qbtypes.Result) {
 	// Get query window
 	startMs, endMs := q.Window()
-
-	stepMs := uint64(step.Milliseconds())
 
 	// Calculate the flux boundary - data after this point should not be cached
 	currentMs := uint64(time.Now().UnixMilli())
@@ -147,14 +147,19 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 
 	// Adjust start and end times to only cache complete intervals
 	cachableStartMs := startMs
+	stepMs := uint64(step.Milliseconds())
 
 	// If we have a step interval, adjust boundaries to only cache complete intervals
 	if stepMs > 0 {
 		// If start is not aligned, round up to next step boundary (first complete interval)
-		cachableStartMs = alignUpToStep(startMs, stepMs)
+		if startMs%stepMs != 0 {
+			cachableStartMs = ((startMs / stepMs) + 1) * stepMs
+		}
 
 		// If end is not aligned, round down to previous step boundary (last complete interval)
-		cachableEndMs = alignDownToStep(cachableEndMs, stepMs)
+		if cachableEndMs%stepMs != 0 {
+			cachableEndMs = (cachableEndMs / stepMs) * stepMs
+		}
 
 		// If after adjustment we have no complete intervals, don't cache
 		if cachableStartMs >= cachableEndMs {
@@ -216,7 +221,8 @@ func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket
 		currentMs := startMs
 
 		// Check if start is not aligned - add partial window
-		if nextAggStart := alignUpToStep(startMs, stepMs); nextAggStart != startMs {
+		if startMs%stepMs != 0 {
+			nextAggStart := startMs - (startMs % stepMs) + stepMs
 			missing = append(missing, &qbtypes.TimeRange{
 				From: startMs,
 				To:   min(nextAggStart, endMs),
@@ -262,7 +268,8 @@ func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket
 	currentMs := startMs
 
 	// Check if start is not aligned - add partial window
-	if nextAggStart := alignUpToStep(startMs, stepMs); nextAggStart != startMs {
+	if startMs%stepMs != 0 {
+		nextAggStart := startMs - (startMs % stepMs) + stepMs
 		missing = append(missing, &qbtypes.TimeRange{
 			From: startMs,
 			To:   min(nextAggStart, endMs),
@@ -281,7 +288,11 @@ func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket
 		}
 
 		// Align bucket boundaries to step intervals
-		alignedBucketStart := alignUpToStep(bucket.StartMs, stepMs)
+		alignedBucketStart := bucket.StartMs
+		if bucket.StartMs%stepMs != 0 {
+			// Round up to next step boundary
+			alignedBucketStart = bucket.StartMs - (bucket.StartMs % stepMs) + stepMs
+		}
 
 		// Add gap before this bucket if needed
 		if currentMs < alignedBucketStart && currentMs < endMs {
@@ -293,8 +304,12 @@ func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket
 
 		// Update current position to the end of this bucket
 		// But ensure it's aligned to step boundary
+		bucketEnd := min(bucket.EndMs, endMs)
 		// The step the window ends inside is missing however far the bucket runs.
-		bucketEnd := alignDownToStep(min(bucket.EndMs, endMs), stepMs)
+		if bucketEnd%stepMs != 0 {
+			// Round down to step boundary
+			bucketEnd = bucketEnd - (bucketEnd % stepMs)
+		}
 		currentMs = max(currentMs, bucketEnd)
 	}
 
@@ -308,19 +323,6 @@ func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket
 
 	// Don't merge ranges - keep partial windows separate for proper handling
 	return missing
-}
-
-// alignUpToStep returns the first step boundary at or after timestampMs.
-func alignUpToStep(timestampMs, stepMs uint64) uint64 {
-	if offset := timestampMs % stepMs; offset != 0 {
-		return timestampMs - offset + stepMs
-	}
-	return timestampMs
-}
-
-// alignDownToStep returns the last step boundary at or before timestampMs.
-func alignDownToStep(timestampMs, stepMs uint64) uint64 {
-	return timestampMs - timestampMs%stepMs
 }
 
 // findMissingRangesBasic is the simple algorithm without step alignment.
