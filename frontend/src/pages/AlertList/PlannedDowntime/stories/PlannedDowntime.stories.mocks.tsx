@@ -21,7 +21,7 @@ import {
 	alertRulesResponse,
 	RULE_MAX,
 } from '../../stories/__story_mockdata__/alerts';
-import { AlertListSubTabs, AlertListTabs } from '../../types';
+import { AlertListTabs } from '../../types';
 
 const LIST = 'Planned downtime · list';
 const REQUEST = 'Planned downtime · requests';
@@ -100,7 +100,7 @@ export const plannedDowntimeMocks = defineStoryMocks({
 		),
 	],
 	config: () => ({
-		route: `/alerts?tab=${AlertListTabs.CONFIGURATION}&subTab=${AlertListSubTabs.PLANNED_DOWNTIME}`,
+		route: `/alerts?tab=${AlertListTabs.PLANNED_DOWNTIME}`,
 	}),
 });
 

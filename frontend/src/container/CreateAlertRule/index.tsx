@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { Form, Tabs, TabsProps } from 'antd';
 import logEvent from 'api/common/logEvent';
-import ConfigureIcon from 'assets/AlertHistory/ConfigureIcon';
 import AlertBreadcrumb from 'components/AlertBreadcrumb';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import { ENTITY_VERSION_V5 } from 'constants/app';
@@ -70,7 +69,6 @@ function CreateRules(): JSX.Element {
 	const handleTabChange = useCallback(
 		(tab: string): void => {
 			queryParams.set('tab', tab);
-			queryParams.delete('subTab');
 			queryParams.delete('search');
 			safeNavigate(`${ROUTES.LIST_ALL_ALERT}?${queryParams.toString()}`);
 		},
@@ -173,13 +171,13 @@ function CreateRules(): JSX.Element {
 			),
 		},
 		{
-			label: (
-				<div className="periscope-tab top-level-tab">
-					<ConfigureIcon width={14} height={14} />
-					Configuration
-				</div>
-			),
-			key: AlertListTabs.CONFIGURATION,
+			label: <div className="periscope-tab top-level-tab">Routing Policies</div>,
+			key: AlertListTabs.ROUTING_POLICIES,
+			children: null,
+		},
+		{
+			label: <div className="periscope-tab top-level-tab">Planned Downtime</div>,
+			key: AlertListTabs.PLANNED_DOWNTIME,
 			children: null,
 		},
 	];

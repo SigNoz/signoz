@@ -21,7 +21,7 @@ const pageStory = storyMocks(plannedDowntimeMocks, { layout: 'app' });
  * Windows that silence rules on a schedule, one off or recurring, with the rules
  * each window covers.
  *
- * Route: `/alerts?tab=Configuration&subTab=PlannedDowntime`.
+ * Route: `/alerts?tab=PlannedDowntime`.
  */
 const meta = {
 	title: 'Pages/Alerts/Planned Downtime',

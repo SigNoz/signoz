@@ -138,7 +138,18 @@ describe('getAutoContexts', () => {
 		]);
 
 		expect(
-			getAutoContexts(ROUTES.LIST_ALL_ALERT, '?tab=Configuration'),
+			getAutoContexts(ROUTES.LIST_ALL_ALERT, '?tab=RoutingPolicies'),
+		).toStrictEqual([
+			{
+				source: 'auto',
+				type: 'alert',
+				resourceId: null,
+				metadata: { page: 'alert_list' },
+			},
+		]);
+
+		expect(
+			getAutoContexts(ROUTES.LIST_ALL_ALERT, '?tab=PlannedDowntime'),
 		).toStrictEqual([
 			{
 				source: 'auto',

@@ -55,7 +55,10 @@ describe('resolvePageType', () => {
 		expect(resolvePageType(ROUTES.LIST_ALL_ALERT, '?tab=TriggeredAlerts')).toBe(
 			PageTypeDTO.alerts_triggered,
 		);
-		expect(resolvePageType(ROUTES.LIST_ALL_ALERT, '?tab=Configuration')).toBe(
+		expect(resolvePageType(ROUTES.LIST_ALL_ALERT, '?tab=RoutingPolicies')).toBe(
+			PageTypeDTO.alert_list,
+		);
+		expect(resolvePageType(ROUTES.LIST_ALL_ALERT, '?tab=PlannedDowntime')).toBe(
 			PageTypeDTO.alert_list,
 		);
 	});
