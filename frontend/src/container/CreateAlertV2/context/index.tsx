@@ -10,7 +10,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import {
 	useCreateRule,
 	useTestRule,
@@ -124,7 +124,7 @@ export function CreateAlertProvider(
 		[setCreateAlertState],
 	);
 
-	const location = useLocation();
+	const location = useAppLocation();
 	const queryParams = new URLSearchParams(location.search);
 	const ruleNameFromURL = queryParams.get(QueryParams.ruleName);
 	const yAxisUnitFromURL = queryParams.get(QueryParams.yAxisUnit);

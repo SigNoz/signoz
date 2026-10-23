@@ -1,7 +1,6 @@
-import { useLocation } from 'react-router-dom';
 import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
-import history from 'lib/history';
+import { useAppLocation } from 'lib/router/useAppLocation';
 
 import {
 	AttributeMapping,
@@ -20,14 +19,14 @@ const routes: TabRoutes[] = [
 ];
 
 function LLMObservabilityPage(): JSX.Element {
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 
 	return (
 		<div
 			className="ai-observability-module-container"
 			data-testid="llm-observability-page"
 		>
-			<RouteTab routes={routes} activeKey={pathname} history={history} />
+			<RouteTab routes={routes} activeKey={pathname} />
 		</div>
 	);
 }

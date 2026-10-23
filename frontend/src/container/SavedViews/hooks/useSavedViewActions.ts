@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import { useQueryClient } from 'react-query';
-import { useLocation } from 'react-router-dom';
 import { toast } from '@signozhq/ui/sonner';
 import {
 	useCreateSavedView,
@@ -19,6 +18,7 @@ import useOptionsMenu from 'container/OptionsMenu/useOptionsMenu';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 import { DataSource } from 'types/common/queryBuilder';
 import { toAPIError } from 'utils/errorUtils';
@@ -44,7 +44,7 @@ export function useSavedViewActions(
 	source: SavedviewtypesSourceDTO,
 ): UseSavedViewActionsResult {
 	const queryClient = useQueryClient();
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const { safeNavigate } = useSafeNavigate();
 	const { currentQuery, stagedQuery, panelType, redirectWithQueryBuilderData } =
 		useQueryBuilder();

@@ -9,7 +9,6 @@ import { useVolumeControlFeatureGate } from 'hooks/metricsExplorer/useVolumeCont
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
-import history from 'lib/history';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { Explorer, Summary, Views, VolumeControl } from './constants';
@@ -52,7 +51,6 @@ function MetricsExplorerPage(): JSX.Element {
 			})}
 			routes={routes}
 			activeKey={pathname}
-			history={history}
 		/>
 	);
 }

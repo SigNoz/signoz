@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { QueryParams } from 'constants/query';
 import {
 	CustomTimeType,
@@ -10,7 +10,7 @@ import {
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { UpdateTimeInterval } from 'store/actions';
 import { getTimeRange } from 'utils/getTimeRange';
 
@@ -33,7 +33,7 @@ export function useTimeSeriesTimeManagement({
 }: UseTimeSeriesTimeManagementProps): UseTimeSeriesTimeManagementResult {
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
-	const location = useLocation();
+	const location = useAppLocation();
 
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
@@ -62,7 +62,7 @@ export function useTimeSeriesTimeManagement({
 			urlQuery.set(QueryParams.endTime, maxTime.toString());
 			urlQuery.delete(QueryParams.relativeTime);
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			navigate(generatedUrl);
 		},
 		[dispatch, location.pathname, urlQuery],
 	);

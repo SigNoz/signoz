@@ -1,7 +1,8 @@
 import { useCallback } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { navigate } from 'lib/router/navigation';
 import { Alert } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import getLocalStorageApi from 'api/browser/localstorage/get';
@@ -71,8 +72,7 @@ const sections: MetricSection[] = [
 function Section(section: MetricSection): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const { title, graphs } = section;
-	const history = useHistory();
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
 
@@ -84,13 +84,13 @@ function Section(section: MetricSection): JSX.Element {
 			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			navigate(generatedUrl);
 
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
 		},
-		[dispatch, history, pathname, urlQuery],
+		[dispatch, pathname, urlQuery],
 	);
 
 	return (

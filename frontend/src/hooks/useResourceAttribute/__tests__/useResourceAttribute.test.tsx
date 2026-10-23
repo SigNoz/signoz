@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { Router } from 'react-router-dom';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { createMemoryHistory } from 'history';
+import { getCurrentLocation } from 'lib/router/navigation';
 import { AppProvider } from 'providers/App/App';
+import { TestRouter } from 'tests/router';
 
 import ResourceProvider from '../ResourceProvider';
 import useResourceAttribute from '../useResourceAttribute';
@@ -17,15 +17,12 @@ jest.mock('hooks/useSafeNavigate', () => ({
 
 describe('useResourceAttribute component hook', () => {
 	it('should not change other query params except for resourceAttribute', async () => {
-		const history = createMemoryHistory({
-			initialEntries: ['/inital-url?tab=overview'],
-		});
 		const wrapper = ({ children }: { children: any }): JSX.Element => (
 			<QueryClientProvider client={queryClient}>
 				<AppProvider>
-					<Router history={history}>
+					<TestRouter initialRoute="/inital-url?tab=overview">
 						<ResourceProvider>{children}</ResourceProvider>
-					</Router>
+					</TestRouter>
 				</AppProvider>
 			</QueryClientProvider>
 		);
@@ -36,7 +33,7 @@ describe('useResourceAttribute component hook', () => {
 		});
 
 		await waitFor(() =>
-			expect(history.location.search).toContain('tab=overview'),
+			expect(getCurrentLocation().search).toContain('tab=overview'),
 		);
 	});
 });

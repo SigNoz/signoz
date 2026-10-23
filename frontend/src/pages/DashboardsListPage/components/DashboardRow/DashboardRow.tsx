@@ -6,7 +6,7 @@ import { Typography } from '@signozhq/ui/typography';
 import { CalendarClock, LockKeyhole, Pin, PinOff } from '@signozhq/icons';
 import cx from 'classnames';
 import logEvent from 'api/common/logEvent';
-import { generatePath } from 'react-router-dom';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { resolveDashboardImage } from 'pages/DashboardPage/DashboardContainer/dashboardIcons';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
@@ -60,7 +60,7 @@ function DashboardRow({
 	const isLocked = !!dashboard.locked;
 	const tags = tagsToStrings(dashboard.tags);
 
-	const link = generatePath(ROUTES.DASHBOARD, { dashboardId: id });
+	const link = buildRoutePath(ROUTES.DASHBOARD, { dashboardId: id });
 	const formattedCreatedAt = formatTimezoneAdjustedTimestamp(
 		createdAt,
 		DATE_TIME_FORMATS.DASH_DATETIME_UTC,

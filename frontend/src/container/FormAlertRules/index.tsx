@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { BellDot, CircleAlert, ExternalLink, Save } from '@signozhq/icons';
 import { Button, FormInstance, SelectProps } from 'antd';
 import { ConfirmDialog } from '@signozhq/ui/dialog';
@@ -109,7 +109,7 @@ function FormAlertRules({
 	>((state) => state.globalTime);
 
 	const urlQuery = useUrlQuery();
-	const location = useLocation();
+	const location = useAppLocation();
 	const queryParams = new URLSearchParams(location.search);
 
 	const dataSource = useMemo(

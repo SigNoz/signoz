@@ -1,8 +1,8 @@
-import { MemoryRouter, Route } from 'react-router-dom';
 // eslint-disable-next-line no-restricted-imports
 import { render } from '@testing-library/react';
 import ROUTES from 'constants/routes';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
+import { TestRouter } from 'tests/router';
 
 jest.mock('api/common/logEvent', () => ({
 	__esModule: true,
@@ -34,13 +34,12 @@ import AIAssistantPage from '../AIAssistantPage';
 
 function renderAt(entry: string): { unmount: () => void } {
 	return render(
-		<MemoryRouter initialEntries={[entry]}>
-			<Route
-				exact
-				path={[ROUTES.AI_ASSISTANT_BASE, ROUTES.AI_ASSISTANT]}
-				component={AIAssistantPage}
-			/>
-		</MemoryRouter>,
+		<TestRouter
+			initialRoute={entry}
+			routePath={[ROUTES.AI_ASSISTANT_BASE, ROUTES.AI_ASSISTANT]}
+		>
+			<AIAssistantPage />
+		</TestRouter>,
 	);
 }
 

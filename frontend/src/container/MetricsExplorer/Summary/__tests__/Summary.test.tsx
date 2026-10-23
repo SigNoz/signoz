@@ -1,4 +1,3 @@
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as metricsHooks from 'api/generated/services/metrics';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -26,20 +25,6 @@ jest.mock('d3-hierarchy', () => ({
 jest.mock('react-use', () => ({
 	useWindowSize: jest.fn().mockReturnValue({ width: 1000, height: 1000 }),
 }));
-jest.mock('react-router-dom-v5-compat', () => {
-	const actual = jest.requireActual('react-router-dom-v5-compat');
-	return {
-		...actual,
-		useSearchParams: jest.fn(),
-		useNavigationType: (): any => 'PUSH',
-	};
-});
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string } => ({
-		pathname: `${ROUTES.METRICS_EXPLORER_BASE}`,
-	}),
-}));
 jest.mock('hooks/queryBuilder/useShareBuilderUrl', () => ({
 	useShareBuilderUrl: jest.fn(),
 }));
@@ -57,7 +42,6 @@ jest.mock('../MetricsSearch', () => {
 	};
 });
 
-const mockSetSearchParams = jest.fn();
 const mockGetMetricsStats = jest.fn();
 const mockGetMetricsTreemap = jest.fn();
 
@@ -88,11 +72,6 @@ const useQueryBuilderSpy = jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder');
 describe('Summary', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
-
-		(useSearchParams as jest.Mock).mockReturnValue([
-			new URLSearchParams(),
-			mockSetSearchParams,
-		]);
 
 		useGetMetricsStatsSpy.mockReturnValue({
 			data: null,
@@ -147,7 +126,9 @@ describe('Summary', () => {
 			currentQuery: staleQuery,
 		} as Partial<QueryBuilderContextType> as QueryBuilderContextType);
 
-		const { rerender } = render(<Summary />);
+		const { rerender } = render(<Summary />, undefined, {
+			initialRoute: ROUTES.METRICS_EXPLORER_BASE,
+		});
 
 		expect(screen.getByTestId('metrics-search-expression')).toHaveTextContent(
 			staleFilterExpression,
@@ -170,29 +151,17 @@ describe('Summary', () => {
 	});
 
 	it('persists inspect modal open state across page refresh', () => {
-		(useSearchParams as jest.Mock).mockReturnValue([
-			new URLSearchParams({
-				isInspectModalOpen: 'true',
-				selectedMetricName: 'test-metric',
-			}),
-			mockSetSearchParams,
-		]);
-
-		render(<Summary />);
+		render(<Summary />, undefined, {
+			initialRoute: `${ROUTES.METRICS_EXPLORER_BASE}?isInspectModalOpen=true&selectedMetricName=test-metric`,
+		});
 
 		expect(screen.queryByText('Proportion View')).not.toBeInTheDocument();
 	});
 
 	it('persists metric details modal state across page refresh', () => {
-		(useSearchParams as jest.Mock).mockReturnValue([
-			new URLSearchParams({
-				isMetricDetailsOpen: 'true',
-				selectedMetricName: 'test-metric',
-			}),
-			mockSetSearchParams,
-		]);
-
-		render(<Summary />);
+		render(<Summary />, undefined, {
+			initialRoute: `${ROUTES.METRICS_EXPLORER_BASE}?isMetricDetailsOpen=true&selectedMetricName=test-metric`,
+		});
 
 		expect(screen.queryByText('Proportion View')).not.toBeInTheDocument();
 	});

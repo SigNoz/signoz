@@ -1,7 +1,7 @@
 import { memo, useCallback, useMemo, useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import BarChart from 'lib/visualization/charts/BarChart/BarChart';
@@ -34,7 +34,7 @@ function LogsExplorerChart({
 }: LogsExplorerChartProps): JSX.Element {
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
-	const location = useLocation();
+	const location = useAppLocation();
 	const { safeNavigate } = useSafeNavigate();
 
 	// Access global time state for min/max range

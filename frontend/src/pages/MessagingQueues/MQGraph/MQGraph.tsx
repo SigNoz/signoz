@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
+import { navigate } from 'lib/router/navigation';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -37,8 +38,7 @@ function MessagingQueuesGraph(): JSX.Element {
 		[filterItems],
 	);
 
-	const history = useHistory();
-	const location = useLocation();
+	const location = useAppLocation();
 	const isLogEventCalled = useRef<boolean>(false);
 
 	const messagingQueueCustomTooltipText = (): HTMLDivElement => {
@@ -50,7 +50,7 @@ function MessagingQueuesGraph(): JSX.Element {
 		return customText;
 	};
 
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const dispatch = useDispatch();
 
 	const onDragSelect = useCallback(
@@ -61,13 +61,13 @@ function MessagingQueuesGraph(): JSX.Element {
 			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			navigate(generatedUrl);
 
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
 		},
-		[dispatch, history, pathname, urlQuery],
+		[dispatch, pathname, urlQuery],
 	);
 
 	const checkIfDataExists = (isDataAvailable: boolean): void => {
@@ -88,7 +88,7 @@ function MessagingQueuesGraph(): JSX.Element {
 				widget={widgetData}
 				headerMenuList={[...ViewMenuAction]}
 				onClickHandler={(xValue, _yValue, _mouseX, _mouseY, data): void => {
-					setSelectedTimelineQuery(urlQuery, xValue, location, history, data);
+					setSelectedTimelineQuery(urlQuery, xValue, location, data);
 				}}
 				onDragSelect={onDragSelect}
 				customTooltipElement={messagingQueueCustomTooltipText()}
