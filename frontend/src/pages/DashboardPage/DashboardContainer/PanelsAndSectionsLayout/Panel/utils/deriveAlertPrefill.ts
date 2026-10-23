@@ -20,6 +20,7 @@ import {
 	type ComparisonThresholdShape,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/threshold';
 import { getSectionControls } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getSectionControls';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import type { MetricAggregation } from 'types/api/v5/queryRange';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { ReduceOperators } from 'types/common/queryBuilder';
@@ -62,7 +63,7 @@ function readReduceTo(
 }
 
 export function uniformReduceTo(query: Query): ReduceOperators | undefined {
-	const { queryData } = query.builder;
+	const { queryData } = getActiveBuilder(query);
 	const first = queryData[0] && readReduceTo(queryData[0]);
 	if (!first) {
 		return undefined;

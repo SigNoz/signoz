@@ -1,5 +1,8 @@
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
-import { initialQueriesMap } from 'constants/queryBuilder';
+import {
+	initialQueriesMap,
+	initialQueryAIWithType,
+} from 'constants/queryBuilder';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import {
 	aiTraceAlertDefaults,
@@ -134,6 +137,16 @@ describe('CreateAlertV2 Context Utils', () => {
 		it('should return TRACES_BASED_ALERT for traces data source', () => {
 			const result = getInitialAlertType(initialQueriesMap.traces);
 			expect(result).toBe(AlertTypes.TRACES_BASED_ALERT);
+		});
+
+		it('should return AI_TRACES_BASED_ALERT for an AI query', () => {
+			const result = getInitialAlertType({
+				...initialQueriesMap.traces,
+				queryType: EQueryType.AI_QUERY_BUILDER,
+				builder: { ...initialQueriesMap.traces.builder, queryData: [] },
+				builder_ai_query: initialQueryAIWithType.builder,
+			});
+			expect(result).toBe(AlertTypes.AI_TRACES_BASED_ALERT);
 		});
 
 		it('should return METRICS_BASED_ALERT for unknown data source', () => {
