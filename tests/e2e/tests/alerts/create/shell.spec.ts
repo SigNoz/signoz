@@ -114,15 +114,15 @@ test.describe('Alert create — shell & type selection', () => {
 		expect(new URL(page.url()).searchParams.get('alertType')).toBeNull();
 	});
 
-	test('TC-06 create renders inside the Alert Rules tab and leaving drops subTab/search', async ({
+	test('TC-06 create renders inside the Alert Rules tab and leaving drops search', async ({
 		authedPage: page,
 	}) => {
-		// `subTab` and `search` are seeded here precisely so their removal is
-		// observable — `handleTabChange` deletes them while keeping everything else.
+		// `search` is seeded here precisely so its removal is observable —
+		// `handleTabChange` deletes it while keeping everything else.
 		await page.goto(
 			createAlertUrl({
 				alertType: AlertType.LOGS,
-				params: { subTab: 'Alert Rules', search: 'stale' },
+				params: { search: 'stale' },
 			}),
 		);
 		await expect(page.getByTestId('alert-name-input')).toBeVisible();
@@ -134,7 +134,6 @@ test.describe('Alert create — shell & type selection', () => {
 		const params = new URL(page.url()).searchParams;
 		// The param carries the space-less enum value, not the tab's visible label.
 		expect(params.get('tab')).toBe(AlertListTab.TRIGGERED_ALERTS);
-		expect(params.get('subTab')).toBeNull();
 		expect(params.get('search')).toBeNull();
 	});
 

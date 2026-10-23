@@ -19,7 +19,7 @@ import {
 	channelNames,
 	notificationChannelsResponse,
 } from '../../stories/__story_mockdata__/alerts';
-import { AlertListSubTabs, AlertListTabs } from '../../types';
+import { AlertListTabs } from '../../types';
 
 const LIST = 'Routing policies · list';
 const REQUEST = 'Routing policies · requests';
@@ -125,7 +125,7 @@ export const routingPoliciesMocks = defineStoryMocks({
 		),
 	],
 	config: () => ({
-		route: `/alerts?tab=${AlertListTabs.CONFIGURATION}&subTab=${AlertListSubTabs.ROUTING_POLICIES}`,
+		route: `/alerts?tab=${AlertListTabs.ROUTING_POLICIES}`,
 	}),
 });
 

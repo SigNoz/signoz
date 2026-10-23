@@ -2,7 +2,7 @@ import { expect, test } from '../../fixtures/alerts/alert-rules';
 import { ALERTS_LIST_PATH } from '../../helpers/alerts/constants';
 import { watchConsole } from '../../helpers/common';
 
-// TC-* — the Alerts page shell: the four top-level tabs, how they map to
+// TC-* — the Alerts page shell: the top-level tabs, how they map to
 // `?tab=`, and a navigation smoke check per tab. Tab *internals* (channel CRUD,
 // planned downtime, routing policies) are deliberately out of scope — each
 // deserves its own spec file.
@@ -11,11 +11,12 @@ const TAB_NAMES = {
 	triggered: /triggered alerts/i,
 	rules: /alert rules/i,
 	channels: /notification channels/i,
-	configuration: /configuration/i,
+	routingPolicies: /routing policies/i,
+	plannedDowntime: /planned downtime/i,
 };
 
 test.describe('Alerts page shell', () => {
-	test('TC-01 all four top-level tabs render', async ({ authedPage: page }) => {
+	test('TC-01 all top-level tabs render', async ({ authedPage: page }) => {
 		await page.goto(ALERTS_LIST_PATH);
 
 		for (const name of Object.values(TAB_NAMES)) {
@@ -43,9 +44,7 @@ test.describe('Alerts page shell', () => {
 		).toBeVisible();
 	});
 
-	test('TC-03 tab switch writes ?tab= and clears subTab', async ({
-		authedPage: page,
-	}) => {
+	test('TC-03 tab switch writes ?tab=', async ({ authedPage: page }) => {
 		await page.goto(ALERTS_LIST_PATH);
 
 		await page.getByRole('tab', { name: TAB_NAMES.triggered }).click();
@@ -54,32 +53,24 @@ test.describe('Alerts page shell', () => {
 		await page.getByRole('tab', { name: TAB_NAMES.channels }).click();
 		await expect(page).toHaveURL(/[?&]tab=Channels/);
 
-		// Entering Configuration adds the default subTab...
-		await page.getByRole('tab', { name: TAB_NAMES.configuration }).click();
-		await expect(page).toHaveURL(/[?&]tab=Configuration/);
-		await expect(page).toHaveURL(/[?&]subTab=planned-downtime/);
+		await page.getByRole('tab', { name: TAB_NAMES.routingPolicies }).click();
+		await expect(page).toHaveURL(/[?&]tab=RoutingPolicies/);
 
-		// ...and leaving it drops subTab entirely (onChange rebuilds the search
-		// from scratch rather than mutating the existing params).
-		await page.getByRole('tab', { name: TAB_NAMES.rules }).click();
-		await expect(page).toHaveURL(/[?&]tab=AlertRules/);
-		await expect(page).not.toHaveURL(/subTab=/);
+		await page.getByRole('tab', { name: TAB_NAMES.plannedDowntime }).click();
+		await expect(page).toHaveURL(/[?&]tab=PlannedDowntime/);
 	});
 
-	test('TC-04 Configuration deep-link', async ({ authedPage: page }) => {
-		// Deep-linking without subTab: the inner Tabs falls back to
-		// planned-downtime for its activeKey without writing it to the URL, so
-		// assert the rendered tab, not the param.
-		await page.goto(`${ALERTS_LIST_PATH}?tab=Configuration`);
+	test('TC-04 Routing Policies and Planned Downtime deep-links', async ({
+		authedPage: page,
+	}) => {
+		await page.goto(`${ALERTS_LIST_PATH}?tab=RoutingPolicies`);
 		await expect(
-			page.getByRole('tab', { name: /planned downtime/i }),
+			page.getByRole('tab', { name: TAB_NAMES.routingPolicies }),
 		).toHaveAttribute('aria-selected', 'true');
 
-		await page.goto(
-			`${ALERTS_LIST_PATH}?tab=Configuration&subTab=routing-policies`,
-		);
+		await page.goto(`${ALERTS_LIST_PATH}?tab=PlannedDowntime`);
 		await expect(
-			page.getByRole('tab', { name: /routing policies/i }),
+			page.getByRole('tab', { name: TAB_NAMES.plannedDowntime }),
 		).toHaveAttribute('aria-selected', 'true');
 	});
 

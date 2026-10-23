@@ -41,7 +41,7 @@ describe('useTableParams navigation scenarios', () => {
 		jest.useRealTimers();
 	});
 
-	describe('Tab navigation: Alert Rules -> Configuration -> Routing Policies', () => {
+	describe('Tab navigation: Alert Rules -> Routing Policies', () => {
 		it('preferred value from one table should NOT leak to URL when navigating away', () => {
 			const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
 			const wrapper = createNuqsWrapper({}, onUrlUpdate);

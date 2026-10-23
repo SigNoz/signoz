@@ -1,7 +1,7 @@
 .alerts-container {
 	// Hands the page height down to the active tab so its content can bound itself
 	// instead of guessing with 100vh. Child combinators only, nested Tabs
-	// (Configuration) must not be caught.
+	// (e.g. the alert history timeline) must not be caught.
 	flex: 1;
 	min-height: 0;
 
@@ -51,14 +51,6 @@
 				.periscope-tab {
 					color: var(--l2-foreground);
 				}
-			}
-		}
-	}
-
-	.configuration-tabs {
-		.ant-tabs-nav {
-			.ant-tabs-nav-wrap {
-				padding: 0 8px;
 			}
 		}
 	}

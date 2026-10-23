@@ -65,14 +65,16 @@ export const ThresholdMatchType = {
 } as const;
 
 /**
- * `AlertListTabs` (`frontend/src/pages/AlertList/types.ts:7-9`). The values are
+ * `AlertListTabs` (`frontend/src/pages/AlertList/types.ts`). The values are
  * space-less — the tab *labels* read "Triggered Alerts" but the `tab` URL param
  * is `TriggeredAlerts`, and asserting the label form silently fails.
  */
 export const AlertListTab = {
 	TRIGGERED_ALERTS: 'TriggeredAlerts',
 	ALERT_RULES: 'AlertRules',
-	CONFIGURATION: 'Configuration',
+	CHANNELS: 'Channels',
+	ROUTING_POLICIES: 'RoutingPolicies',
+	PLANNED_DOWNTIME: 'PlannedDowntime',
 } as const;
 
 /**

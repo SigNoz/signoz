@@ -22,7 +22,7 @@ const pageStory = storyMocks(routingPoliciesMocks, { layout: 'app' });
  * Policies that route a firing alert to channels by expression, in the order they
  * are evaluated.
  *
- * Route: `/alerts?tab=Configuration&subTab=RoutingPolicies`.
+ * Route: `/alerts?tab=RoutingPolicies`.
  */
 const meta = {
 	title: 'Pages/Alerts/Routing Policies',
