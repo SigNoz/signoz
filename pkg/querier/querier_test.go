@@ -59,6 +59,7 @@ func TestQueryRange_MetricTypeMissing(t *testing.T) {
 		flaggertest.New(t), // flagger
 		0,                  // logTraceIDWindowPadding
 		0,                  // maxConcurrentQueries
+		0,                  // maxTimeRange
 	)
 
 	req := &qbtypes.QueryRangeRequest{
@@ -132,6 +133,7 @@ func TestQueryRange_MetricTypeFromStore(t *testing.T) {
 		flaggertest.New(t), // flagger
 		0,                  // logTraceIDWindowPadding
 		0,                  // maxConcurrentQueries
+		0,                  // maxTimeRange
 	)
 
 	req := &qbtypes.QueryRangeRequest{

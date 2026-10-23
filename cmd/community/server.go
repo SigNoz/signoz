@@ -121,8 +121,8 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		func(_ context.Context, _ factory.ProviderSettings, _ flagger.Flagger, _ licensing.Licensing, _ telemetrystore.TelemetryStore, _ retention.Getter, _ organization.Getter, _ zeus.Zeus) (factory.NamedMap[factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config]], string) {
 			return signoz.NewMeterReporterProviderFactories(), "noop"
 		},
-		func(ps factory.ProviderSettings, q querier.Querier, a analytics.Analytics) querier.Handler {
-			return querier.NewHandler(ps, q, a)
+		func(ps factory.ProviderSettings, q querier.Querier, a analytics.Analytics, cfg querier.Config) querier.Handler {
+			return querier.NewHandler(ps, q, a, cfg)
 		},
 		func(_ sqlstore.SQLStore, _ dashboard.Module, _ global.Global, _ zeus.Zeus, _ gateway.Gateway, _ licensing.Licensing, _ serviceaccount.Module, _ cloudintegration.Config) (cloudintegration.Module, error) {
 			return implcloudintegration.NewModule(), nil

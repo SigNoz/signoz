@@ -21,13 +21,15 @@ type handler struct {
 	set       factory.ProviderSettings
 	querier   querier.Querier
 	community querier.Handler
+	config    querier.Config
 }
 
-func NewHandler(set factory.ProviderSettings, querier querier.Querier, community querier.Handler) querier.Handler {
+func NewHandler(set factory.ProviderSettings, querier querier.Querier, community querier.Handler, config querier.Config) querier.Handler {
 	return &handler{
 		set:       set,
 		querier:   querier,
 		community: community,
+		config:    config,
 	}
 }
 
@@ -53,7 +55,7 @@ func (h *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err := queryRangeRequest.Validate(); err != nil {
+	if err := queryRangeRequest.Validate(qbtypes.WithMaxTimeRange(h.config.MaxTimeRange)); err != nil {
 		render.Error(rw, err)
 		return
 	}

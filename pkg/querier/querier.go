@@ -62,6 +62,7 @@ type querier struct {
 	liveDataRefresh          time.Duration
 	builderConfig            builderConfig
 	maxConcurrentQueries     int
+	maxTimeRange             time.Duration
 }
 
 var _ Querier = (*querier)(nil)
@@ -82,6 +83,7 @@ func New(
 	flagger flagger.Flagger,
 	logTraceIDWindowPadding time.Duration,
 	maxConcurrentQueries int,
+	maxTimeRange time.Duration,
 ) *querier {
 	querierSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querier")
 	if maxConcurrentQueries <= 0 {
@@ -106,16 +108,11 @@ func New(
 			logTraceIDWindowPaddingMS: uint64(logTraceIDWindowPadding.Milliseconds()),
 		},
 		maxConcurrentQueries: maxConcurrentQueries,
+		maxTimeRange:         maxTimeRange,
 	}
 }
 
 func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error) {
-
-	// Coerce the window to epoch milliseconds up front so every downstream
-	// consumer (TimeRange, narrowWindowByTraceID, step interval, etc.) can
-	// safely assume ms regardless of the resolution the caller sent.
-	req.Start = querybuilder.ToMilliSecs(req.Start)
-	req.End = querybuilder.ToMilliSecs(req.End)
 
 	event := &qbtypes.QBEvent{
 		Version:         "v5",
@@ -533,11 +530,6 @@ func familyTemporality(temporalities map[string]metrictypes.Temporality, names [
 }
 
 func (q *querier) QueryRawStream(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest, client *qbtypes.RawStream) {
-
-	// Coerce the window to epoch milliseconds up front (End may be 0 for the
-	// open-ended stream, which ToMilliSecs leaves untouched).
-	req.Start = querybuilder.ToMilliSecs(req.Start)
-	req.End = querybuilder.ToMilliSecs(req.End)
 
 	event := &qbtypes.QBEvent{
 		Version:         "v5",

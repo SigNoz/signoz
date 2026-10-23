@@ -673,6 +673,12 @@ func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
 	// Copy the decoded values back to the original struct
 	*r = QueryRangeRequest(temp)
 
+	// Coerce the window to epoch milliseconds up front so every downstream
+	// consumer (TimeRange, narrowWindowByTraceID, step interval, etc.) can
+	// safely assume ms regardless of the resolution the caller sent.
+	r.Start = ToMilliSecs(r.Start)
+	r.End = ToMilliSecs(r.End)
+
 	return nil
 }
 

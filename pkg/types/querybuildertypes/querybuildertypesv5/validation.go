@@ -5,11 +5,15 @@ import (
 	"math"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
+
+// maxEndTimeAhead tolerates client clock skew; anything further ahead is a malformed timestamp.
+const maxEndTimeAhead = 24 * time.Hour
 
 // getQueryIdentifier returns a friendly identifier for a query based on its type and name/content.
 func getQueryIdentifier(envelope QueryEnvelope, index int) string {
@@ -82,6 +86,7 @@ type validationConfig struct {
 	skipGroupByValidation          bool
 	withTimestampGroupByValidation bool
 	withReduceToValidation         bool
+	maxTimeRange                   time.Duration
 }
 
 func applyValidationOptions(opts []ValidationOption) validationConfig {
@@ -90,6 +95,13 @@ func applyValidationOptions(opts []ValidationOption) validationConfig {
 		opt(&cfg)
 	}
 	return cfg
+}
+
+// WithMaxTimeRange rejects requests whose window is longer than maxTimeRange; 0 disables the limit.
+func WithMaxTimeRange(maxTimeRange time.Duration) ValidationOption {
+	return func(cfg *validationConfig) {
+		cfg.maxTimeRange = maxTimeRange
+	}
 }
 
 // SkipLimitOffsetValidation returns a ValidationOption that skips the limit and offset range checks.
@@ -574,12 +586,8 @@ func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
 
 // Validate validates the entire query range request.
 func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
-	// Validate time range
-	if r.RequestType != RequestTypeRawStream && r.Start >= r.End {
-		return errors.NewInvalidInputf(
-			errors.CodeInvalidInput,
-			"start time must be before end time",
-		)
+	if err := r.validateTimeRange(applyValidationOptions(opts)); err != nil {
+		return err
 	}
 
 	// Validate request type
@@ -630,15 +638,14 @@ func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
 // specs) and returns the request type's ValidationOptions. The dry-run path uses
 // this so per-query errors can be attributed individually via QueryEnvelope.Validate
 // instead of failing fast like Validate does.
-func (r *QueryRangeRequest) ValidateRequestScope() ([]ValidationOption, error) {
-	if r.RequestType != RequestTypeRawStream && r.Start >= r.End {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "start time must be before end time")
+func (r *QueryRangeRequest) ValidateRequestScope(opts ...ValidationOption) ([]ValidationOption, error) {
+	if err := r.validateTimeRange(applyValidationOptions(opts)); err != nil {
+		return nil, err
 	}
 
-	var opts []ValidationOption
 	switch r.RequestType {
 	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeTimeSeries, RequestTypeScalar, RequestTypeHeatmap:
-		opts = GetValidationOptions(r.RequestType)
+		opts = append(opts, GetValidationOptions(r.RequestType)...)
 	default:
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid request type: %s", r.RequestType).
 			WithAdditional("Valid request types are: raw, timeseries, scalar, heatmap")
@@ -697,6 +704,25 @@ func (p *QueryRangePreviewParams) Validate() (QueryRangePreviewOptions, error) {
 // to ValidateRequestScope, letting the dry-run report errors independently.
 func (e QueryEnvelope) Validate(opts ...ValidationOption) error {
 	return validateQueryEnvelope(e, opts...)
+}
+
+func (r *QueryRangeRequest) validateTimeRange(cfg validationConfig) error {
+	if r.RequestType == RequestTypeRawStream {
+		return nil
+	}
+	if r.Start == 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "start time is required")
+	}
+	if r.Start >= r.End {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "start time must be before end time")
+	}
+	if r.End > uint64(time.Now().Add(maxEndTimeAhead).UnixMilli()) {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "end time %s is too far in the future", time.UnixMilli(int64(r.End)).UTC().Format(time.RFC3339))
+	}
+	if cfg.maxTimeRange > 0 && time.Duration(r.End-r.Start)*time.Millisecond > cfg.maxTimeRange {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "query time range must not exceed %d days", int64(cfg.maxTimeRange/(24*time.Hour)))
+	}
+	return nil
 }
 
 // validateAllQueriesNotDisabled validates that at least one query in the composite query is enabled.
