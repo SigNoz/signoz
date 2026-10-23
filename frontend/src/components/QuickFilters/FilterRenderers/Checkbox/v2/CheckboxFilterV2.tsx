@@ -160,9 +160,14 @@ export default function CheckboxFilterV2(
 		relatedExclusions,
 	});
 
-	// Kept while a search is typed, so narrowing the list does not remove the box.
+	// Kept while a search is typed, so narrowing the list does not remove the box,
+	// and while a refetch still shows the previous, narrowed results.
+	const wasSearchShown = useRef(false);
 	const isSearchShown =
-		searchText !== '' || totalCount > DEFAULT_VISIBLE_ITEMS_COUNT;
+		searchText !== '' ||
+		totalCount > DEFAULT_VISIBLE_ITEMS_COUNT ||
+		(isFetching && wasSearchShown.current);
+	wasSearchShown.current = isSearchShown;
 
 	return (
 		<div className={styles.checkboxFilter} data-testid="checkbox-filter-v2">
