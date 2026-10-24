@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
@@ -105,9 +106,11 @@ func resolveChannelIDs(ctx context.Context, alertmanagerService alertmanager.Ale
 
 	ids := make([]string, 0, len(names))
 	for _, name := range names {
-		if id, ok := idByName[name]; ok {
-			ids = append(ids, id)
+		id, ok := idByName[name]
+		if !ok {
+			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "notification channel %q does not exist", name)
 		}
+		ids = append(ids, id)
 	}
 
 	return ids, nil

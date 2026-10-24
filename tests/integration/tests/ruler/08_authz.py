@@ -191,6 +191,22 @@ def test_admin_allowed_on_route_policy_writes(
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
 
+def test_route_policy_naming_unknown_channel_rejected(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ROUTE_POLICIES_URL),
+        json={**ROUTE_POLICY_TEMPLATE, "name": _ROUTE_POLICY_NAME, "channels": ["alert-authz-channel-missing"]},
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+
+
 def test_apply_license(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
