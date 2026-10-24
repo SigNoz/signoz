@@ -40,11 +40,19 @@ func stripKeyAlias(name string) string {
 	return keyAliasRe.ReplaceAllString(name, "")
 }
 
-// unwrapVariant returns the concrete value inside the chcol.Variant envelope the driver scans a
-// Dynamic column — a JSON path such as body_v2.level — into.
-func unwrapVariant(val any) any {
-	if v, ok := val.(chcol.Variant); ok {
+// unwrapVariant decodes a scan envelope: the chcol.Variant the driver scans a Dynamic column (a JSON
+// path such as body_v2.level) into, and the JSONValue a whole JSON column scans into. The attributes
+// bag decodes flat so its dotted keys merge with the legacy attribute maps and a key stored at both a
+// scalar and an object path stays two keys; every other JSON column decodes nested.
+func unwrapVariant(name string, val any) any {
+	switch v := val.(type) {
+	case chcol.Variant:
 		return v.Any()
+	case telemetrystoretypes.JSONValue:
+		if name == "attributes" {
+			return v.Flatten()
+		}
+		return v.Nest()
 	}
 	return val
 }
@@ -54,11 +62,11 @@ func unwrapVariant(val any) any {
 // series. JSON goes through encoding/json for its sorted map keys: ClickHouse groups documents by
 // structure, so two rows it considers equal have to produce the same label.
 func labelValue(val any) string {
-	val = unwrapVariant(val)
+	val = unwrapVariant("", val)
 	if val == nil {
 		return ""
 	}
-	if v, ok := val.(telemetrystoretypes.JSONValue); ok {
+	if v, ok := val.(map[string]any); ok {
 		if raw, err := json.Marshal(v); err == nil {
 			return string(raw)
 		}
@@ -478,7 +486,7 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, erro
 		// 2. deref each slot into the output row
 		row := make([]any, len(scan))
 		for i, cell := range scan {
-			row[i] = unwrapVariant(derefValue(cell))
+			row[i] = unwrapVariant(stripKeyAlias(colNames[i]), derefValue(cell))
 		}
 		data = append(data, row)
 	}
@@ -536,7 +544,7 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 			name := stripKeyAlias(colNames[i])
 
 			// de-reference the typed pointer to any
-			val := unwrapVariant(reflect.ValueOf(cellPtr).Elem().Interface())
+			val := unwrapVariant(name, reflect.ValueOf(cellPtr).Elem().Interface())
 
 			// special-case: timestamp column
 			if name == "timestamp" || name == "timestamp_datetime" {
@@ -575,12 +583,15 @@ func mergeSpanAttributeColumns(data map[string]any) {
 	attrStr, hasStr := data["attributes_string"]
 	attrNum, hasNum := data["attributes_number"]
 	attrBool, hasBool := data["attributes_bool"]
-	attrJSON, _ := data["attributes"].(telemetrystoretypes.JSONValue)
+	// readAsRaw already decoded the JSON column into a flat bag of dotted keys via unwrapVariant.
+	attrJSON, _ := data["attributes"].(map[string]any)
 	// todo(nitya): move to resource json
 	resStr, hasRes := data["resources_string"]
 	if hasStr || hasNum || hasBool || attrJSON != nil || hasRes {
 		attributes := make(map[string]any)
-		attrJSON.FlattenInto("", attributes)
+		for k, v := range attrJSON {
+			attributes[k] = v
+		}
 		if m, ok := attrStr.(map[string]string); ok {
 			for k, v := range m {
 				attributes[k] = v

@@ -1,3 +1,6 @@
+import { useTranslation } from 'react-i18next';
+import { Typography } from '@signozhq/ui/typography';
+import { useDeleteConfirm } from 'components/DeleteConfirmModal/useDeleteConfirm';
 import FormAlertChannels from 'container/FormAlertChannels';
 import { ChannelFormState } from 'container/CreateAlertChannels/channelFormValues';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
@@ -24,23 +27,54 @@ function ChannelFormBody({
 	saveChecks,
 	testChecks,
 }: ChannelFormBodyProps): JSX.Element {
-	const { form, type, onTypeChange, onSave, onTest, isSaving, isTesting } =
-		useChannelFormState({ draft, target, onDone });
+	const { t } = useTranslation('channels');
+	const { contextHolder, confirmDelete } = useDeleteConfirm();
+	const {
+		form,
+		type,
+		isDirty,
+		onTypeChange,
+		onSave,
+		onTest,
+		isSaving,
+		isTesting,
+	} = useChannelFormState({ draft, target, onDone });
+
+	const onDiscard = (): void => {
+		if (!isDirty) {
+			onDone();
+			return;
+		}
+
+		confirmDelete({
+			title: (
+				<Typography.Title level={5}>{t('discard_changes_title')}</Typography.Title>
+			),
+			content: t('discard_changes_body'),
+			confirmText: t('button_discard_confirm'),
+			onConfirm: onDone,
+		});
+	};
 
 	return (
-		<FormAlertChannels
-			form={form}
-			type={type}
-			onTypeChangeHandler={onTypeChange}
-			onTestHandler={onTest}
-			onSaveHandler={onSave}
-			savingState={isSaving}
-			testingState={isTesting}
-			editing={target.mode === 'edit'}
-			readOnly={readOnly}
-			saveChecks={saveChecks}
-			testChecks={testChecks}
-		/>
+		<>
+			<FormAlertChannels
+				form={form}
+				type={type}
+				onTypeChangeHandler={onTypeChange}
+				onTestHandler={onTest}
+				onSaveHandler={onSave}
+				onDiscardHandler={onDiscard}
+				savingState={isSaving}
+				testingState={isTesting}
+				editing={target.mode === 'edit'}
+				readOnly={readOnly}
+				hasChanges={isDirty}
+				saveChecks={saveChecks}
+				testChecks={testChecks}
+			/>
+			{contextHolder}
+		</>
 	);
 }
 

@@ -90,13 +90,16 @@ export const SaveFailure: Story = {
 	// the point of the story, not a regression.
 	parameters: { allowConsoleErrors: true },
 	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByTestId(
-				'save-channel-button',
-				undefined,
-				untilLoaded,
-			),
+		const canvas = within(canvasElement);
+
+		// Save is off until the form is edited, so the failure is reached through
+		// a real change rather than an empty submit.
+		await userEvent.type(
+			await canvas.findByTestId('slack-channel-textbox', undefined, untilLoaded),
+			'-edited',
 		);
+		await userEvent.click(canvas.getByTestId('save-channel-button'));
+
 		await screen.findByText('Storybook forced channel failure');
 	},
 };
@@ -177,4 +180,9 @@ export const JiraServiceManagementOps: Story = {
  */
 export const IncidentIO: Story = {
 	args: { channelType: 'incidentio' },
+};
+
+/** A Telegram channel, with its bot token masked behind the password field. */
+export const Telegram: Story = {
+	args: { channelType: 'telegram' },
 };
