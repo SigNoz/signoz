@@ -20,6 +20,46 @@ const (
 
 type diffSide int
 
+var DowntimeRuleIDsExtractor = coretypes.BodyJSONArray("alertIds")
+
+func NewDowntimeRuleAttachExtractor(rulerService Ruler) coretypes.ResourceIDsExtractor {
+	return newDowntimeDiffExtractor(rulerService, attachedSide)
+}
+
+func NewDowntimeRuleDetachExtractor(rulerService Ruler) coretypes.ResourceIDsExtractor {
+	return newDowntimeDiffExtractor(rulerService, detachedSide)
+}
+
+func newDowntimeDiffExtractor(rulerService Ruler, side diffSide) coretypes.ResourceIDsExtractor {
+	return coretypes.ResourceIDsExtractor{Phase: coretypes.PhaseRequest, Fn: func(ec coretypes.ExtractorContext) ([]string, error) {
+		if ec.Request == nil {
+			return nil, nil
+		}
+
+		scheduleID, err := valuer.NewUUID(mux.Vars(ec.Request)["id"])
+		if err != nil {
+			return nil, err
+		}
+
+		stored, err := rulerService.MaintenanceStore().GetPlannedMaintenanceByID(ec.Request.Context(), scheduleID)
+		if err != nil {
+			return nil, err
+		}
+
+		incoming, err := DowntimeRuleIDsExtractor.Fn(ec)
+		if err != nil {
+			return nil, err
+		}
+
+		attached, detached := diffLinks(stored.RuleIDs, incoming)
+		if side == detachedSide {
+			return detached, nil
+		}
+
+		return attached, nil
+	}}
+}
+
 func NewCreateRoutePolicyChannelAttachExtractor(alertmanagerService alertmanager.Alertmanager) coretypes.ResourceIDsExtractor {
 	return coretypes.ResourceIDsExtractor{Phase: coretypes.PhaseRequest, Fn: func(ec coretypes.ExtractorContext) ([]string, error) {
 		if ec.Request == nil {
