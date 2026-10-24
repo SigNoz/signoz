@@ -1104,7 +1104,7 @@ def test_rule_mutations_need_telemetry_read_on_query(
     for method, path, payload in (
         ("post", V2_RULES_URL, body),
         ("put", f"{V2_RULES_URL}/{rule_id}", body),
-        ("patch", f"{V2_RULES_URL}/{rule_id}", {"description": "patch keeps the stored metrics query"}),
+        ("patch", f"{V2_RULES_URL}/{rule_id}", {"condition": body["condition"]}),
         ("post", f"{V2_RULES_URL}/{rule_id}/clone", None),
         ("post", f"{V2_RULES_URL}/test", body),
     ):
@@ -1115,6 +1115,14 @@ def test_rule_mutations_need_telemetry_read_on_query(
             timeout=5,
         )
         assert response.status_code == HTTPStatus.FORBIDDEN, f"{method.upper()} {path}: expected 403, got {response.status_code}: {response.text}"
+
+    response = requests.patch(
+        signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{rule_id}"),
+        json={"description": "patch without the query needs no telemetry read"},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
 
     response = requests.delete(
         signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{rule_id}"),

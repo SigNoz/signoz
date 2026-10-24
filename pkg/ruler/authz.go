@@ -149,7 +149,7 @@ func newRuleChannelDiffExtractor(alertmanagerService alertmanager.Alertmanager, 
 
 		attached, detached := diffLinks(stored.Channels(), incomingNames)
 		if side == detachedSide {
-			return resolveChannelIDs(ctx, alertmanagerService, orgID, detached)
+			return resolveStoredChannelIDs(ctx, alertmanagerService, orgID, detached)
 		}
 
 		return resolveChannelIDs(ctx, alertmanagerService, orgID, attached)
@@ -175,16 +175,7 @@ func patchedRule(stored *ruletypes.GettableRule, body []byte) (*ruletypes.Postab
 		return nil, err
 	}
 
-	patched := new(ruletypes.PostableRule)
-	if err := json.Unmarshal(encoded, patched); err != nil {
-		return nil, err
-	}
-
-	if err := json.Unmarshal(body, patched); err != nil {
-		return nil, err
-	}
-
-	return patched, nil
+	return ruletypes.NewPatchedPostableRule(encoded, body)
 }
 
 func ruleChannelsFromBody(body []byte) ([]string, error) {
@@ -270,14 +261,9 @@ func resolveChannelIDs(ctx context.Context, alertmanagerService alertmanager.Ale
 		return nil, nil
 	}
 
-	channels, err := alertmanagerService.ListChannels(ctx, orgID.StringValue())
+	idByName, err := channelIDsByName(ctx, alertmanagerService, orgID)
 	if err != nil {
 		return nil, err
-	}
-
-	idByName := make(map[string]string, len(channels))
-	for _, channel := range channels {
-		idByName[channel.DisplayName] = channel.ID.StringValue()
 	}
 
 	ids := make([]string, 0, len(names))
@@ -290,6 +276,40 @@ func resolveChannelIDs(ctx context.Context, alertmanagerService alertmanager.Ale
 	}
 
 	return ids, nil
+}
+
+func resolveStoredChannelIDs(ctx context.Context, alertmanagerService alertmanager.Alertmanager, orgID valuer.UUID, names []string) ([]string, error) {
+	if len(names) == 0 {
+		return nil, nil
+	}
+
+	idByName, err := channelIDsByName(ctx, alertmanagerService, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	ids := make([]string, 0, len(names))
+	for _, name := range names {
+		if id, ok := idByName[name]; ok {
+			ids = append(ids, id)
+		}
+	}
+
+	return ids, nil
+}
+
+func channelIDsByName(ctx context.Context, alertmanagerService alertmanager.Alertmanager, orgID valuer.UUID) (map[string]string, error) {
+	channels, err := alertmanagerService.ListChannels(ctx, orgID.StringValue())
+	if err != nil {
+		return nil, err
+	}
+
+	idByName := make(map[string]string, len(channels))
+	for _, channel := range channels {
+		idByName[channel.DisplayName] = channel.ID.StringValue()
+	}
+
+	return idByName, nil
 }
 
 func orgIDFromContext(ctx context.Context) (valuer.UUID, error) {
@@ -339,32 +359,13 @@ func NewRuleBodyTelemetryResources() coretypes.ResourceExtractor {
 	}
 }
 
-func NewPatchedRuleTelemetryResources(rulerService Ruler) coretypes.ResourceExtractor {
+func NewOptionalRuleBodyTelemetryResources() coretypes.ResourceExtractor {
 	return func(ec coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
-		if ec.Request == nil {
+		if !gjson.GetBytes(ec.RequestBody, "condition.compositeQuery").Exists() {
 			return nil, nil
 		}
 
-		stored, err := storedRule(ec, rulerService)
-		if err != nil {
-			return nil, err
-		}
-
-		patched, err := patchedRule(stored, ec.RequestBody)
-		if err != nil {
-			return nil, err
-		}
-
-		if patched.RuleCondition == nil {
-			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.compositeQuery is required")
-		}
-
-		body, err := json.Marshal(map[string]any{"compositeQuery": patched.RuleCondition.CompositeQuery})
-		if err != nil {
-			return nil, err
-		}
-
-		return querybuilder.QueryRangeResources(coretypes.ExtractorContext{Request: ec.Request, RequestBody: body})
+		return NewRuleBodyTelemetryResources()(ec)
 	}
 }
 

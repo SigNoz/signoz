@@ -490,3 +490,72 @@ func TestPatchedRule(t *testing.T) {
 		})
 	}
 }
+
+func TestOptionalRuleBodyTelemetryResources(t *testing.T) {
+	testCases := []struct {
+		name     string
+		body     string
+		wantRefs int
+	}{
+		{
+			name:     "BodyWithoutCondition_NoResources",
+			body:     `{"disabled": true}`,
+			wantRefs: 0,
+		},
+		{
+			name:     "BodyWithQuery_MetricsResource",
+			body:     v2RuleJSON(`[]`),
+			wantRefs: 1,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			refs, err := NewOptionalRuleBodyTelemetryResources()(coretypes.ExtractorContext{RequestBody: []byte(testCase.body)})
+
+			require.NoError(t, err)
+			assert.Len(t, refs, testCase.wantRefs)
+		})
+	}
+}
+
+func TestResolveStoredChannelIDs(t *testing.T) {
+	channels := []*alertmanagertypes.Channel{
+		{Identifiable: types.Identifiable{ID: valuer.GenerateUUID()}, Name: "slack", DisplayName: "slack"},
+	}
+	testCases := []struct {
+		name    string
+		names   []string
+		wantIDs []string
+	}{
+		{
+			name:    "KnownName_Resolved",
+			names:   []string{"slack"},
+			wantIDs: []string{channels[0].ID.StringValue()},
+		},
+		{
+			name:    "UnknownName_Skipped",
+			names:   []string{"slack", "gone"},
+			wantIDs: []string{channels[0].ID.StringValue()},
+		},
+		{
+			name:    "NoNames_NoLookup",
+			names:   nil,
+			wantIDs: nil,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			alertmanagerService := alertmanagertest.NewMockAlertmanager(t)
+			if len(testCase.names) > 0 {
+				alertmanagerService.EXPECT().ListChannels(mock.Anything, mock.Anything).Return(channels, nil)
+			}
+
+			ids, err := resolveStoredChannelIDs(context.Background(), alertmanagerService, valuer.GenerateUUID(), testCase.names)
+
+			require.NoError(t, err)
+			assert.Equal(t, testCase.wantIDs, ids)
+		})
+	}
+}

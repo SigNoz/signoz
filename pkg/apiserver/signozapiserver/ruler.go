@@ -322,7 +322,8 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 				Verb:      coretypes.VerbRead,
 				Category:  coretypes.ActionCategoryDataAccess,
 				Selector:  querybuilder.TelemetrySelector,
-				Resources: ruler.NewPatchedRuleTelemetryResources(provider.rulerService),
+				Resources: ruler.NewOptionalRuleBodyTelemetryResources(),
+				Optional:  true,
 			},
 		),
 	)).Methods(http.MethodPatch).GetError(); err != nil {
