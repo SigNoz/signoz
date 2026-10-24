@@ -4,7 +4,10 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/ruler"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/rulestatehistorytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/gorilla/mux"
@@ -13,7 +16,7 @@ import (
 func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
 
 	if err := router.Handle("/api/v2/rules/{id}/history/stats", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.ruleStateHistoryHandler.GetRuleHistoryStats),
+		provider.authzMiddleware.CheckResources(provider.ruleStateHistoryHandler.GetRuleHistoryStats, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetRuleHistoryStats",
 			Tags:                []string{"rules"},
@@ -24,13 +27,21 @@ func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodGet).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbRead)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbRead,
+			Category: coretypes.ActionCategoryDataAccess,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}),
+	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/rules/{id}/history/timeline", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.ruleStateHistoryHandler.GetRuleHistoryTimeline),
+		provider.authzMiddleware.CheckResources(provider.ruleStateHistoryHandler.GetRuleHistoryTimeline, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetRuleHistoryTimeline",
 			Tags:                []string{"rules"},
@@ -41,13 +52,26 @@ func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodGet).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes(append([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbRead)}, telemetryReadScopes()...)),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbRead,
+			Category: coretypes.ActionCategoryDataAccess,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}, handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: ruler.NewRuleQueryTelemetryResources(provider.rulerService),
+		}),
+	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/rules/{id}/history/top_contributors", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.ruleStateHistoryHandler.GetRuleHistoryContributors),
+		provider.authzMiddleware.CheckResources(provider.ruleStateHistoryHandler.GetRuleHistoryContributors, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetRuleHistoryTopContributors",
 			Tags:                []string{"rules"},
@@ -58,13 +82,26 @@ func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodGet).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes(append([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbRead)}, telemetryReadScopes()...)),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbRead,
+			Category: coretypes.ActionCategoryDataAccess,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}, handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: ruler.NewRuleQueryTelemetryResources(provider.rulerService),
+		}),
+	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/rules/{id}/history/filter_keys", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.ruleStateHistoryHandler.GetRuleHistoryFilterKeys),
+		provider.authzMiddleware.CheckResources(provider.ruleStateHistoryHandler.GetRuleHistoryFilterKeys, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetRuleHistoryFilterKeys",
 			Tags:                []string{"rules"},
@@ -75,13 +112,20 @@ func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodGet).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes(fieldScopes(coretypes.VerbList)),
+		},
+		handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbList,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  coretypes.WildcardSelector,
+			Resources: ruler.NewRuleQueryFieldResources(provider.rulerService),
+		}),
+	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/rules/{id}/history/filter_values", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.ruleStateHistoryHandler.GetRuleHistoryFilterValues),
+		provider.authzMiddleware.CheckResources(provider.ruleStateHistoryHandler.GetRuleHistoryFilterValues, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetRuleHistoryFilterValues",
 			Tags:                []string{"rules"},
@@ -92,13 +136,20 @@ func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodGet).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes(fieldScopes(coretypes.VerbRead)),
+		},
+		handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  coretypes.WildcardSelector,
+			Resources: ruler.NewRuleQueryFieldResources(provider.rulerService),
+		}),
+	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/rules/{id}/history/overall_status", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.ruleStateHistoryHandler.GetRuleHistoryOverallStatus),
+		provider.authzMiddleware.CheckResources(provider.ruleStateHistoryHandler.GetRuleHistoryOverallStatus, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetRuleHistoryOverallStatus",
 			Tags:                []string{"rules"},
@@ -109,10 +160,26 @@ func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodGet).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbRead)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbRead,
+			Category: coretypes.ActionCategoryDataAccess,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}),
+	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func fieldScopes(verb coretypes.Verb) []string {
+	return []string{
+		coretypes.ResourceMetaResourceLogsField.Scope(verb),
+		coretypes.ResourceMetaResourceTracesField.Scope(verb),
+		coretypes.ResourceMetaResourceMetricsField.Scope(verb),
+	}
 }

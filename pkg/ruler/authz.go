@@ -6,11 +6,15 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
+	"github.com/tidwall/gjson"
 )
 
 const (
@@ -163,6 +167,96 @@ func orgIDFromContext(ctx context.Context) (valuer.UUID, error) {
 	}
 
 	return valuer.NewUUID(claims.OrgID)
+}
+
+func NewRuleQueryTelemetryResources(rulerService Ruler) coretypes.ResourceExtractor {
+	return func(ec coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
+		body, err := storedCompositeQuery(ec, rulerService)
+		if err != nil {
+			return nil, err
+		}
+
+		return querybuilder.QueryRangeResources(coretypes.ExtractorContext{Request: ec.Request, RequestBody: body})
+	}
+}
+
+func NewRuleQueryFieldResources(rulerService Ruler) coretypes.ResourceExtractor {
+	return func(ec coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
+		body, err := storedCompositeQuery(ec, rulerService)
+		if err != nil {
+			return nil, err
+		}
+
+		return fieldResourcesFromCompositeQuery(body)
+	}
+}
+
+func storedCompositeQuery(ec coretypes.ExtractorContext, rulerService Ruler) ([]byte, error) {
+	if ec.Request == nil {
+		return nil, nil
+	}
+
+	ruleID, err := valuer.NewUUID(mux.Vars(ec.Request)["id"])
+	if err != nil {
+		return nil, err
+	}
+
+	stored, err := rulerService.GetRule(ec.Request.Context(), ruleID)
+	if err != nil {
+		return nil, err
+	}
+
+	return json.Marshal(map[string]any{"compositeQuery": stored.RuleCondition.CompositeQuery})
+}
+
+func fieldResourcesFromCompositeQuery(body []byte) ([]coretypes.ResourceWithID, error) {
+	queries := gjson.GetBytes(body, "compositeQuery.queries")
+	if !queries.IsArray() || len(queries.Array()) == 0 {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "atleast one query is required")
+	}
+
+	seen := make(map[string]struct{}, 3)
+	refs := make([]coretypes.ResourceWithID, 0, 3)
+	add := func(resources ...coretypes.Resource) {
+		for _, resource := range resources {
+			kind := resource.Kind().String()
+			if _, ok := seen[kind]; ok {
+				continue
+			}
+			seen[kind] = struct{}{}
+			refs = append(refs, coretypes.ResourceWithID{Resource: resource})
+		}
+	}
+
+	for _, query := range queries.Array() {
+		queryType := query.Get("type").String()
+		switch queryType {
+		case qbtypes.QueryTypeBuilder.StringValue(), qbtypes.QueryTypeSubQuery.StringValue():
+			signal := query.Get("spec.signal").String()
+			switch signal {
+			case telemetrytypes.SignalLogs.StringValue():
+				add(coretypes.ResourceMetaResourceLogsField)
+			case telemetrytypes.SignalTraces.StringValue():
+				add(coretypes.ResourceMetaResourceTracesField)
+			case telemetrytypes.SignalMetrics.StringValue():
+				add(coretypes.ResourceMetaResourceMetricsField)
+			default:
+				return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported signal %q", signal)
+			}
+		case qbtypes.QueryTypeBuilderAI.StringValue():
+			add(coretypes.ResourceMetaResourceTracesField)
+		case qbtypes.QueryTypePromQL.StringValue():
+			add(coretypes.ResourceMetaResourceMetricsField)
+		case qbtypes.QueryTypeClickHouseSQL.StringValue():
+			add(coretypes.ResourceMetaResourceLogsField, coretypes.ResourceMetaResourceTracesField, coretypes.ResourceMetaResourceMetricsField)
+		case qbtypes.QueryTypeFormula.StringValue(), qbtypes.QueryTypeJoin.StringValue(), qbtypes.QueryTypeTraceOperator.StringValue():
+			continue
+		default:
+			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported query type %q", queryType)
+		}
+	}
+
+	return refs, nil
 }
 
 func diffLinks(stored, incoming []string) (attached, detached []string) {
