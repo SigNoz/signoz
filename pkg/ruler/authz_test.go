@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertest"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -143,6 +144,87 @@ func TestResolveChannelIDs(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, testCase.want, got)
+		})
+	}
+}
+
+func TestDowntimeRuleLinks(t *testing.T) {
+	testCases := []struct {
+		name         string
+		stored       []string
+		incoming     []string
+		wantAttached []string
+		wantDetached []string
+	}{
+		{
+			name:         "AllToAll_NoChange",
+			stored:       nil,
+			incoming:     nil,
+			wantAttached: []string{},
+			wantDetached: []string{},
+		},
+		{
+			name:         "NarrowFromAllToOne_DetachesAllAttachesOne",
+			stored:       nil,
+			incoming:     []string{"r1"},
+			wantAttached: []string{"r1"},
+			wantDetached: []string{"*"},
+		},
+		{
+			name:         "WidenFromOneToAll_DetachesOneAttachesAll",
+			stored:       []string{"r1"},
+			incoming:     []string{},
+			wantAttached: []string{"*"},
+			wantDetached: []string{"r1"},
+		},
+		{
+			name:         "SwapRules_DiffsIDs",
+			stored:       []string{"r1"},
+			incoming:     []string{"r2"},
+			wantAttached: []string{"r2"},
+			wantDetached: []string{"r1"},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			attached, detached := downtimeRuleLinks(testCase.stored, testCase.incoming)
+
+			assert.ElementsMatch(t, testCase.wantAttached, attached)
+			assert.ElementsMatch(t, testCase.wantDetached, detached)
+		})
+	}
+}
+
+func TestDowntimeRuleIDsExtractor(t *testing.T) {
+	testCases := []struct {
+		name    string
+		body    string
+		wantIDs []string
+	}{
+		{
+			name:    "MissingAlertIds_AllRules",
+			body:    `{"name": "window"}`,
+			wantIDs: []string{"*"},
+		},
+		{
+			name:    "EmptyAlertIds_AllRules",
+			body:    `{"alertIds": []}`,
+			wantIDs: []string{"*"},
+		},
+		{
+			name:    "ExplicitAlertIds_Kept",
+			body:    `{"alertIds": ["r1", "r2"]}`,
+			wantIDs: []string{"r1", "r2"},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			ids, err := DowntimeRuleIDsExtractor.Fn(coretypes.ExtractorContext{RequestBody: []byte(testCase.body)})
+
+			require.NoError(t, err)
+			assert.Equal(t, testCase.wantIDs, ids)
 		})
 	}
 }
