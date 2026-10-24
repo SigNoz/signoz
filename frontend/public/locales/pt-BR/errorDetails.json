@@ -1,0 +1,9 @@
+{
+	"see_trace_graph": "Veja o que aconteceu antes e depois deste erro em um gráfico de traços (traces)",
+	"see_error_in_trace_graph": "Ver o erro no gráfico de traços",
+	"stack_trace": "Pilha de Execução (Stacktrace)",
+	"older": "Mais antigos",
+	"newer": "Mais novos",
+	"something_went_wrong": "Ops !!! Algo deu errado",
+	"contact_if_issue_exists": "Não se preocupe, nossa equipe está aqui para ajudar. Entre em contato com o suporte se o problema persistir."
+}
