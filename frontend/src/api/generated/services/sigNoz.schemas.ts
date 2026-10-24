@@ -6402,6 +6402,7 @@ export interface DashboardtypesDashboardSpecDTO {
 	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type string
+	 * @description Default relative time window applied when a viewer opens the dashboard with no time range in the URL and no previously chosen one. Accepts Perses durations; clients apply supported formats. Empty keeps the client default.
 	 */
 	duration?: string;
 	/**
