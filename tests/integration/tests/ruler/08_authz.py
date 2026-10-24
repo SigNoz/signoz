@@ -787,13 +787,14 @@ def test_downtime_naming_rule_forbidden_without_rule_attach(
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
     token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(DOWNTIME_URL),
-        json={"name": _ACTOR_DOWNTIME_NAME, "description": "scoped actor window", "schedule": DOWNTIME_SCHEDULE, "alertIds": [target_id]},
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
+    for alert_ids in ([target_id], []):
+        response = requests.post(
+            signoz.self.host_configs["8080"].get(DOWNTIME_URL),
+            json={"name": _ACTOR_DOWNTIME_NAME, "description": "scoped actor window", "schedule": DOWNTIME_SCHEDULE, "alertIds": alert_ids},
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.FORBIDDEN, f"alertIds={alert_ids}: expected 403, got {response.status_code}: {response.text}"
 
     response = requests.put(
         signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"),
@@ -855,6 +856,79 @@ def test_downtime_rule_removal_forbidden_without_rule_detach(
 
     response = requests.delete(
         signoz.self.host_configs["8080"].get(f"{DOWNTIME_URL}/{downtime_id}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+
+def test_downtime_widening_to_all_rules_forbidden_without_wildcard_attach(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    role_id = find_role_by_name(signoz, admin_token, _ACTOR_ROLE_NAME)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{V3_RULES_URL}?limit=200"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    target_id = {rule["alert"]: rule["id"] for rule in response.json()["data"]["rules"]}[_TARGET_RULE]
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"),
+        json={
+            "description": "",
+            "transactionGroups": [group for group in _ACTOR_BASE_TRANSACTION_GROUPS if group != transaction_group("attach", "metaresource", "rule", ["*"])]
+            + [
+                transaction_group("attach", "metaresource", "rule", [target_id]),
+                transaction_group("detach", "metaresource", "rule", ["*"]),
+            ],
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(DOWNTIME_URL),
+        json={"name": _ACTOR_DOWNTIME_NAME, "description": "scoped actor window", "schedule": DOWNTIME_SCHEDULE, "alertIds": [target_id]},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    downtime_id = response.json()["data"]["id"]
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{DOWNTIME_URL}/{downtime_id}"),
+        json={"name": _ACTOR_DOWNTIME_NAME, "description": "scoped actor window for all rules", "schedule": DOWNTIME_SCHEDULE, "alertIds": []},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{DOWNTIME_URL}/{downtime_id}"),
+        json={"name": _ACTOR_DOWNTIME_NAME, "description": "scoped actor window for all rules", "schedule": DOWNTIME_SCHEDULE, "alertIds": []},
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"{DOWNTIME_URL}/{downtime_id}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"),
+        json={"description": "", "transactionGroups": _ACTOR_BASE_TRANSACTION_GROUPS},
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )

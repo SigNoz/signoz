@@ -27,7 +27,22 @@ type diffSide int
 
 type incomingChannelsFunc func(stored *ruletypes.GettableRule, body []byte) ([]string, error)
 
-var DowntimeRuleIDsExtractor = coretypes.BodyJSONArray("alertIds")
+var DowntimeRuleIDsExtractor = coretypes.ResourceIDsExtractor{Phase: coretypes.PhaseRequest, Fn: func(ec coretypes.ExtractorContext) ([]string, error) {
+	ids, err := coretypes.BodyJSONArray("alertIds").Fn(ec)
+	if err != nil {
+		return nil, err
+	}
+
+	return allRulesWhenEmpty(ids), nil
+}}
+
+var DowntimeRuleSelector coretypes.SelectorFunc = func(ctx context.Context, resource coretypes.Resource, id string, orgID valuer.UUID) ([]coretypes.Selector, error) {
+	if id == coretypes.WildCardSelectorString {
+		return coretypes.WildcardSelector(ctx, resource, id, orgID)
+	}
+
+	return coretypes.IDSelector(ctx, resource, id, orgID)
+}
 
 func NewDowntimeRuleAttachExtractor(rulerService Ruler) coretypes.ResourceIDsExtractor {
 	return newDowntimeDiffExtractor(rulerService, attachedSide)
@@ -58,7 +73,7 @@ func newDowntimeDiffExtractor(rulerService Ruler, side diffSide) coretypes.Resou
 			return nil, err
 		}
 
-		attached, detached := diffLinks(stored.RuleIDs, incoming)
+		attached, detached := downtimeRuleLinks(stored.RuleIDs, incoming)
 		if side == detachedSide {
 			return detached, nil
 		}
@@ -185,6 +200,18 @@ func ruleChannelsFromBody(body []byte) ([]string, error) {
 	}
 
 	return rule.Channels(), nil
+}
+
+func downtimeRuleLinks(stored, incoming []string) (attached, detached []string) {
+	return diffLinks(allRulesWhenEmpty(stored), allRulesWhenEmpty(incoming))
+}
+
+func allRulesWhenEmpty(ids []string) []string {
+	if len(ids) == 0 {
+		return []string{coretypes.WildCardSelectorString}
+	}
+
+	return ids
 }
 
 func NewCreateRoutePolicyChannelAttachExtractor(alertmanagerService alertmanager.Alertmanager) coretypes.ResourceIDsExtractor {
