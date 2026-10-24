@@ -267,6 +267,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddMetricsFieldTuplesFactory(sqlstore),
 		sqlmigration.NewAddRoutePolicyTuplesFactory(sqlstore),
 		sqlmigration.NewAddDowntimeTuplesFactory(sqlstore),
+		sqlmigration.NewAddRuleTuplesFactory(sqlstore),
 	)
 }
 

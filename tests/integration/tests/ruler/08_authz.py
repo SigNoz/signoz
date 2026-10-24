@@ -16,6 +16,7 @@ from fixtures.types import Operation, SigNoz, TestContainerDocker
 
 V2_RULES_URL = "/api/v2/rules"
 V3_RULES_URL = "/api/v3/rules"
+RULE_VIEWS_URL = "/api/v2/rule_views"
 DOWNTIME_URL = "/api/v1/downtime_schedules"
 ROUTE_POLICIES_URL = "/api/v1/route_policies"
 
@@ -28,6 +29,7 @@ _ACTOR_PASSWORD = "password123Z$"
 _ACTOR_ROLE_NAME = "alert-authz-actor"
 
 _TARGET_RULE = "alert authz target"
+_VIEW_NAME = "alert-authz-view"
 _DOWNTIME_NAME = "alert-authz-downtime"
 _ACTOR_DOWNTIME_NAME = "alert-authz-actor-downtime"
 _ROUTE_POLICY_NAME = "alert-authz-route-policy"
@@ -400,6 +402,45 @@ def test_viewer_allowed_on_downtime_reads_and_forbidden_on_writes(
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
 
+def test_viewer_allowed_on_rule_views(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(_VIEWER_EMAIL, _VIEWER_PASSWORD)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(RULE_VIEWS_URL),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(RULE_VIEWS_URL),
+        json={"name": _VIEW_NAME, "data": {"version": "v1", "sort": "updated_at", "order": "desc"}},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    view_id = response.json()["data"]["id"]
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{RULE_VIEWS_URL}/{view_id}"),
+        json={"name": _VIEW_NAME, "data": {"version": "v1", "sort": "updated_at", "order": "asc"}},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"{RULE_VIEWS_URL}/{view_id}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+
 def test_apply_license(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -531,6 +572,29 @@ def test_route_policy_channel_changes_follow_channel_attach_and_detach(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+
+def test_rule_views_forbidden_without_rule_list(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(RULE_VIEWS_URL),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(RULE_VIEWS_URL),
+        json={"name": _VIEW_NAME, "data": {"version": "v1", "sort": "updated_at", "order": "desc"}},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
 
 
 def test_downtime_naming_rule_forbidden_without_rule_attach(
