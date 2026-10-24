@@ -140,8 +140,12 @@ func (f QueryBuilderFormula) ExtractReferencedQueryNames() ([]string, error) {
 
 	var names []string
 	for _, variable := range expression.Vars() {
-		if !slices.Contains(names, variable) {
-			names = append(names, variable)
+		aggRef, err := parseAggregationReference(variable)
+		if err != nil {
+			return nil, err
+		}
+		if !slices.Contains(names, aggRef.QueryName) {
+			names = append(names, aggRef.QueryName)
 		}
 	}
 	return names, nil
