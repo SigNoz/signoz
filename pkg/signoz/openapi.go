@@ -100,6 +100,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ rulestatehistory.Handler }{},
 		struct{ spanmapper.Handler }{},
 		struct{ alertmanager.Handler }{},
+		struct{ alertmanager.Alertmanager }{},
 		struct{ prometheus.Handler }{},
 		struct{ llmpricingrule.Handler }{},
 		struct{ tracedetail.Handler }{},

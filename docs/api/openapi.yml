@@ -14623,9 +14623,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - route-policy:list
       - tokenizer:
-        - VIEWER
+        - route-policy:list
       summary: List route policies
       tags:
       - routepolicies
@@ -14680,9 +14680,13 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - route-policy:create
+        - route-policy:attach
+        - notification-channel:attach
       - tokenizer:
-        - ADMIN
+        - route-policy:create
+        - route-policy:attach
+        - notification-channel:attach
       summary: Create route policy
       tags:
       - routepolicies
@@ -14727,9 +14731,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - route-policy:delete
       - tokenizer:
-        - ADMIN
+        - route-policy:delete
       summary: Delete route policy
       tags:
       - routepolicies
@@ -14785,9 +14789,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - route-policy:read
       - tokenizer:
-        - VIEWER
+        - route-policy:read
       summary: Get route policy by ID
       tags:
       - routepolicies
@@ -14854,9 +14858,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - route-policy:update
+        - route-policy:attach
+        - route-policy:detach
+        - notification-channel:attach
+        - notification-channel:detach
       - tokenizer:
-        - ADMIN
+        - route-policy:update
+        - route-policy:attach
+        - route-policy:detach
+        - notification-channel:attach
+        - notification-channel:detach
       summary: Update route policy
       tags:
       - routepolicies
