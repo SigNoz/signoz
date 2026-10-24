@@ -289,7 +289,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 				SourceSelector: coretypes.WildcardSelector,
 				TargetResource: coretypes.ResourceMetaResourceRule,
 				TargetIDs:      ruler.DowntimeRuleIDsExtractor,
-				TargetSelector: coretypes.IDSelector,
+				TargetSelector: ruler.DowntimeRuleSelector,
 			},
 		),
 	)).Methods(http.MethodPost).GetError(); err != nil {
@@ -331,7 +331,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 				SourceSelector: coretypes.IDSelector,
 				TargetResource: coretypes.ResourceMetaResourceRule,
 				TargetIDs:      ruler.NewDowntimeRuleAttachExtractor(provider.rulerService),
-				TargetSelector: coretypes.IDSelector,
+				TargetSelector: ruler.DowntimeRuleSelector,
 			},
 			handler.AttachDetachSiblingResourceDef{
 				Verb:           coretypes.VerbDetach,
@@ -341,7 +341,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 				SourceSelector: coretypes.IDSelector,
 				TargetResource: coretypes.ResourceMetaResourceRule,
 				TargetIDs:      ruler.NewDowntimeRuleDetachExtractor(provider.rulerService),
-				TargetSelector: coretypes.IDSelector,
+				TargetSelector: ruler.DowntimeRuleSelector,
 			},
 		),
 	)).Methods(http.MethodPut).GetError(); err != nil {
