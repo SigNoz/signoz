@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Controller, useFormContext } from 'react-hook-form';
-import { Minus, Plus } from '@signozhq/icons';
+import { Plus } from '@signozhq/icons';
 import { Input } from '@signozhq/ui/input';
 import { Button } from '@signozhq/ui/button';
 import { Input as AntdInput } from 'antd';
@@ -10,6 +10,7 @@ import { Typography } from '@signozhq/ui/typography';
 import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
 import FormCard from '../FormCard';
 import FormField from '../FormField';
+import RowEntry from './RowEntry';
 import styles from './RowEditor.module.scss';
 
 const { TextArea } = AntdInput;
@@ -139,10 +140,19 @@ function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 					help={t('help_incidentio_metadata')}
 				>
 					{metadataRows.map((row, index) => (
-						// rows have no stable identity beyond their position
-						// eslint-disable-next-line react/no-array-index-key
-						<div key={index} className={styles.row}>
-							<div className={styles.field}>
+						<RowEntry
+							// rows have no stable identity beyond their position
+							// eslint-disable-next-line react/no-array-index-key
+							key={index}
+							index={index}
+							noun={t('entry_incidentio_metadata')}
+							removeLabel={t('button_incidentio_remove_metadata')}
+							removeTestId={`incidentio-metadata-remove-${index}`}
+							onRemove={(): void =>
+								syncMetadata(metadataRows.filter((_, i) => i !== index))
+							}
+						>
+							<FormField label={t('label_incidentio_metadata_key')}>
 								<Input
 									placeholder={t('placeholder_incidentio_metadata_key')}
 									value={row.key}
@@ -155,8 +165,9 @@ function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 									}
 									data-testid={`incidentio-metadata-key-${index}`}
 								/>
-							</div>
-							<div className={styles.field}>
+							</FormField>
+
+							<FormField label={t('label_incidentio_metadata_value')}>
 								<Input
 									placeholder={t('placeholder_incidentio_metadata_value')}
 									value={row.value}
@@ -169,22 +180,10 @@ function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 									}
 									data-testid={`incidentio-metadata-value-${index}`}
 								/>
-							</div>
-							<Button
-								variant="ghost"
-								color="secondary"
-								size="sm"
-								icon
-								aria-label={t('button_incidentio_remove_metadata')}
-								onClick={(): void =>
-									syncMetadata(metadataRows.filter((_, i) => i !== index))
-								}
-								testId={`incidentio-metadata-remove-${index}`}
-							>
-								<Minus size={14} />
-							</Button>
-						</div>
+							</FormField>
+						</RowEntry>
 					))}
+
 					<div className={styles.add}>
 						<Button
 							variant="dashed"

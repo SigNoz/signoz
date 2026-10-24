@@ -3,23 +3,21 @@ import { Columns3 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';
-import type { TableColumnDef } from 'components/TanStackTableView';
-import {
-	hideColumn,
-	showColumn,
-	useHiddenColumnIds,
-} from 'components/TanStackTableView';
-
 import styles from './ColumnSelector.module.scss';
+import type { TableColumnDef } from './types';
+import { hideColumn, showColumn, useHiddenColumnIds } from './useColumnStore';
 
 interface ColumnSelectorProps<TData> {
 	columns: TableColumnDef<TData>[];
+	/** Shared with the table's `columnStorageKey`, which is what it writes to. */
 	storageKey: string;
+	testId?: string;
 }
 
 function ColumnSelector<TData>({
 	columns,
 	storageKey,
+	testId = 'column-selector-button',
 }: ColumnSelectorProps<TData>): JSX.Element {
 	const hiddenColumnIds = useHiddenColumnIds(storageKey);
 
@@ -47,7 +45,7 @@ function ColumnSelector<TData>({
 					size="sm"
 					color="secondary"
 					prefix={<Columns3 size={14} />}
-					testId="alert-columns-button"
+					testId={testId}
 				>
 					Columns
 				</Button>
@@ -76,5 +74,9 @@ function ColumnSelector<TData>({
 		</Popover>
 	);
 }
+
+ColumnSelector.defaultProps = {
+	testId: 'column-selector-button',
+};
 
 export default ColumnSelector;

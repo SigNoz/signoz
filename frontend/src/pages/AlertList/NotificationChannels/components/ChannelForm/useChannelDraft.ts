@@ -10,6 +10,7 @@ import {
 	ChannelInitialConfig,
 	DEFAULT_CHANNEL_KIND,
 } from 'container/CreateAlertChannels/defaults';
+import { ChannelKind } from 'container/CreateAlertChannels/types';
 import { toAPIError } from 'utils/errorUtils';
 
 export interface ChannelDraftResult {
@@ -22,7 +23,10 @@ export interface ChannelDraftResult {
  * Kept apart from the form so the form is built once its values are known,
  * rather than mounted empty and reset.
  */
-export function useChannelDraft(channelId?: string): ChannelDraftResult {
+export function useChannelDraft(
+	channelId?: string,
+	initialKind?: ChannelKind,
+): ChannelDraftResult {
 	const isEditing = !!channelId;
 
 	const { data, error: loadFailure } = useGetNotificationChannel(
@@ -34,10 +38,10 @@ export function useChannelDraft(channelId?: string): ChannelDraftResult {
 		channelId
 			? null
 			: {
-					kind: DEFAULT_CHANNEL_KIND,
+					kind: initialKind ?? DEFAULT_CHANNEL_KIND,
 					values: {
 						sendResolved: true,
-						...ChannelInitialConfig[DEFAULT_CHANNEL_KIND],
+						...ChannelInitialConfig[initialKind ?? DEFAULT_CHANNEL_KIND],
 					},
 				},
 	);

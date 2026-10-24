@@ -230,24 +230,26 @@ function PrettyView({
 					<span>{content}</span>
 					{/* The menu is portalled, but its clicks still bubble through the React
 					tree to react-json-tree's expand toggle around getItemString. */}
-					<span
-						role="presentation"
-						className="pretty-view__actions-boundary"
-						onClick={(e): void => {
-							e.stopPropagation();
-						}}
-					>
-						<Dropdown
-							items={menuItems}
-							nativeButton={false}
-							align="start"
-							side="bottom"
+					{menuItems.length > 0 && (
+						<span
+							role="presentation"
+							className="pretty-view__actions-boundary"
+							onClick={(e): void => {
+								e.stopPropagation();
+							}}
 						>
-							<span className="pretty-view__actions" role="button" tabIndex={0}>
-								<Ellipsis size={12} />
-							</span>
-						</Dropdown>
-					</span>
+							<Dropdown
+								items={menuItems}
+								nativeButton={false}
+								align="start"
+								side="bottom"
+							>
+								<span className="pretty-view__actions" role="button" tabIndex={0}>
+									<Ellipsis size={12} />
+								</span>
+							</Dropdown>
+						</span>
+					)}
 				</span>
 			);
 		},
