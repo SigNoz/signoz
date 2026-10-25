@@ -25321,10 +25321,12 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
+        - rule:read
         - logs-field:list
         - traces-field:list
         - metrics-field:list
       - tokenizer:
+        - rule:read
         - logs-field:list
         - traces-field:list
         - metrics-field:list
@@ -25435,10 +25437,12 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
+        - rule:read
         - logs-field:read
         - traces-field:read
         - metrics-field:read
       - tokenizer:
+        - rule:read
         - logs-field:read
         - traces-field:read
         - metrics-field:read
