@@ -615,6 +615,134 @@ def test_apply_license(
     add_license(signoz, make_http_mocks, get_token)
 
 
+def test_managed_roles_on_route_policies_after_license(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    editor_token = get_token(_EDITOR_EMAIL, _EDITOR_PASSWORD)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ROUTE_POLICIES_URL),
+        json={**ROUTE_POLICY_TEMPLATE, "name": _ROUTE_POLICY_NAME},
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    policy_id = response.json()["data"]["id"]
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{ROUTE_POLICIES_URL}/{policy_id}"),
+        headers={"Authorization": f"Bearer {editor_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{ROUTE_POLICIES_URL}/{policy_id}"),
+        json={**ROUTE_POLICY_TEMPLATE, "name": _ROUTE_POLICY_NAME, "channels": [SEED_CHANNEL_ALT["name"]]},
+        headers={"Authorization": f"Bearer {editor_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"{ROUTE_POLICIES_URL}/{policy_id}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+
+def test_managed_roles_on_downtime_after_license(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    editor_token = get_token(_EDITOR_EMAIL, _EDITOR_PASSWORD)
+    viewer_token = get_token(_VIEWER_EMAIL, _VIEWER_PASSWORD)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{V3_RULES_URL}?limit=200"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    target_id = {rule["alert"]: rule["id"] for rule in response.json()["data"]["rules"]}[_TARGET_RULE]
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(DOWNTIME_URL),
+        json={"name": _DOWNTIME_NAME, "description": "authz licensed window with rules", "schedule": DOWNTIME_SCHEDULE, "alertIds": [target_id]},
+        headers={"Authorization": f"Bearer {editor_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    downtime_id = response.json()["data"]["id"]
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{DOWNTIME_URL}/{downtime_id}"),
+        headers={"Authorization": f"Bearer {viewer_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{DOWNTIME_URL}/{downtime_id}"),
+        json={"name": _DOWNTIME_NAME, "description": "authz licensed window without rules", "schedule": DOWNTIME_SCHEDULE, "alertIds": []},
+        headers={"Authorization": f"Bearer {viewer_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{DOWNTIME_URL}/{downtime_id}"),
+        json={"name": _DOWNTIME_NAME, "description": "authz licensed window without rules", "schedule": DOWNTIME_SCHEDULE, "alertIds": []},
+        headers={"Authorization": f"Bearer {editor_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"{DOWNTIME_URL}/{downtime_id}"),
+        headers={"Authorization": f"Bearer {editor_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+
+def test_managed_roles_on_rule_views_after_license(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    viewer_token = get_token(_VIEWER_EMAIL, _VIEWER_PASSWORD)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(RULE_VIEWS_URL),
+        headers={"Authorization": f"Bearer {viewer_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(RULE_VIEWS_URL),
+        json={"name": _VIEW_NAME, "data": {"version": "v1", "sort": "updated_at", "order": "desc"}},
+        headers={"Authorization": f"Bearer {viewer_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    view_id = response.json()["data"]["id"]
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"{RULE_VIEWS_URL}/{view_id}"),
+        headers={"Authorization": f"Bearer {viewer_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+
 def test_setup_channel_scoped_actor(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -1273,6 +1401,33 @@ def test_history_labels_need_telemetry_and_field_grants(
             "transactionGroups": _ACTOR_BASE_TRANSACTION_GROUPS
             + [
                 transaction_group("read", "telemetryresource", "metrics", ["builder_query/*"]),
+                transaction_group("list", "metaresource", "metrics-field", ["*"]),
+                transaction_group("read", "metaresource", "metrics-field", ["*"]),
+            ],
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
+    for path, params in label_scoped:
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(path),
+            params=params,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.FORBIDDEN, f"GET {path}: expected 403, got {response.status_code}: {response.text}"
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"),
+        json={
+            "description": "",
+            "transactionGroups": _ACTOR_BASE_TRANSACTION_GROUPS
+            + [
+                transaction_group("read", "metaresource", "rule", ["*"]),
+                transaction_group("read", "telemetryresource", "logs", ["builder_query/*"]),
                 transaction_group("list", "metaresource", "metrics-field", ["*"]),
                 transaction_group("read", "metaresource", "metrics-field", ["*"]),
             ],

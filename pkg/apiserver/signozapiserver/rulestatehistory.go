@@ -112,9 +112,15 @@ func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
-			SecuritySchemes:     newScopedSecuritySchemes(fieldScopes(coretypes.VerbList)),
+			SecuritySchemes:     newScopedSecuritySchemes(append([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbRead)}, buildFieldScopes(coretypes.VerbList)...)),
 		},
-		handler.WithResourceDefs(handler.TelemetryResourceDef{
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbRead,
+			Category: coretypes.ActionCategoryDataAccess,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}, handler.TelemetryResourceDef{
 			Verb:      coretypes.VerbList,
 			Category:  coretypes.ActionCategoryDataAccess,
 			Selector:  coretypes.WildcardSelector,
@@ -136,9 +142,15 @@ func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
-			SecuritySchemes:     newScopedSecuritySchemes(fieldScopes(coretypes.VerbRead)),
+			SecuritySchemes:     newScopedSecuritySchemes(append([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbRead)}, buildFieldScopes(coretypes.VerbRead)...)),
 		},
-		handler.WithResourceDefs(handler.TelemetryResourceDef{
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbRead,
+			Category: coretypes.ActionCategoryDataAccess,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}, handler.TelemetryResourceDef{
 			Verb:      coretypes.VerbRead,
 			Category:  coretypes.ActionCategoryDataAccess,
 			Selector:  coretypes.WildcardSelector,
@@ -176,7 +188,7 @@ func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
 	return nil
 }
 
-func fieldScopes(verb coretypes.Verb) []string {
+func buildFieldScopes(verb coretypes.Verb) []string {
 	return []string{
 		coretypes.ResourceMetaResourceLogsField.Scope(verb),
 		coretypes.ResourceMetaResourceTracesField.Scope(verb),

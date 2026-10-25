@@ -54,12 +54,12 @@ func (migration *addDowntimeTuples) Up(ctx context.Context, db *bun.DB) error {
 
 	isPG := migration.sqlstore.BunDB().Dialect().Name() == dialect.PG
 
-	writeVerbs := []string{"create", "read", "update", "delete", "list"}
+	crudVerbs := []string{"create", "read", "update", "delete", "list"}
 	readVerbs := []string{"read", "list"}
 	linkVerbs := []string{"attach", "detach"}
 
 	tuples := make([]migrationTuple, 0, 20)
-	for _, verb := range writeVerbs {
+	for _, verb := range crudVerbs {
 		tuples = append(tuples,
 			migrationTuple{authtypes.SigNozAdminRoleName, "metaresource", "planned-maintenance", verb},
 			migrationTuple{authtypes.SigNozEditorRoleName, "metaresource", "planned-maintenance", verb},

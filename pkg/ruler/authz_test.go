@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRoutePolicyChannelsFromBody(t *testing.T) {
+func TestParseRoutePolicyChannels(t *testing.T) {
 	testCases := []struct {
 		name    string
 		body    string
@@ -30,7 +30,7 @@ func TestRoutePolicyChannelsFromBody(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			got, err := routePolicyChannelsFromBody([]byte(testCase.body))
+			got, err := parseRoutePolicyChannels([]byte(testCase.body))
 			if testCase.wantErr {
 				require.Error(t, err)
 				return
@@ -150,7 +150,7 @@ func TestResolveChannelIDs(t *testing.T) {
 	}
 }
 
-func TestDowntimeRuleLinks(t *testing.T) {
+func TestDiffDowntimeRuleLinks(t *testing.T) {
 	testCases := []struct {
 		name         string
 		stored       []string
@@ -161,7 +161,7 @@ func TestDowntimeRuleLinks(t *testing.T) {
 		{
 			name:         "AllToAll_NoChange",
 			stored:       nil,
-			incoming:     nil,
+			incoming:     []string{"*"},
 			wantAttached: []string{},
 			wantDetached: []string{},
 		},
@@ -175,7 +175,7 @@ func TestDowntimeRuleLinks(t *testing.T) {
 		{
 			name:         "WidenFromOneToAll_DetachesOneAttachesAll",
 			stored:       []string{"r1"},
-			incoming:     []string{},
+			incoming:     []string{"*"},
 			wantAttached: []string{"*"},
 			wantDetached: []string{"r1"},
 		},
@@ -190,7 +190,7 @@ func TestDowntimeRuleLinks(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			attached, detached := downtimeRuleLinks(testCase.stored, testCase.incoming)
+			attached, detached := diffDowntimeRuleLinks(testCase.stored, testCase.incoming)
 
 			assert.ElementsMatch(t, testCase.wantAttached, attached)
 			assert.ElementsMatch(t, testCase.wantDetached, detached)
@@ -231,7 +231,7 @@ func TestDowntimeRuleIDsExtractor(t *testing.T) {
 	}
 }
 
-func TestFieldResourcesFromCompositeQuery(t *testing.T) {
+func TestMapFieldResources(t *testing.T) {
 	testCases := []struct {
 		name      string
 		body      string
@@ -274,6 +274,16 @@ func TestFieldResourcesFromCompositeQuery(t *testing.T) {
 			wantKinds: []coretypes.Kind{coretypes.KindLogsField, coretypes.KindTracesField, coretypes.KindMetricsField},
 		},
 		{
+			name:      "Builder_AuditLogs_LogsField",
+			body:      `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"logs","source":"audit"}}]}}`,
+			wantKinds: []coretypes.Kind{coretypes.KindLogsField},
+		},
+		{
+			name:      "Builder_MeterMetrics_MetricsField",
+			body:      `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"metrics","source":"meter"}}]}}`,
+			wantKinds: []coretypes.Kind{coretypes.KindMetricsField},
+		},
+		{
 			name:      "TwoBuilderSameSignal_Deduped",
 			body:      `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"metrics"}},{"type":"builder_query","spec":{"signal":"metrics"}}]}}`,
 			wantKinds: []coretypes.Kind{coretypes.KindMetricsField},
@@ -302,7 +312,7 @@ func TestFieldResourcesFromCompositeQuery(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			refs, err := fieldResourcesFromCompositeQuery([]byte(testCase.body))
+			refs, err := mapFieldResources([]byte(testCase.body))
 
 			if testCase.wantErr {
 				assert.Error(t, err)
