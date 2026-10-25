@@ -119,11 +119,171 @@ def test_create_rejects_malformed_json(
         "error": {
             "type": "invalid-input",
             "code": "invalid_input",
-            "message": "failed to unmarshal rule",
+            "message": "failed to parse json: unexpected end of JSON input",
             "errors": [],
             "suggestions": [],
         },
     }
+
+
+def test_create_rejects_unnamed_threshold(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    rule = {**VALID_RULE, "condition": {**VALID_RULE["condition"], "thresholds": {"kind": "basic", "spec": [{"name": "", "target": 90, "matchType": "at_least_once", "op": "above", "channels": []}]}}}
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json=rule,
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert response.json() == {
+        "status": "error",
+        "error": {
+            "type": "invalid-input",
+            "code": "invalid_input",
+            "message": "failed to parse json: invalid rule threshold spec: threshold name cannot be empty",
+            "errors": [],
+            "suggestions": [],
+        },
+    }
+
+
+def test_create_rejects_duplicate_threshold_names(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    threshold = {"name": "critical", "target": 90, "matchType": "at_least_once", "op": "above", "channels": []}
+    rule = {**VALID_RULE, "condition": {**VALID_RULE["condition"], "thresholds": {"kind": "basic", "spec": [threshold, {**threshold, "target": 95}]}}}
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json=rule,
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert response.json() == {
+        "status": "error",
+        "error": {
+            "type": "invalid-input",
+            "code": "invalid_input",
+            "message": "alert rule is not valid",
+            "errors": [{"message": 'condition.thresholds.spec: duplicate threshold name "critical"', "suggestions": []}],
+            "suggestions": [],
+        },
+    }
+
+
+def test_create_rejects_empty_rule_type(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={**VALID_RULE, "ruleType": ""},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert response.json() == {
+        "status": "error",
+        "error": {
+            "type": "invalid-input",
+            "code": "invalid_input",
+            "message": "failed to parse json: string must not be empty",
+            "errors": [],
+            "suggestions": [],
+        },
+    }
+
+
+def test_create_rejects_empty_schema_version(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={**VALID_RULE, "schemaVersion": ""},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert response.json() == {
+        "status": "error",
+        "error": {
+            "type": "invalid-input",
+            "code": "invalid_input",
+            "message": "failed to parse json: string must not be empty",
+            "errors": [],
+            "suggestions": [],
+        },
+    }
+
+
+def test_create_rejects_empty_seasonality(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={**VALID_RULE, "condition": {**VALID_RULE["condition"], "seasonality": ""}},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert response.json() == {
+        "status": "error",
+        "error": {
+            "type": "invalid-input",
+            "code": "invalid_input",
+            "message": "failed to parse json: string must not be empty",
+            "errors": [],
+            "suggestions": [],
+        },
+    }
+
+
+def test_create_defaults_clickhouse_rule_type(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    create_alert_rule: Callable[[dict], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    rule = {key: value for key, value in VALID_RULE.items() if key != "ruleType"}
+    rule["condition"] = {**VALID_RULE["condition"], "compositeQuery": {"queryType": "clickhouse_sql", "panelType": "graph", "queries": [{"type": "clickhouse_sql", "spec": {"name": "A", "query": "SELECT now() AS ts, 1 AS value"}}]}}
+    rule_id = create_alert_rule(rule)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{rule_id}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"]["ruleType"] == "threshold_rule"
 
 
 def test_timeline_rejects_unknown_state(

@@ -76,8 +76,8 @@ type PostableRule struct {
 
 	Version string `json:"version"`
 
-	Evaluation    *EvaluationEnvelope `json:"evaluation" required:"true"`
-	SchemaVersion string              `json:"schemaVersion" required:"true" enum:"v2alpha1"`
+	Evaluation    *EvaluationEnvelope          `json:"evaluation" required:"true"`
+	SchemaVersion valuer.UnsetOrNonEmptyString `json:"schemaVersion" required:"true" enum:"v2alpha1"`
 
 	NotificationSettings *NotificationSettings `json:"notificationSettings" required:"true"`
 }
@@ -232,7 +232,7 @@ func (r *PostableRule) processRuleDefaults() {
 
 	if r.RuleCondition != nil && r.RuleCondition.CompositeQuery != nil {
 		switch r.RuleCondition.CompositeQuery.QueryType {
-		case QueryTypeBuilder:
+		case QueryTypeBuilder, QueryTypeClickHouseSQL:
 			if r.RuleType.IsZero() {
 				r.RuleType = RuleTypeThreshold
 			}
@@ -427,13 +427,13 @@ func (r *PostableRule) Validate() error {
 }
 
 func (r *PostableRule) validateSchemaVersion() []error {
-	switch r.SchemaVersion {
+	switch r.SchemaVersion.StringValue() {
 	case SchemaVersionV2Alpha1:
 		return r.validateV2Alpha1()
 	default:
 		return []error{errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"schemaVersion: unsupported value %q; must be %q",
-			r.SchemaVersion, SchemaVersionV2Alpha1)}
+			r.SchemaVersion.StringValue(), SchemaVersionV2Alpha1)}
 	}
 }
 
@@ -444,6 +444,10 @@ func (r *PostableRule) validateV2Alpha1() []error {
 	if r.RuleCondition.Thresholds == nil {
 		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"condition.thresholds: field is required for schemaVersion %q", SchemaVersionV2Alpha1))
+	} else if thresholds, ok := r.RuleCondition.Thresholds.Spec.(BasicRuleThresholds); ok {
+		if err := thresholds.validateUniqueNames(); err != nil {
+			errs = append(errs, err)
+		}
 	}
 
 	if r.Evaluation == nil {

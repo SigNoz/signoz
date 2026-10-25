@@ -236,7 +236,7 @@ type postableRule struct {
 	AlertName            json.RawMessage       `json:"alert,omitempty"`
 	AlertType            string                `json:"alertType"`
 	Description          json.RawMessage       `json:"description,omitempty"`
-	RuleType             string                `json:"ruleType"`
+	RuleType             string                `json:"ruleType,omitempty"`
 	EvalWindow           textDuration          `json:"evalWindow,omitzero"`
 	Frequency            textDuration          `json:"frequency,omitzero"`
 	RuleCondition        *ruleCondition        `json:"condition"`
@@ -259,8 +259,7 @@ type ruleCondition struct {
 	AbsentFor         json.RawMessage `json:"absentFor,omitempty"`
 	MatchType         string          `json:"matchType,omitempty"`
 	TargetUnit        string          `json:"targetUnit,omitempty"`
-	Algorithm         json.RawMessage `json:"algorithm,omitempty"`
-	Seasonality       json.RawMessage `json:"seasonality,omitempty"`
+	Seasonality       string          `json:"seasonality,omitempty"`
 	SelectedQuery     json.RawMessage `json:"selectedQueryName,omitempty"`
 	RequireMinPoints  json.RawMessage `json:"requireMinPoints,omitempty"`
 	RequiredNumPoints json.RawMessage `json:"requiredNumPoints,omitempty"`
@@ -425,7 +424,7 @@ func (rule *postableRule) decodeQueryEnvelopes() []ruleQueryEnvelope {
 
 func (rule *postableRule) deriveRuleType() {
 	switch rule.RuleCondition.CompositeQuery.QueryType {
-	case queryTypeBuilder:
+	case queryTypeBuilder, queryTypeClickHouseSQL:
 		if rule.RuleType == "" {
 			rule.RuleType = ruleTypeThreshold
 		}

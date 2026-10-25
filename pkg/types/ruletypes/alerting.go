@@ -132,7 +132,6 @@ type RuleCondition struct {
 	CompositeQuery    *AlertCompositeQuery `json:"compositeQuery" required:"true"`
 	AlertOnAbsent     bool                 `json:"alertOnAbsent,omitempty"`
 	AbsentFor         uint64               `json:"absentFor,omitempty"`
-	Algorithm         string               `json:"algorithm,omitempty"`
 	Seasonality       Seasonality          `json:"seasonality,omitzero"`
 	SelectedQuery     string               `json:"selectedQueryName,omitempty"`
 	RequireMinPoints  bool                 `json:"requireMinPoints,omitempty"`

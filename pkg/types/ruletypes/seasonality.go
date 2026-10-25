@@ -6,13 +6,13 @@ import (
 )
 
 type Seasonality struct {
-	valuer.String
+	valuer.UnsetOrNonEmptyString
 }
 
 var (
-	SeasonalityHourly = Seasonality{valuer.NewString("hourly")}
-	SeasonalityDaily  = Seasonality{valuer.NewString("daily")}
-	SeasonalityWeekly = Seasonality{valuer.NewString("weekly")}
+	SeasonalityHourly = Seasonality{valuer.MustNewUnsetOrNonEmptyString("hourly")}
+	SeasonalityDaily  = Seasonality{valuer.MustNewUnsetOrNonEmptyString("daily")}
+	SeasonalityWeekly = Seasonality{valuer.MustNewUnsetOrNonEmptyString("weekly")}
 )
 
 func (Seasonality) Enum() []any {
