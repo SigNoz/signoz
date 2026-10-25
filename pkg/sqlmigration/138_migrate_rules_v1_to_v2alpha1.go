@@ -17,15 +17,22 @@ import (
 )
 
 const (
-	schemaVersionV2Alpha1 = "v2alpha1"
-	ruleTypeThreshold     = "threshold_rule"
-	ruleTypeProm          = "promql_rule"
-	ruleTypeAnomaly       = "anomaly_rule"
-	queryTypeBuilder      = "builder"
-	queryTypePromQL       = "promql"
-	compareOperatorBelow  = "2"
-	criticalThresholdName = "critical"
-	labelSeverity         = "severity"
+	schemaVersionV2Alpha1  = "v2alpha1"
+	ruleTypeThreshold      = "threshold_rule"
+	ruleTypeProm           = "promql_rule"
+	ruleTypeAnomaly        = "anomaly_rule"
+	queryTypeBuilder       = "builder"
+	queryTypePromQL        = "promql"
+	queryTypeClickHouseSQL = "clickhouse_sql"
+	panelTypeGraph         = "graph"
+	alertTypeMetric        = "METRIC_BASED_ALERT"
+	alertTypeTraces        = "TRACES_BASED_ALERT"
+	alertTypeLogs          = "LOGS_BASED_ALERT"
+	signalLogs             = "logs"
+	signalTraces           = "traces"
+	compareOperatorBelow   = "2"
+	criticalThresholdName  = "critical"
+	labelSeverity          = "severity"
 )
 
 // The values the threshold decoder accepts; a stored value outside them fails
@@ -33,6 +40,14 @@ const (
 var (
 	supportedCompareOperators = []string{"1", "above", ">", "2", "below", "<", "3", "equal", "eq", "=", "4", "not_equal", "not_eq", "!=", "5", "above_or_equal", "above_or_eq", ">=", "6", "below_or_equal", "below_or_eq", "<=", "7", "outside_bounds"}
 	supportedMatchTypes       = []string{"1", "at_least_once", "2", "all_the_times", "3", "on_average", "avg", "4", "in_total", "sum", "5", "last"}
+)
+
+// The values the write path accepts; a migrated row outside them cannot be
+// edited until the field is supplied, so the migration derives them.
+var (
+	supportedAlertTypes = []string{"METRIC_BASED_ALERT", "TRACES_BASED_ALERT", "LOGS_BASED_ALERT", "EXCEPTIONS_BASED_ALERT", "AI_TRACES_BASED_ALERT"}
+	supportedQueryTypes = []string{"builder", "clickhouse_sql", "promql"}
+	supportedPanelTypes = []string{"value", "table", "graph"}
 )
 
 type migrateRulesV1ToV2Alpha1 struct {
@@ -167,6 +182,10 @@ func convertRule(ruleID string, rule *postableRule, route *routePolicyRow) error
 	if err := rule.validateDurations(); err != nil {
 		return err
 	}
+	rule.deriveAlertType()
+	rule.deriveQueryType()
+	rule.repairPanelType()
+	rule.disableUnmetMinPoints()
 	rule.deriveRuleType()
 	rule.negateAnomalyBelowTarget()
 	rule.repairEmptySeverity(ruleID, route)
@@ -215,7 +234,7 @@ type routePolicyRow struct {
 // crosswalk reads or writes are typed; the rest pass through as stored.
 type postableRule struct {
 	AlertName            json.RawMessage       `json:"alert,omitempty"`
-	AlertType            json.RawMessage       `json:"alertType,omitempty"`
+	AlertType            string                `json:"alertType"`
 	Description          json.RawMessage       `json:"description,omitempty"`
 	RuleType             string                `json:"ruleType"`
 	EvalWindow           textDuration          `json:"evalWindow,omitzero"`
@@ -250,9 +269,17 @@ type ruleCondition struct {
 
 type compositeQuery struct {
 	Queries   json.RawMessage `json:"queries,omitempty"`
-	PanelType json.RawMessage `json:"panelType,omitempty"`
+	PanelType string          `json:"panelType"`
 	QueryType string          `json:"queryType"`
 	Unit      json.RawMessage `json:"unit,omitempty"`
+}
+
+// ruleQueryEnvelope reads the two envelope keys the derivations need.
+type ruleQueryEnvelope struct {
+	Type string `json:"type"`
+	Spec struct {
+		Signal string `json:"signal"`
+	} `json:"spec"`
 }
 
 type ruleThresholds struct {
@@ -324,6 +351,76 @@ func (rule *postableRule) validateDurations() error {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "evalWindow %s or frequency %s is negative", rule.EvalWindow, rule.Frequency)
 	}
 	return nil
+}
+
+func (rule *postableRule) deriveAlertType() {
+	if slices.Contains(supportedAlertTypes, rule.AlertType) {
+		return
+	}
+	// promql, clickhouse and formula queries carry no signal; they alert on metrics
+	rule.AlertType = alertTypeMetric
+	for _, envelope := range rule.decodeQueryEnvelopes() {
+		switch envelope.Spec.Signal {
+		case signalLogs:
+			rule.AlertType = alertTypeLogs
+			return
+		case signalTraces:
+			rule.AlertType = alertTypeTraces
+			return
+		}
+	}
+}
+
+func (rule *postableRule) deriveQueryType() {
+	query := rule.RuleCondition.CompositeQuery
+	if slices.Contains(supportedQueryTypes, query.QueryType) {
+		return
+	}
+	envelopes := rule.decodeQueryEnvelopes()
+	if len(envelopes) == 0 {
+		return
+	}
+	// a promql or clickhouse_sql envelope spells its type like the composite query does; every other envelope is a builder one
+	switch envelopes[0].Type {
+	case queryTypePromQL, queryTypeClickHouseSQL:
+		query.QueryType = envelopes[0].Type
+	default:
+		query.QueryType = queryTypeBuilder
+	}
+}
+
+func (rule *postableRule) repairPanelType() {
+	query := rule.RuleCondition.CompositeQuery
+	// nothing reads panelType; both alert forms write graph
+	if !slices.Contains(supportedPanelTypes, query.PanelType) {
+		query.PanelType = panelTypeGraph
+	}
+}
+
+func (rule *postableRule) disableUnmetMinPoints() {
+	condition := rule.RuleCondition
+	if string(condition.RequireMinPoints) != "true" {
+		return
+	}
+	points := 0.0
+	if len(condition.RequiredNumPoints) > 0 {
+		if err := json.Unmarshal(condition.RequiredNumPoints, &points); err != nil {
+			return
+		}
+	}
+	if points > 0 {
+		return
+	}
+	// zero required points is a check every series passes
+	condition.RequireMinPoints = json.RawMessage("false")
+}
+
+func (rule *postableRule) decodeQueryEnvelopes() []ruleQueryEnvelope {
+	var envelopes []ruleQueryEnvelope
+	if err := json.Unmarshal(rule.RuleCondition.CompositeQuery.Queries, &envelopes); err != nil {
+		return nil
+	}
+	return envelopes
 }
 
 func (rule *postableRule) deriveRuleType() {
