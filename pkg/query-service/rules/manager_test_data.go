@@ -50,11 +50,10 @@ func ThresholdRuleAtLeastOnceValueAbove(target float64, recovery *float64) rulet
 			"value": "{{$value}}",
 		},
 		Version:       "v5",
-		SchemaVersion: valuer.MustNewUnsetOrNonEmptyString(ruletypes.SchemaVersionV2Alpha1),
+		SchemaVersion: ruletypes.SchemaVersionV2Alpha1,
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &ruletypes.AlertCompositeQuery{
 				QueryType: ruletypes.QueryTypeBuilder,
-				PanelType: ruletypes.PanelTypeGraph,
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeBuilder,
@@ -108,7 +107,7 @@ func BuildPromAtLeastOnceValueAbove(target float64, recovery *float64) ruletypes
 			"value": "{{$value}}",
 		},
 		Version:       "v5",
-		SchemaVersion: valuer.MustNewUnsetOrNonEmptyString(ruletypes.SchemaVersionV2Alpha1),
+		SchemaVersion: ruletypes.SchemaVersionV2Alpha1,
 		RuleCondition: &ruletypes.RuleCondition{
 			SelectedQuery: "A",
 			CompositeQuery: &ruletypes.AlertCompositeQuery{

@@ -9791,6 +9791,8 @@ components:
           type: integer
         alertOnAbsent:
           type: boolean
+        algorithm:
+          type: string
         compositeQuery:
           $ref: '#/components/schemas/RuletypesAlertCompositeQuery'
         requireMinPoints:

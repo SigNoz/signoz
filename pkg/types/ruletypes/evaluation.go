@@ -10,12 +10,12 @@ import (
 )
 
 type EvaluationKind struct {
-	valuer.UnsetOrNonEmptyString
+	valuer.String
 }
 
 var (
-	RollingEvaluation    = EvaluationKind{valuer.MustNewUnsetOrNonEmptyString("rolling")}
-	CumulativeEvaluation = EvaluationKind{valuer.MustNewUnsetOrNonEmptyString("cumulative")}
+	RollingEvaluation    = EvaluationKind{valuer.NewString("rolling")}
+	CumulativeEvaluation = EvaluationKind{valuer.NewString("cumulative")}
 )
 
 // Enum implements jsonschema.Enum; returns the acceptable values for EvaluationKind.
@@ -55,9 +55,9 @@ func (rollingWindow RollingWindow) GetFrequency() valuer.TextDuration {
 }
 
 type CumulativeWindow struct {
-	Schedule  CumulativeSchedule           `json:"schedule" required:"true"`
-	Frequency valuer.TextDuration          `json:"frequency" required:"true"`
-	Timezone  valuer.UnsetOrNonEmptyString `json:"timezone" required:"true"`
+	Schedule  CumulativeSchedule  `json:"schedule" required:"true"`
+	Frequency valuer.TextDuration `json:"frequency" required:"true"`
+	Timezone  string              `json:"timezone" required:"true"`
 }
 
 type CumulativeSchedule struct {
@@ -69,14 +69,14 @@ type CumulativeSchedule struct {
 }
 
 type ScheduleType struct {
-	valuer.UnsetOrNonEmptyString
+	valuer.String
 }
 
 var (
-	ScheduleTypeHourly  = ScheduleType{valuer.MustNewUnsetOrNonEmptyString("hourly")}
-	ScheduleTypeDaily   = ScheduleType{valuer.MustNewUnsetOrNonEmptyString("daily")}
-	ScheduleTypeWeekly  = ScheduleType{valuer.MustNewUnsetOrNonEmptyString("weekly")}
-	ScheduleTypeMonthly = ScheduleType{valuer.MustNewUnsetOrNonEmptyString("monthly")}
+	ScheduleTypeHourly  = ScheduleType{valuer.NewString("hourly")}
+	ScheduleTypeDaily   = ScheduleType{valuer.NewString("daily")}
+	ScheduleTypeWeekly  = ScheduleType{valuer.NewString("weekly")}
+	ScheduleTypeMonthly = ScheduleType{valuer.NewString("monthly")}
 )
 
 // Enum implements jsonschema.Enum; returns the acceptable values for ScheduleType.
@@ -95,10 +95,7 @@ func (cumulativeWindow CumulativeWindow) Validate() error {
 		return err
 	}
 
-	if cumulativeWindow.Timezone.IsZero() {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "timezone is required")
-	}
-	if _, err := time.LoadLocation(cumulativeWindow.Timezone.StringValue()); err != nil {
+	if _, err := time.LoadLocation(cumulativeWindow.Timezone); err != nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "timezone is invalid")
 	}
 	if !cumulativeWindow.Frequency.IsPositive() {
@@ -160,8 +157,8 @@ func (cs CumulativeSchedule) Validate() error {
 
 func (cumulativeWindow CumulativeWindow) NextWindowFor(curr time.Time) (time.Time, time.Time) {
 	loc := time.UTC
-	if !cumulativeWindow.Timezone.IsZero() {
-		if tz, err := time.LoadLocation(cumulativeWindow.Timezone.StringValue()); err == nil {
+	if cumulativeWindow.Timezone != "" {
+		if tz, err := time.LoadLocation(cumulativeWindow.Timezone); err == nil {
 			loc = tz
 		}
 	}

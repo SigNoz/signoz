@@ -32,10 +32,5 @@ func (q *Query) Validate() error {
 	if q.Order != qbtypes.OrderDirectionAsc && q.Order != qbtypes.OrderDirectionDesc {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "order must be asc or desc")
 	}
-	if !q.State.IsZero() {
-		if err := q.State.Validate(); err != nil {
-			return err
-		}
-	}
 	return nil
 }

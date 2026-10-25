@@ -350,15 +350,6 @@ func (m *Manager) validateChannels(ctx context.Context, orgID string, rule *rule
 	return nil
 }
 
-func decodeRule(ruleStr string, rule *ruletypes.PostableRule) error {
-	err := json.Unmarshal([]byte(ruleStr), rule)
-	if err == nil || errors.Ast(err, errors.TypeInvalidInput) {
-		return err
-	}
-	// a syntax error is raised before any UnmarshalJSON runs, so it is the one untyped error
-	return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to parse json: %v", err)
-}
-
 // EditRule writes the rule definition to the
 // datastore and also updates the rule executor
 func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) error {
@@ -368,7 +359,7 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 	}
 	orgID := valuer.MustNewUUID(claims.OrgID)
 	parsedRule := ruletypes.PostableRule{}
-	err = decodeRule(ruleStr, &parsedRule)
+	err = json.Unmarshal([]byte(ruleStr), &parsedRule)
 	if err != nil {
 		return err
 	}
@@ -556,7 +547,7 @@ func (m *Manager) deleteTask(taskName string) {
 // starts an executor for the rule, unless the rule is disabled
 func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.GettableRule, error) {
 	parsedRule := ruletypes.PostableRule{}
-	if err := decodeRule(ruleStr, &parsedRule); err != nil {
+	if err := json.Unmarshal([]byte(ruleStr), &parsedRule); err != nil {
 		return nil, err
 	}
 
@@ -1058,7 +1049,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 		return nil, err
 	}
 
-	if err := decodeRule(ruleStr, &storedRule); err != nil {
+	if err := json.Unmarshal([]byte(ruleStr), &storedRule); err != nil {
 		m.logger.ErrorContext(ctx, "failed to unmarshal patched rule with given id", slog.String("rule.id", id.StringValue()), errors.Attr(err))
 		return nil, err
 	}
@@ -1114,9 +1105,9 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 // sends a test notification. returns alert count and error (if any)
 func (m *Manager) TestNotification(ctx context.Context, orgID valuer.UUID, ruleStr string) (int, error) {
 	parsedRule := ruletypes.PostableRule{}
-	err := decodeRule(ruleStr, &parsedRule)
+	err := json.Unmarshal([]byte(ruleStr), &parsedRule)
 	if err != nil {
-		return 0, err
+		return 0, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to unmarshal rule")
 	}
 	if err := parsedRule.Validate(); err != nil {
 		return 0, err

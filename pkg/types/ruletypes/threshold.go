@@ -15,11 +15,11 @@ import (
 )
 
 type ThresholdKind struct {
-	valuer.UnsetOrNonEmptyString
+	valuer.String
 }
 
 var (
-	BasicThresholdKind = ThresholdKind{valuer.MustNewUnsetOrNonEmptyString("basic")}
+	BasicThresholdKind = ThresholdKind{valuer.NewString("basic")}
 )
 
 // Enum implements jsonschema.Enum; returns the acceptable values for ThresholdKind.
@@ -168,17 +168,6 @@ func (r BasicRuleThresholds) Validate() error {
 		}
 	}
 	return errors.Join(errs...)
-}
-
-func (r BasicRuleThresholds) validateUniqueNames() error {
-	names := make(map[string]struct{}, len(r))
-	for _, basicThreshold := range r {
-		if _, seen := names[basicThreshold.Name]; seen {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.thresholds.spec: duplicate threshold name %q", basicThreshold.Name)
-		}
-		names[basicThreshold.Name] = struct{}{}
-	}
-	return nil
 }
 
 func (r BasicRuleThresholds) Eval(s *qbtypes.TimeSeries, unit string, evalData EvalData) (Vector, error) {

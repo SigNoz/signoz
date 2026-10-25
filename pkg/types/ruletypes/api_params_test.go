@@ -182,8 +182,8 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 			kind:        RuleDataKindJson,
 			expectError: false,
 			validate: func(t *testing.T, rule *PostableRule) {
-				if rule.SchemaVersion.StringValue() != SchemaVersionV2Alpha1 {
-					t.Errorf("Expected schemaVersion %q, got %q", SchemaVersionV2Alpha1, rule.SchemaVersion.StringValue())
+				if rule.SchemaVersion != SchemaVersionV2Alpha1 {
+					t.Errorf("Expected schemaVersion %q, got %q", SchemaVersionV2Alpha1, rule.SchemaVersion)
 				}
 
 				if rule.RuleCondition.Thresholds == nil {

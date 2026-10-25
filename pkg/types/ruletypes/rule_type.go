@@ -6,13 +6,13 @@ import (
 )
 
 type RuleType struct {
-	valuer.UnsetOrNonEmptyString
+	valuer.String
 }
 
 var (
-	RuleTypeThreshold = RuleType{valuer.MustNewUnsetOrNonEmptyString("threshold_rule")}
-	RuleTypeProm      = RuleType{valuer.MustNewUnsetOrNonEmptyString("promql_rule")}
-	RuleTypeAnomaly   = RuleType{valuer.MustNewUnsetOrNonEmptyString("anomaly_rule")}
+	RuleTypeThreshold = RuleType{valuer.NewString("threshold_rule")}
+	RuleTypeProm      = RuleType{valuer.NewString("promql_rule")}
+	RuleTypeAnomaly   = RuleType{valuer.NewString("anomaly_rule")}
 )
 
 func (RuleType) Enum() []any {

@@ -1,9 +1,6 @@
 package ruletypes
 
-import (
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/valuer"
-)
+import "github.com/SigNoz/signoz/pkg/valuer"
 
 type AlertState struct {
 	valuer.String
@@ -26,15 +23,6 @@ func (AlertState) Enum() []any {
 		StateFiring,
 		StateNoData,
 		StateDisabled,
-	}
-}
-
-func (a AlertState) Validate() error {
-	switch a {
-	case StateInactive, StatePending, StateRecovering, StateFiring, StateNoData, StateDisabled:
-		return nil
-	default:
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "state: unsupported value %q; must be one of inactive, pending, recovering, firing, nodata, disabled", a.StringValue())
 	}
 }
 

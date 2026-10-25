@@ -76,8 +76,8 @@ type PostableRule struct {
 
 	Version string `json:"version"`
 
-	Evaluation    *EvaluationEnvelope          `json:"evaluation" required:"true"`
-	SchemaVersion valuer.UnsetOrNonEmptyString `json:"schemaVersion" required:"true" enum:"v2alpha1"`
+	Evaluation    *EvaluationEnvelope `json:"evaluation" required:"true"`
+	SchemaVersion string              `json:"schemaVersion" required:"true" enum:"v2alpha1"`
 
 	NotificationSettings *NotificationSettings `json:"notificationSettings" required:"true"`
 }
@@ -232,7 +232,7 @@ func (r *PostableRule) processRuleDefaults() {
 
 	if r.RuleCondition != nil && r.RuleCondition.CompositeQuery != nil {
 		switch r.RuleCondition.CompositeQuery.QueryType {
-		case QueryTypeBuilder, QueryTypeClickHouseSQL:
+		case QueryTypeBuilder:
 			if r.RuleType.IsZero() {
 				r.RuleType = RuleTypeThreshold
 			}
@@ -335,14 +335,14 @@ func (r *PostableRule) Validate() error {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition: field is required")
 	}
 
-	switch r.AlertType {
-	case AlertTypeMetric, AlertTypeTraces, AlertTypeLogs, AlertTypeExceptions, AlertTypeAITraces:
-	case "":
-		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "alertType: field is required"))
-	default:
-		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"alertType: unsupported value %q; must be one of %q, %q, %q, %q, %q",
-			r.AlertType, AlertTypeMetric, AlertTypeTraces, AlertTypeLogs, AlertTypeExceptions, AlertTypeAITraces))
+	if r.AlertType != "" {
+		switch r.AlertType {
+		case AlertTypeMetric, AlertTypeTraces, AlertTypeLogs, AlertTypeExceptions, AlertTypeAITraces:
+		default:
+			errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
+				"alertType: unsupported value %q; must be one of %q, %q, %q, %q, %q",
+				r.AlertType, AlertTypeMetric, AlertTypeTraces, AlertTypeLogs, AlertTypeExceptions, AlertTypeAITraces))
+		}
 	}
 
 	if !r.RuleType.IsZero() {
@@ -360,12 +360,6 @@ func (r *PostableRule) Validate() error {
 	if r.RuleCondition.CompositeQuery == nil {
 		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.compositeQuery: field is required"))
 	} else {
-		if err := r.RuleCondition.CompositeQuery.QueryType.Validate(); err != nil {
-			errs = append(errs, err)
-		}
-		if err := r.RuleCondition.CompositeQuery.PanelType.Validate(); err != nil {
-			errs = append(errs, err)
-		}
 		if len(r.RuleCondition.CompositeQuery.Queries) == 0 {
 			errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.compositeQuery.queries: must have at least one query"))
 		} else {
@@ -427,13 +421,13 @@ func (r *PostableRule) Validate() error {
 }
 
 func (r *PostableRule) validateSchemaVersion() []error {
-	switch r.SchemaVersion.StringValue() {
+	switch r.SchemaVersion {
 	case SchemaVersionV2Alpha1:
 		return r.validateV2Alpha1()
 	default:
 		return []error{errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"schemaVersion: unsupported value %q; must be %q",
-			r.SchemaVersion.StringValue(), SchemaVersionV2Alpha1)}
+			r.SchemaVersion, SchemaVersionV2Alpha1)}
 	}
 }
 
@@ -444,10 +438,6 @@ func (r *PostableRule) validateV2Alpha1() []error {
 	if r.RuleCondition.Thresholds == nil {
 		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"condition.thresholds: field is required for schemaVersion %q", SchemaVersionV2Alpha1))
-	} else if thresholds, ok := r.RuleCondition.Thresholds.Spec.(BasicRuleThresholds); ok {
-		if err := thresholds.validateUniqueNames(); err != nil {
-			errs = append(errs, err)
-		}
 	}
 
 	if r.Evaluation == nil {
