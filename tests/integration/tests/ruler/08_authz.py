@@ -547,6 +547,37 @@ def test_managed_roles_on_downtime_after_license(
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
 
+def test_managed_roles_on_rule_views_after_license(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    viewer_token = get_token(_VIEWER_EMAIL, _VIEWER_PASSWORD)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(RULE_VIEWS_URL),
+        headers={"Authorization": f"Bearer {viewer_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(RULE_VIEWS_URL),
+        json={"name": _VIEW_NAME, "data": {"version": "v1", "sort": "updated_at", "order": "desc"}},
+        headers={"Authorization": f"Bearer {viewer_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    view_id = response.json()["data"]["id"]
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"{RULE_VIEWS_URL}/{view_id}"),
+        headers={"Authorization": f"Bearer {viewer_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+
 def test_setup_channel_scoped_actor(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
