@@ -409,6 +409,46 @@ def test_apply_license(
     add_license(signoz, make_http_mocks, get_token)
 
 
+def test_managed_roles_on_route_policies_after_license(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    editor_token = get_token(_EDITOR_EMAIL, _EDITOR_PASSWORD)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ROUTE_POLICIES_URL),
+        json={**ROUTE_POLICY_TEMPLATE, "name": _ROUTE_POLICY_NAME},
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    policy_id = response.json()["data"]["id"]
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{ROUTE_POLICIES_URL}/{policy_id}"),
+        headers={"Authorization": f"Bearer {editor_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{ROUTE_POLICIES_URL}/{policy_id}"),
+        json={**ROUTE_POLICY_TEMPLATE, "name": _ROUTE_POLICY_NAME, "channels": [SEED_CHANNEL_ALT["name"]]},
+        headers={"Authorization": f"Bearer {editor_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"{ROUTE_POLICIES_URL}/{policy_id}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+
 def test_setup_channel_scoped_actor(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument

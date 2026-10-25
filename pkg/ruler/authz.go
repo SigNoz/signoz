@@ -99,7 +99,7 @@ func NewCreateRoutePolicyChannelAttachExtractor(alertmanagerService alertmanager
 			return nil, err
 		}
 
-		names, err := routePolicyChannelsFromBody(ec.RequestBody)
+		names, err := parseRoutePolicyChannels(ec.RequestBody)
 		if err != nil {
 			return nil, err
 		}
@@ -133,7 +133,7 @@ func newRoutePolicyDiffExtractor(alertmanagerService alertmanager.Alertmanager, 
 			return nil, err
 		}
 
-		incoming, err := routePolicyChannelsFromBody(ec.RequestBody)
+		incoming, err := parseRoutePolicyChannels(ec.RequestBody)
 		if err != nil {
 			return nil, err
 		}
@@ -147,7 +147,7 @@ func newRoutePolicyDiffExtractor(alertmanagerService alertmanager.Alertmanager, 
 	}}
 }
 
-func routePolicyChannelsFromBody(body []byte) ([]string, error) {
+func parseRoutePolicyChannels(body []byte) ([]string, error) {
 	policy := new(alertmanagertypes.PostableRoutePolicy)
 	if err := json.Unmarshal(body, policy); err != nil {
 		return nil, err
