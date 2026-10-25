@@ -159,7 +159,7 @@ func NewModules(
 		ServiceAccount:       serviceAccount,
 		ServiceAccountGetter: serviceAccountGetter,
 		LogsPipeline:         impllogspipeline.NewModule(sqlstore),
-		RuleStateHistory:     implrulestatehistory.NewModule(implrulestatehistory.NewStore(telemetryStore, telemetryMetadataStore, providerSettings.Logger), ruleStore),
+		RuleStateHistory:     implrulestatehistory.NewModule(implrulestatehistory.NewStore(telemetryStore, telemetryMetadataStore, providerSettings.Logger), ruleStore, providerSettings.Logger),
 		CloudIntegration:     cloudIntegrationModule,
 		TraceDetail:          impltracedetail.NewModule(impltracedetail.NewTraceStore(telemetryStore, telemetryMetadataStore, fl), providerSettings, config.TraceDetail),
 		SpanMapper:           spanMapper,

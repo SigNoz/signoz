@@ -141,6 +141,12 @@ type RuleCondition struct {
 }
 
 func (rc *RuleCondition) SelectedQueryName() string {
+	if rc.SelectedQuery != "" {
+		return rc.SelectedQuery
+	}
+	if rc.CompositeQuery == nil {
+		return ""
+	}
 
 	queryNames := map[string]struct{}{}
 
@@ -183,6 +189,9 @@ func (rc *RuleCondition) SelectedQueryName() string {
 	keys := make([]string, 0, len(queryNames))
 	for k := range queryNames {
 		keys = append(keys, k)
+	}
+	if len(keys) == 0 {
+		return ""
 	}
 	sort.Strings(keys)
 	return keys[len(keys)-1]
