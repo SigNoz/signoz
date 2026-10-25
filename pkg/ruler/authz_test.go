@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRoutePolicyChannelsFromBody(t *testing.T) {
+func TestParseRoutePolicyChannels(t *testing.T) {
 	testCases := []struct {
 		name    string
 		body    string
@@ -27,7 +27,7 @@ func TestRoutePolicyChannelsFromBody(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			got, err := routePolicyChannelsFromBody([]byte(testCase.body))
+			got, err := parseRoutePolicyChannels([]byte(testCase.body))
 			if testCase.wantErr {
 				require.Error(t, err)
 				return
