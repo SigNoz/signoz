@@ -259,7 +259,6 @@ type ruleCondition struct {
 	AbsentFor         json.RawMessage `json:"absentFor,omitempty"`
 	MatchType         string          `json:"matchType,omitempty"`
 	TargetUnit        string          `json:"targetUnit,omitempty"`
-	Algorithm         json.RawMessage `json:"algorithm,omitempty"`
 	Seasonality       string          `json:"seasonality,omitempty"`
 	SelectedQuery     json.RawMessage `json:"selectedQueryName,omitempty"`
 	RequireMinPoints  json.RawMessage `json:"requireMinPoints,omitempty"`

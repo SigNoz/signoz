@@ -72,7 +72,7 @@ func TestCumulativeWindow_NewScheduleSystem(t *testing.T) {
 					Minute: intPtr(15),
 				},
 				Frequency: valuer.MustParseTextDuration("5m"),
-				Timezone:  "UTC",
+				Timezone:  valuer.MustNewUnsetOrNonEmptyString("UTC"),
 			},
 			current: time.Date(2025, 3, 15, 14, 30, 0, 0, time.UTC),
 			wantErr: false,
@@ -86,7 +86,7 @@ func TestCumulativeWindow_NewScheduleSystem(t *testing.T) {
 					Minute: intPtr(30),
 				},
 				Frequency: valuer.MustParseTextDuration("1h"),
-				Timezone:  "Asia/Kolkata",
+				Timezone:  valuer.MustNewUnsetOrNonEmptyString("Asia/Kolkata"),
 			},
 			current: time.Date(2025, 3, 15, 15, 30, 0, 0, time.UTC),
 			wantErr: false,
@@ -101,7 +101,7 @@ func TestCumulativeWindow_NewScheduleSystem(t *testing.T) {
 					Minute:  intPtr(0),
 				},
 				Frequency: valuer.MustParseTextDuration("24h"),
-				Timezone:  "America/New_York",
+				Timezone:  valuer.MustNewUnsetOrNonEmptyString("America/New_York"),
 			},
 			current: time.Date(2025, 3, 18, 19, 0, 0, 0, time.UTC), // Tuesday
 			wantErr: false,
@@ -116,7 +116,7 @@ func TestCumulativeWindow_NewScheduleSystem(t *testing.T) {
 					Minute: intPtr(0),
 				},
 				Frequency: valuer.MustParseTextDuration("24h"),
-				Timezone:  "UTC",
+				Timezone:  valuer.MustNewUnsetOrNonEmptyString("UTC"),
 			},
 			current: time.Date(2025, 3, 15, 12, 0, 0, 0, time.UTC),
 			wantErr: false,
@@ -128,7 +128,7 @@ func TestCumulativeWindow_NewScheduleSystem(t *testing.T) {
 					Type: ScheduleTypeHourly,
 				},
 				Frequency: valuer.MustParseTextDuration("5m"),
-				Timezone:  "UTC",
+				Timezone:  valuer.MustNewUnsetOrNonEmptyString("UTC"),
 			},
 			current: time.Date(2025, 3, 15, 14, 30, 0, 0, time.UTC),
 			wantErr: true,
@@ -181,7 +181,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Type:   ScheduleTypeHourly,
 					Minute: intPtr(30),
 				},
-				Timezone: "UTC",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("UTC"),
 			},
 			current:   time.Date(2025, 3, 15, 14, 30, 0, 0, time.UTC),
 			wantStart: time.Date(2025, 3, 15, 14, 30, 0, 0, time.UTC),
@@ -194,7 +194,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Type:   ScheduleTypeHourly,
 					Minute: intPtr(15),
 				},
-				Timezone: "UTC",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("UTC"),
 			},
 			current:   time.Date(2025, 3, 15, 14, 45, 0, 0, time.UTC),
 			wantStart: time.Date(2025, 3, 15, 14, 15, 0, 0, time.UTC),
@@ -207,7 +207,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Type:   ScheduleTypeHourly,
 					Minute: intPtr(30),
 				},
-				Timezone: "UTC",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("UTC"),
 			},
 			current:   time.Date(2025, 3, 15, 14, 15, 0, 0, time.UTC),
 			wantStart: time.Date(2025, 3, 15, 13, 30, 0, 0, time.UTC), // Previous hour
@@ -220,7 +220,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Type:   ScheduleTypeHourly,
 					Minute: intPtr(30),
 				},
-				Timezone: "UTC",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("UTC"),
 			},
 			current:   time.Date(2025, 3, 15, 13, 14, 0, 0, time.UTC),
 			wantStart: time.Date(2025, 3, 15, 12, 30, 0, 0, time.UTC), // Previous hour
@@ -233,7 +233,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Type:   ScheduleTypeHourly,
 					Minute: intPtr(30),
 				},
-				Timezone: "Asia/Kolkata",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("Asia/Kolkata"),
 			},
 			current:   time.Date(2025, 3, 15, 13, 14, 0, 0, time.UTC),
 			wantStart: time.Date(2025, 3, 15, 13, 00, 0, 0, time.UTC), // Previous hour
@@ -249,7 +249,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:   intPtr(9),
 					Minute: intPtr(30),
 				},
-				Timezone: "UTC",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("UTC"),
 			},
 			current:   time.Date(2025, 3, 15, 9, 30, 0, 0, time.UTC),
 			wantStart: time.Date(2025, 3, 15, 9, 30, 0, 0, time.UTC),
@@ -263,7 +263,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:   intPtr(9),
 					Minute: intPtr(30),
 				},
-				Timezone: "UTC",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("UTC"),
 			},
 			current:   time.Date(2025, 3, 15, 15, 45, 0, 0, time.UTC),
 			wantStart: time.Date(2025, 3, 15, 9, 30, 0, 0, time.UTC),
@@ -277,7 +277,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:   intPtr(9),
 					Minute: intPtr(30),
 				},
-				Timezone: "UTC",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("UTC"),
 			},
 			current:   time.Date(2025, 3, 15, 8, 15, 0, 0, time.UTC),
 			wantStart: time.Date(2025, 3, 14, 9, 30, 0, 0, time.UTC), // Previous day
@@ -291,7 +291,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:   intPtr(9),
 					Minute: intPtr(30),
 				},
-				Timezone: "Asia/Kolkata",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("Asia/Kolkata"),
 			},
 			current:   time.Date(2025, 3, 15, 15, 30, 0, 0, time.UTC), // 9:00 PM IST
 			wantStart: time.Date(2025, 3, 15, 4, 0, 0, 0, time.UTC),   // 9:30 AM IST in UTC
@@ -308,7 +308,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:    intPtr(14),
 					Minute:  intPtr(0),
 				},
-				Timezone: "UTC",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("UTC"),
 			},
 			current:   time.Date(2025, 3, 17, 14, 0, 0, 0, time.UTC), // Monday
 			wantStart: time.Date(2025, 3, 17, 14, 0, 0, 0, time.UTC),
@@ -323,7 +323,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:    intPtr(14),
 					Minute:  intPtr(0),
 				},
-				Timezone: "UTC",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("UTC"),
 			},
 			current:   time.Date(2025, 3, 19, 10, 30, 0, 0, time.UTC), // Wednesday
 			wantStart: time.Date(2025, 3, 17, 14, 0, 0, 0, time.UTC),  // Previous Monday
@@ -338,7 +338,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:    intPtr(14),
 					Minute:  intPtr(0),
 				},
-				Timezone: "UTC",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("UTC"),
 			},
 			current:   time.Date(2025, 3, 18, 10, 0, 0, 0, time.UTC), // Tuesday before 2 PM
 			wantStart: time.Date(2025, 3, 11, 14, 0, 0, 0, time.UTC), // Previous Tuesday
@@ -355,7 +355,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:   intPtr(12),
 					Minute: intPtr(0),
 				},
-				Timezone: "UTC",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("UTC"),
 			},
 			current:   time.Date(2025, 3, 15, 12, 0, 0, 0, time.UTC),
 			wantStart: time.Date(2025, 3, 15, 12, 0, 0, 0, time.UTC),
@@ -370,7 +370,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:   intPtr(0),
 					Minute: intPtr(0),
 				},
-				Timezone: "UTC",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("UTC"),
 			},
 			current:   time.Date(2025, 3, 15, 16, 30, 0, 0, time.UTC),
 			wantStart: time.Date(2025, 3, 1, 0, 0, 0, 0, time.UTC),
@@ -385,7 +385,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:   intPtr(12),
 					Minute: intPtr(0),
 				},
-				Timezone: "UTC",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("UTC"),
 			},
 			current:   time.Date(2025, 3, 10, 10, 0, 0, 0, time.UTC),
 			wantStart: time.Date(2025, 2, 15, 12, 0, 0, 0, time.UTC), // Previous month
@@ -400,7 +400,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:   intPtr(12),
 					Minute: intPtr(0),
 				},
-				Timezone: "UTC",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("UTC"),
 			},
 			current:   time.Date(2025, 3, 15, 10, 0, 0, 0, time.UTC),
 			wantStart: time.Date(2025, 2, 28, 12, 0, 0, 0, time.UTC), // Feb 28 (last day of Feb)
@@ -415,7 +415,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Type:   ScheduleTypeHourly,
 					Minute: intPtr(45),
 				},
-				Timezone: "Asia/Tokyo",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("Asia/Tokyo"),
 			},
 			current:   time.Date(2023, 12, 15, 2, 30, 0, 0, time.UTC), // 11:30 AM JST
 			wantStart: time.Date(2023, 12, 15, 1, 45, 0, 0, time.UTC), // 10:45 AM JST in UTC
@@ -429,7 +429,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:   intPtr(8), // 8 AM EST
 					Minute: intPtr(0),
 				},
-				Timezone: "America/New_York",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("America/New_York"),
 			},
 			current:   time.Date(2023, 12, 15, 20, 30, 0, 0, time.UTC), // 3:30 PM EST
 			wantStart: time.Date(2023, 12, 15, 13, 0, 0, 0, time.UTC),  // 8 AM EST in UTC
@@ -444,7 +444,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:    intPtr(12),
 					Minute:  intPtr(0),
 				},
-				Timezone: "Europe/London",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("Europe/London"),
 			},
 			current:   time.Date(2023, 12, 15, 15, 0, 0, 0, time.UTC), // Friday 3 PM GMT
 			wantStart: time.Date(2023, 12, 11, 12, 0, 0, 0, time.UTC), // Previous Monday 12 PM GMT
@@ -459,7 +459,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:   intPtr(0), // Midnight AEDT
 					Minute: intPtr(0),
 				},
-				Timezone: "Australia/Sydney",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("Australia/Sydney"),
 			},
 			current:   time.Date(2023, 12, 15, 5, 0, 0, 0, time.UTC),  // 4 PM AEDT on 15th
 			wantStart: time.Date(2023, 11, 30, 13, 0, 0, 0, time.UTC), // Midnight AEDT on Dec 1st in UTC (Nov 30 13:00 UTC)
@@ -472,7 +472,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Type:   ScheduleTypeHourly,
 					Minute: intPtr(30),
 				},
-				Timezone: "Pacific/Honolulu",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("Pacific/Honolulu"),
 			},
 			current:   time.Date(2023, 12, 15, 22, 45, 0, 0, time.UTC), // 12:45 PM HST
 			wantStart: time.Date(2023, 12, 15, 22, 30, 0, 0, time.UTC), // 12:30 PM HST in UTC
@@ -486,7 +486,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:   intPtr(2), // 2 AM PST/PDT
 					Minute: intPtr(0),
 				},
-				Timezone: "America/Los_Angeles",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("America/Los_Angeles"),
 			},
 			current:   time.Date(2023, 3, 12, 15, 0, 0, 0, time.UTC), // Day after DST starts
 			wantStart: time.Date(2023, 3, 12, 9, 0, 0, 0, time.UTC),  // 2 AM PDT in UTC (PDT = UTC-7)
@@ -501,7 +501,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:    intPtr(16), // 4 PM CET
 					Minute:  intPtr(30),
 				},
-				Timezone: "Europe/Berlin",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("Europe/Berlin"),
 			},
 			current:   time.Date(2023, 12, 18, 10, 0, 0, 0, time.UTC),  // Monday 11 AM CET
 			wantStart: time.Date(2023, 12, 15, 15, 30, 0, 0, time.UTC), // Previous Friday 4:30 PM CET
@@ -516,7 +516,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:   intPtr(23),
 					Minute: intPtr(59),
 				},
-				Timezone: "Asia/Kolkata",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("Asia/Kolkata"),
 			},
 			current:   time.Date(2023, 3, 10, 12, 0, 0, 0, time.UTC),  // March 10th 5:30 PM IST
 			wantStart: time.Date(2023, 2, 28, 18, 29, 0, 0, time.UTC), // Feb 28 11:59 PM IST (last day of Feb)
@@ -529,7 +529,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Type:   ScheduleTypeHourly,
 					Minute: intPtr(0), // Top of hour
 				},
-				Timezone: "America/Chicago",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("America/Chicago"),
 			},
 			current:   time.Date(2023, 12, 15, 6, 30, 0, 0, time.UTC), // 12:30 AM CST
 			wantStart: time.Date(2023, 12, 15, 6, 0, 0, 0, time.UTC),  // Midnight CST in UTC
@@ -545,7 +545,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:   intPtr(0),
 					Minute: intPtr(0),
 				},
-				Timezone: "UTC",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("UTC"),
 			},
 			current:   time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC), // Jan 1st noon
 			wantStart: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),  // Jan 1st midnight
@@ -560,7 +560,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:   intPtr(15),
 					Minute: intPtr(30),
 				},
-				Timezone: "UTC",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("UTC"),
 			},
 			current:   time.Date(2024, 3, 10, 10, 0, 0, 0, time.UTC),  // March 10th (leap year)
 			wantStart: time.Date(2024, 2, 29, 15, 30, 0, 0, time.UTC), // Feb 29th exists in leap year
@@ -575,7 +575,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:   intPtr(15),
 					Minute: intPtr(30),
 				},
-				Timezone: "UTC",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("UTC"),
 			},
 			current:   time.Date(2023, 3, 10, 10, 0, 0, 0, time.UTC),  // March 10th (non-leap year)
 			wantStart: time.Date(2023, 2, 28, 15, 30, 0, 0, time.UTC), // Feb 28th (fallback)
@@ -590,7 +590,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:   intPtr(12),
 					Minute: intPtr(0),
 				},
-				Timezone: "UTC",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("UTC"),
 			},
 			current:   time.Date(2023, 5, 15, 10, 0, 0, 0, time.UTC), // May 15th
 			wantStart: time.Date(2023, 4, 30, 12, 0, 0, 0, time.UTC), // April 30th (fallback from 31st)
@@ -605,7 +605,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:    intPtr(23),
 					Minute:  intPtr(59),
 				},
-				Timezone: "UTC",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("UTC"),
 			},
 			current:   time.Date(2023, 12, 11, 1, 0, 0, 0, time.UTC),   // Monday 1 AM
 			wantStart: time.Date(2023, 12, 10, 23, 59, 0, 0, time.UTC), // Previous Sunday 11:59 PM
@@ -618,7 +618,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Type:   ScheduleTypeHourly,
 					Minute: intPtr(59),
 				},
-				Timezone: "UTC",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("UTC"),
 			},
 			current:   time.Date(2023, 12, 15, 14, 5, 0, 0, time.UTC),  // 14:05
 			wantStart: time.Date(2023, 12, 15, 13, 59, 0, 0, time.UTC), // 13:59 (previous hour)
@@ -632,7 +632,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:   intPtr(2), // 2 AM (skipped during DST)
 					Minute: intPtr(30),
 				},
-				Timezone: "America/New_York",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("America/New_York"),
 			},
 			current:   time.Date(2023, 3, 12, 15, 0, 0, 0, time.UTC), // Day DST starts
 			wantStart: time.Date(2023, 3, 12, 6, 30, 0, 0, time.UTC), // Same day 2:30 AM EDT (adjusted for DST)
@@ -646,7 +646,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:   intPtr(2), // 2 AM (occurs twice)
 					Minute: intPtr(30),
 				},
-				Timezone: "America/New_York",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("America/New_York"),
 			},
 			current:   time.Date(2023, 11, 5, 15, 0, 0, 0, time.UTC), // Day DST ends
 			wantStart: time.Date(2023, 11, 5, 7, 30, 0, 0, time.UTC), // Same day 2:30 AM EST (after fall back)
@@ -661,7 +661,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:   intPtr(0),
 					Minute: intPtr(0),
 				},
-				Timezone: "UTC",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("UTC"),
 			},
 			current:   time.Date(2023, 2, 15, 12, 0, 0, 0, time.UTC), // February 15th
 			wantStart: time.Date(2023, 1, 31, 0, 0, 0, 0, time.UTC),  // January 31st (exists)
@@ -675,7 +675,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:   intPtr(12),
 					Minute: intPtr(0),
 				},
-				Timezone: "Pacific/Kiritimati", // UTC+14
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("Pacific/Kiritimati"), // UTC+14
 			},
 			current:   time.Date(2023, 12, 15, 5, 0, 0, 0, time.UTC),  // 7 PM local time
 			wantStart: time.Date(2023, 12, 14, 22, 0, 0, 0, time.UTC), // 12 PM local time (previous day in UTC)
@@ -689,7 +689,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:   intPtr(12),
 					Minute: intPtr(0),
 				},
-				Timezone: "Etc/GMT+12", // UTC-12 (use standard timezone name)
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("Etc/GMT+12"), // UTC-12 (use standard timezone name)
 			},
 			current:   time.Date(2023, 12, 15, 5, 0, 0, 0, time.UTC), // 5 PM previous day local time
 			wantStart: time.Date(2023, 12, 15, 0, 0, 0, 0, time.UTC), // 12 PM local time (same day in UTC)
@@ -704,7 +704,7 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 					Hour:    intPtr(0),
 					Minute:  intPtr(0),
 				},
-				Timezone: "UTC",
+				Timezone: valuer.MustNewUnsetOrNonEmptyString("UTC"),
 			},
 			current:   time.Date(2023, 12, 17, 12, 0, 0, 0, time.UTC), // Sunday noon
 			wantStart: time.Date(2023, 12, 16, 0, 0, 0, 0, time.UTC),  // Saturday midnight
@@ -771,7 +771,7 @@ func TestEvaluationEnvelope_UnmarshalJSON(t *testing.T) {
 					Minute: intPtr(30),
 				},
 				Frequency: valuer.MustParseTextDuration("2m"),
-				Timezone:  "UTC",
+				Timezone:  valuer.MustNewUnsetOrNonEmptyString("UTC"),
 			},
 		},
 		{
