@@ -26,7 +26,7 @@ var DowntimeRuleIDsExtractor = coretypes.ResourceIDsExtractor{Phase: coretypes.P
 		return nil, err
 	}
 
-	return allRulesWhenEmpty(ids), nil
+	return defaultToAllRules(ids), nil
 }}
 
 var DowntimeRuleSelector coretypes.SelectorFunc = func(ctx context.Context, resource coretypes.Resource, id string, orgID valuer.UUID) ([]coretypes.Selector, error) {
@@ -66,7 +66,7 @@ func newDowntimeDiffExtractor(rulerService Ruler, side diffSide) coretypes.Resou
 			return nil, err
 		}
 
-		attached, detached := downtimeRuleLinks(stored.RuleIDs, incoming)
+		attached, detached := diffDowntimeRuleLinks(stored.RuleIDs, incoming)
 		if side == detachedSide {
 			return detached, nil
 		}
@@ -75,11 +75,11 @@ func newDowntimeDiffExtractor(rulerService Ruler, side diffSide) coretypes.Resou
 	}}
 }
 
-func downtimeRuleLinks(stored, incoming []string) (attached, detached []string) {
-	return diffLinks(allRulesWhenEmpty(stored), allRulesWhenEmpty(incoming))
+func diffDowntimeRuleLinks(stored, incoming []string) (attached, detached []string) {
+	return diffLinks(defaultToAllRules(stored), incoming)
 }
 
-func allRulesWhenEmpty(ids []string) []string {
+func defaultToAllRules(ids []string) []string {
 	if len(ids) == 0 {
 		return []string{coretypes.WildCardSelectorString}
 	}
@@ -99,7 +99,7 @@ func NewCreateRoutePolicyChannelAttachExtractor(alertmanagerService alertmanager
 			return nil, err
 		}
 
-		names, err := routePolicyChannelsFromBody(ec.RequestBody)
+		names, err := parseRoutePolicyChannels(ec.RequestBody)
 		if err != nil {
 			return nil, err
 		}
@@ -133,7 +133,7 @@ func newRoutePolicyDiffExtractor(alertmanagerService alertmanager.Alertmanager, 
 			return nil, err
 		}
 
-		incoming, err := routePolicyChannelsFromBody(ec.RequestBody)
+		incoming, err := parseRoutePolicyChannels(ec.RequestBody)
 		if err != nil {
 			return nil, err
 		}
@@ -147,7 +147,7 @@ func newRoutePolicyDiffExtractor(alertmanagerService alertmanager.Alertmanager, 
 	}}
 }
 
-func routePolicyChannelsFromBody(body []byte) ([]string, error) {
+func parseRoutePolicyChannels(body []byte) ([]string, error) {
 	policy := new(alertmanagertypes.PostableRoutePolicy)
 	if err := json.Unmarshal(body, policy); err != nil {
 		return nil, err
