@@ -387,7 +387,7 @@ func v2RuleJSON(channels string) string {
 	}`
 }
 
-func TestRuleChannelsFromBody(t *testing.T) {
+func TestParseRuleChannels(t *testing.T) {
 	testCases := []struct {
 		name         string
 		body         string
@@ -423,7 +423,7 @@ func TestRuleChannelsFromBody(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			channels, err := ruleChannelsFromBody([]byte(testCase.body))
+			channels, err := parseRuleChannels([]byte(testCase.body))
 
 			if testCase.wantErr {
 				assert.Error(t, err)
@@ -447,7 +447,7 @@ func TestIncomingRuleChannels(t *testing.T) {
 	}{
 		{
 			name:            "Replaced_IgnoresStored",
-			incoming:        replacedRuleChannels,
+			incoming:        parseReplacedRuleChannels,
 			stored:          v2RuleJSON(`["slack"]`),
 			body:            v2RuleJSON(`["pager"]`),
 			wantChannels:    []string{"pager"},
@@ -455,7 +455,7 @@ func TestIncomingRuleChannels(t *testing.T) {
 		},
 		{
 			name:            "Patched_OmitsCondition_StoredChannelsSurvive",
-			incoming:        patchedRuleChannels,
+			incoming:        parsePatchedRuleChannels,
 			stored:          v2RuleJSON(`["slack"]`),
 			body:            `{"disabled": true}`,
 			wantChannels:    []string{"slack"},
@@ -463,7 +463,7 @@ func TestIncomingRuleChannels(t *testing.T) {
 		},
 		{
 			name:            "Patched_SetsChannels_StoredChannelsReplaced",
-			incoming:        patchedRuleChannels,
+			incoming:        parsePatchedRuleChannels,
 			stored:          v2RuleJSON(`["slack"]`),
 			body:            v2RuleJSON(`["pager"]`),
 			wantChannels:    []string{"pager"},
@@ -471,7 +471,7 @@ func TestIncomingRuleChannels(t *testing.T) {
 		},
 		{
 			name:            "Patched_EmptiesChannels_NoChannelsLeft",
-			incoming:        patchedRuleChannels,
+			incoming:        parsePatchedRuleChannels,
 			stored:          v2RuleJSON(`["slack"]`),
 			body:            v2RuleJSON(`[]`),
 			wantChannels:    nil,
@@ -542,7 +542,7 @@ func TestRuleBodyTelemetryResources(t *testing.T) {
 	}
 }
 
-func TestPatchedRule(t *testing.T) {
+func TestApplyRulePatch(t *testing.T) {
 	logsQuery := `{"condition": {"compositeQuery": {"queryType": "builder", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "stepInterval": "5m"}}]}}}`
 	testCases := []struct {
 		name         string
@@ -569,7 +569,7 @@ func TestPatchedRule(t *testing.T) {
 			stored := new(ruletypes.GettableRule)
 			require.NoError(t, json.Unmarshal([]byte(v2RuleJSON(`["slack"]`)), &stored.PostableRule))
 
-			patched, err := patchedRule(stored, []byte(testCase.body))
+			patched, err := applyRulePatch(stored, []byte(testCase.body))
 
 			require.NoError(t, err)
 			require.NotNil(t, patched.RuleCondition)

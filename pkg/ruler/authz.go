@@ -92,7 +92,7 @@ func NewCreateRuleChannelAttachExtractor(alertmanagerService alertmanager.Alertm
 			return nil, err
 		}
 
-		names, err := ruleChannelsFromBody(ec.RequestBody)
+		names, err := parseRuleChannels(ec.RequestBody)
 		if err != nil {
 			return nil, err
 		}
@@ -113,7 +113,7 @@ func NewCloneRuleChannelAttachExtractor(alertmanagerService alertmanager.Alertma
 			return nil, err
 		}
 
-		stored, err := storedRule(ec, rulerService)
+		stored, err := fetchStoredRule(ec, rulerService)
 		if err != nil {
 			return nil, err
 		}
@@ -123,19 +123,19 @@ func NewCloneRuleChannelAttachExtractor(alertmanagerService alertmanager.Alertma
 }
 
 func NewReplaceRuleChannelAttachExtractor(alertmanagerService alertmanager.Alertmanager, rulerService Ruler) coretypes.ResourceIDsExtractor {
-	return newRuleChannelDiffExtractor(alertmanagerService, rulerService, replacedRuleChannels, attachedSide)
+	return newRuleChannelDiffExtractor(alertmanagerService, rulerService, parseReplacedRuleChannels, attachedSide)
 }
 
 func NewReplaceRuleChannelDetachExtractor(alertmanagerService alertmanager.Alertmanager, rulerService Ruler) coretypes.ResourceIDsExtractor {
-	return newRuleChannelDiffExtractor(alertmanagerService, rulerService, replacedRuleChannels, detachedSide)
+	return newRuleChannelDiffExtractor(alertmanagerService, rulerService, parseReplacedRuleChannels, detachedSide)
 }
 
 func NewPatchRuleChannelAttachExtractor(alertmanagerService alertmanager.Alertmanager, rulerService Ruler) coretypes.ResourceIDsExtractor {
-	return newRuleChannelDiffExtractor(alertmanagerService, rulerService, patchedRuleChannels, attachedSide)
+	return newRuleChannelDiffExtractor(alertmanagerService, rulerService, parsePatchedRuleChannels, attachedSide)
 }
 
 func NewPatchRuleChannelDetachExtractor(alertmanagerService alertmanager.Alertmanager, rulerService Ruler) coretypes.ResourceIDsExtractor {
-	return newRuleChannelDiffExtractor(alertmanagerService, rulerService, patchedRuleChannels, detachedSide)
+	return newRuleChannelDiffExtractor(alertmanagerService, rulerService, parsePatchedRuleChannels, detachedSide)
 }
 
 func newRuleChannelDiffExtractor(alertmanagerService alertmanager.Alertmanager, rulerService Ruler, incoming incomingChannelsFunc, side diffSide) coretypes.ResourceIDsExtractor {
@@ -150,7 +150,7 @@ func newRuleChannelDiffExtractor(alertmanagerService alertmanager.Alertmanager, 
 			return nil, err
 		}
 
-		stored, err := storedRule(ec, rulerService)
+		stored, err := fetchStoredRule(ec, rulerService)
 		if err != nil {
 			return nil, err
 		}
@@ -169,12 +169,12 @@ func newRuleChannelDiffExtractor(alertmanagerService alertmanager.Alertmanager, 
 	}}
 }
 
-func replacedRuleChannels(_ *ruletypes.GettableRule, body []byte) ([]string, error) {
-	return ruleChannelsFromBody(body)
+func parseReplacedRuleChannels(_ *ruletypes.GettableRule, body []byte) ([]string, error) {
+	return parseRuleChannels(body)
 }
 
-func patchedRuleChannels(stored *ruletypes.GettableRule, body []byte) ([]string, error) {
-	patched, err := patchedRule(stored, body)
+func parsePatchedRuleChannels(stored *ruletypes.GettableRule, body []byte) ([]string, error) {
+	patched, err := applyRulePatch(stored, body)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +182,7 @@ func patchedRuleChannels(stored *ruletypes.GettableRule, body []byte) ([]string,
 	return patched.Channels(), nil
 }
 
-func patchedRule(stored *ruletypes.GettableRule, body []byte) (*ruletypes.PostableRule, error) {
+func applyRulePatch(stored *ruletypes.GettableRule, body []byte) (*ruletypes.PostableRule, error) {
 	encoded, err := json.Marshal(stored.PostableRule)
 	if err != nil {
 		return nil, err
@@ -191,7 +191,7 @@ func patchedRule(stored *ruletypes.GettableRule, body []byte) (*ruletypes.Postab
 	return ruletypes.NewPatchedPostableRule(encoded, body)
 }
 
-func ruleChannelsFromBody(body []byte) ([]string, error) {
+func parseRuleChannels(body []byte) ([]string, error) {
 	rule := new(ruletypes.PostableRule)
 	if err := json.Unmarshal(body, rule); err != nil {
 		return nil, err
@@ -286,7 +286,7 @@ func resolveChannelIDs(ctx context.Context, alertmanagerService alertmanager.Ale
 		return nil, nil
 	}
 
-	idByName, err := channelIDsByName(ctx, alertmanagerService, orgID)
+	idByName, err := mapChannelIDsByName(ctx, alertmanagerService, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -308,7 +308,7 @@ func resolveStoredChannelIDs(ctx context.Context, alertmanagerService alertmanag
 		return nil, nil
 	}
 
-	idByName, err := channelIDsByName(ctx, alertmanagerService, orgID)
+	idByName, err := mapChannelIDsByName(ctx, alertmanagerService, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -323,7 +323,7 @@ func resolveStoredChannelIDs(ctx context.Context, alertmanagerService alertmanag
 	return ids, nil
 }
 
-func channelIDsByName(ctx context.Context, alertmanagerService alertmanager.Alertmanager, orgID valuer.UUID) (map[string]string, error) {
+func mapChannelIDsByName(ctx context.Context, alertmanagerService alertmanager.Alertmanager, orgID valuer.UUID) (map[string]string, error) {
 	channels, err := alertmanagerService.ListChannels(ctx, orgID.StringValue())
 	if err != nil {
 		return nil, err
@@ -394,7 +394,7 @@ func NewOptionalRuleBodyTelemetryResources() coretypes.ResourceExtractor {
 	}
 }
 
-func storedRule(ec coretypes.ExtractorContext, rulerService Ruler) (*ruletypes.GettableRule, error) {
+func fetchStoredRule(ec coretypes.ExtractorContext, rulerService Ruler) (*ruletypes.GettableRule, error) {
 	ruleID, err := valuer.NewUUID(mux.Vars(ec.Request)["id"])
 	if err != nil {
 		return nil, err
@@ -408,7 +408,7 @@ func fetchStoredCompositeQuery(ec coretypes.ExtractorContext, rulerService Ruler
 		return nil, nil
 	}
 
-	stored, err := storedRule(ec, rulerService)
+	stored, err := fetchStoredRule(ec, rulerService)
 	if err != nil {
 		return nil, err
 	}
