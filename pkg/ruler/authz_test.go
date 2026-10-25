@@ -229,7 +229,7 @@ func TestDowntimeRuleIDsExtractor(t *testing.T) {
 	}
 }
 
-func TestFieldResourcesFromCompositeQuery(t *testing.T) {
+func TestMapFieldResources(t *testing.T) {
 	testCases := []struct {
 		name      string
 		body      string
@@ -272,6 +272,16 @@ func TestFieldResourcesFromCompositeQuery(t *testing.T) {
 			wantKinds: []coretypes.Kind{coretypes.KindLogsField, coretypes.KindTracesField, coretypes.KindMetricsField},
 		},
 		{
+			name:      "Builder_AuditLogs_LogsField",
+			body:      `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"logs","source":"audit"}}]}}`,
+			wantKinds: []coretypes.Kind{coretypes.KindLogsField},
+		},
+		{
+			name:      "Builder_MeterMetrics_MetricsField",
+			body:      `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"metrics","source":"meter"}}]}}`,
+			wantKinds: []coretypes.Kind{coretypes.KindMetricsField},
+		},
+		{
 			name:      "TwoBuilderSameSignal_Deduped",
 			body:      `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"metrics"}},{"type":"builder_query","spec":{"signal":"metrics"}}]}}`,
 			wantKinds: []coretypes.Kind{coretypes.KindMetricsField},
@@ -300,7 +310,7 @@ func TestFieldResourcesFromCompositeQuery(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			refs, err := fieldResourcesFromCompositeQuery([]byte(testCase.body))
+			refs, err := mapFieldResources([]byte(testCase.body))
 
 			if testCase.wantErr {
 				assert.Error(t, err)

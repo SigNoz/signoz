@@ -976,6 +976,33 @@ def test_history_labels_need_telemetry_and_field_grants(
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
     token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
+    for path, params in label_scoped:
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(path),
+            params=params,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.FORBIDDEN, f"GET {path}: expected 403, got {response.status_code}: {response.text}"
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"),
+        json={
+            "description": "",
+            "transactionGroups": _ACTOR_BASE_TRANSACTION_GROUPS
+            + [
+                transaction_group("read", "metaresource", "rule", ["*"]),
+                transaction_group("read", "telemetryresource", "logs", ["builder_query/*"]),
+                transaction_group("list", "metaresource", "metrics-field", ["*"]),
+                transaction_group("read", "metaresource", "metrics-field", ["*"]),
+            ],
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
     for path, params in rule_and_telemetry_scoped:
         response = requests.get(
             signoz.self.host_configs["8080"].get(path),
