@@ -29,6 +29,10 @@ jest
 
 let mockWindowOpen: jest.Mock;
 
+const TYPES_WITH_SAMPLE_LINK = Object.values(AlertTypes).filter(
+	(type): type is keyof typeof ALERT_TYPE_URL_MAP => type in ALERT_TYPE_URL_MAP,
+);
+
 window.ResizeObserver =
 	window.ResizeObserver ||
 	jest.fn().mockImplementation(() => ({
@@ -94,7 +98,7 @@ describe('Alert rule documentation redirection', () => {
 			'Click here to see how to create a sample alert.',
 		);
 
-		expect(clickHereLinks).toHaveLength(5);
+		expect(clickHereLinks).toHaveLength(TYPES_WITH_SAMPLE_LINK.length);
 	});
 
 	it('should redirect to correct documentation for each alert type', () => {
@@ -103,11 +107,11 @@ describe('Alert rule documentation redirection', () => {
 		const clickHereLinks = getAllByText(
 			'Click here to see how to create a sample alert.',
 		);
-		const alertTypeCount = Object.keys(AlertTypes).length;
+		const alertTypeCount = TYPES_WITH_SAMPLE_LINK.length;
 
 		expect(clickHereLinks).toHaveLength(alertTypeCount);
 
-		Object.values(AlertTypes).forEach((alertType) => {
+		TYPES_WITH_SAMPLE_LINK.forEach((alertType) => {
 			const linkForAlertType = findLinkForAlertType(clickHereLinks, alertType);
 			const expectedUrl = ALERT_TYPE_URL_MAP[alertType];
 
@@ -119,30 +123,30 @@ describe('Alert rule documentation redirection', () => {
 });
 
 describe('Create alert page redirection', () => {
-	Object.values(AlertTypes)
-		.filter((type) => type !== AlertTypes.ANOMALY_BASED_ALERT)
-		.forEach((alertType) => {
-			it(`should redirect to create alert page for ${alertType} and "Check an example alert" should redirect to the correct documentation`, () => {
-				const { getByRole } = render(
-					<CreateAlertPage />,
-					{},
-					{
-						initialRoute: `${ROUTES.ALERTS_NEW}?alertType=${alertType}&showClassicCreateAlertsPage=true`,
-					},
-				);
+	TYPES_WITH_SAMPLE_LINK.filter(
+		(type) => type !== AlertTypes.ANOMALY_BASED_ALERT,
+	).forEach((alertType) => {
+		it(`should redirect to create alert page for ${alertType} and "Check an example alert" should redirect to the correct documentation`, () => {
+			const { getByRole } = render(
+				<CreateAlertPage />,
+				{},
+				{
+					initialRoute: `${ROUTES.ALERTS_NEW}?alertType=${alertType}&showClassicCreateAlertsPage=true`,
+				},
+			);
 
-				act(() => {
-					fireEvent.click(
-						getByRole('button', {
-							name: /alert setup guide/i,
-						}),
-					);
-				});
-
-				expect(mockWindowOpen).toHaveBeenCalledWith(
-					ALERT_TYPE_URL_MAP[alertType].creation,
-					'_blank',
+			act(() => {
+				fireEvent.click(
+					getByRole('button', {
+						name: /alert setup guide/i,
+					}),
 				);
 			});
+
+			expect(mockWindowOpen).toHaveBeenCalledWith(
+				ALERT_TYPE_URL_MAP[alertType].creation,
+				'_blank',
+			);
 		});
+	});
 });

@@ -79,15 +79,17 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 						data-testid={`alert-type-card-${option.selection}`}
 					>
 						{option.description}{' '}
-						<Typography.Link
-							onClick={(e): void => {
-								e.preventDefault();
-								e.stopPropagation();
-								handleRedirection(option.selection);
-							}}
-						>
-							Click here to see how to create a sample alert.
-						</Typography.Link>{' '}
+						{!option.hideSampleAlertLink && (
+							<Typography.Link
+								onClick={(e): void => {
+									e.preventDefault();
+									e.stopPropagation();
+									handleRedirection(option.selection);
+								}}
+							>
+								Click here to see how to create a sample alert.
+							</Typography.Link>
+						)}{' '}
 					</AlertTypeCard>
 				))}
 			</>

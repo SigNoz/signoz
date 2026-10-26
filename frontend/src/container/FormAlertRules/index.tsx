@@ -80,7 +80,7 @@ export enum AlertDetectionTypes {
 	ANOMALY_DETECTION_ALERT = 'anomaly_rule',
 }
 
-const ALERT_SETUP_GUIDE_URLS: Record<AlertTypes, string> = {
+const ALERT_SETUP_GUIDE_URLS: Partial<Record<AlertTypes, string>> = {
 	[AlertTypes.METRICS_BASED_ALERT]:
 		'https://signoz.io/docs/alerts-management/metrics-based-alerts/?utm_source=product&utm_medium=alert-creation-page',
 	[AlertTypes.LOGS_BASED_ALERT]:

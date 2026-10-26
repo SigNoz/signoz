@@ -1,5 +1,4 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, userEvent } from 'tests/test-utils';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 
 import ConfigActions from '../ConfigActions';
@@ -12,16 +11,35 @@ jest.mock(
 	}),
 );
 
-function makePanel(kind: string): DashboardtypesPanelDTO {
+function makePanel(
+	kind: string,
+	queries: unknown[] = [],
+): DashboardtypesPanelDTO {
 	return {
 		kind: 'Panel',
 		spec: {
 			display: { name: 'CPU' },
 			plugin: { kind, spec: {} },
-			queries: [],
+			queries,
 		},
 	} as unknown as DashboardtypesPanelDTO;
 }
+
+const aiQueries = [
+	{
+		kind: 'time_series',
+		spec: {
+			plugin: {
+				kind: 'signoz/CompositeQuery',
+				spec: {
+					queries: [
+						{ type: 'builder_ai_query', spec: { name: 'A', signal: 'traces' } },
+					],
+				},
+			},
+		},
+	},
+];
 
 describe('ConfigActions', () => {
 	beforeEach(() => jest.clearAllMocks());
@@ -35,6 +53,15 @@ describe('ConfigActions', () => {
 		expect(row).toHaveTextContent('Create alert');
 
 		await user.click(row);
+		expect(mockCreateAlert).toHaveBeenCalledWith(panel, 'panel-1');
+	});
+
+	it('offers "Create alert" for an AI query panel', async () => {
+		const user = userEvent.setup();
+		const panel = makePanel('signoz/TimeSeriesPanel', aiQueries);
+		render(<ConfigActions panel={panel} panelId="panel-1" />);
+
+		await user.click(screen.getByTestId('panel-editor-v2-create-alert'));
 		expect(mockCreateAlert).toHaveBeenCalledWith(panel, 'panel-1');
 	});
 

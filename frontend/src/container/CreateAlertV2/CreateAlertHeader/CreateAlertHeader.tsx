@@ -10,7 +10,9 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { RotateCcw } from '@signozhq/icons';
 import { useAlertRuleOptional } from 'providers/Alert';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { Labels } from 'types/api/alerts/def';
+import { EQueryType } from 'types/common/dashboard';
 
 import { useCreateAlertState } from '../context';
 import LabelsInput from './LabelsInput';
@@ -18,7 +20,8 @@ import LabelsInput from './LabelsInput';
 import './styles.scss';
 
 function CreateAlertHeader(): JSX.Element {
-	const { alertState, setAlertState, isEditMode } = useCreateAlertState();
+	const { alertState, setAlertState, isEditMode, alertType } =
+		useCreateAlertState();
 	const alertRuleContext = useAlertRuleOptional();
 
 	const { currentQuery } = useQueryBuilder();
@@ -26,8 +29,12 @@ function CreateAlertHeader(): JSX.Element {
 	const urlQuery = useUrlQuery();
 
 	const groupByLabels = useMemo(() => {
+		const queryData =
+			currentQuery.queryType === EQueryType.AI_QUERY_BUILDER
+				? currentQuery.builder_ai_query?.queryData
+				: currentQuery.builder.queryData;
 		const labels = new Array<string>();
-		currentQuery.builder.queryData.forEach((query) => {
+		queryData?.forEach((query) => {
 			query.groupBy.forEach((groupBy) => {
 				labels.push(groupBy.key);
 			});
@@ -61,15 +68,17 @@ function CreateAlertHeader(): JSX.Element {
 			{!isEditMode && (
 				<div className="alert-header__tab-bar">
 					<div className="alert-header__tab">New Alert Rule</div>
-					<Button
-						prefix={<RotateCcw size={12} />}
-						onClick={handleSwitchToClassicExperience}
-						variant="solid"
-						color="secondary"
-						size="sm"
-					>
-						Switch to Classic Experience
-					</Button>
+					{alertType !== AlertTypes.AI_TRACES_BASED_ALERT && (
+						<Button
+							prefix={<RotateCcw size={12} />}
+							onClick={handleSwitchToClassicExperience}
+							variant="solid"
+							color="secondary"
+							size="sm"
+						>
+							Switch to Classic Experience
+						</Button>
+					)}
 				</div>
 			)}
 			<div className="alert-header__content">

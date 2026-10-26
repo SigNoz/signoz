@@ -27,6 +27,7 @@ function TopContributorsRenderer({
 			labels: labelsArrayToObject(contributor.labels),
 			relatedLogsLink: contributor.relatedLogsLink ?? '',
 			relatedTracesLink: contributor.relatedTracesLink ?? '',
+			relatedAITracesLink: contributor.relatedAITracesLink ?? '',
 		}));
 	}, [data?.data]);
 

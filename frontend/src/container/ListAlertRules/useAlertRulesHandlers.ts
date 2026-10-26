@@ -2,7 +2,10 @@ import { useCallback } from 'react';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { sanitizeDefaultAlertQuery } from 'container/EditAlertV2/utils';
+import {
+	sanitizeDefaultAlertQuery,
+	toEditAlertQuery,
+} from 'container/EditAlertV2/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useTableRowClick } from 'hooks/useTableRowClick';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -27,8 +30,11 @@ export function useAlertRulesHandlers(
 
 	const getEditUrl = useCallback(
 		(rule: AlertRule): string => {
-			const compositeQuery = sanitizeDefaultAlertQuery(
-				mapQueryDataFromApi(toCompositeMetricQuery(rule.condition.compositeQuery)),
+			const compositeQuery = toEditAlertQuery(
+				sanitizeDefaultAlertQuery(
+					mapQueryDataFromApi(toCompositeMetricQuery(rule.condition.compositeQuery)),
+					rule.alertType,
+				),
 				rule.alertType,
 			);
 			params.set(

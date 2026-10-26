@@ -7,6 +7,7 @@ import { useListRules } from 'api/generated/services/rules';
 import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { toEditAlertQuery } from 'container/EditAlertV2/utils';
 import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { ArrowRight, ArrowUpRight, Plus } from '@signozhq/icons';
@@ -131,8 +132,9 @@ export default function AlertRules({
 			ruleState: record.state,
 		});
 
-		const compositeQuery = mapQueryDataFromApi(
-			toCompositeMetricQuery(record.condition.compositeQuery),
+		const compositeQuery = toEditAlertQuery(
+			mapQueryDataFromApi(toCompositeMetricQuery(record.condition.compositeQuery)),
+			record.alertType,
 		);
 		params.set(
 			QueryParams.compositeQuery,

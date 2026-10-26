@@ -4,7 +4,7 @@ import type {
 	DropdownItemType,
 	DropdownSubmenuChildType,
 } from '@signozhq/ui/dropdown';
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook } from 'tests/test-utils';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
@@ -453,7 +453,7 @@ describe('usePanelActionItems', () => {
 		expect(mockOpenView).toHaveBeenCalledWith('panel-1', baseArgs.panel);
 	});
 
-	it('disables only Create Alerts on an AI query panel', () => {
+	it('keeps Create Alerts enabled on an AI query panel', () => {
 		const aiPanel = {
 			...mockPanel,
 			spec: {
@@ -484,7 +484,7 @@ describe('usePanelActionItems', () => {
 		);
 
 		const disabled = disabledKeys(result.current);
-		expect(disabled).toContain('create-alert');
+		expect(disabled).not.toContain('create-alert');
 		expect(disabled).not.toContain('view-panel');
 		expect(disabled).not.toContain('edit-panel');
 	});

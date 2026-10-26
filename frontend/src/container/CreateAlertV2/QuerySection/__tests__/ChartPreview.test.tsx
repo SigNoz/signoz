@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
-import { render, screen } from '@testing-library/react';
+import { render, screen } from 'tests/test-utils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	INITIAL_ALERT_STATE,
@@ -230,6 +230,29 @@ describe('ChartPreview', () => {
 		).toBeInTheDocument();
 		expect(screen.getByTestId(QUERY_TYPE_TEST_ID)).toHaveTextContent(
 			EQueryType.CLICKHOUSE,
+		);
+	});
+
+	it('renders the chart preview when query type is AI_QUERY_BUILDER', () => {
+		useQueryBuilder.mockReturnValue({
+			...mockUseQueryBuilder,
+			currentQuery: {
+				...mockUseQueryBuilder.currentQuery,
+				queryType: EQueryType.AI_QUERY_BUILDER,
+			},
+			stagedQuery: {
+				queryType: EQueryType.AI_QUERY_BUILDER,
+				unit: REQUESTS_PER_SEC,
+			},
+		});
+
+		renderChartPreview();
+
+		expect(
+			screen.getByTestId(CHART_PREVIEW_COMPONENT_TEST_ID),
+		).toBeInTheDocument();
+		expect(screen.getByTestId(QUERY_TYPE_TEST_ID)).toHaveTextContent(
+			EQueryType.AI_QUERY_BUILDER,
 		);
 	});
 

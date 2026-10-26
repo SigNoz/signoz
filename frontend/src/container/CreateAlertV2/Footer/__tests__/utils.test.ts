@@ -1,5 +1,9 @@
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
-import { initialQueriesMap } from 'constants/queryBuilder';
+import { RuletypesAlertTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	initialQueriesMap,
+	initialQueryAIWithType,
+} from 'constants/queryBuilder';
 import {
 	INITIAL_ADVANCED_OPTIONS_STATE,
 	INITIAL_ALERT_STATE,
@@ -14,6 +18,7 @@ import {
 } from 'container/CreateAlertV2/context/types';
 import { createMockAlertContextState } from 'container/CreateAlertV2/EvaluationSettings/__tests__/testUtils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
+import { toPostableRuleDTO } from 'types/api/alerts/convert';
 import { EQueryType } from 'types/common/dashboard';
 
 import { BuildCreateAlertRulePayloadArgs } from '../types';
@@ -543,6 +548,42 @@ describe('Footer utils', () => {
 			expect(props).toBeDefined();
 			expect(props.condition.compositeQuery.queryType).toBe('promql');
 			expect(props.ruleType).toBe('promql_rule');
+		});
+
+		describe('for an AI traces alert', () => {
+			const aiArgs: BuildCreateAlertRulePayloadArgs = {
+				...INITIAL_BUILD_CREATE_ALERT_RULE_PAYLOAD_ARGS,
+				alertType: AlertTypes.AI_TRACES_BASED_ALERT,
+				query: {
+					...initialQueriesMap.traces,
+					queryType: EQueryType.AI_QUERY_BUILDER,
+					builder: { ...initialQueriesMap.traces.builder, queryData: [] },
+					builder_ai_query: initialQueryAIWithType.builder,
+				},
+			};
+
+			it('sends the AI slot as builder_ai_query envelopes under the builder query type', () => {
+				const props = buildCreateThresholdAlertRulePayload(aiArgs);
+				const { compositeQuery } = props.condition;
+
+				expect(compositeQuery.queryType).toBe(EQueryType.QUERY_BUILDER);
+				expect(compositeQuery.queries).toHaveLength(1);
+				expect(compositeQuery.queries?.[0]).toMatchObject({
+					type: 'builder_ai_query',
+					spec: { name: 'A', signal: 'traces' },
+				});
+				expect(props.alertType).toBe(AlertTypes.AI_TRACES_BASED_ALERT);
+				expect(props.ruleType).toBe('threshold_rule');
+				expect(props.condition.selectedQueryName).toBe(
+					aiArgs.thresholdState.selectedQuery,
+				);
+			});
+
+			it('keeps the AI alert type in the posted rule', () => {
+				const dto = toPostableRuleDTO(buildCreateThresholdAlertRulePayload(aiArgs));
+
+				expect(dto.alertType).toBe(RuletypesAlertTypeDTO.AI_TRACES_BASED_ALERT);
+			});
 		});
 
 		// Backward compatibility: a rule loaded with a legacy op/matchType

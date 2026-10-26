@@ -17,6 +17,7 @@ import { AlertListTabs } from 'pages/AlertList/types';
 import { GalleryVerticalEnd, Pyramid } from '@signozhq/icons';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef } from 'types/api/alerts/def';
+import { EQueryType } from 'types/common/dashboard';
 
 import { ALERT_TYPE_VS_SOURCE_MAPPING } from './config';
 import { ALERTS_VALUES_MAP, ALERT_TYPE_BREADCRUMB_TITLE } from './defaults';
@@ -50,6 +51,9 @@ function CreateRules(): JSX.Element {
 			return AlertTypes.ANOMALY_BASED_ALERT;
 		}
 		if (!alertTypeFromURL) {
+			if (compositeQuery?.queryType === EQueryType.AI_QUERY_BUILDER) {
+				return AlertTypes.AI_TRACES_BASED_ALERT;
+			}
 			const dataSource = compositeQuery?.builder.queryData?.[0]?.dataSource;
 			if (dataSource) {
 				return ALERT_TYPE_VS_SOURCE_MAPPING[dataSource];
@@ -57,7 +61,12 @@ function CreateRules(): JSX.Element {
 			return AlertTypes.METRICS_BASED_ALERT;
 		}
 		return alertTypeFromURL as AlertTypes;
-	}, [alertTypeFromURL, ruleTypeFromURL, compositeQuery?.builder.queryData]);
+	}, [
+		alertTypeFromURL,
+		ruleTypeFromURL,
+		compositeQuery?.queryType,
+		compositeQuery?.builder.queryData,
+	]);
 
 	const initialAlertValue: AlertDef = useMemo(
 		() => ({
@@ -100,10 +109,12 @@ function CreateRules(): JSX.Element {
 			return <SelectAlertType onSelect={handleSelectType} />;
 		}
 
-		if (
-			showClassicCreateAlertsPageFlag ||
-			alertType === AlertTypes.ANOMALY_BASED_ALERT
-		) {
+		const isClassicPage =
+			(showClassicCreateAlertsPageFlag &&
+				alertType !== AlertTypes.AI_TRACES_BASED_ALERT) ||
+			alertType === AlertTypes.ANOMALY_BASED_ALERT;
+
+		if (isClassicPage) {
 			return (
 				<FormAlertRules
 					alertType={alertType}

@@ -1,6 +1,11 @@
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
-import { initialQueriesMap } from 'constants/queryBuilder';
 import {
+	initialQueriesMap,
+	initialQueryAIWithType,
+} from 'constants/queryBuilder';
+import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
+import {
+	aiTraceAlertDefaults,
 	alertDefaults,
 	anamolyAlertDefaults,
 	exceptionAlertDefaults,
@@ -9,6 +14,8 @@ import {
 } from 'container/CreateAlertRule/defaults';
 import dayjs from 'dayjs';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
+import { EQueryType } from 'types/common/dashboard';
+import { DataSource } from 'types/common/queryBuilder';
 
 import {
 	INITIAL_ADVANCED_OPTIONS_STATE,
@@ -132,6 +139,16 @@ describe('CreateAlertV2 Context Utils', () => {
 			expect(result).toBe(AlertTypes.TRACES_BASED_ALERT);
 		});
 
+		it('should return AI_TRACES_BASED_ALERT for an AI query', () => {
+			const result = getInitialAlertType({
+				...initialQueriesMap.traces,
+				queryType: EQueryType.AI_QUERY_BUILDER,
+				builder: { ...initialQueriesMap.traces.builder, queryData: [] },
+				builder_ai_query: initialQueryAIWithType.builder,
+			});
+			expect(result).toBe(AlertTypes.AI_TRACES_BASED_ALERT);
+		});
+
 		it('should return METRICS_BASED_ALERT for unknown data source', () => {
 			const queryWithUnknownDataSource = {
 				...initialQueriesMap.metrics,
@@ -171,9 +188,35 @@ describe('CreateAlertV2 Context Utils', () => {
 			expect(result).toBe(alertDefaults);
 		});
 
+		it('should return aiTraceAlertDefaults for AI_TRACES_BASED_ALERT', () => {
+			const result = buildInitialAlertDef(AlertTypes.AI_TRACES_BASED_ALERT);
+			expect(result).toBe(aiTraceAlertDefaults);
+		});
+
 		it('should return alertDefaults for unknown alert type', () => {
 			const result = buildInitialAlertDef('UNKNOWN' as AlertTypes);
 			expect(result).toBe(alertDefaults);
+		});
+	});
+
+	describe('aiTraceAlertDefaults', () => {
+		const { compositeQuery } = aiTraceAlertDefaults.condition;
+
+		it('should be an AI traces alert', () => {
+			expect(aiTraceAlertDefaults.alertType).toBe(
+				AlertTypes.AI_TRACES_BASED_ALERT,
+			);
+			expect(ALERTS_DATA_SOURCE_MAP[AlertTypes.AI_TRACES_BASED_ALERT]).toBe(
+				DataSource.TRACES,
+			);
+		});
+
+		it('should start on the AI query type with an AI traces query', () => {
+			expect(compositeQuery.queryType).toBe(EQueryType.AI_QUERY_BUILDER);
+			expect(compositeQuery.builderQueries?.A).toMatchObject({
+				dataSource: DataSource.TRACES,
+				builderQueryType: 'builder_ai_query',
+			});
 		});
 	});
 
