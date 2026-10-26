@@ -1,4 +1,3 @@
-import { fireEvent, screen } from '@testing-library/react';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import {
@@ -10,7 +9,7 @@ import * as useCompositeQueryParamHooks from 'hooks/queryBuilder/useGetComposite
 import * as navigateHooks from 'hooks/useSafeNavigate';
 import * as useUrlQueryHooks from 'hooks/useUrlQuery';
 import * as appHooks from 'providers/App/App';
-import { render } from 'tests/test-utils';
+import { fireEvent, render, screen, userEvent } from 'tests/test-utils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
@@ -290,9 +289,10 @@ describe('CreateAlertRule', () => {
 			expect(mockSafeNavigate).toHaveBeenCalled();
 		});
 
-		it('should navigate with threshold alert params for AI traces alert', () => {
+		it('should navigate with threshold alert params for AI traces alert', async () => {
+			const user = userEvent.setup();
 			render(<CreateAlertRule />);
-			fireEvent.click(screen.getByText('ai_traces_based_alert'));
+			await user.click(screen.getByText('ai_traces_based_alert'));
 
 			expect(mockSetUrlQuery).toHaveBeenCalledWith(
 				QueryParams.ruleType,

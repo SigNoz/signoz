@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	aiTraceAlertDefaults,
@@ -7,6 +8,7 @@ import {
 import { render, screen } from 'tests/test-utils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import type { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
+import type { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { AlertDef } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
@@ -25,9 +27,13 @@ jest.mock('components/QueryBuilderV2/QueryBuilderV2', () => ({
 }));
 
 jest.mock('hooks/hotkeys/useKeyboardHotkeys', () => ({
-	useKeyboardHotkeys: (): unknown => ({
-		registerShortcut: jest.fn(),
-		deregisterShortcut: jest.fn(),
+	useKeyboardHotkeys: (): ReturnType<typeof useKeyboardHotkeys> => ({
+		registerShortcut: jest.fn() as jest.MockedFunction<
+			ReturnType<typeof useKeyboardHotkeys>['registerShortcut']
+		>,
+		deregisterShortcut: jest.fn() as jest.MockedFunction<
+			ReturnType<typeof useKeyboardHotkeys>['deregisterShortcut']
+		>,
 	}),
 }));
 
@@ -41,6 +47,8 @@ jest.mock('../PromqlSection', () => ({
 	default: (): JSX.Element => <div data-testid="promql-section" />,
 }));
 
+type QuerySectionProps = ComponentProps<typeof QuerySection>;
+
 const renderQuerySection = (
 	alertType: AlertTypes,
 	queryCategory: EQueryType,
@@ -49,11 +57,15 @@ const renderQuerySection = (
 	render(
 		<QuerySection
 			queryCategory={queryCategory}
-			setQueryCategory={jest.fn()}
+			setQueryCategory={
+				jest.fn() as jest.MockedFunction<QuerySectionProps['setQueryCategory']>
+			}
 			alertType={alertType}
-			runQuery={jest.fn()}
+			runQuery={jest.fn() as jest.MockedFunction<QuerySectionProps['runQuery']>}
 			isLoadingQueries={false}
-			handleCancelQuery={jest.fn()}
+			handleCancelQuery={
+				jest.fn() as jest.MockedFunction<QuerySectionProps['handleCancelQuery']>
+			}
 			alertDef={alertDef}
 			panelType={PANEL_TYPES.TIME_SERIES}
 			ruleId=""

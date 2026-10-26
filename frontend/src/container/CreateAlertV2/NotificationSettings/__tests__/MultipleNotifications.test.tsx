@@ -1,5 +1,4 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, userEvent } from 'tests/test-utils';
 import { ALL_SELECTED_VALUE } from 'container/CreateAlertV2/constants';
 import * as createAlertContext from 'container/CreateAlertV2/context';
 import {

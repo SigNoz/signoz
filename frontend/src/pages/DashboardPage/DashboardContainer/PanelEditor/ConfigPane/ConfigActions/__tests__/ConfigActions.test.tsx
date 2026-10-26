@@ -1,5 +1,4 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, userEvent } from 'tests/test-utils';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 
 import ConfigActions from '../ConfigActions';

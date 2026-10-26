@@ -1,10 +1,10 @@
-import { fireEvent, render, screen } from '@testing-library/react';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { defaultPostableAlertRuleV2 } from 'container/CreateAlertV2/constants';
 import { getCreateAlertLocalStateFromAlertDef } from 'container/CreateAlertV2/utils';
 import * as useQueryBuilderHook from 'hooks/queryBuilder/useQueryBuilder';
 import * as useSafeNavigateHook from 'hooks/useSafeNavigate';
+import { fireEvent, render, screen, userEvent } from 'tests/test-utils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { EQueryType } from 'types/common/dashboard';
 
@@ -155,7 +155,8 @@ describe('CreateAlertHeader', () => {
 			screen.queryByText('Switch to Classic Experience'),
 		).not.toBeInTheDocument();
 	});
-	it('should reject a label key used as a group by in an AI query', () => {
+	it('should reject a label key used as a group by in an AI query', async () => {
+		const user = userEvent.setup();
 		const mockSetAlertState = jest.fn() as jest.MockedFunction<
 			ICreateAlertContextProps['setAlertState']
 		>;
@@ -180,10 +181,11 @@ describe('CreateAlertHeader', () => {
 			} as unknown as ReturnType<typeof useQueryBuilderHook.useQueryBuilder>);
 
 		render(<CreateAlertHeader />);
-		fireEvent.click(screen.getByText('+ Add labels'));
-		const input = screen.getByPlaceholderText('Enter key');
-		fireEvent.change(input, { target: { value: 'service.name:foo' } });
-		fireEvent.keyDown(input, { key: 'Enter' });
+		await user.click(screen.getByText('+ Add labels'));
+		await user.type(
+			screen.getByPlaceholderText('Enter key'),
+			'service.name:foo{Enter}',
+		);
 
 		expect(mockSetAlertState).not.toHaveBeenCalledWith(
 			expect.objectContaining({ type: 'SET_ALERT_LABELS' }),

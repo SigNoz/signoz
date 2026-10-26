@@ -4,7 +4,7 @@ import type {
 	DropdownItemType,
 	DropdownSubmenuChildType,
 } from '@signozhq/ui/dropdown';
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook } from 'tests/test-utils';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
