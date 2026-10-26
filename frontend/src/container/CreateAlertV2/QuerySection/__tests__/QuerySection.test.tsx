@@ -212,6 +212,18 @@ describe('QuerySection', () => {
 		expect(screen.getByTestId('is-anomaly-detection')).toHaveTextContent('true');
 	});
 
+	it('stays on the anomaly alert when its active Metrics tab is clicked', async () => {
+		const user = userEvent.setup();
+		renderQuerySection(`?${QueryParams.ruleType}=anomaly_rule`);
+
+		await user.click(screen.getByText(METRICS_TEXT));
+
+		expect(
+			mockUseQueryBuilder.redirectWithQueryBuilderData,
+		).not.toHaveBeenCalled();
+		expect(screen.getByTestId('is-anomaly-detection')).toHaveTextContent('true');
+	});
+
 	it('handles alert type change when clicking on different tabs', async () => {
 		const user = userEvent.setup();
 		renderQuerySection();

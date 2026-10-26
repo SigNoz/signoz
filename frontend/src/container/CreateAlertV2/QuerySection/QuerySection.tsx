@@ -154,6 +154,9 @@ function QuerySection(): JSX.Element {
 								'active-tab': activeTab === tab.value,
 							})}
 							onClick={(): void => {
+								if (isAnomalyDetection && tab.value === activeTab) {
+									return;
+								}
 								setAlertType(tab.value as AlertTypes);
 							}}
 						>
