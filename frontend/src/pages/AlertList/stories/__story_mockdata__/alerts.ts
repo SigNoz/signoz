@@ -7,22 +7,26 @@ import {
 	MetrictypesSpaceAggregationDTO,
 	MetrictypesTemporalityDTO,
 	MetrictypesTimeAggregationDTO,
+	Querybuildertypesv5FunctionNameDTO,
 	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricsSignal,
 	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
 	Querybuildertypesv5ReduceToDTO,
 	RuletypesAlertStateDTO,
 	RuletypesAlertTypeDTO,
 	RuletypesCompareOperatorDTO,
+	RuletypesEvaluationRollingDTOKind,
 	RuletypesMatchTypeDTO,
 	RuletypesPanelTypeDTO,
 	RuletypesQueryTypeDTO,
 	RuletypesRuleTypeDTO,
+	RuletypesSeasonalityDTO,
 	RuletypesThresholdBasicDTOKind,
 	type AlertmanagertypesDeprecatedGettableAlertDTO,
 	type GetAlerts200,
 	type GetRuleByID200,
 	type ListRules200,
 	type RenderErrorResponseDTO,
+	type Querybuildertypesv5FunctionDTO,
 	type RuletypesAlertCompositeQueryDTO,
 	type RuletypesRuleConditionDTO,
 	type RuletypesRuleDTO,
@@ -68,6 +72,10 @@ export const ALERT_SCHEMAS = ['v2', 'classic'] as const;
 
 export type AlertSchema = (typeof ALERT_SCHEMAS)[number];
 
+export const RULE_KINDS = ['threshold', 'anomaly'] as const;
+
+export type RuleKind = (typeof RULE_KINDS)[number];
+
 export const CHANNEL_TYPES = [
 	'slack',
 	'webhook',
@@ -87,7 +95,10 @@ export type ChannelType = (typeof CHANNEL_TYPES)[number];
  * One query envelope is enough for the alert form to mount its query builder
  * over the rule, and it is the query the preview chart is drawn for.
  */
-const compositeQuery = (seed: RuleSeed): RuletypesAlertCompositeQueryDTO => ({
+const compositeQuery = (
+	seed: RuleSeed,
+	functions?: Querybuildertypesv5FunctionDTO[],
+): RuletypesAlertCompositeQueryDTO => ({
 	queryType: RuletypesQueryTypeDTO.builder,
 	panelType: RuletypesPanelTypeDTO.graph,
 	unit: seed.unit,
@@ -111,10 +122,51 @@ const compositeQuery = (seed: RuleSeed): RuletypesAlertCompositeQueryDTO => ({
 				groupBy: [],
 				order: [],
 				stepInterval: 60,
+				functions,
 			},
 		},
 	],
 });
+
+/**
+ * An anomaly rule fires on the z-score of each point against the seasonal
+ * forecast, so its targets are deviations: the classic form stores `below 3`, the
+ * current schema the signed `-3`. The `anomaly` function on the query is what
+ * makes the preview draw the forecast band.
+ */
+const anomalyCondition = (seed: RuleSeed): RuletypesRuleConditionDTO => {
+	return {
+		...condition(seed),
+		compositeQuery: compositeQuery(seed, [
+			{
+				name: Querybuildertypesv5FunctionNameDTO.anomaly,
+				args: [
+					{ name: 'z_score_threshold', value: 3 },
+					{ name: 'seasonality', value: 'daily' },
+				],
+			},
+		]),
+		op: RuletypesCompareOperatorDTO.below,
+		matchType: RuletypesMatchTypeDTO.all_the_times,
+		target: 3,
+		targetUnit: '',
+		algorithm: 'standard',
+		seasonality: RuletypesSeasonalityDTO.daily,
+		thresholds: {
+			kind: RuletypesThresholdBasicDTOKind.basic,
+			spec: [
+				{
+					name: 'critical',
+					matchType: RuletypesMatchTypeDTO.all_the_times,
+					op: RuletypesCompareOperatorDTO.below,
+					target: -3,
+					targetUnit: '',
+					channels: ['ops-slack'],
+				},
+			],
+		},
+	};
+};
 
 const condition = (seed: RuleSeed): RuletypesRuleConditionDTO => ({
 	compositeQuery: compositeQuery(seed),
@@ -293,6 +345,7 @@ export interface RuleShape {
 	severity: SeverityChoice;
 	state: RuleStateChoice;
 	schema?: AlertSchema;
+	kind?: RuleKind;
 }
 
 const buildRule = (index: number, shape: RuleShape): RuletypesRuleDTO => {
@@ -302,23 +355,34 @@ const buildRule = (index: number, shape: RuleShape): RuletypesRuleDTO => {
 		shape.state === 'mixed'
 			? seed.state
 			: (shape.state as RuletypesAlertStateDTO);
+	const isAnomaly = shape.kind === 'anomaly';
 
 	return {
 		id: `rule-${index + 1}`,
 		alert: ruleName(index),
-		alertType: seed.alertType,
-		ruleType: RuletypesRuleTypeDTO.threshold_rule,
+		alertType: isAnomaly
+			? RuletypesAlertTypeDTO.METRIC_BASED_ALERT
+			: seed.alertType,
+		ruleType: isAnomaly
+			? RuletypesRuleTypeDTO.anomaly_rule
+			: RuletypesRuleTypeDTO.threshold_rule,
 		state,
 		disabled: state === RuletypesAlertStateDTO.disabled,
-		condition: condition(seed),
+		condition: isAnomaly ? anomalyCondition(seed) : condition(seed),
 		labels: { severity, ...seed.labels },
 		annotations: {
 			summary: `${seed.alert} crossed its threshold of ${seed.target}`,
 			description:
 				'The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}',
 		},
-		evalWindow: '5m0s',
+		evalWindow: isAnomaly ? '1h0m0s' : '5m0s',
 		frequency: '1m0s',
+		...(isAnomaly && {
+			evaluation: {
+				kind: RuletypesEvaluationRollingDTOKind.rolling,
+				spec: { evalWindow: '1h0m0s', frequency: '1m0s' },
+			},
+		}),
 		createdAt: ago((index + 3) * DAY),
 		updatedAt: ago((index + 1) * HOUR),
 		createdBy: 'ada@signoz.io',
