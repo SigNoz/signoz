@@ -1,7 +1,7 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
 import { FeatureKeys } from 'constants/features';
 import { getAppContextMockState } from 'container/RoutingPolicies/__tests__/testUtils';
 import * as appHooks from 'providers/App/App';
+import { fireEvent, render, screen, userEvent, within } from 'tests/test-utils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import SelectAlertType from '..';
@@ -111,9 +111,10 @@ describe('SelectAlertType', () => {
 		);
 	});
 
-	it('should call onSelect with AI traces based alert type', () => {
+	it('should call onSelect with AI traces based alert type', async () => {
+		const user = userEvent.setup();
 		render(<SelectAlertType onSelect={mockOnSelect} />);
-		fireEvent.click(screen.getByText('ai_traces_based_alert'));
+		await user.click(screen.getByText('ai_traces_based_alert'));
 
 		expect(mockOnSelect).toHaveBeenCalledWith(
 			AlertTypes.AI_TRACES_BASED_ALERT,
@@ -121,9 +122,12 @@ describe('SelectAlertType', () => {
 		);
 	});
 
-	it('should ask for a new tab when the AI traces card is modifier-clicked', () => {
+	it('should ask for a new tab when the AI traces card is modifier-clicked', async () => {
+		const user = userEvent.setup();
 		render(<SelectAlertType onSelect={mockOnSelect} />);
-		fireEvent.click(screen.getByText('ai_traces_based_alert'), { metaKey: true });
+		await user.keyboard('{Meta>}');
+		await user.click(screen.getByText('ai_traces_based_alert'));
+		await user.keyboard('{/Meta}');
 
 		expect(mockOnSelect).toHaveBeenCalledWith(
 			AlertTypes.AI_TRACES_BASED_ALERT,

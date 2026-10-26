@@ -11,6 +11,7 @@ import { EQueryType } from 'types/common/dashboard';
 import * as rulesHook from '../../../../api/generated/services/rules';
 import * as createAlertContext from '../../context';
 import { CreateAlertProvider } from '../../context';
+import type { ICreateAlertContextProps } from '../../context/types';
 import { createMockAlertContextState } from '../../EvaluationSettings/__tests__/testUtils';
 import CreateAlertHeader from '../CreateAlertHeader';
 
@@ -155,7 +156,9 @@ describe('CreateAlertHeader', () => {
 		).not.toBeInTheDocument();
 	});
 	it('should reject a label key used as a group by in an AI query', () => {
-		const mockSetAlertState = jest.fn();
+		const mockSetAlertState = jest.fn() as jest.MockedFunction<
+			ICreateAlertContextProps['setAlertState']
+		>;
 		const alertStateSpy = jest
 			.spyOn(createAlertContext, 'useCreateAlertState')
 			.mockReturnValue(

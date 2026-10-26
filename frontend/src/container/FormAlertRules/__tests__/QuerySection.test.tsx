@@ -6,16 +6,19 @@ import {
 } from 'container/CreateAlertRule/defaults';
 import { render, screen } from 'tests/test-utils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
+import type { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { AlertDef } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
 import QuerySection from '../QuerySection';
 
-const mockQueryBuilderV2 = jest.fn();
+const mockQueryBuilderV2 = jest.fn() as jest.MockedFunction<
+	(props: QueryBuilderProps) => void
+>;
 
 jest.mock('components/QueryBuilderV2/QueryBuilderV2', () => ({
-	QueryBuilderV2: (props: unknown): JSX.Element => {
+	QueryBuilderV2: (props: QueryBuilderProps): JSX.Element => {
 		mockQueryBuilderV2(props);
 		return <div data-testid="query-builder-v2" />;
 	},
