@@ -128,7 +128,7 @@ test('TC-09 RouteTab switches the url', async ({ routing }) => {
 });
 ```
 
-- `driver(name, build)` adds a test-scoped fixture built on `authedPage`.
+- `driver(name, build, dispose?)` adds a test-scoped fixture built on `authedPage`. `dispose` runs after the test on the same page, so a driver can delete what it seeded.
 - `seeded(name, open, close)` adds a worker-scoped seed. `open` and `close` run on a throwaway admin page.
 - A driver reuses helpers by calling them, never by reaching for another fixture.
 - `drivers/` is AI-owned: coding agents generate and maintain it with the specs, and `.gitattributes` collapses it in diffs.
