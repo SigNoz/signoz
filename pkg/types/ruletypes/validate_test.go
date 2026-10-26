@@ -956,3 +956,496 @@ func TestValidate_V2Alpha1(t *testing.T) {
 		})
 	}
 }
+
+// ensure that truly malformed input doesn't panic.
+func TestValidate_GarbagePayloads(t *testing.T) {
+	payloads := []struct {
+		name string
+		json string
+	}{
+		{"empty object", `{}`},
+		{"empty string", `""`},
+		{"null", `null`},
+		{"number", `42`},
+		{"array", `[]`},
+		{"just alert name", `{"alert": "x"}`},
+		{"condition is a string", `{"alert": "x", "version": "v5", "condition": "not_an_object"}`},
+		{"condition is a number", `{"alert": "x", "version": "v5", "condition": 42}`},
+		{"condition is an array", `{"alert": "x", "version": "v5", "condition": []}`},
+		{"queries is a string", `{"alert": "x", "version": "v5", "condition": {"compositeQuery": {"queries": "bad"}}}`},
+		{"queries is a number", `{"alert": "x", "version": "v5", "condition": {"compositeQuery": {"queries": 42}}}`},
+		{"thresholds is a string", `{"alert": "x", "version": "v5", "schemaVersion": "v2alpha1", "condition": {"compositeQuery": {"queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}}]}, "thresholds": "bad"}}`},
+		{"evaluation is a string", `{"alert": "x", "version": "v5", "schemaVersion": "v2alpha1", "condition": {"compositeQuery": {"queries": []}}, "evaluation": "bad"}`},
+		{"notificationSettings is a number", `{"alert": "x", "version": "v5", "schemaVersion": "v2alpha1", "condition": {"compositeQuery": {"queries": []}}, "notificationSettings": 42}`},
+		{"deeply nested garbage", `{"alert": "x", "version": "v5", "condition": {"compositeQuery": {"queryType": "builder", "queries": [{"type": "unknown_type", "spec": {}}]}}}`},
+		{"version is a number", `{"alert": "x", "version": 5, "condition": {}}`},
+		{"labels is an array", `{"alert": "x", "version": "v5", "labels": [], "condition": {}}`},
+		{"op is a number", `{"alert": "x", "version": "v5", "condition": {"compositeQuery": {"queries": []}, "op": 1}}`},
+	}
+
+	for _, tt := range payloads {
+		t.Run(tt.name, func(t *testing.T) {
+			// Must not panic, errors are expected
+			var rule PostableRule
+			err := json.Unmarshal([]byte(tt.json), &rule)
+			if err == nil {
+				// If unmarshal succeeded, Validate should also not panic
+				_ = rule.Validate()
+			}
+		})
+	}
+}
+
+// TestValidate_ReadPathVsWritePath verifies that UnmarshalJSON (read path)
+// is lenient while Validate() (write path) is strict.
+func TestValidate_ReadPathVsWritePath(t *testing.T) {
+	tests := []struct {
+		name              string
+		json              string
+		unmarshalOK       bool // should UnmarshalJSON succeed?
+		validateShouldErr bool // should Validate() fail?
+	}{
+		{
+			name:              "missing alert name : unmarshal ok, Validate fails",
+			json:              removeField(validV2Alpha1Builder(), "alert"),
+			unmarshalOK:       true,
+			validateShouldErr: true,
+		},
+		{
+			name:              "invalid alertType : unmarshal ok, Validate fails",
+			json:              patchJSON(validV2Alpha1Builder(), `{"alertType": "GARBAGE"}`),
+			unmarshalOK:       true,
+			validateShouldErr: true,
+		},
+		{
+			name:              "unsupported schemaVersion : unmarshal ok, Validate fails",
+			json:              patchJSON(validV2Alpha1Builder(), `{"schemaVersion": "v99"}`),
+			unmarshalOK:       true,
+			validateShouldErr: true,
+		},
+		{
+			name:              "valid rule : both ok",
+			json:              validV2Alpha1Builder(),
+			unmarshalOK:       true,
+			validateShouldErr: false,
+		},
+		{
+			name:              "missing condition : unmarshal fails (pre-existing check)",
+			json:              removeField(validV2Alpha1Builder(), "condition"),
+			unmarshalOK:       false,
+			validateShouldErr: false, // not reached
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var rule PostableRule
+			unmarshalErr := json.Unmarshal([]byte(tt.json), &rule)
+
+			if tt.unmarshalOK && unmarshalErr != nil {
+				t.Fatalf("expected unmarshal to succeed, got: %v", unmarshalErr)
+			}
+			if !tt.unmarshalOK && unmarshalErr == nil {
+				t.Fatalf("expected unmarshal to fail, but it succeeded")
+			}
+			if unmarshalErr != nil {
+				return
+			}
+
+			validateErr := rule.Validate()
+			if tt.validateShouldErr && validateErr == nil {
+				t.Errorf("expected Validate() to fail, but it succeeded")
+			}
+			if !tt.validateShouldErr && validateErr != nil {
+				t.Errorf("expected Validate() to succeed, got: %v", validateErr)
+			}
+		})
+	}
+}
+
+// TestValidate_ProcessRuleDefaults verifies that processRuleDefaults applies
+// correct defaults during UnmarshalJSON.
+func TestValidate_ProcessRuleDefaults(t *testing.T) {
+	t.Run("auto-detects ruleType from builder queryType", func(t *testing.T) {
+		var rule PostableRule
+		_ = json.Unmarshal([]byte(removeField(validV2Alpha1Builder(), "ruleType")), &rule)
+		if rule.RuleType != RuleTypeThreshold {
+			t.Errorf("expected threshold_rule, got %v", rule.RuleType)
+		}
+	})
+
+	t.Run("auto-detects ruleType from promql queryType", func(t *testing.T) {
+		var rule PostableRule
+		_ = json.Unmarshal([]byte(removeField(validV2Alpha1Promql(), "ruleType")), &rule)
+		if rule.RuleType != RuleTypeProm {
+			t.Errorf("expected promql_rule, got %v", rule.RuleType)
+		}
+	})
+}
+
+// TestValidate_MarshalRoundTrip verifies marshal to unmarshal produces equivalent rules.
+func TestValidate_MarshalRoundTrip(t *testing.T) {
+	t.Run("v2alpha1 round-trip preserves all fields", func(t *testing.T) {
+		var original PostableRule
+		_ = json.Unmarshal([]byte(validV2Alpha1Builder()), &original)
+
+		marshaled, err := json.Marshal(&original)
+		if err != nil {
+			t.Fatalf("marshal error: %v", err)
+		}
+
+		var raw map[string]json.RawMessage
+		_ = json.Unmarshal(marshaled, &raw)
+		if _, ok := raw["schemaVersion"]; !ok {
+			t.Error("expected schemaVersion to be preserved in v2alpha1 marshal output")
+		}
+		if _, ok := raw["evaluation"]; !ok {
+			t.Error("expected evaluation to be preserved in v2alpha1 marshal output")
+		}
+		if _, ok := raw["notificationSettings"]; !ok {
+			t.Error("expected notificationSettings to be preserved in v2alpha1 marshal output")
+		}
+
+		var roundTripped PostableRule
+		if err := json.Unmarshal(marshaled, &roundTripped); err != nil {
+			t.Fatalf("unmarshal error: %v", err)
+		}
+		if roundTripped.SchemaVersion != SchemaVersionV2Alpha1 {
+			t.Errorf("expected schemaVersion %q, got %q", SchemaVersionV2Alpha1, roundTripped.SchemaVersion)
+		}
+	})
+}
+
+// TestValidate_MultipleErrors verifies that all errors are collected, not just the first.
+func TestValidate_MultipleErrors(t *testing.T) {
+	t.Run("v2alpha1 multiple suggestion errors returned together", func(t *testing.T) {
+		j := `{
+			"alert": "Test", "version": "v5", "schemaVersion": "v2alpha1", "ruleType": "threshold_rule",
+			"condition": {
+				"compositeQuery": {"queryType": "builder", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}}]}
+			}
+		}`
+		_, validateErr := unmarshalAndValidate(j)
+		if validateErr == nil {
+			t.Fatal("expected Validate() error")
+		}
+		// Should contain errors for thresholds, evaluation, notificationSettings
+		for _, substr := range []string{"evaluation", "notificationSettings"} {
+			if !errorContains(validateErr, substr) {
+				t.Errorf("expected error to mention %q, got: %v", substr, validateErr)
+			}
+		}
+	})
+}
+
+// TestValidate_AllSymbolAndShortOperators tests symbol and short operator variants.
+func TestValidate_AllSymbolAndShortOperators(t *testing.T) {
+	mkRule := func(op string) string {
+		return patchJSON(validV2Alpha1Builder(), `{"condition":{"compositeQuery":{"queryType":"builder","queries":[{"type":"builder_query","spec":{"name":"A","signal":"metrics","aggregations":[{"metricName":"cpu","spaceAggregation":"p50"}],"stepInterval":"5m"}}]},"thresholds":{"kind":"basic","spec":[{"name":"critical","target":10.0,"matchType":"1","op":"`+op+`"}]}}}`)
+	}
+
+	validOps := []string{
+		// symbols
+		">", "<", "=", "!=", ">=", "<=",
+		// short literals
+		"eq", "not_eq", "above_or_eq", "below_or_eq",
+	}
+	for _, op := range validOps {
+		t.Run("op "+op, func(t *testing.T) {
+			_, validateErr := unmarshalAndValidate(mkRule(op))
+			if validateErr != nil {
+				t.Errorf("expected op %q to be valid, got: %v", op, validateErr)
+			}
+		})
+	}
+
+	invalidOps := []string{">>", "<>", "===", "~", "contains", "0", "8", "99"}
+	for _, op := range invalidOps {
+		t.Run("invalid op "+op, func(t *testing.T) {
+			_, validateErr := unmarshalAndValidate(mkRule(op))
+			if validateErr == nil {
+				t.Errorf("expected op %q to be invalid", op)
+			}
+		})
+	}
+}
+
+// TestValidate_V2Alpha1_CumulativeEvaluation tests cumulative evaluation schedules.
+func TestValidate_V2Alpha1_CumulativeEvaluation(t *testing.T) {
+	mkRule := func(evalJSON string) string {
+		return `{
+			"alert": "Test", "version": "v5", "schemaVersion": "v2alpha1", "ruleType": "threshold_rule",
+			"condition": {
+				"compositeQuery": {"queryType": "builder", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}}]},
+				"thresholds": {"kind": "basic", "spec": [{"name": "critical", "target": 90.0, "matchType": "1", "op": "1"}]}
+			},
+			"evaluation": ` + evalJSON + `,
+			"notificationSettings": {"renotify": {"enabled": true, "interval": "4h", "alertStates": ["firing"]}}
+		}`
+	}
+
+	tests := []struct {
+		name      string
+		evalJSON  string
+		wantErr   bool
+		errSubstr string
+	}{
+		{
+			name:     "valid cumulative hourly",
+			evalJSON: `{"kind": "cumulative", "spec": {"schedule": {"type": "hourly", "minute": 0}, "frequency": "5m", "timezone": "UTC"}}`,
+		},
+		{
+			name:     "valid cumulative daily",
+			evalJSON: `{"kind": "cumulative", "spec": {"schedule": {"type": "daily", "hour": 9, "minute": 30}, "frequency": "5m", "timezone": "America/New_York"}}`,
+		},
+		{
+			name:     "valid cumulative weekly",
+			evalJSON: `{"kind": "cumulative", "spec": {"schedule": {"type": "weekly", "weekday": 1, "hour": 14, "minute": 0}, "frequency": "5m", "timezone": "UTC"}}`,
+		},
+		{
+			name:     "valid cumulative monthly",
+			evalJSON: `{"kind": "cumulative", "spec": {"schedule": {"type": "monthly", "day": 1, "hour": 0, "minute": 0}, "frequency": "5m", "timezone": "UTC"}}`,
+		},
+		{
+			name:      "cumulative missing minute for hourly",
+			evalJSON:  `{"kind": "cumulative", "spec": {"schedule": {"type": "hourly"}, "frequency": "5m", "timezone": "UTC"}}`,
+			wantErr:   true,
+			errSubstr: "minute",
+		},
+		{
+			name:      "cumulative invalid timezone",
+			evalJSON:  `{"kind": "cumulative", "spec": {"schedule": {"type": "hourly", "minute": 0}, "frequency": "5m", "timezone": "Mars/Olympus"}}`,
+			wantErr:   true,
+			errSubstr: "timezone",
+		},
+		{
+			name:      "cumulative zero frequency",
+			evalJSON:  `{"kind": "cumulative", "spec": {"schedule": {"type": "hourly", "minute": 0}, "frequency": "0s", "timezone": "UTC"}}`,
+			wantErr:   true,
+			errSubstr: "frequency",
+		},
+		{
+			name:      "cumulative daily missing hour",
+			evalJSON:  `{"kind": "cumulative", "spec": {"schedule": {"type": "daily", "minute": 30}, "frequency": "5m", "timezone": "UTC"}}`,
+			wantErr:   true,
+			errSubstr: "hour",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			unmarshalErr, validateErr := unmarshalAndValidate(mkRule(tt.evalJSON))
+			err := unmarshalErr
+			if err == nil {
+				err = validateErr
+			}
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("expected error containing %q, got nil", tt.errSubstr)
+				} else if !errorContains(err, tt.errSubstr) {
+					t.Errorf("expected error containing %q, got: %v", tt.errSubstr, err)
+				}
+			} else if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+		})
+	}
+}
+
+// TestValidate_V2Alpha1_MultipleThresholds tests multi-threshold and literal ops in thresholds.
+func TestValidate_V2Alpha1_MultipleThresholds(t *testing.T) {
+	t.Run("warning and critical thresholds", func(t *testing.T) {
+		j := `{
+			"alert": "Test", "version": "v5", "schemaVersion": "v2alpha1", "ruleType": "threshold_rule",
+			"condition": {
+				"compositeQuery": {"queryType": "builder", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}}]},
+				"thresholds": {"kind": "basic", "spec": [
+					{"name": "warning", "target": 70.0, "matchType": "1", "op": "1"},
+					{"name": "critical", "target": 90.0, "matchType": "1", "op": "1"}
+				]}
+			},
+			"evaluation": {"kind": "rolling", "spec": {"evalWindow": "5m", "frequency": "1m"}},
+			"notificationSettings": {"renotify": {"enabled": true, "interval": "4h", "alertStates": ["firing"]}}
+		}`
+		_, err := unmarshalAndValidate(j)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("thresholds with literal ops and matchTypes", func(t *testing.T) {
+		j := `{
+			"alert": "Test", "version": "v5", "schemaVersion": "v2alpha1", "ruleType": "threshold_rule",
+			"condition": {
+				"compositeQuery": {"queryType": "builder", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}}]},
+				"thresholds": {"kind": "basic", "spec": [
+					{"name": "warning", "target": 70.0, "matchType": "on_average", "op": "above_or_equal"},
+					{"name": "critical", "target": 90.0, "matchType": "last", "op": "above"}
+				]}
+			},
+			"evaluation": {"kind": "rolling", "spec": {"evalWindow": "5m", "frequency": "1m"}},
+			"notificationSettings": {"renotify": {"enabled": true, "interval": "4h", "alertStates": ["firing"]}}
+		}`
+		_, err := unmarshalAndValidate(j)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
+}
+
+// TestValidate_V2Alpha1_NotificationStates tests various renotify alert state combinations.
+func TestValidate_V2Alpha1_NotificationStates(t *testing.T) {
+	mkRule := func(states string) string {
+		return `{
+			"alert": "Test", "version": "v5", "schemaVersion": "v2alpha1", "ruleType": "threshold_rule",
+			"condition": {
+				"compositeQuery": {"queryType": "builder", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}}]},
+				"thresholds": {"kind": "basic", "spec": [{"name": "critical", "target": 90.0, "matchType": "1", "op": "1"}]}
+			},
+			"evaluation": {"kind": "rolling", "spec": {"evalWindow": "5m", "frequency": "1m"}},
+			"notificationSettings": {"renotify": {"enabled": true, "interval": "4h", "alertStates": ` + states + `}}
+		}`
+	}
+
+	tests := []struct {
+		name    string
+		states  string
+		wantErr bool
+	}{
+		{"firing only", `["firing"]`, false},
+		{"nodata only", `["nodata"]`, false},
+		{"both firing and nodata", `["firing", "nodata"]`, false},
+		{"empty states", `[]`, false},
+		{"invalid state", `["pending"]`, true},
+		{"mix valid and invalid", `["firing", "inactive"]`, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			unmarshalErr, validateErr := unmarshalAndValidate(mkRule(tt.states))
+			err := unmarshalErr
+			if err == nil {
+				err = validateErr
+			}
+			if tt.wantErr && err == nil {
+				t.Error("expected error, got nil")
+			}
+			if !tt.wantErr && err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+		})
+	}
+}
+
+// TestValidate_QueryTypes tests various query types in the composite query.
+func TestValidate_QueryTypes(t *testing.T) {
+	mkRule := func(queryType, queryJSON string) string {
+		return patchJSON(validV2Alpha1Builder(), `{
+			"condition": {
+				"compositeQuery": {"queryType": "`+queryType+`", "queries": [`+queryJSON+`]},
+				"thresholds": {"kind": "basic", "spec": [{"name": "critical", "target": 10.0, "matchType": "1", "op": "1"}]}
+			}
+		}`)
+	}
+
+	t.Run("logs signal query", func(t *testing.T) {
+		j := mkRule("builder", `{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "stepInterval": "5m", "aggregations": [{"spaceAggregation": "count"}], "filter": {"expression": "severity_text = 'ERROR'"}}}`)
+		_, err := unmarshalAndValidate(j)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("traces signal query", func(t *testing.T) {
+		j := mkRule("builder", `{"type": "builder_query", "spec": {"name": "A", "signal": "traces", "stepInterval": "5m", "aggregations": [{"spaceAggregation": "count"}]}}`)
+		_, err := unmarshalAndValidate(j)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("clickhouse_sql query", func(t *testing.T) {
+		j := mkRule("clickhouse_sql", `{"type": "clickhouse_sql", "spec": {"name": "A", "query": "SELECT count() FROM logs", "disabled": false}}`)
+		_, err := unmarshalAndValidate(j)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("clickhouse_sql with empty query string", func(t *testing.T) {
+		j := mkRule("clickhouse_sql", `{"type": "clickhouse_sql", "spec": {"name": "A", "query": "", "disabled": false}}`)
+		_, err := unmarshalAndValidate(j)
+		if err == nil {
+			t.Error("expected error for empty clickhouse_sql query")
+		}
+	})
+
+	t.Run("formula query", func(t *testing.T) {
+		j := mkRule("builder", `
+			{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}},
+			{"type": "builder_formula", "spec": {"name": "F1", "expression": "A * 100", "disabled": false}}
+		`)
+		_, err := unmarshalAndValidate(j)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("formula with empty expression", func(t *testing.T) {
+		j := mkRule("builder", `
+			{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}},
+			{"type": "builder_formula", "spec": {"name": "F1", "expression": "", "disabled": false}}
+		`)
+		_, err := unmarshalAndValidate(j)
+		if err == nil {
+			t.Error("expected error for empty formula expression")
+		}
+	})
+
+	t.Run("duplicate query names", func(t *testing.T) {
+		j := mkRule("builder", `
+			{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}},
+			{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "mem", "spaceAggregation": "p50"}], "stepInterval": "5m"}}
+		`)
+		_, err := unmarshalAndValidate(j)
+		if err == nil {
+			t.Error("expected error for duplicate query names")
+		}
+	})
+}
+
+// TestValidate_DisabledRule verifies that disabled rules are still validated.
+func TestValidate_DisabledRule(t *testing.T) {
+	t.Run("disabled rule with invalid alertType still fails Validate", func(t *testing.T) {
+		j := patchJSON(validV2Alpha1Builder(), `{"disabled": true, "alertType": "GARBAGE"}`)
+		_, err := unmarshalAndValidate(j)
+		if err == nil {
+			t.Error("expected Validate() to fail even for disabled rule")
+		}
+	})
+
+	t.Run("disabled rule with valid payload passes", func(t *testing.T) {
+		j := patchJSON(validV2Alpha1Builder(), `{"disabled": true}`)
+		_, err := unmarshalAndValidate(j)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
+}
+
+// TestValidate_AlertOnAbsent documents current behavior for alertOnAbsent/absentFor fields.
+func TestValidate_AlertOnAbsent(t *testing.T) {
+	t.Run("alertOnAbsent true accepted", func(t *testing.T) {
+		j := patchJSON(validV2Alpha1Builder(), `{
+			"condition": {
+				"compositeQuery": {"queryType": "builder", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}}]},
+				"thresholds": {"kind": "basic", "spec": [{"name": "critical", "target": 10.0, "matchType": "1", "op": "1"}]},
+				"alertOnAbsent": true, "absentFor": 300
+			}
+		}`)
+		_, err := unmarshalAndValidate(j)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
+}

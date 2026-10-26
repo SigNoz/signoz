@@ -52,15 +52,17 @@ func (m *module) relatedLinkBuilderForRule(ctx context.Context, orgID valuer.UUI
 		return nil
 	}
 
-	if rule.Evaluation == nil {
-		return nil
+	builder := &relatedLinkBuilder{alertType: rule.AlertType, signal: signal, condition: rule.RuleCondition, logger: m.logger.With(slog.String("rule.id", ruleID))}
+	if rule.Evaluation != nil {
+		if evaluation, err := rule.Evaluation.GetEvaluation(); err == nil {
+			builder.evaluation = evaluation
+		}
 	}
-	evaluation, err := rule.Evaluation.GetEvaluation()
-	if err != nil {
+	if builder.evaluation == nil {
 		return nil
 	}
 
-	return &relatedLinkBuilder{alertType: rule.AlertType, signal: signal, evaluation: evaluation, condition: rule.RuleCondition, logger: m.logger.With(slog.String("rule.id", ruleID))}
+	return builder
 }
 
 // queryWindow returns the range the rule evaluated when it recorded a state
