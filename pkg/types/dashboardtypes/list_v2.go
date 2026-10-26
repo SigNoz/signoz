@@ -119,7 +119,7 @@ type listedDashboardV2 struct {
 	Source        Source                  `json:"source" required:"true" description:"Where the dashboard came from: user or integration. System dashboards are not listed."`
 	SchemaVersion string                  `json:"schemaVersion" required:"true" description:"The dashboard schema version, v6 for v2 dashboards."`
 	Name          string                  `json:"name" required:"true" description:"The dashboard's unique, immutable name."`
-	Image         string                  `json:"image,omitempty" description:"The icon or logo path or image data URI, when set."`
+	Image         string                  `json:"image,omitempty" description:"Icon or logo shown in the dashboard list: the path of an icon or logo bundled with the UI under /assets/Icons/ or /assets/Logos/, or a base64 image data URI. Omitted when none is set."`
 	Tags          []*tagtypes.GettableTag `json:"tags" required:"true" nullable:"false" description:"The tags attached to the dashboard."`
 	Spec          listedDashboardV2Spec   `json:"spec" required:"true" description:"The display part of the dashboard spec. Panels, variables and layouts are not included in list rows."`
 	// Legacy marks a dashboard whose stored data is not yet in the v2 (perses)

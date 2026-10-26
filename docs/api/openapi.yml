@@ -4991,7 +4991,9 @@ components:
         id:
           type: string
         image:
-          description: The icon or logo path or image data URI, when set.
+          description: 'Icon or logo shown in the dashboard list: the path of an icon
+            or logo bundled with the UI under /assets/Icons/ or /assets/Logos/, or
+            a base64 image data URI. Omitted when none is set.'
           type: string
         legacy:
           description: Whether the dashboard is still in the v1 schema. It is listed
@@ -5054,7 +5056,9 @@ components:
         id:
           type: string
         image:
-          description: The icon or logo path or image data URI, when set.
+          description: 'Icon or logo shown in the dashboard list: the path of an icon
+            or logo bundled with the UI under /assets/Icons/ or /assets/Logos/, or
+            a base64 image data URI. Omitted when none is set.'
           type: string
         legacy:
           description: Whether the dashboard is still in the v1 schema. It is listed

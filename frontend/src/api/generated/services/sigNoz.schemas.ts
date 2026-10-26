@@ -7747,7 +7747,7 @@ export interface DashboardtypesListedDashboardForUserV2DTO {
 	id: string;
 	/**
 	 * @type string
-	 * @description The icon or logo path or image data URI, when set.
+	 * @description Icon or logo shown in the dashboard list: the path of an icon or logo bundled with the UI under /assets/Icons/ or /assets/Logos/, or a base64 image data URI. Omitted when none is set.
 	 */
 	image?: string;
 	/**
@@ -7844,7 +7844,7 @@ export interface DashboardtypesListedDashboardV2DTO {
 	id: string;
 	/**
 	 * @type string
-	 * @description The icon or logo path or image data URI, when set.
+	 * @description Icon or logo shown in the dashboard list: the path of an icon or logo bundled with the UI under /assets/Icons/ or /assets/Logos/, or a base64 image data URI. Omitted when none is set.
 	 */
 	image?: string;
 	/**
