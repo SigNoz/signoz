@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Route } from 'react-router-dom';
 import { screen, userEvent, within } from 'storybook/test';
+import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
@@ -12,9 +13,13 @@ import {
 	connectAzureAccount,
 	connectGcpAccount,
 	expectToast,
+	generateGcpAgentCommand,
 	openConnectFlow,
+	openEditAccount,
+	openGcpAgentSetup,
 	untilLoaded,
 	updateAwsAccount,
+	updateGcpProjects,
 	updateTaggedAccount,
 } from './CloudIntegration.stories.mocks';
 
@@ -252,6 +257,111 @@ export const GcpRegionOpen: Story = {
 };
 
 /**
+ * The GCP connect drawer on its agent connection method: only the deployment
+ * project, region and credentials, since the agent monitors the project it is
+ * deployed in.
+ */
+export const GcpAgentSetup: Story = {
+	args: { provider: 'gcp', accounts: 0 },
+	play: async ({ canvasElement }): Promise<void> => {
+		await openGcpAgentSetup(canvasElement);
+	},
+};
+
+/**
+ * The setup command the agent connection generates, with the drawer waiting for
+ * the agent to check in. Set New account check-in to
+ * `checked-in` or `error` to see it connect or fail.
+ */
+export const GcpAgentCommand: Story = {
+	args: { provider: 'gcp', accounts: 0, newAccountCheckIn: 'pending' },
+	play: async ({ canvasElement }): Promise<void> => {
+		await generateGcpAgentCommand(canvasElement);
+		await screen.findByTestId('gcp-agent-command', undefined, untilLoaded);
+	},
+};
+
+/** The agent checks in on the first poll, so the drawer closes with a toast. */
+export const GcpAgentConnectedToast: Story = {
+	args: { provider: 'gcp', accounts: 0, newAccountCheckIn: 'checked-in' },
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await generateGcpAgentCommand(canvasElement);
+		if (args.newAccountCheckIn === 'checked-in') {
+			await expectToast(/gcp account connected successfully/i);
+		}
+	},
+};
+
+/**
+ * The connection poll fails, so the drawer reports it could not connect and
+ * offers Check Again.
+ */
+export const GcpAgentConnectionError: Story = {
+	args: { provider: 'gcp', accounts: 0, newAccountCheckIn: 'error' },
+	play: async ({ canvasElement }): Promise<void> => {
+		await generateGcpAgentCommand(canvasElement);
+		await screen.findByTestId(
+			'gcp-agent-connection-error',
+			undefined,
+			untilLoaded,
+		);
+	},
+};
+
+/**
+ * Leaving the drawer while the agent has not connected yet, which asks first
+ * because closing means starting the installation again.
+ */
+export const GcpAgentCloseConfirm: Story = {
+	args: { provider: 'gcp', accounts: 0, newAccountCheckIn: 'pending' },
+	play: async ({ canvasElement }): Promise<void> => {
+		await generateGcpAgentCommand(canvasElement);
+		await userEvent.click(
+			await screen.findByTestId('gcp-cancel-btn', undefined, untilLoaded),
+		);
+		await screen.findByTestId('gcp-close-setup-btn', undefined, untilLoaded);
+	},
+};
+
+/**
+ * The settings of a GCP account connected through the agent: read-only, since
+ * the backend rejects updates to agent accounts.
+ */
+export const GcpAgentAccountSettings: Story = {
+	args: {
+		provider: 'gcp',
+		gcpConnectionMethod: CloudintegrationtypesGCPConnectionMethodDTO.agent,
+	},
+	play: async ({ canvasElement }): Promise<void> => {
+		await openEditAccount(canvasElement);
+		await screen.findByTestId(
+			'gcp-agent-monitored-projects',
+			undefined,
+			untilLoaded,
+		);
+	},
+};
+
+/** Disconnecting an agent account, which names what is left to clean up. */
+export const GcpAgentDisconnect: Story = {
+	args: {
+		provider: 'gcp',
+		gcpConnectionMethod: CloudintegrationtypesGCPConnectionMethodDTO.agent,
+	},
+	play: async ({ canvasElement }): Promise<void> => {
+		await openEditAccount(canvasElement);
+		await userEvent.click(
+			await screen.findByRole('button', { name: /disconnect/i }, untilLoaded),
+		);
+		await screen.findByText(
+			/signoz-integration-bootstrap Infrastructure/i,
+			undefined,
+			untilLoaded,
+		);
+	},
+};
+
+/**
  * Saving the regions of a connected AWS account. Set Account settings update
  * to `error` for the failure toast.
  */
@@ -301,7 +411,7 @@ export const AzureAccountSettingsUpdateErrorToast: Story = {
 export const GcpAccountSettingsUpdatedToast: Story = {
 	args: { provider: 'gcp' },
 	play: async ({ canvasElement, args }): Promise<void> => {
-		await updateTaggedAccount(canvasElement, 'extra-project');
+		await updateGcpProjects(canvasElement, 'extra-project');
 		if (args.accountUpdate === 'success') {
 			await expectToast(/account settings updated successfully/i);
 		}
@@ -312,7 +422,7 @@ export const GcpAccountSettingsUpdatedToast: Story = {
 export const GcpAccountSettingsUpdateErrorToast: Story = {
 	args: { provider: 'gcp', accountUpdate: 'error' },
 	play: async ({ canvasElement, args }): Promise<void> => {
-		await updateTaggedAccount(canvasElement, 'extra-project');
+		await updateGcpProjects(canvasElement, 'extra-project');
 		if (args.accountUpdate === 'error') {
 			await expectToast(/failed to update account settings/i);
 		}
