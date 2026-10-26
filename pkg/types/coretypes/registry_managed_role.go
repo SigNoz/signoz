@@ -218,6 +218,17 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
+		// span-mapper-group and span-mapper — admin manages, viewer reads
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSpanMapperGroup}, WildCardSelectorString)},
+		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSpanMapperGroup}, WildCardSelectorString)},
+		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSpanMapperGroup}, WildCardSelectorString)},
+		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSpanMapperGroup}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSpanMapperGroup}, WildCardSelectorString)},
+		{Verb: VerbAttach, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSpanMapperGroup}, WildCardSelectorString)},
+		{Verb: VerbDetach, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSpanMapperGroup}, WildCardSelectorString)},
+		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSpanMapper}, WildCardSelectorString)},
+		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSpanMapper}, WildCardSelectorString)},
+		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSpanMapper}, WildCardSelectorString)},
 	},
 	SigNozEditorRoleName: {
 		// cloud-integration — editor can read accounts
@@ -317,6 +328,9 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
+		// span-mapper-group — read only (admin manages)
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSpanMapperGroup}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSpanMapperGroup}, WildCardSelectorString)},
 	},
 	SigNozViewerRoleName: {
 		// cloud-integration — viewer can read accounts
@@ -381,6 +395,9 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		// metrics-field — viewer reads
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
+		// span-mapper-group — read only
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSpanMapperGroup}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSpanMapperGroup}, WildCardSelectorString)},
 	},
 	SigNozAnonymousRoleName: {
 		// public-dashboard — anonymous read

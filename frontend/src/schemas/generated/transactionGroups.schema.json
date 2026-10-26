@@ -74,7 +74,9 @@
         "meter-metrics",
         "logs-field",
         "traces-field",
-        "metrics-field"
+        "metrics-field",
+        "span-mapper-group",
+        "span-mapper"
       ],
       "type": "string"
     },

@@ -299,6 +299,28 @@
     },
     {
       "type": "metaresource",
+      "kind": "span-mapper-group",
+      "verbs": [
+        "read",
+        "update",
+        "delete",
+        "create",
+        "list",
+        "attach",
+        "detach"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "span-mapper",
+      "verbs": [
+        "update",
+        "delete",
+        "create"
+      ]
+    },
+    {
+      "type": "metaresource",
       "kind": "ttl-setting",
       "verbs": [
         "read",
@@ -530,6 +552,14 @@
     },
     {
       "type": "metaresource",
+      "kind": "span-mapper-group",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
       "kind": "ttl-setting",
       "verbs": [
         "read",
@@ -702,6 +732,14 @@
     {
       "type": "metaresource",
       "kind": "metrics-field",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "span-mapper-group",
       "verbs": [
         "read",
         "list"

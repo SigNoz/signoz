@@ -80,6 +80,8 @@ func (name Kind) Enum() []any {
 		KindLogsField,
 		KindTracesField,
 		KindMetricsField,
+		KindSpanMapperGroup,
+		KindSpanMapper,
 	}
 }
 

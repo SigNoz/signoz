@@ -40,6 +40,8 @@ var Kinds = []Kind{
 	KindLogsField,
 	KindTracesField,
 	KindMetricsField,
+	KindSpanMapperGroup,
+	KindSpanMapper,
 }
 
 var (
@@ -82,4 +84,6 @@ var (
 	KindLogsField                    = MustNewKind("logs-field")
 	KindTracesField                  = MustNewKind("traces-field")
 	KindMetricsField                 = MustNewKind("metrics-field")
+	KindSpanMapperGroup              = MustNewKind("span-mapper-group")
+	KindSpanMapper                   = MustNewKind("span-mapper")
 )
