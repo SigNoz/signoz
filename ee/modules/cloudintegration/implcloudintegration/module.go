@@ -2,7 +2,6 @@ package implcloudintegration
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -171,18 +170,6 @@ func (module *module) AgentCheckIn(ctx context.Context, orgID valuer.UUID, provi
 		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
-	connectedAccount, err := module.store.GetConnectedAccountByProviderAccountID(ctx, orgID, req.ProviderAccountID, provider)
-	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-		return nil, err
-	}
-
-	// If a different integration is already connected to this provider account ID, reject the check-in.
-	// Allow re-check-in from the same integration (e.g. agent restarting).
-	if connectedAccount != nil && connectedAccount.ID != req.CloudIntegrationID {
-		errMessage := fmt.Sprintf("provider account id %s is already connected to cloud integration id %s", req.ProviderAccountID, connectedAccount.ID)
-		return nil, errors.New(errors.TypeAlreadyExists, cloudintegrationtypes.ErrCodeCloudIntegrationAlreadyConnected, errMessage)
-	}
-
 	storableAccount, err := module.store.GetAccountByID(ctx, orgID, req.CloudIntegrationID, provider)
 	if err != nil {
 		return nil, err
@@ -195,41 +182,36 @@ func (module *module) AgentCheckIn(ctx context.Context, orgID valuer.UUID, provi
 
 	syncState := account.NextSyncState(req.SyncedVersion)
 
-	// If account has been removed (disconnected), return a minimal response with empty integration config.
 	if account.RemovedAt != nil {
-		// Heartbeat stays frozen after removal, only the sync state is updated.
-		if account.AgentReport != nil && syncState != nil {
-			account.UpdateSyncState(syncState)
+		return module.checkInRemovedAccount(ctx, account, req.ProviderAccountID, syncState)
+	}
 
-			storableAccount, err = cloudintegrationtypes.NewStorableCloudIntegration(account)
-			if err != nil {
-				return nil, err
-			}
+	if err := account.ErrIfInvalidProviderAccountID(req.ProviderAccountID); err != nil {
+		return nil, err
+	}
 
-			err = module.store.UpdateAgentReport(ctx, storableAccount)
-			if err != nil {
-				return nil, err
-			}
-		}
+	connectedAccount, err := module.store.GetConnectedAccountByProviderAccountID(ctx, orgID, req.ProviderAccountID, provider)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		return nil, err
+	}
 
-		return cloudintegrationtypes.NewAgentCheckInResponse(
-			req.ProviderAccountID,
-			account.ID.StringValue(),
-			new(cloudintegrationtypes.ProviderIntegrationConfig),
-			account.RemovedAt,
-			syncState,
-		), nil
+	// If a different integration is already connected to this provider account ID, reject the check-in.
+	// Allow re-check-in from the same integration (e.g. agent restarting).
+	if connectedAccount != nil && connectedAccount.ID != req.CloudIntegrationID {
+		return nil, errors.Newf(
+			errors.TypeAlreadyExists,
+			cloudintegrationtypes.ErrCodeCloudIntegrationAlreadyConnected,
+			"provider account id %s is already connected to cloud integration id %s", req.ProviderAccountID, connectedAccount.ID,
+		)
 	}
 
 	account.UpdateAgentReport(&req.ProviderAccountID, cloudintegrationtypes.NewAgentReport(req.Data, syncState))
-
 	storableAccount, err = cloudintegrationtypes.NewStorableCloudIntegration(account)
 	if err != nil {
 		return nil, err
 	}
 
-	err = module.store.UpdateAgentReport(ctx, storableAccount)
-	if err != nil {
+	if err := module.store.UpdateAgentReport(ctx, storableAccount); err != nil {
 		return nil, err
 	}
 
@@ -498,9 +480,43 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 		stats["cloudintegration.azure.connectedaccounts.count"] = azureAccountsCount
 	}
 
-	// NOTE: not adding stats for services for now.
+	gcpAccountsCount, err := module.store.CountConnectedAccounts(ctx, orgID, cloudintegrationtypes.CloudProviderTypeGCP)
+	if err == nil {
+		stats["cloudintegration.gcp.connectedaccounts.count"] = gcpAccountsCount
+	}
 
 	return stats, nil
+}
+
+// checkInRemovedAccount returns an empty integration config and saves cleanup acknowledgments without refreshing the heartbeat.
+func (module *module) checkInRemovedAccount(ctx context.Context, account *cloudintegrationtypes.Account, providerAccountID string, syncState *cloudintegrationtypes.SyncState) (*cloudintegrationtypes.AgentCheckInResponse, error) {
+	response := cloudintegrationtypes.NewAgentCheckInResponse(
+		providerAccountID,
+		account.ID.StringValue(),
+		new(cloudintegrationtypes.ProviderIntegrationConfig),
+		account.RemovedAt,
+		syncState,
+	)
+
+	if account.AgentReport == nil {
+		return response, nil
+	}
+
+	if syncState == nil {
+		return response, nil
+	}
+
+	account.UpdateSyncState(syncState)
+	storableAccount, err := cloudintegrationtypes.NewStorableCloudIntegration(account)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := module.store.UpdateAgentReport(ctx, storableAccount); err != nil {
+		return nil, err
+	}
+
+	return response, nil
 }
 
 func (module *module) getCloudProvider(provider cloudintegrationtypes.CloudProviderType) (cloudintegration.CloudProviderModule, error) {
