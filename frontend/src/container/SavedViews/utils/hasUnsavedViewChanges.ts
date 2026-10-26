@@ -49,6 +49,7 @@ export function hasUnsavedViewChanges({
 	view,
 	stagedQuery,
 	panelType,
+	preferenceSource,
 	options,
 }: HasUnsavedViewChangesArgs): boolean {
 	if (!stagedQuery) {
@@ -72,14 +73,13 @@ export function hasUnsavedViewChanges({
 		return true;
 	}
 
-	if (!options) {
+	if (!options || !preferenceSource) {
 		return false;
 	}
 
-	const dataSource = stagedQuery.builder.queryData[0]?.dataSource;
 	const { columns, formatting } = getViewColumnsAndFormatting(
 		view.spec,
-		dataSource,
+		preferenceSource,
 	);
 	const toNames = (fields: { name?: string; key?: string }[]): unknown[] =>
 		fields.map((field) => field.name ?? field.key);
@@ -87,7 +87,7 @@ export function hasUnsavedViewChanges({
 		return true;
 	}
 
-	if (dataSource !== DataSource.LOGS || !formatting) {
+	if (preferenceSource !== DataSource.LOGS || !formatting) {
 		return false;
 	}
 	return (

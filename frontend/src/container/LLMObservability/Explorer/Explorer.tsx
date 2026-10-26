@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import logEvent from 'api/common/logEvent';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
@@ -189,6 +190,7 @@ function Explorer(): JSX.Element {
 			<QuickFiltersLayout
 				className="trace-explorer-page"
 				testId="llm-observability-explorer"
+				savedViewProps={{ source: SavedviewtypesSourceDTO.ai_observability }}
 				showFilters={isOpen}
 				onToggleFilters={(): void => setOpen(!isOpen)}
 				quickFilterProps={{
