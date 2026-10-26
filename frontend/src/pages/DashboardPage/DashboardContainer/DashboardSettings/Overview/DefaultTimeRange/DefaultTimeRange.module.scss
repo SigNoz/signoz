@@ -1,0 +1,30 @@
+.infoItemContainer {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.infoTitle {
+	color: var(--l2-foreground);
+}
+
+.defaultTimeRangeInput {
+	[data-radix-popper-content-wrapper] {
+		z-index: 1100 !important;
+	}
+
+	// Radix sets --radix-select-trigger-width on the content element (the wrapper's
+	// child), so match it there to make the dropdown take the trigger's width.
+	[data-radix-popper-content-wrapper] > * {
+		width: var(--radix-select-trigger-width);
+		min-width: var(--radix-select-trigger-width);
+	}
+}
+
+.defaultTimeRangeSelect {
+	width: 100%;
+}
+
+.infoHint {
+	color: var(--l3-foreground);
+}

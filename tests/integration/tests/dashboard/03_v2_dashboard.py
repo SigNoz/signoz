@@ -13,6 +13,80 @@ from fixtures.types import Operation, SigNoz
 BASE_URL = "/api/v2/dashboards"
 
 
+@pytest.mark.parametrize("duration", ["30m", "1h30m", "15s", "1y", "0m", ""])
+def test_dashboard_default_duration_roundtrip(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    duration: str,
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    headers = {"Authorization": f"Bearer {token}"}
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": f"duration-{uuid.uuid4()}",
+            "tags": [],
+            "spec": {"display": {"name": "Duration"}, "variables": [], "panels": {}, "layouts": [], "duration": duration},
+        },
+        headers=headers,
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    dashboard_id = response.json()["data"]["id"]
+    dashboard_url = signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}")
+    try:
+        assert response.json()["data"]["spec"]["duration"] == duration
+        response = requests.get(dashboard_url, headers=headers, timeout=5)
+        assert response.status_code == HTTPStatus.OK, response.text
+        assert response.json()["data"]["spec"]["duration"] == duration
+
+        response = requests.patch(dashboard_url, json=[{"op": "replace", "path": "/spec/display/name", "value": "Renamed"}], headers=headers, timeout=5)
+        assert response.status_code == HTTPStatus.OK, response.text
+        assert response.json()["data"]["spec"]["duration"] == duration
+
+        for updated_duration in ["2h30m", "1d", ""]:
+            response = requests.patch(dashboard_url, json=[{"op": "replace", "path": "/spec/duration", "value": updated_duration}], headers=headers, timeout=5)
+            assert response.status_code == HTTPStatus.OK, response.text
+            assert response.json()["data"]["spec"]["duration"] == updated_duration
+            response = requests.get(dashboard_url, headers=headers, timeout=5)
+            assert response.status_code == HTTPStatus.OK, response.text
+            assert response.json()["data"]["spec"]["duration"] == updated_duration
+
+        response = requests.patch(dashboard_url, json=[{"op": "replace", "path": "/spec/duration", "value": "invalid"}], headers=headers, timeout=5)
+        assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+        assert response.json()["error"]["code"] == "dashboard_invalid_input"
+        response = requests.get(dashboard_url, headers=headers, timeout=5)
+        assert response.status_code == HTTPStatus.OK, response.text
+        assert response.json()["data"]["spec"]["duration"] == ""
+    finally:
+        response = requests.delete(dashboard_url, headers=headers, timeout=5)
+        assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+
+@pytest.mark.parametrize("duration", ["abc", "30x"])
+def test_create_dashboard_rejects_invalid_duration(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    duration: str,
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "schemaVersion": "v6",
+            "name": f"invalid-duration-{uuid.uuid4()}",
+            "spec": {"display": {"name": "Invalid Duration"}, "variables": [], "panels": {}, "layouts": [], "duration": duration},
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert response.json()["error"]["code"] == "dashboard_invalid_input"
+
+
 # ─── failure cases (create no dashboards) ────────────────────────────────────
 
 

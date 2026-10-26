@@ -12,6 +12,12 @@ const validCustomTimeRegex = /^(\d+)(months?|[mhdw])$/;
 export const isValidShortHandDateTimeFormat = (time: string): boolean =>
 	validCustomTimeRegex.test(time);
 
+// The picker fallback supports whole m/h/d/w units and a positive window.
+const validDashboardDurationRegex = /^[1-9]\d*[mhdw]$/;
+
+export const isValidDashboardDuration = (time: string): boolean =>
+	validDashboardDurationRegex.test(time);
+
 const extractTimeAndUnit = (time: string): { time: number; unit: string } => {
 	// Match the pattern
 	const match = /^(\d+)([mhdw])$/.exec(time);

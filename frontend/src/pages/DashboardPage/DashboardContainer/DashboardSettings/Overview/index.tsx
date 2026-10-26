@@ -13,6 +13,7 @@ import APIError from 'types/api/error';
 
 import { useOptimisticPatch } from '../../hooks/useOptimisticPatch';
 import CrossPanelSync from './CrossPanelSync/CrossPanelSync';
+import DefaultTimeRange from './DefaultTimeRange/DefaultTimeRange';
 import DashboardInfoForm from './DashboardInfoForm/DashboardInfoForm';
 import UnsavedChangesFooter from './UnsavedChangesFooter/UnsavedChangesFooter';
 import { stringsToTags, tagsToStrings } from './utils';
@@ -31,6 +32,7 @@ function Overview({ dashboard }: OverviewProps): JSX.Element {
 	const title = dashboard.spec.display.name;
 	const description = dashboard.spec.display.description ?? '';
 	const image = dashboard.image || DEFAULT_DASHBOARD_ICON_PATH;
+	const defaultTimeRange = dashboard.spec.duration ?? '';
 	const tagsAsStrings = useMemo(
 		() => tagsToStrings(dashboard.tags ?? []),
 		[dashboard.tags],
@@ -41,6 +43,8 @@ function Overview({ dashboard }: OverviewProps): JSX.Element {
 	const [updatedDescription, setUpdatedDescription] =
 		useState<string>(description);
 	const [updatedImage, setUpdatedImage] = useState<string>(image);
+	const [updatedDefaultTimeRange, setUpdatedDefaultTimeRange] =
+		useState<string>(defaultTimeRange);
 	const [isSaving, setIsSaving] = useState<boolean>(false);
 	const [numberOfUnsavedChanges, setNumberOfUnsavedChanges] =
 		useState<number>(0);
@@ -53,6 +57,7 @@ function Overview({ dashboard }: OverviewProps): JSX.Element {
 		setUpdatedDescription(description);
 		setUpdatedImage(image);
 		setUpdatedTags(tagsAsStrings);
+		setUpdatedDefaultTimeRange(defaultTimeRange);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [dashboard.updatedAt]);
 
@@ -102,6 +107,9 @@ function Overview({ dashboard }: OverviewProps): JSX.Element {
 		if (!isEqual(updatedTags, tagsAsStrings)) {
 			ops.push(replace('/tags', stringsToTags(updatedTags)));
 		}
+		if (updatedDefaultTimeRange !== defaultTimeRange) {
+			ops.push(replace('/spec/duration', updatedDefaultTimeRange));
+		}
 		return ops;
 	}, [
 		updatedTitle,
@@ -113,6 +121,8 @@ function Overview({ dashboard }: OverviewProps): JSX.Element {
 		dashboard.image,
 		updatedTags,
 		tagsAsStrings,
+		updatedDefaultTimeRange,
+		defaultTimeRange,
 	]);
 
 	const onSaveHandler = useCallback(async (): Promise<void> => {
@@ -135,12 +145,19 @@ function Overview({ dashboard }: OverviewProps): JSX.Element {
 
 	useEffect(() => {
 		let numberOfUnsavedChanges = 0;
-		const initialValues = [title, description, tagsAsStrings, image];
+		const initialValues = [
+			title,
+			description,
+			tagsAsStrings,
+			image,
+			defaultTimeRange,
+		];
 		const updatedValues = [
 			updatedTitle,
 			updatedDescription,
 			updatedTags,
 			updatedImage,
+			updatedDefaultTimeRange,
 		];
 		initialValues.forEach((val, index) => {
 			if (!isEqual(val, updatedValues[index])) {
@@ -153,10 +170,12 @@ function Overview({ dashboard }: OverviewProps): JSX.Element {
 		image,
 		tagsAsStrings,
 		title,
+		defaultTimeRange,
 		updatedDescription,
 		updatedImage,
 		updatedTags,
 		updatedTitle,
+		updatedDefaultTimeRange,
 	]);
 
 	const discardHandler = useCallback((): void => {
@@ -164,8 +183,9 @@ function Overview({ dashboard }: OverviewProps): JSX.Element {
 		setUpdatedImage(image);
 		setUpdatedTags(tagsAsStrings);
 		setUpdatedDescription(description);
+		setUpdatedDefaultTimeRange(defaultTimeRange);
 		void logEvent(DashboardDetailEvents.OverviewDiscarded, { dashboardId: id });
-	}, [title, image, tagsAsStrings, description, id]);
+	}, [title, image, tagsAsStrings, description, defaultTimeRange, id]);
 
 	return (
 		<div className={styles.overviewContent}>
@@ -178,6 +198,10 @@ function Overview({ dashboard }: OverviewProps): JSX.Element {
 				onDescriptionChange={setUpdatedDescription}
 				onImageChange={setUpdatedImage}
 				onTagsChange={setUpdatedTags}
+			/>
+			<DefaultTimeRange
+				value={updatedDefaultTimeRange}
+				onChange={setUpdatedDefaultTimeRange}
 			/>
 			<CrossPanelSync dashboardId={id} />
 			{numberOfUnsavedChanges > 0 && (
