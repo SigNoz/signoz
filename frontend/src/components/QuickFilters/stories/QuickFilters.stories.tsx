@@ -7,8 +7,9 @@ import type { GlobalMockArgs } from '@/storybook/globals';
 
 import QuickFilters from '../QuickFilters';
 import {
-	attributeValuesHandler,
 	checkboxConfig,
+	fieldApis,
+	fieldValuesHandler,
 	handlers,
 	LONG_FILTER_VALUES,
 	loadingFiltersHandlers,
@@ -34,6 +35,7 @@ const meta = {
 		handleFilterVisibilityChange: (): void => undefined,
 		signal: SignalType.LOGS,
 		source: QuickFiltersSource.LOGS_EXPLORER,
+		useFieldApis: fieldApis,
 	},
 	parameters: {
 		msw: { handlers },
@@ -114,7 +116,7 @@ export const SelectedExpandedCheckbox: Story = {
 export const Tooltips: TooltipsStory = {
 	args: { signal: undefined, tooltipsOpen: true },
 	parameters: {
-		msw: { handlers: [attributeValuesHandler(LONG_FILTER_VALUES), ...handlers] },
+		msw: { handlers: [fieldValuesHandler(LONG_FILTER_VALUES), ...handlers] },
 	},
 };
 
