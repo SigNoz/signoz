@@ -7,7 +7,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
@@ -97,7 +96,7 @@ func NewCreateRuleChannelAttachExtractor(alertmanagerService alertmanager.Alertm
 			return nil, err
 		}
 
-		return resolveChannelIDs(ctx, alertmanagerService, orgID, names)
+		return alertmanagerService.GetChannelIDsByNames(ctx, orgID.StringValue(), names)
 	}}
 }
 
@@ -118,7 +117,7 @@ func NewCloneRuleChannelAttachExtractor(alertmanagerService alertmanager.Alertma
 			return nil, err
 		}
 
-		return resolveChannelIDs(ctx, alertmanagerService, orgID, stored.Channels())
+		return alertmanagerService.GetChannelIDsByNames(ctx, orgID.StringValue(), stored.Channels())
 	}}
 }
 
@@ -165,7 +164,7 @@ func newRuleChannelDiffExtractor(alertmanagerService alertmanager.Alertmanager, 
 			return resolveStoredChannelIDs(ctx, alertmanagerService, orgID, detached)
 		}
 
-		return resolveChannelIDs(ctx, alertmanagerService, orgID, attached)
+		return alertmanagerService.GetChannelIDsByNames(ctx, orgID.StringValue(), attached)
 	}}
 }
 
@@ -224,12 +223,12 @@ func NewCreateRoutePolicyChannelAttachExtractor(alertmanagerService alertmanager
 			return nil, err
 		}
 
-		names, err := parseRoutePolicyChannels(ec.RequestBody)
+		names, err := coretypes.BodyJSONArray("channels").Fn(ec)
 		if err != nil {
 			return nil, err
 		}
 
-		return resolveChannelIDs(ctx, alertmanagerService, orgID, names)
+		return alertmanagerService.GetChannelIDsByNames(ctx, orgID.StringValue(), names)
 	}}
 }
 
@@ -258,49 +257,18 @@ func newRoutePolicyDiffExtractor(alertmanagerService alertmanager.Alertmanager, 
 			return nil, err
 		}
 
-		incoming, err := parseRoutePolicyChannels(ec.RequestBody)
+		incoming, err := coretypes.BodyJSONArray("channels").Fn(ec)
 		if err != nil {
 			return nil, err
 		}
 
 		attached, detached := diffLinks(stored.Channels, incoming)
 		if side == detachedSide {
-			return resolveChannelIDs(ctx, alertmanagerService, orgID, detached)
+			return alertmanagerService.GetChannelIDsByNames(ctx, orgID.StringValue(), detached)
 		}
 
-		return resolveChannelIDs(ctx, alertmanagerService, orgID, attached)
+		return alertmanagerService.GetChannelIDsByNames(ctx, orgID.StringValue(), attached)
 	}}
-}
-
-func parseRoutePolicyChannels(body []byte) ([]string, error) {
-	policy := new(alertmanagertypes.PostableRoutePolicy)
-	if err := json.Unmarshal(body, policy); err != nil {
-		return nil, err
-	}
-
-	return policy.Channels, nil
-}
-
-func resolveChannelIDs(ctx context.Context, alertmanagerService alertmanager.Alertmanager, orgID valuer.UUID, names []string) ([]string, error) {
-	if len(names) == 0 {
-		return nil, nil
-	}
-
-	idByName, err := mapChannelIDsByName(ctx, alertmanagerService, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	ids := make([]string, 0, len(names))
-	for _, name := range names {
-		id, ok := idByName[name]
-		if !ok {
-			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "notification channel %q does not exist", name)
-		}
-		ids = append(ids, id)
-	}
-
-	return ids, nil
 }
 
 func resolveStoredChannelIDs(ctx context.Context, alertmanagerService alertmanager.Alertmanager, orgID valuer.UUID, names []string) ([]string, error) {
