@@ -8,9 +8,18 @@ import { OptionsQuery } from 'container/OptionsMenu/types';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { DataSource } from 'types/common/queryBuilder';
 
+import getAIObservabilityTraceViewUpdaterConfig from '../configs/aiObservabilityTraceViewUpdaterConfig';
+import getAIObservabilityUpdaterConfig from '../configs/aiObservabilityUpdaterConfig';
 import getLogsUpdaterConfig from '../configs/logsUpdaterConfig';
 import getTracesUpdaterConfig from '../configs/tracesUpdaterConfig';
-import { FormattingOptions, Preferences } from '../types';
+import {
+	AI_OBSERVABILITY_PREFERENCE_SOURCE,
+	AI_OBSERVABILITY_TRACE_VIEW_PREFERENCE_SOURCE,
+	AI_OBSERVABILITY_TRACE_VIEW_URL_OPTIONS,
+	FormattingOptions,
+	Preferences,
+	PreferenceSource,
+} from '../types';
 
 const metricsUpdater = {
 	updateColumns: (): void => {}, // no-op for metrics
@@ -22,7 +31,7 @@ const getUpdaterConfig = (
 	redirectWithOptionsData: (options: OptionsQuery) => void,
 	setSavedViewPreferences: Dispatch<SetStateAction<Preferences | null>>,
 ): Record<
-	DataSource,
+	PreferenceSource,
 	{
 		updateColumns: (newColumns: TelemetryFieldKey[], mode: string) => void;
 		updateFormatting: (newFormatting: FormattingOptions, mode: string) => void;
@@ -38,7 +47,21 @@ const getUpdaterConfig = (
 		setSavedViewPreferences,
 	),
 	[DataSource.METRICS]: metricsUpdater,
+	[AI_OBSERVABILITY_PREFERENCE_SOURCE]: getAIObservabilityUpdaterConfig(
+		redirectWithOptionsData,
+		setSavedViewPreferences,
+	),
+	[AI_OBSERVABILITY_TRACE_VIEW_PREFERENCE_SOURCE]:
+		getAIObservabilityTraceViewUpdaterConfig(
+			redirectWithOptionsData,
+			setSavedViewPreferences,
+		),
 });
+
+const getUrlOptionsKey = (dataSource: PreferenceSource): string =>
+	dataSource === AI_OBSERVABILITY_TRACE_VIEW_PREFERENCE_SOURCE
+		? AI_OBSERVABILITY_TRACE_VIEW_URL_OPTIONS
+		: URL_OPTIONS;
 
 export function usePreferenceUpdater({
 	dataSource,
@@ -47,7 +70,7 @@ export function usePreferenceUpdater({
 	setReSync,
 	setSavedViewPreferences,
 }: {
-	dataSource: DataSource;
+	dataSource: PreferenceSource;
 	mode: string;
 	preferences: Preferences | null;
 	setReSync: Dispatch<SetStateAction<boolean>>;
@@ -57,7 +80,10 @@ export function usePreferenceUpdater({
 	updateFormatting: (newFormatting: FormattingOptions) => void;
 } {
 	const { redirectWithQuery: redirectWithOptionsData } =
-		useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
+		useUrlQueryData<OptionsQuery>(
+			getUrlOptionsKey(dataSource),
+			defaultOptionsQuery,
+		);
 	const updater = getUpdaterConfig(
 		preferences,
 		redirectWithOptionsData,

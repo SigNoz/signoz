@@ -40,15 +40,17 @@ export const sortByDefaultOrder = (
 ): TelemetryFieldKey[] =>
 	[...fields].sort((a, b) => orderRank(a) - orderRank(b));
 
-/** Anything the keys endpoint adds beyond the ordered set starts hidden; only applied at first init, since the store persists hidden ids. */
+/** Anything the keys endpoint adds beyond the ordered set starts hidden; only applied until the user picks columns. */
 const DEFAULT_VISIBLE_FIELDS = new Set(DEFAULT_COLUMN_ORDER);
+
+export const isDefaultVisible = (field: TelemetryFieldKey): boolean =>
+	DEFAULT_VISIBLE_FIELDS.has(field.name);
 
 export const buildTraceViewColumns = (
 	fields: TelemetryFieldKey[],
 ): TableColumnDef<TracesTableRow>[] =>
 	fields.map((field) => ({
 		...getFieldColumn(field),
-		defaultVisibility: DEFAULT_VISIBLE_FIELDS.has(field.name),
 		// The shared column builder pins anything in TIMESTAMP_FIELD_NAMES; these stay movable.
 		enableMove: true,
 		enableRemove: field.name !== TRACE_ID_COLUMN_ID,
