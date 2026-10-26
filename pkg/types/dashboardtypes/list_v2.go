@@ -116,7 +116,7 @@ type listedDashboardV2 struct {
 
 	OrgID         valuer.UUID             `json:"orgId" required:"true" description:"The organization that owns the dashboard."`
 	Locked        bool                    `json:"locked" required:"true" description:"Whether the dashboard is locked against update and patch."`
-	Source        Source                  `json:"source" required:"true" description:"Where the dashboard came from: user, integration or system."`
+	Source        Source                  `json:"source" required:"true" description:"Where the dashboard came from: user or integration. System dashboards are not listed."`
 	SchemaVersion string                  `json:"schemaVersion" required:"true" description:"The dashboard schema version, v6 for v2 dashboards."`
 	Name          string                  `json:"name" required:"true" description:"The dashboard's unique, immutable name."`
 	Image         string                  `json:"image,omitempty" description:"The icon or logo path or image data URI, when set."`
@@ -125,11 +125,11 @@ type listedDashboardV2 struct {
 	// Legacy marks a dashboard whose stored data is not yet in the v2 (perses)
 	// schema. Such rows are extracted best-effort from the v1 shape so the list
 	// still surfaces them; callers should route them to the legacy view.
-	Legacy bool `json:"legacy" required:"true" description:"Whether the stored dashboard is still in the v1 schema. Such rows are read best-effort and cannot be fetched or edited through the v2 endpoints."`
+	Legacy bool `json:"legacy" required:"true" description:"Whether the dashboard is still in the v1 schema. It is listed but cannot be fetched or edited through the v2 endpoints."`
 }
 
 type listedDashboardV2Spec struct {
-	Display Display `json:"display,omitempty" description:"The dashboard title and description."`
+	Display Display `json:"display,omitempty" description:"The dashboard name and description."`
 }
 
 func newListedDashboardV2(v2 *DashboardV2) *listedDashboardV2 {

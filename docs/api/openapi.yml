@@ -4264,7 +4264,7 @@ components:
           description: The id of the dashboard containing the panel.
           type: string
         dashboardName:
-          description: The dashboard title.
+          description: The dashboard name.
           type: string
         filterBy:
           description: The metric labels the panel filters on.
@@ -4994,9 +4994,8 @@ components:
           description: The icon or logo path or image data URI, when set.
           type: string
         legacy:
-          description: Whether the stored dashboard is still in the v1 schema. Such
-            rows are read best-effort and cannot be fetched or edited through the
-            v2 endpoints.
+          description: Whether the dashboard is still in the v1 schema. It is listed
+            but cannot be fetched or edited through the v2 endpoints.
           type: boolean
         locked:
           description: Whether the dashboard is locked against update and patch.
@@ -5016,7 +5015,8 @@ components:
         source:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesSource'
-          description: 'Where the dashboard came from: user, integration or system.'
+          description: 'Where the dashboard came from: user or integration. System
+            dashboards are not listed.'
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesListedDashboardV2Spec'
@@ -5057,9 +5057,8 @@ components:
           description: The icon or logo path or image data URI, when set.
           type: string
         legacy:
-          description: Whether the stored dashboard is still in the v1 schema. Such
-            rows are read best-effort and cannot be fetched or edited through the
-            v2 endpoints.
+          description: Whether the dashboard is still in the v1 schema. It is listed
+            but cannot be fetched or edited through the v2 endpoints.
           type: boolean
         locked:
           description: Whether the dashboard is locked against update and patch.
@@ -5076,7 +5075,8 @@ components:
         source:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesSource'
-          description: 'Where the dashboard came from: user, integration or system.'
+          description: 'Where the dashboard came from: user or integration. System
+            dashboards are not listed.'
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesListedDashboardV2Spec'
@@ -5108,7 +5108,7 @@ components:
         display:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesDisplay'
-          description: The dashboard title and description.
+          description: The dashboard name and description.
       type: object
     DashboardtypesNumberPanelSpec:
       properties:
@@ -5208,8 +5208,7 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesAreaChartPanelSpec'
-          description: 'Options for an area chart panel: visualization, formatting,
-            chartAppearance, axes, legend and thresholds. {} accepts every default.'
+          description: The options for this panel kind. {} accepts every default.
       required:
       - kind
       - spec
@@ -5224,8 +5223,7 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesBarChartPanelSpec'
-          description: 'Options for a bar chart panel: visualization, formatting,
-            axes, legend and thresholds. {} accepts every default.'
+          description: The options for this panel kind. {} accepts every default.
       required:
       - kind
       - spec
@@ -5240,8 +5238,7 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesHeatmapPanelSpec'
-          description: 'Options for a heatmap panel: visualization, formatting, axes,
-            legend and chartAppearance. {} accepts every default.'
+          description: The options for this panel kind. {} accepts every default.
       required:
       - kind
       - spec
@@ -5256,8 +5253,7 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesHistogramPanelSpec'
-          description: 'Options for a histogram panel: histogramBuckets and legend.
-            {} accepts every default.'
+          description: The options for this panel kind. {} accepts every default.
       required:
       - kind
       - spec
@@ -5272,8 +5268,7 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesListPanelSpec'
-          description: 'Options for a list panel: selectFields, the columns shown
-            for each row. {} accepts every default.'
+          description: The options for this panel kind. {} accepts every default.
       required:
       - kind
       - spec
@@ -5288,8 +5283,7 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesNumberPanelSpec'
-          description: 'Options for a number panel: visualization, formatting and
-            comparison thresholds that recolor the value. {} accepts every default.'
+          description: The options for this panel kind. {} accepts every default.
       required:
       - kind
       - spec
@@ -5304,8 +5298,7 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesPieChartPanelSpec'
-          description: 'Options for a pie chart panel: visualization, formatting and
-            legend. {} accepts every default.'
+          description: The options for this panel kind. {} accepts every default.
       required:
       - kind
       - spec
@@ -5320,8 +5313,7 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesTablePanelSpec'
-          description: 'Options for a table panel: visualization, formatting (including
-            per-column units) and thresholds. {} accepts every default.'
+          description: The options for this panel kind. {} accepts every default.
       required:
       - kind
       - spec
@@ -5336,8 +5328,7 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesTextPanelSpec'
-          description: 'Options for a text panel: mode, the text to render, presentation
-            and headerOptions.'
+          description: The options for this panel kind. {} accepts every default.
       required:
       - kind
       - spec
@@ -5352,8 +5343,7 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesTimeSeriesPanelSpec'
-          description: 'Options for a time series panel: visualization, formatting,
-            chartAppearance, axes, legend and thresholds. {} accepts every default.'
+          description: The options for this panel kind. {} accepts every default.
       required:
       - kind
       - spec
@@ -5470,7 +5460,8 @@ components:
           - $ref: '#/components/schemas/DashboardtypesDashboardViewData'
           description: The list filter and sort to save.
         name:
-          description: The view name.
+          description: The view name, at most 64 characters.
+          maxLength: 64
           type: string
       required:
       - name
@@ -5553,8 +5544,7 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesAIBuilderQuerySpec'
-          description: A builder query over AI observability traces, with the trace
-            builder query fields.
+          description: The kind-specific query spec.
       required:
       - kind
       - spec
@@ -5569,8 +5559,7 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesBuilderQuerySpec'
-          description: 'A builder query over logs, traces or metrics: signal, aggregations,
-            filter, groupBy, order, limit and functions.'
+          description: The kind-specific query spec.
       required:
       - kind
       - spec
@@ -5585,7 +5574,7 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5ClickHouseQuery'
-          description: 'A ClickHouse SQL query: name, query and legend.'
+          description: The kind-specific query spec.
       required:
       - kind
       - spec
@@ -5600,8 +5589,7 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5CompositeQuery'
-          description: 'Several named builder queries and formulas run together: a
-            list of query envelopes, each with a type and a spec.'
+          description: The kind-specific query spec.
       required:
       - kind
       - spec
@@ -5616,7 +5604,7 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5PromQuery'
-          description: 'A PromQL query: name, query, step and legend.'
+          description: The kind-specific query spec.
       required:
       - kind
       - spec
@@ -5631,8 +5619,7 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderFormula'
-          description: A formula over other query names in the same panel, such as
-            A / B * 100.
+          description: The kind-specific query spec.
       required:
       - kind
       - spec
@@ -5647,8 +5634,7 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderTraceOperator'
-          description: A trace operator expression that combines span queries, such
-            as A => B.
+          description: The kind-specific query spec.
       required:
       - kind
       - spec
@@ -6076,7 +6062,7 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesCustomVariableSpec'
-          description: customValue, the fixed list of values.
+          description: The kind-specific value source spec.
       required:
       - kind
       - spec
@@ -6091,8 +6077,7 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesDynamicVariableSpec'
-          description: 'The attribute whose observed values populate the variable:
-            name and signal.'
+          description: The kind-specific value source spec.
       required:
       - kind
       - spec
@@ -6107,7 +6092,7 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesQueryVariableSpec'
-          description: queryValue, the query whose results populate the variable.
+          description: The kind-specific value source spec.
       required:
       - kind
       - spec

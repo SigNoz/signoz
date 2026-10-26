@@ -52,7 +52,7 @@ func (d *DashboardViewData) Validate() error {
 // ════════════════════════════════════════════════════════════════════════
 
 type PostableDashboardView struct {
-	Name string            `json:"name" required:"true" description:"The view name."`
+	Name string            `json:"name" required:"true" maxLength:"64" description:"The view name, at most 64 characters."`
 	Data DashboardViewData `json:"data" required:"true" description:"The list filter and sort to save."`
 }
 

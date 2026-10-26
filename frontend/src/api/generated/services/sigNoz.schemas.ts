@@ -6021,7 +6021,7 @@ export interface DashboardtypesDashboardPanelRefDTO {
 	dashboardId: string;
 	/**
 	 * @type string
-	 * @description The dashboard title.
+	 * @description The dashboard name.
 	 */
 	dashboardName: string;
 	/**
@@ -6174,7 +6174,7 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTOKind;
 	/**
-	 * @description Options for a time series panel: visualization, formatting, chartAppearance, axes, legend and thresholds. {} accepts every default.
+	 * @description The options for this panel kind. {} accepts every default.
 	 */
 	spec: DashboardtypesTimeSeriesPanelSpecDTO;
 }
@@ -6193,7 +6193,7 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpecDTOKind;
 	/**
-	 * @description Options for a bar chart panel: visualization, formatting, axes, legend and thresholds. {} accepts every default.
+	 * @description The options for this panel kind. {} accepts every default.
 	 */
 	spec: DashboardtypesBarChartPanelSpecDTO;
 }
@@ -6212,7 +6212,7 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpecDTOKind;
 	/**
-	 * @description Options for an area chart panel: visualization, formatting, chartAppearance, axes, legend and thresholds. {} accepts every default.
+	 * @description The options for this panel kind. {} accepts every default.
 	 */
 	spec: DashboardtypesAreaChartPanelSpecDTO;
 }
@@ -6247,7 +6247,7 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpecDTOKind;
 	/**
-	 * @description Options for a number panel: visualization, formatting and comparison thresholds that recolor the value. {} accepts every default.
+	 * @description The options for this panel kind. {} accepts every default.
 	 */
 	spec: DashboardtypesNumberPanelSpecDTO;
 }
@@ -6281,7 +6281,7 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpecDTOKind;
 	/**
-	 * @description Options for a pie chart panel: visualization, formatting and legend. {} accepts every default.
+	 * @description The options for this panel kind. {} accepts every default.
 	 */
 	spec: DashboardtypesPieChartPanelSpecDTO;
 }
@@ -6373,7 +6373,7 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpecDTOKind;
 	/**
-	 * @description Options for a table panel: visualization, formatting (including per-column units) and thresholds. {} accepts every default.
+	 * @description The options for this panel kind. {} accepts every default.
 	 */
 	spec: DashboardtypesTablePanelSpecDTO;
 }
@@ -6421,7 +6421,7 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpecDTOKind;
 	/**
-	 * @description Options for a histogram panel: histogramBuckets and legend. {} accepts every default.
+	 * @description The options for this panel kind. {} accepts every default.
 	 */
 	spec: DashboardtypesHistogramPanelSpecDTO;
 }
@@ -6448,7 +6448,7 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTOKind;
 	/**
-	 * @description Options for a list panel: selectFields, the columns shown for each row. {} accepts every default.
+	 * @description The options for this panel kind. {} accepts every default.
 	 */
 	spec: DashboardtypesListPanelSpecDTO;
 }
@@ -6524,7 +6524,7 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTOKind;
 	/**
-	 * @description Options for a text panel: mode, the text to render, presentation and headerOptions.
+	 * @description The options for this panel kind. {} accepts every default.
 	 */
 	spec: DashboardtypesTextPanelSpecDTO;
 }
@@ -6649,7 +6649,7 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTOKind;
 	/**
-	 * @description Options for a heatmap panel: visualization, formatting, axes, legend and chartAppearance. {} accepts every default.
+	 * @description The options for this panel kind. {} accepts every default.
 	 */
 	spec: DashboardtypesHeatmapPanelSpecDTO;
 }
@@ -6688,7 +6688,7 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDa
 	 */
 	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpecDTOKind;
 	/**
-	 * @description A builder query over logs, traces or metrics: signal, aggregations, filter, groupBy, order, limit and functions.
+	 * @description The kind-specific query spec.
 	 */
 	spec: DashboardtypesBuilderQuerySpecDTO;
 }
@@ -6707,7 +6707,7 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDa
 	 */
 	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpecDTOKind;
 	/**
-	 * @description A builder query over AI observability traces, with the trace builder query fields.
+	 * @description The kind-specific query spec.
 	 */
 	spec: DashboardtypesAIBuilderQuerySpecDTO;
 }
@@ -7045,7 +7045,7 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQu
 	 */
 	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTOKind;
 	/**
-	 * @description Several named builder queries and formulas run together: a list of query envelopes, each with a type and a spec.
+	 * @description The kind-specific query spec.
 	 */
 	spec: Querybuildertypesv5CompositeQueryDTO;
 }
@@ -7064,7 +7064,7 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQu
 	 */
 	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormulaDTOKind;
 	/**
-	 * @description A formula over other query names in the same panel, such as A / B * 100.
+	 * @description The kind-specific query spec.
 	 */
 	spec: Querybuildertypesv5QueryBuilderFormulaDTO;
 }
@@ -7083,7 +7083,7 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQu
 	 */
 	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQueryDTOKind;
 	/**
-	 * @description A PromQL query: name, query, step and legend.
+	 * @description The kind-specific query spec.
 	 */
 	spec: Querybuildertypesv5PromQueryDTO;
 }
@@ -7102,7 +7102,7 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQu
 	 */
 	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQueryDTOKind;
 	/**
-	 * @description A ClickHouse SQL query: name, query and legend.
+	 * @description The kind-specific query spec.
 	 */
 	spec: Querybuildertypesv5ClickHouseQueryDTO;
 }
@@ -7121,7 +7121,7 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQu
 	 */
 	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperatorDTOKind;
 	/**
-	 * @description A trace operator expression that combines span queries, such as A => B.
+	 * @description The kind-specific query spec.
 	 */
 	spec: Querybuildertypesv5QueryBuilderTraceOperatorDTO;
 }
@@ -7259,7 +7259,7 @@ export interface DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgType
 	 */
 	kind: DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpecDTOKind;
 	/**
-	 * @description The attribute whose observed values populate the variable: name and signal.
+	 * @description The kind-specific value source spec.
 	 */
 	spec: DashboardtypesDynamicVariableSpecDTO;
 }
@@ -7286,7 +7286,7 @@ export interface DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgType
 	 */
 	kind: DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpecDTOKind;
 	/**
-	 * @description queryValue, the query whose results populate the variable.
+	 * @description The kind-specific value source spec.
 	 */
 	spec: DashboardtypesQueryVariableSpecDTO;
 }
@@ -7305,7 +7305,7 @@ export interface DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgType
 	 */
 	kind: DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpecDTOKind;
 	/**
-	 * @description customValue, the fixed list of values.
+	 * @description The kind-specific value source spec.
 	 */
 	spec: DashboardtypesCustomVariableSpecDTO;
 }
@@ -7726,7 +7726,7 @@ export interface DashboardtypesJSONPatchOperationDTO {
 
 export interface DashboardtypesListedDashboardV2SpecDTO {
 	/**
-	 * @description The dashboard title and description.
+	 * @description The dashboard name and description.
 	 */
 	display?: DashboardtypesDisplayDTO;
 }
@@ -7752,7 +7752,7 @@ export interface DashboardtypesListedDashboardForUserV2DTO {
 	image?: string;
 	/**
 	 * @type boolean
-	 * @description Whether the stored dashboard is still in the v1 schema. Such rows are read best-effort and cannot be fetched or edited through the v2 endpoints.
+	 * @description Whether the dashboard is still in the v1 schema. It is listed but cannot be fetched or edited through the v2 endpoints.
 	 */
 	legacy: boolean;
 	/**
@@ -7781,7 +7781,7 @@ export interface DashboardtypesListedDashboardForUserV2DTO {
 	 */
 	schemaVersion: string;
 	/**
-	 * @description Where the dashboard came from: user, integration or system.
+	 * @description Where the dashboard came from: user or integration. System dashboards are not listed.
 	 */
 	source: DashboardtypesSourceDTO;
 	/**
@@ -7849,7 +7849,7 @@ export interface DashboardtypesListedDashboardV2DTO {
 	image?: string;
 	/**
 	 * @type boolean
-	 * @description Whether the stored dashboard is still in the v1 schema. Such rows are read best-effort and cannot be fetched or edited through the v2 endpoints.
+	 * @description Whether the dashboard is still in the v1 schema. It is listed but cannot be fetched or edited through the v2 endpoints.
 	 */
 	legacy: boolean;
 	/**
@@ -7873,7 +7873,7 @@ export interface DashboardtypesListedDashboardV2DTO {
 	 */
 	schemaVersion: string;
 	/**
-	 * @description Where the dashboard came from: user, integration or system.
+	 * @description Where the dashboard came from: user or integration. System dashboards are not listed.
 	 */
 	source: DashboardtypesSourceDTO;
 	/**
@@ -7999,7 +7999,8 @@ export interface DashboardtypesPostableDashboardViewDTO {
 	data: DashboardtypesDashboardViewDataDTO;
 	/**
 	 * @type string
-	 * @description The view name.
+	 * @maxLength 64
+	 * @description The view name, at most 64 characters.
 	 */
 	name: string;
 }
