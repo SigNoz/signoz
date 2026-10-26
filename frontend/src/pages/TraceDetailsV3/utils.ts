@@ -9,14 +9,14 @@ import {
 	RESERVED_ERROR,
 } from './utils/generateColorPair';
 
-/** Like `||`, but keeps `0`. */
+/** Like `||`, but keeps `0` and `false`. */
 const valueOrUndefined = <T>(value: T): T | undefined =>
-	value || value === 0 ? value : undefined;
+	value || value === 0 || value === false ? value : undefined;
 
 /**
  * Look up an attribute from both `resource` and `attributes` on a span.
  * Resources are checked first (service.name, k8s.* etc. live there).
- * Falsy values count as missing, except `0`.
+ * Falsy values count as missing, except `0` and `false`.
  *
  * Accepts both `SpanV3` (waterfall) and `FlamegraphSpan` (flamegraph) by typing
  * structurally — the only fields touched are `resource` and `attributes`.
