@@ -52,6 +52,22 @@ export const AnomalyRule: Story = {
 	args: { ruleKind: 'anomaly' },
 };
 
+/**
+ * The anomaly rule with one series picked in the preview: that series drawn
+ * against its forecast, inside the band of deviations the rule allows.
+ */
+export const AnomalyRuleForecastBand: Story = {
+	args: { ruleKind: 'anomaly' },
+	play: async ({ canvasElement }): Promise<void> => {
+		const [firstSeries] = await within(canvasElement).findAllByTestId(
+			'anomaly-series-option',
+			undefined,
+			{ timeout: 15_000 },
+		);
+		await userEvent.click(firstSeries);
+	},
+};
+
 /** An anomaly rule written before the current schema, still in the classic form. */
 export const ClassicAnomalyRule: Story = {
 	args: { ruleKind: 'anomaly', alertSchema: 'classic' },
