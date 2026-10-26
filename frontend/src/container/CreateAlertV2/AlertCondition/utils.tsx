@@ -235,17 +235,22 @@ function TooltipExample({
 	thresholdValue: number;
 	matchType: AlertThresholdMatchType;
 }): JSX.Element {
+	const pointsLabel =
+		matchType === AlertThresholdMatchType.IN_TOTAL
+			? 'error counts'
+			: 'data points';
 	return (
 		<div className="tooltip-example">
 			<strong>Example:</strong>
 			<br />
-			Say, For a 5-minute window (configured in Evaluation settings), 1 min
-			aggregation interval (set up in query) → 5{' '}
-			{matchType === AlertThresholdMatchType.IN_TOTAL
-				? 'error counts'
-				: 'data points'}
-			: [{dataPoints.join(', ')}]<br />
-			With threshold {operatorSymbol} {thresholdValue}: {children}
+			<span className="translate-safe">
+				{`Say, For a 5-minute window (configured in Evaluation settings), 1 min aggregation interval (set up in query) → 5 ${pointsLabel}: [${dataPoints.join(', ')}]`}
+			</span>
+			<br />
+			<span className="translate-safe">
+				{`With threshold ${operatorSymbol} ${thresholdValue}: `}
+			</span>
+			{children}
 		</div>
 	);
 }
