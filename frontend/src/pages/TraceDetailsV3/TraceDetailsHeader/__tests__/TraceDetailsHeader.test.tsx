@@ -1,10 +1,17 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import type { SpantypesGettableTraceSummaryDTO } from 'api/generated/services/sigNoz.schemas';
-import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
+import {
+	NuqsTestingAdapter,
+	type OnUrlUpdateFunction,
+} from 'nuqs/adapters/testing';
 import ROUTES from 'constants/routes';
-import { render } from 'tests/test-utils';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+} from 'tests/test-utils';
 
 import TraceDetailsHeader from '../TraceDetailsHeader';
 import { useTraceSummary } from '../useTraceSummary';
@@ -103,14 +110,15 @@ describe('TraceDetailsHeader – back button', () => {
 
 	it('returns to the Overview tab when opened directly on another tab', async () => {
 		mockHasInAppHistory.mockReturnValue(false);
-		const onUrlUpdate = jest.fn();
+		const user = userEvent.setup({ delay: null });
+		const onUrlUpdate = jest.fn() as jest.MockedFunction<OnUrlUpdateFunction>;
 		render(
 			<NuqsTestingAdapter searchParams="?tab=thread" onUrlUpdate={onUrlUpdate}>
 				<TraceDetailsHeader {...baseProps} />
 			</NuqsTestingAdapter>,
 		);
 
-		fireEvent.click(screen.getByRole('button', { name: /back/i }));
+		await user.click(screen.getByRole('button', { name: /back/i }));
 
 		await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
 		expect(onUrlUpdate.mock.calls[0][0].searchParams.get('tab')).toBeNull();

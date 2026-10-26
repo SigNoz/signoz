@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { act, renderHook, waitFor } from '@testing-library/react';
 import { getTraceThread } from 'api/generated/services/tracedetail';
+import { act, renderHook, waitFor } from 'tests/test-utils';
 
 import { useTraceThread } from '../useTraceThread';
 
