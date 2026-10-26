@@ -61,7 +61,7 @@ export interface IQuickFiltersProps {
 	className?: string;
 	showFilterCollapse?: boolean;
 	showQueryName?: boolean;
-	useFieldApis?: QuickFilterCheckboxUseFieldApis;
+	useFieldApis: QuickFilterCheckboxUseFieldApis;
 	savedViewsHeader?: ReactNode;
 }
 
@@ -75,9 +75,6 @@ export enum QuickFiltersSource {
 	AI_OBSERVABILITY = 'ai-observability',
 }
 
-/**
- * Opt-in: fetch values from the /v1/fields/values API instead of /v3/autocomplete/attribute_values
- */
 export type QuickFilterCheckboxUseFieldApis = {
 	startUnixMilli: number;
 	endUnixMilli: number;
