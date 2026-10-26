@@ -217,7 +217,11 @@ describe('AlertCondition', () => {
 			0,
 			expect.objectContaining({
 				functions: [
-					{ name: 'anomaly', args: [], namedArgs: { z_score_threshold: 3 } },
+					{
+						name: 'anomaly',
+						args: [],
+						namedArgs: { z_score_threshold: 3, seasonality: 'hourly' },
+					},
 				],
 			}),
 		);

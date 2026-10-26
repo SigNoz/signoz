@@ -6,23 +6,31 @@ import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { useCreateAlertState } from '../context';
 import { syncAnomalyFunction } from './utils';
 
-// The anomaly function's z-score only draws the preview bands; alerting uses the threshold target.
+// These args only drive the preview; the rule reads the threshold target and condition.seasonality.
 export function useAnomalyFunctionSync(): void {
 	const { alertType, thresholdState } = useCreateAlertState();
 	const { currentQuery, handleSetQueryData } = useQueryBuilder();
 
-	const zScoreThreshold =
-		alertType === AlertTypes.ANOMALY_BASED_ALERT
-			? Number(thresholdState.thresholds[0]?.thresholdValue)
-			: undefined;
+	const isAnomalyAlert = alertType === AlertTypes.ANOMALY_BASED_ALERT;
+	const zScoreThreshold = Number(thresholdState.thresholds[0]?.thresholdValue);
+	const { seasonality } = thresholdState;
 
 	useEffect(() => {
+		const namedArgs = isAnomalyAlert
+			? { z_score_threshold: zScoreThreshold, seasonality }
+			: undefined;
 		currentQuery.builder.queryData.forEach((queryData, index) => {
 			const currentFunctions = queryData.functions || [];
-			const functions = syncAnomalyFunction(currentFunctions, zScoreThreshold);
+			const functions = syncAnomalyFunction(currentFunctions, namedArgs);
 			if (!isEqual(functions, currentFunctions)) {
 				handleSetQueryData(index, { ...queryData, functions });
 			}
 		});
-	}, [currentQuery.builder.queryData, zScoreThreshold, handleSetQueryData]);
+	}, [
+		currentQuery.builder.queryData,
+		isAnomalyAlert,
+		zScoreThreshold,
+		seasonality,
+		handleSetQueryData,
+	]);
 }

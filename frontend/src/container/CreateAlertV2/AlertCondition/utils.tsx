@@ -44,23 +44,15 @@ export function getQueryNames(currentQuery: Query): BaseOptionType[] {
 	return queryConfig[currentQuery.queryType]?.() || [];
 }
 
-// Drops the anomaly function, or re-adds it last with the given z-score.
 export function syncAnomalyFunction(
 	functions: QueryFunction[],
-	zScoreThreshold: number | undefined,
+	namedArgs: QueryFunction['namedArgs'],
 ): QueryFunction[] {
 	const otherFunctions = functions.filter(({ name }) => name !== 'anomaly');
-	if (zScoreThreshold === undefined) {
+	if (!namedArgs) {
 		return otherFunctions;
 	}
-	return [
-		...otherFunctions,
-		{
-			name: 'anomaly',
-			args: [],
-			namedArgs: { z_score_threshold: zScoreThreshold },
-		},
-	];
+	return [...otherFunctions, { name: 'anomaly', args: [], namedArgs }];
 }
 
 export function getCategoryByOptionId(id: string): string | undefined {
