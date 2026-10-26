@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import type { SpantypesGettableTraceSummaryDTO } from 'api/generated/services/sigNoz.schemas';
@@ -98,6 +98,23 @@ describe('TraceDetailsHeader – back button', () => {
 
 		expect(mockPush).toHaveBeenCalledTimes(1);
 		expect(mockPush).toHaveBeenCalledWith(ROUTES.TRACES_EXPLORER);
+		expect(mockGoBack).not.toHaveBeenCalled();
+	});
+
+	it('returns to the Overview tab when opened directly on another tab', async () => {
+		mockHasInAppHistory.mockReturnValue(false);
+		const onUrlUpdate = jest.fn();
+		render(
+			<NuqsTestingAdapter searchParams="?tab=thread" onUrlUpdate={onUrlUpdate}>
+				<TraceDetailsHeader {...baseProps} />
+			</NuqsTestingAdapter>,
+		);
+
+		fireEvent.click(screen.getByRole('button', { name: /back/i }));
+
+		await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
+		expect(onUrlUpdate.mock.calls[0][0].searchParams.get('tab')).toBeNull();
+		expect(mockPush).not.toHaveBeenCalled();
 		expect(mockGoBack).not.toHaveBeenCalled();
 	});
 });
