@@ -24,11 +24,23 @@ func BuildRelatedLinks(annotations model.LabelSet) []RelatedLink {
 	return newRelatedLinks(string(annotations[AnnotationRelatedLogs]), string(annotations[AnnotationRelatedTraces]))
 }
 
-// buildRelatedLinksFromTemplateData backs the relatedLinks template func, where
-// .Annotations is template.KV in channel templates and map[string]any after
-// custom template preprocessing.
-func buildRelatedLinksFromTemplateData(annotations any) []RelatedLink {
-	return newRelatedLinks(lookupTemplateAnnotation(annotations, AnnotationRelatedLogs), lookupTemplateAnnotation(annotations, AnnotationRelatedTraces))
+// buildRelatedLinksFromTemplateData backs the relatedLinks template func. Channel
+// templates pass upstream's template.Alert; rule templates pass the preprocessed
+// map, which keeps annotations under "annotations" and flattens them to the top.
+func buildRelatedLinksFromTemplateData(alert any) []RelatedLink {
+	switch a := alert.(type) {
+	case template.Alert:
+		return newRelatedLinks(a.Annotations[AnnotationRelatedLogs], a.Annotations[AnnotationRelatedTraces])
+	case *template.Alert:
+		if a == nil {
+			return nil
+		}
+		return newRelatedLinks(a.Annotations[AnnotationRelatedLogs], a.Annotations[AnnotationRelatedTraces])
+	case map[string]any:
+		return newRelatedLinks(lookupTemplateDataAnnotation(a, AnnotationRelatedLogs), lookupTemplateDataAnnotation(a, AnnotationRelatedTraces))
+	}
+
+	return nil
 }
 
 func newRelatedLinks(logsURL, tracesURL string) []RelatedLink {
@@ -44,16 +56,22 @@ func newRelatedLinks(logsURL, tracesURL string) []RelatedLink {
 	return links
 }
 
-func lookupTemplateAnnotation(annotations any, key string) string {
-	switch m := annotations.(type) {
+func lookupTemplateDataAnnotation(data map[string]any, key string) string {
+	switch annotations := data["annotations"].(type) {
 	case template.KV:
-		return m[key]
+		if value := annotations[key]; value != "" {
+			return value
+		}
 	case map[string]string:
-		return m[key]
+		if value := annotations[key]; value != "" {
+			return value
+		}
 	case map[string]any:
-		value, _ := m[key].(string)
-		return value
+		if value, _ := annotations[key].(string); value != "" {
+			return value
+		}
 	}
 
-	return ""
+	value, _ := data[key].(string)
+	return value
 }

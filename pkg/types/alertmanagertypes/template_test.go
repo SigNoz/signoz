@@ -251,7 +251,7 @@ func TestFromGlobsRelatedLinks(t *testing.T) {
 		},
 		{
 			name:        "Function_DirectRange",
-			template:    `{{ range relatedLinks .Annotations }}{{ .Label }}={{ .URL }};{{ end }}`,
+			template:    `{{ range relatedLinks . }}{{ .Label }}={{ .URL }};{{ end }}`,
 			annotations: model.LabelSet{"related_logs": "https://signoz.io/logs/logs-explorer?e=5", "related_traces": "https://signoz.io/traces-explorer?e=5"},
 			expected:    "View Related Logs=https://signoz.io/logs/logs-explorer?e=5;View Related Traces=https://signoz.io/traces-explorer?e=5;",
 		},
