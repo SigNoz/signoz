@@ -3,6 +3,7 @@ package querier
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -1069,8 +1070,11 @@ func TestBucketCache_FilteredCachedResults(t *testing.T) {
 	// Get cached data - should be filtered to requested range
 	cached, missing := bc.GetMissRanges(ctx, orgID, query2, qbtypes.Step{Duration: 1000 * time.Millisecond})
 
-	// Should have no missing ranges
-	assert.Len(t, missing, 0)
+	// The value at 3000 stands for the whole step to 4000, which reaches past the
+	// window, so it is left to be recomputed as a partial rather than served.
+	require.Len(t, missing, 1)
+	assert.Equal(t, uint64(3000), missing[0].From)
+	assert.Equal(t, uint64(3500), missing[0].To)
 	assert.NotNil(t, cached)
 
 	// Verify the cached result only contains values within the requested range
@@ -1080,16 +1084,63 @@ func TestBucketCache_FilteredCachedResults(t *testing.T) {
 	require.Len(t, tsData.Aggregations[0].Series, 1)
 
 	series := tsData.Aggregations[0].Series[0]
-	assert.Len(t, series.Values, 2) // Only values at 2000 and 3000 should be included
+	require.Len(t, series.Values, 1)
 
 	// Verify the exact values
 	assert.Equal(t, int64(2000), series.Values[0].Timestamp)
 	assert.Equal(t, float64(20), series.Values[0].Value)
-	assert.Equal(t, int64(3000), series.Values[1].Timestamp)
-	assert.Equal(t, float64(30), series.Values[1].Value)
 
 	// Value at 1000 should not be included (before requested range)
 	// Value at 4000 should not be included (after requested range)
+}
+
+// A promql value is the query evaluated at a single moment rather than over a
+// span, so the one at the window's end belongs to it and has to survive caching.
+func TestBucketCache_PromQLKeepsTheValueAtTheWindowEnd(t *testing.T) {
+	bc := createTestBucketCache(t)
+	ctx := context.Background()
+	orgID := valuer.UUID{}
+	step := qbtypes.Step{Duration: time.Minute}
+
+	query := &promqlQuery{
+		logger:      slog.Default(),
+		query:       qbtypes.PromQuery{Query: "up", Step: step},
+		tr:          qbtypes.TimeRange{From: 600_000, To: 780_000},
+		requestType: qbtypes.RequestTypeTimeSeries,
+	}
+
+	bc.Put(ctx, orgID, query, step, &qbtypes.Result{
+		Type: qbtypes.RequestTypeTimeSeries,
+		Value: &qbtypes.TimeSeriesData{
+			QueryName: "A",
+			Aggregations: []*qbtypes.AggregationBucket{{
+				Series: []*qbtypes.TimeSeries{{
+					Values: []*qbtypes.TimeSeriesValue{
+						{Timestamp: 600_000, Value: 1},
+						{Timestamp: 660_000, Value: 2},
+						{Timestamp: 720_000, Value: 3},
+						{Timestamp: 780_000, Value: 4},
+					},
+				}},
+			}},
+		},
+	})
+	time.Sleep(10 * time.Millisecond)
+
+	cached, missing := bc.GetMissRanges(ctx, orgID, query, step)
+	assert.Empty(t, missing)
+	require.NotNil(t, cached)
+
+	tsData, ok := cached.Value.(*qbtypes.TimeSeriesData)
+	require.True(t, ok)
+	require.Len(t, tsData.Aggregations, 1)
+	require.Len(t, tsData.Aggregations[0].Series, 1)
+
+	timestamps := []int64{}
+	for _, value := range tsData.Aggregations[0].Series[0].Values {
+		timestamps = append(timestamps, value.Timestamp)
+	}
+	assert.Equal(t, []int64{600_000, 660_000, 720_000, 780_000}, timestamps)
 }
 
 func TestBucketCache_FindMissingRangesWithStep(t *testing.T) {
@@ -1150,7 +1201,20 @@ func TestBucketCache_FindMissingRangesWithStep(t *testing.T) {
 			expectedMiss: []*qbtypes.TimeRange{
 				{From: 1000, To: 1500},
 			},
-			description: "Window smaller than step should use basic algorithm",
+			description: "Window smaller than step is fetched whole",
+		},
+		{
+			name: "small_window_less_than_step_inside_a_bucket",
+			buckets: []*qbtypes.CachedBucket{
+				{StartMs: 0, EndMs: 3000},
+			},
+			startMs: 1000,
+			endMs:   1500,
+			stepMs:  1000,
+			expectedMiss: []*qbtypes.TimeRange{
+				{From: 1000, To: 1500},
+			},
+			description: "A cached point spans its whole step, so it cannot answer a window shorter than the step",
 		},
 		{
 			name:    "zero_step_uses_basic_algorithm",
