@@ -4,14 +4,15 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/llmpricingruletypes"
 	"github.com/gorilla/mux"
 )
 
 func (provider *provider) addLLMPricingRuleRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v1/llm_pricing_rules", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.llmPricingRuleHandler.List),
+		provider.authzMiddleware.CheckResources(provider.llmPricingRuleHandler.List, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListLLMPricingRules",
 			Tags:                []string{"llmpricingrules"},
@@ -25,14 +26,20 @@ func (provider *provider) addLLMPricingRuleRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceLLMPricingRule.Scope(coretypes.VerbList)}),
 		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceLLMPricingRule,
+			Verb:     coretypes.VerbList,
+			Category: coretypes.ActionCategoryDataAccess,
+			Selector: coretypes.WildcardSelector,
+		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v1/llm_pricing_rules", handler.New(
-		provider.authzMiddleware.AdminAccess(provider.llmPricingRuleHandler.CreateOrUpdate),
+		provider.authzMiddleware.CheckResources(provider.llmPricingRuleHandler.CreateOrUpdate, authtypes.SigNozAdminRoleName),
 		handler.OpenAPIDef{
 			ID:                 "CreateOrUpdateLLMPricingRules",
 			Tags:               []string{"llmpricingrules"},
@@ -43,14 +50,20 @@ func (provider *provider) addLLMPricingRuleRoutes(router *mux.Router) error {
 			SuccessStatusCode:  http.StatusNoContent,
 			ErrorStatusCodes:   []int{http.StatusBadRequest},
 			Deprecated:         false,
-			SecuritySchemes:    newSecuritySchemes(types.RoleAdmin),
+			SecuritySchemes:    newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceLLMPricingRule.Scope(coretypes.VerbUpdate)}),
 		},
+		handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbUpdate,
+			Category:  coretypes.ActionCategoryConfigurationChange,
+			Selector:  llmpricingruletypes.RuleSelector,
+			Resources: llmpricingruletypes.UpdatableRulesResources,
+		}),
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v1/llm_pricing_rules/unmapped_models", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.llmPricingRuleHandler.ListUnmappedModels),
+		provider.authzMiddleware.CheckResources(provider.llmPricingRuleHandler.ListUnmappedModels, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListUnmappedLLMModels",
 			Tags:                []string{"llmpricingrules"},
@@ -63,14 +76,20 @@ func (provider *provider) addLLMPricingRuleRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceLLMPricingRule.Scope(coretypes.VerbList)}),
 		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceLLMPricingRule,
+			Verb:     coretypes.VerbList,
+			Category: coretypes.ActionCategoryDataAccess,
+			Selector: coretypes.WildcardSelector,
+		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v1/llm_pricing_rules/{id}", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.llmPricingRuleHandler.Get),
+		provider.authzMiddleware.CheckResources(provider.llmPricingRuleHandler.Get, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetLLMPricingRule",
 			Tags:                []string{"llmpricingrules"},
@@ -83,14 +102,21 @@ func (provider *provider) addLLMPricingRuleRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusNotFound},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceLLMPricingRule.Scope(coretypes.VerbRead)}),
 		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceLLMPricingRule,
+			Verb:     coretypes.VerbRead,
+			Category: coretypes.ActionCategoryDataAccess,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v1/llm_pricing_rules/{id}", handler.New(
-		provider.authzMiddleware.AdminAccess(provider.llmPricingRuleHandler.Delete),
+		provider.authzMiddleware.CheckResources(provider.llmPricingRuleHandler.Delete, authtypes.SigNozAdminRoleName),
 		handler.OpenAPIDef{
 			ID:                  "DeleteLLMPricingRule",
 			Tags:                []string{"llmpricingrules"},
@@ -103,8 +129,15 @@ func (provider *provider) addLLMPricingRuleRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusNoContent,
 			ErrorStatusCodes:    []int{http.StatusNotFound},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceLLMPricingRule.Scope(coretypes.VerbDelete)}),
 		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceLLMPricingRule,
+			Verb:     coretypes.VerbDelete,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}),
 	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}

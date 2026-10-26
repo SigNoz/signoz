@@ -218,6 +218,11 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
+		// llm-pricing-rule — admin writes, viewer reads
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLLMPricingRule}, WildCardSelectorString)},
+		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLLMPricingRule}, WildCardSelectorString)},
+		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLLMPricingRule}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLLMPricingRule}, WildCardSelectorString)},
 	},
 	SigNozEditorRoleName: {
 		// cloud-integration — editor can read accounts
@@ -317,6 +322,9 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
+		// llm-pricing-rule — read only (admin writes)
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLLMPricingRule}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLLMPricingRule}, WildCardSelectorString)},
 	},
 	SigNozViewerRoleName: {
 		// cloud-integration — viewer can read accounts
@@ -381,6 +389,9 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		// metrics-field — viewer reads
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
+		// llm-pricing-rule — read only
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLLMPricingRule}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLLMPricingRule}, WildCardSelectorString)},
 	},
 	SigNozAnonymousRoleName: {
 		// public-dashboard — anonymous read
