@@ -2,16 +2,15 @@ import { useCallback, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { toast } from '@signozhq/ui/sonner';
 import {
-	CreateAccountMutationResult,
 	GetConnectionCredentialsQueryResult,
 	invalidateListAccounts,
-	useAgentCheckIn,
 	useCreateAccount,
 	useGetConnectionCredentials,
 } from 'api/generated/services/cloudintegration';
 import {
 	CloudintegrationtypesCredentialsDTO,
-	CloudintegrationtypesPostableAccountDTO,
+	CloudintegrationtypesGCPPostableAccountConfigDTO,
+	CloudintegrationtypesGettableAccountWithConnectionArtifactDTO,
 	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { ErrorType } from 'api/generatedAPIInstance';
@@ -22,23 +21,36 @@ import { toAPIError } from 'utils/errorUtils';
 
 import logEvent from '../../../api/common/logEvent';
 
-interface UseCloudAccountSetupDrawerProps {
+interface UseGcpAccountSetupProps {
 	onClose: () => void;
 }
 
-interface UseCloudAccountSetupDrawer {
-	isLoading: boolean;
-	connectAccount: (values: GcpSetupFormValues) => Promise<void>;
-	handleClose: () => void;
+interface UseGcpAccountSetup {
 	connectionParams?: CloudintegrationtypesCredentialsDTO;
 	isConnectionParamsLoading: boolean;
+	isLoading: boolean;
 	submitError: string | null;
+	setSubmitError: (message: string | null) => void;
 	clearSubmitError: () => void;
+	createGcpAccount: (
+		gcpConfig: CloudintegrationtypesGCPPostableAccountConfigDTO,
+		values: GcpSetupFormValues,
+	) => Promise<CloudintegrationtypesGettableAccountWithConnectionArtifactDTO>;
+	/** Runs a submit, showing the backend's message inline (or `fallbackMessage`) when it fails. */
+	runSubmit: (
+		work: () => Promise<void>,
+		fallbackMessage: string,
+	) => Promise<void>;
+	handleConnected: (payload: {
+		cloudIntegrationId: string;
+		providerAccountId: string | null;
+	}) => void;
 }
 
-export function useCloudAccountSetupDrawer({
+/** What both GCP connection methods share: credentials, account creation, submit state and the connected toast. */
+export function useGcpAccountSetup({
 	onClose,
-}: UseCloudAccountSetupDrawerProps): UseCloudAccountSetupDrawer {
+}: UseGcpAccountSetupProps): UseGcpAccountSetup {
 	const queryClient = useQueryClient();
 	const [isLoading, setIsLoading] = useState(false);
 	const [submitError, setSubmitError] = useState<string | null>(null);
@@ -48,7 +60,6 @@ export function useCloudAccountSetupDrawer({
 	}, []);
 
 	const { mutateAsync: createAccount } = useCreateAccount();
-	const { mutateAsync: checkIn } = useAgentCheckIn();
 	const handleError = useAxiosError();
 
 	const { data: connectionParams, isLoading: isConnectionParamsLoading } =
@@ -63,44 +74,15 @@ export function useCloudAccountSetupDrawer({
 			},
 		);
 
-	const handleClose = useCallback((): void => {
-		onClose();
-	}, [onClose]);
-
-	const handleConnectionSuccess = useCallback(
-		(payload: {
-			cloudIntegrationId: string;
-			providerAccountId: string;
-		}): void => {
-			void logEvent('GCP Integration: Account connected', {
-				cloudIntegrationId: payload.cloudIntegrationId,
-				providerAccountId: payload.providerAccountId,
-			});
-			toast.success('GCP account connected successfully', {
-				position: 'bottom-right',
-			});
-			void invalidateListAccounts(queryClient, {
-				cloudProvider: INTEGRATION_TYPES.GCP,
-			});
-			handleClose();
-		},
-		[handleClose, queryClient],
-	);
-
-	const connectAccount = useCallback(
-		async (values: GcpSetupFormValues): Promise<void> => {
-			try {
-				setIsLoading(true);
-				setSubmitError(null);
-
-				const payload: CloudintegrationtypesPostableAccountDTO = {
-					config: {
-						gcp: {
-							deploymentRegion: values.deploymentRegion,
-							deploymentProjectId: values.deploymentProjectId,
-							projectIds: values.projectIds || [],
-						},
-					},
+	const createGcpAccount = useCallback(
+		async (
+			gcpConfig: CloudintegrationtypesGCPPostableAccountConfigDTO,
+			values: GcpSetupFormValues,
+		): Promise<CloudintegrationtypesGettableAccountWithConnectionArtifactDTO> => {
+			const response = await createAccount({
+				pathParams: { cloudProvider: INTEGRATION_TYPES.GCP },
+				data: {
+					config: { gcp: gcpConfig },
 					credentials: {
 						// Cloud users can't edit these — the backend-provided credentials are
 						// authoritative. Enterprise users have no backend defaults and enter
@@ -110,56 +92,69 @@ export function useCloudAccountSetupDrawer({
 						sigNozApiUrl: connectionParams?.data?.sigNozApiUrl || values.sigNozApiUrl,
 						sigNozApiKey: connectionParams?.data?.sigNozApiKey || values.sigNozApiKey,
 					},
-				};
+				},
+			});
 
-				// Step 1: create the integration account.
-				const createResponse: CreateAccountMutationResult = await createAccount({
-					pathParams: { cloudProvider: INTEGRATION_TYPES.GCP },
-					data: payload,
-				});
+			return response.data;
+		},
+		[connectionParams, createAccount],
+	);
 
-				const cloudIntegrationId = createResponse.data.id;
-				const providerAccountId = values.accountName;
-
-				void logEvent('GCP Integration: Account created', {
-					id: cloudIntegrationId,
-				});
-
-				// Step 2: mimic the agent by checking in from the frontend (manual flow).
-				await checkIn({
-					pathParams: { cloudProvider: INTEGRATION_TYPES.GCP },
-					data: {
-						providerAccountId,
-						cloudIntegrationId,
-						data: {},
-					},
-				});
-
-				handleConnectionSuccess({ cloudIntegrationId, providerAccountId });
+	const runSubmit = useCallback(
+		async (work: () => Promise<void>, fallbackMessage: string): Promise<void> => {
+			try {
+				setIsLoading(true);
+				setSubmitError(null);
+				await work();
 			} catch (error) {
 				// Surface the backend's message inline in the drawer instead of a
 				// generic failure string.
 				const message = toAPIError(
 					error as ErrorType<RenderErrorResponseDTO>,
-					'Failed to connect GCP account',
+					fallbackMessage,
 				).getErrorMessage();
 				setSubmitError(message);
 			} finally {
 				setIsLoading(false);
 			}
 		},
-		[connectionParams, createAccount, checkIn, handleConnectionSuccess],
+		[],
+	);
+
+	const handleConnected = useCallback(
+		({
+			cloudIntegrationId,
+			providerAccountId,
+		}: {
+			cloudIntegrationId: string;
+			providerAccountId: string | null;
+		}): void => {
+			void logEvent('GCP Integration: Account connected', {
+				cloudIntegrationId,
+				providerAccountId,
+			});
+			toast.success('GCP account connected successfully', {
+				position: 'bottom-right',
+			});
+			void invalidateListAccounts(queryClient, {
+				cloudProvider: INTEGRATION_TYPES.GCP,
+			});
+			onClose();
+		},
+		[onClose, queryClient],
 	);
 
 	return {
-		isLoading,
-		connectAccount,
-		handleClose,
 		connectionParams: connectionParams?.data as
 			| CloudintegrationtypesCredentialsDTO
 			| undefined,
 		isConnectionParamsLoading,
+		isLoading,
 		submitError,
+		setSubmitError,
 		clearSubmitError,
+		createGcpAccount,
+		runSubmit,
+		handleConnected,
 	};
 }
