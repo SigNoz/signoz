@@ -9,7 +9,7 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
-type deleteOrphanServiceAccountRoles struct{}
+type deleteOrphanSARoles struct{}
 
 type serviceAccount139 struct {
 	bun.BaseModel `bun:"table:service_account"`
@@ -24,20 +24,20 @@ type serviceAccountRole139 struct {
 	ServiceAccountID string `bun:"service_account_id"`
 }
 
-func NewDeleteOrphanServiceAccountRolesFactory() factory.ProviderFactory[SQLMigration, Config] {
+func NewDeleteOrphanSARolesFactory() factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(
-		factory.MustNewName("delete_orphan_service_account_roles"),
+		factory.MustNewName("delete_orphan_sa_roles"),
 		func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-			return &deleteOrphanServiceAccountRoles{}, nil
+			return &deleteOrphanSARoles{}, nil
 		},
 	)
 }
 
-func (migration *deleteOrphanServiceAccountRoles) Register(migrations *migrate.Migrations) error {
+func (migration *deleteOrphanSARoles) Register(migrations *migrate.Migrations) error {
 	return migrations.Register(migration.Up, migration.Down)
 }
 
-func (migration *deleteOrphanServiceAccountRoles) Up(ctx context.Context, db *bun.DB) error {
+func (migration *deleteOrphanSARoles) Up(ctx context.Context, db *bun.DB) error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -69,6 +69,6 @@ func (migration *deleteOrphanServiceAccountRoles) Up(ctx context.Context, db *bu
 	return tx.Commit()
 }
 
-func (migration *deleteOrphanServiceAccountRoles) Down(context.Context, *bun.DB) error {
+func (migration *deleteOrphanSARoles) Down(context.Context, *bun.DB) error {
 	return nil
 }
