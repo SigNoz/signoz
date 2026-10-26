@@ -1,5 +1,4 @@
-export type SetupFlow = 'manual' | 'agent';
-
+/** Shared by both connection methods; agent setup leaves accountName and projectIds unused. */
 export interface GcpSetupFormValues {
 	accountName: string;
 	deploymentProjectId: string;
