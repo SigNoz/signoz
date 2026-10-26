@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"regexp"
+	"slices"
 	"strings"
 	"text/template/parse"
 
@@ -22,6 +23,9 @@ const (
 
 var (
 	relatedLinksActionPattern = regexp.MustCompile(`(?s)\{\{-?(.*?)-?\}\}`)
+
+	relatedLogsReferencePattern   = regexp.MustCompile(`\.Annotations\.related_logs(?:[^A-Za-z0-9_]|$)`)
+	relatedTracesReferencePattern = regexp.MustCompile(`\.Annotations\.related_traces(?:[^A-Za-z0-9_]|$)`)
 
 	relatedLinksSlackKind = relatedLinksChannelKind{
 		configsKey:  "slack_configs",
@@ -341,41 +345,47 @@ func rewriteRelatedLinksInField(object map[string]json.RawMessage, kind relatedL
 	return true, nil
 }
 
-// rewriteRelatedLinks swaps the related links section of tmpl for the kind's
+// rewriteRelatedLinks swaps every related links section of tmpl for the kind's
 // block call. It returns the input unchanged when tmpl never references the
-// related links annotations, and an error when it does but the section was
+// related links annotations, and an error when it does but a section was
 // customised, is not in the expected shape or does not parse.
 func rewriteRelatedLinks(tmpl string, kind relatedLinksChannelKind) (string, bool, error) {
-	chunks := lexRelatedLinksChunks(tmpl)
-	start, end, found := findRelatedLinksSection(tmpl, chunks)
-	if !found {
-		if indexRelatedLinksAction(chunks, 0, "related_logs") >= 0 || indexRelatedLinksAction(chunks, 0, "related_traces") >= 0 {
-			return tmpl, false, errRelatedLinksUnrecognised
-		}
-		return tmpl, false, nil
-	}
-
-	section, err := normalizeRelatedLinksTemplate(tmpl[start:end])
-	if err != nil {
-		return tmpl, false, err
-	}
-
-	matched := false
-	for _, shipped := range kind.defaults {
-		normalized, err := normalizeRelatedLinksTemplate(shipped)
+	shipped := make([]string, 0, len(kind.defaults))
+	for _, snippet := range kind.defaults {
+		normalized, err := normalizeRelatedLinksTemplate(snippet)
 		if err != nil {
 			return tmpl, false, err
 		}
-		if section == normalized {
-			matched = true
-			break
-		}
-	}
-	if !matched {
-		return tmpl, false, errRelatedLinksCustomised
+		shipped = append(shipped, normalized)
 	}
 
-	rewritten := tmpl[:start] + kind.replacement + tmpl[end:]
+	rewritten := tmpl
+	changed := false
+	for {
+		chunks := lexRelatedLinksChunks(rewritten)
+		start, end, found := findRelatedLinksSection(rewritten, chunks)
+		if !found {
+			if !changed && !strings.Contains(rewritten, kind.replacement) && (indexRelatedLinksAction(chunks, 0, relatedLogsReferencePattern) >= 0 || indexRelatedLinksAction(chunks, 0, relatedTracesReferencePattern) >= 0) {
+				return tmpl, false, errRelatedLinksUnrecognised
+			}
+			break
+		}
+
+		section, err := normalizeRelatedLinksTemplate(rewritten[start:end])
+		if err != nil {
+			return tmpl, false, err
+		}
+		if !slices.Contains(shipped, section) {
+			return tmpl, false, errRelatedLinksCustomised
+		}
+
+		rewritten = rewritten[:start] + kind.replacement + rewritten[end:]
+		changed = true
+	}
+	if !changed {
+		return tmpl, false, nil
+	}
+
 	if _, err := normalizeRelatedLinksTemplate(rewritten); err != nil {
 		return tmpl, false, err
 	}
@@ -405,7 +415,7 @@ func lexRelatedLinksChunks(tmpl string) []relatedLinksChunk {
 // the Slack header text before it) to the end of the first action naming
 // related_traces that follows.
 func findRelatedLinksSection(tmpl string, chunks []relatedLinksChunk) (int, int, bool) {
-	logsIdx := indexRelatedLinksAction(chunks, 0, "related_logs")
+	logsIdx := indexRelatedLinksAction(chunks, 0, relatedLogsReferencePattern)
 	if logsIdx < 0 {
 		return 0, 0, false
 	}
@@ -414,7 +424,7 @@ func findRelatedLinksSection(tmpl string, chunks []relatedLinksChunk) (int, int,
 		return 0, 0, false
 	}
 
-	tracesIdx := indexRelatedLinksAction(chunks, logsEnd+1, "related_traces")
+	tracesIdx := indexRelatedLinksAction(chunks, logsEnd+1, relatedTracesReferencePattern)
 	if tracesIdx < 0 {
 		return 0, 0, false
 	}
@@ -434,9 +444,11 @@ func findRelatedLinksSection(tmpl string, chunks []relatedLinksChunk) (int, int,
 	return start, chunks[tracesEnd].end, true
 }
 
-func indexRelatedLinksAction(chunks []relatedLinksChunk, from int, annotation string) int {
+// indexRelatedLinksAction skips comments so a mention inside {{/* */}} never
+// anchors a section.
+func indexRelatedLinksAction(chunks []relatedLinksChunk, from int, reference *regexp.Regexp) int {
 	for i := from; i < len(chunks); i++ {
-		if chunks[i].action && strings.Contains(chunks[i].inner, annotation) {
+		if chunks[i].action && !strings.HasPrefix(chunks[i].inner, "/*") && reference.MatchString(chunks[i].inner) {
 			return i
 		}
 	}
