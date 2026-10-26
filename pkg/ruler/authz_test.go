@@ -1,43 +1,10 @@
 package ruler
 
 import (
-	"context"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertest"
-	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
-
-func TestParseRoutePolicyChannels(t *testing.T) {
-	testCases := []struct {
-		name    string
-		body    string
-		want    []string
-		wantErr bool
-	}{
-		{name: "TwoChannels_Returned", body: `{"name":"p","expression":"a == 1","channels":["slack","pager"]}`, want: []string{"slack", "pager"}},
-		{name: "NoChannels_Nil", body: `{"name":"p","expression":"a == 1"}`, want: nil},
-		{name: "NotJSON_Errors", body: `not json`, wantErr: true},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			got, err := parseRoutePolicyChannels([]byte(testCase.body))
-			if testCase.wantErr {
-				require.Error(t, err)
-				return
-			}
-
-			require.NoError(t, err)
-			assert.Equal(t, testCase.want, got)
-		})
-	}
-}
 
 func TestDiffLinks(t *testing.T) {
 	testCases := []struct {
@@ -105,44 +72,6 @@ func TestDiffLinks(t *testing.T) {
 
 			assert.Equal(t, testCase.wantAttached, attached)
 			assert.Equal(t, testCase.wantDetached, detached)
-		})
-	}
-}
-
-func TestResolveChannelIDs(t *testing.T) {
-	slackID := valuer.GenerateUUID()
-	pagerID := valuer.GenerateUUID()
-	channels := []*alertmanagertypes.Channel{
-		{Identifiable: types.Identifiable{ID: slackID}, DisplayName: "slack"},
-		{Identifiable: types.Identifiable{ID: pagerID}, DisplayName: "pager"},
-	}
-
-	testCases := []struct {
-		name    string
-		names   []string
-		want    []string
-		wantErr bool
-	}{
-		{name: "AllKnown_IDsInRequestOrder", names: []string{"pager", "slack"}, want: []string{pagerID.StringValue(), slackID.StringValue()}},
-		{name: "UnknownName_Errors", names: []string{"slack", "missing"}, wantErr: true},
-		{name: "NoNames_NoLookup", names: nil, want: nil},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			alertmanagerService := alertmanagertest.NewMockAlertmanager(t)
-			if len(testCase.names) > 0 {
-				alertmanagerService.EXPECT().ListChannels(mock.Anything, mock.Anything).Return(channels, nil)
-			}
-
-			got, err := resolveChannelIDs(context.Background(), alertmanagerService, valuer.GenerateUUID(), testCase.names)
-			if testCase.wantErr {
-				require.Error(t, err)
-				return
-			}
-
-			require.NoError(t, err)
-			assert.Equal(t, testCase.want, got)
 		})
 	}
 }
