@@ -965,7 +965,6 @@ export function QueryBuilderProvider({
 			redirectingUrl?: (typeof ROUTES)[keyof typeof ROUTES],
 			shouldNotStringify?: boolean,
 			newTab?: boolean,
-			replace?: boolean,
 		) => {
 			const queryType =
 				!query.queryType || !Object.values(EQueryType).includes(query.queryType)
@@ -1033,7 +1032,7 @@ export function QueryBuilderProvider({
 				? `${redirectingUrl}?${urlQuery}`
 				: `${location.pathname}?${urlQuery}`;
 
-			safeNavigate(generatedUrl, { newTab, replace });
+			safeNavigate(generatedUrl, { newTab });
 		},
 		[location.pathname, safeNavigate],
 	);
@@ -1117,15 +1116,12 @@ export function QueryBuilderProvider({
 			}
 
 			if (normalizedCompositeQuery?.changed) {
-				// TODO: options object for redirectWithQueryBuilderData
-				redirectWithQueryBuilderData(
-					compositeQueryParam,
-					undefined,
-					undefined,
-					undefined,
-					undefined,
-					true,
+				const urlQuery = getUnstableCurrentSearchParams();
+				urlQuery.set(
+					QueryParams.compositeQuery,
+					encodeURIComponent(JSON.stringify(compositeQueryParam)),
 				);
+				safeNavigate(`${location.pathname}?${urlQuery}`, { replace: true });
 				return;
 			}
 
@@ -1133,7 +1129,7 @@ export function QueryBuilderProvider({
 		}
 	}, [
 		initQueryBuilderData,
-		redirectWithQueryBuilderData,
+		safeNavigate,
 		normalizedCompositeQuery,
 		compositeQueryParam,
 		stagedQuery,

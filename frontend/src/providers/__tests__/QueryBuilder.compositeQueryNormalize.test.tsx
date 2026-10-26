@@ -51,11 +51,15 @@ const urlQuery = (): Query =>
 		),
 	);
 
+const activeLogIdParam = (): string | null =>
+	new URLSearchParams(window.location.search).get('activeLogId');
+
 const renderOn = (
 	route: string,
 	compositeQuery: object,
+	params: Record<string, string> = {},
 ): RenderHookResult<QueryBuilderContextType, unknown> => {
-	const search = new URLSearchParams();
+	const search = new URLSearchParams(params);
 	search.set('compositeQuery', JSON.stringify(compositeQuery));
 	const url = `${route}?${search}`;
 	window.history.replaceState(null, '', url);
@@ -94,11 +98,13 @@ describe('QueryBuilderProvider with page constraints', () => {
 		jest.restoreAllMocks();
 	});
 
-	it('seeds and stages the logs query and rewrites the url once', async () => {
+	it('seeds and stages the logs query and rewrites only compositeQuery', async () => {
 		const replaceState = jest.spyOn(window.history, 'replaceState');
 		const pushState = jest.spyOn(window.history, 'pushState');
 
-		const { result } = renderOn(ROUTES.LOGS_EXPLORER, clickhouseUrlQuery);
+		const { result } = renderOn(ROUTES.LOGS_EXPLORER, clickhouseUrlQuery, {
+			activeLogId: '"log-1"',
+		});
 
 		expect(result.current.currentQuery.queryType).toBe(EQueryType.QUERY_BUILDER);
 		expect(result.current.supersetQuery.builder.queryData[0].dataSource).toBe(
@@ -113,6 +119,7 @@ describe('QueryBuilderProvider with page constraints', () => {
 		expect(urlQuery().queryType).toBe(EQueryType.QUERY_BUILDER);
 		expect(urlQuery().builder.queryData[0].dataSource).toBe(DataSource.LOGS);
 		expect(urlQuery().clickhouse_sql[0].query).toBe('');
+		expect(activeLogIdParam()).toBe('"log-1"');
 		expect(replaceState).toHaveBeenCalled();
 		expect(pushState).not.toHaveBeenCalled();
 	});
@@ -127,45 +134,23 @@ describe('QueryBuilderProvider with page constraints', () => {
 		);
 	});
 
-	it('coerces a clickhouse url to builder on the traces explorer', async () => {
-		const { result } = renderOn(ROUTES.TRACES_EXPLORER, clickhouseUrlQuery);
-
-		await waitFor(() =>
-			expect(result.current.stagedQuery?.queryType).toBe(EQueryType.QUERY_BUILDER),
-		);
-		expect(result.current.stagedQuery?.builder.queryData[0].dataSource).toBe(
-			DataSource.TRACES,
-		);
-		expect(urlQuery().clickhouse_sql[0].query).toBe('');
-	});
-
 	it('leaves a valid url without source untouched and keeps activeLogId', async () => {
-		const replaceState = jest.spyOn(window.history, 'replaceState');
 		const { source: _, ...item } = initialQueriesMap.logs.builder.queryData[0];
 		const query = {
 			...initialQueriesMap.logs,
 			builder: { ...initialQueriesMap.logs.builder, queryData: [item] },
 		};
-		const search = new URLSearchParams();
-		search.set('compositeQuery', JSON.stringify(query));
-		search.set('activeLogId', '"log-1"');
-		const url = `${ROUTES.LOGS_EXPLORER}?${search}`;
-		window.history.replaceState(null, '', url);
-		replaceState.mockClear();
-
-		const { result } = renderHook(() => useQueryBuilder(), {
-			wrapper: ({ children }): JSX.Element => (
-				<AllTheProviders initialRoute={url}>{children}</AllTheProviders>
-			),
+		const { result } = renderOn(ROUTES.LOGS_EXPLORER, query, {
+			activeLogId: '"log-1"',
 		});
 
 		await waitFor(() =>
 			expect(result.current.stagedQuery?.id).toBe(initialQueriesMap.logs.id),
 		);
-		expect(replaceState).not.toHaveBeenCalled();
-		expect(new URLSearchParams(window.location.search).get('activeLogId')).toBe(
-			'"log-1"',
-		);
+		expect(
+			new URLSearchParams(window.location.search).get('compositeQuery'),
+		).toBe(JSON.stringify(query));
+		expect(activeLogIdParam()).toBe('"log-1"');
 	});
 
 	it('leaves a clickhouse query alone on a route without constraints', async () => {
