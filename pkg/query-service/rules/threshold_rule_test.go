@@ -63,6 +63,7 @@ func TestThresholdRuleEvalWithoutRecoveryTarget(t *testing.T) {
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
 				{
+					Name:            "critical",
 					TargetValue:     &c.target,
 					MatchType:       c.matchType,
 					CompareOperator: c.compareOperator,
@@ -180,6 +181,7 @@ func TestPrepareParamsForLogs(t *testing.T) {
 		Kind: ruletypes.BasicThresholdKind,
 		Spec: ruletypes.BasicRuleThresholds{
 			{
+				Name:            "critical",
 				TargetValue:     &[]float64{0.0}[0],
 				MatchType:       ruletypes.AtleastOnce,
 				CompareOperator: ruletypes.ValueIsNotEq,
@@ -246,6 +248,7 @@ func TestPrepareParamsForLogsFilterExpression(t *testing.T) {
 		Kind: ruletypes.BasicThresholdKind,
 		Spec: ruletypes.BasicRuleThresholds{
 			{
+				Name:            "critical",
 				TargetValue:     &[]float64{0.0}[0],
 				MatchType:       ruletypes.AtleastOnce,
 				CompareOperator: ruletypes.ValueIsNotEq,
@@ -308,6 +311,7 @@ func TestPrepareParamsForTracesFilterExpression(t *testing.T) {
 		Kind: ruletypes.BasicThresholdKind,
 		Spec: ruletypes.BasicRuleThresholds{
 			{
+				Name:            "critical",
 				TargetValue:     &[]float64{0.0}[0],
 				MatchType:       ruletypes.AtleastOnce,
 				CompareOperator: ruletypes.ValueIsNotEq,
@@ -366,6 +370,7 @@ func TestPrepareParamsForTraces(t *testing.T) {
 		Kind: ruletypes.BasicThresholdKind,
 		Spec: ruletypes.BasicRuleThresholds{
 			{
+				Name:            "critical",
 				TargetValue:     &[]float64{0.0}[0],
 				MatchType:       ruletypes.AtleastOnce,
 				CompareOperator: ruletypes.ValueIsNotEq,
@@ -458,6 +463,7 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
 				{
+					Name:            "critical",
 					TargetValue:     &c.target,
 					MatchType:       c.matchType,
 					CompareOperator: c.compareOperator,

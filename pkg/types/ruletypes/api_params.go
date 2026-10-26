@@ -444,9 +444,14 @@ func (r *PostableRule) validateV2Alpha1() []error {
 	if r.RuleCondition.Thresholds == nil {
 		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"condition.thresholds: field is required for schemaVersion %q", SchemaVersionV2Alpha1))
-	} else if thresholds, ok := r.RuleCondition.Thresholds.Spec.(BasicRuleThresholds); ok {
-		if err := thresholds.validateUniqueNames(); err != nil {
+	} else if threshold, err := r.RuleCondition.Thresholds.GetRuleThreshold(); err == nil {
+		if err := threshold.Validate(); err != nil {
 			errs = append(errs, err)
+		}
+		if thresholds, ok := threshold.(BasicRuleThresholds); ok {
+			if err := thresholds.validateUniqueNames(); err != nil {
+				errs = append(errs, err)
+			}
 		}
 	}
 

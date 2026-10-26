@@ -147,8 +147,8 @@ def test_create_rejects_unnamed_threshold(
         "error": {
             "type": "invalid-input",
             "code": "invalid_input",
-            "message": "failed to parse json: invalid rule threshold spec: threshold name cannot be empty",
-            "errors": [],
+            "message": "alert rule is not valid",
+            "errors": [{"message": "threshold name cannot be empty", "suggestions": []}],
             "suggestions": [],
         },
     }
