@@ -27,6 +27,7 @@ GCP_SERVICE_SPEC = ProviderServiceSpec(
     service_id="cloudsql_postgres",
     account_config={
         "gcp": {
+            "connectionMethod": "manual",
             "deploymentProjectId": "signoz-test-project",
             "deploymentRegion": "us-central1",
             "projectIds": ["signoz-test-project"],
