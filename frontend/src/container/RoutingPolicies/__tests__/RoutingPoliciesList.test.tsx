@@ -1,126 +1,159 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { VirtuosoMockContext } from 'react-virtuoso';
+import { render, screen, userEvent } from 'tests/test-utils';
 
-import RoutingPoliciesList from '../RoutingPolicyList';
-import { RoutingPolicyListItemProps } from '../types';
-import { getUseRoutingPoliciesMockData } from './testUtils';
+import RoutingPolicyList from '../RoutingPolicyList';
+import { getRoutingPolicyColumns } from '../table.config';
+import { RoutingPolicyListProps } from '../types';
+import { MOCK_ROUTING_POLICY_1, MOCK_ROUTING_POLICY_2 } from './testUtils';
 
-const useRoutingPolicesMockData = getUseRoutingPoliciesMockData();
-const mockHandlePolicyDetailsModalOpen = jest.fn();
-const mockHandleDeleteModalOpen = jest.fn();
-const mockRefetchRoutingPolicies = jest.fn();
+const POLICIES = [MOCK_ROUTING_POLICY_1, MOCK_ROUTING_POLICY_2];
 
-jest.mock('../RoutingPolicyListItem', () => ({
-	__esModule: true,
-	default: jest.fn(({ routingPolicy }: RoutingPolicyListItemProps) => (
-		<div data-testid="routing-policy-list-item">{routingPolicy.name}</div>
-	)),
-}));
+function renderList(
+	overrides: Partial<RoutingPolicyListProps> = {},
+): RoutingPolicyListProps {
+	const props: RoutingPolicyListProps = {
+		columns: getRoutingPolicyColumns((date) => date),
+		routingPolicies: POLICIES,
+		pagedPolicies: POLICIES,
+		calculatedPageSize: null,
+		onLimitChange: jest.fn(),
+		isFetching: false,
+		isError: false,
+		refetch: jest.fn(),
+		canEdit: true,
+		onEdit: jest.fn(),
+		onDelete: jest.fn(),
+		onCreate: jest.fn(),
+		hasSearchTerm: false,
+		onClearSearch: jest.fn(),
+		...overrides,
+	};
+	render(
+		<VirtuosoMockContext.Provider value={{ viewportHeight: 800, itemHeight: 46 }}>
+			<RoutingPolicyList {...props} />
+		</VirtuosoMockContext.Provider>,
+	);
+	return props;
+}
 
-const ROUTING_POLICY_LIST_ITEM_TEST_ID = 'routing-policy-list-item';
+describe('RoutingPolicyList', () => {
+	it('renders the key policy fields and hides audit columns by default', async () => {
+		renderList();
 
-describe('RoutingPoliciesList', () => {
-	it('renders base layout with routing policies', () => {
-		render(
-			<RoutingPoliciesList
-				routingPolicies={useRoutingPolicesMockData.routingPoliciesData}
-				isRoutingPoliciesLoading={
-					useRoutingPolicesMockData.isLoadingRoutingPolicies
-				}
-				isRoutingPoliciesError={useRoutingPolicesMockData.isErrorRoutingPolicies}
-				handlePolicyDetailsModalOpen={mockHandlePolicyDetailsModalOpen}
-				handleDeleteModalOpen={mockHandleDeleteModalOpen}
-				hasSearchTerm={false}
-				refetchRoutingPolicies={mockRefetchRoutingPolicies}
-				isRoutingPoliciesFetching={false}
-			/>,
-		);
-
-		const routingPolicyItems = screen.getAllByTestId(
-			ROUTING_POLICY_LIST_ITEM_TEST_ID,
-		);
-		expect(routingPolicyItems).toHaveLength(2);
-		expect(routingPolicyItems[0]).toHaveTextContent(
-			useRoutingPolicesMockData.routingPoliciesData[0].name,
-		);
-		expect(routingPolicyItems[1]).toHaveTextContent(
-			useRoutingPolicesMockData.routingPoliciesData[1].name,
-		);
-	});
-
-	it('renders loading state', () => {
-		render(
-			<RoutingPoliciesList
-				routingPolicies={useRoutingPolicesMockData.routingPoliciesData}
-				isRoutingPoliciesLoading
-				isRoutingPoliciesError={false}
-				handlePolicyDetailsModalOpen={mockHandlePolicyDetailsModalOpen}
-				handleDeleteModalOpen={mockHandleDeleteModalOpen}
-				hasSearchTerm={false}
-				refetchRoutingPolicies={mockRefetchRoutingPolicies}
-				isRoutingPoliciesFetching={false}
-			/>,
-		);
-		// Check for loading spinner by class name
-		expect(document.querySelector('.ant-spin-spinning')).toBeInTheDocument();
-		// Check that the table is in loading state (blurred)
-		expect(document.querySelector('.ant-spin-blur')).toBeInTheDocument();
-	});
-
-	it('renders loading state when data is being fetched', () => {
-		render(
-			<RoutingPoliciesList
-				routingPolicies={useRoutingPolicesMockData.routingPoliciesData}
-				isRoutingPoliciesLoading={false}
-				isRoutingPoliciesError={false}
-				handlePolicyDetailsModalOpen={mockHandlePolicyDetailsModalOpen}
-				handleDeleteModalOpen={mockHandleDeleteModalOpen}
-				hasSearchTerm={false}
-				refetchRoutingPolicies={mockRefetchRoutingPolicies}
-				isRoutingPoliciesFetching
-			/>,
-		);
-		// Check for loading spinner by class name
-		expect(document.querySelector('.ant-spin-spinning')).toBeInTheDocument();
-		// Check that the table is in loading state (blurred)
-		expect(document.querySelector('.ant-spin-blur')).toBeInTheDocument();
-	});
-
-	it('renders error state', () => {
-		render(
-			<RoutingPoliciesList
-				routingPolicies={[]}
-				isRoutingPoliciesLoading={false}
-				isRoutingPoliciesError
-				handlePolicyDetailsModalOpen={mockHandlePolicyDetailsModalOpen}
-				handleDeleteModalOpen={mockHandleDeleteModalOpen}
-				hasSearchTerm={false}
-				refetchRoutingPolicies={mockRefetchRoutingPolicies}
-				isRoutingPoliciesFetching={false}
-			/>,
-		);
+		await expect(
+			screen.findByTestId(`routing-policy-row-${MOCK_ROUTING_POLICY_1.id}-name`),
+		).resolves.toHaveTextContent(MOCK_ROUTING_POLICY_1.name);
 		expect(
-			screen.getByText('Something went wrong while fetching routing policies.'),
-		).toBeInTheDocument();
+			screen.getByTestId(`routing-policy-row-${MOCK_ROUTING_POLICY_2.id}-name`),
+		).toHaveTextContent(MOCK_ROUTING_POLICY_2.name);
 
-		const retryButton = screen.getByRole('button', { name: 'Retry' });
-		expect(retryButton).toBeInTheDocument();
-		fireEvent.click(retryButton);
-		expect(mockRefetchRoutingPolicies).toHaveBeenCalled();
+		expect(
+			screen.getByText(MOCK_ROUTING_POLICY_1.expression),
+		).toBeInTheDocument();
+		expect(
+			screen.queryByText(MOCK_ROUTING_POLICY_1.description as string),
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByText(MOCK_ROUTING_POLICY_1.channels?.[0] || ''),
+		).toBeInTheDocument();
+		expect(
+			screen.queryByText(MOCK_ROUTING_POLICY_1.createdBy as string),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByText(MOCK_ROUTING_POLICY_2.updatedBy as string),
+		).not.toBeInTheDocument();
 	});
 
-	it('renders empty state', () => {
-		render(
-			<RoutingPoliciesList
-				routingPolicies={[]}
-				isRoutingPoliciesLoading={false}
-				isRoutingPoliciesError={false}
-				handlePolicyDetailsModalOpen={mockHandlePolicyDetailsModalOpen}
-				handleDeleteModalOpen={mockHandleDeleteModalOpen}
-				hasSearchTerm={false}
-				refetchRoutingPolicies={mockRefetchRoutingPolicies}
-				isRoutingPoliciesFetching={false}
-			/>,
+	it('lets every data column be resized', async () => {
+		renderList();
+
+		await screen.findByText(MOCK_ROUTING_POLICY_1.name);
+		const resizable = Array.from(document.querySelectorAll('th'))
+			.filter((th) => th.querySelector('[title="Drag to resize column"]'))
+			.map((th) => th.textContent?.trim());
+		expect(resizable).toStrictEqual(['Routing Policy', 'Expression', 'Channels']);
+	});
+
+	it('opens the policy on row click', async () => {
+		const { onEdit } = renderList();
+
+		await userEvent.click(
+			await screen.findByTestId(
+				`routing-policy-row-${MOCK_ROUTING_POLICY_1.id}-name`,
+			),
 		);
-		expect(screen.getByText('No routing policies yet,')).toBeInTheDocument();
+
+		expect(onEdit).toHaveBeenCalledWith(
+			MOCK_ROUTING_POLICY_1,
+			MOCK_ROUTING_POLICY_1.id,
+			expect.anything(),
+		);
+	});
+
+	it('edits and deletes from the actions menu', async () => {
+		const { onEdit, onDelete } = renderList();
+		const actions = `routing-policy-actions-${MOCK_ROUTING_POLICY_1.id}`;
+
+		await userEvent.click(await screen.findByTestId(actions));
+		await userEvent.click(await screen.findByText('Edit'));
+		expect(onEdit).toHaveBeenCalledWith(MOCK_ROUTING_POLICY_1);
+
+		await userEvent.click(screen.getByTestId(actions));
+		await userEvent.click(await screen.findByText('Delete'));
+		expect(onDelete).toHaveBeenCalledWith(MOCK_ROUTING_POLICY_1);
+	});
+
+	it('hides actions and row click for viewers', async () => {
+		const { onEdit } = renderList({ canEdit: false });
+
+		await userEvent.click(
+			await screen.findByTestId(
+				`routing-policy-row-${MOCK_ROUTING_POLICY_1.id}-name`,
+			),
+		);
+
+		expect(
+			screen.queryByTestId(`routing-policy-actions-${MOCK_ROUTING_POLICY_1.id}`),
+		).not.toBeInTheDocument();
+		expect(onEdit).not.toHaveBeenCalled();
+	});
+
+	it('renders the error state with a refresh', async () => {
+		const { refetch } = renderList({ isError: true, routingPolicies: [] });
+
+		expect(screen.getByTestId('error-title')).toHaveTextContent(
+			'Failed to load routing policies',
+		);
+		await userEvent.click(screen.getByTestId('error-refresh-button'));
+		expect(refetch).toHaveBeenCalled();
+	});
+
+	it('renders the no-results state when a search matches nothing', async () => {
+		const { onClearSearch } = renderList({
+			routingPolicies: [],
+			pagedPolicies: [],
+			hasSearchTerm: true,
+		});
+
+		await userEvent.click(screen.getByTestId('no-results-clear-button'));
+		expect(onClearSearch).toHaveBeenCalled();
+	});
+
+	it('renders the empty state with a create action', async () => {
+		const { onCreate } = renderList({ routingPolicies: [], pagedPolicies: [] });
+
+		expect(
+			screen.getByTestId('routing-policies-empty-state'),
+		).toBeInTheDocument();
+		await userEvent.click(screen.getByTestId('routing-policies-empty-create'));
+		expect(onCreate).toHaveBeenCalled();
+	});
+
+	it('hides the empty-state create action for viewers', () => {
+		renderList({ routingPolicies: [], pagedPolicies: [], canEdit: false });
+
+		expect(
+			screen.queryByTestId('routing-policies-empty-create'),
+		).not.toBeInTheDocument();
 	});
 });
