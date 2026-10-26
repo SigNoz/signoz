@@ -30,13 +30,13 @@ From `tests/fixtures/auth.py` (registered via `pytest_plugins` in `tests/conftes
 - `create_user_admin` — package-scoped; registers the first admin (`USER_ADMIN_EMAIL` / `USER_ADMIN_PASSWORD`). Take it as an unused argument in every test that needs the org to exist.
 - `get_token(email, password) -> str` — bearer token for a user.
 - `add_license(signoz, make_http_mocks, get_token)` — custom roles are enterprise-only; call it in a `test_apply_license` at the top of any suite that creates custom roles.
-- `create_active_user(signoz, admin_token, email=..., role="VIEWER", password=..., name=...) -> user_id` — invite + activate.
+- `create_active_user(signoz, admin_token, email=..., role="signoz-viewer", password=..., name=...) -> user_id` — invite + activate. `role` is a managed role name looked up verbatim (e.g. `signoz-viewer`).
 - `change_user_role(signoz, admin_token, user_id, old_role, new_role)` — e.g. `"signoz-viewer"` → your custom role name.
 
 From `tests/fixtures/role.py`:
 
 - `create_role(token, name, transaction_groups=None, description="") -> role_id` (fixture).
-- `find_role_id(token, name) -> role_id` (fixture).
+- `find_role_by_name(signoz, token, name) -> role_id` — plain function, import `from fixtures.role import find_role_by_name`.
 - `transaction_group(relation, type_name, kind_name, selectors)` — builds one permission entry, e.g. `transaction_group("read", "metaresource", "thing", ["*"])` or with a specific instance name/ID as selector.
 
 From `tests/fixtures/serviceaccount.py`:
@@ -84,7 +84,7 @@ def test_setup_actor(signoz, create_user_admin, get_token, create_role):
             transaction_group("list", "metaresource", "thing", ["*"]),
         ],
     )
-    user_id = create_active_user(signoz, admin_token, email=_ACTOR_EMAIL, role="VIEWER", password=_ACTOR_PASSWORD, name="thing fga actor")
+    user_id = create_active_user(signoz, admin_token, email=_ACTOR_EMAIL, role="signoz-viewer", password=_ACTOR_PASSWORD, name="thing fga actor")
     change_user_role(signoz, admin_token, user_id, "signoz-viewer", "thing-fga-actor")
 
 

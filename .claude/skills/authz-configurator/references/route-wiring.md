@@ -111,15 +111,15 @@ handler.WithResourceDefs(handler.AttachDetachSiblingResourceDef{
     Verb:           coretypes.VerbAttach,
     Category:       coretypes.ActionCategoryAccessControl,
     SourceResource: coretypes.ResourceServiceAccount,
-    SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
+    SourceIDs:      coretypes.OneID(coretypes.BodyJSONPath("serviceAccountId")),
     SourceSelector: coretypes.IDSelector,
     TargetResource: coretypes.ResourceRole,
-    TargetIDs:      coretypes.OneID(coretypes.BodyJSONPath("id")),
+    TargetIDs:      coretypes.OneID(coretypes.BodyJSONPath("roleId")),
     TargetSelector: provider.roleSelector,
 }),
 ```
 
-The detach route is identical with `VerbDetach` and the target ID coming from the path.
+The detach route (`DELETE .../service_account_roles/{id}`) uses `VerbDetach`, and its path `{id}` identifies the **assignment** (the service account role), not the role. Both IDs are resolved from it via lookup-helper extractors — `provider.serviceAccountIDExtractor()` and `provider.roleIDExtractor()` fetch the assignment and return its service account ID and role ID.
 
 ## Linking routes: parent-child
 
