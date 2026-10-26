@@ -28,6 +28,7 @@ import {
 } from './constants';
 import {
 	EvaluationWindowPreset,
+	pickAlertPrefillParams,
 	resolveUrlAlertPrefill,
 } from './resolveUrlAlertPrefill';
 import {
@@ -132,9 +133,10 @@ export function CreateAlertProvider(
 	const ruleNameFromURL = queryParams.get(QueryParams.ruleName);
 	const yAxisUnitFromURL = queryParams.get(QueryParams.yAxisUnit);
 	// Prefill declared in the URL; applied verbatim, agnostic of the producer.
+	const prefillParams = pickAlertPrefillParams(location.search);
 	const urlPrefill = useMemo(
-		() => resolveUrlAlertPrefill(new URLSearchParams(location.search)),
-		[location.search],
+		() => resolveUrlAlertPrefill(new URLSearchParams(prefillParams)),
+		[prefillParams],
 	);
 
 	const [alertType, setAlertType] = useState<AlertTypes>(() => {

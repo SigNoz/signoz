@@ -121,17 +121,17 @@ describe('CreateAlertProvider — URL-declared prefill (issue #5291)', () => {
 // Reproduces the #12137 regression: on the alert overview page the query builder
 // rewrites location.search after the alert loads, which used to re-run the prefill
 // effect and RESET the loaded threshold back to 0.
-function SearchMutator(): JSX.Element {
+function SearchMutator({
+	to = '/alerts/overview?compositeQuery=normalized&ruleId=r1',
+}: {
+	to?: string;
+}): JSX.Element {
 	const routerHistory = useHistory();
 	return (
 		<button
 			type="button"
 			data-testid="mutate-search"
-			onClick={(): void =>
-				routerHistory.replace(
-					'/alerts/overview?compositeQuery=normalized&ruleId=r1',
-				)
-			}
+			onClick={(): void => routerHistory.replace(to)}
 		>
 			change search
 		</button>
@@ -176,6 +176,50 @@ describe('CreateAlertProvider — edit mode ignores URL prefill', () => {
 		expect(screen.getByTestId('threshold-value')).toHaveTextContent('245');
 
 		// Simulate the query builder normalizing the query into the URL post-load.
+		fireEvent.click(screen.getByTestId('mutate-search'));
+
+		expect(screen.getByTestId('threshold-value')).toHaveTextContent('245');
+	});
+});
+
+function ThresholdSetter(): JSX.Element {
+	const { thresholdState, setThresholdState } = useCreateAlertState();
+	return (
+		<button
+			type="button"
+			data-testid="set-threshold"
+			onClick={(): void =>
+				setThresholdState({
+					type: 'SET_THRESHOLDS',
+					payload: [{ ...thresholdState.thresholds[0], thresholdValue: 245 }],
+				})
+			}
+		>
+			set threshold
+		</button>
+	);
+}
+
+describe('CreateAlertProvider — create mode', () => {
+	it('keeps edited thresholds when running the query rewrites location.search', () => {
+		const queryClient = new QueryClient({
+			defaultOptions: { queries: { retry: false } },
+		});
+		render(
+			<MemoryRouter initialEntries={['/alerts/new?alertType=METRIC_BASED_ALERT']}>
+				<QueryClientProvider client={queryClient}>
+					<CreateAlertProvider initialAlertType={AlertTypes.METRICS_BASED_ALERT}>
+						<Probe />
+						<ThresholdSetter />
+						<SearchMutator to="/alerts/new?alertType=METRIC_BASED_ALERT&compositeQuery=ran" />
+					</CreateAlertProvider>
+				</QueryClientProvider>
+			</MemoryRouter>,
+		);
+
+		fireEvent.click(screen.getByTestId('set-threshold'));
+		expect(screen.getByTestId('threshold-value')).toHaveTextContent('245');
+
 		fireEvent.click(screen.getByTestId('mutate-search'));
 
 		expect(screen.getByTestId('threshold-value')).toHaveTextContent('245');
