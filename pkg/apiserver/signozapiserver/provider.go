@@ -91,9 +91,11 @@ type provider struct {
 	ruleStateHistoryHandler    rulestatehistory.Handler
 	spanMapperHandler          spanmapper.Handler
 	alertmanagerHandler        alertmanager.Handler
+	alertmanagerService        alertmanager.Alertmanager
 	prometheusHandler          prometheus.Handler
 	traceDetailHandler         tracedetail.Handler
 	rulerHandler               ruler.Handler
+	rulerService               ruler.Ruler
 	llmPricingRuleHandler      llmpricingrule.Handler
 	statsHandler               statsreporter.Handler
 	savedViewHandler           savedview.Handler
@@ -136,10 +138,12 @@ func NewFactory(
 	ruleStateHistoryHandler rulestatehistory.Handler,
 	spanMapperHandler spanmapper.Handler,
 	alertmanagerHandler alertmanager.Handler,
+	alertmanagerService alertmanager.Alertmanager,
 	prometheusHandler prometheus.Handler,
 	llmPricingRuleHandler llmpricingrule.Handler,
 	traceDetailHandler tracedetail.Handler,
 	rulerHandler ruler.Handler,
+	rulerService ruler.Ruler,
 	statsHandler statsreporter.Handler,
 	savedViewHandler savedview.Handler,
 	globalConfig global.Config,
@@ -189,10 +193,12 @@ func NewFactory(
 			ruleStateHistoryHandler,
 			spanMapperHandler,
 			alertmanagerHandler,
+			alertmanagerService,
 			prometheusHandler,
 			llmPricingRuleHandler,
 			traceDetailHandler,
 			rulerHandler,
+			rulerService,
 			statsHandler,
 			savedViewHandler,
 			globalConfig,
@@ -244,10 +250,12 @@ func newProvider(
 	ruleStateHistoryHandler rulestatehistory.Handler,
 	spanMapperHandler spanmapper.Handler,
 	alertmanagerHandler alertmanager.Handler,
+	alertmanagerService alertmanager.Alertmanager,
 	prometheusHandler prometheus.Handler,
 	llmPricingRuleHandler llmpricingrule.Handler,
 	traceDetailHandler tracedetail.Handler,
 	rulerHandler ruler.Handler,
+	rulerService ruler.Ruler,
 	statsHandler statsreporter.Handler,
 	savedViewHandler savedview.Handler,
 	globalConfig global.Config,
@@ -299,9 +307,11 @@ func newProvider(
 		ruleStateHistoryHandler:    ruleStateHistoryHandler,
 		spanMapperHandler:          spanMapperHandler,
 		alertmanagerHandler:        alertmanagerHandler,
+		alertmanagerService:        alertmanagerService,
 		prometheusHandler:          prometheusHandler,
 		traceDetailHandler:         traceDetailHandler,
 		rulerHandler:               rulerHandler,
+		rulerService:               rulerService,
 		llmPricingRuleHandler:      llmPricingRuleHandler,
 		statsHandler:               statsHandler,
 		savedViewHandler:           savedViewHandler,
