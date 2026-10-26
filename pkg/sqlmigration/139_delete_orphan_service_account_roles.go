@@ -56,16 +56,14 @@ func (migration *deleteOrphanServiceAccountRoles) Up(ctx context.Context, db *bu
 		return err
 	}
 
-	if len(deletedServiceAccountIDs) == 0 {
-		return tx.Commit()
-	}
-
-	_, err = tx.NewDelete().
-		Model(new(serviceAccountRole139)).
-		Where("service_account_id IN (?)", bun.In(deletedServiceAccountIDs)).
-		Exec(ctx)
-	if err != nil {
-		return err
+	if len(deletedServiceAccountIDs) > 0 {
+		_, err = tx.NewDelete().
+			Model(new(serviceAccountRole139)).
+			Where("service_account_id IN (?)", bun.In(deletedServiceAccountIDs)).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
 	}
 
 	return tx.Commit()
