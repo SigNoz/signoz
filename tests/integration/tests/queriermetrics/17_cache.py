@@ -139,6 +139,68 @@ def test_builder_shortening_the_time_range_at_the_start(
         assert returned_points == [(65536, True), (4096, False)], label
 
 
+def test_builder_time_range_shorter_than_the_step(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
+) -> None:
+    metric_name = f"cache_range_below_step_{uuid4().hex[:8]}"
+
+    # 40 minutes back clears the flux interval, which holds recent data out of
+    # the cache. Flooring to a multiple of the 10m step makes the base query span
+    # two whole steps, so both its points are complete
+    start_time = datetime.fromtimestamp(int((datetime.now(tz=UTC) - timedelta(minutes=40)).timestamp()) // 600 * 600, tz=UTC)
+    start_time_ms = int(start_time.timestamp() * 1000)
+    end_time_ms_base_query = start_time_ms + 20 * MINUTE_MS
+    start_time_ms_short_query = start_time_ms + 10 * MINUTE_MS
+    end_time_ms_short_query = start_time_ms + 14 * MINUTE_MS
+
+    query = [build_builder_query("A", metric_name, "max", "max", step_interval=600)]
+
+    # the 10m step splits the twenty minutes into two points, each the max over
+    # its own step: minutes 0-9 and minutes 10-19. The second changes partway
+    # through, 256 until minute 14 and then 4096, so a four minute range opening
+    # at minute 10 has to reach a different value than the whole step does
+    insert_metrics(
+        [
+            Metrics(
+                metric_name=metric_name,
+                labels={"service": "api"},
+                timestamp=start_time + timedelta(minutes=minute),
+                value=(16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 256, 256, 256, 256, 4096, 4096, 4096, 4096, 4096, 4096)[minute],
+                type_="Gauge",
+                is_monotonic=False,
+            )
+            for minute in range(20)
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    base_query = make_query_request(signoz, token, start_time_ms, end_time_ms_base_query, query, no_cache=False)
+    assert base_query.status_code == HTTPStatus.OK, base_query.text
+    points = sorted(get_series_values(base_query.json(), "A"), key=lambda point: point["timestamp"])
+    returned_points = [(point["value"], point.get("partial", False)) for point in points]
+    assert returned_points == [(16, False), (4096, False)]
+
+    from_cache = make_query_request(signoz, token, start_time_ms_short_query, end_time_ms_short_query, query, no_cache=False)
+    assert from_cache.status_code == HTTPStatus.OK, from_cache.text
+
+    uncached = make_query_request(signoz, token, start_time_ms_short_query, end_time_ms_short_query, query, no_cache=True)
+    assert uncached.status_code == HTTPStatus.OK, uncached.text
+
+    assert_results_equal(from_cache.json(), uncached.json(), "A", "range shorter than the step")
+
+    # a range shorter than its step holds a single point, and this one reaches
+    # only minutes 10-13 of the second step, so it comes back as 256 and partial,
+    # where the cached point spans all ten minutes
+    for label, response in (("from cache", from_cache), ("uncached", uncached)):
+        points = sorted(get_series_values(response.json(), "A"), key=lambda point: point["timestamp"])
+        returned_points = [(point["value"], point.get("partial", False)) for point in points]
+        assert returned_points == [(256, True)], label
+
+
 def test_promql_running_the_same_query_twice(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
@@ -271,6 +333,62 @@ def test_promql_shifting_the_time_range(
         assert unaligned_as_asked.status_code == HTTPStatus.OK, unaligned_as_asked.text
         points = sorted(get_series_values(unaligned_as_asked.json(), "A"), key=lambda point: point["timestamp"])
         assert [(point["timestamp"], point["value"]) for point in points] == unaligned_points, f"unaligned query as asked, {run} run"
+
+
+def test_promql_time_range_shorter_than_the_step(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
+) -> None:
+    metric_name = f"cache_promql_range_below_step_{uuid4().hex[:8]}"
+
+    # 40 minutes back clears the flux interval, which holds recent data out of
+    # the cache. Flooring to a multiple of the 10m step aligns the base query to it
+    start_time = datetime.fromtimestamp(int((datetime.now(tz=UTC) - timedelta(minutes=40)).timestamp()) // 600 * 600, tz=UTC)
+    start_time_ms = int(start_time.timestamp() * 1000)
+    end_time_ms_base_query = start_time_ms + 10 * MINUTE_MS
+    start_time_ms_short_query = start_time_ms + 12 * MINUTE_MS
+    end_time_ms_short_query = start_time_ms + 14 * MINUTE_MS
+
+    query = [{"type": "promql", "spec": {"name": "A", "query": f"max_over_time({metric_name}[2m])", "step": 600}}]
+
+    # a sample every minute, rising by 100 each time, so every instant promql
+    # reports at has its own value
+    insert_metrics(
+        [
+            Metrics(
+                metric_name=metric_name,
+                labels={"service": "api"},
+                timestamp=start_time + timedelta(minutes=minute),
+                value=100 * (minute + 1),
+                type_="Gauge",
+                is_monotonic=False,
+            )
+            for minute in range(15)
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    base_query = make_query_request(signoz, token, start_time_ms, end_time_ms_base_query, query, no_cache=False)
+    assert base_query.status_code == HTTPStatus.OK, base_query.text
+    points = sorted(get_series_values(base_query.json(), "A"), key=lambda point: point["timestamp"])
+    assert [(point["timestamp"], point["value"]) for point in points] == [(start_time_ms, 100), (end_time_ms_base_query, 1100)]
+
+    # a range shorter than the step rounds down to the single instant at minute
+    # 10, the instant the base query closed on
+    from_cache = make_query_request(signoz, token, start_time_ms_short_query, end_time_ms_short_query, query, no_cache=False)
+    assert from_cache.status_code == HTTPStatus.OK, from_cache.text
+
+    uncached = make_query_request(signoz, token, start_time_ms_short_query, end_time_ms_short_query, query, no_cache=True)
+    assert uncached.status_code == HTTPStatus.OK, uncached.text
+
+    assert_results_equal(from_cache.json(), uncached.json(), "A", "range shorter than the step")
+
+    for label, response in (("from cache", from_cache), ("uncached", uncached)):
+        points = sorted(get_series_values(response.json(), "A"), key=lambda point: point["timestamp"])
+        assert [(point["timestamp"], point["value"]) for point in points] == [(end_time_ms_base_query, 1100)], label
 
 
 def test_builder_refreshing_a_sliding_time_range(

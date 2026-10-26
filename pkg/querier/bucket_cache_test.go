@@ -1201,7 +1201,20 @@ func TestBucketCache_FindMissingRangesWithStep(t *testing.T) {
 			expectedMiss: []*qbtypes.TimeRange{
 				{From: 1000, To: 1500},
 			},
-			description: "Window smaller than step should use basic algorithm",
+			description: "Window smaller than step is fetched whole",
+		},
+		{
+			name: "small_window_less_than_step_inside_a_bucket",
+			buckets: []*qbtypes.CachedBucket{
+				{StartMs: 0, EndMs: 3000},
+			},
+			startMs: 1000,
+			endMs:   1500,
+			stepMs:  1000,
+			expectedMiss: []*qbtypes.TimeRange{
+				{From: 1000, To: 1500},
+			},
+			description: "A cached point spans its whole step, so it cannot answer a window shorter than the step",
 		},
 		{
 			name:    "zero_step_uses_basic_algorithm",

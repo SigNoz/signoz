@@ -90,7 +90,8 @@ func (bc *bucketCache) GetMissRanges(
 	// Extract relevant buckets and merge them
 	relevantBuckets := bc.filterRelevantBuckets(data.Buckets, startMs, endMs)
 	if len(relevantBuckets) == 0 {
-		return nil, missing
+		// nothing cached overlaps the window, so all of it has to be fetched.
+		return nil, []*qbtypes.TimeRange{{From: startMs, To: endMs}}
 	}
 
 	// Merge buckets into a single result
@@ -209,8 +210,8 @@ func (bc *bucketCache) generateCacheKey(q qbtypes.Query) string {
 
 // findMissingRangesWithStep identifies time ranges not covered by cached buckets with step alignment.
 func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket, startMs, endMs uint64, stepMs uint64) []*qbtypes.TimeRange {
-	// When step is 0 or window is too small to be cached, use simple algorithm
-	if stepMs == 0 || (startMs+stepMs) > endMs {
+	// When step is 0, use simple algorithm
+	if stepMs == 0 {
 		return bc.findMissingRangesBasic(buckets, startMs, endMs)
 	}
 
