@@ -14,13 +14,7 @@ var (
 	GCPConnectionMethodManual = GCPConnectionMethod{valuer.NewString("manual")}
 	GCPConnectionMethodAgent  = GCPConnectionMethod{valuer.NewString("agent")}
 
-	foundryScriptURL = "https://signoz.io/foundry.sh"
-
-	gcpCLITemplate = template.Must(template.New("gcpCLI").Funcs(template.FuncMap{
-		"shellQuote": func(value string) string {
-			return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'"
-		},
-	}).Parse(gcpCLITemplateStr()))
+	gcpCLITemplate = template.Must(template.New("gcpCLI").Funcs(foundryTemplateFuncs).Parse(gcpCLITemplateStr()))
 )
 
 type GCPConnectionMethod struct{ valuer.String }
@@ -112,12 +106,14 @@ func (config *GCPAccountConfig) ErrIfInvalid() error {
 
 func NewGCPConnectionArtifact(integrationAccountID valuer.UUID, agentVersion string, creds *Credentials, cfg *GCPAccountConfig) (*GCPConnectionArtifact, error) {
 	data := gcpTemplateData{
-		FoundryScriptURL:     foundryScriptURL,
-		ProjectID:            cfg.DeploymentProjectID,
-		Region:               cfg.DeploymentRegion,
-		IntegrationAccountID: integrationAccountID.StringValue(),
-		AgentVersion:         agentVersion,
-		Credentials:          creds,
+		foundryTemplateData: foundryTemplateData{
+			FoundryScriptURL:     foundryScriptURL,
+			Region:               cfg.DeploymentRegion,
+			IntegrationAccountID: integrationAccountID.StringValue(),
+			AgentVersion:         agentVersion,
+			Credentials:          creds,
+		},
+		ProjectID: cfg.DeploymentProjectID,
 	}
 
 	var command bytes.Buffer
@@ -158,12 +154,8 @@ func NewGCPIntegrationConfig(config *GCPAccountConfig, metricNames, sinkFilters 
 }
 
 type gcpTemplateData struct {
-	FoundryScriptURL     string
-	ProjectID            string
-	Region               string
-	IntegrationAccountID string
-	AgentVersion         string
-	Credentials          *Credentials
+	foundryTemplateData
+	ProjectID string
 }
 
 func gcpCLITemplateStr() string {

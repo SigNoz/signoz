@@ -20,18 +20,12 @@ export interface RegionFormProps {
 	includeAllRegions: boolean;
 	onRegionSelect: () => void;
 	onSubmit: () => Promise<void>;
-	accountId?: string;
+	connectionCommand: string | null;
 	handleRegionChange: (value: string) => void;
 	connectionParams?: CloudintegrationtypesCredentialsDTO;
 	isConnectionParamsLoading?: boolean;
 	setSelectedRegions: Dispatch<SetStateAction<string[]>>;
 	setIncludeAllRegions: Dispatch<SetStateAction<boolean>>;
-	onConnectionSuccess: (payload: {
-		cloudAccountId: string;
-		status?: unknown;
-	}) => void;
-	onConnectionTimeout: (payload: { id?: string }) => void;
-	onConnectionError: () => void;
 }
 
 export interface IntegrationModalProps {

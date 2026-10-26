@@ -11,11 +11,9 @@ import { RegionSelector } from './RegionForm/RegionSelector';
 function RegionDeploymentSection({
 	regions,
 	handleRegionChange,
-	isFormDisabled,
 }: {
 	regions: Region[];
 	handleRegionChange: (value: string) => void;
-	isFormDisabled: boolean;
 }): JSX.Element {
 	return (
 		<div className="cloud-account-setup-form__form-group">
@@ -35,7 +33,6 @@ function RegionDeploymentSection({
 					suffixIcon={<ChevronDown size={16} color={Color.BG_VANILLA_400} />}
 					className="cloud-account-setup-form__select integrations-select"
 					onChange={handleRegionChange}
-					disabled={isFormDisabled}
 					getPopupContainer={popupContainer}
 				>
 					{regions.flatMap((region) =>

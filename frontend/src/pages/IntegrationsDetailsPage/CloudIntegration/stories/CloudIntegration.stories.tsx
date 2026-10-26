@@ -178,8 +178,8 @@ export const TooltipsInDataCollected: Story = {
 };
 
 /**
- * Connecting an AWS account: region and monitored regions picked, the template
- * launched, and the first poll finds the account connected. Set Account
+ * Connecting an AWS account: region and monitored regions picked, the setup
+ * command generated, and the first poll finds the account connected. Set Account
  * connection to `error` for the failure toast.
  */
 export const AwsAccountConnectedToast: Story = {
@@ -203,7 +203,7 @@ export const AwsAccountConnectionErrorToast: Story = {
 	},
 };
 
-/** Connecting an Azure subscription through the generated setup commands. */
+/** Connecting an Azure subscription through the generated setup command. */
 export const AzureAccountConnectedToast: Story = {
 	args: { provider: 'azure', accounts: 0 },
 	play: async ({ canvasElement, args }): Promise<void> => {
@@ -222,6 +222,89 @@ export const AzureAccountConnectionErrorToast: Story = {
 		if (args.accountCreate === 'error') {
 			await expectToast(/failed to create account connection/i);
 		}
+	},
+};
+
+/**
+ * The AWS setup command, with the drawer waiting for the account to connect.
+ * Set New account check-in to `checked-in` or `error` to see it connect or fail.
+ */
+export const AwsAgentCommand: Story = {
+	args: { accounts: 0, newAccountCheckIn: 'pending' },
+	play: async ({ canvasElement }): Promise<void> => {
+		await connectAwsAccount(canvasElement);
+		await screen.findByTestId('aws-agent-command', undefined, untilLoaded);
+	},
+};
+
+/**
+ * The connection poll fails, so the drawer reports it could not connect and
+ * offers Check Again.
+ */
+export const AwsAgentConnectionError: Story = {
+	args: { accounts: 0, newAccountCheckIn: 'error' },
+	play: async ({ canvasElement }): Promise<void> => {
+		await connectAwsAccount(canvasElement);
+		await screen.findByTestId('aws-check-connection-btn', undefined, untilLoaded);
+	},
+};
+
+/**
+ * Leaving the drawer while the agent has not connected yet, which asks first
+ * because closing means starting the installation again.
+ */
+export const AwsAgentCloseConfirm: Story = {
+	args: { accounts: 0, newAccountCheckIn: 'pending' },
+	play: async ({ canvasElement }): Promise<void> => {
+		await connectAwsAccount(canvasElement);
+		await userEvent.click(
+			await screen.findByTestId('aws-cancel-btn', undefined, untilLoaded),
+		);
+		await screen.findByTestId('aws-close-setup-btn', undefined, untilLoaded);
+	},
+};
+
+/**
+ * The Azure setup command, with the drawer waiting for the subscription to
+ * connect. Set New account check-in to `checked-in` or `error` to see it connect
+ * or fail.
+ */
+export const AzureAgentCommand: Story = {
+	args: { provider: 'azure', accounts: 0, newAccountCheckIn: 'pending' },
+	play: async ({ canvasElement }): Promise<void> => {
+		await connectAzureAccount(canvasElement);
+		await screen.findByTestId('azure-agent-command', undefined, untilLoaded);
+	},
+};
+
+/**
+ * The connection poll fails, so the drawer reports it could not connect and
+ * offers Check Again.
+ */
+export const AzureAgentConnectionError: Story = {
+	args: { provider: 'azure', accounts: 0, newAccountCheckIn: 'error' },
+	play: async ({ canvasElement }): Promise<void> => {
+		await connectAzureAccount(canvasElement);
+		await screen.findByTestId(
+			'azure-check-connection-btn',
+			undefined,
+			untilLoaded,
+		);
+	},
+};
+
+/**
+ * Leaving the drawer while the agent has not connected yet, which asks first
+ * because closing means starting the installation again.
+ */
+export const AzureAgentCloseConfirm: Story = {
+	args: { provider: 'azure', accounts: 0, newAccountCheckIn: 'pending' },
+	play: async ({ canvasElement }): Promise<void> => {
+		await connectAzureAccount(canvasElement);
+		await userEvent.click(
+			await screen.findByTestId('azure-cancel-btn', undefined, untilLoaded),
+		);
+		await screen.findByTestId('azure-close-setup-btn', undefined, untilLoaded);
 	},
 };
 

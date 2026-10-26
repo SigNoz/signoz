@@ -1,14 +1,13 @@
 package cloudintegrationtypes
 
 import (
+	"bytes"
+	"text/template"
+
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-var (
-	CloudFormationQuickCreateBaseURL  = valuer.NewString("https://%s.console.aws.amazon.com/cloudformation/home")
-	AgentCloudFormationTemplateS3Path = valuer.NewString("https://signoz-integrations.s3.us-east-1.amazonaws.com/aws-quickcreate-template-%s.json")
-	AgentCloudFormationBaseStackName  = valuer.NewString("signoz-integration")
-)
+var awsCLITemplate = template.Must(template.New("awsCLI").Funcs(foundryTemplateFuncs).Parse(awsCLITemplateStr()))
 
 type AWSPostableAccountConfig struct {
 	DeploymentRegion string   `json:"deploymentRegion" required:"true"`
@@ -16,7 +15,7 @@ type AWSPostableAccountConfig struct {
 }
 
 type AWSConnectionArtifact struct {
-	ConnectionURL string `json:"connectionUrl" required:"true"`
+	CLICommand string `json:"cliCommand" required:"true"`
 }
 
 type AWSAccountConfig struct {
@@ -105,10 +104,23 @@ type AWSServiceMetricsConfig struct {
 	Enabled bool `json:"enabled"`
 }
 
-func NewAWSConnectionArtifact(connectionURL string) *AWSConnectionArtifact {
-	return &AWSConnectionArtifact{
-		ConnectionURL: connectionURL,
+func NewAWSConnectionArtifact(integrationAccountID valuer.UUID, agentVersion string, creds *Credentials, deploymentRegion string) (*AWSConnectionArtifact, error) {
+	data := foundryTemplateData{
+		FoundryScriptURL:     foundryScriptURL,
+		Region:               deploymentRegion,
+		IntegrationAccountID: integrationAccountID.StringValue(),
+		AgentVersion:         agentVersion,
+		Credentials:          creds,
 	}
+
+	var command bytes.Buffer
+	if err := awsCLITemplate.Execute(&command, data); err != nil {
+		return nil, err
+	}
+
+	return &AWSConnectionArtifact{
+		CLICommand: command.String(),
+	}, nil
 }
 
 func NewAWSIntegrationConfig(enabledRegions []string, telemetryCollectionStrategy *AWSTelemetryCollectionStrategy) *AWSIntegrationConfig {
@@ -166,4 +178,15 @@ func awsOlderIntegrationConfig(cfg *ProviderIntegrationConfig) *IntegrationConfi
 
 	older.Telemetry = oldTelemetry
 	return older
+}
+
+func awsCLITemplateStr() string {
+	return `curl -fsSL {{.FoundryScriptURL | shellQuote}} | bash -s -- cloudintegration aws cloudformation \
+  --region {{.Region | shellQuote}} \
+  --integration-account-id {{.IntegrationAccountID | shellQuote}} \
+  --signoz-api-url {{.Credentials.SigNozAPIURL | shellQuote}} \
+  --signoz-api-key {{.Credentials.SigNozAPIKey | shellQuote}} \
+  --ingestion-url {{.Credentials.IngestionURL | shellQuote}} \
+  --ingestion-key {{.Credentials.IngestionKey | shellQuote}} \
+  --agent-version {{.AgentVersion | shellQuote}}`
 }

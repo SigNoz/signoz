@@ -2,8 +2,6 @@ package implcloudprovider
 
 import (
 	"context"
-	"fmt"
-	"net/url"
 	"sort"
 
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
@@ -18,29 +16,14 @@ func NewAWSCloudProvider(defStore cloudintegrationtypes.ServiceDefinitionStore) 
 	return &awscloudprovider{serviceDefinitions: defStore}, nil
 }
 
-// TODO: move URL construction logic to cloudintegrationtypes and add unit tests for it.
 func (provider *awscloudprovider) GetConnectionArtifact(ctx context.Context, account *cloudintegrationtypes.Account, req *cloudintegrationtypes.GetConnectionArtifactRequest) (*cloudintegrationtypes.ConnectionArtifact, error) {
-	baseURL := fmt.Sprintf(cloudintegrationtypes.CloudFormationQuickCreateBaseURL.StringValue(), req.Config.AWS.DeploymentRegion)
-	u, _ := url.Parse(baseURL)
-
-	q := u.Query()
-	q.Set("region", req.Config.AWS.DeploymentRegion)
-	u.Fragment = "/stacks/quickcreate"
-
-	u.RawQuery = q.Encode()
-
-	q = u.Query()
-	q.Set("stackName", cloudintegrationtypes.AgentCloudFormationBaseStackName.StringValue())
-	q.Set("templateURL", fmt.Sprintf(cloudintegrationtypes.AgentCloudFormationTemplateS3Path.StringValue(), req.Config.AgentVersion))
-	q.Set("param_SigNozIntegrationAgentVersion", req.Config.AgentVersion)
-	q.Set("param_SigNozApiUrl", req.Credentials.SigNozAPIURL)
-	q.Set("param_SigNozApiKey", req.Credentials.SigNozAPIKey)
-	q.Set("param_SigNozAccountId", account.ID.StringValue())
-	q.Set("param_IngestionUrl", req.Credentials.IngestionURL)
-	q.Set("param_IngestionKey", req.Credentials.IngestionKey)
+	connectionArtifact, err := cloudintegrationtypes.NewAWSConnectionArtifact(account.ID, req.Config.AgentVersion, req.Credentials, req.Config.AWS.DeploymentRegion)
+	if err != nil {
+		return nil, err
+	}
 
 	return &cloudintegrationtypes.ConnectionArtifact{
-		AWS: cloudintegrationtypes.NewAWSConnectionArtifact(u.String() + "?&" + q.Encode()), // this format is required by AWS
+		AWS: connectionArtifact,
 	}, nil
 }
 

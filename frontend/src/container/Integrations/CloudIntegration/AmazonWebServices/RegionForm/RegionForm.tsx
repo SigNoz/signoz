@@ -1,14 +1,8 @@
-import { useRef } from 'react';
 import { Form } from 'antd';
-import { useGetAccount } from 'api/generated/services/cloudintegration';
-import cx from 'classnames';
-import { INTEGRATION_TYPES } from 'container/Integrations/constants';
-import {
-	ModalStateEnum,
-	RegionFormProps,
-} from 'container/Integrations/HeroSection/types';
+import { RegionFormProps } from 'container/Integrations/HeroSection/types';
 import { regions } from 'utils/regions';
 
+import AgentSetupCommand from '../../AgentSetupCommand/AgentSetupCommand';
 import AlertMessage from '../../AlertMessage';
 import {
 	ComplianceNote,
@@ -22,56 +16,13 @@ export function RegionForm({
 	modalState,
 	selectedRegions,
 	onSubmit,
-	accountId,
+	connectionCommand,
 	handleRegionChange,
 	connectionParams,
 	isConnectionParamsLoading,
 	setSelectedRegions,
 	setIncludeAllRegions,
-	onConnectionSuccess,
-	onConnectionTimeout,
-	onConnectionError,
 }: RegionFormProps): JSX.Element {
-	const startTimeRef = useRef(Date.now());
-	const refetchInterval = 10 * 1000;
-	const errorTimeout = 10 * 60 * 1000;
-
-	const { isLoading: isAccountStatusLoading } = useGetAccount(
-		{
-			cloudProvider: INTEGRATION_TYPES.AWS,
-			id: accountId ?? '',
-		},
-		{
-			query: {
-				refetchInterval,
-				enabled: !!accountId && modalState === ModalStateEnum.WAITING,
-				onSuccess: (response) => {
-					const isConnected =
-						Boolean(response.data.providerAccountId) &&
-						response.data.removedAt === null;
-
-					if (isConnected) {
-						const cloudAccountId =
-							response.data.providerAccountId ?? response.data.id;
-
-						onConnectionSuccess({
-							cloudAccountId,
-							status: response.data.agentReport,
-						});
-					} else if (Date.now() - startTimeRef.current >= errorTimeout) {
-						onConnectionTimeout({ id: accountId });
-					}
-				},
-				onError: () => {
-					onConnectionError();
-				},
-			},
-		},
-	);
-
-	const isFormDisabled =
-		modalState === ModalStateEnum.WAITING || isAccountStatusLoading;
-
 	return (
 		<Form
 			form={form}
@@ -79,28 +30,30 @@ export function RegionForm({
 			layout="vertical"
 			onFinish={onSubmit}
 		>
-			<div
-				className={cx(`cloud-account-setup-form__content`, {
-					disabled: isFormDisabled,
-				})}
-			>
-				<RegionDeploymentSection
-					regions={regions}
-					handleRegionChange={handleRegionChange}
-					isFormDisabled={isFormDisabled}
+			{connectionCommand ? (
+				<AgentSetupCommand
+					description="Run this command in AWS CloudShell, or in a terminal where the AWS CLI is signed in to the account you want to monitor. It contains your SigNoz keys, so do not share it."
+					command={connectionCommand}
+					testId="aws-agent-command"
 				/>
-				<MonitoringRegionsSection
-					selectedRegions={selectedRegions}
-					setSelectedRegions={setSelectedRegions}
-					setIncludeAllRegions={setIncludeAllRegions}
-				/>
-				<ComplianceNote />
-				<RenderConnectionFields
-					isConnectionParamsLoading={isConnectionParamsLoading}
-					connectionParams={connectionParams}
-					isFormDisabled={isFormDisabled}
-				/>
-			</div>
+			) : (
+				<div className="cloud-account-setup-form__content">
+					<RegionDeploymentSection
+						regions={regions}
+						handleRegionChange={handleRegionChange}
+					/>
+					<MonitoringRegionsSection
+						selectedRegions={selectedRegions}
+						setSelectedRegions={setSelectedRegions}
+						setIncludeAllRegions={setIncludeAllRegions}
+					/>
+					<ComplianceNote />
+					<RenderConnectionFields
+						isConnectionParamsLoading={isConnectionParamsLoading}
+						connectionParams={connectionParams}
+					/>
+				</div>
+			)}
 
 			<div className="cloud-account-setup-form__alert">
 				<AlertMessage modalState={modalState} />

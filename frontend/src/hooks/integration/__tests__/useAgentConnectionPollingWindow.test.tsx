@@ -21,6 +21,7 @@ const renderPolling = (
 	const { rerender } = renderHook(
 		({ enabled }: { enabled: boolean }) =>
 			useAgentConnectionPolling({
+				cloudProvider: 'gcp',
 				accountId: ACCOUNT_ID,
 				enabled,
 				...callbacks,
