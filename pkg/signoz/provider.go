@@ -264,6 +264,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewKeepRelevantLLMPricingRulesFactory(),
 		sqlmigration.NewBackfillTelegramChannelSpecFactory(),
 		sqlmigration.NewAddMetricsFieldTuplesFactory(sqlstore),
+		sqlmigration.NewAddGCPConnectionMethodFactory(),
 		sqlmigration.NewMigrateRulesV1ToV2Alpha1Factory(sqlstore),
 	)
 }
