@@ -94,19 +94,24 @@ describe('convertValue', () => {
 
 	describe('throughput', () => {
 		it('should convert counts per second to counts per minute', () => {
-			expect(convertValue(1, 'cps', 'cpm')).toBe(1 / 60);
+			expect(convertValue(1, 'cps', 'cpm')).toBe(60);
 		});
 
 		it('should convert operations per second to operations per minute', () => {
-			expect(convertValue(1, 'ops', 'opm')).toBe(1 / 60);
+			expect(convertValue(1, 'ops', 'opm')).toBe(60);
 		});
 
 		it('should convert counts per minute to counts per second', () => {
-			expect(convertValue(1, 'cpm', 'cps')).toBe(60);
+			expect(convertValue(120, 'cpm', 'cps')).toBe(2);
 		});
 
 		it('should convert operations per minute to operations per second', () => {
-			expect(convertValue(1, 'opm', 'ops')).toBe(60);
+			expect(convertValue(120, 'opm', 'ops')).toBe(2);
+		});
+
+		it('should convert reads and writes per minute to per second', () => {
+			expect(convertValue(120, 'rpm', 'rps')).toBe(2);
+			expect(convertValue(120, 'wpm', 'wps')).toBe(2);
 		});
 	});
 

@@ -411,6 +411,56 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 			ruleUnit:    "By/s",
 			shouldAlert: true,
 		},
+		{
+			name: "counts per minute to counts per second conversion - should alert",
+			threshold: BasicRuleThreshold{
+				Name:            CriticalThresholdName,
+				TargetValue:     &target, // 100 cpm
+				TargetUnit:      "cpm",
+				MatchType:       AtleastOnce,
+				CompareOperator: ValueIsAbove,
+			},
+			series: &qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{
+					{
+						Key: telemetrytypes.TelemetryFieldKey{
+							Name: "service",
+						},
+						Value: "test",
+					},
+				},
+				Values: []*qbtypes.TimeSeriesValue{
+					{Value: 2, Timestamp: 1000}, // 2 cps = 120 cpm
+				},
+			},
+			ruleUnit:    "cps",
+			shouldAlert: true,
+		},
+		{
+			name: "counts per minute to counts per second conversion - should not alert",
+			threshold: BasicRuleThreshold{
+				Name:            WarningThresholdName,
+				TargetValue:     &target, // 100 cpm
+				TargetUnit:      "cpm",
+				MatchType:       AtleastOnce,
+				CompareOperator: ValueIsAbove,
+			},
+			series: &qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{
+					{
+						Key: telemetrytypes.TelemetryFieldKey{
+							Name: "service",
+						},
+						Value: "test",
+					},
+				},
+				Values: []*qbtypes.TimeSeriesValue{
+					{Value: 1, Timestamp: 1000}, // 1 cps = 60 cpm
+				},
+			},
+			ruleUnit:    "cps",
+			shouldAlert: false,
+		},
 	}
 
 	for _, tt := range tests {

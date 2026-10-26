@@ -349,22 +349,22 @@ const unitsMapping = [
 			{
 				label: 'counts/min (cpm)',
 				value: 'cpm',
-				factor: 60, // 1 cpm = 60 cps
+				factor: 1 / 60, // 60 cpm = 1 cps
 			},
 			{
 				label: 'ops/min (opm)',
 				value: 'opm',
-				factor: 60, // 1 opm = 60 ops
+				factor: 1 / 60, // 60 opm = 1 ops
 			},
 			{
 				label: 'reads/min (rpm)',
 				value: 'rpm',
-				factor: 60, // 1 rpm = 60 rps
+				factor: 1 / 60, // 60 rpm = 1 rps
 			},
 			{
 				label: 'writes/min (wpm)',
 				value: 'wpm',
-				factor: 60, // 1 wpm = 60 wps
+				factor: 1 / 60, // 60 wpm = 1 wps
 			},
 			// ... (other options)
 		],
