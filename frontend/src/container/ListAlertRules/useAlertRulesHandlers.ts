@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import logEvent from 'api/common/logEvent';
+import { RuletypesAlertTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { sanitizeDefaultAlertQuery } from 'container/EditAlertV2/utils';
@@ -7,6 +8,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useTableRowClick } from 'hooks/useTableRowClick';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
+import { toAISlotQuery } from 'lib/query/builderSlot';
 import { toCompositeMetricQuery } from 'types/api/alerts/convert';
 import { isModifierKeyPressed } from 'utils/app';
 
@@ -27,10 +29,14 @@ export function useAlertRulesHandlers(
 
 	const getEditUrl = useCallback(
 		(rule: AlertRule): string => {
-			const compositeQuery = sanitizeDefaultAlertQuery(
+			const query = sanitizeDefaultAlertQuery(
 				mapQueryDataFromApi(toCompositeMetricQuery(rule.condition.compositeQuery)),
 				rule.alertType,
 			);
+			const compositeQuery =
+				rule.alertType === RuletypesAlertTypeDTO.AI_TRACES_BASED_ALERT
+					? toAISlotQuery(query)
+					: query;
 			params.set(
 				QueryParams.compositeQuery,
 				encodeURIComponent(JSON.stringify(compositeQuery)),

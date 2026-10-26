@@ -50,6 +50,19 @@ export function toWireQuery(query: Query): Query {
 	};
 }
 
+/** The reverse of `toWireQuery`: a builder query moves into the AI slot under the AI type. */
+export function toAISlotQuery(query: Query): Query {
+	if (query.queryType !== EQueryType.QUERY_BUILDER) {
+		return query;
+	}
+	return {
+		...query,
+		queryType: EQueryType.AI_QUERY_BUILDER,
+		builder: { queryData: [], queryFormulas: [], queryTraceOperator: [] },
+		builder_ai_query: query.builder,
+	};
+}
+
 /** The builder at `slot`; an unused AI slot holds none. */
 export function getBuilderAt(
 	state: QueryState,

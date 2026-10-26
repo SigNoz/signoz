@@ -5,7 +5,7 @@ import { Popover } from 'antd';
 import LogsIcon from 'assets/AlertHistory/LogsIcon';
 import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { DraftingCompass } from '@signozhq/icons';
+import { Brain, DraftingCompass } from '@signozhq/icons';
 
 import './AlertPopover.styles.scss';
 
@@ -13,14 +13,17 @@ type Props = {
 	children: React.ReactNode;
 	relatedTracesLink?: string;
 	relatedLogsLink?: string;
+	relatedAITracesLink?: string;
 };
 
 function PopoverContent({
 	relatedTracesLink,
 	relatedLogsLink,
+	relatedAITracesLink,
 }: {
 	relatedTracesLink?: Props['relatedTracesLink'];
 	relatedLogsLink?: Props['relatedLogsLink'];
+	relatedAITracesLink?: Props['relatedAITracesLink'];
 }): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	return (
@@ -52,18 +55,35 @@ function PopoverContent({
 					<div className="text">View Traces</div>
 				</Link>
 			)}
+			{!!relatedAITracesLink && (
+				<Link
+					to={`${ROUTES.AI_OBSERVABILITY_EXPLORER}?${relatedAITracesLink}`}
+					className="contributor-row-popover-buttons__button"
+					data-testid="alert-popover-view-ai-traces"
+				>
+					<div className="icon">
+						<Brain
+							size={14}
+							color={isDarkMode ? Color.BG_VANILLA_400 : Color.TEXT_INK_400}
+						/>
+					</div>
+					<div className="text">View AI Traces</div>
+				</Link>
+			)}
 		</div>
 	);
 }
 PopoverContent.defaultProps = {
 	relatedTracesLink: '',
 	relatedLogsLink: '',
+	relatedAITracesLink: '',
 };
 
 function AlertPopover({
 	children,
 	relatedTracesLink,
 	relatedLogsLink,
+	relatedAITracesLink,
 }: Props): JSX.Element {
 	return (
 		<div className="alert-popover-trigger-action">
@@ -77,6 +97,7 @@ function AlertPopover({
 					<PopoverContent
 						relatedTracesLink={relatedTracesLink}
 						relatedLogsLink={relatedLogsLink}
+						relatedAITracesLink={relatedAITracesLink}
 					/>
 				}
 				trigger="click"
@@ -90,23 +111,27 @@ function AlertPopover({
 AlertPopover.defaultProps = {
 	relatedTracesLink: '',
 	relatedLogsLink: '',
+	relatedAITracesLink: '',
 };
 
 type ConditionalAlertPopoverProps = {
 	relatedTracesLink: string;
 	relatedLogsLink: string;
+	relatedAITracesLink: string;
 	children: React.ReactNode;
 };
 export function ConditionalAlertPopover({
 	children,
 	relatedTracesLink,
 	relatedLogsLink,
+	relatedAITracesLink,
 }: ConditionalAlertPopoverProps): JSX.Element {
-	if (relatedTracesLink || relatedLogsLink) {
+	if (relatedTracesLink || relatedLogsLink || relatedAITracesLink) {
 		return (
 			<AlertPopover
 				relatedTracesLink={relatedTracesLink}
 				relatedLogsLink={relatedLogsLink}
+				relatedAITracesLink={relatedAITracesLink}
 			>
 				{children}
 			</AlertPopover>
