@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { Button } from 'antd';
 import classNames from 'classnames';
@@ -74,11 +74,12 @@ function QuerySection(): JSX.Element {
 	const [isLoadingQueries, setIsLoadingQueries] = useState(false);
 	const [isCancelled, setIsCancelled] = useState(false);
 
-	useEffect(() => {
-		if (isLoadingQueries) {
+	const handleFetchingStateChange = useCallback((isFetching: boolean): void => {
+		setIsLoadingQueries(isFetching);
+		if (isFetching) {
 			setIsCancelled(false);
 		}
-	}, [isLoadingQueries]);
+	}, []);
 
 	const handleCancelQuery = useCallback(() => {
 		void queryClient.cancelQueries([REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW]);
@@ -143,7 +144,7 @@ function QuerySection(): JSX.Element {
 				alertDef={alertDef}
 				source={source}
 				isCancelled={isCancelled}
-				onFetchingStateChange={setIsLoadingQueries}
+				onFetchingStateChange={handleFetchingStateChange}
 			/>
 			<div className="query-section-tabs">
 				<div className="query-section-query-actions">
