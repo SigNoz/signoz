@@ -1118,8 +1118,8 @@ func TestValidate_MarshalRoundTrip(t *testing.T) {
 		if err := json.Unmarshal(marshaled, &roundTripped); err != nil {
 			t.Fatalf("unmarshal error: %v", err)
 		}
-		if roundTripped.SchemaVersion != SchemaVersionV2Alpha1 {
-			t.Errorf("expected schemaVersion %q, got %q", SchemaVersionV2Alpha1, roundTripped.SchemaVersion)
+		if roundTripped.SchemaVersion.StringValue() != SchemaVersionV2Alpha1 {
+			t.Errorf("expected schemaVersion %q, got %q", SchemaVersionV2Alpha1, roundTripped.SchemaVersion.StringValue())
 		}
 	})
 }
@@ -1149,7 +1149,7 @@ func TestValidate_MultipleErrors(t *testing.T) {
 // TestValidate_AllSymbolAndShortOperators tests symbol and short operator variants.
 func TestValidate_AllSymbolAndShortOperators(t *testing.T) {
 	mkRule := func(op string) string {
-		return patchJSON(validV2Alpha1Builder(), `{"condition":{"compositeQuery":{"queryType":"builder","queries":[{"type":"builder_query","spec":{"name":"A","signal":"metrics","aggregations":[{"metricName":"cpu","spaceAggregation":"p50"}],"stepInterval":"5m"}}]},"thresholds":{"kind":"basic","spec":[{"name":"critical","target":10.0,"matchType":"1","op":"`+op+`"}]}}}`)
+		return patchJSON(validV2Alpha1Builder(), `{"condition":{"compositeQuery":{"queryType":"builder","panelType":"graph","queries":[{"type":"builder_query","spec":{"name":"A","signal":"metrics","aggregations":[{"metricName":"cpu","spaceAggregation":"p50"}],"stepInterval":"5m"}}]},"thresholds":{"kind":"basic","spec":[{"name":"critical","target":10.0,"matchType":"1","op":"`+op+`"}]}}}`)
 	}
 
 	validOps := []string{
@@ -1182,9 +1182,9 @@ func TestValidate_AllSymbolAndShortOperators(t *testing.T) {
 func TestValidate_V2Alpha1_CumulativeEvaluation(t *testing.T) {
 	mkRule := func(evalJSON string) string {
 		return `{
-			"alert": "Test", "version": "v5", "schemaVersion": "v2alpha1", "ruleType": "threshold_rule",
+			"alert": "Test", "version": "v5", "schemaVersion": "v2alpha1", "ruleType": "threshold_rule", "alertType": "METRIC_BASED_ALERT",
 			"condition": {
-				"compositeQuery": {"queryType": "builder", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}}]},
+				"compositeQuery": {"queryType": "builder", "panelType": "graph", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}}]},
 				"thresholds": {"kind": "basic", "spec": [{"name": "critical", "target": 90.0, "matchType": "1", "op": "1"}]}
 			},
 			"evaluation": ` + evalJSON + `,
@@ -1264,9 +1264,9 @@ func TestValidate_V2Alpha1_CumulativeEvaluation(t *testing.T) {
 func TestValidate_V2Alpha1_MultipleThresholds(t *testing.T) {
 	t.Run("warning and critical thresholds", func(t *testing.T) {
 		j := `{
-			"alert": "Test", "version": "v5", "schemaVersion": "v2alpha1", "ruleType": "threshold_rule",
+			"alert": "Test", "version": "v5", "schemaVersion": "v2alpha1", "ruleType": "threshold_rule", "alertType": "METRIC_BASED_ALERT",
 			"condition": {
-				"compositeQuery": {"queryType": "builder", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}}]},
+				"compositeQuery": {"queryType": "builder", "panelType": "graph", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}}]},
 				"thresholds": {"kind": "basic", "spec": [
 					{"name": "warning", "target": 70.0, "matchType": "1", "op": "1"},
 					{"name": "critical", "target": 90.0, "matchType": "1", "op": "1"}
@@ -1283,9 +1283,9 @@ func TestValidate_V2Alpha1_MultipleThresholds(t *testing.T) {
 
 	t.Run("thresholds with literal ops and matchTypes", func(t *testing.T) {
 		j := `{
-			"alert": "Test", "version": "v5", "schemaVersion": "v2alpha1", "ruleType": "threshold_rule",
+			"alert": "Test", "version": "v5", "schemaVersion": "v2alpha1", "ruleType": "threshold_rule", "alertType": "METRIC_BASED_ALERT",
 			"condition": {
-				"compositeQuery": {"queryType": "builder", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}}]},
+				"compositeQuery": {"queryType": "builder", "panelType": "graph", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}}]},
 				"thresholds": {"kind": "basic", "spec": [
 					{"name": "warning", "target": 70.0, "matchType": "on_average", "op": "above_or_equal"},
 					{"name": "critical", "target": 90.0, "matchType": "last", "op": "above"}
@@ -1305,9 +1305,9 @@ func TestValidate_V2Alpha1_MultipleThresholds(t *testing.T) {
 func TestValidate_V2Alpha1_NotificationStates(t *testing.T) {
 	mkRule := func(states string) string {
 		return `{
-			"alert": "Test", "version": "v5", "schemaVersion": "v2alpha1", "ruleType": "threshold_rule",
+			"alert": "Test", "version": "v5", "schemaVersion": "v2alpha1", "ruleType": "threshold_rule", "alertType": "METRIC_BASED_ALERT",
 			"condition": {
-				"compositeQuery": {"queryType": "builder", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}}]},
+				"compositeQuery": {"queryType": "builder", "panelType": "graph", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}}]},
 				"thresholds": {"kind": "basic", "spec": [{"name": "critical", "target": 90.0, "matchType": "1", "op": "1"}]}
 			},
 			"evaluation": {"kind": "rolling", "spec": {"evalWindow": "5m", "frequency": "1m"}},
@@ -1350,7 +1350,7 @@ func TestValidate_QueryTypes(t *testing.T) {
 	mkRule := func(queryType, queryJSON string) string {
 		return patchJSON(validV2Alpha1Builder(), `{
 			"condition": {
-				"compositeQuery": {"queryType": "`+queryType+`", "queries": [`+queryJSON+`]},
+				"compositeQuery": {"queryType": "`+queryType+`", "panelType": "graph", "queries": [`+queryJSON+`]},
 				"thresholds": {"kind": "basic", "spec": [{"name": "critical", "target": 10.0, "matchType": "1", "op": "1"}]}
 			}
 		}`)
@@ -1446,7 +1446,7 @@ func TestValidate_AlertOnAbsent(t *testing.T) {
 	t.Run("alertOnAbsent true accepted", func(t *testing.T) {
 		j := patchJSON(validV2Alpha1Builder(), `{
 			"condition": {
-				"compositeQuery": {"queryType": "builder", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}}]},
+				"compositeQuery": {"queryType": "builder", "panelType": "graph", "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}], "stepInterval": "5m"}}]},
 				"thresholds": {"kind": "basic", "spec": [{"name": "critical", "target": 10.0, "matchType": "1", "op": "1"}]},
 				"alertOnAbsent": true, "absentFor": 300
 			}

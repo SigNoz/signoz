@@ -266,6 +266,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddMetricsFieldTuplesFactory(sqlstore),
 		sqlmigration.NewAddGCPConnectionMethodFactory(),
 		sqlmigration.NewMigrateRulesV1ToV2Alpha1Factory(sqlstore),
+		sqlmigration.NewRepairRulesV2Alpha1Factory(sqlstore),
 	)
 }
 
