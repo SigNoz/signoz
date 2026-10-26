@@ -547,7 +547,7 @@ def test_downtime_managed_role_tuples_enforced_with_license(
     assert response.status_code == HTTPStatus.NO_CONTENT, f"editor delete must pass on the migrated planned-maintenance delete tuple: {response.text}"
 
 
-def test_managed_roles_on_rule_views_after_license(
+def test_rule_view_managed_role_tuples_enforced_with_license(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -559,7 +559,7 @@ def test_managed_roles_on_rule_views_after_license(
         headers={"Authorization": f"Bearer {viewer_token}"},
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.status_code == HTTPStatus.OK, f"viewer list must pass on the migrated rule list tuple: {response.text}"
 
     response = requests.post(
         signoz.self.host_configs["8080"].get(RULE_VIEWS_URL),
@@ -567,7 +567,7 @@ def test_managed_roles_on_rule_views_after_license(
         headers={"Authorization": f"Bearer {viewer_token}"},
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.CREATED, response.text
+    assert response.status_code == HTTPStatus.CREATED, f"viewer create must pass, rule views are gated on rule list like dashboard views: {response.text}"
     view_id = response.json()["data"]["id"]
 
     response = requests.delete(
@@ -575,7 +575,7 @@ def test_managed_roles_on_rule_views_after_license(
         headers={"Authorization": f"Bearer {viewer_token}"},
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+    assert response.status_code == HTTPStatus.NO_CONTENT, f"viewer delete must pass on the migrated rule list tuple: {response.text}"
 
 
 def test_setup_channel_scoped_actor(
