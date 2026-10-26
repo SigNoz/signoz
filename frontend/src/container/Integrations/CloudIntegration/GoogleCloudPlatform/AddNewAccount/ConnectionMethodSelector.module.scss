@@ -10,12 +10,6 @@
 	composes: drawerSurfaceHead from './shared.module.scss';
 }
 
-.flowRadioTitle {
-	display: flex;
-	gap: var(--spacing-2);
-	align-items: center;
-}
-
-.flowRadioDesc {
+.methodRadioDesc {
 	margin-top: var(--spacing-2);
 }
