@@ -694,6 +694,7 @@ func TestPromRuleEval(t *testing.T) {
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
 				{
+					Name:            "critical",
 					TargetValue:     &c.target,
 					MatchType:       c.matchType,
 					CompareOperator: c.compareOperator,
@@ -1248,6 +1249,7 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 
 func TestPromRule_NoData(t *testing.T) {
 	evalTime := time.Now()
+	target := 200.0
 
 	postableRule := ruletypes.PostableRule{
 		AlertName: valuer.NewDisplayName("Test no data"),
@@ -1269,7 +1271,7 @@ func TestPromRule_NoData(t *testing.T) {
 			},
 			Thresholds: &ruletypes.RuleThresholdData{
 				Kind: ruletypes.BasicThresholdKind,
-				Spec: ruletypes.BasicRuleThresholds{{Name: "Test no data"}},
+				Spec: ruletypes.BasicRuleThresholds{{Name: "Test no data", TargetValue: &target, CompareOperator: ruletypes.ValueIsAbove, MatchType: ruletypes.AtleastOnce}},
 			},
 		},
 	}

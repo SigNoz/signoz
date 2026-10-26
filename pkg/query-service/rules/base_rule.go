@@ -144,6 +144,9 @@ func NewBaseRule(
 	if err != nil {
 		return nil, err
 	}
+	if err := threshold.Validate(); err != nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid rule threshold spec: %v", err)
+	}
 	evaluation, err := p.Evaluation.GetEvaluation()
 	if err != nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to get evaluation: %v", err)

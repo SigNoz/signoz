@@ -35,8 +35,8 @@ const (
 	labelSeverity          = "severity"
 )
 
-// The values the threshold decoder accepts; a stored value outside them fails
-// every later read of the migrated row.
+// The values the write path accepts; a migrated rule outside them is written
+// disabled, for the user to fix.
 var (
 	supportedCompareOperators = []string{"1", "above", ">", "2", "below", "<", "3", "equal", "eq", "=", "4", "not_equal", "not_eq", "!=", "5", "above_or_equal", "above_or_eq", ">=", "6", "below_or_equal", "below_or_eq", "<=", "7", "outside_bounds"}
 	supportedMatchTypes       = []string{"1", "at_least_once", "2", "all_the_times", "3", "on_average", "avg", "4", "in_total", "sum", "5", "last"}
@@ -102,7 +102,7 @@ func (migration *migrateRulesV1ToV2Alpha1) convertOrg(ctx context.Context, orgID
 		routesByName[route.Name] = append(routesByName[route.Name], route)
 	}
 
-	var migrated, skipped, undecodable, unmigratable int
+	var migrated, disabled, skipped, undecodable, unmigratable int
 	for _, stored := range rules {
 		var header struct {
 			SchemaVersion string `json:"schemaVersion"`
@@ -142,6 +142,11 @@ func (migration *migrateRulesV1ToV2Alpha1) convertOrg(ctx context.Context, orgID
 			migration.logger.WarnContext(ctx, "leaving rule at v1", slog.String("org_id", orgID), slog.String("rule_id", stored.ID), errors.Attr(err))
 			continue
 		}
+		if reason := rule.validateThreshold(); reason != nil {
+			rule.Disabled = json.RawMessage("true")
+			disabled++
+			migration.logger.WarnContext(ctx, "migrating rule as disabled, its threshold fails the write path", slog.String("org_id", orgID), slog.String("rule_id", stored.ID), errors.Attr(reason))
+		}
 
 		data, err := marshalUnescaped(rule)
 		if err != nil {
@@ -159,7 +164,7 @@ func (migration *migrateRulesV1ToV2Alpha1) convertOrg(ctx context.Context, orgID
 		migrated++
 	}
 
-	migration.logger.InfoContext(ctx, "migrated rules from v1 to v2alpha1", slog.String("org_id", orgID), slog.Int("total", len(rules)), slog.Int("migrated", migrated), slog.Int("skipped", skipped), slog.Int("undecodable", undecodable), slog.Int("unmigratable", unmigratable))
+	migration.logger.InfoContext(ctx, "migrated rules from v1 to v2alpha1", slog.String("org_id", orgID), slog.Int("total", len(rules)), slog.Int("migrated", migrated), slog.Int("disabled", disabled), slog.Int("skipped", skipped), slog.Int("undecodable", undecodable), slog.Int("unmigratable", unmigratable))
 	return nil
 }
 
@@ -169,9 +174,6 @@ func (migration *migrateRulesV1ToV2Alpha1) convertOrg(ctx context.Context, orgID
 func convertRule(ruleID string, rule *postableRule, route *routePolicyRow) error {
 	if rule.RuleCondition == nil || rule.RuleCondition.CompositeQuery == nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition or condition.compositeQuery is null")
-	}
-	if err := rule.validateThreshold(); err != nil {
-		return err
 	}
 	channels := []string{}
 	if route != nil {
@@ -318,19 +320,19 @@ type renotify struct {
 	AlertStates      []string     `json:"alertStates,omitzero"`
 }
 
-// validateThreshold rejects what the v1 write path once let through: a
-// missing target, or an op or matchType the threshold decoder does not
-// accept. Each fails every later read of the migrated row.
+// validateThreshold reports what the v1 write path once let through: a missing
+// target, or an op or matchType the v2 write path rejects. It reads the
+// relocated threshold, so it runs after convertRule.
 func (rule *postableRule) validateThreshold() error {
-	condition := rule.RuleCondition
-	if condition.Target == nil {
+	threshold := rule.RuleCondition.Thresholds.Spec[0]
+	if threshold.TargetValue == nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.target is null")
 	}
-	if !slices.Contains(supportedCompareOperators, condition.CompareOperator) {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.op: unsupported value %q", condition.CompareOperator)
+	if !slices.Contains(supportedCompareOperators, threshold.CompareOperator) {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.op: unsupported value %q", threshold.CompareOperator)
 	}
-	if !slices.Contains(supportedMatchTypes, condition.MatchType) {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.matchType: unsupported value %q", condition.MatchType)
+	if !slices.Contains(supportedMatchTypes, threshold.MatchType) {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.matchType: unsupported value %q", threshold.MatchType)
 	}
 	return nil
 }
