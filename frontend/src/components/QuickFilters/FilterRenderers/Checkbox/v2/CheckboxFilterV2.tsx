@@ -115,6 +115,14 @@ export default function CheckboxFilterV2(
 		setSearchText(args[0] as string);
 	}, DEBOUNCE_DELAY);
 
+	const handleToggleOpen = (): void => {
+		if (isOpen) {
+			setSearchTextDebounced.cancel();
+			setSearchText('');
+		}
+		onToggleOpen();
+	};
+
 	const currentFilterOp = useMemo(() => {
 		const filterSync = currentQuery?.builder.queryData?.[
 			activeQueryIndex
@@ -175,7 +183,7 @@ export default function CheckboxFilterV2(
 				title={filter.title}
 				isOpen={isOpen}
 				canReset={isSomeFilterPresentForCurrentAttribute}
-				onToggleOpen={onToggleOpen}
+				onToggleOpen={handleToggleOpen}
 				onClear={onClear}
 			/>
 			{isOpen && isLoading && !hasLoadedOnce.current && (

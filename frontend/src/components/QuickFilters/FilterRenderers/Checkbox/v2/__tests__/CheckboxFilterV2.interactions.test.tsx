@@ -462,6 +462,56 @@ describe('CheckboxFilterV2 - interactions', () => {
 			expect(header).toHaveAttribute('data-state', 'open');
 			await screen.findByTestId('checkbox-value-row-production');
 		});
+
+		it('clears the search when the filter is collapsed', async () => {
+			const user = userEvent.setup();
+			const values = Array.from(
+				{ length: 12 },
+				(_, i) => `value-${String(i).padStart(2, '0')}`,
+			);
+
+			server.use(
+				rest.get('http://localhost/api/v1/fields/values', (req, res, ctx) => {
+					const searchText = req.url.searchParams.get('searchText') || '';
+					return res(
+						ctx.status(200),
+						ctx.json({
+							status: 'success',
+							data: {
+								values: {
+									relatedValues: [],
+									stringValues: values.filter((value) => value.includes(searchText)),
+									numberValues: [],
+								},
+							},
+						}),
+					);
+				}),
+			);
+
+			render(
+				<CheckboxFilterV2
+					filter={DEFAULT_FILTER}
+					source={QuickFiltersSource.TRACES_EXPLORER}
+					useFieldApis={DEFAULT_USE_FIELD_APIS}
+				/>,
+			);
+
+			await screen.findByTestId('checkbox-value-row-value-00');
+			await user.type(screen.getByTestId('checkbox-filter-search'), '11');
+			await waitFor(() =>
+				expect(
+					screen.queryByTestId('checkbox-value-row-value-00'),
+				).not.toBeInTheDocument(),
+			);
+
+			const header = screen.getByTestId('checkbox-filter-header');
+			await user.click(header);
+			await user.click(header);
+
+			await screen.findByTestId('checkbox-value-row-value-00');
+			expect(screen.getByTestId('checkbox-filter-search')).toHaveValue('');
+		});
 	});
 
 	describe('show more functionality', () => {
