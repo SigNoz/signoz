@@ -188,5 +188,4 @@ export const qbProviderValue = {
 	updateQueriesData: (): Query => initialQueriesMap.traces,
 	initQueryBuilderData: noop,
 	handleOnUnitsChange: noop,
-	isStagedQueryUpdated: (): boolean => false,
 } as any;

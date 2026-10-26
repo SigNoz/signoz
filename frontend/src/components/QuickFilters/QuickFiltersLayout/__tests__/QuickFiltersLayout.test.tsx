@@ -1,6 +1,5 @@
 import { Button } from '@signozhq/ui/button';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
-import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import { QuickFiltersSource } from '../../types';
@@ -18,10 +17,6 @@ jest.mock('../QuickFiltersLayout.module.scss', () => ({
 		content: 'content',
 		contentInner: 'contentInner',
 	},
-}));
-
-jest.mock('hooks/useSavedViewEnabled', () => ({
-	useSavedViewEnabled: jest.fn(() => true),
 }));
 
 jest.mock('container/SavedViews/SavedViewsRestore', () => ({
@@ -70,10 +65,6 @@ const drawer = (): HTMLElement =>
 	screen.getByTestId('quick-filters-layout-drawer');
 
 describe('QuickFiltersLayout', () => {
-	beforeEach(() => {
-		jest.mocked(useSavedViewEnabled).mockReturnValue(true);
-	});
-
 	it('renders QuickFilters with the given props inside the filters pane', () => {
 		render(
 			<QuickFiltersLayout showFilters quickFilterProps={quickFilterProps}>
@@ -148,35 +139,6 @@ describe('QuickFiltersLayout', () => {
 	});
 
 	describe('saved views', () => {
-		it('ignores savedViewProps while the flag is off', () => {
-			jest.mocked(useSavedViewEnabled).mockReturnValue(false);
-			const { unmount } = render(
-				<QuickFiltersLayout
-					showFilters
-					quickFilterProps={quickFilterProps}
-					savedViewProps={savedViewProps}
-				>
-					<div>content</div>
-				</QuickFiltersLayout>,
-			);
-
-			expect(screen.getByTestId('quick-filters')).toBeInTheDocument();
-			expect(screen.queryByTestId('saved-views-header')).not.toBeInTheDocument();
-			expect(screen.queryByTestId('saved-views-panel')).not.toBeInTheDocument();
-
-			// Saved views only, so nothing is left to show.
-			unmount();
-			render(
-				<QuickFiltersLayout showFilters savedViewProps={savedViewProps}>
-					<div>content</div>
-				</QuickFiltersLayout>,
-			);
-			expect(
-				screen.queryByTestId('quick-filters-layout-filters'),
-			).not.toBeInTheDocument();
-			expect(screen.queryByTestId('saved-views-restore')).not.toBeInTheDocument();
-		});
-
 		it('opens the panel from the header and slides the quick filters drawer, keeping the same QuickFilters node', async () => {
 			render(
 				<QuickFiltersLayout

@@ -97,11 +97,3 @@ export const NavSettingsMenu: Story = {
 		await screen.findByRole('menu');
 	},
 };
-
-/**
- * The firing alert count in the bottom strip, in place of the build version. It
- * counts firing instances, so it does not match the alert rules widget above.
- */
-export const BottomStrip: Story = {
-	args: { bottomStrip: true },
-};

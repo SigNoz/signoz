@@ -5,7 +5,6 @@ import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import SavedViewsHeader from 'container/SavedViews/SavedViewsHeader';
 import SavedViewsPanel from 'container/SavedViews/SavedViewsPanel';
 import SavedViewsRestore from 'container/SavedViews/SavedViewsRestore';
-import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 
 import QuickFilters from '../QuickFilters';
 import { SIDEBAR_TOOLTIP_DELAY_MS } from './constants';
@@ -49,10 +48,9 @@ function QuickFiltersLayout({
 	children,
 }: QuickFiltersLayoutProps): JSX.Element {
 	const [isViewsListOpen, setIsViewsListOpen] = useState(false);
-	const isSavedViewEnabled = useSavedViewEnabled();
 
 	const hasQuickFilters = !!quickFilterProps;
-	const hasSavedViews = !!savedViewProps && isSavedViewEnabled;
+	const hasSavedViews = !!savedViewProps;
 
 	const showSidebar = showFilters && (hasQuickFilters || hasSavedViews);
 
