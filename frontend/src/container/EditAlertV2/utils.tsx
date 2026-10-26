@@ -19,12 +19,18 @@ export function sanitizeDefaultAlertQuery(
 }
 
 /** A saved AI traces rule comes back as a builder query; the editor holds it in the AI slot. */
+export function toEditAlertQuery(
+	query: Query,
+	alertType: AlertTypes | RuletypesAlertTypeDTO | undefined,
+): Query {
+	return alertType === AlertTypes.AI_TRACES_BASED_ALERT
+		? toAISlotQuery(query)
+		: query;
+}
+
 export function getEditAlertQuery(
 	compositeQuery: ICompositeMetricQuery,
 	alertType: AlertTypes,
 ): Query {
-	const query = mapQueryDataFromApi(compositeQuery);
-	return alertType === AlertTypes.AI_TRACES_BASED_ALERT
-		? toAISlotQuery(query)
-		: query;
+	return toEditAlertQuery(mapQueryDataFromApi(compositeQuery), alertType);
 }

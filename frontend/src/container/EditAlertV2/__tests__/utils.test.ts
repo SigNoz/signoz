@@ -1,14 +1,16 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { INITIAL_ALERT_THRESHOLD_STATE } from 'container/CreateAlertV2/context/constants';
+import { RuletypesAlertTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { createMockAlertContextState } from 'container/CreateAlertV2/EvaluationSettings/__tests__/testUtils';
 import { buildCreateThresholdAlertRulePayload } from 'container/CreateAlertV2/Footer/utils';
+import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { QueryEnvelope } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { getEditAlertQuery } from '../utils';
+import { getEditAlertQuery, toEditAlertQuery } from '../utils';
 
 const savedQuery = (
 	type: 'builder_query' | 'builder_ai_query',
@@ -79,5 +81,26 @@ describe('getEditAlertQuery', () => {
 				spec: expect.objectContaining({ name: 'A', signal: 'traces' }),
 			}),
 		]);
+	});
+});
+
+describe('toEditAlertQuery', () => {
+	it('moves a saved AI traces rule into the AI slot', () => {
+		const query = toEditAlertQuery(
+			mapQueryDataFromApi(savedQuery('builder_ai_query')),
+			RuletypesAlertTypeDTO.AI_TRACES_BASED_ALERT,
+		);
+
+		expect(query.queryType).toBe(EQueryType.AI_QUERY_BUILDER);
+		expect(query.builder.queryData).toHaveLength(0);
+		expect(query.builder_ai_query?.queryData[0].queryName).toBe('A');
+	});
+
+	it('leaves a saved traces rule unchanged', () => {
+		const mapped = mapQueryDataFromApi(savedQuery('builder_query'));
+
+		expect(
+			toEditAlertQuery(mapped, RuletypesAlertTypeDTO.TRACES_BASED_ALERT),
+		).toBe(mapped);
 	});
 });
