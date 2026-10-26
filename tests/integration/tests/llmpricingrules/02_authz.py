@@ -19,7 +19,7 @@ from fixtures.llmpricingrules import (
     list_llm_pricing_rules,
     upsert_llm_pricing_rules,
 )
-from fixtures.role import transaction_group
+from fixtures.role import find_role_by_name, transaction_group
 
 user_password = "password123Z$"
 editor_email = "llm-pricing-editor@integration.test"
@@ -197,6 +197,32 @@ def test_upsert_scoped_to_granted_rule(
     bodies = {"other_rule": [other], "create": [PROBE_RULE], "sync_row": [sync_row], "own_and_other": [own, other]}
 
     response = upsert_llm_pricing_rules(signoz, get_token(scoped_email, user_password), bodies[shape])
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
+    assert "llm-pricing-rule:update" in response.text
+
+
+def test_revoke_update_grant(
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+) -> None:
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    rule_id = next(r["id"] for r in list_llm_pricing_rules(signoz, admin_token) if r["modelName"] == PROBE_RULE["modelName"])
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{find_role_by_name(signoz, admin_token, scoped_role)}"),
+        json={
+            "description": "",
+            "transactionGroups": [
+                transaction_group("read", "metaresource", "llm-pricing-rule", [rule_id]),
+                transaction_group("delete", "metaresource", "llm-pricing-rule", [rule_id]),
+            ],
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=10,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    response = upsert_llm_pricing_rules(signoz, get_token(scoped_email, user_password), [{**PROBE_RULE, "id": rule_id}])
     assert response.status_code == HTTPStatus.FORBIDDEN, response.text
     assert "llm-pricing-rule:update" in response.text
 
