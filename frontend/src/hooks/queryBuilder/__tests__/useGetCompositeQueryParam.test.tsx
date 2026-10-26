@@ -36,53 +36,42 @@ const logsWith = (item: object): string =>
 		},
 	});
 
+const withHavingConverted = (queryData: object[]): object[] =>
+	queryData.map((item) => ({ ...item, having: { expression: '' } }));
+
 describe('useGetCompositeQueryParam', () => {
-	it.each(['[]', '"x"', '5', 'null', '{not json'])(
-		'treats %s as no query',
-		(raw) => {
-			expect(renderOn(raw)).toBeNull();
-		},
-	);
-
-	it('normalizes a query whose queryData is not an array', () => {
-		const query = renderOn(
-			JSON.stringify({
-				...initialQueriesMap.logs,
-				builder: { ...initialQueriesMap.logs.builder, queryData: { a: 1 } },
-			}),
-		);
-
-		expect(query?.builder.queryData).toStrictEqual(
-			initialQueryState.builder.queryData.map((item) => ({
-				...item,
-				having: { expression: '' },
-			})),
+	it('treats a non-object or broken compositeQuery as no query', () => {
+		['[]', '"x"', '5', 'null', '{not json'].forEach((raw) =>
+			expect(renderOn(raw)).toBeNull(),
 		);
 	});
 
-	it('resets queryData holding null to the default query', () => {
-		const query = renderOn(
-			JSON.stringify({
-				...initialQueriesMap.logs,
-				builder: {
-					...initialQueriesMap.logs.builder,
-					queryData: [null, initialQueriesMap.logs.builder.queryData[0]],
-				},
-			}),
+	it('repairs the builder shape and converts the legacy having', () => {
+		const defaultQueryData = withHavingConverted(
+			initialQueryState.builder.queryData,
+		);
+		[{ a: 1 }, [null, initialQueriesMap.logs.builder.queryData[0]]].forEach(
+			(queryData) =>
+				expect(
+					renderOn(
+						JSON.stringify({
+							...initialQueriesMap.logs,
+							builder: { ...initialQueriesMap.logs.builder, queryData },
+						}),
+					)?.builder.queryData,
+				).toStrictEqual(defaultQueryData),
 		);
 
-		expect(query?.builder.queryData).toStrictEqual(
-			initialQueryState.builder.queryData.map((item) => ({
-				...item,
-				having: { expression: '' },
-			})),
-		);
-	});
-
-	it('does not drop the query when having holds a non-object', () => {
-		const query = renderOn(logsWith({ having: [null] }));
-
-		expect(query?.builder.queryData[0].having).toStrictEqual({ expression: '' });
+		expect(
+			renderOn(logsWith({ having: [null] }))?.builder.queryData[0].having,
+		).toStrictEqual({ expression: '' });
+		expect(renderOn(JSON.stringify(initialQueriesMap.logs))).toStrictEqual({
+			...initialQueriesMap.logs,
+			builder: {
+				...initialQueriesMap.logs.builder,
+				queryData: withHavingConverted(initialQueriesMap.logs.builder.queryData),
+			},
+		});
 	});
 
 	it('gives an id-less query with a filter the same id on every parse', () => {
@@ -100,64 +89,35 @@ describe('useGetCompositeQueryParam', () => {
 		expect(other?.id).not.toBe(first?.id);
 	});
 
-	it('applies the page constraints on the logs explorer route', () => {
-		const query = renderOn(
-			JSON.stringify({
-				...initialQueriesMap.metrics,
-				queryType: EQueryType.CLICKHOUSE,
-			}),
-			ROUTES.LOGS_EXPLORER,
-		);
-
-		expect(query?.queryType).toBe(EQueryType.QUERY_BUILDER);
-		expect(query?.builder.queryData[0].dataSource).toBe(DataSource.LOGS);
-	});
-
-	it.each([
-		[ROUTES.AI_OBSERVABILITY_EXPLORER, DataSource.TRACES, undefined],
-		[ROUTES.METRICS_EXPLORER_EXPLORER, DataSource.METRICS, undefined],
-		[ROUTES.METER_EXPLORER, DataSource.METRICS, TelemetrytypesSourceDTO.meter],
-	])('applies the page constraints on %s', (route, dataSource, source) => {
-		const query = renderOn(
-			JSON.stringify({
-				...initialQueriesMap.logs,
-				queryType: EQueryType.CLICKHOUSE,
-				builder: {
-					...initialQueriesMap.logs.builder,
-					queryTraceOperator: [initialQueriesMap.traces.builder.queryData[0]],
-				},
-			}),
-			route,
-		);
-
-		expect(query?.queryType).toBe(EQueryType.QUERY_BUILDER);
-		expect(query?.builder.queryData[0].dataSource).toBe(dataSource);
-		expect(query?.builder.queryData[0].source ?? '').toBe(source ?? '');
-		expect(query?.builder.queryTraceOperator).toStrictEqual([]);
-	});
-
-	it('resets a meter query opened on the metrics explorer', () => {
-		const meterQuery = {
-			...initialQueriesMap.metrics,
+	it('applies the page constraints on every constrained route', () => {
+		const clickhouseWithOperator = JSON.stringify({
+			...initialQueriesMap.logs,
+			queryType: EQueryType.CLICKHOUSE,
 			builder: {
-				...initialQueriesMap.metrics.builder,
+				...initialQueriesMap.logs.builder,
 				queryData: [
 					{
 						...initialQueriesMap.metrics.builder.queryData[0],
 						source: TelemetrytypesSourceDTO.meter,
 					},
 				],
+				queryTraceOperator: [initialQueriesMap.traces.builder.queryData[0]],
 			},
-		};
+		});
 
-		expect(
-			renderOn(JSON.stringify(meterQuery), ROUTES.METRICS_EXPLORER_EXPLORER)
-				?.builder.queryData[0].source,
-		).toBe('');
-		expect(
-			renderOn(JSON.stringify(meterQuery), ROUTES.METER_EXPLORER)?.builder
-				.queryData[0].source,
-		).toBe(TelemetrytypesSourceDTO.meter);
+		[
+			[ROUTES.LOGS_EXPLORER, DataSource.LOGS, ''],
+			[ROUTES.AI_OBSERVABILITY_EXPLORER, DataSource.TRACES, ''],
+			[ROUTES.METRICS_EXPLORER_EXPLORER, DataSource.METRICS, ''],
+			[ROUTES.METER_EXPLORER, DataSource.METRICS, TelemetrytypesSourceDTO.meter],
+		].forEach(([route, dataSource, source]) => {
+			const query = renderOn(clickhouseWithOperator, route);
+
+			expect(query?.queryType).toBe(EQueryType.QUERY_BUILDER);
+			expect(query?.builder.queryData[0].dataSource).toBe(dataSource);
+			expect(query?.builder.queryData[0].source ?? '').toBe(source);
+			expect(query?.builder.queryTraceOperator).toStrictEqual([]);
+		});
 	});
 
 	it('keeps the query type on a route without constraints', () => {
@@ -170,17 +130,5 @@ describe('useGetCompositeQueryParam', () => {
 
 		expect(query?.queryType).toBe(EQueryType.CLICKHOUSE);
 		expect(query?.builder.queryData[0].dataSource).toBe(DataSource.METRICS);
-	});
-
-	it('returns a valid query with only the legacy having converted', () => {
-		const [item] = initialQueriesMap.logs.builder.queryData;
-
-		expect(renderOn(JSON.stringify(initialQueriesMap.logs))).toStrictEqual({
-			...initialQueriesMap.logs,
-			builder: {
-				...initialQueriesMap.logs.builder,
-				queryData: [{ ...item, having: { expression: '' } }],
-			},
-		});
 	});
 });
