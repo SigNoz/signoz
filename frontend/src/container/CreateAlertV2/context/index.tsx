@@ -146,6 +146,25 @@ export function CreateAlertProvider(
 		return getInitialAlertTypeFromURL(queryParams, currentQuery);
 	});
 
+	const resetThresholdState = useCallback((type: AlertTypes): void => {
+		setCreateAlertState({
+			slice: CreateAlertSlice.THRESHOLD,
+			action: {
+				type: 'RESET',
+			},
+		});
+
+		if (type === AlertTypes.ANOMALY_BASED_ALERT) {
+			setCreateAlertState({
+				slice: CreateAlertSlice.THRESHOLD,
+				action: {
+					type: 'SET_THRESHOLDS',
+					payload: [INITIAL_ANOMALY_THRESHOLD],
+				},
+			});
+		}
+	}, []);
+
 	const handleAlertTypeChange = useCallback(
 		(value: AlertTypes): void => {
 			// Threshold and anomaly alerts share the metric query, so switching keeps it.
@@ -173,8 +192,17 @@ export function CreateAlertProvider(
 				true,
 			);
 			setAlertType(value);
+			if (isEditMode && keepsQuery) {
+				resetThresholdState(value);
+			}
 		},
-		[alertType, currentQuery, redirectWithQueryBuilderData],
+		[
+			alertType,
+			currentQuery,
+			isEditMode,
+			redirectWithQueryBuilderData,
+			resetThresholdState,
+		],
 	);
 
 	const ruleNameAppliedRef = useRef(false);
@@ -189,22 +217,7 @@ export function CreateAlertProvider(
 			return;
 		}
 
-		setCreateAlertState({
-			slice: CreateAlertSlice.THRESHOLD,
-			action: {
-				type: 'RESET',
-			},
-		});
-
-		if (alertType === AlertTypes.ANOMALY_BASED_ALERT) {
-			setCreateAlertState({
-				slice: CreateAlertSlice.THRESHOLD,
-				action: {
-					type: 'SET_THRESHOLDS',
-					payload: [INITIAL_ANOMALY_THRESHOLD],
-				},
-			});
-		}
+		resetThresholdState(alertType);
 
 		if (urlPrefill.thresholds) {
 			setCreateAlertState({
@@ -266,7 +279,14 @@ export function CreateAlertProvider(
 				},
 			});
 		}
-	}, [alertType, urlPrefill, ruleNameFromURL, yAxisUnitFromURL, isEditMode]);
+	}, [
+		alertType,
+		urlPrefill,
+		ruleNameFromURL,
+		yAxisUnitFromURL,
+		isEditMode,
+		resetThresholdState,
+	]);
 
 	useEffect(() => {
 		if (isEditMode && initialAlertState) {

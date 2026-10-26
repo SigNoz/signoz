@@ -225,3 +225,56 @@ describe('CreateAlertProvider — create mode', () => {
 		expect(screen.getByTestId('threshold-value')).toHaveTextContent('245');
 	});
 });
+
+function AnomalySwitcher(): JSX.Element {
+	const { setAlertType } = useCreateAlertState();
+	return (
+		<button
+			type="button"
+			data-testid="switch-to-anomaly"
+			onClick={(): void => setAlertType(AlertTypes.ANOMALY_BASED_ALERT)}
+		>
+			switch to anomaly
+		</button>
+	);
+}
+
+describe('CreateAlertProvider — edit mode type switch', () => {
+	it('starts the anomaly condition at 3 deviations instead of the loaded threshold', () => {
+		const initialAlertState = {
+			...INITIAL_CREATE_ALERT_STATE,
+			threshold: {
+				...INITIAL_CREATE_ALERT_STATE.threshold,
+				thresholds: [
+					{
+						...INITIAL_CREATE_ALERT_STATE.threshold.thresholds[0],
+						thresholdValue: 500,
+					},
+				],
+			},
+		};
+		const queryClient = new QueryClient({
+			defaultOptions: { queries: { retry: false } },
+		});
+		render(
+			<MemoryRouter initialEntries={['/alerts/overview?ruleId=r1']}>
+				<QueryClientProvider client={queryClient}>
+					<CreateAlertProvider
+						initialAlertType={AlertTypes.METRICS_BASED_ALERT}
+						isEditMode
+						ruleId="r1"
+						initialAlertState={initialAlertState}
+					>
+						<Probe />
+						<AnomalySwitcher />
+					</CreateAlertProvider>
+				</QueryClientProvider>
+			</MemoryRouter>,
+		);
+		expect(screen.getByTestId('threshold-value')).toHaveTextContent('500');
+
+		fireEvent.click(screen.getByTestId('switch-to-anomaly'));
+
+		expect(screen.getByTestId('threshold-value')).toHaveTextContent('3');
+	});
+});
