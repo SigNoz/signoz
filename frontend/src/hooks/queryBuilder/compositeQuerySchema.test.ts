@@ -3,7 +3,14 @@ import {
 	initialQueryBuilderFormValuesMap,
 	initialQueryState,
 } from 'constants/queryBuilder';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	Querybuildertypesv5QueryTypeDTO,
+	TelemetrytypesSourceDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import {
+	IBuilderQuery,
+	QueryMode,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -16,7 +23,6 @@ import {
 const LOGS: QueryConstraints = {
 	queryTypes: [EQueryType.QUERY_BUILDER],
 	dataSource: DataSource.LOGS,
-	traceOperator: false,
 };
 const TRACES: QueryConstraints = {
 	queryTypes: [EQueryType.QUERY_BUILDER],
@@ -26,8 +32,7 @@ const TRACES: QueryConstraints = {
 const METER: QueryConstraints = {
 	queryTypes: [EQueryType.QUERY_BUILDER],
 	dataSource: DataSource.METRICS,
-	source: 'meter',
-	traceOperator: false,
+	source: TelemetrytypesSourceDTO.meter,
 };
 
 const logsSchema = buildPageQuerySchema(LOGS);
@@ -106,11 +111,13 @@ describe('normalizeCompositeQuery shape layer', () => {
 
 	it('keeps keys the schema does not model', () => {
 		const { query } = normalizeCompositeQuery({
-			...logsQuery([logsItem({ builderQueryType: 'builder_ai_query' })]),
+			...logsQuery([logsItem({ builderQueryType: QueryMode.AI_QUERY_BUILDER })]),
 			extra: 'kept',
 		});
 
-		expect(query.builder.queryData[0].builderQueryType).toBe('builder_ai_query');
+		expect(query.builder.queryData[0].builderQueryType).toBe(
+			QueryMode.AI_QUERY_BUILDER,
+		);
 		expect((query as { extra?: string }).extra).toBe('kept');
 	});
 
@@ -287,7 +294,7 @@ describe('normalizeCompositeQuery page constraints', () => {
 			buildPageQuerySchema(METER),
 		);
 
-		expect(query.builder.queryData[0].source).toBe('meter');
+		expect(query.builder.queryData[0].source).toBe(TelemetrytypesSourceDTO.meter);
 		expect(query.builder.queryData[0].filter?.expression).toBe("x='y'");
 	});
 
@@ -338,7 +345,7 @@ describe('normalizeCompositeQuery page constraints', () => {
 					{ name: 'A', legend: '', disabled: false, query: 'SELECT 1' },
 				],
 			},
-			buildPageQuerySchema({ dataSource: DataSource.LOGS, traceOperator: false }),
+			buildPageQuerySchema({ dataSource: DataSource.LOGS }),
 		);
 
 		expect(query.queryType).toBe(EQueryType.CLICKHOUSE);
@@ -362,13 +369,70 @@ describe('normalizeCompositeQuery page constraints', () => {
 		expect(changed).toBe(false);
 	});
 
+	it('fills and enforces the AI query type on the AI explorer', () => {
+		const ai = buildPageQuerySchema({
+			queryTypes: [EQueryType.QUERY_BUILDER],
+			dataSource: DataSource.TRACES,
+			builderQueryType: QueryMode.AI_QUERY_BUILDER,
+		});
+		const tracesItem = {
+			...initialQueryBuilderFormValuesMap.traces,
+			filter: { expression: "name='llm'" },
+		};
+
+		const missing = normalizeCompositeQuery(
+			{
+				...initialQueriesMap.traces,
+				builder: { ...initialQueriesMap.traces.builder, queryData: [tracesItem] },
+			},
+			ai,
+		);
+		const wrong = normalizeCompositeQuery(
+			{
+				...initialQueriesMap.traces,
+				builder: {
+					...initialQueriesMap.traces.builder,
+					queryData: [
+						{
+							...tracesItem,
+							queryName: 'B',
+							builderQueryType: Querybuildertypesv5QueryTypeDTO.builder_query,
+						},
+					],
+				},
+			},
+			ai,
+		);
+		const logs = normalizeCompositeQuery(
+			logsQuery([logsItem({ queryName: 'C' })]),
+			ai,
+		);
+
+		expect(missing.query.builder.queryData[0].builderQueryType).toBe(
+			QueryMode.AI_QUERY_BUILDER,
+		);
+		expect(missing.query.builder.queryData[0].filter?.expression).toBe(
+			"name='llm'",
+		);
+		expect(wrong.query.builder.queryData[0]).toMatchObject({
+			builderQueryType: QueryMode.AI_QUERY_BUILDER,
+			queryName: 'B',
+			filter: { expression: '' },
+		});
+		expect(logs.query.builder.queryData[0]).toMatchObject({
+			builderQueryType: QueryMode.AI_QUERY_BUILDER,
+			dataSource: DataSource.TRACES,
+			queryName: 'C',
+		});
+	});
+
 	it('tells meter apart from metrics by source', () => {
 		const { query, changed } = normalizeCompositeQuery(
 			initialQueriesMap.metrics,
 			buildPageQuerySchema(METER),
 		);
 
-		expect(query.builder.queryData[0].source).toBe('meter');
+		expect(query.builder.queryData[0].source).toBe(TelemetrytypesSourceDTO.meter);
 		expect(changed).toBe(true);
 	});
 

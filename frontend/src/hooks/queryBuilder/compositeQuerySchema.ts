@@ -4,6 +4,7 @@ import {
 } from 'constants/queryBuilder';
 import { cloneDeep, isEqual, omitBy } from 'lodash-es';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
+import { BuilderQueryType } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { BuilderQuerySource, DataSource } from 'types/common/queryBuilder';
 import { v5 as uuidv5 } from 'uuid';
@@ -14,7 +15,8 @@ const COMPOSITE_QUERY_ID_NAMESPACE = '2f1c6a4e-9b3d-4c57-8e21-7a0d5f6b9c13';
 export type QueryConstraints = {
 	dataSource: DataSource;
 	source?: BuilderQuerySource;
-	traceOperator: boolean;
+	builderQueryType?: BuilderQueryType;
+	traceOperator?: boolean;
 	queryTypes?: EQueryType[];
 };
 
@@ -62,6 +64,9 @@ export function buildPageQuerySchema(
 	const itemDefault: IBuilderQuery = {
 		...initialQueryBuilderFormValuesMap[constraints.dataSource],
 		source: constraints.source ?? '',
+		...(constraints.builderQueryType && {
+			builderQueryType: constraints.builderQueryType,
+		}),
 	};
 	const allows = (type: EQueryType): boolean =>
 		!queryTypes || queryTypes.includes(type);
@@ -71,11 +76,16 @@ export function buildPageQuerySchema(
 			...item,
 			dataSource: item.dataSource ?? constraints.dataSource,
 			...(constraints.source && { source: item.source ?? constraints.source }),
+			...(constraints.builderQueryType && {
+				builderQueryType: item.builderQueryType ?? constraints.builderQueryType,
+			}),
 		}))
 		.refine(
 			(item) =>
 				item.dataSource === constraints.dataSource &&
-				(item.source ?? '') === (constraints.source ?? ''),
+				(item.source ?? '') === (constraints.source ?? '') &&
+				(!constraints.builderQueryType ||
+					item.builderQueryType === constraints.builderQueryType),
 		)
 		.catch(({ input }): never => {
 			const { queryName, expression } = input as Partial<IBuilderQuery>;

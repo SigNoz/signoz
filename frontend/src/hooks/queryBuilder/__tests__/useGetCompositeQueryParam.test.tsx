@@ -1,3 +1,4 @@
+import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { initialQueriesMap, initialQueryState } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
@@ -110,6 +111,53 @@ describe('useGetCompositeQueryParam', () => {
 
 		expect(query?.queryType).toBe(EQueryType.QUERY_BUILDER);
 		expect(query?.builder.queryData[0].dataSource).toBe(DataSource.LOGS);
+	});
+
+	it.each([
+		[ROUTES.AI_OBSERVABILITY_EXPLORER, DataSource.TRACES, undefined],
+		[ROUTES.METRICS_EXPLORER_EXPLORER, DataSource.METRICS, undefined],
+		[ROUTES.METER_EXPLORER, DataSource.METRICS, TelemetrytypesSourceDTO.meter],
+	])('applies the page constraints on %s', (route, dataSource, source) => {
+		const query = renderOn(
+			JSON.stringify({
+				...initialQueriesMap.logs,
+				queryType: EQueryType.CLICKHOUSE,
+				builder: {
+					...initialQueriesMap.logs.builder,
+					queryTraceOperator: [initialQueriesMap.traces.builder.queryData[0]],
+				},
+			}),
+			route,
+		);
+
+		expect(query?.queryType).toBe(EQueryType.QUERY_BUILDER);
+		expect(query?.builder.queryData[0].dataSource).toBe(dataSource);
+		expect(query?.builder.queryData[0].source ?? '').toBe(source ?? '');
+		expect(query?.builder.queryTraceOperator).toStrictEqual([]);
+	});
+
+	it('resets a meter query opened on the metrics explorer', () => {
+		const meterQuery = {
+			...initialQueriesMap.metrics,
+			builder: {
+				...initialQueriesMap.metrics.builder,
+				queryData: [
+					{
+						...initialQueriesMap.metrics.builder.queryData[0],
+						source: TelemetrytypesSourceDTO.meter,
+					},
+				],
+			},
+		};
+
+		expect(
+			renderOn(JSON.stringify(meterQuery), ROUTES.METRICS_EXPLORER_EXPLORER)
+				?.builder.queryData[0].source,
+		).toBe('');
+		expect(
+			renderOn(JSON.stringify(meterQuery), ROUTES.METER_EXPLORER)?.builder
+				.queryData[0].source,
+		).toBe(TelemetrytypesSourceDTO.meter);
 	});
 
 	it('keeps the query type on a route without constraints', () => {
