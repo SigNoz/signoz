@@ -19,6 +19,7 @@ export function dataSourceForAlertType(
 			return DataSource.LOGS;
 		case RuletypesAlertTypeDTO.TRACES_BASED_ALERT:
 		case RuletypesAlertTypeDTO.EXCEPTIONS_BASED_ALERT:
+		case RuletypesAlertTypeDTO.AI_TRACES_BASED_ALERT:
 			return DataSource.TRACES;
 		default:
 			return DataSource.METRICS;
