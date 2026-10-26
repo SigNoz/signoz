@@ -216,7 +216,7 @@
     "storybook": "10.5.9",
     "stylelint": "17.15.0",
     "svgo": "4.1.0",
-    "ts-jest": "29.4.9",
+    "ts-jest": "29.4.15",
     "typescript-plugin-css-modules": "5.2.0",
     "use-sync-external-store": "1.6.0",
     "vite-plugin-checker": "0.12.0",

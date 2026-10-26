@@ -8,9 +8,9 @@ overrides:
   '@babel/core@<=7.29.0': '>=7.29.6 <8'
   '@istanbuljs/load-nyc-config>js-yaml': '>=4.3.2 <5'
   '@xmldom/xmldom@<0.8.15': '>=0.8.15 <0.9'
-  brace-expansion@<1.1.18: '>=1.1.18 <2'
-  brace-expansion@>=2.0.0 <2.1.4: '>=2.1.4 <3'
-  brace-expansion@>=5.0.0 <5.0.9: '>=5.0.9 <6'
+  brace-expansion@<1.1.21: '>=1.1.21 <2'
+  brace-expansion@>=2.0.0 <2.1.7: '>=2.1.7 <3'
+  brace-expansion@>=5.0.0 <5.0.12: '>=5.0.12 <6'
   browserslist@<4.28.7: '>=4.28.7 <5'
   cookie@<0.7.0: '>=0.7.1 <1'
   dompurify@<=3.4.12: '>=3.4.13 <4'
@@ -523,8 +523,8 @@ importers:
         specifier: 4.1.0
         version: 4.1.0
       ts-jest:
-        specifier: 29.4.9
-        version: 29.4.9(@babel/core@7.29.7)(@jest/transform@30.4.1)(@jest/types@30.2.0)(babel-jest@29.6.4(@babel/core@7.29.7))(esbuild@0.28.1)(jest-util@30.4.1)(jest@30.2.0(@types/node@16.18.25)(babel-plugin-macros@3.1.0)(ts-node@10.9.1(@swc/core@1.16.2)(@types/node@16.18.25)(typescript@5.9.3)))(typescript@5.9.3)
+        specifier: 29.4.15
+        version: 29.4.15(@babel/core@7.29.7)(@jest/transform@30.4.1)(@jest/types@30.2.0)(babel-jest@29.6.4(@babel/core@7.29.7))(esbuild@0.28.1)(jest-util@30.4.1)(jest@30.2.0(@types/node@16.18.25)(babel-plugin-macros@3.1.0)(ts-node@10.9.1(@swc/core@1.16.2)(@types/node@16.18.25)(typescript@5.9.3)))(typescript@5.9.3)
       typescript-plugin-css-modules:
         specifier: 5.2.0
         version: 5.2.0(ts-node@10.9.1(@swc/core@1.16.2)(@types/node@16.18.25)(typescript@5.9.3))(typescript@5.9.3)
@@ -4761,14 +4761,14 @@ packages:
   boolbase@1.0.0:
     resolution: {integrity: sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==}
 
-  brace-expansion@1.1.18:
-    resolution: {integrity: sha512-Edep/X9fGqVNmzKBVsDYIOtD+z1tuezV70LBjdCst9Tqu76lsnvRiZ6oTic1n+/BIwX6QDGAO94PN4N2SADvtw==}
+  brace-expansion@1.1.21:
+    resolution: {integrity: sha512-9zeA+KLZNNzglF2TPKRQEDyx6Yby7daAkuy8MiPzpXPsYDWi/DRM8jmwUDxokQjYqBpv5DgPiwD4h4ZZSy1Ujw==}
 
-  brace-expansion@2.1.4:
-    resolution: {integrity: sha512-hGfVzPxthbf3+2yjg/RBs60cB0FhqBS/zvdV/4wn4/BmN0bNMMHPc4V/BbFieqf1TKAGGAHnY4eSjajCl0f2Xg==}
+  brace-expansion@2.1.7:
+    resolution: {integrity: sha512-uZbew1NqdmPDTMJ8ah1y+b+9QEJrfkXFk3RcTQw3X0jW/xRUvFKsg1CfQdSYGdTbXZWExtU3J3ccxtnfw1Fi0g==}
 
-  brace-expansion@5.0.9:
-    resolution: {integrity: sha512-ScQ4IuvIEF1TMlP7Zt+vjJ//9zlPb2SDcxWxM3bk8s6t6GGdJ7KO1dCcTidOPJKePW30LE/2cT7wCyPho9/Wxg==}
+  brace-expansion@5.0.12:
+    resolution: {integrity: sha512-YovQ3rzhaLMIrDjNDMkNS01tea93qhEhG5xy8f6+R0l+dw3Ki+5sCoIoI942iuLZTHWogWktgwVDhU09iNEimQ==}
     engines: {node: 20 || >=22}
 
   braces@3.0.3:
@@ -6149,8 +6149,8 @@ packages:
     resolution: {integrity: sha512-59LZHPdGZVh695Ud9lRzPBVTtlX9ZCV150Er2W43ro37wVof0ctenSaskPPjN7lVTIN8mSZt8PHUNKZuNQUuxw==}
     engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
 
-  handlebars@4.7.9:
-    resolution: {integrity: sha512-4E71E0rpOaQuJR2A3xDZ+GM1HyWYv1clR58tC8emQNeQe3RH7MAzSbat+V0wG78LQBo6m6bzSG/L4pBuCsgnUQ==}
+  handlebars@4.7.10:
+    resolution: {integrity: sha512-P5VJMVM7qgBn6vjXMw8WG9uVI+ncf2pi72j4de4yz5ZULLj2RGqLYaKOYGsgyrViQ0tePOVlN1tDCCXXtFqXKg==}
     engines: {node: '>=0.4.7'}
     hasBin: true
 
@@ -9465,8 +9465,8 @@ packages:
   ts-easing@0.2.0:
     resolution: {integrity: sha512-Z86EW+fFFh/IFB1fqQ3/+7Zpf9t2ebOAxNI/V6Wo7r5gqiqtxmgTlQ1qbqQcjLKYeSHPTsEmvlJUDg/EuL0uHQ==}
 
-  ts-jest@29.4.9:
-    resolution: {integrity: sha512-LTb9496gYPMCqjeDLdPrKuXtncudeV1yRZnF4Wo5l3SFi0RYEnYRNgMrFIdg+FHvfzjCyQk1cLncWVqiSX+EvQ==}
+  ts-jest@29.4.15:
+    resolution: {integrity: sha512-s2qmEUYFRqbjz1wv0EmccNPVOb45HOFpFuhzQJLKShYVisuTbCFPIIAIV2EuK5rIxb4BejLDbH7dnBZfYjybUQ==}
     engines: {node: ^14.15.0 || ^16.10.0 || ^18.0.0 || >=20.0.0}
     hasBin: true
     peerDependencies:
@@ -14662,16 +14662,16 @@ snapshots:
 
   boolbase@1.0.0: {}
 
-  brace-expansion@1.1.18:
+  brace-expansion@1.1.21:
     dependencies:
       balanced-match: 1.0.2
       concat-map: 0.0.1
 
-  brace-expansion@2.1.4:
+  brace-expansion@2.1.7:
     dependencies:
       balanced-match: 1.0.2
 
-  brace-expansion@5.0.9:
+  brace-expansion@5.0.12:
     dependencies:
       balanced-match: 4.0.4
 
@@ -16125,7 +16125,7 @@ snapshots:
 
   graphql@16.8.1: {}
 
-  handlebars@4.7.9:
+  handlebars@4.7.10:
     dependencies:
       minimist: 1.2.8
       neo-async: 2.6.2
@@ -17908,19 +17908,19 @@ snapshots:
 
   minimatch@10.2.5:
     dependencies:
-      brace-expansion: 5.0.9
+      brace-expansion: 5.0.12
 
   minimatch@3.1.5:
     dependencies:
-      brace-expansion: 1.1.18
+      brace-expansion: 1.1.21
 
   minimatch@5.1.9:
     dependencies:
-      brace-expansion: 2.1.4
+      brace-expansion: 2.1.7
 
   minimatch@9.0.9:
     dependencies:
-      brace-expansion: 2.1.4
+      brace-expansion: 2.1.7
 
   minimist@1.2.8: {}
 
@@ -20254,11 +20254,11 @@ snapshots:
 
   ts-easing@0.2.0: {}
 
-  ts-jest@29.4.9(@babel/core@7.29.7)(@jest/transform@30.4.1)(@jest/types@30.2.0)(babel-jest@29.6.4(@babel/core@7.29.7))(esbuild@0.28.1)(jest-util@30.4.1)(jest@30.2.0(@types/node@16.18.25)(babel-plugin-macros@3.1.0)(ts-node@10.9.1(@swc/core@1.16.2)(@types/node@16.18.25)(typescript@5.9.3)))(typescript@5.9.3):
+  ts-jest@29.4.15(@babel/core@7.29.7)(@jest/transform@30.4.1)(@jest/types@30.2.0)(babel-jest@29.6.4(@babel/core@7.29.7))(esbuild@0.28.1)(jest-util@30.4.1)(jest@30.2.0(@types/node@16.18.25)(babel-plugin-macros@3.1.0)(ts-node@10.9.1(@swc/core@1.16.2)(@types/node@16.18.25)(typescript@5.9.3)))(typescript@5.9.3):
     dependencies:
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
-      handlebars: 4.7.9
+      handlebars: 4.7.10
       jest: 30.2.0(@types/node@16.18.25)(babel-plugin-macros@3.1.0)(ts-node@10.9.1(@swc/core@1.16.2)(@types/node@16.18.25)(typescript@5.9.3))
       json5: 2.2.3
       lodash.memoize: 4.1.2
