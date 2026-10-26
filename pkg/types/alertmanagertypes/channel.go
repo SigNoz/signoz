@@ -150,6 +150,24 @@ func NewConfigFromChannels(globalConfig GlobalConfig, routeConfig RouteConfig, c
 	return cfg, nil
 }
 
+func MapChannelNamesToIDs(channels Channels, names []string) ([]string, error) {
+	idByName := make(map[string]string, len(channels))
+	for _, channel := range channels {
+		idByName[channel.DisplayName] = channel.ID.StringValue()
+	}
+
+	ids := make([]string, 0, len(names))
+	for _, name := range names {
+		id, ok := idByName[name]
+		if !ok {
+			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "notification channel %q does not exist", name)
+		}
+		ids = append(ids, id)
+	}
+
+	return ids, nil
+}
+
 func NewStatsFromChannels(channels Channels) map[string]any {
 	stats := make(map[string]any)
 	for _, channel := range channels {

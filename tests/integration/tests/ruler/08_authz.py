@@ -23,7 +23,7 @@ _EDITOR_EMAIL = "editor+alertauthz@integration.test"
 _EDITOR_PASSWORD = "password123Z$"
 _VIEWER_EMAIL = "viewer+alertauthz@integration.test"
 _VIEWER_PASSWORD = "password123Z$"
-_ACTOR_EMAIL = "actor+alertauthz@integration.test"
+_ACTOR_EMAIL = "customrole+alertauthz@integration.test"
 _ACTOR_PASSWORD = "password123Z$"
 _ACTOR_ROLE_NAME = "alert-authz-actor"
 
@@ -409,7 +409,7 @@ def test_apply_license(
     add_license(signoz, make_http_mocks, get_token)
 
 
-def test_managed_roles_on_route_policies_after_license(
+def test_route_policy_managed_role_tuples_enforced_with_license(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -423,7 +423,7 @@ def test_managed_roles_on_route_policies_after_license(
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.CREATED, response.text
+    assert response.status_code == HTTPStatus.CREATED, f"admin create must pass on the migrated route-policy and channel attach tuples: {response.text}"
     policy_id = response.json()["data"]["id"]
 
     response = requests.get(
@@ -431,7 +431,7 @@ def test_managed_roles_on_route_policies_after_license(
         headers={"Authorization": f"Bearer {editor_token}"},
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.status_code == HTTPStatus.OK, f"editor read must pass on the migrated route-policy read tuple: {response.text}"
 
     response = requests.put(
         signoz.self.host_configs["8080"].get(f"{ROUTE_POLICIES_URL}/{policy_id}"),
@@ -439,14 +439,14 @@ def test_managed_roles_on_route_policies_after_license(
         headers={"Authorization": f"Bearer {editor_token}"},
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
+    assert response.status_code == HTTPStatus.FORBIDDEN, f"editor update must be forbidden, the migration grants editors no route-policy update tuple: {response.text}"
 
     response = requests.delete(
         signoz.self.host_configs["8080"].get(f"{ROUTE_POLICIES_URL}/{policy_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+    assert response.status_code == HTTPStatus.NO_CONTENT, f"admin delete must pass on the migrated route-policy delete tuple: {response.text}"
 
 
 def test_managed_roles_on_downtime_after_license(
