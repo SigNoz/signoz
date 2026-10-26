@@ -147,6 +147,19 @@ func (provider *provider) ListChannels(ctx context.Context, orgID string) ([]*al
 	return channels, err
 }
 
+func (provider *provider) GetChannelIDsByNames(ctx context.Context, orgID string, names []string) ([]string, error) {
+	if len(names) == 0 {
+		return nil, nil
+	}
+
+	channels, _, err := provider.configStore.ListChannels(ctx, orgID, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return alertmanagertypes.MapChannelNamesToIDs(channels, names)
+}
+
 func (provider *provider) ListNotificationChannels(ctx context.Context, orgID string, params *alertmanagertypes.ListChannelsParams) (*alertmanagertypes.ListableNotificationChannel, error) {
 	channels, total, err := provider.configStore.ListChannels(ctx, orgID, params)
 	if err != nil {
@@ -528,6 +541,10 @@ func (provider *provider) CreateRoutePolicy(ctx context.Context, routeRequest *a
 		return nil, err
 	}
 
+	if _, err := provider.GetChannelIDsByNames(ctx, orgID.String(), routeRequest.Channels); err != nil {
+		return nil, err
+	}
+
 	route := alertmanagertypes.RoutePolicy{
 		Expression:     routeRequest.Expression,
 		ExpressionKind: routeRequest.ExpressionKind,
@@ -718,6 +735,10 @@ func (provider *provider) UpdateRoutePolicyByID(ctx context.Context, routeID str
 
 	if err := route.Validate(); err != nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid route: %v", err)
+	}
+
+	if _, err := provider.GetChannelIDsByNames(ctx, orgID.String(), route.Channels); err != nil {
+		return nil, err
 	}
 
 	existingRoute, err := provider.notificationManager.GetRoutePolicyByID(ctx, claims.OrgID, routeID)
