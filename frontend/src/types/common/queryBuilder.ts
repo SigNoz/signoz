@@ -315,6 +315,7 @@ export type QueryBuilderContextType = {
 		redirectToUrl?: (typeof ROUTES)[keyof typeof ROUTES],
 		shallStringify?: boolean,
 		newTab?: boolean,
+		replace?: boolean,
 	) => void;
 	handleRunQuery: () => void;
 	resetQuery: (newCurrentQuery?: QueryState) => void;

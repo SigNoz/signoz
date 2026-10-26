@@ -34,14 +34,13 @@ import {
 	PartialPanelTypes,
 } from 'lib/query/panelTypeDataSourceFormValuesMap';
 import { OptionsQuery } from 'container/OptionsMenu/types';
-import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
+import { useNormalizedCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { saveRecentQuery } from 'lib/recentQueries/saveRecentQuery';
-import { replaceIncorrectObjectFields } from 'lib/replaceIncorrectObjectFields';
 import { cloneDeep, get, isEqual, set } from 'lodash-es';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 // ** Types
@@ -114,7 +113,8 @@ export function QueryBuilderProvider({
 	const [calledFromHandleRunQuery, setCalledFromHandleRunQuery] =
 		useState<boolean>(false);
 
-	const compositeQueryParam = useGetCompositeQueryParam();
+	const normalizedCompositeQuery = useNormalizedCompositeQueryParam();
+	const compositeQueryParam = normalizedCompositeQuery?.query ?? null;
 	const { queryType: queryTypeParam, ...queryState } =
 		compositeQueryParam || initialQueriesMap.metrics;
 
@@ -965,6 +965,7 @@ export function QueryBuilderProvider({
 			redirectingUrl?: (typeof ROUTES)[keyof typeof ROUTES],
 			shouldNotStringify?: boolean,
 			newTab?: boolean,
+			replace?: boolean,
 		) => {
 			const queryType =
 				!query.queryType || !Object.values(EQueryType).includes(query.queryType)
@@ -1032,7 +1033,7 @@ export function QueryBuilderProvider({
 				? `${redirectingUrl}?${urlQuery}`
 				: `${location.pathname}?${urlQuery}`;
 
-			safeNavigate(generatedUrl, { newTab });
+			safeNavigate(generatedUrl, { newTab, replace });
 		},
 		[location.pathname, safeNavigate],
 	);
@@ -1115,20 +1116,25 @@ export function QueryBuilderProvider({
 				return;
 			}
 
-			const { isValid, validData } = replaceIncorrectObjectFields(
-				compositeQueryParam,
-				initialQueriesMap.metrics,
-			);
-
-			if (!isValid) {
-				redirectWithQueryBuilderData(validData);
-			} else {
-				initQueryBuilderData(compositeQueryParam);
+			if (normalizedCompositeQuery?.changed) {
+				// TODO: options object for redirectWithQueryBuilderData
+				redirectWithQueryBuilderData(
+					compositeQueryParam,
+					undefined,
+					undefined,
+					undefined,
+					undefined,
+					true,
+				);
+				return;
 			}
+
+			initQueryBuilderData(compositeQueryParam);
 		}
 	}, [
 		initQueryBuilderData,
 		redirectWithQueryBuilderData,
+		normalizedCompositeQuery,
 		compositeQueryParam,
 		stagedQuery,
 		location.pathname,
