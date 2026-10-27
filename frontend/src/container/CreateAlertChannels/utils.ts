@@ -1,3 +1,5 @@
+import { ChannelFormValues, WebhookAuth } from './types';
+
 // mirrors go's prometheus model.Duration units
 const JIRA_DURATION_UNIT_MS: Record<string, number> = {
 	ms: 1,
@@ -65,6 +67,23 @@ export const canonicalJiraReopenDuration = (value: string): string => {
 		remaining -= count * ms;
 		return `${canonical}${count}${unit}`;
 	}, '');
+};
+
+export const webhookAuthOf = (
+	values: Pick<
+		ChannelFormValues,
+		'webhookAuth' | 'username' | 'password' | 'bearerToken'
+	>,
+): WebhookAuth => {
+	if (values.webhookAuth) {
+		return values.webhookAuth;
+	}
+	if (values.bearerToken) {
+		return WebhookAuth.bearer;
+	}
+	return values.username || values.password
+		? WebhookAuth.basic
+		: WebhookAuth.none;
 };
 
 export const filledRows = <T>(

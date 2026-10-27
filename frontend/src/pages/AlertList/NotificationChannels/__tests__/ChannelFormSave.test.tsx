@@ -119,6 +119,63 @@ describe('ChannelForm save', () => {
 	);
 
 	it(
+		'sends only the credentials of the picked webhook auth',
+		async () => {
+			let body: Record<string, unknown> | undefined;
+			server.use(
+				rest.post(
+					'http://localhost/api/v2/notification_channels',
+					async (req, res, ctx) => {
+						body = await req.json();
+						return res(ctx.status(201), ctx.json({ status: 'success', data: {} }));
+					},
+				),
+			);
+
+			render(<ChannelForm onDone={jest.fn()} />);
+
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			await user.click(await screen.findByTestId('channel-type-select', {}, FIND));
+			await user.click(await screen.findByRole('option', { name: /^Webhook$/ }));
+
+			await user.type(screen.getByTestId('channel-name-textbox'), 'hook alerts');
+			await user.type(
+				screen.getByTestId('webhook-url-textbox'),
+				'https://example.com/hook',
+			);
+
+			await user.click(screen.getByTestId('webhook-auth-radio-item-basic'));
+			await user.type(screen.getByTestId('webhook-username-textbox'), 'hook-user');
+
+			await user.click(screen.getByTestId('webhook-auth-radio-item-bearer'));
+			expect(
+				screen.queryByTestId('webhook-username-textbox'),
+			).not.toBeInTheDocument();
+			await user.type(
+				screen.getByTestId('webhook-bearer-token-textbox'),
+				'hook-token',
+			);
+
+			const save = screen.getByTestId('save-channel-button');
+			await waitFor(
+				() => expect(save).toHaveAttribute('aria-disabled', 'false'),
+				FIND,
+			);
+			await user.click(save);
+
+			await waitFor(() => expect(body).toBeDefined(), FIND);
+			expect(
+				(body as { config: { spec: Record<string, unknown> } }).config.spec,
+			).toStrictEqual({
+				url: 'https://example.com/hook',
+				bearerToken: 'hook-token',
+				sendResolved: true,
+			});
+		},
+		TEST_TIMEOUT,
+	);
+
+	it(
 		'updates with the config only, since both names are immutable',
 		async () => {
 			let body: Record<string, unknown> | undefined;

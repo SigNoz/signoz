@@ -1,6 +1,6 @@
 import { TFunction } from 'i18next';
 
-import { ChannelFormValues, ChannelKind } from './types';
+import { ChannelFormValues, ChannelKind, WebhookAuth } from './types';
 import { validateChannel } from './validation';
 
 const t = ((key: string) => key) as TFunction;
@@ -30,6 +30,24 @@ describe('validateChannel', () => {
 			ChannelKind.incidentio,
 			{ url: 'https://relay.internal/incidentio', token: 'tok' },
 			null,
+		],
+		[
+			'a webhook username without a password',
+			ChannelKind.webhook,
+			{ url: 'https://hook', webhookAuth: WebhookAuth.basic, username: 'u' },
+			null,
+		],
+		[
+			'basic auth with neither username nor password',
+			ChannelKind.webhook,
+			{ url: 'https://hook', webhookAuth: WebhookAuth.basic },
+			'webhook_basic_auth_required',
+		],
+		[
+			'bearer auth without a token',
+			ChannelKind.webhook,
+			{ url: 'https://hook', webhookAuth: WebhookAuth.bearer, username: 'u' },
+			'webhook_bearer_token_required',
 		],
 	])('%s', (_, kind, values, expected) => {
 		expect(validateChannel(kind, { name: 'channel', ...values }, t)).toBe(
