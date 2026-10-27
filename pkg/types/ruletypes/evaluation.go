@@ -331,6 +331,9 @@ func (e *EvaluationEnvelope) UnmarshalJSON(data []byte) error {
 }
 
 func (e *EvaluationEnvelope) GetEvaluation() (Evaluation, error) {
+	if e == nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "evaluation is nil")
+	}
 	if e.Kind.IsZero() {
 		e.Kind = RollingEvaluation
 	}
