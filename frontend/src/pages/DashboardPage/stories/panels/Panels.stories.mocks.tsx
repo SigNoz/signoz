@@ -25,34 +25,47 @@ import {
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 
 import {
-	currentPanelsDocument,
+	BUCKET_WIDTHS,
 	GAPS,
-	LINE_STYLES,
-	SPAN_GAPS,
-	Y_SCALES,
+	HEATMAP_COUNT_RANGES,
+	HEATMAP_FIXED_COUNTS,
 	HEATMAP_PALETTES,
 	HEATMAP_Y_SCALES,
 	LEGEND_POSITIONS,
+	LINE_STYLES,
 	MAX_SERIES,
 	PANEL_KINDS,
 	PANEL_RESULTS,
 	PANELS_DASHBOARD_ID,
-	panelQueryResponse,
-	patchPanelsDocument,
-	seedPanelsDocument,
+	SPAN_GAPS,
 	STACK_MODES,
 	TEXT_ALIGNS,
 	TEXT_SAMPLES,
 	UNITS,
-	type Gaps,
-	type PanelArgs,
-	type SpanGaps,
-	type YScale,
-	type PanelKind,
-	type PanelResult,
-	type PanelUnit,
-	type TextSample,
-} from './__story_mockdata__/panels';
+	Y_SCALES,
+} from './__story_mockdata__/constants';
+import {
+	currentPanelsDocument,
+	patchPanelsDocument,
+	seedPanelsDocument,
+} from './__story_mockdata__/panelDocuments';
+import {
+	panelQueryResponse,
+	recordPanelRequest,
+	resetPanelRequests,
+} from './__story_mockdata__/panelResponses';
+import type {
+	BucketWidth,
+	Gaps,
+	HeatmapCountRange,
+	PanelArgs,
+	PanelKind,
+	PanelResult,
+	PanelUnit,
+	SpanGaps,
+	TextSample,
+	YScale,
+} from './__story_mockdata__/types';
 
 const PANEL = 'Panels · panel';
 const DATA = 'Panels · data';
@@ -92,7 +105,7 @@ export const panelsMocks = defineStoryMocks({
 		thresholds: toggleControl('Thresholds', {
 			group: PANEL,
 			description:
-				'A dashed labelled line on Time Series, Bar and Area; a background colour on Number when the value is above it; a filled cell on Table rows above it. Other kinds have none.',
+				'A dashed labelled line on Time Series, Bar and Area; a background colour on Number when the value is above it; a filled `A` cell on Table rows above it, never a `B` cell. Other kinds have none.',
 			value: false,
 		}),
 		unit: choiceControl<PanelUnit>('Unit', {
@@ -120,6 +133,19 @@ export const panelsMocks = defineStoryMocks({
 				'Row layout of the bucket axis. The buckets are linear, so `auto` lays them out linearly.',
 			options: HEATMAP_Y_SCALES,
 			value: HeatmapYScale.auto,
+		}),
+		heatmapCounts: choiceControl<HeatmapCountRange>('Heatmap count range', {
+			group: PANEL,
+			description: `The colour bar's bounds: from 0 to the busiest cell, or fixed at ${HEATMAP_FIXED_COUNTS.min}–${HEATMAP_FIXED_COUNTS.max}.`,
+			options: HEATMAP_COUNT_RANGES,
+			value: 'auto',
+		}),
+		bucketWidth: choiceControl<BucketWidth>('Histogram bucket width', {
+			group: PANEL,
+			description:
+				'Width of each Histogram bin, in the series unit; `auto` picks one from the value range.',
+			options: BUCKET_WIDTHS,
+			value: 'auto',
 		}),
 		textSample: choiceControl<TextSample>('Text body', {
 			group: PANEL,
@@ -229,16 +255,20 @@ export const panelsMocks = defineStoryMocks({
 				response.json(async (req) => {
 					const body = (await req.json()) as QueryRangeBody;
 					const spec = body.compositeQuery?.queries?.[0]?.spec;
+					const request = {
+						window: { start: body.start, end: body.end },
+						offset: spec?.offset ?? 0,
+						limit: spec?.limit ?? values.listRows,
+					};
+					recordPanelRequest(request);
 
 					return panelQueryResponse({
+						...request,
 						kind: values.kind,
 						result: values.result,
 						series: values.series,
 						listRows: values.listRows,
 						gaps: values.gaps,
-						window: { start: body.start, end: body.end },
-						offset: spec?.offset ?? 0,
-						limit: spec?.limit ?? values.listRows,
 					});
 				}),
 			),
@@ -249,6 +279,7 @@ export const panelsMocks = defineStoryMocks({
 	}),
 	effect: (values) => {
 		seedPanelsDocument(values);
+		resetPanelRequests();
 		useDashboardPreferencesStore.setState({ preferences: {} });
 	},
 });

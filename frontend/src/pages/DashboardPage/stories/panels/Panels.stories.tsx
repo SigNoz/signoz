@@ -15,13 +15,9 @@ import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import DashboardPage from '../../DashboardPage';
 
 import { panelsMocks } from './Panels.stories.mocks';
-import {
-	expectListPage,
-	expectPanel,
-	filterLegend,
-	nextListPage,
-	searchTable,
-} from './panelPlay';
+import { expectPanel } from './panelPlay/expectPanel';
+import { filterLegend, searchTable } from './panelPlay/interactions';
+import { walkListPages } from './panelPlay/list';
 
 type PanelsArgs = PageStoryArgs<typeof panelsMocks>;
 
@@ -79,7 +75,7 @@ export const AreaStacked: Story = {
 	play,
 };
 
-/** The stacked areas rescaled so every moment sums to 100%. */
+/** The stacked areas rescaled so every moment sums to 100%, each band its service's share. */
 export const AreaPercent: Story = {
 	args: { kind: 'Area', stack: StackMode.percent },
 	play,
@@ -88,6 +84,12 @@ export const AreaPercent: Story = {
 /** How the latency values distribute across buckets, one bar set per service. */
 export const Histogram: Story = {
 	args: { kind: 'Histogram' },
+	play,
+};
+
+/** The histogram binned 50 apart, every bin starting on a multiple of 50. */
+export const HistogramBucketWidth: Story = {
+	args: { kind: 'Histogram', bucketWidth: '50' },
 	play,
 };
 
@@ -103,6 +105,12 @@ export const Heatmap: Story = {
 /** The heatmap's bucket rows laid out on a log scale. */
 export const HeatmapLog: Story = {
 	args: { kind: 'Heatmap', heatmapScale: HeatmapYScale.log },
+	play,
+};
+
+/** The heatmap's colour bar pinned to a fixed 5–250 count range. */
+export const HeatmapCountRange: Story = {
+	args: { kind: 'Heatmap', heatmapCounts: 'fixed' },
 	play,
 };
 
@@ -122,8 +130,8 @@ export const Number: Story = {
 };
 
 /**
- * One row per service with its call count; the cells above the threshold are
- * filled with its colour.
+ * One row per service with its calls (`A`) and errors (`B`); only the `A` cells
+ * above the threshold are filled with its colour, though `B` crosses it too.
  */
 export const Table: Story = {
 	args: { kind: 'Table', thresholds: true, columnUnits: true },
@@ -138,7 +146,7 @@ export const TableSearch: Story = {
 	args: { kind: 'Table' },
 	play: async ({ canvasElement, args }): Promise<void> => {
 		await expectPanel(canvasElement, args);
-		await searchTable(canvasElement, 'payments', args.series);
+		await searchTable(canvasElement, args);
 	},
 };
 
@@ -149,17 +157,14 @@ export const List: Story = {
 };
 
 /**
- * Logs spanning three pages: Next walks to the second and then the last,
- * shorter page, where Next turns off.
+ * Logs spanning three pages, 25 a request: Next walks to the second and then
+ * the last, shorter page, where Next turns off.
  */
 export const ListPaginated: Story = {
 	args: { kind: 'List', listRows: 60 },
 	play: async ({ canvasElement, args }): Promise<void> => {
 		await expectPanel(canvasElement, args);
-		await nextListPage(canvasElement);
-		await expectListPage(canvasElement, args.listRows, 1);
-		await nextListPage(canvasElement);
-		await expectListPage(canvasElement, args.listRows, 2);
+		await walkListPages(canvasElement, args);
 	},
 };
 
@@ -198,7 +203,7 @@ export const LegendRight: Story = {
 	args: { legend: LegendPosition.right },
 	play: async ({ canvasElement, args }): Promise<void> => {
 		await expectPanel(canvasElement, args);
-		await filterLegend(canvasElement, 'payments');
+		await filterLegend(canvasElement, args);
 	},
 };
 
