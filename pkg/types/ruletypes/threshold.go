@@ -133,7 +133,7 @@ type RuleThreshold interface {
 }
 
 type BasicRuleThreshold struct {
-	Name            string          `json:"name" required:"true" description:"The threshold name, conventionally critical, error, warning or info. Alerts carry it as the threshold_name label."`
+	Name            string          `json:"name" required:"true" description:"The threshold name, conventionally critical, error, warning or info. Alerts carry it as the threshold.name label and, lowercased, as the severity label; templates can read it as $threshold.name."`
 	TargetValue     *float64        `json:"target" required:"true" format:"double" description:"The value the query result is compared against, in targetUnit."`
 	TargetUnit      string          `json:"targetUnit" description:"The unit of target and recoveryTarget, such as percent or ms. Converted to the query unit before comparison when the two differ; empty means the query unit."`
 	RecoveryTarget  *float64        `json:"recoveryTarget" format:"double" description:"The value at which a firing alert resolves, in targetUnit. Keeps an alert firing between target and recoveryTarget to avoid flapping; null resolves at target."`

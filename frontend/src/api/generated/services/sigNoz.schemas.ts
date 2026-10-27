@@ -906,7 +906,7 @@ export interface AlertmanagertypesChannelJiraConfigDTO {
 	sendResolved?: boolean | null;
 	/**
 	 * @type string
-	 * @description The Jira Cloud base URL, https://<site>.atlassian.net; only Jira Cloud is supported.
+	 * @description The base URL of the Jira Cloud site, for example https://example.atlassian.net. Only Jira Cloud is supported.
 	 */
 	site: string;
 	/**
@@ -5123,7 +5123,7 @@ export interface Querybuildertypesv5OrderByDTO {
 	 */
 	direction?: Querybuildertypesv5OrderDirectionDTO;
 	/**
-	 * @description The field, aggregation alias or expression to sort by, for example timestamp, service.name or count().
+	 * @description The sort key. For aggregation requests name is a group-by field such as service.name, an aggregation alias, or the aggregation expression: count() or p99(duration_nano) for traces and logs; for metrics the spaceAggregation(timeAggregation(metricName)) form such as sum(rate(signoz_calls_total)), p99(metricName) for histogram metrics, or __result. Raw requests sort by any field, such as timestamp.
 	 */
 	key?: Querybuildertypesv5OrderByKeyDTO;
 }
@@ -12138,7 +12138,7 @@ export interface RuletypesBasicRuleThresholdDTO {
 	matchType: RuletypesMatchTypeDTO;
 	/**
 	 * @type string
-	 * @description The threshold name, conventionally critical, error, warning or info. Alerts carry it as the threshold_name label.
+	 * @description The threshold name, conventionally critical, error, warning or info. Alerts carry it as the threshold.name label and, lowercased, as the severity label; templates can read it as $threshold.name.
 	 */
 	name: string;
 	/**

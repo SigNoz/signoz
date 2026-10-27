@@ -601,7 +601,7 @@ func (o OrderByKey) Copy() OrderByKey {
 
 // key to order by.
 type OrderBy struct {
-	Key       OrderByKey     `json:"key" description:"The field, aggregation alias or expression to sort by, for example timestamp, service.name or count()."`
+	Key       OrderByKey     `json:"key" description:"The sort key. For aggregation requests name is a group-by field such as service.name, an aggregation alias, or the aggregation expression: count() or p99(duration_nano) for traces and logs; for metrics the spaceAggregation(timeAggregation(metricName)) form such as sum(rate(signoz_calls_total)), p99(metricName) for histogram metrics, or __result. Raw requests sort by any field, such as timestamp."`
 	Direction OrderDirection `json:"direction" description:"The sort direction: asc or desc."`
 }
 

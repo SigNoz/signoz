@@ -13,10 +13,8 @@ import (
 )
 
 type ChannelJiraConfig struct {
-	SendResolved *bool `json:"sendResolved,omitempty" description:"Also notify when the alert resolves. Defaults to false."`
-	// Site is the Jira Cloud base URL, https://<site>.atlassian.net. Only Jira
-	// Cloud is supported; the REST base is derived from it.
-	Site              string                       `json:"site" required:"true" description:"The Jira Cloud base URL, https://<site>.atlassian.net; only Jira Cloud is supported."`
+	SendResolved      *bool                        `json:"sendResolved,omitempty" description:"Also notify when the alert resolves. Defaults to false."`
+	Site              string                       `json:"site" required:"true" description:"The base URL of the Jira Cloud site, for example https://example.atlassian.net. Only Jira Cloud is supported."`
 	Project           string                       `json:"project" required:"true" description:"The key of the project issues are created in."`
 	IssueType         string                       `json:"issueType" required:"true" description:"The issue type name, such as Bug."`
 	Summary           valuer.UnsetOrNonEmptyString `json:"summary,omitzero" description:"Alertmanager template for the issue summary; defaults to the SigNoz Jira default."`

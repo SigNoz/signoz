@@ -604,8 +604,8 @@ components:
           nullable: true
           type: boolean
         site:
-          description: The Jira Cloud base URL, https://<site>.atlassian.net; only
-            Jira Cloud is supported.
+          description: The base URL of the Jira Cloud site, for example https://example.atlassian.net.
+            Only Jira Cloud is supported.
           type: string
         summary:
           description: Alertmanager template for the issue summary; defaults to the
@@ -9694,8 +9694,11 @@ components:
         key:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5OrderByKey'
-          description: The field, aggregation alias or expression to sort by, for
-            example timestamp, service.name or count().
+          description: 'The sort key. For aggregation requests name is a group-by
+            field such as service.name, an aggregation alias, or the aggregation expression:
+            count() or p99(duration_nano) for traces and logs; for metrics the spaceAggregation(timeAggregation(metricName))
+            form such as sum(rate(signoz_calls_total)), p99(metricName) for histogram
+            metrics, or __result. Raw requests sort by any field, such as timestamp.'
       type: object
     Querybuildertypesv5OrderByKey:
       properties:
@@ -10966,7 +10969,8 @@ components:
             or the legacy codes as strings, '1' to '5'.
         name:
           description: The threshold name, conventionally critical, error, warning
-            or info. Alerts carry it as the threshold_name label.
+            or info. Alerts carry it as the threshold.name label and, lowercased,
+            as the severity label; templates can read it as $threshold.name.
           type: string
         op:
           allOf:
