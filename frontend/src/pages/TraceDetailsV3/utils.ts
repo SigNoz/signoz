@@ -30,7 +30,7 @@ export function getSpanAttribute(
 		tagMap?: Record<string, any>;
 	},
 	key: string,
-): string | undefined {
+): string | number | boolean | undefined {
 	return (
 		valueOrUndefined(span.resource?.[key]) ??
 		valueOrUndefined(span.attributes?.[key]) ??
@@ -117,7 +117,7 @@ export function getSpanGroupValue(
 	span: SpanV3,
 	colorByFieldName: string,
 ): string {
-	return getSpanAttribute(span, colorByFieldName) || 'unknown';
+	return String(getSpanAttribute(span, colorByFieldName) ?? 'unknown');
 }
 
 /**
