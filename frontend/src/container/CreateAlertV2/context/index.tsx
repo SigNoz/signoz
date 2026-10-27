@@ -25,6 +25,7 @@ import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
 	INITIAL_ANOMALY_THRESHOLD,
 	INITIAL_CREATE_ALERT_STATE,
+	INITIAL_EVALUATION_WINDOW_STATE,
 } from './constants';
 import {
 	EvaluationWindowPreset,
@@ -195,13 +196,24 @@ export function CreateAlertProvider(
 			if (isEditMode && keepsQuery) {
 				resetThresholdState(value);
 			}
+			if (
+				value === AlertTypes.ANOMALY_BASED_ALERT &&
+				createAlertState.evaluationWindow.windowType !== 'rolling'
+			) {
+				setEvaluationWindow({
+					type: 'SET_INITIAL_STATE',
+					payload: INITIAL_EVALUATION_WINDOW_STATE,
+				});
+			}
 		},
 		[
 			alertType,
+			createAlertState.evaluationWindow.windowType,
 			currentQuery,
 			isEditMode,
 			redirectWithQueryBuilderData,
 			resetThresholdState,
+			setEvaluationWindow,
 		],
 	);
 

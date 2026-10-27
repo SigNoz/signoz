@@ -352,17 +352,22 @@ describe('CreateAlertV2 utils', () => {
 				thresholds: [{ thresholdValue: 3 }],
 				algorithm: 'standard',
 				seasonality: 'weekly',
-				evaluationWindow: '1h0m0s',
 			});
 		});
 
-		it('keeps signed targets and the default window for threshold rules', () => {
+		it('loads the anomaly window into the shared evaluation window', () => {
+			expect(getEvaluationWindowStateFromAlertDef(anomalyDef)).toMatchObject({
+				windowType: 'rolling',
+				timeframe: '1h0m0s',
+			});
+		});
+
+		it('keeps signed targets for threshold rules', () => {
 			const state = getThresholdStateFromAlertDef({
 				...anomalyDef,
 				ruleType: 'threshold_rule',
 			});
 			expect(state.thresholds[0].thresholdValue).toBe(-3);
-			expect(state.evaluationWindow).toBe('5m0s');
 		});
 	});
 

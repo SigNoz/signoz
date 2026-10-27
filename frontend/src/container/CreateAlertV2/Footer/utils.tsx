@@ -302,7 +302,7 @@ export function buildCreateThresholdAlertRulePayload(
 export function buildCreateAnomalyAlertRulePayload(
 	args: BuildCreateAlertRulePayloadArgs,
 ): PostableAlertRuleV2 {
-	const { thresholdState, evaluationWindow, advancedOptions } = args;
+	const { thresholdState } = args;
 	const payload = buildCreateThresholdAlertRulePayload(args);
 
 	// Targets are literal z-scores: "below N deviations" fires under -N.
@@ -329,14 +329,6 @@ export function buildCreateAnomalyAlertRulePayload(
 			algorithm: thresholdState.algorithm,
 			seasonality: thresholdState.seasonality,
 		},
-		evaluation: getEvaluationProps(
-			{
-				...evaluationWindow,
-				windowType: 'rolling',
-				timeframe: thresholdState.evaluationWindow,
-			},
-			advancedOptions,
-		),
 	};
 }
 

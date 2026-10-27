@@ -16,7 +16,6 @@ import {
 	NotificationSettingsState,
 	Seasonality,
 	Threshold,
-	TimeDuration,
 } from './types';
 
 export const INITIAL_ALERT_STATE: AlertState = {
@@ -74,7 +73,6 @@ export const INITIAL_ALERT_THRESHOLD_STATE: AlertThresholdState = {
 	selectedQuery: 'A',
 	operator: AlertThresholdOperator.IS_ABOVE,
 	matchType: AlertThresholdMatchType.AT_LEAST_ONCE,
-	evaluationWindow: TimeDuration.FIVE_MINUTES,
 	algorithm: Algorithm.STANDARD,
 	seasonality: Seasonality.HOURLY,
 	thresholds: [INITIAL_CRITICAL_THRESHOLD],
@@ -159,16 +157,6 @@ export const ANOMALY_THRESHOLD_MATCH_TYPE_OPTIONS = [
 	{ value: AlertThresholdMatchType.ALL_THE_TIME, label: 'ALL THE TIME' },
 	{ value: AlertThresholdMatchType.ON_AVERAGE, label: 'ON AVERAGE' },
 	{ value: AlertThresholdMatchType.LAST, label: 'LAST' },
-];
-
-export const ANOMALY_TIME_DURATION_OPTIONS = [
-	{ value: TimeDuration.FIVE_MINUTES, label: '5 minutes' },
-	{ value: TimeDuration.TEN_MINUTES, label: '10 minutes' },
-	{ value: TimeDuration.FIFTEEN_MINUTES, label: '15 minutes' },
-	{ value: TimeDuration.ONE_HOUR, label: '1 hour' },
-	{ value: TimeDuration.THREE_HOURS, label: '3 hours' },
-	{ value: TimeDuration.FOUR_HOURS, label: '4 hours' },
-	{ value: TimeDuration.TWENTY_FOUR_HOURS, label: '24 hours' },
 ];
 
 export const ANOMALY_ALGORITHM_OPTIONS = [

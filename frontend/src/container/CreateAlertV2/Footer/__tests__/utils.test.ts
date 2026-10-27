@@ -13,7 +13,6 @@ import {
 	EvaluationWindowState,
 	NotificationSettingsState,
 	Seasonality,
-	TimeDuration,
 } from 'container/CreateAlertV2/context/types';
 import { createMockAlertContextState } from 'container/CreateAlertV2/EvaluationSettings/__tests__/testUtils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -612,14 +611,17 @@ describe('Footer utils', () => {
 			basicAlertState: mockCreateAlertContextState.alertState,
 			thresholdState: {
 				...thresholdState,
-				evaluationWindow: TimeDuration.ONE_HOUR,
 				seasonality: Seasonality.DAILY,
 				thresholds: [
 					{ ...thresholdState.thresholds[0], thresholdValue: 3, unit: 'ms' },
 				],
 			},
 			advancedOptions: mockCreateAlertContextState.advancedOptions,
-			evaluationWindow: mockCreateAlertContextState.evaluationWindow,
+			evaluationWindow: {
+				...mockCreateAlertContextState.evaluationWindow,
+				windowType: 'rolling',
+				timeframe: '1h0m0s',
+			},
 			notificationSettings: mockCreateAlertContextState.notificationSettings,
 			query: initialQueriesMap.metrics,
 			alertType: AlertTypes.ANOMALY_BASED_ALERT,

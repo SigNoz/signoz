@@ -261,4 +261,32 @@ describe('CreateAlertProvider — edit mode type switch', () => {
 
 		expect(screen.getByTestId('threshold-value')).toHaveTextContent('3');
 	});
+
+	it('moves a cumulative window back to rolling when switching to anomaly', async () => {
+		render(
+			<CreateAlertProvider
+				initialAlertType={AlertTypes.METRICS_BASED_ALERT}
+				isEditMode
+				ruleId="r1"
+				initialAlertState={{
+					...INITIAL_CREATE_ALERT_STATE,
+					evaluationWindow: {
+						...INITIAL_CREATE_ALERT_STATE.evaluationWindow,
+						windowType: 'cumulative',
+						timeframe: 'currentHour',
+					},
+				}}
+			>
+				<Probe />
+				<AnomalySwitcher />
+			</CreateAlertProvider>,
+			undefined,
+			{ initialRoute: '/alerts/overview?ruleId=r1' },
+		);
+		expect(screen.getByTestId('window-type')).toHaveTextContent('cumulative');
+
+		await clickTestId('switch-to-anomaly');
+
+		expect(screen.getByTestId('window-type')).toHaveTextContent('rolling');
+	});
 });

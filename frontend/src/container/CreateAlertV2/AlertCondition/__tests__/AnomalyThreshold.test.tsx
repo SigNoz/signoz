@@ -84,7 +84,9 @@ describe('AnomalyThreshold', () => {
 			'the prediction',
 		);
 		expect(screen.getByTestId('match-type-select')).toBeInTheDocument();
-		expect(screen.getByTestId('evaluation-window-select')).toBeInTheDocument();
+		expect(screen.getByTestId('evaluation-settings-button')).toHaveTextContent(
+			'Rolling',
+		);
 	});
 
 	it('renders the algorithm and seasonality sentence', () => {

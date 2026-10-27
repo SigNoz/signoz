@@ -279,9 +279,6 @@ export function getThresholdStateFromAlertDef(
 			alertDef.condition.algorithm || INITIAL_ALERT_THRESHOLD_STATE.algorithm,
 		seasonality:
 			alertDef.condition.seasonality || INITIAL_ALERT_THRESHOLD_STATE.seasonality,
-		evaluationWindow:
-			(isAnomalyRule && alertDef.evaluation?.spec?.evalWindow) ||
-			INITIAL_ALERT_THRESHOLD_STATE.evaluationWindow,
 	};
 }
 

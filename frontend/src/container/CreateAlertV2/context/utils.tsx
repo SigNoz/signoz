@@ -124,8 +124,6 @@ export const alertThresholdReducer = (
 			return { ...state, operator: action.payload };
 		case 'SET_MATCH_TYPE':
 			return { ...state, matchType: action.payload };
-		case 'SET_EVALUATION_WINDOW':
-			return { ...state, evaluationWindow: action.payload };
 		case 'SET_ALGORITHM':
 			return { ...state, algorithm: action.payload };
 		case 'SET_SEASONALITY':

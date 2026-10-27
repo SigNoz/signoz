@@ -10,12 +10,12 @@ import {
 	ANOMALY_SEASONALITY_OPTIONS,
 	ANOMALY_THRESHOLD_MATCH_TYPE_OPTIONS,
 	ANOMALY_THRESHOLD_OPERATOR_OPTIONS,
-	ANOMALY_TIME_DURATION_OPTIONS,
 } from '../context/constants';
 import {
 	AlertThresholdMatchType,
 	AlertThresholdOperator,
 } from '../context/types';
+import EvaluationSettings from '../EvaluationSettings/EvaluationSettings';
 import { normalizeMatchType, normalizeOperator } from '../utils';
 import { AnomalyAndThresholdProps, UpdateThreshold } from './types';
 import {
@@ -118,20 +118,8 @@ function AnomalyThreshold({
 						data-testid="evaluation-window-text"
 						className="sentence-text"
 					>
-						during the last
+						during the <EvaluationSettings rollingOnly />
 					</Typography.Text>
-					<Select
-						value={thresholdState.evaluationWindow}
-						data-testid="evaluation-window-select"
-						className={styles.windowSelect}
-						onChange={(value): void => {
-							setThresholdState({
-								type: 'SET_EVALUATION_WINDOW',
-								payload: value,
-							});
-						}}
-						options={ANOMALY_TIME_DURATION_OPTIONS}
-					/>
 				</div>
 				<div className="alert-condition-sentence">
 					{/* Sentence 2 */}
