@@ -23,6 +23,7 @@ test.describe('Dashboards — panel states', () => {
 		panels,
 	}) => {
 		await queryRange.respond(QueryRange.empty());
+		const windows = queryRange.recordWindows();
 		await dashboards.seedAndOpen(singlePanelDashboard());
 
 		const target = panels.panel(SINGLE_PANEL_ID);
@@ -33,12 +34,14 @@ test.describe('Dashboards — panel states', () => {
 			PanelMessageText.retryAction,
 		);
 
-		const refetch = queryRange.nextRequest();
-		await target.noDataAction().click();
-		await refetch;
+		const span = (w: { start: number; end: number }): number => w.end - w.start;
+		const before = Math.max(...windows.map(span));
+		expect(before).toBeGreaterThan(0);
 
-		// Widening walks the URL-backed zoom-out ladder.
-		await expect.poll(() => dashboards.param('relativeTime')).not.toBeNull();
+		// Widening walks the URL-backed zoom-out ladder, so the refetch asks for a
+		// longer window than the one the panel loaded with.
+		await target.noDataAction().click();
+		await expect.poll(() => windows.some((w) => span(w) > before)).toBe(true);
 	});
 
 	test('TC-02 a panel pinned to a fixed window cannot extend, so Retry is primary', async ({
