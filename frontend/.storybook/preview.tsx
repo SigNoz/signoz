@@ -127,6 +127,7 @@ const preview: Preview = {
 							'Detail',
 							[
 								'Overview',
+								'Panels',
 								'Settings',
 								'Variables',
 								'New Variable',
