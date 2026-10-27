@@ -215,7 +215,11 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 
 	keySelectors := querybuilder.ExpandKeySelectorsForFamilies(ctx, b.orgID, b.stmtBuilder.fl, getKeySelectors(*query))
 	b.stmtBuilder.logger.DebugContext(ctx, "Key selectors for query", slog.String("query_name", queryName), slog.Any("key_selectors", keySelectors))
-	keys, columnEvolutions, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(ctx, b.orgID, keySelectors)
+	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(ctx, b.orgID, keySelectors)
+	if err != nil {
+		return "", err
+	}
+	columnEvolutions, err := b.stmtBuilder.metadataStore.GetColumnEvolutions(ctx, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
 	if err != nil {
 		return "", err
 	}
@@ -442,7 +446,11 @@ func (b *traceOperatorCTEBuilder) buildFinalQuery(ctx context.Context, selectFro
 	}
 
 	keySelectors := querybuilder.ExpandKeySelectorsForFamilies(ctx, b.orgID, b.stmtBuilder.fl, b.getKeySelectors())
-	keys, columnEvolutions, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(ctx, b.orgID, keySelectors)
+	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(ctx, b.orgID, keySelectors)
+	if err != nil {
+		return nil, err
+	}
+	columnEvolutions, err := b.stmtBuilder.metadataStore.GetColumnEvolutions(ctx, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
 	if err != nil {
 		return nil, err
 	}

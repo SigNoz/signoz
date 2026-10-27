@@ -13,10 +13,8 @@ type MetadataStore interface {
 	// if they have different types or data types.
 	GetKeys(ctx context.Context, orgID valuer.UUID, fieldKeySelector *FieldKeySelector) (map[string][]*TelemetryFieldKey, bool, error)
 
-	// GetKeys but with any number of fieldKeySelectors. It also returns the
-	// column-wide evolutions of the span attributes column, which a key
-	// metadata does not report still reads through.
-	GetKeysMulti(ctx context.Context, orgID valuer.UUID, fieldKeySelectors []*FieldKeySelector) (map[string][]*TelemetryFieldKey, []*EvolutionEntry, bool, error)
+	// GetKeys but with any number of fieldKeySelectors.
+	GetKeysMulti(ctx context.Context, orgID valuer.UUID, fieldKeySelectors []*FieldKeySelector) (map[string][]*TelemetryFieldKey, bool, error)
 
 	// GetKey returns a list of keys with the given name.
 	GetKey(ctx context.Context, orgID valuer.UUID, fieldKeySelector *FieldKeySelector) ([]*TelemetryFieldKey, error)
@@ -46,6 +44,11 @@ type MetadataStore interface {
 	// PromotePaths records promoted paths in the column evolution table as
 	// rows templated by entry; FieldName and ReleaseTime are set per path.
 	PromotePaths(ctx context.Context, entry EvolutionEntry, paths ...string) error
+
+	// GetColumnEvolutions returns the column-wide evolutions of one signal's
+	// field context, which a key metadata does not report still reads
+	// through. The result is cached briefly.
+	GetColumnEvolutions(ctx context.Context, signal Signal, fieldContext FieldContext) ([]*EvolutionEntry, error)
 
 	// GetMaterializedKeys lists the keys materialized as dedicated columns.
 	GetMaterializedKeys(ctx context.Context, signal Signal) ([]*TelemetryFieldKey, error)

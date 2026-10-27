@@ -481,7 +481,7 @@ func (s *store) buildFilterClause(ctx context.Context, orgID valuer.UUID, filter
 		selectors[i].SelectorMatchType = telemetrytypes.FieldSelectorMatchTypeExact
 	}
 
-	fieldKeys, _, _, err := s.telemetryMetadataStore.GetKeysMulti(ctx, orgID, selectors)
+	fieldKeys, _, err := s.telemetryMetadataStore.GetKeysMulti(ctx, orgID, selectors)
 	if err != nil || fieldKeys == nil {
 		fieldKeys = map[string][]*telemetrytypes.TelemetryFieldKey{}
 	}

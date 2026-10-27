@@ -318,8 +318,15 @@ func (b *scopedTraceStatementBuilder) fetchKeys(ctx context.Context, orgID value
 			SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeExact,
 		})
 	}
-	keys, columnEvolutions, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, b.fl, selectors))
-	return keys, columnEvolutions, err
+	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, b.fl, selectors))
+	if err != nil {
+		return nil, nil, err
+	}
+	columnEvolutions, err := b.metadataStore.GetColumnEvolutions(ctx, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
+	if err != nil {
+		return nil, nil, err
+	}
+	return keys, columnEvolutions, nil
 }
 
 func (b *scopedTraceStatementBuilder) resolverFieldKeys() []*telemetrytypes.TelemetryFieldKey {

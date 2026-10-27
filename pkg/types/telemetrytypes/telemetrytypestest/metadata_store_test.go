@@ -54,7 +54,7 @@ func TestEvolutionAppendsPerFieldToColumnWide(t *testing.T) {
 			Name: name, Signal: telemetrytypes.SignalTraces,
 			FieldContext: telemetrytypes.FieldContextAttribute, SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeExact,
 		}
-		_, _, _, err := store.GetKeysMulti(context.Background(), valuer.UUID{}, []*telemetrytypes.FieldKeySelector{selector})
+		_, _, err := store.GetKeysMulti(context.Background(), valuer.UUID{}, []*telemetrytypes.FieldKeySelector{selector})
 		require.NoError(t, err)
 		return key
 	}

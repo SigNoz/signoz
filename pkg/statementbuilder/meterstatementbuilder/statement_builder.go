@@ -74,7 +74,7 @@ func (b *meterQueryStatementBuilder) Build(
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
 	keySelectors := metricsstatementbuilder.GetKeySelectors(query)
-	keys, _, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
+	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
 	if err != nil {
 		return nil, err
 	}

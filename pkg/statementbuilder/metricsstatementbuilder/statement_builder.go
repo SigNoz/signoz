@@ -120,7 +120,7 @@ func (b *StatementBuilder) Build(
 	keySelectors := querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, b.flagger, GetKeySelectors(query))
 	metricNames := querybuilder.FamilyMetricNames(ctx, orgID, b.flagger, query.Aggregations[0].MetricName)
 	keySelectors = expandSelectorsForMetricNames(keySelectors, metricNames)
-	keys, _, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
+	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
 	if err != nil {
 		return nil, err
 	}

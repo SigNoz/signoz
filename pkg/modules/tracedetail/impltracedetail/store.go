@@ -505,9 +505,13 @@ func (s *traceStore) genAIFieldKeys(ctx context.Context, orgID valuer.UUID, name
 	for _, name := range names {
 		selectors = append(selectors, &telemetrytypes.FieldKeySelector{Name: name, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeExact})
 	}
-	keys, columnEvolutions, _, err := s.metadataStore.GetKeysMulti(ctx, orgID, querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, s.flagger, selectors))
+	keys, _, err := s.metadataStore.GetKeysMulti(ctx, orgID, querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, s.flagger, selectors))
 	if err != nil {
 		return nil, nil, errors.WrapInternalf(err, errors.CodeInternal, "error fetching gen_ai field keys")
+	}
+	columnEvolutions, err := s.metadataStore.GetColumnEvolutions(ctx, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
+	if err != nil {
+		return nil, nil, err
 	}
 	return keys, columnEvolutions, nil
 }

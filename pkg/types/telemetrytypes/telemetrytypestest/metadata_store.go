@@ -92,7 +92,7 @@ func (m *MockMetadataStore) GetKeys(ctx context.Context, _ valuer.UUID, fieldKey
 }
 
 // GetKeysMulti applies multiple selectors and returns combined results.
-func (m *MockMetadataStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID, fieldKeySelectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, []*telemetrytypes.EvolutionEntry, bool, error) {
+func (m *MockMetadataStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID, fieldKeySelectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	result := make(map[string][]*telemetrytypes.TelemetryFieldKey)
 
 	// Process each selector
@@ -100,7 +100,7 @@ func (m *MockMetadataStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID,
 		selectorCopy := selector // Create a copy to avoid issues with pointer semantics
 		selectorResults, _, err := m.GetKeys(ctx, orgID, selectorCopy)
 		if err != nil {
-			return nil, nil, false, err
+			return nil, false, err
 		}
 
 		// Merge results
@@ -128,18 +128,7 @@ func (m *MockMetadataStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID,
 		m.updateColumnEvolutionMetadataForKeys(ctx, v)
 	}
 
-	// the span attributes column-wide evolutions, mirroring the real store
-	var columnEvolutions []*telemetrytypes.EvolutionEntry
-	for _, selector := range fieldKeySelectors {
-		if selector.Signal != telemetrytypes.SignalTraces && selector.Signal != telemetrytypes.SignalUnspecified {
-			continue
-		}
-		attributesColumn := &telemetrytypes.EvolutionSelector{Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldName: telemetrytypes.EvolutionFieldNameAll}
-		columnEvolutions = m.ColumnEvolutionMetadataMap[attributesColumn.QualifiedName()]
-		break
-	}
-
-	return result, columnEvolutions, true, nil
+	return result, true, nil
 }
 
 // GetKey returns a list of keys with the given name.
@@ -439,6 +428,11 @@ func (m *MockMetadataStore) updateColumnEvolutionMetadataForKeys(_ context.Conte
 		}
 	}
 	return result
+}
+
+func (m *MockMetadataStore) GetColumnEvolutions(ctx context.Context, signal telemetrytypes.Signal, fieldContext telemetrytypes.FieldContext) ([]*telemetrytypes.EvolutionEntry, error) {
+	selector := &telemetrytypes.EvolutionSelector{Signal: signal, FieldContext: fieldContext, FieldName: telemetrytypes.EvolutionFieldNameAll}
+	return m.ColumnEvolutionMetadataMap[selector.QualifiedName()], nil
 }
 
 func (m *MockMetadataStore) GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []telemetrytypes.MetricMetadataLookupKey) (map[telemetrytypes.MetricMetadataLookupKey]int64, error) {

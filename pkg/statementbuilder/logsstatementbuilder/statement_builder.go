@@ -126,7 +126,7 @@ func (b *logQueryStatementBuilder) Build(
 
 	keySelectors, warnings := getKeySelectors(query, bodyJSONEnabled)
 	keySelectors = querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, b.fl, keySelectors)
-	keys, _, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
+	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
 	if err != nil {
 		return nil, err
 	}

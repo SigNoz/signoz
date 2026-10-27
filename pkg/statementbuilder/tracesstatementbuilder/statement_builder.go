@@ -161,7 +161,11 @@ func (b *traceQueryStatementBuilder) Build(
 	// fields can carry keys that need evolutions, so fetch keys after that.
 	keySelectors := querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, b.fl, getKeySelectors(query))
 
-	keys, columnEvolutions, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
+	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
+	if err != nil {
+		return nil, err
+	}
+	columnEvolutions, err := b.metadataStore.GetColumnEvolutions(ctx, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
 	if err != nil {
 		return nil, err
 	}
