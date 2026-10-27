@@ -1,4 +1,5 @@
-import { Button, Select } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Select } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Plus } from '@signozhq/icons';
@@ -176,11 +177,12 @@ function AnomalyThreshold({
 					/>
 				))}
 				<Button
-					type="dashed"
-					icon={<Plus size={16} />}
+					variant="dashed"
+					color="secondary"
+					size="md"
+					prefix={<Plus size={14} />}
 					onClick={handleAddThreshold}
-					className="add-threshold-btn"
-					data-testid="add-threshold-button"
+					testId="add-threshold-button"
 				>
 					Add Threshold
 				</Button>

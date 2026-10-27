@@ -1,6 +1,7 @@
 import { IAppContext } from 'providers/App/types';
 import { render, screen, userEvent } from 'tests/test-utils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
+import { QueryBuilderContextType } from 'types/common/queryBuilder';
 
 import { CreateAlertProvider } from '../../context';
 import AlertCondition from '../AlertCondition';
@@ -64,8 +65,12 @@ jest.mock('../AnomalyThreshold', () => ({
 	},
 }));
 
-const mockHandleSetQueryData = jest.fn();
-const mockRedirectWithQueryBuilderData = jest.fn();
+const mockHandleSetQueryData: jest.MockedFunction<
+	QueryBuilderContextType['handleSetQueryData']
+> = jest.fn();
+const mockRedirectWithQueryBuilderData: jest.MockedFunction<
+	QueryBuilderContextType['redirectWithQueryBuilderData']
+> = jest.fn();
 const mockCurrentQuery = {
 	dataSource: 'METRICS',
 	queryName: 'A',

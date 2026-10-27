@@ -66,7 +66,8 @@ export const alertPreviewSeries = async (
 	}));
 	const response = queryRangeV5TimeSeriesResponse([{ queryName, series }]);
 
-	if (!isAnomalyRequest(body)) {
+	const zScore = requestedZScore(body);
+	if (zScore === undefined) {
 		return response;
 	}
 
@@ -110,8 +111,8 @@ export const alertPreviewSeries = async (
 								meta: {},
 								series,
 								predictedSeries: forecast,
-								upperBoundSeries: shifted(3 * ANOMALY_SPREAD),
-								lowerBoundSeries: shifted(-3 * ANOMALY_SPREAD),
+								upperBoundSeries: shifted(zScore * ANOMALY_SPREAD),
+								lowerBoundSeries: shifted(-zScore * ANOMALY_SPREAD),
 								anomalyScores,
 							},
 						],
@@ -124,12 +125,27 @@ export const alertPreviewSeries = async (
 
 const ANOMALY_SPREAD = 4;
 
-const isAnomalyRequest = (body: QueryRangeRequestV5): boolean =>
-	body.compositeQuery?.queries?.some((query) =>
-		(query.spec as { functions?: { name: string }[] }).functions?.some(
-			({ name }) => name === 'anomaly',
-		),
-	) ?? false;
+// The engine sizes the band from the `anomaly` function's `z_score_threshold`.
+const requestedZScore = (body: QueryRangeRequestV5): number | undefined => {
+	const anomaly = body.compositeQuery?.queries
+		?.flatMap(
+			(query) =>
+				(
+					query.spec as {
+						functions?: {
+							name: string;
+							args?: { name?: string; value?: unknown }[];
+						}[];
+					}
+				).functions ?? [],
+		)
+		.find(({ name }) => name === 'anomaly');
+	if (!anomaly) {
+		return undefined;
+	}
+	const zScore = anomaly.args?.find(({ name }) => name === 'z_score_threshold');
+	return Number(zScore?.value ?? 3);
+};
 
 const METRIC_SEEDS: MetricsexplorertypesListMetricDTO[] = [
 	{
