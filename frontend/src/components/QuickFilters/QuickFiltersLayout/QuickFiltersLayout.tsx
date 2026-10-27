@@ -9,6 +9,7 @@ import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 
 import QuickFilters from '../QuickFilters';
 import { SIDEBAR_TOOLTIP_DELAY_MS } from './constants';
+import { useCloseOnOutsidePress } from './useCloseOnOutsidePress';
 
 import styles from './QuickFiltersLayout.module.scss';
 
@@ -61,12 +62,20 @@ function QuickFiltersLayout({
 
 	const isSliding = hasQuickFilters && isViewsListOpen;
 
+	const openViews = (): void => setIsViewsListOpen(true);
+	const toggleViews = (): void => setIsViewsListOpen((isOpen) => !isOpen);
+	const closeViews = (): void => setIsViewsListOpen(false);
+	const markSidebarPress = useCloseOnOutsidePress(
+		showSidebar && isSliding,
+		closeViews,
+	);
+
 	const savedViewsHeader = hasSavedViews ? (
 		<SavedViewsHeader
 			{...savedViewProps}
-			onOpenViews={
-				isViewsListVisible ? undefined : (): void => setIsViewsListOpen(true)
-			}
+			onOpenViews={isViewsListVisible ? undefined : openViews}
+			isViewsOpen={isViewsListOpen}
+			onToggleViews={isViewsListPinned ? undefined : toggleViews}
 			onCollapse={hasQuickFilters ? undefined : onToggleFilters}
 		/>
 	) : undefined;
@@ -77,6 +86,7 @@ function QuickFiltersLayout({
 			{showSidebar && (
 				<aside
 					className={cx(styles.sidebar, { [styles.isStatic]: !hasQuickFilters })}
+					onPointerDownCapture={markSidebarPress}
 					data-testid="quick-filters-layout-filters"
 				>
 					<TooltipProvider delay={SIDEBAR_TOOLTIP_DELAY_MS}>
@@ -98,9 +108,7 @@ function QuickFiltersLayout({
 							{hasSavedViews && isViewsListVisible && (
 								<SavedViewsPanel
 									{...savedViewProps}
-									onClose={
-										isViewsListPinned ? undefined : (): void => setIsViewsListOpen(false)
-									}
+									onClose={isViewsListPinned ? undefined : closeViews}
 								/>
 							)}
 						</div>

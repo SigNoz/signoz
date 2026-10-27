@@ -12,6 +12,7 @@ import {
 	SavedViewCreatePermission,
 	SavedViewListPermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 
 import {
 	MY_VIEW_NAME,
@@ -25,6 +26,7 @@ import { useSaveNewView } from './hooks/useSaveNewView';
 import { useSavedViewActions } from './hooks/useSavedViewActions';
 import SaveChangesMenu from './SaveChangesMenu';
 import SavedViewsIconButton from './SavedViewsIconButton';
+import SavedViewsNameToggle from './SavedViewsNameToggle';
 import SaveViewModal from './SaveViewModal';
 import { SaveViewModalMode } from './types';
 
@@ -33,11 +35,16 @@ import styles from './SavedViewsHeader.module.scss';
 function SavedViewsHeader({
 	source,
 	onOpenViews,
+	isViewsOpen = false,
+	onToggleViews,
 	onCollapse,
 }: {
 	source: SavedviewtypesSourceDTO;
 	// Absent while the list is on screen.
 	onOpenViews?: () => void;
+	isViewsOpen?: boolean;
+	// Absent while the list is pinned open.
+	onToggleViews?: () => void;
 	onCollapse?: () => void;
 }): JSX.Element {
 	const {
@@ -50,6 +57,11 @@ function SavedViewsHeader({
 	} = useActiveSavedView(source);
 	const { viewKey } = useGetSavedViewParams();
 	const readPermission = buildSavedViewReadPermission(viewKey);
+	const { isLoading: isCheckingList, deniedPermissions: deniedList } = useAuthZ(
+		[SavedViewListPermission],
+		{ enabled: !!onToggleViews },
+	);
+	const canListViews = !isCheckingList && deniedList.length === 0;
 	const { revertView, clearView, createView, updateView, isSaving } =
 		useSavedViewActions(source);
 
@@ -83,6 +95,9 @@ function SavedViewsHeader({
 		name = SAVED_VIEW_LOAD_FAILED_NAME;
 	}
 	const isDirty = !isError && !!view && hasUnsavedChanges;
+	// Same gates as the All views button; an open panel can always be closed.
+	const canToggleViews =
+		isViewsOpen || (canListViews && !isDirty && !isReadDenied);
 
 	const nameChip = (
 		<span
@@ -123,10 +138,17 @@ function SavedViewsHeader({
 						className={styles.skeleton}
 						testId="saved-views-loading"
 					/>
-				) : isReadDenied ? (
-					<AuthZTooltip checks={[readPermission]}>{nameChip}</AuthZTooltip>
 				) : (
-					<Tooltip title={errorMessage ?? name}>{nameChip}</Tooltip>
+					<SavedViewsNameToggle
+						isOpen={isViewsOpen}
+						onToggle={canToggleViews ? onToggleViews : undefined}
+					>
+						{isReadDenied ? (
+							<AuthZTooltip checks={[readPermission]}>{nameChip}</AuthZTooltip>
+						) : (
+							<Tooltip title={errorMessage ?? name}>{nameChip}</Tooltip>
+						)}
+					</SavedViewsNameToggle>
 				)}
 			</div>
 

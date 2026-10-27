@@ -19,8 +19,8 @@ import (
 // ══════════════════════════════════════════════
 
 type PanelPlugin struct {
-	Kind PanelPluginKind `json:"kind" required:"true"`
-	Spec any             `json:"spec" required:"true"`
+	Kind PanelPluginKind `json:"kind" required:"true" description:"The panel kind. It decides the shape of spec and which query kinds the panel accepts."`
+	Spec any             `json:"spec" required:"true" description:"The options for this panel kind. {} accepts every default."`
 }
 
 // PrepareJSONSchema marks the envelope with x-signoz-discriminator;
@@ -75,8 +75,8 @@ func (PanelPlugin) JSONSchemaOneOf() []any {
 }
 
 type PanelPluginVariant[S any] struct {
-	Kind string `json:"kind" required:"true"`
-	Spec S      `json:"spec" required:"true"`
+	Kind string `json:"kind" required:"true" description:"The panel kind."`
+	Spec S      `json:"spec" required:"true" description:"The options for this panel kind. {} accepts every default."`
 }
 
 func (v PanelPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
@@ -88,8 +88,8 @@ func (v PanelPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
 // ══════════════════════════════════════════════
 
 type QueryPlugin struct {
-	Kind QueryPluginKind `json:"kind" required:"true"`
-	Spec any             `json:"spec" required:"true"`
+	Kind QueryPluginKind `json:"kind" required:"true" description:"The query kind. It decides the shape of spec."`
+	Spec any             `json:"spec" required:"true" description:"The kind-specific query spec. A builder query's shape depends on its signal."`
 }
 
 func (QueryPlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
@@ -168,8 +168,8 @@ func wrapEnvelope(queryType qb.QueryType, spec any) qb.CompositeQuery {
 }
 
 type QueryPluginVariant[S any] struct {
-	Kind string `json:"kind" required:"true"`
-	Spec S      `json:"spec" required:"true"`
+	Kind string `json:"kind" required:"true" description:"The query kind."`
+	Spec S      `json:"spec" required:"true" description:"The kind-specific query spec."`
 }
 
 func (v QueryPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
@@ -181,8 +181,8 @@ func (v QueryPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
 // ══════════════════════════════════════════════
 
 type VariablePlugin struct {
-	Kind VariablePluginKind `json:"kind" required:"true"`
-	Spec any                `json:"spec" required:"true"`
+	Kind VariablePluginKind `json:"kind" required:"true" description:"The value source kind. It decides the shape of spec."`
+	Spec any                `json:"spec" required:"true" description:"The kind-specific value source spec."`
 }
 
 func (VariablePlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
@@ -220,8 +220,8 @@ func (VariablePlugin) JSONSchemaOneOf() []any {
 }
 
 type VariablePluginVariant[S any] struct {
-	Kind string `json:"kind" required:"true"`
-	Spec S      `json:"spec" required:"true"`
+	Kind string `json:"kind" required:"true" description:"The value source kind."`
+	Spec S      `json:"spec" required:"true" description:"The kind-specific value source spec."`
 }
 
 func (v VariablePluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {

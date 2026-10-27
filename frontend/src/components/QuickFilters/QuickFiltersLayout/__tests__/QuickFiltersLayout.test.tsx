@@ -34,17 +34,17 @@ jest.mock('container/SavedViews/SavedViewsRestore', () => ({
 jest.mock('../../QuickFilters', () => ({
 	__esModule: true,
 	default: ({
-		source,
+		quickFilterSource,
 		savedViewsHeader,
 		handleFilterVisibilityChange,
 	}: {
-		source: string;
+		quickFilterSource: string;
 		savedViewsHeader?: React.ReactNode;
 		handleFilterVisibilityChange?: () => void;
 	}): JSX.Element => (
 		<div data-testid="quick-filters">
 			{savedViewsHeader}
-			{source}
+			{quickFilterSource}
 			{handleFilterVisibilityChange && (
 				<Button
 					size="md"
@@ -62,7 +62,7 @@ jest.mock('../../QuickFilters', () => ({
 }));
 
 const quickFilterProps = {
-	source: QuickFiltersSource.TRACES_EXPLORER,
+	quickFilterSource: QuickFiltersSource.TRACES_EXPLORER,
 	useFieldApis: { startUnixMilli: 0, endUnixMilli: 0 },
 };
 const savedViewProps = { source: SavedviewtypesSourceDTO.traces };
@@ -218,6 +218,62 @@ describe('QuickFiltersLayout', () => {
 			expect(screen.getByTestId('saved-views-open')).toBeInTheDocument();
 		});
 
+		it('opens and closes the panel from the view name', async () => {
+			render(
+				<QuickFiltersLayout
+					showFilters
+					quickFilterProps={quickFilterProps}
+					savedViewProps={savedViewProps}
+				>
+					<div>content</div>
+				</QuickFiltersLayout>,
+			);
+			const user = userEvent.setup();
+			const toggle = await screen.findByTestId('saved-views-name-toggle');
+
+			expect(toggle).toHaveAttribute('aria-expanded', 'false');
+			await user.click(toggle);
+
+			expect(screen.getByTestId('saved-views-panel')).toBeInTheDocument();
+			expect(drawer()).toHaveClass('isOpen');
+			expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+			await user.click(toggle);
+
+			expect(screen.queryByTestId('saved-views-panel')).not.toBeInTheDocument();
+			expect(drawer()).not.toHaveClass('isOpen');
+		});
+
+		it('closes the panel on a click outside the sidebar, not inside it', async () => {
+			render(
+				<>
+					<button type="button" data-testid="page-tab">
+						Pipelines
+					</button>
+					<QuickFiltersLayout
+						showFilters
+						quickFilterProps={quickFilterProps}
+						savedViewProps={savedViewProps}
+					>
+						<div data-testid="page-content">content</div>
+					</QuickFiltersLayout>
+				</>,
+			);
+			const user = userEvent.setup();
+
+			await user.click(await screen.findByTestId('saved-views-name-toggle'));
+			await user.click(screen.getByTestId('saved-views-panel-header'));
+			expect(screen.getByTestId('saved-views-panel')).toBeInTheDocument();
+
+			await user.click(screen.getByTestId('page-tab'));
+			expect(screen.queryByTestId('saved-views-panel')).not.toBeInTheDocument();
+			expect(drawer()).not.toHaveClass('isOpen');
+
+			await user.click(await screen.findByTestId('saved-views-name-toggle'));
+			await user.click(screen.getByTestId('page-content'));
+			expect(screen.queryByTestId('saved-views-panel')).not.toBeInTheDocument();
+		});
+
 		it('hands the source to the header and the panel', async () => {
 			render(
 				<QuickFiltersLayout
@@ -258,6 +314,9 @@ describe('QuickFiltersLayout', () => {
 			expect(screen.getByTestId('saved-views-header')).toBeInTheDocument();
 			expect(screen.getByTestId('saved-views-panel')).toBeInTheDocument();
 			expect(screen.queryByTestId('saved-views-open')).not.toBeInTheDocument();
+			expect(
+				screen.queryByTestId('saved-views-name-toggle'),
+			).not.toBeInTheDocument();
 			expect(
 				screen.queryByTestId('saved-views-panel-header'),
 			).not.toBeInTheDocument();

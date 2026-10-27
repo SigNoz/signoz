@@ -7,7 +7,7 @@ import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
-import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
+import { QuickFiltersSource } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { initialQueryAIWithType } from 'constants/queryBuilder';
 import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
@@ -194,8 +194,7 @@ function Explorer(): JSX.Element {
 				savedViewProps={{ source: SavedviewtypesSourceDTO.ai_observability }}
 				quickFilterProps={{
 					className: 'qf-traces-explorer',
-					source: QuickFiltersSource.AI_OBSERVABILITY,
-					signal: SignalType.AI_OBSERVABILITY,
+					quickFilterSource: QuickFiltersSource.AI_OBSERVABILITY,
 					useFieldApis: quickFiltersFieldApis,
 				}}
 			>

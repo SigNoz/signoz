@@ -243,7 +243,7 @@ function Hosts(): JSX.Element {
 										</Tooltip>
 									</div>
 									<QuickFilters
-										source={QuickFiltersSource.INFRA_MONITORING}
+										quickFilterSource={QuickFiltersSource.INFRA_MONITORING}
 										config={getHostsQuickFiltersConfig()}
 										handleFilterVisibilityChange={handleFilterVisibilityChange}
 										useFieldApis={{

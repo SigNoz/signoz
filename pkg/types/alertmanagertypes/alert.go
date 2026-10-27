@@ -47,9 +47,9 @@ const (
 
 type DeprecatedGettableAlert struct {
 	*model.Alert
-	Status      types.AlertStatus `json:"status"`
-	Receivers   []string          `json:"receivers"`
-	Fingerprint string            `json:"fingerprint"`
+	Status      types.AlertStatus `json:"status" description:"The alert state and the silences and inhibitions suppressing it."`
+	Receivers   []string          `json:"receivers" description:"The display names of the channels the alert is routed to."`
+	Fingerprint string            `json:"fingerprint" description:"The alert fingerprint, a hash of its label set."`
 }
 
 type DeprecatedGettableAlerts = []*DeprecatedGettableAlert

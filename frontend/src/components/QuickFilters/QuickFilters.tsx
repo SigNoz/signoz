@@ -49,15 +49,18 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		className,
 		config,
 		handleFilterVisibilityChange,
-		source,
+		quickFilterSource,
 		onFilterChange,
 		onQuickFilterChange,
-		signal,
 		showFilterCollapse = true,
 		showQueryName = true,
 		useFieldApis,
 		savedViewsHeader,
 	} = props;
+	const savedFiltersSource =
+		quickFilterSource === QuickFiltersSource.INFRA_MONITORING
+			? undefined
+			: quickFilterSource;
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 	const [params, setParams] = useApiMonitoringParams();
 	const showIP = params.showIP ?? true;
@@ -68,7 +71,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		customFilters,
 		refetchCustomFilters,
 		isCustomFiltersLoading,
-	} = useFilterConfig({ signal, config });
+	} = useFilterConfig({ savedFiltersSource, config });
 	const {
 		deniedPermissions: deniedSettingsPermissions,
 		isLoading: isSettingsChecking,
@@ -112,15 +115,15 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 
 	// Show dropdown in ListView only for TRACES_EXPLORER source
 	const shouldShowDropdownInListView =
-		isListView && source === QuickFiltersSource.TRACES_EXPLORER;
+		isListView && quickFilterSource === QuickFiltersSource.TRACES_EXPLORER;
 
 	// AI observability builds a single query in the row-level views, so there is
 	// no query for the selector to switch between.
 	const isAIObservabilityRowView =
-		source === QuickFiltersSource.AI_OBSERVABILITY &&
+		quickFilterSource === QuickFiltersSource.AI_OBSERVABILITY &&
 		(isListView || panelType === PANEL_TYPES.TRACE);
 
-	const activeQueryIndex = useActiveQueryIndex(source);
+	const activeQueryIndex = useActiveQueryIndex(quickFilterSource);
 
 	// clear all the filters for the query which is in sync with filters
 	const handleReset = (): void => {
@@ -290,7 +293,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 
 	const renderContent = (): JSX.Element => (
 		<>
-			{source === QuickFiltersSource.API_MONITORING && (
+			{quickFilterSource === QuickFiltersSource.API_MONITORING && (
 				<div className="api-quick-filters-header">
 					<Typography.Text>Show IP addresses</Typography.Text>
 					<Switch
@@ -313,7 +316,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 							return (
 								<Duration
 									key={filter.attributeKey.key}
-									source={source}
+									quickFilterSource={quickFilterSource}
 									filter={filter}
 									onFilterChange={onFilterChange}
 								/>
@@ -324,7 +327,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 							return (
 								<CheckboxV2
 									key={filter.attributeKey.key}
-									source={source}
+									quickFilterSource={quickFilterSource}
 									filter={filter}
 									onFilterChange={onFilterChange}
 									onQuickFilterChange={onQuickFilterChange}
@@ -363,14 +366,14 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		<div className="quick-filters-container">
 			<div className="quick-filters">
 				{savedViewsHeader}
-				{source !== QuickFiltersSource.INFRA_MONITORING && (
+				{quickFilterSource !== QuickFiltersSource.INFRA_MONITORING && (
 					<section className="header">
 						{renderLeftActions()}
 						{renderRightActions()}
 					</section>
 				)}
 
-				{signal ? (
+				{savedFiltersSource ? (
 					<AuthZGuardContent
 						checks={[QuickFilterReadPermission]}
 						fallbackOnLoading={filtersSkeleton}
@@ -391,9 +394,9 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 						className,
 					)}
 				>
-					{isSettingsOpen && (
+					{isSettingsOpen && savedFiltersSource && (
 						<QuickFiltersSettings
-							signal={signal}
+							savedFiltersSource={savedFiltersSource}
 							setIsSettingsOpen={setIsSettingsOpen}
 							customFilters={customFilters}
 							refetchCustomFilters={refetchCustomFilters}
@@ -407,7 +410,6 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 
 QuickFilters.defaultProps = {
 	onFilterChange: null,
-	signal: '',
 	config: [],
 	showFilterCollapse: true,
 	showQueryName: true,

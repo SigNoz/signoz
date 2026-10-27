@@ -10,11 +10,13 @@ import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { CreateAlertProvider } from 'container/CreateAlertV2/context';
-import { getCreateAlertLocalStateFromAlertDef } from 'container/CreateAlertV2/utils';
+import {
+	getAlertTypeFromAlertDef,
+	getCreateAlertLocalStateFromAlertDef,
+} from 'container/CreateAlertV2/utils';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { useAlertRule } from 'providers/Alert';
-import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { NEW_ALERT_SCHEMA_VERSION } from 'types/api/alerts/alertTypesV2';
 import { fromRuleDTOToPostableRuleV2 } from 'types/api/alerts/convert';
 
@@ -74,7 +76,7 @@ function AlertDetails(): JSX.Element {
 
 	const handleTabChange = (route: string): void => {
 		if (route === ROUTES.ALERT_HISTORY) {
-			logEvent('Alert History tab: Visited', { ruleId });
+			void logEvent('Alert History tab: Visited', { ruleId });
 		}
 	};
 
@@ -89,7 +91,7 @@ function AlertDetails(): JSX.Element {
 		<CreateAlertProvider
 			ruleId={ruleId || ''}
 			isEditMode
-			initialAlertType={alertRuleDetails?.alertType as AlertTypes}
+			initialAlertType={getAlertTypeFromAlertDef(alertRuleDetails)}
 			initialAlertState={initialAlertState}
 		>
 			<div
