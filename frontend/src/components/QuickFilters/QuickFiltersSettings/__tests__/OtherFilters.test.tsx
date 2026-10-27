@@ -3,8 +3,8 @@ import { ENVIRONMENT } from 'constants/env';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render } from 'tests/test-utils';
+import { QuickfiltertypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 
-import { SignalType } from '../../types';
 import OtherFilters from '../OtherFilters';
 
 const BASE_URL = ENVIRONMENT.baseURL;
@@ -43,10 +43,12 @@ describe('OtherFilters - AI observability keys', () => {
 		);
 	});
 
-	function renderOtherFilters(signal: SignalType): void {
+	function renderOtherFilters(
+		savedFiltersSource: QuickfiltertypesSourceDTO,
+	): void {
 		render(
 			<OtherFilters
-				signal={signal}
+				savedFiltersSource={savedFiltersSource}
 				inputValue=""
 				addedFilters={[]}
 				setAddedFilters={jest.fn()}
@@ -55,7 +57,7 @@ describe('OtherFilters - AI observability keys', () => {
 	}
 
 	it('reads AI observability keys from their own endpoint', async () => {
-		renderOtherFilters(SignalType.AI_OBSERVABILITY);
+		renderOtherFilters(QuickfiltertypesSourceDTO.ai_observability);
 
 		await expect(
 			screen.findByText('gen_ai.request.model'),
@@ -64,7 +66,7 @@ describe('OtherFilters - AI observability keys', () => {
 	});
 
 	it('does not narrow the AI keys by fieldContext', async () => {
-		renderOtherFilters(SignalType.AI_OBSERVABILITY);
+		renderOtherFilters(QuickfiltertypesSourceDTO.ai_observability);
 
 		// A `trace` context would return only the computed per-trace aggregates,
 		// which cannot be filtered on.
@@ -73,7 +75,7 @@ describe('OtherFilters - AI observability keys', () => {
 	});
 
 	it('keeps other signals on the signal-wide keys endpoint', async () => {
-		renderOtherFilters(SignalType.TRACES);
+		renderOtherFilters(QuickfiltertypesSourceDTO.traces);
 
 		await expect(screen.findByText('http.route')).resolves.toBeInTheDocument();
 		await waitFor(() => expect(aiKeysParams).toBeUndefined());

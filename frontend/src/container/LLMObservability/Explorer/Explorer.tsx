@@ -7,7 +7,7 @@ import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
-import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
+import { QuickFiltersSource } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { initialQueryAIWithType } from 'constants/queryBuilder';
 import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
@@ -193,8 +193,7 @@ function Explorer(): JSX.Element {
 				onToggleFilters={(): void => setOpen(!isOpen)}
 				quickFilterProps={{
 					className: 'qf-traces-explorer',
-					source: QuickFiltersSource.AI_OBSERVABILITY,
-					signal: SignalType.AI_OBSERVABILITY,
+					quickFilterSource: QuickFiltersSource.AI_OBSERVABILITY,
 					useFieldApis: quickFiltersFieldApis,
 				}}
 			>

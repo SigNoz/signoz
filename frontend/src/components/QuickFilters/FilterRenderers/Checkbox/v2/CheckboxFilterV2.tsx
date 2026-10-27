@@ -33,7 +33,7 @@ import styles from './CheckboxFilterV2.module.scss';
 
 interface CheckboxFilterV2Props {
 	filter: IQuickFiltersConfig;
-	source: QuickFiltersSource;
+	quickFilterSource: QuickFiltersSource;
 	onFilterChange?: (query: Query) => void;
 	onQuickFilterChange?: (data: QuickFilterChangeEventData) => void;
 	useFieldApis: QuickFilterCheckboxUseFieldApis;
@@ -42,13 +42,18 @@ interface CheckboxFilterV2Props {
 export default function CheckboxFilterV2(
 	props: CheckboxFilterV2Props,
 ): JSX.Element {
-	const { source, filter, onFilterChange, onQuickFilterChange, useFieldApis } =
-		props;
+	const {
+		quickFilterSource,
+		filter,
+		onFilterChange,
+		onQuickFilterChange,
+		useFieldApis,
+	} = props;
 	const [searchText, setSearchText] = useState<string>('');
 	const [userToggleState, setUserToggleState] = useState<boolean | null>(null);
 
 	const { currentQuery } = useQueryBuilder();
-	const activeQueryIndex = useActiveQueryIndex(source);
+	const activeQueryIndex = useActiveQueryIndex(quickFilterSource);
 
 	const {
 		isOpen,
@@ -75,7 +80,7 @@ export default function CheckboxFilterV2(
 		searchText,
 		existingQuery,
 		metricNamespace: useFieldApis.metricNamespace,
-		source,
+		quickFilterSource,
 		startUnixMilli: useFieldApis.startUnixMilli,
 		endUnixMilli: useFieldApis.endUnixMilli,
 		enabled: isOpen,
@@ -104,7 +109,7 @@ export default function CheckboxFilterV2(
 
 	const { onChange, onClear } = useCheckboxFilterActions({
 		filter,
-		source,
+		quickFilterSource,
 		attributeValues,
 		activeQueryIndex,
 		onFilterChange,
