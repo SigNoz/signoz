@@ -75,7 +75,7 @@ export const AnomalyAlertRoutingPolicies: Story = {
 		);
 		await waitFor(() =>
 			expect(
-				canvas.queryByTestId('anomaly-notification-channel-select'),
+				canvas.queryByTestId('threshold-notification-channel-select'),
 			).not.toBeInTheDocument(),
 		);
 	},
