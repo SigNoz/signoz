@@ -93,6 +93,11 @@ export interface DashboardList {
 	 * lands on. The dashboard is deleted when the test ends.
 	 */
 	create(fields: NewDashboardFields): Promise<string>;
+	/**
+	 * Uploads `dashboard` as a .json file on the Import JSON tab and submits it,
+	 * returning the id from the route it lands on. Deleted when the test ends.
+	 */
+	importJson(dashboard: PostableDashboard): Promise<string>;
 	/** Rows render titles in `dashboard-title-<index>`, not by id. */
 	rowTitle(name: string): Locator;
 	/** Opens the row's actions menu and confirms Delete. */
@@ -174,6 +179,28 @@ function dashboardListDriver(page: Page): DashboardList {
 		await option.click();
 	};
 
+	// Tracked from the response, before the route settles, so a failed
+	// navigation still cleans up.
+	const submitAndTrack = async (submit: Locator): Promise<string> => {
+		const [response] = await Promise.all([
+			page.waitForResponse(
+				(r) =>
+					r.request().method() === 'POST' &&
+					// The app is served under the base path, and so is its API.
+					new URL(r.url()).pathname === `${BASE_PATH}${DASHBOARDS_API}`,
+			),
+			submit.click(),
+		]);
+		expect(response.ok(), `POST ${DASHBOARDS_API} failed`).toBe(true);
+		const created = ((await response.json()) as { data: { id: string } }).data.id;
+		trackDashboard(page, created);
+
+		await page.waitForURL(DASHBOARD_ROUTE);
+		const id = DASHBOARD_ROUTE.exec(new URL(page.url()).pathname)?.[1];
+		expect(id).toBe(created);
+		return created;
+	};
+
 	const list: DashboardList = {
 		async open(name, sort = {}) {
 			const params = new URLSearchParams(
@@ -203,27 +230,21 @@ function dashboardListDriver(page: Page): DashboardList {
 				await list.tagsInput().press('Enter');
 			}
 			await expect(list.tagChips()).toHaveCount(tags.length);
-
-			const [response] = await Promise.all([
-				page.waitForResponse(
-					(r) =>
-						r.request().method() === 'POST' &&
-						// The app is served under the base path, and so is its API.
-						new URL(r.url()).pathname === `${BASE_PATH}${DASHBOARDS_API}`,
-				),
-				list.submit().click(),
+			return submitAndTrack(list.submit());
+		},
+		async importJson(dashboard) {
+			await list.openNewDashboard('Import JSON');
+			const [chooser] = await Promise.all([
+				page.waitForEvent('filechooser'),
+				list.uploadJsonButton().click(),
 			]);
-			// Tracked from the response, before the route settles, so a failed
-			// navigation still cleans up.
-			expect(response.ok(), `POST ${DASHBOARDS_API} failed`).toBe(true);
-			const created = ((await response.json()) as { data: { id: string } }).data
-				.id;
-			trackDashboard(page, created);
-
-			await page.waitForURL(DASHBOARD_ROUTE);
-			const id = DASHBOARD_ROUTE.exec(new URL(page.url()).pathname)?.[1];
-			expect(id).toBe(created);
-			return created;
+			await chooser.setFiles({
+				name: 'dashboard.json',
+				mimeType: 'application/json',
+				buffer: Buffer.from(JSON.stringify(dashboard)),
+			});
+			await expect(list.jsonEditor()).toContainText(dashboard.spec.display.name);
+			return submitAndTrack(list.importJsonSubmit());
 		},
 		rowTitle,
 		async delete(name) {

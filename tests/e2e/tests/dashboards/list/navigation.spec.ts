@@ -95,7 +95,10 @@ test.describe('Dashboards — list navigation', () => {
 	}) => {
 		const name = uniqueName('back');
 		const id = await dashboards.seed(listDashboard(name));
-		await dashboardList.open(name);
+		// Typed, not opened with the param, so Back replays the app's own write.
+		await dashboardList.open();
+		await dashboardList.runSearch(nameContains(name));
+		await expect(dashboardList.rows()).toHaveText([name]);
 		await dashboardList.openRow(name);
 		await expect(page).toHaveURL(PATH.onDashboard(id));
 

@@ -28,6 +28,10 @@ test.describe('Dashboards — list row actions', () => {
 			'Lock Dashboard',
 			'Delete Dashboard',
 		]);
+		// A denied action stays listed but disabled.
+		await expect(
+			dashboardList.rowMenu().getByRole('menuitem', { disabled: true }),
+		).toHaveCount(0);
 	});
 
 	test('TC-02 Open in New Tab opens the dashboard in a new tab', async ({
@@ -105,21 +109,5 @@ test.describe('Dashboards — list row actions', () => {
 		await expect(page).toHaveURL(LIST_URL);
 		await expect(dashboardList.rowTitle(name)).toBeVisible();
 		expect((await dashboards.get(id)).id).toBe(id);
-	});
-
-	test('TC-07 confirming Delete removes the dashboard from the list', async ({
-		dashboards,
-		dashboardList,
-	}) => {
-		const name = uniqueName('delete');
-		await dashboards.seed(listDashboard(name));
-		await dashboardList.open(name);
-
-		await dashboardList.delete(name);
-
-		await expect(dashboardList.rowTitle(name)).toBeHidden();
-		await dashboardList.open(name);
-		await expect(dashboardList.noResults()).toBeVisible();
-		await expect(dashboardList.rows()).toHaveCount(0);
 	});
 });

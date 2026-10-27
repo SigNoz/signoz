@@ -1,4 +1,10 @@
-import { expect, LIST_URL, test } from '../../../drivers/dashboard-list';
+import {
+	expect,
+	LIST_URL,
+	listDashboard,
+	test,
+	uniqueName,
+} from '../../../drivers/dashboard-list';
 
 test.describe('Dashboards — list create and import', () => {
 	test('TC-01 New dashboard offers Blank, template and Import JSON tabs', async ({
@@ -13,19 +19,24 @@ test.describe('Dashboards — list create and import', () => {
 			'From a template',
 			'Import JSON',
 		]);
-		await expect(dashboardList.nameInput()).toBeVisible();
+		await expect(dashboardList.nameInput()).toHaveValue('Sample Dashboard');
 	});
 
-	test('TC-02 the Import JSON tab shows the editor, upload and import controls', async ({
+	test('TC-02 an uploaded JSON file imports and opens the dashboard', async ({
 		dashboardList,
+		dashboards,
 	}) => {
+		const name = uniqueName('import');
 		await dashboardList.open();
 
-		await dashboardList.openNewDashboard('Import JSON');
+		const id = await dashboardList.importJson(
+			listDashboard(name, [{ key: 'team', value: 'e2e' }]),
+		);
 
-		await expect(dashboardList.jsonEditor()).toBeVisible();
-		await expect(dashboardList.uploadJsonButton()).toBeVisible();
-		await expect(dashboardList.importJsonSubmit()).toBeVisible();
+		await expect(dashboards.title()).toHaveText(name);
+		const saved = await dashboards.get(id);
+		expect(saved.spec.display.name).toBe(name);
+		expect(saved.tags).toEqual([{ key: 'team', value: 'e2e' }]);
 	});
 
 	test('TC-03 Escape dismisses the dialog and stays on the list', async ({
