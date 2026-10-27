@@ -151,10 +151,7 @@ export const MicrosoftTeams: Story = {
 	},
 };
 
-/**
- * The Google Chat form, whose webhook URL is rejected unless it is an https URL
- * on `chat.googleapis.com`.
- */
+/** The Google Chat form: the space's incoming webhook and the message text. */
 export const GoogleChat: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await selectChannelType(canvasElement, /^Google Chat$/);
