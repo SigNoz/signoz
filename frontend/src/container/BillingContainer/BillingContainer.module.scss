@@ -7,17 +7,10 @@
 		margin-bottom: var(--spacing-4);
 
 		.pageHeaderTitle {
-			font-weight: var(--label-medium-500-font-weight);
-			font-size: var(--label-medium-500-font-size);
-			line-height: 32px;
-			letter-spacing: -0.08px;
 			color: var(--l1-foreground);
 		}
 
 		.pageHeaderSubtitle {
-			font-size: var(--font-size-sm);
-			line-height: var(--line-height-20);
-			letter-spacing: -0.07px;
 			color: var(--l2-foreground);
 		}
 	}
@@ -34,7 +27,6 @@
 	.pageInfoSubtitle {
 		margin: 0;
 		font-size: var(--font-size-sm);
-		font-weight: var(--font-weight-normal);
 		line-height: var(--line-height-18);
 		letter-spacing: -0.07px;
 		color: var(--l2-foreground);
@@ -170,9 +162,6 @@
 		margin-top: var(--spacing-4);
 		font-family: var(--font-family-inter);
 		font-size: var(--font-size-sm);
-		font-style: normal;
-		font-weight: var(--font-weight-normal);
-		line-height: 22px;
 		letter-spacing: -0.07px;
 	}
 

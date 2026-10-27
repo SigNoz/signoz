@@ -81,9 +81,6 @@
 					border: 1px solid var(--l3-border);
 					background: var(--primary-background);
 					color: var(--l1-foreground);
-					font-family: Inter;
-					font-size: 12px;
-					font-style: normal;
 					font-weight: 500;
 					line-height: 10px; /* 83.333% */
 					letter-spacing: 0.12px;
@@ -107,10 +104,7 @@
 				.connection-text {
 					margin: 0px;
 					padding: 0px 0px 0px 10px;
-					font-family: Inter;
 					font-size: 14px;
-					font-style: normal;
-					font-weight: 400;
 					line-height: 22px; /* 157.143% */
 					letter-spacing: -0.07px;
 				}
@@ -214,10 +208,6 @@
 				align-items: center;
 				justify-content: center;
 				color: var(--l1-foreground);
-				text-align: center;
-				font-family: Inter;
-				font-size: 12px;
-				font-style: normal;
 				font-weight: 500;
 				line-height: 13.3px; /* 110.833% */
 			}
@@ -295,9 +285,6 @@
 
 	.ant-modal-title {
 		color: var(--l1-foreground);
-		font-family: Inter;
-		font-size: 14px;
-		font-style: normal;
 		font-weight: 500;
 		line-height: 20px; /* 142.857% */
 		letter-spacing: -0.07px;
@@ -348,10 +335,6 @@
 					background: var(--l2-background);
 					box-shadow: none;
 					color: var(--l2-foreground);
-					font-family: Inter;
-					font-size: 12px;
-					font-style: normal;
-					font-weight: 400;
 					line-height: 10px; /* 83.333% */
 					letter-spacing: 0.12px;
 					display: flex;
@@ -410,10 +393,7 @@
 			.connection-text {
 				margin: 0px;
 				padding: 0px 0px 0px 10px;
-				font-family: Inter;
 				font-size: 14px;
-				font-style: normal;
-				font-weight: 400;
 				line-height: 22px; /* 157.143% */
 				letter-spacing: -0.07px;
 			}
@@ -449,11 +429,6 @@
 
 			.last-value {
 				color: var(--l1-foreground);
-				font-family: 'Space Mono';
-				font-size: 12px;
-				font-style: normal;
-				font-weight: 400;
-				line-height: 18px; /* 150% */
 				max-width: 320px;
 			}
 		}

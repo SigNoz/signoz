@@ -3,7 +3,6 @@
 // activity reads as one quiet "what the agent did" log.
 .row {
 	width: 100%;
-	font-size: 12px;
 }
 
 .header {
@@ -25,10 +24,6 @@
 .chevron {
 	flex-shrink: 0;
 	color: inherit;
-}
-
-.label {
-	font-weight: 400;
 }
 
 .body {

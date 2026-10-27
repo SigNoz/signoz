@@ -70,12 +70,6 @@
 			}
 
 			.brand-logo-name {
-				font-family: 'Work Sans', sans-serif;
-				font-size: 14px;
-				font-style: normal;
-				font-weight: 500;
-				line-height: 18px;
-
 				color: var(--l1-foreground);
 			}
 		}
@@ -99,9 +93,7 @@
 				background: var(--l2-background);
 
 				text-align: center;
-				font-family: Inter;
 				font-size: 10px;
-				font-style: normal;
 				font-weight: 500;
 				line-height: 14px; /* 140% */
 				letter-spacing: 0.4px;
@@ -280,9 +272,7 @@
 
 				.nav-section-title {
 					color: var(--l1-foreground);
-					font-family: Inter;
 					font-size: 11px;
-					font-style: normal;
 					font-weight: 600;
 					line-height: 18px; /* 163.636% */
 					letter-spacing: 0.88px;
@@ -589,19 +579,6 @@
 	}
 
 	.sidenav-early-access-tag {
-		font-variant-numeric: lining-nums tabular-nums slashed-zero;
-		font-feature-settings:
-			'case' on,
-			'cpsp' on,
-			'dlig' on,
-			'salt' on;
-		font-family: Inter;
-		font-size: 9px;
-		font-style: normal;
-		font-weight: 300;
-		line-height: 12px;
-		letter-spacing: 0.3px;
-		text-transform: uppercase;
 		border-radius: 12px;
 	}
 
@@ -1034,19 +1011,14 @@
 	.user-settings-dropdown-label-text {
 		color: var(--l3-foreground);
 		font-family: Inter;
-		font-size: var(--uppercase-small-500-font-size);
 		font-weight: var(--uppercase-small-500-font-weight);
-		font-style: normal;
-		line-height: 18px;
 		letter-spacing: 0.88px;
-		text-transform: uppercase;
 	}
 
 	.user-settings-dropdown-label-email {
 		color: var(--l1-foreground);
 		font-family: Inter;
 		font-size: var(--font-size-xs);
-		font-style: normal;
 		font-weight: var(--font-weight-normal);
 		line-height: normal;
 		letter-spacing: 0.14px;

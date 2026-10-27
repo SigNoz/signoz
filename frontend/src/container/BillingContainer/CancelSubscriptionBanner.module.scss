@@ -22,15 +22,12 @@
 }
 
 .title {
-	font-size: var(--paragraph-base-500-font-size);
 	font-weight: var(--paragraph-base-500-font-weight);
 	line-height: var(--paragraph-base-500-line-height);
 	color: var(--l1-foreground);
 }
 
 .subtitle {
-	font-size: var(--paragraph-base-400-font-size);
-	font-weight: var(--paragraph-base-400-font-weight);
 	line-height: var(--paragraph-base-400-line-height);
 	color: var(--l2-foreground);
 	padding-left: 20px;
@@ -43,16 +40,12 @@
 }
 
 .dialogDescription {
-	font-size: var(--paragraph-base-400-font-size);
-	font-weight: var(--paragraph-base-400-font-weight);
 	line-height: var(--paragraph-base-400-line-height);
 	color: var(--l2-foreground);
 	margin: 0;
 }
 
 .dialogConfirmLabel {
-	font-size: var(--paragraph-base-400-font-size);
-	font-weight: var(--paragraph-base-400-font-weight);
 	line-height: var(--paragraph-base-400-line-height);
 	color: var(--l2-foreground);
 	margin: 0;
@@ -93,9 +86,4 @@
 
 .retryLink {
 	box-sizing: border-box;
-	text-decoration: none;
-
-	&:hover {
-		text-decoration: none;
-	}
 }

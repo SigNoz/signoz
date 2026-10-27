@@ -151,12 +151,6 @@
 						.tag-text {
 							color: var(--l2-foreground);
 							leading-trim: both;
-							text-edge: cap;
-							font-size: 10px;
-							font-style: normal;
-							font-weight: var(--font-weight-normal);
-							line-height: normal;
-							letter-spacing: -0.05px;
 						}
 					}
 
@@ -188,8 +182,6 @@
 					}
 
 					.ingestion-key-expires-in {
-						font-style: normal;
-						font-weight: 400;
 						line-height: 18px;
 
 						display: flex;
@@ -778,7 +770,6 @@
 		width: 100%;
 
 		.ingestion-key-url-label {
-			font-size: 13px;
 			font-weight: 500;
 			color: var(--bg-robin-300);
 		}
@@ -787,7 +778,6 @@
 			display: flex;
 			gap: 8px;
 			align-items: center;
-			font-size: 13px;
 			font-weight: 500;
 			color: var(--bg-robin-300);
 
@@ -804,8 +794,6 @@
 		justify-content: space-between;
 
 		.ingestion-data-region-label {
-			font-size: 13px;
-			font-weight: 500;
 			color: var(--bg-robin-300);
 		}
 
@@ -813,8 +801,6 @@
 			display: flex;
 			gap: 8px;
 			align-items: center;
-			font-size: 13px;
-			font-weight: 500;
 			color: var(--bg-robin-300);
 
 			.ingestion-data-region-value-text {
@@ -845,14 +831,10 @@
 	}
 
 	.ingestion-url-error-code {
-		font-size: 12px;
-		font-weight: 500;
 		color: var(--bg-amber-500);
 	}
 
 	.ingestion-url-error-message {
-		font-size: 12px;
-		font-weight: 400;
 		color: var(--l2-foreground);
 	}
 }

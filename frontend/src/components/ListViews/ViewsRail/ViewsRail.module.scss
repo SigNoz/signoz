@@ -68,9 +68,6 @@
 }
 
 .groupCount {
-	font-size: var(--font-size-xs);
-	font-weight: var(--font-weight-normal);
-	letter-spacing: 0;
 	color: var(--l3-foreground);
 	background: var(--l2-background);
 	border-radius: 10px;
@@ -79,7 +76,6 @@
 
 .deleteName {
 	color: var(--danger-background);
-	font-weight: var(--font-weight-medium);
 }
 
 .row {

@@ -28,16 +28,10 @@
 					gap: 8px;
 					align-items: center;
 					color: var(--l1-foreground);
-					font-family: Inter;
-					font-size: 13px;
-					font-weight: 500;
 				}
 
 				.notification-message-header-description {
 					color: var(--l2-foreground);
-					font-family: Inter;
-					font-size: 13px;
-					font-weight: 400;
 				}
 			}
 
@@ -58,8 +52,6 @@
 			border: 1px solid var(--l1-border);
 			border-radius: 4px;
 			color: var(--l2-foreground) !important;
-			font-family: Inter;
-			font-size: 13px;
 		}
 	}
 
@@ -129,9 +121,6 @@
 
 				.multiple-notifications-header-title {
 					color: var(--l1-foreground);
-					font-family: Inter;
-					font-size: 13px;
-					font-weight: 500;
 					display: flex;
 					align-items: center;
 					gap: 8px;
@@ -139,9 +128,6 @@
 
 				.multiple-notifications-header-description {
 					color: var(--l2-foreground);
-					font-family: Inter;
-					font-size: 13px;
-					font-weight: 400;
 				}
 			}
 
@@ -150,7 +136,6 @@
 			}
 
 			.multiple-notifications-select-description {
-				font-size: 10px;
 				color: var(--l2-foreground);
 				margin-top: 4px;
 				display: block;
@@ -179,16 +164,10 @@
 
 					.advanced-option-item-title {
 						color: var(--l2-foreground);
-						font-family: Inter;
-						font-size: 13px;
-						font-weight: 500;
 					}
 
 					.advanced-option-item-description {
 						color: var(--muted-foreground);
-						font-family: Inter;
-						font-size: 13px;
-						font-weight: 400;
 					}
 				}
 			}
@@ -207,8 +186,6 @@
 				flex-wrap: nowrap;
 
 				.ant-typography {
-					font-size: 13px;
-					font-weight: 400;
 					color: var(--l2-foreground);
 					white-space: nowrap;
 				}

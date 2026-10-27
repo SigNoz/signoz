@@ -21,7 +21,6 @@
 
 	&__label {
 		font-size: var(--font-size-sm);
-		font-weight: var(--font-weight-normal);
 		color: var(--foreground);
 		line-height: var(--line-height-20);
 		letter-spacing: -0.07px;
@@ -53,8 +52,6 @@
 	}
 
 	&__email-text {
-		font-size: var(--paragraph-base-400-font-size);
-		font-weight: var(--paragraph-base-400-font-weight);
 		color: var(--foreground);
 		line-height: var(--line-height-18);
 		letter-spacing: -0.07px;
@@ -86,8 +83,6 @@
 		[data-slot='badge'] {
 			padding: var(--padding-1) var(--padding-2);
 			align-items: center;
-			font-size: var(--uppercase-small-500-font-size);
-			font-weight: var(--uppercase-small-500-font-weight);
 			line-height: 100%;
 			letter-spacing: 0.44px;
 		}
@@ -157,8 +152,6 @@
 	}
 
 	&__description {
-		font-size: var(--paragraph-base-400-font-size);
-		font-weight: var(--paragraph-base-400-font-weight);
 		color: var(--l2-foreground);
 		line-height: var(--paragraph-base-400-line-height);
 		letter-spacing: -0.065px;
@@ -190,8 +183,6 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		padding: 0 var(--padding-2);
-		font-size: var(--paragraph-base-400-font-size);
-		font-weight: var(--paragraph-base-400-font-weight);
 		color: var(--l2-foreground);
 		line-height: var(--line-height-18);
 		letter-spacing: -0.07px;

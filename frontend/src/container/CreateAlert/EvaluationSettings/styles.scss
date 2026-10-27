@@ -13,7 +13,6 @@
 
 		.ant-typography {
 			color: var(--l2-foreground);
-			font-size: 13px;
 		}
 
 		.evaluate-alert-conditions-separator {
@@ -31,7 +30,6 @@
 
 			.evaluate-alert-conditions-button-left {
 				color: var(--l2-foreground);
-				font-size: 12px;
 				padding-right: 16px;
 			}
 
@@ -42,8 +40,6 @@
 				gap: 8px;
 
 				.evaluate-alert-conditions-button-right-text {
-					font-size: 12px;
-					font-weight: 500;
 					background-color: var(--l2-background);
 					padding: 1px 4px;
 				}
@@ -61,7 +57,6 @@
 
 				.ant-collapse-header-text {
 					color: var(--muted-foreground);
-					font-family: Inter;
 				}
 			}
 

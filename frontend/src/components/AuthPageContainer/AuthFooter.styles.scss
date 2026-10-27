@@ -47,7 +47,6 @@
 .auth-footer-text {
 	font-family: var(--font-family-inter, Inter, sans-serif);
 	font-size: 11px;
-	font-weight: 400;
 	line-height: 1;
 	color: var(--l2-foreground);
 	text-align: center;
@@ -57,7 +56,6 @@
 	display: flex;
 	align-items: center;
 	gap: 6px;
-	text-decoration: none;
 	transition: opacity 0.2s ease;
 
 	&:hover {

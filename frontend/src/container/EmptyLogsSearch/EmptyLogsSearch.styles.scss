@@ -43,24 +43,14 @@
 
 				&__title {
 					color: var(--l1-foreground);
-					font-size: var(--periscope-font-size-base);
-					font-weight: 500;
-					line-height: 20px;
-					letter-spacing: -0.07px;
 				}
 
 				&__subtitle {
 					color: var(--l2-foreground);
-					font-size: var(--periscope-font-size-base);
-					font-weight: 400;
-					line-height: 20px;
-					letter-spacing: -0.07px;
 				}
 
 				&__description {
-					font-size: var(--periscope-font-size-base);
 					color: var(--l2-foreground);
-					line-height: 20px;
 				}
 
 				&__description-list {

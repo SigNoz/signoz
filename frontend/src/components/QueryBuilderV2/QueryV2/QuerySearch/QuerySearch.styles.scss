@@ -208,8 +208,6 @@ $max-recents-shown: 5;
 					box-sizing: border-box;
 					overflow: hidden;
 
-					font-family: 'Space Mono', monospace !important;
-
 					background-color: var(
 						--query-builder-v2-background-color,
 						var(--l2-background)
@@ -351,7 +349,6 @@ $max-recents-shown: 5;
 	}
 
 	.cursor-position {
-		font-size: 12px;
 		color: var(--l2-foreground);
 		padding: 6px;
 		background-color: var(--l1-background);

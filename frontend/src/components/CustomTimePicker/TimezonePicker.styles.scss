@@ -21,7 +21,6 @@ $item-spacing: 8px;
 .timezone-picker {
 	width: 532px;
 	color: var(--l2-foreground);
-	font-family: $font-family;
 
 	&__search {
 		@include flex-center;

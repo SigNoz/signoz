@@ -235,10 +235,6 @@
 					color: var(--l1-foreground);
 					height: 32px;
 
-					&::placeholder {
-						font-family: 'Space Mono';
-					}
-
 					&:hover {
 						border-color: var(--l1-border);
 					}
@@ -273,7 +269,6 @@
 
 			.view-routing-policies-button {
 				color: var(--accent-primary);
-				font-size: 12px;
 				font-weight: 500;
 				display: flex;
 				align-items: center;
@@ -309,7 +304,6 @@
 
 		.evaluate-alert-conditions-button-left {
 			color: var(--l2-foreground);
-			font-size: 12px;
 			flex-shrink: 0;
 		}
 
@@ -321,7 +315,6 @@
 			flex-shrink: 0;
 
 			.evaluate-alert-conditions-button-right-text {
-				font-size: 12px;
 				font-weight: 500;
 				background-color: var(--l1-border);
 				padding: 1px 4px;
@@ -331,7 +324,6 @@
 }
 
 .highlighted-text {
-	font-weight: bold;
 	color: var(--bg-robin-400);
 	margin: 0 4px;
 }
@@ -361,7 +353,6 @@
 		.tooltip-link-text {
 			color: var(--accent-primary);
 			font-size: 11px;
-			text-decoration: none;
 
 			&:hover {
 				text-decoration: underline;

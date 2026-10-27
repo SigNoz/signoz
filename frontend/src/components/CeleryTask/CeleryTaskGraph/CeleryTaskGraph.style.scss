@@ -52,11 +52,6 @@
 			display: flex;
 			justify-content: center;
 			align-items: center;
-
-			.celery-task-graph-worker-count-text {
-				font-size: 2.5vw;
-				text-align: center;
-			}
 		}
 
 		.worker-count-header {
@@ -148,8 +143,6 @@
 
 		.configure-option-Info-text {
 			color: var(--l2-foreground);
-			font-size: 12px;
-			font-weight: 400;
 		}
 	}
 
@@ -217,7 +210,6 @@
 	}
 
 	&__label {
-		font-family: 'Inter';
 		font-size: 14px;
 		color: var(--l2-foreground);
 		line-height: 20px;

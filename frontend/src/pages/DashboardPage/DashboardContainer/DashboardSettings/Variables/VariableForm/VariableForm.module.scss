@@ -196,9 +196,6 @@
 	gap: 10px;
 	padding: 4px 8px;
 	color: var(--bg-robin-400);
-	font-family: 'Space Mono';
-	font-size: 14px;
-	line-height: 18px;
 	border-radius: 3px 0 2px;
 	background: color-mix(in srgb, var(--bg-robin-400) 8%, transparent);
 }
@@ -254,10 +251,6 @@
 .defaultValueDesc {
 	display: block;
 	color: var(--l2-foreground);
-	font-family: Inter;
-	font-size: 11px;
-	line-height: 18px;
-	letter-spacing: -0.06px;
 }
 
 /* All variable selects (Source / Attribute / Sort / Default Value) share width
@@ -304,9 +297,6 @@
 }
 
 .fromText {
-	font-family: 'Space Mono';
-	font-size: 13px;
-	font-weight: var(--font-weight-medium);
 	white-space: nowrap;
 }
 

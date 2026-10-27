@@ -32,12 +32,6 @@
 
 			.section-title {
 				color: var(--l2-foreground);
-				font-family: Inter;
-				font-size: 14px;
-				font-style: normal;
-				font-weight: 400;
-				line-height: 20px; /* 142.857% */
-				letter-spacing: -0.07px;
 			}
 		}
 
@@ -70,13 +64,6 @@
 			background: var(--bg-sakura-500);
 			color: var(--l1-foreground);
 			backdrop-filter: blur(6px);
-			font-family: 'Space Mono';
-			font-size: 12px;
-			font-style: normal;
-			font-weight: 500;
-			line-height: 16px; /* 133.333% */
-			letter-spacing: 0.48px;
-			text-transform: uppercase;
 
 			.ant-btn-icon {
 				margin-inline-end: 0px;
@@ -150,12 +137,6 @@
 					align-items: center;
 					gap: 6px;
 					color: var(--l2-foreground);
-					font-family: Inter;
-					font-size: 14px;
-					font-style: normal;
-					font-weight: 400;
-					line-height: normal;
-					letter-spacing: 0.14px;
 					padding: 14px;
 					width: 100%;
 					.ant-btn-icon {
@@ -176,20 +157,8 @@
 					width: 100%;
 					gap: 6px;
 					color: var(--l2-foreground);
-					font-family: Inter;
-					font-size: 14px;
-					font-style: normal;
-					font-weight: 400;
-					line-height: normal;
-					letter-spacing: 0.14px;
 					padding: 10px 18px 12px 14px;
 					color: var(--bg-cherry-400);
-					font-family: Inter;
-					font-size: 14px;
-					font-style: normal;
-					font-weight: 400;
-					line-height: normal;
-					letter-spacing: 0.14px;
 					.ant-btn-icon {
 						margin-inline-end: 0px;
 					}
@@ -218,11 +187,6 @@
 
 			.ant-modal-title {
 				color: var(--l1-foreground);
-				font-family: Inter;
-				font-size: 14px;
-				font-style: normal;
-				font-weight: 400;
-				line-height: 20px; /* 142.857% */
 			}
 		}
 
@@ -231,11 +195,6 @@
 
 			.typography {
 				color: var(--l1-foreground);
-				font-family: Inter;
-				font-size: 14px;
-				font-style: normal;
-				font-weight: 500;
-				line-height: 20px; /* 142.857% */
 			}
 
 			.ant-form-item {
@@ -256,11 +215,6 @@
 						display: flex;
 						align-items: center;
 						color: var(--l1-foreground);
-						font-family: Inter;
-						font-size: 12px;
-						font-style: normal;
-						font-weight: 500;
-						line-height: 24px; /* 200% */
 						display: flex;
 						width: 140px;
 						padding: 4px 8px;
@@ -279,11 +233,6 @@
 						display: flex;
 						align-items: center;
 						color: var(--l2-foreground);
-						font-family: Inter;
-						font-size: 12px;
-						font-style: normal;
-						font-weight: 500;
-						line-height: 24px; /* 200% */
 						display: flex;
 						padding: 4px 8px;
 						justify-content: center;

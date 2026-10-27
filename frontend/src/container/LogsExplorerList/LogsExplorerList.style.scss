@@ -3,7 +3,6 @@
 	display: flex;
 	flex-direction: column;
 	font-size: 14px;
-	font-weight: 400;
 	line-height: 18px;
 	letter-spacing: -0.005em;
 	text-align: left;
@@ -59,7 +58,6 @@
 
 						white-space: pre-wrap !important;
 						overflow: hidden !important;
-						text-overflow: ellipsis !important;
 					}
 
 					&:hover {
@@ -107,54 +105,6 @@
 			}
 		}
 
-		&.small {
-			tbody {
-				tr {
-					td {
-						.table-cell-content {
-							font-size: 12px !important;
-						}
-					}
-				}
-			}
-		}
-
-		&.medium {
-			tbody {
-				tr {
-					td {
-						.table-cell-content {
-							font-size: 14px !important;
-						}
-					}
-				}
-			}
-		}
-
-		&.large {
-			tbody {
-				tr {
-					td {
-						.table-cell-content {
-							font-size: 16px !important;
-						}
-					}
-				}
-			}
-		}
-
-		&.max-lines-1 {
-			tbody {
-				tr {
-					td {
-						.table-cell-content {
-							font-size: 12px !important;
-						}
-					}
-				}
-			}
-		}
-
 		&[data-max-lines-per-row='1'] {
 			tbody {
 				tr {
@@ -164,7 +114,6 @@
 							-webkit-box-orient: vertical;
 							-webkit-line-clamp: 1;
 							overflow: hidden;
-							text-overflow: ellipsis;
 						}
 					}
 				}
@@ -180,7 +129,6 @@
 							-webkit-box-orient: vertical;
 							-webkit-line-clamp: 2;
 							overflow: hidden;
-							text-overflow: ellipsis;
 						}
 					}
 				}
@@ -196,7 +144,6 @@
 							-webkit-box-orient: vertical;
 							-webkit-line-clamp: 3;
 							overflow: hidden;
-							text-overflow: ellipsis;
 						}
 					}
 				}
@@ -212,7 +159,6 @@
 							-webkit-box-orient: vertical;
 							-webkit-line-clamp: 4;
 							overflow: hidden;
-							text-overflow: ellipsis;
 						}
 					}
 				}
@@ -227,7 +173,6 @@
 						-webkit-box-orient: vertical;
 						-webkit-line-clamp: 5;
 						overflow: hidden;
-						text-overflow: ellipsis;
 					}
 				}
 			}
@@ -242,7 +187,6 @@
 							-webkit-box-orient: vertical;
 							-webkit-line-clamp: 6;
 							overflow: hidden;
-							text-overflow: ellipsis;
 						}
 					}
 				}
@@ -258,7 +202,6 @@
 							-webkit-box-orient: vertical;
 							-webkit-line-clamp: 7;
 							overflow: hidden;
-							text-overflow: ellipsis;
 						}
 					}
 				}
@@ -274,7 +217,6 @@
 							-webkit-box-orient: vertical;
 							-webkit-line-clamp: 8;
 							overflow: hidden;
-							text-overflow: ellipsis;
 						}
 					}
 				}
@@ -290,7 +232,6 @@
 							-webkit-box-orient: vertical;
 							-webkit-line-clamp: 9;
 							overflow: hidden;
-							text-overflow: ellipsis;
 						}
 					}
 				}
@@ -306,7 +247,6 @@
 							-webkit-box-orient: vertical;
 							-webkit-line-clamp: 10;
 							overflow: hidden;
-							text-overflow: ellipsis;
 						}
 					}
 				}

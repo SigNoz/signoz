@@ -107,11 +107,6 @@ $dark-theme: 'darkMode';
 		width: 80%;
 		margin: 0 auto;
 		color: var(--muted-foreground);
-		text-align: center;
-		font-size: 16px;
-		font-style: normal;
-		font-weight: 400;
-		line-height: 24px; /* 150% */
 
 		.#{$light-theme} & {
 			color: var(--foreground);
@@ -119,9 +114,6 @@ $dark-theme: 'darkMode';
 
 		&__highlight {
 			color: var(--l1-foreground);
-			font-style: normal;
-			font-weight: 700;
-			line-height: 24px;
 
 			.#{$light-theme} & {
 				color: var(--foreground);
@@ -139,7 +131,6 @@ $dark-theme: 'darkMode';
 		background-size: 300% 300%;
 		background-clip: text;
 		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
 		animation: gradientFlow 24s ease infinite;
 		margin-bottom: 18px;
 	}

@@ -11,19 +11,11 @@
 	}
 }
 
-.sectionTitleText {
-	text-transform: uppercase;
-}
-
 .fontSizeContainer {
 	display: flex;
 	flex-direction: row;
 	padding: var(--spacing-4);
 	gap: var(--spacing-4);
-}
-
-.fontSizeLabel {
-	text-transform: capitalize;
 }
 
 .checkIcon {

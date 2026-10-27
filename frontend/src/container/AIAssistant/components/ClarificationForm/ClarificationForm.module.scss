@@ -30,7 +30,6 @@
 }
 
 .headerLabel {
-	font-size: 12px;
 	font-weight: 600;
 	color: var(--l1-foreground);
 }
@@ -78,7 +77,6 @@
 }
 
 .label {
-	font-size: 12px;
 	font-weight: 500;
 	color: var(--l2-foreground);
 }
@@ -93,7 +91,6 @@
 	border: 1px solid var(--l2-border);
 	border-radius: var(--radius-2);
 	padding: 5px 8px;
-	font-size: 13px;
 	color: var(--l1-foreground);
 	outline: none;
 	transition: border-color 0.12s;

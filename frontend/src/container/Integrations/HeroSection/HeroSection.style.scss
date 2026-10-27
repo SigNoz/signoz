@@ -50,10 +50,6 @@
 
 			&__title {
 				color: var(--l1-foreground);
-				font-size: 24px;
-				font-weight: 500;
-				line-height: 20px;
-				letter-spacing: -0.12px;
 			}
 		}
 
@@ -72,7 +68,6 @@
 		&-description {
 			color: var(--l2-foreground);
 			font-size: 12px;
-			font-weight: 400;
 			line-height: 18px;
 		}
 	}

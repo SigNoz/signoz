@@ -13,7 +13,6 @@
 
 	&__label {
 		font-size: var(--font-size-xs);
-		font-weight: var(--font-weight-normal);
 		color: var(--foreground);
 		line-height: var(--line-height-20);
 		letter-spacing: -0.07px;
@@ -106,11 +105,5 @@
 		align-items: center;
 		gap: var(--spacing-1);
 		color: var(--primary);
-		font-size: var(--font-size-sm);
-		text-decoration: none;
-
-		&:hover {
-			text-decoration: underline;
-		}
 	}
 }

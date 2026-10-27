@@ -3,7 +3,6 @@
 // same slot so the row alignment doesn't shift when it completes.
 .row {
 	width: 100%;
-	font-size: 12px;
 
 	&.running {
 		opacity: 0.85;
@@ -47,7 +46,6 @@
 }
 
 .label {
-	font-weight: 400;
 	flex: 1;
 	overflow: hidden;
 	text-overflow: ellipsis;

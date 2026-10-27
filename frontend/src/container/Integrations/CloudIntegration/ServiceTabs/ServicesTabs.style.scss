@@ -80,8 +80,6 @@
 		background-color: var(--l3-background) !important;
 		border: 1px solid var(--l1-border) !important;
 		color: var(--l2-foreground) !important;
-		font-family: Inter;
-		font-size: 12px;
 	}
 
 	.ant-select-arrow {
@@ -118,9 +116,7 @@
 
 			.aws-services-list-view-sidebar-content-header {
 				color: var(--l2-foreground);
-				font-family: Inter;
 				font-size: 11px;
-				font-style: normal;
 				font-weight: 600;
 				line-height: 18px; /* 163.636% */
 				letter-spacing: 0.44px;
@@ -129,10 +125,7 @@
 
 			.aws-services-list-view-sidebar-content-item-empty-message {
 				color: var(--l2-foreground);
-				font-family: Inter;
 				font-size: 11px;
-				font-style: normal;
-				font-weight: 400;
 				line-height: 18px; /* 163.636% */
 				letter-spacing: 0.44px;
 			}
@@ -154,10 +147,6 @@
 
 				.aws-services-list-view-sidebar-content-item-title {
 					color: var(--l1-foreground);
-					font-family: Inter;
-					font-size: 13px;
-					font-style: normal;
-					font-weight: 400;
 					line-height: 18px; /* 128.571% */
 				}
 
@@ -302,9 +291,6 @@
 
 			.configure-button {
 				border-radius: 2px;
-				font-size: 12px;
-				letter-spacing: 0.12px;
-				font-weight: 500;
 				width: 116px;
 				box-shadow: none;
 				&--default {
@@ -315,7 +301,6 @@
 				&--primary {
 					background-color: var(--primary-background);
 					color: var(--l1-foreground);
-					font-weight: 500;
 					color: var(--l1-foreground);
 				}
 			}
@@ -387,10 +372,6 @@
 			gap: 10px;
 			&__title {
 				color: var(--l1-foreground);
-				font-size: 18px;
-				font-weight: 500;
-				line-height: 20px; /* 111.111% */
-				letter-spacing: -0.09px;
 			}
 			&__preview-image {
 				width: 100%;
@@ -416,11 +397,6 @@
 							background: transparent;
 							border: none;
 							color: var(--l2-foreground);
-							font-size: 12px;
-							font-weight: 600;
-							line-height: 18px; /* 150% */
-							letter-spacing: 0.6px;
-							text-transform: uppercase;
 						}
 					}
 
@@ -436,15 +412,8 @@
 							}
 
 							> td {
-								&:first-child {
-									font-weight: 500;
-								}
 								border: none;
 								color: var(--l2-foreground);
-								font-size: 14px;
-								font-weight: 400;
-								line-height: 20px; /* 142.857% */
-								letter-spacing: -0.07px;
 							}
 						}
 					}
@@ -452,11 +421,6 @@
 			}
 			&__table-heading {
 				color: var(--muted-foreground);
-				font-size: 11px;
-				font-weight: 500;
-				line-height: 18px; /* 163.636% */
-				letter-spacing: 0.88px;
-				text-transform: uppercase;
 			}
 		}
 	}

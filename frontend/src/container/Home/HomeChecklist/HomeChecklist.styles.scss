@@ -8,9 +8,7 @@
 
 		.completed-checklist-title {
 			color: var(--l2-foreground);
-			font-family: Inter;
 			font-size: 11px;
-			font-style: normal;
 			font-weight: 500;
 			line-height: 18px; /* 163.636% */
 			letter-spacing: 0.88px;
@@ -71,21 +69,12 @@
 
 			.completed-checklist-item-title {
 				color: var(--l2-foreground);
-				font-family: Inter;
-				font-size: 13px;
-				font-style: normal;
-				font-weight: 400;
 				line-height: 24px; /* 171.429% */
 				letter-spacing: -0.07px;
 			}
 
 			.completed-checklist-item-description {
 				color: var(--l2-foreground);
-				font-family: Inter;
-				font-size: 12px;
-				font-style: normal;
-				font-weight: 400;
-				line-height: 20px; /* 142.857% */
 			}
 		}
 	}
@@ -95,9 +84,7 @@
 
 		.whats-next-checklist-title {
 			color: var(--l2-foreground);
-			font-family: Inter;
 			font-size: 11px;
-			font-style: normal;
 			font-weight: 500;
 			line-height: 18px; /* 163.636% */
 			letter-spacing: 0.88px;
@@ -235,9 +222,6 @@
 
 			.whats-next-checklist-item-title {
 				color: var(--l2-foreground);
-				font-family: Inter;
-				font-size: 13px;
-				font-style: normal;
 				line-height: 24px; /* 171.429% */
 				letter-spacing: -0.07px;
 

@@ -30,8 +30,6 @@
 
 .linkPlaceholderText {
 	color: var(--l3-foreground);
-	font-size: 13px;
-	line-height: 1;
 }
 
 .linkField {
@@ -56,9 +54,6 @@
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	color: var(--l2-foreground);
-	font-family: var(--font-mono, 'Geist Mono'), monospace;
-	font-size: 13px;
-	line-height: 1;
 }
 
 .linkDivider {

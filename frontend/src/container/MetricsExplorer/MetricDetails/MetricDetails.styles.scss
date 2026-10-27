@@ -73,23 +73,10 @@
 
 			.labels-row {
 				margin-bottom: 8px;
-
-				.metric-details-grid-label {
-					font-size: 11px;
-				}
 			}
 
 			.values-row {
 				color: var(--l1-foreground);
-				font-family: 'Geist Mono';
-				font-style: normal;
-				font-weight: 600;
-				line-height: 20px; /* 142.857% */
-				letter-spacing: -0.07px;
-
-				.metric-details-grid-value {
-					font-size: 14px;
-				}
 			}
 		}
 
@@ -219,7 +206,6 @@
 							animation: fade-in-out 1.5s ease-in-out;
 						}
 						.all-attributes-contribution {
-							font-family: 'Geist Mono';
 							color: var(--l2-foreground);
 						}
 					}
@@ -342,7 +328,6 @@
 	flex-direction: column;
 	gap: 6px;
 	padding: 12px;
-	font-family: 'Geist Mono' !important;
 	max-height: 300px;
 	overflow-y: scroll;
 	.top-attributes-item {
@@ -485,8 +470,6 @@
 		.all-values-item-text {
 			flex: 1;
 			min-width: 0;
-			font-family: 'Geist Mono';
-			font-size: 12px;
 		}
 
 		.all-values-item-actions {
@@ -502,7 +485,6 @@
 
 	.all-values-empty {
 		padding: 8px;
-		text-align: center;
 	}
 }
 

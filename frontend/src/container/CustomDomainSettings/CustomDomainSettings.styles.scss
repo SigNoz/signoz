@@ -68,7 +68,6 @@
 
 	.custom-domain-card-org-name {
 		color: var(--l1-foreground);
-		font-size: var(--paragraph-base-500-font-size);
 		font-weight: var(--paragraph-base-500-font-weight);
 		line-height: var(--paragraph-base-500-line-height);
 		letter-spacing: var(--paragraph-base-500-letter-spacing);
@@ -94,12 +93,8 @@
 		font-feature-settings:
 			'dlig' on,
 			'salt' on;
-		font-family: Inter;
 		font-size: var(--paragraph-small-400-font-size);
-		font-style: normal;
-		font-weight: var(--paragraph-small-400-font-weight);
 		line-height: var(--paragraph-small-400-line-height);
-		letter-spacing: var(--paragraph-small-400-letter-spacing);
 		text-transform: uppercase;
 
 		svg {
@@ -133,9 +128,6 @@
 
 .workspace-url-dropdown-header {
 	color: var(--l2-foreground);
-	font-size: var(--paragraph-base-400-font-size);
-	line-height: var(--line-height-20);
-	letter-spacing: -0.07px;
 	padding: 0 var(--padding-3) var(--padding-2);
 }
 
@@ -152,15 +144,10 @@
 	gap: var(--spacing-4);
 	padding: 5px var(--padding-3);
 	cursor: pointer;
-	text-decoration: none;
 	transition: background 0.15s ease;
 
 	&:hover {
 		background: var(--l1-background-hover);
-
-		.workspace-url-dropdown-item-label {
-			text-decoration: underline;
-		}
 
 		.workspace-url-dropdown-item-external {
 			opacity: 1;
@@ -180,9 +167,6 @@
 }
 
 .workspace-url-dropdown-item-label {
-	font-size: var(--paragraph-base-400-font-size);
-	line-height: var(--line-height-20);
-	letter-spacing: -0.07px;
 	color: var(--l2-foreground);
 
 	.workspace-url-dropdown-item--active & {
@@ -321,7 +305,6 @@
 
 	.custom-domain-toast-message {
 		font-size: var(--paragraph-base-400-font-size);
-		line-height: var(--line-height-20);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;

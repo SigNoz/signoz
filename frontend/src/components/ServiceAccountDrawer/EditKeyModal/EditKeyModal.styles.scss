@@ -12,8 +12,6 @@
 	}
 
 	&__label {
-		font-size: 13px;
-		font-weight: var(--font-weight-normal);
 		color: var(--foreground);
 		line-height: var(--line-height-20);
 		letter-spacing: -0.07px;
@@ -45,7 +43,6 @@
 	}
 
 	&__key-text {
-		font-size: 13px;
 		font-family: monospace;
 		color: var(--foreground);
 		white-space: nowrap;
@@ -56,7 +53,6 @@
 	}
 
 	&__id-text {
-		font-size: 13px;
 		font-family: monospace;
 		color: var(--foreground);
 		white-space: nowrap;

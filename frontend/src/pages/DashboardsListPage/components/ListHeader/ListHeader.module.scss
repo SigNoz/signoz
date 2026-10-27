@@ -48,7 +48,6 @@
 
 .metaLabel {
 	color: var(--l2-foreground);
-	font-size: var(--font-size-sm);
 }
 
 .sortContent {
@@ -61,13 +60,6 @@
 
 .sortHeading {
 	color: var(--l3-foreground);
-	font-family: Inter;
-	font-size: 11px;
-	font-style: normal;
-	font-weight: var(--font-weight-semibold);
-	line-height: 18px;
-	letter-spacing: 0.88px;
-	text-transform: uppercase;
 	padding: 12px 18px 6px 14px;
 }
 

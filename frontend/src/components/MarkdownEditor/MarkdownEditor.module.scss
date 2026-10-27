@@ -117,8 +117,6 @@
 
 .codeMirror {
 	height: 100%;
-	font-family: var(--font-family-sf-mono);
-	font-size: 13px;
 
 	:global(.cm-editor) {
 		height: 100%;
@@ -160,8 +158,6 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
-	font-family: var(--font-family-sf-mono);
-	font-size: 11px;
 	color: var(--text-neutral-dark-200);
 }
 

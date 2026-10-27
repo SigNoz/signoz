@@ -107,7 +107,6 @@
 		appearance: textfield;
 		color: var(--l1-foreground);
 		font-size: var(--font-size-xs);
-		font-weight: var(--font-weight-normal);
 		line-height: 16px;
 		box-shadow: none;
 
@@ -139,9 +138,7 @@
 }
 
 .retention-error-text {
-	font-size: var(--font-size-xs);
 	color: var(--accent-amber);
-	font-style: italic;
 }
 
 .retention-modal-description {

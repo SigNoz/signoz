@@ -32,8 +32,6 @@
 }
 
 .tableCellText {
-	font-style: normal;
-	font-weight: 400;
 	letter-spacing: -0.07px;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -42,8 +40,6 @@
 	-webkit-box-orient: vertical;
 	-webkit-line-clamp: var(--tanstack-plain-body-line-clamp, 1);
 	line-clamp: var(--tanstack-plain-body-line-clamp, 1);
-	font-size: var(--tanstack-plain-cell-font-size, 14px);
-	line-height: var(--tanstack-plain-cell-line-height, 18px);
 	color: var(--tanstack-table-cell-color, var(--l2-foreground));
 	max-width: 100%;
 	word-break: break-all;
@@ -63,8 +59,6 @@
 	padding: var(--tanstack-cell-padding-top) var(--tanstack-cell-padding-right)
 		var(--tanstack-cell-padding-bottom) var(--tanstack-cell-padding-left);
 	height: var(--tanstack-table-row-height, auto);
-	font-style: normal;
-	font-weight: 400;
 	letter-spacing: -0.07px;
 	font-size: var(--tanstack-plain-cell-font-size, 14px);
 	line-height: var(--tanstack-plain-cell-line-height, 18px);
@@ -164,7 +158,6 @@
 	height: var(--tanstack-table-header-height, 36px);
 	text-align: left;
 	font-size: 14px;
-	font-style: normal;
 	font-weight: 400;
 	line-height: 18px;
 	letter-spacing: -0.07px;

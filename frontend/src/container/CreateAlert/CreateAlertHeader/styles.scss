@@ -1,6 +1,5 @@
 .alert-header {
 	background-color: var(--l1-background);
-	font-family: inherit;
 	color: var(--l1-foreground);
 	padding: 12px 16px;
 
@@ -16,14 +15,12 @@
 		align-items: center;
 		background-color: var(--l1-background);
 		height: 32px;
-		font-size: 13px;
 		color: var(--l1-foreground);
 	}
 
 	&__tab::before {
 		content: '•';
 		margin-right: 6px;
-		font-size: 13px;
 		color: var(--l3-foreground);
 	}
 

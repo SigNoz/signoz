@@ -27,8 +27,6 @@
 
 .createForm {
 	label {
-		font-size: 14px;
-		font-style: normal;
 		font-weight: 500;
 		line-height: 20px;
 
@@ -63,8 +61,6 @@
 		align-items: end;
 
 		.alert-rule-info {
-			font-size: 11px;
-			font-weight: 300;
 			color: var(--l2-foreground);
 		}
 	}
@@ -79,14 +75,10 @@
 		// radio control. Reset them back to plain option-text styling.
 		label {
 			padding: 0;
-			font-weight: 400;
-			line-height: normal;
 		}
 	}
 
 	.alert-rule-all-warning {
-		font-size: 12px;
-		font-weight: 400;
 		color: var(--l2-foreground);
 	}
 

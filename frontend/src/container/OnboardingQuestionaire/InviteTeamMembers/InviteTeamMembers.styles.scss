@@ -32,12 +32,6 @@
 
 	.table-header-cell {
 		color: var(--l1-foreground);
-		font-family: Inter;
-		font-size: 13px;
-		font-style: normal;
-		font-weight: 600;
-		line-height: 100%;
-		letter-spacing: -0.065px;
 	}
 }
 
@@ -114,11 +108,6 @@
 	background: var(--l3-background);
 	border: 1px solid var(--l1-border);
 	color: var(--l1-foreground);
-	font-family: Inter, sans-serif;
-	font-size: 13px;
-	font-weight: 400;
-	line-height: 1;
-	letter-spacing: -0.065px;
 	padding: 6px 8px;
 	box-sizing: border-box;
 
@@ -145,11 +134,6 @@
 		background: var(--l3-background) !important;
 		border: 1px solid var(--l1-border) !important;
 		color: var(--l1-foreground) !important;
-		font-family: Inter, sans-serif !important;
-		font-size: 13px !important;
-		font-weight: 400 !important;
-		line-height: 1 !important;
-		letter-spacing: -0.065px !important;
 		padding: 0 8px !important;
 		box-sizing: border-box !important;
 
@@ -159,7 +143,6 @@
 
 		.ant-select-selection-item {
 			color: var(--l1-foreground) !important;
-			line-height: 30px !important;
 		}
 	}
 
@@ -260,11 +243,6 @@
 	border: 1px dashed var(--l1-border) !important;
 	background: transparent !important;
 	color: var(--l2-foreground);
-	font-family: Inter, sans-serif;
-	font-size: 11px;
-	font-weight: 500;
-	line-height: 1;
-	letter-spacing: 0;
 	height: auto !important;
 	padding: 6px 8px;
 	transition: all 0.2s;
@@ -362,9 +340,6 @@
 
 		.partially-sent-invites-message {
 			color: var(--bg-warning-500);
-
-			font-size: 12px;
-			font-weight: 400;
 
 			display: flex;
 			align-items: center;

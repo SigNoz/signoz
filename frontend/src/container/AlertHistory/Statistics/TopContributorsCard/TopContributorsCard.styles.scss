@@ -87,7 +87,6 @@
 		border-radius: 6px;
 
 		&__icon {
-			font-family: Inter;
 			font-size: 20px;
 			line-height: 26px;
 			letter-spacing: -0.103px;
@@ -97,7 +96,6 @@
 			line-height: 18px;
 			.bold-text {
 				color: var(--l1-foreground);
-				font-weight: 500;
 			}
 		}
 		&__button-wrapper {
@@ -108,9 +106,6 @@
 				background: var(--l3-background);
 				border-width: 0;
 				color: var(--l1-foreground);
-				line-height: 24px;
-				font-size: 12px;
-				font-weight: 500;
 				display: flex;
 				align-items: center;
 			}

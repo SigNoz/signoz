@@ -63,7 +63,6 @@
 	border-style: var(--input-border-style, solid);
 	border-color: var(--input-border-color, var(--border));
 	border-radius: var(--input-border-radius, calc(var(--radius) - 2px));
-	font-size: var(--input-font-size, var(--periscope-font-size-base, 13px));
 	box-shadow: var(--input-box-shadow, none);
 	color: inherit;
 }

@@ -62,7 +62,6 @@
 		.ant-table {
 			.ant-table-thead > tr > th {
 				padding: 12px;
-				font-weight: 500;
 				font-size: 12px;
 				line-height: 18px;
 
@@ -70,10 +69,7 @@
 				border-bottom: none;
 
 				color: var(--l2-foreground);
-				font-family: Inter;
 				font-size: 11px;
-				font-style: normal;
-				font-weight: 600;
 				line-height: 18px; /* 163.636% */
 				letter-spacing: 0.44px;
 				text-transform: uppercase;
@@ -105,7 +101,6 @@
 
 			.ant-table-cell {
 				padding: 12px;
-				font-size: 13px;
 				line-height: 20px;
 				color: var(--l1-foreground);
 				background: var(--l1-background);
@@ -124,9 +119,7 @@
 			.metric-name-column-value {
 				color: var(--l1-foreground);
 				font-family: 'Geist Mono';
-				font-style: normal;
 				font-weight: 600;
-				line-height: 20px; /* 142.857% */
 				letter-spacing: -0.07px;
 			}
 
@@ -135,8 +128,6 @@
 					color: var(--bg-forest-500);
 					padding: 4px 8px;
 					border-radius: 4px;
-					font-size: 12px;
-					font-weight: 500;
 				}
 			}
 
@@ -155,12 +146,6 @@
 
 			.ant-table-cell:nth-child(n + 3) {
 				padding-right: 24px;
-			}
-			.column-header-right {
-				text-align: right;
-			}
-			.column-header-left {
-				text-align: left;
 			}
 			.ant-table-tbody > tr > td {
 				border-bottom: none;
@@ -231,8 +216,6 @@
 	align-items: center;
 	justify-content: flex-start;
 	gap: 4px;
-	text-transform: uppercase;
-	font-size: 12px;
 	padding: 5px 10px;
 	align-self: flex-end;
 }

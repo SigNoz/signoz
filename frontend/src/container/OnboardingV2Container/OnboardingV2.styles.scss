@@ -41,7 +41,6 @@
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			font-weight: bold;
 		}
 
 		&:not(:last-child):after {
@@ -63,10 +62,8 @@
 	}
 
 	&__heading {
-		font-size: 24px;
 		margin-bottom: 12px;
 		color: var(--l1-foreground);
-		font-weight: 600;
 	}
 
 	&__steps {
@@ -81,10 +78,8 @@
 	}
 
 	&__description {
-		font-size: 16px;
 		color: var(--l2-foreground);
 		margin-bottom: 48px !important;
-		line-height: 1.5;
 	}
 
 	&__search {
@@ -105,10 +100,6 @@
 		padding: 10px 20px;
 		background-color: var(--l3-background);
 		color: var(--l2-foreground);
-		font-size: 16px;
-		font-style: normal;
-		font-weight: 400;
-		line-height: 22px; /* 137.5% */
 		transition: all 0.3s ease;
 		border-radius: 4px;
 		background: var(--l2-background);
@@ -142,13 +133,6 @@
 			--greyscale-vanilla-opacity-40060,
 			color-mix(in srgb, var(--border) 60%, transparent)
 		);
-		font-family: Inter;
-		font-size: 13px;
-		font-style: normal;
-		font-weight: 500;
-		line-height: 22px; /* 169.231% */
-		letter-spacing: 0.52px;
-		text-transform: uppercase;
 		display: flex;
 	}
 
@@ -177,21 +161,12 @@
 			padding-left: 30px;
 		}
 
-		&__heading {
-			font-size: 20px;
-		}
-
 		&__description {
 			color: var(--l2-foreground);
-			font-size: 16px;
-			font-style: normal;
-			font-weight: 400;
-			line-height: 24px; /* 150% */
 		}
 
 		&__radio-custom {
 			padding: 8px 16px;
-			font-size: 14px;
 		}
 	}
 }
@@ -405,7 +380,6 @@
 
 .onboarding-text {
 	margin-bottom: 0;
-	font-size: 14px;
 	color: var(--l2-foreground);
 }
 
@@ -568,11 +542,6 @@
 		display: block;
 		margin-top: 8px;
 		color: var(--l2-foreground);
-		font-family: Inter;
-		font-size: 13px;
-		font-style: normal;
-		font-weight: 400;
-		line-height: 22px;
 	}
 
 	.question-help-link {
@@ -826,12 +795,6 @@
 
 					.ingestion-endpoint-section-text {
 						margin-bottom: 16px;
-
-						font-family: Inter;
-						font-size: 12px;
-						font-style: normal;
-						font-weight: 500;
-						line-height: 24px; /* 150% */
 					}
 				}
 
@@ -851,11 +814,6 @@
 
 					.ant-typography {
 						color: var(--l1-foreground);
-						font-family: 'Geist Mono';
-						font-size: 13px;
-						font-style: normal;
-						font-weight: 300;
-						line-height: 24px; /* 171.429% */
 					}
 				}
 			}
@@ -1039,9 +997,7 @@
 		background: color-mix(in srgb, var(--bg-sienna-500) 10%, transparent);
 
 		color: var(--bg-sienna-400);
-		font-size: 13px;
 		padding: 2px;
-		line-height: 20px; /* 142.857% */
 	}
 
 	.request-data-source-btn {
@@ -1061,8 +1017,6 @@
 
 		.ant-typography {
 			margin-top: 0;
-			font-size: 11px !important;
-			font-weight: 400 !important;
 			color: var(--l2-foreground);
 		}
 	}
@@ -1113,8 +1067,6 @@
 
 			.loading-text {
 				color: var(--l2-foreground);
-				font-size: 11px;
-				font-weight: 300;
 			}
 		}
 

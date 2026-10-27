@@ -15,7 +15,6 @@
 .noDashboard {
 	composes: bodyText from '../states.module.scss';
 	color: var(--l1-foreground);
-	font-weight: var(--font-weight-medium);
 }
 
 .info {

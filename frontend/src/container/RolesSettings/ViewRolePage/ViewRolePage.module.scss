@@ -30,10 +30,6 @@
 }
 
 .unsavedText {
-	font-family: Inter;
-	font-size: var(--periscope-font-size-base);
-	font-weight: var(--font-weight-normal);
-	line-height: var(--line-height-20);
 	color: var(--primary);
 }
 
@@ -64,7 +60,6 @@
 }
 
 .formLabel {
-	font-family: Inter;
 	font-size: 12px;
 	font-weight: var(--font-weight-medium);
 	line-height: var(--line-height-20);
@@ -110,8 +105,6 @@
 }
 
 .permissionTitle {
-	letter-spacing: 0.48px;
-	text-transform: uppercase;
 	position: relative;
 }
 

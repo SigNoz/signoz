@@ -9,7 +9,6 @@
 .members-table {
 	.ant-table {
 		background: transparent;
-		font-size: 13px;
 	}
 
 	.ant-table-container {
@@ -22,7 +21,6 @@
 		> tr > td {
 			background: var(--l1-background);
 			font-size: var(--paragraph-small-600-font-size);
-			font-weight: var(--paragraph-small-600-font-weight);
 			line-height: var(--paragraph-small-600-line-height);
 			letter-spacing: 0.44px;
 			text-transform: uppercase;
@@ -95,7 +93,6 @@
 	overflow: hidden;
 
 	.member-name {
-		font-size: var(--paragraph-base-500-font-size);
 		font-weight: var(--paragraph-base-500-font-weight);
 		color: var(--foreground);
 		line-height: var(--paragraph-base-500-line-height);
@@ -105,8 +102,6 @@
 	}
 
 	.member-email {
-		font-size: var(--paragraph-base-400-font-size);
-		font-weight: var(--paragraph-base-400-font-weight);
 		color: var(--l3-foreground-hover);
 		line-height: var(--paragraph-base-400-line-height);
 		letter-spacing: -0.07px;
@@ -119,8 +114,6 @@
 }
 
 .member-joined-date {
-	font-size: var(--paragraph-base-400-font-size);
-	font-weight: var(--paragraph-base-400-font-weight);
 	color: var(--foreground);
 	line-height: var(--line-height-18);
 	letter-spacing: -0.07px;
@@ -149,8 +142,6 @@
 	}
 
 	&__text {
-		font-size: var(--paragraph-base-400-font-size);
-		font-weight: var(--paragraph-base-400-font-weight);
 		color: var(--foreground);
 		margin: 0;
 		line-height: var(--paragraph-base-400-line-height);

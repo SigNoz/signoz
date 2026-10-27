@@ -30,7 +30,6 @@
 	// Font spec: SF Mono, 12px, 400, 18px line-height, -0.5% letter-spacing
 	font-family: 'SF Mono', 'Geist Mono', 'Fira Code', monospace;
 	font-size: var(--data-viewer-font-size, 12px);
-	font-weight: 400;
 	line-height: 18px;
 	letter-spacing: -0.06px;
 
@@ -52,14 +51,6 @@
 	}
 
 	// Force font on all tree elements
-	li,
-	span,
-	label {
-		font-family: inherit !important;
-		font-size: inherit !important;
-		line-height: inherit !important;
-		letter-spacing: inherit !important;
-	}
 
 	// Fix react-json-tree text-indent wrapping
 	li {

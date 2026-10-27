@@ -13,8 +13,6 @@
 		color: var(--l2-foreground);
 		font-family: 'Geist Mono';
 		font-size: 14px;
-		font-style: normal;
-		font-weight: 400;
 		line-height: 20px;
 		letter-spacing: 0.25px;
 
@@ -90,9 +88,7 @@
 
 	.overview-text {
 		color: var(--l1-foreground);
-		font-family: Inter;
 		font-size: 16px;
-		font-style: normal;
 		font-weight: 500;
 		line-height: 24px;
 		letter-spacing: -0.08px;
@@ -101,10 +97,7 @@
 
 	.overview-subtext {
 		color: var(--l2-foreground);
-		font-family: Inter;
 		font-size: 14px;
-		font-style: normal;
-		font-weight: 400;
 		line-height: 20px;
 		letter-spacing: -0.07px;
 		margin: 0;
@@ -132,9 +125,6 @@
 
 			.card-title {
 				color: var(--l1-foreground);
-				font-family: Inter;
-				font-size: 13px;
-				font-style: normal;
 				font-weight: 600;
 				line-height: 22px;
 				letter-spacing: 0.52px;
@@ -144,10 +134,7 @@
 
 			.card-info-text {
 				color: var(--l2-foreground);
-				font-family: Inter;
 				font-size: 14px;
-				font-style: normal;
-				font-weight: 400;
 				line-height: 20px;
 				letter-spacing: -0.07px;
 				margin: 0;
@@ -182,13 +169,7 @@
 
 				.card-title {
 					color: var(--l2-foreground);
-					font-family: Inter;
-					font-size: 13px;
-					font-style: normal;
 					font-weight: 500;
-					line-height: 22px;
-					letter-spacing: 0.52px;
-					text-transform: uppercase;
 				}
 			}
 		}
@@ -217,12 +198,6 @@
 
 				> p {
 					color: var(--l2-foreground);
-					font-family: Inter;
-					font-size: 13px;
-					font-style: normal;
-					font-weight: 500; /* 169.231% */
-					letter-spacing: 0.52px;
-					text-transform: uppercase;
 					margin: 0;
 				}
 
@@ -233,13 +208,6 @@
 
 					> p {
 						color: var(--l3-foreground);
-						font-family: Inter;
-						font-size: 12px;
-						font-style: normal;
-						font-weight: 600;
-						line-height: 22px;
-						letter-spacing: 0.48px;
-						text-transform: uppercase;
 					}
 				}
 			}

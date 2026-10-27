@@ -12,9 +12,6 @@
 
 // Horizontal alignment inherits into the rendered body, which deliberately leaves
 // `text-align` alone so the panel can own it.
-.alignLeft {
-	text-align: left;
-}
 
 .alignCenter {
 	text-align: center;
