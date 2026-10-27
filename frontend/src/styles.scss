@@ -16,11 +16,13 @@ html,
 body {
 	height: 100%;
 	overflow: hidden;
-	font-family: 'Inter', sans-serif;
-	font-optical-sizing: auto;
+	font-family: var(--periscope-font-family-sans);
+	font-optical-sizing: none;
 	font-weight: 400;
 	font-style: normal;
 	font-synthesis: none;
+	font-kerning: normal;
+	text-rendering: optimizeLegibility;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 	background: var(--l1-background) !important;
@@ -37,6 +39,7 @@ body {
 	padding: 0;
 	margin: 0;
 	box-sizing: border-box;
+	font-feature-settings: 'ss01' 1;
 }
 
 .translate-safe {
