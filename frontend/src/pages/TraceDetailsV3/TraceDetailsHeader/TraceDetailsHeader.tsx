@@ -100,7 +100,7 @@ function TraceDetailsHeader({
 		if (hasInAppHistory()) {
 			history.goBack();
 		} else if (!isOverview) {
-			void setTab(TraceDetailsTab.Overview);
+			history.push(ROUTES.AI_OBSERVABILITY_EXPLORER);
 		} else {
 			history.push(ROUTES.TRACES_EXPLORER);
 		}
