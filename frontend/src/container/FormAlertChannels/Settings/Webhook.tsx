@@ -11,6 +11,8 @@ import { webhookAuthOf } from '../../CreateAlertChannels/utils';
 import FormCard from '../FormCard';
 import FormField from '../FormField';
 
+import styles from './Webhook.module.scss';
+
 function WebhookSettings(): JSX.Element {
 	const { t } = useTranslation('channels');
 	const {
@@ -44,27 +46,29 @@ function WebhookSettings(): JSX.Element {
 						control={control}
 						name="webhookAuth"
 						render={({ field }): JSX.Element => (
-							<RadioGroup
-								color="primary"
-								aria-label={t('field_webhook_auth')}
-								value={auth}
-								onChange={field.onChange}
-								testId="webhook-auth-radio"
-								items={[
-									{
-										value: WebhookAuth.none,
-										label: t('option_webhook_auth_none'),
-									},
-									{
-										value: WebhookAuth.basic,
-										label: t('option_webhook_auth_basic'),
-									},
-									{
-										value: WebhookAuth.bearer,
-										label: t('option_webhook_auth_bearer'),
-									},
-								]}
-							/>
+							<div className={styles.auth}>
+								<RadioGroup
+									color="primary"
+									aria-label={t('field_webhook_auth')}
+									value={auth}
+									onChange={field.onChange}
+									testId="webhook-auth-radio"
+									items={[
+										{
+											value: WebhookAuth.none,
+											label: t('option_webhook_auth_none'),
+										},
+										{
+											value: WebhookAuth.basic,
+											label: t('option_webhook_auth_basic'),
+										},
+										{
+											value: WebhookAuth.bearer,
+											label: t('option_webhook_auth_bearer'),
+										},
+									]}
+								/>
+							</div>
 						)}
 					/>
 				</FormField>
