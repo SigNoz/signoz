@@ -45,6 +45,7 @@ import {
 	savedViewsListResponse,
 	type SavedViewSource,
 	unreadableViewId,
+	withLongName,
 } from './__story_mockdata__/savedViews';
 
 import SavedViewsHeader from '../SavedViewsHeader';
@@ -87,6 +88,12 @@ const controls = {
 		value: 4,
 		max: SAVED_VIEWS_MAX,
 	}),
+	longNames: toggleControl('Long names', {
+		group: LIST,
+		description:
+			'Lengthens every view name past the sidebar width, so rows and the open view name truncate.',
+		value: false,
+	}),
 };
 
 type SavedViewsValues = MockControlValues<typeof controls>;
@@ -107,7 +114,7 @@ const definition = defineStoryMocks({
 		values: SavedViewsValues & AuthzArgs,
 		response,
 	): RequestHandler[] => {
-		const { source, openView, createdByMe, createdByOthers } = values;
+		const { source, openView, createdByMe, createdByOthers, longNames } = values;
 
 		// What the panel writes stays in this handler set until a control changes.
 		const created: SavedviewtypesSavedViewDTO[] = [];
@@ -118,8 +125,14 @@ const definition = defineStoryMocks({
 			view: SavedviewtypesSavedViewDTO,
 		): SavedviewtypesSavedViewDTO => ({ ...view, ...updated.get(view.id) });
 
+		const named = (
+			view: SavedviewtypesSavedViewDTO,
+		): SavedviewtypesSavedViewDTO => (longNames ? withLongName(view) : view);
+
 		const findView = (id: string): SavedviewtypesSavedViewDTO | undefined => {
-			const view = created.find((item) => item.id === id) ?? savedViewById(id);
+			const stored = savedViewById(id);
+			const view =
+				created.find((item) => item.id === id) ?? (stored && named(stored));
 
 			return view && !deleted.has(id) ? current(view) : undefined;
 		};
@@ -143,7 +156,7 @@ const definition = defineStoryMocks({
 
 					return {
 						...list,
-						data: [...(list.data ?? []), ...created]
+						data: [...(list.data ?? []).map(named), ...created]
 							.filter((view) => !deleted.has(view.id))
 							.map(current),
 					};
@@ -274,7 +287,9 @@ const isPending = (element: HTMLElement): boolean =>
 	element.hasAttribute('data-loading');
 
 const isDisabled = (element: HTMLElement): boolean =>
-	element.hasAttribute('disabled') || element.hasAttribute('data-disabled');
+	element.hasAttribute('disabled') ||
+	element.hasAttribute('data-disabled') ||
+	element.getAttribute('aria-disabled') === 'true';
 
 export const expectDisabled = (
 	find: FindElement,
@@ -302,6 +317,31 @@ export const rowName =
 	(): HTMLElement =>
 		within(row).getByTestId('saved-views-row-name');
 
+/** Waits for the row's read check, since the card only opens on a readable view. */
+const hoverRow = async (row: HTMLElement): Promise<void> => {
+	await expectDisabled(rowName(row), false);
+	await userEvent.hover(row);
+	await screen.findByTestId('saved-view-hover-card', undefined, UNTIL_LOADED);
+};
+
+const searchViews = async (
+	canvasElement: HTMLElement,
+	text: string,
+): Promise<void> => {
+	const search = await within(canvasElement).findByTestId(
+		'saved-views-search',
+		undefined,
+		UNTIL_LOADED,
+	);
+
+	await userEvent.type(search, text);
+};
+
+const clickWhenEnabled = async (find: FindElement): Promise<void> => {
+	await expectDisabled(find, false);
+	await userEvent.click(find());
+};
+
 export const openRowMenu = async (row: HTMLElement): Promise<void> => {
 	await userEvent.click(within(row).getByTestId('saved-views-row-menu'));
 	await screen.findByRole('menu', undefined, UNTIL_LOADED);
@@ -327,3 +367,53 @@ export const openSaveChangesMenu = async (
 
 export const saveChangesItem = (key: 'save-as-new' | 'update'): FindElement =>
 	byTestId(`saved-views-save-changes-item-${key}`);
+
+type PlayContext = { canvasElement: HTMLElement };
+
+export const hoverFirstRow = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	const [row] = await findRows(canvasElement);
+
+	await hoverRow(row);
+};
+
+export const searchWithNoResults = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	await searchViews(canvasElement, 'nothing like this');
+	await screen.findByTestId('saved-views-list-no-results');
+};
+
+export const openCreateModal = async (): Promise<void> => {
+	await clickWhenEnabled(byTestId('saved-views-create'));
+	await screen.findByTestId('save-view-modal');
+};
+
+export const openEditDetailsModal = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	const [row] = await findRows(canvasElement);
+
+	await openRowMenu(row);
+	await clickWhenEnabled(rowMenuItem('editDetails'));
+	await screen.findByTestId('save-view-modal');
+};
+
+export const openSaveAsNewModal = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	await openSaveChangesMenu(canvasElement);
+	await clickWhenEnabled(saveChangesItem('save-as-new'));
+	await screen.findByTestId('save-view-modal');
+};
+
+export const openDeleteDialog = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	const [row] = await findRows(canvasElement);
+
+	await openRowMenu(row);
+	await clickWhenEnabled(rowMenuItem('delete'));
+	await screen.findByTestId('delete-saved-view-confirm');
+};
