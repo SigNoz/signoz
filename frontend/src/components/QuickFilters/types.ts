@@ -2,7 +2,6 @@ import { ReactNode } from 'react';
 import { QuickfiltertypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
 
 export enum FiltersType {
 	SLIDER = 'SLIDER',
@@ -31,7 +30,6 @@ export interface IQuickFiltersConfig {
 	attributeKey: BaseAutocompleteData;
 	aggregateOperator?: string;
 	aggregateAttribute?: string;
-	dataSource?: DataSource;
 	customRendererForValue?: (value: string) => JSX.Element;
 	defaultOpen: boolean;
 }
