@@ -11,6 +11,7 @@ import {
 	QuickFiltersSource,
 } from '../../../types';
 import CheckboxFilterV2 from './CheckboxFilterV2';
+import { DEFAULT_VISIBLE_ITEMS_COUNT } from '../constants';
 
 export const DEFAULT_FILTER: IQuickFiltersConfig = {
 	type: FiltersType.CHECKBOX,
@@ -29,6 +30,13 @@ export const DEFAULT_USE_FIELD_APIS: QuickFilterCheckboxUseFieldApis = {
 	endUnixMilli: 1700003600000,
 	existingQuery: null,
 };
+
+// Enough extra values to push a section past the count that shows its search box.
+// Named to sort last, so a test's own values stay within the first page.
+export const EXTRA_VALUES = Array.from(
+	{ length: DEFAULT_VISIBLE_ITEMS_COUNT },
+	(_, index) => `zz-extra-value-${index + 1}`,
+);
 
 export function mockFieldsValuesAPI(response: {
 	relatedValues?: (string | null)[];

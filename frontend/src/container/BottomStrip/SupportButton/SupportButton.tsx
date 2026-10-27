@@ -1,8 +1,15 @@
 import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
+import logEvent from 'api/common/logEvent';
 import AddCreditCardModal from 'components/AddCreditCardModal/AddCreditCardModal';
 import { ChatSupportState, useChatSupport } from 'hooks/useChatSupport';
 import { MessageSquareText } from '@signozhq/icons';
+
+import {
+	BottomStripEventKeys,
+	BottomStripEvents,
+	BottomStripSupportType,
+} from '../events';
 
 function SupportButton(): JSX.Element | null {
 	const chatSupport = useChatSupport();
@@ -14,7 +21,13 @@ function SupportButton(): JSX.Element | null {
 	}
 
 	const handleClick = (): void => {
-		if (chatSupport === ChatSupportState.NeedsCard) {
+		const needsCard = chatSupport === ChatSupportState.NeedsCard;
+		void logEvent(BottomStripEvents.SupportClicked, {
+			[BottomStripEventKeys.Type]: needsCard
+				? BottomStripSupportType.AddCard
+				: BottomStripSupportType.Pylon,
+		});
+		if (needsCard) {
 			setIsAddCreditCardModalOpen(true);
 			return;
 		}
