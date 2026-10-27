@@ -86,6 +86,10 @@ func (migration *migrateRulesV1ToV2Alpha1) Up(ctx context.Context, _ *bun.DB) er
 	})
 }
 
+func (migration *migrateRulesV1ToV2Alpha1) Down(context.Context, *bun.DB) error {
+	return nil
+}
+
 func (migration *migrateRulesV1ToV2Alpha1) convertOrg(ctx context.Context, orgID string) error {
 	db := migration.sqlstore.BunDBCtx(ctx)
 
@@ -582,8 +586,4 @@ func (d *textDuration) UnmarshalJSON(data []byte) error {
 	default:
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid duration %s", data)
 	}
-}
-
-func (migration *migrateRulesV1ToV2Alpha1) Down(context.Context, *bun.DB) error {
-	return nil
 }
