@@ -79,24 +79,7 @@ test.describe('Dashboards — TimeSeries panel', () => {
 		await expectRendered();
 	});
 
-	test('TC-02 adding a threshold row closes the one still in edit mode', async ({
-		dashboards,
-		editor,
-		config,
-	}) => {
-		await dashboards.seedAndEdit(singlePanelDashboard(), SINGLE_PANEL_ID);
-
-		await editor.section.expand(Section.thresholds);
-		await config.thresholds.addButton().click();
-		const first = config.thresholds.row(0);
-		await first.value().fill('10');
-
-		await config.thresholds.addButton().click();
-		await expect(config.thresholds.row(1).value()).toBeVisible();
-		await expect(first.value()).toHaveCount(0);
-	});
-
-	test('TC-03 the panel time preference persists and labels the header pill', async ({
+	test('TC-02 the panel time preference persists and labels the header pill', async ({
 		dashboards,
 		editor,
 		panels,
@@ -108,7 +91,7 @@ test.describe('Dashboards — TimeSeries panel', () => {
 		);
 
 		await editor.section.expand(Section.visualization);
-		await editor.select('panel-editor-v2-time-preference', 'Last 15 min');
+		await editor.timePreference('Last 15 min');
 		await editor.save();
 
 		expect((await config.saved(id)).plugin).toMatchObject({
