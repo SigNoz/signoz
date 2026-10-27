@@ -97,7 +97,9 @@ export const EditDowntime: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await clickFirstRowAction(canvasElement, 'edit');
 		await screen.findByText(/edit planned downtime/i);
-		await screen.findByText(/^Postgres connections/);
+		await within(await screen.findByRole('dialog')).findByText(
+			/^Postgres connections/,
+		);
 	},
 };
 
