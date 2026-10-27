@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"maps"
 	"slices"
 	"time"
 
@@ -114,40 +115,37 @@ func (migration *migrateRulesV1ToV2Alpha1) convertOrg(ctx context.Context, orgID
 
 	var migrated, disabled, skipped, undecodable, unmigratable int
 	for _, storedRule := range allRules {
-		rule := new(postableRule)
-		if err := json.Unmarshal([]byte(storedRule.Data), rule); err != nil {
+		storedRuleData := new(postableRule)
+		if err := json.Unmarshal([]byte(storedRule.Data), storedRuleData); err != nil {
 			undecodable++
 			migration.logger.WarnContext(ctx, "failed to decode stored rule", slog.String("org_id", orgID), slog.String("rule_id", storedRule.ID), errors.Attr(err))
 			continue
 		}
-		if rule.SchemaVersion == schemaVersionV2Alpha1 {
+		if storedRuleData.SchemaVersion == schemaVersionV2Alpha1 {
 			skipped++
 			continue
 		}
 
-		route := routePolicyNameToRoute[storedRule.ID]
-		if err := validateRoute(route, rule.PreferredChannels); err != nil {
+		storedRoute := routePolicyNameToRoute[storedRule.ID]
+		if err := validateRoute(storedRoute, storedRuleData.PreferredChannels); err != nil {
 			unmigratable++
 			migration.logger.WarnContext(ctx, "leaving rule at v1", slog.String("org_id", orgID), slog.String("rule_id", storedRule.ID), errors.Attr(err))
 			continue
-		}
-		expression := ""
-		if route != nil {
-			expression = route.Expression
 		}
 
-		if err := convertRule(storedRule.ID, rule, route); err != nil {
+		convertedRule, convertedRoute, err := convertRule(storedRule.ID, storedRuleData, storedRoute)
+		if err != nil {
 			unmigratable++
 			migration.logger.WarnContext(ctx, "leaving rule at v1", slog.String("org_id", orgID), slog.String("rule_id", storedRule.ID), errors.Attr(err))
 			continue
 		}
-		if reason := rule.validateThreshold(); reason != nil {
-			rule.Disabled = json.RawMessage("true")
+		if reason := convertedRule.validateThreshold(); reason != nil {
+			convertedRule.Disabled = json.RawMessage("true")
 			disabled++
 			migration.logger.WarnContext(ctx, "migrating rule as disabled, its threshold fails the write path", slog.String("org_id", orgID), slog.String("rule_id", storedRule.ID), errors.Attr(reason))
 		}
 
-		data, err := marshalUnescaped(rule)
+		data, err := marshalUnescaped(convertedRule)
 		if err != nil {
 			return err
 		}
@@ -155,8 +153,8 @@ func (migration *migrateRulesV1ToV2Alpha1) convertOrg(ctx context.Context, orgID
 		if _, err := db.NewUpdate().Model(storedRule).Column("data").WherePK().Exec(ctx); err != nil {
 			return err
 		}
-		if route != nil && route.Expression != expression {
-			if _, err := db.NewUpdate().Model(route).Column("expression").WherePK().Exec(ctx); err != nil {
+		if convertedRoute != nil && convertedRoute.Expression != storedRoute.Expression {
+			if _, err := db.NewUpdate().Model(convertedRoute).Column("expression").WherePK().Exec(ctx); err != nil {
 				return err
 			}
 		}
@@ -167,21 +165,23 @@ func (migration *migrateRulesV1ToV2Alpha1) convertOrg(ctx context.Context, orgID
 	return nil
 }
 
-// convertRule rewrites rule in place, in the order the v1 decode derived the
-// same values. Version and source are left as stored. A nil route is a rule
-// that never had channels.
-func convertRule(ruleID string, rule *postableRule, route *routePolicyRow) error {
-	if rule.RuleCondition == nil || rule.RuleCondition.CompositeQuery == nil {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition or condition.compositeQuery is null")
+// convertRule returns a v2alpha1 copy of storedRuleData, derived in the order
+// the v1 decode derived the same values, with the rule's route_policy row as it
+// must be stored alongside. Version and source are left as stored. A nil
+// storedRoute is a rule that never had channels.
+func convertRule(ruleID string, storedRuleData *postableRule, storedRoute *routePolicyRow) (*postableRule, *routePolicyRow, error) {
+	if storedRuleData.RuleCondition == nil || storedRuleData.RuleCondition.CompositeQuery == nil {
+		return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "condition or condition.compositeQuery is null")
 	}
 	channels := []string{}
-	if route != nil {
-		channels = route.Channels
+	if storedRoute != nil {
+		channels = storedRoute.Channels
 	}
 
+	rule := storedRuleData.clone()
 	rule.fillDurationDefaults()
 	if err := rule.validateDurations(); err != nil {
-		return err
+		return nil, nil, err
 	}
 	rule.deriveAlertType()
 	rule.deriveQueryType()
@@ -189,14 +189,14 @@ func convertRule(ruleID string, rule *postableRule, route *routePolicyRow) error
 	rule.disableUnmetMinPoints()
 	rule.deriveRuleType()
 	rule.negateAnomalyBelowTarget()
-	rule.repairEmptySeverity(ruleID, route)
+	convertedRoute := rule.repairEmptySeverity(ruleID, storedRoute)
 	rule.relocateThreshold(channels)
 	rule.relocateEvaluation()
 	rule.synthesizeNotificationSettings()
 	rule.SchemaVersion = schemaVersionV2Alpha1
 	rule.clearV1Fields()
 
-	return nil
+	return rule, convertedRoute, nil
 }
 
 // validateRoute checks the rule's route_policy row, named after the rule. A
@@ -306,6 +306,22 @@ type renotify struct {
 	Enabled          bool         `json:"enabled"`
 	ReNotifyInterval textDuration `json:"interval,omitzero"`
 	AlertStates      []string     `json:"alertStates,omitzero"`
+}
+
+// clone copies what the conversion writes to: the rule, its condition, the
+// composite query and the labels. Raw keys share their bytes.
+func (rule *postableRule) clone() *postableRule {
+	cloned := *rule
+	if rule.RuleCondition != nil {
+		condition := *rule.RuleCondition
+		if condition.CompositeQuery != nil {
+			query := *condition.CompositeQuery
+			condition.CompositeQuery = &query
+		}
+		cloned.RuleCondition = &condition
+	}
+	cloned.Labels = maps.Clone(rule.Labels)
+	return &cloned
 }
 
 // validateThreshold reports what the v1 write path once let through: a missing
@@ -438,15 +454,19 @@ func (rule *postableRule) negateAnomalyBelowTarget() {
 
 // repairEmptySeverity rewrites a severity of "" as critical in labels and in
 // the route expression that matches alerts on it, since a threshold named ""
-// fails every later read.
-func (rule *postableRule) repairEmptySeverity(ruleID string, route *routePolicyRow) {
+// fails every later read. It returns storedRoute, or a copy with the new
+// expression.
+func (rule *postableRule) repairEmptySeverity(ruleID string, storedRoute *routePolicyRow) *routePolicyRow {
 	if severity, ok := rule.Labels[labelSeverity]; !ok || severity != "" {
-		return
+		return storedRoute
 	}
 	rule.Labels[labelSeverity] = criticalThresholdName
-	if route != nil {
-		route.Expression = fmt.Sprintf(`threshold.name == "%s" && ruleId == "%s"`, criticalThresholdName, ruleID)
+	if storedRoute == nil {
+		return nil
 	}
+	route := *storedRoute
+	route.Expression = fmt.Sprintf(`threshold.name == "%s" && ruleId == "%s"`, criticalThresholdName, ruleID)
+	return &route
 }
 
 func (rule *postableRule) relocateThreshold(channels []string) {
