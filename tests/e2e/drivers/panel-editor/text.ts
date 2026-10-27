@@ -13,10 +13,6 @@ export interface TextPane {
 	 */
 	setMarkdown(markdown: string): Promise<void>;
 	toolbar(): Locator;
-	/** Rendered only when the dashboard has variables. */
-	insertVariableButton(): Locator;
-	/** The "Hide panel header" switch, inline under the title, not in a section. */
-	hideHeader(): Locator;
 }
 
 export function textPaneAt(page: Page): TextPane {
@@ -31,8 +27,5 @@ export function textPaneAt(page: Page): TextPane {
 			await page.keyboard.insertText(markdown);
 		},
 		toolbar: () => textPane().getByTestId('markdown-editor-toolbar'),
-		insertVariableButton: () =>
-			textPane().getByTestId('markdown-insert-variable'),
-		hideHeader: () => page.getByTestId('panel-header-hide'),
 	};
 }
