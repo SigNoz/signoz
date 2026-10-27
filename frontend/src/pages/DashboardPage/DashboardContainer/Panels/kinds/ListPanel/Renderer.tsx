@@ -217,8 +217,6 @@ function ListPanelRenderer({
 					log={logDetail.activeLog}
 					selectedTab={logDetail.selectedTab}
 					onClose={logDetail.onClose}
-					onAddToQuery={logDetail.onAddToQuery}
-					onClickActionItem={logDetail.onAddToQuery}
 					onNavigateLog={logDetail.onNavigateLog}
 					logs={logDetail.logs}
 					isListViewPanel

@@ -338,6 +338,63 @@ def test_traces_attributes_json_collision_and_map_parity(
         assert set(series.keys()) == expected, label
 
 
+def test_traces_attributes_json_number_reads(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+    seed_attribute_evolution: Callable[[str, datetime], None],
+) -> None:
+    """A JSON number reads like the attributes_number map: a numeric string as its number, an
+    integer above 2^53 rounded, and a non-numeric string as no number."""
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    evolution_time = datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=30)
+    seed_attribute_evolution("traces", evolution_time)
+
+    hit = evolution_time + timedelta(minutes=5)
+    insert_traces(
+        [
+            Traces(
+                timestamp=hit,
+                trace_id=TraceIdGenerator.trace_id(),
+                span_id=TraceIdGenerator.span_id(),
+                name=route,
+                attributes={"http.route": route, "app.code": code},
+                attribute_write_mode="dual_write",
+            )
+            for route, code in [("/int", 404), ("/numeric_string", "404"), ("/big", 2**53 + 1), ("/text", "abc")]
+        ]
+    )
+
+    start_ms = int((hit - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((hit + timedelta(minutes=1)).timestamp() * 1000)
+
+    for label, filter_expression, expected in [
+        ("numeric_string_eq", "app.code = 404", {"/int", "/numeric_string"}),
+        ("big_int_rounded", f"app.code = {2**53}", {"/big"}),
+        ("text_not_a_number", "app.code > 0", {"/int", "/numeric_string", "/big"}),
+    ]:
+        response = make_query_request(
+            signoz,
+            token,
+            start_ms=start_ms,
+            end_ms=end_ms,
+            request_type=RequestType.TIME_SERIES,
+            queries=[
+                build_traces_scalar_query(
+                    aggregations=[build_aggregation("count()")],
+                    group_by=[build_group_by_field("http.route", field_context="attribute")],
+                    filter_expression=filter_expression,
+                )
+            ],
+        )
+        assert response.status_code == HTTPStatus.OK, label
+        aggregations = (response.json()["data"]["data"]["results"][0].get("aggregations")) or []
+        series = index_series_by_label(aggregations[0]["series"], "http.route") if aggregations else {}
+        assert set(series.keys()) == expected, label
+
+
 def test_traces_attributes_json_list_view(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument

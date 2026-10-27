@@ -64,6 +64,7 @@ import {
 	metricTemporalityOf,
 	metricTypeOf,
 	metricsSavedViewsResponse,
+	metricsSavedViewsV2Response,
 	metricsStatsResponse,
 	metricsTreemapResponse,
 	REDUCTION_RULE_MAX,
@@ -515,6 +516,11 @@ export const metricsMocks = defineStoryMocks({
 		rest.get(
 			'http://localhost/api/v1/explorer/views',
 			response.json(() => metricsSavedViewsResponse(values.savedViews)),
+		),
+
+		rest.get(
+			'http://localhost/api/v2/saved_views',
+			response.json(() => metricsSavedViewsV2Response(values.savedViews)),
 		),
 
 		rest.post(

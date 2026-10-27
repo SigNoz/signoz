@@ -48,6 +48,7 @@ import Events from './Events/Events';
 import OpenInLogsExplorer from './SpanLogs/OpenInLogsExplorer';
 import SpanLogs from './SpanLogs/SpanLogs';
 import { useSpanContextLogs } from './SpanLogs/useSpanContextLogs';
+import SpanAIMessages from './SpanAIMessages/SpanAIMessages';
 import SpanSummary from './SpanSummary';
 
 import styles from './SpanDetailsPanel.module.scss';
@@ -281,6 +282,7 @@ function SpanDetailsContent({
 			traceEndTime={traceEndTime}
 		/>
 	);
+	const aiMessages = <SpanAIMessages span={selectedSpan} />;
 	const eventsCount = selectedSpan.events?.length || 0;
 
 	const spanDetailTabs: TabsItemProps[] = [
@@ -291,6 +293,7 @@ function SpanDetailsContent({
 			children: (
 				<>
 					{isWide && summary}
+					{isWide && <div className={styles.tabAiMessages}>{aiMessages}</div>}
 					<DataViewer
 						data={spanDisplayData}
 						drawerKey="trace-details"
@@ -369,6 +372,7 @@ function SpanDetailsContent({
 		<>
 			<div className={styles.panelBody} ref={bodyRef}>
 				{!isWide && <div className={styles.detailsSection}>{summary}</div>}
+				{!isWide && aiMessages}
 
 				<div className={styles.tabsSection}>
 					<Tabs

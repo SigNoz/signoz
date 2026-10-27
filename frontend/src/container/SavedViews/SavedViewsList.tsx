@@ -10,6 +10,7 @@ import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
 
 import { SAVED_VIEWS_LIST_LOADING_ROWS } from './constants';
 import DeleteSavedViewDialog from './DeleteSavedViewDialog';
+import { SavedViewCreatedFrom } from './events';
 import { useSavedViewActions } from './hooks/useSavedViewActions';
 import { useSavedViewHoverCard } from './hooks/useSavedViewHoverCard';
 import { useSavedViewRowActions } from './hooks/useSavedViewRowActions';
@@ -35,13 +36,19 @@ function SavedViewsList({
 	search: string;
 }): JSX.Element {
 	const { viewKey } = useGetSavedViewParams();
-	const { selectView, clearView, createView, isSaving } =
+	const { selectView, clearView, resetView, createView, isSaving } =
 		useSavedViewActions(source);
 	const saveNewView = useSaveNewView(createView);
 	const { createdByMe, createdByOthers, isLoading, isError, refetch } =
 		useSavedViewsList(source, search);
-	const { copyViewLink, renameView, deleteView, isRenaming, isDeleting } =
-		useSavedViewRowActions(source);
+	const {
+		copyViewLink,
+		copyViewId,
+		renameView,
+		deleteView,
+		isRenaming,
+		isDeleting,
+	} = useSavedViewRowActions(source);
 	const [pendingAction, setPendingAction] =
 		useState<PendingSavedViewAction | null>(null);
 	const listRef = useRef<HTMLDivElement>(null);
@@ -79,10 +86,14 @@ function SavedViewsList({
 				copyViewLink(view);
 				return;
 			}
+			if (key === 'copyId') {
+				copyViewId(view);
+				return;
+			}
 			closeHoverCard();
 			setPendingAction({ key, view });
 		},
-		[copyViewLink, closeHoverCard],
+		[copyViewLink, copyViewId, closeHoverCard],
 	);
 
 	const closePendingAction = useCallback((): void => setPendingAction(null), []);
@@ -92,10 +103,10 @@ function SavedViewsList({
 			return;
 		}
 		if (pendingAction.view.id === viewKey) {
-			clearView();
+			resetView();
 		}
 		setPendingAction(null);
-	}, [pendingAction, deleteView, viewKey, clearView]);
+	}, [pendingAction, deleteView, viewKey, resetView]);
 
 	if (isLoading) {
 		return (
@@ -131,7 +142,9 @@ function SavedViewsList({
 			<SavedViewsEmptyState
 				isSearching={search.trim().length > 0}
 				isSaving={isSaving}
-				onSave={saveNewView}
+				onSave={(displayName): Promise<boolean> =>
+					saveNewView(displayName, SavedViewCreatedFrom.EmptyState)
+				}
 			/>
 		);
 	}

@@ -6,7 +6,7 @@ import {
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import {
 	otherFiltersResponse,
-	quickFiltersAttributeValuesResponse,
+	quickFiltersFieldValuesResponse,
 	quickFiltersListResponse,
 } from 'mocks-server/__mockdata__/customQuickFilters';
 import { server } from 'mocks-server/server';
@@ -17,7 +17,7 @@ import '@testing-library/jest-dom';
 
 import QuickFilters from '../QuickFilters';
 import { IQuickFiltersConfig, QuickFiltersSource, SignalType } from '../types';
-import { QuickFiltersConfig } from './constants';
+import { QuickFiltersConfig, QuickFiltersFieldApis } from './constants';
 
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: jest.fn(),
@@ -37,7 +37,6 @@ const SIGNAL = SignalType.LOGS;
 const quickFiltersListURL = `${BASE_URL}/api/v2/quick_filters/${SIGNAL}`;
 const saveQuickFiltersURL = `${BASE_URL}/api/v2/quick_filters/${SIGNAL}`;
 const quickFiltersSuggestionsURL = `${BASE_URL}/api/v1/fields/keys`;
-const quickFiltersAttributeValuesURL = `${BASE_URL}/api/v3/autocomplete/attribute_values`;
 const fieldsValuesURL = `${BASE_URL}/api/v1/fields/values`;
 
 const FILTER_OS_DESCRIPTION = 'os.description';
@@ -62,11 +61,8 @@ const setupServer = (): void => {
 			putHandler(await req.json());
 			return res(ctx.status(200), ctx.json({}));
 		}),
-		rest.get(quickFiltersAttributeValuesURL, (_req, res, ctx) =>
-			res(ctx.status(200), ctx.json(quickFiltersAttributeValuesResponse)),
-		),
 		rest.get(fieldsValuesURL, (_req, res, ctx) =>
-			res(ctx.status(200), ctx.json(quickFiltersAttributeValuesResponse)),
+			res(ctx.status(200), ctx.json(quickFiltersFieldValuesResponse)),
 		),
 	);
 };
@@ -83,6 +79,7 @@ function TestQuickFilters({
 			source={QuickFiltersSource.EXCEPTIONS}
 			config={config}
 			handleFilterVisibilityChange={handleFilterVisibilityChange}
+			useFieldApis={QuickFiltersFieldApis}
 			signal={signal}
 		/>
 	);
@@ -105,6 +102,7 @@ function TestQuickFiltersApiMonitoring({
 			source={QuickFiltersSource.API_MONITORING}
 			config={config}
 			handleFilterVisibilityChange={handleFilterVisibilityChange}
+			useFieldApis={QuickFiltersFieldApis}
 			signal={signal}
 		/>
 	);

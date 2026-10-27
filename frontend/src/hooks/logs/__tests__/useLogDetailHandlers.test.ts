@@ -11,7 +11,6 @@ jest.mock('hooks/useIsTextSelected');
 const mockOnSetActiveLog = jest.fn();
 const mockOnClearActiveLog = jest.fn();
 const mockOnAddToQuery = jest.fn();
-const mockOnGroupByAttribute = jest.fn();
 const mockIsTextSelected = jest.fn();
 
 const mockLog: ILog = {
@@ -44,7 +43,6 @@ beforeEach(() => {
 		onSetActiveLog: mockOnSetActiveLog,
 		onClearActiveLog: mockOnClearActiveLog,
 		onAddToQuery: mockOnAddToQuery,
-		onGroupByAttribute: mockOnGroupByAttribute,
 	});
 });
 
@@ -80,7 +78,6 @@ it('should toggle off when clicking the same active log', () => {
 		onSetActiveLog: mockOnSetActiveLog,
 		onClearActiveLog: mockOnClearActiveLog,
 		onAddToQuery: mockOnAddToQuery,
-		onGroupByAttribute: mockOnGroupByAttribute,
 	});
 
 	const { result } = renderHook(() => useLogDetailHandlers());

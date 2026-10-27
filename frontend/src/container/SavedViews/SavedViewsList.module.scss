@@ -41,7 +41,7 @@
 .row {
 	display: flex;
 	align-items: center;
-	gap: var(--spacing-2);
+	gap: var(--spacing-4);
 	height: var(--spacing-16);
 	padding-right: var(--spacing-4);
 	border-radius: var(--radius-2);
@@ -71,7 +71,7 @@
 
 .row:hover .rowMenu,
 .row:focus-within .rowMenu,
-.rowMenu:has([data-state='open']) {
+.rowMenu:has([data-popup-open]) {
 	width: auto;
 	opacity: 1;
 }

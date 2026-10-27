@@ -75,6 +75,7 @@ jobs:
           - ttl
           - clickhousecluster
           - metricreduction
+          - metricsexplorer
         sqlstore-provider:
           - postgres
           - sqlite

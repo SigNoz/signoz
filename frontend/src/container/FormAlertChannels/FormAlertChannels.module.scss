@@ -1,0 +1,69 @@
+.form {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+}
+
+.cards {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	padding-bottom: var(--spacing-6);
+	border: 0;
+	margin: 0;
+	min-width: 0;
+}
+
+.fields {
+	border: 0;
+	padding: 0;
+	margin: 0;
+	min-width: 0;
+}
+
+/* Laid out like the alert pages: discard on the left, test and save together on
+   the right. Sticky rather than fixed, so it stays inside the page's own scroll
+   instead of adding another offset over the bottom strip. */
+.actions {
+	position: sticky;
+	bottom: 0;
+	z-index: 2;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-3);
+	padding: var(--spacing-4) 0;
+	border-top: 1px solid var(--l2-border);
+	background: var(--l1-background);
+}
+
+.actionGroup {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+}
+
+// TODO: @AshwinBhatkal to be removed once textarea is in signoz ui components
+.fields :global(textarea:disabled) {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+/* The @signozhq inputs leave their surface transparent and take the card's
+   colour. antd paints its textareas instead, so beside them they read as a
+   different control, most visibly in light mode. */
+// TODO: @AshwinBhatkal to be removed once textarea is in signoz ui components
+.fields :global(textarea.ant-input),
+.fields :global(textarea.ant-input:hover),
+.fields :global(textarea.ant-input:focus),
+.fields :global(textarea.ant-input-focused) {
+	background: var(--input-background, transparent);
+	border-width: var(--input-border-width, 1px);
+	border-style: var(--input-border-style, solid);
+	border-color: var(--input-border-color, var(--border));
+	border-radius: var(--input-border-radius, calc(var(--radius) - 2px));
+	font-size: var(--input-font-size, var(--periscope-font-size-base, 13px));
+	box-shadow: var(--input-box-shadow, none);
+	color: inherit;
+}

@@ -213,9 +213,7 @@ go.mod @therealpandey
 ## Notification Channels
 /frontend/src/pages/ChannelsEdit/ @SigNoz/pulse-frontend
 /frontend/src/pages/ChannelsNew/ @SigNoz/pulse-frontend
-/frontend/src/container/AllAlertChannels/ @SigNoz/pulse-frontend
 /frontend/src/container/CreateAlertChannels/ @SigNoz/pulse-frontend
-/frontend/src/container/EditAlertChannels/ @SigNoz/pulse-frontend
 /frontend/src/container/FormAlertChannels/ @SigNoz/pulse-frontend
 /frontend/src/hooks/notificationChannels/ @SigNoz/pulse-frontend
 
@@ -291,6 +289,14 @@ go.mod @therealpandey
 /frontend/src/components/MessagingQueues/ @SigNoz/events-frontend
 /frontend/src/components/MessagingQueueHealthCheck/ @SigNoz/events-frontend
 /frontend/src/hooks/messagingQueue/ @SigNoz/events-frontend
+
+## Saved Views
+/frontend/src/container/SavedViews/ @aks07
+/frontend/src/container/Home/SavedViews/ @aks07
+/frontend/src/hooks/saveViews/ @aks07
+
+## Bottom Strip
+/frontend/src/container/BottomStrip/ @aks07
 
 ## Storybook
 /frontend/.storybook/ @H4ad

@@ -114,29 +114,7 @@ func (i *PromotePath) ValidateAndSetDefaults(target Target) error {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cardinal paths can not be promoted or indexed")
 	}
 
-	for idx, index := range i.Indexes {
-		if index.Type == "" {
-			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "index type is required")
-		}
-		if err := validateIndexType(index.Type); err != nil {
-			return err
-		}
-		if index.Granularity <= 0 {
-			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "index granularity must be greater than 0")
-		}
-
-		jsonDataType, ok := telemetrytypes.MappingFieldDataTypeToJSONDataType[index.FieldDataType]
-		if !ok {
-			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid column type: %s", index.FieldDataType)
-		}
-		if !jsonDataType.IndexSupported {
-			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "index is not supported for column type: %s", index.FieldDataType)
-		}
-
-		i.Indexes[idx].JSONDataType = jsonDataType
-	}
-
-	return nil
+	return i.validateAndSetIndexDefaults(target)
 }
 
 func (index WrappedIndex) SkipIndexType() (schemamigrator.IndexType, error) {
@@ -220,5 +198,31 @@ func validateIndexType(indexType string) error {
 	if values[hashes] < 1 || values[hashes] > maxIndexHashFunctions {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid hash function count in index type: %s", indexType)
 	}
+	return nil
+}
+
+func (i *PromotePath) validateAndSetIndexDefaults(target Target) error {
+	for idx, index := range i.Indexes {
+		if index.Type == "" {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "index type is required")
+		}
+		if err := validateIndexType(index.Type); err != nil {
+			return err
+		}
+		if index.Granularity <= 0 {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "index granularity must be greater than 0")
+		}
+
+		jsonDataType, ok := telemetrytypes.MappingFieldDataTypeToJSONDataType[index.FieldDataType]
+		if !ok {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid column type: %s", index.FieldDataType)
+		}
+		if !jsonDataType.IndexSupported {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "index is not supported for column type: %s", index.FieldDataType)
+		}
+
+		i.Indexes[idx].JSONDataType = target.IndexDataType(jsonDataType)
+	}
+
 	return nil
 }

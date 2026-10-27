@@ -66,9 +66,9 @@ jest.mock('../MetricsTable', () => ({
 	__esModule: true,
 	MetricsTable: jest
 		.fn()
-		.mockImplementation(
-			(): JSX.Element => <div data-testid="metrics-table">Metrics Table</div>,
-		),
+		.mockImplementation((): JSX.Element => (
+			<div data-testid="metrics-table">Metrics Table</div>
+		)),
 }));
 
 const mockUseQuery = jest.fn();

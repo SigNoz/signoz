@@ -320,5 +320,18 @@ func TestFormat_OpenInference(t *testing.T) {
 			wantInput:  `[{"role": "tool", "name": "multiply", "parts": [{"type": "tool_call_response", "id": "call_62136355", "response": "2001"}]}]`,
 			wantOutput: `[]`,
 		},
+		{
+			// OpenInference replaces a base64 image over 32,000 characters with __REDACTED__:
+			// https://github.com/Arize-ai/openinference/blob/12f2cc035edfb00b60b656d977f07abfb7a69900/python/openinference-instrumentation/src/openinference/instrumentation/config.py#L431
+			name: "RedactedImage_GenericPart_Warns",
+			attributes: map[string]any{
+				"llm.input_messages.0.message.role":                                       "user",
+				"llm.input_messages.0.message.contents.0.message_content.type":            "image",
+				"llm.input_messages.0.message.contents.0.message_content.image.image.url": "__REDACTED__",
+			},
+			warnings:   []string{"media without a URL kept as generic"},
+			wantInput:  `[{"role": "user", "parts": [{"type": "generic", "modality": "image", "content": "__REDACTED__"}]}]`,
+			wantOutput: `[]`,
+		},
 	})
 }

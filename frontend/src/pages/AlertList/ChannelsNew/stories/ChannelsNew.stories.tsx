@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -19,7 +19,7 @@ const pageStory = storyMocks(channelsNewMocks, { layout: 'app' });
  */
 const meta = {
 	title: 'Pages/Alerts/Channels/New',
-	tags: ['play'],
+	tags: ['authz', 'play'],
 	component: AlertList,
 	...pageStory,
 	parameters: { ...pageStory.parameters },
@@ -29,22 +29,17 @@ export default meta;
 
 type Story = StoryObj<ChannelsNewArgs>;
 
-/**
- * The type is an antd Select: clicking the element carrying the test id does
- * nothing, the combobox inside it is what opens the list.
- */
 const selectChannelType = async (
 	canvasElement: HTMLElement,
 	label: RegExp,
 ): Promise<void> => {
-	const canvas = within(canvasElement);
-	const select = await canvas.findByTestId('channel-type-select');
+	const trigger = await within(canvasElement).findByTestId(
+		'channel-type-select',
+	);
 
-	await userEvent.click(within(select).getByRole('combobox'));
-	await userEvent.click(await screen.findByTitle(label));
-	// The form under the Select swaps a render after the option is taken, so the
-	// Select's own value is what says the story is on the type it names.
-	await within(select).findByTitle(label);
+	await userEvent.click(trigger);
+	await userEvent.click(await screen.findByRole('option', { name: label }));
+	await within(trigger).findByText(label);
 };
 
 /** A new notification channel, on the Slack form the page opens with. */
@@ -53,11 +48,9 @@ export const Default: Story = {};
 /** Interaction: the channel-type Select opens its real portal-backed option list. */
 export const ChannelTypeSelectOpen: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
-		const select = await within(canvasElement).findByTestId(
-			'channel-type-select',
+		await userEvent.click(
+			await within(canvasElement).findByTestId('channel-type-select'),
 		);
-
-		await userEvent.click(within(select).getByRole('combobox'));
 		await screen.findByRole('listbox');
 	},
 };
@@ -65,9 +58,16 @@ export const ChannelTypeSelectOpen: Story = {
 /** Mutation: saving without a channel name shows the form's required-field feedback. */
 export const InvalidRequiredFields: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByTestId('save-channel-button'),
+		const canvas = within(canvasElement);
+
+		// Save stays off until the form is touched, so filling the webhook first is
+		// how a missing name is reached.
+		await userEvent.type(
+			await canvas.findByTestId('webhook-url-textbox'),
+			'https://hooks.slack.com/services/T/B/X',
 		);
+		await userEvent.click(canvas.getByTestId('save-channel-button'));
+
 		await screen.findByText('Channel name is mandatory');
 	},
 };
@@ -79,9 +79,17 @@ export const TestChannelFailure: Story = {
 	// the point of the story, not a regression.
 	parameters: { allowConsoleErrors: true },
 	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByTestId('test-channel-button'),
+		const canvas = within(canvasElement);
+
+		await userEvent.type(
+			await canvas.findByTestId('channel-name-textbox'),
+			'Storybook channel',
 		);
+		await userEvent.type(
+			await canvas.findByTestId('webhook-url-textbox'),
+			'https://hooks.slack.com/services/storybook',
+		);
+		await userEvent.click(await canvas.findByTestId('test-channel-button'));
 		await screen.findByText('Storybook forced channel failure');
 	},
 };
@@ -174,5 +182,94 @@ export const JiraServiceManagementOps: Story = {
 export const IncidentIO: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await selectChannelType(canvasElement, /^incident\.io$/);
+	},
+};
+
+/** The Telegram form: the bot token, the chat it posts to and the message. */
+export const Telegram: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await selectChannelType(canvasElement, /^Telegram$/);
+	},
+};
+
+/**
+ * Telegram's own required fields. The chat id is the form's first numeric field,
+ * and the API treats 0 as missing, so an empty box has to report the same error
+ * as a blank one rather than sending a zero.
+ */
+export const TelegramRequiredFields: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+
+		await selectChannelType(canvasElement, /^Telegram$/);
+		await userEvent.type(
+			await canvas.findByTestId('channel-name-textbox'),
+			'alerts-telegram',
+		);
+		await userEvent.click(await canvas.findByTestId('save-channel-button'));
+
+		await screen.findByText(
+			'Bot token is mandatory for creating a telegram channel',
+		);
+		await screen.findByText(
+			'Chat ID is mandatory for creating a telegram channel',
+		);
+	},
+};
+
+/**
+ * The fields the API rejects a save without are marked before anything is
+ * submitted, so a long form does not have to be guessed at.
+ */
+export const RequiredFields: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+
+		await expect(
+			await canvas.findByTestId('channel-name-textbox', undefined, {
+				timeout: 15_000,
+			}),
+		).toHaveAttribute('aria-required', 'true');
+		// slack is the kind the form opens on, and its webhook URL is its one
+		// required spec field
+		await expect(canvas.getByTestId('webhook-url-textbox')).toHaveAttribute(
+			'aria-required',
+			'true',
+		);
+	},
+};
+
+/**
+ * The type carried in the URL. Filtering the list by a type and pressing its
+ * create button lands here with `?kind=`, so the form opens on that type with
+ * nothing to pick.
+ */
+export const KindFromUrl: Story = {
+	args: { kindInUrl: 'jira' },
+	play: async ({ canvasElement }): Promise<void> => {
+		const trigger = await within(canvasElement).findByTestId(
+			'channel-type-select',
+			undefined,
+			{ timeout: 15_000 },
+		);
+
+		await within(trigger).findByText(/^Jira$/);
+	},
+};
+
+/**
+ * A `?kind=` the app does not have. The form opens on its own default rather
+ * than on an empty type, so a stale or hand-edited link still works.
+ */
+export const UnknownKindInUrl: Story = {
+	args: { kindInUrl: 'not-a-kind' },
+	play: async ({ canvasElement }): Promise<void> => {
+		const trigger = await within(canvasElement).findByTestId(
+			'channel-type-select',
+			undefined,
+			{ timeout: 15_000 },
+		);
+
+		await within(trigger).findByText(/^Slack$/);
 	},
 };

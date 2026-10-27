@@ -251,3 +251,20 @@ export function renderWithExplorerProviders(
 export function urlParam(history: MemoryHistory, key: string): string | null {
 	return new URLSearchParams(history.location.search).get(key);
 }
+
+// The ui Button marks a pending check with aria-busy and a block with
+// aria-disabled, never the disabled attribute.
+export function expectUsable(element: HTMLElement): void {
+	expect(element).not.toHaveAttribute('aria-busy');
+	expect(element).not.toHaveAttribute('aria-disabled', 'true');
+}
+
+// A menu checks its rows on first open; on a loaded CI runner that outlasts
+// waitFor's 1s default.
+export const MENU_CHECK_TIMEOUT = { timeout: 5000 };
+
+// A menu row waiting on its check is data-loading, not yet data-disabled.
+export function expectRowUsable(row: HTMLElement): void {
+	expect(row).not.toHaveAttribute('data-loading');
+	expect(row).not.toHaveAttribute('data-disabled');
+}

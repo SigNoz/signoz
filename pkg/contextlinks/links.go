@@ -3,10 +3,13 @@ package contextlinks
 import (
 	"encoding/json"
 	"net/url"
+	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
@@ -52,40 +55,66 @@ func prepareExplorerParams(dataSource string, queryType qbtypes.QueryType, start
 	return params
 }
 
-// BuilderQueryForSignal returns the filter expression and group-by keys of the
-// builder query for the given signal, or found=false when the composite query
-// has no builder query for it (e.g. PromQL or ClickHouse SQL alerts). AI trace
-// queries (builder_ai_query) count as trace builder queries.
-// TODO(srikanthccv): re-visit this and support multiple queries.
-func BuilderQueryForSignal(queries []qbtypes.QueryEnvelope, signal telemetrytypes.Signal) (string, []qbtypes.GroupByKey, bool) {
-	switch signal {
-	case telemetrytypes.SignalLogs:
-		return builderQueryForSignal[qbtypes.LogAggregation](queries, signal)
-	case telemetrytypes.SignalTraces:
-		return builderQueryForSignal[qbtypes.TraceAggregation](queries, signal)
+func PrepareRuleFilterExpression(condition *ruletypes.RuleCondition, signal telemetrytypes.Signal, labels map[string]string) (string, bool, error) {
+	var expressions []string
+	if condition != nil && condition.CompositeQuery != nil {
+		names, err := resolveSelectedQueryNames(condition)
+		if err != nil {
+			return "", false, err
+		}
+		switch signal {
+		case telemetrytypes.SignalLogs:
+			expressions = prepareFilterExpressions[qbtypes.LogAggregation](condition.CompositeQuery.Queries, names, signal, labels)
+		case telemetrytypes.SignalTraces:
+			expressions = prepareFilterExpressions[qbtypes.TraceAggregation](condition.CompositeQuery.Queries, names, signal, labels)
+		}
 	}
-	return "", nil, false
+
+	switch {
+	case len(expressions) == 0:
+		// a ClickHouse SQL alert has no builder query; its link filters on the labels alone
+		return PrepareFilterExpression(labels, "", nil), false, nil
+	case len(expressions) == 1:
+		return expressions[0], true, nil
+	case slices.Contains(expressions, ""):
+		// an unfiltered formula input matches everything, so the merged filter does too
+		return "", true, nil
+	}
+	// the explorer list views render one query only, so a formula's inputs merge into one filter
+	return "(" + strings.Join(expressions, ") OR (") + ")", true, nil
 }
 
-func builderQueryForSignal[T any](queries []qbtypes.QueryEnvelope, signal telemetrytypes.Signal) (string, []qbtypes.GroupByKey, bool) {
-	var q qbtypes.QueryBuilderQuery[T]
-	found := false
+func resolveSelectedQueryNames(condition *ruletypes.RuleCondition) ([]string, error) {
+	selected := condition.SelectedQueryName()
+	for _, query := range condition.CompositeQuery.Queries {
+		if query.GetQueryName() != selected {
+			continue
+		}
+		if formula, ok := query.Spec.(qbtypes.QueryBuilderFormula); ok {
+			return formula.ExtractReferencedQueryNames()
+		}
+		return []string{selected}, nil
+	}
+	return nil, nil
+}
+
+func prepareFilterExpressions[T any](queries []qbtypes.QueryEnvelope, names []string, signal telemetrytypes.Signal, labels map[string]string) []string {
+	var expressions []string
 	for _, query := range queries {
 		if query.Type != qbtypes.QueryTypeBuilder && query.Type != qbtypes.QueryTypeBuilderAI {
 			continue
 		}
-		if spec, ok := query.Spec.(qbtypes.QueryBuilderQuery[T]); ok {
-			q = spec
-			found = true
+		spec, ok := query.Spec.(qbtypes.QueryBuilderQuery[T])
+		// spec.Disabled is deliberately not checked: a formula's inputs are
+		// usually hidden in the UI but must still make it into the link
+		if !ok || spec.Signal != signal || !slices.Contains(names, spec.Name) {
+			continue
 		}
+		filterExpr := ""
+		if spec.Filter != nil {
+			filterExpr = spec.Filter.Expression
+		}
+		expressions = append(expressions, PrepareFilterExpression(labels, filterExpr, spec.GroupBy))
 	}
-	if !found || q.Signal != signal {
-		return "", nil, false
-	}
-
-	filterExpr := ""
-	if q.Filter != nil {
-		filterExpr = q.Filter.Expression
-	}
-	return filterExpr, q.GroupBy, true
+	return expressions
 }
