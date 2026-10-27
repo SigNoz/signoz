@@ -1,3 +1,4 @@
+import { ComponentProps } from 'react';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { rest, server } from 'mocks-server/server';
 import { RestRequest } from 'msw';
@@ -14,6 +15,11 @@ jest.mock('../../../../../api/common/logEvent', () => ({
 
 // The form flow drives antd selects and typing, which outruns the 5s default on CI.
 jest.setTimeout(15_000);
+
+type OnClose = ComponentProps<typeof CloudAccountSetupModal>['onClose'];
+
+const mockOnClose = (): jest.MockedFunction<OnClose> =>
+	jest.fn() as jest.MockedFunction<OnClose>;
 
 const AWS_CREDENTIALS_URL =
 	'http://localhost/api/v1/cloud_integrations/aws/credentials';
@@ -82,7 +88,7 @@ describe('AWS CloudAccountSetupModal', () => {
 		const api = mockApi();
 		const openSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
 		const user = userEvent.setup();
-		const onClose = jest.fn();
+		const onClose = mockOnClose();
 
 		render(<CloudAccountSetupModal onClose={onClose} />);
 
@@ -127,7 +133,7 @@ describe('AWS CloudAccountSetupModal', () => {
 	it('closes without asking before a setup command exists', async () => {
 		mockApi();
 		const user = userEvent.setup();
-		const onClose = jest.fn();
+		const onClose = mockOnClose();
 
 		render(<CloudAccountSetupModal onClose={onClose} />);
 
@@ -141,7 +147,7 @@ describe('AWS CloudAccountSetupModal', () => {
 		const api = mockApi({ failFirstPoll: true });
 		const user = userEvent.setup();
 
-		render(<CloudAccountSetupModal onClose={jest.fn()} />);
+		render(<CloudAccountSetupModal onClose={mockOnClose()} />);
 
 		await user.click(await screen.findByRole('combobox'));
 		await user.click(await screen.findByText('US East (N. Virginia)'));

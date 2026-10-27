@@ -1,3 +1,4 @@
+import { ComponentProps } from 'react';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { rest, server } from 'mocks-server/server';
 import { RestRequest } from 'msw';
@@ -14,6 +15,11 @@ jest.mock('../../../../../api/common/logEvent', () => ({
 
 // The form flow drives antd selects and typing, which outruns the 5s default on CI.
 jest.setTimeout(15_000);
+
+type OnClose = ComponentProps<typeof CloudAccountSetupModal>['onClose'];
+
+const mockOnClose = (): jest.MockedFunction<OnClose> =>
+	jest.fn() as jest.MockedFunction<OnClose>;
 
 const AZURE_CREDENTIALS_URL =
 	'http://localhost/api/v1/cloud_integrations/azure/credentials';
@@ -81,7 +87,7 @@ describe('Azure CloudAccountSetupModal', () => {
 	it('creates the account and shows its setup command', async () => {
 		const api = mockApi();
 		const user = userEvent.setup();
-		const onClose = jest.fn();
+		const onClose = mockOnClose();
 
 		render(<CloudAccountSetupModal onClose={onClose} />);
 
@@ -131,7 +137,7 @@ describe('Azure CloudAccountSetupModal', () => {
 	it('closes without asking before a setup command exists', async () => {
 		mockApi();
 		const user = userEvent.setup();
-		const onClose = jest.fn();
+		const onClose = mockOnClose();
 
 		render(<CloudAccountSetupModal onClose={onClose} />);
 
@@ -145,7 +151,7 @@ describe('Azure CloudAccountSetupModal', () => {
 		const api = mockApi({ failFirstPoll: true });
 		const user = userEvent.setup();
 
-		render(<CloudAccountSetupModal onClose={jest.fn()} />);
+		render(<CloudAccountSetupModal onClose={mockOnClose()} />);
 
 		const [region, resourceGroups] = await screen.findAllByRole('combobox');
 		await user.click(region);
