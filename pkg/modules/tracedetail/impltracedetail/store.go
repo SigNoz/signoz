@@ -16,7 +16,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -25,7 +24,7 @@ import (
 
 const colServiceName = `resource_string_service$$$$name` // $ gets escaped so $$$$ converts to $$.
 
-// storableSpanColumns are the columns a waterfall span scans; the attribute columns are added per flag.
+// storableSpanColumns are the columns a waterfall span scans besides attributeColumns.
 var storableSpanColumns = []string{
 	"DISTINCT ON (span_id) timestamp", "duration_nano", "span_id", "has_error", "kind",
 	colServiceName, "name", "resources_string",
@@ -208,8 +207,8 @@ func (s *traceStore) genAISpanColumns(ctx context.Context, orgID valuer.UUID, bo
 	return columns, nil
 }
 
-func (s *traceStore) GetTraceSpans(ctx context.Context, orgID valuer.UUID, traceID string, bounds *spantypes.TraceBounds) ([]spantypes.StorableSpan, error) {
-	sb := s.selectStorableSpans(ctx, orgID)
+func (s *traceStore) GetTraceSpans(ctx context.Context, traceID string, bounds *spantypes.TraceBounds) ([]spantypes.StorableSpan, error) {
+	sb := selectStorableSpans()
 	sb.Where(
 		sb.E("trace_id", traceID),
 		sb.GE("ts_bucket_start", bounds.Start.Unix()-1800),
@@ -250,11 +249,11 @@ func (s *traceStore) GetMinimalSpans(ctx context.Context, traceID string, start,
 	return spans, nil
 }
 
-func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, orgID valuer.UUID, traceID string, start, end time.Time, spanIDs []string) ([]spantypes.StorableSpan, error) {
+func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, start, end time.Time, spanIDs []string) ([]spantypes.StorableSpan, error) {
 	if len(spanIDs) == 0 {
 		return []spantypes.StorableSpan{}, nil
 	}
-	sb := s.selectStorableSpans(ctx, orgID)
+	sb := selectStorableSpans()
 	ids := make([]any, len(spanIDs))
 	for i, id := range spanIDs {
 		ids[i] = id
@@ -276,18 +275,13 @@ func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, orgID valuer.UUID, 
 	return spans, nil
 }
 
-// selectStorableSpans reads the JSON attributes column alongside the legacy maps when the
-// use_trace_attributes_json flag is on, as the query builder does.
-func (s *traceStore) selectStorableSpans(ctx context.Context, orgID valuer.UUID) *sqlbuilder.SelectBuilder {
+// selectStorableSpans reads the JSON attributes column alongside the legacy maps.
+func selectStorableSpans() *sqlbuilder.SelectBuilder {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(storableSpanColumns...)
-	sb.SelectMore(attributeColumns(s.traceAttributesJSON(ctx, orgID), "")...)
+	sb.SelectMore(attributeColumns("")...)
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
 	return sb
-}
-
-func (s *traceStore) traceAttributesJSON(ctx context.Context, orgID valuer.UUID) bool {
-	return s.flagger.BooleanOrEmpty(ctx, flagger.FeatureUseTraceAttributesJSON, featuretypes.NewFlaggerEvaluationContext(orgID))
 }
 
 func (s *traceStore) GetThreadSpans(ctx context.Context, orgID valuer.UUID, traceID string, bounds *spantypes.TraceBounds, page spantypes.ThreadPage) ([]spantypes.StorableSpan, error) {
@@ -296,9 +290,8 @@ func (s *traceStore) GetThreadSpans(ctx context.Context, orgID valuer.UUID, trac
 	sb.Select(
 		"DISTINCT ON (span_id) timestamp", "duration_nano", "span_id", "parent_span_id", "has_error", "name", "kind_string",
 		"status_code_string", "status_message", "resources_string",
-		"events", "links as references",
+		"attributes", "attributes_string", "attributes_number", "attributes_bool", "events", "links as references",
 	)
-	sb.SelectMore(attributeColumns(q.TraceAttrsJSONOn, "")...)
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
 	keys, err := s.genAIFieldKeys(ctx, orgID, aiobservabilitytypes.GenAISpanGateKeys)
 	if err != nil {
@@ -372,7 +365,7 @@ func (s *traceStore) GetThreadCursor(ctx context.Context, traceID string, bounds
 	return &spantypes.ThreadCursor{TimeUnixNano: uint64(timeUnixNano), SpanID: spanID}, nil
 }
 
-func (s *traceStore) GetFlamegraphSpans(ctx context.Context, orgID valuer.UUID, traceID string, start, end time.Time, spanIDs []string) ([]spantypes.StorableSpan, error) {
+func (s *traceStore) GetFlamegraphSpans(ctx context.Context, traceID string, start, end time.Time, spanIDs []string) ([]spantypes.StorableSpan, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(
 		"span_id",
@@ -384,7 +377,7 @@ func (s *traceStore) GetFlamegraphSpans(ctx context.Context, orgID valuer.UUID, 
 		"any(events) AS events",
 		"any(resources_string) AS resources_string",
 	)
-	sb.SelectMore(attributeColumns(s.traceAttributesJSON(ctx, orgID), "any")...)
+	sb.SelectMore(attributeColumns("any")...)
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
 	conditions := []string{
 		sb.E("trace_id", traceID),
@@ -524,30 +517,23 @@ func (s *traceStore) anyExistsCondition(ctx context.Context, q qbtypes.QueryInfo
 	return sb.Or(conds...), nil
 }
 
-// attributeColumns selects the span attribute columns, each wrapped in aggregate when set. With the JSON
-// column read, a row's legacy maps are blanked when its JSON holds the attributes, so a dual-written span
-// ships them once. Under aggregate, `attributes` in the blanking condition resolves to the aggregated
-// alias, so it must stay outside the aggregate (nesting it is ILLEGAL_AGGREGATION).
-func attributeColumns(jsonOn bool, aggregate string) []string {
-	columns := make([]string, 0, len(legacyAttributeColumns)+1)
-	for _, column := range legacyAttributeColumns {
-		expr := column
-		if aggregate != "" {
-			expr = fmt.Sprintf("%s(%s)", aggregate, expr)
-		}
-		if jsonOn {
-			expr = fmt.Sprintf("if(notEmpty(attributes), map(), %s)", expr)
-		}
-		if expr != column {
-			expr += " AS " + column
-		}
-		columns = append(columns, expr)
-	}
-	if !jsonOn {
-		return columns
-	}
+// attributeColumns selects the JSON attributes column and the legacy maps, each wrapped in aggregate when
+// set. A row's maps are blanked when its JSON holds the attributes, so a dual-written span ships them once
+// and a pre-rollout span keeps its maps. Under aggregate, `attributes` in the blanking condition resolves
+// to the aggregated alias, so it must stay outside the aggregate (nesting it is ILLEGAL_AGGREGATION).
+// The aliases also shadow the map columns in WHERE, so a query filtering on the maps cannot use it.
+func attributeColumns(aggregate string) []string {
+	attributes := "attributes"
 	if aggregate != "" {
-		return append(columns, aggregate+"(attributes) AS attributes")
+		attributes = aggregate + "(attributes) AS attributes"
 	}
-	return append(columns, "attributes")
+	columns := []string{attributes}
+	for _, column := range legacyAttributeColumns {
+		value := column
+		if aggregate != "" {
+			value = fmt.Sprintf("%s(%s)", aggregate, column)
+		}
+		columns = append(columns, fmt.Sprintf("if(notEmpty(attributes), map(), %s) AS %s", value, column))
+	}
+	return columns
 }

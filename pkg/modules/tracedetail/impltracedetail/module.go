@@ -64,7 +64,7 @@ func (m *module) GetTraceSummary(ctx context.Context, orgID valuer.UUID, traceID
 // For large traces (NumSpans > effectiveLimit) it uses a two-step fetch:
 // minimal fields for all spans to build the tree, then full fields for the
 // visible window only. Aggregations are not returned.
-func (m *module) GetWaterfallV4(ctx context.Context, orgID valuer.UUID, traceID string, selectedSpanID string, uncollapsedSpans []string) (*spantypes.GettableWaterfallTrace, error) {
+func (m *module) GetWaterfallV4(ctx context.Context, traceID string, selectedSpanID string, uncollapsedSpans []string) (*spantypes.GettableWaterfallTrace, error) {
 	bounds, err := m.store.GetTraceBounds(ctx, traceID)
 	if err != nil {
 		return nil, err
@@ -78,9 +78,9 @@ func (m *module) GetWaterfallV4(ctx context.Context, orgID valuer.UUID, traceID 
 
 	var trace *spantypes.GettableWaterfallTrace
 	if windowed {
-		trace, err = m.getWindowedWaterfall(ctx, orgID, traceID, selectedSpanID, uncollapsedSpans, bounds.Start, bounds.End)
+		trace, err = m.getWindowedWaterfall(ctx, traceID, selectedSpanID, uncollapsedSpans, bounds.Start, bounds.End)
 	} else {
-		trace, err = m.getFullWaterfall(ctx, orgID, traceID, bounds)
+		trace, err = m.getFullWaterfall(ctx, traceID, bounds)
 	}
 	if err != nil {
 		return nil, err
@@ -91,8 +91,8 @@ func (m *module) GetWaterfallV4(ctx context.Context, orgID valuer.UUID, traceID 
 	return trace, nil
 }
 
-func (m *module) getFullWaterfall(ctx context.Context, orgID valuer.UUID, traceID string, bounds *spantypes.TraceBounds) (*spantypes.GettableWaterfallTrace, error) {
-	spanItems, err := m.store.GetTraceSpans(ctx, orgID, traceID, bounds)
+func (m *module) getFullWaterfall(ctx context.Context, traceID string, bounds *spantypes.TraceBounds) (*spantypes.GettableWaterfallTrace, error) {
+	spanItems, err := m.store.GetTraceSpans(ctx, traceID, bounds)
 	if err != nil {
 		return nil, err
 	}
@@ -154,20 +154,20 @@ func (m *module) GetTraceAggregations(ctx context.Context, traceID string, req *
 	return &spantypes.GettableTraceAggregations{Aggregations: results}, nil
 }
 
-func (m *module) GetFlamegraph(ctx context.Context, orgID valuer.UUID, traceID string, selectedSpanID string, selectFields []telemetrytypes.TelemetryFieldKey) (*spantypes.GettableFlamegraphTrace, error) {
+func (m *module) GetFlamegraph(ctx context.Context, traceID string, selectedSpanID string, selectFields []telemetrytypes.TelemetryFieldKey) (*spantypes.GettableFlamegraphTrace, error) {
 	bounds, err := m.store.GetTraceBounds(ctx, traceID)
 	if err != nil {
 		return nil, err
 	}
 	if bounds.NumSpans <= uint64(m.config.Flamegraph.SelectAllSpansLimit) {
-		return m.getFullFlamegraph(ctx, orgID, traceID, bounds, selectFields)
+		return m.getFullFlamegraph(ctx, traceID, bounds, selectFields)
 	}
 	m.metrics.flamegraphRequestCount.Add(ctx, 1, metric.WithAttributes(attrResponseType.String(attrResponseTypeSampled)))
-	return m.getWindowedFlamegraph(ctx, orgID, traceID, selectedSpanID, bounds, selectFields)
+	return m.getWindowedFlamegraph(ctx, traceID, selectedSpanID, bounds, selectFields)
 }
 
 // getWindowedWaterfall builds the waterfall tree with minimal data and then returns only a window of full spans.
-func (m *module) getWindowedWaterfall(ctx context.Context, orgID valuer.UUID, traceID, selectedSpanID string, uncollapsedSpans []string, start, end time.Time) (*spantypes.GettableWaterfallTrace, error) {
+func (m *module) getWindowedWaterfall(ctx context.Context, traceID, selectedSpanID string, uncollapsedSpans []string, start, end time.Time) (*spantypes.GettableWaterfallTrace, error) {
 	// Step 1: minimal fetch → build full tree → select visible window
 	minimalSpans, err := m.store.GetMinimalSpans(ctx, traceID, start, end)
 	if err != nil {
@@ -195,7 +195,7 @@ func (m *module) getWindowedWaterfall(ctx context.Context, orgID valuer.UUID, tr
 	for i, s := range selectedSpans {
 		spanIDs[i] = s.SpanID
 	}
-	fullSpans, err := m.store.GetTraceSpansByIDs(ctx, orgID, traceID, start, end, spanIDs)
+	fullSpans, err := m.store.GetTraceSpansByIDs(ctx, traceID, start, end, spanIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -250,8 +250,8 @@ func (m *module) GetThread(ctx context.Context, orgID valuer.UUID, traceID strin
 	}
 }
 
-func (m *module) getFullFlamegraph(ctx context.Context, orgID valuer.UUID, traceID string, bounds *spantypes.TraceBounds, selectFields []telemetrytypes.TelemetryFieldKey) (*spantypes.GettableFlamegraphTrace, error) {
-	fullSpans, err := m.store.GetFlamegraphSpans(ctx, orgID, traceID, bounds.Start, bounds.End, nil)
+func (m *module) getFullFlamegraph(ctx context.Context, traceID string, bounds *spantypes.TraceBounds, selectFields []telemetrytypes.TelemetryFieldKey) (*spantypes.GettableFlamegraphTrace, error) {
+	fullSpans, err := m.store.GetFlamegraphSpans(ctx, traceID, bounds.Start, bounds.End, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -264,7 +264,7 @@ func (m *module) getFullFlamegraph(ctx context.Context, orgID valuer.UUID, trace
 }
 
 // getWindowedFlamegraph returns a window of a max levels and max sampled spans per level around the selected span.
-func (m *module) getWindowedFlamegraph(ctx context.Context, orgID valuer.UUID, traceID, selectedSpanID string, bounds *spantypes.TraceBounds, selectFields []telemetrytypes.TelemetryFieldKey) (*spantypes.GettableFlamegraphTrace, error) {
+func (m *module) getWindowedFlamegraph(ctx context.Context, traceID, selectedSpanID string, bounds *spantypes.TraceBounds, selectFields []telemetrytypes.TelemetryFieldKey) (*spantypes.GettableFlamegraphTrace, error) {
 	minimalSpans, err := m.store.GetMinimalSpans(ctx, traceID, bounds.Start, bounds.End)
 	if err != nil {
 		return nil, err
@@ -284,7 +284,7 @@ func (m *module) getWindowedFlamegraph(ctx context.Context, orgID valuer.UUID, t
 		return nil, spantypes.ErrTraceNotFound
 	}
 
-	fullSpans, err := m.store.GetFlamegraphSpans(ctx, orgID, traceID, bounds.Start, bounds.End, spantypes.FlamegraphWindowSpanIDs(selectedSpans))
+	fullSpans, err := m.store.GetFlamegraphSpans(ctx, traceID, bounds.Start, bounds.End, spantypes.FlamegraphWindowSpanIDs(selectedSpans))
 	if err != nil {
 		return nil, err
 	}

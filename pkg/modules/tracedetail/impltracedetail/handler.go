@@ -37,12 +37,6 @@ func (h *handler) GetTraceSummary(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) GetWaterfallV4(rw http.ResponseWriter, r *http.Request) {
-	claims, err := authtypes.ClaimsFromContext(r.Context())
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
 	req := new(spantypes.PostableWaterfall)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
@@ -54,7 +48,7 @@ func (h *handler) GetWaterfallV4(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.module.GetWaterfallV4(r.Context(), valuer.MustNewUUID(claims.OrgID), mux.Vars(r)["traceID"], req.SelectedSpanID, req.UncollapsedSpans)
+	result, err := h.module.GetWaterfallV4(r.Context(), mux.Vars(r)["traceID"], req.SelectedSpanID, req.UncollapsedSpans)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -85,19 +79,13 @@ func (h *handler) GetTraceAggregations(rw http.ResponseWriter, r *http.Request) 
 }
 
 func (h *handler) GetFlamegraph(rw http.ResponseWriter, r *http.Request) {
-	claims, err := authtypes.ClaimsFromContext(r.Context())
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
 	req := new(spantypes.PostableFlamegraph)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	result, err := h.module.GetFlamegraph(r.Context(), valuer.MustNewUUID(claims.OrgID), mux.Vars(r)["traceID"], req.SelectedSpanID, req.SelectFields)
+	result, err := h.module.GetFlamegraph(r.Context(), mux.Vars(r)["traceID"], req.SelectedSpanID, req.SelectFields)
 	if err != nil {
 		render.Error(rw, err)
 		return

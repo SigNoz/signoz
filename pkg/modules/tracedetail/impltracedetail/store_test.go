@@ -155,61 +155,36 @@ func TestGetSpanCountByField(t *testing.T) {
 
 func TestGetTraceSpans(t *testing.T) {
 	selectSQL := "SELECT DISTINCT ON (span_id) timestamp, duration_nano, span_id, has_error, kind, resource_string_service$$name, name, resources_string, events, status_message, status_code_string, kind_string, parent_span_id, flags, is_remote, trace_state, status_code, db_name, db_operation, http_method, http_url, http_host, external_http_method, external_http_url, response_status_code, links as references, "
+	attributesSQL := "attributes, if(notEmpty(attributes), map(), attributes_string) AS attributes_string, if(notEmpty(attributes), map(), attributes_number) AS attributes_number, if(notEmpty(attributes), map(), attributes_bool) AS attributes_bool"
 	fromSQL := " FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY timestamp ASC, name ASC"
 
-	testCases := []struct {
-		name          string
-		jsonOn        bool
-		attributesSQL string
-	}{
-		{
-			name:          "FlagOff_ReadsLegacyMaps",
-			attributesSQL: "attributes_string, attributes_number, attributes_bool",
-		},
-		{
-			name:          "FlagOn_ReadsJSONAndBlanksMapsOfJSONRows",
-			jsonOn:        true,
-			attributesSQL: "if(notEmpty(attributes), map(), attributes_string) AS attributes_string, if(notEmpty(attributes), map(), attributes_number) AS attributes_number, if(notEmpty(attributes), map(), attributes_bool) AS attributes_bool, attributes",
-		},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			fl := flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureUseTraceAttributesJSON.String(): testCase.jsonOn})
-			s := newTestStoreWithMetadata(sqlmock.QueryMatcherEqual, telemetrytypestest.NewMockMetadataStore(), fl)
-			s.Mock().ExpectSelect(selectSQL + testCase.attributesSQL + fromSQL).
-				WillReturnRows(cmock.NewRows(nil, nil))
-			_, _ = s.Store().GetTraceSpans(context.Background(), valuer.GenerateUUID(), testTraceID, testBounds)
-			assert.NoError(t, s.Mock().ExpectationsWereMet())
-		})
-	}
+	s := newTestStore(sqlmock.QueryMatcherEqual)
+	s.Mock().ExpectSelect(selectSQL + attributesSQL + fromSQL).
+		WillReturnRows(cmock.NewRows(nil, nil))
+	_, _ = s.Store().GetTraceSpans(context.Background(), testTraceID, testBounds)
+	assert.NoError(t, s.Mock().ExpectationsWereMet())
 }
 
 func TestGetFlamegraphSpans(t *testing.T) {
-	selectSQL := "SELECT span_id, any(parent_span_id) AS parent_span_id, any(timestamp) AS timestamp, any(duration_nano) AS duration_nano, any(has_error) AS has_error, any(name) AS name, any(events) AS events, any(resources_string) AS resources_string, "
-	legacySQL := "any(attributes_string) AS attributes_string, any(attributes_number) AS attributes_number, any(attributes_bool) AS attributes_bool"
-	jsonSQL := "if(notEmpty(attributes), map(), any(attributes_string)) AS attributes_string, if(notEmpty(attributes), map(), any(attributes_number)) AS attributes_number, if(notEmpty(attributes), map(), any(attributes_bool)) AS attributes_bool, any(attributes) AS attributes"
+	selectSQL := "SELECT span_id, any(parent_span_id) AS parent_span_id, any(timestamp) AS timestamp, any(duration_nano) AS duration_nano, any(has_error) AS has_error, any(name) AS name, any(events) AS events, any(resources_string) AS resources_string, any(attributes) AS attributes, if(notEmpty(attributes), map(), any(attributes_string)) AS attributes_string, if(notEmpty(attributes), map(), any(attributes_number)) AS attributes_number, if(notEmpty(attributes), map(), any(attributes_bool)) AS attributes_bool"
 	fromSQL := " FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ?"
 	groupSQL := " GROUP BY span_id ORDER BY timestamp ASC, name ASC"
 
 	testCases := []struct {
 		name    string
-		jsonOn  bool
 		spanIDs []string
 		sql     string
 	}{
-		{name: "FlagOff_NoSpanIDs_ReadsLegacyMaps", sql: selectSQL + legacySQL + fromSQL + groupSQL},
-		{name: "FlagOff_WithSpanIDs_GeneratesInClause", spanIDs: []string{"span-1", "span-2"}, sql: selectSQL + legacySQL + fromSQL + " AND span_id IN (?, ?)" + groupSQL},
-		{name: "FlagOn_ReadsJSONAndBlanksMapsOfJSONRows", jsonOn: true, sql: selectSQL + jsonSQL + fromSQL + groupSQL},
+		{name: "NoSpanIDs_GeneratesBaseSQL", sql: selectSQL + fromSQL + groupSQL},
+		{name: "WithSpanIDs_GeneratesInClauseSQL", spanIDs: []string{"span-1", "span-2"}, sql: selectSQL + fromSQL + " AND span_id IN (?, ?)" + groupSQL},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			fl := flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureUseTraceAttributesJSON.String(): testCase.jsonOn})
-			s := newTestStoreWithMetadata(sqlmock.QueryMatcherEqual, telemetrytypestest.NewMockMetadataStore(), fl)
+			s := newTestStore(sqlmock.QueryMatcherEqual)
 			s.Mock().ExpectSelect(testCase.sql).
 				WillReturnRows(cmock.NewRows(nil, nil))
-			_, _ = s.Store().GetFlamegraphSpans(context.Background(), valuer.GenerateUUID(), testTraceID, testStart, testEnd, testCase.spanIDs)
+			_, _ = s.Store().GetFlamegraphSpans(context.Background(), testTraceID, testStart, testEnd, testCase.spanIDs)
 			assert.NoError(t, s.Mock().ExpectationsWereMet())
 		})
 	}
@@ -242,7 +217,7 @@ func TestGetSpanDurationByField(t *testing.T) {
 }
 
 func TestGetThreadSpans(t *testing.T) {
-	selectSQL := "SELECT DISTINCT ON (span_id) timestamp, duration_nano, span_id, parent_span_id, has_error, name, kind_string, status_code_string, status_message, resources_string, events, links as references, "
+	selectSQL := "SELECT DISTINCT ON (span_id) timestamp, duration_nano, span_id, parent_span_id, has_error, name, kind_string, status_code_string, status_message, resources_string, attributes, attributes_string, attributes_number, attributes_bool, events, links as references"
 	fromSQL := " FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND "
 	orderSQL := " ORDER BY timestamp ASC, span_id ASC LIMIT ?"
 	jsonInsideTrace := testStart.Add(500 * time.Second)
@@ -257,14 +232,14 @@ func TestGetThreadSpans(t *testing.T) {
 		{
 			name:        "FlagOff_ReadsAndFiltersLegacyMaps",
 			jsonRelease: &jsonInsideTrace,
-			selectSQL:   selectSQL + "attributes_string, attributes_number, attributes_bool",
+			selectSQL:   selectSQL,
 			whereSQL:    "(mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))",
 		},
 		{
 			name:        "FlagOn_ReleasedDuringTrace_ReadsJSONFiltersJSONThenMaps",
 			jsonOn:      true,
 			jsonRelease: &jsonInsideTrace,
-			selectSQL:   selectSQL + "if(notEmpty(attributes), map(), attributes_string) AS attributes_string, if(notEmpty(attributes), map(), attributes_number) AS attributes_number, if(notEmpty(attributes), map(), attributes_bool) AS attributes_bool, attributes",
+			selectSQL:   selectSQL,
 			whereSQL:    "(multiIf(attributes.`gen_ai.request.model` IS NOT NULL, attributes.`gen_ai.request.model`::String, mapContains(attributes_string, 'gen_ai.request.model'), attributes_string['gen_ai.request.model'], NULL) IS NOT NULL OR multiIf(attributes.`gen_ai.tool.name` IS NOT NULL, attributes.`gen_ai.tool.name`::String, mapContains(attributes_string, 'gen_ai.tool.name'), attributes_string['gen_ai.tool.name'], NULL) IS NOT NULL OR multiIf(attributes.`gen_ai.agent.name` IS NOT NULL, attributes.`gen_ai.agent.name`::String, mapContains(attributes_string, 'gen_ai.agent.name'), attributes_string['gen_ai.agent.name'], NULL) IS NOT NULL)",
 		},
 	}
