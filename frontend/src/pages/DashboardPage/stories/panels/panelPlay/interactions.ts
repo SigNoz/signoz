@@ -1,11 +1,6 @@
-/**
- * AI-owned. Generated and maintained by the `signoz-page-story` skill.
- * Do not hand-edit: regenerate instead.
- */
-
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
-import { serviceAt } from '../__story_mockdata__/constants';
+import { serviceAt } from '../__story_mockdata__/panelResponses';
 
 import { hasData, PANEL_LOAD, type PanelPlayArgs } from './args';
 

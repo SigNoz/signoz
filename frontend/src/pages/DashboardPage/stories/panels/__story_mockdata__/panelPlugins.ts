@@ -36,7 +36,7 @@ import {
 } from './panelQueries';
 import type { PanelArgs, PanelUnit } from './types';
 
-export interface PanelShape {
+interface PanelShape {
 	plugin: DashboardtypesPanelPluginDTO;
 	queries: DashboardtypesQueryDTO[];
 }

@@ -18,31 +18,32 @@ import {
 } from '@/storybook/msw/__story_mockdata__/queryRange';
 
 import {
+	partialDataWarning,
+	type PanelWindow,
+} from '../../__story_mockdata__/panelData';
+
+import {
 	HEATMAP_BUCKETS,
 	HEATMAP_COLUMNS,
 	HOLE,
 	MAX_SERIES,
 	NUMBER_VALUE,
 	QUERY_NAME,
-	serviceAt,
+	SERVICES,
 	TABLE_SECOND_COLUMN,
-	TABLE_SECOND_VALUES,
-	TABLE_VALUES,
 } from './constants';
-import type {
-	Gaps,
-	PanelRequest,
-	PanelResponseArgs,
-	PanelWindow,
-} from './types';
+import type { Gaps, PanelRequest, PanelResponseArgs } from './types';
 
-export const PANEL_WARNING: Warning = {
-	code: 'partial_data',
-	message:
-		'Some series were dropped: the metric changed temporality partway through the selected window.',
-	url: 'https://signoz.io/docs/metrics-management/types-and-aggregation/',
-	warnings: [{ message: 'Narrow the window to a period with one temporality.' }],
-};
+export const serviceAt = (index: number): string =>
+	index < SERVICES.length
+		? SERVICES[index]
+		: `${SERVICES[index % SERVICES.length]}-${Math.floor(index / SERVICES.length) + 1}`;
+
+export const TABLE_VALUES = (count: number): number[] =>
+	Array.from({ length: count }, (_unused, index) => 3800 - index * 480);
+
+const TABLE_SECOND_VALUES = (count: number): number[] =>
+	Array.from({ length: count }, (_unused, index) => 2000 + index * 600);
 
 /** Every `query_range` the panel sent since the story mounted, oldest first. */
 const requests: PanelRequest[] = [];
@@ -84,16 +85,20 @@ const latencySeries = (
 	window: PanelWindow,
 	count: number,
 	gaps: Gaps,
+	warning: Warning | undefined,
 ): MetricRangePayloadV5 =>
-	queryRangeV5TimeSeriesResponse([
-		{
-			queryName: QUERY_NAME,
-			series: Array.from({ length: count }, (_unused, index) => ({
-				labels: [{ key: { name: 'service.name' }, value: serviceAt(index) }],
-				values: latencyPoints(window, index, gaps),
-			})),
-		},
-	]);
+	queryRangeV5TimeSeriesResponse(
+		[
+			{
+				queryName: QUERY_NAME,
+				series: Array.from({ length: count }, (_unused, index) => ({
+					labels: [{ key: { name: 'service.name' }, value: serviceAt(index) }],
+					values: latencyPoints(window, index, gaps),
+				})),
+			},
+		],
+		{ warning },
+	);
 
 const heatmapCounts = (column: number, group: number): number[] =>
 	Array.from(
@@ -121,11 +126,13 @@ export const heatmapMaxCount = (groups: number): number => {
 const heatmapResponse = (
 	{ start, end }: PanelWindow,
 	count: number,
+	warning: Warning | undefined,
 ): QueryRangeV5200 => {
 	const stepMs = (end - start) / HEATMAP_COLUMNS;
 
 	return queryRangeV5HeatmapResponse({
 		buckets: HEATMAP_BUCKETS,
+		warning,
 		stepSeconds: Math.max(1, Math.round(stepMs / 1000)),
 		series: Array.from({ length: count }, (_unused, group) => ({
 			labels: [{ key: { name: 'service.name' }, value: serviceAt(group) }],
@@ -166,17 +173,6 @@ const logRows = (
 		},
 	);
 
-const withWarning = <T extends MetricRangePayloadV5 | QueryRangeV5200>(
-	payload: T,
-	warn: boolean,
-): T => {
-	if (warn) {
-		payload.data.warning = PANEL_WARNING;
-	}
-
-	return payload;
-};
-
 /** What the panel's `query_range` answers, per kind and result. */
 export const panelQueryResponse = ({
 	kind,
@@ -192,47 +188,39 @@ export const panelQueryResponse = ({
 		return queryRangeV5EmptyResponse();
 	}
 
-	const warn = result === 'warning';
+	const warning = result === 'warning' ? partialDataWarning() : undefined;
 
 	switch (kind) {
 		case 'Heatmap':
-			return withWarning(heatmapResponse(window, series), warn);
+			return heatmapResponse(window, series, warning);
 		case 'Pie':
-			return withWarning(
-				queryRangeV5ScalarTableResponse({
-					groupBy: ['service.name'],
-					aggregations: [QUERY_NAME],
-					rows: TABLE_VALUES(series).map((value, index) => [
-						serviceAt(index),
-						value,
-					]),
-				}),
-				warn,
-			);
+			return queryRangeV5ScalarTableResponse({
+				groupBy: ['service.name'],
+				aggregations: [QUERY_NAME],
+				rows: TABLE_VALUES(series).map((value, index) => [serviceAt(index), value]),
+				warning,
+			});
 		case 'Table': {
 			const second = TABLE_SECOND_VALUES(series);
 
-			return withWarning(
-				queryRangeV5ScalarTableResponse({
-					groupBy: ['service.name'],
-					aggregations: [QUERY_NAME, TABLE_SECOND_COLUMN],
-					rows: TABLE_VALUES(series).map((value, index) => [
-						serviceAt(index),
-						value,
-						second[index],
-					]),
-				}),
-				warn,
-			);
+			return queryRangeV5ScalarTableResponse({
+				groupBy: ['service.name'],
+				aggregations: [QUERY_NAME, TABLE_SECOND_COLUMN],
+				rows: TABLE_VALUES(series).map((value, index) => [
+					serviceAt(index),
+					value,
+					second[index],
+				]),
+				warning,
+			});
 		}
 		case 'Number':
-			return withWarning(queryRangeV5ScalarResponse(NUMBER_VALUE), warn);
+			return queryRangeV5ScalarResponse(NUMBER_VALUE, QUERY_NAME, { warning });
 		case 'List':
-			return withWarning(
-				queryRangeV5RawResponse(logRows(window, listRows, offset, limit)),
-				warn,
-			);
+			return queryRangeV5RawResponse(logRows(window, listRows, offset, limit), {
+				warning,
+			});
 		default:
-			return withWarning(latencySeries(window, series, gaps), warn);
+			return latencySeries(window, series, gaps, warning);
 	}
 };

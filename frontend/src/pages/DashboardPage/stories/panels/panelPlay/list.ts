@@ -1,8 +1,3 @@
-/**
- * AI-owned. Generated and maintained by the `signoz-page-story` skill.
- * Do not hand-edit: regenerate instead.
- */
-
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import { panelRequests } from '../__story_mockdata__/panelResponses';
@@ -10,7 +5,7 @@ import { panelRequests } from '../__story_mockdata__/panelResponses';
 import { hasData, PANEL_LOAD, type PanelPlayArgs } from './args';
 
 /** Rows a List page holds. */
-export const LIST_PAGE_SIZE = 25;
+const LIST_PAGE_SIZE = 25;
 
 const listRowsOnPage = (listRows: number, page: number): number =>
 	Math.max(0, Math.min(LIST_PAGE_SIZE, listRows - page * LIST_PAGE_SIZE));

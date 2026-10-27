@@ -7,18 +7,16 @@ import {
 	DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpecDTOKind as GridKind,
 	DashboardtypesPanelKindDTO as PanelKindDTO,
 	DashboardtypesSourceDTO,
-	type DashboardtypesGettableDashboardV2DTO,
-	type DashboardtypesJSONPatchOperationDTO,
 	type GetDashboardV2200,
 } from 'api/generated/services/sigNoz.schemas';
 
-import { applyJsonPatch } from '../../../DashboardContainer/optimistic/applyJsonPatch';
+import { documentStore } from '../../__story_mockdata__/documentStore';
 
 import { PANEL_NAME, PANELS_DASHBOARD_ID, STORY_PANEL_ID } from './constants';
 import { panelShape } from './panelPlugins';
 import type { PanelArgs } from './types';
 
-export const panelsDashboardResponse = (args: PanelArgs): GetDashboardV2200 => {
+const panelsDashboardResponse = (args: PanelArgs): GetDashboardV2200 => {
 	const { plugin, queries } = panelShape(args);
 
 	return {
@@ -66,29 +64,10 @@ export const panelsDashboardResponse = (args: PanelArgs): GetDashboardV2200 => {
 	};
 };
 
-/**
- * Spec edits travel as a JSON Patch whose response replaces the cache, so the
- * document is kept where the handler can apply the ops. Reseeded on every
- * control change, which is also when the story remounts.
- */
-let document: DashboardtypesGettableDashboardV2DTO | undefined;
+const store = documentStore(panelsDashboardResponse);
 
-export const seedPanelsDocument = (args: PanelArgs): void => {
-	document = panelsDashboardResponse(args).data;
-};
+export const seedPanelsDocument = store.seed;
 
-const envelope = (
-	data: DashboardtypesGettableDashboardV2DTO,
-): GetDashboardV2200 => ({ status: 'success', data });
+export const currentPanelsDocument = store.current;
 
-export const currentPanelsDocument = (args: PanelArgs): GetDashboardV2200 =>
-	envelope(document ?? panelsDashboardResponse(args).data);
-
-export const patchPanelsDocument = (
-	args: PanelArgs,
-	ops: DashboardtypesJSONPatchOperationDTO[],
-): GetDashboardV2200 => {
-	document = applyJsonPatch(document ?? panelsDashboardResponse(args).data, ops);
-
-	return envelope(document);
-};
+export const patchPanelsDocument = store.patch;

@@ -1,22 +1,13 @@
-/**
- * AI-owned. Generated and maintained by the `signoz-page-story` skill.
- * Do not hand-edit: regenerate instead.
- */
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import type { Gaps, PanelArgs, PanelResult } from '../__story_mockdata__/types';
+import type { panelsMocks } from '../Panels.stories.mocks';
 
 /** The dashboard document loads before the panel queries, then the chart sizes itself. */
 export const PANEL_LOAD = { timeout: 15000 };
 
-export interface PanelPlayArgs extends PanelArgs {
-	result: PanelResult;
-	series: number;
-	listRows: number;
-	gaps: Gaps;
-	dataState: string;
-}
+export type PanelPlayArgs = PageStoryArgs<typeof panelsMocks>;
 
-/** Whether the panel was answered with something to draw. */
+/** Whether a queried panel was answered with something to draw. */
 export const hasData = (args: PanelPlayArgs): boolean => {
 	if (args.dataState !== 'loaded' || args.result === 'empty') {
 		return false;
@@ -25,5 +16,5 @@ export const hasData = (args: PanelPlayArgs): boolean => {
 		return args.listRows > 0;
 	}
 
-	return args.kind === 'Number' || args.kind === 'Text' || args.series > 0;
+	return args.kind === 'Number' || args.series > 0;
 };

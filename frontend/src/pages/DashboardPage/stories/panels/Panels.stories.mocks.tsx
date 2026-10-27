@@ -13,7 +13,6 @@ import {
 	DashboardtypesLineStyleDTO as LineStyle,
 	DashboardtypesStackModeDTO as StackMode,
 	DashboardtypesTextAlignDTO as TextAlign,
-	type GetPublicDashboard200,
 } from 'api/generated/services/sigNoz.schemas';
 import { useDashboardPreferencesStore } from 'hooks/dashboard/useDashboardPreference';
 
@@ -23,6 +22,8 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+
+import { publicDashboardMeta } from '../__story_mockdata__/publicDashboard';
 
 import {
 	BUCKET_WIDTHS,
@@ -69,16 +70,6 @@ import type {
 
 const PANEL = 'Panels · panel';
 const DATA = 'Panels · data';
-
-// The header reads the public link on every load, and a 404 here logs an error.
-const publicMeta = (): GetPublicDashboard200 => ({
-	status: 'success',
-	data: {
-		timeRangeEnabled: true,
-		defaultTimeRange: '30m',
-		publicPath: `/public/dashboard/${PANELS_DASHBOARD_ID}`,
-	},
-});
 
 interface QueryRangeBody {
 	start: number;
@@ -247,7 +238,7 @@ export const panelsMocks = defineStoryMocks({
 			),
 
 			rest.get('http://localhost/api/v1/dashboards/:id/public', (_req, res, ctx) =>
-				res(ctx.status(200), ctx.json(publicMeta())),
+				res(ctx.status(200), ctx.json(publicDashboardMeta(PANELS_DASHBOARD_ID))),
 			),
 
 			rest.post(

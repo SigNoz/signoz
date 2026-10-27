@@ -110,12 +110,6 @@ export const TABLE_VALUE_COLUMN = QUERY_NAME;
 /** The table's second value column, which no threshold targets. */
 export const TABLE_SECOND_COLUMN = 'B';
 
-export const TABLE_VALUES = (count: number): number[] =>
-	Array.from({ length: count }, (_unused, index) => 3800 - index * 480);
-
-export const TABLE_SECOND_VALUES = (count: number): number[] =>
-	Array.from({ length: count }, (_unused, index) => 2000 + index * 600);
-
 /** Linear, so `auto` lays the rows out linearly and `log` visibly changes it. */
 export const HEATMAP_BUCKETS = [
 	100, 200, 300, 400, 500, 600, 700, 800, 900, 1000,
@@ -123,7 +117,7 @@ export const HEATMAP_BUCKETS = [
 
 export const HEATMAP_COLUMNS = 30;
 
-const SERVICES = [
+export const SERVICES = [
 	'checkout',
 	'payments',
 	'inventory',
@@ -135,8 +129,3 @@ const SERVICES = [
 ] as const;
 
 export const MAX_SERIES = SERVICES.length;
-
-export const serviceAt = (index: number): string =>
-	index < SERVICES.length
-		? SERVICES[index]
-		: `${SERVICES[index % SERVICES.length]}-${Math.floor(index / SERVICES.length) + 1}`;

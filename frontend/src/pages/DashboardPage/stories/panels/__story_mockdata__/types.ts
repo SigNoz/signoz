@@ -12,6 +12,8 @@ import type {
 	DashboardtypesTextAlignDTO as TextAlign,
 } from 'api/generated/services/sigNoz.schemas';
 
+import type { PanelWindow } from '../../__story_mockdata__/panelData';
+
 import type {
 	BUCKET_WIDTHS,
 	GAPS,
@@ -61,11 +63,6 @@ export interface PanelArgs {
 	showPoints: boolean;
 	spanGaps: SpanGaps;
 	columnUnits: boolean;
-}
-
-export interface PanelWindow {
-	start: number;
-	end: number;
 }
 
 /** What one `query_range` call asked for, as the handler reads it. */

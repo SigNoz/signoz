@@ -1,8 +1,3 @@
-/**
- * AI-owned. Generated and maintained by the `signoz-page-story` skill.
- * Do not hand-edit: regenerate instead.
- */
-
 import { expect, within } from 'storybook/test';
 
 import { PANEL_NAME } from '../__story_mockdata__/constants';

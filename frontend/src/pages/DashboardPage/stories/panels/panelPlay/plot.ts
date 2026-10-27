@@ -1,8 +1,3 @@
-/**
- * AI-owned. Generated and maintained by the `signoz-page-story` skill.
- * Do not hand-edit: regenerate instead.
- */
-
 import type { UPlotHostElement } from 'lib/uPlotV2/components/UPlotChart/utils';
 import { expect, waitFor } from 'storybook/test';
 import type uPlot from 'uplot';

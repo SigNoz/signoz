@@ -63,6 +63,12 @@ export const Bar: Story = {
 	play,
 };
 
+/** The services' bars stacked on one another at every moment. */
+export const BarStacked: Story = {
+	args: { kind: 'Bar', stack: StackMode.normal },
+	play,
+};
+
 /** The services as filled areas, drawn independently. */
 export const Area: Story = {
 	args: { kind: 'Area' },
@@ -126,6 +132,12 @@ export const Pie: Story = {
  */
 export const Number: Story = {
 	args: { kind: 'Number', thresholds: true },
+	play,
+};
+
+/** The value's query matched nothing, which the Number panel draws as its own no-data state. */
+export const NumberNoData: Story = {
+	args: { kind: 'Number', result: 'empty' },
 	play,
 };
 

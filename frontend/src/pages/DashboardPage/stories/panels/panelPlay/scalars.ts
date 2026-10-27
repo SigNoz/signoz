@@ -1,16 +1,14 @@
-/**
- * AI-owned. Generated and maintained by the `signoz-page-story` skill.
- * Do not hand-edit: regenerate instead.
- */
-
+import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { expect, waitFor, within } from 'storybook/test';
 
 import {
 	NUMBER_VALUE,
 	TABLE_THRESHOLD_VALUE,
-	TABLE_VALUES,
 } from '../__story_mockdata__/constants';
-import { serviceIndex } from '../__story_mockdata__/panelResponses';
+import {
+	serviceIndex,
+	TABLE_VALUES,
+} from '../__story_mockdata__/panelResponses';
 
 import { PANEL_LOAD, type PanelPlayArgs } from './args';
 
@@ -22,9 +20,11 @@ export const expectPie = async (
 	// The legend's icons are SVGs too; the donut is the first one.
 	const donut = chart.querySelector('svg');
 	await expect(donut?.querySelectorAll('g > path')).toHaveLength(args.series);
+	// The centre shows the slices' sum, formatted as the panel formats values.
+	const total = TABLE_VALUES(args.series).reduce((sum, value) => sum + value, 0);
 	await expect(
 		donut?.querySelector('text[text-anchor="middle"]')?.textContent,
-	).toMatch(/\d/);
+	).toBe(getYAxisFormattedValue(String(total), args.unit).replace(/\s+/g, ''));
 };
 
 export const expectNumber = async (

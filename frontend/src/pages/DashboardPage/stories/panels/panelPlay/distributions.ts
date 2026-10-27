@@ -1,8 +1,3 @@
-/**
- * AI-owned. Generated and maintained by the `signoz-page-story` skill.
- * Do not hand-edit: regenerate instead.
- */
-
 import { DashboardtypesHeatmapYScaleDTO as HeatmapYScale } from 'api/generated/services/sigNoz.schemas';
 import { getPaletteStops } from 'lib/uPlotV2/plugins/HeatmapPlugin/palettes';
 import { HEATMAP_PALETTE_MAP } from 'pages/DashboardPage/DashboardContainer/Panels/utils/chartAppearance/enumMaps';
@@ -85,11 +80,8 @@ export const expectHeatmap = async (
 		await expect(plot).toBeDefined();
 	}, PANEL_LOAD);
 	const yMax = plot?.scales.y.max ?? 0;
-	// Log and symlog lay rows out on log10 of the bounds; linear on the bounds.
-	if (
-		args.heatmapScale === HeatmapYScale.log ||
-		args.heatmapScale === HeatmapYScale.symlog
-	) {
+	// Log lays rows out on log10 of the bounds; linear on the bounds.
+	if (args.heatmapScale === HeatmapYScale.log) {
 		await expect(yMax).toBeLessThan(10);
 	} else {
 		await expect(yMax).toBeGreaterThanOrEqual(

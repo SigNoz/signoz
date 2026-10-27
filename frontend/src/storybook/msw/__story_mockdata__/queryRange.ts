@@ -69,6 +69,7 @@ export interface ScalarTableSpec {
 	/** Query names the aggregation columns answer for, after the group columns. */
 	aggregations: Array<string | ScalarAggregationColumn>;
 	rows: unknown[][];
+	warning?: Warning;
 }
 
 /**
@@ -81,6 +82,7 @@ export const queryRangeV5ScalarTableResponse = ({
 	groupBy = [],
 	aggregations,
 	rows,
+	warning,
 }: ScalarTableSpec): MetricRangePayloadV5 => {
 	const columns: ColumnDescriptor[] = [
 		...groupBy.map((name) => ({
@@ -104,6 +106,7 @@ export const queryRangeV5ScalarTableResponse = ({
 
 	return {
 		data: {
+			warning,
 			type: 'scalar',
 			data: { results: [{ columns, data: rows }] },
 			meta: {
@@ -477,12 +480,13 @@ export const queryRangeV3ForRequest = (
 		? builderTableResponse(body, options)
 		: builderTimeSeriesResponse(body, options);
 
-export interface HeatmapResponseSpec {
+interface HeatmapResponseSpec {
 	/** Ascending bucket upper bounds; each point carries one count per bound plus the open-above overflow. */
 	buckets: number[];
 	series: Querybuildertypesv5TimeSeriesDTO[];
 	stepSeconds?: number;
 	queryName?: string;
+	warning?: Warning;
 }
 
 /**
@@ -494,9 +498,11 @@ export const queryRangeV5HeatmapResponse = ({
 	series,
 	stepSeconds = 60,
 	queryName = 'A',
+	warning,
 }: HeatmapResponseSpec): QueryRangeV5200 => ({
 	status: 'success',
 	data: {
+		warning,
 		type: Querybuildertypesv5RequestTypeDTO.heatmap,
 		data: {
 			results: [
