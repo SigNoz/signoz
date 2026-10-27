@@ -164,6 +164,17 @@ func (migration *migrateRulesV1ToV2Alpha1) convertOrg(ctx context.Context, orgID
 	return nil
 }
 
+// validateRoute checks the rule's route_policy row, named after the rule. A
+// rule that never had channels got no row from migration 049 and migrates with
+// none; a rule with preferred channels but no row would lose them, so it is
+// left at v1.
+func validateRoute(route *routePolicyRow, preferredChannels []string) error {
+	if route == nil && len(preferredChannels) > 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "no route_policy row for a rule with %d preferred channels", len(preferredChannels))
+	}
+	return nil
+}
+
 // convertRule returns a v2alpha1 copy of storedRuleData, derived in the order
 // the v1 decode derived the same values, with the rule's route_policy row as it
 // must be stored alongside. Version and source are left as stored. A nil
@@ -199,17 +210,6 @@ func convertRule(ruleID string, storedRuleData *postableRule, storedRoute *route
 	rule.clearV1Fields()
 
 	return rule, convertedRoute, nil
-}
-
-// validateRoute checks the rule's route_policy row, named after the rule. A
-// rule that never had channels got no row from migration 049 and migrates with
-// none; a rule with preferred channels but no row would lose them, so it is
-// left at v1.
-func validateRoute(route *routePolicyRow, preferredChannels []string) error {
-	if route == nil && len(preferredChannels) > 0 {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "no route_policy row for a rule with %d preferred channels", len(preferredChannels))
-	}
-	return nil
 }
 
 type routePolicyRow struct {
