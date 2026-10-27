@@ -3,10 +3,15 @@ import { useEffect, useRef, useState } from 'react';
 import { useGetSavedView } from 'api/generated/services/saved-view';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { getViewColumnsAndFormatting } from 'container/SavedViews/utils/getViewColumnsAndFormatting';
-import { DataSource } from 'types/common/queryBuilder';
 
 import { usePreferenceLoader } from '../loader/usePreferenceLoader';
-import { FormattingOptions, PreferenceMode, Preferences } from '../types';
+import { isAIObservabilityPreference } from '../configs/aiObservabilityConfig';
+import {
+	FormattingOptions,
+	PreferenceDataSource,
+	PreferenceMode,
+	Preferences,
+} from '../types';
 import { usePreferenceUpdater } from '../updater/usePreferenceUpdater';
 
 export function usePreferenceSync({
@@ -15,7 +20,7 @@ export function usePreferenceSync({
 	savedViewId,
 }: {
 	mode: PreferenceMode;
-	dataSource: DataSource;
+	dataSource: PreferenceDataSource;
 	savedViewId: string | undefined;
 }): {
 	preferences: Preferences | null;
@@ -37,6 +42,10 @@ export function usePreferenceSync({
 	// memory. Discard writes the saved ones back through the updater.
 	const seededViewId = useRef<string>();
 	useEffect(() => {
+		// The AI explorer tabs have no saved-view mode.
+		if (isAIObservabilityPreference(dataSource)) {
+			return;
+		}
 		const view = viewData?.data;
 		if (view && view.id === savedViewId) {
 			if (seededViewId.current !== savedViewId) {

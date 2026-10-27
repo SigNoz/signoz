@@ -10,7 +10,13 @@ import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { has } from 'lodash-es';
 import { AllTraceFilterKeyValue } from 'constants/traceFilterKeys';
+import {
+	AI_OBSERVABILITY_URL_PARAMS,
+	getAIObservabilityDefaultColumns,
+	isAIObservabilityPreference,
+} from 'providers/preferences/configs/aiObservabilityConfig';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
+import { PreferenceDataSource } from 'providers/preferences/types';
 import {
 	QueryKeyRequestProps,
 	QueryKeySuggestionsResponseProps,
@@ -40,7 +46,8 @@ import { buildCompositeKey, getOptionsFromKeys } from './utils';
 
 interface UseOptionsMenuProps {
 	storageKey?: string;
-	dataSource: DataSource;
+	/** Whose preferences; AI explorer values still search fields as traces. */
+	dataSource: PreferenceDataSource;
 	aggregateOperator?: string;
 	initialOptions?: InitialOptions;
 }
@@ -52,14 +59,20 @@ interface UseOptionsMenu {
 }
 
 const useOptionsMenu = ({
-	dataSource,
+	dataSource: preferenceDataSource,
 	// aggregateOperator,
 	initialOptions = {},
 }: UseOptionsMenuProps): UseOptionsMenu => {
+	const isAIObservability = isAIObservabilityPreference(preferenceDataSource);
+	const dataSource = isAIObservability ? DataSource.TRACES : preferenceDataSource;
+
 	const { notifications } = useNotifications();
 	const prefCtx = usePreferenceContext();
 	// TODO: send null to updateColumns and updateFormatting if dataSource is not logs or traces
-	const slice = dataSource === DataSource.TRACES ? prefCtx.traces : prefCtx.logs;
+	let slice = dataSource === DataSource.TRACES ? prefCtx.traces : prefCtx.logs;
+	if (isAIObservability) {
+		slice = prefCtx[preferenceDataSource];
+	}
 	const { preferences, updateColumns, updateFormatting } = slice;
 
 	const [searchText, setSearchText] = useState<string>('');
@@ -75,7 +88,12 @@ const useOptionsMenu = ({
 	);
 
 	const { query: optionsQuery, redirectWithQuery: redirectWithOptionsData } =
-		useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
+		useUrlQueryData<OptionsQuery>(
+			isAIObservability
+				? AI_OBSERVABILITY_URL_PARAMS[preferenceDataSource]
+				: URL_OPTIONS,
+			defaultOptionsQuery,
+		);
 
 	const initialQueriesV5 = useMemo(
 		() =>
@@ -223,6 +241,10 @@ const useOptionsMenu = ({
 			}));
 		}
 
+		if (isAIObservability) {
+			defaultColumns = getAIObservabilityDefaultColumns(preferenceDataSource);
+		}
+
 		const finalSelectColumns = initialOptions?.selectColumns
 			? initialSelectedColumns
 			: defaultColumns;
@@ -232,7 +254,13 @@ const useOptionsMenu = ({
 			...initialOptions,
 			selectColumns: finalSelectColumns,
 		};
-	}, [dataSource, initialOptions, initialSelectedColumns]);
+	}, [
+		dataSource,
+		isAIObservability,
+		preferenceDataSource,
+		initialOptions,
+		initialSelectedColumns,
+	]);
 
 	const selectedColumnKeys = useMemo(
 		() => preferences?.columns?.map(({ name }) => name) || [],

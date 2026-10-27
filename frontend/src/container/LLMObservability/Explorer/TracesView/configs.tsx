@@ -1,5 +1,6 @@
 import { TelemetryFieldKey } from 'api/v5/v5';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
+import { buildCompositeKey } from 'container/OptionsMenu/utils';
 import { getFieldColumn, TracesTableRow } from '../TracesTable/getFieldColumn';
 import { DEFAULT_PER_PAGE_OPTIONS } from 'hooks/queryPagination';
 
@@ -40,15 +41,51 @@ export const sortByDefaultOrder = (
 ): TelemetryFieldKey[] =>
 	[...fields].sort((a, b) => orderRank(a) - orderRank(b));
 
-/** Anything the keys endpoint adds beyond the ordered set starts hidden; only applied at first init, since the store persists hidden ids. */
+/** Anything the keys endpoint adds beyond the ordered set starts hidden; only applied while no selection is stored. */
 const DEFAULT_VISIBLE_FIELDS = new Set(DEFAULT_COLUMN_ORDER);
+
+/** Matches the id getFieldColumn derives, so fields and columns address alike. */
+export const columnIdOf = (field: TelemetryFieldKey): string =>
+	buildCompositeKey(field.name, field.fieldContext, field.fieldDataType);
+
+export const getDefaultTraceViewFields = (
+	availableFields: TelemetryFieldKey[],
+): TelemetryFieldKey[] =>
+	availableFields.filter((field) => DEFAULT_VISIBLE_FIELDS.has(field.name));
+
+/** The selection the old column store encoded; `null` when it matches the defaults. */
+export const getLegacyTraceViewSelection = (
+	availableFields: TelemetryFieldKey[],
+	hiddenColumnIds: string[],
+	columnOrder: string[],
+): TelemetryFieldKey[] | null => {
+	const hidden = new Set(hiddenColumnIds);
+
+	// A saved order lists exactly the columns the user kept.
+	if (columnOrder.length) {
+		const orderIndex = new Map(columnOrder.map((id, index) => [id, index]));
+		const kept = availableFields
+			.filter((field) => orderIndex.has(columnIdOf(field)))
+			.filter((field) => !hidden.has(columnIdOf(field)));
+		return kept.length
+			? kept.sort(
+					(a, b) =>
+						(orderIndex.get(columnIdOf(a)) ?? 0) -
+						(orderIndex.get(columnIdOf(b)) ?? 0),
+				)
+			: null;
+	}
+
+	const defaults = getDefaultTraceViewFields(availableFields);
+	const kept = defaults.filter((field) => !hidden.has(columnIdOf(field)));
+	return kept.length === defaults.length ? null : kept;
+};
 
 export const buildTraceViewColumns = (
 	fields: TelemetryFieldKey[],
 ): TableColumnDef<TracesTableRow>[] =>
 	fields.map((field) => ({
 		...getFieldColumn(field),
-		defaultVisibility: DEFAULT_VISIBLE_FIELDS.has(field.name),
 		// The shared column builder pins anything in TIMESTAMP_FIELD_NAMES; these stay movable.
 		enableMove: true,
 		enableRemove: field.name !== TRACE_ID_COLUMN_ID,

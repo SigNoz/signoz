@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import useUrlQuery from 'hooks/useUrlQuery';
 import {
+	AIObservabilityPreference,
 	PreferenceContextValue,
 	PreferenceMode,
 } from 'providers/preferences/types';
@@ -47,12 +48,33 @@ export function PreferenceContextProvider({
 		dataSource: DataSource.TRACES,
 	});
 
+	// The AI explorer tabs have no saved-view mode.
+	const aiObservabilityListSlice = usePreferenceSync({
+		mode: PreferenceMode.DIRECT,
+		savedViewId: undefined,
+		dataSource: AIObservabilityPreference.LIST,
+	});
+
+	const aiObservabilityTraceSlice = usePreferenceSync({
+		mode: PreferenceMode.DIRECT,
+		savedViewId: undefined,
+		dataSource: AIObservabilityPreference.TRACE,
+	});
+
+
 	const value = useMemo<PreferenceContextValue>(
 		() => ({
 			logs: logsSlice,
 			traces: tracesSlice,
+			[AIObservabilityPreference.LIST]: aiObservabilityListSlice,
+			[AIObservabilityPreference.TRACE]: aiObservabilityTraceSlice,
 		}),
-		[logsSlice, tracesSlice],
+		[
+			logsSlice,
+			tracesSlice,
+			aiObservabilityListSlice,
+			aiObservabilityTraceSlice,
+		],
 	);
 
 	return (

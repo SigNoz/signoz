@@ -18,7 +18,9 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { useOptionsMenu } from 'container/OptionsMenu';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
+import { AIObservabilityPreference } from 'providers/preferences/types';
 import { getTraceLink, transformSpanRows } from './utils';
 import { getFieldColumn, TracesTableRow } from '../TracesTable/getFieldColumn';
 import TracesTable from '../TracesTable/TracesTable';
@@ -38,7 +40,6 @@ import { getListOrderBy, setListOrderBy } from 'utils/explorerUtils';
 import TraceExplorerControls from '../Controls';
 import { getListViewQuery } from '../explorerUtils';
 import { PER_PAGE_OPTIONS, TIMESTAMP_FIELD } from './configs';
-import { useListViewColumns } from './useListViewColumns';
 import './ListView.styles.scss';
 
 import styles from './ListView.module.scss';
@@ -74,12 +75,13 @@ function ListView({
 		loading: timeRangeUpdateLoading,
 	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
-	const {
-		selectedFields,
-		fieldsSelectorConfig,
-		onColumnOrderChange,
-		onColumnRemove,
-	} = useListViewColumns();
+	const { options, config } = useOptionsMenu({
+		dataSource: AIObservabilityPreference.LIST,
+	});
+	const selectedFields = useMemo(
+		() => options?.selectColumns ?? [],
+		[options?.selectColumns],
+	);
 
 	// Sorted names: stable on reorder, changes on add/remove (the API only returns selected columns).
 	const selectColumnsSignature = useMemo(
@@ -147,7 +149,10 @@ function ListView({
 			queryKey,
 			enabled:
 				// don't make api call while the time range state in redux is loading
-				!timeRangeUpdateLoading && !!stagedQuery && panelType === PANEL_TYPES.LIST,
+				!timeRangeUpdateLoading &&
+				!!stagedQuery &&
+				panelType === PANEL_TYPES.LIST &&
+				!!selectedFields.length,
 		},
 	);
 
@@ -179,6 +184,13 @@ function ListView({
 				...selectedFields.filter((field) => field.name !== TIMESTAMP_FIELD.name),
 			].map((field) => getFieldColumn(field)),
 		[selectedFields],
+	);
+
+	const handleColumnOrderChange = useCallback(
+		(cols: TableColumnDef<TracesTableRow>[]): void => {
+			config?.addColumn?.onReorder(cols.map((c) => c.id));
+		},
+		[config],
 	);
 
 	const rows = useMemo(
@@ -220,7 +232,7 @@ function ListView({
 					isLoading={isFetching}
 					totalCount={rows.length}
 					perPageOptions={PER_PAGE_OPTIONS}
-					config={fieldsSelectorConfig}
+					config={config}
 				/>
 			</div>
 
@@ -235,8 +247,8 @@ function ListView({
 				isError={isError}
 				error={error}
 				isFilterApplied={isFilterApplied}
-				onColumnOrderChange={onColumnOrderChange}
-				onColumnRemove={onColumnRemove}
+				onColumnOrderChange={handleColumnOrderChange}
+				onColumnRemove={config?.addColumn?.onRemove}
 			/>
 		</div>
 	);
