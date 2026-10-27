@@ -23,7 +23,7 @@ import {
  * (mousemove arrives) but `cursor.drag._x === false` and `select.width === 0` —
  * the synthetic mousedown never starts a drag. Chromium and Firefox zoom fine,
  * so this looks like input synthesis rather than the app, though unproven.
- * TC-03/TC-05 still run here: they assert NO zoom, which stays meaningful.
+ * TC-03 still runs here: it asserts NO zoom, which stays meaningful.
  */
 function skipDragZoomOnWebkit(browserName: string): void {
 	test.skip(
@@ -165,13 +165,21 @@ test.describe('Dashboards — panel zoom', () => {
 	test('TC-05 zooming inside the View modal leaves the dashboard window alone', async ({
 		dashboards,
 		panels,
+		browserName,
 	}) => {
+		skipDragZoomOnWebkit(browserName);
 		await dashboards.seedAndOpen(singlePanelDashboard());
 
 		await panels.view.open(SINGLE_PANEL_ID);
 		await expect(panels.view.chart.plotArea()).toBeVisible();
+		const xSpan = async (): Promise<number> => {
+			const { x } = await panels.view.chart.scales();
+			return (x.max ?? 0) - (x.min ?? 0);
+		};
+		const before = await xSpan();
 
 		await panels.view.chart.drag(0.3, 0.7);
+		await expect.poll(xSpan).toBeLessThan(before * 0.6);
 
 		// The modal keeps its own window.
 		expect(dashboards.param('startTime')).toBeNull();

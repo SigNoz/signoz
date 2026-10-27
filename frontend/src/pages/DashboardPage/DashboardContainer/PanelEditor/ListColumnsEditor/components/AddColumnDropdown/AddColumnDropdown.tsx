@@ -87,7 +87,7 @@ function AddColumnDropdown({
 								value={field.name}
 								isSelected={selectedNames.has(field.name)}
 								onSelect={(): void => onToggle(field)}
-								data-testid={`list-columns-suggestion-${field.name}`}
+								data-testid="list-columns-suggestion"
 							>
 								{field.name}
 							</ComboboxItem>

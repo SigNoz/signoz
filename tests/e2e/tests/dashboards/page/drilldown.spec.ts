@@ -197,11 +197,16 @@ test.describe('Dashboards — panel drilldown', () => {
 		await queryRange.respond(ONE_SERIES);
 		await dashboards.seedAndOpen(queryTypesDashboard());
 
-		const target = panels.panel(QUERY_TYPE_PANELS.promql);
-		await expect(target.renderer(PanelKind.TimeSeries)).toBeVisible();
+		const promql = panels.panel(QUERY_TYPE_PANELS.promql);
+		const builder = panels.panel(QUERY_TYPE_PANELS.builder);
+		await expect(promql.renderer(PanelKind.TimeSeries)).toBeVisible();
+		await expect(builder.renderer(PanelKind.TimeSeries)).toBeVisible();
 
-		// Gated to QUERY_BUILDER queries.
-		await target.chart.click();
+		// Gated to QUERY_BUILDER queries. A menu opened by the first click would
+		// swallow the second as a backdrop click, so the builder menu proves it.
+		await promql.chart.clickPoint();
 		await expect(panels.drilldown.menu()).toHaveCount(0);
+		await builder.chart.clickPoint();
+		await expect(panels.drilldown.menu()).toBeVisible();
 	});
 });

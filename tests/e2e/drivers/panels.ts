@@ -22,7 +22,6 @@ import { type TableRows, tableAt } from './panels/table';
 // lives in its own part under ./panels, and so does a kind with UI of its own.
 
 export const PanelMessageText = {
-	noQueryTitle: 'Nothing to visualize yet',
 	// Curly apostrophe (U+2019): a straight quote will not match.
 	errorTitle: 'Couldn’t load panel data',
 	noDataTitle: 'No data in this time range',
@@ -93,6 +92,8 @@ export interface Panels {
 		item(testId: string): Locator;
 		back(menu: 'breakout' | 'var'): Locator;
 		breakoutSearch(): Locator;
+		/** The panel's saved context links, by label. */
+		contextLinks(): Locator;
 		/** A page-level Escape does nothing: the handler needs the backdrop. */
 		dismiss(): Promise<void>;
 	};
@@ -181,6 +182,7 @@ function panelsDriver(page: Page): Panels {
 					),
 			back: (submenu) => page.getByTestId(`drilldown-${submenu}-back`),
 			breakoutSearch: () => page.getByPlaceholder('Search breakout options...'),
+			contextLinks: () => page.getByTestId('drilldown-context-link'),
 			async dismiss() {
 				// A corner, since the menu opens over the clicked point.
 				await page

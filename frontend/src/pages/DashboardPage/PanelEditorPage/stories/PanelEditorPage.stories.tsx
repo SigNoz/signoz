@@ -99,7 +99,7 @@ export const ListPanelAddColumnOpen: Story = {
 				timeout: 10_000,
 			}),
 		);
-		await screen.findAllByTestId(/^list-columns-suggestion-/);
+		await screen.findAllByTestId('list-columns-suggestion');
 	},
 };
 

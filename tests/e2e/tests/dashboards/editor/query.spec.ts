@@ -135,7 +135,7 @@ test.describe('Dashboards — panel editor query pane', () => {
 		);
 
 		// Logs aggregate by expression, so there's no metric to fill.
-		await expect(editor.query.runButton()).toBeVisible();
+		await expect(editor.preview.renderer(PanelKind.TimeSeries)).toBeVisible();
 		await editor.query.run();
 		await editor.save();
 	});

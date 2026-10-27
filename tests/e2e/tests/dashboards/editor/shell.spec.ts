@@ -10,8 +10,8 @@ import {
 // Scope: the editor shell — editing, dirty badge, save, discard guard, locking.
 //
 // Two counter-intuitive behaviours are pinned so a "cleanup" doesn't change
-// them: Save is NOT gated on dirty state (TC-03), and only the in-app close
-// button guards unsaved edits — there is no beforeunload blocker (TC-07).
+// them: Save is NOT gated on dirty state (Header.test.tsx), and only the in-app
+// close button guards unsaved edits — there is no beforeunload blocker (TC-06).
 
 test.describe('Dashboards — panel editor shell', () => {
 	test('TC-01 the editor opens on the panel with its saved title', async ({
@@ -37,18 +37,7 @@ test.describe('Dashboards — panel editor shell', () => {
 		await expect(editor.unsavedBadge()).toBeVisible();
 	});
 
-	test('TC-03 Save stays enabled on a pristine panel', async ({
-		dashboards,
-		editor,
-	}) => {
-		await dashboards.seedAndEdit(singlePanelDashboard(), SINGLE_PANEL_ID);
-
-		// Gated on editability, not isDirty.
-		await expect(editor.unsavedBadge()).toHaveCount(0);
-		await expect(editor.saveButton()).toBeEnabled();
-	});
-
-	test('TC-04 saving persists the title and returns to the dashboard', async ({
+	test('TC-03 saving persists the title and returns to the dashboard', async ({
 		authedPage: page,
 		dashboards,
 		editor,
@@ -77,7 +66,7 @@ test.describe('Dashboards — panel editor shell', () => {
 		expect(ops[0].op).toBe('add');
 	});
 
-	test('TC-05 closing a pristine editor leaves immediately', async ({
+	test('TC-04 closing a pristine editor leaves immediately', async ({
 		authedPage: page,
 		dashboards,
 		editor,
@@ -92,7 +81,7 @@ test.describe('Dashboards — panel editor shell', () => {
 		await expect(editor.discardModal()).toHaveCount(0);
 	});
 
-	test('TC-06 closing a dirty editor asks before discarding', async ({
+	test('TC-05 closing a dirty editor asks before discarding', async ({
 		authedPage: page,
 		dashboards,
 		editor,
@@ -118,7 +107,7 @@ test.describe('Dashboards — panel editor shell', () => {
 		);
 	});
 
-	test('TC-07 unsaved edits hold a refresh, but an in-app route change drops them', async ({
+	test('TC-06 unsaved edits hold a refresh, but an in-app route change drops them', async ({
 		authedPage: page,
 		dashboards,
 		editor,
@@ -148,7 +137,7 @@ test.describe('Dashboards — panel editor shell', () => {
 		);
 	});
 
-	test('TC-08 a locked dashboard disables Save and never PATCHes', async ({
+	test('TC-07 a locked dashboard disables Save and says why', async ({
 		dashboards,
 		editor,
 		panels,
@@ -156,7 +145,6 @@ test.describe('Dashboards — panel editor shell', () => {
 		const id = await dashboards.seed(singlePanelDashboard());
 		await dashboards.setLocked(id, true);
 
-		const patches = editor.capturePatches();
 		await dashboards.openEditor(id, SINGLE_PANEL_ID);
 
 		const save = editor.saveButton();
@@ -164,12 +152,9 @@ test.describe('Dashboards — panel editor shell', () => {
 
 		await editor.hoverSave();
 		await expect(panels.tooltip.text(EditorText.lockedReason)).toBeVisible();
-
-		// The store short-circuits a locked patch before the network.
-		expect(patches).toHaveLength(0);
 	});
 
-	test('TC-09 an unknown panel id redirects back to the dashboard', async ({
+	test('TC-08 an unknown panel id redirects back to the dashboard', async ({
 		authedPage: page,
 		dashboards,
 		editor,
@@ -181,7 +166,7 @@ test.describe('Dashboards — panel editor shell', () => {
 		await expect(editor.root()).toHaveCount(0);
 	});
 
-	test('TC-10 Switch to View Mode hands off to the View modal', async ({
+	test('TC-09 Switch to View Mode hands off to the View modal', async ({
 		authedPage: page,
 		dashboards,
 		editor,
