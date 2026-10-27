@@ -2,6 +2,8 @@ import { ArrowRight } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { openInNewTab } from 'utils/navigation';
 
+import noDataUrl from '@/assets/Icons/no-data.svg';
+
 import { LLM_OBSERVABILITY_DOCS_URL } from '../constants';
 
 import styles from './ThreadNoAiSpans.module.scss';
@@ -9,9 +11,7 @@ import styles from './ThreadNoAiSpans.module.scss';
 function ThreadNoAiSpans(): JSX.Element {
 	return (
 		<div className={styles.root} data-testid="thread-empty">
-			<span className={styles.emoji} aria-hidden>
-				🚏
-			</span>
+			<img src={noDataUrl} alt="" className={styles.noDataImg} />
 			<span className={styles.title}>
 				This trace has no spans from AI-related actions
 			</span>
