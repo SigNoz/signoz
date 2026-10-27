@@ -100,25 +100,23 @@ func (QueryType) Enum() []any {
 }
 
 type AlertCompositeQuery struct {
-	Queries []qbtypes.QueryEnvelope `json:"queries" required:"true"`
+	Queries []qbtypes.QueryEnvelope `json:"queries" required:"true" description:"The queries to evaluate, at least one. Every envelope type must match queryType: builder_query and builder_formula for builder, promql for promql, clickhouse_sql for clickhouse_sql."`
 
-	PanelType PanelType `json:"panelType" required:"true"`
-	QueryType QueryType `json:"queryType" required:"true"`
-	// Unit for the time series data shown in the graph
-	// This is used to format the value and threshold
-	Unit string `json:"unit,omitempty"`
+	PanelType PanelType `json:"panelType" required:"true" description:"The panel the UI renders the queries with: graph, table or value. Use graph for alerts."`
+	QueryType QueryType `json:"queryType" required:"true" description:"The query language of every query: builder, promql or clickhouse_sql."`
+	Unit      string    `json:"unit,omitempty" description:"The unit of the query result, such as percent, ms or bytes. Used to format values in notifications and to convert thresholds given in a different targetUnit."`
 }
 
 type RuleCondition struct {
-	CompositeQuery    *AlertCompositeQuery `json:"compositeQuery" required:"true"`
-	AlertOnAbsent     bool                 `json:"alertOnAbsent,omitempty"`
-	AbsentFor         uint64               `json:"absentFor,omitempty"`
-	Algorithm         string               `json:"algorithm,omitempty"`
-	Seasonality       Seasonality          `json:"seasonality,omitzero"`
-	SelectedQuery     string               `json:"selectedQueryName,omitempty"`
-	RequireMinPoints  bool                 `json:"requireMinPoints,omitempty"`
-	RequiredNumPoints int                  `json:"requiredNumPoints,omitempty"`
-	Thresholds        *RuleThresholdData   `json:"thresholds" required:"true"`
+	CompositeQuery    *AlertCompositeQuery `json:"compositeQuery" required:"true" description:"The queries whose result is compared against the thresholds."`
+	AlertOnAbsent     bool                 `json:"alertOnAbsent,omitempty" description:"Whether to fire a nodata alert when the query returns no data. Defaults to false."`
+	AbsentFor         uint64               `json:"absentFor,omitempty" description:"How many minutes without data pass before the nodata alert fires. Ignored unless alertOnAbsent is true."`
+	Algorithm         string               `json:"algorithm,omitempty" description:"anomaly_rule only: the anomaly detection algorithm. The supported value is standard."`
+	Seasonality       Seasonality          `json:"seasonality,omitzero" description:"anomaly_rule only: the seasonal period the history is compared against, hourly, daily or weekly."`
+	SelectedQuery     string               `json:"selectedQueryName,omitempty" description:"The name of the query whose result is evaluated, such as A or F1. Must match a query in compositeQuery. When omitted, F1 is used if present, otherwise the enabled query with the highest name."`
+	RequireMinPoints  bool                 `json:"requireMinPoints,omitempty" description:"Whether a series is skipped until it has at least requiredNumPoints points in the window. Defaults to false."`
+	RequiredNumPoints int                  `json:"requiredNumPoints,omitempty" description:"The minimum number of points a series needs before it is evaluated. Must be greater than 0 when requireMinPoints is true."`
+	Thresholds        *RuleThresholdData   `json:"thresholds" required:"true" description:"The thresholds to evaluate, as a kind and spec."`
 }
 
 func (rc *RuleCondition) SelectedQueryName() string {
