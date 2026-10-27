@@ -144,7 +144,7 @@ const anomalyCondition = (seed: RuleSeed): RuletypesRuleConditionDTO => {
 			{
 				name: Querybuildertypesv5FunctionNameDTO.anomaly,
 				args: [
-					{ name: 'z_score_threshold', value: 3 },
+					{ name: 'z_score_threshold', value: 2 },
 					{ name: 'seasonality', value: 'daily' },
 				],
 			},
@@ -163,6 +163,14 @@ const anomalyCondition = (seed: RuleSeed): RuletypesRuleConditionDTO => {
 					matchType: RuletypesMatchTypeDTO.all_the_times,
 					op: RuletypesCompareOperatorDTO.below,
 					target: -3,
+					targetUnit: '',
+					channels: ['ops-slack'],
+				},
+				{
+					name: 'warning',
+					matchType: RuletypesMatchTypeDTO.all_the_times,
+					op: RuletypesCompareOperatorDTO.below,
+					target: -2,
 					targetUnit: '',
 					channels: ['ops-slack'],
 				},
