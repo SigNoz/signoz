@@ -8,8 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// The examples are advertised in the OpenAPI spec as payloads the API accepts,
-// so each must decode through the same validation the handler runs.
 func TestTreemapExamplesAreValidPayloads(t *testing.T) {
 	for _, ex := range treemapRequestExamples() {
 		t.Run(ex.Name, func(t *testing.T) {

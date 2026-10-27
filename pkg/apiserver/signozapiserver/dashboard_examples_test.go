@@ -10,8 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// The examples are advertised in the OpenAPI spec as payloads the API accepts,
-// so each must decode through the same validation the handlers run.
 func TestDashboardExamplesAreValidPayloads(t *testing.T) {
 	for _, ex := range createDashboardExamples() {
 		t.Run("create/"+ex.Name, func(t *testing.T) {
