@@ -12,14 +12,14 @@ import (
 
 // PublicWidgetQueryRangeParams are the query params of the public panel query-range endpoint.
 type PublicWidgetQueryRangeParams struct {
-	StartTime string `query:"startTime" required:"false"`
-	EndTime   string `query:"endTime" required:"false"`
+	StartTime string `query:"startTime" required:"false" description:"Start of the time range as a Unix timestamp in milliseconds. Honored only when the public dashboard has timeRangeEnabled."`
+	EndTime   string `query:"endTime" required:"false" description:"End of the time range as a Unix timestamp in milliseconds. Honored only when the public dashboard has timeRangeEnabled."`
 }
 
 // GettablePublicDashboardDataV2 is the anonymous-facing payload of a v2 dashboard.
 type GettablePublicDashboardDataV2 struct {
-	Dashboard       *GettableDashboardV2      `json:"dashboard"`
-	PublicDashboard *GettablePublicDasbhboard `json:"publicDashboard"`
+	Dashboard       *GettableDashboardV2      `json:"dashboard" description:"The dashboard with panel and variable queries redacted."`
+	PublicDashboard *GettablePublicDasbhboard `json:"publicDashboard" description:"The sharing settings."`
 }
 
 // NewPublicDashboardDataFromDashboardV2 builds the anonymous v2 payload: panel queries

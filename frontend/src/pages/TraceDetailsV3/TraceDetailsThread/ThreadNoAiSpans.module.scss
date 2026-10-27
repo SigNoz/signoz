@@ -1,29 +1,31 @@
 .root {
+	flex: 1;
 	display: flex;
 	flex-direction: column;
-	align-items: flex-start;
-	gap: var(--spacing-12);
-	padding: var(--spacing-20) var(--spacing-24);
-}
-
-.message {
-	display: flex;
-	flex-direction: column;
+	align-items: center;
+	justify-content: center;
 	gap: var(--spacing-4);
-	max-width: 428px;
+	padding: var(--spacing-16);
+	text-align: center;
 }
 
-.emoji {
-	font-size: 32px;
-	line-height: 1;
+.noDataImg {
+	height: 32px;
+	width: 32px;
 }
 
-.paragraphs {
-	display: flex;
-	flex-direction: column;
-	gap: var(--paragraph-base-500-line-height);
-}
-
-.highlight {
+.title {
+	font-size: var(--periscope-font-size-medium);
+	font-weight: var(--font-weight-medium);
 	color: var(--l1-foreground);
+}
+
+.description {
+	max-width: 420px;
+	font-size: var(--periscope-font-size-base);
+	color: var(--l2-foreground);
+}
+
+.actions {
+	margin-top: var(--spacing-4);
 }
