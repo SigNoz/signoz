@@ -9,6 +9,7 @@ import CheckboxFilterV2 from '../CheckboxFilterV2';
 import {
 	DEFAULT_FILTER,
 	DEFAULT_USE_FIELD_APIS,
+	EXTRA_VALUES,
 	mockFieldsValuesAPI,
 	mockFieldsValuesAPILoading,
 	setupServer,
@@ -89,7 +90,7 @@ describe('CheckboxFilterV2 - states', () => {
 								data: {
 									values: {
 										relatedValues: [],
-										stringValues: ['production', 'staging'],
+										stringValues: ['production', 'staging', ...EXTRA_VALUES],
 										numberValues: [],
 									},
 								},
@@ -110,7 +111,6 @@ describe('CheckboxFilterV2 - states', () => {
 
 			await screen.findByTestId('checkbox-value-row-production');
 
-			await user.click(screen.getByTestId('checkbox-filter-search-toggle'));
 			const searchInput = screen.getByTestId('checkbox-filter-search');
 			await user.type(searchInput, 'prod');
 

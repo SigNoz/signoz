@@ -32,25 +32,25 @@ type PublicDashboard struct {
 	types.Identifiable
 	types.TimeAuditable
 
-	TimeRangeEnabled bool        `json:"timeRangeEnabled"`
-	DefaultTimeRange string      `json:"defaultTimeRange"`
-	DashboardID      valuer.UUID `json:"dashboardId"`
+	TimeRangeEnabled bool        `json:"timeRangeEnabled" description:"Whether anonymous viewers may change the time range."`
+	DefaultTimeRange string      `json:"defaultTimeRange" description:"The time range shown to anonymous viewers by default, as a Go duration such as 30m, 1h or 24h. Accepted units are ns, us, ms, s, m and h; write a day as 24h."`
+	DashboardID      valuer.UUID `json:"dashboardId" description:"The id of the dashboard being shared."`
 }
 
 type GettablePublicDasbhboard struct {
-	TimeRangeEnabled bool   `json:"timeRangeEnabled"`
-	DefaultTimeRange string `json:"defaultTimeRange"`
-	PublicPath       string `json:"publicPath"`
+	TimeRangeEnabled bool   `json:"timeRangeEnabled" description:"Whether anonymous viewers may change the time range."`
+	DefaultTimeRange string `json:"defaultTimeRange" description:"The time range shown to anonymous viewers by default, as a Go duration such as 30m, 1h or 24h. Accepted units are ns, us, ms, s, m and h; write a day as 24h."`
+	PublicPath       string `json:"publicPath" description:"The path segment of the public URL."`
 }
 
 type PostablePublicDashboard struct {
-	TimeRangeEnabled bool   `json:"timeRangeEnabled"`
-	DefaultTimeRange string `json:"defaultTimeRange"`
+	TimeRangeEnabled bool   `json:"timeRangeEnabled" description:"Whether anonymous viewers may change the time range."`
+	DefaultTimeRange string `json:"defaultTimeRange" description:"The time range shown to anonymous viewers by default, as a Go duration such as 30m, 1h or 24h. Accepted units are ns, us, ms, s, m and h; write a day as 24h."`
 }
 
 type UpdatablePublicDashboard struct {
-	TimeRangeEnabled bool   `json:"timeRangeEnabled"`
-	DefaultTimeRange string `json:"defaultTimeRange"`
+	TimeRangeEnabled bool   `json:"timeRangeEnabled" description:"Whether anonymous viewers may change the time range."`
+	DefaultTimeRange string `json:"defaultTimeRange" description:"The time range shown to anonymous viewers by default, as a Go duration such as 30m, 1h or 24h. Accepted units are ns, us, ms, s, m and h; write a day as 24h."`
 }
 
 func NewPublicDashboard(timeRangeEnabled bool, defaultTimeRange string, dashboardID valuer.UUID) *PublicDashboard {
