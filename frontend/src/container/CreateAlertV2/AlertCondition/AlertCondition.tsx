@@ -1,9 +1,8 @@
 import { Button, Tooltip } from 'antd';
 import classNames from 'classnames';
-import { FeatureKeys } from 'constants/features';
 import { Activity, ChartLine } from '@signozhq/icons';
 import { useChannelOptions } from 'hooks/notificationChannels/useChannelOptions';
-import { useAppContext } from 'providers/App/App';
+import { useIsAnomalyDetectionAvailable } from 'hooks/useIsAnomalyDetectionAvailable';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { useCreateAlertState } from '../context';
@@ -18,7 +17,6 @@ import './styles.scss';
 
 function AlertCondition(): JSX.Element {
 	const { alertType, setAlertType } = useCreateAlertState();
-	const { featureFlags } = useAppContext();
 	useAnomalyFunctionSync();
 
 	const {
@@ -28,11 +26,9 @@ function AlertCondition(): JSX.Element {
 		refetch: refreshChannels,
 	} = useChannelOptions();
 
-	const isAnomalyDetectionEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.ANOMALY_DETECTION)
-			?.active || false;
+	const isAnomalyDetectionEnabled = useIsAnomalyDetectionAvailable();
 
-	// Anomaly rules stay editable even when the flag is off.
+	// Anomaly rules stay editable even without a cloud or enterprise license.
 	const showMultipleTabs =
 		alertType === AlertTypes.ANOMALY_BASED_ALERT ||
 		(isAnomalyDetectionEnabled && alertType === AlertTypes.METRICS_BASED_ALERT);

@@ -253,8 +253,8 @@ describe('AlertCondition', () => {
 		expect(screen.getByTestId(ANOMALY_VIEW_TEST_ID)).toBeInTheDocument();
 	});
 
-	it('hides the anomaly tab for METRICS_BASED_ALERT when anomaly detection is off', () => {
-		renderAlertCondition('METRIC_BASED_ALERT', { featureFlags: [] });
+	it('hides the anomaly tab for METRICS_BASED_ALERT on the community edition', () => {
+		renderAlertCondition('METRIC_BASED_ALERT', { activeLicense: null });
 
 		expect(screen.getByText(THRESHOLD_TAB_TEXT)).toBeInTheDocument();
 		expect(screen.queryByText(ANOMALY_TAB_TEXT)).not.toBeInTheDocument();

@@ -1,5 +1,8 @@
 import { fireEvent, screen } from '@testing-library/react';
-import { FeatureKeys } from 'constants/features';
+import {
+	LicensePlatform,
+	LicenseResModel,
+} from 'types/api/licensesV3/getActive';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { getAppContextMockState } from 'container/RoutingPolicies/__tests__/testUtils';
@@ -74,6 +77,10 @@ const useCompositeQueryParamSpy = jest.spyOn(
 const useUrlQuerySpy = jest.spyOn(useUrlQueryHooks, 'default');
 const useSafeNavigateSpy = jest.spyOn(navigateHooks, 'useSafeNavigate');
 const useAppContextSpy = jest.spyOn(appHooks, 'useAppContext');
+
+const CLOUD_LICENSE = {
+	platform: LicensePlatform.CLOUD,
+} as LicenseResModel;
 
 const mockSetUrlQuery = jest.fn();
 const mockToString = jest.fn();
@@ -273,15 +280,7 @@ describe('CreateAlertRule', () => {
 		it('should navigate with anomaly detection params for anomaly alert', () => {
 			useAppContextSpy.mockReturnValue({
 				...getAppContextMockState({}),
-				featureFlags: [
-					{
-						name: FeatureKeys.ANOMALY_DETECTION,
-						active: true,
-						usage: 0,
-						usage_limit: -1,
-						route: '',
-					},
-				],
+				activeLicense: CLOUD_LICENSE,
 			});
 
 			render(<CreateAlertRule />);
