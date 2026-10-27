@@ -128,6 +128,11 @@ export interface SavedViewsListRowProps {
 	hover: SavedViewsListRowHoverProps;
 }
 
+export type SavedViewsRowLinkProps = Pick<
+	SavedViewsListRowProps,
+	'view' | 'isActive' | 'onSelect'
+>;
+
 export type SavedViewRowActionKey =
 	| 'copyLink'
 	| 'copyId'

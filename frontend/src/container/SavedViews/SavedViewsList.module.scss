@@ -54,9 +54,8 @@
 	&.isActive {
 		background-color: var(--l3-background);
 
-		.rowName {
-			--button-variant-ghost-color: var(--l1-foreground);
-			--button-variant-ghost-hover-color: var(--l1-foreground);
+		.rowLink {
+			color: var(--l1-foreground);
 		}
 	}
 }
@@ -76,18 +75,32 @@
 	opacity: 1;
 }
 
-.rowName {
-	--button-height: 100%;
-	--button-padding: 0 var(--spacing-6);
-	--button-justify-content: flex-start;
-	--button-font-size: var(--periscope-font-size-base);
-	--button-variant-ghost-color: var(--l2-foreground);
-	--button-variant-ghost-hover-color: var(--l2-foreground);
-	--button-variant-ghost-hover-background-color: transparent;
-
+.rowLink {
+	display: flex;
 	flex: 1;
+	align-items: center;
 	min-width: 0;
 	height: 100%;
+	padding: 0 var(--spacing-6);
+	border-radius: var(--radius-1);
+	color: var(--l2-foreground);
+	text-decoration: none;
+
+	&:focus-visible {
+		outline: 1px solid var(--button-focus-ring);
+		outline-offset: -1px;
+	}
+
+	&:hover {
+		color: var(--l2-foreground-hover);
+	}
+}
+
+// nowrap fills the row before the ellipsis; line clamping alone stops at the last whole word.
+.rowLinkLabel {
+	min-width: 0;
+	letter-spacing: -0.005em;
+	white-space: nowrap;
 }
 
 .loading {

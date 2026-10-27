@@ -74,7 +74,7 @@ const controls = {
 	unreadableView: toggleControl('Unreadable view', {
 		group: VIEW,
 		description:
-			'Denies `read` on the first view created by others alone, on top of the Access controls: its row greys out, and with Open view on `created-by-others` the header shows No view access.',
+			'Denies `read` on the first view created by others alone, on top of the Access controls: its row still opens it, and the header then shows No view access, as with Open view on `created-by-others`.',
 		value: false,
 	}),
 	createdByMe: countControl('Created by me', {
@@ -317,9 +317,7 @@ export const rowName =
 	(): HTMLElement =>
 		within(row).getByTestId('saved-views-row-name');
 
-/** Waits for the row's read check, since the card only opens on a readable view. */
 const hoverRow = async (row: HTMLElement): Promise<void> => {
-	await expectDisabled(rowName(row), false);
 	await userEvent.hover(row);
 	await screen.findByTestId('saved-view-hover-card', undefined, UNTIL_LOADED);
 };
@@ -368,7 +366,10 @@ export const openSaveChangesMenu = async (
 export const saveChangesItem = (key: 'save-as-new' | 'update'): FindElement =>
 	byTestId(`saved-views-save-changes-item-${key}`);
 
-type PlayContext = { canvasElement: HTMLElement };
+type PlayContext = {
+	canvasElement: HTMLElement;
+	args: { source: SavedViewSource };
+};
 
 export const hoverFirstRow = async ({
 	canvasElement,
@@ -416,4 +417,24 @@ export const openDeleteDialog = async ({
 	await openRowMenu(row);
 	await clickWhenEnabled(rowMenuItem('delete'));
 	await screen.findByTestId('delete-saved-view-confirm');
+};
+
+export const openUnreadableView = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	const rows = await findRows(canvasElement);
+	const deniedId = unreadableViewId(args.source);
+	const denied = rows.find(
+		(row) => row.getAttribute('data-view-id') === deniedId,
+	) as HTMLElement;
+
+	await userEvent.click(rowName(denied)());
+	await expect(
+		await within(canvasElement).findByText(
+			'No view access',
+			undefined,
+			UNTIL_LOADED,
+		),
+	).toBeVisible();
 };
