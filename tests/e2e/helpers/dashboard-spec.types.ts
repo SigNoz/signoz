@@ -198,7 +198,7 @@ export type Variable =
 			kind: 'ListVariable';
 			spec: {
 				name: string;
-				display: { name: string };
+				display: { name: string; description?: string };
 				allowAllValue: boolean;
 				allowMultiple: boolean;
 				sort: 'none' | 'alphabetical-asc' | 'alphabetical-desc';
@@ -213,7 +213,11 @@ export type Variable =
 	  }
 	| {
 			kind: 'TextVariable';
-			spec: { name: string; display: { name: string }; value: string };
+			spec: {
+				name: string;
+				display: { name: string; description?: string };
+				value: string;
+			};
 	  };
 
 // ─── Dashboard ───────────────────────────────────────────────────────────
