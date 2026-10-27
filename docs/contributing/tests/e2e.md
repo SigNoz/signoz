@@ -93,9 +93,9 @@ tests/
     │   └── auth.ts
     ├── helpers/               # function helpers + the constants they share with tests
     │   ├── auth.ts
-    │   └── dashboards.ts
+    │   └── logs-explorer.ts
     ├── testdata/              # static data files (JSON) used by helpers and tests
-    │   └── apm-metrics.json   # (example)
+    │   └── traces/large-trace.json   # (example)
     ├── tests/                 # Playwright .spec.ts files, one dir per feature area
     │   └── alerts/
     │       └── alerts.spec.ts # (example)
@@ -110,8 +110,8 @@ tests/
 These two folders look similar but mean different things:
 
 - **`fixtures/`** holds *Playwright test fixtures* (created via `test.extend({...})`). By the canonical definition, a fixture is "a consistent, predefined set of data, objects, or environmental conditions used to ensure tests run in a stable state" — i.e. setup/teardown that runs *automatically* around each test or worker. `auth.ts` matches: it extends Playwright's `test` with an `authedPage` that's logged-in before every test runs and torn down after. If the only thing in this folder ever is `auth.ts`, that's fine — fixtures are a deliberately small surface.
-- **`helpers/`** holds plain function helpers that you call *explicitly* from a test or hook — they don't extend Playwright's `test`. This covers both behaviour helpers (e.g. `gotoDashboardsList(page)`) and the constants those helpers and the tests both refer to (e.g. `SEARCH_PLACEHOLDER`). Constants live next to the helpers that use them so a single import line in a test covers both.
-- **`testdata/`** holds static data files (typically JSON / YAML) consumed by the helpers — for example, `apm-metrics.json`, a real dashboard payload uploaded through the UI by an importer helper.
+- **`helpers/`** holds plain function helpers that you call *explicitly* from a test or hook — they don't extend Playwright's `test`. This covers both behaviour helpers (e.g. `gotoLogsExplorer(page)`) and the constants those helpers and the tests both refer to (e.g. `LINKED_ROW_CLASS`). Constants live next to the helpers that use them so a single import line in a test covers both.
+- **`testdata/`** holds static data files (typically JSON / YAML) consumed by the helpers — for example, `traces/large-trace.json`, a real trace the trace-details helpers seed.
 
 Rule of thumb: if it's a `test.extend` fixture, put it in `fixtures/`. If it's a function you call explicitly (or a constant the function uses), put it in `helpers/`. If it's a static file the helpers read, put it in `testdata/`.
 
@@ -187,7 +187,7 @@ Each spec follows these principles:
     });
     ```
     This is faster and more reliable than a multi-step UI seed. Reach for the UI flow only when the test's *purpose* is asserting that flow.
-6. **Reusable static data lives in `tests/e2e/testdata/`.** For example, `apm-metrics.json` is a real dashboard payload the dashboards list suite uploads through the Import JSON flow.
+6. **Reusable static data lives in `tests/e2e/testdata/`.** For example, `traces/large-trace.json` is a real trace that `loadLargeTrace` (in `helpers/trace-details.ts`) seeds for the trace-details tests.
 
 ## How to write an E2E test?
 
