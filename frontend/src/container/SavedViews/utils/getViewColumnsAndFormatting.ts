@@ -6,7 +6,15 @@ import {
 	ensureLogsRequiredColumns,
 } from 'container/OptionsMenu/constants';
 import { FontSize, LogViewMode } from 'container/OptionsMenu/types';
-import { Preferences } from 'providers/preferences/types';
+import {
+	getAIObservabilityDefaultColumns,
+	isAIObservabilityPreference,
+	sanitizeColumns,
+} from 'providers/preferences/configs/aiObservabilityConfig';
+import {
+	PreferenceDataSource,
+	Preferences,
+} from 'providers/preferences/types';
 import { DataSource } from 'types/common/queryBuilder';
 
 function withColumnNames(
@@ -25,8 +33,16 @@ function withColumnNames(
 // defaults filled in where the view has none.
 export function getViewColumnsAndFormatting(
 	spec: SavedviewtypesSavedViewSpecDTO | undefined,
-	dataSource: DataSource,
+	dataSource: PreferenceDataSource,
 ): Preferences {
+	if (isAIObservabilityPreference(dataSource)) {
+		return {
+			columns:
+				sanitizeColumns(dataSource, spec?.selectedFields) ??
+				getAIObservabilityDefaultColumns(dataSource),
+		};
+	}
+
 	const selectedFields = spec?.selectedFields as TelemetryFieldKey[] | undefined;
 
 	if (dataSource === DataSource.LOGS) {

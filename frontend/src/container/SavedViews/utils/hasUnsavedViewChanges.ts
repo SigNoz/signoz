@@ -50,6 +50,7 @@ export function hasUnsavedViewChanges({
 	stagedQuery,
 	panelType,
 	options,
+	optionsDataSource,
 }: HasUnsavedViewChangesArgs): boolean {
 	if (!stagedQuery) {
 		return false;
@@ -79,7 +80,7 @@ export function hasUnsavedViewChanges({
 	const dataSource = stagedQuery.builder.queryData[0]?.dataSource;
 	const { columns, formatting } = getViewColumnsAndFormatting(
 		view.spec,
-		dataSource,
+		optionsDataSource ?? dataSource,
 	);
 	const toNames = (fields: { name?: string; key?: string }[]): unknown[] =>
 		fields.map((field) => field.name ?? field.key);

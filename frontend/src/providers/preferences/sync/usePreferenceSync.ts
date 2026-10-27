@@ -5,7 +5,10 @@ import { TelemetryFieldKey } from 'api/v5/v5';
 import { getViewColumnsAndFormatting } from 'container/SavedViews/utils/getViewColumnsAndFormatting';
 
 import { usePreferenceLoader } from '../loader/usePreferenceLoader';
-import { isAIObservabilityPreference } from '../configs/aiObservabilityConfig';
+import {
+	getAIObservabilityViewColumns,
+	isAIObservabilityPreference,
+} from '../configs/aiObservabilityConfig';
 import {
 	FormattingOptions,
 	PreferenceDataSource,
@@ -42,7 +45,7 @@ export function usePreferenceSync({
 	// memory. Discard writes the saved ones back through the updater.
 	const seededViewId = useRef<string>();
 	useEffect(() => {
-		// The AI explorer tabs have no saved-view mode.
+		// AI explorer tabs are seeded below, once their own preferences have loaded.
 		if (isAIObservabilityPreference(dataSource)) {
 			return;
 		}
@@ -66,6 +69,28 @@ export function usePreferenceSync({
 		reSync,
 		setReSync,
 	});
+
+	useEffect(() => {
+		if (!isAIObservabilityPreference(dataSource)) {
+			return;
+		}
+		const view = viewData?.data;
+		if (view && view.id === savedViewId) {
+			if (seededViewId.current !== savedViewId) {
+				seededViewId.current = savedViewId;
+				// Only the tab the view was saved from takes its columns; the other keeps the user's own.
+				setSavedViewPreferences({
+					columns:
+						getAIObservabilityViewColumns(dataSource, view) ??
+						preferences?.columns ??
+						[],
+				});
+			}
+			return;
+		}
+		seededViewId.current = undefined;
+		setSavedViewPreferences(null);
+	}, [viewData, dataSource, savedViewId, preferences]);
 
 	const { updateColumns, updateFormatting } = usePreferenceUpdater({
 		dataSource,

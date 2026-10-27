@@ -11,7 +11,7 @@ import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { DataSource } from 'types/common/queryBuilder';
 import { toAPIError } from 'utils/errorUtils';
 
-import { SAVED_VIEW_OPTIONS_DATA_SOURCE } from '../constants';
+import { getSavedViewPreferenceDataSource } from '../constants';
 import { UseActiveSavedViewResult } from '../types';
 import { hasUnsavedViewChanges } from '../utils/hasUnsavedViewChanges';
 
@@ -21,7 +21,10 @@ export function useActiveSavedView(
 	const { viewKey } = useGetSavedViewParams();
 	const { stagedQuery, panelType } = useQueryBuilder();
 
-	const optionsDataSource = SAVED_VIEW_OPTIONS_DATA_SOURCE[source];
+	const optionsDataSource = getSavedViewPreferenceDataSource(
+		source,
+		panelType ?? undefined,
+	);
 	const { options } = useOptionsMenu({
 		dataSource: optionsDataSource ?? DataSource.LOGS,
 	});
@@ -64,6 +67,7 @@ export function useActiveSavedView(
 			stagedQuery,
 			panelType: panelType ?? PANEL_TYPES.LIST,
 			options: optionsDataSource ? options : undefined,
+			optionsDataSource,
 		});
 	}, [
 		view,

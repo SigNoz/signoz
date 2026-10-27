@@ -48,16 +48,15 @@ export function PreferenceContextProvider({
 		dataSource: DataSource.TRACES,
 	});
 
-	// The AI explorer tabs have no saved-view mode.
 	const aiObservabilityListSlice = usePreferenceSync({
-		mode: PreferenceMode.DIRECT,
-		savedViewId: undefined,
+		mode: savedViewId ? PreferenceMode.SAVED_VIEW : PreferenceMode.DIRECT,
+		savedViewId: savedViewId || undefined,
 		dataSource: AIObservabilityPreference.LIST,
 	});
 
 	const aiObservabilityTraceSlice = usePreferenceSync({
-		mode: PreferenceMode.DIRECT,
-		savedViewId: undefined,
+		mode: savedViewId ? PreferenceMode.SAVED_VIEW : PreferenceMode.DIRECT,
+		savedViewId: savedViewId || undefined,
 		dataSource: AIObservabilityPreference.TRACE,
 	});
 

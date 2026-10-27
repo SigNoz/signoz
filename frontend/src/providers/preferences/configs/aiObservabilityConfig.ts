@@ -1,3 +1,7 @@
+import {
+	SavedviewtypesSavedViewDTO,
+	SavedviewtypesSourceDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { defaultSelectedColumns } from 'container/LLMObservability/Explorer/ListView/configs';
@@ -89,6 +93,34 @@ export const sanitizeColumns = (
 	);
 
 	return sanitized.length ? sanitized : null;
+};
+
+const PANEL_TYPE_TO_PREFERENCE: Record<string, AIObservabilityPreference> = {
+	list: AIObservabilityPreference.LIST,
+	trace: AIObservabilityPreference.TRACE,
+};
+
+/** The AI tab whose columns a panel type shows; `undefined` for tabs without columns. */
+export const panelTypeToAIObservabilityPreference = (
+	panelType: string | undefined,
+): AIObservabilityPreference | undefined =>
+	panelType ? PANEL_TYPE_TO_PREFERENCE[panelType] : undefined;
+
+/** A saved view's columns for this tab, defaults filled in; `null` when the view belongs to another tab. */
+export const getAIObservabilityViewColumns = (
+	preference: AIObservabilityPreference,
+	view: SavedviewtypesSavedViewDTO,
+): TelemetryFieldKey[] | null => {
+	if (
+		view.source !== SavedviewtypesSourceDTO.ai_observability ||
+		panelTypeToAIObservabilityPreference(view.spec.panelType) !== preference
+	) {
+		return null;
+	}
+	return (
+		sanitizeColumns(preference, view.spec.selectedFields) ??
+		AI_OBSERVABILITY_DEFAULT_COLUMNS[preference]
+	);
 };
 
 /** `selectColumns` of a stored options object; `null` when absent or unparseable. */
