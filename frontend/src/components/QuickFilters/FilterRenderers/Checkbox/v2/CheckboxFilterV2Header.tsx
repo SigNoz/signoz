@@ -1,31 +1,25 @@
 import { useState } from 'react';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
-import { ChevronDown, ChevronRight, Search, Undo2 } from '@signozhq/icons';
+import { ChevronDown, ChevronRight, Undo2 } from '@signozhq/icons';
 
 import { SectionActionButton } from '../../shared/SectionActionButton/SectionActionButton';
-
-import classNames from 'classnames';
 
 import styles from './CheckboxFilterV2Header.module.scss';
 
 interface CheckboxFilterHeaderProps {
 	title: string;
 	isOpen: boolean;
-	actionsClassName?: string;
-	resetActionClassName?: string;
+	canReset: boolean;
 	onToggleOpen: () => void;
-	onToggleSearch: () => void;
 	onClear: () => void;
 }
 
 export function CheckboxFilterV2Header({
 	title,
 	isOpen,
-	actionsClassName,
-	resetActionClassName,
+	canReset,
 	onToggleOpen,
-	onToggleSearch,
 	onClear,
 }: CheckboxFilterHeaderProps): JSX.Element {
 	const [isTitleTruncated, setIsTitleTruncated] = useState(false);
@@ -64,20 +58,13 @@ export function CheckboxFilterV2Header({
 				)}
 				<Tooltip title={isTitleTruncated ? title : undefined}>{titleText}</Tooltip>
 			</section>
-			{isOpen && (
-				<section className={classNames(styles.rightAction, actionsClassName)}>
+			{isOpen && canReset && (
+				<section className={styles.rightAction}>
 					<SectionActionButton
 						icon={<Undo2 size={14} />}
-						className={resetActionClassName}
 						tooltip="Reset"
 						onClick={onClear}
 						testId="checkbox-filter-clear-all"
-					/>
-					<SectionActionButton
-						icon={<Search size={14} />}
-						tooltip="Search"
-						onClick={onToggleSearch}
-						testId="checkbox-filter-search-toggle"
 					/>
 				</section>
 			)}
