@@ -4,10 +4,10 @@ import {
 } from 'constants/queryBuilder';
 import { cloneDeep, isEqual, isPlainObject } from 'lodash-es';
 import {
-	IBuilderQuery,
-	Query,
-	QueryMode,
-} from 'types/api/queryBuilder/queryBuilderData';
+	Querybuildertypesv5QueryTypeDTO,
+	TelemetrytypesSourceDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { v5 as uuidv5 } from 'uuid';
 
@@ -141,12 +141,19 @@ function fillMissingSignal(
 	}
 
 	// A missing `source` already means '', so only meter needs it written.
-	if (builderQuery.source === undefined && rules.source === 'meter') {
-		builderQuery.source = 'meter';
+	if (
+		builderQuery.source === undefined &&
+		rules.source === TelemetrytypesSourceDTO.meter
+	) {
+		builderQuery.source = rules.source;
 	}
 
-	if (builderQuery.builderQueryType === undefined && rules.aiQuery) {
-		builderQuery.builderQueryType = QueryMode.AI_QUERY_BUILDER;
+	// A missing `builderQueryType` already means builder_query, so only AI needs it written.
+	if (
+		builderQuery.builderQueryType === undefined &&
+		rules.builderQueryType === Querybuildertypesv5QueryTypeDTO.builder_ai_query
+	) {
+		builderQuery.builderQueryType = rules.builderQueryType;
 	}
 }
 
@@ -162,13 +169,11 @@ function belongsToExplorer(
 		return false;
 	}
 
-	const isAiQuery = builderQuery.builderQueryType === QueryMode.AI_QUERY_BUILDER;
+	const builderQueryType =
+		builderQuery.builderQueryType ??
+		Querybuildertypesv5QueryTypeDTO.builder_query;
 
-	if (rules.aiQuery && !isAiQuery) {
-		return false;
-	}
-
-	if (!rules.aiQuery && isAiQuery) {
+	if (builderQueryType !== rules.builderQueryType) {
 		return false;
 	}
 
@@ -181,8 +186,10 @@ function getDefaultBuilderQuery(rules: ExplorerQueryRules): IBuilderQuery {
 	);
 	builderQuery.source = rules.source;
 
-	if (rules.aiQuery) {
-		builderQuery.builderQueryType = QueryMode.AI_QUERY_BUILDER;
+	if (
+		rules.builderQueryType === Querybuildertypesv5QueryTypeDTO.builder_ai_query
+	) {
+		builderQuery.builderQueryType = rules.builderQueryType;
 	}
 
 	return builderQuery;
