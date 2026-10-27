@@ -329,11 +329,11 @@ func (rule *postableRule) clone() *postableRule {
 
 // disableIfNeverFired disables a rule v1 stored but could never fire: a
 // negative evalWindow or frequency, which is reset to its default since no
-// read of a rolling window accepts it, a null compositeQuery, or a threshold
-// with a null target or an op or matchType outside the supported sets, which
-// the v2 write path rejects. It reads the relocated fields, so it runs after
-// convertRule, and returns the offending fields, or "" when the rule stays
-// enabled.
+// read of a rolling window accepts it, a null compositeQuery or one with no
+// queries, or a threshold with a null target or an op or matchType outside the
+// supported sets, which the v2 write path rejects. It reads the relocated
+// fields, so it runs after convertRule, and returns the offending fields, or
+// "" when the rule stays enabled.
 func (rule *postableRule) disableIfNeverFired() string {
 	var causes []string
 	window := &rule.Evaluation.Spec
@@ -345,8 +345,11 @@ func (rule *postableRule) disableIfNeverFired() string {
 		causes = append(causes, fmt.Sprintf("frequency %s is negative", window.Frequency))
 		window.Frequency = mustParseTextDuration(defaultFrequency)
 	}
-	if rule.RuleCondition.CompositeQuery == nil {
+	switch {
+	case rule.RuleCondition.CompositeQuery == nil:
 		causes = append(causes, "condition.compositeQuery is null")
+	case len(rule.decodeQueryEnvelopes()) == 0:
+		causes = append(causes, "condition.compositeQuery.queries is empty")
 	}
 	threshold := rule.RuleCondition.Thresholds.Spec[0]
 	switch {
