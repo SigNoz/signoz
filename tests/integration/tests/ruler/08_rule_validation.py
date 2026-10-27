@@ -314,3 +314,105 @@ def test_timeline_rejects_unknown_state(
             "suggestions": [],
         },
     }
+
+
+def test_create_rejects_unknown_field(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={**VALID_RULE, "preferredChannels": ["slack"]},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert response.json() == {
+        "status": "error",
+        "error": {
+            "type": "invalid-input",
+            "code": "invalid_input",
+            "message": 'unknown field "preferredChannels" in alert rule',
+            "errors": [],
+            "suggestions": ["valid fields are `alert`, `alertType`, `description`, `ruleType`, `condition`, `labels`, `annotations`, `disabled`, `source`, `version`, `evaluation`, `schemaVersion`, `notificationSettings`"],
+        },
+    }
+
+
+def test_create_rejects_numeric_eval_window(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={**VALID_RULE, "evaluation": {"kind": "rolling", "spec": {"evalWindow": 300, "frequency": "1m"}}},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert response.json() == {
+        "status": "error",
+        "error": {
+            "type": "invalid-input",
+            "code": "invalid_input",
+            "message": "alert rule is not valid",
+            "errors": [{"message": 'evaluation.spec.evalWindow: must be a duration string such as "5m"', "suggestions": []}],
+            "suggestions": [],
+        },
+    }
+
+
+def test_create_rejects_recovery_target_past_target(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    thresholds = {"kind": "basic", "spec": [{**VALID_RULE["condition"]["thresholds"]["spec"][0], "recoveryTarget": 95}]}
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={**VALID_RULE, "condition": {**VALID_RULE["condition"], "thresholds": thresholds}},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert response.json() == {
+        "status": "error",
+        "error": {
+            "type": "invalid-input",
+            "code": "invalid_input",
+            "message": "alert rule is not valid",
+            "errors": [{"message": "condition.thresholds.spec: recoveryTarget must be below target for op above", "suggestions": []}],
+            "suggestions": [],
+        },
+    }
+
+
+def test_list_defaults_rule_type(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    create_alert_rule: Callable[[dict], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    rule_id = create_alert_rule({key: value for key, value in VALID_RULE.items() if key != "ruleType"})
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v3/rules"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    listed = next(rule for rule in response.json()["data"]["rules"] if rule["id"] == rule_id)
+    assert listed["ruleType"] == "threshold_rule"

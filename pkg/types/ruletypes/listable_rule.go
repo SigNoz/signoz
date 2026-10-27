@@ -33,6 +33,11 @@ type storedRuleData struct {
 	RuleType    RuleType          `json:"ruleType"`
 	Disabled    bool              `json:"disabled"`
 	Labels      map[string]string `json:"labels"`
+	Condition   struct {
+		CompositeQuery struct {
+			QueryType QueryType `json:"queryType"`
+		} `json:"compositeQuery"`
+	} `json:"condition"`
 }
 
 // ToListableRule leaves State zero; the caller overlays evaluation state.
@@ -47,7 +52,7 @@ func (rule *StorableRule) ToListableRule() (*ListableRule, error) {
 		AlertName:     data.AlertName,
 		Description:   data.Description,
 		AlertType:     data.AlertType,
-		RuleType:      data.RuleType,
+		RuleType:      deriveRuleType(data.RuleType, data.Condition.CompositeQuery.QueryType),
 		Disabled:      data.Disabled,
 		Labels:        data.Labels,
 		TimeAuditable: rule.TimeAuditable,

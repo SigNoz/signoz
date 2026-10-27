@@ -29,11 +29,21 @@ func (EvaluationKind) Enum() []any {
 type Evaluation interface {
 	NextWindowFor(curr time.Time) (time.Time, time.Time)
 	GetFrequency() valuer.TextDuration
+	// validateDurationText runs on the write path only; a stored window may
+	// hold a bare number and still evaluate.
+	validateDurationText() error
 }
 
 type RollingWindow struct {
 	EvalWindow valuer.TextDuration `json:"evalWindow" required:"true"`
 	Frequency  valuer.TextDuration `json:"frequency" required:"true"`
+}
+
+func (rollingWindow RollingWindow) validateDurationText() error {
+	if err := validateDurationText("evaluation.spec.evalWindow", rollingWindow.EvalWindow); err != nil {
+		return err
+	}
+	return validateDurationText("evaluation.spec.frequency", rollingWindow.Frequency)
 }
 
 func (rollingWindow RollingWindow) Validate() error {
@@ -58,6 +68,10 @@ type CumulativeWindow struct {
 	Schedule  CumulativeSchedule           `json:"schedule" required:"true"`
 	Frequency valuer.TextDuration          `json:"frequency" required:"true"`
 	Timezone  valuer.UnsetOrNonEmptyString `json:"timezone" required:"true"`
+}
+
+func (cumulativeWindow CumulativeWindow) validateDurationText() error {
+	return validateDurationText("evaluation.spec.frequency", cumulativeWindow.Frequency)
 }
 
 type CumulativeSchedule struct {

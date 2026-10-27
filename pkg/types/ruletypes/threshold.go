@@ -181,6 +181,26 @@ func (r BasicRuleThresholds) validateUniqueNames() error {
 	return nil
 }
 
+func (r BasicRuleThresholds) validateRecoveryTargets() error {
+	for _, basicThreshold := range r {
+		if basicThreshold.RecoveryTarget == nil || basicThreshold.TargetValue == nil {
+			continue
+		}
+		// equal, not_equal and outside_bounds have no recovering side
+		switch basicThreshold.CompareOperator.Normalize() {
+		case ValueIsAbove, ValueAboveOrEq:
+			if *basicThreshold.RecoveryTarget >= *basicThreshold.TargetValue {
+				return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.thresholds.spec: recoveryTarget must be below target for op %s", basicThreshold.CompareOperator.StringValue())
+			}
+		case ValueIsBelow, ValueBelowOrEq:
+			if *basicThreshold.RecoveryTarget <= *basicThreshold.TargetValue {
+				return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.thresholds.spec: recoveryTarget must be above target for op %s", basicThreshold.CompareOperator.StringValue())
+			}
+		}
+	}
+	return nil
+}
+
 func (r BasicRuleThresholds) Eval(s *qbtypes.TimeSeries, unit string, evalData EvalData) (Vector, error) {
 
 	series := &qbtypes.TimeSeries{

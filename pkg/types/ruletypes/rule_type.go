@@ -23,6 +23,19 @@ func (RuleType) Enum() []any {
 	}
 }
 
+func deriveRuleType(ruleType RuleType, queryType QueryType) RuleType {
+	switch queryType {
+	case QueryTypeBuilder, QueryTypeClickHouseSQL:
+		if ruleType.IsZero() {
+			return RuleTypeThreshold
+		}
+	case QueryTypePromQL:
+		// a promql query is a promql rule whatever was sent
+		return RuleTypeProm
+	}
+	return ruleType
+}
+
 func (r RuleType) Validate() error {
 	switch r {
 	case

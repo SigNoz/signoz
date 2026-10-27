@@ -231,14 +231,7 @@ func (r *PostableRule) processRuleDefaults() {
 	}
 
 	if r.RuleCondition != nil && r.RuleCondition.CompositeQuery != nil {
-		switch r.RuleCondition.CompositeQuery.QueryType {
-		case QueryTypeBuilder, QueryTypeClickHouseSQL:
-			if r.RuleType.IsZero() {
-				r.RuleType = RuleTypeThreshold
-			}
-		case QueryTypePromQL:
-			r.RuleType = RuleTypeProm
-		}
+		r.RuleType = deriveRuleType(r.RuleType, r.RuleCondition.CompositeQuery.QueryType)
 	}
 }
 
@@ -452,12 +445,19 @@ func (r *PostableRule) validateV2Alpha1() []error {
 			if err := thresholds.validateUniqueNames(); err != nil {
 				errs = append(errs, err)
 			}
+			if err := thresholds.validateRecoveryTargets(); err != nil {
+				errs = append(errs, err)
+			}
 		}
 	}
 
 	if r.Evaluation == nil {
 		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"evaluation: field is required for schemaVersion %q", SchemaVersionV2Alpha1))
+	} else if evaluation, err := r.Evaluation.GetEvaluation(); err == nil {
+		if err := evaluation.validateDurationText(); err != nil {
+			errs = append(errs, err)
+		}
 	}
 	if r.NotificationSettings == nil {
 		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
@@ -467,9 +467,22 @@ func (r *PostableRule) validateV2Alpha1() []error {
 			errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
 				"notificationSettings.renotify.interval: must be a positive duration when renotify is enabled"))
 		}
+		if r.NotificationSettings.Renotify != nil {
+			if err := validateDurationText("notificationSettings.renotify.interval", r.NotificationSettings.Renotify.ReNotifyInterval); err != nil {
+				errs = append(errs, err)
+			}
+		}
 	}
 
 	return errs
+}
+
+// validateDurationText rejects a bare number, which decodes as nanoseconds.
+func validateDurationText(field string, duration valuer.TextDuration) error {
+	if duration.IsZero() || duration.HasText() {
+		return nil
+	}
+	return errors.NewInvalidInputf(errors.CodeInvalidInput, "%s: must be a duration string such as \"5m\"", field)
 }
 
 func testTemplateParsing(rl *PostableRule) (errs []error) {

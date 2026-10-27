@@ -338,7 +338,7 @@ export function buildCreateAnomalyAlertRulePayload(
 		notificationSettings: notificationSettingsProps,
 		evaluation: evaluationProps,
 		version: '',
-		schemaVersion: '',
+		schemaVersion: 'v2alpha1',
 		source: window?.location.toString(),
 	};
 }

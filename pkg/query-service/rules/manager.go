@@ -18,6 +18,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -352,7 +353,12 @@ func (m *Manager) validateChannels(ctx context.Context, orgID string, rule *rule
 
 func decodeRule(ruleStr string, rule *ruletypes.PostableRule) error {
 	err := json.Unmarshal([]byte(ruleStr), rule)
-	if err == nil || errors.Ast(err, errors.TypeInvalidInput) {
+	if err == nil {
+		// the alias has no UnmarshalJSON, so a strict pass sees every key the rule has no field for
+		type plainRule ruletypes.PostableRule
+		return binding.JSON.BindBody(strings.NewReader(ruleStr), new(plainRule), binding.WithDisallowUnknownFields(true), binding.WithUnknownFieldContext("alert rule"))
+	}
+	if errors.Ast(err, errors.TypeInvalidInput) {
 		return err
 	}
 	// a syntax error is raised before any UnmarshalJSON runs, so it is the one untyped error
@@ -447,7 +453,7 @@ func (m *Manager) editTask(_ context.Context, orgID valuer.UUID, rule *ruletypes
 	})
 	if err != nil {
 		m.logger.Error("loading tasks failed", errors.Attr(err))
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "error preparing rule with given parameters, previous rule set restored")
+		return err
 	}
 
 	for _, r := range newTask.Rules() {
@@ -668,7 +674,7 @@ func (m *Manager) addTask(_ context.Context, orgID valuer.UUID, rule *ruletypes.
 	})
 	if err != nil {
 		m.logger.Error("creating rule task failed", "name", taskName, errors.Attr(err))
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "error loading rules, previous rule set restored")
+		return err
 	}
 
 	for _, r := range newTask.Rules() {
