@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { Button, Tooltip } from 'antd';
 import classNames from 'classnames';
 import { Activity, ChartLine } from '@signozhq/icons';
@@ -10,9 +11,15 @@ import AdvancedOptions from '../EvaluationSettings/AdvancedOptions';
 import Stepper from '../Stepper';
 import AlertThreshold from './AlertThreshold';
 import AnomalyThreshold from './AnomalyThreshold';
-import { ANOMALY_TAB_TOOLTIP, THRESHOLD_TAB_TOOLTIP } from './constants';
+import {
+	ANOMALY_TAB_SWITCH_NOTE,
+	ANOMALY_TAB_TOOLTIP,
+	THRESHOLD_TAB_SWITCH_NOTE,
+	THRESHOLD_TAB_TOOLTIP,
+} from './constants';
 import { useAnomalyFunctionSync } from './useAnomalyFunctionSync';
 
+import styles from './AlertCondition.module.scss';
 import './styles.scss';
 
 function AlertCondition(): JSX.Element {
@@ -57,11 +64,23 @@ function AlertCondition(): JSX.Element {
 		setAlertType(value);
 	};
 
-	const getTabTooltip = (tab: { value: AlertTypes }): string => {
-		if (tab.value === AlertTypes.ANOMALY_BASED_ALERT) {
-			return ANOMALY_TAB_TOOLTIP;
+	const getTabTooltip = (tab: { value: AlertTypes }): ReactNode => {
+		const isAnomalyTab = tab.value === AlertTypes.ANOMALY_BASED_ALERT;
+		const description = isAnomalyTab
+			? ANOMALY_TAB_TOOLTIP
+			: THRESHOLD_TAB_TOOLTIP;
+		if (tab.value === alertType) {
+			return description;
 		}
-		return THRESHOLD_TAB_TOOLTIP;
+		const switchNote = isAnomalyTab
+			? ANOMALY_TAB_SWITCH_NOTE
+			: THRESHOLD_TAB_SWITCH_NOTE;
+		return (
+			<>
+				<div>{description}</div>
+				<div className={styles.switchNote}>{switchNote}</div>
+			</>
+		);
 	};
 
 	return (
@@ -70,7 +89,11 @@ function AlertCondition(): JSX.Element {
 			<div className="alert-condition">
 				<div className="alert-condition-tabs">
 					{tabs.map((tab) => (
-						<Tooltip key={tab.value} title={getTabTooltip(tab)}>
+						<Tooltip
+							key={tab.value}
+							title={getTabTooltip(tab)}
+							overlayClassName={styles.tabTooltip}
+						>
 							<Button
 								className={classNames('list-view-tab', 'explorer-view-option', {
 									'active-tab': alertType === tab.value,

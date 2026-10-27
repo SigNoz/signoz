@@ -160,6 +160,22 @@ describe('AlertCondition', () => {
 		).not.toBeInTheDocument();
 	});
 
+	it('warns in the tab tooltip that switching changes what gets saved', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		renderAlertCondition();
+
+		await user.hover(screen.getByText(ANOMALY_TAB_TEXT));
+		await expect(
+			screen.findByText(/saves this as an anomaly-based alert/),
+		).resolves.toBeInTheDocument();
+
+		await user.click(screen.getByText(ANOMALY_TAB_TEXT));
+		await user.hover(screen.getByText(THRESHOLD_TAB_TEXT));
+		await expect(
+			screen.findByText(/saves this as a metrics-based alert/),
+		).resolves.toBeInTheDocument();
+	});
+
 	it('shows AnomalyThreshold component when alert type is anomaly based', async () => {
 		renderAlertCondition();
 
