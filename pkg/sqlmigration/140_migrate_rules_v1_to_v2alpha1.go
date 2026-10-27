@@ -101,23 +101,23 @@ func (migration *migrateRulesV1ToV2Alpha1) convertOrg(ctx context.Context, orgID
 		return err
 	}
 
-	routes := make([]*routePolicyRow, 0)
-	if err := db.NewSelect().Model(&routes).Where("org_id = ?", orgID).Scan(ctx); err != nil {
+	allRoutePolicies := make([]*routePolicyRow, 0)
+	if err := db.NewSelect().Model(&allRoutePolicies).Where("org_id = ?", orgID).Scan(ctx); err != nil {
 		return err
 	}
-	routesByName := make(map[string][]*routePolicyRow)
-	for _, route := range routes {
-		routesByName[route.Name] = append(routesByName[route.Name], route)
+	routePolicyNameToRoutes := make(map[string][]*routePolicyRow)
+	for _, route := range allRoutePolicies {
+		routePolicyNameToRoutes[route.Name] = append(routePolicyNameToRoutes[route.Name], route)
 	}
 
 	var migrated, disabled, skipped, undecodable, unmigratable int
-	for _, stored := range allRules {
+	for _, storedRule := range allRules {
 		var header struct {
 			SchemaVersion string `json:"schemaVersion"`
 		}
-		if err := json.Unmarshal([]byte(stored.Data), &header); err != nil {
+		if err := json.Unmarshal([]byte(storedRule.Data), &header); err != nil {
 			undecodable++
-			migration.logger.WarnContext(ctx, "failed to decode stored rule", slog.String("org_id", orgID), slog.String("rule_id", stored.ID), errors.Attr(err))
+			migration.logger.WarnContext(ctx, "failed to decode stored rule", slog.String("org_id", orgID), slog.String("rule_id", storedRule.ID), errors.Attr(err))
 			continue
 		}
 		if header.SchemaVersion == schemaVersionV2Alpha1 {
@@ -126,16 +126,16 @@ func (migration *migrateRulesV1ToV2Alpha1) convertOrg(ctx context.Context, orgID
 		}
 
 		rule := new(postableRule)
-		if err := json.Unmarshal([]byte(stored.Data), rule); err != nil {
+		if err := json.Unmarshal([]byte(storedRule.Data), rule); err != nil {
 			undecodable++
-			migration.logger.WarnContext(ctx, "failed to decode stored rule", slog.String("org_id", orgID), slog.String("rule_id", stored.ID), errors.Attr(err))
+			migration.logger.WarnContext(ctx, "failed to decode stored rule", slog.String("org_id", orgID), slog.String("rule_id", storedRule.ID), errors.Attr(err))
 			continue
 		}
 
-		routes := routesByName[stored.ID]
+		routes := routePolicyNameToRoutes[storedRule.ID]
 		if err := validateRoutes(routes, rule.PreferredChannels); err != nil {
 			unmigratable++
-			migration.logger.WarnContext(ctx, "leaving rule at v1", slog.String("org_id", orgID), slog.String("rule_id", stored.ID), errors.Attr(err))
+			migration.logger.WarnContext(ctx, "leaving rule at v1", slog.String("org_id", orgID), slog.String("rule_id", storedRule.ID), errors.Attr(err))
 			continue
 		}
 		var route *routePolicyRow
@@ -145,23 +145,23 @@ func (migration *migrateRulesV1ToV2Alpha1) convertOrg(ctx context.Context, orgID
 			expression = route.Expression
 		}
 
-		if err := convertRule(stored.ID, rule, route); err != nil {
+		if err := convertRule(storedRule.ID, rule, route); err != nil {
 			unmigratable++
-			migration.logger.WarnContext(ctx, "leaving rule at v1", slog.String("org_id", orgID), slog.String("rule_id", stored.ID), errors.Attr(err))
+			migration.logger.WarnContext(ctx, "leaving rule at v1", slog.String("org_id", orgID), slog.String("rule_id", storedRule.ID), errors.Attr(err))
 			continue
 		}
 		if reason := rule.validateThreshold(); reason != nil {
 			rule.Disabled = json.RawMessage("true")
 			disabled++
-			migration.logger.WarnContext(ctx, "migrating rule as disabled, its threshold fails the write path", slog.String("org_id", orgID), slog.String("rule_id", stored.ID), errors.Attr(reason))
+			migration.logger.WarnContext(ctx, "migrating rule as disabled, its threshold fails the write path", slog.String("org_id", orgID), slog.String("rule_id", storedRule.ID), errors.Attr(reason))
 		}
 
 		data, err := marshalUnescaped(rule)
 		if err != nil {
 			return err
 		}
-		stored.Data = string(data)
-		if _, err := db.NewUpdate().Model(stored).Column("data").WherePK().Exec(ctx); err != nil {
+		storedRule.Data = string(data)
+		if _, err := db.NewUpdate().Model(storedRule).Column("data").WherePK().Exec(ctx); err != nil {
 			return err
 		}
 		if route != nil && route.Expression != expression {
