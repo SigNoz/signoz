@@ -332,17 +332,28 @@ func (m *Manager) validateChannels(ctx context.Context, orgID string, rule *rule
 	}
 
 	known := make(map[string]struct{}, len(orgChannels))
+	displayNameByName := make(map[string]string, len(orgChannels))
 	for _, ch := range orgChannels {
 		known[ch.DisplayName] = struct{}{}
+		displayNameByName[ch.Name] = ch.DisplayName
 	}
 
-	var unknown []string
+	var unknown, byName []string
 	for _, name := range channels {
-		if _, ok := known[name]; !ok {
-			unknown = append(unknown, name)
+		if _, ok := known[name]; ok {
+			continue
 		}
+		if displayName, ok := displayNameByName[name]; ok {
+			byName = append(byName, fmt.Sprintf("%s (display name %q)", name, displayName))
+			continue
+		}
+		unknown = append(unknown, name)
 	}
 
+	if len(byName) > 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"channels: rules reference channels by display name, not name: %v", byName)
+	}
 	if len(unknown) > 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"channels: the following channels do not exist: %v", unknown)
