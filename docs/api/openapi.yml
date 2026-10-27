@@ -31970,6 +31970,100 @@ paths:
         content:
           application/json:
             examples:
+              ai_traces_raw:
+                summary: 'Raw: spans of AI traces with many tool calls'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        filter:
+                          expression: trace.tool_call_count > 10 AND gen_ai.tool.name
+                            EXISTS
+                        limit: 100
+                        name: A
+                        order:
+                        - direction: desc
+                          key:
+                            fieldContext: span
+                            name: timestamp
+                        selectFields:
+                        - fieldContext: attribute
+                          name: gen_ai.tool.name
+                        signal: traces
+                      type: builder_ai_query
+                  end: 1640998800000
+                  requestType: raw
+                  schemaVersion: v1
+                  start: 1640995200000
+              ai_traces_scalar:
+                summary: 'Scalar: average per-trace AI cost by model'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - expression: avg(trace.estimated_total_cost)
+                        groupBy:
+                        - fieldContext: attribute
+                          name: gen_ai.request.model
+                        limit: 10
+                        name: A
+                        order:
+                        - direction: desc
+                          key:
+                            name: avg(trace.estimated_total_cost)
+                        signal: traces
+                      type: builder_ai_query
+                  end: 1640998800000
+                  requestType: scalar
+                  schemaVersion: v1
+                  start: 1640995200000
+              ai_traces_time_series:
+                summary: 'Time series: per-trace AI cost by model'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - expression: sum(trace.estimated_total_cost)
+                        groupBy:
+                        - fieldContext: attribute
+                          name: gen_ai.request.model
+                        limit: 10
+                        name: A
+                        order:
+                        - direction: desc
+                          key:
+                            name: sum(trace.estimated_total_cost)
+                        signal: traces
+                        stepInterval: 60s
+                      type: builder_ai_query
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+              ai_traces_trace:
+                summary: 'Trace list: AI traces with many tool calls, most expensive
+                  first'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        filter:
+                          expression: trace.tool_call_count > 10 AND trace.distinct_tool_count
+                            < 3
+                        limit: 10
+                        name: A
+                        order:
+                        - direction: desc
+                          key:
+                            name: trace.estimated_total_cost
+                        signal: traces
+                      type: builder_ai_query
+                  end: 1640998800000
+                  requestType: trace
+                  schemaVersion: v1
+                  start: 1640995200000
               clickhouse_sql_logs_raw:
                 summary: 'ClickHouse SQL: raw logs with resource filter'
                 value:

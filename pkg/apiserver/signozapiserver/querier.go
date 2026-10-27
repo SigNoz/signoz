@@ -255,6 +255,120 @@ func (provider *provider) addQuerierRoutes(router *mux.Router) error {
 				},
 			},
 			{
+				Name:    "ai_traces_trace",
+				Summary: "Trace list: AI traces with many tool calls, most expensive first",
+				Value: map[string]any{
+					"schemaVersion": "v1",
+					"start":         1640995200000,
+					"end":           1640998800000,
+					"requestType":   "trace",
+					"compositeQuery": map[string]any{
+						"queries": []any{
+							map[string]any{
+								"type": "builder_ai_query",
+								"spec": map[string]any{
+									"name":   "A",
+									"signal": "traces",
+									"filter": map[string]any{"expression": "trace.tool_call_count > 10 AND trace.distinct_tool_count < 3"},
+									"order": []any{
+										map[string]any{"key": map[string]any{"name": "trace.estimated_total_cost"}, "direction": "desc"},
+									},
+									"limit": 10,
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				Name:    "ai_traces_raw",
+				Summary: "Raw: spans of AI traces with many tool calls",
+				Value: map[string]any{
+					"schemaVersion": "v1",
+					"start":         1640995200000,
+					"end":           1640998800000,
+					"requestType":   "raw",
+					"compositeQuery": map[string]any{
+						"queries": []any{
+							map[string]any{
+								"type": "builder_ai_query",
+								"spec": map[string]any{
+									"name":   "A",
+									"signal": "traces",
+									"filter": map[string]any{"expression": "trace.tool_call_count > 10 AND gen_ai.tool.name EXISTS"},
+									"selectFields": []any{
+										map[string]any{"name": "gen_ai.tool.name", "fieldContext": "attribute"},
+									},
+									"order": []any{
+										map[string]any{"key": map[string]any{"name": "timestamp", "fieldContext": "span"}, "direction": "desc"},
+									},
+									"limit": 100,
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				Name:    "ai_traces_time_series",
+				Summary: "Time series: per-trace AI cost by model",
+				Value: map[string]any{
+					"schemaVersion": "v1",
+					"start":         1640995200000,
+					"end":           1640998800000,
+					"requestType":   "time_series",
+					"compositeQuery": map[string]any{
+						"queries": []any{
+							map[string]any{
+								"type": "builder_ai_query",
+								"spec": map[string]any{
+									"name":   "A",
+									"signal": "traces",
+									"aggregations": []any{
+										map[string]any{"expression": "sum(trace.estimated_total_cost)"},
+									},
+									"stepInterval": "60s",
+									"groupBy":      []any{map[string]any{"name": "gen_ai.request.model", "fieldContext": "attribute"}},
+									"order": []any{
+										map[string]any{"key": map[string]any{"name": "sum(trace.estimated_total_cost)"}, "direction": "desc"},
+									},
+									"limit": 10,
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				Name:    "ai_traces_scalar",
+				Summary: "Scalar: average per-trace AI cost by model",
+				Value: map[string]any{
+					"schemaVersion": "v1",
+					"start":         1640995200000,
+					"end":           1640998800000,
+					"requestType":   "scalar",
+					"compositeQuery": map[string]any{
+						"queries": []any{
+							map[string]any{
+								"type": "builder_ai_query",
+								"spec": map[string]any{
+									"name":   "A",
+									"signal": "traces",
+									"aggregations": []any{
+										map[string]any{"expression": "avg(trace.estimated_total_cost)"},
+									},
+									"groupBy": []any{map[string]any{"name": "gen_ai.request.model", "fieldContext": "attribute"}},
+									"order": []any{
+										map[string]any{"key": map[string]any{"name": "avg(trace.estimated_total_cost)"}, "direction": "desc"},
+									},
+									"limit": 10,
+								},
+							},
+						},
+					},
+				},
+			},
+			{
 				Name:    "logs_scalar",
 				Summary: "Scalar: total error log count",
 				Value: map[string]any{
