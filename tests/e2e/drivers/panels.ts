@@ -92,6 +92,8 @@ export interface Panels {
 		item(testId: string): Locator;
 		back(menu: 'breakout' | 'var'): Locator;
 		breakoutSearch(): Locator;
+		/** The panel's saved context links, by label. */
+		contextLinks(): Locator;
 		/** A page-level Escape does nothing: the handler needs the backdrop. */
 		dismiss(): Promise<void>;
 	};
@@ -180,6 +182,7 @@ function panelsDriver(page: Page): Panels {
 					),
 			back: (submenu) => page.getByTestId(`drilldown-${submenu}-back`),
 			breakoutSearch: () => page.getByPlaceholder('Search breakout options...'),
+			contextLinks: () => page.getByTestId('drilldown-context-link'),
 			async dismiss() {
 				// A corner, since the menu opens over the clicked point.
 				await page

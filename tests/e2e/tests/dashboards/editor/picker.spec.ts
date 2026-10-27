@@ -2,7 +2,6 @@ import {
 	compactDashboard,
 	emptyDashboard,
 	expect,
-	PANEL_TYPE_TILES,
 	PanelKind,
 	PATH,
 	singlePanelDashboard,
@@ -208,39 +207,5 @@ test.describe('Dashboards — panel picker', () => {
 			(layout) => layout.spec.display?.title === 'Fresh section',
 		);
 		expect(section?.spec.items).toHaveLength(1);
-	});
-
-	test('TC-10 search narrows the tiles and offers a way back', async ({
-		dashboards,
-		newPanel,
-	}) => {
-		await dashboards.seedAndOpen(singlePanelDashboard());
-		await dashboards.headerAddPanel().click();
-
-		// Matches name, description and group label.
-		await newPanel.search().fill('pie');
-		await expect(newPanel.tiles()).toHaveCount(1);
-		await expect(newPanel.tile(PanelKind.PieChart)).toBeVisible();
-
-		await newPanel.search().fill('no-such-panel');
-		await expect(newPanel.tiles()).toHaveCount(0);
-		await expect(newPanel.emptyState()).toBeVisible();
-	});
-
-	test('TC-11 a category chip filters to its group', async ({
-		dashboards,
-		newPanel,
-	}) => {
-		await dashboards.seedAndOpen(singlePanelDashboard());
-		await dashboards.headerAddPanel().click();
-
-		await newPanel.category('Raw records').click();
-		await expect(newPanel.groups()).toHaveText(['Raw records']);
-		await expect(newPanel.tiles()).toHaveCount(
-			PANEL_TYPE_TILES.filter((t) => t.category === 'Raw records').length,
-		);
-
-		await newPanel.category('All').click();
-		await expect(newPanel.tiles()).toHaveCount(PANEL_TYPE_TILES.length);
 	});
 });

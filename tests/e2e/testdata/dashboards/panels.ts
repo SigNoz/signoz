@@ -231,22 +231,3 @@ export function variablesDashboard(
 		],
 	});
 }
-
-/** Invalid on purpose: Text must carry `queries: []`; the server rejects this. */
-export function textPanelWithQueryDashboard(): PostableDashboard {
-	const text = panel(PanelKind.Text, { name: 'Notes' });
-	return buildDashboard({
-		title: `e2e-text-with-query-${Date.now()}-${uniqueSuffix()}`,
-		sections: [
-			{
-				title: 'Section',
-				panels: {
-					[SINGLE_PANEL_ID]: {
-						...text,
-						spec: { ...text.spec, queries: [metricsQuery()] },
-					},
-				},
-			},
-		],
-	});
-}
