@@ -264,6 +264,74 @@ describe('ChannelForm save', () => {
 	);
 
 	it(
+		'keeps bearer auth while a saved token is cleared and replaced',
+		async () => {
+			let body: Record<string, unknown> | undefined;
+			server.use(
+				rest.get(
+					'http://localhost/api/v2/notification_channels/:id',
+					(_, res, ctx) =>
+						res(
+							ctx.status(200),
+							ctx.json({
+								status: 'success',
+								data: {
+									id: '3',
+									name: 'webhook-channel',
+									displayName: 'webhook channel',
+									createdAt: '2026-01-01T00:00:00Z',
+									updatedAt: '2026-01-01T00:00:00Z',
+									config: {
+										kind: 'webhook',
+										spec: { url: 'https://example.com/hook', bearerToken: 'old-token' },
+									},
+								},
+							}),
+						),
+				),
+				rest.put(
+					'http://localhost/api/v2/notification_channels/:id',
+					async (req, res, ctx) => {
+						body = await req.json();
+						return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+					},
+				),
+			);
+
+			const onDone = jest.fn();
+			render(<ChannelForm channelId="3" onDone={onDone} />);
+
+			const token = await screen.findByTestId(
+				'webhook-bearer-token-textbox',
+				{},
+				FIND,
+			);
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			await user.clear(token);
+			await user.type(
+				screen.getByTestId('webhook-bearer-token-textbox'),
+				'new-token',
+			);
+
+			const save = screen.getByTestId('save-channel-button');
+			await waitFor(
+				() => expect(save).toHaveAttribute('aria-disabled', 'false'),
+				FIND,
+			);
+			await user.click(save);
+
+			await waitFor(() => expect(onDone).toHaveBeenCalled(), FIND);
+			expect(body).toStrictEqual({
+				config: {
+					kind: 'webhook',
+					spec: { url: 'https://example.com/hook', bearerToken: 'new-token' },
+				},
+			});
+		},
+		TEST_TIMEOUT,
+	);
+
+	it(
 		'opens read-only, with saving disabled rather than hidden, when update is denied',
 		async () => {
 			server.use(setupAuthzGrantByPrefix('read', 'list'));
