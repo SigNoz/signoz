@@ -1,4 +1,6 @@
 @use './periscope.scss';
+// Inter from rsms/inter: the Google Fonts build drops ss01, ss02, zero and case.
+@use './assets/fonts/inter/faces';
 
 @import '@signozhq/design-tokens/dist/style.css';
 @import 'overlayscrollbars/overlayscrollbars.css';
@@ -10,23 +12,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&display=swap');
-
-// Inter from rsms/inter: the Google Fonts build drops ss01, ss02, zero and case.
-@font-face {
-	font-family: 'Inter';
-	font-style: normal;
-	font-weight: 100 900;
-	font-display: swap;
-	src: url('./assets/fonts/inter/InterVariable.woff2') format('woff2');
-}
-
-@font-face {
-	font-family: 'Inter';
-	font-style: italic;
-	font-weight: 100 900;
-	font-display: swap;
-	src: url('./assets/fonts/inter/InterVariable-Italic.woff2') format('woff2');
-}
 
 #root,
 html,
