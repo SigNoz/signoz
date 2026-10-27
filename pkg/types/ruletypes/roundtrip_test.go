@@ -159,7 +159,7 @@ func TestV2MinimalReadShape(t *testing.T) {
 	assert.JSONEq(t, `false`, string(ns["usePolicy"]))
 
 	assert.JSONEq(t, `false`, string(body["disabled"]))
-	assert.JSONEq(t, `"v5"`, string(body["version"]))
+	assert.JSONEq(t, `""`, string(body["version"]))
 
 	var condition struct {
 		Thresholds struct {

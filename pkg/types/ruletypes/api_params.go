@@ -73,7 +73,7 @@ type PostableRule struct {
 
 	Source string `json:"source,omitempty" description:"The URL of the page the rule was created from. Informational; it is not used for evaluation."`
 
-	Version string `json:"version" description:"The query payload version. Only v5 is accepted and it is filled in when omitted."`
+	Version string `json:"version" description:"The query payload version. Nothing reads it."`
 
 	Evaluation    *EvaluationEnvelope          `json:"evaluation" required:"true" description:"The evaluation window, as a kind and spec."`
 	SchemaVersion valuer.UnsetOrNonEmptyString `json:"schemaVersion" required:"true" enum:"v2alpha1" description:"The rule payload schema."`
@@ -223,11 +223,6 @@ func (ns *NotificationSettings) UnmarshalJSON(data []byte) error {
 // processRuleDefaults applies the default values
 // for the rule options that are blank or unset.
 func (r *PostableRule) processRuleDefaults() {
-	// TODO(srikanthccv): remove as this is now a legacy field
-	if r.Version == "" {
-		r.Version = "v5"
-	}
-
 	if r.RuleCondition != nil && r.RuleCondition.CompositeQuery != nil {
 		r.RuleType = deriveRuleType(r.RuleType, r.RuleCondition.CompositeQuery.QueryType)
 	}

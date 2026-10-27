@@ -11415,8 +11415,7 @@ components:
           type: string
         version:
           deprecated: true
-          description: The query payload version. Only v5 is accepted and it is filled
-            in when omitted.
+          description: The query payload version. Nothing reads it.
           type: string
       required:
       - alert
@@ -11553,8 +11552,7 @@ components:
           type: string
         version:
           deprecated: true
-          description: The query payload version. Only v5 is accepted and it is filled
-            in when omitted.
+          description: The query payload version. Nothing reads it.
           type: string
       required:
       - id

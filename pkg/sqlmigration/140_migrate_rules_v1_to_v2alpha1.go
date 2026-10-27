@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"maps"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/uptrace/bun"
@@ -33,6 +35,8 @@ const (
 	compareOperatorBelow   = "2"
 	criticalThresholdName  = "critical"
 	labelSeverity          = "severity"
+	defaultEvalWindow      = "5m"
+	defaultFrequency       = "1m"
 )
 
 // The values the write path accepts; a migrated rule outside them is written
@@ -85,141 +89,128 @@ func (migration *migrateRulesV1ToV2Alpha1) Up(ctx context.Context, _ *bun.DB) er
 	})
 }
 
+func (migration *migrateRulesV1ToV2Alpha1) Down(context.Context, *bun.DB) error {
+	return nil
+}
+
 func (migration *migrateRulesV1ToV2Alpha1) convertOrg(ctx context.Context, orgID string) error {
 	db := migration.sqlstore.BunDBCtx(ctx)
 
-	rules := make([]*ruleRow, 0)
-	if err := db.NewSelect().Model(&rules).Where("org_id = ?", orgID).Scan(ctx); err != nil {
+	type ruleRow struct {
+		bun.BaseModel `bun:"table:rule"`
+
+		ID    string `bun:"id,pk"`
+		OrgID string `bun:"org_id"`
+		Data  string `bun:"data"`
+	}
+
+	allRules := make([]*ruleRow, 0)
+	if err := db.NewSelect().Model(&allRules).Where("org_id = ?", orgID).Scan(ctx); err != nil {
 		return err
 	}
 
-	routes := make([]*routePolicyRow, 0)
-	if err := db.NewSelect().Model(&routes).Where("org_id = ?", orgID).Scan(ctx); err != nil {
+	allRoutePolicies := make([]*routePolicyRow, 0)
+	if err := db.NewSelect().Model(&allRoutePolicies).Where("org_id = ?", orgID).Scan(ctx); err != nil {
 		return err
 	}
-	routesByName := make(map[string][]*routePolicyRow)
-	for _, route := range routes {
-		routesByName[route.Name] = append(routesByName[route.Name], route)
+	// the name is not unique; a v1 rule has one threshold so one row, and any
+	// duplicate is as good as another
+	routePolicyNameToRoute := make(map[string]*routePolicyRow)
+	for _, route := range allRoutePolicies {
+		routePolicyNameToRoute[route.Name] = route
 	}
 
 	var migrated, disabled, skipped, undecodable, unmigratable int
-	for _, stored := range rules {
-		var header struct {
-			SchemaVersion string `json:"schemaVersion"`
-		}
-		if err := json.Unmarshal([]byte(stored.Data), &header); err != nil {
+	for _, storedRule := range allRules {
+		storedRuleData := new(postableRule)
+		if err := json.Unmarshal([]byte(storedRule.Data), storedRuleData); err != nil {
 			undecodable++
-			migration.logger.WarnContext(ctx, "failed to decode stored rule", slog.String("org_id", orgID), slog.String("rule_id", stored.ID), errors.Attr(err))
+			migration.logger.WarnContext(ctx, "failed to decode stored rule", slog.String("org_id", orgID), slog.String("rule_id", storedRule.ID), errors.Attr(err))
 			continue
 		}
-		if header.SchemaVersion == schemaVersionV2Alpha1 {
+		if storedRuleData.SchemaVersion == schemaVersionV2Alpha1 {
 			skipped++
 			continue
 		}
 
-		rule := new(postableRule)
-		if err := json.Unmarshal([]byte(stored.Data), rule); err != nil {
-			undecodable++
-			migration.logger.WarnContext(ctx, "failed to decode stored rule", slog.String("org_id", orgID), slog.String("rule_id", stored.ID), errors.Attr(err))
+		storedRoute := routePolicyNameToRoute[storedRule.ID]
+		if err := validateRoute(storedRoute, storedRuleData.PreferredChannels); err != nil {
+			unmigratable++
+			migration.logger.WarnContext(ctx, "leaving rule at v1", slog.String("org_id", orgID), slog.String("rule_id", storedRule.ID), errors.Attr(err))
 			continue
 		}
 
-		routes := routesByName[stored.ID]
-		if err := validateRoutes(routes, rule.PreferredChannels); err != nil {
+		convertedRule, convertedRoute, err := convertRule(storedRule.ID, storedRuleData, storedRoute)
+		if err != nil {
 			unmigratable++
-			migration.logger.WarnContext(ctx, "leaving rule at v1", slog.String("org_id", orgID), slog.String("rule_id", stored.ID), errors.Attr(err))
+			migration.logger.WarnContext(ctx, "leaving rule at v1", slog.String("org_id", orgID), slog.String("rule_id", storedRule.ID), errors.Attr(err))
 			continue
 		}
-		var route *routePolicyRow
-		expression := ""
-		if len(routes) == 1 {
-			route = routes[0]
-			expression = route.Expression
-		}
-
-		if err := convertRule(stored.ID, rule, route); err != nil {
-			unmigratable++
-			migration.logger.WarnContext(ctx, "leaving rule at v1", slog.String("org_id", orgID), slog.String("rule_id", stored.ID), errors.Attr(err))
-			continue
-		}
-		if reason := rule.validateThreshold(); reason != nil {
-			rule.Disabled = json.RawMessage("true")
+		if cause := convertedRule.disableIfNeverFired(); cause != "" {
 			disabled++
-			migration.logger.WarnContext(ctx, "migrating rule as disabled, its threshold fails the write path", slog.String("org_id", orgID), slog.String("rule_id", stored.ID), errors.Attr(reason))
+			migration.logger.WarnContext(ctx, "migrating rule as disabled, it never fired in v1", slog.String("org_id", orgID), slog.String("rule_id", storedRule.ID), slog.String("cause", cause))
 		}
 
-		data, err := marshalUnescaped(rule)
+		data, err := marshalUnescaped(convertedRule)
 		if err != nil {
 			return err
 		}
-		stored.Data = string(data)
-		if _, err := db.NewUpdate().Model(stored).Column("data").WherePK().Exec(ctx); err != nil {
+		storedRule.Data = string(data)
+		if _, err := db.NewUpdate().Model(storedRule).Column("data").WherePK().Exec(ctx); err != nil {
 			return err
 		}
-		if route != nil && route.Expression != expression {
-			if _, err := db.NewUpdate().Model(route).Column("expression").WherePK().Exec(ctx); err != nil {
+		if convertedRoute != nil && convertedRoute.Expression != storedRoute.Expression {
+			if _, err := db.NewUpdate().Model(convertedRoute).Column("expression").WherePK().Exec(ctx); err != nil {
 				return err
 			}
 		}
 		migrated++
 	}
 
-	migration.logger.InfoContext(ctx, "migrated rules from v1 to v2alpha1", slog.String("org_id", orgID), slog.Int("total", len(rules)), slog.Int("migrated", migrated), slog.Int("disabled", disabled), slog.Int("skipped", skipped), slog.Int("undecodable", undecodable), slog.Int("unmigratable", unmigratable))
+	migration.logger.InfoContext(ctx, "migrated rules from v1 to v2alpha1", slog.String("org_id", orgID), slog.Int("total", len(allRules)), slog.Int("migrated", migrated), slog.Int("disabled", disabled), slog.Int("skipped", skipped), slog.Int("undecodable", undecodable), slog.Int("unmigratable", unmigratable))
 	return nil
 }
 
-// convertRule rewrites rule in place, in the order the v1 decode derived the
-// same values. Version and source are left as stored. A nil route is a rule
-// that never had channels.
-func convertRule(ruleID string, rule *postableRule, route *routePolicyRow) error {
-	if rule.RuleCondition == nil || rule.RuleCondition.CompositeQuery == nil {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition or condition.compositeQuery is null")
+// validateRoute checks the rule's route_policy row, named after the rule. A
+// rule that never had channels got no row from migration 049 and migrates with
+// none; a rule with preferred channels but no row would lose them, so it is
+// left at v1.
+func validateRoute(route *routePolicyRow, preferredChannels []string) error {
+	if route == nil && len(preferredChannels) > 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "no route_policy row for a rule with %d preferred channels", len(preferredChannels))
+	}
+	return nil
+}
+
+// convertRule returns a v2alpha1 copy of storedRuleData, derived in the order
+// the v1 decode derived the same values, with the rule's route_policy row as it
+// must be stored alongside. Version and source are left as stored. A nil
+// storedRoute is a rule that never had channels.
+func convertRule(ruleID string, storedRuleData *postableRule, storedRoute *routePolicyRow) (*postableRule, *routePolicyRow, error) {
+	if storedRuleData.RuleCondition == nil {
+		return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "condition in stored rule data is null")
 	}
 	channels := []string{}
-	if route != nil {
-		channels = route.Channels
+	if storedRoute != nil {
+		channels = storedRoute.Channels
 	}
 
+	rule := storedRuleData.clone()
 	rule.fillDurationDefaults()
-	if err := rule.validateDurations(); err != nil {
-		return err
-	}
 	rule.deriveAlertType()
 	rule.deriveQueryType()
 	rule.repairPanelType()
 	rule.disableUnmetMinPoints()
 	rule.deriveRuleType()
 	rule.negateAnomalyBelowTarget()
-	rule.repairEmptySeverity(ruleID, route)
+	convertedRoute := rule.repairEmptySeverity(ruleID, storedRoute)
 	rule.relocateThreshold(channels)
 	rule.relocateEvaluation()
 	rule.synthesizeNotificationSettings()
 	rule.SchemaVersion = schemaVersionV2Alpha1
 	rule.clearV1Fields()
 
-	return nil
-}
-
-// validateRoutes checks the rule's route_policy rows, named after the rule. A
-// rule that never had channels got no row from migration 049 and migrates with
-// none; a rule with preferred channels but no row would lose them, so it is
-// left at v1.
-func validateRoutes(routes []*routePolicyRow, preferredChannels []string) error {
-	if len(routes) > 1 {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "expected one route_policy row, found %d", len(routes))
-	}
-	if len(routes) == 0 && len(preferredChannels) > 0 {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "no route_policy row for a rule with %d preferred channels", len(preferredChannels))
-	}
-	return nil
-}
-
-type ruleRow struct {
-	bun.BaseModel `bun:"table:rule"`
-
-	ID    string `bun:"id,pk"`
-	OrgID string `bun:"org_id"`
-	Data  string `bun:"data"`
+	return rule, convertedRoute, nil
 }
 
 type routePolicyRow struct {
@@ -319,39 +310,69 @@ type renotify struct {
 	AlertStates      []string     `json:"alertStates,omitzero"`
 }
 
-// validateThreshold reports what the v1 write path once let through: a missing
-// target, or an op or matchType the v2 write path rejects. It reads the
-// relocated threshold, so it runs after convertRule.
-func (rule *postableRule) validateThreshold() error {
+// clone copies what the conversion writes to: the rule, its condition, the
+// composite query and the labels. Raw keys share their bytes.
+func (rule *postableRule) clone() *postableRule {
+	cloned := *rule
+	if rule.RuleCondition != nil {
+		condition := *rule.RuleCondition
+		if condition.CompositeQuery != nil {
+			query := *condition.CompositeQuery
+			condition.CompositeQuery = &query
+		}
+		cloned.RuleCondition = &condition
+	}
+	cloned.Labels = maps.Clone(rule.Labels)
+	return &cloned
+}
+
+// disableIfNeverFired disables a rule v1 stored but could never fire: a
+// negative evalWindow or frequency, which is reset to its default since no
+// read of a rolling window accepts it, a null compositeQuery or one with no
+// queries, or a threshold with a null target or an op or matchType outside the
+// supported sets, which the v2 write path rejects. It reads the relocated
+// fields, so it runs after convertRule, and returns the offending fields, or
+// "" when the rule stays enabled.
+func (rule *postableRule) disableIfNeverFired() string {
+	var causes []string
+	window := &rule.Evaluation.Spec
+	if !window.EvalWindow.IsPositive() {
+		causes = append(causes, fmt.Sprintf("evalWindow %s is negative", window.EvalWindow))
+		window.EvalWindow = mustParseTextDuration(defaultEvalWindow)
+	}
+	if !window.Frequency.IsPositive() {
+		causes = append(causes, fmt.Sprintf("frequency %s is negative", window.Frequency))
+		window.Frequency = mustParseTextDuration(defaultFrequency)
+	}
+	switch {
+	case rule.RuleCondition.CompositeQuery == nil:
+		causes = append(causes, "condition.compositeQuery is null")
+	case len(rule.decodeQueryEnvelopes()) == 0:
+		causes = append(causes, "condition.compositeQuery.queries is empty")
+	}
 	threshold := rule.RuleCondition.Thresholds.Spec[0]
-	if threshold.TargetValue == nil {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.target is null")
+	switch {
+	case threshold.TargetValue == nil:
+		causes = append(causes, "condition.target is null")
+	case !slices.Contains(supportedCompareOperators, threshold.CompareOperator):
+		causes = append(causes, fmt.Sprintf("condition.op: unsupported value %q", threshold.CompareOperator))
+	case !slices.Contains(supportedMatchTypes, threshold.MatchType):
+		causes = append(causes, fmt.Sprintf("condition.matchType: unsupported value %q", threshold.MatchType))
 	}
-	if !slices.Contains(supportedCompareOperators, threshold.CompareOperator) {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.op: unsupported value %q", threshold.CompareOperator)
+	if len(causes) == 0 {
+		return ""
 	}
-	if !slices.Contains(supportedMatchTypes, threshold.MatchType) {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.matchType: unsupported value %q", threshold.MatchType)
-	}
-	return nil
+	rule.Disabled = json.RawMessage("true")
+	return strings.Join(causes, ", ")
 }
 
 func (rule *postableRule) fillDurationDefaults() {
 	if rule.EvalWindow.IsZero() {
-		rule.EvalWindow = mustParseTextDuration("5m")
+		rule.EvalWindow = mustParseTextDuration(defaultEvalWindow)
 	}
 	if rule.Frequency.IsZero() {
-		rule.Frequency = mustParseTextDuration("1m")
+		rule.Frequency = mustParseTextDuration(defaultFrequency)
 	}
-}
-
-// validateDurations rejects what the v1 write path never checked: a negative
-// evalWindow or frequency, which no read of a rolling window accepts.
-func (rule *postableRule) validateDurations() error {
-	if !rule.EvalWindow.IsPositive() || !rule.Frequency.IsPositive() {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "evalWindow %s or frequency %s is negative", rule.EvalWindow, rule.Frequency)
-	}
-	return nil
 }
 
 func (rule *postableRule) deriveAlertType() {
@@ -374,7 +395,7 @@ func (rule *postableRule) deriveAlertType() {
 
 func (rule *postableRule) deriveQueryType() {
 	query := rule.RuleCondition.CompositeQuery
-	if slices.Contains(supportedQueryTypes, query.QueryType) {
+	if query == nil || slices.Contains(supportedQueryTypes, query.QueryType) {
 		return
 	}
 	envelopes := rule.decodeQueryEnvelopes()
@@ -393,7 +414,7 @@ func (rule *postableRule) deriveQueryType() {
 func (rule *postableRule) repairPanelType() {
 	query := rule.RuleCondition.CompositeQuery
 	// nothing reads panelType; both alert forms write graph
-	if !slices.Contains(supportedPanelTypes, query.PanelType) {
+	if query != nil && !slices.Contains(supportedPanelTypes, query.PanelType) {
 		query.PanelType = panelTypeGraph
 	}
 }
@@ -417,15 +438,23 @@ func (rule *postableRule) disableUnmetMinPoints() {
 }
 
 func (rule *postableRule) decodeQueryEnvelopes() []ruleQueryEnvelope {
+	query := rule.RuleCondition.CompositeQuery
+	if query == nil {
+		return nil
+	}
 	var envelopes []ruleQueryEnvelope
-	if err := json.Unmarshal(rule.RuleCondition.CompositeQuery.Queries, &envelopes); err != nil {
+	if err := json.Unmarshal(query.Queries, &envelopes); err != nil {
 		return nil
 	}
 	return envelopes
 }
 
 func (rule *postableRule) deriveRuleType() {
-	switch rule.RuleCondition.CompositeQuery.QueryType {
+	query := rule.RuleCondition.CompositeQuery
+	if query == nil {
+		return
+	}
+	switch query.QueryType {
 	case queryTypeBuilder, queryTypeClickHouseSQL:
 		if rule.RuleType == "" {
 			rule.RuleType = ruleTypeThreshold
@@ -449,15 +478,19 @@ func (rule *postableRule) negateAnomalyBelowTarget() {
 
 // repairEmptySeverity rewrites a severity of "" as critical in labels and in
 // the route expression that matches alerts on it, since a threshold named ""
-// fails every later read.
-func (rule *postableRule) repairEmptySeverity(ruleID string, route *routePolicyRow) {
+// fails every later read. It returns storedRoute, or a copy with the new
+// expression.
+func (rule *postableRule) repairEmptySeverity(ruleID string, storedRoute *routePolicyRow) *routePolicyRow {
 	if severity, ok := rule.Labels[labelSeverity]; !ok || severity != "" {
-		return
+		return storedRoute
 	}
 	rule.Labels[labelSeverity] = criticalThresholdName
-	if route != nil {
-		route.Expression = fmt.Sprintf(`threshold.name == "%s" && ruleId == "%s"`, criticalThresholdName, ruleID)
+	if storedRoute == nil {
+		return nil
 	}
+	route := *storedRoute
+	route.Expression = fmt.Sprintf(`threshold.name == "%s" && ruleId == "%s"`, criticalThresholdName, ruleID)
+	return &route
 }
 
 func (rule *postableRule) relocateThreshold(channels []string) {
@@ -566,8 +599,4 @@ func (d *textDuration) UnmarshalJSON(data []byte) error {
 	default:
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid duration %s", data)
 	}
-}
-
-func (migration *migrateRulesV1ToV2Alpha1) Down(context.Context, *bun.DB) error {
-	return nil
 }
