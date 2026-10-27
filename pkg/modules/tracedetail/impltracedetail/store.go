@@ -209,7 +209,7 @@ func (s *traceStore) genAISpanColumns(ctx context.Context, orgID valuer.UUID, bo
 	return columns, nil
 }
 
-func (s *traceStore) GetTraceSpans(ctx context.Context, _ valuer.UUID, traceID string, bounds *spantypes.TraceBounds) ([]spantypes.StorableSpan, error) {
+func (s *traceStore) GetTraceSpans(ctx context.Context, traceID string, bounds *spantypes.TraceBounds) ([]spantypes.StorableSpan, error) {
 	sb := selectStorableSpans()
 	sb.Where(
 		sb.E("trace_id", traceID),
@@ -251,7 +251,7 @@ func (s *traceStore) GetMinimalSpans(ctx context.Context, traceID string, start,
 	return spans, nil
 }
 
-func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, _ valuer.UUID, traceID string, start, end time.Time, spanIDs []string) ([]spantypes.StorableSpan, error) {
+func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, start, end time.Time, spanIDs []string) ([]spantypes.StorableSpan, error) {
 	if len(spanIDs) == 0 {
 		return []spantypes.StorableSpan{}, nil
 	}
@@ -291,12 +291,9 @@ func (s *traceStore) GetThreadSpans(ctx context.Context, orgID valuer.UUID, trac
 	sb.Select(
 		"DISTINCT ON (span_id) timestamp", "duration_nano", "span_id", "parent_span_id", "has_error", "name", "kind_string",
 		"status_code_string", "status_message", "resources_string",
-		"attributes_string", "attributes_number", "attributes_bool",
+		"attributes", "attributes_string", "attributes_number", "attributes_bool",
 		"events", "links as references",
 	)
-	if q.TraceAttrsJSONOn {
-		sb.SelectMore("attributes")
-	}
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
 	keys, err := s.genAIFieldKeys(ctx, orgID, aiobservabilitytypes.GenAISpanGateKeys)
 	if err != nil {

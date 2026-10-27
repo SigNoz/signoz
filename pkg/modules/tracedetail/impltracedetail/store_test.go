@@ -159,7 +159,7 @@ func TestGetTraceSpans(t *testing.T) {
 	s := newTestStore(sqlmock.QueryMatcherEqual)
 	s.Mock().ExpectSelect(expectedSQL).
 		WillReturnRows(cmock.NewRows(nil, nil))
-	_, _ = s.Store().GetTraceSpans(context.Background(), valuer.GenerateUUID(), testTraceID, testBounds)
+	_, _ = s.Store().GetTraceSpans(context.Background(), testTraceID, testBounds)
 	assert.NoError(t, s.Mock().ExpectationsWereMet())
 }
 
@@ -218,7 +218,7 @@ func TestGetSpanDurationByField(t *testing.T) {
 }
 
 func TestGetThreadSpans(t *testing.T) {
-	selectSQL := "SELECT DISTINCT ON (span_id) timestamp, duration_nano, span_id, parent_span_id, has_error, name, kind_string, status_code_string, status_message, resources_string, attributes_string, attributes_number, attributes_bool, events, links as references"
+	selectSQL := "SELECT DISTINCT ON (span_id) timestamp, duration_nano, span_id, parent_span_id, has_error, name, kind_string, status_code_string, status_message, resources_string, attributes, attributes_string, attributes_number, attributes_bool, events, links as references"
 	fromSQL := " FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND "
 	orderSQL := " ORDER BY timestamp ASC, span_id ASC LIMIT ?"
 	jsonInsideTrace := testStart.Add(500 * time.Second)
@@ -227,20 +227,17 @@ func TestGetThreadSpans(t *testing.T) {
 		name        string
 		jsonOn      bool
 		jsonRelease *time.Time
-		selectSQL   string
 		whereSQL    string
 	}{
 		{
-			name:        "FlagOff_ReadsAndFiltersLegacyMaps",
+			name:        "FlagOff_FiltersLegacyMaps",
 			jsonRelease: &jsonInsideTrace,
-			selectSQL:   selectSQL,
 			whereSQL:    "(mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))",
 		},
 		{
-			name:        "FlagOn_ReleasedDuringTrace_ReadsJSONFiltersJSONThenMaps",
+			name:        "FlagOn_ReleasedDuringTrace_FiltersJSONThenMaps",
 			jsonOn:      true,
 			jsonRelease: &jsonInsideTrace,
-			selectSQL:   selectSQL + ", attributes",
 			whereSQL:    "(multiIf(attributes.`gen_ai.request.model` IS NOT NULL, attributes.`gen_ai.request.model`::String, mapContains(attributes_string, 'gen_ai.request.model'), attributes_string['gen_ai.request.model'], NULL) IS NOT NULL OR multiIf(attributes.`gen_ai.tool.name` IS NOT NULL, attributes.`gen_ai.tool.name`::String, mapContains(attributes_string, 'gen_ai.tool.name'), attributes_string['gen_ai.tool.name'], NULL) IS NOT NULL OR multiIf(attributes.`gen_ai.agent.name` IS NOT NULL, attributes.`gen_ai.agent.name`::String, mapContains(attributes_string, 'gen_ai.agent.name'), attributes_string['gen_ai.agent.name'], NULL) IS NOT NULL)",
 		},
 	}
@@ -249,7 +246,7 @@ func TestGetThreadSpans(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			fl := flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureUseTraceAttributesJSON.String(): testCase.jsonOn})
 			s := newTestStoreWithMetadata(sqlmock.QueryMatcherRegexp, genAIMetadataStore(testCase.jsonRelease), fl)
-			s.Mock().ExpectSelect(regexp.QuoteMeta(testCase.selectSQL + fromSQL + testCase.whereSQL + orderSQL)).
+			s.Mock().ExpectSelect(regexp.QuoteMeta(selectSQL + fromSQL + testCase.whereSQL + orderSQL)).
 				WillReturnRows(cmock.NewRows(nil, nil))
 			_, _ = s.Store().GetThreadSpans(context.Background(), valuer.GenerateUUID(), testTraceID, testBounds, spantypes.ThreadPage{Limit: 3})
 			assert.NoError(t, s.Mock().ExpectationsWereMet())

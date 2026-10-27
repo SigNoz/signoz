@@ -92,7 +92,7 @@ func (m *module) GetWaterfallV4(ctx context.Context, orgID valuer.UUID, traceID 
 }
 
 func (m *module) getFullWaterfall(ctx context.Context, orgID valuer.UUID, traceID string, bounds *spantypes.TraceBounds) (*spantypes.GettableWaterfallTrace, error) {
-	spanItems, err := m.store.GetTraceSpans(ctx, orgID, traceID, bounds)
+	spanItems, err := m.store.GetTraceSpans(ctx, traceID, bounds)
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +195,7 @@ func (m *module) getWindowedWaterfall(ctx context.Context, orgID valuer.UUID, tr
 	for i, s := range selectedSpans {
 		spanIDs[i] = s.SpanID
 	}
-	fullSpans, err := m.store.GetTraceSpansByIDs(ctx, orgID, traceID, start, end, spanIDs)
+	fullSpans, err := m.store.GetTraceSpansByIDs(ctx, traceID, start, end, spanIDs)
 	if err != nil {
 		return nil, err
 	}
