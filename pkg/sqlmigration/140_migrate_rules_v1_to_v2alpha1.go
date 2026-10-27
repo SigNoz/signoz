@@ -190,9 +190,6 @@ func convertRule(ruleID string, storedRuleData *postableRule, storedRoute *route
 	if storedRuleData.RuleCondition == nil {
 		return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "condition in stored rule data is null")
 	}
-	if storedRuleData.RuleCondition.CompositeQuery == nil {
-		return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.compositeQuery in stored rule data is null")
-	}
 	channels := []string{}
 	if storedRoute != nil {
 		channels = storedRoute.Channels
@@ -332,10 +329,11 @@ func (rule *postableRule) clone() *postableRule {
 
 // disableIfNeverFired disables a rule v1 stored but could never fire: a
 // negative evalWindow or frequency, which is reset to its default since no
-// read of a rolling window accepts it, or a threshold with a null target or an
-// op or matchType outside the supported sets, which the v2 write path rejects.
-// It reads the relocated fields, so it runs after convertRule, and returns the
-// offending fields, or "" when the rule stays enabled.
+// read of a rolling window accepts it, a null compositeQuery, or a threshold
+// with a null target or an op or matchType outside the supported sets, which
+// the v2 write path rejects. It reads the relocated fields, so it runs after
+// convertRule, and returns the offending fields, or "" when the rule stays
+// enabled.
 func (rule *postableRule) disableIfNeverFired() string {
 	var causes []string
 	window := &rule.Evaluation.Spec
@@ -346,6 +344,9 @@ func (rule *postableRule) disableIfNeverFired() string {
 	if !window.Frequency.IsPositive() {
 		causes = append(causes, fmt.Sprintf("frequency %s is negative", window.Frequency))
 		window.Frequency = mustParseTextDuration(defaultFrequency)
+	}
+	if rule.RuleCondition.CompositeQuery == nil {
+		causes = append(causes, "condition.compositeQuery is null")
 	}
 	threshold := rule.RuleCondition.Thresholds.Spec[0]
 	switch {
@@ -392,7 +393,7 @@ func (rule *postableRule) deriveAlertType() {
 
 func (rule *postableRule) deriveQueryType() {
 	query := rule.RuleCondition.CompositeQuery
-	if slices.Contains(supportedQueryTypes, query.QueryType) {
+	if query == nil || slices.Contains(supportedQueryTypes, query.QueryType) {
 		return
 	}
 	envelopes := rule.decodeQueryEnvelopes()
@@ -411,7 +412,7 @@ func (rule *postableRule) deriveQueryType() {
 func (rule *postableRule) repairPanelType() {
 	query := rule.RuleCondition.CompositeQuery
 	// nothing reads panelType; both alert forms write graph
-	if !slices.Contains(supportedPanelTypes, query.PanelType) {
+	if query != nil && !slices.Contains(supportedPanelTypes, query.PanelType) {
 		query.PanelType = panelTypeGraph
 	}
 }
@@ -435,15 +436,23 @@ func (rule *postableRule) disableUnmetMinPoints() {
 }
 
 func (rule *postableRule) decodeQueryEnvelopes() []ruleQueryEnvelope {
+	query := rule.RuleCondition.CompositeQuery
+	if query == nil {
+		return nil
+	}
 	var envelopes []ruleQueryEnvelope
-	if err := json.Unmarshal(rule.RuleCondition.CompositeQuery.Queries, &envelopes); err != nil {
+	if err := json.Unmarshal(query.Queries, &envelopes); err != nil {
 		return nil
 	}
 	return envelopes
 }
 
 func (rule *postableRule) deriveRuleType() {
-	switch rule.RuleCondition.CompositeQuery.QueryType {
+	query := rule.RuleCondition.CompositeQuery
+	if query == nil {
+		return
+	}
+	switch query.QueryType {
 	case queryTypeBuilder, queryTypeClickHouseSQL:
 		if rule.RuleType == "" {
 			rule.RuleType = ruleTypeThreshold
