@@ -6,11 +6,7 @@ import { ThreadSpan, ThreadView } from '../TraceDetailsThread/types';
 import JsonBlock from '../AIThreadMessage/JsonBlock';
 import { MessageType } from '../AIThreadMessage/types';
 import MessagesSection from './MessagesSection';
-import {
-	getSpanMessages,
-	hasFormattedMessages,
-	hasRawMessages,
-} from '../utils/spanMessages';
+import { getSpanMessages, hasFormattedMessages } from '../utils/spanMessages';
 
 import styles from './SpanMessages.module.scss';
 
@@ -32,9 +28,8 @@ function SpanMessages({
 	onToolLinkClick,
 }: SpanMessagesProps): JSX.Element {
 	const data = useMemo(() => getSpanMessages(span), [span]);
-	const isFormatted = view === ThreadView.Formatted;
 
-	if (isFormatted ? !hasFormattedMessages(data) : !hasRawMessages(data)) {
+	if (!hasFormattedMessages(data)) {
 		return (
 			<div
 				className={cx(styles.missing, className)}
@@ -45,11 +40,11 @@ function SpanMessages({
 		);
 	}
 
-	if (!isFormatted) {
+	if (view === ThreadView.Json) {
 		return (
 			<div className={cx(styles.root, className)} data-testid="span-messages-json">
 				<JsonBlock
-					data={{ input: data.rawInput ?? [], output: data.rawOutput ?? [] }}
+					data={{ input: data.formattedInput, output: data.formattedOutput }}
 				/>
 			</div>
 		);
@@ -60,7 +55,6 @@ function SpanMessages({
 			<MessagesSection
 				view={view}
 				messages={data.formattedInput}
-				raw={data.rawInput}
 				messageType={MessageType.Input}
 				testId="span-messages-input"
 				canLinkToToolCall={canLinkToToolCall}
@@ -69,7 +63,6 @@ function SpanMessages({
 			<MessagesSection
 				view={view}
 				messages={data.formattedOutput}
-				raw={data.rawOutput}
 				messageType={MessageType.Output}
 				testId="span-messages-output"
 				canLinkToToolCall={canLinkToToolCall}
