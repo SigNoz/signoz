@@ -1,8 +1,5 @@
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { MemoryRouter } from 'react-router-dom';
-import { fireEvent, render, screen } from '@testing-library/react';
-import * as appHooks from 'providers/App/App';
-import { createAppContextMock } from 'tests/fixtures/appContextMock';
+import { IAppContext } from 'providers/App/types';
+import { render, screen, userEvent } from 'tests/test-utils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { CreateAlertProvider } from '../../context';
@@ -87,37 +84,29 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	}),
 }));
 
-const createTestQueryClient = (): QueryClient =>
-	new QueryClient({
-		defaultOptions: {
-			queries: {
-				retry: false,
-			},
-		},
-	});
-
 const renderAlertCondition = (
 	alertType?: string,
-): ReturnType<typeof render> => {
-	const queryClient = createTestQueryClient();
-	const initialEntries = alertType ? [`/?alertType=${alertType}`] : undefined;
-	return render(
-		<MemoryRouter initialEntries={initialEntries}>
-			<QueryClientProvider client={queryClient}>
-				<CreateAlertProvider initialAlertType={AlertTypes.METRICS_BASED_ALERT}>
-					<AlertCondition />
-				</CreateAlertProvider>
-			</QueryClientProvider>
-		</MemoryRouter>,
+	appContextOverrides?: Partial<IAppContext>,
+): ReturnType<typeof render> =>
+	render(
+		<CreateAlertProvider initialAlertType={AlertTypes.METRICS_BASED_ALERT}>
+			<AlertCondition />
+		</CreateAlertProvider>,
+		undefined,
+		{
+			initialRoute: alertType ? `/?alertType=${alertType}` : '/',
+			appContextOverrides,
+		},
 	);
-};
 
-const useAppContextSpy = jest.spyOn(appHooks, 'useAppContext');
+const clickText = async (text: string): Promise<void> => {
+	const user = userEvent.setup({ pointerEventsCheck: 0 });
+	await user.click(screen.getByText(text));
+};
 
 describe('AlertCondition', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
-		useAppContextSpy.mockReturnValue(createAppContextMock('ADMIN'));
 	});
 
 	it('renders the stepper with correct step number and label', () => {
@@ -171,34 +160,31 @@ describe('AlertCondition', () => {
 		).not.toBeInTheDocument();
 	});
 
-	it('shows AnomalyThreshold component when alert type is anomaly based', () => {
+	it('shows AnomalyThreshold component when alert type is anomaly based', async () => {
 		renderAlertCondition();
 
 		// Click on anomaly tab to switch to anomaly-based alert
-		const anomalyTab = screen.getByText(ANOMALY_TAB_TEXT);
-		fireEvent.click(anomalyTab);
+		await clickText(ANOMALY_TAB_TEXT);
 
 		expect(screen.getByTestId(ANOMALY_THRESHOLD_TEST_ID)).toBeInTheDocument();
 		expect(screen.queryByTestId(ALERT_THRESHOLD_TEST_ID)).not.toBeInTheDocument();
 	});
 
-	it('switches between threshold and anomaly tabs', () => {
+	it('switches between threshold and anomaly tabs', async () => {
 		renderAlertCondition();
 
 		// Initially shows threshold component
 		expect(screen.getByTestId(ALERT_THRESHOLD_TEST_ID)).toBeInTheDocument();
 
 		// Click anomaly tab
-		const anomalyTab = screen.getByText(ANOMALY_TAB_TEXT);
-		fireEvent.click(anomalyTab);
+		await clickText(ANOMALY_TAB_TEXT);
 
 		// Should show anomaly component
 		expect(screen.getByTestId(ANOMALY_THRESHOLD_TEST_ID)).toBeInTheDocument();
 		expect(screen.queryByTestId(ALERT_THRESHOLD_TEST_ID)).not.toBeInTheDocument();
 
 		// Click threshold tab
-		const thresholdTab = screen.getByText(THRESHOLD_TAB_TEXT);
-		fireEvent.click(thresholdTab);
+		await clickText(THRESHOLD_TAB_TEXT);
 
 		// Should show threshold component again
 		expect(screen.getByTestId(ALERT_THRESHOLD_TEST_ID)).toBeInTheDocument();
@@ -207,11 +193,11 @@ describe('AlertCondition', () => {
 		).not.toBeInTheDocument();
 	});
 
-	it('adds the anomaly function with the default z-score when switching to anomaly', () => {
+	it('adds the anomaly function with the default z-score when switching to anomaly', async () => {
 		renderAlertCondition();
 		expect(mockHandleSetQueryData).not.toHaveBeenCalled();
 
-		fireEvent.click(screen.getByText(ANOMALY_TAB_TEXT));
+		await clickText(ANOMALY_TAB_TEXT);
 
 		expect(mockHandleSetQueryData).toHaveBeenCalledWith(
 			0,
@@ -227,10 +213,10 @@ describe('AlertCondition', () => {
 		);
 	});
 
-	it('keeps the current query when switching between threshold and anomaly', () => {
+	it('keeps the current query when switching between threshold and anomaly', async () => {
 		renderAlertCondition();
 
-		fireEvent.click(screen.getByText(ANOMALY_TAB_TEXT));
+		await clickText(ANOMALY_TAB_TEXT);
 
 		expect(mockRedirectWithQueryBuilderData).toHaveBeenCalledWith(
 			mockCurrentQuery,
@@ -240,7 +226,7 @@ describe('AlertCondition', () => {
 		);
 	});
 
-	it('applies active tab styling correctly', () => {
+	it('applies active tab styling correctly', async () => {
 		renderAlertCondition();
 
 		const thresholdTab = screen.getByText(THRESHOLD_TAB_TEXT);
@@ -251,7 +237,7 @@ describe('AlertCondition', () => {
 		expect(anomalyTab.closest(ACTIVE_TAB_CLASS)).not.toBeInTheDocument();
 
 		// Click anomaly tab
-		fireEvent.click(anomalyTab);
+		await clickText(ANOMALY_TAB_TEXT);
 
 		// Anomaly tab should be active now
 		expect(anomalyTab.closest(ACTIVE_TAB_CLASS)).toBeInTheDocument();
@@ -268,10 +254,7 @@ describe('AlertCondition', () => {
 	});
 
 	it('hides the anomaly tab for METRICS_BASED_ALERT when anomaly detection is off', () => {
-		useAppContextSpy.mockReturnValue(
-			createAppContextMock('ADMIN', { featureFlags: [] }),
-		);
-		renderAlertCondition('METRIC_BASED_ALERT');
+		renderAlertCondition('METRIC_BASED_ALERT', { featureFlags: [] });
 
 		expect(screen.getByText(THRESHOLD_TAB_TEXT)).toBeInTheDocument();
 		expect(screen.queryByText(ANOMALY_TAB_TEXT)).not.toBeInTheDocument();

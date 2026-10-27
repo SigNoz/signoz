@@ -1,6 +1,5 @@
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { MemoryRouter, useHistory } from 'react-router-dom';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { useHistory } from 'react-router-dom';
+import { render, screen, userEvent } from 'tests/test-utils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { INITIAL_CREATE_ALERT_STATE } from '../constants';
@@ -41,19 +40,19 @@ function Probe(): JSX.Element {
 }
 
 function renderWithSearch(search: string): void {
-	const queryClient = new QueryClient({
-		defaultOptions: { queries: { retry: false } },
-	});
 	render(
-		<MemoryRouter initialEntries={[`/alerts/new${search}`]}>
-			<QueryClientProvider client={queryClient}>
-				<CreateAlertProvider initialAlertType={AlertTypes.METRICS_BASED_ALERT}>
-					<Probe />
-				</CreateAlertProvider>
-			</QueryClientProvider>
-		</MemoryRouter>,
+		<CreateAlertProvider initialAlertType={AlertTypes.METRICS_BASED_ALERT}>
+			<Probe />
+		</CreateAlertProvider>,
+		undefined,
+		{ initialRoute: `/alerts/new${search}` },
 	);
 }
+
+const clickTestId = async (testId: string): Promise<void> => {
+	const user = userEvent.setup({ pointerEventsCheck: 0 });
+	await user.click(screen.getByTestId(testId));
+};
 
 function serializeThreshold(thresholdValue: number): string {
 	return encodeURIComponent(
@@ -139,7 +138,7 @@ function SearchMutator({
 }
 
 describe('CreateAlertProvider — edit mode ignores URL prefill', () => {
-	it('keeps loaded thresholds when the query builder rewrites location.search', () => {
+	it('keeps loaded thresholds when the query builder rewrites location.search', async () => {
 		const initialAlertState = {
 			...INITIAL_CREATE_ALERT_STATE,
 			threshold: {
@@ -154,29 +153,24 @@ describe('CreateAlertProvider — edit mode ignores URL prefill', () => {
 			},
 		};
 
-		const queryClient = new QueryClient({
-			defaultOptions: { queries: { retry: false } },
-		});
 		render(
-			<MemoryRouter initialEntries={['/alerts/overview?ruleId=r1']}>
-				<QueryClientProvider client={queryClient}>
-					<CreateAlertProvider
-						initialAlertType={AlertTypes.METRICS_BASED_ALERT}
-						isEditMode
-						ruleId="r1"
-						initialAlertState={initialAlertState}
-					>
-						<Probe />
-						<SearchMutator />
-					</CreateAlertProvider>
-				</QueryClientProvider>
-			</MemoryRouter>,
+			<CreateAlertProvider
+				initialAlertType={AlertTypes.METRICS_BASED_ALERT}
+				isEditMode
+				ruleId="r1"
+				initialAlertState={initialAlertState}
+			>
+				<Probe />
+				<SearchMutator />
+			</CreateAlertProvider>,
+			undefined,
+			{ initialRoute: '/alerts/overview?ruleId=r1' },
 		);
 
 		expect(screen.getByTestId('threshold-value')).toHaveTextContent('245');
 
 		// Simulate the query builder normalizing the query into the URL post-load.
-		fireEvent.click(screen.getByTestId('mutate-search'));
+		await clickTestId('mutate-search');
 
 		expect(screen.getByTestId('threshold-value')).toHaveTextContent('245');
 	});
@@ -201,26 +195,21 @@ function ThresholdSetter(): JSX.Element {
 }
 
 describe('CreateAlertProvider — create mode', () => {
-	it('keeps edited thresholds when running the query rewrites location.search', () => {
-		const queryClient = new QueryClient({
-			defaultOptions: { queries: { retry: false } },
-		});
+	it('keeps edited thresholds when running the query rewrites location.search', async () => {
 		render(
-			<MemoryRouter initialEntries={['/alerts/new?alertType=METRIC_BASED_ALERT']}>
-				<QueryClientProvider client={queryClient}>
-					<CreateAlertProvider initialAlertType={AlertTypes.METRICS_BASED_ALERT}>
-						<Probe />
-						<ThresholdSetter />
-						<SearchMutator to="/alerts/new?alertType=METRIC_BASED_ALERT&compositeQuery=ran" />
-					</CreateAlertProvider>
-				</QueryClientProvider>
-			</MemoryRouter>,
+			<CreateAlertProvider initialAlertType={AlertTypes.METRICS_BASED_ALERT}>
+				<Probe />
+				<ThresholdSetter />
+				<SearchMutator to="/alerts/new?alertType=METRIC_BASED_ALERT&compositeQuery=ran" />
+			</CreateAlertProvider>,
+			undefined,
+			{ initialRoute: '/alerts/new?alertType=METRIC_BASED_ALERT' },
 		);
 
-		fireEvent.click(screen.getByTestId('set-threshold'));
+		await clickTestId('set-threshold');
 		expect(screen.getByTestId('threshold-value')).toHaveTextContent('245');
 
-		fireEvent.click(screen.getByTestId('mutate-search'));
+		await clickTestId('mutate-search');
 
 		expect(screen.getByTestId('threshold-value')).toHaveTextContent('245');
 	});
@@ -240,7 +229,7 @@ function AnomalySwitcher(): JSX.Element {
 }
 
 describe('CreateAlertProvider — edit mode type switch', () => {
-	it('starts the anomaly condition at 3 deviations instead of the loaded threshold', () => {
+	it('starts the anomaly condition at 3 deviations instead of the loaded threshold', async () => {
 		const initialAlertState = {
 			...INITIAL_CREATE_ALERT_STATE,
 			threshold: {
@@ -253,27 +242,22 @@ describe('CreateAlertProvider — edit mode type switch', () => {
 				],
 			},
 		};
-		const queryClient = new QueryClient({
-			defaultOptions: { queries: { retry: false } },
-		});
 		render(
-			<MemoryRouter initialEntries={['/alerts/overview?ruleId=r1']}>
-				<QueryClientProvider client={queryClient}>
-					<CreateAlertProvider
-						initialAlertType={AlertTypes.METRICS_BASED_ALERT}
-						isEditMode
-						ruleId="r1"
-						initialAlertState={initialAlertState}
-					>
-						<Probe />
-						<AnomalySwitcher />
-					</CreateAlertProvider>
-				</QueryClientProvider>
-			</MemoryRouter>,
+			<CreateAlertProvider
+				initialAlertType={AlertTypes.METRICS_BASED_ALERT}
+				isEditMode
+				ruleId="r1"
+				initialAlertState={initialAlertState}
+			>
+				<Probe />
+				<AnomalySwitcher />
+			</CreateAlertProvider>,
+			undefined,
+			{ initialRoute: '/alerts/overview?ruleId=r1' },
 		);
 		expect(screen.getByTestId('threshold-value')).toHaveTextContent('500');
 
-		fireEvent.click(screen.getByTestId('switch-to-anomaly'));
+		await clickTestId('switch-to-anomaly');
 
 		expect(screen.getByTestId('threshold-value')).toHaveTextContent('3');
 	});

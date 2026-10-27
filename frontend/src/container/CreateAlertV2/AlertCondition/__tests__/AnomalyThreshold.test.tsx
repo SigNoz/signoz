@@ -1,13 +1,9 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
 import { createMockAlertContextState } from 'container/CreateAlertV2/EvaluationSettings/__tests__/testUtils';
-import { getAppContextMockState } from 'container/RoutingPolicies/__tests__/testUtils';
-import * as appHooks from 'providers/App/App';
+import { render, screen, userEvent, within } from 'tests/test-utils';
 import { Channels } from 'types/api/channels/getAll';
 
 import * as context from '../../context';
 import AnomalyThreshold from '../AnomalyThreshold';
-
-jest.spyOn(appHooks, 'useAppContext').mockReturnValue(getAppContextMockState());
 
 jest.mock('uplot', () => {
 	const paths = {
@@ -70,8 +66,10 @@ describe('AnomalyThreshold', () => {
 		useCreateAlertStateSpy.mockReturnValue(mockContextState);
 	});
 
-	const openSelect = (testId: string): void => {
-		fireEvent.mouseDown(within(screen.getByTestId(testId)).getByRole('combobox'));
+	const pickOption = async (testId: string, title: string): Promise<void> => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		await user.click(within(screen.getByTestId(testId)).getByRole('combobox'));
+		await user.click(await screen.findByTitle(title));
 	};
 
 	it('renders the first condition sentence', () => {
@@ -100,20 +98,18 @@ describe('AnomalyThreshold', () => {
 		expect(screen.getByTestId('seasonality-text')).toBeInTheDocument();
 	});
 
-	it('stores the picked deviation as a number', () => {
+	it('stores the picked deviation as a number', async () => {
 		renderAnomalyThreshold();
-		openSelect('threshold-value-select');
-		fireEvent.click(screen.getByTitle('4'));
+		await pickOption('threshold-value-select', '4');
 		expect(mockSetThresholdState).toHaveBeenCalledWith({
 			type: 'SET_THRESHOLDS',
 			payload: [expect.objectContaining({ thresholdValue: 4 })],
 		});
 	});
 
-	it('picks channels by name when routing policies are off', () => {
+	it('picks channels by name when routing policies are off', async () => {
 		renderAnomalyThreshold();
-		openSelect('anomaly-notification-channel-select');
-		fireEvent.click(screen.getByTitle('slack-alerts'));
+		await pickOption('anomaly-notification-channel-select', 'slack-alerts');
 		expect(mockSetThresholdState).toHaveBeenCalledWith({
 			type: 'SET_THRESHOLDS',
 			payload: [expect.objectContaining({ channels: ['slack-alerts'] })],
