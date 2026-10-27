@@ -139,7 +139,7 @@ const timestampAt = (index: number, start: number, end: number): string => {
 	return new Date(end - index * step).toISOString();
 };
 
-export const traceSpanRows = ({
+const flatSpanRows = ({
 	count,
 	offset,
 	limit,
@@ -167,9 +167,22 @@ export const traceSpanRows = ({
 		};
 	});
 
+/** The List view returns every span field, with resource and attribute fields nested in maps. */
+export const traceSpanRows = (options: SpanRowsOptions): RawRow[] =>
+	flatSpanRows(options).map(
+		({ timestamp, data: { 'service.name': serviceName, ...data } }) => ({
+			timestamp,
+			data: {
+				...data,
+				attributes: {},
+				resource: { 'service.name': serviceName },
+			},
+		}),
+	);
+
 /** The Trace view lists root spans, with the span count of the whole trace. */
 export const traceRootSpanRows = (options: SpanRowsOptions): RawRow[] =>
-	traceSpanRows(options).map((row, index) => ({
+	flatSpanRows(options).map((row, index) => ({
 		...row,
 		data: {
 			...row.data,
