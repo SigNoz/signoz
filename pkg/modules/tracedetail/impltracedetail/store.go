@@ -24,17 +24,19 @@ import (
 
 const colServiceName = `resource_string_service$$$$name` // $ gets escaped so $$$$ converts to $$.
 
-// storableSpanColumns are the columns a waterfall span scans besides attributeColumns.
+// storableSpanColumns are the columns a waterfall span scans. A row's legacy maps are blanked when its
+// JSON holds the attributes.
 var storableSpanColumns = []string{
 	"DISTINCT ON (span_id) timestamp", "duration_nano", "span_id", "has_error", "kind",
-	colServiceName, "name", "resources_string",
+	colServiceName, "name", "attributes", "resources_string",
+	"if(notEmpty(attributes), map(), attributes_string) AS attributes_string",
+	"if(notEmpty(attributes), map(), attributes_number) AS attributes_number",
+	"if(notEmpty(attributes), map(), attributes_bool) AS attributes_bool",
 	"events", "status_message", "status_code_string", "kind_string", "parent_span_id",
 	"flags", "is_remote", "trace_state", "status_code",
 	"db_name", "db_operation", "http_method", "http_url", "http_host",
 	"external_http_method", "external_http_url", "response_status_code", "links as references",
 }
-
-var legacyAttributeColumns = []string{"attributes_string", "attributes_number", "attributes_bool"}
 
 func buildFieldExpr(fieldKey telemetrytypes.TelemetryFieldKey) (string, error) {
 	switch fieldKey.FieldContext {
@@ -279,7 +281,6 @@ func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, _ valuer.UUID, trac
 func selectStorableSpans() *sqlbuilder.SelectBuilder {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(storableSpanColumns...)
-	sb.SelectMore(attributeColumns("")...)
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
 	return sb
 }
@@ -290,8 +291,12 @@ func (s *traceStore) GetThreadSpans(ctx context.Context, orgID valuer.UUID, trac
 	sb.Select(
 		"DISTINCT ON (span_id) timestamp", "duration_nano", "span_id", "parent_span_id", "has_error", "name", "kind_string",
 		"status_code_string", "status_message", "resources_string",
-		"attributes", "attributes_string", "attributes_number", "attributes_bool", "events", "links as references",
+		"attributes_string", "attributes_number", "attributes_bool",
+		"events", "links as references",
 	)
+	if q.TraceAttrsJSONOn {
+		sb.SelectMore("attributes")
+	}
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
 	keys, err := s.genAIFieldKeys(ctx, orgID, aiobservabilitytypes.GenAISpanGateKeys)
 	if err != nil {
@@ -375,9 +380,12 @@ func (s *traceStore) GetFlamegraphSpans(ctx context.Context, traceID string, sta
 		"any(has_error) AS has_error",
 		"any(name) AS name",
 		"any(events) AS events",
+		"any(attributes) AS attributes",
+		"if(notEmpty(attributes), map(), any(attributes_string)) AS attributes_string", // `attributes` below resolves to the aggregated alias
+		"if(notEmpty(attributes), map(), any(attributes_number)) AS attributes_number",
+		"if(notEmpty(attributes), map(), any(attributes_bool)) AS attributes_bool",
 		"any(resources_string) AS resources_string",
 	)
-	sb.SelectMore(attributeColumns("any")...)
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
 	conditions := []string{
 		sb.E("trace_id", traceID),
@@ -515,25 +523,4 @@ func (s *traceStore) anyExistsCondition(ctx context.Context, q qbtypes.QueryInfo
 		conds = append(conds, keyConds...)
 	}
 	return sb.Or(conds...), nil
-}
-
-// attributeColumns selects the JSON attributes column and the legacy maps, each wrapped in aggregate when
-// set. A row's maps are blanked when its JSON holds the attributes, so a dual-written span ships them once
-// and a pre-rollout span keeps its maps. Under aggregate, `attributes` in the blanking condition resolves
-// to the aggregated alias, so it must stay outside the aggregate (nesting it is ILLEGAL_AGGREGATION).
-// The aliases also shadow the map columns in WHERE, so a query filtering on the maps cannot use it.
-func attributeColumns(aggregate string) []string {
-	attributes := "attributes"
-	if aggregate != "" {
-		attributes = aggregate + "(attributes) AS attributes"
-	}
-	columns := []string{attributes}
-	for _, column := range legacyAttributeColumns {
-		value := column
-		if aggregate != "" {
-			value = fmt.Sprintf("%s(%s)", aggregate, column)
-		}
-		columns = append(columns, fmt.Sprintf("if(notEmpty(attributes), map(), %s) AS %s", value, column))
-	}
-	return columns
 }

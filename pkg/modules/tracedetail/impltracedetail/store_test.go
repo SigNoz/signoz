@@ -154,7 +154,7 @@ func TestGetSpanCountByField(t *testing.T) {
 }
 
 func TestGetTraceSpans(t *testing.T) {
-	expectedSQL := "SELECT DISTINCT ON (span_id) timestamp, duration_nano, span_id, has_error, kind, resource_string_service$$name, name, resources_string, events, status_message, status_code_string, kind_string, parent_span_id, flags, is_remote, trace_state, status_code, db_name, db_operation, http_method, http_url, http_host, external_http_method, external_http_url, response_status_code, links as references, attributes, if(notEmpty(attributes), map(), attributes_string) AS attributes_string, if(notEmpty(attributes), map(), attributes_number) AS attributes_number, if(notEmpty(attributes), map(), attributes_bool) AS attributes_bool FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY timestamp ASC, name ASC"
+	expectedSQL := "SELECT DISTINCT ON (span_id) timestamp, duration_nano, span_id, has_error, kind, resource_string_service$$name, name, attributes, resources_string, if(notEmpty(attributes), map(), attributes_string) AS attributes_string, if(notEmpty(attributes), map(), attributes_number) AS attributes_number, if(notEmpty(attributes), map(), attributes_bool) AS attributes_bool, events, status_message, status_code_string, kind_string, parent_span_id, flags, is_remote, trace_state, status_code, db_name, db_operation, http_method, http_url, http_host, external_http_method, external_http_url, response_status_code, links as references FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY timestamp ASC, name ASC"
 
 	s := newTestStore(sqlmock.QueryMatcherEqual)
 	s.Mock().ExpectSelect(expectedSQL).
@@ -171,12 +171,12 @@ func TestGetFlamegraphSpans(t *testing.T) {
 	}{
 		{
 			name: "NoSpanIDs_GeneratesBaseSQL",
-			sql:  "SELECT span_id, any(parent_span_id) AS parent_span_id, any(timestamp) AS timestamp, any(duration_nano) AS duration_nano, any(has_error) AS has_error, any(name) AS name, any(events) AS events, any(resources_string) AS resources_string, any(attributes) AS attributes, if(notEmpty(attributes), map(), any(attributes_string)) AS attributes_string, if(notEmpty(attributes), map(), any(attributes_number)) AS attributes_number, if(notEmpty(attributes), map(), any(attributes_bool)) AS attributes_bool FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY span_id ORDER BY timestamp ASC, name ASC",
+			sql:  "SELECT span_id, any(parent_span_id) AS parent_span_id, any(timestamp) AS timestamp, any(duration_nano) AS duration_nano, any(has_error) AS has_error, any(name) AS name, any(events) AS events, any(attributes) AS attributes, if(notEmpty(attributes), map(), any(attributes_string)) AS attributes_string, if(notEmpty(attributes), map(), any(attributes_number)) AS attributes_number, if(notEmpty(attributes), map(), any(attributes_bool)) AS attributes_bool, any(resources_string) AS resources_string FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY span_id ORDER BY timestamp ASC, name ASC",
 		},
 		{
 			name:    "WithSpanIDs_GeneratesInClauseSQL",
 			spanIDs: []string{"span-1", "span-2"},
-			sql:     "SELECT span_id, any(parent_span_id) AS parent_span_id, any(timestamp) AS timestamp, any(duration_nano) AS duration_nano, any(has_error) AS has_error, any(name) AS name, any(events) AS events, any(resources_string) AS resources_string, any(attributes) AS attributes, if(notEmpty(attributes), map(), any(attributes_string)) AS attributes_string, if(notEmpty(attributes), map(), any(attributes_number)) AS attributes_number, if(notEmpty(attributes), map(), any(attributes_bool)) AS attributes_bool FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND span_id IN (?, ?) GROUP BY span_id ORDER BY timestamp ASC, name ASC",
+			sql:     "SELECT span_id, any(parent_span_id) AS parent_span_id, any(timestamp) AS timestamp, any(duration_nano) AS duration_nano, any(has_error) AS has_error, any(name) AS name, any(events) AS events, any(attributes) AS attributes, if(notEmpty(attributes), map(), any(attributes_string)) AS attributes_string, if(notEmpty(attributes), map(), any(attributes_number)) AS attributes_number, if(notEmpty(attributes), map(), any(attributes_bool)) AS attributes_bool, any(resources_string) AS resources_string FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND span_id IN (?, ?) GROUP BY span_id ORDER BY timestamp ASC, name ASC",
 		},
 	}
 
@@ -218,7 +218,7 @@ func TestGetSpanDurationByField(t *testing.T) {
 }
 
 func TestGetThreadSpans(t *testing.T) {
-	selectSQL := "SELECT DISTINCT ON (span_id) timestamp, duration_nano, span_id, parent_span_id, has_error, name, kind_string, status_code_string, status_message, resources_string, attributes, attributes_string, attributes_number, attributes_bool, events, links as references"
+	selectSQL := "SELECT DISTINCT ON (span_id) timestamp, duration_nano, span_id, parent_span_id, has_error, name, kind_string, status_code_string, status_message, resources_string, attributes_string, attributes_number, attributes_bool, events, links as references"
 	fromSQL := " FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND "
 	orderSQL := " ORDER BY timestamp ASC, span_id ASC LIMIT ?"
 	jsonInsideTrace := testStart.Add(500 * time.Second)
@@ -240,7 +240,7 @@ func TestGetThreadSpans(t *testing.T) {
 			name:        "FlagOn_ReleasedDuringTrace_ReadsJSONFiltersJSONThenMaps",
 			jsonOn:      true,
 			jsonRelease: &jsonInsideTrace,
-			selectSQL:   selectSQL,
+			selectSQL:   selectSQL + ", attributes",
 			whereSQL:    "(multiIf(attributes.`gen_ai.request.model` IS NOT NULL, attributes.`gen_ai.request.model`::String, mapContains(attributes_string, 'gen_ai.request.model'), attributes_string['gen_ai.request.model'], NULL) IS NOT NULL OR multiIf(attributes.`gen_ai.tool.name` IS NOT NULL, attributes.`gen_ai.tool.name`::String, mapContains(attributes_string, 'gen_ai.tool.name'), attributes_string['gen_ai.tool.name'], NULL) IS NOT NULL OR multiIf(attributes.`gen_ai.agent.name` IS NOT NULL, attributes.`gen_ai.agent.name`::String, mapContains(attributes_string, 'gen_ai.agent.name'), attributes_string['gen_ai.agent.name'], NULL) IS NOT NULL)",
 		},
 	}
