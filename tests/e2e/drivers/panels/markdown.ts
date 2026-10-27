@@ -8,9 +8,6 @@ import { type Locator } from '@playwright/test';
 export interface Markdown {
 	root(): Locator;
 	heading(name: string): Locator;
-	listItems(): Locator;
-	link(name: string): Locator;
-	codeBlock(): Locator;
 	/** "Nothing written yet", for a blank body. */
 	empty(): Locator;
 }
@@ -19,9 +16,6 @@ export function markdownAt(root: () => Locator): Markdown {
 	return {
 		root,
 		heading: (name) => root().getByRole('heading', { name }),
-		listItems: () => root().getByRole('listitem'),
-		link: (name) => root().getByRole('link', { name }),
-		codeBlock: () => root().locator('pre code'),
 		empty: () => root().getByTestId('text-panel-empty'),
 	};
 }
