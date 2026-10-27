@@ -19,6 +19,7 @@ import {
 	SAVED_VIEW_LOAD_FAILED_NAME,
 	SAVED_VIEW_TOAST_POSITION,
 } from './constants';
+import { SavedViewCreatedFrom } from './events';
 import { useActiveSavedView } from './hooks/useActiveSavedView';
 import { useSaveNewView } from './hooks/useSaveNewView';
 import { useSavedViewActions } from './hooks/useSavedViewActions';
@@ -54,7 +55,17 @@ function SavedViewsHeader({
 
 	const [modalMode, setModalMode] = useState<SaveViewModalMode | null>(null);
 
-	const handleSave = useSaveNewView(createView);
+	const saveNewView = useSaveNewView(createView);
+	const handleSave = useCallback(
+		(displayName: string): Promise<boolean> =>
+			saveNewView(
+				displayName,
+				modalMode === 'saveAsNew'
+					? SavedViewCreatedFrom.SaveAsNew
+					: SavedViewCreatedFrom.Header,
+			),
+		[saveNewView, modalMode],
+	);
 
 	const handleUpdate = useCallback(async (): Promise<void> => {
 		if (view && (await updateView(view))) {
