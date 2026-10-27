@@ -6,10 +6,10 @@
 @import '@signozhq/design-tokens/dist/themes/signoz-tokens.css';
 
 /* Import fonts from CDN */
-@import url('https://fonts.googleapis.com/css2?family=Work+Sans&wght@500&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Geist+Mono&wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&display=swap');
 
 #root,
 html,
@@ -20,6 +20,9 @@ body {
 	font-optical-sizing: auto;
 	font-weight: 400;
 	font-style: normal;
+	font-synthesis: none;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
 	background: var(--l1-background) !important;
 	color: var(--l1-foreground) !important;
 
@@ -72,7 +75,6 @@ body {
 			align-items: center;
 			gap: 4px;
 			font-size: 12px;
-			-webkit-font-smoothing: antialiased;
 
 			.u-marker {
 				border-radius: 50%;
@@ -277,7 +279,6 @@ body {
 				padding: 6px 10px;
 				cursor: pointer;
 				white-space: nowrap;
-				-webkit-font-smoothing: antialiased;
 				border-radius: 2px;
 				min-width: 0; // Allow shrinking
 				max-width: 100%;
@@ -404,7 +405,6 @@ body {
 	position: absolute;
 	margin: 0.5rem;
 	background: var(--l2-background);
-	-webkit-font-smoothing: antialiased;
 	color: var(--l1-foreground);
 	z-index: 10000;
 	// pointer-events: none;
@@ -749,7 +749,6 @@ notifications	-  2050
 	white-space: nowrap;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 	border: 1px solid var(--l1-border);
-	-webkit-font-smoothing: antialiased;
 	letter-spacing: 0.025em;
 }
 
