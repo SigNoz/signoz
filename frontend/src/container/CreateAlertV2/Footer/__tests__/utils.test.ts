@@ -100,6 +100,33 @@ describe('Footer utils', () => {
 			);
 		});
 
+		it.each([
+			['', 'Please enter a deviation greater than 0'],
+			[0, 'Please enter a deviation greater than 0'],
+			[-2, 'Please enter a deviation greater than 0'],
+			['2.5', null],
+		])('when the anomaly deviation is %p', (thresholdValue, expected) => {
+			const currentArgs: BuildCreateAlertRulePayloadArgs = {
+				...args,
+				alertType: AlertTypes.ANOMALY_BASED_ALERT,
+				basicAlertState: { ...args.basicAlertState, name: 'test name' },
+				thresholdState: {
+					...args.thresholdState,
+					thresholds: [
+						{
+							...args.thresholdState.thresholds[0],
+							thresholdValue: thresholdValue as number,
+						},
+					],
+				},
+				notificationSettings: {
+					...args.notificationSettings,
+					routingPolicies: true,
+				},
+			};
+			expect(validateCreateAlertState(currentArgs)).toBe(expected);
+		});
+
 		it('when threshold channels are not provided but routing policies are enabled', () => {
 			const currentArgs: BuildCreateAlertRulePayloadArgs = {
 				...args,

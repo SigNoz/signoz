@@ -141,8 +141,8 @@ export const THRESHOLD_OPERATOR_OPTIONS = [
 ];
 
 export const ANOMALY_THRESHOLD_OPERATOR_OPTIONS = [
-	{ value: AlertThresholdOperator.IS_ABOVE, label: 'IS ABOVE' },
-	{ value: AlertThresholdOperator.IS_BELOW, label: 'IS BELOW' },
+	{ value: AlertThresholdOperator.IS_ABOVE, label: 'ABOVE' },
+	{ value: AlertThresholdOperator.IS_BELOW, label: 'BELOW' },
 	{ value: AlertThresholdOperator.ABOVE_BELOW, label: 'ABOVE/BELOW' },
 ];
 
@@ -157,6 +157,8 @@ export const THRESHOLD_MATCH_TYPE_OPTIONS = [
 export const ANOMALY_THRESHOLD_MATCH_TYPE_OPTIONS = [
 	{ value: AlertThresholdMatchType.AT_LEAST_ONCE, label: 'AT LEAST ONCE' },
 	{ value: AlertThresholdMatchType.ALL_THE_TIME, label: 'ALL THE TIME' },
+	{ value: AlertThresholdMatchType.ON_AVERAGE, label: 'ON AVERAGE' },
+	{ value: AlertThresholdMatchType.LAST, label: 'LAST' },
 ];
 
 export const ANOMALY_TIME_DURATION_OPTIONS = [

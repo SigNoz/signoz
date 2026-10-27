@@ -34,7 +34,8 @@ export function getFormattedTimeValue(timeValue: number, unit: string): string {
 export function validateCreateAlertState(
 	args: BuildCreateAlertRulePayloadArgs,
 ): string | null {
-	const { basicAlertState, thresholdState, notificationSettings } = args;
+	const { alertType, basicAlertState, thresholdState, notificationSettings } =
+		args;
 
 	// Validate alert name
 	if (!basicAlertState.name) {
@@ -46,6 +47,12 @@ export function validateCreateAlertState(
 		const threshold = thresholdState.thresholds[i];
 		if (!threshold.label) {
 			return 'Please enter a label for each threshold';
+		}
+		if (
+			alertType === AlertTypes.ANOMALY_BASED_ALERT &&
+			!(Number(threshold.thresholdValue) > 0)
+		) {
+			return 'Please enter a deviation greater than 0';
 		}
 		// this runs during render, so a throw here takes down the whole page
 		if (!notificationSettings.routingPolicies && !threshold.channels?.length) {

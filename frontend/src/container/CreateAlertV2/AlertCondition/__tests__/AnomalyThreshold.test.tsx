@@ -3,6 +3,7 @@ import { render, screen, userEvent, within } from 'tests/test-utils';
 import { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
 
 import * as context from '../../context';
+import { AlertThresholdMatchType } from '../../context/types';
 import AnomalyThreshold from '../AnomalyThreshold';
 
 jest.mock('uplot', () => {
@@ -72,38 +73,70 @@ describe('AnomalyThreshold', () => {
 		await user.click(await screen.findByTitle(title));
 	};
 
-	it('renders the first condition sentence', () => {
+	it('renders the condition sentence in the same order as threshold alerts', () => {
 		renderAnomalyThreshold();
-		expect(screen.getByTestId('notification-text')).toBeInTheDocument();
-		expect(screen.getByTestId('evaluation-window-text')).toBeInTheDocument();
+		expect(screen.getByTestId('notification-text')).toHaveTextContent(
+			'Send a notification when',
+		);
+		expect(screen.getByTestId('query-select')).toBeInTheDocument();
+		expect(screen.getByTestId('operator-select')).toBeInTheDocument();
+		expect(screen.getByTestId('predicted-data-text')).toHaveTextContent(
+			'the prediction',
+		);
+		expect(screen.getByTestId('match-type-select')).toBeInTheDocument();
 		expect(screen.getByTestId('evaluation-window-select')).toBeInTheDocument();
 	});
 
-	it('renders the second condition sentence', () => {
+	it('renders the algorithm and seasonality sentence', () => {
 		renderAnomalyThreshold();
-		expect(screen.getByTestId('threshold-text')).toBeInTheDocument();
-		expect(screen.getByTestId('threshold-value-select')).toBeInTheDocument();
-		expect(screen.getByTestId('deviations-text')).toBeInTheDocument();
-		expect(screen.getByTestId('operator-select')).toBeInTheDocument();
-		expect(screen.getByTestId('predicted-data-text')).toBeInTheDocument();
-		expect(screen.getByTestId('match-type-select')).toBeInTheDocument();
-	});
-
-	it('renders the third condition sentence', () => {
-		renderAnomalyThreshold();
-		expect(screen.getByTestId('using-the-text')).toBeInTheDocument();
 		expect(screen.getByTestId('algorithm-select')).toBeInTheDocument();
-		expect(screen.getByTestId('algorithm-with-text')).toBeInTheDocument();
 		expect(screen.getByTestId('seasonality-select')).toBeInTheDocument();
-		expect(screen.getByTestId('seasonality-text')).toBeInTheDocument();
+		expect(screen.getByTestId('seasonality-text')).toHaveTextContent(
+			'seasonality',
+		);
 	});
 
-	it('stores the picked deviation as a number', async () => {
+	it('renames the severity from its threshold row', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderAnomalyThreshold();
-		await pickOption('threshold-value-select', '4');
+		await user.type(screen.getByTestId('anomaly-threshold-name-input'), 'x');
 		expect(mockSetThresholdState).toHaveBeenCalledWith({
 			type: 'SET_THRESHOLDS',
-			payload: [expect.objectContaining({ thresholdValue: 4 })],
+			payload: [expect.objectContaining({ label: 'criticalx' })],
+		});
+	});
+
+	it('takes a typed deviation', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		useCreateAlertStateSpy.mockReturnValue({
+			...mockContextState,
+			thresholdState: {
+				...mockContextState.thresholdState,
+				thresholds: [
+					{
+						...mockContextState.thresholdState.thresholds[0],
+						thresholdValue: '' as unknown as number,
+					},
+				],
+			},
+		});
+		renderAnomalyThreshold();
+		await user.type(screen.getByTestId('anomaly-threshold-value-input'), '4');
+		expect(mockSetThresholdState).toHaveBeenCalledWith({
+			type: 'SET_THRESHOLDS',
+			payload: [expect.objectContaining({ thresholdValue: '4' })],
+		});
+	});
+
+	it.each([
+		['ON AVERAGE', AlertThresholdMatchType.ON_AVERAGE],
+		['LAST', AlertThresholdMatchType.LAST],
+	])('offers the %s match type', async (title, matchType) => {
+		renderAnomalyThreshold();
+		await pickOption('match-type-select', title);
+		expect(mockSetThresholdState).toHaveBeenCalledWith({
+			type: 'SET_MATCH_TYPE',
+			payload: matchType,
 		});
 	});
 

@@ -90,8 +90,6 @@
 			}
 
 			.ant-select {
-				width: 240px;
-
 				.ant-select-selector {
 					background-color: var(--l2-background);
 					border: 1px solid var(--l1-border);
@@ -310,14 +308,6 @@
 
 		.ant-typography {
 			color: var(--accent-primary);
-		}
-	}
-}
-
-.anomaly-threshold-container {
-	.ant-select {
-		.ant-select-selector {
-			min-width: 150px;
 		}
 	}
 }
