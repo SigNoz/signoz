@@ -5,6 +5,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -77,6 +78,15 @@ func (PanelType) Enum() []any {
 	}
 }
 
+func (p PanelType) Validate() error {
+	switch p {
+	case PanelTypeValue, PanelTypeTable, PanelTypeGraph:
+		return nil
+	default:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.compositeQuery.panelType: unsupported value %q; must be one of value, table, graph", p.StringValue())
+	}
+}
+
 // Note: this is used to represent the state of the alert query
 // i.e the active tab which should be used to represent the selection
 
@@ -99,6 +109,15 @@ func (QueryType) Enum() []any {
 	}
 }
 
+func (q QueryType) Validate() error {
+	switch q {
+	case QueryTypeBuilder, QueryTypeClickHouseSQL, QueryTypePromQL:
+		return nil
+	default:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.compositeQuery.queryType: unsupported value %q; must be one of builder, clickhouse_sql, promql", q.StringValue())
+	}
+}
+
 type AlertCompositeQuery struct {
 	Queries []qbtypes.QueryEnvelope `json:"queries" required:"true" description:"The queries to evaluate, at least one. Every envelope type must match queryType: builder_query and builder_formula for builder, promql for promql, clickhouse_sql for clickhouse_sql."`
 
@@ -111,7 +130,6 @@ type RuleCondition struct {
 	CompositeQuery    *AlertCompositeQuery `json:"compositeQuery" required:"true" description:"The queries whose result is compared against the thresholds."`
 	AlertOnAbsent     bool                 `json:"alertOnAbsent,omitempty" description:"Whether to fire a nodata alert when the query returns no data. Defaults to false."`
 	AbsentFor         uint64               `json:"absentFor,omitempty" description:"How many minutes without data pass before the nodata alert fires. Ignored unless alertOnAbsent is true."`
-	Algorithm         string               `json:"algorithm,omitempty" description:"anomaly_rule only: the anomaly detection algorithm. The supported value is standard."`
 	Seasonality       Seasonality          `json:"seasonality,omitzero" description:"anomaly_rule only: the seasonal period the history is compared against, hourly, daily or weekly."`
 	SelectedQuery     string               `json:"selectedQueryName,omitempty" description:"The name of the query whose result is evaluated, such as A or F1. Must match a query in compositeQuery. When omitted, F1 is used if present, otherwise the enabled query with the highest name."`
 	RequireMinPoints  bool                 `json:"requireMinPoints,omitempty" description:"Whether a series is skipped until it has at least requiredNumPoints points in the window. Defaults to false."`

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 	"unicode/utf8"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/swaggest/jsonschema-go"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -225,7 +227,7 @@ func (ns *NotificationSettings) UnmarshalJSON(data []byte) error {
 func (r *PostableRule) processRuleDefaults() {
 	if r.RuleCondition != nil && r.RuleCondition.CompositeQuery != nil {
 		switch r.RuleCondition.CompositeQuery.QueryType {
-		case QueryTypeBuilder:
+		case QueryTypeBuilder, QueryTypeClickHouseSQL:
 			if r.RuleType.IsZero() {
 				r.RuleType = RuleTypeThreshold
 			}
@@ -243,6 +245,20 @@ func (r *PostableRule) UnmarshalJSON(bytes []byte) error {
 	}
 	r.processRuleDefaults()
 	return r.validate()
+}
+
+func (r *PostableRule) DecodeStrict(ruleStr string) error {
+	err := json.Unmarshal([]byte(ruleStr), r)
+	if err == nil {
+		// the alias has no UnmarshalJSON, so a strict pass sees every key the rule has no field for
+		type plainRule PostableRule
+		return binding.JSON.BindBody(strings.NewReader(ruleStr), new(plainRule), binding.WithDisallowUnknownFields(true), binding.WithUnknownFieldContext("alert rule"))
+	}
+	if errors.Ast(err, errors.TypeInvalidInput) {
+		return err
+	}
+	// a syntax error is raised before any UnmarshalJSON runs, so it is the one untyped error
+	return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to parse json: %v", err)
 }
 
 var _ jsonschema.Preparer = PostableRule{}
@@ -328,7 +344,9 @@ func (r *PostableRule) Validate() error {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition: field is required")
 	}
 
-	if r.AlertType != "" {
+	if r.AlertType == "" {
+		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "alertType: field is required"))
+	} else {
 		switch r.AlertType {
 		case AlertTypeMetric, AlertTypeTraces, AlertTypeLogs, AlertTypeExceptions, AlertTypeAITraces:
 		default:
@@ -353,6 +371,12 @@ func (r *PostableRule) Validate() error {
 	if r.RuleCondition.CompositeQuery == nil {
 		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.compositeQuery: field is required"))
 	} else {
+		if err := r.RuleCondition.CompositeQuery.QueryType.Validate(); err != nil {
+			errs = append(errs, err)
+		}
+		if err := r.RuleCondition.CompositeQuery.PanelType.Validate(); err != nil {
+			errs = append(errs, err)
+		}
 		if len(r.RuleCondition.CompositeQuery.Queries) == 0 {
 			errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.compositeQuery.queries: must have at least one query"))
 		} else {
@@ -435,11 +459,23 @@ func (r *PostableRule) validateV2Alpha1() []error {
 		if err := threshold.Validate(); err != nil {
 			errs = append(errs, err)
 		}
+		if thresholds, ok := threshold.(BasicRuleThresholds); ok {
+			if err := thresholds.validateUniqueNames(); err != nil {
+				errs = append(errs, err)
+			}
+			if err := thresholds.validateRecoveryTargets(); err != nil {
+				errs = append(errs, err)
+			}
+		}
 	}
 
 	if r.Evaluation == nil {
 		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"evaluation: field is required for schemaVersion %q", SchemaVersionV2Alpha1))
+	} else if evaluation, err := r.Evaluation.GetEvaluation(); err == nil {
+		if err := evaluation.validateDurationText(); err != nil {
+			errs = append(errs, err)
+		}
 	}
 	if r.NotificationSettings == nil {
 		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
@@ -449,9 +485,22 @@ func (r *PostableRule) validateV2Alpha1() []error {
 			errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
 				"notificationSettings.renotify.interval: must be a positive duration when renotify is enabled"))
 		}
+		if r.NotificationSettings.Renotify != nil {
+			if err := validateDurationText("notificationSettings.renotify.interval", r.NotificationSettings.Renotify.ReNotifyInterval); err != nil {
+				errs = append(errs, err)
+			}
+		}
 	}
 
 	return errs
+}
+
+// validateDurationText rejects a bare number, which decodes as nanoseconds.
+func validateDurationText(field string, duration valuer.TextDuration) error {
+	if duration.IsZero() || duration.HasText() {
+		return nil
+	}
+	return errors.NewInvalidInputf(errors.CodeInvalidInput, "%s: must be a duration string such as \"5m\"", field)
 }
 
 func testTemplateParsing(rl *PostableRule) (errs []error) {

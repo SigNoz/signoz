@@ -11576,10 +11576,6 @@ components:
           description: Whether to fire a nodata alert when the query returns no data.
             Defaults to false.
           type: boolean
-        algorithm:
-          description: 'anomaly_rule only: the anomaly detection algorithm. The supported
-            value is standard.'
-          type: string
         compositeQuery:
           allOf:
           - $ref: '#/components/schemas/RuletypesAlertCompositeQuery'
