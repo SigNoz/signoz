@@ -112,23 +112,14 @@ func (migration *migrateRulesV1ToV2Alpha1) convertOrg(ctx context.Context, orgID
 
 	var migrated, disabled, skipped, undecodable, unmigratable int
 	for _, storedRule := range allRules {
-		var header struct {
-			SchemaVersion string `json:"schemaVersion"`
-		}
-		if err := json.Unmarshal([]byte(storedRule.Data), &header); err != nil {
-			undecodable++
-			migration.logger.WarnContext(ctx, "failed to decode stored rule", slog.String("org_id", orgID), slog.String("rule_id", storedRule.ID), errors.Attr(err))
-			continue
-		}
-		if header.SchemaVersion == schemaVersionV2Alpha1 {
-			skipped++
-			continue
-		}
-
 		rule := new(postableRule)
 		if err := json.Unmarshal([]byte(storedRule.Data), rule); err != nil {
 			undecodable++
 			migration.logger.WarnContext(ctx, "failed to decode stored rule", slog.String("org_id", orgID), slog.String("rule_id", storedRule.ID), errors.Attr(err))
+			continue
+		}
+		if rule.SchemaVersion == schemaVersionV2Alpha1 {
+			skipped++
 			continue
 		}
 
