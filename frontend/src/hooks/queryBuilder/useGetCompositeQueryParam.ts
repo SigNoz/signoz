@@ -14,8 +14,7 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	NormalizedQuery,
 	normalizeCompositeQuery,
-} from './compositeQuerySchema';
-import { pageQuerySchemaFor } from './pageQueryConstraints';
+} from './normalizeCompositeQuery';
 
 export const useNormalizedCompositeQueryParam = (): NormalizedQuery | null => {
 	const urlQuery = useUrlQuery();
@@ -33,13 +32,16 @@ export const useNormalizedCompositeQueryParam = (): NormalizedQuery | null => {
 
 			// MDN reference - https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURIComponent#decoding_query_parameters_from_a_url
 			// MDN reference to support + characters using encoding - https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams#preserving_plus_signs add later
-			parsedCompositeQuery = JSON.parse(
+			const rawQuery: unknown = JSON.parse(
 				decodeURIComponent(compositeQuery.replace(/\+/g, ' ')),
 			);
+			if (!isPlainObject(rawQuery)) {
+				return null;
+			}
 
 			({ query: parsedCompositeQuery, changed } = normalizeCompositeQuery(
-				parsedCompositeQuery,
-				pageQuerySchemaFor(pathname),
+				rawQuery as object,
+				pathname,
 			));
 
 			// Convert old format to new format for each query in builder.queryData
