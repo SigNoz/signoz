@@ -9,6 +9,7 @@ import { rest } from 'msw';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { render, screen } from 'tests/test-utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
 import ListView from './index';
 
@@ -147,10 +148,10 @@ describe('Traces ListView - Data Loaded', () => {
 	});
 
 	it('requests every span field instead of the selected columns', async () => {
-		let requestBody: any;
+		let requestBody: QueryRangeRequestV5 | undefined;
 		server.use(
 			rest.post(QUERY_RANGE_URL, async (req, res, ctx) => {
-				requestBody = await req.json();
+				requestBody = await req.json<QueryRangeRequestV5>();
 				return res(ctx.status(200), ctx.json(listResponse(listRows)));
 			}),
 		);
@@ -172,10 +173,10 @@ describe('Traces ListView - Data Loaded', () => {
 		} as Query);
 
 		await expect(screen.findByText('frontend')).resolves.toBeInTheDocument();
-		const { queries } = requestBody.compositeQuery;
+		const queries = requestBody?.compositeQuery.queries ?? [];
 		expect(queries).toHaveLength(2);
-		queries.forEach((query: { spec: { selectFields?: unknown } }) => {
-			expect(query.spec.selectFields).toBeUndefined();
+		queries.forEach(({ spec }) => {
+			expect(spec).not.toHaveProperty('selectFields');
 		});
 	});
 });
