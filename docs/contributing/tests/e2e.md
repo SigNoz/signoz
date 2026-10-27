@@ -187,7 +187,7 @@ Each spec follows these principles:
     });
     ```
     This is faster and more reliable than a multi-step UI seed. Reach for the UI flow only when the test's *purpose* is asserting that flow.
-6. **Reusable static data lives in `tests/e2e/testdata/`.** For example, `apm-metrics.json` is a real dashboard payload that `importApmMetricsDashboardViaUI` (in `helpers/dashboards.ts`) uploads through the actual Import JSON UI flow to seed a richly-tagged dashboard for search/list tests.
+6. **Reusable static data lives in `tests/e2e/testdata/`.** For example, `apm-metrics.json` is a real dashboard payload the dashboards list suite uploads through the Import JSON flow.
 
 ## How to write an E2E test?
 

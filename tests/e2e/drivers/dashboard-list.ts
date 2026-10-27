@@ -7,11 +7,8 @@ import { randomBytes } from 'crypto';
 import { expect, type Locator, type Page } from '@playwright/test';
 
 import { BASE_PATH } from '../helpers/base-path';
-import {
-	buildDashboard,
-	type PostableDashboard,
-	type Tag,
-} from '../helpers/dashboard-spec';
+import { buildDashboard } from '../helpers/dashboard-spec';
+import type { PostableDashboard, Tag } from '../helpers/dashboard-spec.types';
 
 import {
 	DASHBOARDS_API,

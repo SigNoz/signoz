@@ -4,7 +4,10 @@
  */
 import { type Locator, type Page } from '@playwright/test';
 
-import type { ContextLink, PanelPluginSpec } from '../helpers/dashboard-spec';
+import type {
+	ContextLink,
+	PanelPluginSpec,
+} from '../helpers/dashboard-spec.types';
 import { SINGLE_PANEL_ID } from '../testdata/dashboards/panels';
 
 import { getViaApi } from './dashboards';

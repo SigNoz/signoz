@@ -142,21 +142,18 @@ export const QueryRange = {
 		aggregationColumns?: string[];
 		rows: (string | number)[][];
 		queryName?: string;
-		units?: Record<string, string>;
 	}): QueryRangeBody {
 		const queryName = options.queryName ?? 'A';
 		const group = (options.groupColumns ?? []).map((name) => ({
 			name,
 			queryName,
 			columnType: 'group',
-			...(options.units?.[name] ? { meta: { unit: options.units[name] } } : {}),
 		}));
 		const aggregation = (options.aggregationColumns ?? []).map((name, index) => ({
 			name,
 			queryName,
 			columnType: 'aggregation',
 			aggregationIndex: index,
-			...(options.units?.[name] ? { meta: { unit: options.units[name] } } : {}),
 		}));
 		return envelope('scalar', [
 			{ queryName, columns: [...group, ...aggregation], data: options.rows },
@@ -164,14 +161,10 @@ export const QueryRange = {
 	},
 
 	/** List rows. `timestamp` is RFC-3339 here, not epoch ms — per the contract. */
-	raw(
-		rows: Record<string, unknown>[],
-		options?: { queryName?: string; nextCursor?: string },
-	): QueryRangeBody {
+	raw(rows: Record<string, unknown>[], queryName = 'A'): QueryRangeBody {
 		return envelope('raw', [
 			{
-				queryName: options?.queryName ?? 'A',
-				...(options?.nextCursor ? { nextCursor: options.nextCursor } : {}),
+				queryName,
 				rows: rows.map((data) => ({
 					timestamp:
 						typeof data.timestamp === 'string'
@@ -235,57 +228,92 @@ export const QueryRange = {
 
 // ─── Route installers ────────────────────────────────────────────────────
 
-export interface MockOptions {
-	/** Stop intercepting after N calls, letting later requests hit the backend. */
-	times?: number;
+function fulfill(route: Route, body: QueryRangeBody): Promise<void> {
+	return route.fulfill({
+		status: 200,
+		contentType: 'application/json',
+		body: JSON.stringify(body),
+	});
 }
 
 /** Fulfil every query_range call with one pinned body. */
 export async function mockQueryRange(
 	page: Page,
 	body: QueryRangeBody,
-	options?: MockOptions,
 ): Promise<void> {
-	let served = 0;
-	await page.route(QUERY_RANGE_GLOB, async (route: Route) => {
-		if (options?.times !== undefined && served >= options.times) {
-			await route.fallback();
-			return;
-		}
-		served += 1;
-		await route.fulfill({
-			status: 200,
-			contentType: 'application/json',
-			body: JSON.stringify(body),
-		});
-	});
+	await page.route(QUERY_RANGE_GLOB, (route) => fulfill(route, body));
 }
 
 /** Fail every query_range call — drives `panel-error`. */
 export async function mockQueryRangeError(
 	page: Page,
 	message = 'mocked query failure',
-	options?: MockOptions & { status?: number },
 ): Promise<void> {
-	let served = 0;
-	await page.route(QUERY_RANGE_GLOB, async (route: Route) => {
-		if (options?.times !== undefined && served >= options.times) {
-			await route.fallback();
-			return;
-		}
-		served += 1;
-		await route.fulfill({
-			status: options?.status ?? 500,
+	await page.route(QUERY_RANGE_GLOB, (route) =>
+		route.fulfill({
+			status: 500,
 			contentType: 'application/json',
 			body: JSON.stringify({
 				status: 'error',
 				error: { code: 'internal', message },
 			}),
-		});
+		}),
+	);
+}
+
+/** Hold every query_range call until `release` is called, then serve `body`. */
+export async function holdQueryRange(
+	page: Page,
+	body: QueryRangeBody,
+): Promise<{ release: () => void }> {
+	let release: () => void = () => undefined;
+	const gate = new Promise<void>((resolve) => {
+		release = resolve;
 	});
+	await page.route(QUERY_RANGE_GLOB, async (route) => {
+		await gate;
+		await fulfill(route, body);
+	});
+	return { release: () => release() };
 }
 
 /** Drop the interception so later navigation reaches the real backend again. */
 export async function unmockQueryRange(page: Page): Promise<void> {
 	await page.unroute(QUERY_RANGE_GLOB);
+}
+
+export function isQueryRange(url: string): boolean {
+	return url.includes('/query_range');
+}
+
+/** A query_range request's `start` / `end`, in epoch ms, and which query it ran. */
+export interface QueryWindow {
+	start: number;
+	end: number;
+	/** The request type and composite query, serialized: equal for the same panel. */
+	query: string;
+}
+
+/** The window of every query_range request `page` makes from now on. */
+export function recordQueryWindows(page: Page): QueryWindow[] {
+	const windows: QueryWindow[] = [];
+	page.on('request', (request) => {
+		if (!isQueryRange(request.url())) {
+			return;
+		}
+		const body = request.postDataJSON() as {
+			start?: unknown;
+			end?: unknown;
+			requestType?: unknown;
+			compositeQuery?: unknown;
+		} | null;
+		if (typeof body?.start === 'number' && typeof body.end === 'number') {
+			windows.push({
+				start: body.start,
+				end: body.end,
+				query: JSON.stringify([body.requestType, body.compositeQuery]),
+			});
+		}
+	});
+	return windows;
 }
