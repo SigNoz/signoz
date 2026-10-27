@@ -16,7 +16,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -232,7 +231,11 @@ func postProcessMetricQuery(
 		}
 	}
 
-	result = q.applySeriesLimit(result, query.Limit, query.Order)
+	reducesToScalar := req.RequestType == qbtypes.RequestTypeScalar && config.ReduceTo != qbtypes.ReduceToUnknown
+
+	if !reducesToScalar {
+		result = q.applySeriesLimit(result, query.Limit, query.Order)
+	}
 
 	if len(query.Functions) > 0 {
 		step := query.StepInterval.Milliseconds()
@@ -241,9 +244,11 @@ func postProcessMetricQuery(
 	}
 
 	// Apply reduce to for scalar request type
-	if req.RequestType == qbtypes.RequestTypeScalar {
-		if len(query.Aggregations) > 0 && query.Aggregations[0].ReduceTo != qbtypes.ReduceToUnknown {
-			result = q.applyMetricReduceTo(result, query.Aggregations[0].ReduceTo)
+	if reducesToScalar {
+		result = q.applyMetricReduceTo(result, config.ReduceTo)
+		result = q.applySeriesLimit(result, query.Limit, query.Order)
+		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
+			result.Value = convertTimeSeriesDataToScalar(tsData, tsData.QueryName)
 		}
 	}
 
@@ -286,9 +291,6 @@ func (q *querier) applyMetricReduceTo(result *qbtypes.Result, reduceOp qbtypes.R
 			}
 		}
 	}
-
-	scalarData := convertTimeSeriesDataToScalar(tsData, tsData.QueryName)
-	result.Value = scalarData
 
 	return result
 }
@@ -1205,7 +1207,7 @@ func (q *querier) postProcessLogBody(ctx context.Context, orgID valuer.UUID, res
 // carried one. Anything that is not a decoded document — the legacy string body, a NULL cell —
 // is legal under these names and left alone.
 func stripEmptyBodyMessage(val any) {
-	bodyMap, ok := val.(telemetrystoretypes.JSONValue)
+	bodyMap, ok := val.(map[string]any)
 	if !ok {
 		return
 	}

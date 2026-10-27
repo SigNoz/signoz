@@ -63,6 +63,7 @@ jest.mock('../../QuickFilters', () => ({
 
 const quickFilterProps = {
 	source: QuickFiltersSource.TRACES_EXPLORER,
+	useFieldApis: { startUnixMilli: 0, endUnixMilli: 0 },
 };
 const savedViewProps = { source: SavedviewtypesSourceDTO.traces };
 

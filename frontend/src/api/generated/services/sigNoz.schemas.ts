@@ -4079,7 +4079,12 @@ export interface CloudintegrationtypesAzureAccountConfigDTO {
 	resourceGroups: string[];
 }
 
+export enum CloudintegrationtypesGCPConnectionMethodDTO {
+	manual = 'manual',
+	agent = 'agent',
+}
 export interface CloudintegrationtypesGCPAccountConfigDTO {
+	connectionMethod: CloudintegrationtypesGCPConnectionMethodDTO;
 	/**
 	 * @type string
 	 */
@@ -4326,7 +4331,10 @@ export interface CloudintegrationtypesCollectedMetricDTO {
 }
 
 export interface CloudintegrationtypesGCPConnectionArtifactDTO {
-	[key: string]: unknown;
+	/**
+	 * @type string
+	 */
+	cliCommand: string;
 }
 
 export interface CloudintegrationtypesConnectionArtifactDTO {
@@ -4365,8 +4373,62 @@ export interface CloudintegrationtypesDataCollectedDTO {
 	metrics?: CloudintegrationtypesCollectedMetricDTO[] | null;
 }
 
+/**
+ * @nullable
+ */
+export type CloudintegrationtypesGCPLogsCollectionStrategyDTO = {
+	/**
+	 * @type string
+	 */
+	sinkFilter: string;
+} | null;
+
+/**
+ * @nullable
+ */
+export type CloudintegrationtypesGCPMetricsCollectionStrategyDTO = {
+	/**
+	 * @type array
+	 */
+	metricNames: string[];
+} | null;
+
+export interface CloudintegrationtypesGCPTelemetryCollectionStrategyDTO {
+	logs: CloudintegrationtypesGCPLogsCollectionStrategyDTO | null;
+	metrics: CloudintegrationtypesGCPMetricsCollectionStrategyDTO | null;
+}
+
 export interface CloudintegrationtypesGCPIntegrationConfigDTO {
-	[key: string]: unknown;
+	connectionMethod: CloudintegrationtypesGCPConnectionMethodDTO;
+	/**
+	 * @type string
+	 */
+	deploymentProjectId: string;
+	/**
+	 * @type string
+	 */
+	deploymentRegion: string;
+	/**
+	 * @type array
+	 */
+	projectIds: string[];
+	telemetryCollectionStrategy: CloudintegrationtypesGCPTelemetryCollectionStrategyDTO;
+}
+
+export interface CloudintegrationtypesGCPPostableAccountConfigDTO {
+	connectionMethod: CloudintegrationtypesGCPConnectionMethodDTO;
+	/**
+	 * @type string
+	 */
+	deploymentProjectId: string;
+	/**
+	 * @type string
+	 */
+	deploymentRegion: string;
+	/**
+	 * @type array
+	 */
+	projectIds: string[];
 }
 
 export interface CloudintegrationtypesGettableAccountWithConnectionArtifactDTO {
@@ -4521,7 +4583,7 @@ export interface CloudintegrationtypesGettableServicesMetadataDTO {
 export interface CloudintegrationtypesPostableAccountConfigDTO {
 	aws?: CloudintegrationtypesAWSPostableAccountConfigDTO;
 	azure?: CloudintegrationtypesAzureAccountConfigDTO;
-	gcp?: CloudintegrationtypesGCPAccountConfigDTO;
+	gcp?: CloudintegrationtypesGCPPostableAccountConfigDTO;
 }
 
 export interface CloudintegrationtypesPostableAccountDTO {
@@ -4664,9 +4726,9 @@ export interface CloudintegrationtypesUpdatableGCPAccountConfigDTO {
 	 */
 	deploymentRegion: string;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	projectIds: string[] | null;
+	projectIds: string[];
 }
 
 export interface CloudintegrationtypesUpdatableAccountConfigDTO {
@@ -6946,6 +7008,11 @@ export interface Querybuildertypesv5PromQueryDTO {
 	 * @description The PromQL expression. Dotted metric and label names must use the UTF-8 quoted selector form, for example {'http.server.duration'}.
 	 */
 	query?: string;
+	/**
+	 * @type boolean
+	 * @description When true, start and end are evaluated as given instead of rounded down to the step, and the result is not cached. Defaults to false.
+	 */
+	skipStepAlignment?: boolean;
 	/**
 	 * @type boolean
 	 * @description Reserved; currently has no effect.

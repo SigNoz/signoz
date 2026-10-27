@@ -18,6 +18,25 @@ import {
 
 setupServer();
 
+const activeEnvironmentFilter = buildQueryBuilderOverrides({
+	builder: {
+		queryData: [
+			{
+				filters: {
+					items: [
+						{
+							key: { key: 'deployment.environment' },
+							op: 'in',
+							value: ['production'],
+						},
+					],
+					op: 'AND',
+				},
+			},
+		],
+	},
+});
+
 describe('CheckboxFilterV2 - interactions', () => {
 	describe('search functionality', () => {
 		it('filters values based on search text', async () => {
@@ -419,6 +438,63 @@ describe('CheckboxFilterV2 - interactions', () => {
 
 			const header = screen.getByTestId('checkbox-filter-header');
 			expect(header).toHaveAttribute('data-state', 'closed');
+
+			await user.click(header);
+
+			expect(header).toHaveAttribute('data-state', 'open');
+			await screen.findByTestId('checkbox-value-row-production');
+		});
+
+		it('opens a closed filter when the query filters on its key', async () => {
+			mockFieldsValuesAPI({
+				stringValues: ['production', 'staging'],
+			});
+
+			render(
+				<CheckboxFilterV2
+					filter={{ ...DEFAULT_FILTER, defaultOpen: false }}
+					source={QuickFiltersSource.TRACES_EXPLORER}
+					useFieldApis={DEFAULT_USE_FIELD_APIS}
+				/>,
+				undefined,
+				{ queryBuilderOverrides: activeEnvironmentFilter },
+			);
+
+			expect(screen.getByTestId('checkbox-filter-header')).toHaveAttribute(
+				'data-state',
+				'open',
+			);
+			await expect(
+				screen.findByTestId('checkbox-value-row-production'),
+			).resolves.toHaveAttribute('data-state', 'checked');
+		});
+
+		it('keeps the user toggle over the auto-open', async () => {
+			const user = userEvent.setup();
+
+			mockFieldsValuesAPI({
+				stringValues: ['production'],
+			});
+
+			render(
+				<CheckboxFilterV2
+					filter={{ ...DEFAULT_FILTER, defaultOpen: false }}
+					source={QuickFiltersSource.TRACES_EXPLORER}
+					useFieldApis={DEFAULT_USE_FIELD_APIS}
+				/>,
+				undefined,
+				{ queryBuilderOverrides: activeEnvironmentFilter },
+			);
+
+			const header = screen.getByTestId('checkbox-filter-header');
+			await screen.findByTestId('checkbox-value-row-production');
+
+			await user.click(header);
+
+			expect(header).toHaveAttribute('data-state', 'closed');
+			expect(
+				screen.queryByTestId('checkbox-value-row-production'),
+			).not.toBeInTheDocument();
 
 			await user.click(header);
 
