@@ -16,6 +16,7 @@ import type {
 	InspectMetrics200,
 	ListMetricReductionRules200,
 	ListMetrics200,
+	ListSavedViews200,
 	MetricreductionruletypesGettableReductionRuleDTO,
 	MetricsexplorertypesStatDTO,
 	MetricsexplorertypesTreemapEntryDTO,
@@ -24,7 +25,12 @@ import {
 	MetricreductionruletypesMatchTypeDTO,
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
+	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricsSignal,
+	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
 	Querybuildertypesv5RequestTypeDTO,
+	SavedviewtypesPanelTypeDTO,
+	SavedviewtypesSchemaVersionDTO,
+	SavedviewtypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { explorerView } from 'mocks-server/__mockdata__/explorer_views';
 import type { AllViewsProps, ViewProps } from 'types/api/saveViews/types';
@@ -782,6 +788,33 @@ export const metricsSavedViewsResponse = (count: number): AllViewsProps => ({
 		tags: ['metrics'],
 		createdBy: 'ada@signoz.io',
 		extraData: '{"color":"#7cd4fd"}',
+	})),
+});
+
+export const metricsSavedViewsV2Response = (
+	count: number,
+): ListSavedViews200 => ({
+	status: 'success',
+	data: VIEW_NAMES.slice(0, count).map((displayName, index) => ({
+		id: `storybook-metrics-view-${index + 1}`,
+		name: `storybook-metrics-view-${index + 1}`,
+		source: SavedviewtypesSourceDTO.metrics,
+		schemaVersion: SavedviewtypesSchemaVersionDTO.v2,
+		createdAt: '2026-08-20T09:00:00Z',
+		createdBy: 'ada@signoz.io',
+		updatedAt: '2026-08-20T09:00:00Z',
+		updatedBy: 'ada@signoz.io',
+		spec: {
+			displayName,
+			panelType: SavedviewtypesPanelTypeDTO.graph,
+			requestType: Querybuildertypesv5RequestTypeDTO.time_series,
+			queries: [
+				{
+					type: Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query,
+					spec: { name: 'A', signal: MetricsSignal.metrics },
+				},
+			],
+		},
 	})),
 });
 

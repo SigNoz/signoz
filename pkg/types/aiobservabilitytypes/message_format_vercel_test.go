@@ -155,5 +155,21 @@ func TestFormat_Vercel(t *testing.T) {
 			wantInput:  `[{"role": "user", "parts": [{"type": "text", "content": "this should fail"}]}]`,
 			wantOutput: `[]`,
 		},
+		{
+			// ai.response.text is the model's text, moved onto the output by the mapper; an answer that is JSON
+			// stays text, as only the recorded tool calls are objects with toolName:
+			// https://github.com/vercel/ai/blob/a5e92fe3c692f8e152fe1eb9ef50a4e734ad0ffb/packages/ai/src/generate-text/generate-text.ts#L385
+			// https://github.com/vercel/ai/blob/a5e92fe3c692f8e152fe1eb9ef50a4e734ad0ffb/packages/ai/src/generate-text/generate-text.ts#L780
+			name:       "JSONObjectAnswer_KeptAsText",
+			attributes: map[string]any{"ai.operationId": "ai.generateText.doGenerate", "ai.response.finishReason": "stop", GenAIOutputMessages: `{"answer": 42}`},
+			wantInput:  `[]`,
+			wantOutput: `[{"role": "assistant", "parts": [{"type": "text", "content": "{\"answer\": 42}"}], "finish_reason": "stop"}]`,
+		},
+		{
+			name:       "JSONListAnswer_KeptAsText",
+			attributes: map[string]any{"ai.operationId": "ai.generateText.doGenerate", "ai.response.finishReason": "stop", GenAIOutputMessages: `[{"name":"Alice"},{"name":"Bob"}]`},
+			wantInput:  `[]`,
+			wantOutput: `[{"role": "assistant", "parts": [{"type": "text", "content": "[{\"name\":\"Alice\"},{\"name\":\"Bob\"}]"}], "finish_reason": "stop"}]`,
+		},
 	})
 }

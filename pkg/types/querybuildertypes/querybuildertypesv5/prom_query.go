@@ -11,6 +11,9 @@ type PromQuery struct {
 	Step Step `json:"step"`
 	// stats if true, the query will return stats
 	Stats bool `json:"stats"`
+	// skipStepAlignment if true, start and end are used as given instead of
+	// rounded down to the step, and the result is never cached
+	SkipStepAlignment bool `json:"skipStepAlignment,omitempty"`
 
 	Legend string `json:"legend"`
 }

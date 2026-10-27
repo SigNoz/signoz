@@ -324,7 +324,7 @@ func (item *StorableSpan) ToWaterfallSpan(traceID string) *WaterfallSpan {
 	resources := make(map[string]string)
 	maps.Copy(resources, item.ResourcesString)
 
-	formatted := aiobservabilitytypes.FormatMessages(item.AttributesJSON)
+	formatted := aiobservabilitytypes.FormatMessages(item.AttributesJSON.Nest())
 	return &WaterfallSpan{
 		Attributes:         item.Attributes(),
 		DBName:             item.DBName,

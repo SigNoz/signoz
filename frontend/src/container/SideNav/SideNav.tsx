@@ -65,8 +65,7 @@ import { useAppContext } from 'providers/App/App';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
-import { checkVersionState } from 'utils/app';
-import { isModifierKeyPressed } from 'utils/app';
+import { checkVersionState, isModifierKeyPressed } from 'utils/app';
 import { showErrorNotification } from 'utils/error';
 import { openInNewTab } from 'utils/navigation';
 
@@ -714,7 +713,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		registerShortcut(GlobalShortcuts.NavigateToSettingsBilling, () =>
 			onClickHandler(ROUTES.BILLING, null),
 		);
-		registerShortcut(GlobalShortcuts.NavigateToSettingsNotificationChannels, () =>
+		registerShortcut(GlobalShortcuts.NavigateToNotificationChannels, () =>
 			onClickHandler(ROUTES.ALL_CHANNELS, null),
 		);
 		registerShortcut(GlobalShortcuts.NavigateToSettingsServiceAccounts, () =>
@@ -744,7 +743,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			deregisterShortcut(GlobalShortcuts.NavigateToSettings);
 			deregisterShortcut(GlobalShortcuts.NavigateToSettingsIngestion);
 			deregisterShortcut(GlobalShortcuts.NavigateToSettingsBilling);
-			deregisterShortcut(GlobalShortcuts.NavigateToSettingsNotificationChannels);
+			deregisterShortcut(GlobalShortcuts.NavigateToNotificationChannels);
 			deregisterShortcut(GlobalShortcuts.NavigateToSettingsServiceAccounts);
 			deregisterShortcut(GlobalShortcuts.NavigateToSettingsRoles);
 			deregisterShortcut(GlobalShortcuts.NavigateToSettingsMembers);

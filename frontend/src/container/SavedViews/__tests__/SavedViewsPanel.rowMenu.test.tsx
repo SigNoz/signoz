@@ -9,8 +9,10 @@ import SavedViewsHeader from '../SavedViewsHeader';
 import SavedViewsPanel from '../SavedViewsPanel';
 import { mockSavedViewsApi } from './savedViewsApiMock';
 import {
+	expectRowUsable,
 	explorerUrl,
 	makeView,
+	MENU_CHECK_TIMEOUT,
 	renderWithExplorerProviders,
 	urlParam,
 	viewUrl,
@@ -58,13 +60,22 @@ const row = (name: string): HTMLElement =>
 		.getAllByTestId('saved-views-row')
 		.find((element) => element.textContent?.includes(name)) as HTMLElement;
 
+const ROW_MENU_ITEM_TEST_IDS: Record<string, string> = {
+	'Copy link': 'saved-views-row-menu-item-copyLink',
+	'Copy ID': 'saved-views-row-menu-item-copyId',
+	'Edit details': 'saved-views-row-menu-item-editDetails',
+	Delete: 'saved-views-row-menu-item-delete',
+};
+
 async function chooseFromRowMenu(
 	viewName: string,
 	item: string,
 ): Promise<void> {
 	await screen.findByTestId('saved-views-list');
 	fireEvent.click(within(row(viewName)).getByTestId('saved-views-row-menu'));
-	fireEvent.click(await screen.findByRole('menuitem', { name: item }));
+	const menuItem = await screen.findByTestId(ROW_MENU_ITEM_TEST_IDS[item]);
+	await waitFor(() => expectRowUsable(menuItem), MENU_CHECK_TIMEOUT);
+	fireEvent.click(menuItem);
 }
 
 const chip = (): HTMLElement => screen.getByTestId('saved-views-name');
@@ -76,19 +87,36 @@ describe('SavedViewsPanel row menu', () => {
 		jest.mocked(toast.success).mockClear();
 	});
 
-	it('offers copy link, edit details and delete', async () => {
+	it('offers copy link, copy id, edit details and delete', async () => {
 		mockSavedViewsApi([errors]);
 		renderPanelWithHeader();
 		await screen.findByTestId('saved-views-list');
 
 		fireEvent.click(within(row('Errors')).getByTestId('saved-views-row-menu'));
 
-		const items = await screen.findAllByRole('menuitem');
-		expect(items.map((item) => item.textContent)).toStrictEqual([
+		await screen.findByTestId(ROW_MENU_ITEM_TEST_IDS['Copy link']);
+		const items = Object.values(ROW_MENU_ITEM_TEST_IDS).map(
+			(testId) => screen.getByTestId(testId).textContent,
+		);
+		expect(items).toStrictEqual([
 			'Copy link',
+			'Copy ID',
 			'Edit details',
 			'Delete',
 		]);
+	});
+
+	it('copies the view id', async () => {
+		mockSavedViewsApi([errors, slow]);
+		renderPanelWithHeader();
+
+		await chooseFromRowMenu('Slow spans', 'Copy ID');
+
+		expect(mockCopy).toHaveBeenCalledWith(slow.id);
+		expect(toast.success).toHaveBeenCalledWith(
+			'View ID copied',
+			expect.anything(),
+		);
 	});
 
 	it('copies a link that opens the view with its query and tab', async () => {

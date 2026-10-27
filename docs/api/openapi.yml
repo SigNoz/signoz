@@ -251,6 +251,7 @@ components:
           opsgenie: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfig'
           pagerduty: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelPagerdutyConfig'
           slack: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfig'
+          telegram: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfig'
           webhook: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelWebhookConfig'
         propertyName: kind
       oneOf:
@@ -264,6 +265,7 @@ components:
       - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfig'
       - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfig'
       - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfig'
       type: object
     AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfig:
       properties:
@@ -369,6 +371,18 @@ components:
           type: string
         spec:
           $ref: '#/components/schemas/AlertmanagertypesChannelSlackConfig'
+      required:
+      - kind
+      - spec
+      type: object
+    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfig:
+      properties:
+        kind:
+          enum:
+          - telegram
+          type: string
+        spec:
+          $ref: '#/components/schemas/AlertmanagertypesChannelTelegramConfig'
       required:
       - kind
       - spec
@@ -525,6 +539,7 @@ components:
       - jira
       - jsmops
       - incidentio
+      - telegram
       type: string
     AlertmanagertypesChannelListOrder:
       enum:
@@ -728,6 +743,31 @@ components:
       required:
       - title
       - value
+      type: object
+    AlertmanagertypesChannelTelegramConfig:
+      properties:
+        apiUrl:
+          type: string
+        botToken:
+          format: password
+          type: string
+        chatId:
+          format: int64
+          type: integer
+        disableNotifications:
+          type: boolean
+        message:
+          type: string
+        messageThreadId:
+          type: integer
+        sendResolved:
+          nullable: true
+          type: boolean
+        title:
+          type: string
+      required:
+      - botToken
+      - chatId
       type: object
     AlertmanagertypesChannelWebhookConfig:
       properties:
@@ -1023,6 +1063,8 @@ components:
       - required:
         - incidentio_configs
       - required:
+        - telegram_configs
+      - required:
         - discord_configs
       - required:
         - email_configs
@@ -1042,8 +1084,6 @@ components:
         - victorops_configs
       - required:
         - sns_configs
-      - required:
-        - telegram_configs
       - required:
         - webex_configs
       - required:
@@ -1119,7 +1159,7 @@ components:
           type: array
         telegram_configs:
           items:
-            $ref: '#/components/schemas/ConfigTelegramConfig'
+            $ref: '#/components/schemas/AlertmanagertypesTelegramReceiverConfig'
           type: array
         victorops_configs:
           items:
@@ -1263,7 +1303,7 @@ components:
           type: array
         telegram_configs:
           items:
-            $ref: '#/components/schemas/ConfigTelegramConfig'
+            $ref: '#/components/schemas/AlertmanagertypesTelegramReceiverConfig'
           type: array
         victorops_configs:
           items:
@@ -1334,6 +1374,34 @@ components:
       - timezone
       - startTime
       type: object
+    AlertmanagertypesTelegramReceiverConfig:
+      properties:
+        api_url:
+          $ref: '#/components/schemas/ConfigURLType2'
+        chat:
+          format: int64
+          type: integer
+        chat_file:
+          type: string
+        disable_notifications:
+          type: boolean
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        message:
+          type: string
+        message_thread_id:
+          type: integer
+        parse_mode:
+          type: string
+        send_resolved:
+          type: boolean
+        title:
+          type: string
+        token:
+          type: string
+        token_file:
+          type: string
+      type: object
     AlertmanagertypesTestableNotificationChannel:
       properties:
         config:
@@ -1374,9 +1442,13 @@ components:
     AuthtypesAuthDomainConfigGoogle:
       properties:
         kind:
-          $ref: '#/components/schemas/AuthtypesAuthNProvider'
+          allOf:
+          - $ref: '#/components/schemas/AuthtypesAuthNProvider'
+          description: The kind of authn provider.
         spec:
-          $ref: '#/components/schemas/AuthtypesGoogleConfig'
+          allOf:
+          - $ref: '#/components/schemas/AuthtypesGoogleConfig'
+          description: The google auth configuration.
       required:
       - kind
       - spec
@@ -1384,9 +1456,13 @@ components:
     AuthtypesAuthDomainConfigOIDC:
       properties:
         kind:
-          $ref: '#/components/schemas/AuthtypesAuthNProvider'
+          allOf:
+          - $ref: '#/components/schemas/AuthtypesAuthNProvider'
+          description: The kind of authn provider.
         spec:
-          $ref: '#/components/schemas/AuthtypesOIDCConfig'
+          allOf:
+          - $ref: '#/components/schemas/AuthtypesOIDCConfig'
+          description: The oidc configuration.
       required:
       - kind
       - spec
@@ -1394,9 +1470,13 @@ components:
     AuthtypesAuthDomainConfigSAML:
       properties:
         kind:
-          $ref: '#/components/schemas/AuthtypesAuthNProvider'
+          allOf:
+          - $ref: '#/components/schemas/AuthtypesAuthNProvider'
+          description: The kind of authn provider.
         spec:
-          $ref: '#/components/schemas/AuthtypesSamlConfig'
+          allOf:
+          - $ref: '#/components/schemas/AuthtypesSamlConfig'
+          description: The saml configuration.
       required:
       - kind
       - spec
@@ -2159,6 +2239,8 @@ components:
       type: object
     CloudintegrationtypesGCPAccountConfig:
       properties:
+        connectionMethod:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPConnectionMethod'
         deploymentProjectId:
           type: string
         deploymentRegion:
@@ -2168,13 +2250,79 @@ components:
             type: string
           type: array
       required:
+      - connectionMethod
       - deploymentProjectId
       - deploymentRegion
       - projectIds
       type: object
     CloudintegrationtypesGCPConnectionArtifact:
+      properties:
+        cliCommand:
+          type: string
+      required:
+      - cliCommand
       type: object
+    CloudintegrationtypesGCPConnectionMethod:
+      enum:
+      - manual
+      - agent
+      type: string
     CloudintegrationtypesGCPIntegrationConfig:
+      properties:
+        connectionMethod:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPConnectionMethod'
+        deploymentProjectId:
+          type: string
+        deploymentRegion:
+          type: string
+        projectIds:
+          items:
+            type: string
+          type: array
+        telemetryCollectionStrategy:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPTelemetryCollectionStrategy'
+      required:
+      - connectionMethod
+      - deploymentProjectId
+      - deploymentRegion
+      - projectIds
+      - telemetryCollectionStrategy
+      type: object
+    CloudintegrationtypesGCPLogsCollectionStrategy:
+      nullable: true
+      properties:
+        sinkFilter:
+          type: string
+      required:
+      - sinkFilter
+      type: object
+    CloudintegrationtypesGCPMetricsCollectionStrategy:
+      nullable: true
+      properties:
+        metricNames:
+          items:
+            type: string
+          type: array
+      required:
+      - metricNames
+      type: object
+    CloudintegrationtypesGCPPostableAccountConfig:
+      properties:
+        connectionMethod:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPConnectionMethod'
+        deploymentProjectId:
+          type: string
+        deploymentRegion:
+          type: string
+        projectIds:
+          items:
+            type: string
+          type: array
+      required:
+      - connectionMethod
+      - deploymentProjectId
+      - deploymentRegion
+      - projectIds
       type: object
     CloudintegrationtypesGCPServiceConfig:
       properties:
@@ -2196,6 +2344,16 @@ components:
           type: boolean
       required:
       - enabled
+      type: object
+    CloudintegrationtypesGCPTelemetryCollectionStrategy:
+      properties:
+        logs:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPLogsCollectionStrategy'
+        metrics:
+          $ref: '#/components/schemas/CloudintegrationtypesGCPMetricsCollectionStrategy'
+      required:
+      - metrics
+      - logs
       type: object
     CloudintegrationtypesGettableAccountWithConnectionArtifact:
       properties:
@@ -2333,7 +2491,7 @@ components:
         azure:
           $ref: '#/components/schemas/CloudintegrationtypesAzureAccountConfig'
         gcp:
-          $ref: '#/components/schemas/CloudintegrationtypesGCPAccountConfig'
+          $ref: '#/components/schemas/CloudintegrationtypesGCPPostableAccountConfig'
       type: object
     CloudintegrationtypesPostableAgentCheckIn:
       properties:
@@ -2568,7 +2726,6 @@ components:
         projectIds:
           items:
             type: string
-          nullable: true
           type: array
       required:
       - deploymentProjectId
@@ -3501,6 +3658,7 @@ components:
       - meter-metrics
       - logs-field
       - traces-field
+      - metrics-field
       type: string
     CoretypesObject:
       properties:
@@ -8046,6 +8204,31 @@ components:
       - metric
       - value
       type: object
+    PromotetypesIndexMaterializedPathsResult:
+      properties:
+        indexed:
+          items:
+            $ref: '#/components/schemas/PromotetypesPromotePath'
+          nullable: true
+          type: array
+        skipped:
+          items:
+            $ref: '#/components/schemas/PromotetypesPromotePath'
+          nullable: true
+          type: array
+      required:
+      - indexed
+      - skipped
+      type: object
+    PromotetypesPostableIndexMaterializedPaths:
+      properties:
+        dryRun:
+          type: boolean
+        signal:
+          type: string
+      required:
+      - signal
+      type: object
     PromotetypesPromotePath:
       properties:
         context:
@@ -8127,9 +8310,13 @@ components:
     Querybuildertypesv5BucketOptionsLinear:
       properties:
         kind:
-          $ref: '#/components/schemas/Querybuildertypesv5BucketsKind'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5BucketsKind'
+          description: How the upper bounds are spaced.
         spec:
-          $ref: '#/components/schemas/Querybuildertypesv5LinearBucketsSpec'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5LinearBucketsSpec'
+          description: The evenly spaced bucket specification.
       required:
       - kind
       - spec
@@ -8137,9 +8324,13 @@ components:
     Querybuildertypesv5BucketOptionsLog:
       properties:
         kind:
-          $ref: '#/components/schemas/Querybuildertypesv5BucketsKind'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5BucketsKind'
+          description: How the upper bounds are spaced.
         spec:
-          $ref: '#/components/schemas/Querybuildertypesv5LogBucketsSpec'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5LogBucketsSpec'
+          description: The logarithmic bucket specification.
       required:
       - kind
       - spec
@@ -8425,6 +8616,8 @@ components:
           type: string
         query:
           type: string
+        skipStepAlignment:
+          type: boolean
         stats:
           type: boolean
         step:
@@ -8728,54 +8921,78 @@ components:
     Querybuildertypesv5QueryEnvelopeBuilder:
       properties:
         spec:
-          $ref: '#/components/schemas/Querybuildertypesv5BuilderQuerySpec'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5BuilderQuerySpec'
+          description: The builder query specification.
         type:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+          description: The type of the query.
       required:
       - type
       type: object
     Querybuildertypesv5QueryEnvelopeBuilderAI:
       properties:
         spec:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
+          description: The AI builder query specification.
         type:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+          description: The type of the query.
       required:
       - type
       type: object
     Querybuildertypesv5QueryEnvelopeClickHouseSQL:
       properties:
         spec:
-          $ref: '#/components/schemas/Querybuildertypesv5ClickHouseQuery'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5ClickHouseQuery'
+          description: The ClickHouse SQL query specification.
         type:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+          description: The type of the query.
       required:
       - type
       type: object
     Querybuildertypesv5QueryEnvelopeFormula:
       properties:
         spec:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderFormula'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderFormula'
+          description: The formula specification.
         type:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+          description: The type of the query.
       required:
       - type
       type: object
     Querybuildertypesv5QueryEnvelopePromQL:
       properties:
         spec:
-          $ref: '#/components/schemas/Querybuildertypesv5PromQuery'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5PromQuery'
+          description: The PromQL query specification.
         type:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+          description: The type of the query.
       required:
       - type
       type: object
     Querybuildertypesv5QueryEnvelopeTraceOperator:
       properties:
         spec:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderTraceOperator'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderTraceOperator'
+          description: The trace operator specification.
         type:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+          description: The type of the query.
       required:
       - type
       type: object
@@ -9335,9 +9552,13 @@ components:
     RuletypesEvaluationCumulative:
       properties:
         kind:
-          $ref: '#/components/schemas/RuletypesEvaluationKind'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesEvaluationKind'
+          description: The kind of evaluation.
         spec:
-          $ref: '#/components/schemas/RuletypesCumulativeWindow'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesCumulativeWindow'
+          description: The cumulative window evaluation specification.
       required:
       - kind
       - spec
@@ -9360,9 +9581,13 @@ components:
     RuletypesEvaluationRolling:
       properties:
         kind:
-          $ref: '#/components/schemas/RuletypesEvaluationKind'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesEvaluationKind'
+          description: The kind of evaluation.
         spec:
-          $ref: '#/components/schemas/RuletypesRollingWindow'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesRollingWindow'
+          description: The rolling window evaluation specification.
       required:
       - kind
       - spec
@@ -9743,9 +9968,13 @@ components:
     RuletypesThresholdBasic:
       properties:
         kind:
-          $ref: '#/components/schemas/RuletypesThresholdKind'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesThresholdKind'
+          description: The kind of threshold.
         spec:
-          $ref: '#/components/schemas/RuletypesBasicRuleThresholds'
+          allOf:
+          - $ref: '#/components/schemas/RuletypesBasicRuleThresholds'
+          description: The basic threshold specification (array of thresholds).
       required:
       - kind
       - spec
@@ -14069,6 +14298,67 @@ paths:
         - logs-field:update
         - traces-field:update
       summary: Promote paths
+      tags:
+      - promote
+      x-signoz-stability: alpha
+  /api/v1/promoted_paths/materialized:
+    post:
+      deprecated: false
+      description: This endpoint indexes the JSON sub-columns of materialized paths
+        whose columns are indexed and returns the indexed and skipped paths.
+      operationId: IndexMaterializedPaths
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromotetypesPostableIndexMaterializedPaths'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PromotetypesIndexMaterializedPathsResult'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - logs-field:update
+        - traces-field:update
+      - tokenizer:
+        - logs-field:update
+        - traces-field:update
+      summary: Index materialized paths
       tags:
       - promote
       x-signoz-stability: alpha
@@ -20427,9 +20717,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics-field:list
       - tokenizer:
-        - VIEWER
+        - metrics-field:list
       summary: List metric names
       tags:
       - metrics
@@ -20496,9 +20786,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:list
       - tokenizer:
-        - VIEWER
+        - rule:list
       summary: Get metric alerts
       tags:
       - metrics
@@ -20580,9 +20870,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics-field:read
       - tokenizer:
-        - VIEWER
+        - metrics-field:read
       summary: Get metric attributes
       tags:
       - metrics
@@ -20650,9 +20940,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: Get metric highlights
       tags:
       - metrics
@@ -20709,9 +20999,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: Inspect raw metric data points
       tags:
       - metrics
@@ -20779,9 +21069,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics-field:read
       - tokenizer:
-        - VIEWER
+        - metrics-field:read
       summary: Get metric metadata
       tags:
       - metrics
@@ -20825,9 +21115,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - metrics-field:update
       - tokenizer:
-        - EDITOR
+        - metrics-field:update
       summary: Update metric metadata
       tags:
       - metrics
@@ -20873,9 +21163,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: Check if non-SigNoz metrics have been received
       tags:
       - metrics
@@ -20932,9 +21222,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: Get metrics statistics
       tags:
       - metrics
@@ -20991,9 +21281,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: Get metrics treemap
       tags:
       - metrics
@@ -24922,6 +25212,75 @@ paths:
       tags:
       - rules
       x-signoz-stability: alpha
+  /api/v2/rules/{id}/clone:
+    post:
+      deprecated: false
+      description: This endpoint creates a new alert rule from the stored definition
+        of an existing one. The clone keeps every modeled field of the source, including
+        its enabled/disabled state, and gets the source's name suffixed with " - Copy"
+        (or a bumped " - Copy (n)" counter when the source is itself a copy). The
+        clone is owned by the caller.
+      operationId: CloneRuleByID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RuletypesRule'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Clone alert rule
+      tags:
+      - rules
+      x-signoz-stability: alpha
   /api/v2/rules/{id}/history/filter_keys:
     get:
       deprecated: false
@@ -28063,9 +28422,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - dashboard:list
       - tokenizer:
-        - VIEWER
+        - dashboard:list
       summary: Get metric dashboards (v2)
       tags:
       - metrics

@@ -44,11 +44,12 @@ func (f *formatting) vercel() bool {
 	}
 
 	text, calls := attribute(f.attributes, vercelResponseText), decode(attribute(f.attributes, vercelResponseCalls))
-	switch output := decode(attribute(f.attributes, GenAIOutputMessages)).(type) {
-	case string:
-		text = output
-	case []any:
-		calls = output
+	if output := attribute(f.attributes, GenAIOutputMessages); output != nil {
+		if list, ok := vercelToolCalls(decode(output)); ok {
+			calls = list
+		} else {
+			text = output
+		}
 	}
 	msg := OutputMessage{Role: RoleAssistant, Parts: Parts{}, FinishReason: finishReason(stringOf(attribute(f.attributes, vercelResponseFinished)))}
 	if s := stringOf(text); s != "" {
@@ -145,6 +146,23 @@ func vercelPart(item any) Part {
 		}
 	}
 	return part(GenericPart(p))
+}
+
+// vercelToolCalls returns the value as the recorded tool calls, objects with toolName, so an answer that is
+// itself JSON stays text:
+// https://github.com/vercel/ai/blob/a5e92fe3c692f8e152fe1eb9ef50a4e734ad0ffb/packages/ai/src/generate-text/generate-text.ts#L780
+func vercelToolCalls(value any) ([]any, bool) {
+	list, ok := value.([]any)
+	if !ok || len(list) == 0 {
+		return nil, false
+	}
+	for _, item := range list {
+		call, ok := item.(map[string]any)
+		if !ok || stringOf(call["toolName"]) == "" {
+			return nil, false
+		}
+	}
+	return list, true
 }
 
 // vercelToolCall reads {toolCallId, toolName, input} or the v1 {toolCallId, toolName, args}; the

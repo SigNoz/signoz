@@ -16,7 +16,7 @@ import {
 } from 'lib/authz/utils/authz-test-utils';
 import {
 	otherFiltersResponse,
-	quickFiltersAttributeValuesResponse,
+	quickFiltersFieldValuesResponse,
 	quickFiltersListResponse,
 } from 'mocks-server/__mockdata__/customQuickFilters';
 import { server } from 'mocks-server/server';
@@ -25,7 +25,7 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import QuickFilters from '../QuickFilters';
 import { QuickFiltersSource, SignalType } from '../types';
-import { QuickFiltersConfig } from './constants';
+import { QuickFiltersConfig, QuickFiltersFieldApis } from './constants';
 
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: jest.fn(),
@@ -38,7 +38,6 @@ const BASE_URL = ENVIRONMENT.baseURL;
 const SIGNAL = SignalType.LOGS;
 const quickFiltersListURL = `${BASE_URL}/api/v2/quick_filters/${SIGNAL}`;
 const fieldsKeysURL = `${BASE_URL}/api/v1/fields/keys`;
-const attributeValuesURL = `${BASE_URL}/api/v3/autocomplete/attribute_values`;
 const fieldsValuesURL = `${BASE_URL}/api/v1/fields/values`;
 
 const NOT_AUTHORIZED_TEXT = /is not authorized to perform/i;
@@ -71,11 +70,8 @@ beforeEach(() => {
 		rest.get(fieldsKeysURL, (_req, res, ctx) =>
 			res(ctx.status(200), ctx.json(otherFiltersResponse)),
 		),
-		rest.get(attributeValuesURL, (_req, res, ctx) =>
-			res(ctx.status(200), ctx.json(quickFiltersAttributeValuesResponse)),
-		),
 		rest.get(fieldsValuesURL, (_req, res, ctx) =>
-			res(ctx.status(200), ctx.json(quickFiltersAttributeValuesResponse)),
+			res(ctx.status(200), ctx.json(quickFiltersFieldValuesResponse)),
 		),
 	);
 });
@@ -91,6 +87,7 @@ function renderWithSignal(): void {
 			source={QuickFiltersSource.LOGS_EXPLORER}
 			signal={SIGNAL}
 			handleFilterVisibilityChange={jest.fn()}
+			useFieldApis={QuickFiltersFieldApis}
 		/>,
 	);
 }
@@ -101,6 +98,7 @@ function renderStaticConfig(): void {
 			source={QuickFiltersSource.EXCEPTIONS}
 			config={QuickFiltersConfig}
 			handleFilterVisibilityChange={jest.fn()}
+			useFieldApis={QuickFiltersFieldApis}
 		/>,
 	);
 }

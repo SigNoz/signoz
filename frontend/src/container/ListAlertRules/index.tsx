@@ -4,7 +4,7 @@ import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import ErrorEmptyState from 'components/Alerts/ErrorEmptyState';
 import NoResultsEmptyState from 'components/Alerts/NoResultsEmptyState';
-import TanStackTable from 'components/TanStackTableView';
+import TanStackTable, { ColumnSelector } from 'components/TanStackTableView';
 import { useCalculatedPageSize } from 'components/TanStackTableView/useCalculatedPageSize';
 import { useTableParams } from 'components/TanStackTableView/useTableParams';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -15,7 +15,7 @@ import { useTimezone } from 'providers/Timezone';
 import TextToolTip from 'components/TextToolTip';
 
 import { AlertsEmptyState } from './AlertsEmptyState/AlertsEmptyState';
-import { ActionsMenu, ColumnSelector } from './components';
+import { ActionsMenu } from './components';
 import { ALERT_RULES_PARAMS, useAlertRulesFilters } from './hooks';
 import styles from './ListAlertRules.module.scss';
 import { getAlertRuleColumns } from './table.config';
@@ -134,7 +134,11 @@ function ListAlertRules(): JSX.Element {
 			{!isEmptyNoRules && (
 				<div className={styles.header}>
 					<div className={styles.refreshRow}>
-						<ColumnSelector columns={columns} storageKey="alert-rules-columns" />
+						<ColumnSelector
+							columns={columns}
+							storageKey="alert-rules-columns"
+							testId="alert-columns-button"
+						/>
 						{addNewAlert && (
 							<Button
 								variant="solid"

@@ -12,8 +12,10 @@ import (
 // writes them:
 // https://github.com/pydantic/pydantic-ai/blob/9ac853bb84ffed7ba0edccb026c5b4f3228c1de7/pydantic_ai_slim/pydantic_ai/messages.py#L3130
 // https://github.com/pydantic/pydantic-ai/blob/9ac853bb84ffed7ba0edccb026c5b4f3228c1de7/pydantic_ai_slim/pydantic_ai/messages.py#L1724
-// The choice finish_reason as the provider spells it, as litellm copies it:
+// The choice finish_reason as the provider spells it, and the OpenAI tool_calls and tool_call_id beside parts,
+// as litellm copies them:
 // https://github.com/BerriAI/litellm/blob/9d72bae336ec0d14c41651adcb0d2e1149721f46/litellm/integrations/opentelemetry.py#L2822
+// https://github.com/BerriAI/litellm/blob/9d72bae336ec0d14c41651adcb0d2e1149721f46/litellm/integrations/opentelemetry.py#L2803
 // Not yet: "thinking" for "reasoning".
 
 // semconv decodes messages that already follow the schema through the genai types. A part of a
@@ -41,8 +43,29 @@ func (f *formatting) semconv(list []any) OutputMessages {
 				msgs[i].Parts[j] = contentPart(map[string]any(block))
 			}
 		}
+		if m, ok := list[i].(map[string]any); ok {
+			semconvToolFields(&msgs[i], m)
+		}
 	}
 	return msgs
+}
+
+// semconvToolFields turns the tool_call_id of a tool message into its response part, and tool_calls into
+// tool call parts when the message has none.
+func semconvToolFields(msg *OutputMessage, m map[string]any) {
+	if id := stringOf(m["tool_call_id"]); msg.Role == RoleTool && id != "" && onlyText(msg.Parts) {
+		msg.Parts = Parts{part(ToolCallResponsePart{Type: PartTypeToolCallResponse, ID: &id, Response: toolResponse(textOf(msg.Parts))})}
+		return
+	}
+	if hasToolCall(msg.Parts) {
+		return
+	}
+	calls, _ := m["tool_calls"].([]any)
+	for _, call := range calls {
+		if c, ok := call.(map[string]any); ok {
+			msg.Parts = append(msg.Parts, toolCallPart(c))
+		}
+	}
 }
 
 // semconvRepairs copies the parts whose keys SDKs misspell into the schema's spelling. The input

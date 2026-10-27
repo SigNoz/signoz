@@ -25,15 +25,20 @@ func (f *formatting) traceloop() bool {
 	return true
 }
 
-// completionToolCalls fills an output message left without parts from the gen_ai.completion.N keys
-// litellm writes beside its semconv value, whose parts never carry the tool call:
-// https://github.com/BerriAI/litellm/blob/9d72bae336ec0d14c41651adcb0d2e1149721f46/litellm/integrations/opentelemetry.py#L2365
+// completionToolCalls adds the gen_ai.completion.N.function_call keys litellm writes beside its semconv value,
+// whose parts never carry the tool calls, to the first output message without a tool call. N numbers the
+// tool calls, not the choices:
 // https://github.com/BerriAI/litellm/blob/9d72bae336ec0d14c41651adcb0d2e1149721f46/litellm/integrations/opentelemetry.py#L2770
+// https://github.com/BerriAI/litellm/blob/9d72bae336ec0d14c41651adcb0d2e1149721f46/litellm/integrations/opentelemetry.py#L2369
 func (f *formatting) completionToolCalls() {
 	for i := range f.out.Output {
-		if len(f.out.Output[i].Parts) == 0 {
-			f.out.Output[i].Parts = append(f.out.Output[i].Parts, traceloopToolCalls(indexedAt(f.attributes, traceloopCompletions, i))...)
+		if hasToolCall(f.out.Output[i].Parts) {
+			continue
 		}
+		for _, completion := range indexed(f.attributes, traceloopCompletions) {
+			f.out.Output[i].Parts = append(f.out.Output[i].Parts, traceloopToolCalls(completion)...)
+		}
+		return
 	}
 }
 

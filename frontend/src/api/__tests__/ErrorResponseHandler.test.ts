@@ -9,12 +9,14 @@ describe('ErrorResponseHandler', () => {
 			.spyOn(console, 'error')
 			.mockImplementation(() => undefined);
 
-		expect(ErrorResponseHandler(new CanceledError() as AxiosError)).toEqual({
-			statusCode: 500,
-			payload: null,
-			error: 'Something went wrong',
-			message: null,
-		});
+		expect(ErrorResponseHandler(new CanceledError() as AxiosError)).toStrictEqual(
+			{
+				statusCode: 500,
+				payload: null,
+				error: 'Something went wrong',
+				message: null,
+			},
+		);
 		expect(consoleError).not.toHaveBeenCalled();
 
 		consoleError.mockRestore();

@@ -2,10 +2,9 @@ import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus } from '@signozhq/icons';
 import { Select, Spin } from 'antd';
-import useComponentPermission from 'hooks/useComponentPermission';
+import { useNotificationChannelCollectionPermissions } from 'hooks/notificationChannels/useNotificationChannelCollectionPermissions';
 import { useNotifications } from 'hooks/useNotifications';
-import { useAppContext } from 'providers/App/App';
-import { Channels } from 'types/api/channels/getAll';
+import { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
 import APIError from 'types/api/error';
 
 import { StyledCreateChannelOption, StyledSelect } from './styles';
@@ -16,7 +15,7 @@ export interface ChannelSelectProps {
 	onSelectChannels: (s: string[]) => void;
 	onDropdownOpen: () => void;
 	isLoading: boolean;
-	channels: Channels[];
+	channels: ChannelOption[];
 	hasError: boolean;
 	error: APIError;
 	handleCreateNewChannels: () => void;
@@ -53,11 +52,8 @@ function ChannelSelect({
 		});
 	}
 
-	const { user } = useAppContext();
-	const [addNewChannelPermission] = useComponentPermission(
-		['add_new_channel'],
-		user.role,
-	);
+	const { canCreate: addNewChannelPermission } =
+		useNotificationChannelCollectionPermissions();
 
 	const renderOptions = (): ReactNode[] => {
 		const children: ReactNode[] = [];

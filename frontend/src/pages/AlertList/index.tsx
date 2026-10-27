@@ -4,7 +4,6 @@ import { Tabs, TabsProps } from 'antd';
 import ConfigureIcon from 'assets/AlertHistory/ConfigureIcon';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import ROUTES from 'constants/routes';
-import AllAlertChannels from 'container/AllAlertChannels';
 import AllAlertRules from 'container/ListAlertRules';
 import { PlannedDowntime } from 'container/PlannedDowntime/PlannedDowntime';
 import RoutingPolicies from 'container/RoutingPolicies';
@@ -15,6 +14,8 @@ import { Cable, GalleryVerticalEnd, Pyramid } from '@signozhq/icons';
 import AlertDetails from 'pages/AlertDetails';
 import ChannelsEdit from 'pages/ChannelsEdit';
 import ChannelsNew from 'pages/ChannelsNew';
+
+import NotificationChannels from './NotificationChannels/NotificationChannels';
 
 import { AlertListSubTabs, AlertListTabs } from './types';
 
@@ -104,7 +105,7 @@ function AllAlertList(): JSX.Element {
 				<div className="alert-rules-container">
 					{isChannelsNew && <ChannelsNew />}
 					{isChannelsEdit && <ChannelsEdit />}
-					{!isChannelDetails && <AllAlertChannels />}
+					{!isChannelDetails && <NotificationChannels />}
 				</div>
 			),
 		},

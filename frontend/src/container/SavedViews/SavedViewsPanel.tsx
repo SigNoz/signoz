@@ -4,6 +4,9 @@ import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 
+import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
+import { SavedViewListPermission } from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
+
 import SavedViewsIconButton from './SavedViewsIconButton';
 import SavedViewsList from './SavedViewsList';
 
@@ -39,16 +42,20 @@ function SavedViewsPanel({
 					/>
 				</div>
 			)}
-			<div className={styles.search}>
-				<Input
-					value={search}
-					onChange={(event): void => setSearch(event.target.value)}
-					placeholder="Search..."
-					aria-label="Search views"
-					testId="saved-views-search"
-				/>
-			</div>
-			<SavedViewsList source={source} search={search} />
+			<AuthZGuardContent checks={[SavedViewListPermission]}>
+				<>
+					<div className={styles.search}>
+						<Input
+							value={search}
+							onChange={(event): void => setSearch(event.target.value)}
+							placeholder="Search..."
+							aria-label="Search views"
+							testId="saved-views-search"
+						/>
+					</div>
+					<SavedViewsList source={source} search={search} />
+				</>
+			</AuthZGuardContent>
 		</div>
 	);
 }

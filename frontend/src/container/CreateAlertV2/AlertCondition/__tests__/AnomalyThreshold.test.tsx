@@ -1,6 +1,6 @@
 import { createMockAlertContextState } from 'container/CreateAlertV2/EvaluationSettings/__tests__/testUtils';
 import { render, screen, userEvent, within } from 'tests/test-utils';
-import { Channels } from 'types/api/channels/getAll';
+import { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
 
 import * as context from '../../context';
 import AnomalyThreshold from '../AnomalyThreshold';
@@ -48,7 +48,7 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	}),
 }));
 
-const channels = [{ id: '1', name: 'slack-alerts' }] as Channels[];
+const channels: ChannelOption[] = [{ id: '1', name: 'slack-alerts' }];
 
 const renderAnomalyThreshold = (): ReturnType<typeof render> =>
 	render(
