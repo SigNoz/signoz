@@ -14,10 +14,14 @@ import { boxOf, dragBy } from './dom';
 export interface PanelGrid {
 	/** The grid item's rendered size in px. */
 	size(): Promise<{ width: number; height: number }>;
+	/** The grid item's rendered top-left corner in px. */
+	position(): Promise<{ x: number; y: number }>;
 	/** Drags RGL's south-east grip by the given offset. */
 	resize(dx: number, dy: number): Promise<void>;
 	/** Drags the header handle across its own width. */
 	dragByHeader(): Promise<void>;
+	/** The same drag, started on the ⋮ actions button inside the handle. */
+	dragByActionsButton(): Promise<void>;
 }
 
 export function gridAt(page: Page, root: () => Locator): PanelGrid {
@@ -28,6 +32,10 @@ export function gridAt(page: Page, root: () => Locator): PanelGrid {
 		async size() {
 			const { width, height } = await boxOf(gridItem(), 'the grid item');
 			return { width, height };
+		},
+		async position() {
+			const { x, y } = await boxOf(gridItem(), 'the grid item');
+			return { x, y };
 		},
 		async resize(dx, dy) {
 			const grip = await boxOf(
@@ -53,6 +61,23 @@ export function gridAt(page: Page, root: () => Locator): PanelGrid {
 				{ x: bar.x + bar.width, y },
 				15,
 			);
+		},
+		async dragByActionsButton() {
+			const bar = await boxOf(
+				root().locator('.panel-drag-handle').first(),
+				'the drag handle',
+			);
+			// The trigger only appears on hover.
+			await root().hover();
+			const button = await boxOf(
+				root().locator('[data-testid^="panel-actions-"]'),
+				'the actions button',
+			);
+			const from = {
+				x: button.x + button.width / 2,
+				y: button.y + button.height / 2,
+			};
+			await dragBy(page, from, { x: from.x + bar.width, y: from.y }, 15);
 		},
 	};
 }

@@ -63,7 +63,7 @@ test.describe('Dashboards — grid layout', () => {
 			.toBeCloseTo(rendered.height, -1);
 	});
 
-	test('TC-03 opening the actions menu does not start a drag', async ({
+	test('TC-03 dragging from the actions button does not move the panel', async ({
 		dashboards,
 		panels,
 	}) => {
@@ -72,12 +72,14 @@ test.describe('Dashboards — grid layout', () => {
 		const target = panels.panel(COMPACT_PANELS.timeseries);
 		await expect(target.renderer(PanelKind.TimeSeries)).toBeVisible();
 		const before = await dashboards.gridItem(id, COMPACT_PANELS.timeseries);
+		const rendered = await target.grid.position();
 
-		// The ⋮ button sits inside the drag handle but is marked `panel-no-drag`
-		// and stops pointerdown, so opening the menu must leave the grid alone.
-		await target.actions.open();
+		// The ⋮ button sits inside the drag handle but is marked `panel-no-drag`,
+		// so the same drag that moves the panel from the header (TC-04) must not.
+		await target.grid.dragByActionsButton();
 		await target.actions.close();
 
+		expect(await target.grid.position()).toEqual(rendered);
 		expect(await dashboards.gridItem(id, COMPACT_PANELS.timeseries)).toEqual(
 			before,
 		);
