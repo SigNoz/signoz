@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { act, renderHook, waitFor } from '@testing-library/react';
 import { getTraceThread } from 'api/generated/services/tracedetail';
+import { act, renderHook, waitFor } from 'tests/test-utils';
 
 import { useTraceThread } from '../useTraceThread';
 
@@ -154,6 +154,7 @@ describe('useTraceThread', () => {
 
 		await waitFor(() => expect(result.current.isError).toBe(true));
 		expect(mockGetTraceThread).toHaveBeenCalledTimes(1);
+		expect(result.current.isNotFound).toBe(true);
 	});
 
 	it('retries other errors', async () => {
@@ -162,5 +163,6 @@ describe('useTraceThread', () => {
 
 		await waitFor(() => expect(result.current.isError).toBe(true));
 		expect(mockGetTraceThread).toHaveBeenCalledTimes(4);
+		expect(result.current.isNotFound).toBe(false);
 	});
 });

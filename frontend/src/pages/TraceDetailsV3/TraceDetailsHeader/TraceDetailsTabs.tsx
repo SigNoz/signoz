@@ -22,7 +22,8 @@ function TraceDetailsTabs(): JSX.Element {
 	const [tab, setTab] = useTraceDetailsTab();
 
 	const handleChange = (value: string): void => {
-		void setTab(value as TraceDetailsTab);
+		// Pushed so the thread's "Go back" returns to the previous tab, not the previous page.
+		void setTab(value as TraceDetailsTab, { history: 'push' });
 	};
 
 	return (
