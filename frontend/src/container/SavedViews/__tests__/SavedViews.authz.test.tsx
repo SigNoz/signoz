@@ -1,6 +1,10 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	AuthtypesTransactionDTO,
+	SavedviewtypesSourceDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import {
@@ -12,6 +16,7 @@ import {
 } from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
 import {
 	AUTHZ_CHECK_URL,
+	authzMockResponse,
 	setupAuthzDeny,
 } from 'lib/authz/utils/authz-test-utils';
 import { server } from 'mocks-server/server';
@@ -22,11 +27,13 @@ import SavedViewsHeader from '../SavedViewsHeader';
 import SavedViewsPanel from '../SavedViewsPanel';
 import { API, mockSavedViewsApi } from './savedViewsApiMock';
 import {
+	expectUsable,
 	explorerUrl,
 	makeView,
 	MENU_CHECK_TIMEOUT,
 	queryWith,
 	renderWithExplorerProviders,
+	urlParam,
 	viewUrl,
 } from './savedViewsTestUtils';
 
@@ -35,8 +42,10 @@ const PATH = ROUTES.TRACES_EXPLORER;
 const errors = makeView({ id: 'view-1', displayName: 'Errors' });
 const slow = makeView({ id: 'view-2', displayName: 'Slow spans' });
 
-function renderPanel(url = explorerUrl(PATH, {})): void {
-	renderWithExplorerProviders(
+function renderPanel(
+	url = explorerUrl(PATH, {}),
+): ReturnType<typeof renderWithExplorerProviders> {
+	return renderWithExplorerProviders(
 		<SavedViewsPanel
 			source={SavedviewtypesSourceDTO.traces}
 			onClose={jest.fn()}
@@ -98,21 +107,65 @@ describe('SavedViews - AuthZ', () => {
 		expect(screen.queryByTestId('saved-views-search')).toBeNull();
 	});
 
-	it('disables only the views it cannot read', async () => {
+	it('runs no read check per row', async () => {
+		const relations: string[] = [];
 		mockSavedViewsApi([errors, slow]);
-		server.use(setupAuthzDeny(buildSavedViewReadPermission(errors.id)));
+		server.use(
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				const payload = (await req.json()) as AuthtypesTransactionDTO[];
+				relations.push(...payload.map((transaction) => transaction.relation));
+				return res(
+					ctx.json(
+						authzMockResponse(
+							payload,
+							payload.map(() => true),
+						),
+					),
+				);
+			}),
+		);
 		renderPanel();
 
+		// The menu checks go out after any check the rows made on mount.
+		await openRowMenu('Errors');
+		await settledRow('saved-views-row-menu-item-delete');
+		expect(relations).toContain('delete');
+		expect(relations).not.toContain('read');
+	});
+
+	it('opens a view it cannot read, then the header says no access', async () => {
+		mockSavedViewsApi([errors]);
+		server.use(setupAuthzDeny(buildSavedViewReadPermission(errors.id)));
+		const { history } = renderWithExplorerProviders(
+			<>
+				<SavedViewsHeader
+					source={SavedviewtypesSourceDTO.traces}
+					onOpenViews={jest.fn()}
+					onToggleViews={jest.fn()}
+				/>
+				<SavedViewsPanel
+					source={SavedviewtypesSourceDTO.traces}
+					onClose={jest.fn()}
+				/>
+			</>,
+			explorerUrl(PATH, {}),
+		);
+
 		await screen.findAllByTestId('saved-views-row');
-		const nameOf = (view: string): HTMLElement =>
-			within(rowNamed(view)).getByTestId('saved-views-row-name');
+		const name = within(rowNamed('Errors')).getByTestId('saved-views-row-name');
+		expectUsable(name);
+		await userEvent.click(name);
+
 		await waitFor(() =>
-			expect(nameOf('Errors')).toHaveAttribute('aria-disabled', 'true'),
+			expect(urlParam(history, QueryParams.viewKey)).toBe(
+				JSON.stringify(errors.id),
+			),
 		);
 		await waitFor(() =>
-			expect(nameOf('Slow spans')).not.toHaveAttribute('aria-busy'),
+			expect(screen.getByTestId('saved-views-name')).toHaveTextContent(
+				'No view access',
+			),
 		);
-		expect(nameOf('Slow spans')).not.toHaveAttribute('aria-disabled', 'true');
 	});
 
 	it('keeps the row menu on a view it cannot read', async () => {
