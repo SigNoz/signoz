@@ -139,10 +139,9 @@ func (migration *migrateRulesV1ToV2Alpha1) convertOrg(ctx context.Context, orgID
 			migration.logger.WarnContext(ctx, "leaving rule at v1", slog.String("org_id", orgID), slog.String("rule_id", storedRule.ID), errors.Attr(err))
 			continue
 		}
-		if reason := convertedRule.validateThreshold(); reason != nil {
-			convertedRule.Disabled = json.RawMessage("true")
+		if cause := convertedRule.disableIfThresholdNeverFired(); cause != "" {
 			disabled++
-			migration.logger.WarnContext(ctx, "migrating rule as disabled, its threshold fails the write path", slog.String("org_id", orgID), slog.String("rule_id", storedRule.ID), errors.Attr(reason))
+			migration.logger.WarnContext(ctx, "migrating rule as disabled, its threshold never fired in v1", slog.String("org_id", orgID), slog.String("rule_id", storedRule.ID), slog.String("cause", cause))
 		}
 
 		data, err := marshalUnescaped(convertedRule)
@@ -324,21 +323,26 @@ func (rule *postableRule) clone() *postableRule {
 	return &cloned
 }
 
-// validateThreshold reports what the v1 write path once let through: a missing
-// target, or an op or matchType the v2 write path rejects. It reads the
-// relocated threshold, so it runs after convertRule.
-func (rule *postableRule) validateThreshold() error {
+// disableIfThresholdNeverFired disables a rule whose threshold v1 stored but
+// never fired on: a null target, or an op or matchType outside the supported
+// sets, all of which the v2 write path rejects. It reads the relocated
+// threshold, so it runs after convertRule, and returns the offending field,
+// or "" when the rule stays enabled.
+func (rule *postableRule) disableIfThresholdNeverFired() string {
 	threshold := rule.RuleCondition.Thresholds.Spec[0]
-	if threshold.TargetValue == nil {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.target is null")
+	var cause string
+	switch {
+	case threshold.TargetValue == nil:
+		cause = "condition.target is null"
+	case !slices.Contains(supportedCompareOperators, threshold.CompareOperator):
+		cause = fmt.Sprintf("condition.op: unsupported value %q", threshold.CompareOperator)
+	case !slices.Contains(supportedMatchTypes, threshold.MatchType):
+		cause = fmt.Sprintf("condition.matchType: unsupported value %q", threshold.MatchType)
+	default:
+		return ""
 	}
-	if !slices.Contains(supportedCompareOperators, threshold.CompareOperator) {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.op: unsupported value %q", threshold.CompareOperator)
-	}
-	if !slices.Contains(supportedMatchTypes, threshold.MatchType) {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.matchType: unsupported value %q", threshold.MatchType)
-	}
-	return nil
+	rule.Disabled = json.RawMessage("true")
+	return cause
 }
 
 func (rule *postableRule) fillDurationDefaults() {
