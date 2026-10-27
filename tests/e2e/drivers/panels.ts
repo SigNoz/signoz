@@ -5,6 +5,7 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
 import { PanelKind } from '../helpers/dashboard-spec';
+import { logDetailsDrawer } from '../helpers/logs-explorer';
 
 import { test as dashboardsTest } from './dashboards';
 import { driver } from './kit';
@@ -86,6 +87,8 @@ export interface Panels {
 		text(text: string): Locator;
 		heatmap: HeatmapTooltip;
 	};
+	/** The log detail drawer a List row of logs opens. */
+	logDetail(): Locator;
 	drilldown: {
 		menu(): Locator;
 		/** Testids sit on an inner span; this walks up so disabled states assert. */
@@ -172,6 +175,7 @@ function panelsDriver(page: Page): Panels {
 			text: (text) => page.getByText(text),
 			heatmap: heatmapTooltipAt(page),
 		},
+		logDetail: () => logDetailsDrawer(page),
 		drilldown: {
 			menu,
 			item: (testId) =>

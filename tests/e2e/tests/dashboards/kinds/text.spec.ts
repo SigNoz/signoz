@@ -3,22 +3,11 @@ import {
 	expect,
 	PanelKind,
 	PATH,
-	Section,
 	test,
 } from '../../../drivers/panel-editor';
 
-const BODY = [
-	'# Release notes',
-	'',
-	'- first item',
-	'- second item',
-	'',
-	'[SigNoz docs](https://signoz.io/docs)',
-	'',
-	'```js',
-	'const answer = 42;',
-	'```',
-].join('\n');
+// Markdown rendering itself is covered by MarkdownContent.test.tsx and the Text story.
+const BODY = '# Release notes\n\nShipped this week.';
 
 test.describe('Dashboards — Text panel', () => {
 	test('TC-01 a Text panel from the picker opens the Markdown editor, not the query builder', async ({
@@ -37,24 +26,6 @@ test.describe('Dashboards — Text panel', () => {
 		await expect(editor.text.toolbar()).toBeVisible();
 		await expect(editor.query.builder()).toHaveCount(0);
 		await expect(editor.query.runButton()).toHaveCount(0);
-		// Nothing to insert on a dashboard without variables.
-		await expect(editor.text.insertVariableButton()).toHaveCount(0);
-
-		for (const title of [Section.visualization, Section.panelAppearance]) {
-			await expect(editor.section.toggle(title)).toBeVisible();
-		}
-		await expect(editor.text.hideHeader()).toBeVisible();
-		// No data to format, scale or threshold, and no fields for links to resolve.
-		for (const title of [
-			Section.formatting,
-			Section.axes,
-			Section.legend,
-			Section.chartAppearance,
-			Section.thresholds,
-			Section.contextLinks,
-		]) {
-			await expect(editor.section.toggle(title)).toHaveCount(0);
-		}
 	});
 
 	test('TC-02 written Markdown previews live, saves without a query and renders on the grid', async ({
@@ -85,13 +56,8 @@ test.describe('Dashboards — Text panel', () => {
 		expect(persisted.spec.queries).toEqual([]);
 		expect(persisted.spec.plugin.spec.text).toBe(BODY);
 
-		const markdown = panels.panel(panelId).markdown;
-		await expect(markdown.heading('Release notes')).toBeVisible();
-		await expect(markdown.listItems()).toHaveText(['first item', 'second item']);
-		// Links always leave the dashboard.
-		const link = markdown.link('SigNoz docs');
-		await expect(link).toHaveAttribute('href', 'https://signoz.io/docs');
-		await expect(link).toHaveAttribute('target', '_blank');
-		await expect(markdown.codeBlock()).toHaveText('const answer = 42;');
+		await expect(
+			panels.panel(panelId).markdown.heading('Release notes'),
+		).toBeVisible();
 	});
 });

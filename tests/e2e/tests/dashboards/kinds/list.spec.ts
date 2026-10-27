@@ -32,9 +32,14 @@ test.describe('Dashboards — List panel', () => {
 		await expect(actions.item(PanelAction.createAlert)).toHaveCount(0);
 	});
 
-	test('TC-02 clicking a row opens no drilldown menu', async ({ panels }) => {
+	test('TC-02 clicking a row opens the log detail drawer, not a drilldown menu', async ({
+		panels,
+	}) => {
 		const target = panels.panel(SINGLE_PANEL_ID);
 		await target.text('log line 0').click();
+
+		await expect(panels.logDetail()).toBeVisible();
+		await expect(panels.logDetail()).toContainText('log line 0');
 		await expect(panels.drilldown.menu()).toHaveCount(0);
 	});
 });
