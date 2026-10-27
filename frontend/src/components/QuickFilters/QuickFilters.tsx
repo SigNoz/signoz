@@ -34,7 +34,6 @@ import {
 import { isFunction } from 'lodash-es';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import Checkbox from './FilterRenderers/Checkbox/Checkbox';
 import useActiveQueryIndex from './hooks/useActiveQueryIndex';
 import CheckboxV2 from './FilterRenderers/Checkbox/v2/CheckboxFilterV2';
 import Duration from './FilterRenderers/Duration/Duration';
@@ -310,25 +309,6 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 			<section className="filters">
 				{filterConfig.map((filter) => {
 					switch (filter.type) {
-						case FiltersType.CHECKBOX:
-							return useFieldApis ? (
-								<CheckboxV2
-									key={filter.attributeKey.key}
-									source={source}
-									filter={filter}
-									onFilterChange={onFilterChange}
-									onQuickFilterChange={onQuickFilterChange}
-									useFieldApis={useFieldApis}
-								/>
-							) : (
-								<Checkbox
-									key={filter.attributeKey.key}
-									source={source}
-									filter={filter}
-									onFilterChange={onFilterChange}
-									onQuickFilterChange={onQuickFilterChange}
-								/>
-							);
 						case FiltersType.DURATION:
 							return (
 								<Duration
@@ -340,9 +320,8 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 							);
 						case FiltersType.SLIDER:
 							return <Slider key={filter.attributeKey.key} />;
-						// eslint-disable-next-line sonarjs/no-duplicated-branches
 						default:
-							return useFieldApis ? (
+							return (
 								<CheckboxV2
 									key={filter.attributeKey.key}
 									source={source}
@@ -350,14 +329,6 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 									onFilterChange={onFilterChange}
 									onQuickFilterChange={onQuickFilterChange}
 									useFieldApis={useFieldApis}
-								/>
-							) : (
-								<Checkbox
-									key={filter.attributeKey.key}
-									source={source}
-									filter={filter}
-									onFilterChange={onFilterChange}
-									onQuickFilterChange={onQuickFilterChange}
 								/>
 							);
 					}
@@ -440,5 +411,4 @@ QuickFilters.defaultProps = {
 	config: [],
 	showFilterCollapse: true,
 	showQueryName: true,
-	useFieldApis: undefined,
 };
