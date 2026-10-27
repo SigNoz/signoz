@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 	"unicode/utf8"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/swaggest/jsonschema-go"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -236,6 +238,20 @@ func (r *PostableRule) UnmarshalJSON(bytes []byte) error {
 	}
 	r.processRuleDefaults()
 	return r.validate()
+}
+
+func (r *PostableRule) DecodeStrict(ruleStr string) error {
+	err := json.Unmarshal([]byte(ruleStr), r)
+	if err == nil {
+		// the alias has no UnmarshalJSON, so a strict pass sees every key the rule has no field for
+		type plainRule PostableRule
+		return binding.JSON.BindBody(strings.NewReader(ruleStr), new(plainRule), binding.WithDisallowUnknownFields(true), binding.WithUnknownFieldContext("alert rule"))
+	}
+	if errors.Ast(err, errors.TypeInvalidInput) {
+		return err
+	}
+	// a syntax error is raised before any UnmarshalJSON runs, so it is the one untyped error
+	return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to parse json: %v", err)
 }
 
 var _ jsonschema.Preparer = PostableRule{}
