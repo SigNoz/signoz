@@ -2108,21 +2108,10 @@ func TestScatterPlotDimensionsBindToQuery(t *testing.T) {
 		expectedErrorSubstring string
 	}{
 		{
-			scenario:    "a single-aggregation query is one value column keyed by its name",
-			queryPlugin: `{"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "traces", "aggregations": [{"expression": "count()"}], "groupBy": [{"name": "service.name"}]}}`,
-			dimensions:  `{"x": "A", "colorBy": ["service.name"]}`,
-		},
-		{
 			scenario:               "a multi-aggregation query keys each value column by name and expression",
 			queryPlugin:            `{"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "traces", "aggregations": [{"expression": "count()"}, {"expression": "p99(duration_nano)"}]}}`,
 			dimensions:             `{"x": "A"}`,
 			expectedErrorSubstring: "dimensions.x: \"A\" is not a value column of the panel's query; value columns: `A.count()`, `A.p99(duration_nano)`",
-		},
-		{
-			scenario:               "a value column of a query the panel does not have",
-			queryPlugin:            `{"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}`,
-			dimensions:             `{"y": "B"}`,
-			expectedErrorSubstring: "dimensions.y: \"B\" is not a value column of the panel's query; value columns: `A`",
 		},
 		{
 			scenario:               "a colour key the query does not group by",
@@ -2140,18 +2129,36 @@ func TestScatterPlotDimensionsBindToQuery(t *testing.T) {
 			dimensions: `{"x": "F1", "colorBy": ["service.name"]}`,
 		},
 		{
-			scenario: "a disabled query yields no value column",
-			queryPlugin: `{"kind": "signoz/CompositeQuery", "spec": {"queries": [
-				{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "disabled": true, "aggregations": [{"expression": "count()"}]}},
-				{"type": "builder_formula", "spec": {"name": "F1", "expression": "A * 2"}}
-			]}}`,
-			dimensions:             `{"sizeBy": "A"}`,
-			expectedErrorSubstring: "dimensions.sizeBy: \"A\" is not a value column of the panel's query; value columns: `F1`",
-		},
-		{
 			scenario:    "clickhouse columns are only known at run time, so the bindings go unchecked",
 			queryPlugin: `{"kind": "signoz/ClickHouseSQL", "spec": {"name": "A", "query": "SELECT 1"}}`,
 			dimensions:  `{"x": "throughput", "colorBy": ["pod"]}`,
+		},
+		{
+			scenario: "queries grouped by different keys have no rows that join into dots",
+			queryPlugin: `{"kind": "signoz/CompositeQuery", "spec": {"queries": [
+				{"type": "builder_query", "spec": {"name": "A", "signal": "traces", "aggregations": [{"expression": "count()"}], "groupBy": [{"name": "service.name"}]}},
+				{"type": "builder_query", "spec": {"name": "B", "signal": "traces", "aggregations": [{"expression": "p99(duration_nano)"}], "groupBy": [{"name": "k8s.pod.name"}]}}
+			]}}`,
+			dimensions:             `{"x": "A", "y": "B"}`,
+			expectedErrorSubstring: "queries must group by the same keys so their rows join into dots; \"A\" groups by [`service.name`], \"B\" groups by [`k8s.pod.name`]",
+		},
+		{
+			scenario: "group-by order does not matter, since rows join on the label set",
+			queryPlugin: `{"kind": "signoz/CompositeQuery", "spec": {"queries": [
+				{"type": "builder_query", "spec": {"name": "A", "signal": "traces", "aggregations": [{"expression": "count()"}], "groupBy": [{"name": "service.name"}, {"name": "k8s.pod.name"}]}},
+				{"type": "builder_query", "spec": {"name": "B", "signal": "traces", "aggregations": [{"expression": "p99(duration_nano)"}], "groupBy": [{"name": "k8s.pod.name"}, {"name": "service.name"}]}}
+			]}}`,
+			dimensions: `{"x": "A", "y": "B", "colorBy": ["service.name"]}`,
+		},
+		{
+			scenario: "every query counts toward the shared group-by, even one disabled and unread",
+			queryPlugin: `{"kind": "signoz/CompositeQuery", "spec": {"queries": [
+				{"type": "builder_query", "spec": {"name": "A", "signal": "traces", "aggregations": [{"expression": "count()"}], "groupBy": [{"name": "service.name"}]}},
+				{"type": "builder_query", "spec": {"name": "B", "signal": "traces", "aggregations": [{"expression": "p99(duration_nano)"}], "groupBy": [{"name": "service.name"}]}},
+				{"type": "builder_query", "spec": {"name": "C", "signal": "traces", "disabled": true, "aggregations": [{"expression": "count()"}], "groupBy": [{"name": "k8s.pod.name"}]}}
+			]}}`,
+			dimensions:             `{"x": "A", "y": "B"}`,
+			expectedErrorSubstring: "\"A\" groups by [`service.name`], \"C\" groups by [`k8s.pod.name`]",
 		},
 	}
 

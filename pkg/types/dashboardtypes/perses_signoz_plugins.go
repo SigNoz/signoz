@@ -371,6 +371,36 @@ func (s *ScatterPlotPanelSpec) validateAgainstQuery(query Query, path string) er
 	if !known {
 		return nil
 	}
+	if err := s.validateQueriesShareGroupBy(composite, path); err != nil {
+		return err
+	}
+	if err := s.validateValueDimensions(keys, path); err != nil {
+		return err
+	}
+	if err := s.validateColorDimensions(keys, path); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Order is ignored since rows join on sorted labels; disabled queries count, as formulas carry their keys.
+func (*ScatterPlotPanelSpec) validateQueriesShareGroupBy(composite qb.CompositeQuery, path string) error {
+	var queries []qb.QueryEnvelope
+	for _, envelope := range composite.Queries {
+		if envelope.GetType() != qb.QueryTypeFormula {
+			queries = append(queries, envelope)
+		}
+	}
+	for i := 1; i < len(queries); i++ {
+		first, other := groupByKeyNames(queries[0]), groupByKeyNames(queries[i])
+		if !slices.Equal(first, other) {
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: queries must group by the same keys so their rows join into dots; %q groups by [%s], %q groups by [%s]", path, queries[0].GetQueryName(), allowedValuesForKind(first), queries[i].GetQueryName(), allowedValuesForKind(other))
+		}
+	}
+	return nil
+}
+
+func (s *ScatterPlotPanelSpec) validateValueDimensions(keys qb.ResultColumnKeys, path string) error {
 	for _, binding := range []struct{ field, key string }{{"x", s.Dimensions.X}, {"y", s.Dimensions.Y}, {"sizeBy", s.Dimensions.SizeBy}} {
 		// Empty is unset: the renderer picks a column or a fixed size.
 		if binding.key == "" {
@@ -380,12 +410,25 @@ func (s *ScatterPlotPanelSpec) validateAgainstQuery(query Query, path string) er
 			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.dimensions.%s: %q is not a value column of the panel's query; value columns: %s", path, binding.field, binding.key, allowedValuesForKind(slices.Sorted(maps.Keys(keys.Aggregations))))
 		}
 	}
+	return nil
+}
+
+func (s *ScatterPlotPanelSpec) validateColorDimensions(keys qb.ResultColumnKeys, path string) error {
 	for _, label := range s.Dimensions.ColorBy {
 		if _, ok := keys.Groups[label]; !ok {
 			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.dimensions.colorBy: %q is not a group-by key of the panel's query; group-by keys: %s", path, label, allowedValuesForKind(slices.Sorted(maps.Keys(keys.Groups))))
 		}
 	}
 	return nil
+}
+
+func groupByKeyNames(envelope qb.QueryEnvelope) []string {
+	names := make([]string, 0, len(envelope.GetGroupBy()))
+	for _, key := range envelope.GetGroupBy() {
+		names = append(names, key.Name)
+	}
+	slices.Sort(names)
+	return names
 }
 
 // ScatterPlotDimensions binds result columns to what a dot encodes. Value columns
