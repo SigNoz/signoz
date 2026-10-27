@@ -8,7 +8,7 @@ import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
-import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
+import { QuickFiltersSource } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -231,8 +231,7 @@ function LogsExplorer(): JSX.Element {
 					savedViewProps={{ source: SavedviewtypesSourceDTO.logs }}
 					quickFilterProps={{
 						className: 'qf-logs-explorer',
-						signal: SignalType.LOGS,
-						source: QuickFiltersSource.LOGS_EXPLORER,
+						quickFilterSource: QuickFiltersSource.LOGS_EXPLORER,
 						useFieldApis: quickFilterFieldApis,
 					}}
 				>

@@ -97,7 +97,7 @@ interface ToggleAction {
 	isOnlyOrAllClicked?: boolean;
 	previousState?: CheckedState;
 	sectionType?: SectionType;
-	source?: QuickFiltersSource;
+	quickFilterSource?: QuickFiltersSource;
 	attributeValues?: string[];
 }
 
@@ -117,7 +117,8 @@ function runToggle(c: ToggleCase): { items: SimpleItem[]; expression: string } {
 		currentQuery: buildQuery(initialItems, initialExpression),
 		activeQueryIndex: 0,
 		filter: { attributeKey: { key: KEY, type: 'tag' } } as never,
-		source: c.action.source ?? QuickFiltersSource.LOGS_EXPLORER,
+		quickFilterSource:
+			c.action.quickFilterSource ?? QuickFiltersSource.LOGS_EXPLORER,
 		attributeValues: c.action.attributeValues ?? ['a', 'b', 'c'],
 		value: c.action.value,
 		checked: c.action.checked,
@@ -162,7 +163,7 @@ const TOGGLE_CASES: ToggleCase[] = [
 		action: {
 			value: 'a',
 			checked: false,
-			source: QuickFiltersSource.INFRA_MONITORING,
+			quickFilterSource: QuickFiltersSource.INFRA_MONITORING,
 		},
 		// `nin` is what the source asks for, but re-deriving the expression
 		// normalises it. Nothing observes the difference: both infra pages send
@@ -313,7 +314,7 @@ const TOGGLE_CASES: ToggleCase[] = [
 		action: {
 			value: 'b',
 			checked: false,
-			source: QuickFiltersSource.INFRA_MONITORING,
+			quickFilterSource: QuickFiltersSource.INFRA_MONITORING,
 		},
 		expected: {
 			items: [{ key: KEY, op: 'not in', value: ['a', 'b'] }],

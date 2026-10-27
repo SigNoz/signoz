@@ -7,7 +7,7 @@ import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
-import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
+import { QuickFiltersSource } from 'components/QuickFilters/types';
 import { initialQueryMeterWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
@@ -130,8 +130,7 @@ function Explorer(): JSX.Element {
 				savedViewProps={{ source: SavedviewtypesSourceDTO.meter }}
 				quickFilterProps={{
 					className: 'qf-meter-explorer',
-					source: QuickFiltersSource.METER_EXPLORER,
-					signal: SignalType.METER_EXPLORER,
+					quickFilterSource: QuickFiltersSource.METER_EXPLORER,
 					showFilterCollapse: true,
 					showQueryName: false,
 					useFieldApis: quickFilterFieldApis,

@@ -34,17 +34,17 @@ jest.mock('container/SavedViews/SavedViewsRestore', () => ({
 jest.mock('../../QuickFilters', () => ({
 	__esModule: true,
 	default: ({
-		source,
+		quickFilterSource,
 		savedViewsHeader,
 		handleFilterVisibilityChange,
 	}: {
-		source: string;
+		quickFilterSource: string;
 		savedViewsHeader?: React.ReactNode;
 		handleFilterVisibilityChange?: () => void;
 	}): JSX.Element => (
 		<div data-testid="quick-filters">
 			{savedViewsHeader}
-			{source}
+			{quickFilterSource}
 			{handleFilterVisibilityChange && (
 				<Button
 					size="md"
@@ -62,7 +62,7 @@ jest.mock('../../QuickFilters', () => ({
 }));
 
 const quickFilterProps = {
-	source: QuickFiltersSource.TRACES_EXPLORER,
+	quickFilterSource: QuickFiltersSource.TRACES_EXPLORER,
 	useFieldApis: { startUnixMilli: 0, endUnixMilli: 0 },
 };
 const savedViewProps = { source: SavedviewtypesSourceDTO.traces };

@@ -25,7 +25,7 @@ describe('CheckboxFilterV2 - states', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);
@@ -47,7 +47,7 @@ describe('CheckboxFilterV2 - states', () => {
 			render(
 				<CheckboxFilterV2
 					filter={closedFilter}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);
@@ -104,7 +104,7 @@ describe('CheckboxFilterV2 - states', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);
@@ -133,7 +133,7 @@ describe('CheckboxFilterV2 - states', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);
@@ -152,7 +152,7 @@ describe('CheckboxFilterV2 - states', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);
@@ -172,7 +172,7 @@ describe('CheckboxFilterV2 - states', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);
@@ -195,7 +195,7 @@ describe('CheckboxFilterV2 - states', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);

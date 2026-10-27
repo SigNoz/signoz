@@ -46,14 +46,18 @@ export function removeManagedClauses(expression: string, key: string): string {
 }
 
 // Sources that use backend APIs expecting short operator format (e.g., 'nin' instead of 'not in')
-const SOURCES_WITH_SHORT_OPERATORS = [QuickFiltersSource.INFRA_MONITORING];
+const SOURCES_WITH_SHORT_OPERATORS: QuickFiltersSource[] = [
+	QuickFiltersSource.INFRA_MONITORING,
+];
 
 /**
  * Returns the correct NOT_IN operator value based on source.
  * InfraMonitoring backend expects 'nin', others expect 'not in'.
  */
-export function getNotInOperator(source: QuickFiltersSource): string {
-	if (SOURCES_WITH_SHORT_OPERATORS.includes(source)) {
+export function getNotInOperator(
+	quickFilterSource: QuickFiltersSource,
+): string {
+	if (SOURCES_WITH_SHORT_OPERATORS.includes(quickFilterSource)) {
 		return 'nin';
 	}
 	return getOperatorValue('NOT_IN');
@@ -134,7 +138,7 @@ export function applyCheckboxToggle({
 	currentQuery,
 	activeQueryIndex,
 	filter,
-	source,
+	quickFilterSource,
 	attributeValues,
 	value,
 	checked,
@@ -145,7 +149,7 @@ export function applyCheckboxToggle({
 	currentQuery: Query;
 	activeQueryIndex: number;
 	filter: IQuickFiltersConfig;
-	source: QuickFiltersSource;
+	quickFilterSource: QuickFiltersSource;
 	attributeValues: string[];
 	value: string;
 	checked: boolean;
@@ -240,7 +244,7 @@ export function applyCheckboxToggle({
 							if (sectionType === SectionType.RELATED) {
 								const newFilter: TagFilterItem = {
 									id: uuid(),
-									op: getNotInOperator(source),
+									op: getNotInOperator(quickFilterSource),
 									key: filter.attributeKey,
 									value,
 								};
@@ -380,7 +384,7 @@ export function applyCheckboxToggle({
 						if (!checked) {
 							const newFilter = {
 								...currentFilter,
-								op: getNotInOperator(source),
+								op: getNotInOperator(quickFilterSource),
 								value: [currentFilter.value as string, value],
 							};
 							query.filters.items = query.filters.items.map((item) => {
@@ -404,7 +408,9 @@ export function applyCheckboxToggle({
 			// checked=true → user wants to select (IN), checked=false → exclude (NOT IN)
 			const newFilterItem: TagFilterItem = {
 				id: uuid(),
-				op: checked ? getOperatorValue(OPERATORS.IN) : getNotInOperator(source),
+				op: checked
+					? getOperatorValue(OPERATORS.IN)
+					: getNotInOperator(quickFilterSource),
 				key: filter.attributeKey,
 				value,
 			};
