@@ -20,7 +20,12 @@ import { useKeyboardNavigationForEvaluationWindowPopover } from './useKeyboardNa
 function EvaluationWindowPopover({
 	evaluationWindow,
 	setEvaluationWindow,
+	rollingOnly = false,
 }: IEvaluationWindowPopoverProps): JSX.Element {
+	const windowTypeOptions = rollingOnly
+		? EVALUATION_WINDOW_TYPE.filter((option) => option.value === 'rolling')
+		: EVALUATION_WINDOW_TYPE;
+
 	const { containerRef, firstItemRef } =
 		useKeyboardNavigationForEvaluationWindowPopover({
 			onSelect: (value: string, sectionId: string): void => {
@@ -136,7 +141,7 @@ function EvaluationWindowPopover({
 			<div className="evaluation-window-content">
 				{renderEvaluationWindowContent(
 					'EVALUATION WINDOW',
-					EVALUATION_WINDOW_TYPE,
+					windowTypeOptions,
 					evaluationWindow.windowType,
 					(value: string): void =>
 						setEvaluationWindow({

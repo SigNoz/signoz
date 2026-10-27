@@ -334,6 +334,7 @@ function AnomalyAlertEvaluationView({
 										<Checkbox
 											color="primary"
 											key={seriesKey}
+											testId="anomaly-series-option"
 											name="series"
 											value={selectedSeries === seriesKey}
 											onChange={(): void => handleSeriesChange(seriesKey)}

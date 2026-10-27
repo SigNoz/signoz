@@ -28,7 +28,7 @@ import {
 /**
  * Which alert the page is building. The page reads this off the URL, so the
  * control is a route rather than a response: with no type at all it stays on
- * the picker, anomaly detection routes to the classic form, and everything else
+ * the picker, `classic-form` opts back into the classic form, and everything else
  * opens the current one.
  */
 const ALERT_MODES = [
