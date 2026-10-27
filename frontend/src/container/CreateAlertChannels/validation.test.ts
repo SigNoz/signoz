@@ -32,6 +32,18 @@ describe('validateChannel', () => {
 			null,
 		],
 		[
+			'an incident.io token pasted with its Bearer prefix',
+			ChannelKind.incidentio,
+			{ url: 'https://relay.internal/incidentio', token: 'Bearer tok' },
+			'incidentio_token_bearer_prefix',
+		],
+		[
+			'an incident.io token with a trailing space',
+			ChannelKind.incidentio,
+			{ url: 'https://relay.internal/incidentio', token: 'tok ' },
+			'incidentio_token_whitespace',
+		],
+		[
 			'a webhook username without a password',
 			ChannelKind.webhook,
 			{ url: 'https://hook', webhookAuth: WebhookAuth.basic, username: 'u' },
@@ -48,6 +60,30 @@ describe('validateChannel', () => {
 			ChannelKind.webhook,
 			{ url: 'https://hook', webhookAuth: WebhookAuth.bearer, username: 'u' },
 			'webhook_bearer_token_required',
+		],
+		[
+			'a slack field without a value',
+			ChannelKind.slack,
+			{ apiUrl: 'https://hooks', fields: [{ title: 'env', value: '' }] },
+			'slack_field_value_required',
+		],
+		[
+			'a slack button with neither url nor name',
+			ChannelKind.slack,
+			{
+				apiUrl: 'https://hooks',
+				actions: [{ type: 'button', text: 'Runbook', url: '' }],
+			},
+			'slack_action_url_or_name_required',
+		],
+		[
+			'a slack button with a name only',
+			ChannelKind.slack,
+			{
+				apiUrl: 'https://hooks',
+				actions: [{ type: 'button', text: 'Ack', name: 'ack' }],
+			},
+			null,
 		],
 	])('%s', (_, kind, values, expected) => {
 		expect(validateChannel(kind, { name: 'channel', ...values }, t)).toBe(

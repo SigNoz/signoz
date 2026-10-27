@@ -176,6 +176,47 @@ describe('ChannelForm save', () => {
 	);
 
 	it(
+		'flags a slack field without a value instead of sending it',
+		async () => {
+			const onCreate = jest.fn();
+			server.use(
+				rest.post(
+					'http://localhost/api/v2/notification_channels',
+					(_, res, ctx) => {
+						onCreate();
+						return res(ctx.status(201), ctx.json({ status: 'success', data: {} }));
+					},
+				),
+			);
+
+			render(<ChannelForm onDone={jest.fn()} />);
+
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			await user.type(
+				await screen.findByTestId('channel-name-textbox', {}, FIND),
+				'slack alerts',
+			);
+			await user.type(
+				screen.getByTestId('webhook-url-textbox'),
+				'https://hooks.slack.com/services/T/B/X',
+			);
+			await user.click(screen.getByTestId('slack-field-add'));
+			await user.type(screen.getByTestId('slack-field-title-0'), 'env');
+
+			const save = screen.getByTestId('save-channel-button');
+			await waitFor(
+				() => expect(save).toHaveAttribute('aria-disabled', 'false'),
+				FIND,
+			);
+			await user.click(save);
+
+			await screen.findByText('slack_field_value_required', {}, FIND);
+			expect(onCreate).not.toHaveBeenCalled();
+		},
+		TEST_TIMEOUT,
+	);
+
+	it(
 		'updates with the config only, since both names are immutable',
 		async () => {
 			let body: Record<string, unknown> | undefined;
