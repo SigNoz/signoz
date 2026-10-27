@@ -44,5 +44,12 @@ module.exports = {
 				'local/class-name-pattern': [true, { severity: 'warning' }],
 			},
 		},
+		{
+			// @font-face descriptors name a font file, they do not style text
+			files: ['src/assets/fonts/**/*.scss'],
+			rules: {
+				'property-disallowed-list': null,
+			},
+		},
 	],
 };
