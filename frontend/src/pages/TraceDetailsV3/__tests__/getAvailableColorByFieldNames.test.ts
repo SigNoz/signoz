@@ -27,6 +27,14 @@ describe('getAvailableColorByFieldNames', () => {
 		expect(getAvailableColorByFieldNames(spans)).toStrictEqual(['host.name']);
 	});
 
+	it('offers a field whose only values are 0 or false', () => {
+		const spans = [
+			span({ attributes: { 'host.name': 0 } }),
+			span({ attributes: { 'host.name': false } }),
+		];
+		expect(getAvailableColorByFieldNames(spans)).toStrictEqual(['host.name']);
+	});
+
 	it('does not offer fields no span carries', () => {
 		const spans = [span({ resource: { 'service.name': 'api' } })];
 		expect(getAvailableColorByFieldNames(spans)).toStrictEqual(['service.name']);

@@ -143,6 +143,6 @@ export function resolveSpanColor(
  */
 export function getAvailableColorByFieldNames(spans: SpanV3[]): string[] {
 	return COLOR_BY_OPTIONS.filter((opt) =>
-		spans.some((s) => getSpanAttribute(s, opt.field.name)),
+		spans.some((s) => getSpanAttribute(s, opt.field.name) !== undefined),
 	).map((opt) => opt.field.name);
 }
