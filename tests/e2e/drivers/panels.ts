@@ -22,7 +22,6 @@ import { type TableRows, tableAt } from './panels/table';
 // lives in its own part under ./panels, and so does a kind with UI of its own.
 
 export const PanelMessageText = {
-	noQueryTitle: 'Nothing to visualize yet',
 	// Curly apostrophe (U+2019): a straight quote will not match.
 	errorTitle: 'Couldn’t load panel data',
 	noDataTitle: 'No data in this time range',

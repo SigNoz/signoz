@@ -7,17 +7,22 @@ import {
 	type Locator,
 	type Page,
 	type Request,
-	type Route,
 } from '@playwright/test';
 
 import { BASE_PATH } from '../helpers/base-path';
 import { authToken } from '../helpers/common';
-import type { PostableDashboard } from '../helpers/dashboard-spec';
+import type {
+	GettableDashboard,
+	PostableDashboard,
+} from '../helpers/dashboard-spec.types';
 import {
+	holdQueryRange,
+	isQueryRange,
 	mockQueryRange,
 	mockQueryRangeError,
-	type MockOptions,
 	type QueryRangeBody,
+	type QueryWindow,
+	recordQueryWindows,
 	unmockQueryRange,
 } from '../helpers/query-range-mock';
 
@@ -26,8 +31,6 @@ import { driver, kit } from './kit';
 // `POST /api/v2/dashboards` takes the full perses spec in one call.
 
 export const DASHBOARDS_API = '/api/v2/dashboards';
-
-const QUERY_RANGE_GLOB = '**/api/v5/query_range';
 
 export const PATH = {
 	dashboard: (id: string): string => `/dashboard/${id}`,
@@ -47,14 +50,6 @@ export const PATH = {
  * testid from its `id`, which is also its localStorage layout key.
  */
 export const EDITOR_ROOT = '[data-testid="panel-editor-v2"]:not([data-group])';
-
-export interface GettableDashboard {
-	id: string;
-	name: string;
-	locked: boolean;
-	tags: { key: string; value: string }[];
-	spec: PostableDashboard['spec'];
-}
 
 export interface Dashboards {
 	/** Created for this test and deleted when it ends. */
@@ -100,11 +95,8 @@ export interface GridGeometry {
 
 export interface QueryRangeMock {
 	/** Fulfils every call with one body. Install before navigating. */
-	respond(body: QueryRangeBody, options?: MockOptions): Promise<void>;
-	fail(
-		message?: string,
-		options?: MockOptions & { status?: number },
-	): Promise<void>;
+	respond(body: QueryRangeBody): Promise<void>;
+	fail(message?: string): Promise<void>;
 	/** Holds every call until `release` is called, then serves `body`. */
 	hold(body: QueryRangeBody): Promise<{ release: () => void }>;
 	/** Drops interception so later calls reach the backend. */
@@ -115,14 +107,6 @@ export interface QueryRangeMock {
 	recordWindows(): QueryWindow[];
 }
 
-/** A query_range request's `start` / `end`, in epoch ms, and which query it ran. */
-export interface QueryWindow {
-	start: number;
-	end: number;
-	/** The request type and composite query, serialized: equal for the same panel. */
-	query: string;
-}
-
 async function bearer(page: Page): Promise<{ Authorization: string }> {
 	return { Authorization: `Bearer ${await authToken(page)}` };
 }
@@ -131,7 +115,7 @@ async function bearer(page: Page): Promise<{ Authorization: string }> {
  * A 400 is almost always the strict decoder rejecting a stray key; the body
  * names the field, so it is surfaced verbatim.
  */
-async function createViaApi(
+export async function createViaApi(
 	page: Page,
 	dashboard: PostableDashboard,
 ): Promise<string> {
@@ -188,21 +172,29 @@ export function trackDashboard(page: Page, id: string): void {
 }
 
 /**
+ * Best effort: a dashboard the test already deleted 404s, and an unlocked one
+ * rejects the unlock. A locked dashboard rejects the DELETE, so unlock first.
+ */
+export async function deleteViaApi(page: Page, id: string): Promise<void> {
+	const headers = await bearer(page);
+	await page.request
+		.delete(`${DASHBOARDS_API}/${id}/lock`, { headers })
+		.catch(() => undefined);
+	await page.request
+		.delete(`${DASHBOARDS_API}/${id}`, { headers })
+		.catch(() => undefined);
+}
+
+/**
  * Not asserted: a test that deleted its own dashboard, or left a closed page
  * behind, must not fail on cleanup.
  */
 export async function removeTrackedDashboards(page: Page): Promise<void> {
 	const ids = trackedByPage.get(page) ?? [];
 	trackedByPage.delete(page);
-	if (ids.length === 0) {
-		return;
-	}
 	try {
-		const headers = await bearer(page);
 		for (const id of ids) {
-			await page.request
-				.delete(`${DASHBOARDS_API}/${id}`, { headers })
-				.catch(() => undefined);
+			await deleteViaApi(page, id);
 		}
 	} catch {
 		/* the dashboards outlive the run rather than hiding why it failed */
@@ -283,50 +275,13 @@ function dashboardsDriver(page: Page): Dashboards {
 }
 
 function queryRangeDriver(page: Page): QueryRangeMock {
-	const isQueryRange = (url: string): boolean => url.includes('/query_range');
-
 	return {
-		respond: (body, options) => mockQueryRange(page, body, options),
-		fail: (message, options) => mockQueryRangeError(page, message, options),
-		async hold(body) {
-			let release: () => void = () => undefined;
-			const gate = new Promise<void>((resolve) => {
-				release = resolve;
-			});
-			await page.route(QUERY_RANGE_GLOB, async (route: Route) => {
-				await gate;
-				await route.fulfill({
-					status: 200,
-					contentType: 'application/json',
-					body: JSON.stringify(body),
-				});
-			});
-			return { release: () => release() };
-		},
+		respond: (body) => mockQueryRange(page, body),
+		fail: (message) => mockQueryRangeError(page, message),
+		hold: (body) => holdQueryRange(page, body),
 		reset: () => unmockQueryRange(page),
 		nextRequest: () => page.waitForRequest((r) => isQueryRange(r.url())),
-		recordWindows() {
-			const windows: QueryWindow[] = [];
-			page.on('request', (request) => {
-				if (!isQueryRange(request.url())) {
-					return;
-				}
-				const body = request.postDataJSON() as {
-					start?: unknown;
-					end?: unknown;
-					requestType?: unknown;
-					compositeQuery?: unknown;
-				} | null;
-				if (typeof body?.start === 'number' && typeof body.end === 'number') {
-					windows.push({
-						start: body.start,
-						end: body.end,
-						query: JSON.stringify([body.requestType, body.compositeQuery]),
-					});
-				}
-			});
-			return windows;
-		},
+		recordWindows: () => recordQueryWindows(page),
 	};
 }
 
@@ -344,5 +299,6 @@ export const test = withQueryRange(withDashboards(kit));
 
 export { expect } from './kit';
 export * from '../helpers/dashboard-spec';
+export type * from '../helpers/dashboard-spec.types';
 export { heatmapPoints, QueryRange, ramp } from '../helpers/query-range-mock';
 export * from '../testdata/dashboards/panels';
