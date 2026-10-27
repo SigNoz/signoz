@@ -362,3 +362,65 @@ def test_list_defaults_rule_type(
     assert response.status_code == HTTPStatus.OK, response.text
     listed = next(rule for rule in response.json()["data"]["rules"] if rule["id"] == rule_id)
     assert listed["ruleType"] == "threshold_rule"
+
+
+def test_update_rejects_malformed_id(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/not-a-uuid"),
+        json=VALID_RULE,
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert response.json() == {
+        "status": "error",
+        "error": {
+            "type": "invalid-input",
+            "code": "invalid_input",
+            "message": "id is not a valid uuid",
+            "errors": [],
+            "suggestions": [],
+        },
+    }
+
+
+def test_create_rejects_channel_by_name(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    create_webhook_notification_channel: Callable[[str, str, dict, bool], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    channel_id = create_webhook_notification_channel(f"Rule Validation {time.time_ns()}", "http://localhost:9/alert", {}, False)
+    channel = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v2/notification_channels/{channel_id}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    ).json()["data"]
+
+    thresholds = {"kind": "basic", "spec": [{**VALID_RULE["condition"]["thresholds"]["spec"][0], "channels": [channel["name"]]}]}
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={**VALID_RULE, "condition": {**VALID_RULE["condition"], "thresholds": thresholds}},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert response.json() == {
+        "status": "error",
+        "error": {
+            "type": "invalid-input",
+            "code": "invalid_input",
+            "message": f'channels: rules reference channels by display name, not name: [{channel["name"]} (display name "{channel["displayName"]}")]',
+            "errors": [],
+            "suggestions": [],
+        },
+    }
