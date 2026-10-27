@@ -1,17 +1,8 @@
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import type { SpantypesGettableTraceSummaryDTO } from 'api/generated/services/sigNoz.schemas';
-import {
-	NuqsTestingAdapter,
-	type OnUrlUpdateFunction,
-} from 'nuqs/adapters/testing';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import ROUTES from 'constants/routes';
-import {
-	fireEvent,
-	render,
-	screen,
-	userEvent,
-	waitFor,
-} from 'tests/test-utils';
+import { fireEvent, render, screen, userEvent } from 'tests/test-utils';
 
 import TraceDetailsHeader from '../TraceDetailsHeader';
 import { useTraceSummary } from '../useTraceSummary';
@@ -108,21 +99,19 @@ describe('TraceDetailsHeader – back button', () => {
 		expect(mockGoBack).not.toHaveBeenCalled();
 	});
 
-	it('returns to the Overview tab when opened directly on another tab', async () => {
+	it('pushes to the AI observability explorer when opened directly on another tab', async () => {
 		mockHasInAppHistory.mockReturnValue(false);
 		const user = userEvent.setup({ delay: null });
-		const onUrlUpdate = jest.fn() as jest.MockedFunction<OnUrlUpdateFunction>;
 		render(
-			<NuqsTestingAdapter searchParams="?tab=thread" onUrlUpdate={onUrlUpdate}>
+			<NuqsTestingAdapter searchParams="?tab=thread">
 				<TraceDetailsHeader {...baseProps} />
 			</NuqsTestingAdapter>,
 		);
 
 		await user.click(screen.getByRole('button', { name: /back/i }));
 
-		await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
-		expect(onUrlUpdate.mock.calls[0][0].searchParams.get('tab')).toBeNull();
-		expect(mockPush).not.toHaveBeenCalled();
+		expect(mockPush).toHaveBeenCalledTimes(1);
+		expect(mockPush).toHaveBeenCalledWith(ROUTES.AI_OBSERVABILITY_EXPLORER);
 		expect(mockGoBack).not.toHaveBeenCalled();
 	});
 });

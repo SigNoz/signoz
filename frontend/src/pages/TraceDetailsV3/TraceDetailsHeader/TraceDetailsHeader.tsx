@@ -64,7 +64,7 @@ function TraceDetailsHeader({
 	const [isPreviewFieldsOpen, setIsPreviewFieldsOpen] = useState(false);
 	const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
 	const { data: traceSummary } = useTraceSummary(traceID);
-	const [tab, setTab] = useTraceDetailsTab();
+	const [tab] = useTraceDetailsTab();
 	const isOverview = tab === TraceDetailsTab.Overview;
 
 	// Overview-only panels must not linger over another tab.
@@ -104,7 +104,7 @@ function TraceDetailsHeader({
 		} else {
 			history.push(ROUTES.TRACES_EXPLORER);
 		}
-	}, [isOverview, setTab]);
+	}, [isOverview]);
 
 	const handleToggleTraceDetails = useCallback((): void => {
 		setShowTraceDetails((prev) => !prev);
