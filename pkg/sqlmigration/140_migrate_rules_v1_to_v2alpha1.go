@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"maps"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/uptrace/bun"
@@ -34,6 +35,8 @@ const (
 	compareOperatorBelow   = "2"
 	criticalThresholdName  = "critical"
 	labelSeverity          = "severity"
+	defaultEvalWindow      = "5m"
+	defaultFrequency       = "1m"
 )
 
 // The values the write path accepts; a migrated rule outside them is written
@@ -143,9 +146,9 @@ func (migration *migrateRulesV1ToV2Alpha1) convertOrg(ctx context.Context, orgID
 			migration.logger.WarnContext(ctx, "leaving rule at v1", slog.String("org_id", orgID), slog.String("rule_id", storedRule.ID), errors.Attr(err))
 			continue
 		}
-		if cause := convertedRule.disableIfThresholdNeverFired(); cause != "" {
+		if cause := convertedRule.disableIfNeverFired(); cause != "" {
 			disabled++
-			migration.logger.WarnContext(ctx, "migrating rule as disabled, its threshold never fired in v1", slog.String("org_id", orgID), slog.String("rule_id", storedRule.ID), slog.String("cause", cause))
+			migration.logger.WarnContext(ctx, "migrating rule as disabled, it never fired in v1", slog.String("org_id", orgID), slog.String("rule_id", storedRule.ID), slog.String("cause", cause))
 		}
 
 		data, err := marshalUnescaped(convertedRule)
@@ -197,9 +200,6 @@ func convertRule(ruleID string, storedRuleData *postableRule, storedRoute *route
 
 	rule := storedRuleData.clone()
 	rule.fillDurationDefaults()
-	if err := rule.validateDurations(); err != nil {
-		return nil, nil, err
-	}
 	rule.deriveAlertType()
 	rule.deriveQueryType()
 	rule.repairPanelType()
@@ -330,44 +330,46 @@ func (rule *postableRule) clone() *postableRule {
 	return &cloned
 }
 
-// disableIfThresholdNeverFired disables a rule whose threshold v1 stored but
-// never fired on: a null target, or an op or matchType outside the supported
-// sets, all of which the v2 write path rejects. It reads the relocated
-// threshold, so it runs after convertRule, and returns the offending field,
-// or "" when the rule stays enabled.
-func (rule *postableRule) disableIfThresholdNeverFired() string {
+// disableIfNeverFired disables a rule v1 stored but could never fire: a
+// negative evalWindow or frequency, which is reset to its default since no
+// read of a rolling window accepts it, or a threshold with a null target or an
+// op or matchType outside the supported sets, which the v2 write path rejects.
+// It reads the relocated fields, so it runs after convertRule, and returns the
+// offending fields, or "" when the rule stays enabled.
+func (rule *postableRule) disableIfNeverFired() string {
+	var causes []string
+	window := &rule.Evaluation.Spec
+	if !window.EvalWindow.IsPositive() {
+		causes = append(causes, fmt.Sprintf("evalWindow %s is negative", window.EvalWindow))
+		window.EvalWindow = mustParseTextDuration(defaultEvalWindow)
+	}
+	if !window.Frequency.IsPositive() {
+		causes = append(causes, fmt.Sprintf("frequency %s is negative", window.Frequency))
+		window.Frequency = mustParseTextDuration(defaultFrequency)
+	}
 	threshold := rule.RuleCondition.Thresholds.Spec[0]
-	var cause string
 	switch {
 	case threshold.TargetValue == nil:
-		cause = "condition.target is null"
+		causes = append(causes, "condition.target is null")
 	case !slices.Contains(supportedCompareOperators, threshold.CompareOperator):
-		cause = fmt.Sprintf("condition.op: unsupported value %q", threshold.CompareOperator)
+		causes = append(causes, fmt.Sprintf("condition.op: unsupported value %q", threshold.CompareOperator))
 	case !slices.Contains(supportedMatchTypes, threshold.MatchType):
-		cause = fmt.Sprintf("condition.matchType: unsupported value %q", threshold.MatchType)
-	default:
+		causes = append(causes, fmt.Sprintf("condition.matchType: unsupported value %q", threshold.MatchType))
+	}
+	if len(causes) == 0 {
 		return ""
 	}
 	rule.Disabled = json.RawMessage("true")
-	return cause
+	return strings.Join(causes, ", ")
 }
 
 func (rule *postableRule) fillDurationDefaults() {
 	if rule.EvalWindow.IsZero() {
-		rule.EvalWindow = mustParseTextDuration("5m")
+		rule.EvalWindow = mustParseTextDuration(defaultEvalWindow)
 	}
 	if rule.Frequency.IsZero() {
-		rule.Frequency = mustParseTextDuration("1m")
+		rule.Frequency = mustParseTextDuration(defaultFrequency)
 	}
-}
-
-// validateDurations rejects what the v1 write path never checked: a negative
-// evalWindow or frequency, which no read of a rolling window accepts.
-func (rule *postableRule) validateDurations() error {
-	if !rule.EvalWindow.IsPositive() || !rule.Frequency.IsPositive() {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "evalWindow %s or frequency %s is negative", rule.EvalWindow, rule.Frequency)
-	}
-	return nil
 }
 
 func (rule *postableRule) deriveAlertType() {
