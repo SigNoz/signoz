@@ -1,5 +1,4 @@
-import { useCallback, useMemo } from 'react';
-import { useWindowSize } from 'react-use';
+import { useCallback, useMemo, useRef } from 'react';
 import { Group } from '@visx/group';
 import { Treemap } from '@visx/hierarchy';
 import { Empty, Select, Skeleton, Tooltip } from 'antd';
@@ -7,11 +6,13 @@ import { Typography } from '@signozhq/ui/typography';
 import { MetricsexplorertypesTreemapModeDTO } from 'api/generated/services/sigNoz.schemas';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import { HierarchyNode, stratify, treemapBinary } from 'd3-hierarchy';
+import { useResizeObserver } from 'hooks/useDimensions';
 import { Info } from '@signozhq/icons';
 
 import {
 	TREEMAP_HEIGHT,
 	TREEMAP_MARGINS,
+	TREEMAP_MIN_WIDTH,
 	TREEMAP_SQUARE_PADDING,
 	TREEMAP_VIEW_OPTIONS,
 } from './constants';
@@ -33,17 +34,9 @@ function MetricsTreemapInternal({
 	data,
 	viewType,
 	openMetricDetails,
+	width,
 }: MetricsTreemapInternalProps): JSX.Element {
-	const { width: windowWidth } = useWindowSize();
-
-	const treemapWidth = useMemo(
-		() =>
-			Math.max(
-				windowWidth - TREEMAP_MARGINS.LEFT - TREEMAP_MARGINS.RIGHT - 70,
-				300,
-			),
-		[windowWidth],
-	);
+	const treemapWidth = Math.max(width, TREEMAP_MIN_WIDTH);
 
 	const treemapData = useMemo(() => {
 		const extracedTreemapData =
@@ -119,7 +112,11 @@ function MetricsTreemapInternal({
 	}
 
 	return (
-		<svg width={treemapWidth} height={TREEMAP_HEIGHT} className="metrics-treemap">
+		<svg
+			width={treemapWidth}
+			height={TREEMAP_HEIGHT}
+			data-testid="metrics-treemap-svg"
+		>
 			<rect
 				width={treemapWidth}
 				height={TREEMAP_HEIGHT}
@@ -185,6 +182,9 @@ function MetricsTreemap({
 	openMetricDetails,
 	setHeatmapView,
 }: MetricsTreemapProps): JSX.Element {
+	const canvasRef = useRef<HTMLDivElement>(null);
+	const { width: canvasWidth } = useResizeObserver(canvasRef);
+
 	return (
 		<div
 			className="metrics-treemap-container"
@@ -207,14 +207,21 @@ function MetricsTreemap({
 					disabled={isLoading}
 				/>
 			</div>
-			<MetricsTreemapInternal
-				isLoading={isLoading}
-				isError={isError}
-				error={error}
-				data={data}
-				viewType={viewType}
-				openMetricDetails={openMetricDetails}
-			/>
+			<div
+				ref={canvasRef}
+				className="metrics-treemap"
+				data-testid="metrics-treemap-canvas"
+			>
+				<MetricsTreemapInternal
+					isLoading={isLoading}
+					isError={isError}
+					error={error}
+					data={data}
+					viewType={viewType}
+					openMetricDetails={openMetricDetails}
+					width={canvasWidth}
+				/>
+			</div>
 		</div>
 	);
 }
