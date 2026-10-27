@@ -262,6 +262,24 @@ describe('CreateAlertProvider — edit mode type switch', () => {
 		expect(screen.getByTestId('threshold-value')).toHaveTextContent('3');
 	});
 
+	it('keeps the meter preset from bringing back a cumulative window for anomaly', async () => {
+		render(
+			<CreateAlertProvider initialAlertType={AlertTypes.METRICS_BASED_ALERT}>
+				<Probe />
+				<AnomalySwitcher />
+			</CreateAlertProvider>,
+			undefined,
+			{
+				initialRoute: '/alerts/new?matchType=in_total&evaluationWindowPreset=meter',
+			},
+		);
+		expect(screen.getByTestId('window-type')).toHaveTextContent('cumulative');
+
+		await clickTestId('switch-to-anomaly');
+
+		expect(screen.getByTestId('window-type')).toHaveTextContent('rolling');
+	});
+
 	it('moves a cumulative window back to rolling when switching to anomaly', async () => {
 		render(
 			<CreateAlertProvider

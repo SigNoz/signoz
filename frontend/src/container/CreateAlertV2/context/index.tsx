@@ -261,7 +261,10 @@ export function CreateAlertProvider(
 			});
 		}
 
-		if (urlPrefill.evaluationWindowPreset === EvaluationWindowPreset.METER) {
+		if (
+			urlPrefill.evaluationWindowPreset === EvaluationWindowPreset.METER &&
+			alertType !== AlertTypes.ANOMALY_BASED_ALERT
+		) {
 			setCreateAlertState({
 				slice: CreateAlertSlice.EVALUATION_WINDOW,
 				action: {
