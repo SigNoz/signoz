@@ -5753,7 +5753,7 @@ export interface MetrictypesComparisonSpaceAggregationParamDTO {
 	/**
 	 * @type number
 	 * @format double
-	 * @description Bucket bound the comparison uses, in the unit of the histogram metric. The count is an estimate, interpolated linearly between the two nearest bucket bounds.
+	 * @description Bucket bound the comparison uses, in the unit of the histogram metric. The count is exact when threshold equals one of the metric's le bucket bounds, and otherwise an estimate interpolated linearly between the two nearest bounds.
 	 */
 	threshold: number;
 }
