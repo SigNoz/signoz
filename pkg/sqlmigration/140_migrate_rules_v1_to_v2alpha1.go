@@ -88,8 +88,16 @@ func (migration *migrateRulesV1ToV2Alpha1) Up(ctx context.Context, _ *bun.DB) er
 func (migration *migrateRulesV1ToV2Alpha1) convertOrg(ctx context.Context, orgID string) error {
 	db := migration.sqlstore.BunDBCtx(ctx)
 
-	rules := make([]*ruleRow, 0)
-	if err := db.NewSelect().Model(&rules).Where("org_id = ?", orgID).Scan(ctx); err != nil {
+	type ruleRow struct {
+		bun.BaseModel `bun:"table:rule"`
+
+		ID    string `bun:"id,pk"`
+		OrgID string `bun:"org_id"`
+		Data  string `bun:"data"`
+	}
+
+	allRules := make([]*ruleRow, 0)
+	if err := db.NewSelect().Model(&allRules).Where("org_id = ?", orgID).Scan(ctx); err != nil {
 		return err
 	}
 
@@ -103,7 +111,7 @@ func (migration *migrateRulesV1ToV2Alpha1) convertOrg(ctx context.Context, orgID
 	}
 
 	var migrated, disabled, skipped, undecodable, unmigratable int
-	for _, stored := range rules {
+	for _, stored := range allRules {
 		var header struct {
 			SchemaVersion string `json:"schemaVersion"`
 		}
@@ -164,7 +172,7 @@ func (migration *migrateRulesV1ToV2Alpha1) convertOrg(ctx context.Context, orgID
 		migrated++
 	}
 
-	migration.logger.InfoContext(ctx, "migrated rules from v1 to v2alpha1", slog.String("org_id", orgID), slog.Int("total", len(rules)), slog.Int("migrated", migrated), slog.Int("disabled", disabled), slog.Int("skipped", skipped), slog.Int("undecodable", undecodable), slog.Int("unmigratable", unmigratable))
+	migration.logger.InfoContext(ctx, "migrated rules from v1 to v2alpha1", slog.String("org_id", orgID), slog.Int("total", len(allRules)), slog.Int("migrated", migrated), slog.Int("disabled", disabled), slog.Int("skipped", skipped), slog.Int("undecodable", undecodable), slog.Int("unmigratable", unmigratable))
 	return nil
 }
 
@@ -212,14 +220,6 @@ func validateRoutes(routes []*routePolicyRow, preferredChannels []string) error 
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "no route_policy row for a rule with %d preferred channels", len(preferredChannels))
 	}
 	return nil
-}
-
-type ruleRow struct {
-	bun.BaseModel `bun:"table:rule"`
-
-	ID    string `bun:"id,pk"`
-	OrgID string `bun:"org_id"`
-	Data  string `bun:"data"`
 }
 
 type routePolicyRow struct {
