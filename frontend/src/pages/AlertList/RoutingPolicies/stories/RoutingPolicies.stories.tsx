@@ -138,6 +138,10 @@ export const FormValidationError: Story = {
 	},
 };
 
+const expectToast = async (text: RegExp): Promise<void> => {
+	await waitFor(() => expect(screen.getByText(text)).toBeVisible());
+};
+
 const confirmDelete = async (canvasElement: HTMLElement): Promise<void> => {
 	await DeletePolicyConfirm.play?.({ canvasElement } as never);
 	await userEvent.click(
@@ -150,13 +154,11 @@ export const CreatePolicyToast: Story = {
 	play: async ({ canvasElement, args }): Promise<void> => {
 		await NewPolicy.play?.({ canvasElement } as never);
 		await fillNewPolicy();
-		if (args.createState === 'success') {
-			await waitFor(() =>
-				expect(
-					screen.getByText(/routing policy created successfully/i),
-				).toBeVisible(),
-			);
-		}
+		await expectToast(
+			args.createState === 'success'
+				? /routing policy created successfully/i
+				: /Policy name already exists/i,
+		);
 	},
 };
 
@@ -171,13 +173,11 @@ export const CreatePolicyErrorToast: Story = {
 export const UpdatePolicyToast: Story = {
 	play: async ({ canvasElement, args }): Promise<void> => {
 		await openEditPolicy(canvasElement);
-		if (args.updateState === 'success') {
-			await waitFor(() =>
-				expect(
-					screen.getByText(/routing policy updated successfully/i),
-				).toBeVisible(),
-			);
-		}
+		await expectToast(
+			args.updateState === 'success'
+				? /routing policy updated successfully/i
+				: /failed to update routing policy/i,
+		);
 	},
 };
 
@@ -192,13 +192,11 @@ export const UpdatePolicyErrorToast: Story = {
 export const DeletePolicyToast: Story = {
 	play: async ({ canvasElement, args }): Promise<void> => {
 		await confirmDelete(canvasElement);
-		if (args.deleteState === 'success') {
-			await waitFor(() =>
-				expect(
-					screen.getByText(/routing policy deleted successfully/i),
-				).toBeVisible(),
-			);
-		}
+		await expectToast(
+			args.deleteState === 'success'
+				? /routing policy deleted successfully/i
+				: /failed to delete routing policy/i,
+		);
 	},
 };
 
