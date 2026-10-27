@@ -1118,8 +1118,8 @@ func TestValidate_MarshalRoundTrip(t *testing.T) {
 		if err := json.Unmarshal(marshaled, &roundTripped); err != nil {
 			t.Fatalf("unmarshal error: %v", err)
 		}
-		if roundTripped.SchemaVersion.StringValue() != SchemaVersionV2Alpha1 {
-			t.Errorf("expected schemaVersion %q, got %q", SchemaVersionV2Alpha1, roundTripped.SchemaVersion.StringValue())
+		if roundTripped.SchemaVersion != SchemaVersionV2Alpha1 {
+			t.Errorf("expected schemaVersion %q, got %q", SchemaVersionV2Alpha1, roundTripped.SchemaVersion)
 		}
 	})
 }

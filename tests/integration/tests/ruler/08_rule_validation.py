@@ -230,8 +230,8 @@ def test_create_rejects_empty_schema_version(
         "error": {
             "type": "invalid-input",
             "code": "invalid_input",
-            "message": "failed to parse json: string must not be empty",
-            "errors": [],
+            "message": "alert rule is not valid",
+            "errors": [{"message": 'schemaVersion: unsupported value ""; must be "v2alpha1"', "suggestions": []}],
             "suggestions": [],
         },
     }

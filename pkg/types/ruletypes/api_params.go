@@ -77,8 +77,8 @@ type PostableRule struct {
 
 	Version string `json:"version" description:"The query payload version. Nothing reads it."`
 
-	Evaluation    *EvaluationEnvelope          `json:"evaluation" required:"true" description:"The evaluation window, as a kind and spec."`
-	SchemaVersion valuer.UnsetOrNonEmptyString `json:"schemaVersion" required:"true" enum:"v2alpha1" description:"The rule payload schema."`
+	Evaluation    *EvaluationEnvelope `json:"evaluation" required:"true" description:"The evaluation window, as a kind and spec."`
+	SchemaVersion string              `json:"schemaVersion" required:"true" enum:"v2alpha1" description:"The rule payload schema."`
 
 	NotificationSettings *NotificationSettings `json:"notificationSettings" required:"true" description:"Grouping, re-notification and routing behaviour."`
 }
@@ -429,13 +429,13 @@ func (r *PostableRule) Validate() error {
 }
 
 func (r *PostableRule) validateSchemaVersion() []error {
-	switch r.SchemaVersion.StringValue() {
+	switch r.SchemaVersion {
 	case SchemaVersionV2Alpha1:
 		return r.validateV2Alpha1()
 	default:
 		return []error{errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"schemaVersion: unsupported value %q; must be %q",
-			r.SchemaVersion.StringValue(), SchemaVersionV2Alpha1)}
+			r.SchemaVersion, SchemaVersionV2Alpha1)}
 	}
 }
 
