@@ -226,7 +226,14 @@ func (ns *NotificationSettings) UnmarshalJSON(data []byte) error {
 // for the rule options that are blank or unset.
 func (r *PostableRule) processRuleDefaults() {
 	if r.RuleCondition != nil && r.RuleCondition.CompositeQuery != nil {
-		r.RuleType = deriveRuleType(r.RuleType, r.RuleCondition.CompositeQuery.QueryType)
+		switch r.RuleCondition.CompositeQuery.QueryType {
+		case QueryTypeBuilder, QueryTypeClickHouseSQL:
+			if r.RuleType.IsZero() {
+				r.RuleType = RuleTypeThreshold
+			}
+		case QueryTypePromQL:
+			r.RuleType = RuleTypeProm
+		}
 	}
 }
 

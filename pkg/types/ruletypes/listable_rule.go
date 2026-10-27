@@ -47,12 +47,21 @@ func (rule *StorableRule) ToListableRule() (*ListableRule, error) {
 		return nil, err
 	}
 
+	switch data.Condition.CompositeQuery.QueryType {
+	case QueryTypeBuilder, QueryTypeClickHouseSQL:
+		if data.RuleType.IsZero() {
+			data.RuleType = RuleTypeThreshold
+		}
+	case QueryTypePromQL:
+		data.RuleType = RuleTypeProm
+	}
+
 	return &ListableRule{
 		Id:            rule.ID.StringValue(),
 		AlertName:     data.AlertName,
 		Description:   data.Description,
 		AlertType:     data.AlertType,
-		RuleType:      deriveRuleType(data.RuleType, data.Condition.CompositeQuery.QueryType),
+		RuleType:      data.RuleType,
 		Disabled:      data.Disabled,
 		Labels:        data.Labels,
 		TimeAuditable: rule.TimeAuditable,
