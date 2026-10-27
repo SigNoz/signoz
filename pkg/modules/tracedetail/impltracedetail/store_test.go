@@ -154,29 +154,30 @@ func TestGetSpanCountByField(t *testing.T) {
 }
 
 func TestGetTraceSpans(t *testing.T) {
-	selectSQL := "SELECT DISTINCT ON (span_id) timestamp, duration_nano, span_id, has_error, kind, resource_string_service$$name, name, resources_string, events, status_message, status_code_string, kind_string, parent_span_id, flags, is_remote, trace_state, status_code, db_name, db_operation, http_method, http_url, http_host, external_http_method, external_http_url, response_status_code, links as references, "
-	attributesSQL := "attributes, if(notEmpty(attributes), map(), attributes_string) AS attributes_string, if(notEmpty(attributes), map(), attributes_number) AS attributes_number, if(notEmpty(attributes), map(), attributes_bool) AS attributes_bool"
-	fromSQL := " FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY timestamp ASC, name ASC"
+	expectedSQL := "SELECT DISTINCT ON (span_id) timestamp, duration_nano, span_id, has_error, kind, resource_string_service$$name, name, resources_string, events, status_message, status_code_string, kind_string, parent_span_id, flags, is_remote, trace_state, status_code, db_name, db_operation, http_method, http_url, http_host, external_http_method, external_http_url, response_status_code, links as references, attributes, if(notEmpty(attributes), map(), attributes_string) AS attributes_string, if(notEmpty(attributes), map(), attributes_number) AS attributes_number, if(notEmpty(attributes), map(), attributes_bool) AS attributes_bool FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY timestamp ASC, name ASC"
 
 	s := newTestStore(sqlmock.QueryMatcherEqual)
-	s.Mock().ExpectSelect(selectSQL + attributesSQL + fromSQL).
+	s.Mock().ExpectSelect(expectedSQL).
 		WillReturnRows(cmock.NewRows(nil, nil))
-	_, _ = s.Store().GetTraceSpans(context.Background(), testTraceID, testBounds)
+	_, _ = s.Store().GetTraceSpans(context.Background(), valuer.GenerateUUID(), testTraceID, testBounds)
 	assert.NoError(t, s.Mock().ExpectationsWereMet())
 }
 
 func TestGetFlamegraphSpans(t *testing.T) {
-	selectSQL := "SELECT span_id, any(parent_span_id) AS parent_span_id, any(timestamp) AS timestamp, any(duration_nano) AS duration_nano, any(has_error) AS has_error, any(name) AS name, any(events) AS events, any(resources_string) AS resources_string, any(attributes) AS attributes, if(notEmpty(attributes), map(), any(attributes_string)) AS attributes_string, if(notEmpty(attributes), map(), any(attributes_number)) AS attributes_number, if(notEmpty(attributes), map(), any(attributes_bool)) AS attributes_bool"
-	fromSQL := " FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ?"
-	groupSQL := " GROUP BY span_id ORDER BY timestamp ASC, name ASC"
-
 	testCases := []struct {
 		name    string
 		spanIDs []string
 		sql     string
 	}{
-		{name: "NoSpanIDs_GeneratesBaseSQL", sql: selectSQL + fromSQL + groupSQL},
-		{name: "WithSpanIDs_GeneratesInClauseSQL", spanIDs: []string{"span-1", "span-2"}, sql: selectSQL + fromSQL + " AND span_id IN (?, ?)" + groupSQL},
+		{
+			name: "NoSpanIDs_GeneratesBaseSQL",
+			sql:  "SELECT span_id, any(parent_span_id) AS parent_span_id, any(timestamp) AS timestamp, any(duration_nano) AS duration_nano, any(has_error) AS has_error, any(name) AS name, any(events) AS events, any(resources_string) AS resources_string, any(attributes) AS attributes, if(notEmpty(attributes), map(), any(attributes_string)) AS attributes_string, if(notEmpty(attributes), map(), any(attributes_number)) AS attributes_number, if(notEmpty(attributes), map(), any(attributes_bool)) AS attributes_bool FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY span_id ORDER BY timestamp ASC, name ASC",
+		},
+		{
+			name:    "WithSpanIDs_GeneratesInClauseSQL",
+			spanIDs: []string{"span-1", "span-2"},
+			sql:     "SELECT span_id, any(parent_span_id) AS parent_span_id, any(timestamp) AS timestamp, any(duration_nano) AS duration_nano, any(has_error) AS has_error, any(name) AS name, any(events) AS events, any(resources_string) AS resources_string, any(attributes) AS attributes, if(notEmpty(attributes), map(), any(attributes_string)) AS attributes_string, if(notEmpty(attributes), map(), any(attributes_number)) AS attributes_number, if(notEmpty(attributes), map(), any(attributes_bool)) AS attributes_bool FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND span_id IN (?, ?) GROUP BY span_id ORDER BY timestamp ASC, name ASC",
+		},
 	}
 
 	for _, testCase := range testCases {
