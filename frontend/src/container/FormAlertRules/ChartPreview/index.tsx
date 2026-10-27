@@ -31,7 +31,7 @@ import getTimeString from 'lib/getTimeString';
 import history from 'lib/history';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { isEmpty } from 'lodash-es';
-import { useIsAnomalyDetectionAvailable } from 'hooks/useIsAnomalyDetectionAvailable';
+import { useIsAnomalyDetectionAvailable } from 'container/CreateAlertV2/useIsAnomalyDetectionAvailable';
 import { useTimezone } from 'providers/Timezone';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';

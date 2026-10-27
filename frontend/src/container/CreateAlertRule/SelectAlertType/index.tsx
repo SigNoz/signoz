@@ -5,7 +5,7 @@ import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
-import { useIsAnomalyDetectionAvailable } from 'hooks/useIsAnomalyDetectionAvailable';
+import { useIsAnomalyDetectionAvailable } from 'container/CreateAlertV2/useIsAnomalyDetectionAvailable';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { isModifierKeyPressed } from 'utils/app';
 import { openInNewTab } from 'utils/navigation';

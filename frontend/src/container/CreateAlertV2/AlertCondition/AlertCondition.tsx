@@ -3,12 +3,12 @@ import { Button, Tooltip } from 'antd';
 import classNames from 'classnames';
 import { Activity, ChartLine } from '@signozhq/icons';
 import { useChannelOptions } from 'hooks/notificationChannels/useChannelOptions';
-import { useIsAnomalyDetectionAvailable } from 'hooks/useIsAnomalyDetectionAvailable';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { useCreateAlertState } from '../context';
 import AdvancedOptions from '../EvaluationSettings/AdvancedOptions';
 import Stepper from '../Stepper';
+import { useIsAnomalyDetectionAvailable } from '../useIsAnomalyDetectionAvailable';
 import AlertThreshold from './AlertThreshold';
 import AnomalyThreshold from './AnomalyThreshold';
 import {

@@ -1,4 +1,4 @@
-import { useGetTenantLicense } from './useGetTenantLicense';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 
 export const useIsAnomalyDetectionAvailable = (): boolean => {
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();

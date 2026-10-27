@@ -38,7 +38,7 @@ import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQu
 import { isEmpty, isEqual } from 'lodash-es';
 import Tabs2 from 'periscope/components/Tabs2';
 import { useAlertRuleOptional } from 'providers/Alert';
-import { useIsAnomalyDetectionAvailable } from 'hooks/useIsAnomalyDetectionAvailable';
+import { useIsAnomalyDetectionAvailable } from 'container/CreateAlertV2/useIsAnomalyDetectionAvailable';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { AppState } from 'store/reducers';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
