@@ -275,14 +275,14 @@ interface PathBuilders {
 	[key: string]: Series.PathBuilder;
 }
 
-/**
- * Get path builder based on draw style and interpolation
- */
 /** Draws standalone markers, never a connecting line. */
 function isMarkerOnlyDrawStyle(drawStyle: DrawStyle): boolean {
 	return drawStyle === DrawStyle.Points || drawStyle === DrawStyle.Scatter;
 }
 
+/**
+ * Get path builder based on draw style and interpolation
+ */
 function getPathBuilder({
 	drawStyle,
 	lineInterpolation,
