@@ -3,6 +3,7 @@
  * Do not hand-edit: regenerate instead.
  */
 
+import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
 import type {
 	CloudintegrationtypesAccountConfigDTO,
 	CloudintegrationtypesAccountDTO,
@@ -22,6 +23,19 @@ export type CloudProvider = (typeof CLOUD_PROVIDERS)[number];
 
 export const MUTATION_STATES = ['success', 'loading', 'error'] as const;
 export type MutationState = (typeof MUTATION_STATES)[number];
+
+export const GCP_CONNECTION_METHODS = [
+	CloudintegrationtypesGCPConnectionMethodDTO.manual,
+	CloudintegrationtypesGCPConnectionMethodDTO.agent,
+] as const;
+
+/** How the poll for the account the connect flow just created answers. */
+export const NEW_ACCOUNT_CHECK_INS = [
+	'checked-in',
+	'pending',
+	'error',
+] as const;
+export type NewAccountCheckIn = (typeof NEW_ACCOUNT_CHECK_INS)[number];
 
 interface CloudServiceSeed {
 	id: string;
@@ -266,6 +280,7 @@ const ACCOUNTS: Record<CloudProvider, readonly string[]> = {
 
 const accountConfig = (
 	provider: CloudProvider,
+	gcpConnectionMethod: CloudintegrationtypesGCPConnectionMethodDTO,
 ): CloudintegrationtypesAccountConfigDTO => {
 	if (provider === 'aws') {
 		return { aws: { regions: ['us-east-1', 'eu-west-1', 'ap-south-1'] } };
@@ -280,8 +295,23 @@ const accountConfig = (
 		};
 	}
 
+	// The backend only accepts the deployment project as an agent account's scope.
+	if (
+		gcpConnectionMethod === CloudintegrationtypesGCPConnectionMethodDTO.agent
+	) {
+		return {
+			gcp: {
+				connectionMethod: gcpConnectionMethod,
+				deploymentRegion: 'us-central1',
+				deploymentProjectId: 'signoz-prod-4471',
+				projectIds: ['signoz-prod-4471'],
+			},
+		};
+	}
+
 	return {
 		gcp: {
+			connectionMethod: gcpConnectionMethod,
 			deploymentRegion: 'us-central1',
 			deploymentProjectId: 'signoz-prod-4471',
 			projectIds: ['signoz-prod-4471', 'signoz-analytics-8820'],
@@ -292,12 +322,13 @@ const accountConfig = (
 const account = (
 	provider: CloudProvider,
 	index: number,
+	gcpConnectionMethod: CloudintegrationtypesGCPConnectionMethodDTO,
 ): CloudintegrationtypesAccountDTO => ({
 	id: `${provider}-account-${index + 1}`,
 	orgId: 'story-org',
 	provider,
 	providerAccountId: ACCOUNTS[provider][index],
-	config: accountConfig(provider),
+	config: accountConfig(provider, gcpConnectionMethod),
 	agentReport: {
 		timestampMillis: Date.now() - 45 * 1000,
 		data: null,
@@ -311,11 +342,12 @@ const account = (
 export const accountsResponse = (
 	provider: CloudProvider,
 	count: number,
+	gcpConnectionMethod: CloudintegrationtypesGCPConnectionMethodDTO,
 ): ListAccounts200 => ({
 	status: 'success',
 	data: {
 		accounts: Array.from({ length: count }, (_, index) =>
-			account(provider, index),
+			account(provider, index, gcpConnectionMethod),
 		),
 	},
 });
@@ -323,11 +355,52 @@ export const accountsResponse = (
 export const accountResponse = (
 	provider: CloudProvider,
 	id: string,
+	gcpConnectionMethod: CloudintegrationtypesGCPConnectionMethodDTO,
 ): GetAccount200 => {
 	const parsed = Number.parseInt(id.replace(`${provider}-account-`, ''), 10);
 	const index = Number.isNaN(parsed) ? 0 : Math.max(0, parsed - 1);
 
-	return { status: 'success', data: account(provider, index) };
+	return {
+		status: 'success',
+		data: account(provider, index, gcpConnectionMethod),
+	};
+};
+
+/** The backend's command template, filled in for the story's project and region. */
+const GCP_AGENT_COMMAND = {
+	cliCommand: `curl -fsSL 'https://signoz.io/foundry.sh' | bash -s -- cloudintegration gcp terraform \\
+  --region 'us-central1' \\
+  --gcp-project 'signoz-prod-4471' \\
+  --integration-account-id 'gcp-account-new' \\
+  --signoz-api-url 'https://story.us.signoz.cloud' \\
+  --signoz-api-key 'story-api-key-8b7d02' \\
+  --ingestion-url 'https://ingest.us.signoz.cloud:443' \\
+  --ingestion-key 'story-ingestion-key-2f9c41' \\
+  --agent-version 'v0.0.8'`,
+};
+
+export const newAccountId = (provider: CloudProvider): string =>
+	`${provider}-account-new`;
+
+/**
+ * The account the connect flow just created, as its connection poll sees it. Only
+ * GCP's agent connection polls, so a GCP account here is an agent one.
+ */
+export const newAccountResponse = (
+	provider: CloudProvider,
+	isCheckedIn: boolean,
+): GetAccount200 => {
+	const created = {
+		...account(provider, 0, CloudintegrationtypesGCPConnectionMethodDTO.agent),
+		id: newAccountId(provider),
+	};
+
+	return {
+		status: 'success',
+		data: isCheckedIn
+			? created
+			: { ...created, providerAccountId: null, agentReport: null },
+	};
 };
 
 /**
@@ -541,14 +614,16 @@ export const credentialsResponse = (): GetConnectionCredentials200 => ({
 
 /**
  * The connection URL is what the setup flow opens in a new tab, which the story
- * reports through the navigation overlay rather than following.
+ * reports through the navigation overlay rather than following. GCP returns its
+ * setup command only for an agent connection; a manual one gets none.
  */
 export const createdAccountResponse = (
 	provider: CloudProvider,
+	gcpConnectionMethod?: CloudintegrationtypesGCPConnectionMethodDTO,
 ): CreateAccount201 => ({
 	status: 'success',
 	data: {
-		id: `${provider}-account-new`,
+		id: newAccountId(provider),
 		connectionArtifact: {
 			aws: {
 				connectionUrl: `https://console.aws.amazon.com/cloudformation/home#/stacks/create?templateURL=https://signoz.io/${provider}.yaml`,
@@ -559,6 +634,10 @@ export const createdAccountResponse = (
 				cloudPowerShellCommand:
 					'New-AzSubscriptionDeployment -TemplateUri https://signoz.io/azure.json',
 			},
+			...(gcpConnectionMethod ===
+				CloudintegrationtypesGCPConnectionMethodDTO.agent && {
+				gcp: GCP_AGENT_COMMAND,
+			}),
 		},
 	},
 });
