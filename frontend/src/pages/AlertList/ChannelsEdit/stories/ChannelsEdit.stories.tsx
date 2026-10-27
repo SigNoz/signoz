@@ -117,6 +117,16 @@ export const Webhook: Story = {
 	args: { channelType: 'webhook' },
 };
 
+/** The webhook channel saved with a bearer token: only the token field shows. */
+export const WebhookBearerToken: Story = {
+	args: { channelType: 'webhook', webhookAuth: 'bearer' },
+};
+
+/** The webhook channel saved without credentials: the auth option is None. */
+export const WebhookWithoutAuth: Story = {
+	args: { channelType: 'webhook', webhookAuth: 'none' },
+};
+
 /**
  * The Opsgenie channel, whose form carries the integration API key and the
  * priority the alert is raised at.
