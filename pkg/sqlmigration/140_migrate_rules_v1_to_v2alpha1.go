@@ -169,8 +169,11 @@ func (migration *migrateRulesV1ToV2Alpha1) convertOrg(ctx context.Context, orgID
 // must be stored alongside. Version and source are left as stored. A nil
 // storedRoute is a rule that never had channels.
 func convertRule(ruleID string, storedRuleData *postableRule, storedRoute *routePolicyRow) (*postableRule, *routePolicyRow, error) {
-	if storedRuleData.RuleCondition == nil || storedRuleData.RuleCondition.CompositeQuery == nil {
-		return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "condition or condition.compositeQuery is null")
+	if storedRuleData.RuleCondition == nil {
+		return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "condition in stored rule data is null")
+	}
+	if storedRuleData.RuleCondition.CompositeQuery == nil {
+		return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.compositeQuery in stored rule data is null")
 	}
 	channels := []string{}
 	if storedRoute != nil {
