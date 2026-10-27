@@ -105,9 +105,11 @@ func (migration *migrateRulesV1ToV2Alpha1) convertOrg(ctx context.Context, orgID
 	if err := db.NewSelect().Model(&allRoutePolicies).Where("org_id = ?", orgID).Scan(ctx); err != nil {
 		return err
 	}
-	routePolicyNameToRoutes := make(map[string][]*routePolicyRow)
+	// the name is not unique; a v1 rule has one threshold so one row, and any
+	// duplicate is as good as another
+	routePolicyNameToRoute := make(map[string]*routePolicyRow)
 	for _, route := range allRoutePolicies {
-		routePolicyNameToRoutes[route.Name] = append(routePolicyNameToRoutes[route.Name], route)
+		routePolicyNameToRoute[route.Name] = route
 	}
 
 	var migrated, disabled, skipped, undecodable, unmigratable int
@@ -123,16 +125,14 @@ func (migration *migrateRulesV1ToV2Alpha1) convertOrg(ctx context.Context, orgID
 			continue
 		}
 
-		routes := routePolicyNameToRoutes[storedRule.ID]
-		if err := validateRoutes(routes, rule.PreferredChannels); err != nil {
+		route := routePolicyNameToRoute[storedRule.ID]
+		if err := validateRoute(route, rule.PreferredChannels); err != nil {
 			unmigratable++
 			migration.logger.WarnContext(ctx, "leaving rule at v1", slog.String("org_id", orgID), slog.String("rule_id", storedRule.ID), errors.Attr(err))
 			continue
 		}
-		var route *routePolicyRow
 		expression := ""
-		if len(routes) == 1 {
-			route = routes[0]
+		if route != nil {
 			expression = route.Expression
 		}
 
@@ -199,15 +199,12 @@ func convertRule(ruleID string, rule *postableRule, route *routePolicyRow) error
 	return nil
 }
 
-// validateRoutes checks the rule's route_policy rows, named after the rule. A
+// validateRoute checks the rule's route_policy row, named after the rule. A
 // rule that never had channels got no row from migration 049 and migrates with
 // none; a rule with preferred channels but no row would lose them, so it is
 // left at v1.
-func validateRoutes(routes []*routePolicyRow, preferredChannels []string) error {
-	if len(routes) > 1 {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "expected one route_policy row, found %d", len(routes))
-	}
-	if len(routes) == 0 && len(preferredChannels) > 0 {
+func validateRoute(route *routePolicyRow, preferredChannels []string) error {
+	if route == nil && len(preferredChannels) > 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "no route_policy row for a rule with %d preferred channels", len(preferredChannels))
 	}
 	return nil
