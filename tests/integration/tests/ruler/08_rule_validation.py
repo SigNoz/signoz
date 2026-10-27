@@ -183,33 +183,6 @@ def test_create_rejects_duplicate_threshold_names(
     }
 
 
-def test_create_rejects_empty_rule_type(
-    signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-):
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(BASE_URL),
-        json={**VALID_RULE, "ruleType": ""},
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert response.json() == {
-        "status": "error",
-        "error": {
-            "type": "invalid-input",
-            "code": "invalid_input",
-            "message": "failed to parse json: string must not be empty",
-            "errors": [],
-            "suggestions": [],
-        },
-    }
-
-
 def test_create_rejects_empty_schema_version(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -232,33 +205,6 @@ def test_create_rejects_empty_schema_version(
             "code": "invalid_input",
             "message": "alert rule is not valid",
             "errors": [{"message": 'schemaVersion: unsupported value ""; must be "v2alpha1"', "suggestions": []}],
-            "suggestions": [],
-        },
-    }
-
-
-def test_create_rejects_empty_seasonality(
-    signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-):
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(BASE_URL),
-        json={**VALID_RULE, "condition": {**VALID_RULE["condition"], "seasonality": ""}},
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert response.json() == {
-        "status": "error",
-        "error": {
-            "type": "invalid-input",
-            "code": "invalid_input",
-            "message": "failed to parse json: string must not be empty",
-            "errors": [],
             "suggestions": [],
         },
     }

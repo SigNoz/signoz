@@ -15,11 +15,11 @@ import (
 )
 
 type ThresholdKind struct {
-	valuer.UnsetOrNonEmptyString
+	valuer.String
 }
 
 var (
-	BasicThresholdKind = ThresholdKind{valuer.MustNewUnsetOrNonEmptyString("basic")}
+	BasicThresholdKind = ThresholdKind{valuer.NewString("basic")}
 )
 
 // Enum implements jsonschema.Enum; returns the acceptable values for ThresholdKind.
