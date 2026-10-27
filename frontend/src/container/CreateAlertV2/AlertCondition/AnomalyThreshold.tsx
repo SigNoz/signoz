@@ -1,8 +1,7 @@
-import { Input } from '@signozhq/ui/input';
-import { Select } from 'antd';
+import { Button, Select } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useAppContext } from 'providers/App/App';
+import { Plus } from '@signozhq/icons';
 
 import { useCreateAlertState } from '../context';
 import {
@@ -10,6 +9,7 @@ import {
 	ANOMALY_SEASONALITY_OPTIONS,
 	ANOMALY_THRESHOLD_MATCH_TYPE_OPTIONS,
 	ANOMALY_THRESHOLD_OPERATOR_OPTIONS,
+	INITIAL_ANOMALY_THRESHOLD,
 } from '../context/constants';
 import {
 	AlertThresholdMatchType,
@@ -17,12 +17,10 @@ import {
 } from '../context/types';
 import EvaluationSettings from '../EvaluationSettings/EvaluationSettings';
 import { normalizeMatchType, normalizeOperator } from '../utils';
-import { AnomalyAndThresholdProps, UpdateThreshold } from './types';
-import {
-	getQueryNames,
-	NotificationChannelsNotFoundContent,
-	RoutingPolicyBanner,
-} from './utils';
+import ThresholdItem from './ThresholdItem';
+import { AnomalyAndThresholdProps } from './types';
+import { useThresholdList } from './useThresholdList';
+import { getQueryNames, RoutingPolicyBanner } from './utils';
 
 import styles from './AnomalyThreshold.module.scss';
 
@@ -32,7 +30,6 @@ function AnomalyThreshold({
 	isErrorChannels,
 	refreshChannels,
 }: AnomalyAndThresholdProps): JSX.Element {
-	const { user } = useAppContext();
 	const {
 		thresholdState,
 		setThresholdState,
@@ -44,16 +41,16 @@ function AnomalyThreshold({
 
 	const queryNames = getQueryNames(currentQuery);
 
-	const updateThreshold: UpdateThreshold = (id, field, value) => {
-		setThresholdState({
-			type: 'SET_THRESHOLDS',
-			payload: thresholdState.thresholds.map((t) =>
-				t.id === id ? { ...t, [field]: value } : t,
+	const { addThreshold, removeThreshold, updateThreshold } = useThresholdList();
+
+	const handleAddThreshold = (): void => {
+		addThreshold({
+			thresholdValue: Math.max(
+				1,
+				INITIAL_ANOMALY_THRESHOLD.thresholdValue - thresholdState.thresholds.length,
 			),
 		});
 	};
-
-	const threshold = thresholdState.thresholds[0];
 
 	return (
 		<div className="anomaly-threshold-container">
@@ -163,77 +160,30 @@ function AnomalyThreshold({
 			</div>
 			{/* Sentence 3 */}
 			<div className="thresholds-section">
-				<div className="threshold-item">
-					<div className="threshold-row">
-						<div className="threshold-indicator">
-							<div
-								className="threshold-dot"
-								style={{ backgroundColor: threshold.color }}
-							/>
-						</div>
-						<div className="threshold-controls">
-							<Input
-								placeholder="Enter threshold name"
-								value={threshold.label}
-								onChange={(e): void =>
-									updateThreshold(threshold.id, 'label', e.target.value)
-								}
-								className={styles.severityInput}
-								data-testid="anomaly-threshold-name-input"
-							/>
-							<Typography.Text className="sentence-text">at</Typography.Text>
-							<Input
-								placeholder="Deviations"
-								value={threshold.thresholdValue}
-								onChange={(e): void =>
-									updateThreshold(threshold.id, 'thresholdValue', e.target.value)
-								}
-								className={styles.deviationInput}
-								type="number"
-								data-testid="anomaly-threshold-value-input"
-							/>
-							<Typography.Text data-testid="deviations-text" className="sentence-text">
-								deviations
-							</Typography.Text>
-							{!notificationSettings.routingPolicies && (
-								<>
-									<Typography.Text className="sentence-text">send to</Typography.Text>
-									<Select
-										value={threshold.channels}
-										data-testid="anomaly-notification-channel-select"
-										className={styles.channelSelect}
-										onChange={(value): void =>
-											updateThreshold(threshold.id, 'channels', value)
-										}
-										options={channels.map((channel) => ({
-											value: channel.name,
-											label: channel.name,
-										}))}
-										mode="multiple"
-										placeholder="Select notification channels"
-										showSearch
-										maxTagCount={2}
-										maxTagPlaceholder={(omittedValues): string =>
-											`+${omittedValues.length} more`
-										}
-										maxTagTextLength={10}
-										filterOption={(input, option): boolean =>
-											option?.label?.toLowerCase().includes(input.toLowerCase()) || false
-										}
-										status={isErrorChannels ? 'error' : undefined}
-										disabled={isLoadingChannels}
-										notFoundContent={
-											<NotificationChannelsNotFoundContent
-												user={user}
-												refreshChannels={refreshChannels}
-											/>
-										}
-									/>
-								</>
-							)}
-						</div>
-					</div>
-				</div>
+				{thresholdState.thresholds.map((threshold, index) => (
+					<ThresholdItem
+						key={threshold.id}
+						threshold={threshold}
+						updateThreshold={updateThreshold}
+						removeThreshold={removeThreshold}
+						showRemoveButton={index !== 0 && thresholdState.thresholds.length > 1}
+						channels={channels}
+						isLoadingChannels={isLoadingChannels}
+						units={[]}
+						isErrorChannels={isErrorChannels}
+						refreshChannels={refreshChannels}
+						isAnomaly
+					/>
+				))}
+				<Button
+					type="dashed"
+					icon={<Plus size={16} />}
+					onClick={handleAddThreshold}
+					className="add-threshold-btn"
+					data-testid="add-threshold-button"
+				>
+					Add Threshold
+				</Button>
 			</div>
 			<RoutingPolicyBanner
 				notificationSettings={notificationSettings}

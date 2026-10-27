@@ -658,6 +658,31 @@ describe('Footer utils', () => {
 			expect(props.condition.thresholds?.spec[0].op).toBe(operator);
 		});
 
+		it('signs every anomaly severity the same way', () => {
+			const props = buildCreateAlertRulePayload({
+				...anomalyArgs,
+				thresholdState: {
+					...anomalyArgs.thresholdState,
+					operator: AlertThresholdOperator.IS_BELOW,
+					thresholds: [
+						{ ...anomalyArgs.thresholdState.thresholds[0], thresholdValue: 3 },
+						{
+							...anomalyArgs.thresholdState.thresholds[0],
+							id: 'warning',
+							label: 'warning',
+							thresholdValue: 2,
+						},
+					],
+				},
+			});
+			expect(
+				props.condition.thresholds?.spec.map(({ name, target }) => [name, target]),
+			).toStrictEqual([
+				['critical', -3],
+				['warning', -2],
+			]);
+		});
+
 		it('builds a threshold rule for other alert types', () => {
 			const props = buildCreateAlertRulePayload({
 				...anomalyArgs,

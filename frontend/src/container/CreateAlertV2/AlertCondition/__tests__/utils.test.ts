@@ -1,6 +1,9 @@
 import { QueryFunction } from 'types/api/v5/queryRange';
 
-import { syncAnomalyFunction } from '../utils';
+import { INITIAL_CRITICAL_THRESHOLD } from '../../context/constants';
+import { Threshold } from '../../context/types';
+
+import { getSmallestDeviation, syncAnomalyFunction } from '../utils';
 
 const timeShift: QueryFunction = { name: 'timeShift', args: [{ value: 3600 }] };
 const anomaly = (
@@ -36,5 +39,20 @@ describe('syncAnomalyFunction', () => {
 		expect(
 			syncAnomalyFunction([anomaly(3, 'daily'), timeShift], undefined),
 		).toStrictEqual([timeShift]);
+	});
+});
+
+describe('getSmallestDeviation', () => {
+	it.each([
+		[[3, 2], 2],
+		[['2.5', 4], 2.5],
+		[[3, '', 0], 3],
+		[[''], 0],
+	])('picks the smallest valid deviation from %p', (values, expected) => {
+		const thresholds = values.map(
+			(thresholdValue) =>
+				({ ...INITIAL_CRITICAL_THRESHOLD, thresholdValue }) as Threshold,
+		);
+		expect(getSmallestDeviation(thresholds)).toBe(expected);
 	});
 });

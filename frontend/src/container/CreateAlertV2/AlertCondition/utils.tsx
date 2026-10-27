@@ -21,6 +21,7 @@ import { USER_ROLES } from 'types/roles';
 import { openInNewTab } from 'utils/navigation';
 
 import { ROUTING_POLICIES_ROUTE } from './constants';
+import { Threshold } from '../context/types';
 import { RoutingPolicyBannerProps } from './types';
 
 export function getQueryNames(currentQuery: Query): BaseOptionType[] {
@@ -42,6 +43,13 @@ export function getQueryNames(currentQuery: Query): BaseOptionType[] {
 	};
 
 	return queryConfig[currentQuery.queryType]?.() || [];
+}
+
+export function getSmallestDeviation(thresholds: Threshold[]): number {
+	const deviations = thresholds
+		.map(({ thresholdValue }) => Number(thresholdValue))
+		.filter((deviation) => deviation > 0);
+	return deviations.length > 0 ? Math.min(...deviations) : 0;
 }
 
 export function syncAnomalyFunction(

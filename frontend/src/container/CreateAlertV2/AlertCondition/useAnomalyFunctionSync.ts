@@ -4,7 +4,7 @@ import { isEqual } from 'lodash-es';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { useCreateAlertState } from '../context';
-import { syncAnomalyFunction } from './utils';
+import { getSmallestDeviation, syncAnomalyFunction } from './utils';
 
 // These args only drive the preview; the rule reads the threshold target and condition.seasonality.
 export function useAnomalyFunctionSync(): void {
@@ -12,7 +12,7 @@ export function useAnomalyFunctionSync(): void {
 	const { currentQuery, handleSetQueryData } = useQueryBuilder();
 
 	const isAnomalyAlert = alertType === AlertTypes.ANOMALY_BASED_ALERT;
-	const zScoreThreshold = Number(thresholdState.thresholds[0]?.thresholdValue);
+	const zScoreThreshold = getSmallestDeviation(thresholdState.thresholds);
 	const { seasonality } = thresholdState;
 
 	useEffect(() => {

@@ -101,7 +101,7 @@ describe('AnomalyThreshold', () => {
 	it('renames the severity from its threshold row', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderAnomalyThreshold();
-		await user.type(screen.getByTestId('anomaly-threshold-name-input'), 'x');
+		await user.type(screen.getByTestId('threshold-name-input'), 'x');
 		expect(mockSetThresholdState).toHaveBeenCalledWith({
 			type: 'SET_THRESHOLDS',
 			payload: [expect.objectContaining({ label: 'criticalx' })],
@@ -123,7 +123,7 @@ describe('AnomalyThreshold', () => {
 			},
 		});
 		renderAnomalyThreshold();
-		await user.type(screen.getByTestId('anomaly-threshold-value-input'), '4');
+		await user.type(screen.getByTestId('threshold-value-input'), '4');
 		expect(mockSetThresholdState).toHaveBeenCalledWith({
 			type: 'SET_THRESHOLDS',
 			payload: [expect.objectContaining({ thresholdValue: '4' })],
@@ -144,10 +144,23 @@ describe('AnomalyThreshold', () => {
 
 	it('picks channels by name when routing policies are off', async () => {
 		renderAnomalyThreshold();
-		await pickOption('anomaly-notification-channel-select', 'slack-alerts');
+		await pickOption('threshold-notification-channel-select', 'slack-alerts');
 		expect(mockSetThresholdState).toHaveBeenCalledWith({
 			type: 'SET_THRESHOLDS',
 			payload: [expect.objectContaining({ channels: ['slack-alerts'] })],
+		});
+	});
+
+	it('adds the next severity one deviation lower', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		renderAnomalyThreshold();
+		await user.click(screen.getByTestId('add-threshold-button'));
+		expect(mockSetThresholdState).toHaveBeenCalledWith({
+			type: 'SET_THRESHOLDS',
+			payload: [
+				mockContextState.thresholdState.thresholds[0],
+				expect.objectContaining({ label: 'warning', thresholdValue: 2 }),
+			],
 		});
 	});
 
@@ -161,7 +174,7 @@ describe('AnomalyThreshold', () => {
 		});
 		renderAnomalyThreshold();
 		expect(
-			screen.queryByTestId('anomaly-notification-channel-select'),
+			screen.queryByTestId('threshold-notification-channel-select'),
 		).not.toBeInTheDocument();
 	});
 });
