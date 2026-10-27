@@ -154,16 +154,16 @@ func (m *module) GetTraceAggregations(ctx context.Context, traceID string, req *
 	return &spantypes.GettableTraceAggregations{Aggregations: results}, nil
 }
 
-func (m *module) GetFlamegraph(ctx context.Context, traceID string, selectedSpanID string, selectFields []telemetrytypes.TelemetryFieldKey) (*spantypes.GettableFlamegraphTrace, error) {
+func (m *module) GetFlamegraph(ctx context.Context, orgID valuer.UUID, traceID string, selectedSpanID string, selectFields []telemetrytypes.TelemetryFieldKey) (*spantypes.GettableFlamegraphTrace, error) {
 	bounds, err := m.store.GetTraceBounds(ctx, traceID)
 	if err != nil {
 		return nil, err
 	}
 	if bounds.NumSpans <= uint64(m.config.Flamegraph.SelectAllSpansLimit) {
-		return m.getFullFlamegraph(ctx, traceID, bounds, selectFields)
+		return m.getFullFlamegraph(ctx, orgID, traceID, bounds, selectFields)
 	}
 	m.metrics.flamegraphRequestCount.Add(ctx, 1, metric.WithAttributes(attrResponseType.String(attrResponseTypeSampled)))
-	return m.getWindowedFlamegraph(ctx, traceID, selectedSpanID, bounds, selectFields)
+	return m.getWindowedFlamegraph(ctx, orgID, traceID, selectedSpanID, bounds, selectFields)
 }
 
 // getWindowedWaterfall builds the waterfall tree with minimal data and then returns only a window of full spans.
@@ -250,8 +250,8 @@ func (m *module) GetThread(ctx context.Context, orgID valuer.UUID, traceID strin
 	}
 }
 
-func (m *module) getFullFlamegraph(ctx context.Context, traceID string, bounds *spantypes.TraceBounds, selectFields []telemetrytypes.TelemetryFieldKey) (*spantypes.GettableFlamegraphTrace, error) {
-	fullSpans, err := m.store.GetFlamegraphSpans(ctx, traceID, bounds.Start, bounds.End, nil)
+func (m *module) getFullFlamegraph(ctx context.Context, orgID valuer.UUID, traceID string, bounds *spantypes.TraceBounds, selectFields []telemetrytypes.TelemetryFieldKey) (*spantypes.GettableFlamegraphTrace, error) {
+	fullSpans, err := m.store.GetFlamegraphSpans(ctx, orgID, traceID, bounds.Start, bounds.End, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -264,7 +264,7 @@ func (m *module) getFullFlamegraph(ctx context.Context, traceID string, bounds *
 }
 
 // getWindowedFlamegraph returns a window of a max levels and max sampled spans per level around the selected span.
-func (m *module) getWindowedFlamegraph(ctx context.Context, traceID, selectedSpanID string, bounds *spantypes.TraceBounds, selectFields []telemetrytypes.TelemetryFieldKey) (*spantypes.GettableFlamegraphTrace, error) {
+func (m *module) getWindowedFlamegraph(ctx context.Context, orgID valuer.UUID, traceID, selectedSpanID string, bounds *spantypes.TraceBounds, selectFields []telemetrytypes.TelemetryFieldKey) (*spantypes.GettableFlamegraphTrace, error) {
 	minimalSpans, err := m.store.GetMinimalSpans(ctx, traceID, bounds.Start, bounds.End)
 	if err != nil {
 		return nil, err
@@ -284,7 +284,7 @@ func (m *module) getWindowedFlamegraph(ctx context.Context, traceID, selectedSpa
 		return nil, spantypes.ErrTraceNotFound
 	}
 
-	fullSpans, err := m.store.GetFlamegraphSpans(ctx, traceID, bounds.Start, bounds.End, spantypes.FlamegraphWindowSpanIDs(selectedSpans))
+	fullSpans, err := m.store.GetFlamegraphSpans(ctx, orgID, traceID, bounds.Start, bounds.End, spantypes.FlamegraphWindowSpanIDs(selectedSpans))
 	if err != nil {
 		return nil, err
 	}

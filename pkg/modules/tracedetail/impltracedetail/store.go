@@ -25,16 +25,17 @@ import (
 
 const colServiceName = `resource_string_service$$$$name` // $ gets escaped so $$$$ converts to $$.
 
-// storableSpanColumns are the columns a waterfall span scans; the JSON attributes column is added per flag.
+// storableSpanColumns are the columns a waterfall span scans; the attribute columns are added per flag.
 var storableSpanColumns = []string{
 	"DISTINCT ON (span_id) timestamp", "duration_nano", "span_id", "has_error", "kind",
-	colServiceName, "name",
-	"attributes_string", "attributes_number", "attributes_bool", "resources_string",
+	colServiceName, "name", "resources_string",
 	"events", "status_message", "status_code_string", "kind_string", "parent_span_id",
 	"flags", "is_remote", "trace_state", "status_code",
 	"db_name", "db_operation", "http_method", "http_url", "http_host",
 	"external_http_method", "external_http_url", "response_status_code", "links as references",
 }
+
+var legacyAttributeColumns = []string{"attributes_string", "attributes_number", "attributes_bool"}
 
 func buildFieldExpr(fieldKey telemetrytypes.TelemetryFieldKey) (string, error) {
 	switch fieldKey.FieldContext {
@@ -280,11 +281,13 @@ func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, orgID valuer.UUID, 
 func (s *traceStore) selectStorableSpans(ctx context.Context, orgID valuer.UUID) *sqlbuilder.SelectBuilder {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(storableSpanColumns...)
-	if s.flagger.BooleanOrEmpty(ctx, flagger.FeatureUseTraceAttributesJSON, featuretypes.NewFlaggerEvaluationContext(orgID)) {
-		sb.SelectMore("attributes")
-	}
+	sb.SelectMore(attributeColumns(s.traceAttributesJSON(ctx, orgID), "")...)
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
 	return sb
+}
+
+func (s *traceStore) traceAttributesJSON(ctx context.Context, orgID valuer.UUID) bool {
+	return s.flagger.BooleanOrEmpty(ctx, flagger.FeatureUseTraceAttributesJSON, featuretypes.NewFlaggerEvaluationContext(orgID))
 }
 
 func (s *traceStore) GetThreadSpans(ctx context.Context, orgID valuer.UUID, traceID string, bounds *spantypes.TraceBounds, page spantypes.ThreadPage) ([]spantypes.StorableSpan, error) {
@@ -293,12 +296,9 @@ func (s *traceStore) GetThreadSpans(ctx context.Context, orgID valuer.UUID, trac
 	sb.Select(
 		"DISTINCT ON (span_id) timestamp", "duration_nano", "span_id", "parent_span_id", "has_error", "name", "kind_string",
 		"status_code_string", "status_message", "resources_string",
-		"attributes_string", "attributes_number", "attributes_bool",
 		"events", "links as references",
 	)
-	if q.TraceAttrsJSONOn {
-		sb.SelectMore("attributes")
-	}
+	sb.SelectMore(attributeColumns(q.TraceAttrsJSONOn, "")...)
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
 	keys, err := s.genAIFieldKeys(ctx, orgID, aiobservabilitytypes.GenAISpanGateKeys)
 	if err != nil {
@@ -372,7 +372,7 @@ func (s *traceStore) GetThreadCursor(ctx context.Context, traceID string, bounds
 	return &spantypes.ThreadCursor{TimeUnixNano: uint64(timeUnixNano), SpanID: spanID}, nil
 }
 
-func (s *traceStore) GetFlamegraphSpans(ctx context.Context, traceID string, start, end time.Time, spanIDs []string) ([]spantypes.StorableSpan, error) {
+func (s *traceStore) GetFlamegraphSpans(ctx context.Context, orgID valuer.UUID, traceID string, start, end time.Time, spanIDs []string) ([]spantypes.StorableSpan, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(
 		"span_id",
@@ -382,11 +382,9 @@ func (s *traceStore) GetFlamegraphSpans(ctx context.Context, traceID string, sta
 		"any(has_error) AS has_error",
 		"any(name) AS name",
 		"any(events) AS events",
-		"any(attributes_string) AS attributes_string",
-		"any(attributes_number) AS attributes_number",
-		"any(attributes_bool) AS attributes_bool",
 		"any(resources_string) AS resources_string",
 	)
+	sb.SelectMore(attributeColumns(s.traceAttributesJSON(ctx, orgID), "any")...)
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
 	conditions := []string{
 		sb.E("trace_id", traceID),
@@ -524,4 +522,32 @@ func (s *traceStore) anyExistsCondition(ctx context.Context, q qbtypes.QueryInfo
 		conds = append(conds, keyConds...)
 	}
 	return sb.Or(conds...), nil
+}
+
+// attributeColumns selects the span attribute columns, each wrapped in aggregate when set. With the JSON
+// column read, a row's legacy maps are blanked when its JSON holds the attributes, so a dual-written span
+// ships them once. Under aggregate, `attributes` in the blanking condition resolves to the aggregated
+// alias, so it must stay outside the aggregate (nesting it is ILLEGAL_AGGREGATION).
+func attributeColumns(jsonOn bool, aggregate string) []string {
+	columns := make([]string, 0, len(legacyAttributeColumns)+1)
+	for _, column := range legacyAttributeColumns {
+		expr := column
+		if aggregate != "" {
+			expr = fmt.Sprintf("%s(%s)", aggregate, expr)
+		}
+		if jsonOn {
+			expr = fmt.Sprintf("if(notEmpty(attributes), map(), %s)", expr)
+		}
+		if expr != column {
+			expr += " AS " + column
+		}
+		columns = append(columns, expr)
+	}
+	if !jsonOn {
+		return columns
+	}
+	if aggregate != "" {
+		return append(columns, aggregate+"(attributes) AS attributes")
+	}
+	return append(columns, "attributes")
 }

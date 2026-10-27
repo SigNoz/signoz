@@ -36,7 +36,7 @@ type TraceStore interface {
 	GetTraceSpans(ctx context.Context, orgID valuer.UUID, traceID string, bounds *TraceBounds) ([]StorableSpan, error)
 	GetMinimalSpans(ctx context.Context, traceID string, start, end time.Time) ([]MinimalSpan, error)
 	GetTraceSpansByIDs(ctx context.Context, orgID valuer.UUID, traceID string, start, end time.Time, spanIDs []string) ([]StorableSpan, error)
-	GetFlamegraphSpans(ctx context.Context, traceID string, start, end time.Time, spanIDs []string) ([]StorableSpan, error)
+	GetFlamegraphSpans(ctx context.Context, orgID valuer.UUID, traceID string, start, end time.Time, spanIDs []string) ([]StorableSpan, error)
 	GetThreadSpans(ctx context.Context, orgID valuer.UUID, traceID string, bounds *TraceBounds, page ThreadPage) ([]StorableSpan, error)
 	GetThreadCursor(ctx context.Context, traceID string, bounds *TraceBounds, spanID string) (*ThreadCursor, error)
 
