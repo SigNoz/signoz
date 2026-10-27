@@ -47,7 +47,37 @@ export interface SectionHandle {
 	delete(): Promise<void>;
 }
 
+export interface Toolbar {
+	actions(): Locator;
+	configure(): Locator;
+	json(): Locator;
+	newPanel(): Locator;
+	timePicker(): Locator;
+	/** No testid or accessible name: matched by its wrapper class. */
+	refresh(): Locator;
+	autoRefresh(): Locator;
+	feedback(): Locator;
+	share(): Locator;
+}
+
+/** The toolbar's controls, shared with the time picker and settings drivers. */
+export function toolbarAt(page: Page): Toolbar {
+	return {
+		actions: () => page.getByTestId('options'),
+		configure: () => page.getByTestId('show-drawer'),
+		json: () => page.getByTestId('edit-json'),
+		newPanel: () => page.getByTestId('add-panel-header'),
+		timePicker: () => page.getByTestId('dropDown'),
+		refresh: () => page.locator('.refresh-btn button'),
+		autoRefresh: () => page.getByRole('button', { name: 'Set auto refresh' }),
+		feedback: () => page.getByRole('button', { name: 'Feedback' }),
+		share: () => page.getByRole('button', { name: 'Share' }),
+	};
+}
+
 export interface DashboardPage {
+	/** The confirm dialog's Cancel, which carries no testid. */
+	cancelDelete(): Locator;
 	breadcrumb(): Locator;
 	/** The breadcrumb's link back to the list. */
 	breadcrumbHome(): Locator;
@@ -55,18 +85,7 @@ export interface DashboardPage {
 	documentTitle(): Promise<string>;
 	tags(): Locator;
 	tagsOverflow(): Locator;
-	toolbar: {
-		actions(): Locator;
-		configure(): Locator;
-		json(): Locator;
-		newPanel(): Locator;
-		timePicker(): Locator;
-		/** No testid or accessible name: matched by its wrapper class. */
-		refresh(): Locator;
-		autoRefresh(): Locator;
-		feedback(): Locator;
-		share(): Locator;
-	};
+	toolbar: Toolbar;
 	actions: {
 		open(): Promise<Locator>;
 		close(): Promise<void>;
@@ -173,6 +192,8 @@ function dashboardPageDriver(page: Page): DashboardPage {
 		page.getByRole('dialog').filter({ hasText: 'Dashboard JSON' });
 
 	const dashboardPage: DashboardPage = {
+		cancelDelete: () =>
+			page.getByRole('dialog').getByRole('button', { name: 'Cancel' }),
 		breadcrumb,
 		breadcrumbHome: () =>
 			breadcrumb().getByRole('link', { name: 'Dashboard', exact: true }),
@@ -180,17 +201,7 @@ function dashboardPageDriver(page: Page): DashboardPage {
 		documentTitle: () => page.title(),
 		tags: () => page.getByTestId('dashboard-tags'),
 		tagsOverflow: () => page.getByTestId('dashboard-tags-overflow'),
-		toolbar: {
-			actions: () => page.getByTestId('options'),
-			configure: () => page.getByTestId('show-drawer'),
-			json: () => page.getByTestId('edit-json'),
-			newPanel: () => page.getByTestId('add-panel-header'),
-			timePicker: () => page.getByTestId('dropDown'),
-			refresh: () => page.locator('.refresh-btn button'),
-			autoRefresh: () => page.getByRole('button', { name: 'Set auto refresh' }),
-			feedback: () => page.getByRole('button', { name: 'Feedback' }),
-			share: () => page.getByRole('button', { name: 'Share' }),
-		},
+		toolbar: toolbarAt(page),
 		actions: {
 			async open() {
 				await dashboardPage.actions.close();

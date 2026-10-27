@@ -1,6 +1,7 @@
 import {
 	BAR_VALUES,
 	BAR_VARIABLES as V,
+	type Dashboards,
 	emptyDashboard,
 	expect,
 	test,
@@ -8,6 +9,16 @@ import {
 } from '../../../drivers/dashboard-settings';
 
 // Scope: the Configure drawer — Overview, Variables and Publish tabs.
+
+function savedNames(
+	dashboards: Dashboards,
+	id: string,
+): () => Promise<string[]> {
+	return async () =>
+		(await dashboards.get(id)).spec.variables.map(
+			(variable) => variable.spec.name,
+		);
+}
 
 test.describe('Dashboards — settings drawer', () => {
 	test('TC-01 Configure opens on Overview with every tab', async ({
@@ -90,7 +101,7 @@ test.describe('Dashboards — settings drawer', () => {
 		settings,
 		variablesBar,
 	}) => {
-		await dashboards.seedAndOpen(variablesBarDashboard());
+		const id = await dashboards.seedAndOpen(variablesBarDashboard());
 		const name = 'tb_added';
 
 		await settings.open();
@@ -102,6 +113,8 @@ test.describe('Dashboards — settings drawer', () => {
 		await settings.form.save().click();
 		await expect(settings.variables.row(name)).toBeVisible();
 		await settings.close();
+		// The save is optimistic, so the row alone does not prove the PATCH.
+		await expect.poll(savedNames(dashboards, id)).toContain(name);
 
 		await variablesBar.expand();
 		await expect(variablesBar.label(name)).toBeVisible();
@@ -114,7 +127,7 @@ test.describe('Dashboards — settings drawer', () => {
 		settings,
 		variablesBar,
 	}) => {
-		await dashboards.seedAndOpen(variablesBarDashboard());
+		const id = await dashboards.seedAndOpen(variablesBarDashboard());
 		const name = 'cu_added';
 
 		await settings.open();
@@ -126,6 +139,7 @@ test.describe('Dashboards — settings drawer', () => {
 		await settings.form.save().click();
 		await expect(settings.variables.row(name)).toBeVisible();
 		await settings.close();
+		await expect.poll(savedNames(dashboards, id)).toContain(name);
 
 		await variablesBar.expand();
 		await expect(variablesBar.select(name)).toContainText('east');
@@ -203,11 +217,7 @@ test.describe('Dashboards — settings drawer', () => {
 
 		await expect(variablesBar.label(renamed)).toBeVisible();
 		await expect(variablesBar.label(V.textEnv)).toHaveCount(0);
-		await expect
-			.poll(async () =>
-				(await dashboards.get(id)).spec.variables.map((v) => v.spec.name),
-			)
-			.toContain(renamed);
+		await expect.poll(savedNames(dashboards, id)).toContain(renamed);
 	});
 
 	test('TC-11 switching a custom variable to Query swaps the form', async ({
@@ -262,7 +272,7 @@ test.describe('Dashboards — settings drawer', () => {
 		settings,
 		variablesBar,
 	}) => {
-		await dashboards.seedAndOpen(variablesBarDashboard());
+		const id = await dashboards.seedAndOpen(variablesBarDashboard());
 		await expect(variablesBar.label(V.textEnv)).toBeVisible();
 
 		await settings.open();
@@ -272,6 +282,8 @@ test.describe('Dashboards — settings drawer', () => {
 
 		await expect(variablesBar.label(V.textEnv)).toHaveCount(0);
 		await expect(variablesBar.label(V.textService)).toBeVisible();
+		// The bar drops the label before the PATCH lands.
+		await expect.poll(savedNames(dashboards, id)).not.toContain(V.textEnv);
 	});
 
 	test('TC-14 a duplicate name keeps Save Variable disabled', async ({
@@ -319,7 +331,61 @@ test.describe('Dashboards — settings drawer', () => {
 		await expect(settings.variables.row(V.textEnv)).toBeVisible();
 	});
 
-	test.fixme('TC-16 the bar picks up a changed textbox default', async ({
+	test('TC-16 dragging a variable reorders the list, the bar and the spec', async ({
+		dashboards,
+		settings,
+		variablesBar,
+	}) => {
+		const id = await dashboards.seedAndOpen(variablesBarDashboard());
+		const before = await savedNames(dashboards, id)();
+		const [first, second] = before;
+
+		await settings.open();
+		await settings.openTab('Variables');
+		await settings.variables.reorder(second, first);
+
+		const after = [second, first, ...before.slice(2)];
+		await expect.poll(savedNames(dashboards, id)).toEqual(after);
+		await settings.close();
+		expect(await variablesBar.names()).toEqual(after.map((name) => `$${name}`));
+	});
+
+	test('TC-17 a dynamic variable created in Configure lists the field values', async ({
+		dashboards,
+		settings,
+		variablesBar,
+	}) => {
+		// Unique per test: seeded rows outlive it.
+		const label = `e2e_created_${Date.now()}_${process.pid}`;
+		await variablesBar.seedMetricLabel(label, ['ns-one', 'ns-two']);
+		const id = await dashboards.seed(emptyDashboard());
+		await dashboards.openEmpty(id);
+		const name = 'd_created';
+
+		await settings.open();
+		await settings.openTab('Variables');
+		await settings.variables.add().click();
+		await settings.form.name().fill(name);
+		await settings.form.type('dynamic').click();
+		await settings.form.dynamicField(label);
+		await settings.form.save().click();
+		await expect(settings.variables.row(name)).toBeVisible();
+		await settings.close();
+
+		await expect
+			.poll(async () => {
+				const saved = (await dashboards.get(id)).spec.variables.find(
+					(variable) => variable.spec.name === name,
+				);
+				return saved?.kind === 'ListVariable' ? saved.spec.plugin : undefined;
+			})
+			.toMatchObject({ kind: 'signoz/DynamicVariable', spec: { name: label } });
+		await variablesBar.open(name);
+		await expect(variablesBar.option('ns-one')).toBeVisible();
+		await expect(variablesBar.option('ns-two')).toBeVisible();
+	});
+
+	test.fixme('TC-18 the bar picks up a changed textbox default', async ({
 		dashboards,
 		settings,
 		variablesBar,

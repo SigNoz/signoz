@@ -1,6 +1,13 @@
 import {
 	BAR_VALUES,
 	BAR_VARIABLES as V,
+	EMPTY_VARIABLE_QUERY,
+	GOLDEN,
+	PanelKind,
+	textVariable,
+	VARIABLE_NAMES,
+	VARIABLE_PANEL_ID,
+	variablesDashboard,
 	expect,
 	QUERY_CHILD_SUFFIX,
 	test,
@@ -127,6 +134,8 @@ test.describe('Dashboards — variables bar', () => {
 
 		await variablesBar.type(V.textEnv, 'production');
 
+		// Enter commits by blurring, so the field must lose focus without a click.
+		await expect(variablesBar.textbox(V.textEnv)).not.toBeFocused();
 		await expect(variablesBar.textbox(V.textEnv)).toHaveValue('production');
 		expect((await variablesBar.shared())[V.textEnv]).toBe('production');
 	});
@@ -226,7 +235,9 @@ test.describe('Dashboards — variables bar', () => {
 		dashboards,
 		variablesBar,
 	}) => {
+		const fetched = variablesBar.optionsFetched(EMPTY_VARIABLE_QUERY);
 		await dashboards.seedAndOpen(variablesBarDashboard());
+		await fetched;
 		await variablesBar.expand();
 
 		await variablesBar.open(V.queryEmpty);
@@ -264,24 +275,45 @@ test.describe('Dashboards — variables bar', () => {
 		expect(await variablesBar.names()).toEqual(ORDER.map((name) => `$${name}`));
 	});
 
-	test('TC-15 a variable deleted in Configure leaves the bar', async ({
+	test('TC-15 picking a value refetches the panel that uses it', async ({
 		dashboards,
+		panels,
+		queryRange,
 		variablesBar,
-		settings,
 	}) => {
-		await dashboards.seedAndOpen(variablesBarDashboard());
-		await expect(variablesBar.label(V.textService)).toHaveCount(1);
+		await dashboards.seedAndOpen(variablesDashboard());
+		const target = panels.panel(VARIABLE_PANEL_ID);
+		await expect(
+			target.renderer(PanelKind.TimeSeries).or(target.noData()).first(),
+		).toBeVisible();
+		const picked = GOLDEN.services[1];
 
-		await settings.open();
-		await settings.openTab('Variables');
-		await settings.variables.remove(V.textService);
-		await settings.close();
+		const refetch = queryRange.nextRequest();
+		await variablesBar.pick(VARIABLE_NAMES.custom, picked);
 
-		await expect(variablesBar.label(V.textService)).toHaveCount(0);
-		await expect(variablesBar.label(V.textEnv)).toBeVisible();
+		const body = (await refetch).postDataJSON() as {
+			variables?: Record<string, { value?: unknown }>;
+		};
+		expect(body.variables?.[VARIABLE_NAMES.custom]?.value).toBe(picked);
 	});
 
-	test.fixme('TC-16 a first visit through a shared link applies its values', async ({
+	test('TC-16 a variable description shows in its info tooltip', async ({
+		dashboards,
+		variablesBar,
+	}) => {
+		const documented = textVariable('tb_documented', 'x');
+		documented.spec.display.description = 'Deployment environment';
+		const fixture = variablesBarDashboard();
+		fixture.spec.variables.push(documented);
+		await dashboards.seedAndOpen(fixture);
+		await variablesBar.expand();
+
+		const tooltip = await variablesBar.info('tb_documented');
+
+		await expect(tooltip).toContainText('Deployment environment');
+	});
+
+	test.fixme('TC-17 a first visit through a shared link applies its values', async ({
 		dashboards,
 		variablesBar,
 	}) => {

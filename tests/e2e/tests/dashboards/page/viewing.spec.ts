@@ -2,6 +2,7 @@ import {
 	COMPACT_PANELS,
 	compactDashboard,
 	expect,
+	PanelKind,
 	test,
 } from '../../../drivers/dashboard-page';
 
@@ -95,8 +96,16 @@ test.describe('Dashboards — viewing', () => {
 		const collected = dashboardPage.collectPageErrors();
 
 		await dashboards.seedAndOpen(compactDashboard());
-		await expect(panels.panel(COMPACT_PANELS.timeseries).title()).toBeVisible();
-		await expect(panels.panel(COMPACT_PANELS.table).title()).toBeVisible();
+		// Settled, not just titled: the errors only count once the data is in.
+		for (const [id, kind] of [
+			[COMPACT_PANELS.timeseries, PanelKind.TimeSeries],
+			[COMPACT_PANELS.table, PanelKind.Table],
+		] as const) {
+			const target = panels.panel(id);
+			await expect(
+				target.renderer(kind).or(target.noData()).first(),
+			).toBeVisible();
+		}
 
 		expect(collected.errors).toEqual([]);
 	});

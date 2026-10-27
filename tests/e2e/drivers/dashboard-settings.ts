@@ -4,17 +4,15 @@
  */
 import { expect, type Locator, type Page } from '@playwright/test';
 
-import {
-	buildDashboard,
-	panel,
-	PanelKind,
-	type PostableDashboard,
-	type Signal,
-	type Variable,
-} from '../helpers/dashboard-spec';
+import { buildDashboard, panel, PanelKind } from '../helpers/dashboard-spec';
+import type {
+	PostableDashboard,
+	Signal,
+	Variable,
+} from '../helpers/dashboard-spec.types';
 
-import { seedMetricsViaSeeder } from '../helpers/dashboards';
-
+import { toolbarAt } from './dashboard-page';
+import { boxOf, dragBy, openSelectOption } from './panels/dom';
 import { PATH } from './dashboards';
 import { driver } from './kit';
 import { test as panelsTest } from './panels';
@@ -82,6 +80,8 @@ function listVariable(
 	};
 }
 
+export const EMPTY_VARIABLE_QUERY = "SELECT 'none' WHERE 1 = 0";
+
 export const BAR_VARIABLES = {
 	textEnv: 'tb_env',
 	textService: 'tb_service',
@@ -128,7 +128,7 @@ export function variablesBarDashboard(
 				`SELECT concat({{.${v.queryParent}}}, '${QUERY_CHILD_SUFFIX}')`,
 				{ multi: true },
 			),
-			queryVariable(v.queryEmpty, "SELECT 'none' WHERE 1 = 0", { multi: true }),
+			queryVariable(v.queryEmpty, EMPTY_VARIABLE_QUERY, { multi: true }),
 			dynamicVariable(
 				v.dynamic,
 				options.dynamicAttribute ?? 'service.name',
@@ -194,7 +194,8 @@ function ordinal(day: number): string {
 }
 
 function timePickerDriver(page: Page): TimePicker {
-	const input = (): Locator => page.getByTestId('dropDown');
+	const toolbar = toolbarAt(page);
+	const input = (): Locator => toolbar.timePicker();
 	const options = (): Locator => page.locator('.date-time-popover');
 	// The timezone footer sits outside `.date-time-popover`.
 	const popover = (): Locator => page.locator('.date-time-root');
@@ -244,11 +245,10 @@ function timePickerDriver(page: Page): TimePicker {
 				.getByRole('button', { name: new RegExp(`^${name}\\b`) })
 				.click();
 		},
-		// The refresh button has neither a test id nor an accessible name.
-		refresh: () => page.locator('.refresh-btn button'),
+		refresh: () => toolbar.refresh(),
 		autoRefresh: {
 			async open() {
-				await page.getByRole('button', { name: 'Set auto refresh' }).click();
+				await toolbar.autoRefresh().click();
 				await expect(autoRefreshMenu()).toBeVisible();
 			},
 			checkbox: () =>
@@ -295,6 +295,10 @@ export interface VariablesBar {
 	close(name: string): Promise<void>;
 	listbox(): Locator;
 	option(label: string): Locator;
+	/** Hovers the variable's info icon and returns its tooltip. */
+	info(name: string): Promise<Locator>;
+	/** Resolves once a query variable's options for `query` come back. */
+	optionsFetched(query: string): Promise<void>;
 	/** Single-select: picks one option. */
 	pick(name: string, value: string): Promise<void>;
 	/** Multi-select: toggles each value, then closes to commit. */
@@ -366,6 +370,20 @@ function variablesBarDriver(page: Page): VariablesBar {
 		listbox,
 		option: (label) =>
 			listbox().getByRole('option', { name: label, exact: true }),
+		async info(name) {
+			// The icon is a bare lucide svg: no testid or accessible name.
+			await variable(name).locator('svg[class*="infoIcon"]').hover();
+			const tooltip = page.getByRole('tooltip');
+			await expect(tooltip).toBeVisible();
+			return tooltip;
+		},
+		async optionsFetched(query) {
+			await page.waitForResponse(
+				(r) =>
+					r.url().includes('/variables/query') &&
+					(r.request().postDataJSON() as { query?: string } | null)?.query === query,
+			);
+		},
 		async pick(name, value) {
 			await bar.open(name);
 			await bar.option(value).click();
@@ -396,7 +414,7 @@ function variablesBarDriver(page: Page): VariablesBar {
 					{ capture: true, once: true },
 				);
 			});
-			await page.getByRole('button', { name: 'Share' }).click();
+			await toolbarAt(page).share().click();
 			const modal = page.locator('.share-modal-content');
 			const include = modal
 				.locator('.absolute-relative-time-toggler-container')
@@ -414,9 +432,10 @@ function variablesBarDriver(page: Page): VariablesBar {
 		},
 		async seedMetricLabel(label, values) {
 			const timestamp = new Date(Date.now() - 60_000).toISOString();
-			await seedMetricsViaSeeder(
-				page,
-				values.map((value) => ({
+			const seeder = process.env.SIGNOZ_E2E_SEEDER_URL;
+			expect(seeder, 'SIGNOZ_E2E_SEEDER_URL is not set').toBeTruthy();
+			const res = await page.request.post(`${seeder}/telemetry/metrics`, {
+				data: values.map((value) => ({
 					metric_name: 'e2e_dynamic_variable',
 					labels: { [label]: value },
 					timestamp,
@@ -425,7 +444,8 @@ function variablesBarDriver(page: Page): VariablesBar {
 					type_: 'Sum',
 					is_monotonic: true,
 				})),
-			);
+			});
+			expect(res.ok(), `seeder POST ${res.status()}`).toBe(true);
 		},
 	};
 	return bar;
@@ -461,11 +481,15 @@ export interface DashboardSettings {
 		edit(name: string): Promise<void>;
 		/** Confirms inline. */
 		remove(name: string): Promise<void>;
+		/** Drags `name`'s grip onto `target`'s row. */
+		reorder(name: string, target: string): Promise<void>;
 	};
 	form: {
 		name(): Locator;
 		type(type: VariableTypeTab): Locator;
 		customValues(): Locator;
+		/** Searches the dynamic variable's field select and picks `field`. */
+		dynamicField(field: string): Promise<void>;
 		textDefault(): Locator;
 		queryEditor(): Locator;
 		error(text: string): Locator;
@@ -485,7 +509,7 @@ function settingsDriver(page: Page): DashboardSettings {
 	const panelLocator = (): Locator => dialog().getByRole('tabpanel').first();
 
 	const settings: DashboardSettings = {
-		configure: () => page.getByTestId('show-drawer'),
+		configure: () => toolbarAt(page).configure(),
 		async open() {
 			await settings.configure().click();
 			await expect(dialog()).toBeVisible();
@@ -531,11 +555,34 @@ function settingsDriver(page: Page): DashboardSettings {
 				await dialog().getByTestId(`variable-delete-confirm-${name}`).click();
 				await expect(settings.variables.row(name)).toHaveCount(0);
 			},
+			async reorder(name, target) {
+				const grip = await boxOf(
+					settings.variables
+						.row(name)
+						.getByRole('button', { name: 'Reorder variable' }),
+					'the reorder grip',
+				);
+				const to = await boxOf(settings.variables.row(target), 'the target row');
+				// dnd-kit's pointer sensor activates on the first move.
+				await dragBy(
+					page,
+					{ x: grip.x + grip.width / 2, y: grip.y + grip.height / 2 },
+					{ x: grip.x + grip.width / 2, y: to.y + to.height / 4 },
+					20,
+				);
+			},
 		},
 		form: {
 			name: () => dialog().getByTestId('variable-name'),
 			type: (type) => dialog().getByTestId(`variable-type-${type}`),
 			customValues: () => dialog().getByTestId('variable-custom-input'),
+			async dynamicField(field) {
+				const select = dialog().getByTestId('variable-field-select');
+				await select.click();
+				await page.keyboard.type(field);
+				await openSelectOption(page, field).click();
+				await expect(select).toContainText(field);
+			},
 			textDefault: () => dialog().getByTestId('variable-text-input'),
 			// Monaco renders a textbox named "Editor content" with no test id.
 			queryEditor: () => dialog().locator('.monaco-editor'),

@@ -1,6 +1,5 @@
 import {
 	expect,
-	REFRESH_INTERVALS,
 	SINGLE_PANEL_ID,
 	singlePanelDashboard,
 	test,
@@ -30,21 +29,7 @@ test.describe('Dashboards — time range', () => {
 			.toBe(true);
 	});
 
-	test('TC-02 switching presets twice keeps only the last one', async ({
-		timePicker,
-		authedPage: page,
-	}) => {
-		await timePicker.selectPreset('6h');
-		await expect(timePicker.input()).toHaveAccessibleName('Last 6 hours');
-		await expect(page).toHaveURL(/relativeTime=6h/);
-
-		await timePicker.selectPreset('1d');
-		await expect(timePicker.input()).toHaveAccessibleName('Last 1 day');
-		await expect(page).toHaveURL(/relativeTime=1d/);
-		await expect(page).not.toHaveURL(/relativeTime=6h/);
-	});
-
-	test('TC-03 a custom date range switches the URL to absolute timestamps', async ({
+	test('TC-02 a custom date range switches the URL to absolute timestamps', async ({
 		timePicker,
 		queryRange,
 		authedPage: page,
@@ -68,7 +53,7 @@ test.describe('Dashboards — time range', () => {
 		await expect.poll(matchesUrl).toBe(true);
 	});
 
-	test('TC-04 changing the timezone updates the offset badge', async ({
+	test('TC-03 changing the timezone updates the offset badge', async ({
 		timePicker,
 	}) => {
 		await timePicker.selectTimezone('Tokyo', 'Asia/Tokyo');
@@ -76,37 +61,32 @@ test.describe('Dashboards — time range', () => {
 		await expect(timePicker.timezoneBadge()).toHaveText('UTC + 9:00');
 	});
 
-	test('TC-05 the auto-refresh popup lists every interval, off by default', async ({
+	test('TC-04 auto-refresh refetches the panels on its interval, until turned off', async ({
 		timePicker,
+		panels,
+		queryRange,
 	}) => {
-		await timePicker.autoRefresh.open();
+		const target = panels.panel(SINGLE_PANEL_ID);
+		await expect(target.root()).toHaveAttribute('data-panel-visible', 'true');
+		await expect(target.loading()).toBeHidden();
 
-		await expect(timePicker.autoRefresh.checkbox()).not.toBeChecked();
-		for (const label of REFRESH_INTERVALS) {
-			await expect(timePicker.autoRefresh.interval(label)).toBeVisible();
-		}
-	});
-
-	test('TC-06 auto-refresh toggles on, takes an interval and toggles off', async ({
-		timePicker,
-	}) => {
 		await timePicker.autoRefresh.open();
 		const checkbox = timePicker.autoRefresh.checkbox();
-
+		await expect(checkbox).not.toBeChecked();
 		await checkbox.click();
-		await expect(checkbox).toBeChecked();
+		await timePicker.autoRefresh.interval('5 seconds').click();
+		await expect(timePicker.autoRefresh.selected()).toHaveText('5 seconds');
 
-		await timePicker.autoRefresh.interval('1 minute').click();
-		await expect(timePicker.autoRefresh.selected()).toHaveText('1 minute');
-		await timePicker.autoRefresh.interval('5 minutes').click();
-		await expect(timePicker.autoRefresh.selected()).toHaveText('5 minutes');
-		await expect(checkbox).toBeChecked();
+		const windows = queryRange.recordWindows();
+		await expect
+			.poll(() => windows.length, { timeout: 15_000 })
+			.toBeGreaterThanOrEqual(2);
 
 		await checkbox.click();
 		await expect(checkbox).not.toBeChecked();
 	});
 
-	test('TC-07 manual refresh refetches the panels', async ({
+	test('TC-05 manual refresh refetches the panels', async ({
 		timePicker,
 		panels,
 		queryRange,

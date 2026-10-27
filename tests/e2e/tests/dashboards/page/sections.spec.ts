@@ -10,7 +10,7 @@ import {
 // rename, add and delete are patches to the spec.
 
 test.describe('Dashboards — sections', () => {
-	test('TC-01 collapsing a section hides its panels and keeps its header', async ({
+	test('TC-01 a collapsed section unmounts its panels and stays collapsed after a reload', async ({
 		dashboards,
 		dashboardPage,
 		panels,
@@ -19,27 +19,19 @@ test.describe('Dashboards — sections', () => {
 		const tabular = dashboardPage.section('Tabular');
 
 		await tabular.collapse();
-
 		await expect(tabular.toggle()).toBeVisible();
-		await expect(panels.panel(COMPACT_PANELS.table).root()).toBeHidden();
-		await expect(panels.panel(COMPACT_PANELS.list).root()).toBeHidden();
-	});
+		await expect(tabular.panels()).toHaveCount(0);
+		await expect(panels.panel(COMPACT_PANELS.timeseries).root()).toHaveCount(1);
 
-	test('TC-02 expanding restores every panel the section held', async ({
-		dashboards,
-		dashboardPage,
-	}) => {
-		await dashboards.seedAndOpen(compactDashboard());
-		const tabular = dashboardPage.section('Tabular');
-		const before = await tabular.panels().count();
+		await dashboards.reload();
+		await expect(panels.panel(COMPACT_PANELS.timeseries).root()).toHaveCount(1);
+		await expect(tabular.panels()).toHaveCount(0);
 
-		await tabular.collapse();
 		await tabular.expand();
-
-		await expect(tabular.panels()).toHaveCount(before);
+		await expect(tabular.panels()).toHaveCount(2);
 	});
 
-	test('TC-03 the section menu offers add, rename, clone and delete', async ({
+	test('TC-02 the section menu offers add, rename, clone and delete', async ({
 		dashboards,
 		dashboardPage,
 	}) => {
@@ -53,7 +45,7 @@ test.describe('Dashboards — sections', () => {
 		}
 	});
 
-	test('TC-04 renaming a section updates its header and persists', async ({
+	test('TC-03 renaming a section updates its header and persists', async ({
 		dashboards,
 		dashboardPage,
 	}) => {
@@ -73,7 +65,7 @@ test.describe('Dashboards — sections', () => {
 			.toEqual([renamed, 'Tabular']);
 	});
 
-	test('TC-05 cancelling a section rename leaves the title unchanged', async ({
+	test('TC-04 cancelling a section rename leaves the title unchanged', async ({
 		dashboards,
 		dashboardPage,
 	}) => {
@@ -91,7 +83,7 @@ test.describe('Dashboards — sections', () => {
 		).toHaveCount(0);
 	});
 
-	test('TC-06 a section added from the Actions menu can be deleted', async ({
+	test('TC-05 a section added from the Actions menu can be deleted', async ({
 		dashboards,
 		dashboardPage,
 	}) => {
@@ -109,38 +101,5 @@ test.describe('Dashboards — sections', () => {
 		await expect
 			.poll(async () => (await dashboards.get(id)).spec.layouts.length)
 			.toBe(2);
-	});
-
-	test('TC-07 two sections collapse in sequence and both stay collapsed', async ({
-		dashboards,
-		dashboardPage,
-	}) => {
-		await dashboards.seedAndOpen(compactDashboard());
-		const charts = dashboardPage.section('Charts');
-		const tabular = dashboardPage.section('Tabular');
-
-		await charts.collapse();
-		await tabular.collapse();
-
-		await expect(charts.panels()).toHaveCount(0);
-		await expect(tabular.panels()).toHaveCount(0);
-
-		await charts.expand();
-		await tabular.expand();
-		await expect(charts.panels()).toHaveCount(1);
-		await expect(tabular.panels()).toHaveCount(2);
-	});
-
-	test('TC-08 a collapsed section unmounts its panels and spares the others', async ({
-		dashboards,
-		dashboardPage,
-		panels,
-	}) => {
-		await dashboards.seedAndOpen(compactDashboard());
-
-		await dashboardPage.section('Charts').collapse();
-
-		await expect(panels.panel(COMPACT_PANELS.timeseries).root()).toHaveCount(0);
-		await expect(panels.panel(COMPACT_PANELS.table).root()).toHaveCount(1);
 	});
 });

@@ -1,5 +1,8 @@
 import {
+	COMPACT_PANELS,
 	DashboardAction,
+	PanelAction,
+	PATH,
 	compactDashboard,
 	expect,
 	test,
@@ -43,7 +46,7 @@ test.describe('Dashboards — edit mode', () => {
 		await expect.poll(async () => (await dashboards.get(id)).locked).toBe(true);
 	});
 
-	test('TC-03 renaming updates the title and breadcrumb', async ({
+	test('TC-03 renaming updates the title and breadcrumb and survives a reload', async ({
 		dashboards,
 		dashboardPage,
 	}) => {
@@ -56,6 +59,10 @@ test.describe('Dashboards — edit mode', () => {
 		await expect
 			.poll(async () => (await dashboards.get(id)).spec.display.name)
 			.toBe(renamed);
+
+		await dashboards.reload();
+		await expect(dashboardPage.title()).toHaveText(renamed);
+		await expect.poll(() => dashboardPage.documentTitle()).toBe(renamed);
 	});
 
 	test('TC-04 cancelling a rename leaves the name unchanged', async ({
@@ -74,20 +81,7 @@ test.describe('Dashboards — edit mode', () => {
 		await expect(dashboardPage.breadcrumb()).toContainText(original);
 	});
 
-	test('TC-05 a section added from the Actions menu can be removed', async ({
-		dashboards,
-		dashboardPage,
-	}) => {
-		await dashboards.seedAndOpen(compactDashboard());
-		const title = `e2e-section-${Date.now()}`;
-
-		await dashboardPage.addSection(title);
-		await dashboardPage.section(title).delete();
-
-		await expect(dashboardPage.section(title).root()).toHaveCount(0);
-	});
-
-	test('TC-06 the JSON drawer downloads the dashboard as .json', async ({
+	test('TC-05 the JSON drawer downloads the dashboard as .json', async ({
 		dashboards,
 		dashboardPage,
 	}) => {
@@ -98,7 +92,7 @@ test.describe('Dashboards — edit mode', () => {
 		expect(await dashboardPage.json.download()).toMatch(/\.json$/);
 	});
 
-	test('TC-07 the JSON drawer copies the dashboard JSON', async ({
+	test('TC-06 the JSON drawer copies the dashboard JSON', async ({
 		dashboards,
 		dashboardPage,
 		browserName,
@@ -118,7 +112,7 @@ test.describe('Dashboards — edit mode', () => {
 		expect(copied.spec?.display?.name).toBe(fixture.spec.display.name);
 	});
 
-	test('TC-08 Full screen shows only the grid and exits cleanly', async ({
+	test('TC-07 Full screen shows only the grid and exits cleanly', async ({
 		dashboards,
 		dashboardPage,
 	}) => {
@@ -137,7 +131,7 @@ test.describe('Dashboards — edit mode', () => {
 		expect(collected.errors).toEqual([]);
 	});
 
-	test('TC-09 lock then unlock restores the edit affordances', async ({
+	test('TC-08 lock then unlock restores the edit affordances', async ({
 		dashboards,
 		dashboardPage,
 	}) => {
@@ -164,21 +158,36 @@ test.describe('Dashboards — edit mode', () => {
 		await expect.poll(async () => (await dashboards.get(id)).locked).toBe(false);
 	});
 
-	test('TC-10 a rename survives a reload', async ({
+	test('TC-09 Edit panel opens that panel in the editor', async ({
+		authedPage: page,
 		dashboards,
-		dashboardPage,
+		panels,
 	}) => {
 		const id = await dashboards.seedAndOpen(compactDashboard());
-		const renamed = `Renamed-Persist-${Date.now()}`;
 
-		await dashboardPage.rename.to(renamed);
-		await expect
-			.poll(async () => (await dashboards.get(id)).spec.display.name)
-			.toBe(renamed);
+		await panels.panel(COMPACT_PANELS.table).actions.run(PanelAction.edit);
 
-		await dashboards.reload();
+		await expect(page).toHaveURL(
+			new RegExp(`${PATH.editor(id, COMPACT_PANELS.table)}(\\?|$)`),
+		);
+	});
 
-		await expect(dashboardPage.title()).toHaveText(renamed);
-		await expect.poll(() => dashboardPage.documentTitle()).toBe(renamed);
+	test('TC-10 cancelling a panel delete keeps the panel', async ({
+		dashboards,
+		dashboardPage,
+		panels,
+	}) => {
+		const id = await dashboards.seedAndOpen(compactDashboard());
+		const list = panels.panel(COMPACT_PANELS.list);
+
+		await list.actions.run(PanelAction.delete);
+		await expect(dashboards.confirmDelete()).toBeVisible();
+		await dashboardPage.cancelDelete().click();
+
+		await expect(dashboards.confirmDelete()).toBeHidden();
+		await expect(list.root()).toBeVisible();
+		expect(
+			(await dashboards.get(id)).spec.panels[COMPACT_PANELS.list],
+		).toBeDefined();
 	});
 });
