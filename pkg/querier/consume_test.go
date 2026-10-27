@@ -95,6 +95,9 @@ func jsonColumn(paths map[string]any) telemetrystoretypes.JSONValue {
 func TestUnwrapVariant(t *testing.T) {
 	jsonCol := jsonColumn(map[string]any{"level": "error", "attrs.code": int64(500)})
 	nullCol := jsonColumn(map[string]any{"level": "error", "absent": chcol.Variant{}})
+	scopeAttrs := chcol.NewJSON()
+	scopeAttrs.SetValueAtPath("lib.lang", "go")
+	scopeCol := jsonColumn(map[string]any{"name": "io.opentelemetry.http", "version": "1.2.0", "attributes": scopeAttrs})
 
 	testCases := []struct {
 		name   string
@@ -108,6 +111,7 @@ func TestUnwrapVariant(t *testing.T) {
 		{name: "JSONColumnNested", column: "body_v2", input: jsonCol, want: map[string]any{"level": "error", "attrs": map[string]any{"code": float64(500)}}},
 		{name: "AttributesColumnFlat", column: "attributes", input: jsonCol, want: map[string]any{"level": "error", "attrs.code": float64(500)}},
 		{name: "AttributesColumnDropsNullPaths", column: "attributes", input: nullCol, want: map[string]any{"level": "error"}},
+		{name: "ScopeColumnDecodesToScope", column: "scope", input: scopeCol, want: spantypes.Scope{Name: "io.opentelemetry.http", Version: "1.2.0", Attributes: map[string]any{"lib.lang": "go"}}},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {

@@ -64,6 +64,7 @@ type WaterfallSpan struct {
 	Name         string            `json:"name"`
 	ParentSpanID string            `json:"parent_span_id"`
 	Resource     map[string]string `json:"resource"`
+	Scope        Scope             `json:"scope"`
 	SpanID       string            `json:"span_id"`
 	TimeUnix     uint64            `json:"time_unix"`
 	TraceID      string            `json:"trace_id"`
@@ -113,6 +114,7 @@ type StorableSpan struct {
 	AttributesBool     map[string]bool               `ch:"attributes_bool"`
 	AttributesJSON     telemetrystoretypes.JSONValue `ch:"attributes"`
 	ResourcesString    map[string]string             `ch:"resources_string"`
+	Scope              telemetrystoretypes.JSONValue `ch:"scope"`
 	Events             []string                      `ch:"events"`
 	StatusMessage      string                        `ch:"status_message"`
 	StatusCodeString   string                        `ch:"status_code_string"`
@@ -153,6 +155,7 @@ func (item *MinimalSpan) ToWaterfallSpan(traceID string) *WaterfallSpan {
 		HasError:     item.HasError,
 		ServiceName:  item.ServiceName,
 		Resource:     map[string]string{"service.name": item.ServiceName},
+		Scope:        newEmptyScope(),
 		Children:     make([]*WaterfallSpan, 0),
 		Attributes:   make(map[string]any),
 		Events:       make([]Event, 0),
@@ -182,6 +185,7 @@ func NewMissingWaterfallSpan(spanID, traceID string, timeUnixNano, durationNano 
 		Children:     make([]*WaterfallSpan, 0),
 		Attributes:   make(map[string]any),
 		Resource:     make(map[string]string),
+		Scope:        newEmptyScope(),
 	}
 }
 
@@ -336,6 +340,7 @@ func (item *StorableSpan) ToWaterfallSpan(traceID string) *WaterfallSpan {
 		Name:               item.Name,
 		ParentSpanID:       item.ParentSpanID,
 		Resource:           resources,
+		Scope:              NewScope(item.Scope),
 		ResponseStatusCode: item.ResponseStatusCode,
 		SpanID:             item.SpanID,
 		StatusCode:         item.StatusCode,

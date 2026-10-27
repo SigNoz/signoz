@@ -21,12 +21,13 @@ def test_waterfall_and_flamegraph_read_each_attribute_home(
     trace_id = TraceIdGenerator.trace_id()
     legacy_id, json_id, dual_id = (TraceIdGenerator.span_id() for _ in range(3))
     resources = {"service.name": "tracedetail-attribute-homes"}
+    scope = {"name": "io.opentelemetry.http", "version": "1.2.0", "attributes": {"lib.lang": "go"}}
 
     insert_traces(
         [
             Traces(timestamp=now - timedelta(seconds=10), duration=timedelta(seconds=9), trace_id=trace_id, span_id=legacy_id, name="GET /legacy", kind=TracesKind.SPAN_KIND_SERVER, resources=resources, attributes={"http.route": "/legacy", "http.retry.count": 1, "cache.hit": True}, attribute_write_mode="legacy_only"),
             Traces(timestamp=now - timedelta(seconds=8), trace_id=trace_id, span_id=json_id, parent_span_id=legacy_id, name="db call", resources=resources, attributes={"http.route": "/json", "db.function": "node_refresh", "db.function.arg_count": 2}, attribute_write_mode="json_only"),
-            Traces(timestamp=now - timedelta(seconds=6), trace_id=trace_id, span_id=dual_id, parent_span_id=legacy_id, name="GET /dual", resources=resources, attributes={"http.route": "/dual"}),
+            Traces(timestamp=now - timedelta(seconds=6), trace_id=trace_id, span_id=dual_id, parent_span_id=legacy_id, name="GET /dual", resources=resources, attributes={"http.route": "/dual"}, scope=scope),
         ]
     )
 
@@ -40,11 +41,14 @@ def test_waterfall_and_flamegraph_read_each_attribute_home(
         timeout=10,
     )
     assert response.status_code == HTTPStatus.OK, response.text
-    waterfall = {span["span_id"]: span["attributes"] for span in response.json()["data"]["spans"]}
+    spans = {span["span_id"]: span for span in response.json()["data"]["spans"]}
+    waterfall = {span_id: span["attributes"] for span_id, span in spans.items()}
     assert waterfall[legacy_id] == {"http.route": "/legacy", "http.retry.count": 1, "cache.hit": True}
     # a key stored at both a scalar and an object path stays two flat keys
     assert waterfall[json_id] == {"http.route": "/json", "db.function": "node_refresh", "db.function.arg_count": 2}
     assert waterfall[dual_id] == {"http.route": "/dual"}
+    assert spans[dual_id]["scope"] == scope
+    assert spans[legacy_id]["scope"] == {"name": "", "version": "", "attributes": {}}
 
     response = requests.post(
         signoz.self.host_configs["8080"].get(f"/api/v3/traces/{trace_id}/flamegraph"),
@@ -54,6 +58,8 @@ def test_waterfall_and_flamegraph_read_each_attribute_home(
                 {"name": "http.route", "fieldContext": "attribute"},
                 {"name": "db.function.arg_count", "fieldContext": "attribute"},
                 {"name": "service.name", "fieldContext": "resource"},
+                {"name": "scope.name", "fieldContext": "scope"},
+                {"name": "lib.lang", "fieldContext": "scope"},
             ],
         },
         headers=headers,
@@ -65,3 +71,5 @@ def test_waterfall_and_flamegraph_read_each_attribute_home(
     assert flamegraph[json_id]["attributes"] == {"http.route": "/json", "db.function.arg_count": 2}
     assert flamegraph[dual_id]["attributes"] == {"http.route": "/dual"}
     assert all(span["resource"] == resources for span in flamegraph.values())
+    assert flamegraph[dual_id]["scope"] == {"name": "io.opentelemetry.http", "version": "", "attributes": {"lib.lang": "go"}}
+    assert flamegraph[json_id]["scope"] == {"name": "", "version": "", "attributes": {}}

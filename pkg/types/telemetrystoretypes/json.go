@@ -51,6 +51,20 @@ func (v JSONValue) Nest() map[string]any {
 	return unwrap(v.column.NestedMap())
 }
 
+// StringAt returns the string at a path, such as a declared String path; empty when absent.
+func (v JSONValue) StringAt(path string) string {
+	value, _ := chcol.ExtractJSONPathAs[string](&v.column, path)
+	return value
+}
+
+// ObjectAt returns the object at a declared JSON path, such as scope.attributes; empty when absent.
+func (v JSONValue) ObjectAt(path string) JSONValue {
+	if object, ok := chcol.ExtractJSONPathAs[*chcol.JSON](&v.column, path); ok && object != nil {
+		return JSONValue{column: *object}
+	}
+	return JSONValue{}
+}
+
 // MarshalJSON renders the flat attribute bag, so a reader that stores the scan target without calling
 // Flatten or Nest serializes the column instead of the empty struct.
 func (v JSONValue) MarshalJSON() ([]byte, error) {

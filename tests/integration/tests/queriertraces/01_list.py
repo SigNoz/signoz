@@ -545,7 +545,7 @@ def test_traces_list_response_shape_values(
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
 
-    def span(marker: str, *, kind: TracesKind, status_code: TracesStatusCode = TracesStatusCode.STATUS_CODE_UNSET, status_message: str = "", flags: int = 0, attributes: dict[str, Any]) -> Traces:
+    def span(marker: str, *, kind: TracesKind, status_code: TracesStatusCode = TracesStatusCode.STATUS_CODE_UNSET, status_message: str = "", flags: int = 0, attributes: dict[str, Any], scope: dict[str, Any] | None = None) -> Traces:
         return Traces(
             timestamp=now - timedelta(seconds=1),
             duration=timedelta(seconds=1),
@@ -558,10 +558,11 @@ def test_traces_list_response_shape_values(
             flags=flags,
             resources={"service.name": "shape-service", **extra_resources},
             attributes={"marker": marker, **attributes, **extra_attrs},
+            scope=scope or {},
         )
 
     spans = [
-        span("error", kind=TracesKind.SPAN_KIND_SERVER, status_code=TracesStatusCode.STATUS_CODE_ERROR, status_message="boom", attributes={"str_a": "x", "num_a": 7.5, "bool_a": True}),
+        span("error", kind=TracesKind.SPAN_KIND_SERVER, status_code=TracesStatusCode.STATUS_CODE_ERROR, status_message="boom", attributes={"str_a": "x", "num_a": 7.5, "bool_a": True}, scope={"name": "io.signoz.shape", "version": "0.1.0", "attributes": {"lib.lang": "go"}}),
         span("client", kind=TracesKind.SPAN_KIND_CLIENT, attributes={"http.url": "https://api.example.com/v1/orders", "http.request.method": "GET"}),
         span("db", kind=TracesKind.SPAN_KIND_CLIENT, attributes={"db.name": "orders_db", "db.operation": "SELECT"}),
         span("host", kind=TracesKind.SPAN_KIND_PRODUCER, attributes={"server.address": "payments.internal:8080"}),
@@ -622,6 +623,7 @@ def test_traces_list_response_shape_values(
             "is_remote": span_obj.is_remote,
             "attributes": {**span_obj.attribute_string, **span_obj.attributes_number, **span_obj.attributes_bool},
             "resource": span_obj.resources_string,
+            "scope": span_obj.scope_json,
         }
         # `==` treats True/1 and 7.5/7.5 as equal regardless of type, so pin the
         # string/number/bool type preservation for the error span explicitly.
@@ -1154,6 +1156,7 @@ def test_traces_list_span_scope(
                 "is_remote": x[3].is_remote,
                 "attributes": {**x[3].attribute_string, **x[3].attributes_number, **x[3].attributes_bool},
                 "resource": x[3].resources_string,
+                "scope": x[3].scope_json,
             },
             id="order_timestamp_full_shape",
         ),
@@ -1191,6 +1194,7 @@ def test_traces_list_span_scope(
                 "is_remote": x[3].is_remote,
                 "attributes": {**x[3].attribute_string, **x[3].attributes_number, **x[3].attributes_bool},
                 "resource": x[3].resources_string,
+                "scope": x[3].scope_json,
             },
             id="order_attribute_timestamp_full_shape",
         ),
