@@ -4,7 +4,10 @@
  */
 import { type Locator, type Page } from '@playwright/test';
 
-import type { ContextLink, PanelPluginSpec } from '../helpers/dashboard-spec';
+import type {
+	ContextLink,
+	PanelPluginSpec,
+} from '../helpers/dashboard-spec.types';
 import { SINGLE_PANEL_ID } from '../testdata/dashboards/panels';
 
 import { getViaApi } from './dashboards';
@@ -33,13 +36,7 @@ export interface ContextLinks {
 	label(): Locator;
 	url(): Locator;
 	save(): Locator;
-	cancel(): Locator;
-	addParam(): Locator;
-	paramKey(index: number): Locator;
-	paramValue(index: number): Locator;
 	item(index: number): Locator;
-	edit(index: number): Locator;
-	remove(index: number): Locator;
 	/**
 	 * Closes the URL field's suggestion popover, which otherwise keeps the
 	 * dialog reflowing so buttons never settle. Escape would dismiss the whole
@@ -79,13 +76,7 @@ function panelConfigDriver(page: Page): PanelConfig {
 			label: contextLinkLabel,
 			url: () => page.getByTestId('context-link-url'),
 			save: () => page.getByTestId('context-link-save'),
-			cancel: () => page.getByTestId('context-link-cancel'),
-			addParam: () => page.getByTestId('context-link-add-param'),
-			paramKey: (index) => page.getByTestId(`context-link-param-key-${index}`),
-			paramValue: (index) => page.getByTestId(`context-link-param-value-${index}`),
 			item: (index) => page.getByTestId(`context-link-item-${index}`),
-			edit: (index) => page.getByTestId(`context-link-edit-${index}`),
-			remove: (index) => page.getByTestId(`context-link-remove-${index}`),
 			async blurFields() {
 				await contextLinkLabel().focus();
 			},

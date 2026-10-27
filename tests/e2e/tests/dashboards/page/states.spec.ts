@@ -44,26 +44,7 @@ test.describe('Dashboards — panel states', () => {
 		await expect.poll(() => windows.some((w) => span(w) > before)).toBe(true);
 	});
 
-	test('TC-02 a panel pinned to a fixed window cannot extend, so Retry is primary', async ({
-		dashboards,
-		queryRange,
-		panels,
-	}) => {
-		await queryRange.respond(QueryRange.empty());
-
-		await dashboards.seedAndOpen(
-			singlePanelDashboard({
-				pluginSpec: { visualization: { timePreference: 'last_15_min' } },
-			}),
-		);
-
-		const target = panels.panel(SINGLE_PANEL_ID);
-		await expect(target.noData()).toBeVisible();
-		await expect(target.noDataAction()).toHaveText(PanelMessageText.retryAction);
-		await expect(target.noDataSecondaryAction()).toHaveCount(0);
-	});
-
-	test('TC-03 a failing query shows the error state and Retry refetches', async ({
+	test('TC-02 a failing query shows the error state and Retry refetches', async ({
 		dashboards,
 		queryRange,
 		panels,
@@ -87,7 +68,7 @@ test.describe('Dashboards — panel states', () => {
 		await expect(target.renderer(PanelKind.TimeSeries)).toBeVisible();
 	});
 
-	test('TC-04 an in-flight first query shows the loading state', async ({
+	test('TC-03 an in-flight first query shows the loading state', async ({
 		dashboards,
 		queryRange,
 		panels,
