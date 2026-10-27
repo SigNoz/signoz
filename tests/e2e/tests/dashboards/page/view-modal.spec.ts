@@ -2,8 +2,10 @@ import {
 	PATH,
 	PanelAction,
 	PanelKind,
+	QueryRange,
 	SINGLE_PANEL_ID,
 	expect,
+	ramp,
 	singlePanelDashboard,
 	test,
 } from '../../../drivers/panel-editor';
@@ -47,13 +49,21 @@ test.describe('Dashboards — View modal', () => {
 		queryRange,
 		panels,
 	}) => {
+		await queryRange.respond(
+			QueryRange.timeSeries([
+				{ labels: { 'service.name': 'adservice' }, points: ramp(12, 2, 8) },
+			]),
+		);
 		await dashboards.seedAndOpen(singlePanelDashboard());
 		await panels.view.open(SINGLE_PANEL_ID);
+		// The modal's own first query must land before Refresh is measured.
+		await expect(panels.view.chart.plotArea()).toBeVisible();
 
-		const refetch = queryRange.nextRequest();
+		const windows = queryRange.recordWindows();
 		await panels.view.refresh().click();
-		const request = await refetch;
-		expect(request.method()).toBe('POST');
+
+		await expect.poll(() => windows.length).toBeGreaterThan(0);
+		expect(windows[0].end).toBeGreaterThan(windows[0].start);
 	});
 
 	test('TC-04 switching the panel type in the modal does not persist', async ({

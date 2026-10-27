@@ -48,6 +48,9 @@ export default function UPlotChart({
 	const { setPlotContextInitialState } = usePlotContext();
 	const containerRef = useRef<HTMLDivElement>(null);
 	const plotInstanceRef = useRef<uPlot | null>(null);
+	// The container the live plot was created on. React detaches `containerRef`
+	// before effect cleanups run, so destroy clears this one, not the ref.
+	const plotHostRef = useRef<HTMLDivElement | null>(null);
 	const prevPropsRef = useRef<UPlotChartProps | null>(null);
 
 	/**
@@ -58,7 +61,8 @@ export default function UPlotChart({
 			onDestroy?.(plotInstanceRef.current);
 			plotInstanceRef.current.destroy();
 			plotInstanceRef.current = null;
-			setInstanceHandle(containerRef.current, null);
+			setInstanceHandle(plotHostRef.current, null);
+			plotHostRef.current = null;
 			setPlotContextInitialState({ uPlotInstance: null });
 			plotRef?.(null);
 		}
@@ -102,7 +106,8 @@ export default function UPlotChart({
 		});
 
 		plotInstanceRef.current = plot;
-		setInstanceHandle(containerRef.current, plot);
+		plotHostRef.current = containerRef.current;
+		setInstanceHandle(plotHostRef.current, plot);
 	}, [
 		config,
 		data,

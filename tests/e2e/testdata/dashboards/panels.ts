@@ -7,12 +7,14 @@ import {
 	panel,
 	promqlQuery,
 	rawQuery,
-	type ContextLink,
-	type PanelPluginSpec,
-	type PostableDashboard,
-	type Query,
-	type Variable,
 } from '../../helpers/dashboard-spec';
+import type {
+	ContextLink,
+	PanelPluginSpec,
+	PostableDashboard,
+	Query,
+	Variable,
+} from '../../helpers/dashboard-spec.types';
 
 // Dashboard fixtures for the dashboard suites. TypeScript rather than frozen JSON so
 // a contract change is a compile error, and panel ids stay visible to the specs
@@ -224,25 +226,6 @@ export function variablesDashboard(
 								filter: `service.name = $${VARIABLE_NAMES.custom}`,
 							}),
 					}),
-				},
-			},
-		],
-	});
-}
-
-/** Invalid on purpose: Text must carry `queries: []`; the server rejects this. */
-export function textPanelWithQueryDashboard(): PostableDashboard {
-	const text = panel(PanelKind.Text, { name: 'Notes' });
-	return buildDashboard({
-		title: `e2e-text-with-query-${Date.now()}-${uniqueSuffix()}`,
-		sections: [
-			{
-				title: 'Section',
-				panels: {
-					[SINGLE_PANEL_ID]: {
-						...text,
-						spec: { ...text.spec, queries: [metricsQuery()] },
-					},
 				},
 			},
 		],

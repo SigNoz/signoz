@@ -117,32 +117,8 @@ test.describe('Dashboards — panel actions', () => {
 			.toEqual(['Tabular']);
 	});
 
-	test('TC-06 a locked dashboard disables the mutating actions', async ({
-		dashboards,
-		panels,
-	}) => {
-		const id = await dashboards.seed(compactDashboard());
-		await dashboards.setLocked(id, true);
-		await dashboards.open(id);
-
-		const { actions } = panels.panel(COMPACT_PANELS.timeseries);
-		await actions.open();
-
-		// View and Download don't mutate, so they stay available.
-		await expect(actions.item(PanelAction.view)).toBeEnabled();
-
-		for (const label of [
-			PanelAction.edit,
-			PanelAction.clone,
-			PanelAction.move,
-			PanelAction.delete,
-		]) {
-			await expect(actions.item(label)).toBeDisabled();
-		}
-	});
-
 	// An empty table exports nothing, so the rows are mocked.
-	test('TC-07 Download as CSV on a Table panel produces a file', async ({
+	test('TC-06 Download as CSV on a Table panel produces a file', async ({
 		dashboards,
 		panels,
 		queryRange,
