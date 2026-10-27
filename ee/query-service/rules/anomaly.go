@@ -34,8 +34,7 @@ type AnomalyRule struct {
 
 	provider anomaly.Provider
 
-	version string
-	logger  *slog.Logger
+	logger *slog.Logger
 
 	seasonality anomaly.Seasonality
 }
@@ -63,7 +62,6 @@ func NewAnomalyRule(
 	r := AnomalyRule{
 		BaseRule: baseRule,
 		querier:  querier,
-		version:  p.Version,
 		logger:   logger.With(slog.String("rule.id", id)),
 	}
 

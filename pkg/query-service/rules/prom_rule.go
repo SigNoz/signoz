@@ -23,7 +23,6 @@ import (
 
 type PromRule struct {
 	*BaseRule
-	version    string
 	prometheus prometheus.Prometheus
 }
 
@@ -47,7 +46,6 @@ func NewPromRule(
 
 	p := PromRule{
 		BaseRule:   baseRule,
-		version:    postableRule.Version,
 		prometheus: prometheus,
 	}
 
