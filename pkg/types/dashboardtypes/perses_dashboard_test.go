@@ -2045,6 +2045,12 @@ func TestInvalidateScatterPlotPanelSpecValues(t *testing.T) {
 			expectedErrorSubstring: "invalid point opacity 70",
 		},
 		{
+			scenario:               "misspelled point setting",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"chartAppearance": {"points": {"opactiy": 0.5}}}`,
+			expectedErrorSubstring: "unknown field",
+		},
+		{
 			scenario:               "area fill fields on a scatter plot",
 			panelKind:              "signoz/ScatterPlotPanel",
 			panelSpec:              `{"chartAppearance": {"fillOpacity": 0.5}}`,

@@ -294,6 +294,11 @@ func (c *CompositeQuery) CollectResultColumnKeys() (ResultColumnKeys, bool) {
 			continue
 		}
 		for _, expression := range expressions {
+			// Metric aggregations have no expression and are keyed by the query name alone.
+			if expression == "" {
+				keys.Aggregations[envelope.GetQueryName()] = struct{}{}
+				continue
+			}
 			keys.Aggregations[envelope.GetQueryName()+"."+expression] = struct{}{}
 		}
 	}

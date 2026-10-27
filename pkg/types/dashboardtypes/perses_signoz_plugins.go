@@ -1,6 +1,7 @@
 package dashboardtypes
 
 import (
+	"bytes"
 	"encoding/json"
 	"maps"
 	"slices"
@@ -468,9 +469,11 @@ type ScatterPlotPoints struct {
 }
 
 func (p *ScatterPlotPoints) UnmarshalJSON(data []byte) error {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
 	type alias ScatterPlotPoints
 	var tmp alias
-	if err := json.Unmarshal(data, &tmp); err != nil {
+	if err := dec.Decode(&tmp); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid points")
 	}
 	*p = ScatterPlotPoints(tmp)

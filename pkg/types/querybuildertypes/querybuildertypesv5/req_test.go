@@ -1931,6 +1931,15 @@ func TestCompositeQueryCollectResultColumnKeys(t *testing.T) {
 			expectedKnown: true,
 		},
 		{
+			scenario: "several metric aggregations are keyed by the query name",
+			composite: CompositeQuery{Queries: []QueryEnvelope{{Type: QueryTypeBuilder, Spec: QueryBuilderQuery[MetricAggregation]{
+				Name:         "A",
+				Aggregations: []MetricAggregation{{MetricName: "http.server.request.count"}, {MetricName: "http.server.request.duration"}},
+			}}}},
+			expectedKeys:  ResultColumnKeys{Aggregations: map[string]struct{}{"A": {}}, Groups: map[string]struct{}{}},
+			expectedKnown: true,
+		},
+		{
 			scenario: "a disabled query yields no aggregation but keeps its groups for the formula over it",
 			composite: CompositeQuery{Queries: []QueryEnvelope{
 				{Type: QueryTypeBuilder, Spec: QueryBuilderQuery[MetricAggregation]{
