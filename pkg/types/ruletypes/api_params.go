@@ -344,14 +344,16 @@ func (r *PostableRule) Validate() error {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition: field is required")
 	}
 
-	switch r.AlertType {
-	case AlertTypeMetric, AlertTypeTraces, AlertTypeLogs, AlertTypeExceptions, AlertTypeAITraces:
-	case "":
+	if r.AlertType == "" {
 		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "alertType: field is required"))
-	default:
-		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"alertType: unsupported value %q; must be one of %q, %q, %q, %q, %q",
-			r.AlertType, AlertTypeMetric, AlertTypeTraces, AlertTypeLogs, AlertTypeExceptions, AlertTypeAITraces))
+	} else {
+		switch r.AlertType {
+		case AlertTypeMetric, AlertTypeTraces, AlertTypeLogs, AlertTypeExceptions, AlertTypeAITraces:
+		default:
+			errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
+				"alertType: unsupported value %q; must be one of %q, %q, %q, %q, %q",
+				r.AlertType, AlertTypeMetric, AlertTypeTraces, AlertTypeLogs, AlertTypeExceptions, AlertTypeAITraces))
+		}
 	}
 
 	if !r.RuleType.IsZero() {
