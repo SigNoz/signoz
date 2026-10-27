@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime';
 
-import { useTimeSearchParams } from '../useTimeSearchParams';
+import { useTimeSearchParams } from 'hooks/useTimeSearchParams';
 
 let mockGlobalTime = {
 	selectedTime: '30m',

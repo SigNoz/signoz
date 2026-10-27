@@ -26,7 +26,7 @@ import {
 	parseNewPanelTarget,
 } from '../DashboardContainer/PanelEditor/newPanelRoute';
 import { useSyncVariablesForSuggestions } from '../DashboardContainer/hooks/useSyncVariablesForSuggestions';
-import { useTimeSearchParams } from '../DashboardContainer/hooks/useTimeSearchParams';
+import { useTimeSearchParams } from 'hooks/useTimeSearchParams';
 import { createDefaultPanel } from '../DashboardContainer/patchOps';
 import { useDashboardStore } from '../DashboardContainer/store/useDashboardStore';
 import { useSeedVariableSelection } from '../DashboardContainer/VariablesBar/hooks/useSeedVariableSelection';
