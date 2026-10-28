@@ -72,40 +72,6 @@
 	}
 }
 
-.chat-support-gateway {
-	position: fixed;
-	// Lifted above the bottom strip. Don't extend this pattern — new fixed-bottom
-	// UI belongs in the bounded layout, not in another offset here.
-	bottom: calc(20px + var(--bottom-strip-height, 0px));
-	right: 20px;
-	z-index: 1000;
-
-	.chat-support-gateway-btn {
-		max-width: 48px;
-		width: 48px;
-		max-height: 48px;
-		height: 48px;
-		padding: 12px;
-		border-radius: 50%;
-
-		display: flex;
-		justify-content: center;
-		align-items: center;
-
-		background-color: #f25733;
-		border: none;
-
-		&:hover {
-			color: white !important;
-			border-color: white !important;
-		}
-
-		.chat-support-gateway-btn-icon {
-			fill: white;
-		}
-	}
-}
-
 .add-credit-card-btn,
 .cancel-btn {
 	display: inline-flex;
