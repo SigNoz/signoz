@@ -39,7 +39,7 @@ func (v JSONValue) Flatten() map[string]any {
 		if isNull(value) {
 			continue
 		}
-		flat[path] = value
+		flat[path] = flatObject(value)
 	}
 	return unwrap(flat)
 }
@@ -48,27 +48,26 @@ func (v JSONValue) Flatten() map[string]any {
 // A key stored at both a scalar and an object path collapses here, which Flatten avoids:
 // https://github.com/SigNoz/events-pod/issues/8
 func (v JSONValue) Nest() map[string]any {
-	return unwrap(v.column.NestedMap())
-}
-
-// StringAt returns the string at a path, such as a declared String path; empty when absent.
-func (v JSONValue) StringAt(path string) string {
-	value, _ := chcol.ExtractJSONPathAs[string](&v.column, path)
-	return value
-}
-
-// ObjectAt returns the object at a declared JSON path, such as scope.attributes; empty when absent.
-func (v JSONValue) ObjectAt(path string) JSONValue {
-	if object, ok := chcol.ExtractJSONPathAs[*chcol.JSON](&v.column, path); ok && object != nil {
-		return JSONValue{column: *object}
+	nested := chcol.NewJSON()
+	for path, value := range v.column.ValuesByPath() {
+		nested.SetValueAtPath(path, flatObject(value))
 	}
-	return JSONValue{}
+	return unwrap(nested.NestedMap())
 }
 
 // MarshalJSON renders the flat attribute bag, so a reader that stores the scan target without calling
 // Flatten or Nest serializes the column instead of the empty struct.
 func (v JSONValue) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.Flatten())
+}
+
+// flatObject renders a declared JSON sub-path, which the driver scans as a nested chcol.JSON (such as
+// scope.attributes), as a flat attribute bag.
+func flatObject(value any) any {
+	if object, ok := value.(*chcol.JSON); ok && object != nil {
+		return JSONValue{column: *object}
+	}
+	return value
 }
 
 func isNull(value any) bool {

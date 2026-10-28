@@ -111,7 +111,7 @@ func TestUnwrapVariant(t *testing.T) {
 		{name: "JSONColumnNested", column: "body_v2", input: jsonCol, want: map[string]any{"level": "error", "attrs": map[string]any{"code": float64(500)}}},
 		{name: "AttributesColumnFlat", column: "attributes", input: jsonCol, want: map[string]any{"level": "error", "attrs.code": float64(500)}},
 		{name: "AttributesColumnDropsNullPaths", column: "attributes", input: nullCol, want: map[string]any{"level": "error"}},
-		{name: "ScopeColumnDecodesToScope", column: "scope", input: scopeCol, want: spantypes.Scope{Name: "io.opentelemetry.http", Version: "1.2.0", Attributes: map[string]any{"lib.lang": "go"}}},
+		{name: "DeclaredObjectPathNestsFlat", column: "scope", input: scopeCol, want: map[string]any{"name": "io.opentelemetry.http", "version": "1.2.0", "attributes": map[string]any{"lib.lang": "go"}}},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {

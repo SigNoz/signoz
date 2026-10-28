@@ -17,11 +17,14 @@ type Scope struct {
 }
 
 func NewScope(column telemetrystoretypes.JSONValue) Scope {
-	return Scope{
-		Name:       column.StringAt("name"),
-		Version:    column.StringAt("version"),
-		Attributes: column.ObjectAt("attributes").Flatten(),
+	scope := newEmptyScope()
+	fields := column.Flatten()
+	scope.Name, _ = fields["name"].(string)
+	scope.Version, _ = fields["version"].(string)
+	if attributes, ok := fields["attributes"].(map[string]any); ok {
+		scope.Attributes = attributes
 	}
+	return scope
 }
 
 func newEmptyScope() Scope {

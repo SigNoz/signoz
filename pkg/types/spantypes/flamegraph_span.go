@@ -73,7 +73,7 @@ func NewFlamegraphSpanFromStorable(s *StorableSpan, level int64, selectFields []
 		return span
 	}
 	var attributes map[string]any
-	var scope *Scope
+	var scope Scope
 	for _, field := range selectFields {
 		switch field.FieldContext {
 		case telemetrytypes.FieldContextResource:
@@ -88,11 +88,10 @@ func NewFlamegraphSpanFromStorable(s *StorableSpan, level int64, selectFields []
 				span.Attributes[field.Name] = v
 			}
 		case telemetrytypes.FieldContextScope:
-			if scope == nil {
-				full := NewScope(s.Scope)
-				scope = &full
+			if scope.Attributes == nil {
+				scope = NewScope(s.Scope)
 			}
-			span.Scope.copyField(*scope, field.Name)
+			span.Scope.copyField(scope, field.Name)
 		}
 	}
 	return span
