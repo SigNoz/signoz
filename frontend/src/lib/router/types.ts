@@ -56,3 +56,26 @@ export interface NavigateOptions {
 }
 
 export type NavigateFn = (to: To, options?: NavigateOptions) => void;
+
+/** The navigation a blocker function is asked about. */
+export interface BlockerArgs {
+	currentLocation: AppLocation;
+	nextLocation: AppLocation;
+	action: NavigationAction;
+}
+
+export type BlockerFunction = (args: BlockerArgs) => boolean;
+
+/**
+ * A blocked navigation waits on `proceed` or `reset`. Locations are
+ * basename-free, like every other location the facade hands out.
+ */
+export type AppBlocker =
+	| { state: 'unblocked'; location: undefined }
+	| {
+			state: 'blocked';
+			location: AppLocation;
+			proceed: () => void;
+			reset: () => void;
+	  }
+	| { state: 'proceeding'; location: AppLocation };
