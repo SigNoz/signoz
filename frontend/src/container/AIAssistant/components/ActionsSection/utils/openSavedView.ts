@@ -11,7 +11,7 @@ import { getSavedViewQuery } from 'container/SavedViews/utils/getSavedViewQuery'
 import { toSavedViewSource } from 'container/SavedViews/utils/toSavedViewSource';
 import { SOURCEPAGE_VS_ROUTES } from 'pages/SaveView/constants';
 import { DataSource } from 'types/common/queryBuilder';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { buildExplorerNavigationUrl } from 'utils/buildExplorerNavigationUrl';
 import { History } from 'history';
 
 type SavedViewSourceHint = SavedViewSourcePage;
@@ -70,26 +70,6 @@ export function explorerRouteForSourcePage(
 	sourcePage: DataSource | string,
 ): (typeof SOURCEPAGE_VS_ROUTES)[keyof typeof SOURCEPAGE_VS_ROUTES] | null {
 	return SOURCEPAGE_VS_ROUTES[sourcePage] ?? null;
-}
-
-/**
- * Builds an explorer URL the same way `redirectWithQueryBuilderData` does —
- * without inheriting stale query params from the current page's `urlQuery`.
- */
-export function buildExplorerNavigationUrl(
-	route: string,
-	query: Query,
-	searchParams: Record<string, unknown>,
-): string {
-	const params = new URLSearchParams();
-	params.set(
-		QueryParams.compositeQuery,
-		encodeURIComponent(JSON.stringify(query)),
-	);
-	Object.entries(searchParams).forEach(([key, value]) => {
-		params.set(key, JSON.stringify(value));
-	});
-	return `${route}?${params.toString()}`;
 }
 
 export function openSavedView(

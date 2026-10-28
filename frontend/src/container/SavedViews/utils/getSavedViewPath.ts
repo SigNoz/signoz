@@ -1,6 +1,6 @@
 import { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
-import { buildExplorerNavigationUrl } from 'container/AIAssistant/components/ActionsSection/utils/openSavedView';
+import { buildExplorerNavigationUrl } from 'utils/buildExplorerNavigationUrl';
 
 import { getSavedViewQuery } from './getSavedViewQuery';
 
