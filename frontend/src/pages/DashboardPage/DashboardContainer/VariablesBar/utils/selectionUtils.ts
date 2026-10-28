@@ -51,6 +51,7 @@ interface CommittedValues {
 	values: string[];
 	options: string[];
 	showAllOption: boolean;
+	isDynamic: boolean;
 	emptyFallback: VariableSelection;
 }
 
@@ -62,6 +63,7 @@ export function selectionFromCommittedValues({
 	values,
 	options,
 	showAllOption,
+	isDynamic,
 	emptyFallback,
 }: CommittedValues): VariableSelection {
 	if (values.length === 0) {
@@ -71,10 +73,12 @@ export function selectionFromCommittedValues({
 	const customValues = values.filter((value) => !options.includes(value));
 	// ALL re-materializes to the option set, so a set carrying a typed value is not ALL
 	// — the next refetch would expand it back and drop what the user typed.
+	// A dynamic ALL travels as `__all__` and is never re-materialized, so a value outside
+	// its truncated list (a search pick, an older window's pick) loses nothing.
 	const allSelected =
 		showAllOption &&
 		options.length > 0 &&
-		customValues.length === 0 &&
+		(isDynamic || customValues.length === 0) &&
 		options.every((option) => values.includes(option));
 
 	return {
