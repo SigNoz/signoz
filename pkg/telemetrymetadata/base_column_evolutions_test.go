@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetColumnEvolutions(t *testing.T) {
+func TestGetBaseColumnEvolutions(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := mockTelemetryStore.Mock()
 	metadata := NewTelemetryMetaStore(instrumentationtest.New().ToProviderSettings(), mockTelemetryStore, flaggertest.New(t))
@@ -40,7 +40,7 @@ func TestGetColumnEvolutions(t *testing.T) {
 	t.Run("SecondCall_ReadsCache", func(t *testing.T) {
 		expectFetch()
 		for range 2 {
-			entries, err := metadata.GetColumnEvolutions(context.Background(), telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
+			entries, err := metadata.GetBaseColumnEvolutions(context.Background(), telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
 			require.NoError(t, err)
 			require.Len(t, entries, 1)
 			assert.Equal(t, "attributes", entries[0].ColumnName)
@@ -51,12 +51,12 @@ func TestGetColumnEvolutions(t *testing.T) {
 
 	t.Run("ExpiredCache_Refetches", func(t *testing.T) {
 		store := metadata.(*telemetryMetaStore)
-		for name, cached := range store.columnEvolutions {
-			cached.fetchedAt = time.Now().Add(-2 * columnEvolutionsTTL)
-			store.columnEvolutions[name] = cached
+		for name, cached := range store.baseColumnEvolutions {
+			cached.fetchedAt = time.Now().Add(-2 * baseColumnEvolutionsTTL)
+			store.baseColumnEvolutions[name] = cached
 		}
 		expectFetch()
-		_, err := metadata.GetColumnEvolutions(context.Background(), telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
+		_, err := metadata.GetBaseColumnEvolutions(context.Background(), telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
 		require.NoError(t, err)
 		require.NoError(t, mock.ExpectationsWereMet())
 	})

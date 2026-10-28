@@ -72,8 +72,8 @@ type telemetryMetaStore struct {
 	fl                 flagger.Flagger
 	jsonColumnMetadata map[telemetrytypes.Signal]map[telemetrytypes.FieldContext]telemetrytypes.JSONColumnMetadata
 
-	columnEvolutionsMu sync.Mutex
-	columnEvolutions   map[string]cachedColumnEvolutions
+	baseColumnEvolutionsMu sync.Mutex
+	baseColumnEvolutions   map[string]cachedBaseColumnEvolutions
 }
 
 func NewTelemetryMetaStore(
@@ -115,9 +115,9 @@ func NewTelemetryMetaStore(
 				},
 			},
 		},
-		fl:               fl,
-		storage:          NewStorage(),
-		columnEvolutions: make(map[string]cachedColumnEvolutions),
+		fl:                   fl,
+		storage:              NewStorage(),
+		baseColumnEvolutions: make(map[string]cachedBaseColumnEvolutions),
 	}
 
 	return t

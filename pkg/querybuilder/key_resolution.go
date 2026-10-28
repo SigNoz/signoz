@@ -113,15 +113,15 @@ func NewKeyNotFoundWarning(name string) string {
 	return fmt.Sprintf("key `%s` not found in metadata; querying the underlying data directly. If this is unexpected, check the key name for typos.", name)
 }
 
-// WithColumnEvolutions returns a copy of key that carries the column-wide
+// WithBaseColumnEvolutions returns a copy of key that carries the column-wide
 // evolutions, so a key metadata does not report reads through the same
 // rollout. A key with evolutions of its own is returned as is.
-func WithColumnEvolutions(key *telemetrytypes.TelemetryFieldKey, columnEvolutions []*telemetrytypes.EvolutionEntry) *telemetrytypes.TelemetryFieldKey {
-	if len(key.Evolutions) > 0 || len(columnEvolutions) == 0 {
+func WithBaseColumnEvolutions(key *telemetrytypes.TelemetryFieldKey, baseColumnEvolutions []*telemetrytypes.EvolutionEntry) *telemetrytypes.TelemetryFieldKey {
+	if len(key.Evolutions) > 0 || len(baseColumnEvolutions) == 0 {
 		return key
 	}
 	withEvolutions := *key
-	withEvolutions.Evolutions = columnEvolutions
+	withEvolutions.Evolutions = baseColumnEvolutions
 	return &withEvolutions
 }
 

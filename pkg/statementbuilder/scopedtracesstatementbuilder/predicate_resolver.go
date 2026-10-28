@@ -14,21 +14,21 @@ import (
 // embedded anywhere in sb; maskExpr is set by the builder after resolveMask
 // (Scoped* aggregates embed it).
 type predicateResolver struct {
-	storage          qbtypes.Storage
-	keys             map[string][]*telemetrytypes.TelemetryFieldKey
-	columnEvolutions []*telemetrytypes.EvolutionEntry
-	sb               *sqlbuilder.SelectBuilder
-	maskExpr         string
+	storage              qbtypes.Storage
+	keys                 map[string][]*telemetrytypes.TelemetryFieldKey
+	baseColumnEvolutions []*telemetrytypes.EvolutionEntry
+	sb                   *sqlbuilder.SelectBuilder
+	maskExpr             string
 }
 
-func newPredicateResolver(storage qbtypes.Storage, keys map[string][]*telemetrytypes.TelemetryFieldKey, columnEvolutions []*telemetrytypes.EvolutionEntry, sb *sqlbuilder.SelectBuilder) *predicateResolver {
-	return &predicateResolver{storage: storage, keys: keys, columnEvolutions: columnEvolutions, sb: sb}
+func newPredicateResolver(storage qbtypes.Storage, keys map[string][]*telemetrytypes.TelemetryFieldKey, baseColumnEvolutions []*telemetrytypes.EvolutionEntry, sb *sqlbuilder.SelectBuilder) *predicateResolver {
+	return &predicateResolver{storage: storage, keys: keys, baseColumnEvolutions: baseColumnEvolutions, sb: sb}
 }
 
 // ConditionFor returns a boolean predicate for key (materialized column when
 // present, else map access), args bound into sb.
 func (r *predicateResolver) ConditionFor(ctx context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) (string, error) {
-	conds, _, err := querybuilder.Conditions(ctx, q, r.storage, querybuilder.WithColumnEvolutions(key, r.columnEvolutions), op, value, r.keys, false, r.sb)
+	conds, _, err := querybuilder.Conditions(ctx, q, r.storage, querybuilder.WithBaseColumnEvolutions(key, r.baseColumnEvolutions), op, value, r.keys, false, r.sb)
 	if err != nil {
 		return "", err
 	}

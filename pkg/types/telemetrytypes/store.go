@@ -45,10 +45,10 @@ type MetadataStore interface {
 	// rows templated by entry; FieldName and ReleaseTime are set per path.
 	PromotePaths(ctx context.Context, entry EvolutionEntry, paths ...string) error
 
-	// GetColumnEvolutions returns the column-wide evolutions of one signal's
+	// GetBaseColumnEvolutions returns the column-wide evolutions of one signal's
 	// field context, which a key metadata does not report still reads
 	// through. The result is cached briefly.
-	GetColumnEvolutions(ctx context.Context, signal Signal, fieldContext FieldContext) ([]*EvolutionEntry, error)
+	GetBaseColumnEvolutions(ctx context.Context, signal Signal, fieldContext FieldContext) ([]*EvolutionEntry, error)
 
 	// GetMaterializedKeys lists the keys materialized as dedicated columns.
 	GetMaterializedKeys(ctx context.Context, signal Signal) ([]*TelemetryFieldKey, error)

@@ -560,7 +560,7 @@ func TestConditionForAttributeJSONUnknownKey(t *testing.T) {
 	build := func(t *testing.T, q qbtypes.QueryInfo, evolutions []*telemetrytypes.EvolutionEntry, key telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) string {
 		t.Helper()
 		sb := sqlbuilder.NewSelectBuilder()
-		conds, _, err := querybuilder.Conditions(ctx, q, storage, querybuilder.WithColumnEvolutions(&key, evolutions), op, value, map[string][]*telemetrytypes.TelemetryFieldKey{}, false, sb)
+		conds, _, err := querybuilder.Conditions(ctx, q, storage, querybuilder.WithBaseColumnEvolutions(&key, evolutions), op, value, map[string][]*telemetrytypes.TelemetryFieldKey{}, false, sb)
 		require.NoError(t, err)
 		sb.Where(conds...)
 		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)

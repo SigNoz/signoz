@@ -135,18 +135,18 @@ func TestSynthesizeKeysEvolutions(t *testing.T) {
 	}
 }
 
-func TestWithColumnEvolutions(t *testing.T) {
+func TestWithBaseColumnEvolutions(t *testing.T) {
 	columnWide := []*telemetrytypes.EvolutionEntry{{ColumnName: "attributes", FieldContext: telemetrytypes.FieldContextAttribute, FieldName: telemetrytypes.EvolutionFieldNameAll}}
 	own := []*telemetrytypes.EvolutionEntry{{ColumnName: "attributes_promoted", FieldContext: telemetrytypes.FieldContextAttribute, FieldName: "http.route"}}
 
 	t.Run("KeyWithoutEvolutions_CopyCarriesColumnWide", func(t *testing.T) {
 		key := &telemetrytypes.TelemetryFieldKey{Name: "http.route"}
-		got := WithColumnEvolutions(key, columnWide)
+		got := WithBaseColumnEvolutions(key, columnWide)
 		assert.Equal(t, columnWide, got.Evolutions)
 		assert.Empty(t, key.Evolutions, "the caller's key is not mutated")
 	})
 	t.Run("KeyWithEvolutions_ReturnedAsIs", func(t *testing.T) {
 		key := &telemetrytypes.TelemetryFieldKey{Name: "http.route", Evolutions: own}
-		assert.Same(t, key, WithColumnEvolutions(key, columnWide))
+		assert.Same(t, key, WithBaseColumnEvolutions(key, columnWide))
 	})
 }

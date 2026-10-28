@@ -8,22 +8,22 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-// columnEvolutionsTTL bounds how long a column evolution inserted by a
+// baseColumnEvolutionsTTL bounds how long a column evolution inserted by a
 // migration while running goes unseen.
-const columnEvolutionsTTL = time.Minute
+const baseColumnEvolutionsTTL = time.Minute
 
-type cachedColumnEvolutions struct {
+type cachedBaseColumnEvolutions struct {
 	entries   []*telemetrytypes.EvolutionEntry
 	fetchedAt time.Time
 }
 
-func (t *telemetryMetaStore) GetColumnEvolutions(ctx context.Context, signal telemetrytypes.Signal, fieldContext telemetrytypes.FieldContext) ([]*telemetrytypes.EvolutionEntry, error) {
+func (t *telemetryMetaStore) GetBaseColumnEvolutions(ctx context.Context, signal telemetrytypes.Signal, fieldContext telemetrytypes.FieldContext) ([]*telemetrytypes.EvolutionEntry, error) {
 	selector := &telemetrytypes.EvolutionSelector{Signal: signal, FieldContext: fieldContext, FieldName: telemetrytypes.EvolutionFieldNameAll}
 
-	t.columnEvolutionsMu.Lock()
-	defer t.columnEvolutionsMu.Unlock()
+	t.baseColumnEvolutionsMu.Lock()
+	defer t.baseColumnEvolutionsMu.Unlock()
 
-	if cached, ok := t.columnEvolutions[selector.QualifiedName()]; ok && time.Since(cached.fetchedAt) < columnEvolutionsTTL {
+	if cached, ok := t.baseColumnEvolutions[selector.QualifiedName()]; ok && time.Since(cached.fetchedAt) < baseColumnEvolutionsTTL {
 		return cached.entries, nil
 	}
 
@@ -31,6 +31,6 @@ func (t *telemetryMetaStore) GetColumnEvolutions(ctx context.Context, signal tel
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch the column evolutions of %s", selector.QualifiedName())
 	}
-	t.columnEvolutions[selector.QualifiedName()] = cachedColumnEvolutions{entries: entries, fetchedAt: time.Now()}
+	t.baseColumnEvolutions[selector.QualifiedName()] = cachedBaseColumnEvolutions{entries: entries, fetchedAt: time.Now()}
 	return entries, nil
 }

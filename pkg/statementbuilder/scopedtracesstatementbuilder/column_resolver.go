@@ -13,13 +13,13 @@ import (
 // shared storage. It binds no args, so its expressions embed in any builder;
 // predicates (which do bind args) are the predicateResolver's job.
 type columnResolver struct {
-	storage          qbtypes.Storage
-	keys             map[string][]*telemetrytypes.TelemetryFieldKey
-	columnEvolutions []*telemetrytypes.EvolutionEntry
+	storage              qbtypes.Storage
+	keys                 map[string][]*telemetrytypes.TelemetryFieldKey
+	baseColumnEvolutions []*telemetrytypes.EvolutionEntry
 }
 
-func newColumnResolver(storage qbtypes.Storage, keys map[string][]*telemetrytypes.TelemetryFieldKey, columnEvolutions []*telemetrytypes.EvolutionEntry) *columnResolver {
-	return &columnResolver{storage: storage, keys: keys, columnEvolutions: columnEvolutions}
+func newColumnResolver(storage qbtypes.Storage, keys map[string][]*telemetrytypes.TelemetryFieldKey, baseColumnEvolutions []*telemetrytypes.EvolutionEntry) *columnResolver {
+	return &columnResolver{storage: storage, keys: keys, baseColumnEvolutions: baseColumnEvolutions}
 }
 
 // Read returns the bare read of one field key.
@@ -37,7 +37,7 @@ func (r *columnResolver) ValueFor(ctx context.Context, q qbtypes.QueryInfo, key 
 	if cands := r.keys[key.Name]; len(cands) > 0 {
 		key = cands[0]
 	}
-	expr, err := querybuilder.ResolveColumn(ctx, q, r.storage, querybuilder.WithColumnEvolutions(key, r.columnEvolutions), dt, r.keys)
+	expr, err := querybuilder.ResolveColumn(ctx, q, r.storage, querybuilder.WithBaseColumnEvolutions(key, r.baseColumnEvolutions), dt, r.keys)
 	if err != nil {
 		return "", err
 	}
