@@ -7,7 +7,6 @@ import {
 	RuleType,
 	STOCK_ALERT_TYPE_CARDS,
 } from './constants';
-import { v1SaveButton } from './v1';
 
 // ─── Navigation ────────────────────────────────────────────────────────────
 
@@ -70,8 +69,6 @@ export async function expectAlertTypeCardSet(page: Page): Promise<void> {
 export interface CreateAlertUrlOptions {
 	alertType?: AlertTypeValue;
 	ruleType?: string;
-	/** Sets `showClassicCreateAlertsPage=true` ⇒ the v1 classic form. */
-	classic?: boolean;
 	/** Merged in last, so it can override anything above. */
 	params?: Record<string, string>;
 }
@@ -79,13 +76,9 @@ export interface CreateAlertUrlOptions {
 export function createAlertUrl({
 	alertType = AlertType.LOGS,
 	ruleType = RuleType.THRESHOLD,
-	classic = false,
 	params = {},
 }: CreateAlertUrlOptions = {}): string {
 	const search = new URLSearchParams({ alertType, ruleType });
-	if (classic) {
-		search.set('showClassicCreateAlertsPage', 'true');
-	}
 	for (const [key, value] of Object.entries(params)) {
 		search.set(key, value);
 	}
@@ -101,18 +94,9 @@ export function createAlertUrl({
  */
 export async function gotoCreateAlertV2(
 	page: Page,
-	options: Omit<CreateAlertUrlOptions, 'classic'> = {},
+	options: CreateAlertUrlOptions = {},
 ): Promise<void> {
-	await page.goto(createAlertUrl({ ...options, classic: false }));
+	await page.goto(createAlertUrl(options));
 	await expect(page.getByTestId('alert-name-input')).toBeVisible();
 	await page.waitForURL(/compositeQuery=/, { timeout: 15_000 });
-}
-
-/** Open the **v1** classic create form and wait for its primary action. */
-export async function gotoCreateAlertV1(
-	page: Page,
-	options: Omit<CreateAlertUrlOptions, 'classic'> = {},
-): Promise<void> {
-	await page.goto(createAlertUrl({ ...options, classic: true }));
-	await expect(v1SaveButton(page)).toBeVisible();
 }

@@ -11,7 +11,6 @@ import {
 	isHistoryRequest,
 	sortTimelineDescending,
 	statsCard,
-	timelineFooterRange,
 	timelineRows,
 } from '../../../helpers/alerts/history';
 import {
@@ -126,27 +125,7 @@ test.describe('Alert history — cross-cutting', () => {
 		}
 	});
 
-	test('TC-06 v1 and v2 schema rules both render history correctly', async ({
-		authedPage: page,
-		alertHistory,
-	}) => {
-		for (const [variant, ruleId, total] of [
-			['v2', alertHistory.ruleId, alertHistory.total],
-			['v1', alertHistory.ruleIdV1, alertHistory.totalV1],
-		] as const) {
-			await gotoAlertHistory(page, ruleId);
-			await expect(
-				page.getByTestId('alert-details-root'),
-				`${variant} rule renders the details shell`,
-			).toHaveAttribute(
-				'data-schema-version',
-				variant === 'v2' ? 'v2alpha1' : 'v1',
-			);
-			await expect(timelineFooterRange(page)).toContainText(`of ${total}`);
-		}
-	});
-
-	test('TC-07 no legacy v1 history API calls during full session', async ({
+	test('TC-06 no legacy v1 history API calls during full session', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -176,7 +155,7 @@ test.describe('Alert history — cross-cutting', () => {
 		}
 	});
 
-	test('TC-08 history API endpoints carry expected params', async ({
+	test('TC-07 history API endpoints carry expected params', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {

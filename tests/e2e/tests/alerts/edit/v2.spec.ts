@@ -41,7 +41,7 @@ const SEED_RV2 = {
 	absentFor: 7,
 } as const;
 
-/** PUT for one specific rule. v1 and v2 share this endpoint. */
+/** PUT for one specific rule. */
 function isRuleUpdate(url: string, method: string, ruleId: string): boolean {
 	return method === 'PUT' && url.includes(`/api/v2/rules/${ruleId}`);
 }
@@ -61,15 +61,10 @@ test.describe('Alert edit — v2 rule', () => {
 		await expect(root).toHaveClass(/alert-details-v2/);
 		await expect(root).toHaveAttribute('data-schema-version', 'v2alpha1');
 
-		// `CreateAlertHeader` hides the whole tab bar in edit mode, which removes both
-		// the "New Alert Rule" chip and the classic-experience escape hatch. The escape
-		// hatch matters: switching experiences mid-edit would silently drop the loaded
-		// rule.
+		// `CreateAlertHeader` hides the whole tab bar in edit mode, which removes the
+		// "New Alert Rule" chip.
 		await expect(page.getByTestId('alert-name-input')).toBeVisible();
 		await expect(page.getByText('New Alert Rule')).toBeHidden();
-		await expect(
-			page.getByRole('button', { name: 'Switch to Classic Experience' }),
-		).toBeHidden();
 	});
 
 	test('TC-02 name and labels prefill from the rule', async ({
@@ -333,9 +328,8 @@ test.describe('Alert edit — v2 rule', () => {
 		await gotoAlertOverview(page, ruleId);
 		await page.getByTestId('alert-name-input').fill(renamed);
 
-		// AD-03/AD-04 cover renaming through the details header's RenameModal, which
-		// PATCHes on its own. This row is the other path: the editable header field is
-		// local state until the *Footer* saves it, so the assertion is on the PUT body.
+		// The editable header field is local state until the *Footer* saves it, so the
+		// assertion is on the PUT body.
 		const [response] = await Promise.all([
 			page.waitForResponse((r) =>
 				isRuleUpdate(r.url(), r.request().method(), ruleId),

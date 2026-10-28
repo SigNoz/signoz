@@ -28,8 +28,7 @@ import {
 /**
  * Which alert the page is building. The page reads this off the URL, so the
  * control is a route rather than a response: with no type at all it stays on
- * the picker, `classic-form` opts back into the classic form, and everything else
- * opens the current one.
+ * the picker and everything else opens the form.
  */
 const ALERT_MODES = [
 	'select-type',
@@ -38,7 +37,6 @@ const ALERT_MODES = [
 	'traces',
 	'exceptions',
 	'anomaly',
-	'classic-form',
 ] as const;
 
 type AlertMode = (typeof ALERT_MODES)[number];
@@ -49,7 +47,6 @@ const ALERT_TYPE_BY_MODE: Partial<Record<AlertMode, AlertTypes>> = {
 	traces: AlertTypes.TRACES_BASED_ALERT,
 	exceptions: AlertTypes.EXCEPTIONS_BASED_ALERT,
 	anomaly: AlertTypes.METRICS_BASED_ALERT,
-	'classic-form': AlertTypes.METRICS_BASED_ALERT,
 };
 
 const routeFor = (mode: AlertMode): string => {
@@ -67,10 +64,6 @@ const routeFor = (mode: AlertMode): string => {
 				: RuletypesRuleTypeDTO.threshold_rule,
 		[QueryParams.relativeTime]: '6h',
 	});
-
-	if (mode === 'classic-form') {
-		params.set(QueryParams.showClassicCreateAlertsPage, 'true');
-	}
 
 	return `${ROUTES.ALERTS_NEW}?${params.toString()}`;
 };

@@ -26,7 +26,7 @@ export const AlertType = {
 
 export type AlertTypeValue = (typeof AlertType)[keyof typeof AlertType];
 
-/** `AlertDetectionTypes` (`frontend/src/container/FormAlertRules/index.tsx:78-81`). */
+/** `RuletypesRuleTypeDTO` (`frontend/src/api/generated/services/sigNoz.schemas.ts`). */
 export const RuleType = {
 	THRESHOLD: 'threshold_rule',
 	ANOMALY: 'anomaly_rule',
