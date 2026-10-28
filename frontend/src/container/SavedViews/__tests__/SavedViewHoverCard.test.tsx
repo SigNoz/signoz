@@ -5,11 +5,19 @@ import {
 	waitFor,
 	within,
 } from '@testing-library/react';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	AuthtypesTransactionDTO,
+	SavedviewtypesSourceDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import {
+	AUTHZ_CHECK_URL,
+	authzMockResponse,
+} from 'lib/authz/utils/authz-test-utils';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
+import { userEvent } from 'tests/test-utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -222,6 +230,31 @@ describe('SavedViewHoverCard', () => {
 
 			expect(card()).toBeNull();
 		});
+
+		it('does not open when the row menu is pressed before the delay', async () => {
+			const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+			await renderPanel();
+
+			fireEvent.mouseEnter(row('Errors'));
+			advance(SAVED_VIEW_HOVER_CARD_OPEN_DELAY_MS / 2);
+			await user.click(within(row('Errors')).getByTestId('saved-views-row-menu'));
+			advance(SAVED_VIEW_HOVER_CARD_OPEN_DELAY_MS);
+
+			expect(card()).toBeNull();
+		});
+
+		it('closes on escape, leaving nothing of the popover behind', async () => {
+			const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+			await renderPanel();
+			await openCard('Errors');
+
+			await user.keyboard('{Escape}');
+
+			expect(card()).toBeNull();
+			expect(
+				document.querySelector('[data-radix-popper-content-wrapper]'),
+			).toBeNull();
+		});
 	});
 
 	describe('content', () => {
@@ -310,6 +343,78 @@ describe('SavedViewHoverCard', () => {
 			await openCard('Errors');
 
 			await waitFor(() => expect(fetches).toBe(2));
+		});
+
+		it('shows a skeleton, not the failure, while the view loads', async () => {
+			let requested = false;
+			let release: () => void = () => undefined;
+			const gate = new Promise<void>((resolve) => {
+				release = resolve;
+			});
+			server.use(
+				rest.get(`${API}/:id`, async (_req, res, ctx) => {
+					requested = true;
+					await gate;
+					return res(ctx.json({ status: 'success', data: errors }));
+				}),
+			);
+			await renderPanel();
+
+			fireEvent.mouseEnter(row('Errors'));
+			advance(SAVED_VIEW_HOVER_CARD_OPEN_DELAY_MS);
+			await waitFor(() => expect(requested).toBe(true));
+
+			expect(
+				screen.getByTestId('saved-view-hover-card-loading'),
+			).toBeInTheDocument();
+			expect(screen.queryByTestId('saved-view-hover-card-error')).toBeNull();
+
+			release();
+			await screen.findByTestId('saved-view-hover-card-query');
+		});
+
+		it('shows a skeleton while the read check is pending', async () => {
+			let release: () => void = () => undefined;
+			const gate = new Promise<void>((resolve) => {
+				release = resolve;
+			});
+			const isRead = (transaction: AuthtypesTransactionDTO): boolean =>
+				transaction.relation === 'read';
+			const isReadAll = (transaction: AuthtypesTransactionDTO): boolean =>
+				isRead(transaction) && transaction.object.selector === '*';
+			// Read on every view would skip the per-view check, so it is denied.
+			server.use(
+				rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+					const payload = (await req.json()) as AuthtypesTransactionDTO[];
+					if (
+						payload.some(
+							(transaction) => isRead(transaction) && !isReadAll(transaction),
+						)
+					) {
+						await gate;
+					}
+					return res(
+						ctx.json(
+							authzMockResponse(
+								payload,
+								payload.map((transaction) => !isReadAll(transaction)),
+							),
+						),
+					);
+				}),
+			);
+			await renderPanel();
+
+			fireEvent.mouseEnter(row('Errors'));
+			advance(SAVED_VIEW_HOVER_CARD_OPEN_DELAY_MS);
+
+			await expect(
+				screen.findByTestId('saved-view-hover-card-loading'),
+			).resolves.toBeInTheDocument();
+			expect(screen.queryByTestId('saved-view-hover-card-query')).toBeNull();
+
+			release();
+			await screen.findByTestId('saved-view-hover-card-query');
 		});
 
 		it('says the view failed to load when its fetch fails', async () => {
