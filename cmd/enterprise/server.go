@@ -61,7 +61,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/ruler/signozruler"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/auditstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/subscription"
+	"github.com/SigNoz/signoz/pkg/telemetrymetadata/audittelemetrymetadata"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
@@ -172,6 +174,13 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 
 			return factories, "http"
 		},
+		[]signoz.LogSourceQuery{{
+			Source: telemetrytypes.SourceAudit,
+			Resolver: func(ts telemetrystore.TelemetryStore) telemetrytypes.FieldKeyResolver {
+				return audittelemetrymetadata.New(ts)
+			},
+			StatementBuilderFactory: auditstatementbuilder.NewFactory,
+		}},
 		func(ps factory.ProviderSettings, q querier.Querier, a analytics.Analytics) querier.Handler {
 			communityHandler := querier.NewHandler(ps, q, a)
 			return eequerier.NewHandler(ps, q, communityHandler)

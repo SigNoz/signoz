@@ -50,7 +50,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/statementbuilder/aistatementbuilder"
-	"github.com/SigNoz/signoz/pkg/statementbuilder/auditstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/statementbuilder/logsstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/statementbuilder/meterstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/statementbuilder/metricsstatementbuilder"
@@ -58,7 +57,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/subscription"
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
-	"github.com/SigNoz/signoz/pkg/telemetrymetadata/audittelemetrymetadata"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	pkgtokenizer "github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -114,6 +112,7 @@ func newQueryStack(
 	telemetryStore telemetrystore.TelemetryStore,
 	cache cache.Cache,
 	fl flagger.Flagger,
+	logSources []LogSourceQuery,
 ) (
 	telemetrytypes.MetadataStore,
 	qbtypes.StatementBuilder[qbtypes.TraceAggregation],
@@ -126,9 +125,11 @@ func newQueryStack(
 	querier.BucketCache,
 	error,
 ) {
-	metadataStore := telemetrymetadata.NewTelemetryMetaStore(settings, telemetryStore, fl, map[telemetrytypes.Source]telemetrytypes.FieldKeyResolver{
-		telemetrytypes.SourceAudit: audittelemetrymetadata.New(telemetryStore),
-	})
+	resolvers := map[telemetrytypes.Source]telemetrytypes.FieldKeyResolver{}
+	for _, logSource := range logSources {
+		resolvers[logSource.Source] = logSource.Resolver(telemetryStore)
+	}
+	metadataStore := telemetrymetadata.NewTelemetryMetaStore(settings, telemetryStore, fl, resolvers)
 
 	cfg := config.Querier.Config
 	traceStmtBuilder, err := tracesstatementbuilder.NewFactory(telemetryStore, metadataStore, fl).New(ctx, settings, cfg)
@@ -147,12 +148,13 @@ func newQueryStack(
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
-	auditStmtBuilder, err := auditstatementbuilder.NewFactory(metadataStore, fl).New(ctx, settings, cfg)
-	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
-	}
-	sourceLogStmtBuilders := map[telemetrytypes.Source]qbtypes.StatementBuilder[qbtypes.LogAggregation]{
-		telemetrytypes.SourceAudit: auditStmtBuilder,
+	sourceLogStmtBuilders := map[telemetrytypes.Source]qbtypes.StatementBuilder[qbtypes.LogAggregation]{}
+	for _, logSource := range logSources {
+		builder, err := logSource.StatementBuilderFactory(metadataStore, fl).New(ctx, settings, cfg)
+		if err != nil {
+			return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+		}
+		sourceLogStmtBuilders[logSource.Source] = builder
 	}
 	metricStmtBuilder, err := metricsstatementbuilder.NewFactory(metadataStore, fl).New(ctx, settings, cfg)
 	if err != nil {
@@ -188,6 +190,7 @@ func New(
 	gatewayProviderFactory func(licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config],
 	auditorProviderFactories func(licensing.Licensing) factory.NamedMap[factory.ProviderFactory[auditor.Auditor, auditor.Config]],
 	meterReporterProviderFactories func(context.Context, factory.ProviderSettings, flagger.Flagger, licensing.Licensing, telemetrystore.TelemetryStore, retention.Getter, organization.Getter, zeus.Zeus) (factory.NamedMap[factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config]], string),
+	logSources []LogSourceQuery,
 	querierHandlerCallback func(factory.ProviderSettings, querier.Querier, analytics.Analytics) querier.Handler,
 	cloudIntegrationCallback func(sqlstore.SQLStore, dashboard.Module, global.Global, zeus.Zeus, gateway.Gateway, licensing.Licensing, serviceaccount.Module, cloudintegration.Config) (cloudintegration.Module, error),
 	metricReductionRuleModuleCallback func(sqlstore.SQLStore, telemetrystore.TelemetryStore, dashboard.Module, queryparser.QueryParser, licensing.Licensing, flagger.Flagger, telemetrytypes.MetadataStore, factory.ProviderSettings, int) metricreductionrule.Module,
@@ -329,7 +332,7 @@ func New(
 
 	// Assemble the query stack (metadata store, statement builders, bucket cache) once,
 	// and reuse the single metadata store everywhere downstream.
-	telemetryMetadataStore, traceStmtBuilder, aiTraceStmtBuilder, logStmtBuilder, sourceLogStmtBuilders, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, err := newQueryStack(ctx, providerSettings, config, telemetrystore, cache, flagger)
+	telemetryMetadataStore, traceStmtBuilder, aiTraceStmtBuilder, logStmtBuilder, sourceLogStmtBuilders, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, err := newQueryStack(ctx, providerSettings, config, telemetrystore, cache, flagger, logSources)
 	if err != nil {
 		return nil, err
 	}
