@@ -23,14 +23,14 @@
 .title {
 	margin: 0;
 	font-weight: var(--label-base-500-font-weight);
-	line-height: var(--line-height-18);
+	line-height: var(--label-base-500-line-height);
 	letter-spacing: -0.07px;
 	color: var(--l1-foreground);
 }
 
 .subtitle {
 	margin: 0;
-	line-height: var(--line-height-18);
+	line-height: var(--paragraph-small-400-line-height);
 	letter-spacing: -0.07px;
 	color: var(--l2-foreground);
 }

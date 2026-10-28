@@ -20,9 +20,9 @@
 	}
 
 	&__label {
-		font-size: var(--font-size-sm);
+		font-size: var(--paragraph-base-400-font-size);
 		color: var(--foreground);
-		line-height: var(--line-height-20);
+		line-height: var(--paragraph-base-400-line-height);
 		letter-spacing: -0.07px;
 		cursor: default;
 	}
@@ -53,7 +53,7 @@
 
 	&__email-text {
 		color: var(--foreground);
-		line-height: var(--line-height-18);
+		line-height: var(--paragraph-small-400-line-height);
 		letter-spacing: -0.07px;
 		white-space: nowrap;
 		overflow: hidden;
@@ -89,10 +89,10 @@
 	}
 
 	&__meta-label {
-		font-size: var(--font-size-xs);
-		font-weight: var(--font-weight-medium);
+		font-size: var(--uppercase-small-500-font-size);
+		font-weight: var(--uppercase-small-500-font-weight);
 		color: var(--foreground);
-		line-height: var(--line-height-20);
+		line-height: var(--uppercase-small-500-line-height);
 		letter-spacing: 0.48px;
 		text-transform: uppercase;
 	}
@@ -184,7 +184,7 @@
 		text-overflow: ellipsis;
 		padding: 0 var(--padding-2);
 		color: var(--l2-foreground);
-		line-height: var(--line-height-18);
+		line-height: var(--paragraph-small-400-line-height);
 		letter-spacing: -0.07px;
 	}
 }

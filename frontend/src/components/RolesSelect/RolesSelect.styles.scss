@@ -30,13 +30,13 @@
 		display: flex;
 		align-items: center;
 		height: 22px;
-		font-size: var(--font-size-sm);
+		font-size: var(--paragraph-base-400-font-size);
 		color: var(--l1-foreground);
 		background: var(--l3-background);
 		border: 1px solid var(--l1-border);
 		border-radius: 2px;
 		padding: 0 var(--padding-1) 0 6px;
-		line-height: var(--line-height-20);
+		line-height: var(--paragraph-base-400-line-height);
 		letter-spacing: -0.07px;
 		margin: 0;
 	}
@@ -49,7 +49,7 @@
 	}
 
 	.ant-select-selection-placeholder {
-		font-size: var(--font-size-sm);
+		font-size: var(--label-base-400-font-size);
 		color: var(--l3-foreground);
 	}
 
@@ -70,7 +70,7 @@
 	gap: var(--spacing-3);
 	padding: var(--padding-1) var(--padding-2);
 	color: var(--destructive);
-	font-size: var(--font-size-xs);
+	font-size: var(--label-small-400-font-size);
 
 	&__msg {
 		display: flex;

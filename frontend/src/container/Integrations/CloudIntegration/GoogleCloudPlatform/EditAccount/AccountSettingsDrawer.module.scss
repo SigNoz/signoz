@@ -14,8 +14,8 @@
 .connectedAccountDetailsTitle {
 	color: var(--l1-foreground);
 	font-size: 14px;
-	font-weight: var(--font-weight-medium);
-	line-height: var(--line-height-20);
+	font-weight: var(--paragraph-base-500-font-weight);
+	line-height: var(--paragraph-base-500-line-height);
 	letter-spacing: -0.07px;
 }
 
@@ -28,7 +28,7 @@
 
 .accountIdValue {
 	font-family: 'Geist Mono';
-	font-weight: var(--font-weight-bold);
+	font-weight: 700;
 }
 
 .regionSelector {
@@ -40,8 +40,8 @@
 .regionSelectorTitle {
 	color: var(--l1-foreground);
 	font-size: 14px;
-	font-weight: var(--font-weight-medium);
-	line-height: var(--line-height-20);
+	font-weight: var(--paragraph-base-500-font-weight);
+	line-height: var(--paragraph-base-500-line-height);
 	letter-spacing: -0.07px;
 }
 

@@ -22,8 +22,8 @@
 }
 
 .general-settings-subtitle {
-	font-size: var(--font-size-sm);
-	line-height: var(--line-height-20);
+	font-size: var(--paragraph-base-400-font-size);
+	line-height: var(--paragraph-base-400-line-height);
 	letter-spacing: -0.07px;
 	color: var(--l2-foreground);
 }
@@ -45,9 +45,9 @@
 }
 
 .retention-controls-header-label {
-	font-size: var(--font-size-xs);
-	font-weight: var(--font-weight-medium);
-	line-height: var(--line-height-24);
+	font-size: var(--uppercase-small-500-font-size);
+	font-weight: var(--uppercase-small-500-font-weight);
+	line-height: var(--uppercase-small-500-line-height);
 	letter-spacing: 0.48px;
 	text-transform: uppercase;
 	color: var(--l2-foreground);
@@ -70,9 +70,9 @@
 	display: flex;
 	align-items: center;
 	gap: var(--spacing-3);
-	font-size: var(--font-size-sm);
-	font-weight: var(--font-weight-medium);
-	line-height: var(--line-height-20);
+	font-size: var(--paragraph-base-500-font-size);
+	font-weight: var(--paragraph-base-500-font-weight);
+	line-height: var(--paragraph-base-500-line-height);
 	letter-spacing: -0.07px;
 	color: var(--l1-foreground);
 
@@ -106,7 +106,7 @@
 		-moz-appearance: textfield;
 		appearance: textfield;
 		color: var(--l1-foreground);
-		font-size: var(--font-size-xs);
+		font-size: var(--label-small-400-font-size);
 		line-height: 16px;
 		box-shadow: none;
 
@@ -144,6 +144,6 @@
 .retention-modal-description {
 	margin: 0;
 	color: var(--l1-foreground);
-	font-size: var(--font-size-sm);
+	font-size: var(--paragraph-base-400-font-size);
 	line-height: 22px;
 }

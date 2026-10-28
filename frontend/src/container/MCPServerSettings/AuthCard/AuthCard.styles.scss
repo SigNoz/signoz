@@ -18,9 +18,9 @@
 	}
 
 	&__description {
-		font-size: var(--font-size-xs);
+		font-size: var(--paragraph-small-400-font-size);
 		color: var(--foreground);
-		line-height: var(--line-height-18);
+		line-height: var(--paragraph-small-400-line-height);
 		margin: 0;
 	}
 
@@ -31,7 +31,7 @@
 	}
 
 	&__field-label {
-		font-size: var(--font-size-xs);
+		font-size: var(--label-small-500-font-size);
 		font-weight: 500;
 		color: var(--foreground);
 		letter-spacing: 0.01em;

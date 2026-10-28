@@ -66,7 +66,7 @@
 
 	:global(.ant-pagination-item) > a {
 		color: var(--l2-foreground);
-		font-size: var(--font-size-sm);
+		font-size: var(--paragraph-base-400-font-size);
 		line-height: 20px;
 	}
 
@@ -76,15 +76,15 @@
 
 	:global(.ant-pagination-item-active) > a {
 		color: var(--foreground) !important;
-		font-weight: var(--font-weight-medium);
+		font-weight: var(--label-base-500-font-weight);
 	}
 }
 
 .subtitle {
 	color: var(--l2-foreground);
-	font-size: var(--font-size-sm);
+	font-size: var(--paragraph-base-400-font-size);
 	font-style: normal;
-	font-weight: var(--font-weight-normal);
+	font-weight: var(--paragraph-base-400-font-weight);
 	line-height: 20px;
 	letter-spacing: -0.07px;
 }

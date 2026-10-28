@@ -13,18 +13,18 @@
 
 .title {
 	color: var(--l1-foreground);
-	font-size: var(--font-size-lg);
+	font-size: var(--label-large-400-font-size);
 	font-style: normal;
-	font-weight: var(--font-weight-normal);
+	font-weight: var(--label-large-400-font-weight);
 	line-height: 28px;
 	letter-spacing: -0.09px;
 }
 
 .subtitle {
 	color: var(--l2-foreground);
-	font-size: var(--font-size-sm);
+	font-size: var(--paragraph-base-400-font-size);
 	font-style: normal;
-	font-weight: var(--font-weight-normal);
+	font-weight: var(--paragraph-base-400-font-weight);
 	line-height: 20px;
 	letter-spacing: -0.07px;
 }

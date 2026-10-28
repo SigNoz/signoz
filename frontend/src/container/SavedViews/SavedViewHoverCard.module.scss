@@ -15,7 +15,7 @@
 .name {
 	min-width: 0;
 	color: var(--l1-foreground);
-	font-size: var(--periscope-font-size-base);
+	font-size: var(--label-base-400-font-size);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -38,13 +38,13 @@
 
 .queryName {
 	color: var(--l2-foreground);
-	font-size: var(--periscope-font-size-small);
+	font-size: var(--label-small-400-font-size);
 }
 
 .metric {
 	color: var(--l2-foreground);
 	font-family: var(--periscope-font-family-mono);
-	font-size: var(--font-size-xs);
+	font-size: var(--code-small-400-font-size);
 	word-break: break-all;
 }
 
@@ -56,7 +56,7 @@
 	overflow: hidden;
 	color: var(--l1-foreground);
 	font-family: var(--periscope-font-family-mono);
-	font-size: var(--font-size-xs);
+	font-size: var(--code-small-400-font-size);
 	word-break: break-all;
 }
 
@@ -77,9 +77,9 @@
 
 .sectionTitle {
 	color: var(--muted-foreground);
-	font-size: var(--periscope-font-size-small);
-	font-weight: var(--font-weight-medium);
-	line-height: var(--line-height-18);
+	font-size: var(--uppercase-small-500-font-size);
+	font-weight: var(--uppercase-small-500-font-weight);
+	line-height: var(--uppercase-small-500-line-height);
 	letter-spacing: 0.88px;
 	text-transform: uppercase;
 }

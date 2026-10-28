@@ -190,7 +190,7 @@
 	margin: 0;
 	color: var(--l1-foreground);
 	font-size: var(--paragraph-base-400-font-size);
-	line-height: var(--line-height-20);
+	line-height: var(--paragraph-base-400-line-height);
 	letter-spacing: -0.07px;
 }
 
@@ -226,8 +226,8 @@
 
 .edit-modal-helper {
 	color: var(--l2-foreground);
-	font-size: var(--font-size-xs);
-	line-height: var(--line-height-20);
+	font-size: var(--paragraph-base-400-font-size);
+	line-height: var(--paragraph-base-400-line-height);
 
 	&--error {
 		color: var(--destructive);
@@ -249,7 +249,7 @@
 
 .edit-modal-note-emoji {
 	font-size: 16px;
-	line-height: var(--line-height-20);
+	line-height: var(--label-medium-400-line-height);
 	flex-shrink: 0;
 	margin-top: 2px;
 }
@@ -257,7 +257,7 @@
 .edit-modal-note-text {
 	color: var(--l2-foreground);
 	font-size: var(--paragraph-base-400-font-size);
-	line-height: var(--line-height-20);
+	line-height: var(--paragraph-base-400-line-height);
 	letter-spacing: -0.07px;
 }
 

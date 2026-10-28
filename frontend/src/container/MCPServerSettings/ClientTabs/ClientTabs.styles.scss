@@ -13,7 +13,7 @@
 
 		.learn-more {
 			width: fit-content;
-			font-size: var(--font-size-xs);
+			font-size: var(--label-small-400-font-size);
 		}
 	}
 
@@ -50,9 +50,9 @@
 	}
 
 	&__instructions {
-		font-size: var(--font-size-xs);
+		font-size: var(--paragraph-base-400-font-size);
 		color: var(--foreground);
-		line-height: var(--line-height-20);
+		line-height: var(--paragraph-base-400-line-height);
 		margin: 0;
 	}
 }

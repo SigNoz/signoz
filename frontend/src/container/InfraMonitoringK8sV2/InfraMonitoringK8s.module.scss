@@ -109,8 +109,8 @@
 }
 
 .sectionLabel {
-	font-size: var(--periscope-font-size-small);
-	font-weight: var(--font-weight-semibold);
+	font-size: var(--uppercase-small-600-font-size);
+	font-weight: var(--uppercase-small-600-font-weight);
 	text-transform: uppercase;
 	letter-spacing: 0.5px;
 	color: var(--l3-foreground);
@@ -151,7 +151,8 @@
 		background-color 0.2s ease,
 		color 0.2s ease;
 	color: var(--l2-foreground);
-	font-size: var(--periscope-font-size-base);
+	font-size: var(--label-base-400-font-size);
+	--typography-color: var(--l1-foreground);
 
 	&:hover:not(.categoryItemSelected) {
 		background: var(--l2-background-hover);

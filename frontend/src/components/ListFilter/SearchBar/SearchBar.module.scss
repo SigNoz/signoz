@@ -25,7 +25,7 @@
 
 	:global(.cm-dsl-logic) {
 		color: var(--bg-sakura-400);
-		font-weight: var(--font-weight-medium);
+		font-weight: var(--label-base-500-font-weight);
 	}
 
 	:global(.cm-dsl-string) {
@@ -59,7 +59,7 @@
 			content: 'SUGGESTIONS';
 			padding: 12px 14px 8px;
 			font-size: 11px;
-			font-weight: var(--font-weight-medium);
+			font-weight: var(--uppercase-small-500-font-weight);
 			line-height: 18px;
 			letter-spacing: 0.88px;
 			text-transform: uppercase;
@@ -71,7 +71,7 @@
 			padding: 10px 14px;
 			border-top: 1px solid var(--l1-border);
 			background: var(--l2-background);
-			font-size: var(--font-size-xs);
+			font-size: var(--label-small-400-font-size);
 			color: var(--l2-foreground);
 		}
 
@@ -131,7 +131,7 @@
 		border-radius: 50px;
 		background: color-mix(in srgb, var(--l1-foreground) 10%, transparent);
 		font-style: normal;
-		font-size: var(--font-size-xs);
+		font-size: var(--label-small-400-font-size);
 		color: var(--l2-foreground);
 		text-transform: capitalize;
 	}

@@ -7,7 +7,7 @@
 
 .groupName {
 	color: var(--l1-foreground);
-	font-weight: var(--font-weight-semibold);
+	font-weight: var(--label-base-600-font-weight);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -15,7 +15,7 @@
 
 .groupCount {
 	color: var(--l3-foreground);
-	font-size: var(--font-size-xs);
+	font-size: var(--label-small-400-font-size);
 	white-space: nowrap;
 }
 

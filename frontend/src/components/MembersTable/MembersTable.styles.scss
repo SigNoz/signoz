@@ -115,7 +115,7 @@
 
 .member-joined-date {
 	color: var(--foreground);
-	line-height: var(--line-height-18);
+	line-height: var(--paragraph-small-400-line-height);
 	letter-spacing: -0.07px;
 	white-space: nowrap;
 }
@@ -123,7 +123,7 @@
 .member-joined-dash {
 	font-size: var(--paragraph-base-400-font-size);
 	color: var(--l3-foreground-hover);
-	line-height: var(--line-height-18);
+	line-height: var(--paragraph-base-400-line-height);
 	letter-spacing: -0.07px;
 }
 
@@ -137,7 +137,7 @@
 	color: var(--foreground);
 
 	&__emoji {
-		font-size: var(--font-size-2xl);
+		font-size: 24px;
 		line-height: 1;
 	}
 
@@ -147,7 +147,7 @@
 		line-height: var(--paragraph-base-400-line-height);
 
 		strong {
-			font-weight: var(--font-weight-medium);
+			font-weight: var(--paragraph-base-500-font-weight);
 			color: var(--l1-foreground);
 		}
 	}
@@ -164,12 +164,12 @@
 	}
 
 	.members-pagination-range {
-		font-size: var(--font-size-xs);
+		font-size: var(--label-small-400-font-size);
 		color: var(--foreground);
 	}
 
 	.members-pagination-total {
-		font-size: var(--font-size-xs);
+		font-size: var(--label-small-400-font-size);
 		color: var(--foreground);
 		opacity: 0.5;
 	}

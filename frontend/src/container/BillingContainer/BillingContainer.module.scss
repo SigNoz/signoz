@@ -17,17 +17,17 @@
 
 	.pageInfoTitle {
 		margin: 0;
-		font-size: var(--font-size-sm);
-		font-weight: var(--font-weight-medium);
-		line-height: var(--line-height-20);
+		font-size: var(--paragraph-base-500-font-size);
+		font-weight: var(--paragraph-base-500-font-weight);
+		line-height: var(--paragraph-base-500-line-height);
 		letter-spacing: -0.07px;
 		color: var(--l1-foreground);
 	}
 
 	.pageInfoSubtitle {
 		margin: 0;
-		font-size: var(--font-size-sm);
-		line-height: var(--line-height-18);
+		font-size: var(--paragraph-base-400-font-size);
+		line-height: var(--paragraph-base-400-line-height);
 		letter-spacing: -0.07px;
 		color: var(--l2-foreground);
 	}
@@ -63,8 +63,8 @@
 				height: 52px;
 				padding: 0 var(--padding-4);
 				color: var(--l3-foreground);
-				font-size: var(--font-size-xs);
-				font-weight: var(--font-weight-medium);
+				font-size: var(--uppercase-small-500-font-size);
+				font-weight: var(--uppercase-small-500-font-weight);
 				letter-spacing: 0.48px;
 				text-transform: uppercase;
 			}
@@ -75,7 +75,7 @@
 				background: var(--l2-background);
 				border-bottom: 1px solid var(--l1-border);
 				color: var(--l2-foreground);
-				font-size: var(--font-size-sm);
+				font-size: var(--label-base-400-font-size);
 
 				&:first-child {
 					color: var(--l1-foreground);
@@ -160,8 +160,8 @@
 
 	.billingUpdateNote {
 		margin-top: var(--spacing-4);
-		font-family: var(--font-family-inter);
-		font-size: var(--font-size-sm);
+		font-family: var(--label-base-400-font-family);
+		font-size: var(--label-base-400-font-size);
 		letter-spacing: -0.07px;
 	}
 

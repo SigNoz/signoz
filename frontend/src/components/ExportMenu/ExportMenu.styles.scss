@@ -6,7 +6,7 @@
 		display: flex;
 		color: var(--l1-foreground);
 		font-family: Inter;
-		font-size: var(--periscope-font-size-small);
+		font-size: var(--uppercase-small-500-font-size);
 		font-style: normal;
 		font-weight: 500;
 		line-height: 18px;
@@ -23,7 +23,7 @@
 		// radio option labels — radix popover content inherits the root font
 		// size; pin to the app's 13px base the antd popover used to impose
 		label {
-			font-size: var(--periscope-font-size-base);
+			font-size: var(--label-base-400-font-size);
 		}
 	}
 }

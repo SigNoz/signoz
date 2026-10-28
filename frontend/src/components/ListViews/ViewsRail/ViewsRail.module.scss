@@ -24,8 +24,8 @@
 
 .headerTitle {
 	margin: 0;
-	font-size: var(--font-size-base);
-	font-weight: var(--font-weight-semibold);
+	font-size: var(--label-medium-600-font-size);
+	font-weight: var(--label-medium-600-font-weight);
 	letter-spacing: -0.01em;
 	color: var(--l1-foreground);
 	text-align: left;
@@ -38,7 +38,7 @@
 .searchEmpty {
 	padding: 12px;
 	color: var(--l3-foreground);
-	font-size: var(--font-size-xs);
+	font-size: var(--label-small-400-font-size);
 	text-align: center;
 }
 
@@ -54,8 +54,8 @@
 	align-items: center;
 	gap: 6px;
 	padding: 16px 8px 8px;
-	font-size: var(--font-size-xs);
-	font-weight: var(--font-weight-semibold);
+	font-size: var(--uppercase-small-600-font-size);
+	font-weight: var(--uppercase-small-600-font-weight);
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
 	color: var(--l3-foreground);
@@ -157,7 +157,7 @@
 	border: 1px dashed var(--l2-border);
 	border-radius: 8px;
 	color: var(--l3-foreground);
-	font-size: var(--font-size-xs);
+	font-size: var(--label-small-400-font-size);
 	line-height: 1.5;
 	text-align: center;
 }
@@ -174,8 +174,8 @@
 }
 
 .dirtyTitle {
-	font-size: var(--font-size-xs);
-	font-weight: var(--font-weight-semibold);
+	font-size: var(--uppercase-small-600-font-size);
+	font-weight: var(--uppercase-small-600-font-weight);
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
 	color: var(--l2-foreground);

@@ -31,13 +31,13 @@
 	align-items: center;
 	gap: var(--spacing-3);
 	margin: 0;
-	font-size: var(--periscope-font-size-base);
-	font-weight: var(--font-weight-semibold);
+	font-size: var(--label-base-600-font-size);
+	font-weight: var(--label-base-600-font-weight);
 }
 
 .description {
 	margin: 0;
-	font-size: var(--periscope-font-size-base);
+	font-size: var(--label-base-400-font-size);
 	color: var(--l3-foreground);
 }
 
@@ -81,11 +81,11 @@
 	height: 100%;
 	text-align: center;
 	color: var(--l3-foreground);
-	font-size: var(--periscope-font-size-base);
+	font-size: var(--label-base-400-font-size);
 }
 
 .placeholderTitle {
-	font-weight: var(--font-weight-semibold);
+	font-weight: var(--label-base-600-font-weight);
 	color: var(--l2-foreground);
 }
 
@@ -94,7 +94,7 @@
 	border-radius: var(--radius-2);
 	background: var(--callout-error-background);
 	color: var(--callout-error-title);
-	font-size: var(--periscope-font-size-base);
+	font-size: var(--label-base-400-font-size);
 }
 
 .results {
@@ -121,13 +121,13 @@
 	display: flex;
 	align-items: center;
 	gap: var(--spacing-3);
-	font-size: var(--periscope-font-size-base);
-	font-weight: var(--font-weight-semibold);
+	font-size: var(--label-base-600-font-size);
+	font-weight: var(--label-base-600-font-weight);
 }
 
 .resultEmpty {
 	color: var(--l3-foreground);
-	font-size: var(--periscope-font-size-base);
+	font-size: var(--label-base-400-font-size);
 }
 
 .attrRows {
@@ -144,7 +144,7 @@
 	padding: var(--spacing-2) var(--padding-3);
 	border-radius: var(--radius-2);
 	font-family: 'Geist Mono', monospace;
-	font-size: var(--font-size-xs);
+	font-size: var(--code-small-400-font-size);
 
 	&.added {
 		background: var(--callout-success-background);
@@ -169,7 +169,7 @@
 }
 
 .attrKey {
-	font-weight: var(--font-weight-medium);
+	font-weight: var(--label-base-500-font-weight);
 }
 
 .attrValue {
