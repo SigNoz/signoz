@@ -1,4 +1,4 @@
-package telemetrymetadata
+package resolvercore
 
 import (
 	"strings"
@@ -6,7 +6,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-func staticFieldMatchesAny(field telemetrytypes.TelemetryFieldKey, selectors []*telemetrytypes.FieldKeySelector) bool {
+func StaticFieldMatchesAny(field telemetrytypes.TelemetryFieldKey, selectors []*telemetrytypes.FieldKeySelector) bool {
 	for _, selector := range selectors {
 		if staticFieldMatches(field, selector) {
 			return true
