@@ -1,4 +1,4 @@
-import { render, screen, userEvent } from 'tests/test-utils';
+import { render, screen, userEvent, within } from 'tests/test-utils';
 
 import ConfigRangeSlider from '../ConfigRangeSlider';
 
@@ -24,7 +24,9 @@ describe('ConfigRangeSlider', () => {
 			/>,
 		);
 
-		expect(screen.getAllByRole('slider')).toHaveLength(2);
+		expect(
+			within(screen.getByTestId('range')).getAllByRole('slider'),
+		).toHaveLength(2);
 		expect(screen.getByText('4–24 px')).toBeInTheDocument();
 	});
 
@@ -42,7 +44,9 @@ describe('ConfigRangeSlider', () => {
 			/>,
 		);
 
-		const [, maxThumb] = screen.getAllByRole('slider');
+		const [, maxThumb] = within(screen.getByTestId('range')).getAllByRole(
+			'slider',
+		);
 		maxThumb.focus();
 		await user.keyboard('{ArrowRight}');
 
