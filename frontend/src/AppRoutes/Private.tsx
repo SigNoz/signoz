@@ -1,5 +1,4 @@
 import { ReactChild, useCallback, useMemo } from 'react';
-import { matchPath, Redirect, useLocation } from 'react-router-dom';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import { useListUsers } from 'api/generated/services/users';
@@ -9,6 +8,9 @@ import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { isEmpty } from 'lodash-es';
+import { matchRoute } from 'lib/router/matchRoute';
+import { Redirect } from 'lib/router/Redirect';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { useAppContext } from 'providers/App/App';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 import { OrgPreference } from 'types/api/preferences/preference';
@@ -28,7 +30,7 @@ import routes, {
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
-	const location = useLocation();
+	const location = useAppLocation();
 	const { pathname } = location;
 	const {
 		org,
@@ -47,10 +49,11 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		() =>
 			new Map(
 				[...routes, LIST_LICENSES, SUPPORT_ROUTE].map((e) => {
-					const currentPath = matchPath(pathname, {
-						path: e.path,
-					});
-					return [currentPath === null ? null : 'current', e];
+					const patterns = Array.isArray(e.path) ? e.path : [e.path];
+					const matches = patterns.some(
+						(pattern) => matchRoute(pathname, pattern) !== null,
+					);
+					return [matches ? 'current' : null, e];
 				}),
 			),
 		[pathname],
@@ -242,7 +245,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			);
 			if (fromPathname) {
 				setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, '');
-				return <Redirect to={fromPathname} />;
+				return <Redirect to={fromPathname} replace={false} />;
 			}
 			if (pathname !== ROUTES.SOMETHING_WENT_WRONG) {
 				return <Redirect to={ROUTES.HOME} />;
@@ -256,7 +259,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		);
 		if (fromPathname) {
 			setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, '');
-			return <Redirect to={fromPathname} />;
+			return <Redirect to={fromPathname} replace={false} />;
 		}
 		return <Redirect to={ROUTES.HOME} />;
 	} else {

@@ -35,11 +35,12 @@ test.describe('Routing — auth guards', () => {
 		expect(await guest.historyDepth()).toBe(depthAtLogin + 1);
 
 		// Back reaches the replaced /login entry, where being logged in redirects
-		// straight out again.
+		// away. The stashed route was cleared, so the fallback is /home. Poll for
+		// /home: `goBack()` resolves before the redirect off /login, so a
+		// "not /login" poll passes on the url the pop started from.
 		await guest.goBack();
 		await expect
 			.poll(() => guest.url().pathname, { timeout: 15_000 })
-			.not.toBe(PATH.login);
-		expect(guest.url().pathname).toBe(PATH.services);
+			.toBe(PATH.home);
 	});
 });
