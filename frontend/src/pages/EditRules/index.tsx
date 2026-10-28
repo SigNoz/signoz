@@ -11,19 +11,12 @@ import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import EditRulesContainer from 'container/EditRules';
+import EditAlertV2 from 'container/EditAlertV2';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
-import {
-	NEW_ALERT_SCHEMA_VERSION,
-	PostableAlertRuleV2,
-} from 'types/api/alerts/alertTypesV2';
-import {
-	fromRuleDTOToAlertDef,
-	fromRuleDTOToPostableRuleV2,
-} from 'types/api/alerts/convert';
+import { fromRuleDTOToPostableRuleV2 } from 'types/api/alerts/convert';
 
 import './EditRules.styles.scss';
 
@@ -96,17 +89,13 @@ function EditRules(): JSX.Element {
 		return <Spinner tip="Loading Rules..." />;
 	}
 
-	let initialV2AlertValue: PostableAlertRuleV2 | null = null;
-	if (ruleData.schemaVersion === NEW_ALERT_SCHEMA_VERSION) {
-		initialV2AlertValue = fromRuleDTOToPostableRuleV2(ruleData);
-	}
+	const initialAlert = fromRuleDTOToPostableRuleV2(ruleData);
 
 	return (
 		<div className="edit-rules-container">
-			<EditRulesContainer
-				ruleId={ruleId || ''}
-				initialValue={fromRuleDTOToAlertDef(ruleData)}
-				initialV2AlertValue={initialV2AlertValue}
+			<EditAlertV2
+				initialAlert={initialAlert}
+				alertType={initialAlert.alertType}
 			/>
 		</div>
 	);

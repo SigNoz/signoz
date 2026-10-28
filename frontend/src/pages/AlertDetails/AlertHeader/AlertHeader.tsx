@@ -1,17 +1,10 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas';
 import CreateAlertV2Header from 'container/CreateAlertV2/CreateAlertHeader';
-import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import { useAlertRule } from 'providers/Alert';
-import {
-	NEW_ALERT_SCHEMA_VERSION,
-	PostableAlertRuleV2,
-} from 'types/api/alerts/alertTypesV2';
+import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 
 import AlertActionButtons from './ActionButtons/ActionButtons';
-import AlertLabels from './AlertLabels/AlertLabels';
-import AlertSeverity from './AlertSeverity/AlertSeverity';
-import AlertState from './AlertState/AlertState';
 
 import './AlertHeader.styles.scss';
 
@@ -19,8 +12,8 @@ export type AlertHeaderProps = {
 	alertDetails: RuletypesRuleDTO | PostableAlertRuleV2;
 };
 function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
-	const { state, alert: alertName, labels } = alertDetails;
-	const { alertRuleState, alertRuleName, setAlertRuleName } = useAlertRule();
+	const { alert: alertName } = alertDetails;
+	const { alertRuleName, setAlertRuleName } = useAlertRule();
 
 	useEffect(() => {
 		if (alertRuleName === undefined && alertName) {
@@ -30,50 +23,9 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 
 	useEffect(() => (): void => setAlertRuleName(undefined), [setAlertRuleName]);
 
-	const displayName = alertRuleName ?? alertName;
-
-	const labelsWithoutSeverity = useMemo(() => {
-		if (labels) {
-			return Object.fromEntries(
-				Object.entries(labels).filter(([key]) => key !== 'severity'),
-			);
-		}
-		return {};
-	}, [labels]);
-
-	const isV2Alert = alertDetails.schemaVersion === NEW_ALERT_SCHEMA_VERSION;
-
-	const CreateAlertV1Header = (
-		<div className="alert-info__info-wrapper">
-			<div className="top-section">
-				<div className="alert-title-wrapper">
-					<AlertState
-						state={alertRuleState ?? state ?? ''}
-						testId="alert-header-state"
-					/>
-					<div className="alert-title" data-testid="alert-header-title">
-						<LineClampedText text={displayName || ''} />
-					</div>
-				</div>
-			</div>
-			<div className="bottom-section">
-				{labels?.severity && (
-					<AlertSeverity severity={labels.severity} testId="alert-header-severity" />
-				)}
-
-				{/* // TODO(shaheer): Get actual data when we are able to get alert firing from state from API */}
-				{/* <AlertStatus
-						status="firing"
-						timestamp={dayjs().subtract(1, 'd').valueOf()}
-					/> */}
-				<AlertLabels labels={labelsWithoutSeverity} testId="alert-header-labels" />
-			</div>
-		</div>
-	);
-
 	return (
 		<div className="alert-info">
-			{isV2Alert ? <CreateAlertV2Header /> : CreateAlertV1Header}
+			<CreateAlertV2Header />
 			<div className="alert-info__action-buttons">
 				<AlertActionButtons
 					alertDetails={alertDetails}

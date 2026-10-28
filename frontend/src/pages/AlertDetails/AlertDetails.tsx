@@ -2,7 +2,6 @@ import React, { useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Divider } from '@signozhq/ui/divider';
 import logEvent from 'api/common/logEvent';
-import classNames from 'classnames';
 import AlertBreadcrumb from 'components/AlertBreadcrumb';
 import { Filters } from 'components/AlertDetailsFilters/Filters';
 import RouteTab from 'components/RouteTab';
@@ -17,7 +16,6 @@ import {
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { useAlertRule } from 'providers/Alert';
-import { NEW_ALERT_SCHEMA_VERSION } from 'types/api/alerts/alertTypesV2';
 import { fromRuleDTOToPostableRuleV2 } from 'types/api/alerts/convert';
 
 import AlertHeader from './AlertHeader/AlertHeader';
@@ -80,8 +78,6 @@ function AlertDetails(): JSX.Element {
 		}
 	};
 
-	const isV2Alert = alertRuleDetails?.schemaVersion === NEW_ALERT_SCHEMA_VERSION;
-
 	// Show spinner until we have alert data loaded
 	if (isLoading && !alertRuleDetails) {
 		return <Spinner />;
@@ -95,9 +91,9 @@ function AlertDetails(): JSX.Element {
 			initialAlertState={initialAlertState}
 		>
 			<div
-				className={classNames('alert-details', { 'alert-details-v2': isV2Alert })}
+				className="alert-details alert-details-v2"
 				data-testid="alert-details-root"
-				data-schema-version={isV2Alert ? NEW_ALERT_SCHEMA_VERSION : 'v1'}
+				data-schema-version={alertRuleDetails?.schemaVersion}
 			>
 				<AlertBreadcrumb
 					className="alert-details__breadcrumb"

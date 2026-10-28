@@ -437,7 +437,7 @@ test.describe('Alert create — v2 builder', () => {
 		await page.getByTestId('alert-name-input').fill(name);
 		await selectThresholdChannel(page, 0, alertChannel.name);
 
-		// One click — v2 has no confirm dialog, unlike v1.
+		// One click, no confirm dialog.
 		const [response] = await Promise.all([
 			page.waitForResponse(
 				(r) => r.url().includes('/api/v2/rules') && r.request().method() === 'POST',
@@ -451,7 +451,6 @@ test.describe('Alert create — v2 builder', () => {
 
 		const body = response.request().postDataJSON();
 		expect(body.schemaVersion).toBe('v2alpha1');
-		expect(body.version).toBe('v5');
 		expect(body.alert).toBe(name);
 		expect(body.condition.thresholds.kind).toBe('basic');
 		expect(body.condition.thresholds.spec[0]).toMatchObject({

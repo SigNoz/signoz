@@ -65,24 +65,19 @@ export interface ThresholdSeedSpec {
 	recoveryTarget?: number | null;
 }
 
-/** Rule schema flavour. `v1` is the legacy payload posted to `/api/v1/rules`. */
-export type AlertSchema = 'v1' | 'v2';
-
 export interface LogsAlertSeed {
 	name: string;
 	/** Substring the rule matches on (`body CONTAINS '<marker>'`). */
 	marker: string;
 	/** Channel *names* (not ids) — the API validates the reference. */
 	channels: string[];
-	schema?: AlertSchema;
 	/** Go duration, e.g. `5m0s`. Shrink it to make the rule resolve fast. */
 	evalWindow?: string;
 	frequency?: string;
-	/** Becomes the history `threshold.name` for v1 rules (`processRuleDefaults`). */
+	/** Becomes the threshold name, i.e. the history `threshold.name`. */
 	severity?: string;
 	/**
-	 * Extra rule labels merged alongside `severity`. They show up in the details
-	 * header's labels row (which renders `labels` minus `severity`) *and* as extra
+	 * Extra rule labels merged alongside `severity`. They show up as extra
 	 * history `filter_keys`, so add them only where a scenario needs them.
 	 */
 	extraLabels?: Record<string, string>;
@@ -90,19 +85,6 @@ export interface LogsAlertSeed {
 	alertOnAbsent?: boolean;
 	/** `condition.absentFor`, in minutes. */
 	absentFor?: number;
-
-	// ── SEED-RV1 extras ─────────────────────────────────────────────────────
-	// v1 only. Same reasoning as SEED-RV2's block: an `EV1-*` prefill assertion
-	// against the value the create form would have produced anyway proves nothing,
-	// so each of these exists to differ from `alertDefaults`
-	// (`container/CreateAlertRule/defaults.ts`).
-
-	/** `condition.target`. The v1 default is *absent*, so any number differs. */
-	target?: number;
-	/** `condition.op` as the legacy numeric string. `1` above, `2` below, … */
-	op?: string;
-	/** `condition.matchType`, same encoding. `1` at-least-once, `2` all-the-times. */
-	matchType?: string;
 }
 
 export interface TracesAlertSeed {

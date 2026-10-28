@@ -35,21 +35,6 @@ jest.mock('container/TopNav/DateTimeSelectionV2', () => ({
 	},
 }));
 
-jest.mock('container/FormAlertRules', () => ({
-	__esModule: true,
-	default: function MockFormAlertRules({
-		alertType,
-	}: {
-		alertType: AlertTypes;
-	}): JSX.Element {
-		return (
-			<div>
-				<h1>Form Alert Rules</h1>
-				<p>{alertType}</p>
-			</div>
-		);
-	},
-}));
 jest.mock('container/CreateAlertV2', () => ({
 	__esModule: true,
 	default: function MockCreateAlertV2({
@@ -84,7 +69,6 @@ const mockGetUrlQuery = jest.fn();
 const mockSafeNavigate = jest.fn();
 const mockDeleteUrlQuery = jest.fn();
 
-const FORM_ALERT_RULES_TEXT = 'Form Alert Rules';
 const CREATE_ALERT_V2_TEXT = 'Create Alert V2';
 
 describe('CreateAlertRule', () => {
@@ -103,20 +87,6 @@ describe('CreateAlertRule', () => {
 		useAppContextSpy.mockReturnValue(getAppContextMockState());
 	});
 
-	it('should render classic flow when showClassicCreateAlertsPage is true', () => {
-		mockGetUrlQuery.mockImplementation((key: string) => {
-			if (key === QueryParams.showClassicCreateAlertsPage) {
-				return 'true';
-			}
-			if (key === QueryParams.alertType) {
-				return AlertTypes.METRICS_BASED_ALERT;
-			}
-			return null;
-		});
-		render(<CreateAlertRule />);
-		expect(screen.getByText(FORM_ALERT_RULES_TEXT)).toBeInTheDocument();
-	});
-
 	it('should render new flow when alertType is provided', () => {
 		mockGetUrlQuery.mockImplementation((key: string) => {
 			if (key === QueryParams.alertType) {
@@ -132,7 +102,6 @@ describe('CreateAlertRule', () => {
 		mockGetUrlQuery.mockReturnValue(null);
 		useCompositeQueryParamSpy.mockReturnValue(null);
 		render(<CreateAlertRule />);
-		expect(screen.queryByText(FORM_ALERT_RULES_TEXT)).not.toBeInTheDocument();
 		expect(screen.queryByText(CREATE_ALERT_V2_TEXT)).not.toBeInTheDocument();
 	});
 
@@ -157,9 +126,6 @@ describe('CreateAlertRule', () => {
 
 	it('should render new flow with the anomaly alert type when ruleType is anomaly_rule', () => {
 		mockGetUrlQuery.mockImplementation((key: string) => {
-			if (key === QueryParams.showClassicCreateAlertsPage) {
-				return 'false';
-			}
 			if (key === QueryParams.ruleType) {
 				return 'anomaly_rule';
 			}
@@ -168,7 +134,6 @@ describe('CreateAlertRule', () => {
 		render(<CreateAlertRule />);
 		expect(screen.getByText(CREATE_ALERT_V2_TEXT)).toBeInTheDocument();
 		expect(screen.getByText(AlertTypes.ANOMALY_BASED_ALERT)).toBeInTheDocument();
-		expect(screen.queryByText(FORM_ALERT_RULES_TEXT)).not.toBeInTheDocument();
 	});
 
 	it('should use alertType from URL when provided', () => {
@@ -285,28 +250,6 @@ describe('CreateAlertRule', () => {
 			expect(mockSetUrlQuery).toHaveBeenCalledWith(
 				QueryParams.ruleType,
 				'anomaly_rule',
-			);
-			expect(mockSetUrlQuery).toHaveBeenCalledWith(
-				QueryParams.alertType,
-				AlertTypes.METRICS_BASED_ALERT,
-			);
-			expect(mockSafeNavigate).toHaveBeenCalled();
-		});
-
-		it('should navigate even when showClassicCreateAlertsPage flag is present', () => {
-			mockGetUrlQuery.mockImplementation((key: string) => {
-				if (key === QueryParams.showClassicCreateAlertsPage) {
-					return 'true';
-				}
-				return null;
-			});
-
-			render(<CreateAlertRule />);
-			fireEvent.click(screen.getByText('metric_based_alert'));
-
-			expect(mockSetUrlQuery).toHaveBeenCalledWith(
-				QueryParams.ruleType,
-				'threshold_rule',
 			);
 			expect(mockSetUrlQuery).toHaveBeenCalledWith(
 				QueryParams.alertType,

@@ -7,11 +7,9 @@ import {
 	logsCompositeQuery,
 	metricsCompositeQuery,
 	tracesCompositeQuery,
-	v1RulePayload,
 	v2RulePayload,
 } from './payloads';
 import type {
-	AlertSchema,
 	LogsAlertSeed,
 	MetricAlertSeed,
 	ThresholdAlertSeed,
@@ -87,68 +85,52 @@ export async function deleteAlertViaApi(page: Page, id: string): Promise<void> {
 
 async function postRule(
 	page: Page,
-	schema: AlertSchema,
 	payload: Record<string, unknown>,
 ): Promise<string> {
 	const token = await authToken(page);
-	const path = schema === 'v1' ? '/api/v1/rules' : '/api/v2/rules';
-	const res = await page.request.post(path, {
+	const res = await page.request.post('/api/v2/rules', {
 		data: payload,
 		headers: { Authorization: `Bearer ${token}` },
 	});
 	if (!res.ok()) {
-		throw new Error(`POST ${path} ${res.status()}: ${await res.text()}`);
+		throw new Error(`POST /api/v2/rules ${res.status()}: ${await res.text()}`);
 	}
 	const json = (await res.json()) as { data: { id: string } };
 	return String(json.data.id);
 }
 
-/**
- * Create a logs threshold rule grouped by `service.name`. `schema: 'v1'` posts
- * the legacy payload to `/api/v1/rules`, which the UI then renders through the
- * v1 branch of `AlertHeader` / `ActionButtons` — both schemas serve the *same*
- * history APIs, so history scenarios can be parameterised over them.
- */
+/** Create a logs threshold rule grouped by `service.name`. */
 export async function createLogsAlertViaApi(
 	page: Page,
 	{
 		name,
 		marker,
 		channels,
-		schema = 'v2',
 		evalWindow = '5m0s',
 		frequency = '15s',
-		severity = schema === 'v1' ? 'warning' : 'critical',
+		severity = 'critical',
 		extraLabels,
 		alertOnAbsent,
 		absentFor,
-		target,
-		op,
-		matchType,
 	}: LogsAlertSeed,
 ): Promise<string> {
 	const extraCondition =
 		alertOnAbsent === undefined
 			? undefined
 			: { alertOnAbsent, absentFor: absentFor ?? 1 };
-	const args = {
-		name,
-		alertType: 'LOGS_BASED_ALERT',
-		compositeQuery: logsCompositeQuery(marker),
-		channels,
-		severity,
-		extraLabels,
-		evalWindow,
-		frequency,
-		extraCondition,
-		target,
-		op,
-		matchType,
-	};
 	return postRule(
 		page,
-		schema,
-		schema === 'v1' ? v1RulePayload(args) : v2RulePayload(args),
+		v2RulePayload({
+			name,
+			alertType: 'LOGS_BASED_ALERT',
+			compositeQuery: logsCompositeQuery(marker),
+			channels,
+			severity,
+			extraLabels,
+			evalWindow,
+			frequency,
+			extraCondition,
+		}),
 	);
 }
 
@@ -169,7 +151,6 @@ export async function createTracesAlertViaApi(
 ): Promise<string> {
 	return postRule(
 		page,
-		'v2',
 		v2RulePayload({
 			name,
 			alertType: 'TRACES_BASED_ALERT',
@@ -196,7 +177,6 @@ export async function createMetricAlertViaApi(
 ): Promise<string> {
 	return postRule(
 		page,
-		'v2',
 		v2RulePayload({
 			name,
 			alertType: 'METRIC_BASED_ALERT',

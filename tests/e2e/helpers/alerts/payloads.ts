@@ -9,7 +9,7 @@ const ANNOTATIONS = {
 		'This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})',
 };
 
-// A minimal but valid v2 (schemaVersion v2alpha1 / version v5) threshold rule
+// A minimal but valid v2 (schemaVersion v2alpha1) threshold rule
 // on the always-present `signoz_calls_total` metric. Mirrors the shape the
 // CreateAlertV2 UI posts to POST /api/v2/rules.
 export function buildThresholdRulePayload({
@@ -43,9 +43,7 @@ export function buildThresholdRulePayload({
 		alertType: 'METRIC_BASED_ALERT',
 		ruleType: 'threshold_rule',
 		schemaVersion: 'v2alpha1',
-		version: 'v5',
 		disabled: false,
-		source: '',
 		...(labels ? { labels } : {}),
 		annotations: ANNOTATIONS,
 		evaluation: {
@@ -234,9 +232,7 @@ export function v2RulePayload({
 		alertType,
 		ruleType: 'threshold_rule',
 		schemaVersion: 'v2alpha1',
-		version: 'v5',
 		disabled: false,
-		source: '',
 		labels: { severity, ...extraLabels },
 		annotations: ANNOTATIONS,
 		evaluation: { kind: 'rolling', spec: { evalWindow, frequency } },
@@ -262,62 +258,6 @@ export function v2RulePayload({
 					},
 				],
 			},
-			...extraCondition,
-		},
-	};
-}
-
-// Legacy schema: `evalWindow`/`frequency` sit at the top level, channels are
-// `preferredChannels`, and `condition.{op,target,matchType}` are the numeric
-// enum forms the v1 validator requires. `labels.severity` becomes the history
-// `threshold.name`.
-export function v1RulePayload({
-	name,
-	alertType,
-	compositeQuery,
-	channels,
-	severity,
-	extraLabels,
-	evalWindow,
-	frequency,
-	extraCondition,
-	target = 0,
-	op = '1',
-	matchType = '1',
-}: {
-	name: string;
-	alertType: string;
-	compositeQuery: Record<string, unknown>;
-	channels: string[];
-	severity: string;
-	extraLabels?: Record<string, string>;
-	evalWindow: string;
-	frequency: string;
-	extraCondition?: Record<string, unknown>;
-	target?: number;
-	op?: string;
-	matchType?: string;
-}): Record<string, unknown> {
-	return {
-		alert: name,
-		alertType,
-		ruleType: 'threshold_rule',
-		disabled: false,
-		source: '',
-		evalWindow,
-		frequency,
-		preferredChannels: channels,
-		labels: { severity, ...extraLabels },
-		annotations: ANNOTATIONS,
-		condition: {
-			selectedQueryName: 'A',
-			// Defaults match the history seeds' original shape — `target 0 / op above /
-			// matchType at_least_once` fires on the first evaluation that sees data — so
-			// overriding them is opt-in and cannot change what those seeds do.
-			op,
-			target,
-			matchType,
-			compositeQuery,
 			...extraCondition,
 		},
 	};
