@@ -3,9 +3,9 @@
  * Do not hand-edit: regenerate instead.
  */
 
+import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { AlertDetectionTypes } from 'container/FormAlertRules';
 import { rest } from 'msw';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -63,8 +63,8 @@ const routeFor = (mode: AlertMode): string => {
 		[QueryParams.alertType]: alertType,
 		[QueryParams.ruleType]:
 			mode === 'anomaly'
-				? AlertDetectionTypes.ANOMALY_DETECTION_ALERT
-				: AlertDetectionTypes.THRESHOLD_ALERT,
+				? RuletypesRuleTypeDTO.anomaly_rule
+				: RuletypesRuleTypeDTO.threshold_rule,
 		[QueryParams.relativeTime]: '6h',
 	});
 

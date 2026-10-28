@@ -1,10 +1,10 @@
+import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import {
 	initialQueryBuilderFormValuesMap,
 	initialQueryPromQLData,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
-import { AlertDetectionTypes } from 'container/FormAlertRules';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
 	AlertDef,
@@ -63,7 +63,7 @@ export const alertDefaults: AlertDef = {
 export const anamolyAlertDefaults: AlertDef = {
 	alertType: AlertTypes.METRICS_BASED_ALERT,
 	version: ENTITY_VERSION_V5,
-	ruleType: AlertDetectionTypes.ANOMALY_DETECTION_ALERT,
+	ruleType: RuletypesRuleTypeDTO.anomaly_rule,
 	condition: {
 		compositeQuery: {
 			builderQueries: {

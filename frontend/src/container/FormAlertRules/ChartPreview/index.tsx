@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
+import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
@@ -45,7 +46,6 @@ import { getGraphType } from 'utils/getGraphType';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import { getTimeRange } from 'utils/getTimeRange';
 
-import { AlertDetectionTypes } from '..';
 import ChartContent from './ChartContent';
 import { ChartContainer } from './styles';
 import { getThresholds } from './utils';
@@ -279,7 +279,7 @@ function ChartPreview({
 	const hasResultData = !!queryResponse?.data?.payload?.data?.result?.length;
 
 	const isAnomalyDetectionAlert =
-		alertDef?.ruleType === AlertDetectionTypes.ANOMALY_DETECTION_ALERT;
+		alertDef?.ruleType === RuletypesRuleTypeDTO.anomaly_rule;
 
 	const chartDataAvailable =
 		chartData &&
