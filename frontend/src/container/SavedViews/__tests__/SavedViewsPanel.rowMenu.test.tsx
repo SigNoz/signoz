@@ -236,4 +236,19 @@ describe('SavedViewsPanel row menu', () => {
 		);
 		await waitFor(() => expect(chip()).toHaveTextContent('My view'));
 	});
+
+	it('keeps the open view when another view is deleted', async () => {
+		mockSavedViewsApi([errors, slow]);
+		const { history } = renderPanelWithHeader(viewUrl(PATH, errors));
+		await waitFor(() => expect(chip()).toHaveTextContent('Errors'));
+
+		await chooseFromRowMenu('Slow spans', 'Delete');
+		await userEvent.click(screen.getByTestId('delete-saved-view-confirm'));
+
+		await waitFor(() => expect(row('Slow spans')).toBeUndefined());
+		expect(urlParam(history, QueryParams.viewKey)).toBe(
+			JSON.stringify(errors.id),
+		);
+		expect(chip()).toHaveTextContent('Errors');
+	});
 });
