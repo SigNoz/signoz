@@ -28,6 +28,8 @@ METRICS_DATA = "ruler/test_scenarios/threshold_above_at_least_once/alert_data.js
 METRICS_RULE = "ruler/test_scenarios/threshold_above_at_least_once/rule.json"
 LOGS_DATA = "ruler/test_scenarios/threshold_below_at_least_once/alert_data.jsonl"
 LOGS_RULE = "ruler/test_scenarios/threshold_below_at_least_once/rule.json"
+AI_TRACES_DATA = "ruler/test_scenarios/rule_state_history_ai_traces/alert_data.jsonl"
+AI_TRACES_RULE = "ruler/test_scenarios/rule_state_history_ai_traces/rule.json"
 
 
 JIRA_CASES = [
@@ -72,6 +74,29 @@ JIRA_CASES = [
                         "json_body": jira_issue_subset(
                             "threshold_below_at_least_once",
                             [("Open in SigNoz", r"/alerts/overview\?ruleId="), ("View Related Logs", r"/logs/logs-explorer\?")],
+                        ),
+                    },
+                ),
+            ],
+        ),
+    ),
+    types.AlertManagerNotificationTestCase(
+        name="jira_rich_issue_ai_traces",
+        rule_path=AI_TRACES_RULE,
+        alert_data=[types.AlertData(type="traces", data_path=AI_TRACES_DATA)],
+        channel_config=jira_config(),
+        notification_expectation=types.AMNotificationExpectation(
+            should_notify=True,
+            wait_time_seconds=60,
+            notification_validations=[
+                types.NotificationValidation(
+                    destination_type="webhook",
+                    validation_data={
+                        "path": f"{JIRA_API_BASE}/issue",
+                        "count": 1,
+                        "json_body": jira_issue_subset(
+                            "rule_state_history_ai_traces",
+                            [("Open in SigNoz", r"/alerts/overview\?ruleId="), ("View Related AI Traces", r"/ai-observability/explorer\?")],
                         ),
                     },
                 ),

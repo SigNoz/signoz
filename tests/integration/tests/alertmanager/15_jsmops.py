@@ -29,6 +29,8 @@ METRICS_DATA = "ruler/test_scenarios/threshold_above_at_least_once/alert_data.js
 METRICS_RULE = "ruler/test_scenarios/threshold_above_at_least_once/rule.json"
 LOGS_DATA = "ruler/test_scenarios/threshold_below_at_least_once/alert_data.jsonl"
 LOGS_RULE = "ruler/test_scenarios/threshold_below_at_least_once/rule.json"
+AI_TRACES_DATA = "ruler/test_scenarios/rule_state_history_ai_traces/alert_data.jsonl"
+AI_TRACES_RULE = "ruler/test_scenarios/rule_state_history_ai_traces/rule.json"
 
 
 JSMOPS_CASES = [
@@ -74,6 +76,29 @@ JSMOPS_CASES = [
                         "json_body": jsmops_alert_subset(
                             "threshold_below_at_least_once",
                             [("View in SigNoz", r"/alerts/overview\?ruleId="), ("View related logs", r"/logs/logs-explorer\?")],
+                        ),
+                    },
+                ),
+            ],
+        ),
+    ),
+    types.AlertManagerNotificationTestCase(
+        name="jsmops_rich_alert_ai_traces",
+        rule_path=AI_TRACES_RULE,
+        alert_data=[types.AlertData(type="traces", data_path=AI_TRACES_DATA)],
+        channel_config=jsmops_config(),
+        notification_expectation=types.AMNotificationExpectation(
+            should_notify=True,
+            wait_time_seconds=60,
+            notification_validations=[
+                types.NotificationValidation(
+                    destination_type="webhook",
+                    validation_data={
+                        "path": f"{JSMOPS_API_BASE}/v2/alerts",
+                        "count": 1,
+                        "json_body": jsmops_alert_subset(
+                            "rule_state_history_ai_traces",
+                            [("View in SigNoz", r"/alerts/overview\?ruleId="), ("View related AI traces", r"/ai-observability/explorer\?")],
                         ),
                     },
                 ),
