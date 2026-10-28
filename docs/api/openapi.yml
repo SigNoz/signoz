@@ -31971,14 +31971,38 @@ paths:
           application/json:
             examples:
               ai_traces_raw:
-                summary: 'Raw: spans of AI traces with many tool calls'
+                summary: 'Raw: LLM, tool, and agent spans of one service''s AI traces
+                  with many tool calls'
                 value:
                   compositeQuery:
                     queries:
                     - spec:
                         filter:
-                          expression: trace.tool_call_count > 10 AND gen_ai.tool.name
-                            EXISTS
+                          expression: service.name = 'ai-agent' AND trace.tool_call_count
+                            > 10
+                        limit: 100
+                        name: A
+                        order:
+                        - direction: desc
+                          key:
+                            fieldContext: span
+                            name: timestamp
+                        signal: traces
+                      type: builder_ai_query
+                  end: 1640998800000
+                  requestType: raw
+                  schemaVersion: v1
+                  start: 1640995200000
+              ai_traces_raw_select_fields:
+                summary: 'Raw: the same spans with the span name and gen_ai model,
+                  tool, and token fields selected'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        filter:
+                          expression: service.name = 'ai-agent' AND trace.tool_call_count
+                            > 10
                         limit: 100
                         name: A
                         order:
@@ -31987,8 +32011,16 @@ paths:
                             fieldContext: span
                             name: timestamp
                         selectFields:
+                        - fieldContext: span
+                          name: name
+                        - fieldContext: attribute
+                          name: gen_ai.request.model
                         - fieldContext: attribute
                           name: gen_ai.tool.name
+                        - fieldContext: attribute
+                          name: gen_ai.usage.input_tokens
+                        - fieldContext: attribute
+                          name: gen_ai.usage.output_tokens
                         signal: traces
                       type: builder_ai_query
                   end: 1640998800000

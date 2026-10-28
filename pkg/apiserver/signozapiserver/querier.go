@@ -282,7 +282,7 @@ func (provider *provider) addQuerierRoutes(router *mux.Router) error {
 			},
 			{
 				Name:    "ai_traces_raw",
-				Summary: "Raw: spans of AI traces with many tool calls",
+				Summary: "Raw: LLM, tool, and agent spans of one service's AI traces with many tool calls",
 				Value: map[string]any{
 					"schemaVersion": "v1",
 					"start":         1640995200000,
@@ -295,9 +295,39 @@ func (provider *provider) addQuerierRoutes(router *mux.Router) error {
 								"spec": map[string]any{
 									"name":   "A",
 									"signal": "traces",
-									"filter": map[string]any{"expression": "trace.tool_call_count > 10 AND gen_ai.tool.name EXISTS"},
+									"filter": map[string]any{"expression": "service.name = 'ai-agent' AND trace.tool_call_count > 10"},
+									"order": []any{
+										map[string]any{"key": map[string]any{"name": "timestamp", "fieldContext": "span"}, "direction": "desc"},
+									},
+									"limit": 100,
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				Name:    "ai_traces_raw_select_fields",
+				Summary: "Raw: the same spans with the span name and gen_ai model, tool, and token fields selected",
+				Value: map[string]any{
+					"schemaVersion": "v1",
+					"start":         1640995200000,
+					"end":           1640998800000,
+					"requestType":   "raw",
+					"compositeQuery": map[string]any{
+						"queries": []any{
+							map[string]any{
+								"type": "builder_ai_query",
+								"spec": map[string]any{
+									"name":   "A",
+									"signal": "traces",
+									"filter": map[string]any{"expression": "service.name = 'ai-agent' AND trace.tool_call_count > 10"},
 									"selectFields": []any{
+										map[string]any{"name": "name", "fieldContext": "span"},
+										map[string]any{"name": "gen_ai.request.model", "fieldContext": "attribute"},
 										map[string]any{"name": "gen_ai.tool.name", "fieldContext": "attribute"},
+										map[string]any{"name": "gen_ai.usage.input_tokens", "fieldContext": "attribute"},
+										map[string]any{"name": "gen_ai.usage.output_tokens", "fieldContext": "attribute"},
 									},
 									"order": []any{
 										map[string]any{"key": map[string]any{"name": "timestamp", "fieldContext": "span"}, "direction": "desc"},
