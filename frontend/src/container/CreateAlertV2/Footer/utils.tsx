@@ -292,9 +292,7 @@ export function buildCreateThresholdAlertRulePayload(
 			summary: notificationSettings.description,
 		},
 		notificationSettings: notificationSettingsProps,
-		version: 'v5',
 		schemaVersion: 'v2alpha1',
-		source: window?.location.toString(),
 	};
 }
 

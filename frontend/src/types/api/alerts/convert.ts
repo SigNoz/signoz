@@ -69,7 +69,10 @@ function stripUndefinedLabels(
 export function toPostableRuleDTO(
 	local: PostableAlertRuleV2,
 ): RuletypesPostableRuleDTO {
-	const payload: Record<keyof RuletypesPostableRuleDTO, any> = {
+	const payload: Record<
+		Exclude<keyof RuletypesPostableRuleDTO, 'source' | 'version'>,
+		any
+	> = {
 		alert: local.alert,
 		alertType: toAlertTypeDTO(local.alertType),
 		ruleType: toRuleTypeDTO(local.ruleType),
@@ -83,8 +86,6 @@ export function toPostableRuleDTO(
 		notificationSettings: local.notificationSettings,
 		evaluation: local.evaluation,
 		schemaVersion: local.schemaVersion,
-		source: local.source,
-		version: local.version,
 		disabled: local.disabled,
 		description: (local as unknown as RuletypesPostableRuleDTO).description,
 	};
