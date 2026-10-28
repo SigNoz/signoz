@@ -4,9 +4,17 @@ import { ensureLogsRequiredColumns } from 'container/OptionsMenu/constants';
 import { has } from 'lodash-es';
 import { DataSource } from 'types/common/queryBuilder';
 
+import aiObservabilityLoaderConfig from '../configs/aiObservabilityLoaderConfig';
+import aiObservabilityTraceViewLoaderConfig from '../configs/aiObservabilityTraceViewLoaderConfig';
 import logsLoaderConfig from '../configs/logsLoaderConfig';
 import tracesLoaderConfig from '../configs/tracesLoaderConfig';
-import { FormattingOptions, Preferences } from '../types';
+import {
+	AI_OBSERVABILITY_PREFERENCE_SOURCE,
+	AI_OBSERVABILITY_TRACE_VIEW_PREFERENCE_SOURCE,
+	FormattingOptions,
+	Preferences,
+	PreferenceSource,
+} from '../types';
 
 const migrateColumns = (columns: any): any =>
 	columns.map((column: any) => {
@@ -65,12 +73,24 @@ function tracesPreferencesLoader(): {
 	return preferencesLoader(tracesLoaderConfig);
 }
 
+function aiObservabilityPreferencesLoader(): {
+	columns: TelemetryFieldKey[];
+} {
+	return preferencesLoader(aiObservabilityLoaderConfig);
+}
+
+function aiObservabilityTraceViewPreferencesLoader(): {
+	columns: TelemetryFieldKey[];
+} {
+	return preferencesLoader(aiObservabilityTraceViewLoaderConfig);
+}
+
 export function usePreferenceLoader({
 	dataSource,
 	reSync,
 	setReSync,
 }: {
-	dataSource: DataSource;
+	dataSource: PreferenceSource;
 	reSync: boolean;
 	setReSync: (value: boolean) => void;
 }): {
@@ -85,6 +105,14 @@ export function usePreferenceLoader({
 		}
 		if (dataSource === DataSource.TRACES) {
 			const { columns } = tracesPreferencesLoader();
+			return { columns };
+		}
+		if (dataSource === AI_OBSERVABILITY_PREFERENCE_SOURCE) {
+			const { columns } = aiObservabilityPreferencesLoader();
+			return { columns };
+		}
+		if (dataSource === AI_OBSERVABILITY_TRACE_VIEW_PREFERENCE_SOURCE) {
+			const { columns } = aiObservabilityTraceViewPreferencesLoader();
 			return { columns };
 		}
 		return null;
@@ -103,6 +131,16 @@ export function usePreferenceLoader({
 
 				if (dataSource === DataSource.TRACES) {
 					const { columns } = tracesPreferencesLoader();
+					setPreferences({ columns });
+				}
+
+				if (dataSource === AI_OBSERVABILITY_PREFERENCE_SOURCE) {
+					const { columns } = aiObservabilityPreferencesLoader();
+					setPreferences({ columns });
+				}
+
+				if (dataSource === AI_OBSERVABILITY_TRACE_VIEW_PREFERENCE_SOURCE) {
+					const { columns } = aiObservabilityTraceViewPreferencesLoader();
 					setPreferences({ columns });
 				}
 			} catch (e) {

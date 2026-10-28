@@ -1,6 +1,7 @@
 /* eslint-disable no-restricted-syntax */
 import { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
+import { MemoryRouter } from 'react-router-dom';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { ENVIRONMENT } from 'constants/env';
 import { server } from 'mocks-server/server';
@@ -9,13 +10,28 @@ import {
 	TelemetrytypesFieldContextDTO,
 	TelemetrytypesFieldDataTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { useColumnStore } from 'components/TanStackTableView/useColumnStore';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
+import { AI_OBSERVABILITY_TRACE_VIEW_URL_OPTIONS } from 'providers/preferences/types';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 import { useTraceViewColumns } from '../useTraceViewColumns';
 
-const STORAGE_KEY = LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_COLUMNS;
+// The loader reads window.location, which MemoryRouter never moves.
+jest.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: (url: string) => void } => ({
+		safeNavigate: (url: string): void => window.history.replaceState({}, '', url),
+	}),
+}));
+
+const STORAGE_KEY = LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_OPTIONS;
+
+const storedColumnNames = (): string[] | undefined =>
+	(
+		JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null') as {
+			selectColumns: TelemetryFieldKey[];
+		} | null
+	)?.selectColumns.map((field) => field.name);
 
 const AGGREGATE_KEYS = [
 	'llm_call_count',
@@ -39,7 +55,11 @@ function wrapper({ children }: { children: ReactNode }): JSX.Element {
 		defaultOptions: { queries: { retry: false } },
 	});
 	return (
-		<QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+		<MemoryRouter>
+			<QueryClientProvider client={queryClient}>
+				<PreferenceContextProvider>{children}</PreferenceContextProvider>
+			</QueryClientProvider>
+		</MemoryRouter>
 	);
 }
 
@@ -90,8 +110,8 @@ const renderColumns = async (): Promise<
 describe('useTraceViewColumns', () => {
 	beforeEach(() => {
 		seenAI.length = 0;
-		useColumnStore.getState().tables = {};
 		localStorage.clear();
+		window.history.replaceState({}, '', '/');
 		mockAggregateKeys(AGGREGATE_KEYS);
 	});
 
@@ -160,10 +180,22 @@ describe('useTraceViewColumns', () => {
 
 		const { result } = await renderColumns();
 
-		expect(columnNames(result.current.columns)).toContain('brand_new_aggregate');
 		expect(fieldNames(result.current.selectedFields)).not.toContain(
 			'brand_new_aggregate',
 		);
+
+		act(() => {
+			result.current.onFieldsChange([
+				...result.current.selectedFields,
+				{
+					name: 'brand_new_aggregate',
+					fieldContext: 'trace',
+					fieldDataType: 'float64',
+				},
+			]);
+		});
+
+		expect(columnNames(result.current.columns)).toContain('brand_new_aggregate');
 	});
 
 	describe('when the keys fetch fails', () => {
@@ -179,10 +211,7 @@ describe('useTraceViewColumns', () => {
 		it('does not persist defaults', async () => {
 			await renderColumns();
 
-			expect(useColumnStore.getState().tables[STORAGE_KEY]).toBeUndefined();
-			expect(
-				localStorage.getItem(`@signoz/table-columns/${STORAGE_KEY}`),
-			).toBeNull();
+			expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
 		});
 
 		it('reports the column state as not persistable', async () => {
@@ -198,7 +227,7 @@ describe('useTraceViewColumns', () => {
 				result.current.onFieldsChange([{ name: 'trace_id' }]);
 			});
 
-			expect(useColumnStore.getState().tables[STORAGE_KEY]).toBeUndefined();
+			expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
 		});
 
 		it('seeds the defaults once a later fetch succeeds', async () => {
@@ -291,12 +320,72 @@ describe('useTraceViewColumns', () => {
 			'trace_id',
 			'service.name',
 		]);
-		expect(
-			useColumnStore.getState().tables[STORAGE_KEY].columnOrder,
-		).toStrictEqual([
-			'trace:total_tokens:float64',
+		expect(storedColumnNames()).toStrictEqual([
+			'total_tokens',
 			'trace_id',
-			'resource:service.name',
+			'service.name',
 		]);
+	});
+
+	it('writes the selection to its own URL param, not the list view one', async () => {
+		const { result } = await renderColumns();
+
+		act(() => {
+			result.current.onFieldsChange([{ name: 'trace_id' }, { name: 'input' }]);
+		});
+
+		expect(window.location.search).not.toContain('options=');
+		const params = new URLSearchParams(window.location.search);
+		expect(
+			JSON.parse(params.get(AI_OBSERVABILITY_TRACE_VIEW_URL_OPTIONS) ?? '{}')
+				.selectColumns,
+		).toStrictEqual([{ name: 'trace_id' }, { name: 'input' }]);
+	});
+
+	it('takes the URL columns over the stored ones', async () => {
+		localStorage.setItem(
+			STORAGE_KEY,
+			JSON.stringify({ selectColumns: [{ name: 'trace_id' }, { name: 'input' }] }),
+		);
+		window.history.replaceState(
+			{},
+			'',
+			`/?${AI_OBSERVABILITY_TRACE_VIEW_URL_OPTIONS}=${encodeURIComponent(
+				JSON.stringify({
+					selectColumns: [{ name: 'output' }, { name: 'trace_id' }],
+				}),
+			)}`,
+		);
+
+		const { result } = await renderColumns();
+
+		expect(fieldNames(result.current.selectedFields)).toStrictEqual([
+			'output',
+			'trace_id',
+		]);
+	});
+
+	it('drops stored fields the keys endpoint no longer reports', async () => {
+		localStorage.setItem(
+			STORAGE_KEY,
+			JSON.stringify({
+				selectColumns: [{ name: 'trace_id' }, { name: 'removed_aggregate' }],
+			}),
+		);
+
+		const { result } = await renderColumns();
+
+		expect(fieldNames(result.current.selectedFields)).toStrictEqual(['trace_id']);
+	});
+
+	it('removes a column dropped from the table header', async () => {
+		const { result } = await renderColumns();
+
+		act(() => {
+			result.current.onColumnRemove('input');
+		});
+
+		expect(fieldNames(result.current.selectedFields)).not.toContain('input');
+		expect(storedColumnNames()).not.toContain('input');
 	});
 });
