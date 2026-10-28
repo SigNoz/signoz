@@ -117,6 +117,12 @@ func withStatsLimit(limit int) statsOpt {
 	}
 }
 
+func withStatsOffset(offset int) statsOpt {
+	return func(req *metricsexplorertypes.StatsRequest) {
+		req.Offset = offset
+	}
+}
+
 func withStatsOrderBy(name string, dir qbtypes.OrderDirection) statsOpt {
 	return func(req *metricsexplorertypes.StatsRequest) {
 		req.OrderBy = &qbtypes.OrderBy{
@@ -229,6 +235,25 @@ func TestGetStats(t *testing.T) {
 			assert.NoError(t, mock.ExpectationsWereMet())
 		})
 	}
+}
+
+func TestGetStatsOutOfRangePagePreservesTotal(t *testing.T) {
+	mod, mock, _ := newTestModule(t, sqlmock.QueryMatcherRegexp, true)
+	mock.ExpectQuery(regexp.QuoteMeta(statsNoFilterSQL)).
+		WithArgs(anyArgs(14)...).
+		WillReturnRows(cmock.NewRows(nil, nil))
+	mock.ExpectQueryRow(`(?s)^WITH .*SELECT COUNT\(\*\) AS total FROM __time_series_counts ts.*$`).
+		WillReturnRow(cmock.NewRow(
+			[]cmock.ColumnType{{Name: "total", Type: "UInt64"}},
+			[]any{uint64(3)},
+		))
+
+	response, err := mod.GetStats(context.Background(), testOrgID, statsRequest(withStatsOffset(10)))
+
+	assert.NoError(t, err)
+	assert.Empty(t, response.Metrics)
+	assert.Equal(t, uint64(3), response.Total)
+	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
 func TestGetTreemap(t *testing.T) {
