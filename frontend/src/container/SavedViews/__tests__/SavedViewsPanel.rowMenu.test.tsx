@@ -4,11 +4,13 @@ import { toast } from '@signozhq/ui/sonner';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime';
 
 import SavedViewsHeader from '../SavedViewsHeader';
 import SavedViewsPanel from '../SavedViewsPanel';
-import { mockSavedViewsApi } from './savedViewsApiMock';
+import { API, mockSavedViewsApi } from './savedViewsApiMock';
 import {
 	expectRowUsable,
 	explorerUrl,
@@ -179,6 +181,87 @@ describe('SavedViewsPanel row menu', () => {
 		});
 		expect(toast.success).toHaveBeenCalledWith('View updated', expect.anything());
 		await waitFor(() => expect(row('Slow checkout spans')).toBeInTheDocument());
+	});
+
+	it('renames from the stored view, not a stale list row', async () => {
+		const views = [errors, slow];
+		const requests = mockSavedViewsApi(views);
+		renderPanelWithHeader();
+		await screen.findByTestId('saved-views-list');
+		const stored = makeView({
+			id: slow.id,
+			displayName: 'Slow spans',
+			expression: 'duration_nano > 5000',
+		});
+		views[1] = stored;
+
+		await chooseFromRowMenu('Slow spans', 'Edit details');
+		const name = screen.getByTestId('save-view-name');
+		await userEvent.clear(name);
+		await userEvent.type(name, 'Slow checkout spans');
+		await userEvent.click(screen.getByTestId('save-view-submit'));
+
+		await waitFor(() => expect(requests.updated).toHaveLength(1));
+		expect(requests.updated[0].body).toMatchObject({
+			spec: { ...stored.spec, displayName: 'Slow checkout spans' },
+		});
+	});
+
+	it('renames from the list row when the view cannot be read', async () => {
+		const requests = mockSavedViewsApi([errors, slow]);
+		server.use(
+			rest.get(`${API}/:id`, (_req, res, ctx) =>
+				res(ctx.status(403), ctx.json({ status: 'error' })),
+			),
+		);
+		renderPanelWithHeader();
+
+		await chooseFromRowMenu('Slow spans', 'Edit details');
+		const name = screen.getByTestId('save-view-name');
+		await userEvent.clear(name);
+		await userEvent.type(name, 'Slow checkout spans');
+		await userEvent.click(screen.getByTestId('save-view-submit'));
+
+		await waitFor(() => expect(requests.updated).toHaveLength(1));
+		expect(requests.updated[0].body).toMatchObject({
+			spec: { ...slow.spec, displayName: 'Slow checkout spans' },
+		});
+	});
+
+	it('does not rename when the stored view fails to load', async () => {
+		const requests = mockSavedViewsApi([errors, slow]);
+		server.use(
+			rest.get(`${API}/:id`, (_req, res, ctx) =>
+				res(ctx.status(500), ctx.json({ status: 'error' })),
+			),
+		);
+		renderPanelWithHeader();
+
+		await chooseFromRowMenu('Slow spans', 'Edit details');
+		const name = screen.getByTestId('save-view-name');
+		await userEvent.type(name, ' 2');
+		await userEvent.click(screen.getByTestId('save-view-submit'));
+
+		await waitFor(() => expect(toast.error).toHaveBeenCalled());
+		expect(requests.updated).toHaveLength(0);
+	});
+
+	it('ignores Enter while the stored view loads', async () => {
+		const requests = mockSavedViewsApi([errors, slow], { getDelay: 300 });
+		renderPanelWithHeader();
+
+		await chooseFromRowMenu('Slow spans', 'Edit details');
+		const name = screen.getByTestId('save-view-name');
+		await userEvent.type(name, ' 2{enter}');
+		await userEvent.type(name, '{enter}');
+
+		await waitFor(() =>
+			expect(toast.success).toHaveBeenCalledWith(
+				'View updated',
+				expect.anything(),
+			),
+		);
+		expect(requests.updated).toHaveLength(1);
 	});
 
 	it('shows the new name in the header when the open view is renamed', async () => {
