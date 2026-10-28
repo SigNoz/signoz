@@ -20,7 +20,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
 	"github.com/SigNoz/signoz/pkg/statementbuilder"
 	"github.com/SigNoz/signoz/pkg/statementbuilder/aistatementbuilder"
-	"github.com/SigNoz/signoz/pkg/statementbuilder/auditstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/statementbuilder/logsstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/statementbuilder/meterstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/statementbuilder/metricsstatementbuilder"
@@ -28,8 +27,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/stretchr/testify/require"
 )
 
@@ -126,14 +123,12 @@ func NewTestManager(t *testing.T, testOpts *TestManagerOptions) *Manager {
 	require.NoError(t, err)
 	logStmtBuilder, err := logsstatementbuilder.NewFactory(telemetryStore, metadataStore, flagger).New(ctx, providerSettings, cfg)
 	require.NoError(t, err)
-	auditStmtBuilder, err := auditstatementbuilder.NewFactory(metadataStore, flagger).New(ctx, providerSettings, cfg)
-	require.NoError(t, err)
 	metricStmtBuilder, err := metricsstatementbuilder.NewFactory(metadataStore, flagger).New(ctx, providerSettings, cfg)
 	require.NoError(t, err)
 	meterStmtBuilder, err := meterstatementbuilder.NewFactory(metadataStore, flagger).New(ctx, providerSettings, cfg)
 	require.NoError(t, err)
 	bucketCache := querier.NewBucketCache(providerSettings, cache, 0, 0)
-	providerFactory := signozquerier.NewFactory(telemetryStore, prometheus, metadataStore, traceStmtBuilder, aiTraceStmtBuilder, logStmtBuilder, map[telemetrytypes.Source]qbtypes.StatementBuilder[qbtypes.LogAggregation]{telemetrytypes.SourceAudit: auditStmtBuilder}, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, flagger)
+	providerFactory := signozquerier.NewFactory(telemetryStore, prometheus, metadataStore, traceStmtBuilder, aiTraceStmtBuilder, logStmtBuilder, nil, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, flagger)
 	mockQuerier, err := providerFactory.New(context.Background(), providerSettings, querier.Config{})
 	require.NoError(t, err)
 

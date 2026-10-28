@@ -8,11 +8,11 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 	"golang.org/x/exp/maps"
 
+	"github.com/SigNoz/signoz/ee/telemetryschema/audittelemetryschema"
 	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata/parser"
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata/resolvercore"
-	"github.com/SigNoz/signoz/pkg/telemetryschema/audittelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
