@@ -125,6 +125,45 @@ describe('hasUnsavedViewChanges', () => {
 		).toBe(true);
 	});
 
+	it('is clean while no query is staged', () => {
+		expect(
+			hasUnsavedViewChanges({
+				view,
+				stagedQuery: null,
+				panelType: PANEL_TYPES.LIST,
+				options,
+			}),
+		).toBe(false);
+	});
+
+	it('is dirty when the columns are reordered', () => {
+		expect(
+			hasUnsavedViewChanges({
+				view,
+				stagedQuery: staged,
+				panelType: PANEL_TYPES.LIST,
+				options: { ...options, selectColumns: [columns[1], columns[0]] },
+			}),
+		).toBe(true);
+	});
+
+	it('is dirty when a column is swapped for another', () => {
+		expect(
+			hasUnsavedViewChanges({
+				view,
+				stagedQuery: staged,
+				panelType: PANEL_TYPES.LIST,
+				options: {
+					...options,
+					selectColumns: [
+						columns[0],
+						{ name: 'duration_nano', key: 'duration_nano' } as TelemetryFieldKey,
+					],
+				},
+			}),
+		).toBe(true);
+	});
+
 	it('reads a traces view without columns as the default columns', () => {
 		const bare = viewFrom(
 			toSavedViewSpec({
@@ -175,6 +214,20 @@ describe('hasUnsavedViewChanges', () => {
 					stagedQuery: logsStaged,
 					panelType: PANEL_TYPES.LIST,
 					options: { selectColumns: shownColumns, ...formatting, maxLines: 5 },
+				}),
+			).toBe(true);
+		});
+
+		it.each([
+			['format', { format: 'table' as LogViewMode }],
+			['font size', { fontSize: FontSize.LARGE }],
+		])('is dirty when only the %s changes', (_, change) => {
+			expect(
+				hasUnsavedViewChanges({
+					view: logsView,
+					stagedQuery: logsStaged,
+					panelType: PANEL_TYPES.LIST,
+					options: { selectColumns: shownColumns, ...formatting, ...change },
 				}),
 			).toBe(true);
 		});
@@ -285,6 +338,132 @@ describe('hasUnsavedViewChanges', () => {
 				panelType: PANEL_TYPES.TIME_SERIES,
 			}),
 		).toBe(false);
+	});
+
+	it.each([
+		['point', 'attribute'],
+		['spanfield', 'span'],
+		['logfield', 'log'],
+		['tracefield', 'trace'],
+	])(
+		'reads a group-by staged as %s and stored as %s as the same field',
+		(legacyContext, storedContext) => {
+			const base = viewFrom(
+				toSavedViewSpec({
+					query: query(DataSource.METRICS, ''),
+					panelType: PANEL_TYPES.TIME_SERIES,
+					displayName: 'By os',
+				}),
+			);
+			const [storedQuery] = base.spec.queries;
+			const storedView = {
+				...base,
+				spec: {
+					...base.spec,
+					queries: [
+						{
+							...storedQuery,
+							spec: {
+								...storedQuery.spec,
+								groupBy: [
+									{
+										name: 'os.type',
+										fieldContext: storedContext,
+										fieldDataType: 'string',
+									},
+								],
+							},
+						},
+					],
+				},
+			} as SavedviewtypesSavedViewDTO;
+			const opened = stagedFrom(storedView, DataSource.METRICS);
+			const stagedLegacy = {
+				...opened,
+				builder: {
+					...opened.builder,
+					queryData: opened.builder.queryData.map((queryData) => ({
+						...queryData,
+						groupBy: [{ key: 'os.type', dataType: 'string', type: legacyContext }],
+					})),
+				},
+			} as Query;
+
+			expect(
+				hasUnsavedViewChanges({
+					view: storedView,
+					stagedQuery: stagedLegacy,
+					panelType: PANEL_TYPES.TIME_SERIES,
+				}),
+			).toBe(false);
+		},
+	);
+
+	// The query still staged after a save keeps the builder's values, while
+	// the server returns the view without them.
+	describe('right after saving a query that carries builder defaults', () => {
+		const withPatch = (
+			dataSource: DataSource,
+			patch: Partial<Query['builder']['queryData'][number]>,
+		): Query => {
+			const base = query(dataSource, '');
+			return {
+				...base,
+				builder: {
+					...base.builder,
+					queryData: base.builder.queryData.map((queryData) => ({
+						...queryData,
+						...patch,
+					})),
+				},
+			} as Query;
+		};
+
+		it.each([
+			[
+				'a zero offset on a list',
+				DataSource.LOGS,
+				PANEL_TYPES.LIST,
+				{ offset: 0 },
+			],
+			[
+				'an empty group-by description',
+				DataSource.TRACES,
+				PANEL_TYPES.TIME_SERIES,
+				{
+					groupBy: [
+						{
+							key: 'service.name',
+							dataType: 'string',
+							type: 'resource',
+							description: '',
+						},
+					],
+				},
+			],
+			[
+				'a function without arguments',
+				DataSource.METRICS,
+				PANEL_TYPES.TIME_SERIES,
+				{ functions: [{ name: 'absolute', args: [], namedArgs: {} }] },
+			],
+		])('is clean with %s', (_, dataSource, panelType, patch) => {
+			const saved = withPatch(
+				dataSource,
+				patch as Partial<Query['builder']['queryData'][number]>,
+			);
+			const savedView = viewFrom(
+				toSavedViewSpec({ query: saved, panelType, displayName: 'Saved' }),
+			);
+
+			expect(
+				hasUnsavedViewChanges({
+					view: savedView,
+					stagedQuery: saved,
+					panelType,
+				}),
+			).toBe(false);
+		});
 	});
 
 	describe('list order', () => {
