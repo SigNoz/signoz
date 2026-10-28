@@ -14,6 +14,11 @@ import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { ArrowRight, CircleAlert, KeyRound } from '@signozhq/icons';
 import { Label } from 'pages/SignUp/styles';
+import { hashPassword } from 'utils/hashPassword';
+import {
+	isPasswordComplex,
+	PASSWORD_POLICY_MESSAGE,
+} from 'utils/passwordPolicy';
 
 import { FormContainer } from './styles';
 
@@ -42,6 +47,8 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 	);
 
 	const [form] = Form.useForm<FormValues>();
+	const handleFormSubmit = async (): Promise<void> => {
+		const { password } = form.getFieldsValue();
 	const password = Form.useWatch('password', form);
 	const confirmPassword = Form.useWatch('confirmPassword', form);
 
@@ -64,7 +71,16 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 			return;
 		}
 
+		if (!isPasswordComplex(password)) {
+			notifications.error({
+				message: 'Weak password',
+				description: PASSWORD_POLICY_MESSAGE,
+			});
+			return;
+		}
+
 		resetPassword(
+			{ data: { password: await hashPassword(password), token: token || '' } },
 			{ data: { password: form.getFieldValue('password'), token } },
 			{
 				onSuccess: (): void => {
@@ -77,6 +93,80 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 				},
 			},
 		);
+	};
+
+	const validatePassword = (): boolean => {
+		const { password, confirmPassword } = form.getFieldsValue();
+
+		if (
+			password &&
+			confirmPassword &&
+			password.trim() &&
+			confirmPassword.trim() &&
+			password.length > 0 &&
+			confirmPassword.length > 0
+		) {
+			return password === confirmPassword;
+		}
+
+		return false;
+	};
+
+	const handleValuesChange = useDebouncedFn((): void => {
+		const { password, confirmPassword } = form.getFieldsValue();
+
+		if (!password || !confirmPassword) {
+			setIsValidPassword(false);
+		}
+
+		// Only clear error if passwords match while typing (but don't set error until blur)
+		if (
+			password &&
+			confirmPassword &&
+			password.trim() &&
+			confirmPassword.trim()
+		) {
+			const isValid = validatePassword();
+			setIsValidPassword(isValid);
+
+			// Only clear error if passwords match, don't set error on mismatch
+			if (isValid) {
+				setConfirmPasswordError(false);
+			}
+		}
+	}, 100);
+
+	const handlePasswordBlur = (): void => {
+		const { confirmPassword } = form.getFieldsValue();
+		// Only validate if confirm password has a value
+		if (confirmPassword && confirmPassword.trim()) {
+			const isValid = validatePassword();
+			setIsValidPassword(isValid);
+			setConfirmPasswordError(!isValid);
+		}
+	};
+
+	const handleConfirmPasswordBlur = (): void => {
+		const { password, confirmPassword } = form.getFieldsValue();
+		if (
+			password &&
+			password.trim() &&
+			confirmPassword &&
+			confirmPassword.trim()
+		) {
+			const isValid = validatePassword();
+			setIsValidPassword(isValid);
+			setConfirmPasswordError(!isValid);
+		}
+	};
+
+	const handleSubmit = (): void => {
+		const isValid = validatePassword();
+		setIsValidPassword(isValid);
+
+		if (token) {
+			void handleFormSubmit();
+		}
 	};
 
 	return (
