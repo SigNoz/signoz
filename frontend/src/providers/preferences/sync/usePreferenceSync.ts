@@ -3,10 +3,18 @@ import { useEffect, useRef, useState } from 'react';
 import { useGetSavedView } from 'api/generated/services/saved-view';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { getViewColumnsAndFormatting } from 'container/SavedViews/utils/getViewColumnsAndFormatting';
-import { DataSource } from 'types/common/queryBuilder';
 
 import { usePreferenceLoader } from '../loader/usePreferenceLoader';
-import { FormattingOptions, PreferenceMode, Preferences } from '../types';
+import {
+	getAIObservabilityViewColumns,
+	isAIObservabilityPreference,
+} from '../configs/aiObservabilityConfig';
+import {
+	FormattingOptions,
+	PreferenceDataSource,
+	PreferenceMode,
+	Preferences,
+} from '../types';
 import { usePreferenceUpdater } from '../updater/usePreferenceUpdater';
 
 export function usePreferenceSync({
@@ -15,7 +23,7 @@ export function usePreferenceSync({
 	savedViewId,
 }: {
 	mode: PreferenceMode;
-	dataSource: DataSource;
+	dataSource: PreferenceDataSource;
 	savedViewId: string | undefined;
 }): {
 	preferences: Preferences | null;
@@ -37,6 +45,10 @@ export function usePreferenceSync({
 	// memory. Discard writes the saved ones back through the updater.
 	const seededViewId = useRef<string>();
 	useEffect(() => {
+		// AI explorer tabs are seeded below, once their own preferences have loaded.
+		if (isAIObservabilityPreference(dataSource)) {
+			return;
+		}
 		const view = viewData?.data;
 		if (view && view.id === savedViewId) {
 			if (seededViewId.current !== savedViewId) {
@@ -57,6 +69,28 @@ export function usePreferenceSync({
 		reSync,
 		setReSync,
 	});
+
+	useEffect(() => {
+		if (!isAIObservabilityPreference(dataSource)) {
+			return;
+		}
+		const view = viewData?.data;
+		if (view && view.id === savedViewId) {
+			if (seededViewId.current !== savedViewId) {
+				seededViewId.current = savedViewId;
+				// Only the tab the view was saved from takes its columns; the other keeps the user's own.
+				setSavedViewPreferences({
+					columns:
+						getAIObservabilityViewColumns(dataSource, view) ??
+						preferences?.columns ??
+						[],
+				});
+			}
+			return;
+		}
+		seededViewId.current = undefined;
+		setSavedViewPreferences(null);
+	}, [viewData, dataSource, savedViewId, preferences]);
 
 	const { updateColumns, updateFormatting } = usePreferenceUpdater({
 		dataSource,

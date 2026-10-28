@@ -69,6 +69,8 @@ function TracesView({
 		columns,
 		selectedFields,
 		onFieldsChange,
+		onColumnOrderChange,
+		onColumnRemove,
 		requiredFields,
 		isLoading: isColumnsLoading,
 		canPersistColumns,
@@ -183,15 +185,6 @@ function TracesView({
 		[canPersistColumns, selectedFields, onFieldsChange],
 	);
 
-	// Rendering the pool unfiltered would surface columns the defaults keep hidden.
-	const tableColumns = useMemo(
-		() =>
-			canPersistColumns
-				? columns
-				: columns.filter((column) => column.defaultVisibility !== false),
-		[canPersistColumns, columns],
-	);
-
 	return (
 		<div className={styles.container}>
 			<div className={styles.actionsContainer}>
@@ -226,13 +219,12 @@ function TracesView({
 
 			<TracesTable
 				data={rows}
-				columns={tableColumns}
+				columns={columns}
 				columnStorageKey={
 					canPersistColumns
 						? LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_COLUMNS
 						: undefined
 				}
-				respectColumnOrder
 				panelType="TRACE"
 				getRowHref={getTraceLink}
 				isLoading={isLoading || isColumnsLoading}
@@ -240,6 +232,8 @@ function TracesView({
 				isError={isError}
 				error={error}
 				isFilterApplied={isFilterApplied}
+				onColumnOrderChange={onColumnOrderChange}
+				onColumnRemove={onColumnRemove}
 			/>
 		</div>
 	);

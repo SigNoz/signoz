@@ -8,6 +8,8 @@ import {
 	buildSavedViewDeletePermission,
 	buildSavedViewUpdatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
+import { panelTypeToAIObservabilityPreference } from 'providers/preferences/configs/aiObservabilityConfig';
+import { PreferenceDataSource } from 'providers/preferences/types';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { SavedViewRowActionConfig, SaveViewModalMode } from './types';
@@ -21,6 +23,17 @@ export const SAVED_VIEW_OPTIONS_DATA_SOURCE: Partial<
 	[SavedviewtypesSourceDTO.logs]: DataSource.LOGS,
 	[SavedviewtypesSourceDTO.traces]: DataSource.TRACES,
 };
+
+/** Whose column preferences a view saves; AI views use the tab they were saved from. */
+export function getSavedViewPreferenceDataSource(
+	source: SavedviewtypesSourceDTO,
+	panelType: string | undefined,
+): PreferenceDataSource | undefined {
+	if (source === SavedviewtypesSourceDTO.ai_observability) {
+		return panelTypeToAIObservabilityPreference(panelType);
+	}
+	return SAVED_VIEW_OPTIONS_DATA_SOURCE[source];
+}
 
 // What selecting a view writes to the url, so clearing it removes exactly these.
 export const SAVED_VIEW_URL_PARAMS = [

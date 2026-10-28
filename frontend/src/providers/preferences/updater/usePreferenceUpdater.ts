@@ -10,7 +10,16 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import getLogsUpdaterConfig from '../configs/logsUpdaterConfig';
 import getTracesUpdaterConfig from '../configs/tracesUpdaterConfig';
-import { FormattingOptions, Preferences } from '../types';
+import {
+	AI_OBSERVABILITY_URL_PARAMS,
+	isAIObservabilityPreference,
+} from '../configs/aiObservabilityConfig';
+import getAIObservabilityUpdaterConfig from '../configs/aiObservabilityUpdaterConfig';
+import {
+	FormattingOptions,
+	PreferenceDataSource,
+	Preferences,
+} from '../types';
 
 const metricsUpdater = {
 	updateColumns: (): void => {}, // no-op for metrics
@@ -47,7 +56,7 @@ export function usePreferenceUpdater({
 	setReSync,
 	setSavedViewPreferences,
 }: {
-	dataSource: DataSource;
+	dataSource: PreferenceDataSource;
 	mode: string;
 	preferences: Preferences | null;
 	setReSync: Dispatch<SetStateAction<boolean>>;
@@ -57,12 +66,23 @@ export function usePreferenceUpdater({
 	updateFormatting: (newFormatting: FormattingOptions) => void;
 } {
 	const { redirectWithQuery: redirectWithOptionsData } =
-		useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
-	const updater = getUpdaterConfig(
-		preferences,
-		redirectWithOptionsData,
-		setSavedViewPreferences,
-	)[dataSource];
+		useUrlQueryData<OptionsQuery>(
+			isAIObservabilityPreference(dataSource)
+				? AI_OBSERVABILITY_URL_PARAMS[dataSource]
+				: URL_OPTIONS,
+			defaultOptionsQuery,
+		);
+	const updater = isAIObservabilityPreference(dataSource)
+		? getAIObservabilityUpdaterConfig(
+				dataSource,
+				redirectWithOptionsData,
+				setSavedViewPreferences,
+			)
+		: getUpdaterConfig(
+				preferences,
+				redirectWithOptionsData,
+				setSavedViewPreferences,
+			)[dataSource];
 
 	return {
 		updateColumns: (newColumns: TelemetryFieldKey[]): void => {

@@ -20,13 +20,14 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { isAIObservabilityPreference } from 'providers/preferences/configs/aiObservabilityConfig';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 import { DataSource } from 'types/common/queryBuilder';
 import { toAPIError } from 'utils/errorUtils';
 import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 
 import {
-	SAVED_VIEW_OPTIONS_DATA_SOURCE,
+	getSavedViewPreferenceDataSource,
 	SAVED_VIEW_SCHEMA_VERSION,
 	SAVED_VIEW_TOAST_POSITION,
 	SAVED_VIEW_URL_PARAMS,
@@ -60,15 +61,14 @@ export function useSavedViewActions(
 	const { viewKey } = useGetSavedViewParams();
 	const logSavedViewEvent = useSavedViewLogEvent(source);
 
-	const optionsDataSource = SAVED_VIEW_OPTIONS_DATA_SOURCE[source];
+	const optionsDataSource = getSavedViewPreferenceDataSource(
+		source,
+		panelType ?? undefined,
+	);
 	const { options } = useOptionsMenu({
 		dataSource: optionsDataSource ?? DataSource.LOGS,
 	});
 	const preferences = usePreferenceContext();
-	const preferencesSlice =
-		optionsDataSource === DataSource.TRACES
-			? preferences.traces
-			: preferences.logs;
 
 	const { mutateAsync: createSavedView, isLoading: isCreating } =
 		useCreateSavedView();
@@ -105,10 +105,22 @@ export function useSavedViewActions(
 
 	const revertView = useCallback(
 		(view: SavedviewtypesSavedViewDTO): void => {
-			if (optionsDataSource) {
+			// The view's own tab, which can differ from the open one.
+			const viewDataSource = getSavedViewPreferenceDataSource(
+				source,
+				view.spec.panelType,
+			);
+			if (viewDataSource) {
+				let preferencesSlice =
+					viewDataSource === DataSource.TRACES
+						? preferences.traces
+						: preferences.logs;
+				if (isAIObservabilityPreference(viewDataSource)) {
+					preferencesSlice = preferences[viewDataSource];
+				}
 				const { columns, formatting } = getViewColumnsAndFormatting(
 					view.spec,
-					optionsDataSource,
+					viewDataSource,
 				);
 				preferencesSlice.updateColumns(columns);
 				if (formatting) {
@@ -120,7 +132,7 @@ export function useSavedViewActions(
 				[SavedViewEventKeys.ViewId]: view.id,
 			});
 		},
-		[optionsDataSource, preferencesSlice, selectView, logSavedViewEvent],
+		[source, preferences, selectView, logSavedViewEvent],
 	);
 
 	// The query builder redirects only ever add params, so the url is rebuilt

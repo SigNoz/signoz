@@ -18,7 +18,9 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { useOptionsMenu } from 'container/OptionsMenu';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
+import { AIObservabilityPreference } from 'providers/preferences/types';
 import { getTraceLink, transformSpanRows } from './utils';
 import { getFieldColumn, TracesTableRow } from '../TracesTable/getFieldColumn';
 import TracesTable from '../TracesTable/TracesTable';
@@ -37,11 +39,7 @@ import { getListOrderBy, setListOrderBy } from 'utils/explorerUtils';
 
 import TraceExplorerControls from '../Controls';
 import { getListViewQuery } from '../explorerUtils';
-import {
-	defaultSelectedColumns,
-	PER_PAGE_OPTIONS,
-	TIMESTAMP_FIELD,
-} from './configs';
+import { PER_PAGE_OPTIONS, TIMESTAMP_FIELD } from './configs';
 import './ListView.styles.scss';
 
 import styles from './ListView.module.scss';
@@ -77,6 +75,24 @@ function ListView({
 		loading: timeRangeUpdateLoading,
 	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
+	const { options, config } = useOptionsMenu({
+		dataSource: AIObservabilityPreference.LIST,
+	});
+	const selectedFields = useMemo(
+		() => options?.selectColumns ?? [],
+		[options?.selectColumns],
+	);
+
+	// Sorted names: stable on reorder, changes on add/remove (the API only returns selected columns).
+	const selectColumnsSignature = useMemo(
+		() =>
+			selectedFields
+				.map((field) => field.name)
+				.sort()
+				.join(','),
+		[selectedFields],
+	);
+
 	const { queryData: paginationQueryData } = useUrlQueryData<Pagination>(
 		QueryParams.pagination,
 	);
@@ -97,12 +113,14 @@ function ListView({
 			stagedQuery,
 			panelType,
 			paginationConfig,
+			selectColumnsSignature,
 		],
 		[
 			stagedQuery,
 			panelType,
 			globalSelectedTime,
 			paginationConfig,
+			selectColumnsSignature,
 			maxTime,
 			minTime,
 		],
@@ -123,7 +141,7 @@ function ListView({
 			},
 			tableParams: {
 				pagination: paginationConfig,
-				selectColumns: defaultSelectedColumns,
+				selectColumns: selectedFields,
 			},
 		},
 		ENTITY_VERSION_V5,
@@ -131,7 +149,10 @@ function ListView({
 			queryKey,
 			enabled:
 				// don't make api call while the time range state in redux is loading
-				!timeRangeUpdateLoading && !!stagedQuery && panelType === PANEL_TYPES.LIST,
+				!timeRangeUpdateLoading &&
+				!!stagedQuery &&
+				panelType === PANEL_TYPES.LIST &&
+				!!selectedFields.length,
 		},
 	);
 
@@ -156,13 +177,20 @@ function ListView({
 		[queryTableDataResult],
 	);
 
-	// TODO(ai-explorer): static columns until the preferences framework lands.
 	const columns = useMemo<TableColumnDef<TracesTableRow>[]>(
 		() =>
-			[TIMESTAMP_FIELD, ...defaultSelectedColumns].map((field) =>
-				getFieldColumn(field),
-			),
-		[],
+			[
+				TIMESTAMP_FIELD,
+				...selectedFields.filter((field) => field.name !== TIMESTAMP_FIELD.name),
+			].map((field) => getFieldColumn(field)),
+		[selectedFields],
+	);
+
+	const handleColumnOrderChange = useCallback(
+		(cols: TableColumnDef<TracesTableRow>[]): void => {
+			config?.addColumn?.onReorder(cols.map((c) => c.id));
+		},
+		[config],
 	);
 
 	const rows = useMemo(
@@ -204,6 +232,7 @@ function ListView({
 					isLoading={isFetching}
 					totalCount={rows.length}
 					perPageOptions={PER_PAGE_OPTIONS}
+					config={config}
 				/>
 			</div>
 
@@ -211,7 +240,6 @@ function ListView({
 				data={rows}
 				columns={columns}
 				columnStorageKey={LOCALSTORAGE.AI_OBSERVABILITY_LIST_COLUMNS}
-				respectColumnOrder
 				panelType="LIST"
 				getRowHref={getTraceLink}
 				isLoading={isLoading}
@@ -219,6 +247,8 @@ function ListView({
 				isError={isError}
 				error={error}
 				isFilterApplied={isFilterApplied}
+				onColumnOrderChange={handleColumnOrderChange}
+				onColumnRemove={config?.addColumn?.onRemove}
 			/>
 		</div>
 	);

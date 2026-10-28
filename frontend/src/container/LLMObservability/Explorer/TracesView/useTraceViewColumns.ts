@@ -1,17 +1,16 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
 import { mergeExtraFields } from 'utils/extraFields';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
 import {
-	hideColumn,
-	initializeFromDefaults,
 	setColumnOrder,
 	showColumn,
 	useColumnOrder,
 	useHiddenColumnIds,
 } from 'components/TanStackTableView/useColumnStore';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { buildCompositeKey } from 'container/OptionsMenu/utils';
+import { useOptionsMenu } from 'container/OptionsMenu';
+import { AIObservabilityPreference } from 'providers/preferences/types';
 import { TracesTableRow } from '../TracesTable/getFieldColumn';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DATA_SOURCE_TO_SIGNAL, DataSource } from 'types/common/queryBuilder';
@@ -23,27 +22,41 @@ import {
 } from '../constants';
 import {
 	buildTraceViewColumns,
+	columnIdOf,
+	getDefaultTraceViewFields,
+	getLegacyTraceViewSelection,
 	sortByDefaultOrder,
 	TRACE_ID_COLUMN_ID,
 } from './configs';
 
-const STORAGE_KEY = LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_COLUMNS;
-
-/** Matches the id getFieldColumn derives, so fields and columns address alike. */
-const columnIdOf = (field: TelemetryFieldKey): string =>
-	buildCompositeKey(field.name, field.fieldContext, field.fieldDataType);
+/** Now only column widths; it held the selection as hidden ids + order before the preference slice. */
+const TABLE_STORAGE_KEY = LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_COLUMNS;
 
 interface UseTraceViewColumns {
 	columns: TableColumnDef<TracesTableRow>[];
 	selectedFields: TelemetryFieldKey[];
 	onFieldsChange: (next: TelemetryFieldKey[]) => void;
+	onColumnOrderChange: (cols: TableColumnDef<TracesTableRow>[]) => void;
+	onColumnRemove: (columnId: string) => void;
 	requiredFields: readonly string[];
 	isLoading: boolean;
 	/** False until the keys fetch lands; a partial set must not reach the persisted store. */
 	canPersistColumns: boolean;
 }
 
-// TODO(ai-explorer): browser-local only, unlike the list views' `?options=` columns.
+const withTraceId = (
+	fields: TelemetryFieldKey[],
+	availableFields: TelemetryFieldKey[],
+): TelemetryFieldKey[] => {
+	if (fields.some((field) => field.name === TRACE_ID_COLUMN_ID)) {
+		return fields;
+	}
+	const traceId = availableFields.find(
+		(field) => field.name === TRACE_ID_COLUMN_ID,
+	);
+	return traceId ? [traceId, ...fields] : fields;
+};
+
 export function useTraceViewColumns(): UseTraceViewColumns {
 	const {
 		data: fetchedFields = [],
@@ -66,60 +79,104 @@ export function useTraceViewColumns(): UseTraceViewColumns {
 		[fetchedFields],
 	);
 
-	const columns = useMemo(
-		() => buildTraceViewColumns(availableFields),
-		[availableFields],
+	const { options, config } = useOptionsMenu({
+		dataSource: AIObservabilityPreference.TRACE,
+	});
+	// Nothing stored loads as an empty list; the defaults then come from the pool.
+	const storedFields = options?.selectColumns?.length
+		? options.selectColumns
+		: null;
+	const updateColumns = config?.fieldsSelector?.onFieldsChange;
+
+	// Captured on first render, before the table prunes hidden ids it no longer renders.
+	const legacyHiddenIds = useHiddenColumnIds(TABLE_STORAGE_KEY);
+	const legacyOrder = useColumnOrder(TABLE_STORAGE_KEY);
+	const legacy = useRef({ hiddenIds: legacyHiddenIds, order: legacyOrder });
+
+	const migratedFields = useMemo(
+		() =>
+			isSuccess && !storedFields
+				? getLegacyTraceViewSelection(
+						availableFields,
+						legacy.current.hiddenIds,
+						legacy.current.order,
+					)
+				: null,
+		[isSuccess, storedFields, availableFields],
 	);
 
-	// Defaults from a partial column set would persist as the user's own choice.
+	// updateColumns changes identity every render; the migration must still run once.
+	const hasMigrated = useRef(false);
 	useEffect(() => {
-		if (isSuccess) {
-			initializeFromDefaults(STORAGE_KEY, columns);
+		if (!migratedFields || hasMigrated.current) {
+			return;
 		}
-	}, [isSuccess, columns]);
-
-	const hiddenColumnIds = useHiddenColumnIds(STORAGE_KEY);
-	const columnOrder = useColumnOrder(STORAGE_KEY);
+		hasMigrated.current = true;
+		updateColumns?.(migratedFields);
+		// Clear the old encoding so a later reset to defaults isn't migrated again.
+		setColumnOrder(TABLE_STORAGE_KEY, []);
+		legacy.current.hiddenIds.forEach((id) => showColumn(TABLE_STORAGE_KEY, id));
+		legacy.current = { hiddenIds: [], order: [] };
+	}, [migratedFields, updateColumns]);
 
 	const selectedFields = useMemo(() => {
-		const hidden = new Set(hiddenColumnIds);
-		const orderIndex = new Map(columnOrder.map((id, index) => [id, index]));
+		const byName = new Map(availableFields.map((field) => [field.name, field]));
+		const source =
+			storedFields ?? migratedFields ?? getDefaultTraceViewFields(availableFields);
+		// Stored fields the endpoint no longer reports are dropped.
+		const resolved = source
+			.map((field) => byName.get(field.name))
+			.filter((field): field is TelemetryFieldKey => !!field);
+		return withTraceId(resolved, availableFields);
+	}, [availableFields, storedFields, migratedFields]);
 
-		return availableFields
-			.filter((field) => !hidden.has(columnIdOf(field)))
-			.sort(
-				(a, b) =>
-					(orderIndex.get(columnIdOf(a)) ?? Infinity) -
-					(orderIndex.get(columnIdOf(b)) ?? Infinity),
-			);
-	}, [availableFields, hiddenColumnIds, columnOrder]);
+	const columns = useMemo(
+		() => buildTraceViewColumns(selectedFields),
+		[selectedFields],
+	);
 
 	const onFieldsChange = useCallback(
 		(next: TelemetryFieldKey[]): void => {
 			if (!isSuccess) {
 				return;
 			}
-
-			const keptIds = new Set(next.map(columnIdOf));
-
-			columns.forEach((column) => {
-				if (keptIds.has(column.id) || column.id === TRACE_ID_COLUMN_ID) {
-					showColumn(STORAGE_KEY, column.id);
-				} else {
-					hideColumn(STORAGE_KEY, column.id);
-				}
-			});
-
-			// Columns missing from the order sort last, so the visible ones suffice.
-			setColumnOrder(STORAGE_KEY, next.map(columnIdOf));
+			updateColumns?.(withTraceId(next, availableFields));
 		},
-		[columns, isSuccess],
+		[isSuccess, availableFields, updateColumns],
+	);
+
+	const onColumnOrderChange = useCallback(
+		(cols: TableColumnDef<TracesTableRow>[]): void => {
+			const orderIndex = new Map(cols.map((col, index) => [col.id, index]));
+			onFieldsChange(
+				[...selectedFields].sort(
+					(a, b) =>
+						(orderIndex.get(columnIdOf(a)) ?? Infinity) -
+						(orderIndex.get(columnIdOf(b)) ?? Infinity),
+				),
+			);
+		},
+		[selectedFields, onFieldsChange],
+	);
+
+	const onColumnRemove = useCallback(
+		(columnId: string): void => {
+			if (columnId === TRACE_ID_COLUMN_ID) {
+				return;
+			}
+			onFieldsChange(
+				selectedFields.filter((field) => columnIdOf(field) !== columnId),
+			);
+		},
+		[selectedFields, onFieldsChange],
 	);
 
 	return {
 		columns,
 		selectedFields,
 		onFieldsChange,
+		onColumnOrderChange,
+		onColumnRemove,
 		requiredFields: [TRACE_ID_COLUMN_ID],
 		isLoading: !isFetched,
 		canPersistColumns: isSuccess,
