@@ -1,5 +1,8 @@
 import { fireEvent, screen } from '@testing-library/react';
-import { FeatureKeys } from 'constants/features';
+import {
+	LicensePlatform,
+	LicenseResModel,
+} from 'types/api/licensesV3/getActive';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { getAppContextMockState } from 'container/RoutingPolicies/__tests__/testUtils';
@@ -62,6 +65,10 @@ const useCompositeQueryParamSpy = jest.spyOn(
 const useUrlQuerySpy = jest.spyOn(useUrlQueryHooks, 'default');
 const useSafeNavigateSpy = jest.spyOn(navigateHooks, 'useSafeNavigate');
 const useAppContextSpy = jest.spyOn(appHooks, 'useAppContext');
+
+const CLOUD_LICENSE = {
+	platform: LicensePlatform.CLOUD,
+} as LicenseResModel;
 
 const mockSetUrlQuery = jest.fn();
 const mockToString = jest.fn();
@@ -140,7 +147,7 @@ describe('CreateAlertRule', () => {
 		expect(screen.getByText(AlertTypes.METRICS_BASED_ALERT)).toBeInTheDocument();
 	});
 
-	it('should render classic flow when ruleType is anomaly_rule even if showClassicCreateAlertsPage is not true', () => {
+	it('should render new flow with the anomaly alert type when ruleType is anomaly_rule', () => {
 		mockGetUrlQuery.mockImplementation((key: string) => {
 			if (key === QueryParams.showClassicCreateAlertsPage) {
 				return 'false';
@@ -151,8 +158,9 @@ describe('CreateAlertRule', () => {
 			return null;
 		});
 		render(<CreateAlertRule />);
-		expect(screen.getByText(FORM_ALERT_RULES_TEXT)).toBeInTheDocument();
-		expect(screen.queryByText(CREATE_ALERT_V2_TEXT)).not.toBeInTheDocument();
+		expect(screen.getByText(CREATE_ALERT_V2_TEXT)).toBeInTheDocument();
+		expect(screen.getByText(AlertTypes.ANOMALY_BASED_ALERT)).toBeInTheDocument();
+		expect(screen.queryByText(FORM_ALERT_RULES_TEXT)).not.toBeInTheDocument();
 	});
 
 	it('should use alertType from URL when provided', () => {
@@ -260,15 +268,7 @@ describe('CreateAlertRule', () => {
 		it('should navigate with anomaly detection params for anomaly alert', () => {
 			useAppContextSpy.mockReturnValue({
 				...getAppContextMockState({}),
-				featureFlags: [
-					{
-						name: FeatureKeys.ANOMALY_DETECTION,
-						active: true,
-						usage: 0,
-						usage_limit: -1,
-						route: '',
-					},
-				],
+				activeLicense: CLOUD_LICENSE,
 			});
 
 			render(<CreateAlertRule />);

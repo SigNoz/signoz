@@ -37,8 +37,9 @@ describe('Anomaly Alert Documentation Redirection', () => {
 	});
 
 	it('should handle anomaly alert documentation redirection correctly', () => {
+		// The setup guide button only exists in the classic form.
 		const { getByRole } = render(<CreateAlertPage />, undefined, {
-			initialRoute: `${ROUTES.ALERTS_NEW}?ruleType=anomaly_rule`,
+			initialRoute: `${ROUTES.ALERTS_NEW}?ruleType=anomaly_rule&showClassicCreateAlertsPage=true`,
 		});
 
 		const alertType = AlertTypes.ANOMALY_BASED_ALERT;

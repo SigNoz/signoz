@@ -8,7 +8,6 @@ import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import Spinner from 'components/Spinner';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -32,7 +31,7 @@ import getTimeString from 'lib/getTimeString';
 import { navigate } from 'lib/router/navigation';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { isEmpty } from 'lodash-es';
-import { useAppContext } from 'providers/App/App';
+import { useIsAnomalyDetectionAvailable } from 'container/CreateAlertV2/useIsAnomalyDetectionAvailable';
 import { useTimezone } from 'providers/Timezone';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
@@ -119,8 +118,6 @@ function ChartPreview({
 		maxTime,
 		selectedTime: globalSelectedInterval,
 	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
-
-	const { featureFlags } = useAppContext();
 
 	const handleBackNavigation = (): void => {
 		const searchParams = new URLSearchParams(window.location.search);
@@ -290,9 +287,7 @@ function ChartPreview({
 		!queryResponse.isLoading &&
 		(!queryResponse.isError || isCancelled);
 
-	const isAnomalyDetectionEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.ANOMALY_DETECTION)
-			?.active || false;
+	const isAnomalyDetectionEnabled = useIsAnomalyDetectionAvailable();
 
 	const isWarning = !isEmpty(queryResponse.data?.warning);
 

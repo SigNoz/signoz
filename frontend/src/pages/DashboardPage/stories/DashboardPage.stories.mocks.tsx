@@ -35,6 +35,7 @@ import {
 	type DashboardArgs,
 	type VariableKind,
 } from './__story_mockdata__/dashboard';
+import { publicDashboardMeta } from './__story_mockdata__/publicDashboard';
 import {
 	API_RESULTS,
 	settle,
@@ -45,6 +46,7 @@ import {
 	emptyPanelResponse,
 	VARIABLE_ATTRIBUTES,
 	panelResponse,
+	partialDataWarning,
 	serviceVariableValues,
 } from './__story_mockdata__/panelData';
 import {
@@ -87,14 +89,8 @@ const VARIABLE_QUERY_ERROR = {
 		"Code: 62. DB::Exception: Syntax error: failed at position 58 ('$environment'). (SYNTAX_ERROR)",
 };
 
-const publicMeta = (): GetPublicDashboard200 => ({
-	status: 'success',
-	data: {
-		timeRangeEnabled: true,
-		defaultTimeRange: '30m',
-		publicPath: `/public/dashboard/${STORY_DASHBOARD_ID}`,
-	},
-});
+const publicMeta = (): GetPublicDashboard200 =>
+	publicDashboardMeta(STORY_DASHBOARD_ID);
 
 const NOT_PUBLIC = {
 	status: 'error',
@@ -395,17 +391,7 @@ export const warnedPanelQueryHandler = rest.post(
 			ctx.status(200),
 			ctx.json(
 				queryRangeV5ScalarResponse(0.94, 'A', {
-					warning: {
-						code: 'partial_data',
-						message: `Some series for ${TOOLTIP_WARNED_METRIC} were dropped: the metric changed temporality partway through the selected window.`,
-						url: 'https://signoz.io/docs/metrics-management/types-and-aggregation/',
-						warnings: [
-							{
-								message:
-									'Narrow the window to a period with one temporality, or re-record the metric as a delta.',
-							},
-						],
-					},
+					warning: partialDataWarning(TOOLTIP_WARNED_METRIC),
 				}),
 			),
 		);

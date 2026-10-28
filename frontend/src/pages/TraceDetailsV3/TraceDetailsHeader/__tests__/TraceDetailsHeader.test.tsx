@@ -1,10 +1,8 @@
-import { fireEvent, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import type { SpantypesGettableTraceSummaryDTO } from 'api/generated/services/sigNoz.schemas';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import ROUTES from 'constants/routes';
-import { render } from 'tests/test-utils';
+import { fireEvent, render, screen, userEvent } from 'tests/test-utils';
 
 import TraceDetailsHeader from '../TraceDetailsHeader';
 import { useTraceSummary } from '../useTraceSummary';
@@ -91,6 +89,22 @@ describe('TraceDetailsHeader – back button', () => {
 
 		expect(mockNavigate).toHaveBeenCalledTimes(1);
 		expect(mockNavigate).toHaveBeenCalledWith(ROUTES.TRACES_EXPLORER);
+		expect(mockBack).not.toHaveBeenCalled();
+	});
+
+	it('pushes to the AI observability explorer when opened directly on another tab', async () => {
+		mockHasInAppHistory.mockReturnValue(false);
+		const user = userEvent.setup({ delay: null });
+		render(
+			<NuqsTestingAdapter searchParams="?tab=thread">
+				<TraceDetailsHeader {...baseProps} />
+			</NuqsTestingAdapter>,
+		);
+
+		await user.click(screen.getByRole('button', { name: /back/i }));
+
+		expect(mockNavigate).toHaveBeenCalledTimes(1);
+		expect(mockNavigate).toHaveBeenCalledWith(ROUTES.AI_OBSERVABILITY_EXPLORER);
 		expect(mockBack).not.toHaveBeenCalled();
 	});
 });

@@ -7,7 +7,7 @@ import setLocalStorageApi from 'api/browser/localstorage/set';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
-import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
+import { QuickFiltersSource } from 'components/QuickFilters/types';
 import RouteTab from 'components/RouteTab';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
@@ -63,8 +63,7 @@ function AllErrors(): JSX.Element {
 			onToggleFilters={handleFilterVisibilityChange}
 			quickFilterProps={{
 				className: 'qf-exceptions',
-				source: QuickFiltersSource.EXCEPTIONS,
-				signal: SignalType.EXCEPTIONS,
+				quickFilterSource: QuickFiltersSource.EXCEPTIONS,
 				useFieldApis: quickFilterFieldApis,
 			}}
 		>

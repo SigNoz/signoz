@@ -98,10 +98,12 @@ function TraceDetailsHeader({
 	const handlePreviousBtnClick = useCallback((): void => {
 		if (hasInAppHistory()) {
 			back();
+		} else if (!isOverview) {
+			navigate(ROUTES.AI_OBSERVABILITY_EXPLORER);
 		} else {
 			navigate(ROUTES.TRACES_EXPLORER);
 		}
-	}, []);
+	}, [isOverview]);
 
 	const handleToggleTraceDetails = useCallback((): void => {
 		setShowTraceDetails((prev) => !prev);

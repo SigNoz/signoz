@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -89,14 +90,15 @@ func (bc *bucketCache) GetMissRanges(
 	// Extract relevant buckets and merge them
 	relevantBuckets := bc.filterRelevantBuckets(data.Buckets, startMs, endMs)
 	if len(relevantBuckets) == 0 {
-		return nil, missing
+		// nothing cached overlaps the window, so all of it has to be fetched.
+		return nil, []*qbtypes.TimeRange{{From: startMs, To: endMs}}
 	}
 
 	// Merge buckets into a single result
 	mergedResult := bc.mergeBuckets(ctx, relevantBuckets, data.Warnings)
 
 	// Filter the merged result to only include values within the requested time range
-	mergedResult = bc.filterResultToTimeRange(mergedResult, startMs, endMs)
+	mergedResult = bc.filterResultToTimeRange(mergedResult, q, startMs, endMs, stepMs)
 
 	return mergedResult, missing
 }
@@ -208,8 +210,8 @@ func (bc *bucketCache) generateCacheKey(q qbtypes.Query) string {
 
 // findMissingRangesWithStep identifies time ranges not covered by cached buckets with step alignment.
 func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket, startMs, endMs uint64, stepMs uint64) []*qbtypes.TimeRange {
-	// When step is 0 or window is too small to be cached, use simple algorithm
-	if stepMs == 0 || (startMs+stepMs) > endMs {
+	// When step is 0, use simple algorithm
+	if stepMs == 0 {
 		return bc.findMissingRangesBasic(buckets, startMs, endMs)
 	}
 
@@ -304,7 +306,8 @@ func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket
 		// Update current position to the end of this bucket
 		// But ensure it's aligned to step boundary
 		bucketEnd := min(bucket.EndMs, endMs)
-		if bucketEnd%stepMs != 0 && bucketEnd < endMs {
+		// The step the window ends inside is missing however far the bucket runs.
+		if bucketEnd%stepMs != 0 {
 			// Round down to step boundary
 			bucketEnd = bucketEnd - (bucketEnd % stepMs)
 		}
@@ -791,10 +794,24 @@ func max(a, b uint64) uint64 {
 	return b
 }
 
-// filterResultToTimeRange filters the result to only include values within the requested time range.
-func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, startMs, endMs uint64) *qbtypes.Result {
+// filterResultToTimeRange narrows the cached result to the requested window, both
+// the values in it and the heatmap axis under them.
+func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, q qbtypes.Query, startMs, endMs, stepMs uint64) *qbtypes.Result {
 	if result == nil || result.Value == nil {
 		return result
+	}
+
+	_, isPromQL := q.(*promqlQuery)
+	maxTimestampMs := endMs
+	// A promql value at T is the query evaluated at T, so T == endMs is inside the
+	// requested range. For every other query type the value at T aggregates
+	// [T, T+stepMs), which the requested range contains only when T <= endMs-stepMs.
+	if !isPromQL {
+		if stepMs > 0 {
+			maxTimestampMs = endMs - stepMs
+		} else {
+			maxTimestampMs = endMs - 1
+		}
 	}
 
 	switch result.Type {
@@ -821,7 +838,7 @@ func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, startMs, 
 					// Filter values to only include those within the requested time range
 					for _, value := range series.Values {
 						timestampMs := uint64(value.Timestamp)
-						if timestampMs >= startMs && timestampMs < endMs {
+						if timestampMs >= startMs && timestampMs <= maxTimestampMs {
 							filteredSeries.Values = append(filteredSeries.Values, value)
 						}
 					}
@@ -836,6 +853,8 @@ func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, startMs, 
 				}
 			}
 
+			bc.trimHeatmapAxisToTheWindow(q, filteredData)
+
 			// Create a new result with the filtered data
 			return &qbtypes.Result{
 				Type:     result.Type,
@@ -848,4 +867,26 @@ func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, startMs, 
 
 	// For non-time series data, return as is
 	return result
+}
+
+// A cache entry can hold a longer time range than the one now requested, and its
+// bucket axis spans every sample value seen across that longer range. Once the
+// points outside the requested range are dropped, the axis may still list
+// buckets that only those dropped points counted into. Left there, they render
+// as empty rows that the same request never has when it bypasses the cache.
+//
+// PromQL and ClickHouse queries name their own buckets, and a histogram's are
+// its `le` labels, so only a gauge, sum or summary axis is cut.
+func (bc *bucketCache) trimHeatmapAxisToTheWindow(q qbtypes.Query, tsData *qbtypes.TimeSeriesData) {
+	metricQuery, isMetricQuery := q.(*builderQuery[qbtypes.MetricAggregation])
+	if !isMetricQuery {
+		return
+	}
+	if metricQuery.spec.Aggregations[0].Type == metrictypes.HistogramType {
+		return
+	}
+
+	for _, aggBucket := range tsData.Aggregations {
+		aggBucket.TrimAxisToCountedBuckets()
+	}
 }

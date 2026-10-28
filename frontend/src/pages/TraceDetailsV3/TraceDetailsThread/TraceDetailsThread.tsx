@@ -39,6 +39,7 @@ function TraceDetailsThread(): JSX.Element {
 		spansAboveFirstPage,
 		isLoading,
 		isError,
+		isNotFound,
 		hasNextPage,
 		hasPreviousPage,
 		isFetchingNextPage,
@@ -51,6 +52,7 @@ function TraceDetailsThread(): JSX.Element {
 		interestedSpanId,
 		spans,
 		isLoading,
+		isNotFound,
 	);
 	const interestedSpanIndex = spans.findIndex(
 		(span) => span.span_id === interestedSpanId,

@@ -3,6 +3,7 @@ import { Button } from '@signozhq/ui/button';
 import { Modal } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { useDisconnectAccount } from 'api/generated/services/cloudintegration';
+import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import {
 	INTEGRATION_TELEMETRY_EVENTS,
@@ -17,10 +18,12 @@ function RemoveIntegrationAccount({
 	cloudProvider,
 	accountId,
 	onRemoveIntegrationAccountSuccess,
+	gcpConnectionMethod,
 }: {
 	cloudProvider: string;
 	accountId: string;
 	onRemoveIntegrationAccountSuccess: () => void;
+	gcpConnectionMethod?: CloudintegrationtypesGCPConnectionMethodDTO;
 }): JSX.Element {
 	const { notifications } = useNotifications();
 	const [isModalOpen, setIsModalOpen] = useState(false);
@@ -44,7 +47,7 @@ function RemoveIntegrationAccount({
 			},
 		});
 	const handleOk = (): void => {
-		logEvent(INTEGRATION_TELEMETRY_EVENTS.INTEGRATION_ACCOUNT_REMOVED, {
+		void logEvent(INTEGRATION_TELEMETRY_EVENTS.INTEGRATION_ACCOUNT_REMOVED, {
 			accountId,
 			integration: cloudProvider,
 		});
@@ -71,6 +74,20 @@ function RemoveIntegrationAccount({
 				<br />
 				After that, you can delete the cloudformation stack that was created
 				manually when connecting this account.
+			</>
+		);
+	} else if (
+		cloudProvider === INTEGRATION_TYPES.GCP &&
+		gcpConnectionMethod === CloudintegrationtypesGCPConnectionMethodDTO.agent
+	) {
+		modalDescription = (
+			<>
+				Removing this account will stop SigNoz from monitoring it, and the agent
+				will disable the telemetry resources it created in your GCP project. <br />
+				<br />
+				After that, you can delete the signoz-integration-bootstrap Infrastructure
+				Manager deployment, the signoz-integration-bootstrap service account and the
+				signoz-integration secrets that were created while connecting this account.
 			</>
 		);
 	} else if (cloudProvider === INTEGRATION_TYPES.GCP) {
@@ -128,5 +145,9 @@ function RemoveIntegrationAccount({
 		</div>
 	);
 }
+
+RemoveIntegrationAccount.defaultProps = {
+	gcpConnectionMethod: undefined,
+};
 
 export default RemoveIntegrationAccount;

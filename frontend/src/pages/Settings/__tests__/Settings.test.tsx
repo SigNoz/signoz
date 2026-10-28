@@ -38,7 +38,6 @@ describe('SettingsPage nav sections', () => {
 			'settings-page-sidenav',
 			'workspace',
 			'account',
-			'notification-channels',
 			'billing',
 			'roles',
 			'members',
@@ -48,6 +47,12 @@ describe('SettingsPage nav sections', () => {
 			'mcp-server',
 		])('renders "%s" element', (id) => {
 			expect(screen.getByTestId(id)).toBeInTheDocument();
+		});
+
+		it('does not render "notification-channels" element', () => {
+			expect(
+				screen.queryByTestId('notification-channels'),
+			).not.toBeInTheDocument();
 		});
 
 		it.each(['Identity & Access', 'Authentication'])(

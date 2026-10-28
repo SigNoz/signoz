@@ -1,9 +1,8 @@
 import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
-import { SIGNAL_DATA_SOURCE_MAP } from 'components/QuickFilters/QuickFiltersSettings/constants';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { fieldDataTypeToDataType } from 'utils/fieldDataType';
 
-import { FiltersType, IQuickFiltersConfig, SignalType } from './types';
+import { FiltersType, IQuickFiltersConfig } from './types';
 
 const FILTER_TITLE_MAP: Record<string, string> = {
 	duration_nano: 'Duration',
@@ -50,11 +49,10 @@ const getFilterType = (att: TelemetryFieldKey): FiltersType => {
 };
 
 export const getFilterConfig = (
-	signal?: SignalType,
 	customFilters?: TelemetryFieldKey[],
 	config?: IQuickFiltersConfig[],
 ): IQuickFiltersConfig[] => {
-	if (!customFilters?.length || !signal) {
+	if (!customFilters?.length) {
 		return config || [];
 	}
 
@@ -63,7 +61,6 @@ export const getFilterConfig = (
 			({
 				type: getFilterType(att),
 				title: getFilterName(att.name),
-				dataSource: SIGNAL_DATA_SOURCE_MAP[signal],
 				attributeKey: {
 					id: att.name,
 					key: att.name,
