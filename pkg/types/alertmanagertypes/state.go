@@ -110,3 +110,20 @@ type StateStore interface {
 	// initial state of silences or notification log when starting the alertmanager.
 	Get(context.Context, string) (*StoreableState, error)
 }
+
+type SlackAlertThread struct {
+	bun.BaseModel `bun:"table:slack_alert_threads"`
+
+	ID        uint64    `bun:"id,pk,autoincrement"`
+	OrgID     string    `bun:"org_id,notnull"`
+	GroupKey  string    `bun:"group_key,notnull,unique"`
+	ThreadTs  string    `bun:"thread_ts,notnull"`
+	CreatedAt time.Time `bun:"created_at,notnull"`
+	UpdatedAt time.Time `bun:"updated_at,notnull"`
+}
+
+type AlertThreadStore interface {
+	GetThreadTs(ctx context.Context, orgID string, groupKey string) (string, error)
+	SetThreadTs(ctx context.Context, orgID string, groupKey string, threadTs string) error
+	DeleteThread(ctx context.Context, orgID string, groupKey string) error
+}

@@ -41,6 +41,8 @@ type Service struct {
 	notificationManager nfmanager.NotificationManager
 
 	maintenanceStore alertmanagertypes.MaintenanceStore
+
+	threadStore alertmanagertypes.AlertThreadStore
 }
 
 func New(
@@ -51,6 +53,7 @@ func New(
 	orgGetter organization.Getter,
 	nfManager nfmanager.NotificationManager,
 	maintenanceStore alertmanagertypes.MaintenanceStore,
+	threadStore alertmanagertypes.AlertThreadStore,
 ) *Service {
 	service := &Service{
 		config:              config,
@@ -62,6 +65,7 @@ func New(
 		serversMtx:          sync.RWMutex{},
 		notificationManager: nfManager,
 		maintenanceStore:    maintenanceStore,
+		threadStore:         threadStore,
 	}
 
 	return service
@@ -183,6 +187,7 @@ func (service *Service) newServer(ctx context.Context, orgID string) (*alertmana
 	server, err := alertmanagerserver.New(
 		ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID,
 		service.stateStore, service.notificationManager, service.maintenanceStore,
+		service.threadStore,
 	)
 	if err != nil {
 		return nil, err

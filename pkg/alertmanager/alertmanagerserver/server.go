@@ -51,7 +51,8 @@ type Server struct {
 	orgID string
 
 	// store is the backing store for the alertmanager
-	stateStore alertmanagertypes.StateStore
+	stateStore  alertmanagertypes.StateStore
+	threadStore alertmanagertypes.AlertThreadStore
 
 	// alertmanager primitives from upstream alertmanager
 	alerts              *mem.Alerts
@@ -81,6 +82,7 @@ func New(
 	stateStore alertmanagertypes.StateStore,
 	nfManager nfmanager.NotificationManager,
 	maintenanceStore alertmanagertypes.MaintenanceStore,
+	threadStore alertmanagertypes.AlertThreadStore,
 ) (*Server, error) {
 	server := &Server{
 		logger:              logger.With(slog.String("pkg", "go.signoz.io/pkg/alertmanager/alertmanagerserver")),
@@ -88,6 +90,7 @@ func New(
 		srvConfig:           srvConfig,
 		orgID:               orgID,
 		stateStore:          stateStore,
+		threadStore:         threadStore,
 		stopc:               make(chan struct{}),
 		notificationManager: nfManager,
 	}
@@ -282,7 +285,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 		if err != nil {
 			return err
 		}
-		integrations, err := alertmanagernotify.NewReceiverIntegrations(extendedRcv, server.tmpl, server.logger, server.templater)
+		integrations, err := alertmanagernotify.NewReceiverIntegrations(extendedRcv, server.tmpl, server.logger, server.templater, server.orgID, server.threadStore)
 		if err != nil {
 			return err
 		}
