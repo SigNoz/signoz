@@ -27,6 +27,10 @@ export interface AppProvidersProps {
  * A new provider belongs here only if it holds process-wide state that does not
  * depend on the user, the license or the route. One that fetches on mount would
  * fire unauthenticated from here; put it in `AppShell` or lower.
+ *
+ * The whole stack is the root route's element, so it renders inside the data
+ * router: `searchParams` (nuqs) reads the router's `useNavigate` /
+ * `useSearchParams`, and the boot spinner renders at a route too.
  */
 function AppProviders({
 	children,

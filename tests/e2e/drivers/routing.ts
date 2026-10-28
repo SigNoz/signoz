@@ -83,6 +83,8 @@ export interface Routing {
 	waitForParam(key: string, value: string): Promise<void>;
 	/** `history.length`: Chromium keeps it on POP and REPLACE, grows it on PUSH. */
 	historyDepth(): Promise<number>;
+	/** Pathnames of the tab's same-origin history entries, oldest first. */
+	historyPaths(): Promise<string[]>;
 	/** Complete the login form on the page as it stands, without navigating. */
 	login(): Promise<void>;
 	/** Sidebar entries are `div.nav-item`, not links. */
@@ -167,6 +169,18 @@ export function routingDriver(page: Page): Routing {
 				() =>
 					(globalThis as unknown as { history: { length: number } }).history.length,
 			),
+		historyPaths: async () => {
+			const urls = await page.evaluate(() =>
+				(
+					globalThis as unknown as {
+						navigation: { entries(): { url: string | null }[] };
+					}
+				).navigation
+					.entries()
+					.map((entry) => entry.url ?? ''),
+			);
+			return urls.map((url) => new URL(url).pathname);
+		},
 
 		login: async () => {
 			await page.getByTestId('email').fill(ADMIN.email);
