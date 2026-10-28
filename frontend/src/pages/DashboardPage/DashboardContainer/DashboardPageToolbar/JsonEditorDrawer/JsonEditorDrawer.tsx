@@ -1,5 +1,4 @@
 import { KeyboardEvent, useCallback } from 'react';
-import MEditor from '@monaco-editor/react';
 import { TriangleAlert } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
@@ -12,10 +11,7 @@ import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { useCopyToClipboard } from 'react-use';
 import { toast } from '@signozhq/ui/sonner';
 
-import {
-	defineJsonEditorTheme,
-	JSON_EDITOR_THEME,
-} from 'lib/monaco/jsonEditorTheme';
+import MonacoEditor from 'lib/monaco/MonacoEditor';
 import styles from './JsonEditorDrawer.module.scss';
 import JsonEditorToolbar from './JsonEditorToolbar';
 import { useJsonEditor } from './useJsonEditor';
@@ -213,7 +209,7 @@ function JsonEditorDrawer({
 					onReset={reset}
 				/>
 				<div className={styles.editor}>
-					<MEditor
+					<MonacoEditor
 						language="json"
 						height="100%"
 						value={draft}
@@ -225,10 +221,7 @@ function JsonEditorDrawer({
 							fontSize: 13,
 							fontFamily: 'Space Mono',
 						}}
-						theme="vs-dark"
-						onMount={(editor, monaco): void => {
-							defineJsonEditorTheme(monaco, editor.getContainerDomNode());
-							monaco.editor.setTheme(JSON_EDITOR_THEME);
+						onMount={(_editor, monaco): void => {
 							void document.fonts.ready.then(() => monaco.editor.remeasureFonts());
 						}}
 					/>

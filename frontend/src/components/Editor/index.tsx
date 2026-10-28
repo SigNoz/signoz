@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import MEditor, { EditorProps } from '@monaco-editor/react';
-import { useIsDarkMode } from 'hooks/useDarkMode';
+import { EditorProps } from '@monaco-editor/react';
+import MonacoEditor from 'lib/monaco/MonacoEditor';
 
 function Editor({
 	value,
@@ -10,8 +10,6 @@ function Editor({
 	height,
 	options,
 }: MEditorProps): JSX.Element {
-	const isDarkMode = useIsDarkMode();
-
 	const onChangeHandler = (newValue?: string): void => {
 		if (readOnly) {
 			return;
@@ -28,8 +26,7 @@ function Editor({
 	);
 
 	return (
-		<MEditor
-			theme={isDarkMode ? 'vs-dark' : 'vs-light'}
+		<MonacoEditor
 			language={language}
 			value={value}
 			options={editorOptions}

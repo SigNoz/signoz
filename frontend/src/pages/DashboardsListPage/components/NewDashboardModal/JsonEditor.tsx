@@ -1,10 +1,8 @@
 import { useState } from 'react';
-import MEditor, { Monaco } from '@monaco-editor/react';
-import { Color } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui/button';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Maximize2 } from '@signozhq/icons';
-import { useIsDarkMode } from 'hooks/useDarkMode';
+import MonacoEditor from 'lib/monaco/MonacoEditor';
 
 import styles from './NewDashboardModal.module.scss';
 
@@ -15,18 +13,6 @@ interface Props {
 	height?: string;
 }
 
-const defineTheme = (monaco: Monaco): void => {
-	monaco.editor.defineTheme('my-theme', {
-		base: 'vs-dark',
-		inherit: true,
-		rules: [
-			{ token: 'string.key.json', foreground: Color.BG_VANILLA_400 },
-			{ token: 'string.value.json', foreground: Color.BG_ROBIN_400 },
-		],
-		colors: { 'editor.background': Color.BG_INK_300 },
-	});
-};
-
 // JSON editor with a one-click "expand" into an extra-wide modal for easier
 // editing/review. The expanded editor shares the same value, so edits persist.
 function JsonEditor({
@@ -35,11 +21,10 @@ function JsonEditor({
 	readOnly = false,
 	height = '38vh',
 }: Props): JSX.Element {
-	const isDarkMode = useIsDarkMode();
 	const [expanded, setExpanded] = useState(false);
 
 	const renderEditor = (editorHeight: string): JSX.Element => (
-		<MEditor
+		<MonacoEditor
 			language="json"
 			height={editorHeight}
 			value={value}
@@ -51,8 +36,6 @@ function JsonEditor({
 				fontSize: 14,
 				fontFamily: 'Space Mono',
 			}}
-			theme={isDarkMode ? 'my-theme' : 'light'}
-			beforeMount={defineTheme}
 		/>
 	);
 
