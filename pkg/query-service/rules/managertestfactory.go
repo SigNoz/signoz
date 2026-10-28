@@ -28,6 +28,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/stretchr/testify/require"
 )
 
@@ -131,7 +133,7 @@ func NewTestManager(t *testing.T, testOpts *TestManagerOptions) *Manager {
 	meterStmtBuilder, err := meterstatementbuilder.NewFactory(metadataStore, flagger).New(ctx, providerSettings, cfg)
 	require.NoError(t, err)
 	bucketCache := querier.NewBucketCache(providerSettings, cache, 0, 0)
-	providerFactory := signozquerier.NewFactory(telemetryStore, prometheus, metadataStore, traceStmtBuilder, aiTraceStmtBuilder, logStmtBuilder, auditStmtBuilder, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, flagger)
+	providerFactory := signozquerier.NewFactory(telemetryStore, prometheus, metadataStore, traceStmtBuilder, aiTraceStmtBuilder, logStmtBuilder, map[telemetrytypes.Source]qbtypes.StatementBuilder[qbtypes.LogAggregation]{telemetrytypes.SourceAudit: auditStmtBuilder}, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, flagger)
 	mockQuerier, err := providerFactory.New(context.Background(), providerSettings, querier.Config{})
 	require.NoError(t, err)
 
