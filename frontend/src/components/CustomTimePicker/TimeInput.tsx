@@ -11,6 +11,7 @@ interface TimeInputProps {
 	/** When provided, renders the localized date as a static prefix inside the wrapper */
 	date?: Date;
 	label?: string;
+	ariaLabelPrefix?: string;
 	testIdPrefix?: string;
 }
 
@@ -23,6 +24,7 @@ function TimeInput({
 	onSecondChange,
 	date,
 	label,
+	ariaLabelPrefix = label,
 	testIdPrefix = '',
 }: TimeInputProps): JSX.Element {
 	const hourRef = useRef<HTMLInputElement>(null);
@@ -115,7 +117,7 @@ function TimeInput({
 					value={hour}
 					placeholder="HH"
 					maxLength={2}
-					aria-label="Hours"
+					aria-label={ariaLabelPrefix ? `${ariaLabelPrefix} hours` : 'Hours'}
 					data-testid={tid('time-input-hour')}
 					onChange={(e): void => handleChange(e.target.value, onHourChange, 0, 2)}
 					onKeyDown={(e): void => handleKeyDown(e, hour, 0)}
@@ -133,7 +135,7 @@ function TimeInput({
 					value={minute}
 					placeholder="MM"
 					maxLength={2}
-					aria-label="Minutes"
+					aria-label={ariaLabelPrefix ? `${ariaLabelPrefix} minutes` : 'Minutes'}
 					data-testid={tid('time-input-minute')}
 					onChange={(e): void => handleChange(e.target.value, onMinuteChange, 1, 5)}
 					onKeyDown={(e): void => handleKeyDown(e, minute, 1)}
@@ -151,7 +153,7 @@ function TimeInput({
 					value={second}
 					placeholder="SS"
 					maxLength={2}
-					aria-label="Seconds"
+					aria-label={ariaLabelPrefix ? `${ariaLabelPrefix} seconds` : 'Seconds'}
 					data-testid={tid('time-input-second')}
 					onChange={(e): void => handleChange(e.target.value, onSecondChange, 2, 5)}
 					onKeyDown={(e): void => handleKeyDown(e, second, 2)}

@@ -27,6 +27,7 @@ import { getCustomTimeRanges } from 'utils/customTimeRangeUtils';
 import { TimeRangeValidationResult } from 'utils/timeUtils';
 
 import CalendarContainer from './CalendarContainer';
+import { toCalendarDate } from './aroundTimeUtils';
 import AroundTimeContainer from './AroundTimeContainer';
 import { CustomTimePickerInputStatus } from './CustomTimePicker';
 import TimezonePicker from './TimezonePicker';
@@ -83,15 +84,14 @@ const getDateRange = (
 	maxTime: number,
 	timezone: string,
 ): DateRange => {
-	const from = dayjs(minTime / TO_MILLISECONDS_FACTOR)
-		.tz(timezone)
-		.startOf('day')
-		.toDate();
-
-	const to = dayjs(maxTime / TO_MILLISECONDS_FACTOR)
-		.tz(timezone)
-		.endOf('day')
-		.toDate();
+	const from = toCalendarDate(
+		new Date(minTime / TO_MILLISECONDS_FACTOR),
+		timezone,
+	);
+	const to = toCalendarDate(
+		new Date(maxTime / TO_MILLISECONDS_FACTOR),
+		timezone,
+	);
 
 	return { from, to };
 };

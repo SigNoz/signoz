@@ -3,9 +3,15 @@ import { useCallback, useState } from 'react';
 import dayjs from 'dayjs';
 
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
+import { useTimezone } from 'providers/Timezone';
 
 import { OFFSET_PRESETS, AroundTimeState } from './AroundTimeContainer.types';
-import { clampTimeComponent, parseOffsetToMs } from './aroundTimeUtils';
+import {
+	isValidTime,
+	parseOffsetToMs,
+	toCalendarDate,
+	toZonedDateTime,
+} from './aroundTimeUtils';
 
 const DEFAULT_STATE: AroundTimeState = {
 	centerDate: undefined,
@@ -18,25 +24,29 @@ const DEFAULT_STATE: AroundTimeState = {
 function deriveInitialState(
 	initialFrom: Date,
 	initialTo: Date,
+	timezone: string,
 ): AroundTimeState | null {
 	const fromMs = initialFrom.getTime();
 	const toMs = initialTo.getTime();
 	const halfSpanMs = (toMs - fromMs) / 2;
+	if (!Number.isFinite(halfSpanMs) || halfSpanMs <= 0) {
+		return null;
+	}
 
 	const matchingPreset = OFFSET_PRESETS.find(
 		(p) => parseOffsetToMs(p.value) === halfSpanMs,
 	);
-	if (!matchingPreset) {
-		return null;
-	}
-
-	const center = dayjs(fromMs + halfSpanMs);
+	const center = dayjs(fromMs + halfSpanMs).tz(timezone);
 	return {
-		centerDate: center.toDate(),
+		centerDate: toCalendarDate(center.toDate(), timezone),
 		centerHour: String(center.hour()).padStart(2, '0'),
 		centerMinute: String(center.minute()).padStart(2, '0'),
 		centerSecond: String(center.second()).padStart(2, '0'),
-		offset: matchingPreset.value,
+		offset:
+			matchingPreset?.value ??
+			(Number.isInteger(halfSpanMs / 60_000)
+				? `${halfSpanMs / 60_000}m`
+				: DEFAULT_STATE.offset),
 	};
 }
 
@@ -56,9 +66,10 @@ export function useAroundTimeCallbacks(
 	initialFrom?: Date,
 	initialTo?: Date,
 ): UseAroundTimeCallbacksReturn {
+	const { timezone } = useTimezone();
 	const [state, setState] = useState<AroundTimeState>(() => {
 		if (initialFrom && initialTo) {
-			const derived = deriveInitialState(initialFrom, initialTo);
+			const derived = deriveInitialState(initialFrom, initialTo, timezone.value);
 			if (derived) {
 				return derived;
 			}
@@ -87,29 +98,31 @@ export function useAroundTimeCallbacks(
 	}, []);
 
 	const offsetMs = parseOffsetToMs(state.offset);
-	const canApply = state.centerDate !== undefined && offsetMs !== null;
+	const center =
+		state.centerDate &&
+		isValidTime(state.centerHour, state.centerMinute, state.centerSecond)
+			? toZonedDateTime(
+					state.centerDate,
+					{
+						hour: state.centerHour,
+						minute: state.centerMinute,
+						second: state.centerSecond,
+					},
+					timezone.value,
+				)
+			: null;
+	const from =
+		center && offsetMs !== null ? center.subtract(offsetMs, 'ms') : null;
+	const to = center && offsetMs !== null ? center.add(offsetMs, 'ms') : null;
+	const canApply = !!(from?.isValid() && to?.isValid() && from.isBefore(to));
 
 	const onApplyHandler = useCallback((): void => {
-		if (!state.centerDate || offsetMs === null) {
+		if (!canApply || !from || !to) {
 			return;
 		}
 
-		const hour = parseInt(clampTimeComponent(state.centerHour, 23), 10);
-		const minute = parseInt(clampTimeComponent(state.centerMinute, 59), 10);
-		const second = parseInt(clampTimeComponent(state.centerSecond, 59), 10);
-
-		const centerMs = dayjs(state.centerDate)
-			.hour(hour)
-			.minute(minute)
-			.second(second)
-			.millisecond(0)
-			.valueOf();
-
-		const from = dayjs(centerMs - offsetMs);
-		const to = dayjs(centerMs + offsetMs);
-
 		onApply([from, to]);
-	}, [state, offsetMs, onApply]);
+	}, [canApply, from, to, onApply]);
 
 	return {
 		state,

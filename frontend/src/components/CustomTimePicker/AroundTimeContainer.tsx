@@ -3,13 +3,14 @@ import { Button, Input, Select } from 'antd';
 import { Calendar } from '@signozhq/ui/calendar';
 import { Calendar as CalendarIcon, Check, X } from '@signozhq/icons';
 import dayjs from 'dayjs';
+import { useTimezone } from 'providers/Timezone';
 
 import {
 	OFFSET_PRESETS,
 	CUSTOM_OFFSET_VALUE,
 	AroundTimeContainerProps,
 } from './AroundTimeContainer.types';
-import { isValidOffset } from './aroundTimeUtils';
+import { isValidOffset, toCalendarDate } from './aroundTimeUtils';
 import { useAroundTimeCallbacks } from './useAroundTimeCallbacks';
 import TimeInput from './TimeInput';
 import styles from './AroundTimeContainer.module.scss';
@@ -22,6 +23,7 @@ function AroundTimeContainer({
 	initialFrom,
 	initialTo,
 }: AroundTimeContainerProps): JSX.Element {
+	const { timezone } = useTimezone();
 	const {
 		state,
 		onSelectDate,
@@ -61,9 +63,10 @@ function AroundTimeContainer({
 			<div className={styles.calendarBody}>
 				<Calendar
 					mode="single"
+					defaultMonth={state.centerDate}
 					selected={state.centerDate}
 					onSelect={(date): void => onSelectDate(date)}
-					disabled={{ after: dayjs().toDate() }}
+					disabled={{ after: toCalendarDate(new Date(), timezone.value) }}
 				/>
 
 				<div className={styles.controls}>
@@ -76,6 +79,7 @@ function AroundTimeContainer({
 						onMinuteChange={onMinuteChange}
 						onSecondChange={onSecondChange}
 						date={state.centerDate}
+						ariaLabelPrefix="Center"
 						testIdPrefix="around"
 					/>
 
@@ -107,7 +111,9 @@ function AroundTimeContainer({
 					{selectValue === CUSTOM_OFFSET_VALUE && state.offset && !offsetValid && (
 						<>
 							<span />
-							<span className={styles.offsetHint}>Use format: 5m, 1h, 3h, 1d</span>
+							<span className={styles.offsetHint}>
+								Use a positive offset: 5m, 1h, 3h, 1d
+							</span>
 						</>
 					)}
 				</div>

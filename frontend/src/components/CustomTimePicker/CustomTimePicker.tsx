@@ -577,6 +577,7 @@ function CustomTimePicker({
 					content={
 						newPopover ? (
 							<CustomTimePickerPopoverContent
+								key={timezone.value}
 								isLiveLogsEnabled={!!showLiveLogs}
 								setIsOpen={setOpen}
 								setCustomDTPickerVisible={defaultTo(setCustomDTPickerVisible, noop)}

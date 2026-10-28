@@ -2,6 +2,9 @@ import {
 	clampTimeComponent,
 	isValidOffset,
 	parseOffsetToMs,
+	toCalendarDate,
+	toZonedDateTime,
+	isValidTime,
 } from '../aroundTimeUtils';
 
 describe('parseOffsetToMs', () => {
@@ -30,6 +33,60 @@ describe('parseOffsetToMs', () => {
 
 	it('trims whitespace', () => {
 		expect(parseOffsetToMs('  15m  ')).toBe(15 * 60 * 1000);
+	});
+
+	it.each(['0m', '0h', '0d', '9007199254740991d', '9'.repeat(400) + 'm'])(
+		'rejects zero and overflowing offsets: %s',
+		(offset) => {
+			expect(parseOffsetToMs(offset)).toBeNull();
+		},
+	);
+});
+
+describe('calendar timezone conversion', () => {
+	it('represents the selected timezone day in the calendar', () => {
+		const date = toCalendarDate(
+			new Date('2025-01-16T01:00:00Z'),
+			'America/Los_Angeles',
+		);
+		expect([date.getFullYear(), date.getMonth(), date.getDate()]).toStrictEqual([
+			2025, 0, 15,
+		]);
+	});
+
+	it.each([
+		['America/Los_Angeles', '2025-01-15T20:30:45.000Z'],
+		['Asia/Kolkata', '2025-01-15T07:00:45.000Z'],
+		['UTC', '2025-01-15T12:30:45.000Z'],
+	])('interprets the calendar day and time in %s', (timezone, expected) => {
+		expect(
+			toZonedDateTime(
+				new Date(2025, 0, 15),
+				{ hour: '12', minute: '30', second: '45' },
+				timezone,
+			).toISOString(),
+		).toBe(expected);
+	});
+
+	it('uses the selected day offset when crossing daylight saving time', () => {
+		expect(
+			toZonedDateTime(
+				new Date(2025, 2, 9),
+				{ hour: '12', minute: '00', second: '00' },
+				'America/Los_Angeles',
+			).toISOString(),
+		).toBe('2025-03-09T19:00:00.000Z');
+	});
+});
+
+describe('isValidTime', () => {
+	it.each([
+		['', '00', '00'],
+		['24', '00', '00'],
+		['12', '60', '00'],
+		['12', '00', '60'],
+	])('rejects invalid time %s:%s:%s', (hour, minute, second) => {
+		expect(isValidTime(hour, minute, second)).toBe(false);
 	});
 });
 

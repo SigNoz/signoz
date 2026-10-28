@@ -8,6 +8,11 @@ import { useTimezone } from 'providers/Timezone';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
 
 import { DateRange } from './CustomTimePickerPopoverContent';
+import {
+	isValidTime,
+	toCalendarDate,
+	toZonedDateTime,
+} from './aroundTimeUtils';
 import TimeInput from './TimeInput';
 
 const pad = (n: number): string => String(n).padStart(2, '0');
@@ -50,7 +55,24 @@ function CalendarContainer({
 		initialTo ? pad(dayjs(initialTo).tz(timezone.value).second()) : '59',
 	);
 
-	const bothDatesSelected = !!(dateRange?.from && dateRange?.to);
+	const from =
+		dateRange?.from && isValidTime(startHour, startMinute, startSecond)
+			? toZonedDateTime(
+					dateRange.from,
+					{ hour: startHour, minute: startMinute, second: startSecond },
+					timezone.value,
+				)
+			: null;
+	const to =
+		dateRange?.to && isValidTime(endHour, endMinute, endSecond)
+			? toZonedDateTime(
+					dateRange.to,
+					{ hour: endHour, minute: endMinute, second: endSecond },
+					timezone.value,
+				).millisecond(999)
+			: null;
+	const canApply = !!(from?.isValid() && to?.isValid() && from.isBefore(to));
+	const reversedRange = !!(from && to && !from.isBefore(to));
 
 	// this is to override the default behavior of the shadcn calendar component
 	// if a range is already selected, clicking on a date will reset selection and set the new date as the start date
@@ -80,31 +102,9 @@ function CalendarContainer({
 	};
 
 	const handleApply = (): void => {
-		if (!dateRange?.from || !dateRange?.to) {
+		if (!canApply || !from || !to) {
 			return;
 		}
-
-		const clamp = (val: string, max: number): number => {
-			const n = parseInt(val, 10);
-			if (Number.isNaN(n)) {
-				return 0;
-			}
-			return Math.min(Math.max(n, 0), max);
-		};
-
-		const from = dayjs(dateRange.from)
-			.tz(timezone.value)
-			.hour(clamp(startHour, 23))
-			.minute(clamp(startMinute, 59))
-			.second(clamp(startSecond, 59))
-			.millisecond(0);
-
-		const to = dayjs(dateRange.to)
-			.tz(timezone.value)
-			.hour(clamp(endHour, 23))
-			.minute(clamp(endMinute, 59))
-			.second(clamp(endSecond, 59))
-			.millisecond(999);
 
 		onApply([from, to]);
 	};
@@ -114,13 +114,8 @@ function CalendarContainer({
 			<div className="calendar-container-header">
 				<CalendarIcon size={12} />
 				<div className="calendar-container-header-title">
-					{dayjs(dateRange?.from)
-						.tz(timezone.value)
-						.format(DATE_TIME_FORMATS.MONTH_DATE_SHORT)}{' '}
-					-{' '}
-					{dayjs(dateRange?.to)
-						.tz(timezone.value)
-						.format(DATE_TIME_FORMATS.MONTH_DATE_SHORT)}
+					{dayjs(dateRange?.from).format(DATE_TIME_FORMATS.MONTH_DATE_SHORT)} -{' '}
+					{dayjs(dateRange?.to).format(DATE_TIME_FORMATS.MONTH_DATE_SHORT)}
 				</div>
 			</div>
 
@@ -131,7 +126,7 @@ function CalendarContainer({
 					defaultMonth={dateRange?.from}
 					selected={dateRange}
 					disabled={{
-						after: dayjs().toDate(),
+						after: toCalendarDate(new Date(), timezone.value),
 					}}
 					onSelect={handleSelect}
 				/>
@@ -161,6 +156,10 @@ function CalendarContainer({
 					/>
 				</div>
 
+				{reversedRange && (
+					<div role="alert">End time must be after start time.</div>
+				)}
+
 				<div className="calendar-actions">
 					<Button
 						type="primary"
@@ -173,7 +172,7 @@ function CalendarContainer({
 					<Button
 						type="primary"
 						className="periscope-btn primary apply-btn"
-						disabled={!bothDatesSelected}
+						disabled={!canApply}
 						onClick={handleApply}
 						icon={<Check size={12} />}
 					>

@@ -3,6 +3,11 @@ import dayjs from 'dayjs';
 
 import AroundTimeContainer from './AroundTimeContainer';
 
+let mockTimezone = 'UTC';
+jest.mock('providers/Timezone', () => ({
+	useTimezone: () => ({ timezone: { value: mockTimezone } }),
+}));
+
 // Mock antd Select so we can test option selection easily
 jest.mock('antd', () => {
 	const actual = jest.requireActual('antd');
@@ -41,6 +46,7 @@ jest.mock('antd', () => {
 jest.mock('@signozhq/ui/calendar', () => ({
 	Calendar: ({
 		onSelect,
+		selected,
 	}: {
 		mode: string;
 		selected: Date | undefined;
@@ -49,6 +55,7 @@ jest.mock('@signozhq/ui/calendar', () => ({
 	}): JSX.Element => (
 		<button
 			data-testid="mock-calendar"
+			data-selected-date={selected?.toLocaleDateString('en-CA')}
 			type="button"
 			onClick={(): void => onSelect(new Date('2025-06-16'))}
 		>
@@ -63,6 +70,7 @@ describe('AroundTimeContainer', () => {
 
 	beforeEach(() => {
 		jest.clearAllMocks();
+		mockTimezone = 'UTC';
 	});
 
 	it('renders the calendar, offset select, and action buttons', () => {
@@ -135,7 +143,7 @@ describe('AroundTimeContainer', () => {
 		fireEvent.change(select, { target: { value: '1h' } });
 
 		// No error hint should appear for a valid preset
-		expect(screen.queryByText(/Use format:/i)).not.toBeInTheDocument();
+		expect(screen.queryByText(/Use a positive offset:/i)).not.toBeInTheDocument();
 	});
 
 	it('selecting Custom shows the free-text offset input', () => {
@@ -158,7 +166,7 @@ describe('AroundTimeContainer', () => {
 		const offsetInput = screen.getByTestId('around-time-offset-input');
 		fireEvent.change(offsetInput, { target: { value: 'invalid' } });
 
-		expect(screen.getByText(/Use format:/i)).toBeInTheDocument();
+		expect(screen.getByText(/Use a positive offset:/i)).toBeInTheDocument();
 	});
 
 	it('does not show error hint when custom offset is empty', () => {
@@ -171,6 +179,75 @@ describe('AroundTimeContainer', () => {
 		const offsetInput = screen.getByTestId('around-time-offset-input');
 		fireEvent.change(offsetInput, { target: { value: '' } });
 
-		expect(screen.queryByText(/Use format:/i)).not.toBeInTheDocument();
+		expect(screen.queryByText(/Use a positive offset:/i)).not.toBeInTheDocument();
+	});
+
+	it('seeds and applies the center in the selected timezone across a day boundary', () => {
+		mockTimezone = 'America/Los_Angeles';
+		const initialFrom = new Date('2025-01-16T00:00:00Z');
+		const initialTo = new Date('2025-01-16T01:00:00Z');
+		render(
+			<AroundTimeContainer
+				onApply={mockOnApply}
+				onCancel={mockOnCancel}
+				initialFrom={initialFrom}
+				initialTo={initialTo}
+			/>,
+		);
+
+		expect(screen.getByText('Jan 15, 2025')).toBeInTheDocument();
+		expect(screen.getByLabelText('Center hours')).toHaveValue('16');
+		expect(screen.getByLabelText('Center minutes')).toHaveValue('30');
+		fireEvent.click(screen.getByTestId('around-time-apply'));
+
+		const [from, to] = mockOnApply.mock.calls[0][0];
+		expect(from.valueOf()).toBe(initialFrom.getTime());
+		expect(to.valueOf()).toBe(initialTo.getTime());
+	});
+
+	it('preserves a non-preset offset from the current range', () => {
+		render(
+			<AroundTimeContainer
+				onApply={mockOnApply}
+				onCancel={mockOnCancel}
+				initialFrom={new Date('2025-01-15T12:00:00Z')}
+				initialTo={new Date('2025-01-15T12:40:00Z')}
+			/>,
+		);
+
+		expect(screen.getByTestId('around-time-offset-input')).toHaveValue('20m');
+		expect(screen.getByLabelText('Center minutes')).toHaveValue('20');
+	});
+
+	it.each(['0m', '9007199254740991d', '100000001d'])(
+		'does not apply an invalid offset %s',
+		(offset) => {
+			render(
+				<AroundTimeContainer onApply={mockOnApply} onCancel={mockOnCancel} />,
+			);
+			fireEvent.click(screen.getByTestId('mock-calendar'));
+			fireEvent.change(screen.getByTestId('around-time-offset-select'), {
+				target: { value: '__custom__' },
+			});
+			fireEvent.change(screen.getByTestId('around-time-offset-input'), {
+				target: { value: offset },
+			});
+			fireEvent.click(screen.getByTestId('around-time-apply'));
+
+			expect(screen.getByTestId('around-time-apply')).toBeDisabled();
+			expect(mockOnApply).not.toHaveBeenCalled();
+		},
+	);
+
+	it('does not silently replace an empty time with midnight', () => {
+		render(<AroundTimeContainer onApply={mockOnApply} onCancel={mockOnCancel} />);
+		fireEvent.click(screen.getByTestId('mock-calendar'));
+		fireEvent.change(screen.getByLabelText('Center hours'), {
+			target: { value: '' },
+		});
+		fireEvent.click(screen.getByTestId('around-time-apply'));
+
+		expect(screen.getByTestId('around-time-apply')).toBeDisabled();
+		expect(mockOnApply).not.toHaveBeenCalled();
 	});
 });

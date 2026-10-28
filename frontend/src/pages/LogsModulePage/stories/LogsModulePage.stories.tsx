@@ -81,6 +81,56 @@ const openFirstLog = async (canvasElement: HTMLElement): Promise<void> => {
  */
 export const Default: Story = {};
 
+const openTimePicker = async (): Promise<void> => {
+	await screen.findAllByTestId(/^logs-table-row-/, undefined, untilLoaded);
+	await userEvent.click(await screen.findByTestId('dropDown'));
+	await waitFor(
+		() => expect(screen.getByTestId('time-option-custom')).toBeVisible(),
+		untilLoaded,
+	);
+};
+
+/** The current range with editable start and end times. */
+export const CustomTimeRange: Story = {
+	play: async (): Promise<void> => {
+		await openTimePicker();
+		await userEvent.click(await screen.findByTestId('time-option-custom'));
+		await waitFor(
+			() => expect(screen.getByLabelText('Start hours')).toBeVisible(),
+			untilLoaded,
+		);
+		await expect(screen.getByLabelText('End hours')).toBeVisible();
+	},
+};
+
+/** A time-centered range with a custom offset and invalid-offset feedback. */
+export const AroundTime: Story = {
+	play: async (): Promise<void> => {
+		await openTimePicker();
+		await userEvent.click(await screen.findByTestId('time-option-around'));
+		await waitFor(
+			() => expect(screen.getByLabelText('Center hours')).toBeVisible(),
+			untilLoaded,
+		);
+		await userEvent.click(
+			within(screen.getByTestId('around-time-offset-select')).getByRole(
+				'combobox',
+			),
+		);
+		await userEvent.click(await screen.findByText('Custom…'));
+		const offset = await screen.findByTestId('around-time-offset-input');
+		await userEvent.clear(offset);
+		await userEvent.type(offset, '0m');
+		await expect(screen.getByTestId('around-time-apply')).toBeDisabled();
+		await expect(
+			screen.getByText('Use a positive offset: 5m, 1h, 3h, 1d'),
+		).toBeVisible();
+		await userEvent.clear(offset);
+		await userEvent.type(offset, '45m');
+		await expect(screen.getByTestId('around-time-apply')).not.toBeDisabled();
+	},
+};
+
 /** A workspace with logs ingesting but nothing matching the query. */
 export const NoLogs: Story = {
 	args: { logs: 0 },
