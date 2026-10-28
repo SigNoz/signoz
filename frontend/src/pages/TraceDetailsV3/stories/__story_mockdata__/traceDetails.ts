@@ -518,6 +518,7 @@ const flamegraphSpan = (span: BuiltSpan): SpantypesFlamegraphSpanDTO => ({
 	level: span.level,
 	attributes: span.template.attributes,
 	resource: resourceOf(span),
+	scope: { name: '', version: '', attributes: {} },
 	event: [],
 });
 

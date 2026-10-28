@@ -10,6 +10,11 @@ describe('getSpanDisplayData', () => {
 			name: 'GET /api',
 			attributes: { 'http.method': 'GET' },
 			resource: { 'service.name': 'api' },
+			scope: {
+				name: 'io.opentelemetry.http',
+				version: '1.2.0',
+				attributes: { 'lib.lang': 'go' },
+			},
 			level: 1,
 			has_children: true,
 			sub_tree_node_count: 3,
@@ -24,6 +29,11 @@ describe('getSpanDisplayData', () => {
 			name: 'GET /api',
 			attributes: { 'http.method': 'GET' },
 			resource: { 'service.name': 'api' },
+			scope: {
+				name: 'io.opentelemetry.http',
+				version: '1.2.0',
+				attributes: { 'lib.lang': 'go' },
+			},
 		});
 	});
 });
