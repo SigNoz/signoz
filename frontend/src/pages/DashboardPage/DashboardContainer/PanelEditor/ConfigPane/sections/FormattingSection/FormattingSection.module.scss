@@ -22,7 +22,7 @@
 }
 
 .previewValue {
-	font-family: 'Geist Mono', monospace;
+	font-family: var(--code-base-400-font-family);
 	font-size: 15px;
 	color: var(--l1-foreground);
 }

@@ -240,7 +240,7 @@
 	}
 
 	code {
-		font-family: 'Geist Mono', 'Fira Code', monospace;
+		font-family: var(--code-small-400-font-family);
 		font-size: 11.5px;
 		border-radius: var(--radius-2);
 		padding: 1px 4px;

@@ -43,7 +43,7 @@
 
 .metric {
 	color: var(--l2-foreground);
-	font-family: var(--periscope-font-family-mono);
+	font-family: var(--code-small-400-font-family);
 	font-size: var(--code-small-400-font-size);
 	word-break: break-all;
 }
@@ -55,7 +55,7 @@
 	line-clamp: 4;
 	overflow: hidden;
 	color: var(--l1-foreground);
-	font-family: var(--periscope-font-family-mono);
+	font-family: var(--code-small-400-font-family);
 	font-size: var(--code-small-400-font-size);
 	word-break: break-all;
 }

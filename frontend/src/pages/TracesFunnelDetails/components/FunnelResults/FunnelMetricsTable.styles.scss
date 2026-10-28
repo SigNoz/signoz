@@ -39,7 +39,7 @@
 
 		&-value {
 			color: var(--l1-foreground);
-			font-family: 'Geist Mono';
+			font-family: var(--code-base-500-font-family);
 			font-size: 14px;
 			font-weight: 500;
 			line-height: 22px; /* 157.143% */
@@ -70,7 +70,7 @@
 		&-value,
 		&-unit {
 			color: var(--l2-foreground);
-			font-family: 'Geist Mono';
+			font-family: var(--code-base-400-font-family);
 			font-size: 14px;
 			line-height: 22px; /* 157.143% */
 			letter-spacing: -0.07px;

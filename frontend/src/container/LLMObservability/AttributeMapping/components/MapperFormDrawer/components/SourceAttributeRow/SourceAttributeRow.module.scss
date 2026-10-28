@@ -31,7 +31,7 @@
 .sourceInput {
 	flex: 1;
 	min-width: 0;
-	font-family: 'Geist Mono', monospace;
+	font-family: var(--code-base-400-font-family);
 }
 
 /* The selects size themselves via their `width` prop; keep them from flexing. */

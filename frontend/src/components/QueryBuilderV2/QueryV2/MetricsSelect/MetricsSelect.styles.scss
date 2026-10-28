@@ -28,7 +28,7 @@
 			var(--l2-background)
 		) !important;
 		color: var(--query-builder-v2-color, var(--l2-foreground));
-		font-family: 'Geist Mono';
+		font-family: var(--code-base-400-font-family);
 		font-size: 13px;
 		min-height: 36px;
 
@@ -51,7 +51,7 @@
 
 	.ant-select-item {
 		color: var(--query-builder-v2-color, var(--l2-foreground));
-		font-family: 'Geist Mono';
+		font-family: var(--code-base-400-font-family);
 		font-size: 13px;
 		font-style: normal;
 		font-weight: 400;

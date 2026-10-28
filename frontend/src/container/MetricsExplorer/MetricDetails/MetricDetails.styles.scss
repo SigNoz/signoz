@@ -10,7 +10,7 @@
 			gap: 8px;
 
 			.ant-typography {
-				font-family: 'Geist Mono';
+				font-family: var(--code-base-400-font-family);
 			}
 		}
 
@@ -159,7 +159,7 @@
 				}
 
 				.ant-typography {
-					font-family: 'Geist Mono';
+					font-family: var(--code-base-400-font-family);
 					color: var(--bg-robin-400);
 				}
 
@@ -194,7 +194,7 @@
 						align-items: center;
 						.ant-btn {
 							.ant-typography:first-child {
-								font-family: 'Geist Mono';
+								font-family: var(--code-base-400-font-family);
 								color: var(--bg-robin-400);
 								background-color: transparent;
 							}
@@ -249,7 +249,7 @@
 							background-color: var(--l1-border);
 							.ant-typography {
 								color: var(--l2-foreground);
-								font-family: 'Geist Mono';
+								font-family: var(--code-base-400-font-family);
 								text-overflow: ellipsis;
 							}
 							&:hover {

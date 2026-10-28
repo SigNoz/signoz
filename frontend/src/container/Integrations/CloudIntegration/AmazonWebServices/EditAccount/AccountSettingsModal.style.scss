@@ -1,7 +1,7 @@
 .account-settings-modal {
 	&__title-account-id {
 		color: var(--l1-foreground);
-		font-family: 'Geist Mono';
+		font-family: var(--code-base-600-font-family);
 		font-size: 14px;
 		font-weight: 600;
 		line-height: 20px;
@@ -32,7 +32,7 @@
 					line-height: 18px;
 					letter-spacing: -0.06px;
 					&-account-id {
-						font-family: 'Geist Mono';
+						font-family: var(--code-small-600-font-family);
 						font-weight: 700;
 					}
 				}

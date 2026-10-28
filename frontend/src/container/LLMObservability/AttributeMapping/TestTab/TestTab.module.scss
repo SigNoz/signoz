@@ -143,7 +143,7 @@
 	gap: var(--spacing-4);
 	padding: var(--spacing-2) var(--padding-3);
 	border-radius: var(--radius-2);
-	font-family: 'Geist Mono', monospace;
+	font-family: var(--code-small-400-font-family);
 	font-size: var(--code-small-400-font-size);
 
 	&.added {

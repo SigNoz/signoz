@@ -39,7 +39,7 @@
 .resourceBadge {
 	margin-left: auto;
 	font-size: 10px;
-	font-family: var(--font-mono, monospace);
+	font-family: var(--code-small-400-font-family);
 	background: var(--l2-background);
 	border: 1px solid var(--l2-border);
 	border-radius: var(--radius-2);
@@ -114,7 +114,7 @@
 // + monospace styling but renders an inner stack of `.diffLine` rows
 // instead of a single `<pre>` so individual lines can be colored.
 .diffPane {
-	font-family: var(--font-mono, monospace);
+	font-family: var(--code-small-400-font-family);
 	font-size: 12px;
 	background: var(--l2-background);
 	border-radius: var(--radius-2);
@@ -212,7 +212,7 @@
 }
 
 .diffJson {
-	font-family: var(--font-mono, monospace);
+	font-family: var(--code-small-400-font-family);
 	font-size: 11px;
 	background: var(--l2-background);
 	border-radius: var(--radius-2);

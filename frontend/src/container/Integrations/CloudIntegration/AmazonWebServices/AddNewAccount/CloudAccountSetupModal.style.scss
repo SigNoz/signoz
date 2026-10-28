@@ -130,7 +130,7 @@
 			font-weight: 500;
 		}
 		&__confirm-selection-count {
-			font-family: 'Geist Mono';
+			font-family: var(--code-base-400-font-family);
 		}
 		&__close-button {
 			background: var(--l1-background);
@@ -175,7 +175,7 @@
 				color: var(--l1-foreground);
 
 				.retry-time {
-					font-family: 'Geist Mono';
+					font-family: var(--code-base-600-font-family);
 					font-size: 14px;
 					font-weight: 600;
 					line-height: 22px;

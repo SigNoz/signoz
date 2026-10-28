@@ -92,7 +92,7 @@
 		border-radius: 16px;
 		font-size: 12px;
 		border: 1px solid var(--bg-sienna-500);
-		font-family: 'Geist Mono';
+		font-family: var(--code-small-400-font-family);
 	}
 
 	&__remove-button {

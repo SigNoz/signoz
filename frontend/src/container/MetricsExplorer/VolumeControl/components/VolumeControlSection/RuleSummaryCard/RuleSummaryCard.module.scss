@@ -40,7 +40,7 @@
 }
 
 .labelChip {
-	font-family: 'Geist Mono', monospace;
+	font-family: var(--code-base-400-font-family);
 	padding: 2px 8px;
 	border-radius: 4px;
 	background: var(--l3-background);

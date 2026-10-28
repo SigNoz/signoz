@@ -499,13 +499,13 @@
 		.labels-key {
 			color: var(--l2-foreground);
 			background-color: var(--l3-background);
-			font-family: 'Geist Mono';
+			font-family: var(--code-base-400-font-family);
 		}
 
 		.labels-value {
 			background-color: var(--l3-background);
 			opacity: 80%;
-			font-family: 'Geist Mono';
+			font-family: var(--code-base-400-font-family);
 
 			.field-renderer-container {
 				.label {

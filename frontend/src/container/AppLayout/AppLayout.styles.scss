@@ -83,7 +83,7 @@
 	border-radius: 2px;
 	background: color-mix(in srgb, var(--primary-background) 10%, transparent);
 	padding-right: 4px;
-	font-family: 'Geist Mono';
+	font-family: var(--code-base-400-font-family);
 	color: var(--primary-foreground);
 }
 

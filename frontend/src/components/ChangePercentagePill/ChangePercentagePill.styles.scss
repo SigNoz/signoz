@@ -11,7 +11,7 @@
 		justify-content: center;
 	}
 	&__label {
-		font-family: 'Geist Mono';
+		font-family: var(--code-base-400-font-family);
 	}
 	&--positive {
 		.change-percentage-pill {

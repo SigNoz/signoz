@@ -34,7 +34,7 @@
 
 .viewValue {
 	overflow: hidden;
-	font-family: 'Geist Mono', monospace;
+	font-family: var(--code-base-400-font-family);
 	font-size: 13px;
 	color: var(--l1-foreground);
 	white-space: nowrap;
@@ -105,7 +105,7 @@
 .formatPreview {
 	padding: 2px 8px;
 	border-radius: 3px;
-	font-family: 'Geist Mono', monospace;
+	font-family: var(--code-base-600-font-family);
 	font-weight: 600;
 	color: var(--bg-vanilla-100);
 }

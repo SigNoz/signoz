@@ -47,7 +47,7 @@
 
 	.title {
 		// Typography's only monospace affordance is `code`, which also draws a chip.
-		font-family: var(--font-mono);
+		font-family: var(--code-base-500-font-family);
 	}
 
 	.radio-button {
@@ -94,7 +94,7 @@
 
 			.domain-details-metadata-value {
 				// Typography's only monospace affordance is `code`, which also draws a chip.
-				font-family: var(--font-mono);
+				font-family: var(--code-base-500-font-family);
 
 				width: 100%;
 				white-space: nowrap;

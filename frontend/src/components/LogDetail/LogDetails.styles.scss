@@ -85,7 +85,7 @@
 
 		.log-body {
 			font-family: 'SF Mono';
-			font-family: 'Geist Mono';
+			font-family: var(--code-base-400-font-family);
 
 			font-size: var(--code-base-400-font-size);
 			line-height: 18px;

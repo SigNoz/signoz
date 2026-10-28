@@ -217,7 +217,7 @@
 	}
 
 	&__value {
-		font-family: 'Geist Mono';
+		font-family: var(--code-base-400-font-family);
 		font-size: 24px;
 		color: var(--l1-foreground);
 		line-height: 32px;

@@ -67,7 +67,7 @@
 		}
 		.total-contribution {
 			color: var(--primary-foreground);
-			font-family: 'Geist Mono';
+			font-family: var(--code-small-500-font-family);
 			font-size: 12px;
 			font-weight: 500;
 			letter-spacing: -0.06px;

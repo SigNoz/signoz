@@ -82,7 +82,7 @@
 	gap: var(--spacing-2);
 
 	color: var(--l3-foreground);
-	font-family: 'Geist Mono';
+	font-family: var(--code-small-500-font-family);
 	font-size: 12px;
 	font-weight: var(--uppercase-small-500-font-weight);
 	line-height: 18px;
@@ -96,7 +96,7 @@
  * the query builder's value type itself.
  */
 .toggleLabel {
-	font-family: 'Geist Mono';
+	font-family: var(--code-base-400-font-family);
 	font-size: 13px;
 	font-weight: var(--code-base-400-font-weight);
 	letter-spacing: -0.07px;
@@ -104,7 +104,7 @@
 
 /** Surface and metrics come from the `--input-*` tokens; the family and tracking are set here. */
 .numberField {
-	--input-font-family: 'Geist Mono';
+	--input-font-family: var(--code-base-400-font-family);
 	--input-letter-spacing: -0.07px;
 }
 
@@ -113,7 +113,7 @@
 .bound {
 	padding: var(--spacing-1) 0;
 
-	font-family: 'Geist Mono';
+	font-family: var(--code-base-400-font-family);
 	font-size: 13px;
 	line-height: 20px;
 	letter-spacing: -0.07px;
@@ -126,7 +126,7 @@
 }
 
 .muted {
-	font-family: 'Geist Mono';
+	font-family: var(--code-base-400-font-family);
 	font-size: 13px;
 	line-height: 20px;
 	color: var(--l3-foreground);

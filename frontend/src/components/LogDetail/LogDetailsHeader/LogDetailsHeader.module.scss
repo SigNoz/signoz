@@ -13,7 +13,7 @@
 }
 
 .timestamp {
-	font-family: 'Geist Mono', monospace;
+	font-family: var(--code-base-400-font-family);
 	font-size: var(--code-base-400-font-size);
 	font-weight: var(--code-base-400-font-weight);
 	color: var(--l1-foreground);

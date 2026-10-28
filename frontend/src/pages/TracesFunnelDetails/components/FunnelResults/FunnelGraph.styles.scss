@@ -93,7 +93,7 @@
 
 			&__value {
 				color: var(--l1-foreground);
-				font-family: 'Geist Mono';
+				font-family: var(--code-small-400-font-family);
 				font-size: 12px;
 			}
 		}

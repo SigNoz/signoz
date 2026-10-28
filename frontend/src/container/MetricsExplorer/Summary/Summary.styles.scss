@@ -118,7 +118,7 @@
 
 			.metric-name-column-value {
 				color: var(--l1-foreground);
-				font-family: 'Geist Mono';
+				font-family: var(--code-base-600-font-family);
 				font-weight: 600;
 				letter-spacing: -0.07px;
 			}

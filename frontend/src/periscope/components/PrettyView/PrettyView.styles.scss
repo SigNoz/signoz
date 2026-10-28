@@ -28,7 +28,7 @@
 	}
 
 	// Font spec: SF Mono, 12px, 400, 18px line-height, -0.5% letter-spacing
-	font-family: 'SF Mono', 'Geist Mono', 'Fira Code', monospace;
+	font-family: var(--code-small-400-font-family);
 	font-size: var(--data-viewer-font-size, 12px);
 	line-height: 18px;
 	letter-spacing: -0.06px;

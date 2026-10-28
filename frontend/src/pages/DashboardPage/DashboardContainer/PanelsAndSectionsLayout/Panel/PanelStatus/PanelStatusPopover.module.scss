@@ -127,7 +127,7 @@
 	position: relative;
 	padding-left: 14px;
 	color: var(--l2-foreground);
-	font-family: 'Geist Mono', monospace;
+	font-family: var(--code-small-400-font-family);
 	font-size: 12px;
 	word-break: break-word;
 }

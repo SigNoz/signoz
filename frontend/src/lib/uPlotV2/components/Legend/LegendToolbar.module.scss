@@ -14,7 +14,7 @@
 .status {
 	// Wraps rather than losing the count at its end.
 	min-width: 0;
-	font-family: var(--font-mono);
+	font-family: var(--code-small-400-font-family);
 	font-size: var(--code-small-400-font-size);
 	color: var(--l3-foreground);
 }

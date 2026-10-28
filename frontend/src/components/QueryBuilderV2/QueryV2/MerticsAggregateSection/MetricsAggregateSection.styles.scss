@@ -60,7 +60,7 @@
 
 			.metrics-aggregation-section-content-item-label {
 				color: var(--l2-foreground);
-				font-family: 'Geist Mono';
+				font-family: var(--code-base-400-font-family);
 				line-height: 20px; /* 142.857% */
 				letter-spacing: -0.07px;
 
@@ -100,7 +100,7 @@
 						var(--l2-background)
 					) !important;
 					color: var(--query-builder-v2-color, var(--l2-foreground));
-					font-family: 'Geist Mono';
+					font-family: var(--code-base-400-font-family);
 					font-size: 13px;
 					line-height: 20px;
 					letter-spacing: -0.07px;
@@ -149,7 +149,7 @@
 	background: var(--l1-background);
 
 	color: var(--l1-foreground);
-	font-family: 'Geist Mono';
+	font-family: var(--code-base-400-font-family);
 	font-size: 13px;
 	font-style: normal;
 	font-weight: 400;

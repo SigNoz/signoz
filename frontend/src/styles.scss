@@ -747,7 +747,7 @@ notifications	-  2050
 	padding: 8px 12px;
 	border-radius: 6px;
 	font-size: 12px;
-	font-family: 'Geist Mono';
+	font-family: var(--code-small-500-font-family);
 	font-weight: 500;
 	z-index: 10000;
 	pointer-events: none;
