@@ -14,7 +14,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata/resolvercore"
-	"github.com/SigNoz/signoz/pkg/telemetryschema/audittelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/metertelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
@@ -32,8 +31,6 @@ import (
 var (
 	ErrFailedToGetTracesKeys    = errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get traces keys")
 	ErrFailedToGetLogsKeys      = errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get logs keys")
-	ErrFailedToGetAuditKeys     = errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get audit keys")
-	ErrFailedToGetTblStatement  = errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get tbl statement")
 	ErrFailedToGetMetricsKeys   = errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get metrics keys")
 	ErrFailedToGetMeterKeys     = errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get meter keys")
 	ErrFailedToGetMeterValues   = errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get meter values")
@@ -56,11 +53,6 @@ type telemetryMetaStore struct {
 	logAttributeKeysTblName        string
 	logResourceKeysTblName         string
 	logsV2TblName                  string
-	auditDBName                    string
-	auditLogsTblName               string
-	auditFieldsTblName             string
-	auditAttributeKeysTblName      string
-	auditResourceKeysTblName       string
 	relatedMetadataDBName          string
 	relatedMetadataTblName         string
 	columnEvolutionMetadataTblName string
@@ -68,12 +60,17 @@ type telemetryMetaStore struct {
 	storage            qbtypes.Storage
 	fl                 flagger.Flagger
 	jsonColumnMetadata map[telemetrytypes.Signal]map[telemetrytypes.FieldContext]telemetrytypes.JSONColumnMetadata
+
+	// resolvers answer the sources this build knows about; a source with no
+	// resolver falls back to its signal's own lookup.
+	resolvers map[telemetrytypes.Source]telemetrytypes.FieldKeyResolver
 }
 
 func NewTelemetryMetaStore(
 	settings factory.ProviderSettings,
 	telemetrystore telemetrystore.TelemetryStore,
 	fl flagger.Flagger,
+	resolvers map[telemetrytypes.Source]telemetrytypes.FieldKeyResolver,
 ) telemetrytypes.MetadataStore {
 	metadataSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrymetadata")
 
@@ -93,11 +90,6 @@ func NewTelemetryMetaStore(
 		logsFieldsTblName:              logstelemetryschema.TagAttributesV2TableName,
 		logAttributeKeysTblName:        logstelemetryschema.LogAttributeKeysTblName,
 		logResourceKeysTblName:         logstelemetryschema.LogResourceKeysTblName,
-		auditDBName:                    audittelemetryschema.DBName,
-		auditLogsTblName:               audittelemetryschema.AuditLogsTableName,
-		auditFieldsTblName:             audittelemetryschema.TagAttributesTableName,
-		auditAttributeKeysTblName:      audittelemetryschema.LogAttributeKeysTblName,
-		auditResourceKeysTblName:       audittelemetryschema.LogResourceKeysTblName,
 		relatedMetadataDBName:          DBName,
 		relatedMetadataTblName:         AttributesMetadataTableName,
 		columnEvolutionMetadataTblName: ColumnEvolutionMetadataTableName,
@@ -109,11 +101,22 @@ func NewTelemetryMetaStore(
 				},
 			},
 		},
-		fl:      fl,
-		storage: NewStorage(),
+		fl:        fl,
+		storage:   NewStorage(),
+		resolvers: resolvers,
 	}
 
 	return t
+}
+
+// resolverFor returns the resolver registered for a source. SourceUnspecified
+// always belongs to the signal's own lookup.
+func (t *telemetryMetaStore) resolverFor(source telemetrytypes.Source) (telemetrytypes.FieldKeyResolver, bool) {
+	if source == telemetrytypes.SourceUnspecified {
+		return nil, false
+	}
+	resolver, ok := t.resolvers[source]
+	return resolver, ok
 }
 
 // GetMaterializedKeys sets each key's Indexes to the skip indexes built on its column alone.
@@ -184,21 +187,6 @@ func (t *telemetryMetaStore) listColumnSkipIndexes(ctx context.Context, signal t
 	}
 
 	return indexes, rows.Err()
-}
-
-func getPriorityForContext(ctx telemetrytypes.FieldContext) int {
-	switch ctx {
-	case telemetrytypes.FieldContextLog:
-		return 1
-	case telemetrytypes.FieldContextResource:
-		return 2
-	case telemetrytypes.FieldContextScope:
-		return 3
-	case telemetrytypes.FieldContextAttribute:
-		return 4
-	default:
-		return 5
-	}
 }
 
 // applyBackwardCompatibleKeys adds backward compatible key aliases to the map.
@@ -300,8 +288,8 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, orgID valuer.UUID, fie
 	case telemetrytypes.SignalTraces:
 		keys, complete, err = t.getTracesKeys(ctx, selectors)
 	case telemetrytypes.SignalLogs:
-		if fieldKeySelector.Source == telemetrytypes.SourceAudit {
-			keys, complete, err = t.getAuditKeys(ctx, selectors)
+		if resolver, ok := t.resolverFor(fieldKeySelector.Source); ok {
+			keys, complete, err = resolver.GetKeys(ctx, selectors)
 		} else {
 			keys, complete, err = t.getLogsKeys(ctx, orgID, selectors)
 		}
@@ -353,16 +341,17 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, orgID valuer.UUID, fie
 func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID, fieldKeySelectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
 
 	logsSelectors := []*telemetrytypes.FieldKeySelector{}
-	auditSelectors := []*telemetrytypes.FieldKeySelector{}
 	tracesSelectors := []*telemetrytypes.FieldKeySelector{}
 	metricsSelectors := []*telemetrytypes.FieldKeySelector{}
 	meterSourceMetricsSelectors := []*telemetrytypes.FieldKeySelector{}
+	resolverSelectors := map[telemetrytypes.Source][]*telemetrytypes.FieldKeySelector{}
 
 	for _, fieldKeySelector := range fieldKeySelectors {
 		switch fieldKeySelector.Signal {
 		case telemetrytypes.SignalLogs:
-			if fieldKeySelector.Source == telemetrytypes.SourceAudit {
-				auditSelectors = append(auditSelectors, fieldKeySelector)
+			if _, ok := t.resolverFor(fieldKeySelector.Source); ok {
+				source := fieldKeySelector.Source
+				resolverSelectors[source] = append(resolverSelectors[source], fieldKeySelector)
 			} else {
 				logsSelectors = append(logsSelectors, fieldKeySelector)
 			}
@@ -385,9 +374,15 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID
 	if err != nil {
 		return nil, false, err
 	}
-	auditKeys, auditComplete, err := t.getAuditKeys(ctx, auditSelectors)
-	if err != nil {
-		return nil, false, err
+	resolverKeys := []*telemetrytypes.TelemetryFieldKey{}
+	resolverComplete := true
+	for source, selectors := range resolverSelectors {
+		keys, complete, err := t.resolvers[source].GetKeys(ctx, selectors)
+		if err != nil {
+			return nil, false, err
+		}
+		resolverKeys = append(resolverKeys, keys...)
+		resolverComplete = resolverComplete && complete
 	}
 	tracesKeys, tracesComplete, err := t.getTracesKeys(ctx, tracesSelectors)
 	if err != nil {
@@ -403,13 +398,13 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID
 		return nil, false, err
 	}
 	// Complete only if all queries are complete
-	complete := logsComplete && auditComplete && tracesComplete && metricsComplete
+	complete := logsComplete && resolverComplete && tracesComplete && metricsComplete
 
 	mapOfKeys := make(map[string][]*telemetrytypes.TelemetryFieldKey)
 	for _, key := range logsKeys {
 		mapOfKeys[key.Name] = append(mapOfKeys[key.Name], key)
 	}
-	for _, key := range auditKeys {
+	for _, key := range resolverKeys {
 		mapOfKeys[key.Name] = append(mapOfKeys[key.Name], key)
 	}
 	for _, key := range tracesKeys {
@@ -682,8 +677,8 @@ func (t *telemetryMetaStore) GetAllValues(ctx context.Context, orgID valuer.UUID
 	case telemetrytypes.SignalTraces:
 		values, complete, err = t.getSpanFieldValues(ctx, orgID, fieldValueSelector)
 	case telemetrytypes.SignalLogs:
-		if fieldValueSelector.Source == telemetrytypes.SourceAudit {
-			values, complete, err = t.getAuditFieldValues(ctx, fieldValueSelector)
+		if resolver, ok := t.resolverFor(fieldValueSelector.Source); ok {
+			values, complete, err = resolver.GetAllValues(ctx, fieldValueSelector)
 		} else {
 			values, complete, err = t.getLogFieldValues(ctx, orgID, fieldValueSelector)
 		}

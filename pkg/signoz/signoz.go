@@ -58,6 +58,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/subscription"
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
+	"github.com/SigNoz/signoz/pkg/telemetrymetadata/audittelemetrymetadata"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	pkgtokenizer "github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -125,7 +126,9 @@ func newQueryStack(
 	querier.BucketCache,
 	error,
 ) {
-	metadataStore := telemetrymetadata.NewTelemetryMetaStore(settings, telemetryStore, fl)
+	metadataStore := telemetrymetadata.NewTelemetryMetaStore(settings, telemetryStore, fl, map[telemetrytypes.Source]telemetrytypes.FieldKeyResolver{
+		telemetrytypes.SourceAudit: audittelemetrymetadata.New(telemetryStore),
+	})
 
 	cfg := config.Querier.Config
 	traceStmtBuilder, err := tracesstatementbuilder.NewFactory(telemetryStore, metadataStore, fl).New(ctx, settings, cfg)

@@ -32,7 +32,7 @@ func (t *telemetryMetaStore) logsTblStatementToFieldKeys(ctx context.Context) ([
 	statements := []telemetrytypes.ShowCreateTableStatement{}
 	err := t.telemetrystore.ClickhouseDB().Select(ctx, &statements, query)
 	if err != nil {
-		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTblStatement.Error())
+		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, resolvercore.ErrFailedToGetTblStatement.Error())
 	}
 
 	materialisedKeys, err := parser.ExtractFieldKeysFromTblStatement(statements[0].Statement)
@@ -137,7 +137,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, orgID valuer.UUID,
 			"name AS tag_key",
 			fmt.Sprintf("'%s' AS tag_type", fieldContext.TagType()),
 			"lower(datatype) AS tag_data_type", // logs had historical mixed-case data
-			fmt.Sprintf("%d AS priority", getPriorityForContext(fieldContext)),
+			fmt.Sprintf("%d AS priority", resolvercore.PriorityForContext(fieldContext)),
 		).From(tblName)
 
 		conds := []string{}
@@ -185,7 +185,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, orgID valuer.UUID,
 			"field_name AS tag_key",
 			fmt.Sprintf("'%s' AS tag_type", telemetrytypes.FieldContextBody.TagType()),
 			"field_data_type AS tag_data_type",
-			fmt.Sprintf("%d AS priority", getPriorityForContext(telemetrytypes.FieldContextBody)),
+			fmt.Sprintf("%d AS priority", resolvercore.PriorityForContext(telemetrytypes.FieldContextBody)),
 		).From(fmt.Sprintf("%s.%s", DBName, FieldKeysTable))
 
 		sb.Where(sb.E("signal", telemetrytypes.SignalLogs.StringValue()))

@@ -1,4 +1,4 @@
-package telemetrymetadata
+package audittelemetrymetadata
 
 import (
 	"context"
@@ -13,28 +13,44 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata/parser"
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata/resolvercore"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/audittelemetryschema"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-func (t *telemetryMetaStore) auditTblStatementToFieldKeys(ctx context.Context) ([]*telemetrytypes.TelemetryFieldKey, error) {
+var errFailedToGetAuditKeys = errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get audit keys")
+
+// Resolver answers key and value lookups for the audit log tables. It is
+// registered against telemetrytypes.SourceAudit; without it the metadata store
+// carries no audit knowledge.
+type Resolver struct {
+	store telemetrystore.TelemetryStore
+}
+
+var _ telemetrytypes.FieldKeyResolver = (*Resolver)(nil)
+
+func New(store telemetrystore.TelemetryStore) *Resolver {
+	return &Resolver{store: store}
+}
+
+func (r *Resolver) tblStatementToFieldKeys(ctx context.Context) ([]*telemetrytypes.TelemetryFieldKey, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
 		instrumentationtypes.CodeNamespace:    "metadata",
 		instrumentationtypes.CodeFunctionName: "auditTblStatementToFieldKeys",
 	})
 
-	query := fmt.Sprintf("SHOW CREATE TABLE %s.%s", t.auditDBName, t.auditLogsTblName)
+	query := fmt.Sprintf("SHOW CREATE TABLE %s.%s", audittelemetryschema.DBName, audittelemetryschema.AuditLogsTableName)
 	statements := []telemetrytypes.ShowCreateTableStatement{}
-	err := t.telemetrystore.ClickhouseDB().Select(ctx, &statements, query)
+	err := r.store.ClickhouseDB().Select(ctx, &statements, query)
 	if err != nil {
-		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTblStatement.Error())
+		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, resolvercore.ErrFailedToGetTblStatement.Error())
 	}
 
 	materialisedKeys, err := parser.ExtractFieldKeysFromTblStatement(statements[0].Statement)
 	if err != nil {
-		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetAuditKeys.Error())
+		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, errFailedToGetAuditKeys.Error())
 	}
 
 	for idx := range materialisedKeys {
@@ -44,7 +60,7 @@ func (t *telemetryMetaStore) auditTblStatementToFieldKeys(ctx context.Context) (
 	return materialisedKeys, nil
 }
 
-func (t *telemetryMetaStore) getAuditKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
+func (r *Resolver) GetKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
 		instrumentationtypes.CodeNamespace:    "metadata",
@@ -55,7 +71,7 @@ func (t *telemetryMetaStore) getAuditKeys(ctx context.Context, fieldKeySelectors
 		return nil, true, nil
 	}
 
-	matKeys, err := t.auditTblStatementToFieldKeys(ctx)
+	matKeys, err := r.tblStatementToFieldKeys(ctx)
 	if err != nil {
 		return nil, false, err
 	}
@@ -87,8 +103,8 @@ func (t *telemetryMetaStore) getAuditKeys(ctx context.Context, fieldKeySelectors
 		shouldQuery  bool
 		tblName      string
 	}{
-		{telemetrytypes.FieldContextAttribute, queryAttributeTable, t.auditDBName + "." + t.auditAttributeKeysTblName},
-		{telemetrytypes.FieldContextResource, queryResourceTable, t.auditDBName + "." + t.auditResourceKeysTblName},
+		{telemetrytypes.FieldContextAttribute, queryAttributeTable, audittelemetryschema.DBName + "." + audittelemetryschema.LogAttributeKeysTblName},
+		{telemetrytypes.FieldContextResource, queryResourceTable, audittelemetryschema.DBName + "." + audittelemetryschema.LogResourceKeysTblName},
 	}
 
 	for _, table := range tablesToQuery {
@@ -103,7 +119,7 @@ func (t *telemetryMetaStore) getAuditKeys(ctx context.Context, fieldKeySelectors
 			"name AS tag_key",
 			fmt.Sprintf("'%s' AS tag_type", fieldContext.TagType()),
 			"lower(datatype) AS tag_data_type",
-			fmt.Sprintf("%d AS priority", getPriorityForContext(fieldContext)),
+			fmt.Sprintf("%d AS priority", resolvercore.PriorityForContext(fieldContext)),
 		).From(tblName)
 
 		var limit int
@@ -169,9 +185,9 @@ func (t *telemetryMetaStore) getAuditKeys(ctx context.Context, fieldKeySelectors
 		LIMIT %d
 	`, strings.Join(queries, " UNION ALL "), limit+1)
 
-		rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, mainQuery, allArgs...)
+		rows, err := r.store.ClickhouseDB().Query(ctx, mainQuery, allArgs...)
 		if err != nil {
-			return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetAuditKeys.Error())
+			return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, errFailedToGetAuditKeys.Error())
 		}
 		defer rows.Close()
 
@@ -187,7 +203,7 @@ func (t *telemetryMetaStore) getAuditKeys(ctx context.Context, fieldKeySelectors
 			var priority uint8
 			err = rows.Scan(&name, &fieldContext, &fieldDataType, &priority)
 			if err != nil {
-				return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetAuditKeys.Error())
+				return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, errFailedToGetAuditKeys.Error())
 			}
 			key, ok := mapOfKeys[name+";"+fieldContext.StringValue()+";"+fieldDataType.StringValue()]
 
@@ -205,7 +221,7 @@ func (t *telemetryMetaStore) getAuditKeys(ctx context.Context, fieldKeySelectors
 		}
 
 		if rows.Err() != nil {
-			return nil, false, errors.Wrap(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetAuditKeys.Error())
+			return nil, false, errors.Wrap(rows.Err(), errors.TypeInternal, errors.CodeInternal, errFailedToGetAuditKeys.Error())
 		}
 	}
 
@@ -225,7 +241,7 @@ func (t *telemetryMetaStore) getAuditKeys(ctx context.Context, fieldKeySelectors
 	return keys, complete, nil
 }
 
-func (t *telemetryMetaStore) getAuditFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
+func (r *Resolver) GetAllValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
 		instrumentationtypes.CodeNamespace:    "metadata",
@@ -237,7 +253,7 @@ func (t *telemetryMetaStore) getAuditFieldValues(ctx context.Context, fieldValue
 		limit = 50
 	}
 
-	sb := sqlbuilder.Select("DISTINCT string_value, number_value").From(t.auditDBName + "." + t.auditFieldsTblName)
+	sb := sqlbuilder.Select("DISTINCT string_value, number_value").From(audittelemetryschema.DBName + "." + audittelemetryschema.TagAttributesTableName)
 
 	if fieldValueSelector.Name != "" {
 		sb.Where(sb.E("tag_key", fieldValueSelector.Name))
@@ -271,9 +287,9 @@ func (t *telemetryMetaStore) getAuditFieldValues(ctx context.Context, fieldValue
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
+	rows, err := r.store.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetAuditKeys.Error())
+		return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, errFailedToGetAuditKeys.Error())
 	}
 	defer rows.Close()
 
@@ -289,7 +305,7 @@ func (t *telemetryMetaStore) getAuditFieldValues(ctx context.Context, fieldValue
 		var numberValue float64
 		err = rows.Scan(&stringValue, &numberValue)
 		if err != nil {
-			return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetAuditKeys.Error())
+			return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, errFailedToGetAuditKeys.Error())
 		}
 		if stringValue != "" && !seen[stringValue] {
 			if totalCount >= limit {

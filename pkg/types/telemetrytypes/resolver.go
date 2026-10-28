@@ -7,23 +7,14 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// FieldKeyResolver resolves keys and values for a single signal and source.
-// Implementations are scoped to one signal and never dispatch on it; a
-// MetadataStore owns the routing and delegates here.
+// FieldKeyResolver resolves keys and values for one source within a signal.
+// Implementations never dispatch; a MetadataStore owns the routing, registers
+// them by Source and merges what they return. Keys come back flat rather than
+// grouped by name because the store does the grouping across sources.
 type FieldKeyResolver interface {
-	// GetKeys returns a map of field keys types.TelemetryFieldKey by name, there can be multiple keys with the same name
-	// if they have different types or data types.
-	GetKeys(ctx context.Context, orgID valuer.UUID, fieldKeySelector *FieldKeySelector) (map[string][]*TelemetryFieldKey, bool, error)
+	GetKeys(ctx context.Context, fieldKeySelectors []*FieldKeySelector) ([]*TelemetryFieldKey, bool, error)
 
-	// GetKey returns a list of keys with the given name.
-	GetKey(ctx context.Context, orgID valuer.UUID, fieldKeySelector *FieldKeySelector) ([]*TelemetryFieldKey, error)
-
-	// GetRelatedValues returns a list of related values for the given key name
-	// and the existing selection of keys.
-	GetRelatedValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *FieldValueSelector) ([]string, bool, error)
-
-	// GetAllValues returns a list of all values.
-	GetAllValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *FieldValueSelector) (*TelemetryFieldValues, bool, error)
+	GetAllValues(ctx context.Context, fieldValueSelector *FieldValueSelector) (*TelemetryFieldValues, bool, error)
 }
 
 // MetricMetadata covers the lookups that only apply to the metrics signal.
