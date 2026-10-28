@@ -39,13 +39,16 @@ describe('findGroupByMismatch', () => {
 		]);
 	});
 
-	it('ignores disabled queries', () => {
+	it('counts disabled queries', () => {
 		expect(
 			findGroupByMismatch([
 				query('A', ['service.name']),
 				query('B', ['host.name'], true),
 			]),
-		).toBeNull();
+		).toStrictEqual([
+			{ queryName: 'A', labels: ['service.name'] },
+			{ queryName: 'B', labels: ['host.name'] },
+		]);
 	});
 });
 
