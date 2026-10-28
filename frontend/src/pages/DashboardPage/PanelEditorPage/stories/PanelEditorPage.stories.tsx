@@ -1,11 +1,13 @@
 import type { ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Route } from 'react-router-dom';
+import * as monaco from 'monaco-editor';
 import ROUTES from 'constants/routes';
-import { screen, userEvent, within } from 'storybook/test';
+import { screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
+import { waitForMonacoText } from '@/storybook/visual/waitForMonacoText';
 
 import { panelEditorMocks, savePanel } from './PanelEditorPage.stories.mocks';
 
@@ -248,4 +250,44 @@ export const PanelSavedToast: Story = {
 export const TextPanelSavedToast: Story = {
 	args: { panel: 'new', newPanelKind: 'text' },
 	play: PanelSavedToast.play,
+};
+
+const CLICKHOUSE_QUERY =
+	'SELECT toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS ts, serviceName, count() AS calls FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp > now() - INTERVAL 1 HOUR GROUP BY ts, serviceName ORDER BY ts';
+
+/**
+ * The ClickHouse Query tab with a query written in its SQL editor, over the
+ * panel the editor opened on.
+ */
+export const ClickHouseQuery: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const tab = await within(canvasElement).findByRole(
+			'tab',
+			{ name: /ClickHouse Query/ },
+			{ timeout: 10000 },
+		);
+
+		await userEvent.click(tab);
+
+		// Typing into Monaco's hidden textarea never reaches its model in this runner.
+		const model = await waitFor(
+			() => {
+				const found = monaco.editor
+					.getModels()
+					.find((candidate) => candidate.getLanguageId() === 'sql');
+
+				if (!found) {
+					throw new Error('The SQL editor has not mounted');
+				}
+
+				return found;
+			},
+			{ timeout: 15000 },
+		);
+
+		model.setValue(CLICKHOUSE_QUERY);
+		await waitForMonacoText(canvasElement);
+		await userEvent.unhover(tab);
+		(document.activeElement as HTMLElement | null)?.blur();
+	},
 };

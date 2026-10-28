@@ -3,6 +3,7 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
+import { waitForMonacoText } from '@/storybook/visual/waitForMonacoText';
 
 import LLMObservabilityPage from '../../index';
 import {
@@ -99,5 +100,23 @@ export const ChangesSavedToast: Story = {
 				expect(screen.getByText(/attribute mapping changes saved/i)).toBeVisible(),
 			);
 		}
+	},
+};
+
+/**
+ * The Test tab: the JSON editor pre-filled with the sample span, before any run.
+ */
+export const TestTab: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const tab = await within(canvasElement).findByRole(
+			'tab',
+			{ name: 'Test' },
+			{ timeout: 10000 },
+		);
+
+		await userEvent.click(tab);
+		await waitForMonacoText(canvasElement);
+		await userEvent.unhover(tab);
+		(document.activeElement as HTMLElement | null)?.blur();
 	},
 };
