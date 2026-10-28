@@ -21,7 +21,9 @@ function SavedViewsListRow({
 			className={cx(styles.row, { [styles.isActive]: isActive })}
 			data-testid="saved-views-row"
 			data-view-id={view.id}
-			onMouseEnter={(event): void => hover.onRowEnter(view, event.currentTarget)}
+			onMouseEnter={(event): void =>
+				hover.onRowEnter(view.id, event.currentTarget)
+			}
 			onMouseLeave={hover.onRowLeave}
 		>
 			<SavedViewsRowLink view={view} isActive={isActive} onSelect={onSelect} />

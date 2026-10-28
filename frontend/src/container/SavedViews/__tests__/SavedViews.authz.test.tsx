@@ -23,6 +23,7 @@ import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { SAVED_VIEW_HOVER_CARD_OPEN_DELAY_MS } from '../constants';
 import SavedViewsHeader from '../SavedViewsHeader';
 import SavedViewsPanel from '../SavedViewsPanel';
 import { API, mockSavedViewsApi } from './savedViewsApiMock';
@@ -38,6 +39,7 @@ import {
 } from './savedViewsTestUtils';
 
 const PATH = ROUTES.TRACES_EXPLORER;
+const HOVER_CARD_TIMEOUT = { timeout: SAVED_VIEW_HOVER_CARD_OPEN_DELAY_MS * 3 };
 
 const errors = makeView({ id: 'view-1', displayName: 'Errors' });
 const slow = makeView({ id: 'view-2', displayName: 'Slow spans' });
@@ -184,6 +186,33 @@ describe('SavedViews - AuthZ', () => {
 		await expect(
 			settledRow('saved-views-row-menu-item-copyLink'),
 		).resolves.not.toHaveAttribute('data-disabled');
+	});
+
+	it('shows the denied callout in the hover card of a view it cannot read, without fetching it', async () => {
+		let fetches = 0;
+		mockSavedViewsApi([errors]);
+		server.use(
+			setupAuthzDeny(buildSavedViewReadPermission(errors.id)),
+			rest.get(`${API}/:id`, (_req, res, ctx) => {
+				fetches += 1;
+				return res(ctx.json({ status: 'success', data: errors }));
+			}),
+		);
+		renderPanel();
+
+		await screen.findAllByTestId('saved-views-row');
+		fireEvent.mouseEnter(rowNamed('Errors'));
+
+		const card = await screen.findByTestId(
+			'saved-view-hover-card',
+			undefined,
+			HOVER_CARD_TIMEOUT,
+		);
+		await expect(
+			within(card).findByText(/not authorized/i),
+		).resolves.toBeInTheDocument();
+		expect(within(card).queryByTestId('saved-view-hover-card-query')).toBeNull();
+		expect(fetches).toBe(0);
 	});
 
 	it('disables creating without create', async () => {

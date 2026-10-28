@@ -186,7 +186,7 @@ export interface UseSavedViewRowActionsResult {
 }
 
 export interface SavedViewHoverCardTarget {
-	view: SavedviewtypesSavedViewDTO;
+	viewId: string;
 	anchorTop: number;
 	anchorHeight: number;
 }
@@ -207,8 +207,12 @@ export interface SavedViewHoverCardProps {
 	onClose: () => void;
 }
 
+export interface SavedViewHoverCardDetailsProps {
+	viewId: string;
+}
+
 export interface SavedViewsListRowHoverProps {
-	onRowEnter: (view: SavedviewtypesSavedViewDTO, row: HTMLElement) => void;
+	onRowEnter: (viewId: string, row: HTMLElement) => void;
 	onRowLeave: () => void;
 	onMenuOpen: () => void;
 }

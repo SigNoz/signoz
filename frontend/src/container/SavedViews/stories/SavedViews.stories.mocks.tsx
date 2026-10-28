@@ -74,7 +74,7 @@ const controls = {
 	unreadableView: toggleControl('Unreadable view', {
 		group: VIEW,
 		description:
-			'Denies `read` on the first view created by others alone, on top of the Access controls: its row still opens it, and the header then shows No view access, as with Open view on `created-by-others`.',
+			'Denies `read` on the first view created by others alone, on top of the Access controls: its row still opens it, and the header then shows No view access, as with Open view on `created-by-others`. Its hover card shows the permission callout in place of the query.',
 		value: false,
 	}),
 	createdByMe: countControl('Created by me', {
@@ -317,9 +317,10 @@ export const rowName =
 	(): HTMLElement =>
 		within(row).getByTestId('saved-views-row-name');
 
-const hoverRow = async (row: HTMLElement): Promise<void> => {
+const hoverRow = async (row: HTMLElement): Promise<HTMLElement> => {
 	await userEvent.hover(row);
-	await screen.findByTestId('saved-view-hover-card', undefined, UNTIL_LOADED);
+
+	return screen.findByTestId('saved-view-hover-card', undefined, UNTIL_LOADED);
 };
 
 const searchViews = async (
@@ -375,8 +376,13 @@ export const hoverFirstRow = async ({
 	canvasElement,
 }: PlayContext): Promise<void> => {
 	const [row] = await findRows(canvasElement);
+	const card = await hoverRow(row);
 
-	await hoverRow(row);
+	await within(card).findByTestId(
+		'saved-view-hover-card-query',
+		undefined,
+		UNTIL_LOADED,
+	);
 };
 
 export const searchWithNoResults = async ({
@@ -419,15 +425,36 @@ export const openDeleteDialog = async ({
 	await screen.findByTestId('delete-saved-view-confirm');
 };
 
-export const openUnreadableView = async ({
+const findUnreadableRow = async ({
 	canvasElement,
 	args,
-}: PlayContext): Promise<void> => {
+}: PlayContext): Promise<HTMLElement> => {
 	const rows = await findRows(canvasElement);
 	const deniedId = unreadableViewId(args.source);
-	const denied = rows.find(
+
+	return rows.find(
 		(row) => row.getAttribute('data-view-id') === deniedId,
 	) as HTMLElement;
+};
+
+export const hoverUnreadableRow = async (
+	context: PlayContext,
+): Promise<void> => {
+	const card = await hoverRow(await findUnreadableRow(context));
+
+	await expect(
+		await within(card).findByText(/not authorized/i, undefined, UNTIL_LOADED),
+	).toBeVisible();
+	await expect(
+		within(card).queryByTestId('saved-view-hover-card-query'),
+	).toBeNull();
+};
+
+export const openUnreadableView = async (
+	context: PlayContext,
+): Promise<void> => {
+	const { canvasElement } = context;
+	const denied = await findUnreadableRow(context);
 
 	await userEvent.click(rowName(denied)());
 	await expect(

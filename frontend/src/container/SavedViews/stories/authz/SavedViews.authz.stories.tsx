@@ -9,6 +9,7 @@ import {
 	expectDisabled,
 	expectPending,
 	findRows,
+	hoverUnreadableRow,
 	openRowMenu,
 	openSaveChangesMenu,
 	openUnreadableView,
@@ -105,6 +106,12 @@ export const NoCreateSaveMenu: Story = {
 export const NoRead: Story = {
 	args: { unreadableView: true },
 	play: openUnreadableView,
+};
+
+/** The hover card of the unreadable view: the permission callout in place of its query. */
+export const NoReadHoverCard: Story = {
+	args: { unreadableView: true },
+	play: hoverUnreadableRow,
 };
 
 /** The unreadable view open from its link: the header names it No view access. */

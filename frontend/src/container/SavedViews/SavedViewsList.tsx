@@ -65,11 +65,11 @@ function SavedViewsList({
 
 	const rowHover = useMemo<SavedViewsListRowHoverProps>(
 		() => ({
-			onRowEnter: (view, row): void => {
+			onRowEnter: (viewId, row): void => {
 				const listTop = listRef.current?.getBoundingClientRect().top ?? 0;
 				const rowRect = row.getBoundingClientRect();
 				onHoverCardRowEnter({
-					view,
+					viewId,
 					anchorTop: rowRect.top - listTop,
 					anchorHeight: rowRect.height,
 				});
