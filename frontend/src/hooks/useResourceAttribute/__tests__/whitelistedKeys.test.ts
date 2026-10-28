@@ -2,6 +2,7 @@ import ROUTES from 'constants/routes';
 
 import { whilelistedKeys } from '../config';
 import {
+	convertMetricKeyToTrace,
 	filterServiceMapSupportedQueries,
 	mappingWithRoutesAndKeys,
 } from '../utils';
@@ -11,13 +12,31 @@ describe('useResourceAttribute config', () => {
 		it('should include underscore-notation keys', () => {
 			expect(whilelistedKeys).toContain('resource_deployment_environment');
 			expect(whilelistedKeys).toContain('resource_k8s_cluster_name');
-			expect(whilelistedKeys).toContain('resource_k8s_cluster_namespace');
+			expect(whilelistedKeys).toContain('resource_k8s_namespace_name');
 		});
 
 		it('should include dot-notation keys', () => {
 			expect(whilelistedKeys).toContain('resource_deployment.environment');
 			expect(whilelistedKeys).toContain('resource_k8s.cluster.name');
-			expect(whilelistedKeys).toContain('resource_k8s.cluster.namespace');
+			expect(whilelistedKeys).toContain('resource_k8s.namespace.name');
+		});
+
+		it('should not include k8s.cluster.namespace, which is not an OTel attribute', () => {
+			expect(whilelistedKeys).not.toContain('resource_k8s_cluster_namespace');
+			expect(whilelistedKeys).not.toContain('resource_k8s.cluster.namespace');
+		});
+
+		it('should map every key to a column the service map backend accepts', () => {
+			// Keys accepted by BuildServiceMapQuery in pkg/query-service/app/services/map.go
+			const backendColumns = [
+				'deployment_environment',
+				'k8s_cluster_name',
+				'k8s_namespace_name',
+			];
+			whilelistedKeys.forEach((key) => {
+				const backendKey = convertMetricKeyToTrace(key).replace(/\./g, '_');
+				expect(backendColumns).toContain(backendKey);
+			});
 		});
 	});
 
@@ -28,7 +47,7 @@ describe('useResourceAttribute config', () => {
 				value: 'resource_deployment.environment',
 			},
 			{ label: 'k8s.cluster.name', value: 'resource_k8s.cluster.name' },
-			{ label: 'k8s.cluster.namespace', value: 'resource_k8s.cluster.namespace' },
+			{ label: 'k8s.namespace.name', value: 'resource_k8s.namespace.name' },
 		];
 
 		const underscoreNotationFilters = [
@@ -37,7 +56,7 @@ describe('useResourceAttribute config', () => {
 				value: 'resource_deployment_environment',
 			},
 			{ label: 'k8s.cluster.name', value: 'resource_k8s_cluster_name' },
-			{ label: 'k8s.cluster.namespace', value: 'resource_k8s_cluster_namespace' },
+			{ label: 'k8s.namespace.name', value: 'resource_k8s_namespace_name' },
 		];
 
 		const nonWhitelistedFilters = [
