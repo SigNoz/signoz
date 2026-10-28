@@ -15,6 +15,13 @@ type Config struct {
 	Sqlite SqliteConfig `mapstructure:"sqlite"`
 	// Postgres is the postgres configuration.
 	Postgres PostgresConfig `mapstructure:"postgres"`
+	// MySQL is the mysql configuration.
+	MySQL MySQLConfig `mapstructure:"mysql"`
+}
+
+type MySQLConfig struct {
+	// DSN is the database source name.
+	DSN string `mapstructure:"dsn"`
 }
 
 type PostgresConfig struct {

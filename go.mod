@@ -20,6 +20,7 @@ require (
 	github.com/evanphx/json-patch/v5 v5.9.11
 	github.com/gin-gonic/gin v1.11.0
 	github.com/go-co-op/gocron v1.30.1
+	github.com/go-sql-driver/mysql v1.8.1
 	github.com/go-openapi/runtime v0.29.2
 	github.com/go-openapi/strfmt v0.26.1
 	github.com/go-playground/validator/v10 v10.27.0
