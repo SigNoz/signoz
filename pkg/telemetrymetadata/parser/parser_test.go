@@ -1,4 +1,4 @@
-package telemetrymetadata
+package parser
 
 import (
 	"slices"

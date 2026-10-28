@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/semconv"
+	"github.com/SigNoz/signoz/pkg/telemetrymetadata/parser"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/audittelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/metertelemetryschema"
@@ -202,7 +203,7 @@ func (t *telemetryMetaStore) tracesTblStatementToFieldKeys(ctx context.Context) 
 		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTblStatement.Error())
 	}
 
-	materialisedKeys, err := ExtractFieldKeysFromTblStatement(statements[0].Statement)
+	materialisedKeys, err := parser.ExtractFieldKeysFromTblStatement(statements[0].Statement)
 	if err != nil {
 		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
 	}
@@ -384,7 +385,7 @@ func (t *telemetryMetaStore) logsTblStatementToFieldKeys(ctx context.Context) ([
 		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTblStatement.Error())
 	}
 
-	materialisedKeys, err := ExtractFieldKeysFromTblStatement(statements[0].Statement)
+	materialisedKeys, err := parser.ExtractFieldKeysFromTblStatement(statements[0].Statement)
 	if err != nil {
 		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
 	}
@@ -705,7 +706,7 @@ func (t *telemetryMetaStore) auditTblStatementToFieldKeys(ctx context.Context) (
 		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTblStatement.Error())
 	}
 
-	materialisedKeys, err := ExtractFieldKeysFromTblStatement(statements[0].Statement)
+	materialisedKeys, err := parser.ExtractFieldKeysFromTblStatement(statements[0].Statement)
 	if err != nil {
 		return nil, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetAuditKeys.Error())
 	}
