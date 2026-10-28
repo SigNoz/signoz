@@ -1,7 +1,6 @@
 import { ruleTester } from './rule-tester.mjs';
 
 const FACADE = 'src/lib/router facade';
-const HISTORY = 'lib/history singleton';
 const MOCK = 'tests/router-mocks helpers';
 
 await ruleTester({
@@ -10,11 +9,6 @@ await ruleTester({
 		{
 			name: 'facade import',
 			code: "import { useAppNavigate } from 'lib/router/useAppNavigate';",
-		},
-		{
-			name:
-				'the history package itself is a version-bump concern, not a facade one',
-			code: "import { createBrowserHistory } from 'history';",
 		},
 		{
 			name: 'unrelated module whose name contains history',
@@ -49,13 +43,8 @@ await ruleTester({
 			errors: [{ message: MOCK }],
 		},
 		{
-			name: 'jest.mock of lib/history',
-			code: "jest.mock('lib/history');",
-			errors: [{ message: MOCK }],
-		},
-		{
-			name: 'jest.doMock of react-router-dom-v5-compat',
-			code: "jest.doMock('react-router-dom-v5-compat');",
+			name: 'jest.doMock of react-router',
+			code: "jest.doMock('react-router');",
 			errors: [{ message: MOCK }],
 		},
 		{
@@ -74,29 +63,14 @@ await ruleTester({
 			errors: [{ message: FACADE }],
 		},
 		{
-			name: 'react-router-dom-v5-compat',
-			code: "import { useNavigate } from 'react-router-dom-v5-compat';",
-			errors: [{ message: 'compat package is an implementation detail' }],
+			name: 'react-router-dom is flagged as the v7 re-export shim',
+			code: "import { Outlet } from 'react-router-dom';",
+			errors: [{ message: 'only a re-export shim' }],
 		},
 		{
-			name: 'lib/history default import',
-			code: "import history from 'lib/history';",
-			errors: [{ message: HISTORY }],
-		},
-		{
-			name: 'lib/history through the @/ alias',
-			code: "import history from '@/lib/history';",
-			errors: [{ message: HISTORY }],
-		},
-		{
-			name: 'jest.mock of lib/history through the @/ alias',
-			code: "jest.mock('@/lib/history');",
-			errors: [{ message: MOCK }],
-		},
-		{
-			name: 'lib/history require',
-			code: "const history = require('lib/history').default;",
-			errors: [{ message: HISTORY }],
+			name: 'require',
+			code: "const router = require('react-router');",
+			errors: [{ message: FACADE }],
 		},
 		{
 			name: 'dynamic import',
@@ -116,10 +90,10 @@ await ruleTester({
 		{
 			name: 'one report per import statement',
 			code:
-				"import { Link } from 'react-router-dom';\nimport history from 'lib/history';",
+				"import { Link } from 'react-router';\nimport { Outlet } from 'react-router';",
 			errors: [
 				{ message: FACADE, line: 1 },
-				{ message: HISTORY, line: 2 },
+				{ message: FACADE, line: 2 },
 			],
 		},
 	],
