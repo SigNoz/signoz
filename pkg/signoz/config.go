@@ -30,6 +30,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/opamp"
 	"github.com/SigNoz/signoz/pkg/pprof"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -84,6 +85,9 @@ type Config struct {
 
 	// API Server config
 	APIServer apiserver.Config `mapstructure:"apiserver"`
+
+	// OpAMP config
+	OpAMP opamp.Config `mapstructure:"opamp"`
 
 	// TelemetryStore config
 	TelemetryStore telemetrystore.Config `mapstructure:"telemetrystore"`
@@ -162,6 +166,7 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		sqlmigrator.NewConfigFactory(),
 		sqlschema.NewConfigFactory(),
 		apiserver.NewConfigFactory(),
+		opamp.NewConfigFactory(),
 		telemetrystore.NewConfigFactory(),
 		prometheus.NewConfigFactory(),
 		alertmanager.NewConfigFactory(),

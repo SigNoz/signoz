@@ -132,6 +132,7 @@ and path below is read from the environment, so set them on the `make` call:
 
 ```bash
 SIGNOZ_APISERVER_ADDRESS=0.0.0.0:8081 \
+SIGNOZ_OPAMP_ADDRESS=0.0.0.0:4321 \
 SIGNOZ_SQLSTORE_SQLITE_PATH=/path/to/main/sqlite.db \
 SIGNOZ_INSTRUMENTATION_METRICS_READERS_PULL_EXPORTER_PROMETHEUS_PORT=9091 \
 make go-run-community
@@ -140,6 +141,7 @@ make go-run-community
 | Variable | Default | Why you'd change it |
 | --- | --- | --- |
 | `SIGNOZ_APISERVER_ADDRESS` | `0.0.0.0:8080` | Address the API server listens on |
+| `SIGNOZ_OPAMP_ADDRESS` | `0.0.0.0:4320` | Address the OpAMP websocket server listens on |
 | `SIGNOZ_SQLSTORE_SQLITE_PATH` | `signoz.db` in worktree | To reuse same database |
 | `SIGNOZ_INSTRUMENTATION_METRICS_READERS_PULL_EXPORTER_PROMETHEUS_PORT` | `9090` | Bound by the Prometheus metrics exporter on startup |
 
