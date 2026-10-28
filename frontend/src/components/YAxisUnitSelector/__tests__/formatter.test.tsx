@@ -185,6 +185,23 @@ describe('formatUniversalUnit', () => {
 		});
 	});
 
+	describe('Negative values in custom scaled families', () => {
+		it.each([
+			[-1000, UniversalYAxisUnit.BITS, '-1 kb'],
+			[-1023, UniversalYAxisUnit.KILOBITS, '-1.02 Mb'],
+			[-5000, UniversalYAxisUnit.KILOBITS, '-5 Mb'],
+			[-375, UniversalYAxisUnit.KILOBITS, '-375 kb'],
+			[-0.5, UniversalYAxisUnit.KILOBITS, '-500 b'],
+			[-1000, UniversalYAxisUnit.EXABYTES, '-1 ZB'],
+			[-2048, UniversalYAxisUnit.EXBIBYTES_SECOND, '-2 ZiB/s'],
+		])(
+			'formats %s %s as %s, mirroring the positive value',
+			(value, unit, expected) => {
+				expect(formatUniversalUnit(value, unit)).toBe(expected);
+			},
+		);
+	});
+
 	describe('Bit rate', () => {
 		it.each([
 			// Bits/second
