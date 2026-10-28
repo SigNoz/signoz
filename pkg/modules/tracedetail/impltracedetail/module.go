@@ -64,7 +64,7 @@ func (m *module) GetTraceSummary(ctx context.Context, orgID valuer.UUID, traceID
 // For large traces (NumSpans > effectiveLimit) it uses a two-step fetch:
 // minimal fields for all spans to build the tree, then full fields for the
 // visible window only. Aggregations are not returned.
-func (m *module) GetWaterfallV4(ctx context.Context, traceID string, selectedSpanID string, uncollapsedSpans []string) (*spantypes.GettableWaterfallTrace, error) {
+func (m *module) GetWaterfallV4(ctx context.Context, orgID valuer.UUID, traceID string, selectedSpanID string, uncollapsedSpans []string) (*spantypes.GettableWaterfallTrace, error) {
 	bounds, err := m.store.GetTraceBounds(ctx, traceID)
 	if err != nil {
 		return nil, err
