@@ -64,7 +64,7 @@ const config: Config.InitialOptions = {
 	setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
 	testPathIgnorePatterns: ['/node_modules/', '/public/'],
 	moduleDirectories: ['node_modules', 'src'],
-	testEnvironment: 'jest-environment-jsdom',
+	testEnvironment: '<rootDir>/jest.environment.cjs',
 	coverageThreshold: {
 		global: {
 			statements: 80,
