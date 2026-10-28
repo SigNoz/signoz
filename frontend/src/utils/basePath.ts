@@ -31,6 +31,30 @@ export function withBasePath(path: string): string {
 }
 
 /**
+ * Inverse of withBasePath: turns a real browser pathname into an app path.
+ * Idempotent and safe to call on any value.
+ *
+ *   stripBasePath('/signoz/logs') → '/logs'
+ *   stripBasePath('/logs')        → '/logs'  (already stripped)
+ *   stripBasePath('/signoz')      → '/'      (the base path itself)
+ */
+export function stripBasePath(path: string): string {
+	if (!path.startsWith('/')) {
+		return path;
+	}
+	if (_basePath === '/') {
+		return path;
+	}
+	if (path === _basePath || path === _basePath.slice(0, -1)) {
+		return '/';
+	}
+	if (path.startsWith(_basePath)) {
+		return path.slice(_basePath.length - 1);
+	}
+	return path;
+}
+
+/**
  * Full absolute URL — for copy-to-clipboard and window.open calls.
  * getAbsoluteUrl(ROUTES.LOGS_EXPLORER) → 'https://host/signoz/logs/logs-explorer'
  */

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { TestRouter } from 'tests/router';
-import { renderHook } from 'tests/test-utils';
+import { act, renderHook } from 'tests/test-utils';
 
 import { navigate } from '../navigation';
 import { useAppLocation } from '../useAppLocation';
@@ -25,10 +25,10 @@ describe('useAppLocation', () => {
 	});
 
 	it('returns the entry state', () => {
-		navigate('/logs', { replace: true, state: { from: 'test' } });
 		const { result } = renderHook(() => useAppLocation<{ from: string }>(), {
 			wrapper: TestRouter,
 		});
+		act(() => navigate('/logs', { replace: true, state: { from: 'test' } }));
 
 		expect(result.current.state.from).toBe('test');
 	});
