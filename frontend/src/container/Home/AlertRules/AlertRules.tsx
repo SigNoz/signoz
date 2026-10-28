@@ -139,11 +139,6 @@ export default function AlertRules({
 			encodeURIComponent(JSON.stringify(compositeQuery)),
 		);
 
-		const panelType = record.condition.compositeQuery.panelType;
-		if (panelType) {
-			params.set(QueryParams.panelTypes, panelType);
-		}
-
 		params.set(QueryParams.ruleId, record.id);
 
 		history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);

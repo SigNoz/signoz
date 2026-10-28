@@ -65,10 +65,12 @@ describe('buildCreateAlertUrl', () => {
 		);
 	});
 
-	it('tags the URL with panel type, v5 version, and the dashboards source', () => {
+	it('leaves the panel type out of the URL, tagging v5 version and the dashboards source', () => {
 		const params = parse(buildCreateAlertUrl(makePanel()));
 
-		expect(params.get(QueryParams.panelTypes)).toBe(PANEL_TYPES.TIME_SERIES);
+		// The alert pages hardcode the panel type (graph); writing it to the URL
+		// only ever polluted the next page's `panelTypes` consumer.
+		expect(params.get(QueryParams.panelTypes)).toBeNull();
 		expect(params.get(QueryParams.version)).toBe(ENTITY_VERSION_V5);
 		expect(params.get(QueryParams.source)).toBe('dashboards');
 	});
