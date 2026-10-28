@@ -1592,6 +1592,7 @@ components:
         duration:
           type: string
         repeatOn:
+          description: Required for weekly recurrence.
           items:
             $ref: '#/components/schemas/AlertmanagertypesRepeatOn'
           nullable: true
@@ -1628,6 +1629,7 @@ components:
     AlertmanagertypesSchedule:
       properties:
         endTime:
+          description: If empty, the alert will be active forever.
           format: date-time
           type: string
         recurrence:
