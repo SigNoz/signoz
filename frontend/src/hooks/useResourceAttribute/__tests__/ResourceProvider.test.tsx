@@ -553,8 +553,9 @@ describe('ResourceProvider', () => {
 			];
 			const encoded = encode(JSON.stringify(seeded));
 
-			// The effect that re-hydrates reads the URL through lib/history, the same
-			// history the router runs on, so one navigation drives both.
+			// The effect that re-hydrates reads the URL through lib/router/navigation,
+			// which drives the same router the tree renders in, so one navigation
+			// drives both.
 			act(() => {
 				navigate(`/?resourceAttribute=${encoded}`);
 			});

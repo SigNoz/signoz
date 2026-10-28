@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
 
 import { TestRouter } from './router';
@@ -26,7 +25,7 @@ describe('TestRouter', () => {
 	});
 
 	it('keeps the existing URL when initialRoute is omitted', () => {
-		navigate('/existing');
+		window.history.replaceState(null, '', '/existing');
 
 		render(
 			<TestRouter>
