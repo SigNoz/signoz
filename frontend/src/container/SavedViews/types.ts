@@ -234,3 +234,20 @@ export interface SavedViewsEmptyStateProps {
 	isSaving: boolean;
 	onSave: (displayName: string) => Promise<boolean>;
 }
+
+export enum PreservedViewsTypes {
+	LOGS = 'logs',
+	TRACES = 'traces',
+	METRICS = 'metrics',
+	METER = 'meter',
+}
+
+export type PreservedViewType =
+	| PreservedViewsTypes.LOGS
+	| PreservedViewsTypes.TRACES
+	| PreservedViewsTypes.METRICS
+	| PreservedViewsTypes.METER;
+
+export type PreservedViewsInLocalStorage = Partial<
+	Record<PreservedViewType, { key: string; value: string }>
+>;

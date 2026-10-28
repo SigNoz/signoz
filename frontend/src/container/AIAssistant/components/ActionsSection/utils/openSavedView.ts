@@ -9,7 +9,7 @@ import { SavedViewSourcePage } from 'container/SavedViews/types';
 import { findSavedView } from 'container/SavedViews/utils/findSavedView';
 import { getSavedViewQuery } from 'container/SavedViews/utils/getSavedViewQuery';
 import { toSavedViewSource } from 'container/SavedViews/utils/toSavedViewSource';
-import { SOURCEPAGE_VS_ROUTES } from 'pages/SaveView/constants';
+import { SOURCEPAGE_VS_ROUTES } from 'container/SavedViews/constants';
 import { DataSource } from 'types/common/queryBuilder';
 import { buildExplorerNavigationUrl } from 'utils/buildExplorerNavigationUrl';
 import { History } from 'history';
@@ -88,7 +88,6 @@ export function openSavedView(
 	const query = getSavedViewQuery(view);
 	const url = buildExplorerNavigationUrl(route, query, {
 		[QueryParams.panelTypes]: view.spec.panelType as unknown as PANEL_TYPES,
-		[QueryParams.viewName]: view.spec.displayName,
 		[QueryParams.viewKey]: view.id,
 	});
 	history.push(url);

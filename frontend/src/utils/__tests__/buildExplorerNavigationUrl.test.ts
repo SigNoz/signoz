@@ -11,7 +11,6 @@ describe('buildExplorerNavigationUrl', () => {
 			{ queryType: 'builder' } as never,
 			{
 				[QueryParams.panelTypes]: PANEL_TYPES.LIST,
-				[QueryParams.viewName]: 'My view',
 				[QueryParams.viewKey]: 'view-1',
 			},
 		);
