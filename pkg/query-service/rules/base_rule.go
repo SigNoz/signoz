@@ -251,7 +251,12 @@ func (r *BaseRule) PreferredChannels() []string         { return r.preferredChan
 func (r *BaseRule) GeneratorURL() string {
 	params := url.Values{}
 	params.Set("ruleId", r.id)
-	return r.ExternalURL("alerts/overview", params)
+	// Deep-link straight to the rule edit page. The frontend rewrites
+	// `/alerts/edit` -> `/alerts/overview` (see AppRoutes/routes.ts), so
+	// this stays a single canonical URL that resolves to the overview with
+	// the right rule focused, while keeping webhook payloads short and
+	// free of compositeQuery noise — see issue #10940.
+	return r.ExternalURL("alerts/edit", params)
 }
 
 // ExpandAnnotations runs expand over the rule's annotations, leaving private
