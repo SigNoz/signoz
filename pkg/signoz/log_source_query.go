@@ -12,8 +12,7 @@ import (
 // LogSourceQuery supplies the query stack for one source within the logs
 // signal. The resolver is built before the metadata store and the statement
 // builder after it, so they arrive as two functions rather than two values.
-// Sources nothing registers stay unavailable, which is how the community
-// build ships the audit source.
+// Resolver may be nil for a source that serves no key or value suggestions.
 type LogSourceQuery struct {
 	Source                  telemetrytypes.Source
 	Resolver                func(telemetrystore.TelemetryStore) telemetrytypes.FieldKeyResolver

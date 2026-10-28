@@ -102,7 +102,8 @@ type SigNoz struct {
 
 // newQueryStack assembles the query stack once and returns, in order: the shared
 // telemetry metadata store (reused elsewhere in signoz.New), the per-signal
-// statement builders (trace, ai-trace, log, audit, metric, meter, trace-operator),
+// statement builders (trace, ai-trace, log, per-source log, metric, meter,
+// trace-operator),
 // and the bucket cache. It is the only place that imports the concrete
 // statement-builder sub-packages.
 func newQueryStack(
@@ -127,6 +128,9 @@ func newQueryStack(
 ) {
 	resolvers := map[telemetrytypes.Source]telemetrytypes.FieldKeyResolver{}
 	for _, logSource := range logSources {
+		if logSource.Resolver == nil {
+			continue
+		}
 		resolvers[logSource.Source] = logSource.Resolver(telemetryStore)
 	}
 	metadataStore := telemetrymetadata.NewTelemetryMetaStore(settings, telemetryStore, fl, resolvers)

@@ -44,6 +44,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/ruler/signozruler"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/noopauditstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/subscription"
 	"github.com/SigNoz/signoz/pkg/subscription/noopsubscription"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -121,7 +122,10 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		func(_ context.Context, _ factory.ProviderSettings, _ flagger.Flagger, _ licensing.Licensing, _ telemetrystore.TelemetryStore, _ retention.Getter, _ organization.Getter, _ zeus.Zeus) (factory.NamedMap[factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config]], string) {
 			return signoz.NewMeterReporterProviderFactories(), "noop"
 		},
-		nil,
+		[]signoz.LogSourceQuery{{
+			Source:                  telemetrytypes.SourceAudit,
+			StatementBuilderFactory: noopauditstatementbuilder.NewFactory,
+		}},
 		func(ps factory.ProviderSettings, q querier.Querier, a analytics.Analytics) querier.Handler {
 			return querier.NewHandler(ps, q, a)
 		},
