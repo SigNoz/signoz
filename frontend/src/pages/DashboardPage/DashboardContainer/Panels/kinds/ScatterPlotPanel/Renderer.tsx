@@ -22,7 +22,6 @@ import PanelStyles from '../../panel.module.scss';
 import type { PanelRendererProps } from '../../types/rendererProps';
 import { prepareScatterClickData } from '../../utils/drilldown/prepareScatterClickData';
 import { getBuilderQueries } from '../../utils/getBuilderQueries';
-import { getJoinedScalarTable } from '../../utils/getJoinedScalarTable';
 import { getPanelTimeRange } from '../../utils/getPanelTimeRange';
 import {
 	resolveDecimalPrecision,
@@ -36,9 +35,9 @@ import {
 import { ScatterPlotDataStatus } from './types';
 import { getAxisThresholds, toScatterAxisOptions } from './utils/axisOptions';
 import { findGroupByMismatch } from './utils/groupByMismatch';
+import { getScatterPlotData } from './utils/getScatterPlotData';
 import { getScatterPlotEmptyMessage } from './utils/messages';
 import { resolvePointOpacity, resolvePointSize } from './utils/points';
-import { prepareScatterPlotData } from './utils/prepareData';
 
 import styles from './Renderer.module.scss';
 
@@ -61,17 +60,9 @@ function ScatterPlotPanelRenderer({
 		[panel.spec.plugin.spec],
 	);
 
-	const table = useMemo(() => getJoinedScalarTable(data), [data]);
-
 	const scatterData = useMemo(
-		() =>
-			prepareScatterPlotData({
-				table,
-				dimensions: spec.dimensions,
-				axes: spec.axes,
-				columnUnits: spec.formatting?.columnUnits ?? {},
-			}),
-		[table, spec.dimensions, spec.axes, spec.formatting?.columnUnits],
+		() => getScatterPlotData(data, spec),
+		[data, spec],
 	);
 
 	const decimalPrecision = useMemo(

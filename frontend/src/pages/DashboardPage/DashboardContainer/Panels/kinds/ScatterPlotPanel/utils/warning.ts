@@ -3,23 +3,16 @@ import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/quer
 
 import type { PanelOfKind } from '../../../types/rendererProps';
 import { getBuilderQueries } from '../../../utils/getBuilderQueries';
+import { getScatterPlotData } from './getScatterPlotData';
 import { findGroupByMismatch } from './groupByMismatch';
 import { getScatterPlotWarning } from './messages';
-import { prepareScatterPlotData } from './prepareData';
-import { getJoinedScalarTable } from '../../../utils/getJoinedScalarTable';
 
 export function getScatterPlotDataWarning(
 	panel: PanelOfKind<'signoz/ScatterPlotPanel'>,
 	data: PanelQueryData,
 ): PanelStatusDetail | null {
-	const { dimensions, axes, formatting } = panel.spec.plugin.spec;
 	return getScatterPlotWarning(
-		prepareScatterPlotData({
-			table: getJoinedScalarTable(data),
-			dimensions,
-			axes,
-			columnUnits: formatting?.columnUnits ?? {},
-		}),
+		getScatterPlotData(data, panel.spec.plugin.spec),
 		findGroupByMismatch(getBuilderQueries(panel.spec.queries)),
 	);
 }
