@@ -10,15 +10,12 @@ import {
 	createAlertUrl,
 	expectAlertTypeCardSet,
 	gotoAlertTypeSelection,
-	gotoCreateAlertV1,
-	gotoCreateAlertV2,
 	hasAnomalyAlertTypeCard,
 } from '../../../helpers/alert-forms/navigation';
-import { v1SaveButton } from '../../../helpers/alert-forms/v1';
 
 // TC-* — the create *shell*: type selection, how a card click writes the
-// URL, the breadcrumb, the surrounding alerts tab bar, and the two ways to reach
-// the classic form. Nothing here saves a rule, so no scenario needs a channel.
+// URL, the breadcrumb and the surrounding alerts tab bar. Nothing here saves a
+// rule, so no scenario needs a channel.
 
 test.describe('Alert create — shell & type selection', () => {
 	test('TC-01 bare /alerts/new lists exactly the expected alert-type cards', async ({
@@ -136,35 +133,5 @@ test.describe('Alert create — shell & type selection', () => {
 		expect(params.get('tab')).toBe(AlertListTab.TRIGGERED_ALERTS);
 		expect(params.get('subTab')).toBeNull();
 		expect(params.get('search')).toBeNull();
-	});
-
-	test('TC-07 showClassicCreateAlertsPage=true renders the v1 form instead', async ({
-		authedPage: page,
-	}) => {
-		await gotoCreateAlertV1(page, { alertType: AlertType.METRICS });
-
-		await expect(v1SaveButton(page)).toBeVisible();
-		// The clearest v1/v2 discriminator: the v2 header input simply is not there.
-		await expect(page.getByTestId('alert-name-input')).toBeHidden();
-	});
-
-	test('TC-08 Switch to Classic Experience replaces history, so Back does not return to v2', async ({
-		authedPage: page,
-	}) => {
-		await gotoCreateAlertV2(page, { alertType: AlertType.METRICS });
-
-		await page
-			.getByRole('button', { name: 'Switch to Classic Experience' })
-			.click();
-
-		await expect(v1SaveButton(page)).toBeVisible();
-		expect(
-			new URL(page.url()).searchParams.get('showClassicCreateAlertsPage'),
-		).toBe('true');
-
-		// `safeNavigate(url, { replace: true })` — going back must skip the v2 entry
-		// entirely rather than bouncing between the two experiences.
-		await page.goBack();
-		await expect(page.getByTestId('alert-name-input')).toBeHidden();
 	});
 });

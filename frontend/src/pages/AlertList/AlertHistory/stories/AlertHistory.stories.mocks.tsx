@@ -6,7 +6,7 @@
 import { TIMELINE_TABLE_PAGE_SIZE } from 'container/AlertHistory/constants';
 import { rest } from 'msw';
 
-import { choiceControl, countControl } from '@/storybook/controls/controls';
+import { countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 
 import {
@@ -23,11 +23,9 @@ import {
 
 import {
 	alertRuleByIdResponse,
-	ALERT_SCHEMAS,
 	notificationChannelsResponse,
 	CHANNEL_MAX,
 	FIRST_RULE_NAME,
-	type AlertSchema,
 } from '../../stories/__story_mockdata__/alerts';
 
 const STORY_RULE_ID = 'rule-1';
@@ -76,13 +74,6 @@ export const alertHistoryMocks = defineStoryMocks({
 			description: 'How finely the graph above the table slices the window.',
 			value: 30,
 			max: 60,
-		}),
-		alertSchema: choiceControl<AlertSchema>('Alert schema', {
-			group: TIMELINE,
-			description:
-				'Which form the Overview tab opens the rule in. The history tab only shows it in the breadcrumb and the header.',
-			options: ALERT_SCHEMAS,
-			value: 'v2',
 		}),
 	},
 	handlers: (values, response) => [
@@ -142,7 +133,6 @@ export const alertHistoryMocks = defineStoryMocks({
 				alertRuleByIdResponse(String(req.params.id), {
 					severity: 'mixed',
 					state: 'mixed',
-					schema: values.alertSchema,
 				}),
 			),
 		),

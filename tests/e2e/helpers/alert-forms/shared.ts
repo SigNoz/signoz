@@ -63,11 +63,8 @@ export function dropdownOption(page: Page, label: string): Locator {
 }
 
 /**
- * Pick a notification channel by exact name in one of the two channel selects —
- * v2's per-threshold one and v1's single `alert-channel-select`. Both are
- * `mode="multiple"` antd selects over the *same* global channel list, so both need
- * exactly this sequence; the shared body is why this is one function rather than
- * two near-copies.
+ * Pick a notification channel by exact name in a threshold's channel select, a
+ * `mode="multiple"` antd select over the global channel list.
  *
  * The list must be **searched**, not scrolled. Channels are global while the
  * `alertChannel` fixture is worker-scoped, so a shared stack accumulates one
@@ -115,11 +112,10 @@ export async function pickChannelByName(
 	// Fail here rather than three assertions later: a silently-missed pick shows up
 	// as "Save is still disabled", which points at the validator instead of at this.
 	//
-	// Counted, not name-matched: v2's select sets `maxTagTextLength={10}`
-	// (`ThresholdItem.tsx:140`) so its tag reads `e2e-alerts…`, and v1's passes
-	// `optionLabelProp="label"` to options that carry no `label` prop, so its tag
-	// renders empty. Neither can ever contain the full channel name. The name itself
-	// is verified where it actually matters — in the request body (CV2-20, CV1-08).
+	// Counted, not name-matched: the select sets `maxTagTextLength={10}`
+	// (`ThresholdItem.tsx:140`) so its tag reads `e2e-alerts…` and can never contain
+	// the full channel name. The name itself is verified where it actually matters,
+	// in the request body (CV2-20).
 	await expect(selectedTags(select)).toHaveCount(tagsBefore + 1);
 }
 

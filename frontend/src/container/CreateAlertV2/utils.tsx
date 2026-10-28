@@ -1,10 +1,10 @@
 import { createPortal } from 'react-dom';
 import { Color } from '@signozhq/design-tokens';
 import { Spin } from 'antd';
+import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { TIMEZONE_DATA } from 'components/CustomTimePicker/timezoneUtils';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { getRandomColor } from 'container/ExplorerOptions/utils';
-import { AlertDetectionTypes } from 'container/FormAlertRules';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 import { v4 } from 'uuid';
@@ -250,8 +250,7 @@ export {
 export function getThresholdStateFromAlertDef(
 	alertDef: PostableAlertRuleV2,
 ): AlertThresholdState {
-	const isAnomalyRule =
-		alertDef.ruleType === AlertDetectionTypes.ANOMALY_DETECTION_ALERT;
+	const isAnomalyRule = alertDef.ruleType === RuletypesRuleTypeDTO.anomaly_rule;
 	return {
 		...INITIAL_ALERT_THRESHOLD_STATE,
 		thresholds:
@@ -286,7 +285,7 @@ export function getThresholdStateFromAlertDef(
 export function getAlertTypeFromAlertDef(
 	alertDef: PostableAlertRuleV2 | undefined,
 ): AlertTypes {
-	if (alertDef?.ruleType === AlertDetectionTypes.ANOMALY_DETECTION_ALERT) {
+	if (alertDef?.ruleType === RuletypesRuleTypeDTO.anomaly_rule) {
 		return AlertTypes.ANOMALY_BASED_ALERT;
 	}
 	return alertDef?.alertType as AlertTypes;

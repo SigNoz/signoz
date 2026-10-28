@@ -187,16 +187,8 @@ test.describe('Alert history — expression filter', () => {
 			`of ${alertHistory.total}`,
 		);
 
-		await gotoAlertHistory(page, alertHistory.ruleIdV1);
 		responsePromise = waitForHistoryResponse(page, 'timeline');
 		await runFilterExpression(page, `threshold.name = 'warning'`);
-		await responsePromise;
-		await expect(timelineFooterRange(page)).toContainText(
-			`of ${alertHistory.totalV1}`,
-		);
-
-		responsePromise = waitForHistoryResponse(page, 'timeline');
-		await runFilterExpression(page, `threshold.name = 'critical'`);
 		await responsePromise;
 		await expect(timelineRows(page)).toHaveCount(0);
 	});

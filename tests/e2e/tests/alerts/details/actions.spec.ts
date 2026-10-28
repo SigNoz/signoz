@@ -12,7 +12,6 @@ test.describe('Alert details — actions', () => {
 	}) => {
 		const ruleId = await ownedRules.logs({
 			name: `e2e-ad-toggle-${Date.now()}`,
-			schema: 'v2',
 		});
 
 		await gotoAlertDetails(page, ruleId);
@@ -48,7 +47,7 @@ test.describe('Alert details — actions', () => {
 		ownedRules,
 	}) => {
 		const name = `e2e-ad-clone-${Date.now()}`;
-		const ruleId = await ownedRules.logs({ name, schema: 'v2' });
+		const ruleId = await ownedRules.logs({ name });
 
 		await gotoAlertDetails(page, ruleId);
 		await page.getByTestId('alert-actions-menu').click();
@@ -75,7 +74,7 @@ test.describe('Alert details — actions', () => {
 		ownedRules,
 	}) => {
 		const name = `e2e-ad-delete-${Date.now()}`;
-		const ruleId = await ownedRules.logs({ name, schema: 'v2' });
+		const ruleId = await ownedRules.logs({ name });
 
 		await gotoAlertDetails(page, ruleId);
 		await page.getByTestId('alert-actions-menu').click();

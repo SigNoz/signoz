@@ -1,6 +1,6 @@
+import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { AlertDetectionTypes } from 'container/FormAlertRules';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
@@ -266,7 +266,7 @@ export function buildCreateThresholdAlertRulePayload(
 	// Evaluation
 	const evaluationProps = getEvaluationProps(evaluationWindow, advancedOptions);
 
-	let ruleType: string = AlertDetectionTypes.THRESHOLD_ALERT;
+	let ruleType: string = RuletypesRuleTypeDTO.threshold_rule;
 	if (query.queryType === EQueryType.PROM) {
 		ruleType = 'promql_rule';
 	}
@@ -292,9 +292,7 @@ export function buildCreateThresholdAlertRulePayload(
 			summary: notificationSettings.description,
 		},
 		notificationSettings: notificationSettingsProps,
-		version: 'v5',
 		schemaVersion: 'v2alpha1',
-		source: window?.location.toString(),
 	};
 }
 
@@ -321,7 +319,7 @@ export function buildCreateAnomalyAlertRulePayload(
 
 	return {
 		...payload,
-		ruleType: AlertDetectionTypes.ANOMALY_DETECTION_ALERT,
+		ruleType: RuletypesRuleTypeDTO.anomaly_rule,
 		alertType: AlertTypes.METRICS_BASED_ALERT,
 		condition: {
 			...payload.condition,

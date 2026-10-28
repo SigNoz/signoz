@@ -81,11 +81,6 @@ export const AnomalyAlertRoutingPolicies: Story = {
 	},
 };
 
-/** The classic form, which `showClassicCreateAlertsPage` opts back into. */
-export const ClassicForm: Story = {
-	args: { alertMode: 'classic-form' },
-};
-
 /**
  * The match-type tooltip on the threshold sentence: a paragraph on what an
  * aggregated data point is, a worked example over five of them, and the docs

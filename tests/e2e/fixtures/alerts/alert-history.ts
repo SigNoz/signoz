@@ -55,23 +55,16 @@ const METRICS_HISTORY_HOSTS = ['host-0', 'host-1'];
 /** Service count for `tracesHistory`. 3 keeps wait short while proving traces link. */
 const TRACES_HISTORY_SERVICES = 3;
 
-/** Team label for the v1 rule in `alertHistory`, so its header labels row is non-empty. */
-export const V1_RULE_TEAM_LABEL = 'e2e-platform';
-
 export interface AlertHistorySeed {
 	/** v2 (`schemaVersion: v2alpha1`) rule — the default history subject. */
 	ruleId: string;
-	/** Legacy v1 rule over the same logs. Its `threshold.name` is `warning`. */
-	ruleIdV1: string;
 	channelName: string;
-	/** The `body CONTAINS` marker both rules match. */
+	/** The `body CONTAINS` marker the rule matches. */
 	marker: string;
 	/** The seeded `service.name` values, in creation order. */
 	services: string[];
 	/** Baseline `total` for {@link ruleId}, read after the rule was frozen. */
 	total: number;
-	/** Baseline `total` for {@link ruleIdV1}. */
-	totalV1: number;
 }
 
 export interface MetricsHistorySeed {
@@ -154,33 +147,20 @@ async function createAlertHistorySeed(
 			name: `e2e-ah-rule-v2-${stamp}`,
 			marker,
 			channels: [channel.name],
-			schema: 'v2',
-		});
-		const ruleIdV1 = await createLogsAlertViaApi(page, {
-			name: `e2e-ah-rule-v1-${stamp}`,
-			marker,
-			channels: [channel.name],
-			schema: 'v1',
-			extraLabels: { team: V1_RULE_TEAM_LABEL },
 		});
 
 		await waitForTimelineEntries(page, ruleId, { min: LOGS_HISTORY_SERVICES });
-		await waitForTimelineEntries(page, ruleIdV1, { min: LOGS_HISTORY_SERVICES });
-
 		await setRuleDisabledViaApi(page, ruleId, true);
-		await setRuleDisabledViaApi(page, ruleIdV1, true);
 
 		return {
 			seed: {
 				ruleId,
-				ruleIdV1,
 				channelName: channel.name,
 				marker,
 				services,
 				total: await readTimelineTotal(page, ruleId),
-				totalV1: await readTimelineTotal(page, ruleIdV1),
 			},
-			ruleIds: [ruleId, ruleIdV1],
+			ruleIds: [ruleId],
 			channelId: channel.id,
 		};
 	});

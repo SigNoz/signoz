@@ -39,11 +39,6 @@ type Story = StoryObj<AlertOverviewArgs>;
  */
 export const Default: Story = {};
 
-/** A rule written before the current schema, which opens in the classic form. */
-export const ClassicSchema: Story = {
-	args: { alertSchema: 'classic' },
-};
-
 /**
  * An anomaly rule in the current schema: the condition reads in deviations from
  * the forecast, and the preview draws the band the rule compares against.
@@ -66,11 +61,6 @@ export const AnomalyRuleForecastBand: Story = {
 		);
 		await userEvent.click(firstSeries);
 	},
-};
-
-/** An anomaly rule written before the current schema, still in the classic form. */
-export const ClassicAnomalyRule: Story = {
-	args: { ruleKind: 'anomaly', alertSchema: 'classic' },
 };
 
 /** A rule someone turned off: the toggle in the header is what turns it back on. */

@@ -9,7 +9,6 @@ import {
 } from '../../helpers/alerts/api';
 import { seedAlertRules } from '../../helpers/alerts/seeding';
 import type {
-	AlertSchema,
 	LogsAlertSeed,
 	ThresholdAlertSeed,
 } from '../../helpers/alerts/types';
@@ -57,22 +56,12 @@ export interface OwnedRules {
 	/**
 	 * Seed a logs rule this test owns. No telemetry is seeded for its marker, so
 	 * it never fires — enough for anything about the details shell.
-	 *
-	 * `schema: 'v1'` posts the legacy payload; the condition overrides exist so
-	 * a v1 *prefill* assertion can be made against values the create form would
-	 * not have produced by itself.
 	 */
 	logs(
 		options: {
 			name: string;
-			schema?: AlertSchema;
 			marker?: string;
-		} & Partial<
-			Pick<
-				LogsAlertSeed,
-				'severity' | 'extraLabels' | 'evalWindow' | 'target' | 'op' | 'matchType'
-			>
-		>,
+		} & Partial<Pick<LogsAlertSeed, 'severity' | 'extraLabels' | 'evalWindow'>>,
 	): Promise<string>;
 	/**
 	 * Track a rule the *app* created (Clone / Duplicate) so teardown removes it
@@ -185,13 +174,12 @@ function createOwnedRulesFactory(
 				}),
 			),
 
-		logs: ({ name, schema = 'v2', marker, ...overrides }) =>
+		logs: ({ name, marker, ...overrides }) =>
 			seed((page) =>
 				createLogsAlertViaApi(page, {
 					name,
 					marker: marker ?? `e2e alert never seeded ${name}`,
 					channels: [channelName],
-					schema,
 					...overrides,
 				}),
 			),

@@ -8,11 +8,9 @@ import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	cloneRuleByID,
 	deleteRuleByID,
-	getGetRuleByIDQueryKey,
 	getGetRuleHistoryTimelineQueryOptions,
 	invalidateGetRuleByID,
 	invalidateListRules,
-	updateRuleByID,
 	useGetRuleByID,
 	useGetRuleHistoryOverallStatus,
 	useGetRuleHistoryStats,
@@ -52,8 +50,7 @@ import EditRules from 'pages/EditRules';
 import BetaTag from 'periscope/components/BetaTag/BetaTag';
 import { useAlertRule } from 'providers/Alert';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import { toPostableRuleDTOFromAlertDef } from 'types/api/alerts/convert';
-import { AlertDef, AlertRuleTimelineTableResponse } from 'types/api/alerts/def';
+import { AlertRuleTimelineTableResponse } from 'types/api/alerts/def';
 import APIError from 'types/api/error';
 import { nanoToMilli } from 'utils/timeUtils';
 import { Typography } from '@signozhq/ui/typography';
@@ -516,60 +513,6 @@ export const useAlertRuleClone = ({
 	};
 
 	return { handleAlertClone };
-};
-
-export const useAlertRuleUpdate = ({
-	alertDetails,
-	setAlertRuleName,
-	intermediateName,
-}: {
-	alertDetails: AlertDef;
-	setAlertRuleName: (name: string | undefined) => void;
-	intermediateName: string;
-}): {
-	handleAlertUpdate: () => void;
-	isLoading: boolean;
-} => {
-	const { notifications } = useNotifications();
-	const { showErrorModal } = useErrorModal();
-	const queryClient = useQueryClient();
-
-	const { mutate: updateAlertRule, isLoading } = useMutation(
-		[REACT_QUERY_KEY.UPDATE_ALERT_RULE, alertDetails.id],
-		(args: { data: AlertDef; id: string }) =>
-			updateRuleByID({ id: args.id }, toPostableRuleDTOFromAlertDef(args.data)),
-		{
-			onMutate: () => setAlertRuleName(intermediateName),
-			onSuccess: () => {
-				const ruleId = alertDetails.id || '';
-				const ruleQueryKey = getGetRuleByIDQueryKey({ id: ruleId });
-				const existingRule = queryClient.getQueryData<GetRuleByID200>(ruleQueryKey);
-				if (existingRule) {
-					queryClient.setQueryData<GetRuleByID200>(ruleQueryKey, {
-						...existingRule,
-						data: { ...existingRule.data, alert: intermediateName },
-					});
-				}
-				void invalidateListRules(queryClient);
-				notifications.success({ message: 'Alert renamed successfully' });
-			},
-			onError: (error) => {
-				setAlertRuleName(alertDetails.alert);
-				showErrorModal(
-					convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
-				);
-			},
-		},
-	);
-
-	const handleAlertUpdate = (): void => {
-		updateAlertRule({
-			data: { ...alertDetails, alert: intermediateName },
-			id: alertDetails.id || '',
-		});
-	};
-
-	return { handleAlertUpdate, isLoading };
 };
 
 export const useAlertRuleDelete = ({
