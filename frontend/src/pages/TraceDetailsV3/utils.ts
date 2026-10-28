@@ -74,7 +74,6 @@ const VISIBLE_SPAN_FIELDS_IN_DETAILS_VIEW = [
 	'trace_state',
 	'attributes',
 	'resource',
-	'scope',
 	'events',
 	'references',
 	'http_method',

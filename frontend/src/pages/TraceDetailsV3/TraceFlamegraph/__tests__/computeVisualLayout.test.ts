@@ -20,7 +20,6 @@ function makeSpan(
 		event: [],
 		resource: {},
 		attributes: {},
-		scope: { name: '', version: '', attributes: {} },
 		...overrides,
 	};
 }
