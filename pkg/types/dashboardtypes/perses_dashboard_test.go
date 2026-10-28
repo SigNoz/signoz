@@ -2602,6 +2602,7 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 		// Top-level: rejected
 		{"Table+PromQL", mkQuery("signoz/TablePanel", "signoz/PromQLQuery", `{"name":"A","query":"up"}`), true},
 		{"ScatterPlot+PromQL", mkQuery("signoz/ScatterPlotPanel", "signoz/PromQLQuery", `{"name":"A","query":"up"}`), true},
+		{"ScatterPlot+TraceOperator", mkQuery("signoz/ScatterPlotPanel", "signoz/TraceOperator", `{"name":"T1","expression":"A => B"}`), true},
 		{"List+ClickHouse", mkQuery("signoz/ListPanel", "signoz/ClickHouseSQL", `{"name":"A","query":"SELECT 1"}`), true},
 		{"List+PromQL", mkQuery("signoz/ListPanel", "signoz/PromQLQuery", `{"name":"A","query":"up"}`), true},
 		{"List+Composite", mkQuery("signoz/ListPanel", "signoz/CompositeQuery", `{"queries":[]}`), true},
