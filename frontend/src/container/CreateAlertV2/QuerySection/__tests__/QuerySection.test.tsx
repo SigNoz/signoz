@@ -4,12 +4,12 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import {
 	initialClickHouseData,
 	initialQueryPromQLData,
 } from 'constants/queryBuilder';
-import { AlertDetectionTypes } from 'container/FormAlertRules';
 import store from 'store';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { EQueryType } from 'types/common/dashboard';
@@ -237,7 +237,7 @@ describe('QuerySection', () => {
 			expect.any(Object),
 			{
 				[QueryParams.alertType]: AlertTypes.LOGS_BASED_ALERT,
-				[QueryParams.ruleType]: AlertDetectionTypes.THRESHOLD_ALERT,
+				[QueryParams.ruleType]: RuletypesRuleTypeDTO.threshold_rule,
 			},
 			undefined,
 			true,
@@ -252,7 +252,7 @@ describe('QuerySection', () => {
 			expect.any(Object),
 			{
 				[QueryParams.alertType]: AlertTypes.TRACES_BASED_ALERT,
-				[QueryParams.ruleType]: AlertDetectionTypes.THRESHOLD_ALERT,
+				[QueryParams.ruleType]: RuletypesRuleTypeDTO.threshold_rule,
 			},
 			undefined,
 			true,
@@ -376,7 +376,7 @@ describe('QuerySection', () => {
 
 		expect(result[1]).toStrictEqual({
 			[QueryParams.alertType]: AlertTypes.METRICS_BASED_ALERT,
-			[QueryParams.ruleType]: AlertDetectionTypes.THRESHOLD_ALERT,
+			[QueryParams.ruleType]: RuletypesRuleTypeDTO.threshold_rule,
 		});
 	});
 

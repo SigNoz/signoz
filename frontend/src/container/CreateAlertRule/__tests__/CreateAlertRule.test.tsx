@@ -49,10 +49,6 @@ jest.mock('container/FormAlertRules', () => ({
 			</div>
 		);
 	},
-	AlertDetectionTypes: {
-		THRESHOLD_ALERT: 'threshold_rule',
-		ANOMALY_DETECTION_ALERT: 'anomaly_rule',
-	},
 }));
 jest.mock('container/CreateAlertV2', () => ({
 	__esModule: true,

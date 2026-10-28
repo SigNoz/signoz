@@ -1,3 +1,4 @@
+import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { useCallback, useEffect, useMemo } from 'react';
 import { Form, Tabs, TabsProps } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -8,7 +9,7 @@ import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import CreateAlertV2 from 'container/CreateAlertV2';
-import FormAlertRules, { AlertDetectionTypes } from 'container/FormAlertRules';
+import FormAlertRules from 'container/FormAlertRules';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -46,7 +47,7 @@ function CreateRules(): JSX.Element {
 	}, [isTypeSelectionMode]);
 
 	const alertType = useMemo(() => {
-		if (ruleTypeFromURL === AlertDetectionTypes.ANOMALY_DETECTION_ALERT) {
+		if (ruleTypeFromURL === RuletypesRuleTypeDTO.anomaly_rule) {
 			return AlertTypes.ANOMALY_BASED_ALERT;
 		}
 		if (!alertTypeFromURL) {
@@ -80,13 +81,10 @@ function CreateRules(): JSX.Element {
 	const handleSelectType = useCallback(
 		(type: AlertTypes, newTab?: boolean): void => {
 			if (type === AlertTypes.ANOMALY_BASED_ALERT) {
-				queryParams.set(
-					QueryParams.ruleType,
-					AlertDetectionTypes.ANOMALY_DETECTION_ALERT,
-				);
+				queryParams.set(QueryParams.ruleType, RuletypesRuleTypeDTO.anomaly_rule);
 				queryParams.set(QueryParams.alertType, AlertTypes.METRICS_BASED_ALERT);
 			} else {
-				queryParams.set(QueryParams.ruleType, AlertDetectionTypes.THRESHOLD_ALERT);
+				queryParams.set(QueryParams.ruleType, RuletypesRuleTypeDTO.threshold_rule);
 				queryParams.set(QueryParams.alertType, type);
 			}
 

@@ -11,13 +11,13 @@ import {
 	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
+import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	useCreateRule,
 	useTestRule,
 	useUpdateRuleByID,
 } from 'api/generated/services/rules';
 import { QueryParams } from 'constants/query';
-import { AlertDetectionTypes } from 'container/FormAlertRules';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -186,8 +186,8 @@ export function CreateAlertProvider(
 					[QueryParams.alertType]: value,
 					[QueryParams.ruleType]:
 						value === AlertTypes.ANOMALY_BASED_ALERT
-							? AlertDetectionTypes.ANOMALY_DETECTION_ALERT
-							: AlertDetectionTypes.THRESHOLD_ALERT,
+							? RuletypesRuleTypeDTO.anomaly_rule
+							: RuletypesRuleTypeDTO.threshold_rule,
 				},
 				undefined,
 				true,
