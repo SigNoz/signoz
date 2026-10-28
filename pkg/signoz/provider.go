@@ -266,6 +266,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewBackfillTelegramChannelSpecFactory(),
 		sqlmigration.NewAddMetricsFieldTuplesFactory(sqlstore),
 		sqlmigration.NewAddAlertTuplesFactory(sqlstore),
+		sqlmigration.NewAddPlannedMaintenanceOriginFactory(sqlstore, sqlschema),
 	)
 }
 
