@@ -1,28 +1,46 @@
-import { act, renderHook } from '@testing-library/react';
+import type { ReactNode } from 'react';
+import { act, renderHook, type RenderHookResult } from '@testing-library/react';
 import { getCurrentLocation, navigate } from 'lib/router/navigation';
+import { TestRouter } from 'tests/router';
 
 import { useNavigationBlocker } from '../useNavigationBlocker';
 
-function settle(): Promise<void> {
-	return new Promise((resolve) => {
-		setTimeout(resolve, 60);
+type BlockerHook = RenderHookResult<
+	ReturnType<typeof useNavigationBlocker>,
+	{ shouldBlock: boolean }
+>;
+
+function wrapper({ children }: { children: ReactNode }): JSX.Element {
+	return <TestRouter initialRoute="/start">{children}</TestRouter>;
+}
+
+/** Lets router updates, and the `popstate` a POP arrives on, reach React. */
+async function settle(): Promise<void> {
+	await act(async () => {
+		await new Promise((resolve) => setTimeout(resolve, 60));
 	});
 }
 
-describe('useNavigationBlocker against the real history', () => {
-	beforeEach(async () => {
-		navigate('/start');
-		navigate('/a');
-		navigate('/b');
-		navigate('/c');
-		await settle();
-	});
+/** Mounts the blocker, disarmed, at /c with /start, /a and /b behind it. */
+async function renderAtC(): Promise<BlockerHook> {
+	const hook = renderHook(
+		({ shouldBlock }) => useNavigationBlocker(shouldBlock),
+		{ wrapper, initialProps: { shouldBlock: false } },
+	);
+	navigate('/a');
+	navigate('/b');
+	navigate('/c');
+	await settle();
+	return hook;
+}
 
+describe('useNavigationBlocker against the real history', () => {
 	it('lets a bypassed browser Back through without showing the modal', async () => {
-		const { result } = renderHook(() => useNavigationBlocker(true));
+		const { result, rerender } = await renderAtC();
+		rerender({ shouldBlock: true });
 
 		act(() => result.current.allowNextNavigation());
-		act(() => window.history.back());
+		window.history.back();
 		await settle();
 
 		expect(getCurrentLocation().pathname).toBe('/b');
@@ -30,23 +48,26 @@ describe('useNavigationBlocker against the real history', () => {
 	});
 
 	it('keeps blocking after a bypassed navigation', async () => {
-		const { result } = renderHook(() => useNavigationBlocker(true));
+		const { result, rerender } = await renderAtC();
+		rerender({ shouldBlock: true });
 
 		act(() => result.current.allowNextNavigation());
-		act(() => window.history.back());
+		window.history.back();
 		await settle();
-		act(() => navigate('/elsewhere'));
+		navigate('/elsewhere');
+		await settle();
 
 		expect(getCurrentLocation().pathname).toBe('/b');
 		expect(result.current.isBlocked).toBe(true);
 	});
 
 	it('replays a blocked Forward on confirm', async () => {
-		act(() => window.history.go(-2));
+		const { result, rerender } = await renderAtC();
+		window.history.go(-2);
 		await settle();
-		const { result } = renderHook(() => useNavigationBlocker(true));
+		rerender({ shouldBlock: true });
 
-		act(() => window.history.forward());
+		window.history.forward();
 		await settle();
 
 		expect(result.current.isBlocked).toBe(true);
@@ -59,12 +80,16 @@ describe('useNavigationBlocker against the real history', () => {
 	});
 
 	it('replays a blocked multi-entry jump on confirm', async () => {
-		act(() => window.history.go(-2));
+		const { result, rerender } = await renderAtC();
+		window.history.go(-2);
 		await settle();
-		const { result } = renderHook(() => useNavigationBlocker(true));
+		rerender({ shouldBlock: true });
 
-		act(() => window.history.go(2));
+		window.history.go(2);
 		await settle();
+
+		expect(result.current.isBlocked).toBe(true);
+
 		act(() => result.current.confirmNavigation());
 		await settle();
 
