@@ -238,7 +238,9 @@ function DomainList(): JSX.Element {
 						setSelectedDomainIndex(-1);
 						setParams(DEFAULT_PARAMS);
 					}}
-					domainListFilters={query?.filters}
+					domainListFilterExpression={
+						compositeData?.builder?.queryData[0]?.filter?.expression ?? ''
+					}
 				/>
 			)}
 		</section>

@@ -123,17 +123,7 @@ const timeRange = (): Partial<AppState> => {
 	};
 };
 
-const serviceFilterItems = {
-	op: 'AND',
-	items: [
-		{
-			id: 'storybook-service-filter',
-			key: { key: 'service.name', dataType: 'string', type: 'resource' },
-			op: '=',
-			value: 'checkout',
-		},
-	],
-};
+const serviceFilterExpression = "service.name = 'checkout'";
 
 interface RouteValues {
 	drawer: DrawerState;
@@ -160,7 +150,9 @@ const apiMonitoringRoute = ({
 		selectedView: VIEW_OF[drawer],
 		selectedEndPointName:
 			drawer === 'endpoint-stats' ? endpointUrl(domainName, 0) : '',
-		...(serviceFilter ? { endPointDetailsLocalFilters: serviceFilterItems } : {}),
+		...(serviceFilter
+			? { endPointDetailsFilterExpression: serviceFilterExpression }
+			: {}),
 	};
 
 	return `${ROUTES.API_MONITORING}?apiMonitoringParams=${encodeURIComponent(

@@ -195,16 +195,6 @@
 			line-height: 18px;
 			letter-spacing: -0.07px;
 		}
-
-		.group-by-select {
-			width: 100%;
-			.ant-select-selector {
-				font-size: 14px;
-				border-radius: 2px 0px 0px 2px;
-				border: 1px solid var(--l1-border);
-				background: var(--l3-background);
-			}
-		}
 	}
 	// Add border-bottom to table cells when pagination is not present
 	.ant-spin-container:not(:has(.ant-pagination)) .ant-table-cell {
@@ -417,9 +407,9 @@
 	.endpoint-details-filters-container {
 		display: flex;
 		flex-direction: row;
-		align-items: center;
+		align-items: flex-start;
 		border: 1px solid var(--l1-border);
-		height: 36px;
+		min-height: 36px;
 		box-sizing: content-box;
 		.ant-select-selector {
 			border: none !important;
