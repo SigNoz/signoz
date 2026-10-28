@@ -73,7 +73,7 @@ type telemetryMetaStore struct {
 	jsonColumnMetadata map[telemetrytypes.Signal]map[telemetrytypes.FieldContext]telemetrytypes.JSONColumnMetadata
 
 	baseColumnEvolutionsMu sync.Mutex
-	baseColumnEvolutions   map[string]cachedBaseColumnEvolutions
+	baseColumnEvolutions   map[string][]*telemetrytypes.EvolutionEntry
 }
 
 func NewTelemetryMetaStore(
@@ -117,7 +117,7 @@ func NewTelemetryMetaStore(
 		},
 		fl:                   fl,
 		storage:              NewStorage(),
-		baseColumnEvolutions: make(map[string]cachedBaseColumnEvolutions),
+		baseColumnEvolutions: make(map[string][]*telemetrytypes.EvolutionEntry),
 	}
 
 	return t
@@ -2445,6 +2445,26 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporalityAndType(ctx conte
 	}
 
 	return temporalities, types, nil
+}
+
+// GetBaseColumnEvolutions caches the entries for the life of the process: they
+// change only on schema migrations.
+func (t *telemetryMetaStore) GetBaseColumnEvolutions(ctx context.Context, signal telemetrytypes.Signal, fieldContext telemetrytypes.FieldContext) ([]*telemetrytypes.EvolutionEntry, error) {
+	selector := &telemetrytypes.EvolutionSelector{Signal: signal, FieldContext: fieldContext, FieldName: telemetrytypes.EvolutionFieldNameAll}
+
+	t.baseColumnEvolutionsMu.Lock()
+	defer t.baseColumnEvolutionsMu.Unlock()
+
+	if entries, ok := t.baseColumnEvolutions[selector.QualifiedName()]; ok {
+		return entries, nil
+	}
+
+	entries, err := t.fetchEvolutionEntryFromClickHouse(ctx, []*telemetrytypes.EvolutionSelector{selector})
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch the base column evolutions of %s", selector.QualifiedName())
+	}
+	t.baseColumnEvolutions[selector.QualifiedName()] = entries
+	return entries, nil
 }
 
 func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Context, selectors []*telemetrytypes.EvolutionSelector) ([]*telemetrytypes.EvolutionEntry, error) {

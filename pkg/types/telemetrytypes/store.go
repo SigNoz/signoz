@@ -47,7 +47,7 @@ type MetadataStore interface {
 
 	// GetBaseColumnEvolutions returns the column-wide evolutions of one signal's
 	// field context, which a key metadata does not report still reads
-	// through. The result is cached briefly.
+	// through.
 	GetBaseColumnEvolutions(ctx context.Context, signal Signal, fieldContext FieldContext) ([]*EvolutionEntry, error)
 
 	// GetMaterializedKeys lists the keys materialized as dedicated columns.
