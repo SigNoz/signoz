@@ -3,7 +3,20 @@ package sqlstore
 import (
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+)
+
+const (
+	ProviderSQLite   = "sqlite"
+	ProviderPostgres = "postgres"
+
+	SQLiteModeDelete = "delete"
+	SQLiteModeWAL    = "wal"
+
+	SQLiteTransactionModeDeferred  = "deferred"
+	SQLiteTransactionModeImmediate = "immediate"
+	SQLiteTransactionModeExclusive = "exclusive"
 )
 
 type Config struct {
@@ -51,21 +64,54 @@ func NewConfigFactory() factory.ConfigFactory {
 
 func newConfig() factory.Config {
 	return Config{
-		Provider: "sqlite",
+		Provider: ProviderSQLite,
 		Connection: ConnectionConfig{
 			MaxOpenConns:    100,
 			MaxConnLifetime: 0,
 		},
 		Sqlite: SqliteConfig{
 			Path:            "/var/lib/signoz/signoz.db",
-			Mode:            "wal",
+			Mode:            SQLiteModeWAL,
 			BusyTimeout:     10000 * time.Millisecond, // increasing the defaults from https://github.com/mattn/go-sqlite3/blob/master/sqlite3.go#L1098 because of transpilation from C to GO
-			TransactionMode: "immediate",
+			TransactionMode: SQLiteTransactionModeImmediate,
 		},
 	}
 
 }
 
 func (c Config) Validate() error {
+	switch c.Provider {
+	case ProviderSQLite:
+		if c.Sqlite.Path == "" {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "sqlstore::sqlite::path cannot be empty")
+		}
+		switch c.Sqlite.Mode {
+		case SQLiteModeDelete, SQLiteModeWAL:
+		default:
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "sqlstore::sqlite::mode must be one of [%s, %s], got %q", SQLiteModeDelete, SQLiteModeWAL, c.Sqlite.Mode)
+		}
+		if c.Sqlite.BusyTimeout < 0 {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "sqlstore::sqlite::busy_timeout cannot be negative, got %v", c.Sqlite.BusyTimeout)
+		}
+		switch c.Sqlite.TransactionMode {
+		case SQLiteTransactionModeDeferred, SQLiteTransactionModeImmediate, SQLiteTransactionModeExclusive:
+		default:
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "sqlstore::sqlite::transaction_mode must be one of [%s, %s, %s], got %q", SQLiteTransactionModeDeferred, SQLiteTransactionModeImmediate, SQLiteTransactionModeExclusive, c.Sqlite.TransactionMode)
+		}
+	case ProviderPostgres:
+		if c.Postgres.DSN == "" {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "sqlstore::postgres::dsn cannot be empty")
+		}
+	default:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "sqlstore::provider must be one of [%s, %s], got %q", ProviderSQLite, ProviderPostgres, c.Provider)
+	}
+
+	if c.Connection.MaxOpenConns <= 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "sqlstore::max_open_conns must be positive, got %d", c.Connection.MaxOpenConns)
+	}
+	if c.Connection.MaxConnLifetime < 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "sqlstore::max_conn_lifetime cannot be negative, got %v", c.Connection.MaxConnLifetime)
+	}
+
 	return nil
 }
