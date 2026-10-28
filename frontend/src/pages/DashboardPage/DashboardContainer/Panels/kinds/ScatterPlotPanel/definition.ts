@@ -37,6 +37,9 @@ export const definition: PanelDefinition<'signoz/ScatterPlotPanel'> = {
 		legend_format: {
 			state: 'hidden',
 		},
+		trace_operator: {
+			state: 'hidden',
+		},
 		limit: {
 			state: 'pinned',
 			placeholder: `Default ${MAX_PLOTTED_GROUPS.toLocaleString('en-US')} for Scatter Plot`,
