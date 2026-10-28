@@ -59,6 +59,14 @@ For substantial changes, please split your contribution into multiple PRs:
 
 We follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). All commits and PRs should include type specifiers (e.g., `feat:`, `fix:`, `docs:`, etc.).
 
+### Before You Contribute
+
+Before you begin, please take a moment to ensure your contribution is not already being addressed by someone else in the community. This helps us maintain a streamlined development process and avoids redundant efforts.
+
+*   **Search the Issue Tracker**: Use the [GitHub search](https://github.com/SigNoz/signoz/issues) to verify if the bug or feature request has already been logged.
+*   **Review Open Pull Requests**: Check [active PRs](https://github.com/SigNoz/signoz/pulls) to see if there's an ongoing effort that addresses the issue.
+*   **Avoid Duplicates**: If you find an existing issue or PR, please add your comments, additional context, or reactions there rather than creating a new one.
+
 ## How can I contribute to other repositories?
 
 You can find other repositories in the [SigNoz](https://github.com/SigNoz) organization to contribute to. Here is a list of **highlighted** repositories:
