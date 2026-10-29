@@ -168,8 +168,6 @@ type storage struct {
 
 var _ qbtypes.Storage = (*storage)(nil)
 
-// NewStorage takes a nil schemaMetadataStore when no synthesized key reads the
-// attributes JSON column.
 func NewStorage(schemaMetadataStore telemetrytypes.SchemaMetadataStore) qbtypes.Storage {
 	return &storage{schemaMetadataStore: schemaMetadataStore}
 }

@@ -149,8 +149,6 @@ func TestGroupByAttributeHomeAcrossRollout(t *testing.T) {
 	}
 }
 
-// TestUnknownAttributeFollowsRollout: a filter or group-by key metadata does not report reads the
-// home the window selects, the same as a reported key.
 func TestUnknownAttributeFollowsRollout(t *testing.T) {
 	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 	rel := releaseTime.UnixMilli()

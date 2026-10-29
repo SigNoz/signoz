@@ -19,16 +19,14 @@ func NewSchemaMetadataStore(telemetryStore telemetrystore.TelemetryStore) teleme
 	return &schemaMetadataStore{telemetryStore: telemetryStore}
 }
 
-// GetBaseColumnEvolutions caches found entries for the life of the process, as
-// entries are only ever added. An empty result is not cached: the migrator can
-// add the entries at runtime.
+// An empty result is not cached: the migrator can add the entries at runtime.
 func (s *schemaMetadataStore) GetBaseColumnEvolutions(ctx context.Context, signal telemetrytypes.Signal, fieldContext telemetrytypes.FieldContext) ([]*telemetrytypes.EvolutionEntry, error) {
 	selector := &telemetrytypes.EvolutionSelector{Signal: signal, FieldContext: fieldContext, FieldName: telemetrytypes.EvolutionFieldNameAll}
 	if cached, ok := s.baseColumnEvolutions.Load(selector.QualifiedName()); ok {
 		return cached.([]*telemetrytypes.EvolutionEntry), nil
 	}
 
-	entries, err := fetchEvolutionEntries(ctx, s.telemetryStore, fmt.Sprintf("%s.%s", DBName, ColumnEvolutionMetadataTableName), []*telemetrytypes.EvolutionSelector{selector})
+	entries, err := fetchEvolutionEntryFromClickHouse(ctx, s.telemetryStore, fmt.Sprintf("%s.%s", DBName, ColumnEvolutionMetadataTableName), []*telemetrytypes.EvolutionSelector{selector})
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch the base column evolutions of %s", selector.QualifiedName())
 	}

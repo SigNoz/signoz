@@ -7,11 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// SchemaMetadataStore reads the schema metadata a storage needs.
 type SchemaMetadataStore interface {
-	// GetBaseColumnEvolutions returns the column-wide evolutions of one signal's
-	// field context, which a key metadata does not report still reads
-	// through.
 	GetBaseColumnEvolutions(ctx context.Context, signal Signal, fieldContext FieldContext) ([]*EvolutionEntry, error)
 }
 
