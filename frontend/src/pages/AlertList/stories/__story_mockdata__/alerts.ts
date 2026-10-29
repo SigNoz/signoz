@@ -18,6 +18,7 @@ import {
 	RuletypesMatchTypeDTO,
 	RuletypesPanelTypeDTO,
 	RuletypesQueryTypeDTO,
+	RuletypesRuleDTOSchemaVersion,
 	RuletypesRuleTypeDTO,
 	RuletypesSeasonalityDTO,
 	RuletypesThresholdBasicDTOKind,
@@ -34,7 +35,6 @@ import {
 	type AlertmanagertypesGettableNotificationChannelDTO,
 	type AlertmanagertypesListedNotificationChannelDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { NEW_ALERT_SCHEMA_VERSION } from 'types/api/alerts/alertTypesV2';
 
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
@@ -388,18 +388,18 @@ const buildRule = (index: number, shape: RuleShape): RuletypesRuleDTO => {
 		},
 		evalWindow: isAnomaly ? '1h0m0s' : '5m0s',
 		frequency: '1m0s',
-		...(isAnomaly && {
-			evaluation: {
-				kind: RuletypesEvaluationRollingDTOKind.rolling,
-				spec: { evalWindow: '1h0m0s', frequency: '1m0s' },
-			},
-		}),
+		evaluation: {
+			kind: RuletypesEvaluationRollingDTOKind.rolling,
+			spec: { evalWindow: isAnomaly ? '1h0m0s' : '5m0s', frequency: '1m0s' },
+		},
 		createdAt: ago((index + 3) * DAY),
 		updatedAt: ago((index + 1) * HOUR),
 		createdBy: 'ada@signoz.io',
 		updatedBy: 'grace@signoz.io',
-		schemaVersion:
-			shape.schema === 'classic' ? undefined : NEW_ALERT_SCHEMA_VERSION,
+		// classic rows predate schemaVersion, which the spec now requires
+		schemaVersion: (shape.schema === 'classic'
+			? undefined
+			: RuletypesRuleDTOSchemaVersion.v2alpha1) as RuletypesRuleDTOSchemaVersion,
 		version: 'v5',
 		source: 'http://localhost/alerts',
 		preferredChannels: ['ops-slack'],
