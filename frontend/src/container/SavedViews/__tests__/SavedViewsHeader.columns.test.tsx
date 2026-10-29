@@ -28,7 +28,7 @@ const errors = {
 };
 
 function Harness(): JSX.Element {
-	const { traces } = usePreferenceContext();
+	const traces = usePreferenceContext()[SavedviewtypesSourceDTO.traces];
 	const [headerKey, setHeaderKey] = useState(0);
 	const columns = traces.preferences?.columns ?? [];
 

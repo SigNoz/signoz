@@ -8,10 +8,9 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
 import { buildSavedViewReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
-import { DataSource } from 'types/common/queryBuilder';
+import { isPreferenceSourcePage } from 'providers/preferences/utils';
 import { toAPIError } from 'utils/errorUtils';
 
-import { SAVED_VIEW_OPTIONS_DATA_SOURCE } from '../constants';
 import { UseActiveSavedViewResult } from '../types';
 import { hasUnsavedViewChanges } from '../utils/hasUnsavedViewChanges';
 
@@ -21,9 +20,9 @@ export function useActiveSavedView(
 	const { viewKey } = useGetSavedViewParams();
 	const { stagedQuery, panelType } = useQueryBuilder();
 
-	const optionsDataSource = SAVED_VIEW_OPTIONS_DATA_SOURCE[source];
+	const hasOptions = isPreferenceSourcePage(source);
 	const { options } = useOptionsMenu({
-		dataSource: optionsDataSource ?? DataSource.LOGS,
+		sourcePage: hasOptions ? source : SavedviewtypesSourceDTO.logs,
 	});
 
 	const { isLoading: isCheckingRead, deniedPermissions } = useAuthZ(
@@ -63,7 +62,7 @@ export function useActiveSavedView(
 			view,
 			stagedQuery,
 			panelType: panelType ?? PANEL_TYPES.LIST,
-			options: optionsDataSource ? options : undefined,
+			options: hasOptions ? options : undefined,
 		});
 	}, [
 		view,
@@ -71,7 +70,7 @@ export function useActiveSavedView(
 		isStagedQueryCurrent,
 		stagedQuery,
 		panelType,
-		optionsDataSource,
+		hasOptions,
 		options,
 	]);
 
