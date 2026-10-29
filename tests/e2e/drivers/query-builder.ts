@@ -9,16 +9,30 @@ import {
 	type Request,
 } from '@playwright/test';
 
+import { ownDropdown } from '../helpers/alert-forms/shared';
+import { postToSeeder } from '../helpers/alerts/seeding';
 import { watchConsole, type ConsoleWatch } from '../helpers/common';
 import { isQueryRange } from '../helpers/query-range-mock';
 import { dismissQuickFiltersAnnouncement } from '../helpers/quick-filters';
 
-import { driver, kit } from './kit';
+import { driver, kit, seeded } from './kit';
 
 export const EXPLORER = {
 	logs: '/logs/logs-explorer',
 	traces: '/traces-explorer',
+	metrics: '/metrics-explorer/explorer',
 } as const;
+
+/** A monotonic Sum in the golden dataset. */
+export const SUM_METRIC = 'signoz_calls_total';
+/** Another golden Sum, for switching between metrics of one type. */
+export const OTHER_SUM_METRIC = 'signoz_latency_count';
+
+/** The golden dataset has only Sums; these are seeded per worker. */
+export interface MetricTypes {
+	gauge: string;
+	histogram: string;
+}
 
 /** Inside the golden dataset's window. */
 export const RELATIVE_TIME = '6h';
@@ -76,6 +90,22 @@ export interface QueryBlock {
 	/** The filter's status icon: shown only while unfocused and non-empty. */
 	filterStatus(): Locator;
 	aggregation: FilterEditor;
+	/** The aggregation's "every … Seconds" input. */
+	step(): Locator;
+	metric: MetricControls;
+}
+
+/** The metrics aggregation section: metric picker plus time/space selects. */
+export interface MetricControls {
+	select(name: string): Promise<void>;
+	/** The selected value. Absent for histograms. */
+	timeAggregation(): Locator;
+	/** The selected value. */
+	spaceAggregation(): Locator;
+	setTimeAggregation(label: string): Promise<void>;
+	setSpaceAggregation(label: string): Promise<void>;
+	/** Labels offered by the space-aggregation select, as shown. */
+	spaceOptions(): Promise<string[]>;
 }
 
 export interface QuickFilterValue {
@@ -189,6 +219,59 @@ function editorAt(page: Page, root: () => Locator): FilterEditor {
 	return editor;
 }
 
+/**
+ * Opens the antd select inside `select` and returns its options. Scoped to the
+ * list the select owns: a previous select's list can still be mid-close.
+ */
+async function openSelect(page: Page, select: Locator): Promise<Locator> {
+	await select.locator('.ant-select-selector').click();
+	const list = await ownDropdown(page, select);
+	await expect(list).toBeVisible();
+	return list.locator('.ant-select-item-option');
+}
+
+/** antd renders select options with trailing whitespace ("Sum "). */
+const exactly = (label: string): RegExp => new RegExp(`^\\s*${label}\\s*$`);
+
+function metricAt(
+	page: Page,
+	root: () => Locator,
+	index: number,
+): MetricControls {
+	const time = (): Locator => root().getByTestId('metrics-time-aggregation');
+	const space = (): Locator => root().getByTestId('metrics-space-aggregation');
+	return {
+		async select(name) {
+			// An antd AutoComplete: the testid is on a wrapper.
+			const field = page.getByTestId(`metric-name-selector-${index}`);
+			const options = await openSelect(page, field);
+			await field.locator('input').fill(name);
+			// Options carry the metric's type and unit next to its name.
+			await options.filter({ hasText: name }).first().click();
+		},
+		// The selection item, not the root: these selects render their list
+		// inside the root, so its text includes every option.
+		timeAggregation: () => time().locator('.ant-select-selection-item'),
+		spaceAggregation: () => space().locator('.ant-select-selection-item'),
+		async setTimeAggregation(label) {
+			const options = await openSelect(page, time());
+			await options.filter({ hasText: exactly(label) }).click();
+			await expect(this.timeAggregation()).toHaveText(label);
+		},
+		async setSpaceAggregation(label) {
+			const options = await openSelect(page, space());
+			await options.filter({ hasText: exactly(label) }).click();
+			await expect(this.spaceAggregation()).toHaveText(label);
+		},
+		async spaceOptions() {
+			const options = await openSelect(page, space());
+			const labels = await options.allTextContents();
+			await page.keyboard.press('Escape');
+			return labels.map((label) => label.trim());
+		},
+	};
+}
+
 function queryBuilderDriver(page: Page): QueryBuilderDriver {
 	const bodies: V5Body[] = [];
 	page.on('request', (request: Request) => {
@@ -226,8 +309,19 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 			if (composite !== undefined) {
 				params.push(`compositeQuery=${composite}`);
 			}
+			const url = `${path}?${params.join('&')}`;
+			// The metrics explorer runs nothing until a metric is chosen; its
+			// settle point is the metric list instead.
+			if (path === EXPLORER.metrics) {
+				await Promise.all([
+					page.waitForResponse((r) => r.url().includes('/api/v2/metrics')),
+					page.goto(url),
+				]);
+				await expect(qb.query('A').filter.content()).toBeVisible();
+				return [];
+			}
 			const fired = await firedBy(async () => {
-				await page.goto(`${path}?${params.join('&')}`);
+				await page.goto(url);
 			});
 			await expect(qb.query('A').filter.content()).toBeVisible();
 			return fired;
@@ -243,6 +337,8 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 				aggregation: editorAt(page, () =>
 					root().getByTestId('query-aggregation-editor'),
 				),
+				step: () => root().getByTestId('input-Seconds'),
+				metric: metricAt(page, root, name.charCodeAt(0) - 'A'.charCodeAt(0)),
 			};
 		},
 		async addQuery(name) {
@@ -326,6 +422,47 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 /** Layers `qb` onto another host's test, e.g. the alert-rule fixtures. */
 export const withQueryBuilder = driver('qb', ({ page }) =>
 	queryBuilderDriver(page),
+);
+
+const HISTOGRAM_BOUNDS = ['1', '2', '4', '+Inf'];
+
+/** Ten minutes of a gauge and a cumulative histogram, names unique per worker. */
+export const withMetricTypes = seeded(
+	'metricTypes',
+	async ({ page, workerIndex }) => {
+		const suffix = `${workerIndex}_${Date.now()}`;
+		const types: MetricTypes = {
+			gauge: `e2e_qb_gauge_${suffix}`,
+			histogram: `e2e_qb_histogram_${suffix}`,
+		};
+		const now = Date.now();
+		const points: Record<string, unknown>[] = [];
+		for (let minute = 0; minute < 10; minute += 1) {
+			const timestamp = new Date(now - (10 - minute) * 60_000).toISOString();
+			points.push({
+				metric_name: types.gauge,
+				labels: { host: 'qb-host' },
+				timestamp,
+				value: 10 + minute,
+				type_: 'Gauge',
+				temporality: 'Unspecified',
+				is_monotonic: false,
+			});
+			HISTOGRAM_BOUNDS.forEach((le, bucket) => {
+				points.push({
+					metric_name: types.histogram,
+					labels: { le },
+					timestamp,
+					value: (minute + 1) * (bucket + 1),
+					type_: 'Histogram',
+					temporality: 'Cumulative',
+					is_monotonic: false,
+				});
+			});
+		}
+		await postToSeeder(page, '/telemetry/metrics', points);
+		return types;
+	},
 );
 
 export const test = withQueryBuilder(kit);

@@ -3,6 +3,9 @@ import { expect, EXPLORER, test } from '../../drivers/query-builder';
 // Typing is real keystrokes: the regressions here (caret jumps, swallowed
 // Enter, the run shortcut) only show up through the keyboard path.
 
+const RECENT_KEPT = "service.name = 'frontend' AND severity_text = 'WARN'";
+const RECENT_REMOVED = 'logger.name EXISTS';
+
 const COMPOUND: Record<string, string> = {
 	'NOT over a parenthesised OR':
 		"NOT (severity_text = 'INFO' OR severity_text = 'WARN') AND service.name = 'frontend'",
@@ -206,6 +209,53 @@ test.describe('Query builder — filter editor', () => {
 			.poll(() => qb.query('A').filter.expression())
 			.toMatch(/severity_text = 'ERROR'$/);
 		expect(qb.console.errors).toEqual([]);
+	});
+
+	test('TC-15 recent searches are offered, applied and deleted', async ({
+		qb,
+	}) => {
+		await qb.openExplorer(EXPLORER.logs);
+		const filter = qb.query('A').filter;
+		for (const expression of [RECENT_KEPT, RECENT_REMOVED]) {
+			await filter.type(expression);
+			await filter.press('Escape');
+			await qb.run();
+		}
+
+		await filter.clear();
+		await filter.openSuggestions();
+		await expect(filter.suggestion(RECENT_KEPT)).toBeVisible();
+		await expect(filter.suggestion(RECENT_REMOVED)).toBeVisible();
+
+		await filter.suggestion(RECENT_KEPT).click();
+		await expect.poll(() => filter.expression()).toBe(RECENT_KEPT);
+
+		await filter.clear();
+		await filter.openSuggestions();
+		await filter
+			.suggestion(RECENT_REMOVED)
+			.getByRole('button', { name: 'Remove from recent searches' })
+			.click();
+		await expect(filter.suggestion(RECENT_REMOVED)).toHaveCount(0);
+	});
+
+	test('TC-15 recent searches survive a reload and stay with their signal', async ({
+		qb,
+	}) => {
+		await qb.openExplorer(EXPLORER.logs);
+		await qb.query('A').filter.type(RECENT_KEPT);
+		await qb.query('A').filter.press('Escape');
+		await qb.run();
+
+		await qb.openExplorer(EXPLORER.logs);
+		await qb.query('A').filter.clear();
+		await qb.query('A').filter.openSuggestions();
+		await expect(qb.query('A').filter.suggestion(RECENT_KEPT)).toBeVisible();
+
+		await qb.openExplorer(EXPLORER.traces);
+		await qb.query('A').filter.clear();
+		await qb.query('A').filter.openSuggestions();
+		await expect(qb.query('A').filter.suggestion(RECENT_KEPT)).toHaveCount(0);
 	});
 
 	test('TC-16 a quick-filter value toggles between excluded and cleared', async ({
