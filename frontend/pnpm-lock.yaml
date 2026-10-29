@@ -438,9 +438,6 @@ importers:
       '@types/testing-library__jest-dom':
         specifier: ^5.14.5
         version: 5.14.5
-      '@types/uuid':
-        specifier: ^8.3.1
-        version: 8.3.4
       '@typescript/native-preview':
         specifier: 7.0.0-dev.20260430.1
         version: 7.0.0-dev.20260430.1
@@ -4155,9 +4152,6 @@ packages:
 
   '@types/unist@3.0.2':
     resolution: {integrity: sha512-dqId9J8K/vGi5Zr7oo212BGii5m3q5Hxlkwy3WpYuKPklmBEvsbMYYyLxAQpSffdLl/gdW0XUpKWFvYmyoWCoQ==}
-
-  '@types/uuid@8.3.4':
-    resolution: {integrity: sha512-c/I8ZRb51j+pYGAu5CrFMRxqZ2ke4y2grEBO5AUjgSkSk+qT2Ea+OdWElz/OiMf5MNpn2b17kuVBwZLQJXzihw==}
 
   '@types/wait-on@5.3.4':
     resolution: {integrity: sha512-EBsPjFMrFlMbbUFf9D1Fp+PAB2TwmUn7a3YtHyD9RLuTIk1jDd8SxXVAoez2Ciy+8Jsceo2MYEYZzJ/DvorOKw==}
@@ -13806,8 +13800,6 @@ snapshots:
   '@types/unist@2.0.8': {}
 
   '@types/unist@3.0.2': {}
-
-  '@types/uuid@8.3.4': {}
 
   '@types/wait-on@5.3.4':
     dependencies:
