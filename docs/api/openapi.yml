@@ -3932,6 +3932,8 @@ components:
       - logs-field
       - traces-field
       - metrics-field
+      - span-mapper-group
+      - span-mapper
       type: string
     CoretypesObject:
       properties:
@@ -17814,9 +17816,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - span-mapper-group:list
       - tokenizer:
-        - VIEWER
+        - span-mapper-group:list
       summary: List span attribute mapping groups
       tags:
       - spanmapper
@@ -17877,9 +17879,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - span-mapper-group:create
       - tokenizer:
-        - ADMIN
+        - span-mapper-group:create
       summary: Create a span attribute mapping group
       tags:
       - spanmapper
@@ -17924,9 +17926,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - span-mapper-group:delete
       - tokenizer:
-        - ADMIN
+        - span-mapper-group:delete
       summary: Delete a span attribute mapping group
       tags:
       - spanmapper
@@ -17982,9 +17984,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - span-mapper-group:update
       - tokenizer:
-        - ADMIN
+        - span-mapper-group:update
       summary: Update a span attribute mapping group
       tags:
       - spanmapper
@@ -18047,9 +18049,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - span-mapper-group:read
       - tokenizer:
-        - VIEWER
+        - span-mapper-group:read
       summary: List span mappers for a group
       tags:
       - spanmapper
@@ -18122,9 +18124,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - span-mapper:create
+        - span-mapper-group:attach
       - tokenizer:
-        - ADMIN
+        - span-mapper:create
+        - span-mapper-group:attach
       summary: Create a span mapper
       tags:
       - spanmapper
@@ -18174,9 +18178,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - span-mapper:delete
+        - span-mapper-group:detach
       - tokenizer:
-        - ADMIN
+        - span-mapper:delete
+        - span-mapper-group:detach
       summary: Delete a span mapper
       tags:
       - spanmapper
@@ -18237,9 +18243,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - span-mapper:update
       - tokenizer:
-        - ADMIN
+        - span-mapper:update
       summary: Update a span mapper
       tags:
       - spanmapper
@@ -18247,7 +18253,8 @@ paths:
   /api/v1/span_mapper_groups/test:
     post:
       deprecated: false
-      description: Tests how span mappers would transform sample spans
+      description: Tests how span mappers would transform sample spans. Groups sent
+        without mappers are read from the store by name.
       operationId: TestSpanMappers
       requestBody:
         content:
@@ -18301,9 +18308,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - span-mapper-group:read
       - tokenizer:
-        - VIEWER
+        - span-mapper-group:read
       summary: Test span mappers against sample spans
       tags:
       - spanmapper

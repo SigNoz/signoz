@@ -40,6 +40,8 @@ var Resources = []Resource{
 	ResourceMetaResourceLogsField,
 	ResourceMetaResourceTracesField,
 	ResourceMetaResourceMetricsField,
+	ResourceMetaResourceSpanMapperGroup,
+	ResourceMetaResourceSpanMapper,
 }
 
 var (
@@ -82,4 +84,6 @@ var (
 	ResourceMetaResourceLogsField                        = NewResourceMetaResource(KindLogsField)
 	ResourceMetaResourceTracesField                      = NewResourceMetaResource(KindTracesField)
 	ResourceMetaResourceMetricsField                     = NewResourceMetaResource(KindMetricsField, VerbList, VerbRead, VerbUpdate)
+	ResourceMetaResourceSpanMapperGroup                  = NewResourceMetaResource(KindSpanMapperGroup)
+	ResourceMetaResourceSpanMapper                       = NewResourceMetaResource(KindSpanMapper, VerbCreate, VerbUpdate, VerbDelete)
 )

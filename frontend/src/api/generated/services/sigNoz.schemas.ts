@@ -3579,6 +3579,8 @@ export enum CoretypesKindDTO {
 	'logs-field' = 'logs-field',
 	'traces-field' = 'traces-field',
 	'metrics-field' = 'metrics-field',
+	'span-mapper-group' = 'span-mapper-group',
+	'span-mapper' = 'span-mapper',
 }
 export enum CoretypesTypeDTO {
 	user = 'user',
