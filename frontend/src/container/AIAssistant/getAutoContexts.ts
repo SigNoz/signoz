@@ -13,7 +13,7 @@ import { NEW_PANEL_ID } from 'pages/DashboardPage/DashboardContainer/PanelEditor
  *
  * **URL-only.** All inputs come from `pathname` + `search`; we never reach
  * into Redux / context. SigNoz already encodes most page state into the URL
- * (`compositeQuery`, `startTime`/`endTime`, `viewName`/`viewKey`,
+ * (`compositeQuery`, `startTime`/`endTime`, `viewKey`,
  * `variables`, `expandedWidgetId`, `activeLogId`, …), so URL parsing is
  * sufficient. Anything not in the URL is simply omitted from `metadata` —
  * the server applies its own defaults.
@@ -287,7 +287,7 @@ export function getAutoContexts(
 
 	// ── Metrics ───────────────────────────────────────────────────────────────
 
-	// Metrics explorer — `/metrics-explorer` and sub-routes (summary, explorer, views).
+	// Metrics explorer — `/metrics-explorer` and sub-routes (summary, explorer).
 	if (matchRoute(pathname, ROUTES.METRICS_EXPLORER_BASE)) {
 		return [
 			{
@@ -357,10 +357,6 @@ function collectSharedMetadata(
 	const viewKey = params.get(QueryParams.viewKey);
 	if (viewKey) {
 		out.savedViewId = viewKey;
-	}
-	const viewName = params.get(QueryParams.viewName);
-	if (viewName) {
-		out.savedViewName = viewName;
 	}
 	const variablesRaw = params.get(QueryParams.variables);
 	if (variablesRaw) {

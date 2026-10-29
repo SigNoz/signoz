@@ -6,7 +6,7 @@ import FieldsSelector from 'components/FieldsSelector';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import { MAX_LOGS_LIST_SIZE } from 'constants/liveTail';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
+import { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
 import GoToTop from 'container/GoToTop';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { LOGS_REQUIRED_COLUMNS } from 'container/OptionsMenu/constants';

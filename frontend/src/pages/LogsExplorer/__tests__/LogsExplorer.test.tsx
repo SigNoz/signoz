@@ -217,7 +217,6 @@ describe('Logs Explorer Tests', () => {
 					updateQueriesData: (): Query => initialQueriesMap.metrics,
 					initQueryBuilderData: noop,
 					handleOnUnitsChange: noop,
-					isStagedQueryUpdated: (): boolean => false,
 				}}
 			>
 				<PreferenceContextProvider>

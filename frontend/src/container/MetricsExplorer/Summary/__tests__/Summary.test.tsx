@@ -52,7 +52,6 @@ const mockUseQueryBuilderData = {
 	currentQuery: initialQueriesMap[DataSource.METRICS],
 	resetQuery: jest.fn(),
 	redirectWithQueryBuilderData: jest.fn(),
-	isStagedQueryUpdated: jest.fn(),
 	handleSetQueryData: jest.fn(),
 	handleSetFormulaData: jest.fn(),
 	handleSetQueryItemData: jest.fn(),
