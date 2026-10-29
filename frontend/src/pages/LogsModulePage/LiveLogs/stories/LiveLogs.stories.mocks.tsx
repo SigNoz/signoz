@@ -22,7 +22,7 @@ import {
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 
-import { logsSavedViewsResponse } from '../../SavedViews/stories/__story_mockdata__/savedViews';
+import { logsSavedViewsResponse } from '../../stories/__story_mockdata__/savedViews';
 import {
 	attributeValuesResponse,
 	dashboardsResponse,
@@ -187,7 +187,7 @@ export const liveLogsMocks = defineStoryMocks({
 		),
 
 		rest.get(
-			'http://localhost/api/v1/explorer/views',
+			'http://localhost/api/v2/saved_views',
 			response.json(() => logsSavedViewsResponse(4)),
 		),
 

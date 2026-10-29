@@ -25,9 +25,6 @@
 		.ant-collapse-item > .ant-collapse-content > .ant-collapse-content-box
 	) {
 		@include custom-scrollbar;
-
-		max-height: 150px;
-		overflow-y: auto;
 		padding: var(--spacing-4) !important;
 	}
 }

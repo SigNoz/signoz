@@ -32,8 +32,8 @@ type Evaluation interface {
 }
 
 type RollingWindow struct {
-	EvalWindow valuer.TextDuration `json:"evalWindow" required:"true"`
-	Frequency  valuer.TextDuration `json:"frequency" required:"true"`
+	EvalWindow valuer.TextDuration `json:"evalWindow" required:"true" description:"The sliding lookback window each evaluation queries, as a Go duration such as 5m."`
+	Frequency  valuer.TextDuration `json:"frequency" required:"true" description:"How often the rule is evaluated, as a Go duration such as 1m. Must be positive."`
 }
 
 func (rollingWindow RollingWindow) Validate() error {
@@ -55,17 +55,17 @@ func (rollingWindow RollingWindow) GetFrequency() valuer.TextDuration {
 }
 
 type CumulativeWindow struct {
-	Schedule  CumulativeSchedule  `json:"schedule" required:"true"`
-	Frequency valuer.TextDuration `json:"frequency" required:"true"`
-	Timezone  string              `json:"timezone" required:"true"`
+	Schedule  CumulativeSchedule  `json:"schedule" required:"true" description:"The boundary the accumulation window starts from. Each evaluation queries from the most recent boundary to now."`
+	Frequency valuer.TextDuration `json:"frequency" required:"true" description:"How often the rule is evaluated, as a Go duration such as 1m. Must be positive."`
+	Timezone  string              `json:"timezone" required:"true" description:"The IANA time zone the schedule is resolved in, such as UTC or Asia/Kolkata."`
 }
 
 type CumulativeSchedule struct {
-	Type    ScheduleType `json:"type" required:"true"`
-	Minute  *int         `json:"minute,omitempty"`  // 0-59, for all types
-	Hour    *int         `json:"hour,omitempty"`    // 0-23, for daily/weekly/monthly
-	Day     *int         `json:"day,omitempty"`     // 1-31, for monthly
-	Weekday *int         `json:"weekday,omitempty"` // 0-6 (Sunday=0), for weekly
+	Type    ScheduleType `json:"type" required:"true" description:"How often the window resets: hourly, daily, weekly or monthly."`
+	Minute  *int         `json:"minute,omitempty" description:"The minute of the reset boundary, 0 to 59. Required for every type."`
+	Hour    *int         `json:"hour,omitempty" description:"The hour of the reset boundary, 0 to 23. Required for daily, weekly and monthly."`
+	Day     *int         `json:"day,omitempty" description:"The day of the month of the reset boundary, 1 to 31. Required for monthly."`
+	Weekday *int         `json:"weekday,omitempty" description:"The weekday of the reset boundary, 0 (Sunday) to 6 (Saturday). Required for weekly."`
 }
 
 type ScheduleType struct {
@@ -244,8 +244,8 @@ func (cumulativeWindow CumulativeWindow) GetFrequency() valuer.TextDuration {
 }
 
 type EvaluationEnvelope struct {
-	Kind EvaluationKind `json:"kind" required:"true"`
-	Spec any            `json:"spec" required:"true"`
+	Kind EvaluationKind `json:"kind" required:"true" description:"The kind of evaluation window: rolling slides a fixed lookback, cumulative accumulates from a scheduled reset."`
+	Spec any            `json:"spec" required:"true" description:"The evaluation specification for kind: evalWindow and frequency for rolling, schedule, frequency and timezone for cumulative."`
 }
 
 // evaluationRolling is the OpenAPI schema for an EvaluationEnvelope with kind=rolling.

@@ -46,9 +46,9 @@ One endpoint feeding several widgets stays one handler that reads the request. `
 
 ```ts
 rest.get(
-	'http://localhost/api/v1/explorer/views',
+	'http://localhost/api/v2/saved_views',
 	response.json((req) =>
-		savedViews(values.savedViews, req.url.searchParams.get('sourcePage') ?? 'logs'),
+		savedViews(values.savedViews, req.url.searchParams.get('source') ?? 'logs'),
 	),
 ),
 ```

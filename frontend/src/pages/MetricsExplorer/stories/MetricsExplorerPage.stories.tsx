@@ -69,15 +69,10 @@ export const VolumeControl: Story = {
 
 /**
  * The Explorer tab plotting one metric, with the query builder above the chart
- * and the saved-view actions in the toolbar.
+ * and the saved views beside it.
  */
 export const Explorer: Story = {
 	args: { tab: 'explorer' },
-};
-
-/** The Views tab, where the saved views the explorer offers are managed. */
-export const SavedViews: Story = {
-	args: { tab: 'views' },
 };
 
 /**

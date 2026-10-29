@@ -321,7 +321,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 										</div>
 										{selectedCategoryConfig && (
 											<QuickFilters
-												source={QuickFiltersSource.INFRA_MONITORING}
+												quickFilterSource={QuickFiltersSource.INFRA_MONITORING}
 												config={selectedCategoryConfig}
 												handleFilterVisibilityChange={handleFilterVisibilityChange}
 												useFieldApis={selectedCategoryUseFieldApis}
