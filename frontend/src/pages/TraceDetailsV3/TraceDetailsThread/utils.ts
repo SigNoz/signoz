@@ -28,6 +28,7 @@ export function getInterestedSpanStatus(
 	interestedSpanId: string | undefined,
 	spans: ThreadSpan[],
 	isLoading: boolean,
+	isNotFound: boolean,
 ): InterestedSpanStatus {
 	if (!interestedSpanId) {
 		return InterestedSpanStatus.None;
@@ -35,8 +36,12 @@ export function getInterestedSpanStatus(
 	if (isLoading) {
 		return InterestedSpanStatus.Loading;
 	}
-	if (spans.length === 0) {
+	if (isNotFound) {
 		return InterestedSpanStatus.NotFound;
+	}
+	// The span exists but the thread is empty, so the no-AI-spans state applies.
+	if (spans.length === 0) {
+		return InterestedSpanStatus.None;
 	}
 	return spans.some((span) => span.span_id === interestedSpanId)
 		? InterestedSpanStatus.Found

@@ -34,7 +34,7 @@ import {
 import {
 	logsSavedViewsResponse,
 	SAVED_VIEW_MAX,
-} from '../SavedViews/stories/__story_mockdata__/savedViews';
+} from './__story_mockdata__/savedViews';
 import {
 	attributeValuesResponse,
 	dashboardsResponse,
@@ -181,7 +181,7 @@ export const logsMocks = defineStoryMocks({
 		}),
 		savedViews: countControl('Saved views', {
 			group: FILTERS,
-			description: 'The views the view picker above the query builder lists.',
+			description: 'The views the saved views panel beside the explorer lists.',
 			value: 4,
 			max: SAVED_VIEW_MAX,
 		}),
@@ -257,7 +257,7 @@ export const logsMocks = defineStoryMocks({
 			),
 
 			rest.get(
-				'http://localhost/api/v1/explorer/views',
+				'http://localhost/api/v2/saved_views',
 				response.json(() => logsSavedViewsResponse(values.savedViews)),
 			),
 

@@ -4,7 +4,7 @@ import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
+import { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
 import {
 	getBodyDisplayString,
 	getSanitizedLogBody,

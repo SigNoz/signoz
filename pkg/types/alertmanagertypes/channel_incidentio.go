@@ -10,12 +10,12 @@ import (
 )
 
 type ChannelIncidentIOConfig struct {
-	SendResolved *bool                        `json:"sendResolved,omitempty"`
-	URL          string                       `json:"url" required:"true"`
-	Token        string                       `json:"token" required:"true" format:"password"`
-	Title        valuer.UnsetOrNonEmptyString `json:"title,omitzero"`
-	Description  valuer.UnsetOrNonEmptyString `json:"description,omitzero"`
-	Metadata     map[string]string            `json:"metadata,omitzero"`
+	SendResolved *bool                        `json:"sendResolved,omitempty" description:"Also notify when the alert resolves. Defaults to false."`
+	URL          string                       `json:"url" required:"true" description:"The alert source HTTP alert events endpoint copied from its setup page."`
+	Token        string                       `json:"token" required:"true" format:"password" description:"The alert source secret token, without the Bearer prefix. A secret; returned by create, update and fetch by ID, never by list."`
+	Title        valuer.UnsetOrNonEmptyString `json:"title,omitzero" description:"Alertmanager template for the alert title; defaults to the SigNoz incident.io default."`
+	Description  valuer.UnsetOrNonEmptyString `json:"description,omitzero" description:"Alertmanager template for the alert description, rendered as markdown; defaults to the SigNoz incident.io default."`
+	Metadata     map[string]string            `json:"metadata,omitzero" description:"Extra event metadata keyed by name, merged over the group's common labels; values are Alertmanager templates."`
 }
 
 func (c *ChannelIncidentIOConfig) UnmarshalJSON(data []byte) error {
@@ -102,15 +102,15 @@ const (
 type IncidentIOReceiverConfig struct {
 	config.NotifierConfig `yaml:",inline" json:",inline"`
 
-	HTTPConfig *commoncfg.HTTPClientConfig `yaml:"http_config,omitempty" json:"http_config,omitempty"`
+	HTTPConfig *commoncfg.HTTPClientConfig `yaml:"http_config,omitempty" json:"http_config,omitempty" description:"HTTP client settings for the API call."`
 
-	URL         string        `yaml:"url,omitempty" json:"url,omitempty"`
-	Token       config.Secret `yaml:"token,omitempty" json:"token,omitempty"`
-	Title       string        `yaml:"title,omitempty" json:"title,omitempty"`
-	Description string        `yaml:"description,omitempty" json:"description,omitempty"`
+	URL         string        `yaml:"url,omitempty" json:"url,omitempty" description:"The alert source HTTP alert events endpoint."`
+	Token       config.Secret `yaml:"token,omitempty" json:"token,omitempty" description:"The alert source secret token, without the Bearer prefix."`
+	Title       string        `yaml:"title,omitempty" json:"title,omitempty" description:"Alertmanager template for the alert title."`
+	Description string        `yaml:"description,omitempty" json:"description,omitempty" description:"Alertmanager template for the alert description."`
 	// Metadata is merged into the event's metadata on top of the group's common
 	// labels (channel wins on key clash). Values are template-expanded.
-	Metadata map[string]string `yaml:"metadata,omitempty" json:"metadata,omitempty"`
+	Metadata map[string]string `yaml:"metadata,omitempty" json:"metadata,omitempty" description:"Extra event metadata keyed by name, merged over the group's common labels; values are Alertmanager templates."`
 }
 
 // send_resolved has no omitempty upstream, so a var default here is overwritten

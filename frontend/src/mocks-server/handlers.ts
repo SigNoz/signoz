@@ -13,7 +13,6 @@ import {
 	dashboardSuccessResponse,
 	getDashboardById,
 } from './__mockdata__/dashboards';
-import { explorerView } from './__mockdata__/explorer_views';
 import { licensesSuccessResponse } from './__mockdata__/licenses';
 import { queryRangeSuccessResponse } from './__mockdata__/query_range';
 import { serviceSuccessResponse } from './__mockdata__/services';
@@ -173,20 +172,6 @@ export const handlers = [
 					data: { attributeKeys: null },
 				}),
 			),
-	),
-
-	rest.get('http://localhost/api/v1/explorer/views', (req, res, ctx) =>
-		res(ctx.status(200), ctx.json(explorerView)),
-	),
-
-	rest.post('http://localhost/api/v1/explorer/views', (req, res, ctx) =>
-		res(
-			ctx.status(200),
-			ctx.json({
-				status: 'success',
-				data: '7731ece1-3fa3-4ed4-8b1c-58b4c28723b2',
-			}),
-		),
 	),
 
 	rest.post('http://localhost/api/v1/event', (req, res, ctx) =>

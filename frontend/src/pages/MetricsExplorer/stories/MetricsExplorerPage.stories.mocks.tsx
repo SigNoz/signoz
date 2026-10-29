@@ -63,7 +63,6 @@ import {
 	metricMetadataResponse,
 	metricTemporalityOf,
 	metricTypeOf,
-	metricsSavedViewsResponse,
 	metricsSavedViewsV2Response,
 	metricsStatsResponse,
 	metricsTreemapResponse,
@@ -80,12 +79,7 @@ const SUMMARY = 'Metrics · summary';
 const EXPLORER = 'Metrics · explorer';
 const VOLUME = 'Metrics · volume control';
 
-const METRICS_TABS = [
-	'summary',
-	'volume-control',
-	'explorer',
-	'views',
-] as const;
+const METRICS_TABS = ['summary', 'volume-control', 'explorer'] as const;
 
 type MetricsTab = (typeof METRICS_TABS)[number];
 
@@ -173,10 +167,6 @@ const metricsRoute = ({
 	drawerMetric,
 	explorerMetrics,
 }: RouteValues): string => {
-	if (tab === 'views') {
-		return ROUTES.METRICS_EXPLORER_VIEWS;
-	}
-
 	if (tab === 'volume-control') {
 		return ROUTES.METRICS_EXPLORER_VOLUME_CONTROL;
 	}
@@ -269,7 +259,7 @@ export const metricsMocks = defineStoryMocks({
 		tab: choiceControl<MetricsTab>('Tab', {
 			group: VIEW,
 			description:
-				'The four pathnames the module tabs between. Clicking another tab leaves the story, so switch it here.',
+				'The three pathnames the module tabs between. Clicking another tab leaves the story, so switch it here.',
 			options: METRICS_TABS,
 			value: 'summary',
 		}),
@@ -348,7 +338,7 @@ export const metricsMocks = defineStoryMocks({
 		}),
 		savedViews: countControl('Saved views', {
 			group: EXPLORER,
-			description: 'Fills the explorer views dropdown and the Views tab.',
+			description: 'Fills the saved views list beside the explorer.',
 			value: 4,
 			max: SAVED_VIEW_MAX,
 		}),
@@ -511,11 +501,6 @@ export const metricsMocks = defineStoryMocks({
 		rest.get(
 			'http://localhost/api/v2/users/me/dashboards',
 			response.json(() => dashboardsForUserResponse(EXPORT_DASHBOARDS)),
-		),
-
-		rest.get(
-			'http://localhost/api/v1/explorer/views',
-			response.json(() => metricsSavedViewsResponse(values.savedViews)),
 		),
 
 		rest.get(

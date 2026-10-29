@@ -266,6 +266,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewBackfillTelegramChannelSpecFactory(),
 		sqlmigration.NewAddMetricsFieldTuplesFactory(sqlstore),
 		sqlmigration.NewAddGCPConnectionMethodFactory(),
+		sqlmigration.NewDeleteOrphanSARolesFactory(),
 		sqlmigration.NewAddRoutePolicyTuplesFactory(sqlstore),
 		sqlmigration.NewAddDowntimeTuplesFactory(sqlstore),
 		sqlmigration.NewAddRuleTuplesFactory(sqlstore),
