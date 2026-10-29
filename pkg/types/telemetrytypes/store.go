@@ -7,8 +7,18 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
+// SchemaMetadataStore is the part of the metadata store a storage reads.
+type SchemaMetadataStore interface {
+	// GetBaseColumnEvolutions returns the column-wide evolutions of one signal's
+	// field context, which a key metadata does not report still reads
+	// through.
+	GetBaseColumnEvolutions(ctx context.Context, signal Signal, fieldContext FieldContext) ([]*EvolutionEntry, error)
+}
+
 // MetadataStore is the interface for the telemetry metadata store.
 type MetadataStore interface {
+	SchemaMetadataStore
+
 	// GetKeys returns a map of field keys types.TelemetryFieldKey by name, there can be multiple keys with the same name
 	// if they have different types or data types.
 	GetKeys(ctx context.Context, orgID valuer.UUID, fieldKeySelector *FieldKeySelector) (map[string][]*TelemetryFieldKey, bool, error)
@@ -44,11 +54,6 @@ type MetadataStore interface {
 	// PromotePaths records promoted paths in the column evolution table as
 	// rows templated by entry; FieldName and ReleaseTime are set per path.
 	PromotePaths(ctx context.Context, entry EvolutionEntry, paths ...string) error
-
-	// GetBaseColumnEvolutions returns the column-wide evolutions of one signal's
-	// field context, which a key metadata does not report still reads
-	// through.
-	GetBaseColumnEvolutions(ctx context.Context, signal Signal, fieldContext FieldContext) ([]*EvolutionEntry, error)
 
 	// GetMaterializedKeys lists the keys materialized as dedicated columns.
 	GetMaterializedKeys(ctx context.Context, signal Signal) ([]*TelemetryFieldKey, error)

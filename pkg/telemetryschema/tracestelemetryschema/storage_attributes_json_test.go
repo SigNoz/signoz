@@ -552,11 +552,11 @@ func TestConditionForAttributeJSONStraddleAbsentKeyExclusion(t *testing.T) {
 	})
 }
 
-type fakeEvolutionStore struct {
+type fakeSchemaMetadataStore struct {
 	evolutions []*telemetrytypes.EvolutionEntry
 }
 
-func (s fakeEvolutionStore) GetBaseColumnEvolutions(context.Context, telemetrytypes.Signal, telemetrytypes.FieldContext) ([]*telemetrytypes.EvolutionEntry, error) {
+func (s fakeSchemaMetadataStore) GetBaseColumnEvolutions(context.Context, telemetrytypes.Signal, telemetrytypes.FieldContext) ([]*telemetrytypes.EvolutionEntry, error) {
 	return s.evolutions, nil
 }
 
@@ -567,7 +567,7 @@ func TestConditionForAttributeJSONUnknownKey(t *testing.T) {
 	build := func(t *testing.T, q qbtypes.QueryInfo, evolutions []*telemetrytypes.EvolutionEntry, key telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) string {
 		t.Helper()
 		sb := sqlbuilder.NewSelectBuilder()
-		conds, _, err := querybuilder.Conditions(ctx, q, NewStorage(fakeEvolutionStore{evolutions: evolutions}), &key, op, value, map[string][]*telemetrytypes.TelemetryFieldKey{}, false, sb)
+		conds, _, err := querybuilder.Conditions(ctx, q, NewStorage(fakeSchemaMetadataStore{evolutions: evolutions}), &key, op, value, map[string][]*telemetrytypes.TelemetryFieldKey{}, false, sb)
 		require.NoError(t, err)
 		sb.Where(conds...)
 		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
