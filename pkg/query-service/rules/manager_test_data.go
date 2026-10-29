@@ -49,11 +49,10 @@ func ThresholdRuleAtLeastOnceValueAbove(target float64, recovery *float64) rulet
 		Annotations: map[string]string{
 			"value": "{{$value}}",
 		},
-		Version: "v5",
+		Version:       "v5",
+		SchemaVersion: ruletypes.SchemaVersionV2Alpha1,
 		RuleCondition: &ruletypes.RuleCondition{
-			MatchType:       ruletypes.AtleastOnce,
-			CompareOperator: ruletypes.ValueIsAbove,
-			Target:          &target,
+			SelectedQuery: "A",
 			CompositeQuery: &ruletypes.AlertCompositeQuery{
 				QueryType: ruletypes.QueryTypeBuilder,
 				Queries: []qbtypes.QueryEnvelope{
@@ -108,12 +107,10 @@ func BuildPromAtLeastOnceValueAbove(target float64, recovery *float64) ruletypes
 		Annotations: map[string]string{
 			"value": "{{$value}}",
 		},
-		Version: "v5",
+		Version:       "v5",
+		SchemaVersion: ruletypes.SchemaVersionV2Alpha1,
 		RuleCondition: &ruletypes.RuleCondition{
-			MatchType:       ruletypes.AtleastOnce,
-			SelectedQuery:   "A",
-			CompareOperator: ruletypes.ValueIsAbove,
-			Target:          &target,
+			SelectedQuery: "A",
 			CompositeQuery: &ruletypes.AlertCompositeQuery{
 				QueryType: ruletypes.QueryTypePromQL,
 				PanelType: ruletypes.PanelTypeGraph,
@@ -138,7 +135,6 @@ func BuildPromAtLeastOnceValueAbove(target float64, recovery *float64) ruletypes
 						RecoveryTarget:  recovery,
 						MatchType:       ruletypes.AtleastOnce,
 						CompareOperator: ruletypes.ValueIsAbove,
-						Channels:        []string{"slack"},
 					},
 				},
 			},

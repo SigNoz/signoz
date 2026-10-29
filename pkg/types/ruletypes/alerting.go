@@ -109,18 +109,14 @@ type AlertCompositeQuery struct {
 
 type RuleCondition struct {
 	CompositeQuery    *AlertCompositeQuery `json:"compositeQuery" required:"true" description:"The queries whose result is compared against the thresholds."`
-	CompareOperator   CompareOperator      `json:"op,omitzero" description:"schemaVersion v1 only: how the value is compared with target. Accepted as above, below, equal, not_equal, above_or_equal, below_or_equal or outside_bounds, their symbols, or the legacy codes as strings, '1' to '7'. Required for v1; v2alpha1 sets op on each threshold."`
-	Target            *float64             `json:"target,omitempty" format:"double" description:"schemaVersion v1 only: the value compared against, in targetUnit. Required for v1; v2alpha1 sets target on each threshold."`
 	AlertOnAbsent     bool                 `json:"alertOnAbsent,omitempty" description:"Whether to fire a nodata alert when the query returns no data. Defaults to false."`
 	AbsentFor         uint64               `json:"absentFor,omitempty" description:"How many minutes without data pass before the nodata alert fires. Ignored unless alertOnAbsent is true."`
-	MatchType         MatchType            `json:"matchType,omitzero" description:"schemaVersion v1 only: which points in the window must satisfy op. Accepted as at_least_once, all_the_times, on_average, in_total or last, their aliases avg and sum, or the legacy codes as strings, '1' to '5'. Required for v1; v2alpha1 sets matchType on each threshold."`
-	TargetUnit        string               `json:"targetUnit,omitempty" description:"schemaVersion v1 only: the unit of target, such as percent or ms. Converted to compositeQuery.unit before comparison when the two differ."`
 	Algorithm         string               `json:"algorithm,omitempty" description:"anomaly_rule only: the anomaly detection algorithm. The supported value is standard."`
 	Seasonality       Seasonality          `json:"seasonality,omitzero" description:"anomaly_rule only: the seasonal period the history is compared against, hourly, daily or weekly."`
-	SelectedQuery     string               `json:"selectedQueryName,omitempty" description:"The name of the query whose result is evaluated, such as A or F1. Must match a query in compositeQuery. When omitted, F1 is used if present, otherwise the enabled query with the highest name."`
+	SelectedQuery     string               `json:"selectedQueryName" required:"true" description:"The name of the query whose result is evaluated, such as A or F1. Must match a query in compositeQuery."`
 	RequireMinPoints  bool                 `json:"requireMinPoints,omitempty" description:"Whether a series is skipped until it has at least requiredNumPoints points in the window. Defaults to false."`
 	RequiredNumPoints int                  `json:"requiredNumPoints,omitempty" description:"The minimum number of points a series needs before it is evaluated. Must be greater than 0 when requireMinPoints is true."`
-	Thresholds        *RuleThresholdData   `json:"thresholds,omitempty" description:"The thresholds to evaluate, as a kind and spec. Required when schemaVersion is v2alpha1; derived from op, target and matchType for v1."`
+	Thresholds        *RuleThresholdData   `json:"thresholds" required:"true" description:"The thresholds to evaluate, as a kind and spec."`
 }
 
 func (rc *RuleCondition) SelectedQueryName() string {

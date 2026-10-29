@@ -85,9 +85,6 @@ func (r *RuleThresholdData) UnmarshalJSON(data []byte) error {
 		if err := json.Unmarshal(raw["spec"], &basicThresholds); err != nil {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to unmarshal rule threshold spec: %v", err)
 		}
-		if err := basicThresholds.Validate(); err != nil {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid rule threshold spec: %v", err)
-		}
 		r.Spec = basicThresholds
 
 	default:
@@ -130,6 +127,9 @@ type RuleThreshold interface {
 	// using the given EvalData and returns the matching series
 	Eval(series *qbtypes.TimeSeries, unit string, evalData EvalData) (Vector, error)
 	GetRuleReceivers() []RuleReceivers
+	// Validate runs on the write path and before a task is built; a stored
+	// rule may hold a threshold that fails it and still decode.
+	Validate() error
 }
 
 type BasicRuleThreshold struct {
