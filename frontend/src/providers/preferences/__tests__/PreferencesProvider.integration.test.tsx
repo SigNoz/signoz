@@ -1,15 +1,15 @@
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { LogViewMode } from 'container/OptionsMenu/types';
+import { LogViewMode, FontSize } from 'container/OptionsMenu/types';
 import {
 	defaultLogsSelectedColumns,
 	defaultTraceSelectedColumns,
 } from 'container/OptionsMenu/constants';
-import { FontSize } from 'container/OptionsMenu/types';
 import { render, screen, userEvent } from 'tests/test-utils';
-import { DataSource } from 'types/common/queryBuilder';
 
 import { usePreferenceContext } from '../context/PreferenceContextProvider';
+import { PreferenceSourcePage } from '../types';
 
 const ROUTE_LOGS = '/logs';
 const ROUTE_TRACES = '/traces';
@@ -38,14 +38,13 @@ function getLocalStorageJSON<T>(key: string): T | null {
 }
 
 function Consumer({
-	dataSource,
+	sourcePage,
 	testIdPrefix,
 }: {
-	dataSource: DataSource;
+	sourcePage: PreferenceSourcePage;
 	testIdPrefix: string;
 }): JSX.Element {
-	const ctx = usePreferenceContext();
-	const slice = dataSource === DataSource.TRACES ? ctx.traces : ctx.logs;
+	const slice = usePreferenceContext()[sourcePage];
 
 	return (
 		<div>
@@ -58,7 +57,7 @@ function Consumer({
 				type="button"
 				onClick={(): void => {
 					const newCols: TelemetryFieldKey[] =
-						dataSource === DataSource.TRACES
+						sourcePage === SavedviewtypesSourceDTO.traces
 							? (defaultTraceSelectedColumns.slice(0, 1) as TelemetryFieldKey[])
 							: (defaultLogsSelectedColumns.slice(0, 1) as TelemetryFieldKey[]);
 					slice.updateColumns(newCols);
@@ -78,7 +77,10 @@ describe('PreferencesProvider integration', () => {
 	describe('Logs', () => {
 		it('loads defaults when no localStorage or url provided', () => {
 			render(
-				<Consumer dataSource={DataSource.LOGS} testIdPrefix={TESTID_LOGS} />,
+				<Consumer
+					sourcePage={SavedviewtypesSourceDTO.logs}
+					testIdPrefix={TESTID_LOGS}
+				/>,
 				undefined,
 				{
 					initialRoute: ROUTE_LOGS,
@@ -101,7 +103,10 @@ describe('PreferencesProvider integration', () => {
 			});
 
 			render(
-				<Consumer dataSource={DataSource.LOGS} testIdPrefix={TESTID_LOGS} />,
+				<Consumer
+					sourcePage={SavedviewtypesSourceDTO.logs}
+					testIdPrefix={TESTID_LOGS}
+				/>,
 				undefined,
 				{
 					initialRoute: ROUTE_LOGS,
@@ -116,7 +121,10 @@ describe('PreferencesProvider integration', () => {
 		it('direct mode updateColumns persists to localStorage', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			render(
-				<Consumer dataSource={DataSource.LOGS} testIdPrefix={TESTID_LOGS} />,
+				<Consumer
+					sourcePage={SavedviewtypesSourceDTO.logs}
+					testIdPrefix={TESTID_LOGS}
+				/>,
 				undefined,
 				{
 					initialRoute: ROUTE_LOGS,
@@ -142,7 +150,7 @@ describe('PreferencesProvider integration', () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 			render(
-				<Consumer dataSource={DataSource.LOGS} testIdPrefix="logs" />,
+				<Consumer sourcePage={SavedviewtypesSourceDTO.logs} testIdPrefix="logs" />,
 				undefined,
 				{
 					initialRoute: initialEntry,
@@ -175,7 +183,10 @@ describe('PreferencesProvider integration', () => {
 			});
 
 			render(
-				<Consumer dataSource={DataSource.LOGS} testIdPrefix={TESTID_LOGS} />,
+				<Consumer
+					sourcePage={SavedviewtypesSourceDTO.logs}
+					testIdPrefix={TESTID_LOGS}
+				/>,
 				undefined,
 				{
 					initialRoute: ROUTE_LOGS,
@@ -197,7 +208,7 @@ describe('PreferencesProvider integration', () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 			function FormattingConsumer(): JSX.Element {
-				const { logs } = usePreferenceContext();
+				const logs = usePreferenceContext()[SavedviewtypesSourceDTO.logs];
 				return (
 					<button
 						data-testid="logs-update-formatting"
@@ -235,7 +246,10 @@ describe('PreferencesProvider integration', () => {
 			const initialEntry = `/logs?viewKey=${encodeURIComponent(viewKey)}`;
 
 			render(
-				<Consumer dataSource={DataSource.LOGS} testIdPrefix={TESTID_LOGS} />,
+				<Consumer
+					sourcePage={SavedviewtypesSourceDTO.logs}
+					testIdPrefix={TESTID_LOGS}
+				/>,
 				undefined,
 				{ initialRoute: initialEntry },
 			);
@@ -254,7 +268,10 @@ describe('PreferencesProvider integration', () => {
 	describe('Traces', () => {
 		it('loads defaults when no localStorage or url provided', () => {
 			render(
-				<Consumer dataSource={DataSource.TRACES} testIdPrefix={TESTID_TRACES} />,
+				<Consumer
+					sourcePage={SavedviewtypesSourceDTO.traces}
+					testIdPrefix={TESTID_TRACES}
+				/>,
 				undefined,
 				{
 					initialRoute: ROUTE_TRACES,
@@ -273,7 +290,10 @@ describe('PreferencesProvider integration', () => {
 			});
 
 			render(
-				<Consumer dataSource={DataSource.TRACES} testIdPrefix={TESTID_TRACES} />,
+				<Consumer
+					sourcePage={SavedviewtypesSourceDTO.traces}
+					testIdPrefix={TESTID_TRACES}
+				/>,
 				undefined,
 				{
 					initialRoute: ROUTE_TRACES,
@@ -286,7 +306,10 @@ describe('PreferencesProvider integration', () => {
 		it('direct mode updateColumns persists to localStorage', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			render(
-				<Consumer dataSource={DataSource.TRACES} testIdPrefix={TESTID_TRACES} />,
+				<Consumer
+					sourcePage={SavedviewtypesSourceDTO.traces}
+					testIdPrefix={TESTID_TRACES}
+				/>,
 				undefined,
 				{
 					initialRoute: ROUTE_TRACES,
@@ -309,7 +332,10 @@ describe('PreferencesProvider integration', () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 			render(
-				<Consumer dataSource={DataSource.TRACES} testIdPrefix="traces" />,
+				<Consumer
+					sourcePage={SavedviewtypesSourceDTO.traces}
+					testIdPrefix="traces"
+				/>,
 				undefined,
 				{
 					initialRoute: initialEntry,
@@ -338,7 +364,10 @@ describe('PreferencesProvider integration', () => {
 			});
 
 			render(
-				<Consumer dataSource={DataSource.TRACES} testIdPrefix={TESTID_TRACES} />,
+				<Consumer
+					sourcePage={SavedviewtypesSourceDTO.traces}
+					testIdPrefix={TESTID_TRACES}
+				/>,
 				undefined,
 				{ initialRoute: ROUTE_TRACES },
 			);
@@ -355,7 +384,7 @@ describe('PreferencesProvider integration', () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 			function TracesFormattingConsumer(): JSX.Element {
-				const { traces } = usePreferenceContext();
+				const traces = usePreferenceContext()[SavedviewtypesSourceDTO.traces];
 				return (
 					<button
 						data-testid="traces-update-formatting"
@@ -390,7 +419,10 @@ describe('PreferencesProvider integration', () => {
 			const initialEntry = `/traces?viewKey=${encodeURIComponent(viewKey)}`;
 
 			render(
-				<Consumer dataSource={DataSource.TRACES} testIdPrefix={TESTID_TRACES} />,
+				<Consumer
+					sourcePage={SavedviewtypesSourceDTO.traces}
+					testIdPrefix={TESTID_TRACES}
+				/>,
 				undefined,
 				{ initialRoute: initialEntry },
 			);

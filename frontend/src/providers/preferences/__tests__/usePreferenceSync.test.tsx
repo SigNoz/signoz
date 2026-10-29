@@ -9,7 +9,6 @@ import {
 	defaultTraceSelectedColumns,
 	ensureLogsRequiredColumns,
 } from 'container/OptionsMenu/constants';
-import { DataSource } from 'types/common/queryBuilder';
 
 import { usePreferenceSync } from '../sync/usePreferenceSync';
 import { PreferenceMode } from '../types';
@@ -84,7 +83,7 @@ describe('usePreferenceSync in saved view mode', () => {
 		renderHook(() =>
 			usePreferenceSync({
 				mode: PreferenceMode.DIRECT,
-				dataSource: DataSource.LOGS,
+				sourcePage: SavedviewtypesSourceDTO.logs,
 				savedViewId: undefined,
 			}),
 		);
@@ -101,7 +100,7 @@ describe('usePreferenceSync in saved view mode', () => {
 		const { result } = renderHook(() =>
 			usePreferenceSync({
 				mode: PreferenceMode.DIRECT,
-				dataSource: DataSource.LOGS,
+				sourcePage: SavedviewtypesSourceDTO.logs,
 				savedViewId: undefined,
 			}),
 		);
@@ -120,7 +119,7 @@ describe('usePreferenceSync in saved view mode', () => {
 		const { result } = renderHook(() =>
 			usePreferenceSync({
 				mode: PreferenceMode.SAVED_VIEW,
-				dataSource: DataSource.LOGS,
+				sourcePage: SavedviewtypesSourceDTO.logs,
 				savedViewId: 'view-1',
 			}),
 		);
@@ -147,7 +146,7 @@ describe('usePreferenceSync in saved view mode', () => {
 		const { result } = renderHook(() =>
 			usePreferenceSync({
 				mode: PreferenceMode.SAVED_VIEW,
-				dataSource: DataSource.LOGS,
+				sourcePage: SavedviewtypesSourceDTO.logs,
 				savedViewId: 'view-1',
 			}),
 		);
@@ -174,14 +173,14 @@ describe('usePreferenceSync in saved view mode', () => {
 		const withFields = renderHook(() =>
 			usePreferenceSync({
 				mode: PreferenceMode.SAVED_VIEW,
-				dataSource: DataSource.TRACES,
+				sourcePage: SavedviewtypesSourceDTO.traces,
 				savedViewId: 'with-fields',
 			}),
 		);
 		const withoutFields = renderHook(() =>
 			usePreferenceSync({
 				mode: PreferenceMode.SAVED_VIEW,
-				dataSource: DataSource.TRACES,
+				sourcePage: SavedviewtypesSourceDTO.traces,
 				savedViewId: 'without-fields',
 			}),
 		);
@@ -202,7 +201,7 @@ describe('usePreferenceSync in saved view mode', () => {
 		const { result } = renderHook(() =>
 			usePreferenceSync({
 				mode: PreferenceMode.SAVED_VIEW,
-				dataSource: DataSource.LOGS,
+				sourcePage: SavedviewtypesSourceDTO.logs,
 				savedViewId: 'missing',
 			}),
 		);

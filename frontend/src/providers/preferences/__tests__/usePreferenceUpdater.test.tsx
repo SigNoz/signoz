@@ -1,35 +1,36 @@
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { act } from 'react-dom/test-utils';
 import { renderHook } from '@testing-library/react';
 import { TelemetryFieldKey } from 'api/v5/v5';
-import { LogViewMode } from 'container/OptionsMenu/types';
-import { FontSize } from 'container/OptionsMenu/types';
+import { LogViewMode, FontSize } from 'container/OptionsMenu/types';
 import {
 	FormattingOptions,
 	PreferenceMode,
 	Preferences,
 } from 'providers/preferences/types';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { DataSource } from 'types/common/queryBuilder';
 
 import { usePreferenceUpdater } from '../updater/usePreferenceUpdater';
 
 // Mock the config updaters
-const mockUpdateColumns = jest.fn();
-const mockUpdateFormatting = jest.fn();
+const mockLogsUpdateColumns = jest.fn();
+const mockLogsUpdateFormatting = jest.fn();
+const mockTracesUpdateColumns = jest.fn();
+const mockTracesUpdateFormatting = jest.fn();
 
 jest.mock('../configs/logsUpdaterConfig', () => ({
 	__esModule: true,
 	default: jest.fn().mockImplementation(() => ({
-		updateColumns: mockUpdateColumns,
-		updateFormatting: mockUpdateFormatting,
+		updateColumns: mockLogsUpdateColumns,
+		updateFormatting: mockLogsUpdateFormatting,
 	})),
 }));
 
 jest.mock('../configs/tracesUpdaterConfig', () => ({
 	__esModule: true,
 	default: jest.fn().mockImplementation(() => ({
-		updateColumns: mockUpdateColumns,
-		updateFormatting: mockUpdateFormatting,
+		updateColumns: mockTracesUpdateColumns,
+		updateFormatting: mockTracesUpdateFormatting,
 	})),
 }));
 
@@ -62,7 +63,7 @@ describe('usePreferenceUpdater', () => {
 
 		const { result } = renderHook(() =>
 			usePreferenceUpdater({
-				dataSource: DataSource.LOGS,
+				sourcePage: SavedviewtypesSourceDTO.logs,
 				mode: PreferenceMode.DIRECT,
 				preferences: mockPreferences,
 				setReSync,
@@ -75,7 +76,7 @@ describe('usePreferenceUpdater', () => {
 		expect(typeof result.current.updateFormatting).toBe('function');
 	});
 
-	it('should call the logs updater for updateColumns with logs dataSource', () => {
+	it('should call the logs updater for updateColumns with the logs list key', () => {
 		const setReSync = jest.fn();
 		const setSavedViewPreferences = jest.fn();
 		const newColumns: TelemetryFieldKey[] = [
@@ -88,7 +89,7 @@ describe('usePreferenceUpdater', () => {
 
 		const { result } = renderHook(() =>
 			usePreferenceUpdater({
-				dataSource: DataSource.LOGS,
+				sourcePage: SavedviewtypesSourceDTO.logs,
 				mode: PreferenceMode.DIRECT,
 				preferences: mockPreferences,
 				setReSync,
@@ -101,14 +102,15 @@ describe('usePreferenceUpdater', () => {
 		});
 
 		// Should call the logs updater
-		expect(mockUpdateColumns).toHaveBeenCalledWith(
+		expect(mockLogsUpdateColumns).toHaveBeenCalledWith(
 			newColumns,
 			PreferenceMode.DIRECT,
 		);
+		expect(mockTracesUpdateColumns).not.toHaveBeenCalled();
 		expect(setReSync).toHaveBeenCalledWith(true);
 	});
 
-	it('should call the logs updater for updateFormatting with logs dataSource', () => {
+	it('should call the logs updater for updateFormatting with the logs list key', () => {
 		const setReSync = jest.fn();
 		const setSavedViewPreferences = jest.fn();
 		const newFormatting: FormattingOptions = {
@@ -120,7 +122,7 @@ describe('usePreferenceUpdater', () => {
 
 		const { result } = renderHook(() =>
 			usePreferenceUpdater({
-				dataSource: DataSource.LOGS,
+				sourcePage: SavedviewtypesSourceDTO.logs,
 				mode: PreferenceMode.DIRECT,
 				preferences: mockPreferences,
 				setReSync,
@@ -133,14 +135,15 @@ describe('usePreferenceUpdater', () => {
 		});
 
 		// Should call the logs updater
-		expect(mockUpdateFormatting).toHaveBeenCalledWith(
+		expect(mockLogsUpdateFormatting).toHaveBeenCalledWith(
 			newFormatting,
 			PreferenceMode.DIRECT,
 		);
+		expect(mockTracesUpdateFormatting).not.toHaveBeenCalled();
 		expect(setReSync).toHaveBeenCalledWith(true);
 	});
 
-	it('should call the traces updater for updateColumns with traces dataSource', () => {
+	it('should call the traces updater for updateColumns with the traces list key', () => {
 		const setReSync = jest.fn();
 		const setSavedViewPreferences = jest.fn();
 		const newColumns: TelemetryFieldKey[] = [
@@ -153,7 +156,7 @@ describe('usePreferenceUpdater', () => {
 
 		const { result } = renderHook(() =>
 			usePreferenceUpdater({
-				dataSource: DataSource.TRACES,
+				sourcePage: SavedviewtypesSourceDTO.traces,
 				mode: PreferenceMode.DIRECT,
 				preferences: mockPreferences,
 				setReSync,
@@ -166,14 +169,15 @@ describe('usePreferenceUpdater', () => {
 		});
 
 		// Should call the traces updater
-		expect(mockUpdateColumns).toHaveBeenCalledWith(
+		expect(mockTracesUpdateColumns).toHaveBeenCalledWith(
 			newColumns,
 			PreferenceMode.DIRECT,
 		);
+		expect(mockLogsUpdateColumns).not.toHaveBeenCalled();
 		expect(setReSync).toHaveBeenCalledWith(true);
 	});
 
-	it('should call the traces updater for updateFormatting with traces dataSource', () => {
+	it('should call the traces updater for updateFormatting with the traces list key', () => {
 		const setReSync = jest.fn();
 		const setSavedViewPreferences = jest.fn();
 		const newFormatting: FormattingOptions = {
@@ -185,7 +189,7 @@ describe('usePreferenceUpdater', () => {
 
 		const { result } = renderHook(() =>
 			usePreferenceUpdater({
-				dataSource: DataSource.TRACES,
+				sourcePage: SavedviewtypesSourceDTO.traces,
 				mode: PreferenceMode.DIRECT,
 				preferences: mockPreferences,
 				setReSync,
@@ -198,10 +202,11 @@ describe('usePreferenceUpdater', () => {
 		});
 
 		// Should call the traces updater
-		expect(mockUpdateFormatting).toHaveBeenCalledWith(
+		expect(mockTracesUpdateFormatting).toHaveBeenCalledWith(
 			newFormatting,
 			PreferenceMode.DIRECT,
 		);
+		expect(mockLogsUpdateFormatting).not.toHaveBeenCalled();
 		expect(setReSync).toHaveBeenCalledWith(true);
 	});
 
@@ -211,7 +216,7 @@ describe('usePreferenceUpdater', () => {
 
 		const { result } = renderHook(() =>
 			usePreferenceUpdater({
-				dataSource: DataSource.LOGS,
+				sourcePage: SavedviewtypesSourceDTO.logs,
 				mode: PreferenceMode.DIRECT,
 				preferences: mockPreferences,
 				setReSync,

@@ -1,6 +1,6 @@
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { renderHook, waitFor } from '@testing-library/react';
 import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
-import { DataSource } from 'types/common/queryBuilder';
 
 import logsLoaderConfig from '../configs/logsLoaderConfig';
 import { usePreferenceLoader } from '../loader/usePreferenceLoader';
@@ -50,7 +50,7 @@ describe('usePreferenceLoader', () => {
 		const setReSync = jest.fn();
 		const { result } = renderHook(() =>
 			usePreferenceLoader({
-				dataSource: DataSource.LOGS,
+				sourcePage: SavedviewtypesSourceDTO.logs,
 				reSync: false,
 				setReSync,
 			}),
@@ -74,7 +74,7 @@ describe('usePreferenceLoader', () => {
 		const setReSync = jest.fn();
 		const { result } = renderHook(() =>
 			usePreferenceLoader({
-				dataSource: DataSource.TRACES,
+				sourcePage: SavedviewtypesSourceDTO.traces,
 				reSync: false,
 				setReSync,
 			}),
@@ -99,7 +99,7 @@ describe('usePreferenceLoader', () => {
 		// We'll unmount quickly to avoid the infinite loop
 		const { unmount } = renderHook(() =>
 			usePreferenceLoader({
-				dataSource: DataSource.LOGS,
+				sourcePage: SavedviewtypesSourceDTO.logs,
 				reSync: true,
 				setReSync,
 			}),
@@ -130,7 +130,7 @@ describe('usePreferenceLoader', () => {
 		const setReSync = jest.fn();
 		const { result } = renderHook(() =>
 			usePreferenceLoader({
-				dataSource: DataSource.LOGS,
+				sourcePage: SavedviewtypesSourceDTO.logs,
 				reSync: true,
 				setReSync,
 			}),
