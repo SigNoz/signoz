@@ -297,6 +297,7 @@ func TestPatchMergePreservesUnpatchedFields(t *testing.T) {
 				"panelType": "graph",
 				"queryType": "promql"
 			},
+			"selectedQueryName": "A",
 			"thresholds": {"kind": "basic", "spec": [{"name": "critical", "target": 90, "matchType": "at_least_once", "op": "above"}]}
 		},
 		"evaluation": {"kind": "rolling", "spec": {"evalWindow": "5m", "frequency": "1m"}},

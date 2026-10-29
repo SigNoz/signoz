@@ -363,7 +363,9 @@ func (r *PostableRule) Validate() error {
 		}
 	}
 
-	if r.RuleCondition.SelectedQuery != "" && r.RuleCondition.CompositeQuery != nil && len(r.RuleCondition.CompositeQuery.Queries) > 0 {
+	if r.RuleCondition.SelectedQuery == "" {
+		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.selectedQueryName: field is required"))
+	} else if r.RuleCondition.CompositeQuery != nil && len(r.RuleCondition.CompositeQuery.Queries) > 0 {
 		found := false
 		for _, query := range r.RuleCondition.CompositeQuery.Queries {
 			if query.GetQueryName() == r.RuleCondition.SelectedQuery {

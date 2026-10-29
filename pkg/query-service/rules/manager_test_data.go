@@ -52,6 +52,7 @@ func ThresholdRuleAtLeastOnceValueAbove(target float64, recovery *float64) rulet
 		Version:       "v5",
 		SchemaVersion: ruletypes.SchemaVersionV2Alpha1,
 		RuleCondition: &ruletypes.RuleCondition{
+			SelectedQuery: "A",
 			CompositeQuery: &ruletypes.AlertCompositeQuery{
 				QueryType: ruletypes.QueryTypeBuilder,
 				Queries: []qbtypes.QueryEnvelope{

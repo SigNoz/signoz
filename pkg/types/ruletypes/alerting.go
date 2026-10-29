@@ -113,7 +113,7 @@ type RuleCondition struct {
 	AbsentFor         uint64               `json:"absentFor,omitempty" description:"How many minutes without data pass before the nodata alert fires. Ignored unless alertOnAbsent is true."`
 	Algorithm         string               `json:"algorithm,omitempty" description:"anomaly_rule only: the anomaly detection algorithm. The supported value is standard."`
 	Seasonality       Seasonality          `json:"seasonality,omitzero" description:"anomaly_rule only: the seasonal period the history is compared against, hourly, daily or weekly."`
-	SelectedQuery     string               `json:"selectedQueryName,omitempty" description:"The name of the query whose result is evaluated, such as A or F1. Must match a query in compositeQuery. When omitted, F1 is used if present, otherwise the enabled query with the highest name."`
+	SelectedQuery     string               `json:"selectedQueryName" required:"true" description:"The name of the query whose result is evaluated, such as A or F1. Must match a query in compositeQuery."`
 	RequireMinPoints  bool                 `json:"requireMinPoints,omitempty" description:"Whether a series is skipped until it has at least requiredNumPoints points in the window. Defaults to false."`
 	RequiredNumPoints int                  `json:"requiredNumPoints,omitempty" description:"The minimum number of points a series needs before it is evaluated. Must be greater than 0 when requireMinPoints is true."`
 	Thresholds        *RuleThresholdData   `json:"thresholds" required:"true" description:"The thresholds to evaluate, as a kind and spec."`

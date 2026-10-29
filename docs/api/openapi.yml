@@ -11599,8 +11599,7 @@ components:
             against, hourly, daily or weekly.'
         selectedQueryName:
           description: The name of the query whose result is evaluated, such as A
-            or F1. Must match a query in compositeQuery. When omitted, F1 is used
-            if present, otherwise the enabled query with the highest name.
+            or F1. Must match a query in compositeQuery.
           type: string
         thresholds:
           allOf:
@@ -11608,6 +11607,7 @@ components:
           description: The thresholds to evaluate, as a kind and spec.
       required:
       - compositeQuery
+      - selectedQueryName
       - thresholds
       type: object
     RuletypesRuleThresholdData:
