@@ -1,0 +1,43 @@
+.stackTrace {
+	margin: 0;
+	max-height: 70vh;
+	overflow-y: auto;
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.line {
+	padding: 0 var(--spacing-2);
+
+	&:first-child {
+		margin-top: 0;
+	}
+}
+
+.header {
+	color: var(--bg-cherry-400);
+	font-weight: 600;
+	margin-top: var(--spacing-4);
+}
+
+.cause {
+	color: var(--bg-amber-400);
+	font-weight: 600;
+	margin-top: var(--spacing-4);
+}
+
+.frame {
+	color: var(--l2-foreground);
+	padding-left: var(--spacing-8);
+	border-left: 2px solid var(--l1-border);
+}
+
+:global(.lightMode) {
+	.header {
+		color: var(--callout-error-title);
+	}
+
+	.cause {
+		color: var(--callout-warning-title);
+	}
+}

@@ -7,6 +7,7 @@ import { Diamond } from '@signozhq/icons';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import EventAttribute from './components/EventAttribute';
+import FormattedStackTrace from './components/FormattedStackTrace';
 import NoData from './NoData/NoData';
 
 import styles from './Events.module.scss';
@@ -129,7 +130,11 @@ function EventsTable(props: IEventsTableProps): JSX.Element {
 				width="80vw"
 				centered
 			>
-				<pre className={styles.fullView}>{modalContent?.content}</pre>
+				{modalContent?.title === 'exception.stacktrace' ? (
+					<FormattedStackTrace stackTrace={modalContent.content} />
+				) : (
+					<pre className={styles.fullView}>{modalContent?.content}</pre>
+				)}
 			</Modal>
 		</div>
 	);
