@@ -12,12 +12,19 @@ import { QueryKey } from 'react-query';
 import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
+import type { ColumnSizingState } from '@tanstack/react-table';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	setColumnSizing,
+	useColumnSizing,
+} from 'components/TanStackTableView/useColumnStore';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import useOptionsMenu from 'container/OptionsMenu/useOptionsMenu';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
 import { getTraceLink, transformSpanRows } from './utils';
 import { getFieldColumn, TracesTableRow } from '../TracesTable/getFieldColumn';
@@ -37,11 +44,7 @@ import { getListOrderBy, setListOrderBy } from 'utils/explorerUtils';
 
 import TraceExplorerControls from '../Controls';
 import { getListViewQuery } from '../explorerUtils';
-import {
-	defaultSelectedColumns,
-	PER_PAGE_OPTIONS,
-	TIMESTAMP_FIELD,
-} from './configs';
+import { PER_PAGE_OPTIONS, TIMESTAMP_FIELD } from './configs';
 import './ListView.styles.scss';
 
 import styles from './ListView.module.scss';
@@ -77,6 +80,11 @@ function ListView({
 		loading: timeRangeUpdateLoading,
 	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
+	const { options, config } = useOptionsMenu({
+		sourcePage: SavedviewtypesSourceDTO.ai_observability,
+	});
+	const selectColumns = options.selectColumns;
+
 	const { queryData: paginationQueryData } = useUrlQueryData<Pagination>(
 		QueryParams.pagination,
 	);
@@ -88,6 +96,17 @@ function ListView({
 		[stagedQuery, orderBy],
 	);
 
+	// Sorted names: stable on reorder, changes on add/remove, which must refetch
+	// since the list query returns only the listed columns.
+	const selectColumnsSignature = useMemo(
+		() =>
+			selectColumns
+				.map((column) => column.name)
+				.sort()
+				.join(','),
+		[selectColumns],
+	);
+
 	const queryKey = useMemo(
 		() => [
 			REACT_QUERY_KEY.GET_QUERY_RANGE,
@@ -97,6 +116,7 @@ function ListView({
 			stagedQuery,
 			panelType,
 			paginationConfig,
+			selectColumnsSignature,
 		],
 		[
 			stagedQuery,
@@ -105,6 +125,7 @@ function ListView({
 			paginationConfig,
 			maxTime,
 			minTime,
+			selectColumnsSignature,
 		],
 	);
 
@@ -123,7 +144,7 @@ function ListView({
 			},
 			tableParams: {
 				pagination: paginationConfig,
-				selectColumns: defaultSelectedColumns,
+				selectColumns,
 			},
 		},
 		ENTITY_VERSION_V5,
@@ -156,13 +177,36 @@ function ListView({
 		[queryTableDataResult],
 	);
 
-	// TODO(ai-explorer): static columns until the preferences framework lands.
 	const columns = useMemo<TableColumnDef<TracesTableRow>[]>(
 		() =>
-			[TIMESTAMP_FIELD, ...defaultSelectedColumns].map((field) =>
-				getFieldColumn(field),
-			),
-		[],
+			[
+				TIMESTAMP_FIELD,
+				...selectColumns.filter((field) => field.name !== TIMESTAMP_FIELD.name),
+			].map((field) => getFieldColumn(field)),
+		[selectColumns],
+	);
+
+	const handleColumnOrderChange = useCallback(
+		(cols: TableColumnDef<TracesTableRow>[]): void => {
+			config?.addColumn?.onReorder(cols.map((column) => column.id));
+		},
+		[config],
+	);
+
+	// The column store keeps widths only; the picked columns live in the slice.
+	const columnSizing = useColumnSizing(
+		LOCALSTORAGE.AI_OBSERVABILITY_LIST_COLUMNS,
+	);
+	const handleColumnSizingChange = useCallback<
+		Dispatch<SetStateAction<ColumnSizingState>>
+	>(
+		(updater) => {
+			setColumnSizing(
+				LOCALSTORAGE.AI_OBSERVABILITY_LIST_COLUMNS,
+				typeof updater === 'function' ? updater(columnSizing) : updater,
+			);
+		},
+		[columnSizing],
 	);
 
 	const rows = useMemo(
@@ -204,14 +248,17 @@ function ListView({
 					isLoading={isFetching}
 					totalCount={rows.length}
 					perPageOptions={PER_PAGE_OPTIONS}
+					config={config}
 				/>
 			</div>
 
 			<TracesTable
 				data={rows}
 				columns={columns}
-				columnStorageKey={LOCALSTORAGE.AI_OBSERVABILITY_LIST_COLUMNS}
-				respectColumnOrder
+				onColumnOrderChange={handleColumnOrderChange}
+				onColumnRemove={config?.addColumn?.onRemove}
+				columnSizing={columnSizing}
+				onColumnSizingChange={handleColumnSizingChange}
 				panelType="LIST"
 				getRowHref={getTraceLink}
 				isLoading={isLoading}
