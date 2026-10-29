@@ -72,16 +72,30 @@ export interface QueryBlock {
 	aggregation: FilterEditor;
 }
 
+export interface QuickFilterValue {
+	checkbox(): Locator;
+	/** Toggles the value; returns the query_range bodies the toggle fired. */
+	toggle(): Promise<V5Body[]>;
+}
+
+/** The explorer's tab, carried in the `panelTypes` param. */
+export type ExplorerView = 'list' | 'graph' | 'table';
+
+export interface OpenOptions {
+	/** Serialised the way the app writes it. */
+	query?: unknown;
+	/** A `compositeQuery` value sent as given, for malformed input. */
+	raw?: string;
+	view?: ExplorerView;
+}
+
 export interface QueryBuilderDriver {
 	/**
-	 * Opens an explorer with an optional raw `compositeQuery` value, sent as
-	 * given. Resolves once the page's own first query_range has answered: the
-	 * explorer rewrites its URL and re-mounts the builder until then, which
-	 * drops keystrokes. Returns the bodies that load fired.
+	 * Resolves once the page's own first query_range has answered: the explorer
+	 * rewrites its URL and re-mounts the builder until then, which drops
+	 * keystrokes. Returns the bodies that load fired.
 	 */
-	openExplorer(path: string, rawCompositeQuery?: string): Promise<V5Body[]>;
-	/** Opens an explorer with `query` serialised the way the app writes it. */
-	openExplorerWith(path: string, query: unknown): Promise<V5Body[]>;
+	openExplorer(path: string, options?: OpenOptions): Promise<V5Body[]>;
 	query(name: string): QueryBlock;
 	runButton(): Locator;
 	/** Clicks Run; returns every query_range body the click fired. */
@@ -93,6 +107,8 @@ export interface QueryBuilderDriver {
 	 * previous render — a gap no person can produce.
 	 */
 	runShortcut(): Promise<V5Body[]>;
+	/** A value in an explorer's checkbox quick filter, by its header title. */
+	quickFilter(title: string, value: string): QuickFilterValue;
 	/** The spec of query `name` in the first body that has it. */
 	spec(bodies: V5Body[], name: string): V5Query['spec'];
 	/** Every query_range body sent since the test started. */
@@ -156,8 +172,9 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 		}
 	});
 	const consoleWatch = watchConsole(page, {
-		// ANTLR reports every partial expression on console.error.
-		ignore: ['line 1:'],
+		// ANTLR reports every partial expression on console.error, prefixed
+		// with its position (`line 1:14 ...`).
+		ignore: ['line 1:', 'line 2:', 'line 3:'],
 	});
 
 	const firedBy = async (action: () => Promise<void>): Promise<V5Body[]> => {
@@ -169,20 +186,27 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 		return bodies.slice(before);
 	};
 
-	const open = async (path: string, raw?: string): Promise<V5Body[]> => {
-		await dismissQuickFiltersAnnouncement(page);
-		const query = raw === undefined ? '' : `&compositeQuery=${raw}`;
-		const fired = await firedBy(async () => {
-			await page.goto(`${path}?relativeTime=${RELATIVE_TIME}${query}`);
-		});
-		await expect(qb.query('A').filter.content()).toBeVisible();
-		return fired;
-	};
-
 	const qb: QueryBuilderDriver = {
-		openExplorer: open,
-		openExplorerWith: (path, query) =>
-			open(path, encodeURIComponent(JSON.stringify(query))),
+		async openExplorer(path, { query, raw, view } = {}) {
+			await dismissQuickFiltersAnnouncement(page);
+			const params = [`relativeTime=${RELATIVE_TIME}`];
+			if (view) {
+				params.push(`panelTypes=${encodeURIComponent(JSON.stringify(view))}`);
+			}
+			const composite =
+				raw ??
+				(query === undefined
+					? undefined
+					: encodeURIComponent(JSON.stringify(query)));
+			if (composite !== undefined) {
+				params.push(`compositeQuery=${composite}`);
+			}
+			const fired = await firedBy(async () => {
+				await page.goto(`${path}?${params.join('&')}`);
+			});
+			await expect(qb.query('A').filter.content()).toBeVisible();
+			return fired;
+		},
 		query(name) {
 			const root = (): Locator => page.getByTestId(`query-${name}`);
 			return {
@@ -210,6 +234,14 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 					}),
 			);
 			return firedBy(() => page.keyboard.press('ControlOrMeta+Enter'));
+		},
+		quickFilter(title, value) {
+			const checkbox = (): Locator =>
+				page.getByTestId(`checkbox-${title}-${value}`);
+			return {
+				checkbox,
+				toggle: () => firedBy(() => checkbox().click()),
+			};
 		},
 		spec(fired, name) {
 			for (const body of fired) {
