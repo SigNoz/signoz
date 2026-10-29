@@ -21,40 +21,30 @@ describe('useGetSavedViewParams', () => {
 
 		const { result } = renderHook(() => useGetSavedViewParams());
 
-		expect(result.current).toStrictEqual({ viewName: '', viewKey: '' });
+		expect(result.current).toStrictEqual({ viewKey: '' });
 	});
 
 	it('parses JSON-stringified values', () => {
-		setSearch(
-			`viewName=${encodeURIComponent(
-				JSON.stringify('Hindsight'),
-			)}&viewKey=${encodeURIComponent(JSON.stringify('abc-123'))}`,
-		);
+		setSearch(`viewKey=${encodeURIComponent(JSON.stringify('abc-123'))}`);
 
 		const { result } = renderHook(() => useGetSavedViewParams());
 
-		expect(result.current).toStrictEqual({
-			viewName: 'Hindsight',
-			viewKey: 'abc-123',
-		});
+		expect(result.current).toStrictEqual({ viewKey: 'abc-123' });
 	});
 
 	it('falls back to the raw string when a value is not valid JSON', () => {
-		setSearch('viewName=Hindsight&viewKey=some-uuid-value');
+		setSearch('viewKey=some-uuid-value');
 
 		const { result } = renderHook(() => useGetSavedViewParams());
 
-		expect(result.current).toStrictEqual({
-			viewName: 'Hindsight',
-			viewKey: 'some-uuid-value',
-		});
+		expect(result.current).toStrictEqual({ viewKey: 'some-uuid-value' });
 	});
 
 	it('does not throw and keeps the raw string for non-string JSON', () => {
-		setSearch('viewName=123');
+		setSearch('viewKey=123');
 
 		const { result } = renderHook(() => useGetSavedViewParams());
 
-		expect(result.current).toStrictEqual({ viewName: '123', viewKey: '' });
+		expect(result.current).toStrictEqual({ viewKey: '123' });
 	});
 });

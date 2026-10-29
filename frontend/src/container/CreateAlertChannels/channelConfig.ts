@@ -18,8 +18,17 @@ import {
 import { omit, pick } from 'lodash-es';
 import { omitBlank } from 'utils/omitBlank';
 
-import { ChannelFormValues, ChannelKind, ChannelSpecFormValues } from './types';
-import { canonicalJiraReopenDuration, filledRows } from './utils';
+import {
+	ChannelFormValues,
+	ChannelKind,
+	ChannelSpecFormValues,
+	WebhookAuth,
+} from './types';
+import {
+	canonicalJiraReopenDuration,
+	filledRows,
+	webhookAuthOf,
+} from './utils';
 
 const SPEC_FIELDS = {
 	[ChannelKind.slack]: [
@@ -208,6 +217,17 @@ export function toChannelConfig(
 		).map((action) =>
 			action.confirm?.text?.trim() ? action : omit(action, 'confirm'),
 		);
+	}
+
+	if (kind === ChannelKind.webhook) {
+		const auth = webhookAuthOf(values);
+		if (auth !== WebhookAuth.basic) {
+			delete picked.username;
+			delete picked.password;
+		}
+		if (auth !== WebhookAuth.bearer) {
+			delete picked.bearerToken;
+		}
 	}
 
 	const spec: Record<string, unknown> = omitBlank(picked);

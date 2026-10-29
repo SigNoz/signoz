@@ -13,10 +13,7 @@ import APIError from 'types/api/error';
 import { isModifierKeyPressed } from 'utils/app';
 
 import { useCreateAlertState } from '../context';
-import {
-	buildCreateThresholdAlertRulePayload,
-	validateCreateAlertState,
-} from './utils';
+import { buildCreateAlertRulePayload, validateCreateAlertState } from './utils';
 
 import './styles.scss';
 import {
@@ -84,7 +81,7 @@ function Footer(): JSX.Element {
 	);
 
 	const handleTestNotification = useCallback((): void => {
-		const payload = buildCreateThresholdAlertRulePayload({
+		const payload = buildCreateAlertRulePayload({
 			alertType,
 			basicAlertState,
 			thresholdState,
@@ -117,11 +114,12 @@ function Footer(): JSX.Element {
 		notificationSettings,
 		currentQuery,
 		testAlertRule,
+		handleApiError,
 	]);
 
 	const queryClient = useQueryClient();
 	const handleSaveAlert = useCallback((): void => {
-		const payload = buildCreateThresholdAlertRulePayload({
+		const payload = buildCreateAlertRulePayload({
 			alertType,
 			basicAlertState,
 			thresholdState,
@@ -173,6 +171,7 @@ function Footer(): JSX.Element {
 		createAlertRule,
 		safeNavigate,
 		handleApiError,
+		queryClient,
 	]);
 
 	const isSavingAlertRule = isCreatingAlertRule || isUpdatingAlertRule;

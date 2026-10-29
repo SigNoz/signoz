@@ -45,14 +45,17 @@ const CASES: PrefillCase[] = [
 			url: 'https://example.com/hook',
 			username: 'hook-user',
 			password: 'hook-pass',
-			bearerToken: 'hook-token',
 		},
 		fields: [
 			['webhook-url-textbox', 'https://example.com/hook'],
 			['webhook-username-textbox', 'hook-user'],
 			['webhook-password-textbox', 'hook-pass'],
-			['webhook-bearer-token-textbox', 'hook-token'],
 		],
+	},
+	{
+		kind: 'webhook',
+		spec: { url: 'https://example.com/hook', bearerToken: 'hook-token' },
+		fields: [['webhook-bearer-token-textbox', 'hook-token']],
 	},
 	{
 		kind: 'email',
