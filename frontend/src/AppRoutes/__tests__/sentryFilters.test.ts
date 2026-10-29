@@ -1,6 +1,7 @@
-import type { ErrorEvent } from '@sentry/react';
+import type { ErrorEvent, StackFrame } from '@sentry/react';
 
 import {
+	hasNoAppFrames,
 	isExternalIntegrationError,
 	SENTRY_IGNORE_ERRORS,
 } from '../sentryFilters';
@@ -72,6 +73,57 @@ describe('isExternalIntegrationError', () => {
 
 	it('keeps an error without a stack trace', () => {
 		expect(isExternalIntegrationError({ type: undefined })).toBe(false);
+	});
+});
+
+describe('hasNoAppFrames', () => {
+	const PAGE_URL = 'https://example.us.signoz.cloud/dashboard/01a081e1';
+
+	function eventWithStackFrames(frames: StackFrame[]): ErrorEvent {
+		return {
+			type: undefined,
+			exception: {
+				values: [{ type: 'SyntaxError', stacktrace: { frames } }],
+			},
+		};
+	}
+
+	it('drops a script appended to the page', () => {
+		expect(
+			hasNoAppFrames(
+				eventWithStackFrames([
+					{ filename: PAGE_URL, lineno: 1, colno: 30, function: 'global code' },
+					{ filename: '[native code]', function: 'eval' },
+					{ filename: '[native code]', function: 'append' },
+				]),
+			),
+		).toBe(true);
+	});
+
+	it('drops a browser extension error', () => {
+		expect(
+			hasNoAppFrames(
+				eventWithStackFrames([
+					{ filename: 'chrome-extension://abc/content.js', lineno: 4, colno: 12 },
+				]),
+			),
+		).toBe(true);
+	});
+
+	it('keeps an error with a frame from our bundle', () => {
+		expect(hasNoAppFrames(eventWithFrames(PAGE_URL, APP_BUNDLE))).toBe(false);
+	});
+
+	it('keeps an error without a stack trace', () => {
+		expect(hasNoAppFrames({ type: undefined })).toBe(false);
+	});
+
+	it('keeps an error whose frames have no position', () => {
+		expect(
+			hasNoAppFrames(
+				eventWithStackFrames([{ filename: '[native code]', function: 'eval' }]),
+			),
+		).toBe(false);
 	});
 });
 

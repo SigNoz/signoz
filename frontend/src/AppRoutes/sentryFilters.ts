@@ -14,6 +14,23 @@ export const SENTRY_IGNORE_ERRORS = [
 	/Called on script loaded before session recording is available/,
 ];
 
+const APP_ASSETS_PATH = '/assets/';
+
+// Frames without a position are `[native code]`, which says nothing about the
+// script that threw.
+export function hasNoAppFrames(event: ErrorEvent): boolean {
+	const frames = (event.exception?.values ?? [])
+		.flatMap((exception) => exception.stacktrace?.frames ?? [])
+		.filter(
+			(frame) => frame.filename && (frame.lineno != null || frame.colno != null),
+		);
+
+	return (
+		frames.length > 0 &&
+		!frames.some((frame) => frame.filename?.includes(APP_ASSETS_PATH))
+	);
+}
+
 // PostHog's lazy recorder, the Pylon widget and Appcues.
 const EXTERNAL_SCRIPT_URLS = [
 	/^https?:\/\/[^/]+\.posthog\.com\//,

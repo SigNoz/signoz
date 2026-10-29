@@ -22,6 +22,7 @@ import { ChatSupportState, useChatSupport } from 'hooks/useChatSupport';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { StatusCodes } from 'http-status-codes';
+import { IS_PROD } from 'lib/env';
 import history from 'lib/history';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import posthog from 'posthog-js';
@@ -38,6 +39,7 @@ import defaultRoutes, {
 	SUPPORT_ROUTE,
 } from './routes';
 import {
+	hasNoAppFrames,
 	isExternalIntegrationError,
 	SENTRY_IGNORE_ERRORS,
 } from './sentryFilters';
@@ -350,6 +352,11 @@ function App(): JSX.Element {
 						}
 
 						if (isExternalIntegrationError(event)) {
+							return null;
+						}
+
+						// Dev serves source from /src/, so every frame would look foreign there.
+						if (IS_PROD && hasNoAppFrames(event)) {
 							return null;
 						}
 
