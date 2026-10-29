@@ -94,6 +94,19 @@ export interface QueryBlock {
 	step(): Locator;
 	metric: MetricControls;
 	addOns: AddOns;
+	/** The "…" menu: offered only where several queries are allowed. */
+	actions(): Locator;
+	clone(): Promise<void>;
+	delete(): Promise<void>;
+	toggleVisibility(): Promise<void>;
+	collapse(): Promise<void>;
+}
+
+export interface FormulaBlock {
+	root(): Locator;
+	expression(): Locator;
+	legend(): Locator;
+	delete(): Promise<void>;
 }
 
 /** `query-add-on-<field>` toggle values: a documented DOM contract. */
@@ -121,6 +134,11 @@ export interface AddOns {
 	having: FilterEditor;
 	limit(): Locator;
 	legend(): Locator;
+	reduceTo: {
+		/** The selected value. */
+		value(): Locator;
+		set(label: string): Promise<void>;
+	};
 }
 
 /** The metrics aggregation section: metric picker plus time/space selects. */
@@ -163,6 +181,10 @@ export interface QueryBuilderDriver {
 	query(name: string): QueryBlock;
 	/** Adds the next query (B, C, …) and waits for its block. */
 	addQuery(name: string): Promise<QueryBlock>;
+	/** Builder query names, top to bottom. */
+	queryNames(): Promise<string[]>;
+	formula(name: string): FormulaBlock;
+	addFormula(name: string): Promise<FormulaBlock>;
 	traceOperator: {
 		root(): Locator;
 		/** "Add Trace Matching": offered on traces hosts that allow it. */
@@ -261,6 +283,10 @@ async function openSelect(page: Page, select: Locator): Promise<Locator> {
 /** antd renders select options with trailing whitespace ("Sum "). */
 const exactly = (label: string): RegExp => new RegExp(`^\\s*${label}\\s*$`);
 
+/** A reduce-to option or value by its operator: "Sum of values in timeframe". */
+export const reduceToLabel = (operator: string): RegExp =>
+	new RegExp(`^\\s*${operator} of values`);
+
 const ADD_ON_CONTENT: Record<AddOnField, string> = {
 	group_by: 'group-by-content',
 	having: 'having-content',
@@ -313,6 +339,16 @@ function addOnsAt(page: Page, root: () => Locator): AddOns {
 		having: editorAt(page, () => root().getByTestId('having-editor')),
 		limit: () => content('limit').getByTestId('input-Limit'),
 		legend: () => content('legend_format').getByTestId('input-Legend format'),
+		reduceTo: {
+			value: () =>
+				root().getByTestId('reduce-to').locator('.ant-select-selection-item'),
+			// Labels read "<Op> of values in timeframe"; matched on the operator.
+			async set(label) {
+				const options = await openSelect(page, root().getByTestId('reduce-to'));
+				await options.filter({ hasText: reduceToLabel(label) }).click();
+				await expect(addOns.reduceTo.value()).toHaveText(reduceToLabel(label));
+			},
+		},
 	};
 	return addOns;
 }
@@ -424,6 +460,18 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 				step: () => root().getByTestId('input-Seconds'),
 				metric: metricAt(page, root, name.charCodeAt(0) - 'A'.charCodeAt(0)),
 				addOns: addOnsAt(page, root),
+				actions: () => root().getByTestId('query-actions'),
+				async clone() {
+					await root().getByTestId('query-actions').click();
+					await page.getByTestId('query-actions-item-clone-query').click();
+				},
+				async delete() {
+					await root().getByTestId('query-actions').click();
+					await page.getByTestId('query-actions-item-delete-query').click();
+					await expect(root()).toHaveCount(0);
+				},
+				toggleVisibility: () => root().getByTestId('qb-entity-visibility').click(),
+				collapse: () => root().getByTestId('qb-entity-collapse').click(),
 			};
 		},
 		async addQuery(name) {
@@ -431,6 +479,31 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 			const block = qb.query(name);
 			await expect(block.filter.content()).toBeVisible();
 			return block;
+		},
+		queryNames: () =>
+			page.locator('[data-testid^="query-"]').evaluateAll((nodes) =>
+				nodes
+					.map((node) => node.getAttribute('data-testid') ?? '')
+					.filter((id) => /^query-[A-Z]$/.test(id))
+					.map((id) => id.slice('query-'.length)),
+			),
+		formula(name) {
+			const root = (): Locator => page.getByTestId(`formula-${name}`);
+			return {
+				root,
+				expression: () => root().getByTestId('formula-expression'),
+				legend: () => root().getByTestId('formula-legend'),
+				async delete() {
+					await root().getByTestId('qb-entity-delete').click();
+					await expect(root()).toHaveCount(0);
+				},
+			};
+		},
+		async addFormula(name) {
+			await page.getByTestId('add-formula-button').click();
+			const formula = qb.formula(name);
+			await expect(formula.expression()).toBeVisible();
+			return formula;
 		},
 		traceOperator: {
 			root: () => page.getByTestId('trace-operator'),

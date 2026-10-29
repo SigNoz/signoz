@@ -48,11 +48,14 @@ test.describe('Query builder — filter editor', () => {
 		const filter = qb.query('A').filter;
 
 		await filter.type('severity_te');
+		await filter.openSuggestions();
 		await filter.suggestion('severity_text').first().click();
 		await expect.poll(() => filter.expression()).toMatch(/^severity_text\s*$/);
 
+		await filter.openSuggestions();
 		await expect(filter.suggestion(/^=/).first()).toBeVisible();
 		await filter.append('= ');
+		await filter.openSuggestions();
 		await filter.suggestion('ERROR').first().click();
 		await expect
 			.poll(() => filter.expression())
