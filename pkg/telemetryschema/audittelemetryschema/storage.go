@@ -129,7 +129,7 @@ func absentReads(column *schema.Column) qbtypes.Absent {
 // Fallback answers a column name with the column. Audit has no attribute
 // synthesis, so any other unknown key stays unresolved and the caller
 // errors.
-func (m *storage) Fallback(_ context.Context, _ qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, _ any) ([]*telemetrytypes.LogicalField, error) {
+func (m *storage) Fallback(_ context.Context, _ qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, _ any, _ []*telemetrytypes.EvolutionEntry) ([]*telemetrytypes.LogicalField, error) {
 	schemaColumn, ok := auditLogColumns[key.Name]
 	if !ok {
 		return nil, nil

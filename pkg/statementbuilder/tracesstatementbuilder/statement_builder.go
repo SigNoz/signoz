@@ -385,7 +385,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 
 	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end)
 	for i, field := range query.SelectFields {
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, querybuilder.WithBaseColumnEvolutions(&field, baseColumnEvolutions), telemetrytypes.FieldDataTypeUnspecified, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &field, telemetrytypes.FieldDataTypeUnspecified, keys, baseColumnEvolutions)
 		if err != nil {
 			return nil, err
 		}
@@ -409,7 +409,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 
 	// Add order by
 	for _, orderBy := range query.Order {
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, querybuilder.WithBaseColumnEvolutions(&orderBy.Key.TelemetryFieldKey, baseColumnEvolutions), telemetrytypes.FieldDataTypeUnspecified, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys, baseColumnEvolutions)
 		if err != nil {
 			return nil, err
 		}
@@ -603,7 +603,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end)
 	for i, gb := range query.GroupBy {
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, querybuilder.WithBaseColumnEvolutions(&gb.TelemetryFieldKey, baseColumnEvolutions), telemetrytypes.FieldDataTypeString, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys, baseColumnEvolutions)
 		if err != nil {
 			return nil, err
 		}
@@ -772,7 +772,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end)
 	for i, gb := range query.GroupBy {
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, querybuilder.WithBaseColumnEvolutions(&gb.TelemetryFieldKey, baseColumnEvolutions), telemetrytypes.FieldDataTypeString, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys, baseColumnEvolutions)
 		if err != nil {
 			return nil, err
 		}

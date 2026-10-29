@@ -28,7 +28,7 @@ func newPredicateResolver(storage qbtypes.Storage, keys map[string][]*telemetryt
 // ConditionFor returns a boolean predicate for key (materialized column when
 // present, else map access), args bound into sb.
 func (r *predicateResolver) ConditionFor(ctx context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) (string, error) {
-	conds, _, err := querybuilder.Conditions(ctx, q, r.storage, querybuilder.WithBaseColumnEvolutions(key, r.baseColumnEvolutions), op, value, r.keys, false, r.sb)
+	conds, _, err := querybuilder.Conditions(ctx, q, r.storage, key, op, value, r.keys, r.baseColumnEvolutions, false, r.sb)
 	if err != nil {
 		return "", err
 	}

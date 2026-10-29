@@ -139,7 +139,7 @@ func TestAttributeJSONFlagOffParity(t *testing.T) {
 		for _, testCase := range testCases {
 			t.Run(windowName+"_"+testCase.name, func(t *testing.T) {
 				sb := sqlbuilder.NewSelectBuilder()
-				conds, _, err := querybuilder.Conditions(ctx, q, storage, &key, testCase.operator, testCase.value, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, false, sb)
+				conds, _, err := querybuilder.Conditions(ctx, q, storage, &key, testCase.operator, testCase.value, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, nil, false, sb)
 				require.NoError(t, err)
 				sb.Where(conds...)
 				sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -247,7 +247,7 @@ func TestConditionForAttributeJSON(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			sb := sqlbuilder.NewSelectBuilder()
-			conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1], TraceAttrsJSONOn: true}, storage, &tc.key, tc.operator, tc.value, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}, false, sb)
+			conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1], TraceAttrsJSONOn: true}, storage, &tc.key, tc.operator, tc.value, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}, nil, false, sb)
 			require.NoError(t, err)
 			sb.Where(conds...)
 			sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -266,7 +266,7 @@ func TestConditionForAttributeJSONNotExistsDualRead(t *testing.T) {
 
 	key := attrKey("user.id", telemetrytypes.FieldDataTypeString, evo)
 	sb := sqlbuilder.NewSelectBuilder()
-	conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: attrWindowStraddle[0], EndNs: attrWindowStraddle[1], TraceAttrsJSONOn: true}, storage, &key, qbtypes.FilterOperatorNotExists, nil, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, false, sb)
+	conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: attrWindowStraddle[0], EndNs: attrWindowStraddle[1], TraceAttrsJSONOn: true}, storage, &key, qbtypes.FilterOperatorNotExists, nil, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, nil, false, sb)
 	require.NoError(t, err)
 	sb.Where(conds...)
 	sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -286,14 +286,14 @@ func TestColumnExpressionForAttributeJSON(t *testing.T) {
 
 	t.Run("group by string", func(t *testing.T) {
 		key := attrKey("user.id", telemetrytypes.FieldDataTypeString, evo)
-		got, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1], TraceAttrsJSONOn: true}, storage, &key, telemetrytypes.FieldDataTypeString, nil)
+		got, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1], TraceAttrsJSONOn: true}, storage, &key, telemetrytypes.FieldDataTypeString, nil, evo)
 		require.NoError(t, err)
 		assert.Equal(t, "multiIf(attributes.`user.id` IS NOT NULL, attributes.`user.id`::String, attributes.`attribute.user.id` IS NOT NULL, attributes.`attribute.user.id`::String, NULL)", got)
 	})
 
 	t.Run("aggregation numeric", func(t *testing.T) {
 		key := attrKey("latency", telemetrytypes.FieldDataTypeNumber, evo)
-		got, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1], TraceAttrsJSONOn: true}, storage, &key, telemetrytypes.FieldDataTypeFloat64, nil)
+		got, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1], TraceAttrsJSONOn: true}, storage, &key, telemetrytypes.FieldDataTypeFloat64, nil, evo)
 		require.NoError(t, err)
 		assert.Equal(t, "multiIf(toFloat64OrNull(attributes.`latency`::String) IS NOT NULL, toFloat64OrNull(attributes.`latency`::String), toFloat64OrNull(attributes.`attribute.latency`::String) IS NOT NULL, toFloat64OrNull(attributes.`attribute.latency`::String), NULL)", got)
 	})
@@ -309,7 +309,7 @@ func TestAttributeJSONNoAmbiguityWarning(t *testing.T) {
 
 	key := attrKey("user.id", telemetrytypes.FieldDataTypeString, evo)
 	sb := sqlbuilder.NewSelectBuilder()
-	_, warnings, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1], TraceAttrsJSONOn: true}, storage, &key, qbtypes.FilterOperatorEqual, "x", map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, false, sb)
+	_, warnings, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1], TraceAttrsJSONOn: true}, storage, &key, qbtypes.FilterOperatorEqual, "x", map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, nil, false, sb)
 	require.NoError(t, err)
 	assert.Empty(t, warnings, "a plain attribute filter must not emit an ambiguity warning")
 }
@@ -331,7 +331,7 @@ func TestConditionForAttributeJSONTypeCollision(t *testing.T) {
 
 	ref := attrKey("http.status_code", telemetrytypes.FieldDataTypeUnspecified, nil)
 	sb := sqlbuilder.NewSelectBuilder()
-	conds, warnings, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1], TraceAttrsJSONOn: true}, storage, &ref, qbtypes.FilterOperatorEqual, float64(200), fieldKeys, false, sb)
+	conds, warnings, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1], TraceAttrsJSONOn: true}, storage, &ref, qbtypes.FilterOperatorEqual, float64(200), fieldKeys, nil, false, sb)
 	require.NoError(t, err)
 	require.Len(t, conds, 2, "a colliding name must build one condition per data type")
 
@@ -360,7 +360,7 @@ func TestColumnExpressionForAttributeJSONTypeCollision(t *testing.T) {
 	}
 
 	ref := attrKey("http.status_code", telemetrytypes.FieldDataTypeUnspecified, nil)
-	got, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1], TraceAttrsJSONOn: true}, storage, &ref, telemetrytypes.FieldDataTypeString, fieldKeys)
+	got, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1], TraceAttrsJSONOn: true}, storage, &ref, telemetrytypes.FieldDataTypeString, fieldKeys, nil)
 	require.NoError(t, err)
 	assert.Equal(t,
 		"multiIf(attributes.`http.status_code` IS NOT NULL, attributes.`http.status_code`::String, toFloat64OrNull(attributes.`http.status_code`::String) IS NOT NULL, toString(toFloat64OrNull(attributes.`http.status_code`::String)), NULL)",
@@ -384,7 +384,7 @@ func TestColumnExpressionForAttributeJSONTypeCollisionNumericAgg(t *testing.T) {
 	}
 
 	ref := attrKey("http.status_code", telemetrytypes.FieldDataTypeUnspecified, nil)
-	got, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1], TraceAttrsJSONOn: true}, storage, &ref, telemetrytypes.FieldDataTypeFloat64, fieldKeys)
+	got, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1], TraceAttrsJSONOn: true}, storage, &ref, telemetrytypes.FieldDataTypeFloat64, fieldKeys, nil)
 	require.NoError(t, err)
 	assert.Equal(t,
 		"multiIf(toFloat64OrNull(attributes.`http.status_code`::String) IS NOT NULL, toFloat64OrNull(attributes.`http.status_code`::String), attributes.`http.status_code` IS NOT NULL, toFloat64OrNull(attributes.`http.status_code`::String), NULL)",
@@ -407,7 +407,7 @@ func TestConditionForAttributeMapTypeCollisionParity(t *testing.T) {
 
 	ref := attrKey("http.status_code", telemetrytypes.FieldDataTypeUnspecified, nil)
 	sb := sqlbuilder.NewSelectBuilder()
-	conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: attrWindowBefore[0], EndNs: attrWindowBefore[1], TraceAttrsJSONOn: true}, storage, &ref, qbtypes.FilterOperatorEqual, float64(200), fieldKeys, false, sb)
+	conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: attrWindowBefore[0], EndNs: attrWindowBefore[1], TraceAttrsJSONOn: true}, storage, &ref, qbtypes.FilterOperatorEqual, float64(200), fieldKeys, nil, false, sb)
 	require.NoError(t, err)
 	require.Len(t, conds, 2, "a colliding name must build one condition per data type")
 
@@ -446,7 +446,7 @@ func TestConditionForAttributeJSONNegativeOperatorParity(t *testing.T) {
 	build := func(t *testing.T, key telemetrytypes.TelemetryFieldKey, window [2]uint64, op qbtypes.FilterOperator, value any) string {
 		t.Helper()
 		sb := sqlbuilder.NewSelectBuilder()
-		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: window[0], EndNs: window[1], TraceAttrsJSONOn: true}, storage, &key, op, value, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, false, sb)
+		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: window[0], EndNs: window[1], TraceAttrsJSONOn: true}, storage, &key, op, value, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, nil, false, sb)
 		require.NoError(t, err)
 		sb.Where(conds...)
 		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -526,7 +526,7 @@ func TestConditionForAttributeJSONStraddleAbsentKeyExclusion(t *testing.T) {
 	build := func(t *testing.T, key telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) string {
 		t.Helper()
 		sb := sqlbuilder.NewSelectBuilder()
-		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: attrWindowStraddle[0], EndNs: attrWindowStraddle[1], TraceAttrsJSONOn: true}, storage, &key, op, value, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, false, sb)
+		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: attrWindowStraddle[0], EndNs: attrWindowStraddle[1], TraceAttrsJSONOn: true}, storage, &key, op, value, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, nil, false, sb)
 		require.NoError(t, err)
 		sb.Where(conds...)
 		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -560,7 +560,7 @@ func TestConditionForAttributeJSONUnknownKey(t *testing.T) {
 	build := func(t *testing.T, q qbtypes.QueryInfo, evolutions []*telemetrytypes.EvolutionEntry, key telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) string {
 		t.Helper()
 		sb := sqlbuilder.NewSelectBuilder()
-		conds, _, err := querybuilder.Conditions(ctx, q, storage, querybuilder.WithBaseColumnEvolutions(&key, evolutions), op, value, map[string][]*telemetrytypes.TelemetryFieldKey{}, false, sb)
+		conds, _, err := querybuilder.Conditions(ctx, q, storage, &key, op, value, map[string][]*telemetrytypes.TelemetryFieldKey{}, evolutions, false, sb)
 		require.NoError(t, err)
 		sb.Where(conds...)
 		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)

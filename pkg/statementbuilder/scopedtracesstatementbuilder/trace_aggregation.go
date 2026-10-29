@@ -488,7 +488,7 @@ func (b *scopedTraceStatementBuilder) resolveGroupColumns(ctx context.Context, q
 	}
 	out := make([]groupColumn, 0, len(groupBy))
 	for i := range groupBy {
-		expr, err := querybuilder.ResolveColumn(ctx, q, b.storage, querybuilder.WithBaseColumnEvolutions(&groupBy[i].TelemetryFieldKey, baseColumnEvolutions), telemetrytypes.FieldDataTypeString, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, q, b.storage, &groupBy[i].TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys, baseColumnEvolutions)
 		if err != nil {
 			return nil, err
 		}

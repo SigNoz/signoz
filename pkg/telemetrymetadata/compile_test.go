@@ -198,7 +198,7 @@ func TestConditionFor(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &tc.key, tc.operator, tc.value, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}, false, sb)
+			cond, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &tc.key, tc.operator, tc.value, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}, nil, false, sb)
 			sb.Where(cond...)
 
 			if tc.expectedError != nil {

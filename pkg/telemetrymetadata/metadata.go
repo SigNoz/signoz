@@ -72,7 +72,7 @@ type telemetryMetaStore struct {
 	fl                 flagger.Flagger
 	jsonColumnMetadata map[telemetrytypes.Signal]map[telemetrytypes.FieldContext]telemetrytypes.JSONColumnMetadata
 
-	baseColumnEvolutionsMu sync.Mutex
+	baseColumnEvolutionsMu sync.RWMutex
 	baseColumnEvolutions   map[string][]*telemetrytypes.EvolutionEntry
 }
 
@@ -2452,10 +2452,10 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporalityAndType(ctx conte
 func (t *telemetryMetaStore) GetBaseColumnEvolutions(ctx context.Context, signal telemetrytypes.Signal, fieldContext telemetrytypes.FieldContext) ([]*telemetrytypes.EvolutionEntry, error) {
 	selector := &telemetrytypes.EvolutionSelector{Signal: signal, FieldContext: fieldContext, FieldName: telemetrytypes.EvolutionFieldNameAll}
 
-	t.baseColumnEvolutionsMu.Lock()
-	defer t.baseColumnEvolutionsMu.Unlock()
-
-	if entries, ok := t.baseColumnEvolutions[selector.QualifiedName()]; ok {
+	t.baseColumnEvolutionsMu.RLock()
+	entries, ok := t.baseColumnEvolutions[selector.QualifiedName()]
+	t.baseColumnEvolutionsMu.RUnlock()
+	if ok {
 		return entries, nil
 	}
 
@@ -2463,7 +2463,10 @@ func (t *telemetryMetaStore) GetBaseColumnEvolutions(ctx context.Context, signal
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch the base column evolutions of %s", selector.QualifiedName())
 	}
+
+	t.baseColumnEvolutionsMu.Lock()
 	t.baseColumnEvolutions[selector.QualifiedName()] = entries
+	t.baseColumnEvolutionsMu.Unlock()
 	return entries, nil
 }
 
@@ -2739,7 +2742,7 @@ func (t *telemetryMetaStore) containsConditions(ctx context.Context, q qbtypes.Q
 			FieldDataType: dataType,
 		}}
 	}
-	conds, _, err := querybuilder.Conditions(ctx, q, t.storage, key, qbtypes.FilterOperatorContains, value, fieldKeys, false, sb)
+	conds, _, err := querybuilder.Conditions(ctx, q, t.storage, key, qbtypes.FilterOperatorContains, value, fieldKeys, nil, false, sb)
 	return conds, err
 }
 

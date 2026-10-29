@@ -87,7 +87,7 @@ func (s *aliasStorage) Read(_ context.Context, _ qbtypes.QueryInfo, key *telemet
 	return qbtypes.Read{SQL: quoteAlias(key.Name), Presence: "true", Absence: "false", WhenAbsent: qbtypes.AlwaysPresent}, nil
 }
 
-func (s *aliasStorage) Fallback(_ context.Context, _ qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, _ any) ([]*telemetrytypes.LogicalField, error) {
+func (s *aliasStorage) Fallback(_ context.Context, _ qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, _ any, _ []*telemetrytypes.EvolutionEntry) ([]*telemetrytypes.LogicalField, error) {
 	return nil, errors.NewInvalidInputf(errors.CodeInvalidInput,
 		"aggregate %q cannot be used in a trace-level filter; filterable aggregates: %s",
 		key.Name, strings.Join(sortedAliases(s.allowed), ", "))
