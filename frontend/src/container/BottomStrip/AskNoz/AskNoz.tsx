@@ -1,8 +1,15 @@
+import { useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
+import logEvent from 'api/common/logEvent';
 import Noz from 'components/Noz/Noz';
 import { NOZ_TOOLTIP_TITLE } from 'components/Noz/Noz.constants';
+import {
+	AIAssistantEvents,
+	AIAssistantOpenSource,
+} from 'container/AIAssistant/events';
+import { normalizePage } from 'container/AIAssistant/hooks/useAIAssistantAnalyticsContext';
 import { selectPendingUserInputStreamCount } from 'container/AIAssistant/store/pendingInputSelectors';
 import {
 	openAIAssistant,
@@ -37,6 +44,14 @@ function AskNoz(): JSX.Element | null {
 	// The drawer does not render on the Noz full page, so the button would be inert.
 	const isAIAssistantPage = pathname.startsWith(ROUTES.AI_ASSISTANT_BASE);
 
+	const handleOpen = useCallback((): void => {
+		void logEvent(AIAssistantEvents.Opened, {
+			source: AIAssistantOpenSource.BottomStrip,
+			currentPage: normalizePage(pathname),
+		});
+		openAIAssistant();
+	}, [pathname]);
+
 	if (!isAIAssistantEnabled || isDrawerOpen || isAIAssistantPage) {
 		return null;
 	}
@@ -57,7 +72,7 @@ function AskNoz(): JSX.Element | null {
 						color="secondary"
 						size="sm"
 						prefix={<Noz size={16} />}
-						onClick={(): void => openAIAssistant()}
+						onClick={handleOpen}
 						aria-label={
 							showPendingBadge
 								? `Ask Noz, ${pendingUserInputCount} ${

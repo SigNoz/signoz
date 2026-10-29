@@ -48,41 +48,36 @@ describe('SpanMessages', () => {
 		).toBeInTheDocument();
 	});
 
-	it('shows the empty state in JSON view when there are no raw messages', () => {
-		render(<SpanMessages span={makeSpan({})} view={ThreadView.Json} />);
+	it('shows the empty state in JSON view when there are no formatted messages', () => {
+		const span = makeSpan({
+			attributes: { [GEN_AI_KEYS.inputMessages]: '[{"role":"user"}]' },
+		});
+
+		render(<SpanMessages span={span} view={ThreadView.Json} />);
 
 		expect(screen.getByTestId('span-messages-empty')).toBeInTheDocument();
 	});
 
-	it('renders raw messages in JSON view', () => {
+	it('renders formatted messages in JSON view, ignoring the raw attribute', () => {
 		const span = makeSpan({
-			attributes: { [GEN_AI_KEYS.outputMessages]: '[{"role":"assistant"}]' },
+			formattedInput: [
+				{ role: 'user', parts: [{ type: 'text', content: 'formatted-text' }] },
+			],
+			attributes: {
+				[GEN_AI_KEYS.inputMessages]: '[{"role":"user","content":"raw-text"}]',
+			},
 		});
 
 		render(<SpanMessages span={span} view={ThreadView.Json} />);
 
 		expect(screen.getByTestId('span-messages-json')).toBeInTheDocument();
-	});
-
-	it('opens every key in JSON view', () => {
-		const span = makeSpan({
-			attributes: {
-				[GEN_AI_KEYS.inputMessages]: '[{"role":"user","content":"visible-text"}]',
-			},
-		});
-
-		render(<SpanMessages span={span} view={ThreadView.Json} />);
-
-		expect(screen.getByText(/visible-text/)).toBeInTheDocument();
+		expect(screen.getByText(/formatted-text/)).toBeInTheDocument();
+		expect(screen.queryByText(/raw-text/)).not.toBeInTheDocument();
 	});
 
 	it('collapses tall JSON behind Show more in JSON view', () => {
 		const span = makeSpan({
-			attributes: {
-				[GEN_AI_KEYS.inputMessages]: JSON.stringify([
-					{ role: 'user', content: 'hi' },
-				]),
-			},
+			formattedInput: [{ role: 'user', parts: [{ type: 'text', content: 'hi' }] }],
 		});
 
 		render(<SpanMessages span={span} view={ThreadView.Json} />);

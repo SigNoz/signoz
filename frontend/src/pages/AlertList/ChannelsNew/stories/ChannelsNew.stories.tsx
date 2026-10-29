@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -40,6 +40,24 @@ const selectChannelType = async (
 	await userEvent.click(trigger);
 	await userEvent.click(await screen.findByRole('option', { name: label }));
 	await within(trigger).findByText(label);
+};
+
+const fillName = async (
+	canvasElement: HTMLElement,
+	name: string,
+): Promise<void> => {
+	await userEvent.type(
+		await within(canvasElement).findByTestId('channel-name-textbox'),
+		name,
+	);
+};
+
+const sendTest = async (canvasElement: HTMLElement): Promise<void> => {
+	const test = within(canvasElement).getByTestId('test-channel-button');
+
+	await waitFor(() => expect(test).toHaveAttribute('aria-disabled', 'false'));
+	await userEvent.click(test);
+	await screen.findByText('An alert has been sent to this channel');
 };
 
 /** A new notification channel, on the Slack form the page opens with. */
@@ -123,6 +141,79 @@ export const Webhook: Story = {
 	},
 };
 
+/**
+ * Basic auth picked on the webhook form: the username and password show, and
+ * saving with both empty asks for one of them.
+ */
+export const WebhookBasicAuth: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+
+		await selectChannelType(canvasElement, /^Webhook$/);
+		await fillName(canvasElement, 'alerts-webhook');
+		await userEvent.type(
+			canvas.getByTestId('webhook-url-textbox'),
+			'https://example.com/hook',
+		);
+		await userEvent.click(canvas.getByTestId('webhook-auth-radio-item-basic'));
+		await userEvent.click(canvas.getByTestId('save-channel-button'));
+
+		await canvas.findByText('Enter a username or password');
+		await expect(
+			canvas.queryByTestId('webhook-bearer-token-textbox'),
+		).not.toBeInTheDocument();
+	},
+};
+
+/**
+ * Bearer auth picked on the webhook form: only the token shows, and saving
+ * without one asks for it.
+ */
+export const WebhookBearerAuth: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+
+		await selectChannelType(canvasElement, /^Webhook$/);
+		await fillName(canvasElement, 'alerts-webhook');
+		await userEvent.type(
+			canvas.getByTestId('webhook-url-textbox'),
+			'https://example.com/hook',
+		);
+		await userEvent.click(canvas.getByTestId('webhook-auth-radio-item-bearer'));
+		await userEvent.click(canvas.getByTestId('save-channel-button'));
+
+		await canvas.findByText('Enter a bearer token');
+		await expect(
+			canvas.queryByTestId('webhook-username-textbox'),
+		).not.toBeInTheDocument();
+	},
+};
+
+/**
+ * A Slack field with a title but no value, and a button with text but neither
+ * a URL nor a name. Each is flagged under its row rather than sent for the API
+ * to reject.
+ */
+export const SlackRowErrors: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+
+		await fillName(canvasElement, 'alerts-slack');
+		await userEvent.type(
+			canvas.getByTestId('webhook-url-textbox'),
+			'https://hooks.slack.com/services/T/B/X',
+		);
+		await userEvent.click(canvas.getByTestId('slack-field-add'));
+		await userEvent.type(canvas.getByTestId('slack-field-title-0'), 'Region');
+		await userEvent.click(canvas.getByTestId('slack-action-add'));
+		await userEvent.type(canvas.getByTestId('slack-action-text-0'), 'Dashboard');
+		await userEvent.click(canvas.getByTestId('save-channel-button'));
+
+		await canvas.findByText('Enter a value for this field');
+		await canvas.findByText('Enter a URL or a name for this button');
+	},
+};
+
 /** The PagerDuty form: routing key, severity and the incident details. */
 export const PagerDuty: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
@@ -151,13 +242,27 @@ export const MicrosoftTeams: Story = {
 	},
 };
 
-/**
- * The Google Chat form, whose webhook URL is rejected unless it is an https URL
- * on `chat.googleapis.com`.
- */
+/** The Google Chat form: the space's incoming webhook and the message text. */
 export const GoogleChat: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await selectChannelType(canvasElement, /^Google Chat$/);
+	},
+};
+
+/**
+ * The Google Chat form pointed at a relay rather than `chat.googleapis.com`.
+ * The API accepts any webhook URL, so the test send goes through.
+ */
+export const GoogleChatRelayURL: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await selectChannelType(canvasElement, /^Google Chat$/);
+		await fillName(canvasElement, 'alerts-google-chat');
+		await userEvent.type(
+			within(canvasElement).getByTestId('webhook-url-textbox'),
+			'http://chat-relay.internal/v1/spaces/OPS/messages',
+		);
+
+		await sendTest(canvasElement);
 	},
 };
 
@@ -168,6 +273,29 @@ export const GoogleChat: Story = {
 export const Jira: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await selectChannelType(canvasElement, /^Jira$/);
+	},
+};
+
+/**
+ * The Jira form pointed at a proxy rather than an `atlassian.net` site. The API
+ * accepts any site URL, so the test send goes through.
+ */
+export const JiraProxySite: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+
+		await selectChannelType(canvasElement, /^Jira$/);
+		await fillName(canvasElement, 'alerts-jira');
+		await userEvent.type(
+			canvas.getByTestId('jira-site-textbox'),
+			'https://jira-proxy.acme.internal',
+		);
+		await userEvent.type(canvas.getByTestId('jira-email-textbox'), 'ops@acme.io');
+		await userEvent.type(canvas.getByTestId('jira-api-token-textbox'), 'token');
+		await userEvent.type(canvas.getByTestId('jira-project-textbox'), 'OPS');
+		await userEvent.type(canvas.getByTestId('jira-issue-type-textbox'), 'Bug');
+
+		await sendTest(canvasElement);
 	},
 };
 
@@ -182,6 +310,31 @@ export const JiraServiceManagementOps: Story = {
 export const IncidentIO: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await selectChannelType(canvasElement, /^incident\.io$/);
+	},
+};
+
+/**
+ * The incident.io form pointed at a relay, which the API accepts, with the token
+ * pasted as the setup page shows it. The `Bearer ` prefix is flagged, since it
+ * would be sent twice.
+ */
+export const IncidentIOBearerToken: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+
+		await selectChannelType(canvasElement, /^incident\.io$/);
+		await fillName(canvasElement, 'alerts-incidentio');
+		await userEvent.type(
+			canvas.getByTestId('incidentio-url-textbox'),
+			'https://incidentio-relay.internal/alerts',
+		);
+		await userEvent.type(
+			canvas.getByTestId('incidentio-token-textbox'),
+			'Bearer story-token',
+		);
+		await userEvent.click(canvas.getByTestId('save-channel-button'));
+
+		await canvas.findByText('Paste the token only, without the Bearer prefix');
 	},
 };
 

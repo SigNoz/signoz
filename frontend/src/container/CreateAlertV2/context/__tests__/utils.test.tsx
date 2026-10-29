@@ -27,7 +27,6 @@ import {
 	EvaluationWindowState,
 	NotificationSettingsState,
 	Seasonality,
-	TimeDuration,
 } from '../types';
 import {
 	advancedOptionsReducer,
@@ -266,7 +265,6 @@ describe('CreateAlertV2 Context Utils', () => {
 				selectedQuery: 'B',
 				operator: AlertThresholdOperator.IS_BELOW,
 				matchType: AlertThresholdMatchType.ALL_THE_TIME,
-				evaluationWindow: TimeDuration.TEN_MINUTES,
 				algorithm: Algorithm.STANDARD,
 				seasonality: Seasonality.DAILY,
 				thresholds: [],
@@ -280,7 +278,6 @@ describe('CreateAlertV2 Context Utils', () => {
 				selectedQuery: 'C',
 				operator: AlertThresholdOperator.IS_EQUAL_TO,
 				matchType: AlertThresholdMatchType.ON_AVERAGE,
-				evaluationWindow: TimeDuration.ONE_HOUR,
 				algorithm: Algorithm.STANDARD,
 				seasonality: Seasonality.WEEKLY,
 				thresholds: [],
