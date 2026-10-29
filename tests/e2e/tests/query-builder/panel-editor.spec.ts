@@ -16,6 +16,10 @@ import {
 
 const test = withMetricTypes(withQueryBuilder(editorTest));
 
+const LOGS_FILTER = "severity_text = 'ERROR'";
+const TRACES_FILTER = "http.method = 'GET'";
+const PROMQL = 'sum(rate(signoz_calls_total[5m]))';
+
 const QUERIES = {
 	logs: () => logsCountQuery(),
 	traces: () => logsCountQuery({ signal: 'traces' }),
@@ -139,5 +143,59 @@ test.describe('Query builder — panel editor', () => {
 			metricName: SUM_METRIC,
 			reduceTo: 'sum',
 		});
+	});
+
+	test('TC-31 switching signal restores the query left on each signal', async ({
+		dashboards,
+		qb,
+	}) => {
+		await dashboards.seedAndEdit(
+			singlePanelDashboard({ query: logsCountQuery({ groupBy: [] }) }),
+			SINGLE_PANEL_ID,
+		);
+		const query = qb.query('A');
+		await query.filter.type(LOGS_FILTER);
+		await query.filter.press('Escape');
+
+		await query.setSignal('Traces');
+		await expect.poll(() => query.filter.expression()).toBe('');
+		await query.filter.type(TRACES_FILTER);
+		await query.filter.press('Escape');
+
+		await query.setSignal('Logs');
+		await expect.poll(() => query.filter.expression()).toBe(LOGS_FILTER);
+		await query.setSignal('Traces');
+		await expect.poll(() => query.filter.expression()).toBe(TRACES_FILTER);
+		await qb.runButton().click();
+		await expect
+			.poll(() => qb.latest('A'))
+			.toMatchObject({
+				signal: 'traces',
+				filter: { expression: TRACES_FILTER },
+			});
+	});
+
+	test('TC-33 a PromQL query is sent as promql and kept across tab switches', async ({
+		dashboards,
+		qb,
+	}) => {
+		await dashboards.seedAndEdit(
+			singlePanelDashboard({ query: metricsQuery() }),
+			SINGLE_PANEL_ID,
+		);
+
+		await qb.tab('promql').click();
+		await qb.promql().fill(PROMQL);
+		const fired = await qb.run();
+		expect(fired.at(-1)?.compositeQuery.queries[0]).toMatchObject({
+			type: 'promql',
+			spec: { name: 'A', query: PROMQL },
+		});
+
+		await qb.tab('clickhouse_sql').click();
+		await qb.tab('builder').click();
+		await expect(qb.query('A').metric.spaceAggregation()).toHaveText('Sum');
+		await qb.tab('promql').click();
+		await expect(qb.promql()).toHaveValue(PROMQL);
 	});
 });

@@ -15,48 +15,67 @@ import {
 // Run does nothing until one is: each added query picks a metric first.
 const test = withQueryBuilder(editorTest);
 
+const CLONED_FILTER = "operation = '/ads/get'";
+
 test.describe('Query builder — multiple queries', () => {
-	test('TC-28 queries are named, cloned, hidden and deleted', async ({
+	test('TC-28 a deleted name is reused by the next added query', async ({
 		dashboards,
 		qb,
 	}) => {
 		await dashboards.seedAndEdit(
-			singlePanelDashboard({
-				query: metricsQuery({ filter: "operation = '/ads/get'" }),
-			}),
+			singlePanelDashboard({ query: metricsQuery() }),
 			SINGLE_PANEL_ID,
 		);
 		for (const name of ['B', 'C']) {
-			const query = await qb.addQuery(name);
-			await query.metric.select(OTHER_SUM_METRIC);
+			await (await qb.addQuery(name)).metric.select(OTHER_SUM_METRIC);
 		}
 		expect(await qb.queryNames()).toEqual(['A', 'B', 'C']);
 
 		await qb.query('B').delete();
 		expect(await qb.queryNames()).toEqual(['A', 'C']);
-		await (await qb.addQuery('B')).metric.select(OTHER_SUM_METRIC);
+		await qb.addQuery('B');
 		expect(await qb.queryNames()).toEqual(['A', 'C', 'B']);
+	});
+
+	test('TC-28 a clone and a hidden query reach the request', async ({
+		dashboards,
+		qb,
+	}) => {
+		await dashboards.seedAndEdit(
+			singlePanelDashboard({ query: metricsQuery({ filter: CLONED_FILTER }) }),
+			SINGLE_PANEL_ID,
+		);
+		await (await qb.addQuery('B')).metric.select(OTHER_SUM_METRIC);
 
 		await qb.query('A').clone();
-		await expect(qb.query('D').root()).toBeVisible();
 		await expect
-			.poll(() => qb.query('D').filter.expression())
-			.toBe("operation = '/ads/get'");
+			.poll(() => qb.query('C').filter.expression())
+			.toBe(CLONED_FILTER);
+		await qb.query('B').toggleVisibility();
+		await qb.runButton().click();
 
-		await qb.query('C').toggleVisibility();
-		const fired = await qb.run();
-		expect(qb.spec(fired, 'C').disabled).toBe(true);
-		expect(qb.spec(fired, 'D').aggregations?.[0]).toMatchObject({
-			metricName: SUM_METRIC,
+		await expect.poll(() => qb.latest('B')?.disabled).toBe(true);
+		expect(qb.latest('C')).toMatchObject({
+			filter: { expression: CLONED_FILTER },
+			aggregations: [expect.objectContaining({ metricName: SUM_METRIC })],
 		});
+	});
 
-		for (const name of ['B', 'C', 'D']) {
-			await qb.query(name).delete();
-		}
+	test('TC-28 the last remaining query offers no delete', async ({
+		dashboards,
+		qb,
+	}) => {
+		await dashboards.seedAndEdit(
+			singlePanelDashboard({ query: metricsQuery() }),
+			SINGLE_PANEL_ID,
+		);
+		await (await qb.addQuery('B')).metric.select(OTHER_SUM_METRIC);
+
+		await qb.query('B').delete();
 		await qb.query('A').actions().click();
-		await expect(
-			qb.query('A').root().page().getByTestId('query-actions-item-delete-query'),
-		).toHaveCount(0);
+
+		await expect(qb.query('A').menuItem('clone')).toBeVisible();
+		await expect(qb.query('A').menuItem('delete')).toHaveCount(0);
 	});
 
 	test('TC-29 a formula over two queries reaches the request', async ({
