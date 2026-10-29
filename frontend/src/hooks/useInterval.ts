@@ -18,7 +18,7 @@ function useInterval(
 			}
 		}
 
-		let id: NodeJS.Timer;
+		let id: ReturnType<typeof setInterval> | undefined;
 
 		if (enabled) {
 			id = setInterval(tick, delay);

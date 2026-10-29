@@ -175,7 +175,7 @@
     "@types/history": "4.7.11",
     "@types/jest": "30.0.0",
     "@types/lodash-es": "^4.17.4",
-    "@types/node": "^16.10.3",
+    "@types/node": "^22.20.5",
     "@types/papaparse": "5.3.7",
     "@types/react": "18.0.26",
     "@types/react-addons-update": "0.14.21",
