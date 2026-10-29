@@ -124,8 +124,7 @@ func TestGetBaseColumnEvolutionsReadsCache(t *testing.T) {
 func TestGetBaseColumnEvolutionsRefetchesEmptyResult(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := mockTelemetryStore.Mock()
-	store := NewTelemetryMetaStore(instrumentationtest.New().ToProviderSettings(), mockTelemetryStore, flaggertest.New(t))
-	metadata := store.(*telemetryMetaStore)
+	metadata := NewTelemetryMetaStore(instrumentationtest.New().ToProviderSettings(), mockTelemetryStore, flaggertest.New(t))
 	get := func() []*telemetrytypes.EvolutionEntry {
 		entries, err := metadata.GetBaseColumnEvolutions(context.Background(), telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
 		require.NoError(t, err)
@@ -134,15 +133,11 @@ func TestGetBaseColumnEvolutionsRefetchesEmptyResult(t *testing.T) {
 
 	expectBaseColumnEvolutionsQuery(mock, nil)
 	assert.Empty(t, get())
-	assert.Empty(t, get(), "an empty result is cached within the TTL")
 
-	for name, cached := range metadata.baseColumnEvolutions {
-		cached.fetchedAt = cached.fetchedAt.Add(-emptyBaseColumnEvolutionsTTL)
-		metadata.baseColumnEvolutions[name] = cached
-	}
 	expectBaseColumnEvolutionsQuery(mock, [][]any{
 		{"traces", "attributes", "JSON()", "attribute", "__all__", uint32(0), float64(time.Now().UnixNano())},
 	})
 	assert.Len(t, get(), 1)
+	assert.Len(t, get(), 1, "a found result is cached")
 	require.NoError(t, mock.ExpectationsWereMet())
 }

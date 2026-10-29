@@ -576,14 +576,21 @@ func (m *storage) addBaseColumnEvolutions(ctx context.Context, q qbtypes.QueryIn
 	if !q.TraceAttrsJSONOn || m.schemaMetadataStore == nil {
 		return nil
 	}
+	var attributeKeys []*telemetrytypes.TelemetryFieldKey
+	for _, key := range keys {
+		if key.FieldContext == telemetrytypes.FieldContextAttribute && len(key.Evolutions) == 0 {
+			attributeKeys = append(attributeKeys, key)
+		}
+	}
+	if len(attributeKeys) == 0 {
+		return nil
+	}
 	evolutions, err := m.schemaMetadataStore.GetBaseColumnEvolutions(ctx, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
 	if err != nil {
 		return err
 	}
-	for _, key := range keys {
-		if key.FieldContext == telemetrytypes.FieldContextAttribute && len(key.Evolutions) == 0 {
-			key.Evolutions = evolutions
-		}
+	for _, key := range attributeKeys {
+		key.Evolutions = evolutions
 	}
 	return nil
 }
