@@ -68,7 +68,7 @@ func NewTraceStore(ts telemetrystore.TelemetryStore, metadataStore telemetrytype
 	return &traceStore{
 		telemetryStore: ts,
 		metadataStore:  metadataStore,
-		storage:        tracestelemetryschema.NewStorage(),
+		storage:        tracestelemetryschema.NewStorage(metadataStore),
 		flagger:        fl,
 	}
 }

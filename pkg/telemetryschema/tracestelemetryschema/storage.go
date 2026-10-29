@@ -162,12 +162,22 @@ var (
 	}
 )
 
-type storage struct{}
+// EvolutionStore reads the column-wide evolutions Fallback gives the attribute
+// keys it synthesizes.
+type EvolutionStore interface {
+	GetBaseColumnEvolutions(ctx context.Context, signal telemetrytypes.Signal, fieldContext telemetrytypes.FieldContext) ([]*telemetrytypes.EvolutionEntry, error)
+}
+
+type storage struct {
+	evolutionStore EvolutionStore
+}
 
 var _ qbtypes.Storage = (*storage)(nil)
 
-func NewStorage() qbtypes.Storage {
-	return &storage{}
+// NewStorage takes a nil evolutionStore when no synthesized key reads the
+// attributes JSON column.
+func NewStorage(evolutionStore EvolutionStore) qbtypes.Storage {
+	return &storage{evolutionStore: evolutionStore}
 }
 
 func (m *storage) getColumn(
@@ -562,7 +572,26 @@ func (m *storage) Fallback(ctx context.Context, q qbtypes.QueryInfo, key *teleme
 		literal := telemetrytypes.NewTelemetryFieldKey(key.FieldContext.StringValue()+"."+key.Name, key.FieldContext, key.FieldDataType)
 		keys = append(querybuilder.SynthesizeKeys(key, value), querybuilder.SynthesizeKeys(literal, value)...)
 	}
+	if err := m.addBaseColumnEvolutions(ctx, q, keys); err != nil {
+		return nil, err
+	}
 	return querybuilder.WrapAsLogicalFields(key.Name, keys), nil
+}
+
+func (m *storage) addBaseColumnEvolutions(ctx context.Context, q qbtypes.QueryInfo, keys []*telemetrytypes.TelemetryFieldKey) error {
+	if !q.TraceAttrsJSONOn || m.evolutionStore == nil {
+		return nil
+	}
+	evolutions, err := m.evolutionStore.GetBaseColumnEvolutions(ctx, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
+	if err != nil {
+		return err
+	}
+	for _, key := range keys {
+		if key.FieldContext == telemetrytypes.FieldContextAttribute && len(key.Evolutions) == 0 {
+			key.Evolutions = evolutions
+		}
+	}
+	return nil
 }
 
 // stampColumnType gives an untyped column key the data type its column reads

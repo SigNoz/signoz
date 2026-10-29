@@ -51,7 +51,7 @@ func TestConditionForFamilyMergesMembersCurrentFirst(t *testing.T) {
 		}},
 	}
 	fl := familyFlagOn(t)
-	storage := NewStorage()
+	storage := NewStorage(nil)
 
 	// The requested spelling is the old name; precedence must still be
 	// current-first.
@@ -87,7 +87,7 @@ func TestConditionForFamilyNegativeKeepsKeylessRows(t *testing.T) {
 		}},
 	}
 	fl := familyFlagOn(t)
-	storage := NewStorage()
+	storage := NewStorage(nil)
 
 	sb := sqlbuilder.NewSelectBuilder()
 	conds, _, err := querybuilder.Conditions(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, startNs, endNs), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, qbtypes.FilterOperatorNotEqual, "production", fieldKeys, false, sb)
@@ -122,7 +122,7 @@ func TestConditionForFamilyExists(t *testing.T) {
 		}},
 	}
 	fl := familyFlagOn(t)
-	storage := NewStorage()
+	storage := NewStorage(nil)
 
 	sb := sqlbuilder.NewSelectBuilder()
 	conds, _, err := querybuilder.Conditions(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, startNs, endNs), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, qbtypes.FilterOperatorNotExists, nil, fieldKeys, false, sb)
@@ -157,7 +157,7 @@ func TestConditionForFamilyOffByDefault(t *testing.T) {
 		}},
 	}
 	fl := flaggertest.New(t)
-	storage := NewStorage()
+	storage := NewStorage(nil)
 
 	sb := sqlbuilder.NewSelectBuilder()
 	conds, _, err := querybuilder.Conditions(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, startNs, endNs), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, qbtypes.FilterOperatorEqual, "production", fieldKeys, false, sb)
@@ -193,7 +193,7 @@ func TestConditionForSingleMemberIsUnchanged(t *testing.T) {
 	}
 	delete(fieldKeys, "deployment.environment")
 	fl := familyFlagOn(t)
-	storage := NewStorage()
+	storage := NewStorage(nil)
 
 	sb := sqlbuilder.NewSelectBuilder()
 	conds, _, err := querybuilder.Conditions(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, startNs, endNs), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, qbtypes.FilterOperatorEqual, "production", fieldKeys, false, sb)
@@ -226,7 +226,7 @@ func TestColumnExpressionForFamilyGroupBy(t *testing.T) {
 		}},
 	}
 	fl := familyFlagOn(t)
-	storage := NewStorage()
+	storage := NewStorage(nil)
 
 	expr, err := querybuilder.ResolveColumn(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, startNs, endNs), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, telemetrytypes.FieldDataTypeString, fieldKeys)
 	require.NoError(t, err)

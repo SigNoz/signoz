@@ -59,7 +59,7 @@ func NewFactory(
 			if err != nil {
 				return nil, err
 			}
-			return NewScopedTraceStatementBuilder(settings, metadataStore, tracestelemetryschema.NewStorage(), scope, traceStmtBuilder, fl), nil
+			return NewScopedTraceStatementBuilder(settings, metadataStore, tracestelemetryschema.NewStorage(metadataStore), scope, traceStmtBuilder, fl), nil
 		},
 	)
 }

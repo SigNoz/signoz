@@ -4,6 +4,10 @@ import (
 	"time"
 )
 
+// EvolutionFieldNameAll is the field name of an evolution entry that applies
+// to every field of its column.
+const EvolutionFieldNameAll = "__all__"
+
 type EvolutionEntry struct {
 	Signal       Signal       `json:"signal"`
 	ColumnName   string       `json:"column_name"`

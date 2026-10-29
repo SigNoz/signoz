@@ -44,7 +44,7 @@ func attrKey(name string, dt telemetrytypes.FieldDataType, evo []*telemetrytypes
 // cast, straddling a dual-read multiIf with the JSON column first.
 func TestFieldForAttributeJSONEvolution(t *testing.T) {
 	ctx := context.Background()
-	storage := NewStorage()
+	storage := NewStorage(nil)
 	evo := MockAttributeEvolutionData(attrJSONRelease)
 
 	testCases := []struct {
@@ -79,7 +79,7 @@ func TestFieldForAttributeJSONEvolution(t *testing.T) {
 // entry is registered: a key with no evolutions resolves to the Map column for every window.
 func TestFieldForAttributeNoEvolutionParity(t *testing.T) {
 	ctx := context.Background()
-	storage := NewStorage()
+	storage := NewStorage(nil)
 
 	for _, dt := range []struct {
 		dataType telemetrytypes.FieldDataType
@@ -101,7 +101,7 @@ func TestFieldForAttributeNoEvolutionParity(t *testing.T) {
 // every window.
 func TestAttributeJSONFlagOffParity(t *testing.T) {
 	ctx := context.Background()
-	storage := NewStorage()
+	storage := NewStorage(nil)
 	evo := MockAttributeEvolutionData(attrJSONRelease)
 	windows := map[string][2]uint64{
 		"BeforeRelease":     attrWindowBefore,
@@ -154,7 +154,7 @@ func TestAttributeJSONFlagOffParity(t *testing.T) {
 // numeric comparisons keep numeric semantics; existence never tests the ::String cast.
 func TestConditionForAttributeJSON(t *testing.T) {
 	ctx := context.Background()
-	storage := NewStorage()
+	storage := NewStorage(nil)
 	evo := MockAttributeEvolutionData(attrJSONRelease)
 
 	testCases := []struct {
@@ -261,7 +261,7 @@ func TestConditionForAttributeJSON(t *testing.T) {
 // home is excluded (De Morgan), including rows that predate the JSON column.
 func TestConditionForAttributeJSONNotExistsDualRead(t *testing.T) {
 	ctx := context.Background()
-	storage := NewStorage()
+	storage := NewStorage(nil)
 	evo := MockAttributeEvolutionData(attrJSONRelease)
 
 	key := attrKey("user.id", telemetrytypes.FieldDataTypeString, evo)
@@ -281,7 +281,7 @@ func TestConditionForAttributeJSONNotExistsDualRead(t *testing.T) {
 // path is NULL rather than a spurious ”/0, and the numeric branch keeps its toFloat64 coercion.
 func TestColumnExpressionForAttributeJSON(t *testing.T) {
 	ctx := context.Background()
-	storage := NewStorage()
+	storage := NewStorage(nil)
 	evo := MockAttributeEvolutionData(attrJSONRelease)
 
 	t.Run("group by string", func(t *testing.T) {
@@ -304,7 +304,7 @@ func TestColumnExpressionForAttributeJSON(t *testing.T) {
 // attribute filter must not emit the "ambiguous key" warning.
 func TestAttributeJSONNoAmbiguityWarning(t *testing.T) {
 	ctx := context.Background()
-	storage := NewStorage()
+	storage := NewStorage(nil)
 	evo := MockAttributeEvolutionData(attrJSONRelease)
 
 	key := attrKey("user.id", telemetrytypes.FieldDataTypeString, evo)
@@ -320,7 +320,7 @@ func TestAttributeJSONNoAmbiguityWarning(t *testing.T) {
 // warning. In the JSON column the two branches share the raw path; only the cast differs.
 func TestConditionForAttributeJSONTypeCollision(t *testing.T) {
 	ctx := context.Background()
-	storage := NewStorage()
+	storage := NewStorage(nil)
 	evo := MockAttributeEvolutionData(attrJSONRelease)
 
 	strKey := attrKey("http.status_code", telemetrytypes.FieldDataTypeString, evo)
@@ -350,7 +350,7 @@ func TestConditionForAttributeJSONTypeCollision(t *testing.T) {
 // as its actual stored type.
 func TestColumnExpressionForAttributeJSONTypeCollision(t *testing.T) {
 	ctx := context.Background()
-	storage := NewStorage()
+	storage := NewStorage(nil)
 	evo := MockAttributeEvolutionData(attrJSONRelease)
 
 	strKey := attrKey("http.status_code", telemetrytypes.FieldDataTypeString, evo)
@@ -374,7 +374,7 @@ func TestColumnExpressionForAttributeJSONTypeCollision(t *testing.T) {
 // coverage.
 func TestColumnExpressionForAttributeJSONTypeCollisionNumericAgg(t *testing.T) {
 	ctx := context.Background()
-	storage := NewStorage()
+	storage := NewStorage(nil)
 	evo := MockAttributeEvolutionData(attrJSONRelease)
 
 	numKey := attrKey("http.status_code", telemetrytypes.FieldDataTypeNumber, evo)
@@ -396,7 +396,7 @@ func TestColumnExpressionForAttributeJSONTypeCollisionNumericAgg(t *testing.T) {
 // columns (attributes_string / attributes_number), each with its own mapContains guard.
 func TestConditionForAttributeMapTypeCollisionParity(t *testing.T) {
 	ctx := context.Background()
-	storage := NewStorage()
+	storage := NewStorage(nil)
 	evo := MockAttributeEvolutionData(attrJSONRelease)
 
 	strKey := attrKey("http.status_code", telemetrytypes.FieldDataTypeString, evo)
@@ -440,7 +440,7 @@ func TestColumnForUnspecifiedAttributeNoBranchFlip(t *testing.T) {
 // evolution: a key without it (the pre-rollout system) is byte-identical to today.
 func TestConditionForAttributeJSONNegativeOperatorParity(t *testing.T) {
 	ctx := context.Background()
-	storage := NewStorage()
+	storage := NewStorage(nil)
 	evo := MockAttributeEvolutionData(attrJSONRelease)
 
 	build := func(t *testing.T, key telemetrytypes.TelemetryFieldKey, window [2]uint64, op qbtypes.FilterOperator, value any) string {
@@ -520,7 +520,7 @@ func TestConditionForAttributeJSONNegativeOperatorParity(t *testing.T) {
 // EXISTS/NOT EXISTS must still exclude a key absent from every home, rather than matching it.
 func TestConditionForAttributeJSONStraddleAbsentKeyExclusion(t *testing.T) {
 	ctx := context.Background()
-	storage := NewStorage()
+	storage := NewStorage(nil)
 	evo := MockAttributeEvolutionData(attrJSONRelease)
 
 	build := func(t *testing.T, key telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) string {
@@ -549,5 +549,88 @@ func TestConditionForAttributeJSONStraddleAbsentKeyExclusion(t *testing.T) {
 		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
 		sql := build(t, key, qbtypes.FilterOperatorNotExists, nil)
 		assert.Contains(t, sql, ", NULL) IS NULL")
+	})
+}
+
+type fakeEvolutionStore struct {
+	evolutions []*telemetrytypes.EvolutionEntry
+}
+
+func (s fakeEvolutionStore) GetBaseColumnEvolutions(context.Context, telemetrytypes.Signal, telemetrytypes.FieldContext) ([]*telemetrytypes.EvolutionEntry, error) {
+	return s.evolutions, nil
+}
+
+func TestConditionForAttributeJSONUnknownKey(t *testing.T) {
+	ctx := context.Background()
+	evo := MockAttributeEvolutionData(attrJSONRelease)
+
+	build := func(t *testing.T, q qbtypes.QueryInfo, evolutions []*telemetrytypes.EvolutionEntry, key telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) string {
+		t.Helper()
+		sb := sqlbuilder.NewSelectBuilder()
+		conds, _, err := querybuilder.Conditions(ctx, q, NewStorage(fakeEvolutionStore{evolutions: evolutions}), &key, op, value, map[string][]*telemetrytypes.TelemetryFieldKey{}, false, sb)
+		require.NoError(t, err)
+		sb.Where(conds...)
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		return sql
+	}
+	query := func(window [2]uint64) qbtypes.QueryInfo {
+		return qbtypes.QueryInfo{StartNs: window[0], EndNs: window[1], TraceAttrsJSONOn: true}
+	}
+	bare := telemetrytypes.TelemetryFieldKey{Name: "unknown.attr"}
+
+	t.Run("before -> map", func(t *testing.T) {
+		sql := build(t, query(attrWindowBefore), evo, bare, qbtypes.FilterOperatorEqual, "x")
+		assert.Contains(t, sql, "attributes_string['unknown.attr'] = ?")
+		assert.NotContains(t, sql, "attributes.`unknown.attr`")
+	})
+	t.Run("after -> json", func(t *testing.T) {
+		sql := build(t, query(attrWindowAfter), evo, bare, qbtypes.FilterOperatorEqual, "x")
+		assert.Contains(t, sql, "attributes.`unknown.attr`::String = ?")
+		assert.NotContains(t, sql, "attributes_string")
+	})
+	t.Run("straddle -> dual", func(t *testing.T) {
+		sql := build(t, query(attrWindowStraddle), evo, bare, qbtypes.FilterOperatorEqual, "x")
+		assert.Contains(t, sql, "multiIf(attributes.`unknown.attr` IS NOT NULL, attributes.`unknown.attr`::String, mapContains(attributes_string, 'unknown.attr'), attributes_string['unknown.attr'], NULL) = ?")
+	})
+	t.Run("after number -> json", func(t *testing.T) {
+		sql := build(t, query(attrWindowAfter), evo, bare, qbtypes.FilterOperatorEqual, float64(1))
+		assert.Contains(t, sql, "toFloat64OrNull(attributes.`unknown.attr`::String) = ?")
+		assert.NotContains(t, sql, "attributes_number")
+	})
+	t.Run("after exists fans out over json only", func(t *testing.T) {
+		sql := build(t, query(attrWindowAfter), evo, bare, qbtypes.FilterOperatorExists, nil)
+		assert.Contains(t, sql, "attributes.`unknown.attr` IS NOT NULL")
+		assert.NotContains(t, sql, "mapContains")
+	})
+	t.Run("after qualified attribute spelling -> json for both spellings", func(t *testing.T) {
+		qualified := telemetrytypes.TelemetryFieldKey{Name: "unknown.attr", FieldContext: telemetrytypes.FieldContextAttribute}
+		sql := build(t, query(attrWindowAfter), evo, qualified, qbtypes.FilterOperatorEqual, "x")
+		assert.Contains(t, sql, "attributes.`unknown.attr`::String = ?")
+		assert.Contains(t, sql, "attributes.`attribute.unknown.attr`::String = ?")
+		assert.NotContains(t, sql, "attributes_string")
+	})
+	t.Run("after span spelling corrects to the json attribute", func(t *testing.T) {
+		span := telemetrytypes.TelemetryFieldKey{Name: "unknown.attr", FieldContext: telemetrytypes.FieldContextSpan}
+		sql := build(t, query(attrWindowAfter), evo, span, qbtypes.FilterOperatorEqual, "x")
+		assert.Contains(t, sql, "attributes.`unknown.attr`::String = ?")
+		assert.NotContains(t, sql, "attributes_string")
+	})
+	t.Run("without column-wide evolutions -> map in every window", func(t *testing.T) {
+		sql := build(t, query(attrWindowAfter), nil, bare, qbtypes.FilterOperatorEqual, "x")
+		assert.Contains(t, sql, "attributes_string['unknown.attr'] = ?")
+		assert.NotContains(t, sql, "attributes.`unknown.attr`")
+	})
+	t.Run("flag off -> map in every window", func(t *testing.T) {
+		q := query(attrWindowAfter)
+		q.TraceAttrsJSONOn = false
+		sql := build(t, q, evo, bare, qbtypes.FilterOperatorEqual, "x")
+		assert.Contains(t, sql, "attributes_string['unknown.attr'] = ?")
+		assert.NotContains(t, sql, "attributes.`unknown.attr`")
+	})
+	t.Run("resource spelling is untouched by attribute evolutions", func(t *testing.T) {
+		resource := telemetrytypes.TelemetryFieldKey{Name: "unknown.attr", FieldContext: telemetrytypes.FieldContextResource}
+		sql := build(t, query(attrWindowAfter), evo, resource, qbtypes.FilterOperatorEqual, "x")
+		assert.Contains(t, sql, "resource.`unknown.attr`::String")
+		assert.Contains(t, sql, "resources_string['unknown.attr']")
 	})
 }

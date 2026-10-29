@@ -54,7 +54,7 @@ func NewFactory(
 	return factory.NewProviderFactory(
 		factory.MustNewName("traces"),
 		func(_ context.Context, settings factory.ProviderSettings, cfg statementbuilder.Config) (qbtypes.StatementBuilder[qbtypes.TraceAggregation], error) {
-			storage := tracestelemetryschema.NewStorage()
+			storage := tracestelemetryschema.NewStorage(metadataStore)
 			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, storage, fl, telemetrytypes.SignalTraces)
 			return NewTraceQueryStatementBuilder(
 				settings, metadataStore, storage, aggExprRewriter, telemetryStore, fl,
