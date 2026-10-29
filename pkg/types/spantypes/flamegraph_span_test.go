@@ -1,9 +1,11 @@
 package spantypes
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -64,6 +66,17 @@ func TestNewFlamegraphSpanFromStorable_SelectFields(t *testing.T) {
 			wantResource: map[string]string{},
 			wantScope:    Scope{"name": "io.opentelemetry.http", "attributes": map[string]any{"lib.lang": "go"}},
 		},
+		{
+			name: "ScopeFields_UnsetSelection_Empty",
+			span: StorableSpan{Scope: scopeColumn("io.opentelemetry.grpc", "", map[string]any{"rpc.system": "grpc"})},
+			selectFields: []telemetrytypes.TelemetryFieldKey{
+				{Name: "scope.version", FieldContext: telemetrytypes.FieldContextScope},
+				{Name: "absent", FieldContext: telemetrytypes.FieldContextScope},
+			},
+			wantAttrs:    map[string]any{},
+			wantResource: map[string]string{},
+			wantScope:    Scope{},
+		},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -73,4 +86,12 @@ func TestNewFlamegraphSpanFromStorable_SelectFields(t *testing.T) {
 			assert.Equal(t, testCase.wantScope, span.Scope)
 		})
 	}
+}
+
+func TestNewMissingParentFlamegraphSpan_EmptyScope(t *testing.T) {
+	span := NewMissingParentFlamegraphSpan(&FlamegraphSpan{SpanID: "child", ParentSpanID: "parent"})
+
+	raw, err := json.Marshal(span)
+	require.NoError(t, err)
+	assert.Contains(t, string(raw), `"scope":{}`)
 }

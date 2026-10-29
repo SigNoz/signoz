@@ -5,11 +5,6 @@ import (
 )
 
 const (
-	ScopeNameKey    = "scope.name"
-	ScopeVersionKey = "scope.version"
-)
-
-const (
 	scopeName       = "name"
 	scopeVersion    = "version"
 	scopeAttributes = "attributes"
@@ -37,6 +32,30 @@ func NewScope(column map[string]any) Scope {
 	return scope
 }
 
+// NewSelectedScope builds a Scope with only the selected fields from the flattened scope column:
+// scope.name and scope.version select the declared paths, any other name a scope attribute.
+func NewSelectedScope(column map[string]any, names []string) Scope {
+	attributes, _ := column[scopeAttributes].(map[string]any)
+	selected := map[string]any{}
+	selectedAttributes := map[string]any{}
+	for _, name := range names {
+		switch name {
+		case "scope.name":
+			selected[scopeName] = column[scopeName]
+		case "scope.version":
+			selected[scopeVersion] = column[scopeVersion]
+		default:
+			if v, ok := attributes[name]; ok {
+				selectedAttributes[name] = v
+			}
+		}
+	}
+	selected[scopeAttributes] = selectedAttributes
+	return NewScope(selected)
+}
+
+// PrepareJSONSchema types the map's fields. Scope is a map rather than a struct so unset fields are
+// left out instead of sent empty; omitempty would do that but decodes back with nil fields.
 func (Scope) PrepareJSONSchema(schema *jsonschema.Schema) error {
 	attributes := jsonschema.Schema{}
 	attributes.WithType(jsonschema.Object.Type())
@@ -47,35 +66,4 @@ func (Scope) PrepareJSONSchema(schema *jsonschema.Schema) error {
 	schema.WithPropertiesItem(scopeVersion, jsonschema.String.ToSchemaOrBool())
 	schema.WithPropertiesItem(scopeAttributes, attributes.ToSchemaOrBool())
 	return nil
-}
-
-// copyField copies one scope field key from src, resolved as the query builder does: scope.name and
-// scope.version are the declared paths, any other name is a scope attribute.
-func (s Scope) copyField(src Scope, name string) {
-	switch name {
-	case ScopeNameKey:
-		if v, ok := src[scopeName]; ok {
-			s[scopeName] = v
-		}
-	case ScopeVersionKey:
-		if v, ok := src[scopeVersion]; ok {
-			s[scopeVersion] = v
-		}
-	default:
-		v, ok := src.attributes()[name]
-		if !ok {
-			return
-		}
-		attributes := s.attributes()
-		if attributes == nil {
-			attributes = make(map[string]any)
-			s[scopeAttributes] = attributes
-		}
-		attributes[name] = v
-	}
-}
-
-func (s Scope) attributes() map[string]any {
-	attributes, _ := s[scopeAttributes].(map[string]any)
-	return attributes
 }
