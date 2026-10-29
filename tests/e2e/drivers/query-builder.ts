@@ -96,10 +96,15 @@ export interface QueryBlock {
 	addOns: AddOns;
 	/** The "…" menu: offered only where several queries are allowed. */
 	actions(): Locator;
+	/** A row of the open "…" menu. */
+	menuItem(action: 'clone' | 'delete'): Locator;
 	clone(): Promise<void>;
 	delete(): Promise<void>;
 	toggleVisibility(): Promise<void>;
 	collapse(): Promise<void>;
+	/** The data-source dropdown's value; only on hosts that let it change. */
+	signal(): Locator;
+	setSignal(label: 'Logs' | 'Traces' | 'Metrics'): Promise<void>;
 }
 
 export interface FormulaBlock {
@@ -183,12 +188,17 @@ export interface QueryBuilderDriver {
 	addQuery(name: string): Promise<QueryBlock>;
 	/** Builder query names, top to bottom. */
 	queryNames(): Promise<string[]>;
+	/** Panel-editor query-type tab, by its queryType (`builder`, `promql`, …). */
+	tab(queryType: string): Locator;
+	promql(): Locator;
 	formula(name: string): FormulaBlock;
 	addFormula(name: string): Promise<FormulaBlock>;
 	traceOperator: {
 		root(): Locator;
 		/** "Add Trace Matching": offered on traces hosts that allow it. */
+		addButton(): Locator;
 		add(): Promise<void>;
+		remove(): Promise<void>;
 		editor: FilterEditor;
 	};
 	/**
@@ -197,6 +207,8 @@ export interface QueryBuilderDriver {
 	 */
 	addToDashboard(title: string): Promise<void>;
 	runButton(): Locator;
+	/** The logs explorer's results area, below the builder. */
+	logsResults(): Locator;
 	/** Clicks Run; returns every query_range body the click fired. */
 	run(): Promise<V5Body[]>;
 	/**
@@ -212,6 +224,12 @@ export interface QueryBuilderDriver {
 	spec(bodies: V5Body[], name: string): V5Query['spec'];
 	/** Every query_range body sent since the test started. */
 	sent(): V5Body[];
+	/**
+	 * Query `name`'s spec in the newest body that has it, whatever sent it. The
+	 * panel editor fetches on structural edits, so Run after one can be a cache
+	 * hit that sends nothing: poll this rather than waiting on Run.
+	 */
+	latest(name: string): V5Query['spec'] | undefined;
 	/** The URL's `compositeQuery`, parsed. */
 	urlQuery(): Record<string, unknown> | null;
 	console: ConsoleWatch;
@@ -392,6 +410,24 @@ function metricAt(
 	};
 }
 
+/**
+ * Two frames: an edit reaches React state on its next scheduler task, and an
+ * action in the same frame reads the previous render. A long render delays
+ * the frame itself, so this cannot pass before the commit.
+ */
+async function afterRender(page: Page): Promise<void> {
+	await page.evaluate(
+		() =>
+			new Promise<void>((resolve) => {
+				// Runs in the browser; the e2e tsconfig has no DOM lib.
+				const { requestAnimationFrame: frame } = globalThis as unknown as {
+					requestAnimationFrame(this: void, callback: () => void): number;
+				};
+				frame(() => frame(() => resolve()));
+			}),
+	);
+}
+
 function queryBuilderDriver(page: Page): QueryBuilderDriver {
 	const bodies: V5Body[] = [];
 	page.on('request', (request: Request) => {
@@ -448,6 +484,8 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 		},
 		query(name) {
 			const root = (): Locator => page.getByTestId(`query-${name}`);
+			// Index-suffixed testids predate the name-keyed block root.
+			const index = name.charCodeAt(0) - 'A'.charCodeAt(0);
 			return {
 				root,
 				filter: editorAt(page, () =>
@@ -458,9 +496,11 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 					root().getByTestId('query-aggregation-editor'),
 				),
 				step: () => root().getByTestId('input-Seconds'),
-				metric: metricAt(page, root, name.charCodeAt(0) - 'A'.charCodeAt(0)),
+				metric: metricAt(page, root, index),
 				addOns: addOnsAt(page, root),
 				actions: () => root().getByTestId('query-actions'),
+				menuItem: (action) =>
+					page.getByTestId(`query-actions-item-${action}-query`),
 				async clone() {
 					await root().getByTestId('query-actions').click();
 					await page.getByTestId('query-actions-item-clone-query').click();
@@ -470,10 +510,28 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 					await page.getByTestId('query-actions-item-delete-query').click();
 					await expect(root()).toHaveCount(0);
 				},
-				toggleVisibility: () => root().getByTestId('qb-entity-visibility').click(),
+				async toggleVisibility() {
+					await root().getByTestId('qb-entity-visibility').click();
+					// The icon is the only visible change and carries no state.
+					await afterRender(page);
+				},
 				collapse: () => root().getByTestId('qb-entity-collapse').click(),
+				signal: () =>
+					root()
+						.getByTestId(`query-data-source-selector-${index}`)
+						.locator('.ant-select-selection-item'),
+				async setSignal(label) {
+					const options = await openSelect(
+						page,
+						root().getByTestId(`query-data-source-selector-${index}`),
+					);
+					await options.filter({ hasText: exactly(label) }).click();
+					await expect(this.signal()).toHaveText(label);
+				},
 			};
 		},
+		tab: (queryType) => page.getByTestId(`query-type-tab-${queryType}`),
+		promql: () => page.getByTestId('promql-query-input').first(),
 		async addQuery(name) {
 			await page.getByTestId('add-new-query-button').click();
 			const block = qb.query(name);
@@ -507,13 +565,17 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 		},
 		traceOperator: {
 			root: () => page.getByTestId('trace-operator'),
+			// No testid; the label is followed by a "Beta" tag inside the button.
+			addButton: () =>
+				page.getByRole('button').filter({ hasText: /^Add Trace Matching/ }),
 			async add() {
-				// No testid; the label is followed by a "Beta" tag inside the button.
-				await page
-					.getByRole('button')
-					.filter({ hasText: /^Add Trace Matching/ })
-					.click();
+				await qb.traceOperator.addButton().click();
 				await expect(qb.traceOperator.editor.content()).toBeVisible();
+			},
+			async remove() {
+				// The only direct button child: the trash icon, no testid.
+				await qb.traceOperator.root().locator(':scope > button').click();
+				await expect(qb.traceOperator.root()).toHaveCount(0);
 			},
 			editor: editorAt(page, () => page.getByTestId('trace-operator-editor')),
 		},
@@ -530,18 +592,11 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 			await expect(qb.query('A').filter.content()).toBeVisible();
 		},
 		runButton: () => page.locator('[data-run-query-btn]').first(),
+		// No testid on the container.
+		logsResults: () => page.locator('.logs-explorer-views'),
 		run: () => firedBy(() => qb.runButton().click()),
 		async runShortcut() {
-			await page.evaluate(
-				() =>
-					new Promise<void>((resolve) => {
-						// Runs in the browser; the e2e tsconfig has no DOM lib.
-						const { requestAnimationFrame: frame } = globalThis as unknown as {
-							requestAnimationFrame(this: void, callback: () => void): number;
-						};
-						frame(() => frame(() => resolve()));
-					}),
-			);
+			await afterRender(page);
 			return firedBy(() => page.keyboard.press('ControlOrMeta+Enter'));
 		},
 		quickFilter(title, value) {
@@ -564,6 +619,11 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 			throw new Error(`no query ${name} in ${fired.length} query_range bodies`);
 		},
 		sent: () => bodies,
+		latest: (name) =>
+			[...bodies]
+				.reverse()
+				.flatMap((body) => body.compositeQuery?.queries ?? [])
+				.find((query) => query.spec?.name === name)?.spec,
 		urlQuery() {
 			const raw = new URL(page.url()).searchParams.get('compositeQuery');
 			if (!raw) {
