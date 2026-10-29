@@ -16,7 +16,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -25,11 +24,14 @@ import (
 
 const colServiceName = `resource_string_service$$$$name` // $ gets escaped so $$$$ converts to $$.
 
-// storableSpanColumns are the columns a waterfall span scans; the JSON attributes column is added per flag.
+// storableSpanColumns are the columns a waterfall span scans. A row's legacy maps are blanked when its
+// JSON holds the attributes.
 var storableSpanColumns = []string{
 	"DISTINCT ON (span_id) timestamp", "duration_nano", "span_id", "has_error", "kind",
-	colServiceName, "name",
-	"attributes_string", "attributes_number", "attributes_bool", "resources_string",
+	colServiceName, "name", "attributes", "resources_string",
+	"if(notEmpty(attributes), map(), attributes_string) AS attributes_string",
+	"if(notEmpty(attributes), map(), attributes_number) AS attributes_number",
+	"if(notEmpty(attributes), map(), attributes_bool) AS attributes_bool",
 	"events", "status_message", "status_code_string", "kind_string", "parent_span_id",
 	"flags", "is_remote", "trace_state", "status_code",
 	"db_name", "db_operation", "http_method", "http_url", "http_host",
@@ -207,8 +209,8 @@ func (s *traceStore) genAISpanColumns(ctx context.Context, orgID valuer.UUID, bo
 	return columns, nil
 }
 
-func (s *traceStore) GetTraceSpans(ctx context.Context, orgID valuer.UUID, traceID string, bounds *spantypes.TraceBounds) ([]spantypes.StorableSpan, error) {
-	sb := s.selectStorableSpans(ctx, orgID)
+func (s *traceStore) GetTraceSpans(ctx context.Context, traceID string, bounds *spantypes.TraceBounds) ([]spantypes.StorableSpan, error) {
+	sb := selectStorableSpans()
 	sb.Where(
 		sb.E("trace_id", traceID),
 		sb.GE("ts_bucket_start", bounds.Start.Unix()-1800),
@@ -249,11 +251,11 @@ func (s *traceStore) GetMinimalSpans(ctx context.Context, traceID string, start,
 	return spans, nil
 }
 
-func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, orgID valuer.UUID, traceID string, start, end time.Time, spanIDs []string) ([]spantypes.StorableSpan, error) {
+func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, start, end time.Time, spanIDs []string) ([]spantypes.StorableSpan, error) {
 	if len(spanIDs) == 0 {
 		return []spantypes.StorableSpan{}, nil
 	}
-	sb := s.selectStorableSpans(ctx, orgID)
+	sb := selectStorableSpans()
 	ids := make([]any, len(spanIDs))
 	for i, id := range spanIDs {
 		ids[i] = id
@@ -275,14 +277,10 @@ func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, orgID valuer.UUID, 
 	return spans, nil
 }
 
-// selectStorableSpans reads the JSON attributes column alongside the legacy maps when the
-// use_trace_attributes_json flag is on, as the query builder does.
-func (s *traceStore) selectStorableSpans(ctx context.Context, orgID valuer.UUID) *sqlbuilder.SelectBuilder {
+// selectStorableSpans reads the JSON attributes column alongside the legacy maps.
+func selectStorableSpans() *sqlbuilder.SelectBuilder {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(storableSpanColumns...)
-	if s.flagger.BooleanOrEmpty(ctx, flagger.FeatureUseTraceAttributesJSON, featuretypes.NewFlaggerEvaluationContext(orgID)) {
-		sb.SelectMore("attributes")
-	}
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
 	return sb
 }
@@ -293,12 +291,9 @@ func (s *traceStore) GetThreadSpans(ctx context.Context, orgID valuer.UUID, trac
 	sb.Select(
 		"DISTINCT ON (span_id) timestamp", "duration_nano", "span_id", "parent_span_id", "has_error", "name", "kind_string",
 		"status_code_string", "status_message", "resources_string",
-		"attributes_string", "attributes_number", "attributes_bool",
+		"attributes", "attributes_string", "attributes_number", "attributes_bool",
 		"events", "links as references",
 	)
-	if q.TraceAttrsJSONOn {
-		sb.SelectMore("attributes")
-	}
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
 	keys, err := s.genAIFieldKeys(ctx, orgID, aiobservabilitytypes.GenAISpanGateKeys)
 	if err != nil {
@@ -382,9 +377,10 @@ func (s *traceStore) GetFlamegraphSpans(ctx context.Context, traceID string, sta
 		"any(has_error) AS has_error",
 		"any(name) AS name",
 		"any(events) AS events",
-		"any(attributes_string) AS attributes_string",
-		"any(attributes_number) AS attributes_number",
-		"any(attributes_bool) AS attributes_bool",
+		"any(attributes) AS attributes",
+		"if(notEmpty(attributes), map(), any(attributes_string)) AS attributes_string", // `attributes` below resolves to the aggregated alias
+		"if(notEmpty(attributes), map(), any(attributes_number)) AS attributes_number",
+		"if(notEmpty(attributes), map(), any(attributes_bool)) AS attributes_bool",
 		"any(resources_string) AS resources_string",
 	)
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))

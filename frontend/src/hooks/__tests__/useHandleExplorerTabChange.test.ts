@@ -6,8 +6,7 @@ import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 
 jest.mock('hooks/queryBuilder/useQueryBuilder');
 jest.mock('hooks/saveViews/useGetSavedViewParams', () => ({
-	useGetSavedViewParams: (): { viewName: string; viewKey: string } => ({
-		viewName: '',
+	useGetSavedViewParams: (): { viewKey: string } => ({
 		viewKey: '',
 	}),
 }));

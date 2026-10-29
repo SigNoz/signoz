@@ -22,9 +22,11 @@ import {
 	SAVED_VIEW_SCHEMA_VERSION,
 	SAVED_VIEW_TOAST_POSITION,
 } from '../constants';
+import { SavedViewEventKeys, SavedViewEvents } from '../events';
 import { UseSavedViewRowActionsResult } from '../types';
 import { getSavedViewQuery } from '../utils/getSavedViewQuery';
 import { invalidateSavedViews } from '../utils/invalidateSavedViews';
+import { useSavedViewLogEvent } from './useSavedViewLogEvent';
 
 function showErrorToast(error: unknown, fallback: string): void {
 	toast.error(
@@ -42,6 +44,7 @@ export function useSavedViewRowActions(
 	const queryClient = useQueryClient();
 	const { pathname } = useLocation();
 	const [, copyToClipboard] = useCopyToClipboard();
+	const logSavedViewEvent = useSavedViewLogEvent(source);
 	const { mutateAsync: updateSavedView, isLoading: isRenaming } =
 		useUpdateSavedView();
 	const { mutateAsync: deleteSavedView, isLoading: isDeleting } =
@@ -55,8 +58,11 @@ export function useSavedViewRowActions(
 			});
 			copyToClipboard(getAbsoluteUrl(path));
 			toast.success('Link copied', { position: SAVED_VIEW_TOAST_POSITION });
+			logSavedViewEvent(SavedViewEvents.LinkCopied, {
+				[SavedViewEventKeys.ViewId]: view.id,
+			});
 		},
-		[pathname, copyToClipboard],
+		[pathname, copyToClipboard, logSavedViewEvent],
 	);
 
 	const copyViewId = useCallback(
@@ -83,13 +89,16 @@ export function useSavedViewRowActions(
 				});
 				await invalidateSavedViews(queryClient, source, view.id);
 				toast.success('View updated', { position: SAVED_VIEW_TOAST_POSITION });
+				logSavedViewEvent(SavedViewEvents.ViewDetailsEdited, {
+					[SavedViewEventKeys.ViewId]: view.id,
+				});
 				return true;
 			} catch (error) {
 				showErrorToast(error, 'Could not update the view');
 				return false;
 			}
 		},
-		[updateSavedView, source, queryClient],
+		[updateSavedView, source, queryClient, logSavedViewEvent],
 	);
 
 	// The deleted view's own query is left alone: refetching it would fail
@@ -100,13 +109,16 @@ export function useSavedViewRowActions(
 				await deleteSavedView({ pathParams: { id: view.id } });
 				await invalidateSavedViews(queryClient, source);
 				toast.success('View deleted', { position: SAVED_VIEW_TOAST_POSITION });
+				logSavedViewEvent(SavedViewEvents.ViewDeleted, {
+					[SavedViewEventKeys.ViewId]: view.id,
+				});
 				return true;
 			} catch (error) {
 				showErrorToast(error, 'Could not delete the view');
 				return false;
 			}
 		},
-		[deleteSavedView, source, queryClient],
+		[deleteSavedView, source, queryClient, logSavedViewEvent],
 	);
 
 	return {
