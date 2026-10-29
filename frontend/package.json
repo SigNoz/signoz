@@ -190,7 +190,6 @@
     "@types/testing-library__jest-dom": "^5.14.5",
     "@typescript/native-preview": "7.0.0-dev.20260430.1",
     "eslint-plugin-sonarjs": "4.0.2",
-    "glob": "^13.0.6",
     "husky": "^7.0.4",
     "is-ci": "^3.0.1",
     "jest-environment-jsdom": "29.7.0",

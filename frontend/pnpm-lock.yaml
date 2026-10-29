@@ -444,9 +444,6 @@ importers:
       eslint-plugin-sonarjs:
         specifier: 4.0.2
         version: 4.0.2(eslint@10.2.1(jiti@2.6.1))
-      glob:
-        specifier: ^13.0.6
-        version: 13.0.6
       husky:
         specifier: ^7.0.4
         version: 7.0.4
