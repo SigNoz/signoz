@@ -1,6 +1,7 @@
 import {
 	SavedviewtypesSavedViewDTO,
 	SavedviewtypesSavedViewSpecDTO,
+	SavedviewtypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	initialQueriesMap,
@@ -120,6 +121,7 @@ describe('hasUnsavedViewChanges', () => {
 				view,
 				stagedQuery: staged,
 				panelType: PANEL_TYPES.LIST,
+				sourcePage: SavedviewtypesSourceDTO.traces,
 				options: { ...options, selectColumns: [columns[0]] },
 			}),
 		).toBe(true);
@@ -139,6 +141,7 @@ describe('hasUnsavedViewChanges', () => {
 				view: bare,
 				stagedQuery: stagedFrom(bare, DataSource.TRACES),
 				panelType: PANEL_TYPES.LIST,
+				sourcePage: SavedviewtypesSourceDTO.traces,
 				options: { ...options, selectColumns: defaultTraceSelectedColumns },
 			}),
 		).toBe(false);
@@ -163,6 +166,7 @@ describe('hasUnsavedViewChanges', () => {
 					view: logsView,
 					stagedQuery: logsStaged,
 					panelType: PANEL_TYPES.LIST,
+					sourcePage: SavedviewtypesSourceDTO.logs,
 					options: { selectColumns: shownColumns, ...formatting },
 				}),
 			).toBe(false);
@@ -174,6 +178,7 @@ describe('hasUnsavedViewChanges', () => {
 					view: logsView,
 					stagedQuery: logsStaged,
 					panelType: PANEL_TYPES.LIST,
+					sourcePage: SavedviewtypesSourceDTO.logs,
 					options: { selectColumns: shownColumns, ...formatting, maxLines: 5 },
 				}),
 			).toBe(true);
@@ -193,6 +198,7 @@ describe('hasUnsavedViewChanges', () => {
 					view: bare,
 					stagedQuery: stagedFrom(bare, DataSource.LOGS),
 					panelType: PANEL_TYPES.LIST,
+					sourcePage: SavedviewtypesSourceDTO.logs,
 					options: {
 						selectColumns: defaultLogsSelectedColumns,
 						format: 'table',
@@ -236,6 +242,7 @@ describe('hasUnsavedViewChanges', () => {
 				view: olderView,
 				stagedQuery: stagedFrom(olderView, DataSource.METRICS),
 				panelType: PANEL_TYPES.TIME_SERIES,
+				sourcePage: SavedviewtypesSourceDTO.metrics,
 			}),
 		).toBe(false);
 	});
@@ -283,6 +290,7 @@ describe('hasUnsavedViewChanges', () => {
 				view: storedView,
 				stagedQuery: stagedWithTag,
 				panelType: PANEL_TYPES.TIME_SERIES,
+				sourcePage: SavedviewtypesSourceDTO.metrics,
 			}),
 		).toBe(false);
 	});
@@ -322,6 +330,7 @@ describe('hasUnsavedViewChanges', () => {
 					view: noOrder,
 					stagedQuery: stagedFrom(noOrder, DataSource.LOGS),
 					panelType: PANEL_TYPES.LIST,
+					sourcePage: SavedviewtypesSourceDTO.logs,
 				}),
 			).toBe(false);
 		});
@@ -337,6 +346,7 @@ describe('hasUnsavedViewChanges', () => {
 					view: noOrder,
 					stagedQuery: sorted,
 					panelType: PANEL_TYPES.LIST,
+					sourcePage: SavedviewtypesSourceDTO.logs,
 				}),
 			).toBe(true);
 
@@ -346,6 +356,7 @@ describe('hasUnsavedViewChanges', () => {
 					view: saved,
 					stagedQuery: stagedFrom(saved, DataSource.LOGS),
 					panelType: PANEL_TYPES.LIST,
+					sourcePage: SavedviewtypesSourceDTO.logs,
 				}),
 			).toBe(false);
 		});
@@ -362,6 +373,7 @@ describe('hasUnsavedViewChanges', () => {
 					view: legacy,
 					stagedQuery: stagedFrom(legacy, DataSource.LOGS),
 					panelType: PANEL_TYPES.LIST,
+					sourcePage: SavedviewtypesSourceDTO.logs,
 				}),
 			).toBe(false);
 		});
@@ -373,6 +385,7 @@ describe('hasUnsavedViewChanges', () => {
 				view,
 				stagedQuery: staged,
 				panelType: PANEL_TYPES.LIST,
+				sourcePage: SavedviewtypesSourceDTO.traces,
 				options: { ...options, ...formatting, maxLines: 5 },
 			}),
 		).toBe(false);

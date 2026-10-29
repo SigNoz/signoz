@@ -32,6 +32,7 @@ export interface HasUnsavedViewChangesArgs {
 	stagedQuery: Query | null;
 	panelType: PANEL_TYPES;
 	options?: SavedViewOptions;
+	sourcePage: SavedviewtypesSourceDTO;
 }
 
 export interface UseLastUsedViewResult {
