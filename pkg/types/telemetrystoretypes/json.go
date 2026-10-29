@@ -48,11 +48,7 @@ func (v JSONValue) Flatten() map[string]any {
 // A key stored at both a scalar and an object path collapses here, which Flatten avoids:
 // https://github.com/SigNoz/events-pod/issues/8
 func (v JSONValue) Nest() map[string]any {
-	nested := chcol.NewJSON()
-	for path, value := range v.column.ValuesByPath() {
-		nested.SetValueAtPath(path, flatObject(value))
-	}
-	return unwrap(nested.NestedMap())
+	return unwrap(v.column.NestedMap())
 }
 
 // MarshalJSON renders the flat attribute bag, so a reader that stores the scan target without calling
