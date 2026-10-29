@@ -1,5 +1,8 @@
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { TRACE_VIEW_DEFAULT_COLUMNS } from 'container/LLMObservability/Explorer/constants';
 import { useGetSavedView } from 'api/generated/services/saved-view';
 import {
+	SavedviewtypesPanelTypeDTO,
 	SavedviewtypesSavedViewDTO,
 	SavedviewtypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -195,6 +198,64 @@ describe('usePreferenceSync in saved view mode', () => {
 		expect(withoutFields.result.current.preferences?.columns).toBe(
 			defaultTraceSelectedColumns,
 		);
+	});
+
+	it('passes AI trace selectedFields through and uses the defaults when absent', () => {
+		mockViews([
+			makeView('ai-with-fields', SavedviewtypesSourceDTO.ai_observability, {
+				panelType: SavedviewtypesPanelTypeDTO.trace,
+				selectedFields: [{ name: 'total_tokens' }],
+			}),
+			makeView('ai-without-fields', SavedviewtypesSourceDTO.ai_observability, {
+				panelType: SavedviewtypesPanelTypeDTO.trace,
+			}),
+		]);
+
+		const withFields = renderHook(() =>
+			usePreferenceSync({
+				mode: PreferenceMode.SAVED_VIEW,
+				sourcePage: SavedviewtypesSourceDTO.ai_observability,
+				savedViewId: 'ai-with-fields',
+			}),
+		);
+		const withoutFields = renderHook(() =>
+			usePreferenceSync({
+				mode: PreferenceMode.SAVED_VIEW,
+				sourcePage: SavedviewtypesSourceDTO.ai_observability,
+				savedViewId: 'ai-without-fields',
+			}),
+		);
+
+		expect(withFields.result.current.preferences).toStrictEqual({
+			columns: [{ name: 'total_tokens' }],
+			panelType: PANEL_TYPES.TRACE,
+		});
+		expect(withoutFields.result.current.preferences).toStrictEqual({
+			columns: TRACE_VIEW_DEFAULT_COLUMNS,
+			panelType: PANEL_TYPES.TRACE,
+		});
+	});
+
+	it('gives the open panel its defaults when the AI view was saved on another panel', () => {
+		mockViews([
+			makeView('ai-graph', SavedviewtypesSourceDTO.ai_observability, {
+				panelType: SavedviewtypesPanelTypeDTO.graph,
+			}),
+		]);
+
+		const { result } = renderHook(() =>
+			usePreferenceSync({
+				mode: PreferenceMode.SAVED_VIEW,
+				sourcePage: SavedviewtypesSourceDTO.ai_observability,
+				panelType: PANEL_TYPES.TRACE,
+				savedViewId: 'ai-graph',
+			}),
+		);
+
+		expect(result.current.preferences).toStrictEqual({
+			columns: TRACE_VIEW_DEFAULT_COLUMNS,
+			panelType: PANEL_TYPES.TRACE,
+		});
 	});
 
 	it('uses defaults while the saved view is not loaded', () => {
