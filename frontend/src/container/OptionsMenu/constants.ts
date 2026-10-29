@@ -21,6 +21,7 @@ export const SOURCE_PAGE_SIGNAL: Record<
 > = {
 	[SavedviewtypesSourceDTO.logs]: DataSource.LOGS,
 	[SavedviewtypesSourceDTO.traces]: DataSource.TRACES,
+	[SavedviewtypesSourceDTO.ai_observability]: DataSource.TRACES,
 };
 
 export const EXCLUDED_COLUMNS: Record<DataSource, string[]> = {

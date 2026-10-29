@@ -1,4 +1,5 @@
 import { TelemetryFieldKey } from 'api/v5/v5';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { LogViewMode, FontSize } from 'container/OptionsMenu/types';
 
 import { PREFERENCE_SOURCE_PAGES } from '../constants';
@@ -9,6 +10,8 @@ export enum PreferenceMode {
 }
 
 export type PreferenceSourcePage = (typeof PREFERENCE_SOURCE_PAGES)[number];
+
+export type PanelColumns = Partial<Record<PANEL_TYPES, TelemetryFieldKey[]>>;
 
 export interface PreferenceSlice {
 	preferences: Preferences | null;
@@ -33,4 +36,7 @@ export interface FormattingOptions {
 export interface Preferences {
 	columns: TelemetryFieldKey[];
 	formatting?: FormattingOptions;
+	// Set by source pages whose panels each keep their own columns: the panel
+	// these columns belong to.
+	panelType?: PANEL_TYPES;
 }

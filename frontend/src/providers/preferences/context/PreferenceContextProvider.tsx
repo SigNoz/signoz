@@ -6,6 +6,8 @@ import React, {
 	useMemo,
 } from 'react';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { QueryParams } from 'constants/query';
+import { DEFAULT_PANEL_TYPE } from 'container/LLMObservability/Explorer/constants';
 import useUrlQuery from 'hooks/useUrlQuery';
 import {
 	PreferenceContextValue,
@@ -47,12 +49,30 @@ export function PreferenceContextProvider({
 		sourcePage: SavedviewtypesSourceDTO.traces,
 	});
 
+	let aiPanelType = DEFAULT_PANEL_TYPE;
+	const panelTypesParam = params.get(QueryParams.panelTypes);
+	if (panelTypesParam) {
+		try {
+			aiPanelType = JSON.parse(panelTypesParam);
+		} catch (e) {
+			console.error(e);
+		}
+	}
+
+	const aiObservabilitySlice = usePreferenceSync({
+		mode: savedViewId ? PreferenceMode.SAVED_VIEW : PreferenceMode.DIRECT,
+		savedViewId: savedViewId || undefined,
+		sourcePage: SavedviewtypesSourceDTO.ai_observability,
+		panelType: aiPanelType,
+	});
+
 	const value = useMemo<PreferenceContextValue>(
 		() => ({
 			[SavedviewtypesSourceDTO.logs]: logsSlice,
 			[SavedviewtypesSourceDTO.traces]: tracesSlice,
+			[SavedviewtypesSourceDTO.ai_observability]: aiObservabilitySlice,
 		}),
-		[logsSlice, tracesSlice],
+		[logsSlice, tracesSlice, aiObservabilitySlice],
 	);
 
 	return (

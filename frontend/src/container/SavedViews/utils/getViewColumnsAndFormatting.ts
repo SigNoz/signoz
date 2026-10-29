@@ -3,12 +3,14 @@ import {
 	SavedviewtypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { TelemetryFieldKey } from 'api/v5/v5';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	defaultLogsSelectedColumns,
 	defaultTraceSelectedColumns,
 	ensureLogsRequiredColumns,
 } from 'container/OptionsMenu/constants';
 import { FontSize, LogViewMode } from 'container/OptionsMenu/types';
+import getAiObservabilityLoaderConfig from 'providers/preferences/configs/aiObservabilityLoaderConfig';
 import { Preferences } from 'providers/preferences/types';
 
 function withColumnNames(
@@ -46,6 +48,18 @@ export function getViewColumnsAndFormatting(
 	}
 	if (sourcePage === SavedviewtypesSourceDTO.traces) {
 		return { columns: selectedFields || defaultTraceSelectedColumns };
+	}
+	if (sourcePage === SavedviewtypesSourceDTO.ai_observability) {
+		if (!spec) {
+			return { columns: [] };
+		}
+		const panelType = spec.panelType as unknown as PANEL_TYPES;
+		return {
+			columns:
+				selectedFields ||
+				getAiObservabilityLoaderConfig(panelType).default().columns,
+			panelType,
+		};
 	}
 	return { columns: [] };
 }
