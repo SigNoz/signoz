@@ -2,8 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { Button, InputNumber, Popover, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
-import { LogViewMode } from 'container/OptionsMenu/types';
-import { FontSize, OptionsMenuConfig } from 'container/OptionsMenu/types';
+import {
+	LogViewMode,
+	FontSize,
+	OptionsMenuConfig,
+} from 'container/OptionsMenu/types';
 import {
 	Check,
 	ChevronLeft,

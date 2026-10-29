@@ -104,7 +104,9 @@ function PanelHeader(props: PanelHeaderProps): JSX.Element {
 	return (
 		<div className={cx(styles.header, 'panel-drag-handle')}>
 			<div className={styles.headerLeft}>
-				<Typography.Text className={styles.headerTitle}>{name}</Typography.Text>
+				<Typography.Text className={styles.headerTitle} data-testid="panel-title">
+					{name}
+				</Typography.Text>
 				{description && (
 					<Tooltip title={description}>
 						<Info

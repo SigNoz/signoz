@@ -86,16 +86,12 @@ export const otherFiltersResponse = {
 	},
 };
 
-export const quickFiltersAttributeValuesResponse = {
+export const quickFiltersFieldValuesResponse = {
 	status: 'success',
 	data: {
-		stringAttributeValues: [
-			'mq-kafka',
-			'otel-demo',
-			'otlp-python',
-			'sample-flask',
-		],
-		numberAttributeValues: null,
-		boolAttributeValues: null,
+		complete: true,
+		values: {
+			stringValues: ['mq-kafka', 'otel-demo', 'otlp-python', 'sample-flask'],
+		},
 	},
 };

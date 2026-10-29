@@ -263,6 +263,10 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddFieldTuplesFactory(sqlstore),
 		sqlmigration.NewKeepRelevantLLMPricingRulesFactory(),
 		sqlmigration.NewBackfillTelegramChannelSpecFactory(),
+		sqlmigration.NewAddMetricsFieldTuplesFactory(sqlstore),
+		sqlmigration.NewAddGCPConnectionMethodFactory(),
+		sqlmigration.NewDeleteOrphanSARolesFactory(),
+		sqlmigration.NewAddRoutePolicyTuplesFactory(sqlstore),
 	)
 }
 
@@ -327,7 +331,7 @@ func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, p
 	)
 }
 
-func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.AuthZ, modules Modules, handlers Handlers, globalConfig global.Config, gatewayService gateway.Gateway, identNResolver identn.IdentNResolver, sharder sharder.Sharder, auditor auditor.Auditor, web web.Web) factory.NamedMap[factory.ProviderFactory[apiserver.APIServer, apiserver.Config]] {
+func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.AuthZ, modules Modules, handlers Handlers, globalConfig global.Config, gatewayService gateway.Gateway, identNResolver identn.IdentNResolver, sharder sharder.Sharder, auditor auditor.Auditor, web web.Web, alertmanagerService alertmanager.Alertmanager) factory.NamedMap[factory.ProviderFactory[apiserver.APIServer, apiserver.Config]] {
 	return factory.MustNewNamedMap(
 		signozapiserver.NewFactory(
 			orgGetter,
@@ -364,6 +368,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.RuleStateHistory,
 			handlers.SpanMapperHandler,
 			handlers.AlertmanagerHandler,
+			alertmanagerService,
 			handlers.PrometheusHandler,
 			handlers.LLMPricingRuleHandler,
 			handlers.TraceDetail,

@@ -43,7 +43,7 @@ import { ALL_TIME_ZONES } from 'utils/timeZoneUtil';
 
 import 'dayjs/locale/en';
 
-import { AlertRuleTags } from './PlannedDowntimeList';
+import { AlertRuleTags } from './AlertRuleTags';
 import {
 	getAlertOptionsFromIds,
 	getDurationInfo,

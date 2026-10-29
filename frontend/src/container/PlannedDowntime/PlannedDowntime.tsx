@@ -1,35 +1,50 @@
-import React, { ChangeEvent, useEffect, useState } from 'react';
+import React, {
+	ChangeEvent,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { useHistory } from 'react-router-dom';
 import { Plus, Search } from '@signozhq/icons';
-import { Color } from '@signozhq/design-tokens';
+import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { Button, Flex, Form, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { Form } from 'antd';
 import {
 	useDeleteDowntimeScheduleByID,
 	useListDowntimeSchedules,
 } from 'api/generated/services/downtimeschedules';
 import { useListRules } from 'api/generated/services/rules';
 import type { AlertmanagertypesPlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas';
+import { ColumnSelector } from 'components/TanStackTableView';
+import TextToolTip from 'components/TextToolTip';
 import dayjs from 'dayjs';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
+import { useTimezone } from 'providers/Timezone';
 import { USER_ROLES } from 'types/roles';
 
 import 'dayjs/locale/en';
 
+import styles from './PlannedDowntime.module.scss';
 import { PlannedDowntimeDeleteModal } from './PlannedDowntimeDeleteModal';
 import { PlannedDowntimeForm } from './PlannedDowntimeForm';
-import { PlannedDowntimeList } from './PlannedDowntimeList';
+import PlannedDowntimeList from './PlannedDowntimeList';
 import {
 	defaultInitialValues,
 	deleteDowntimeHandler,
 } from './PlannedDowntimeutils';
+import { getPlannedDowntimeColumns } from './table.config';
+import { DowntimeSchedulesTableData } from './types';
+import usePlannedDowntimeTable from './usePlannedDowntimeTable';
 
 import './PlannedDowntime.styles.scss';
+
+const COLUMNS_STORAGE_KEY = 'planned-downtime-columns';
 
 dayjs.locale('en');
 
@@ -69,7 +84,7 @@ export function PlannedDowntime(): JSX.Element {
 		}
 	}, [form, isOpen]);
 
-	const [searchValue, setSearchValue] = React.useState<string | number>(
+	const [searchValue, setSearchValue] = React.useState<string>(
 		urlQuery.get('search') || '',
 	);
 	const [deleteData, setDeleteData] = useState<{ id: string; name: string }>();
@@ -86,15 +101,61 @@ export function PlannedDowntime(): JSX.Element {
 		history.replace(url);
 	}, 300);
 
+	const {
+		containerRef,
+		calculatedPageSize,
+		filteredDowntimes,
+		pagedDowntimes,
+		setPage,
+		setLimit,
+	} = usePlannedDowntimeTable(
+		downtimeSchedules.data?.data || [],
+		alertOptions || [],
+		searchValue,
+	);
+
 	const handleSearch = (e: ChangeEvent<HTMLInputElement>): void => {
 		setSearchValue(e.target.value);
 		updateUrlWithSearch(e.target.value);
+		setPage(1);
 	};
 
 	const clearSearch = (): void => {
 		setSearchValue('');
 		updateUrlWithSearch('');
+		setPage(1);
 	};
+
+	const canEdit = user?.role !== USER_ROLES.VIEWER;
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+	const columns = React.useMemo(
+		() => getPlannedDowntimeColumns(formatTimezoneAdjustedTimestamp),
+		[formatTimezoneAdjustedTimestamp],
+	);
+
+	const handleCreate = useCallback((): void => {
+		setInitialValues(defaultInitialValues);
+		setIsOpen(true);
+		setEditMode(false);
+		form.resetFields();
+	}, [form]);
+
+	const handleEdit = useCallback(
+		(downtime: DowntimeSchedulesTableData): void => {
+			setInitialValues({ ...downtime });
+			setIsOpen(true);
+			setEditMode(true);
+		},
+		[],
+	);
+
+	const handleDelete = useCallback(
+		(downtime: DowntimeSchedulesTableData): void => {
+			setDeleteData({ id: downtime.id, name: downtime.name });
+			setIsDeleteModalOpen(true);
+		},
+		[],
+	);
 
 	// Delete Downtime Schedule
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -125,78 +186,107 @@ export function PlannedDowntime(): JSX.Element {
 		});
 	};
 
+	const isFetching = useMemo(
+		() => downtimeSchedules.isLoading || downtimeSchedules.isFetching,
+		[downtimeSchedules.isLoading, downtimeSchedules.isFetching],
+	);
+	const totalDowntimes = useMemo(
+		() => downtimeSchedules.data?.data?.length ?? 0,
+		[downtimeSchedules.data?.data?.length],
+	);
+	const isEmpty = useMemo(
+		() => !isFetching && !searchValue && totalDowntimes === 0,
+		[isFetching, searchValue, totalDowntimes],
+	);
+
 	return (
-		<div className="planned-downtime-container">
-			<div className="planned-downtime-content">
-				<Typography.Title className="title">Planned Downtime</Typography.Title>
-				<Typography.Text className="subtitle">
-					Create and manage planned downtimes.
-				</Typography.Text>
-				<Flex className="toolbar">
+		<div className={styles.container}>
+			<header className={styles.headerBand}>
+				<div className={styles.commandHeader}>
+					<div className={styles.headingBlock}>
+						<Typography.Title className={styles.title}>
+							Planned Downtime
+						</Typography.Title>
+						<span className={styles.countPill}>{totalDowntimes}</span>
+					</div>
+					<div className={styles.grow} />
+					{!isEmpty && (
+						<ColumnSelector
+							columns={columns}
+							storageKey={COLUMNS_STORAGE_KEY}
+							testId="planned-downtime-columns"
+						/>
+					)}
+					<Button
+						variant="solid"
+						color="primary"
+						size="sm"
+						prefix={<Plus size={14} />}
+						onClick={handleCreate}
+						disabled={!canEdit}
+						disabledTooltip="You need edit permissions to create a planned downtime"
+						testId="planned-downtime-create"
+					>
+						New downtime
+					</Button>
+					<TextToolTip
+						text="More details on how to schedule planned downtime"
+						url="https://signoz.io/docs/alerts-management/planned-maintenance/"
+						urlText="Learn More"
+					/>
+				</div>
+
+				<div className={styles.filtersRow}>
 					<Input
-						placeholder="Search for a planned downtime..."
-						prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
+						containerClassName={styles.searchInput}
+						placeholder="Search by name"
 						value={searchValue}
 						onChange={handleSearch}
+						suffix={<Search size={14} className={styles.searchIcon} />}
+						testId="planned-downtime-search"
 					/>
-					<Tooltip
-						title={
-							user?.role === USER_ROLES.VIEWER
-								? 'You need edit permissions to create a planned downtime'
-								: ''
-						}
-					>
-						<Button
-							type="primary"
-							onClick={(): void => {
-								setInitialValues(defaultInitialValues);
-								setIsOpen(true);
-								setEditMode(false);
-								form.resetFields();
-							}}
-							disabled={user?.role === USER_ROLES.VIEWER}
-						>
-							<Flex align="center" gap={4}>
-								<Plus size={16} />
-								New downtime
-							</Flex>
-						</Button>
-					</Tooltip>
-				</Flex>
-				<br />
+				</div>
+			</header>
+
+			<div ref={containerRef} className={styles.tableContainer}>
 				<PlannedDowntimeList
-					downtimeSchedules={downtimeSchedules}
-					alertOptions={alertOptions || []}
-					setInitialValues={setInitialValues}
-					setModalOpen={setIsOpen}
-					handleDeleteDowntime={(id, name): void => {
-						setDeleteData({ id, name });
-						setIsDeleteModalOpen(true);
-					}}
-					setEditMode={setEditMode}
-					searchValue={searchValue}
-				/>
-				{isOpen && (
-					<PlannedDowntimeForm
-						alertOptions={alertOptions || []}
-						initialValues={initialValues}
-						isError={isError}
-						isLoading={isLoading}
-						isOpen={isOpen}
-						setIsOpen={setIsOpen}
-						refetchAllSchedules={refetchAllSchedules}
-						isEditMode={isEditMode}
-						form={form}
-					/>
-				)}
-				<PlannedDowntimeDeleteModal
-					isDeleteLoading={isDeleteLoading}
-					isDeleteModalOpen={isDeleteModalOpen}
-					onDeleteHandler={onDeleteHandler}
-					setIsDeleteModalOpen={setIsDeleteModalOpen}
-					downtimeSchedule={deleteData?.name || ''}
+					columns={columns}
+					downtimes={filteredDowntimes}
+					pagedDowntimes={pagedDowntimes}
+					calculatedPageSize={calculatedPageSize}
+					onLimitChange={setLimit}
+					isFetching={isFetching}
+					isError={downtimeSchedules.isError}
+					refetch={refetchAllSchedules}
+					canEdit={canEdit}
+					onEdit={handleEdit}
+					onDelete={handleDelete}
+					onCreate={handleCreate}
+					hasSearchTerm={searchValue.length > 0}
+					onClearSearch={clearSearch}
 				/>
 			</div>
+
+			{isOpen && (
+				<PlannedDowntimeForm
+					alertOptions={alertOptions || []}
+					initialValues={initialValues}
+					isError={isError}
+					isLoading={isLoading}
+					isOpen={isOpen}
+					setIsOpen={setIsOpen}
+					refetchAllSchedules={refetchAllSchedules}
+					isEditMode={isEditMode}
+					form={form}
+				/>
+			)}
+			<PlannedDowntimeDeleteModal
+				isDeleteLoading={isDeleteLoading}
+				isDeleteModalOpen={isDeleteModalOpen}
+				onDeleteHandler={onDeleteHandler}
+				setIsDeleteModalOpen={setIsDeleteModalOpen}
+				downtimeSchedule={deleteData?.name || ''}
+			/>
 		</div>
 	);
 }

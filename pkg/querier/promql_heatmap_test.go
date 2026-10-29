@@ -16,7 +16,7 @@ import (
 
 // The cache key is the fingerprint alone, so two request types over one
 // expression must not produce the same one — a time series payload served to a
-// heatmap request has no axis and reads back as a single collapsed band.
+// heatmap request has no axis and reads back as a single collapsed bucket.
 func TestFingerprintSeparatesHeatmapFromTimeSeries(t *testing.T) {
 	fingerprintFor := func(requestType qbv5.RequestType) string {
 		q := &promqlQuery{
@@ -50,7 +50,7 @@ func TestFoldMatrixAsHeatmapClampsADecreasingCumulativeCount(t *testing.T) {
 		},
 	}
 
-	data, err := foldMatrixAsHeatmap(matrix, &qbv5.TimeRange{From: 1710000000000, To: 1710000060000}, uint64(time.Minute.Milliseconds()), "A")
+	data, err := foldMatrixAsHeatmap(matrix, "A")
 	require.NoError(t, err)
 	require.Len(t, data.Aggregations, 1)
 
@@ -76,7 +76,7 @@ func TestFoldMatrixAsHeatmapWidensTheBandOverAMissingUpperBound(t *testing.T) {
 		},
 	}
 
-	data, err := foldMatrixAsHeatmap(matrix, &qbv5.TimeRange{From: 1710000000000, To: 1710000060000}, uint64(time.Minute.Milliseconds()), "A")
+	data, err := foldMatrixAsHeatmap(matrix, "A")
 	require.NoError(t, err)
 	require.Len(t, data.Aggregations, 1)
 

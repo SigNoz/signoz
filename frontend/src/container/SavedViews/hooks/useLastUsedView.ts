@@ -6,9 +6,8 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import {
 	PreservedViewsInLocalStorage,
 	PreservedViewType,
-} from 'container/ExplorerOptions/types';
-
-import { UseLastUsedViewResult } from '../types';
+	UseLastUsedViewResult,
+} from '../types';
 
 function readLastUsedViews(): PreservedViewsInLocalStorage {
 	try {

@@ -4,7 +4,7 @@ import history from 'lib/history';
 import { openInNewTab } from 'utils/navigation';
 
 export interface ChannelFormView {
-	openCreate: () => void;
+	openCreate: (kind?: string) => void;
 	openEdit: (channelId: string, options?: { newTab?: boolean }) => void;
 }
 
@@ -22,7 +22,10 @@ export function useChannelFormView(): ChannelFormView {
 	};
 
 	return {
-		openCreate: (): void => history.push(ROUTES.CHANNELS_NEW),
+		openCreate: (kind?: string): void =>
+			history.push(
+				kind ? `${ROUTES.CHANNELS_NEW}?kind=${kind}` : ROUTES.CHANNELS_NEW,
+			),
 		openEdit,
 	};
 }

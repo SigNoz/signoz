@@ -6,16 +6,27 @@ import { NotificationChannelCreatePermission } from 'lib/authz/hooks/useAuthZ/pe
 
 import ChannelFormBody from './ChannelFormBody';
 import styles from './ChannelForm.module.scss';
+import { ChannelKind } from 'container/CreateAlertChannels/types';
+
 import { useChannelDraft } from './useChannelDraft';
 
 interface ChannelFormProps {
 	channelId?: string;
+	/** Preselects the type when creating, so a filtered list can offer its kind. */
+	initialKind?: ChannelKind;
 	onDone: () => void;
 }
 
-function ChannelForm({ channelId, onDone }: ChannelFormProps): JSX.Element {
+function ChannelForm({
+	channelId,
+	initialKind,
+	onDone,
+}: ChannelFormProps): JSX.Element {
 	const { t } = useTranslation('channels');
-	const { draft, isLoading, loadError } = useChannelDraft(channelId);
+	const { draft, isLoading, loadError } = useChannelDraft(
+		channelId,
+		initialKind,
+	);
 
 	const {
 		canEdit,
