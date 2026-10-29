@@ -2,8 +2,11 @@ package ruler
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -151,6 +154,84 @@ func orgIDFromContext(ctx context.Context) (valuer.UUID, error) {
 	}
 
 	return valuer.NewUUID(claims.OrgID)
+}
+
+func NewRuleQueryTelemetryResources(rulerService Ruler) coretypes.ResourceExtractor {
+	return func(ec coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
+		body, err := fetchStoredCompositeQuery(ec, rulerService)
+		if err != nil {
+			return nil, err
+		}
+
+		return querybuilder.QueryRangeResources(coretypes.ExtractorContext{Request: ec.Request, RequestBody: body})
+	}
+}
+
+func NewRuleQueryFieldResources(rulerService Ruler) coretypes.ResourceExtractor {
+	return func(ec coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
+		body, err := fetchStoredCompositeQuery(ec, rulerService)
+		if err != nil {
+			return nil, err
+		}
+
+		return mapFieldResources(body)
+	}
+}
+
+func fetchStoredCompositeQuery(ec coretypes.ExtractorContext, rulerService Ruler) ([]byte, error) {
+	if ec.Request == nil {
+		return nil, nil
+	}
+
+	ruleID, err := valuer.NewUUID(mux.Vars(ec.Request)["id"])
+	if err != nil {
+		return nil, err
+	}
+
+	stored, err := rulerService.GetRule(ec.Request.Context(), ruleID)
+	if err != nil {
+		return nil, err
+	}
+
+	return json.Marshal(map[string]any{"compositeQuery": stored.RuleCondition.CompositeQuery})
+}
+
+func mapFieldResources(body []byte) ([]coretypes.ResourceWithID, error) {
+	telemetry, err := querybuilder.QueryRangeResources(coretypes.ExtractorContext{RequestBody: body})
+	if err != nil {
+		return nil, err
+	}
+
+	seen := make(map[string]struct{}, 3)
+	refs := make([]coretypes.ResourceWithID, 0, 3)
+	for _, ref := range telemetry {
+		field, err := fieldResourceForKind(ref.Resource.Kind())
+		if err != nil {
+			return nil, err
+		}
+
+		kind := field.Kind().String()
+		if _, ok := seen[kind]; ok {
+			continue
+		}
+		seen[kind] = struct{}{}
+		refs = append(refs, coretypes.ResourceWithID{Resource: field})
+	}
+
+	return refs, nil
+}
+
+func fieldResourceForKind(kind coretypes.Kind) (coretypes.Resource, error) {
+	switch kind {
+	case coretypes.KindLogs, coretypes.KindAuditLogs:
+		return coretypes.ResourceMetaResourceLogsField, nil
+	case coretypes.KindTraces:
+		return coretypes.ResourceMetaResourceTracesField, nil
+	case coretypes.KindMetrics, coretypes.KindMeterMetrics:
+		return coretypes.ResourceMetaResourceMetricsField, nil
+	default:
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "no field resource for telemetry kind %q", kind.String())
+	}
 }
 
 func diffLinks(stored, incoming []string) (attached, detached []string) {
