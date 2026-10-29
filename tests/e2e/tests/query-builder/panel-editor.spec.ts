@@ -113,7 +113,9 @@ test.describe('Query builder — panel editor', () => {
 		await editor.switchType(PanelKind.TimeSeries);
 
 		await expect(addOns.limit()).toHaveValue('7');
-		expect(qb.spec(await qb.run(), 'A').limit).toBe(7);
+		// The kind switch already fetched: Run can be a cache hit.
+		await qb.runButton().click();
+		await expect.poll(() => qb.latest('A')?.limit).toBe(7);
 	});
 
 	test('TC-26 reduce-to follows the metric type and keeps a choice within it', async ({

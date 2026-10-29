@@ -168,6 +168,7 @@ test.describe('Query builder — filter editor', () => {
 		const filter = qb.query('A').filter;
 
 		await filter.type('service.name IN ');
+		await filter.openSuggestions();
 		await filter.suggestion('frontend').first().click();
 		await expect
 			.poll(() => filter.expression())
