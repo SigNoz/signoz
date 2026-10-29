@@ -103,7 +103,6 @@
     "rc-select": "14.10.0",
     "react": "18.2.0",
     "react-addons-update": "15.6.3",
-    "react-beautiful-dnd": "13.1.1",
     "react-dnd": "16.0.1",
     "react-dnd-html5-backend": "16.0.1",
     "react-dom": "18.2.0",
@@ -137,7 +136,6 @@
     "uplot": "1.6.31",
     "uuid": "14.0.1",
     "vite": "npm:rolldown-vite@7.3.1",
-    "vite-plugin-html": "3.2.2",
     "zod": "4.3.6",
     "zustand": "5.0.11"
   },
@@ -182,7 +180,6 @@
     "@types/papaparse": "5.3.7",
     "@types/react": "18.0.26",
     "@types/react-addons-update": "0.14.21",
-    "@types/react-beautiful-dnd": "13.1.8",
     "@types/react-dom": "18.0.10",
     "@types/react-grid-layout": "^1.1.2",
     "@types/react-redux": "^7.1.11",
