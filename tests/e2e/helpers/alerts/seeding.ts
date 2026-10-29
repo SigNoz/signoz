@@ -15,7 +15,7 @@ import type {
 
 // ─── Seeding telemetry ───────────────────────────────────────────────────
 
-async function postToSeeder(
+export async function postToSeeder(
 	page: Page,
 	path: string,
 	data: unknown,
