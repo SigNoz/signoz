@@ -102,7 +102,7 @@ describe('resolvePageType', () => {
 		expect(resolvePageType(ROUTES.METRICS_EXPLORER_EXPLORER, '')).toBe(
 			PageTypeDTO.metrics_explorer,
 		);
-		expect(resolvePageType(ROUTES.METRICS_EXPLORER_VIEWS, '')).toBe(
+		expect(resolvePageType('/metrics-explorer/views', '')).toBe(
 			PageTypeDTO.metrics_explorer,
 		);
 	});

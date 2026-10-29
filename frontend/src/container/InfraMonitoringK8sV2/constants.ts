@@ -228,7 +228,6 @@ export function GetPodsQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{
@@ -242,7 +241,6 @@ export function GetPodsQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: false,
 		},
 		{
@@ -256,7 +254,6 @@ export function GetPodsQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: false,
 		},
 		{
@@ -270,7 +267,6 @@ export function GetPodsQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: false,
 		},
 		{
@@ -284,7 +280,6 @@ export function GetPodsQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: false,
 		},
 		{
@@ -298,7 +293,6 @@ export function GetPodsQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: false,
 		},
 		{
@@ -312,7 +306,6 @@ export function GetPodsQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: false,
 		},
 		{
@@ -326,7 +319,6 @@ export function GetPodsQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: false,
 		},
 		{
@@ -355,7 +347,6 @@ export function GetContainersQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.CONTAINER_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{
@@ -369,7 +360,6 @@ export function GetContainersQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.CONTAINER_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{
@@ -383,7 +373,6 @@ export function GetContainersQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.CONTAINER_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: false,
 		},
 		{
@@ -397,7 +386,6 @@ export function GetContainersQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.CONTAINER_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: false,
 		},
 		{
@@ -411,7 +399,6 @@ export function GetContainersQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.CONTAINER_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: false,
 		},
 		{
@@ -425,7 +412,6 @@ export function GetContainersQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.CONTAINER_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: false,
 		},
 		{
@@ -439,7 +425,6 @@ export function GetContainersQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.CONTAINER_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: false,
 		},
 		{
@@ -453,7 +438,6 @@ export function GetContainersQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.CONTAINER_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: false,
 		},
 		{
@@ -467,7 +451,6 @@ export function GetContainersQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.CONTAINER_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: false,
 		},
 		{
@@ -481,7 +464,6 @@ export function GetContainersQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.CONTAINER_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: false,
 		},
 		{
@@ -510,7 +492,6 @@ export function GetNodesQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{
@@ -524,7 +505,6 @@ export function GetNodesQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{
@@ -553,7 +533,6 @@ export function GetNamespaceQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{
@@ -567,7 +546,6 @@ export function GetNamespaceQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{
@@ -596,7 +574,6 @@ export function GetClustersQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{
@@ -625,7 +602,6 @@ export function GetVolumesQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_CAPACITY,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{
@@ -639,7 +615,6 @@ export function GetVolumesQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_CAPACITY,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{
@@ -653,7 +628,6 @@ export function GetVolumesQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_CAPACITY,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{
@@ -682,7 +656,6 @@ export function GetDeploymentsQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{
@@ -696,7 +669,6 @@ export function GetDeploymentsQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{
@@ -710,7 +682,6 @@ export function GetDeploymentsQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{
@@ -739,7 +710,6 @@ export function GetStatefulsetsQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{
@@ -753,7 +723,6 @@ export function GetStatefulsetsQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{
@@ -767,7 +736,6 @@ export function GetStatefulsetsQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{
@@ -796,7 +764,6 @@ export function GetDaemonsetsQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{
@@ -809,7 +776,6 @@ export function GetDaemonsetsQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{
@@ -822,7 +788,6 @@ export function GetDaemonsetsQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{
@@ -851,7 +816,6 @@ export function GetJobsQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{
@@ -864,7 +828,6 @@ export function GetJobsQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{
@@ -877,7 +840,6 @@ export function GetJobsQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{

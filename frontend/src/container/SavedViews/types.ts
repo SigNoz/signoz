@@ -10,6 +10,8 @@ import { OptionsQuery } from 'container/OptionsMenu/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { SavedViewCreatedFrom } from './events';
+
 export type SavedViewSourcePage = DataSource | 'meter';
 
 export type SavedViewOptions = Pick<
@@ -51,7 +53,12 @@ export interface UseSavedViewActionsResult {
 	selectView: (view: SavedviewtypesSavedViewDTO) => void;
 	revertView: (view: SavedviewtypesSavedViewDTO) => void;
 	clearView: () => void;
-	createView: (displayName: string) => Promise<string | undefined>;
+	/** Clears the open view without logging it, for flows that are not a clear. */
+	resetView: () => void;
+	createView: (
+		displayName: string,
+		from: SavedViewCreatedFrom,
+	) => Promise<string | undefined>;
 	updateView: (view: SavedviewtypesSavedViewDTO) => Promise<boolean>;
 	isSaving: boolean;
 }
@@ -218,3 +225,20 @@ export interface SavedViewsEmptyStateProps {
 	isSaving: boolean;
 	onSave: (displayName: string) => Promise<boolean>;
 }
+
+export enum PreservedViewsTypes {
+	LOGS = 'logs',
+	TRACES = 'traces',
+	METRICS = 'metrics',
+	METER = 'meter',
+}
+
+export type PreservedViewType =
+	| PreservedViewsTypes.LOGS
+	| PreservedViewsTypes.TRACES
+	| PreservedViewsTypes.METRICS
+	| PreservedViewsTypes.METER;
+
+export type PreservedViewsInLocalStorage = Partial<
+	Record<PreservedViewType, { key: string; value: string }>
+>;

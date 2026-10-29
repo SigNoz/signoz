@@ -52,6 +52,7 @@ function renderHeader(
 		<SavedViewsHeader
 			source={SavedviewtypesSourceDTO.traces}
 			onOpenViews={jest.fn()}
+			onToggleViews={jest.fn()}
 		/>,
 		url,
 	);
@@ -261,5 +262,47 @@ describe('SavedViews - AuthZ', () => {
 		await waitFor(() =>
 			expect(screen.queryAllByText(message).length).toBeGreaterThan(0),
 		);
+	});
+
+	describe('view name toggle', () => {
+		it('toggles the views from the name when list is allowed', async () => {
+			mockSavedViewsApi([]);
+			renderHeader(explorerUrl(PATH, {}));
+
+			await expect(
+				screen.findByTestId('saved-views-name-toggle'),
+			).resolves.toBeInTheDocument();
+		});
+
+		it('leaves the name plain without list, the All views button says why', async () => {
+			mockSavedViewsApi([]);
+			server.use(setupAuthzDeny(SavedViewListPermission));
+			renderHeader(explorerUrl(PATH, {}));
+
+			await waitFor(() =>
+				expect(screen.getByTestId('saved-views-open')).toHaveAttribute(
+					'aria-disabled',
+					'true',
+				),
+			);
+			expect(
+				screen.queryByTestId('saved-views-name-toggle'),
+			).not.toBeInTheDocument();
+		});
+
+		it('leaves the name plain on a view it cannot read', async () => {
+			mockSavedViewsApi([errors]);
+			server.use(setupAuthzDeny(buildSavedViewReadPermission(errors.id)));
+			renderHeader(viewUrl(PATH, errors));
+
+			await waitFor(() =>
+				expect(screen.getByTestId('saved-views-name')).toHaveTextContent(
+					'No view access',
+				),
+			);
+			expect(
+				screen.queryByTestId('saved-views-name-toggle'),
+			).not.toBeInTheDocument();
+		});
 	});
 });
