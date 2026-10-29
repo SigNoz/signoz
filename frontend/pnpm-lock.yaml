@@ -445,8 +445,8 @@ importers:
         specifier: 4.0.2
         version: 4.0.2(eslint@10.2.1(jiti@2.6.1))
       husky:
-        specifier: ^7.0.4
-        version: 7.0.4
+        specifier: ^9.1.7
+        version: 9.1.7
       jest-environment-jsdom:
         specifier: 29.7.0
         version: 29.7.0
@@ -6178,9 +6178,9 @@ packages:
     resolution: {integrity: sha512-eKCa6bwnJhvxj14kZk5NCPc6Hb6BdsU9DZcOnmQKSnO1VKrfV0zCvtttPZUsBvjmNDn8rpcJfpwSYnHBjc95MQ==}
     engines: {node: '>=18.18.0'}
 
-  husky@7.0.4:
-    resolution: {integrity: sha512-vbaCKN2QLtP/vD4yvs6iz6hBEo6wkSzs8HpRah1Z6aGmF2KW5PdYuAd7uX5a+OyBZHBhd+TFLqgjUgytQr4RvQ==}
-    engines: {node: '>=12'}
+  husky@9.1.7:
+    resolution: {integrity: sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA==}
+    engines: {node: '>=18'}
     hasBin: true
 
   hyphenate-style-name@1.0.4:
@@ -16036,7 +16036,7 @@ snapshots:
 
   human-signals@8.0.1: {}
 
-  husky@7.0.4: {}
+  husky@9.1.7: {}
 
   hyphenate-style-name@1.0.4: {}
 
