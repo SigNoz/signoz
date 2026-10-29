@@ -61,6 +61,12 @@ export interface FilterEditor {
 	lineCount(): Locator;
 	/** The open autocomplete popup. */
 	suggestions(): Locator;
+	/**
+	 * Ctrl+Space: opens the popup at the caret. Typing opens it only once the
+	 * debounced key fetch answers, which a loaded stack can delay past a test's
+	 * next step.
+	 */
+	openSuggestions(): Promise<void>;
 	suggestion(label: string | RegExp): Locator;
 }
 
@@ -97,6 +103,19 @@ export interface QueryBuilderDriver {
 	 */
 	openExplorer(path: string, options?: OpenOptions): Promise<V5Body[]>;
 	query(name: string): QueryBlock;
+	/** Adds the next query (B, C, …) and waits for its block. */
+	addQuery(name: string): Promise<QueryBlock>;
+	traceOperator: {
+		root(): Locator;
+		/** "Add Trace Matching": offered on traces hosts that allow it. */
+		add(): Promise<void>;
+		editor: FilterEditor;
+	};
+	/**
+	 * Explorer "Add to dashboard": picks the dashboard titled `title` and waits
+	 * for the new-panel editor the export navigates to.
+	 */
+	addToDashboard(title: string): Promise<void>;
 	runButton(): Locator;
 	/** Clicks Run; returns every query_range body the click fired. */
 	run(): Promise<V5Body[]>;
@@ -156,6 +175,12 @@ function editorAt(page: Page, root: () => Locator): FilterEditor {
 		expression: () => EDITOR_DOC(root()),
 		lineCount: () => root().locator('.cm-line'),
 		suggestions: () => page.locator('.cm-tooltip-autocomplete'),
+		async openSuggestions() {
+			await expect(async () => {
+				await page.keyboard.press('Control+Space');
+				await expect(editor.suggestions()).toBeVisible({ timeout: 2_000 });
+			}).toPass({ timeout: 15_000 });
+		},
 		suggestion: (label) =>
 			page
 				.locator('.cm-tooltip-autocomplete [role="option"]')
@@ -220,6 +245,36 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 				),
 			};
 		},
+		async addQuery(name) {
+			await page.getByTestId('add-new-query-button').click();
+			const block = qb.query(name);
+			await expect(block.filter.content()).toBeVisible();
+			return block;
+		},
+		traceOperator: {
+			root: () => page.getByTestId('trace-operator'),
+			async add() {
+				// No testid; the label is followed by a "Beta" tag inside the button.
+				await page
+					.getByRole('button')
+					.filter({ hasText: /^Add Trace Matching/ })
+					.click();
+				await expect(qb.traceOperator.editor.content()).toBeVisible();
+			},
+			editor: editorAt(page, () => page.getByTestId('trace-operator-editor')),
+		},
+		async addToDashboard(title) {
+			await page.getByTestId('explorer-add-to-dashboard').click();
+			const dialog = page.getByTestId('export-panel-dialog');
+			await dialog
+				.getByTestId('export-dashboard-select')
+				.locator('input')
+				.fill(title);
+			await dialog.locator(`.ant-select-item-option[title="${title}"]`).click();
+			await dialog.getByTestId('export-panel-export').click();
+			await page.waitForURL(/\/panel\/new\?/);
+			await expect(qb.query('A').filter.content()).toBeVisible();
+		},
 		runButton: () => page.locator('[data-run-query-btn]').first(),
 		run: () => firedBy(() => qb.runButton().click()),
 		async runShortcut() {
@@ -268,7 +323,10 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 	return qb;
 }
 
-const withQueryBuilder = driver('qb', ({ page }) => queryBuilderDriver(page));
+/** Layers `qb` onto another host's test, e.g. the alert-rule fixtures. */
+export const withQueryBuilder = driver('qb', ({ page }) =>
+	queryBuilderDriver(page),
+);
 
 export const test = withQueryBuilder(kit);
 

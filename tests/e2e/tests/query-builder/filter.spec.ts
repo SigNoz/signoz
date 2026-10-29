@@ -143,7 +143,7 @@ test.describe('Query builder — filter editor', () => {
 		const filter = qb.query('A').filter;
 
 		await filter.type('serv');
-		await expect(filter.suggestions()).toBeVisible();
+		await filter.openSuggestions();
 		await filter.press('Escape');
 
 		await expect(filter.suggestions()).toHaveCount(0);

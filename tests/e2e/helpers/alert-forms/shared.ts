@@ -85,8 +85,17 @@ export async function pickChannelByName(
 	channelName: string,
 ): Promise<void> {
 	const tagsBefore = await selectedTags(select).count();
-	await select.click();
-	await expect(select).toHaveClass(/ant-select-open/);
+	// A re-render of the condition section (e.g. after a query edit) can close
+	// the select as the click opens it; re-click only while it is still closed.
+	await expect(async () => {
+		const isOpen = await select.evaluate((node) =>
+			node.classList.contains('ant-select-open'),
+		);
+		if (!isOpen) {
+			await select.click();
+		}
+		await expect(select).toHaveClass(/ant-select-open/, { timeout: 2_000 });
+	}).toPass({ timeout: 15_000 });
 
 	// `fill` on the combobox input rather than `keyboard.type`: the query is a ~30
 	// character channel name and every keystroke re-runs antd's filter, so typing it
