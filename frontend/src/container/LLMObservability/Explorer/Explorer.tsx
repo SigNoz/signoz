@@ -3,6 +3,7 @@ import { useQueryClient } from 'react-query';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
 import logEvent from 'api/common/logEvent';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
@@ -190,6 +191,7 @@ function Explorer(): JSX.Element {
 				testId="llm-observability-explorer"
 				showFilters={isOpen}
 				onToggleFilters={(): void => setOpen(!isOpen)}
+				savedViewProps={{ source: SavedviewtypesSourceDTO.ai_observability }}
 				quickFilterProps={{
 					className: 'qf-traces-explorer',
 					quickFilterSource: QuickFiltersSource.AI_OBSERVABILITY,
