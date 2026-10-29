@@ -22,7 +22,11 @@ const getUpdaterConfig = (
 ): Record<
 	PreferenceSourcePage,
 	{
-		updateColumns: (newColumns: TelemetryFieldKey[], mode: string) => void;
+		updateColumns: (
+			newColumns: TelemetryFieldKey[],
+			mode: string,
+			panelType?: PANEL_TYPES,
+		) => void;
 		updateFormatting: (newFormatting: FormattingOptions, mode: string) => void;
 	}
 > => ({
@@ -57,7 +61,10 @@ export function usePreferenceUpdater({
 	setReSync: Dispatch<SetStateAction<boolean>>;
 	setSavedViewPreferences: Dispatch<SetStateAction<Preferences | null>>;
 }): {
-	updateColumns: (newColumns: TelemetryFieldKey[]) => void;
+	updateColumns: (
+		newColumns: TelemetryFieldKey[],
+		panelType?: PANEL_TYPES,
+	) => void;
 	updateFormatting: (newFormatting: FormattingOptions) => void;
 } {
 	const { redirectWithQuery: redirectWithOptionsData } =
@@ -70,8 +77,11 @@ export function usePreferenceUpdater({
 	)[sourcePage];
 
 	return {
-		updateColumns: (newColumns: TelemetryFieldKey[]): void => {
-			updater.updateColumns(newColumns, mode);
+		updateColumns: (
+			newColumns: TelemetryFieldKey[],
+			columnsPanelType?: PANEL_TYPES,
+		): void => {
+			updater.updateColumns(newColumns, mode, columnsPanelType);
 			setReSync(true);
 		},
 		updateFormatting: (newFormatting: FormattingOptions): void => {

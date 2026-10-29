@@ -17,7 +17,11 @@ export interface PreferenceSlice {
 	preferences: Preferences | null;
 	loading: boolean;
 	error: Error | null;
-	updateColumns: (newColumns: TelemetryFieldKey[]) => void;
+	// `panelType` defaults to the open panel.
+	updateColumns: (
+		newColumns: TelemetryFieldKey[],
+		panelType?: PANEL_TYPES,
+	) => void;
 	updateFormatting: (newFormatting: FormattingOptions) => void;
 }
 

@@ -273,4 +273,21 @@ describe('usePreferenceSync in saved view mode', () => {
 			ensureLogsRequiredColumns(defaultLogsSelectedColumns),
 		);
 	});
+	it('uses the AI trace defaults while the saved view is not loaded', () => {
+		mockViews([]);
+
+		const { result } = renderHook(() =>
+			usePreferenceSync({
+				mode: PreferenceMode.SAVED_VIEW,
+				sourcePage: SavedviewtypesSourceDTO.ai_observability,
+				panelType: PANEL_TYPES.TRACE,
+				savedViewId: 'missing',
+			}),
+		);
+
+		expect(result.current.preferences).toStrictEqual({
+			columns: TRACE_VIEW_DEFAULT_COLUMNS,
+			panelType: PANEL_TYPES.TRACE,
+		});
+	});
 });

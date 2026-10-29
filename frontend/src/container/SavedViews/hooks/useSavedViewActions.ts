@@ -106,12 +106,12 @@ export function useSavedViewActions(
 
 	const revertView = useCallback(
 		(view: SavedviewtypesSavedViewDTO): void => {
-			if (hasOptions && preferenceSlice) {
-				const { columns, formatting } = getViewColumnsAndFormatting(
+			if (preferenceSlice) {
+				const { columns, formatting, panelType } = getViewColumnsAndFormatting(
 					view.spec,
 					source,
 				);
-				preferenceSlice.updateColumns(columns);
+				preferenceSlice.updateColumns(columns, panelType);
 				if (formatting) {
 					preferenceSlice.updateFormatting(formatting);
 				}
@@ -121,7 +121,7 @@ export function useSavedViewActions(
 				[SavedViewEventKeys.ViewId]: view.id,
 			});
 		},
-		[hasOptions, source, preferenceSlice, selectView, logSavedViewEvent],
+		[source, preferenceSlice, selectView, logSavedViewEvent],
 	);
 
 	// The query builder redirects only ever add params, so the url is rebuilt
