@@ -33,8 +33,11 @@ test.describe('Query builder — multiple queries', () => {
 
 		await qb.query('B').delete();
 		expect(await qb.queryNames()).toEqual(['A', 'C']);
-		await qb.addQuery('B');
+		const reAdded = await qb.addQuery('B');
 		expect(await qb.queryNames()).toEqual(['A', 'C', 'B']);
+		await reAdded.metric.select(SUM_METRIC);
+		await expect(reAdded.metric.input()).toHaveValue(SUM_METRIC);
+		await expect(qb.query('C').metric.input()).toHaveValue(OTHER_SUM_METRIC);
 	});
 
 	test('TC-28 a clone and a hidden query reach the request', async ({
@@ -91,25 +94,19 @@ test.describe('Query builder — multiple queries', () => {
 		const formula = await qb.addFormula('F1');
 		await formula.expression().fill('A / B');
 		await formula.legend().fill('ratio');
-		const fired = await qb.run();
-
-		const queries = fired.flatMap((body) => body.compositeQuery.queries);
-		expect(queries).toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({
-					type: 'builder_formula',
-					spec: expect.objectContaining({
-						name: 'F1',
-						expression: 'A / B',
-						legend: 'ratio',
-					}),
-				}),
-			]),
-		);
+		await qb.runButton().click();
+		await expect
+			.poll(() => qb.latest('F1'))
+			.toMatchObject({ expression: 'A / B', legend: 'ratio' });
 
 		await formula.delete();
-		const after = (await qb.run()).at(-1)?.compositeQuery.queries ?? [];
-		expect(after.map((query) => query.type)).not.toContain('builder_formula');
-		expect(after.map((query) => query.spec.name)).toEqual(['A', 'B']);
+		await qb.rerunUntil(
+			() =>
+				qb
+					.sent()
+					.at(-1)
+					?.compositeQuery.queries.map((q) => q.spec.name),
+			['A', 'B'],
+		);
 	});
 });

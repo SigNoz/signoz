@@ -45,7 +45,13 @@ export interface V5Query {
 		signal?: string;
 		disabled?: boolean;
 		filter?: { expression?: string };
-		aggregations?: { expression?: string }[];
+		aggregations?: {
+			expression?: string;
+			metricName?: string;
+			timeAggregation?: string;
+			spaceAggregation?: string;
+			reduceTo?: string;
+		}[];
 		groupBy?: { name: string }[];
 		having?: { expression?: string };
 		order?: { key: { name: string }; direction: string }[];
@@ -149,6 +155,8 @@ export interface AddOns {
 /** The metrics aggregation section: metric picker plus time/space selects. */
 export interface MetricControls {
 	select(name: string): Promise<void>;
+	/** The metric name input. */
+	input(): Locator;
 	/** The selected value. Absent for histograms. */
 	timeAggregation(): Locator;
 	/** The selected value. */
@@ -211,6 +219,12 @@ export interface QueryBuilderDriver {
 	logsResults(): Locator;
 	/** Clicks Run; returns every query_range body the click fired. */
 	run(): Promise<V5Body[]>;
+	/**
+	 * Clicks Run until `read()` equals `expected`. For panel-editor structural
+	 * edits, whose draft can lag the DOM: an early Run is a cache hit that
+	 * sends nothing. Never clicks while the button is Cancel.
+	 */
+	rerunUntil(read: () => unknown, expected: unknown): Promise<void>;
 	/**
 	 * Ctrl/Cmd+Enter from the focused field; returns the fired bodies. Waits two
 	 * frames first: editor changes reach React state on its next scheduler task,
@@ -371,17 +385,15 @@ function addOnsAt(page: Page, root: () => Locator): AddOns {
 	return addOns;
 }
 
-function metricAt(
-	page: Page,
-	root: () => Locator,
-	index: number,
-): MetricControls {
+function metricAt(page: Page, root: () => Locator): MetricControls {
+	const picker = (): Locator =>
+		root().locator('[data-testid^="metric-name-selector-"]');
 	const time = (): Locator => root().getByTestId('metrics-time-aggregation');
 	const space = (): Locator => root().getByTestId('metrics-space-aggregation');
 	return {
 		async select(name) {
 			// An antd AutoComplete: the testid is on a wrapper.
-			const field = page.getByTestId(`metric-name-selector-${index}`);
+			const field = picker();
 			const options = await openSelect(page, field);
 			await field.locator('input').fill(name);
 			// Options carry the metric's type and unit next to its name.
@@ -389,6 +401,7 @@ function metricAt(
 		},
 		// The selection item, not the root: these selects render their list
 		// inside the root, so its text includes every option.
+		input: () => picker().locator('input'),
 		timeAggregation: () => time().locator('.ant-select-selection-item'),
 		spaceAggregation: () => space().locator('.ant-select-selection-item'),
 		async setTimeAggregation(label) {
@@ -441,12 +454,15 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 		ignore: ['line 1:', 'line 2:', 'line 3:'],
 	});
 
+	// Waits on a request the action started: a response to one already in
+	// flight (e.g. after a structural edit) would end the wait too early.
 	const firedBy = async (action: () => Promise<void>): Promise<V5Body[]> => {
 		const before = bodies.length;
-		await Promise.all([
-			page.waitForResponse((r) => isQueryRange(r.url())),
-			action(),
-		]);
+		const answered = page
+			.waitForRequest((r) => isQueryRange(r.url()) && r.method() === 'POST')
+			.then((request) => request.response());
+		await action();
+		await answered;
 		return bodies.slice(before);
 	};
 
@@ -484,8 +500,10 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 		},
 		query(name) {
 			const root = (): Locator => page.getByTestId(`query-${name}`);
-			// Index-suffixed testids predate the name-keyed block root.
-			const index = name.charCodeAt(0) - 'A'.charCodeAt(0);
+			// Index-suffixed testids follow screen position, not the query's
+			// name (A, C, B after a delete and re-add): match them in the block.
+			const signalSelect = (): Locator =>
+				root().locator('[data-testid^="query-data-source-selector-"]');
 			return {
 				root,
 				filter: editorAt(page, () =>
@@ -496,7 +514,7 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 					root().getByTestId('query-aggregation-editor'),
 				),
 				step: () => root().getByTestId('input-Seconds'),
-				metric: metricAt(page, root, index),
+				metric: metricAt(page, root),
 				addOns: addOnsAt(page, root),
 				actions: () => root().getByTestId('query-actions'),
 				menuItem: (action) =>
@@ -504,11 +522,13 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 				async clone() {
 					await root().getByTestId('query-actions').click();
 					await page.getByTestId('query-actions-item-clone-query').click();
+					await afterRender(page);
 				},
 				async delete() {
 					await root().getByTestId('query-actions').click();
 					await page.getByTestId('query-actions-item-delete-query').click();
 					await expect(root()).toHaveCount(0);
+					await afterRender(page);
 				},
 				async toggleVisibility() {
 					await root().getByTestId('qb-entity-visibility').click();
@@ -516,15 +536,9 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 					await afterRender(page);
 				},
 				collapse: () => root().getByTestId('qb-entity-collapse').click(),
-				signal: () =>
-					root()
-						.getByTestId(`query-data-source-selector-${index}`)
-						.locator('.ant-select-selection-item'),
+				signal: () => signalSelect().locator('.ant-select-selection-item'),
 				async setSignal(label) {
-					const options = await openSelect(
-						page,
-						root().getByTestId(`query-data-source-selector-${index}`),
-					);
+					const options = await openSelect(page, signalSelect());
 					await options.filter({ hasText: exactly(label) }).click();
 					await expect(this.signal()).toHaveText(label);
 				},
@@ -554,6 +568,8 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 				async delete() {
 					await root().getByTestId('qb-entity-delete').click();
 					await expect(root()).toHaveCount(0);
+					// The block leaves the DOM before the editor's draft follows.
+					await afterRender(page);
 				},
 			};
 		},
@@ -594,7 +610,18 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 		runButton: () => page.locator('[data-run-query-btn]').first(),
 		// No testid on the container.
 		logsResults: () => page.locator('.logs-explorer-views'),
-		run: () => firedBy(() => qb.runButton().click()),
+		async run() {
+			await afterRender(page);
+			return firedBy(() => qb.runButton().click());
+		},
+		async rerunUntil(read, expected) {
+			await expect(async () => {
+				await expect(qb.runButton()).toHaveText(/Run Query/);
+				await afterRender(page);
+				await qb.runButton().click();
+				await expect.poll(read, { timeout: 3_000 }).toEqual(expected);
+			}).toPass({ timeout: 25_000 });
+		},
 		async runShortcut() {
 			await afterRender(page);
 			return firedBy(() => page.keyboard.press('ControlOrMeta+Enter'));

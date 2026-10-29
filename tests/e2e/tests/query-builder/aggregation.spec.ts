@@ -59,9 +59,15 @@ test.describe('Query builder — logs and traces aggregations', () => {
 
 		await qb.traceOperator.remove();
 		await expect(qb.query('A').aggregation.root()).toBeVisible();
-		const after = (await qb.run()).at(-1)?.compositeQuery.queries ?? [];
-		expect(after.map((query) => query.type)).not.toContain(
-			'builder_trace_operator',
+		await qb.rerunUntil(
+			() =>
+				qb
+					.sent()
+					.at(-1)
+					?.compositeQuery.queries.some(
+						(query) => query.type === 'builder_trace_operator',
+					),
+			false,
 		);
 	});
 
