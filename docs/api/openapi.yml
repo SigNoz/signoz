@@ -12399,10 +12399,6 @@ components:
           type: string
         version:
           type: string
-      required:
-      - name
-      - version
-      - attributes
       type: object
     SpantypesSpanAggregation:
       properties:
