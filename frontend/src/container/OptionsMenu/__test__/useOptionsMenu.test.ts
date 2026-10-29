@@ -1,11 +1,20 @@
-import { useQueries } from 'react-query';
-import { renderHook } from '@testing-library/react';
+import { createElement, ReactNode } from 'react';
+import { QueryClient, QueryClientProvider } from 'react-query';
+import type { NotificationInstance } from 'antd/es/notification/interface';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	FormattingOptions,
+	PreferenceContextValue,
+	PreferenceSlice,
+} from 'providers/preferences/types';
+import { renderHook } from 'tests/test-utils';
+import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
+import { FontSize } from '../types';
 import useOptionsMenu from '../useOptionsMenu';
 
 // Mock all dependencies
@@ -13,104 +22,118 @@ jest.mock('hooks/useNotifications');
 jest.mock('providers/preferences/context/PreferenceContextProvider');
 jest.mock('hooks/useUrlQueryData');
 jest.mock('hooks/querySuggestions/useGetQueryKeySuggestions');
-jest.mock('react-query', () => ({
-	...jest.requireActual('react-query'),
-	useQueries: jest.fn(),
-}));
+
+const mockUseNotifications = jest.mocked(useNotifications);
+const mockUsePreferenceContext = jest.mocked(usePreferenceContext);
+const mockUseUrlQueryData = jest.mocked(useUrlQueryData);
+const mockUseGetQueryKeySuggestions = jest.mocked(useGetQueryKeySuggestions);
+
+type KeySuggestionsResult = ReturnType<typeof useGetQueryKeySuggestions>;
+
+// The hook reads only `data.data.data.keys` and `isFetching`.
+const keySuggestions = (
+	attributeKeys: Record<string, string>[],
+): KeySuggestionsResult =>
+	({
+		data: { data: { data: { complete: true, keys: { attributeKeys } } } },
+		isFetching: false,
+	}) as unknown as KeySuggestionsResult;
+
+const wrapper = ({ children }: { children: ReactNode }): JSX.Element =>
+	createElement(QueryClientProvider, { client: new QueryClient() }, children);
+
+const toIds = (columns: TelemetryFieldKey[]): string[] =>
+	columns.map((column) => `${column.fieldContext}:${column.name}`);
 
 describe('useOptionsMenu', () => {
-	const mockNotifications = { error: jest.fn(), success: jest.fn() };
-	const mockUpdateColumns = jest.fn();
-	const mockUpdateFormatting = jest.fn();
-	const mockRedirectWithQuery = jest.fn();
+	const mockNotifications = {
+		error: jest.fn() as jest.MockedFunction<NotificationInstance['error']>,
+		success: jest.fn() as jest.MockedFunction<NotificationInstance['success']>,
+	} as Partial<NotificationInstance> as NotificationInstance;
+	const mockUpdateColumns = jest.fn() as jest.MockedFunction<
+		PreferenceSlice['updateColumns']
+	>;
+	const mockUpdateFormatting = jest.fn() as jest.MockedFunction<
+		PreferenceSlice['updateFormatting']
+	>;
+	const mockRedirectWithQuery = jest.fn() as jest.MockedFunction<
+		(newQueryData: unknown) => void
+	>;
+
+	const slice = (
+		columns: TelemetryFieldKey[],
+		formatting: FormattingOptions,
+	): PreferenceSlice => ({
+		preferences: { columns, formatting },
+		loading: false,
+		error: null,
+		updateColumns: mockUpdateColumns,
+		updateFormatting: mockUpdateFormatting,
+	});
+
+	const rawFormatting: FormattingOptions = {
+		format: 'raw',
+		maxLines: 1,
+		fontSize: FontSize.SMALL,
+	};
 
 	beforeEach(() => {
 		jest.clearAllMocks();
 
-		(useNotifications as jest.Mock).mockReturnValue({
+		mockUseNotifications.mockReturnValue({
 			notifications: mockNotifications,
 		});
 
-		(usePreferenceContext as jest.Mock).mockReturnValue({
-			[SavedviewtypesSourceDTO.traces]: {
-				preferences: {
-					columns: [],
-					formatting: {
-						format: 'raw',
-						maxLines: 1,
-						fontSize: 'small',
-					},
-				},
-				updateColumns: mockUpdateColumns,
-				updateFormatting: mockUpdateFormatting,
-			},
-			[SavedviewtypesSourceDTO.logs]: {
-				preferences: {
-					columns: [],
-					formatting: {
-						format: 'raw',
-						maxLines: 1,
-						fontSize: 'small',
-					},
-				},
-				updateColumns: mockUpdateColumns,
-				updateFormatting: mockUpdateFormatting,
-			},
-		});
+		mockUsePreferenceContext.mockReturnValue({
+			[SavedviewtypesSourceDTO.traces]: slice([], rawFormatting),
+			[SavedviewtypesSourceDTO.logs]: slice([], rawFormatting),
+		} satisfies PreferenceContextValue);
 
-		(useUrlQueryData as jest.Mock).mockReturnValue({
+		mockUseUrlQueryData.mockReturnValue({
 			query: null,
+			queryData: undefined,
 			redirectWithQuery: mockRedirectWithQuery,
 		});
-
-		(useQueries as jest.Mock).mockReturnValue([]);
 	});
 
 	it('does not show isRoot or isEntryPoint in column options when sourcePage is traces', () => {
 		// Mock the query key suggestions to return data including isRoot and isEntryPoint
-		(useGetQueryKeySuggestions as jest.Mock).mockReturnValue({
-			data: {
-				data: {
-					data: {
-						keys: {
-							attributeKeys: [
-								{
-									name: 'isRoot',
-									signal: 'traces',
-									fieldDataType: 'bool',
-									fieldContext: '',
-								},
-								{
-									name: 'isEntryPoint',
-									signal: 'traces',
-									fieldDataType: 'bool',
-									fieldContext: '',
-								},
-								{
-									name: 'duration',
-									signal: 'traces',
-									fieldDataType: 'float64',
-									fieldContext: '',
-								},
-								{
-									name: 'serviceName',
-									signal: 'traces',
-									fieldDataType: 'string',
-									fieldContext: '',
-								},
-							],
-						},
-					},
+		mockUseGetQueryKeySuggestions.mockReturnValue(
+			keySuggestions([
+				{
+					name: 'isRoot',
+					signal: 'traces',
+					fieldDataType: 'bool',
+					fieldContext: '',
 				},
-			},
-			isFetching: false,
-		});
+				{
+					name: 'isEntryPoint',
+					signal: 'traces',
+					fieldDataType: 'bool',
+					fieldContext: '',
+				},
+				{
+					name: 'duration',
+					signal: 'traces',
+					fieldDataType: 'float64',
+					fieldContext: '',
+				},
+				{
+					name: 'serviceName',
+					signal: 'traces',
+					fieldDataType: 'string',
+					fieldContext: '',
+				},
+			]),
+		);
 
-		const { result } = renderHook(() =>
-			useOptionsMenu({
-				sourcePage: SavedviewtypesSourceDTO.traces,
-				aggregateOperator: 'count',
-			}),
+		const { result } = renderHook(
+			() =>
+				useOptionsMenu({
+					sourcePage: SavedviewtypesSourceDTO.traces,
+					aggregateOperator: 'count',
+				}),
+			{ wrapper },
 		);
 
 		// Get the column options from the config
@@ -129,43 +152,36 @@ describe('useOptionsMenu', () => {
 
 	it('shows body in column options when sourcePage is logs', () => {
 		// Mock the query key suggestions to return data including body
-		(useGetQueryKeySuggestions as jest.Mock).mockReturnValue({
-			data: {
-				data: {
-					data: {
-						keys: {
-							attributeKeys: [
-								{
-									name: 'body',
-									signal: 'logs',
-									fieldDataType: 'string',
-									fieldContext: '',
-								},
-								{
-									name: 'level',
-									signal: 'logs',
-									fieldDataType: 'string',
-									fieldContext: '',
-								},
-								{
-									name: 'timestamp',
-									signal: 'logs',
-									fieldDataType: 'int64',
-									fieldContext: '',
-								},
-							],
-						},
-					},
+		mockUseGetQueryKeySuggestions.mockReturnValue(
+			keySuggestions([
+				{
+					name: 'body',
+					signal: 'logs',
+					fieldDataType: 'string',
+					fieldContext: '',
 				},
-			},
-			isFetching: false,
-		});
+				{
+					name: 'level',
+					signal: 'logs',
+					fieldDataType: 'string',
+					fieldContext: '',
+				},
+				{
+					name: 'timestamp',
+					signal: 'logs',
+					fieldDataType: 'int64',
+					fieldContext: '',
+				},
+			]),
+		);
 
-		const { result } = renderHook(() =>
-			useOptionsMenu({
-				sourcePage: SavedviewtypesSourceDTO.logs,
-				aggregateOperator: 'count',
-			}),
+		const { result } = renderHook(
+			() =>
+				useOptionsMenu({
+					sourcePage: SavedviewtypesSourceDTO.logs,
+					aggregateOperator: 'count',
+				}),
+			{ wrapper },
 		);
 
 		// Get the column options from the config
@@ -181,15 +197,15 @@ describe('useOptionsMenu', () => {
 	});
 
 	describe('reorderSelectColumns / handleRemoveSelectedColumn — composite ID lookup', () => {
-		const baseFormatting = {
+		const baseFormatting: FormattingOptions = {
 			format: 'table',
 			maxLines: 1,
-			fontSize: 'small',
+			fontSize: FontSize.SMALL,
 		};
 
 		// Two entries share the same `name` but differ in `fieldContext` — the
 		// exact case composite IDs are meant to disambiguate.
-		const seedColumns = [
+		const seedColumns: TelemetryFieldKey[] = [
 			{
 				name: 'body',
 				fieldContext: 'log',
@@ -211,36 +227,26 @@ describe('useOptionsMenu', () => {
 			{
 				name: 'timestamp',
 				fieldContext: 'log',
-				fieldDataType: '',
 				signal: 'logs',
 			},
 		];
 
 		beforeEach(() => {
-			(useGetQueryKeySuggestions as jest.Mock).mockReturnValue({
-				data: { data: { data: { keys: {} } } },
-				isFetching: false,
-			});
-			(usePreferenceContext as jest.Mock).mockReturnValue({
-				[SavedviewtypesSourceDTO.traces]: {
-					preferences: { columns: [], formatting: baseFormatting },
-					updateColumns: mockUpdateColumns,
-					updateFormatting: mockUpdateFormatting,
-				},
-				[SavedviewtypesSourceDTO.logs]: {
-					preferences: { columns: seedColumns, formatting: baseFormatting },
-					updateColumns: mockUpdateColumns,
-					updateFormatting: mockUpdateFormatting,
-				},
-			});
+			mockUseGetQueryKeySuggestions.mockReturnValue(keySuggestions([]));
+			mockUsePreferenceContext.mockReturnValue({
+				[SavedviewtypesSourceDTO.traces]: slice([], baseFormatting),
+				[SavedviewtypesSourceDTO.logs]: slice(seedColumns, baseFormatting),
+			} satisfies PreferenceContextValue);
 		});
 
 		it('reorders by composite IDs — preserves both same-name variants distinctly', () => {
-			const { result } = renderHook(() =>
-				useOptionsMenu({
-					sourcePage: SavedviewtypesSourceDTO.logs,
-					aggregateOperator: 'count',
-				}),
+			const { result } = renderHook(
+				() =>
+					useOptionsMenu({
+						sourcePage: SavedviewtypesSourceDTO.logs,
+						aggregateOperator: 'count',
+					}),
+				{ wrapper },
 			);
 
 			// New order: [attribute:service.name, log:body, resource:service.name, log:timestamp]
@@ -253,12 +259,7 @@ describe('useOptionsMenu', () => {
 
 			expect(mockUpdateColumns).toHaveBeenCalledTimes(1);
 			const reordered = mockUpdateColumns.mock.calls[0][0];
-			expect(
-				reordered.map(
-					(c: { name: string; fieldContext: string }) =>
-						`${c.fieldContext}:${c.name}`,
-				),
-			).toStrictEqual([
+			expect(toIds(reordered)).toStrictEqual([
 				'attribute:service.name',
 				'log:body',
 				'resource:service.name',
@@ -267,11 +268,13 @@ describe('useOptionsMenu', () => {
 		});
 
 		it('reorder ignores ids that are not columns (e.g. state-indicator) and skips unknown ids', () => {
-			const { result } = renderHook(() =>
-				useOptionsMenu({
-					sourcePage: SavedviewtypesSourceDTO.logs,
-					aggregateOperator: 'count',
-				}),
+			const { result } = renderHook(
+				() =>
+					useOptionsMenu({
+						sourcePage: SavedviewtypesSourceDTO.logs,
+						aggregateOperator: 'count',
+					}),
+				{ wrapper },
 			);
 
 			result.current.config.addColumn?.onReorder([
@@ -285,12 +288,7 @@ describe('useOptionsMenu', () => {
 
 			const reordered = mockUpdateColumns.mock.calls[0][0];
 			// state-indicator + unknown.composite filtered; rest preserved in given order.
-			expect(
-				reordered.map(
-					(c: { name: string; fieldContext: string }) =>
-						`${c.fieldContext}:${c.name}`,
-				),
-			).toStrictEqual([
+			expect(toIds(reordered)).toStrictEqual([
 				'log:timestamp',
 				'log:body',
 				'resource:service.name',
@@ -299,11 +297,13 @@ describe('useOptionsMenu', () => {
 		});
 
 		it('removes only the variant whose composite ID matches', () => {
-			const { result } = renderHook(() =>
-				useOptionsMenu({
-					sourcePage: SavedviewtypesSourceDTO.logs,
-					aggregateOperator: 'count',
-				}),
+			const { result } = renderHook(
+				() =>
+					useOptionsMenu({
+						sourcePage: SavedviewtypesSourceDTO.logs,
+						aggregateOperator: 'count',
+					}),
+				{ wrapper },
 			);
 
 			// Removing 'resource:service.name' should drop ONLY the resource variant.
@@ -311,20 +311,21 @@ describe('useOptionsMenu', () => {
 
 			expect(mockUpdateColumns).toHaveBeenCalledTimes(1);
 			const remaining = mockUpdateColumns.mock.calls[0][0];
-			expect(
-				remaining.map(
-					(c: { name: string; fieldContext: string }) =>
-						`${c.fieldContext}:${c.name}`,
-				),
-			).toStrictEqual(['log:body', 'attribute:service.name', 'log:timestamp']);
+			expect(toIds(remaining)).toStrictEqual([
+				'log:body',
+				'attribute:service.name',
+				'log:timestamp',
+			]);
 		});
 
 		it('removing by a non-matching composite ID is a no-op (filter returns the full list)', () => {
-			const { result } = renderHook(() =>
-				useOptionsMenu({
-					sourcePage: SavedviewtypesSourceDTO.logs,
-					aggregateOperator: 'count',
-				}),
+			const { result } = renderHook(
+				() =>
+					useOptionsMenu({
+						sourcePage: SavedviewtypesSourceDTO.logs,
+						aggregateOperator: 'count',
+					}),
+				{ wrapper },
 			);
 
 			result.current.config.addColumn?.onRemove('unknown.composite');
@@ -337,35 +338,34 @@ describe('useOptionsMenu', () => {
 
 	describe('fieldsSelector.value drops legacy columns without a name', () => {
 		it('excludes entries missing name while keeping valid columns', () => {
-			(useGetQueryKeySuggestions as jest.Mock).mockReturnValue({
-				data: { data: { data: { keys: {} } } },
-				isFetching: false,
-			});
-			(usePreferenceContext as jest.Mock).mockReturnValue({
-				[SavedviewtypesSourceDTO.traces]: {
-					preferences: {
-						columns: [
-							{ name: 'body', fieldContext: 'log' },
-							{ key: 'legacy-key-no-name', fieldContext: 'log' },
-							{ name: 'timestamp', fieldContext: 'log' },
-						],
-						formatting: { format: 'table', maxLines: 1, fontSize: 'small' },
+			mockUseGetQueryKeySuggestions.mockReturnValue(keySuggestions([]));
+			mockUsePreferenceContext.mockReturnValue({
+				[SavedviewtypesSourceDTO.traces]: slice(
+					[
+						{ name: 'body', fieldContext: 'log' },
+						// A legacy stored column: `key` only, no `name`.
+						{
+							key: 'legacy-key-no-name',
+							fieldContext: 'log',
+						} as unknown as TelemetryFieldKey,
+						{ name: 'timestamp', fieldContext: 'log' },
+					],
+					{
+						format: 'table',
+						maxLines: 1,
+						fontSize: FontSize.SMALL,
 					},
-					updateColumns: mockUpdateColumns,
-					updateFormatting: mockUpdateFormatting,
-				},
-				[SavedviewtypesSourceDTO.logs]: {
-					preferences: { columns: [], formatting: {} },
-					updateColumns: mockUpdateColumns,
-					updateFormatting: mockUpdateFormatting,
-				},
-			});
+				),
+				[SavedviewtypesSourceDTO.logs]: slice([], {}),
+			} satisfies PreferenceContextValue);
 
-			const { result } = renderHook(() =>
-				useOptionsMenu({
-					sourcePage: SavedviewtypesSourceDTO.traces,
-					aggregateOperator: 'count',
-				}),
+			const { result } = renderHook(
+				() =>
+					useOptionsMenu({
+						sourcePage: SavedviewtypesSourceDTO.traces,
+						aggregateOperator: 'count',
+					}),
+				{ wrapper },
 			);
 
 			const fields = result.current.config.fieldsSelector?.value ?? [];

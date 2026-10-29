@@ -1,46 +1,39 @@
+import { Dispatch, SetStateAction } from 'react';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
-import { act } from 'react-dom/test-utils';
-import { renderHook } from '@testing-library/react';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { LogViewMode, FontSize } from 'container/OptionsMenu/types';
+import useUrlQueryData from 'hooks/useUrlQueryData';
 import {
 	FormattingOptions,
 	PreferenceMode,
 	Preferences,
 } from 'providers/preferences/types';
+import { act, renderHook } from 'tests/test-utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
+import getLogsUpdaterConfig from '../configs/logsUpdaterConfig';
+import getTracesUpdaterConfig from '../configs/tracesUpdaterConfig';
 import { usePreferenceUpdater } from '../updater/usePreferenceUpdater';
 
-// Mock the config updaters
-const mockLogsUpdateColumns = jest.fn();
-const mockLogsUpdateFormatting = jest.fn();
-const mockTracesUpdateColumns = jest.fn();
-const mockTracesUpdateFormatting = jest.fn();
+jest.mock('../configs/logsUpdaterConfig');
+jest.mock('../configs/tracesUpdaterConfig');
+jest.mock('hooks/useUrlQueryData');
 
-jest.mock('../configs/logsUpdaterConfig', () => ({
-	__esModule: true,
-	default: jest.fn().mockImplementation(() => ({
-		updateColumns: mockLogsUpdateColumns,
-		updateFormatting: mockLogsUpdateFormatting,
-	})),
-}));
+type LogsUpdater = ReturnType<typeof getLogsUpdaterConfig>;
+type TracesUpdater = ReturnType<typeof getTracesUpdaterConfig>;
 
-jest.mock('../configs/tracesUpdaterConfig', () => ({
-	__esModule: true,
-	default: jest.fn().mockImplementation(() => ({
-		updateColumns: mockTracesUpdateColumns,
-		updateFormatting: mockTracesUpdateFormatting,
-	})),
-}));
-
-// Mock the URL query hook
-jest.mock('hooks/useUrlQueryData', () => ({
-	__esModule: true,
-	default: jest.fn().mockReturnValue({
-		redirectWithQuery: jest.fn(),
-	}),
-}));
+const mockLogsUpdateColumns = jest.fn() as jest.MockedFunction<
+	LogsUpdater['updateColumns']
+>;
+const mockLogsUpdateFormatting = jest.fn() as jest.MockedFunction<
+	LogsUpdater['updateFormatting']
+>;
+const mockTracesUpdateColumns = jest.fn() as jest.MockedFunction<
+	TracesUpdater['updateColumns']
+>;
+const mockTracesUpdateFormatting = jest.fn() as jest.MockedFunction<
+	TracesUpdater['updateFormatting']
+>;
 
 describe('usePreferenceUpdater', () => {
 	const mockPreferences: Preferences = {
@@ -52,15 +45,33 @@ describe('usePreferenceUpdater', () => {
 			version: 1,
 		},
 	};
+	const setReSync = jest.fn() as jest.MockedFunction<
+		Dispatch<SetStateAction<boolean>>
+	>;
+	const setSavedViewPreferences = jest.fn() as jest.MockedFunction<
+		Dispatch<SetStateAction<Preferences | null>>
+	>;
 
 	beforeEach(() => {
 		jest.clearAllMocks();
+		jest.mocked(getLogsUpdaterConfig).mockReturnValue({
+			updateColumns: mockLogsUpdateColumns,
+			updateFormatting: mockLogsUpdateFormatting,
+		});
+		jest.mocked(getTracesUpdaterConfig).mockReturnValue({
+			updateColumns: mockTracesUpdateColumns,
+			updateFormatting: mockTracesUpdateFormatting,
+		});
+		jest.mocked(useUrlQueryData).mockReturnValue({
+			query: null,
+			queryData: undefined,
+			redirectWithQuery: jest.fn() as jest.MockedFunction<
+				(newQueryData: unknown) => void
+			>,
+		});
 	});
 
 	it('should return updateColumns and updateFormatting functions', () => {
-		const setReSync = jest.fn();
-		const setSavedViewPreferences = jest.fn();
-
 		const { result } = renderHook(() =>
 			usePreferenceUpdater({
 				sourcePage: SavedviewtypesSourceDTO.logs,
@@ -77,8 +88,6 @@ describe('usePreferenceUpdater', () => {
 	});
 
 	it('should call the logs updater for updateColumns with the logs list key', () => {
-		const setReSync = jest.fn();
-		const setSavedViewPreferences = jest.fn();
 		const newColumns: TelemetryFieldKey[] = [
 			{
 				name: 'new-column',
@@ -111,8 +120,6 @@ describe('usePreferenceUpdater', () => {
 	});
 
 	it('should call the logs updater for updateFormatting with the logs list key', () => {
-		const setReSync = jest.fn();
-		const setSavedViewPreferences = jest.fn();
 		const newFormatting: FormattingOptions = {
 			maxLines: 10,
 			format: 'table' as LogViewMode,
@@ -144,8 +151,6 @@ describe('usePreferenceUpdater', () => {
 	});
 
 	it('should call the traces updater for updateColumns with the traces list key', () => {
-		const setReSync = jest.fn();
-		const setSavedViewPreferences = jest.fn();
 		const newColumns: TelemetryFieldKey[] = [
 			{
 				name: 'new-trace-column',
@@ -178,8 +183,6 @@ describe('usePreferenceUpdater', () => {
 	});
 
 	it('should call the traces updater for updateFormatting with the traces list key', () => {
-		const setReSync = jest.fn();
-		const setSavedViewPreferences = jest.fn();
 		const newFormatting: FormattingOptions = {
 			maxLines: 10,
 			format: 'table' as LogViewMode,
@@ -211,9 +214,6 @@ describe('usePreferenceUpdater', () => {
 	});
 
 	it('should increment reSync counter when updates are called', () => {
-		const setReSync = jest.fn();
-		const setSavedViewPreferences = jest.fn();
-
 		const { result } = renderHook(() =>
 			usePreferenceUpdater({
 				sourcePage: SavedviewtypesSourceDTO.logs,

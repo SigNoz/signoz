@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { act, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { Button } from '@signozhq/ui/button';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
+import { act, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import SavedViewsHeader from '../SavedViewsHeader';
 import { mockSavedViewsApi } from './savedViewsApiMock';
@@ -37,7 +36,7 @@ function Harness(): JSX.Element {
 			<SavedViewsHeader
 				key={headerKey}
 				source={SavedviewtypesSourceDTO.traces}
-				onOpenViews={jest.fn()}
+				onOpenViews={jest.fn() as jest.MockedFunction<() => void>}
 			/>
 			<span data-testid="columns">
 				{columns.map((column) => column.name).join(',')}
@@ -84,13 +83,14 @@ describe('SavedViewsHeader columns', () => {
 	});
 
 	it('keeps edited columns when the view is fetched again', async () => {
+		const user = userEvent.setup();
 		mockSavedViewsApi([errors]);
 		await openView();
 
-		await userEvent.click(screen.getByTestId('add-column'));
+		await user.click(screen.getByTestId('add-column'));
 		await waitFor(() => expect(isDirty()).toBe(true));
 
-		await userEvent.click(screen.getByTestId('remount-header'));
+		await user.click(screen.getByTestId('remount-header'));
 		await act(() => new Promise((resolve) => setTimeout(resolve, 200)));
 
 		expect(columnsText()).toBe('service.name,name,extra-2');
@@ -98,35 +98,37 @@ describe('SavedViewsHeader columns', () => {
 	});
 
 	it('discard puts the saved columns back', async () => {
+		const user = userEvent.setup();
 		mockSavedViewsApi([errors]);
 		await openView();
 
-		await userEvent.click(screen.getByTestId('add-column'));
+		await user.click(screen.getByTestId('add-column'));
 		await waitFor(() => expect(isDirty()).toBe(true));
 
-		await userEvent.click(screen.getByTestId('saved-views-discard'));
+		await user.click(screen.getByTestId('saved-views-discard'));
 
 		await waitFor(() => expect(columnsText()).toBe('service.name,name'));
 		expect(isDirty()).toBe(false);
 	});
 
 	it('discard after an update goes back to the updated columns', async () => {
+		const user = userEvent.setup();
 		mockSavedViewsApi([errors]);
 		await openView();
 
-		await userEvent.click(screen.getByTestId('add-column'));
+		await user.click(screen.getByTestId('add-column'));
 		await waitFor(() => expect(isDirty()).toBe(true));
-		await userEvent.click(screen.getByTestId('saved-views-save-changes'));
+		await user.click(screen.getByTestId('saved-views-save-changes'));
 		const update = await screen.findByTestId(
 			'saved-views-save-changes-item-update',
 		);
 		await waitFor(() => expectRowUsable(update), MENU_CHECK_TIMEOUT);
-		await userEvent.click(update);
+		await user.click(update);
 		await waitFor(() => expect(isDirty()).toBe(false));
 
-		await userEvent.click(screen.getByTestId('add-column'));
+		await user.click(screen.getByTestId('add-column'));
 		await waitFor(() => expect(isDirty()).toBe(true));
-		await userEvent.click(screen.getByTestId('saved-views-discard'));
+		await user.click(screen.getByTestId('saved-views-discard'));
 
 		await waitFor(() => expect(columnsText()).toBe('service.name,name,extra-2'));
 		expect(isDirty()).toBe(false);
