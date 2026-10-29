@@ -30,6 +30,7 @@ import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';
 import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import { extractDomain } from 'utils/app';
+import { hasNoAppFrames } from 'utils/sentry';
 
 import { Home } from './pageComponents';
 import PrivateRoute from './Private';
@@ -363,6 +364,11 @@ function App(): JSX.Element {
 
 						// Drop the event if its level is 'warning' or 'info'
 						if (event.level === 'warning' || event.level === 'info') {
+							return null;
+						}
+
+						// Dev serves source from /src/, so every frame would look foreign there.
+						if (process.env.NODE_ENV === 'production' && hasNoAppFrames(event)) {
 							return null;
 						}
 
