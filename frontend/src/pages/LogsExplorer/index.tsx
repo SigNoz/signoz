@@ -3,7 +3,6 @@ import { useQueryClient } from 'react-query';
 import * as Sentry from '@sentry/react';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
-import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
@@ -268,9 +267,7 @@ function LogsExplorer(): JSX.Element {
 
 						<div className="log-explorer-query-container">
 							<div>
-								<ExplorerCard sourcepage={DataSource.LOGS}>
-									<LogExplorerQuerySection selectedView={selectedView} />
-								</ExplorerCard>
+								<LogExplorerQuerySection selectedView={selectedView} />
 							</div>
 							<div className="logs-explorer-views">
 								{isCancelled ? (

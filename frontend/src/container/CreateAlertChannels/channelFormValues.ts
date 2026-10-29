@@ -1,6 +1,7 @@
 import { AlertmanagertypesGettableNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas';
 
 import { ChannelFormValues, ChannelKind } from './types';
+import { webhookAuthOf } from './utils';
 
 export interface ChannelFormState {
 	kind: ChannelKind;
@@ -22,11 +23,15 @@ function toChannelKind(kind: string): ChannelKind {
 export function toChannelFormState(
 	channel: AlertmanagertypesGettableNotificationChannelDTO,
 ): ChannelFormState {
-	return {
-		kind: toChannelKind(channel.config.kind),
-		values: {
-			...channel.config.spec,
-			name: channel.displayName,
-		},
+	const kind = toChannelKind(channel.config.kind);
+	const values: ChannelFormValues = {
+		...channel.config.spec,
+		name: channel.displayName,
 	};
+
+	if (kind === ChannelKind.webhook) {
+		values.webhookAuth = webhookAuthOf(values);
+	}
+
+	return { kind, values };
 }

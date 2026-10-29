@@ -26,7 +26,6 @@ import {
 	Login,
 	Logs,
 	LogsIndexToFields,
-	LogsSaveViews,
 	MessagingQueuesMainPage,
 	MeterExplorerPage,
 	MetricsExplorer,
@@ -48,7 +47,6 @@ import {
 	TracesExplorer,
 	TracesFunnelDetails,
 	TracesFunnels,
-	TracesSaveViews,
 	UnAuthorized,
 	UsageExplorerPage,
 	WorkspaceAccessRestricted,
@@ -119,13 +117,6 @@ const routes: AppRoutes[] = [
 		isPrivate: true,
 		exact: true,
 		key: 'SERVICE_MAP',
-	},
-	{
-		path: ROUTES.LOGS_SAVE_VIEWS,
-		component: LogsSaveViews,
-		isPrivate: true,
-		exact: true,
-		key: 'LOGS_SAVE_VIEWS',
 	},
 	{
 		path: ROUTES.TRACE_DETAIL,
@@ -217,13 +208,6 @@ const routes: AppRoutes[] = [
 		component: TracesExplorer,
 		isPrivate: true,
 		key: 'TRACES_EXPLORER',
-	},
-	{
-		path: ROUTES.TRACES_SAVE_VIEWS,
-		exact: true,
-		component: TracesSaveViews,
-		isPrivate: true,
-		key: 'TRACES_SAVE_VIEWS',
 	},
 	{
 		path: ROUTES.TRACES_FUNNELS,
@@ -415,13 +399,6 @@ const routes: AppRoutes[] = [
 		isPrivate: true,
 	},
 	{
-		path: ROUTES.METRICS_EXPLORER_VIEWS,
-		exact: true,
-		component: MetricsExplorer,
-		key: 'METRICS_EXPLORER_VIEWS',
-		isPrivate: true,
-	},
-	{
 		path: ROUTES.METRICS_EXPLORER_VOLUME_CONTROL,
 		exact: true,
 		component: MetricsExplorer,
@@ -441,13 +418,6 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: MeterExplorerPage,
 		key: 'METER_EXPLORER',
-		isPrivate: true,
-	},
-	{
-		path: ROUTES.METER_EXPLORER_VIEWS,
-		exact: true,
-		component: MeterExplorerPage,
-		key: 'METER_EXPLORER_VIEWS',
 		isPrivate: true,
 	},
 	{

@@ -853,6 +853,22 @@ export const channelNames = (count: number): string[] =>
 		(_unused, index) => CHANNEL_SEEDS[index % CHANNEL_SEEDS.length].name,
 	);
 
+export const WEBHOOK_AUTHS = ['basic', 'bearer', 'none'] as const;
+
+export type WebhookAuthChoice = (typeof WEBHOOK_AUTHS)[number];
+
+const WEBHOOK_CREDENTIALS: Record<WebhookAuthChoice, Record<string, string>> = {
+	basic: { username: 'story-user' },
+	bearer: { bearerToken: 'story-bearer-token' },
+	none: {},
+};
+
+const webhookSpec = (auth: WebhookAuthChoice): Record<string, unknown> => ({
+	url: 'https://example.com/story-hook',
+	...WEBHOOK_CREDENTIALS[auth],
+	sendResolved: true,
+});
+
 /**
  * The v2 spec each kind is fetched with, so the edit form renders populated
  * fields. Keys mirror the generated channel spec schemas.
@@ -881,11 +897,7 @@ const CHANNEL_SPECS: Record<ChannelType, Record<string, unknown>> = {
 		],
 		sendResolved: true,
 	},
-	webhook: {
-		url: 'https://example.com/story-hook',
-		username: 'story-user',
-		sendResolved: true,
-	},
+	webhook: webhookSpec('basic'),
 	pagerduty: {
 		routingKey: 'story-routing-key',
 		description: '{{ .CommonLabels.alertname }}',
@@ -949,6 +961,7 @@ const CHANNEL_SPECS: Record<ChannelType, Record<string, unknown>> = {
 export const notificationChannelResponse = (
 	id: string,
 	type: ChannelType,
+	webhookAuth: WebhookAuthChoice = 'basic',
 ): {
 	status: string;
 	data: AlertmanagertypesGettableNotificationChannelDTO;
@@ -969,7 +982,7 @@ export const notificationChannelResponse = (
 			updatedAt: ago((index + 1) * DAY),
 			config: {
 				kind: type,
-				spec: CHANNEL_SPECS[type],
+				spec: type === 'webhook' ? webhookSpec(webhookAuth) : CHANNEL_SPECS[type],
 			} as unknown as AlertmanagertypesChannelConfigDTO,
 		},
 	};

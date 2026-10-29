@@ -26,7 +26,11 @@ const COLUMNS = [
 
 function SlackActions(): JSX.Element {
 	const { t } = useTranslation('channels');
-	const { control, register } = useFormContext<ChannelSpecFormValues>();
+	const {
+		control,
+		register,
+		formState: { errors },
+	} = useFormContext<ChannelSpecFormValues>();
 	const { fields, append, remove } = useFieldArray({ control, name: 'actions' });
 
 	const keyFor = (column: ActionColumn): string => column.replace('.text', '');
@@ -51,6 +55,9 @@ function SlackActions(): JSX.Element {
 								key={column}
 								label={t(`label_slack_action_${keyFor(column)}`)}
 								tooltip={t(`tooltip_slack_action_${keyFor(column)}`)}
+								error={
+									column === 'url' ? errors.actions?.[index]?.url?.message : undefined
+								}
 							>
 								<Input
 									{...register(`actions.${index}.${column}` as const)}

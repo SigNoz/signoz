@@ -130,7 +130,6 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 			updateAllQueriesOperators,
 			updateQueriesData,
 			initQueryBuilderData: jest.fn(),
-			isStagedQueryUpdated: jest.fn(() => false),
 			isDefaultQuery: jest.fn(() => false),
 		} as unknown as QueryBuilderContextType;
 
