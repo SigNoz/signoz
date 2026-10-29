@@ -93,6 +93,34 @@ export interface QueryBlock {
 	/** The aggregation's "every … Seconds" input. */
 	step(): Locator;
 	metric: MetricControls;
+	addOns: AddOns;
+}
+
+/** `query-add-on-<field>` toggle values: a documented DOM contract. */
+export type AddOnField =
+	| 'group_by'
+	| 'having'
+	| 'order_by'
+	| 'limit'
+	| 'legend_format'
+	| 'reduce_to';
+
+export interface AddOns {
+	/** The toggle row; its children name the add-ons on offer. */
+	toggles(): Locator;
+	/** Idempotent: leaves an already-open add-on open. */
+	open(field: AddOnField): Promise<void>;
+	content(field: AddOnField): Locator;
+	groupBy: {
+		/** Types `key` and picks the suggestion with that exact name. */
+		add(key: string): Promise<void>;
+		remove(key: string): Promise<void>;
+		/** The selected keys, in order. */
+		values(): Promise<string[]>;
+	};
+	having: FilterEditor;
+	limit(): Locator;
+	legend(): Locator;
 }
 
 /** The metrics aggregation section: metric picker plus time/space selects. */
@@ -233,6 +261,62 @@ async function openSelect(page: Page, select: Locator): Promise<Locator> {
 /** antd renders select options with trailing whitespace ("Sum "). */
 const exactly = (label: string): RegExp => new RegExp(`^\\s*${label}\\s*$`);
 
+const ADD_ON_CONTENT: Record<AddOnField, string> = {
+	group_by: 'group-by-content',
+	having: 'having-content',
+	order_by: 'order-by-content',
+	limit: 'limit-content',
+	legend_format: 'legend-format-content',
+	reduce_to: 'reduce-to-content',
+};
+
+function addOnsAt(page: Page, root: () => Locator): AddOns {
+	const content = (field: AddOnField): Locator =>
+		root().getByTestId(ADD_ON_CONTENT[field]);
+	const groupBy = (): Locator => root().getByTestId('group-by');
+	const addOns: AddOns = {
+		toggles: () => root().locator('[data-testid^="query-add-on-"]'),
+		async open(field) {
+			if (await content(field).isVisible()) {
+				return;
+			}
+			await root().getByTestId(`query-add-on-${field}`).click();
+			await expect(content(field)).toBeVisible();
+		},
+		content,
+		groupBy: {
+			async add(key) {
+				const options = await openSelect(page, groupBy());
+				await groupBy().locator('input').fill(key);
+				await options
+					.filter({ hasText: exactly(key) })
+					.first()
+					.click();
+				await page.keyboard.press('Escape');
+				await expect(
+					groupBy().locator('.ant-select-selection-item', { hasText: key }),
+				).toBeVisible();
+			},
+			async remove(key) {
+				await groupBy()
+					.locator('.ant-select-selection-item', { hasText: key })
+					.locator('.ant-select-selection-item-remove')
+					.click();
+			},
+			async values() {
+				const texts = await groupBy()
+					.locator('.ant-select-selection-item-content')
+					.allTextContents();
+				return texts.map((text) => text.trim());
+			},
+		},
+		having: editorAt(page, () => root().getByTestId('having-editor')),
+		limit: () => content('limit').getByTestId('input-Limit'),
+		legend: () => content('legend_format').getByTestId('input-Legend format'),
+	};
+	return addOns;
+}
+
 function metricAt(
 	page: Page,
 	root: () => Locator,
@@ -339,6 +423,7 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 				),
 				step: () => root().getByTestId('input-Seconds'),
 				metric: metricAt(page, root, name.charCodeAt(0) - 'A'.charCodeAt(0)),
+				addOns: addOnsAt(page, root),
 			};
 		},
 		async addQuery(name) {
