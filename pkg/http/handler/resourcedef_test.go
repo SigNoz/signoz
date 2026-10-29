@@ -69,3 +69,43 @@ func TestAttachDetachSiblingResourceDefKeepsEmptySingleID(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, []string{""}, withTarget.TargetIDs())
 }
+
+func TestTelemetryResourceDefWithoutResources(t *testing.T) {
+	testCases := []struct {
+		name     string
+		optional bool
+		wantLen  int
+		wantErr  bool
+	}{
+		{
+			name:     "Required_Errors",
+			optional: false,
+			wantLen:  1,
+			wantErr:  true,
+		},
+		{
+			name:     "Optional_ResolvesNothing",
+			optional: true,
+			wantLen:  0,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			def := TelemetryResourceDef{
+				Verb:      coretypes.VerbRead,
+				Category:  coretypes.ActionCategoryDataAccess,
+				Selector:  coretypes.WildcardSelector,
+				Resources: func(coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) { return nil, nil },
+				Optional:  testCase.optional,
+			}
+
+			resolved := ResolveRequest([]ResourceDef{def}, coretypes.ExtractorContext{})
+
+			require.Len(t, resolved, testCase.wantLen)
+			if testCase.wantErr {
+				assert.Error(t, resolved[0].Err())
+			}
+		})
+	}
+}

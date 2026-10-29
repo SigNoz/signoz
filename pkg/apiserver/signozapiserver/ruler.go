@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/ruler"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
@@ -14,138 +14,366 @@ import (
 )
 
 func (provider *provider) addRulerRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v2/rules", handler.New(provider.authzMiddleware.ViewAccess(provider.rulerHandler.ListRules), handler.OpenAPIDef{
-		ID:                  "ListRules",
-		Tags:                []string{"rules"},
-		Summary:             "List alert rules",
-		Description:         "This endpoint lists all alert rules with their current evaluation state. Deprecated: use ListRulesV3, which supports filtering, sorting and pagination.",
-		Response:            make([]*ruletypes.Rule, 0),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		Deprecated:          true,
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-	})).Methods(http.MethodGet).GetError(); err != nil {
+	if err := router.Handle("/api/v2/rules", handler.New(
+		provider.authzMiddleware.CheckResources(provider.rulerHandler.ListRules, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		handler.OpenAPIDef{
+			ID:                  "ListRules",
+			Tags:                []string{"rules"},
+			Summary:             "List alert rules",
+			Description:         "This endpoint lists all alert rules with their current evaluation state. Deprecated: use ListRulesV3, which supports filtering, sorting and pagination.",
+			Response:            make([]*ruletypes.Rule, 0),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			Deprecated:          true,
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbList)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbList,
+			Category: coretypes.ActionCategoryDataAccess,
+			Selector: coretypes.WildcardSelector,
+		}),
+	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v3/rules", handler.New(provider.authzMiddleware.ViewAccess(provider.rulerHandler.ListRulesV3), handler.OpenAPIDef{
-		ID:                  "ListRulesV3",
-		Tags:                []string{"rules"},
-		Summary:             "List alert rules (v3)",
-		Description:         "Returns a page of alert rules with their current evaluation state, trimmed to the fields the list page renders. Supports a filter DSL (`query`), a repeated `states` filter applied after the state overlay, sort (`updated_at`/`created_at`/`name`/`state`/`severity`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). In the filter DSL, a non-reserved key is matched as a rule label directly (`team = infra`); a key that collides with a reserved keyword matches either interpretation (negative operators exclude both), and `labels.<key>` targets only the label. The response also carries the org's label pairs and the reserved filter keys for building filter suggestions.",
-		RequestQuery:        new(ruletypes.ListRulesParams),
-		Response:            new(ruletypes.ListableRules),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-	})).Methods(http.MethodGet).GetError(); err != nil {
+	if err := router.Handle("/api/v3/rules", handler.New(
+		provider.authzMiddleware.CheckResources(provider.rulerHandler.ListRulesV3, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		handler.OpenAPIDef{
+			ID:                  "ListRulesV3",
+			Tags:                []string{"rules"},
+			Summary:             "List alert rules (v3)",
+			Description:         "Returns a page of alert rules with their current evaluation state, trimmed to the fields the list page renders. Supports a filter DSL (`query`), a repeated `states` filter applied after the state overlay, sort (`updated_at`/`created_at`/`name`/`state`/`severity`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). In the filter DSL, a non-reserved key is matched as a rule label directly (`team = infra`); a key that collides with a reserved keyword matches either interpretation (negative operators exclude both), and `labels.<key>` targets only the label. The response also carries the org's label pairs and the reserved filter keys for building filter suggestions.",
+			RequestQuery:        new(ruletypes.ListRulesParams),
+			Response:            new(ruletypes.ListableRules),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest},
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbList)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbList,
+			Category: coretypes.ActionCategoryDataAccess,
+			Selector: coretypes.WildcardSelector,
+		}),
+	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/rules/{id}", handler.New(provider.authzMiddleware.ViewAccess(provider.rulerHandler.GetRuleByID), handler.OpenAPIDef{
-		ID:                  "GetRuleByID",
-		Tags:                []string{"rules"},
-		Summary:             "Get alert rule by ID",
-		Description:         "This endpoint returns an alert rule by ID",
-		Response:            new(ruletypes.Rule),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusNotFound},
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-	})).Methods(http.MethodGet).GetError(); err != nil {
+	if err := router.Handle("/api/v2/rules/{id}", handler.New(
+		provider.authzMiddleware.CheckResources(provider.rulerHandler.GetRuleByID, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		handler.OpenAPIDef{
+			ID:                  "GetRuleByID",
+			Tags:                []string{"rules"},
+			Summary:             "Get alert rule by ID",
+			Description:         "This endpoint returns an alert rule by ID",
+			Response:            new(ruletypes.Rule),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusNotFound},
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbRead)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbRead,
+			Category: coretypes.ActionCategoryDataAccess,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}),
+	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/rules", handler.New(provider.authzMiddleware.EditAccess(provider.rulerHandler.CreateRule), handler.OpenAPIDef{
-		ID:                  "CreateRule",
-		Tags:                []string{"rules"},
-		Summary:             "Create alert rule",
-		Description:         "This endpoint creates a new alert rule",
-		Request:             new(ruletypes.PostableRule),
-		RequestContentType:  "application/json",
-		RequestExamples:     postableRuleExamples(),
-		Response:            new(ruletypes.Rule),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusCreated,
-		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	if err := router.Handle("/api/v2/rules", handler.New(
+		provider.authzMiddleware.CheckResources(provider.rulerHandler.CreateRule, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		handler.OpenAPIDef{
+			ID:                  "CreateRule",
+			Tags:                []string{"rules"},
+			Summary:             "Create alert rule",
+			Description:         "This endpoint creates a new alert rule",
+			Request:             new(ruletypes.PostableRule),
+			RequestContentType:  "application/json",
+			RequestExamples:     postableRuleExamples(),
+			Response:            new(ruletypes.Rule),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusCreated,
+			ErrorStatusCodes:    []int{http.StatusBadRequest},
+			SecuritySchemes: newScopedSecuritySchemes(append([]string{
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbCreate),
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbAttach),
+				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbAttach),
+			}, telemetryReadScopes()...)),
+		},
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceRule,
+				Verb:     coretypes.VerbCreate,
+				Category: coretypes.ActionCategoryConfigurationChange,
+				ID:       coretypes.ResponseJSONPath("data.id"),
+				Selector: coretypes.WildcardSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourceRule,
+				SourceIDs:      coretypes.OneID(coretypes.ResponseJSONPath("data.id")),
+				SourceSelector: coretypes.WildcardSelector,
+				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
+				TargetIDs:      ruler.NewCreateRuleChannelAttachExtractor(provider.alertmanagerService),
+				TargetSelector: coretypes.IDSelector,
+			},
+			handler.TelemetryResourceDef{
+				Verb:      coretypes.VerbRead,
+				Category:  coretypes.ActionCategoryDataAccess,
+				Selector:  querybuilder.TelemetrySelector,
+				Resources: ruler.NewRuleBodyTelemetryResources(),
+			},
+		),
+	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/rules/{id}/clone", handler.New(provider.authzMiddleware.EditAccess(provider.rulerHandler.CloneRuleByID), handler.OpenAPIDef{
-		ID:                  "CloneRuleByID",
-		Tags:                []string{"rules"},
-		Summary:             "Clone alert rule",
-		Description:         "This endpoint creates a new alert rule from the stored definition of an existing one. The clone keeps every modeled field of the source, including its enabled/disabled state, and gets the source's name suffixed with \" - Copy\" (or a bumped \" - Copy (n)\" counter when the source is itself a copy). The clone is owned by the caller.",
-		Response:            new(ruletypes.Rule),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusCreated,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	if err := router.Handle("/api/v2/rules/{id}/clone", handler.New(
+		provider.authzMiddleware.CheckResources(provider.rulerHandler.CloneRuleByID, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		handler.OpenAPIDef{
+			ID:                  "CloneRuleByID",
+			Tags:                []string{"rules"},
+			Summary:             "Clone alert rule",
+			Description:         "This endpoint creates a new alert rule from the stored definition of an existing one. The clone keeps every modeled field of the source, including its enabled/disabled state, and gets the source's name suffixed with \" - Copy\" (or a bumped \" - Copy (n)\" counter when the source is itself a copy). The clone is owned by the caller.",
+			Response:            new(ruletypes.Rule),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusCreated,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			SecuritySchemes: newScopedSecuritySchemes(append([]string{
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbRead),
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbCreate),
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbAttach),
+				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbAttach),
+			}, telemetryReadScopes()...)),
+		},
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceRule,
+				Verb:     coretypes.VerbRead,
+				Category: coretypes.ActionCategoryDataAccess,
+				ID:       coretypes.PathParam("id"),
+				Selector: coretypes.IDSelector,
+			},
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceRule,
+				Verb:     coretypes.VerbCreate,
+				Category: coretypes.ActionCategoryConfigurationChange,
+				ID:       coretypes.ResponseJSONPath("data.id"),
+				Selector: coretypes.WildcardSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourceRule,
+				SourceIDs:      coretypes.OneID(coretypes.ResponseJSONPath("data.id")),
+				SourceSelector: coretypes.WildcardSelector,
+				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
+				TargetIDs:      ruler.NewCloneRuleChannelAttachExtractor(provider.alertmanagerService, provider.rulerService),
+				TargetSelector: coretypes.IDSelector,
+			},
+			handler.TelemetryResourceDef{
+				Verb:      coretypes.VerbRead,
+				Category:  coretypes.ActionCategoryDataAccess,
+				Selector:  querybuilder.TelemetrySelector,
+				Resources: ruler.NewRuleQueryTelemetryResources(provider.rulerService),
+			},
+		),
+	)).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+	if err := router.Handle("/api/v2/rules/{id}", handler.New(
+		provider.authzMiddleware.CheckResources(provider.rulerHandler.UpdateRuleByID, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		handler.OpenAPIDef{
+			ID:                 "UpdateRuleByID",
+			Tags:               []string{"rules"},
+			Summary:            "Update alert rule",
+			Description:        "This endpoint updates an alert rule by ID",
+			Request:            new(ruletypes.PostableRule),
+			RequestContentType: "application/json",
+			RequestExamples:    postableRuleExamples(),
+			SuccessStatusCode:  http.StatusNoContent,
+			ErrorStatusCodes:   []int{http.StatusBadRequest, http.StatusNotFound},
+			SecuritySchemes: newScopedSecuritySchemes(append([]string{
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbUpdate),
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbAttach),
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbDetach),
+				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbAttach),
+				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbDetach),
+			}, telemetryReadScopes()...)),
+		},
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceRule,
+				Verb:     coretypes.VerbUpdate,
+				Category: coretypes.ActionCategoryConfigurationChange,
+				ID:       coretypes.PathParam("id"),
+				Selector: coretypes.IDSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourceRule,
+				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
+				SourceSelector: coretypes.IDSelector,
+				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
+				TargetIDs:      ruler.NewReplaceRuleChannelAttachExtractor(provider.alertmanagerService, provider.rulerService),
+				TargetSelector: coretypes.IDSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbDetach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourceRule,
+				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
+				SourceSelector: coretypes.IDSelector,
+				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
+				TargetIDs:      ruler.NewReplaceRuleChannelDetachExtractor(provider.alertmanagerService, provider.rulerService),
+				TargetSelector: coretypes.IDSelector,
+			},
+			handler.TelemetryResourceDef{
+				Verb:      coretypes.VerbRead,
+				Category:  coretypes.ActionCategoryDataAccess,
+				Selector:  querybuilder.TelemetrySelector,
+				Resources: ruler.NewRuleBodyTelemetryResources(),
+			},
+		),
+	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/rules/{id}", handler.New(provider.authzMiddleware.EditAccess(provider.rulerHandler.UpdateRuleByID), handler.OpenAPIDef{
-		ID:                 "UpdateRuleByID",
-		Tags:               []string{"rules"},
-		Summary:            "Update alert rule",
-		Description:        "This endpoint updates an alert rule by ID",
-		Request:            new(ruletypes.PostableRule),
-		RequestContentType: "application/json",
-		RequestExamples:    postableRuleExamples(),
-		SuccessStatusCode:  http.StatusNoContent,
-		ErrorStatusCodes:   []int{http.StatusBadRequest, http.StatusNotFound},
-		SecuritySchemes:    newSecuritySchemes(types.RoleEditor),
-	})).Methods(http.MethodPut).GetError(); err != nil {
+	if err := router.Handle("/api/v2/rules/{id}", handler.New(
+		provider.authzMiddleware.CheckResources(provider.rulerHandler.DeleteRuleByID, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		handler.OpenAPIDef{
+			ID:                "DeleteRuleByID",
+			Tags:              []string{"rules"},
+			Summary:           "Delete alert rule",
+			Description:       "This endpoint deletes an alert rule by ID",
+			SuccessStatusCode: http.StatusNoContent,
+			ErrorStatusCodes:  []int{http.StatusNotFound},
+			SecuritySchemes:   newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbDelete)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbDelete,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}),
+	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/rules/{id}", handler.New(provider.authzMiddleware.EditAccess(provider.rulerHandler.DeleteRuleByID), handler.OpenAPIDef{
-		ID:                "DeleteRuleByID",
-		Tags:              []string{"rules"},
-		Summary:           "Delete alert rule",
-		Description:       "This endpoint deletes an alert rule by ID",
-		SuccessStatusCode: http.StatusNoContent,
-		ErrorStatusCodes:  []int{http.StatusNotFound},
-		SecuritySchemes:   newSecuritySchemes(types.RoleEditor),
-	})).Methods(http.MethodDelete).GetError(); err != nil {
+	if err := router.Handle("/api/v2/rules/{id}", handler.New(
+		provider.authzMiddleware.CheckResources(provider.rulerHandler.PatchRuleByID, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		handler.OpenAPIDef{
+			ID:                  "PatchRuleByID",
+			Tags:                []string{"rules"},
+			Summary:             "Patch alert rule",
+			Description:         "This endpoint applies a partial update to an alert rule by ID",
+			Request:             new(ruletypes.PostableRule),
+			RequestContentType:  "application/json",
+			RequestExamples:     postableRuleExamples(),
+			Response:            new(ruletypes.Rule),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			SecuritySchemes: newScopedSecuritySchemes(append([]string{
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbUpdate),
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbAttach),
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbDetach),
+				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbAttach),
+				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbDetach),
+			}, telemetryReadScopes()...)),
+		},
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceRule,
+				Verb:     coretypes.VerbUpdate,
+				Category: coretypes.ActionCategoryConfigurationChange,
+				ID:       coretypes.PathParam("id"),
+				Selector: coretypes.IDSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourceRule,
+				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
+				SourceSelector: coretypes.IDSelector,
+				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
+				TargetIDs:      ruler.NewPatchRuleChannelAttachExtractor(provider.alertmanagerService, provider.rulerService),
+				TargetSelector: coretypes.IDSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbDetach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourceRule,
+				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
+				SourceSelector: coretypes.IDSelector,
+				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
+				TargetIDs:      ruler.NewPatchRuleChannelDetachExtractor(provider.alertmanagerService, provider.rulerService),
+				TargetSelector: coretypes.IDSelector,
+			},
+			handler.TelemetryResourceDef{
+				Verb:      coretypes.VerbRead,
+				Category:  coretypes.ActionCategoryDataAccess,
+				Selector:  querybuilder.TelemetrySelector,
+				Resources: ruler.NewOptionalRuleBodyTelemetryResources(),
+				Optional:  true,
+			},
+		),
+	)).Methods(http.MethodPatch).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/rules/{id}", handler.New(provider.authzMiddleware.EditAccess(provider.rulerHandler.PatchRuleByID), handler.OpenAPIDef{
-		ID:                  "PatchRuleByID",
-		Tags:                []string{"rules"},
-		Summary:             "Patch alert rule",
-		Description:         "This endpoint applies a partial update to an alert rule by ID",
-		Request:             new(ruletypes.PostableRule),
-		RequestContentType:  "application/json",
-		RequestExamples:     postableRuleExamples(),
-		Response:            new(ruletypes.Rule),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
-	})).Methods(http.MethodPatch).GetError(); err != nil {
-		return err
-	}
-
-	if err := router.Handle("/api/v2/rules/test", handler.New(provider.authzMiddleware.EditAccess(provider.rulerHandler.TestRule), handler.OpenAPIDef{
-		ID:                  "TestRule",
-		Tags:                []string{"rules"},
-		Summary:             "Test alert rule",
-		Description:         "This endpoint fires a test notification for the given rule definition",
-		Request:             new(ruletypes.PostableRule),
-		RequestContentType:  "application/json",
-		RequestExamples:     postableRuleExamples(),
-		Response:            new(ruletypes.GettableTestRule),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	if err := router.Handle("/api/v2/rules/test", handler.New(
+		provider.authzMiddleware.CheckResources(provider.rulerHandler.TestRule, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		handler.OpenAPIDef{
+			ID:                  "TestRule",
+			Tags:                []string{"rules"},
+			Summary:             "Test alert rule",
+			Description:         "This endpoint fires a test notification for the given rule definition",
+			Request:             new(ruletypes.PostableRule),
+			RequestContentType:  "application/json",
+			RequestExamples:     postableRuleExamples(),
+			Response:            new(ruletypes.GettableTestRule),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest},
+			SecuritySchemes: newScopedSecuritySchemes(append([]string{
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbCreate),
+				coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbAttach),
+				coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbAttach),
+			}, telemetryReadScopes()...)),
+		},
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceRule,
+				Verb:     coretypes.VerbCreate,
+				Category: coretypes.ActionCategoryConfigurationChange,
+				Selector: coretypes.WildcardSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryConfigurationChange,
+				SourceResource: coretypes.ResourceMetaResourceRule,
+				SourceSelector: coretypes.WildcardSelector,
+				TargetResource: coretypes.ResourceMetaResourceNotificationChannel,
+				TargetIDs:      ruler.NewCreateRuleChannelAttachExtractor(provider.alertmanagerService),
+				TargetSelector: coretypes.IDSelector,
+			},
+			handler.TelemetryResourceDef{
+				Verb:      coretypes.VerbRead,
+				Category:  coretypes.ActionCategoryDataAccess,
+				Selector:  querybuilder.TelemetrySelector,
+				Resources: ruler.NewRuleBodyTelemetryResources(),
+			},
+		),
+	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 

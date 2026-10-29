@@ -35,6 +35,9 @@ _DOWNTIME_NAME = "alert-authz-downtime"
 _ACTOR_DOWNTIME_NAME = "alert-authz-actor-downtime"
 _ROUTE_POLICY_NAME = "alert-authz-route-policy"
 _ACTOR_ROUTE_POLICY_NAME = "alert-authz-actor-route-policy"
+_EDITOR_RULE = "alert authz editor rule"
+_ACTOR_RULE = "alert authz actor rule"
+_ACTOR_SWAP_RULE = "alert authz actor swap rule"
 
 SEED_CHANNEL = {"name": "alert-authz-channel", "email_configs": [{"to": "alert-authz@integration.test"}]}
 SEED_CHANNEL_ALT = {"name": "alert-authz-channel-alt", "email_configs": [{"to": "alert-authz-alt@integration.test"}]}
@@ -95,6 +98,24 @@ _ACTOR_BASE_TRANSACTION_GROUPS = [
     transaction_group("detach", "metaresource", "planned-maintenance", ["*"]),
     transaction_group("attach", "metaresource", "rule", ["*"]),
 ]
+
+_ACTOR_RULE_TRANSACTION_GROUPS = _ACTOR_BASE_TRANSACTION_GROUPS + [
+    transaction_group("create", "metaresource", "rule", ["*"]),
+    transaction_group("read", "metaresource", "rule", ["*"]),
+    transaction_group("list", "metaresource", "rule", ["*"]),
+    transaction_group("update", "metaresource", "rule", ["*"]),
+    transaction_group("delete", "metaresource", "rule", ["*"]),
+    transaction_group("detach", "metaresource", "rule", ["*"]),
+]
+
+LOGS_RULE_CONDITION = {
+    **RULE_CONDITION,
+    "compositeQuery": {
+        "queryType": "builder",
+        "panelType": "graph",
+        "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
+    },
+}
 
 
 def test_setup_users_and_channels(
@@ -440,6 +461,149 @@ def test_viewer_allowed_on_rule_views(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+
+def test_viewer_allowed_on_rule_reads(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(_VIEWER_EMAIL, _VIEWER_PASSWORD)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{V3_RULES_URL}?limit=200"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    target_id = {rule["alert"]: rule["id"] for rule in response.json()["data"]["rules"]}[_TARGET_RULE]
+
+    for path in (V2_RULES_URL, f"{V2_RULES_URL}/{target_id}"):
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(path),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK, f"GET {path}: expected 200, got {response.status_code}: {response.text}"
+
+
+def test_viewer_forbidden_on_rule_writes(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(_VIEWER_EMAIL, _VIEWER_PASSWORD)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{V3_RULES_URL}?limit=200"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    target_id = {rule["alert"]: rule["id"] for rule in response.json()["data"]["rules"]}[_TARGET_RULE]
+
+    body = {**RULE_TEMPLATE, "alert": _TARGET_RULE}
+    for method, path, payload in (
+        ("post", V2_RULES_URL, body),
+        ("put", f"{V2_RULES_URL}/{target_id}", body),
+        ("patch", f"{V2_RULES_URL}/{target_id}", {"description": "viewer patch"}),
+        ("delete", f"{V2_RULES_URL}/{target_id}", None),
+        ("post", f"{V2_RULES_URL}/{target_id}/clone", None),
+        ("post", f"{V2_RULES_URL}/test", body),
+    ):
+        response = getattr(requests, method)(
+            signoz.self.host_configs["8080"].get(path),
+            json=payload,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.FORBIDDEN, f"{method.upper()} {path}: expected 403, got {response.status_code}: {response.text}"
+
+
+def test_editor_allowed_on_rule_lifecycle(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(_EDITOR_EMAIL, _EDITOR_PASSWORD)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(V2_RULES_URL),
+        json={**RULE_TEMPLATE, "alert": _EDITOR_RULE},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    rule_id = response.json()["data"]["id"]
+
+    swapped_condition = {
+        **RULE_CONDITION,
+        "thresholds": {
+            "kind": "basic",
+            "spec": [{"name": "critical", "target": 90, "matchType": "at_least_once", "op": "above", "channels": [SEED_CHANNEL_ALT["name"]]}],
+        },
+    }
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{rule_id}"),
+        json={**RULE_TEMPLATE, "alert": _EDITOR_RULE, "condition": swapped_condition},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    response = requests.patch(
+        signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{rule_id}"),
+        json={"description": "patched without touching channels"},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"]["condition"]["thresholds"]["spec"][0]["channels"] == [SEED_CHANNEL_ALT["name"]], response.text
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{rule_id}/clone"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    clone_id = response.json()["data"]["id"]
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/test"),
+        json={**RULE_TEMPLATE, "alert": _EDITOR_RULE},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    for created_id in (rule_id, clone_id):
+        response = requests.delete(
+            signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{created_id}"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+
+def test_rule_naming_unknown_channel_rejected(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    condition = {
+        **RULE_CONDITION,
+        "thresholds": {"kind": "basic", "spec": [{"name": "critical", "target": 90, "matchType": "at_least_once", "op": "above", "channels": ["alert-authz-missing-channel"]}]},
+    }
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(V2_RULES_URL),
+        json={**RULE_TEMPLATE, "alert": _EDITOR_RULE, "condition": condition},
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
 
 
 def test_apply_license(
@@ -893,6 +1057,277 @@ def test_downtime_widening_to_all_rules_forbidden_without_wildcard_attach(
     response = requests.put(
         signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"),
         json={"description": "", "transactionGroups": _ACTOR_BASE_TRANSACTION_GROUPS},
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+
+def test_setup_rule_scoped_actor(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{find_role_by_name(signoz, admin_token, _ACTOR_ROLE_NAME)}"),
+        json={
+            "description": "",
+            "transactionGroups": _ACTOR_RULE_TRANSACTION_GROUPS + [transaction_group("read", "telemetryresource", "metrics", ["builder_query/*"])],
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+
+def test_rule_without_channels_allowed_without_channel_attach(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
+
+    condition = {
+        **RULE_CONDITION,
+        "thresholds": {"kind": "basic", "spec": [{"name": "critical", "target": 90, "matchType": "at_least_once", "op": "above", "channels": []}]},
+    }
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(V2_RULES_URL),
+        json={
+            **RULE_TEMPLATE,
+            "alert": _ACTOR_RULE,
+            "condition": condition,
+            "notificationSettings": {**RULE_TEMPLATE["notificationSettings"], "usePolicy": True},
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{response.json()['data']['id']}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+
+def test_rule_naming_channel_forbidden_without_channel_attach(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(V2_RULES_URL),
+        json={**RULE_TEMPLATE, "alert": _ACTOR_RULE},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{V3_RULES_URL}?limit=200"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    target_id = {rule["alert"]: rule["id"] for rule in response.json()["data"]["rules"]}[_TARGET_RULE]
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{target_id}/clone"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
+
+
+def test_rule_naming_channel_allowed_once_channel_attach_granted(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{find_role_by_name(signoz, admin_token, _ACTOR_ROLE_NAME)}"),
+        json={
+            "description": "",
+            "transactionGroups": _ACTOR_RULE_TRANSACTION_GROUPS
+            + [
+                transaction_group("read", "telemetryresource", "metrics", ["builder_query/*"]),
+                transaction_group("attach", "metaresource", "notification-channel", ["*"]),
+            ],
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(V2_RULES_URL),
+        json={**RULE_TEMPLATE, "alert": _ACTOR_RULE},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    rule_id = response.json()["data"]["id"]
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{rule_id}/clone"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    clone_id = response.json()["data"]["id"]
+
+    for created_id in (rule_id, clone_id):
+        response = requests.delete(
+            signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{created_id}"),
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+
+def test_channel_swap_forbidden_without_channel_detach(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(V2_RULES_URL),
+        json={**RULE_TEMPLATE, "alert": _ACTOR_SWAP_RULE},
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    rule_id = response.json()["data"]["id"]
+
+    swapped_condition = {
+        **RULE_CONDITION,
+        "thresholds": {
+            "kind": "basic",
+            "spec": [{"name": "critical", "target": 90, "matchType": "at_least_once", "op": "above", "channels": [SEED_CHANNEL_ALT["name"]]}],
+        },
+    }
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{rule_id}"),
+        json={**RULE_TEMPLATE, "alert": _ACTOR_SWAP_RULE, "condition": swapped_condition},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
+
+    response = requests.patch(
+        signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{rule_id}"),
+        json={"description": "patched without touching channels"},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{rule_id}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+
+def test_rule_mutations_need_telemetry_read_on_query(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
+
+    condition = {
+        **RULE_CONDITION,
+        "thresholds": {"kind": "basic", "spec": [{"name": "critical", "target": 90, "matchType": "at_least_once", "op": "above", "channels": []}]},
+    }
+    body = {
+        **RULE_TEMPLATE,
+        "alert": _ACTOR_RULE,
+        "condition": condition,
+        "notificationSettings": {**RULE_TEMPLATE["notificationSettings"], "usePolicy": True},
+    }
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(V2_RULES_URL),
+        json=body,
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    rule_id = response.json()["data"]["id"]
+
+    logs_body = {**body, "alertType": "LOGS_BASED_ALERT", "condition": {**LOGS_RULE_CONDITION, "thresholds": condition["thresholds"]}}
+    for method, path, payload in (
+        ("post", V2_RULES_URL, logs_body),
+        ("put", f"{V2_RULES_URL}/{rule_id}", logs_body),
+        ("patch", f"{V2_RULES_URL}/{rule_id}", {"condition": logs_body["condition"]}),
+        ("post", f"{V2_RULES_URL}/test", logs_body),
+    ):
+        response = getattr(requests, method)(
+            signoz.self.host_configs["8080"].get(path),
+            json=payload,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.FORBIDDEN, f"{method.upper()} {path}: expected 403, got {response.status_code}: {response.text}"
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/test"),
+        json=body,
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{find_role_by_name(signoz, admin_token, _ACTOR_ROLE_NAME)}"),
+        json={"description": "", "transactionGroups": _ACTOR_RULE_TRANSACTION_GROUPS},
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
+    for method, path, payload in (
+        ("post", V2_RULES_URL, body),
+        ("put", f"{V2_RULES_URL}/{rule_id}", body),
+        ("patch", f"{V2_RULES_URL}/{rule_id}", {"condition": body["condition"]}),
+        ("post", f"{V2_RULES_URL}/{rule_id}/clone", None),
+        ("post", f"{V2_RULES_URL}/test", body),
+    ):
+        response = getattr(requests, method)(
+            signoz.self.host_configs["8080"].get(path),
+            json=payload,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.FORBIDDEN, f"{method.upper()} {path}: expected 403, got {response.status_code}: {response.text}"
+
+    response = requests.patch(
+        signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{rule_id}"),
+        json={"description": "patch without the query needs no telemetry read"},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{rule_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
