@@ -15,22 +15,29 @@ const getAiObservabilityUpdaterConfig = (
 	setSavedViewPreferences: Dispatch<SetStateAction<Preferences | null>>,
 	panelType: PANEL_TYPES | undefined,
 ): {
-	updateColumns: (newColumns: TelemetryFieldKey[], mode: string) => void;
+	updateColumns: (
+		newColumns: TelemetryFieldKey[],
+		mode: string,
+		columnsPanelType?: PANEL_TYPES,
+	) => void;
 	updateFormatting: () => void;
 } => ({
-	updateColumns: (newColumns, mode): void => {
-		if (!panelType) {
+	updateColumns: (newColumns, mode, columnsPanelType = panelType): void => {
+		if (!columnsPanelType) {
 			return;
 		}
 
 		if (mode === PreferenceMode.SAVED_VIEW) {
-			setSavedViewPreferences({ columns: newColumns, panelType });
+			setSavedViewPreferences({
+				columns: newColumns,
+				panelType: columnsPanelType,
+			});
 		}
 
 		if (mode === PreferenceMode.DIRECT) {
 			const panels = {
 				...aiObservabilityLoaderConfig.local().panels,
-				[panelType]: newColumns,
+				[columnsPanelType]: newColumns,
 			};
 			redirectWithOptionsData({
 				...defaultOptionsQuery,

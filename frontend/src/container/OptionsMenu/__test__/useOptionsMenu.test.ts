@@ -87,6 +87,7 @@ describe('useOptionsMenu', () => {
 		mockUsePreferenceContext.mockReturnValue({
 			[SavedviewtypesSourceDTO.traces]: slice([], rawFormatting),
 			[SavedviewtypesSourceDTO.logs]: slice([], rawFormatting),
+			[SavedviewtypesSourceDTO.ai_observability]: slice([], {}),
 		} satisfies PreferenceContextValue);
 
 		mockUseUrlQueryData.mockReturnValue({
@@ -236,6 +237,7 @@ describe('useOptionsMenu', () => {
 			mockUsePreferenceContext.mockReturnValue({
 				[SavedviewtypesSourceDTO.traces]: slice([], baseFormatting),
 				[SavedviewtypesSourceDTO.logs]: slice(seedColumns, baseFormatting),
+				[SavedviewtypesSourceDTO.ai_observability]: slice([], {}),
 			} satisfies PreferenceContextValue);
 		});
 
@@ -357,6 +359,7 @@ describe('useOptionsMenu', () => {
 					},
 				),
 				[SavedviewtypesSourceDTO.logs]: slice([], {}),
+				[SavedviewtypesSourceDTO.ai_observability]: slice([], {}),
 			} satisfies PreferenceContextValue);
 
 			const { result } = renderHook(

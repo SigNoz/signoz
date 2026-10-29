@@ -30,7 +30,10 @@ export function usePreferenceSync({
 	preferences: Preferences | null;
 	loading: boolean;
 	error: Error | null;
-	updateColumns: (newColumns: TelemetryFieldKey[]) => void;
+	updateColumns: (
+		newColumns: TelemetryFieldKey[],
+		panelType?: PANEL_TYPES,
+	) => void;
 	updateFormatting: (newFormatting: FormattingOptions) => void;
 } {
 	const isSavedViewMode = mode === PreferenceMode.SAVED_VIEW && !!savedViewId;

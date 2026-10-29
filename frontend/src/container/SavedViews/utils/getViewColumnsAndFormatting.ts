@@ -9,6 +9,7 @@ import {
 	defaultTraceSelectedColumns,
 	ensureLogsRequiredColumns,
 } from 'container/OptionsMenu/constants';
+import { DEFAULT_PANEL_TYPE } from 'container/LLMObservability/Explorer/constants';
 import { FontSize, LogViewMode } from 'container/OptionsMenu/types';
 import aiObservabilityLoaderConfig from 'providers/preferences/configs/aiObservabilityLoaderConfig';
 import { Preferences } from 'providers/preferences/types';
@@ -50,10 +51,9 @@ export function getViewColumnsAndFormatting(
 		return { columns: selectedFields || defaultTraceSelectedColumns };
 	}
 	if (sourcePage === SavedviewtypesSourceDTO.ai_observability) {
-		if (!spec) {
-			return { columns: [] };
-		}
-		const panelType = spec.panelType as unknown as PANEL_TYPES;
+		const panelType =
+			(spec?.panelType as unknown as PANEL_TYPES | undefined) ??
+			DEFAULT_PANEL_TYPE;
 		return {
 			columns:
 				selectedFields || aiObservabilityLoaderConfig.default(panelType).columns,
