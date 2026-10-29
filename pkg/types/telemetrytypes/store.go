@@ -7,7 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// SchemaMetadataStore is the part of the metadata store a storage reads.
+// SchemaMetadataStore reads the schema metadata a storage needs.
 type SchemaMetadataStore interface {
 	// GetBaseColumnEvolutions returns the column-wide evolutions of one signal's
 	// field context, which a key metadata does not report still reads
@@ -17,8 +17,6 @@ type SchemaMetadataStore interface {
 
 // MetadataStore is the interface for the telemetry metadata store.
 type MetadataStore interface {
-	SchemaMetadataStore
-
 	// GetKeys returns a map of field keys types.TelemetryFieldKey by name, there can be multiple keys with the same name
 	// if they have different types or data types.
 	GetKeys(ctx context.Context, orgID valuer.UUID, fieldKeySelector *FieldKeySelector) (map[string][]*TelemetryFieldKey, bool, error)

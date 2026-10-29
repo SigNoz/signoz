@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
@@ -68,7 +69,7 @@ func NewTraceStore(ts telemetrystore.TelemetryStore, metadataStore telemetrytype
 	return &traceStore{
 		telemetryStore: ts,
 		metadataStore:  metadataStore,
-		storage:        tracestelemetryschema.NewStorage(metadataStore),
+		storage:        tracestelemetryschema.NewStorage(telemetrymetadata.NewSchemaMetadataStore(ts)),
 		flagger:        fl,
 	}
 }

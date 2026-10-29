@@ -15,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/statementbuilder"
 	"github.com/SigNoz/signoz/pkg/statementbuilder/resourcefilter"
 	"github.com/SigNoz/signoz/pkg/statementbuilder/tracesstatementbuilder"
+	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -59,7 +60,7 @@ func NewFactory(
 			if err != nil {
 				return nil, err
 			}
-			return NewScopedTraceStatementBuilder(settings, metadataStore, tracestelemetryschema.NewStorage(metadataStore), scope, traceStmtBuilder, fl), nil
+			return NewScopedTraceStatementBuilder(settings, metadataStore, tracestelemetryschema.NewStorage(telemetrymetadata.NewSchemaMetadataStore(telemetryStore)), scope, traceStmtBuilder, fl), nil
 		},
 	)
 }

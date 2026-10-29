@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/huandu/go-sqlbuilder"
@@ -71,8 +70,6 @@ type telemetryMetaStore struct {
 	storage            qbtypes.Storage
 	fl                 flagger.Flagger
 	jsonColumnMetadata map[telemetrytypes.Signal]map[telemetrytypes.FieldContext]telemetrytypes.JSONColumnMetadata
-
-	baseColumnEvolutions sync.Map
 }
 
 func NewTelemetryMetaStore(
@@ -2445,29 +2442,14 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporalityAndType(ctx conte
 	return temporalities, types, nil
 }
 
-// GetBaseColumnEvolutions caches found entries for the life of the process, as
-// entries are only ever added. An empty result is not cached: the migrator can
-// add the entries at runtime.
-func (t *telemetryMetaStore) GetBaseColumnEvolutions(ctx context.Context, signal telemetrytypes.Signal, fieldContext telemetrytypes.FieldContext) ([]*telemetrytypes.EvolutionEntry, error) {
-	selector := &telemetrytypes.EvolutionSelector{Signal: signal, FieldContext: fieldContext, FieldName: telemetrytypes.EvolutionFieldNameAll}
-	if cached, ok := t.baseColumnEvolutions.Load(selector.QualifiedName()); ok {
-		return cached.([]*telemetrytypes.EvolutionEntry), nil
-	}
-
-	entries, err := t.fetchEvolutionEntryFromClickHouse(ctx, []*telemetrytypes.EvolutionSelector{selector})
-	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch the base column evolutions of %s", selector.QualifiedName())
-	}
-	if len(entries) > 0 {
-		t.baseColumnEvolutions.Store(selector.QualifiedName(), entries)
-	}
-	return entries, nil
+func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Context, selectors []*telemetrytypes.EvolutionSelector) ([]*telemetrytypes.EvolutionEntry, error) {
+	return fetchEvolutionEntries(ctx, k.telemetrystore, fmt.Sprintf("%s.%s", k.relatedMetadataDBName, k.columnEvolutionMetadataTblName), selectors)
 }
 
-func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Context, selectors []*telemetrytypes.EvolutionSelector) ([]*telemetrytypes.EvolutionEntry, error) {
+func fetchEvolutionEntries(ctx context.Context, telemetryStore telemetrystore.TelemetryStore, table string, selectors []*telemetrytypes.EvolutionSelector) ([]*telemetrytypes.EvolutionEntry, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("signal", "column_name", "column_type", "field_context", "field_name", "version", "release_time")
-	sb.From(fmt.Sprintf("%s.%s", k.relatedMetadataDBName, k.columnEvolutionMetadataTblName))
+	sb.From(table)
 	sb.OrderBy("release_time ASC")
 
 	var clauses []string
@@ -2489,7 +2471,7 @@ func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Conte
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	var entries []*telemetrytypes.EvolutionEntry
-	rows, err := k.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
+	rows, err := telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
