@@ -10,9 +10,8 @@ import {
 import ROUTES from 'constants/routes';
 import { getSavedViewQuery } from 'container/SavedViews/utils/getSavedViewQuery';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
-import { SOURCEPAGE_VS_ROUTES } from 'pages/SaveView/constants';
+import { SOURCEPAGE_VS_ROUTES } from 'container/SavedViews/constants';
 import Card from 'periscope/components/Card/Card';
-import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 
@@ -36,7 +35,6 @@ export default function SavedViews({
 	loadingUserPreferences: boolean;
 }): JSX.Element {
 	const { user } = useAppContext();
-	const isSavedViewEnabled = useSavedViewEnabled();
 	const [selectedEntity, setSelectedEntity] = useState<string>('logs');
 	const [selectedEntityViews, setSelectedEntityViews] = useState<
 		SavedviewtypesSavedViewDTO[]
@@ -104,7 +102,6 @@ export default function SavedViews({
 			view.spec.panelType,
 			{
 				query: getSavedViewQuery(view),
-				viewName: view.spec.displayName,
 				viewKey: view.id,
 			},
 			SOURCEPAGE_VS_ROUTES[selectedEntity],
@@ -116,19 +113,6 @@ export default function SavedViews({
 			onUpdateChecklistDoneItem('SETUP_SAVED_VIEWS');
 		}
 	}, [hasSavedViews, onUpdateChecklistDoneItem, loadingUserPreferences]);
-
-	const footerLink = useMemo(() => {
-		if (selectedEntity === 'logs') {
-			return ROUTES.LOGS_SAVE_VIEWS;
-		}
-		if (selectedEntity === 'traces') {
-			return ROUTES.TRACES_SAVE_VIEWS;
-		}
-		if (selectedEntity === 'metrics') {
-			return ROUTES.METRICS_EXPLORER_VIEWS;
-		}
-		return '';
-	}, [selectedEntity]);
 
 	const getStartedLink = useMemo(() => {
 		if (selectedEntity === 'logs') {
@@ -352,26 +336,6 @@ export default function SavedViews({
 			<Card.Content>
 				{selectedEntityViews.length > 0 ? renderSavedViews() : emptyStateCard()}
 			</Card.Content>
-
-			{!isSavedViewEnabled && selectedEntityViews.length > 0 && (
-				<Card.Footer>
-					<div className="services-footer home-data-card-footer">
-						<Link to={footerLink}>
-							<Button
-								type="link"
-								className="periscope-btn link learn-more-link"
-								onClick={(): void => {
-									logEvent('Homepage: All saved views clicked', {
-										entity: selectedEntity,
-									});
-								}}
-							>
-								All Views <ArrowRight size={12} />
-							</Button>
-						</Link>
-					</div>
-				</Card.Footer>
-			)}
 		</Card>
 	);
 }

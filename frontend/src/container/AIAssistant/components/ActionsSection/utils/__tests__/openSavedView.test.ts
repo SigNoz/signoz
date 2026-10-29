@@ -235,7 +235,6 @@ describe('buildExplorerNavigationUrl', () => {
 			{ queryType: 'builder' } as never,
 			{
 				[QueryParams.panelTypes]: PANEL_TYPES.LIST,
-				[QueryParams.viewName]: 'My view',
 				[QueryParams.viewKey]: 'view-1',
 			},
 		);
@@ -259,7 +258,7 @@ describe('openSavedView', () => {
 		expect(pushedUrl).toContain(ROUTES.LOGS_EXPLORER);
 		const params = new URLSearchParams(pushedUrl.split('?')[1]);
 		expect(params.get(QueryParams.viewKey)).toBe('"view-logs"');
-		expect(params.get(QueryParams.viewName)).toBe('"View view-logs"');
+		expect(params.get(QueryParams.viewName)).toBeNull();
 		expect(params.get(QueryParams.panelTypes)).toBe('"list"');
 	});
 

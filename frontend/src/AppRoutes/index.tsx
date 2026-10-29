@@ -18,7 +18,6 @@ import AppLayout from 'container/AppLayout';
 import Hex from 'crypto-js/enc-hex';
 import HmacSHA256 from 'crypto-js/hmac-sha256';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
-import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import { ChatSupportState, useChatSupport } from 'hooks/useChatSupport';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
@@ -66,7 +65,6 @@ function App(): JSX.Element {
 	} = useAppContext();
 	const [routes, setRoutes] = useState<AppRoutes[]>(defaultRoutes);
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
-	const isSavedViewEnabled = useSavedViewEnabled();
 	const chatSupport = useChatSupport();
 
 	const { hostname } = window.location;
@@ -256,18 +254,8 @@ function App(): JSX.Element {
 
 	useEffect(() => {
 		// The bottom strip carries Support, so the floating bubble goes entirely.
-		if (
-			isSavedViewEnabled ||
-			pathname === ROUTES.ONBOARDING ||
-			pathname.startsWith('/public/dashboard/') ||
-			pathname === '/ai-assistant' ||
-			pathname.startsWith('/ai-assistant/')
-		) {
-			window.Pylon?.('hideChatBubble');
-		} else {
-			window.Pylon?.('showChatBubble');
-		}
-	}, [pathname, isSavedViewEnabled]);
+		window.Pylon?.('hideChatBubble');
+	}, [pathname]);
 
 	// Identity for the Pylon widget. Whether this user gets Pylon at all is
 	// `useChatSupport`'s call — this only fills in who they are.

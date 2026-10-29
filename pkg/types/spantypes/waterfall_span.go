@@ -273,20 +273,12 @@ func (ws *WaterfallSpan) getPathToSelectedSpanID(selectedSpanID string) ([]strin
 	return nil, false
 }
 
-func (item *StorableSpan) AttributeValue(name string) any {
-	if v, ok := item.AttributesString[name]; ok {
-		return v
-	}
-	if v, ok := item.AttributesNumber[name]; ok {
-		return v
-	}
-	if v, ok := item.AttributesBool[name]; ok {
-		return v
-	}
-	return nil
-}
-
+// Attributes flattens the JSON column into dotted keys, as the querier does for list responses, and
+// falls back to the legacy maps for spans written before the JSON rollout.
 func (item *StorableSpan) Attributes() map[string]any {
+	if attributes := item.AttributesJSON.Flatten(); len(attributes) > 0 {
+		return attributes
+	}
 	attributes := make(map[string]any, len(item.AttributesString)+len(item.AttributesNumber)+len(item.AttributesBool))
 	for k, v := range item.AttributesString {
 		attributes[k] = v

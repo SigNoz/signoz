@@ -305,14 +305,6 @@ export const TooltipsInApprovalDiff: Story = {
 };
 
 /**
- * The conversation count in the bottom strip, in place of the build version.
- * Archived threads are left out of it.
- */
-export const BottomStrip: Story = {
-	args: { bottomStrip: true },
-};
-
-/**
  * The recording controls' tooltips, held open: discard, stop and send, and the
  * send button beside them, which waits for words.
  */

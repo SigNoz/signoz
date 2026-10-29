@@ -139,13 +139,6 @@ jest.mock(
 		},
 );
 jest.mock(
-	'container/ExplorerOptions/ExplorerOptionWrapper',
-	() =>
-		function MockExplorerOptionWrapper(): JSX.Element {
-			return <div>MockExplorerOptionWrapper</div>;
-		},
-);
-jest.mock(
 	'components/QuickFilters/QuickFilters',
 	() =>
 		function MockQuickFilters(): JSX.Element {
@@ -416,7 +409,6 @@ function LogsExplorerWithMockContext({
 			updateQueriesData: (): Query => initialQueriesMap.logs,
 			initQueryBuilderData: noop,
 			handleOnUnitsChange: noop,
-			isStagedQueryUpdated: (): boolean => false,
 		}),
 		[currentQuery, stagedQuery, handleRunQuery],
 	);
