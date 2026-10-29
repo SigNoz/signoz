@@ -623,7 +623,7 @@ def test_traces_list_response_shape_values(
             "is_remote": span_obj.is_remote,
             "attributes": {**span_obj.attribute_string, **span_obj.attributes_number, **span_obj.attributes_bool},
             "resource": span_obj.resources_string,
-            "scope": span_obj.scope_json,
+            "scope": {k: v for k, v in span_obj.scope_json.items() if v},
         }
         # `==` treats True/1 and 7.5/7.5 as equal regardless of type, so pin the
         # string/number/bool type preservation for the error span explicitly.
@@ -1156,7 +1156,7 @@ def test_traces_list_span_scope(
                 "is_remote": x[3].is_remote,
                 "attributes": {**x[3].attribute_string, **x[3].attributes_number, **x[3].attributes_bool},
                 "resource": x[3].resources_string,
-                "scope": x[3].scope_json,
+                "scope": {k: v for k, v in x[3].scope_json.items() if v},
             },
             id="order_timestamp_full_shape",
         ),
@@ -1194,7 +1194,7 @@ def test_traces_list_span_scope(
                 "is_remote": x[3].is_remote,
                 "attributes": {**x[3].attribute_string, **x[3].attributes_number, **x[3].attributes_bool},
                 "resource": x[3].resources_string,
-                "scope": x[3].scope_json,
+                "scope": {k: v for k, v in x[3].scope_json.items() if v},
             },
             id="order_attribute_timestamp_full_shape",
         ),

@@ -27,7 +27,7 @@ func TestNewFlamegraphSpanFromStorable_SelectFields(t *testing.T) {
 			},
 			wantAttrs:    map[string]any{"http.route": "/orders", "http.retry.count": float64(2)},
 			wantResource: map[string]string{},
-			wantScope:    newEmptyScope(),
+			wantScope:    Scope{},
 		},
 		{
 			name: "LegacyMaps_Resolve",
@@ -39,7 +39,7 @@ func TestNewFlamegraphSpanFromStorable_SelectFields(t *testing.T) {
 			},
 			wantAttrs:    map[string]any{"http.route": "/cart", "cache.hit": true},
 			wantResource: map[string]string{},
-			wantScope:    newEmptyScope(),
+			wantScope:    Scope{},
 		},
 		{
 			name: "ResourceFields_EmptyValueSkipped",
@@ -50,7 +50,7 @@ func TestNewFlamegraphSpanFromStorable_SelectFields(t *testing.T) {
 			},
 			wantAttrs:    map[string]any{},
 			wantResource: map[string]string{"service.name": "checkout"},
-			wantScope:    newEmptyScope(),
+			wantScope:    Scope{},
 		},
 		{
 			name: "ScopeFields_DeclaredPathsAndAttributes",
@@ -62,7 +62,7 @@ func TestNewFlamegraphSpanFromStorable_SelectFields(t *testing.T) {
 			},
 			wantAttrs:    map[string]any{},
 			wantResource: map[string]string{},
-			wantScope:    Scope{Name: "io.opentelemetry.http", Attributes: map[string]any{"lib.lang": "go"}},
+			wantScope:    Scope{"name": "io.opentelemetry.http", "attributes": map[string]any{"lib.lang": "go"}},
 		},
 	}
 	for _, testCase := range testCases {

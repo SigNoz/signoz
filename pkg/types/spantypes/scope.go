@@ -1,7 +1,7 @@
 package spantypes
 
 import (
-	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
+	"github.com/swaggest/jsonschema-go"
 )
 
 const (
@@ -9,39 +9,73 @@ const (
 	ScopeVersionKey = "scope.version"
 )
 
-// Scope is a span's instrumentation scope. Attributes are flat dotted keys, like the span attributes.
-type Scope struct {
-	Name       string         `json:"name,omitempty"`
-	Version    string         `json:"version,omitempty"`
-	Attributes map[string]any `json:"attributes,omitempty"`
-}
+const (
+	scopeName       = "name"
+	scopeVersion    = "version"
+	scopeAttributes = "attributes"
+)
 
-func NewScope(column telemetrystoretypes.JSONValue) Scope {
-	scope := newEmptyScope()
-	fields := column.Flatten()
-	scope.Name, _ = fields["name"].(string)
-	scope.Version, _ = fields["version"].(string)
-	if attributes, ok := fields["attributes"].(map[string]any); ok {
-		scope.Attributes = attributes
+var _ jsonschema.Preparer = Scope{}
+
+// Scope is a span's instrumentation scope holding only the fields that are set: name, version and
+// attributes, a flat bag of dotted keys like the span attributes.
+type Scope map[string]any
+
+// NewScope builds a Scope from the flattened scope column, where an unset declared path reads back
+// as its zero value (name and version as empty strings).
+func NewScope(column map[string]any) Scope {
+	scope := Scope{}
+	if name, _ := column[scopeName].(string); name != "" {
+		scope[scopeName] = name
+	}
+	if version, _ := column[scopeVersion].(string); version != "" {
+		scope[scopeVersion] = version
+	}
+	if attributes, _ := column[scopeAttributes].(map[string]any); len(attributes) > 0 {
+		scope[scopeAttributes] = attributes
 	}
 	return scope
 }
 
-func newEmptyScope() Scope {
-	return Scope{Attributes: make(map[string]any)}
+func (Scope) PrepareJSONSchema(schema *jsonschema.Schema) error {
+	attributes := jsonschema.Schema{}
+	attributes.WithType(jsonschema.Object.Type())
+	attributes.WithAdditionalProperties(jsonschema.SchemaOrBool{TypeObject: &jsonschema.Schema{}})
+
+	schema.AdditionalProperties = nil
+	schema.WithPropertiesItem(scopeName, jsonschema.String.ToSchemaOrBool())
+	schema.WithPropertiesItem(scopeVersion, jsonschema.String.ToSchemaOrBool())
+	schema.WithPropertiesItem(scopeAttributes, attributes.ToSchemaOrBool())
+	return nil
 }
 
 // copyField copies one scope field key from src, resolved as the query builder does: scope.name and
 // scope.version are the declared paths, any other name is a scope attribute.
-func (s *Scope) copyField(src Scope, name string) {
+func (s Scope) copyField(src Scope, name string) {
 	switch name {
 	case ScopeNameKey:
-		s.Name = src.Name
-	case ScopeVersionKey:
-		s.Version = src.Version
-	default:
-		if v, ok := src.Attributes[name]; ok {
-			s.Attributes[name] = v
+		if v, ok := src[scopeName]; ok {
+			s[scopeName] = v
 		}
+	case ScopeVersionKey:
+		if v, ok := src[scopeVersion]; ok {
+			s[scopeVersion] = v
+		}
+	default:
+		v, ok := src.attributes()[name]
+		if !ok {
+			return
+		}
+		attributes := s.attributes()
+		if attributes == nil {
+			attributes = make(map[string]any)
+			s[scopeAttributes] = attributes
+		}
+		attributes[name] = v
 	}
+}
+
+func (s Scope) attributes() map[string]any {
+	attributes, _ := s[scopeAttributes].(map[string]any)
+	return attributes
 }

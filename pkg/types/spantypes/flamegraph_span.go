@@ -67,7 +67,7 @@ func NewFlamegraphSpanFromStorable(s *StorableSpan, level int64, selectFields []
 		Events:       s.UnmarshalledEvents(),
 		Attributes:   make(map[string]any),
 		Resource:     make(map[string]string),
-		Scope:        newEmptyScope(),
+		Scope:        Scope{},
 	}
 	if len(selectFields) == 0 {
 		return span
@@ -88,8 +88,8 @@ func NewFlamegraphSpanFromStorable(s *StorableSpan, level int64, selectFields []
 				span.Attributes[field.Name] = v
 			}
 		case telemetrytypes.FieldContextScope:
-			if scope.Attributes == nil {
-				scope = NewScope(s.Scope)
+			if scope == nil {
+				scope = NewScope(s.Scope.Flatten())
 			}
 			span.Scope.copyField(scope, field.Name)
 		}

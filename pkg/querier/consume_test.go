@@ -136,6 +136,32 @@ func TestMergeSpanAttributeColumns_EmptyEventsAndLinks(t *testing.T) {
 	}
 }
 
+func TestMergeSpanAttributeColumns_Scope(t *testing.T) {
+	testCases := []struct {
+		name  string
+		scope map[string]any
+		want  spantypes.Scope
+	}{
+		{
+			name:  "SetFields_Kept",
+			scope: map[string]any{"name": "io.opentelemetry.http", "version": "1.2.0", "attributes": map[string]any{"lib.lang": "go"}},
+			want:  spantypes.Scope{"name": "io.opentelemetry.http", "version": "1.2.0", "attributes": map[string]any{"lib.lang": "go"}},
+		},
+		{
+			name:  "UnsetDeclaredPaths_Empty",
+			scope: map[string]any{"name": "", "version": "", "attributes": map[string]any{}},
+			want:  spantypes.Scope{},
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			data := map[string]any{"scope": testCase.scope}
+			mergeSpanAttributeColumns(data)
+			assert.Equal(t, testCase.want, data["scope"])
+		})
+	}
+}
+
 // readAsRaw decodes the JSON column into a flat bag of dotted keys before this runs; mergeSpanAttributeColumns
 // copies that bag and overlays the legacy string/number/bool maps, which win on collision.
 func TestMergeSpanAttributeColumns_JSONColumn(t *testing.T) {

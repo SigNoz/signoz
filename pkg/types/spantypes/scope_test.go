@@ -32,22 +32,27 @@ func TestNewScope(t *testing.T) {
 		{
 			name:   "AttributesStayDotted",
 			column: scopeColumn("io.opentelemetry.http", "1.2.0", map[string]any{"lib.lang": "go", "lib.lang.version": "1.22", "retry": int64(3)}),
-			want:   Scope{Name: "io.opentelemetry.http", Version: "1.2.0", Attributes: map[string]any{"lib.lang": "go", "lib.lang.version": "1.22", "retry": float64(3)}},
+			want:   Scope{"name": "io.opentelemetry.http", "version": "1.2.0", "attributes": map[string]any{"lib.lang": "go", "lib.lang.version": "1.22", "retry": float64(3)}},
 		},
 		{
-			name:   "DropsNullAttributePaths",
+			name:   "DropsNullAttributePaths_UnsetVersion",
 			column: scopeColumn("checkout", "", map[string]any{"team": "payments", "absent": chcol.Variant{}}),
-			want:   Scope{Name: "checkout", Attributes: map[string]any{"team": "payments"}},
+			want:   Scope{"name": "checkout", "attributes": map[string]any{"team": "payments"}},
+		},
+		{
+			name:   "UnsetDeclaredPaths_Empty",
+			column: scopeColumn("", "", nil),
+			want:   Scope{},
 		},
 		{
 			name:   "EmptyColumn",
 			column: telemetrystoretypes.JSONValue{},
-			want:   Scope{Attributes: map[string]any{}},
+			want:   Scope{},
 		},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			assert.Equal(t, testCase.want, NewScope(testCase.column))
+			assert.Equal(t, testCase.want, NewScope(testCase.column.Flatten()))
 		})
 	}
 }

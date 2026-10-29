@@ -628,6 +628,9 @@ func mergeSpanAttributeColumns(data map[string]any) {
 	if raw, ok := data["links"]; ok {
 		data["links"] = spantypes.ParseLinks(raw)
 	}
+	if column, ok := data["scope"].(map[string]any); ok {
+		data["scope"] = spantypes.NewScope(column)
+	}
 }
 
 // numericAsFloat converts numeric types to float64 efficiently.

@@ -155,7 +155,7 @@ func (item *MinimalSpan) ToWaterfallSpan(traceID string) *WaterfallSpan {
 		HasError:     item.HasError,
 		ServiceName:  item.ServiceName,
 		Resource:     map[string]string{"service.name": item.ServiceName},
-		Scope:        newEmptyScope(),
+		Scope:        Scope{},
 		Children:     make([]*WaterfallSpan, 0),
 		Attributes:   make(map[string]any),
 		Events:       make([]Event, 0),
@@ -185,7 +185,7 @@ func NewMissingWaterfallSpan(spanID, traceID string, timeUnixNano, durationNano 
 		Children:     make([]*WaterfallSpan, 0),
 		Attributes:   make(map[string]any),
 		Resource:     make(map[string]string),
-		Scope:        newEmptyScope(),
+		Scope:        Scope{},
 	}
 }
 
@@ -340,7 +340,7 @@ func (item *StorableSpan) ToWaterfallSpan(traceID string) *WaterfallSpan {
 		Name:               item.Name,
 		ParentSpanID:       item.ParentSpanID,
 		Resource:           resources,
-		Scope:              NewScope(item.Scope),
+		Scope:              NewScope(item.Scope.Flatten()),
 		ResponseStatusCode: item.ResponseStatusCode,
 		SpanID:             item.SpanID,
 		StatusCode:         item.StatusCode,
