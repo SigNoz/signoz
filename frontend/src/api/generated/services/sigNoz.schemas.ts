@@ -13270,15 +13270,15 @@ export interface SpantypesScopeDTO {
 	/**
 	 * @type object
 	 */
-	attributes: SpantypesScopeDTOAttributes;
+	attributes?: SpantypesScopeDTOAttributes;
 	/**
 	 * @type string
 	 */
-	name: string;
+	name?: string;
 	/**
 	 * @type string
 	 */
-	version: string;
+	version?: string;
 }
 
 export interface SpantypesFlamegraphSpanDTO {
