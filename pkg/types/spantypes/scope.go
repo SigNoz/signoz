@@ -11,9 +11,9 @@ const (
 
 // Scope is a span's instrumentation scope. Attributes are flat dotted keys, like the span attributes.
 type Scope struct {
-	Name       string         `json:"name" required:"true"`
-	Version    string         `json:"version" required:"true"`
-	Attributes map[string]any `json:"attributes" required:"true" nullable:"false"`
+	Name       string         `json:"name,omitempty"`
+	Version    string         `json:"version,omitempty"`
+	Attributes map[string]any `json:"attributes,omitempty"`
 }
 
 func NewScope(column telemetrystoretypes.JSONValue) Scope {

@@ -48,7 +48,7 @@ def test_waterfall_and_flamegraph_read_each_attribute_home(
     assert waterfall[json_id] == {"http.route": "/json", "db.function": "node_refresh", "db.function.arg_count": 2}
     assert waterfall[dual_id] == {"http.route": "/dual"}
     assert spans[dual_id]["scope"] == scope
-    assert spans[legacy_id]["scope"] == {"name": "", "version": "", "attributes": {}}
+    assert spans[legacy_id]["scope"] == {}
 
     response = requests.post(
         signoz.self.host_configs["8080"].get(f"/api/v3/traces/{trace_id}/flamegraph"),
@@ -71,5 +71,5 @@ def test_waterfall_and_flamegraph_read_each_attribute_home(
     assert flamegraph[json_id]["attributes"] == {"http.route": "/json", "db.function.arg_count": 2}
     assert flamegraph[dual_id]["attributes"] == {"http.route": "/dual"}
     assert all(span["resource"] == resources for span in flamegraph.values())
-    assert flamegraph[dual_id]["scope"] == {"name": "io.opentelemetry.http", "version": "", "attributes": {"lib.lang": "go"}}
-    assert flamegraph[json_id]["scope"] == {"name": "", "version": "", "attributes": {}}
+    assert flamegraph[dual_id]["scope"] == {"name": "io.opentelemetry.http", "attributes": {"lib.lang": "go"}}
+    assert flamegraph[json_id]["scope"] == {}
