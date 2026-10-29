@@ -11389,8 +11389,7 @@ components:
         evaluation:
           allOf:
           - $ref: '#/components/schemas/RuletypesEvaluationEnvelope'
-          description: The evaluation window, as a kind and spec. Required when schemaVersion
-            is v2alpha1; derived from evalWindow and frequency for v1.
+          description: The evaluation window, as a kind and spec.
         frequency:
           description: How often the rule is evaluated, as a Go duration such as 1m.
             Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set
@@ -11406,8 +11405,7 @@ components:
         notificationSettings:
           allOf:
           - $ref: '#/components/schemas/RuletypesNotificationSettings'
-          description: Grouping, re-notification and routing behaviour. Required when
-            schemaVersion is v2alpha1; derived from the v1 fields otherwise.
+          description: Grouping, re-notification and routing behaviour.
         preferredChannels:
           description: The displayName of each notification channel to notify, for
             schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries
@@ -11420,26 +11418,30 @@ components:
           - $ref: '#/components/schemas/RuletypesRuleType'
           description: 'The evaluation strategy: threshold_rule compares against thresholds,
             promql_rule evaluates a PromQL expression, anomaly_rule scores deviation
-            from seasonal history. Defaults to threshold_rule for builder queries
-            and is forced to promql_rule for promql queries.'
+            from seasonal history. Defaults to threshold_rule for builder and clickhouse_sql
+            queries and is forced to promql_rule for promql queries.'
         schemaVersion:
-          description: 'The rule payload schema: v1 (the default when omitted) uses
-            the flat condition fields, v2alpha1 uses condition.thresholds, evaluation
-            and notificationSettings.'
+          description: The rule payload schema.
+          enum:
+          - v2alpha1
           type: string
         source:
+          deprecated: true
           description: The URL of the page the rule was created from. Informational;
             it is not used for evaluation.
           type: string
         version:
-          description: The query payload version. Only v5 is accepted and it is filled
-            in when omitted.
+          deprecated: true
+          description: The query payload version. Nothing reads it.
           type: string
       required:
       - alert
       - alertType
       - ruleType
       - condition
+      - evaluation
+      - schemaVersion
+      - notificationSettings
       type: object
     RuletypesPostableRuleView:
       properties:
@@ -11528,8 +11530,7 @@ components:
         evaluation:
           allOf:
           - $ref: '#/components/schemas/RuletypesEvaluationEnvelope'
-          description: The evaluation window, as a kind and spec. Required when schemaVersion
-            is v2alpha1; derived from evalWindow and frequency for v1.
+          description: The evaluation window, as a kind and spec.
         frequency:
           description: How often the rule is evaluated, as a Go duration such as 1m.
             Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set
@@ -11548,8 +11549,7 @@ components:
         notificationSettings:
           allOf:
           - $ref: '#/components/schemas/RuletypesNotificationSettings'
-          description: Grouping, re-notification and routing behaviour. Required when
-            schemaVersion is v2alpha1; derived from the v1 fields otherwise.
+          description: Grouping, re-notification and routing behaviour.
         preferredChannels:
           description: The displayName of each notification channel to notify, for
             schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries
@@ -11562,14 +11562,15 @@ components:
           - $ref: '#/components/schemas/RuletypesRuleType'
           description: 'The evaluation strategy: threshold_rule compares against thresholds,
             promql_rule evaluates a PromQL expression, anomaly_rule scores deviation
-            from seasonal history. Defaults to threshold_rule for builder queries
-            and is forced to promql_rule for promql queries.'
+            from seasonal history. Defaults to threshold_rule for builder and clickhouse_sql
+            queries and is forced to promql_rule for promql queries.'
         schemaVersion:
-          description: 'The rule payload schema: v1 (the default when omitted) uses
-            the flat condition fields, v2alpha1 uses condition.thresholds, evaluation
-            and notificationSettings.'
+          description: The rule payload schema.
+          enum:
+          - v2alpha1
           type: string
         source:
+          deprecated: true
           description: The URL of the page the rule was created from. Informational;
             it is not used for evaluation.
           type: string
@@ -11584,8 +11585,8 @@ components:
         updatedBy:
           type: string
         version:
-          description: The query payload version. Only v5 is accepted and it is filled
-            in when omitted.
+          deprecated: true
+          description: The query payload version. Nothing reads it.
           type: string
       required:
       - id
@@ -11594,6 +11595,9 @@ components:
       - alertType
       - ruleType
       - condition
+      - evaluation
+      - schemaVersion
+      - notificationSettings
       type: object
     RuletypesRuleCondition:
       properties:
@@ -11643,8 +11647,7 @@ components:
             against, hourly, daily or weekly.'
         selectedQueryName:
           description: The name of the query whose result is evaluated, such as A
-            or F1. Must match a query in compositeQuery. When omitted, F1 is used
-            if present, otherwise the enabled query with the highest name.
+            or F1. Must match a query in compositeQuery.
           type: string
         target:
           description: 'schemaVersion v1 only: the value compared against, in targetUnit.
@@ -11660,10 +11663,11 @@ components:
         thresholds:
           allOf:
           - $ref: '#/components/schemas/RuletypesRuleThresholdData'
-          description: The thresholds to evaluate, as a kind and spec. Required when
-            schemaVersion is v2alpha1; derived from op, target and matchType for v1.
+          description: The thresholds to evaluate, as a kind and spec.
       required:
       - compositeQuery
+      - selectedQueryName
+      - thresholds
       type: object
     RuletypesRuleThresholdData:
       discriminator:
@@ -25336,13 +25340,13 @@ paths:
                   schemaVersion: v2alpha1
                   version: v5
               metric_anomaly:
-                description: Anomaly rules are not yet supported under schemaVersion
-                  v2alpha1, so this example uses the v1 shape. Wraps a builder query
-                  in the `anomaly` function with daily seasonality SigNoz compares
-                  each point against the forecast for that time of day. Fires when
-                  the anomaly score stays below the threshold for the entire window;
-                  `requireMinPoints` guards against noisy intervals.
-                summary: Metric anomaly rule (v1 only)
+                description: Wraps a builder query in the `anomaly` function with
+                  daily seasonality, so SigNoz compares each point against the forecast
+                  for that time of day. The threshold is compared against the signed
+                  anomaly score, so `below` with a target of -2 fires when an abrupt
+                  drop holds for the entire window; `requireMinPoints` guards against
+                  noisy intervals.
+                summary: Metric anomaly rule
                 value:
                   alert: Anomalous drop in ingested spans
                   alertType: METRIC_BASED_ALERT
@@ -25377,22 +25381,36 @@ paths:
                           stepInterval: 21600
                         type: builder_query
                       queryType: builder
-                    matchType: all_the_times
-                    op: below
                     requireMinPoints: true
                     requiredNumPoints: 3
                     seasonality: daily
                     selectedQueryName: A
-                    target: 2
+                    thresholds:
+                      kind: basic
+                      spec:
+                      - channels:
+                        - slack-ingestion
+                        matchType: all_the_times
+                        name: warning
+                        op: below
+                        target: -2
                   description: Detect an abrupt drop in span ingestion using a z-score
                     anomaly function
-                  evalWindow: 24h
-                  frequency: 3h
+                  evaluation:
+                    kind: rolling
+                    spec:
+                      evalWindow: 24h
+                      frequency: 3h
                   labels:
                     severity: warning
-                  preferredChannels:
-                  - slack-ingestion
+                  notificationSettings:
+                    renotify:
+                      alertStates:
+                      - firing
+                      enabled: true
+                      interval: 4h
                   ruleType: anomaly_rule
+                  schemaVersion: v2alpha1
                   version: v5
               metric_promql:
                 description: PromQL expression instead of the builder. Dotted OTEL
@@ -26302,13 +26320,13 @@ paths:
                   schemaVersion: v2alpha1
                   version: v5
               metric_anomaly:
-                description: Anomaly rules are not yet supported under schemaVersion
-                  v2alpha1, so this example uses the v1 shape. Wraps a builder query
-                  in the `anomaly` function with daily seasonality SigNoz compares
-                  each point against the forecast for that time of day. Fires when
-                  the anomaly score stays below the threshold for the entire window;
-                  `requireMinPoints` guards against noisy intervals.
-                summary: Metric anomaly rule (v1 only)
+                description: Wraps a builder query in the `anomaly` function with
+                  daily seasonality, so SigNoz compares each point against the forecast
+                  for that time of day. The threshold is compared against the signed
+                  anomaly score, so `below` with a target of -2 fires when an abrupt
+                  drop holds for the entire window; `requireMinPoints` guards against
+                  noisy intervals.
+                summary: Metric anomaly rule
                 value:
                   alert: Anomalous drop in ingested spans
                   alertType: METRIC_BASED_ALERT
@@ -26343,22 +26361,36 @@ paths:
                           stepInterval: 21600
                         type: builder_query
                       queryType: builder
-                    matchType: all_the_times
-                    op: below
                     requireMinPoints: true
                     requiredNumPoints: 3
                     seasonality: daily
                     selectedQueryName: A
-                    target: 2
+                    thresholds:
+                      kind: basic
+                      spec:
+                      - channels:
+                        - slack-ingestion
+                        matchType: all_the_times
+                        name: warning
+                        op: below
+                        target: -2
                   description: Detect an abrupt drop in span ingestion using a z-score
                     anomaly function
-                  evalWindow: 24h
-                  frequency: 3h
+                  evaluation:
+                    kind: rolling
+                    spec:
+                      evalWindow: 24h
+                      frequency: 3h
                   labels:
                     severity: warning
-                  preferredChannels:
-                  - slack-ingestion
+                  notificationSettings:
+                    renotify:
+                      alertStates:
+                      - firing
+                      enabled: true
+                      interval: 4h
                   ruleType: anomaly_rule
+                  schemaVersion: v2alpha1
                   version: v5
               metric_promql:
                 description: PromQL expression instead of the builder. Dotted OTEL
@@ -27173,13 +27205,13 @@ paths:
                   schemaVersion: v2alpha1
                   version: v5
               metric_anomaly:
-                description: Anomaly rules are not yet supported under schemaVersion
-                  v2alpha1, so this example uses the v1 shape. Wraps a builder query
-                  in the `anomaly` function with daily seasonality SigNoz compares
-                  each point against the forecast for that time of day. Fires when
-                  the anomaly score stays below the threshold for the entire window;
-                  `requireMinPoints` guards against noisy intervals.
-                summary: Metric anomaly rule (v1 only)
+                description: Wraps a builder query in the `anomaly` function with
+                  daily seasonality, so SigNoz compares each point against the forecast
+                  for that time of day. The threshold is compared against the signed
+                  anomaly score, so `below` with a target of -2 fires when an abrupt
+                  drop holds for the entire window; `requireMinPoints` guards against
+                  noisy intervals.
+                summary: Metric anomaly rule
                 value:
                   alert: Anomalous drop in ingested spans
                   alertType: METRIC_BASED_ALERT
@@ -27214,22 +27246,36 @@ paths:
                           stepInterval: 21600
                         type: builder_query
                       queryType: builder
-                    matchType: all_the_times
-                    op: below
                     requireMinPoints: true
                     requiredNumPoints: 3
                     seasonality: daily
                     selectedQueryName: A
-                    target: 2
+                    thresholds:
+                      kind: basic
+                      spec:
+                      - channels:
+                        - slack-ingestion
+                        matchType: all_the_times
+                        name: warning
+                        op: below
+                        target: -2
                   description: Detect an abrupt drop in span ingestion using a z-score
                     anomaly function
-                  evalWindow: 24h
-                  frequency: 3h
+                  evaluation:
+                    kind: rolling
+                    spec:
+                      evalWindow: 24h
+                      frequency: 3h
                   labels:
                     severity: warning
-                  preferredChannels:
-                  - slack-ingestion
+                  notificationSettings:
+                    renotify:
+                      alertStates:
+                      - firing
+                      enabled: true
+                      interval: 4h
                   ruleType: anomaly_rule
+                  schemaVersion: v2alpha1
                   version: v5
               metric_promql:
                 description: PromQL expression instead of the builder. Dotted OTEL
@@ -28798,13 +28844,13 @@ paths:
                   schemaVersion: v2alpha1
                   version: v5
               metric_anomaly:
-                description: Anomaly rules are not yet supported under schemaVersion
-                  v2alpha1, so this example uses the v1 shape. Wraps a builder query
-                  in the `anomaly` function with daily seasonality SigNoz compares
-                  each point against the forecast for that time of day. Fires when
-                  the anomaly score stays below the threshold for the entire window;
-                  `requireMinPoints` guards against noisy intervals.
-                summary: Metric anomaly rule (v1 only)
+                description: Wraps a builder query in the `anomaly` function with
+                  daily seasonality, so SigNoz compares each point against the forecast
+                  for that time of day. The threshold is compared against the signed
+                  anomaly score, so `below` with a target of -2 fires when an abrupt
+                  drop holds for the entire window; `requireMinPoints` guards against
+                  noisy intervals.
+                summary: Metric anomaly rule
                 value:
                   alert: Anomalous drop in ingested spans
                   alertType: METRIC_BASED_ALERT
@@ -28839,22 +28885,36 @@ paths:
                           stepInterval: 21600
                         type: builder_query
                       queryType: builder
-                    matchType: all_the_times
-                    op: below
                     requireMinPoints: true
                     requiredNumPoints: 3
                     seasonality: daily
                     selectedQueryName: A
-                    target: 2
+                    thresholds:
+                      kind: basic
+                      spec:
+                      - channels:
+                        - slack-ingestion
+                        matchType: all_the_times
+                        name: warning
+                        op: below
+                        target: -2
                   description: Detect an abrupt drop in span ingestion using a z-score
                     anomaly function
-                  evalWindow: 24h
-                  frequency: 3h
+                  evaluation:
+                    kind: rolling
+                    spec:
+                      evalWindow: 24h
+                      frequency: 3h
                   labels:
                     severity: warning
-                  preferredChannels:
-                  - slack-ingestion
+                  notificationSettings:
+                    renotify:
+                      alertStates:
+                      - firing
+                      enabled: true
+                      interval: 4h
                   ruleType: anomaly_rule
+                  schemaVersion: v2alpha1
                   version: v5
               metric_promql:
                 description: PromQL expression instead of the builder. Dotted OTEL

@@ -12584,6 +12584,12 @@ export type RuletypesPostableRuleDTOAnnotations = { [key: string]: string };
  */
 export type RuletypesPostableRuleDTOLabels = { [key: string]: string };
 
+/**
+ * The rule payload schema.
+ */
+export enum RuletypesPostableRuleDTOSchemaVersion {
+	v2alpha1 = 'v2alpha1',
+}
 export enum RuletypesSeasonalityDTO {
 	hourly = 'hourly',
 	daily = 'daily',
@@ -12660,9 +12666,9 @@ export interface RuletypesRuleConditionDTO {
 	seasonality?: RuletypesSeasonalityDTO;
 	/**
 	 * @type string
-	 * @description The name of the query whose result is evaluated, such as A or F1. Must match a query in compositeQuery. When omitted, F1 is used if present, otherwise the enabled query with the highest name.
+	 * @description The name of the query whose result is evaluated, such as A or F1. Must match a query in compositeQuery.
 	 */
-	selectedQueryName?: string;
+	selectedQueryName: string;
 	/**
 	 * @type number,null
 	 * @format double
@@ -12675,9 +12681,9 @@ export interface RuletypesRuleConditionDTO {
 	 */
 	targetUnit?: string;
 	/**
-	 * @description The thresholds to evaluate, as a kind and spec. Required when schemaVersion is v2alpha1; derived from op, target and matchType for v1.
+	 * @description The thresholds to evaluate, as a kind and spec.
 	 */
-	thresholds?: RuletypesRuleThresholdDataDTO;
+	thresholds: RuletypesRuleThresholdDataDTO;
 }
 
 export interface RuletypesPostableRuleDTO {
@@ -12715,9 +12721,9 @@ export interface RuletypesPostableRuleDTO {
 	 */
 	evalWindow?: string;
 	/**
-	 * @description The evaluation window, as a kind and spec. Required when schemaVersion is v2alpha1; derived from evalWindow and frequency for v1.
+	 * @description The evaluation window, as a kind and spec.
 	 */
-	evaluation?: RuletypesEvaluationEnvelopeDTO;
+	evaluation: RuletypesEvaluationEnvelopeDTO;
 	/**
 	 * @type string
 	 * @description How often the rule is evaluated, as a Go duration such as 1m. Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set it in evaluation.spec instead.
@@ -12729,23 +12735,24 @@ export interface RuletypesPostableRuleDTO {
 	 */
 	labels?: RuletypesPostableRuleDTOLabels;
 	/**
-	 * @description Grouping, re-notification and routing behaviour. Required when schemaVersion is v2alpha1; derived from the v1 fields otherwise.
+	 * @description Grouping, re-notification and routing behaviour.
 	 */
-	notificationSettings?: RuletypesNotificationSettingsDTO;
+	notificationSettings: RuletypesNotificationSettingsDTO;
 	/**
 	 * @type array
 	 * @description The displayName of each notification channel to notify, for schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries its own channels.
 	 */
 	preferredChannels?: string[];
 	/**
-	 * @description The evaluation strategy: threshold_rule compares against thresholds, promql_rule evaluates a PromQL expression, anomaly_rule scores deviation from seasonal history. Defaults to threshold_rule for builder queries and is forced to promql_rule for promql queries.
+	 * @description The evaluation strategy: threshold_rule compares against thresholds, promql_rule evaluates a PromQL expression, anomaly_rule scores deviation from seasonal history. Defaults to threshold_rule for builder and clickhouse_sql queries and is forced to promql_rule for promql queries.
 	 */
 	ruleType: RuletypesRuleTypeDTO;
 	/**
+	 * @enum v2alpha1
 	 * @type string
-	 * @description The rule payload schema: v1 (the default when omitted) uses the flat condition fields, v2alpha1 uses condition.thresholds, evaluation and notificationSettings.
+	 * @description The rule payload schema.
 	 */
-	schemaVersion?: string;
+	schemaVersion: RuletypesPostableRuleDTOSchemaVersion;
 	/**
 	 * @type string
 	 * @description The URL of the page the rule was created from. Informational; it is not used for evaluation.
@@ -12753,7 +12760,7 @@ export interface RuletypesPostableRuleDTO {
 	source?: string;
 	/**
 	 * @type string
-	 * @description The query payload version. Only v5 is accepted and it is filled in when omitted.
+	 * @description The query payload version. Nothing reads it.
 	 */
 	version?: string;
 }
@@ -12776,6 +12783,12 @@ export type RuletypesRuleDTOAnnotations = { [key: string]: string };
  */
 export type RuletypesRuleDTOLabels = { [key: string]: string };
 
+/**
+ * The rule payload schema.
+ */
+export enum RuletypesRuleDTOSchemaVersion {
+	v2alpha1 = 'v2alpha1',
+}
 export interface RuletypesRuleDTO {
 	/**
 	 * @type string
@@ -12820,9 +12833,9 @@ export interface RuletypesRuleDTO {
 	 */
 	evalWindow?: string;
 	/**
-	 * @description The evaluation window, as a kind and spec. Required when schemaVersion is v2alpha1; derived from evalWindow and frequency for v1.
+	 * @description The evaluation window, as a kind and spec.
 	 */
-	evaluation?: RuletypesEvaluationEnvelopeDTO;
+	evaluation: RuletypesEvaluationEnvelopeDTO;
 	/**
 	 * @type string
 	 * @description How often the rule is evaluated, as a Go duration such as 1m. Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set it in evaluation.spec instead.
@@ -12839,23 +12852,24 @@ export interface RuletypesRuleDTO {
 	 */
 	labels?: RuletypesRuleDTOLabels;
 	/**
-	 * @description Grouping, re-notification and routing behaviour. Required when schemaVersion is v2alpha1; derived from the v1 fields otherwise.
+	 * @description Grouping, re-notification and routing behaviour.
 	 */
-	notificationSettings?: RuletypesNotificationSettingsDTO;
+	notificationSettings: RuletypesNotificationSettingsDTO;
 	/**
 	 * @type array
 	 * @description The displayName of each notification channel to notify, for schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries its own channels.
 	 */
 	preferredChannels?: string[];
 	/**
-	 * @description The evaluation strategy: threshold_rule compares against thresholds, promql_rule evaluates a PromQL expression, anomaly_rule scores deviation from seasonal history. Defaults to threshold_rule for builder queries and is forced to promql_rule for promql queries.
+	 * @description The evaluation strategy: threshold_rule compares against thresholds, promql_rule evaluates a PromQL expression, anomaly_rule scores deviation from seasonal history. Defaults to threshold_rule for builder and clickhouse_sql queries and is forced to promql_rule for promql queries.
 	 */
 	ruleType: RuletypesRuleTypeDTO;
 	/**
+	 * @enum v2alpha1
 	 * @type string
-	 * @description The rule payload schema: v1 (the default when omitted) uses the flat condition fields, v2alpha1 uses condition.thresholds, evaluation and notificationSettings.
+	 * @description The rule payload schema.
 	 */
-	schemaVersion?: string;
+	schemaVersion: RuletypesRuleDTOSchemaVersion;
 	/**
 	 * @type string
 	 * @description The URL of the page the rule was created from. Informational; it is not used for evaluation.
@@ -12876,7 +12890,7 @@ export interface RuletypesRuleDTO {
 	updatedBy?: string;
 	/**
 	 * @type string
-	 * @description The query payload version. Only v5 is accepted and it is filled in when omitted.
+	 * @description The query payload version. Nothing reads it.
 	 */
 	version?: string;
 }
