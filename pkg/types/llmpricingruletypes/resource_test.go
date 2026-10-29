@@ -49,6 +49,16 @@ func TestUpdatableRulesResources(t *testing.T) {
 			want: []string{"8cde4f56-7a8b-4c9d-8e0f-1a2b3c4d5e6f"},
 		},
 		{
+			name: "DuplicateIDKey_LastWins",
+			body: `{"rules":[{"id":"0b6d1a4e-5c1f-4d2a-9e3b-1f2a3b4c5d6e","id":"6abc2d34-5e6f-4a7b-8c8d-9e0f1a2b3c4d","isOverride":true}]}`,
+			want: []string{"6abc2d34-5e6f-4a7b-8c8d-9e0f1a2b3c4d"},
+		},
+		{
+			name: "CaseVariantIDKey_LastWins",
+			body: `{"rules":[{"id":"0b6d1a4e-5c1f-4d2a-9e3b-1f2a3b4c5d6e","ID":"6abc2d34-5e6f-4a7b-8c8d-9e0f1a2b3c4d","isOverride":true}]}`,
+			want: []string{"6abc2d34-5e6f-4a7b-8c8d-9e0f1a2b3c4d"},
+		},
+		{
 			name:    "InvalidID_Rejected",
 			body:    `{"rules":[{"id":"not-a-uuid","isOverride":true}]}`,
 			wantErr: true,

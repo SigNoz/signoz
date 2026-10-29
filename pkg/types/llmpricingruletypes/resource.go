@@ -2,9 +2,8 @@ package llmpricingruletypes
 
 import (
 	"context"
+	"encoding/json"
 	"slices"
-
-	"github.com/tidwall/gjson"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
@@ -17,26 +16,30 @@ import (
 // else resolves to the wildcard: isOverride without an id is a create, sourceId
 // without isOverride is a sync row, and an empty list has nothing to check.
 func UpdatableRulesResources(ec coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
-	rules := gjson.GetBytes(ec.RequestBody, "rules").Array()
+	// encoding/json with the handler's tags, so duplicate or case-variant id
+	// keys resolve to the id that is actually written.
+	var body struct {
+		Rules []*struct {
+			// Normalised through valuer so an uppercase id still matches the
+			// lowercase selector regex of the metaresource type.
+			ID         *valuer.UUID `json:"id"`
+			IsOverride *bool        `json:"isOverride"`
+		} `json:"rules"`
+	}
+	if err := json.Unmarshal(ec.RequestBody, &body); err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInvalidInput, ErrCodePricingRuleInvalidInput, "invalid pricing rules body")
+	}
 
-	ids := make([]string, 0, len(rules))
-	wildcard := len(rules) == 0
-	for _, rule := range rules {
-		rawID := rule.Get("id").String()
-		isOverride := rule.Get("isOverride").Type
-		if rawID == "" || (isOverride != gjson.True && isOverride != gjson.False) {
+	ids := make([]string, 0, len(body.Rules))
+	wildcard := len(body.Rules) == 0
+	for _, rule := range body.Rules {
+		if rule == nil || rule.ID == nil || rule.IsOverride == nil {
 			wildcard = true
 			continue
 		}
 
-		// Normalised through valuer so an uppercase id still matches the
-		// lowercase selector regex of the metaresource type.
-		id, err := valuer.NewUUID(rawID)
-		if err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInvalidInput, ErrCodePricingRuleInvalidInput, "rule id %q is not a valid uuid", rawID)
-		}
-		if !slices.Contains(ids, id.StringValue()) {
-			ids = append(ids, id.StringValue())
+		if !slices.Contains(ids, rule.ID.StringValue()) {
+			ids = append(ids, rule.ID.StringValue())
 		}
 	}
 	if wildcard {
