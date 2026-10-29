@@ -28,7 +28,6 @@ import getUserLatestVersion from 'api/v1/version/getLatestVersion';
 import { AxiosError } from 'axios';
 import cx from 'classnames';
 import ChangelogModal from 'components/ChangelogModal/ChangelogModal';
-import ChatSupportGateway from 'components/ChatSupportGateway/ChatSupportGateway';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
@@ -51,8 +50,6 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { useNotifications } from 'hooks/useNotifications';
-import { ChatSupportState, useChatSupport } from 'hooks/useChatSupport';
-import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import useTabVisibility from 'hooks/useTabFocus';
 import history from 'lib/history';
 import { isNull } from 'lodash-es';
@@ -401,7 +398,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	}, [pathname]);
 
 	const isToDisplayLayout = isLoggedIn;
-	const isSavedViewEnabled = useSavedViewEnabled();
 
 	const routeKey = useMemo(() => getRouteKey(pathname), [pathname]);
 	const pageTitle = t(routeKey);
@@ -488,8 +484,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			document.body.classList.remove('darkMode');
 		}
 	}, [isDarkMode]);
-
-	const chatSupport = useChatSupport();
 
 	// Listen for API warnings
 	const handleWarning = (
@@ -834,9 +828,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 							</LayoutContent>
 						</Sentry.ErrorBoundary>
 
-						{isSavedViewEnabled && isToDisplayLayout && !renderFullScreen && (
-							<BottomStrip />
-						)}
+						{isToDisplayLayout && !renderFullScreen && <BottomStrip />}
 					</div>
 
 					{isLoggedIn && isAIAssistantEnabled && (
@@ -847,9 +839,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					)}
 				</Flex>
 
-				{chatSupport === ChatSupportState.NeedsCard && !isSavedViewEnabled && (
-					<ChatSupportGateway />
-				)}
 				{showChangelogModal && changelog && (
 					<ChangelogModal changelog={changelog} onClose={toggleChangelogModal} />
 				)}

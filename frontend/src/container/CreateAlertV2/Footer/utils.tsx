@@ -2,6 +2,7 @@ import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { AlertDetectionTypes } from 'container/FormAlertRules';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
 	BasicThreshold,
 	PostableAlertRuleV2,
@@ -9,8 +10,10 @@ import {
 import { EQueryType } from 'types/common/dashboard';
 import { compositeQueryToQueryEnvelope } from 'utils/compositeQueryToQueryEnvelope';
 
+import { normalizeOperator } from '../context/conditionNormalizers';
 import {
 	AdvancedOptionsState,
+	AlertThresholdOperator,
 	EvaluationWindowState,
 	NotificationSettingsState,
 } from '../context/types';
@@ -31,7 +34,8 @@ export function getFormattedTimeValue(timeValue: number, unit: string): string {
 export function validateCreateAlertState(
 	args: BuildCreateAlertRulePayloadArgs,
 ): string | null {
-	const { basicAlertState, thresholdState, notificationSettings } = args;
+	const { alertType, basicAlertState, thresholdState, notificationSettings } =
+		args;
 
 	// Validate alert name
 	if (!basicAlertState.name) {
@@ -43,6 +47,12 @@ export function validateCreateAlertState(
 		const threshold = thresholdState.thresholds[i];
 		if (!threshold.label) {
 			return 'Please enter a label for each threshold';
+		}
+		if (
+			alertType === AlertTypes.ANOMALY_BASED_ALERT &&
+			!(Number(threshold.thresholdValue) > 0)
+		) {
+			return 'Please enter a deviation greater than 0';
 		}
 		// this runs during render, so a throw here takes down the whole page
 		if (!notificationSettings.routingPolicies && !threshold.channels?.length) {
@@ -289,56 +299,43 @@ export function buildCreateThresholdAlertRulePayload(
 }
 
 // Build Create Anomaly Alert Rule Payload
-// TODO: Update this function before enabling anomaly alert rule creation
 export function buildCreateAnomalyAlertRulePayload(
 	args: BuildCreateAlertRulePayloadArgs,
 ): PostableAlertRuleV2 {
-	const {
-		alertType,
-		basicAlertState,
-		query,
-		notificationSettings,
-		evaluationWindow,
-		advancedOptions,
-	} = args;
+	const { thresholdState } = args;
+	const payload = buildCreateThresholdAlertRulePayload(args);
 
-	const compositeQuery = compositeQueryToQueryEnvelope({
-		builderQueries: {
-			...mapQueryDataToApi(query.builder.queryData, 'queryName').data,
-			...mapQueryDataToApi(query.builder.queryFormulas, 'queryName').data,
-		},
-		promQueries: mapQueryDataToApi(query.promql, 'name').data,
-		chQueries: mapQueryDataToApi(query.clickhouse_sql, 'name').data,
-		queryType: query.queryType,
-		panelType: PANEL_TYPES.TIME_SERIES,
-		unit: basicAlertState.yAxisUnit,
-	});
-
-	const alertOnAbsentProps = getAlertOnAbsentProps(advancedOptions);
-	const enforceMinimumDatapointsProps =
-		getEnforceMinimumDatapointsProps(advancedOptions);
-	const evaluationProps = getEvaluationProps(evaluationWindow, advancedOptions);
-	const notificationSettingsProps =
-		getNotificationSettingsProps(notificationSettings);
+	// Targets are literal z-scores: "below N deviations" fires under -N.
+	// A target unit would rescale the z-score, so it is always cleared.
+	const sign =
+		normalizeOperator(thresholdState.operator) === AlertThresholdOperator.IS_BELOW
+			? -1
+			: 1;
+	const thresholds: BasicThreshold[] = (
+		payload.condition.thresholds?.spec || []
+	).map((threshold) => ({
+		...threshold,
+		target: sign * Math.abs(threshold.target),
+		targetUnit: '',
+	}));
 
 	return {
-		alert: basicAlertState.name,
+		...payload,
 		ruleType: AlertDetectionTypes.ANOMALY_DETECTION_ALERT,
-		alertType,
+		alertType: AlertTypes.METRICS_BASED_ALERT,
 		condition: {
-			compositeQuery,
-			...alertOnAbsentProps,
-			...enforceMinimumDatapointsProps,
+			...payload.condition,
+			thresholds: { kind: 'basic', spec: thresholds },
+			algorithm: thresholdState.algorithm,
+			seasonality: thresholdState.seasonality,
 		},
-		labels: basicAlertState.labels,
-		annotations: {
-			description: notificationSettings.description,
-			summary: notificationSettings.description,
-		},
-		notificationSettings: notificationSettingsProps,
-		evaluation: evaluationProps,
-		version: '',
-		schemaVersion: '',
-		source: window?.location.toString(),
 	};
+}
+
+export function buildCreateAlertRulePayload(
+	args: BuildCreateAlertRulePayloadArgs,
+): PostableAlertRuleV2 {
+	return args.alertType === AlertTypes.ANOMALY_BASED_ALERT
+		? buildCreateAnomalyAlertRulePayload(args)
+		: buildCreateThresholdAlertRulePayload(args);
 }
