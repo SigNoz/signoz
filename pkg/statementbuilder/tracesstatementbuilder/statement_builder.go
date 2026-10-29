@@ -165,6 +165,10 @@ func (b *traceQueryStatementBuilder) Build(
 	if err != nil {
 		return nil, err
 	}
+	baseColumnEvolutions, err := b.metadataStore.GetBaseColumnEvolutions(ctx, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, action := range adjustTraceKeys(keys, &query, requestType) {
 		b.logger.DebugContext(ctx, "key adjustment action", slog.String("action", action))
@@ -174,13 +178,13 @@ func (b *traceQueryStatementBuilder) Build(
 
 	switch requestType {
 	case qbtypes.RequestTypeRaw:
-		return b.buildListQuery(ctx, orgID, q, query, start, end, keys, variables, isSelectFieldsEmpty)
+		return b.buildListQuery(ctx, orgID, q, query, start, end, keys, baseColumnEvolutions, variables, isSelectFieldsEmpty)
 	case qbtypes.RequestTypeTimeSeries:
-		return b.buildTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables)
+		return b.buildTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, baseColumnEvolutions, variables)
 	case qbtypes.RequestTypeScalar:
-		return b.buildScalarQuery(ctx, orgID, q, query, start, end, keys, variables, false, false)
+		return b.buildScalarQuery(ctx, orgID, q, query, start, end, keys, baseColumnEvolutions, variables, false, false)
 	case qbtypes.RequestTypeTrace:
-		return b.buildTraceQuery(ctx, orgID, q, query, start, end, keys, variables)
+		return b.buildTraceQuery(ctx, orgID, q, query, start, end, keys, baseColumnEvolutions, variables)
 	}
 
 	return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
@@ -356,13 +360,10 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	start, end uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	baseColumnEvolutions []*telemetrytypes.EvolutionEntry,
 	variables map[string]qbtypes.VariableItem,
 	isSelectFieldsEmpty bool,
 ) (*qbtypes.Statement, error) {
-	baseColumnEvolutions, err := b.metadataStore.GetBaseColumnEvolutions(ctx, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
-	if err != nil {
-		return nil, err
-	}
 
 	var (
 		cteFragments []string
@@ -402,7 +403,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	sb.From(fmt.Sprintf("%s.%s", tracestelemetryschema.DBName, tracestelemetryschema.SpanIndexV3TableName))
 
 	// Add filter conditions
-	preparedWhereClause, err := b.addFilterCondition(ctx, orgID, sb, start, end, query, keys, variables, skipResourceFilter)
+	preparedWhereClause, err := b.addFilterCondition(ctx, orgID, sb, start, end, query, keys, baseColumnEvolutions, variables, skipResourceFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -449,6 +450,7 @@ func (b *traceQueryStatementBuilder) buildTraceQuery(
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	start, end uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	baseColumnEvolutions []*telemetrytypes.EvolutionEntry,
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
 
@@ -474,7 +476,7 @@ func (b *traceQueryStatementBuilder) buildTraceQuery(
 	}
 
 	// Add filter conditions
-	preparedWhereClause, err := b.addFilterCondition(ctx, orgID, distSB, start, end, query, keys, variables, skipResourceFilter)
+	preparedWhereClause, err := b.addFilterCondition(ctx, orgID, distSB, start, end, query, keys, baseColumnEvolutions, variables, skipResourceFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -568,12 +570,9 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	start, end uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	baseColumnEvolutions []*telemetrytypes.EvolutionEntry,
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
-	baseColumnEvolutions, err := b.metadataStore.GetBaseColumnEvolutions(ctx, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
-	if err != nil {
-		return nil, err
-	}
 
 	var (
 		cteFragments []string
@@ -629,7 +628,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	}
 
 	sb.From(fmt.Sprintf("%s.%s", tracestelemetryschema.DBName, tracestelemetryschema.SpanIndexV3TableName))
-	preparedWhereClause, err := b.addFilterCondition(ctx, orgID, sb, start, end, query, keys, variables, skipResourceFilter)
+	preparedWhereClause, err := b.addFilterCondition(ctx, orgID, sb, start, end, query, keys, baseColumnEvolutions, variables, skipResourceFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -640,7 +639,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	if query.Limit > 0 && len(query.GroupBy) > 0 {
 		// build the scalar “top/bottom-N” query in its own builder.
 		cteSB := sqlbuilder.NewSelectBuilder()
-		cteStmt, err := b.buildScalarQuery(ctx, orgID, cteSB, query, start, end, keys, variables, true, true)
+		cteStmt, err := b.buildScalarQuery(ctx, orgID, cteSB, query, start, end, keys, baseColumnEvolutions, variables, true, true)
 		if err != nil {
 			return nil, err
 		}
@@ -737,14 +736,11 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	start, end uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	baseColumnEvolutions []*telemetrytypes.EvolutionEntry,
 	variables map[string]qbtypes.VariableItem,
 	skipResourceCTE bool,
 	skipHaving bool,
 ) (*qbtypes.Statement, error) {
-	baseColumnEvolutions, err := b.metadataStore.GetBaseColumnEvolutions(ctx, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
-	if err != nil {
-		return nil, err
-	}
 
 	var (
 		cteFragments []string
@@ -806,7 +802,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	sb.From(fmt.Sprintf("%s.%s", tracestelemetryschema.DBName, tracestelemetryschema.SpanIndexV3TableName))
 
 	// Add filter conditions
-	preparedWhereClause, err := b.addFilterCondition(ctx, orgID, sb, start, end, query, keys, variables, skipResourceFilter)
+	preparedWhereClause, err := b.addFilterCondition(ctx, orgID, sb, start, end, query, keys, baseColumnEvolutions, variables, skipResourceFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -873,15 +869,13 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	baseColumnEvolutions []*telemetrytypes.EvolutionEntry,
 	variables map[string]qbtypes.VariableItem,
 	skipResourceFilter bool,
 ) (querybuilder.PreparedWhereClause, error) {
 
 	var preparedWhereClause querybuilder.PreparedWhereClause
-	baseColumnEvolutions, err := b.metadataStore.GetBaseColumnEvolutions(ctx, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
-	if err != nil {
-		return preparedWhereClause, err
-	}
+	var err error
 
 	if query.Filter != nil && query.Filter.Expression != "" {
 		// add filter expression

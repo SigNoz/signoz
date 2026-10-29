@@ -183,22 +183,18 @@ func (s *traceStore) genAISpanColumns(ctx context.Context, orgID valuer.UUID, bo
 	for _, value := range values {
 		names = append(names, value.key)
 	}
-	keys, err := s.genAIFieldKeys(ctx, orgID, names)
+	keys, baseColumnEvolutions, err := s.genAIFieldKeys(ctx, orgID, names)
 	if err != nil {
 		return nil, err
 	}
 
 	q := querybuilder.NewQueryInfo(ctx, orgID, s.flagger, telemetrytypes.SignalTraces, nil, uint64(bounds.Start.UnixNano()), uint64(bounds.End.UnixNano()))
-	isGenAI, err := s.anyExistsCondition(ctx, q, aiobservabilitytypes.GenAISpanGateKeys, keys, sb)
+	isGenAI, err := s.anyExistsCondition(ctx, q, aiobservabilitytypes.GenAISpanGateKeys, keys, baseColumnEvolutions, sb)
 	if err != nil {
 		return nil, err
 	}
 	columns := []string{isGenAI + " AS is_gen_ai"}
 
-	baseColumnEvolutions, err := s.metadataStore.GetBaseColumnEvolutions(ctx, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
-	if err != nil {
-		return nil, err
-	}
 	for _, value := range values {
 		// lookup by number, the type metadata stores numeric attributes under; float64 is only the output cast
 		expr, err := querybuilder.ResolveColumn(ctx, q, s.storage, attributeKey(value.key, telemetrytypes.FieldDataTypeNumber), telemetrytypes.FieldDataTypeFloat64, keys, baseColumnEvolutions)
@@ -304,11 +300,11 @@ func (s *traceStore) GetThreadSpans(ctx context.Context, orgID valuer.UUID, trac
 		sb.SelectMore("attributes")
 	}
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
-	keys, err := s.genAIFieldKeys(ctx, orgID, aiobservabilitytypes.GenAISpanGateKeys)
+	keys, baseColumnEvolutions, err := s.genAIFieldKeys(ctx, orgID, aiobservabilitytypes.GenAISpanGateKeys)
 	if err != nil {
 		return nil, err
 	}
-	isThreadSpan, err := s.anyExistsCondition(ctx, q, aiobservabilitytypes.GenAISpanGateKeys, keys, sb)
+	isThreadSpan, err := s.anyExistsCondition(ctx, q, aiobservabilitytypes.GenAISpanGateKeys, keys, baseColumnEvolutions, sb)
 	if err != nil {
 		return nil, err
 	}
@@ -503,26 +499,27 @@ func attributeKey(name string, dataType telemetrytypes.FieldDataType) *telemetry
 	return &telemetrytypes.TelemetryFieldKey{Name: name, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: dataType}
 }
 
-// genAIFieldKeys fetches the metadata keys for the attribute names, expanded across semconv families.
-func (s *traceStore) genAIFieldKeys(ctx context.Context, orgID valuer.UUID, names []string) (map[string][]*telemetrytypes.TelemetryFieldKey, error) {
+// genAIFieldKeys fetches the metadata keys for the attribute names, expanded across semconv families,
+// and the base column evolutions they resolve with.
+func (s *traceStore) genAIFieldKeys(ctx context.Context, orgID valuer.UUID, names []string) (map[string][]*telemetrytypes.TelemetryFieldKey, []*telemetrytypes.EvolutionEntry, error) {
 	selectors := make([]*telemetrytypes.FieldKeySelector, 0, len(names))
 	for _, name := range names {
 		selectors = append(selectors, &telemetrytypes.FieldKeySelector{Name: name, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeExact})
 	}
 	keys, _, err := s.metadataStore.GetKeysMulti(ctx, orgID, querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, s.flagger, selectors))
 	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error fetching gen_ai field keys")
+		return nil, nil, errors.WrapInternalf(err, errors.CodeInternal, "error fetching gen_ai field keys")
 	}
-	return keys, nil
+	baseColumnEvolutions, err := s.metadataStore.GetBaseColumnEvolutions(ctx, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
+	if err != nil {
+		return nil, nil, err
+	}
+	return keys, baseColumnEvolutions, nil
 }
 
 // anyExistsCondition ORs an EXISTS test per attribute name, resolved across attribute evolutions
 // and the use_trace_attributes_json flag so the filter reads the same columns the query builder does.
-func (s *traceStore) anyExistsCondition(ctx context.Context, q qbtypes.QueryInfo, names []string, keys map[string][]*telemetrytypes.TelemetryFieldKey, sb *sqlbuilder.SelectBuilder) (string, error) {
-	baseColumnEvolutions, err := s.metadataStore.GetBaseColumnEvolutions(ctx, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
-	if err != nil {
-		return "", err
-	}
+func (s *traceStore) anyExistsCondition(ctx context.Context, q qbtypes.QueryInfo, names []string, keys map[string][]*telemetrytypes.TelemetryFieldKey, baseColumnEvolutions []*telemetrytypes.EvolutionEntry, sb *sqlbuilder.SelectBuilder) (string, error) {
 	conds := make([]string, 0, len(names))
 	for _, name := range names {
 		keyConds, _, err := querybuilder.Conditions(ctx, q, s.storage, attributeKey(name, telemetrytypes.FieldDataTypeString), qbtypes.FilterOperatorExists, nil, keys, baseColumnEvolutions, false, sb)

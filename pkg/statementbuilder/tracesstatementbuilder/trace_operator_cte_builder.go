@@ -450,28 +450,27 @@ func (b *traceOperatorCTEBuilder) buildFinalQuery(ctx context.Context, selectFro
 	if err != nil {
 		return nil, err
 	}
+	baseColumnEvolutions, err := b.stmtBuilder.metadataStore.GetBaseColumnEvolutions(ctx, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
+	if err != nil {
+		return nil, err
+	}
 	b.adjustOperatorKeys(ctx, keys, requestType)
 
 	switch requestType {
 	case qbtypes.RequestTypeRaw:
-		return b.buildListQuery(ctx, selectFromCTE, keys, isSelectFieldsEmpty)
+		return b.buildListQuery(ctx, selectFromCTE, keys, baseColumnEvolutions, isSelectFieldsEmpty)
 	case qbtypes.RequestTypeTimeSeries:
-		return b.buildTimeSeriesQuery(ctx, selectFromCTE, keys)
+		return b.buildTimeSeriesQuery(ctx, selectFromCTE, keys, baseColumnEvolutions)
 	case qbtypes.RequestTypeTrace:
-		return b.buildTraceQuery(ctx, selectFromCTE, keys)
+		return b.buildTraceQuery(ctx, selectFromCTE, keys, baseColumnEvolutions)
 	case qbtypes.RequestTypeScalar:
-		return b.buildScalarQuery(ctx, selectFromCTE, keys)
+		return b.buildScalarQuery(ctx, selectFromCTE, keys, baseColumnEvolutions)
 	default:
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
 	}
 }
 
-func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFromCTE string, keys map[string][]*telemetrytypes.TelemetryFieldKey, isSelectFieldsEmpty bool) (*qbtypes.Statement, error) {
-	baseColumnEvolutions, err := b.stmtBuilder.metadataStore.GetBaseColumnEvolutions(ctx, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
-	if err != nil {
-		return nil, err
-	}
-
+func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFromCTE string, keys map[string][]*telemetrytypes.TelemetryFieldKey, baseColumnEvolutions []*telemetrytypes.EvolutionEntry, isSelectFieldsEmpty bool) (*qbtypes.Statement, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
 	// Select core fields. These are always present so the trace operator
@@ -631,12 +630,7 @@ func (b *traceOperatorCTEBuilder) getKeySelectors() []*telemetrytypes.FieldKeySe
 	return keySelectors
 }
 
-func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, selectFromCTE string, keys map[string][]*telemetrytypes.TelemetryFieldKey) (*qbtypes.Statement, error) {
-	baseColumnEvolutions, err := b.stmtBuilder.metadataStore.GetBaseColumnEvolutions(ctx, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
-	if err != nil {
-		return nil, err
-	}
-
+func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, selectFromCTE string, keys map[string][]*telemetrytypes.TelemetryFieldKey, baseColumnEvolutions []*telemetrytypes.EvolutionEntry) (*qbtypes.Statement, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
 	sb.Select(fmt.Sprintf(
@@ -737,12 +731,7 @@ func (b *traceOperatorCTEBuilder) buildTraceSummaryCTE(selectFromCTE string) {
 	b.addCTE("trace_summary", sql, args, []string{"all_spans", selectFromCTE})
 }
 
-func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFromCTE string, keys map[string][]*telemetrytypes.TelemetryFieldKey) (*qbtypes.Statement, error) {
-	baseColumnEvolutions, err := b.stmtBuilder.metadataStore.GetBaseColumnEvolutions(ctx, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
-	if err != nil {
-		return nil, err
-	}
-
+func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFromCTE string, keys map[string][]*telemetrytypes.TelemetryFieldKey, baseColumnEvolutions []*telemetrytypes.EvolutionEntry) (*qbtypes.Statement, error) {
 	b.buildTraceSummaryCTE(selectFromCTE)
 
 	sb := sqlbuilder.NewSelectBuilder()
@@ -872,12 +861,7 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 	}, nil
 }
 
-func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFromCTE string, keys map[string][]*telemetrytypes.TelemetryFieldKey) (*qbtypes.Statement, error) {
-	baseColumnEvolutions, err := b.stmtBuilder.metadataStore.GetBaseColumnEvolutions(ctx, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
-	if err != nil {
-		return nil, err
-	}
-
+func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFromCTE string, keys map[string][]*telemetrytypes.TelemetryFieldKey, baseColumnEvolutions []*telemetrytypes.EvolutionEntry) (*qbtypes.Statement, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
 	info := querybuilder.NewQueryInfo(ctx, b.orgID, b.stmtBuilder.fl, telemetrytypes.SignalTraces, nil, b.start, b.end)
