@@ -10,6 +10,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
+var CodeFailLoadBaseColumnEvolutions = errors.MustNewCode("fail_load_base_column_evolutions")
+
 type schemaMetadataStore struct {
 	telemetryStore       telemetrystore.TelemetryStore
 	baseColumnEvolutions sync.Map
@@ -28,7 +30,7 @@ func (s *schemaMetadataStore) GetBaseColumnEvolutions(ctx context.Context, signa
 
 	entries, err := fetchEvolutionEntryFromClickHouse(ctx, s.telemetryStore, fmt.Sprintf("%s.%s", DBName, ColumnEvolutionMetadataTableName), []*telemetrytypes.EvolutionSelector{selector})
 	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch the base column evolutions of %s", selector.QualifiedName())
+		return nil, errors.WrapInternalf(err, CodeFailLoadBaseColumnEvolutions, "failed to fetch the base column evolutions of %s", selector.QualifiedName())
 	}
 	if len(entries) > 0 {
 		s.baseColumnEvolutions.Store(selector.QualifiedName(), entries)

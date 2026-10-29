@@ -6,11 +6,12 @@ import (
 	"time"
 
 	cmock "github.com/SigNoz/clickhouse-go-mock"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 var evolutionColumns = []cmock.ColumnType{

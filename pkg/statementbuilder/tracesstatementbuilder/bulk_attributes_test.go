@@ -17,6 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,8 +27,10 @@ var jsonAttrColRe = regexp.MustCompile(`,\s*attributes\s*(,| FROM )`)
 func newBulkTestBuilder(t *testing.T, releaseTime time.Time) *traceQueryStatementBuilder {
 	t.Helper()
 	fl := flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureUseTraceAttributesJSON.String(): true})
+	schemaMetadataStore := telemetrytypestest.NewMockSchemaMetadataStore(t)
+	schemaMetadataStore.EXPECT().GetBaseColumnEvolutions(mock.Anything, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute).Return(tracestelemetryschema.MockAttributeEvolutionData(releaseTime), nil).Maybe()
+	storage := tracestelemetryschema.NewStorage(schemaMetadataStore)
 	store := telemetrytypestest.NewMockMetadataStore()
-	storage := tracestelemetryschema.NewStorage(store)
 	store.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 	store.KeysMap["http.route"] = []*telemetrytypes.TelemetryFieldKey{{
 		Name:          "http.route",
@@ -274,8 +277,10 @@ func TestTraceOperatorUnknownAttributeFollowsRollout(t *testing.T) {
 	endMs := uint64(releaseTime.Add(48 * time.Hour).UnixMilli())
 
 	fl := flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureUseTraceAttributesJSON.String(): true})
+	schemaMetadataStore := telemetrytypestest.NewMockSchemaMetadataStore(t)
+	schemaMetadataStore.EXPECT().GetBaseColumnEvolutions(mock.Anything, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute).Return(tracestelemetryschema.MockAttributeEvolutionData(releaseTime), nil).Maybe()
+	storage := tracestelemetryschema.NewStorage(schemaMetadataStore)
 	store := telemetrytypestest.NewMockMetadataStore()
-	storage := tracestelemetryschema.NewStorage(store)
 	store.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 	store.ColumnEvolutionMetadataMap["traces:attribute:__all__"] = tracestelemetryschema.MockAttributeEvolutionData(releaseTime)
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)

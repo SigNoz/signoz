@@ -8,8 +8,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -552,85 +554,138 @@ func TestConditionForAttributeJSONStraddleAbsentKeyExclusion(t *testing.T) {
 	})
 }
 
-type fakeSchemaMetadataStore struct {
-	evolutions []*telemetrytypes.EvolutionEntry
-}
-
-func (s fakeSchemaMetadataStore) GetBaseColumnEvolutions(context.Context, telemetrytypes.Signal, telemetrytypes.FieldContext) ([]*telemetrytypes.EvolutionEntry, error) {
-	return s.evolutions, nil
-}
-
 func TestConditionForAttributeJSONUnknownKey(t *testing.T) {
-	ctx := context.Background()
-	evo := MockAttributeEvolutionData(attrJSONRelease)
-
-	build := func(t *testing.T, q qbtypes.QueryInfo, evolutions []*telemetrytypes.EvolutionEntry, key telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) string {
-		t.Helper()
-		sb := sqlbuilder.NewSelectBuilder()
-		conds, _, err := querybuilder.Conditions(ctx, q, NewStorage(fakeSchemaMetadataStore{evolutions: evolutions}), &key, op, value, map[string][]*telemetrytypes.TelemetryFieldKey{}, false, sb)
-		require.NoError(t, err)
-		sb.Where(conds...)
-		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-		return sql
-	}
-	query := func(window [2]uint64) qbtypes.QueryInfo {
-		return qbtypes.QueryInfo{StartNs: window[0], EndNs: window[1], TraceAttrsJSONOn: true}
-	}
+	evolutions := MockAttributeEvolutionData(attrJSONRelease)
 	bare := telemetrytypes.TelemetryFieldKey{Name: "unknown.attr"}
 
-	t.Run("before -> map", func(t *testing.T) {
-		sql := build(t, query(attrWindowBefore), evo, bare, qbtypes.FilterOperatorEqual, "x")
-		assert.Contains(t, sql, "attributes_string['unknown.attr'] = ?")
-		assert.NotContains(t, sql, "attributes.`unknown.attr`")
-	})
-	t.Run("after -> json", func(t *testing.T) {
-		sql := build(t, query(attrWindowAfter), evo, bare, qbtypes.FilterOperatorEqual, "x")
-		assert.Contains(t, sql, "attributes.`unknown.attr`::String = ?")
-		assert.NotContains(t, sql, "attributes_string")
-	})
-	t.Run("straddle -> dual", func(t *testing.T) {
-		sql := build(t, query(attrWindowStraddle), evo, bare, qbtypes.FilterOperatorEqual, "x")
-		assert.Contains(t, sql, "multiIf(attributes.`unknown.attr` IS NOT NULL, attributes.`unknown.attr`::String, mapContains(attributes_string, 'unknown.attr'), attributes_string['unknown.attr'], NULL) = ?")
-	})
-	t.Run("after number -> json", func(t *testing.T) {
-		sql := build(t, query(attrWindowAfter), evo, bare, qbtypes.FilterOperatorEqual, float64(1))
-		assert.Contains(t, sql, "toFloat64OrNull(attributes.`unknown.attr`::String) = ?")
-		assert.NotContains(t, sql, "attributes_number")
-	})
-	t.Run("after exists fans out over json only", func(t *testing.T) {
-		sql := build(t, query(attrWindowAfter), evo, bare, qbtypes.FilterOperatorExists, nil)
-		assert.Contains(t, sql, "attributes.`unknown.attr` IS NOT NULL")
-		assert.NotContains(t, sql, "mapContains")
-	})
-	t.Run("after qualified attribute spelling -> json for both spellings", func(t *testing.T) {
-		qualified := telemetrytypes.TelemetryFieldKey{Name: "unknown.attr", FieldContext: telemetrytypes.FieldContextAttribute}
-		sql := build(t, query(attrWindowAfter), evo, qualified, qbtypes.FilterOperatorEqual, "x")
-		assert.Contains(t, sql, "attributes.`unknown.attr`::String = ?")
-		assert.Contains(t, sql, "attributes.`attribute.unknown.attr`::String = ?")
-		assert.NotContains(t, sql, "attributes_string")
-	})
-	t.Run("after span spelling corrects to the json attribute", func(t *testing.T) {
-		span := telemetrytypes.TelemetryFieldKey{Name: "unknown.attr", FieldContext: telemetrytypes.FieldContextSpan}
-		sql := build(t, query(attrWindowAfter), evo, span, qbtypes.FilterOperatorEqual, "x")
-		assert.Contains(t, sql, "attributes.`unknown.attr`::String = ?")
-		assert.NotContains(t, sql, "attributes_string")
-	})
-	t.Run("without column-wide evolutions -> map in every window", func(t *testing.T) {
-		sql := build(t, query(attrWindowAfter), nil, bare, qbtypes.FilterOperatorEqual, "x")
-		assert.Contains(t, sql, "attributes_string['unknown.attr'] = ?")
-		assert.NotContains(t, sql, "attributes.`unknown.attr`")
-	})
-	t.Run("flag off -> map in every window", func(t *testing.T) {
-		q := query(attrWindowAfter)
-		q.TraceAttrsJSONOn = false
-		sql := build(t, q, evo, bare, qbtypes.FilterOperatorEqual, "x")
-		assert.Contains(t, sql, "attributes_string['unknown.attr'] = ?")
-		assert.NotContains(t, sql, "attributes.`unknown.attr`")
-	})
-	t.Run("resource spelling is untouched by attribute evolutions", func(t *testing.T) {
-		resource := telemetrytypes.TelemetryFieldKey{Name: "unknown.attr", FieldContext: telemetrytypes.FieldContextResource}
-		sql := build(t, query(attrWindowAfter), evo, resource, qbtypes.FilterOperatorEqual, "x")
-		assert.Contains(t, sql, "resource.`unknown.attr`::String")
-		assert.Contains(t, sql, "resources_string['unknown.attr']")
-	})
+	testCases := []struct {
+		name            string
+		window          [2]uint64
+		flagOff         bool
+		evolutions      []*telemetrytypes.EvolutionEntry
+		key             telemetrytypes.TelemetryFieldKey
+		operator        qbtypes.FilterOperator
+		value           any
+		wantContains    []string
+		wantNotContains []string
+	}{
+		{
+			name:            "BeforeRollout_ReadsMap",
+			window:          attrWindowBefore,
+			evolutions:      evolutions,
+			key:             bare,
+			operator:        qbtypes.FilterOperatorEqual,
+			value:           "x",
+			wantContains:    []string{"attributes_string['unknown.attr'] = ?"},
+			wantNotContains: []string{"attributes.`unknown.attr`"},
+		},
+		{
+			name:            "AfterRollout_ReadsJSON",
+			window:          attrWindowAfter,
+			evolutions:      evolutions,
+			key:             bare,
+			operator:        qbtypes.FilterOperatorEqual,
+			value:           "x",
+			wantContains:    []string{"attributes.`unknown.attr`::String = ?"},
+			wantNotContains: []string{"attributes_string"},
+		},
+		{
+			name:         "StraddlingRollout_ReadsJSONThenMap",
+			window:       attrWindowStraddle,
+			evolutions:   evolutions,
+			key:          bare,
+			operator:     qbtypes.FilterOperatorEqual,
+			value:        "x",
+			wantContains: []string{"multiIf(attributes.`unknown.attr` IS NOT NULL, attributes.`unknown.attr`::String, mapContains(attributes_string, 'unknown.attr'), attributes_string['unknown.attr'], NULL) = ?"},
+		},
+		{
+			name:            "AfterRollout_NumberOperand_ReadsJSON",
+			window:          attrWindowAfter,
+			evolutions:      evolutions,
+			key:             bare,
+			operator:        qbtypes.FilterOperatorEqual,
+			value:           float64(1),
+			wantContains:    []string{"toFloat64OrNull(attributes.`unknown.attr`::String) = ?"},
+			wantNotContains: []string{"attributes_number"},
+		},
+		{
+			name:            "AfterRollout_Exists_ReadsJSONOnly",
+			window:          attrWindowAfter,
+			evolutions:      evolutions,
+			key:             bare,
+			operator:        qbtypes.FilterOperatorExists,
+			wantContains:    []string{"attributes.`unknown.attr` IS NOT NULL"},
+			wantNotContains: []string{"mapContains"},
+		},
+		{
+			name:            "AfterRollout_AttributeContext_ReadsJSONForBothSpellings",
+			window:          attrWindowAfter,
+			evolutions:      evolutions,
+			key:             telemetrytypes.TelemetryFieldKey{Name: "unknown.attr", FieldContext: telemetrytypes.FieldContextAttribute},
+			operator:        qbtypes.FilterOperatorEqual,
+			value:           "x",
+			wantContains:    []string{"attributes.`unknown.attr`::String = ?", "attributes.`attribute.unknown.attr`::String = ?"},
+			wantNotContains: []string{"attributes_string"},
+		},
+		{
+			name:            "AfterRollout_SpanContext_ReadsJSONAttribute",
+			window:          attrWindowAfter,
+			evolutions:      evolutions,
+			key:             telemetrytypes.TelemetryFieldKey{Name: "unknown.attr", FieldContext: telemetrytypes.FieldContextSpan},
+			operator:        qbtypes.FilterOperatorEqual,
+			value:           "x",
+			wantContains:    []string{"attributes.`unknown.attr`::String = ?"},
+			wantNotContains: []string{"attributes_string"},
+		},
+		{
+			name:            "NoEvolutions_ReadsMap",
+			window:          attrWindowAfter,
+			key:             bare,
+			operator:        qbtypes.FilterOperatorEqual,
+			value:           "x",
+			wantContains:    []string{"attributes_string['unknown.attr'] = ?"},
+			wantNotContains: []string{"attributes.`unknown.attr`"},
+		},
+		{
+			name:            "FlagOff_ReadsMap",
+			window:          attrWindowAfter,
+			flagOff:         true,
+			evolutions:      evolutions,
+			key:             bare,
+			operator:        qbtypes.FilterOperatorEqual,
+			value:           "x",
+			wantContains:    []string{"attributes_string['unknown.attr'] = ?"},
+			wantNotContains: []string{"attributes.`unknown.attr`"},
+		},
+		{
+			name:         "ResourceContext_IgnoresAttributeEvolutions",
+			window:       attrWindowAfter,
+			evolutions:   evolutions,
+			key:          telemetrytypes.TelemetryFieldKey{Name: "unknown.attr", FieldContext: telemetrytypes.FieldContextResource},
+			operator:     qbtypes.FilterOperatorEqual,
+			value:        "x",
+			wantContains: []string{"resource.`unknown.attr`::String", "resources_string['unknown.attr']"},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			schemaMetadataStore := telemetrytypestest.NewMockSchemaMetadataStore(t)
+			schemaMetadataStore.EXPECT().GetBaseColumnEvolutions(mock.Anything, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute).Return(testCase.evolutions, nil).Maybe()
+
+			q := qbtypes.QueryInfo{StartNs: testCase.window[0], EndNs: testCase.window[1], TraceAttrsJSONOn: !testCase.flagOff}
+			sb := sqlbuilder.NewSelectBuilder()
+			conds, _, err := querybuilder.Conditions(context.Background(), q, NewStorage(schemaMetadataStore), &testCase.key, testCase.operator, testCase.value, map[string][]*telemetrytypes.TelemetryFieldKey{}, false, sb)
+			require.NoError(t, err)
+			sb.Where(conds...)
+			sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+			for _, want := range testCase.wantContains {
+				assert.Contains(t, sql, want)
+			}
+			for _, unwanted := range testCase.wantNotContains {
+				assert.NotContains(t, sql, unwanted)
+			}
+		})
+	}
 }
