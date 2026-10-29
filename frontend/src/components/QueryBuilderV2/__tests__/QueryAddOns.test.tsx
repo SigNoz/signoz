@@ -171,6 +171,9 @@ describe('QueryAddOns', () => {
 
 		fireEvent.change(input, { target: { value: '10' } });
 		expect(mockHandleChangeQueryData).toHaveBeenCalledWith('limit', 10);
+
+		fireEvent.change(input, { target: { value: '-5' } });
+		expect(mockHandleChangeQueryData).toHaveBeenLastCalledWith('limit', null);
 	});
 
 	it.each([
