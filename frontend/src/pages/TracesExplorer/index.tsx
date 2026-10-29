@@ -73,7 +73,7 @@ function TracesExplorer(): JSX.Element {
 
 	const { options } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
-		dataSource: DataSource.TRACES,
+		sourcePage: SavedviewtypesSourceDTO.traces,
 		aggregateOperator: 'noop',
 		initialOptions: {
 			selectColumns: defaultSelectedColumns,

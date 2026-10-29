@@ -4,7 +4,7 @@ import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKey
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
-import { DataSource } from 'types/common/queryBuilder';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 
 import useOptionsMenu from '../useOptionsMenu';
 
@@ -32,7 +32,7 @@ describe('useOptionsMenu', () => {
 		});
 
 		(usePreferenceContext as jest.Mock).mockReturnValue({
-			traces: {
+			[SavedviewtypesSourceDTO.traces]: {
 				preferences: {
 					columns: [],
 					formatting: {
@@ -44,7 +44,7 @@ describe('useOptionsMenu', () => {
 				updateColumns: mockUpdateColumns,
 				updateFormatting: mockUpdateFormatting,
 			},
-			logs: {
+			[SavedviewtypesSourceDTO.logs]: {
 				preferences: {
 					columns: [],
 					formatting: {
@@ -66,7 +66,7 @@ describe('useOptionsMenu', () => {
 		(useQueries as jest.Mock).mockReturnValue([]);
 	});
 
-	it('does not show isRoot or isEntryPoint in column options when dataSource is TRACES', () => {
+	it('does not show isRoot or isEntryPoint in column options when sourcePage is traces', () => {
 		// Mock the query key suggestions to return data including isRoot and isEntryPoint
 		(useGetQueryKeySuggestions as jest.Mock).mockReturnValue({
 			data: {
@@ -108,7 +108,7 @@ describe('useOptionsMenu', () => {
 
 		const { result } = renderHook(() =>
 			useOptionsMenu({
-				dataSource: DataSource.TRACES,
+				sourcePage: SavedviewtypesSourceDTO.traces,
 				aggregateOperator: 'count',
 			}),
 		);
@@ -127,60 +127,7 @@ describe('useOptionsMenu', () => {
 		expect(optionNames).toContain('serviceName');
 	});
 
-	it('does not show body in column options when dataSource is METRICS', () => {
-		// Mock the query key suggestions to return data including body
-		(useGetQueryKeySuggestions as jest.Mock).mockReturnValue({
-			data: {
-				data: {
-					data: {
-						keys: {
-							attributeKeys: [
-								{
-									name: 'body',
-									signal: 'logs',
-									fieldDataType: 'string',
-									fieldContext: '',
-								},
-								{
-									name: 'status',
-									signal: 'metrics',
-									fieldDataType: 'int64',
-									fieldContext: '',
-								},
-								{
-									name: 'value',
-									signal: 'metrics',
-									fieldDataType: 'float64',
-									fieldContext: '',
-								},
-							],
-						},
-					},
-				},
-			},
-			isFetching: false,
-		});
-
-		const { result } = renderHook(() =>
-			useOptionsMenu({
-				dataSource: DataSource.METRICS,
-				aggregateOperator: 'count',
-			}),
-		);
-
-		// Get the column options from the config
-		const columnOptions = result.current.config.addColumn?.options ?? [];
-		const optionNames = columnOptions.map((option) => option.label);
-
-		// body should NOT be in the options
-		expect(optionNames).not.toContain('body');
-
-		// Other attributes should be present
-		expect(optionNames).toContain('status');
-		expect(optionNames).toContain('value');
-	});
-
-	it('does not show body in column options when dataSource is LOGS', () => {
+	it('shows body in column options when sourcePage is logs', () => {
 		// Mock the query key suggestions to return data including body
 		(useGetQueryKeySuggestions as jest.Mock).mockReturnValue({
 			data: {
@@ -216,7 +163,7 @@ describe('useOptionsMenu', () => {
 
 		const { result } = renderHook(() =>
 			useOptionsMenu({
-				dataSource: DataSource.LOGS,
+				sourcePage: SavedviewtypesSourceDTO.logs,
 				aggregateOperator: 'count',
 			}),
 		);
@@ -275,12 +222,12 @@ describe('useOptionsMenu', () => {
 				isFetching: false,
 			});
 			(usePreferenceContext as jest.Mock).mockReturnValue({
-				traces: {
+				[SavedviewtypesSourceDTO.traces]: {
 					preferences: { columns: [], formatting: baseFormatting },
 					updateColumns: mockUpdateColumns,
 					updateFormatting: mockUpdateFormatting,
 				},
-				logs: {
+				[SavedviewtypesSourceDTO.logs]: {
 					preferences: { columns: seedColumns, formatting: baseFormatting },
 					updateColumns: mockUpdateColumns,
 					updateFormatting: mockUpdateFormatting,
@@ -291,7 +238,7 @@ describe('useOptionsMenu', () => {
 		it('reorders by composite IDs — preserves both same-name variants distinctly', () => {
 			const { result } = renderHook(() =>
 				useOptionsMenu({
-					dataSource: DataSource.LOGS,
+					sourcePage: SavedviewtypesSourceDTO.logs,
 					aggregateOperator: 'count',
 				}),
 			);
@@ -322,7 +269,7 @@ describe('useOptionsMenu', () => {
 		it('reorder ignores ids that are not columns (e.g. state-indicator) and skips unknown ids', () => {
 			const { result } = renderHook(() =>
 				useOptionsMenu({
-					dataSource: DataSource.LOGS,
+					sourcePage: SavedviewtypesSourceDTO.logs,
 					aggregateOperator: 'count',
 				}),
 			);
@@ -354,7 +301,7 @@ describe('useOptionsMenu', () => {
 		it('removes only the variant whose composite ID matches', () => {
 			const { result } = renderHook(() =>
 				useOptionsMenu({
-					dataSource: DataSource.LOGS,
+					sourcePage: SavedviewtypesSourceDTO.logs,
 					aggregateOperator: 'count',
 				}),
 			);
@@ -375,7 +322,7 @@ describe('useOptionsMenu', () => {
 		it('removing by a non-matching composite ID is a no-op (filter returns the full list)', () => {
 			const { result } = renderHook(() =>
 				useOptionsMenu({
-					dataSource: DataSource.LOGS,
+					sourcePage: SavedviewtypesSourceDTO.logs,
 					aggregateOperator: 'count',
 				}),
 			);
@@ -395,7 +342,7 @@ describe('useOptionsMenu', () => {
 				isFetching: false,
 			});
 			(usePreferenceContext as jest.Mock).mockReturnValue({
-				traces: {
+				[SavedviewtypesSourceDTO.traces]: {
 					preferences: {
 						columns: [
 							{ name: 'body', fieldContext: 'log' },
@@ -407,7 +354,7 @@ describe('useOptionsMenu', () => {
 					updateColumns: mockUpdateColumns,
 					updateFormatting: mockUpdateFormatting,
 				},
-				logs: {
+				[SavedviewtypesSourceDTO.logs]: {
 					preferences: { columns: [], formatting: {} },
 					updateColumns: mockUpdateColumns,
 					updateFormatting: mockUpdateFormatting,
@@ -416,7 +363,7 @@ describe('useOptionsMenu', () => {
 
 			const { result } = renderHook(() =>
 				useOptionsMenu({
-					dataSource: DataSource.TRACES,
+					sourcePage: SavedviewtypesSourceDTO.traces,
 					aggregateOperator: 'count',
 				}),
 			);
