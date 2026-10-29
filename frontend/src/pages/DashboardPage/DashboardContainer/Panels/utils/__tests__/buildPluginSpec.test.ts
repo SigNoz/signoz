@@ -1,6 +1,7 @@
 import {
 	DashboardtypesComparisonOperatorDTO,
 	DashboardtypesFillModeDTO,
+	DashboardtypesHeatmapYScaleDTO,
 	DashboardtypesLegendPositionDTO,
 	DashboardtypesLineInterpolationDTO,
 	DashboardtypesLineStyleDTO,
@@ -310,6 +311,19 @@ describe('buildPluginSpec', () => {
 
 			expect(buildPluginSpec(sections, { oldSpec }).axes).toStrictEqual({
 				isLogScale: true,
+			});
+		});
+
+		it('carries only the y scale, dropping fields a scatter y axis adds', () => {
+			const sections: SectionConfig[] = [
+				{ kind: SectionKind.Axes, controls: { y: true } },
+			];
+			const oldSpec = oldSpecWith({
+				axes: { y: { label: 'Latency', softMin: 0, softMax: 100 } },
+			});
+
+			expect(buildPluginSpec(sections, { oldSpec }).axes).toStrictEqual({
+				y: { scale: DashboardtypesHeatmapYScaleDTO.auto },
 			});
 		});
 

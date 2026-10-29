@@ -1,4 +1,4 @@
-import { render, screen, userEvent } from 'tests/test-utils';
+import { render, screen, userEvent, within } from 'tests/test-utils';
 
 import ChartAppearanceSection from '../ChartAppearanceSection';
 
@@ -68,7 +68,9 @@ describe('ChartAppearanceSection points', () => {
 			/>,
 		);
 
-		const [sizeThumb] = screen.getAllByRole('slider');
+		const sizeThumb = within(
+			screen.getByTestId('panel-editor-v2-point-size'),
+		).getByRole('slider');
 		sizeThumb.focus();
 		await user.keyboard('{ArrowRight}');
 
@@ -88,8 +90,9 @@ describe('ChartAppearanceSection points', () => {
 			/>,
 		);
 
-		const thumbs = screen.getAllByRole('slider');
-		const opacityThumb = thumbs[thumbs.length - 1];
+		const opacityThumb = within(
+			screen.getByTestId('panel-editor-v2-point-opacity'),
+		).getByRole('slider');
 		expect(opacityThumb).toHaveAttribute('aria-valuemin', '0.1');
 		opacityThumb.focus();
 		await user.keyboard('{ArrowLeft}');

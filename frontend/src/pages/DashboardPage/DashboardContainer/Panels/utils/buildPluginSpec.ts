@@ -223,10 +223,7 @@ const SECTION_SEEDS: SectionSeeds = {
 					old.isLogScale !== undefined && { isLogScale: old.isLogScale }),
 				// Seeded so the control opens on the axis being drawn.
 				...(controls.y && {
-					y: {
-						...old.y,
-						scale: old.y?.scale ?? DashboardtypesHeatmapYScaleDTO.auto,
-					},
+					y: { scale: old.y?.scale ?? DashboardtypesHeatmapYScaleDTO.auto },
 				}),
 			};
 		},

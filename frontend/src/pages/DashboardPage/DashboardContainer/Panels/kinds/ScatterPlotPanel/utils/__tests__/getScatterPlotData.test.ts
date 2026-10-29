@@ -11,6 +11,22 @@ jest.mock('../prepareData');
 
 const mockPrepare = jest.mocked(prepareScatterPlotData);
 
+function makeReady(): ScatterPlotData {
+	return {
+		status: ScatterPlotDataStatus.Ready,
+		series: [],
+		pointLabels: [],
+		channels: { x: { label: 'A' }, y: { label: 'B' } },
+		axisQueries: { x: 'A', y: 'B' },
+		totalGroups: 0,
+		drawnGroups: 0,
+		missingValueGroups: 0,
+		nonPositiveOnLogGroups: 0,
+		cappedGroups: 0,
+		staleDimensions: [],
+	};
+}
+
 function makeData(): PanelQueryData {
 	return { response: undefined, requestPayload: undefined, legendMap: {} };
 }
@@ -18,9 +34,7 @@ function makeData(): PanelQueryData {
 describe('getScatterPlotData', () => {
 	beforeEach(() => {
 		jest.mocked(getJoinedScalarTable).mockReturnValue(undefined);
-		mockPrepare.mockImplementation(
-			() => ({ status: ScatterPlotDataStatus.Ready }) as ScatterPlotData,
-		);
+		mockPrepare.mockImplementation(makeReady);
 	});
 
 	afterEach(() => {
