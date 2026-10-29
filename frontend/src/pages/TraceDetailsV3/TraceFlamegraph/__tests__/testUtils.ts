@@ -12,7 +12,7 @@ export const MOCK_SPAN: FlamegraphSpan = {
 	event: [],
 	resource: {},
 	attributes: {},
-	scope: { name: '', version: '', attributes: {} },
+	scope: {},
 };
 
 /** Nested spans structure for findSpanById tests */
