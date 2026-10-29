@@ -266,6 +266,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddMetricsFieldTuplesFactory(sqlstore),
 		sqlmigration.NewAddGCPConnectionMethodFactory(),
 		sqlmigration.NewDeleteOrphanSARolesFactory(),
+		sqlmigration.NewAddLLMPricingRuleTuplesFactory(sqlstore),
 	)
 }
 

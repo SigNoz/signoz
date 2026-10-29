@@ -3932,6 +3932,7 @@ components:
       - logs-field
       - traces-field
       - metrics-field
+      - llm-pricing-rule
       type: string
     CoretypesObject:
       properties:
@@ -15759,9 +15760,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - llm-pricing-rule:list
       - tokenizer:
-        - VIEWER
+        - llm-pricing-rule:list
       summary: List pricing rules
       tags:
       - llmpricingrules
@@ -15806,9 +15807,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - llm-pricing-rule:update
       - tokenizer:
-        - ADMIN
+        - llm-pricing-rule:update
       summary: Create or update pricing rules
       tags:
       - llmpricingrules
@@ -15854,9 +15855,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - llm-pricing-rule:delete
       - tokenizer:
-        - ADMIN
+        - llm-pricing-rule:delete
       summary: Delete a pricing rule
       tags:
       - llmpricingrules
@@ -15912,9 +15913,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - llm-pricing-rule:read
       - tokenizer:
-        - VIEWER
+        - llm-pricing-rule:read
       summary: Get a pricing rule
       tags:
       - llmpricingrules
@@ -15967,9 +15968,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - llm-pricing-rule:list
       - tokenizer:
-        - VIEWER
+        - llm-pricing-rule:list
       summary: List unmapped models
       tags:
       - llmpricingrules
