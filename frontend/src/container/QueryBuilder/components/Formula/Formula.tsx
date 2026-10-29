@@ -2,6 +2,7 @@ import { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import { Col, Input, Row, Select } from 'antd';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import BucketOptions from 'components/QueryBuilderV2/QueryV2/QueryAddOns/BucketOptions/BucketOptions';
+import { parseLimit } from 'components/QueryBuilderV2/utils';
 import { LEGEND } from 'constants/global';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 // ** Hooks
@@ -171,7 +172,7 @@ export function Formula({
 								<InputWithLabel
 									label="Limit"
 									type="number"
-									onChange={(value): void => handleChangeLimit(Number(value))}
+									onChange={(value): void => handleChangeLimit(parseLimit(value))}
 									initialValue={formula?.limit ?? undefined}
 									placeholder="Enter limit"
 								/>

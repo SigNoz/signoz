@@ -845,6 +845,12 @@ export const appendAndClause = (
  * @param having - Array of old having objects with columnName, op, and value
  * @returns New having format with expression string
  */
+/** A query or formula limit: a positive integer, otherwise none. */
+export const parseLimit = (value: string): number | null => {
+	const limit = Number(value);
+	return Number.isInteger(limit) && limit > 0 ? limit : null;
+};
+
 export const convertHavingToExpression = (
 	having: Having[],
 ): { expression: string } => {
@@ -871,7 +877,14 @@ export const convertHavingToExpression = (
 				formattedValue = String(value);
 			}
 
-			return `${columnName} ${op} ${formattedValue}`;
+			// The old having filter upper-cased the function (`COUNT()`); v5 only
+			// resolves the aggregation's own lower-case expression.
+			const reference = columnName.replace(
+				/^\s*([A-Za-z_]\w*)\(/,
+				(_, fn: string) => `${fn.toLowerCase()}(`,
+			);
+
+			return `${reference} ${op} ${formattedValue}`;
 		})
 		.filter((expression) => expression !== ''); // Remove empty expressions
 
