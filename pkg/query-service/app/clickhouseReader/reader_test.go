@@ -1,8 +1,10 @@
 package clickhouseReader
 
 import (
+	"context"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,5 +27,27 @@ func TestGetStatusFilters(t *testing.T) {
 	}
 	for _, test := range tests {
 		assert.Equal(getStatusFilters(test.query, test.statusParams, test.excludeMap), test.expected)
+	}
+}
+
+// SetTTLV2 must reject a non-positive default TTL before issuing any
+// ClickHouse ALTER, otherwise _retention_days is set to DEFAULT 0 and new
+// rows expire immediately. The zero-value reader has no database handles,
+// so any attempted DB access would panic; NotPanics proves no ALTER ran.
+func TestSetTTLV2RejectsNonPositiveDefaultTTL(t *testing.T) {
+	reader := &ClickHouseReader{}
+
+	for _, days := range []int{0, -7} {
+		params := &retentiontypes.CustomRetentionTTLParams{
+			Type:           retentiontypes.LogsTTL,
+			DefaultTTLDays: days,
+		}
+
+		var err error
+		assert.NotPanics(t, func() {
+			_, err = reader.SetTTLV2(context.Background(), "test-org", params)
+		}, "SetTTLV2 must reject invalid TTL before touching the database")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "defaultTTLDays")
 	}
 }
