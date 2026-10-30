@@ -141,7 +141,9 @@ func (b *logQueryStatementBuilder) Build(
 	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeRawStream:
 		stmt, err = b.buildListQuery(ctx, orgID, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeTimeSeries:
-		stmt, err = b.buildTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables)
+		stmt, err = b.buildTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables, nil)
+	case qbtypes.RequestTypeHeatmap:
+		stmt, err = b.buildTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables, query.BucketOptions)
 	case qbtypes.RequestTypeScalar:
 		stmt, err = b.buildScalarQuery(ctx, orgID, q, query, start, end, keys, false, variables)
 	default:
@@ -171,6 +173,15 @@ func (b *logQueryStatementBuilder) costGuardFor(ctx context.Context, orgID value
 		maxScanRows = b.searchMaxScanRowsJSONBody
 	}
 	return &qbtypes.CostGuard{Warning: querybuilder.SearchWarning, MaxScanRows: maxScanRows}
+}
+
+// heatmapBucketField is the field a heatmap cuts its axis from, nil for every
+// other request type. Validation has already refused a heatmap without one.
+func heatmapBucketField(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) *telemetrytypes.TelemetryFieldKey {
+	if query.BucketOptions == nil {
+		return nil
+	}
+	return query.BucketOptions.Field
 }
 
 func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation], bodyJSONEnabled bool) ([]*telemetrytypes.FieldKeySelector, []string) {
@@ -214,6 +225,15 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation], bo
 			Signal:        telemetrytypes.SignalLogs,
 			FieldContext:  query.Order[idx].Key.FieldContext,
 			FieldDataType: query.Order[idx].Key.FieldDataType,
+		})
+	}
+
+	if field := heatmapBucketField(query); field != nil {
+		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
+			Name:          field.Name,
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  field.FieldContext,
+			FieldDataType: field.FieldDataType,
 		})
 	}
 
@@ -290,6 +310,9 @@ func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[stri
 	}
 	for idx := range query.Order {
 		actions = append(actions, b.adjustKey(&query.Order[idx].Key.TelemetryFieldKey, keys)...)
+	}
+	if field := heatmapBucketField(query); field != nil {
+		actions = append(actions, b.adjustKey(field, keys)...)
 	}
 
 	for _, action := range actions {
@@ -430,6 +453,9 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	return stmt, nil
 }
 
+// buildTimeSeriesQuery builds one row per (time bucket, group). A non-nil
+// bucketOptions makes it a heatmap instead: the bucket a row's value falls in
+// joins the group keys, so a row is one cell.
 func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	ctx context.Context,
 	orgID valuer.UUID,
@@ -438,6 +464,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	start, end uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
+	bucketOptions *qbtypes.BucketOptions,
 ) (*qbtypes.Statement, error) {
 
 	var (
@@ -474,6 +501,18 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		fieldAlias := groupByColumnAlias(i, gb.Name)
 		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("toString(%s) AS %s", expr, fieldAlias)))
 		fieldNames = append(fieldNames, sqlbuilder.Escape(fieldAlias))
+	}
+
+	var bucketAliases, bucketWarnings []string
+	if bucketOptions != nil {
+		valueFragment, aliases, warnings, err := querybuilder.HeatmapBucketColumns(
+			ctx, info, b.storage, sb, columnKey(bucketOptions.Field), bucketOptions, keys,
+		)
+		if err != nil {
+			return nil, err
+		}
+		cteFragments = append(cteFragments, valueFragment)
+		bucketAliases, bucketWarnings = aliases, warnings
 	}
 
 	// Aggregations
@@ -521,6 +560,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		// Group by all dimensions
 		sb.GroupBy("ts")
 		sb.GroupBy(fieldNames...)
+		sb.GroupBy(bucketAliases...)
 		if query.Having != nil && query.Having.Expression != "" {
 			// Rewrite having expression to use SQL column names
 			rewriter := querybuilder.NewHavingExpressionRewriter()
@@ -555,6 +595,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	} else {
 		sb.GroupBy("ts")
 		sb.GroupBy(fieldNames...)
+		sb.GroupBy(bucketAliases...)
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
 			rewrittenExpr, err := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
@@ -589,7 +630,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	stmt := &qbtypes.Statement{
 		Query:          finalSQL,
 		Args:           finalArgs,
-		Warnings:       preparedWhereClause.Warnings,
+		Warnings:       append(preparedWhereClause.Warnings, bucketWarnings...),
 		WarningsDocURL: preparedWhereClause.WarningsDocURL,
 		CostGuard:      b.costGuardFor(ctx, orgID, preparedWhereClause.RequiresCostGuard),
 	}

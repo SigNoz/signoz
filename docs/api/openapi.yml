@@ -9394,6 +9394,8 @@ components:
       type: object
     Querybuildertypesv5BucketOptionsLinear:
       properties:
+        field:
+          $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
         kind:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5BucketsKind'
@@ -9408,6 +9410,8 @@ components:
       type: object
     Querybuildertypesv5BucketOptionsLog:
       properties:
+        field:
+          $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
         kind:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5BucketsKind'

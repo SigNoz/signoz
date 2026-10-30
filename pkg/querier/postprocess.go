@@ -182,6 +182,14 @@ func postProcessBuilderQuery[T any](
 	req *qbtypes.QueryRangeRequest,
 ) *qbtypes.Result {
 
+	// A disabled query feeds a formula as a time series, so only an enabled one
+	// came back bucketed.
+	if req.RequestType == qbtypes.RequestTypeHeatmap && !query.Disabled && query.BucketOptions != nil {
+		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
+			resolveHeatmapBucketAxis(tsData, query.BucketOptions.ToHeatmapBucketing())
+		}
+	}
+
 	result = q.applySeriesLimit(result, query.Limit, query.Order)
 
 	// Apply functions

@@ -176,7 +176,9 @@ func (b *traceQueryStatementBuilder) Build(
 	case qbtypes.RequestTypeRaw:
 		return b.buildListQuery(ctx, orgID, q, query, start, end, keys, variables, isSelectFieldsEmpty)
 	case qbtypes.RequestTypeTimeSeries:
-		return b.buildTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables)
+		return b.buildTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables, nil)
+	case qbtypes.RequestTypeHeatmap:
+		return b.buildTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables, query.BucketOptions)
 	case qbtypes.RequestTypeScalar:
 		return b.buildScalarQuery(ctx, orgID, q, query, start, end, keys, variables, false, false)
 	case qbtypes.RequestTypeTrace:
@@ -210,6 +212,10 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) 
 
 	for idx := range query.Order {
 		keySelectors = append(keySelectors, keySelectorsForField(query.Order[idx].Key.TelemetryFieldKey)...)
+	}
+
+	if field := heatmapBucketField(query); field != nil {
+		keySelectors = append(keySelectors, keySelectorsForField(*field)...)
 	}
 
 	for idx := range keySelectors {
@@ -297,8 +303,20 @@ func adjustTraceKeys(keys map[string][]*telemetrytypes.TelemetryFieldKey, query 
 	for idx := range query.Order {
 		actions = append(actions, adjustTraceKey(&query.Order[idx].Key.TelemetryFieldKey, keys)...)
 	}
+	if field := heatmapBucketField(*query); field != nil {
+		actions = append(actions, adjustTraceKey(field, keys)...)
+	}
 
 	return actions
+}
+
+// heatmapBucketField is the field a heatmap cuts its axis from, nil for every
+// other request type. Validation has already refused a heatmap without one.
+func heatmapBucketField(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) *telemetrytypes.TelemetryFieldKey {
+	if query.BucketOptions == nil {
+		return nil
+	}
+	return query.BucketOptions.Field
 }
 
 // adjustTraceKey resolves a single TelemetryFieldKey against the keys map.
@@ -557,6 +575,9 @@ func (b *traceQueryStatementBuilder) buildTraceQuery(
 	return stmt, nil
 }
 
+// buildTimeSeriesQuery builds one row per (time bucket, group). A non-nil
+// bucketOptions makes it a heatmap instead: the bucket a row's value falls in
+// joins the group keys, so a row is one cell.
 func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	ctx context.Context,
 	orgID valuer.UUID,
@@ -565,6 +586,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	start, end uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
+	bucketOptions *qbtypes.BucketOptions,
 ) (*qbtypes.Statement, error) {
 
 	var (
@@ -602,6 +624,18 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		fieldAlias := groupByColumnAlias(i, gb.Name)
 		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("toString(%s) AS %s", expr, fieldAlias)))
 		fieldNames = append(fieldNames, sqlbuilder.Escape(fieldAlias))
+	}
+
+	var bucketAliases, bucketWarnings []string
+	if bucketOptions != nil {
+		valueFragment, aliases, warnings, err := querybuilder.HeatmapBucketColumns(
+			ctx, info, b.storage, sb, bucketOptions.Field, bucketOptions, keys,
+		)
+		if err != nil {
+			return nil, err
+		}
+		cteFragments = append(cteFragments, valueFragment)
+		bucketAliases, bucketWarnings = aliases, warnings
 	}
 
 	// Aggregations
@@ -646,6 +680,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		// Group by all dimensions
 		sb.GroupBy("ts")
 		sb.GroupBy(fieldNames...)
+		sb.GroupBy(bucketAliases...)
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
 			rewrittenExpr, err := rewriter.RewriteForTraces(query.Having.Expression, query.Aggregations)
@@ -679,6 +714,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	} else {
 		sb.GroupBy("ts")
 		sb.GroupBy(fieldNames...)
+		sb.GroupBy(bucketAliases...)
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
 			rewrittenExpr, err := rewriter.RewriteForTraces(query.Having.Expression, query.Aggregations)
@@ -713,7 +749,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	stmt := &qbtypes.Statement{
 		Query:          finalSQL,
 		Args:           finalArgs,
-		Warnings:       preparedWhereClause.Warnings,
+		Warnings:       append(preparedWhereClause.Warnings, bucketWarnings...),
 		WarningsDocURL: preparedWhereClause.WarningsDocURL,
 	}
 
