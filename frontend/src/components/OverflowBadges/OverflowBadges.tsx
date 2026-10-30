@@ -1,44 +1,54 @@
-import type { Key, ReactNode } from 'react';
-import { Badge } from '@signozhq/ui/badge';
+import { type CSSProperties, useRef } from 'react';
 import { Tooltip } from '@signozhq/ui/tooltip';
+
+import ItemBadge from './ItemBadge';
+import type { OverflowBadgeItem } from './types';
+import { useOverflowBadgesLayout } from './useOverflowBadgesLayout';
 
 import styles from './OverflowBadges.module.scss';
 
-const DEFAULT_MAX_VISIBLE = 2;
-
-export interface OverflowBadgeItem {
-	key: Key;
-	label: ReactNode;
-}
-
 interface OverflowBadgesProps {
 	items: OverflowBadgeItem[];
-	maxVisible?: number;
 }
 
 /**
- * A row of badges: the first few inline, the rest revealed on hover of a "+N"
- * badge.
+ * A row of badges: as many as fit the width inline, the rest revealed on hover
+ * of a "+N" badge. A lone badge too wide to fit truncates instead.
  */
-function OverflowBadges({
-	items,
-	maxVisible = DEFAULT_MAX_VISIBLE,
-}: OverflowBadgesProps): JSX.Element {
-	const extra = items.slice(maxVisible);
-
-	const renderBadge = ({ key, label }: OverflowBadgeItem): JSX.Element => (
-		<Badge key={key} textTransform="none" variant="solid" color="secondary">
-			{label}
-		</Badge>
+function OverflowBadges({ items }: OverflowBadgesProps): JSX.Element {
+	const containerRef = useRef<HTMLDivElement>(null);
+	const measureRef = useRef<HTMLDivElement>(null);
+	const { visibleCount, firstMaxWidth, isMeasuring } = useOverflowBadgesLayout(
+		items,
+		containerRef,
+		measureRef,
 	);
 
+	const visible = items.slice(0, visibleCount);
+	const extra = items.slice(visibleCount);
+	// The app sets `--badge-max-width` globally, which outranks Badge's `maxWidth` prop.
+	const containerStyle =
+		firstMaxWidth === undefined
+			? undefined
+			: ({ '--badge-max-width': `${firstMaxWidth}px` } as CSSProperties);
+
 	return (
-		<div className={styles.badges}>
-			{items.slice(0, maxVisible).map(renderBadge)}
+		<div ref={containerRef} className={styles.badges} style={containerStyle}>
+			{visible.map(({ key, label }) => (
+				<ItemBadge key={key} testId="overflow-badges-item">
+					{label}
+				</ItemBadge>
+			))}
 			{extra.length > 0 && (
 				<Tooltip
 					side="bottom"
-					title={<div className={styles.extraBadges}>{extra.map(renderBadge)}</div>}
+					title={
+						<div className={styles.extraBadges}>
+							{extra.map(({ key, label }) => (
+								<ItemBadge key={key}>{label}</ItemBadge>
+							))}
+						</div>
+					}
 				>
 					{/* Stop the click so the "+N" badge doesn't trigger the row's click. */}
 					<span
@@ -46,11 +56,17 @@ function OverflowBadges({
 						className={styles.overflow}
 						onClick={(e): void => e.stopPropagation()}
 					>
-						<Badge textTransform="none" variant="solid" color="secondary">
-							+{extra.length}
-						</Badge>
+						<ItemBadge testId="overflow-badges-more">+{extra.length}</ItemBadge>
 					</span>
 				</Tooltip>
+			)}
+			{isMeasuring && (
+				<div ref={measureRef} className={styles.measure} aria-hidden>
+					{items.map(({ key, label }) => (
+						<ItemBadge key={key}>{label}</ItemBadge>
+					))}
+					<ItemBadge>+{items.length}</ItemBadge>
+				</div>
 			)}
 		</div>
 	);

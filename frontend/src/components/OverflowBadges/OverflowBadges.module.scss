@@ -1,4 +1,5 @@
 .badges {
+	position: relative;
 	display: flex;
 	align-items: center;
 	gap: var(--spacing-2);
@@ -9,6 +10,17 @@
 
 .overflow {
 	flex-shrink: 0;
+}
+
+/* Lays every badge out at its natural width, off-screen, to size the visible row. */
+.measure {
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: flex;
+	width: max-content;
+	visibility: hidden;
+	pointer-events: none;
 }
 
 .extraBadges {
