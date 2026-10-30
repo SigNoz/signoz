@@ -196,6 +196,28 @@ func (provider *provider) Get(ctx context.Context, orgID valuer.UUID, cacheKey s
 	return errors.NewInternalf(errors.CodeInternal, "unrecognized: (value: \"%s\")", reflect.TypeOf(cachedData).String())
 }
 
+func (provider *provider) GetMany(ctx context.Context, orgID valuer.UUID, cacheKeys []string, dests []cachetypes.Cacheable) error {
+	if len(dests) != len(cacheKeys) {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "got %d destinations for %d keys", len(dests), len(cacheKeys))
+	}
+
+	var errs []error
+	for i, cacheKey := range cacheKeys {
+		err := provider.Get(ctx, orgID, cacheKey, dests[i])
+		if err == nil {
+			continue
+		}
+		dests[i] = nil
+		if !errors.Ast(err, errors.TypeNotFound) {
+			errs = append(errs, err)
+		}
+	}
+	if len(errs) == 0 {
+		return nil
+	}
+	return errors.Join(errs...)
+}
+
 func (provider *provider) Delete(ctx context.Context, orgID valuer.UUID, cacheKey string) {
 	_, span := provider.settings.Tracer().Start(ctx, "memory.delete", trace.WithAttributes(
 		attribute.String(semconv.AttributeDBSystem, "memory"),

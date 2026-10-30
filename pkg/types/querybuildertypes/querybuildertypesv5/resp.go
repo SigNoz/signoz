@@ -137,6 +137,28 @@ type TimeSeriesData struct {
 	Aggregations []*AggregationBucket `json:"aggregations" description:"One bucket per aggregation of the query. The order is not guaranteed; match buckets to aggregations by index."`
 }
 
+// FilterToTimeRange copies the aggregation and series structure keeping only
+// the values with startMs <= timestamp < endMs.
+func (t *TimeSeriesData) FilterToTimeRange(startMs, endMs uint64) *TimeSeriesData {
+	filtered := &TimeSeriesData{
+		QueryName:    t.QueryName,
+		Aggregations: make([]*AggregationBucket, 0, len(t.Aggregations)),
+	}
+	for _, aggBucket := range t.Aggregations {
+		filteredBucket := &AggregationBucket{
+			Index:  aggBucket.Index,
+			Alias:  aggBucket.Alias,
+			Meta:   aggBucket.Meta,
+			Series: make([]*TimeSeries, 0, len(aggBucket.Series)),
+		}
+		for _, series := range aggBucket.Series {
+			filteredBucket.Series = append(filteredBucket.Series, series.filterToTimeRange(startMs, endMs))
+		}
+		filtered.Aggregations = append(filtered.Aggregations, filteredBucket)
+	}
+	return filtered
+}
+
 type AggregationBucket struct {
 	Index  int             `json:"index" description:"The zero-based position of the aggregation in the query."`
 	Alias  string          `json:"alias" description:"The alias of the aggregation, or the internal name __result_N, with N its index, when no alias was given."`
@@ -257,6 +279,21 @@ func (ts *TimeSeries) EvaluableValues() []*TimeSeriesValue {
 		}
 	}
 	return result
+}
+
+// filterToTimeRange copies the series keeping only the values with
+// startMs <= timestamp < endMs.
+func (ts *TimeSeries) filterToTimeRange(startMs, endMs uint64) *TimeSeries {
+	filtered := &TimeSeries{
+		Labels: ts.Labels,
+		Values: make([]*TimeSeriesValue, 0, len(ts.Values)),
+	}
+	for _, value := range ts.Values {
+		if timestamp := uint64(value.Timestamp); timestamp >= startMs && timestamp < endMs {
+			filtered.Values = append(filtered.Values, value)
+		}
+	}
+	return filtered
 }
 
 type Label struct {
