@@ -1,0 +1,21 @@
+.row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.slider {
+	flex: 1;
+	min-width: 0;
+	// Cancel the slider's half-thumb track inset so it aligns with the other controls.
+	margin-inline: calc(var(--slider-thumb-width, 18px) / -2);
+}
+
+.value {
+	flex-shrink: 0;
+	min-width: 56px;
+	text-align: right;
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+	color: var(--l3-foreground);
+}

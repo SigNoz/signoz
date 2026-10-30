@@ -8,7 +8,8 @@ import Scatter from './Scatter';
 import {
 	buildSeries,
 	type ScatterStoryProps,
-	THRESHOLDS,
+	X_THRESHOLDS,
+	Y_THRESHOLDS,
 } from './Scatter.stories.mocks';
 import { ScatterAxisScale } from './types';
 import { buildScatterConfig, prepareScatterChartData } from './utils';
@@ -34,11 +35,18 @@ function ScatterStory(props: ScatterStoryProps): JSX.Element {
 				id: 'scatter-story',
 				series,
 				isDarkMode,
-				x: { unit: 'reqps', scale: xScale },
-				y: { unit: 'ms', scale: yScale },
+				x: {
+					unit: 'reqps',
+					scale: xScale,
+					thresholds: thresholds ? X_THRESHOLDS : undefined,
+				},
+				y: {
+					unit: 'ms',
+					scale: yScale,
+					thresholds: thresholds ? Y_THRESHOLDS : undefined,
+				},
 				pointSize: { fixed: pointSize, min: 4, max: pointSize * 4 },
 				fillOpacity,
-				thresholds: thresholds ? THRESHOLDS : undefined,
 			}),
 		[series, isDarkMode, xScale, yScale, pointSize, fillOpacity, thresholds],
 	);
@@ -141,7 +149,7 @@ export const SameX: Story = {
 	args: { groups: 3, pointsPerGroup: 50, shape: 'sameX' },
 };
 
-/** Horizontal line with label on the y axis; the scale stretches to include it. */
+/** Labelled lines on both axes; each scale stretches to include its line. */
 export const Thresholds: Story = {
 	args: { groups: 3, pointsPerGroup: 40, thresholds: true },
 };

@@ -6,7 +6,8 @@ export type NonAddOnField =
 	| QueryBuilderField.StepInterval
 	| QueryBuilderField.Functions
 	| QueryBuilderField.Formula
-	| QueryBuilderField.AdditionalQueries;
+	| QueryBuilderField.AdditionalQueries
+	| QueryBuilderField.TraceOperator;
 
 export type AddOnField = Exclude<QueryBuilderField, NonAddOnField>;
 

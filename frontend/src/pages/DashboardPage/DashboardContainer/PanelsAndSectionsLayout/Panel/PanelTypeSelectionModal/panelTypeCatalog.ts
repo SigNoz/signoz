@@ -40,6 +40,11 @@ const PANEL_TYPE_META: Record<PanelKind, PanelTypeMeta> = {
 		description: 'Compare values across categories',
 	},
 	'signoz/PieChartPanel': { group: 'compare', description: 'Share of a whole' },
+	'signoz/ScatterPlotPanel': {
+		group: 'compare',
+		description: 'Two values per group, plotted against each other',
+		isNew: true,
+	},
 	'signoz/HistogramPanel': {
 		group: 'distributions',
 		description: 'Distribution of values into buckets',
