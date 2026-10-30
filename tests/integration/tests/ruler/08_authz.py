@@ -255,7 +255,7 @@ def test_admin_allowed_on_route_policy_writes(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
-    assert response.json()["data"]["channels"] == [SEED_CHANNEL_ALT["name"]]
+    assert response.json()["data"]["channels"] == [SEED_CHANNEL_ALT["name"]], response.text
 
     response = requests.delete(
         signoz.self.host_configs["8080"].get(f"{ROUTE_POLICIES_URL}/{policy_id}"),
@@ -620,7 +620,7 @@ def test_route_policy_channel_changes_follow_channel_attach_and_detach(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
-    assert response.json()["data"]["channels"] == [SEED_CHANNEL_ALT["name"]]
+    assert response.json()["data"]["channels"] == [SEED_CHANNEL_ALT["name"]], response.text
 
     response = requests.delete(
         signoz.self.host_configs["8080"].get(f"{ROUTE_POLICIES_URL}/{policy_id}"),
