@@ -51,14 +51,14 @@ func TestBuildRelatedLinks(t *testing.T) {
 	}
 }
 
-func TestBuildRelatedLinksFromTemplateData(t *testing.T) {
+func TestResolveRelatedLinksForTemplate(t *testing.T) {
 	testCases := []struct {
 		name     string
 		alert    any
 		expected []RelatedLink
 	}{
 		{
-			name:  "ChannelAlert_Both_LogsFirst",
+			name:  "ChannelTemplate_Both_LogsFirst",
 			alert: template.Alert{Annotations: template.KV{"related_traces": "https://signoz.io/traces-explorer?d=4", "related_logs": "https://signoz.io/logs/logs-explorer?d=4"}},
 			expected: []RelatedLink{
 				{Label: "View Related Logs", URL: "https://signoz.io/logs/logs-explorer?d=4"},
@@ -66,32 +66,32 @@ func TestBuildRelatedLinksFromTemplateData(t *testing.T) {
 			},
 		},
 		{
-			name:     "ChannelAlertPointer_TracesOnly",
+			name:     "ChannelTemplate_Pointer_TracesOnly",
 			alert:    &template.Alert{Annotations: template.KV{"related_traces": "https://signoz.io/traces-explorer?e=5"}},
 			expected: []RelatedLink{{Label: "View Related Traces", URL: "https://signoz.io/traces-explorer?e=5"}},
 		},
 		{
-			name:     "ChannelAlertNilPointer_NoLinks",
+			name:     "ChannelTemplate_NilPointer_NoLinks",
 			alert:    (*template.Alert)(nil),
 			expected: nil,
 		},
 		{
-			name:     "RuleData_AnnotationsKV",
+			name:     "RuleTemplate_AnnotationsKV",
 			alert:    map[string]any{"annotations": template.KV{"related_logs": "https://signoz.io/logs/logs-explorer?f=6"}, "labels": template.KV{"alertname": "a"}},
 			expected: []RelatedLink{{Label: "View Related Logs", URL: "https://signoz.io/logs/logs-explorer?f=6"}},
 		},
 		{
-			name:     "RuleData_AnnotationsMapStringAny",
+			name:     "RuleTemplate_AnnotationsMapStringAny",
 			alert:    map[string]any{"annotations": map[string]any{"related_traces": "https://signoz.io/traces-explorer?g=7"}},
 			expected: []RelatedLink{{Label: "View Related Traces", URL: "https://signoz.io/traces-explorer?g=7"}},
 		},
 		{
-			name:     "RuleData_AnnotationsMapStringString",
+			name:     "RuleTemplate_AnnotationsMapStringString",
 			alert:    map[string]any{"annotations": map[string]string{"related_logs": "https://signoz.io/logs/logs-explorer?h=8"}},
 			expected: []RelatedLink{{Label: "View Related Logs", URL: "https://signoz.io/logs/logs-explorer?h=8"}},
 		},
 		{
-			name:  "RuleData_FlattenedKeysOnly",
+			name:  "RuleTemplate_FlattenedKeysOnly",
 			alert: map[string]any{"related_logs": "https://signoz.io/logs/logs-explorer?i=9", "related_traces": "https://signoz.io/traces-explorer?i=9"},
 			expected: []RelatedLink{
 				{Label: "View Related Logs", URL: "https://signoz.io/logs/logs-explorer?i=9"},
@@ -99,12 +99,12 @@ func TestBuildRelatedLinksFromTemplateData(t *testing.T) {
 			},
 		},
 		{
-			name:     "RuleData_AnnotationsEmpty_FallsBackToFlattened",
+			name:     "RuleTemplate_AnnotationsEmpty_FallsBackToFlattened",
 			alert:    map[string]any{"annotations": template.KV{}, "related_logs": "https://signoz.io/logs/logs-explorer?j=10"},
 			expected: []RelatedLink{{Label: "View Related Logs", URL: "https://signoz.io/logs/logs-explorer?j=10"}},
 		},
 		{
-			name:     "RuleData_NonStringValues_Ignored",
+			name:     "RuleTemplate_NonStringValues_Ignored",
 			alert:    map[string]any{"annotations": map[string]any{"related_logs": 42}, "related_traces": nil},
 			expected: nil,
 		},
@@ -122,7 +122,7 @@ func TestBuildRelatedLinksFromTemplateData(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			assert.Equal(t, testCase.expected, buildRelatedLinksFromTemplateData(testCase.alert))
+			assert.Equal(t, testCase.expected, resolveRelatedLinksForTemplate(testCase.alert))
 		})
 	}
 }

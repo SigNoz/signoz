@@ -24,10 +24,8 @@ func BuildRelatedLinks(annotations model.LabelSet) []RelatedLink {
 	return newRelatedLinks(string(annotations[AnnotationRelatedLogs]), string(annotations[AnnotationRelatedTraces]))
 }
 
-// buildRelatedLinksFromTemplateData backs the relatedLinks template func. Channel
-// templates pass upstream's template.Alert; rule templates pass the preprocessed
-// map, which keeps annotations under "annotations" and flattens them to the top.
-func buildRelatedLinksFromTemplateData(alert any) []RelatedLink {
+// resolveRelatedLinksForTemplate backs the relatedLinks template func: channel templates pass template.Alert, rule templates pass the preprocessed map.
+func resolveRelatedLinksForTemplate(alert any) []RelatedLink {
 	switch a := alert.(type) {
 	case template.Alert:
 		return newRelatedLinks(a.Annotations[AnnotationRelatedLogs], a.Annotations[AnnotationRelatedTraces])

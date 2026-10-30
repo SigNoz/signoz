@@ -19,7 +19,7 @@ func AdditionalFuncMap() tmpltext.FuncMap {
 		"urlescape": func(value string) tmplhtml.HTML {
 			return tmplhtml.HTML(url.QueryEscape(value))
 		},
-		"relatedLinks": buildRelatedLinksFromTemplateData,
+		"relatedLinks": resolveRelatedLinksForTemplate,
 	}
 }
 
