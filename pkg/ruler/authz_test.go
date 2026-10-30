@@ -1,12 +1,29 @@
 package ruler
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes/alertmanagertypestest"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
+
+type stubRuler struct {
+	Ruler
+	maintenanceStore alertmanagertypes.MaintenanceStore
+}
+
+func (stub stubRuler) MaintenanceStore() alertmanagertypes.MaintenanceStore {
+	return stub.maintenanceStore
+}
 
 func TestDiffLinks(t *testing.T) {
 	testCases := []struct {
@@ -152,6 +169,47 @@ func TestDowntimeRuleIDsExtractor(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			ids, err := DowntimeRuleIDsExtractor.Fn(coretypes.ExtractorContext{RequestBody: []byte(testCase.body)})
+
+			require.NoError(t, err)
+			assert.Equal(t, testCase.wantIDs, ids)
+		})
+	}
+}
+
+func TestDowntimeDiffExtractorScopesStoreByOrg(t *testing.T) {
+	orgID := valuer.GenerateUUID()
+	scheduleID := valuer.GenerateUUID()
+
+	testCases := []struct {
+		name      string
+		side      diffSide
+		hasClaims bool
+		wantIDs   []string
+		wantErr   bool
+	}{
+		{name: "AttachSide_UsesClaimsOrg", side: attachedSide, hasClaims: true, wantIDs: []string{"r2"}},
+		{name: "DetachSide_UsesClaimsOrg", side: detachedSide, hasClaims: true, wantIDs: []string{"r1"}},
+		{name: "NoClaims_Error", side: attachedSide, wantErr: true},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			store := alertmanagertypestest.NewMockMaintenanceStore(t)
+			if testCase.hasClaims {
+				store.EXPECT().GetPlannedMaintenanceByID(mock.Anything, orgID.StringValue(), scheduleID).Return(&alertmanagertypes.PlannedMaintenance{RuleIDs: []string{"r1"}}, nil)
+			}
+
+			req := httptest.NewRequest(http.MethodPut, "/api/v1/downtime_schedules/"+scheduleID.StringValue(), nil)
+			req = mux.SetURLVars(req, map[string]string{"id": scheduleID.StringValue()})
+			if testCase.hasClaims {
+				req = req.WithContext(authtypes.NewContextWithClaims(req.Context(), authtypes.Claims{OrgID: orgID.StringValue()}))
+			}
+
+			ids, err := newDowntimeDiffExtractor(stubRuler{maintenanceStore: store}, testCase.side).Fn(coretypes.ExtractorContext{Request: req, RequestBody: []byte(`{"alertIds": ["r2"]}`)})
+			if testCase.wantErr {
+				require.Error(t, err)
+				return
+			}
 
 			require.NoError(t, err)
 			assert.Equal(t, testCase.wantIDs, ids)

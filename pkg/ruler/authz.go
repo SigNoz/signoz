@@ -48,12 +48,18 @@ func newDowntimeDiffExtractor(rulerService Ruler, side diffSide) coretypes.Resou
 			return nil, nil
 		}
 
+		ctx := ec.Request.Context()
+		orgID, err := orgIDFromContext(ctx)
+		if err != nil {
+			return nil, err
+		}
+
 		scheduleID, err := valuer.NewUUID(mux.Vars(ec.Request)["id"])
 		if err != nil {
 			return nil, err
 		}
 
-		stored, err := rulerService.MaintenanceStore().GetPlannedMaintenanceByID(ec.Request.Context(), scheduleID)
+		stored, err := rulerService.MaintenanceStore().GetPlannedMaintenanceByID(ctx, orgID.StringValue(), scheduleID)
 		if err != nil {
 			return nil, err
 		}

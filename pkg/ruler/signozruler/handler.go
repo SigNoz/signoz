@@ -283,7 +283,13 @@ func (handler *handler) GetDowntimeScheduleByID(rw http.ResponseWriter, req *htt
 		return
 	}
 
-	schedule, err := handler.ruler.MaintenanceStore().GetPlannedMaintenanceByID(ctx, id)
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	schedule, err := handler.ruler.MaintenanceStore().GetPlannedMaintenanceByID(ctx, claims.OrgID, id)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -356,7 +362,13 @@ func (handler *handler) DeleteDowntimeScheduleByID(rw http.ResponseWriter, req *
 		return
 	}
 
-	err = handler.ruler.MaintenanceStore().DeletePlannedMaintenance(ctx, id)
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	err = handler.ruler.MaintenanceStore().DeletePlannedMaintenance(ctx, claims.OrgID, id)
 	if err != nil {
 		render.Error(rw, err)
 		return
