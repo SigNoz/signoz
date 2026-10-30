@@ -10,6 +10,10 @@ export const computeOverflowBadgesLayout = (
 	badgeWidths: number[],
 	overflowWidth: number,
 ): OverflowBadgesLayout => {
+	if (badgeWidths.length === 0) {
+		return { visibleCount: 0 };
+	}
+
 	let used = 0;
 	let visibleCount = 0;
 	for (let i = 0; i < badgeWidths.length; i++) {

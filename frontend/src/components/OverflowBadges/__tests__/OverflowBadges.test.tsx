@@ -35,6 +35,12 @@ describe('computeOverflowBadgesLayout', () => {
 			firstMaxWidth: 100,
 		});
 	});
+
+	it('returns visibleCount 0 when badgeWidths is empty', () => {
+		expect(computeOverflowBadgesLayout(100, 4, [], 30)).toStrictEqual({
+			visibleCount: 0,
+		});
+	});
 });
 
 describe('OverflowBadges', () => {

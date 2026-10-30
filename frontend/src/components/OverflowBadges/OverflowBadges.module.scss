@@ -10,6 +10,7 @@
 
 .overflow {
 	flex-shrink: 0;
+	--badge-max-width: none;
 }
 
 /* Lays every badge out at its natural width, off-screen, to size the visible row. */

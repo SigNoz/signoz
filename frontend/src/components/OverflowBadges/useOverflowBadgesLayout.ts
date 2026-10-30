@@ -21,7 +21,7 @@ export function useOverflowBadgesLayout(
 	const [measurement, setMeasurement] =
 		useState<OverflowBadgesMeasurement | null>(null);
 	const [available, setAvailable] = useState(0);
-	const isMeasuring = measurement?.itemsKey !== itemsKey;
+	const isMeasuring = items.length > 0 && measurement?.itemsKey !== itemsKey;
 
 	useLayoutEffect(() => {
 		const container = containerRef.current;
