@@ -378,6 +378,7 @@ function TraceOperatorEditor({
 					theme={isDarkMode ? copilot : githubLight}
 					onChange={handleChange}
 					onUpdate={handleUpdate}
+					data-testid="trace-operator-editor"
 					className={cx('query-where-clause-editor', {
 						isValid: validation.isValid === true,
 						hasErrors: validation.errors.length > 0,

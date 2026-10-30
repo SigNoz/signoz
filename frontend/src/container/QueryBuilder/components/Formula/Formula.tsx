@@ -112,7 +112,7 @@ export function Formula({
 	);
 
 	return (
-		<Row gutter={[0, 15]}>
+		<Row gutter={[0, 15]} data-testid={`formula-${formula.queryName}`}>
 			<QBEntityOptions
 				isCollapsed={isCollapse}
 				showFunctions={false}
@@ -130,6 +130,7 @@ export function Formula({
 						<Input.TextArea
 							name="expression"
 							className="formula-expression"
+							data-testid="formula-expression"
 							onChange={handleChange}
 							size="middle"
 							value={formula.expression}
@@ -141,6 +142,7 @@ export function Formula({
 						<Input
 							name="legend"
 							className="formula-legend"
+							data-testid="formula-legend"
 							onChange={handleChange}
 							size="middle"
 							value={formula.legend}
