@@ -63,6 +63,9 @@ interface CustomTimePickerProps {
 	customDateTimeVisible?: boolean;
 	setCustomDTPickerVisible?: Dispatch<SetStateAction<boolean>>;
 	onCustomDateHandler?: (dateTimeRange: DateTimeRangeType) => void;
+	/** When true, shows the "Around a time" picker panel */
+	aroundTimeVisible?: boolean;
+	setAroundTimeVisible?: Dispatch<SetStateAction<boolean>>;
 	showLiveLogs?: boolean;
 	onGoLive?: () => void;
 	onExitLiveLogs?: () => void;
@@ -90,6 +93,8 @@ function CustomTimePicker({
 	customDateTimeVisible,
 	setCustomDTPickerVisible,
 	onCustomDateHandler,
+	aroundTimeVisible,
+	setAroundTimeVisible,
 	onGoLive,
 	onExitLiveLogs,
 	showLiveLogs,
@@ -277,6 +282,7 @@ function CustomTimePicker({
 
 		if (!newOpen) {
 			setCustomDTPickerVisible?.(false);
+			setAroundTimeVisible?.(false);
 			setActiveView('datetime');
 
 			if (showLiveLogs) {
@@ -407,7 +413,14 @@ function CustomTimePicker({
 
 	const handleSelect = (label: string, value: string): void => {
 		if (value === 'custom') {
+			setAroundTimeVisible?.(false);
 			setCustomDTPickerVisible?.(true);
+			return;
+		}
+
+		if (value === 'around') {
+			setCustomDTPickerVisible?.(false);
+			setAroundTimeVisible?.(true);
 			return;
 		}
 
@@ -488,6 +501,7 @@ function CustomTimePicker({
 
 		setOpen(false);
 		setCustomDTPickerVisible?.(false);
+		setAroundTimeVisible?.(false);
 
 		if (showLiveLogs) {
 			setInputValue('Live');
@@ -563,10 +577,13 @@ function CustomTimePicker({
 					content={
 						newPopover ? (
 							<CustomTimePickerPopoverContent
+								key={timezone.value}
 								isLiveLogsEnabled={!!showLiveLogs}
 								setIsOpen={setOpen}
 								setCustomDTPickerVisible={defaultTo(setCustomDTPickerVisible, noop)}
 								customDateTimeVisible={defaultTo(customDateTimeVisible, false)}
+								aroundTimeVisible={defaultTo(aroundTimeVisible, false)}
+								setAroundTimeVisible={defaultTo(setAroundTimeVisible, noop)}
 								onCustomDateHandler={defaultTo(onCustomDateHandler, noop)}
 								onSelectHandler={handleSelect}
 								onTimezoneChange={handleTimezoneChange}
@@ -681,6 +698,8 @@ CustomTimePicker.defaultProps = {
 	customDateTimeVisible: false,
 	setCustomDTPickerVisible: noop,
 	onCustomDateHandler: noop,
+	aroundTimeVisible: false,
+	setAroundTimeVisible: noop,
 	onGoLive: noop,
 	onCustomTimeStatusUpdate: noop,
 	onExitLiveLogs: noop,
