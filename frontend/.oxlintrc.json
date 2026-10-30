@@ -294,6 +294,8 @@
     // Forces useDashboardFetchRequired() outside the root V2 pages (allowlisted in overrides below)
     "signoz/no-msw-in-story-file": "error",
     // Bans msw imports in *.stories.tsx; handlers/mock data belong in the sibling .stories.mocks.tsx
+    "signoz/no-direct-react-router-import": "error",
+    // Steers call sites to the src/lib/router facade (allowlisted in overrides below)
     "no-restricted-globals": [
       "error",
       {
@@ -588,6 +590,23 @@
       ],
       "rules": {
         "no-redeclare": "off"
+      }
+    },
+    {
+      // The react-router allowlist: the facade itself, the route table, `useSafeNavigate`,
+      // the history singleton and the test and story router mounts. Test files are
+      // deliberately absent: they render at a route or use tests/router-mocks.
+      "files": [
+        "src/lib/router/**",
+        "src/AppRoutes/**",
+        "src/hooks/useSafeNavigate.ts",
+        "src/lib/history.ts",
+        "src/tests/router.tsx",
+        "src/storybook/providers/StorybookProviders.tsx",
+        "src/storybook/renderAtRoute.tsx"
+      ],
+      "rules": {
+        "signoz/no-direct-react-router-import": "off"
       }
     }
   ]

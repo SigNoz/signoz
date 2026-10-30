@@ -8,6 +8,7 @@ import { AppProvider } from 'providers/App/App';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import store from 'store';
+import { mockAppLocation } from 'tests/router-mocks';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
@@ -19,12 +20,9 @@ import {
 import { WidgetGraphComponentProps } from 'container/WidgetCard/Card/types';
 import WidgetGraphComponent from 'container/WidgetCard/Card/WidgetGraphComponent';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string } => ({
-		pathname: `${process.env.FRONTEND_API_ENDPOINT}/${ROUTES.DASHBOARD}/624652db-6097-42f5-bbca-e9012901db00`,
-	}),
-}));
+mockAppLocation({
+	pathname: `${process.env.FRONTEND_API_ENDPOINT}/${ROUTES.DASHBOARD}/624652db-6097-42f5-bbca-e9012901db00`,
+});
 
 jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({

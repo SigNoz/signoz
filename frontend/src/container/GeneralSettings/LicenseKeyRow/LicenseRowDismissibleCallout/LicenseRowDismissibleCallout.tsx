@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { AppLink } from 'lib/router/AppLink';
 import { Callout } from '@signozhq/ui/callout';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
@@ -55,21 +55,21 @@ function LicenseRowDismissibleCallout(): JSX.Element | null {
 						{' '}
 						Find your{' '}
 						{hasServiceAccountsAccess && (
-							<Link
+							<AppLink
 								to={ROUTES.SERVICE_ACCOUNTS_SETTINGS}
 								className="license-key-callout__link"
 							>
 								Service account here
-							</Link>
+							</AppLink>
 						)}
 						{hasServiceAccountsAccess && hasIngestionAccess && ' and '}
 						{hasIngestionAccess && (
-							<Link
+							<AppLink
 								to={ROUTES.INGESTION_SETTINGS}
 								className="license-key-callout__link"
 							>
 								Ingestion key here
-							</Link>
+							</AppLink>
 						)}
 						.
 					</>

@@ -298,7 +298,8 @@ export default function ChatInput({
 		(value: string, caret: number) => {
 			const beforeCaret = value.slice(0, caret);
 			const atIndex = beforeCaret.lastIndexOf('@');
-			if (atIndex < 0) {
+			// `@` only triggers at a word start, so words containing `@` stay plain text.
+			if (atIndex < 0 || /\S/.test(beforeCaret.charAt(atIndex - 1))) {
 				setIsContextPickerOpen(false);
 				setMentionRange(null);
 				return;

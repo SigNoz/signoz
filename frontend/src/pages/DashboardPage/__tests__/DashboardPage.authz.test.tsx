@@ -6,19 +6,16 @@ import {
 	setupAuthzAdmin,
 	setupAuthzDenyAll,
 } from 'lib/authz/utils/authz-test-utils';
+import { mockAppParams } from 'tests/router-mocks';
 
 import DashboardPage from '../DashboardPage';
 
 const DASHBOARD_ID = 'dash-1';
 const DASHBOARD_URL = `http://localhost/api/v2/dashboards/${DASHBOARD_ID}`;
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useParams: (): { dashboardId: string } => ({ dashboardId: DASHBOARD_ID }),
-}));
-
 describe('DashboardPage - AuthZ', () => {
 	beforeEach(() => {
+		mockAppParams({ dashboardId: DASHBOARD_ID });
 		server.use(setupAuthzAdmin());
 	});
 

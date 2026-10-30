@@ -86,6 +86,13 @@ overrides:
  #      typescript-plugin-css-modules > postcss-load-config@3 (^1.10.2)
  # remove: blocked — babel-plugin-macros 3.1.0 (latest) still uses cosmiconfig@7
  yaml@>=1.0.0 <1.10.3: '>=1.10.3 <2'
+ # via: jest (@jest/core, @jest/console, jest-config) declares @types/node '*',
+ #      which kept 16.18.25 next to the direct ^22
+ # remove: once `pnpm dedupe` passes trustPolicy and leaves one @types/node
+ '@types/node': '$@types/node'
 trustPolicy: no-downgrade
 trustPolicyExclude:
  - 'semver@6.3.1 || 5.7.2'
+ # via: @types/node@22 (undici-types ~6.21.0, no provenance)
+ # remove: upgrade @types/node to >=24 (undici-types 7.x has provenance)
+ - 'undici-types@6.21.0'

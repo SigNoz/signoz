@@ -1,5 +1,4 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { MemoryRouter } from 'react-router-dom';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { render, RenderResult, screen } from '@testing-library/react';
 import TriggeredAlerts from 'container/TriggeredAlerts';
@@ -7,6 +6,7 @@ import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { AppContext } from 'providers/App/App';
 import TimezoneProvider from 'providers/Timezone';
 import { onNuqsUrlUpdate, resetNuqsState } from 'tests/nuqs-helpers';
+import { TestRouter } from 'tests/router';
 import { getAppContextMock } from 'tests/test-utils';
 
 interface RenderOptions {
@@ -31,7 +31,7 @@ export function renderTriggeredAlerts(
 	});
 
 	return render(
-		<MemoryRouter initialEntries={[initialRoute]}>
+		<TestRouter initialRoute={initialRoute}>
 			<NuqsTestingAdapter
 				searchParams={initialSearch}
 				onUrlUpdate={onNuqsUrlUpdate}
@@ -50,7 +50,7 @@ export function renderTriggeredAlerts(
 					</AppContext.Provider>
 				</QueryClientProvider>
 			</NuqsTestingAdapter>
-		</MemoryRouter>,
+		</TestRouter>,
 	);
 }
 

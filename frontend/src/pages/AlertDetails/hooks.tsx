@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useMutation, useQueryClient, useQuery } from 'react-query';
-import { generatePath } from 'react-router-dom';
 import { TablePaginationConfig, TableProps } from 'antd';
 import type { FilterValue, SorterResult } from 'antd/es/table/interface';
 import { patchRulePartial } from 'api/alerts/patchRulePartial';
@@ -46,7 +45,8 @@ import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constan
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
-import history from 'lib/history';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
+import { navigate } from 'lib/router/navigation';
 import { History, Table } from '@signozhq/icons';
 import EditRules from 'pages/EditRules';
 import BetaTag from 'periscope/components/BetaTag/BetaTag';
@@ -119,7 +119,7 @@ export const useRouteTabUtils = (): { routes: TabRoutes[] } => {
 				return '';
 		}
 
-		return `${generatePath(route)}?${params}`;
+		return `${buildRoutePath(route)}?${params}`;
 	};
 
 	const routes = [
@@ -502,7 +502,7 @@ export const useAlertRuleClone = ({
 				await invalidateListRules(queryClient);
 
 				params.set(QueryParams.ruleId, response.data.id);
-				history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
+				navigate(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 			},
 			onError: (error) =>
 				showErrorModal(
@@ -591,7 +591,7 @@ export const useAlertRuleDelete = ({
 					message: `Success`,
 				});
 
-				history.push(ROUTES.LIST_ALL_ALERT);
+				navigate(ROUTES.LIST_ALL_ALERT);
 			},
 			onError: (error) =>
 				showErrorModal(

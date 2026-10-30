@@ -1,20 +1,12 @@
 import { useState } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import dayjs from 'dayjs';
+import { mockAppLocation } from 'tests/router-mocks';
 import * as timeUtils from 'utils/timeUtils';
 
 import CustomTimePicker from './CustomTimePicker';
 
-jest.mock('react-router-dom', () => {
-	const actual = jest.requireActual('react-router-dom');
-
-	return {
-		...actual,
-		useLocation: jest.fn().mockReturnValue({
-			pathname: '/test-path',
-		}),
-	};
-});
+mockAppLocation({ pathname: '/test-path' });
 
 jest.mock('react-redux', () => ({
 	...jest.requireActual('react-redux'),

@@ -1,9 +1,9 @@
 import { useMutation } from 'react-query';
-import { generatePath } from 'react-router-dom';
 import { toast } from '@signozhq/ui/sonner';
 import logEvent from 'api/common/logEvent';
 import { cloneDashboardV2 } from 'api/generated/services/dashboard';
 import ROUTES from 'constants/routes';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
@@ -32,7 +32,7 @@ export function useCloneDashboardAction({
 				dashboardId,
 			});
 			safeNavigate(
-				generatePath(ROUTES.DASHBOARD, { dashboardId: response.data.id }),
+				buildRoutePath(ROUTES.DASHBOARD, { dashboardId: response.data.id }),
 			);
 		},
 		onError: (error: APIError) => {
