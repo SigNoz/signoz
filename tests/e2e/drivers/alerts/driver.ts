@@ -102,8 +102,10 @@ export interface AlertList {
 	rowFor(name: string): Locator;
 	/** The STATE cell of `ruleId`'s row — `OK`, `Disabled`, `Firing`. */
 	stateCell(ruleId: string): Locator;
+	/** The DSL search box's editable content (a CodeMirror editor). */
 	search(): Locator;
-	searchFor(text: string): Promise<void>;
+	/** Replace the DSL draft and run it, as Run query does. */
+	runSearch(query: string): Promise<void>;
 	openRowActions(name: string): Promise<void>;
 	openFirstRowActions(): Promise<void>;
 	menuItem(label: string | RegExp): Locator;
@@ -400,11 +402,18 @@ export function alertsDriver(page: Page): Alerts {
 		rows: () => page.locator('tbody tr'),
 		rowFor: (name) => page.locator('tbody tr', { hasText: name }).first(),
 		stateCell: (ruleId) => page.getByTestId(`alert-row-${ruleId}-state`),
-		search: () => page.getByTestId('list-alerts-search-input'),
+		search: () =>
+			page.getByTestId('alert-rules-list-search').locator('.cm-content'),
 
-		searchFor: async (text) => {
-			await list.search().fill(text);
-			await expect(page).toHaveURL(new RegExp(`search=${text}`));
+		runSearch: async (query) => {
+			await list.search().click();
+			await page.keyboard.press('ControlOrMeta+A');
+			await page.keyboard.insertText(query);
+			await expect(list.search()).toHaveText(query);
+			await page.getByTestId('alert-rules-list-search-submit').click();
+			await page.waitForURL(
+				(url) => (url.searchParams.get('query') ?? '') === query.trim(),
+			);
 		},
 
 		openRowActions: async (name) => {

@@ -38,6 +38,7 @@ export const test = withAlerts(
 
 export { expect } from '../kit';
 export { alertsDriver, HISTORY_ENDPOINTS, withAlerts } from './driver';
+export { nameContains } from '../dashboard-list';
 export type { Alerts, HistoryEndpoint } from './driver';
 export * from './constants';
 export type { TimelineItem, TimelineResponse } from './types';

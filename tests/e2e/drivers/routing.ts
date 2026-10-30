@@ -265,7 +265,7 @@ export function routingDriver(page: Page): Routing {
 			landmark: () =>
 				page
 					.getByRole('heading', { name: 'Alert Rules' })
-					.or(page.getByTestId('list-alerts-search-input')),
+					.or(page.getByTestId('alert-rules-list-search')),
 		},
 
 		settings: {

@@ -62,10 +62,10 @@ tests/e2e/
 ## Writing a spec
 
 ```ts
-import { expect, test } from '../../drivers/alerts';
+import { expect, nameContains, test } from '../../drivers/alerts';
 
 test('TC-01 …', async ({ alerts, alertList }) => {
-  await alerts.list.goto({ search: alertList.namePrefix });
+  await alerts.list.goto({ query: nameContains(alertList.namePrefix) });
   await expect(alerts.list.rows()).toHaveCount(10);
 });
 ```
