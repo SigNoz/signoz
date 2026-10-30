@@ -33,7 +33,7 @@ func expectBaseColumnEvolutionsQuery(mock cmock.ClickConnMockCommon, rows [][]an
 func TestGetBaseColumnEvolutionsReadsCache(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := mockTelemetryStore.Mock()
-	store := NewSchemaMetadataStore(mockTelemetryStore)
+	store := NewSchemaMetadataStore(mockTelemetryStore, 0)
 
 	releaseTime := time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)
 	expectBaseColumnEvolutionsQuery(mock, [][]any{
@@ -53,7 +53,7 @@ func TestGetBaseColumnEvolutionsReadsCache(t *testing.T) {
 func TestGetBaseColumnEvolutionsRefetchesEmptyResult(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := mockTelemetryStore.Mock()
-	store := NewSchemaMetadataStore(mockTelemetryStore)
+	store := NewSchemaMetadataStore(mockTelemetryStore, 0)
 	get := func() []*telemetrytypes.EvolutionEntry {
 		entries, err := store.GetBaseColumnEvolutions(context.Background(), telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
 		require.NoError(t, err)
@@ -68,5 +68,21 @@ func TestGetBaseColumnEvolutionsRefetchesEmptyResult(t *testing.T) {
 	})
 	assert.Len(t, get(), 1)
 	assert.Len(t, get(), 1, "a found result is cached")
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestGetBaseColumnEvolutionsRefetchesExpiredEntry(t *testing.T) {
+	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	mock := mockTelemetryStore.Mock()
+	store := NewSchemaMetadataStore(mockTelemetryStore, time.Nanosecond)
+
+	rows := [][]any{{"traces", "attributes", "JSON()", "attribute", "__all__", uint32(0), float64(time.Now().UnixNano())}}
+	expectBaseColumnEvolutionsQuery(mock, rows)
+	expectBaseColumnEvolutionsQuery(mock, rows)
+	for range 2 {
+		entries, err := store.GetBaseColumnEvolutions(context.Background(), telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
+		require.NoError(t, err)
+		assert.Len(t, entries, 1)
+	}
 	require.NoError(t, mock.ExpectationsWereMet())
 }

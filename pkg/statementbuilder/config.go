@@ -1,6 +1,8 @@
 package statementbuilder
 
 import (
+	"time"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 )
 
@@ -21,6 +23,9 @@ type Config struct {
 	// SearchMaxScanRowsJSONBody is the same budget for body_v2, where each row costs far
 	// more: toString() rebuilds every document and no skip index prunes (0 disables).
 	SearchMaxScanRowsJSONBody int64 `yaml:"search_max_scan_rows_json_body" mapstructure:"search_max_scan_rows_json_body"`
+	// SchemaMetadataStoreCacheTTL is how long the schema metadata store caches what it
+	// found; 0 caches it for the life of the process.
+	SchemaMetadataStoreCacheTTL time.Duration `yaml:"schema_metadata_store_cache_ttl" mapstructure:"schema_metadata_store_cache_ttl"`
 }
 
 func NewConfig() Config {
@@ -44,6 +49,9 @@ func (c Config) Validate() error {
 	}
 	if c.SearchMaxScanRowsJSONBody < 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "search_max_scan_rows_json_body must not be negative, got %v", c.SearchMaxScanRowsJSONBody)
+	}
+	if c.SchemaMetadataStoreCacheTTL < 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "schema_metadata_store_cache_ttl must not be negative, got %v", c.SchemaMetadataStoreCacheTTL)
 	}
 	return nil
 }

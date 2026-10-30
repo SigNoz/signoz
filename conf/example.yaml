@@ -178,6 +178,9 @@ querier:
   # range with padding to include slightly delayed log exports. Logs only; set
   # to 0 to disable.
   log_trace_id_window_padding: 5m
+  # How long the schema metadata store caches what it found; 0 caches it for the
+  # life of the process.
+  schema_metadata_store_cache_ttl: 0s
 
 ##################### TelemetryStore #####################
 telemetrystore:

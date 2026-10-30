@@ -10,7 +10,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/statementbuilder"
 	"github.com/SigNoz/signoz/pkg/statementbuilder/resourcefilter"
-	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -37,12 +36,13 @@ var _ qbtypes.TraceOperatorStatementBuilder = (*traceOperatorStatementBuilder)(n
 func NewOperatorFactory(
 	telemetryStore telemetrystore.TelemetryStore,
 	metadataStore telemetrytypes.MetadataStore,
+	schemaMetadataStore telemetrytypes.SchemaMetadataStore,
 	fl flagger.Flagger,
 ) factory.ProviderFactory[qbtypes.TraceOperatorStatementBuilder, statementbuilder.Config] {
 	return factory.NewProviderFactory(
 		factory.MustNewName("traceoperator"),
 		func(_ context.Context, settings factory.ProviderSettings, cfg statementbuilder.Config) (qbtypes.TraceOperatorStatementBuilder, error) {
-			storage := tracestelemetryschema.NewStorage(telemetrymetadata.NewSchemaMetadataStore(telemetryStore))
+			storage := tracestelemetryschema.NewStorage(schemaMetadataStore)
 			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, storage, fl, telemetrytypes.SignalTraces)
 			traceStmtBuilder := NewTraceQueryStatementBuilder(
 				settings, metadataStore, storage, aggExprRewriter, telemetryStore, fl,

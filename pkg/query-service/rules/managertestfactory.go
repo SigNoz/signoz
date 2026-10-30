@@ -114,13 +114,14 @@ func NewTestManager(t *testing.T, testOpts *TestManagerOptions) *Manager {
 
 	// Create querier with test values
 	metadataStore := telemetrymetadata.NewTelemetryMetaStore(providerSettings, telemetryStore, flagger)
+	schemaMetadataStore := telemetrymetadata.NewSchemaMetadataStore(telemetryStore, 0)
 	cfg := statementbuilder.Config{}
 	ctx := context.Background()
-	traceStmtBuilder, err := tracesstatementbuilder.NewFactory(telemetryStore, metadataStore, flagger).New(ctx, providerSettings, cfg)
+	traceStmtBuilder, err := tracesstatementbuilder.NewFactory(telemetryStore, metadataStore, schemaMetadataStore, flagger).New(ctx, providerSettings, cfg)
 	require.NoError(t, err)
-	aiTraceStmtBuilder, err := aistatementbuilder.NewFactory(telemetryStore, metadataStore, flagger).New(ctx, providerSettings, cfg)
+	aiTraceStmtBuilder, err := aistatementbuilder.NewFactory(telemetryStore, metadataStore, schemaMetadataStore, flagger).New(ctx, providerSettings, cfg)
 	require.NoError(t, err)
-	traceOperatorStmtBuilder, err := tracesstatementbuilder.NewOperatorFactory(telemetryStore, metadataStore, flagger).New(ctx, providerSettings, cfg)
+	traceOperatorStmtBuilder, err := tracesstatementbuilder.NewOperatorFactory(telemetryStore, metadataStore, schemaMetadataStore, flagger).New(ctx, providerSettings, cfg)
 	require.NoError(t, err)
 	logStmtBuilder, err := logsstatementbuilder.NewFactory(telemetryStore, metadataStore, flagger).New(ctx, providerSettings, cfg)
 	require.NoError(t, err)

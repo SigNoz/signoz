@@ -13,7 +13,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
@@ -65,11 +64,11 @@ type traceStore struct {
 	flagger        flagger.Flagger
 }
 
-func NewTraceStore(ts telemetrystore.TelemetryStore, metadataStore telemetrytypes.MetadataStore, fl flagger.Flagger) *traceStore {
+func NewTraceStore(ts telemetrystore.TelemetryStore, metadataStore telemetrytypes.MetadataStore, schemaMetadataStore telemetrytypes.SchemaMetadataStore, fl flagger.Flagger) *traceStore {
 	return &traceStore{
 		telemetryStore: ts,
 		metadataStore:  metadataStore,
-		storage:        tracestelemetryschema.NewStorage(telemetrymetadata.NewSchemaMetadataStore(ts)),
+		storage:        tracestelemetryschema.NewStorage(schemaMetadataStore),
 		flagger:        fl,
 	}
 }
