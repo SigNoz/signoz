@@ -4,9 +4,14 @@
  */
 
 import { rest } from 'msw';
+import remove from 'api/browser/localstorage/remove';
+import set from 'api/browser/localstorage/set';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { USER_PREFERENCES } from 'constants/userPreferences';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
+import { spanPercentilesResponse } from 'pages/TraceDetailsV3/stories/__story_mockdata__/traceDetails';
 import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 import { explorerViewToPanelType } from 'utils/explorerUtils';
 
@@ -65,6 +70,7 @@ const tracesRoute = ({ tab, view }: RouteValues): string => {
 interface RawQuerySpec {
 	limit?: number;
 	offset?: number;
+	signal?: string;
 }
 
 const rawSpecOf = (body: QueryRangeRequestV5): RawQuerySpec => {
@@ -101,6 +107,12 @@ export const tracesMocks = defineStoryMocks({
 			description:
 				'Answers 503 on the spans of the services that fail, which is what the status column and the error colouring read.',
 			value: true,
+		}),
+		spanDrawer: toggleControl('Span drawer', {
+			group: LIST,
+			description:
+				'The `TRACES_SPAN_DRAWER_ENABLED` localStorage flag the span drawer ships behind. Off, a row click opens the trace page.',
+			value: false,
 		}),
 		warning: toggleControl('Query warning', {
 			group: LIST,
@@ -170,11 +182,42 @@ export const tracesMocks = defineStoryMocks({
 		),
 
 		rest.post(
+			'http://localhost/api/v1/span_percentile',
+			response.json(spanPercentilesResponse),
+		),
+
+		// The drawer's percentile panel dereferences this preference without a guard.
+		rest.get(
+			'http://localhost/api/v1/user/preferences/:name',
+			response.json((req) => ({
+				status: 'success',
+				data: {
+					name: String(req.params.name),
+					description: 'storybook',
+					valueType: 'array',
+					defaultValue: [],
+					allowedValues: [],
+					allowedScopes: ['user'],
+					value:
+						String(req.params.name) ===
+						USER_PREFERENCES.SPAN_PERCENTILE_RESOURCE_ATTRIBUTES
+							? ['service.name']
+							: [],
+				},
+			})),
+		),
+
+		rest.post(
 			'http://localhost/api/v5/query_range',
 			response.json(async (req) => {
 				const body = (await req.json()) as QueryRangeRequestV5;
 				const { start, end, requestType } = body;
-				const { limit = 10, offset = 0 } = rawSpecOf(body);
+				const { limit = 10, offset = 0, signal } = rawSpecOf(body);
+
+				// The drawer's logs tab asks for the span's logs; the story has none.
+				if (signal === 'logs') {
+					return queryRangeV5RawResponse([]);
+				}
 
 				const rows = {
 					count: values.spans,
@@ -232,4 +275,11 @@ export const tracesMocks = defineStoryMocks({
 		),
 	],
 	config: (values) => ({ route: tracesRoute(values) }),
+	effect: (values) => {
+		if (values.spanDrawer) {
+			set(LOCALSTORAGE.TRACES_SPAN_DRAWER_ENABLED, 'true');
+		} else {
+			remove(LOCALSTORAGE.TRACES_SPAN_DRAWER_ENABLED);
+		}
+	},
 });

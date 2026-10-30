@@ -1,4 +1,7 @@
+import remove from 'api/browser/localstorage/remove';
+import set from 'api/browser/localstorage/set';
 import { ENVIRONMENT } from 'constants/env';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import {
 	initialQueriesMap,
 	initialQueryBuilderFormTraceOperatorValues,
@@ -7,7 +10,7 @@ import {
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { VirtuosoMockContext } from 'react-virtuoso';
-import { render, screen } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
@@ -178,5 +181,112 @@ describe('Traces ListView - Data Loaded', () => {
 		queries.forEach(({ spec }) => {
 			expect(spec).not.toHaveProperty('selectFields');
 		});
+	});
+});
+
+describe('Traces ListView - span drawer', () => {
+	beforeEach(() => {
+		set(LOCALSTORAGE.TRACES_SPAN_DRAWER_ENABLED, 'true');
+		mockSuccess();
+	});
+
+	afterEach(() => {
+		remove(LOCALSTORAGE.TRACES_SPAN_DRAWER_ENABLED);
+		server.resetHandlers();
+	});
+
+	it('opens the clicked span and steps through rows with the arrow keys', async () => {
+		const user = userEvent.setup();
+		renderListView();
+
+		await user.click(await screen.findByText('HTTP GET'));
+
+		const drawer = await screen.findByTestId('span-details-drawer');
+		expect(within(drawer).getByText('HTTP GET')).toBeInTheDocument();
+		expect(within(drawer).getByTestId('span-details-trace-id')).toHaveTextContent(
+			'0000000000000000344ded1387b08a7e',
+		);
+
+		await user.keyboard('{ArrowDown}');
+		await expect(
+			within(drawer).findByText('authenticate_check_db'),
+		).resolves.toBeInTheDocument();
+
+		await user.keyboard('{ArrowUp}');
+		await expect(
+			within(drawer).findByText('HTTP GET'),
+		).resolves.toBeInTheDocument();
+	});
+
+	it('requests span logs over whole milliseconds', async () => {
+		const logsRequests: QueryRangeRequestV5[] = [];
+		server.use(
+			rest.post(QUERY_RANGE_URL, async (req, res, ctx) => {
+				const body = await req.json<QueryRangeRequestV5>();
+				const spec = body.compositeQuery.queries[0]?.spec;
+				if (spec && 'signal' in spec && spec.signal === 'logs') {
+					logsRequests.push(body);
+				}
+				return res(ctx.status(200), ctx.json(listResponse(listRows)));
+			}),
+		);
+		const user = userEvent.setup();
+		renderListView();
+
+		// Its 790.94939 ms duration makes the span window end mid-millisecond.
+		await user.click(await screen.findByText('authenticate_check_db'));
+
+		await waitFor(() => expect(logsRequests.length).toBeGreaterThan(0));
+		logsRequests.forEach(({ start, end }) => {
+			expect(Number.isInteger(start)).toBe(true);
+			expect(Number.isInteger(end)).toBe(true);
+		});
+	});
+
+	it('speaks only for the span, since the list has no trace bounds', async () => {
+		const logsFilters: string[] = [];
+		server.use(
+			rest.post(QUERY_RANGE_URL, async (req, res, ctx) => {
+				const body = await req.json<QueryRangeRequestV5>();
+				const spec = body.compositeQuery.queries[0]?.spec;
+				if (spec && 'signal' in spec && spec.signal === 'logs') {
+					logsFilters.push(spec.filter?.expression ?? '');
+					return res(ctx.status(200), ctx.json(listResponse([])));
+				}
+				return res(ctx.status(200), ctx.json(listResponse(listRows)));
+			}),
+		);
+		const user = userEvent.setup();
+		renderListView();
+
+		await user.click(await screen.findByText('HTTP GET'));
+		const drawer = await screen.findByTestId('span-details-drawer');
+		expect(
+			within(drawer).queryByText(/of total exec time/),
+		).not.toBeInTheDocument();
+
+		await user.click(within(drawer).getByRole('tab', { name: /logs/i }));
+		await expect(
+			within(drawer).findByText('No logs found for this span.'),
+		).resolves.toBeInTheDocument();
+		// No trace-wide check: every logs request is scoped to the span.
+		expect(logsFilters.length).toBeGreaterThan(0);
+		logsFilters.forEach((expression) => {
+			expect(expression).toContain('span_id');
+		});
+	});
+
+	it('closes the drawer', async () => {
+		const user = userEvent.setup();
+		renderListView();
+
+		await user.click(await screen.findByText('HTTP GET'));
+		await screen.findByTestId('span-details-drawer');
+
+		await user.click(screen.getByTestId('span-drawer-close'));
+
+		await waitFor(() =>
+			expect(screen.queryByTestId('span-details-drawer')).not.toBeInTheDocument(),
+		);
 	});
 });

@@ -173,6 +173,22 @@ const flatSpanRows = ({
 		};
 	});
 
+/** The list API's event shape: `attributes`, where the trace API says `attributeMap`. */
+const exceptionEvent = (
+	timestamp: string,
+): {
+	name: string;
+	timeUnixNano: number;
+	attributes: Record<string, string>;
+} => ({
+	name: 'exception',
+	timeUnixNano: new Date(timestamp).getTime() * 1_000_000,
+	attributes: {
+		'exception.type': 'UpstreamTimeoutError',
+		'exception.message': 'upstream did not answer within 1s',
+	},
+});
+
 /** The List view returns every span field, with resource and attribute fields nested in maps. */
 export const traceSpanRows = (options: SpanRowsOptions): RawRow[] =>
 	flatSpanRows(options).map(
@@ -182,6 +198,10 @@ export const traceSpanRows = (options: SpanRowsOptions): RawRow[] =>
 				...data,
 				attributes: {},
 				resource: { 'service.name': serviceName },
+				events: data.has_error ? [exceptionEvent(timestamp)] : [],
+				links: data.has_error
+					? [{ traceId: traceIdAt(0), spanId: spanIdAt(0) }]
+					: [],
 			},
 		}),
 	);

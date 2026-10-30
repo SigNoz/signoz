@@ -71,6 +71,25 @@ export const RootSpans: Story = {
 	args: { view: ExplorerViews.TRACE },
 };
 
+/**
+ * The span details drawer over the list, opened on a failing span: its
+ * summary, attributes, the exception event and a linked span, with up and down
+ * stepping through the page.
+ */
+export const SpanDrawer: Story = {
+	args: { spanDrawer: true },
+	play: async (): Promise<void> => {
+		const [row] = await screen.findAllByText(
+			'POST /api/orders',
+			undefined,
+			untilLoaded,
+		);
+
+		await userEvent.click(row);
+		await screen.findByTestId('span-details-drawer');
+	},
+};
+
 /** The charted view of the same trace query. */
 export const Timeseries: Story = {
 	args: { view: ExplorerViews.TIMESERIES },
