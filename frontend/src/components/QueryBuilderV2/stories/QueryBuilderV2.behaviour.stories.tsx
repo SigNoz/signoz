@@ -153,7 +153,11 @@ export const ValuePanelTakesOneAggregation: Story = {
 			aggregations: [{ expression: 'count()' }],
 		});
 
-		appendToAggregation(canvasElement, ', count_distinct(service.name)');
+		const { before, after } = appendToAggregation(
+			canvasElement,
+			', count_distinct(service.name)',
+		);
+		await expect(after).toBe(before);
 
 		await expectFirstQuery(canvasElement, {
 			aggregations: [{ expression: 'count()' }],

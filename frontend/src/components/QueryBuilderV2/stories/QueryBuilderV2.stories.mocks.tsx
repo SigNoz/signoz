@@ -101,14 +101,15 @@ export const selectMetric = async (
 };
 
 /**
- * Appends `text` to query `A`'s aggregation editor. Dispatched as a CodeMirror
- * transaction: `userEvent.type` strands the caret when the line redraws, and a
- * transaction runs the editor's own filters, which is what an input limit is.
+ * Appends `text` to query `A`'s aggregation editor and returns its document
+ * before and after. Dispatched as a CodeMirror transaction: `userEvent.type`
+ * strands the caret when the line redraws, and a transaction runs the editor's
+ * own filters, which is what an input limit is.
  */
 export const appendToAggregation = (
 	canvasElement: HTMLElement,
 	text: string,
-): void => {
+): { before: string; after: string } => {
 	const content = within(canvasElement)
 		.getByTestId('query-aggregation-editor')
 		.querySelector<HTMLElement>('.cm-content');
@@ -116,12 +117,15 @@ export const appendToAggregation = (
 	if (!view) {
 		throw new Error('aggregation editor not mounted');
 	}
-	const end = view.state.doc.length;
+	const before = view.state.doc.toString();
 	view.dispatch({
-		changes: { from: end, insert: text },
-		selection: { anchor: end + text.length },
+		changes: { from: before.length, insert: text },
+		selection: { anchor: before.length + text.length },
 		userEvent: 'input.type',
 	});
+	// Read synchronously: the document is the editor's own verdict, before
+	// React state catches up.
+	return { before, after: view.state.doc.toString() };
 };
 
 export const DEFAULT_ARGS: Partial<QueryBuilderProps> = {
