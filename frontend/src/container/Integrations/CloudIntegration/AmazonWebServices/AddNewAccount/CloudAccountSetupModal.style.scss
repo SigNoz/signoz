@@ -12,6 +12,13 @@
 		overflow: hidden;
 	}
 
+	&__footer {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		width: 100%;
+	}
+
 	&__content {
 		flex: 1;
 		overflow-y: auto;
@@ -141,52 +148,6 @@
 				opacity: 1;
 				transform: none;
 			}
-		}
-	}
-
-	.cloud-account-setup-form__code-block-tabs {
-		padding: 8px;
-		border-radius: 4px;
-		border: 1px solid var(--l2-border);
-		background: var(--l2-background);
-
-		&-header {
-			display: flex;
-			flex-direction: column;
-			gap: 12px;
-
-			margin-bottom: 12px;
-
-			&-title {
-				color: var(--l1-foreground);
-				font-size: 14px;
-				font-weight: 500;
-				line-height: 20px;
-				letter-spacing: -0.07px;
-			}
-
-			&-description {
-				color: var(--l2-foreground);
-				font-size: 12px;
-				font-weight: 400;
-				line-height: 18px;
-				letter-spacing: -0.06px;
-			}
-		}
-
-		[role='tablist'] {
-			gap: 8px !important;
-		}
-
-		[role='tabpanel'] {
-			padding: 0 !important;
-		}
-
-		[data-slot='tabs-item'] {
-			padding: 4px 24px !important;
-			border: none !important;
-			background-color: transparent !important;
-			font-size: 12px !important;
 		}
 	}
 

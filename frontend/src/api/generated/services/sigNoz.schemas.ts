@@ -3936,7 +3936,7 @@ export interface CloudintegrationtypesAWSConnectionArtifactDTO {
 	/**
 	 * @type string
 	 */
-	connectionUrl: string;
+	cliCommand: string;
 }
 
 export interface CloudintegrationtypesAWSLogsCollectionStrategyDTO {
@@ -4146,10 +4146,6 @@ export interface CloudintegrationtypesAzureConnectionArtifactDTO {
 	 * @type string
 	 */
 	cliCommand: string;
-	/**
-	 * @type string
-	 */
-	cloudPowerShellCommand: string;
 }
 
 export interface CloudintegrationtypesAzureLogsCollectionStrategyDTO {

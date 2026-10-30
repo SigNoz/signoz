@@ -10,10 +10,6 @@
 	gap: var(--spacing-3);
 }
 
-.mono {
-	composes: mono from '../shared.module.scss';
-}
-
 // CodeBlock renders the copy button's wrapper first and the highlighted code last;
 // the code theme sets the block's margin and padding inline, hence !important.
 .command {

@@ -366,6 +366,30 @@ export const accountResponse = (
 	};
 };
 
+/** The backend's command template, filled in for the story's region. */
+const AWS_AGENT_COMMAND = {
+	cliCommand: `curl -fsSL 'https://signoz.io/foundry.sh' | bash -s -- cloudintegration aws cloudformation \\
+  --region 'us-east-1' \\
+  --integration-account-id 'aws-account-new' \\
+  --signoz-api-url 'https://story.us.signoz.cloud' \\
+  --signoz-api-key 'story-api-key-8b7d02' \\
+  --ingestion-url 'https://ingest.us.signoz.cloud:443' \\
+  --ingestion-key 'story-ingestion-key-2f9c41' \\
+  --agent-version 'v0.0.8'`,
+};
+
+/** The backend's command template, filled in for the story's region. */
+const AZURE_AGENT_COMMAND = {
+	cliCommand: `curl -fsSL 'https://signoz.io/foundry.sh' | bash -s -- cloudintegration azure bicep \\
+  --region 'australiaeast' \\
+  --integration-account-id 'azure-account-new' \\
+  --signoz-api-url 'https://story.us.signoz.cloud' \\
+  --signoz-api-key 'story-api-key-8b7d02' \\
+  --ingestion-url 'https://ingest.us.signoz.cloud:443' \\
+  --ingestion-key 'story-ingestion-key-2f9c41' \\
+  --agent-version 'v0.0.8'`,
+};
+
 /** The backend's command template, filled in for the story's project and region. */
 const GCP_AGENT_COMMAND = {
 	cliCommand: `curl -fsSL 'https://signoz.io/foundry.sh' | bash -s -- cloudintegration gcp terraform \\
@@ -613,9 +637,8 @@ export const credentialsResponse = (): GetConnectionCredentials200 => ({
 });
 
 /**
- * The connection URL is what the setup flow opens in a new tab, which the story
- * reports through the navigation overlay rather than following. GCP returns its
- * setup command only for an agent connection; a manual one gets none.
+ * GCP returns its setup command only for an agent connection; a manual one gets
+ * none.
  */
 export const createdAccountResponse = (
 	provider: CloudProvider,
@@ -625,15 +648,8 @@ export const createdAccountResponse = (
 	data: {
 		id: newAccountId(provider),
 		connectionArtifact: {
-			aws: {
-				connectionUrl: `https://console.aws.amazon.com/cloudformation/home#/stacks/create?templateURL=https://signoz.io/${provider}.yaml`,
-			},
-			azure: {
-				cliCommand:
-					'az deployment sub create --template-uri https://signoz.io/azure.json',
-				cloudPowerShellCommand:
-					'New-AzSubscriptionDeployment -TemplateUri https://signoz.io/azure.json',
-			},
+			aws: AWS_AGENT_COMMAND,
+			azure: AZURE_AGENT_COMMAND,
 			...(gcpConnectionMethod ===
 				CloudintegrationtypesGCPConnectionMethodDTO.agent && {
 				gcp: GCP_AGENT_COMMAND,

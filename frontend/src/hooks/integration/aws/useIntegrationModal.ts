@@ -14,9 +14,10 @@ import {
 	GetConnectionCredentialsQueryResult,
 	invalidateListAccounts,
 	useCreateAccount,
+	useGetConnectionCredentials,
 } from 'api/generated/services/cloudintegration';
-import { useGetConnectionCredentials } from 'api/generated/services/cloudintegration';
 import {
+	CloudintegrationtypesAccountDTO,
 	CloudintegrationtypesCredentialsDTO,
 	CloudintegrationtypesPostableAccountDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -29,6 +30,7 @@ import useAxiosError from 'hooks/useAxiosError';
 import { regions } from 'utils/regions';
 
 import logEvent from '../../../api/common/logEvent';
+import { useAgentConnectionPolling } from '../useAgentConnectionPolling';
 
 interface UseIntegrationModalProps {
 	onClose: () => void;
@@ -42,7 +44,8 @@ interface UseIntegrationModal {
 	activeView: ActiveViewEnum;
 	selectedRegions: string[];
 	includeAllRegions: boolean;
-	isGeneratingUrl: boolean;
+	isGeneratingCommand: boolean;
+	connectionCommand: string | null;
 	setSelectedRegions: Dispatch<SetStateAction<string[]>>;
 	setIncludeAllRegions: Dispatch<SetStateAction<boolean>>;
 	handleRegionSelect: () => void;
@@ -50,17 +53,11 @@ interface UseIntegrationModal {
 	handleClose: () => void;
 	setActiveView: (view: ActiveViewEnum) => void;
 	allRegions: string[];
-	accountId?: string;
 	selectedDeploymentRegion: string | undefined;
 	handleRegionChange: (value: string) => void;
 	connectionParams?: CloudintegrationtypesCredentialsDTO;
 	isConnectionParamsLoading: boolean;
-	handleConnectionSuccess: (payload: {
-		cloudAccountId: string;
-		status?: unknown;
-	}) => void;
-	handleConnectionTimeout: (payload: { id?: string }) => void;
-	handleConnectionError: () => void;
+	checkConnectionAgain: () => void;
 }
 
 export function useIntegrationModal({
@@ -73,6 +70,9 @@ export function useIntegrationModal({
 	);
 	const [isLoading, setIsLoading] = useState(false);
 	const [accountId, setAccountId] = useState<string | undefined>();
+	const [connectionCommand, setConnectionCommand] = useState<string | null>(
+		null,
+	);
 	const [activeView, setActiveView] = useState<ActiveViewEnum>(
 		ActiveViewEnum.FORM,
 	);
@@ -103,14 +103,15 @@ export function useIntegrationModal({
 		setSelectedRegions([]);
 		setIncludeAllRegions(false);
 		setModalState(ModalStateEnum.FORM);
+		setConnectionCommand(null);
 		onClose();
 	}, [onClose]);
 
 	const handleConnectionSuccess = useCallback(
-		(payload: { cloudAccountId: string; status?: unknown }): void => {
+		(account: CloudintegrationtypesAccountDTO): void => {
 			void logEvent('AWS Integration: Account connected', {
-				cloudAccountId: payload.cloudAccountId,
-				status: payload.status,
+				cloudAccountId: account.providerAccountId ?? account.id,
+				status: account.agentReport,
 			});
 			toast.success('AWS account connected successfully', {
 				position: 'bottom-right',
@@ -123,21 +124,32 @@ export function useIntegrationModal({
 		[handleClose, queryClient],
 	);
 
-	const handleConnectionTimeout = useCallback(
-		(payload: { id?: string }): void => {
-			setModalState(ModalStateEnum.ERROR);
-			void logEvent('AWS Integration: Account connection attempt timed out', {
-				id: payload.id,
-			});
-		},
-		[],
-	);
+	const handleConnectionTimeout = useCallback((): void => {
+		setModalState(ModalStateEnum.ERROR);
+		void logEvent('AWS Integration: Account connection attempt timed out', {
+			id: accountId,
+		});
+	}, [accountId]);
 
 	const handleConnectionError = useCallback((): void => {
 		setModalState(ModalStateEnum.ERROR);
 	}, []);
 
-	const { mutate: generateUrl, isLoading: isGeneratingUrl } = useCreateAccount();
+	const checkConnectionAgain = useCallback((): void => {
+		setModalState(ModalStateEnum.WAITING);
+	}, []);
+
+	useAgentConnectionPolling({
+		cloudProvider: INTEGRATION_TYPES.AWS,
+		accountId: accountId ?? '',
+		enabled: modalState === ModalStateEnum.WAITING && accountId !== undefined,
+		onConnected: handleConnectionSuccess,
+		onTimeout: handleConnectionTimeout,
+		onError: handleConnectionError,
+	});
+
+	const { mutate: createAccount, isLoading: isGeneratingCommand } =
+		useCreateAccount();
 
 	const handleError = useAxiosError();
 	const { data: connectionParams, isLoading: isConnectionParamsLoading } =
@@ -152,9 +164,9 @@ export function useIntegrationModal({
 			},
 		);
 
-	const handleGenerateUrl = useCallback(
+	const handleGenerateCommand = useCallback(
 		(payload: CloudintegrationtypesPostableAccountDTO): void => {
-			generateUrl(
+			createAccount(
 				{
 					pathParams: { cloudProvider: INTEGRATION_TYPES.AWS },
 					data: payload,
@@ -162,17 +174,19 @@ export function useIntegrationModal({
 				{
 					onSuccess: (response: CreateAccountMutationResult) => {
 						const accountId = response.data.id;
-						const connectionUrl =
-							response.data.connectionArtifact.aws?.connectionUrl ?? '';
+						const command = response.data.connectionArtifact.aws?.cliCommand;
+						if (!command) {
+							setModalState(ModalStateEnum.ERROR);
+							toast.error('Failed to generate the AWS setup command', {
+								position: 'bottom-right',
+							});
+							return;
+						}
 
-						void logEvent(
-							'AWS Integration: Account connection attempt redirected to AWS',
-							{
-								id: accountId,
-							},
-						);
-						// oxlint-disable-next-line signoz/no-raw-absolute-path -- connectionUrl is an external AWS console URL, not an internal path
-						window.open(connectionUrl, '_blank');
+						void logEvent('AWS Integration: Account connection command generated', {
+							id: accountId,
+						});
+						setConnectionCommand(command);
 						setModalState(ModalStateEnum.WAITING);
 						setAccountId(accountId);
 					},
@@ -185,7 +199,7 @@ export function useIntegrationModal({
 				},
 			);
 		},
-		[generateUrl],
+		[createAccount],
 	);
 
 	const handleSubmit = useCallback(async (): Promise<void> => {
@@ -208,13 +222,13 @@ export function useIntegrationModal({
 				},
 			};
 
-			handleGenerateUrl(payload);
+			handleGenerateCommand(payload);
 		} catch (error) {
 			console.error('Form submission failed:', error);
 		} finally {
 			setIsLoading(false);
 		}
-	}, [form, selectedRegions, handleGenerateUrl, connectionParams]);
+	}, [form, selectedRegions, handleGenerateCommand, connectionParams]);
 
 	return {
 		form,
@@ -223,7 +237,8 @@ export function useIntegrationModal({
 		activeView,
 		selectedRegions,
 		includeAllRegions,
-		isGeneratingUrl,
+		isGeneratingCommand,
+		connectionCommand,
 		setSelectedRegions,
 		setIncludeAllRegions,
 		handleRegionSelect,
@@ -231,7 +246,6 @@ export function useIntegrationModal({
 		handleClose,
 		setActiveView,
 		allRegions,
-		accountId,
 		setModalState,
 		selectedDeploymentRegion,
 		handleRegionChange,
@@ -239,8 +253,6 @@ export function useIntegrationModal({
 			| CloudintegrationtypesCredentialsDTO
 			| undefined,
 		isConnectionParamsLoading,
-		handleConnectionSuccess,
-		handleConnectionTimeout,
-		handleConnectionError,
+		checkConnectionAgain,
 	};
 }
