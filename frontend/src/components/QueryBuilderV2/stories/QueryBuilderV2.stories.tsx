@@ -1,48 +1,22 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor, within } from 'storybook/test';
+import { expect, within } from 'storybook/test';
 
 import { withCanvas } from '@/storybook/decorators/withCanvas';
 
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { QueryBuilderV2 } from '../QueryBuilderV2';
+import {
+	DEFAULT_ARGS,
+	expectFirstQuery,
+	meterQuery,
+	PANEL_EDITOR_ARGS,
+	PANEL_EDITOR_PATH,
+	routeWith,
+} from './QueryBuilderV2.stories.mocks';
 import QueryProbe from './QueryProbe';
-
-/** The builder's provider reads its starting query from the URL, as every host seeds it. */
-const routeWith = (path: string, query: Query): string =>
-	`${path}?compositeQuery=${encodeURIComponent(JSON.stringify(query))}`;
-
-const meterQuery: Query = {
-	...initialQueriesMap.metrics,
-	builder: {
-		...initialQueriesMap.metrics.builder,
-		queryData: [
-			{ ...initialQueriesMap.metrics.builder.queryData[0], source: 'meter' },
-		],
-	},
-};
-
-/** The `compositeQuery` the probe prints for the builder's current state. */
-const payloadIn = (canvasElement: HTMLElement): { queries: unknown[] } =>
-	JSON.parse(
-		within(canvasElement).getByTestId('qb-payload').textContent ?? '{}',
-	) as { queries: unknown[] };
-
-const expectFirstQuery = async (
-	canvasElement: HTMLElement,
-	spec: Record<string, unknown>,
-): Promise<void> => {
-	await waitFor(() =>
-		expect(payloadIn(canvasElement).queries[0]).toMatchObject({
-			type: 'builder_query',
-			spec: expect.objectContaining(spec),
-		}),
-	);
-};
 
 /**
  * The query builder as each host mounts it: the props come from that host's
@@ -54,7 +28,7 @@ const meta = {
 	component: QueryBuilderV2,
 	tags: ['play'],
 	decorators: [withCanvas({ maxWidth: 1100 })],
-	args: { panelType: PANEL_TYPES.TIME_SERIES, version: 'v3' },
+	args: DEFAULT_ARGS,
 	render: (args): JSX.Element => (
 		<>
 			<QueryBuilderV2 {...args} />
@@ -141,19 +115,10 @@ export const MeterExplorer: Story = {
  * formulas and trace matching.
  */
 export const PanelEditor: Story = {
-	args: {
-		allowedDataSources: [
-			TelemetrytypesSignalDTO.logs,
-			TelemetrytypesSignalDTO.traces,
-			TelemetrytypesSignalDTO.metrics,
-		],
-		showTraceOperator: true,
-		signalSourceChangeEnabled: true,
-		savePreviousQuery: true,
-	},
+	args: PANEL_EDITOR_ARGS,
 	parameters: {
 		signoz: {
-			route: routeWith('/dashboard/story/panel/story', initialQueriesMap.logs),
+			route: routeWith(PANEL_EDITOR_PATH, initialQueriesMap.logs),
 		},
 	},
 	play: async ({ canvasElement }) => {
