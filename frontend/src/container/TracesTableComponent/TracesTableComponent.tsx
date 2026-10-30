@@ -22,7 +22,7 @@ import {
 import { Pagination } from 'hooks/queryPagination';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { useTimezone } from 'providers/Timezone';
 import { SuccessResponse } from 'types/api';
@@ -91,7 +91,7 @@ function TracesTableComponent({
 				if (event.metaKey || event.ctrlKey) {
 					openInNewTab(getTraceLink(record));
 				} else {
-					history.push(getTraceLink(record));
+					navigate(getTraceLink(record));
 				}
 			},
 		}),

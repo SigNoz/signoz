@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import { useQueryClient } from 'react-query';
-import { useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { toast } from '@signozhq/ui/sonner';
 import {
@@ -15,6 +14,7 @@ import {
 import { ErrorType } from 'api/generatedAPIInstance';
 import { QueryParams } from 'constants/query';
 import { buildExplorerNavigationUrl } from 'container/AIAssistant/components/ActionsSection/utils/openSavedView';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { getAbsoluteUrl } from 'utils/basePath';
 import { toAPIError } from 'utils/errorUtils';
 
@@ -42,7 +42,7 @@ export function useSavedViewRowActions(
 	source: SavedviewtypesSourceDTO,
 ): UseSavedViewRowActionsResult {
 	const queryClient = useQueryClient();
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const [, copyToClipboard] = useCopyToClipboard();
 	const logSavedViewEvent = useSavedViewLogEvent(source);
 	const { mutateAsync: updateSavedView, isLoading: isRenaming } =

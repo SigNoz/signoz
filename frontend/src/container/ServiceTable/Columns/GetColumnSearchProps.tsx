@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { AppLink } from 'lib/router/AppLink';
 import { Search } from '@signozhq/icons';
 import type { ColumnType } from 'antd/es/table';
 import ROUTES from 'constants/routes';
@@ -34,9 +34,9 @@ export const getColumnSearchProps = (
 		const queryString = getQueryString(avialableParams, urlParams);
 
 		return (
-			<Link to={`${ROUTES.APPLICATION}/${metrics}?${queryString.join('')}`}>
+			<AppLink to={`${ROUTES.APPLICATION}/${metrics}?${queryString.join('')}`}>
 				<Name>{metrics}</Name>
-			</Link>
+			</AppLink>
 		);
 	},
 });

@@ -1,8 +1,10 @@
 import {
 	RuletypesAlertStateDTO,
 	RuletypesAlertTypeDTO,
+	RuletypesEvaluationRollingDTOKind,
 	RuletypesPanelTypeDTO,
 	RuletypesQueryTypeDTO,
+	RuletypesRuleDTOSchemaVersion,
 	RuletypesRuleTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type {
@@ -38,6 +40,12 @@ const make = (
 	evalWindow: '5m0s',
 	frequency: '1m0s',
 	ruleType: RuletypesRuleTypeDTO.threshold_rule,
+	schemaVersion: RuletypesRuleDTOSchemaVersion.v2alpha1,
+	evaluation: {
+		kind: RuletypesEvaluationRollingDTOKind.rolling,
+		spec: { evalWindow: '5m0s', frequency: '1m0s' },
+	},
+	notificationSettings: { usePolicy: false, renotify: { enabled: false } },
 	...overrides,
 });
 

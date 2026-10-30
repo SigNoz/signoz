@@ -12,7 +12,7 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { useAppContext } from 'providers/App/App';
 
 import {
@@ -95,7 +95,7 @@ function OnboardingQuestionaire(): JSX.Element {
 
 			logEvent('Org Onboarding: Redirecting to Get Started', {});
 
-			history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+			navigate(ROUTES.GET_STARTED_WITH_CLOUD);
 		},
 		onError: () => {
 			setUpdatingOrgOnboardingStatus(false);

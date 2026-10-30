@@ -7,7 +7,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useParams } from 'react-router-dom';
+import { useAppParams } from 'lib/router/useAppParams';
 import {
 	ChartNoAxesGantt,
 	ChevronDown,
@@ -25,7 +25,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 import { ResizableBox } from 'periscope/components/ResizableBox';
-import { SpanV3, TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
+import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { TraceDetailEventKeys, TraceDetailEvents } from '../events';
 import { useSpanDetailVariant } from '../hooks/useSpanDetailVariant';
@@ -74,7 +74,7 @@ function TraceDetailsOverview({
 	onHasTraceDataChange,
 	dataLoadedFiredForRef,
 }: TraceDetailsOverviewProps): JSX.Element {
-	const { id: traceId } = useParams<TraceDetailV3URLProps>();
+	const { id: traceId } = useAppParams<'id'>();
 	const urlQuery = useUrlQuery();
 	const [interestedSpanId, setInterestedSpanId] = useState<IInterestedSpan>(
 		() => ({
@@ -147,7 +147,7 @@ function TraceDetailsOverview({
 		isFetching: isFetchingTraceData,
 		error: errorFetchingTraceData,
 	} = useGetTraceV4({
-		traceId,
+		traceId: traceId || '',
 		uncollapsedSpans: queryParams.uncollapsedSpans,
 		selectedSpanId: queryParams.selectedSpanId,
 		isSelectedSpanIDUnCollapsed: queryParams.isSelectedSpanIDUnCollapsed,

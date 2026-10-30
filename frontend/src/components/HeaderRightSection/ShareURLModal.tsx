@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { matchPath, useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { matchRoute } from 'lib/router/matchRoute';
 import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
@@ -41,7 +42,7 @@ interface ShareURLModalProps {
 
 function ShareURLModal({ extraOption }: ShareURLModalProps): JSX.Element {
 	const urlQuery = useUrlQuery();
-	const location = useLocation();
+	const location = useAppLocation();
 	const { selectedTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -75,7 +76,7 @@ function ShareURLModal({ extraOption }: ShareURLModalProps): JSX.Element {
 	const isRouteToBeSharedWithTime = useMemo(
 		() =>
 			routesToBeSharedWithTime.some((route) =>
-				matchPath(location.pathname, { path: route, exact: true }),
+				matchRoute(location.pathname, route, { exact: true }),
 			),
 		[location.pathname],
 	);

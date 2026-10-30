@@ -8,7 +8,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { Select, Spin } from 'antd';
+import { type RefSelectProps, Select, Spin } from 'antd';
 import { Pill } from '@signozhq/ui/pill';
 import cx from 'classnames';
 import {
@@ -40,7 +40,6 @@ import {
 	unset,
 } from 'lodash-es';
 import { ChevronDown, ChevronUp } from '@signozhq/icons';
-import type { BaseSelectRef } from 'rc-select';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -161,7 +160,7 @@ function QueryBuilderSearchV2(
 	const { currentQuery } = useQueryBuilder();
 	const runQuery = useRunQueryWithFilterItems();
 
-	const selectRef = useRef<BaseSelectRef>(null);
+	const selectRef = useRef<RefSelectProps>(null);
 
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 

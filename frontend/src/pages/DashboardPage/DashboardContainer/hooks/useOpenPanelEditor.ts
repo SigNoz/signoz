@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { generatePath } from 'react-router-dom';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -38,7 +38,7 @@ export function useOpenPanelEditor(): (
 				panelId,
 				dashboardId,
 			});
-			const path = generatePath(ROUTES.DASHBOARD_PANEL_EDITOR, {
+			const path = buildRoutePath(ROUTES.DASHBOARD_PANEL_EDITOR, {
 				dashboardId,
 				panelId,
 			});
