@@ -101,7 +101,25 @@ func (srv *Server) onDisconnect(conn types.Connection) {
 // orgID from the context
 // note :- there can only be 50 agents in the db for a given orgID, we don't have a check in-memory but we delete from the db after insert.
 func (srv *Server) OnMessage(ctx context.Context, conn types.Connection, msg *protobufs.AgentToServer) *protobufs.ServerToAgent {
-	agentID, _ := valuer.NewUUIDFromBytes(msg.GetInstanceUid())
+	instanceUID := msg.GetInstanceUid()
+	agentID, err := valuer.NewUUIDFromBytes(instanceUID)
+	if err != nil || agentID.IsZero() {
+		logArgs := []any{
+			"instance_uid_length", len(instanceUID),
+		}
+		if err != nil {
+			logArgs = append(logArgs, errors.Attr(err))
+		}
+		srv.logger.WarnContext(ctx, "rejected OpAMP message with invalid agent instance UID", logArgs...)
+
+		return &protobufs.ServerToAgent{
+			InstanceUid: instanceUID,
+			ErrorResponse: &protobufs.ServerErrorResponse{
+				Type:         protobufs.ServerErrorResponseType_ServerErrorResponseType_BadRequest,
+				ErrorMessage: "instance UID must be a non-zero 16-byte value",
+			},
+		}
+	}
 
 	// find the orgID, if nothing is found keep it empty.
 	// the find or create agent will return an error if orgID is empty
