@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as Sentry from '@sentry/react';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
@@ -9,14 +9,12 @@ import {
 	QuickFilterCheckboxUseFieldApis,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
-import { initialQueriesMap } from 'constants/queryBuilder';
-import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ArrowUpToLine, Filter } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { DataSource } from 'types/common/queryBuilder';
 
 import { CategoryIcon } from './Base/categoryIcons';
+import { DefaultQueryRedirect } from './Base/DefaultQueryRedirect';
 import { K8sDynamicList } from './Base/K8sDynamicList';
 import EntityStatusFilter from './Base/components/EntityStatusFilter/EntityStatusFilter';
 import {
@@ -68,9 +66,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	const [, setNodeReadinessFilter] = useInfraMonitoringNodeReadinessFilter();
 	const [, setContainerStatusFilter] = useInfraMonitoringContainerStatusFilter();
 
-	const compositeQuery = useGetCompositeQueryParam();
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
-	const isInitialized = useRef(false);
 
 	const selectedTime = useGlobalTimeStore((state) => state.selectedTime);
 	const getMinMaxTime = useGlobalTimeStore((state) => state.getMinMaxTime);
@@ -96,28 +92,6 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		() => getUseFieldApis(selectedCategory as InfraMonitoringEntity),
 		[getUseFieldApis, selectedCategory],
 	);
-
-	useEffect(() => {
-		if (isInitialized.current) {
-			return;
-		}
-		isInitialized.current = true;
-
-		if (!compositeQuery) {
-			const defaultQuery = initialQueriesMap[DataSource.METRICS];
-			redirectWithQueryBuilderData({
-				...defaultQuery,
-				builder: {
-					...defaultQuery.builder,
-					queryData: defaultQuery.builder.queryData.map((query) => ({
-						...query,
-						filter: { expression: '' },
-						filters: { items: [], op: 'AND' as const },
-					})),
-				},
-			});
-		}
-	}, [compositeQuery, redirectWithQueryBuilderData]);
 
 	useEffect(() => {
 		void logEvent(InfraMonitoringEvents.FilterApplied, {
@@ -271,6 +245,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
+			<DefaultQueryRedirect />
 			<div className={styles.infraMonitoringContainer}>
 				<div className={styles.infraContentRow}>
 					{showFilters && (
