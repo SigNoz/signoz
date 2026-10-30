@@ -3,7 +3,6 @@ import {
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { defaultTraceSelectedColumns } from 'container/OptionsMenu/constants';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
@@ -591,7 +590,6 @@ export const listViewInitialTraceQuery: Query = {
 				orderBy: [{ columnName: 'timestamp', order: 'desc' }],
 				offset: 0,
 				pageSize: 10,
-				selectColumns: defaultTraceSelectedColumns,
 			},
 		],
 	},
