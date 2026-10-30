@@ -149,7 +149,7 @@ describe('PlannedDowntime Component', () => {
 	it('renders the header, search and create action', () => {
 		renderPage();
 
-		expect(screen.getByText('Planned Downtime')).toBeInTheDocument();
+		expect(screen.getByText('All planned downtimes')).toBeInTheDocument();
 		expect(screen.getByTestId(SEARCH_TEST_ID)).toBeInTheDocument();
 		expect(screen.getByTestId(CREATE_TEST_ID)).toHaveAttribute(
 			'aria-disabled',

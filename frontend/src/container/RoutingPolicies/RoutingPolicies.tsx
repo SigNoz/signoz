@@ -102,7 +102,7 @@ function RoutingPolicies(): JSX.Element {
 				<div className={styles.commandHeader}>
 					<div className={styles.headingBlock}>
 						<Typography.Title className={styles.title}>
-							Routing Policies
+							All routing policies
 						</Typography.Title>
 						<span className={styles.countPill}>{routingPoliciesData.length}</span>
 					</div>

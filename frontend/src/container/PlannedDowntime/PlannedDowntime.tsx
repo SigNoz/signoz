@@ -204,7 +204,7 @@ export function PlannedDowntime(): JSX.Element {
 				<div className={styles.commandHeader}>
 					<div className={styles.headingBlock}>
 						<Typography.Title className={styles.title}>
-							Planned Downtime
+							All planned downtimes
 						</Typography.Title>
 						<span className={styles.countPill}>{totalDowntimes}</span>
 					</div>
