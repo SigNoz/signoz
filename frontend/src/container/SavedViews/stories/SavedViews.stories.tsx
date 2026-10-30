@@ -7,6 +7,7 @@ import SavedViewsPanel from '../SavedViewsPanel';
 import {
 	findRows,
 	hoverFirstRow,
+	hoverFirstRowLoading,
 	openCreateModal,
 	openDeleteDialog,
 	openEditDetailsModal,
@@ -96,6 +97,12 @@ export const LongNames: Story = {
 /** The hover card of the first row: its query, who updated it and when. */
 export const HoverCard: Story = {
 	play: hoverFirstRow,
+};
+
+/** The hover card while its view is still loading: a skeleton in place of the query. */
+export const HoverCardLoading: Story = {
+	args: { viewPending: true },
+	play: hoverFirstRowLoading,
 };
 
 /** A search that matches no view: the list says so in place of the rows. */

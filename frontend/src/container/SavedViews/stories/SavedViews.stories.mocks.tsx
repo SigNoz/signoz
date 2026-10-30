@@ -77,6 +77,12 @@ const controls = {
 			'Denies `read` on the first view created by others alone, on top of the Access controls: its row still opens it, and the header then shows No view access, as with Open view on `created-by-others`. Its hover card shows the permission callout in place of the query.',
 		value: false,
 	}),
+	viewPending: toggleControl('View fetch pending', {
+		group: VIEW,
+		description:
+			'Holds every `GET /saved_views/:id` open, so a hover card stays on its loading skeleton.',
+		value: false,
+	}),
 	createdByMe: countControl('Created by me', {
 		group: LIST,
 		value: 3,
@@ -114,7 +120,14 @@ const definition = defineStoryMocks({
 		values: SavedViewsValues & AuthzArgs,
 		response,
 	): RequestHandler[] => {
-		const { source, openView, createdByMe, createdByOthers, longNames } = values;
+		const {
+			source,
+			openView,
+			viewPending,
+			createdByMe,
+			createdByOthers,
+			longNames,
+		} = values;
 
 		// What the panel writes stays in this handler set until a control changes.
 		const created: SavedviewtypesSavedViewDTO[] = [];
@@ -164,6 +177,10 @@ const definition = defineStoryMocks({
 			),
 
 			rest.get(`${API}/:id`, (req, res, ctx) => {
+				if (viewPending) {
+					return res(ctx.delay('infinite'));
+				}
+
 				if (openError) {
 					return res(ctx.status(openError.status), ctx.json(openError.body));
 				}
@@ -380,6 +397,19 @@ export const hoverFirstRow = async ({
 
 	await within(card).findByTestId(
 		'saved-view-hover-card-query',
+		undefined,
+		UNTIL_LOADED,
+	);
+};
+
+export const hoverFirstRowLoading = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	const [row] = await findRows(canvasElement);
+	const card = await hoverRow(row);
+
+	await within(card).findByTestId(
+		'saved-view-hover-card-loading',
 		undefined,
 		UNTIL_LOADED,
 	);
