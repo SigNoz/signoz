@@ -43,7 +43,7 @@ var deprecatedTraceFields = map[string]renamedTraceField{
 }
 
 func NewRenameSavedViewDeprecatedTraceFieldsFactory() factory.ProviderFactory[SQLMigration, Config] {
-	return factory.NewProviderFactory(factory.MustNewName("rename_saved_view_deprecated_trace_fields"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
+	return factory.NewProviderFactory(factory.MustNewName("rename_saved_view_trace_fields"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
 		return &renameSavedViewDeprecatedTraceFields{settings: ps}, nil
 	})
 }
@@ -83,9 +83,9 @@ func (migration *renameSavedViewDeprecatedTraceFields) Up(ctx context.Context, d
 
 	var renamed, skipped int
 	for _, row := range rows {
-		renamedData, changed, ok := renameDeprecatedTraceFields(row.Data)
-		if !ok {
-			migration.settings.Logger.WarnContext(ctx, "saved view data could not be parsed, leaving it untouched", slog.String("saved_view_id", row.ID))
+		renamedData, changed, err := renameDeprecatedTraceFields(row.Data)
+		if err != nil {
+			migration.settings.Logger.WarnContext(ctx, "saved view data could not be parsed, leaving it untouched", slog.String("saved_view_id", row.ID), slog.Any("error", err))
 			skipped++
 			continue
 		}
@@ -108,57 +108,25 @@ func (migration *renameSavedViewDeprecatedTraceFields) Down(context.Context, *bu
 	return nil
 }
 
-// renameDeprecatedTraceFields rewrites deprecated names in spec.selectedFields. Returns
-// ok=false if data can't be parsed, and changed=false if there was nothing to rename.
-func renameDeprecatedTraceFields(data string) (renamed string, changed bool, ok bool) {
+// renameDeprecatedTraceFields renames deprecated entries in spec.selectedFields, keeping
+// every other key of the entry as is. A renamed entry already selected with the same
+// context is dropped. Returns changed=false if there was nothing to rename.
+func renameDeprecatedTraceFields(data string) (string, bool, error) {
 	var raw map[string]json.RawMessage
 	if err := json.Unmarshal([]byte(data), &raw); err != nil {
-		return "", false, false
+		return "", false, err
 	}
 
 	var spec map[string]json.RawMessage
 	if err := json.Unmarshal(raw["spec"], &spec); err != nil {
-		return "", false, false
-	}
-
-	fields, ok := spec["selectedFields"]
-	if !ok {
-		return "", false, true
-	}
-
-	renamedFields, changed, ok := renameDeprecatedTraceFieldList(fields)
-	if !ok {
-		return "", false, false
-	}
-	if !changed {
-		return "", false, true
-	}
-	spec["selectedFields"] = renamedFields
-
-	renamedSpec, err := marshalUnescaped(spec)
-	if err != nil {
-		return "", false, false
-	}
-	raw["spec"] = renamedSpec
-
-	renamedData, err := marshalUnescaped(raw)
-	if err != nil {
-		return "", false, false
-	}
-
-	return string(renamedData), true, true
-}
-
-// renameDeprecatedTraceFieldList renames deprecated entries, keeping every other key
-// of the entry as is. A renamed entry already selected with the same context is dropped.
-func renameDeprecatedTraceFieldList(fieldsRaw json.RawMessage) (json.RawMessage, bool, bool) {
-	if isJSONNull(fieldsRaw) {
-		return nil, false, true
+		return "", false, err
 	}
 
 	var fields []map[string]json.RawMessage
-	if err := json.Unmarshal(fieldsRaw, &fields); err != nil {
-		return nil, false, false
+	if selectedFields, ok := spec["selectedFields"]; ok {
+		if err := json.Unmarshal(selectedFields, &fields); err != nil {
+			return "", false, err
+		}
 	}
 
 	keys := make([]renamedTraceField, len(fields))
@@ -190,17 +158,21 @@ func renameDeprecatedTraceFieldList(fieldsRaw json.RawMessage) (json.RawMessage,
 	}
 
 	if !changed {
-		return nil, false, true
+		return "", false, nil
 	}
 
-	renamedFieldsJSON, err := marshalUnescaped(renamedFields)
+	var err error
+	if spec["selectedFields"], err = marshalUnescaped(renamedFields); err != nil {
+		return "", false, err
+	}
+	if raw["spec"], err = marshalUnescaped(spec); err != nil {
+		return "", false, err
+	}
+
+	renamedData, err := marshalUnescaped(raw)
 	if err != nil {
-		return nil, false, false
+		return "", false, err
 	}
 
-	return renamedFieldsJSON, true, true
-}
-
-func isJSONNull(raw json.RawMessage) bool {
-	return len(raw) == 0 || string(raw) == "null"
+	return string(renamedData), true, nil
 }
