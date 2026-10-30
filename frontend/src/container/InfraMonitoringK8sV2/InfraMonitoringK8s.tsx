@@ -221,14 +221,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 
 	const handleCategorySelect = (key: string): void => {
 		if (key !== selectedCategory) {
-			void setSelectedCategory(key as string);
-			void setOrderBy(null);
-			void setGroupBy(null);
-			void setCurrentPage(null);
-			setSelectedItemParams(null);
-			void setPodStatusFilter(null);
-			void setNodeReadinessFilter(null);
-			void setContainerStatusFilter(null);
+			// Navigate first: a navigation drops the nuqs writes still queued.
 			redirectWithQueryBuilderData({
 				...currentQuery,
 				builder: {
@@ -242,6 +235,14 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					],
 				},
 			});
+			void setSelectedCategory(key as string);
+			void setOrderBy(null);
+			void setGroupBy(null);
+			void setCurrentPage(null);
+			setSelectedItemParams(null);
+			void setPodStatusFilter(null);
+			void setNodeReadinessFilter(null);
+			void setContainerStatusFilter(null);
 		}
 	};
 
