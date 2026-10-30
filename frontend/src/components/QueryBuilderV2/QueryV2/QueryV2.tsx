@@ -179,6 +179,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 		<div
 			className={cx('query-v2', { 'where-clause-view': showOnlyWhereClause })}
 			ref={ref}
+			data-testid={`query-${query.queryName}`}
 		>
 			<div className="qb-content-section">
 				{(!showOnlyWhereClause || showTraceOperator) && (
@@ -242,6 +243,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 							{isMultiQueryAllowed && (
 								<Dropdown
 									items={queryActionItems}
+									testId="query-actions"
 									nativeButton={false}
 									align="end"
 									side="bottom"
