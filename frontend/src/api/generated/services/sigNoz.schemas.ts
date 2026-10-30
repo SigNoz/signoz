@@ -6722,28 +6722,42 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	spec: DashboardtypesHeatmapPanelSpecDTO;
 }
 
+/**
+ * The panel kind.
+ */
 export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpecDTOKind {
 	'signoz/ScatterPlotPanel' = 'signoz/ScatterPlotPanel',
 }
 export interface DashboardtypesScatterPlotAxisDTO {
 	/**
 	 * @type string
-	 * @description Axis title. Empty draws none.
+	 * @description Axis title. Empty draws none; the tooltip still names the column.
 	 */
 	label?: string;
+	/**
+	 * @description auto (default) uses log, or symlog when values include zero or negatives, when that spreads the dots clearly more than linear does; otherwise linear. log cannot place a value at or below zero and leaves that dot out; symlog is log-like but places it.
+	 */
 	scale?: DashboardtypesAxisScaleDTO;
 	/**
 	 * @type number,null
+	 * @description The highest value the axis always shows; data above it still extends the axis, as does a threshold on it. Null fits the data.
 	 */
 	softMax?: number | null;
 	/**
 	 * @type number,null
+	 * @description The lowest value the axis always shows; data below it still extends the axis, as does a threshold on it. Null fits the data. A log axis ignores a bound at or below zero.
 	 */
 	softMin?: number | null;
 }
 
 export interface DashboardtypesScatterPlotAxesDTO {
+	/**
+	 * @description The axis dimensions.x is plotted along.
+	 */
 	x?: DashboardtypesScatterPlotAxisDTO;
+	/**
+	 * @description The axis dimensions.y is plotted along.
+	 */
 	y?: DashboardtypesScatterPlotAxisDTO;
 }
 
@@ -6761,36 +6775,71 @@ export type DashboardtypesPointDiameterDTO = number | null;
  */
 export type DashboardtypesPointOpacityDTO = number | null;
 
+/**
+ * Diameter of the largest dot when dimensions.sizeBy is set, in CSS pixels from 2 to 40. Null means 24.
+ */
+export type DashboardtypesScatterPlotPointsDTOMaxSize = DashboardtypesPointDiameterDTO | null;
+
+/**
+ * Diameter of the smallest dot when dimensions.sizeBy is set, in CSS pixels from 2 to 40. Null means 4.
+ */
+export type DashboardtypesScatterPlotPointsDTOMinSize = DashboardtypesPointDiameterDTO | null;
+
+/**
+ * Fill opacity of every dot, from 0.1 to 1. Null means 0.7.
+ */
+export type DashboardtypesScatterPlotPointsDTOOpacity = DashboardtypesPointOpacityDTO | null;
+
+/**
+ * Diameter of every dot when dimensions.sizeBy is unset, in CSS pixels from 2 to 40. Null means 6.
+ */
+export type DashboardtypesScatterPlotPointsDTOSize = DashboardtypesPointDiameterDTO | null;
+
 export interface DashboardtypesScatterPlotPointsDTO {
-	maxSize?: DashboardtypesPointDiameterDTO | null;
-	minSize?: DashboardtypesPointDiameterDTO | null;
-	opacity?: DashboardtypesPointOpacityDTO | null;
-	size?: DashboardtypesPointDiameterDTO | null;
+	/**
+	 * @description Diameter of the largest dot when dimensions.sizeBy is set, in CSS pixels from 2 to 40. Null means 24.
+	 */
+	maxSize?: DashboardtypesScatterPlotPointsDTOMaxSize;
+	/**
+	 * @description Diameter of the smallest dot when dimensions.sizeBy is set, in CSS pixels from 2 to 40. Null means 4.
+	 */
+	minSize?: DashboardtypesScatterPlotPointsDTOMinSize;
+	/**
+	 * @description Fill opacity of every dot, from 0.1 to 1. Null means 0.7.
+	 */
+	opacity?: DashboardtypesScatterPlotPointsDTOOpacity;
+	/**
+	 * @description Diameter of every dot when dimensions.sizeBy is unset, in CSS pixels from 2 to 40. Null means 6.
+	 */
+	size?: DashboardtypesScatterPlotPointsDTOSize;
 }
 
 export interface DashboardtypesScatterPlotChartAppearanceDTO {
+	/**
+	 * @description Dot size and opacity.
+	 */
 	points?: DashboardtypesScatterPlotPointsDTO;
 }
 
 export interface DashboardtypesScatterPlotDimensionsDTO {
 	/**
 	 * @type array,null
-	 * @description Group-by label names (e.g. k8s.namespace.name) whose combined values colour dots and drive the legend. Empty colours by every group-by label.
+	 * @description Group-by label names (e.g. k8s.namespace.name) whose combined values color the dots and drive the legend. Empty colors by every group-by label.
 	 */
 	colorBy?: string[] | null;
 	/**
 	 * @type string
-	 * @description Value column key that scales dot size. Empty draws every dot at the default size.
+	 * @description Value column key that scales each dot's area between chartAppearance.points.minSize and maxSize. Empty draws every dot at chartAppearance.points.size, as does a dot with no value.
 	 */
 	sizeBy?: string;
 	/**
 	 * @type string
-	 * @description Value column key (queryName, or queryName.expression for a multi-aggregation query) plotted on the x axis. Empty uses the first value column.
+	 * @description Value column key (queryName, or queryName.expression for a multi-aggregation query) plotted on the x axis. Empty, or a key the result lacks, uses the first value column.
 	 */
 	x?: string;
 	/**
 	 * @type string
-	 * @description Value column key plotted on the y axis. Empty uses the second value column.
+	 * @description Value column key plotted on the y axis. Empty, or a key the result lacks, uses the first value column x does not use.
 	 */
 	y?: string;
 }
@@ -6800,36 +6849,62 @@ export enum DashboardtypesThresholdAxisDTO {
 	y = 'y',
 }
 export interface DashboardtypesScatterPlotThresholdDTO {
+	/**
+	 * @description The axis the line marks: y (default) draws it horizontally, x vertically. Unit converts against that axis's column unit, and the axis extends to keep the line in view.
+	 */
 	axis?: DashboardtypesThresholdAxisDTO;
 	/**
 	 * @type string
+	 * @description The CSS color of the line, for example #F1575F, which matches the SigNoz red preset; CSS named colors such as red also work.
 	 */
 	color: string;
 	/**
 	 * @type string
+	 * @description The caption shown on the line.
 	 */
 	label?: string;
 	/**
 	 * @type string
+	 * @description The unit id of value, such as ms or percent. Empty means the panel's unit, or the column's unit for a table threshold. Prefer the panel's unit; a different unit works only when it converts to it, such as s against a panel in ms.
 	 */
 	unit?: string;
 	/**
 	 * @type number
 	 * @format double
+	 * @description The value the line is drawn at, in unit.
 	 */
 	value: number;
 }
 
 export interface DashboardtypesScatterPlotPanelSpecDTO {
+	/**
+	 * @description Title, bounds and scale of each axis.
+	 */
 	axes?: DashboardtypesScatterPlotAxesDTO;
+	/**
+	 * @description Dot drawing options.
+	 */
 	chartAppearance?: DashboardtypesScatterPlotChartAppearanceDTO;
+	/**
+	 * @description Which result columns place, size and color the dots. Each dot is one row of the joined scalar result: one group.
+	 */
 	dimensions?: DashboardtypesScatterPlotDimensionsDTO;
+	/**
+	 * @description Per-column units and decimal precision. The x and y columns' units label their axes; every bound column's unit shows in the tooltip.
+	 */
 	formatting?: DashboardtypesTableFormattingDTO;
+	/**
+	 * @description Legend placement and series colors. A series is one color group, labeled by its colorBy values joined with a comma, or All when nothing is grouped.
+	 */
 	legend?: DashboardtypesLegendDTO;
 	/**
 	 * @type array,null
+	 * @description Reference lines drawn at fixed values across the x or y axis.
 	 */
 	thresholds?: DashboardtypesScatterPlotThresholdDTO[] | null;
+	/**
+	 * @description The time range the groups are computed over.
+	 */
 	visualization?: DashboardtypesBasicVisualizationDTO;
 }
 
@@ -6837,8 +6912,12 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	/**
 	 * @enum signoz/ScatterPlotPanel
 	 * @type string
+	 * @description The panel kind.
 	 */
 	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpecDTOKind;
+	/**
+	 * @description The options for this panel kind. {} accepts every default.
+	 */
 	spec: DashboardtypesScatterPlotPanelSpecDTO;
 }
 
