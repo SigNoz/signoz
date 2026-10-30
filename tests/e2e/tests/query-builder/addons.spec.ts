@@ -107,18 +107,19 @@ test.describe('Query builder — add-ons', () => {
 		expect(qb.spec(await qb.run(), 'A')).not.toHaveProperty('limit');
 	});
 
-	// known: the input accepts a negative limit; Run then sends nothing, and the
-	// next Run sends it and the backend answers 400.
-	test.fixme('TC-24 a negative limit is never sent', async ({ qb }) => {
+	test('TC-24 a negative limit means no limit', async ({ qb }) => {
 		await qb.openExplorer(EXPLORER.logs, { view: 'graph' });
 		const addOns = qb.query('A').addOns;
+		await addOns.open('group_by');
+		await addOns.groupBy.add('service.name');
 		await addOns.open('limit');
+		await addOns.limit().fill('10');
+		expect(qb.spec(await qb.run(), 'A').limit).toBe(10);
 
 		await addOns.limit().fill('-5');
-		await qb.runButton().click();
-		await qb.runButton().click();
+		const fired = await qb.run();
 
-		expect(qb.sent().map((body) => qb.spec([body], 'A').limit)).not.toContain(-5);
+		expect(qb.spec(fired, 'A')).not.toHaveProperty('limit');
 		expect(qb.console.failedResponses).toEqual([]);
 	});
 
