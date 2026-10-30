@@ -58,6 +58,12 @@ describe('resolvePageType', () => {
 		expect(resolvePageType(ROUTES.LIST_ALL_ALERT, '?tab=Configuration')).toBe(
 			PageTypeDTO.alert_list,
 		);
+		expect(resolvePageType(ROUTES.LIST_ALL_ALERT, '?tab=RoutingPolicies')).toBe(
+			PageTypeDTO.alert_list,
+		);
+		expect(resolvePageType(ROUTES.LIST_ALL_ALERT, '?tab=PlannedDowntime')).toBe(
+			PageTypeDTO.alert_list,
+		);
 	});
 
 	it('returns log_detail when logs explorer has activeLogId', () => {

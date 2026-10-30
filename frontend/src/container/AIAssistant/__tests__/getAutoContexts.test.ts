@@ -147,6 +147,28 @@ describe('getAutoContexts', () => {
 				metadata: { page: 'alert_list' },
 			},
 		]);
+
+		expect(
+			getAutoContexts(ROUTES.LIST_ALL_ALERT, '?tab=RoutingPolicies'),
+		).toStrictEqual([
+			{
+				source: 'auto',
+				type: 'alert',
+				resourceId: null,
+				metadata: { page: 'alert_list' },
+			},
+		]);
+
+		expect(
+			getAutoContexts(ROUTES.LIST_ALL_ALERT, '?tab=PlannedDowntime'),
+		).toStrictEqual([
+			{
+				source: 'auto',
+				type: 'alert',
+				resourceId: null,
+				metadata: { page: 'alert_list' },
+			},
+		]);
 	});
 
 	it('returns dashboard detail context on dashboard page', () => {
