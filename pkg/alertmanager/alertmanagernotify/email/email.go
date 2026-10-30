@@ -170,7 +170,8 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 			tlsConfig.ServerName = n.conf.Smarthost.Host
 		}
 
-		conn, err = tls.Dial("tcp", n.conf.Smarthost.String(), tlsConfig)
+		dialer := tls.Dialer{Config: tlsConfig}
+		conn, err = dialer.DialContext(ctx, "tcp", n.conf.Smarthost.String())
 		if err != nil {
 			return true, errors.WrapInternalf(err, errors.CodeInternal, "establish TLS connection to server")
 		}
@@ -184,9 +185,22 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 			return true, errors.WrapInternalf(err, errors.CodeInternal, "establish connection to server")
 		}
 	}
+	transport := conn
+	if tlsConn, ok := conn.(*tls.Conn); ok {
+		// Abort the underlying transport without waiting for a TLS close_notify exchange.
+		transport = tlsConn.NetConn()
+	}
+	defer func() { _ = transport.Close() }()
+	if deadline, ok := ctx.Deadline(); ok {
+		if err := transport.SetDeadline(deadline); err != nil {
+			return true, errors.WrapInternalf(err, errors.CodeInternal, "set SMTP connection deadline")
+		}
+	}
+	stop := context.AfterFunc(ctx, func() { _ = transport.Close() })
+	defer stop()
+
 	c, err = smtp.NewClient(conn, n.conf.Smarthost.Host)
 	if err != nil {
-		conn.Close()
 		return true, errors.WrapInternalf(err, errors.CodeInternal, "create SMTP client")
 	}
 	defer func() {
