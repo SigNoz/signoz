@@ -3,6 +3,7 @@ import { ALERT_LIST_PAGE_SIZE } from '../../../helpers/alerts/constants';
 import {
 	alertRuleRows,
 	gotoAlertList,
+	nameContains,
 } from '../../../helpers/alerts/navigation';
 
 test.describe('Alert rules list — pagination and sorting', () => {
@@ -10,7 +11,7 @@ test.describe('Alert rules list — pagination and sorting', () => {
 		authedPage: page,
 		alertList,
 	}) => {
-		await gotoAlertList(page, { search: alertList.namePrefix });
+		await gotoAlertList(page, { query: nameContains(alertList.namePrefix) });
 
 		await expect(page.getByTestId('pagination-total-count')).toContainText(
 			`of ${alertList.count}`,
@@ -29,7 +30,7 @@ test.describe('Alert rules list — pagination and sorting', () => {
 	});
 
 	test('TC-02 changes page size', async ({ authedPage: page, alertList }) => {
-		await gotoAlertList(page, { search: alertList.namePrefix });
+		await gotoAlertList(page, { query: nameContains(alertList.namePrefix) });
 		await expect(alertRuleRows(page)).toHaveCount(ALERT_LIST_PAGE_SIZE);
 
 		await page.getByTestId('pagination-page-size').click();

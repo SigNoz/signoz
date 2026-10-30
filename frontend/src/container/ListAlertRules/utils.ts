@@ -1,10 +1,12 @@
 import logEvent from 'api/common/logEvent';
-import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas';
-import { sortByColumn } from 'components/Alerts/utils';
+import {
+	RuletypesListOrderDTO,
+	RuletypesListSortDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import type { SortState } from 'components/TanStackTableView/types';
 import { dataSourceForAlertType } from 'constants/alerts';
 
-import type { AlertRule } from './types';
+import type { AlertRule, RuleListFilter } from './types';
 
 export const ALERT_RULES_REFRESH_INTERVAL = 30_000;
 
@@ -24,7 +26,7 @@ const ACTION_LABELS: Record<string, string> = {
 
 export const alertActionLogEvent = (
 	action: string,
-	record: RuletypesRuleDTO,
+	record: AlertRule,
 ): void => {
 	const actionValue = ACTION_LABELS[action] ?? action;
 	void logEvent('Alert: Action', {
@@ -35,58 +37,75 @@ export const alertActionLogEvent = (
 	});
 };
 
-export function getAlertSortValue(
-	rule: AlertRule,
-	columnName: string,
-): string | number {
-	switch (columnName) {
-		case 'state':
-			return rule.state ?? '';
-		case 'name':
-			return rule.alert ?? '';
-		case 'severity':
-			return rule.labels?.severity ?? '';
-		case 'createdAt':
-			return rule.createdAt ? new Date(rule.createdAt).getTime() : 0;
-		case 'updatedAt':
-			return rule.updatedAt ? new Date(rule.updatedAt).getTime() : 0;
-		default:
-			return '';
-	}
-}
+const COLUMN_TO_SORT: Record<string, RuletypesListSortDTO> = {
+	state: RuletypesListSortDTO.state,
+	name: RuletypesListSortDTO.name,
+	severity: RuletypesListSortDTO.severity,
+	createdAt: RuletypesListSortDTO.created_at,
+	updatedAt: RuletypesListSortDTO.updated_at,
+};
 
-export function sortRules(
-	rules: AlertRule[],
+export const DEFAULT_RULE_LIST_SORT = RuletypesListSortDTO.updated_at;
+export const DEFAULT_RULE_LIST_ORDER = RuletypesListOrderDTO.desc;
+
+// `rule_list_filter_invalid`: DSL syntax / key / operator; `rule_list_invalid`: other list params.
+export const RULE_LIST_INVALID_ERROR_CODES: readonly string[] = [
+	'rule_list_filter_invalid',
+	'rule_list_invalid',
+];
+
+export function toListSort(
 	orderBy: SortState | null,
-): AlertRule[] {
-	return sortByColumn(rules, orderBy, getAlertSortValue);
+): Pick<RuleListFilter, 'sort' | 'order'> {
+	const sort = orderBy ? COLUMN_TO_SORT[orderBy.columnName] : undefined;
+	if (!orderBy || !sort) {
+		return { sort: DEFAULT_RULE_LIST_SORT, order: DEFAULT_RULE_LIST_ORDER };
+	}
+	return {
+		sort,
+		order:
+			orderBy.order === 'asc'
+				? RuletypesListOrderDTO.asc
+				: RuletypesListOrderDTO.desc,
+	};
 }
 
-export function filterRulesByFilters(
-	rules: AlertRule[],
-	filters: string[],
-): AlertRule[] {
-	if (filters.length === 0) {
-		return rules;
+// The backend default sort maps to `null` so the table shows no sort indicator.
+export function toOrderBy(
+	sort: RuletypesListSortDTO,
+	order: RuletypesListOrderDTO,
+): SortState | null {
+	if (sort === DEFAULT_RULE_LIST_SORT && order === DEFAULT_RULE_LIST_ORDER) {
+		return null;
 	}
+	const columnName = Object.keys(COLUMN_TO_SORT).find(
+		(key) => COLUMN_TO_SORT[key] === sort,
+	);
+	return columnName
+		? { columnName, order: order === RuletypesListOrderDTO.asc ? 'asc' : 'desc' }
+		: null;
+}
 
-	const stateFilters = filters
-		.filter((f) => f.startsWith('state:'))
-		.map((f) => f.replace('state:', '').toLowerCase());
+export function isSameRuleListFilter(
+	a: RuleListFilter,
+	b: RuleListFilter,
+): boolean {
+	return (
+		a.query.trim() === b.query.trim() &&
+		a.sort === b.sort &&
+		a.order === b.order &&
+		a.states.length === b.states.length &&
+		[...a.states].sort().join(',') === [...b.states].sort().join(',')
+	);
+}
 
-	const severityFilters = filters
-		.filter((f) => f.startsWith('severity:'))
-		.map((f) => f.replace('severity:', '').toLowerCase());
+export const DEFAULT_RULE_LIST_FILTER: RuleListFilter = {
+	query: '',
+	states: [],
+	sort: DEFAULT_RULE_LIST_SORT,
+	order: DEFAULT_RULE_LIST_ORDER,
+};
 
-	return rules.filter((rule) => {
-		const state = rule.state?.toLowerCase() ?? '';
-		const severity = rule.labels?.severity?.toLowerCase() ?? '';
-
-		const matchesState =
-			stateFilters.length === 0 || stateFilters.includes(state);
-		const matchesSeverity =
-			severityFilters.length === 0 || severityFilters.includes(severity);
-
-		return matchesState && matchesSeverity;
-	});
+export function isDefaultRuleListFilter(filter: RuleListFilter): boolean {
+	return isSameRuleListFilter(filter, DEFAULT_RULE_LIST_FILTER);
 }

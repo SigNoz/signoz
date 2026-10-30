@@ -18,7 +18,7 @@ import {
 	useAccumulatedTags,
 } from '../../hooks/useAccumulatedTags';
 import { useActiveView } from '../../hooks/useActiveView';
-import { useCreatorOptions } from '../../hooks/useCreatorOptions';
+import { useCreatorOptions } from 'components/ListFilter/useCreatorOptions';
 import { useDashboardFilters } from '../../hooks/useDashboardFilters';
 import {
 	usePage,
@@ -28,15 +28,19 @@ import {
 import { useDashboardViewsStore } from '../../store/useDashboardViewsStore';
 import { useDashboardsListVisibleColumnsStore } from '../../store/useVisibleColumnsStore';
 import { BuiltinViewId } from '../../types';
-import type { SuggestionSource } from '../../utils/dslSuggestions';
+import type { SuggestionSource } from 'components/ListFilter/dsl/types';
 import type { DashboardListItem } from '../../utils/helpers';
 import { applyClientView } from '../../utils/views';
-import FilterZone from '../FilterZone/FilterZone';
+import DashboardsFilterZone from '../DashboardsFilterZone/DashboardsFilterZone';
 import NewDashboardModal from '../NewDashboardModal/NewDashboardModal';
-import StatusBar from '../StatusBar/StatusBar';
-import ViewsRail from '../ViewsRail/ViewsRail';
-import CommandHeader from './CommandHeader';
+import type { ReactElement } from 'react';
+import ListCommandHeader from 'components/ListViews/ListCommandHeader/ListCommandHeader';
+import ListStatusBar from 'components/ListViews/ListStatusBar/ListStatusBar';
+import type { ViewSaveMode } from 'components/ListViews/types';
+import ViewsRail from 'components/ListViews/ViewsRail/ViewsRail';
 import DashboardsResults from './DashboardsResults';
+import NewDashboardButton from './NewDashboardButton';
+import ViewsRailGuard from './ViewsRailGuard';
 import WorkspaceEmptyState from './WorkspaceEmptyState';
 
 import styles from './DashboardsList.module.scss';
@@ -125,6 +129,21 @@ function DashboardsList(): JSX.Element {
 		void logEvent(DashboardListEvents.RailToggled, { collapsed: !railCollapsed });
 		setRailCollapsed(!railCollapsed);
 	}, [setRailCollapsed, railCollapsed]);
+	const guardViewsRail = useCallback(
+		(content: ReactElement): ReactElement => (
+			<ViewsRailGuard>{content}</ViewsRailGuard>
+		),
+		[],
+	);
+	const logViewSaved = useCallback((mode: ViewSaveMode): void => {
+		void logEvent(DashboardListEvents.ViewSaved, { mode });
+	}, []);
+	const logViewRenamed = useCallback((): void => {
+		void logEvent(DashboardListEvents.ViewRenamed, {});
+	}, []);
+	const logViewDeleted = useCallback((): void => {
+		void logEvent(DashboardListEvents.ViewDeleted, {});
+	}, []);
 
 	const listParams = useMemo(
 		() => ({
@@ -207,17 +226,17 @@ function DashboardsList(): JSX.Element {
 	// Autocomplete data source: reserved keys from the response, tag keys/values
 	// accumulated across pages, and creator emails for `created_by` values.
 	const source = useMemo<SuggestionSource>(() => {
-		const tagValuesByKey: Record<string, string[]> = {};
-		const tagKeys = new Set<string>();
+		const valuesByKey: Record<string, string[]> = {};
+		const dynamicKeys = new Set<string>();
 		availableTags.forEach((t) => {
-			tagKeys.add(t.key);
+			dynamicKeys.add(t.key);
 			const lower = t.key.toLowerCase();
-			(tagValuesByKey[lower] ??= []).push(t.value);
+			(valuesByKey[lower] ??= []).push(t.value);
 		});
 		return {
 			reservedKeys: response?.data?.reservedKeywords,
-			tagKeys: Array.from(tagKeys),
-			tagValuesByKey,
+			dynamicKeys: Array.from(dynamicKeys),
+			valuesByKey,
 			creatorEmails: creatorOptions.map((o) => o.email),
 			currentUserEmail: user.email,
 		};
@@ -296,6 +315,12 @@ function DashboardsList(): JSX.Element {
 				onReset={handleResetView}
 				onDelete={handleRemoveView}
 				onRename={renameView}
+				testIdPrefix="dashboards"
+				deleteDescription="This removes the saved view. Your dashboards are not affected."
+				guard={guardViewsRail}
+				onViewSaved={logViewSaved}
+				onViewRenamed={logViewRenamed}
+				onViewDeleted={logViewDeleted}
 			/>
 			<div className={styles.main}>
 				<div className={styles.mainScroll}>
@@ -304,13 +329,13 @@ function DashboardsList(): JSX.Element {
 					) : (
 						<>
 							<div className={styles.headerZone}>
-								<CommandHeader
+								<ListCommandHeader
 									label={activeLabel}
 									count={total}
 									isModified={isModified}
-									onCreate={openCreate}
+									action={<NewDashboardButton onClick={openCreate} />}
 								/>
-								<FilterZone
+								<DashboardsFilterZone
 									query={query}
 									creatorOptions={creatorOptions}
 									source={source}
@@ -354,11 +379,13 @@ function DashboardsList(): JSX.Element {
 						</>
 					)}
 				</div>
-				<StatusBar
+				<ListStatusBar
 					collapsed={railCollapsed}
 					onToggleCollapse={toggleRail}
 					count={dashboards.length}
 					total={total}
+					noun="dashboards"
+					testId="dashboards-rail-toggle"
 				/>
 			</div>
 

@@ -1,55 +1,92 @@
 import { useEffect, useMemo, useRef } from 'react';
 import logEvent from 'api/common/logEvent';
-import { useListRules } from 'api/generated/services/rules';
-import { searchByLabels } from 'components/Alerts/utils';
-import type { SortState } from 'components/TanStackTableView/types';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import { useListRulesV3 } from 'api/generated/services/rules';
+import type {
+	ListRulesV3200,
+	ListRulesV3Params,
+	RenderErrorResponseDTO,
+	RuletypesLabelPairDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import type { AxiosError } from 'axios';
+import { GeneratedAPIInstance } from 'api/generatedAPIInstance';
 import { isUndefined } from 'lodash-es';
 
 import type { AlertRule } from './types';
-import { filterRulesByFilters, sortRules } from './utils';
+import { RULE_LIST_INVALID_ERROR_CODES } from './utils';
 
 interface UseAlertRulesDataReturn {
-	allRules: AlertRule[];
-	filteredRules: AlertRule[];
+	rules: AlertRule[];
+	total: number;
+	/** Label pairs across the org's rules, for DSL autocomplete. */
+	labels: RuletypesLabelPairDTO[];
+	reservedKeywords: string[] | undefined;
 	isFetching: boolean;
+	/** A failure other than an invalid filter query. */
 	isError: boolean;
+	/** The backend's message when the filter query is invalid. */
+	queryError: string | null;
 	refetch: () => void;
 }
 
 export function useAlertRulesData(
-	orderBy: SortState | null,
-	searchText = '',
-	filters: string[] = [],
+	params: ListRulesV3Params,
 ): UseAlertRulesDataReturn {
 	const hasLoggedEvent = useRef(false);
 
-	const rulesResponse = useListRules();
+	const rulesResponse = useListRulesV3(params, {
+		query: {
+			keepPreviousData: true,
+			// The backend binds repeated `states=` keys; axios' default sends `states[]=`.
+			queryFn: ({ signal }) =>
+				GeneratedAPIInstance<ListRulesV3200>({
+					url: '/api/v3/rules',
+					method: 'GET',
+					params,
+					paramsSerializer: { indexes: null },
+					signal,
+				}),
+		},
+	});
 
-	const allRules = useMemo(
-		() => rulesResponse.data?.data ?? [],
+	const rules = useMemo(
+		() => rulesResponse.data?.data.rules ?? [],
+		[rulesResponse.data],
+	);
+	const total = rulesResponse.data?.data.total ?? 0;
+	const labels = useMemo(
+		() => rulesResponse.data?.data.labels ?? [],
 		[rulesResponse.data],
 	);
 
 	useEffect(() => {
 		if (!hasLoggedEvent.current && !isUndefined(rulesResponse.data?.data)) {
 			void logEvent('Alert: List page visited', {
-				number: allRules.length,
+				number: total,
 			});
 			hasLoggedEvent.current = true;
 		}
-	}, [rulesResponse.data, allRules.length]);
+	}, [rulesResponse.data, total]);
 
-	const filteredRules = useMemo(() => {
-		const filtered = filterRulesByFilters(allRules, filters);
-		const searched = searchByLabels(filtered, searchText, (r) => r.alert ?? '');
-		return sortRules(searched, orderBy);
-	}, [allRules, filters, searchText, orderBy]);
+	const apiError = useMemo(
+		() =>
+			convertToApiError(
+				rulesResponse.error as AxiosError<RenderErrorResponseDTO> | null,
+			),
+		[rulesResponse.error],
+	);
+	const errorCode = apiError?.getErrorCode();
+	const isQueryError =
+		!!errorCode && RULE_LIST_INVALID_ERROR_CODES.includes(errorCode);
 
 	return {
-		allRules,
-		filteredRules,
+		rules: isQueryError ? [] : rules,
+		total: isQueryError ? 0 : total,
+		labels,
+		reservedKeywords: rulesResponse.data?.data.reservedKeywords,
 		isFetching: rulesResponse.isFetching,
-		isError: rulesResponse.isError,
+		isError: rulesResponse.isError && !isQueryError,
+		queryError: isQueryError ? (apiError?.getErrorMessage() ?? null) : null,
 		refetch: rulesResponse.refetch,
 	};
 }

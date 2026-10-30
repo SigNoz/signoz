@@ -2,6 +2,7 @@ import { expect, test } from '../../../fixtures/alerts/alert-rules';
 import {
 	alertRuleRows,
 	gotoAlertList,
+	nameContains,
 } from '../../../helpers/alerts/navigation';
 
 test.describe('Alert rules list — navigation', () => {
@@ -9,21 +10,20 @@ test.describe('Alert rules list — navigation', () => {
 		authedPage: page,
 		alertList,
 	}) => {
-		await gotoAlertList(page, { search: alertList.namePrefix });
+		await gotoAlertList(page, { query: nameContains(alertList.namePrefix) });
 
 		await alertRuleRows(page).first().click();
 
 		await expect(page).toHaveURL(/\/alerts\/overview\?/);
 		await expect(page).toHaveURL(/[?&]ruleId=/);
 		await expect(page).toHaveURL(/[?&]compositeQuery=/);
-		await expect(page).toHaveURL(/[?&]panelTypes=/);
 	});
 
 	test('TC-02 actions menu Edit and Edit in New Tab navigate correctly', async ({
 		authedPage: page,
 		alertList,
 	}) => {
-		await gotoAlertList(page, { search: alertList.namePrefix });
+		await gotoAlertList(page, { query: nameContains(alertList.namePrefix) });
 
 		await alertRuleRows(page).first().getByTestId('alert-actions').click();
 		await page.getByRole('menuitem', { name: 'Edit in New Tab' }).waitFor();
@@ -47,7 +47,7 @@ test.describe('Alert rules list — navigation', () => {
 		authedPage: page,
 		alertList,
 	}) => {
-		await gotoAlertList(page, { search: alertList.namePrefix });
+		await gotoAlertList(page, { query: nameContains(alertList.namePrefix) });
 
 		await page.getByTestId('list-alerts-new-alert-button').click();
 

@@ -7,19 +7,20 @@ import { expectFirstPage } from '../../../helpers/alerts/history';
 import {
 	alertRuleRows,
 	gotoAlertList,
+	nameContains,
+	runAlertListSearch,
 } from '../../../helpers/alerts/navigation';
 
 test.describe('Alert rules list — search', () => {
 	test('TC-01 filters by name', async ({ authedPage: page, alertList }) => {
 		await gotoAlertList(page);
 
-		await page
-			.getByTestId('list-alerts-search-input')
-			.fill(`${alertList.namePrefix}-03`);
+		await runAlertListSearch(page, nameContains(`${alertList.namePrefix}-03`));
 
-		await expect(page).toHaveURL(new RegExp(`search=${alertList.namePrefix}-03`));
 		await expect(alertRuleRows(page)).toHaveCount(1);
-		await expect(page.getByText(`${alertList.namePrefix}-03`)).toBeVisible();
+		await expect(alertRuleRows(page).first()).toContainText(
+			`${alertList.namePrefix}-03`,
+		);
 	});
 
 	test('TC-02 filters by severity and by label', async ({
@@ -27,20 +28,16 @@ test.describe('Alert rules list — search', () => {
 		alertList,
 	}) => {
 		await gotoAlertList(page);
-		const search = page.getByTestId('list-alerts-search-input');
+		const scope = nameContains(alertList.namePrefix);
+		const perSeverity = alertList.count / SEED_B_SEVERITIES.length;
 
-		const perSeverity = Math.floor(alertList.count / SEED_B_SEVERITIES.length);
-
-		await search.fill('warning');
-		await expect(page).toHaveURL(/search=warning/);
-		await expect(alertRuleRows(page)).not.toHaveCount(0);
+		await runAlertListSearch(page, `${scope} AND severity = 'warning'`);
+		await expect(alertRuleRows(page)).toHaveCount(perSeverity);
 		for (const row of await alertRuleRows(page).all()) {
 			await expect(row).toContainText('warning');
 		}
-		expect(await alertRuleRows(page).count()).toBeGreaterThanOrEqual(perSeverity);
 
-		await search.fill(alertList.paymentsLabel);
-		await expect(page).toHaveURL(new RegExp(`search=${alertList.paymentsLabel}`));
+		await runAlertListSearch(page, `labels.team = '${alertList.paymentsLabel}'`);
 		await expect(alertRuleRows(page)).toHaveCount(alertList.count / 2);
 	});
 
@@ -48,17 +45,15 @@ test.describe('Alert rules list — search', () => {
 		authedPage: page,
 		alertList,
 	}) => {
-		await gotoAlertList(page, { search: alertList.namePrefix });
+		await gotoAlertList(page, { query: nameContains(alertList.namePrefix) });
 
-		await page
-			.getByTestId('list-alerts-search-input')
-			.fill('no-such-alert-anywhere');
+		await runAlertListSearch(page, nameContains('no-such-alert-anywhere'));
 
 		await expect(page.getByText('No matching alert rules')).toBeVisible();
 
 		await page.getByRole('button', { name: 'Clear Search' }).click();
 
-		await expect(page).not.toHaveURL(/search=/);
+		await expect(page).not.toHaveURL(/[?&]query=/);
 		await expect(alertRuleRows(page)).toHaveCount(ALERT_LIST_PAGE_SIZE);
 	});
 
@@ -69,7 +64,7 @@ test.describe('Alert rules list — search', () => {
 		await gotoAlertList(page, { page: '2' });
 		await expect(page).toHaveURL(/[?&]page=2/);
 
-		await page.getByTestId('list-alerts-search-input').fill(alertList.namePrefix);
+		await runAlertListSearch(page, nameContains(alertList.namePrefix));
 
 		await expectFirstPage(page);
 	});
@@ -79,36 +74,18 @@ test.describe('Alert rules list — search', () => {
 		alertList,
 	}) => {
 		const perSeverity = alertList.count / SEED_B_SEVERITIES.length;
-		const scoped = { search: alertList.namePrefix };
+		const query = `${nameContains(alertList.namePrefix)} AND severity = 'warning'`;
 
-		// One filter kind: a third of the batch.
-		await gotoAlertList(page, {
-			...scoped,
-			alertRulesFilters: JSON.stringify(['severity:warning']),
-		});
+		// Seeded rules never fire, so they sit in `inactive`: the intersection is unchanged.
+		await gotoAlertList(page, { query, states: 'inactive' });
 		await expect(alertRuleRows(page)).toHaveCount(perSeverity);
 		for (const row of await alertRuleRows(page).all()) {
 			await expect(row).toContainText('warning');
 		}
 
-		// Both kinds, both satisfied — seeded rules never fire, so they sit in
-		// `inactive`. The intersection is unchanged.
-		await gotoAlertList(page, {
-			...scoped,
-			alertRulesFilters: JSON.stringify(['severity:warning', 'state:inactive']),
-		});
-		await expect(alertRuleRows(page)).toHaveCount(perSeverity);
-
-		// Both kinds, only one satisfied. Under AND this is empty; under OR the
-		// severity match alone would still surface all `perSeverity` rules.
-		await gotoAlertList(
-			page,
-			{
-				...scoped,
-				alertRulesFilters: JSON.stringify(['severity:warning', 'state:firing']),
-			},
-			{ expectRows: false },
-		);
+		// Under AND this is empty; under OR the severity match alone would still
+		// surface all `perSeverity` rules.
+		await gotoAlertList(page, { query, states: 'firing' }, { expectRows: false });
 		await expect(alertRuleRows(page)).toHaveCount(0);
 		await expect(page.getByText('No matching alert rules')).toBeVisible();
 	});

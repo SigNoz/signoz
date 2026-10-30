@@ -37,8 +37,8 @@ test.describe('Alerts page shell', () => {
 		// `ListAlertRules` hides the search input entirely in the empty state.
 		await expect(
 			page
-				.getByRole('heading', { name: 'Alert Rules' })
-				.or(page.getByTestId('list-alerts-search-input')),
+				.getByRole('heading', { name: 'Alert Rules', exact: true })
+				.or(page.getByTestId('alert-rules-list-search')),
 		).toBeVisible();
 	});
 
