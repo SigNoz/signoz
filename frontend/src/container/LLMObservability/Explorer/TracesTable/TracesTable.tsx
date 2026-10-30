@@ -1,6 +1,7 @@
-import { useCallback } from 'react';
+import { Dispatch, SetStateAction, useCallback } from 'react';
 import { useHistory } from 'react-router-dom';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
+import type { ColumnSizingState } from '@tanstack/react-table';
 import TanStackTable from 'components/TanStackTableView';
 import type {
 	CellTypographySize,
@@ -31,6 +32,8 @@ export type TracesTableProps = {
 	isFilterApplied: boolean;
 	onColumnOrderChange?: (cols: TableColumnDef<TracesTableRow>[]) => void;
 	onColumnRemove?: (columnId: string) => void;
+	columnSizing?: ColumnSizingState;
+	onColumnSizingChange?: Dispatch<SetStateAction<ColumnSizingState>>;
 	cellTypographySize?: CellTypographySize;
 };
 
@@ -48,6 +51,8 @@ function TracesTable({
 	isFilterApplied,
 	onColumnOrderChange,
 	onColumnRemove,
+	columnSizing,
+	onColumnSizingChange,
 	cellTypographySize = 'medium',
 }: TracesTableProps): JSX.Element {
 	const history = useHistory();
@@ -98,6 +103,8 @@ function TracesTable({
 						cellTypographySize={cellTypographySize}
 						onColumnOrderChange={onColumnOrderChange}
 						onColumnRemove={onColumnRemove}
+						columnSizing={columnSizing}
+						onColumnSizingChange={onColumnSizingChange}
 						onRowClick={handleRowClick}
 						onRowClickNewTab={handleRowClickNewTab}
 						getRowTestId={(row): string => `traces-table-row-${row.id}`}
@@ -113,6 +120,8 @@ TracesTable.defaultProps = {
 	respectColumnOrder: false,
 	onColumnOrderChange: undefined,
 	onColumnRemove: undefined,
+	columnSizing: undefined,
+	onColumnSizingChange: undefined,
 	cellTypographySize: 'medium',
 };
 

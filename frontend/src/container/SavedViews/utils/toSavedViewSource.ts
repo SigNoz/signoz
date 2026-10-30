@@ -3,8 +3,8 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import { SavedViewSourcePage } from '../types';
 
-// Queries and the AI assistant name a source by DataSource (the signal), the
-// api keys views by source page.
+// The AI assistant names a view's source by DataSource (the signal), the api
+// keys views by source page.
 const SAVED_VIEW_SOURCE: Record<SavedViewSourcePage, SavedviewtypesSourceDTO> =
 	{
 		[DataSource.LOGS]: SavedviewtypesSourceDTO.logs,

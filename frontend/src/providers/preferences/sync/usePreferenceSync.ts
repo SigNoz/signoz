@@ -1,9 +1,11 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useGetSavedView } from 'api/generated/services/saved-view';
 import { TelemetryFieldKey } from 'api/v5/v5';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getViewColumnsAndFormatting } from 'container/SavedViews/utils/getViewColumnsAndFormatting';
 
+import { getPanelDefaults } from '../loader/getPanelDefaults';
 import { usePreferenceLoader } from '../loader/usePreferenceLoader';
 import {
 	FormattingOptions,
@@ -16,16 +18,22 @@ import { usePreferenceUpdater } from '../updater/usePreferenceUpdater';
 export function usePreferenceSync({
 	mode,
 	sourcePage,
+	panelType,
 	savedViewId,
 }: {
 	mode: PreferenceMode;
 	sourcePage: PreferenceSourcePage;
+	// The open panel, for source pages whose panels each keep their own columns.
+	panelType?: PANEL_TYPES;
 	savedViewId: string | undefined;
 }): {
 	preferences: Preferences | null;
 	loading: boolean;
 	error: Error | null;
-	updateColumns: (newColumns: TelemetryFieldKey[]) => void;
+	updateColumns: (
+		newColumns: TelemetryFieldKey[],
+		panelType?: PANEL_TYPES,
+	) => void;
 	updateFormatting: (newFormatting: FormattingOptions) => void;
 } {
 	const isSavedViewMode = mode === PreferenceMode.SAVED_VIEW && !!savedViewId;
@@ -58,22 +66,36 @@ export function usePreferenceSync({
 	const [reSync, setReSync] = useState(false);
 	const { preferences, loading, error } = usePreferenceLoader({
 		sourcePage,
+		panelType,
 		reSync,
 		setReSync,
 	});
 
 	const { updateColumns, updateFormatting } = usePreferenceUpdater({
 		sourcePage,
+		panelType,
 		mode,
 		preferences,
 		setReSync,
 		setSavedViewPreferences,
 	});
 
+	// A view saved on another panel has no columns for the open one, so that
+	// panel starts from its defaults.
+	const viewPreferences = useMemo(
+		() =>
+			savedViewPreferences?.panelType &&
+			panelType &&
+			savedViewPreferences.panelType !== panelType
+				? (getPanelDefaults(sourcePage, panelType) ?? savedViewPreferences)
+				: savedViewPreferences,
+		[savedViewPreferences, panelType, sourcePage],
+	);
+
 	return {
 		preferences:
 			mode === PreferenceMode.SAVED_VIEW && savedViewId
-				? savedViewPreferences
+				? viewPreferences
 				: preferences,
 		loading,
 		error,

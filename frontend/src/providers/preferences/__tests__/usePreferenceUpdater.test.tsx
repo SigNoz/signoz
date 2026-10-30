@@ -114,6 +114,7 @@ describe('usePreferenceUpdater', () => {
 		expect(mockLogsUpdateColumns).toHaveBeenCalledWith(
 			newColumns,
 			PreferenceMode.DIRECT,
+			undefined,
 		);
 		expect(mockTracesUpdateColumns).not.toHaveBeenCalled();
 		expect(setReSync).toHaveBeenCalledWith(true);
@@ -177,6 +178,7 @@ describe('usePreferenceUpdater', () => {
 		expect(mockTracesUpdateColumns).toHaveBeenCalledWith(
 			newColumns,
 			PreferenceMode.DIRECT,
+			undefined,
 		);
 		expect(mockLogsUpdateColumns).not.toHaveBeenCalled();
 		expect(setReSync).toHaveBeenCalledWith(true);

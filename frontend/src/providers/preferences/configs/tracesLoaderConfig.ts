@@ -5,6 +5,8 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { defaultTraceSelectedColumns } from 'container/OptionsMenu/constants';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
+import { isAiObservabilityExplorerRoute } from '../utils';
+
 /**
  * Validates if a column is valid for Traces Explorer
  * Filters out Logs-specific columns that would cause query failures
@@ -41,6 +43,9 @@ const tracesLoaders = {
 	url: (): {
 		columns: BaseAutocompleteData[];
 	} => {
+		if (isAiObservabilityExplorerRoute()) {
+			return { columns: [] };
+		}
 		const urlParams = new URLSearchParams(window.location.search);
 		try {
 			const options = JSON.parse(urlParams.get('options') || '{}');

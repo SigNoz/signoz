@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { TelemetryFieldKey } from 'api/v5/v5';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ensureLogsRequiredColumns } from 'container/OptionsMenu/constants';
 import { has } from 'lodash-es';
 
+import aiObservabilityLoaderConfig from '../configs/aiObservabilityLoaderConfig';
 import logsLoaderConfig from '../configs/logsLoaderConfig';
 import tracesLoaderConfig from '../configs/tracesLoaderConfig';
 import { FormattingOptions, Preferences, PreferenceSourcePage } from '../types';
@@ -66,17 +68,40 @@ function tracesPreferencesLoader(): {
 	return { columns };
 }
 
-const PREFERENCE_LOADERS: Record<PreferenceSourcePage, () => Preferences> = {
+// Loads the open panel only. Same priority as the other loaders: localStorage,
+// then the url, then the defaults.
+function aiObservabilityPreferencesLoader(
+	panelType?: PANEL_TYPES,
+): Preferences {
+	if (!panelType) {
+		return { columns: [] };
+	}
+	return {
+		columns:
+			aiObservabilityLoaderConfig.local().panels[panelType] ??
+			aiObservabilityLoaderConfig.url().panels[panelType] ??
+			aiObservabilityLoaderConfig.default(panelType).columns,
+		panelType,
+	};
+}
+
+const PREFERENCE_LOADERS: Record<
+	PreferenceSourcePage,
+	(panelType?: PANEL_TYPES) => Preferences
+> = {
 	[SavedviewtypesSourceDTO.logs]: logsPreferencesLoader,
 	[SavedviewtypesSourceDTO.traces]: tracesPreferencesLoader,
+	[SavedviewtypesSourceDTO.ai_observability]: aiObservabilityPreferencesLoader,
 };
 
 export function usePreferenceLoader({
 	sourcePage,
+	panelType,
 	reSync,
 	setReSync,
 }: {
 	sourcePage: PreferenceSourcePage;
+	panelType?: PANEL_TYPES;
 	reSync: boolean;
 	setReSync: (value: boolean) => void;
 }): {
@@ -85,17 +110,24 @@ export function usePreferenceLoader({
 	error: Error | null;
 } {
 	const loadSlicePreferences = PREFERENCE_LOADERS[sourcePage];
-	const [preferences, setPreferences] = useState<Preferences | null>(
-		loadSlicePreferences,
+	const [preferences, setPreferences] = useState<Preferences | null>(() =>
+		loadSlicePreferences(panelType),
 	);
 	const [error, setError] = useState<Error | null>(null);
+
+	// Switching panels loads the new panel's columns in the same render.
+	const [loadedPanelType, setLoadedPanelType] = useState(panelType);
+	if (loadedPanelType !== panelType) {
+		setLoadedPanelType(panelType);
+		setPreferences(loadSlicePreferences(panelType));
+	}
 
 	useEffect((): void => {
 		function loadPreferences(): void {
 			setError(null);
 
 			try {
-				setPreferences(loadSlicePreferences());
+				setPreferences(loadSlicePreferences(panelType));
 			} catch (e) {
 				setError(e as Error);
 			} finally {
@@ -110,7 +142,7 @@ export function usePreferenceLoader({
 		if (reSync) {
 			loadPreferences();
 		}
-	}, [loadSlicePreferences, reSync, setReSync]);
+	}, [loadSlicePreferences, panelType, reSync, setReSync]);
 
 	return { preferences, loading: false, error };
 }

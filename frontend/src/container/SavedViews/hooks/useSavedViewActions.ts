@@ -21,7 +21,10 @@ import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { usePreferenceSlice } from 'providers/preferences/context/usePreferenceSlice';
-import { isPreferenceSourcePage } from 'providers/preferences/utils';
+import {
+	hasPreferences,
+	isPreferenceSourcePage,
+} from 'providers/preferences/utils';
 import { toAPIError } from 'utils/errorUtils';
 import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 
@@ -59,9 +62,12 @@ export function useSavedViewActions(
 	const { viewKey } = useGetSavedViewParams();
 	const logSavedViewEvent = useSavedViewLogEvent(source);
 
-	const hasOptions = isPreferenceSourcePage(source);
+	const viewPanelType = panelType ?? PANEL_TYPES.LIST;
+	const hasOptions = hasPreferences(source, viewPanelType);
 	const { options } = useOptionsMenu({
-		sourcePage: hasOptions ? source : SavedviewtypesSourceDTO.logs,
+		sourcePage: isPreferenceSourcePage(source)
+			? source
+			: SavedviewtypesSourceDTO.logs,
 	});
 	const preferenceSlice = usePreferenceSlice(source);
 
@@ -79,12 +85,12 @@ export function useSavedViewActions(
 		(displayName: string, color?: string): SavedviewtypesSavedViewSpecDTO =>
 			toSavedViewSpec({
 				query: stagedQuery ?? currentQuery,
-				panelType: panelType ?? PANEL_TYPES.LIST,
+				panelType: viewPanelType,
 				displayName,
 				options: hasOptions ? options : undefined,
 				color,
 			}),
-		[stagedQuery, currentQuery, panelType, hasOptions, options],
+		[stagedQuery, currentQuery, viewPanelType, hasOptions, options],
 	);
 
 	const selectView = useCallback(
@@ -101,11 +107,11 @@ export function useSavedViewActions(
 	const revertView = useCallback(
 		(view: SavedviewtypesSavedViewDTO): void => {
 			if (preferenceSlice) {
-				const { columns, formatting } = getViewColumnsAndFormatting(
+				const { columns, formatting, panelType } = getViewColumnsAndFormatting(
 					view.spec,
 					source,
 				);
-				preferenceSlice.updateColumns(columns);
+				preferenceSlice.updateColumns(columns, panelType);
 				if (formatting) {
 					preferenceSlice.updateFormatting(formatting);
 				}
