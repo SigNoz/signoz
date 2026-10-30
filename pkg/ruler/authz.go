@@ -23,7 +23,7 @@ var DowntimeRuleIDsExtractor = coretypes.ResourceIDsExtractor{Phase: coretypes.P
 		return nil, err
 	}
 
-	return defaultToAllRules(ids), nil
+	return defaultToWildcardIfEmpty(ids), nil
 }}
 
 var DowntimeRuleSelector coretypes.SelectorFunc = func(ctx context.Context, resource coretypes.Resource, id string, orgID valuer.UUID) ([]coretypes.Selector, error) {
@@ -73,10 +73,10 @@ func newDowntimeDiffExtractor(rulerService Ruler, side diffSide) coretypes.Resou
 }
 
 func diffDowntimeRuleLinks(stored, incoming []string) (attached, detached []string) {
-	return diffLinks(defaultToAllRules(stored), incoming)
+	return diffLinks(defaultToWildcardIfEmpty(stored), incoming)
 }
 
-func defaultToAllRules(ids []string) []string {
+func defaultToWildcardIfEmpty(ids []string) []string {
 	if len(ids) == 0 {
 		return []string{coretypes.WildCardSelectorString}
 	}
