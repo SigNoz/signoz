@@ -1,4 +1,5 @@
 import {
+	logsCountQuery,
 	metricsQuery,
 	SINGLE_PANEL_ID,
 	singlePanelDashboard,
@@ -11,13 +12,36 @@ import {
 	withQueryBuilder,
 } from '../../drivers/query-builder';
 
-// In the panel editor a new query starts as metrics with no metric picked, and
-// Run does nothing until one is: each added query picks a metric first.
+// An added query continues the previous query's signal. On these metrics
+// panels it starts with no metric, and Run does nothing until one is picked.
 const test = withQueryBuilder(editorTest);
+
+const SIGNAL_LABEL = { logs: 'Logs', traces: 'Traces' } as const;
 
 const CLONED_FILTER = "operation = '/ads/get'";
 
 test.describe('Query builder — multiple queries', () => {
+	for (const signal of ['logs', 'traces'] as const) {
+		test(`TC-28 a query added to a ${signal} panel stays ${signal}`, async ({
+			dashboards,
+			qb,
+		}) => {
+			await dashboards.seedAndEdit(
+				singlePanelDashboard({ query: logsCountQuery({ signal }) }),
+				SINGLE_PANEL_ID,
+			);
+
+			const added = await qb.addQuery('B');
+
+			await expect(added.signal()).toHaveText(SIGNAL_LABEL[signal]);
+			await expect(added.aggregation.root()).toBeVisible();
+			await expect(added.metric.input()).toHaveCount(0);
+			await added.filter.type("service.name = 'frontend'");
+			await added.filter.press('Escape');
+			await qb.rerunUntil(() => qb.latest('B')?.signal, signal);
+		});
+	}
+
 	test('TC-28 a deleted name is reused by the next added query', async ({
 		dashboards,
 		qb,
