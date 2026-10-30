@@ -73,7 +73,7 @@ TELEGRAM_CASES = [
                         "count": 1,
                         "json_body": telegram_message_subset(
                             "threshold_below_at_least_once",
-                            [("View in SigNoz", r"/alerts/overview\?ruleId="), ("View related logs", r"/logs/logs-explorer\?")],
+                            [("View in SigNoz", r"/alerts/overview\?ruleId="), ("View Related Logs", r"/logs/logs-explorer\?")],
                         ),
                     },
                 ),
@@ -96,7 +96,7 @@ TELEGRAM_CASES = [
                         "count": 1,
                         "json_body": telegram_message_subset(
                             "threshold_above_average",
-                            [("View in SigNoz", r"/alerts/overview\?ruleId="), ("View related traces", r"traces-explorer\?")],
+                            [("View in SigNoz", r"/alerts/overview\?ruleId="), ("View Related Traces", r"traces-explorer\?")],
                         ),
                     },
                 ),

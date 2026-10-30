@@ -22,9 +22,7 @@ const (
 {{ if .Annotations.summary }}<b>Summary:</b> {{ .Annotations.summary | html }}
 {{ end }}{{ if .Annotations.description }}<b>Description:</b> {{ .Annotations.description | html }}
 {{ end }}{{ if .GeneratorURL }}<a href="{{ .GeneratorURL | html }}">View in SigNoz</a>
-{{ end }}{{ if .Annotations.related_logs }}<a href="{{ .Annotations.related_logs | html }}">View related logs</a>
-{{ end }}{{ if .Annotations.related_traces }}<a href="{{ .Annotations.related_traces | html }}">View related traces</a>
-{{ end }}
+{{ end }}{{ template "signoz.relatedLinks.html" . }}
 {{ end }}`
 )
 

@@ -32,8 +32,6 @@ const (
 const (
 	AnnotationTitleTemplate  = "_title_template"
 	AnnotationBodyTemplate   = "_body_template"
-	AnnotationRelatedLogs    = "related_logs"
-	AnnotationRelatedTraces  = "related_traces"
 	AnnotationValue          = "value"
 	AnnotationThresholdValue = "threshold.value"
 	AnnotationCompareOp      = "compare_op"
