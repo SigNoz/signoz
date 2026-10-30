@@ -29,19 +29,22 @@ import {
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 
+import {
+	orgUsersResponse,
+	STORY_USER_EMAIL,
+} from '@/storybook/msw/__story_mockdata__/orgUsers';
+
 import { dashboardResponse } from '../../DashboardPage/stories/__story_mockdata__/dashboard';
 import {
 	dashboardIdAt,
 	dashboardViewsResponse,
 	dashboardsListResponse,
-	orgUsersResponse,
 	PIN_WRITES,
 	recentDashboardIds,
 	ROW_MARKERS,
 	savedView,
 	seedPinnedDashboards,
 	setDashboardPinned,
-	STORY_USER_EMAIL,
 	TEMPLATE_REQUESTS,
 	TOOLTIP_TAGS,
 	WRITE_STATES,
