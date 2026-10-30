@@ -62,7 +62,6 @@ function K8sHeader({
 			const currentExpression =
 				currentQuery.builder.queryData[0]?.filter?.expression || '';
 			const finalExpression = newExpression ?? currentExpression;
-			void setCurrentPage(1);
 
 			const updatedQuery = {
 				...currentQuery,
@@ -89,6 +88,8 @@ function K8sHeader({
 			);
 
 			safeNavigate(`${location.pathname}?${newUrlQuery.toString()}`);
+			// After the navigation: a navigation drops the nuqs writes still queued.
+			void setCurrentPage(1);
 			void invalidateQueries();
 
 			if (finalExpression?.trim()) {
