@@ -7,6 +7,7 @@ import {
 	DEFAULT_PANEL_TYPE,
 	TRACE_VIEW_DEFAULT_COLUMNS,
 } from 'container/LLMObservability/Explorer/constants';
+import { defaultSelectedColumns as LIST_VIEW_DEFAULT_COLUMNS } from 'container/LLMObservability/Explorer/ListView/configs';
 
 import { PanelColumns } from '../types';
 import { isAiObservabilityExplorerRoute } from '../utils';
@@ -45,6 +46,11 @@ const toPanels = (value: unknown): PanelColumns => {
 	);
 };
 
+const PANEL_DEFAULT_COLUMNS: PanelColumns = {
+	[PANEL_TYPES.LIST]: LIST_VIEW_DEFAULT_COLUMNS,
+	[PANEL_TYPES.TRACE]: TRACE_VIEW_DEFAULT_COLUMNS,
+};
+
 // --- AI OBSERVABILITY preferences loader config ---
 // Stored as { [panelType]: columns }. The url keeps the open panel's columns in
 // `options.selectColumns`, and `panelTypes` says which panel they belong to.
@@ -78,9 +84,8 @@ const aiObservabilityLoaders = {
 			return { panels: {} };
 		}
 	},
-	// Only the trace panel keeps columns today.
 	default: (panelType: PANEL_TYPES): { columns: TelemetryFieldKey[] } => ({
-		columns: panelType === PANEL_TYPES.TRACE ? TRACE_VIEW_DEFAULT_COLUMNS : [],
+		columns: PANEL_DEFAULT_COLUMNS[panelType] ?? [],
 	}),
 };
 
