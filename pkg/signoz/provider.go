@@ -269,6 +269,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewDeleteOrphanSARolesFactory(),
 		sqlmigration.NewAddRoutePolicyTuplesFactory(sqlstore),
 		sqlmigration.NewAddDowntimeTuplesFactory(sqlstore),
+		sqlmigration.NewAddRuleTuplesFactory(sqlstore),
 	)
 }
 

@@ -149,61 +149,97 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/rule_views", handler.New(provider.authzMiddleware.ViewAccess(provider.rulerHandler.ListRuleViews), handler.OpenAPIDef{
-		ID:                  "ListRuleViews",
-		Tags:                []string{"rules"},
-		Summary:             "List rule saved views",
-		Description:         "Returns every saved view in the calling user's org. Saved views are shared org-wide.",
-		Response:            new(ruletypes.ListableRuleViews),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-	})).Methods(http.MethodGet).GetError(); err != nil {
+	if err := router.Handle("/api/v2/rule_views", handler.New(
+		provider.authzMiddleware.CheckResources(provider.rulerHandler.ListRuleViews, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		handler.OpenAPIDef{
+			ID:                  "ListRuleViews",
+			Tags:                []string{"rules"},
+			Summary:             "List rule saved views",
+			Description:         "Returns every saved view in the calling user's org. Saved views are shared org-wide.",
+			Response:            new(ruletypes.ListableRuleViews),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbList)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbList,
+			Category: coretypes.ActionCategoryDataAccess,
+			Selector: coretypes.WildcardSelector,
+		}),
+	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/rule_views", handler.New(provider.authzMiddleware.ViewAccess(provider.rulerHandler.CreateRuleView), handler.OpenAPIDef{
-		ID:                  "CreateRuleView",
-		Tags:                []string{"rules"},
-		Summary:             "Create rule saved view",
-		Description:         "Persists the calling user's rule listing state (query, states, sort, order) as a named, reusable view shared across the org.",
-		Request:             new(ruletypes.PostableRuleView),
-		RequestContentType:  "application/json",
-		Response:            new(ruletypes.RuleView),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusCreated,
-		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	if err := router.Handle("/api/v2/rule_views", handler.New(
+		provider.authzMiddleware.CheckResources(provider.rulerHandler.CreateRuleView, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		handler.OpenAPIDef{
+			ID:                  "CreateRuleView",
+			Tags:                []string{"rules"},
+			Summary:             "Create rule saved view",
+			Description:         "Persists the calling user's rule listing state (query, states, sort, order) as a named, reusable view shared across the org.",
+			Request:             new(ruletypes.PostableRuleView),
+			RequestContentType:  "application/json",
+			Response:            new(ruletypes.RuleView),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusCreated,
+			ErrorStatusCodes:    []int{http.StatusBadRequest},
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbList)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbList,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			Selector: coretypes.WildcardSelector,
+		}),
+	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/rule_views/{id}", handler.New(provider.authzMiddleware.ViewAccess(provider.rulerHandler.UpdateRuleView), handler.OpenAPIDef{
-		ID:                  "UpdateRuleView",
-		Tags:                []string{"rules"},
-		Summary:             "Update rule saved view",
-		Description:         "Replaces a saved view's name and data. Saved views are shared org-wide.",
-		Request:             new(ruletypes.UpdatableRuleView),
-		RequestContentType:  "application/json",
-		Response:            new(ruletypes.RuleView),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-	})).Methods(http.MethodPut).GetError(); err != nil {
+	if err := router.Handle("/api/v2/rule_views/{id}", handler.New(
+		provider.authzMiddleware.CheckResources(provider.rulerHandler.UpdateRuleView, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		handler.OpenAPIDef{
+			ID:                  "UpdateRuleView",
+			Tags:                []string{"rules"},
+			Summary:             "Update rule saved view",
+			Description:         "Replaces a saved view's name and data. Saved views are shared org-wide.",
+			Request:             new(ruletypes.UpdatableRuleView),
+			RequestContentType:  "application/json",
+			Response:            new(ruletypes.RuleView),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbList)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbList,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			Selector: coretypes.WildcardSelector,
+		}),
+	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/rule_views/{id}", handler.New(provider.authzMiddleware.ViewAccess(provider.rulerHandler.DeleteRuleView), handler.OpenAPIDef{
-		ID:                  "DeleteRuleView",
-		Tags:                []string{"rules"},
-		Summary:             "Delete rule saved view",
-		Description:         "Removes a saved view. Saved views are shared org-wide. Deleting a non-existent view returns 404.",
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-	})).Methods(http.MethodDelete).GetError(); err != nil {
+	if err := router.Handle("/api/v2/rule_views/{id}", handler.New(
+		provider.authzMiddleware.CheckResources(provider.rulerHandler.DeleteRuleView, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		handler.OpenAPIDef{
+			ID:                  "DeleteRuleView",
+			Tags:                []string{"rules"},
+			Summary:             "Delete rule saved view",
+			Description:         "Removes a saved view. Saved views are shared org-wide. Deleting a non-existent view returns 404.",
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbList)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbList,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			Selector: coretypes.WildcardSelector,
+		}),
+	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 
