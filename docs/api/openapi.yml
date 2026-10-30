@@ -5397,11 +5397,14 @@ components:
     DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpec:
       properties:
         kind:
+          description: The panel kind.
           enum:
           - signoz/ScatterPlotPanel
           type: string
         spec:
-          $ref: '#/components/schemas/DashboardtypesScatterPlotPanelSpec'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesScatterPlotPanelSpec'
+          description: The options for this panel kind. {} accepts every default.
       required:
       - kind
       - spec
@@ -5783,95 +5786,152 @@ components:
     DashboardtypesScatterPlotAxes:
       properties:
         x:
-          $ref: '#/components/schemas/DashboardtypesScatterPlotAxis'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesScatterPlotAxis'
+          description: The axis dimensions.x is plotted along.
         "y":
-          $ref: '#/components/schemas/DashboardtypesScatterPlotAxis'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesScatterPlotAxis'
+          description: The axis dimensions.y is plotted along.
       type: object
     DashboardtypesScatterPlotAxis:
       properties:
         label:
-          description: Axis title. Empty draws none.
+          description: Axis title. Empty draws none; the tooltip still names the column.
           type: string
         scale:
-          $ref: '#/components/schemas/DashboardtypesAxisScale'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesAxisScale'
+          description: auto (default) uses log, or symlog when values include zero
+            or negatives, when that spreads the dots clearly more than linear does;
+            otherwise linear. log cannot place a value at or below zero and leaves
+            that dot out; symlog is log-like but places it.
         softMax:
+          description: The highest value the axis always shows; data above it still
+            extends the axis, as does a threshold on it. Null fits the data.
           nullable: true
           type: number
         softMin:
+          description: The lowest value the axis always shows; data below it still
+            extends the axis, as does a threshold on it. Null fits the data. A log
+            axis ignores a bound at or below zero.
           nullable: true
           type: number
       type: object
     DashboardtypesScatterPlotChartAppearance:
       properties:
         points:
-          $ref: '#/components/schemas/DashboardtypesScatterPlotPoints'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesScatterPlotPoints'
+          description: Dot size and opacity.
       type: object
     DashboardtypesScatterPlotDimensions:
       properties:
         colorBy:
           description: Group-by label names (e.g. k8s.namespace.name) whose combined
-            values colour dots and drive the legend. Empty colours by every group-by
+            values color the dots and drive the legend. Empty colors by every group-by
             label.
           items:
             type: string
           nullable: true
           type: array
         sizeBy:
-          description: Value column key that scales dot size. Empty draws every dot
-            at the default size.
+          description: Value column key that scales each dot's area between chartAppearance.points.minSize
+            and maxSize. Empty draws every dot at chartAppearance.points.size, as
+            does a dot with no value.
           type: string
         x:
           description: Value column key (queryName, or queryName.expression for a
-            multi-aggregation query) plotted on the x axis. Empty uses the first value
-            column.
+            multi-aggregation query) plotted on the x axis. Empty, or a key the result
+            lacks, uses the first value column.
           type: string
         "y":
-          description: Value column key plotted on the y axis. Empty uses the second
-            value column.
+          description: Value column key plotted on the y axis. Empty, or a key the
+            result lacks, uses the first value column x does not use.
           type: string
       type: object
     DashboardtypesScatterPlotPanelSpec:
       properties:
         axes:
-          $ref: '#/components/schemas/DashboardtypesScatterPlotAxes'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesScatterPlotAxes'
+          description: Title, bounds and scale of each axis.
         chartAppearance:
-          $ref: '#/components/schemas/DashboardtypesScatterPlotChartAppearance'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesScatterPlotChartAppearance'
+          description: Dot drawing options.
         dimensions:
-          $ref: '#/components/schemas/DashboardtypesScatterPlotDimensions'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesScatterPlotDimensions'
+          description: 'Which result columns place, size and color the dots. Each
+            dot is one row of the joined scalar result: one group.'
         formatting:
-          $ref: '#/components/schemas/DashboardtypesTableFormatting'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesTableFormatting'
+          description: Per-column units and decimal precision. The x and y columns'
+            units label their axes; every bound column's unit shows in the tooltip.
         legend:
-          $ref: '#/components/schemas/DashboardtypesLegend'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesLegend'
+          description: Legend placement and series colors. A series is one color group,
+            labeled by its colorBy values joined with a comma, or All when nothing
+            is grouped.
         thresholds:
+          description: Reference lines drawn at fixed values across the x or y axis.
           items:
             $ref: '#/components/schemas/DashboardtypesScatterPlotThreshold'
           nullable: true
           type: array
         visualization:
-          $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+          description: The time range the groups are computed over.
       type: object
     DashboardtypesScatterPlotPoints:
       properties:
         maxSize:
-          $ref: '#/components/schemas/DashboardtypesPointDiameter'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesPointDiameter'
+          description: Diameter of the largest dot when dimensions.sizeBy is set,
+            in CSS pixels from 2 to 40. Null means 24.
         minSize:
-          $ref: '#/components/schemas/DashboardtypesPointDiameter'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesPointDiameter'
+          description: Diameter of the smallest dot when dimensions.sizeBy is set,
+            in CSS pixels from 2 to 40. Null means 4.
         opacity:
-          $ref: '#/components/schemas/DashboardtypesPointOpacity'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesPointOpacity'
+          description: Fill opacity of every dot, from 0.1 to 1. Null means 0.7.
         size:
-          $ref: '#/components/schemas/DashboardtypesPointDiameter'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesPointDiameter'
+          description: Diameter of every dot when dimensions.sizeBy is unset, in CSS
+            pixels from 2 to 40. Null means 6.
       type: object
     DashboardtypesScatterPlotThreshold:
       properties:
         axis:
-          $ref: '#/components/schemas/DashboardtypesThresholdAxis'
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesThresholdAxis'
+          description: 'The axis the line marks: y (default) draws it horizontally,
+            x vertically. Unit converts against that axis''s column unit, and the
+            axis extends to keep the line in view.'
         color:
+          description: 'The CSS color of the line, for example #F1575F, which matches
+            the SigNoz red preset; CSS named colors such as red also work.'
           type: string
         label:
+          description: The caption shown on the line.
           type: string
         unit:
+          description: The unit id of value, such as ms or percent. Empty means the
+            panel's unit, or the column's unit for a table threshold. Prefer the panel's
+            unit; a different unit works only when it converts to it, such as s against
+            a panel in ms.
           type: string
         value:
+          description: The value the line is drawn at, in unit.
           format: double
           type: number
       required:
