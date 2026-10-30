@@ -17,8 +17,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-const stepsPerBucket = 300
-
 // BucketCache is the interface for bucket-based caching.
 type BucketCache interface {
 	// cached portion + list of gaps to fetch
@@ -178,7 +176,7 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 	}
 
 	// Convert trimmed result to buckets with adjusted boundaries
-	bucketWidthMs := bucketWidth(stepMs)
+	bucketWidthMs := bucketWidth(startMs, endMs, stepMs)
 	freshBuckets := bc.resultToBuckets(ctx, trimmedResult, cachableStartMs, cachableEndMs, bucketWidthMs)
 
 	// If no fresh buckets and no existing data, don't cache
@@ -703,10 +701,13 @@ func (bc *bucketCache) splitIntoBuckets(ctx context.Context, tsData *qbtypes.Tim
 	return buckets
 }
 
-// bucketWidth depends only on the step, which is part of the cache key, so every window of a query
-// cuts at the same edges. Zero means no cutting.
-func bucketWidth(stepMs uint64) uint64 {
-	return stepMs * stepsPerBucket
+// bucketWidth is the query window rounded up to whole steps, so bucket edges at its multiples stay step-aligned.
+func bucketWidth(startMs, endMs, stepMs uint64) uint64 {
+	widthMs := endMs - startMs
+	if stepMs > 0 && widthMs%stepMs != 0 {
+		widthMs += stepMs - widthMs%stepMs
+	}
+	return widthMs
 }
 
 // statsShare is the duration-weighted part of stats for [fromMs, toMs) within [startMs, endMs).
@@ -783,7 +784,6 @@ func (bc *bucketCache) upsertBucket(ctx context.Context, buckets []*qbtypes.Cach
 		startMs = min(startMs, bucket.StartMs)
 		endMs = max(endMs, bucket.EndMs)
 	}
-	// TODO(tvats): stats of the absorbed buckets outside fresh's range are dropped; add their share.
 	pieces := bc.splitIntoBuckets(ctx, bc.mergeTimeSeriesValues(ctx, merged), fresh.Type, fresh.Stats, startMs, endMs, widthMs)
 	if pieces == nil {
 		return append(kept, fresh)
