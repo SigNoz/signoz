@@ -7,6 +7,7 @@ import Renderer from './Renderer';
 import { MAX_PLOTTED_GROUPS } from './utils/prepareData';
 import { sections } from './sections';
 import { getScatterPlotDataWarning } from './utils/warning';
+import { pruneStaleDimensions } from './utils/pruneStaleDimensions';
 import {
 	Querybuildertypesv5RequestTypeDTO,
 	TelemetrytypesSignalDTO,
@@ -57,6 +58,7 @@ export const definition: PanelDefinition<'signoz/ScatterPlotPanel'> = {
 	// One group by everywhere, so the queries' results join row for row.
 	syncedQueryBuilderFields: [QueryBuilderField.GroupBy],
 	getDataWarning: getScatterPlotDataWarning,
+	prepareSaveSpec: pruneStaleDimensions,
 	actions: {
 		view: true,
 		edit: true,
