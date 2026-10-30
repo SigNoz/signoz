@@ -783,6 +783,7 @@ func (bc *bucketCache) upsertBucket(ctx context.Context, buckets []*qbtypes.Cach
 		startMs = min(startMs, bucket.StartMs)
 		endMs = max(endMs, bucket.EndMs)
 	}
+	// TODO(tvats): stats of the absorbed buckets outside fresh's range are dropped; add their share.
 	pieces := bc.splitIntoBuckets(ctx, bc.mergeTimeSeriesValues(ctx, merged), fresh.Type, fresh.Stats, startMs, endMs, widthMs)
 	if pieces == nil {
 		return append(kept, fresh)
