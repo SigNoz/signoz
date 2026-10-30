@@ -105,10 +105,6 @@ interface RouteValues {
 const meterRoute = ({ tab, metric, timeRange }: RouteValues): string => {
 	const params = new URLSearchParams(meterTimeWindow(timeRange).search);
 
-	if (tab === 'views') {
-		return `${ROUTES.METER_EXPLORER_VIEWS}?${params.toString()}`;
-	}
-
 	if (tab === 'explorer') {
 		// Encoded the way `redirectWithQueryBuilderData` writes it, so the param
 		// survives the extra decode the query builder does when reading it back.
@@ -137,7 +133,7 @@ export const meterMocks = defineStoryMocks({
 		tab: choiceControl<MeterTab>('Tab', {
 			group: VIEW,
 			description:
-				'The three pathnames the module tabs between. Clicking another tab leaves the story, so switch it here.',
+				'The two pathnames the module tabs between. Clicking another tab leaves the story, so switch it here.',
 			options: METER_TABS,
 			value: 'meter',
 		}),
@@ -177,7 +173,7 @@ export const meterMocks = defineStoryMocks({
 		}),
 		savedViews: countControl('Saved views', {
 			group: EXPLORER,
-			description: 'Fills the views dropdown and the Views tab.',
+			description: 'Fills the saved views list beside the explorer.',
 			value: 4,
 			max: 6,
 		}),
@@ -237,7 +233,7 @@ export const meterMocks = defineStoryMocks({
 		),
 
 		rest.get(
-			'http://localhost/api/v1/explorer/views',
+			'http://localhost/api/v2/saved_views',
 			response.json(() => savedMeterViewsResponse(values.savedViews)),
 		),
 

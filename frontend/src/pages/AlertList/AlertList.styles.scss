@@ -1,7 +1,7 @@
 .alerts-container {
 	// Hands the page height down to the active tab so its content can bound itself
 	// instead of guessing with 100vh. Child combinators only, nested Tabs
-	// (Configuration) must not be caught.
+	// (e.g. the alert history timeline) must not be caught.
 	flex: 1;
 	min-height: 0;
 
@@ -55,19 +55,89 @@
 		}
 	}
 
-	.configuration-tabs {
-		.ant-tabs-nav {
-			.ant-tabs-nav-wrap {
-				padding: 0 8px;
-			}
-		}
-	}
-
 	.alert-rules-container {
 		margin-top: 10px;
 		flex: 1;
 		min-height: 0;
 		display: flex;
 		flex-direction: column;
+	}
+
+	.alert-configuration-container {
+		flex: 1;
+		min-height: 0;
+		display: flex;
+		flex-direction: row;
+		align-items: stretch;
+
+		.alert-configuration-sidebar {
+			width: 240px;
+			flex-shrink: 0;
+			border-right: 1px solid var(--l1-border);
+			background: var(--l1-background);
+			padding: 12px 8px;
+			display: flex;
+			flex-direction: column;
+			gap: 2px;
+			overflow-y: auto;
+
+			.sidebar-nav-item {
+				display: flex;
+				align-items: center;
+				width: 100%;
+				height: 32px;
+				padding: 0 8px;
+				margin: 0;
+				border: none;
+				border-radius: var(--radius-2, 4px);
+				background: transparent;
+				color: var(--l2-foreground);
+				font-family: inherit;
+				font-size: 13px;
+				font-weight: var(--font-weight-normal, 400);
+				line-height: 18px;
+				text-align: left;
+				cursor: pointer;
+				transition:
+					background 0.12s ease,
+					color 0.12s ease;
+
+				&:hover {
+					background: var(--l1-background-hover);
+					color: var(--l1-foreground);
+				}
+
+				&.active {
+					background: var(--l1-background-hover);
+					color: var(--l1-foreground);
+					font-weight: var(--font-weight-medium, 500);
+				}
+
+				&:focus-visible {
+					outline: 2px solid var(--primary-background);
+					outline-offset: -1px;
+				}
+
+				.sidebar-nav-item-label {
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					color: inherit;
+				}
+			}
+		}
+
+		.alert-configuration-content {
+			flex: 1;
+			min-width: 0;
+			min-height: 0;
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+
+			> .alert-rules-container {
+				margin-top: 0;
+			}
+		}
 	}
 }

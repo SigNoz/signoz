@@ -93,9 +93,9 @@ tests/
     │   └── auth.ts
     ├── helpers/               # function helpers + the constants they share with tests
     │   ├── auth.ts
-    │   └── dashboards.ts
+    │   └── logs-explorer.ts
     ├── testdata/              # static data files (JSON) used by helpers and tests
-    │   └── apm-metrics.json   # (example)
+    │   └── traces/large-trace.json   # (example)
     ├── tests/                 # Playwright .spec.ts files, one dir per feature area
     │   └── alerts/
     │       └── alerts.spec.ts # (example)
@@ -110,8 +110,8 @@ tests/
 These two folders look similar but mean different things:
 
 - **`fixtures/`** holds *Playwright test fixtures* (created via `test.extend({...})`). By the canonical definition, a fixture is "a consistent, predefined set of data, objects, or environmental conditions used to ensure tests run in a stable state" — i.e. setup/teardown that runs *automatically* around each test or worker. `auth.ts` matches: it extends Playwright's `test` with an `authedPage` that's logged-in before every test runs and torn down after. If the only thing in this folder ever is `auth.ts`, that's fine — fixtures are a deliberately small surface.
-- **`helpers/`** holds plain function helpers that you call *explicitly* from a test or hook — they don't extend Playwright's `test`. This covers both behaviour helpers (e.g. `gotoDashboardsList(page)`) and the constants those helpers and the tests both refer to (e.g. `SEARCH_PLACEHOLDER`). Constants live next to the helpers that use them so a single import line in a test covers both.
-- **`testdata/`** holds static data files (typically JSON / YAML) consumed by the helpers — for example, `apm-metrics.json`, a real dashboard payload uploaded through the UI by an importer helper.
+- **`helpers/`** holds plain function helpers that you call *explicitly* from a test or hook — they don't extend Playwright's `test`. This covers both behaviour helpers (e.g. `gotoLogsExplorer(page)`) and the constants those helpers and the tests both refer to (e.g. `LINKED_ROW_CLASS`). Constants live next to the helpers that use them so a single import line in a test covers both.
+- **`testdata/`** holds static data files (typically JSON / YAML) consumed by the helpers — for example, `traces/large-trace.json`, a real trace the trace-details helpers seed.
 
 Rule of thumb: if it's a `test.extend` fixture, put it in `fixtures/`. If it's a function you call explicitly (or a constant the function uses), put it in `helpers/`. If it's a static file the helpers read, put it in `testdata/`.
 
@@ -128,7 +128,7 @@ test('TC-09 RouteTab switches the url', async ({ routing }) => {
 });
 ```
 
-- `driver(name, build)` adds a test-scoped fixture built on `authedPage`.
+- `driver(name, build, dispose?)` adds a test-scoped fixture built on `authedPage`. `dispose` runs after the test on the same page, so a driver can delete what it seeded.
 - `seeded(name, open, close)` adds a worker-scoped seed. `open` and `close` run on a throwaway admin page.
 - A driver reuses helpers by calling them, never by reaching for another fixture.
 - `drivers/` is AI-owned: coding agents generate and maintain it with the specs, and `.gitattributes` collapses it in diffs.
@@ -173,9 +173,10 @@ Each spec follows these principles:
 1. **Directory per feature**: `tests/e2e/tests/<feature>/*.spec.ts`. Cross-resource junction concerns (e.g. cascade-delete) go in their own file, not packed into one giant spec.
 2. **Test titles use `TC-NN`**: `test('TC-01 alerts page — tabs render', ...)`. Preserves ordering at a glance and maps to external coverage tracking.
 3. **UI-first**: drive flows through the UI. Playwright traces capture every BE request/response the UI triggers, so asserting on UI outcomes implicitly validates BE contracts. Reach for direct `page.request.*` only when the test's *purpose* is asserting a response contract (use `page.waitForResponse` on a UI click) or when a specific UI step is structurally flaky (e.g. Ant DatePicker calendar-cell indices) — and even then try UI first.
-4. **Self-contained state**: each spec seeds its own data and cleans up at suite teardown. The pytest harness creates a fresh stack with **zero** dashboards / alerts / etc. — never assume pre-existing data. Two patterns work:
-    - **Per-test seed + cleanup in `try / finally`** — small specs where each test owns its data.
-    - **Suite-level seed + `afterAll` teardown** — preferred for larger specs. Each `createDashboard(...)` call adds the resulting ID to a module-level `Set<string>`, and one `test.afterAll(...)` deletes everything in the set. See `tests/e2e/tests/dashboards/list.spec.ts` for the full pattern. `test.beforeAll` / `test.afterAll` cannot use `authedPage` directly (it's test-scoped); use `newAdminContext(browser)` from `helpers/auth.ts` instead — it performs one fresh login per suite hook.
+4. **Self-contained state**: each spec seeds its own data and cleans up at suite teardown. The pytest harness creates a fresh stack with **zero** dashboards / alerts / etc. — never assume pre-existing data. Patterns, in order of preference:
+    - **Driver `dispose`** — the driver tracks what it seeded and deletes it after the test, so the spec has no cleanup code. See `dashboards.seed(...)` in `tests/e2e/drivers/dashboards.ts`.
+    - **Per-test seed + cleanup in `try / finally`** — small specs without a driver, where each test owns its data.
+    - **Suite-level seed + `afterAll` teardown** — larger specs without a driver. One `test.afterAll(...)` deletes everything the suite seeded. See `tests/e2e/tests/llm-o11y/llm-pricing.spec.ts`. `test.beforeAll` / `test.afterAll` cannot use `authedPage` directly (it's test-scoped); use `newAdminContext(browser)` from `helpers/auth.ts` instead — it performs one fresh login per suite hook.
 5. **Seed via API when the UI flow is multi-step or brittle.** The frontend stores its JWT in `localStorage` under `AUTH_TOKEN`; `page.request.*` inherits the auth fixture's storage state. A typical pattern:
     ```ts
     const token = await page.evaluate(
@@ -187,7 +188,7 @@ Each spec follows these principles:
     });
     ```
     This is faster and more reliable than a multi-step UI seed. Reach for the UI flow only when the test's *purpose* is asserting that flow.
-6. **Reusable static data lives in `tests/e2e/testdata/`.** For example, `apm-metrics.json` is a real dashboard payload that `importApmMetricsDashboardViaUI` (in `helpers/dashboards.ts`) uploads through the actual Import JSON UI flow to seed a richly-tagged dashboard for search/list tests.
+6. **Reusable static data lives in `tests/e2e/testdata/`.** For example, `traces/large-trace.json` is a real trace that `loadLargeTrace` (in `helpers/trace-details.ts`) seeds for the trace-details tests.
 
 ## How to write an E2E test?
 

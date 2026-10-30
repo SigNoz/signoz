@@ -91,6 +91,7 @@ type provider struct {
 	ruleStateHistoryHandler    rulestatehistory.Handler
 	spanMapperHandler          spanmapper.Handler
 	alertmanagerHandler        alertmanager.Handler
+	alertmanagerService        alertmanager.Alertmanager
 	prometheusHandler          prometheus.Handler
 	traceDetailHandler         tracedetail.Handler
 	rulerHandler               ruler.Handler
@@ -136,6 +137,7 @@ func NewFactory(
 	ruleStateHistoryHandler rulestatehistory.Handler,
 	spanMapperHandler spanmapper.Handler,
 	alertmanagerHandler alertmanager.Handler,
+	alertmanagerService alertmanager.Alertmanager,
 	prometheusHandler prometheus.Handler,
 	llmPricingRuleHandler llmpricingrule.Handler,
 	traceDetailHandler tracedetail.Handler,
@@ -189,6 +191,7 @@ func NewFactory(
 			ruleStateHistoryHandler,
 			spanMapperHandler,
 			alertmanagerHandler,
+			alertmanagerService,
 			prometheusHandler,
 			llmPricingRuleHandler,
 			traceDetailHandler,
@@ -244,6 +247,7 @@ func newProvider(
 	ruleStateHistoryHandler rulestatehistory.Handler,
 	spanMapperHandler spanmapper.Handler,
 	alertmanagerHandler alertmanager.Handler,
+	alertmanagerService alertmanager.Alertmanager,
 	prometheusHandler prometheus.Handler,
 	llmPricingRuleHandler llmpricingrule.Handler,
 	traceDetailHandler tracedetail.Handler,
@@ -299,6 +303,7 @@ func newProvider(
 		ruleStateHistoryHandler:    ruleStateHistoryHandler,
 		spanMapperHandler:          spanMapperHandler,
 		alertmanagerHandler:        alertmanagerHandler,
+		alertmanagerService:        alertmanagerService,
 		prometheusHandler:          prometheusHandler,
 		traceDetailHandler:         traceDetailHandler,
 		rulerHandler:               rulerHandler,

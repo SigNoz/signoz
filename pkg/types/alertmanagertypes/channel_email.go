@@ -14,10 +14,10 @@ import (
 // credentials and TLS settings come from the deployment's global config, so a
 // channel can only choose recipients and body.
 type ChannelEmailConfig struct {
-	SendResolved *bool                        `json:"sendResolved,omitempty"`
-	To           string                       `json:"to" required:"true"`
-	HTML         valuer.UnsetOrNonEmptyString `json:"html,omitzero"`
-	Headers      map[string]string            `json:"headers,omitzero"`
+	SendResolved *bool                        `json:"sendResolved,omitempty" description:"Also notify when the alert resolves. Defaults to false."`
+	To           string                       `json:"to" required:"true" description:"The recipient addresses, comma separated."`
+	HTML         valuer.UnsetOrNonEmptyString `json:"html,omitzero" description:"Alertmanager template for the HTML body; defaults to the Alertmanager email default."`
+	Headers      map[string]string            `json:"headers,omitzero" description:"Extra SMTP headers keyed by canonical MIME header name, such as Subject."`
 }
 
 func (c *ChannelEmailConfig) UnmarshalJSON(data []byte) error {

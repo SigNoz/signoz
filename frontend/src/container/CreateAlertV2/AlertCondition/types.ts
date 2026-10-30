@@ -26,6 +26,13 @@ export interface ThresholdItemProps {
 	units: DefaultOptionType[];
 	isErrorChannels: boolean;
 	refreshChannels: () => void;
+	isAnomaly?: boolean;
+}
+
+export interface ThresholdList {
+	addThreshold: (overrides?: Partial<Threshold>) => void;
+	removeThreshold: (thresholdId: string) => void;
+	updateThreshold: UpdateThreshold;
 }
 
 export interface AnomalyAndThresholdProps {

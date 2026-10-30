@@ -115,6 +115,13 @@ func newPromqlQuery(
 	requestType qbv5.RequestType,
 	variables map[string]qbv5.VariableItem,
 ) *promqlQuery {
+	// promql evaluates at tr.From and every step after it, so two windows a few
+	// seconds apart ask for different instants and could never share a cache
+	// entry. Rounding both ends down to the step makes them the same query.
+	if stepMs := uint64(query.Step.Milliseconds()); stepMs > 0 && !query.SkipStepAlignment {
+		tr.From -= tr.From % stepMs
+		tr.To -= tr.To % stepMs
+	}
 	return &promqlQuery{
 		logger:      logger,
 		promEngine:  promEngine,
@@ -130,6 +137,12 @@ func (q *promqlQuery) Fingerprint() string {
 	switch q.requestType {
 	case qbv5.RequestTypeTimeSeries, qbv5.RequestTypeHeatmap:
 	default:
+		return ""
+	}
+
+	// an unaligned window evaluates at instants no other window asks for, so
+	// there is nothing to share
+	if q.query.SkipStepAlignment {
 		return ""
 	}
 
@@ -352,7 +365,7 @@ func (q *promqlQuery) toResult(matrix promql.Matrix, warnings []string, began ti
 }
 
 func (q *promqlQuery) toResultForHeatmap(matrix promql.Matrix, warnings []string, began time.Time, statsMu *sync.Mutex, rowsScanned, bytesScanned *uint64) (*qbv5.Result, error) {
-	tsData, err := foldMatrixAsHeatmap(matrix, &q.tr, uint64(q.query.Step.Milliseconds()), q.query.Name)
+	tsData, err := foldMatrixAsHeatmap(matrix, q.query.Name)
 	if err != nil {
 		return nil, err
 	}

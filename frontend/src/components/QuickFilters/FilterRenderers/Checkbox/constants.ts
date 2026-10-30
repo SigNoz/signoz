@@ -1,0 +1,1 @@
+export const DEFAULT_VISIBLE_ITEMS_COUNT = 10;
