@@ -10,24 +10,12 @@ import {
 	type DashboardtypesListedDashboardForUserV2DTO,
 	type ListDashboardViews200,
 	type ListDashboardsForUserV2200,
-	type ListUsers200,
 	type TagtypesGettableTagDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { createAppContextMock } from 'tests/fixtures/appContextMock';
-import { USER_ROLES } from 'types/roles';
-
-/**
- * "My dashboards" matches on the signed-in address, so the rows have to be
- * created by the same user the providers mount.
- */
-export const STORY_USER_EMAIL = createAppContextMock(USER_ROLES.ADMIN).user
-	.email;
-
-const TEAMMATE_EMAILS = [
-	'ada@signoz.io',
-	'grace@signoz.io',
-	'linus@signoz.io',
-] as const;
+import {
+	STORY_USER_EMAIL,
+	TEAMMATE_EMAILS,
+} from '@/storybook/msw/__story_mockdata__/orgUsers';
 
 const HOUR = 60 * 60 * 1000;
 
@@ -324,21 +312,6 @@ export const dashboardViewsResponse = (
 });
 
 /** The org's users, which is where the Created-by dropdown gets its options. */
-export const orgUsersResponse = (): ListUsers200 => ({
-	status: 'success',
-	data: [
-		{
-			id: 'storybook-user-me',
-			email: STORY_USER_EMAIL,
-			displayName: 'John Doe',
-		},
-		...TEAMMATE_EMAILS.map((email, index) => ({
-			id: `storybook-user-${index + 1}`,
-			email,
-			displayName: email.split('@')[0].replace(/^./, (c) => c.toUpperCase()),
-		})),
-	],
-});
 
 /** Ids the Recently-viewed rail entry reads out of local state. */
 export const recentDashboardIds = (count: number): string[] =>

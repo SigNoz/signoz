@@ -5,22 +5,16 @@
 //   - client:    constrains by a client-side id set (Favorites, Recently viewed)
 import { Clock, Layers, Lock, Pin, User } from '@signozhq/icons';
 
-import { createdByClause } from './filterQuery';
-import { BuiltinViewId } from '../types';
-import type { ViewSection } from '../types';
+import {
+	areQueriesEqual,
+	createdByClause,
+} from 'components/ListFilter/dsl/filterQuery';
+import type { BuiltinListView } from 'components/ListViews/types';
+
+import { BuiltinViewId, type DashboardViewFilter } from '../types';
 import type { DashboardListItem } from './helpers';
 
-// All @signozhq icons share this component type.
-export type ViewIcon = typeof Pin;
-
-export interface BuiltinView {
-	id: BuiltinViewId;
-	label: string;
-	icon: ViewIcon;
-	section: Exclude<ViewSection, 'custom'>;
-}
-
-export const BUILTIN_VIEWS: BuiltinView[] = [
+export const BUILTIN_VIEWS: BuiltinListView[] = [
 	{
 		id: BuiltinViewId.Mine,
 		label: 'My dashboards',
@@ -72,6 +66,22 @@ export const builtinViewQuery = (
 			return null;
 	}
 };
+
+// Built-in views only seed the query; the current sort/order is kept.
+export const builtinViewFilter = (
+	id: string,
+	current: DashboardViewFilter,
+	userEmail: string,
+): DashboardViewFilter | null => {
+	const query = builtinViewQuery(id, userEmail);
+	return query === null ? null : { ...current, query };
+};
+
+// A view is dirty only when its query diverges; sort/order changes don't count.
+export const areViewFiltersEqual = (
+	a: DashboardViewFilter,
+	b: DashboardViewFilter,
+): boolean => areQueriesEqual(a.query, b.query);
 
 export interface EmptyStateCopy {
 	title: string;

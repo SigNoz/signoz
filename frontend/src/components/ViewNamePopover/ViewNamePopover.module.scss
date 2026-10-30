@@ -1,0 +1,26 @@
+.savePopover {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	width: 280px;
+	padding: 4px;
+}
+
+.saveTitle {
+	font-size: var(--font-size-sm);
+	font-weight: var(--font-weight-semibold);
+	color: var(--l1-foreground);
+}
+
+.saveLabel {
+	font-size: var(--font-size-xs);
+	color: var(--l3-foreground);
+	margin-top: 2px;
+}
+
+.saveActions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 4px;
+}

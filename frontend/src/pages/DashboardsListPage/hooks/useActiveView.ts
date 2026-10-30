@@ -1,22 +1,22 @@
 import { useCallback, useMemo } from 'react';
-import { type Options, parseAsString, useQueryState } from 'nuqs';
 import type {
 	DashboardtypesListOrderDTO,
 	DashboardtypesListSortDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import type {
+	BuiltinListView,
+	SavedListView,
+} from 'components/ListViews/types';
+import { useListViews } from 'hooks/listViews/useListViews';
 
-import { areQueriesEqual } from '../utils/filterQuery';
-import { BuiltinViewId } from '../types';
-import type { SavedView } from '../types';
+import { BuiltinViewId, type DashboardViewFilter } from '../types';
 import {
+	areViewFiltersEqual,
 	BUILTIN_VIEWS,
-	type BuiltinView,
-	builtinViewQuery,
+	builtinViewFilter,
 	isClientView,
 } from '../utils/views';
 import { useSavedViews } from './useSavedViews';
-
-const opts: Options = { history: 'push' };
 
 interface UseActiveViewArgs {
 	query: string;
@@ -32,8 +32,8 @@ interface UseActiveViewArgs {
 
 export interface UseActiveViewResult {
 	activeViewId: string;
-	builtinViews: BuiltinView[];
-	customViews: SavedView[];
+	builtinViews: BuiltinListView[];
+	customViews: SavedListView<DashboardViewFilter>[];
 	customViewsLoading: boolean;
 	isCustomActive: boolean;
 	// The current query diverges from the active view's canonical query.
@@ -48,10 +48,9 @@ export interface UseActiveViewResult {
 	renameView: (id: string, name: string) => void;
 }
 
-// Orchestrates the active view: which view is selected (URL `view` param),
-// merging built-in + org-shared saved views, applying a view's query on select,
-// dirty detection, and save/reset/delete via the Views API. A view now simply
-// "is" a query string, so dirty detection is a trimmed string compare.
+// Dashboards' binding of `useListViews`: a view is a `{ query, sort, order }`
+// filter, built-in views seed only the query, and dirty detection is a trimmed
+// query compare.
 export function useActiveView({
 	query,
 	setQuery,
@@ -62,145 +61,54 @@ export function useActiveView({
 	setSortOrder,
 	canListDashboards,
 }: UseActiveViewArgs): UseActiveViewResult {
-	const [activeViewId, setActiveViewId] = useQueryState(
-		'view',
-		parseAsString.withDefault(BuiltinViewId.All).withOptions(opts),
+	const api = useSavedViews({ enabled: canListDashboards });
+
+	const filter = useMemo<DashboardViewFilter>(
+		() => ({ query, sort: sortColumn, order: sortOrder }),
+		[query, sortColumn, sortOrder],
 	);
 
-	const {
-		views: customViews,
-		isLoading: customViewsLoading,
-		createView,
-		updateView,
-		deleteView,
-	} = useSavedViews({ enabled: canListDashboards });
-
-	const activeCustom = useMemo(
-		() => customViews.find((v) => v.id === activeViewId),
-		[customViews, activeViewId],
-	);
-
-	// The query the active view "is" — used to detect divergence.
-	const canonicalQuery = useMemo<string | null>(
-		() =>
-			activeCustom
-				? activeCustom.query
-				: builtinViewQuery(activeViewId, userEmail),
-		[activeCustom, activeViewId, userEmail],
-	);
-
-	const isModified =
-		canonicalQuery !== null && !areQueriesEqual(query, canonicalQuery);
-
-	const selectView = useCallback(
-		(id: string): void => {
-			void setActiveViewId(id);
-			const custom = customViews.find((v) => v.id === id);
-			if (custom) {
-				setQuery(custom.query);
-				setSortColumn(custom.sort);
-				setSortOrder(custom.order);
-				return;
+	const applyFilter = useCallback(
+		(next: DashboardViewFilter): void => {
+			setQuery(next.query);
+			if (next.sort !== sortColumn) {
+				setSortColumn(next.sort);
 			}
-			setQuery(builtinViewQuery(id, userEmail) ?? '');
-		},
-		[
-			setActiveViewId,
-			customViews,
-			setQuery,
-			userEmail,
-			setSortColumn,
-			setSortOrder,
-		],
-	);
-
-	const saveView = useCallback(
-		(name: string): void => {
-			void (async (): Promise<void> => {
-				const created = await createView({
-					name,
-					query,
-					sort: sortColumn,
-					order: sortOrder,
-				});
-				if (created) {
-					void setActiveViewId(created.id);
-				}
-			})();
-		},
-		[query, createView, sortColumn, sortOrder, setActiveViewId],
-	);
-
-	const saveActiveView = useCallback((): void => {
-		if (!activeCustom) {
-			return;
-		}
-		updateView(activeCustom.id, {
-			name: activeCustom.name,
-			query,
-			sort: sortColumn,
-			order: sortOrder,
-		});
-	}, [activeCustom, query, updateView, sortColumn, sortOrder]);
-
-	const resetView = useCallback((): void => {
-		if (canonicalQuery === null) {
-			return;
-		}
-		setQuery(canonicalQuery);
-		if (activeCustom) {
-			setSortColumn(activeCustom.sort);
-			setSortOrder(activeCustom.order);
-		}
-	}, [canonicalQuery, setQuery, activeCustom, setSortColumn, setSortOrder]);
-
-	const removeView = useCallback(
-		async (id: string): Promise<void> => {
-			try {
-				await deleteView(id);
-			} catch {
-				// Failure is surfaced by the delete mutation's error toast; still
-				// settle so the confirm modal stops loading and closes.
-				return;
-			}
-			if (activeViewId === id) {
-				void setActiveViewId(BuiltinViewId.All);
-				setQuery('');
+			if (next.order !== sortOrder) {
+				setSortOrder(next.order);
 			}
 		},
-		[deleteView, activeViewId, setActiveViewId, setQuery],
+		[setQuery, sortColumn, sortOrder, setSortColumn, setSortOrder],
 	);
 
-	// Rename only touches the view's name; its stored query/sort/order are preserved.
-	const renameView = useCallback(
-		(id: string, name: string): void => {
-			const view = customViews.find((v) => v.id === id);
-			if (!view) {
-				return;
-			}
-			updateView(id, {
-				name,
-				query: view.query,
-				sort: view.sort,
-				order: view.order,
-			});
-		},
-		[customViews, updateView],
+	const builtinFilter = useCallback(
+		(id: string, current: DashboardViewFilter): DashboardViewFilter | null =>
+			builtinViewFilter(id, current, userEmail),
+		[userEmail],
 	);
+
+	const views = useListViews<DashboardViewFilter>({
+		filter,
+		applyFilter,
+		isEqual: areViewFiltersEqual,
+		builtinFilter,
+		defaultViewId: BuiltinViewId.All,
+		api,
+	});
 
 	return {
-		activeViewId,
+		activeViewId: views.activeViewId,
 		builtinViews: BUILTIN_VIEWS,
-		customViews,
-		customViewsLoading,
-		isCustomActive: !!activeCustom,
-		isModified,
-		clientView: isClientView(activeViewId),
-		selectView,
-		saveView,
-		saveActiveView,
-		resetView,
-		removeView,
-		renameView,
+		customViews: views.customViews,
+		customViewsLoading: api.isLoading,
+		isCustomActive: views.isCustomActive,
+		isModified: views.isModified,
+		clientView: isClientView(views.activeViewId),
+		selectView: views.selectView,
+		saveView: views.saveView,
+		saveActiveView: views.saveActiveView,
+		resetView: views.resetView,
+		removeView: views.removeView,
+		renameView: views.renameView,
 	};
 }
