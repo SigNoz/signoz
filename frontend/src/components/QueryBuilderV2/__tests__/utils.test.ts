@@ -12,9 +12,48 @@ import {
 	convertExpressionToFilters,
 	convertFiltersToExpression,
 	convertFiltersToExpressionWithExistingQuery,
+	convertHavingToExpression,
 	formatValueForExpression,
+	parseLimit,
 	removeKeysFromExpression,
 } from '../utils';
+
+describe('convertHavingToExpression', () => {
+	it.each([
+		['COUNT()', 'count() > 5'],
+		['COUNT_DISTINCT(service.name)', 'count_distinct(service.name) > 5'],
+		['P99(duration_nano)', 'p99(duration_nano) > 5'],
+		['SUM(http.Request.Size)', 'sum(http.Request.Size) > 5'],
+		['count()', 'count() > 5'],
+	])('references %s by its lower-case function', (columnName, expected) => {
+		expect(
+			convertHavingToExpression([{ columnName, op: '>', value: 5 }]),
+		).toStrictEqual({ expression: expected });
+	});
+
+	it('joins several conditions and formats list values', () => {
+		expect(
+			convertHavingToExpression([
+				{ columnName: 'COUNT()', op: '>', value: 5 },
+				{ columnName: 'COUNT()', op: 'NOT IN', value: [1, 2] },
+			]),
+		).toStrictEqual({ expression: 'count() > 5 AND count() NOT IN [1, 2]' });
+	});
+});
+
+describe('parseLimit', () => {
+	it.each([
+		['10', 10],
+		['1', 1],
+		['', null],
+		['0', null],
+		['-5', null],
+		['2.5', null],
+		['abc', null],
+	])('parses %j as %j', (value, expected) => {
+		expect(parseLimit(value)).toBe(expected);
+	});
+});
 
 describe('convertFiltersToExpression', () => {
 	beforeEach(() => {
