@@ -17,6 +17,7 @@ import (
 
 	signozerrors "github.com/SigNoz/signoz/pkg/errors"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/types/thirdpartyapitypes"
 
 	"log/slog"
@@ -931,6 +932,10 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 			}
 			chQuery.Query = query.String()
+
+			if err := clickhousesql.ErrIfStatementIsNotValid(chQuery.Query); err != nil {
+				return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+			}
 		}
 	}
 
