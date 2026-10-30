@@ -258,6 +258,7 @@ Tests can be configured using pytest options:
 - `--clickhouse-version` — ClickHouse version, also used for ClickHouse Keeper (default: `25.12.5`)
 - `--schema-migrator-version` — SigNoz schema migrator version (default: `v0.144.9`)
 - `--with-web` — Build the frontend into the SigNoz image (required for e2e)
+- `--no-race` — Build SigNoz without the race detector, for a faster local stack. CI keeps it. Applies when the image is built: a fresh stack or `--rebuild`.
 
 Example:
 
