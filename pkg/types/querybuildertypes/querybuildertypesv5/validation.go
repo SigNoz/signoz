@@ -879,12 +879,18 @@ func (r *QueryRangeRequest) validateHeatmap() error {
 			if err := validateHeatmapQuery(spec.Functions, spec.Having); err != nil {
 				return err
 			}
+			if err := refuseBucketField(spec.BucketOptions, "a metrics query"); err != nil {
+				return err
+			}
 			if spec.Disabled {
 				continue
 			}
 			enabled++
 		case QueryBuilderFormula:
 			if err := validateHeatmapQuery(spec.Functions, spec.Having); err != nil {
+				return err
+			}
+			if err := refuseBucketField(spec.BucketOptions, "a formula"); err != nil {
 				return err
 			}
 			if spec.Disabled {
@@ -901,15 +907,26 @@ func (r *QueryRangeRequest) validateHeatmap() error {
 				continue
 			}
 			enabled++
-		// An AI query decodes to the traces spec, so it lands here too. Admitting
-		// either signal means capping Aggregations at one: each carries its own
-		// Meta.Buckets, and a heatmap renders against a single bucket axis.
-		case QueryBuilderQuery[LogAggregation], QueryBuilderQuery[TraceAggregation]:
-			return errors.New(errors.TypeUnsupported, errors.CodeUnsupported,
-				"heatmaps are not supported for the logs and traces signals yet")
+		// An AI query decodes to the traces spec, so it lands here too.
+		case QueryBuilderQuery[LogAggregation]:
+			if err := validateEventHeatmapQuery(spec.Functions, spec.Having, spec.BucketOptions, len(spec.Aggregations), spec.Disabled); err != nil {
+				return err
+			}
+			if spec.Disabled {
+				continue
+			}
+			enabled++
+		case QueryBuilderQuery[TraceAggregation]:
+			if err := validateEventHeatmapQuery(spec.Functions, spec.Having, spec.BucketOptions, len(spec.Aggregations), spec.Disabled); err != nil {
+				return err
+			}
+			if spec.Disabled {
+				continue
+			}
+			enabled++
 		default:
 			return errors.NewInvalidInputf(errors.CodeInvalidInput,
-				"heatmap requests support one metrics builder query, one formula over them, one clickhouse query, or one promql query, got %q", envelope.Type.StringValue())
+				"heatmap requests support one builder query, one formula over them, one clickhouse query, or one promql query, got %q", envelope.Type.StringValue())
 		}
 	}
 
@@ -1006,10 +1023,51 @@ func validateHeatmapQuery(functions []Function, having *Having) error {
 
 	if having != nil && having.Expression != "" {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"having is not supported for heatmap requests: it filters individual cells, which breaks the cumulative differencing")
+			"having is not supported for heatmap requests: it filters individual cells rather than groups, leaving holes in the bucket axis")
 	}
 
 	return nil
+}
+
+// validateEventHeatmapQuery holds a logs or traces query to what a per-event
+// heatmap can draw. A disabled query feeds a formula rather than the chart, so
+// it states no axis of its own and only the settings that still reach the cells
+// are checked.
+func validateEventHeatmapQuery(functions []Function, having *Having, bucketOptions *BucketOptions, numAggregations int, disabled bool) error {
+	if err := validateHeatmapQuery(functions, having); err != nil {
+		return err
+	}
+
+	if disabled {
+		return nil
+	}
+
+	// Every aggregation carries its own Meta.Buckets, and a heatmap renders
+	// against a single bucket axis.
+	if numAggregations > 1 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"a heatmap renders one bucket axis, but the query has %d aggregations", numAggregations).
+			WithAdditional("Keep the one aggregation whose distribution you want to plot")
+	}
+
+	if bucketOptions == nil || bucketOptions.Field == nil || bucketOptions.Field.Name == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"a logs or traces heatmap needs bucketOptions.field, the numeric field its axis is cut from").
+			WithAdditional("Set bucketOptions.field to a field such as duration_nano")
+	}
+
+	return nil
+}
+
+// refuseBucketField rejects an axis field on a query that has exactly one value
+// per point, where naming a second one says the caller expected a different
+// chart than the one they would get.
+func refuseBucketField(bucketOptions *BucketOptions, subject string) error {
+	if bucketOptions == nil || bucketOptions.Field == nil {
+		return nil
+	}
+	return errors.NewInvalidInputf(errors.CodeInvalidInput,
+		"bucketOptions.field is not supported for %s: its axis is cut from the value it already computes", subject)
 }
 
 func GetValidationOptions(requestType RequestType) []ValidationOption {

@@ -729,7 +729,11 @@ func (r *QueryRangeRequest) GetQueriesSupportingZeroDefault() map[string]bool {
 
 type BucketOptions struct {
 	Kind BucketsKind `json:"kind"`
-	Spec any         `json:"spec"`
+	// Field names the numeric field whose values the axis is cut from. A log or
+	// a span carries many, so one has to be named; a metrics query and a formula
+	// each carry exactly one value and name none.
+	Field *telemetrytypes.TelemetryFieldKey `json:"field,omitempty"`
+	Spec  any                               `json:"spec"`
 }
 
 type BucketsKind struct {
@@ -768,14 +772,16 @@ type LogBucketsSpec struct {
 
 func (b *BucketOptions) UnmarshalJSON(data []byte) error {
 	var shadow struct {
-		Kind BucketsKind     `json:"kind"`
-		Spec json.RawMessage `json:"spec"`
+		Kind  BucketsKind                       `json:"kind"`
+		Field *telemetrytypes.TelemetryFieldKey `json:"field"`
+		Spec  json.RawMessage                   `json:"spec"`
 	}
 	if err := binding.JSON.BindBody(bytes.NewReader(data), &shadow, binding.WithDisallowUnknownFields(true)); err != nil {
 		return err
 	}
 
 	b.Kind = shadow.Kind
+	b.Field = shadow.Field
 
 	// An absent spec is a malformed pair rather than a request for defaults;
 	// `"spec": {}` asks for those.
@@ -818,13 +824,15 @@ func (b *BucketOptions) UnmarshalJSON(data []byte) error {
 // PrepareJSONSchema pointing at components that were never emitted. `kind` is
 // required:"true" on both so oapi-codegen renders the discriminator non-pointer.
 type bucketOptionsLinear struct {
-	Kind BucketsKind       `json:"kind" required:"true" description:"How the upper bounds are spaced."`
-	Spec LinearBucketsSpec `json:"spec" required:"true" description:"The evenly spaced bucket specification."`
+	Kind  BucketsKind                       `json:"kind" required:"true" description:"How the upper bounds are spaced."`
+	Field *telemetrytypes.TelemetryFieldKey `json:"field,omitempty" description:"The numeric field the axis is cut from. Required for logs and traces, rejected for metrics and formulas."`
+	Spec  LinearBucketsSpec                 `json:"spec" required:"true" description:"The evenly spaced bucket specification."`
 }
 
 type bucketOptionsLog struct {
-	Kind BucketsKind    `json:"kind" required:"true" description:"How the upper bounds are spaced."`
-	Spec LogBucketsSpec `json:"spec" required:"true" description:"The logarithmic bucket specification."`
+	Kind  BucketsKind                       `json:"kind" required:"true" description:"How the upper bounds are spaced."`
+	Field *telemetrytypes.TelemetryFieldKey `json:"field,omitempty" description:"The numeric field the axis is cut from. Required for logs and traces, rejected for metrics and formulas."`
+	Spec  LogBucketsSpec                    `json:"spec" required:"true" description:"The logarithmic bucket specification."`
 }
 
 var _ jsonschema.OneOfExposer = BucketOptions{}
