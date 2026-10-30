@@ -4,14 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"math"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/clickhousesql"
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -911,6 +908,10 @@ const (
 
 	heatmapValueAlias = "__result_0"
 	heatmapWindow     = "__heatmap_window"
+
+	// The column __spatial_aggregation_cte carries the sample in, which is what
+	// the bucket axis is cut from.
+	heatmapValueColumn = "value"
 )
 
 func isHistogramBucket(k qbtypes.GroupByKey) bool { return k.Name == histogramBucketKey }
@@ -976,7 +977,7 @@ func buildValueHeatmapFinalSelect(
 	args []any,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 ) (*qbtypes.Statement, error) {
-	bucketMin, bucketMax, err := renderHeatmapBucketExprs(*query.Aggregations[0].HeatmapBucketing)
+	bucketMin, bucketMax, err := querybuilder.RenderHeatmapBucketExprs(*query.Aggregations[0].HeatmapBucketing, heatmapValueColumn)
 	if err != nil {
 		return nil, err
 	}
@@ -995,61 +996,6 @@ func buildValueHeatmapFinalSelect(
 
 	q, a := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return &qbtypes.Statement{Query: combined + q, Args: append(args, a...)}, nil
-}
-
-// renderHeatmapBucketExprs renders the bucket (min, max] that `value` falls in.
-// Only the bucket under everything the axis covers is open below, and only the
-// one over it is open above.
-func renderHeatmapBucketExprs(bucketing qbtypes.HeatmapBucketing) (minExpr, maxExpr string, err error) {
-	switch bucketing.Kind {
-	case qbtypes.BucketsKindLinear:
-		return renderLinearBucketExprs(bucketing)
-	case qbtypes.BucketsKindLog:
-		return renderLogBucketExprs()
-	default:
-		return "", "", errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"unsupported bucketsScaling %q for heatmap requests", bucketing.Kind.StringValue())
-	}
-}
-
-func renderLinearBucketExprs(bucketing qbtypes.HeatmapBucketing) (string, string, error) {
-	maxValue := formatFloat(bucketing.MaxValue)
-	numBuckets := strconv.Itoa(bucketing.NumBuckets)
-	index := fmt.Sprintf("least(greatest(ceil(value * %s / %s), 1), %s)", numBuckets, maxValue, numBuckets)
-
-	minExpr := fmt.Sprintf(
-		"multiIf(value <= 0, toFloat64('-Inf'), value > %s, toFloat64(%s), (%s - 1) * %s / %s)",
-		maxValue, maxValue, index, maxValue, numBuckets,
-	)
-	maxExpr := fmt.Sprintf(
-		"multiIf(value <= 0, toFloat64(0), value > %s, toFloat64('+Inf'), %s * %s / %s)",
-		maxValue, index, maxValue, numBuckets,
-	)
-	return minExpr, maxExpr, nil
-}
-
-// ClickHouse buckets at MaxLogScale whatever HeatmapBucketing.LogScale asks for;
-// postprocessing folds the axis down afterwards.
-func renderLogBucketExprs() (string, string, error) {
-	bucketsPerDoubling := formatFloat(math.Exp2(qbtypes.MaxLogScale))
-	lowest := formatFloat(qbtypes.MinLogUpperBound)
-	highest := formatFloat(qbtypes.MaxLogUpperBound)
-
-	minExpr := fmt.Sprintf(
-		"multiIf(value <= 0, toFloat64('-Inf'), value <= %s, toFloat64(0), value > %s, toFloat64(%s), pow(2, (ceil(log2(value) * %s) - 1) / %s))",
-		lowest, highest, highest, bucketsPerDoubling, bucketsPerDoubling,
-	)
-	maxExpr := fmt.Sprintf(
-		"multiIf(value <= 0, toFloat64(0), value <= %s, %s, value > %s, toFloat64('+Inf'), pow(2, ceil(log2(value) * %s) / %s))",
-		lowest, lowest, highest, bucketsPerDoubling, bucketsPerDoubling,
-	)
-	return minExpr, maxExpr, nil
-}
-
-// formatFloat renders a float64 as the shortest literal that reads back as the
-// same value, so an upper bound computed from it is identical on every row.
-func formatFloat(v float64) string {
-	return strconv.FormatFloat(v, 'g', -1, 64)
 }
 
 func GroupByColumnAlias(i int, name string) string {

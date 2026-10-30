@@ -143,6 +143,15 @@ func (q *builderQuery[T]) Fingerprint() string {
 		parts = append(parts, fmt.Sprintf("aggs=[%s]", strings.Join(aggParts, ",")))
 	}
 
+	// A metrics heatmap carries its axis on the aggregation, which the loop above
+	// already fingerprinted. Logs and traces carry it on the spec, and the
+	// aggregation is the same count() whichever field is bucketed.
+	if q.kind == qbtypes.RequestTypeHeatmap && q.spec.Signal != telemetrytypes.SignalMetrics && q.spec.BucketOptions != nil && q.spec.BucketOptions.Field != nil {
+		parts = append(parts, fmt.Sprintf("buckets=%s:%s",
+			fingerprintFieldKey(*q.spec.BucketOptions.Field),
+			fingerprintHeatmapBucketing(q.spec.BucketOptions.ToHeatmapBucketing())))
+	}
+
 	// Add filter if present
 	if q.spec.Filter != nil && q.spec.Filter.Expression != "" {
 		parts = append(parts, fmt.Sprintf("filter=%s", q.spec.Filter.Expression))
