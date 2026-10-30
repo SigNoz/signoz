@@ -1,5 +1,5 @@
-import { Badge } from '@signozhq/ui/badge';
 import type { TableColumnDef } from 'components/TanStackTableView';
+import OverflowBadges from 'components/OverflowBadges/OverflowBadges';
 import TanStackTable from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { toRelativeTime } from 'pages/AlertList/NotificationChannels/utils/relativeTime';
@@ -80,18 +80,12 @@ export function getRoutingPolicyColumns(
 			enableMove: false,
 			cell: ({ row }): JSX.Element =>
 				row.channels?.length ? (
-					<div className={styles.badges}>
-						{row.channels.map((channel) => (
-							<Badge
-								key={channel}
-								textTransform="none"
-								variant="solid"
-								color="secondary"
-							>
-								{channel}
-							</Badge>
-						))}
-					</div>
+					<OverflowBadges
+						items={row.channels.map((channel) => ({
+							key: channel,
+							label: channel,
+						}))}
+					/>
 				) : (
 					<TanStackTable.Text>-</TanStackTable.Text>
 				),
