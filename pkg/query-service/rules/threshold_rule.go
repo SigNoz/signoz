@@ -82,6 +82,9 @@ func (r *ThresholdRule) prepareQueryRange(ctx context.Context, ts time.Time) (*q
 	}
 	req.CompositeQuery.Queries = make([]qbtypes.QueryEnvelope, len(r.Condition().CompositeQuery.Queries))
 	copy(req.CompositeQuery.Queries, r.Condition().CompositeQuery.Queries)
+	if r.Condition().CompositeQuery.FormatOptions != nil {
+		req.FormatOptions = r.Condition().CompositeQuery.FormatOptions
+	}
 	return req, nil
 }
 
