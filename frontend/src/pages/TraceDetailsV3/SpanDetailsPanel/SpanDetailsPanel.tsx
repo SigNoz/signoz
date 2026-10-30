@@ -172,6 +172,31 @@ function SpanDetailsContent({
 	// 	[spanAttributeActions, setCopy],
 	// );
 
+	// Without trace bounds (a traces explorer row) the panel speaks only for the
+	// span: its own logs window, and no trace-wide logs check.
+	const hasTraceBounds = !!traceStartTime && !!traceEndTime;
+	const logsTimeRange = useMemo(
+		() =>
+			traceStartTime && traceEndTime
+				? {
+						startTime: traceStartTime - FIVE_MINUTES_IN_MS,
+						endTime: traceEndTime + FIVE_MINUTES_IN_MS,
+					}
+				: {
+						startTime: selectedSpan.timestamp - FIVE_MINUTES_IN_MS,
+						// query_range rejects a fractional end.
+						endTime:
+							Math.ceil(selectedSpan.timestamp + selectedSpan.duration_nano / 1e6) +
+							FIVE_MINUTES_IN_MS,
+					},
+		[
+			traceStartTime,
+			traceEndTime,
+			selectedSpan.timestamp,
+			selectedSpan.duration_nano,
+		],
+	);
+
 	const {
 		logs,
 		isLoading: isLogsLoading,
@@ -182,11 +207,8 @@ function SpanDetailsContent({
 	} = useSpanContextLogs({
 		traceId: selectedSpan.trace_id,
 		spanId: selectedSpan.span_id,
-		timeRange: {
-			startTime: (traceStartTime || 0) - FIVE_MINUTES_IN_MS,
-			endTime: (traceEndTime || 0) + FIVE_MINUTES_IN_MS,
-		},
-		isDrawerOpen: true,
+		timeRange: logsTimeRange,
+		checkTraceLogs: hasTraceBounds,
 	});
 
 	const infraMetadata = useMemo(() => {
@@ -205,8 +227,7 @@ function SpanDetailsContent({
 	}, [selectedSpan]);
 
 	const handleExplorerPageRedirect = useCallback((): void => {
-		const startTimeMs = (traceStartTime || 0) - FIVE_MINUTES_IN_MS;
-		const endTimeMs = (traceEndTime || 0) + FIVE_MINUTES_IN_MS;
+		const { startTime: startTimeMs, endTime: endTimeMs } = logsTimeRange;
 
 		const traceIdFilter = {
 			op: 'AND',
@@ -248,14 +269,15 @@ function SpanDetailsContent({
 		searchParams.set(QueryParams.endTime, endTimeMs.toString());
 
 		openInNewTab(`${ROUTES.LOGS_EXPLORER}?${searchParams.toString()}`);
-	}, [selectedSpan.trace_id, traceStartTime, traceEndTime]);
+	}, [selectedSpan.trace_id, logsTimeRange]);
 
 	const emptyLogsStateConfig = useMemo(
 		() => ({
 			...getEmptyLogsListConfig(() => {}),
+			...(!hasTraceBounds && { title: 'No logs found for this span.' }),
 			showClearFiltersButton: false,
 		}),
-		[],
+		[hasTraceBounds],
 	);
 
 	// const keyAttributes = useMemo(() => {
@@ -325,11 +347,7 @@ function SpanDetailsContent({
 					</Badge>
 				) : undefined,
 			children: (
-				<Events
-					span={selectedSpan}
-					startTime={traceStartTime || 0}
-					isSearchVisible
-				/>
+				<Events span={selectedSpan} startTime={traceStartTime} isSearchVisible />
 			),
 		},
 		{
@@ -340,10 +358,7 @@ function SpanDetailsContent({
 				<SpanLogs
 					traceId={selectedSpan.trace_id}
 					spanId={selectedSpan.span_id}
-					timeRange={{
-						startTime: (traceStartTime || 0) - FIVE_MINUTES_IN_MS,
-						endTime: (traceEndTime || 0) + FIVE_MINUTES_IN_MS,
-					}}
+					timeRange={logsTimeRange}
 					logs={logs}
 					isLoading={isLogsLoading}
 					isError={isLogsError}
