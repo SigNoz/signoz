@@ -74,6 +74,8 @@ export type TableColumnDef<
 		default?: number | string;
 		max?: number | string;
 		ignoreLastColumnFill?: boolean;
+		/** When last, hand the fill to the previous column instead of taking it. */
+		passLastColumnFill?: boolean;
 	};
 };
 
