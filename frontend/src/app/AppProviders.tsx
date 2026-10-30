@@ -16,6 +16,7 @@ export interface AppProvidersProps {
 	store: Store;
 	queryClient: QueryClient;
 	appContext: AppLayer;
+	router: AppLayer;
 	searchParams: AppLayer;
 }
 
@@ -27,27 +28,34 @@ export interface AppProvidersProps {
  * A new provider belongs here only if it holds process-wide state that does not
  * depend on the user, the license or the route. One that fetches on mount would
  * fire unauthenticated from here; put it in `AppShell` or lower.
+ *
+ * `router` is the outermost layer because `searchParams` (nuqs) reads the
+ * router's `useNavigate` / `useSearchParams`. Everything below, including the
+ * boot spinner, therefore renders inside the router.
  */
 function AppProviders({
 	children,
 	store,
 	queryClient,
 	appContext,
+	router,
 	searchParams,
 }: AppProvidersProps): JSX.Element {
 	return (
 		<HelmetProvider>
-			{searchParams(
-				<ThemeProvider>
-					<TimezoneProvider>
-						<QueryClientProvider client={queryClient}>
-							<Provider store={store}>
-								<GlobalTimeStoreAdapter />
-								{appContext(children)}
-							</Provider>
-						</QueryClientProvider>
-					</TimezoneProvider>
-				</ThemeProvider>,
+			{router(
+				searchParams(
+					<ThemeProvider>
+						<TimezoneProvider>
+							<QueryClientProvider client={queryClient}>
+								<Provider store={store}>
+									<GlobalTimeStoreAdapter />
+									{appContext(children)}
+								</Provider>
+							</QueryClientProvider>
+						</TimezoneProvider>
+					</ThemeProvider>,
+				),
 			)}
 		</HelmetProvider>
 	);

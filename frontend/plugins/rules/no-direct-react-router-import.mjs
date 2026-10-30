@@ -5,12 +5,15 @@
  * upgrade is a change to one directory instead of ~300 call sites. This rule
  * keeps new call sites, and test mocks, from reaching past it.
  *
+ * `react-router-dom` is still flagged even though the package is gone: on v7 it is a
+ * re-export shim over `react-router`, so reinstalling it would split the tree again.
+ *
  * `history` (the package) is deliberately not flagged: it is a transitive concern of
  * the version bump, not something the facade replaces.
  *
- * The allowlist (the facade itself, the route table, `useSafeNavigate`, the history
- * singleton and the test and story router mounts) is applied via overrides in
- * .oxlintrc.json, not here, so the file list stays visible next to the severity.
+ * The allowlist (the facade itself, the route table, the router mount, `useSafeNavigate`,
+ * the history singleton and the test and story router mounts) is applied via overrides
+ * in .oxlintrc.json, not here, so the file list stays visible next to the severity.
  */
 
 import path from 'node:path';
@@ -29,9 +32,8 @@ const JEST_MODULE_METHODS = new Set([
 ]);
 
 const MESSAGE_IDS = {
-	'react-router': 'v5Router',
-	'react-router-dom': 'v5Router',
-	'react-router-dom-v5-compat': 'v6Compat',
+	'react-router': 'router',
+	'react-router-dom': 'routerDom',
 	'lib/history': 'historySingleton',
 	'@/lib/history': 'historySingleton',
 };
@@ -65,10 +67,10 @@ export default {
 		},
 		schema: [],
 		messages: {
-			v5Router:
-				'Do not import react-router-dom directly. Use the src/lib/router facade (useAppNavigate, useAppLocation, useAppParams, AppLink, Redirect, matchRoute) so a router upgrade stays contained.',
-			v6Compat:
-				'Do not import react-router-dom-v5-compat directly. Use the src/lib/router facade instead; the compat package is an implementation detail of the migration and disappears with it.',
+			router:
+				'Do not import react-router directly. Use the src/lib/router facade (useAppNavigate, useAppLocation, useAppParams, AppLink, Redirect, matchRoute) so a router upgrade stays contained.',
+			routerDom:
+				'Do not import react-router-dom. The app is on react-router; on v7 react-router-dom is only a re-export shim, and installing it puts two copies of the router in the tree. Use the src/lib/router facade.',
 			historySingleton:
 				'Do not import the lib/history singleton. Use the helpers in src/lib/router/navigation.ts, or useAppNavigate() to follow the nearest router. history loses basename handling once the router owns it.',
 			mock:

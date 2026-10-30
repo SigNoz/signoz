@@ -1,14 +1,12 @@
 import { ReactNode, useEffect, useMemo } from 'react';
-import { Router } from 'react-router-dom';
-import { CompatRouter } from 'react-router-dom-v5-compat';
 import AppPageProviders from '@/app/AppPageProviders';
 import AppProviders from '@/app/AppProviders';
+import { appRouter } from '@/app/AppRouter';
 import AppShell from '@/app/AppShell';
 import type { AppLayer } from '@/app/types';
 import { CmdKPalette } from 'components/cmdKPalette/cmdKPalette';
 import { Toaster } from '@signozhq/ui/sonner';
 import AppLayout from 'container/AppLayout';
-import history from 'lib/history';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { AppContext, useAppContext } from 'providers/App/App';
 
@@ -40,12 +38,6 @@ function StoryContextProbe(): null {
 
 	return null;
 }
-
-const storyRouter: AppLayer = (children) => (
-	<Router history={history}>
-		<CompatRouter>{children}</CompatRouter>
-	</Router>
-);
 
 const appLayout: AppLayer = (children) => <AppLayout>{children}</AppLayout>;
 
@@ -89,6 +81,7 @@ function StorybookProviders({
 			appContext={(scoped): ReactNode => (
 				<AppContext.Provider value={appContextValue}>{scoped}</AppContext.Provider>
 			)}
+			router={appRouter}
 			searchParams={(scoped): ReactNode => (
 				<NuqsTestingAdapter searchParams={searchParams} hasMemory>
 					{scoped}
@@ -96,7 +89,6 @@ function StorybookProviders({
 			)}
 		>
 			<AppShell
-				router={storyRouter}
 				overlays={
 					<>
 						<StoryContextProbe />

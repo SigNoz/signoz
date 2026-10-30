@@ -12,7 +12,7 @@ export const useStoryRoute = (
 	routeState?: unknown,
 ): URLSearchParams =>
 	useMemo(() => {
-		setStoryLocation({ ...parsePath(route), state: routeState });
+		setStoryLocation(parsePath(route), routeState);
 		const [, search = ''] = route.split('?');
 		return new URLSearchParams(search);
 	}, [route, routeState]);

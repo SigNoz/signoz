@@ -21,6 +21,17 @@ function loadNavigation(baseHref?: string): NavigationModule {
 	return mod;
 }
 
+function nextUpdate(
+	nav: NavigationModule,
+): Promise<{ location: { pathname: string }; action: string }> {
+	return new Promise((resolve) => {
+		const unsubscribe = nav.subscribe((update) => {
+			unsubscribe();
+			resolve(update);
+		});
+	});
+}
+
 function settle(): Promise<void> {
 	return new Promise((resolve) => {
 		setTimeout(resolve, 60);
@@ -112,23 +123,79 @@ describe('basename ownership', () => {
 		expect(nav.getCurrentLocation().pathname).toBe('/logs');
 	});
 
-	it('does not double-prefix a path that already carries the base path', () => {
+	it('round-trips getCurrentLocation through navigate', () => {
 		const nav = loadNavigation('/signoz/');
 		nav.navigate('/logs');
 		nav.navigate(nav.getCurrentLocation().pathname);
 		expect(window.location.pathname).toBe('/signoz/logs');
 	});
+
+	it('prefixes a path whose first segment equals the base path', () => {
+		const nav = loadNavigation('/logs/');
+		nav.navigate('/logs/logs-explorer');
+		expect(window.location.pathname).toBe('/logs/logs/logs-explorer');
+		expect(nav.getCurrentLocation().pathname).toBe('/logs/logs-explorer');
+	});
+
+	it('prefixes the pathname of an object target', () => {
+		const nav = loadNavigation('/signoz/');
+		nav.navigate({ pathname: '/logs', search: '?a=1' });
+		expect(window.location.pathname).toBe('/signoz/logs');
+		expect(window.location.search).toBe('?a=1');
+	});
+});
+
+describe('subscribe', () => {
+	it('reports a single update object, not two arguments', async () => {
+		const nav = loadNavigation();
+		const listener = jest.fn();
+		const unsubscribe = nav.subscribe(listener);
+
+		nav.navigate('/logs');
+
+		expect(listener).toHaveBeenCalledTimes(1);
+		expect(listener.mock.calls[0]).toHaveLength(1);
+		expect(listener.mock.calls[0][0]).toMatchObject({
+			location: { pathname: '/logs' },
+			action: 'PUSH',
+		});
+		unsubscribe();
+	});
+
+	it('reports REPLACE', () => {
+		const nav = loadNavigation();
+		const listener = jest.fn();
+		const unsubscribe = nav.subscribe(listener);
+
+		nav.navigate('/logs', { replace: true });
+
+		expect(listener.mock.calls[0][0].action).toBe('REPLACE');
+		unsubscribe();
+	});
+
+	it('stops reporting after unsubscribe', () => {
+		const nav = loadNavigation();
+		const listener = jest.fn();
+		nav.subscribe(listener)();
+
+		nav.navigate('/logs');
+
+		expect(listener).not.toHaveBeenCalled();
+	});
 });
 
 describe('back', () => {
-	it('restores the previous location', async () => {
+	it('reports POP and restores the previous location', async () => {
 		const nav = loadNavigation();
 		nav.navigate('/logs');
 		nav.navigate('/traces');
 
+		const popped = nextUpdate(nav);
 		nav.back();
-		await settle();
+		const update = await popped;
 
+		expect(update.action).toBe('POP');
+		expect(update.location.pathname).toBe('/logs');
 		expect(nav.getCurrentLocation().pathname).toBe('/logs');
 	});
 });
@@ -341,25 +408,6 @@ describe('blockNavigation', () => {
 		window.history.forward();
 		await settle();
 		expect(window.location.pathname).toBe('/b');
-	});
-
-	it('catches the router up when history@4 does not revert a blocked POP', async () => {
-		const nav = loadNavigation();
-		nav.navigate('/p');
-		// nuqs pushes like this, so both entries carry the same history@4 key.
-		window.history.pushState(window.history.state, '', '/p?x=1');
-		window.history.back();
-		await settle();
-
-		const seen: BlockedTransition[] = [];
-		const unblock = nav.blockNavigation((tx) => seen.push(tx));
-		window.history.forward();
-		await settle();
-		unblock();
-		seen[0].retry();
-
-		expect(nav.getCurrentLocation().search).toBe('?x=1');
-		expect(window.location.search).toBe('?x=1');
 	});
 
 	it('keeps the blocker armed when retry runs inside it', () => {

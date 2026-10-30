@@ -1,16 +1,20 @@
 import { ReactElement, ReactNode, useRef } from 'react';
-import { Route, Router } from 'react-router-dom';
-import { CompatRouter, useInRouterContext } from 'react-router-dom-v5-compat';
+import {
+	Route,
+	Routes,
+	unstable_HistoryRouter as HistoryRouter,
+	useInRouterContext,
+} from 'react-router';
 import history from 'lib/history';
+import { getBasePath, withBasePath } from 'utils/basePath';
 
 import { resetTestRoute } from './router-utils';
 
 // Mounts on the `lib/history` singleton like `src/AppRoutes/index.tsx`, so
-// imperative `navigate()` calls move the router. `CompatRouter` is always
-// present for the v6-only facade hooks. A `TestRouter` inside another renders
-// its children on the outer router and cannot take an `initialRoute`: the outer
-// `CompatRouter` has already read the location, so v6-backed hooks would keep
-// the outer route.
+// imperative `navigate()` calls move the router. The base path is applied as the
+// real mount applies it. A `TestRouter` inside another renders its children on
+// the outer router and cannot take an `initialRoute`: the outer router has
+// already read the location.
 
 interface TestRouterProps {
 	children: ReactNode;
@@ -21,7 +25,7 @@ interface TestRouterProps {
 	initialRoute?: string;
 	/**
 	 * Route pattern(s) to mount the children under, for a component that reads
-	 * `useParams`. Matching is exact.
+	 * `useParams`. Matching is exact, which is `<Routes>`'s default.
 	 */
 	routePath?: string | string[];
 }
@@ -45,14 +49,18 @@ export function TestRouter({
 	if (!seeded.current) {
 		seeded.current = true;
 		if (initialRoute) {
-			history.replace(initialRoute);
+			// The raw history no longer strips or prepends the base path (the
+			// router owns it), so the seed has to be a real browser path.
+			history.replace(withBasePath(initialRoute));
 		}
 	}
 
 	const tree = routePath ? (
-		<Route exact path={routePath}>
-			{children}
-		</Route>
+		<Routes>
+			{(Array.isArray(routePath) ? routePath : [routePath]).map((pattern) => (
+				<Route key={pattern} path={pattern} element={children} />
+			))}
+		</Routes>
 	) : (
 		children
 	);
@@ -62,9 +70,9 @@ export function TestRouter({
 	}
 
 	return (
-		<Router history={history}>
-			<CompatRouter>{tree}</CompatRouter>
-		</Router>
+		<HistoryRouter basename={getBasePath()} history={history}>
+			{tree}
+		</HistoryRouter>
 	);
 }
 

@@ -1,4 +1,5 @@
 import history from 'lib/history';
+import { getBasePath, stripBasePath } from 'utils/basePath';
 
 import type {
 	AppLocation,
@@ -7,29 +8,7 @@ import type {
 	NavigationBlocker,
 	To,
 } from './types';
-import { applyNavigate, retryTransition, toAppLocation } from './utils';
-
-let entryKeys: Array<string | undefined> = [history.location.key];
-let currentKey = history.location.key;
-
-// history@4 reports a blocked POP's target but not how far away it is, and the
-// POP is already reverted by the time `retry` runs. Mirroring its entry keys
-// gives the distance back. Like history@4, an entry it never saw (one from
-// before a reload) counts as the first one, so a POP whose ends both land on
-// index 0 is not reverted.
-history.listen((location, action) => {
-	const index = entryKeys.indexOf(currentKey);
-	currentKey = location.key;
-	if (action === 'PUSH') {
-		entryKeys = [...entryKeys.slice(0, index + 1), location.key];
-	} else if (action === 'REPLACE' && index !== -1) {
-		entryKeys[index] = location.key;
-	}
-});
-
-function entryIndex(key: string | undefined): number {
-	return Math.max(0, entryKeys.indexOf(key));
-}
+import { applyNavigate, toAppLocation } from './utils';
 
 /**
  * Imperative navigation on the app's history singleton, usable from any code.
@@ -37,49 +16,104 @@ function entryIndex(key: string | undefined): number {
  * `useSafeNavigate` it does not suppress same-URL navigation and has no new-tab
  * branch, because it cannot see the current render.
  *
- * Callers pass and receive basename-free app paths.
+ * This module owns the base path. history@5 has no `basename` option, so the
+ * router carries it for component navigation and never sees what goes through
+ * here: callers pass and receive basename-free app paths, and the prepend on
+ * write and the strip on read happen below.
  */
+function toBrowserTarget(to: To): To {
+	if (typeof to === 'string') {
+		return toBrowserPath(to);
+	}
+	return to.pathname === undefined
+		? to
+		: { ...to, pathname: toBrowserPath(to.pathname) };
+}
+
+// Unconditional, like the router's basename. `withBasePath` skips a path that
+// already starts with the base path, which misses an app path whose first
+// segment is the base path's name.
+function toBrowserPath(path: string): string {
+	const basePath = getBasePath();
+	return basePath === '/' || !path.startsWith('/')
+		? path
+		: `${basePath}${path.slice(1)}`;
+}
+
+function toAppPath<S>(location: AppLocation<S>): AppLocation<S> {
+	return { ...location, pathname: stripBasePath(location.pathname) };
+}
+
 export function navigate(to: To, options?: NavigateOptions): void {
-	applyNavigate(history, to, options);
+	applyNavigate(history, toBrowserTarget(to), options);
 }
 
 export function back(): void {
-	history.goBack();
+	history.go(-1);
 }
 
 export function getCurrentLocation(): AppLocation {
-	return toAppLocation(history.location);
+	return toAppPath(toAppLocation(history.location));
+}
+
+export function subscribe(
+	listener: (update: {
+		location: AppLocation;
+		action: NavigationAction;
+	}) => void,
+): () => void {
+	return history.listen(({ location, action }) => {
+		listener({
+			location: toAppPath(toAppLocation(location)),
+			action: action as NavigationAction,
+		});
+	});
 }
 
 export function blockNavigation(blocker: NavigationBlocker): () => void {
-	return history.block((location, action) => {
-		const appLocation = toAppLocation(location);
-		const navigationAction = action as NavigationAction;
-		const delta = entryIndex(location.key) - entryIndex(currentKey);
-		const popDelta = delta === 0 ? null : delta;
-		let deciding = true;
-		let allowed = false;
+	let stopWaiting: (() => void) | null = null;
+	let unblock = register();
 
-		blocker({
-			location: appLocation,
-			action: navigationAction,
-			retry: () => {
-				if (deciding) {
-					allowed = true;
-					return;
-				}
-				retryTransition(history, appLocation, navigationAction, popDelta);
-			},
+	function register(): () => void {
+		return history.block((transition) => {
+			let deciding = true;
+			let allowed = false;
+
+			blocker({
+				location: toAppPath(toAppLocation(transition.location)),
+				action: transition.action as NavigationAction,
+				retry: () => {
+					if (deciding) {
+						allowed = true;
+						return;
+					}
+					transition.retry();
+				},
+			});
+			deciding = false;
+
+			if (!allowed) {
+				return;
+			}
+			// history@5 cancels every transition while a blocker is registered, so
+			// letting one through means retrying it unblocked. A retried POP lands
+			// on a later popstate, so the blocker comes back once the transition
+			// has, not straight after `retry()`.
+			unblock();
+			stopWaiting = history.listen(() => {
+				stopWaiting?.();
+				stopWaiting = null;
+				unblock = register();
+			});
+			transition.retry();
 		});
-		deciding = false;
+	}
 
-		// history@4 cancels the transition when the prompt returns `false`;
-		// history@5 cancels whenever a blocker is registered and hands control to
-		// `retry()`. A `retry()` inside the blocker means "let it through", and
-		// history@4 does that by not cancelling: re-issuing a POP would walk the
-		// stack twice.
-		return allowed ? undefined : false;
-	});
+	return (): void => {
+		stopWaiting?.();
+		stopWaiting = null;
+		unblock();
+	};
 }
 
 export { hasInAppHistory } from 'lib/history';

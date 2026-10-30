@@ -1,9 +1,4 @@
-import {
-	createMemoryHistory,
-	LocationDescriptor,
-	MemoryHistory,
-	parsePath,
-} from 'history';
+import { createMemoryHistory, MemoryHistory, parsePath, To } from 'history';
 
 /**
  * Query keys the Storybook preview owns. They live in the iframe's URL, which
@@ -27,7 +22,7 @@ export const storyHistory: MemoryHistory = createMemoryHistory({
 	initialEntries: ['/'],
 });
 
-export const toHref = (to: LocationDescriptor): string =>
+export const toHref = (to: To): string =>
 	typeof to === 'string' ? to : storyHistory.createHref(to);
 
 const withoutPreviewParams = (search: string): URLSearchParams => {
@@ -86,8 +81,8 @@ export const isSamePagePathname = (pathname: string | undefined): boolean =>
  * when the target is another page, leaving the caller to report it as blocked.
  */
 export const navigateWithinPage = (
-	to: LocationDescriptor,
-	{ replace = false }: { replace?: boolean } = {},
+	to: To,
+	{ replace = false, state }: { replace?: boolean; state?: unknown } = {},
 ): boolean => {
 	const target = typeof to === 'string' ? parsePath(to) : to;
 
@@ -98,18 +93,21 @@ export const navigateWithinPage = (
 	// The preview's params ride along in whatever the app read out of
 	// `window.location.search`, so they are dropped on the way back in and the
 	// story's history stays the page's own URL.
-	storyHistory[replace ? 'replace' : 'push']({
-		...target,
-		search: `?${withoutPreviewParams(target.search ?? '')}`,
-		pathname: storyHistory.location.pathname,
-	});
+	storyHistory[replace ? 'replace' : 'push'](
+		{
+			...target,
+			search: `?${withoutPreviewParams(target.search ?? '')}`,
+			pathname: storyHistory.location.pathname,
+		},
+		state,
+	);
 
 	return true;
 };
 
 /** Places the story at a route without going through the block. */
-export const setStoryLocation = (to: LocationDescriptor): void => {
-	storyHistory.replace(to);
+export const setStoryLocation = (to: To, state?: unknown): void => {
+	storyHistory.replace(to, state);
 	mirrorSearchToBrowser();
 };
 
