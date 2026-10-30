@@ -3,6 +3,7 @@ import type {
 	DashboardtypesPanelSpecDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { useCallback } from 'react';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	getSupportedSignals,
@@ -104,7 +105,11 @@ export function usePanelEditSession({
 		enabled: isPanelKindSupported(panelKind),
 	});
 
-	const { runQuery, isQueryDirty, buildSaveSpec } = usePanelEditorQuerySync({
+	const {
+		runQuery,
+		isQueryDirty,
+		buildSaveSpec: buildQuerySaveSpec,
+	} = usePanelEditorQuerySync({
 		draft,
 		panelType,
 		setSpec,
@@ -113,6 +118,15 @@ export function usePanelEditSession({
 		signal: seedQuerySignal ? defaultSignal : undefined,
 		savedQueries: savedPanel?.spec.queries,
 	});
+
+	const { prepareSaveSpec } = panelDefinition;
+	const buildSaveSpec = useCallback(
+		(next: DashboardtypesPanelSpecDTO): DashboardtypesPanelSpecDTO => {
+			const withQueries = buildQuerySaveSpec(next);
+			return prepareSaveSpec ? prepareSaveSpec(withQueries) : withQueries;
+		},
+		[buildQuerySaveSpec, prepareSaveSpec],
+	);
 
 	return {
 		draft,
