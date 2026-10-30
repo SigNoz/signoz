@@ -2,6 +2,7 @@ import { expect, test } from '../../../fixtures/alerts/alert-rules';
 import {
 	alertRuleRows,
 	gotoAlertList,
+	nameContains,
 } from '../../../helpers/alerts/navigation';
 
 test.describe('Alert rules list — row actions', () => {
@@ -12,7 +13,7 @@ test.describe('Alert rules list — row actions', () => {
 		const name = `e2e-alert-row-toggle-${Date.now()}`;
 		const ruleId = await ownedRules.threshold(name);
 
-		await gotoAlertList(page, { search: name });
+		await gotoAlertList(page, { query: nameContains(name) });
 		const row = alertRuleRows(page).first();
 		await expect(row.getByTestId(`alert-row-${ruleId}-state`)).toHaveText('OK');
 
@@ -50,7 +51,7 @@ test.describe('Alert rules list — row actions', () => {
 		const name = `e2e-alert-row-clone-${Date.now()}`;
 		await ownedRules.threshold(name);
 
-		await gotoAlertList(page, { search: name });
+		await gotoAlertList(page, { query: nameContains(name) });
 		await alertRuleRows(page).first().getByTestId('alert-actions').click();
 
 		const [createResponse] = await Promise.all([
@@ -66,7 +67,7 @@ test.describe('Alert rules list — row actions', () => {
 
 		await expect(page.getByText('Alert cloned successfully')).toBeVisible();
 
-		await gotoAlertList(page, { search: name });
+		await gotoAlertList(page, { query: nameContains(name) });
 		await expect(page.getByText(`${name} - Copy`)).toBeVisible();
 	});
 
@@ -77,7 +78,7 @@ test.describe('Alert rules list — row actions', () => {
 		const name = `e2e-alert-row-delete-${Date.now()}`;
 		const ruleId = await ownedRules.threshold(name);
 
-		await gotoAlertList(page, { search: name });
+		await gotoAlertList(page, { query: nameContains(name) });
 		await alertRuleRows(page).first().getByTestId('alert-actions').click();
 
 		await Promise.all([

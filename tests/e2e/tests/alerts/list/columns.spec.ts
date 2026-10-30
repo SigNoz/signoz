@@ -3,6 +3,7 @@ import { ALERT_LIST_PAGE_SIZE } from '../../../helpers/alerts/constants';
 import {
 	alertRuleRows,
 	gotoAlertList,
+	nameContains,
 } from '../../../helpers/alerts/navigation';
 
 test.describe('Alert rules list — columns', () => {
@@ -10,7 +11,7 @@ test.describe('Alert rules list — columns', () => {
 		authedPage: page,
 		alertList,
 	}) => {
-		await gotoAlertList(page, { search: alertList.namePrefix });
+		await gotoAlertList(page, { query: nameContains(alertList.namePrefix) });
 
 		for (const header of ['Status', 'Alert Name', 'Severity', 'Labels']) {
 			await expect(page.getByRole('columnheader', { name: header })).toBeVisible();
@@ -37,7 +38,7 @@ test.describe('Alert rules list — columns', () => {
 		authedPage: page,
 		alertList,
 	}) => {
-		await gotoAlertList(page, { search: alertList.namePrefix });
+		await gotoAlertList(page, { query: nameContains(alertList.namePrefix) });
 		await expect(
 			page.getByRole('columnheader', { name: 'Severity' }),
 		).toBeVisible();
@@ -67,7 +68,7 @@ test.describe('Alert rules list — columns', () => {
 		authedPage: page,
 		alertList,
 	}) => {
-		await gotoAlertList(page, { search: alertList.namePrefix });
+		await gotoAlertList(page, { query: nameContains(alertList.namePrefix) });
 
 		const firstCell = alertRuleRows(page).first();
 		const ascFirst = await firstCell.textContent();

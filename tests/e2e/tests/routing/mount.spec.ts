@@ -24,7 +24,7 @@ test.describe('Routing: router mount', () => {
 		await expect(
 			page
 				.getByRole('heading', { name: 'Alert Rules' })
-				.or(page.getByTestId('list-alerts-search-input')),
+				.or(page.getByTestId('alert-rules-list-search')),
 		).toBeVisible();
 	});
 
