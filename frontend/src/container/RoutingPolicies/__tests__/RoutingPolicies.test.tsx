@@ -50,7 +50,7 @@ describe('RoutingPolicies', () => {
 
 	it('should render components properly', () => {
 		render(<RoutingPolicies />);
-		expect(screen.getByText('Routing Policies')).toBeInTheDocument();
+		expect(screen.getByText('All routing policies')).toBeInTheDocument();
 		expect(screen.getByTestId(SEARCH_TEST_ID)).toBeInTheDocument();
 		expect(screen.getByTestId(CREATE_TEST_ID)).toBeInTheDocument();
 		expect(screen.getByTestId('routing-policy-list')).toBeInTheDocument();
