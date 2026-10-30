@@ -2033,6 +2033,18 @@ func TestInvalidateScatterPlotPanelSpecValues(t *testing.T) {
 			expectedErrorSubstring: "minSize 20 must not exceed maxSize 10",
 		},
 		{
+			scenario:               "max point size below the default min",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"chartAppearance": {"points": {"maxSize": 2}}}`,
+			expectedErrorSubstring: "minSize 4 must not exceed maxSize 2",
+		},
+		{
+			scenario:               "min point size above the default max",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"chartAppearance": {"points": {"minSize": 40}}}`,
+			expectedErrorSubstring: "minSize 40 must not exceed maxSize 24",
+		},
+		{
 			scenario:               "point opacity below the floor",
 			panelKind:              "signoz/ScatterPlotPanel",
 			panelSpec:              `{"chartAppearance": {"points": {"opacity": 0.05}}}`,
