@@ -26,6 +26,7 @@ import {
 	RAW_QUERY_FIELDS,
 	resolveQueryBuilderFields,
 } from '../../queryBuilderFields.utils';
+import { parseLimit } from '../../utils';
 
 import BucketOptions from './BucketOptions/BucketOptions';
 import HavingFilter from './HavingFilter/HavingFilter';
@@ -278,7 +279,7 @@ function QueryAddOns({
 
 	const handleChangeLimit = useCallback(
 		(value: string) => {
-			handleChangeQueryData('limit', Number(value) || null);
+			handleChangeQueryData('limit', parseLimit(value));
 		},
 		[handleChangeQueryData],
 	);
