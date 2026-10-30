@@ -66,6 +66,7 @@ type WaterfallSpan struct {
 	Resource     map[string]string `json:"resource"`
 	SpanID       string            `json:"span_id"`
 	TimeUnix     uint64            `json:"time_unix"`
+	TimeUnixNano string            `json:"time_unix_nano,omitempty"`
 	TraceID      string            `json:"trace_id"`
 	TraceState   string            `json:"trace_state"`
 	References   []OtelSpanRef     `json:"references" required:"true" nullable:"false"`
