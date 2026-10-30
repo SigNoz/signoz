@@ -1,17 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import MEditor from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
 import { Check, Copy } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { READONLY_EDITOR_OPTIONS } from 'lib/monaco/editorOptions';
+import MonacoEditor from 'lib/monaco/MonacoEditor';
 
-import {
-	defineJsonTheme,
-	JSON_THEME_DARK,
-	READONLY_EDITOR_OPTIONS,
-} from '../monaco.config';
 import { RolePermissionsData } from '../types';
 import { transformResourcePermissionsToTransactionGroups } from '../hooks/useRolePermissions';
 
@@ -79,13 +75,11 @@ function ReadOnlyJsonViewer({
 						</Button>
 					</Tooltip>
 				</div>
-				<MEditor
+				<MonacoEditor
 					value={jsonContent}
 					language="json"
 					options={READONLY_EDITOR_OPTIONS}
 					height="100%"
-					theme={isDarkMode ? JSON_THEME_DARK : 'light'}
-					beforeMount={defineJsonTheme}
 				/>
 			</div>
 		</div>

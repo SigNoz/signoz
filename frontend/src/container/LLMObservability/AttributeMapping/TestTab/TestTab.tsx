@@ -1,17 +1,11 @@
-import MEditor from '@monaco-editor/react';
 import { Play, RotateCcw } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
-import { useIsDarkMode } from 'hooks/useDarkMode';
+import MonacoEditor from 'lib/monaco/MonacoEditor';
 
 import styles from './TestTab.module.scss';
 import JsonEditorSkeleton from './JsonEditorSkeleton';
 import TestResult from './TestResult';
-import {
-	defineSignozJsonTheme,
-	SIGNOZ_JSON_THEME_DARK,
-	SIGNOZ_JSON_THEME_LIGHT,
-} from './jsonEditorTheme';
 import { UseTestSpanMapper } from './useTestSpanMapper';
 
 interface TestTabProps {
@@ -32,7 +26,6 @@ function TestTab({ spanTest }: TestTabProps): JSX.Element {
 		error,
 		validationError,
 	} = spanTest;
-	const isDarkMode = useIsDarkMode();
 
 	function renderResults(): JSX.Element {
 		if (error) {
@@ -122,14 +115,12 @@ function TestTab({ spanTest }: TestTabProps): JSX.Element {
 					data-testid="test-span-input"
 					aria-label="Sample span JSON"
 				>
-					<MEditor
+					<MonacoEditor
 						language="json"
 						value={input}
 						onChange={(value): void => setInput(value ?? '')}
 						height="100%"
 						loading={<JsonEditorSkeleton />}
-						theme={isDarkMode ? SIGNOZ_JSON_THEME_DARK : SIGNOZ_JSON_THEME_LIGHT}
-						beforeMount={defineSignozJsonTheme}
 						options={{
 							minimap: { enabled: false },
 							fontSize: 12,

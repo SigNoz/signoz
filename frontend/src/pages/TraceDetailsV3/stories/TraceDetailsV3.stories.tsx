@@ -12,6 +12,7 @@ import {
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
+import { waitForMonacoText } from '@/storybook/visual/waitForMonacoText';
 
 import {
 	focusSpanIndex,
@@ -323,5 +324,21 @@ export const TraceExportCancelledToast: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await startDownload(canvasElement);
 		await userEvent.click(await screen.findByTestId('trace-download-cancel'));
+	},
+};
+
+/** The span panel switched from the pretty view to the span's raw JSON. */
+export const SpanJsonView: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const option = await within(canvasElement).findByTestId(
+			'data-viewer-view-mode-button-json',
+			undefined,
+			untilLoaded,
+		);
+
+		await userEvent.click(option);
+		await waitForMonacoText(canvasElement);
+		await userEvent.unhover(option);
+		(document.activeElement as HTMLElement | null)?.blur();
 	},
 };

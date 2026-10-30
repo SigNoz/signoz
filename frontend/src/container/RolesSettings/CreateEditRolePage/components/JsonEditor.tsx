@@ -7,7 +7,7 @@ import {
 	useRef,
 } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import MEditor, { Monaco, OnMount } from '@monaco-editor/react';
+import { Monaco, OnMount } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
 import { Check, Copy } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
@@ -15,12 +15,9 @@ import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import type { AuthtypesTransactionGroupDTO } from 'api/generated/services/sigNoz.schemas';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { EDITABLE_EDITOR_OPTIONS } from 'lib/monaco/editorOptions';
+import MonacoEditor from 'lib/monaco/MonacoEditor';
 
-import {
-	defineJsonTheme,
-	EDITABLE_EDITOR_OPTIONS,
-	JSON_THEME_DARK,
-} from '../../monaco.config';
 import {
 	transformResourcePermissionsToTransactionGroups,
 	transformTransactionGroupsToResourcePermissions,
@@ -34,7 +31,7 @@ import {
 import styles from './JsonEditor.module.scss';
 import { JsonEditorProps, JsonEditorRef } from './JsonEditor.types';
 
-type MonacoEditor = Parameters<OnMount>[0];
+type MonacoEditorInstance = Parameters<OnMount>[0];
 
 const JsonEditor = forwardRef<JsonEditorRef, JsonEditorProps>(
 	function JsonEditor({ resources, mode, onChange, onValidityChange }, ref) {
@@ -50,7 +47,7 @@ const JsonEditor = forwardRef<JsonEditorRef, JsonEditorProps>(
 		});
 		const prevModeRef = useRef(mode);
 		const completionDisposableRef = useRef<{ dispose(): void } | null>(null);
-		const editorRef = useRef<MonacoEditor | null>(null);
+		const editorRef = useRef<MonacoEditorInstance | null>(null);
 		const markersListenerRef = useRef<{ dispose(): void } | null>(null);
 
 		const hasError = parseError !== null || schemaErrors.length > 0;
@@ -100,7 +97,6 @@ const JsonEditor = forwardRef<JsonEditorRef, JsonEditorProps>(
 		);
 
 		const configureMonaco = useCallback((monaco: Monaco): void => {
-			defineJsonTheme(monaco);
 			registerJsonSchema(monaco);
 			completionDisposableRef.current = registerCompletionProvider(monaco);
 		}, []);
@@ -184,7 +180,7 @@ const JsonEditor = forwardRef<JsonEditorRef, JsonEditorProps>(
 							</Button>
 						</Tooltip>
 					</div>
-					<MEditor
+					<MonacoEditor
 						value={jsonBuffer}
 						language="json"
 						path={ROLE_PERMISSIONS_MODEL_PATH}
@@ -192,7 +188,6 @@ const JsonEditor = forwardRef<JsonEditorRef, JsonEditorProps>(
 						onChange={handleEditorChange}
 						onMount={handleEditorMount}
 						height="100%"
-						theme={isDarkMode ? JSON_THEME_DARK : 'light'}
 						beforeMount={configureMonaco}
 					/>
 				</div>
@@ -225,7 +220,11 @@ const JsonEditor = forwardRef<JsonEditorRef, JsonEditorProps>(
 								className={styles.jsonEditorErrorMessage}
 							>
 								{schemaErrors[0]}
-								{schemaErrors.length > 1 && ` (+${schemaErrors.length - 1} more)`}
+								{schemaErrors.length > 1 && (
+									<span className="translate-safe">
+										{` (+${schemaErrors.length - 1} more)`}
+									</span>
+								)}
 							</Typography>
 						</div>
 					)}

@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import MEditor, { EditorProps, Monaco } from '@monaco-editor/react';
-import { Color } from '@signozhq/design-tokens';
+import { EditorProps } from '@monaco-editor/react';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
-import { useIsDarkMode } from 'hooks/useDarkMode';
+import MonacoEditor from 'lib/monaco/MonacoEditor';
 
 import './JsonView.styles.scss';
 
@@ -38,36 +37,16 @@ const editorOptions: EditorProps['options'] = {
 	folding: false,
 };
 
-function setEditorTheme(monaco: Monaco): void {
-	monaco.editor.defineTheme('signoz-dark', {
-		base: 'vs-dark',
-		inherit: true,
-		rules: [
-			{ token: 'string.key.json', foreground: Color.BG_VANILLA_400 },
-			{ token: 'string.value.json', foreground: Color.BG_ROBIN_400 },
-		],
-		colors: {
-			'editor.background': '#00000000', // transparent
-		},
-		fontFamily: 'SF Mono, Geist Mono, Fira Code, monospace',
-		fontSize: 12,
-		fontWeight: 'normal',
-		lineHeight: 18,
-		letterSpacing: -0.06,
-	});
-}
-
 function JsonView({
 	data,
 	height = '575px',
 	fontSize = 12,
 }: JsonViewProps): JSX.Element {
 	const [isWrapWord, setIsWrapWord] = useState(true);
-	const isDarkMode = useIsDarkMode();
 
 	return (
 		<div className="json-view">
-			<MEditor
+			<MonacoEditor
 				value={data}
 				language="json"
 				options={{
@@ -77,8 +56,6 @@ function JsonView({
 				}}
 				onChange={(): void => {}}
 				height={height}
-				theme={isDarkMode ? 'signoz-dark' : 'light'}
-				beforeMount={setEditorTheme}
 			/>
 			<div className="json-view__footer">
 				<div className="json-view__wrap-toggle">
