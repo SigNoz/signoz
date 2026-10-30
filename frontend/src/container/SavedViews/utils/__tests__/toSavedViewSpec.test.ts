@@ -80,6 +80,66 @@ describe('toSavedViewSpec', () => {
 		});
 	});
 
+	it('keeps the description and unit of a column, naming it by name before key', () => {
+		const spec = toSavedViewSpec({
+			query: tracesQuery(),
+			panelType: PANEL_TYPES.LIST,
+			displayName: 'Errors',
+			options: {
+				selectColumns: [
+					{
+						name: 'duration_nano',
+						key: 'durationNano',
+						description: 'Span duration',
+						unit: 'ns',
+					},
+				] as unknown as TelemetryFieldKey[],
+				format: 'raw' as LogViewMode,
+				maxLines: 2,
+				fontSize: FontSize.SMALL,
+			},
+		});
+
+		expect(spec.selectedFields).toStrictEqual([
+			{ name: 'duration_nano', description: 'Span duration', unit: 'ns' },
+		]);
+	});
+
+	it.each([
+		[
+			PANEL_TYPES.LIST,
+			SavedviewtypesPanelTypeDTO.list,
+			Querybuildertypesv5RequestTypeDTO.raw,
+		],
+		[
+			PANEL_TYPES.TABLE,
+			SavedviewtypesPanelTypeDTO.table,
+			Querybuildertypesv5RequestTypeDTO.scalar,
+		],
+		[
+			PANEL_TYPES.TRACE,
+			SavedviewtypesPanelTypeDTO.trace,
+			Querybuildertypesv5RequestTypeDTO.trace,
+		],
+		[
+			PANEL_TYPES.PIE,
+			SavedviewtypesPanelTypeDTO.graph,
+			Querybuildertypesv5RequestTypeDTO.scalar,
+		],
+	])(
+		'stores the %s panel as panel type %s with request type %s',
+		(panelType, storedPanelType, requestType) => {
+			const spec = toSavedViewSpec({
+				query: tracesQuery(),
+				panelType,
+				displayName: 'Errors',
+			});
+
+			expect(spec.panelType).toBe(storedPanelType);
+			expect(spec.requestType).toBe(requestType);
+		},
+	);
+
 	it('keeps the colour in display', () => {
 		const spec = toSavedViewSpec({
 			query: tracesQuery(),
