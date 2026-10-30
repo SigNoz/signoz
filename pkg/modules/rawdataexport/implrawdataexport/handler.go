@@ -17,6 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
+	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/exporttypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -25,10 +26,11 @@ import (
 
 type handler struct {
 	module rawdataexport.Module
+	budget querier.Budget
 }
 
-func NewHandler(module rawdataexport.Module) rawdataexport.Handler {
-	return &handler{module: module}
+func NewHandler(module rawdataexport.Module, budget querier.Budget) rawdataexport.Handler {
+	return &handler{module: module, budget: budget}
 }
 
 func (handler *handler) ExportRawData(rw http.ResponseWriter, r *http.Request) {
@@ -46,6 +48,11 @@ func (handler *handler) ExportRawData(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := validateSpecForExport(&queryRangeRequest); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	if err := handler.budget.AdmitTimeRange(queryRangeRequest.Start, queryRangeRequest.End); err != nil {
 		render.Error(rw, err)
 		return
 	}

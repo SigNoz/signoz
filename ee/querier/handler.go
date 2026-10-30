@@ -21,13 +21,15 @@ type handler struct {
 	set       factory.ProviderSettings
 	querier   querier.Querier
 	community querier.Handler
+	budget    querier.Budget
 }
 
-func NewHandler(set factory.ProviderSettings, querier querier.Querier, community querier.Handler) querier.Handler {
+func NewHandler(set factory.ProviderSettings, querier querier.Querier, community querier.Handler, budget querier.Budget) querier.Handler {
 	return &handler{
 		set:       set,
 		querier:   querier,
 		community: community,
+		budget:    budget,
 	}
 }
 
@@ -54,6 +56,11 @@ func (h *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if err := queryRangeRequest.Validate(); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	if err := h.budget.AdmitTimeRange(queryRangeRequest.Start, queryRangeRequest.End); err != nil {
 		render.Error(rw, err)
 		return
 	}

@@ -10,6 +10,8 @@ import (
 
 const DefaultMaxConcurrentQueries = 8
 
+const DefaultMaxTimeRange = 2 * 365 * 24 * time.Hour
+
 // Config represents the configuration for the querier.
 type Config struct {
 	// CacheTTL is the TTL for cached query results
@@ -20,6 +22,8 @@ type Config struct {
 	MaxConcurrentQueries int `yaml:"max_concurrent_queries" mapstructure:"max_concurrent_queries"`
 	// LogTraceIDWindowPadding is the padding added to narrowed down timerange from trace summary to logs with trace_id filter.
 	LogTraceIDWindowPadding time.Duration `yaml:"log_trace_id_window_padding" mapstructure:"log_trace_id_window_padding"`
+	// MaxTimeRange is the maximum allowed span between start and end of a query range request; 0 disables the limit.
+	MaxTimeRange time.Duration `yaml:"max_time_range" mapstructure:"max_time_range"`
 
 	// Keys sit under querier.skip_resource_fingerprint.
 	statementbuilder.Config `mapstructure:",squash" yaml:",squash"`
@@ -37,6 +41,7 @@ func newConfig() factory.Config {
 		FluxInterval:            5 * time.Minute,
 		MaxConcurrentQueries:    DefaultMaxConcurrentQueries,
 		LogTraceIDWindowPadding: 5 * time.Minute,
+		MaxTimeRange:            DefaultMaxTimeRange,
 		Config:                  statementbuilder.NewConfig(),
 	}
 }
@@ -54,6 +59,9 @@ func (c Config) Validate() error {
 	}
 	if c.LogTraceIDWindowPadding < 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "log_trace_id_window_padding must not be negative, got %v", c.LogTraceIDWindowPadding)
+	}
+	if c.MaxTimeRange < 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "max_time_range must not be negative, got %v", c.MaxTimeRange)
 	}
 	// Embedded Validate is shadowed by this one; call it explicitly.
 	if err := c.Config.Validate(); err != nil {
