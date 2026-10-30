@@ -183,7 +183,7 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 	}
 
 	// Merge with existing buckets
-	mergedBuckets := bc.mergeAndDeduplicateBuckets(existingData.Buckets, freshBuckets)
+	mergedBuckets := bc.mergeAndDeduplicateBuckets(ctx, existingData.Buckets, freshBuckets)
 
 	// Update warnings
 	allWarnings := append(existingData.Warnings, trimmedResult.Warnings...)
@@ -659,46 +659,48 @@ func (bc *bucketCache) resultToBuckets(ctx context.Context, result *qbtypes.Resu
 
 	// For now, create a single bucket for the entire range
 	// In the future, we could split large ranges into smaller buckets
-	valueBytes, err := json.Marshal(result.Value)
-	if err != nil {
-		bc.logger.ErrorContext(ctx, "failed to marshal result value", errors.Attr(err))
+	tsData, ok := result.Value.(*qbtypes.TimeSeriesData)
+	if !ok {
 		return nil
 	}
 
 	// Always create a bucket, even for empty filtered results
 	// This ensures we don't re-query for data that doesn't exist
-	return []*qbtypes.CachedBucket{
-		{
-			StartMs: startMs,
-			EndMs:   endMs,
-			Type:    result.Type,
-			Value:   valueBytes,
-			Stats:   result.Stats,
-		},
+	bucket := bc.newBucket(ctx, tsData, result.Type, result.Stats, startMs, endMs)
+	if bucket == nil {
+		return nil
+	}
+	return []*qbtypes.CachedBucket{bucket}
+}
+
+// newBucket keeps the values of tsData in [startMs, endMs]; a PromQL value at endMs is inside the window.
+func (bc *bucketCache) newBucket(ctx context.Context, tsData *qbtypes.TimeSeriesData, resultType qbtypes.RequestType, stats qbtypes.ExecStats, startMs, endMs uint64) *qbtypes.CachedBucket {
+	value, err := json.Marshal(filterTimeSeriesData(tsData, startMs, endMs+1))
+	if err != nil {
+		bc.logger.ErrorContext(ctx, "failed to marshal result value", errors.Attr(err))
+		return nil
+	}
+	return &qbtypes.CachedBucket{
+		StartMs: startMs,
+		EndMs:   endMs,
+		Type:    resultType,
+		Value:   value,
+		Stats:   stats,
 	}
 }
 
 // mergeAndDeduplicateBuckets combines and deduplicates bucket lists.
-func (bc *bucketCache) mergeAndDeduplicateBuckets(existing, fresh []*qbtypes.CachedBucket) []*qbtypes.CachedBucket {
-	// Create a map to deduplicate by time range
-	bucketMap := make(map[string]*qbtypes.CachedBucket)
+// Buckets stay disjoint: existing buckets overlapping a fresh one are folded into it, keeping
+// their values outside the fresh range.
+func (bc *bucketCache) mergeAndDeduplicateBuckets(ctx context.Context, existing, fresh []*qbtypes.CachedBucket) []*qbtypes.CachedBucket {
+	result := make([]*qbtypes.CachedBucket, 0, len(existing)+len(fresh))
 
 	// Add existing buckets
-	for _, bucket := range existing {
-		key := fmt.Sprintf("%d-%d", bucket.StartMs, bucket.EndMs)
-		bucketMap[key] = bucket
-	}
+	result = append(result, existing...)
 
 	// Add/update with fresh buckets
 	for _, bucket := range fresh {
-		key := fmt.Sprintf("%d-%d", bucket.StartMs, bucket.EndMs)
-		bucketMap[key] = bucket
-	}
-
-	// Convert back to slice with pre-allocated capacity
-	result := make([]*qbtypes.CachedBucket, 0, len(bucketMap))
-	for _, bucket := range bucketMap {
-		result = append(result, bucket)
+		result = bc.upsertBucket(ctx, result, bucket)
 	}
 
 	// Sort by start time
@@ -713,6 +715,66 @@ func (bc *bucketCache) mergeAndDeduplicateBuckets(existing, fresh []*qbtypes.Cac
 	})
 
 	return result
+}
+
+// upsertBucket adds fresh to buckets, absorbing every bucket it overlaps into one bucket over their union.
+func (bc *bucketCache) upsertBucket(ctx context.Context, buckets []*qbtypes.CachedBucket, fresh *qbtypes.CachedBucket) []*qbtypes.CachedBucket {
+	kept := make([]*qbtypes.CachedBucket, 0, len(buckets)+1)
+	merged := []*qbtypes.CachedBucket{fresh}
+	for _, bucket := range buckets {
+		if bucket.StartMs >= fresh.EndMs || fresh.StartMs >= bucket.EndMs {
+			kept = append(kept, bucket)
+			continue
+		}
+		if fresh.StartMs <= bucket.StartMs && bucket.EndMs <= fresh.EndMs {
+			continue
+		}
+		if trimmed := bc.excludeRange(ctx, bucket, fresh.StartMs, fresh.EndMs); trimmed != nil {
+			merged = append(merged, trimmed)
+		}
+	}
+	if len(merged) == 1 {
+		return append(kept, fresh)
+	}
+
+	startMs, endMs := fresh.StartMs, fresh.EndMs
+	for _, bucket := range merged[1:] {
+		startMs = min(startMs, bucket.StartMs)
+		endMs = max(endMs, bucket.EndMs)
+	}
+	union := bc.newBucket(ctx, bc.mergeTimeSeriesValues(ctx, merged), fresh.Type, fresh.Stats, startMs, endMs)
+	if union == nil {
+		return append(kept, fresh)
+	}
+	return append(kept, union)
+}
+
+// excludeRange returns bucket without its values in [startMs, endMs), or nil if it cannot be decoded.
+func (bc *bucketCache) excludeRange(ctx context.Context, bucket *qbtypes.CachedBucket, startMs, endMs uint64) *qbtypes.CachedBucket {
+	var tsData *qbtypes.TimeSeriesData
+	if err := json.Unmarshal(bucket.Value, &tsData); err != nil || tsData == nil {
+		bc.logger.ErrorContext(ctx, "failed to unmarshal time series data", errors.Attr(err))
+		return nil
+	}
+	for _, aggBucket := range tsData.Aggregations {
+		for _, series := range aggBucket.Series {
+			series.Values = slices.DeleteFunc(series.Values, func(v *qbtypes.TimeSeriesValue) bool {
+				return uint64(v.Timestamp) >= startMs && uint64(v.Timestamp) < endMs
+			})
+		}
+	}
+	value, err := json.Marshal(tsData)
+	if err != nil {
+		bc.logger.ErrorContext(ctx, "failed to marshal time series data", errors.Attr(err))
+		return nil
+	}
+	return &qbtypes.CachedBucket{
+		StartMs: bucket.StartMs,
+		EndMs:   bucket.EndMs,
+		Type:    bucket.Type,
+		Value:   value,
+		Stats:   bucket.Stats,
+	}
 }
 
 // deduplicateWarnings removes duplicate warnings.
@@ -817,41 +879,7 @@ func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, q qbtypes
 	switch result.Type {
 	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
 		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
-			filteredData := &qbtypes.TimeSeriesData{
-				Aggregations: make([]*qbtypes.AggregationBucket, 0, len(tsData.Aggregations)),
-			}
-
-			for _, aggBucket := range tsData.Aggregations {
-				filteredBucket := &qbtypes.AggregationBucket{
-					Index:  aggBucket.Index,
-					Alias:  aggBucket.Alias,
-					Meta:   aggBucket.Meta,
-					Series: make([]*qbtypes.TimeSeries, 0, len(aggBucket.Series)),
-				}
-
-				for _, series := range aggBucket.Series {
-					filteredSeries := &qbtypes.TimeSeries{
-						Labels: series.Labels,
-						Values: make([]*qbtypes.TimeSeriesValue, 0, len(series.Values)),
-					}
-
-					// Filter values to only include those within the requested time range
-					for _, value := range series.Values {
-						timestampMs := uint64(value.Timestamp)
-						if timestampMs >= startMs && timestampMs <= maxTimestampMs {
-							filteredSeries.Values = append(filteredSeries.Values, value)
-						}
-					}
-
-					// Always add series to preserve structure (even if empty)
-					filteredBucket.Series = append(filteredBucket.Series, filteredSeries)
-				}
-
-				// Only add bucket if it has series
-				if len(filteredBucket.Series) > 0 {
-					filteredData.Aggregations = append(filteredData.Aggregations, filteredBucket)
-				}
-			}
+			filteredData := filterTimeSeriesData(tsData, startMs, maxTimestampMs+1)
 
 			bc.trimHeatmapAxisToTheWindow(q, filteredData)
 
@@ -889,4 +917,45 @@ func (bc *bucketCache) trimHeatmapAxisToTheWindow(q qbtypes.Query, tsData *qbtyp
 	for _, aggBucket := range tsData.Aggregations {
 		aggBucket.TrimAxisToCountedBuckets()
 	}
+}
+
+// filterTimeSeriesData copies tsData keeping only values in [startMs, endMs); series survive empty, aggregations without series do not.
+func filterTimeSeriesData(tsData *qbtypes.TimeSeriesData, startMs, endMs uint64) *qbtypes.TimeSeriesData {
+	filteredData := &qbtypes.TimeSeriesData{
+		Aggregations: make([]*qbtypes.AggregationBucket, 0, len(tsData.Aggregations)),
+	}
+
+	for _, aggBucket := range tsData.Aggregations {
+		filteredBucket := &qbtypes.AggregationBucket{
+			Index:  aggBucket.Index,
+			Alias:  aggBucket.Alias,
+			Meta:   aggBucket.Meta,
+			Series: make([]*qbtypes.TimeSeries, 0, len(aggBucket.Series)),
+		}
+
+		for _, series := range aggBucket.Series {
+			filteredSeries := &qbtypes.TimeSeries{
+				Labels: series.Labels,
+				Values: make([]*qbtypes.TimeSeriesValue, 0, len(series.Values)),
+			}
+
+			// Filter values to only include those within the requested time range
+			for _, value := range series.Values {
+				timestampMs := uint64(value.Timestamp)
+				if timestampMs >= startMs && timestampMs < endMs {
+					filteredSeries.Values = append(filteredSeries.Values, value)
+				}
+			}
+
+			// Always add series to preserve structure (even if empty)
+			filteredBucket.Series = append(filteredBucket.Series, filteredSeries)
+		}
+
+		// Only add bucket if it has series
+		if len(filteredBucket.Series) > 0 {
+			filteredData.Aggregations = append(filteredData.Aggregations, filteredBucket)
+		}
+	}
+
+	return filteredData
 }

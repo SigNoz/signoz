@@ -1465,3 +1465,85 @@ func TestBucketCache_NoCache(t *testing.T) {
 	// The actual NoCache logic is implemented in querier.run(), not in bucket cache
 	// This test verifies that the cache works normally and NoCache bypasses it at a higher level
 }
+
+func TestBucketCache_Put_OverlappingBuckets(t *testing.T) {
+	// A fresh window absorbs every bucket it overlaps into one bucket over their union.
+	testCases := []struct {
+		name            string
+		windows         []qbtypes.TimeRange
+		expectedBuckets []qbtypes.TimeRange
+	}{
+		{
+			name:            "SlidingWindows_MergeIntoOne",
+			windows:         []qbtypes.TimeRange{{From: 1000, To: 5000}, {From: 2000, To: 6000}, {From: 3000, To: 7000}},
+			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 7000}},
+		},
+		{
+			name:            "DisjointWindows_KeepAll",
+			windows:         []qbtypes.TimeRange{{From: 1000, To: 3000}, {From: 5000, To: 7000}},
+			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 3000}, {From: 5000, To: 7000}},
+		},
+		{
+			name:            "TouchingWindows_StaySeparate",
+			windows:         []qbtypes.TimeRange{{From: 1000, To: 3000}, {From: 3000, To: 5000}},
+			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 3000}, {From: 3000, To: 5000}},
+		},
+		{
+			name:            "PartialOverlap_MergeOnlyOverlapping",
+			windows:         []qbtypes.TimeRange{{From: 1000, To: 3000}, {From: 5000, To: 7000}, {From: 2000, To: 4000}},
+			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 4000}, {From: 5000, To: 7000}},
+		},
+		{
+			name:            "NarrowerWindow_KeepsWideBucket",
+			windows:         []qbtypes.TimeRange{{From: 1000, To: 7000}, {From: 3000, To: 5000}},
+			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 7000}},
+		},
+		{
+			name:            "WiderWindow_AbsorbsCoveredBuckets",
+			windows:         []qbtypes.TimeRange{{From: 2000, To: 3000}, {From: 4000, To: 5000}, {From: 1000, To: 7000}},
+			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 7000}},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			memCache := createTestCache(t)
+			bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
+			step := qbtypes.Step{Duration: time.Second}
+
+			// Each window stamps its values with its 1-based run number.
+			expectedValues := map[int64]float64{}
+			for i, window := range testCase.windows {
+				tsData := createTestTimeSeries("A", window.From, window.To, 1000)
+				for _, value := range tsData.Aggregations[0].Series[0].Values {
+					value.Value = float64(i + 1)
+					expectedValues[value.Timestamp] = value.Value
+				}
+				query := &mockQuery{fingerprint: testCase.name, startMs: window.From, endMs: window.To}
+				bc.Put(context.Background(), valuer.UUID{}, query, step, &qbtypes.Result{Type: qbtypes.RequestTypeTimeSeries, Value: tsData})
+			}
+
+			var data qbtypes.CachedData
+			require.NoError(t, memCache.Get(context.Background(), valuer.UUID{}, "v5:query:"+testCase.name, &data))
+			buckets := make([]qbtypes.TimeRange, 0, len(data.Buckets))
+			for _, bucket := range data.Buckets {
+				buckets = append(buckets, qbtypes.TimeRange{From: bucket.StartMs, To: bucket.EndMs})
+			}
+			assert.Equal(t, testCase.expectedBuckets, buckets)
+
+			// Every cached point carries the value of the last window that covered it.
+			span := &mockQuery{fingerprint: testCase.name, startMs: testCase.expectedBuckets[0].From, endMs: testCase.expectedBuckets[len(testCase.expectedBuckets)-1].To}
+			cached, _ := bc.GetMissRanges(context.Background(), valuer.UUID{}, span, step)
+			require.NotNil(t, cached)
+			tsData, ok := cached.Value.(*qbtypes.TimeSeriesData)
+			require.True(t, ok)
+			require.Len(t, tsData.Aggregations, 1)
+			require.Len(t, tsData.Aggregations[0].Series, 1)
+			cachedValues := map[int64]float64{}
+			for _, value := range tsData.Aggregations[0].Series[0].Values {
+				cachedValues[value.Timestamp] = value.Value
+			}
+			assert.Equal(t, expectedValues, cachedValues)
+		})
+	}
+}
