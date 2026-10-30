@@ -88,6 +88,8 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 			lineConfig.fill = finalFillColor;
 		} else if (this.props.drawStyle === DrawStyle.Histogram) {
 			lineConfig.fill = `${finalFillColor}40`;
+		} else if (this.props.drawStyle === DrawStyle.Scatter) {
+			lineConfig.fill = `${finalFillColor}${toAlphaHex(resolveFillOpacity(fillOpacity))}`;
 		} else if (fillMode && fillMode !== FillMode.None) {
 			const resolvedOpacity = resolveFillOpacity(fillOpacity);
 			if (fillMode === FillMode.Solid) {
@@ -123,7 +125,7 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 			return { paths: pathBuilder };
 		}
 
-		if (drawStyle === DrawStyle.Points) {
+		if (isMarkerOnlyDrawStyle(drawStyle)) {
 			return { paths: (): null => null };
 		}
 
@@ -195,6 +197,10 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 		if (drawStyle === DrawStyle.Points) {
 			return true;
 		}
+		// The discs are the series path; uPlot's own points would double-draw them.
+		if (drawStyle === DrawStyle.Scatter) {
+			return false;
+		}
 		return !!showPoints;
 	}
 
@@ -226,6 +232,7 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 			show = true,
 			metric,
 			partialTimestamps,
+			facets,
 		} = this.props;
 
 		const resolvedLineColor = this.getLineColor();
@@ -255,6 +262,7 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 			points: Object.keys(pointsConfig).length > 0 ? pointsConfig : undefined,
 			metric,
 			...(partialTimestamps?.size ? { partialTimestamps } : {}),
+			...(facets && { facets }),
 		};
 	}
 }
@@ -265,6 +273,11 @@ interface PathBuilders {
 	stepBefore: Series.PathBuilder;
 	stepAfter: Series.PathBuilder;
 	[key: string]: Series.PathBuilder;
+}
+
+/** Draws standalone markers, never a connecting line. */
+function isMarkerOnlyDrawStyle(drawStyle: DrawStyle): boolean {
+	return drawStyle === DrawStyle.Points || drawStyle === DrawStyle.Scatter;
 }
 
 /**
