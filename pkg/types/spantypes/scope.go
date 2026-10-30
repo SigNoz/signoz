@@ -1,6 +1,8 @@
 package spantypes
 
 import (
+	"strings"
+
 	"github.com/swaggest/jsonschema-go"
 )
 
@@ -45,6 +47,7 @@ func NewSelectedScope(column map[string]any, names []string) Scope {
 		case "scope.version":
 			selected[scopeVersion] = column[scopeVersion]
 		default:
+			name = strings.TrimPrefix(name, "attribute.")
 			if v, ok := attributes[name]; ok {
 				selectedAttributes[name] = v
 			}
