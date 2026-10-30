@@ -1411,7 +1411,7 @@ func (p *HeatmapPalette) UnmarshalJSON(data []byte) error {
 	}
 }
 
-// todo(@namanv3): remove and use AxisScale everywhere
+// todo(@namanv3): remove and use AxisScale everywhere.
 type HeatmapYScale struct{ valuer.String }
 
 var (
