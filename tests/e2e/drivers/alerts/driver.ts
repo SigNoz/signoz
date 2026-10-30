@@ -366,7 +366,8 @@ export function alertsDriver(page: Page): Alerts {
 		tab: (name) => page.getByRole('tab', { name }),
 		configSidebar: () => page.getByTestId('alert-configuration-sidebar'),
 		configSidebarItem: (key) => page.getByTestId(`configuration-sidebar-${key}`),
-		rulesHeading: () => page.getByRole('heading', { name: 'Alert Rules' }),
+		rulesHeading: () =>
+			page.getByRole('heading', { name: 'Alert Rules', exact: true }),
 		triggeredSearch: () => page.getByTestId('triggered-alerts-search-input'),
 		breadcrumb: () => page.locator('.ant-breadcrumb'),
 		crumb: (text) => shell.breadcrumb().getByText(text),
