@@ -1,0 +1,19 @@
+.badges {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.overflow {
+	flex-shrink: 0;
+}
+
+.extraBadges {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-2);
+	max-width: 320px;
+}
