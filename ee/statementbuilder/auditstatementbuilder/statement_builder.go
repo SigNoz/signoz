@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/SigNoz/signoz/ee/telemetryschema/audittelemetryschema"
 	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -13,7 +14,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/statementbuilder"
 	"github.com/SigNoz/signoz/pkg/statementbuilder/resourcefilter"
-	"github.com/SigNoz/signoz/pkg/telemetryschema/audittelemetryschema"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -58,7 +58,7 @@ func NewAuditQueryStatementBuilder(
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	flagger flagger.Flagger,
 ) *auditQueryStatementBuilder {
-	auditSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetryschema/audittelemetryschema")
+	auditSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/ee/telemetryschema/audittelemetryschema")
 
 	resourceFilterStmtBuilder := resourcefilter.New[qbtypes.LogAggregation](
 		settings,

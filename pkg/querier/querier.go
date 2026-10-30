@@ -54,7 +54,7 @@ type querier struct {
 	traceStmtBuilder         qbtypes.StatementBuilder[qbtypes.TraceAggregation]
 	aiTraceStmtBuilder       qbtypes.StatementBuilder[qbtypes.TraceAggregation]
 	logStmtBuilder           qbtypes.StatementBuilder[qbtypes.LogAggregation]
-	auditStmtBuilder         qbtypes.StatementBuilder[qbtypes.LogAggregation]
+	sourceLogStmtBuilders    map[telemetrytypes.Source]qbtypes.StatementBuilder[qbtypes.LogAggregation]
 	metricStmtBuilder        qbtypes.StatementBuilder[qbtypes.MetricAggregation]
 	meterStmtBuilder         qbtypes.StatementBuilder[qbtypes.MetricAggregation]
 	traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder
@@ -74,7 +74,7 @@ func New(
 	traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
 	aiTraceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
 	logStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
-	auditStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
+	sourceLogStmtBuilders map[telemetrytypes.Source]qbtypes.StatementBuilder[qbtypes.LogAggregation],
 	metricStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation],
 	meterStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation],
 	traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder,
@@ -96,7 +96,7 @@ func New(
 		traceStmtBuilder:         traceStmtBuilder,
 		aiTraceStmtBuilder:       aiTraceStmtBuilder,
 		logStmtBuilder:           logStmtBuilder,
-		auditStmtBuilder:         auditStmtBuilder,
+		sourceLogStmtBuilders:    sourceLogStmtBuilders,
 		metricStmtBuilder:        metricStmtBuilder,
 		meterStmtBuilder:         meterStmtBuilder,
 		traceOperatorStmtBuilder: traceOperatorStmtBuilder,
@@ -266,10 +266,7 @@ func (q *querier) buildQueries(
 			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
 				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
 				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
-				stmtBuilder := q.logStmtBuilder
-				if spec.Source == telemetrytypes.SourceAudit {
-					stmtBuilder = q.auditStmtBuilder
-				}
+				stmtBuilder := q.logStmtBuilderFor(spec.Source)
 				bq := newBuilderQuery(q.logger, q.telemetryStore, orgID, stmtBuilder, query.Type, spec, timeRange, req.RequestType, tmplVars, q.builderConfig)
 				queries[spec.Name] = bq
 				steps[spec.Name] = spec.StepInterval
@@ -602,10 +599,7 @@ func (q *querier) QueryRawStream(ctx context.Context, orgID valuer.UUID, req *qb
 		case <-tick:
 			// timestamp end is not specified here
 			timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: tsStart}, req.RequestType)
-			liveTailStmtBuilder := q.logStmtBuilder
-			if spec.Source == telemetrytypes.SourceAudit {
-				liveTailStmtBuilder = q.auditStmtBuilder
-			}
+			liveTailStmtBuilder := q.logStmtBuilderFor(spec.Source)
 			bq := newBuilderQuery(q.logger, q.telemetryStore, orgID, liveTailStmtBuilder, query.Type, spec, timeRange, req.RequestType, map[string]qbtypes.VariableItem{
 				"id": {
 					Value: updatedLogID,
@@ -937,10 +931,7 @@ func (q *querier) createRangedQuery(_ valuer.UUID, originalQuery qbtypes.Query, 
 		specCopy := qt.spec.Copy()
 		specCopy.ShiftBy = extractShiftFromBuilderQuery(specCopy)
 		adjustedTimeRange := adjustTimeRangeForShift(specCopy, timeRange, qt.kind)
-		shiftStmtBuilder := q.logStmtBuilder
-		if qt.spec.Source == telemetrytypes.SourceAudit {
-			shiftStmtBuilder = q.auditStmtBuilder
-		}
+		shiftStmtBuilder := q.logStmtBuilderFor(qt.spec.Source)
 		return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, shiftStmtBuilder, qt.queryType, specCopy, adjustedTimeRange, qt.kind, qt.variables, q.builderConfig)
 
 	case *builderQuery[qbtypes.MetricAggregation]:
