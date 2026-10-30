@@ -12,6 +12,19 @@ import { getAppContextMock, screen, waitFor, within } from 'tests/test-utils';
 
 import { renderListAlertRules, runSearchQuery } from './_helpers';
 
+// jsdom has no layout, and Floating UI's getComputedStyle walk over every
+// popover ancestor costs ~1 s per open here, enough to time out under load.
+jest.mock('@floating-ui/dom', () => ({
+	...jest.requireActual('@floating-ui/dom'),
+	autoUpdate: (): (() => void) => (): void => {},
+	computePosition: (
+		_reference: unknown,
+		_floating: unknown,
+		{ placement = 'bottom', strategy = 'absolute' } = {},
+	): Promise<unknown> =>
+		Promise.resolve({ x: 0, y: 0, placement, strategy, middlewareData: {} }),
+}));
+
 const VIEW_1_ORDER_BY = JSON.stringify({ columnName: 'name', order: 'asc' });
 const VIEW_1_QUERY = "severity = 'critical'";
 
@@ -92,6 +105,13 @@ async function selectView(user: User, id: string): Promise<void> {
 	await waitFor(() => expect(urlParam('view')).toBe(id));
 }
 
+// A role query walks the whole table; the antd confirm's button is found by text.
+function findConfirmDelete(): Promise<HTMLElement> {
+	return screen.findByText('Delete', {
+		selector: '.ant-modal-confirm button span',
+	});
+}
+
 describe('ListAlertRules — saved views rail', () => {
 	beforeEach(() => {
 		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
@@ -121,7 +141,7 @@ describe('ListAlertRules — saved views rail', () => {
 			['firing', 'Firing'],
 			['disabled', 'Disabled'],
 		])('%s sends states=%s', async (id, label) => {
-			const user = userEvent.setup({ delay: null });
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
 			const requests = captureRulesRequests();
 			renderListAlertRules();
 			await screen.findByText('High CPU Alert');
@@ -140,7 +160,7 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('My alert rules filters by the current user as creator', async () => {
-			const user = userEvent.setup({ delay: null });
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
 			const requests = captureRulesRequests();
 			const { email } = getAppContextMock('ADMIN').user;
 			renderListAlertRules();
@@ -158,7 +178,7 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('editing a builtin view filter offers save as new view, which POSTs', async () => {
-			const user = userEvent.setup({ delay: null });
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
 			const captured = captureViewWrites();
 			renderListAlertRules();
 			await screen.findByText('High CPU Alert');
@@ -192,7 +212,7 @@ describe('ListAlertRules — saved views rail', () => {
 
 	describe('saved views', () => {
 		it('lists saved views and applies the selected one', async () => {
-			const user = userEvent.setup({ delay: null });
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
 			const requests = captureRulesRequests();
 			renderListAlertRules({ initialRoute: '/?page=2' });
 
@@ -224,7 +244,7 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('shows the unsaved-changes panel after editing an applied view filter', async () => {
-			const user = userEvent.setup({ delay: null });
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
 			renderListAlertRules();
 			await selectView(user, 'view-1');
 
@@ -239,7 +259,7 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('Save PUTs the full current filter and the unchanged name', async () => {
-			const user = userEvent.setup({ delay: null });
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
 			const captured = captureViewWrites();
 			renderListAlertRules();
 			await selectView(user, 'view-1');
@@ -269,7 +289,7 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('Save as POSTs a new view and activates it', async () => {
-			const user = userEvent.setup({ delay: null });
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
 			const captured = captureViewWrites();
 			renderListAlertRules();
 			await selectView(user, 'view-1');
@@ -298,7 +318,7 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('caps a view name at 64 characters', async () => {
-			const user = userEvent.setup({ delay: null });
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
 			const captured = captureViewWrites();
 			renderListAlertRules();
 			await screen.findByText('High CPU Alert');
@@ -315,7 +335,7 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('Reset restores the active view filter', async () => {
-			const user = userEvent.setup({ delay: null });
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
 			renderListAlertRules();
 			await selectView(user, 'view-1');
 			await runSearchQuery(user, 'foo');
@@ -335,7 +355,7 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('rename PUTs the new name and keeps the stored filter', async () => {
-			const user = userEvent.setup({ delay: null });
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
 			const captured = captureViewWrites();
 			renderListAlertRules();
 			await selectView(user, 'view-2');
@@ -368,7 +388,7 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('delete asks for confirmation and sends DELETE', async () => {
-			const user = userEvent.setup({ delay: null });
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
 			const captured = captureViewWrites();
 			renderListAlertRules();
 			await selectView(user, 'view-1');
@@ -379,21 +399,21 @@ describe('ListAlertRules — saved views rail', () => {
 				screen.findByText(/Views are shared across your organization/),
 			).resolves.toBeInTheDocument();
 			expect(captured.deletes).toHaveLength(0);
-			await user.click(screen.getByRole('button', { name: 'Delete' }));
+			await user.click(await findConfirmDelete());
 
 			await waitFor(() => expect(captured.deletes).toStrictEqual(['view-2']));
 			expect(urlParam('view')).toBe('view-1');
 		});
 
 		it('deleting the active view falls back to All', async () => {
-			const user = userEvent.setup({ delay: null });
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
 			const captured = captureViewWrites();
 			renderListAlertRules();
 			await selectView(user, 'view-1');
 			await waitFor(() => expect(urlParam('query')).toBe(VIEW_1_QUERY));
 
 			await user.click(screen.getByTestId('alert-rules-view-delete-view-1'));
-			await user.click(await screen.findByRole('button', { name: 'Delete' }));
+			await user.click(await findConfirmDelete());
 
 			await waitFor(() => expect(captured.deletes).toStrictEqual(['view-1']));
 			await waitFor(() => {
@@ -405,7 +425,7 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('All alert rules clears the view and its filters', async () => {
-			const user = userEvent.setup({ delay: null });
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
 			renderListAlertRules();
 			await selectView(user, 'view-1');
 			await waitFor(() => expect(urlParam('query')).not.toBeNull());
@@ -449,7 +469,7 @@ describe('ListAlertRules — saved views rail', () => {
 
 	describe('rail chrome', () => {
 		it('filters views by name', async () => {
-			const user = userEvent.setup({ delay: null });
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
 			renderListAlertRules();
 			await screen.findByTestId('alert-rules-view-view-2');
 
@@ -469,7 +489,7 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('collapses the rail from the status bar and persists it', async () => {
-			const user = userEvent.setup({ delay: null });
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
 			renderListAlertRules();
 			await screen.findByText('High CPU Alert');
 
