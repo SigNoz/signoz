@@ -5,11 +5,15 @@ import (
 	"math"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
+
+// maxEndTimeAhead tolerates client clock skew; anything further ahead is a malformed timestamp.
+const maxEndTimeAhead = 24 * time.Hour
 
 // getQueryIdentifier returns a friendly identifier for a query based on its type and name/content.
 func getQueryIdentifier(envelope QueryEnvelope, index int) string {
@@ -574,12 +578,8 @@ func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
 
 // Validate validates the entire query range request.
 func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
-	// Validate time range
-	if r.RequestType != RequestTypeRawStream && r.Start >= r.End {
-		return errors.NewInvalidInputf(
-			errors.CodeInvalidInput,
-			"start time must be before end time",
-		)
+	if err := r.validateTimeRange(); err != nil {
+		return err
 	}
 
 	// Validate request type
@@ -631,8 +631,8 @@ func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
 // this so per-query errors can be attributed individually via QueryEnvelope.Validate
 // instead of failing fast like Validate does.
 func (r *QueryRangeRequest) ValidateRequestScope() ([]ValidationOption, error) {
-	if r.RequestType != RequestTypeRawStream && r.Start >= r.End {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "start time must be before end time")
+	if err := r.validateTimeRange(); err != nil {
+		return nil, err
 	}
 
 	var opts []ValidationOption
@@ -697,6 +697,22 @@ func (p *QueryRangePreviewParams) Validate() (QueryRangePreviewOptions, error) {
 // to ValidateRequestScope, letting the dry-run report errors independently.
 func (e QueryEnvelope) Validate(opts ...ValidationOption) error {
 	return validateQueryEnvelope(e, opts...)
+}
+
+func (r *QueryRangeRequest) validateTimeRange() error {
+	if r.RequestType == RequestTypeRawStream {
+		return nil
+	}
+	if r.Start == 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "start time is required")
+	}
+	if r.Start >= r.End {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "start time must be before end time")
+	}
+	if r.End > uint64(time.Now().Add(maxEndTimeAhead).UnixMilli()) {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "end time %s is too far in the future", time.UnixMilli(int64(r.End)).UTC().Format(time.RFC3339))
+	}
+	return nil
 }
 
 // validateAllQueriesNotDisabled validates that at least one query in the composite query is enabled.
