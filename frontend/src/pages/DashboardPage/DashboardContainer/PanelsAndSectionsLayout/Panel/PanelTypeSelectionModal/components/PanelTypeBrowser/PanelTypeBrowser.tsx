@@ -4,12 +4,12 @@ import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import cx from 'classnames';
 
-import type { PanelKind } from '../../../Panels/types/panelKind';
+import type { PanelKind } from '../../../../../Panels/types/panelKind';
 import {
 	filterPanelTypeGroups,
 	type PanelTypeGroupId,
 } from './panelTypeCatalog';
-import PanelTypeTile from './PanelTypeTile';
+import PanelTypeTile from '../PanelTypeTile/PanelTypeTile';
 
 import styles from './PanelTypeBrowser.module.scss';
 

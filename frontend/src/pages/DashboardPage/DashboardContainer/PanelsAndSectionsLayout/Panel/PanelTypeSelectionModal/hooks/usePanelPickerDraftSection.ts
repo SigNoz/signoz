@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
-import type { PanelKind } from '../../../Panels/types/panelKind';
-import { usePanelPickerTargetStore } from '../../../store/usePanelPickerTargetStore';
+import type { PanelKind } from '../../../../Panels/types/panelKind';
+import { usePanelPickerTargetStore } from '../../../../store/usePanelPickerTargetStore';
 
 export function usePanelPickerDraftSection(
 	title: string | null,
