@@ -143,9 +143,7 @@ test.describe('Query builder — URL handling', () => {
 		expect(qb.console.errors).toEqual([]);
 	});
 
-	// known: convertHavingToExpression keeps the stored `COUNT()` casing, which
-	// the v5 backend rejects with a 400 ("Invalid references in `Having`").
-	test.fixme('TC-03 a legacy having as the old builder stored it still runs', async ({
+	test('TC-03 a legacy having as the old builder stored it still runs', async ({
 		qb,
 	}) => {
 		const loaded = await qb.openExplorer(EXPLORER.logs, {
@@ -153,9 +151,7 @@ test.describe('Query builder — URL handling', () => {
 			query: legacyLogsQuery([{ columnName: 'COUNT()', op: '>', value: 5 }]),
 		});
 
-		expect(qb.spec(loaded, 'A').having?.expression).toMatch(
-			/^count\(\)\s*>\s*5$/i,
-		);
+		expect(qb.spec(loaded, 'A').having?.expression).toBe('count() > 5');
 		expect(qb.console.failedResponses).toEqual([]);
 	});
 
