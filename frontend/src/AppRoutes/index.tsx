@@ -1,6 +1,12 @@
-import { ReactNode, Suspense, useCallback, useEffect, useState } from 'react';
-import { Route, Router, Switch } from 'react-router-dom';
-import { CompatRouter } from 'react-router-dom-v5-compat';
+import {
+	ReactNode,
+	Suspense,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
+import { Outlet } from 'react-router';
 import * as Sentry from '@sentry/react';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
@@ -9,7 +15,6 @@ import AppPageProviders from 'app/AppPageProviders';
 import AppShell from 'app/AppShell';
 import AppLoading from 'components/AppLoading/AppLoading';
 import { CmdKPalette } from 'components/cmdKPalette/cmdKPalette';
-import NotFound from 'components/NotFound';
 import { ShiftHoldOverlayController } from 'components/ShiftOverlay/ShiftHoldOverlayController';
 import Spinner from 'components/Spinner';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -23,7 +28,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { StatusCodes } from 'http-status-codes';
 import { IS_PROD } from 'lib/env';
-import history from 'lib/history';
+import { getCurrentLocation, navigate, subscribe } from 'lib/router/navigation';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import posthog from 'posthog-js';
 import { useAppContext } from 'providers/App/App';
@@ -31,24 +36,18 @@ import { IUser } from 'providers/App/types';
 import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import { extractDomain } from 'utils/app';
 
-import { Home } from './pageComponents';
 import PrivateRoute from './Private';
 import defaultRoutes, {
 	AppRoutes,
 	LIST_LICENSES,
 	SUPPORT_ROUTE,
 } from './routes';
+import type { EnabledRouteKeys } from './routeTable';
 import {
 	hasNoAppFrames,
 	isExternalIntegrationError,
 	SENTRY_IGNORE_ERRORS,
 } from './sentryFilters';
-
-const appRouter = (children: ReactNode): ReactNode => (
-	<Router history={history}>
-		<CompatRouter>{children}</CompatRouter>
-	</Router>
-);
 
 const appLayout = (children: ReactNode): ReactNode => (
 	<AppLayout>{children}</AppLayout>
@@ -70,18 +69,24 @@ function App(): JSX.Element {
 		isPreflightLoading,
 	} = useAppContext();
 	const [routes, setRoutes] = useState<AppRoutes[]>(defaultRoutes);
+	const enabledRouteKeys = useMemo<EnabledRouteKeys>(
+		() => new Set(routes.map(({ key }) => key)),
+		[routes],
+	);
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 	const chatSupport = useChatSupport();
 
 	const { hostname } = window.location;
-	const [pathname, setPathname] = useState(history.location.pathname);
+	// Through the facade, not the raw history: the router owns the base path
+	// now, so `history.location.pathname` would still carry it.
+	const [pathname, setPathname] = useState(getCurrentLocation().pathname);
 
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
 	const [isSentryInitialized, setIsSentryInitialized] = useState(false);
 
 	useEffect(() => {
-		return history.listen((location) => {
+		return subscribe(({ location }) => {
 			setPathname(location.pathname);
 		});
 	}, []);
@@ -398,7 +403,7 @@ function App(): JSX.Element {
 		// this needs to be on top of data missing error because if there is an error, data will never be loaded and it will
 		// move to indefinitive loading
 		if (userFetchError && pathname !== ROUTES.SOMETHING_WENT_WRONG) {
-			history.replace(ROUTES.SOMETHING_WENT_WRONG);
+			navigate(ROUTES.SOMETHING_WENT_WRONG, { replace: true });
 		}
 
 		// if all of the data is not set then return a spinner, this is required because there is some gap between loading states and data setting
@@ -414,7 +419,6 @@ function App(): JSX.Element {
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<AppShell
-				router={appRouter}
 				overlays={
 					isLoggedInState && (
 						<>
@@ -427,18 +431,7 @@ function App(): JSX.Element {
 				<PrivateRoute>
 					<AppPageProviders layout={appLayout}>
 						<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-							<Switch>
-								{routes.map(({ path, component, exact }) => (
-									<Route
-										key={`${path}`}
-										exact={exact}
-										path={path}
-										component={component}
-									/>
-								))}
-								<Route exact path="/" component={Home} />
-								<Route path="*" component={NotFound} />
-							</Switch>
+							<Outlet context={enabledRouteKeys} />
 						</Suspense>
 					</AppPageProviders>
 				</PrivateRoute>

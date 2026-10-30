@@ -1,85 +1,114 @@
-import history from 'lib/history';
+import type { DataRouter } from 'react-router';
+import { stripBasePath } from 'utils/basePath';
 
 import type {
 	AppLocation,
 	NavigateOptions,
 	NavigationAction,
-	NavigationBlocker,
 	To,
 } from './types';
-import { applyNavigate, retryTransition, toAppLocation } from './utils';
+import { toAppLocation } from './utils';
 
-let entryKeys: Array<string | undefined> = [history.location.key];
-let currentKey = history.location.key;
+/**
+ * Imperative navigation, usable from any code. `useAppNavigate` navigates on
+ * the nearest router instead. Unlike `useSafeNavigate` it does not suppress
+ * same-URL navigation and has no new-tab branch, because it cannot see the
+ * current render.
+ *
+ * It drives the data router attached last: the app's, or the one a test or a
+ * story mounts. Callers pass and receive basename-free app paths. The router
+ * prepends the base path on write, and its `state.location` is the full browser
+ * path, so reads strip it here.
+ *
+ * A navigation commits synchronously only while no matched route has a loader;
+ * once one does, `router.navigate` settles after the loader.
+ */
+type Listener = (update: {
+	location: AppLocation;
+	action: NavigationAction;
+}) => void;
 
-// history@4 reports a blocked POP's target but not how far away it is, and the
-// POP is already reverted by the time `retry` runs. Mirroring its entry keys
-// gives the distance back. Like history@4, an entry it never saw (one from
-// before a reload) counts as the first one, so a POP whose ends both land on
-// index 0 is not reverted.
-history.listen((location, action) => {
-	const index = entryKeys.indexOf(currentKey);
-	currentKey = location.key;
-	if (action === 'PUSH') {
-		entryKeys = [...entryKeys.slice(0, index + 1), location.key];
-	} else if (action === 'REPLACE' && index !== -1) {
-		entryKeys[index] = location.key;
+const attached: DataRouter[] = [];
+const listeners = new Set<Listener>();
+let inAppPushCount = 0;
+
+function activeRouter(): DataRouter {
+	const router = attached[attached.length - 1];
+	if (!router) {
+		throw new Error(
+			'lib/router/navigation: no router is attached. Mount the app router, a TestRouter or a story first.',
+		);
 	}
-});
+	return router;
+}
 
-function entryIndex(key: string | undefined): number {
-	return Math.max(0, entryKeys.indexOf(key));
+function toAppPath<S>(location: AppLocation<S>): AppLocation<S> {
+	return { ...location, pathname: stripBasePath(location.pathname) };
 }
 
 /**
- * Imperative navigation on the app's history singleton, usable from any code.
- * `useAppNavigate` navigates on the nearest router instead. Unlike
- * `useSafeNavigate` it does not suppress same-URL navigation and has no new-tab
- * branch, because it cannot see the current render.
- *
- * Callers pass and receive basename-free app paths.
+ * Makes `router` the one this module drives until the returned detach runs.
+ * Attachments stack, so detaching a router a test mounted hands control back
+ * to the one below it.
  */
+export function attachRouter(router: DataRouter): () => void {
+	attached.push(router);
+
+	let { location } = router.state;
+	const unsubscribe = router.subscribe((state) => {
+		// The router also publishes navigation, fetcher and blocker state; only a
+		// committed location is a navigation.
+		if (state.location === location) {
+			return;
+		}
+		location = state.location;
+
+		if (attached[attached.length - 1] !== router) {
+			return;
+		}
+		if (state.historyAction === 'PUSH') {
+			inAppPushCount += 1;
+		}
+
+		const update = {
+			location: toAppPath(toAppLocation(state.location)),
+			action: state.historyAction as NavigationAction,
+		};
+		listeners.forEach((listener) => listener(update));
+	});
+
+	return (): void => {
+		unsubscribe();
+		const index = attached.lastIndexOf(router);
+		if (index !== -1) {
+			attached.splice(index, 1);
+		}
+	};
+}
+
 export function navigate(to: To, options?: NavigateOptions): void {
-	applyNavigate(history, to, options);
-}
-
-export function back(): void {
-	history.goBack();
-}
-
-export function getCurrentLocation(): AppLocation {
-	return toAppLocation(history.location);
-}
-
-export function blockNavigation(blocker: NavigationBlocker): () => void {
-	return history.block((location, action) => {
-		const appLocation = toAppLocation(location);
-		const navigationAction = action as NavigationAction;
-		const delta = entryIndex(location.key) - entryIndex(currentKey);
-		const popDelta = delta === 0 ? null : delta;
-		let deciding = true;
-		let allowed = false;
-
-		blocker({
-			location: appLocation,
-			action: navigationAction,
-			retry: () => {
-				if (deciding) {
-					allowed = true;
-					return;
-				}
-				retryTransition(history, appLocation, navigationAction, popDelta);
-			},
-		});
-		deciding = false;
-
-		// history@4 cancels the transition when the prompt returns `false`;
-		// history@5 cancels whenever a blocker is registered and hands control to
-		// `retry()`. A `retry()` inside the blocker means "let it through", and
-		// history@4 does that by not cancelling: re-issuing a POP would walk the
-		// stack twice.
-		return allowed ? undefined : false;
+	void activeRouter().navigate(to, {
+		replace: options?.replace,
+		state: options?.state,
 	});
 }
 
-export { hasInAppHistory } from 'lib/history';
+export function back(): void {
+	void activeRouter().navigate(-1);
+}
+
+export function getCurrentLocation(): AppLocation {
+	return toAppPath(toAppLocation(activeRouter().state.location));
+}
+
+export function subscribe(listener: Listener): () => void {
+	// Wrapped so that subscribing the same function twice yields two
+	// subscriptions, as `history.listen` did.
+	const entry: Listener = (update) => listener(update);
+	listeners.add(entry);
+	return (): void => {
+		listeners.delete(entry);
+	};
+}
+
+export const hasInAppHistory = (): boolean => inAppPushCount > 0;

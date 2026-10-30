@@ -1,6 +1,6 @@
 // Spies on the `lib/router` facade, for tests that cannot render at a route or
-// assert the navigation call itself. Tests never mock the router packages or
-// `lib/history`: those change at a router upgrade, the facade does not.
+// assert the navigation call itself. Tests never mock the router packages: they
+// change at a router upgrade, the facade does not.
 // Spies last for the rest of the file unless restored.
 
 import * as navigation from 'lib/router/navigation';

@@ -1,65 +1,46 @@
-import {
-	History,
-	LocationDescriptor,
-	LocationDescriptorObject,
-	parsePath,
-} from 'history';
-import { fn, type Mock } from 'storybook/test';
+import { createMemoryRouter, type DataRouter, parsePath } from 'react-router';
+import { hostRoutes } from 'lib/router/HostRouter';
+import { fn } from 'storybook/test';
 
 import { recordBlockedNavigation } from './blockedNavigationStore';
-import { navigateWithinPage, storyHistory, toHref } from './pageScope';
+import { navigateWithinPage, setStoryRouter, toHref } from './pageScope';
 
-const guardedNavigate = (
-	via: 'push' | 'replace',
-): Mock<(to: LocationDescriptor, state?: unknown) => void> =>
-	fn((to: LocationDescriptor, state?: unknown): void => {
-		const target: LocationDescriptorObject =
-			typeof to === 'string' ? { ...parsePath(to), state } : { state, ...to };
-
-		if (navigateWithinPage(target, { replace: via === 'replace' })) {
-			return;
-		}
-
-		recordBlockedNavigation(via, toHref(to));
-	}).mockName(`history.${via}`);
-
-const blockedRelativeNavigate = (via: string): Mock<(delta?: number) => void> =>
-	fn((delta?: number): void => {
-		recordBlockedNavigation(via, delta === undefined ? via : `${via}(${delta})`);
-	}).mockName(`history.${via}`);
-
-const overriddenMethods = {
-	push: guardedNavigate('push'),
-	replace: guardedNavigate('replace'),
-	go: blockedRelativeNavigate('go'),
-	goBack: blockedRelativeNavigate('goBack'),
-	goForward: blockedRelativeNavigate('goForward'),
-} as const;
-
-type OverriddenMethod = keyof typeof overriddenMethods;
-
-const isOverriddenMethod = (prop: string | symbol): prop is OverriddenMethod =>
-	typeof prop === 'string' && prop in overriddenMethods;
+type Navigate = DataRouter['navigate'];
 
 /**
- * What the app sees in place of `lib/history`. Reads (`location`, `action`,
- * `listen`) are proxied to the story's memory history so react-router renders
- * normally; navigation goes through `pageScope`, and whatever would leave the
- * page is swallowed and reported to `blockedNavigationStore`.
- * `react-router-dom-v5-compat` drives its `useNavigate` through this same
- * object, so `useSafeNavigate` is covered too.
+ * Every navigation the app makes reaches `router.navigate`: `useNavigate`,
+ * `<Link>`, `useSearchParams` and `lib/router/navigation` all call it. One that
+ * stays on the page goes through `pageScope`; whatever would leave the page is
+ * swallowed and reported to `blockedNavigationStore`.
  */
-export const containedHistory: History = new Proxy(storyHistory, {
-	get(target, prop, receiver) {
-		if (isOverriddenMethod(prop)) {
-			return overriddenMethods[prop];
-		}
-		return Reflect.get(target, prop, receiver);
-	},
-});
+const guardedNavigate = fn(((to, options) => {
+	if (typeof to === 'number') {
+		recordBlockedNavigation('go', `go(${to})`);
+		return Promise.resolve();
+	}
 
-export const hasInAppHistory = (): boolean => false;
+	const target = typeof to === 'string' ? parsePath(to) : (to ?? {});
+	const replace = options?.replace ?? false;
+
+	if (!navigateWithinPage(target, { replace, state: options?.state })) {
+		recordBlockedNavigation(replace ? 'replace' : 'push', toHref(target));
+	}
+	return Promise.resolve();
+}) as Navigate).mockName('router.navigate');
+
+/** A router for one story, placed at its route before anything renders. */
+export const createStoryRouter = (
+	route: string,
+	routeState?: unknown,
+): DataRouter => {
+	const router = createMemoryRouter(hostRoutes, {
+		initialEntries: [{ ...parsePath(route), state: routeState }],
+	});
+	setStoryRouter(router);
+	router.navigate = guardedNavigate as Navigate;
+	return router;
+};
 
 export const resetStoryHistory = (): void => {
-	Object.values(overriddenMethods).forEach((method) => method.mockClear());
+	guardedNavigate.mockClear();
 };

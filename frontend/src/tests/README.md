@@ -97,7 +97,10 @@ render(<Page />, undefined, {
 expect(getCurrentLocation().pathname).toBe(ROUTES.HOME);
 ```
 
-Never mock the router packages (`react-router`, `react-router-dom`) or `lib/history`;
+Module-level `navigate()` and `getCurrentLocation()` drive the mounted router and throw
+when none is. Render first, or attach one with `attachTestRouter` from `tests/router-utils`.
+
+Never mock the router packages (`react-router`, `react-router-dom`);
 `signoz/no-direct-react-router-import` rejects it. When a test cannot render at a route,
 or asserts the call itself, spy on the `lib/router` facade with `tests/router-mocks`:
 ```ts
