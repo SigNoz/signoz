@@ -17,6 +17,79 @@ const (
 
 type diffSide int
 
+var DowntimeRuleIDsExtractor = coretypes.ResourceIDsExtractor{Phase: coretypes.PhaseRequest, Fn: func(ec coretypes.ExtractorContext) ([]string, error) {
+	ids, err := coretypes.BodyJSONArray("alertIds").Fn(ec)
+	if err != nil {
+		return nil, err
+	}
+
+	return defaultToWildcardIfEmpty(ids), nil
+}}
+
+var DowntimeRuleSelector coretypes.SelectorFunc = func(ctx context.Context, resource coretypes.Resource, id string, orgID valuer.UUID) ([]coretypes.Selector, error) {
+	if id == coretypes.WildCardSelectorString {
+		return coretypes.WildcardSelector(ctx, resource, id, orgID)
+	}
+
+	return coretypes.IDSelector(ctx, resource, id, orgID)
+}
+
+func NewDowntimeRuleAttachExtractor(rulerService Ruler) coretypes.ResourceIDsExtractor {
+	return newDowntimeDiffExtractor(rulerService, attachedSide)
+}
+
+func NewDowntimeRuleDetachExtractor(rulerService Ruler) coretypes.ResourceIDsExtractor {
+	return newDowntimeDiffExtractor(rulerService, detachedSide)
+}
+
+func newDowntimeDiffExtractor(rulerService Ruler, side diffSide) coretypes.ResourceIDsExtractor {
+	return coretypes.ResourceIDsExtractor{Phase: coretypes.PhaseRequest, Fn: func(ec coretypes.ExtractorContext) ([]string, error) {
+		if ec.Request == nil {
+			return nil, nil
+		}
+
+		ctx := ec.Request.Context()
+		orgID, err := orgIDFromContext(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		scheduleID, err := valuer.NewUUID(mux.Vars(ec.Request)["id"])
+		if err != nil {
+			return nil, err
+		}
+
+		stored, err := rulerService.MaintenanceStore().GetPlannedMaintenanceByID(ctx, orgID.StringValue(), scheduleID)
+		if err != nil {
+			return nil, err
+		}
+
+		incoming, err := DowntimeRuleIDsExtractor.Fn(ec)
+		if err != nil {
+			return nil, err
+		}
+
+		attached, detached := diffDowntimeRuleLinks(stored.RuleIDs, incoming)
+		if side == detachedSide {
+			return detached, nil
+		}
+
+		return attached, nil
+	}}
+}
+
+func diffDowntimeRuleLinks(stored, incoming []string) (attached, detached []string) {
+	return diffLinks(defaultToWildcardIfEmpty(stored), incoming)
+}
+
+func defaultToWildcardIfEmpty(ids []string) []string {
+	if len(ids) == 0 {
+		return []string{coretypes.WildCardSelectorString}
+	}
+
+	return ids
+}
+
 func NewCreateRoutePolicyChannelAttachExtractor(alertmanagerService alertmanager.Alertmanager) coretypes.ResourceIDsExtractor {
 	return coretypes.ResourceIDsExtractor{Phase: coretypes.PhaseRequest, Fn: func(ec coretypes.ExtractorContext) ([]string, error) {
 		if ec.Request == nil {

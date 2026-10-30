@@ -18,10 +18,19 @@ func NewMockMaintenanceStore(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockMaintenanceStore {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockMaintenanceStore{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -75,7 +84,7 @@ type MockMaintenanceStore_CreatePlannedMaintenance_Call struct {
 // CreatePlannedMaintenance is a helper method to define mock.On call
 //   - context1 context.Context
 //   - postablePlannedMaintenance *alertmanagertypes.PostablePlannedMaintenance
-func (_e *MockMaintenanceStore_Expecter) CreatePlannedMaintenance(context1 interface{}, postablePlannedMaintenance interface{}) *MockMaintenanceStore_CreatePlannedMaintenance_Call {
+func (_e *MockMaintenanceStore_Expecter) CreatePlannedMaintenance(context1 any, postablePlannedMaintenance any) *MockMaintenanceStore_CreatePlannedMaintenance_Call {
 	return &MockMaintenanceStore_CreatePlannedMaintenance_Call{Call: _e.mock.On("CreatePlannedMaintenance", context1, postablePlannedMaintenance)}
 }
 
@@ -108,16 +117,16 @@ func (_c *MockMaintenanceStore_CreatePlannedMaintenance_Call) RunAndReturn(run f
 }
 
 // DeletePlannedMaintenance provides a mock function for the type MockMaintenanceStore
-func (_mock *MockMaintenanceStore) DeletePlannedMaintenance(context1 context.Context, uUID valuer.UUID) error {
-	ret := _mock.Called(context1, uUID)
+func (_mock *MockMaintenanceStore) DeletePlannedMaintenance(context1 context.Context, s string, uUID valuer.UUID) error {
+	ret := _mock.Called(context1, s, uUID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeletePlannedMaintenance")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, valuer.UUID) error); ok {
-		r0 = returnFunc(context1, uUID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, valuer.UUID) error); ok {
+		r0 = returnFunc(context1, s, uUID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -131,24 +140,30 @@ type MockMaintenanceStore_DeletePlannedMaintenance_Call struct {
 
 // DeletePlannedMaintenance is a helper method to define mock.On call
 //   - context1 context.Context
+//   - s string
 //   - uUID valuer.UUID
-func (_e *MockMaintenanceStore_Expecter) DeletePlannedMaintenance(context1 interface{}, uUID interface{}) *MockMaintenanceStore_DeletePlannedMaintenance_Call {
-	return &MockMaintenanceStore_DeletePlannedMaintenance_Call{Call: _e.mock.On("DeletePlannedMaintenance", context1, uUID)}
+func (_e *MockMaintenanceStore_Expecter) DeletePlannedMaintenance(context1 any, s any, uUID any) *MockMaintenanceStore_DeletePlannedMaintenance_Call {
+	return &MockMaintenanceStore_DeletePlannedMaintenance_Call{Call: _e.mock.On("DeletePlannedMaintenance", context1, s, uUID)}
 }
 
-func (_c *MockMaintenanceStore_DeletePlannedMaintenance_Call) Run(run func(context1 context.Context, uUID valuer.UUID)) *MockMaintenanceStore_DeletePlannedMaintenance_Call {
+func (_c *MockMaintenanceStore_DeletePlannedMaintenance_Call) Run(run func(context1 context.Context, s string, uUID valuer.UUID)) *MockMaintenanceStore_DeletePlannedMaintenance_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 valuer.UUID
+		var arg1 string
 		if args[1] != nil {
-			arg1 = args[1].(valuer.UUID)
+			arg1 = args[1].(string)
+		}
+		var arg2 valuer.UUID
+		if args[2] != nil {
+			arg2 = args[2].(valuer.UUID)
 		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -159,14 +174,14 @@ func (_c *MockMaintenanceStore_DeletePlannedMaintenance_Call) Return(err error) 
 	return _c
 }
 
-func (_c *MockMaintenanceStore_DeletePlannedMaintenance_Call) RunAndReturn(run func(context1 context.Context, uUID valuer.UUID) error) *MockMaintenanceStore_DeletePlannedMaintenance_Call {
+func (_c *MockMaintenanceStore_DeletePlannedMaintenance_Call) RunAndReturn(run func(context1 context.Context, s string, uUID valuer.UUID) error) *MockMaintenanceStore_DeletePlannedMaintenance_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetPlannedMaintenanceByID provides a mock function for the type MockMaintenanceStore
-func (_mock *MockMaintenanceStore) GetPlannedMaintenanceByID(context1 context.Context, uUID valuer.UUID) (*alertmanagertypes.PlannedMaintenance, error) {
-	ret := _mock.Called(context1, uUID)
+func (_mock *MockMaintenanceStore) GetPlannedMaintenanceByID(context1 context.Context, s string, uUID valuer.UUID) (*alertmanagertypes.PlannedMaintenance, error) {
+	ret := _mock.Called(context1, s, uUID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetPlannedMaintenanceByID")
@@ -174,18 +189,18 @@ func (_mock *MockMaintenanceStore) GetPlannedMaintenanceByID(context1 context.Co
 
 	var r0 *alertmanagertypes.PlannedMaintenance
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, valuer.UUID) (*alertmanagertypes.PlannedMaintenance, error)); ok {
-		return returnFunc(context1, uUID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, valuer.UUID) (*alertmanagertypes.PlannedMaintenance, error)); ok {
+		return returnFunc(context1, s, uUID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, valuer.UUID) *alertmanagertypes.PlannedMaintenance); ok {
-		r0 = returnFunc(context1, uUID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, valuer.UUID) *alertmanagertypes.PlannedMaintenance); ok {
+		r0 = returnFunc(context1, s, uUID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*alertmanagertypes.PlannedMaintenance)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, valuer.UUID) error); ok {
-		r1 = returnFunc(context1, uUID)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, valuer.UUID) error); ok {
+		r1 = returnFunc(context1, s, uUID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -199,24 +214,30 @@ type MockMaintenanceStore_GetPlannedMaintenanceByID_Call struct {
 
 // GetPlannedMaintenanceByID is a helper method to define mock.On call
 //   - context1 context.Context
+//   - s string
 //   - uUID valuer.UUID
-func (_e *MockMaintenanceStore_Expecter) GetPlannedMaintenanceByID(context1 interface{}, uUID interface{}) *MockMaintenanceStore_GetPlannedMaintenanceByID_Call {
-	return &MockMaintenanceStore_GetPlannedMaintenanceByID_Call{Call: _e.mock.On("GetPlannedMaintenanceByID", context1, uUID)}
+func (_e *MockMaintenanceStore_Expecter) GetPlannedMaintenanceByID(context1 any, s any, uUID any) *MockMaintenanceStore_GetPlannedMaintenanceByID_Call {
+	return &MockMaintenanceStore_GetPlannedMaintenanceByID_Call{Call: _e.mock.On("GetPlannedMaintenanceByID", context1, s, uUID)}
 }
 
-func (_c *MockMaintenanceStore_GetPlannedMaintenanceByID_Call) Run(run func(context1 context.Context, uUID valuer.UUID)) *MockMaintenanceStore_GetPlannedMaintenanceByID_Call {
+func (_c *MockMaintenanceStore_GetPlannedMaintenanceByID_Call) Run(run func(context1 context.Context, s string, uUID valuer.UUID)) *MockMaintenanceStore_GetPlannedMaintenanceByID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 valuer.UUID
+		var arg1 string
 		if args[1] != nil {
-			arg1 = args[1].(valuer.UUID)
+			arg1 = args[1].(string)
+		}
+		var arg2 valuer.UUID
+		if args[2] != nil {
+			arg2 = args[2].(valuer.UUID)
 		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -227,7 +248,7 @@ func (_c *MockMaintenanceStore_GetPlannedMaintenanceByID_Call) Return(plannedMai
 	return _c
 }
 
-func (_c *MockMaintenanceStore_GetPlannedMaintenanceByID_Call) RunAndReturn(run func(context1 context.Context, uUID valuer.UUID) (*alertmanagertypes.PlannedMaintenance, error)) *MockMaintenanceStore_GetPlannedMaintenanceByID_Call {
+func (_c *MockMaintenanceStore_GetPlannedMaintenanceByID_Call) RunAndReturn(run func(context1 context.Context, s string, uUID valuer.UUID) (*alertmanagertypes.PlannedMaintenance, error)) *MockMaintenanceStore_GetPlannedMaintenanceByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -268,7 +289,7 @@ type MockMaintenanceStore_ListPlannedMaintenance_Call struct {
 // ListPlannedMaintenance is a helper method to define mock.On call
 //   - context1 context.Context
 //   - s string
-func (_e *MockMaintenanceStore_Expecter) ListPlannedMaintenance(context1 interface{}, s interface{}) *MockMaintenanceStore_ListPlannedMaintenance_Call {
+func (_e *MockMaintenanceStore_Expecter) ListPlannedMaintenance(context1 any, s any) *MockMaintenanceStore_ListPlannedMaintenance_Call {
 	return &MockMaintenanceStore_ListPlannedMaintenance_Call{Call: _e.mock.On("ListPlannedMaintenance", context1, s)}
 }
 
@@ -326,7 +347,7 @@ type MockMaintenanceStore_UpdatePlannedMaintenance_Call struct {
 //   - context1 context.Context
 //   - postablePlannedMaintenance *alertmanagertypes.PostablePlannedMaintenance
 //   - uUID valuer.UUID
-func (_e *MockMaintenanceStore_Expecter) UpdatePlannedMaintenance(context1 interface{}, postablePlannedMaintenance interface{}, uUID interface{}) *MockMaintenanceStore_UpdatePlannedMaintenance_Call {
+func (_e *MockMaintenanceStore_Expecter) UpdatePlannedMaintenance(context1 any, postablePlannedMaintenance any, uUID any) *MockMaintenanceStore_UpdatePlannedMaintenance_Call {
 	return &MockMaintenanceStore_UpdatePlannedMaintenance_Call{Call: _e.mock.On("UpdatePlannedMaintenance", context1, postablePlannedMaintenance, uUID)}
 }
 
