@@ -1,6 +1,7 @@
 import { Badge } from '@signozhq/ui/badge';
 import { AlertmanagertypesMaintenanceStatusDTO } from 'api/generated/services/sigNoz.schemas';
 import type { TableColumnDef } from 'components/TanStackTableView';
+import OverflowBadges from 'components/OverflowBadges/OverflowBadges';
 import TanStackTable from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { toRelativeTime } from 'pages/AlertList/NotificationChannels/utils/relativeTime';
@@ -152,18 +153,12 @@ export function getPlannedDowntimeColumns(
 			enableMove: false,
 			cell: ({ row }): JSX.Element =>
 				row.alertOptions.length ? (
-					<div className={styles.badges}>
-						{row.alertOptions.map((alert) => (
-							<Badge
-								key={alert.value}
-								textTransform="none"
-								variant="solid"
-								color="secondary"
-							>
-								{alert.label}
-							</Badge>
-						))}
-					</div>
+					<OverflowBadges
+						items={row.alertOptions.map((alert) => ({
+							key: String(alert.value),
+							label: alert.label,
+						}))}
+					/>
 				) : (
 					<Badge textTransform="none" variant="solid" color="secondary">
 						All alert rules
