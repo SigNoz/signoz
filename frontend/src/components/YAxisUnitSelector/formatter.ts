@@ -20,8 +20,10 @@ function scaleValue(
 		return { value, label: AdditionalLabelsMappingForGrafanaUnits[unit] || '' };
 	}
 
-	// Scale the value up or down to the nearest unit in the family
-	let scaled = value;
+	// Scale the value up or down to the nearest unit in the family. Scale the
+	// magnitude so a negative value gets the same unit as its positive twin.
+	const sign = value < 0 ? -1 : 1;
+	let scaled = Math.abs(value);
 	// Scale up
 	while (scaled >= factor && idx < family.length - 1) {
 		scaled /= factor;
@@ -35,7 +37,7 @@ function scaleValue(
 
 	// Return the scaled value and the label of the nearest unit in the family
 	return {
-		value: scaled,
+		value: sign * scaled,
 		label: AdditionalLabelsMappingForGrafanaUnits[family[idx]] || '',
 	};
 }
