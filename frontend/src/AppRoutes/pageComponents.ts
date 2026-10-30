@@ -292,3 +292,10 @@ export const LLMObservabilityPage = Loadable(
 			/* webpackChunkName: "LLM Observability Page" */ 'pages/LLMObservability'
 		),
 );
+
+export const NeuralOptimizerPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "Neural Optimizer Page" */ 'pages/NeuralOptimizer/index'
+		),
+);
