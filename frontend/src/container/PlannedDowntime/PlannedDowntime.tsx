@@ -226,7 +226,7 @@ export function PlannedDowntime(): JSX.Element {
 						disabledTooltip="You need edit permissions to create a planned downtime"
 						testId="planned-downtime-create"
 					>
-						New downtime
+						New Downtime
 					</Button>
 					<TextToolTip
 						text="More details on how to schedule planned downtime"

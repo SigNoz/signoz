@@ -124,7 +124,7 @@ function RoutingPolicies(): JSX.Element {
 						disabledTooltip="You need edit permissions to create a routing policy"
 						testId="routing-policies-create"
 					>
-						New routing policy
+						New Routing Policy
 					</Button>
 					<TextToolTip
 						text="More details on how to configure routing policies"
