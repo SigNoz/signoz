@@ -67,7 +67,7 @@ export function getPlannedDowntimeColumns(
 			id: 'name',
 			header: 'Downtime',
 			accessorKey: 'name',
-			width: { default: '100%', min: '200px' },
+			width: { default: '240px', min: '200px' },
 			enableSort: true,
 			enableResize: true,
 			enableRemove: false,
