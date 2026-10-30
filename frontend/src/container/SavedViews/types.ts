@@ -209,6 +209,8 @@ export interface SavedViewHoverCardProps {
 
 export interface SavedViewHoverCardDetailsProps {
 	viewId: string;
+	/** `read` is granted on every view, so the view needs no check of its own. */
+	canReadAll: boolean;
 }
 
 export interface SavedViewsListRowHoverProps {

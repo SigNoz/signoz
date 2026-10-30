@@ -115,6 +115,7 @@ function SavedViewHoverCardDetails({
 }
 
 export default withAuthZContent(SavedViewHoverCardDetails, {
-	checks: ({ viewId }) => [buildSavedViewReadPermission(viewId)],
+	checks: ({ viewId, canReadAll }) =>
+		canReadAll ? [] : [buildSavedViewReadPermission(viewId)],
 	fallbackOnLoading: <SavedViewHoverCardSkeleton />,
 });

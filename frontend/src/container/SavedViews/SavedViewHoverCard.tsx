@@ -1,4 +1,6 @@
 import { Popover, PopoverAnchor, PopoverContent } from '@signozhq/ui/popover';
+import { SavedViewReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 
 import SavedViewHoverCardDetails from './SavedViewHoverCardDetails';
 import { SavedViewHoverCardProps } from './types';
@@ -11,6 +13,8 @@ function SavedViewHoverCard({
 	onCardLeave,
 	onClose,
 }: SavedViewHoverCardProps): JSX.Element {
+	const { allowed: canReadAll } = useAuthZ([SavedViewReadPermission]);
+
 	return (
 		<Popover
 			open={!!target}
@@ -41,7 +45,10 @@ function SavedViewHoverCard({
 						onMouseLeave={onCardLeave}
 						data-testid="saved-view-hover-card"
 					>
-						<SavedViewHoverCardDetails viewId={target.viewId} />
+						<SavedViewHoverCardDetails
+							viewId={target.viewId}
+							canReadAll={canReadAll}
+						/>
 					</div>
 				)}
 			</PopoverContent>

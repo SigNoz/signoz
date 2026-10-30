@@ -13,6 +13,7 @@ import {
 	buildSavedViewUpdatePermission,
 	SavedViewCreatePermission,
 	SavedViewListPermission,
+	SavedViewReadPermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
 import {
 	AUTHZ_CHECK_URL,
@@ -79,6 +80,37 @@ async function openRowMenu(name: string): Promise<void> {
 	fireEvent.click(within(rowNamed(name)).getByTestId('saved-views-row-menu'));
 }
 
+// Records every check, answered by `isGranted`.
+function recordChecks(
+	isGranted: (transaction: AuthtypesTransactionDTO) => boolean = (): boolean =>
+		true,
+): AuthtypesTransactionDTO[] {
+	const checks: AuthtypesTransactionDTO[] = [];
+	server.use(
+		rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+			const payload = (await req.json()) as AuthtypesTransactionDTO[];
+			checks.push(...payload);
+			return res(ctx.json(authzMockResponse(payload, payload.map(isGranted))));
+		}),
+	);
+	return checks;
+}
+
+const readSelectors = (checks: AuthtypesTransactionDTO[]): string[] =>
+	checks
+		.filter((transaction) => transaction.relation === 'read')
+		.map((transaction) => transaction.object.selector);
+
+async function hoverRow(name: string): Promise<HTMLElement> {
+	await screen.findAllByTestId('saved-views-row');
+	fireEvent.mouseEnter(rowNamed(name));
+	return screen.findByTestId(
+		'saved-view-hover-card',
+		undefined,
+		HOVER_CARD_TIMEOUT,
+	);
+}
+
 // Resolves once the row's check is back, so its state is final.
 async function settledRow(testId: string): Promise<HTMLElement> {
 	await waitFor(
@@ -110,29 +142,15 @@ describe('SavedViews - AuthZ', () => {
 	});
 
 	it('runs no read check per row', async () => {
-		const relations: string[] = [];
 		mockSavedViewsApi([errors, slow]);
-		server.use(
-			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
-				const payload = (await req.json()) as AuthtypesTransactionDTO[];
-				relations.push(...payload.map((transaction) => transaction.relation));
-				return res(
-					ctx.json(
-						authzMockResponse(
-							payload,
-							payload.map(() => true),
-						),
-					),
-				);
-			}),
-		);
+		const checks = recordChecks();
 		renderPanel();
 
 		// The menu checks go out after any check the rows made on mount.
 		await openRowMenu('Errors');
 		await settledRow('saved-views-row-menu-item-delete');
-		expect(relations).toContain('delete');
-		expect(relations).not.toContain('read');
+		expect(checks.map((transaction) => transaction.relation)).toContain('delete');
+		expect(readSelectors(checks)).toStrictEqual(['*']);
 	});
 
 	it('opens a view it cannot read, then the header says no access', async () => {
@@ -192,7 +210,10 @@ describe('SavedViews - AuthZ', () => {
 		let fetches = 0;
 		mockSavedViewsApi([errors]);
 		server.use(
-			setupAuthzDeny(buildSavedViewReadPermission(errors.id)),
+			setupAuthzDeny(
+				SavedViewReadPermission,
+				buildSavedViewReadPermission(errors.id),
+			),
 			rest.get(`${API}/:id`, (_req, res, ctx) => {
 				fetches += 1;
 				return res(ctx.json({ status: 'success', data: errors }));
@@ -200,19 +221,41 @@ describe('SavedViews - AuthZ', () => {
 		);
 		renderPanel();
 
-		await screen.findAllByTestId('saved-views-row');
-		fireEvent.mouseEnter(rowNamed('Errors'));
-
-		const card = await screen.findByTestId(
-			'saved-view-hover-card',
-			undefined,
-			HOVER_CARD_TIMEOUT,
-		);
+		const card = await hoverRow('Errors');
 		await expect(
 			within(card).findByText(/not authorized/i),
 		).resolves.toBeInTheDocument();
 		expect(within(card).queryByTestId('saved-view-hover-card-query')).toBeNull();
 		expect(fetches).toBe(0);
+	});
+
+	it('skips the read check of the hovered view with read on every view', async () => {
+		mockSavedViewsApi([errors]);
+		const checks = recordChecks();
+		renderPanel();
+
+		const card = await hoverRow('Errors');
+
+		await expect(
+			within(card).findByTestId('saved-view-hover-card-query'),
+		).resolves.toHaveTextContent('has_error = true');
+		expect(readSelectors(checks)).toStrictEqual(['*']);
+	});
+
+	it('checks read on the hovered view without read on every view', async () => {
+		mockSavedViewsApi([errors]);
+		const checks = recordChecks(
+			(transaction) =>
+				transaction.relation !== 'read' || transaction.object.selector !== '*',
+		);
+		renderPanel();
+
+		const card = await hoverRow('Errors');
+
+		await expect(
+			within(card).findByTestId('saved-view-hover-card-query'),
+		).resolves.toHaveTextContent('has_error = true');
+		expect(readSelectors(checks)).toStrictEqual(['*', errors.id]);
 	});
 
 	it('disables creating without create', async () => {

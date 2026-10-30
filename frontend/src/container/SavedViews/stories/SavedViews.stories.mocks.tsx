@@ -74,7 +74,7 @@ const controls = {
 	unreadableView: toggleControl('Unreadable view', {
 		group: VIEW,
 		description:
-			'Denies `read` on the first view created by others alone, on top of the Access controls: its row still opens it, and the header then shows No view access, as with Open view on `created-by-others`. Its hover card shows the permission callout in place of the query.',
+			'Denies `read` on the first view created by others, and so on `saved-view:*`, on top of the Access controls: its row still opens it, and the header then shows No view access, as with Open view on `created-by-others`. Its hover card shows the permission callout in place of the query.',
 		value: false,
 	}),
 	viewPending: toggleControl('View fetch pending', {
@@ -112,7 +112,7 @@ const viewDenied = (
 ): boolean =>
 	transaction.relation === 'read' &&
 	transaction.object.resource.kind === 'saved-view' &&
-	transaction.object.selector === deniedId;
+	[deniedId, '*'].includes(transaction.object.selector);
 
 const definition = defineStoryMocks({
 	controls,
