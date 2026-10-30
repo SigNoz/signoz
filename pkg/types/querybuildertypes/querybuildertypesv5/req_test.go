@@ -1906,13 +1906,13 @@ func TestQueryRangeRequest_StepIntervalForQuery(t *testing.T) {
 
 func TestCompositeQueryCollectResultColumnKeys(t *testing.T) {
 	testCases := []struct {
-		scenario      string
+		name          string
 		composite     CompositeQuery
 		expectedKeys  ResultColumnKeys
 		expectedKnown bool
 	}{
 		{
-			scenario: "a single aggregation is keyed by the query name",
+			name: "SingleAggregation_KeyedByQueryName",
 			composite: CompositeQuery{Queries: []QueryEnvelope{{Type: QueryTypeBuilder, Spec: QueryBuilderQuery[TraceAggregation]{
 				Name:         "A",
 				Aggregations: []TraceAggregation{{Expression: "count()"}},
@@ -1922,7 +1922,7 @@ func TestCompositeQueryCollectResultColumnKeys(t *testing.T) {
 			expectedKnown: true,
 		},
 		{
-			scenario: "several aggregations are keyed by query name and expression",
+			name: "SeveralAggregations_KeyedByQueryNameAndExpression",
 			composite: CompositeQuery{Queries: []QueryEnvelope{{Type: QueryTypeBuilder, Spec: QueryBuilderQuery[LogAggregation]{
 				Name:         "A",
 				Aggregations: []LogAggregation{{Expression: "count()"}, {Expression: "p99(duration_nano)"}},
@@ -1931,7 +1931,7 @@ func TestCompositeQueryCollectResultColumnKeys(t *testing.T) {
 			expectedKnown: true,
 		},
 		{
-			scenario: "several metric aggregations are keyed by the query name",
+			name: "SeveralMetricAggregations_KeyedByQueryName",
 			composite: CompositeQuery{Queries: []QueryEnvelope{{Type: QueryTypeBuilder, Spec: QueryBuilderQuery[MetricAggregation]{
 				Name:         "A",
 				Aggregations: []MetricAggregation{{MetricName: "http.server.request.count"}, {MetricName: "http.server.request.duration"}},
@@ -1940,7 +1940,7 @@ func TestCompositeQueryCollectResultColumnKeys(t *testing.T) {
 			expectedKnown: true,
 		},
 		{
-			scenario: "a disabled query yields no aggregation but keeps its groups for the formula over it",
+			name: "DisabledQuery_NoAggregation_GroupsKeptForFormula",
 			composite: CompositeQuery{Queries: []QueryEnvelope{
 				{Type: QueryTypeBuilder, Spec: QueryBuilderQuery[MetricAggregation]{
 					Name:         "A",
@@ -1954,7 +1954,7 @@ func TestCompositeQueryCollectResultColumnKeys(t *testing.T) {
 			expectedKnown: true,
 		},
 		{
-			scenario: "clickhouse columns are only known at run time",
+			name: "ClickHouseQuery_ColumnsUnknownUntilRunTime",
 			composite: CompositeQuery{Queries: []QueryEnvelope{{Type: QueryTypeClickHouseSQL, Spec: ClickHouseQuery{
 				Name:  "A",
 				Query: "SELECT 1",
@@ -1965,7 +1965,7 @@ func TestCompositeQueryCollectResultColumnKeys(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		t.Run(testCase.scenario, func(t *testing.T) {
+		t.Run(testCase.name, func(t *testing.T) {
 			keys, known := testCase.composite.CollectResultColumnKeys()
 			assert.Equal(t, testCase.expectedKnown, known)
 			assert.Equal(t, testCase.expectedKeys, keys)
