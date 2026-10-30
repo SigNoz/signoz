@@ -29,13 +29,9 @@ func resolveRelatedLinksForTemplate(alert any) []RelatedLink {
 	switch a := alert.(type) {
 	case template.Alert:
 		return newRelatedLinks(a.Annotations[AnnotationRelatedLogs], a.Annotations[AnnotationRelatedTraces])
-	case *template.Alert:
-		if a == nil {
-			return nil
-		}
-		return newRelatedLinks(a.Annotations[AnnotationRelatedLogs], a.Annotations[AnnotationRelatedTraces])
 	case map[string]any:
-		return newRelatedLinks(lookupTemplateDataAnnotation(a, AnnotationRelatedLogs), lookupTemplateDataAnnotation(a, AnnotationRelatedTraces))
+		annotations, _ := a["annotations"].(template.KV)
+		return newRelatedLinks(annotations[AnnotationRelatedLogs], annotations[AnnotationRelatedTraces])
 	}
 
 	return nil
@@ -52,24 +48,4 @@ func newRelatedLinks(logsURL, tracesURL string) []RelatedLink {
 	}
 
 	return links
-}
-
-func lookupTemplateDataAnnotation(data map[string]any, key string) string {
-	switch annotations := data["annotations"].(type) {
-	case template.KV:
-		if value := annotations[key]; value != "" {
-			return value
-		}
-	case map[string]string:
-		if value := annotations[key]; value != "" {
-			return value
-		}
-	case map[string]any:
-		if value, _ := annotations[key].(string); value != "" {
-			return value
-		}
-	}
-
-	value, _ := data[key].(string)
-	return value
 }

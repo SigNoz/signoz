@@ -66,46 +66,18 @@ func TestResolveRelatedLinksForTemplate(t *testing.T) {
 			},
 		},
 		{
-			name:     "ChannelTemplate_Pointer_TracesOnly",
-			alert:    &template.Alert{Annotations: template.KV{"related_traces": "https://signoz.io/traces-explorer?e=5"}},
-			expected: []RelatedLink{{Label: "View Related Traces", URL: "https://signoz.io/traces-explorer?e=5"}},
-		},
-		{
-			name:     "ChannelTemplate_NilPointer_NoLinks",
-			alert:    (*template.Alert)(nil),
+			name:     "ChannelTemplate_NoAnnotations_NoLinks",
+			alert:    template.Alert{Labels: template.KV{"alertname": "a"}},
 			expected: nil,
 		},
 		{
-			name:     "RuleTemplate_AnnotationsKV",
+			name:     "RuleTemplate_LogsOnly",
 			alert:    map[string]any{"annotations": template.KV{"related_logs": "https://signoz.io/logs/logs-explorer?f=6"}, "labels": template.KV{"alertname": "a"}},
 			expected: []RelatedLink{{Label: "View Related Logs", URL: "https://signoz.io/logs/logs-explorer?f=6"}},
 		},
 		{
-			name:     "RuleTemplate_AnnotationsMapStringAny",
-			alert:    map[string]any{"annotations": map[string]any{"related_traces": "https://signoz.io/traces-explorer?g=7"}},
-			expected: []RelatedLink{{Label: "View Related Traces", URL: "https://signoz.io/traces-explorer?g=7"}},
-		},
-		{
-			name:     "RuleTemplate_AnnotationsMapStringString",
-			alert:    map[string]any{"annotations": map[string]string{"related_logs": "https://signoz.io/logs/logs-explorer?h=8"}},
-			expected: []RelatedLink{{Label: "View Related Logs", URL: "https://signoz.io/logs/logs-explorer?h=8"}},
-		},
-		{
-			name:  "RuleTemplate_FlattenedKeysOnly",
-			alert: map[string]any{"related_logs": "https://signoz.io/logs/logs-explorer?i=9", "related_traces": "https://signoz.io/traces-explorer?i=9"},
-			expected: []RelatedLink{
-				{Label: "View Related Logs", URL: "https://signoz.io/logs/logs-explorer?i=9"},
-				{Label: "View Related Traces", URL: "https://signoz.io/traces-explorer?i=9"},
-			},
-		},
-		{
-			name:     "RuleTemplate_AnnotationsEmpty_FallsBackToFlattened",
-			alert:    map[string]any{"annotations": template.KV{}, "related_logs": "https://signoz.io/logs/logs-explorer?j=10"},
-			expected: []RelatedLink{{Label: "View Related Logs", URL: "https://signoz.io/logs/logs-explorer?j=10"}},
-		},
-		{
-			name:     "RuleTemplate_NonStringValues_Ignored",
-			alert:    map[string]any{"annotations": map[string]any{"related_logs": 42}, "related_traces": nil},
+			name:     "RuleTemplate_NoAnnotations_NoLinks",
+			alert:    map[string]any{"labels": template.KV{"alertname": "a"}},
 			expected: nil,
 		},
 		{
