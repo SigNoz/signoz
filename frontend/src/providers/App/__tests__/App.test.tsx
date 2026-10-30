@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import { getIsNoAuthMode, setNoAuthMode } from 'utils/noAuthMode';
+import { getIsProxyAuthMode, setProxyAuthMode } from 'utils/proxyAuthMode';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { SINGLE_FLIGHT_WAIT_TIME_MS } from 'lib/authz/hooks/useAuthZ/constants';
 import { server } from 'mocks-server/server';
@@ -372,6 +373,7 @@ describe('AppProvider no-auth preflight', () => {
 
 	afterEach(() => {
 		setNoAuthMode(false);
+		setProxyAuthMode(false);
 	});
 
 	it('sets noAuthMode singleton when impersonation is enabled', async () => {
@@ -485,5 +487,34 @@ describe('AppProvider no-auth preflight', () => {
 			},
 			{ timeout: 3000 },
 		);
+	});
+
+	it('sets logged in without clearing tokens when trusted header mode is enabled', async () => {
+		server.use(
+			rest.get(GLOBAL_CONFIG_URL, (_, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						data: { identN: { trustedHeader: { enabled: true } } },
+					}),
+				),
+			),
+		);
+
+		const wrapper = createWrapper();
+		const { result } = renderHook(() => useAppContext(), { wrapper });
+
+		await waitFor(
+			() => {
+				expect(result.current.isPreflightLoading).toBe(false);
+			},
+			{ timeout: 3000 },
+		);
+
+		expect(getIsProxyAuthMode()).toBe(true);
+
+		// Password sessions coexist with proxy auth, so the global no-auth flag must
+		// stay off or token rotation and logout break for those users.
+		expect(getIsNoAuthMode()).toBe(false);
 	});
 });
