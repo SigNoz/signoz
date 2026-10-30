@@ -1,4 +1,5 @@
 import { Badge } from '@signozhq/ui/badge';
+import { Skeleton } from '@signozhq/ui/skeleton';
 import { AlertmanagertypesMaintenanceStatusDTO } from 'api/generated/services/sigNoz.schemas';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import OverflowBadges from 'components/OverflowBadges/OverflowBadges';
@@ -34,6 +35,7 @@ const STATUS_BADGE: Record<
 
 export function getPlannedDowntimeColumns(
 	formatTimezoneAdjustedTimestamp: (date: string, format: string) => string,
+	isAlertsLoading?: boolean,
 ): TableColumnDef<DowntimeSchedulesTableData>[] {
 	const textCell = (value: string | undefined): JSX.Element => (
 		<TanStackTable.Text title={value || undefined}>
@@ -149,19 +151,36 @@ export function getPlannedDowntimeColumns(
 			enableSort: false,
 			enableResize: true,
 			enableMove: false,
-			cell: ({ row }): JSX.Element =>
-				row.alertOptions.length ? (
+			cell: ({ row }): JSX.Element => {
+				const hasScopedAlerts = Boolean(row.alertIds && row.alertIds.length > 0);
+				if (!hasScopedAlerts) {
+					return (
+						<Badge textTransform="none" variant="solid" color="secondary">
+							All alert rules
+						</Badge>
+					);
+				}
+
+				if (isAlertsLoading) {
+					return (
+						<Skeleton.Input
+							testId="alerts-silenced-skeleton"
+							active
+							size="small"
+							style={{ width: 100, height: 22 }}
+						/>
+					);
+				}
+
+				return (
 					<OverflowBadges
 						items={row.alertOptions.map((alert) => ({
 							key: String(alert.value),
 							label: alert.label,
 						}))}
 					/>
-				) : (
-					<Badge textTransform="none" variant="solid" color="secondary">
-						All alert rules
-					</Badge>
-				),
+				);
+			},
 		},
 		{
 			id: 'description',
