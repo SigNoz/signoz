@@ -1,4 +1,6 @@
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { TelemetryFieldKey } from 'api/v5/v5';
+import { PREFERENCE_SOURCE_PAGES } from 'providers/preferences/constants';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { FontSize, OptionsQuery } from './types';
@@ -11,6 +13,14 @@ export const defaultOptionsQuery: OptionsQuery = {
 	maxLines: 1,
 	format: 'raw',
 	fontSize: FontSize.SMALL,
+};
+
+export const SOURCE_PAGE_SIGNAL: Record<
+	(typeof PREFERENCE_SOURCE_PAGES)[number],
+	DataSource
+> = {
+	[SavedviewtypesSourceDTO.logs]: DataSource.LOGS,
+	[SavedviewtypesSourceDTO.traces]: DataSource.TRACES,
 };
 
 export const EXCLUDED_COLUMNS: Record<DataSource, string[]> = {

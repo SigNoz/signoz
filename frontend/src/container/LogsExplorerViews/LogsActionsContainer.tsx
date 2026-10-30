@@ -1,6 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
 import FieldsSelector from 'components/FieldsSelector';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
@@ -28,7 +29,7 @@ function LogsActionsContainer({
 }): JSX.Element {
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		dataSource: DataSource.LOGS,
+		sourcePage: SavedviewtypesSourceDTO.logs,
 		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
 	});
 

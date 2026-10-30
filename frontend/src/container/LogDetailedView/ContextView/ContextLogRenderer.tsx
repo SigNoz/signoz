@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import { Button, Skeleton } from 'antd';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -16,7 +17,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { ILog } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource, StringOperators } from 'types/common/queryBuilder';
+import { StringOperators } from 'types/common/queryBuilder';
 import { withBasePath } from 'utils/basePath';
 
 import { useContextLogData } from './useContextLogData';
@@ -45,7 +46,7 @@ function ContextLogRenderer({
 
 	const { options } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		dataSource: DataSource.LOGS,
+		sourcePage: SavedviewtypesSourceDTO.logs,
 		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
 	});
 
