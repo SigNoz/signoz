@@ -1,6 +1,7 @@
 import { MouseEvent, useMemo } from 'react';
-import { Link, useLocation } from 'react-router-dom';
 import { Typography } from '@signozhq/ui/typography';
+import { AppLink } from 'lib/router/AppLink';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { isModifierKeyPressed } from 'utils/app';
 import { useTimeSearchParams } from 'hooks/useTimeSearchParams';
 
@@ -14,7 +15,7 @@ function SavedViewsRowLink({
 	isActive,
 	onSelect,
 }: SavedViewsRowLinkProps): JSX.Element {
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const timeSearch = useTimeSearchParams();
 	const path = useMemo(
 		() => getSavedViewPath(pathname, view, timeSearch),
@@ -33,7 +34,7 @@ function SavedViewsRowLink({
 	};
 
 	return (
-		<Link
+		<AppLink
 			to={path}
 			className={styles.rowLink}
 			aria-current={isActive ? 'page' : undefined}
@@ -49,7 +50,7 @@ function SavedViewsRowLink({
 			>
 				{view.spec.displayName}
 			</Typography.Text>
-		</Link>
+		</AppLink>
 	);
 }
 

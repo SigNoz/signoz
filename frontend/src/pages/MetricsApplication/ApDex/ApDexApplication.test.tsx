@@ -1,15 +1,11 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { mockAppParams } from 'tests/router-mocks';
 
 import { APPLICATION_SETTINGS } from '../constants';
 import { thresholdMockData } from './__mock__/thresholdMockData';
 import ApDexApplication from './ApDexApplication';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useParams: (): {
-		servicename: string;
-	} => ({ servicename: 'mockServiceName' }),
-}));
+mockAppParams({ servicename: 'mockServiceName' });
 
 jest.mock('hooks/apDex/useGetApDexSettings', () => ({
 	__esModule: true,

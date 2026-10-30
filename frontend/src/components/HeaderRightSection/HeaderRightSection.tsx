@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import { Dot } from '@signozhq/icons';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { Dot, Globe, Inbox, SquarePen } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import Noz from 'components/Noz/Noz';
@@ -16,7 +16,6 @@ import {
 import { selectPendingUserInputStreamCount } from 'container/AIAssistant/store/pendingInputSelectors';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
-import { Globe, Inbox, SquarePen } from '@signozhq/icons';
 
 import AnnouncementsModal from './AnnouncementsModal';
 import FeedbackModal from './FeedbackModal';
@@ -39,7 +38,7 @@ function HeaderRightSection({
 	enableFeedback,
 	shareModalExtraOption,
 }: HeaderRightSectionProps): JSX.Element | null {
-	const location = useLocation();
+	const location = useAppLocation();
 
 	const [openFeedbackModal, setOpenFeedbackModal] = useState(false);
 	const [openShareURLModal, setOpenShareURLModal] = useState(false);

@@ -2,7 +2,6 @@ import React, { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { NuqsAdapter } from 'nuqs/adapters/react';
@@ -20,7 +19,8 @@ import { createAppContextMock } from 'tests/fixtures/appContextMock';
 import thunk from 'redux-thunk';
 import store from 'store';
 import { QueryBuilderContextType } from 'types/common/queryBuilder';
-// import { MemoryRouter as V5MemoryRouter } from 'react-router-dom-v5-compat';
+
+import { TestRouter } from './router';
 
 // Mock ResizeObserver
 class ResizeObserverMock {
@@ -112,17 +112,18 @@ export function AllTheProviders({
 	appContextOverrides,
 	queryBuilderOverrides,
 	initialRoute,
+	routePath,
 }: {
 	children: React.ReactNode;
 	role?: string;
 	appContextOverrides?: Partial<IAppContext>;
 	queryBuilderOverrides?: Partial<QueryBuilderContextType>;
 	initialRoute?: string;
+	routePath?: string | string[];
 }): ReactElement {
 	// Set default values
 	const roleValue = role || 'ADMIN';
 	const appContextOverridesValue = appContextOverrides || {};
-	const initialRouteValue = initialRoute || '/';
 
 	const queryBuilderContent = queryBuilderOverrides ? (
 		<QueryBuilderContext.Provider
@@ -137,7 +138,7 @@ export function AllTheProviders({
 	const appContextValue = getAppContextMock(roleValue, appContextOverridesValue);
 
 	return (
-		<MemoryRouter initialEntries={[initialRouteValue]}>
+		<TestRouter initialRoute={initialRoute} routePath={routePath}>
 			<NuqsAdapter>
 				<QueryClientProvider client={queryClient}>
 					<Provider store={mockStored(roleValue)}>
@@ -155,7 +156,7 @@ export function AllTheProviders({
 					</Provider>
 				</QueryClientProvider>
 			</NuqsAdapter>
-		</MemoryRouter>
+		</TestRouter>
 	);
 }
 
@@ -163,7 +164,8 @@ AllTheProviders.defaultProps = {
 	role: 'ADMIN',
 	appContextOverrides: {},
 	queryBuilderOverrides: undefined,
-	initialRoute: '/',
+	initialRoute: undefined,
+	routePath: undefined,
 };
 
 interface ProviderProps {
@@ -171,6 +173,7 @@ interface ProviderProps {
 	appContextOverrides?: Partial<IAppContext>;
 	queryBuilderOverrides?: Partial<QueryBuilderContextType>;
 	initialRoute?: string;
+	routePath?: string | string[];
 }
 
 const customRender = (
@@ -183,6 +186,7 @@ const customRender = (
 		appContextOverrides = {},
 		queryBuilderOverrides,
 		initialRoute = '/',
+		routePath,
 	} = providerProps;
 
 	return render(ui, {
@@ -192,6 +196,7 @@ const customRender = (
 				appContextOverrides={appContextOverrides}
 				queryBuilderOverrides={queryBuilderOverrides}
 				initialRoute={initialRoute}
+				routePath={routePath}
 			>
 				{ui}
 			</AllTheProviders>

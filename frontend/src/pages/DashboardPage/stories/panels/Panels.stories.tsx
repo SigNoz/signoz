@@ -1,6 +1,5 @@
 import type { ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Route } from 'react-router-dom';
 import {
 	DashboardtypesHeatmapYScaleDTO as HeatmapYScale,
 	DashboardtypesLegendPositionDTO as LegendPosition,
@@ -10,6 +9,7 @@ import {
 import ROUTES from 'constants/routes';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
+import { renderAtRoute } from '@/storybook/renderAtRoute';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import DashboardPage from '../../DashboardPage';
@@ -39,9 +39,7 @@ const meta = {
 	// signature; the story's args are what the controls resolve to.
 	component: DashboardPage as ComponentType<PanelsArgs>,
 	// The page reads the dashboard id out of the pathname.
-	render: (): JSX.Element => (
-		<Route path={ROUTES.DASHBOARD} component={DashboardPage} />
-	),
+	render: renderAtRoute(ROUTES.DASHBOARD, DashboardPage),
 	...pageStory,
 	parameters: { ...pageStory.parameters },
 } satisfies Meta<PanelsArgs>;

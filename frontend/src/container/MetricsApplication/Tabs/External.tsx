@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
-import { useLocation, useParams } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { useAppParams } from 'lib/router/useAppParams';
 import { Col } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
@@ -23,7 +24,7 @@ import {
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import store from 'store';
 import { UpdateTimeInterval } from 'store/actions';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -39,7 +40,6 @@ import {
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, Row } from '../styles';
 import GraphControlsPanel from './Overview/GraphControlsPanel/GraphControlsPanel';
-import { IServiceName } from './types';
 import {
 	handleNonInQueryRange,
 	onViewAPIMonitoringPopupClick,
@@ -51,13 +51,13 @@ import {
 function External(): JSX.Element {
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const [selectedData, setSelectedData] = useState<any>(undefined);
-	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	const { servicename: encodedServiceName } = useAppParams<'servicename'>();
 
-	const servicename = decodeURIComponent(encodedServiceName);
+	const servicename = decodeURIComponent(encodedServiceName || '');
 	const { queries } = useResourceAttribute();
 
 	const urlQuery = useUrlQuery();
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const dispatch = useDispatch();
 
 	const onDragSelect = useCallback(
@@ -68,7 +68,7 @@ function External(): JSX.Element {
 			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			navigate(generatedUrl);
 
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));

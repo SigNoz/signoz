@@ -1,10 +1,9 @@
-import { useParams } from 'react-router-dom';
+import { useAppParams } from 'lib/router/useAppParams';
 import Spinner from 'components/Spinner';
 import { useGetMetricMeta } from 'hooks/apDex/useGetMetricMeta';
 import useErrorNotification from 'hooks/useErrorNotification';
 
 import { WidgetKeys } from '../../../constant';
-import { IServiceName } from '../../types';
 import ApDexMetrics from './ApDexMetrics';
 import { ApDexDataSwitcherProps } from './types';
 
@@ -15,8 +14,8 @@ function ApDexMetricsApplication({
 	thresholdValue,
 	topLevelOperationsRoute,
 }: ApDexDataSwitcherProps): JSX.Element {
-	const { servicename: encodedServiceName } = useParams<IServiceName>();
-	const servicename = decodeURIComponent(encodedServiceName);
+	const { servicename: encodedServiceName } = useAppParams<'servicename'>();
+	const servicename = decodeURIComponent(encodedServiceName || '');
 
 	const { data, isLoading, error } = useGetMetricMeta(
 		WidgetKeys.SignozLatencyBucket,

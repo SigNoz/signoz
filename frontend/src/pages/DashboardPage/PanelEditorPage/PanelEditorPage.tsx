@@ -1,10 +1,8 @@
 import { useCallback, useMemo, useRef } from 'react';
-import {
-	generatePath,
-	Redirect,
-	useLocation,
-	useParams,
-} from 'react-router-dom';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
+import { Redirect } from 'lib/router/Redirect';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { useAppParams } from 'lib/router/useAppParams';
 import { Typography } from '@signozhq/ui/typography';
 import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
@@ -38,11 +36,8 @@ import styles from './PanelEditorPage.module.scss';
  * fetched dashboard spec and wires up navigate-back callbacks.
  */
 function PanelEditorPage(): JSX.Element {
-	const { dashboardId, panelId } = useParams<{
-		dashboardId: string;
-		panelId: string;
-	}>();
-	const { search, state } = useLocation();
+	const { dashboardId, panelId } = useAppParams<'dashboardId' | 'panelId'>();
+	const { search, state } = useAppLocation();
 	const { safeNavigate } = useSafeNavigate();
 	const timeSearch = useTimeSearchParams();
 
@@ -50,8 +45,9 @@ function PanelEditorPage(): JSX.Element {
 	// instead of the saved panel. Lost on refresh/new-tab, which falls back to saved.
 	const handoffSpec = (state as PanelEditorHandoffState | null)?.editSpec;
 
-	const { dashboard, isLoading, isError, error, refetch } =
-		useDashboardFetch(dashboardId);
+	const { dashboard, isLoading, isError, error, refetch } = useDashboardFetch(
+		dashboardId || '',
+	);
 	// On a refresh/direct URL this route is the only mount, so seed the edit
 	// context the way DashboardContainer does — during render, so the subtree's
 	// first render already sees the id (useDashboardFetchRequired throws without it).
@@ -78,8 +74,8 @@ function PanelEditorPage(): JSX.Element {
 	// A `panel/new?panelKind=…` route means "create": seed a default panel of that
 	// kind rather than looking one up (seeded from the exported query when present).
 	// Persisted (with a real id) only on save.
-	const newKind = parseNewPanelKind(panelId, search);
-	const existingPanel = dashboard?.spec.panels[panelId];
+	const newKind = parseNewPanelKind(panelId || '', search);
+	const existingPanel = panelId ? dashboard?.spec.panels[panelId] : undefined;
 	const panel = useMemo(() => {
 		if (newKind) {
 			// A `compositeQuery` at mount means the explorer routed an export here.
@@ -104,7 +100,9 @@ function PanelEditorPage(): JSX.Element {
 	const backToDashboard = useCallback((): void => {
 		// Drop editor-only URL state (variables come from the persisted store), but carry
 		// time so a custom range picked in the editor isn't reset to the dashboard default.
-		const path = generatePath(ROUTES.DASHBOARD, { dashboardId });
+		const path = buildRoutePath(ROUTES.DASHBOARD, {
+			dashboardId: dashboardId || '',
+		});
 		safeNavigate(timeSearch ? `${path}?${timeSearch}` : path);
 	}, [safeNavigate, dashboardId, timeSearch]);
 
@@ -125,15 +123,15 @@ function PanelEditorPage(): JSX.Element {
 	if (!panel) {
 		return (
 			<Redirect
-				to={`${generatePath(ROUTES.DASHBOARD, { dashboardId })}${search}`}
+				to={`${buildRoutePath(ROUTES.DASHBOARD, { dashboardId: dashboardId || '' })}${search}`}
 			/>
 		);
 	}
 
 	return (
 		<PanelEditorContainer
-			dashboardId={dashboardId}
-			panelId={panelId}
+			dashboardId={dashboardId || ''}
+			panelId={panelId || ''}
 			panel={panel}
 			savedPanel={existingPanel}
 			isNew={!!newKind}

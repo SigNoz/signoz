@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { connect, useDispatch, useSelector } from 'react-redux';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
-import { useNavigationType } from 'react-router-dom-v5-compat';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { useAppNavigationType } from 'lib/router/useAppNavigationType';
 import { RefreshCw, Undo } from '@signozhq/icons';
 import { Button } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
@@ -60,7 +60,6 @@ import './DateTimeSelectionV2.styles.scss';
 function DateTimeSelection({
 	showAutoRefresh,
 	showRefreshText = true,
-	location,
 	updateTimeInterval,
 	globalTimeLoading,
 	showResetButton = false,
@@ -76,9 +75,10 @@ function DateTimeSelection({
 	disableUrlSync = false,
 	showRecentlyUsed = true,
 }: Props): JSX.Element {
+	const location = useAppLocation();
 	const [formSelector] = Form.useForm();
 	const { safeNavigate } = useSafeNavigate();
-	const navigationType = useNavigationType(); // Returns 'POP' for back/forward navigation
+	const navigationType = useAppNavigationType(); // Returns 'POP' for back/forward navigation
 	const dispatch = useDispatch();
 
 	const { maxTime, minTime, selectedTime } = useSelector<
@@ -835,6 +835,6 @@ const mapDispatchToProps = (
 	globalTimeLoading: bindActionCreators(GlobalTimeLoading, dispatch),
 });
 
-type Props = DateTimeSelectionV2Props & DispatchProps & RouteComponentProps;
+type Props = DateTimeSelectionV2Props & DispatchProps;
 
-export default connect(null, mapDispatchToProps)(withRouter(DateTimeSelection));
+export default connect(null, mapDispatchToProps)(DateTimeSelection);
