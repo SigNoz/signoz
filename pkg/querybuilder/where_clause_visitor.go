@@ -25,19 +25,20 @@ const stringMatchingOperatorDocURL = "https://signoz.io/docs/userguide/operators
 // filterExpressionVisitor implements the FilterQueryVisitor interface
 // to convert the parsed filter expressions into ClickHouse WHERE clause.
 type filterExpressionVisitor struct {
-	context            context.Context
-	query              qbtypes.QueryInfo
-	storage            qbtypes.Storage
-	warnings           []string
-	mainWarnURL        string
-	fieldKeys          map[string][]*telemetrytypes.TelemetryFieldKey
-	errors             []string
-	mainErrorURL       string
-	builder            *sqlbuilder.SelectBuilder
-	fullTextColumn     *telemetrytypes.TelemetryFieldKey
-	skipResourceFilter bool
-	skipFullTextFilter bool
-	variables          map[string]qbtypes.VariableItem
+	context              context.Context
+	query                qbtypes.QueryInfo
+	storage              qbtypes.Storage
+	warnings             []string
+	mainWarnURL          string
+	fieldKeys            map[string][]*telemetrytypes.TelemetryFieldKey
+	baseColumnEvolutions []*telemetrytypes.EvolutionEntry
+	errors               []string
+	mainErrorURL         string
+	builder              *sqlbuilder.SelectBuilder
+	fullTextColumn       *telemetrytypes.TelemetryFieldKey
+	skipResourceFilter   bool
+	skipFullTextFilter   bool
+	variables            map[string]qbtypes.VariableItem
 
 	keysWithWarnings map[string]bool
 
@@ -48,30 +49,32 @@ type FilterExprVisitorOpts struct {
 	Context context.Context
 	// Query is the request's context with the query-path flags evaluated
 	// one time. Storage answers the signal's part of every term.
-	Query              qbtypes.QueryInfo
-	Storage            qbtypes.Storage
-	Logger             *slog.Logger
-	FieldKeys          map[string][]*telemetrytypes.TelemetryFieldKey
-	Builder            *sqlbuilder.SelectBuilder
-	FullTextColumn     *telemetrytypes.TelemetryFieldKey
-	SkipResourceFilter bool
-	SkipFullTextFilter bool
-	Variables          map[string]qbtypes.VariableItem
+	Query                qbtypes.QueryInfo
+	Storage              qbtypes.Storage
+	Logger               *slog.Logger
+	FieldKeys            map[string][]*telemetrytypes.TelemetryFieldKey
+	BaseColumnEvolutions []*telemetrytypes.EvolutionEntry
+	Builder              *sqlbuilder.SelectBuilder
+	FullTextColumn       *telemetrytypes.TelemetryFieldKey
+	SkipResourceFilter   bool
+	SkipFullTextFilter   bool
+	Variables            map[string]qbtypes.VariableItem
 }
 
 // newFilterExpressionVisitor creates a new filterExpressionVisitor.
 func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVisitor {
 	return &filterExpressionVisitor{
-		context:            opts.Context,
-		query:              opts.Query,
-		storage:            opts.Storage,
-		fieldKeys:          opts.FieldKeys,
-		builder:            opts.Builder,
-		fullTextColumn:     opts.FullTextColumn,
-		skipResourceFilter: opts.SkipResourceFilter,
-		skipFullTextFilter: opts.SkipFullTextFilter,
-		variables:          opts.Variables,
-		keysWithWarnings:   make(map[string]bool),
+		context:              opts.Context,
+		query:                opts.Query,
+		storage:              opts.Storage,
+		fieldKeys:            opts.FieldKeys,
+		baseColumnEvolutions: opts.BaseColumnEvolutions,
+		builder:              opts.Builder,
+		fullTextColumn:       opts.FullTextColumn,
+		skipResourceFilter:   opts.SkipResourceFilter,
+		skipFullTextFilter:   opts.SkipFullTextFilter,
+		variables:            opts.Variables,
+		keysWithWarnings:     make(map[string]bool),
 	}
 }
 
@@ -928,7 +931,7 @@ func (v *filterExpressionVisitor) buildConditions(key *telemetrytypes.TelemetryF
 	} else if skip {
 		return nil, true
 	}
-	resolved, err := Resolve(v.context, v.query, v.storage, key, op, value, v.fieldKeys)
+	resolved, err := Resolve(v.context, v.query, v.storage, key, op, value, v.fieldKeys, v.baseColumnEvolutions)
 	if err != nil {
 		v.recordError(err)
 		return nil, false

@@ -13,12 +13,13 @@ import (
 // shared storage. It binds no args, so its expressions embed in any builder;
 // predicates (which do bind args) are the predicateResolver's job.
 type columnResolver struct {
-	storage qbtypes.Storage
-	keys    map[string][]*telemetrytypes.TelemetryFieldKey
+	storage              qbtypes.Storage
+	keys                 map[string][]*telemetrytypes.TelemetryFieldKey
+	baseColumnEvolutions []*telemetrytypes.EvolutionEntry
 }
 
-func newColumnResolver(storage qbtypes.Storage, keys map[string][]*telemetrytypes.TelemetryFieldKey) *columnResolver {
-	return &columnResolver{storage: storage, keys: keys}
+func newColumnResolver(storage qbtypes.Storage, keys map[string][]*telemetrytypes.TelemetryFieldKey, baseColumnEvolutions []*telemetrytypes.EvolutionEntry) *columnResolver {
+	return &columnResolver{storage: storage, keys: keys, baseColumnEvolutions: baseColumnEvolutions}
 }
 
 // Read returns the bare read of one field key.
@@ -36,7 +37,7 @@ func (r *columnResolver) ValueFor(ctx context.Context, q qbtypes.QueryInfo, key 
 	if cands := r.keys[key.Name]; len(cands) > 0 {
 		key = cands[0]
 	}
-	expr, err := querybuilder.ResolveColumn(ctx, q, r.storage, key, dt, r.keys)
+	expr, err := querybuilder.ResolveColumn(ctx, q, r.storage, key, dt, r.keys, r.baseColumnEvolutions)
 	if err != nil {
 		return "", err
 	}

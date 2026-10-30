@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/huandu/go-sqlbuilder"
@@ -70,6 +71,9 @@ type telemetryMetaStore struct {
 	storage            qbtypes.Storage
 	fl                 flagger.Flagger
 	jsonColumnMetadata map[telemetrytypes.Signal]map[telemetrytypes.FieldContext]telemetrytypes.JSONColumnMetadata
+
+	baseColumnEvolutionsMu sync.RWMutex
+	baseColumnEvolutions   map[string][]*telemetrytypes.EvolutionEntry
 }
 
 func NewTelemetryMetaStore(
@@ -111,8 +115,9 @@ func NewTelemetryMetaStore(
 				},
 			},
 		},
-		fl:      fl,
-		storage: NewStorage(),
+		fl:                   fl,
+		storage:              NewStorage(),
+		baseColumnEvolutions: make(map[string][]*telemetrytypes.EvolutionEntry),
 	}
 
 	return t
@@ -2442,6 +2447,29 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporalityAndType(ctx conte
 	return temporalities, types, nil
 }
 
+// GetBaseColumnEvolutions caches the entries for the life of the process: they
+// change only on schema migrations.
+func (t *telemetryMetaStore) GetBaseColumnEvolutions(ctx context.Context, signal telemetrytypes.Signal, fieldContext telemetrytypes.FieldContext) ([]*telemetrytypes.EvolutionEntry, error) {
+	selector := &telemetrytypes.EvolutionSelector{Signal: signal, FieldContext: fieldContext, FieldName: telemetrytypes.EvolutionFieldNameAll}
+
+	t.baseColumnEvolutionsMu.RLock()
+	entries, ok := t.baseColumnEvolutions[selector.QualifiedName()]
+	t.baseColumnEvolutionsMu.RUnlock()
+	if ok {
+		return entries, nil
+	}
+
+	entries, err := t.fetchEvolutionEntryFromClickHouse(ctx, []*telemetrytypes.EvolutionSelector{selector})
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch the base column evolutions of %s", selector.QualifiedName())
+	}
+
+	t.baseColumnEvolutionsMu.Lock()
+	t.baseColumnEvolutions[selector.QualifiedName()] = entries
+	t.baseColumnEvolutionsMu.Unlock()
+	return entries, nil
+}
+
 func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Context, selectors []*telemetrytypes.EvolutionSelector) ([]*telemetrytypes.EvolutionEntry, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("signal", "column_name", "column_type", "field_context", "field_name", "version", "release_time")
@@ -2714,7 +2742,7 @@ func (t *telemetryMetaStore) containsConditions(ctx context.Context, q qbtypes.Q
 			FieldDataType: dataType,
 		}}
 	}
-	conds, _, err := querybuilder.Conditions(ctx, q, t.storage, key, qbtypes.FilterOperatorContains, value, fieldKeys, false, sb)
+	conds, _, err := querybuilder.Conditions(ctx, q, t.storage, key, qbtypes.FilterOperatorContains, value, fieldKeys, nil, false, sb)
 	return conds, err
 }
 

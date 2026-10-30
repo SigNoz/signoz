@@ -430,6 +430,11 @@ func (m *MockMetadataStore) updateColumnEvolutionMetadataForKeys(_ context.Conte
 	return result
 }
 
+func (m *MockMetadataStore) GetBaseColumnEvolutions(ctx context.Context, signal telemetrytypes.Signal, fieldContext telemetrytypes.FieldContext) ([]*telemetrytypes.EvolutionEntry, error) {
+	selector := &telemetrytypes.EvolutionSelector{Signal: signal, FieldContext: fieldContext, FieldName: telemetrytypes.EvolutionFieldNameAll}
+	return m.ColumnEvolutionMetadataMap[selector.QualifiedName()], nil
+}
+
 func (m *MockMetadataStore) GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []telemetrytypes.MetricMetadataLookupKey) (map[telemetrytypes.MetricMetadataLookupKey]int64, error) {
 	return m.LookupKeysMap, nil
 }

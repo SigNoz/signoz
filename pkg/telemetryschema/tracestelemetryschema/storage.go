@@ -533,8 +533,9 @@ func foldAbsentJSONReadToTypeDefault(key *telemetrytypes.TelemetryFieldKey, oper
 // real column is that column. A span or trace context is kept as written,
 // and corrects to the attribute maps when it names no column. A strict
 // context synthesizes its type variants under the stripped and the literal
-// spelling.
-func (m *storage) Fallback(ctx context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, value any) ([]*telemetrytypes.LogicalField, error) {
+// spelling. A synthesized key takes the base column evolutions of its
+// context, so it follows the same rollout as a reported key.
+func (m *storage) Fallback(ctx context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, value any, baseColumnEvolutions []*telemetrytypes.EvolutionEntry) ([]*telemetrytypes.LogicalField, error) {
 	var keys []*telemetrytypes.TelemetryFieldKey
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextUnspecified:
@@ -561,6 +562,11 @@ func (m *storage) Fallback(ctx context.Context, q qbtypes.QueryInfo, key *teleme
 		// a context can be a legitimate prefix in user data
 		literal := telemetrytypes.NewTelemetryFieldKey(key.FieldContext.StringValue()+"."+key.Name, key.FieldContext, key.FieldDataType)
 		keys = append(querybuilder.SynthesizeKeys(key, value), querybuilder.SynthesizeKeys(literal, value)...)
+	}
+	for _, synthesized := range keys {
+		if len(synthesized.Evolutions) == 0 {
+			synthesized.Evolutions = telemetrytypes.EvolutionsOfContext(baseColumnEvolutions, synthesized.FieldContext)
+		}
 	}
 	return querybuilder.WrapAsLogicalFields(key.Name, keys), nil
 }

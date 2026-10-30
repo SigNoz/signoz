@@ -98,7 +98,7 @@ func TestConditionForFamilyMergedSemantics(t *testing.T) {
 			sb := sqlbuilder.NewSelectBuilder()
 			q := querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, 0, 0)
 			conds, _, err := querybuilder.Conditions(context.Background(), q, storage,
-				&telemetrytypes.TelemetryFieldKey{Name: "deployment.environment"}, testCase.operator, "production", fieldKeys, false, sb)
+				&telemetrytypes.TelemetryFieldKey{Name: "deployment.environment"}, testCase.operator, "production", fieldKeys, nil, false, sb)
 			require.NoError(t, err)
 			sb.Select("1").Where(conds...)
 			sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
