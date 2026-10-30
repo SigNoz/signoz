@@ -18,7 +18,9 @@ test.describe('Alert rules list — search', () => {
 		await runAlertListSearch(page, nameContains(`${alertList.namePrefix}-03`));
 
 		await expect(alertRuleRows(page)).toHaveCount(1);
-		await expect(page.getByText(`${alertList.namePrefix}-03`)).toBeVisible();
+		await expect(alertRuleRows(page).first()).toContainText(
+			`${alertList.namePrefix}-03`,
+		);
 	});
 
 	test('TC-02 filters by severity and by label', async ({

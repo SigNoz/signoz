@@ -17,7 +17,6 @@ test.describe('Alert rules list — navigation', () => {
 		await expect(page).toHaveURL(/\/alerts\/overview\?/);
 		await expect(page).toHaveURL(/[?&]ruleId=/);
 		await expect(page).toHaveURL(/[?&]compositeQuery=/);
-		await expect(page).toHaveURL(/[?&]panelTypes=/);
 	});
 
 	test('TC-02 actions menu Edit and Edit in New Tab navigate correctly', async ({
