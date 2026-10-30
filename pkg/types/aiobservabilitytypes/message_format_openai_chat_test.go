@@ -214,6 +214,14 @@ func TestFormat_OpenAIChat(t *testing.T) {
 			wantOutput: `[{"role": "assistant", "parts": [{"type": "text", "content": "Hi, this is a courtesy call about your order. Do you have a minute?"}]}]`,
 		},
 		{
+			// a structured output that happens to carry a role key is not a message
+			name:       "ObjectWithRoleKeyButNoContent_KeptAsGeneric",
+			output:     `{"role": "admin", "permissions": ["read", "write"]}`,
+			warnings:   []string{"message format not recognised, kept as generic"},
+			wantInput:  `[]`,
+			wantOutput: `[{"role": "", "parts": [{"type": "generic", "content": "{\"permissions\":[\"read\",\"write\"],\"role\":\"admin\"}"}]}]`,
+		},
+		{
 			// Langfuse LangChain handler: the additional_kwargs of the AIMessage, without a role, as the output
 			// of a tool-calling turn
 			name:       "RolelessToolCallsOutput_AssistantToolCallPart",

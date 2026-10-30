@@ -222,7 +222,7 @@ func (f *formatting) side(value any, role Role) (OutputMessages, string) {
 		if messages, ok := v["messages"].([]any); ok {
 			return f.openAIChatMessages(messages), FormatterOpenAIChat
 		}
-		if v["role"] != nil || v["tool_calls"] != nil {
+		if (v["role"] != nil && hasKeys(v, "content")) || v["tool_calls"] != nil {
 			return OutputMessages{f.openAIChatSingle(v)}, FormatterOpenAIChat
 		}
 	case string:
