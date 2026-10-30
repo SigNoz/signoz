@@ -143,7 +143,7 @@ const preview: Preview = {
 						'Logs',
 						['Explorer', 'Live Tail', 'Pipelines', 'Settings'],
 						'Traces',
-						['Explorer', 'Trace Details', 'Funnel Details'],
+						['Explorer', 'Trace Details', ['Overview', 'Thread'], 'Funnel Details'],
 						'Metrics',
 						['Explorer'],
 						'Infrastructure',
