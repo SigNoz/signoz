@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
 import * as appHooks from 'providers/App/App';
+import { fireEvent, render, screen } from 'tests/test-utils';
 
 import RoutingPolicies from '../RoutingPolicies';
 import * as routingPoliciesHooks from '../useRoutingPolicies';
@@ -7,33 +7,13 @@ import {
 	getAppContextMockState,
 	getUseRoutingPoliciesMockData,
 	MOCK_ROUTING_POLICY_1,
-	mockLocation,
-	mockQueryParams,
 } from './testUtils';
 
 const ROUTING_POLICY_DETAILS_TEST_ID = 'routing-policy-details';
-const SEARCH_PLACEHOLDER = 'Search for a routing policy...';
+const SEARCH_TEST_ID = 'routing-policies-search';
+const CREATE_TEST_ID = 'routing-policies-create';
 
 jest.spyOn(appHooks, 'useAppContext').mockReturnValue(getAppContextMockState());
-
-jest.mock('hooks/useUrlQuery', () => ({
-	__esModule: true,
-	default: (): URLSearchParams => mockQueryParams({}),
-}));
-
-const mockHistoryReplace = jest.fn();
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useHistory: (): any => ({
-		replace: mockHistoryReplace,
-	}),
-	useLocation: (): any => ({
-		pathname: '/alerts',
-		search: '',
-		hash: '',
-		state: null,
-	}),
-}));
 
 jest.mock('../RoutingPolicyList', () => ({
 	__esModule: true,
@@ -66,20 +46,13 @@ jest.spyOn(routingPoliciesHooks, 'default').mockReturnValue(
 describe('RoutingPolicies', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
-		mockQueryParams({});
-		mockLocation('/alerts');
 	});
 
 	it('should render components properly', () => {
 		render(<RoutingPolicies />);
 		expect(screen.getByText('Routing Policies')).toBeInTheDocument();
-		expect(
-			screen.getByText('Create and manage routing policies.'),
-		).toBeInTheDocument();
-		expect(screen.getByPlaceholderText(SEARCH_PLACEHOLDER)).toBeInTheDocument();
-		expect(
-			screen.getByRole('button', { name: /New routing policy/ }),
-		).toBeInTheDocument();
+		expect(screen.getByTestId(SEARCH_TEST_ID)).toBeInTheDocument();
+		expect(screen.getByTestId(CREATE_TEST_ID)).toBeInTheDocument();
 		expect(screen.getByTestId('routing-policy-list')).toBeInTheDocument();
 		expect(
 			screen.queryByTestId(ROUTING_POLICY_DETAILS_TEST_ID),
@@ -89,9 +62,10 @@ describe('RoutingPolicies', () => {
 
 	it('should enable the "New routing policy" button for users with ADMIN role', () => {
 		render(<RoutingPolicies />);
-		expect(
-			screen.getByRole('button', { name: /New routing policy/ }),
-		).toBeEnabled();
+		expect(screen.getByTestId(CREATE_TEST_ID)).toHaveAttribute(
+			'aria-disabled',
+			'false',
+		);
 	});
 
 	it('should disable the "New routing policy" button for users with VIEWER role', () => {
@@ -99,14 +73,15 @@ describe('RoutingPolicies', () => {
 			.spyOn(appHooks, 'useAppContext')
 			.mockReturnValueOnce(getAppContextMockState({ role: 'VIEWER' }));
 		render(<RoutingPolicies />);
-		expect(
-			screen.getByRole('button', { name: /New routing policy/ }),
-		).toBeDisabled();
+		expect(screen.getByTestId(CREATE_TEST_ID)).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('filters routing policies by search term', () => {
 		render(<RoutingPolicies />);
-		const searchInput = screen.getByPlaceholderText(SEARCH_PLACEHOLDER);
+		const searchInput = screen.getByTestId(SEARCH_TEST_ID);
 		fireEvent.change(searchInput, {
 			target: { value: MOCK_ROUTING_POLICY_1.name },
 		});
@@ -116,10 +91,7 @@ describe('RoutingPolicies', () => {
 
 	it('clicking on the "New routing policy" button opens the policy details modal', () => {
 		render(<RoutingPolicies />);
-		const newRoutingPolicyButton = screen.getByRole('button', {
-			name: /New routing policy/,
-		});
-		fireEvent.click(newRoutingPolicyButton);
+		fireEvent.click(screen.getByTestId(CREATE_TEST_ID));
 		expect(mockHandlePolicyDetailsModalOpen).toHaveBeenCalledWith('create', null);
 	});
 
@@ -148,9 +120,8 @@ describe('RoutingPolicies', () => {
 		expect(screen.getByTestId('delete-routing-policy')).toBeInTheDocument();
 	});
 
-	it('should load with search term from URL query params', () => {
+	it('should show the current search term', () => {
 		const searchTerm = 'existing search';
-		mockQueryParams({ search: searchTerm });
 		jest.spyOn(routingPoliciesHooks, 'default').mockReturnValue(
 			getUseRoutingPoliciesMockData({
 				searchTerm,
@@ -159,14 +130,11 @@ describe('RoutingPolicies', () => {
 
 		render(<RoutingPolicies />);
 
-		const searchInput = screen.getByPlaceholderText(
-			SEARCH_PLACEHOLDER,
-		) as HTMLInputElement;
+		const searchInput = screen.getByTestId(SEARCH_TEST_ID) as HTMLInputElement;
 		expect(searchInput.value).toBe(searchTerm);
 	});
 
-	it('should initialize with empty search when no search param is in URL', () => {
-		mockQueryParams({});
+	it('should show an empty search when there is no search term', () => {
 		jest.spyOn(routingPoliciesHooks, 'default').mockReturnValue(
 			getUseRoutingPoliciesMockData({
 				searchTerm: '',
@@ -175,9 +143,7 @@ describe('RoutingPolicies', () => {
 
 		render(<RoutingPolicies />);
 
-		const searchInput = screen.getByPlaceholderText(
-			SEARCH_PLACEHOLDER,
-		) as HTMLInputElement;
+		const searchInput = screen.getByTestId(SEARCH_TEST_ID) as HTMLInputElement;
 		expect(searchInput.value).toBe('');
 	});
 });
