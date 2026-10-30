@@ -42,7 +42,7 @@ export function getRoutingPolicyColumns(
 			id: 'name',
 			header: 'Routing Policy',
 			accessorKey: 'name',
-			width: { default: '100%', min: '220px' },
+			width: { default: '320px', min: '220px' },
 			enableSort: true,
 			enableResize: true,
 			enableRemove: false,
