@@ -110,9 +110,8 @@ func (migration *renameSavedViewDeprecatedTraceFields) Down(context.Context, *bu
 	return nil
 }
 
-// renameDeprecatedTraceFields rewrites deprecated names in spec.selectedFields and in
-// each query's spec.selectFields. Returns ok=false if data can't be parsed, and
-// changed=false if there was nothing to rename.
+// renameDeprecatedTraceFields rewrites deprecated names in spec.selectedFields. Returns
+// ok=false if data can't be parsed, and changed=false if there was nothing to rename.
 func renameDeprecatedTraceFields(data string) (renamed string, changed bool, ok bool) {
 	var raw map[string]json.RawMessage
 	if err := json.Unmarshal([]byte(data), &raw); err != nil {
@@ -124,67 +123,19 @@ func renameDeprecatedTraceFields(data string) (renamed string, changed bool, ok 
 		return "", false, false
 	}
 
-	if fields, ok := spec["selectedFields"]; ok {
-		renamedFields, fieldsChanged, ok := renameDeprecatedTraceFieldList(fields)
-		if !ok {
-			return "", false, false
-		}
-		if fieldsChanged {
-			spec["selectedFields"] = renamedFields
-			changed = true
-		}
+	fields, ok := spec["selectedFields"]
+	if !ok {
+		return "", false, true
 	}
 
-	if queriesRaw, ok := spec["queries"]; ok && !isJSONNull(queriesRaw) {
-		var queries []map[string]json.RawMessage
-		if err := json.Unmarshal(queriesRaw, &queries); err != nil {
-			return "", false, false
-		}
-
-		queriesChanged := false
-		for _, query := range queries {
-			querySpecRaw, ok := query["spec"]
-			if !ok || isJSONNull(querySpecRaw) {
-				continue
-			}
-
-			var querySpec map[string]json.RawMessage
-			if err := json.Unmarshal(querySpecRaw, &querySpec); err != nil {
-				continue
-			}
-
-			fields, ok := querySpec["selectFields"]
-			if !ok {
-				continue
-			}
-
-			renamedFields, fieldsChanged, ok := renameDeprecatedTraceFieldList(fields)
-			if !ok || !fieldsChanged {
-				continue
-			}
-
-			querySpec["selectFields"] = renamedFields
-			renamedSpec, err := marshalUnescaped(querySpec)
-			if err != nil {
-				return "", false, false
-			}
-			query["spec"] = renamedSpec
-			queriesChanged = true
-		}
-
-		if queriesChanged {
-			renamedQueries, err := marshalUnescaped(queries)
-			if err != nil {
-				return "", false, false
-			}
-			spec["queries"] = renamedQueries
-			changed = true
-		}
+	renamedFields, changed, ok := renameDeprecatedTraceFieldList(fields)
+	if !ok {
+		return "", false, false
 	}
-
 	if !changed {
 		return "", false, true
 	}
+	spec["selectedFields"] = renamedFields
 
 	renamedSpec, err := marshalUnescaped(spec)
 	if err != nil {
