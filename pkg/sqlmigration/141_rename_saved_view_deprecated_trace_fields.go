@@ -9,7 +9,6 @@ import (
 	"github.com/uptrace/bun/migrate"
 
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
 )
 
 // deprecatedTraceFields maps the legacy camelCase trace fields to their current key.
@@ -43,9 +42,9 @@ var deprecatedTraceFields = map[string]renamedTraceField{
 	"peerService":        {"peer.service", "attribute"},
 }
 
-func NewRenameSavedViewDeprecatedTraceFieldsFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
+func NewRenameSavedViewDeprecatedTraceFieldsFactory() factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(factory.MustNewName("rename_saved_view_deprecated_trace_fields"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-		return &renameSavedViewDeprecatedTraceFields{sqlstore: sqlstore, settings: ps}, nil
+		return &renameSavedViewDeprecatedTraceFields{settings: ps}, nil
 	})
 }
 
@@ -63,7 +62,6 @@ type renamedTraceField struct {
 }
 
 type renameSavedViewDeprecatedTraceFields struct {
-	sqlstore sqlstore.SQLStore
 	settings factory.ProviderSettings
 }
 
