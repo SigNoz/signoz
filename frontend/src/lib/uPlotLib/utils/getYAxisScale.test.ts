@@ -209,4 +209,63 @@ describe('getYAxisScale', () => {
 			range: [5, 30],
 		});
 	});
+
+	it.each([
+		{
+			thresholdValue: 2000,
+			thresholdUnit: 'ms',
+			yAxisUnit: 's',
+			expectedRange: [2, 25],
+		},
+		{
+			thresholdValue: 1,
+			thresholdUnit: 's',
+			yAxisUnit: 'ms',
+			expectedRange: [15, 1000],
+		},
+		{
+			thresholdValue: 2000,
+			thresholdUnit: 'unrecognized-unit',
+			yAxisUnit: 's',
+			expectedRange: [15, 25],
+		},
+	])(
+		'uses converted threshold $thresholdValue $thresholdUnit on $yAxisUnit axis',
+		({ thresholdValue, thresholdUnit, yAxisUnit, expectedRange }) => {
+			const result = getYAxisScale({
+				thresholds: [
+					{ ...mockThresholds[0], thresholdValue, thresholdUnit },
+				],
+				series: mockSeriesData,
+				yAxisUnit,
+				softMin: null,
+				softMax: null,
+			} as GetYAxisScale);
+
+			expect(result).toStrictEqual({ auto: false, range: expectedRange });
+		},
+	);
+
+	it('uses soft bounds when no threshold can be converted and series are absent', () => {
+		const result = getYAxisScale({
+			thresholds: [
+				{
+					...mockThresholds[0],
+					thresholdValue: 2000,
+					thresholdUnit: 'unrecognized-unit',
+				},
+			],
+			series: [],
+			yAxisUnit: 's',
+			softMin: 5,
+			softMax: 30,
+		} as GetYAxisScale);
+
+		expect(result).toStrictEqual({
+			range: {
+				min: { soft: 5, mode: 2 },
+				max: { soft: 30, mode: 2 },
+			},
+		});
+	});
 });

@@ -26,10 +26,8 @@ function findMinMaxThresholdValues(
 	thresholds: ThresholdProps[],
 	yAxisUnit?: string,
 ): [number, number] {
-	let minThresholdValue =
-		thresholds[0].thresholdValue || Number.MAX_SAFE_INTEGER;
-	let maxThresholdValue =
-		thresholds[0].thresholdValue || Number.MIN_SAFE_INTEGER;
+	let minThresholdValue = Number.MAX_SAFE_INTEGER;
+	let maxThresholdValue = Number.MIN_SAFE_INTEGER;
 
 	thresholds.forEach((entry) => {
 		const { thresholdValue, thresholdUnit } = entry;
@@ -183,6 +181,15 @@ GetYAxisScale): { auto?: boolean; range?: uPlot.Scale.Range } => {
 		if (thresholds.length > 0) {
 			// Situation: thresholds are present and series data is absent
 			let [min, max] = findMinMaxThresholdValues(thresholds, yAxisUnit);
+			if (min > max) {
+				return getYAxisScale({
+					thresholds: [],
+					series,
+					yAxisUnit,
+					softMin,
+					softMax,
+				});
+			}
 
 			if (softMin !== null) {
 				// Compare with softMin if it is not null
