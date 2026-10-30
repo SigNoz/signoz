@@ -3,6 +3,7 @@ import { Badge } from '@signozhq/ui/badge';
 import { Tabs, type TabsItemProps } from '@signozhq/ui/tabs';
 import { Bookmark, ChartColumnBig, List, ScrollText } from '@signozhq/icons';
 import { Skeleton } from 'antd';
+import cx from 'classnames';
 import { DetailsHeader, DetailsPanelDrawer } from 'components/DetailsPanel';
 import { HeaderAction } from 'components/DetailsPanel/DetailsHeader/DetailsHeader';
 import { DetailsPanelState } from 'components/DetailsPanel/types';
@@ -49,6 +50,7 @@ import OpenInLogsExplorer from './SpanLogs/OpenInLogsExplorer';
 import SpanLogs from './SpanLogs/SpanLogs';
 import { useSpanContextLogs } from './SpanLogs/useSpanContextLogs';
 import SpanAIMessages from './SpanAIMessages/SpanAIMessages';
+import SpanDrawerHeader from './SpanDrawerHeader';
 import SpanSummary from './SpanSummary';
 
 import styles from './SpanDetailsPanel.module.scss';
@@ -58,6 +60,8 @@ interface SpanDetailsPanelProps {
 	selectedSpan: SpanV3 | undefined;
 	variant?: SpanDetailVariant;
 	onVariantChange?: (variant: SpanDetailVariant) => void;
+	/** Page-specific actions, shown before the dock mode switcher. */
+	headerActions?: HeaderAction[];
 	traceStartTime?: number;
 	traceEndTime?: number;
 }
@@ -406,11 +410,13 @@ function SpanDetailsPanel({
 	selectedSpan,
 	variant = SpanDetailVariant.DIALOG,
 	onVariantChange,
+	headerActions: pageHeaderActions,
 	traceStartTime,
 	traceEndTime,
 }: SpanDetailsPanelProps): JSX.Element {
 	const headerActions = useMemo((): HeaderAction[] => {
 		const actions: HeaderAction[] = [
+			...(pageHeaderActions ?? []),
 			// TODO: Add back when driven through separate config for different pages
 			// {
 			// 	key: 'view-full-trace',
@@ -440,7 +446,7 @@ function SpanDetailsPanel({
 		}
 
 		return actions;
-	}, [variant, onVariantChange]);
+	}, [pageHeaderActions, variant, onVariantChange]);
 
 	const PANEL_WIDTH = SPAN_DETAILS_PANEL_MIN_WIDTH;
 	const PANEL_MARGIN_RIGHT = 20;
@@ -449,14 +455,22 @@ function SpanDetailsPanel({
 
 	const content = (
 		<>
-			<DetailsHeader
-				title="Span details"
-				onClose={panelState.close}
-				actions={headerActions}
-				className={
-					variant === SpanDetailVariant.DIALOG ? 'floating-panel__drag-handle' : ''
-				}
-			/>
+			{variant === SpanDetailVariant.DRAWER ? (
+				<SpanDrawerHeader
+					title="Span details"
+					onClose={panelState.close}
+					actions={headerActions}
+				/>
+			) : (
+				<DetailsHeader
+					title="Span details"
+					onClose={panelState.close}
+					actions={headerActions}
+					className={
+						variant === SpanDetailVariant.DIALOG ? 'floating-panel__drag-handle' : ''
+					}
+				/>
+			)}
 			{selectedSpan ? (
 				<SpanDetailsContent
 					selectedSpan={selectedSpan}
@@ -483,7 +497,8 @@ function SpanDetailsPanel({
 			<DetailsPanelDrawer
 				isOpen={panelState.isOpen}
 				onClose={panelState.close}
-				className={styles.panel}
+				className={cx(styles.panel, styles.drawerPanel)}
+				testId="span-details-drawer"
 			>
 				{content}
 			</DetailsPanelDrawer>

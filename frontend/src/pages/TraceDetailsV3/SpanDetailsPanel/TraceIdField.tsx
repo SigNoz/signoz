@@ -2,63 +2,35 @@ import { useCopyToClipboard } from 'react-use';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { toast } from '@signozhq/ui/sonner';
-import { AppLink } from 'lib/router/AppLink';
-import { matchRoute } from 'lib/router/matchRoute';
-import { useAppLocation } from 'lib/router/useAppLocation';
-import ROUTES from 'constants/routes';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
-
-import styles from './TraceIdField.module.scss';
 
 interface TraceIdFieldProps {
 	span: SpanV3;
 }
 
-/**
- * Renders a span's trace id. When the user is already on the trace detail
- * page for this trace, clicking the id copies it to the clipboard (the
- * "navigate" affordance would be a no-op). Otherwise, falls back to the
- * existing link to the trace detail page.
- */
+/** Renders a span's trace id; clicking it copies the id. */
 export function TraceIdField({ span }: TraceIdFieldProps): JSX.Element {
-	const { pathname } = useAppLocation();
-	const match = matchRoute<'id'>(pathname, ROUTES.TRACE_DETAIL, { exact: true });
 	const [, setCopy] = useCopyToClipboard();
 
-	const isCurrentTrace = match?.params.id === span.trace_id;
-
-	if (isCurrentTrace) {
-		const handleCopy = (): void => {
-			setCopy(span.trace_id);
-			toast.success('Trace ID copied to clipboard', {
-				position: 'top-right',
-			});
-		};
-
-		return (
-			<Tooltip title="Click to copy trace ID">
-				<Button
-					size="md"
-					variant="link"
-					color="secondary"
-					maxWidth="100%"
-					onClick={handleCopy}
-				>
-					{span.trace_id}
-				</Button>
-			</Tooltip>
-		);
-	}
+	const handleCopy = (): void => {
+		setCopy(span.trace_id);
+		toast.success('Trace ID copied to clipboard', {
+			position: 'top-right',
+		});
+	};
 
 	return (
-		<AppLink
-			to={{
-				pathname: `/trace/${span.trace_id}`,
-				search: window.location.search,
-			}}
-			className={styles.traceId}
-		>
-			{span.trace_id}
-		</AppLink>
+		<Tooltip title="Click to copy trace ID">
+			<Button
+				size="md"
+				variant="link"
+				color="secondary"
+				maxWidth="100%"
+				onClick={handleCopy}
+				testId="span-details-trace-id"
+			>
+				{span.trace_id}
+			</Button>
+		</Tooltip>
 	);
 }

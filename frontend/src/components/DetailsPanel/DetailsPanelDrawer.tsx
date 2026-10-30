@@ -1,12 +1,15 @@
-import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Drawer, DrawerContent } from '@signozhq/ui/drawer';
+import cx from 'classnames';
+import { AnimatePresence } from 'motion/react';
 
-import './DetailsPanelDrawer.styles.scss';
+import styles from './DetailsPanelDrawer.module.scss';
 
 interface DetailsPanelDrawerProps {
 	isOpen: boolean;
 	onClose: () => void;
 	children: React.ReactNode;
 	className?: string;
+	testId?: string;
 }
 
 function DetailsPanelDrawer({
@@ -14,22 +17,41 @@ function DetailsPanelDrawer({
 	onClose,
 	children,
 	className,
+	testId,
 }: DetailsPanelDrawerProps): JSX.Element {
 	return (
-		<DrawerWrapper
+		<Drawer
 			open={isOpen}
 			onOpenChange={(open): void => {
 				if (!open) {
 					onClose();
 				}
 			}}
-			direction="right"
-			showOverlay={false}
-			className={`details-panel-drawer ${className || ''}`}
+			modal={false}
 		>
-			<div className="details-panel-drawer__body">{children}</div>
-		</DrawerWrapper>
+			<AnimatePresence>
+				{isOpen && (
+					<DrawerContent
+						forceMount
+						direction="right"
+						width="extra-wide"
+						showOverlay={false}
+						// The page stays usable behind the drawer; only close or Esc dismiss it.
+						onInteractOutside={(e): void => e.preventDefault()}
+						className={cx(styles.drawer, className)}
+						testId={testId}
+					>
+						<div className={styles.body}>{children}</div>
+					</DrawerContent>
+				)}
+			</AnimatePresence>
+		</Drawer>
 	);
 }
+
+DetailsPanelDrawer.defaultProps = {
+	className: undefined,
+	testId: undefined,
+};
 
 export default DetailsPanelDrawer;
