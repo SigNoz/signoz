@@ -64,11 +64,11 @@ type traceStore struct {
 	flagger        flagger.Flagger
 }
 
-func NewTraceStore(ts telemetrystore.TelemetryStore, metadataStore telemetrytypes.MetadataStore, fl flagger.Flagger) *traceStore {
+func NewTraceStore(ts telemetrystore.TelemetryStore, metadataStore telemetrytypes.MetadataStore, schemaMetadataStore telemetrytypes.SchemaMetadataStore, fl flagger.Flagger) *traceStore {
 	return &traceStore{
 		telemetryStore: ts,
 		metadataStore:  metadataStore,
-		storage:        tracestelemetryschema.NewStorage(),
+		storage:        tracestelemetryschema.NewStorage(schemaMetadataStore),
 		flagger:        fl,
 	}
 }

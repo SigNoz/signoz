@@ -146,7 +146,7 @@ func TestGetFieldKeyName(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			storage := NewStorage()
+			storage := NewStorage(nil)
 			read, err := storage.Read(ctx, qbtypes.QueryInfo{StartNs: uint64(time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()), EndNs: uint64(time.Date(2024, 6, 5, 0, 0, 0, 0, time.UTC).UnixNano())}, &tc.key)
 
 			if tc.expectedError != nil {
@@ -234,7 +234,7 @@ func TestFieldForResourceWithEvolution(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			storage := NewStorage()
+			storage := NewStorage(nil)
 			read, err := storage.Read(ctx, qbtypes.QueryInfo{StartNs: tc.tsStart, EndNs: tc.tsEnd}, &tc.key)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedResult, read.SQL)
@@ -294,7 +294,7 @@ func TestColumnExpressionForTemporalColumn(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			storage := NewStorage()
+			storage := NewStorage(nil)
 			result, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: tsStart, EndNs: tsEnd}, storage, &tc.key, tc.requiredDataType, nil)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedResult, result)
@@ -322,7 +322,7 @@ func TestColumnExpressionForTimestampAttributeCollision(t *testing.T) {
 		},
 	}
 
-	storage := NewStorage()
+	storage := NewStorage(nil)
 
 	t.Run("bare timestamp resolves to the intrinsic column alone", func(t *testing.T) {
 		bare := telemetrytypes.TelemetryFieldKey{Name: "timestamp"}
@@ -431,7 +431,7 @@ func TestColumnExpressionForScopeDeclaredPath(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			storage := NewStorage()
+			storage := NewStorage(nil)
 			result, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{}, storage, &tc.key, telemetrytypes.FieldDataTypeUnspecified, tc.keys)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedResult, result)

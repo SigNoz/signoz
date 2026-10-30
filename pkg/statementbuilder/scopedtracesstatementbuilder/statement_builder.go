@@ -50,16 +50,17 @@ func NewFactory(
 	scope TraceScope,
 	telemetryStore telemetrystore.TelemetryStore,
 	metadataStore telemetrytypes.MetadataStore,
+	schemaMetadataStore telemetrytypes.SchemaMetadataStore,
 	fl flagger.Flagger,
 ) factory.ProviderFactory[qbtypes.StatementBuilder[qbtypes.TraceAggregation], statementbuilder.Config] {
 	return factory.NewProviderFactory(
 		name,
 		func(ctx context.Context, settings factory.ProviderSettings, cfg statementbuilder.Config) (qbtypes.StatementBuilder[qbtypes.TraceAggregation], error) {
-			traceStmtBuilder, err := tracesstatementbuilder.NewFactory(telemetryStore, metadataStore, fl).New(ctx, settings, cfg)
+			traceStmtBuilder, err := tracesstatementbuilder.NewFactory(telemetryStore, metadataStore, schemaMetadataStore, fl).New(ctx, settings, cfg)
 			if err != nil {
 				return nil, err
 			}
-			return NewScopedTraceStatementBuilder(settings, metadataStore, tracestelemetryschema.NewStorage(), scope, traceStmtBuilder, fl), nil
+			return NewScopedTraceStatementBuilder(settings, metadataStore, tracestelemetryschema.NewStorage(schemaMetadataStore), scope, traceStmtBuilder, fl), nil
 		},
 	)
 }

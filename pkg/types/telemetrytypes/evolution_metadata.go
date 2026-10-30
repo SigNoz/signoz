@@ -4,6 +4,8 @@ import (
 	"time"
 )
 
+const EvolutionFieldNameAll = "__all__"
+
 type EvolutionEntry struct {
 	Signal       Signal       `json:"signal"`
 	ColumnName   string       `json:"column_name"`

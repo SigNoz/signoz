@@ -49,7 +49,7 @@ func newTestStore(matcher sqlmock.QueryMatcher) *spantypestest.TraceStoreTest {
 
 func newTestStoreWithMetadata(matcher sqlmock.QueryMatcher, metadataStore telemetrytypes.MetadataStore, fl flagger.Flagger) *spantypestest.TraceStoreTest {
 	ts := telemetrystoretest.New(telemetrystore.Config{}, matcher)
-	return spantypestest.New(impltracedetail.NewTraceStore(ts, metadataStore, fl), ts.Mock())
+	return spantypestest.New(impltracedetail.NewTraceStore(ts, metadataStore, nil, fl), ts.Mock())
 }
 
 func TestGetTraceBounds(t *testing.T) {

@@ -36,12 +36,13 @@ var _ qbtypes.TraceOperatorStatementBuilder = (*traceOperatorStatementBuilder)(n
 func NewOperatorFactory(
 	telemetryStore telemetrystore.TelemetryStore,
 	metadataStore telemetrytypes.MetadataStore,
+	schemaMetadataStore telemetrytypes.SchemaMetadataStore,
 	fl flagger.Flagger,
 ) factory.ProviderFactory[qbtypes.TraceOperatorStatementBuilder, statementbuilder.Config] {
 	return factory.NewProviderFactory(
 		factory.MustNewName("traceoperator"),
 		func(_ context.Context, settings factory.ProviderSettings, cfg statementbuilder.Config) (qbtypes.TraceOperatorStatementBuilder, error) {
-			storage := tracestelemetryschema.NewStorage()
+			storage := tracestelemetryschema.NewStorage(schemaMetadataStore)
 			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, storage, fl, telemetrytypes.SignalTraces)
 			traceStmtBuilder := NewTraceQueryStatementBuilder(
 				settings, metadataStore, storage, aggExprRewriter, telemetryStore, fl,

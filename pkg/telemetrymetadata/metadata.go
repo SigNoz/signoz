@@ -2442,10 +2442,10 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporalityAndType(ctx conte
 	return temporalities, types, nil
 }
 
-func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Context, selectors []*telemetrytypes.EvolutionSelector) ([]*telemetrytypes.EvolutionEntry, error) {
+func fetchEvolutionEntryFromClickHouse(ctx context.Context, telemetryStore telemetrystore.TelemetryStore, table string, selectors []*telemetrytypes.EvolutionSelector) ([]*telemetrytypes.EvolutionEntry, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("signal", "column_name", "column_type", "field_context", "field_name", "version", "release_time")
-	sb.From(fmt.Sprintf("%s.%s", k.relatedMetadataDBName, k.columnEvolutionMetadataTblName))
+	sb.From(table)
 	sb.OrderBy("release_time ASC")
 
 	var clauses []string
@@ -2467,7 +2467,7 @@ func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Conte
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	var entries []*telemetrytypes.EvolutionEntry
-	rows, err := k.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
+	rows, err := telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -2517,7 +2517,7 @@ func (k *telemetryMetaStore) updateColumnEvolutionMetadataForKeys(ctx context.Co
 		metadataKeySelectors = append(metadataKeySelectors, selector)
 	}
 
-	evolutions, err := k.fetchEvolutionEntryFromClickHouse(ctx, metadataKeySelectors)
+	evolutions, err := fetchEvolutionEntryFromClickHouse(ctx, k.telemetrystore, fmt.Sprintf("%s.%s", k.relatedMetadataDBName, k.columnEvolutionMetadataTblName), metadataKeySelectors)
 	if err != nil {
 		return errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to fetch evolution from clickhouse %s", err.Error())
 	}
