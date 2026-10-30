@@ -193,14 +193,14 @@ describe('PlannedDowntime Component', () => {
 		expect(screen.getByText(MOCK_DOWNTIME_3_NAME)).toBeInTheDocument();
 	});
 
-	it('shows the key schedule details and hides secondary columns by default', async () => {
+	it('shows the key schedule details, timezone and duration, and hides secondary columns by default', async () => {
 		renderPage();
 
 		await screen.findByText(MOCK_DOWNTIME_1_NAME);
 		expect(screen.getByText(/\(Asia\/Kolkata\)$/)).toBeInTheDocument();
 		expect(screen.getByText('Weekly on Mon · 2h')).toBeInTheDocument();
-		expect(screen.queryByText('Asia/Kolkata')).not.toBeInTheDocument();
-		expect(screen.queryByText('2h')).not.toBeInTheDocument();
+		expect(screen.getAllByText('Asia/Kolkata').length).toBeGreaterThan(0);
+		expect(screen.getAllByText('2h').length).toBeGreaterThan(0);
 		expect(screen.queryByText('Database maintenance')).not.toBeInTheDocument();
 		expect(screen.queryByText('creator@signoz.io')).not.toBeInTheDocument();
 		expect(screen.queryByText('editor@signoz.io')).not.toBeInTheDocument();
@@ -219,7 +219,9 @@ describe('PlannedDowntime Component', () => {
 			'Downtime',
 			'Status',
 			'Schedule',
+			'Timezone',
 			'Repeats',
+			'Duration',
 		]);
 	});
 
