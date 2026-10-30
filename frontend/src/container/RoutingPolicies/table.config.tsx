@@ -57,20 +57,6 @@ export function getRoutingPolicyColumns(
 			),
 		},
 		{
-			id: 'expression',
-			header: 'Expression',
-			accessorKey: 'expression',
-			width: { default: '260px', min: '160px' },
-			enableSort: false,
-			enableResize: true,
-			enableMove: false,
-			cell: ({ row }): JSX.Element => (
-				<TanStackTable.Text className={styles.expression} title={row.expression}>
-					{row.expression}
-				</TanStackTable.Text>
-			),
-		},
-		{
 			id: 'channels',
 			header: 'Channels',
 			accessorKey: 'channels',
@@ -89,6 +75,20 @@ export function getRoutingPolicyColumns(
 				) : (
 					<TanStackTable.Text>-</TanStackTable.Text>
 				),
+		},
+		{
+			id: 'expression',
+			header: 'Expression',
+			accessorKey: 'expression',
+			width: { default: '260px', min: '160px' },
+			enableSort: false,
+			enableResize: true,
+			enableMove: false,
+			cell: ({ row }): JSX.Element => (
+				<TanStackTable.Text className={styles.expression} title={row.expression}>
+					{row.expression}
+				</TanStackTable.Text>
+			),
 		},
 		{
 			id: 'createdBy',
