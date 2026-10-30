@@ -45,6 +45,7 @@ import {
 	savedViewsListResponse,
 	type SavedViewSource,
 	unreadableViewId,
+	withLongName,
 } from './__story_mockdata__/savedViews';
 
 import SavedViewsHeader from '../SavedViewsHeader';
@@ -73,7 +74,13 @@ const controls = {
 	unreadableView: toggleControl('Unreadable view', {
 		group: VIEW,
 		description:
-			'Denies `read` on the first view created by others alone, on top of the Access controls: its row greys out, and with Open view on `created-by-others` the header shows No view access.',
+			'Denies `read` on the first view created by others, and so on `saved-view:*`, on top of the Access controls: its row still opens it, and the header then shows No view access, as with Open view on `created-by-others`. Its hover card shows the permission callout in place of the query.',
+		value: false,
+	}),
+	viewPending: toggleControl('View fetch pending', {
+		group: VIEW,
+		description:
+			'Holds every `GET /saved_views/:id` open, so a hover card stays on its loading skeleton.',
 		value: false,
 	}),
 	createdByMe: countControl('Created by me', {
@@ -87,6 +94,12 @@ const controls = {
 		value: 4,
 		max: SAVED_VIEWS_MAX,
 	}),
+	longNames: toggleControl('Long names', {
+		group: LIST,
+		description:
+			'Lengthens every view name past the sidebar width, so rows and the open view name truncate.',
+		value: false,
+	}),
 };
 
 type SavedViewsValues = MockControlValues<typeof controls>;
@@ -99,7 +112,7 @@ const viewDenied = (
 ): boolean =>
 	transaction.relation === 'read' &&
 	transaction.object.resource.kind === 'saved-view' &&
-	transaction.object.selector === deniedId;
+	[deniedId, '*'].includes(transaction.object.selector);
 
 const definition = defineStoryMocks({
 	controls,
@@ -107,7 +120,14 @@ const definition = defineStoryMocks({
 		values: SavedViewsValues & AuthzArgs,
 		response,
 	): RequestHandler[] => {
-		const { source, openView, createdByMe, createdByOthers } = values;
+		const {
+			source,
+			openView,
+			viewPending,
+			createdByMe,
+			createdByOthers,
+			longNames,
+		} = values;
 
 		// What the panel writes stays in this handler set until a control changes.
 		const created: SavedviewtypesSavedViewDTO[] = [];
@@ -118,8 +138,14 @@ const definition = defineStoryMocks({
 			view: SavedviewtypesSavedViewDTO,
 		): SavedviewtypesSavedViewDTO => ({ ...view, ...updated.get(view.id) });
 
+		const named = (
+			view: SavedviewtypesSavedViewDTO,
+		): SavedviewtypesSavedViewDTO => (longNames ? withLongName(view) : view);
+
 		const findView = (id: string): SavedviewtypesSavedViewDTO | undefined => {
-			const view = created.find((item) => item.id === id) ?? savedViewById(id);
+			const stored = savedViewById(id);
+			const view =
+				created.find((item) => item.id === id) ?? (stored && named(stored));
 
 			return view && !deleted.has(id) ? current(view) : undefined;
 		};
@@ -143,7 +169,7 @@ const definition = defineStoryMocks({
 
 					return {
 						...list,
-						data: [...(list.data ?? []), ...created]
+						data: [...(list.data ?? []).map(named), ...created]
 							.filter((view) => !deleted.has(view.id))
 							.map(current),
 					};
@@ -151,6 +177,10 @@ const definition = defineStoryMocks({
 			),
 
 			rest.get(`${API}/:id`, (req, res, ctx) => {
+				if (viewPending) {
+					return res(ctx.delay('infinite'));
+				}
+
 				if (openError) {
 					return res(ctx.status(openError.status), ctx.json(openError.body));
 				}
@@ -274,7 +304,9 @@ const isPending = (element: HTMLElement): boolean =>
 	element.hasAttribute('data-loading');
 
 const isDisabled = (element: HTMLElement): boolean =>
-	element.hasAttribute('disabled') || element.hasAttribute('data-disabled');
+	element.hasAttribute('disabled') ||
+	element.hasAttribute('data-disabled') ||
+	element.getAttribute('aria-disabled') === 'true';
 
 export const expectDisabled = (
 	find: FindElement,
@@ -302,6 +334,30 @@ export const rowName =
 	(): HTMLElement =>
 		within(row).getByTestId('saved-views-row-name');
 
+const hoverRow = async (row: HTMLElement): Promise<HTMLElement> => {
+	await userEvent.hover(row);
+
+	return screen.findByTestId('saved-view-hover-card', undefined, UNTIL_LOADED);
+};
+
+const searchViews = async (
+	canvasElement: HTMLElement,
+	text: string,
+): Promise<void> => {
+	const search = await within(canvasElement).findByTestId(
+		'saved-views-search',
+		undefined,
+		UNTIL_LOADED,
+	);
+
+	await userEvent.type(search, text);
+};
+
+const clickWhenEnabled = async (find: FindElement): Promise<void> => {
+	await expectDisabled(find, false);
+	await userEvent.click(find());
+};
+
 export const openRowMenu = async (row: HTMLElement): Promise<void> => {
 	await userEvent.click(within(row).getByTestId('saved-views-row-menu'));
 	await screen.findByRole('menu', undefined, UNTIL_LOADED);
@@ -327,3 +383,115 @@ export const openSaveChangesMenu = async (
 
 export const saveChangesItem = (key: 'save-as-new' | 'update'): FindElement =>
 	byTestId(`saved-views-save-changes-item-${key}`);
+
+type PlayContext = {
+	canvasElement: HTMLElement;
+	args: { source: SavedViewSource };
+};
+
+export const hoverFirstRow = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	const [row] = await findRows(canvasElement);
+	const card = await hoverRow(row);
+
+	await within(card).findByTestId(
+		'saved-view-hover-card-query',
+		undefined,
+		UNTIL_LOADED,
+	);
+};
+
+export const hoverFirstRowLoading = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	const [row] = await findRows(canvasElement);
+	const card = await hoverRow(row);
+
+	await within(card).findByTestId(
+		'saved-view-hover-card-loading',
+		undefined,
+		UNTIL_LOADED,
+	);
+};
+
+export const searchWithNoResults = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	await searchViews(canvasElement, 'nothing like this');
+	await screen.findByTestId('saved-views-list-no-results');
+};
+
+export const openCreateModal = async (): Promise<void> => {
+	await clickWhenEnabled(byTestId('saved-views-create'));
+	await screen.findByTestId('save-view-modal');
+};
+
+export const openEditDetailsModal = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	const [row] = await findRows(canvasElement);
+
+	await openRowMenu(row);
+	await clickWhenEnabled(rowMenuItem('editDetails'));
+	await screen.findByTestId('save-view-modal');
+};
+
+export const openSaveAsNewModal = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	await openSaveChangesMenu(canvasElement);
+	await clickWhenEnabled(saveChangesItem('save-as-new'));
+	await screen.findByTestId('save-view-modal');
+};
+
+export const openDeleteDialog = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	const [row] = await findRows(canvasElement);
+
+	await openRowMenu(row);
+	await clickWhenEnabled(rowMenuItem('delete'));
+	await screen.findByTestId('delete-saved-view-confirm');
+};
+
+const findUnreadableRow = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<HTMLElement> => {
+	const rows = await findRows(canvasElement);
+	const deniedId = unreadableViewId(args.source);
+
+	return rows.find(
+		(row) => row.getAttribute('data-view-id') === deniedId,
+	) as HTMLElement;
+};
+
+export const hoverUnreadableRow = async (
+	context: PlayContext,
+): Promise<void> => {
+	const card = await hoverRow(await findUnreadableRow(context));
+
+	await expect(
+		await within(card).findByText(/not authorized/i, undefined, UNTIL_LOADED),
+	).toBeVisible();
+	await expect(
+		within(card).queryByTestId('saved-view-hover-card-query'),
+	).toBeNull();
+};
+
+export const openUnreadableView = async (
+	context: PlayContext,
+): Promise<void> => {
+	const { canvasElement } = context;
+	const denied = await findUnreadableRow(context);
+
+	await userEvent.click(rowName(denied)());
+	await expect(
+		await within(canvasElement).findByText(
+			'No view access',
+			undefined,
+			UNTIL_LOADED,
+		),
+	).toBeVisible();
+};

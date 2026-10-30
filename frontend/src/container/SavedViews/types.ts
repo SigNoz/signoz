@@ -128,6 +128,11 @@ export interface SavedViewsListRowProps {
 	hover: SavedViewsListRowHoverProps;
 }
 
+export type SavedViewsRowLinkProps = Pick<
+	SavedViewsListRowProps,
+	'view' | 'isActive' | 'onSelect'
+>;
+
 export type SavedViewRowActionKey =
 	| 'copyLink'
 	| 'copyId'
@@ -181,7 +186,7 @@ export interface UseSavedViewRowActionsResult {
 }
 
 export interface SavedViewHoverCardTarget {
-	view: SavedviewtypesSavedViewDTO;
+	viewId: string;
 	anchorTop: number;
 	anchorHeight: number;
 }
@@ -202,8 +207,14 @@ export interface SavedViewHoverCardProps {
 	onClose: () => void;
 }
 
+export interface SavedViewHoverCardDetailsProps {
+	viewId: string;
+	/** `read` is granted on every view, so the view needs no check of its own. */
+	canReadAll: boolean;
+}
+
 export interface SavedViewsListRowHoverProps {
-	onRowEnter: (view: SavedviewtypesSavedViewDTO, row: HTMLElement) => void;
+	onRowEnter: (viewId: string, row: HTMLElement) => void;
 	onRowLeave: () => void;
 	onMenuOpen: () => void;
 }

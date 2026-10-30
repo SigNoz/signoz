@@ -6,6 +6,7 @@ export const SavedViewCreatePermission = buildPermission(
 	'create',
 	'saved-view:*',
 );
+export const SavedViewReadPermission = buildPermission('read', 'saved-view:*');
 
 export const buildSavedViewReadPermission = (id: string): BrandedPermission =>
 	buildPermission('read', `saved-view:${id}`);

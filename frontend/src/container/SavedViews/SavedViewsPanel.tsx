@@ -5,7 +5,11 @@ import { Typography } from '@signozhq/ui/typography';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
-import { SavedViewListPermission } from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
+import {
+	SavedViewListPermission,
+	SavedViewReadPermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 
 import SavedViewsIconButton from './SavedViewsIconButton';
 import SavedViewsList from './SavedViewsList';
@@ -21,6 +25,8 @@ function SavedViewsPanel({
 	onClose?: () => void;
 }): JSX.Element {
 	const [search, setSearch] = useState('');
+	// Batched with the list check, so the hover card reads it from cache.
+	useAuthZ([SavedViewReadPermission]);
 
 	return (
 		<div

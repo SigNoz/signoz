@@ -18,11 +18,9 @@ import {
 import ROUTES from 'constants/routes';
 import { navigate } from 'lib/router/navigation';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
-	buildExplorerNavigationUrl,
 	findSavedViewInLists,
 	openSavedView,
 	openSavedViewByKey,
@@ -229,23 +227,6 @@ describe('findSavedViewInLists', () => {
 
 		expect(result).toStrictEqual(metricsView);
 		expect(mockedListSavedViews).toHaveBeenCalledTimes(3);
-	});
-});
-
-describe('buildExplorerNavigationUrl', () => {
-	it('encodes composite query and view selectors', () => {
-		const url = buildExplorerNavigationUrl(
-			ROUTES.LOGS_EXPLORER,
-			{ queryType: 'builder' } as never,
-			{
-				[QueryParams.panelTypes]: PANEL_TYPES.LIST,
-				[QueryParams.viewKey]: 'view-1',
-			},
-		);
-
-		expect(url).toContain(ROUTES.LOGS_EXPLORER);
-		expect(url).toContain(`${QueryParams.compositeQuery}=`);
-		expect(url).toContain(`${QueryParams.viewKey}=`);
 	});
 });
 

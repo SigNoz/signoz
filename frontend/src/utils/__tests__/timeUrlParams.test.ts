@@ -1,6 +1,6 @@
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime';
 
-import { timeParamsFromGlobalTime } from '../timeUrlParams';
+import { timeParamsFromGlobalTime } from 'utils/timeUrlParams';
 
 describe('timeParamsFromGlobalTime', () => {
 	it('emits relativeTime for a relative selection', () => {
