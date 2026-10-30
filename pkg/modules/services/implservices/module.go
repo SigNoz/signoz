@@ -54,9 +54,6 @@ func (m *module) FetchTopLevelOperations(ctx context.Context, start time.Time, s
 	defer rows.Close()
 
 	ops := make(map[string][]string)
-	if err := rows.Err(); err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch top level operations")
-	}
 	for rows.Next() {
 		var name, serviceName string
 		var ts time.Time
@@ -67,6 +64,9 @@ func (m *module) FetchTopLevelOperations(ctx context.Context, start time.Time, s
 			ops[serviceName] = []string{"overflow_operation"}
 		}
 		ops[serviceName] = append(ops[serviceName], name)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating top level operations")
 	}
 	return ops, nil
 }
