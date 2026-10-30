@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
+import { expect, screen, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -18,8 +18,10 @@ type AlertRulesArgs = PageStoryArgs<typeof alertRulesMocks>;
 const pageStory = storyMocks(alertRulesMocks, { layout: 'app' });
 
 /**
- * The rule list tab: every rule with its severity, state and channels. Creating
- * and editing follow the legacy editor role.
+ * The rule list tab: the views rail beside every rule with its severity, state
+ * and channels, filtered server-side by a DSL query, a state set and the table
+ * sort, which org-shared saved views capture and restore. Creating and editing
+ * follow the legacy editor role.
  *
  * Route: `/alerts?tab=AlertRules`.
  */
@@ -35,6 +37,10 @@ export default meta;
 
 type Story = StoryObj<AlertRulesArgs>;
 
+// A row's rename and delete only take the pointer while the row is hovered,
+// which a play cannot put the real cursor on.
+const hoverActions = userEvent.setup({ pointerEventsCheck: 0 });
+
 /**
  * Every alert rule the org has configured, with the state each one evaluated to
  * on its last run and the severity it fires at.
@@ -46,10 +52,115 @@ export const NoRules: Story = {
 	args: { rules: 0 },
 };
 
-/** Search: an unmatched query retains the filters and renders the no-results branch. */
-export const SearchNoResults: Story = {
+/** A state filter no rule is in: the filters stay and the no-results branch renders. */
+export const NoMatchingRules: Story = {
 	parameters: {
-		signoz: { route: '/alerts?tab=AlertRules&search=no-matching-alert-rule' },
+		signoz: { route: '/alerts?tab=AlertRules&states=recovering' },
+	},
+};
+
+/** The query the list was asked for does not parse: the server's message sits under the search box. */
+export const InvalidQuery: Story = {
+	args: { invalidQuery: 'rule_list_filter_invalid' },
+	parameters: {
+		allowConsoleErrors: true,
+		signoz: {
+			route: "/alerts?tab=AlertRules&query=name%20CONTAINS%20'prod'%20AND",
+		},
+	},
+};
+
+/**
+ * The query box's suggestions, opened: the rule fields first, then every
+ * `labels.<key>` the org's rules carry.
+ */
+export const QuerySuggestions: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+		// The labels come with the rule list, so the box is opened once rows are in.
+		await canvas.findAllByTestId('alert-actions', undefined, untilLoaded);
+		const search = canvas.getByTestId('alert-rules-list-search');
+		await userEvent.click(search.querySelector('.cm-content') ?? search);
+		await screen.findByText('labels.team');
+	},
+};
+
+/** A workspace with no saved view yet, where the rail says how to make one. */
+export const NoSavedViews: Story = {
+	args: { ruleViews: 0 },
+};
+
+/** A shared link carrying only the view id: the view's query and states are applied once the views load. */
+export const ViewApplied: Story = {
+	parameters: {
+		signoz: { route: '/alerts?tab=AlertRules&view=view-1' },
+	},
+};
+
+/**
+ * The filters changed after the view was applied: the dirty dot on the rail
+ * entry and the header, and Save, Save as and Reset at the foot of the rail.
+ */
+export const ViewModified: Story = {
+	parameters: {
+		signoz: {
+			route:
+				'/alerts?tab=AlertRules&view=view-2&query=team%20%3D%20%27infra%27&states=firing',
+		},
+	},
+};
+
+/** Filters set with no saved view selected: the rail offers to save them as a new one. */
+export const UnsavedFilters: Story = {
+	parameters: {
+		signoz: { route: '/alerts?tab=AlertRules&states=firing' },
+	},
+};
+
+/** The rail folded away from the status bar, leaving the list the full width. */
+export const RailCollapsed: Story = {
+	args: { railCollapsed: true },
+};
+
+/** The popover that names the current filters as a new saved view. */
+export const SaveViewPopover: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByTestId(
+				'alert-rules-view-save-trigger',
+				undefined,
+				untilLoaded,
+			),
+		);
+		await screen.findByText('Save as view');
+	},
+};
+
+/** A saved view's rename popover, opened from its row. */
+export const RenameViewPopover: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await hoverActions.click(
+			await within(canvasElement).findByTestId(
+				'alert-rules-view-rename-view-1',
+				undefined,
+				untilLoaded,
+			),
+		);
+		await screen.findByText('Rename view');
+	},
+};
+
+/** Deleting a saved view asks first, because every teammate loses it too. */
+export const DeleteViewConfirm: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await hoverActions.click(
+			await within(canvasElement).findByTestId(
+				'alert-rules-view-delete-view-1',
+				undefined,
+				untilLoaded,
+			),
+		);
+		await screen.findByText(/shared across your organization/i);
 	},
 };
 
@@ -151,9 +262,9 @@ export const ToggleAlertToast: Story = {
 	play: async ({ canvasElement, args }): Promise<void> => {
 		await runRowAction(canvasElement, /^(enable|disable)$/i);
 		if (args.toggleState === 'success') {
-			await waitFor(() =>
-				expect(screen.getByText(/alert (enabled|disabled)/i)).toBeVisible(),
-			);
+			await expect(
+				await screen.findByText(/alert (enabled|disabled)/i),
+			).toBeVisible();
 		}
 	},
 };
@@ -176,9 +287,9 @@ export const CloneAlertToast: Story = {
 	play: async ({ canvasElement, args }): Promise<void> => {
 		await runRowAction(canvasElement, /^clone$/i);
 		if (args.cloneState === 'success') {
-			await waitFor(() =>
-				expect(screen.getByText(/alert cloned successfully/i)).toBeVisible(),
-			);
+			await expect(
+				await screen.findByText(/alert cloned successfully/i),
+			).toBeVisible();
 		}
 	},
 };
@@ -201,9 +312,9 @@ export const DeleteAlertToast: Story = {
 	play: async ({ canvasElement, args }): Promise<void> => {
 		await runRowAction(canvasElement, /^delete$/i);
 		if (args.deleteState === 'success') {
-			await waitFor(() =>
-				expect(screen.getByText(/alert deleted successfully/i)).toBeVisible(),
-			);
+			await expect(
+				await screen.findByText(/alert deleted successfully/i),
+			).toBeVisible();
 		}
 	},
 };
@@ -232,8 +343,6 @@ export const LabelCopiedToast: Story = {
 		);
 
 		await userEvent.click(copy);
-		await waitFor(() =>
-			expect(screen.getByText(/copied! use in search/i)).toBeVisible(),
-		);
+		await expect(await screen.findByText(/copied! use in search/i)).toBeVisible();
 	},
 };
