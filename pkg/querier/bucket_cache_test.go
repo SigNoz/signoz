@@ -1467,7 +1467,7 @@ func TestBucketCache_NoCache(t *testing.T) {
 }
 
 func TestBucketCache_Put_OverlappingBuckets(t *testing.T) {
-	// Buckets are cut at multiples of the query window, so a 4s window fills 4s-aligned buckets.
+	// Buckets are cut at multiples of 300 steps, so a 10ms step fills 3s-aligned buckets.
 	testCases := []struct {
 		name            string
 		windows         []qbtypes.TimeRange
@@ -1476,27 +1476,27 @@ func TestBucketCache_Put_OverlappingBuckets(t *testing.T) {
 		{
 			name:            "SlidingWindows_FillAlignedBuckets",
 			windows:         []qbtypes.TimeRange{{From: 1000, To: 5000}, {From: 2000, To: 6000}, {From: 3000, To: 7000}},
-			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 4000}, {From: 4000, To: 7000}},
+			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 3000}, {From: 3000, To: 6000}, {From: 6000, To: 7000}},
 		},
 		{
 			name:            "DisjointWindows_KeepAll",
 			windows:         []qbtypes.TimeRange{{From: 1000, To: 3000}, {From: 5000, To: 7000}},
-			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 2000}, {From: 2000, To: 3000}, {From: 5000, To: 6000}, {From: 6000, To: 7000}},
+			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 3000}, {From: 5000, To: 6000}, {From: 6000, To: 7000}},
 		},
 		{
 			name:            "PartialOverlap_MergeOnlyOverlapping",
 			windows:         []qbtypes.TimeRange{{From: 1000, To: 3000}, {From: 5000, To: 7000}, {From: 2000, To: 4000}},
-			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 2000}, {From: 2000, To: 4000}, {From: 5000, To: 6000}, {From: 6000, To: 7000}},
+			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 3000}, {From: 3000, To: 4000}, {From: 5000, To: 6000}, {From: 6000, To: 7000}},
 		},
 		{
-			name:            "NarrowerWindow_RecutsWideBucket",
+			name:            "NarrowerWindow_KeepsBucketEdges",
 			windows:         []qbtypes.TimeRange{{From: 1000, To: 7000}, {From: 3000, To: 5000}},
-			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 2000}, {From: 2000, To: 4000}, {From: 4000, To: 6000}, {From: 6000, To: 7000}},
+			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 3000}, {From: 3000, To: 6000}, {From: 6000, To: 7000}},
 		},
 		{
 			name:            "WiderWindow_AbsorbsCoveredBuckets",
 			windows:         []qbtypes.TimeRange{{From: 2000, To: 3000}, {From: 4000, To: 5000}, {From: 1000, To: 7000}},
-			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 6000}, {From: 6000, To: 7000}},
+			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 3000}, {From: 3000, To: 6000}, {From: 6000, To: 7000}},
 		},
 	}
 
@@ -1504,7 +1504,7 @@ func TestBucketCache_Put_OverlappingBuckets(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			memCache := createTestCache(t)
 			bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
-			step := qbtypes.Step{Duration: time.Second}
+			step := qbtypes.Step{Duration: 10 * time.Millisecond}
 
 			// Each window stamps its values with its 1-based run number.
 			expectedValues := map[int64]float64{}
