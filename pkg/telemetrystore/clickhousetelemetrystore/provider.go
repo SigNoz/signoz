@@ -20,6 +20,9 @@ var (
 	ErrCodeUnknownIdentifier = errors.MustNewCode("unknown_identifier")
 	ErrCodeIllegalArgument   = errors.MustNewCode("illegal_argument")
 
+	ErrCodeDistributedSubqueryDenied = errors.MustNewCode("distributed_subquery_denied")
+	ErrCodeDecimalOverflow           = errors.MustNewCode("decimal_overflow")
+
 	ErrCodeQueryCanceled   = errors.MustNewCode("query_canceled")
 	ErrCodeQueryTimeout    = errors.MustNewCode("query_timeout")
 	ErrCodeExecutionFailed = errors.MustNewCode("execution_failed")
@@ -71,6 +74,18 @@ var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickh
 	},
 	chproto.ErrTooLessArgumentsForFunction: func(cause error, ex *clickhouse.Exception) error {
 		return errors.WrapInvalidInputf(cause, ErrCodeIllegalArgument, "too few arguments to function: %s", ex.Message)
+	},
+	chproto.ErrBadGet: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeIllegalArgument, "parameter of the wrong type: %s", ex.Message).
+			WithSuggestions("write numeric function parameters in the type the function expects, for example 1.0 rather than 1 where it takes a Float64")
+	},
+	chproto.ErrDistributedInJoinSubqueryDenied: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeDistributedSubqueryDenied, "IN or JOIN subquery over a distributed table is not allowed: %s", ex.Message).
+			WithSuggestions("use GLOBAL IN or GLOBAL JOIN for the subquery")
+	},
+	chproto.ErrDecimalOverflow: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeDecimalOverflow, "decimal overflow: %s", ex.Message).
+			WithSuggestions("cast the Decimal values to Float64, or to a wider Decimal such as Decimal128, before the arithmetic")
 	},
 }
 
