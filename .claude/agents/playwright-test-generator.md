@@ -150,6 +150,18 @@ Note: no cleanup code (the `dashboards` driver deletes its seed), no raw locator
 - **Monaco editor swallows Escape.** Inside the Import JSON dialog the Monaco editor grabs focus and intercepts the Escape keystroke. Click the modal title first to blur Monaco; `dashboardList.dismissWithEscape()` does this.
 - **Empty zero-state hides controls.** With no dashboards in the workspace, the list controls and `new-dashboard-cta` are absent. Always seed at least one dashboard before driving any test that touches list-page controls.
 
+# Timing traps
+
+Each of these passes alone and flakes under parallel CI load. Handle them inside the driver action.
+
+- **Wait for the request the action started.** A `waitForResponse` registered after the click, or matching any in-flight request, can resolve on an earlier one. Register `page.waitForRequest(...)` before the action, then await its `response()`.
+- **Let React commit before a shortcut.** A keyboard shortcut (e.g. Cmd+Enter) pressed right after typing can read the previous state. Wait two animation frames (`requestAnimationFrame` twice in `page.evaluate`) before pressing it.
+- **Typing before the first load is lost.** Pages that reset inputs when their initial data lands wipe early keystrokes. The `open` action waits for the page's first data request.
+- **A cache hit fires nothing.** When a page already fetched on an earlier edit, the next Run may be served from the React Query cache. After one Run, assert the page shows the expected result and the last request sent carries the edit. Don't wait for a fresh request that may not come, and don't click Run repeatedly: that hides a first click sending stale values.
+- **Open autocomplete explicitly.** Suggestions that appear on focus or typing arrive late under load. Trigger them (e.g. Ctrl+Space) and wait for the option.
+- **antd dropdowns render in a portal.** A Select's options are not inside the Select. Scope to that Select's own open dropdown, and assert the chosen value on `.ant-select-selection-item`.
+- **Split long scenarios.** A test chaining many reloads or edits nears the timeout under load. Split it.
+
 # Quality bar
 
 - Every test runs end-to-end against a fresh stack. If you can't run it green from a fresh `test_setup`, it's not done.
