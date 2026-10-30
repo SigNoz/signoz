@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"math/bits"
 	"slices"
 	"time"
 
@@ -176,8 +175,7 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 	}
 
 	// Convert trimmed result to buckets with adjusted boundaries
-	bucketWidthMs := bucketWidth(startMs, endMs, stepMs)
-	freshBuckets := bc.resultToBuckets(ctx, trimmedResult, cachableStartMs, cachableEndMs, bucketWidthMs)
+	freshBuckets := bc.resultToBuckets(ctx, trimmedResult, cachableStartMs, cachableEndMs)
 
 	// If no fresh buckets and no existing data, don't cache
 	if len(freshBuckets) == 0 && len(existingData.Buckets) == 0 {
@@ -185,7 +183,7 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 	}
 
 	// Merge with existing buckets
-	mergedBuckets := bc.mergeAndDeduplicateBuckets(ctx, existingData.Buckets, freshBuckets, bucketWidthMs)
+	mergedBuckets := bc.mergeAndDeduplicateBuckets(ctx, existingData.Buckets, freshBuckets)
 
 	// Update warnings
 	allWarnings := append(existingData.Warnings, trimmedResult.Warnings...)
@@ -648,7 +646,7 @@ func (bc *bucketCache) isEmptyResult(result *qbtypes.Result) (isEmpty bool, isFi
 }
 
 // resultToBuckets converts a query result into time-based buckets.
-func (bc *bucketCache) resultToBuckets(ctx context.Context, result *qbtypes.Result, startMs, endMs, widthMs uint64) []*qbtypes.CachedBucket {
+func (bc *bucketCache) resultToBuckets(ctx context.Context, result *qbtypes.Result, startMs, endMs uint64) []*qbtypes.CachedBucket {
 	// Check if result is empty
 	isEmpty, isFiltered := bc.isEmptyResult(result)
 
@@ -659,82 +657,42 @@ func (bc *bucketCache) resultToBuckets(ctx context.Context, result *qbtypes.Resu
 		return nil
 	}
 
+	// For now, create a single bucket for the entire range
+	// In the future, we could split large ranges into smaller buckets
 	tsData, ok := result.Value.(*qbtypes.TimeSeriesData)
 	if !ok {
 		return nil
 	}
 
-	// Always create buckets, even for empty filtered results
+	// Always create a bucket, even for empty filtered results
 	// This ensures we don't re-query for data that doesn't exist
-	return bc.splitIntoBuckets(ctx, tsData, result.Type, result.Stats, startMs, endMs, widthMs)
+	bucket := bc.newBucket(ctx, tsData, result.Type, result.Stats, startMs, endMs)
+	if bucket == nil {
+		return nil
+	}
+	return []*qbtypes.CachedBucket{bucket}
 }
 
-// splitIntoBuckets cuts [startMs, endMs) at multiples of widthMs, one bucket per piece.
-func (bc *bucketCache) splitIntoBuckets(ctx context.Context, tsData *qbtypes.TimeSeriesData, resultType qbtypes.RequestType, stats qbtypes.ExecStats, startMs, endMs, widthMs uint64) []*qbtypes.CachedBucket {
-	buckets := make([]*qbtypes.CachedBucket, 0, 1)
-	for chunkStartMs := startMs; chunkStartMs < endMs; {
-		chunkEndMs := endMs
-		if widthMs > 0 {
-			chunkEndMs = min(endMs, (chunkStartMs/widthMs+1)*widthMs)
-		}
-
-		// A PromQL value at endMs is inside the window and travels with the last piece.
-		upToMs := chunkEndMs
-		if chunkEndMs == endMs {
-			upToMs = endMs + 1
-		}
-		value, err := json.Marshal(filterTimeSeriesData(tsData, chunkStartMs, upToMs))
-		if err != nil {
-			bc.logger.ErrorContext(ctx, "failed to marshal result value", errors.Attr(err))
-			return nil
-		}
-
-		buckets = append(buckets, &qbtypes.CachedBucket{
-			StartMs: chunkStartMs,
-			EndMs:   chunkEndMs,
-			Type:    resultType,
-			Value:   value,
-			Stats:   statsShare(stats, startMs, endMs, chunkStartMs, chunkEndMs),
-		})
-		chunkStartMs = chunkEndMs
+// newBucket keeps the values of tsData in [startMs, endMs]; a PromQL value at endMs is inside the window.
+func (bc *bucketCache) newBucket(ctx context.Context, tsData *qbtypes.TimeSeriesData, resultType qbtypes.RequestType, stats qbtypes.ExecStats, startMs, endMs uint64) *qbtypes.CachedBucket {
+	value, err := json.Marshal(filterTimeSeriesData(tsData, startMs, endMs+1))
+	if err != nil {
+		bc.logger.ErrorContext(ctx, "failed to marshal result value", errors.Attr(err))
+		return nil
 	}
-	return buckets
-}
-
-// bucketWidth is the query window rounded up to whole steps, so bucket edges at its multiples stay step-aligned.
-func bucketWidth(startMs, endMs, stepMs uint64) uint64 {
-	widthMs := endMs - startMs
-	if stepMs > 0 && widthMs%stepMs != 0 {
-		widthMs += stepMs - widthMs%stepMs
-	}
-	return widthMs
-}
-
-// statsShare is the duration-weighted part of stats for [fromMs, toMs) within [startMs, endMs).
-// Shares are differences of running totals, so the pieces of a split add back up to stats exactly.
-func statsShare(stats qbtypes.ExecStats, startMs, endMs, fromMs, toMs uint64) qbtypes.ExecStats {
-	totalMs := endMs - startMs
-	if totalMs == 0 {
-		return stats
-	}
-	upTo := func(v, atMs uint64) uint64 {
-		hi, lo := bits.Mul64(v, atMs-startMs)
-		q, _ := bits.Div64(hi, lo, totalMs)
-		return q
-	}
-	return qbtypes.ExecStats{
-		RowsScanned:   upTo(stats.RowsScanned, toMs) - upTo(stats.RowsScanned, fromMs),
-		BytesScanned:  upTo(stats.BytesScanned, toMs) - upTo(stats.BytesScanned, fromMs),
-		DurationMS:    upTo(stats.DurationMS, toMs) - upTo(stats.DurationMS, fromMs),
-		StepIntervals: stats.StepIntervals,
+	return &qbtypes.CachedBucket{
+		StartMs: startMs,
+		EndMs:   endMs,
+		Type:    resultType,
+		Value:   value,
+		Stats:   stats,
 	}
 }
 
 // mergeAndDeduplicateBuckets combines and deduplicates bucket lists.
-// Buckets stay disjoint and never cross a multiple of widthMs: existing buckets overlapping a
-// fresh one are folded into it, keeping their values outside the fresh range, and the union is
-// cut back into width-sized pieces.
-func (bc *bucketCache) mergeAndDeduplicateBuckets(ctx context.Context, existing, fresh []*qbtypes.CachedBucket, widthMs uint64) []*qbtypes.CachedBucket {
+// Buckets stay disjoint: existing buckets overlapping a fresh one are folded into it, keeping
+// their values outside the fresh range.
+func (bc *bucketCache) mergeAndDeduplicateBuckets(ctx context.Context, existing, fresh []*qbtypes.CachedBucket) []*qbtypes.CachedBucket {
 	result := make([]*qbtypes.CachedBucket, 0, len(existing)+len(fresh))
 
 	// Add existing buckets
@@ -742,7 +700,7 @@ func (bc *bucketCache) mergeAndDeduplicateBuckets(ctx context.Context, existing,
 
 	// Add/update with fresh buckets
 	for _, bucket := range fresh {
-		result = bc.upsertBucket(ctx, result, bucket, widthMs)
+		result = bc.upsertBucket(ctx, result, bucket)
 	}
 
 	// Sort by start time
@@ -759,8 +717,8 @@ func (bc *bucketCache) mergeAndDeduplicateBuckets(ctx context.Context, existing,
 	return result
 }
 
-// upsertBucket adds fresh to buckets, absorbing every bucket it overlaps.
-func (bc *bucketCache) upsertBucket(ctx context.Context, buckets []*qbtypes.CachedBucket, fresh *qbtypes.CachedBucket, widthMs uint64) []*qbtypes.CachedBucket {
+// upsertBucket adds fresh to buckets, absorbing every bucket it overlaps into one bucket over their union.
+func (bc *bucketCache) upsertBucket(ctx context.Context, buckets []*qbtypes.CachedBucket, fresh *qbtypes.CachedBucket) []*qbtypes.CachedBucket {
 	kept := make([]*qbtypes.CachedBucket, 0, len(buckets)+1)
 	merged := []*qbtypes.CachedBucket{fresh}
 	for _, bucket := range buckets {
@@ -784,11 +742,11 @@ func (bc *bucketCache) upsertBucket(ctx context.Context, buckets []*qbtypes.Cach
 		startMs = min(startMs, bucket.StartMs)
 		endMs = max(endMs, bucket.EndMs)
 	}
-	pieces := bc.splitIntoBuckets(ctx, bc.mergeTimeSeriesValues(ctx, merged), fresh.Type, fresh.Stats, startMs, endMs, widthMs)
-	if pieces == nil {
+	union := bc.newBucket(ctx, bc.mergeTimeSeriesValues(ctx, merged), fresh.Type, fresh.Stats, startMs, endMs)
+	if union == nil {
 		return append(kept, fresh)
 	}
-	return append(kept, pieces...)
+	return append(kept, union)
 }
 
 // excludeRange returns bucket without its values in [startMs, endMs), or nil if it cannot be decoded.

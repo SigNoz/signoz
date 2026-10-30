@@ -1467,36 +1467,41 @@ func TestBucketCache_NoCache(t *testing.T) {
 }
 
 func TestBucketCache_Put_OverlappingBuckets(t *testing.T) {
-	// Buckets are cut at multiples of the query window, so a 4s window fills 4s-aligned buckets.
+	// A fresh window absorbs every bucket it overlaps into one bucket over their union.
 	testCases := []struct {
 		name            string
 		windows         []qbtypes.TimeRange
 		expectedBuckets []qbtypes.TimeRange
 	}{
 		{
-			name:            "SlidingWindows_FillAlignedBuckets",
+			name:            "SlidingWindows_MergeIntoOne",
 			windows:         []qbtypes.TimeRange{{From: 1000, To: 5000}, {From: 2000, To: 6000}, {From: 3000, To: 7000}},
-			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 4000}, {From: 4000, To: 7000}},
+			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 7000}},
 		},
 		{
 			name:            "DisjointWindows_KeepAll",
 			windows:         []qbtypes.TimeRange{{From: 1000, To: 3000}, {From: 5000, To: 7000}},
-			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 2000}, {From: 2000, To: 3000}, {From: 5000, To: 6000}, {From: 6000, To: 7000}},
+			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 3000}, {From: 5000, To: 7000}},
+		},
+		{
+			name:            "TouchingWindows_StaySeparate",
+			windows:         []qbtypes.TimeRange{{From: 1000, To: 3000}, {From: 3000, To: 5000}},
+			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 3000}, {From: 3000, To: 5000}},
 		},
 		{
 			name:            "PartialOverlap_MergeOnlyOverlapping",
 			windows:         []qbtypes.TimeRange{{From: 1000, To: 3000}, {From: 5000, To: 7000}, {From: 2000, To: 4000}},
-			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 2000}, {From: 2000, To: 4000}, {From: 5000, To: 6000}, {From: 6000, To: 7000}},
+			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 4000}, {From: 5000, To: 7000}},
 		},
 		{
-			name:            "NarrowerWindow_RecutsWideBucket",
+			name:            "NarrowerWindow_KeepsWideBucket",
 			windows:         []qbtypes.TimeRange{{From: 1000, To: 7000}, {From: 3000, To: 5000}},
-			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 2000}, {From: 2000, To: 4000}, {From: 4000, To: 6000}, {From: 6000, To: 7000}},
+			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 7000}},
 		},
 		{
 			name:            "WiderWindow_AbsorbsCoveredBuckets",
 			windows:         []qbtypes.TimeRange{{From: 2000, To: 3000}, {From: 4000, To: 5000}, {From: 1000, To: 7000}},
-			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 6000}, {From: 6000, To: 7000}},
+			expectedBuckets: []qbtypes.TimeRange{{From: 1000, To: 7000}},
 		},
 	}
 
