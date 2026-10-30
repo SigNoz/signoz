@@ -73,6 +73,8 @@ const SPAN_TEMPLATES: SpanTemplate[] = [
 			'rpc.system': 'grpc',
 			'rpc.method': 'Authorize',
 			'payment.provider': 'stripe',
+			'payment.request':
+				'{"amount":129.99,"currency":"USD","metadata":{"order_id":"order-42","items":[{"sku":"item-7","quantity":2}]}}',
 			'http.status_code': 503,
 		},
 	},
