@@ -11,6 +11,12 @@ func makeBuckets(start, end uint64) []tsRange {
 	startNS := querybuilder.ToNanoSecs(start)
 	endNS := querybuilder.ToNanoSecs(end)
 
+	// A cursor that reaches the window boundary can leave end <= start; the
+	// subtractions below are unsigned and would wrap.
+	if endNS <= startNS {
+		return nil
+	}
+
 	if endNS-startNS <= uint64(hourNanos) {
 		return []tsRange{{fromNS: startNS, toNS: endNS}}
 	}
