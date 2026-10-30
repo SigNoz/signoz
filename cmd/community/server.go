@@ -122,7 +122,7 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 			return signoz.NewMeterReporterProviderFactories(), "noop"
 		},
 		func(ps factory.ProviderSettings, q querier.Querier, a analytics.Analytics) querier.Handler {
-			return querier.NewHandler(ps, q, a)
+			return querier.NewHandler(ps, q, a, querier.NewBudget(config.Querier))
 		},
 		func(_ sqlstore.SQLStore, _ dashboard.Module, _ global.Global, _ zeus.Zeus, _ gateway.Gateway, _ licensing.Licensing, _ serviceaccount.Module, _ cloudintegration.Config) (cloudintegration.Module, error) {
 			return implcloudintegration.NewModule(), nil

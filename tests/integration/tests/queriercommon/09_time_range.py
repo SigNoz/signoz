@@ -29,6 +29,7 @@ TWO_YEARS = timedelta(days=730)
         pytest.param(1_700_000_000_000, 1_700_000_000_000, "start time must be before end time", id="start_equals_end"),
         # 2592000000 is 30 days in ms; read as an epoch in seconds it is year 2052.
         pytest.param(1_700_000_000_000, 2_592_000_000, "end time 2052-02-20T00:00:00Z is too far in the future", id="end_in_2052"),
+        pytest.param(1_700_000_000_000 - int((TWO_YEARS + timedelta(days=1)).total_seconds() * 1000), 1_700_000_000_000, "query time range must not exceed 730 days", id="range_over_two_years"),
     ],
 )
 def test_time_range_rejected(

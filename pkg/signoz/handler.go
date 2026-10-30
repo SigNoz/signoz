@@ -97,6 +97,7 @@ type Handlers struct {
 
 func NewHandlers(
 	modules Modules,
+	config Config,
 	providerSettings factory.ProviderSettings,
 	analytics analytics.Analytics,
 	querierHandler querier.Handler,
@@ -120,7 +121,7 @@ func NewHandlers(
 		Dashboard:               impldashboard.NewHandler(modules.Dashboard, providerSettings, authz),
 		QuickFilter:             implquickfilter.NewHandler(modules.QuickFilter),
 		TraceFunnel:             impltracefunnel.NewHandler(modules.TraceFunnel),
-		RawDataExport:           implrawdataexport.NewHandler(modules.RawDataExport),
+		RawDataExport:           implrawdataexport.NewHandler(modules.RawDataExport, querier.NewBudget(config.Querier)),
 		Services:                implservices.NewHandler(modules.Services),
 		MetricsExplorer:         implmetricsexplorer.NewHandler(modules.MetricsExplorer),
 		MetricReductionRule:     implmetricreductionrule.NewHandler(modules.MetricReductionRule),

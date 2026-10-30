@@ -173,8 +173,9 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 			return factories, "http"
 		},
 		func(ps factory.ProviderSettings, q querier.Querier, a analytics.Analytics) querier.Handler {
-			communityHandler := querier.NewHandler(ps, q, a)
-			return eequerier.NewHandler(ps, q, communityHandler)
+			queryBudget := querier.NewBudget(config.Querier)
+			communityHandler := querier.NewHandler(ps, q, a, queryBudget)
+			return eequerier.NewHandler(ps, q, communityHandler, queryBudget)
 		},
 		func(sqlStore sqlstore.SQLStore, dashboardModule dashboard.Module, global global.Global, zeus zeus.Zeus, gateway gateway.Gateway, licensing licensing.Licensing, serviceAccount serviceaccount.Module, config cloudintegration.Config) (cloudintegration.Module, error) {
 			defStore := pkgcloudintegration.NewServiceDefinitionStore()

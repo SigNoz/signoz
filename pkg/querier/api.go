@@ -33,10 +33,11 @@ type handler struct {
 	set       factory.ProviderSettings
 	analytics analytics.Analytics
 	querier   Querier
+	budget    Budget
 }
 
-func NewHandler(set factory.ProviderSettings, querier Querier, analytics analytics.Analytics) Handler {
-	return &handler{set: set, querier: querier, analytics: analytics}
+func NewHandler(set factory.ProviderSettings, querier Querier, analytics analytics.Analytics, budget Budget) Handler {
+	return &handler{set: set, querier: querier, analytics: analytics, budget: budget}
 }
 
 func (handler *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
@@ -58,8 +59,12 @@ func (handler *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Validate the query request
 	if err := queryRangeRequest.Validate(); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	if err := handler.budget.AdmitTimeRange(queryRangeRequest.Start, queryRangeRequest.End); err != nil {
 		render.Error(rw, err)
 		return
 	}
