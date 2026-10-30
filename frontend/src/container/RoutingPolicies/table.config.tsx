@@ -80,7 +80,7 @@ export function getRoutingPolicyColumns(
 			enableMove: false,
 			cell: ({ row }): JSX.Element =>
 				row.channels?.length ? (
-					<div className={styles.badges} title={row.channels.join(', ')}>
+					<div className={styles.badges}>
 						{row.channels.map((channel) => (
 							<Badge
 								key={channel}

@@ -152,14 +152,7 @@ export function getPlannedDowntimeColumns(
 			enableMove: false,
 			cell: ({ row }): JSX.Element =>
 				row.alertOptions.length ? (
-					<div
-						className={styles.badges}
-						title={row.alertOptions
-							.flatMap((alert) =>
-								typeof alert.label === 'string' ? [alert.label] : [],
-							)
-							.join(', ')}
-					>
+					<div className={styles.badges}>
 						{row.alertOptions.map((alert) => (
 							<Badge
 								key={alert.value}
