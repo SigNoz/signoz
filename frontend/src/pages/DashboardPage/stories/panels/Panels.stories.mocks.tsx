@@ -4,8 +4,8 @@
  */
 
 import { rest } from 'msw';
-import { generatePath } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import {
 	DashboardtypesHeatmapPaletteDTO as HeatmapPalette,
 	DashboardtypesHeatmapYScaleDTO as HeatmapYScale,
@@ -266,7 +266,7 @@ export const panelsMocks = defineStoryMocks({
 		];
 	},
 	config: () => ({
-		route: generatePath(ROUTES.DASHBOARD, { dashboardId: PANELS_DASHBOARD_ID }),
+		route: buildRoutePath(ROUTES.DASHBOARD, { dashboardId: PANELS_DASHBOARD_ID }),
 	}),
 	effect: (values) => {
 		seedPanelsDocument(values);

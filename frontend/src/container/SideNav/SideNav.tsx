@@ -10,7 +10,7 @@ import {
 import { useMutation } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import {
 	closestCenter,
 	DndContext,
@@ -41,7 +41,7 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { isArray } from 'lodash-es';
 import {
 	ArrowUpRight,
@@ -126,7 +126,7 @@ function SortableFilter({ item }: { item: SidebarItem }): JSX.Element {
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const { openCmdK } = useCmdK();
-	const { pathname, search } = useLocation();
+	const { pathname, search } = useAppLocation();
 	const { currentVersion, latestVersion, isCurrentVersionError } = useSelector<
 		AppState,
 		AppReducer
@@ -472,7 +472,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		if (isModifierKeyPressed(event)) {
 			openInNewTab(ROUTES.GET_STARTED_WITH_CLOUD);
 		} else {
-			history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+			navigate(ROUTES.GET_STARTED_WITH_CLOUD);
 		}
 	};
 
@@ -488,8 +488,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 				if (event && isModifierKeyPressed(event)) {
 					openInNewTab(url);
 				} else {
-					history.push(url, {
-						from: pathname,
+					navigate(url, {
+						state: { from: pathname },
 					});
 				}
 			}
@@ -637,7 +637,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			if (isModifierKeyPressed(event)) {
 				openInNewTab(settingsRoute);
 			} else {
-				history.push(settingsRoute);
+				navigate(settingsRoute);
 			}
 		} else if (item.key === 'quick-search') {
 			openCmdK();
@@ -655,7 +655,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			if (isModifierKeyPressed(event)) {
 				openInNewTab(aiPath);
 			} else {
-				history.push(aiPath);
+				navigate(aiPath);
 			}
 		} else if (item) {
 			onClickHandler(item?.key as string, event);
@@ -848,14 +848,14 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					if (event && isModifierKeyPressed(event)) {
 						openInNewTab(ROUTES.SHORTCUTS);
 					} else {
-						history.push(ROUTES.SHORTCUTS);
+						navigate(ROUTES.SHORTCUTS);
 					}
 					break;
 				case 'invite-collaborators':
 					if (event && isModifierKeyPressed(event)) {
 						openInNewTab(`${ROUTES.MEMBERS_SETTINGS}?invite=true`);
 					} else {
-						history.push(`${ROUTES.MEMBERS_SETTINGS}?invite=true`);
+						navigate(`${ROUTES.MEMBERS_SETTINGS}?invite=true`);
 					}
 					break;
 				case 'chat-support':
@@ -888,28 +888,28 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 				if (isModifierKeyPressed(event)) {
 					openInNewTab(ROUTES.MY_SETTINGS);
 				} else {
-					history.push(ROUTES.MY_SETTINGS);
+					navigate(ROUTES.MY_SETTINGS);
 				}
 				break;
 			case 'workspace':
 				if (isModifierKeyPressed(event)) {
 					openInNewTab(ROUTES.SETTINGS);
 				} else {
-					history.push(ROUTES.SETTINGS);
+					navigate(ROUTES.SETTINGS);
 				}
 				break;
 			case 'license':
 				if (isModifierKeyPressed(event)) {
 					openInNewTab(ROUTES.LIST_LICENSES);
 				} else {
-					history.push(ROUTES.LIST_LICENSES);
+					navigate(ROUTES.LIST_LICENSES);
 				}
 				break;
 			case 'keyboard-shortcuts':
 				if (isModifierKeyPressed(event)) {
 					openInNewTab(ROUTES.SHORTCUTS);
 				} else {
-					history.push(ROUTES.SHORTCUTS);
+					navigate(ROUTES.SHORTCUTS);
 				}
 				break;
 			case 'logout':

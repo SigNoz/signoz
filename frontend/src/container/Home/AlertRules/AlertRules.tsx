@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
 import { Button, Skeleton } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import logEvent from 'api/common/logEvent';
@@ -7,7 +6,9 @@ import { useListRules } from 'api/generated/services/rules';
 import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { AppLink } from 'lib/router/AppLink';
+import { navigate } from 'lib/router/navigation';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { ArrowRight, ArrowUpRight, Plus } from '@signozhq/icons';
 import Card from 'periscope/components/Card/Card';
@@ -33,7 +34,7 @@ export default function AlertRules({
 		[],
 	);
 
-	const location = useLocation();
+	const location = useAppLocation();
 	const params = new URLSearchParams(location.search);
 
 	// Fetch Alerts
@@ -88,7 +89,7 @@ export default function AlertRules({
 
 				{user?.role !== USER_ROLES.VIEWER && (
 					<div className="empty-actions-container">
-						<Link to={ROUTES.ALERTS_NEW}>
+						<AppLink to={ROUTES.ALERTS_NEW}>
 							<Button
 								type="default"
 								className="periscope-btn secondary"
@@ -99,7 +100,7 @@ export default function AlertRules({
 							>
 								Create Alert Rule
 							</Button>
-						</Link>
+						</AppLink>
 
 						<Button
 							type="link"
@@ -146,7 +147,7 @@ export default function AlertRules({
 
 		params.set(QueryParams.ruleId, record.id);
 
-		history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
+		navigate(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 	};
 
 	const renderAlertRules = (): JSX.Element => (
@@ -228,7 +229,7 @@ export default function AlertRules({
 			{rulesExist && (
 				<Card.Footer>
 					<div className="alert-rules-footer home-data-card-footer">
-						<Link to={ROUTES.LIST_ALL_ALERT}>
+						<AppLink to={ROUTES.LIST_ALL_ALERT}>
 							<Button
 								type="link"
 								className="periscope-btn link learn-more-link"
@@ -238,7 +239,7 @@ export default function AlertRules({
 							>
 								All Alert Rules <ArrowRight size={12} />
 							</Button>
-						</Link>
+						</AppLink>
 					</div>
 				</Card.Footer>
 			)}

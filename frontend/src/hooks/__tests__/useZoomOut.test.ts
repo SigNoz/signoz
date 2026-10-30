@@ -1,5 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { QueryParams } from 'constants/query';
+import { mockAppLocation } from 'tests/router-mocks';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { useZoomOut } from '../useZoomOut';
@@ -27,9 +28,7 @@ jest.mock('react-redux', () => ({
 	},
 }));
 
-jest.mock('react-router-dom', () => ({
-	useLocation: (): { pathname: string } => ({ pathname: '/logs-explorer' }),
-}));
+mockAppLocation({ pathname: '/logs-explorer' });
 
 jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): { safeNavigate: typeof mockSafeNavigate } => ({

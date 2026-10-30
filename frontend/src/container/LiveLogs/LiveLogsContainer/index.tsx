@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import FieldsSelector from 'components/FieldsSelector';
@@ -32,7 +32,7 @@ interface LiveLogsContainerProps {
 function LiveLogsContainer({
 	handleChangeSelectedView,
 }: LiveLogsContainerProps): JSX.Element {
-	const location = useLocation();
+	const location = useAppLocation();
 	const [logs, setLogs] = useState<ILiveLogsLog[]>([]);
 	const { currentQuery, stagedQuery } = useQueryBuilder();
 	const [showLiveLogsFrequencyChart, setShowLiveLogsFrequencyChart] =

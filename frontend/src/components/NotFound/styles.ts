@@ -1,7 +1,7 @@
-import { Link } from 'react-router-dom';
+import { AppLink } from 'lib/router/AppLink';
 import styled from 'styled-components';
 
-export const Button = styled(Link)`
+export const Button = styled(AppLink)`
 	border: 2px solid #2f80ed;
 	box-sizing: border-box;
 	border-radius: 10px;

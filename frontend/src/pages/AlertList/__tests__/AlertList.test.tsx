@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { mockAppLocation } from 'tests/router-mocks';
 
 import AlertList from '../index';
 
@@ -14,12 +15,6 @@ const ROUTING_POLICIES_TEXT = 'Routing Policies';
 const CHANNELS_SUB_TAB = 'channels';
 const PLANNED_DOWNTIME_SUB_TAB = 'planned-downtime';
 const ROUTING_POLICIES_SUB_TAB = 'routing-policies';
-
-const mockUseLocation = jest.fn();
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): unknown => mockUseLocation(),
-}));
 
 let mockUrlQuery: URLSearchParams;
 jest.mock('hooks/useUrlQuery', () => ({
@@ -78,9 +73,7 @@ jest.mock('container/ListAlertRules', () => ({
 }));
 
 const mockLocation = (pathname: string): void => {
-	mockUseLocation.mockReturnValue({
-		pathname,
-	});
+	mockAppLocation({ pathname });
 };
 
 const mockQueryParams = (params: Record<string, string | null>): void => {

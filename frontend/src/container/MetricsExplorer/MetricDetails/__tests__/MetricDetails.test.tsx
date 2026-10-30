@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import * as metricsExplorerHooks from 'api/generated/services/metrics';
-import ROUTES from 'constants/routes';
 import * as useHandleExplorerTabChange from 'hooks/useHandleExplorerTabChange';
 import { userEvent } from 'tests/test-utils';
 
@@ -18,12 +17,6 @@ jest
 		handleExplorerTabChange: mockHandleExplorerTabChange,
 	});
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string } => ({
-		pathname: `${ROUTES.METRICS_EXPLORER}`,
-	}),
-}));
 jest.mock('react-redux', () => ({
 	...jest.requireActual('react-redux'),
 	useSelector: jest.fn().mockReturnValue({
