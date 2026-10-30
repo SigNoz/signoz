@@ -20,9 +20,9 @@ func makeBuckets(start, end uint64) []tsRange {
 	curEnd := endNS
 
 	for {
-		curStart := curEnd - bucket
-		if curStart < startNS {
-			curStart = startNS
+		curStart := startNS
+		if curEnd-startNS > bucket {
+			curStart = curEnd - bucket
 		}
 		out = append(out, tsRange{fromNS: curStart, toNS: curEnd})
 
