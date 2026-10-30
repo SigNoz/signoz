@@ -3,8 +3,10 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import { MetricsexplorertypesTreemapModeDTO } from 'api/generated/services/sigNoz.schemas';
+import { useResizeObserver } from 'hooks/useDimensions';
 import store from 'store';
 
+import { TREEMAP_MIN_WIDTH } from '../constants';
 import MetricsTreemap from '../MetricsTreemap';
 
 jest.mock('d3-hierarchy', () => ({
@@ -22,9 +24,13 @@ jest.mock('d3-hierarchy', () => ({
 	}),
 	treemapBinary: jest.fn(),
 }));
-jest.mock('react-use', () => ({
-	useWindowSize: jest.fn().mockReturnValue({ width: 1000, height: 1000 }),
+jest.mock('hooks/useDimensions', () => ({
+	useResizeObserver: jest.fn().mockReturnValue({ width: 1000, height: 200 }),
 }));
+
+const mockUseResizeObserver = useResizeObserver as jest.MockedFunction<
+	typeof useResizeObserver
+>;
 
 const mockData = [
 	{
@@ -132,4 +138,40 @@ describe('MetricsTreemap', () => {
 		expect(screen.getByTestId('metrics-treemap-empty-state')).toBeInTheDocument();
 		expect(screen.getByText('No metrics found')).toBeInTheDocument();
 	});
+
+	it.each([
+		{ containerWidth: 640, expectedWidth: 640 },
+		{ containerWidth: 120, expectedWidth: TREEMAP_MIN_WIDTH },
+	])(
+		'sizes the treemap to a $containerWidth px container',
+		({ containerWidth, expectedWidth }) => {
+			mockUseResizeObserver.mockReturnValueOnce({
+				width: containerWidth,
+				height: 200,
+			});
+
+			render(
+				<MemoryRouter>
+					<Provider store={store}>
+						<MetricsTreemap
+							isLoading={false}
+							isError={false}
+							data={{
+								timeseries: [mockData[0]],
+								samples: [mockData[1]],
+							}}
+							openMetricDetails={jest.fn()}
+							viewType={MetricsexplorertypesTreemapModeDTO.samples}
+							setHeatmapView={jest.fn()}
+						/>
+					</Provider>
+				</MemoryRouter>,
+			);
+
+			expect(screen.getByTestId('metrics-treemap-svg')).toHaveAttribute(
+				'width',
+				String(expectedWidth),
+			);
+		},
+	);
 });

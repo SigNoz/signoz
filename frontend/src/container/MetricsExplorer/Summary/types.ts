@@ -62,6 +62,7 @@ export interface MetricsTreemapInternalProps {
 		view: 'list' | 'treemap',
 		event?: React.MouseEvent,
 	) => void;
+	width: number;
 }
 
 export interface OrderByPayload {
