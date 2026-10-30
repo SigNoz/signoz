@@ -24,6 +24,9 @@ type prometheusOpenAPIHandler struct {
 	id          string
 	summary     string
 	params      any
+	// success documents the 200 response shape. Defaults to
+	// prometheus.SuccessResponseSchema{} (the query/query_range shape) when nil.
+	success any
 }
 
 func (h *prometheusOpenAPIHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -47,8 +50,12 @@ func (h *prometheusOpenAPIHandler) ServeOpenAPI(opCtx openapi.OperationContext) 
 
 	opCtx.AddReqStructure(h.params)
 
+	success := h.success
+	if success == nil {
+		success = prometheus.SuccessResponseSchema{}
+	}
 	opCtx.AddRespStructure(
-		prometheus.SuccessResponseSchema{},
+		success,
 		openapi.WithContentType("application/json"),
 		openapi.WithHTTPStatus(http.StatusOK),
 	)
@@ -94,6 +101,36 @@ func (provider *provider) addPrometheusRoutes(router *mux.Router) error {
 		id:          "PrometheusQueryRange",
 		summary:     "Prometheus range query",
 		params:      new(prometheus.QueryRangeParamsSchema),
+	}).Methods(http.MethodGet, http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/prometheus/api/v1/labels", &prometheusOpenAPIHandler{
+		handlerFunc: provider.authzMiddleware.CheckResources(provider.prometheusHandler.Labels, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		id:          "PrometheusLabels",
+		summary:     "Prometheus label names",
+		params:      new(prometheus.LabelsParamsSchema),
+		success:     prometheus.LabelsSuccessResponseSchema{},
+	}).Methods(http.MethodGet, http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/prometheus/api/v1/label/{name}/values", &prometheusOpenAPIHandler{
+		handlerFunc: provider.authzMiddleware.CheckResources(provider.prometheusHandler.LabelValues, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		id:          "PrometheusLabelValues",
+		summary:     "Prometheus label values",
+		params:      new(prometheus.LabelsParamsSchema),
+		success:     prometheus.LabelsSuccessResponseSchema{},
+	}).Methods(http.MethodGet, http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/prometheus/api/v1/series", &prometheusOpenAPIHandler{
+		handlerFunc: provider.authzMiddleware.CheckResources(provider.prometheusHandler.Series, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		id:          "PrometheusSeries",
+		summary:     "Prometheus series",
+		params:      new(prometheus.SeriesParamsSchema),
+		success:     prometheus.SeriesSuccessResponseSchema{},
 	}).Methods(http.MethodGet, http.MethodPost).GetError(); err != nil {
 		return err
 	}
