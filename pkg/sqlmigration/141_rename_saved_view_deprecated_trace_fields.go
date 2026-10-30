@@ -12,19 +12,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 )
 
-type storableSavedViewTraceFieldsRow struct {
-	bun.BaseModel `bun:"table:saved_view"`
-
-	ID     string `bun:"id,pk,type:text"`
-	Source string `bun:"source,type:text"`
-	Data   string `bun:"data,type:text"`
-}
-
-type renamedTraceField struct {
-	name         string
-	fieldContext string
-}
-
 // deprecatedTraceFields maps the legacy camelCase trace fields to their current key.
 var deprecatedTraceFields = map[string]renamedTraceField{
 	"traceID":            {"trace_id", "span"},
@@ -56,15 +43,28 @@ var deprecatedTraceFields = map[string]renamedTraceField{
 	"peerService":        {"peer.service", "attribute"},
 }
 
-type renameSavedViewDeprecatedTraceFields struct {
-	sqlstore sqlstore.SQLStore
-	settings factory.ProviderSettings
-}
-
 func NewRenameSavedViewDeprecatedTraceFieldsFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(factory.MustNewName("rename_saved_view_deprecated_trace_fields"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
 		return &renameSavedViewDeprecatedTraceFields{sqlstore: sqlstore, settings: ps}, nil
 	})
+}
+
+type storableSavedViewTraceFieldsRow struct {
+	bun.BaseModel `bun:"table:saved_view"`
+
+	ID     string `bun:"id,pk,type:text"`
+	Source string `bun:"source,type:text"`
+	Data   string `bun:"data,type:text"`
+}
+
+type renamedTraceField struct {
+	name         string
+	fieldContext string
+}
+
+type renameSavedViewDeprecatedTraceFields struct {
+	sqlstore sqlstore.SQLStore
+	settings factory.ProviderSettings
 }
 
 func (migration *renameSavedViewDeprecatedTraceFields) Register(migrations *migrate.Migrations) error {
@@ -152,7 +152,7 @@ func renameDeprecatedTraceFields(data string) (renamed string, changed bool, ok 
 }
 
 // renameDeprecatedTraceFieldList renames deprecated entries, keeping every other key
-// of the entry as is. A renamed entry whose new name is already selected is dropped.
+// of the entry as is. A renamed entry already selected with the same context is dropped.
 func renameDeprecatedTraceFieldList(fieldsRaw json.RawMessage) (json.RawMessage, bool, bool) {
 	if isJSONNull(fieldsRaw) {
 		return nil, false, true
@@ -163,27 +163,28 @@ func renameDeprecatedTraceFieldList(fieldsRaw json.RawMessage) (json.RawMessage,
 		return nil, false, false
 	}
 
-	names := make([]string, len(fields))
-	selected := make(map[string]struct{}, len(fields))
+	keys := make([]renamedTraceField, len(fields))
+	selected := make(map[renamedTraceField]struct{}, len(fields))
 	for i, field := range fields {
-		_ = json.Unmarshal(field["name"], &names[i])
-		selected[names[i]] = struct{}{}
+		_ = json.Unmarshal(field["name"], &keys[i].name)
+		_ = json.Unmarshal(field["fieldContext"], &keys[i].fieldContext)
+		selected[keys[i]] = struct{}{}
 	}
 
 	changed := false
 	renamedFields := make([]map[string]json.RawMessage, 0, len(fields))
 	for i, field := range fields {
-		renamedField, ok := deprecatedTraceFields[names[i]]
+		renamedField, ok := deprecatedTraceFields[keys[i].name]
 		if !ok {
 			renamedFields = append(renamedFields, field)
 			continue
 		}
 
 		changed = true
-		if _, ok := selected[renamedField.name]; ok {
+		if _, ok := selected[renamedField]; ok {
 			continue
 		}
-		selected[renamedField.name] = struct{}{}
+		selected[renamedField] = struct{}{}
 
 		field["name"], _ = json.Marshal(renamedField.name)
 		field["fieldContext"], _ = json.Marshal(renamedField.fieldContext)
