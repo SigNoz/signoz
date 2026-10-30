@@ -260,3 +260,27 @@ func TestCloneableConcurrentSetGet(t *testing.T) {
 		assert.NotSame(t, cachedCloneable, cloneables[i])
 	}
 }
+
+func TestGetMany(t *testing.T) {
+	cache, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
+		NumCounters: 10 * 1000,
+		MaxCost:     1 << 26,
+	}})
+	require.NoError(t, err)
+
+	orgID := valuer.GenerateUUID()
+	require.NoError(t, cache.Set(context.Background(), orgID, "first", &CloneableA{Key: "first", Value: 1}, 10*time.Second))
+	require.NoError(t, cache.Set(context.Background(), orgID, "third", &CloneableA{Key: "third", Value: 3}, 10*time.Second))
+
+	// bytes that are not JSON cannot be read into a CloneableA
+	memory := cache.(*provider)
+	memory.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), "fourth"}, "::"), []byte("not json"), 1, 10*time.Second)
+	memory.cc.Wait()
+
+	dests := []cachetypes.Cacheable{new(CloneableA), new(CloneableA), new(CloneableA), new(CloneableA)}
+	err = cache.GetMany(context.Background(), orgID, []string{"first", "second", "third", "fourth"}, dests)
+
+	// the unreadable key is reported and nilled, the readable ones are still served
+	assert.Error(t, err)
+	assert.Equal(t, []cachetypes.Cacheable{&CloneableA{Key: "first", Value: 1}, nil, &CloneableA{Key: "third", Value: 3}, nil}, dests)
+}
