@@ -206,6 +206,30 @@ func TestFormat_OpenAIChat(t *testing.T) {
 			wantOutput: `[]`,
 		},
 		{
+			// Langfuse SDK generation: the history as a list, the first choice's message as the output
+			name:       "SingleMessageOutput_AssistantMessage",
+			input:      `[{"role": "system", "content": "You are a support agent on a phone call."}, {"role": "user", "content": "Hello?"}]`,
+			output:     `{"role": "assistant", "content": "Hi, this is a courtesy call about your order. Do you have a minute?"}`,
+			wantInput:  `[{"role": "system", "parts": [{"type": "text", "content": "You are a support agent on a phone call."}]}, {"role": "user", "parts": [{"type": "text", "content": "Hello?"}]}]`,
+			wantOutput: `[{"role": "assistant", "parts": [{"type": "text", "content": "Hi, this is a courtesy call about your order. Do you have a minute?"}]}]`,
+		},
+		{
+			// a structured output that happens to carry a role key is not a message
+			name:       "ObjectWithRoleKeyButNoContent_KeptAsGeneric",
+			output:     `{"role": "admin", "permissions": ["read", "write"]}`,
+			warnings:   []string{"message format not recognised, kept as generic"},
+			wantInput:  `[]`,
+			wantOutput: `[{"role": "", "parts": [{"type": "generic", "content": "{\"permissions\":[\"read\",\"write\"],\"role\":\"admin\"}"}]}]`,
+		},
+		{
+			// Langfuse LangChain handler: the additional_kwargs of the AIMessage, without a role, as the output
+			// of a tool-calling turn
+			name:       "RolelessToolCallsOutput_AssistantToolCallPart",
+			output:     `{"tool_calls": [{"id": "call_1", "type": "function", "function": {"name": "get_weather", "arguments": "{\"city\": \"Oslo\"}"}}], "refusal": null}`,
+			wantInput:  `[]`,
+			wantOutput: `[{"role": "assistant", "parts": [{"type": "tool_call", "name": "get_weather", "id": "call_1", "arguments": {"city": "Oslo"}}]}]`,
+		},
+		{
 			name:      "ResponseWithScalarChoice_KeptAsGeneric",
 			output:    `{"choices":["oops",{"finish_reason":"stop","index":1,"message":{"role":"assistant","content":"hi"}}]}`,
 			wantInput: `[]`,
