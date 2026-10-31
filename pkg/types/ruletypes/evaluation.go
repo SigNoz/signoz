@@ -224,7 +224,9 @@ func (cumulativeWindow CumulativeWindow) getLastScheduleTime(curr time.Time, loc
 
 		candidate := time.Date(curr.Year(), curr.Month(), dayInCurrentMonth, hour, minute, 0, 0, loc)
 		if candidate.After(curr) {
-			prevMonth := curr.AddDate(0, -1, 0)
+			// AddDate would overflow on the 29th-31st (Mar 31 minus a month is Mar 3),
+			// so step back from the first of the month instead.
+			prevMonth := time.Date(curr.Year(), curr.Month()-1, 1, 0, 0, 0, 0, loc)
 			lastDayOfPrevMonth := time.Date(prevMonth.Year(), prevMonth.Month()+1, 0, 0, 0, 0, 0, loc).Day()
 			dayInPrevMonth := targetDay
 			if targetDay > lastDayOfPrevMonth {
