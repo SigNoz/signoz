@@ -283,4 +283,27 @@ test.describe('Alert history — expression filter', () => {
 			`of ${alertHistory.total}`,
 		);
 	});
+
+	test('TC-13 a state filter clicked after a run keeps the expression', async ({
+		authedPage: page,
+		alertHistory,
+	}) => {
+		await gotoAlertHistory(page, alertHistory.ruleId);
+		const expression = `service.name = '${alertHistory.services[3]}'`;
+		const firstResponsePromise = waitForHistoryResponse(page, 'timeline');
+		await runFilterExpression(page, expression);
+		await firstResponsePromise;
+
+		const requestPromise = page.waitForRequest((req) =>
+			isHistoryRequest(req, 'timeline'),
+		);
+		await page.getByTestId('timeline-filter-fired').click();
+		const request = await requestPromise;
+
+		const params = requestUrl(request).searchParams;
+		expect(params.get('state')).toBe('firing');
+		expect(params.get('filterExpression')).toBe(expression);
+		await expect(page).toHaveURL(/[?&]alertHistoryExpression=/);
+		await expect(timelineRows(page)).toHaveCount(1);
+	});
 });
