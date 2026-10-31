@@ -47,12 +47,26 @@ export function QuerySearchV2Provider({
 		store.getState().setInitialExpression(initialExpression);
 	}, [initialExpression, store]);
 
+	const adoptedUrlExpression = useRef<string | null | undefined>(undefined);
 	// The URL owns the expression, in both directions. A provider can outlive the
 	// navigation away from the page it belongs to (a route-driven tab keeps the
 	// leaving pane mounted until its animation ends), so treating a param that
 	// disappeared as something to restore republishes it onto the URL of the page
 	// being entered.
 	useEffect(() => {
+		const previousUrlExpression = adoptedUrlExpression.current;
+		adoptedUrlExpression.current = urlExpression;
+		// Only a URL change is adopted: a new initial expression arrives with
+		// whatever a child ran for it, which the URL has not caught up with yet.
+		if (urlExpression === previousUrlExpression) {
+			return;
+		}
+		// On mount an empty URL has nothing to adopt, and children run their mount
+		// effects first: an expression one of them ran is already committed.
+		if (previousUrlExpression === undefined && !urlExpression) {
+			return;
+		}
+
 		const userExpression = getUserExpressionFromCombined(
 			initialExpression,
 			urlExpression,
