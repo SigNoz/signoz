@@ -21,6 +21,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/aiobservability"
+	"github.com/SigNoz/signoz/pkg/modules/annotations"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
@@ -82,6 +83,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ metricsexplorer.Handler }{},
 		struct{ metricreductionrule.Handler }{},
 		struct{ inframonitoring.Handler }{},
+		struct{ annotations.Handler }{},
 		struct{ gateway.Handler }{},
 		struct{ gateway.Gateway }{},
 		struct{ fields.Handler }{},

@@ -9,6 +9,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/modules/annotations"
+	"github.com/SigNoz/signoz/pkg/modules/annotations/implannotations"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
@@ -85,6 +87,7 @@ type Modules struct {
 	MetricsExplorer      metricsexplorer.Module
 	MetricReductionRule  metricreductionrule.Module
 	InfraMonitoring      inframonitoring.Module
+	Annotations          annotations.Module
 	Promote              promote.Module
 	ServiceAccount       serviceaccount.Module
 	ServiceAccountGetter serviceaccount.Getter
@@ -155,6 +158,7 @@ func NewModules(
 		MetricsExplorer:      implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, fl, providerSettings, config.MetricsExplorer),
 		MetricReductionRule:  metricReductionRule,
 		InfraMonitoring:      implinframonitoring.NewModule(telemetryStore, telemetryMetadataStore, querier, fl, providerSettings, config.InfraMonitoring),
+		Annotations:          implannotations.NewModule(telemetryStore, telemetryMetadataStore, fl, providerSettings),
 		Promote:              implpromote.NewModule(telemetryMetadataStore, telemetryStore, providerSettings),
 		ServiceAccount:       serviceAccount,
 		ServiceAccountGetter: serviceAccountGetter,

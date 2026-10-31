@@ -350,6 +350,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.MetricsExplorer,
 			handlers.MetricReductionRule,
 			handlers.InfraMonitoring,
+			handlers.Annotations,
 			handlers.GatewayHandler,
 			gatewayService,
 			handlers.Fields,

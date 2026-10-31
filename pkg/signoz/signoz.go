@@ -570,6 +570,7 @@ func New(
 		cloudIntegrationModule,
 		modules.LogsPipeline,
 		modules.InfraMonitoring,
+		modules.Annotations,
 		querier,
 		authz,
 	}

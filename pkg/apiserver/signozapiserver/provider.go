@@ -18,6 +18,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/aiobservability"
+	"github.com/SigNoz/signoz/pkg/modules/annotations"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
@@ -73,6 +74,7 @@ type provider struct {
 	metricsExplorerHandler     metricsexplorer.Handler
 	metricReductionRuleHandler metricreductionrule.Handler
 	infraMonitoringHandler     inframonitoring.Handler
+	annotationsHandler         annotations.Handler
 	gatewayHandler             gateway.Handler
 	gatewayService             gateway.Gateway
 	fieldsHandler              fields.Handler
@@ -119,6 +121,7 @@ func NewFactory(
 	metricsExplorerHandler metricsexplorer.Handler,
 	metricReductionRuleHandler metricreductionrule.Handler,
 	infraMonitoringHandler inframonitoring.Handler,
+	annotationsHandler annotations.Handler,
 	gatewayHandler gateway.Handler,
 	gatewayService gateway.Gateway,
 	fieldsHandler fields.Handler,
@@ -173,6 +176,7 @@ func NewFactory(
 			metricsExplorerHandler,
 			metricReductionRuleHandler,
 			infraMonitoringHandler,
+			annotationsHandler,
 			gatewayHandler,
 			gatewayService,
 			fieldsHandler,
@@ -229,6 +233,7 @@ func newProvider(
 	metricsExplorerHandler metricsexplorer.Handler,
 	metricReductionRuleHandler metricreductionrule.Handler,
 	infraMonitoringHandler inframonitoring.Handler,
+	annotationsHandler annotations.Handler,
 	gatewayHandler gateway.Handler,
 	gatewayService gateway.Gateway,
 	fieldsHandler fields.Handler,
@@ -285,6 +290,7 @@ func newProvider(
 		metricsExplorerHandler:     metricsExplorerHandler,
 		metricReductionRuleHandler: metricReductionRuleHandler,
 		infraMonitoringHandler:     infraMonitoringHandler,
+		annotationsHandler:         annotationsHandler,
 		gatewayHandler:             gatewayHandler,
 		gatewayService:             gatewayService,
 		fieldsHandler:              fieldsHandler,
@@ -428,6 +434,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addInfraMonitoringRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addAnnotationsRoutes(router); err != nil {
 		return err
 	}
 
