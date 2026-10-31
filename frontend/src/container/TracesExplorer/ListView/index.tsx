@@ -204,7 +204,7 @@ function ListView({
 		[queryTableData],
 	);
 
-	const { tableProps, drawerProps } = useSpanDrawer(rows);
+	const { tableProps, drawerProps, onPressInside } = useSpanDrawer(rows);
 
 	const handleColumnOrderChange = useCallback(
 		(cols: TableColumnDef<TracesTableRow>[]): void => {
@@ -257,23 +257,26 @@ function ListView({
 				/>
 			</div>
 
-			<TracesTable
-				data={rows}
-				columns={columns}
-				columnStorageKey={LOCALSTORAGE.TRACES_LIST_COLUMNS}
-				panelType="LIST"
-				getRowHref={getTraceLink}
-				{...tableProps}
-				isLoading={isLoading}
-				isFetching={isFetching}
-				isError={isError}
-				error={error}
-				isFilterApplied={isFilterApplied}
-				onColumnOrderChange={handleColumnOrderChange}
-				onColumnRemove={config?.addColumn?.onRemove}
-			/>
+			{/* A press in the table or the drawer (a portal) keeps the drawer open. */}
+			<div className={styles.drawerScope} onPointerDownCapture={onPressInside}>
+				<TracesTable
+					data={rows}
+					columns={columns}
+					columnStorageKey={LOCALSTORAGE.TRACES_LIST_COLUMNS}
+					panelType="LIST"
+					getRowHref={getTraceLink}
+					{...tableProps}
+					isLoading={isLoading}
+					isFetching={isFetching}
+					isError={isError}
+					error={error}
+					isFilterApplied={isFilterApplied}
+					onColumnOrderChange={handleColumnOrderChange}
+					onColumnRemove={config?.addColumn?.onRemove}
+				/>
 
-			{drawerProps && <SpanDrawer {...drawerProps} />}
+				{drawerProps && <SpanDrawer {...drawerProps} />}
+			</div>
 		</div>
 	);
 }

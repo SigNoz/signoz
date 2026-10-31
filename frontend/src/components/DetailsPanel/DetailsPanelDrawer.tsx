@@ -36,7 +36,7 @@ function DetailsPanelDrawer({
 						direction="right"
 						width="extra-wide"
 						showOverlay={false}
-						// The page stays usable behind the drawer; only close or Esc dismiss it.
+						// Outside presses are left to the page, which knows what counts as inside.
 						onInteractOutside={(e): void => e.preventDefault()}
 						className={cx(styles.drawer, className)}
 						testId={testId}

@@ -289,4 +289,25 @@ describe('Traces ListView - span drawer', () => {
 			expect(screen.queryByTestId('span-details-drawer')).not.toBeInTheDocument(),
 		);
 	});
+
+	it('stays open on a press in the drawer or the list, and closes on one outside', async () => {
+		const user = userEvent.setup();
+		renderListView();
+
+		await user.click(await screen.findByText('HTTP GET'));
+		const drawer = await screen.findByTestId('span-details-drawer');
+
+		await user.click(drawer);
+		// Hovering re-renders the row, so the press needs a fresh query.
+		await user.hover(screen.getByText('authenticate_check_db'));
+		await user.click(screen.getByText('authenticate_check_db'));
+		await expect(
+			within(drawer).findByText('authenticate_check_db'),
+		).resolves.toBeInTheDocument();
+
+		await user.click(document.body);
+		await waitFor(() =>
+			expect(screen.queryByTestId('span-details-drawer')).not.toBeInTheDocument(),
+		);
+	});
 });

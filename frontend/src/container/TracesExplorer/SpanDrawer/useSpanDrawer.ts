@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { PointerEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRowNavigation } from 'components/TanStackTableView/useRowNavigation';
 import { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
 import type { TracesTableProps } from 'container/TracesExplorer/TracesTable/TracesTable';
+import { useCloseOnOutsidePress } from 'hooks/useCloseOnOutsidePress';
 
 import type { SpanDrawerProps } from './SpanDrawer';
 import { isSpanDrawerEnabled } from './utils';
@@ -15,6 +16,8 @@ type UseSpanDrawerResult = {
 	>;
 	/** Null while the drawer flag is off. */
 	drawerProps: SpanDrawerProps | null;
+	/** `onPointerDownCapture` for the area a press keeps the drawer open in. */
+	onPressInside: (event: PointerEvent) => void;
 };
 
 export function useSpanDrawer(rows: TracesTableRow[]): UseSpanDrawerResult {
@@ -57,6 +60,11 @@ export function useSpanDrawer(rows: TracesTableRow[]): UseSpanDrawerResult {
 		}
 	}, [activeSpan, activeRowIndex]);
 
+	const onPressInside = useCloseOnOutsidePress(
+		isEnabled && activeRowIndex !== -1,
+		clearActiveSpan,
+	);
+
 	const navigation = useRowNavigation({
 		rows,
 		activeIndex: activeRowIndex,
@@ -64,7 +72,7 @@ export function useSpanDrawer(rows: TracesTableRow[]): UseSpanDrawerResult {
 	});
 
 	if (!isEnabled) {
-		return { tableProps: {}, drawerProps: null };
+		return { tableProps: {}, drawerProps: null, onPressInside };
 	}
 
 	return {
@@ -74,5 +82,6 @@ export function useSpanDrawer(rows: TracesTableRow[]): UseSpanDrawerResult {
 			onClose: clearActiveSpan,
 			navigation,
 		},
+		onPressInside,
 	};
 }
