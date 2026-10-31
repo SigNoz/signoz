@@ -3217,6 +3217,127 @@ export interface AlertmanagertypesUpdatableNotificationChannelDTO {
 	config: AlertmanagertypesChannelConfigDTO;
 }
 
+export enum AnnotationtypesAnnotationDeploymentDTOKind {
+	deployment = 'deployment',
+}
+export enum TelemetrytypesSignalDTO {
+	traces = 'traces',
+	logs = 'logs',
+	metrics = 'metrics',
+	'' = '',
+}
+export type AnnotationtypesDeploymentSpecDTOResourceAttributesAnyOf = {
+	[key: string]: string;
+};
+
+/**
+ * @nullable
+ */
+export type AnnotationtypesDeploymentSpecDTOResourceAttributes = AnnotationtypesDeploymentSpecDTOResourceAttributesAnyOf | null;
+
+export interface AnnotationtypesDeploymentSpecDTO {
+	/**
+	 * @type string
+	 */
+	environment: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	firstSeen: number;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	logId: string;
+	/**
+	 * @type object,null
+	 */
+	resourceAttributes: AnnotationtypesDeploymentSpecDTOResourceAttributes;
+	/**
+	 * @type string
+	 */
+	service: string;
+	signal: TelemetrytypesSignalDTO;
+	/**
+	 * @type string
+	 */
+	spanId: string;
+	/**
+	 * @type string
+	 */
+	traceId: string;
+	/**
+	 * @type string
+	 */
+	version: string;
+}
+
+export interface AnnotationtypesAnnotationDeploymentDTO {
+	/**
+	 * @type string
+	 * @enum deployment
+	 */
+	kind: AnnotationtypesAnnotationDeploymentDTOKind;
+	spec: AnnotationtypesDeploymentSpecDTO;
+}
+
+export type AnnotationtypesAnnotationDTO =
+	AnnotationtypesAnnotationDeploymentDTO;
+
+export enum AnnotationtypesAnnotationKindDTO {
+	deployment = 'deployment',
+}
+export interface AnnotationtypesAnnotationsDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	historyAvailableFrom: number;
+	/**
+	 * @type array,null
+	 */
+	records: AnnotationtypesAnnotationDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	total: number;
+}
+
+export interface Querybuildertypesv5FilterDTO {
+	/**
+	 * @type string
+	 * @description A filter in the query filter syntax: comparisons such as =, !=, <, >, IN, LIKE, CONTAINS and EXISTS on field names, combined with AND, OR and NOT, with string values in single quotes, for example key = 'value' AND other_key > 10. Which fields exist depends on the signal or endpoint the filter is used with.
+	 */
+	expression?: string;
+}
+
+export interface AnnotationtypesPostableAnnotationsDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
+	kind: AnnotationtypesAnnotationKindDTO;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type array,null
+	 */
+	signals?: TelemetrytypesSignalDTO[] | null;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
 export interface AuthtypesAttributeMappingDTO {
 	/**
 	 * @type string
@@ -5012,14 +5133,6 @@ export type Querybuildertypesv5BucketOptionsDTO =
 	| Querybuildertypesv5BucketOptionsLinearDTO
 	| Querybuildertypesv5BucketOptionsLogDTO;
 
-export interface Querybuildertypesv5FilterDTO {
-	/**
-	 * @type string
-	 * @description A filter in the query filter syntax: comparisons such as =, !=, <, >, IN, LIKE, CONTAINS and EXISTS on field names, combined with AND, OR and NOT, with string values in single quotes, for example key = 'value' AND other_key > 10. Which fields exist depends on the signal or endpoint the filter is used with.
-	 */
-	expression?: string;
-}
-
 /**
  * The argument value as a number, string or boolean, for example the threshold for cutOffMin or the duration for timeShift.
  */
@@ -5086,12 +5199,6 @@ export enum TelemetrytypesFieldDataTypeDTO {
 	float64 = 'float64',
 	int64 = 'int64',
 	number = 'number',
-	'' = '',
-}
-export enum TelemetrytypesSignalDTO {
-	traces = 'traces',
-	logs = 'logs',
-	metrics = 'metrics',
 	'' = '',
 }
 export interface Querybuildertypesv5GroupByKeyDTO {
@@ -14571,6 +14678,14 @@ export type GetAlerts200 = {
 	 * @type array
 	 */
 	data: AlertmanagertypesDeprecatedGettableAlertDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListAnnotations200 = {
+	data: AnnotationtypesAnnotationsDTO;
 	/**
 	 * @type string
 	 */
