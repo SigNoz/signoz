@@ -1,6 +1,8 @@
 import { Tabs, TabsProps } from 'antd';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { useAppParams } from 'lib/router/useAppParams';
 import { QueryParams } from 'constants/query';
+import ROUTES from 'constants/routes';
 import DBCall from 'container/MetricsApplication/Tabs/DBCall';
 import External from 'container/MetricsApplication/Tabs/External';
 import Overview from 'container/MetricsApplication/Tabs/Overview';
@@ -15,9 +17,7 @@ import useMetricsApplicationTabKey from './useMetricsApplicationTabKey';
 import './MetricsApplication.styles.scss';
 
 function MetricsApplication(): JSX.Element {
-	const { servicename: encodedServiceName } = useAppParams<{
-		servicename: string;
-	}>();
+	const { servicename } = useAppParams<'servicename'>();
 
 	const activeKey = useMetricsApplicationTabKey();
 
@@ -44,7 +44,9 @@ function MetricsApplication(): JSX.Element {
 
 	const onTabChange = (tab: string): void => {
 		urlQuery.set(QueryParams.tab, tab);
-		safeNavigate(`/services/${encodedServiceName}?${urlQuery.toString()}`);
+		safeNavigate(
+			`${buildRoutePath(ROUTES.SERVICE_METRICS, { servicename })}?${urlQuery.toString()}`,
+		);
 	};
 
 	return (

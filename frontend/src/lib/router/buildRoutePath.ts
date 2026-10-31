@@ -6,8 +6,8 @@ import { generatePath } from 'react-router';
  * Param values are passed raw and come back percent-encoded. `generatePath`
  * runs each one through `encodeURIComponent`, so a value can never introduce
  * extra path segments or a query string. A value that is already encoded gets
- * encoded twice: read params back with `matchRoute` / `useAppParams`, which
- * un-escape only `%2F`, and decode before passing one here.
+ * encoded twice. `useAppParams` values are already decoded; `matchRoute` ones
+ * un-escape only `%2F`, so decode those before passing one here.
  *
  * v7's `generatePath` types params as `string | null`, so non-strings are
  * stringified here. `undefined` values are dropped, which leaves an optional
