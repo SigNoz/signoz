@@ -26,7 +26,7 @@ const SEEDS: PolicySeed[] = [
 		name: 'Critical production to on-call',
 		description: 'Anything critical in prod pages whoever is on call.',
 		expression: 'severity = "critical" AND env = "prod"',
-		channels: [1, 0],
+		channels: [1, 0, 3, 4, 2, 5],
 	},
 	{
 		name: 'Payments team ownership',

@@ -31,7 +31,7 @@ type TanStackHeaderRowProps<TData = unknown> = {
 	onRemoveColumn?: (columnId: string) => void;
 	orderBy?: SortState | null;
 	onSort?: (sort: SortState | null) => void;
-	/** Last column cannot be resized */
+	/** The fill column and any after it cannot be resized */
 	isLastColumn?: boolean;
 };
 

@@ -202,6 +202,29 @@ describe('useRoutingPolicies', () => {
 		expect(callArg).toContain('search=test+search');
 	});
 
+	it('should preserve existing query parameters such as sort and pagination when updating search (Bug 54)', async () => {
+		const { result } = renderHookWithWrapper(
+			'/alerts?tab=Configuration&subTab=routing-policies&orderBy=name&order=asc&page=2&limit=20',
+		);
+
+		act(() => {
+			result.current.setSearchTerm('policy');
+		});
+
+		await waitFor(() => {
+			expect(mockNavigate).toHaveBeenCalled();
+		});
+
+		const callArg = mockNavigate.mock.calls[0][0];
+		expect(callArg).toContain('tab=Configuration');
+		expect(callArg).toContain('subTab=routing-policies');
+		expect(callArg).toContain('orderBy=name');
+		expect(callArg).toContain('order=asc');
+		expect(callArg).toContain('page=2');
+		expect(callArg).toContain('limit=20');
+		expect(callArg).toContain('search=policy');
+	});
+
 	it('should remove search param from URL when search is cleared', async () => {
 		const { result } = renderHookWithWrapper('/alerts?search=existing');
 

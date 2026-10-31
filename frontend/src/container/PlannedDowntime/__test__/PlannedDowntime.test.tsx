@@ -10,8 +10,7 @@ import {
 	AlertmanagertypesRepeatTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
-import { mockLocation } from 'container/RoutingPolicies/__tests__/testUtils';
-import { mockAppLocation } from 'tests/router-mocks';
+import { mockAppLocation, mockNavigate } from 'tests/router-mocks';
 import { render, userEvent } from 'tests/test-utils';
 import { USER_ROLES } from 'types/roles';
 
@@ -102,8 +101,6 @@ const mockDowntimeQueryResult: Partial<DowntimeQueryResult> = {
 
 let mockUrlQuery: URLSearchParams;
 
-mockAppLocation({ pathname: '/alerts' });
-
 jest.mock('hooks/useUrlQuery', () => ({
 	__esModule: true,
 	default: (): URLSearchParams => mockUrlQuery,
@@ -127,29 +124,44 @@ jest.mock('api/generated/services/downtimeschedules', () => ({
 		isLoading: false,
 	}),
 }));
+
+let mockRulesState: {
+	data?: { data: Array<{ id: number | string; alert: string }> };
+	isError: boolean;
+	isLoading: boolean;
+	isFetching: boolean;
+} = {
+	data: { data: [] },
+	isError: false,
+	isLoading: false,
+	isFetching: false,
+};
+
 jest.mock('api/generated/services/rules', () => ({
-	useListRules: (): {
-		data: { data: [] };
-		isError: false;
-		isLoading: false;
-	} => ({
-		data: { data: [] },
-		isError: false,
-		isLoading: false,
-	}),
+	useListRules: (): typeof mockRulesState => mockRulesState,
 }));
 
 describe('PlannedDowntime Component', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		mockUrlQuery = new URLSearchParams();
-		mockLocation('/alerts');
+		mockAppLocation({
+			pathname: '/alerts',
+			search: '',
+		});
+		mockDowntimeQueryResult.data = MOCK_DOWNTIME_RESPONSE;
+		mockRulesState = {
+			data: { data: [] },
+			isError: false,
+			isLoading: false,
+			isFetching: false,
+		};
 	});
 
 	it('renders the header, search and create action', () => {
 		renderPage();
 
-		expect(screen.getByText('Planned Downtime')).toBeInTheDocument();
+		expect(screen.getByText('All planned downtimes')).toBeInTheDocument();
 		expect(screen.getByTestId(SEARCH_TEST_ID)).toBeInTheDocument();
 		expect(screen.getByTestId(CREATE_TEST_ID)).toHaveAttribute(
 			'aria-disabled',
@@ -193,14 +205,14 @@ describe('PlannedDowntime Component', () => {
 		expect(screen.getByText(MOCK_DOWNTIME_3_NAME)).toBeInTheDocument();
 	});
 
-	it('shows the key schedule details and hides secondary columns by default', async () => {
+	it('shows the key schedule details, timezone and duration, and hides secondary columns by default', async () => {
 		renderPage();
 
 		await screen.findByText(MOCK_DOWNTIME_1_NAME);
 		expect(screen.getByText(/\(Asia\/Kolkata\)$/)).toBeInTheDocument();
 		expect(screen.getByText('Weekly on Mon · 2h')).toBeInTheDocument();
-		expect(screen.queryByText('Asia/Kolkata')).not.toBeInTheDocument();
-		expect(screen.queryByText('2h')).not.toBeInTheDocument();
+		expect(screen.getAllByText('Asia/Kolkata').length).toBeGreaterThan(0);
+		expect(screen.getAllByText('2h').length).toBeGreaterThan(0);
 		expect(screen.queryByText('Database maintenance')).not.toBeInTheDocument();
 		expect(screen.queryByText('creator@signoz.io')).not.toBeInTheDocument();
 		expect(screen.queryByText('editor@signoz.io')).not.toBeInTheDocument();
@@ -208,7 +220,7 @@ describe('PlannedDowntime Component', () => {
 		expect(screen.getAllByText('Active')).toHaveLength(3);
 	});
 
-	it('lets every data column be resized', async () => {
+	it('lets every data column but the last, which fills, be resized', async () => {
 		renderPage();
 
 		await screen.findByText(MOCK_DOWNTIME_1_NAME);
@@ -219,8 +231,9 @@ describe('PlannedDowntime Component', () => {
 			'Downtime',
 			'Status',
 			'Schedule',
+			'Timezone',
 			'Repeats',
-			'Alerts Silenced',
+			'Duration',
 		]);
 	});
 
@@ -289,5 +302,117 @@ describe('PlannedDowntime Component', () => {
 
 		await screen.findByText(MOCK_DOWNTIME_1_NAME);
 		expect(screen.queryByTestId('downtime-actions-1')).not.toBeInTheDocument();
+	});
+
+	it('preserves existing query parameters such as sort and pagination when typing in search (Bug 54)', async () => {
+		jest.useFakeTimers();
+		mockAppLocation({
+			pathname: '/alerts',
+			search:
+				'?tab=Configuration&subTab=planned-downtime&orderBy=name&order=asc&page=2&limit=20',
+		});
+		const navigateSpy = mockNavigate();
+
+		renderPage();
+
+		fireEvent.change(screen.getByTestId(SEARCH_TEST_ID), {
+			target: { value: 'query' },
+		});
+
+		jest.advanceTimersByTime(350);
+
+		expect(navigateSpy).toHaveBeenCalled();
+		const callArg = navigateSpy.mock.calls[0][0];
+		expect(callArg).toContain('tab=Configuration');
+		expect(callArg).toContain('subTab=planned-downtime');
+		expect(callArg).toContain('orderBy=name');
+		expect(callArg).toContain('order=asc');
+		expect(callArg).toContain('page=2');
+		expect(callArg).toContain('limit=20');
+		expect(callArg).toContain('search=query');
+
+		jest.useRealTimers();
+	});
+
+	it('shows skeleton while alert rules are loading for scoped downtime (Bug 56)', async () => {
+		mockRulesState = {
+			data: undefined,
+			isError: false,
+			isLoading: true,
+			isFetching: true,
+		};
+		const scopedDowntime = createMockDowntime({
+			id: 'scoped-1',
+			name: 'Scoped Downtime Loading',
+			schedule: buildSchedule({ startTime: MOCK_DATE_1 }),
+			alertIds: ['rule-1'],
+		});
+		mockDowntimeQueryResult.data = {
+			data: [scopedDowntime],
+			status: 'success',
+		};
+
+		renderPage();
+
+		await screen.findByText('Scoped Downtime Loading');
+		expect(screen.getByTestId('alerts-silenced-skeleton')).toBeInTheDocument();
+		expect(screen.queryByText('All alert rules')).not.toBeInTheDocument();
+	});
+
+	it('shows "Unknown rule" when scoped rule IDs cannot be resolved (Bug 56)', async () => {
+		mockRulesState = {
+			data: { data: [] },
+			isError: false,
+			isLoading: false,
+			isFetching: false,
+		};
+		const scopedDowntime = createMockDowntime({
+			id: 'scoped-2',
+			name: 'Scoped Downtime Deleted Rule',
+			schedule: buildSchedule({ startTime: MOCK_DATE_1 }),
+			alertIds: ['deleted-rule-id'],
+		});
+		mockDowntimeQueryResult.data = {
+			data: [scopedDowntime],
+			status: 'success',
+		};
+
+		renderPage();
+
+		await screen.findByText('Scoped Downtime Deleted Rule');
+		expect(screen.getByText('Unknown rule')).toBeInTheDocument();
+		expect(screen.queryByText('All alert rules')).not.toBeInTheDocument();
+	});
+
+	it('shows resolved alert rule name when scoped rule ID exists', async () => {
+		mockRulesState = {
+			data: {
+				data: [
+					{
+						id: 'rule-42',
+						alert: 'Disk Space High',
+					} as any,
+				],
+			},
+			isError: false,
+			isLoading: false,
+			isFetching: false,
+		};
+		const scopedDowntime = createMockDowntime({
+			id: 'scoped-3',
+			name: 'Scoped Downtime Resolved',
+			schedule: buildSchedule({ startTime: MOCK_DATE_1 }),
+			alertIds: ['rule-42'],
+		});
+		mockDowntimeQueryResult.data = {
+			data: [scopedDowntime],
+			status: 'success',
+		};
+
+		renderPage();
+
+		await screen.findByText('Scoped Downtime Resolved');
+		expect(screen.getByText('Disk Space High')).toBeInTheDocument();
+		expect(screen.queryByText('All alert rules')).not.toBeInTheDocument();
 	});
 });

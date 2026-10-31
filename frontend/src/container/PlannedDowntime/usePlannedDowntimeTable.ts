@@ -5,7 +5,6 @@ import type { SortState } from 'components/TanStackTableView/types';
 import { useCalculatedPageSize } from 'components/TanStackTableView/useCalculatedPageSize';
 import { useTableParams } from 'components/TanStackTableView/useTableParams';
 
-import { getAlertOptionsFromIds } from './PlannedDowntimeutils';
 import { DowntimeAlertOption, DowntimeSchedulesTableData } from './types';
 
 export const PLANNED_DOWNTIME_QUERY_PARAMS = {
@@ -72,16 +71,38 @@ function usePlannedDowntimeTable(
 
 	const filteredDowntimes = useMemo(() => {
 		const search = searchValue.toLowerCase();
+		const alertOptionsMap = new Map<string, DowntimeAlertOption>();
+		alertOptions.forEach((option) => {
+			if (option?.value != null) {
+				alertOptionsMap.set(String(option.value), option);
+			}
+		});
+
 		return downtimes
 			.filter(
 				(downtime) =>
 					downtime.name.toLowerCase().includes(search) ||
 					downtime.id === searchValue,
 			)
-			.map((downtime) => ({
-				...downtime,
-				alertOptions: getAlertOptionsFromIds(downtime.alertIds || [], alertOptions),
-			}));
+			.map((downtime) => {
+				const resolvedAlertOptions: DowntimeAlertOption[] = (
+					downtime.alertIds || []
+				).map((id) => {
+					const found = alertOptionsMap.get(String(id));
+					if (found) {
+						return found;
+					}
+					return {
+						label: 'Unknown rule',
+						value: id,
+					};
+				});
+
+				return {
+					...downtime,
+					alertOptions: resolvedAlertOptions,
+				};
+			});
 	}, [downtimes, alertOptions, searchValue]);
 
 	const pagedDowntimes = useMemo(() => {

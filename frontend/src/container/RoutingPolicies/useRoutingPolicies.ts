@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { navigate } from 'lib/router/navigation';
 import { toast } from '@signozhq/ui/sonner';
 import { GetRoutingPoliciesResponse } from 'api/routingPolicies/getRoutingPolicies';
@@ -30,9 +31,20 @@ import './styles.scss';
 function useRoutingPolicies(): UseRoutingPoliciesReturn {
 	const queryClient = useQueryClient();
 	const urlQuery = useUrlQuery();
+	const location = useAppLocation();
 
 	// Local state
-	const [searchTerm, setSearchTerm] = useState(urlQuery.get('search') || '');
+	const [searchTerm, setSearchTerm] = useState(() => {
+		const searchFromUrlQuery = urlQuery.get('search');
+		if (searchFromUrlQuery) {
+			return searchFromUrlQuery;
+		}
+		const search =
+			(typeof window !== 'undefined' && window.location.search) ||
+			location.search ||
+			'';
+		return new URLSearchParams(search).get('search') || '';
+	});
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 	const [policyDetailsModalState, setPolicyDetailsModalState] =
 		useState<PolicyDetailsModalState>({
@@ -44,12 +56,15 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 
 	const updateUrlWithSearch = useDebouncedFn((value) => {
 		const searchValue = value as string;
+		const search =
+			(typeof window !== 'undefined' && window.location.search) || location.search;
+		const params = new URLSearchParams(search);
 		if (searchValue) {
-			urlQuery.set('search', searchValue);
+			params.set('search', searchValue);
 		} else {
-			urlQuery.delete('search');
+			params.delete('search');
 		}
-		const url = `/alerts?${urlQuery.toString()}`;
+		const url = `/alerts?${params.toString()}`;
 		navigate(url, { replace: true });
 	}, 300);
 

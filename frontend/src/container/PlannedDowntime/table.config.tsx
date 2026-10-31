@@ -1,6 +1,8 @@
 import { Badge } from '@signozhq/ui/badge';
+import { Skeleton } from '@signozhq/ui/skeleton';
 import { AlertmanagertypesMaintenanceStatusDTO } from 'api/generated/services/sigNoz.schemas';
 import type { TableColumnDef } from 'components/TanStackTableView';
+import OverflowBadges from 'components/OverflowBadges/OverflowBadges';
 import TanStackTable from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { toRelativeTime } from 'pages/AlertList/NotificationChannels/utils/relativeTime';
@@ -33,6 +35,7 @@ const STATUS_BADGE: Record<
 
 export function getPlannedDowntimeColumns(
 	formatTimezoneAdjustedTimestamp: (date: string, format: string) => string,
+	isAlertsLoading?: boolean,
 ): TableColumnDef<DowntimeSchedulesTableData>[] {
 	const textCell = (value: string | undefined): JSX.Element => (
 		<TanStackTable.Text title={value || undefined}>
@@ -66,7 +69,7 @@ export function getPlannedDowntimeColumns(
 			id: 'name',
 			header: 'Downtime',
 			accessorKey: 'name',
-			width: { default: '100%', min: '200px' },
+			width: { default: '240px', min: '200px' },
 			enableSort: true,
 			enableResize: true,
 			enableRemove: false,
@@ -114,7 +117,6 @@ export function getPlannedDowntimeColumns(
 			header: 'Timezone',
 			accessorFn: (row) => row.schedule?.timezone,
 			width: { default: '130px', min: '110px' },
-			defaultVisibility: false,
 			enableSort: false,
 			enableResize: true,
 			enableMove: false,
@@ -135,7 +137,6 @@ export function getPlannedDowntimeColumns(
 			header: 'Duration',
 			accessorFn: (row) => row.schedule?.recurrence?.duration,
 			width: { default: '110px', min: '90px' },
-			defaultVisibility: false,
 			enableSort: false,
 			enableResize: true,
 			enableMove: false,
@@ -150,32 +151,36 @@ export function getPlannedDowntimeColumns(
 			enableSort: false,
 			enableResize: true,
 			enableMove: false,
-			cell: ({ row }): JSX.Element =>
-				row.alertOptions.length ? (
-					<div
-						className={styles.badges}
-						title={row.alertOptions
-							.flatMap((alert) =>
-								typeof alert.label === 'string' ? [alert.label] : [],
-							)
-							.join(', ')}
-					>
-						{row.alertOptions.map((alert) => (
-							<Badge
-								key={alert.value}
-								textTransform="none"
-								variant="solid"
-								color="secondary"
-							>
-								{alert.label}
-							</Badge>
-						))}
-					</div>
-				) : (
-					<Badge textTransform="none" variant="solid" color="secondary">
-						All alert rules
-					</Badge>
-				),
+			cell: ({ row }): JSX.Element => {
+				const hasScopedAlerts = Boolean(row.alertIds && row.alertIds.length > 0);
+				if (!hasScopedAlerts) {
+					return (
+						<Badge textTransform="none" variant="solid" color="secondary">
+							All alert rules
+						</Badge>
+					);
+				}
+
+				if (isAlertsLoading) {
+					return (
+						<Skeleton.Input
+							testId="alerts-silenced-skeleton"
+							active
+							size="small"
+							style={{ width: 100, height: 22 }}
+						/>
+					);
+				}
+
+				return (
+					<OverflowBadges
+						items={row.alertOptions.map((alert) => ({
+							key: String(alert.value),
+							label: alert.label,
+						}))}
+					/>
+				);
+			},
 		},
 		{
 			id: 'description',

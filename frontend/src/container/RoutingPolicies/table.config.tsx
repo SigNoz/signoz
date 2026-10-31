@@ -1,5 +1,5 @@
-import { Badge } from '@signozhq/ui/badge';
 import type { TableColumnDef } from 'components/TanStackTableView';
+import OverflowBadges from 'components/OverflowBadges/OverflowBadges';
 import TanStackTable from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { toRelativeTime } from 'pages/AlertList/NotificationChannels/utils/relativeTime';
@@ -42,7 +42,7 @@ export function getRoutingPolicyColumns(
 			id: 'name',
 			header: 'Routing Policy',
 			accessorKey: 'name',
-			width: { default: '100%', min: '220px' },
+			width: { default: '320px', min: '220px' },
 			enableSort: true,
 			enableResize: true,
 			enableRemove: false,
@@ -57,6 +57,26 @@ export function getRoutingPolicyColumns(
 			),
 		},
 		{
+			id: 'channels',
+			header: 'Channels',
+			accessorKey: 'channels',
+			width: { default: '220px', min: '140px' },
+			enableSort: false,
+			enableResize: true,
+			enableMove: false,
+			cell: ({ row }): JSX.Element =>
+				row.channels?.length ? (
+					<OverflowBadges
+						items={row.channels.map((channel) => ({
+							key: channel,
+							label: channel,
+						}))}
+					/>
+				) : (
+					<TanStackTable.Text>-</TanStackTable.Text>
+				),
+		},
+		{
 			id: 'expression',
 			header: 'Expression',
 			accessorKey: 'expression',
@@ -69,32 +89,6 @@ export function getRoutingPolicyColumns(
 					{row.expression}
 				</TanStackTable.Text>
 			),
-		},
-		{
-			id: 'channels',
-			header: 'Channels',
-			accessorKey: 'channels',
-			width: { default: '220px', min: '140px' },
-			enableSort: false,
-			enableResize: true,
-			enableMove: false,
-			cell: ({ row }): JSX.Element =>
-				row.channels?.length ? (
-					<div className={styles.badges} title={row.channels.join(', ')}>
-						{row.channels.map((channel) => (
-							<Badge
-								key={channel}
-								textTransform="none"
-								variant="solid"
-								color="secondary"
-							>
-								{channel}
-							</Badge>
-						))}
-					</div>
-				) : (
-					<TanStackTable.Text>-</TanStackTable.Text>
-				),
 		},
 		{
 			id: 'createdBy',

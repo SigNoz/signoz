@@ -64,14 +64,14 @@ describe('RoutingPolicyList', () => {
 		).not.toBeInTheDocument();
 	});
 
-	it('lets every data column be resized', async () => {
+	it('lets every data column but the last, which fills, be resized', async () => {
 		renderList();
 
 		await screen.findByText(MOCK_ROUTING_POLICY_1.name);
 		const resizable = Array.from(document.querySelectorAll('th'))
 			.filter((th) => th.querySelector('[title="Drag to resize column"]'))
 			.map((th) => th.textContent?.trim());
-		expect(resizable).toStrictEqual(['Routing Policy', 'Expression', 'Channels']);
+		expect(resizable).toStrictEqual(['Routing Policy', 'Channels']);
 	});
 
 	it('opens the policy on row click', async () => {
