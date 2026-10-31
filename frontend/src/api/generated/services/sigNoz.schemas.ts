@@ -5466,6 +5466,10 @@ export interface DashboardtypesPanelFormattingDTO {
 export enum DashboardtypesLegendModeDTO {
 	list = 'list',
 }
+export enum DashboardtypesLegendOrderDTO {
+	value = 'value',
+	custom = 'custom',
+}
 export enum DashboardtypesLegendPositionDTO {
 	bottom = 'bottom',
 	right = 'right',
@@ -5483,6 +5487,17 @@ export type DashboardtypesLegendDTOCustomColorsAnyOf = {
  */
 export type DashboardtypesLegendDTOCustomColors = DashboardtypesLegendDTOCustomColorsAnyOf | null;
 
+/**
+ * Sort indexes keyed by series label, ascending. A label without an entry has index 0; equal indexes keep natural order.
+ */
+export type DashboardtypesLegendDTOCustomOrderAnyOf = { [key: string]: number };
+
+/**
+ * Sort indexes keyed by series label, ascending. A label without an entry has index 0; equal indexes keep natural order.
+ * @nullable
+ */
+export type DashboardtypesLegendDTOCustomOrder = DashboardtypesLegendDTOCustomOrderAnyOf | null;
+
 export interface DashboardtypesLegendDTO {
 	/**
 	 * @type object,null
@@ -5490,9 +5505,18 @@ export interface DashboardtypesLegendDTO {
 	 */
 	customColors?: DashboardtypesLegendDTOCustomColors;
 	/**
+	 * @type object,null
+	 * @description Sort indexes keyed by series label, ascending. A label without an entry has index 0; equal indexes keep natural order.
+	 */
+	customOrder?: DashboardtypesLegendDTOCustomOrder;
+	/**
 	 * @description The legend layout. Only list is supported.
 	 */
 	mode?: DashboardtypesLegendModeDTO;
+	/**
+	 * @description The series order: value (default) by descending mean, or custom by customOrder.
+	 */
+	order?: DashboardtypesLegendOrderDTO;
 	/**
 	 * @description Where the legend sits: bottom (default) or right.
 	 */

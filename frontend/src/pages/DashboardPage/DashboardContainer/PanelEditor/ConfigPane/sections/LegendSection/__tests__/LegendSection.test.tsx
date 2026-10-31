@@ -1,6 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { DashboardtypesLegendPositionDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	DashboardtypesLegendOrderDTO,
+	DashboardtypesLegendPositionDTO,
+} from 'api/generated/services/sigNoz.schemas';
 
 import LegendSection from '../LegendSection';
 
@@ -67,5 +70,75 @@ describe('LegendSection', () => {
 			position: 'right',
 			customColors: { a: '#fff' },
 		});
+	});
+
+	it('hides the series order control unless the kind enables it', () => {
+		render(
+			<LegendSection
+				value={undefined}
+				controls={{ position: true }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(
+			screen.queryByTestId('panel-editor-v2-legend-order-mode'),
+		).not.toBeInTheDocument();
+	});
+
+	it('defaults to by-value order without the per-series list', () => {
+		render(
+			<LegendSection
+				value={undefined}
+				controls={{ order: true }}
+				onChange={jest.fn()}
+				legendSeries={[{ label: 'CPU %', defaultColor: '#fff' }]}
+			/>,
+		);
+
+		expect(screen.getByRole('radio', { name: 'By value' })).toBeChecked();
+		expect(
+			screen.queryByTestId('panel-editor-v2-legend-order'),
+		).not.toBeInTheDocument();
+	});
+
+	it('switches to custom order, keeping the indexes and other legend fields', async () => {
+		const user = userEvent.setup();
+		const onChange = jest.fn();
+		render(
+			<LegendSection
+				value={{
+					position: DashboardtypesLegendPositionDTO.bottom,
+					customOrder: { 'CPU %': -1 },
+				}}
+				controls={{ order: true }}
+				onChange={onChange}
+			/>,
+		);
+
+		await user.click(
+			screen.getByTestId('panel-editor-v2-legend-order-mode-custom'),
+		);
+
+		expect(onChange).toHaveBeenCalledWith({
+			position: 'bottom',
+			order: 'custom',
+			customOrder: { 'CPU %': -1 },
+		});
+	});
+
+	it('shows the per-series list when the order is custom', () => {
+		render(
+			<LegendSection
+				value={{ order: DashboardtypesLegendOrderDTO.custom }}
+				controls={{ order: true }}
+				onChange={jest.fn()}
+				legendSeries={[{ label: 'CPU %', defaultColor: '#fff' }]}
+			/>,
+		);
+
+		expect(
+			screen.getByTestId('panel-editor-v2-legend-order'),
+		).toBeInTheDocument();
 	});
 });
