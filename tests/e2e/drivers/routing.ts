@@ -9,7 +9,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import { authToken } from './api';
 import { ADMIN } from './auth';
 import { buildDashboard, createViaApi, deleteViaApi } from './dashboards';
-import { seedPodMetricsViaSeeder } from './infra/pods';
+import { SAMPLE_POD, seedPodMetricsViaSeeder } from './infra/pods';
 import { driver, kit, seeded } from './kit';
 import { logsExplorerDriver } from './logs/explorer';
 import {
@@ -131,6 +131,17 @@ export interface Routing {
 		groupBy(attribute: string): Promise<void>;
 		waitUntilGrouped(attribute: string, grouped?: boolean): Promise<void>;
 		groupBySelect(): Locator;
+		/** Run `expression` from the list's search box. */
+		filter(expression: string): Promise<void>;
+		/** Sort by the first sortable column: a nuqs write the router never sees. */
+		sort(): Promise<void>;
+		category(key: string): Locator;
+		/** Click a pod's name once, with no retry: a second click is the bug. */
+		openPod(name: string): Promise<void>;
+		drawer(): Locator;
+		drawerTab(label: string): Locator;
+		/** The search box of the drawer's Overview tab. */
+		overviewSearch(): Locator;
 	};
 	trace: {
 		path(trace: LargeTrace): string;
@@ -326,6 +337,39 @@ export function routingDriver(page: Page): Routing {
 			waitUntilGrouped: (attribute, grouped = true) =>
 				page.waitForURL((url) => groupByOf(url).includes(attribute) === grouped),
 			groupBySelect: () => page.getByTestId('k8s-table-group-by-select'),
+			// The caret can jump once after the editor mounts and rotate the typed
+			// text, so retype until the editor holds exactly the expression.
+			filter: async (expression) => {
+				const editor = page
+					.locator('.query-where-clause-editor .cm-content')
+					.first();
+				await expect(async () => {
+					await editor.click();
+					await page.keyboard.press('ControlOrMeta+a');
+					await page.keyboard.press('Delete');
+					await page.keyboard.insertText(expression);
+					await expect(editor).toHaveText(expression, { timeout: 2_000 });
+				}).toPass({ timeout: 20_000 });
+				await page.getByRole('button', { name: /run query/i }).click();
+				await page.waitForURL((url) =>
+					decodeURIComponent(url.searchParams.get('compositeQuery') ?? '').includes(
+						expression,
+					),
+				);
+			},
+			sort: async () => {
+				await page.locator('thead button[data-sort]').first().click();
+				await page.waitForURL((url) => url.searchParams.has('orderBy'));
+			},
+			category: (key) => page.getByTestId(`category-${key}`),
+			openPod: async (name) => {
+				await page.getByRole('row').getByText(name, { exact: true }).click();
+			},
+			drawer: () => page.getByRole('dialog'),
+			drawerTab: (label) =>
+				routing.k8s.drawer().getByRole('button', { name: label, exact: true }),
+			overviewSearch: () =>
+				routing.k8s.drawer().locator('.query-where-clause-editor .cm-content'),
 		},
 
 		trace: {
@@ -420,7 +464,7 @@ const withPods = seeded(
 	'pods',
 	async ({ page }) => {
 		await seedWithRetry(() => seedPodMetricsViaSeeder(page));
-		return { groupBy: NAMESPACE_ATTR };
+		return { groupBy: NAMESPACE_ATTR, pod: SAMPLE_POD };
 	},
 	undefined,
 	{ timeout: SEED_TIMEOUT_MS },
