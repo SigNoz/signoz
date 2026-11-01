@@ -419,11 +419,7 @@ def test_create_channel(  # pylint: disable=too-many-arguments,too-many-position
                     "\n"
                     "{{ end }}{{ if .GeneratorURL }}[View in SigNoz]({{ .GeneratorURL }})\n"
                     "\n"
-                    "{{ end }}{{ if .Annotations.related_logs }}[View related logs]({{ .Annotations.related_logs }})\n"
-                    "\n"
-                    "{{ end }}{{ if .Annotations.related_traces }}[View related traces]({{ .Annotations.related_traces }})\n"
-                    "\n"
-                    "{{ end }}{{ end }}"
+                    '{{ end }}{{ template "signoz.relatedLinks.markdown" . }}{{ end }}'
                 ),
                 "tags": "signoz",
             },
@@ -450,11 +446,7 @@ def test_create_channel(  # pylint: disable=too-many-arguments,too-many-position
                     "\n"
                     "{{ end }}{{ if .GeneratorURL }}[View in SigNoz]({{ .GeneratorURL }})\n"
                     "\n"
-                    "{{ end }}{{ if .Annotations.related_logs }}[View related logs]({{ .Annotations.related_logs }})\n"
-                    "\n"
-                    "{{ end }}{{ if .Annotations.related_traces }}[View related traces]({{ .Annotations.related_traces }})\n"
-                    "\n"
-                    "{{ end }}{{ end }}"
+                    '{{ end }}{{ template "signoz.relatedLinks.markdown" . }}{{ end }}'
                 ),
             },
             [],

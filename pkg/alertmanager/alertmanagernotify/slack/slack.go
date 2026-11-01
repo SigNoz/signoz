@@ -18,7 +18,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	commoncfg "github.com/prometheus/common/config"
 
 	"github.com/prometheus/alertmanager/config"
@@ -269,11 +268,8 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert, tm
 // buttons for an alert, or nil when no related-link annotations are present.
 func buildRelatedLinkActions(alert *types.Alert) []config.SlackAction {
 	var actions []config.SlackAction
-	if link := alert.Annotations[ruletypes.AnnotationRelatedLogs]; link != "" {
-		actions = append(actions, config.SlackAction{Type: "button", Text: "View Related Logs", URL: string(link)})
-	}
-	if link := alert.Annotations[ruletypes.AnnotationRelatedTraces]; link != "" {
-		actions = append(actions, config.SlackAction{Type: "button", Text: "View Related Traces", URL: string(link)})
+	for _, link := range alertmanagertypes.BuildRelatedLinks(alert.Annotations) {
+		actions = append(actions, config.SlackAction{Type: "button", Text: link.Label, URL: link.URL})
 	}
 	return actions
 }
