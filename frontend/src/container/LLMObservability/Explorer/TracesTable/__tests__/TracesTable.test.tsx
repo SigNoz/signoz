@@ -6,7 +6,7 @@ import { render, screen, userEvent } from 'tests/test-utils';
 import { buildTraceViewColumns } from '../../TracesView/configs';
 import TracesTable from '../TracesTable';
 
-const STORAGE_KEY = LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_COLUMNS;
+const STORAGE_KEY = LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_COLUMN_SIZING;
 const PERSISTED_KEY = `@signoz/table-columns/${STORAGE_KEY}`;
 
 const ROWS = [{ id: 't1', trace_id: 'abc', 'service.name': 'checkout' }];
@@ -17,7 +17,11 @@ const COLUMNS = buildTraceViewColumns([
 	{ name: 'trace_id' },
 	{ name: 'service.name', fieldContext: 'resource' },
 	{ name: 'unlisted_aggregate' },
-]);
+]).map((column) =>
+	column.id === 'unlisted_aggregate'
+		? { ...column, defaultVisibility: false }
+		: column,
+);
 
 function RaceHarness(): JSX.Element {
 	const [columnsReady, setColumnsReady] = useState(false);

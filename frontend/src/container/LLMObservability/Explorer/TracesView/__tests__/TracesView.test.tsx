@@ -6,14 +6,12 @@ import {
 	TelemetrytypesFieldContextDTO,
 	TelemetrytypesFieldDataTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { useColumnStore } from 'components/TanStackTableView/useColumnStore';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
 
 import TracesView from '../TracesView';
 
-const STORAGE_KEY = LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_COLUMNS;
-const PERSISTED_KEY = `@signoz/table-columns/${STORAGE_KEY}`;
+const STORAGE_KEY = LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_OPTIONS;
 const QUERY_RANGE_URL = `${ENVIRONMENT.baseURL}/api/v5/query_range`;
 const FIELD_KEYS_URL = `${ENVIRONMENT.baseURL}/api/v1/ai_observability/fields/keys`;
 
@@ -84,11 +82,6 @@ const mockFieldKeysFailure = (): void => {
 	);
 };
 
-const persistedState = (): { hiddenColumnIds: string[] } | null => {
-	const raw = localStorage.getItem(PERSISTED_KEY);
-	return raw ? (JSON.parse(raw) as { hiddenColumnIds: string[] }) : null;
-};
-
 const renderTracesView = (): ReturnType<typeof render> =>
 	render(
 		<TracesView
@@ -109,7 +102,6 @@ const renderTracesView = (): ReturnType<typeof render> =>
 
 describe('TracesView column persistence', () => {
 	beforeEach(() => {
-		useColumnStore.setState({ tables: {} });
 		localStorage.clear();
 		mockRows();
 	});
@@ -121,16 +113,15 @@ describe('TracesView column persistence', () => {
 	// Rows are virtualised, so a mounted table stands in for "rows arrived".
 	const findTable = (): Promise<HTMLElement> => screen.findByRole('table');
 
-	it('seeds the persisted defaults once the field keys arrive', async () => {
+	it('shows the default columns once the field keys arrive', async () => {
 		mockFieldKeys(['llm_call_count', 'tool_call_count']);
 		renderTracesView();
 
 		await findTable();
 
 		await waitFor(() => {
-			expect(persistedState()?.hiddenColumnIds).toStrictEqual([]);
+			expect(screen.getByText(OPTIONS_TRIGGER)).toBeInTheDocument();
 		});
-		expect(screen.getByText(OPTIONS_TRIGGER)).toBeInTheDocument();
 		expect(screen.getByText('llm_call_count')).toBeInTheDocument();
 	});
 
@@ -140,8 +131,7 @@ describe('TracesView column persistence', () => {
 
 		await findTable();
 
-		expect(useColumnStore.getState().tables[STORAGE_KEY]).toBeUndefined();
-		expect(persistedState()).toBeNull();
+		expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
 	});
 
 	it('drops the column picker when the field keys fail', async () => {
@@ -166,18 +156,23 @@ describe('TracesView column persistence', () => {
 	});
 
 	it('leaves an existing selection untouched while the field keys fail', async () => {
-		const existing = {
-			hiddenColumnIds: ['trace:tool_call_count:float64', 'input', 'output'],
-			columnOrder: ['trace_id', 'resource:service.name'],
-			columnSizing: {},
-		};
-		localStorage.setItem(PERSISTED_KEY, JSON.stringify(existing));
+		const existing = JSON.stringify({
+			selectColumns: [
+				{ name: 'trace_id' },
+				{
+					name: 'tool_call_count',
+					fieldContext: 'trace',
+					fieldDataType: 'float64',
+				},
+			],
+		});
+		localStorage.setItem(STORAGE_KEY, existing);
 
 		mockFieldKeysFailure();
 		renderTracesView();
 
 		await findTable();
 
-		expect(persistedState()).toStrictEqual(existing);
+		expect(localStorage.getItem(STORAGE_KEY)).toBe(existing);
 	});
 });

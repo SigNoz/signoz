@@ -3,10 +3,14 @@ import { useEffect, useRef, useState } from 'react';
 import { useGetSavedView } from 'api/generated/services/saved-view';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { getViewColumnsAndFormatting } from 'container/SavedViews/utils/getViewColumnsAndFormatting';
-import { DataSource } from 'types/common/queryBuilder';
 
 import { usePreferenceLoader } from '../loader/usePreferenceLoader';
-import { FormattingOptions, PreferenceMode, Preferences } from '../types';
+import {
+	FormattingOptions,
+	PreferenceMode,
+	Preferences,
+	PreferenceSource,
+} from '../types';
 import { usePreferenceUpdater } from '../updater/usePreferenceUpdater';
 
 export function usePreferenceSync({
@@ -15,7 +19,7 @@ export function usePreferenceSync({
 	savedViewId,
 }: {
 	mode: PreferenceMode;
-	dataSource: DataSource;
+	dataSource: PreferenceSource;
 	savedViewId: string | undefined;
 }): {
 	preferences: Preferences | null;

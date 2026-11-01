@@ -1,17 +1,9 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
 import { mergeExtraFields } from 'utils/extraFields';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
-import {
-	hideColumn,
-	initializeFromDefaults,
-	setColumnOrder,
-	showColumn,
-	useColumnOrder,
-	useHiddenColumnIds,
-} from 'components/TanStackTableView/useColumnStore';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
+import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 import { TracesTableRow } from '../TracesTable/getFieldColumn';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DATA_SOURCE_TO_SIGNAL, DataSource } from 'types/common/queryBuilder';
@@ -23,28 +15,35 @@ import {
 } from '../constants';
 import {
 	buildTraceViewColumns,
+	isDefaultVisible,
 	sortByDefaultOrder,
 	TRACE_ID_COLUMN_ID,
 } from './configs';
-
-const STORAGE_KEY = LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_COLUMNS;
 
 /** Matches the id getFieldColumn derives, so fields and columns address alike. */
 const columnIdOf = (field: TelemetryFieldKey): string =>
 	buildCompositeKey(field.name, field.fieldContext, field.fieldDataType);
 
+const isTraceId = (field: TelemetryFieldKey): boolean =>
+	columnIdOf(field) === TRACE_ID_COLUMN_ID;
+
 interface UseTraceViewColumns {
+	/** Visible columns, in the user's order. */
 	columns: TableColumnDef<TracesTableRow>[];
 	selectedFields: TelemetryFieldKey[];
 	onFieldsChange: (next: TelemetryFieldKey[]) => void;
+	onColumnOrderChange: (cols: TableColumnDef<TracesTableRow>[]) => void;
+	onColumnRemove: (columnId: string) => void;
 	requiredFields: readonly string[];
 	isLoading: boolean;
 	/** False until the keys fetch lands; a partial set must not reach the persisted store. */
 	canPersistColumns: boolean;
 }
 
-// TODO(ai-explorer): browser-local only, unlike the list views' `?options=` columns.
 export function useTraceViewColumns(): UseTraceViewColumns {
+	const { preferences, updateColumns } =
+		usePreferenceContext().aiObservabilityTraceView;
+
 	const {
 		data: fetchedFields = [],
 		isFetched,
@@ -66,60 +65,69 @@ export function useTraceViewColumns(): UseTraceViewColumns {
 		[fetchedFields],
 	);
 
-	const columns = useMemo(
-		() => buildTraceViewColumns(availableFields),
-		[availableFields],
-	);
-
-	// Defaults from a partial column set would persist as the user's own choice.
-	useEffect(() => {
-		if (isSuccess) {
-			initializeFromDefaults(STORAGE_KEY, columns);
-		}
-	}, [isSuccess, columns]);
-
-	const hiddenColumnIds = useHiddenColumnIds(STORAGE_KEY);
-	const columnOrder = useColumnOrder(STORAGE_KEY);
-
+	// Stored fields resolve against the pool, so a field that is gone drops out; none left means the defaults.
 	const selectedFields = useMemo(() => {
-		const hidden = new Set(hiddenColumnIds);
-		const orderIndex = new Map(columnOrder.map((id, index) => [id, index]));
+		const byId = new Map(
+			availableFields.map((field) => [columnIdOf(field), field]),
+		);
+		const stored = (preferences?.columns ?? [])
+			.map((field) => byId.get(columnIdOf(field)))
+			.filter((field): field is TelemetryFieldKey => !!field);
+		const selected = stored.length
+			? stored
+			: availableFields.filter(isDefaultVisible);
+		const traceId = byId.get(TRACE_ID_COLUMN_ID);
 
-		return availableFields
-			.filter((field) => !hidden.has(columnIdOf(field)))
-			.sort(
-				(a, b) =>
-					(orderIndex.get(columnIdOf(a)) ?? Infinity) -
-					(orderIndex.get(columnIdOf(b)) ?? Infinity),
-			);
-	}, [availableFields, hiddenColumnIds, columnOrder]);
+		return selected.some(isTraceId) || !traceId
+			? selected
+			: [traceId, ...selected];
+	}, [availableFields, preferences?.columns]);
+
+	const columns = useMemo(
+		() => buildTraceViewColumns(selectedFields),
+		[selectedFields],
+	);
 
 	const onFieldsChange = useCallback(
 		(next: TelemetryFieldKey[]): void => {
 			if (!isSuccess) {
 				return;
 			}
-
-			const keptIds = new Set(next.map(columnIdOf));
-
-			columns.forEach((column) => {
-				if (keptIds.has(column.id) || column.id === TRACE_ID_COLUMN_ID) {
-					showColumn(STORAGE_KEY, column.id);
-				} else {
-					hideColumn(STORAGE_KEY, column.id);
-				}
-			});
-
-			// Columns missing from the order sort last, so the visible ones suffice.
-			setColumnOrder(STORAGE_KEY, next.map(columnIdOf));
+			const traceId = selectedFields.find(isTraceId);
+			updateColumns(next.some(isTraceId) || !traceId ? next : [traceId, ...next]);
 		},
-		[columns, isSuccess],
+		[isSuccess, selectedFields, updateColumns],
+	);
+
+	const onColumnOrderChange = useCallback(
+		(cols: TableColumnDef<TracesTableRow>[]): void => {
+			const byId = new Map(
+				selectedFields.map((field) => [columnIdOf(field), field]),
+			);
+			onFieldsChange(
+				cols
+					.map((col) => byId.get(col.id))
+					.filter((field): field is TelemetryFieldKey => !!field),
+			);
+		},
+		[selectedFields, onFieldsChange],
+	);
+
+	const onColumnRemove = useCallback(
+		(columnId: string): void => {
+			onFieldsChange(
+				selectedFields.filter((field) => columnIdOf(field) !== columnId),
+			);
+		},
+		[selectedFields, onFieldsChange],
 	);
 
 	return {
 		columns,
 		selectedFields,
 		onFieldsChange,
+		onColumnOrderChange,
+		onColumnRemove,
 		requiredFields: [TRACE_ID_COLUMN_ID],
 		isLoading: !isFetched,
 		canPersistColumns: isSuccess,
