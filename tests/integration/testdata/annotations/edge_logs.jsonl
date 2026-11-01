@@ -1,0 +1,2 @@
+{ "timestamp": "2026-01-01T01:00:00.000000Z", "resources": { "service.name": "checkout", "deployment.environment": "prod", "service.version": "1.0.0" }, "attributes": {}, "body": "checkout 1.0.0 started", "severity_text": "INFO" }
+{ "timestamp": "2026-01-01T02:39:30.000000Z", "resources": { "service.name": "checkout", "deployment.environment": "prod", "service.version": "1.1.0" }, "attributes": {}, "body": "checkout 1.1.0 started", "severity_text": "INFO" }
