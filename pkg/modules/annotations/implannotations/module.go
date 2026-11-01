@@ -3,6 +3,7 @@ package implannotations
 import (
 	"context"
 	"log/slog"
+	"slices"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
@@ -10,9 +11,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/statementbuilder/resourcefilter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/annotationtypes"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"golang.org/x/sync/errgroup"
 )
 
 type module struct {
@@ -43,9 +47,56 @@ func (m *module) ListAnnotations(ctx context.Context, orgID valuer.UUID, req *an
 		return nil, err
 	}
 
-	return &annotationtypes.Annotations{
-		Records:              []annotationtypes.Annotation{},
-		Total:                0,
-		HistoryAvailableFrom: 0,
-	}, nil
+	var (
+		tracesSpecs, logsSpecs             []annotationtypes.DeploymentSpec
+		tracesHistoryEdge, logsHistoryEdge int64
+	)
+	signals := resolveSignals(req)
+	errGroup, gCtx := errgroup.WithContext(ctx)
+
+	if slices.Contains(signals, telemetrytypes.SignalTraces) {
+		errGroup.Go(func() error {
+			rows, edge, err := m.queryTracesDeployments(gCtx, orgID, req)
+			if err != nil {
+				return err
+			}
+			tracesSpecs, err = annotationtypes.NewDeploymentSpecsFromRows(rows)
+			if err != nil {
+				return err
+			}
+			tracesHistoryEdge = edge
+			return nil
+		})
+	}
+
+	if slices.Contains(signals, telemetrytypes.SignalLogs) {
+		errGroup.Go(func() error {
+			rows, edge, err := m.queryLogsDeployments(gCtx, orgID, req)
+			if err != nil {
+				return err
+			}
+			logsSpecs, err = annotationtypes.NewDeploymentSpecsFromRows(rows)
+			if err != nil {
+				return err
+			}
+			logsHistoryEdge = edge
+			return nil
+		})
+	}
+
+	if err := errGroup.Wait(); err != nil {
+		return nil, err
+	}
+
+	page, total := annotationtypes.ApplyLimit(annotationtypes.MergeDeployments(tracesSpecs, logsSpecs), req.Limit)
+	return annotationtypes.NewAnnotationsFromDeployments(page, total, annotationtypes.EarliestHistoryEdge(tracesHistoryEdge, logsHistoryEdge)), nil
+}
+
+func (m *module) withAnnotationsContext(ctx context.Context, signal telemetrytypes.Signal, functionName string) context.Context {
+	comments := map[string]string{
+		instrumentationtypes.TelemetrySignal:  signal.StringValue(),
+		instrumentationtypes.CodeNamespace:    "annotations",
+		instrumentationtypes.CodeFunctionName: functionName,
+	}
+	return ctxtypes.NewContextWithCommentVals(ctx, comments)
 }
