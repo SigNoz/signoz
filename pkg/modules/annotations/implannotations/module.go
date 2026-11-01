@@ -7,8 +7,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/annotations"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/resourcefilter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/annotationtypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -16,6 +18,7 @@ import (
 type module struct {
 	telemetryStore         telemetrystore.TelemetryStore
 	telemetryMetadataStore telemetrytypes.MetadataStore
+	storage                qbtypes.Storage
 	fl                     flagger.Flagger
 	logger                 *slog.Logger
 }
@@ -29,6 +32,7 @@ func NewModule(
 	return &module{
 		telemetryStore:         telemetryStore,
 		telemetryMetadataStore: telemetryMetadataStore,
+		storage:                resourcefilter.NewStorage(),
 		fl:                     fl,
 		logger:                 providerSettings.Logger,
 	}
