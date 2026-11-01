@@ -1,6 +1,6 @@
 import { MouseEvent, ReactNode } from 'react';
-import { MemoryRouter } from 'react-router-dom';
 import { renderHook } from '@testing-library/react';
+import { TestRouter } from 'tests/router';
 import {
 	__resetSearchParamsGetter,
 	__setSearchParamsGetterForTest,
@@ -21,9 +21,9 @@ jest.mock('@signozhq/ui/sonner', () => ({
 
 // The router only knows the stale URL; nuqs has since written ?tab=thread.
 const wrapper = ({ children }: { children: ReactNode }): JSX.Element => (
-	<MemoryRouter initialEntries={['/trace/abc?tab=overview&spanId=old']}>
+	<TestRouter initialRoute="/trace/abc?tab=overview&spanId=old">
 		{children}
-	</MemoryRouter>
+	</TestRouter>
 );
 
 const clickEvent = {

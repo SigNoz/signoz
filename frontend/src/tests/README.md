@@ -86,6 +86,25 @@ fireEvent.scroll(scroller);
 Routing-dependent behavior:
 ```ts
 render(<Page />, undefined, { initialRoute: '/logs-explorer?panelType=list' });
+
+// Pattern params: mount under the route the page reads them from.
+render(<Page />, undefined, {
+  initialRoute: '/dashboard/abc',
+  routePath: ROUTES.DASHBOARD,
+});
+
+// Where the component navigated to.
+expect(getCurrentLocation().pathname).toBe(ROUTES.HOME);
+```
+
+Never mock the router packages (`react-router`, `react-router-dom`) or `lib/history`;
+`signoz/no-direct-react-router-import` rejects it. When a test cannot render at a route,
+or asserts the call itself, spy on the `lib/router` facade with `tests/router-mocks`:
+```ts
+mockAppLocation({ pathname: ROUTES.LOGS_EXPLORER });
+mockAppParams({ dashboardId: 'abc' });
+const navigate = mockAppNavigate(); // what useAppNavigate() returns
+const navigateSpy = mockNavigate(); // module-level navigate()
 ```
 
 #### Notes

@@ -2,8 +2,6 @@ import { ReactElement, useEffect, useMemo } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
-import { CompatRouter } from 'react-router-dom-v5-compat';
 import { render, RenderResult } from '@testing-library/react';
 import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import {
@@ -14,10 +12,10 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
-import { createMemoryHistory, MemoryHistory } from 'history';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
+import { navigate } from 'lib/router/navigation';
 import { NuqsAdapter } from 'nuqs/adapters/react';
 import { AppContext } from 'providers/App/App';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
@@ -26,9 +24,11 @@ import TimezoneProvider from 'providers/Timezone';
 import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import store from 'store';
+import { TestRouter } from 'tests/router';
 import { getAppContextMock } from 'tests/test-utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { __setSearchParamsGetterForTest } from 'utils/getUnstableCurrentSearchParams';
 
 import { getSavedViewQuery } from '../utils/getSavedViewQuery';
@@ -161,6 +161,23 @@ export function viewUrl(
 
 const mockStore = configureStore([thunk]);
 
+export function withGlobalTime(
+	ui: ReactElement,
+	globalTime: Partial<GlobalReducer>,
+): ReactElement {
+	const state = store.getState();
+	return (
+		<Provider
+			store={mockStore({
+				...state,
+				globalTime: { ...state.globalTime, ...globalTime },
+			})}
+		>
+			{ui}
+		</Provider>
+	);
+}
+
 // What the explorer page does around the header: writes its default query to a
 // bare url, and sets the provider's tab from the url (the provider alone seeds
 // it from the raw, still JSON-quoted param).
@@ -183,30 +200,30 @@ function ExplorerShell({ dataSource }: { dataSource: DataSource }): null {
 	return null;
 }
 
+export interface ExplorerUrl {
+	push: (url: string) => void;
+	location: Pick<Location, 'pathname' | 'search'>;
+}
+
 export function renderWithExplorerProviders(
 	ui: ReactElement,
 	initialUrl: string,
 	dataSource: DataSource = DataSource.TRACES,
-): RenderResult & { history: MemoryHistory } {
-	const history = createMemoryHistory({ initialEntries: [initialUrl] });
-	// Parts of the explorer read window.location directly, so it follows the
-	// router's history.
-	const syncWindowLocation = (): void =>
-		window.history.replaceState(
-			null,
-			'',
-			`${history.location.pathname}${history.location.search}`,
-		);
-	syncWindowLocation();
-	history.listen(syncWindowLocation);
+): RenderResult & { history: ExplorerUrl } {
+	const history: ExplorerUrl = {
+		push: (url) => navigate(url),
+		get location() {
+			return window.location;
+		},
+	};
 	__setSearchParamsGetterForTest(
-		() => new URLSearchParams(history.location.search),
+		() => new URLSearchParams(window.location.search),
 	);
 	safeNavigateMock.mockImplementation((to) => {
-		history.push(
+		navigate(
 			typeof to === 'string'
 				? to
-				: `${to.pathname ?? history.location.pathname}${to.search ?? ''}`,
+				: `${to.pathname ?? window.location.pathname}${to.search ?? ''}`,
 		);
 	});
 
@@ -224,31 +241,29 @@ export function renderWithExplorerProviders(
 	};
 
 	const result = render(
-		<Router history={history}>
-			<CompatRouter>
-				<NuqsAdapter>
-					<QueryClientProvider client={queryClient}>
-						<Provider store={mockStore(store.getState())}>
-							<AppContext.Provider value={appContext}>
-								<TimezoneProvider>
-									<PreferenceContextProvider>
-										<QueryBuilderProvider>
-											<ExplorerShell dataSource={dataSource} />
-											{ui}
-										</QueryBuilderProvider>
-									</PreferenceContextProvider>
-								</TimezoneProvider>
-							</AppContext.Provider>
-						</Provider>
-					</QueryClientProvider>
-				</NuqsAdapter>
-			</CompatRouter>
-		</Router>,
+		<TestRouter initialRoute={initialUrl}>
+			<NuqsAdapter>
+				<QueryClientProvider client={queryClient}>
+					<Provider store={mockStore(store.getState())}>
+						<AppContext.Provider value={appContext}>
+							<TimezoneProvider>
+								<PreferenceContextProvider>
+									<QueryBuilderProvider>
+										<ExplorerShell dataSource={dataSource} />
+										{ui}
+									</QueryBuilderProvider>
+								</PreferenceContextProvider>
+							</TimezoneProvider>
+						</AppContext.Provider>
+					</Provider>
+				</QueryClientProvider>
+			</NuqsAdapter>
+		</TestRouter>,
 	);
 	return { ...result, history };
 }
 
-export function urlParam(history: MemoryHistory, key: string): string | null {
+export function urlParam(history: ExplorerUrl, key: string): string | null {
 	return new URLSearchParams(history.location.search).get(key);
 }
 

@@ -1,6 +1,6 @@
-import { useLocation } from 'react-router-dom';
 import get from 'api/browser/localstorage/get';
 import { DASHBOARD_TIME_IN_DURATION } from 'constants/app';
+import { useAppLocation } from 'lib/router/useAppLocation';
 
 import { refreshIntervalOptions } from './constants';
 
@@ -14,7 +14,7 @@ export interface AutoRefreshSelection {
  * Read on every render because localStorage isn't reactive.
  */
 export function useAutoRefreshSelection(): AutoRefreshSelection {
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 
 	const selectedOption = JSON.parse(get(DASHBOARD_TIME_IN_DURATION) || '{}')[
 		pathname
