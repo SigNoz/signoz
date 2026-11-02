@@ -382,6 +382,62 @@ def telegram_message_subset(alertname: str, links: list[tuple[str, str]]) -> dic
     }
 
 
+def mattermost_path(hook: str) -> str:
+    return f"/hooks/{hook}"
+
+
+def mattermost_channel(name: str, hook: str, notification_channel: types.TestContainerDocker) -> dict:
+    """The hook id keys the WireMock path, like a real incoming webhook URL."""
+    return {
+        "name": name,
+        "config": {
+            "kind": "mattermost",
+            "spec": {
+                "webhookUrl": notification_channel.container_configs["8080"].get(mattermost_path(hook)),
+                "channel": "alerts",
+            },
+        },
+    }
+
+
+def mattermost_ok_mappings(path: str) -> list[Mapping]:
+    """A Mattermost incoming webhook answers a post with a plain-text ok."""
+    return [
+        Mapping(
+            request=MappingRequest(method=HttpMethods.POST, url_path=path),
+            response=MappingResponse(status=200, body="ok"),
+        )
+    ]
+
+
+def mattermost_retry_mappings(path: str) -> list[Mapping]:
+    """503 on the first call then 200, via a wiremock scenario transition."""
+    scenario = f"mattermost-retry-{path}"
+    return [
+        Mapping(
+            request=MappingRequest(method=HttpMethods.POST, url_path=path),
+            response=MappingResponse(status=503, body="unavailable"),
+            scenario_name=scenario,
+            required_scenario_state="Started",
+            new_scenario_state="ok",
+        ),
+        Mapping(
+            request=MappingRequest(method=HttpMethods.POST, url_path=path),
+            response=MappingResponse(status=200, body="ok"),
+            scenario_name=scenario,
+            required_scenario_state="ok",
+        ),
+    ]
+
+
+def mattermost_message_subset(alertname: str) -> dict:
+    """Upstream's default text: a markdown heading, then the alert labels."""
+    return {
+        "channel": "alerts",
+        "text": re.compile("(?s)" + re.escape("# Alerts Firing:") + ".*" + re.escape(f"alertname = {alertname}")),
+    }
+
+
 JIRA_TEST_EMAIL = "user@acme.io"
 JIRA_SA_EMAIL = "svc@serviceaccount.atlassian.com"
 JIRA_TEST_TOKEN = "jira-test-token"  # noqa: S105

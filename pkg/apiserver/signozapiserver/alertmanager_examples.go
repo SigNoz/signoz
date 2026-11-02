@@ -177,6 +177,19 @@ func createNotificationChannelExamples() []handler.OpenAPIExample {
 				}),
 			},
 		},
+		{
+			Name:        "mattermost",
+			Summary:     "Mattermost incoming webhook",
+			Description: "Posts a Markdown message to a Mattermost channel through an incoming webhook. `channel`, `username` and the icons override the webhook defaults only where the Mattermost server allows it.",
+			Value: map[string]any{
+				"name":        "mattermost-platform",
+				"displayName": "Mattermost platform",
+				"config": channelConfig("mattermost", map[string]any{
+					"webhookUrl": "https://mattermost.example.com/hooks/xxxxxxxxxxxxxxxxxxxxxxxxxx",
+					"channel":    "alerts",
+				}),
+			},
+		},
 	}
 }
 

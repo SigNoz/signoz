@@ -252,6 +252,7 @@ components:
           incidentio: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfig'
           jira: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfig'
           jsmops: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfig'
+          mattermost: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMattermostConfig'
           msteams: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMSTeamsConfig'
           opsgenie: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfig'
           pagerduty: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelPagerdutyConfig'
@@ -271,6 +272,7 @@ components:
       - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfig'
       - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfig'
       - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMattermostConfig'
       type: object
     AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfig:
       properties:
@@ -357,6 +359,21 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/AlertmanagertypesChannelMSTeamsConfig'
+          description: The provider-specific configuration for this kind.
+      required:
+      - kind
+      - spec
+      type: object
+    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMattermostConfig:
+      properties:
+        kind:
+          description: The channel provider kind this variant accepts.
+          enum:
+          - mattermost
+          type: string
+        spec:
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesChannelMattermostConfig'
           description: The provider-specific configuration for this kind.
       required:
       - kind
@@ -665,6 +682,7 @@ components:
       - jsmops
       - incidentio
       - telegram
+      - mattermost
       type: string
     AlertmanagertypesChannelListOrder:
       enum:
@@ -694,6 +712,41 @@ components:
         webhookUrl:
           description: The Teams incoming webhook URL. A secret; returned by create,
             update and fetch by ID, never by list.
+          format: password
+          type: string
+      required:
+      - webhookUrl
+      type: object
+    AlertmanagertypesChannelMattermostConfig:
+      properties:
+        channel:
+          description: The channel to post to, such as town-square or @username; empty
+            uses the webhook default. Only honoured when the webhook is not locked
+            to a channel.
+          type: string
+        iconEmoji:
+          description: Overrides the profile picture with an emoji, such as :bell:;
+            requires icon overrides to be enabled on the Mattermost server.
+          type: string
+        iconUrl:
+          description: Overrides the profile picture of the post; requires icon overrides
+            to be enabled on the Mattermost server.
+          type: string
+        sendResolved:
+          description: Also notify when the alert resolves. Defaults to true.
+          nullable: true
+          type: boolean
+        text:
+          description: Alertmanager template for the Markdown message; defaults to
+            the Alertmanager Mattermost default.
+          type: string
+        username:
+          description: Overrides the posting username; requires username overrides
+            to be enabled on the Mattermost server.
+          type: string
+        webhookUrl:
+          description: The Mattermost incoming webhook URL. A secret; returned by
+            create, update and fetch by ID, never by list.
           format: password
           type: string
       required:
@@ -24270,6 +24323,19 @@ paths:
                       tags: signoz,platform
                   displayName: JSM Ops on-call
                   name: jsmops-oncall
+              mattermost:
+                description: Posts a Markdown message to a Mattermost channel through
+                  an incoming webhook. `channel`, `username` and the icons override
+                  the webhook defaults only where the Mattermost server allows it.
+                summary: Mattermost incoming webhook
+                value:
+                  config:
+                    kind: mattermost
+                    spec:
+                      channel: alerts
+                      webhookUrl: https://mattermost.example.com/hooks/xxxxxxxxxxxxxxxxxxxxxxxxxx
+                  displayName: Mattermost platform
+                  name: mattermost-platform
               msteams:
                 description: Posts an adaptive card to a Teams channel through an
                   incoming webhook.
