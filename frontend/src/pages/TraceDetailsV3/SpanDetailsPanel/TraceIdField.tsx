@@ -1,36 +1,27 @@
-import { useCopyToClipboard } from 'react-use';
-import { Button } from '@signozhq/ui/button';
-import { Tooltip } from '@signozhq/ui/tooltip';
-import { toast } from '@signozhq/ui/sonner';
+import { Typography } from '@signozhq/ui/typography';
+import CopyButton from 'periscope/components/CopyButton/CopyButton';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
+
+import styles from './TraceIdField.module.scss';
 
 interface TraceIdFieldProps {
 	span: SpanV3;
 }
 
-/** Renders a span's trace id; clicking it copies the id. */
 export function TraceIdField({ span }: TraceIdFieldProps): JSX.Element {
-	const [, setCopy] = useCopyToClipboard();
-
-	const handleCopy = (): void => {
-		setCopy(span.trace_id);
-		toast.success('Trace ID copied to clipboard', {
-			position: 'top-right',
-		});
-	};
-
 	return (
-		<Tooltip title="Click to copy trace ID">
-			<Button
-				size="md"
-				variant="link"
-				color="secondary"
-				maxWidth="100%"
-				onClick={handleCopy}
-				testId="span-details-trace-id"
-			>
-				{span.trace_id}
-			</Button>
-		</Tooltip>
+		<div className={styles.traceId}>
+			<span className={styles.value} title={span.trace_id}>
+				<Typography.Text testId="span-details-trace-id">
+					{span.trace_id}
+				</Typography.Text>
+			</span>
+			<CopyButton
+				value={span.trace_id}
+				size={12}
+				ariaLabel="Copy trace ID"
+				testId="span-details-copy-trace-id"
+			/>
+		</div>
 	);
 }
