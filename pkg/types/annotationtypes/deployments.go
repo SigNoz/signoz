@@ -78,7 +78,7 @@ func NewDeploymentSpecsFromRows(rows []DeploymentRow) ([]DeploymentSpec, error) 
 
 func NewDeploymentID(service, environment, version string) string {
 	sum := sha256.Sum256([]byte(strings.Join([]string{service, environment, version}, "\x00")))
-	return "dep_" + hex.EncodeToString(sum[:4])
+	return "dep_" + hex.EncodeToString(sum[:8])
 }
 
 // MergeDeployments keeps the earliest FirstSeen per (service, environment, version); on a tie the first input wins.

@@ -23,7 +23,7 @@ func TestNewDeploymentID(t *testing.T) {
 	}
 
 	base := NewDeploymentID("checkout", "prod", "1.2.0")
-	require.Len(t, base, len("dep_")+8)
+	require.Len(t, base, len("dep_")+16)
 	assert.True(t, len(base) > 4 && base[:4] == "dep_")
 
 	for _, testCase := range testCases {

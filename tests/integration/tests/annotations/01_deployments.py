@@ -90,7 +90,7 @@ def test_deployments_accuracy(
         spec = record["spec"]
         for field in ("id", "signal", "service", "environment", "version", "firstSeen", "traceId", "spanId", "logId", "resourceAttributes"):
             assert field in spec, f"missing {field} in {spec!r}"
-        assert re.fullmatch(r"dep_[0-9a-f]{8}", spec["id"])
+        assert re.fullmatch(r"dep_[0-9a-f]{16}", spec["id"])
         key = (spec["service"], spec["version"])
         if spec["signal"] == "traces":
             span = span_of[key]
