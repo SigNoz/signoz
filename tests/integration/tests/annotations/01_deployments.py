@@ -252,6 +252,49 @@ def test_deployments_history_edge(  # pylint: disable=too-many-arguments,too-man
 
 
 @pytest.mark.parametrize(
+    ("families_on", "expression", "expected"),
+    [
+        pytest.param(True, "", {("checkout", "prod", "1.1.0"), ("checkout", "staging", "1.1.0"), ("billing", "prod", "7.0.0")}, id="flag_on_reads_both_spellings_current_first"),
+        pytest.param(True, "deployment.environment = 'staging'", {("checkout", "staging", "1.1.0")}, id="flag_on_filter_widened_to_new_key"),
+        pytest.param(False, "", {("checkout", "prod", "1.1.0"), ("checkout", "", "1.1.0"), ("billing", "legacy-prod", "7.0.0")}, id="flag_off_reads_legacy_key_only"),
+        pytest.param(False, "deployment.environment = 'staging'", set(), id="flag_off_filter_stays_literal"),
+    ],
+)
+def test_deployments_environment_family(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    signoz: types.SigNoz,
+    signoz_families_on: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_traces,
+    families_on: bool,
+    expression: str,
+    expected: set[tuple[str, str, str]],
+) -> None:
+    """With resolve_semconv_families on, the environment is read from
+    deployment.environment.name first, then deployment.environment, so a
+    resource emitting only the new key keeps its own tuple and id. With the
+    flag off the legacy key alone is read, as the filter path does."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    traces = Traces.load_from_file(get_testdata_file_path("annotations/traces_environment.jsonl"), base_time=now - BASELINE_OFFSET)
+    insert_traces(traces)
+
+    instance = signoz_families_on if families_on else signoz
+    body: dict = {"kind": "deployment", "start": int((now - timedelta(hours=1)).timestamp() * 1000), "end": int(now.timestamp() * 1000), "limit": 50}
+    if expression:
+        body["filter"] = {"expression": expression}
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = requests.post(instance.self.host_configs["8080"].get(ENDPOINT), headers={"authorization": f"Bearer {token}"}, json=body, timeout=5)
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    assert {(r["spec"]["service"], r["spec"]["environment"], r["spec"]["version"]) for r in data["records"]} == expected
+    assert data["total"] == len(expected)
+    assert len({r["spec"]["id"] for r in data["records"]}) == len(expected)
+    for record in data["records"]:
+        assert "deployment.environment.name" not in record["spec"]["resourceAttributes"]
+        assert "deployment.environment" not in record["spec"]["resourceAttributes"]
+
+
+@pytest.mark.parametrize(
     ("expression", "expected"),
     [
         pytest.param("k8s.namespace.name = 'jobs'", {("worker", "3.0.0")}, id="eq"),

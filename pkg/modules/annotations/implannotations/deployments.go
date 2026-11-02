@@ -3,10 +3,13 @@ package implannotations
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/semconv"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/SigNoz/signoz/pkg/types/annotationtypes"
@@ -15,7 +18,10 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-const resourceBucketSeconds = 1800
+const (
+	resourceBucketSeconds = 1800
+	legacyEnvironmentKey  = "deployment.environment"
+)
 
 type signalTables struct {
 	signal        telemetrytypes.Signal
@@ -59,7 +65,7 @@ func (m *module) queryTracesDeployments(ctx context.Context, orgID valuer.UUID, 
 		return []annotationtypes.DeploymentRow{}, 0, nil
 	}
 
-	query, args := buildTracesDeploymentsQuery(filterClause, req.Start, req.End, rBucket)
+	query, args := buildTracesDeploymentsQuery(filterClause, resolveEnvironmentKeys(ctx, orgID, m.fl, telemetrytypes.SignalTraces), req.Start, req.End, rBucket)
 	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
 		return nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to query traces deployments")
@@ -107,7 +113,7 @@ func (m *module) queryLogsDeployments(ctx context.Context, orgID valuer.UUID, re
 		return []annotationtypes.DeploymentRow{}, 0, nil
 	}
 
-	query, args := buildLogsDeploymentsQuery(filterClause, req.Start, req.End, rBucket)
+	query, args := buildLogsDeploymentsQuery(filterClause, resolveEnvironmentKeys(ctx, orgID, m.fl, telemetrytypes.SignalLogs), req.Start, req.End, rBucket)
 	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
 		return nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to query logs deployments")
@@ -142,12 +148,12 @@ func (m *module) readHistoryEdge(ctx context.Context, tables signalTables) (int6
 	return rBucket, nil
 }
 
-func buildTracesDeploymentsQuery(filterClause *sqlbuilder.WhereClause, startMs, endMs, rBucket int64) (string, []any) {
+func buildTracesDeploymentsQuery(filterClause *sqlbuilder.WhereClause, envKeys []string, startMs, endMs, rBucket int64) (string, []any) {
 	bounds := []string{
 		"fromUnixTimestamp64Milli(toInt64(?)) AS t1_dt",
 		"fromUnixTimestamp64Milli(toInt64(?)) AS t2_dt",
 	}
-	ctes, cteArgs := buildResourcePasses(tracesTables, filterClause, startMs, endMs, rBucket, bounds, []any{startMs, endMs})
+	ctes, cteArgs := buildResourcePasses(tracesTables, filterClause, envKeys, startMs, endMs, rBucket, bounds, []any{startMs, endMs})
 
 	final := buildFinalSelect(
 		tracesTables,
@@ -158,12 +164,12 @@ func buildTracesDeploymentsQuery(filterClause *sqlbuilder.WhereClause, startMs, 
 	return querybuilder.CombineCTEs(ctes) + final, querybuilder.PrependArgs(cteArgs, nil)
 }
 
-func buildLogsDeploymentsQuery(filterClause *sqlbuilder.WhereClause, startMs, endMs, rBucket int64) (string, []any) {
+func buildLogsDeploymentsQuery(filterClause *sqlbuilder.WhereClause, envKeys []string, startMs, endMs, rBucket int64) (string, []any) {
 	bounds := []string{
 		"toUInt64(?) * 1000000 AS t1_ns",
 		"toUInt64(?) * 1000000 AS t2_ns",
 	}
-	ctes, cteArgs := buildResourcePasses(logsTables, filterClause, startMs, endMs, rBucket, bounds, []any{startMs, endMs})
+	ctes, cteArgs := buildResourcePasses(logsTables, filterClause, envKeys, startMs, endMs, rBucket, bounds, []any{startMs, endMs})
 
 	final := buildFinalSelect(
 		logsTables,
@@ -175,7 +181,7 @@ func buildLogsDeploymentsQuery(filterClause *sqlbuilder.WhereClause, startMs, en
 }
 
 // buildResourcePasses returns the constants, the signal's time bounds and the two resource-table CTEs shared by both signals, with their args in order.
-func buildResourcePasses(tables signalTables, filterClause *sqlbuilder.WhereClause, startMs, endMs, rBucket int64, bounds []string, boundArgs []any) ([]string, [][]any) {
+func buildResourcePasses(tables signalTables, filterClause *sqlbuilder.WhereClause, envKeys []string, startMs, endMs, rBucket int64, bounds []string, boundArgs []any) ([]string, [][]any) {
 	constants := []string{
 		"toInt64(intDiv(?, 1000)) AS t1",
 		"toInt64(intDiv(?, 1000)) AS t2",
@@ -190,7 +196,7 @@ func buildResourcePasses(tables signalTables, filterClause *sqlbuilder.WhereClau
 	firstBucketInner := sqlbuilder.NewSelectBuilder()
 	firstBucketInner.Select(
 		"simpleJSONExtractString(labels, 'service.name') AS service",
-		"simpleJSONExtractString(labels, 'deployment.environment') AS env",
+		buildEnvironmentExpr(envKeys)+" AS env",
 		"simpleJSONExtractString(labels, 'service.version') AS version",
 		"seen_at_ts_bucket_start AS bucket",
 	)
@@ -206,7 +212,7 @@ func buildResourcePasses(tables signalTables, filterClause *sqlbuilder.WhereClau
 	cand := sqlbuilder.NewSelectBuilder()
 	cand.Select(
 		"simpleJSONExtractString(labels, 'service.name') AS service",
-		"simpleJSONExtractString(labels, 'deployment.environment') AS env",
+		buildEnvironmentExpr(envKeys)+" AS env",
 		"simpleJSONExtractString(labels, 'service.version') AS version",
 		"seen_at_ts_bucket_start AS min_bucket",
 		"fingerprint AS fp",
@@ -228,6 +234,30 @@ func buildResourcePasses(tables signalTables, filterClause *sqlbuilder.WhereClau
 }
 
 // buildFinalSelect joins the raw table back to cand; idSelect and having carry the signal-specific columns and bounds.
+// resolveEnvironmentKeys returns the environment spellings to read, the semconv family when the families flag is on, else the legacy key alone.
+func resolveEnvironmentKeys(ctx context.Context, orgID valuer.UUID, fl flagger.Flagger, signal telemetrytypes.Signal) []string {
+	if !querybuilder.SemconvFamiliesEnabled(ctx, orgID, fl) {
+		return []string{legacyEnvironmentKey}
+	}
+	return semconv.Members(semconv.KindAttribute, telemetrytypes.FieldKeySelector{
+		Name:         legacyEnvironmentKey,
+		Signal:       signal,
+		FieldContext: telemetrytypes.FieldContextResource,
+	})
+}
+
+// buildEnvironmentExpr mirrors the string family read the filter path compiles: first non-empty spelling wins, ” when none is set.
+func buildEnvironmentExpr(keys []string) string {
+	if len(keys) == 1 {
+		return fmt.Sprintf("simpleJSONExtractString(labels, '%s')", keys[0])
+	}
+	reads := make([]string, 0, len(keys))
+	for _, key := range keys {
+		reads = append(reads, fmt.Sprintf("NULLIF(simpleJSONExtractString(labels, '%s'), '')", key))
+	}
+	return fmt.Sprintf("COALESCE(%s, '')", strings.Join(reads, ", "))
+}
+
 func buildFinalSelect(tables signalTables, idSelect, having string) string {
 	raw := tables.rawAlias
 	return fmt.Sprintf(

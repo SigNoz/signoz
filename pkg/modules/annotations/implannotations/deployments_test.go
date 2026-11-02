@@ -1,11 +1,15 @@
 package implannotations
 
 import (
+	"context"
 	"strings"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/types/annotationtypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,6 +20,17 @@ func serviceFilterClause(value string) *sqlbuilder.WhereClause {
 	cond := sqlbuilder.NewCond()
 	clause.AddWhereExpr(cond.Args, cond.Equal("simpleJSONExtractString(labels, 'service.name')", value))
 	return clause
+}
+
+var (
+	legacyEnvKeys = []string{"deployment.environment"}
+	familyEnvKeys = []string{"deployment.environment.name", "deployment.environment"}
+	familyEnvExpr = "COALESCE(NULLIF(simpleJSONExtractString(labels, 'deployment.environment.name'), ''), NULLIF(simpleJSONExtractString(labels, 'deployment.environment'), ''), '')"
+)
+
+// withFamilyEnv swaps the legacy environment read for the coalesced family read in both resource passes of a golden.
+func withFamilyEnv(golden string) string {
+	return strings.Replace(golden, "simpleJSONExtractString(labels, 'deployment.environment') AS env", familyEnvExpr+" AS env", 2)
 }
 
 // withServiceFilter inserts the service predicate into both resource passes of an unfiltered golden.
@@ -33,26 +48,36 @@ func TestBuildTracesDeploymentsQuery(t *testing.T) {
 	testCases := []struct {
 		name     string
 		filter   *sqlbuilder.WhereClause
+		envKeys  []string
 		wantSQL  string
 		wantArgs []any
 	}{
 		{
 			name:     "NoFilter_Golden",
 			filter:   sqlbuilder.NewWhereClause(),
+			envKeys:  legacyEnvKeys,
 			wantSQL:  noFilter,
 			wantArgs: []any{int64(1700000000000), int64(1700003600000), int64(1699990000), int64(1700000000000), int64(1700003600000)},
 		},
 		{
 			name:     "Filtered_ArgsInBothPasses",
 			filter:   serviceFilterClause("cart"),
+			envKeys:  legacyEnvKeys,
 			wantSQL:  withServiceFilter(noFilter),
 			wantArgs: []any{int64(1700000000000), int64(1700003600000), int64(1699990000), int64(1700000000000), int64(1700003600000), "cart", "cart"},
+		},
+		{
+			name:     "FamilyKeys_CoalescedEnvInBothPasses",
+			filter:   sqlbuilder.NewWhereClause(),
+			envKeys:  familyEnvKeys,
+			wantSQL:  withFamilyEnv(noFilter),
+			wantArgs: []any{int64(1700000000000), int64(1700003600000), int64(1699990000), int64(1700000000000), int64(1700003600000)},
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			sql, args := buildTracesDeploymentsQuery(testCase.filter, 1700000000000, 1700003600000, 1699990000)
+			sql, args := buildTracesDeploymentsQuery(testCase.filter, testCase.envKeys, 1700000000000, 1700003600000, 1699990000)
 			assert.Equal(t, testCase.wantSQL, sql)
 			assert.Equal(t, testCase.wantArgs, args)
 			assert.Equal(t, strings.Count(sql, "?"), len(args))
@@ -69,29 +94,79 @@ func TestBuildLogsDeploymentsQuery(t *testing.T) {
 	testCases := []struct {
 		name     string
 		filter   *sqlbuilder.WhereClause
+		envKeys  []string
 		wantSQL  string
 		wantArgs []any
 	}{
 		{
 			name:     "NoFilter_Golden",
 			filter:   sqlbuilder.NewWhereClause(),
+			envKeys:  legacyEnvKeys,
 			wantSQL:  noFilter,
 			wantArgs: []any{int64(1700000000000), int64(1700003600000), int64(1699990000), int64(1700000000000), int64(1700003600000)},
 		},
 		{
 			name:     "Filtered_ArgsInBothPasses",
 			filter:   serviceFilterClause("cart"),
+			envKeys:  legacyEnvKeys,
 			wantSQL:  withServiceFilter(noFilter),
 			wantArgs: []any{int64(1700000000000), int64(1700003600000), int64(1699990000), int64(1700000000000), int64(1700003600000), "cart", "cart"},
+		},
+		{
+			name:     "FamilyKeys_CoalescedEnvInBothPasses",
+			filter:   sqlbuilder.NewWhereClause(),
+			envKeys:  familyEnvKeys,
+			wantSQL:  withFamilyEnv(noFilter),
+			wantArgs: []any{int64(1700000000000), int64(1700003600000), int64(1699990000), int64(1700000000000), int64(1700003600000)},
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			sql, args := buildLogsDeploymentsQuery(testCase.filter, 1700000000000, 1700003600000, 1699990000)
+			sql, args := buildLogsDeploymentsQuery(testCase.filter, testCase.envKeys, 1700000000000, 1700003600000, 1699990000)
 			assert.Equal(t, testCase.wantSQL, sql)
 			assert.Equal(t, testCase.wantArgs, args)
 			assert.Equal(t, strings.Count(sql, "?"), len(args))
+		})
+	}
+}
+
+func TestBuildEnvironmentExpr(t *testing.T) {
+	testCases := []struct {
+		name string
+		keys []string
+		want string
+	}{
+		{name: "SingleKey_PlainRead", keys: legacyEnvKeys, want: "simpleJSONExtractString(labels, 'deployment.environment')"},
+		{name: "FamilyKeys_CoalesceCurrentFirst", keys: familyEnvKeys, want: familyEnvExpr},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.want, buildEnvironmentExpr(testCase.keys))
+		})
+	}
+}
+
+func TestResolveEnvironmentKeys(t *testing.T) {
+	testCases := []struct {
+		name     string
+		familyOn bool
+		signal   telemetrytypes.Signal
+		want     []string
+	}{
+		{name: "FlagOff_LegacyOnly", familyOn: false, signal: telemetrytypes.SignalTraces, want: legacyEnvKeys},
+		{name: "FlagOn_Traces_CurrentThenLegacy", familyOn: true, signal: telemetrytypes.SignalTraces, want: familyEnvKeys},
+		{name: "FlagOn_Logs_CurrentThenLegacy", familyOn: true, signal: telemetrytypes.SignalLogs, want: familyEnvKeys},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			fl := flaggertest.New(t)
+			if testCase.familyOn {
+				fl = flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureResolveSemconvFamilies.String(): true})
+			}
+			assert.Equal(t, testCase.want, resolveEnvironmentKeys(context.Background(), valuer.GenerateUUID(), fl, testCase.signal))
 		})
 	}
 }
