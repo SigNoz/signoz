@@ -133,6 +133,10 @@ export interface QueryPanelDefinition<
 		panel: PanelOfKind<K>,
 		data: PanelQueryData,
 	) => PanelStatusDetail | null;
+	/** Reconciles the kind's options with the queries a save carries. */
+	reconcileWithQueries?: (
+		spec: DashboardtypesPanelSpecDTO,
+	) => DashboardtypesPanelSpecDTO;
 }
 
 /**

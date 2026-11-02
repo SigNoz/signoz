@@ -480,9 +480,17 @@ func (p *ScatterPlotPoints) UnmarshalJSON(data []byte) error {
 	return p.validate()
 }
 
+// Null bounds are compared at their renderer defaults, so one-sided settings can't invert the range.
 func (p ScatterPlotPoints) validate() error {
-	if p.MinSize != nil && p.MaxSize != nil && *p.MinSize > *p.MaxSize {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid points: minSize %d must not exceed maxSize %d", *p.MinSize, *p.MaxSize)
+	minSize, maxSize := defaultPointMinSize, defaultPointMaxSize
+	if p.MinSize != nil {
+		minSize = *p.MinSize
+	}
+	if p.MaxSize != nil {
+		maxSize = *p.MaxSize
+	}
+	if minSize > maxSize {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid points: minSize %d must not exceed maxSize %d", minSize, maxSize)
 	}
 	return nil
 }
@@ -1079,6 +1087,9 @@ func (o *FillOpacity) UnmarshalJSON(data []byte) error {
 const (
 	minPointDiameter = 2
 	maxPointDiameter = 40
+
+	defaultPointMinSize PointDiameter = 4
+	defaultPointMaxSize PointDiameter = 24
 )
 
 // PointDiameter is a scatter dot's diameter in whole CSS pixels.
