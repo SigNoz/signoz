@@ -11,7 +11,6 @@ import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
-import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
@@ -24,12 +23,17 @@ import dayjs from 'dayjs';
 import { Clock, PenLine, TriangleAlert } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 import { getCustomTimeRanges } from 'utils/customTimeRangeUtils';
+import { isTimeRangeSaved, SavedTimeRange } from 'utils/savedTimeRangeUtils';
 import { TimeRangeValidationResult } from 'utils/timeUtils';
 
 import CalendarContainer from './CalendarContainer';
 import { CustomTimePickerInputStatus } from './CustomTimePicker';
+import RecentlyUsedTimeRangeItem from './SavedTimeRanges/RecentlyUsedTimeRangeItem';
+import SavedTimeRanges from './SavedTimeRanges/SavedTimeRanges';
+import { formatTimeRangeLabel } from './SavedTimeRanges/utils';
 import TimezonePicker from './TimezonePicker';
 import { Timezone } from './timezoneUtils';
+import useSavedTimeRanges from './useSavedTimeRanges';
 
 import './CustomTimePicker.styles.scss';
 
@@ -145,11 +149,32 @@ function CustomTimePickerPopoverContent({
 		RecentlyUsedDateTimeRange[]
 	>([]);
 
+	const {
+		savedTimeRanges,
+		save: saveTimeRange,
+		rename: renameSavedTimeRange,
+		remove: removeSavedTimeRange,
+	} = useSavedTimeRanges();
+
 	const handleExitLiveLogs = useCallback((): void => {
 		if (isLogsExplorerPage) {
 			onExitLiveLogs();
 		}
 	}, [isLogsExplorerPage, onExitLiveLogs]);
+
+	const applyAbsoluteTimeRange = useCallback(
+		(from: string, to: string): void => {
+			handleExitLiveLogs();
+			onCustomDateHandler([dayjs(from), dayjs(to)]);
+			setIsOpen(false);
+		},
+		[handleExitLiveLogs, onCustomDateHandler, setIsOpen],
+	);
+
+	const handleApplySavedTimeRange = useCallback(
+		(range: SavedTimeRange): void => applyAbsoluteTimeRange(range.from, range.to),
+		[applyAbsoluteTimeRange],
+	);
 
 	useEffect(() => {
 		if (!customDateTimeVisible) {
@@ -157,11 +182,7 @@ function CustomTimePickerPopoverContent({
 
 			const formattedCustomTimeRanges: RecentlyUsedDateTimeRange[] =
 				customTimeRanges.map((range) => ({
-					label: `${dayjs(range.from)
-						.tz(timezone.value)
-						.format(DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS)} - ${dayjs(range.to)
-						.tz(timezone.value)
-						.format(DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS)}`,
+					label: formatTimeRangeLabel(range.from, range.to, timezone.value),
 					from: range.from,
 					to: range.to,
 					value: range.timestamp,
@@ -321,31 +342,30 @@ function CustomTimePickerPopoverContent({
 								<div>{getTimeChips(RelativeDurationSuggestionOptions)}</div>
 							</div>
 
+							{showRecentlyUsed && savedTimeRanges.length > 0 && (
+								<SavedTimeRanges
+									ranges={savedTimeRanges}
+									timezone={timezone.value}
+									onApply={handleApplySavedTimeRange}
+									onRename={renameSavedTimeRange}
+									onRemove={removeSavedTimeRange}
+								/>
+							)}
+
 							{showRecentlyUsed && recentlyUsedTimeRanges.length > 0 && (
 								<div className="recently-used-container">
 									<div className="time-heading">RECENTLY USED</div>
 									<div className="recently-used-range">
 										{recentlyUsedTimeRanges.map((range: RecentlyUsedDateTimeRange) => (
-											<div
-												className="recently-used-range-item"
-												role="button"
-												tabIndex={0}
-												onKeyDown={(e): void => {
-													if (e.key === 'Enter' || e.key === ' ') {
-														handleExitLiveLogs();
-														onCustomDateHandler([dayjs(range.from), dayjs(range.to)]);
-														setIsOpen(false);
-													}
-												}}
+											<RecentlyUsedTimeRangeItem
 												key={range.value}
-												onClick={(): void => {
-													handleExitLiveLogs();
-													onCustomDateHandler([dayjs(range.from), dayjs(range.to)]);
-													setIsOpen(false);
-												}}
-											>
-												{range.label}
-											</div>
+												label={range.label}
+												isSaved={isTimeRangeSaved(savedTimeRanges, range)}
+												onApply={(): void => applyAbsoluteTimeRange(range.from, range.to)}
+												onSave={(name): void =>
+													saveTimeRange({ name, from: range.from, to: range.to })
+												}
+											/>
 										))}
 									</div>
 								</div>

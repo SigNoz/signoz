@@ -1,0 +1,69 @@
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+}
+
+.list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+}
+
+.item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-2);
+	padding-right: var(--spacing-2);
+	border-radius: 2px;
+	color: var(--l2-foreground);
+	background-color: var(--l3-background);
+
+	&:hover {
+		color: var(--l1-foreground);
+	}
+}
+
+.itemApply {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-width: 0;
+	padding: var(--spacing-4);
+	border: none;
+	background: none;
+	color: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.itemName {
+	overflow: hidden;
+	font-size: var(--periscope-font-size-base);
+	font-weight: 500;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.itemRange {
+	font-size: var(--font-size-xs);
+	line-height: var(--line-height-snug);
+	letter-spacing: 0.04em;
+}
+
+.itemActions {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+}
+
+.nameInput {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+}
+
+.nameInputField {
+	flex: 1;
+}
