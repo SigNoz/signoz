@@ -39,6 +39,7 @@ func (PanelPlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
 		string(PanelKindText):        schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec"),
 		string(PanelKindHeatmap):     schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec"),
 		string(PanelKindScatterPlot): schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpec"),
+		string(PanelKindTopList):     schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpec"),
 		string(PanelKindGeoMap):      schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpec"),
 	})
 }
@@ -74,6 +75,7 @@ func (PanelPlugin) JSONSchemaOneOf() []any {
 		PanelPluginVariant[TextPanelSpec]{Kind: string(PanelKindText)},
 		PanelPluginVariant[HeatmapPanelSpec]{Kind: string(PanelKindHeatmap)},
 		PanelPluginVariant[ScatterPlotPanelSpec]{Kind: string(PanelKindScatterPlot)},
+		PanelPluginVariant[TopListPanelSpec]{Kind: string(PanelKindTopList)},
 		PanelPluginVariant[GeoMapPanelSpec]{Kind: string(PanelKindGeoMap)},
 	}
 }
@@ -249,6 +251,7 @@ var (
 		PanelKindText:        func() any { return new(TextPanelSpec) },
 		PanelKindHeatmap:     func() any { return new(HeatmapPanelSpec) },
 		PanelKindScatterPlot: func() any { return new(ScatterPlotPanelSpec) },
+		PanelKindTopList:     func() any { return new(TopListPanelSpec) },
 		PanelKindGeoMap:      func() any { return new(GeoMapPanelSpec) },
 	}
 	queryPluginSpecs = map[QueryPluginKind]func() any{
@@ -277,6 +280,7 @@ var (
 		PanelKindText:        {},
 		PanelKindHeatmap:     {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindPromQL, QueryKindClickHouseSQL},
 		PanelKindScatterPlot: {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindClickHouseSQL},
+		PanelKindTopList:     {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
 		PanelKindGeoMap:      {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindClickHouseSQL},
 	}
 )
