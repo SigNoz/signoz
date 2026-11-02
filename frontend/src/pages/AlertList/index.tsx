@@ -8,6 +8,7 @@ import AllAlertRules from 'container/ListAlertRules';
 import { PlannedDowntime } from 'container/PlannedDowntime/PlannedDowntime';
 import RoutingPolicies from 'container/RoutingPolicies';
 import TriggeredAlerts from 'container/TriggeredAlerts';
+import useReducedMotion from 'hooks/useReducedMotion';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { GalleryVerticalEnd, Pyramid } from '@signozhq/icons';
@@ -50,6 +51,7 @@ function AllAlertList(): JSX.Element {
 	const urlQuery = useUrlQuery();
 	const location = useAppLocation();
 	const { safeNavigate } = useSafeNavigate();
+	const prefersReducedMotion = useReducedMotion();
 
 	const tab = urlQuery.get('tab');
 	const subTab = urlQuery.get('subTab');
@@ -220,6 +222,7 @@ function AllAlertList(): JSX.Element {
 	return (
 		<Tabs
 			destroyInactiveTabPane
+			animated={!prefersReducedMotion}
 			items={items}
 			activeKey={getActiveTab()}
 			onChange={handleTopTabChange}
