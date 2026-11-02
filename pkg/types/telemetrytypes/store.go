@@ -3,11 +3,12 @@ package telemetrytypes
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// MetadataStore is the interface for the telemetry metadata store.
+// MetadataStore is the interface for the telemetry metadata store. The key and
+// value lookups route to a per-signal FieldKeyResolver; the embedded interfaces
+// are signal-scoped and pass straight through.
 type MetadataStore interface {
 	// GetKeys returns a map of field keys types.TelemetryFieldKey by name, there can be multiple keys with the same name
 	// if they have different types or data types.
@@ -26,32 +27,12 @@ type MetadataStore interface {
 	// GetAllValues returns a list of all values.
 	GetAllValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *FieldValueSelector) (*TelemetryFieldValues, bool, error)
 
-	// FetchTemporality fetches the temporality for metric
-	FetchTemporality(ctx context.Context, orgID valuer.UUID, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricName string) (metrictypes.Temporality, error)
-
-	// FetchTemporalityMulti fetches the temporality for multiple metrics
-	FetchTemporalityMulti(ctx context.Context, orgID valuer.UUID, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, error)
-
-	FetchTemporalityAndTypeMulti(ctx context.Context, orgID valuer.UUID, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, map[string]metrictypes.Type, map[string]bool, error)
-
-	// ListJSONIndexes lists the per-path JSON skip indexes of the given source.
-	ListJSONIndexes(ctx context.Context, lookup JSONIndexLookup, filters ...string) ([]TelemetryFieldKeySkipIndex, error)
-
-	// GetPromotedPaths lists the promoted paths recorded in the column
-	// evolution table for the entry's signal, column and field context.
-	GetPromotedPaths(ctx context.Context, entry EvolutionEntry, paths ...string) (map[string]bool, error)
-
-	// PromotePaths records promoted paths in the column evolution table as
-	// rows templated by entry; FieldName and ReleaseTime are set per path.
-	PromotePaths(ctx context.Context, entry EvolutionEntry, paths ...string) error
-
 	// GetMaterializedKeys lists the keys materialized as dedicated columns.
 	GetMaterializedKeys(ctx context.Context, signal Signal) ([]*TelemetryFieldKey, error)
 
-	// GetFirstSeenFromMetricMetadata gets the first seen timestamp for a metric metadata lookup key.
-	GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []MetricMetadataLookupKey) (map[MetricMetadataLookupKey]int64, error)
+	MetricMetadata
 
-	FetchLastSeenInfoMulti(ctx context.Context, orgID valuer.UUID, metricNames ...string) (map[string]int64, error)
+	LogsMetadata
 }
 
 type MetricMetadataLookupKey struct {

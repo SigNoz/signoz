@@ -1,15 +1,15 @@
-package telemetrymetadata
+package parser
 
 import (
 	"strings"
 
-	"github.com/AfterShip/clickhouse-sql-parser/parser"
+	chparser "github.com/AfterShip/clickhouse-sql-parser/parser"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 // TelemetryFieldVisitor is an AST visitor for extracting telemetry fields.
 type TelemetryFieldVisitor struct {
-	parser.DefaultASTVisitor
+	chparser.DefaultASTVisitor
 	Fields []*telemetrytypes.TelemetryFieldKey
 }
 
@@ -20,14 +20,14 @@ func NewTelemetryFieldVisitor() *TelemetryFieldVisitor {
 }
 
 // VisitColumnDef is called when visiting a column definition.
-func (v *TelemetryFieldVisitor) VisitColumnDef(expr *parser.ColumnDef) error {
+func (v *TelemetryFieldVisitor) VisitColumnDef(expr *chparser.ColumnDef) error {
 	// Check if this is a materialized column with DEFAULT expression
 	if expr.DefaultExpr == nil {
 		return nil
 	}
 
 	// Parse column name to extract context and data type
-	columnName := parser.Format(expr.Name)
+	columnName := chparser.Format(expr.Name)
 
 	// Remove backticks if present
 	columnName = strings.TrimPrefix(columnName, "`")
@@ -75,7 +75,7 @@ func (v *TelemetryFieldVisitor) VisitColumnDef(expr *parser.ColumnDef) error {
 	// Extract field name from the DEFAULT expression
 	// The DEFAULT expression should be something like: resources_string['k8s.cluster.name']
 	// We need to extract the key inside the square brackets
-	defaultExprStr := parser.Format(expr.DefaultExpr)
+	defaultExprStr := chparser.Format(expr.DefaultExpr)
 
 	// Look for the pattern: map['key']
 	startIdx := strings.Index(defaultExprStr, "['")
@@ -101,7 +101,7 @@ func (v *TelemetryFieldVisitor) VisitColumnDef(expr *parser.ColumnDef) error {
 
 func ExtractFieldKeysFromTblStatement(statement string) ([]*telemetrytypes.TelemetryFieldKey, error) {
 	// Parse the CREATE TABLE statement using the ClickHouse parser
-	p := parser.NewParser(statement)
+	p := chparser.NewParser(statement)
 	stmts, err := p.ParseStmts()
 	if err != nil {
 		return nil, err
@@ -113,7 +113,7 @@ func ExtractFieldKeysFromTblStatement(statement string) ([]*telemetrytypes.Telem
 	// Visit each statement
 	for _, stmt := range stmts {
 		// We're looking for CreateTable statements
-		createTable, ok := stmt.(*parser.CreateTable)
+		createTable, ok := stmt.(*chparser.CreateTable)
 		if !ok {
 			continue
 		}

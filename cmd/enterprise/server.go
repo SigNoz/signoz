@@ -28,7 +28,9 @@ import (
 	eequerier "github.com/SigNoz/signoz/ee/querier"
 	enterpriseapp "github.com/SigNoz/signoz/ee/query-service/app"
 	eerules "github.com/SigNoz/signoz/ee/query-service/rules"
+	"github.com/SigNoz/signoz/ee/statementbuilder/auditstatementbuilder"
 	"github.com/SigNoz/signoz/ee/subscription/httpsubscription"
+	"github.com/SigNoz/signoz/ee/telemetrymetadata/audittelemetrymetadata"
 	enterprisezeus "github.com/SigNoz/signoz/ee/zeus"
 	"github.com/SigNoz/signoz/ee/zeus/httpzeus"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
@@ -172,6 +174,13 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 
 			return factories, "http"
 		},
+		[]signoz.LogSourceQuery{{
+			Source: telemetrytypes.SourceAudit,
+			Resolver: func(ts telemetrystore.TelemetryStore) telemetrytypes.FieldKeyResolver {
+				return audittelemetrymetadata.New(ts)
+			},
+			StatementBuilderFactory: auditstatementbuilder.NewFactory,
+		}},
 		func(ps factory.ProviderSettings, q querier.Querier, a analytics.Analytics) querier.Handler {
 			communityHandler := querier.NewHandler(ps, q, a)
 			return eequerier.NewHandler(ps, q, communityHandler)
