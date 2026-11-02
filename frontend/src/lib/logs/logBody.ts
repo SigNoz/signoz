@@ -22,11 +22,12 @@ export function getBodyDisplay(body: unknown): string {
 }
 
 export function getBodyMessage(body: unknown): string {
-	if (!isBodyObject(body)) {
-		return coerceToString(body);
+	const collapsed = extractOnlyMessageBody(body);
+	if (!isBodyObject(collapsed)) {
+		return coerceToString(collapsed);
 	}
-	if (typeof body.message === 'string' && body.message !== '') {
-		return body.message;
+	if (typeof collapsed.message === 'string' && collapsed.message !== '') {
+		return collapsed.message;
 	}
-	return JSON.stringify(body);
+	return JSON.stringify(collapsed);
 }

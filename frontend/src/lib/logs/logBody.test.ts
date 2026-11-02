@@ -58,6 +58,13 @@ describe('getBodyMessage', () => {
 		);
 	});
 
+	it('collapses a message-only body the same way as getBodyDisplay', () => {
+		expect(getBodyMessage({ message: { event: 'login' } as never })).toBe(
+			'{"event":"login"}',
+		);
+		expect(getBodyMessage({ message: '' })).toBe('');
+	});
+
 	it('returns an empty string for a missing body', () => {
 		expect(getBodyMessage(undefined)).toBe('');
 		expect(getBodyMessage(null)).toBe('');
