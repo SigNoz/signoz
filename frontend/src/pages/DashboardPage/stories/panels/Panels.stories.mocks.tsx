@@ -195,7 +195,7 @@ export const panelsMocks = defineStoryMocks({
 		series: countControl('Series', {
 			group: DATA,
 			description:
-				'Series on the charts, groups on the heatmap, slices on the pie, rows on the table.',
+				'Series on the charts, groups on the heatmap, slices on the pie, rows on the table and top list, dots on the scatter plot, countries on the geo map.',
 			value: 4,
 			max: MAX_SERIES,
 		}),

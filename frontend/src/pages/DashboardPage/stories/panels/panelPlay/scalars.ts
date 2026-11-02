@@ -6,11 +6,13 @@ import {
 	TABLE_THRESHOLD_VALUE,
 } from '../__story_mockdata__/constants';
 import {
+	serviceAt,
 	serviceIndex,
 	TABLE_VALUES,
 } from '../__story_mockdata__/panelResponses';
 
 import { PANEL_LOAD, type PanelPlayArgs } from './args';
+import { waitForPlot } from './plot';
 
 export const expectPie = async (
 	root: HTMLElement,
@@ -102,4 +104,44 @@ export const expectTable = async (
 	}
 
 	await expectTableThresholds(rows, args);
+};
+
+/** No colour-by set, so every service is its own series of one dot. */
+export const expectScatterPlot = async (
+	root: HTMLElement,
+	args: PanelPlayArgs,
+): Promise<void> => {
+	await within(root).findByTestId('scatter-plot-chart', {}, PANEL_LOAD);
+	const plot = await waitForPlot(root, args.series);
+	await expect(
+		plot.data
+			.slice(1)
+			.map((facets) => (facets as unknown as number[][])[0].length),
+	).toEqual(Array.from({ length: args.series }, () => 1));
+};
+
+/** Ranked highest first; the values come back already in that order. */
+export const expectTopList = async (
+	root: HTMLElement,
+	args: PanelPlayArgs,
+): Promise<void> => {
+	await waitFor(
+		() =>
+			expect(within(root).getAllByTestId('top-list-row')).toHaveLength(
+				args.series,
+			),
+		PANEL_LOAD,
+	);
+	await expect(within(root).getAllByTestId('top-list-row')[0]).toHaveTextContent(
+		serviceAt(0),
+	);
+};
+
+/** Zoom controls render only once the outlines have loaded and drawn. */
+export const expectGeoMap = async (root: HTMLElement): Promise<void> => {
+	await within(root).findByTestId('geo-map-zoom-controls', {}, PANEL_LOAD);
+	await expect(within(root).getByTestId('geo-map-legend')).toBeInTheDocument();
+	await expect(
+		within(root).queryByTestId('geo-map-empty-message'),
+	).not.toBeInTheDocument();
 };
