@@ -63,6 +63,28 @@ describe('resolveColorDomain', () => {
 		);
 	});
 
+	it('starts at the lowest value on auto when it is negative', () => {
+		expect(
+			resolveColorDomain({ min: null, max: null }, [[-30, null, 10]]),
+		).toStrictEqual({ min: -30, max: 10, logFloor: 10 });
+	});
+
+	it('spans all-negative values up to 0 rather than collapsing', () => {
+		const domain = resolveColorDomain({ min: null, max: null }, [[-30, -10]]);
+		expect(domain).toMatchObject({ min: -30, max: 0 });
+		expect(
+			normalizeColorValue({ value: -10, domain, scale: ColorRampScale.Linear }),
+		).toBeCloseTo(2 / 3, 6);
+	});
+
+	it('collapses all-zero values to the bottom of the scale', () => {
+		const domain = resolveColorDomain({ min: null, max: null }, [[0, 0]]);
+		expect(domain).toMatchObject({ min: 0, max: 0 });
+		expect(
+			normalizeColorValue({ value: 0, domain, scale: ColorRampScale.Linear }),
+		).toBe(0);
+	});
+
 	it('honours explicit clamps', () => {
 		expect(resolveColorDomain({ min: 10, max: 100 }, [[5, 20]])).toStrictEqual({
 			min: 10,
@@ -108,6 +130,16 @@ describe('getRampBottom', () => {
 	it('keeps an explicit minimum above the floor on a log ramp', () => {
 		expect(getRampBottom({ ...domain, min: 10 }, ColorRampScale.Log)).toBe(10);
 	});
+
+	it.each([
+		[{ min: 0, max: 0, logFloor: 1 }, 0],
+		[{ min: 0, max: 10, logFloor: 10 }, 0],
+	])(
+		'starts a log ramp with no span above its floor at the minimum, as drawn',
+		(flat, expected) => {
+			expect(getRampBottom(flat, ColorRampScale.Log)).toBe(expected);
+		},
+	);
 
 	it.each([ColorRampScale.Linear, ColorRampScale.Sqrt])(
 		'starts a %s ramp at the domain minimum',
@@ -266,6 +298,32 @@ describe('createColorRampResolver', () => {
 		});
 
 		expect(resolver.colorFor(0)).toBe(resolver.ramp[0]);
+	});
+
+	it('gives zero the bottom of the ramp when the surface fill is off', () => {
+		const resolver = createColorRampResolver({
+			options: DEFAULT_COLOR_RAMP_OPTIONS,
+			domain: { min: 0, max: 1000, logFloor: 1 },
+			isDarkMode: true,
+			seriesColor: SERIES_COLOR,
+			fillZero: false,
+		});
+
+		expect(resolver.colorFor(0)).toBe(resolver.ramp[0]);
+	});
+
+	it('starts the ramp part-way up the palette, keeping its top', () => {
+		const full = build({ steps: 8 });
+		const trimmed = createColorRampResolver({
+			options: { ...DEFAULT_COLOR_RAMP_OPTIONS, steps: 8 },
+			domain: { min: 0, max: 1000, logFloor: 1 },
+			isDarkMode: true,
+			seriesColor: SERIES_COLOR,
+			paletteStart: 0.25,
+		});
+
+		expect(trimmed.ramp[0]).not.toBe(full.ramp[0]);
+		expect(trimmed.ramp[7]).toBe(full.ramp[7]);
 	});
 
 	it('emits one ramp entry per step', () => {

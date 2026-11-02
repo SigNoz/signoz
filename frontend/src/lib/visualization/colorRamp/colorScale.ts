@@ -58,6 +58,19 @@ export function getMaxValue(values: Array<Array<number | null>>): number {
 	return max;
 }
 
+/** Lowest value, ignoring `null`, and never above 0. */
+function getMinValue(values: Array<Array<number | null>>): number {
+	let min = 0;
+	for (const row of values) {
+		for (const value of row) {
+			if (value !== null && Number.isFinite(value) && value < min) {
+				min = value;
+			}
+		}
+	}
+	return min;
+}
+
 /** Smallest value above zero, ignoring `null`. `null` when there is none. */
 export function getSmallestPositiveValue(
 	values: Array<Array<number | null>>,
@@ -92,15 +105,22 @@ function resolveLogFloor(
 	return Math.max(smallest, max / 10 ** MAX_LOG_DECADES);
 }
 
-/** Explicit clamps win; otherwise 0 to the highest value. */
+/** Explicit clamps win; otherwise from 0, or the lowest value when negative,
+ *  to the highest. */
 export function resolveColorDomain(
 	options: Pick<ColorRampOptions, 'min' | 'max'>,
 	values: Array<Array<number | null>>,
 ): ColorRampDomain {
-	const min = options.min ?? 0;
+	const min = options.min ?? getMinValue(values);
 	const max = options.max ?? getMaxValue(values);
 	const logFloor = resolveLogFloor(values, max);
 	return max > min ? { min, max, logFloor } : { min, max: min, logFloor };
+}
+
+/** Where a log ramp starts; `null` when the floor leaves it no span. */
+function getLogBottom(domain: ColorRampDomain): number | null {
+	const bottom = Math.max(domain.min, domain.logFloor);
+	return domain.max > bottom ? bottom : null;
 }
 
 /**
@@ -112,7 +132,7 @@ export function getRampBottom(
 	scale: ColorRampScale,
 ): number {
 	return scale === ColorRampScale.Log
-		? Math.max(domain.min, domain.logFloor)
+		? (getLogBottom(domain) ?? domain.min)
 		: domain.min;
 }
 
@@ -134,16 +154,16 @@ export function normalizeColorValue({
 
 	const clamped = Math.min(Math.max(value, min), max);
 
-	if (scale === ColorRampScale.Log) {
+	// When the floor already reaches the top of the domain, there is no span to
+	// spread logarithmically. Fall through rather than flatten every value.
+	const logBottom = scale === ColorRampScale.Log ? getLogBottom(domain) : null;
+	if (logBottom !== null) {
 		// Anything at or below the floor sits at the bottom; log cannot place it.
-		const bottom = getRampBottom(domain, scale);
-		const logMin = Math.log10(bottom);
-		const logMax = Math.log10(max);
-		if (logMax > logMin) {
-			return (Math.log10(Math.max(clamped, bottom)) - logMin) / (logMax - logMin);
-		}
-		// The floor already reaches the top of the domain, so there is no span to
-		// spread logarithmically. Fall through rather than flatten every value.
+		const logMin = Math.log10(logBottom);
+		return (
+			(Math.log10(Math.max(clamped, logBottom)) - logMin) /
+			(Math.log10(max) - logMin)
+		);
 	}
 
 	const linear = (clamped - min) / (max - min);
@@ -210,12 +230,20 @@ export function createColorRampResolver({
 	domain,
 	isDarkMode,
 	seriesColor,
+	paletteStart = 0,
+	fillZero = true,
 }: {
 	options: ColorRampOptions;
 	domain: ColorRampDomain;
 	isDarkMode: boolean;
 	/** Opacity-mode fill when `options.fill` is empty. */
 	seriesColor: string;
+	/** 0..1 share of the palette's low end to skip. That end shades towards the
+	 *  theme's background, which suits a grid where low recedes, but not shapes
+	 *  that must stay visible against it. */
+	paletteStart?: number;
+	/** `false` gives 0 the ramp's bottom colour instead of the panel surface. */
+	fillZero?: boolean;
 }): ColorRampResolver {
 	const steps = clampColorSteps(options.steps);
 	const positions = Array.from({ length: steps }, (_, index) =>
@@ -233,7 +261,9 @@ export function createColorRampResolver({
 		);
 	} else {
 		const stops = getPaletteStops(options.palette, isDarkMode);
-		ramp = positions.map((t) => sampleStops(stops, t));
+		ramp = positions.map((t) =>
+			sampleStops(stops, paletteStart + t * (1 - paletteStart)),
+		);
 	}
 
 	const positionOf = (value: number | null): number | null => {
@@ -245,7 +275,7 @@ export function createColorRampResolver({
 
 	// An explicit `min` above zero makes it a clamped value like any other.
 	const zeroFill =
-		domain.min <= 0 ? ZERO_FILL[isDarkMode ? 'dark' : 'light'] : null;
+		fillZero && domain.min <= 0 ? ZERO_FILL[isDarkMode ? 'dark' : 'light'] : null;
 
 	return {
 		positionOf,
