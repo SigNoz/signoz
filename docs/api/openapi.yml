@@ -12233,6 +12233,8 @@ components:
           additionalProperties:
             type: string
           type: object
+        scope:
+          $ref: '#/components/schemas/SpantypesScope'
         spanId:
           type: string
         timestamp:
@@ -12249,6 +12251,7 @@ components:
       - event
       - attributes
       - resource
+      - scope
       type: object
     SpantypesGettableFlamegraphTrace:
       properties:
@@ -12488,6 +12491,16 @@ components:
             type: string
           nullable: true
           type: array
+      type: object
+    SpantypesScope:
+      properties:
+        attributes:
+          additionalProperties: {}
+          type: object
+        name:
+          type: string
+        version:
+          type: string
       type: object
     SpantypesSpanAggregation:
       properties:
@@ -12858,6 +12871,8 @@ components:
           type: object
         response_status_code:
           type: string
+        scope:
+          $ref: '#/components/schemas/SpantypesScope'
         span_id:
           type: string
         status_code:

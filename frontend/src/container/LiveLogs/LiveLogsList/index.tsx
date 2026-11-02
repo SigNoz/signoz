@@ -5,6 +5,7 @@ import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { toast } from '@signozhq/ui/sonner';
 import { Card } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import ListLogView from 'components/Logs/ListLogView';
@@ -30,7 +31,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useEventSource } from 'providers/EventSource';
 // interfaces
 import { ILog } from 'types/api/logs/log';
-import { DataSource, StringOperators } from 'types/common/queryBuilder';
+import { StringOperators } from 'types/common/queryBuilder';
 
 import loadingPlaneUrl from '@/assets/Icons/loading-plane.gif';
 import { getAbsoluteUrl } from 'utils/basePath';
@@ -68,7 +69,7 @@ function LiveLogsList({
 
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		dataSource: DataSource.LOGS,
+		sourcePage: SavedviewtypesSourceDTO.logs,
 		aggregateOperator: StringOperators.NOOP,
 	});
 

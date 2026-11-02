@@ -11,6 +11,7 @@ import {
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
@@ -86,7 +87,7 @@ function ListView({
 
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
-		dataSource: DataSource.TRACES,
+		sourcePage: SavedviewtypesSourceDTO.traces,
 		aggregateOperator: 'count',
 		initialOptions: {
 			selectColumns: defaultSelectedColumns,
