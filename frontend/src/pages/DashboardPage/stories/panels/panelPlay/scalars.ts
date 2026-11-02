@@ -12,6 +12,7 @@ import {
 } from '../__story_mockdata__/panelResponses';
 
 import { PANEL_LOAD, type PanelPlayArgs } from './args';
+import { waitForPlot } from './plot';
 
 // `long-tail` draws 14 slices and folds the other 10 into Other.
 const LONG_TAIL_KEPT = 14;
@@ -115,4 +116,27 @@ export const expectTable = async (
 	}
 
 	await expectTableThresholds(rows, args);
+};
+
+/** No colour-by set, so every service is its own series of one dot. */
+export const expectScatterPlot = async (
+	root: HTMLElement,
+	args: PanelPlayArgs,
+): Promise<void> => {
+	await within(root).findByTestId('scatter-plot-chart', {}, PANEL_LOAD);
+	const plot = await waitForPlot(root, args.series);
+	await expect(
+		plot.data
+			.slice(1)
+			.map((facets) => (facets as unknown as number[][])[0].length),
+	).toEqual(Array.from({ length: args.series }, () => 1));
+};
+
+/** Zoom controls render only once the outlines have loaded and drawn. */
+export const expectGeoMap = async (root: HTMLElement): Promise<void> => {
+	await within(root).findByTestId('geo-map-zoom-controls', {}, PANEL_LOAD);
+	await expect(within(root).getByTestId('geo-map-legend')).toBeInTheDocument();
+	await expect(
+		within(root).queryByTestId('geo-map-empty-message'),
+	).not.toBeInTheDocument();
 };

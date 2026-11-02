@@ -190,6 +190,18 @@ export const ListPaginated: Story = {
 	play: playListPaginated,
 };
 
+/** Each service as one dot, its p99 latency (`A`) across and its errors (`B`) up. */
+export const ScatterPlot: Story = {
+	args: { kind: 'ScatterPlot' },
+	play: playPanel,
+};
+
+/** p99 latency per country, each country shaded by its value on a world map. */
+export const GeoMap: Story = {
+	args: { kind: 'GeoMap' },
+	play: playPanel,
+};
+
 /** A Markdown runbook: heading, list, link and code block. */
 export const Text: Story = {
 	args: { kind: 'Text' },
