@@ -124,15 +124,14 @@ func statsAIBuilderQuery() string {
 	}`
 }
 
-// An AI builder query is always a traces query, so it counts towards traces as
-// well as the AI counters.
+// An AI builder query reads traces but counts only towards the AI stat.
 func TestNewStatsFromStorableDashboardsCountsAIBuilderQueries(t *testing.T) {
 	dashboard := newStatsStorableV2(t, `"p1": `+statsPanel(statsAIBuilderQuery()))
 
 	stats := NewStatsFromStorableDashboards([]*StorableDashboard{dashboard})
 
 	assert.Equal(t, int64(1), stats[statKeyPanelCount])
-	assert.Equal(t, int64(1), stats[statKeyPanelTracesCount])
+	assert.Equal(t, int64(0), stats[statKeyPanelTracesCount])
 	assert.Equal(t, int64(0), stats[statKeyPanelMetricsCount])
 	assert.Equal(t, int64(0), stats[statKeyPanelLogsCount])
 	assert.Equal(t, int64(1), stats[statKeyPanelAICount])
@@ -155,7 +154,7 @@ func TestNewStatsFromStorableDashboardsCountsAICompositeSubQueries(t *testing.T)
 
 	assert.Equal(t, int64(2), stats[statKeyPanelCount])
 	assert.Equal(t, int64(2), stats[statKeyPanelAICount])
-	assert.Equal(t, int64(2), stats[statKeyPanelTracesCount])
+	assert.Equal(t, int64(0), stats[statKeyPanelTracesCount])
 	assert.Equal(t, int64(1), stats[statKeyPanelLogsCount])
 }
 

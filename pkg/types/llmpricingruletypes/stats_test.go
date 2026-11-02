@@ -12,17 +12,15 @@ func TestNewStatsFromRules(t *testing.T) {
 	sourceID := valuer.GenerateUUID()
 
 	testCases := []struct {
-		name     string
-		rules    []*LLMPricingRule
-		unmapped []*UnmappedModel
-		want     map[string]any
+		name  string
+		rules []*LLMPricingRule
+		want  map[string]any
 	}{
 		{
-			name: "NoRules_NoModels",
+			name: "NoRules",
 			want: map[string]any{
-				"llmpricingrule.custom.count":         int64(0),
-				"llmpricingrule.override.count":       int64(0),
-				"llmpricingrule.unmapped_model.count": int64(0),
+				"llmpricingrule.custom.count":   int64(0),
+				"llmpricingrule.override.count": int64(0),
 			},
 		},
 		{
@@ -33,18 +31,23 @@ func TestNewStatsFromRules(t *testing.T) {
 				{SourceID: &sourceID, IsOverride: true},
 				{SourceID: &sourceID, IsOverride: false},
 			},
-			unmapped: []*UnmappedModel{{ModelName: "gpt-5-nano"}, {ModelName: "claude-haiku-5-5"}},
 			want: map[string]any{
-				"llmpricingrule.custom.count":         int64(2),
-				"llmpricingrule.override.count":       int64(1),
-				"llmpricingrule.unmapped_model.count": int64(2),
+				"llmpricingrule.custom.count":   int64(2),
+				"llmpricingrule.override.count": int64(1),
 			},
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			assert.Equal(t, testCase.want, NewStatsFromRules(testCase.rules, testCase.unmapped))
+			assert.Equal(t, testCase.want, NewStatsFromRules(testCase.rules))
 		})
 	}
+}
+
+func TestNewStatsFromUnmappedModels(t *testing.T) {
+	unmapped := []*UnmappedModel{{ModelName: "gpt-5-nano"}, {ModelName: "claude-haiku-5-5"}}
+
+	assert.Equal(t, map[string]any{"llmpricingrule.unmapped_model.count": int64(2)}, NewStatsFromUnmappedModels(unmapped))
+	assert.Equal(t, map[string]any{"llmpricingrule.unmapped_model.count": int64(0)}, NewStatsFromUnmappedModels(nil))
 }

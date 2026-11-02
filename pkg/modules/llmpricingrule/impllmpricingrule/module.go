@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"maps"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
@@ -26,10 +28,11 @@ type module struct {
 	store                  llmpricingruletypes.Store
 	querier                querier.Querier
 	telemetryMetadataStore telemetrytypes.MetadataStore
+	logger                 *slog.Logger
 }
 
-func NewModule(store llmpricingruletypes.Store, querier querier.Querier, telemetryMetadataStore telemetrytypes.MetadataStore) llmpricingrule.Module {
-	return &module{store: store, querier: querier, telemetryMetadataStore: telemetryMetadataStore}
+func NewModule(store llmpricingruletypes.Store, querier querier.Querier, telemetryMetadataStore telemetrytypes.MetadataStore, providerSettings factory.ProviderSettings) llmpricingrule.Module {
+	return &module{store: store, querier: querier, telemetryMetadataStore: telemetryMetadataStore, logger: providerSettings.Logger}
 }
 
 func (module *module) List(ctx context.Context, orgID valuer.UUID, offset, limit int, search string, isOverride *bool) ([]*llmpricingruletypes.LLMPricingRule, int, error) {
@@ -56,24 +59,27 @@ func (module *module) ListUnmappedModels(ctx context.Context, orgID valuer.UUID)
 	return llmpricingruletypes.UnmappedModels(models, rules), nil
 }
 
+// Collect keeps the rule counts even when ClickHouse is unreachable: the
+// counts that depend on it are skipped so the reporter retains their last value.
 func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
 	rules, err := module.listAllRules(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
+	stats := llmpricingruletypes.NewStatsFromRules(rules)
 
-	models, err := module.discoverModels(ctx, orgID)
-	if err != nil {
-		return nil, err
+	if models, err := module.discoverModels(ctx, orgID); err != nil {
+		module.logger.DebugContext(ctx, "failed to collect unmapped model stats", errors.Attr(err))
+	} else {
+		maps.Copy(stats, llmpricingruletypes.NewStatsFromUnmappedModels(llmpricingruletypes.UnmappedModels(models, rules)))
 	}
-
-	stats := llmpricingruletypes.NewStatsFromRules(rules, llmpricingruletypes.UnmappedModels(models, rules))
 
 	values := make(map[string]*telemetrytypes.TelemetryFieldValues)
 	for _, selector := range aiobservabilitytypes.StatsFieldValueSelectors(time.Now()) {
 		fieldValues, _, err := module.telemetryMetadataStore.GetAllValues(ctx, orgID, selector)
 		if err != nil {
-			return nil, err
+			module.logger.DebugContext(ctx, "failed to collect gen_ai attribute stats", slog.String("key", selector.Name), errors.Attr(err))
+			continue
 		}
 		values[selector.Name] = fieldValues
 	}

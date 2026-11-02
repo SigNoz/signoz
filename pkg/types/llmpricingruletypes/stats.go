@@ -1,8 +1,8 @@
 package llmpricingruletypes
 
-// NewStatsFromRules reports the rules users added themselves,
-// synced defaults users pinned, and how many models in use no rule prices.
-func NewStatsFromRules(rules []*LLMPricingRule, unmapped []*UnmappedModel) map[string]any {
+// NewStatsFromRules reports the rules users added themselves and the synced
+// defaults users pinned.
+func NewStatsFromRules(rules []*LLMPricingRule) map[string]any {
 	custom, overrides := int64(0), int64(0)
 	for _, rule := range rules {
 		switch {
@@ -14,8 +14,11 @@ func NewStatsFromRules(rules []*LLMPricingRule, unmapped []*UnmappedModel) map[s
 	}
 
 	return map[string]any{
-		"llmpricingrule.custom.count":         custom,
-		"llmpricingrule.override.count":       overrides,
-		"llmpricingrule.unmapped_model.count": int64(len(unmapped)),
+		"llmpricingrule.custom.count":   custom,
+		"llmpricingrule.override.count": overrides,
 	}
+}
+
+func NewStatsFromUnmappedModels(unmapped []*UnmappedModel) map[string]any {
+	return map[string]any{"llmpricingrule.unmapped_model.count": int64(len(unmapped))}
 }

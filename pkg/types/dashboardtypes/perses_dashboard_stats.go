@@ -68,7 +68,7 @@ func newStats() map[string]any {
 }
 
 // addPanelStats counts the panels of a v2 spec, and each panel's queries against
-// the signal they read. AI queries also count as traces.
+// the signal they read. AI queries count only towards the AI stat.
 func addPanelStats(spec *DashboardSpec, stats map[string]any) {
 	for _, panel := range spec.Panels {
 		if panel == nil {
@@ -84,6 +84,7 @@ func addPanelStats(spec *DashboardSpec, stats map[string]any) {
 			for _, envelope := range composite.Queries {
 				if envelope.Type == qb.QueryTypeBuilderAI {
 					incrementStat(stats, statKeyPanelAICount)
+					continue
 				}
 				if key, ok := panelSignalStatKeys[envelope.GetSignal()]; ok {
 					incrementStat(stats, key)

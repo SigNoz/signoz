@@ -19,8 +19,8 @@ const (
 // values the stats reporter counts under telemetry.traces.<key>.count.
 var statsAttributeKeys = []string{GenAIRequestModel, GenAIToolName, GenAIAgentName}
 
-// StatsFieldValueSelectors look up each tracked attribute's values since the
-// start of the previous day.
+// StatsFieldValueSelectors look up each tracked attribute's string values
+// since the start of the previous day.
 func StatsFieldValueSelectors(now time.Time) []*telemetrytypes.FieldValueSelector {
 	selectors := make([]*telemetrytypes.FieldValueSelector, 0, len(statsAttributeKeys))
 	for _, key := range statsAttributeKeys {
@@ -29,6 +29,7 @@ func StatsFieldValueSelectors(now time.Time) []*telemetrytypes.FieldValueSelecto
 				StartUnixMilli: now.Add(-statsLookback).UnixMilli(),
 				Signal:         telemetrytypes.SignalTraces,
 				FieldContext:   telemetrytypes.FieldContextAttribute,
+				FieldDataType:  telemetrytypes.FieldDataTypeString,
 				Name:           key,
 			},
 			Limit: statsValuesLimit,
@@ -37,15 +38,14 @@ func StatsFieldValueSelectors(now time.Time) []*telemetrytypes.FieldValueSelecto
 	return selectors
 }
 
-// NewStatsFromFieldValues counts the distinct values returned per key.
+// NewStatsFromFieldValues counts the distinct values of each looked-up key.
+// Keys absent from values are left out, so a failed lookup never reports zero.
 func NewStatsFromFieldValues(values map[string]*telemetrytypes.TelemetryFieldValues) map[string]any {
-	stats := make(map[string]any, len(statsAttributeKeys))
+	stats := make(map[string]any, len(values))
 	for _, key := range statsAttributeKeys {
-		count := 0
 		if fieldValues := values[key]; fieldValues != nil {
-			count = len(fieldValues.StringValues)
+			stats["telemetry.traces."+key+".count"] = int64(len(fieldValues.StringValues))
 		}
-		stats["telemetry.traces."+key+".count"] = int64(count)
 	}
 	return stats
 }
