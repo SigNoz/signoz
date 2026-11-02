@@ -4,6 +4,8 @@ import type {
 	DashboardtypesComparisonThresholdDTO,
 	DashboardtypesFillModeDTO,
 	DashboardtypesFillOpacityDTO,
+	DashboardtypesGeoMapBubblesDTO,
+	DashboardtypesGeoMapColorsDTO,
 	DashboardtypesGeoMapLocationDTO,
 	DashboardtypesGeoMapSettingsDTO,
 	DashboardtypesHeatmapAxesDTO,
@@ -117,10 +119,14 @@ export interface PanelChartAppearanceSlice {
 	fillOpacity?: DashboardtypesFillOpacityDTO;
 	showPoints?: boolean;
 	spanGaps?: DashboardtypesSpanGapsDTO;
-	/** The heatmap's cell colour ramp. */
-	colors?: DashboardtypesHeatmapColorsDTO;
+	/** The heatmap's cell colour ramp, or the geo map's value ramp. */
+	colors?: DashboardtypesHeatmapColorsDTO & DashboardtypesGeoMapColorsDTO;
 	/** Scatter Plot's dot size and opacity. */
 	points?: DashboardtypesScatterPlotPointsDTO;
+	/** Geo Map's circle radius range. */
+	bubbles?: DashboardtypesGeoMapBubblesDTO;
+	/** Geo Map's shape names; unset shows them. */
+	labels?: boolean | null;
 }
 
 /** Geo Map edits `location` and `map` together: what a row is decides the area and layer. */
@@ -200,6 +206,12 @@ export interface SectionControls {
 		colors?: boolean;
 		/** Scatter Plot's dots: one size, or a min/max range when a size column is bound. */
 		points?: boolean;
+		/** Geo Map's value ramp: palette, scale, steps and a value range. */
+		mapColors?: boolean;
+		/** Geo Map's circle radius range. */
+		bubbles?: boolean;
+		/** Geo Map's shape names. */
+		labels?: boolean;
 	};
 	[SectionKind.Buckets]: {
 		count?: boolean;
