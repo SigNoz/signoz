@@ -48,6 +48,7 @@ import SpanHintBadge from '../../../SpanHintBadge/SpanHintBadge';
 import { isAiSpan } from '../../../utils/aiTraceUtils';
 import AddSpanToFunnelModal from '../../AddSpanToFunnelModal/AddSpanToFunnelModal';
 import { IInterestedSpan } from '../../types';
+import { getTraceWaterfallSidebarContentWidth } from '../../utils';
 
 import styles from './Success.module.scss';
 
@@ -125,7 +126,6 @@ const LazyEventDotPopover = memo(function LazyEventDotPopover({
 
 // css config
 const CONNECTOR_WIDTH = 30;
-const VERTICAL_CONNECTOR_WIDTH = 1;
 
 interface SpanStateClasses {
 	isSelected: boolean;
@@ -498,7 +498,6 @@ const WATERFALL_BOTTOM_PADDING = 24;
 const DEFAULT_SIDEBAR_WIDTH = 450;
 const MIN_SIDEBAR_WIDTH = 240;
 const MAX_SIDEBAR_WIDTH = 900;
-const BASE_CONTENT_WIDTH = 300;
 
 function Success(props: ISuccessProps): JSX.Element {
 	const {
@@ -753,14 +752,9 @@ function Success(props: ISuccessProps): JSX.Element {
 
 	// Compute max content width for sidebar horizontal scroll
 	const maxContentWidth = useMemo(() => {
-		if (spans.length === 0) {
-			return sidebarWidth;
-		}
-		const maxLevel = spans.reduce((max, span) => Math.max(max, span.level), 0);
-		return Math.max(
-			sidebarWidth,
-			maxLevel * (CONNECTOR_WIDTH + VERTICAL_CONNECTOR_WIDTH) + BASE_CONTENT_WIDTH,
-		);
+		return getTraceWaterfallSidebarContentWidth(spans, sidebarWidth, {
+			indentWidthPerLevel: CONNECTOR_WIDTH,
+		});
 	}, [spans, sidebarWidth]);
 
 	// Scroll a span to viewport center if it isn't already visible. Shared by
