@@ -9,6 +9,7 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { getCurrentLocation } from 'lib/router/navigation';
+import { UpdateTimeInterval } from 'store/actions';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { QueryBuilderContextType } from 'types/common/queryBuilder';
 
@@ -24,7 +25,14 @@ jest.mock('api/common/logEvent', () => ({
 	default: jest.fn(),
 }));
 
+jest.mock('store/actions', () => {
+	const actual =
+		jest.requireActual<typeof import('store/actions')>('store/actions');
+	return { ...actual, UpdateTimeInterval: jest.fn(actual.UpdateTimeInterval) };
+});
+
 const mockUndo = undoExecution as jest.MockedFunction<typeof undoExecution>;
+const mockUpdateTimeInterval = jest.mocked(UpdateTimeInterval);
 
 const START_MS = Date.UTC(2026, 6, 26, 10, 34);
 const END_MS = Date.UTC(2026, 6, 26, 10, 49);
@@ -201,5 +209,47 @@ describe('ActionsSection apply_filter', () => {
 			expect.objectContaining({ builder: expect.anything() }),
 			{ [QueryParams.panelTypes]: PANEL_TYPES.TABLE },
 		);
+	});
+
+	it('switches the open explorer to the answer time range', async () => {
+		const redirectWithQueryBuilderData = jest.fn() as jest.MockedFunction<
+			QueryBuilderContextType['redirectWithQueryBuilderData']
+		>;
+		const handleSetQueryData = jest.fn() as jest.MockedFunction<
+			QueryBuilderContextType['handleSetQueryData']
+		>;
+		render(
+			<ActionsSection
+				actions={[
+					countByServiceAction('Apply with time', {
+						start: START_MS,
+						end: END_MS,
+					}),
+				]}
+				messageId="message-on-page-with-time"
+			/>,
+			undefined,
+			{
+				initialRoute: ROUTES.LOGS_EXPLORER,
+				queryBuilderOverrides: { redirectWithQueryBuilderData, handleSetQueryData },
+			},
+		);
+
+		await waitFor(() =>
+			expect(redirectWithQueryBuilderData).toHaveBeenCalledTimes(1),
+		);
+		expect(redirectWithQueryBuilderData).toHaveBeenCalledWith(
+			expect.objectContaining({ builder: expect.anything() }),
+			{
+				[QueryParams.panelTypes]: PANEL_TYPES.TABLE,
+				[QueryParams.startTime]: START_MS,
+				[QueryParams.endTime]: END_MS,
+				[QueryParams.relativeTime]: null,
+			},
+		);
+		expect(mockUpdateTimeInterval).toHaveBeenCalledWith('custom', [
+			START_MS,
+			END_MS,
+		]);
 	});
 });
