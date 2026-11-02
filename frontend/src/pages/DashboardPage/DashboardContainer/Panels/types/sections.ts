@@ -8,6 +8,7 @@ import type {
 	DashboardtypesGeoMapColorsDTO,
 	DashboardtypesGeoMapLocationDTO,
 	DashboardtypesGeoMapSettingsDTO,
+	DashboardtypesGeoMapThresholdDTO,
 	DashboardtypesHeatmapAxesDTO,
 	DashboardtypesHeatmapColorsDTO,
 	DashboardtypesHeaderOptionsDTO,
@@ -87,11 +88,13 @@ export enum SectionKind {
  * - `label` — value + color + label lines (TimeSeries / Bar)
  * - `comparison` — value crosses an operator → recolor (Number)
  * - `table` — per-column comparison (Table)
+ * - `color` — comparison that always recolors, so it has no format (Geo Map)
  */
 export enum ThresholdVariant {
 	LABEL = 'label',
 	COMPARISON = 'comparison',
 	TABLE = 'table',
+	COLOR = 'color',
 }
 
 /** Union of every threshold element shape stored under `plugin.spec.thresholds`. */
@@ -99,7 +102,8 @@ export type AnyThreshold =
 	| DashboardtypesThresholdWithLabelDTO
 	| DashboardtypesScatterPlotThresholdDTO
 	| DashboardtypesComparisonThresholdDTO
-	| DashboardtypesTableThresholdDTO;
+	| DashboardtypesTableThresholdDTO
+	| DashboardtypesGeoMapThresholdDTO;
 
 /**
  * Each section ↔ one slice of the panel spec it edits. Most slices live under
