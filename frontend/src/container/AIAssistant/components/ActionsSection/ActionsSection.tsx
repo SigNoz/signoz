@@ -341,6 +341,7 @@ function applyFilter(action: MessageActionDTO, deps: ApplyFilterDeps): void {
 	// Read before toUrlCompositeQuery, which drops the requestType envelope.
 	const panelType = getPanelTypeForRequestType(
 		requestTypeFromActionQuery(action.query),
+		action.signal,
 	);
 	const normalized = withDerivedFilterExpressions(urlQuery as unknown as Query);
 	// eslint-disable-next-line no-console

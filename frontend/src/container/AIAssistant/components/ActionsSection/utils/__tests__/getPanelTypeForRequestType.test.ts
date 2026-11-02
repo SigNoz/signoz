@@ -1,3 +1,4 @@
+import { ApplyFilterSignalDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 
@@ -8,18 +9,44 @@ import {
 
 describe('getPanelTypeForRequestType', () => {
 	it.each([
-		[Querybuildertypesv5RequestTypeDTO.scalar, PANEL_TYPES.TABLE],
-		[Querybuildertypesv5RequestTypeDTO.time_series, PANEL_TYPES.TIME_SERIES],
-		[Querybuildertypesv5RequestTypeDTO.raw, PANEL_TYPES.LIST],
-	])('maps %s to the %s view', (requestType, view) => {
-		expect(getPanelTypeForRequestType(requestType)).toBe(view);
+		[
+			Querybuildertypesv5RequestTypeDTO.scalar,
+			ApplyFilterSignalDTO.logs,
+			PANEL_TYPES.TABLE,
+		],
+		[
+			Querybuildertypesv5RequestTypeDTO.time_series,
+			ApplyFilterSignalDTO.logs,
+			PANEL_TYPES.TIME_SERIES,
+		],
+		[
+			Querybuildertypesv5RequestTypeDTO.raw,
+			ApplyFilterSignalDTO.logs,
+			PANEL_TYPES.LIST,
+		],
+		[
+			Querybuildertypesv5RequestTypeDTO.trace,
+			ApplyFilterSignalDTO.traces,
+			PANEL_TYPES.TRACE,
+		],
+		[
+			Querybuildertypesv5RequestTypeDTO.trace,
+			ApplyFilterSignalDTO.logs,
+			PANEL_TYPES.LIST,
+		],
+		[
+			Querybuildertypesv5RequestTypeDTO.trace,
+			ApplyFilterSignalDTO.metrics,
+			PANEL_TYPES.LIST,
+		],
+	])('maps %s on the %s signal to the %s view', (requestType, signal, view) => {
+		expect(getPanelTypeForRequestType(requestType, signal)).toBe(view);
 	});
 
 	it.each([
 		undefined,
 		null,
 		'',
-		Querybuildertypesv5RequestTypeDTO.trace,
 		Querybuildertypesv5RequestTypeDTO.raw_stream,
 		Querybuildertypesv5RequestTypeDTO.heatmap,
 		'distribution',
@@ -31,7 +58,9 @@ describe('getPanelTypeForRequestType', () => {
 	])(
 		'falls back to the List view for unmapped or invalid requestType (%p)',
 		(value) => {
-			expect(getPanelTypeForRequestType(value)).toBe(PANEL_TYPES.LIST);
+			expect(getPanelTypeForRequestType(value, ApplyFilterSignalDTO.traces)).toBe(
+				PANEL_TYPES.LIST,
+			);
 		},
 	);
 });
@@ -67,8 +96,11 @@ describe('requestTypeFromActionQuery', () => {
 				],
 			},
 		};
-		expect(getPanelTypeForRequestType(requestTypeFromActionQuery(query))).toBe(
-			PANEL_TYPES.TABLE,
-		);
+		expect(
+			getPanelTypeForRequestType(
+				requestTypeFromActionQuery(query),
+				ApplyFilterSignalDTO.logs,
+			),
+		).toBe(PANEL_TYPES.TABLE);
 	});
 });
