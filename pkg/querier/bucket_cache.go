@@ -190,14 +190,24 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 	cellWidthMs := bucketCacheCellSteps * stepMs
 	freshBuckets := bc.resultToBuckets(ctx, trimmedResult, cachableStartMs, cachableEndMs, cellWidthMs)
 
+	cellKeys := make([]string, len(freshBuckets))
+	cellEntries := make([]cachetypes.Cacheable, len(freshBuckets))
+	for i, freshBucket := range freshBuckets {
+		cellKeys[i] = bc.generateCacheKey(q, deriveCellIdx(freshBucket.StartMs, cellWidthMs))
+		cellEntries[i] = &qbtypes.CachedData{}
+	}
+	// A cell that could not be read comes back nil like a miss, so its entry is
+	// rebuilt from the fresh bucket alone
+	if err := bc.cache.GetMany(ctx, orgID, cellKeys, cellEntries); err != nil {
+		bc.logger.ErrorContext(ctx, "error getting cached data", errors.Attr(err))
+	}
+
 	// Each cell is its own cache entry, rewritten only when the fresh bucket
 	// changes what it holds, so an entry's TTL runs from its last new data
-	for _, freshBucket := range freshBuckets {
-		cellKey := bc.generateCacheKey(q, deriveCellIdx(freshBucket.StartMs, cellWidthMs))
-
-		var cellEntry qbtypes.CachedData
-		if err := bc.cache.Get(ctx, orgID, cellKey, &cellEntry); err != nil {
-			cellEntry = qbtypes.CachedData{}
+	for i, freshBucket := range freshBuckets {
+		cellEntry := &qbtypes.CachedData{}
+		if cellEntries[i] != nil {
+			cellEntry = cellEntries[i].(*qbtypes.CachedData)
 		}
 
 		cellBuckets, changed := bc.mergeFreshBucketIntoCell(ctx, cellEntry.Buckets, freshBucket)
@@ -206,7 +216,7 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 		}
 		cellEntry.Buckets = cellBuckets
 		cellEntry.Warnings = bc.deduplicateWarnings(append(cellEntry.Warnings, trimmedResult.Warnings...))
-		if err := bc.cache.Set(ctx, orgID, cellKey, &cellEntry, bc.cacheTTL); err != nil {
+		if err := bc.cache.Set(ctx, orgID, cellKeys[i], cellEntry, bc.cacheTTL); err != nil {
 			bc.logger.ErrorContext(ctx, "error setting cached data", errors.Attr(err))
 		}
 	}
